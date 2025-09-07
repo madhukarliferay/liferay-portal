@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.model.impl;
@@ -37,17 +28,17 @@ public class AccountEntryCacheModel
 	implements CacheModel<AccountEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AccountEntryCacheModel)) {
+		if (!(object instanceof AccountEntryCacheModel)) {
 			return false;
 		}
 
 		AccountEntryCacheModel accountEntryCacheModel =
-			(AccountEntryCacheModel)obj;
+			(AccountEntryCacheModel)object;
 
 		if ((accountEntryId == accountEntryCacheModel.accountEntryId) &&
 			(mvccVersion == accountEntryCacheModel.mvccVersion)) {
@@ -77,10 +68,14 @@ public class AccountEntryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(53);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", uuid=");
+		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", accountEntryId=");
 		sb.append(accountEntryId);
 		sb.append(", companyId=");
@@ -93,18 +88,40 @@ public class AccountEntryCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", defaultBillingAddressId=");
+		sb.append(defaultBillingAddressId);
+		sb.append(", defaultCPaymentMethodKey=");
+		sb.append(defaultCPaymentMethodKey);
+		sb.append(", defaultShippingAddressId=");
+		sb.append(defaultShippingAddressId);
 		sb.append(", parentAccountEntryId=");
 		sb.append(parentAccountEntryId);
-		sb.append(", name=");
-		sb.append(name);
 		sb.append(", description=");
 		sb.append(description);
 		sb.append(", domains=");
 		sb.append(domains);
+		sb.append(", emailAddress=");
+		sb.append(emailAddress);
 		sb.append(", logoId=");
 		sb.append(logoId);
+		sb.append(", name=");
+		sb.append(name);
+		sb.append(", restrictMembership=");
+		sb.append(restrictMembership);
+		sb.append(", taxExemptionCode=");
+		sb.append(taxExemptionCode);
+		sb.append(", taxIdNumber=");
+		sb.append(taxIdNumber);
+		sb.append(", type=");
+		sb.append(type);
 		sb.append(", status=");
 		sb.append(status);
+		sb.append(", statusByUserId=");
+		sb.append(statusByUserId);
+		sb.append(", statusByUserName=");
+		sb.append(statusByUserName);
+		sb.append(", statusDate=");
+		sb.append(statusDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -115,6 +132,21 @@ public class AccountEntryCacheModel
 		AccountEntryImpl accountEntryImpl = new AccountEntryImpl();
 
 		accountEntryImpl.setMvccVersion(mvccVersion);
+
+		if (uuid == null) {
+			accountEntryImpl.setUuid("");
+		}
+		else {
+			accountEntryImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			accountEntryImpl.setExternalReferenceCode("");
+		}
+		else {
+			accountEntryImpl.setExternalReferenceCode(externalReferenceCode);
+		}
+
 		accountEntryImpl.setAccountEntryId(accountEntryId);
 		accountEntryImpl.setCompanyId(companyId);
 		accountEntryImpl.setUserId(userId);
@@ -140,14 +172,18 @@ public class AccountEntryCacheModel
 			accountEntryImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
-		accountEntryImpl.setParentAccountEntryId(parentAccountEntryId);
+		accountEntryImpl.setDefaultBillingAddressId(defaultBillingAddressId);
 
-		if (name == null) {
-			accountEntryImpl.setName("");
+		if (defaultCPaymentMethodKey == null) {
+			accountEntryImpl.setDefaultCPaymentMethodKey("");
 		}
 		else {
-			accountEntryImpl.setName(name);
+			accountEntryImpl.setDefaultCPaymentMethodKey(
+				defaultCPaymentMethodKey);
 		}
+
+		accountEntryImpl.setDefaultShippingAddressId(defaultShippingAddressId);
+		accountEntryImpl.setParentAccountEntryId(parentAccountEntryId);
 
 		if (description == null) {
 			accountEntryImpl.setDescription("");
@@ -163,8 +199,61 @@ public class AccountEntryCacheModel
 			accountEntryImpl.setDomains(domains);
 		}
 
+		if (emailAddress == null) {
+			accountEntryImpl.setEmailAddress("");
+		}
+		else {
+			accountEntryImpl.setEmailAddress(emailAddress);
+		}
+
 		accountEntryImpl.setLogoId(logoId);
+
+		if (name == null) {
+			accountEntryImpl.setName("");
+		}
+		else {
+			accountEntryImpl.setName(name);
+		}
+
+		accountEntryImpl.setRestrictMembership(restrictMembership);
+
+		if (taxExemptionCode == null) {
+			accountEntryImpl.setTaxExemptionCode("");
+		}
+		else {
+			accountEntryImpl.setTaxExemptionCode(taxExemptionCode);
+		}
+
+		if (taxIdNumber == null) {
+			accountEntryImpl.setTaxIdNumber("");
+		}
+		else {
+			accountEntryImpl.setTaxIdNumber(taxIdNumber);
+		}
+
+		if (type == null) {
+			accountEntryImpl.setType("");
+		}
+		else {
+			accountEntryImpl.setType(type);
+		}
+
 		accountEntryImpl.setStatus(status);
+		accountEntryImpl.setStatusByUserId(statusByUserId);
+
+		if (statusByUserName == null) {
+			accountEntryImpl.setStatusByUserName("");
+		}
+		else {
+			accountEntryImpl.setStatusByUserName(statusByUserName);
+		}
+
+		if (statusDate == Long.MIN_VALUE) {
+			accountEntryImpl.setStatusDate(null);
+		}
+		else {
+			accountEntryImpl.setStatusDate(new Date(statusDate));
+		}
 
 		accountEntryImpl.resetOriginalValues();
 
@@ -174,6 +263,8 @@ public class AccountEntryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		accountEntryId = objectInput.readLong();
 
@@ -184,19 +275,48 @@ public class AccountEntryCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		defaultBillingAddressId = objectInput.readLong();
+		defaultCPaymentMethodKey = objectInput.readUTF();
+
+		defaultShippingAddressId = objectInput.readLong();
+
 		parentAccountEntryId = objectInput.readLong();
-		name = objectInput.readUTF();
 		description = objectInput.readUTF();
 		domains = objectInput.readUTF();
+		emailAddress = objectInput.readUTF();
 
 		logoId = objectInput.readLong();
+		name = objectInput.readUTF();
+
+		restrictMembership = objectInput.readBoolean();
+		taxExemptionCode = objectInput.readUTF();
+		taxIdNumber = objectInput.readUTF();
+		type = objectInput.readUTF();
 
 		status = objectInput.readInt();
+
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
 
 		objectOutput.writeLong(accountEntryId);
 
@@ -214,14 +334,18 @@ public class AccountEntryCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
-		objectOutput.writeLong(parentAccountEntryId);
+		objectOutput.writeLong(defaultBillingAddressId);
 
-		if (name == null) {
+		if (defaultCPaymentMethodKey == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(name);
+			objectOutput.writeUTF(defaultCPaymentMethodKey);
 		}
+
+		objectOutput.writeLong(defaultShippingAddressId);
+
+		objectOutput.writeLong(parentAccountEntryId);
 
 		if (description == null) {
 			objectOutput.writeUTF("");
@@ -237,23 +361,84 @@ public class AccountEntryCacheModel
 			objectOutput.writeUTF(domains);
 		}
 
+		if (emailAddress == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(emailAddress);
+		}
+
 		objectOutput.writeLong(logoId);
 
+		if (name == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		objectOutput.writeBoolean(restrictMembership);
+
+		if (taxExemptionCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(taxExemptionCode);
+		}
+
+		if (taxIdNumber == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(taxIdNumber);
+		}
+
+		if (type == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
 		objectOutput.writeInt(status);
+
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
 	}
 
 	public long mvccVersion;
+	public String uuid;
+	public String externalReferenceCode;
 	public long accountEntryId;
 	public long companyId;
 	public long userId;
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long defaultBillingAddressId;
+	public String defaultCPaymentMethodKey;
+	public long defaultShippingAddressId;
 	public long parentAccountEntryId;
-	public String name;
 	public String description;
 	public String domains;
+	public String emailAddress;
 	public long logoId;
+	public String name;
+	public boolean restrictMembership;
+	public String taxExemptionCode;
+	public String taxIdNumber;
+	public String type;
 	public int status;
+	public long statusByUserId;
+	public String statusByUserName;
+	public long statusDate;
 
 }

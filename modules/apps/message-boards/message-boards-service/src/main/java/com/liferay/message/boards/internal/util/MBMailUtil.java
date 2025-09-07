@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.internal.util;
 
+import com.liferay.mail.kernel.service.MailService;
 import com.liferay.message.boards.constants.MBMessageConstants;
 import com.liferay.message.boards.model.MBMessage;
-import com.liferay.petra.mail.JavaMailUtil;
+import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -32,15 +26,13 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.mail.BodyPart;
+import jakarta.mail.Message;
+import jakarta.mail.Part;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+
 import java.io.InputStream;
-
-import java.util.Map;
-
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.Part;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 
 /**
  * @author Sergio González
@@ -54,8 +46,6 @@ public class MBMailUtil {
 		throws Exception {
 
 		Object partContent = _getPartContent(part);
-
-		String contentType = StringUtil.toLowerCase(part.getContentType());
 
 		if ((part.getDisposition() != null) &&
 			StringUtil.equalsIgnoreCase(
@@ -73,7 +63,7 @@ public class MBMailUtil {
 				bytes = s.getBytes();
 			}
 			else if (partContent instanceof InputStream) {
-				bytes = JavaMailUtil.getBytes(part);
+				bytes = StreamUtil.toByteArray(part.getInputStream());
 			}
 
 			mbMailMessage.addBytes(part.getFileName(), bytes);
@@ -89,14 +79,15 @@ public class MBMailUtil {
 				}
 			}
 			else if (partContent instanceof String) {
-				Map<String, Object> options =
-					HashMapBuilder.<String, Object>put(
-						"emailPartToMBMessageBody", Boolean.TRUE
-					).build();
+				String contentType = StringUtil.toLowerCase(
+					part.getContentType());
 
 				String messageBody = SanitizerUtil.sanitize(
 					0, 0, 0, MBMessage.class.getName(), 0, contentType,
-					Sanitizer.MODE_ALL, (String)partContent, options);
+					Sanitizer.MODE_ALL, (String)partContent,
+					HashMapBuilder.<String, Object>put(
+						"emailPartToMBMessageBody", Boolean.TRUE
+					).build());
 
 				if (contentType.startsWith(ContentTypes.TEXT_HTML)) {
 					mbMailMessage.setHtmlBody(messageBody);
@@ -118,14 +109,6 @@ public class MBMailUtil {
 		String[] parts = _getMessageIdStringParts(messageIdString);
 
 		return GetterUtil.getLong(parts[1]);
-	}
-
-	public static int getMessageIdStringOffset() {
-		if (PropsValues.POP_SERVER_SUBDOMAIN.length() == 0) {
-			return 1;
-		}
-
-		return 0;
 	}
 
 	public static long getParentMessageId(Message message) throws Exception {
@@ -191,25 +174,17 @@ public class MBMailUtil {
 	}
 
 	public static String getReplyToAddress(
-		long categoryId, long messageId, String mx,
+		MailService mailService, long categoryId, long messageId, String mx,
 		String defaultMailingListAddress) {
 
-		if (PropsValues.POP_SERVER_SUBDOMAIN.length() <= 0) {
+		if (!hasSubdomain(mailService)) {
 			return defaultMailingListAddress;
 		}
 
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(MESSAGE_POP_PORTLET_PREFIX);
-		sb.append(categoryId);
-		sb.append(StringPool.PERIOD);
-		sb.append(messageId);
-		sb.append(StringPool.AT);
-		sb.append(PropsValues.POP_SERVER_SUBDOMAIN);
-		sb.append(StringPool.PERIOD);
-		sb.append(mx);
-
-		return sb.toString();
+		return StringBundler.concat(
+			MESSAGE_POP_PORTLET_PREFIX, categoryId, StringPool.PERIOD,
+			messageId, StringPool.AT, PropsValues.POP_SERVER_SUBDOMAIN,
+			StringPool.PERIOD, mx);
 	}
 
 	public static String getSubjectForEmail(MBMessage message)
@@ -243,22 +218,27 @@ public class MBMailUtil {
 		return subject;
 	}
 
-	public static boolean hasMailIdHeader(Message message) throws Exception {
+	public static boolean hasMailIdHeader(
+			MailService mailService, Message message)
+		throws Exception {
+
 		String[] messageIds = message.getHeader("Message-ID");
 
-		if (messageIds == null) {
+		if ((messageIds == null) || !hasSubdomain(mailService)) {
 			return false;
 		}
 
 		for (String messageId : messageIds) {
-			if (Validator.isNotNull(PropsValues.POP_SERVER_SUBDOMAIN) &&
-				messageId.contains(PropsValues.POP_SERVER_SUBDOMAIN)) {
-
+			if (messageId.contains(PropsValues.POP_SERVER_SUBDOMAIN)) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	public static boolean hasSubdomain(MailService mailService) {
+		return Validator.isNotNull(mailService.getPOPServerSubdomain());
 	}
 
 	private static String[] _getMessageIdStringParts(String messageIdString) {
@@ -296,17 +276,10 @@ public class MBMailUtil {
 
 		// See LPS-56173
 
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader classLoader = currentThread.getContextClassLoader();
-
-		try {
-			currentThread.setContextClassLoader(Part.class.getClassLoader());
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				Part.class.getClassLoader())) {
 
 			return part.getContent();
-		}
-		finally {
-			currentThread.setContextClassLoader(classLoader);
 		}
 	}
 

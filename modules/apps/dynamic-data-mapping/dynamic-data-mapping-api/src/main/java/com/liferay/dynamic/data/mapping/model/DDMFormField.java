@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
@@ -17,7 +8,12 @@ package com.liferay.dynamic.data.mapping.model;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -45,8 +41,13 @@ public class DDMFormField implements Serializable {
 	public DDMFormField(DDMFormField ddmFormField) {
 		_properties = new LinkedHashMap<>(ddmFormField._properties);
 
-		setDDMFormFieldOptions(
-			new DDMFormFieldOptions(ddmFormField.getDDMFormFieldOptions()));
+		DDMFormFieldOptions ddmFormFieldOptions =
+			ddmFormField.getDDMFormFieldOptions();
+
+		if (ddmFormFieldOptions != null) {
+			setDDMFormFieldOptions(
+				new DDMFormFieldOptions(ddmFormFieldOptions));
+		}
 
 		_ddmFormFieldRules = new ArrayList<>(
 			ddmFormField._ddmFormFieldRules.size());
@@ -65,11 +66,35 @@ public class DDMFormField implements Serializable {
 				new DDMFormFieldValidation(ddmFormFieldValidation));
 		}
 
-		setLabel(new LocalizedValue(ddmFormField.getLabel()));
-		setPredefinedValue(
-			new LocalizedValue(ddmFormField.getPredefinedValue()));
-		setStyle(new LocalizedValue(ddmFormField.getStyle()));
-		setTip(new LocalizedValue(ddmFormField.getTip()));
+		String fieldReference = ddmFormField.getFieldReference();
+
+		if (fieldReference != null) {
+			setFieldReference(fieldReference);
+		}
+
+		LocalizedValue label = ddmFormField.getLabel();
+
+		if (label != null) {
+			setLabel(new LocalizedValue(label));
+		}
+
+		LocalizedValue predefinedValue = ddmFormField.getPredefinedValue();
+
+		if (predefinedValue != null) {
+			setPredefinedValue(new LocalizedValue(predefinedValue));
+		}
+
+		LocalizedValue style = ddmFormField.getStyle();
+
+		if (style != null) {
+			setStyle(new LocalizedValue(style));
+		}
+
+		LocalizedValue tip = ddmFormField.getTip();
+
+		if (tip != null) {
+			setTip(new LocalizedValue(tip));
+		}
 
 		_nestedDDMFormFields = new ArrayList<>(
 			ddmFormField._nestedDDMFormFields.size());
@@ -89,11 +114,16 @@ public class DDMFormField implements Serializable {
 		setName(name);
 		setType(type);
 
-		setDDMFormFieldOptions(new DDMFormFieldOptions());
-		setLabel(new LocalizedValue());
-		setPredefinedValue(new LocalizedValue());
-		setStyle(new LocalizedValue());
-		setTip(new LocalizedValue());
+		Locale locale = LocaleUtil.getDefault();
+
+		setDDMFormFieldOptions(new DDMFormFieldOptions(locale));
+
+		setFieldReference(name);
+
+		setLabel(new LocalizedValue(locale));
+		setPredefinedValue(new LocalizedValue(locale));
+		setStyle(new LocalizedValue(locale));
+		setTip(new LocalizedValue(locale));
 	}
 
 	/**
@@ -111,16 +141,16 @@ public class DDMFormField implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMFormField)) {
+		if (!(object instanceof DDMFormField)) {
 			return false;
 		}
 
-		DDMFormField ddmFormField = (DDMFormField)obj;
+		DDMFormField ddmFormField = (DDMFormField)object;
 
 		if (Objects.equals(_properties, ddmFormField._properties) &&
 			Objects.equals(
@@ -130,6 +160,47 @@ public class DDMFormField implements Serializable {
 		}
 
 		return false;
+	}
+
+	public String getDataSourceType() {
+		Object propertyDataSourceType = _properties.get("dataSourceType");
+
+		if (propertyDataSourceType == null) {
+			return _DATA_SOURCE_TYPE_MANUAL;
+		}
+
+		String dataSourceType = StringPool.BLANK;
+
+		if (propertyDataSourceType instanceof JSONArray) {
+			JSONArray jsonArray = (JSONArray)propertyDataSourceType;
+
+			return GetterUtil.getString(
+				jsonArray.get(0), _DATA_SOURCE_TYPE_MANUAL);
+		}
+		else if (propertyDataSourceType instanceof String) {
+			dataSourceType = (String)propertyDataSourceType;
+
+			if (dataSourceType.startsWith(StringPool.OPEN_BRACKET) &&
+				dataSourceType.endsWith(StringPool.CLOSE_BRACKET)) {
+
+				try {
+					JSONArray jsonArray = JSONFactoryUtil.createJSONArray(
+						dataSourceType);
+
+					return GetterUtil.getString(
+						jsonArray.get(0), _DATA_SOURCE_TYPE_MANUAL);
+				}
+				catch (JSONException jsonException) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(jsonException);
+					}
+
+					return dataSourceType;
+				}
+			}
+		}
+
+		return dataSourceType;
 	}
 
 	public String getDataType() {
@@ -148,7 +219,7 @@ public class DDMFormField implements Serializable {
 
 		if ((ddmFormFieldOptions != null) &&
 			Validator.isNotNull(dataSourceType) &&
-			!dataSourceType.equals("manual")) {
+			!dataSourceType.equals(_DATA_SOURCE_TYPE_MANUAL)) {
 
 			Locale defaultLocale = ddmFormFieldOptions.getDefaultLocale();
 
@@ -170,8 +241,16 @@ public class DDMFormField implements Serializable {
 		return null;
 	}
 
+	public DDMFormLayout getDDMFormLayout() {
+		return _ddmFormLayout;
+	}
+
 	public String getFieldNamespace() {
 		return MapUtil.getString(_properties, "fieldNamespace");
+	}
+
+	public String getFieldReference() {
+		return MapUtil.getString(_properties, "fieldReference");
 	}
 
 	public String getIndexType() {
@@ -205,6 +284,21 @@ public class DDMFormField implements Serializable {
 		return nestedDDMFormFieldsMap;
 	}
 
+	public Map<String, DDMFormField> getNestedDDMFormFieldsReferencesMap() {
+		Map<String, DDMFormField> nestedDDMFormFieldsReferencesMap =
+			new LinkedHashMap<>();
+
+		for (DDMFormField nestedDDMFormField : _nestedDDMFormFields) {
+			nestedDDMFormFieldsReferencesMap.put(
+				nestedDDMFormField.getFieldReference(), nestedDDMFormField);
+
+			nestedDDMFormFieldsReferencesMap.putAll(
+				nestedDDMFormField.getNestedDDMFormFieldsReferencesMap());
+		}
+
+		return nestedDDMFormFieldsReferencesMap;
+	}
+
 	public Map<String, DDMFormField> getNontransientNestedDDMFormFieldsMap() {
 		Map<String, DDMFormField> nestedDDMFormFieldsMap =
 			new LinkedHashMap<>();
@@ -222,6 +316,26 @@ public class DDMFormField implements Serializable {
 		return nestedDDMFormFieldsMap;
 	}
 
+	public Map<String, DDMFormField>
+		getNontransientNestedDDMFormFieldsReferencesMap() {
+
+		Map<String, DDMFormField> nestedDDMFormFieldsReferencesMap =
+			new LinkedHashMap<>();
+
+		for (DDMFormField nestedDDMFormField : _nestedDDMFormFields) {
+			if (!nestedDDMFormField.isTransient()) {
+				nestedDDMFormFieldsReferencesMap.put(
+					nestedDDMFormField.getFieldReference(), nestedDDMFormField);
+			}
+
+			nestedDDMFormFieldsReferencesMap.putAll(
+				nestedDDMFormField.
+					getNontransientNestedDDMFormFieldsReferencesMap());
+		}
+
+		return nestedDDMFormFieldsReferencesMap;
+	}
+
 	public LocalizedValue getPredefinedValue() {
 		return (LocalizedValue)_properties.get("predefinedValue");
 	}
@@ -232,6 +346,10 @@ public class DDMFormField implements Serializable {
 
 	public Object getProperty(String name) {
 		return _properties.get(name);
+	}
+
+	public LocalizedValue getRequiredErrorMessage() {
+		return (LocalizedValue)_properties.get("requiredErrorMessage");
 	}
 
 	public LocalizedValue getStyle() {
@@ -255,6 +373,10 @@ public class DDMFormField implements Serializable {
 		int hash = HashUtil.hash(0, _properties);
 
 		return HashUtil.hash(hash, _nestedDDMFormFields);
+	}
+
+	public boolean hasProperty(String propertyKey) {
+		return _properties.containsKey(propertyKey);
 	}
 
 	public boolean isLocalizable() {
@@ -281,12 +403,25 @@ public class DDMFormField implements Serializable {
 		return MapUtil.getBoolean(_properties, "showLabel", true);
 	}
 
+	/**
+	 * This method returns <code>true</code> if the DDMFormField is not supposed
+	 * to hold value/data, i.e. its "dataType" property is blank or
+	 * <code>null</code>. Transient fields can be considered structural fields
+	 * like Liferay's native separator or fieldset fields.
+	 *
+	 * @return boolean
+	 * @review
+	 */
 	public boolean isTransient() {
-		if (Validator.isNull(getDataType())) {
-			return true;
-		}
+		return Validator.isNull(getDataType());
+	}
 
-		return false;
+	public boolean isVisualProperty() {
+		return MapUtil.getBoolean(_properties, "visualProperty");
+	}
+
+	public void removeProperty(String propertyKey) {
+		_properties.remove(propertyKey);
 	}
 
 	public void setDataType(String dataType) {
@@ -313,8 +448,16 @@ public class DDMFormField implements Serializable {
 		_properties.put("validation", ddmFormFieldValidation);
 	}
 
+	public void setDDMFormLayout(DDMFormLayout ddmFormLayout) {
+		_ddmFormLayout = ddmFormLayout;
+	}
+
 	public void setFieldNamespace(String fieldNamespace) {
 		_properties.put("fieldNamespace", fieldNamespace);
+	}
+
+	public void setFieldReference(String fieldReference) {
+		_properties.put("fieldReference", fieldReference);
 	}
 
 	public void setIndexType(String indexType) {
@@ -361,6 +504,10 @@ public class DDMFormField implements Serializable {
 		_properties.put("required", required);
 	}
 
+	public void setRequiredErrorMessage(LocalizedValue requiredErrorMessage) {
+		_properties.put("requiredErrorMessage", requiredErrorMessage);
+	}
+
 	public void setShowLabel(boolean showLabel) {
 		_properties.put("showLabel", showLabel);
 	}
@@ -381,31 +528,17 @@ public class DDMFormField implements Serializable {
 		_properties.put("visibilityExpression", visibilityExpression);
 	}
 
-	protected String getDataSourceType() {
-		Object dataSourceType = _properties.get("dataSourceType");
-
-		if (dataSourceType instanceof JSONArray) {
-			JSONArray jsonArray = (JSONArray)dataSourceType;
-
-			return jsonArray.getString(0);
-		}
-		else if (dataSourceType instanceof String) {
-			try {
-				JSONArray jsonArray = JSONFactoryUtil.createJSONArray(
-					(String)dataSourceType);
-
-				return jsonArray.getString(0);
-			}
-			catch (Exception e) {
-				return (String)dataSourceType;
-			}
-		}
-
-		return StringPool.BLANK;
+	public void setVisualProperty(boolean visualProperty) {
+		_properties.put("visualProperty", visualProperty);
 	}
+
+	private static final String _DATA_SOURCE_TYPE_MANUAL = "manual";
+
+	private static final Log _log = LogFactoryUtil.getLog(DDMFormField.class);
 
 	private DDMForm _ddmForm;
 	private final List<DDMFormFieldRule> _ddmFormFieldRules;
+	private DDMFormLayout _ddmFormLayout;
 	private List<DDMFormField> _nestedDDMFormFields;
 	private final Map<String, Object> _properties;
 

@@ -1,27 +1,34 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/deletions/init.jsp" %>
 
 <c:if test="<%= cmd.equals(Constants.EXPORT) || cmd.equals(Constants.IMPORT) || cmd.equals(Constants.PUBLISH) %>">
-	<aui:fieldset cssClass="options-group" markupView="lexicon">
-		<div class="sheet-section">
-			<h3 class="sheet-subtitle"><liferay-ui:message key="deletions" /></h3>
+	<div aria-labelledby="<portlet:namespace />deletions" class="options-group" role="group">
+		<clay:sheet-section>
+			<span class="sheet-subtitle" id="<portlet:namespace />deletions">
+				<liferay-ui:message key="deletions" />
+			</span>
 
-			<c:if test="<%= !cmd.equals(Constants.EXPORT) %>">
+			<%
+			StagingGroupHelper stagingGroupHelper = StagingGroupHelperUtil.getStagingGroupHelper();
+			%>
+
+			<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-44771") && !cmd.equals(Constants.EXPORT) && !stagingGroupHelper.isCompanyGroup(group) %>'>
+				<c:if test="<%= cmd.equals(Constants.IMPORT) %>">
+					<clay:alert
+						cssClass="hide"
+						displayType="warning"
+						id='<%= liferayPortletResponse.getNamespace() + "deletePortletDataAlert" %>'
+						message="this-option-does-not-apply-to-object-entries"
+						title="delete-application-data-before-importing"
+					/>
+				</c:if>
+
 				<liferay-staging:checkbox
 					checked="<%= MapUtil.getBoolean(parameterMap, PortletDataHandlerKeys.DELETE_PORTLET_DATA, false) %>"
 					disabled="<%= disableInputs %>"
@@ -32,13 +39,17 @@
 				/>
 			</c:if>
 
+			<%
+			ExportImportServiceConfiguration exportImportServiceConfiguration = ConfigurationProviderUtil.getSystemConfiguration(ExportImportServiceConfiguration.class);
+			%>
+
 			<liferay-staging:checkbox
-				checked="<%= MapUtil.getBoolean(parameterMap, PortletDataHandlerKeys.DELETIONS, false) %>"
+				checked="<%= MapUtil.getBoolean(parameterMap, PortletDataHandlerKeys.DELETIONS, exportImportServiceConfiguration.replicateIndividualDeletionsByDefault()) %>"
 				description="<%= individualDeletionsDescription %>"
 				disabled="<%= disableInputs %>"
 				label="<%= individualDeletionsTitle %>"
 				name="<%= PortletDataHandlerKeys.DELETIONS %>"
 			/>
-		</div>
-	</aui:fieldset>
+		</clay:sheet-section>
+	</div>
 </c:if>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -48,20 +39,24 @@ public class SamlSpIdpConnectionWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
-		attributes.put("samlIdpEntityId", getSamlIdpEntityId());
 		attributes.put(
 			"assertionSignatureRequired", isAssertionSignatureRequired());
 		attributes.put("clockSkew", getClockSkew());
 		attributes.put("enabled", isEnabled());
 		attributes.put("forceAuthn", isForceAuthn());
 		attributes.put("ldapImportEnabled", isLdapImportEnabled());
+		attributes.put("metadataUpdatedDate", getMetadataUpdatedDate());
 		attributes.put("metadataUrl", getMetadataUrl());
 		attributes.put("metadataXml", getMetadataXml());
-		attributes.put("metadataUpdatedDate", getMetadataUpdatedDate());
 		attributes.put("name", getName());
 		attributes.put("nameIdFormat", getNameIdFormat());
+		attributes.put("samlIdpEntityId", getSamlIdpEntityId());
 		attributes.put("signAuthnRequest", isSignAuthnRequest());
+		attributes.put(
+			"unknownUsersAreStrangers", isUnknownUsersAreStrangers());
 		attributes.put("userAttributeMappings", getUserAttributeMappings());
+		attributes.put(
+			"userIdentifierExpression", getUserIdentifierExpression());
 
 		return attributes;
 	}
@@ -105,12 +100,6 @@ public class SamlSpIdpConnectionWrapper
 			setModifiedDate(modifiedDate);
 		}
 
-		String samlIdpEntityId = (String)attributes.get("samlIdpEntityId");
-
-		if (samlIdpEntityId != null) {
-			setSamlIdpEntityId(samlIdpEntityId);
-		}
-
 		Boolean assertionSignatureRequired = (Boolean)attributes.get(
 			"assertionSignatureRequired");
 
@@ -143,6 +132,12 @@ public class SamlSpIdpConnectionWrapper
 			setLdapImportEnabled(ldapImportEnabled);
 		}
 
+		Date metadataUpdatedDate = (Date)attributes.get("metadataUpdatedDate");
+
+		if (metadataUpdatedDate != null) {
+			setMetadataUpdatedDate(metadataUpdatedDate);
+		}
+
 		String metadataUrl = (String)attributes.get("metadataUrl");
 
 		if (metadataUrl != null) {
@@ -153,12 +148,6 @@ public class SamlSpIdpConnectionWrapper
 
 		if (metadataXml != null) {
 			setMetadataXml(metadataXml);
-		}
-
-		Date metadataUpdatedDate = (Date)attributes.get("metadataUpdatedDate");
-
-		if (metadataUpdatedDate != null) {
-			setMetadataUpdatedDate(metadataUpdatedDate);
 		}
 
 		String name = (String)attributes.get("name");
@@ -173,10 +162,23 @@ public class SamlSpIdpConnectionWrapper
 			setNameIdFormat(nameIdFormat);
 		}
 
+		String samlIdpEntityId = (String)attributes.get("samlIdpEntityId");
+
+		if (samlIdpEntityId != null) {
+			setSamlIdpEntityId(samlIdpEntityId);
+		}
+
 		Boolean signAuthnRequest = (Boolean)attributes.get("signAuthnRequest");
 
 		if (signAuthnRequest != null) {
 			setSignAuthnRequest(signAuthnRequest);
+		}
+
+		Boolean unknownUsersAreStrangers = (Boolean)attributes.get(
+			"unknownUsersAreStrangers");
+
+		if (unknownUsersAreStrangers != null) {
+			setUnknownUsersAreStrangers(unknownUsersAreStrangers);
 		}
 
 		String userAttributeMappings = (String)attributes.get(
@@ -185,6 +187,18 @@ public class SamlSpIdpConnectionWrapper
 		if (userAttributeMappings != null) {
 			setUserAttributeMappings(userAttributeMappings);
 		}
+
+		String userIdentifierExpression = (String)attributes.get(
+			"userIdentifierExpression");
+
+		if (userIdentifierExpression != null) {
+			setUserIdentifierExpression(userIdentifierExpression);
+		}
+	}
+
+	@Override
+	public SamlSpIdpConnection cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -317,6 +331,13 @@ public class SamlSpIdpConnectionWrapper
 		return model.getNameIdFormat();
 	}
 
+	@Override
+	public java.util.Properties getNormalizedUserAttributeMappings()
+		throws java.io.IOException {
+
+		return model.getNormalizedUserAttributeMappings();
+	}
+
 	/**
 	 * Returns the primary key of this saml sp idp connection.
 	 *
@@ -358,6 +379,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Returns the unknown users are strangers of this saml sp idp connection.
+	 *
+	 * @return the unknown users are strangers of this saml sp idp connection
+	 */
+	@Override
+	public boolean getUnknownUsersAreStrangers() {
+		return model.getUnknownUsersAreStrangers();
+	}
+
+	/**
 	 * Returns the user attribute mappings of this saml sp idp connection.
 	 *
 	 * @return the user attribute mappings of this saml sp idp connection
@@ -375,6 +406,16 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public long getUserId() {
 		return model.getUserId();
+	}
+
+	/**
+	 * Returns the user identifier expression of this saml sp idp connection.
+	 *
+	 * @return the user identifier expression of this saml sp idp connection
+	 */
+	@Override
+	public String getUserIdentifierExpression() {
+		return model.getUserIdentifierExpression();
 	}
 
 	/**
@@ -448,10 +489,15 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
-	 * NOTE FOR DEVELOPERS:
+	 * Returns <code>true</code> if this saml sp idp connection is unknown users are strangers.
 	 *
-	 * Never modify or reference this class directly. All methods that expect a saml sp idp connection model instance should use the <code>SamlSpIdpConnection</code> interface instead.
+	 * @return <code>true</code> if this saml sp idp connection is unknown users are strangers; <code>false</code> otherwise
 	 */
+	@Override
+	public boolean isUnknownUsersAreStrangers() {
+		return model.isUnknownUsersAreStrangers();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -630,6 +676,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Sets whether this saml sp idp connection is unknown users are strangers.
+	 *
+	 * @param unknownUsersAreStrangers the unknown users are strangers of this saml sp idp connection
+	 */
+	@Override
+	public void setUnknownUsersAreStrangers(boolean unknownUsersAreStrangers) {
+		model.setUnknownUsersAreStrangers(unknownUsersAreStrangers);
+	}
+
+	/**
 	 * Sets the user attribute mappings of this saml sp idp connection.
 	 *
 	 * @param userAttributeMappings the user attribute mappings of this saml sp idp connection
@@ -650,6 +706,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Sets the user identifier expression of this saml sp idp connection.
+	 *
+	 * @param userIdentifierExpression the user identifier expression of this saml sp idp connection
+	 */
+	@Override
+	public void setUserIdentifierExpression(String userIdentifierExpression) {
+		model.setUserIdentifierExpression(userIdentifierExpression);
+	}
+
+	/**
 	 * Sets the user name of this saml sp idp connection.
 	 *
 	 * @param userName the user name of this saml sp idp connection
@@ -667,6 +733,11 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model.impl;
@@ -37,17 +28,17 @@ public class SegmentsExperimentCacheModel
 	implements CacheModel<SegmentsExperiment>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SegmentsExperimentCacheModel)) {
+		if (!(object instanceof SegmentsExperimentCacheModel)) {
 			return false;
 		}
 
 		SegmentsExperimentCacheModel segmentsExperimentCacheModel =
-			(SegmentsExperimentCacheModel)obj;
+			(SegmentsExperimentCacheModel)object;
 
 		if ((segmentsExperimentId ==
 				segmentsExperimentCacheModel.segmentsExperimentId) &&
@@ -82,6 +73,8 @@ public class SegmentsExperimentCacheModel
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", segmentsExperimentId=");
@@ -104,10 +97,8 @@ public class SegmentsExperimentCacheModel
 		sb.append(segmentsExperienceId);
 		sb.append(", segmentsExperimentKey=");
 		sb.append(segmentsExperimentKey);
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-		sb.append(", classPK=");
-		sb.append(classPK);
+		sb.append(", plid=");
+		sb.append(plid);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", description=");
@@ -127,6 +118,7 @@ public class SegmentsExperimentCacheModel
 			new SegmentsExperimentImpl();
 
 		segmentsExperimentImpl.setMvccVersion(mvccVersion);
+		segmentsExperimentImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			segmentsExperimentImpl.setUuid("");
@@ -172,8 +164,7 @@ public class SegmentsExperimentCacheModel
 				segmentsExperimentKey);
 		}
 
-		segmentsExperimentImpl.setClassNameId(classNameId);
-		segmentsExperimentImpl.setClassPK(classPK);
+		segmentsExperimentImpl.setPlid(plid);
 
 		if (name == null) {
 			segmentsExperimentImpl.setName("");
@@ -204,8 +195,12 @@ public class SegmentsExperimentCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		segmentsExperimentId = objectInput.readLong();
@@ -224,12 +219,10 @@ public class SegmentsExperimentCacheModel
 		segmentsExperienceId = objectInput.readLong();
 		segmentsExperimentKey = objectInput.readUTF();
 
-		classNameId = objectInput.readLong();
-
-		classPK = objectInput.readLong();
+		plid = objectInput.readLong();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
-		typeSettings = objectInput.readUTF();
+		typeSettings = (String)objectInput.readObject();
 
 		status = objectInput.readInt();
 	}
@@ -237,6 +230,8 @@ public class SegmentsExperimentCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -274,9 +269,7 @@ public class SegmentsExperimentCacheModel
 			objectOutput.writeUTF(segmentsExperimentKey);
 		}
 
-		objectOutput.writeLong(classNameId);
-
-		objectOutput.writeLong(classPK);
+		objectOutput.writeLong(plid);
 
 		if (name == null) {
 			objectOutput.writeUTF("");
@@ -293,16 +286,17 @@ public class SegmentsExperimentCacheModel
 		}
 
 		if (typeSettings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(typeSettings);
+			objectOutput.writeObject(typeSettings);
 		}
 
 		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long segmentsExperimentId;
 	public long groupId;
@@ -314,8 +308,7 @@ public class SegmentsExperimentCacheModel
 	public long segmentsEntryId;
 	public long segmentsExperienceId;
 	public String segmentsExperimentKey;
-	public long classNameId;
-	public long classPK;
+	public long plid;
 	public String name;
 	public String description;
 	public String typeSettings;

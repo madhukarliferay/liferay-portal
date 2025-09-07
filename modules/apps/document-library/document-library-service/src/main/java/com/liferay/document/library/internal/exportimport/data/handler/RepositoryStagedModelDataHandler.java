@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.exportimport.data.handler;
@@ -166,12 +157,11 @@ public class RepositoryStagedModelDataHandler
 				if (existingRepository == null) {
 					serviceContext.setUuid(repository.getUuid());
 
-					long repositoryClassNameId = _getRepositoryClassNameId(
-						repositoryElement, repository.getClassNameId());
-
 					importedRepository = _repositoryLocalService.addRepository(
-						userId, portletDataContext.getScopeGroupId(),
-						repositoryClassNameId,
+						repository.getExternalReferenceCode(), userId,
+						portletDataContext.getScopeGroupId(),
+						_getRepositoryClassNameId(
+							repositoryElement, repository.getClassNameId()),
 						DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 						repository.getName(), repository.getDescription(),
 						repository.getPortletId(),
@@ -187,12 +177,11 @@ public class RepositoryStagedModelDataHandler
 				}
 			}
 			else if (existingRepository == null) {
-				long repositoryClassNameId = _getRepositoryClassNameId(
-					repositoryElement, repository.getClassNameId());
-
 				importedRepository = _repositoryLocalService.addRepository(
-					userId, portletDataContext.getScopeGroupId(),
-					repositoryClassNameId,
+					repository.getExternalReferenceCode(), userId,
+					portletDataContext.getScopeGroupId(),
+					_getRepositoryClassNameId(
+						repositoryElement, repository.getClassNameId()),
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 					repository.getName(), repository.getDescription(),
 					repository.getPortletId(),
@@ -202,22 +191,23 @@ public class RepositoryStagedModelDataHandler
 			else {
 				importedRepository = existingRepository;
 			}
-		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					StringBundler.concat(
-						"Unable to connect to repository {name=",
-						repository.getName(), ", typeSettings=",
-						repository.getTypeSettingsProperties(), "}"),
-					e);
-			}
-		}
 
-		portletDataContext.importClassedModel(repository, importedRepository);
+			portletDataContext.importClassedModel(
+				repository, importedRepository);
 
-		StagedModelDataHandlerUtil.importReferenceStagedModels(
-			portletDataContext, repository, RepositoryEntry.class);
+			StagedModelDataHandlerUtil.importReferenceStagedModels(
+				portletDataContext, repository, RepositoryEntry.class);
+		}
+		catch (Exception exception) {
+			_log.error(
+				StringBundler.concat(
+					"Unable to connect to repository {name=",
+					repository.getName(), ", typeSettings=",
+					repository.getTypeSettingsProperties(), "}"),
+				exception);
+
+			throw exception;
+		}
 	}
 
 	@Override

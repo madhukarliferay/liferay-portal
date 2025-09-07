@@ -1,35 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.util;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletProvider;
-import com.liferay.taglib.ui.AssetCategoriesSummaryTag;
-import com.liferay.taglib.ui.AssetTagsSummaryTag;
-import com.liferay.taglib.ui.BreadcrumbTag;
 import com.liferay.taglib.ui.IconTag;
-import com.liferay.taglib.ui.JournalArticleTag;
-import com.liferay.taglib.ui.RatingsTag;
 
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
+import jakarta.portlet.WindowState;
 
-import javax.servlet.ServletContext;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Daniel Reuther
@@ -74,44 +58,7 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 	}
 
 	@Override
-	public void assetCategoriesSummary(
-		String className, long classPK, String message, PortletURL portletURL) {
-	}
-
-	@Override
-	public void assetTagsSummary(
-		String className, long classPK, String message, String assetTagNames,
-		PortletURL portletURL) {
-	}
-
-	@Override
-	public void breadcrumb() {
-	}
-
-	@Override
-	public void breadcrumb(
-		long ddmTemplateGroupId, String ddmTemplateKey, boolean showGuestGroup,
-		boolean showParentGroups, boolean showLayout,
-		boolean showPortletBreadcrumb) {
-	}
-
-	@Override
 	public void doAsURL(long doAsUserId) {
-	}
-
-	@Override
-	public AssetCategoriesSummaryTag<?> getAssetCategoriesSummaryTag() {
-		return null;
-	}
-
-	@Override
-	public AssetTagsSummaryTag<?> getAssetTagsSummaryTag() {
-		return null;
-	}
-
-	@Override
-	public BreadcrumbTag getBreadcrumbTag() {
-		return null;
 	}
 
 	@Override
@@ -120,17 +67,7 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 	}
 
 	@Override
-	public JournalArticleTag getJournalArticleTag() {
-		return null;
-	}
-
-	@Override
 	public PageContext getPageContext() {
-		return null;
-	}
-
-	@Override
-	public RatingsTag getRatingsTag() {
 		return null;
 	}
 
@@ -161,11 +98,6 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 	}
 
 	@Override
-	public void journalArticle(
-		String articleId, long groupId, String ddmTemplateKey) {
-	}
-
-	@Override
 	public void language() {
 	}
 
@@ -178,10 +110,6 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 	public void language(
 		String formName, String formAction, String name, String[] languageIds,
 		String displayStyle) {
-	}
-
-	@Override
-	public void layoutIcon(Layout layout) {
 	}
 
 	@Override
@@ -211,12 +139,6 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 
 	@Override
 	public void portletIconPortlet(Portlet portlet) {
-	}
-
-	@Override
-	public void ratings(
-		String className, long classPK, int numberOfStars, String type,
-		String url) {
 	}
 
 	@Override
@@ -292,20 +214,6 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 	public void runtime(
 		String portletName, String instanceId, String queryString,
 		String defaultPreferences) {
-	}
-
-	@Override
-	public void sitesDirectory() {
-	}
-
-	@Override
-	public void sitesDirectory(String displayStyle, String sites) {
-	}
-
-	@Override
-	public void toggle(
-		String id, String showImage, String hideImage, String showMessage,
-		String hideMessage, boolean defaultShowContent) {
 	}
 
 	@Override

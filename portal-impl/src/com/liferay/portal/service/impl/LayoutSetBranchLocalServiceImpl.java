@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
 import com.liferay.exportimport.kernel.staging.StagingUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.LayoutSetBranchNameException;
 import com.liferay.portal.kernel.exception.NoSuchLayoutSetBranchException;
@@ -37,7 +30,17 @@ import com.liferay.portal.kernel.model.LayoutSetBranch;
 import com.liferay.portal.kernel.model.LayoutSetBranchConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ImageLocalService;
+import com.liferay.portal.kernel.service.LayoutBranchLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutRevisionLocalService;
+import com.liferay.portal.kernel.service.LayoutSetLocalService;
+import com.liferay.portal.kernel.service.RecentLayoutSetBranchLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.persistence.LayoutBranchPersistence;
+import com.liferay.portal.kernel.service.persistence.LayoutPersistence;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,6 +50,7 @@ import com.liferay.portal.service.base.LayoutSetBranchLocalServiceBaseImpl;
 
 import java.text.Format;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -68,7 +72,7 @@ public class LayoutSetBranchLocalServiceImpl
 
 		// Layout branch
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		validate(0, groupId, privateLayout, name, master);
 
@@ -91,7 +95,7 @@ public class LayoutSetBranchLocalServiceImpl
 			settings = copyLayoutSetBranch.getSettings();
 		}
 		else {
-			LayoutSet layoutSet = layoutSetLocalService.getLayoutSet(
+			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 				groupId, privateLayout);
 
 			logo = layoutSet.getLogo();
@@ -118,14 +122,15 @@ public class LayoutSetBranchLocalServiceImpl
 		layoutSetBranch.setLogoId(logoId);
 
 		if (logo) {
-			Image logoImage = imageLocalService.getImage(logoId);
+			Image logoImage = _imageLocalService.getImage(logoId);
 
 			long layoutSetBranchLogoId = counterLocalService.increment();
 
-			imageLocalService.updateImage(
-				layoutSetBranchLogoId, logoImage.getTextObj(),
-				logoImage.getType(), logoImage.getHeight(),
-				logoImage.getWidth(), logoImage.getSize());
+			_imageLocalService.updateImage(
+				layoutSetBranch.getCompanyId(), layoutSetBranchLogoId,
+				logoImage.getTextObj(), logoImage.getType(),
+				logoImage.getHeight(), logoImage.getWidth(),
+				logoImage.getSize());
 
 			layoutSetBranch.setLogoId(layoutSetBranchLogoId);
 		}
@@ -135,11 +140,11 @@ public class LayoutSetBranchLocalServiceImpl
 		layoutSetBranch.setCss(css);
 		layoutSetBranch.setSettings(settings);
 
-		layoutSetBranchPersistence.update(layoutSetBranch);
+		layoutSetBranch = layoutSetBranchPersistence.update(layoutSetBranch);
 
 		// Resources
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			user.getCompanyId(), layoutSetBranch.getGroupId(), user.getUserId(),
 			LayoutSetBranch.class.getName(),
 			layoutSetBranch.getLayoutSetBranchId(), false, true, false);
@@ -151,20 +156,20 @@ public class LayoutSetBranchLocalServiceImpl
 		if (layoutSetBranch.isMaster() ||
 			(copyLayoutSetBranchId == LayoutSetBranchConstants.ALL_BRANCHES)) {
 
-			List<Layout> layouts = layoutPersistence.findByG_P(
+			List<Layout> layouts = _layoutPersistence.findByG_P(
 				layoutSetBranch.getGroupId(),
 				layoutSetBranch.isPrivateLayout());
 
 			for (Layout layout : layouts) {
 				LayoutBranch layoutBranch =
-					layoutBranchLocalService.addLayoutBranch(
+					_layoutBranchLocalService.addLayoutBranch(
 						layoutSetBranchId, layout.getPlid(),
 						LayoutBranchConstants.MASTER_BRANCH_NAME,
 						LayoutBranchConstants.MASTER_BRANCH_DESCRIPTION, true,
 						serviceContext);
 
 				LayoutRevision lastLayoutRevision =
-					layoutRevisionLocalService.fetchLastLayoutRevision(
+					_layoutRevisionLocalService.fetchLastLayoutRevision(
 						layout.getPlid(), true);
 
 				if (lastLayoutRevision != null) {
@@ -173,7 +178,7 @@ public class LayoutSetBranchLocalServiceImpl
 					serviceContext.setWorkflowAction(
 						WorkflowConstants.ACTION_PUBLISH);
 
-					layoutRevisionLocalService.addLayoutRevision(
+					_layoutRevisionLocalService.addLayoutRevision(
 						userId, layoutSetBranchId,
 						layoutBranch.getLayoutBranchId(),
 						LayoutRevisionConstants.
@@ -196,7 +201,7 @@ public class LayoutSetBranchLocalServiceImpl
 					serviceContext.setWorkflowAction(workflowAction);
 				}
 				else {
-					layoutRevisionLocalService.addLayoutRevision(
+					_layoutRevisionLocalService.addLayoutRevision(
 						userId, layoutSetBranchId,
 						layoutBranch.getLayoutBranchId(),
 						LayoutRevisionConstants.
@@ -214,18 +219,18 @@ public class LayoutSetBranchLocalServiceImpl
 		}
 		else if (copyLayoutSetBranchId > 0) {
 			List<LayoutRevision> layoutRevisions =
-				layoutRevisionLocalService.getLayoutRevisions(
+				_layoutRevisionLocalService.getLayoutRevisions(
 					copyLayoutSetBranchId, true);
 
 			for (LayoutRevision layoutRevision : layoutRevisions) {
 				LayoutBranch layoutBranch =
-					layoutBranchLocalService.addLayoutBranch(
+					_layoutBranchLocalService.addLayoutBranch(
 						layoutSetBranchId, layoutRevision.getPlid(),
 						LayoutBranchConstants.MASTER_BRANCH_NAME,
 						LayoutBranchConstants.MASTER_BRANCH_DESCRIPTION, true,
 						serviceContext);
 
-				layoutRevisionLocalService.addLayoutRevision(
+				_layoutRevisionLocalService.addLayoutRevision(
 					userId, layoutSetBranchId, layoutBranch.getLayoutBranchId(),
 					LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID,
 					true, layoutRevision.getPlid(),
@@ -264,6 +269,45 @@ public class LayoutSetBranchLocalServiceImpl
 			LayoutSetBranch layoutSetBranch, boolean includeMaster)
 		throws PortalException {
 
+		return deleteLayoutSetBranch(
+			LayoutConstants.DEFAULT_PLID, layoutSetBranch, includeMaster);
+	}
+
+	@Override
+	public LayoutSetBranch deleteLayoutSetBranch(long layoutSetBranchId)
+		throws PortalException {
+
+		return deleteLayoutSetBranch(
+			LayoutConstants.DEFAULT_PLID, layoutSetBranchId);
+	}
+
+	@Override
+	public LayoutSetBranch deleteLayoutSetBranch(
+			long currentLayoutPlid, LayoutSetBranch layoutSetBranch,
+			boolean includeMaster)
+		throws PortalException {
+
+		// Layout
+
+		if (!layoutSetBranch.isMaster()) {
+			List<Long> deletablePlids = _getDeletablePlids(
+				layoutSetBranch.getLayoutSetBranchId());
+
+			if ((currentLayoutPlid != LayoutConstants.DEFAULT_PLID) &&
+				deletablePlids.contains(currentLayoutPlid)) {
+
+				throw new PortalException();
+			}
+
+			for (long plid : deletablePlids) {
+				Layout layout = _layoutLocalService.fetchLayout(plid);
+
+				if (layout != null) {
+					_layoutLocalService.deleteLayout(layout);
+				}
+			}
+		}
+
 		// Layout branch
 
 		if (!includeMaster && layoutSetBranch.isMaster()) {
@@ -274,37 +318,38 @@ public class LayoutSetBranchLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			layoutSetBranch.getCompanyId(), LayoutSetBranch.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			layoutSetBranch.getLayoutSetBranchId());
 
 		// Layout branches
 
-		layoutBranchLocalService.deleteLayoutSetBranchLayoutBranches(
+		_layoutBranchLocalService.deleteLayoutSetBranchLayoutBranches(
 			layoutSetBranch.getLayoutSetBranchId());
 
 		// Layout revisions
 
-		layoutRevisionLocalService.deleteLayoutSetBranchLayoutRevisions(
+		_layoutRevisionLocalService.deleteLayoutSetBranchLayoutRevisions(
 			layoutSetBranch.getLayoutSetBranchId());
 
 		// Recent layout sets
 
-		recentLayoutSetBranchLocalService.deleteRecentLayoutSetBranches(
+		_recentLayoutSetBranchLocalService.deleteRecentLayoutSetBranches(
 			layoutSetBranch.getLayoutSetBranchId());
 
 		return layoutSetBranch;
 	}
 
 	@Override
-	public LayoutSetBranch deleteLayoutSetBranch(long layoutSetBranchId)
+	public LayoutSetBranch deleteLayoutSetBranch(
+			long currentLayoutPlid, long layoutSetBranchId)
 		throws PortalException {
 
 		LayoutSetBranch layoutSetBranch =
 			layoutSetBranchPersistence.findByPrimaryKey(layoutSetBranchId);
 
-		return deleteLayoutSetBranch(layoutSetBranch, false);
+		return deleteLayoutSetBranch(currentLayoutPlid, layoutSetBranch, false);
 	}
 
 	@Override
@@ -322,8 +367,19 @@ public class LayoutSetBranchLocalServiceImpl
 		List<LayoutSetBranch> layoutSetBranches =
 			layoutSetBranchPersistence.findByG_P(groupId, privateLayout);
 
+		LayoutSetBranch masterLayoutSetBranch = null;
+
 		for (LayoutSetBranch layoutSetBranch : layoutSetBranches) {
-			deleteLayoutSetBranch(layoutSetBranch, includeMaster);
+			if (layoutSetBranch.isMaster()) {
+				masterLayoutSetBranch = layoutSetBranch;
+			}
+			else {
+				deleteLayoutSetBranch(layoutSetBranch, includeMaster);
+			}
+		}
+
+		if (masterLayoutSetBranch != null) {
+			deleteLayoutSetBranch(masterLayoutSetBranch, includeMaster);
 		}
 	}
 
@@ -350,7 +406,7 @@ public class LayoutSetBranchLocalServiceImpl
 
 		return layoutSetBranchPersistence.findByG_P(
 			groupId, privateLayout, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			new LayoutSetBranchCreateDateComparator(true));
+			LayoutSetBranchCreateDateComparator.getInstance(true));
 	}
 
 	@Override
@@ -369,10 +425,10 @@ public class LayoutSetBranchLocalServiceImpl
 		throws PortalException {
 
 		if (layoutSetBranchId <= 0) {
-			User user = userPersistence.findByPrimaryKey(userId);
+			User user = _userPersistence.findByPrimaryKey(userId);
 
 			if (layoutSetId <= 0) {
-				LayoutSet layoutSet = layoutSetLocalService.getLayoutSet(
+				LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 					groupId, privateLayout);
 
 				layoutSetId = layoutSet.getLayoutSetId();
@@ -407,15 +463,14 @@ public class LayoutSetBranchLocalServiceImpl
 
 		Locale locale = serviceContext.getLocale();
 
-		Format dateFormatDateTime = FastDateFormatFactoryUtil.getDateTime(
-			locale);
+		Format dateTimeFormat = FastDateFormatFactoryUtil.getDateTime(locale);
 
-		String nowString = dateFormatDateTime.format(new Date());
+		String nowString = dateTimeFormat.format(new Date());
 
 		serviceContext.setWorkflowAction(WorkflowConstants.STATUS_DRAFT);
 
 		List<LayoutRevision> layoutRevisions =
-			layoutRevisionLocalService.getLayoutRevisions(
+			_layoutRevisionLocalService.getLayoutRevisions(
 				mergeLayoutSetBranchId, true);
 
 		for (LayoutRevision layoutRevision : layoutRevisions) {
@@ -426,22 +481,20 @@ public class LayoutSetBranchLocalServiceImpl
 				layoutBranch.getName(), mergeLayoutSetBranch.getName(),
 				layoutRevision.getPlid());
 
-			StringBundler sb = new StringBundler(3);
-
-			sb.append(mergeLayoutSetBranch.getDescription());
-			sb.append(StringPool.SPACE);
-			sb.append(
-				LanguageUtil.format(
-					locale, "merged-from-x-x",
-					new String[] {mergeLayoutSetBranch.getName(), nowString},
-					false));
-
-			layoutBranch = layoutBranchLocalService.addLayoutBranch(
+			layoutBranch = _layoutBranchLocalService.addLayoutBranch(
 				layoutSetBranch.getLayoutSetBranchId(),
-				layoutRevision.getPlid(), layoutBranchName, sb.toString(),
+				layoutRevision.getPlid(), layoutBranchName,
+				StringBundler.concat(
+					mergeLayoutSetBranch.getDescription(), StringPool.SPACE,
+					LanguageUtil.format(
+						locale, "merged-from-x-x",
+						new String[] {
+							mergeLayoutSetBranch.getName(), nowString
+						},
+						false)),
 				false, serviceContext);
 
-			layoutRevisionLocalService.addLayoutRevision(
+			_layoutRevisionLocalService.addLayoutRevision(
 				layoutRevision.getUserId(),
 				layoutSetBranch.getLayoutSetBranchId(),
 				layoutBranch.getLayoutBranchId(),
@@ -477,16 +530,14 @@ public class LayoutSetBranchLocalServiceImpl
 		layoutSetBranch.setName(name);
 		layoutSetBranch.setDescription(description);
 
-		layoutSetBranchPersistence.update(layoutSetBranch);
-
-		return layoutSetBranch;
+		return layoutSetBranchPersistence.update(layoutSetBranch);
 	}
 
 	protected String getLayoutBranchName(
 		long layoutSetBranchId, Locale locale, String mergeBranchName,
 		String mergeLayoutSetBranchName, long plid) {
 
-		LayoutBranch layoutBranch = layoutBranchPersistence.fetchByL_P_N(
+		LayoutBranch layoutBranch = _layoutBranchPersistence.fetchByL_P_N(
 			layoutSetBranchId, plid, mergeBranchName);
 
 		if (layoutBranch == null) {
@@ -500,7 +551,7 @@ public class LayoutSetBranchLocalServiceImpl
 		String layoutBranchName = defaultLayoutBranchName;
 
 		for (int i = 1;; i++) {
-			layoutBranch = layoutBranchPersistence.fetchByL_P_N(
+			layoutBranch = _layoutBranchPersistence.fetchByL_P_N(
 				layoutSetBranchId, plid, layoutBranchName);
 
 			if (layoutBranch == null) {
@@ -538,40 +589,111 @@ public class LayoutSetBranchLocalServiceImpl
 					LayoutSetBranchNameException.DUPLICATE);
 			}
 		}
-		catch (NoSuchLayoutSetBranchException nslsbe) {
+		catch (NoSuchLayoutSetBranchException noSuchLayoutSetBranchException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nslsbe, nslsbe);
+				_log.debug(noSuchLayoutSetBranchException);
 			}
 		}
 
-		if (master) {
-			try {
-				LayoutSetBranch masterLayoutSetBranch =
-					layoutSetBranchPersistence.findByG_P_M_First(
-						groupId, privateLayout, true, null);
+		if (!master) {
+			return;
+		}
 
-				if (layoutSetBranchId !=
-						masterLayoutSetBranch.getLayoutSetBranchId()) {
+		try {
+			LayoutSetBranch masterLayoutSetBranch =
+				layoutSetBranchPersistence.findByG_P_M_First(
+					groupId, privateLayout, true, null);
 
-					throw new LayoutSetBranchNameException(
-						LayoutSetBranchNameException.MASTER);
-				}
+			if (layoutSetBranchId !=
+					masterLayoutSetBranch.getLayoutSetBranchId()) {
+
+				throw new LayoutSetBranchNameException(
+					LayoutSetBranchNameException.MASTER);
 			}
-			catch (NoSuchLayoutSetBranchException nslsbe) {
+		}
+		catch (NoSuchLayoutSetBranchException noSuchLayoutSetBranchException) {
 
-				// LPS-52675
+			// LPS-52675
 
-				if (_log.isDebugEnabled()) {
-					_log.debug(nslsbe, nslsbe);
-				}
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchLayoutSetBranchException);
 			}
 		}
 	}
 
+	private List<Long> _getDeletablePlids(long layoutSetBranchId) {
+		List<Long> deletablePlids = new ArrayList<>();
+
+		List<Long> relatedPlids = _getRelatedPlids(layoutSetBranchId);
+
+		for (long plid : relatedPlids) {
+			boolean deletableLayout = true;
+
+			List<LayoutRevision> layoutRevisions =
+				_layoutRevisionLocalService.getLayoutRevisions(plid);
+
+			for (LayoutRevision layoutRevision : layoutRevisions) {
+				if ((layoutRevision.getStatus() !=
+						WorkflowConstants.STATUS_INCOMPLETE) &&
+					(layoutRevision.getLayoutSetBranchId() !=
+						layoutSetBranchId)) {
+
+					deletableLayout = false;
+
+					break;
+				}
+			}
+
+			if (deletableLayout) {
+				deletablePlids.add(plid);
+			}
+		}
+
+		return deletablePlids;
+	}
+
+	private List<Long> _getRelatedPlids(long layoutSetBranchId) {
+		return TransformUtil.transform(
+			_layoutBranchLocalService.getLayoutSetBranchLayoutBranches(
+				layoutSetBranchId),
+			layoutBranch -> layoutBranch.getPlid());
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutSetBranchLocalServiceImpl.class);
+
+	@BeanReference(type = ImageLocalService.class)
+	private ImageLocalService _imageLocalService;
+
+	@BeanReference(type = LayoutBranchLocalService.class)
+	private LayoutBranchLocalService _layoutBranchLocalService;
+
+	@BeanReference(type = LayoutBranchPersistence.class)
+	private LayoutBranchPersistence _layoutBranchPersistence;
+
+	@BeanReference(type = LayoutLocalService.class)
+	private LayoutLocalService _layoutLocalService;
+
+	@BeanReference(type = LayoutPersistence.class)
+	private LayoutPersistence _layoutPersistence;
+
+	@BeanReference(type = LayoutRevisionLocalService.class)
+	private LayoutRevisionLocalService _layoutRevisionLocalService;
+
+	@BeanReference(type = LayoutSetLocalService.class)
+	private LayoutSetLocalService _layoutSetLocalService;
+
+	@BeanReference(type = RecentLayoutSetBranchLocalService.class)
+	private RecentLayoutSetBranchLocalService
+		_recentLayoutSetBranchLocalService;
+
+	@BeanReference(type = ResourceLocalService.class)
+	private ResourceLocalService _resourceLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

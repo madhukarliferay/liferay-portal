@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
@@ -24,17 +15,16 @@ package com.liferay.portal.kernel.service;
 public class PasswordPolicyServiceWrapper
 	implements PasswordPolicyService, ServiceWrapper<PasswordPolicyService> {
 
+	public PasswordPolicyServiceWrapper() {
+		this(null);
+	}
+
 	public PasswordPolicyServiceWrapper(
 		PasswordPolicyService passwordPolicyService) {
 
 		_passwordPolicyService = passwordPolicyService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PasswordPolicyServiceUtil} to access the password policy remote service. Add custom service methods to <code>com.liferay.portal.service.impl.PasswordPolicyServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy addPasswordPolicy(
 			java.lang.String name, java.lang.String description,
@@ -88,9 +78,11 @@ public class PasswordPolicyServiceWrapper
 		search(
 			long companyId, java.lang.String name, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.PasswordPolicy> obc) {
+				<com.liferay.portal.kernel.model.PasswordPolicy>
+					orderByComparator) {
 
-		return _passwordPolicyService.search(companyId, name, start, end, obc);
+		return _passwordPolicyService.search(
+			companyId, name, start, end, orderByComparator);
 	}
 
 	@Override

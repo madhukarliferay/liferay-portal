@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector.taglib.internal.util;
@@ -21,36 +12,35 @@ import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolver;
 import com.liferay.item.selector.taglib.ItemSelectorRepositoryEntryBrowserReturnTypeUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
-import com.liferay.portal.kernel.util.ResourceBundleLoaderUtil;
-import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.util.WebKeys;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Ambrín Chaudhary
@@ -61,6 +51,7 @@ public class ItemSelectorRepositoryEntryBrowserUtil {
 	public static void addPortletBreadcrumbEntries(
 			long folderId, String displayStyle,
 			HttpServletRequest httpServletRequest,
+			LiferayPortletRequest liferayPortletRequest,
 			LiferayPortletResponse liferayPortletResponse,
 			PortletURL portletURL)
 		throws Exception {
@@ -76,10 +67,16 @@ public class ItemSelectorRepositoryEntryBrowserUtil {
 
 		Group scopeGroup = themeDisplay.getScopeGroup();
 
+		if (scopeGroup.isControlPanel()) {
+			Company company = themeDisplay.getCompany();
+
+			scopeGroup = company.getGroup();
+		}
+
 		_addPortletBreadcrumbEntry(
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, httpServletRequest,
 			scopeGroup.getDescriptiveName(httpServletRequest.getLocale()),
-			portletURL);
+			EntryURLUtil.getGroupPortletURL(scopeGroup, liferayPortletRequest));
 
 		if (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 			Folder folder = DLAppServiceUtil.getFolder(folderId);
@@ -100,60 +97,86 @@ public class ItemSelectorRepositoryEntryBrowserUtil {
 		}
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #addPortletBreadcrumbEntries(long, String,
+	 *             HttpServletRequest, LiferayPortletRequest,
+	 *             LiferayPortletResponse, PortletURL)}
+	 */
+	@Deprecated
+	public static void addPortletBreadcrumbEntries(
+			long folderId, String displayStyle,
+			HttpServletRequest httpServletRequest,
+			LiferayPortletResponse liferayPortletResponse,
+			PortletURL portletURL)
+		throws Exception {
+
+		PortletRequest portletRequest =
+			(PortletRequest)httpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
+
+		addPortletBreadcrumbEntries(
+			folderId, displayStyle, httpServletRequest,
+			PortalUtil.getLiferayPortletRequest(portletRequest),
+			liferayPortletResponse, portletURL);
+	}
+
 	public static JSONObject getItemMetadataJSONObject(
 			FileEntry fileEntry, Locale locale)
 		throws PortalException {
 
 		FileVersion latestFileVersion = fileEntry.getLatestFileVersion();
-		Date modifiedDate = fileEntry.getModifiedDate();
 
-		JSONArray firstTabDataJSONArray = JSONUtil.putAll(
-			_createJSONObject(
-				LanguageUtil.get(locale, "format"),
-				HtmlUtil.escape(latestFileVersion.getExtension())),
-			_createJSONObject(
-				LanguageUtil.get(locale, "size"),
-				TextFormatter.formatStorageSize(fileEntry.getSize(), locale)),
-			_createJSONObject(
-				LanguageUtil.get(locale, "name"),
-				HtmlUtil.escape(DLUtil.getTitleWithExtension(fileEntry))),
-			_createJSONObject(
-				LanguageUtil.get(locale, "modified"),
-				LanguageUtil.format(
-					locale, "x-ago-by-x",
-					new Object[] {
-						LanguageUtil.getTimeDescription(
-							locale,
-							System.currentTimeMillis() - modifiedDate.getTime(),
-							true),
-						HtmlUtil.escape(fileEntry.getUserName())
-					})));
-
-		JSONObject firstTabJSONObject = JSONUtil.put(
-			"data", firstTabDataJSONArray
-		).put(
-			"title", LanguageUtil.get(locale, "file-info")
-		);
-
-		JSONArray groupsJSONArray = JSONUtil.put(firstTabJSONObject);
-
-		JSONObject secondTabJSONObject = JSONUtil.put(
-			"data",
+		return JSONUtil.put(
+			"groups",
 			JSONUtil.putAll(
-				_createJSONObject(
-					LanguageUtil.get(locale, "version"),
-					HtmlUtil.escape(latestFileVersion.getVersion())),
-				_createJSONObject(
-					LanguageUtil.get(locale, "status"),
-					WorkflowConstants.getStatusLabel(
-						latestFileVersion.getStatus())))
-		).put(
-			"title", LanguageUtil.get(locale, "version")
-		);
+				JSONUtil.put(
+					"data",
+					() -> {
+						Date modifiedDate = fileEntry.getModifiedDate();
 
-		groupsJSONArray.put(secondTabJSONObject);
-
-		return JSONUtil.put("groups", groupsJSONArray);
+						return JSONUtil.putAll(
+							_createJSONObject(
+								LanguageUtil.get(locale, "format"),
+								HtmlUtil.escape(
+									latestFileVersion.getExtension())),
+							_createJSONObject(
+								LanguageUtil.get(locale, "size"),
+								LanguageUtil.formatStorageSize(
+									fileEntry.getSize(), locale)),
+							_createJSONObject(
+								LanguageUtil.get(locale, "name"),
+								HtmlUtil.escape(
+									DLUtil.getTitleWithExtension(fileEntry))),
+							_createJSONObject(
+								LanguageUtil.get(locale, "modified"),
+								LanguageUtil.format(
+									locale, "x-ago-by-x",
+									new Object[] {
+										LanguageUtil.getTimeDescription(
+											locale,
+											System.currentTimeMillis() -
+												modifiedDate.getTime(),
+											true),
+										HtmlUtil.escape(fileEntry.getUserName())
+									})));
+					}
+				).put(
+					"title", LanguageUtil.get(locale, "file-info")
+				),
+				JSONUtil.put(
+					"data",
+					JSONUtil.putAll(
+						_createJSONObject(
+							LanguageUtil.get(locale, "version"),
+							HtmlUtil.escape(latestFileVersion.getVersion())),
+						_createJSONObject(
+							LanguageUtil.get(locale, "status"),
+							WorkflowConstants.getStatusLabel(
+								latestFileVersion.getStatus())))
+				).put(
+					"title", LanguageUtil.get(locale, "version")
+				)));
 	}
 
 	public static String getItemSelectorReturnTypeClassName(
@@ -195,26 +218,18 @@ public class ItemSelectorRepositoryEntryBrowserUtil {
 			HttpServletRequest httpServletRequest,
 			LiferayPortletResponse liferayPortletResponse,
 			PortletURL portletURL)
-		throws PortletException {
-
-		PortletURL viewGroupSelectorURL = PortletURLUtil.clone(
-			portletURL, liferayPortletResponse);
-
-		viewGroupSelectorURL.setParameter("groupType", "site");
-		viewGroupSelectorURL.setParameter(
-			"showGroupSelector", Boolean.TRUE.toString());
-
-		ResourceBundleLoader resourceBundleLoader =
-			ResourceBundleLoaderUtil.
-				getResourceBundleLoaderByBundleSymbolicName(
-					"com.liferay.item.selector.taglib");
-
-		ResourceBundle resourceBundle = resourceBundleLoader.loadResourceBundle(
-			PortalUtil.getLocale(httpServletRequest));
+		throws Exception {
 
 		PortalUtil.addPortletBreadcrumbEntry(
-			httpServletRequest, LanguageUtil.get(resourceBundle, "workspaces"),
-			viewGroupSelectorURL.toString());
+			httpServletRequest,
+			LanguageUtil.get(httpServletRequest, "sites-and-libraries"),
+			PortletURLBuilder.create(
+				PortletURLUtil.clone(portletURL, liferayPortletResponse)
+			).setParameter(
+				"groupType", "site"
+			).setParameter(
+				"showGroupSelector", true
+			).buildString());
 	}
 
 	private static void _addPortletBreadcrumbEntry(

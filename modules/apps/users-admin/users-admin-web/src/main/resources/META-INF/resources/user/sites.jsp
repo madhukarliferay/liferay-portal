@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,10 +9,10 @@
 
 <%
 User selUser = userDisplayContext.getSelectedUser();
-List<Group> groups = userDisplayContext.getGroups();
-List<Group> inheritedSites = userDisplayContext.getInheritedSites();
+List<Group> siteGroups = userDisplayContext.getSiteGroups();
+List<Group> inheritedSiteGroups = userDisplayContext.getInheritedSiteGroups();
 
-currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites");
+currentURLObj.setParameter("historyKey", liferayPortletResponse.getNamespace() + "sites");
 %>
 
 <liferay-ui:error-marker
@@ -29,36 +20,43 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 	value="sites"
 />
 
-<liferay-ui:membership-policy-error />
+<liferay-site:membership-policy-error />
 
-<h3 class="autofit-row sheet-subtitle">
-	<span class="autofit-col autofit-col-expand">
+<clay:content-row
+	containerElement="div"
+	cssClass="sheet-subtitle"
+>
+	<clay:content-col
+		expand="<%= true %>"
+	>
 		<span class="heading-text"><liferay-ui:message key="sites" /></span>
-	</span>
+	</clay:content-col>
 
 	<c:if test="<%= !portletName.equals(myAccountPortletId) %>">
-		<span class="autofit-col">
-			<span class="heading-end">
-				<liferay-ui:icon
-					cssClass="modify-link"
-					id="selectSiteLink"
-					label="<%= true %>"
-					linkCssClass="btn btn-secondary btn-sm"
-					message="select"
-					url="javascript:;"
-				/>
-			</span>
-		</span>
+		<clay:content-col>
+			<clay:button
+				aria-label='<%= LanguageUtil.format(request, "select-x", "sites") %>'
+				cssClass="heading-end modify-link"
+				displayType="secondary"
+				id='<%= liferayPortletResponse.getNamespace() + "selectSiteLink" %>'
+				label='<%= LanguageUtil.get(request, "select") %>'
+				small="<%= true %>"
+			/>
+		</clay:content-col>
 	</c:if>
-</h3>
+</clay:content-row>
 
 <liferay-util:buffer
-	var="removeGroupIcon"
+	var="removeButtonSites"
 >
-	<liferay-ui:icon
+	<clay:button
+		aria-label="TOKEN_ARIA_LABEL"
+		cssClass="lfr-portal-tooltip modify-link"
+		data-rowId="TOKEN_DATA_ROW_ID"
+		displayType="unstyled"
 		icon="times-circle"
-		markupView="lexicon"
-		message="remove"
+		small="<%= true %>"
+		title="TOKEN_TITLE"
 	/>
 </liferay-util:buffer>
 
@@ -72,10 +70,11 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 	emptyResultsMessage="this-user-does-not-belong-to-a-site"
 	headerNames="name,roles,null"
 	iteratorURL="<%= currentURLObj %>"
-	total="<%= groups.size() %>"
+	total="<%= siteGroups.size() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= groups.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+		calculateStartAndEnd="<%= true %>"
+		results="<%= siteGroups %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -86,7 +85,7 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 		rowIdProperty="friendlyURL"
 	>
 		<liferay-ui:search-container-column-text
-			cssClass="table-cell-content"
+			cssClass="table-cell-expand"
 			name="name"
 		>
 			<liferay-staging:descriptive-name
@@ -105,16 +104,25 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 		%>
 
 		<liferay-ui:search-container-column-text
-			cssClass="table-cell-content"
+			cssClass="table-cell-expand"
 			name="roles"
-			value="<%= HtmlUtil.escape(UsersAdminUtil.getUserColumnText(locale, userGroupRoles, UsersAdmin.USER_GROUP_ROLE_TITLE_ACCESSOR, userGroupRolesCount)) %>"
+			value="<%= HtmlUtil.escape(UsersAdminUtil.getUserColumnText(locale, userGroupRoles, UsersAdminUtil.USER_GROUP_ROLE_TITLE_ACCESSOR, userGroupRolesCount)) %>"
 		/>
 
 		<c:if test="<%= !portletName.equals(myAccountPortletId) && (selUser != null) && !SiteMembershipPolicyUtil.isMembershipRequired(selUser.getUserId(), group.getGroupId()) && !SiteMembershipPolicyUtil.isMembershipProtected(permissionChecker, selUser.getUserId(), group.getGroupId()) %>">
 			<liferay-ui:search-container-column-text>
 				<c:if test="<%= group.isManualMembership() %>">
-					<a class="modify-link" data-rowId="<%= group.getGroupId() %>" href="javascript:;"><%= removeGroupIcon %></a>
-				</c:if>
+					<clay:button
+						aria-label='<%= LanguageUtil.format(request, "remove-x", HtmlUtil.escape(group.getDescriptiveName(locale))) %>'
+						cssClass="lfr-portal-tooltip modify-link"
+						data-rowId="<%= group.getGroupId() %>"
+						displayType="unstyled"
+						icon="times-circle"
+						small="<%= true %>"
+						title='<%= LanguageUtil.format(request, "remove-x", HtmlUtil.escape(group.getDescriptiveName(locale))) %>'
+					/>
+				</c:if
+			>
 			</liferay-ui:search-container-column-text>
 		</c:if>
 	</liferay-ui:search-container-row>
@@ -126,7 +134,6 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 
 <c:if test="<%= !portletName.equals(myAccountPortletId) %>">
 	<aui:script use="liferay-search-container">
-		var AArray = A.Array;
 		var Util = Liferay.Util;
 
 		var addGroupIds = [];
@@ -138,57 +145,44 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 
 		var searchContainerContentBox = searchContainer.get('contentBox');
 
-		var handleOnSelect = A.one('#<portlet:namespace />selectSiteLink').on(
-			'click',
-			function(event) {
-				var searchContainerData = searchContainer.getData();
+		const selectSiteButton = document.getElementById(
+			'<portlet:namespace />selectSiteLink'
+		);
 
-				if (!searchContainerData.length) {
-					searchContainerData = [];
-				} else {
-					searchContainerData = searchContainerData.split(',');
-				}
+		const handleOnSelect = selectSiteButton.addEventListener('click', (event) => {
+			var searchContainerData = searchContainer.getData();
 
-				Util.selectEntity(
-					{
-						dialog: {
-							constrain: true,
-							modal: true
-						},
+			if (!searchContainerData.length) {
+				searchContainerData = [];
+			}
+			else {
+				searchContainerData = searchContainerData.split(',');
+			}
 
-						<%
-						String eventName = liferayPortletResponse.getNamespace() + "selectSite";
-						%>
-
-						id: '<%= eventName %>',
-						selectedData: searchContainerData,
-						title: '<liferay-ui:message arguments="site" key="select-x" />',
-
-						<%
-						PortletURL groupSelectorURL = PortletProviderUtil.getPortletURL(request, Group.class.getName(), PortletProvider.Action.BROWSE);
-
-						groupSelectorURL.setParameter("p_u_i_d", (selUser == null) ? "0" : String.valueOf(selUser.getUserId()));
-						groupSelectorURL.setParameter("filterManageableGroups", Boolean.FALSE.toString());
-						groupSelectorURL.setParameter("includeCurrentGroup", Boolean.FALSE.toString());
-						groupSelectorURL.setParameter("manualMembership", Boolean.TRUE.toString());
-						groupSelectorURL.setParameter("eventName", eventName);
-						groupSelectorURL.setWindowState(LiferayWindowState.POP_UP);
-						%>
-
-						uri: '<%= groupSelectorURL.toString() %>'
-					},
-					function(event) {
-						var entityId = event.entityid;
-
-						var rowColumns = [];
-
-						rowColumns.push(event.entityname);
-						rowColumns.push('');
-						rowColumns.push(
-							'<a class="modify-link" data-rowId="' +
-								entityId +
-								'" href="javascript:;"><%= UnicodeFormatter.toString(removeGroupIcon) %></a>'
+			Util.openSelectionModal({
+				onSelect: (selectedItem) => {
+					if (selectedItem) {
+						const entityId = selectedItem.groupid;
+						const entityName = A.Escape.html(
+							selectedItem.groupdescriptivename
 						);
+						const label = Liferay.Util.sub(
+							'<liferay-ui:message key="remove-x" />',
+							entityName
+						);
+						const rowColumns = [];
+
+						let removeButton =
+							'<%= UnicodeFormatter.toString(removeButtonSites) %>';
+
+						removeButton = removeButton
+							.replace('TOKEN_ARIA_LABEL', label)
+							.replace('TOKEN_DATA_ROW_ID', entityId)
+							.replace('TOKEN_TITLE', label);
+
+						rowColumns.push(entityName);
+						rowColumns.push('');
+						rowColumns.push(removeButton);
 
 						searchContainer.addRow(rowColumns, entityId);
 
@@ -196,22 +190,27 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 
 						addGroupIds.push(entityId);
 
-						AArray.removeItem(deleteGroupIds, entityId);
+						deleteGroupIds = deleteGroupIds.filter((deleteGroupId) => {
+							return deleteGroupId !== entityId;
+						});
 
-						document.<portlet:namespace />fm.<portlet:namespace />addGroupIds.value = addGroupIds.join(
-							','
-						);
-						document.<portlet:namespace />fm.<portlet:namespace />deleteGroupIds.value = deleteGroupIds.join(
-							','
-						);
+						document.<portlet:namespace />fm.<portlet:namespace />addGroupIds.value =
+							addGroupIds.join(',');
+						document.<portlet:namespace />fm.<portlet:namespace />deleteGroupIds.value =
+							deleteGroupIds.join(',');
 					}
-				);
-			}
-		);
+				},
+				selectEventName:
+					'<%= liferayPortletResponse.getNamespace() + "selectGroup" %>',
+				selectedData: [searchContainerData],
+				title: '<liferay-ui:message arguments="site" key="select-x" />',
+				url: '<%= userDisplayContext.getGroupItemSelectorURL() %>',
+			});
+		});
 
 		var handleOnModifyLink = searchContainerContentBox.delegate(
 			'click',
-			function(event) {
+			(event) => {
 				var link = event.currentTarget;
 
 				var rowId = link.attr('data-rowId');
@@ -229,24 +228,24 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 
 				searchContainer.deleteRow(tr, rowId);
 
-				AArray.removeItem(addGroupIds, event.rowId);
+				addGroupIds = addGroupIds.filter((addGroupId) => {
+					return addGroupId !== event.rowId;
+				});
 
 				deleteGroupIds.push(rowId);
 
-				document.<portlet:namespace />fm.<portlet:namespace />addGroupIds.value = addGroupIds.join(
-					','
-				);
-				document.<portlet:namespace />fm.<portlet:namespace />deleteGroupIds.value = deleteGroupIds.join(
-					','
-				);
+				document.<portlet:namespace />fm.<portlet:namespace />addGroupIds.value =
+					addGroupIds.join(',');
+				document.<portlet:namespace />fm.<portlet:namespace />deleteGroupIds.value =
+					deleteGroupIds.join(',');
 			},
 			'.modify-link'
 		);
 
 		var handleEnableRemoveSite = Liferay.on(
 			'<portlet:namespace />enableRemovedSites',
-			function(event) {
-				event.selectors.each(function(item, index, collection) {
+			(event) => {
+				event.selectors.each((item, index, collection) => {
 					var groupId = item.attr('data-entityid');
 
 					if (deleteGroupIds.indexOf(groupId) != -1) {
@@ -256,9 +255,9 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 			}
 		);
 
-		var onDestroyPortlet = function(event) {
+		var onDestroyPortlet = function (event) {
 			if (event.portletId === '<%= portletDisplay.getId() %>') {
-				Liferay.detach(handleOnSelect);
+				removeEventListener('click', handleOnSelect);
 				Liferay.detach(handleOnModifyLink);
 				Liferay.detach(handleEnableRemoveSite);
 
@@ -270,18 +269,19 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 	</aui:script>
 </c:if>
 
-<c:if test="<%= !inheritedSites.isEmpty() %>">
-	<h4 class="sheet-tertiary-title"><liferay-ui:message key="inherited-sites" /></h4>
+<c:if test="<%= !inheritedSiteGroups.isEmpty() %>">
+	<div class="sheet-tertiary-title"><liferay-ui:message key="inherited-sites" /></div>
 
 	<liferay-ui:search-container
 		cssClass="lfr-search-container-inherited-sites"
 		curParam="inheritedSitesCur"
 		headerNames="name,roles"
 		iteratorURL="<%= currentURLObj %>"
-		total="<%= inheritedSites.size() %>"
+		total="<%= inheritedSiteGroups.size() %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%= inheritedSites.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+			calculateStartAndEnd="<%= true %>"
+			results="<%= inheritedSiteGroups %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -292,7 +292,7 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 			rowIdProperty="friendlyURL"
 		>
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="name"
 				value="<%= HtmlUtil.escape(inheritedSite.getDescriptiveName(locale)) %>"
 			/>
@@ -308,9 +308,9 @@ currentURLObj.setParameter("historyKey", renderResponse.getNamespace() + "sites"
 			%>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="roles"
-				value="<%= HtmlUtil.escape(UsersAdminUtil.getUserColumnText(locale, inheritedRoles, UsersAdmin.USER_GROUP_ROLE_TITLE_ACCESSOR, inheritedRolesCount)) %>"
+				value="<%= HtmlUtil.escape(UsersAdminUtil.getUserColumnText(locale, inheritedRoles, UsersAdminUtil.USER_GROUP_ROLE_TITLE_ACCESSOR, inheritedRolesCount)) %>"
 			/>
 		</liferay-ui:search-container-row>
 

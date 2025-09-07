@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.portal.kernel.exception.PortalException;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for AssetEntry. This utility wraps
@@ -30,26 +24,17 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class AssetEntryServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetEntryServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetEntryServiceUtil} to access the asset entry remote service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.asset.kernel.model.AssetEntry fetchEntry(
-			long entryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static AssetEntry fetchEntry(long entryId) throws PortalException {
 		return getService().fetchEntry(entryId);
 	}
 
-	public static java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-		getCompanyEntries(long companyId, int start, int end) {
+	public static List<AssetEntry> getCompanyEntries(
+		long companyId, int start, int end) {
 
 		return getService().getCompanyEntries(companyId, start, end);
 	}
@@ -58,11 +43,10 @@ public class AssetEntryServiceUtil {
 		return getService().getCompanyEntriesCount(companyId);
 	}
 
-	public static java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-			getEntries(
-				com.liferay.asset.kernel.service.persistence.AssetEntryQuery
-					entryQuery)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<AssetEntry> getEntries(
+			com.liferay.asset.kernel.service.persistence.AssetEntryQuery
+				entryQuery)
+		throws PortalException {
 
 		return getService().getEntries(entryQuery);
 	}
@@ -70,21 +54,17 @@ public class AssetEntryServiceUtil {
 	public static int getEntriesCount(
 			com.liferay.asset.kernel.service.persistence.AssetEntryQuery
 				entryQuery)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getEntriesCount(entryQuery);
 	}
 
-	public static com.liferay.asset.kernel.model.AssetEntry getEntry(
-			long entryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static AssetEntry getEntry(long entryId) throws PortalException {
 		return getService().getEntry(entryId);
 	}
 
-	public static com.liferay.asset.kernel.model.AssetEntry getEntry(
-			String className, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static AssetEntry getEntry(String className, long classPK)
+		throws PortalException {
 
 		return getService().getEntry(className, classPK);
 	}
@@ -98,21 +78,20 @@ public class AssetEntryServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static void incrementViewCounter(
-			com.liferay.asset.kernel.model.AssetEntry assetEntry)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static void incrementViewCounter(AssetEntry assetEntry)
+		throws PortalException {
 
 		getService().incrementViewCounter(assetEntry);
 	}
 
-	public static com.liferay.asset.kernel.model.AssetEntry
-			incrementViewCounter(long companyId, String className, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static AssetEntry incrementViewCounter(
+			long companyId, String className, long classPK)
+		throws PortalException {
 
 		return getService().incrementViewCounter(companyId, className, classPK);
 	}
 
-	public static com.liferay.asset.kernel.model.AssetEntry updateEntry(
+	public static AssetEntry updateEntry(
 			long groupId, java.util.Date createDate,
 			java.util.Date modifiedDate, String className, long classPK,
 			String classUuid, long classTypeId, long[] categoryIds,
@@ -122,7 +101,7 @@ public class AssetEntryServiceUtil {
 			String mimeType, String title, String description, String summary,
 			String url, String layoutUuid, int height, int width,
 			Double priority)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateEntry(
 			groupId, createDate, modifiedDate, className, classPK, classUuid,
@@ -132,14 +111,13 @@ public class AssetEntryServiceUtil {
 	}
 
 	public static AssetEntryService getService() {
-		if (_service == null) {
-			_service = (AssetEntryService)PortalBeanLocatorUtil.locate(
-				AssetEntryService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static AssetEntryService _service;
+	public static void setService(AssetEntryService service) {
+		_service = service;
+	}
+
+	private static volatile AssetEntryService _service;
 
 }

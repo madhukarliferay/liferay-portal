@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector.internal;
@@ -43,21 +34,23 @@ public class ItemSelectorReturnTypeResolverHandlerImpl
 	implements ItemSelectorReturnTypeResolverHandler {
 
 	@Override
-	public ItemSelectorReturnTypeResolver getItemSelectorReturnTypeResolver(
-		Class<? extends ItemSelectorReturnType> itemSelectorReturnTypeClass,
-		Class<?> modelClass) {
+	public ItemSelectorReturnTypeResolver<?, ?>
+		getItemSelectorReturnTypeResolver(
+			Class<? extends ItemSelectorReturnType> itemSelectorReturnTypeClass,
+			Class<?> modelClass) {
 
 		return _serviceTrackerMap.getService(
 			_getKey(itemSelectorReturnTypeClass, modelClass));
 	}
 
 	@Override
-	public ItemSelectorReturnTypeResolver getItemSelectorReturnTypeResolver(
-		ItemSelectorCriterion itemSelectorCriterion,
-		ItemSelectorView itemSelectorView, Class<?> modelClass) {
+	public ItemSelectorReturnTypeResolver<?, ?>
+		getItemSelectorReturnTypeResolver(
+			ItemSelectorCriterion itemSelectorCriterion,
+			ItemSelectorView<?> itemSelectorView, Class<?> modelClass) {
 
 		ItemSelectorReturnType itemSelectorReturnType =
-			getFirstAvailableItemSelectorReturnType(
+			_getFirstAvailableItemSelectorReturnType(
 				itemSelectorCriterion.getDesiredItemSelectorReturnTypes(),
 				_itemSelectorViewReturnTypeProviderHandler.
 					getSupportedItemSelectorReturnTypes(itemSelectorView));
@@ -67,31 +60,26 @@ public class ItemSelectorReturnTypeResolverHandlerImpl
 	}
 
 	@Override
-	public ItemSelectorReturnTypeResolver getItemSelectorReturnTypeResolver(
-		String itemSelectorReturnTypeClassName, String modelClassName) {
+	public ItemSelectorReturnTypeResolver<?, ?>
+		getItemSelectorReturnTypeResolver(
+			String itemSelectorReturnTypeClassName, String modelClassName) {
 
 		return _serviceTrackerMap.getService(
 			_getKey(itemSelectorReturnTypeClassName, modelClassName));
 	}
 
-	@Reference(unbind = "-")
-	public void setItemSelectorViewReturnTypeProviderHandler(
-		ItemSelectorViewReturnTypeProviderHandler
-			itemSelectorViewReturnTypeProviderHandler) {
-
-		_itemSelectorViewReturnTypeProviderHandler =
-			itemSelectorViewReturnTypeProviderHandler;
-	}
-
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-			bundleContext, ItemSelectorReturnTypeResolver.class, null,
+			bundleContext,
+			(Class<ItemSelectorReturnTypeResolver<?, ?>>)
+				(Class<?>)ItemSelectorReturnTypeResolver.class,
+			null,
 			new ItemSelectorReturnTypeResolverServiceReferenceMapper(
 				bundleContext));
 	}
 
-	protected ItemSelectorReturnType getFirstAvailableItemSelectorReturnType(
+	private ItemSelectorReturnType _getFirstAvailableItemSelectorReturnType(
 		List<ItemSelectorReturnType> desiredItemSelectorReturnTypes,
 		List<ItemSelectorReturnType> supportedItemSelectorReturnTypes) {
 
@@ -112,7 +100,7 @@ public class ItemSelectorReturnTypeResolverHandlerImpl
 	}
 
 	private String _getKey(
-		Class itemSelectorReturnTypeClass, Class modelClass) {
+		Class<?> itemSelectorReturnTypeClass, Class<?> modelClass) {
 
 		String itemSelectorResolverReturnTypeClassName =
 			itemSelectorReturnTypeClass.getName();
@@ -132,14 +120,16 @@ public class ItemSelectorReturnTypeResolverHandlerImpl
 			itemSelectorResolverModelClassName;
 	}
 
+	@Reference
 	private ItemSelectorViewReturnTypeProviderHandler
 		_itemSelectorViewReturnTypeProviderHandler;
-	private ServiceTrackerMap<String, ItemSelectorReturnTypeResolver>
+
+	private ServiceTrackerMap<String, ItemSelectorReturnTypeResolver<?, ?>>
 		_serviceTrackerMap;
 
 	private class ItemSelectorReturnTypeResolverServiceReferenceMapper
 		implements ServiceReferenceMapper
-			<String, ItemSelectorReturnTypeResolver> {
+			<String, ItemSelectorReturnTypeResolver<?, ?>> {
 
 		public ItemSelectorReturnTypeResolverServiceReferenceMapper(
 			BundleContext bundleContext) {
@@ -149,11 +139,13 @@ public class ItemSelectorReturnTypeResolverHandlerImpl
 
 		@Override
 		public void map(
-			ServiceReference<ItemSelectorReturnTypeResolver> serviceReference,
+			ServiceReference<ItemSelectorReturnTypeResolver<?, ?>>
+				serviceReference,
 			Emitter<String> emitter) {
 
-			ItemSelectorReturnTypeResolver itemSelectorReturnTypeResolver =
-				_bundleContext.getService(serviceReference);
+			ItemSelectorReturnTypeResolver<?, ?>
+				itemSelectorReturnTypeResolver = _bundleContext.getService(
+					serviceReference);
 
 			try {
 				emitter.emit(

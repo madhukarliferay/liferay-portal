@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchPasswordPolicyRelException;
 import com.liferay.portal.kernel.model.PasswordPolicyRel;
 import com.liferay.portal.kernel.service.PasswordPolicyRelLocalServiceUtil;
@@ -428,19 +420,63 @@ public class PasswordPolicyRelPersistenceTest {
 
 		_persistence.clearCache();
 
-		PasswordPolicyRel existingPasswordPolicyRel =
-			_persistence.findByPrimaryKey(newPasswordPolicyRel.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(
+				newPasswordPolicyRel.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		PasswordPolicyRel newPasswordPolicyRel = addPasswordPolicyRel();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			PasswordPolicyRel.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"passwordPolicyRelId",
+				newPasswordPolicyRel.getPasswordPolicyRelId()));
+
+		List<PasswordPolicyRel> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(PasswordPolicyRel passwordPolicyRel) {
 		Assert.assertEquals(
-			Long.valueOf(existingPasswordPolicyRel.getClassNameId()),
+			Long.valueOf(passwordPolicyRel.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPasswordPolicyRel, "getOriginalClassNameId",
-				new Class<?>[0]));
+				passwordPolicyRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingPasswordPolicyRel.getClassPK()),
+			Long.valueOf(passwordPolicyRel.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPasswordPolicyRel, "getOriginalClassPK",
-				new Class<?>[0]));
+				passwordPolicyRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected PasswordPolicyRel addPasswordPolicyRel() throws Exception {

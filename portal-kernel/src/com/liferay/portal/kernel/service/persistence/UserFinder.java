@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
@@ -22,9 +13,6 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface UserFinder {
-
-	public java.util.Map<Long, Integer> countByGroups(
-		long companyId, int status, long[] groupIds);
 
 	public int countByKeywords(
 		long companyId, String keywords, int status,
@@ -55,13 +43,10 @@ public interface UserFinder {
 		long companyId, String keywords, int status,
 		java.util.LinkedHashMap<String, Object> params, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.portal.kernel.model.User> obc);
+			<com.liferay.portal.kernel.model.User> orderByComparator);
 
 	public java.util.List<com.liferay.portal.kernel.model.User>
 		findByNoAnnouncementsDeliveries(String type);
-
-	public java.util.List<com.liferay.portal.kernel.model.User>
-		findByNoContacts();
 
 	public java.util.List<com.liferay.portal.kernel.model.User>
 		findByNoGroups();
@@ -71,7 +56,7 @@ public interface UserFinder {
 			long companyId, long userId, int socialRelationType,
 			String socialRelationTypeComparator, int status, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.User> obc);
+				<com.liferay.portal.kernel.model.User> orderByComparator);
 
 	public java.util.List<com.liferay.portal.kernel.model.User>
 		findByUsersOrgsGtUserId(
@@ -88,7 +73,7 @@ public interface UserFinder {
 			java.util.LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.User> obc);
+				<com.liferay.portal.kernel.model.User> orderByComparator);
 
 	public java.util.List<com.liferay.portal.kernel.model.User>
 		findByC_FN_MN_LN_SN_EA_S(
@@ -97,6 +82,6 @@ public interface UserFinder {
 			int status, java.util.LinkedHashMap<String, Object> params,
 			boolean andOperator, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.User> obc);
+				<com.liferay.portal.kernel.model.User> orderByComparator);
 
 }

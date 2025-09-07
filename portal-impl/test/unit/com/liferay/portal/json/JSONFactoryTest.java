@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.json;
@@ -20,26 +11,35 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.jabsorb.serializer.LiferayJSONDeserializationWhitelist;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
+import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.test.AssertUtils;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Igor Spasic
  */
 public class JSONFactoryTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() throws Exception {
@@ -55,7 +55,7 @@ public class JSONFactoryTest {
 			FooBean.class.getName(), FooBean1.class.getName(),
 			FooBean2.class.getName(), FooBean3.class.getName(),
 			FooBean4.class.getName(), FooBean5.class.getName(),
-			FooBean6.class.getName());
+			FooBean6.class.getName(), FooBean7.class.getName());
 
 		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
 
@@ -64,29 +64,26 @@ public class JSONFactoryTest {
 
 	@Test
 	public void testAnnotations() {
-		FooBean fooBean = new FooBean();
-
-		String json = removeQuotes(JSONFactoryUtil.looseSerialize(fooBean));
+		String json = removeQuotes(
+			JSONFactoryUtil.looseSerialize(new FooBean()));
 
 		Assert.assertEquals("{name:bar,value:173}", json);
 	}
 
 	@Test
 	public void testCollection() {
-		FooBean1 fooBean1 = new FooBean1();
-
-		String json = removeQuotes(JSONFactoryUtil.looseSerialize(fooBean1));
+		String json = removeQuotes(
+			JSONFactoryUtil.looseSerialize(new FooBean1()));
 
 		Assert.assertEquals("{collection:[element],value:173}", json);
 	}
 
 	@Test
 	public void testDeserializeLongArrayToIntegerArray() {
-		Map<String, long[]> map = HashMapBuilder.<String, long[]>put(
-			"key", new long[] {1L, 2L, 3L, 4L, 5L}
-		).build();
-
-		String json = JSONFactoryUtil.serialize(map);
+		String json = JSONFactoryUtil.serialize(
+			HashMapBuilder.<String, long[]>put(
+				"key", new long[] {1L, 2L, 3L, 4L, 5L}
+			).build());
 
 		Object object = JSONFactoryUtil.deserialize(json);
 
@@ -103,10 +100,9 @@ public class JSONFactoryTest {
 	public void testDeserializeNonwhitelistedClass() {
 		String json = JSONFactoryUtil.serialize(new JSONFactoryTest());
 
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					LiferayJSONDeserializationWhitelist.class.getName(),
-					Level.WARNING)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				LiferayJSONDeserializationWhitelist.class.getName(),
+				LoggerTestUtil.WARN)) {
 
 			Object object = JSONFactoryUtil.deserialize(json);
 
@@ -114,16 +110,16 @@ public class JSONFactoryTest {
 				object.getClass() + " is not an instance of Map",
 				object instanceof Map);
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(logRecords.toString(), 1, logRecords.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LogRecord logRecord = logRecords.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
 			Assert.assertTrue(
-				logRecord.getMessage(),
+				logEntry.getMessage(),
 				StringUtil.startsWith(
-					logRecord.getMessage(),
+					logEntry.getMessage(),
 					"Unable to deserialize " +
 						JSONFactoryTest.class.getName()));
 		}
@@ -175,13 +171,11 @@ public class JSONFactoryTest {
 
 	@Test
 	public void testHasProperty() {
-		Three three = new Three();
-
 		JSONSerializer jsonSerializer = JSONFactoryUtil.createJSONSerializer();
 
 		jsonSerializer.exclude("class");
 
-		String jsonString = jsonSerializer.serialize(three);
+		String jsonString = jsonSerializer.serialize(new Three());
 
 		Assert.assertEquals("{\"flag\":true}", jsonString);
 	}
@@ -204,12 +198,12 @@ public class JSONFactoryTest {
 		Object object = JSONFactoryUtil.looseDeserialize(
 			"{\"class\":\"java.lang.Thread\"}");
 
-		Assert.assertEquals(HashMap.class, object.getClass());
+		Assert.assertEquals(LinkedHashMap.class, object.getClass());
 
 		object = JSONFactoryUtil.looseDeserialize(
 			"{\"\u0063lass\":\"java.lang.Thread\"}");
 
-		Assert.assertEquals(HashMap.class, object.getClass());
+		Assert.assertEquals(LinkedHashMap.class, object.getClass());
 
 		Map<?, ?> map = (Map<?, ?>)object;
 
@@ -244,6 +238,43 @@ public class JSONFactoryTest {
 		Assert.assertNotNull(map);
 		Assert.assertEquals(map.toString(), 1, map.size());
 		Assert.assertEquals(JSONFactoryImpl.class.getName(), map.get("class"));
+	}
+
+	@Test
+	public void testSerializeDeserializeEnum() {
+		String json = JSONFactoryUtil.serialize(
+			HashMapBuilder.put(
+				"enum", FooBean7.TEST_1
+			).build());
+
+		Object object = JSONFactoryUtil.deserialize(json);
+
+		Assert.assertTrue(object instanceof HashMap);
+
+		HashMap<?, ?> hashMap = (HashMap<?, ?>)object;
+
+		Assert.assertTrue(hashMap.get("enum") instanceof FooBean7);
+
+		Assert.assertSame(hashMap.get("enum"), FooBean7.TEST_1);
+	}
+
+	@Test
+	public void testSerializeDeserializeEnumInsideMessage() {
+		Message message = new Message();
+
+		message.put("enum", FooBean7.TEST_1);
+
+		String json = JSONFactoryUtil.serialize(message);
+
+		Object object = JSONFactoryUtil.deserialize(json);
+
+		Assert.assertTrue(object instanceof Message);
+
+		message = (Message)object;
+
+		Assert.assertTrue(message.get("enum") instanceof FooBean7);
+
+		Assert.assertSame(message.get("enum"), FooBean7.TEST_1);
 	}
 
 	@Test
@@ -286,9 +317,8 @@ public class JSONFactoryTest {
 
 	@Test
 	public void testStrictMode() {
-		FooBean2 fooBean2 = new FooBean2();
-
-		String json = removeQuotes(JSONFactoryUtil.looseSerialize(fooBean2));
+		String json = removeQuotes(
+			JSONFactoryUtil.looseSerialize(new FooBean2()));
 
 		Assert.assertEquals("{value:173}", json);
 	}

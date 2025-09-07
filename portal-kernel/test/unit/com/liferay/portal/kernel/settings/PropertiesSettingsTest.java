@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.settings;
@@ -34,8 +25,8 @@ public class PropertiesSettingsTest {
 			new LocationVariableResolver(null, (SettingsLocatorHelper)null),
 			new Properties() {
 				{
-					put(_SINGLE_KEY, _SINGLE_VALUE);
 					put(_MULTIPLE_KEY, _MULTIPLE_VALUES);
+					put(_SINGLE_KEY, _SINGLE_VALUE);
 				}
 			});
 
@@ -67,8 +58,7 @@ public class PropertiesSettingsTest {
 
 	@Test
 	public void testGetValuesWithResourceValue() {
-		final String expectedValue =
-			"resourceValue0,resourceValue1,resourceValue2";
+		String expectedValue = "resourceValue0,resourceValue1,resourceValue2";
 
 		PropertiesSettings propertiesSettings = new PropertiesSettings(
 			_createLocationVariableResolver(
@@ -104,7 +94,7 @@ public class PropertiesSettingsTest {
 
 	@Test
 	public void testGetValueWithResourceValue() {
-		final String expectedValue = "resourceValue";
+		String expectedValue = "resourceValue";
 
 		PropertiesSettings propertiesSettings = new PropertiesSettings(
 			_createLocationVariableResolver(
@@ -126,11 +116,7 @@ public class PropertiesSettingsTest {
 
 			@Override
 			public boolean isLocationVariable(String value) {
-				if (value.equals(resolveString)) {
-					return true;
-				}
-
-				return false;
+				return value.equals(resolveString);
 			}
 
 			@Override

@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.web.internal.portlet.action;
 
 import com.liferay.asset.list.constants.AssetListPortletKeys;
 import com.liferay.asset.list.service.AssetListEntryService;
-import com.liferay.asset.list.web.internal.handler.AssetListEntryExceptionRequestHandler;
+import com.liferay.asset.list.web.internal.handler.AssetListEntryExceptionRequestHandlerUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -28,9 +19,8 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletURL;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,9 +29,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + AssetListPortletKeys.ASSET_LIST,
+		"jakarta.portlet.name=" + AssetListPortletKeys.ASSET_LIST,
 		"mvc.command.name=/asset_list/update_asset_list_entry"
 	},
 	service = MVCActionCommand.class
@@ -62,13 +51,15 @@ public class UpdateAssetListEntryMVCActionCommand extends BaseMVCActionCommand {
 			_assetListEntryService.updateAssetListEntry(
 				assetListEntryId, title);
 
-			LiferayPortletResponse liferayPortletResponse =
-				_portal.getLiferayPortletResponse(actionResponse);
-
-			PortletURL portletURL = liferayPortletResponse.createRenderURL();
-
 			JSONObject jsonObject = JSONUtil.put(
-				"redirectURL", portletURL.toString());
+				"redirectURL",
+				() -> {
+					LiferayPortletResponse liferayPortletResponse =
+						_portal.getLiferayPortletResponse(actionResponse);
+
+					return String.valueOf(
+						liferayPortletResponse.createRenderURL());
+				});
 
 			if (SessionErrors.contains(
 					actionRequest, "assetListEntryNameInvalid")) {
@@ -79,19 +70,15 @@ public class UpdateAssetListEntryMVCActionCommand extends BaseMVCActionCommand {
 			JSONPortletResponseUtil.writeJSON(
 				actionRequest, actionResponse, jsonObject);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			SessionErrors.add(actionRequest, "assetListEntryNameInvalid");
 
 			hideDefaultErrorMessage(actionRequest);
 
-			_assetListEntryExceptionRequestHandler.handlePortalException(
-				actionRequest, actionResponse, pe);
+			AssetListEntryExceptionRequestHandlerUtil.handlePortalException(
+				actionRequest, actionResponse, portalException);
 		}
 	}
-
-	@Reference
-	private AssetListEntryExceptionRequestHandler
-		_assetListEntryExceptionRequestHandler;
 
 	@Reference
 	private AssetListEntryService _assetListEntryService;

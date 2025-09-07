@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -19,6 +10,8 @@ import com.liferay.dynamic.data.mapping.service.DDMTemplateVersionLocalServiceUt
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.cache.CacheField;
@@ -53,7 +46,10 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 				return rootElement.attributeValue("default-locale");
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		Locale locale = LocaleUtil.getSiteDefault();
@@ -74,6 +70,9 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 		if (_resourceClassName == null) {
 			_resourceClassName = PortalUtil.getClassName(
 				getResourceClassNameId());
+
+			resourceClassNameUpdateEntityCacheBiConsumer.accept(
+				this, _resourceClassName);
 		}
 
 		return _resourceClassName;
@@ -123,7 +122,7 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 	 */
 	@Override
 	public String getWebDavURL(ThemeDisplay themeDisplay, String webDAVToken) {
-		StringBundler sb = new StringBundler(11);
+		StringBundler sb = new StringBundler(8);
 
 		boolean secure = false;
 
@@ -133,14 +132,12 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 			secure = true;
 		}
 
-		String portalURL = PortalUtil.getPortalURL(
-			themeDisplay.getServerName(), themeDisplay.getServerPort(), secure);
-
-		sb.append(portalURL);
-
+		sb.append(
+			PortalUtil.getPortalURL(
+				themeDisplay.getServerName(), themeDisplay.getServerPort(),
+				secure));
 		sb.append(themeDisplay.getPathContext());
-		sb.append(StringPool.SLASH);
-		sb.append("webdav");
+		sb.append("/webdav");
 
 		Group group = themeDisplay.getScopeGroup();
 
@@ -148,9 +145,7 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 
 		sb.append(StringPool.SLASH);
 		sb.append(webDAVToken);
-		sb.append(StringPool.SLASH);
-		sb.append("Templates");
-		sb.append(StringPool.SLASH);
+		sb.append("/Templates/");
 		sb.append(getTemplateId());
 
 		return sb.toString();
@@ -172,6 +167,9 @@ public class DDMTemplateImpl extends DDMTemplateBaseImpl {
 	public void setSmallImageType(String smallImageType) {
 		_smallImageType = smallImageType;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMTemplateImpl.class);
 
 	@CacheField(propagateToInterface = true)
 	private String _resourceClassName;

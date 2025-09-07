@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.io.unsync;
@@ -121,7 +112,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -129,7 +120,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -137,7 +128,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -145,7 +136,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -153,7 +144,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -161,7 +152,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -169,7 +160,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		unsyncBufferedReader.close();
@@ -191,14 +182,14 @@ public class UnsyncBufferedReaderTest {
 			new UnsyncBufferedReader(new StringReader(""), 0);
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
 			new UnsyncBufferedReader(new StringReader(""), -1);
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 	}
 
@@ -222,7 +213,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		Assert.assertEquals(-1, unsyncBufferedReader.markLimitIndex);
@@ -274,7 +265,7 @@ public class UnsyncBufferedReaderTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		// Shuffle
@@ -420,7 +411,7 @@ public class UnsyncBufferedReaderTest {
 		try {
 			unsyncBufferedReader.skip(-1);
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		// Load data into buffer
@@ -462,7 +453,8 @@ public class UnsyncBufferedReaderTest {
 
 		// Clear out buffer
 
-		Assert.assertEquals(size * 2 - 1, unsyncBufferedReader.skip(size * 2));
+		Assert.assertEquals(
+			(size * 2) - 1, unsyncBufferedReader.skip(size * 2));
 
 		// Mark a large size for EOF
 
@@ -484,7 +476,7 @@ public class UnsyncBufferedReaderTest {
 
 	static {
 		for (int i = 0; i < _SIZE; i++) {
-			_BUFFER[i] = (char)(i % 26 + 'a');
+			_BUFFER[i] = (char)((i % 26) + 'a');
 		}
 	}
 

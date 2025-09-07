@@ -3,7 +3,7 @@ definition {
 
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.main.component.name = "User Interface";
+	property testray.main.component.name = "Frontend Other";
 
 	setUp {
 		TestCase.setUpPortalInstance();
@@ -12,105 +12,91 @@ definition {
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
+		}
+		else {
+			PagesAdmin.tearDownCP();
+
+			JSONUser.tearDownNonAdminUsers();
 		}
 	}
 
-	@priority = "5"
-	test RightToLeftSmoke {
-		property portal.acceptance = "false";
-		property test.name.skip.portal.instance = "UIInfrastructureUsecase#RightToLeftSmoke";
-
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
-
-		SitePages.addPublicPage(pageName = "RTL Test Page");
-
-		Navigator.gotoPage(pageName = "RTL Test Page");
-
-		Portlet.addPG(portletName = "Language Selector");
-
-		LanguagePortlet.selectLanguagePG(
-			locale = "ar_SA",
-			textIcon = "العربية-السعودية");
-
-		ProductMenuHelper.openProductMenu();
-
-		Page.viewRTLLayout();
-
-		LanguagePortlet.selectLanguagePG(
-			locale = "en_US",
-			textIcon = "english-United States");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		Navigator.ensureLocaleURL(locale = "ar");
-
-		PortletEntry.changeLocale(locale = "ar_SA");
-
-		WebContent.addCP(webContentTitle = "WC Title");
-
-		WebContent.viewRTLLayout();
-
-		Navigator.openURL();
-
-		Navigator.ensureLocaleURL(locale = "en");
-	}
-
-	@description = "Ensure that a user can access portlet options and drag and drop portlets."
-	@priority = "5"
-	test Smoke {
+	@description = "LPS-95157. Verify control menu on an admin page is styled correctly after refreshing page"
+	@priority = 5
+	@refactordone
+	test AdminPageCanDisplayStyleCorrectlyAfterPageRefresh {
+		property app.server.types = "tomcat";
+		property database.types = "mysql";
+		property environment.acceptance = "false";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
 		property portal.acceptance = "true";
 
 		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+			category = "Content & Data",
+			portlet = "Web Content");
 
-		SitePages.addPublicPage(pageName = "Test Page");
+		Refresh();
 
-		Navigator.gotoPage(pageName = "Test Page");
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "display",
+			value1 = "flex");
 
-		Portlet.addPG(portletName = "Hello World");
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "list-style",
+			value1 = "outside none none");
 
-		task ("Close the Add Panel") {
-			Click(locator1 = "ControlMenuAddPanel#CLOSE_ADD_PANEL");
+		takeScreenshot();
+	}
+
+	@description = "LRQA-55778. Smoke test to verify portlet configuration is available, look and feel is available"
+	@priority = 5
+	@refactordone
+	test CanConfigurePortletUI {
+		property osgi.modules.includes = "frontend-taglib-clay-sample-web";
+		property portal.acceptance = "true";
+
+		task ("Given a portlet on public page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page");
+
+			JSONLayout.updateLayoutTemplateOfPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				layoutTemplate = "1 Column");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				widgetName = "Clay Sample");
+
+			Navigator.gotoPage(pageName = "Clay Sample Test Page");
 		}
 
-		task ("Assert the 'Configuration' iframe of the Hello World portlet") {
+		task ("When viewing configuration menu of the portlet") {
 			Portlet.gotoPortletOptions(
-				portletName = "Hello World",
+				portletName = "Clay Sample",
 				portletOption = "Configuration");
 
 			IFrame.selectConfigurationFrame();
-
-			AssertTextEquals(
-				key_navItem = "Sharing",
-				locator1 = "NavBar#NAV_ITEM_LINK",
-				value1 = "Sharing");
-
-			IFrame.closeFrame();
 		}
 
-		Navigator.gotoPage(pageName = "Test Page");
+		task ("When viewing the Look and Feel configuration") {
+			Navigator.gotoPage(pageName = "Clay Sample Test Page");
 
-		task ("Assert the 'Look and Feel' iframe of the Hello World portlet") {
 			Portlet.gotoPortletOptions(
-				portletName = "Hello World",
+				portletName = "Clay Sample",
 				portletOption = "Look and Feel Configuration");
 
 			IFrame.selectConfigurationFrame();
+		}
 
+		task ("Then the look and feel configuration iframe is present") {
 			var key_tab = "General";
 
 			AssertTextEquals(
@@ -119,39 +105,91 @@ definition {
 
 			IFrame.closeFrame();
 		}
+	}
 
-		Portlet.dragAndDropPortletToColumnPG(
-			columnNumberFrom = "1",
-			columnNumberTo = "2",
-			portletName = "Hello World");
+	@description = "LRQA-55778. Smoke test to verify portlet can be dragged and dropped"
+	@priority = 5
+	@refactordone
+	test CanDragAndDropPortlet {
+		property app.server.types = "tomcat";
+		property database.types = "mysql";
+		property environment.acceptance = "true";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
+		property osgi.modules.includes = "frontend-taglib-clay-sample-web";
+		property portal.acceptance = "true";
 
-		Portlet.dragAndDropPortletToColumnPG(
-			columnNumberFrom = "2",
-			columnNumberTo = "1",
-			portletName = "Hello World");
+		task ("Given a portlet on public page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page");
 
-		task ("Removes Hello World Portlets on Test Page and Welcome Page") {
-			Navigator.gotoPage(pageName = "Test Page");
+			JSONLayout.updateLayoutTemplateOfPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				layoutTemplate = "2 Columns (50/50)");
 
-			Portlet.deletePG(portletName = "Hello World");
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				widgetName = "Clay Sample");
 
-			Navigator.gotoPage(pageName = "Home");
+			Navigator.gotoPage(pageName = "Clay Sample Test Page");
+		}
 
-			Portlet.deletePG(portletName = "Hello World");
+		task ("Then able to drag and drop portlet to another column in page") {
+			Portlet.dragAndDropPortletToColumnPG(
+				columnNumberFrom = 1,
+				columnNumberTo = 2,
+				portletName = "Clay Sample");
 
-			Portlet.viewNoSpecificPG(portletName = "Hello World");
+			Portlet.dragAndDropPortletToColumnPG(
+				columnNumberFrom = 2,
+				columnNumberTo = 1,
+				portletName = "Clay Sample");
 		}
 	}
 
-	@description = "This is a use case for LPS-70390."
-	@priority = "4"
-	test ViewNonASCIICharactersWithSPADisabled {
+	@description = "LRQA-55778. Smoke test to verify portlet can be removed"
+	@priority = 5
+	@refactordone
+	test CanRemovePortlet {
+		property osgi.modules.includes = "frontend-taglib-clay-sample-web";
+		property portal.acceptance = "true";
+
+		task ("Given a portlet on public page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page");
+
+			JSONLayout.updateLayoutTemplateOfPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				layoutTemplate = "1 Column");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Clay Sample Test Page",
+				widgetName = "Clay Sample");
+
+			Navigator.gotoPage(pageName = "Clay Sample Test Page");
+		}
+
+		task ("When delete Clay Sample Portlet on Test Page") {
+			Portlet.deletePG(portletName = "Clay Sample");
+		}
+
+		task ("Then Clay Sample Portlet is not present on page") {
+			Portlet.viewNoSpecificPG(portletName = "Clay Sample");
+		}
+	}
+
+	@description = "LPS-70390. Non ascii characters would be displayed correctly, when SPA is turned off"
+	@priority = 4
+	@refactordone
+	test CanViewNonASCIICharactersWithSPADisabled {
 		property custom.properties = "javascript.single.page.application.enabled=false";
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.addCP(
 			userEmailAddress = "skandi@liferay.com",
@@ -159,16 +197,126 @@ definition {
 			userLastName = "Ääkkönen",
 			userScreenName = "uskandi");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.viewCP(
 			userEmailAddress = "skandi@liferay.com",
 			userFirstName = "Skändi",
 			userLastName = "Ääkkönen",
 			userScreenName = "uskandi");
+	}
+
+	@description = "Verify portlets have defined boundaries in 3 column page layout."
+	@priority = 5
+	@refactordone
+	test PortletBoundariesAreContained {
+		property app.server.types = "tomcat";
+		property database.types = "mysql";
+		property environment.acceptance = "false";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
+		property osgi.modules.includes = "frontend-taglib-clay-sample-web";
+		property portal.acceptance = "true";
+
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page");
+
+		JSONLayout.updateLayoutTemplateOfPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page",
+			layoutTemplate = "3 Columns");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = 1,
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Message Boards");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = 2,
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Clay Sample");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = 3,
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Documents and Media");
+
+		Navigator.gotoPage(pageName = "Test Page");
+
+		MouseOver(
+			key_pageColumnNumber = 1,
+			key_portletName = "Message Boards",
+			locator1 = "Portlet#PORTLET_TITLE_INSIDE_PAGE_COLUMN");
+
+		Portlet.assertPortletHeader(portletName = "MBPortlet");
+
+		takeScreenshot();
+
+		MouseOver(
+			key_pageColumnNumber = 2,
+			key_portletName = "Clay Sample",
+			locator1 = "Portlet#PORTLET_TITLE_INSIDE_PAGE_COLUMN");
+
+		Portlet.assertPortletHeader(portletName = "ClaySamplePortlet");
+
+		takeScreenshot();
+
+		MouseOver(
+			key_pageColumnNumber = 3,
+			key_portletName = "Documents and Media",
+			locator1 = "Portlet#PORTLET_TITLE_INSIDE_PAGE_COLUMN");
+
+		Portlet.assertPortletHeader(portletName = "DLPortlet");
+
+		takeScreenshot();
+	}
+
+	@description = "LPS-95157. Verify control menu on home page is styled correctly after refreshing page."
+	@priority = 5
+	@refactordone
+	test SitePageCanDisplayStyleCorrectlyAfterPageRefresh {
+		property app.server.types = "tomcat";
+		property database.types = "mysql";
+		property environment.acceptance = "false";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
+		property portal.acceptance = "true";
+
+		Navigator.gotoPage(pageName = "Home");
+
+		ProductMenuHelper.closeProductMenu();
+
+		Refresh();
+
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "display",
+			value1 = "flex");
+
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "list-style",
+			value1 = "outside none none");
+
+		takeScreenshot();
+
+		ProductMenuHelper.openProductMenu();
+
+		Refresh();
+
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "display",
+			value1 = "flex");
+
+		AssertCssValue(
+			locator1 = "//*[contains(@id,'controlMenu')]",
+			locator2 = "list-style",
+			value1 = "outside none none");
+
+		takeScreenshot();
 	}
 
 }

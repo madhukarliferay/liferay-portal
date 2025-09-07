@@ -1,34 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.internal.model.listener.test;
 
-import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryUserRel;
-import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
-import com.liferay.account.service.test.AccountEntryTestUtil;
+import com.liferay.account.service.test.util.AccountEntryArgs;
+import com.liferay.account.service.test.util.AccountEntryTestUtil;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
@@ -41,6 +31,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Pei-Jung Lan
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class AccountEntryUserRelModelListenerTest {
 
@@ -55,28 +46,20 @@ public class AccountEntryUserRelModelListenerTest {
 	}
 
 	@Test
-	public void testAddAccountEntryUserRelsForUserWithDefaultAccountEntry()
+	public void testAddAccountEntryUserRelForAccountEntryTypeBusiness()
 		throws Exception {
 
-		AccountEntry accountEntry = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
+		AccountEntryTestUtil.addAccountEntry(
+			AccountEntryArgs.withUsers(_user, UserTestUtil.addUser()));
+	}
 
-		_accountEntries.add(accountEntry);
+	@Test(expected = ModelListenerException.class)
+	public void testAddAccountEntryUserRelForAccountEntryTypePerson()
+		throws Exception {
 
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry.getAccountEntryId(), _user.getUserId());
-
-		_accountEntryUserRelLocalService.deleteAccountEntryUserRels(
-			accountEntry.getAccountEntryId(), new long[] {_user.getUserId()});
-
-		_assertGetAccountEntryUserRelByAccountUserId(
-			_user.getUserId(), AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT);
-
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry.getAccountEntryId(), _user.getUserId());
-
-		_assertGetAccountEntryUserRelByAccountUserId(
-			_user.getUserId(), accountEntry.getAccountEntryId());
+		AccountEntryTestUtil.addAccountEntry(
+			AccountEntryArgs.TYPE_PERSON,
+			AccountEntryArgs.withUsers(_user, UserTestUtil.addUser()));
 	}
 
 	@Test
@@ -84,19 +67,9 @@ public class AccountEntryUserRelModelListenerTest {
 		throws Exception {
 
 		AccountEntry accountEntry1 = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
-
-		_accountEntries.add(accountEntry1);
-
+			AccountEntryArgs.withUsers(_user));
 		AccountEntry accountEntry2 = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
-
-		_accountEntries.add(accountEntry2);
-
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry1.getAccountEntryId(), _user.getUserId());
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry2.getAccountEntryId(), _user.getUserId());
+			AccountEntryArgs.withUsers(_user));
 
 		List<AccountEntryUserRel> userAccountEntryUserRels =
 			_accountEntryUserRelLocalService.
@@ -118,12 +91,7 @@ public class AccountEntryUserRelModelListenerTest {
 		throws Exception {
 
 		AccountEntry accountEntry = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
-
-		_accountEntries.add(accountEntry);
-
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry.getAccountEntryId(), _user.getUserId());
+			AccountEntryArgs.withUsers(_user));
 
 		List<AccountEntryUserRel> userAccountEntryUserRels =
 			_accountEntryUserRelLocalService.
@@ -136,8 +104,13 @@ public class AccountEntryUserRelModelListenerTest {
 		_accountEntryUserRelLocalService.deleteAccountEntryUserRels(
 			accountEntry.getAccountEntryId(), new long[] {_user.getUserId()});
 
-		_assertGetAccountEntryUserRelByAccountUserId(
-			_user.getUserId(), AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT);
+		userAccountEntryUserRels =
+			_accountEntryUserRelLocalService.
+				getAccountEntryUserRelsByAccountUserId(_user.getUserId());
+
+		Assert.assertEquals(
+			userAccountEntryUserRels.toString(), 0,
+			userAccountEntryUserRels.size());
 	}
 
 	private void _assertGetAccountEntryUserRelByAccountUserId(
@@ -156,16 +129,9 @@ public class AccountEntryUserRelModelListenerTest {
 			expectedAccountEntryId, accountEntryUserRel.getAccountEntryId());
 	}
 
-	@DeleteAfterTestRun
-	private final List<AccountEntry> _accountEntries = new ArrayList<>();
-
-	@Inject
-	private AccountEntryLocalService _accountEntryLocalService;
-
 	@Inject
 	private AccountEntryUserRelLocalService _accountEntryUserRelLocalService;
 
-	@DeleteAfterTestRun
 	private User _user;
 
 }

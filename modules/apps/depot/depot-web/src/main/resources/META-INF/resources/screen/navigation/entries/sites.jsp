@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,24 +13,69 @@ DepotAdminSitesDisplayContext depotAdminSitesDisplayContext = new DepotAdminSite
 List<DepotEntryGroupRel> depotEntryGroupRels = depotAdminSitesDisplayContext.getDepotEntryGroupRels();
 %>
 
-<div class="sheet-section">
-	<h3 class="autofit-row sheet-subtitle">
-		<span class="autofit-col autofit-col-expand">
+<clay:sheet-section>
+	<clay:content-row
+		containerElement="h3"
+		cssClass="sheet-subtitle"
+	>
+		<clay:content-col
+			expand="<%= true %>"
+		>
 			<span class="heading-text"><liferay-ui:message key="connected-sites" /></span>
-		</span>
-		<span class="autofit-col">
-			<span class="heading-end">
-				<clay:button
-					elementClasses="btn-secondary"
-					id='<%= renderResponse.getNamespace() + "addConnectedSiteButton" %>'
-					label='<%= LanguageUtil.get(request, "add") %>'
-					size="sm"
-					style="secondary"
-					title='<%= LanguageUtil.get(request, "connect-to-a-site") %>'
-				/>
-			</span>
-		</span>
-	</h3>
+		</clay:content-col>
+
+		<c:if test="<%= !depotAdminSitesDisplayContext.isLiveDepotEntry() %>">
+			<clay:content-col>
+				<span class="heading-end">
+
+					<%
+					PortletURL itemSelectorURL = depotAdminSitesDisplayContext.getItemSelectorURL();
+
+					String itemSelectorURLString = itemSelectorURL.toString();
+					%>
+
+					<clay:button
+						additionalProps='<%=
+							HashMapBuilder.<String, Object>put(
+								"currentURL", currentURL
+							).put(
+								"itemSelectorURL", itemSelectorURLString
+							).build()
+						%>'
+						displayType="secondary"
+						id='<%= liferayPortletResponse.getNamespace() + "addConnectedSiteButton" %>'
+						label="add"
+						propsTransformer="{AddConnectedSitesButtonPropsTransformer} from depot-web"
+						small="<%= true %>"
+						title="connect-to-a-site"
+					/>
+				</span>
+			</clay:content-col>
+		</c:if>
+	</clay:content-row>
+
+	<liferay-ui:error exception="<%= DepotEntryGroupRelToGroupException.MustBeLocallyStaged.class %>">
+		<liferay-ui:message key="a-locally-staged-asset-library-cannot-be-connected-to-a-remotely-staged-site" />
+	</liferay-ui:error>
+
+	<liferay-ui:error exception="<%= DepotEntryGroupRelToGroupException.MustBeRemotelyStaged.class %>">
+		<liferay-ui:message key="a-remotely-staged-asset-library-cannot-be-connected-to-a-locally-staged-site" />
+	</liferay-ui:error>
+
+	<liferay-ui:error exception="<%= DepotEntryGroupRelToGroupException.MustBeStaged.class %>">
+		<liferay-ui:message key="a-staged-asset-library-cannot-be-connected-to-an-unstaged-site" />
+	</liferay-ui:error>
+
+	<liferay-ui:error exception="<%= DepotEntryGroupRelToGroupException.MustNotBeStaged.class %>">
+		<liferay-ui:message key="an-unstaged-asset-library-cannot-be-connected-to-a-staged-site" />
+	</liferay-ui:error>
+
+	<c:if test="<%= depotAdminSitesDisplayContext.isLiveDepotEntry() %>">
+		<clay:alert
+			displayType="info"
+			message="this-is-a-live-asset-library.-site-connections-must-be-managed-from-the-staging-one"
+		/>
+	</c:if>
 
 	<aui:input name="toGroupId" type="hidden" />
 
@@ -53,7 +89,8 @@ List<DepotEntryGroupRel> depotEntryGroupRels = depotAdminSitesDisplayContext.get
 		total="<%= depotEntryGroupRels.size() %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%= depotEntryGroupRels.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+			calculateStartAndEnd="<%= true %>"
+			results="<%= depotEntryGroupRels %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -62,77 +99,45 @@ List<DepotEntryGroupRel> depotEntryGroupRels = depotAdminSitesDisplayContext.get
 			modelVar="depotEntryGroupRel"
 		>
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="name"
 			>
 				<%= HtmlUtil.escape(depotAdminSitesDisplayContext.getSiteName(depotEntryGroupRel)) %>
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
-				helpMessage="shows-the-repository-content-in-search-results"
+				cssClass="table-cell-expand"
+				helpMessage="shows-the-asset-library-content-in-search-results"
 				name="searchable-content"
 			>
 				<liferay-ui:message key='<%= depotEntryGroupRel.isSearchable() ? "yes" : "no" %>' />
 			</liferay-ui:search-container-column-text>
 
-			<liferay-ui:search-container-column-text>
-				<clay:dropdown-menu
-					defaultEventHandler="<%= DepotAdminWebKeys.CONNECTED_SITE_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-					dropdownItems="<%= depotAdminSitesDisplayContext.getConnectedSiteDropdownItems(depotEntryGroupRel) %>"
-					icon="ellipsis-v"
-					style="secondary"
-					triggerCssClasses="btn-monospaced btn-outline-borderless btn-secondary btn-sm"
-				/>
+			<liferay-ui:search-container-column-text
+				cssClass="table-cell-expand"
+				helpMessage="makes-the-asset-library-web-content-structures-and-document-types-available-in-the-site"
+				name="structures-and-types"
+			>
+				<liferay-ui:message key='<%= depotEntryGroupRel.isDdmStructuresAvailable() ? "yes" : "no" %>' />
 			</liferay-ui:search-container-column-text>
+
+			<c:if test="<%= !depotAdminSitesDisplayContext.isLiveDepotEntry() %>">
+				<liferay-ui:search-container-column-text>
+					<clay:dropdown-menu
+						borderless="<%= true %>"
+						displayType="secondary"
+						dropdownItems="<%= depotAdminSitesDisplayContext.getConnectedSiteDropdownItems(depotEntryGroupRel) %>"
+						icon="ellipsis-v"
+						monospaced="<%= true %>"
+						propsTransformer="{ConnectedSiteDropdownPropsTransformer} from depot-web"
+						small="<%= true %>"
+					/>
+				</liferay-ui:search-container-column-text>
+			</c:if>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-
-	<liferay-frontend:component
-		componentId="<%= DepotAdminWebKeys.CONNECTED_SITE_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-		module="js/ConnectedSiteDropdownDefaultEventHandler.es"
-	/>
-
-	<aui:script require="metal-dom/src/all/dom as dom">
-		var addConnectedSiteButton = document.querySelector(
-			'#<portlet:namespace />addConnectedSiteButton'
-		);
-
-		addConnectedSiteButton.addEventListener('click', function(event) {
-			Liferay.Util.selectEntity(
-				{
-					dialog: {
-						constrain: true,
-						destroyOnHide: true,
-						modal: true
-					},
-					eventName:
-						'<%= liferayPortletResponse.getNamespace() + "selectSite" %>',
-					id: '<portlet:namespace />selectSite',
-					title: '<liferay-ui:message key="select-site" />',
-					uri:
-						'<%= String.valueOf(depotAdminSitesDisplayContext.getItemSelectorURL()) %>'
-				},
-				function(event) {
-					var toGroupIdInput = document.querySelector(
-						'#<portlet:namespace />toGroupId'
-					);
-
-					toGroupIdInput.value = event.groupid;
-
-					var redirectInput = document.querySelector(
-						'#<portlet:namespace />redirect'
-					);
-
-					redirectInput.value = '<%= currentURL %>';
-
-					submitForm(toGroupIdInput.form);
-				}
-			);
-		});
-	</aui:script>
-</div>
+</clay:sheet-section>

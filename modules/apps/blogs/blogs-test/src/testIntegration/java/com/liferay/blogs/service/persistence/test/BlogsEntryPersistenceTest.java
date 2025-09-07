@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.blogs.exception.DuplicateBlogsEntryExternalReferenceCodeException;
 import com.liferay.blogs.exception.NoSuchEntryException;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalServiceUtil;
@@ -26,14 +18,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,7 +122,11 @@ public class BlogsEntryPersistenceTest {
 
 		newBlogsEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newBlogsEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newBlogsEntry.setUuid(RandomTestUtil.randomString());
+
+		newBlogsEntry.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		newBlogsEntry.setGroupId(RandomTestUtil.nextLong());
 
@@ -191,7 +191,13 @@ public class BlogsEntryPersistenceTest {
 			existingBlogsEntry.getMvccVersion(),
 			newBlogsEntry.getMvccVersion());
 		Assert.assertEquals(
+			existingBlogsEntry.getCtCollectionId(),
+			newBlogsEntry.getCtCollectionId());
+		Assert.assertEquals(
 			existingBlogsEntry.getUuid(), newBlogsEntry.getUuid());
+		Assert.assertEquals(
+			existingBlogsEntry.getExternalReferenceCode(),
+			newBlogsEntry.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingBlogsEntry.getEntryId(), newBlogsEntry.getEntryId());
 		Assert.assertEquals(
@@ -264,6 +270,26 @@ public class BlogsEntryPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingBlogsEntry.getStatusDate()),
 			Time.getShortTimestamp(newBlogsEntry.getStatusDate()));
+	}
+
+	@Test(expected = DuplicateBlogsEntryExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		BlogsEntry blogsEntry = addBlogsEntry();
+
+		BlogsEntry newBlogsEntry = addBlogsEntry();
+
+		newBlogsEntry.setGroupId(blogsEntry.getGroupId());
+
+		newBlogsEntry = _persistence.update(newBlogsEntry);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newBlogsEntry);
+
+		newBlogsEntry.setExternalReferenceCode(
+			blogsEntry.getExternalReferenceCode());
+
+		_persistence.update(newBlogsEntry);
 	}
 
 	@Test
@@ -505,6 +531,15 @@ public class BlogsEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		BlogsEntry newBlogsEntry = addBlogsEntry();
 
@@ -529,18 +564,37 @@ public class BlogsEntryPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<BlogsEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"BlogsEntry", "mvccVersion", true, "uuid", true, "entryId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "title", true,
-			"subtitle", true, "urlTitle", true, "description", true,
-			"displayDate", true, "allowPingbacks", true, "allowTrackbacks",
-			true, "coverImageCaption", true, "coverImageFileEntryId", true,
+			"BlogsEntry", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "entryId", true, "groupId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "title", true, "subtitle",
+			true, "urlTitle", true, "description", true, "displayDate", true,
+			"allowPingbacks", true, "allowTrackbacks", true,
+			"coverImageCaption", true, "coverImageFileEntryId", true,
 			"coverImageURL", true, "smallImage", true, "smallImageFileEntryId",
 			true, "smallImageId", true, "smallImageURL", true,
 			"lastPublishDate", true, "status", true, "statusByUserId", true,
@@ -757,29 +811,82 @@ public class BlogsEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		BlogsEntry existingBlogsEntry = _persistence.findByPrimaryKey(
-			newBlogsEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newBlogsEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingBlogsEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingBlogsEntry, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		BlogsEntry newBlogsEntry = addBlogsEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			BlogsEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("entryId", newBlogsEntry.getEntryId()));
+
+		List<BlogsEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(BlogsEntry blogsEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingBlogsEntry.getGroupId()),
+			blogsEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(blogsEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingBlogsEntry, "getOriginalGroupId", new Class<?>[0]));
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingBlogsEntry.getGroupId()),
+			Long.valueOf(blogsEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingBlogsEntry, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingBlogsEntry.getUrlTitle(),
-				ReflectionTestUtil.invoke(
-					existingBlogsEntry, "getOriginalUrlTitle",
-					new Class<?>[0])));
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			blogsEntry.getUrlTitle(),
+			ReflectionTestUtil.invoke(
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "urlTitle"));
+
+		Assert.assertEquals(
+			blogsEntry.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(blogsEntry.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				blogsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected BlogsEntry addBlogsEntry() throws Exception {
@@ -789,7 +896,11 @@ public class BlogsEntryPersistenceTest {
 
 		blogsEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		blogsEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		blogsEntry.setUuid(RandomTestUtil.randomString());
+
+		blogsEntry.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		blogsEntry.setGroupId(RandomTestUtil.nextLong());
 

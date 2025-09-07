@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model.impl;
 
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -38,18 +33,18 @@ public class LayoutPageTemplateStructureRelCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutPageTemplateStructureRelCacheModel)) {
+		if (!(object instanceof LayoutPageTemplateStructureRelCacheModel)) {
 			return false;
 		}
 
 		LayoutPageTemplateStructureRelCacheModel
 			layoutPageTemplateStructureRelCacheModel =
-				(LayoutPageTemplateStructureRelCacheModel)obj;
+				(LayoutPageTemplateStructureRelCacheModel)object;
 
 		if ((layoutPageTemplateStructureRelId ==
 				layoutPageTemplateStructureRelCacheModel.
@@ -82,10 +77,12 @@ public class LayoutPageTemplateStructureRelCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", layoutPageTemplateStructureRelId=");
@@ -108,6 +105,16 @@ public class LayoutPageTemplateStructureRelCacheModel
 		sb.append(segmentsExperienceId);
 		sb.append(", data=");
 		sb.append(data);
+		sb.append(", lastPublishDate=");
+		sb.append(lastPublishDate);
+		sb.append(", status=");
+		sb.append(status);
+		sb.append(", statusByUserId=");
+		sb.append(statusByUserId);
+		sb.append(", statusByUserName=");
+		sb.append(statusByUserName);
+		sb.append(", statusDate=");
+		sb.append(statusDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -119,6 +126,7 @@ public class LayoutPageTemplateStructureRelCacheModel
 			new LayoutPageTemplateStructureRelImpl();
 
 		layoutPageTemplateStructureRelImpl.setMvccVersion(mvccVersion);
+		layoutPageTemplateStructureRelImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			layoutPageTemplateStructureRelImpl.setUuid("");
@@ -168,14 +176,53 @@ public class LayoutPageTemplateStructureRelCacheModel
 			layoutPageTemplateStructureRelImpl.setData(data);
 		}
 
+		if (lastPublishDate == Long.MIN_VALUE) {
+			layoutPageTemplateStructureRelImpl.setLastPublishDate(null);
+		}
+		else {
+			layoutPageTemplateStructureRelImpl.setLastPublishDate(
+				new Date(lastPublishDate));
+		}
+
+		layoutPageTemplateStructureRelImpl.setStatus(status);
+		layoutPageTemplateStructureRelImpl.setStatusByUserId(statusByUserId);
+
+		if (statusByUserName == null) {
+			layoutPageTemplateStructureRelImpl.setStatusByUserName("");
+		}
+		else {
+			layoutPageTemplateStructureRelImpl.setStatusByUserName(
+				statusByUserName);
+		}
+
+		if (statusDate == Long.MIN_VALUE) {
+			layoutPageTemplateStructureRelImpl.setStatusDate(null);
+		}
+		else {
+			layoutPageTemplateStructureRelImpl.setStatusDate(
+				new Date(statusDate));
+		}
+
 		layoutPageTemplateStructureRelImpl.resetOriginalValues();
+
+		try {
+			_dataJSONObjectMethodHandle.invokeExact(
+				layoutPageTemplateStructureRelImpl, dataJSONObject);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return layoutPageTemplateStructureRelImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		layoutPageTemplateStructureRelId = objectInput.readLong();
@@ -192,12 +239,24 @@ public class LayoutPageTemplateStructureRelCacheModel
 		layoutPageTemplateStructureId = objectInput.readLong();
 
 		segmentsExperienceId = objectInput.readLong();
-		data = objectInput.readUTF();
+		data = (String)objectInput.readObject();
+		lastPublishDate = objectInput.readLong();
+
+		status = objectInput.readInt();
+
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
+
+		dataJSONObject =
+			(com.liferay.portal.kernel.json.JSONObject)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -229,14 +288,32 @@ public class LayoutPageTemplateStructureRelCacheModel
 		objectOutput.writeLong(segmentsExperienceId);
 
 		if (data == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(data);
+		}
+
+		objectOutput.writeLong(lastPublishDate);
+
+		objectOutput.writeInt(status);
+
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(data);
+			objectOutput.writeUTF(statusByUserName);
 		}
+
+		objectOutput.writeLong(statusDate);
+
+		objectOutput.writeObject(dataJSONObject);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long layoutPageTemplateStructureRelId;
 	public long groupId;
@@ -248,5 +325,26 @@ public class LayoutPageTemplateStructureRelCacheModel
 	public long layoutPageTemplateStructureId;
 	public long segmentsExperienceId;
 	public String data;
+	public long lastPublishDate;
+	public int status;
+	public long statusByUserId;
+	public String statusByUserName;
+	public long statusDate;
+	public volatile com.liferay.portal.kernel.json.JSONObject dataJSONObject;
+
+	private static final MethodHandle _dataJSONObjectMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_dataJSONObjectMethodHandle = lookup.findSetter(
+				LayoutPageTemplateStructureRelImpl.class, "_dataJSONObject",
+				com.liferay.portal.kernel.json.JSONObject.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

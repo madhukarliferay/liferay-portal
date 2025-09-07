@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.asah.connector.internal.provider;
@@ -37,13 +28,12 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sarai Díaz
  */
 @Component(
-	immediate = true,
 	property = "segments.entry.provider.source=" + SegmentsEntryConstants.SOURCE_ASAH_FARO_BACKEND,
 	service = AsahInterestTermProvider.class
 )
 public class AsahInterestTermProvider {
 
-	public String[] getInterestTerms(String userId) {
+	public String[] getInterestTerms(long companyId, String userId) {
 		String[] cachedInterestTerms = _asahInterestTermCache.getInterestTerms(
 			userId);
 
@@ -54,7 +44,7 @@ public class AsahInterestTermProvider {
 						userId);
 			}
 
-			_sendMessage(userId);
+			_sendMessage(companyId, userId);
 
 			return new String[0];
 		}
@@ -83,10 +73,11 @@ public class AsahInterestTermProvider {
 		_destinationServiceRegistration.unregister();
 	}
 
-	private void _sendMessage(String userId) {
+	private void _sendMessage(long companyId, String userId) {
 		Message message = new Message();
 
-		message.setPayload(userId);
+		message.put("companyId", companyId);
+		message.put("userId", userId);
 
 		_messageBus.sendMessage(
 			SegmentsAsahDestinationNames.INTEREST_TERMS, message);

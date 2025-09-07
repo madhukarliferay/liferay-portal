@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.cors.client.test;
 
 import com.liferay.petra.process.ProcessCallable;
 import com.liferay.petra.process.ProcessException;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.StringUtil;
+
+import jakarta.ws.rs.HttpMethod;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -30,9 +24,13 @@ import java.util.Map;
 public class AllowRestrictedHeadersCallable
 	implements ProcessCallable<String[]> {
 
-	public AllowRestrictedHeadersCallable(String url, String origin) {
+	public AllowRestrictedHeadersCallable(
+		String url, String origin, String method, boolean authenticate) {
+
 		_url = url;
 		_origin = origin;
+		_method = method;
+		_authenticate = authenticate;
 	}
 
 	@Override
@@ -45,7 +43,16 @@ public class AllowRestrictedHeadersCallable
 
 			httpURLConnection.setRequestProperty("Origin", _origin);
 			httpURLConnection.setRequestProperty(
-				_ACCESS_CONTROL_REQUEST_METHOD, "GET");
+				_ACCESS_CONTROL_REQUEST_METHOD, HttpMethod.GET);
+			httpURLConnection.setRequestMethod(_method);
+
+			if (_authenticate) {
+				String encodedUserNameAndPassword = Base64.encode(
+					"test@liferay.com:test".getBytes());
+
+				httpURLConnection.setRequestProperty(
+					"Authorization", "Basic " + encodedUserNameAndPassword);
+			}
 
 			Map<String, List<String>> headerFields =
 				httpURLConnection.getHeaderFields();
@@ -57,8 +64,8 @@ public class AllowRestrictedHeadersCallable
 				String.valueOf(httpURLConnection.getResponseCode())
 			};
 		}
-		catch (Exception e) {
-			throw new ProcessException(e);
+		catch (Exception exception) {
+			throw new ProcessException(exception);
 		}
 	}
 
@@ -70,6 +77,8 @@ public class AllowRestrictedHeadersCallable
 
 	private static final long serialVersionUID = 1L;
 
+	private final boolean _authenticate;
+	private final String _method;
 	private final String _origin;
 	private final String _url;
 

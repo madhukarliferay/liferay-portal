@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.search.test;
@@ -35,7 +26,6 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -51,7 +41,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Locale;
@@ -80,31 +69,29 @@ public class JournalIndexerTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		CompanyThreadLocal.setCompanyId(TestPropsValues.getCompanyId());
-
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext();
 
 		serviceContext.setCompanyId(TestPropsValues.getCompanyId());
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
-		PortalPreferences portalPreferenceces =
+		PortalPreferences portalPreferences =
 			PortletPreferencesFactoryUtil.getPortalPreferences(
 				TestPropsValues.getUserId(), true);
 
 		_originalPortalPreferencesXML = PortletPreferencesFactoryUtil.toXML(
-			portalPreferenceces);
+			portalPreferences);
 
-		portalPreferenceces.setValue(
+		portalPreferences.setValue(
 			"", "indexAllArticleVersionsEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue(
 			"", "expireAllArticleVersionsEnabled", "true");
 
 		PortalPreferencesLocalServiceUtil.updatePreferences(
 			TestPropsValues.getCompanyId(),
 			PortletKeys.PREFS_OWNER_TYPE_COMPANY,
-			PortletPreferencesFactoryUtil.toXML(portalPreferenceces));
+			PortletPreferencesFactoryUtil.toXML(portalPreferences));
 	}
 
 	@After
@@ -353,16 +340,16 @@ public class JournalIndexerTest {
 			LocaleUtil.US, "Title"
 		).build();
 
-		Map<Locale, String> contentMap = HashMapBuilder.put(
-			LocaleUtil.GERMANY, "Liferay Architektur Ansatz"
-		).put(
-			LocaleUtil.SPAIN, "Liferay Arquitectura Aproximacion"
-		).put(
-			LocaleUtil.US, "Liferay Architectural Approach"
-		).build();
-
 		JournalArticle article = JournalTestUtil.addArticleWithWorkflow(
-			_group.getGroupId(), titleMap, titleMap, contentMap, true);
+			_group.getGroupId(), titleMap, titleMap,
+			HashMapBuilder.put(
+				LocaleUtil.GERMANY, "Liferay Architektur Ansatz"
+			).put(
+				LocaleUtil.SPAIN, "Liferay Arquitectura Aproximacion"
+			).put(
+				LocaleUtil.US, "Liferay Architectural Approach"
+			).build(),
+			true);
 
 		assertSearchCount(1, _group.getGroupId(), searchContext1);
 
@@ -452,11 +439,6 @@ public class JournalIndexerTest {
 			serviceContext);
 
 		assertSearchCount(1, _group.getGroupId(), searchContext2);
-	}
-
-	@Test
-	public void testUpdateStructuredContent() throws Exception {
-		updateContent();
 	}
 
 	protected void addArticle(boolean approve) throws Exception {
@@ -791,45 +773,6 @@ public class JournalIndexerTest {
 			assertSearchCount(1, _group.getGroupId(), searchContext1);
 			assertSearchCount(0, _group.getGroupId(), searchContext2);
 		}
-	}
-
-	protected void updateContent() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
-		SearchContext searchContext1 = SearchContextTestUtil.getSearchContext(
-			_group.getGroupId());
-
-		searchContext1.setKeywords("Architectural");
-
-		assertSearchCount(0, _group.getGroupId(), searchContext1);
-
-		SearchContext searchContext2 = SearchContextTestUtil.getSearchContext(
-			_group.getGroupId());
-
-		searchContext2.setKeywords("Liferay");
-
-		assertSearchCount(0, _group.getGroupId(), searchContext2);
-
-		JournalFolder folder = JournalTestUtil.addFolder(
-			_group.getGroupId(), RandomTestUtil.randomString());
-
-		String content = "Liferay Architectural Approach";
-
-		JournalArticle article = addJournalWithDDMStructure(
-			folder.getFolderId(), content, serviceContext);
-
-		assertSearchCount(1, _group.getGroupId(), searchContext1);
-
-		content = DDMStructureTestUtil.getSampleStructuredContent(
-			"name", "Architectural Approach");
-
-		JournalArticleLocalServiceUtil.updateContent(
-			_group.getGroupId(), article.getArticleId(), article.getVersion(),
-			content);
-
-		assertSearchCount(1, _group.getGroupId(), searchContext1);
-		assertSearchCount(0, _group.getGroupId(), searchContext2);
 	}
 
 	@DeleteAfterTestRun

@@ -1,23 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portlet.social.service.base.SocialActivitySetLocalServiceBaseImpl;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivitySet;
+import com.liferay.social.kernel.service.persistence.SocialActivityPersistence;
 import com.liferay.social.kernel.util.comparator.SocialActivitySetModifiedDateComparator;
 
 import java.util.List;
@@ -34,7 +27,7 @@ public class SocialActivitySetLocalServiceImpl
 
 		// Activity set
 
-		SocialActivity activity = socialActivityPersistence.findByPrimaryKey(
+		SocialActivity activity = _socialActivityPersistence.findByPrimaryKey(
 			activityId);
 
 		long activitySetId = counterLocalService.increment();
@@ -52,13 +45,13 @@ public class SocialActivitySetLocalServiceImpl
 		activitySet.setType(activity.getType());
 		activitySet.setActivityCount(1);
 
-		socialActivitySetPersistence.update(activitySet);
+		activitySet = socialActivitySetPersistence.update(activitySet);
 
 		// Activity
 
 		activity.setActivitySetId(activitySetId);
 
-		socialActivityPersistence.update(activity);
+		_socialActivityPersistence.update(activity);
 
 		return activitySet;
 	}
@@ -93,7 +86,7 @@ public class SocialActivitySetLocalServiceImpl
 	public void decrementActivityCount(long classNameId, long classPK)
 		throws PortalException {
 
-		List<SocialActivity> activities = socialActivityPersistence.findByC_C(
+		List<SocialActivity> activities = _socialActivityPersistence.findByC_C(
 			classNameId, classPK);
 
 		for (SocialActivity activity : activities) {
@@ -107,7 +100,7 @@ public class SocialActivitySetLocalServiceImpl
 
 		return socialActivitySetPersistence.fetchByC_C_T_First(
 			classNameId, classPK, type,
-			new SocialActivitySetModifiedDateComparator());
+			SocialActivitySetModifiedDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -116,7 +109,7 @@ public class SocialActivitySetLocalServiceImpl
 
 		return socialActivitySetPersistence.fetchByU_C_C_T_First(
 			userId, classNameId, classPK, type,
-			new SocialActivitySetModifiedDateComparator());
+			SocialActivitySetModifiedDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -124,7 +117,8 @@ public class SocialActivitySetLocalServiceImpl
 		long groupId, int start, int end) {
 
 		return socialActivitySetPersistence.findByGroupId(
-			groupId, start, end, new SocialActivitySetModifiedDateComparator());
+			groupId, start, end,
+			SocialActivitySetModifiedDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -176,7 +170,7 @@ public class SocialActivitySetLocalServiceImpl
 
 		return socialActivitySetPersistence.fetchByG_U_T_First(
 			groupId, userId, type,
-			new SocialActivitySetModifiedDateComparator());
+			SocialActivitySetModifiedDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -185,7 +179,7 @@ public class SocialActivitySetLocalServiceImpl
 
 		return socialActivitySetPersistence.fetchByG_U_C_T_First(
 			groupId, userId, classNameId, type,
-			new SocialActivitySetModifiedDateComparator());
+			SocialActivitySetModifiedDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -233,7 +227,7 @@ public class SocialActivitySetLocalServiceImpl
 		SocialActivitySet activitySet =
 			socialActivitySetPersistence.findByPrimaryKey(activitySetId);
 
-		SocialActivity activity = socialActivityPersistence.findByPrimaryKey(
+		SocialActivity activity = _socialActivityPersistence.findByPrimaryKey(
 			activityId);
 
 		activitySet.setUserId(activity.getUserId());
@@ -247,7 +241,10 @@ public class SocialActivitySetLocalServiceImpl
 
 		activity.setActivitySetId(activitySetId);
 
-		socialActivityPersistence.update(activity);
+		_socialActivityPersistence.update(activity);
 	}
+
+	@BeanReference(type = SocialActivityPersistence.class)
+	private SocialActivityPersistence _socialActivityPersistence;
 
 }

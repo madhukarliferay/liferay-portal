@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.messaging;
@@ -48,9 +39,9 @@ public class MessageStatus implements Serializable {
 		return false;
 	}
 
-	public void setException(Exception e) {
-		_exceptionMessage = e.getMessage();
-		_exceptionStackTrace = StackTraceUtil.getStackTrace(e);
+	public void setException(Exception exception) {
+		_exceptionMessage = exception.getMessage();
+		_exceptionStackTrace = StackTraceUtil.getStackTrace(exception);
 	}
 
 	public void setPayload(Object payload) {
@@ -67,21 +58,10 @@ public class MessageStatus implements Serializable {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(11);
-
-		sb.append("{startTime=");
-		sb.append(_startTime);
-		sb.append(", endTime=");
-		sb.append(_endTime);
-		sb.append(", payload=");
-		sb.append(_payload);
-		sb.append(", errorMessage=");
-		sb.append(_exceptionMessage);
-		sb.append(", errorStackTrace=");
-		sb.append(_exceptionStackTrace);
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{startTime=", _startTime, ", endTime=", _endTime, ", payload=",
+			_payload, ", errorMessage=", _exceptionMessage,
+			", errorStackTrace=", _exceptionStackTrace, "}");
 	}
 
 	private long _endTime;

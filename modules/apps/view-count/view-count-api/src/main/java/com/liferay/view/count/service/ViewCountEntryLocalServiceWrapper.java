@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.view.count.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ViewCountEntryLocalService}.
@@ -27,6 +19,10 @@ public class ViewCountEntryLocalServiceWrapper
 	implements ServiceWrapper<ViewCountEntryLocalService>,
 			   ViewCountEntryLocalService {
 
+	public ViewCountEntryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ViewCountEntryLocalServiceWrapper(
 		ViewCountEntryLocalService viewCountEntryLocalService) {
 
@@ -36,6 +32,10 @@ public class ViewCountEntryLocalServiceWrapper
 	/**
 	 * Adds the view count entry to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ViewCountEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param viewCountEntry the view count entry
 	 * @return the view count entry that was added
 	 */
@@ -44,6 +44,17 @@ public class ViewCountEntryLocalServiceWrapper
 		com.liferay.view.count.model.ViewCountEntry viewCountEntry) {
 
 		return _viewCountEntryLocalService.addViewCountEntry(viewCountEntry);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _viewCountEntryLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -83,6 +94,10 @@ public class ViewCountEntryLocalServiceWrapper
 	/**
 	 * Deletes the view count entry from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ViewCountEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param viewCountEntry the view count entry
 	 * @return the view count entry that was removed
 	 */
@@ -96,6 +111,10 @@ public class ViewCountEntryLocalServiceWrapper
 	/**
 	 * Deletes the view count entry with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ViewCountEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param viewCountEntryPK the primary key of the view count entry
 	 * @return the view count entry that was removed
 	 * @throws PortalException if a view count entry with the primary key could not be found
@@ -108,6 +127,18 @@ public class ViewCountEntryLocalServiceWrapper
 
 		return _viewCountEntryLocalService.deleteViewCountEntry(
 			viewCountEntryPK);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _viewCountEntryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _viewCountEntryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -234,6 +265,9 @@ public class ViewCountEntryLocalServiceWrapper
 		return _viewCountEntryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -293,6 +327,11 @@ public class ViewCountEntryLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.petra.sql.dsl.Table<?> getViewCountEntryTable() {
+		return _viewCountEntryLocalService.getViewCountEntryTable();
+	}
+
+	@Override
 	public void incrementViewCount(
 		long companyId, long classNameId, long classPK, int increment) {
 
@@ -300,8 +339,22 @@ public class ViewCountEntryLocalServiceWrapper
 			companyId, classNameId, classPK, increment);
 	}
 
+	@Override
+	public boolean isViewCountEnabled() {
+		return _viewCountEntryLocalService.isViewCountEnabled();
+	}
+
+	@Override
+	public boolean isViewCountEnabled(long classNameId) {
+		return _viewCountEntryLocalService.isViewCountEnabled(classNameId);
+	}
+
 	/**
 	 * Updates the view count entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ViewCountEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param viewCountEntry the view count entry
 	 * @return the view count entry that was updated
@@ -311,6 +364,11 @@ public class ViewCountEntryLocalServiceWrapper
 		com.liferay.view.count.model.ViewCountEntry viewCountEntry) {
 
 		return _viewCountEntryLocalService.updateViewCountEntry(viewCountEntry);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _viewCountEntryLocalService.getBasePersistence();
 	}
 
 	@Override

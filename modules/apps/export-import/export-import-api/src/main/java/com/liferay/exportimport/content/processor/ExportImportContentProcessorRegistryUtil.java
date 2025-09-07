@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.content.processor;
@@ -36,14 +27,14 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  */
 public class ExportImportContentProcessorRegistryUtil {
 
-	public static ExportImportContentProcessor getExportImportContentProcessor(
-		String className) {
+	public static ExportImportContentProcessor<String>
+		getExportImportContentProcessor(String className) {
 
 		return _exportImportContentProcessorRegistryUtil.
 			_getExportImportContentProcessor(className);
 	}
 
-	public static List<ExportImportContentProcessor>
+	public static List<ExportImportContentProcessor<String>>
 		getExportImportContentProcessors() {
 
 		return _exportImportContentProcessorRegistryUtil.
@@ -57,23 +48,26 @@ public class ExportImportContentProcessorRegistryUtil {
 		_bundleContext = bundle.getBundleContext();
 
 		_serviceTracker = ServiceTrackerFactory.open(
-			_bundleContext, ExportImportContentProcessor.class,
+			_bundleContext,
+			(Class<ExportImportContentProcessor<String>>)
+				(Class<?>)ExportImportContentProcessor.class,
 			new ExportImportContentProcessorServiceTrackerCustomizer());
 	}
 
-	private ExportImportContentProcessor _getExportImportContentProcessor(
-		String className) {
+	private ExportImportContentProcessor<String>
+		_getExportImportContentProcessor(String className) {
 
 		return _exportImportContentProcessors.get(className);
 	}
 
-	private List<ExportImportContentProcessor>
+	private List<ExportImportContentProcessor<String>>
 		_getExportImportContentProcessors() {
 
-		Collection<ExportImportContentProcessor> values =
-			_exportImportContentProcessors.values();
+		Collection<ExportImportContentProcessor<String>>
+			exportImportContentProcessors =
+				_exportImportContentProcessors.values();
 
-		return ListUtil.fromCollection(values);
+		return ListUtil.fromCollection(exportImportContentProcessors);
 	}
 
 	private static final ExportImportContentProcessorRegistryUtil
@@ -81,21 +75,23 @@ public class ExportImportContentProcessorRegistryUtil {
 			new ExportImportContentProcessorRegistryUtil();
 
 	private final BundleContext _bundleContext;
-	private final Map<String, ExportImportContentProcessor>
+	private final Map<String, ExportImportContentProcessor<String>>
 		_exportImportContentProcessors = new ConcurrentHashMap<>();
 	private final ServiceTracker
-		<ExportImportContentProcessor, ExportImportContentProcessor>
-			_serviceTracker;
+		<ExportImportContentProcessor<String>,
+		 ExportImportContentProcessor<String>> _serviceTracker;
 
 	private class ExportImportContentProcessorServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer
-			<ExportImportContentProcessor, ExportImportContentProcessor> {
+			<ExportImportContentProcessor<String>,
+			 ExportImportContentProcessor<String>> {
 
 		@Override
-		public ExportImportContentProcessor addingService(
-			ServiceReference<ExportImportContentProcessor> serviceReference) {
+		public ExportImportContentProcessor<String> addingService(
+			ServiceReference<ExportImportContentProcessor<String>>
+				serviceReference) {
 
-			ExportImportContentProcessor exportImportContentProcessor =
+			ExportImportContentProcessor<String> exportImportContentProcessor =
 				_bundleContext.getService(serviceReference);
 
 			List<String> modelClassNames = StringPlus.asList(
@@ -111,8 +107,9 @@ public class ExportImportContentProcessorRegistryUtil {
 
 		@Override
 		public void modifiedService(
-			ServiceReference<ExportImportContentProcessor> serviceReference,
-			ExportImportContentProcessor exportImportContentProcessor) {
+			ServiceReference<ExportImportContentProcessor<String>>
+				serviceReference,
+			ExportImportContentProcessor<String> exportImportContentProcessor) {
 
 			removedService(serviceReference, exportImportContentProcessor);
 
@@ -121,8 +118,9 @@ public class ExportImportContentProcessorRegistryUtil {
 
 		@Override
 		public void removedService(
-			ServiceReference<ExportImportContentProcessor> serviceReference,
-			ExportImportContentProcessor exportImportContentProcessor) {
+			ServiceReference<ExportImportContentProcessor<String>>
+				serviceReference,
+			ExportImportContentProcessor<String> exportImportContentProcessor) {
 
 			_bundleContext.ungetService(serviceReference);
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.sample.sql.builder.io;
@@ -55,7 +46,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -65,7 +56,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -75,7 +66,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -85,7 +76,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -95,7 +86,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -105,7 +96,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -115,7 +106,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -125,7 +116,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -135,7 +126,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -145,7 +136,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 	}
 
@@ -274,7 +265,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -282,7 +273,7 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		charPipe.close();
@@ -588,12 +579,11 @@ public class CharPipeTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
-		Writer writer = charPipe.getWriter();
-
-		SlowWriterJob slowWriterJob = new SlowWriterJob(writer, 4, false);
+		SlowWriterJob slowWriterJob = new SlowWriterJob(
+			charPipe.getWriter(), 4, false);
 
 		Thread thread = new Thread(slowWriterJob);
 
@@ -619,10 +609,8 @@ public class CharPipeTest {
 	public void testSlowReader() throws Exception {
 		CharPipe charPipe = new CharPipe(4);
 
-		Reader reader = charPipe.getReader();
-
 		SlowReaderJob slowReaderJob = new SlowReaderJob(
-			reader, 4, false, false);
+			charPipe.getReader(), 4, false, false);
 
 		Thread thread = new Thread(slowReaderJob);
 
@@ -656,9 +644,8 @@ public class CharPipeTest {
 	public void testSlowReaderOnCloseForce() throws Exception {
 		CharPipe charPipe = new CharPipe(4);
 
-		Reader reader = charPipe.getReader();
-
-		SlowReaderJob slowReaderJob = new SlowReaderJob(reader, 4, true, true);
+		SlowReaderJob slowReaderJob = new SlowReaderJob(
+			charPipe.getReader(), 4, true, true);
 
 		Thread thread = new Thread(slowReaderJob);
 
@@ -685,9 +672,8 @@ public class CharPipeTest {
 	public void testSlowReaderOnClosePeacefully() throws Exception {
 		CharPipe charPipe = new CharPipe(4);
 
-		Reader reader = charPipe.getReader();
-
-		SlowReaderJob slowReaderJob = new SlowReaderJob(reader, 4, true, false);
+		SlowReaderJob slowReaderJob = new SlowReaderJob(
+			charPipe.getReader(), 4, true, false);
 
 		Thread thread = new Thread(slowReaderJob);
 
@@ -714,9 +700,8 @@ public class CharPipeTest {
 	public void testSlowWriter() throws Exception {
 		CharPipe charPipe = new CharPipe(4);
 
-		Writer writer = charPipe.getWriter();
-
-		SlowWriterJob slowWriterJob = new SlowWriterJob(writer, 4, false);
+		SlowWriterJob slowWriterJob = new SlowWriterJob(
+			charPipe.getWriter(), 4, false);
 
 		Thread thread = new Thread(slowWriterJob);
 
@@ -743,9 +728,8 @@ public class CharPipeTest {
 	public void testSlowWriterOnClose() throws Exception {
 		CharPipe charPipe = new CharPipe(4);
 
-		Writer writer = charPipe.getWriter();
-
-		SlowWriterJob slowWriterJob = new SlowWriterJob(writer, 4, true);
+		SlowWriterJob slowWriterJob = new SlowWriterJob(
+			charPipe.getWriter(), 4, true);
 
 		Thread thread = new Thread(slowWriterJob);
 
@@ -775,13 +759,15 @@ public class CharPipeTest {
 
 		int range = time / 2;
 
-		int waitTime = new Random().nextInt(range) + range;
+		Random random = new Random();
+
+		int waitTime = random.nextInt(range) + range;
 
 		Thread.sleep(waitTime);
 	}
 
 	private long _timestampedRead(Reader reader, char[] buffer)
-		throws IOException {
+		throws Exception {
 
 		reader.read(buffer);
 
@@ -789,7 +775,7 @@ public class CharPipeTest {
 	}
 
 	private long _timestampedSkip(Reader reader, int skipSize)
-		throws IOException {
+		throws Exception {
 
 		reader.skip(skipSize);
 
@@ -797,7 +783,7 @@ public class CharPipeTest {
 	}
 
 	private long _timestampedWrite(Writer writer, char[] data)
-		throws IOException {
+		throws Exception {
 
 		writer.write(data);
 
@@ -805,7 +791,7 @@ public class CharPipeTest {
 	}
 
 	private long _timestampedWrite(Writer writer, String data)
-		throws IOException {
+		throws Exception {
 
 		writer.write(data);
 
@@ -859,7 +845,7 @@ public class CharPipeTest {
 					_failed = true;
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (!_close) {
 					_failed = true;
 				}
@@ -909,7 +895,7 @@ public class CharPipeTest {
 					_failed = true;
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (!_expectException) {
 					_failed = true;
 				}

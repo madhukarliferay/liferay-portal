@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -21,15 +12,15 @@ import java.io.IOException;
  * @author Michael Hashimoto
  */
 public class FunctionalPortalTestBatch
-	extends BasePortalTestBatch<PortalBatchBuildData, PortalWorkspace> {
+	extends BasePortalTestBatch<PortalBatchBuildData> {
 
 	@Override
 	public void run() {
 		try {
 			executeBatch();
 		}
-		catch (AntException ae) {
-			throw new RuntimeException(ae);
+		catch (AntException antException) {
+			throw new RuntimeException(antException);
 		}
 		finally {
 			publishResults();
@@ -39,10 +30,9 @@ public class FunctionalPortalTestBatch
 	}
 
 	protected FunctionalPortalTestBatch(
-		PortalBatchBuildData portalBatchBuildData,
-		PortalWorkspace portalWorkspace) {
+		PortalBatchBuildData portalBatchBuildData, Workspace workspace) {
 
-		super(portalBatchBuildData, portalWorkspace);
+		super(portalBatchBuildData, workspace);
 	}
 
 	protected void publishPoshiReport() {
@@ -68,8 +58,8 @@ public class FunctionalPortalTestBatch
 							portalBatchBuildData.getArtifactDir(),
 							poshiResultsDirName));
 				}
-				catch (IOException ioe) {
-					throw new RuntimeException(ioe);
+				catch (IOException ioException) {
+					throw new RuntimeException(ioException);
 				}
 			}
 		}
@@ -109,6 +99,9 @@ public class FunctionalPortalTestBatch
 			sb.append(" - <a href=\"");
 			sb.append(poshiReportBaseURL);
 			sb.append("/summary.html\">summary.html</a>");
+			sb.append(" - <a href=\"");
+			sb.append(poshiReportBaseURL);
+			sb.append("/console.txt\">console.txt</a>");
 		}
 
 		sb.append("</ul>");

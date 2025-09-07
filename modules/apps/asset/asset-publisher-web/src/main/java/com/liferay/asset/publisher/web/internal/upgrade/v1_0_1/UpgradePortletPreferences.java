@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.publisher.web.internal.upgrade.v1_0_1;
@@ -17,21 +8,22 @@ package com.liferay.asset.publisher.web.internal.upgrade.v1_0_1;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletPreferences;
+import com.liferay.portal.kernel.upgrade.BasePortletPreferencesUpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReader;
 
-import java.util.Objects;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.Objects;
 
 /**
  * @author Cristina Rodríguez
  */
-public class UpgradePortletPreferences extends BaseUpgradePortletPreferences {
+public class UpgradePortletPreferences
+	extends BasePortletPreferencesUpgradeProcess {
 
 	public UpgradePortletPreferences(SAXReader saxReader) {
 		_saxReader = saxReader;
@@ -58,7 +50,7 @@ public class UpgradePortletPreferences extends BaseUpgradePortletPreferences {
 			"assetEntryXml", new String[0]);
 
 		if (ArrayUtil.isNotEmpty(assetEntryXmls)) {
-			upgradeTypes(assetEntryXmls);
+			_upgradeTypes(assetEntryXmls);
 
 			portletPreferences.setValues("assetEntryXml", assetEntryXmls);
 		}
@@ -66,7 +58,7 @@ public class UpgradePortletPreferences extends BaseUpgradePortletPreferences {
 		return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 	}
 
-	protected void upgradeTypes(String[] assetEntryXmls) throws Exception {
+	private void _upgradeTypes(String[] assetEntryXmls) throws Exception {
 		for (int i = 0; i < assetEntryXmls.length; i++) {
 			String assetEntry = assetEntryXmls[i];
 

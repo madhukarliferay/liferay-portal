@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.model;
@@ -19,6 +10,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -41,6 +34,8 @@ public class SocialActivityWrapper
 	public Map<String, Object> getModelAttributes() {
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
+		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("activityId", getActivityId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -61,6 +56,18 @@ public class SocialActivityWrapper
 
 	@Override
 	public void setModelAttributes(Map<String, Object> attributes) {
+		Long mvccVersion = (Long)attributes.get("mvccVersion");
+
+		if (mvccVersion != null) {
+			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		Long activityId = (Long)attributes.get("activityId");
 
 		if (activityId != null) {
@@ -146,6 +153,11 @@ public class SocialActivityWrapper
 		}
 	}
 
+	@Override
+	public SocialActivity cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
 	/**
 	 * Returns the activity ID of this social activity.
 	 *
@@ -222,6 +234,16 @@ public class SocialActivityWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this social activity.
+	 *
+	 * @return the ct collection ID of this social activity
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the extra data of this social activity.
 	 *
 	 * @return the extra data of this social activity
@@ -263,6 +285,16 @@ public class SocialActivityWrapper
 	@Override
 	public long getMirrorActivityId() {
 		return model.getMirrorActivityId();
+	}
+
+	/**
+	 * Returns the mvcc version of this social activity.
+	 *
+	 * @return the mvcc version of this social activity
+	 */
+	@Override
+	public long getMvccVersion() {
+		return model.getMvccVersion();
 	}
 
 	/**
@@ -350,11 +382,6 @@ public class SocialActivityWrapper
 		return model.isClassName(className);
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a social activity model instance should use the <code>SocialActivity</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -433,6 +460,16 @@ public class SocialActivityWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this social activity.
+	 *
+	 * @param ctCollectionId the ct collection ID of this social activity
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the extra data of this social activity.
 	 *
 	 * @param extraData the extra data of this social activity
@@ -467,6 +504,16 @@ public class SocialActivityWrapper
 	@Override
 	public void setMirrorActivityId(long mirrorActivityId) {
 		model.setMirrorActivityId(mirrorActivityId);
+	}
+
+	/**
+	 * Sets the mvcc version of this social activity.
+	 *
+	 * @param mvccVersion the mvcc version of this social activity
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		model.setMvccVersion(mvccVersion);
 	}
 
 	/**
@@ -547,6 +594,25 @@ public class SocialActivityWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<SocialActivity, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<SocialActivity, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

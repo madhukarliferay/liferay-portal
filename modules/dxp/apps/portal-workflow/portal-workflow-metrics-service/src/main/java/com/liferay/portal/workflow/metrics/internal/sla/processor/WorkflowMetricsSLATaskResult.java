@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.internal.sla.processor;
@@ -23,8 +14,12 @@ import java.time.LocalDateTime;
  */
 public class WorkflowMetricsSLATaskResult {
 
-	public Long getAssigneeId() {
-		return _assigneeId;
+	public Long[] getAssigneeIds() {
+		return _assigneeIds;
+	}
+
+	public String getAssigneeType() {
+		return _assigneeType;
 	}
 
 	public long getCompanyId() {
@@ -39,12 +34,20 @@ public class WorkflowMetricsSLATaskResult {
 		return _completionUserId;
 	}
 
+	public LocalDateTime getInstanceCompletionLocalDateTime() {
+		return _instanceCompletionLocalDateTime;
+	}
+
 	public long getInstanceId() {
 		return _instanceId;
 	}
 
-	public LocalDateTime getLastCheckLocalDateTime() {
-		return _lastCheckLocalDateTime;
+	public LocalDateTime getModifiedLocalDateTime() {
+		return _modifiedLocalDateTime;
+	}
+
+	public long getNodeId() {
+		return _nodeId;
 	}
 
 	public long getProcessId() {
@@ -63,10 +66,6 @@ public class WorkflowMetricsSLATaskResult {
 		return _taskName;
 	}
 
-	public long getTokenId() {
-		return _tokenId;
-	}
-
 	public WorkflowMetricsSLAStatus getWorkflowMetricsSLAStatus() {
 		return _workflowMetricsSLAStatus;
 	}
@@ -75,12 +74,20 @@ public class WorkflowMetricsSLATaskResult {
 		return _breached;
 	}
 
+	public boolean isInstanceCompleted() {
+		return _instanceCompleted;
+	}
+
 	public boolean isOnTime() {
 		return _onTime;
 	}
 
-	public void setAssigneeId(Long assigneeId) {
-		_assigneeId = assigneeId;
+	public void setAssigneeIds(Long[] assigneeIds) {
+		_assigneeIds = assigneeIds;
+	}
+
+	public void setAssigneeType(String assigneeType) {
+		_assigneeType = assigneeType;
 	}
 
 	public void setBreached(boolean breached) {
@@ -101,14 +108,26 @@ public class WorkflowMetricsSLATaskResult {
 		_completionUserId = completionUserId;
 	}
 
+	public void setInstanceCompleted(boolean instanceCompleted) {
+		_instanceCompleted = instanceCompleted;
+	}
+
+	public void setInstanceCompletionLocalDateTime(
+		LocalDateTime instanceCompletionLocalDateTime) {
+
+		_instanceCompletionLocalDateTime = instanceCompletionLocalDateTime;
+	}
+
 	public void setInstanceId(long instanceId) {
 		_instanceId = instanceId;
 	}
 
-	public void setLastCheckLocalDateTime(
-		LocalDateTime lastCheckLocalDateTime) {
+	public void setModifiedLocalDateTime(LocalDateTime modifiedLocalDateTime) {
+		_modifiedLocalDateTime = modifiedLocalDateTime;
+	}
 
-		_lastCheckLocalDateTime = lastCheckLocalDateTime;
+	public void setNodeId(long nodeId) {
+		_nodeId = nodeId;
 	}
 
 	public void setOnTime(boolean onTime) {
@@ -131,29 +150,28 @@ public class WorkflowMetricsSLATaskResult {
 		_taskName = taskName;
 	}
 
-	public void setTokenId(long tokenId) {
-		_tokenId = tokenId;
-	}
-
 	public void setWorkflowMetricsSLAStatus(
 		WorkflowMetricsSLAStatus workflowMetricsSLAStatus) {
 
 		_workflowMetricsSLAStatus = workflowMetricsSLAStatus;
 	}
 
-	private Long _assigneeId;
+	private Long[] _assigneeIds;
+	private String _assigneeType;
 	private boolean _breached;
 	private long _companyId;
 	private LocalDateTime _completionLocalDateTime;
 	private Long _completionUserId;
+	private boolean _instanceCompleted;
+	private LocalDateTime _instanceCompletionLocalDateTime;
 	private long _instanceId;
-	private LocalDateTime _lastCheckLocalDateTime;
+	private LocalDateTime _modifiedLocalDateTime;
+	private long _nodeId;
 	private boolean _onTime;
 	private long _processId;
 	private long _slaDefinitionId;
 	private long _taskId;
 	private String _taskName;
-	private long _tokenId;
 	private WorkflowMetricsSLAStatus _workflowMetricsSLAStatus;
 
 }

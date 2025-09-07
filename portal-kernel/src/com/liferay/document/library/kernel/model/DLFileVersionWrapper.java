@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.model;
@@ -22,6 +13,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -45,6 +38,7 @@ public class DLFileVersionWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("fileVersionId", getFileVersionId());
 		attributes.put("groupId", getGroupId());
@@ -68,6 +62,10 @@ public class DLFileVersionWrapper
 		attributes.put("version", getVersion());
 		attributes.put("size", getSize());
 		attributes.put("checksum", getChecksum());
+		attributes.put("storeUUID", getStoreUUID());
+		attributes.put("displayDate", getDisplayDate());
+		attributes.put("expirationDate", getExpirationDate());
+		attributes.put("reviewDate", getReviewDate());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
 		attributes.put("statusByUserId", getStatusByUserId());
@@ -83,6 +81,12 @@ public class DLFileVersionWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -223,6 +227,30 @@ public class DLFileVersionWrapper
 			setChecksum(checksum);
 		}
 
+		String storeUUID = (String)attributes.get("storeUUID");
+
+		if (storeUUID != null) {
+			setStoreUUID(storeUUID);
+		}
+
+		Date displayDate = (Date)attributes.get("displayDate");
+
+		if (displayDate != null) {
+			setDisplayDate(displayDate);
+		}
+
+		Date expirationDate = (Date)attributes.get("expirationDate");
+
+		if (expirationDate != null) {
+			setExpirationDate(expirationDate);
+		}
+
+		Date reviewDate = (Date)attributes.get("reviewDate");
+
+		if (reviewDate != null) {
+			setReviewDate(reviewDate);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
@@ -259,6 +287,11 @@ public class DLFileVersionWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.buildTreePath();
+	}
+
+	@Override
+	public DLFileVersion cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -308,6 +341,21 @@ public class DLFileVersionWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this document library file version.
+	 *
+	 * @return the ct collection ID of this document library file version
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 DLFileEntryTypeUtil#getDDMStructures(DLFileEntryType)}
+	 */
+	@Deprecated
 	@Override
 	public java.util.List<com.liferay.dynamic.data.mapping.kernel.DDMStructure>
 			getDDMStructures()
@@ -326,6 +374,16 @@ public class DLFileVersionWrapper
 		return model.getDescription();
 	}
 
+	/**
+	 * Returns the display date of this document library file version.
+	 *
+	 * @return the display date of this document library file version
+	 */
+	@Override
+	public Date getDisplayDate() {
+		return model.getDisplayDate();
+	}
+
 	@Override
 	public DLFileEntryType getDLFileEntryType()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -336,6 +394,16 @@ public class DLFileVersionWrapper
 	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return model.getExpandoBridge();
+	}
+
+	/**
+	 * Returns the expiration date of this document library file version.
+	 *
+	 * @return the expiration date of this document library file version
+	 */
+	@Override
+	public Date getExpirationDate() {
+		return model.getExpirationDate();
 	}
 
 	/**
@@ -505,6 +573,16 @@ public class DLFileVersionWrapper
 	}
 
 	/**
+	 * Returns the review date of this document library file version.
+	 *
+	 * @return the review date of this document library file version
+	 */
+	@Override
+	public Date getReviewDate() {
+		return model.getReviewDate();
+	}
+
+	/**
 	 * Returns the size of this document library file version.
 	 *
 	 * @return the size of this document library file version
@@ -562,6 +640,21 @@ public class DLFileVersionWrapper
 	@Override
 	public Date getStatusDate() {
 		return model.getStatusDate();
+	}
+
+	@Override
+	public String getStoreFileName() {
+		return model.getStoreFileName();
+	}
+
+	/**
+	 * Returns the store uuid of this document library file version.
+	 *
+	 * @return the store uuid of this document library file version
+	 */
+	@Override
+	public String getStoreUUID() {
+		return model.getStoreUUID();
 	}
 
 	/**
@@ -714,11 +807,6 @@ public class DLFileVersionWrapper
 		return model.isScheduled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a document library file version model instance should use the <code>DLFileVersion</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -765,6 +853,16 @@ public class DLFileVersionWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this document library file version.
+	 *
+	 * @param ctCollectionId the ct collection ID of this document library file version
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the description of this document library file version.
 	 *
 	 * @param description the description of this document library file version
@@ -772,6 +870,26 @@ public class DLFileVersionWrapper
 	@Override
 	public void setDescription(String description) {
 		model.setDescription(description);
+	}
+
+	/**
+	 * Sets the display date of this document library file version.
+	 *
+	 * @param displayDate the display date of this document library file version
+	 */
+	@Override
+	public void setDisplayDate(Date displayDate) {
+		model.setDisplayDate(displayDate);
+	}
+
+	/**
+	 * Sets the expiration date of this document library file version.
+	 *
+	 * @param expirationDate the expiration date of this document library file version
+	 */
+	@Override
+	public void setExpirationDate(Date expirationDate) {
+		model.setExpirationDate(expirationDate);
 	}
 
 	/**
@@ -797,9 +915,9 @@ public class DLFileVersionWrapper
 	@Override
 	public void setExtraSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties
-			extraSettingsProperties) {
+			extraSettingsUnicodeProperties) {
 
-		model.setExtraSettingsProperties(extraSettingsProperties);
+		model.setExtraSettingsProperties(extraSettingsUnicodeProperties);
 	}
 
 	/**
@@ -923,6 +1041,16 @@ public class DLFileVersionWrapper
 	}
 
 	/**
+	 * Sets the review date of this document library file version.
+	 *
+	 * @param reviewDate the review date of this document library file version
+	 */
+	@Override
+	public void setReviewDate(Date reviewDate) {
+		model.setReviewDate(reviewDate);
+	}
+
+	/**
 	 * Sets the size of this document library file version.
 	 *
 	 * @param size the size of this document library file version
@@ -980,6 +1108,16 @@ public class DLFileVersionWrapper
 	@Override
 	public void setStatusDate(Date statusDate) {
 		model.setStatusDate(statusDate);
+	}
+
+	/**
+	 * Sets the store uuid of this document library file version.
+	 *
+	 * @param storeUUID the store uuid of this document library file version
+	 */
+	@Override
+	public void setStoreUUID(String storeUUID) {
+		model.setStoreUUID(storeUUID);
 	}
 
 	/**
@@ -1053,8 +1191,27 @@ public class DLFileVersionWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
 	public void updateTreePath(String treePath) {
 		model.updateTreePath(treePath);
+	}
+
+	@Override
+	public Map<String, Function<DLFileVersion, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<DLFileVersion, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

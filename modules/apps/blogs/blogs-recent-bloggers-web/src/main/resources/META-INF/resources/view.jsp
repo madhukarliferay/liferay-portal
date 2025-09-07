@@ -1,27 +1,18 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-List statsUsers = null;
+List<BlogsStatsUser> statsUsers = null;
 
 if (selectionMethod.equals("users")) {
 	if (organizationId > 0) {
-		statsUsers = BlogsStatsUserLocalServiceUtil.getOrganizationStatsUsers(organizationId, 0, max, new StatsUserLastPostDateComparator());
+		statsUsers = BlogsStatsUserLocalServiceUtil.getOrganizationStatsUsers(organizationId, 0, max);
 	}
 	else {
 		statsUsers = BlogsStatsUserLocalServiceUtil.getGroupsStatsUsers(company.getCompanyId(), scopeGroupId, 0, max);
@@ -39,7 +30,7 @@ else {
 	<c:otherwise>
 
 		<%
-		SearchContainer searchContainer = new SearchContainer();
+		SearchContainer<BlogsStatsUser> searchContainer = new SearchContainer();
 
 		List<String> headerNames = new ArrayList<String>();
 
@@ -53,18 +44,18 @@ else {
 
 		boolean statsUserRendered = false;
 
-		List resultRows = searchContainer.getResultRows();
+		List<com.liferay.portal.kernel.dao.search.ResultRow> resultRows = searchContainer.getResultRows();
 
 		for (int i = 0; i < statsUsers.size(); i++) {
-			BlogsStatsUser statsUser = (BlogsStatsUser)statsUsers.get(i);
+			BlogsStatsUser statsUser = statsUsers.get(i);
 
 			try {
 				Group group = GroupLocalServiceUtil.getGroup(statsUser.getGroupId());
-				User user2 = UserLocalServiceUtil.getUserById(statsUser.getUserId());
+				User user2 = UserLocalServiceUtil.getUserById(statsUser.getStatsUserId());
 
 				int entriesCount = BlogsEntryServiceUtil.getGroupUserEntriesCount(group.getGroupId(), user2.getUserId(), WorkflowConstants.STATUS_APPROVED);
 
-				List entries = BlogsEntryServiceUtil.getGroupUserEntries(group.getGroupId(), user2.getUserId(), WorkflowConstants.STATUS_APPROVED, 0, max, new EntryModifiedDateComparator());
+				List<BlogsEntry> entries = BlogsEntryServiceUtil.getGroupUserEntries(group.getGroupId(), user2.getUserId(), WorkflowConstants.STATUS_APPROVED, 0, max, EntryModifiedDateComparator.getInstance(false));
 
 				if (entries.isEmpty()) {
 					if (!selectionMethod.equals("users")) {
@@ -75,7 +66,7 @@ else {
 
 					entriesCount = BlogsEntryServiceUtil.getGroupUserEntriesCount(scopeGroupId, user2.getUserId(), WorkflowConstants.STATUS_APPROVED);
 
-					entries = BlogsEntryServiceUtil.getGroupUserEntries(scopeGroupId, user2.getUserId(), WorkflowConstants.STATUS_APPROVED, 0, max, new EntryModifiedDateComparator());
+					entries = BlogsEntryServiceUtil.getGroupUserEntries(scopeGroupId, user2.getUserId(), WorkflowConstants.STATUS_APPROVED, 0, max, EntryModifiedDateComparator.getInstance(false));
 
 					if (entries.isEmpty()) {
 						continue;
@@ -84,7 +75,7 @@ else {
 
 				statsUserRendered = true;
 
-				BlogsEntry entry = (BlogsEntry)entries.get(0);
+				BlogsEntry entry = entries.get(0);
 
 				StringBundler sb = new StringBundler(4);
 
@@ -130,6 +121,7 @@ else {
 		<c:choose>
 			<c:when test="<%= statsUserRendered %>">
 				<liferay-ui:search-iterator
+					markupView="deprecated"
 					paginate="<%= false %>"
 					searchContainer="<%= searchContainer %>"
 				/>

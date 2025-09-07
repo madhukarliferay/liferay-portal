@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.upgrade.v1_0_4.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.model.AssetVocabulary;
-import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.calendar.test.util.CalendarUpgradeTestUtil;
-import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
+import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
@@ -26,9 +17,9 @@ import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourcePermission;
-import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
-import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ResourcePermissionTestUtil;
@@ -36,7 +27,9 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.model.impl.ResourcePermissionImpl;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -49,6 +42,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Adam Brandizzi
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class UpgradeClassNamesTest {
 
@@ -200,27 +194,23 @@ public class UpgradeClassNamesTest {
 	protected void addAssetVocabulary(long classNameId) throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("multiValued=true\nselectedClassNameIds=");
-		sb.append(classNameId);
-		sb.append(":-1");
-
-		_assetVocabulary = AssetVocabularyLocalServiceUtil.addVocabulary(
+		_assetVocabulary = _assetVocabularyLocalService.addVocabulary(
 			TestPropsValues.getUserId(), group.getGroupId(),
 			RandomTestUtil.randomString(),
 			RandomTestUtil.randomLocaleStringMap(),
-			RandomTestUtil.randomLocaleStringMap(), sb.toString(),
+			RandomTestUtil.randomLocaleStringMap(),
+			StringBundler.concat(
+				"multiValued=true\nselectedClassNameIds=", classNameId, ":-1"),
 			ServiceContextTestUtil.getServiceContext());
 	}
 
 	protected ClassName addClassName(String value) {
-		ClassName className = ClassNameLocalServiceUtil.createClassName(
-			CounterLocalServiceUtil.increment());
+		ClassName className = _classNameLocalService.createClassName(
+			_counterLocalService.increment());
 
 		className.setValue(value);
 
-		return ClassNameLocalServiceUtil.addClassName(className);
+		return _classNameLocalService.addClassName(className);
 	}
 
 	protected ResourcePermission addResourcePermission(
@@ -232,13 +222,13 @@ public class UpgradeClassNamesTest {
 	}
 
 	protected void assertNewClassNameIdExists() {
-		long calBookingClassNameId = ClassNameLocalServiceUtil.getClassNameId(
+		long calBookingClassNameId = _classNameLocalService.getClassNameId(
 			"com.liferay.calendar.model.CalendarBooking");
 
 		EntityCacheUtil.clearCache();
 
 		AssetVocabulary assetVocabulary =
-			AssetVocabularyLocalServiceUtil.fetchAssetVocabulary(
+			_assetVocabularyLocalService.fetchAssetVocabulary(
 				_assetVocabulary.getVocabularyId());
 
 		String settings = assetVocabulary.getSettings();
@@ -253,7 +243,7 @@ public class UpgradeClassNamesTest {
 		EntityCacheUtil.clearCache(ResourcePermissionImpl.class);
 
 		_newResourcePermission =
-			ResourcePermissionLocalServiceUtil.fetchResourcePermission(
+			_resourcePermissionLocalService.fetchResourcePermission(
 				_newResourcePermission.getResourcePermissionId());
 
 		Assert.assertNotNull(_newResourcePermission);
@@ -263,7 +253,7 @@ public class UpgradeClassNamesTest {
 		EntityCacheUtil.clearCache(ResourcePermissionImpl.class);
 
 		_oldResourcePermission =
-			ResourcePermissionLocalServiceUtil.fetchResourcePermission(
+			_resourcePermissionLocalService.fetchResourcePermission(
 				_oldResourcePermission.getResourcePermissionId());
 
 		Assert.assertNotNull(_oldResourcePermission);
@@ -273,29 +263,41 @@ public class UpgradeClassNamesTest {
 		EntityCacheUtil.clearCache(ResourcePermissionImpl.class);
 
 		_oldResourcePermission =
-			ResourcePermissionLocalServiceUtil.fetchResourcePermission(
+			_resourcePermissionLocalService.fetchResourcePermission(
 				_oldResourcePermission.getResourcePermissionId());
 
 		Assert.assertNull(_oldResourcePermission);
 	}
 
 	protected void setUpUpgradeCalendarResource() {
-		_upgradeProcess = CalendarUpgradeTestUtil.getServiceUpgradeStep(
-			"v1_0_4.UpgradeClassNames");
+		_upgradeProcess = CalendarUpgradeTestUtil.getUpgradeStep(
+			_upgradeStepRegistrator, "v1_0_4.UpgradeClassNames");
 	}
 
-	@DeleteAfterTestRun
 	private AssetVocabulary _assetVocabulary;
 
-	@DeleteAfterTestRun
+	@Inject
+	private AssetVocabularyLocalService _assetVocabularyLocalService;
+
 	private ClassName _calEventClassName;
 
-	@DeleteAfterTestRun
-	private ResourcePermission _newResourcePermission;
+	@Inject
+	private ClassNameLocalService _classNameLocalService;
 
-	@DeleteAfterTestRun
+	@Inject
+	private CounterLocalService _counterLocalService;
+
+	private ResourcePermission _newResourcePermission;
 	private ResourcePermission _oldResourcePermission;
 
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
 	private UpgradeProcess _upgradeProcess;
+
+	@Inject(
+		filter = "component.name=com.liferay.calendar.internal.upgrade.registry.CalendarServiceUpgradeStepRegistrator"
+	)
+	private UpgradeStepRegistrator _upgradeStepRegistrator;
 
 }

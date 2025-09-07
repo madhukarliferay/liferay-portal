@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector;
@@ -41,16 +32,16 @@ public abstract class BaseItemSelectorCriterionHandler
 	public List<ItemSelectorView<T>> getItemSelectorViews(
 		ItemSelectorCriterion itemSelectorCriterion) {
 
-		List<ItemSelectorView> itemSelectorViews =
+		List<ItemSelectorView<T>> itemSelectorViews =
 			_serviceTrackerMap.getService(itemSelectorCriterion.getClass());
 
 		if (itemSelectorViews == null) {
 			return Collections.emptyList();
 		}
 
-		List<ItemSelectorView<T>> filteredItemSelectedViews = new ArrayList<>();
+		List<ItemSelectorView<T>> filteredItemSelectorViews = new ArrayList<>();
 
-		for (ItemSelectorView itemSelectorView : itemSelectorViews) {
+		for (ItemSelectorView<T> itemSelectorView : itemSelectorViews) {
 			List<ItemSelectorReturnType> desiredItemSelectorReturnTypes =
 				itemSelectorCriterion.getDesiredItemSelectorReturnTypes();
 
@@ -60,14 +51,14 @@ public abstract class BaseItemSelectorCriterionHandler
 				if (_isItemSelectorViewSupported(
 						itemSelectorView, desiredItemSelectorReturnType)) {
 
-					filteredItemSelectedViews.add(itemSelectorView);
+					filteredItemSelectorViews.add(itemSelectorView);
 
 					break;
 				}
 			}
 		}
 
-		return (List)Collections.unmodifiableList(filteredItemSelectedViews);
+		return (List)Collections.unmodifiableList(filteredItemSelectorViews);
 	}
 
 	protected void activate(BundleContext bundleContext) {
@@ -76,7 +67,8 @@ public abstract class BaseItemSelectorCriterionHandler
 			null);
 
 		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, ItemSelectorView.class, null,
+			bundleContext,
+			(Class<ItemSelectorView<T>>)(Class<?>)ItemSelectorView.class, null,
 			new ItemSelectorViewServiceReferenceMapper(bundleContext),
 			Collections.reverseOrder(
 				new PropertyServiceReferenceComparator(
@@ -90,7 +82,7 @@ public abstract class BaseItemSelectorCriterionHandler
 	}
 
 	private boolean _isItemSelectorViewSupported(
-		ItemSelectorView itemSelectorView,
+		ItemSelectorView<T> itemSelectorView,
 		ItemSelectorReturnType itemSelectorReturnType) {
 
 		String itemSelectorReturnTypeClassName = ClassUtil.getClassName(
@@ -131,10 +123,11 @@ public abstract class BaseItemSelectorCriterionHandler
 	private ServiceTracker
 		<ItemSelectorViewReturnTypeProviderHandler,
 		 ItemSelectorViewReturnTypeProviderHandler> _serviceTracker;
-	private ServiceTrackerMap<Class, List<ItemSelectorView>> _serviceTrackerMap;
+	private ServiceTrackerMap<Class<?>, List<ItemSelectorView<T>>>
+		_serviceTrackerMap;
 
 	private class ItemSelectorViewServiceReferenceMapper
-		implements ServiceReferenceMapper<Class, ItemSelectorView> {
+		implements ServiceReferenceMapper<Class<?>, ItemSelectorView<T>> {
 
 		public ItemSelectorViewServiceReferenceMapper(
 			BundleContext bundleContext) {
@@ -144,10 +137,10 @@ public abstract class BaseItemSelectorCriterionHandler
 
 		@Override
 		public void map(
-			ServiceReference<ItemSelectorView> serviceReference,
-			Emitter<Class> emitter) {
+			ServiceReference<ItemSelectorView<T>> serviceReference,
+			Emitter<Class<?>> emitter) {
 
-			ItemSelectorView itemSelectorView = _bundleContext.getService(
+			ItemSelectorView<T> itemSelectorView = _bundleContext.getService(
 				serviceReference);
 
 			try {

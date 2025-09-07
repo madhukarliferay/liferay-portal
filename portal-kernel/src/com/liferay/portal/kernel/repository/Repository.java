@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.repository;
@@ -17,6 +8,7 @@ package com.liferay.portal.kernel.repository;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.repository.model.RepositoryEntry;
@@ -42,8 +34,8 @@ public interface Repository extends DocumentRepository {
 	 *         out
 	 * @return the file entry if the cancel checkout operation was successful;
 	 *         <code>null</code> if the file entry was not checked out
-	 * @see    #checkInFileEntry(
-	 * 			long, long, DLVersionNumberIncrease, String, ServiceContext)
+	 * @see    #checkInFileEntry(long, long, DLVersionNumberIncrease, String,
+	 *         ServiceContext)
 	 * @see    #checkOutFileEntry(long, ServiceContext)
 	 */
 	public FileVersion cancelCheckOut(long fileEntryId) throws PortalException;
@@ -68,12 +60,12 @@ public interface Repository extends DocumentRepository {
 
 	public List<FileEntry> getFileEntries(
 			long folderId, long fileEntryTypeId, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public List<FileEntry> getFileEntries(
 			long folderId, String[] mimeTypes, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public int getFileEntriesAndFileShortcutsCount(
@@ -90,17 +82,18 @@ public interface Repository extends DocumentRepository {
 			getFoldersAndFileEntriesAndFileShortcuts(
 				long folderId, int status, String[] mimeTypes,
 				boolean includeMountFolders, boolean includeOwner, int start,
-				int end, OrderByComparator<?> obc)
+				int end, OrderByComparator<?> orderByComparator)
 		throws PortalException {
 
 		return getFoldersAndFileEntriesAndFileShortcuts(
-			folderId, status, mimeTypes, includeMountFolders, start, end, obc);
+			folderId, status, mimeTypes, includeMountFolders, start, end,
+			orderByComparator);
 	}
 
 	public List<RepositoryEntry> getFoldersAndFileEntriesAndFileShortcuts(
 			long folderId, int status, String[] mimeTypes,
 			boolean includeMountFolders, int start, int end,
-			OrderByComparator<?> obc)
+			OrderByComparator<?> orderByComparator)
 		throws PortalException;
 
 	public int getFoldersAndFileEntriesAndFileShortcutsCount(
@@ -122,14 +115,14 @@ public interface Repository extends DocumentRepository {
 
 	public List<Folder> getMountFolders(
 			long parentFolderId, int start, int end,
-			OrderByComparator<Folder> obc)
+			OrderByComparator<Folder> orderByComparator)
 		throws PortalException;
 
 	public int getMountFoldersCount(long parentFolderId) throws PortalException;
 
 	public List<FileEntry> getRepositoryFileEntries(
 			long userId, long rootFolderId, String[] mimeTypes, int status,
-			int start, int end, OrderByComparator<FileEntry> obc)
+			int start, int end, OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public int getRepositoryFileEntriesCount(long userId, long rootFolderId)
@@ -137,6 +130,9 @@ public interface Repository extends DocumentRepository {
 
 	public int getRepositoryFileEntriesCount(
 			long userId, long rootFolderId, String[] mimeTypes, int status)
+		throws PortalException;
+
+	public List<FileShortcut> getRepositoryFileShortcuts(long groupId)
 		throws PortalException;
 
 	public void getSubfolderIds(List<Long> folderIds, long folderId)

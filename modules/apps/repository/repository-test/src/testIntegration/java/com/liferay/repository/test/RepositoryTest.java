@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.repository.test;
@@ -76,10 +67,9 @@ public class RepositoryTest {
 
 	@Test
 	public void testAddFileEntryInRepository() throws Exception {
-		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
-
 		Repository repository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			PortalUtil.getClassNameId(LiferayRepository.class),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -112,7 +102,7 @@ public class RepositoryTest {
 		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
 
 		Repository repository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -121,13 +111,13 @@ public class RepositoryTest {
 		repositoryIds[0] = repository.getRepositoryId();
 
 		DLFolder dlFolder = DLFolderServiceUtil.addFolder(
-			_group.getGroupId(), _group.getGroupId(), false,
+			null, _group.getGroupId(), _group.getGroupId(), false,
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			new ServiceContext());
 
 		repository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
 			dlFolder.getFolderId(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			new UnicodeProperties(), true, new ServiceContext());
@@ -143,7 +133,7 @@ public class RepositoryTest {
 				Assert.fail(
 					"Should not be able to access repository " + repositoryId);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 		}
 	}
@@ -151,14 +141,16 @@ public class RepositoryTest {
 	@Test
 	public void testDeleteGroupRepository() throws Exception {
 		FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			StringUtil.randomString(), ContentTypes.APPLICATION_OCTET_STREAM,
 			StringUtil.randomString(), StringUtil.randomString(),
-			StringUtil.randomString(), new byte[0],
+			StringUtil.randomString(), StringUtil.randomString(), new byte[0],
+			null, null, null,
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		DLFileShortcutLocalServiceUtil.addFileShortcut(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			fileEntry.getFileEntryId(),
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
@@ -182,10 +174,9 @@ public class RepositoryTest {
 	public void testFileEntriesAreDeletedWhenDeletingAllRepositories()
 		throws Exception {
 
-		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
-
 		Repository dlRepository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			PortalUtil.getClassNameId(LiferayRepository.class),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -213,7 +204,7 @@ public class RepositoryTest {
 						"Should not be able to get file entry ", fileEntryId,
 						" from repository ", dlRepository.getRepositoryId()));
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 		}
 	}
@@ -222,10 +213,9 @@ public class RepositoryTest {
 	public void testGetMountFoldersCountWithHiddenRepository()
 		throws Exception {
 
-		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
-
 		RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			PortalUtil.getClassNameId(LiferayRepository.class),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -242,10 +232,9 @@ public class RepositoryTest {
 	public void testGetMountFoldersCountWithNotHiddenRepository()
 		throws Exception {
 
-		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
-
 		RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			PortalUtil.getClassNameId(LiferayRepository.class),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), false,
@@ -270,7 +259,7 @@ public class RepositoryTest {
 		fileEntryIds[1] = primaryKeys[2];
 
 		Repository repository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			PortalUtil.getClassNameId(LiferayRepository.class),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
@@ -295,7 +284,7 @@ public class RepositoryTest {
 				"Should not be able to get file entry from repository " +
 					_group.getGroupId());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		LocalRepository localRepository =
@@ -313,7 +302,7 @@ public class RepositoryTest {
 		long classNameId = PortalUtil.getClassNameId(LiferayRepository.class);
 
 		Repository repository1 = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -327,7 +316,7 @@ public class RepositoryTest {
 		fileEntryIds[1] = primaryKeys[2];
 
 		Repository repository2 = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new UnicodeProperties(), true,
@@ -352,7 +341,7 @@ public class RepositoryTest {
 				"Should be able to get file entry from repository " +
 					repository2.getRepositoryId());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		LocalRepository localRepository =
@@ -371,23 +360,27 @@ public class RepositoryTest {
 			RepositoryProviderUtil.getLocalRepository(repositoryId);
 
 		FileEntry fileEntry = localRepository.addFileEntry(
-			TestPropsValues.getUserId(),
+			null, TestPropsValues.getUserId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
-			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			inputStream, _TEST_CONTENT.length(), new ServiceContext());
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringPool.BLANK, StringPool.BLANK, inputStream,
+			_TEST_CONTENT.length(), null, null, null, new ServiceContext());
 
 		Folder folder = localRepository.addFolder(
-			TestPropsValues.getUserId(),
+			null, TestPropsValues.getUserId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			new ServiceContext());
 
+		inputStream = new UnsyncByteArrayInputStream(_TEST_CONTENT.getBytes());
+
 		FileEntry folderFileEntry = localRepository.addFileEntry(
-			TestPropsValues.getUserId(), folder.getFolderId(),
+			null, TestPropsValues.getUserId(), folder.getFolderId(),
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
-			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			inputStream, _TEST_CONTENT.length(), new ServiceContext());
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringPool.BLANK, StringPool.BLANK, inputStream,
+			_TEST_CONTENT.length(), null, null, null, new ServiceContext());
 
 		return new long[] {
 			fileEntry.getFileEntryId(), folder.getFolderId(),

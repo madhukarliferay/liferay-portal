@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
@@ -35,22 +26,26 @@ import com.liferay.exportimport.test.util.model.util.DummyFolderTestUtil;
 import com.liferay.exportimport.test.util.model.util.DummyReferenceTestUtil;
 import com.liferay.exportimport.test.util.model.util.DummyTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.dao.orm.hibernate.DynamicQueryFactoryImpl;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.portlet.PortletBag;
 import com.liferay.portal.kernel.portlet.PortletBagPool;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.zip.ZipReader;
-import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerList;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +56,9 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Akos Thurzo
@@ -77,7 +75,7 @@ public class ExportedMissingReferenceExportImportTest
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		super.setUp();
 
@@ -152,19 +150,16 @@ public class ExportedMissingReferenceExportImportTest
 
 	@Test
 	public void testMissingDummy() throws Exception {
-		List<PortletDataHandler> portletDataHandlers = setPortletDataHandler(
-			DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-			DummyFolderWithMissingDummyPortletDataHandler.class);
+		try (SafeCloseable safeCloseable =
+				setPortletDataHandlerWithSafeCloseable(
+					DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
+					DummyFolderWithMissingDummyPortletDataHandler.class)) {
 
-		long[] layoutIds = {layout.getLayoutId()};
+			exportImportLayouts(
+				new long[] {layout.getLayoutId()}, getImportParameterMap());
 
-		exportImportLayouts(layoutIds, getImportParameterMap());
-
-		assertMissingReferences();
-
-		setPortletDataHandler(
-			DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-			portletDataHandlers);
+			assertMissingReferences();
+		}
 	}
 
 	@Test
@@ -179,24 +174,19 @@ public class ExportedMissingReferenceExportImportTest
 
 	@Test
 	public void testMissingLayout() throws Exception {
-		List<PortletDataHandler> portletDataHandlers = setPortletDataHandler(
-			DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-			DummyFolderWithMissingLayoutPortletDataHandler.class);
+		try (SafeCloseable safeCloseable =
+				setPortletDataHandlerWithSafeCloseable(
+					DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
+					DummyFolderWithMissingLayoutPortletDataHandler.class)) {
 
-		long[] layoutIds = {layout.getLayoutId()};
+			exportImportLayouts(
+				new long[] {layout.getLayoutId()}, getImportParameterMap());
 
-		exportImportLayouts(layoutIds, getImportParameterMap());
-
-		assertMissingReferences();
-
-		setPortletDataHandler(
-			DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-			portletDataHandlers);
+			assertMissingReferences();
+		}
 	}
 
 	protected void assertMissingReferences() throws Exception {
-		ZipReader zipReader = ZipReaderFactoryUtil.getZipReader(larFile);
-
 		PortletDataContext portletDataContext =
 			PortletDataContextFactoryUtil.createImportPortletDataContext(
 				TestPropsValues.getCompanyId(), group.getGroupId(),
@@ -204,7 +194,7 @@ public class ExportedMissingReferenceExportImportTest
 				ExportImportHelperUtil.getUserIdStrategy(
 					TestPropsValues.getUserId(),
 					TestUserIdStrategy.CURRENT_USER_ID),
-				zipReader);
+				_zipReaderFactory.getZipReader(larFile));
 
 		Element missingReferencesElement =
 			portletDataContext.getMissingReferencesElement();
@@ -242,59 +232,91 @@ public class ExportedMissingReferenceExportImportTest
 		return getExportParameterMap();
 	}
 
-	protected int getPortletDataHandlerRank(Class portletDataHandlerClass) {
+	protected int getPortletDataHandlerRank(Class<?> portletDataHandlerClass) {
+		Bundle bundle = FrameworkUtil.getBundle(
+			ExportedMissingReferenceExportImportTest.class);
+
 		ServiceTrackerList<PortletDataHandler> portletDataHandlerInstances =
-			ServiceTrackerCollections.openList(portletDataHandlerClass);
+			ServiceTrackerListFactory.open(
+				bundle.getBundleContext(), PortletDataHandler.class,
+				"(component.name=" + portletDataHandlerClass.getName() + ")");
 
 		Assert.assertEquals(
 			portletDataHandlerInstances.toString(), 1,
 			portletDataHandlerInstances.size());
 
-		PortletDataHandler portletDataHandlerInstance =
-			portletDataHandlerInstances.get(0);
+		Iterator<PortletDataHandler> iterator =
+			portletDataHandlerInstances.iterator();
+
+		PortletDataHandler portletDataHandlerInstance = iterator.next();
 
 		return portletDataHandlerInstance.getRank();
 	}
 
-	protected List<PortletDataHandler> setPortletDataHandler(
-			String portletId, Class portletDataHandlerClass)
-		throws Exception {
-
-		ServiceTrackerList<PortletDataHandler> portletDataHandlerInstances =
-			ServiceTrackerCollections.openList(portletDataHandlerClass);
-
-		return setPortletDataHandler(portletId, portletDataHandlerInstances);
-	}
-
-	protected List<PortletDataHandler> setPortletDataHandler(
-			String portletId,
-			List<PortletDataHandler> portletDataHandlerInstances)
-		throws Exception {
-
-		PortletBag portletBag = PortletBagPool.get(portletId);
-
-		List<PortletDataHandler> oldDataHandlerInstances =
-			portletBag.getPortletDataHandlerInstances();
-
-		portletBag.setPortletDataHandlerInstances(portletDataHandlerInstances);
-
-		return oldDataHandlerInstances;
-	}
-
 	protected void setPortletDataHandlerRank(
-		Class portletDataHandlerClass, int rank) {
+		Class<?> portletDataHandlerClass, int rank) {
+
+		Bundle bundle = FrameworkUtil.getBundle(
+			ExportedMissingReferenceExportImportTest.class);
 
 		ServiceTrackerList<PortletDataHandler> portletDataHandlerInstances =
-			ServiceTrackerCollections.openList(portletDataHandlerClass);
+			ServiceTrackerListFactory.open(
+				bundle.getBundleContext(), PortletDataHandler.class,
+				"(component.name=" + portletDataHandlerClass.getName() + ")");
 
 		Assert.assertEquals(
 			portletDataHandlerInstances.toString(), 1,
 			portletDataHandlerInstances.size());
 
-		PortletDataHandler portletDataHandlerInstance =
-			portletDataHandlerInstances.get(0);
+		Iterator<PortletDataHandler> iterator =
+			portletDataHandlerInstances.iterator();
+
+		PortletDataHandler portletDataHandlerInstance = iterator.next();
 
 		portletDataHandlerInstance.setRank(rank);
+	}
+
+	protected SafeCloseable setPortletDataHandlerWithSafeCloseable(
+			String portletId, Class<?> portletDataHandlerClass)
+		throws Exception {
+
+		Bundle bundle = FrameworkUtil.getBundle(
+			ExportedMissingReferenceExportImportTest.class);
+
+		ServiceTrackerList<PortletDataHandler> portletDataHandlerInstances =
+			ServiceTrackerListFactory.open(
+				bundle.getBundleContext(), PortletDataHandler.class,
+				"(component.name=" + portletDataHandlerClass.getName() + ")");
+
+		Iterator<PortletDataHandler> iterator =
+			portletDataHandlerInstances.iterator();
+
+		return setPortletDataHandlerWithSafeCloseable(
+			portletId, iterator.next());
+	}
+
+	protected SafeCloseable setPortletDataHandlerWithSafeCloseable(
+			String portletId, PortletDataHandler portletDataHandler)
+		throws Exception {
+
+		PortletBag portletBag = PortletBagPool.get(portletId);
+
+		Snapshot<PortletDataHandler> portletDataHandlerSnapshot =
+			ReflectionTestUtil.getAndSetFieldValue(
+				portletBag, "_portletDataHandlerSnapshot",
+				new Snapshot<PortletDataHandler>(
+					PortletBag.class, PortletDataHandler.class) {
+
+					@Override
+					public PortletDataHandler get() {
+						return portletDataHandler;
+					}
+
+				});
+
+		return () -> ReflectionTestUtil.setFieldValue(
+			portletBag, "_portletDataHandlerSnapshot",
+			portletDataHandlerSnapshot);
 	}
 
 	private void _testMissingDummyOrder(boolean missingFirst) throws Exception {
@@ -304,36 +326,29 @@ public class ExportedMissingReferenceExportImportTest
 			getPortletDataHandlerRank(
 				DummyFolderWithMissingDummyPortletDataHandler.class);
 
-		List<PortletDataHandler> portletDataHandlers = null;
+		try (SafeCloseable safeCloseable =
+				setPortletDataHandlerWithSafeCloseable(
+					DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
+					DummyFolderWithMissingDummyPortletDataHandler.class)) {
 
-		try {
 			setPortletDataHandlerRank(
 				DummyFolderPortletDataHandler.class, missingFirst ? 200 : 100);
 			setPortletDataHandlerRank(
 				DummyFolderWithMissingDummyPortletDataHandler.class,
 				missingFirst ? 100 : 200);
 
-			portletDataHandlers = setPortletDataHandler(
-				DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-				DummyFolderWithMissingDummyPortletDataHandler.class);
-
 			LayoutTestUtil.addPortletToLayout(
 				layout,
 				DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE);
 
-			long[] layoutIds = {layout.getLayoutId()};
-
-			exportImportLayouts(layoutIds, getImportParameterMap());
+			exportImportLayouts(
+				new long[] {layout.getLayoutId()}, getImportParameterMap());
 
 			if (missingFirst) {
 				assertMissingReferences();
 			}
 		}
 		finally {
-			setPortletDataHandler(
-				DummyFolderPortletKeys.DUMMY_FOLDER_WITH_MISSING_REFERENCE,
-				portletDataHandlers);
-
 			setPortletDataHandlerRank(
 				DummyFolderPortletDataHandler.class,
 				dummyFolderPortletDataHandlerRank);
@@ -348,5 +363,8 @@ public class ExportedMissingReferenceExportImportTest
 	private StagedModelRepository<DummyReference>
 		_dummyReferenceStagedModelRepository;
 	private StagedModelRepository<Dummy> _dummyStagedModelRepository;
+
+	@Inject
+	private ZipReaderFactory _zipReaderFactory;
 
 }

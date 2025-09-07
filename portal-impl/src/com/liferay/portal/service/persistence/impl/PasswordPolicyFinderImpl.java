@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.impl;
@@ -55,17 +46,19 @@ public class PasswordPolicyFinderImpl
 	@Override
 	public List<PasswordPolicy> filterFindByC_N(
 		long companyId, String name, int start, int end,
-		OrderByComparator<PasswordPolicy> obc) {
+		OrderByComparator<PasswordPolicy> orderByComparator) {
 
-		return doFindByC_N(companyId, name, start, end, obc, true);
+		return doFindByC_N(
+			companyId, name, start, end, orderByComparator, true);
 	}
 
 	@Override
 	public List<PasswordPolicy> findByC_N(
 		long companyId, String name, int start, int end,
-		OrderByComparator<PasswordPolicy> obc) {
+		OrderByComparator<PasswordPolicy> orderByComparator) {
 
-		return doFindByC_N(companyId, name, start, end, obc, false);
+		return doFindByC_N(
+			companyId, name, start, end, orderByComparator, false);
 	}
 
 	protected int doCountByC_N(
@@ -85,24 +78,23 @@ public class PasswordPolicyFinderImpl
 
 				sql = InlineSQLHelperUtil.replacePermissionCheck(
 					sql, PasswordPolicy.class.getName(),
-					"PasswordPolicy.passwordPolicyId", null, null,
-					new long[] {0}, null);
+					"PasswordPolicy.passwordPolicyId");
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(companyId);
-			qPos.add(name);
-			qPos.add(name);
+			queryPos.add(companyId);
+			queryPos.add(name);
+			queryPos.add(name);
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -111,8 +103,8 @@ public class PasswordPolicyFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -121,7 +113,8 @@ public class PasswordPolicyFinderImpl
 
 	protected List<PasswordPolicy> doFindByC_N(
 		long companyId, String name, int start, int end,
-		OrderByComparator<PasswordPolicy> obc, boolean inlineSQLHelper) {
+		OrderByComparator<PasswordPolicy> orderByComparator,
+		boolean inlineSQLHelper) {
 
 		name = CustomSQLUtil.keywords(name)[0];
 
@@ -132,32 +125,31 @@ public class PasswordPolicyFinderImpl
 
 			String sql = CustomSQLUtil.get(FIND_BY_C_N);
 
-			sql = CustomSQLUtil.replaceOrderBy(sql, obc);
+			sql = CustomSQLUtil.replaceOrderBy(sql, orderByComparator);
 
 			if (inlineSQLHelper &&
 				InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 
 				sql = InlineSQLHelperUtil.replacePermissionCheck(
 					sql, PasswordPolicy.class.getName(),
-					"PasswordPolicy.passwordPolicyId", null, null,
-					new long[] {0}, null);
+					"PasswordPolicy.passwordPolicyId");
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("PasswordPolicy", PasswordPolicyImpl.class);
+			sqlQuery.addEntity("PasswordPolicy", PasswordPolicyImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(companyId);
-			qPos.add(name);
-			qPos.add(name);
+			queryPos.add(companyId);
+			queryPos.add(name);
+			queryPos.add(name);
 
 			return (List<PasswordPolicy>)QueryUtil.list(
-				q, getDialect(), start, end);
+				sqlQuery, getDialect(), start, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);

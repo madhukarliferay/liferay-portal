@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.store.test.util;
@@ -37,14 +28,14 @@ import org.junit.Test;
 public abstract class BaseStoreTestCase {
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		_companyId = RandomTestUtil.nextLong();
 		_repositoryId = RandomTestUtil.nextLong();
 		_store = getStore();
 	}
 
 	@After
-	public void tearDown() throws Exception {
+	public void tearDown() {
 		_store.deleteDirectory(_companyId, _repositoryId, StringPool.SLASH);
 	}
 
@@ -267,7 +258,7 @@ public abstract class BaseStoreTestCase {
 	}
 
 	@Test
-	public void testGetFileNamesWithInvalidRepository() throws Exception {
+	public void testGetFileNamesWithInvalidRepository() {
 		String[] fileNames = _store.getFileNames(
 			_companyId, _repositoryId, StringPool.BLANK);
 
@@ -324,6 +315,24 @@ public abstract class BaseStoreTestCase {
 		_store.getFileSize(
 			_companyId, _repositoryId, RandomTestUtil.randomString(),
 			StringPool.BLANK);
+	}
+
+	@Test
+	public void testGetFileVersions() throws Exception {
+		String fileName = RandomTestUtil.randomString();
+
+		_store.addFile(
+			_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT,
+			new UnsyncByteArrayInputStream(_DATA_VERSION_1));
+
+		addVersions(fileName, 5);
+
+		String[] fileVersions = _store.getFileVersions(
+			_companyId, _repositoryId, fileName);
+
+		for (int i = 0; i < 5; i++) {
+			Assert.assertEquals("1." + i, fileVersions[i]);
+		}
 	}
 
 	@Test

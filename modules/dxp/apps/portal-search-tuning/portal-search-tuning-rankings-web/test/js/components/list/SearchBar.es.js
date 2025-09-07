@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {render} from '@testing-library/react';
@@ -16,7 +10,7 @@ import SearchBar from '../../../../src/main/resources/META-INF/resources/js/comp
 import {resultsDataToMap} from '../../../../src/main/resources/META-INF/resources/js/utils/util.es';
 import {
 	FETCH_SEARCH_DOCUMENTS_URL,
-	getMockResultsData
+	getMockResultsData,
 } from '../../mocks/data.es';
 
 import '@testing-library/jest-dom/extend-expect';
@@ -29,7 +23,7 @@ function renderTestSearchBar(props) {
 	return render(
 		<SearchBar
 			dataMap={DATA_MAP}
-			fetchDocumentsSearchUrl={FETCH_SEARCH_DOCUMENTS_URL}
+			fetchDocumentsSearchURL={FETCH_SEARCH_DOCUMENTS_URL}
 			onClickHide={jest.fn()}
 			onClickPin={jest.fn()}
 			onSelectAll={jest.fn()}
@@ -57,7 +51,7 @@ describe('SearchBar', () => {
 	it('hides the add result button with selectedIds', () => {
 		const {queryByText} = renderTestSearchBar({
 			onAddResultSubmit: jest.fn(),
-			selectedIds: [102]
+			selectedIds: [102],
 		});
 
 		expect(queryByText('add-result')).toBeNull();
@@ -65,7 +59,7 @@ describe('SearchBar', () => {
 
 	it('shows what is selected with selectedIds', () => {
 		const {getByText} = renderTestSearchBar({
-			selectedIds: [102, 103]
+			selectedIds: [102, 103],
 		});
 
 		expect(getByText('x-items-selected')).toBeInTheDocument();
@@ -73,7 +67,7 @@ describe('SearchBar', () => {
 
 	it('shows only one selected with selectedIds', () => {
 		const {getByText} = renderTestSearchBar({
-			selectedIds: [102]
+			selectedIds: [102],
 		});
 
 		expect(getByText('x-item-selected')).toBeInTheDocument();

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal.display.context;
@@ -18,25 +9,27 @@ import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
-import com.liferay.oauth2.provider.scope.liferay.ApplicationDescriptorLocator;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
-import com.liferay.oauth2.provider.scope.liferay.ScopeDescriptorLocator;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
+import com.liferay.oauth2.provider.scope.liferay.spi.ApplicationDescriptorLocator;
+import com.liferay.oauth2.provider.scope.liferay.spi.ScopeDescriptorLocator;
 import com.liferay.oauth2.provider.scope.spi.application.descriptor.ApplicationDescriptor;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationService;
 import com.liferay.oauth2.provider.service.OAuth2ScopeGrantLocalService;
 import com.liferay.oauth2.provider.web.internal.AssignableScopes;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.portlet.PortletRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,11 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.portlet.PortletRequest;
+import java.util.TreeSet;
 
 /**
  * @author Stian Sigvartsen
@@ -63,30 +52,32 @@ public class AssignScopesDisplayContext
 	extends OAuth2AdminPortletDisplayContext {
 
 	public AssignScopesDisplayContext(
-			OAuth2ApplicationService oAuth2ApplicationService,
+			ApplicationDescriptorLocator applicationDescriptorLocator,
+			DLURLHelper dlURLHelper,
 			OAuth2ApplicationScopeAliasesLocalService
 				oAuth2ApplicationScopeAliasesLocalService,
-			OAuth2ScopeGrantLocalService oAuth2ScopeGrantLocalService,
+			OAuth2ApplicationService oAuth2ApplicationService,
 			OAuth2ProviderConfiguration oAuth2ProviderConfiguration,
-			PortletRequest portletRequest, ThemeDisplay themeDisplay,
-			ApplicationDescriptorLocator applicationDescriptorLocator,
+			OAuth2ScopeGrantLocalService oAuth2ScopeGrantLocalService,
+			PortletRequest portletRequest,
 			ScopeDescriptorLocator scopeDescriptorLocator,
-			ScopeLocator scopeLocator, DLURLHelper dlURLHelper)
+			ScopeLocator scopeLocator, ThemeDisplay themeDisplay)
 		throws PortalException {
 
 		super(
-			oAuth2ApplicationService, oAuth2ApplicationScopeAliasesLocalService,
-			oAuth2ProviderConfiguration, portletRequest, themeDisplay,
-			dlURLHelper);
+			dlURLHelper, oAuth2ApplicationScopeAliasesLocalService,
+			oAuth2ApplicationService, oAuth2ProviderConfiguration,
+			portletRequest, themeDisplay);
 
 		_applicationDescriptorLocator = applicationDescriptorLocator;
+
 		_companyId = themeDisplay.getCompanyId();
 		_locale = themeDisplay.getLocale();
 
 		OAuth2Application oAuth2Application = getOAuth2Application();
 
 		Map<String, AssignableScopes> assignedScopeAliasesAssignableScopes =
-			getAssignableScopesByScopeAlias(
+			_getAssignableScopesByScopeAlias(
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
 				applicationDescriptorLocator, oAuth2ScopeGrantLocalService,
 				scopeDescriptorLocator, scopeLocator, themeDisplay);
@@ -112,7 +103,7 @@ public class AssignScopesDisplayContext
 				assignedAssignableScopes =
 					assignedScopeAliasesAssignableScopes.remove(scopeAlias);
 
-				relations = getRelations(null, assignedAssignableScopes);
+				relations = _getRelations(null, assignedAssignableScopes);
 
 				assignableScopes = assignedAssignableScopes;
 				applicationNames =
@@ -121,7 +112,7 @@ public class AssignScopesDisplayContext
 			else {
 				assignableScopes.addLiferayOAuth2Scopes(liferayOAuth2Scopes);
 
-				relations = getRelations(scopeAlias, assignableScopes);
+				relations = _getRelations(scopeAlias, assignableScopes);
 
 				assignedAssignableScopes =
 					assignedScopeAliasesAssignableScopes.remove(scopeAlias);
@@ -203,24 +194,13 @@ public class AssignScopesDisplayContext
 		String applicationName, AssignableScopes assignableScopes,
 		String delimiter) {
 
-		Set<String> applicationScopeDescription =
-			assignableScopes.getApplicationScopeDescription(
-				_companyId, applicationName);
-
-		Stream<String> stream = applicationScopeDescription.stream();
-
-		List<String> scopesList = stream.sorted(
-		).map(
-			HtmlUtil::escape
-		).collect(
-			Collectors.toList()
-		);
-
-		if (ListUtil.isEmpty(scopesList)) {
-			return StringPool.BLANK;
-		}
-
-		return StringUtil.merge(scopesList, delimiter);
+		return StringUtil.merge(
+			TransformUtil.transform(
+				new TreeSet<>(
+					assignableScopes.getApplicationScopeDescription(
+						_companyId, applicationName)),
+				HtmlUtil::escape),
+			delimiter);
 	}
 
 	public Map<AssignableScopes, Relations> getAssignableScopesRelations(
@@ -292,23 +272,19 @@ public class AssignScopesDisplayContext
 	public Map<AssignableScopes, Relations>
 		getGlobalAssignableScopesRelations() {
 
-		Collection<Set<AssignableScopes>> assignableScopesCollection =
-			_globalAssignableScopesByApplicationName.values();
+		Map<AssignableScopes, Relations> assignableScopesRelations =
+			new HashMap<>();
 
-		Stream<Set<AssignableScopes>> stream =
-			assignableScopesCollection.stream();
+		for (Set<AssignableScopes> assignableScopess :
+				_globalAssignableScopesByApplicationName.values()) {
 
-		return stream.flatMap(
-			Set::stream
-		).collect(
-			Collectors.toSet()
-		).stream(
-		).filter(
-			_assignableScopesRelations::containsKey
-		).collect(
-			Collectors.toMap(
-				Function.identity(), _assignableScopesRelations::get)
-		);
+			assignableScopesRelations.putAll(
+				HashMapBuilder.put(
+					assignableScopess, _assignableScopesRelations::get
+				).build());
+		}
+
+		return assignableScopesRelations;
 	}
 
 	public List<Map.Entry<String, String>>
@@ -337,16 +313,16 @@ public class AssignScopesDisplayContext
 		}
 
 		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
+		public boolean equals(Object object) {
+			if (this == object) {
 				return true;
 			}
 
-			if ((o == null) || (getClass() != o.getClass())) {
+			if ((object == null) || (getClass() != object.getClass())) {
 				return false;
 			}
 
-			Relations relations = (Relations)o;
+			Relations relations = (Relations)object;
 
 			if (Objects.equals(
 					_globalAssignableScopes,
@@ -372,19 +348,16 @@ public class AssignScopesDisplayContext
 		}
 
 		public Set<String> getGlobalScopeAliases() {
-			Stream<AssignableScopes> stream = _globalAssignableScopes.stream();
+			Set<String> scopeAliases = new HashSet<>();
 
-			return stream.map(
-				_assignableScopesRelations::get
-			).flatMap(
-				relations -> {
-					Set<String> scopeAliases = relations.getScopeAliases();
+			for (AssignableScopes assignableScopes : _globalAssignableScopes) {
+				Relations relations = _assignableScopesRelations.get(
+					assignableScopes);
 
-					return scopeAliases.stream();
-				}
-			).collect(
-				Collectors.toSet()
-			);
+				scopeAliases.addAll(relations.getScopeAliases());
+			}
+
+			return scopeAliases;
 		}
 
 		public Set<String> getScopeAliases() {
@@ -405,12 +378,21 @@ public class AssignScopesDisplayContext
 
 		private AssignableScopes _assignedAssignableScopes;
 		private Set<String> _assignedScopeAliases;
-		private Set<AssignableScopes> _globalAssignableScopes = new HashSet<>();
+		private final Set<AssignableScopes> _globalAssignableScopes =
+			new HashSet<>();
 		private final Set<String> _scopeAliases;
 
 	}
 
-	protected Map<String, AssignableScopes> getAssignableScopesByScopeAlias(
+	protected Map<AssignableScopes, Relations> getAssignableScopesRelations(
+		Set<AssignableScopes> assignableScopes) {
+
+		return HashMapBuilder.put(
+			assignableScopes, _assignableScopesRelations::get
+		).build();
+	}
+
+	private Map<String, AssignableScopes> _getAssignableScopesByScopeAlias(
 		long oAuth2ApplicationScopeAliasesId,
 		ApplicationDescriptorLocator applicationDescriptorLocator,
 		OAuth2ScopeGrantLocalService oAuth2ScopeGrantLocalService,
@@ -445,21 +427,7 @@ public class AssignScopesDisplayContext
 		return scopeAliasesAssignableScopes;
 	}
 
-	protected Map<AssignableScopes, Relations> getAssignableScopesRelations(
-		Set<AssignableScopes> assignableScopes) {
-
-		Stream<AssignableScopes> assignableScopesStream =
-			assignableScopes.stream();
-
-		return assignableScopesStream.filter(
-			_assignableScopesRelations::containsKey
-		).collect(
-			Collectors.toMap(
-				Function.identity(), _assignableScopesRelations::get)
-		);
-	}
-
-	protected Relations getRelations(
+	private Relations _getRelations(
 		String scopeAlias, AssignableScopes assignableScopes) {
 
 		return _assignableScopesRelations.compute(
@@ -479,16 +447,6 @@ public class AssignScopesDisplayContext
 
 				return new Relations(Collections.emptySet());
 			});
-	}
-
-	private static <K, V> Map<V, K> _invertMap(Map<K, V> map) {
-		Map<V, K> ret = new HashMap<>();
-
-		for (Map.Entry<K, V> entry : map.entrySet()) {
-			ret.put(entry.getValue(), entry.getKey());
-		}
-
-		return ret;
 	}
 
 	private void _indexAssignableScopes(
@@ -525,6 +483,16 @@ public class AssignScopesDisplayContext
 		}
 	}
 
+	private <K, V> Map<V, K> _invertMap(Map<K, V> map) {
+		Map<V, K> ret = new HashMap<>();
+
+		for (Map.Entry<K, V> entry : map.entrySet()) {
+			ret.put(entry.getValue(), entry.getKey());
+		}
+
+		return ret;
+	}
+
 	private Map<AssignableScopes, Relations> _normalize(
 		Map<AssignableScopes, Relations> assignableScopesRelations) {
 
@@ -542,8 +510,8 @@ public class AssignScopesDisplayContext
 
 			// Preserve assignable scopes that are assigned an alias
 
-			if (!SetUtil.isEmpty(relations.getAssignedScopeAliases()) ||
-				!SetUtil.isEmpty(relations.getScopeAliases())) {
+			if (SetUtil.isNotEmpty(relations.getAssignedScopeAliases()) ||
+				SetUtil.isNotEmpty(relations.getScopeAliases())) {
 
 				combinedAssignableScopesRelations.put(
 					assignableScopes, relations);
@@ -594,12 +562,12 @@ public class AssignScopesDisplayContext
 	}
 
 	private final ApplicationDescriptorLocator _applicationDescriptorLocator;
-	private Map<AssignableScopes, Relations> _assignableScopesRelations =
+	private final Map<AssignableScopes, Relations> _assignableScopesRelations =
 		new HashMap<>();
 	private final long _companyId;
-	private Map<String, Set<AssignableScopes>>
+	private final Map<String, Set<AssignableScopes>>
 		_globalAssignableScopesByApplicationName = new HashMap<>();
-	private Map<String, Set<AssignableScopes>>
+	private final Map<String, Set<AssignableScopes>>
 		_localAssignableScopesByApplicationName = new HashMap<>();
 	private final Locale _locale;
 

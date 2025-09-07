@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
 
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetCategoryDisplay;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -45,6 +37,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -53,10 +46,10 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface AssetCategoryService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetCategoryServiceUtil} to access the asset category remote service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetCategoryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetCategoryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the asset category remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link AssetCategoryServiceUtil} if injection and service tracking are not available.
 	 */
 	public AssetCategory addCategory(
 			long groupId, long parentCategoryId, Map<Locale, String> titleMap,
@@ -69,12 +62,33 @@ public interface AssetCategoryService extends BaseService {
 			ServiceContext serviceContext)
 		throws PortalException;
 
+	public AssetCategory addCategory(
+			String externalReferenceCode, long groupId, long parentCategoryId,
+			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
+			long vocabularyId, String[] categoryProperties,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	public void deleteCategories(long[] categoryIds) throws PortalException;
 
 	public void deleteCategory(long categoryId) throws PortalException;
 
+	public AssetCategory deleteCategoryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AssetCategory fetchCategory(long categoryId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetCategory fetchCategoryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetCategory getAssetCategoryByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException;
 
 	/**
 	 * Returns a range of assetCategories related to an AssetEntry with the
@@ -121,14 +135,14 @@ public interface AssetCategoryService extends BaseService {
 	 * @param parentCategoryId the parent category ID
 	 * @param start the lower bound of the range of results
 	 * @param end the upper bound of the range of results (not inclusive)
-	 * @param obc the comparator
+	 * @param orderByComparator the comparator
 	 * @return the matching categories
 	 * @throws PortalException
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getChildCategories(
 			long parentCategoryId, int start, int end,
-			OrderByComparator<AssetCategory> obc)
+			OrderByComparator<AssetCategory> orderByComparator)
 		throws PortalException;
 
 	/**
@@ -142,6 +156,11 @@ public interface AssetCategoryService extends BaseService {
 	public int getChildCategoriesCount(long parentCategoryId)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetCategory getOrAddEmptyCategory(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -152,24 +171,24 @@ public interface AssetCategoryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getVocabularyCategories(
 			long vocabularyId, int start, int end,
-			OrderByComparator<AssetCategory> obc)
+			OrderByComparator<AssetCategory> orderByComparator)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getVocabularyCategories(
 			long parentCategoryId, long vocabularyId, int start, int end,
-			OrderByComparator<AssetCategory> obc)
+			OrderByComparator<AssetCategory> orderByComparator)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getVocabularyCategories(
 		long groupId, long parentCategoryId, long vocabularyId, int start,
-		int end, OrderByComparator<AssetCategory> obc);
+		int end, OrderByComparator<AssetCategory> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getVocabularyCategories(
 		long groupId, String name, long vocabularyId, int start, int end,
-		OrderByComparator<AssetCategory> obc);
+		OrderByComparator<AssetCategory> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getVocabularyCategoriesCount(long groupId, long vocabularyId);
@@ -185,19 +204,19 @@ public interface AssetCategoryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AssetCategoryDisplay getVocabularyCategoriesDisplay(
 			long vocabularyId, int start, int end,
-			OrderByComparator<AssetCategory> obc)
+			OrderByComparator<AssetCategory> orderByComparator)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AssetCategoryDisplay getVocabularyCategoriesDisplay(
 			long groupId, String name, long vocabularyId, int start, int end,
-			OrderByComparator<AssetCategory> obc)
+			OrderByComparator<AssetCategory> orderByComparator)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> getVocabularyRootCategories(
 		long groupId, long vocabularyId, int start, int end,
-		OrderByComparator<AssetCategory> obc);
+		OrderByComparator<AssetCategory> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getVocabularyRootCategoriesCount(
@@ -211,7 +230,7 @@ public interface AssetCategoryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetCategory> search(
 		long groupId, String keywords, long vocabularyId, int start, int end,
-		OrderByComparator<AssetCategory> obc);
+		OrderByComparator<AssetCategory> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public JSONArray search(

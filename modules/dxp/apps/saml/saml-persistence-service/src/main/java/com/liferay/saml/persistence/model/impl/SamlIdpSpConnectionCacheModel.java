@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model.impl;
@@ -36,17 +27,17 @@ public class SamlIdpSpConnectionCacheModel
 	implements CacheModel<SamlIdpSpConnection>, Externalizable {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SamlIdpSpConnectionCacheModel)) {
+		if (!(object instanceof SamlIdpSpConnectionCacheModel)) {
 			return false;
 		}
 
 		SamlIdpSpConnectionCacheModel samlIdpSpConnectionCacheModel =
-			(SamlIdpSpConnectionCacheModel)obj;
+			(SamlIdpSpConnectionCacheModel)object;
 
 		if (samlIdpSpConnectionId ==
 				samlIdpSpConnectionCacheModel.samlIdpSpConnectionId) {
@@ -78,8 +69,6 @@ public class SamlIdpSpConnectionCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", samlSpEntityId=");
-		sb.append(samlSpEntityId);
 		sb.append(", assertionLifetime=");
 		sb.append(assertionLifetime);
 		sb.append(", attributeNames=");
@@ -104,6 +93,8 @@ public class SamlIdpSpConnectionCacheModel
 		sb.append(nameIdAttribute);
 		sb.append(", nameIdFormat=");
 		sb.append(nameIdFormat);
+		sb.append(", samlSpEntityId=");
+		sb.append(samlSpEntityId);
 		sb.append("}");
 
 		return sb.toString();
@@ -137,13 +128,6 @@ public class SamlIdpSpConnectionCacheModel
 		}
 		else {
 			samlIdpSpConnectionImpl.setModifiedDate(new Date(modifiedDate));
-		}
-
-		if (samlSpEntityId == null) {
-			samlIdpSpConnectionImpl.setSamlSpEntityId("");
-		}
-		else {
-			samlIdpSpConnectionImpl.setSamlSpEntityId(samlSpEntityId);
 		}
 
 		samlIdpSpConnectionImpl.setAssertionLifetime(assertionLifetime);
@@ -204,13 +188,22 @@ public class SamlIdpSpConnectionCacheModel
 			samlIdpSpConnectionImpl.setNameIdFormat(nameIdFormat);
 		}
 
+		if (samlSpEntityId == null) {
+			samlIdpSpConnectionImpl.setSamlSpEntityId("");
+		}
+		else {
+			samlIdpSpConnectionImpl.setSamlSpEntityId(samlSpEntityId);
+		}
+
 		samlIdpSpConnectionImpl.resetOriginalValues();
 
 		return samlIdpSpConnectionImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		samlIdpSpConnectionId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
@@ -219,7 +212,6 @@ public class SamlIdpSpConnectionCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-		samlSpEntityId = objectInput.readUTF();
 
 		assertionLifetime = objectInput.readInt();
 		attributeNames = objectInput.readUTF();
@@ -232,11 +224,12 @@ public class SamlIdpSpConnectionCacheModel
 
 		encryptionForced = objectInput.readBoolean();
 		metadataUrl = objectInput.readUTF();
-		metadataXml = objectInput.readUTF();
+		metadataXml = (String)objectInput.readObject();
 		metadataUpdatedDate = objectInput.readLong();
 		name = objectInput.readUTF();
 		nameIdAttribute = objectInput.readUTF();
 		nameIdFormat = objectInput.readUTF();
+		samlSpEntityId = objectInput.readUTF();
 	}
 
 	@Override
@@ -256,13 +249,6 @@ public class SamlIdpSpConnectionCacheModel
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
-
-		if (samlSpEntityId == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(samlSpEntityId);
-		}
 
 		objectOutput.writeInt(assertionLifetime);
 
@@ -289,10 +275,10 @@ public class SamlIdpSpConnectionCacheModel
 		}
 
 		if (metadataXml == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(metadataXml);
+			objectOutput.writeObject(metadataXml);
 		}
 
 		objectOutput.writeLong(metadataUpdatedDate);
@@ -317,6 +303,13 @@ public class SamlIdpSpConnectionCacheModel
 		else {
 			objectOutput.writeUTF(nameIdFormat);
 		}
+
+		if (samlSpEntityId == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(samlSpEntityId);
+		}
 	}
 
 	public long samlIdpSpConnectionId;
@@ -325,7 +318,6 @@ public class SamlIdpSpConnectionCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
-	public String samlSpEntityId;
 	public int assertionLifetime;
 	public String attributeNames;
 	public boolean attributesEnabled;
@@ -338,5 +330,6 @@ public class SamlIdpSpConnectionCacheModel
 	public String name;
 	public String nameIdAttribute;
 	public String nameIdFormat;
+	public String samlSpEntityId;
 
 }

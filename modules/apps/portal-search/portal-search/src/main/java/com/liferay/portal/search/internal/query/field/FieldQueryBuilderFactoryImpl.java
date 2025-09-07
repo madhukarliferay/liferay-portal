@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query.field;
@@ -44,19 +35,19 @@ import org.osgi.service.component.annotations.Reference;
 public class FieldQueryBuilderFactoryImpl implements FieldQueryBuilderFactory {
 
 	@Override
-	public FieldQueryBuilder getQueryBuilder(String field) {
-		if (queryPreProcessConfiguration.isSubstringSearchAlways(field)) {
+	public FieldQueryBuilder getQueryBuilder(String fieldName) {
+		if (queryPreProcessConfiguration.isSubstringSearchAlways(fieldName)) {
 			return substringFieldQueryBuilder;
 		}
 
-		for (String descriptionField : _descriptionFields) {
-			if (field.startsWith(descriptionField)) {
+		for (String descriptionFieldName : _descriptionFieldNames) {
+			if (fieldName.startsWith(descriptionFieldName)) {
 				return descriptionFieldQueryBuilder;
 			}
 		}
 
-		for (String titleField : _titleFields) {
-			if (field.startsWith(titleField)) {
+		for (String titleFieldName : _titleFieldNames) {
+			if (fieldName.startsWith(titleFieldName)) {
 				return titleFieldQueryBuilder;
 			}
 		}
@@ -67,11 +58,23 @@ public class FieldQueryBuilderFactoryImpl implements FieldQueryBuilderFactory {
 	@Activate
 	@Modified
 	protected void activate(Map<String, Object> properties) {
-		_descriptionFields = getFields(properties, "description.fields");
-		_titleFields = getFields(properties, "title.fields");
+		_descriptionFieldNames = _getFields(properties, "description.fields");
+		_titleFieldNames = _getFields(properties, "title.fields");
 	}
 
-	protected Collection<String> getFields(
+	@Reference(target = "(query.builder.type=description)")
+	protected FieldQueryBuilder descriptionFieldQueryBuilder;
+
+	@Reference
+	protected QueryPreProcessConfiguration queryPreProcessConfiguration;
+
+	@Reference(target = "(query.builder.type=substring)")
+	protected FieldQueryBuilder substringFieldQueryBuilder;
+
+	@Reference(target = "(query.builder.type=title)")
+	protected FieldQueryBuilder titleFieldQueryBuilder;
+
+	private Collection<String> _getFields(
 		Map<String, Object> properties, String key) {
 
 		String[] values = StringUtil.split(
@@ -80,21 +83,9 @@ public class FieldQueryBuilderFactoryImpl implements FieldQueryBuilderFactory {
 		return new HashSet<>(Arrays.asList(values));
 	}
 
-	@Reference
-	protected DescriptionFieldQueryBuilder descriptionFieldQueryBuilder;
-
-	@Reference
-	protected QueryPreProcessConfiguration queryPreProcessConfiguration;
-
-	@Reference
-	protected SubstringFieldQueryBuilder substringFieldQueryBuilder;
-
-	@Reference
-	protected TitleFieldQueryBuilder titleFieldQueryBuilder;
-
-	private volatile Collection<String> _descriptionFields = Arrays.asList(
+	private volatile Collection<String> _descriptionFieldNames = Arrays.asList(
 		"content", "description");
-	private volatile Collection<String> _titleFields = new HashSet<>(
+	private volatile Collection<String> _titleFieldNames = new HashSet<>(
 		Arrays.asList("name", "title"));
 
 }

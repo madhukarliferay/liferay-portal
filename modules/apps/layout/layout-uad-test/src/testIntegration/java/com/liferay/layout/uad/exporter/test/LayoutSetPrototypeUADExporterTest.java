@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.uad.exporter.test;
@@ -24,6 +15,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.user.associated.data.exporter.UADExporter;
 import com.liferay.user.associated.data.test.util.BaseUADExporterTestCase;
 
@@ -44,7 +36,9 @@ public class LayoutSetPrototypeUADExporterTest
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Override
 	protected LayoutSetPrototype addBaseModel(long userId) throws Exception {
@@ -61,12 +55,7 @@ public class LayoutSetPrototypeUADExporterTest
 	}
 
 	@Override
-	protected String getPrimaryKeyName() {
-		return "layoutSetPrototypeId";
-	}
-
-	@Override
-	protected UADExporter getUADExporter() {
+	protected UADExporter<LayoutSetPrototype> getUADExporter() {
 		return _uadExporter;
 	}
 
@@ -77,7 +66,9 @@ public class LayoutSetPrototypeUADExporterTest
 	private final List<LayoutSetPrototype> _layoutSetPrototypes =
 		new ArrayList<>();
 
-	@Inject(filter = "component.name=*.LayoutSetPrototypeUADExporter")
-	private UADExporter _uadExporter;
+	@Inject(
+		filter = "component.name=com.liferay.layout.uad.exporter.LayoutSetPrototypeUADExporter"
+	)
+	private UADExporter<LayoutSetPrototype> _uadExporter;
 
 }

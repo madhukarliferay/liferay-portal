@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.memberships.web.internal.portlet;
 
+import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.kernel.exception.MembershipRequestCommentsException;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.NoSuchRoleException;
@@ -30,7 +22,6 @@ import com.liferay.portal.kernel.service.MembershipRequestService;
 import com.liferay.portal.kernel.service.OrganizationService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
-import com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupGroupRoleService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleService;
@@ -39,14 +30,25 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.liveusers.LiveUsers;
-import com.liferay.site.memberships.web.internal.constants.SiteMembershipsPortletKeys;
+import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
+import com.liferay.site.memberships.constants.SiteMembershipsPortletKeys;
 import com.liferay.site.memberships.web.internal.display.context.SiteMembershipsDisplayContext;
-import com.liferay.users.admin.kernel.util.UsersAdmin;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import java.io.IOException;
 
@@ -55,15 +57,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -71,7 +64,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Brian Wing Shun Chan
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-communities",
@@ -82,13 +74,14 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.render-weight=50",
 		"com.liferay.portlet.system=true",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Site Memberships Admin",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/view.jsp",
-		"javax.portlet.name=" + SiteMembershipsPortletKeys.SITE_MEMBERSHIPS_ADMIN,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"jakarta.portlet.display-name=Site Memberships Admin",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/view.jsp",
+		"jakarta.portlet.name=" + SiteMembershipsPortletKeys.SITE_MEMBERSHIPS_ADMIN,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=administrator",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
@@ -248,21 +241,31 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 			return;
 		}
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		Group group = _getGroup(actionRequest, actionResponse);
 
+		long[] availableRoleIds = ParamUtil.getLongValues(
+			actionRequest, "availableRowIds");
 		long[] roleIds = ParamUtil.getLongValues(actionRequest, "rowIds");
 
 		List<UserGroupRole> userGroupRoles =
 			_userGroupRoleLocalService.getUserGroupRoles(
 				user.getUserId(), group.getGroupId());
 
+		userGroupRoles = UsersAdminUtil.filterUserGroupRoles(
+			themeDisplay.getPermissionChecker(), userGroupRoles);
+
 		List<Long> curRoleIds = ListUtil.toList(
-			userGroupRoles, UsersAdmin.USER_GROUP_ROLE_ID_ACCESSOR);
+			userGroupRoles, UsersAdminUtil.USER_GROUP_ROLE_ID_ACCESSOR);
 
 		List<Long> removeRoleIds = new ArrayList<>();
 
 		for (long roleId : curRoleIds) {
-			if (!ArrayUtil.contains(roleIds, roleId)) {
+			if (!ArrayUtil.contains(roleIds, roleId) &&
+				ArrayUtil.contains(availableRoleIds, roleId)) {
+
 				removeRoleIds.add(roleId);
 			}
 		}
@@ -272,7 +275,7 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 			ArrayUtil.toLongArray(removeRoleIds));
 	}
 
-	public void editUserGroupsSiteRoles(
+	public void editUserGroupsRoles(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
@@ -288,7 +291,7 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 		}
 	}
 
-	public void editUsersSiteRoles(
+	public void editUsersRoles(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
@@ -304,7 +307,7 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 		}
 	}
 
-	public void removeUserGroupSiteRole(
+	public void removeUserGroupRole(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
@@ -316,7 +319,7 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 			userIds, group.getGroupId(), roleId);
 	}
 
-	public void removeUserSiteRole(
+	public void removeUserRole(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
@@ -326,6 +329,16 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 
 		_userGroupRoleService.deleteUserGroupRoles(
 			userIds, group.getGroupId(), roleId);
+	}
+
+	@Override
+	public void render(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws IOException, PortletException {
+
+		renderRequest.setAttribute(ItemSelector.class.getName(), _itemSelector);
+
+		super.render(renderRequest, renderResponse);
 	}
 
 	public void replyMembershipRequest(
@@ -365,14 +378,24 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		Group group = _getGroup(actionRequest, actionResponse);
-
 		long userGroupId = ParamUtil.getLong(actionRequest, "userGroupId");
-
+		Group group = _getGroup(actionRequest, actionResponse);
 		long[] roleIds = ParamUtil.getLongValues(actionRequest, "rowIds");
 
 		_userGroupGroupRoleService.deleteUserGroupGroupRoles(
 			userGroupId, group.getGroupId(), roleIds);
+	}
+
+	public void unassignUserGroupRole(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws Exception {
+
+		long userId = ParamUtil.getLong(actionRequest, "userId");
+		Group group = _getGroup(actionRequest, actionResponse);
+		long[] roleIds = ParamUtil.getLongValues(actionRequest, "rowIds");
+
+		_userGroupRoleService.deleteUserGroupRoles(
+			userId, group.getGroupId(), roleIds);
 	}
 
 	@Override
@@ -395,14 +418,14 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 	}
 
 	@Override
-	protected boolean isSessionErrorException(Throwable cause) {
-		if (cause instanceof MembershipPolicyException ||
-			cause instanceof MembershipRequestCommentsException ||
-			cause instanceof NoSuchGroupException ||
-			cause instanceof NoSuchRoleException ||
-			cause instanceof PrincipalException ||
-			cause instanceof RequiredUserException ||
-			super.isSessionErrorException(cause)) {
+	protected boolean isSessionErrorException(Throwable throwable) {
+		if (throwable instanceof MembershipPolicyException ||
+			throwable instanceof MembershipRequestCommentsException ||
+			throwable instanceof NoSuchGroupException ||
+			throwable instanceof NoSuchRoleException ||
+			throwable instanceof PrincipalException ||
+			throwable instanceof RequiredUserException ||
+			super.isSessionErrorException(throwable)) {
 
 			return true;
 		}
@@ -446,6 +469,9 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 	}
 
 	@Reference
+	private ItemSelector _itemSelector;
+
+	@Reference
 	private MembershipRequestService _membershipRequestService;
 
 	@Reference
@@ -453,9 +479,6 @@ public class SiteMembershipsPortlet extends MVCPortlet {
 
 	@Reference
 	private Portal _portal;
-
-	@Reference
-	private UserGroupGroupRoleLocalService _userGroupGroupRoleLocalService;
 
 	@Reference
 	private UserGroupGroupRoleService _userGroupGroupRoleService;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.internal.lifecycle;
@@ -33,15 +24,14 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Daniel Kocsis
  */
-@Component(immediate = true, service = ExportImportLifecycleListener.class)
+@Component(service = ExportImportLifecycleListener.class)
 public class LoggerExportImportLifecycleListener
 	implements EventAwareExportImportLifecycleListener {
 
 	public String getStagedModelLogFragment(StagedModel stagedModel) {
-		StringBundler sb = new StringBundler(8);
+		StringBundler sb = new StringBundler(7);
 
-		sb.append(StringPool.OPEN_CURLY_BRACE);
-		sb.append("class: ");
+		sb.append("{class: ");
 		sb.append(ExportImportClassedModelUtil.getClassName(stagedModel));
 
 		if (stagedModel instanceof StagedGroupedModel) {
@@ -75,11 +65,7 @@ public class LoggerExportImportLifecycleListener
 			PortletDataContext portletDataContext, Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Layout export failed for group " + portletDataContext.getGroupId(),
 			throwable);
 	}
@@ -115,11 +101,7 @@ public class LoggerExportImportLifecycleListener
 			PortletDataContext portletDataContext, Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Layout import failed for group " + portletDataContext.getGroupId(),
 			throwable);
 	}
@@ -162,11 +144,7 @@ public class LoggerExportImportLifecycleListener
 			Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Layout publication failed for group " +
 				exportImportConfiguration.getGroupId(),
 			throwable);
@@ -206,11 +184,7 @@ public class LoggerExportImportLifecycleListener
 			Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Layout remote publication failed for group " +
 				exportImportConfiguration.getGroupId(),
 			throwable);
@@ -249,11 +223,7 @@ public class LoggerExportImportLifecycleListener
 			PortletDataContext portletDataContext, Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Portlet export failed for portlet " +
 				portletDataContext.getPortletId(),
 			throwable);
@@ -290,11 +260,7 @@ public class LoggerExportImportLifecycleListener
 			PortletDataContext portletDataContext, Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Portlet import failed for portlet " +
 				portletDataContext.getPortletId(),
 			throwable);
@@ -338,14 +304,10 @@ public class LoggerExportImportLifecycleListener
 			Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
 		String portletId = MapUtil.getString(
 			exportImportConfiguration.getSettingsMap(), "portletId");
 
-		_log.debug(
+		_log.error(
 			"Portlet publication failed for portlet " + portletId, throwable);
 	}
 
@@ -385,11 +347,7 @@ public class LoggerExportImportLifecycleListener
 			Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Staged model " + getStagedModelLogFragment(stagedModel) +
 				" export failed",
 			throwable);
@@ -429,11 +387,7 @@ public class LoggerExportImportLifecycleListener
 			Throwable throwable)
 		throws Exception {
 
-		if (!_log.isDebugEnabled()) {
-			return;
-		}
-
-		_log.debug(
+		_log.error(
 			"Staged model " + getStagedModelLogFragment(stagedModel) +
 				" import failed",
 			throwable);

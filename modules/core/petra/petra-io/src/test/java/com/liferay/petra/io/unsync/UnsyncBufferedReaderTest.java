@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io.unsync;
 
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,6 +23,7 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -38,15 +32,18 @@ import org.junit.Test;
 public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor() {
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new CodeCoverageAssertor() {
 
-			@Override
-			public void appendAssertClasses(List<Class<?>> assertClasses) {
-				assertClasses.add(BoundaryCheckerUtil.class);
-			}
+				@Override
+				public void appendAssertClasses(List<Class<?>> assertClasses) {
+					assertClasses.add(BoundaryCheckerUtil.class);
+				}
 
-		};
+			},
+			LiferayUnitTestRule.INSTANCE);
 
 	@Override
 	@Test
@@ -147,8 +144,8 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
-			Assert.assertEquals("Reader is null", ioe.getMessage());
+		catch (IOException ioException) {
+			Assert.assertEquals("Reader is null", ioException.getMessage());
 		}
 
 		testClose(unsyncBufferedReader, "Reader is null");
@@ -177,8 +174,9 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
-			Assert.assertEquals("Size is less than 1", iae.getMessage());
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				"Size is less than 1", illegalArgumentException.getMessage());
 		}
 
 		try {
@@ -186,8 +184,9 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
-			Assert.assertEquals("Size is less than 1", iae.getMessage());
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				"Size is less than 1", illegalArgumentException.getMessage());
 		}
 	}
 
@@ -214,8 +213,10 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
-			Assert.assertEquals("Mark limit is less than 0", iae.getMessage());
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				"Mark limit is less than 0",
+				illegalArgumentException.getMessage());
 		}
 
 		Assert.assertEquals(
@@ -272,8 +273,9 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
-			Assert.assertEquals("Resetting to invalid mark", ioe.getMessage());
+		catch (IOException ioException) {
+			Assert.assertEquals(
+				"Resetting to invalid mark", ioException.getMessage());
 		}
 
 		// Shuffle
@@ -471,8 +473,9 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
-			Assert.assertEquals("Skip is less than 0", iae.getMessage());
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				"Skip is less than 0", illegalArgumentException.getMessage());
 		}
 
 		// Load data into buffer
@@ -515,7 +518,8 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 		// Clear out buffer
 
-		Assert.assertEquals(size * 2 - 1, unsyncBufferedReader.skip(size * 2));
+		Assert.assertEquals(
+			(size * 2) - 1, unsyncBufferedReader.skip(size * 2));
 
 		// Mark a large size for EOF
 
@@ -555,7 +559,7 @@ public class UnsyncBufferedReaderTest extends BaseReaderTestCase {
 
 	static {
 		for (int i = 0; i < _SIZE; i++) {
-			_BUFFER[i] = (char)(i % 26 + 'a');
+			_BUFFER[i] = (char)((i % 26) + 'a');
 		}
 	}
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.poshi.runner;
@@ -22,17 +13,19 @@ import groovy.lang.Closure;
 
 import java.io.File;
 
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.file.CopySpec;
-import org.gradle.api.plugins.BasePlugin;
-import org.gradle.api.tasks.Upload;
+import org.gradle.api.file.DuplicatesStrategy;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.bundling.Jar;
 
 /**
@@ -45,19 +38,14 @@ public class PoshiRunnerResourcesPlugin implements Plugin<Project> {
 	public static final String POSHI_RUNNER_RESOURCES_CONFIGURATION_NAME =
 		"poshiRunnerResources";
 
-	public static final String UPLOAD_POSHI_RUNNER_RESOURCES_TASK_NAME =
-		"uploadPoshiRunnerResources";
-
 	@Override
 	public void apply(Project project) {
 		final PoshiRunnerResourcesExtension poshiRunnerResourcesExtension =
 			GradleUtil.addExtension(
 				project, PLUGIN_NAME, PoshiRunnerResourcesExtension.class);
 
-		Configuration configuration = _addConfigurationPoshiRunnerResources(
-			project);
-
-		_addTaskUploadPoshiRunnerResources(project, configuration);
+		_addConfigurationPoshiRunnerResources(
+			project, poshiRunnerResourcesExtension);
 
 		project.afterEvaluate(
 			new Action<Project>() {
@@ -72,7 +60,7 @@ public class PoshiRunnerResourcesPlugin implements Plugin<Project> {
 	}
 
 	private Jar _addArtifactPoshiRunnerResources(
-		Project project, final File dir, String baseName, String appendix,
+		Project project, final Set<File> dirs, String baseName, String appendix,
 		String rootDirName, String version) {
 
 		Jar jar = GradleUtil.addTask(
@@ -87,21 +75,30 @@ public class PoshiRunnerResourcesPlugin implements Plugin<Project> {
 
 					@SuppressWarnings("unused")
 					public void doCall(CopySpec copySpec) {
-						copySpec.from(dir);
+						copySpec.from(dirs);
 					}
 
 				});
 		}
 		else {
-			jar.from(dir);
+			jar.from(dirs);
 		}
 
-		jar.setAppendix(appendix);
-		jar.setBaseName(baseName);
 		jar.setDescription(
-			"Assembles a jar archive containing the Poshi Runner resources " +
-				"in '" + project.relativePath(dir) + "'.");
-		jar.setVersion(version);
+			"Assembles a jar archive containing the Poshi Runner resources.");
+		jar.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
+
+		Property<String> archiveAppendixProperty = jar.getArchiveAppendix();
+
+		archiveAppendixProperty.set(appendix);
+
+		Property<String> archiveBaseNameProperty = jar.getArchiveBaseName();
+
+		archiveBaseNameProperty.set(baseName);
+
+		Property<String> archiveVersionProperty = jar.getArchiveVersion();
+
+		archiveVersionProperty.set(version);
 
 		ArtifactHandler artifactHandler = project.getArtifacts();
 
@@ -115,29 +112,40 @@ public class PoshiRunnerResourcesPlugin implements Plugin<Project> {
 		PoshiRunnerResourcesExtension poshiRunnerResourcesExtension) {
 
 		String appendix = poshiRunnerResourcesExtension.getArtifactAppendix();
+		String baseName = poshiRunnerResourcesExtension.getBaseName();
 		String rootDirName = poshiRunnerResourcesExtension.getRootDirName();
 		String version = poshiRunnerResourcesExtension.getArtifactVersion();
 
-		Map<Object, Object> baseNameDirs =
-			poshiRunnerResourcesExtension.getBaseNameDirs();
+		Set<File> dirs = new HashSet<>();
 
-		for (Map.Entry<Object, Object> entry : baseNameDirs.entrySet()) {
-			String baseName = GradleUtil.toString(entry.getKey());
-			File dir = GradleUtil.toFile(project, entry.getValue());
-
-			_addArtifactPoshiRunnerResources(
-				project, dir, baseName, appendix, rootDirName, version);
+		for (Object dir : poshiRunnerResourcesExtension.getDirs()) {
+			dirs.add(GradleUtil.toFile(project, dir));
 		}
+
+		_addArtifactPoshiRunnerResources(
+			project, dirs, baseName, appendix, rootDirName, version);
 	}
 
 	private Configuration _addConfigurationPoshiRunnerResources(
-		Project project) {
+		final Project project,
+		final PoshiRunnerResourcesExtension poshiRunnerResourcesExtension) {
 
 		ConfigurationContainer configurationContainer =
 			project.getConfigurations();
 
 		Configuration configuration = configurationContainer.maybeCreate(
 			POSHI_RUNNER_RESOURCES_CONFIGURATION_NAME);
+
+		configuration.defaultDependencies(
+			new Action<DependencySet>() {
+
+				@Override
+				public void execute(DependencySet dependencySet) {
+					_addDependenciesPoshiRunnerResources(
+						project, poshiRunnerResourcesExtension);
+				}
+
+			});
 
 		configuration.setDescription(
 			"Configures the Poshi Runner resources artifacts.");
@@ -146,17 +154,14 @@ public class PoshiRunnerResourcesPlugin implements Plugin<Project> {
 		return configuration;
 	}
 
-	private Upload _addTaskUploadPoshiRunnerResources(
-		Project project, Configuration configuration) {
+	private void _addDependenciesPoshiRunnerResources(
+		Project project,
+		PoshiRunnerResourcesExtension poshiRunnerResourcesExtension) {
 
-		Upload upload = GradleUtil.addTask(
-			project, UPLOAD_POSHI_RUNNER_RESOURCES_TASK_NAME, Upload.class);
-
-		upload.setConfiguration(configuration);
-		upload.setDescription("Uploads all Poshi Runner resources artifacts.");
-		upload.setGroup(BasePlugin.UPLOAD_GROUP);
-
-		return upload;
+		GradleUtil.addDependency(
+			project, POSHI_RUNNER_RESOURCES_CONFIGURATION_NAME, "com.liferay",
+			"com.liferay.poshi.runner.resources",
+			poshiRunnerResourcesExtension.getVersion());
 	}
 
 }

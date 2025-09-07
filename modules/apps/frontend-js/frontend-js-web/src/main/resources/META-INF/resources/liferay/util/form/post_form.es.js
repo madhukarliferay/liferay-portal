@@ -1,20 +1,9 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {isDef, isObject, isString} from 'metal';
-import dom from 'metal-dom';
-
+import isObject from './../is_object';
 import setFormValues from './set_form_values.es';
 
 /**
@@ -28,7 +17,9 @@ import setFormValues from './set_form_values.es';
  */
 
 export default function postForm(form, options) {
-	form = dom.toElement(form);
+	if (typeof form === 'string') {
+		form = document.querySelector(form);
+	}
 
 	if (form && form.nodeName === 'FORM') {
 		form.setAttribute('method', 'post');
@@ -38,16 +29,19 @@ export default function postForm(form, options) {
 
 			if (isObject(data)) {
 				setFormValues(form, data);
-			} else {
+			}
+			else {
 				return;
 			}
 
-			if (!isDef(url)) {
+			if (url === undefined) {
 				submitForm(form);
-			} else if (isString(url)) {
+			}
+			else if (typeof url === 'string') {
 				submitForm(form, url);
 			}
-		} else {
+		}
+		else {
 			submitForm(form);
 		}
 	}

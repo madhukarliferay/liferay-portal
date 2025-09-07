@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,6 +37,7 @@ public class JournalFeedWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("id", getId());
 		attributes.put("groupId", getGroupId());
@@ -55,7 +49,7 @@ public class JournalFeedWrapper
 		attributes.put("feedId", getFeedId());
 		attributes.put("name", getName());
 		attributes.put("description", getDescription());
-		attributes.put("DDMStructureKey", getDDMStructureKey());
+		attributes.put("DDMStructureId", getDDMStructureId());
 		attributes.put("DDMTemplateKey", getDDMTemplateKey());
 		attributes.put("DDMRendererTemplateKey", getDDMRendererTemplateKey());
 		attributes.put("delta", getDelta());
@@ -77,6 +71,12 @@ public class JournalFeedWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -145,10 +145,10 @@ public class JournalFeedWrapper
 			setDescription(description);
 		}
 
-		String DDMStructureKey = (String)attributes.get("DDMStructureKey");
+		Long DDMStructureId = (Long)attributes.get("DDMStructureId");
 
-		if (DDMStructureKey != null) {
-			setDDMStructureKey(DDMStructureKey);
+		if (DDMStructureId != null) {
+			setDDMStructureId(DDMStructureId);
 		}
 
 		String DDMTemplateKey = (String)attributes.get("DDMTemplateKey");
@@ -220,6 +220,11 @@ public class JournalFeedWrapper
 		}
 	}
 
+	@Override
+	public JournalFeed cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
 	/**
 	 * Returns the company ID of this journal feed.
 	 *
@@ -251,6 +256,16 @@ public class JournalFeedWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this journal feed.
+	 *
+	 * @return the ct collection ID of this journal feed
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the ddm renderer template key of this journal feed.
 	 *
 	 * @return the ddm renderer template key of this journal feed
@@ -261,13 +276,13 @@ public class JournalFeedWrapper
 	}
 
 	/**
-	 * Returns the ddm structure key of this journal feed.
+	 * Returns the ddm structure ID of this journal feed.
 	 *
-	 * @return the ddm structure key of this journal feed
+	 * @return the ddm structure ID of this journal feed
 	 */
 	@Override
-	public String getDDMStructureKey() {
-		return model.getDDMStructureKey();
+	public long getDDMStructureId() {
+		return model.getDDMStructureId();
 	}
 
 	/**
@@ -480,11 +495,6 @@ public class JournalFeedWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a journal feed model instance should use the <code>JournalFeed</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -521,6 +531,16 @@ public class JournalFeedWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this journal feed.
+	 *
+	 * @param ctCollectionId the ct collection ID of this journal feed
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the ddm renderer template key of this journal feed.
 	 *
 	 * @param DDMRendererTemplateKey the ddm renderer template key of this journal feed
@@ -531,13 +551,13 @@ public class JournalFeedWrapper
 	}
 
 	/**
-	 * Sets the ddm structure key of this journal feed.
+	 * Sets the ddm structure ID of this journal feed.
 	 *
-	 * @param DDMStructureKey the ddm structure key of this journal feed
+	 * @param DDMStructureId the ddm structure ID of this journal feed
 	 */
 	@Override
-	public void setDDMStructureKey(String DDMStructureKey) {
-		model.setDDMStructureKey(DDMStructureKey);
+	public void setDDMStructureId(long DDMStructureId) {
+		model.setDDMStructureId(DDMStructureId);
 	}
 
 	/**
@@ -748,6 +768,25 @@ public class JournalFeedWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<JournalFeed, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<JournalFeed, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

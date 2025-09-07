@@ -1,58 +1,30 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/adaptive_media/init.jsp" %>
 
-<clay:navigation-bar
-	inverted="<%= true %>"
-	navigationItems='<%=
-		new JSPNavigationItemList(pageContext) {
-			{
-				add(
-					navigationItem -> {
-						navigationItem.setActive(true);
-						navigationItem.setHref(renderResponse.createRenderURL());
-						navigationItem.setLabel(LanguageUtil.get(request, "image-resolutions"));
-					});
-			}
-		}
-	%>'
-/>
-
 <%
-AMManagementToolbarDisplayContext amManagementToolbarDisplayContext = new AMManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, currentURLObj);
+SearchContainer<?> amSearchContainer = new SearchContainer<>(renderRequest, renderResponse.createRenderURL(), null, "there-are-no-image-resolutions");
+
+amSearchContainer.setId("imageConfigurationEntries");
+amSearchContainer.setResultsAndTotal((List)request.getAttribute(AMWebKeys.CONFIGURATION_ENTRIES_LIST));
+amSearchContainer.setRowChecker(new ImageConfigurationEntriesChecker(liferayPortletResponse));
+
+int totalImages = GetterUtil.getInteger(request.getAttribute(AMWebKeys.TOTAL_IMAGES));
 %>
 
 <clay:management-toolbar
-	creationMenu="<%= amManagementToolbarDisplayContext.getCreationMenu() %>"
-	disabled="<%= amManagementToolbarDisplayContext.isDisabled() %>"
-	filterDropdownItems="<%= amManagementToolbarDisplayContext.getFilterDropdownItems() %>"
-	filterLabelItems="<%= amManagementToolbarDisplayContext.getFilterLabelItems() %>"
-	infoPanelId="infoPanelId"
-	itemsTotal="<%= amManagementToolbarDisplayContext.getTotalItems() %>"
-	searchContainerId="imageConfigurationEntries"
-	showSearch="<%= false %>"
+	managementToolbarDisplayContext="<%= new AMManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, amSearchContainer) %>"
 />
 
-<%
-PortletURL portletURL = renderResponse.createRenderURL();
-%>
-
-<div class="closed container-fluid-1280 sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
-	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/adaptive_media/info_panel" var="sidebarPanelURL" />
+<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/adaptive_media/info_panel" var="sidebarPanelURL">
+		<portlet:param name="totalImages" value="<%= String.valueOf(totalImages) %>" />
+	</liferay-portlet:resourceURL>
 
 	<liferay-frontend:sidebar-panel
 		resourceURL="<%= sidebarPanelURL %>"
@@ -61,7 +33,9 @@ PortletURL portletURL = renderResponse.createRenderURL();
 		<liferay-util:include page="/adaptive_media/info_panel.jsp" servletContext="<%= application %>" />
 	</liferay-frontend:sidebar-panel>
 
-	<div class="sidenav-content">
+	<clay:container-fluid
+		cssClass="sidenav-content"
+	>
 		<liferay-util:include page="/adaptive_media/success_messages.jsp" servletContext="<%= application %>" />
 
 		<c:choose>
@@ -95,22 +69,12 @@ PortletURL portletURL = renderResponse.createRenderURL();
 
 			currentBackgroundTaskConfigurationEntryUuids.add(configurationEntryUuid);
 		}
-
-		List<AMImageConfigurationEntry> selectedConfigurationEntries = amManagementToolbarDisplayContext.getSelectedConfigurationEntries();
 		%>
 
-		<aui:form action="<%= deleteImageConfigurationEntryURL.toString() %>" method="post" name="fm">
+		<aui:form action="<%= deleteImageConfigurationEntryURL %>" method="post" name="fm">
 			<liferay-ui:search-container
-				emptyResultsMessage="there-are-no-image-resolutions"
-				id="imageConfigurationEntries"
-				iteratorURL="<%= portletURL %>"
-				rowChecker="<%= new ImageConfigurationEntriesChecker(liferayPortletResponse) %>"
-				total="<%= selectedConfigurationEntries.size() %>"
+				searchContainer="<%= amSearchContainer %>"
 			>
-				<liferay-ui:search-container-results
-					results="<%= ListUtil.subList(selectedConfigurationEntries, searchContainer.getStart(), searchContainer.getEnd()) %>"
-				/>
-
 				<liferay-ui:search-container-row
 					className="com.liferay.adaptive.media.image.configuration.AMImageConfigurationEntry"
 					modelVar="amImageConfigurationEntry"
@@ -151,8 +115,6 @@ PortletURL portletURL = renderResponse.createRenderURL();
 						String uuid = String.valueOf(amImageConfigurationEntry.getUUID());
 
 						int adaptedImages = AMImageEntryLocalServiceUtil.getAMImageEntriesCount(themeDisplay.getCompanyId(), amImageConfigurationEntry.getUUID());
-
-						int totalImages = AMImageEntryLocalServiceUtil.getExpectedAMImageEntriesCount(themeDisplay.getCompanyId());
 						%>
 
 						<div id="<portlet:namespace />AdaptRemainingContainer_<%= rowId %>">
@@ -160,38 +122,34 @@ PortletURL portletURL = renderResponse.createRenderURL();
 								<portlet:param name="entryUuid" value="<%= uuid %>" />
 							</portlet:resourceURL>
 
-							<%
-							Map<String, Object> data = HashMapBuilder.<String, Object>put(
-								"adaptedImages", Math.min(adaptedImages, totalImages)
-							).put(
-								"adaptiveMediaProgressComponentId", renderResponse.getNamespace() + "AdaptRemaining" + uuid
-							).put(
-								"autoStartProgress", ((optimizeImagesAllConfigurationsBackgroundTasksCount > 0) && amImageConfigurationEntry.isEnabled()) || currentBackgroundTaskConfigurationEntryUuids.contains(uuid)
-							).put(
-								"disabled", !amImageConfigurationEntry.isEnabled()
-							).put(
-								"namespace", liferayPortletResponse.getNamespace()
-							).put(
-								"percentageUrl", adaptedImagesPercentageURL.toString()
-							).put(
-								"totalImages", totalImages
-							).put(
-								"uuid", uuid
-							).build();
-							%>
-
 							<react:component
-								data="<%= data %>"
-								module="adaptive_media/js/AdaptiveMediaProgress.es"
+								module="{AdaptiveMediaProgress} from adaptive-media-web"
+								props='<%=
+									HashMapBuilder.<String, Object>put(
+										"adaptedImages", Math.min(adaptedImages, totalImages)
+									).put(
+										"adaptiveMediaProgressComponentId", liferayPortletResponse.getNamespace() + "AdaptRemaining" + uuid
+									).put(
+										"autoStartProgress", ((optimizeImagesAllConfigurationsBackgroundTasksCount > 0) && amImageConfigurationEntry.isEnabled()) || currentBackgroundTaskConfigurationEntryUuids.contains(uuid)
+									).put(
+										"disabled", !amImageConfigurationEntry.isEnabled()
+									).put(
+										"namespace", liferayPortletResponse.getNamespace()
+									).put(
+										"percentageUrl", adaptedImagesPercentageURL.toString()
+									).put(
+										"totalImages", totalImages
+									).put(
+										"uuid", uuid
+									).build()
+								%>'
 							/>
 						</div>
 					</liferay-ui:search-container-column-text>
 
 					<%
 					Map<String, String> properties = amImageConfigurationEntry.getProperties();
-					%>
 
-					<%
 					String maxWidth = properties.get("max-width");
 					%>
 
@@ -224,7 +182,7 @@ PortletURL portletURL = renderResponse.createRenderURL();
 				/>
 			</liferay-ui:search-container>
 		</aui:form>
-	</div>
+	</clay:container-fluid>
 </div>
 
 <aui:script>

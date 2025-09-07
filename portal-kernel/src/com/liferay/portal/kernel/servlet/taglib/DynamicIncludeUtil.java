@@ -1,34 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet.taglib;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapper;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.collections.ServiceReferenceMapper;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Iterator;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
  * @author Carlos Sierra Andrés
@@ -37,17 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 public class DynamicIncludeUtil {
 
 	public static List<DynamicInclude> getDynamicIncludes(String key) {
-		return _dynamicIncludeUtil._dynamicIncludes.getService(key);
+		return _dynamicIncludes.getService(key);
 	}
 
 	public static boolean hasDynamicInclude(String key) {
-		List<DynamicInclude> dynamicIncludes = getDynamicIncludes(key);
-
-		if ((dynamicIncludes == null) || dynamicIncludes.isEmpty()) {
-			return false;
-		}
-
-		return true;
+		return ListUtil.isNotEmpty(getDynamicIncludes(key));
 	}
 
 	public static void include(
@@ -57,7 +43,7 @@ public class DynamicIncludeUtil {
 
 		List<DynamicInclude> dynamicIncludes = getDynamicIncludes(key);
 
-		if ((dynamicIncludes == null) || dynamicIncludes.isEmpty()) {
+		if (ListUtil.isEmpty(dynamicIncludes)) {
 			return;
 		}
 
@@ -77,15 +63,24 @@ public class DynamicIncludeUtil {
 				dynamicInclude.include(
 					httpServletRequest, httpServletResponse, key);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 	}
 
 	private DynamicIncludeUtil() {
-		_dynamicIncludes = ServiceTrackerCollections.openMultiValueMap(
-			DynamicInclude.class, null,
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DynamicIncludeUtil.class);
+
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
+
+	private static final ServiceTrackerMap<String, List<DynamicInclude>>
+		_dynamicIncludes = ServiceTrackerMapFactory.openMultiValueMap(
+			_bundleContext, DynamicInclude.class, null,
 			new ServiceReferenceMapper<String, DynamicInclude>() {
 
 				@Override
@@ -93,9 +88,7 @@ public class DynamicIncludeUtil {
 					ServiceReference<DynamicInclude> serviceReference,
 					final Emitter<String> emitter) {
 
-					Registry registry = RegistryUtil.getRegistry();
-
-					DynamicInclude dynamicInclude = registry.getService(
+					DynamicInclude dynamicInclude = _bundleContext.getService(
 						serviceReference);
 
 					dynamicInclude.register(
@@ -108,19 +101,9 @@ public class DynamicIncludeUtil {
 
 						});
 
-					registry.ungetService(serviceReference);
+					_bundleContext.ungetService(serviceReference);
 				}
 
 			});
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		DynamicIncludeUtil.class);
-
-	private static final DynamicIncludeUtil _dynamicIncludeUtil =
-		new DynamicIncludeUtil();
-
-	private final ServiceTrackerMap<String, List<DynamicInclude>>
-		_dynamicIncludes;
 
 }

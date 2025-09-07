@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoTaskInstanceTokenCacheModel
 	implements CacheModel<KaleoTaskInstanceToken>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoTaskInstanceTokenCacheModel)) {
+		if (!(object instanceof KaleoTaskInstanceTokenCacheModel)) {
 			return false;
 		}
 
 		KaleoTaskInstanceTokenCacheModel kaleoTaskInstanceTokenCacheModel =
-			(KaleoTaskInstanceTokenCacheModel)obj;
+			(KaleoTaskInstanceTokenCacheModel)object;
 
 		if ((kaleoTaskInstanceTokenId ==
 				kaleoTaskInstanceTokenCacheModel.kaleoTaskInstanceTokenId) &&
@@ -78,10 +69,12 @@ public class KaleoTaskInstanceTokenCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(41);
+		StringBundler sb = new StringBundler(45);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoTaskInstanceTokenId=");
 		sb.append(kaleoTaskInstanceTokenId);
 		sb.append(", groupId=");
@@ -96,6 +89,8 @@ public class KaleoTaskInstanceTokenCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoInstanceId=");
@@ -131,6 +126,7 @@ public class KaleoTaskInstanceTokenCacheModel
 			new KaleoTaskInstanceTokenImpl();
 
 		kaleoTaskInstanceTokenImpl.setMvccVersion(mvccVersion);
+		kaleoTaskInstanceTokenImpl.setCtCollectionId(ctCollectionId);
 		kaleoTaskInstanceTokenImpl.setKaleoTaskInstanceTokenId(
 			kaleoTaskInstanceTokenId);
 		kaleoTaskInstanceTokenImpl.setGroupId(groupId);
@@ -158,6 +154,7 @@ public class KaleoTaskInstanceTokenCacheModel
 			kaleoTaskInstanceTokenImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		kaleoTaskInstanceTokenImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoTaskInstanceTokenImpl.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 		kaleoTaskInstanceTokenImpl.setKaleoInstanceId(kaleoInstanceId);
@@ -211,8 +208,12 @@ public class KaleoTaskInstanceTokenCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoTaskInstanceTokenId = objectInput.readLong();
 
@@ -224,6 +225,8 @@ public class KaleoTaskInstanceTokenCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+
+		kaleoDefinitionId = objectInput.readLong();
 
 		kaleoDefinitionVersionId = objectInput.readLong();
 
@@ -242,12 +245,14 @@ public class KaleoTaskInstanceTokenCacheModel
 		completed = objectInput.readBoolean();
 		completionDate = objectInput.readLong();
 		dueDate = objectInput.readLong();
-		workflowContext = objectInput.readUTF();
+		workflowContext = (String)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoTaskInstanceTokenId);
 
@@ -266,6 +271,8 @@ public class KaleoTaskInstanceTokenCacheModel
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
+
+		objectOutput.writeLong(kaleoDefinitionId);
 
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
@@ -298,14 +305,15 @@ public class KaleoTaskInstanceTokenCacheModel
 		objectOutput.writeLong(dueDate);
 
 		if (workflowContext == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(workflowContext);
+			objectOutput.writeObject(workflowContext);
 		}
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoTaskInstanceTokenId;
 	public long groupId;
 	public long companyId;
@@ -313,6 +321,7 @@ public class KaleoTaskInstanceTokenCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public long kaleoInstanceId;
 	public long kaleoInstanceTokenId;

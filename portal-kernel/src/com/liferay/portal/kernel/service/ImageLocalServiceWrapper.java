@@ -1,18 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.portal.kernel.model.Image;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link ImageLocalService}.
@@ -24,6 +20,10 @@ package com.liferay.portal.kernel.service;
 public class ImageLocalServiceWrapper
 	implements ImageLocalService, ServiceWrapper<ImageLocalService> {
 
+	public ImageLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ImageLocalServiceWrapper(ImageLocalService imageLocalService) {
 		_imageLocalService = imageLocalService;
 	}
@@ -31,13 +31,15 @@ public class ImageLocalServiceWrapper
 	/**
 	 * Adds the image to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param image the image
 	 * @return the image that was added
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image addImage(
-		com.liferay.portal.kernel.model.Image image) {
-
+	public Image addImage(Image image) {
 		return _imageLocalService.addImage(image);
 	}
 
@@ -48,32 +50,49 @@ public class ImageLocalServiceWrapper
 	 * @return the new image
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image createImage(long imageId) {
+	public Image createImage(long imageId) {
 		return _imageLocalService.createImage(imageId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _imageLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
 	 * Deletes the image from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param image the image
 	 * @return the image that was removed
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image deleteImage(
-		com.liferay.portal.kernel.model.Image image) {
-
+	public Image deleteImage(Image image) {
 		return _imageLocalService.deleteImage(image);
 	}
 
 	/**
 	 * Deletes the image with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param imageId the primary key of the image
 	 * @return the image that was removed
 	 * @throws PortalException if a image with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image deleteImage(long imageId)
+	public Image deleteImage(long imageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _imageLocalService.deleteImage(imageId);
@@ -88,6 +107,18 @@ public class ImageLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _imageLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _imageLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _imageLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -180,7 +211,7 @@ public class ImageLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image fetchImage(long imageId) {
+	public Image fetchImage(long imageId) {
 		return _imageLocalService.fetchImage(imageId);
 	}
 
@@ -192,7 +223,7 @@ public class ImageLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image getCompanyLogo(long imageId) {
+	public Image getCompanyLogo(long imageId) {
 		return _imageLocalService.getCompanyLogo(imageId);
 	}
 
@@ -204,21 +235,27 @@ public class ImageLocalServiceWrapper
 	 * @throws PortalException if a image with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image getImage(long imageId)
+	public Image getImage(long imageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _imageLocalService.getImage(imageId);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image getImageOrDefault(
-		long imageId) {
+	public java.io.InputStream getImageInputStream(
+			long companyId, long imageId, String type)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
+		return _imageLocalService.getImageInputStream(companyId, imageId, type);
+	}
+
+	@Override
+	public Image getImageOrDefault(long imageId) {
 		return _imageLocalService.getImageOrDefault(imageId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Image> getImages() {
+	public java.util.List<Image> getImages() {
 		return _imageLocalService.getImages();
 	}
 
@@ -234,16 +271,12 @@ public class ImageLocalServiceWrapper
 	 * @return the range of images
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Image> getImages(
-		int start, int end) {
-
+	public java.util.List<Image> getImages(int start, int end) {
 		return _imageLocalService.getImages(start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Image>
-		getImagesBySize(int size) {
-
+	public java.util.List<Image> getImagesBySize(int size) {
 		return _imageLocalService.getImagesBySize(size);
 	}
 
@@ -270,10 +303,13 @@ public class ImageLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _imageLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -283,8 +319,7 @@ public class ImageLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image moveImage(
-			long imageId, byte[] bytes)
+	public Image moveImage(long imageId, byte[] bytes)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _imageLocalService.moveImage(imageId, bytes);
@@ -293,56 +328,82 @@ public class ImageLocalServiceWrapper
 	/**
 	 * Updates the image in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param image the image
 	 * @return the image that was updated
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-		com.liferay.portal.kernel.model.Image image) {
-
+	public Image updateImage(Image image) {
 		return _imageLocalService.updateImage(image);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-			long imageId, byte[] bytes)
+	public Image updateImage(long companyId, long imageId, byte[] bytes)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _imageLocalService.updateImage(imageId, bytes);
+		return _imageLocalService.updateImage(companyId, imageId, bytes);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-			long imageId, byte[] bytes, java.lang.String type, int height,
+	public Image updateImage(
+			long companyId, long imageId, byte[] bytes, String type, int height,
 			int width, int size)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _imageLocalService.updateImage(
-			imageId, bytes, type, height, width, size);
+			companyId, imageId, bytes, type, height, width, size);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-			long imageId, java.io.File file)
+	public Image updateImage(long companyId, long imageId, java.io.File file)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _imageLocalService.updateImage(imageId, file);
+		return _imageLocalService.updateImage(companyId, imageId, file);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-			long imageId, java.io.InputStream is)
+	public Image updateImage(
+			long companyId, long imageId, java.io.InputStream inputStream)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _imageLocalService.updateImage(imageId, is);
+		return _imageLocalService.updateImage(companyId, imageId, inputStream);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Image updateImage(
-			long imageId, java.io.InputStream is, boolean cleanUpStream)
+	public Image updateImage(
+			long companyId, long imageId, java.io.InputStream inputStream,
+			boolean cleanUpStream)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _imageLocalService.updateImage(imageId, is, cleanUpStream);
+		return _imageLocalService.updateImage(
+			companyId, imageId, inputStream, cleanUpStream);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _imageLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<Image> getCTPersistence() {
+		return _imageLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<Image> getModelClass() {
+		return _imageLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<Image>, R, E> updateUnsafeFunction)
+		throws E {
+
+		return _imageLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

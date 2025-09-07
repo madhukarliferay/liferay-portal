@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.attachments.test;
@@ -49,7 +40,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,7 +64,6 @@ public class MBAttachmentsTest {
 		addGroup();
 	}
 
-	@Ignore
 	@Test
 	public void testDeleteAttachmentsWhenDeletingMessage() throws Exception {
 		int initialFileEntriesCount =
@@ -209,7 +198,6 @@ public class MBAttachmentsTest {
 			initialFoldersCount, DLFolderLocalServiceUtil.getDLFoldersCount());
 	}
 
-	@Ignore
 	@Test
 	public void testFoldersCountWhenDeletingMessageWithAttachments()
 		throws Exception {
@@ -307,14 +295,12 @@ public class MBAttachmentsTest {
 			addGroup();
 		}
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		_category = MBCategoryServiceUtil.addCategory(
-			TestPropsValues.getUserId(),
+			null, TestPropsValues.getUserId(),
 			MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
-			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
+			RandomTestUtil.randomString(), StringPool.BLANK,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	protected void addGroup() throws Exception {
@@ -328,15 +314,12 @@ public class MBAttachmentsTest {
 			addCategory();
 		}
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		_message = MBMessageLocalServiceUtil.addMessage(
 			TestPropsValues.getUserId(), RandomTestUtil.randomString(),
 			_category.getGroupId(), _category.getCategoryId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			serviceContext);
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	protected void addMessageAttachment() throws Exception {
@@ -355,15 +338,13 @@ public class MBAttachmentsTest {
 				MBTestUtil.getInputStreamOVPs(
 					"company_logo.png", getClass(), StringPool.BLANK);
 
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(
-					_group.getGroupId(), user.getUserId());
-
 			_message = MBMessageLocalServiceUtil.addMessage(
 				user.getUserId(), user.getFullName(), _group.getGroupId(),
 				MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, "Subject",
 				"Body", MBMessageConstants.DEFAULT_FORMAT, objectValuePairs,
-				false, 0, false, serviceContext);
+				false, 0, false,
+				ServiceContextTestUtil.getServiceContext(
+					_group.getGroupId(), user.getUserId()));
 		}
 		else {
 			ServiceContext serviceContext =

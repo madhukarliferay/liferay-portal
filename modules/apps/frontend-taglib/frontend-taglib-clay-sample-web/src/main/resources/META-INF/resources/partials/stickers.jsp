@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,86 +13,108 @@
 
 <h3>SQUARE</h3>
 
-<div class="mb-3 row text-center">
-	<div class="col-md-1">
+<clay:row
+	cssClass="mb-3 text-center"
+>
+	<clay:col
+		md="1"
+	>
 		<clay:sticker
 			label="JPG"
 		/>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:sticker
 			icon="picture"
 		/>
-	</div>
-</div>
+	</clay:col>
+</clay:row>
 
 <h3>ROUND</h3>
 
-<div class="mb-3 row text-center">
-	<div class="col-md-1">
+<clay:row
+	cssClass="mb-3 text-center"
+>
+	<clay:col
+		md="1"
+	>
 		<clay:sticker
 			label="JPG"
 			shape="circle"
 		/>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:sticker
 			icon="picture"
 			shape="circle"
 		/>
-	</div>
-</div>
+	</clay:col>
+</clay:row>
 
 <h3>POSITION</h3>
 
-<div class="mb-3 row">
-	<div class="col-md-2">
+<clay:row
+	cssClass="mb-3"
+>
+	<clay:col
+		md="2"
+	>
 		<div class="aspect-ratio">
-			<img class="aspect-ratio-item-fluid" src="https://claycss.com/images/thumbnail_hot_air_ballon.jpg" />
+			<img alt="Thumbnail of hot air ballon" class="aspect-ratio-item-fluid" src="https://clayui.com/images/thumbnail_hot_air_ballon.jpg" />
 
 			<clay:sticker
+				displayType="danger"
 				label="PDF"
 				position="top-left"
-				style="danger"
 			/>
 		</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-2">
+	<clay:col
+		md="2"
+	>
 		<div class="aspect-ratio">
-			<img class="aspect-ratio-item-fluid" src="https://claycss.com/images/thumbnail_hot_air_ballon.jpg" />
+			<img alt="Thumbnail of hot air ballon" class="aspect-ratio-item-fluid" src="https://clayui.com/images/thumbnail_hot_air_ballon.jpg" />
 
 			<clay:sticker
+				displayType="danger"
 				label="PDF"
 				position="bottom-left"
-				style="danger"
 			/>
 		</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-2">
+	<clay:col
+		md="2"
+	>
 		<div class="aspect-ratio">
-			<img class="aspect-ratio-item-fluid" src="https://claycss.com/images/thumbnail_hot_air_ballon.jpg" />
+			<img alt="Thumbnail of hot air ballon" class="aspect-ratio-item-fluid" src="https://clayui.com/images/thumbnail_hot_air_ballon.jpg" />
 
 			<clay:sticker
+				displayType="danger"
 				label="PDF"
 				position="top-right"
-				style="danger"
 			/>
 		</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-2">
+	<clay:col
+		md="2"
+	>
 		<div class="aspect-ratio">
-			<img class="aspect-ratio-item-fluid" src="https://claycss.com/images/thumbnail_hot_air_ballon.jpg" />
+			<img alt="Thumbnail of hot air ballon" class="aspect-ratio-item-fluid" src="https://clayui.com/images/thumbnail_hot_air_ballon.jpg" />
 
 			<clay:sticker
+				displayType="danger"
 				label="PDF"
 				position="bottom-right"
-				style="danger"
 			/>
 		</div>
-	</div>
-</div>
+	</clay:col>
+</clay:row>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model.impl;
@@ -37,17 +28,17 @@ public class SegmentsEntryCacheModel
 	implements CacheModel<SegmentsEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SegmentsEntryCacheModel)) {
+		if (!(object instanceof SegmentsEntryCacheModel)) {
 			return false;
 		}
 
 		SegmentsEntryCacheModel segmentsEntryCacheModel =
-			(SegmentsEntryCacheModel)obj;
+			(SegmentsEntryCacheModel)object;
 
 		if ((segmentsEntryId == segmentsEntryCacheModel.segmentsEntryId) &&
 			(mvccVersion == segmentsEntryCacheModel.mvccVersion)) {
@@ -81,6 +72,8 @@ public class SegmentsEntryCacheModel
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", segmentsEntryId=");
@@ -109,8 +102,6 @@ public class SegmentsEntryCacheModel
 		sb.append(criteria);
 		sb.append(", source=");
 		sb.append(source);
-		sb.append(", type=");
-		sb.append(type);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append("}");
@@ -123,6 +114,7 @@ public class SegmentsEntryCacheModel
 		SegmentsEntryImpl segmentsEntryImpl = new SegmentsEntryImpl();
 
 		segmentsEntryImpl.setMvccVersion(mvccVersion);
+		segmentsEntryImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			segmentsEntryImpl.setUuid("");
@@ -194,13 +186,6 @@ public class SegmentsEntryCacheModel
 			segmentsEntryImpl.setSource(source);
 		}
 
-		if (type == null) {
-			segmentsEntryImpl.setType("");
-		}
-		else {
-			segmentsEntryImpl.setType(type);
-		}
-
 		if (lastPublishDate == Long.MIN_VALUE) {
 			segmentsEntryImpl.setLastPublishDate(null);
 		}
@@ -214,8 +199,12 @@ public class SegmentsEntryCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		segmentsEntryId = objectInput.readLong();
@@ -233,15 +222,16 @@ public class SegmentsEntryCacheModel
 		description = objectInput.readUTF();
 
 		active = objectInput.readBoolean();
-		criteria = objectInput.readUTF();
+		criteria = (String)objectInput.readObject();
 		source = objectInput.readUTF();
-		type = objectInput.readUTF();
 		lastPublishDate = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -292,10 +282,10 @@ public class SegmentsEntryCacheModel
 		objectOutput.writeBoolean(active);
 
 		if (criteria == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(criteria);
+			objectOutput.writeObject(criteria);
 		}
 
 		if (source == null) {
@@ -305,17 +295,11 @@ public class SegmentsEntryCacheModel
 			objectOutput.writeUTF(source);
 		}
 
-		if (type == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(type);
-		}
-
 		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long segmentsEntryId;
 	public long groupId;
@@ -330,7 +314,6 @@ public class SegmentsEntryCacheModel
 	public boolean active;
 	public String criteria;
 	public String source;
-	public String type;
 	public long lastPublishDate;
 
 }

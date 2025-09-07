@@ -1,22 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet;
 
+import com.liferay.portal.kernel.portlet.RestrictPortletServletRequest;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.util.JavaConstants;
-import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.MimeResponse;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,11 +20,6 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.portlet.MimeResponse;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>
@@ -42,20 +33,20 @@ public class NamespaceServletRequest extends DynamicServletRequest {
 
 	public static Set<String> reservedAttrs = new HashSet<String>() {
 		{
-			add(JavaConstants.JAVAX_PORTLET_CONFIG);
-			add(JavaConstants.JAVAX_PORTLET_PORTLET);
-			add(JavaConstants.JAVAX_PORTLET_REQUEST);
-			add(JavaConstants.JAVAX_PORTLET_RESPONSE);
-			add(JavaConstants.JAVAX_SERVLET_FORWARD_CONTEXT_PATH);
-			add(JavaConstants.JAVAX_SERVLET_FORWARD_PATH_INFO);
-			add(JavaConstants.JAVAX_SERVLET_FORWARD_QUERY_STRING);
-			add(JavaConstants.JAVAX_SERVLET_FORWARD_REQUEST_URI);
-			add(JavaConstants.JAVAX_SERVLET_FORWARD_SERVLET_PATH);
-			add(JavaConstants.JAVAX_SERVLET_INCLUDE_CONTEXT_PATH);
-			add(JavaConstants.JAVAX_SERVLET_INCLUDE_PATH_INFO);
-			add(JavaConstants.JAVAX_SERVLET_INCLUDE_QUERY_STRING);
-			add(JavaConstants.JAVAX_SERVLET_INCLUDE_REQUEST_URI);
-			add(JavaConstants.JAVAX_SERVLET_INCLUDE_SERVLET_PATH);
+			add(JavaConstants.JAKARTA_PORTLET_CONFIG);
+			add(JavaConstants.JAKARTA_PORTLET_PORTLET);
+			add(JavaConstants.JAKARTA_PORTLET_REQUEST);
+			add(JavaConstants.JAKARTA_PORTLET_RESPONSE);
+			add(JavaConstants.JAKARTA_SERVLET_FORWARD_CONTEXT_PATH);
+			add(JavaConstants.JAKARTA_SERVLET_FORWARD_PATH_INFO);
+			add(JavaConstants.JAKARTA_SERVLET_FORWARD_QUERY_STRING);
+			add(JavaConstants.JAKARTA_SERVLET_FORWARD_REQUEST_URI);
+			add(JavaConstants.JAKARTA_SERVLET_FORWARD_SERVLET_PATH);
+			add(JavaConstants.JAKARTA_SERVLET_INCLUDE_CONTEXT_PATH);
+			add(JavaConstants.JAKARTA_SERVLET_INCLUDE_PATH_INFO);
+			add(JavaConstants.JAKARTA_SERVLET_INCLUDE_QUERY_STRING);
+			add(JavaConstants.JAKARTA_SERVLET_INCLUDE_REQUEST_URI);
+			add(JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH);
 			add(MimeResponse.MARKUP_HEAD_ELEMENT);
 			add(PortletRequest.LIFECYCLE_PHASE);
 		}
@@ -93,10 +84,10 @@ public class NamespaceServletRequest extends DynamicServletRequest {
 	public Enumeration<String> getAttributeNames() {
 		List<String> names = new ArrayList<>();
 
-		Enumeration<String> enu = super.getAttributeNames();
+		Enumeration<String> enumeration = super.getAttributeNames();
 
-		while (enu.hasMoreElements()) {
-			String name = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String name = enumeration.nextElement();
 
 			if (name.startsWith(_attrNamespace)) {
 				names.add(name.substring(_attrNamespace.length()));
@@ -164,16 +155,10 @@ public class NamespaceServletRequest extends DynamicServletRequest {
 	}
 
 	private boolean _isReservedParam(String name) {
-		if (reservedAttrs.contains(name)) {
+		if (reservedAttrs.contains(name) ||
+			RestrictPortletServletRequest.isSharedRequestAttribute(name)) {
+
 			return true;
-		}
-
-		for (String requestSharedAttribute :
-				PropsValues.REQUEST_SHARED_ATTRIBUTES) {
-
-			if (name.startsWith(requestSharedAttribute)) {
-				return true;
-			}
 		}
 
 		return false;

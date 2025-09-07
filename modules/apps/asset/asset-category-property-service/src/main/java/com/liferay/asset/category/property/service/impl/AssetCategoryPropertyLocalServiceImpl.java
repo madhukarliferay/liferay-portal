@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.category.property.service.impl;
@@ -18,11 +9,19 @@ import com.liferay.asset.category.property.exception.CategoryPropertyKeyExceptio
 import com.liferay.asset.category.property.exception.CategoryPropertyValueException;
 import com.liferay.asset.category.property.exception.DuplicateCategoryPropertyException;
 import com.liferay.asset.category.property.model.AssetCategoryProperty;
+import com.liferay.asset.category.property.model.AssetCategoryPropertyTable;
 import com.liferay.asset.category.property.service.base.AssetCategoryPropertyLocalServiceBaseImpl;
+import com.liferay.asset.kernel.model.AssetCategoryTable;
 import com.liferay.asset.util.AssetHelper;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.List;
 
@@ -45,14 +44,14 @@ public class AssetCategoryPropertyLocalServiceImpl
 			long userId, long categoryId, String key, String value)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		_validate(key, value);
 
-		validate(key, value);
-
-		if (hasCategoryProperty(categoryId, key)) {
+		if (_hasCategoryProperty(categoryId, key)) {
 			throw new DuplicateCategoryPropertyException(
 				"A category property already exists with the key " + key);
 		}
+
+		User user = _userLocalService.getUser(userId);
 
 		long categoryPropertyId = counterLocalService.increment();
 
@@ -66,22 +65,23 @@ public class AssetCategoryPropertyLocalServiceImpl
 		categoryProperty.setKey(key);
 		categoryProperty.setValue(value);
 
-		assetCategoryPropertyPersistence.update(categoryProperty);
-
-		return categoryProperty;
+		return assetCategoryPropertyPersistence.update(categoryProperty);
 	}
 
 	@Override
 	public void deleteCategoryProperties(long entryId) {
-		List<AssetCategoryProperty> categoryProperties =
+		List<AssetCategoryProperty> assetCategoryProperties =
 			assetCategoryPropertyPersistence.findByCategoryId(entryId);
 
-		for (AssetCategoryProperty categoryProperty : categoryProperties) {
-			deleteCategoryProperty(categoryProperty);
+		for (AssetCategoryProperty assetCategoryProperty :
+				assetCategoryProperties) {
+
+			deleteCategoryProperty(assetCategoryProperty);
 		}
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public void deleteCategoryProperty(AssetCategoryProperty categoryProperty) {
 		assetCategoryPropertyPersistence.remove(categoryProperty);
 	}
@@ -134,7 +134,24 @@ public class AssetCategoryPropertyLocalServiceImpl
 	public List<AssetCategoryProperty> getCategoryPropertyValues(
 		long groupId, String key) {
 
-		return assetCategoryPropertyFinder.findByG_K(groupId, key);
+		return assetCategoryPropertyPersistence.dslQuery(
+			DSLQueryFactoryUtil.selectDistinct(
+				AssetCategoryPropertyTable.INSTANCE
+			).from(
+				AssetCategoryPropertyTable.INSTANCE
+			).innerJoinON(
+				AssetCategoryTable.INSTANCE,
+				AssetCategoryTable.INSTANCE.categoryId.eq(
+					AssetCategoryPropertyTable.INSTANCE.categoryId)
+			).where(
+				AssetCategoryTable.INSTANCE.groupId.eq(
+					groupId
+				).and(
+					AssetCategoryPropertyTable.INSTANCE.key.eq(key)
+				)
+			).orderBy(
+				AssetCategoryPropertyTable.INSTANCE.value.ascending()
+			));
 	}
 
 	@Override
@@ -149,16 +166,16 @@ public class AssetCategoryPropertyLocalServiceImpl
 		String categoryPropertyKey = categoryProperty.getKey();
 
 		if (!categoryPropertyKey.equals(key) &&
-			hasCategoryProperty(categoryProperty.getCategoryId(), key)) {
+			_hasCategoryProperty(categoryProperty.getCategoryId(), key)) {
 
 			throw new DuplicateCategoryPropertyException(
 				"A category property already exists with the key " + key);
 		}
 
-		validate(key, value);
+		_validate(key, value);
 
 		if (userId != 0) {
-			User user = userLocalService.getUser(userId);
+			User user = _userLocalService.getUser(userId);
 
 			categoryProperty.setUserId(userId);
 			categoryProperty.setUserName(user.getFullName());
@@ -167,9 +184,7 @@ public class AssetCategoryPropertyLocalServiceImpl
 		categoryProperty.setKey(key);
 		categoryProperty.setValue(value);
 
-		assetCategoryPropertyPersistence.update(categoryProperty);
-
-		return categoryProperty;
+		return assetCategoryPropertyPersistence.update(categoryProperty);
 	}
 
 	@Override
@@ -180,7 +195,7 @@ public class AssetCategoryPropertyLocalServiceImpl
 		return updateCategoryProperty(0, categoryPropertyId, key, value);
 	}
 
-	protected boolean hasCategoryProperty(long categoryId, String key) {
+	private boolean _hasCategoryProperty(long categoryId, String key) {
 		AssetCategoryProperty categoryProperty =
 			assetCategoryPropertyPersistence.fetchByCA_K(categoryId, key);
 
@@ -191,17 +206,37 @@ public class AssetCategoryPropertyLocalServiceImpl
 		return false;
 	}
 
-	protected void validate(String key, String value) throws PortalException {
+	private void _validate(String key, String value) throws PortalException {
 		if (!_assetHelper.isValidWord(key)) {
 			throw new CategoryPropertyKeyException("Invalid key " + key);
 		}
 
-		if (!_assetHelper.isValidWord(value)) {
-			throw new CategoryPropertyValueException("Invalid value " + value);
+		int keyMaxLength = ModelHintsUtil.getMaxLength(
+			AssetCategoryProperty.class.getName(), "key");
+
+		if (key.length() > keyMaxLength) {
+			throw new CategoryPropertyKeyException(
+				"Maximum length of key exceeded");
+		}
+
+		if (Validator.isBlank(value)) {
+			throw new CategoryPropertyValueException(
+				"Property value cannot be an empty string");
+		}
+
+		int valueMaxLength = ModelHintsUtil.getMaxLength(
+			AssetCategoryProperty.class.getName(), "value");
+
+		if (value.length() > valueMaxLength) {
+			throw new CategoryPropertyValueException(
+				"Maximum length of value exceeded");
 		}
 	}
 
 	@Reference
 	private AssetHelper _assetHelper;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

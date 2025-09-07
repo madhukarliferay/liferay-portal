@@ -1,9 +1,7 @@
 <?xml version="1.0"?>
 
 <suppressions>
-	<source-check>
-		<suppress checks="JavaIllegalImportsCheck" files="modules/apps/analytics/analytics-client-impl/src/main/java/com/liferay/analytics/client/internal/IdentityClientImpl\.java" />
-		<suppress checks="JavaModuleInternalImportsCheck" files="modules/apps/analytics/analytics-client-impl/src/main/java/com/liferay/analytics/client/internal/AnalyticsClientImpl\.java" />
-		<suppress checks="JavaModuleInternalImportsCheck" files="modules/apps/analytics/analytics-client-impl/src/main/java/com/liferay/analytics/client/internal/IdentityClientImpl\.java" />
-	</source-check>
+	<checkstyle>
+		<suppress checks="PersistenceCallCheck" files="analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/dto/v1_0/converter/DXPEntityDTOConverterImpl\.java" />
+	</checkstyle>
 </suppressions>

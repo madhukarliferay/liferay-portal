@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.permission.test;
@@ -17,17 +8,19 @@ package com.liferay.portal.security.permission.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.NoSuchResourceException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.test.constants.ServiceTestConstants;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.security.permission.DoAsUserThread;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -52,9 +45,9 @@ public class ResourceLocalServiceTest {
 	public void testAddResourcesConcurrently() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_users = new User[ServiceTestUtil.THREAD_COUNT];
+		_users = new User[ServiceTestConstants.THREAD_COUNT];
 
-		for (int i = 0; i < ServiceTestUtil.THREAD_COUNT; i++) {
+		for (int i = 0; i < ServiceTestConstants.THREAD_COUNT; i++) {
 			User user = UserTestUtil.addUser(
 				"ResourceLocalServiceTest" + (i + 1), _group.getGroupId());
 
@@ -62,7 +55,7 @@ public class ResourceLocalServiceTest {
 		}
 
 		DoAsUserThread[] doAsUserThreads =
-			new DoAsUserThread[ServiceTestUtil.THREAD_COUNT];
+			new DoAsUserThread[ServiceTestConstants.THREAD_COUNT];
 
 		for (int i = 0; i < doAsUserThreads.length; i++) {
 			doAsUserThreads[i] = new AddResources(_users[i].getUserId());
@@ -86,10 +79,14 @@ public class ResourceLocalServiceTest {
 
 		Assert.assertTrue(
 			StringBundler.concat(
-				"Only ", successCount, " out of ", ServiceTestUtil.THREAD_COUNT,
+				"Only ", successCount, " out of ",
+				ServiceTestConstants.THREAD_COUNT,
 				" threads added resources successfully"),
-			successCount == ServiceTestUtil.THREAD_COUNT);
+			successCount == ServiceTestConstants.THREAD_COUNT);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ResourceLocalServiceTest.class);
 
 	@DeleteAfterTestRun
 	private Group _group;
@@ -111,7 +108,11 @@ public class ResourceLocalServiceTest {
 					String.valueOf(
 						TestPropsValues.getPlid(_group.getGroupId())));
 			}
-			catch (NoSuchResourceException nsre) {
+			catch (NoSuchResourceException noSuchResourceException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(noSuchResourceException);
+				}
+
 				_resourceLocalService.addResources(
 					TestPropsValues.getCompanyId(), _group.getGroupId(), 0,
 					Layout.class.getName(),

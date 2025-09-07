@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service;
@@ -19,6 +10,9 @@ import com.liferay.dynamic.data.lists.model.DDLRecordVersion;
 import com.liferay.dynamic.data.mapping.exception.StorageException;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -36,6 +30,8 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -46,6 +42,7 @@ import java.io.Serializable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -59,22 +56,27 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see DDLRecordLocalServiceUtil
  * @generated
  */
+@CTAware
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface DDLRecordLocalService
-	extends BaseLocalService, PersistedModelLocalService {
+	extends BaseLocalService, CTService<DDLRecord>, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link DDLRecordLocalServiceUtil} to access the ddl record local service. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the ddl record local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link DDLRecordLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the ddl record to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDLRecordLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddlRecord the ddl record
 	 * @return the ddl record that was added
@@ -106,8 +108,24 @@ public interface DDLRecordLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public DDLRecord addRecord(
+			long userId, long groupId, long recordSetId, int displayIndex,
+			Map<String, Serializable> fieldsMap, ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x)
+	 */
+	@Deprecated
+	@Indexable(type = IndexableType.REINDEX)
+	public DDLRecord addRecord(
 			long userId, long groupId, long ddmStorageId, long ddlRecordSetId,
 			ServiceContext serviceContext)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public DDLRecord addRecord(
+			long userId, long groupId, long ddmStorageId, long ddlRecordSetId,
+			String className, long classPK, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -120,7 +138,17 @@ public interface DDLRecordLocalService
 	public DDLRecord createDDLRecord(long recordId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Deletes the ddl record from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDLRecordLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddlRecord the ddl record
 	 * @return the ddl record that was removed
@@ -130,6 +158,10 @@ public interface DDLRecordLocalService
 
 	/**
 	 * Deletes the ddl record with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDLRecordLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param recordId the primary key of the ddl record
 	 * @return the ddl record that was removed
@@ -175,6 +207,12 @@ public interface DDLRecordLocalService
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public void deleteRecords(long recordSetId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -254,6 +292,9 @@ public interface DDLRecordLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DDLRecord fetchDDLRecordByUuidAndGroupId(String uuid, long groupId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public DDLRecord fetchFirstRecord(String className, long classPK);
 
 	/**
 	 * Returns the record with the ID.
@@ -420,6 +461,9 @@ public interface DDLRecordLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -474,7 +518,8 @@ public interface DDLRecordLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDLRecord> getRecords(
-		long recordSetId, int start, int end, OrderByComparator<DDLRecord> obc);
+		long recordSetId, int start, int end,
+		OrderByComparator<DDLRecord> orderByComparator);
 
 	/**
 	 * Returns all the records matching the record set ID and user ID.
@@ -489,7 +534,7 @@ public interface DDLRecordLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDLRecord> getRecords(
 		long recordSetId, long userId, int start, int end,
-		OrderByComparator<DDLRecord> obc);
+		OrderByComparator<DDLRecord> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getRecordsCount(long recordSetId);
@@ -572,6 +617,10 @@ public interface DDLRecordLocalService
 	/**
 	 * Updates the ddl record in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDLRecordLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddlRecord the ddl record
 	 * @return the ddl record that was updated
 	 */
@@ -602,6 +651,13 @@ public interface DDLRecordLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public DDLRecord updateRecord(
+			long userId, long recordId, int displayIndex,
+			Map<String, Serializable> fieldsMap, boolean mergeFields,
+			ServiceContext serviceContext)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public DDLRecord updateRecord(
 			long userId, long recordId, long ddmStorageId,
 			ServiceContext serviceContext)
 		throws PortalException;
@@ -623,5 +679,19 @@ public interface DDLRecordLocalService
 			long userId, long recordVersionId, int status,
 			ServiceContext serviceContext)
 		throws PortalException;
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<DDLRecord> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<DDLRecord> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<DDLRecord>, R, E> updateUnsafeFunction)
+		throws E;
 
 }

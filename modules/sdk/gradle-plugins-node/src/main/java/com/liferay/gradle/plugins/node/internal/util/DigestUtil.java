@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.node.internal.util;
 
 import com.liferay.gradle.util.Validator;
+import com.liferay.gradle.util.hash.HashUtil;
+import com.liferay.gradle.util.hash.HashValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +26,6 @@ import java.util.TreeSet;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.UncheckedIOException;
-import org.gradle.internal.hash.HashUtil;
-import org.gradle.internal.hash.HashValue;
 
 /**
  * @author Hugo Huijser
@@ -52,24 +43,24 @@ public class DigestUtil {
 		try {
 			bytes = Files.readAllBytes(digestFile.toPath());
 		}
-		catch (IOException ioe) {
-			throw new UncheckedIOException(ioe);
+		catch (IOException ioException) {
+			throw new UncheckedIOException(ioException);
 		}
 
 		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
 	public static String getDigest(Iterable<File> files) {
-		StringBuilder sb = new StringBuilder();
-
 		SortedSet<File> sortedFiles = null;
 
 		try {
 			sortedFiles = _flattenAndSort(files);
 		}
-		catch (IOException ioe) {
-			throw new GradleException("Unable to flatten files", ioe);
+		catch (IOException ioException) {
+			throw new GradleException("Unable to flatten files", ioException);
 		}
+
+		StringBuilder sb = new StringBuilder();
 
 		for (File file : sortedFiles) {
 			if (!file.exists()) {
@@ -82,7 +73,7 @@ public class DigestUtil {
 
 				sb.append(Integer.toHexString(lines.hashCode()));
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				HashValue hashValue = HashUtil.sha1(file);
 
 				sb.append(hashValue.asHexString());
@@ -161,16 +152,16 @@ public class DigestUtil {
 			return canonicalPath1.compareTo(canonicalPath2);
 		}
 
-		private static String _getCanonicalPath(File file) {
+		private String _getCanonicalPath(File file) {
 			String canonicalPath = null;
 
 			try {
 				canonicalPath = file.getCanonicalPath();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				String message = "Unable to get canonical path of " + file;
 
-				throw new UncheckedIOException(message, ioe);
+				throw new UncheckedIOException(message, ioException);
 			}
 
 			if (File.separatorChar != '/') {

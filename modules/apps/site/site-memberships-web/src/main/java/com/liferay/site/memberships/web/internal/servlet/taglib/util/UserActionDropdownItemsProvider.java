@@ -1,40 +1,32 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.memberships.web.internal.servlet.taglib.util;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
-import com.liferay.portal.kernel.security.membershippolicy.SiteMembershipPolicyUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.membershippolicy.SiteMembershipPolicyUtil;
+
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -54,84 +46,112 @@ public class UserActionDropdownItemsProvider {
 	}
 
 	public List<DropdownItem> getActionDropdownItems() throws Exception {
-		return new DropdownItemList() {
-			{
-				if (GroupPermissionUtil.contains(
-						_themeDisplay.getPermissionChecker(),
-						_themeDisplay.getSiteGroupIdOrLiveGroupId(),
-						ActionKeys.ASSIGN_USER_ROLES)) {
-
-					add(_getAssignSiteRolesActionUnsafeConsumer());
-				}
-
-				if (GroupPermissionUtil.contains(
-						_themeDisplay.getPermissionChecker(),
-						_themeDisplay.getSiteGroupIdOrLiveGroupId(),
-						ActionKeys.ASSIGN_MEMBERS) &&
-					!SiteMembershipPolicyUtil.isMembershipProtected(
-						_themeDisplay.getPermissionChecker(), _user.getUserId(),
-						_themeDisplay.getSiteGroupIdOrLiveGroupId()) &&
-					!SiteMembershipPolicyUtil.isMembershipRequired(
-						_user.getUserId(),
-						_themeDisplay.getSiteGroupIdOrLiveGroupId())) {
-
-					add(_getDeleteGroupUsersActionUnsafeConsumer());
-				}
+		return DropdownItemListBuilder.add(
+			() -> GroupPermissionUtil.contains(
+				_themeDisplay.getPermissionChecker(),
+				_themeDisplay.getSiteGroupIdOrLiveGroupId(),
+				ActionKeys.ASSIGN_USER_ROLES),
+			_getAssignRolesActionUnsafeConsumer()
+		).add(
+			dropdownItem -> {
+				dropdownItem.putData("action", "unassignRoles");
+				dropdownItem.putData(
+					"unassignUserGroupRoleURL",
+					PortletURLBuilder.createActionURL(
+						_renderResponse
+					).setMVCPath(
+						"/users_roles.jsp"
+					).setParameter(
+						"assignRoles", Boolean.FALSE
+					).setParameter(
+						"groupId", _themeDisplay.getSiteGroupIdOrLiveGroupId()
+					).setParameter(
+						"p_u_i_d", _user.getUserId()
+					).setWindowState(
+						LiferayWindowState.POP_UP
+					).buildString());
+				dropdownItem.putData("userId", _user.getUserId());
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "unassign-roles"));
 			}
-		};
+		).add(
+			() ->
+				GroupPermissionUtil.contains(
+					_themeDisplay.getPermissionChecker(),
+					_themeDisplay.getSiteGroupIdOrLiveGroupId(),
+					ActionKeys.ASSIGN_MEMBERS) &&
+				!SiteMembershipPolicyUtil.isMembershipProtected(
+					_themeDisplay.getPermissionChecker(), _user.getUserId(),
+					_themeDisplay.getSiteGroupIdOrLiveGroupId()) &&
+				!SiteMembershipPolicyUtil.isMembershipRequired(
+					_user.getUserId(),
+					_themeDisplay.getSiteGroupIdOrLiveGroupId()),
+			_getDeleteGroupUsersActionUnsafeConsumer()
+		).build();
 	}
 
 	private UnsafeConsumer<DropdownItem, Exception>
-			_getAssignSiteRolesActionUnsafeConsumer()
+			_getAssignRolesActionUnsafeConsumer()
 		throws Exception {
 
-		PortletURL assignSiteRolesURL = _renderResponse.createRenderURL();
-
-		assignSiteRolesURL.setParameter("mvcPath", "/users_roles.jsp");
-		assignSiteRolesURL.setParameter(
-			"p_u_i_d", String.valueOf(_user.getUserId()));
-		assignSiteRolesURL.setParameter(
-			"groupId",
-			String.valueOf(_themeDisplay.getSiteGroupIdOrLiveGroupId()));
-		assignSiteRolesURL.setWindowState(LiferayWindowState.POP_UP);
-
-		PortletURL editUserGroupRoleURL = _renderResponse.createActionURL();
-
-		editUserGroupRoleURL.setParameter(
-			ActionRequest.ACTION_NAME, "editUserGroupRole");
-		editUserGroupRoleURL.setParameter(
-			"p_u_i_d", String.valueOf(_user.getUserId()));
-
 		return dropdownItem -> {
-			dropdownItem.putData("action", "assignSiteRoles");
+			dropdownItem.putData("action", "assignRoles");
 			dropdownItem.putData(
-				"assignSiteRolesURL", assignSiteRolesURL.toString());
+				"assignRolesURL",
+				PortletURLBuilder.createRenderURL(
+					_renderResponse
+				).setMVCPath(
+					"/users_roles.jsp"
+				).setParameter(
+					"groupId", _themeDisplay.getSiteGroupIdOrLiveGroupId()
+				).setParameter(
+					"p_u_i_d", _user.getUserId()
+				).setParameter(
+					"roleType",
+					() -> {
+						Group group = _themeDisplay.getScopeGroup();
+
+						if (!group.isSite() && group.isDepot()) {
+							return RoleConstants.TYPE_DEPOT;
+						}
+
+						return null;
+					}
+				).setWindowState(
+					LiferayWindowState.POP_UP
+				).buildString());
 			dropdownItem.putData(
-				"editUserGroupRoleURL", editUserGroupRoleURL.toString());
+				"editUserGroupRoleURL",
+				PortletURLBuilder.createActionURL(
+					_renderResponse
+				).setActionName(
+					"editUserGroupRole"
+				).setParameter(
+					"p_u_i_d", _user.getUserId()
+				).buildString());
 			dropdownItem.setLabel(
-				LanguageUtil.get(_httpServletRequest, "assign-site-roles"));
+				LanguageUtil.get(_httpServletRequest, "assign-roles"));
 		};
 	}
 
 	private UnsafeConsumer<DropdownItem, Exception>
 		_getDeleteGroupUsersActionUnsafeConsumer() {
 
-		PortletURL deleteGroupUsersURL = _renderResponse.createActionURL();
-
-		deleteGroupUsersURL.setParameter(
-			ActionRequest.ACTION_NAME, "deleteGroupUsers");
-		deleteGroupUsersURL.setParameter(
-			"redirect", _themeDisplay.getURLCurrent());
-		deleteGroupUsersURL.setParameter(
-			"groupId",
-			String.valueOf(_themeDisplay.getSiteGroupIdOrLiveGroupId()));
-		deleteGroupUsersURL.setParameter(
-			"removeUserId", String.valueOf(_user.getUserId()));
-
 		return dropdownItem -> {
 			dropdownItem.putData("action", "deleteGroupUsers");
 			dropdownItem.putData(
-				"deleteGroupUsersURL", deleteGroupUsersURL.toString());
+				"deleteGroupUsersURL",
+				PortletURLBuilder.createActionURL(
+					_renderResponse
+				).setActionName(
+					"deleteGroupUsers"
+				).setRedirect(
+					_themeDisplay.getURLCurrent()
+				).setParameter(
+					"groupId", _themeDisplay.getSiteGroupIdOrLiveGroupId()
+				).setParameter(
+					"removeUserId", _user.getUserId()
+				).buildString());
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "remove-membership"));
 		};

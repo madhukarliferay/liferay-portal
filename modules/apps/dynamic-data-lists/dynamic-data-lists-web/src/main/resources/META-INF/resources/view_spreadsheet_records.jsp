@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,7 +19,9 @@ if (editable || ddlDisplayContext.isAdminPortlet()) {
 DDMStructure ddmStructure = recordSet.getDDMStructure();
 %>
 
-<div class="container-fluid-1280 lfr-spreadsheet-container">
+<clay:container-fluid
+	cssClass="container-view lfr-spreadsheet-container"
+>
 	<div id="<portlet:namespace />spreadsheet">
 		<div class="table-striped yui3-datatable yui3-widget" id="<portlet:namespace />dataTable">
 			<div class="yui3-datatable-content yui3-datatable-scrollable" id="<portlet:namespace />dataTableContent"></div>
@@ -48,12 +41,13 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 			<aui:button inlineField="<%= true %>" name="addRecords" value="add" />
 		</div>
 	</c:if>
-</div>
+</clay:container-fluid>
 
 <%@ include file="/custom_spreadsheet_editors.jspf" %>
 
 <aui:script use="liferay-portlet-dynamic-data-lists">
-	var structure = <%= DDMUtil.getDDMFormFieldsJSONArray(ddmStructure, ddmStructure.getDefinition()) %>;
+	var structure =
+		<%= DDMUtil.getDDMFormFieldsJSONArray(ddmStructure, ddmStructure.getDefinition()) %>;
 
 	var columns = Liferay.SpreadSheet.buildDataTableColumns(
 		<%= ddlDisplayContext.getRecordSetJSONArray(recordSet, locale) %>,
@@ -62,15 +56,11 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 		<%= editable %>
 	);
 
-	var ignoreEmptyRecordsNumericSort = function(recA, recB, desc, field) {
+	var ignoreEmptyRecordsNumericSort = function (recA, recB, desc, field) {
 		var a = recA.get(field);
 		var b = recB.get(field);
 
-		return A.ArraySort.compareIgnoreWhiteSpace(a, b, desc, function(
-			a,
-			b,
-			desc
-		) {
+		return A.ArraySort.compareIgnoreWhiteSpace(a, b, desc, (a, b, desc) => {
 			var num1 = parseFloat(a);
 			var num2 = parseFloat(b);
 
@@ -78,7 +68,8 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 
 			if (isNaN(num1) || isNaN(num2)) {
 				result = A.ArraySort.compare(a, b, desc);
-			} else {
+			}
+			else {
 				result = desc ? num2 - num1 : num1 - num2;
 			}
 
@@ -86,7 +77,7 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 		});
 	};
 
-	var ignoreEmptyRecordsStringSort = function(recA, recB, desc, field) {
+	var ignoreEmptyRecordsStringSort = function (recA, recB, desc, field) {
 		var a = recA.get(field);
 		var b = recB.get(field);
 
@@ -96,16 +87,17 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 	var numericData = {
 		double: 1,
 		integer: 1,
-		number: 1
+		number: 1,
 	};
 
-	var keys = columns.map(function(item, index) {
+	var keys = columns.map((item, index) => {
 		var key = item.key;
 
 		if (!item.sortFn) {
 			if (numericData[item.dataType]) {
 				item.sortFn = A.rbind(ignoreEmptyRecordsNumericSort, item, key);
-			} else {
+			}
+			else {
 				item.sortFn = A.rbind(ignoreEmptyRecordsStringSort, item, key);
 			}
 		}
@@ -123,22 +115,29 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 	List<DDLRecord> records = DDLRecordLocalServiceUtil.getRecords(recordSet.getRecordSetId(), status, 0, 1000, null);
 	%>
 
-	var records = <%= ddlDisplayContext.getRecordsJSONArray(records, !editable, locale) %>;
+	var records =
+		<%= ddlDisplayContext.getRecordsJSONArray(records, !editable, locale) %>;
 
-	records.sort(function(a, b) {
+	records.sort((a, b) => {
 		return a.displayIndex - b.displayIndex;
 	});
 
-	var data = Liferay.SpreadSheet.buildEmptyRecords(
-		<%= Math.max(recordSet.getMinDisplayRows() - records.size(), 0) %>,
-		keys
-	);
+	var data = [];
 
-	records.forEach(function(item, index) {
+	<c:if test="<%= editable %>">
+		data = Liferay.SpreadSheet.buildEmptyRecords(
+			<%= Math.max(recordSet.getMinDisplayRows() - records.size(), 0) %>,
+			keys
+		);
+	</c:if>
+
+	records.forEach((item, index) => {
 		data.splice(item.displayIndex, 0, item);
 	});
 
 	var spreadSheet = new Liferay.SpreadSheet({
+		addRecordURL:
+			'<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/dynamic_data_lists/add_record" />',
 		boundingBox: '#<portlet:namespace />dataTable',
 		columns: columns,
 		contentBox: '#<portlet:namespace />dataTableContent',
@@ -147,10 +146,10 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 		plugins: [
 			{
 				cfg: {
-					highlightRange: false
+					highlightRange: false,
 				},
-				fn: A.Plugin.DataTableHighlight
-			}
+				fn: A.Plugin.DataTableHighlight,
+			},
 		],
 		portletNamespace: '<portlet:namespace />',
 		recordsetId: <%= recordSet.getRecordSetId() %>,
@@ -159,10 +158,12 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 			desc: '<liferay-ui:message key="descending" />',
 			reverseSortBy:
 				'<liferay-ui:message arguments="{column}" key="reverse-sort-by-x" />',
-			sortBy: '<liferay-ui:message arguments="{column}" key="sort-by-x" />'
+			sortBy: '<liferay-ui:message arguments="{column}" key="sort-by-x" />',
 		},
 		structure: structure,
-		width: '100%'
+		updateRecordURL:
+			'<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/dynamic_data_lists/update_record" />',
+		width: '100%',
 	});
 
 	spreadSheet.render('#<portlet:namespace />spreadsheet');
@@ -172,7 +173,7 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 	<c:if test="<%= editable %>">
 		var numberOfRecordsNode = A.one('#<portlet:namespace />numberOfRecords');
 
-		A.one('#<portlet:namespace />addRecords').on('click', function(event) {
+		A.one('#<portlet:namespace />addRecords').on('click', (event) => {
 			var numberOfRecords = parseInt(numberOfRecordsNode.val(), 10) || 0;
 
 			spreadSheet.addEmptyRows(numberOfRecords);

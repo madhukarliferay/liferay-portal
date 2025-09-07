@@ -1,32 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.aui;
 
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.content.security.policy.ContentSecurityPolicyNonceProviderUtil;
 import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.servlet.FileAvailabilityUtil;
 import com.liferay.portal.kernel.servlet.taglib.BodyContentWrapper;
 import com.liferay.portal.kernel.servlet.taglib.aui.ScriptData;
-import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.FileAvailabilityUtil;
 import com.liferay.taglib.aui.base.BaseScriptTag;
 import com.liferay.taglib.util.PortalIncludeUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.BodyContent;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.BodyContent;
+
+import java.io.IOException;
+
+import java.util.Objects;
 
 /**
  * @author Brian Wing Shun Chan
@@ -103,6 +102,20 @@ public class ScriptTag extends BaseScriptTag {
 			(HttpServletRequest)pageContext.getRequest();
 
 		try {
+			if (getAsync() || Validator.isNotNull(getBlocking()) ||
+				Validator.isNotNull(getCrossOrigin()) || getDefer() ||
+				Validator.isNotNull(getFetchPriority()) ||
+				Validator.isNotNull(getId()) ||
+				Validator.isNotNull(getIntegrity()) ||
+				Validator.isNotNull(getReferrerPolicy()) ||
+				Validator.isNotNull(getSenna()) ||
+				Validator.isNotNull(getSrc()) ||
+				(Validator.isNotNull(getType()) &&
+				 !Objects.equals(getType(), "text/javascript"))) {
+
+				return _endTag();
+			}
+
 			String portletId = null;
 
 			Portlet portlet = (Portlet)httpServletRequest.getAttribute(
@@ -112,15 +125,15 @@ public class ScriptTag extends BaseScriptTag {
 				portletId = portlet.getPortletId();
 			}
 
-			StringBundler bodyContentSB = getBodyContentAsStringBundler();
-
 			String require = getRequire();
 			String use = getUse();
 
-			if ((require != null) && (use != null)) {
+			if ((use != null) && (require != null)) {
 				throw new JspException(
-					"Attributes \"require\" and \"use\" are both set");
+					"Attribute \"use\" cannot be used with \"require\"");
 			}
+
+			StringBundler bodyContentSB = getBodyContentAsStringBundler();
 
 			if (getSandbox() || (require != null) || (use != null)) {
 				StringBundler sb = new StringBundler(4);
@@ -190,8 +203,8 @@ public class ScriptTag extends BaseScriptTag {
 
 			return EVAL_PAGE;
 		}
-		catch (Exception e) {
-			throw new JspException(e);
+		catch (Exception exception) {
+			throw new JspException(exception);
 		}
 		finally {
 			cleanUp();
@@ -218,6 +231,82 @@ public class ScriptTag extends BaseScriptTag {
 		setPosition(null);
 		setRequire(null);
 		setUse(null);
+	}
+
+	private int _endTag() throws IOException, JspException {
+		if (Validator.isNotNull(getRequire())) {
+			throw new JspException(
+				"Attribute \"require\" may not be used with direct rendering");
+		}
+
+		if (getSandbox()) {
+			throw new JspException(
+				"Attribute \"sandbox\" can only be false with direct " +
+					"rendering");
+		}
+
+		if (Validator.isNotNull(getUse())) {
+			throw new JspException(
+				"Attribute \"use\" may not be used with direct rendering");
+		}
+
+		JspWriter jspWriter = pageContext.getOut();
+
+		jspWriter.write("<script");
+		jspWriter.write(
+			ContentSecurityPolicyNonceProviderUtil.getNonceAttribute(
+				getRequest()));
+
+		_write(jspWriter, "async", getAsync());
+		_write(jspWriter, "blocking", getBlocking());
+		_write(jspWriter, "crossorigin", getCrossOrigin());
+		_write(jspWriter, "defer", getDefer());
+		_write(jspWriter, "fetchpriority", getFetchPriority());
+		_write(jspWriter, "id", getId());
+		_write(jspWriter, "integrity", getIntegrity());
+		_write(jspWriter, "referrerpolicy", getReferrerPolicy());
+		_write(jspWriter, "src", getSrc());
+		_write(jspWriter, "type", getType());
+
+		String senna = getSenna();
+
+		if (Objects.equals(senna, "off")) {
+			_write(jspWriter, "data-senna-off", "true");
+		}
+		else if (Validator.isNotNull(senna)) {
+			_write(jspWriter, "data-senna-track", senna);
+		}
+
+		jspWriter.write(">");
+
+		StringBundler sb = getBodyContentAsStringBundler();
+
+		jspWriter.write(sb.toString());
+
+		jspWriter.write("</script>");
+
+		return EVAL_PAGE;
+	}
+
+	private void _write(JspWriter jspWriter, String name, boolean value)
+		throws IOException {
+
+		if (value) {
+			jspWriter.write(StringPool.SPACE);
+			jspWriter.write(name);
+		}
+	}
+
+	private void _write(JspWriter jspWriter, String name, String value)
+		throws IOException {
+
+		if (Validator.isNotNull(value)) {
+			jspWriter.write(StringPool.SPACE);
+			jspWriter.write(name);
+			jspWriter.write("=\"");
+			jspWriter.write(value);
+			jspWriter.write(StringPool.QUOTE);
+		}
 	}
 
 }

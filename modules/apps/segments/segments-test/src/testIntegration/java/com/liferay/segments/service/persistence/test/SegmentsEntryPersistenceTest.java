@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service.persistence.test;
@@ -21,14 +12,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +121,8 @@ public class SegmentsEntryPersistenceTest {
 
 		newSegmentsEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSegmentsEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSegmentsEntry.setUuid(RandomTestUtil.randomString());
 
 		newSegmentsEntry.setGroupId(RandomTestUtil.nextLong());
@@ -152,8 +149,6 @@ public class SegmentsEntryPersistenceTest {
 
 		newSegmentsEntry.setSource(RandomTestUtil.randomString());
 
-		newSegmentsEntry.setType(RandomTestUtil.randomString());
-
 		newSegmentsEntry.setLastPublishDate(RandomTestUtil.nextDate());
 
 		_segmentsEntries.add(_persistence.update(newSegmentsEntry));
@@ -164,6 +159,9 @@ public class SegmentsEntryPersistenceTest {
 		Assert.assertEquals(
 			existingSegmentsEntry.getMvccVersion(),
 			newSegmentsEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingSegmentsEntry.getCtCollectionId(),
+			newSegmentsEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingSegmentsEntry.getUuid(), newSegmentsEntry.getUuid());
 		Assert.assertEquals(
@@ -201,8 +199,6 @@ public class SegmentsEntryPersistenceTest {
 		Assert.assertEquals(
 			existingSegmentsEntry.getSource(), newSegmentsEntry.getSource());
 		Assert.assertEquals(
-			existingSegmentsEntry.getType(), newSegmentsEntry.getType());
-		Assert.assertEquals(
 			Time.getShortTimestamp(existingSegmentsEntry.getLastPublishDate()),
 			Time.getShortTimestamp(newSegmentsEntry.getLastPublishDate()));
 	}
@@ -235,6 +231,19 @@ public class SegmentsEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountBySegmentsEntryId() throws Exception {
+		_persistence.countBySegmentsEntryId(RandomTestUtil.nextLong());
+
+		_persistence.countBySegmentsEntryId(0L);
+	}
+
+	@Test
+	public void testCountBySegmentsEntryIdArrayable() throws Exception {
+		_persistence.countBySegmentsEntryId(
+			new long[] {RandomTestUtil.nextLong(), 0L});
+	}
+
+	@Test
 	public void testCountByGroupId() throws Exception {
 		_persistence.countByGroupId(RandomTestUtil.nextLong());
 
@@ -247,21 +256,32 @@ public class SegmentsEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByCompanyId() throws Exception {
+		_persistence.countByCompanyId(RandomTestUtil.nextLong());
+
+		_persistence.countByCompanyId(0L);
+	}
+
+	@Test
+	public void testCountByCompanyIdArrayable() throws Exception {
+		_persistence.countByCompanyId(
+			new long[] {RandomTestUtil.nextLong(), 0L});
+	}
+
+	@Test
+	public void testCountByActive() throws Exception {
+		_persistence.countByActive(RandomTestUtil.randomBoolean());
+
+		_persistence.countByActive(RandomTestUtil.randomBoolean());
+	}
+
+	@Test
 	public void testCountBySource() throws Exception {
 		_persistence.countBySource("");
 
 		_persistence.countBySource("null");
 
 		_persistence.countBySource((String)null);
-	}
-
-	@Test
-	public void testCountByType() throws Exception {
-		_persistence.countByType("");
-
-		_persistence.countByType("null");
-
-		_persistence.countByType((String)null);
 	}
 
 	@Test
@@ -289,49 +309,18 @@ public class SegmentsEntryPersistenceTest {
 	}
 
 	@Test
-	public void testCountByA_T() throws Exception {
-		_persistence.countByA_T(RandomTestUtil.randomBoolean(), "");
+	public void testCountByG_SRC() throws Exception {
+		_persistence.countByG_SRC(RandomTestUtil.nextLong(), "");
 
-		_persistence.countByA_T(RandomTestUtil.randomBoolean(), "null");
+		_persistence.countByG_SRC(0L, "null");
 
-		_persistence.countByA_T(RandomTestUtil.randomBoolean(), (String)null);
+		_persistence.countByG_SRC(0L, (String)null);
 	}
 
 	@Test
-	public void testCountByG_A_T() throws Exception {
-		_persistence.countByG_A_T(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(), "");
-
-		_persistence.countByG_A_T(0L, RandomTestUtil.randomBoolean(), "null");
-
-		_persistence.countByG_A_T(
-			0L, RandomTestUtil.randomBoolean(), (String)null);
-	}
-
-	@Test
-	public void testCountByG_A_TArrayable() throws Exception {
-		_persistence.countByG_A_T(
+	public void testCountByG_SRCArrayable() throws Exception {
+		_persistence.countByG_SRC(
 			new long[] {RandomTestUtil.nextLong(), 0L},
-			RandomTestUtil.randomBoolean(), RandomTestUtil.randomString());
-	}
-
-	@Test
-	public void testCountByG_A_S_T() throws Exception {
-		_persistence.countByG_A_S_T(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(), "", "");
-
-		_persistence.countByG_A_S_T(
-			0L, RandomTestUtil.randomBoolean(), "null", "null");
-
-		_persistence.countByG_A_S_T(
-			0L, RandomTestUtil.randomBoolean(), (String)null, (String)null);
-	}
-
-	@Test
-	public void testCountByG_A_S_TArrayable() throws Exception {
-		_persistence.countByG_A_S_T(
-			new long[] {RandomTestUtil.nextLong(), 0L},
-			RandomTestUtil.randomBoolean(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString());
 	}
 
@@ -360,17 +349,35 @@ public class SegmentsEntryPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<SegmentsEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SegmentsEntry", "mvccVersion", true, "uuid", true,
-			"segmentsEntryId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
+			"SegmentsEntry", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "segmentsEntryId", true, "groupId", true, "companyId",
+			true, "userId", true, "userName", true, "createDate", true,
 			"modifiedDate", true, "segmentsEntryKey", true, "name", true,
-			"description", true, "active", true, "source", true, "type", true,
+			"description", true, "active", true, "source", true,
 			"lastPublishDate", true);
 	}
 
@@ -593,30 +600,72 @@ public class SegmentsEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		SegmentsEntry existingSegmentsEntry = _persistence.findByPrimaryKey(
-			newSegmentsEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newSegmentsEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingSegmentsEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingSegmentsEntry, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SegmentsEntry newSegmentsEntry = addSegmentsEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SegmentsEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"segmentsEntryId", newSegmentsEntry.getSegmentsEntryId()));
+
+		List<SegmentsEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(SegmentsEntry segmentsEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingSegmentsEntry.getGroupId()),
+			segmentsEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				segmentsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(segmentsEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsEntry, "getOriginalGroupId", new Class<?>[0]));
+				segmentsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingSegmentsEntry.getGroupId()),
+			Long.valueOf(segmentsEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsEntry, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingSegmentsEntry.getSegmentsEntryKey(),
-				ReflectionTestUtil.invoke(
-					existingSegmentsEntry, "getOriginalSegmentsEntryKey",
-					new Class<?>[0])));
+				segmentsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			segmentsEntry.getSegmentsEntryKey(),
+			ReflectionTestUtil.invoke(
+				segmentsEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "segmentsEntryKey"));
 	}
 
 	protected SegmentsEntry addSegmentsEntry() throws Exception {
@@ -625,6 +674,8 @@ public class SegmentsEntryPersistenceTest {
 		SegmentsEntry segmentsEntry = _persistence.create(pk);
 
 		segmentsEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		segmentsEntry.setCtCollectionId(RandomTestUtil.nextLong());
 
 		segmentsEntry.setUuid(RandomTestUtil.randomString());
 
@@ -651,8 +702,6 @@ public class SegmentsEntryPersistenceTest {
 		segmentsEntry.setCriteria(RandomTestUtil.randomString());
 
 		segmentsEntry.setSource(RandomTestUtil.randomString());
-
-		segmentsEntry.setType(RandomTestUtil.randomString());
 
 		segmentsEntry.setLastPublishDate(RandomTestUtil.nextDate());
 

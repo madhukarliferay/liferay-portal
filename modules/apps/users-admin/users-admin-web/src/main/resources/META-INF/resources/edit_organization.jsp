@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,17 +18,27 @@ Organization organization = OrganizationServiceUtil.fetchOrganization(organizati
 
 String type = BeanParamUtil.getString(organization, request, "type");
 
-PortletURL portletURL = liferayPortletResponse.createRenderURL();
-
-portletURL.setParameter("mvcRenderCommandName", "/users_admin/edit_organization");
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	liferayPortletResponse
+).setMVCRenderCommandName(
+	"/users_admin/edit_organization"
+).buildPortletURL();
 
 if (Validator.isNotNull(redirect)) {
 	portletURL.setParameter("redirect", redirect);
 }
 
-if (Validator.isNotNull(backURL)) {
-	portletURL.setParameter("backURL", backURL);
+if (Validator.isNull(backURL)) {
+	backURL = PortletURLBuilder.createRenderURL(
+		liferayPortletResponse
+	).setParameter(
+		"screenNavigationCategoryKey", UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS
+	).setParameter(
+		"usersListView", UserConstants.LIST_VIEW_FLAT_ORGANIZATIONS
+	).buildString();
 }
+
+portletURL.setParameter("backURL", backURL);
 
 if (organization != null) {
 	portletURL.setParameter("organizationId", String.valueOf(organizationId));
@@ -45,6 +46,7 @@ if (organization != null) {
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(backURL);
+portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 String headerTitle = null;
 
@@ -65,8 +67,6 @@ renderResponse.setTitle(headerTitle);
 	containerCssClass="col-lg-8"
 	containerWrapperCssClass="container-fluid container-fluid-max-xl container-form-lg"
 	context="<%= organization %>"
-	headerContainerCssClass=""
-	inverted="<%= layout.isTypeControlPanel() %>"
 	key="<%= UserScreenNavigationEntryConstants.SCREEN_NAVIGATION_KEY_ORGANIZATIONS %>"
 	menubarCssClass="menubar menubar-transparent menubar-vertical-expand-lg"
 	navCssClass="col-lg-3"

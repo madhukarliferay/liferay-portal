@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.internal.resolution.adapter;
 
 import com.liferay.frontend.js.loader.modules.extender.internal.resolution.BrowserModule;
+import com.liferay.frontend.js.loader.modules.extender.internal.resolution.BrowserModulesResolution;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSModule;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackage;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackageDependency;
@@ -35,7 +27,11 @@ import java.util.Map;
  */
 public class JSBrowserModule implements BrowserModule {
 
-	public JSBrowserModule(JSModule jsModule, NPMRegistry npmRegistry) {
+	public JSBrowserModule(
+		BrowserModulesResolution browserModulesResolution, JSModule jsModule,
+		NPMRegistry npmRegistry) {
+
+		_browserModulesResolution = browserModulesResolution;
 		_jsModule = jsModule;
 
 		_populateDependenciesMap(npmRegistry);
@@ -85,12 +81,12 @@ public class JSBrowserModule implements BrowserModule {
 					jsPackage.getJSPackageDependency(dependencyPackageName);
 
 				if (jsPackageDependency == null) {
-					String errorMessage = StringBundler.concat(
-						":ERROR:Missing version constraints for ",
-						dependencyPackageName, " in package.json of ",
-						jsPackage.getResolvedId());
-
-					_dependenciesMap.put(dependencyPackageName, errorMessage);
+					_browserModulesResolution.addError(
+						StringBundler.concat(
+							"Missing version constraints for '",
+							dependencyPackageName, "' in package.json of '",
+							jsPackage.getResolvedId(), "' (required from its '",
+							_jsModule.getName(), "' module)"));
 				}
 				else {
 					JSPackage dependencyJSPackage =
@@ -98,14 +94,14 @@ public class JSBrowserModule implements BrowserModule {
 							jsPackageDependency);
 
 					if (dependencyJSPackage == null) {
-						String errorMessage = StringBundler.concat(
-							":ERROR:Package ", dependencyPackageName,
-							" which is a dependency of ",
-							jsPackage.getResolvedId(),
-							" is not deployed in the server");
-
-						_dependenciesMap.put(
-							dependencyPackageName, errorMessage);
+						_browserModulesResolution.addError(
+							StringBundler.concat(
+								"Package '", dependencyPackageName,
+								"' which is a dependency of '",
+								jsPackage.getResolvedId(),
+								"' is not deployed in the server (required ",
+								"from its '", _jsModule.getResolvedId(),
+								"' module)"));
 					}
 					else {
 						_dependenciesMap.put(
@@ -117,6 +113,7 @@ public class JSBrowserModule implements BrowserModule {
 		}
 	}
 
+	private final BrowserModulesResolution _browserModulesResolution;
 	private final Map<String, String> _dependenciesMap = new HashMap<>();
 	private final JSModule _jsModule;
 

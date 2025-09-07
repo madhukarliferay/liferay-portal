@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -21,7 +12,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 WorkflowDefinition workflowDefinition = (WorkflowDefinition)request.getAttribute(WebKeys.WORKFLOW_DEFINITION);
 
-String content = workflowDefinition.getContent();
+String content = workflowDefinition.getContentAsXML();
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
@@ -40,79 +31,89 @@ boolean previewBeforeRestore = WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_S
 	<portlet:param name="version" value="<%= String.valueOf(workflowDefinition.getVersion()) %>" />
 </liferay-portlet:renderURL>
 
-<liferay-frontend:info-bar>
-	<div class="container-fluid-1280">
-		<c:if test="<%= !previewBeforeRestore %>">
-			<div class="info-bar-item">
-				<c:choose>
-					<c:when test="<%= workflowDefinition.isActive() %>">
-						<span class="label label-info label-lg">
-							<liferay-ui:message key="published" />
-						</span>
-					</c:when>
-					<c:otherwise>
-						<span class="label label-lg label-secondary">
-							<liferay-ui:message key="not-published" />
-						</span>
-					</c:otherwise>
-				</c:choose>
-			</div>
-		</c:if>
+<div class="management-bar management-bar-light navbar navbar-expand-md">
+	<clay:container-fluid>
+		<ul class="m-auto navbar-nav"></ul>
 
-		<%
-		String userName = workflowDefinitionDisplayContext.getUserName(workflowDefinition);
-		%>
+		<ul class="middle navbar-nav">
+			<li class="nav-item">
+				<c:if test="<%= !previewBeforeRestore %>">
+					<c:choose>
+						<c:when test="<%= workflowDefinition.isActive() %>">
+							<clay:label
+								displayType="info"
+								label="published"
+								large="<%= true %>"
+							/>
+						</c:when>
+						<c:otherwise>
+							<clay:label
+								label="not-published"
+								large="<%= true %>"
+							/>
+						</c:otherwise>
+					</c:choose>
+				</c:if>
 
-		<span>
-			<c:choose>
-				<c:when test="<%= userName == null %>">
-					<%= dateFormatTime.format(workflowDefinition.getModifiedDate()) %>
-				</c:when>
-				<c:when test="<%= previewBeforeRestore %>">
-					<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(workflowDefinition.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="revision-from-x-by-x" translateArguments="<%= false %>" />
-				</c:when>
-				<c:otherwise>
-					<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(workflowDefinition.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="x-by-x" translateArguments="<%= false %>" />
-				</c:otherwise>
-			</c:choose>
-		</span>
-	</div>
-</liferay-frontend:info-bar>
+				<%
+				String userName = workflowDefinitionDisplayContext.getUserName(workflowDefinition);
+				%>
 
-<div class="<%= previewBeforeRestore ? "" : "container-fluid-1280" %>" id="container">
+				<span>
+					<c:choose>
+						<c:when test="<%= userName == null %>">
+							<%= displayDateFormat.format(workflowDefinition.getModifiedDate()) %>
+						</c:when>
+						<c:when test="<%= previewBeforeRestore %>">
+							<liferay-ui:message arguments="<%= new String[] {displayDateFormat.format(workflowDefinition.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="revision-from-x-by-x" translateArguments="<%= false %>" />
+						</c:when>
+						<c:otherwise>
+							<liferay-ui:message arguments="<%= new String[] {displayDateFormat.format(workflowDefinition.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="x,-by-x" translateArguments="<%= false %>" />
+						</c:otherwise>
+					</c:choose>
+				</span>
+			</li>
+		</ul>
+
+		<ul class="end m-auto navbar-nav"></ul>
+	</clay:container-fluid>
+</div>
+
+<div class="<%= previewBeforeRestore ? "" : "container-fluid container-fluid-max-xl container-form-lg" %>" id="container">
 	<aui:model-context bean="<%= workflowDefinition %>" model="<%= WorkflowDefinition.class %>" />
 
 	<aui:input name="content" type="hidden" value="<%= content %>" />
 
 	<aui:form method="post" name="form">
-		<div class="card-horizontal main-content-card">
-			<div class="card-row-padded">
-				<aui:fieldset cssClass="workflow-definition-content">
-					<aui:col>
-						<aui:field-wrapper label="title">
-							<liferay-ui:input-localized
-								disabled="<%= true %>"
-								name=" <%= workflowDefinition.getName() %>_title"
-								xml='<%= BeanPropertiesUtil.getString(workflowDefinition, "title") %>'
-							/>
-						</aui:field-wrapper>
-					</aui:col>
+		<div class="sheet">
+			<aui:fieldset cssClass="workflow-definition-content">
+				<clay:col>
+					<aui:field-wrapper label="title">
+						<liferay-ui:input-localized
+							disabled="<%= true %>"
+							name='<%= workflowDefinition.getName() + "_title" %>'
+							xml='<%= BeanPropertiesUtil.getString(workflowDefinition, "title") %>'
+						/>
+					</aui:field-wrapper>
+				</clay:col>
 
-					<aui:col cssClass="workflow-definition-content-source-wrapper" id="contentSourceWrapper">
-						<div class="workflow-definition-content-source" id="<portlet:namespace />contentEditor"></div>
-					</aui:col>
-				</aui:fieldset>
-			</div>
+				<clay:col
+					cssClass="workflow-definition-content-source-wrapper"
+					id='<%= liferayPortletResponse.getNamespace() + "contentSourceWrapper" %>'
+				>
+					<div class="workflow-definition-content-source" id="<portlet:namespace />contentEditor"></div>
+				</clay:col>
+			</aui:fieldset>
+
+			<c:choose>
+				<c:when test="<%= !previewBeforeRestore %>">
+					<div class="sheet-footer">
+						<aui:button href="<%= editWorkflowDefinitionURL %>" primary="<%= true %>" value="edit" />
+					</div>
+				</c:when>
+			</c:choose>
 		</div>
 	</aui:form>
-
-	<c:choose>
-		<c:when test="<%= !previewBeforeRestore %>">
-			<aui:button-row>
-				<aui:button href="<%= editWorkflowDefinitionURL %>" primary="<%= true %>" value="edit" />
-			</aui:button-row>
-		</c:when>
-	</c:choose>
 </div>
 
 <aui:script use="aui-ace-editor">
@@ -122,7 +123,7 @@ boolean previewBeforeRestore = WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_S
 		mode: 'xml',
 		readOnly: 'true',
 		tabSize: 4,
-		width: '100%'
+		width: '100%',
 	}).render();
 
 	var editorContentElement = document.getElementById(

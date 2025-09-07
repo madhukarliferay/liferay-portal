@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,11 +13,6 @@ MBMessage message = (MBMessage)request.getAttribute(WebKeys.MESSAGE_BOARDS_MESSA
 long messageId = BeanParamUtil.getLong(message, request, "messageId");
 
 MBBreadcrumbUtil.addPortletBreadcrumbEntries(message, request, renderResponse);
-
-PortletURL iteratorURL = renderResponse.createRenderURL();
-
-iteratorURL.setParameter("mvcRenderCommandName", "/message_boards/view_deleted_message_attachments");
-iteratorURL.setParameter("messageId", String.valueOf(messageId));
 %>
 
 <portlet:actionURL name="/message_boards/edit_message_attachments" var="emptyTrashURL">
@@ -37,7 +23,7 @@ iteratorURL.setParameter("messageId", String.valueOf(messageId));
 String trashEntriesMaxAgeTimeDescription = LanguageUtil.getTimeDescription(locale, trashHelper.getMaxAge(themeDisplay.getScopeGroup()) * Time.MINUTE, true);
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<liferay-trash:empty
 		confirmMessage="are-you-sure-you-want-to-remove-the-attachments-for-this-message"
 		emptyMessage="remove-the-attachments-for-this-message"
@@ -49,7 +35,15 @@ String trashEntriesMaxAgeTimeDescription = LanguageUtil.getTimeDescription(local
 	<liferay-ui:search-container
 		emptyResultsMessage="this-message-does-not-have-file-attachments-in-the-recycle-bin"
 		headerNames="file-name,size,action"
-		iteratorURL="<%= iteratorURL %>"
+		iteratorURL='<%=
+			PortletURLBuilder.createRenderURL(
+				renderResponse
+			).setMVCRenderCommandName(
+				"/message_boards/view_deleted_message_attachments"
+			).setParameter(
+				"messageId", messageId
+			).buildPortletURL()
+		%>'
 		total="<%= message.getDeletedAttachmentsFileEntriesCount() %>"
 	>
 		<liferay-ui:search-container-results
@@ -89,7 +83,7 @@ String trashEntriesMaxAgeTimeDescription = LanguageUtil.getTimeDescription(local
 			<liferay-ui:search-container-column-text
 				href="<%= rowHREF %>"
 				name="size"
-				value="<%= TextFormatter.formatStorageSize(fileEntry.getSize(), locale) %>"
+				value="<%= LanguageUtil.formatStorageSize(fileEntry.getSize(), locale) %>"
 			/>
 
 			<liferay-ui:search-container-column-jsp
@@ -103,4 +97,4 @@ String trashEntriesMaxAgeTimeDescription = LanguageUtil.getTimeDescription(local
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>

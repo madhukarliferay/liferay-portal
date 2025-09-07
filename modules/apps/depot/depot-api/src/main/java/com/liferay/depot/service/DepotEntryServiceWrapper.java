@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service;
 
+import com.liferay.depot.model.DepotEntry;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,43 +18,83 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class DepotEntryServiceWrapper
 	implements DepotEntryService, ServiceWrapper<DepotEntryService> {
 
+	public DepotEntryServiceWrapper() {
+		this(null);
+	}
+
 	public DepotEntryServiceWrapper(DepotEntryService depotEntryService) {
 		_depotEntryService = depotEntryService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DepotEntryServiceUtil} to access the depot entry remote service. Add custom service methods to <code>com.liferay.depot.service.impl.DepotEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.depot.model.DepotEntry addDepotEntry(
+	public DepotEntry addDepotEntry(
 			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap,
+			java.util.Map<java.util.Locale, String> descriptionMap, int type,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryService.addDepotEntry(
-			nameMap, descriptionMap, serviceContext);
+			nameMap, descriptionMap, type, serviceContext);
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntry deleteDepotEntry(
-			long depotEntryId)
+	public DepotEntry deleteDepotEntry(long depotEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryService.deleteDepotEntry(depotEntryId);
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntry getDepotEntry(long depotEntryId)
+	public DepotEntry fetchGroupDepotEntry(long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryService.fetchGroupDepotEntry(groupId);
+	}
+
+	@Override
+	public java.util.List<DepotEntry> getCurrentAndGroupConnectedDepotEntries(
+			long groupId, int type, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryService.getCurrentAndGroupConnectedDepotEntries(
+			groupId, type, start, end);
+	}
+
+	@Override
+	public DepotEntry getDepotEntry(long depotEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryService.getDepotEntry(depotEntryId);
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntry getGroupDepotEntry(long groupId)
+	public java.util.List<DepotEntry> getGroupConnectedDepotEntries(
+			long groupId, boolean ddmStructuresAvailable, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryService.getGroupConnectedDepotEntries(
+			groupId, ddmStructuresAvailable, start, end);
+	}
+
+	@Override
+	public java.util.List<DepotEntry> getGroupConnectedDepotEntries(
+			long groupId, int type, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryService.getGroupConnectedDepotEntries(
+			groupId, type, start, end);
+	}
+
+	@Override
+	public int getGroupConnectedDepotEntriesCount(long groupId, int type)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryService.getGroupConnectedDepotEntriesCount(
+			groupId, type);
+	}
+
+	@Override
+	public DepotEntry getGroupDepotEntry(long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryService.getGroupDepotEntry(groupId);
@@ -79,17 +111,18 @@ public class DepotEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntry updateDepotEntry(
+	public DepotEntry updateDepotEntry(
 			long depotEntryId, java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
+			java.util.Map<String, Boolean> depotAppCustomizationMap,
 			com.liferay.portal.kernel.util.UnicodeProperties
-				typeSettingsProperties,
+				typeSettingsUnicodeProperties,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryService.updateDepotEntry(
-			depotEntryId, nameMap, descriptionMap, typeSettingsProperties,
-			serviceContext);
+			depotEntryId, nameMap, descriptionMap, depotAppCustomizationMap,
+			typeSettingsUnicodeProperties, serviceContext);
 	}
 
 	@Override

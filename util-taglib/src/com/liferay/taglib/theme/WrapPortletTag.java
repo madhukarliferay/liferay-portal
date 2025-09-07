@@ -1,35 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.theme;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
-import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
+import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.theme.ThemeUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.servlet.PipingServletResponse;
+import com.liferay.taglib.servlet.PipingServletResponseFactory;
 import com.liferay.taglib.util.ParamAndPropertyAncestorTagImpl;
-import com.liferay.taglib.util.ThemeUtil;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyTag;
 
 /**
  * @author Brian Wing Shun Chan
@@ -47,7 +39,6 @@ public class WrapPortletTag
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		Theme theme = themeDisplay.getTheme();
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
 		// Portlet content
@@ -69,13 +60,10 @@ public class WrapPortletTag
 
 		String content = ThemeUtil.include(
 			servletContext, httpServletRequest, httpServletResponse, wrapPage,
-			theme, false);
+			themeDisplay.getTheme(), false);
 
-		return _CONTENT_WRAPPER_PRE.concat(
-			content
-		).concat(
-			_CONTENT_WRAPPER_POST
-		);
+		return StringBundler.concat(
+			_CONTENT_WRAPPER_PRE, content, _CONTENT_WRAPPER_POST);
 	}
 
 	@Override
@@ -87,8 +75,6 @@ public class WrapPortletTag
 				(ThemeDisplay)httpServletRequest.getAttribute(
 					WebKeys.THEME_DISPLAY);
 
-			Theme theme = themeDisplay.getTheme();
-
 			PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
 			// Portlet content
@@ -99,13 +85,14 @@ public class WrapPortletTag
 
 			ThemeUtil.include(
 				getServletContext(), httpServletRequest,
-				PipingServletResponse.createPipingServletResponse(pageContext),
-				getPage(), theme);
+				PipingServletResponseFactory.createPipingServletResponse(
+					pageContext),
+				getPage(), themeDisplay.getTheme());
 
 			return EVAL_PAGE;
 		}
-		catch (Exception e) {
-			throw new JspException(e);
+		catch (Exception exception) {
+			throw new JspException(exception);
 		}
 		finally {
 			clearParams();

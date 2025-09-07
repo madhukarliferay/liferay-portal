@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.counter.service.persistence.impl;
@@ -21,20 +12,24 @@ import com.liferay.counter.model.CounterRegister;
 import com.liferay.counter.model.impl.CounterImpl;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.cache.CacheRegistryItem;
 import com.liferay.portal.kernel.concurrent.CompeteLatch;
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.LockMode;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.ObjectNotFoundException;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.sql.Connection;
@@ -59,17 +54,32 @@ import javax.sql.DataSource;
 public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 	@Override
+	public long getCurrentId(String name) {
+		try (Connection connection = getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				_SQL_SELECT_ID_BY_NAME)) {
+
+			preparedStatement.setString(1, name);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong(1);
+				}
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+
+		return 0;
+	}
+
+	@Override
 	public List<String> getNames() {
-		Connection connection = null;
-		PreparedStatement preparedStatement = null;
-		ResultSet resultSet = null;
-
-		try {
-			connection = getConnection();
-
-			preparedStatement = connection.prepareStatement(_SQL_SELECT_NAMES);
-
-			resultSet = preparedStatement.executeQuery();
+		try (Connection connection = getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				_SQL_SELECT_NAMES);
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			List<String> list = new ArrayList<>();
 
@@ -79,11 +89,8 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 			return list;
 		}
-		catch (SQLException sqle) {
-			throw processException(sqle);
-		}
-		finally {
-			DataAccess.cleanUp(connection, preparedStatement, resultSet);
+		catch (SQLException sqlException) {
+			throw processException(sqlException);
 		}
 	}
 
@@ -113,7 +120,21 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 	@Override
 	public void invalidate() {
-		_counterRegisterMap.clear();
+		if (!DBPartition.isPartitionEnabled() ||
+			(CompanyThreadLocal.getCompanyId() == CompanyConstants.SYSTEM)) {
+
+			_counterRegisterMap.clear();
+
+			return;
+		}
+
+		for (String key : _counterRegisterMap.keySet()) {
+			if (key.endsWith(
+					StringPool.AT + CompanyThreadLocal.getCompanyId())) {
+
+				_counterRegisterMap.remove(key);
+			}
+		}
 	}
 
 	@Override
@@ -121,39 +142,38 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 		CounterRegister counterRegister = getCounterRegister(oldName);
 
 		synchronized (counterRegister) {
-			if (_counterRegisterMap.containsKey(newName)) {
+			if (_counterRegisterMap.containsKey(
+					DBPartitionUtil.getPartitionKey(newName))) {
+
 				throw new SystemException(
 					StringBundler.concat(
 						"Cannot rename ", oldName, " to ", newName));
 			}
 
-			Connection connection = null;
-			PreparedStatement preparedStatement = null;
-
-			try {
-				connection = getConnection();
-
-				preparedStatement = connection.prepareStatement(
-					_SQL_UPDATE_NAME_BY_NAME);
+			try (Connection connection = getConnection();
+				PreparedStatement preparedStatement =
+					connection.prepareStatement(_SQL_UPDATE_NAME_BY_NAME)) {
 
 				preparedStatement.setString(1, newName);
 				preparedStatement.setString(2, oldName);
 
 				preparedStatement.executeUpdate();
 			}
-			catch (ObjectNotFoundException onfe) {
+			catch (ObjectNotFoundException objectNotFoundException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(objectNotFoundException);
+				}
 			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				DataAccess.cleanUp(connection, preparedStatement);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 
 			counterRegister.setName(newName);
 
-			_counterRegisterMap.put(newName, counterRegister);
-			_counterRegisterMap.remove(oldName);
+			_counterRegisterMap.put(
+				DBPartitionUtil.getPartitionKey(newName), counterRegister);
+			_counterRegisterMap.remove(
+				DBPartitionUtil.getPartitionKey(oldName));
 		}
 	}
 
@@ -164,25 +184,32 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 		synchronized (counterRegister) {
 			Session session = null;
 
-			try {
-				session = openSession();
+			try (Connection connection = getConnection()) {
+				connection.setAutoCommit(false);
+
+				session = _sessionFactory.openNewSession(connection);
 
 				Counter counter = (Counter)session.get(CounterImpl.class, name);
 
 				session.delete(counter);
 
 				session.flush();
+
+				connection.commit();
 			}
-			catch (ObjectNotFoundException onfe) {
+			catch (ObjectNotFoundException objectNotFoundException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(objectNotFoundException);
+				}
 			}
-			catch (Exception e) {
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
 			}
 
-			_counterRegisterMap.remove(name);
+			_counterRegisterMap.remove(DBPartitionUtil.getPartitionKey(name));
 		}
 	}
 
@@ -190,7 +217,8 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 	public void reset(String name, long size) {
 		CounterRegister counterRegister = createCounterRegister(name, size);
 
-		_counterRegisterMap.put(name, counterRegister);
+		_counterRegisterMap.put(
+			DBPartitionUtil.getPartitionKey(name), counterRegister);
 	}
 
 	protected void closeSession(Session session) throws ORMException {
@@ -205,12 +233,12 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 		long rangeMin = -1;
 
 		try (Connection connection = getConnection();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				_SQL_SELECT_ID_BY_NAME)) {
 
-			ps1.setString(1, name);
+			preparedStatement1.setString(1, name);
 
-			try (ResultSet resultSet = ps1.executeQuery()) {
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
 				if (!resultSet.next()) {
 					rangeMin = _DEFAULT_CURRENT_ID;
 
@@ -218,19 +246,19 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 						rangeMin = size;
 					}
 
-					try (PreparedStatement ps2 = connection.prepareStatement(
-							_SQL_INSERT)) {
+					try (PreparedStatement preparedStatement2 =
+							connection.prepareStatement(_SQL_INSERT)) {
 
-						ps2.setString(1, name);
-						ps2.setLong(2, rangeMin);
+						preparedStatement2.setString(1, name);
+						preparedStatement2.setLong(2, rangeMin);
 
-						ps2.executeUpdate();
+						preparedStatement2.executeUpdate();
 					}
 				}
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 
 		int rangeSize = getRangeSize(name);
@@ -245,7 +273,8 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 	}
 
 	protected CounterRegister getCounterRegister(String name) {
-		CounterRegister counterRegister = _counterRegisterMap.get(name);
+		CounterRegister counterRegister = _counterRegisterMap.get(
+			DBPartitionUtil.getPartitionKey(name));
 
 		if (counterRegister != null) {
 			return counterRegister;
@@ -255,12 +284,14 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 			// Double check
 
-			counterRegister = _counterRegisterMap.get(name);
+			counterRegister = _counterRegisterMap.get(
+				DBPartitionUtil.getPartitionKey(name));
 
 			if (counterRegister == null) {
 				counterRegister = createCounterRegister(name);
 
-				_counterRegisterMap.put(name, counterRegister);
+				_counterRegisterMap.put(
+					DBPartitionUtil.getPartitionKey(name), counterRegister);
 			}
 
 			return counterRegister;
@@ -283,7 +314,8 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 			incrementType = name;
 		}
 
-		Integer rangeSize = _rangeSizeMap.get(incrementType);
+		Integer rangeSize = _rangeSizeMap.get(
+			DBPartitionUtil.getPartitionKey(incrementType));
 
 		if (rangeSize == null) {
 			rangeSize = GetterUtil.getInteger(
@@ -291,25 +323,22 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 					PropsKeys.COUNTER_INCREMENT_PREFIX + incrementType),
 				PropsValues.COUNTER_INCREMENT);
 
-			_rangeSizeMap.put(incrementType, rangeSize);
+			_rangeSizeMap.put(
+				DBPartitionUtil.getPartitionKey(incrementType), rangeSize);
 		}
 
 		return rangeSize.intValue();
 	}
 
-	protected Session openSession() throws ORMException {
-		return _sessionFactory.openSession();
-	}
-
-	protected SystemException processException(Exception e) {
-		if (!(e instanceof ORMException)) {
-			_log.error("Caught unexpected exception", e);
+	protected SystemException processException(Exception exception) {
+		if (!(exception instanceof ORMException)) {
+			_log.error("Caught unexpected exception", exception);
 		}
 		else if (_log.isDebugEnabled()) {
-			_log.debug(e, e);
+			_log.debug(exception);
 		}
 
-		return new SystemException(e);
+		return new SystemException(exception);
 	}
 
 	protected void setDataSource(DataSource dataSource) {
@@ -342,8 +371,8 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 			try {
 				competeLatch.await();
 			}
-			catch (InterruptedException ie) {
-				throw processException(ie);
+			catch (InterruptedException interruptedException) {
+				throw processException(interruptedException);
 			}
 
 			// Compete again
@@ -362,17 +391,22 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 			newValue = counterHolder.addAndGet(size);
 
 			if (newValue > counterHolder.getRangeMax()) {
+				int range = counterRegister.getRangeSize();
+
+				if (size > range) {
+					range = size;
+				}
+
 				CounterHolder newCounterHolder = _obtainIncrement(
-					counterRegister.getName(), counterRegister.getRangeSize(),
-					0);
+					counterRegister.getName(), range, 0);
 
 				newValue = newCounterHolder.addAndGet(size);
 
 				counterRegister.setCounterHolder(newCounterHolder);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 
@@ -389,8 +423,10 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 		Session session = null;
 
-		try {
-			session = openSession();
+		try (Connection connection = getConnection()) {
+			connection.setAutoCommit(false);
+
+			session = _sessionFactory.openNewSession(connection);
 
 			Counter counter = (Counter)session.get(
 				CounterImpl.class, counterName, LockMode.UPGRADE);
@@ -411,10 +447,12 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 			session.flush();
 
+			connection.commit();
+
 			return counterHolder;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);

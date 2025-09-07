@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.item.selector.web.internal;
@@ -25,21 +16,20 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.site.item.selector.web.internal.renderer.MyGroupItemSelectorViewRenderer;
-import com.liferay.site.util.GroupSearchProvider;
-import com.liferay.site.util.GroupURLProvider;
+import com.liferay.site.provider.GroupURLProvider;
+
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -73,8 +63,11 @@ public class MyGroupItemSelectorView
 	}
 
 	@Override
-	public boolean isVisible(ThemeDisplay themeDisplay) {
-		return true;
+	public boolean isVisible(
+		GroupItemSelectorCriterion groupItemSelectorCriterion,
+		ThemeDisplay themeDisplay) {
+
+		return groupItemSelectorCriterion.isIncludeRecentSites();
 	}
 
 	@Override
@@ -84,20 +77,20 @@ public class MyGroupItemSelectorView
 			PortletURL portletURL, String itemSelectedEventName, boolean search)
 		throws IOException, ServletException {
 
-		_myGroupItemSelectorViewRender.renderHTML(
+		_myGroupItemSelectorViewRenderer.renderHTML(
 			servletRequest, servletResponse, groupItemSelectorCriterion,
 			portletURL, itemSelectedEventName, search);
 	}
 
 	@Activate
 	protected void activate() {
-		_myGroupItemSelectorViewRender = new MyGroupItemSelectorViewRenderer(
-			_groupSearchProvider, _groupURLProvider, _servletContext);
+		_myGroupItemSelectorViewRenderer = new MyGroupItemSelectorViewRenderer(
+			_groupURLProvider, _servletContext);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		_myGroupItemSelectorViewRender = null;
+		_myGroupItemSelectorViewRenderer = null;
 	}
 
 	private static final List<ItemSelectorReturnType>
@@ -108,12 +101,9 @@ public class MyGroupItemSelectorView
 				new UUIDItemSelectorReturnType()));
 
 	@Reference
-	private GroupSearchProvider _groupSearchProvider;
-
-	@Reference
 	private GroupURLProvider _groupURLProvider;
 
-	private MyGroupItemSelectorViewRenderer _myGroupItemSelectorViewRender;
+	private MyGroupItemSelectorViewRenderer _myGroupItemSelectorViewRenderer;
 
 	@Reference
 	private Portal _portal;

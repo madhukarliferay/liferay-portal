@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.osgi.service.tracker.collections.map.test;
@@ -161,10 +152,8 @@ public class ListServiceTrackerMapTest {
 		ServiceRegistration<TrackedOne> serviceRegistration1 = registerService(
 			trackedOne1);
 
-		TrackedOne trackedOne2 = new TrackedOne();
-
 		ServiceRegistration<TrackedOne> serviceRegistration2 = registerService(
-			trackedOne2);
+			new TrackedOne());
 
 		TrackedOne trackedOne3 = new TrackedOne();
 
@@ -497,7 +486,7 @@ public class ListServiceTrackerMapTest {
 						try {
 							contentTrackedOnes.add(new TrackedOne("spurious"));
 						}
-						catch (Exception e) {
+						catch (Exception exception) {
 						}
 					}
 
@@ -544,8 +533,8 @@ public class ListServiceTrackerMapTest {
 							Assert.assertEquals(
 								contentTrackedOnes, Arrays.asList(trackedOne));
 						}
-						catch (Throwable t) {
-							throwables.add(t);
+						catch (Throwable throwable) {
+							throwables.add(throwable);
 						}
 					}
 
@@ -603,8 +592,13 @@ public class ListServiceTrackerMapTest {
 	protected ServiceTrackerMap<String, List<TrackedOne>>
 		createServiceTrackerMap(BundleContext bundleContext) {
 
-		return ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, TrackedOne.class, "target");
+		ServiceTrackerMap<String, List<TrackedOne>> serviceTrackerMap =
+			ServiceTrackerMapFactory.openMultiValueMap(
+				bundleContext, TrackedOne.class, "target");
+
+		serviceTrackerMap.keySet();
+
+		return serviceTrackerMap;
 	}
 
 	protected ServiceTrackerMap<String, List<TrackedOne>>
@@ -612,9 +606,14 @@ public class ListServiceTrackerMapTest {
 			BundleContext bundleContext,
 			Comparator<ServiceReference<TrackedOne>> comparator) {
 
-		return ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, TrackedOne.class, null,
-			new PropertyServiceReferenceMapper<>("target"), comparator);
+		ServiceTrackerMap<String, List<TrackedOne>> serviceTrackerMap =
+			ServiceTrackerMapFactory.openMultiValueMap(
+				bundleContext, TrackedOne.class, null,
+				new PropertyServiceReferenceMapper<>("target"), comparator);
+
+		serviceTrackerMap.keySet();
+
+		return serviceTrackerMap;
 	}
 
 	protected ServiceTrackerMap<String, List<TrackedOne>>
@@ -622,10 +621,15 @@ public class ListServiceTrackerMapTest {
 			ServiceTrackerMapListener<String, TrackedOne, List<TrackedOne>>
 				serviceTrackerMapListener) {
 
-		return ServiceTrackerMapFactory.openMultiValueMap(
-			_bundleContext, TrackedOne.class, null,
-			new PropertyServiceReferenceMapper<>("target"),
-			serviceTrackerMapListener);
+		ServiceTrackerMap<String, List<TrackedOne>> serviceTrackerMap =
+			ServiceTrackerMapFactory.openMultiValueMap(
+				_bundleContext, TrackedOne.class, null,
+				new PropertyServiceReferenceMapper<>("target"),
+				serviceTrackerMapListener);
+
+		serviceTrackerMap.keySet();
+
+		return serviceTrackerMap;
 	}
 
 	protected ServiceRegistration<TrackedOne> registerService(

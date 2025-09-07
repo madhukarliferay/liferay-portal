@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
@@ -17,17 +8,21 @@ package com.liferay.portal.kernel.portlet;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 /**
  * @author Eudaldo Alonso
@@ -37,7 +32,8 @@ public class PortletProviderUtil {
 	public static String getPortletId(
 		String className, PortletProvider.Action action) {
 
-		PortletProvider portletProvider = getPortletProvider(className, action);
+		PortletProvider portletProvider = _getPortletProvider(
+			className, action);
 
 		if (portletProvider != null) {
 			return portletProvider.getPortletName();
@@ -51,7 +47,8 @@ public class PortletProviderUtil {
 			String className, PortletProvider.Action action)
 		throws PortalException {
 
-		PortletProvider portletProvider = getPortletProvider(className, action);
+		PortletProvider portletProvider = _getPortletProvider(
+			className, action);
 
 		if (portletProvider != null) {
 			return portletProvider.getPortletURL(httpServletRequest, group);
@@ -65,7 +62,8 @@ public class PortletProviderUtil {
 			PortletProvider.Action action)
 		throws PortalException {
 
-		PortletProvider portletProvider = getPortletProvider(className, action);
+		PortletProvider portletProvider = _getPortletProvider(
+			className, action);
 
 		if (portletProvider != null) {
 			return portletProvider.getPortletURL(httpServletRequest);
@@ -94,48 +92,40 @@ public class PortletProviderUtil {
 			action);
 	}
 
-	protected static PortletProvider getPortletProvider(
-		String className, PortletProvider.Action action) {
+	private static PortletProvider _getPortletProvider(
+		PortletProvider.Action action, List<PortletProvider> portletProviders) {
 
-		if (action.equals(PortletProvider.Action.ADD)) {
-			return getPortletProvider(className, _addServiceTrackerMap);
+		if (portletProviders == null) {
+			return null;
 		}
-		else if (action.equals(PortletProvider.Action.BROWSE)) {
-			return getPortletProvider(className, _browseServiceTrackerMap);
-		}
-		else if (action.equals(PortletProvider.Action.EDIT)) {
-			return getPortletProvider(className, _editServiceTrackerMap);
-		}
-		else if (action.equals(PortletProvider.Action.MANAGE)) {
-			return getPortletProvider(className, _manageServiceTrackerMap);
-		}
-		else if (action.equals(PortletProvider.Action.PREVIEW)) {
-			return getPortletProvider(className, _previewServiceTrackerMap);
-		}
-		else if (action.equals(PortletProvider.Action.VIEW)) {
-			return getPortletProvider(className, _viewServiceTrackerMap);
+
+		for (PortletProvider portletProvider : portletProviders) {
+			if (ArrayUtil.contains(
+					portletProvider.getSupportedActions(), action)) {
+
+				return portletProvider;
+			}
 		}
 
 		return null;
 	}
 
-	protected static PortletProvider getPortletProvider(
-		String className,
-		ServiceTrackerMap<String, ? extends PortletProvider>
-			serviceTrackerMap) {
+	private static PortletProvider _getPortletProvider(
+		String className, PortletProvider.Action action) {
 
-		PortletProvider portletProvider = serviceTrackerMap.getService(
-			className);
+		PortletProvider portletProvider = _getPortletProvider(
+			action, _serviceTrackerMap.getService(className));
 
-		if ((portletProvider == null) && isAssetObject(className)) {
-			portletProvider = serviceTrackerMap.getService(
-				AssetEntry.class.getName());
+		if ((portletProvider == null) && _isAssetObject(className)) {
+			portletProvider = _getPortletProvider(
+				action,
+				_serviceTrackerMap.getService(AssetEntry.class.getName()));
 		}
 
 		return portletProvider;
 	}
 
-	protected static boolean isAssetObject(String className) {
+	private static boolean _isAssetObject(String className) {
 		AssetRendererFactory<?> assetRendererFactory =
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
 				className);
@@ -147,24 +137,9 @@ public class PortletProviderUtil {
 		return false;
 	}
 
-	private static final ServiceTrackerMap<String, AddPortletProvider>
-		_addServiceTrackerMap = ServiceTrackerCollections.openSingleValueMap(
-			AddPortletProvider.class, "model.class.name");
-	private static final ServiceTrackerMap<String, BrowsePortletProvider>
-		_browseServiceTrackerMap = ServiceTrackerCollections.openSingleValueMap(
-			BrowsePortletProvider.class, "model.class.name");
-	private static final ServiceTrackerMap<String, EditPortletProvider>
-		_editServiceTrackerMap = ServiceTrackerCollections.openSingleValueMap(
-			EditPortletProvider.class, "model.class.name");
-	private static final ServiceTrackerMap<String, ManagePortletProvider>
-		_manageServiceTrackerMap = ServiceTrackerCollections.openSingleValueMap(
-			ManagePortletProvider.class, "model.class.name");
-	private static final ServiceTrackerMap<String, PreviewPortletProvider>
-		_previewServiceTrackerMap =
-			ServiceTrackerCollections.openSingleValueMap(
-				PreviewPortletProvider.class, "model.class.name");
-	private static final ServiceTrackerMap<String, ViewPortletProvider>
-		_viewServiceTrackerMap = ServiceTrackerCollections.openSingleValueMap(
-			ViewPortletProvider.class, "model.class.name");
+	private static final ServiceTrackerMap<String, List<PortletProvider>>
+		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
+			SystemBundleUtil.getBundleContext(), PortletProvider.class,
+			"model.class.name");
 
 }

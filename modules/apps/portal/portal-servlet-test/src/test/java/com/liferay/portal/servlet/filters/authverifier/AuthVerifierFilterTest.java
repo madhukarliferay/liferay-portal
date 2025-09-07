@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.authverifier;
 
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControl;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
@@ -22,22 +14,26 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.security.access.control.AccessControlImpl;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockFilterConfig;
@@ -49,16 +45,24 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 public class AuthVerifierFilterTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@BeforeClass
 	public static void setUpClass() {
 		_portalUtil.setPortal(_portalImpl);
 
-		Registry registry = new BasicRegistryImpl();
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		registry.registerService(
-			AccessControl.class, new TestAccessControlImpl());
+		_serviceRegistration = bundleContext.registerService(
+			AccessControl.class, new TestAccessControlImpl(), null);
+	}
 
-		RegistryUtil.setRegistry(registry);
+	@AfterClass
+	public static void tearDownClass() {
+		_serviceRegistration.unregister();
 	}
 
 	@After
@@ -105,6 +109,7 @@ public class AuthVerifierFilterTest {
 		}
 		finally {
 			_portalUtil.setPortal(_portalImpl);
+
 			_setPortalProperty("PORTAL_PROXY_PATH", portalProxyPath);
 		}
 
@@ -133,6 +138,7 @@ public class AuthVerifierFilterTest {
 		}
 		finally {
 			_portalUtil.setPortal(_portalImpl);
+
 			_setPortalProperty("PORTAL_PROXY_PATH", portalProxyPath);
 		}
 
@@ -240,6 +246,7 @@ public class AuthVerifierFilterTest {
 
 	private static final PortalImpl _portalImpl = new PortalImpl();
 	private static final PortalUtil _portalUtil = new PortalUtil();
+	private static ServiceRegistration<?> _serviceRegistration;
 
 	private final AuthVerifierFilter _authVerifierFilter =
 		new AuthVerifierFilter();

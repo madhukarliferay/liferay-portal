@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import getPortletNamespace from '../get_portlet_namespace.es';
@@ -64,7 +55,7 @@ export default function createPortletURL(basePortletURL, parameters = {}) {
 		'refererGroupId',
 		'refererPlid',
 		'saveLastPath',
-		'scroll'
+		'scroll',
 	]);
 
 	if (
@@ -73,7 +64,8 @@ export default function createPortletURL(basePortletURL, parameters = {}) {
 	) {
 		if (basePortletURL.indexOf('/') !== 0) {
 			basePortletURL = `${Liferay.ThemeDisplay.getPortalURL()}/${basePortletURL}`;
-		} else {
+		}
+		else {
 			basePortletURL =
 				Liferay.ThemeDisplay.getPortalURL() + basePortletURL;
 		}
@@ -97,12 +89,13 @@ export default function createPortletURL(basePortletURL, parameters = {}) {
 		namespace = getPortletNamespace(portletID);
 	}
 
-	Object.keys(parameters).forEach(key => {
+	Object.keys(parameters).forEach((key) => {
 		let param;
 
 		if (reservedParameters.has(key)) {
 			param = key;
-		} else {
+		}
+		else {
 			param = `${namespace}${key}`;
 		}
 

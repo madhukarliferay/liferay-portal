@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.exportimport.internal.staged.model.repository;
 
 import com.liferay.expando.kernel.model.ExpandoTable;
-import com.liferay.expando.kernel.model.adapter.StagedExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.expando.model.adapter.StagedExpandoTable;
 import com.liferay.exportimport.kernel.lar.ExportImportHelper;
 import com.liferay.exportimport.kernel.lar.ManifestSummary;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
@@ -31,9 +22,13 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.adapter.ModelAdapterUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.model.adapter.util.ModelAdapterUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Akos Thurzo
  */
 @Component(
-	immediate = true,
-	property = "model.class.name=com.liferay.expando.kernel.model.adapter.StagedExpandoTable",
+	property = "model.class.name=com.liferay.expando.model.adapter.StagedExpandoTable",
 	service = StagedModelRepository.class
 )
 public class StagedExpandoTableStagedModelRepository
@@ -88,7 +82,11 @@ public class StagedExpandoTableStagedModelRepository
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		for (ExpandoTable expandoTable : expandoTables) {
-			_expandoTableLocalService.deleteTable(expandoTable);
+			if (expandoTable.getCompanyId() ==
+					portletDataContext.getCompanyId()) {
+
+				_expandoTableLocalService.deleteTable(expandoTable);
+			}
 		}
 	}
 
@@ -143,7 +141,7 @@ public class StagedExpandoTableStagedModelRepository
 	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
 		final PortletDataContext portletDataContext) {
 
-		final ExportActionableDynamicQuery exportActionableDynamicQuery =
+		ExportActionableDynamicQuery exportActionableDynamicQuery =
 			new ExportActionableDynamicQuery() {
 
 				@Override
@@ -185,6 +183,19 @@ public class StagedExpandoTableStagedModelRepository
 		exportActionableDynamicQuery.setModelClass(ExpandoTable.class);
 		exportActionableDynamicQuery.setPerformActionMethod(
 			(ExpandoTable expandoTable) -> {
+				ClassName className = _classNameLocalService.fetchClassName(
+					expandoTable.getClassNameId());
+
+				if (className == null) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"No class name exists for class name ID " +
+								expandoTable.getClassNameId());
+					}
+
+					return;
+				}
+
 				StagedExpandoTable stagedExpandoTable = ModelAdapterUtil.adapt(
 					expandoTable, ExpandoTable.class, StagedExpandoTable.class);
 
@@ -233,6 +244,12 @@ public class StagedExpandoTableStagedModelRepository
 	private String _parseName(String uuid) {
 		return uuid.substring(uuid.indexOf(StringPool.POUND) + 1);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		StagedExpandoTableStagedModelRepository.class);
+
+	@Reference
+	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;

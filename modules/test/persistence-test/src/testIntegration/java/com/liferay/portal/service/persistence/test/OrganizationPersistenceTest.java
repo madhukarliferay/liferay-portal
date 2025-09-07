@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.exception.DuplicateOrganizationExternalReferenceCodeException;
 import com.liferay.portal.kernel.exception.NoSuchOrganizationException;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
@@ -45,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +117,8 @@ public class OrganizationPersistenceTest {
 
 		newOrganization.setMvccVersion(RandomTestUtil.nextLong());
 
+		newOrganization.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newOrganization.setUuid(RandomTestUtil.randomString());
 
 		newOrganization.setExternalReferenceCode(RandomTestUtil.randomString());
@@ -153,11 +147,13 @@ public class OrganizationPersistenceTest {
 
 		newOrganization.setCountryId(RandomTestUtil.nextLong());
 
-		newOrganization.setStatusId(RandomTestUtil.nextLong());
+		newOrganization.setStatusListTypeId(RandomTestUtil.nextLong());
 
 		newOrganization.setComments(RandomTestUtil.randomString());
 
 		newOrganization.setLogoId(RandomTestUtil.nextLong());
+
+		newOrganization.setStatus(RandomTestUtil.nextInt());
 
 		_organizations.add(_persistence.update(newOrganization));
 
@@ -167,6 +163,9 @@ public class OrganizationPersistenceTest {
 		Assert.assertEquals(
 			existingOrganization.getMvccVersion(),
 			newOrganization.getMvccVersion());
+		Assert.assertEquals(
+			existingOrganization.getCtCollectionId(),
+			newOrganization.getCtCollectionId());
 		Assert.assertEquals(
 			existingOrganization.getUuid(), newOrganization.getUuid());
 		Assert.assertEquals(
@@ -206,11 +205,34 @@ public class OrganizationPersistenceTest {
 			existingOrganization.getCountryId(),
 			newOrganization.getCountryId());
 		Assert.assertEquals(
-			existingOrganization.getStatusId(), newOrganization.getStatusId());
+			existingOrganization.getStatusListTypeId(),
+			newOrganization.getStatusListTypeId());
 		Assert.assertEquals(
 			existingOrganization.getComments(), newOrganization.getComments());
 		Assert.assertEquals(
 			existingOrganization.getLogoId(), newOrganization.getLogoId());
+		Assert.assertEquals(
+			existingOrganization.getStatus(), newOrganization.getStatus());
+	}
+
+	@Test(expected = DuplicateOrganizationExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		Organization organization = addOrganization();
+
+		Organization newOrganization = addOrganization();
+
+		newOrganization.setCompanyId(organization.getCompanyId());
+
+		newOrganization = _persistence.update(newOrganization);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newOrganization);
+
+		newOrganization.setExternalReferenceCode(
+			organization.getExternalReferenceCode());
+
+		_persistence.update(newOrganization);
 	}
 
 	@Test
@@ -239,10 +261,10 @@ public class OrganizationPersistenceTest {
 	}
 
 	@Test
-	public void testCountByLocations() throws Exception {
-		_persistence.countByLocations(RandomTestUtil.nextLong());
+	public void testCountByCompanyIdLocations() throws Exception {
+		_persistence.countByCompanyIdLocations(RandomTestUtil.nextLong());
 
-		_persistence.countByLocations(0L);
+		_persistence.countByCompanyIdLocations(0L);
 	}
 
 	@Test
@@ -254,12 +276,12 @@ public class OrganizationPersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_T() throws Exception {
-		_persistence.countByC_T(RandomTestUtil.nextLong(), "");
+	public void testCountByC_LikeT() throws Exception {
+		_persistence.countByC_LikeT(RandomTestUtil.nextLong(), "");
 
-		_persistence.countByC_T(0L, "null");
+		_persistence.countByC_LikeT(0L, "null");
 
-		_persistence.countByC_T(0L, (String)null);
+		_persistence.countByC_LikeT(0L, (String)null);
 	}
 
 	@Test
@@ -281,12 +303,12 @@ public class OrganizationPersistenceTest {
 	}
 
 	@Test
-	public void testCountByO_C_P() throws Exception {
-		_persistence.countByO_C_P(
+	public void testCountByGtO_C_P() throws Exception {
+		_persistence.countByGtO_C_P(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextLong());
 
-		_persistence.countByO_C_P(0L, 0L, 0L);
+		_persistence.countByGtO_C_P(0L, 0L, 0L);
 	}
 
 	@Test
@@ -300,12 +322,12 @@ public class OrganizationPersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_ERC() throws Exception {
-		_persistence.countByC_ERC(RandomTestUtil.nextLong(), "");
+	public void testCountByERC_C() throws Exception {
+		_persistence.countByERC_C("", RandomTestUtil.nextLong());
 
-		_persistence.countByC_ERC(0L, "null");
+		_persistence.countByERC_C("null", 0L);
 
-		_persistence.countByC_ERC(0L, (String)null);
+		_persistence.countByERC_C((String)null, 0L);
 	}
 
 	@Test
@@ -333,13 +355,13 @@ public class OrganizationPersistenceTest {
 
 	protected OrderByComparator<Organization> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"Organization_", "mvccVersion", true, "uuid", true,
-			"externalReferenceCode", true, "organizationId", true, "companyId",
-			true, "userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "parentOrganizationId", true, "treePath",
-			true, "name", true, "type", true, "recursable", true, "regionId",
-			true, "countryId", true, "statusId", true, "comments", true,
-			"logoId", true);
+			"Organization_", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "externalReferenceCode", true, "organizationId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "parentOrganizationId", true,
+			"treePath", true, "name", true, "type", true, "recursable", true,
+			"regionId", true, "countryId", true, "statusListTypeId", true,
+			"comments", true, "logoId", true, "status", true);
 	}
 
 	@Test
@@ -561,29 +583,72 @@ public class OrganizationPersistenceTest {
 
 		_persistence.clearCache();
 
-		Organization existingOrganization = _persistence.findByPrimaryKey(
-			newOrganization.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newOrganization.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		Organization newOrganization = addOrganization();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Organization.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"organizationId", newOrganization.getOrganizationId()));
+
+		List<Organization> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(Organization organization) {
+		Assert.assertEquals(
+			Long.valueOf(organization.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				organization, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
+		Assert.assertEquals(
+			organization.getName(),
+			ReflectionTestUtil.invoke(
+				organization, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingOrganization.getCompanyId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingOrganization, "getOriginalCompanyId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingOrganization.getName(),
-				ReflectionTestUtil.invoke(
-					existingOrganization, "getOriginalName", new Class<?>[0])));
-
+			organization.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				organization, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
 		Assert.assertEquals(
-			Long.valueOf(existingOrganization.getCompanyId()),
+			Long.valueOf(organization.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingOrganization, "getOriginalCompanyId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingOrganization.getExternalReferenceCode(),
-				ReflectionTestUtil.invoke(
-					existingOrganization, "getOriginalExternalReferenceCode",
-					new Class<?>[0])));
+				organization, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 	}
 
 	protected Organization addOrganization() throws Exception {
@@ -592,6 +657,8 @@ public class OrganizationPersistenceTest {
 		Organization organization = _persistence.create(pk);
 
 		organization.setMvccVersion(RandomTestUtil.nextLong());
+
+		organization.setCtCollectionId(RandomTestUtil.nextLong());
 
 		organization.setUuid(RandomTestUtil.randomString());
 
@@ -621,11 +688,13 @@ public class OrganizationPersistenceTest {
 
 		organization.setCountryId(RandomTestUtil.nextLong());
 
-		organization.setStatusId(RandomTestUtil.nextLong());
+		organization.setStatusListTypeId(RandomTestUtil.nextLong());
 
 		organization.setComments(RandomTestUtil.randomString());
 
 		organization.setLogoId(RandomTestUtil.nextLong());
+
+		organization.setStatus(RandomTestUtil.nextInt());
 
 		_organizations.add(_persistence.update(organization));
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.impl;
@@ -125,8 +116,37 @@ public class OAuth2ScopeGrantLocalServiceImpl
 		long companyId, String applicationName, String bundleSymbolicName,
 		String accessTokenContent) {
 
-		return oAuth2ScopeGrantFinder.findByC_A_B_A(
-			companyId, applicationName, bundleSymbolicName, accessTokenContent);
+		List<OAuth2ScopeGrant> oAuth2ScopeGrants = new ArrayList<>();
+
+		for (OAuth2Authorization oAuth2Authorization :
+				oAuth2AuthorizationPersistence.findByC_ATCH(
+					companyId, accessTokenContent.hashCode())) {
+
+			if (!Objects.equals(
+					accessTokenContent,
+					oAuth2Authorization.getAccessTokenContent())) {
+
+				continue;
+			}
+
+			for (OAuth2ScopeGrant oAuth2ScopeGrant :
+					oAuth2ScopeGrantPersistence.
+						getOAuth2AuthorizationOAuth2ScopeGrants(
+							oAuth2Authorization.getPrimaryKey())) {
+
+				if (Objects.equals(
+						applicationName,
+						oAuth2ScopeGrant.getApplicationName()) &&
+					Objects.equals(
+						bundleSymbolicName,
+						oAuth2ScopeGrant.getBundleSymbolicName())) {
+
+					oAuth2ScopeGrants.add(oAuth2ScopeGrant);
+				}
+			}
+		}
+
+		return oAuth2ScopeGrants;
 	}
 
 	@Override
@@ -172,12 +192,8 @@ public class OAuth2ScopeGrantLocalServiceImpl
 
 		if (!Objects.equals(
 				oAuth2ScopeGrant.getApplicationName(),
-				liferayOAuth2Scope.getApplicationName())) {
-
-			return false;
-		}
-
-		if (!Objects.equals(
+				liferayOAuth2Scope.getApplicationName()) ||
+			!Objects.equals(
 				oAuth2ScopeGrant.getScope(), liferayOAuth2Scope.getScope())) {
 
 			return false;
@@ -187,13 +203,8 @@ public class OAuth2ScopeGrantLocalServiceImpl
 
 		String bundleSymbolicName = bundle.getSymbolicName();
 
-		if (!Objects.equals(
-				oAuth2ScopeGrant.getBundleSymbolicName(), bundleSymbolicName)) {
-
-			return false;
-		}
-
-		return true;
+		return Objects.equals(
+			oAuth2ScopeGrant.getBundleSymbolicName(), bundleSymbolicName);
 	}
 
 }

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -54,9 +45,9 @@ for (AssetEntryResult assetEntryResult : assetPublisherDisplayContext.getAssetEn
 
 			<liferay-util:include page="/view_asset_entries_title_list.jsp" servletContext="<%= application %>" />
 		</c:when>
-		<c:when test="<%= StringUtil.startsWith(assetPublisherDisplayContext.getDisplayStyle(), PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX) %>">
+		<c:when test="<%= StringUtil.startsWith(assetPublisherDisplayContext.getDisplayStyle(), PortletDisplayTemplateConstants.DISPLAY_STYLE_PREFIX) %>">
 			<c:if test="<%= Validator.isNotNull(assetEntryResult.getTitle()) %>">
-				<h3 class="asset-entries-group-label"><%= HtmlUtil.escape(assetEntryResult.getTitle()) %></h3>
+				<p class="asset-entries-group-label h3"><%= HtmlUtil.escape(assetEntryResult.getTitle()) %></p>
 			</c:if>
 
 			<liferay-ddm:template-renderer
@@ -76,9 +67,7 @@ for (AssetEntryResult assetEntryResult : assetPublisherDisplayContext.getAssetEn
 			for (int assetEntryIndex = 0; assetEntryIndex < assetEntries.size(); assetEntryIndex++) {
 				AssetEntry assetEntry = assetEntries.get(assetEntryIndex);
 
-				long classPK = assetEntry.getClassPK();
-
-				AssetRendererFactory<?> assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassNameId(assetEntry.getClassNameId());
+				AssetRendererFactory<?> assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(assetEntry.getClassName());
 
 				if (assetRendererFactory == null) {
 					continue;
@@ -87,11 +76,11 @@ for (AssetEntryResult assetEntryResult : assetPublisherDisplayContext.getAssetEn
 				AssetRenderer<?> assetRenderer = null;
 
 				try {
-					assetRenderer = assetRendererFactory.getAssetRenderer(classPK);
+					assetRenderer = assetRendererFactory.getAssetRenderer(assetEntry.getClassPK());
 				}
 				catch (Exception e) {
 					if (_log.isWarnEnabled()) {
-						_log.warn(e, e);
+						_log.warn(e);
 					}
 				}
 
@@ -127,5 +116,5 @@ for (AssetEntryResult assetEntryResult : assetPublisherDisplayContext.getAssetEn
 %>
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("com_liferay_asset_publisher_web.view_asset_entry_list_jsp");
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_asset_publisher_web.view_asset_entry_list_jsp");
 %>

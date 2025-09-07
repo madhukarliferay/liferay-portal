@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.webdav.test;
@@ -60,8 +51,6 @@ public class BaseWebDAVTestCase {
 	public Tuple service(
 		String method, String path, Map<String, String> headers, byte[] data) {
 
-		WebDAVServlet webDAVServlet = new WebDAVServlet();
-
 		String requestURI = StringBundler.concat(
 			_CONTEXT_PATH, _SERVLET_PATH, _PATH_INFO_PREFACE, path);
 
@@ -76,7 +65,7 @@ public class BaseWebDAVTestCase {
 			mockHttpServletRequest.setRemoteUser(
 				String.valueOf(TestPropsValues.getUserId()));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			Assert.fail("User ID cannot be initialized");
 		}
 
@@ -89,8 +78,8 @@ public class BaseWebDAVTestCase {
 		try {
 			throw new Exception();
 		}
-		catch (Exception e) {
-			StackTraceElement[] stackTraceElements = e.getStackTrace();
+		catch (Exception exception) {
+			StackTraceElement[] stackTraceElements = exception.getStackTrace();
 
 			for (StackTraceElement stackTraceElement : stackTraceElements) {
 				String methodName = stackTraceElement.getMethodName();
@@ -134,6 +123,8 @@ public class BaseWebDAVTestCase {
 		}
 
 		try {
+			WebDAVServlet webDAVServlet = new WebDAVServlet();
+
 			MockHttpServletResponse mockHttpServletResponse =
 				new MockHttpServletResponse();
 
@@ -153,8 +144,8 @@ public class BaseWebDAVTestCase {
 
 			return new Tuple(statusCode, responseBody, responseHeaders);
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			exception.printStackTrace();
 		}
 
 		return null;
@@ -343,27 +334,18 @@ public class BaseWebDAVTestCase {
 	private static WebDAVStorage _webDAVStorage;
 
 	static {
-		StringBundler sb = new StringBundler(8);
+		_LOCK_XML = StringBundler.concat(
+			"<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n",
+			"<D:lockinfo xmlns:D='DAV:'>\n",
+			"<D:lockscope><D:exclusive/></D:lockscope>\n",
+			"<D:locktype><D:write/></D:locktype>\n", "<D:owner>\n",
+			"<D:href>http://www.liferay.com</D:href>\n", "</D:owner>\n",
+			"</D:lockinfo>\n");
 
-		sb.append("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
-		sb.append("<D:lockinfo xmlns:D='DAV:'>\n");
-		sb.append("<D:lockscope><D:exclusive/></D:lockscope>\n");
-		sb.append("<D:locktype><D:write/></D:locktype>\n");
-		sb.append("<D:owner>\n");
-		sb.append("<D:href>http://www.liferay.com</D:href>\n");
-		sb.append("</D:owner>\n");
-		sb.append("</D:lockinfo>\n");
-
-		_LOCK_XML = sb.toString();
-
-		sb = new StringBundler(4);
-
-		sb.append("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
-		sb.append("<D:propfind xmlns:D=\"DAV:\">\n");
-		sb.append("<D:allprop/>\n");
-		sb.append("</D:propfind>");
-
-		_PROPFIND_XML = sb.toString();
+		_PROPFIND_XML = StringBundler.concat(
+			"<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n",
+			"<D:propfind xmlns:D=\"DAV:\">\n", "<D:allprop/>\n",
+			"</D:propfind>");
 	}
 
 }

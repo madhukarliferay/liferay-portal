@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -39,7 +30,7 @@ if (exportImportConfiguration.getType() == ExportImportConfigurationConstants.TY
 	showWhenSingleIcon="<%= true %>"
 >
 	<portlet:renderURL var="newPublishProcessURL">
-		<portlet:param name="mvcRenderCommandName" value="publishLayouts" />
+		<portlet:param name="mvcRenderCommandName" value="/staging_processes/publish_layouts" />
 		<portlet:param name="<%= Constants.CMD %>" value="<%= localPublishing ? Constants.PUBLISH_TO_LIVE : Constants.PUBLISH_TO_REMOTE %>" />
 		<portlet:param name="exportImportConfigurationId" value="<%= String.valueOf(exportImportConfiguration.getExportImportConfigurationId()) %>" />
 	</portlet:renderURL>
@@ -50,15 +41,15 @@ if (exportImportConfiguration.getType() == ExportImportConfigurationConstants.TY
 	/>
 
 	<portlet:renderURL var="deleteRedirectURL">
-		<portlet:param name="mvcRenderCommandName" value="viewPublishConfigurations" />
+		<portlet:param name="mvcRenderCommandName" value="/staging_processes/view_publish_configurations" />
 		<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
 		<portlet:param name="layoutSetBranchId" value="<%= String.valueOf(layoutSetBranchId) %>" />
 		<portlet:param name="layoutSetBranchName" value="<%= layoutSetBranchName %>" />
 		<portlet:param name="privateLayout" value="<%= String.valueOf(privateLayout) %>" />
 	</portlet:renderURL>
 
-	<portlet:actionURL name="editPublishConfiguration" var="deletePublishConfigurationURL">
-		<portlet:param name="mvcRenderCommandName" value="editPublishConfiguration" />
+	<portlet:actionURL name="/staging_processes/edit_publish_configuration" var="deletePublishConfigurationURL">
+		<portlet:param name="mvcRenderCommandName" value="/staging_processes/edit_publish_configuration" />
 		<portlet:param name="<%= Constants.CMD %>" value="<%= trashHelper.isTrashEnabled(groupId) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>" />
 		<portlet:param name="redirect" value="<%= deleteRedirectURL %>" />
 		<portlet:param name="exportImportConfigurationId" value="<%= String.valueOf(exportImportConfiguration.getExportImportConfigurationId()) %>" />

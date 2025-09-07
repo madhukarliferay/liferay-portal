@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.io;
@@ -24,6 +15,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.lang.reflect.Field;
 
@@ -31,6 +23,8 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -38,29 +32,23 @@ import org.junit.Test;
  */
 public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
-		setUpDDMFormLayoutJSONDeserializer();
+		_setUpDDMFormLayoutJSONDeserializer();
 	}
 
 	@Test
 	public void testDDMFormLayoutDeserialization() throws Exception {
-		String serializedDDMFormLayout = read(
-			"ddm-form-layout-json-deserializer-test-data.json");
-
-		DDMFormLayoutDeserializerDeserializeRequest.Builder builder =
-			DDMFormLayoutDeserializerDeserializeRequest.Builder.newBuilder(
-				serializedDDMFormLayout);
-
-		DDMFormLayoutDeserializerDeserializeResponse
-			ddmFormLayoutDeserializerDeserializeResponse =
-				_ddmFormLayoutJSONDeserializer.deserialize(builder.build());
-
-		DDMFormLayout ddmFormLayout =
-			ddmFormLayoutDeserializerDeserializeResponse.getDDMFormLayout();
+		DDMFormLayout ddmFormLayout = deserialize(
+			read("ddm-form-layout-json-deserializer-test-data.json"));
 
 		Assert.assertEquals(LocaleUtil.US, ddmFormLayout.getDefaultLocale());
 
@@ -94,6 +82,18 @@ public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 			ddmFormLayoutRows.get(3));
 	}
 
+	@Test
+	public void testDDMFormLayoutDeserializationWithSchemaVersion()
+		throws Exception {
+
+		DDMFormLayout ddmFormLayout = deserialize(
+			read(
+				"ddm-form-layout-json-deserializer-with-definition-schema-" +
+					"version.json"));
+
+		Assert.assertEquals("2.0", ddmFormLayout.getDefinitionSchemaVersion());
+	}
+
 	protected void assertEquals(
 		DDMFormLayoutColumn expectedDDMFormLayoutColumn,
 		DDMFormLayoutColumn actualDDMFormLayoutColumn) {
@@ -123,7 +123,19 @@ public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 		}
 	}
 
-	protected void setUpDDMFormLayoutJSONDeserializer() throws Exception {
+	protected DDMFormLayout deserialize(String serializedDDMFormLayout) {
+		DDMFormLayoutDeserializerDeserializeRequest.Builder builder =
+			DDMFormLayoutDeserializerDeserializeRequest.Builder.newBuilder(
+				serializedDDMFormLayout);
+
+		DDMFormLayoutDeserializerDeserializeResponse
+			ddmFormLayoutDeserializerDeserializeResponse =
+				_ddmFormLayoutJSONDeserializer.deserialize(builder.build());
+
+		return ddmFormLayoutDeserializerDeserializeResponse.getDDMFormLayout();
+	}
+
+	private void _setUpDDMFormLayoutJSONDeserializer() throws Exception {
 		Field field = ReflectionUtil.getDeclaredField(
 			DDMFormLayoutJSONDeserializer.class, "_jsonFactory");
 

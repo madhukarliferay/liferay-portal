@@ -1,26 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.grid;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRequestParameterRetriever;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -29,7 +23,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pedro Queiroz
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=grid",
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.GRID,
 	service = DDMFormFieldValueRequestParameterRetriever.class
 )
 public class GridDDMFormFieldValueRequestParameterRetriever
@@ -42,21 +36,28 @@ public class GridDDMFormFieldValueRequestParameterRetriever
 
 		JSONObject jsonObject = jsonFactory.createJSONObject();
 
-		Map<String, String[]> parametersMap =
-			httpServletRequest.getParameterMap();
+		String[] parameterValues = httpServletRequest.getParameterValues(
+			ddmFormFieldParameterName);
 
-		if (!parametersMap.containsKey(ddmFormFieldParameterName)) {
+		if (ArrayUtil.isEmpty(parameterValues)) {
 			return jsonObject.toString();
 		}
 
-		String[] parameterValues = parametersMap.get(ddmFormFieldParameterName);
+		if (parameterValues.length == 1) {
+			jsonObject = getJSONObject(_log, parameterValues[0]);
+		}
 
-		for (String value : parameterValues) {
-			if (!value.isEmpty()) {
-				String[] values = value.split(";");
+		for (String parameterValue : parameterValues) {
+			if (parameterValue.isEmpty() ||
+				!parameterValue.contains(StringPool.SEMICOLON)) {
 
-				jsonObject.put(values[0], values[1]);
+				continue;
 			}
+
+			String[] parameterValueParts = parameterValue.split(
+				StringPool.SEMICOLON);
+
+			jsonObject.put(parameterValueParts[0], parameterValueParts[1]);
 		}
 
 		return jsonObject.toString();
@@ -64,5 +65,8 @@ public class GridDDMFormFieldValueRequestParameterRetriever
 
 	@Reference
 	protected JSONFactory jsonFactory;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		GridDDMFormFieldValueRequestParameterRetriever.class);
 
 }

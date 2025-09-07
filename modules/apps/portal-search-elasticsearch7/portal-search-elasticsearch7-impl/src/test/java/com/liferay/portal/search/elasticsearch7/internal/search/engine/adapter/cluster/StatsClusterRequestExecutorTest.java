@@ -1,29 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.cluster;
 
 import com.liferay.portal.json.JSONFactoryImpl;
-import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchFixture;
+import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchConnectionFixture;
 import com.liferay.portal.search.engine.adapter.cluster.StatsClusterRequest;
 import com.liferay.portal.search.engine.adapter.cluster.StatsClusterResponse;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -31,19 +22,26 @@ import org.junit.Test;
  */
 public class StatsClusterRequestExecutorTest {
 
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
-		setUpJSONFactoryUtil();
+		ElasticsearchConnectionFixture elasticsearchConnectionFixture =
+			ElasticsearchConnectionFixture.builder(
+			).clusterName(
+				StatsClusterRequestExecutorTest.class.getSimpleName()
+			).build();
 
-		_elasticsearchFixture = new ElasticsearchFixture(
-			StatsClusterRequestExecutorTest.class.getSimpleName());
+		elasticsearchConnectionFixture.createNode();
 
-		_elasticsearchFixture.setUp();
+		_elasticsearchConnectionFixture = elasticsearchConnectionFixture;
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_elasticsearchFixture.tearDown();
+		_elasticsearchConnectionFixture.destroyNode();
 	}
 
 	@Test
@@ -51,32 +49,22 @@ public class StatsClusterRequestExecutorTest {
 		StatsClusterRequest statsClusterRequest = new StatsClusterRequest(
 			new String[] {_NODE_ID});
 
-		StatsClusterRequestExecutorImpl statsClusterRequestExecutorImpl =
-			new StatsClusterRequestExecutorImpl() {
-				{
-					setElasticsearchClientResolver(_elasticsearchFixture);
-					setClusterHealthStatusTranslator(
-						new ClusterHealthStatusTranslatorImpl());
-				}
-			};
+		StatsClusterRequestExecutor statsClusterRequestExecutor =
+			new StatsClusterRequestExecutor(
+				_elasticsearchConnectionFixture, new JSONFactoryImpl());
 
 		StatsClusterResponse statsClusterResponse =
-			statsClusterRequestExecutorImpl.execute(statsClusterRequest);
+			statsClusterRequestExecutor.execute(statsClusterRequest);
 
 		Assert.assertNotNull(statsClusterResponse);
-
+		Assert.assertNotEquals(
+			0, statsClusterResponse.getAvailableSpaceInBytes());
 		Assert.assertNotNull(statsClusterResponse.getClusterHealthStatus());
+		Assert.assertNotEquals(0, statsClusterResponse.getUsedSpaceInBytes());
 	}
 
-	protected void setUpJSONFactoryUtil() {
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
+	private static final String _NODE_ID = "liferay_sidecar";
 
-		jsonFactoryUtil.setJSONFactory(_jsonFactory);
-	}
-
-	private static final String _NODE_ID = "liferay";
-
-	private ElasticsearchFixture _elasticsearchFixture;
-	private final JSONFactory _jsonFactory = new JSONFactoryImpl();
+	private ElasticsearchConnectionFixture _elasticsearchConnectionFixture;
 
 }

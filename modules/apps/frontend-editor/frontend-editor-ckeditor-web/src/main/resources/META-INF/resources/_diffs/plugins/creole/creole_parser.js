@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 /*
@@ -39,15 +30,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-(function() {
-	if (!Parse) {
-		var Parse = {};
-	}
+(function () {
+	const Parse = window.Parse || {};
+
 	if (!Parse.Simple) {
 		Parse.Simple = {};
 	}
 
-	Parse.Simple.Base = function(grammar, options) {
+	Parse.Simple.Base = function (grammar, options) {
 		if (!arguments.length) {
 			return;
 		}
@@ -63,12 +53,13 @@
 
 		parse(node, data, options) {
 			if (options) {
-				for (var i in this.options) {
-					if (typeof options[i] == 'undefined') {
+				for (const i in this.options) {
+					if (typeof options[i] === 'undefined') {
 						options[i] = this.options[i];
 					}
 				}
-			} else {
+			}
+			else {
 				options = this.options;
 			}
 			data = data.replace(/\r\n?/g, '\n');
@@ -78,17 +69,17 @@
 			}
 		},
 
-		ruleConstructor: null
+		ruleConstructor: null,
 	};
 
 	Parse.Simple.Base.prototype.constructor = Parse.Simple.Base;
 
-	Parse.Simple.Base.Rule = function(params) {
+	Parse.Simple.Base.Rule = function (params) {
 		if (!arguments.length) {
 			return;
 		}
 
-		for (var p in params) {
+		for (const p in params) {
 			this[p] = params[p];
 		}
 		if (!this.children) {
@@ -100,18 +91,18 @@
 
 	Parse.Simple.Base.Rule.prototype = {
 		apply(node, data, options) {
-			var tail = '' + data;
-			var matches = [];
+			let tail = '' + data;
+			const matches = [];
 
 			if (!this.fallback.apply) {
 				this.fallback = new this.constructor(this.fallback);
 			}
 
 			while (true) {
-				var best = false;
-				var rule = false;
+				let best = false;
+				let rule = false;
 				for (let i = 0; i < this.children.length; i++) {
-					if (typeof matches[i] == 'undefined') {
+					if (typeof matches[i] === 'undefined') {
 						if (!this.children[i].match) {
 							this.children[i] = new this.constructor(
 								this.children[i]
@@ -125,13 +116,13 @@
 					) {
 						best = matches[i];
 						rule = this.children[i];
-						if (best.index == 0) {
+						if (best.index === 0) {
 							break;
 						}
 					}
 				}
 
-				var pos = best ? best.index : tail.length;
+				const pos = best ? best.index : tail.length;
 				if (pos > 0) {
 					this.fallback.apply(node, tail.substring(0, pos), options);
 				}
@@ -145,13 +136,14 @@
 				}
 				rule.build(node, best, options);
 
-				var chopped = best.index + best[0].length;
+				const chopped = best.index + best[0].length;
 				tail = tail.substring(chopped);
 				for (let i = 0; i < this.children.length; i++) {
 					if (matches[i]) {
 						if (matches[i].index >= chopped) {
 							matches[i].index -= chopped;
-						} else {
+						}
+						else {
 							matches[i] = void 0;
 						}
 					}
@@ -164,16 +156,17 @@
 		attrs: null,
 
 		build(node, r, options) {
-			var data;
+			let data;
 			if (this.capture !== null) {
 				data = r[this.capture];
 			}
 
-			var target;
+			let target;
 			if (this.tag) {
 				target = document.createElement(this.tag);
 				node.appendChild(target);
-			} else {
+			}
+			else {
 				target = node;
 			}
 
@@ -185,13 +178,14 @@
 			}
 
 			if (this.attrs) {
-				for (var i in this.attrs) {
+				for (const i in this.attrs) {
 					target.setAttribute(i, this.attrs[i]);
-					if (options && options.forIE && i == 'class') {
+					if (options && options.forIE && i === 'class') {
 						target.className = this.attrs[i];
 					}
 				}
 			}
+
 			return this;
 		},
 
@@ -201,11 +195,13 @@
 		fallback: {
 			apply(node, data, options) {
 				if (options && options.forIE) {
+
 					// workaround for bad IE
+
 					data = data.replace(/\n/g, ' \r');
 				}
 				node.appendChild(document.createTextNode(data));
-			}
+			},
 		},
 
 		match(data) {
@@ -215,13 +211,13 @@
 		regex: null,
 		replaceRegex: null,
 		replaceString: null,
-		tag: null
+		tag: null,
 	};
 
 	Parse.Simple.Base.Rule.prototype.constructor = Parse.Simple.Base.Rule;
 
-	Parse.Simple.Creole = function(options) {
-		var rx = {};
+	Parse.Simple.Creole = function (options) {
+		const rx = {};
 		rx.link = '[^\\]|~\\n]*(?:(?:\\](?!\\])|~.)[^\\]|~\\n]*)*';
 		rx.linkText = '[^\\]~\\n]*(?:(?:\\](?!\\])|~.)[^\\]~\\n]*)*';
 		rx.uriPrefix = '\\b(?:(?:https?|ftp)://|mailto:)';
@@ -236,19 +232,20 @@
 			(options && options.strict ? '' : ')?') +
 			'}}';
 
-		var formatLink = function(link, format) {
+		const formatLink = function (link, format) {
 			if (format instanceof Function) {
 				return format(link);
 			}
 
-			format = format instanceof Array ? format : [format];
-			if (typeof format[1] == 'undefined') {
+			format = Array.isArray(format) ? format : [format];
+			if (typeof format[1] === 'undefined') {
 				format[1] = '';
 			}
+
 			return format[0] + link + format[1];
 		};
 
-		var g = {
+		const g = {
 			br: {regex: /\\\\/, tag: 'br'},
 
 			em: {
@@ -263,46 +260,50 @@
 					'((?!' +
 					rx.uriPrefix +
 					')[^\\/~])*)*)(\\/\\/|\\n|$)',
-				tag: 'em'
+				tag: 'em',
 			},
 
 			escapedSequence: {
 				attrs: {class: 'escaped'},
 				capture: 1,
 				regex: '~(' + rx.rawUri + '|.)',
-				tag: 'span'
+				tag: 'span',
 			},
 
 			escapedSymbol: {
 				attrs: {class: 'escaped'},
 				capture: 1,
 				regex: /~(.)/,
-				tag: 'span'
+				tag: 'span',
 			},
 
 			hr: {regex: /(^|\n)\s*----\s*(\n|$)/, tag: 'hr'},
 
+			// eslint-disable-next-line @liferay/no-abbreviations
 			img: {
 				build(node, r, options) {
-					var imagePath = r[1];
-					var imagePathPrefix = options ? options.imagePrefix : '';
+					let imagePath = r[1];
+					const imagePathPrefix = options ? options.imagePrefix : '';
 
-					if (imagePathPrefix) {
-						if (!/^https?:\/\//gi.test(imagePath)) {
-							imagePath = imagePathPrefix + imagePath;
-						}
+					if (
+						imagePathPrefix &&
+						!imagePath.startsWith('data:image/') &&
+						!/^https?:\/\//gi.test(imagePath)
+					) {
+						imagePath = imagePathPrefix + imagePath;
 					}
 
-					var img = document.createElement('img');
-					img.src = imagePath;
+					const image = document.createElement('img');
+					image.src = imagePath;
 					if (r[2]) {
-						img.alt = r[2].replace(/~(.)/g, '$1');
-					} else if (options && options.defaultImageText) {
-						img.alt = options.defaultImageText;
+						image.alt = r[2].replace(/~(.)/g, '$1');
 					}
-					node.appendChild(img);
+					else if (options && options.defaultImageText) {
+						image.alt = options.defaultImageText;
+					}
+					node.appendChild(image);
 				},
-				regex: rx.img
+				regex: rx.img,
 			},
 
 			li: {
@@ -310,19 +311,19 @@
 				regex: /[ \t]*([*#]).+(\n[ \t]*[^*#\s].*)*(\n[ \t]*[*#]{2}.+)*/,
 				replaceRegex: /(^|\n)[ \t]*[*#]/g,
 				replaceString: '$1',
-				tag: 'li'
+				tag: 'li',
 			},
 
 			namedLink: {
 				build(node, r, options) {
-					var link = document.createElement('a');
+					const link = document.createElement('a');
 
 					link.href =
 						options && options.linkFormat
 							? formatLink(
 									r[1].replace(/~(.)/g, '$1'),
 									options.linkFormat
-							  )
+								)
 							: r[1].replace(/~(.)/g, '$1');
 					link.setAttribute('data-cke-saved-href', link.href);
 
@@ -330,27 +331,28 @@
 
 					node.appendChild(link);
 				},
-				regex: '\\[\\[(' + rx.link + ')\\|(' + rx.linkText + ')\\]\\]'
+				regex: '\\[\\[(' + rx.link + ')\\|(' + rx.linkText + ')\\]\\]',
 			},
 
 			namedUri: {
 				build(node, r, options) {
-					var link = document.createElement('a');
+					const link = document.createElement('a');
 					link.href = r[1];
 					if (options && options.isPlainUri) {
 						link.appendChild(document.createTextNode(r[2]));
-					} else {
+					}
+					else {
 						this.apply(link, r[2], options);
 					}
 					node.appendChild(link);
 				},
-				regex: '\\[\\[(' + rx.uri + ')\\|(' + rx.linkText + ')\\]\\]'
+				regex: '\\[\\[(' + rx.uri + ')\\|(' + rx.linkText + ')\\]\\]',
 			},
 
 			olist: {
 				capture: 0,
 				regex: /(^|\n)([ \t]*#[^*#].*(\n|$)([ \t]*[^\s*#].*(\n|$))*([ \t]*[*#]{2}.*(\n|$))*)+/,
-				tag: 'ol'
+				tag: 'ol',
 			},
 
 			paragraph: {capture: 0, regex: /(^|\n)(\s*\S.*(\n|$))/, tag: 'p'},
@@ -360,7 +362,7 @@
 				regex: /(^|\n)\{\{\{\n((.*\n)*?)\}\}\}(\n|$)/,
 				replaceRegex: /^ ([ \t]*\}\}\})/gm,
 				replaceString: '$1',
-				tag: 'pre'
+				tag: 'pre',
 			},
 
 			rawUri: {build: 'dummy', regex: '(' + rx.rawUri + ')'},
@@ -370,14 +372,14 @@
 			strong: {
 				capture: 1,
 				regex: /\*\*([^*~]*((\*(?!\*)|~(.|(?=\n)|$))[^*~]*)*)(\*\*|\n|$)/,
-				tag: 'strong'
+				tag: 'strong',
 			},
 
 			table: {
 				attrs: {class: 'cke_show_border'},
 				capture: 0,
 				regex: /(^|\n)(\|.*?[ \t]*(\n|$))+/,
-				tag: 'table'
+				tag: 'table',
 			},
 
 			td: {
@@ -391,7 +393,7 @@
 					')?\\]\\][^|~\\[{]*)*' +
 					(options && options.strict ? '' : '|' + rx.img) +
 					'|[\\[{])[^|~]*)*)',
-				tag: 'td'
+				tag: 'td',
 			},
 
 			text: {capture: 0, regex: /(^|\n)(\s*[^\s].*(\n|$))+/},
@@ -405,28 +407,28 @@
 				regex: /\{\{\{(.*?\}\}\}+)/,
 				replaceRegex: /\}\}\}$/,
 				replaceString: '',
-				tag: 'tt'
+				tag: 'tt',
 			},
 
 			ulist: {
 				capture: 0,
 				regex: /(^|\n)([ \t]*\*[^*#].*(\n|$)([ \t]*[^\s*#].*(\n|$))*([ \t]*[*#]{2}.*(\n|$))*)+/,
-				tag: 'ul'
+				tag: 'ul',
 			},
 
 			unnamedInterwikiLink: {
 				build: 'dummy',
-				regex: '\\[\\[(' + rx.interwikiLink + ')\\]\\]'
+				regex: '\\[\\[(' + rx.interwikiLink + ')\\]\\]',
 			},
 
 			unnamedLink: {
 				build: 'dummy',
-				regex: '\\[\\[(' + rx.link + ')\\]\\]'
+				regex: '\\[\\[(' + rx.link + ')\\]\\]',
 			},
 
-			unnamedUri: {build: 'dummy', regex: '\\[\\[(' + rx.uri + ')\\]\\]'}
+			unnamedUri: {build: 'dummy', regex: '\\[\\[(' + rx.uri + ')\\]\\]'},
 		};
-		g.unnamedUri.build = g.rawUri.build = function(node, r, options) {
+		g.unnamedUri.build = g.rawUri.build = function (node, r, options) {
 			if (!options) {
 				options = {};
 			}
@@ -434,7 +436,7 @@
 			g.namedUri.build.call(this, node, Array(r[0], r[1], r[1]), options);
 			options.isPlainUri = false;
 		};
-		g.unnamedLink.build = function(node, r, options) {
+		g.unnamedLink.build = function (node, r, options) {
 			g.namedLink.build.call(
 				this,
 				node,
@@ -444,18 +446,20 @@
 		};
 		g.namedInterwikiLink = {
 			build(node, r, options) {
-				var link = document.createElement('a');
+				const link = document.createElement('a');
 
-				var m, f;
+				let m;
+				let f;
 				if (options && options.interwiki) {
 					m = r[1].match(/(.*?):(.*)/);
 					f = options.interwiki[m[1]];
 				}
 
-				if (typeof f == 'undefined') {
+				if (typeof f === 'undefined') {
 					if (!g.namedLink.apply) {
 						g.namedLink = new this.constructor(g.namedLink);
 					}
+
 					return g.namedLink.build.call(
 						g.namedLink,
 						node,
@@ -471,9 +475,13 @@
 				node.appendChild(link);
 			},
 			regex:
-				'\\[\\[(' + rx.interwikiLink + ')\\|(' + rx.linkText + ')\\]\\]'
+				'\\[\\[(' +
+				rx.interwikiLink +
+				')\\|(' +
+				rx.linkText +
+				')\\]\\]',
 		};
-		g.unnamedInterwikiLink.build = function(node, r, options) {
+		g.unnamedInterwikiLink.build = function (node, r, options) {
 			g.namedInterwikiLink.build.call(
 				this,
 				node,
@@ -481,12 +489,16 @@
 				options
 			);
 		};
-		g.namedUri.children = g.unnamedUri.children = g.rawUri.children = g.namedLink.children = g.unnamedLink.children = g.namedInterwikiLink.children = g.unnamedInterwikiLink.children = [
-			g.escapedSymbol,
-			g.img
-		];
+		g.namedUri.children =
+			g.unnamedUri.children =
+			g.rawUri.children =
+			g.namedLink.children =
+			g.unnamedLink.children =
+			g.namedInterwikiLink.children =
+			g.unnamedInterwikiLink.children =
+				[g.escapedSymbol, g.img];
 
-		for (var i = 1; i <= 6; i++) {
+		for (let i = 1; i <= 6; i++) {
 			g['h' + i] = {
 				capture: 2,
 				regex:
@@ -494,7 +506,7 @@
 					i +
 					'}[ \\t]*' +
 					'([^\\n=][^~]*?(~(.|(?=\\n)|$))*)[ \\t]*=*\\s*(\\n|$)',
-				tag: 'h' + i
+				tag: 'h' + i,
 			};
 		}
 
@@ -507,35 +519,46 @@
 		g.td.children = [g.singleLine];
 		g.th.children = [g.singleLine];
 
-		g.h1.children = g.h2.children = g.h3.children = g.h4.children = g.h5.children = g.h6.children = [
-			g.escapedSequence,
-			g.br,
-			g.rawUri,
-			g.namedUri,
-			g.namedInterwikiLink,
-			g.namedLink,
-			g.unnamedUri,
-			g.unnamedInterwikiLink,
-			g.unnamedLink,
-			g.tt,
-			g.img
-		];
+		g.h1.children =
+			g.h2.children =
+			g.h3.children =
+			g.h4.children =
+			g.h5.children =
+			g.h6.children =
+				[
+					g.escapedSequence,
+					g.br,
+					g.rawUri,
+					g.namedUri,
+					g.namedInterwikiLink,
+					g.namedLink,
+					g.unnamedUri,
+					g.unnamedInterwikiLink,
+					g.unnamedLink,
+					g.tt,
+					g.img,
+				];
 
-		g.singleLine.children = g.paragraph.children = g.text.children = g.strong.children = g.em.children = [
-			g.escapedSequence,
-			g.strong,
-			g.em,
-			g.br,
-			g.rawUri,
-			g.namedUri,
-			g.namedInterwikiLink,
-			g.namedLink,
-			g.unnamedUri,
-			g.unnamedInterwikiLink,
-			g.unnamedLink,
-			g.tt,
-			g.img
-		];
+		g.singleLine.children =
+			g.paragraph.children =
+			g.text.children =
+			g.strong.children =
+			g.em.children =
+				[
+					g.escapedSequence,
+					g.strong,
+					g.em,
+					g.br,
+					g.rawUri,
+					g.namedUri,
+					g.namedInterwikiLink,
+					g.namedLink,
+					g.unnamedUri,
+					g.unnamedInterwikiLink,
+					g.unnamedLink,
+					g.tt,
+					g.img,
+				];
 
 		g.root = {
 			children: [
@@ -549,9 +572,9 @@
 				g.ulist,
 				g.olist,
 				g.preBlock,
-				g.table
+				g.table,
 			],
-			fallback: {children: [g.paragraph]}
+			fallback: {children: [g.paragraph]},
 		};
 
 		Parse.Simple.Base.call(this, g, options);

@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
@@ -20,51 +14,46 @@ import {
 	addVariant,
 	reviewVariants,
 	updateVariant,
-	updateVariants
+	updateVariants,
 } from '../../state/actions.es';
 import {DispatchContext, StateContext} from '../../state/context.es';
 import {navigateToExperience} from '../../util/navigation.es';
-import {
-	STATUS_FINISHED_NO_WINNER,
-	STATUS_FINISHED_WINNER
-} from '../../util/statuses.es';
+import {STATUS_DRAFT} from '../../util/statuses.es';
 import {openErrorToast, openSuccessToast} from '../../util/toasts.es';
 import VariantForm from './internal/VariantForm.es';
-import VariantList from './internal/VariantList.es';
+import VariantTable from './internal/VariantTable.es';
 
-function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
+function Variants({selectedSegmentsExperienceId}) {
 	const dispatch = useContext(DispatchContext);
 	const {errors, experiment, variants} = useContext(StateContext);
 	const {APIService, page} = useContext(SegmentsExperimentsContext);
-
-	const {
-		observer: creatingVariantObserver,
-		onClose: creatingVariantOnClose
-	} = useModal({
-		onClose: () => setCreatingVariant(false)
-	});
-	const {
-		observer: editingVariantObserver,
-		onClose: editingVariantOnClose
-	} = useModal({
-		onClose: () => setEditingVariant({active: false})
-	});
 	const [creatingVariant, setCreatingVariant] = useState(false);
+
+	const {observer: creatingVariantObserver, onClose: creatingVariantOnClose} =
+		useModal({
+			onClose: () => setCreatingVariant(false),
+		});
+
 	const [editingVariant, setEditingVariant] = useState({active: false});
 
-	const publishable =
-		experiment.status.value === STATUS_FINISHED_WINNER ||
-		experiment.status.value === STATUS_FINISHED_NO_WINNER;
+	const {observer: editingVariantObserver, onClose: editingVariantOnClose} =
+		useModal({
+			onClose: () => setEditingVariant({active: false}),
+		});
 
 	return (
 		<>
-			<h4 className="mb-3 mt-4 sheet-subtitle">
+			<div className="h4 mb-3 mt-4 sheet-subtitle">
 				{Liferay.Language.get('variants')}
-				<ClayIcon
-					className="ml-1 reference-mark text-warning"
-					symbol="asterisk"
-				/>
-			</h4>
+
+				{experiment.status.value === STATUS_DRAFT && (
+					<ClayIcon
+						className="lexicon-icon-sm ml-1 reference-mark text-warning"
+						style={{verticalAlign: 'super'}}
+						symbol="asterisk"
+					/>
+				)}
+			</div>
 
 			{variants.length === 1 && (
 				<>
@@ -75,40 +64,41 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 							)}
 						</b>
 					</p>
+
 					<p className="mb-2 text-secondary">
 						{Liferay.Language.get('variants-help')}
 					</p>
+
 					{errors.variantsError && (
-						<div className="font-weight-bold mb-3 text-danger">
+						<div className="font-weight-semi-bold mb-3 text-danger">
 							<ClayIcon
 								className="mr-2"
 								symbol="exclamation-full"
 							/>
+
 							{Liferay.Language.get(
 								'a-variant-needs-to-be-created'
 							)}
 						</div>
 					)}
+
+					{experiment.editable && (
+						<ClayButton
+							className="mb-3"
+							data-testid="create-variant"
+							displayType="secondary"
+							onClick={() => setCreatingVariant(!creatingVariant)}
+						>
+							{Liferay.Language.get('create-variant')}
+						</ClayButton>
+					)}
 				</>
 			)}
 
-			{experiment.editable && (
-				<ClayButton
-					className="mb-3"
-					data-testid="create-variant"
-					displayType="secondary"
-					onClick={() => setCreatingVariant(!creatingVariant)}
-				>
-					{Liferay.Language.get('create-variant')}
-				</ClayButton>
-			)}
-
-			<VariantList
-				editable={experiment.editable}
+			<VariantTable
+				experiment={experiment}
 				onVariantDeletion={_handleVariantDeletion}
 				onVariantEdition={_handleVariantEdition}
-				onVariantPublish={onVariantPublish}
-				publishable={publishable}
 				selectedSegmentsExperienceId={selectedSegmentsExperienceId}
 				variants={variants}
 			/>
@@ -145,9 +135,8 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 
 	function _handleVariantDeletion(variantId) {
 		const body = {
-			classNameId: page.classNameId,
-			classPK: page.classPK,
-			segmentsExperimentRelId: variantId
+			plid: page.plid,
+			segmentsExperimentRelId: variantId,
 		};
 
 		return APIService.deleteVariant(body)
@@ -156,22 +145,27 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 
 				let variantExperienceId = null;
 
-				const newVariants = variants.filter(variant => {
-					if (variant.segmentsExperimentRelId !== variantId)
+				const newVariants = variants.filter((variant) => {
+					if (variant.segmentsExperimentRelId !== variantId) {
 						return true;
+					}
 
 					variantExperienceId = variant.segmentsExperienceId;
+
 					return false;
 				});
 
 				if (variantExperienceId === selectedSegmentsExperienceId) {
-					navigateToExperience(experiment.segmentsExperienceId);
-				} else {
+					navigateToExperience({
+						experienceId: experiment.segmentsExperienceId,
+					});
+				}
+				else {
 					dispatch(updateVariants(newVariants));
 					dispatch(reviewVariants());
 				}
 			})
-			.catch(_error => {
+			.catch((_error) => {
 				openErrorToast();
 			});
 	}
@@ -180,16 +174,15 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 		setEditingVariant({
 			active: true,
 			name,
-			variantId
+			variantId,
 		});
 	}
 
 	function _handleVariantEditionSave({name, variantId}) {
 		const body = {
-			classNameId: page.classNameId,
-			classPK: page.classPK,
 			name,
-			segmentsExperimentRelId: variantId
+			plid: page.plid,
+			segmentsExperimentRelId: variantId,
 		};
 
 		return APIService.editVariant(body).then(({segmentsExperimentRel}) => {
@@ -198,9 +191,9 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 			dispatch(
 				updateVariant({
 					changes: {
-						name: segmentsExperimentRel.name
+						name: segmentsExperimentRel.name,
 					},
-					variantId
+					variantId,
 				})
 			);
 		});
@@ -208,10 +201,9 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 
 	function _handleVariantCreation({name}) {
 		const body = {
-			classNameId: page.classNameId,
-			classPK: page.classPK,
 			name,
-			segmentsExperimentId: experiment.segmentsExperimentId
+			plid: page.plid,
+			segmentsExperimentId: experiment.segmentsExperimentId,
 		};
 
 		return APIService.createVariant(body)
@@ -221,7 +213,7 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 					segmentsExperienceId,
 					segmentsExperimentId,
 					segmentsExperimentRelId,
-					split
+					split,
 				} = segmentsExperimentRel;
 
 				openSuccessToast();
@@ -233,19 +225,19 @@ function Variants({onVariantPublish, selectedSegmentsExperienceId}) {
 						segmentsExperienceId,
 						segmentsExperimentId,
 						segmentsExperimentRelId,
-						split
+						split,
 					})
 				);
 			})
-			.catch(_error => {
+			.catch((_error) => {
 				openErrorToast();
 			});
 	}
 }
 
 Variants.propTypes = {
-	onVariantPublish: PropTypes.func.isRequired,
-	selectedSegmentsExperienceId: PropTypes.string.isRequired
+	onVariantPublish: PropTypes.func,
+	selectedSegmentsExperienceId: PropTypes.string.isRequired,
 };
 
 export default Variants;

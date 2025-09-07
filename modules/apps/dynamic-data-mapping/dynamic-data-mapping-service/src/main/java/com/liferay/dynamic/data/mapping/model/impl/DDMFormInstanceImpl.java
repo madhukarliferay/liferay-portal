@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -24,8 +15,12 @@ import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordLocalServic
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceVersionLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.dynamic.data.mapping.storage.StorageType;
+import com.liferay.dynamic.data.mapping.util.DDMFormInstanceFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.cache.CacheField;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.List;
 
@@ -56,11 +51,23 @@ public class DDMFormInstanceImpl extends DDMFormInstanceBaseImpl {
 	}
 
 	@Override
-	public DDMFormValues getSettingsDDMFormValues() throws PortalException {
+	public long getObjectDefinitionId() throws PortalException {
+		DDMFormInstanceSettings ddmFormInstanceSettings =
+			DDMFormInstanceFactory.create(
+				DDMFormInstanceSettings.class, getSettingsDDMFormValues());
+
+		return GetterUtil.getLong(ddmFormInstanceSettings.objectDefinitionId());
+	}
+
+	@Override
+	public DDMFormValues getSettingsDDMFormValues() {
 		if (_ddmFormValues == null) {
 			_ddmFormValues =
 				DDMFormInstanceLocalServiceUtil.
 					getFormInstanceSettingsFormValues(this);
+
+			ddmFormValuesUpdateEntityCacheBiConsumer.accept(
+				this, _ddmFormValues);
 		}
 
 		return _ddmFormValues;
@@ -78,6 +85,21 @@ public class DDMFormInstanceImpl extends DDMFormInstanceBaseImpl {
 	}
 
 	@Override
+	public String getStorageType() throws PortalException {
+		DDMFormInstanceSettings ddmFormInstanceSettings =
+			DDMFormInstanceFactory.create(
+				DDMFormInstanceSettings.class, getSettingsDDMFormValues());
+
+		String storageType = ddmFormInstanceSettings.storageType();
+
+		if (Validator.isNotNull(storageType)) {
+			return storageType;
+		}
+
+		return StorageType.DEFAULT.toString();
+	}
+
+	@Override
 	public DDMStructure getStructure() throws PortalException {
 		return DDMStructureLocalServiceUtil.getStructure(getStructureId());
 	}
@@ -89,7 +111,14 @@ public class DDMFormInstanceImpl extends DDMFormInstanceBaseImpl {
 		_formInstanceSettings = null;
 	}
 
-	@CacheField(methodName = "DDMFormValues", propagateToInterface = true)
+	@Override
+	public void setSettingsDDMFormValues(DDMFormValues ddmFormValues) {
+		_ddmFormValues = ddmFormValues;
+	}
+
+	@CacheField(
+		methodName = "SettingsDDMFormValues", propagateToInterface = true
+	)
 	private DDMFormValues _ddmFormValues;
 
 	private DDMFormInstanceSettings _formInstanceSettings;

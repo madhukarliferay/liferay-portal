@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.preferences.test;
@@ -26,12 +17,12 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PortletKeys;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import javax.portlet.Portlet;
+import jakarta.portlet.Portlet;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -72,11 +63,11 @@ public class PortletPreferencesFactoryImplGetPreferencesIdsTest {
 		ServiceContextThreadLocal.pushServiceContext(
 			ServiceContextTestUtil.getServiceContext());
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group, true);
+		_layout = LayoutTestUtil.addTypePortletLayout(_group, true);
 	}
 
 	@After
@@ -202,7 +193,7 @@ public class PortletPreferencesFactoryImplGetPreferencesIdsTest {
 
 		_registerCompanyWidePortlet();
 
-		_layout = LayoutTestUtil.addLayout(_group, false);
+		_layout = LayoutTestUtil.addTypePortletLayout(_group, false);
 
 		PortletPreferencesFactoryUtil.getPortletPreferencesIds(
 			_layout.getGroupId(), TestPropsValues.getUserId(), _layout,
@@ -212,12 +203,11 @@ public class PortletPreferencesFactoryImplGetPreferencesIdsTest {
 	private void _registerCompanyWidePortlet() {
 		_serviceRegistration = _bundleContext.registerService(
 			Portlet.class, new MVCPortlet(),
-			new HashMapDictionary<String, Object>() {
-				{
-					put("com.liferay.portlet.preferences-company-wide", "true");
-					put("javax.portlet.name", _TEST_COMPANY_PORTLET_NAME);
-				}
-			});
+			HashMapDictionaryBuilder.<String, Object>put(
+				"com.liferay.portlet.preferences-company-wide", "true"
+			).put(
+				"jakarta.portlet.name", _TEST_COMPANY_PORTLET_NAME
+			).build());
 	}
 
 	private void _registerPortlet(
@@ -225,20 +215,17 @@ public class PortletPreferencesFactoryImplGetPreferencesIdsTest {
 
 		_serviceRegistration = _bundleContext.registerService(
 			Portlet.class, new MVCPortlet(),
-			new HashMapDictionary<String, Object>() {
-				{
-					put(
-						"com.liferay.portlet.preferences-company-wide",
-						"false");
-					put(
-						"com.liferay.portlet.preferences-owned-by-group",
-						Boolean.valueOf(owedByGroup));
-					put(
-						"com.liferay.portlet.preferences-unique-per-layout",
-						Boolean.valueOf(uniquePerLayout));
-					put("javax.portlet.name", portletName);
-				}
-			});
+			HashMapDictionaryBuilder.<String, Object>put(
+				"com.liferay.portlet.preferences-company-wide", "false"
+			).put(
+				"com.liferay.portlet.preferences-owned-by-group",
+				Boolean.valueOf(owedByGroup)
+			).put(
+				"com.liferay.portlet.preferences-unique-per-layout",
+				Boolean.valueOf(uniquePerLayout)
+			).put(
+				"jakarta.portlet.name", portletName
+			).build());
 	}
 
 	private static final String _TEST_COMPANY_PORTLET_NAME =

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.asset.auto.tagger.microsoft.cognitive.services.internal;
@@ -17,20 +8,20 @@ package com.liferay.document.library.asset.auto.tagger.microsoft.cognitive.servi
 import com.liferay.asset.auto.tagger.AssetAutoTagProvider;
 import com.liferay.document.library.asset.auto.tagger.microsoft.cognitive.services.internal.configuration.MSCognitiveServicesAssetAutoTagProviderCompanyConfiguration;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.repository.capabilities.TemporaryFileEntriesCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -45,8 +36,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -66,17 +56,18 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 		try {
 			MSCognitiveServicesAssetAutoTagProviderCompanyConfiguration
 				msCognitiveServicesAssetAutoTagProviderCompanyConfiguration =
-					_getConfiguration(fileEntry);
+					_getMSCognitiveServicesAssetAutoTagProviderCompanyConfiguration(
+						fileEntry);
 
 			if (!msCognitiveServicesAssetAutoTagProviderCompanyConfiguration.
 					enabled() ||
 				_isTemporary(fileEntry) || (fileEntry.getSize() > _MAX_SIZE) ||
-				!_isSupportedFormat(fileEntry)) {
+				!_isSupportedMimeType(fileEntry.getMimeType())) {
 
 				return Collections.emptyList();
 			}
 
-			checkAPIEndpoint(
+			_checkAPIEndpoint(
 				msCognitiveServicesAssetAutoTagProviderCompanyConfiguration.
 					apiEndpoint());
 
@@ -91,14 +82,16 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 
 			return JSONUtil.toStringList(tagsJSONArray, "name");
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
 
 			return Collections.emptyList();
 		}
 	}
 
-	protected void checkAPIEndpoint(String apiEndpoint)
+	private void _checkAPIEndpoint(String apiEndpoint)
 		throws MalformedURLException, UnknownHostException {
 
 		URL url = new URL(apiEndpoint);
@@ -113,7 +106,8 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 	}
 
 	private MSCognitiveServicesAssetAutoTagProviderCompanyConfiguration
-			_getConfiguration(FileEntry fileEntry)
+			_getMSCognitiveServicesAssetAutoTagProviderCompanyConfiguration(
+				FileEntry fileEntry)
 		throws ConfigurationException {
 
 		return _configurationProvider.getCompanyConfiguration(
@@ -121,9 +115,8 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 			fileEntry.getCompanyId());
 	}
 
-	private boolean _isSupportedFormat(FileEntry fileEntry) {
-		return _supportedFormats.contains(
-			StringUtil.toUpperCase(fileEntry.getExtension()));
+	private boolean _isSupportedMimeType(String mimeType) {
+		return _supportedMimeTypes.contains(mimeType);
 	}
 
 	private boolean _isTemporary(FileEntry fileEntry) {
@@ -155,16 +148,15 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 		httpURLConnection.getResponseMessage();
 
 		try (InputStream inputStream = httpURLConnection.getInputStream()) {
-			return JSONFactoryUtil.createJSONObject(
-				StringUtil.read(inputStream));
+			return _jsonFactory.createJSONObject(StringUtil.read(inputStream));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			try (InputStream inputStream = httpURLConnection.getErrorStream()) {
 				throw new PortalException(
 					StringBundler.concat(
 						"Response code ", httpURLConnection.getResponseCode(),
 						":", StringUtil.read(inputStream)),
-					e);
+					exception);
 			}
 		}
 	}
@@ -174,13 +166,14 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 	private static final Log _log = LogFactoryUtil.getLog(
 		MSCognitiveServicesImageAssetAutoTagProvider.class);
 
-	private static final Set<String> _supportedFormats = new HashSet<>(
-		Arrays.asList("BMP", "GIF", "JPEG", "JPG", "PNG"));
+	private static final List<String> _supportedMimeTypes = Arrays.asList(
+		ContentTypes.IMAGE_BMP, ContentTypes.IMAGE_GIF, ContentTypes.IMAGE_JPEG,
+		ContentTypes.IMAGE_PNG);
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
-	private Http _http;
+	private JSONFactory _jsonFactory;
 
 }

@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
+import com.liferay.portal.kernel.model.TypedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -38,10 +30,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface AssetListEntryUsageModel
-	extends AttachedModel, BaseModel<AssetListEntryUsage>, MVCCModel,
-			ShardedModel, StagedGroupedModel {
+	extends BaseModel<AssetListEntryUsage>, CTModel<AssetListEntryUsage>,
+			MVCCModel, ShardedModel, StagedGroupedModel, TypedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a asset list entry usage model instance should use the {@link AssetListEntryUsage} interface instead.
@@ -52,6 +44,7 @@ public interface AssetListEntryUsageModel
 	 *
 	 * @return the primary key of this asset list entry usage
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -59,6 +52,7 @@ public interface AssetListEntryUsageModel
 	 *
 	 * @param primaryKey the primary key of this asset list entry usage
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -76,6 +70,22 @@ public interface AssetListEntryUsageModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this asset list entry usage.
+	 *
+	 * @return the ct collection ID of this asset list entry usage
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this asset list entry usage.
+	 *
+	 * @param ctCollectionId the ct collection ID of this asset list entry usage
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this asset list entry usage.
@@ -222,20 +232,6 @@ public interface AssetListEntryUsageModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
-	 * Returns the asset list entry ID of this asset list entry usage.
-	 *
-	 * @return the asset list entry ID of this asset list entry usage
-	 */
-	public long getAssetListEntryId();
-
-	/**
-	 * Sets the asset list entry ID of this asset list entry usage.
-	 *
-	 * @param assetListEntryId the asset list entry ID of this asset list entry usage
-	 */
-	public void setAssetListEntryId(long assetListEntryId);
-
-	/**
 	 * Returns the fully qualified class name of this asset list entry usage.
 	 *
 	 * @return the fully qualified class name of this asset list entry usage
@@ -262,35 +258,76 @@ public interface AssetListEntryUsageModel
 	public void setClassNameId(long classNameId);
 
 	/**
-	 * Returns the class pk of this asset list entry usage.
+	 * Returns the container key of this asset list entry usage.
 	 *
-	 * @return the class pk of this asset list entry usage
-	 */
-	@Override
-	public long getClassPK();
-
-	/**
-	 * Sets the class pk of this asset list entry usage.
-	 *
-	 * @param classPK the class pk of this asset list entry usage
-	 */
-	@Override
-	public void setClassPK(long classPK);
-
-	/**
-	 * Returns the portlet ID of this asset list entry usage.
-	 *
-	 * @return the portlet ID of this asset list entry usage
+	 * @return the container key of this asset list entry usage
 	 */
 	@AutoEscape
-	public String getPortletId();
+	public String getContainerKey();
 
 	/**
-	 * Sets the portlet ID of this asset list entry usage.
+	 * Sets the container key of this asset list entry usage.
 	 *
-	 * @param portletId the portlet ID of this asset list entry usage
+	 * @param containerKey the container key of this asset list entry usage
 	 */
-	public void setPortletId(String portletId);
+	public void setContainerKey(String containerKey);
+
+	/**
+	 * Returns the container type of this asset list entry usage.
+	 *
+	 * @return the container type of this asset list entry usage
+	 */
+	public long getContainerType();
+
+	/**
+	 * Sets the container type of this asset list entry usage.
+	 *
+	 * @param containerType the container type of this asset list entry usage
+	 */
+	public void setContainerType(long containerType);
+
+	/**
+	 * Returns the key of this asset list entry usage.
+	 *
+	 * @return the key of this asset list entry usage
+	 */
+	@AutoEscape
+	public String getKey();
+
+	/**
+	 * Sets the key of this asset list entry usage.
+	 *
+	 * @param key the key of this asset list entry usage
+	 */
+	public void setKey(String key);
+
+	/**
+	 * Returns the plid of this asset list entry usage.
+	 *
+	 * @return the plid of this asset list entry usage
+	 */
+	public long getPlid();
+
+	/**
+	 * Sets the plid of this asset list entry usage.
+	 *
+	 * @param plid the plid of this asset list entry usage
+	 */
+	public void setPlid(long plid);
+
+	/**
+	 * Returns the type of this asset list entry usage.
+	 *
+	 * @return the type of this asset list entry usage
+	 */
+	public int getType();
+
+	/**
+	 * Sets the type of this asset list entry usage.
+	 *
+	 * @param type the type of this asset list entry usage
+	 */
+	public void setType(int type);
 
 	/**
 	 * Returns the last publish date of this asset list entry usage.
@@ -307,5 +344,12 @@ public interface AssetListEntryUsageModel
 	 */
 	@Override
 	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public AssetListEntryUsage cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

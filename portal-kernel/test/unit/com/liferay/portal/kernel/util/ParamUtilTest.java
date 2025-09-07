@@ -1,29 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
+import com.liferay.portal.kernel.test.portlet.MockPortletRequest;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.portlet.MockPortletRequest;
 
 /**
  * @author Preston Crary
@@ -32,7 +26,16 @@ public class ParamUtilTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		PropsTestUtil.setProps(PropsKeys.UNICODE_TEXT_NORMALIZER_FORM, "NFC");
+		_propsUtilMockedStatic.when(
+			() -> PropsUtil.get(PropsKeys.UNICODE_TEXT_NORMALIZER_FORM)
+		).thenReturn(
+			"NFC"
+		);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		_propsUtilMockedStatic.close();
 	}
 
 	@Test
@@ -63,10 +66,10 @@ public class ParamUtilTest {
 		mockHttpServletRequest.addParameter("key1", "\u1004\u103A\u1037");
 		mockHttpServletRequest.addParameter("key2", "\u1004\u1037\u103A");
 
-		String value = ParamUtil.getString(mockHttpServletRequest, "key1", "");
+		String value1 = ParamUtil.getString(mockHttpServletRequest, "key1", "");
 		String value2 = ParamUtil.getString(mockHttpServletRequest, "key2", "");
 
-		Assert.assertEquals(value, value2);
+		Assert.assertEquals(value1, value2);
 	}
 
 	@Test
@@ -103,5 +106,8 @@ public class ParamUtilTest {
 
 		Assert.assertSame(defaultString, value);
 	}
+
+	private static final MockedStatic<PropsUtil> _propsUtilMockedStatic =
+		Mockito.mockStatic(PropsUtil.class);
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.impl;
@@ -81,6 +72,21 @@ public class DDMFormInstanceServiceImpl extends DDMFormInstanceServiceBaseImpl {
 	}
 
 	@Override
+	public DDMFormInstance copyFormInstance(
+			long groupId, Map<Locale, String> nameMap,
+			DDMFormInstance sourceDDMFormInstance,
+			DDMFormValues settingsDDMFormValues, ServiceContext serviceContext)
+		throws PortalException {
+
+		_portletResourcePermission.check(
+			getPermissionChecker(), groupId, DDMActionKeys.ADD_FORM_INSTANCE);
+
+		return ddmFormInstanceLocalService.copyFormInstance(
+			getUserId(), groupId, nameMap, sourceDDMFormInstance,
+			settingsDDMFormValues, serviceContext);
+	}
+
+	@Override
 	public void deleteFormInstance(long ddmFormInstanceId)
 		throws PortalException {
 
@@ -101,13 +107,6 @@ public class DDMFormInstanceServiceImpl extends DDMFormInstanceServiceBaseImpl {
 			return null;
 		}
 
-		if (_ddmFormInstanceModelResourcePermission.contains(
-				getPermissionChecker(), ddmFormInstance.getFormInstanceId(),
-				DDMActionKeys.ADD_FORM_INSTANCE_RECORD)) {
-
-			return ddmFormInstance;
-		}
-
 		_ddmFormInstanceModelResourcePermission.check(
 			getPermissionChecker(), ddmFormInstance.getFormInstanceId(),
 			ActionKeys.VIEW);
@@ -118,14 +117,6 @@ public class DDMFormInstanceServiceImpl extends DDMFormInstanceServiceBaseImpl {
 	@Override
 	public DDMFormInstance getFormInstance(long ddmFormInstanceId)
 		throws PortalException {
-
-		if (_ddmFormInstanceModelResourcePermission.contains(
-				getPermissionChecker(), ddmFormInstanceId,
-				DDMActionKeys.ADD_FORM_INSTANCE_RECORD)) {
-
-			return ddmFormInstanceLocalService.getFormInstance(
-				ddmFormInstanceId);
-		}
 
 		_ddmFormInstanceModelResourcePermission.check(
 			getPermissionChecker(), ddmFormInstanceId, ActionKeys.VIEW);
@@ -144,6 +135,21 @@ public class DDMFormInstanceServiceImpl extends DDMFormInstanceServiceBaseImpl {
 	@Override
 	public int getFormInstancesCount(long companyId, long groupId) {
 		return ddmFormInstanceFinder.filterCountByC_G(companyId, groupId);
+	}
+
+	@Override
+	public int getFormInstancesCount(String uuid) throws PortalException {
+		return ddmFormInstanceLocalService.getFormInstancesCount(uuid);
+	}
+
+	@Override
+	public List<DDMFormInstance> search(
+		long companyId, long groupId, String keywords, int status, int start,
+		int end, OrderByComparator<DDMFormInstance> orderByComparator) {
+
+		return ddmFormInstanceFinder.filterFindByKeywords(
+			companyId, groupId, keywords, status, start, end,
+			orderByComparator);
 	}
 
 	@Override
@@ -174,11 +180,32 @@ public class DDMFormInstanceServiceImpl extends DDMFormInstanceServiceBaseImpl {
 
 	@Override
 	public int searchCount(
+		long companyId, long groupId, String keywords, int status) {
+
+		return ddmFormInstanceFinder.filterCountByKeywords(
+			companyId, groupId, keywords, status);
+	}
+
+	@Override
+	public int searchCount(
 		long companyId, long groupId, String[] names, String[] descriptions,
 		boolean andOperator) {
 
 		return ddmFormInstanceFinder.filterCountByC_G_N_D(
 			companyId, groupId, names, descriptions, andOperator);
+	}
+
+	@Override
+	public void sendEmail(
+			long formInstanceId, String message, String subject,
+			String[] toEmailAddresses)
+		throws Exception {
+
+		_ddmFormInstanceModelResourcePermission.check(
+			getPermissionChecker(), formInstanceId, ActionKeys.UPDATE);
+
+		ddmFormInstanceLocalService.sendEmail(
+			getUserId(), message, subject, toEmailAddresses);
 	}
 
 	/**

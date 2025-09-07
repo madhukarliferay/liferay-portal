@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.web.internal.portlet.configuration.icon;
@@ -20,27 +11,22 @@ import com.liferay.adaptive.media.web.internal.background.task.OptimizeImagesAll
 import com.liferay.adaptive.media.web.internal.constants.AMPortletKeys;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.AggregateResourceBundle;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.Collection;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
+import java.util.Collection;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,8 +35,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sergio González
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + AMPortletKeys.ADAPTIVE_MEDIA,
+	property = "jakarta.portlet.name=" + AMPortletKeys.ADAPTIVE_MEDIA,
 	service = PortletConfigurationIcon.class
 )
 public class OptimizeImagesPortletConfigurationIcon
@@ -71,23 +56,8 @@ public class OptimizeImagesPortletConfigurationIcon
 	}
 
 	@Override
-	public String getId() {
-		return "optimize-images";
-	}
-
-	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), "adapt-all-images");
-	}
-
-	@Override
-	public ResourceBundle getResourceBundle(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
-
-		return new AggregateResourceBundle(
-			resourceBundle, super.getResourceBundle(locale));
+		return _language.get(getLocale(portletRequest), "adapt-all-images");
 	}
 
 	@Override
@@ -98,17 +68,16 @@ public class OptimizeImagesPortletConfigurationIcon
 			WebKeys.THEME_DISPLAY);
 
 		if (_isDisabled(themeDisplay.getCompanyId())) {
-			return "javascript:;";
+			return "javascript:void(0);";
 		}
 
-		PortletURL portletURL = _portal.getControlPanelPortletURL(
-			portletRequest, AMPortletKeys.ADAPTIVE_MEDIA,
-			PortletRequest.ACTION_PHASE);
-
-		portletURL.setParameter(
-			ActionRequest.ACTION_NAME, "/adaptive_media/optimize_images");
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			_portal.getControlPanelPortletURL(
+				portletRequest, AMPortletKeys.ADAPTIVE_MEDIA,
+				PortletRequest.ACTION_PHASE)
+		).setActionName(
+			"/adaptive_media/optimize_images"
+		).buildString();
 	}
 
 	@Override
@@ -124,11 +93,7 @@ public class OptimizeImagesPortletConfigurationIcon
 		PermissionChecker permissionChecker =
 			themeDisplay.getPermissionChecker();
 
-		if (!permissionChecker.isCompanyAdmin()) {
-			return false;
-		}
-
-		return true;
+		return permissionChecker.isCompanyAdmin();
 	}
 
 	private boolean _isDisabled(long companyId) {
@@ -159,6 +124,9 @@ public class OptimizeImagesPortletConfigurationIcon
 
 	@Reference
 	private BackgroundTaskManager _backgroundTaskManager;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

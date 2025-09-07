@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.deploy.hot;
@@ -17,10 +8,10 @@ package com.liferay.portal.kernel.deploy.hot;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.util.ProxyFactory;
 
+import jakarta.servlet.ServletContext;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
-import javax.servlet.ServletContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -28,14 +19,14 @@ import javax.servlet.ServletContext;
 public abstract class BaseHotDeployListener implements HotDeployListener {
 
 	public void throwHotDeployException(
-			HotDeployEvent event, String msg, Throwable t)
+			HotDeployEvent event, String msg, Throwable throwable)
 		throws HotDeployException {
 
 		ServletContext servletContext = event.getServletContext();
 
 		String servletContextName = servletContext.getServletContextName();
 
-		throw new HotDeployException(msg + servletContextName, t);
+		throw new HotDeployException(msg + servletContextName, throwable);
 	}
 
 	protected String getClpServletContextName(
@@ -43,7 +34,7 @@ public abstract class BaseHotDeployListener implements HotDeployListener {
 			MessageListener clpMessageListener)
 		throws Exception {
 
-		Exception e = null;
+		Exception exception1 = null;
 
 		try {
 			Method servletContextNameMethod = clpMessageListenerClass.getMethod(
@@ -51,8 +42,8 @@ public abstract class BaseHotDeployListener implements HotDeployListener {
 
 			return (String)servletContextNameMethod.invoke(null);
 		}
-		catch (Exception e1) {
-			e = e1;
+		catch (Exception exception2) {
+			exception1 = exception2;
 		}
 
 		try {
@@ -64,10 +55,10 @@ public abstract class BaseHotDeployListener implements HotDeployListener {
 
 			return clpServletContextName.toString();
 		}
-		catch (Exception e2) {
+		catch (Exception exception2) {
 		}
 
-		throw e;
+		throw exception1;
 	}
 
 	protected Object newInstance(

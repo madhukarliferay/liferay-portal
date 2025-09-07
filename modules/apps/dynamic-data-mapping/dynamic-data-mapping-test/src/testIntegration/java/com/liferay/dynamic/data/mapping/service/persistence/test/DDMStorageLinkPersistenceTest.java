@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -125,6 +117,8 @@ public class DDMStorageLinkPersistenceTest {
 
 		newDDMStorageLink.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDMStorageLink.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDMStorageLink.setUuid(RandomTestUtil.randomString());
 
 		newDDMStorageLink.setCompanyId(RandomTestUtil.nextLong());
@@ -145,6 +139,9 @@ public class DDMStorageLinkPersistenceTest {
 		Assert.assertEquals(
 			existingDDMStorageLink.getMvccVersion(),
 			newDDMStorageLink.getMvccVersion());
+		Assert.assertEquals(
+			existingDDMStorageLink.getCtCollectionId(),
+			newDDMStorageLink.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDMStorageLink.getUuid(), newDDMStorageLink.getUuid());
 		Assert.assertEquals(
@@ -237,9 +234,10 @@ public class DDMStorageLinkPersistenceTest {
 
 	protected OrderByComparator<DDMStorageLink> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DDMStorageLink", "mvccVersion", true, "uuid", true,
-			"storageLinkId", true, "companyId", true, "classNameId", true,
-			"classPK", true, "structureId", true, "structureVersionId", true);
+			"DDMStorageLink", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "storageLinkId", true, "companyId", true,
+			"classNameId", true, "classPK", true, "structureId", true,
+			"structureVersionId", true);
 	}
 
 	@Test
@@ -462,13 +460,56 @@ public class DDMStorageLinkPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMStorageLink existingDDMStorageLink = _persistence.findByPrimaryKey(
-			newDDMStorageLink.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDDMStorageLink.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMStorageLink newDDMStorageLink = addDDMStorageLink();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMStorageLink.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"storageLinkId", newDDMStorageLink.getStorageLinkId()));
+
+		List<DDMStorageLink> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDMStorageLink ddmStorageLink) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDMStorageLink.getClassPK()),
+			Long.valueOf(ddmStorageLink.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMStorageLink, "getOriginalClassPK", new Class<?>[0]));
+				ddmStorageLink, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected DDMStorageLink addDDMStorageLink() throws Exception {
@@ -477,6 +518,8 @@ public class DDMStorageLinkPersistenceTest {
 		DDMStorageLink ddmStorageLink = _persistence.create(pk);
 
 		ddmStorageLink.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddmStorageLink.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddmStorageLink.setUuid(RandomTestUtil.randomString());
 

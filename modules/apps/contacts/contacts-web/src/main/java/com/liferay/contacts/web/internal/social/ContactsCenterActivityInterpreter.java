@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.contacts.web.internal.social;
@@ -19,24 +10,22 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.social.kernel.model.BaseSocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialRelationConstants;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Hai Yu
+ * @deprecated As of Cavanaugh (7.4.x)
  */
 @Component(
-	property = "javax.portlet.name=" + ContactsPortletKeys.CONTACTS_CENTER,
+	property = "jakarta.portlet.name=" + ContactsPortletKeys.CONTACTS_CENTER,
 	service = SocialActivityInterpreter.class
 )
+@Deprecated
 public class ContactsCenterActivityInterpreter
 	extends BaseSocialActivityInterpreter {
 
@@ -50,11 +39,6 @@ public class ContactsCenterActivityInterpreter
 		SocialActivity activity, ServiceContext serviceContext) {
 
 		return getUserName(activity.getReceiverUserId(), serviceContext);
-	}
-
-	@Override
-	protected ResourceBundleLoader getResourceBundleLoader() {
-		return _resourceBundleLoader;
 	}
 
 	@Override
@@ -94,12 +78,5 @@ public class ContactsCenterActivityInterpreter
 	}
 
 	private static final String[] _CLASS_NAMES = {User.class.getName()};
-
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.contacts.web)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
 
 }

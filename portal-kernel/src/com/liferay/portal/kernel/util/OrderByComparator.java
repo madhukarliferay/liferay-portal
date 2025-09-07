@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.sql.dsl.query.sort.OrderByInfo;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 
@@ -26,7 +18,7 @@ import java.util.Comparator;
  * @author Shuyang Zhou
  */
 public abstract class OrderByComparator<T>
-	implements Comparator<T>, Serializable {
+	implements Comparator<T>, OrderByInfo, Serializable {
 
 	public String getOrderBy() {
 		return null;
@@ -36,18 +28,19 @@ public abstract class OrderByComparator<T>
 		return getOrderByFields();
 	}
 
-	public Object[] getOrderByConditionValues(Object obj) {
+	public Object[] getOrderByConditionValues(Object object) {
 		String[] fields = getOrderByConditionFields();
 
 		Object[] values = new Object[fields.length];
 
 		for (int i = 0; i < fields.length; i++) {
-			values[i] = BeanPropertiesUtil.getObject(obj, fields[i]);
+			values[i] = BeanPropertiesUtil.getObject(object, fields[i]);
 		}
 
 		return values;
 	}
 
+	@Override
 	public String[] getOrderByFields() {
 		String orderBy = getOrderBy();
 
@@ -86,6 +79,7 @@ public abstract class OrderByComparator<T>
 		return true;
 	}
 
+	@Override
 	public boolean isAscending(String field) {
 		return isAscending();
 	}

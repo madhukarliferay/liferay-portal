@@ -1,25 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.theme;
 
+import com.liferay.expando.kernel.model.ExpandoBridge;
+import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.model.LayoutType;
+import com.liferay.portal.kernel.model.LayoutTypeController;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
@@ -30,16 +24,16 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.webserver.WebServerServletTokenUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Represents a portal navigation item, providing access to layouts and metadata
@@ -52,19 +46,16 @@ import javax.servlet.http.HttpServletRequest;
 public class NavItem implements Serializable {
 
 	public static List<NavItem> fromLayouts(
-			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
-			Map<String, Object> contextObjects)
+			HttpServletRequest httpServletRequest, List<Layout> parentLayouts,
+			ThemeDisplay themeDisplay)
 		throws PortalException {
-
-		List<Layout> parentLayouts = themeDisplay.getLayouts();
 
 		if (parentLayouts == null) {
 			return Collections.emptyList();
 		}
 
 		Map<Long, List<Layout>> layoutChildLayouts =
-			LayoutLocalServiceUtil.getLayoutChildLayouts(
-				themeDisplay.getLayoutSet(), parentLayouts);
+			LayoutLocalServiceUtil.getLayoutChildLayouts(parentLayouts);
 
 		for (List<Layout> childLayouts : layoutChildLayouts.values()) {
 			Iterator<Layout> iterator = childLayouts.iterator();
@@ -73,6 +64,7 @@ public class NavItem implements Serializable {
 				Layout childLayout = iterator.next();
 
 				if (_isContentLayoutDraft(childLayout) ||
+					!_isLayoutRevisionDisplayable(childLayout) ||
 					childLayout.isHidden() ||
 					!LayoutPermissionUtil.contains(
 						themeDisplay.getPermissionChecker(), childLayout,
@@ -89,51 +81,49 @@ public class NavItem implements Serializable {
 			List<Layout> childLayouts = layoutChildLayouts.get(
 				parentLayout.getPlid());
 
-			if (_isContentLayoutDraft(parentLayout)) {
+			if (_isContentLayoutDraft(parentLayout) ||
+				!_isLayoutRevisionDisplayable(parentLayout)) {
+
 				continue;
 			}
 
 			navItems.add(
 				new NavItem(
 					httpServletRequest, themeDisplay, parentLayout,
-					childLayouts, contextObjects));
+					childLayouts));
 		}
 
 		return navItems;
 	}
 
-	public NavItem(
-		HttpServletRequest httpServletRequest, Layout layout,
-		Map<String, Object> contextObjects) {
-
+	public NavItem(HttpServletRequest httpServletRequest, Layout layout) {
 		this(
 			httpServletRequest,
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY),
-			layout, contextObjects);
+			layout);
 	}
 
 	public NavItem(
 		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
-		Layout layout, Map<String, Object> contextObjects) {
+		Layout layout) {
 
 		_httpServletRequest = httpServletRequest;
 		_themeDisplay = themeDisplay;
 		_layout = layout;
-		_contextObjects = contextObjects;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof NavItem)) {
+		if (!(object instanceof NavItem)) {
 			return false;
 		}
 
-		NavItem navItem = (NavItem)obj;
+		NavItem navItem = (NavItem)object;
 
 		if (getLayoutId() == navItem.getLayoutId()) {
 			return true;
@@ -173,10 +163,26 @@ public class NavItem implements Serializable {
 				_themeDisplay.getPermissionChecker());
 
 			_children = _fromLayouts(
-				_httpServletRequest, _themeDisplay, layouts, _contextObjects);
+				_httpServletRequest, _themeDisplay, layouts);
 		}
 
 		return _children;
+	}
+
+	public String getDisplayIcon() throws Exception {
+		return StringPool.BLANK;
+	}
+
+	public Map<String, Serializable> getExpandoAttributes() {
+		if (_layout != null) {
+			ExpandoBridge expandoBridge = _layout.getExpandoBridge();
+
+			if (expandoBridge != null) {
+				return expandoBridge.getAttributes();
+			}
+		}
+
+		return new HashMap<>();
 	}
 
 	/**
@@ -297,13 +303,7 @@ public class NavItem implements Serializable {
 	 * @throws Exception if an exception occurred
 	 */
 	public boolean hasBrowsableChildren() throws Exception {
-		List<NavItem> browsableChildren = getBrowsableChildren();
-
-		if (!browsableChildren.isEmpty()) {
-			return true;
-		}
-
-		return false;
+		return _hasBrowsableChildren(getChildren());
 	}
 
 	/**
@@ -317,11 +317,7 @@ public class NavItem implements Serializable {
 	public boolean hasChildren() throws Exception {
 		List<NavItem> children = getChildren();
 
-		if (!children.isEmpty()) {
-			return true;
-		}
-
-		return false;
+		return !children.isEmpty();
 	}
 
 	@Override
@@ -334,15 +330,10 @@ public class NavItem implements Serializable {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(_themeDisplay.getPathImage());
-		sb.append("/layout_icon?img_id=");
-		sb.append(_layout.getIconImageId());
-		sb.append("&t=");
-		sb.append(WebServerServletTokenUtil.getToken(_layout.getIconImageId()));
-
-		return sb.toString();
+		return StringBundler.concat(
+			_themeDisplay.getPathImage(), "/layout_icon?img_id=",
+			_layout.getIconImageId(), "&t=",
+			WebServerServletTokenUtil.getToken(_layout.getIconImageId()));
 	}
 
 	public boolean isBrowsable() {
@@ -372,54 +363,89 @@ public class NavItem implements Serializable {
 			layout.getAncestorPlid());
 	}
 
-	private static List<NavItem> _fromLayouts(
-		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
-		List<Layout> layouts, Map<String, Object> contextObjects) {
+	private static boolean _isContentLayoutDraft(Layout layout) {
+		if (!layout.isTypeContent()) {
+			return false;
+		}
 
-		if ((layouts == null) || layouts.isEmpty()) {
+		if (layout.fetchDraftLayout() != null) {
+			return !layout.isPublished();
+		}
+
+		if (layout.isApproved() && !layout.isHidden() && !layout.isSystem()) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private static boolean _isLayoutRevisionDisplayable(Layout layout) {
+		if (layout.isTypeContent() ||
+			!LayoutStagingUtil.isBranchingLayout(layout)) {
+
+			return true;
+		}
+
+		LayoutRevision layoutRevision = LayoutStagingUtil.getLayoutRevision(
+			layout);
+
+		if (!layoutRevision.isIncomplete()) {
+			return true;
+		}
+
+		LayoutType layoutType = layout.getLayoutType();
+
+		LayoutTypeController layoutTypeController =
+			layoutType.getLayoutTypeController();
+
+		return layoutTypeController.isWorkflowEnabled();
+	}
+
+	private NavItem(
+		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
+		Layout layout, List<Layout> childLayouts) {
+
+		_httpServletRequest = httpServletRequest;
+		_themeDisplay = themeDisplay;
+		_layout = layout;
+
+		_children = _fromLayouts(
+			httpServletRequest, themeDisplay, childLayouts);
+	}
+
+	private List<NavItem> _fromLayouts(
+		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
+		List<Layout> layouts) {
+
+		if (ListUtil.isEmpty(layouts)) {
 			return Collections.emptyList();
 		}
 
 		List<NavItem> navItems = new ArrayList<>(layouts.size());
 
 		for (Layout layout : layouts) {
-			navItems.add(
-				new NavItem(
-					httpServletRequest, themeDisplay, layout, contextObjects));
+			navItems.add(new NavItem(httpServletRequest, themeDisplay, layout));
 		}
 
 		return navItems;
 	}
 
-	private static boolean _isContentLayoutDraft(Layout layout) {
-		if (!Objects.equals(layout.getType(), LayoutConstants.TYPE_CONTENT)) {
-			return false;
-		}
+	private boolean _hasBrowsableChildren(List<NavItem> navItems)
+		throws Exception {
 
-		if (Objects.equals(layout.getCreateDate(), layout.getPublishDate())) {
-			return true;
+		for (NavItem navItem : navItems) {
+			if (navItem.isBrowsable() ||
+				_hasBrowsableChildren(navItem.getChildren())) {
+
+				return true;
+			}
 		}
 
 		return false;
 	}
 
-	private NavItem(
-		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
-		Layout layout, List<Layout> childLayouts,
-		Map<String, Object> contextObjects) {
-
-		_httpServletRequest = httpServletRequest;
-		_themeDisplay = themeDisplay;
-		_layout = layout;
-		_contextObjects = contextObjects;
-
-		_children = _fromLayouts(
-			httpServletRequest, themeDisplay, childLayouts, contextObjects);
-	}
-
 	private List<NavItem> _browsableChildren;
 	private List<NavItem> _children;
-	private final Map<String, Object> _contextObjects;
 	private final HttpServletRequest _httpServletRequest;
 	private final Layout _layout;
 	private final ThemeDisplay _themeDisplay;

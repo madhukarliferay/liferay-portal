@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,32 +10,35 @@
 <%
 String navigation = "banned-users";
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcRenderCommandName", "/message_boards/view_banned_users");
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCRenderCommandName(
+	"/message_boards_admin/view_banned_users"
+).buildPortletURL();
 %>
 
-<%@ include file="/message_boards_admin/nav.jspf" %>
+<%@ include file="/message_boards/nav.jspf" %>
 
 <%
-MBBannedUsersManagementToolbarDisplayContext mbBannedUsersManagementToolbarDisplayContext = new MBBannedUsersManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request);
+MBBannedUsersManagementToolbarDisplayContext mbBannedUsersManagementToolbarDisplayContext = new MBBannedUsersManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse);
 
 int totalBannedUsers = MBBanLocalServiceUtil.getBansCount(scopeGroupId);
 %>
 
 <clay:management-toolbar
 	actionDropdownItems="<%= mbBannedUsersManagementToolbarDisplayContext.getActionDropdownItems() %>"
-	componentId="mbBannedUsersManagementToolbar"
+	additionalProps="<%= mbBannedUsersManagementToolbarDisplayContext.getAdditionalProps() %>"
 	disabled="<%= totalBannedUsers == 0 %>"
 	itemsTotal="<%= totalBannedUsers %>"
+	propsTransformer="{BanUsersManagementToolbarPropsTransformer} from message-boards-web"
 	searchContainerId="mbBanUsers"
 	showCreationMenu="<%= false %>"
 	showInfoButton="<%= false %>"
 	showSearch="<%= false %>"
 />
 
-<div class="container-fluid-1280">
-	<aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
+<clay:container-fluid>
+	<aui:form action="<%= portletURL %>" method="get" name="fm">
 		<aui:input name="<%= Constants.CMD %>" type="hidden" />
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 
@@ -67,11 +61,10 @@ int totalBannedUsers = MBBanLocalServiceUtil.getBansCount(scopeGroupId);
 			>
 
 				<%
-				Map<String, Object> rowData = new HashMap<String, Object>();
-
-				rowData.put("actions", StringUtil.merge(mbBannedUsersManagementToolbarDisplayContext.getAvailableActions(ban)));
-
-				row.setData(rowData);
+				row.setData(
+					HashMapBuilder.<String, Object>put(
+						"actions", StringUtil.merge(mbBannedUsersManagementToolbarDisplayContext.getAvailableActions(ban))
+					).build());
 				%>
 
 				<liferay-ui:search-container-column-user
@@ -114,7 +107,7 @@ int totalBannedUsers = MBBanLocalServiceUtil.getBansCount(scopeGroupId);
 					<span class="text-default">
 						<liferay-ui:message key="unban-date" />
 
-						<%= dateFormatDateTime.format(com.liferay.message.boards.util.MBUtil.getUnbanDate(ban, PropsValues.MESSAGE_BOARDS_EXPIRE_BAN_INTERVAL)) %>
+						<%= dateTimeFormat.format(com.liferay.message.boards.util.MBUtil.getUnbanDate(ban, PropsValues.MESSAGE_BOARDS_EXPIRE_BAN_INTERVAL)) %>
 					</span>
 				</liferay-ui:search-container-column-text>
 
@@ -129,37 +122,10 @@ int totalBannedUsers = MBBanLocalServiceUtil.getBansCount(scopeGroupId);
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
+</clay:container-fluid>
 
 <%
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, TextFormatter.format("banned-users", TextFormatter.O)), portletURL.toString());
 
 PortalUtil.setPageSubtitle(LanguageUtil.get(request, "banned-users"), request);
 %>
-
-<aui:script>
-	var unbanUser = function() {
-		Liferay.Util.postForm(document.<portlet:namespace />fm, {
-			data: {
-				<%= Constants.CMD %>: 'unban'
-			},
-			url: '<portlet:actionURL name="/message_boards/ban_user" />'
-		});
-	};
-
-	var ACTIONS = {
-		unbanUser: unbanUser
-	};
-
-	Liferay.componentReady('mbBannedUsersManagementToolbar').then(function(
-		managementToolbar
-	) {
-		managementToolbar.on('actionItemClicked', function(event) {
-			var itemData = event.data.item.data;
-
-			if (itemData && itemData.action && ACTIONS[itemData.action]) {
-				ACTIONS[itemData.action]();
-			}
-		});
-	});
-</aui:script>

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.scripting.internal.util;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.workflow.kaleo.KaleoWorkflowModelConverter;
 import com.liferay.portal.workflow.kaleo.model.KaleoInstance;
 import com.liferay.portal.workflow.kaleo.model.KaleoInstanceToken;
@@ -26,7 +18,6 @@ import com.liferay.portal.workflow.kaleo.runtime.util.WorkflowContextUtil;
 
 import java.io.Serializable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
@@ -35,7 +26,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = ScriptingContextBuilder.class)
+@Component(service = ScriptingContextBuilder.class)
 public class ScriptingContextBuilderImpl implements ScriptingContextBuilder {
 
 	@Override
@@ -56,12 +47,14 @@ public class ScriptingContextBuilderImpl implements ScriptingContextBuilder {
 				kaleoInstance.getWorkflowContext());
 		}
 
-		Map<String, Object> inputObjects = new HashMap<>();
-
-		inputObjects.putAll(workflowContext);
-		inputObjects.put(
-			"kaleoInstanceToken", executionContext.getKaleoInstanceToken());
-		inputObjects.put("workflowContext", workflowContext);
+		Map<String, Object> inputObjects =
+			HashMapBuilder.<String, Object>putAll(
+				workflowContext
+			).put(
+				"kaleoInstanceToken", executionContext.getKaleoInstanceToken()
+			).put(
+				"workflowContext", workflowContext
+			).build();
 
 		KaleoTaskInstanceToken kaleoTaskInstanceToken =
 			executionContext.getKaleoTaskInstanceToken();

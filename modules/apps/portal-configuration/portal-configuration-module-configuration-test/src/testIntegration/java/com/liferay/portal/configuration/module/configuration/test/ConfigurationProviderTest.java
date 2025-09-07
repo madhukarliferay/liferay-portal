@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.module.configuration.test;
@@ -20,14 +11,13 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 import java.util.Dictionary;
@@ -149,6 +139,16 @@ public class ConfigurationProviderTest {
 			_properties, _configuration.getProperties(),
 			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
 			companyId);
+
+		_configurationProvider.saveCompanyConfiguration(
+			companyId, _PID, _properties);
+
+		_configuration = _getFactoryConfiguration(_PID);
+
+		assertFactoryPropertyValues(
+			_properties, _configuration.getProperties(),
+			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
+			companyId);
 	}
 
 	@Test
@@ -160,6 +160,18 @@ public class ConfigurationProviderTest {
 
 		_configurationProvider.saveGroupConfiguration(
 			TestConfiguration.class, groupId, _properties);
+
+		_configuration = _getFactoryConfiguration(_PID);
+
+		assertFactoryPropertyValues(
+			_properties, _configuration.getProperties(),
+			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
+			groupId);
+
+		_properties.put("key3", "groupValue3");
+
+		_configurationProvider.saveGroupConfiguration(
+			groupId, _PID, _properties);
 
 		_configuration = _getFactoryConfiguration(_PID);
 
@@ -251,15 +263,17 @@ public class ConfigurationProviderTest {
 
 		Assert.assertNotNull(configurationProperties);
 
-		for (Enumeration keys = properties.keys(); keys.hasMoreElements();) {
-			String key = (String)keys.nextElement();
+		for (Enumeration<String> enumeration = properties.keys();
+			 enumeration.hasMoreElements();) {
+
+			String key = enumeration.nextElement();
 
 			Assert.assertEquals(
 				properties.get(key), configurationProperties.get(key));
 		}
 	}
 
-	private Configuration _getConfiguration(String pid) throws IOException {
+	private Configuration _getConfiguration(String pid) throws Exception {
 		return _configurationAdmin.getConfiguration(pid, StringPool.QUESTION);
 	}
 
@@ -294,9 +308,8 @@ public class ConfigurationProviderTest {
 		_properties.put("key1", "value1");
 		_properties.put("key2", "value2");
 
-		Configuration configuration = _getConfiguration(pid);
-
-		ConfigurationTestUtil.saveConfiguration(configuration, _properties);
+		ConfigurationTestUtil.saveConfiguration(
+			_getConfiguration(pid), _properties);
 	}
 
 	private Configuration _configuration;

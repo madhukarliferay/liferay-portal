@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharepoint.rest.oauth2.service.persistence.impl;
@@ -27,21 +18,28 @@ import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.sharepoint.rest.oauth2.exception.NoSuch2TokenEntryException;
 import com.liferay.sharepoint.rest.oauth2.model.SharepointOAuth2TokenEntry;
+import com.liferay.sharepoint.rest.oauth2.model.SharepointOAuth2TokenEntryTable;
 import com.liferay.sharepoint.rest.oauth2.model.impl.SharepointOAuth2TokenEntryImpl;
 import com.liferay.sharepoint.rest.oauth2.model.impl.SharepointOAuth2TokenEntryModelImpl;
 import com.liferay.sharepoint.rest.oauth2.service.persistence.SharepointOAuth2TokenEntryPersistence;
+import com.liferay.sharepoint.rest.oauth2.service.persistence.SharepointOAuth2TokenEntryUtil;
 import com.liferay.sharepoint.rest.oauth2.service.persistence.impl.constants.SharepointOAuthPersistenceConstants;
 
 import java.io.Serializable;
 
 import java.lang.reflect.InvocationHandler;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,7 +67,7 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	extends BasePersistenceImpl<SharepointOAuth2TokenEntry>
 	implements SharepointOAuth2TokenEntryPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>SharepointOAuth2TokenEntryUtil</code> to access the sharepoint o auth2 token entry persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -197,43 +195,43 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
+			sb.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
 
-			query.append(_FINDER_COLUMN_USERID_USERID_2);
+			sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(SharepointOAuth2TokenEntryModelImpl.ORDER_BY_JPQL);
+				sb.append(SharepointOAuth2TokenEntryModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				list = (List<SharepointOAuth2TokenEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -241,12 +239,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -277,16 +271,16 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			return sharepointOAuth2TokenEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuch2TokenEntryException(msg.toString());
+		throw new NoSuch2TokenEntryException(sb.toString());
 	}
 
 	/**
@@ -332,16 +326,16 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			return sharepointOAuth2TokenEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuch2TokenEntryException(msg.toString());
+		throw new NoSuch2TokenEntryException(sb.toString());
 	}
 
 	/**
@@ -410,8 +404,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -424,102 +418,102 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		OrderByComparator<SharepointOAuth2TokenEntry> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
+		sb.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
 
-		query.append(_FINDER_COLUMN_USERID_USERID_2);
+		sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(SharepointOAuth2TokenEntryModelImpl.ORDER_BY_JPQL);
+			sb.append(SharepointOAuth2TokenEntryModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						sharepointOAuth2TokenEntry)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<SharepointOAuth2TokenEntry> list = q.list();
+		List<SharepointOAuth2TokenEntry> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -559,33 +553,31 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
+			sb.append(_SQL_COUNT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
 
-			query.append(_FINDER_COLUMN_USERID_USERID_2);
+			sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -599,7 +591,6 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		"sharepointOAuth2TokenEntry.userId = ?";
 
 	private FinderPath _finderPathFetchByU_C;
-	private FinderPath _finderPathCountByU_C;
 
 	/**
 	 * Returns the sharepoint o auth2 token entry where userId = &#63; and configurationPid = &#63; or throws a <code>NoSuch2TokenEntryException</code> if it could not be found.
@@ -618,23 +609,23 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			userId, configurationPid);
 
 		if (sharepointOAuth2TokenEntry == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("userId=");
-			msg.append(userId);
+			sb.append("userId=");
+			sb.append(userId);
 
-			msg.append(", configurationPid=");
-			msg.append(configurationPid);
+			sb.append(", configurationPid=");
+			sb.append(configurationPid);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuch2TokenEntryException(msg.toString());
+			throw new NoSuch2TokenEntryException(sb.toString());
 		}
 
 		return sharepointOAuth2TokenEntry;
@@ -695,41 +686,41 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		}
 
 		if (result == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
+			sb.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
 
-			query.append(_FINDER_COLUMN_U_C_USERID_2);
+			sb.append(_FINDER_COLUMN_U_C_USERID_2);
 
 			boolean bindConfigurationPid = false;
 
 			if (configurationPid.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_3);
+				sb.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_3);
 			}
 			else {
 				bindConfigurationPid = true;
 
-				query.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_2);
+				sb.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				if (bindConfigurationPid) {
-					qPos.add(configurationPid);
+					queryPos.add(configurationPid);
 				}
 
-				List<SharepointOAuth2TokenEntry> list = q.list();
+				List<SharepointOAuth2TokenEntry> list = query.list();
 
 				if (list.isEmpty()) {
 					if (useFinderCache) {
@@ -746,12 +737,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 					cacheResult(sharepointOAuth2TokenEntry);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(_finderPathFetchByU_C, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -793,64 +780,14 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	 */
 	@Override
 	public int countByU_C(long userId, String configurationPid) {
-		configurationPid = Objects.toString(configurationPid, "");
+		SharepointOAuth2TokenEntry sharepointOAuth2TokenEntry = fetchByU_C(
+			userId, configurationPid);
 
-		FinderPath finderPath = _finderPathCountByU_C;
-
-		Object[] finderArgs = new Object[] {userId, configurationPid};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_SHAREPOINTOAUTH2TOKENENTRY_WHERE);
-
-			query.append(_FINDER_COLUMN_U_C_USERID_2);
-
-			boolean bindConfigurationPid = false;
-
-			if (configurationPid.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_3);
-			}
-			else {
-				bindConfigurationPid = true;
-
-				query.append(_FINDER_COLUMN_U_C_CONFIGURATIONPID_2);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(userId);
-
-				if (bindConfigurationPid) {
-					qPos.add(configurationPid);
-				}
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (sharepointOAuth2TokenEntry == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String _FINDER_COLUMN_U_C_USERID_2 =
@@ -867,6 +804,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 
 		setModelImplClass(SharepointOAuth2TokenEntryImpl.class);
 		setModelPKClass(long.class);
+
+		setTable(SharepointOAuth2TokenEntryTable.INSTANCE);
 	}
 
 	/**
@@ -879,7 +818,7 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		SharepointOAuth2TokenEntry sharepointOAuth2TokenEntry) {
 
 		entityCache.putResult(
-			entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
+			SharepointOAuth2TokenEntryImpl.class,
 			sharepointOAuth2TokenEntry.getPrimaryKey(),
 			sharepointOAuth2TokenEntry);
 
@@ -890,9 +829,9 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 				sharepointOAuth2TokenEntry.getConfigurationPid()
 			},
 			sharepointOAuth2TokenEntry);
-
-		sharepointOAuth2TokenEntry.resetOriginalValues();
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the sharepoint o auth2 token entries in the entity cache if it is enabled.
@@ -903,17 +842,22 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	public void cacheResult(
 		List<SharepointOAuth2TokenEntry> sharepointOAuth2TokenEntries) {
 
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (sharepointOAuth2TokenEntries.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (SharepointOAuth2TokenEntry sharepointOAuth2TokenEntry :
 				sharepointOAuth2TokenEntries) {
 
 			if (entityCache.getResult(
-					entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
+					SharepointOAuth2TokenEntryImpl.class,
 					sharepointOAuth2TokenEntry.getPrimaryKey()) == null) {
 
 				cacheResult(sharepointOAuth2TokenEntry);
-			}
-			else {
-				sharepointOAuth2TokenEntry.resetOriginalValues();
 			}
 		}
 	}
@@ -929,9 +873,7 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(SharepointOAuth2TokenEntryImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(SharepointOAuth2TokenEntryImpl.class);
 	}
 
 	/**
@@ -946,47 +888,29 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		SharepointOAuth2TokenEntry sharepointOAuth2TokenEntry) {
 
 		entityCache.removeResult(
-			entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
-			sharepointOAuth2TokenEntry.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
-		clearUniqueFindersCache(
-			(SharepointOAuth2TokenEntryModelImpl)sharepointOAuth2TokenEntry,
-			true);
+			SharepointOAuth2TokenEntryImpl.class, sharepointOAuth2TokenEntry);
 	}
 
 	@Override
 	public void clearCache(
 		List<SharepointOAuth2TokenEntry> sharepointOAuth2TokenEntries) {
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (SharepointOAuth2TokenEntry sharepointOAuth2TokenEntry :
 				sharepointOAuth2TokenEntries) {
 
 			entityCache.removeResult(
-				entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
-				sharepointOAuth2TokenEntry.getPrimaryKey());
-
-			clearUniqueFindersCache(
-				(SharepointOAuth2TokenEntryModelImpl)sharepointOAuth2TokenEntry,
-				true);
+				SharepointOAuth2TokenEntryImpl.class,
+				sharepointOAuth2TokenEntry);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(SharepointOAuth2TokenEntryImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
 			entityCache.removeResult(
-				entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
-				primaryKey);
+				SharepointOAuth2TokenEntryImpl.class, primaryKey);
 		}
 	}
 
@@ -1000,38 +924,7 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		};
 
 		finderCache.putResult(
-			_finderPathCountByU_C, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByU_C, args, sharepointOAuth2TokenEntryModelImpl,
-			false);
-	}
-
-	protected void clearUniqueFindersCache(
-		SharepointOAuth2TokenEntryModelImpl sharepointOAuth2TokenEntryModelImpl,
-		boolean clearCurrent) {
-
-		if (clearCurrent) {
-			Object[] args = new Object[] {
-				sharepointOAuth2TokenEntryModelImpl.getUserId(),
-				sharepointOAuth2TokenEntryModelImpl.getConfigurationPid()
-			};
-
-			finderCache.removeResult(_finderPathCountByU_C, args);
-			finderCache.removeResult(_finderPathFetchByU_C, args);
-		}
-
-		if ((sharepointOAuth2TokenEntryModelImpl.getColumnBitmask() &
-			 _finderPathFetchByU_C.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				sharepointOAuth2TokenEntryModelImpl.getOriginalUserId(),
-				sharepointOAuth2TokenEntryModelImpl.
-					getOriginalConfigurationPid()
-			};
-
-			finderCache.removeResult(_finderPathCountByU_C, args);
-			finderCache.removeResult(_finderPathFetchByU_C, args);
-		}
+			_finderPathFetchByU_C, args, sharepointOAuth2TokenEntryModelImpl);
 	}
 
 	/**
@@ -1101,11 +994,11 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 
 			return remove(sharepointOAuth2TokenEntry);
 		}
-		catch (NoSuch2TokenEntryException nsee) {
-			throw nsee;
+		catch (NoSuch2TokenEntryException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1132,8 +1025,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 				session.delete(sharepointOAuth2TokenEntry);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1175,15 +1068,28 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			sharepointOAuth2TokenEntryModelImpl =
 				(SharepointOAuth2TokenEntryModelImpl)sharepointOAuth2TokenEntry;
 
+		if (isNew && (sharepointOAuth2TokenEntry.getCreateDate() == null)) {
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
+
+			Date date = new Date();
+
+			if (serviceContext == null) {
+				sharepointOAuth2TokenEntry.setCreateDate(date);
+			}
+			else {
+				sharepointOAuth2TokenEntry.setCreateDate(
+					serviceContext.getCreateDate(date));
+			}
+		}
+
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			if (sharepointOAuth2TokenEntry.isNew()) {
+			if (isNew) {
 				session.save(sharepointOAuth2TokenEntry);
-
-				sharepointOAuth2TokenEntry.setNew(false);
 			}
 			else {
 				sharepointOAuth2TokenEntry =
@@ -1191,61 +1097,22 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 						sharepointOAuth2TokenEntry);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				sharepointOAuth2TokenEntryModelImpl.getUserId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUserId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUserId, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((sharepointOAuth2TokenEntryModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUserId.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					sharepointOAuth2TokenEntryModelImpl.getOriginalUserId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUserId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUserId, args);
-
-				args = new Object[] {
-					sharepointOAuth2TokenEntryModelImpl.getUserId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUserId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUserId, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, SharepointOAuth2TokenEntryImpl.class,
-			sharepointOAuth2TokenEntry.getPrimaryKey(),
-			sharepointOAuth2TokenEntry, false);
+			SharepointOAuth2TokenEntryImpl.class,
+			sharepointOAuth2TokenEntryModelImpl, false, true);
 
-		clearUniqueFindersCache(sharepointOAuth2TokenEntryModelImpl, false);
 		cacheUniqueFindersCache(sharepointOAuth2TokenEntryModelImpl);
+
+		if (isNew) {
+			sharepointOAuth2TokenEntry.setNew(false);
+		}
 
 		sharepointOAuth2TokenEntry.resetOriginalValues();
 
@@ -1395,19 +1262,19 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 			String sql = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					2 + (orderByComparator.getOrderByFields().length * 2));
 
-				query.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY);
+				sb.append(_SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY);
 
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				sql = query.toString();
+				sql = sb.toString();
 			}
 			else {
 				sql = _SQL_SELECT_SHAREPOINTOAUTH2TOKENENTRY;
@@ -1421,10 +1288,10 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
 				list = (List<SharepointOAuth2TokenEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1432,12 +1299,8 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1476,19 +1339,16 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(
+				Query query = session.createQuery(
 					_SQL_COUNT_SHAREPOINTOAUTH2TOKENENTRY);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(
 					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1523,69 +1383,51 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		SharepointOAuth2TokenEntryModelImpl.setEntityCacheEnabled(
-			entityCacheEnabled);
-		SharepointOAuth2TokenEntryModelImpl.setFinderCacheEnabled(
-			finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			SharepointOAuth2TokenEntryImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			SharepointOAuth2TokenEntryImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByUserId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			SharepointOAuth2TokenEntryImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUserId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId"}, true);
 
 		_finderPathWithoutPaginationFindByUserId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			SharepointOAuth2TokenEntryImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUserId",
-			new String[] {Long.class.getName()},
-			SharepointOAuth2TokenEntryModelImpl.USERID_COLUMN_BITMASK);
+			new String[] {Long.class.getName()}, new String[] {"userId"}, true);
 
 		_finderPathCountByUserId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUserId",
-			new String[] {Long.class.getName()});
+			new String[] {Long.class.getName()}, new String[] {"userId"},
+			false);
 
 		_finderPathFetchByU_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			SharepointOAuth2TokenEntryImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByU_C",
+			FINDER_CLASS_NAME_ENTITY, "fetchByU_C",
 			new String[] {Long.class.getName(), String.class.getName()},
-			SharepointOAuth2TokenEntryModelImpl.USERID_COLUMN_BITMASK |
-			SharepointOAuth2TokenEntryModelImpl.
-				CONFIGURATIONPID_COLUMN_BITMASK);
+			new String[] {"userId", "configurationPid"}, true);
 
-		_finderPathCountByU_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_C",
-			new String[] {Long.class.getName(), String.class.getName()});
+		SharepointOAuth2TokenEntryUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		SharepointOAuth2TokenEntryUtil.setPersistence(null);
+
 		entityCache.removeCache(SharepointOAuth2TokenEntryImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -1594,12 +1436,6 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.sharepoint.rest.oauth2.model.SharepointOAuth2TokenEntry"),
-			true);
 	}
 
 	@Override
@@ -1619,8 +1455,6 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		super.setSessionFactory(sessionFactory);
 	}
-
-	private boolean _columnBitmaskEnabled;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -1652,13 +1486,9 @@ public class SharepointOAuth2TokenEntryPersistenceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		SharepointOAuth2TokenEntryPersistenceImpl.class);
 
-	static {
-		try {
-			Class.forName(SharepointOAuthPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

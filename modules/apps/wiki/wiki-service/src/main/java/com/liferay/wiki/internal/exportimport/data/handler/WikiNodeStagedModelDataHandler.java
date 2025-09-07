@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.internal.exportimport.data.handler;
@@ -18,8 +9,11 @@ import com.liferay.exportimport.data.handler.base.BaseStagedModelDataHandler;
 import com.liferay.exportimport.kernel.lar.ExportImportPathUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandler;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
@@ -31,13 +25,17 @@ import com.liferay.wiki.service.WikiNodeLocalService;
 import java.util.List;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Zsolt Berentey
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(
+	configurationPid = "com.liferay.wiki.configuration.WikiGroupServiceConfiguration",
+	service = StagedModelDataHandler.class
+)
 public class WikiNodeStagedModelDataHandler
 	extends BaseStagedModelDataHandler<WikiNode> {
 
@@ -79,6 +77,17 @@ public class WikiNodeStagedModelDataHandler
 	@Override
 	public String[] getClassNames() {
 		return CLASS_NAMES;
+	}
+
+	@Override
+	public boolean isEnabled(long companyId) {
+		return FeatureFlagManagerUtil.isEnabled(companyId, "LPD-35013");
+	}
+
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_wikiGroupServiceConfiguration = ConfigurableUtil.createConfigurable(
+			WikiGroupServiceConfiguration.class, properties);
 	}
 
 	@Override
@@ -134,14 +143,15 @@ public class WikiNodeStagedModelDataHandler
 		if (portletDataContext.isDataStrategyMirror()) {
 			if (existingNode == null) {
 				if (nodeWithSameName != null) {
-					nodeName = getNodeName(
+					nodeName = _getNodeName(
 						portletDataContext, node, nodeName, 2);
 				}
 
 				serviceContext.setUuid(node.getUuid());
 
 				importedNode = _wikiNodeLocalService.addNode(
-					userId, nodeName, node.getDescription(), serviceContext);
+					node.getExternalReferenceCode(), userId, nodeName,
+					node.getDescription(), serviceContext);
 			}
 			else {
 				String uuid = existingNode.getUuid();
@@ -149,7 +159,7 @@ public class WikiNodeStagedModelDataHandler
 				if ((nodeWithSameName != null) &&
 					!uuid.equals(nodeWithSameName.getUuid())) {
 
-					nodeName = getNodeName(
+					nodeName = _getNodeName(
 						portletDataContext, node, nodeName, 2);
 				}
 
@@ -170,10 +180,10 @@ public class WikiNodeStagedModelDataHandler
 					serviceContext);
 			}
 			else {
-				nodeName = getNodeName(portletDataContext, node, nodeName, 2);
-
 				importedNode = _wikiNodeLocalService.addNode(
-					userId, nodeName, node.getDescription(), serviceContext);
+					node.getExternalReferenceCode(), userId,
+					_getNodeName(portletDataContext, node, nodeName, 2),
+					node.getDescription(), serviceContext);
 			}
 		}
 
@@ -196,13 +206,13 @@ public class WikiNodeStagedModelDataHandler
 			WikiNode.class.getName());
 
 		if (trashHandler.isRestorable(existingNode.getNodeId())) {
-			long userId = portletDataContext.getUserId(node.getUserUuid());
-
-			trashHandler.restoreTrashEntry(userId, existingNode.getNodeId());
+			trashHandler.restoreTrashEntry(
+				portletDataContext.getUserId(node.getUserUuid()),
+				existingNode.getNodeId());
 		}
 	}
 
-	protected String getNodeName(
+	private String _getNodeName(
 			PortletDataContext portletDataContext, WikiNode node, String name,
 			int count)
 		throws Exception {
@@ -216,26 +226,14 @@ public class WikiNodeStagedModelDataHandler
 
 		String nodeName = node.getName();
 
-		return getNodeName(
+		return _getNodeName(
 			portletDataContext, node,
-			nodeName.concat(
-				StringPool.SPACE
-			).concat(
-				String.valueOf(count)
-			),
-			++count);
+			StringBundler.concat(nodeName, StringPool.SPACE, count), ++count);
 	}
 
-	@Reference(unbind = "-")
-	protected void setWikiNodeLocalService(
-		WikiNodeLocalService wikiNodeLocalService) {
-
-		_wikiNodeLocalService = wikiNodeLocalService;
-	}
-
-	@Reference
 	private WikiGroupServiceConfiguration _wikiGroupServiceConfiguration;
 
+	@Reference
 	private WikiNodeLocalService _wikiNodeLocalService;
 
 }

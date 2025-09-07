@@ -1,0 +1,38 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.source.formatter.dependencies.upgrade;
+
+public class UpgradeJavaGetFDSTableSchemaParameterCheck extends BaseTableFDSView  {
+
+	@Override
+	public FDSTableSchema getFDSTableSchema() {
+		FDSTableSchemaBuilder fDSTableSchemaBuilder =
+			_fDSTableSchemaBuilderFactory.create();
+
+		FDSTableSchemaField invoiceIdFDSTableSchemaField =
+			fDSTableSchemaBuilder.add("invoiceId", "invoice-id-field");
+
+		invoiceIdFDSTableSchemaField.setContentRenderer("link");
+		invoiceIdFDSTableSchemaField.setSortable(true);
+
+		fDSTableSchemaBuilder.add(
+			"createdBy", "invoice-created-by");
+		fDSTableSchemaBuilder.add(
+			"documentDate", "invoice-document-date");
+		fDSTableSchemaBuilder.add(
+			"dueDate", "invoice-due-date");
+		fDSTableSchemaBuilder.add(
+			"invoiceTotal", "invoice-total");
+
+		FDSTableSchemaField statusFDSTableSchemaField =
+			fDSTableSchemaBuilder.add("status", "invoice-status");
+
+		statusFDSTableSchemaField.setContentRenderer("label");
+
+		return fDSTableSchemaBuilder.build();
+	}
+
+}

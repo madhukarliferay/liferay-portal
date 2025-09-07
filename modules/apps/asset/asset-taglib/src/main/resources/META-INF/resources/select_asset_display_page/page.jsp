@@ -1,29 +1,25 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/select_asset_display_page/init.jsp" %>
 
-<aui:input id="pagesContainerInput" ignoreRequestValue="<%= true %>" name="layoutUuid" type="hidden" value="<%= selectAssetDisplayPageDisplayContext.getLayoutUuid() %>" />
+<aui:input id="pagesContainerInput" name="layoutUuid" type="hidden" value="<%= selectAssetDisplayPageDisplayContext.getLayoutUuid() %>" />
 
-<aui:input id="assetDisplayPageIdInput" ignoreRequestValue="<%= true %>" name="assetDisplayPageId" type="hidden" value="<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageId() %>" />
+<aui:input id="assetDisplayPageIdInput" name="assetDisplayPageId" type="hidden" value="<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageId() %>" />
 
-<aui:select label="" name="displayPageType" title="display-page-template-type" value="<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageType() %>">
-	<aui:option label="default-display-page-template" value="<%= AssetDisplayPageConstants.TYPE_DEFAULT %>" />
-	<aui:option label="specific-display-page-template" value="<%= AssetDisplayPageConstants.TYPE_SPECIFIC %>" />
-	<aui:option label="no-display-page-template" value="<%= AssetDisplayPageConstants.TYPE_NONE %>" />
+<aui:select label="display-page-template" name="displayPageType" title="display-page-template-type" value="<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageType() %>">
+	<aui:option label="default" value="<%= AssetDisplayPageConstants.TYPE_DEFAULT %>" />
+	<aui:option label="specific" value="<%= AssetDisplayPageConstants.TYPE_SPECIFIC %>" />
+
+	<c:if test="<%= selectAssetDisplayPageDisplayContext.inheritableDisplayPageTemplate() %>">
+		<aui:option label="inherited" value="<%= AssetDisplayPageConstants.TYPE_INHERITED %>" />
+	</c:if>
+
+	<aui:option label="none" value="<%= AssetDisplayPageConstants.TYPE_NONE %>" />
 </aui:select>
 
 <div class="input-group <%= selectAssetDisplayPageDisplayContext.isAssetDisplayPageTypeDefault() ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />defaultDisplayPageNameContainer">
@@ -39,10 +35,10 @@
 	<c:if test="<%= selectAssetDisplayPageDisplayContext.isAssetDisplayPageTypeDefault() && selectAssetDisplayPageDisplayContext.isShowViewInContextLink() && selectAssetDisplayPageDisplayContext.isURLViewInContext() %>">
 		<div class="input-group-item input-group-item-shrink">
 			<clay:button
+				displayType="secondary"
 				icon="view"
 				id='<%= liferayPortletResponse.getNamespace() + "previewDefaultDisplayPageButton" %>'
-				monospaced="<%= true %>"
-				style="secondary"
+				type="button"
 			/>
 		</div>
 	</c:if>
@@ -62,21 +58,23 @@
 		<c:if test="<%= selectAssetDisplayPageDisplayContext.isAssetDisplayPageTypeSpecific() && selectAssetDisplayPageDisplayContext.isShowViewInContextLink() && selectAssetDisplayPageDisplayContext.isURLViewInContext() %>">
 			<div class="input-group-item input-group-item-shrink">
 				<clay:button
-					elementClasses="btn-secondary"
+					displayType="secondary"
 					icon="view"
 					id='<%= liferayPortletResponse.getNamespace() + "previewSpecificDisplayPageButton" %>'
-					monospaced="<%= true %>"
+					type="button"
 				/>
 			</div>
 		</c:if>
 	</div>
 
-	<div class="btn-group">
-		<aui:button name="chooseSpecificDisplayPage" value="select" />
-	</div>
+	<clay:button
+		displayType="secondary"
+		id='<%= liferayPortletResponse.getNamespace() + "chooseSpecificDisplayPage" %>'
+		label="select"
+	/>
 </div>
 
-<aui:script require="frontend-js-web/liferay/ItemSelectorDialog.es as ItemSelectorDialog">
+<aui:script sandbox="<%= true %>">
 	var assetDisplayPageIdInput = document.getElementById(
 		'<portlet:namespace />assetDisplayPageIdInput'
 	);
@@ -93,37 +91,42 @@
 		'<portlet:namespace />specificDisplayPageNameInput'
 	);
 
-	chooseSpecificDisplayPage.addEventListener('click', function(event) {
-		var itemSelectorDialog = new ItemSelectorDialog.default({
-			eventName: '<%= selectAssetDisplayPageDisplayContext.getEventName() %>',
-			singleSelect: true,
+	chooseSpecificDisplayPage.addEventListener('click', (event) => {
+		Liferay.Util.openSelectionModal({
+			onSelect: function (selectedItem) {
+				assetDisplayPageIdInput.value = '';
+
+				pagesContainerInput.value = '';
+
+				if (selectedItem) {
+					if (
+						selectedItem.returnType ===
+						'com.liferay.item.selector.criteria.AssetEntryItemSelectorReturnType'
+					) {
+						try {
+							var itemValue = JSON.parse(selectedItem.value);
+
+							assetDisplayPageIdInput.value = itemValue.id;
+
+							specificDisplayPageNameInput.value = itemValue.name;
+						}
+						catch (e) {}
+					}
+					else {
+						pagesContainerInput.value = selectedItem.id;
+
+						specificDisplayPageNameInput.value = selectedItem.name;
+					}
+
+					if (previewSpecificDisplayPageButton) {
+						previewSpecificDisplayPageButton.parentNode.remove();
+					}
+				}
+			},
+			selectEventName:
+				'<%= selectAssetDisplayPageDisplayContext.getEventName() %>',
 			title: '<liferay-ui:message key="select-page" />',
-			url:
-				'<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageItemSelectorURL() %>'
-		});
-
-		itemSelectorDialog.open();
-
-		itemSelectorDialog.on('selectedItemChange', function(event) {
-			var selectedItem = event.selectedItem;
-
-			assetDisplayPageIdInput.value = '';
-
-			pagesContainerInput.value = '';
-
-			if (selectedItem) {
-				if (selectedItem.type === 'asset-display-page') {
-					assetDisplayPageIdInput.value = selectedItem.id;
-				} else {
-					pagesContainerInput.value = selectedItem.id;
-				}
-
-				specificDisplayPageNameInput.value = selectedItem.name;
-
-				if (previewSpecificDisplayPageButton) {
-					previewSpecificDisplayPageButton.parentNode.remove();
-				}
-			}
+			url: '<%= selectAssetDisplayPageDisplayContext.getAssetDisplayPageItemSelectorURL() %>',
 		});
 	});
 
@@ -132,33 +135,19 @@
 	);
 
 	if (previewDefaultDisplayPageButton) {
-		previewDefaultDisplayPageButton.addEventListener('click', function(event) {
-			Liferay.Util.openWindow({
-				dialog: {
-					destroyOnHide: true
-				},
-				dialogIframe: {
-					bodyCssClass: 'dialog-with-footer'
-				},
+		previewDefaultDisplayPageButton.addEventListener('click', (event) => {
+			Liferay.Util.openModal({
 				title: '<liferay-ui:message key="preview" />',
-				uri:
-					'<%= selectAssetDisplayPageDisplayContext.getURLViewInContext() %>'
+				url: '<%= HtmlUtil.escapeJS(selectAssetDisplayPageDisplayContext.getURLViewInContext()) %>',
 			});
 		});
 	}
 
 	if (previewSpecificDisplayPageButton) {
-		previewSpecificDisplayPageButton.addEventListener('click', function(event) {
-			Liferay.Util.openWindow({
-				dialog: {
-					destroyOnHide: true
-				},
-				dialogIframe: {
-					bodyCssClass: 'dialog-with-footer'
-				},
+		previewSpecificDisplayPageButton.addEventListener('click', (event) => {
+			Liferay.Util.openModal({
 				title: '<liferay-ui:message key="preview" />',
-				uri:
-					'<%= selectAssetDisplayPageDisplayContext.getURLViewInContext() %>'
+				url: '<%= HtmlUtil.escapeJS(selectAssetDisplayPageDisplayContext.getURLViewInContext()) %>',
 			});
 		});
 	}

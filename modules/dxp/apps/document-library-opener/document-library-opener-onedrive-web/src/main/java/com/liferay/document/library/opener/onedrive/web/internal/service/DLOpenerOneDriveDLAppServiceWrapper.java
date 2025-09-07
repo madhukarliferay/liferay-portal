@@ -1,22 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.opener.onedrive.web.internal.service;
 
-import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
-import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.document.library.kernel.service.DLAppServiceWrapper;
 import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.document.library.opener.constants.DLOpenerFileEntryReferenceConstants;
@@ -28,7 +17,6 @@ import com.liferay.document.library.opener.onedrive.web.internal.constants.DLOpe
 import com.liferay.document.library.opener.onedrive.web.internal.exception.GraphServicePortalException;
 import com.liferay.document.library.opener.service.DLOpenerFileEntryReferenceLocalService;
 import com.liferay.document.library.opener.upload.UniqueFileEntryTitleProvider;
-import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -37,10 +25,13 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.io.File;
+import java.io.InputStream;
 
+import java.util.Date;
 import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
@@ -56,14 +47,6 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = ServiceWrapper.class)
 public class DLOpenerOneDriveDLAppServiceWrapper extends DLAppServiceWrapper {
 
-	public DLOpenerOneDriveDLAppServiceWrapper() {
-		super(null);
-	}
-
-	public DLOpenerOneDriveDLAppServiceWrapper(DLAppService dlAppService) {
-		super(dlAppService);
-	}
-
 	@Override
 	public void cancelCheckOut(long fileEntryId) throws PortalException {
 		FileEntry fileEntry = getFileEntry(fileEntryId);
@@ -73,25 +56,15 @@ public class DLOpenerOneDriveDLAppServiceWrapper extends DLAppServiceWrapper {
 		if (_dlOpenerOneDriveManager.isConfigured(fileEntry.getCompanyId()) &&
 			_dlOpenerOneDriveManager.isOneDriveFile(fileEntry)) {
 
-			DLOpenerFileEntryReference dlOpenerFileEntryReference =
-				_dlOpenerFileEntryReferenceLocalService.
-					getDLOpenerFileEntryReference(
-						DLOpenerOneDriveConstants.ONE_DRIVE_REFERENCE_TYPE,
-						fileEntry);
-
 			try {
 				_dlOpenerOneDriveManager.deleteFile(_getUserId(), fileEntry);
 			}
-			catch (GraphServicePortalException.ItemNotFound inf) {
-				_log.error("The OneDrive file does not exist", inf);
-			}
+			catch (GraphServicePortalException.ItemNotFound
+						graphServicePortalException) {
 
-			if ((dlOpenerFileEntryReference.getType() ==
-					DLOpenerFileEntryReferenceConstants.TYPE_NEW) &&
-				DLFileEntryConstants.VERSION_DEFAULT.equals(
-					fileEntry.getVersion())) {
-
-				deleteFileEntry(fileEntryId);
+				_log.error(
+					"The OneDrive file does not exist",
+					graphServicePortalException);
 			}
 		}
 	}
@@ -158,18 +131,39 @@ public class DLOpenerOneDriveDLAppServiceWrapper extends DLAppServiceWrapper {
 			serviceContext.getUserId(), fileEntry);
 	}
 
-	private long _getUserId() {
-		return GetterUtil.getLong(PrincipalThreadLocal.getName());
-	}
+	@Override
+	public FileEntry updateFileEntryAndCheckIn(
+			long fileEntryId, String sourceFileName, String mimeType,
+			String title, String urlTitle, String description, String changeLog,
+			DLVersionNumberIncrease dlVersionNumberIncrease,
+			InputStream inputStream, long size, Date displayDate,
+			Date expirationDate, Date revisionDate,
+			ServiceContext serviceContext)
+		throws PortalException {
 
-	private String _removeExtension(String string) {
-		int i = string.lastIndexOf(CharPool.PERIOD);
+		FileEntry fileEntry = getFileEntry(fileEntryId);
 
-		if (i == -1) {
-			return string;
+		if (!_dlOpenerOneDriveManager.isConfigured(fileEntry.getCompanyId()) ||
+			!_dlOpenerOneDriveManager.isOneDriveFile(fileEntry)) {
+
+			return super.updateFileEntryAndCheckIn(
+				fileEntryId, sourceFileName, mimeType, title, urlTitle,
+				description, changeLog, dlVersionNumberIncrease, inputStream,
+				size, displayDate, expirationDate, revisionDate,
+				serviceContext);
 		}
 
-		return string.substring(0, i);
+		checkInFileEntry(
+			fileEntryId, dlVersionNumberIncrease, changeLog, serviceContext);
+
+		return super.updateFileEntry(
+			fileEntryId, sourceFileName, mimeType, title, urlTitle, description,
+			changeLog, dlVersionNumberIncrease, inputStream, size, displayDate,
+			expirationDate, revisionDate, serviceContext);
+	}
+
+	private long _getUserId() {
+		return GetterUtil.getLong(PrincipalThreadLocal.getName());
 	}
 
 	private void _updateFileEntryFromOneDrive(
@@ -189,23 +183,26 @@ public class DLOpenerOneDriveDLAppServiceWrapper extends DLAppServiceWrapper {
 		if (!Objects.equals(
 				sourceFileName, dLOpenerOneDriveFileReference.getTitle())) {
 
+			String mimeTypeExtension =
+				DLOpenerOneDriveMimeTypes.getMimeTypeExtension(
+					fileEntry.getMimeType());
+
 			title = _uniqueFileEntryTitleProvider.provide(
 				fileEntry.getGroupId(), fileEntry.getFolderId(),
+				mimeTypeExtension,
 				_dlValidator.fixName(
-					_removeExtension(
+					FileUtil.stripExtension(
 						dLOpenerOneDriveFileReference.getTitle())));
 
-			sourceFileName = title;
-
-			sourceFileName += DLOpenerOneDriveMimeTypes.getMimeTypeExtension(
-				fileEntry.getMimeType());
+			sourceFileName = title.concat(mimeTypeExtension);
 		}
 
 		try {
 			updateFileEntry(
 				fileEntry.getFileEntryId(), sourceFileName,
-				fileEntry.getMimeType(), title, fileEntry.getDescription(),
-				StringPool.BLANK, DLVersionNumberIncrease.NONE, file,
+				fileEntry.getMimeType(), title, StringPool.BLANK,
+				fileEntry.getDescription(), StringPool.BLANK,
+				DLVersionNumberIncrease.NONE, file, null, null, null,
 				serviceContext);
 		}
 		finally {

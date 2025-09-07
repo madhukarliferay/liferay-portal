@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.ratings.internal.page.ratings.exportimport.data.handler;
 
 import com.liferay.exportimport.kernel.lar.BasePortletDataHandler;
+import com.liferay.exportimport.kernel.lar.DataLevel;
 import com.liferay.exportimport.kernel.lar.ExportImportHelper;
 import com.liferay.exportimport.kernel.lar.ExportImportProcessCallbackRegistry;
 import com.liferay.exportimport.kernel.lar.ManifestSummary;
@@ -35,16 +27,16 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
-import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistryUtil;
 import com.liferay.portal.kernel.xml.Element;
+import com.liferay.portal.service.PersistedModelLocalServiceRegistryUtil;
 import com.liferay.ratings.kernel.model.RatingsEntry;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 import com.liferay.ratings.page.ratings.constants.PageRatingsPortletKeys;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.List;
 import java.util.concurrent.Callable;
-
-import javax.portlet.PortletPreferences;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -54,14 +46,14 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gergely Mathe
  */
 @Component(
-	property = "javax.portlet.name=" + PageRatingsPortletKeys.PAGE_RATINGS,
+	property = "jakarta.portlet.name=" + PageRatingsPortletKeys.PAGE_RATINGS,
 	service = PortletDataHandler.class
 )
 public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 
 	public static final String NAMESPACE = "ratings";
 
-	public static final String SCHEMA_VERSION = "1.0.0";
+	public static final String SCHEMA_VERSION = "4.0.0";
 
 	@Override
 	public String getSchemaVersion() {
@@ -71,6 +63,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 	@Activate
 	protected void activate() {
 		setDataAlwaysStaged(true);
+		setDataLevel(DataLevel.PORTLET_INSTANCE);
 		setDeletionSystemEventStagedModelTypes(
 			new StagedModelType(RatingsEntry.class));
 		setExportControls(
@@ -84,7 +77,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 
 	@Override
 	protected String doExportData(
-			final PortletDataContext portletDataContext, String portletId,
+			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
@@ -98,7 +91,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 		}
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			getRatingsEntryActionableDynamicQuery(portletDataContext);
+			_getRatingsEntryActionableDynamicQuery(portletDataContext);
 
 		actionableDynamicQuery.performActions();
 
@@ -124,19 +117,17 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 
 	@Override
 	protected void doPrepareManifestSummary(
-			final PortletDataContext portletDataContext,
+			PortletDataContext portletDataContext,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
-		final ActionableDynamicQuery actionableDynamicQuery =
-			getRatingsEntryCountActionableDynamicQuery(portletDataContext);
+		ActionableDynamicQuery actionableDynamicQuery =
+			_getRatingsEntryCountActionableDynamicQuery(portletDataContext);
 
 		actionableDynamicQuery.performCount();
 	}
 
-	protected long getGroupId(RatingsEntry ratingsEntry)
-		throws PortalException {
-
+	private long _getGroupId(RatingsEntry ratingsEntry) throws PortalException {
 		PersistedModelLocalService persistedModelLocalService =
 			PersistedModelLocalServiceRegistryUtil.
 				getPersistedModelLocalService(ratingsEntry.getClassName());
@@ -151,9 +142,9 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 			persistedModel = persistedModelLocalService.getPersistedModel(
 				ratingsEntry.getClassPK());
 		}
-		catch (NoSuchModelException nsme) {
+		catch (NoSuchModelException noSuchModelException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsme.getMessage(), nsme);
+				_log.debug(noSuchModelException);
 			}
 
 			return GroupConstants.DEFAULT_PARENT_GROUP_ID;
@@ -168,8 +159,8 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 		return groupedModel.getGroupId();
 	}
 
-	protected ActionableDynamicQuery getRatingsEntryActionableDynamicQuery(
-		final PortletDataContext portletDataContext) {
+	private ActionableDynamicQuery _getRatingsEntryActionableDynamicQuery(
+		PortletDataContext portletDataContext) {
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_ratingsEntryLocalService.getExportActionableDynamicQuery(
@@ -177,7 +168,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 
 		actionableDynamicQuery.setPerformActionMethod(
 			(RatingsEntry ratingsEntry) -> {
-				long groupId = getGroupId(ratingsEntry);
+				long groupId = _getGroupId(ratingsEntry);
 
 				if (groupId != portletDataContext.getScopeGroupId()) {
 					return;
@@ -190,9 +181,9 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 		return actionableDynamicQuery;
 	}
 
-	protected ActionableDynamicQuery getRatingsEntryCountActionableDynamicQuery(
+	private ActionableDynamicQuery _getRatingsEntryCountActionableDynamicQuery(
 			final PortletDataContext portletDataContext)
-		throws PortalException {
+		throws Exception {
 
 		final ExportActionableDynamicQuery exportActionableDynamicQuery =
 			_ratingsEntryLocalService.getExportActionableDynamicQuery(
@@ -200,7 +191,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 
 		exportActionableDynamicQuery.setPerformActionMethod(
 			(RatingsEntry ratingsEntry) -> {
-				long groupId = getGroupId(ratingsEntry);
+				long groupId = _getGroupId(ratingsEntry);
 
 				if (groupId != portletDataContext.getScopeGroupId()) {
 					return;
@@ -243,13 +234,6 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 		return exportActionableDynamicQuery;
 	}
 
-	@Reference(unbind = "-")
-	protected void setRatingsEntryLocalService(
-		RatingsEntryLocalService ratingsEntryLocalService) {
-
-		_ratingsEntryLocalService = ratingsEntryLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		PageRatingsPortletDataHandler.class);
 
@@ -263,6 +247,7 @@ public class PageRatingsPortletDataHandler extends BasePortletDataHandler {
 	@Reference
 	private PortletDataContextFactory _portletDataContextFactory;
 
+	@Reference
 	private RatingsEntryLocalService _ratingsEntryLocalService;
 
 	private static class ImportRatingsCallable implements Callable<Void> {

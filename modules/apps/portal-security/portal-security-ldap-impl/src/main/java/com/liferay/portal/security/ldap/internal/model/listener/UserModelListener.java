@@ -1,23 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.internal.model.listener;
 
 import com.liferay.portal.kernel.exception.ModelListenerException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.MembershipRequest;
 import com.liferay.portal.kernel.model.MembershipRequestConstants;
@@ -28,13 +17,11 @@ import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.service.MembershipRequestLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.exportimport.UserExporter;
 import com.liferay.portal.security.ldap.internal.UserImportTransactionThreadLocal;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -47,7 +34,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Raymond Augé
  * @author Vilmos Papp
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class UserModelListener extends BaseLDAPExportModelListener<User> {
 
 	@Override
@@ -61,12 +48,12 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 				Long userId = (Long)classPK;
 				Long groupId = (Long)associationClassPK;
 
-				updateMembershipRequestStatus(
+				_updateMembershipRequestStatus(
 					userId.longValue(), groupId.longValue());
 			}
 		}
-		catch (Exception e) {
-			throw new ModelListenerException(e);
+		catch (Exception exception) {
+			throw new ModelListenerException(exception);
 		}
 	}
 
@@ -75,57 +62,40 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 		try {
 			exportToLDAP(user);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new ModelListenerException(
 				"Unable to export user " + user.getUserId() +
 					" to LDAP on after create",
-				e);
+				exception);
 		}
 	}
 
 	@Override
-	public void onAfterUpdate(User user) throws ModelListenerException {
+	public void onAfterUpdate(User originalUser, User user)
+		throws ModelListenerException {
+
 		try {
 			exportToLDAP(user);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new ModelListenerException(
 				"Unable to export user " + user.getUserId() +
 					" to LDAP on after update",
-				e);
+				exception);
 		}
 	}
 
 	@Override
-	public void onBeforeUpdate(User user) {
+	public void onBeforeUpdate(User originalUser, User user) {
 		UserImportTransactionThreadLocal.setOriginalEmailAddress(
 			user.getOriginalEmailAddress());
 	}
 
-	protected void exportToLDAP(final User user) {
-		if (user.isDefaultUser() ||
-			UserImportTransactionThreadLocal.isOriginatesFromImport()) {
-
-			return;
-		}
-
-		Callable<Void> callable = CallableUtil.getCallable(
-			expandoBridgeAttributes -> {
-				try {
-					_userExporter.exportUser(user, expandoBridgeAttributes);
-				}
-				catch (Exception e) {
-					_log.error(
-						"Unable to export user with user ID " +
-							user.getUserId() + " to LDAP on after create",
-						e);
-				}
-			});
-
-		TransactionCommitCallbackUtil.registerCallback(callable);
+	protected void exportToLDAP(User user) throws Exception {
+		exportToLDAP(user, _userExporter, _ldapSettings);
 	}
 
-	protected void updateMembershipRequestStatus(long userId, long groupId)
+	private void _updateMembershipRequestStatus(long userId, long groupId)
 		throws Exception {
 
 		long principalUserId = GetterUtil.getLong(
@@ -140,15 +110,15 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 		for (MembershipRequest membershipRequest : membershipRequests) {
 			_membershipRequestLocalService.updateStatus(
 				principalUserId, membershipRequest.getMembershipRequestId(),
-				LanguageUtil.get(
+				_language.get(
 					user.getLocale(), "your-membership-has-been-approved"),
 				MembershipRequestConstants.STATUS_APPROVED, false,
 				new ServiceContext());
 		}
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		UserModelListener.class);
+	@Reference
+	private Language _language;
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,

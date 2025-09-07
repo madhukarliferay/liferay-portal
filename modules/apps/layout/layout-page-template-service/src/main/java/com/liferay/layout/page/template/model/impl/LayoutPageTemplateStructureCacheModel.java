@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model.impl;
@@ -38,18 +29,18 @@ public class LayoutPageTemplateStructureCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutPageTemplateStructureCacheModel)) {
+		if (!(object instanceof LayoutPageTemplateStructureCacheModel)) {
 			return false;
 		}
 
 		LayoutPageTemplateStructureCacheModel
 			layoutPageTemplateStructureCacheModel =
-				(LayoutPageTemplateStructureCacheModel)obj;
+				(LayoutPageTemplateStructureCacheModel)object;
 
 		if ((layoutPageTemplateStructureId ==
 				layoutPageTemplateStructureCacheModel.
@@ -86,6 +77,8 @@ public class LayoutPageTemplateStructureCacheModel
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", layoutPageTemplateStructureId=");
@@ -102,10 +95,8 @@ public class LayoutPageTemplateStructureCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-		sb.append(", classPK=");
-		sb.append(classPK);
+		sb.append(", plid=");
+		sb.append(plid);
 		sb.append("}");
 
 		return sb.toString();
@@ -117,6 +108,7 @@ public class LayoutPageTemplateStructureCacheModel
 			new LayoutPageTemplateStructureImpl();
 
 		layoutPageTemplateStructureImpl.setMvccVersion(mvccVersion);
+		layoutPageTemplateStructureImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			layoutPageTemplateStructureImpl.setUuid("");
@@ -153,8 +145,7 @@ public class LayoutPageTemplateStructureCacheModel
 				new Date(modifiedDate));
 		}
 
-		layoutPageTemplateStructureImpl.setClassNameId(classNameId);
-		layoutPageTemplateStructureImpl.setClassPK(classPK);
+		layoutPageTemplateStructureImpl.setPlid(plid);
 
 		layoutPageTemplateStructureImpl.resetOriginalValues();
 
@@ -164,6 +155,8 @@ public class LayoutPageTemplateStructureCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		layoutPageTemplateStructureId = objectInput.readLong();
@@ -177,14 +170,14 @@ public class LayoutPageTemplateStructureCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
-		classNameId = objectInput.readLong();
-
-		classPK = objectInput.readLong();
+		plid = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -211,12 +204,11 @@ public class LayoutPageTemplateStructureCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
-		objectOutput.writeLong(classNameId);
-
-		objectOutput.writeLong(classPK);
+		objectOutput.writeLong(plid);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long layoutPageTemplateStructureId;
 	public long groupId;
@@ -225,7 +217,6 @@ public class LayoutPageTemplateStructureCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
-	public long classNameId;
-	public long classPK;
+	public long plid;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -131,6 +122,8 @@ public class SamlSpAuthRequestPersistenceTest {
 
 		newSamlSpAuthRequest.setSamlIdpEntityId(RandomTestUtil.randomString());
 
+		newSamlSpAuthRequest.setSamlRelayState(RandomTestUtil.randomString());
+
 		newSamlSpAuthRequest.setSamlSpAuthRequestKey(
 			RandomTestUtil.randomString());
 
@@ -152,15 +145,18 @@ public class SamlSpAuthRequestPersistenceTest {
 			existingSamlSpAuthRequest.getSamlIdpEntityId(),
 			newSamlSpAuthRequest.getSamlIdpEntityId());
 		Assert.assertEquals(
+			existingSamlSpAuthRequest.getSamlRelayState(),
+			newSamlSpAuthRequest.getSamlRelayState());
+		Assert.assertEquals(
 			existingSamlSpAuthRequest.getSamlSpAuthRequestKey(),
 			newSamlSpAuthRequest.getSamlSpAuthRequestKey());
 	}
 
 	@Test
-	public void testCountByCreateDate() throws Exception {
-		_persistence.countByCreateDate(RandomTestUtil.nextDate());
+	public void testCountByLtCreateDate() throws Exception {
+		_persistence.countByLtCreateDate(RandomTestUtil.nextDate());
 
-		_persistence.countByCreateDate(RandomTestUtil.nextDate());
+		_persistence.countByLtCreateDate(RandomTestUtil.nextDate());
 	}
 
 	@Test
@@ -198,8 +194,8 @@ public class SamlSpAuthRequestPersistenceTest {
 	protected OrderByComparator<SamlSpAuthRequest> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"SamlSpAuthRequest", "samlSpAuthnRequestId", true, "companyId",
-			true, "createDate", true, "samlIdpEntityId", true,
-			"samlSpAuthRequestKey", true);
+			true, "createDate", true, "samlIdpEntityId", true, "samlRelayState",
+			true, "samlSpAuthRequestKey", true);
 	}
 
 	@Test
@@ -429,21 +425,63 @@ public class SamlSpAuthRequestPersistenceTest {
 
 		_persistence.clearCache();
 
-		SamlSpAuthRequest existingSamlSpAuthRequest =
-			_persistence.findByPrimaryKey(newSamlSpAuthRequest.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(
+				newSamlSpAuthRequest.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingSamlSpAuthRequest.getSamlIdpEntityId(),
-				ReflectionTestUtil.invoke(
-					existingSamlSpAuthRequest, "getOriginalSamlIdpEntityId",
-					new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingSamlSpAuthRequest.getSamlSpAuthRequestKey(),
-				ReflectionTestUtil.invoke(
-					existingSamlSpAuthRequest,
-					"getOriginalSamlSpAuthRequestKey", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SamlSpAuthRequest newSamlSpAuthRequest = addSamlSpAuthRequest();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SamlSpAuthRequest.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"samlSpAuthnRequestId",
+				newSamlSpAuthRequest.getSamlSpAuthnRequestId()));
+
+		List<SamlSpAuthRequest> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(SamlSpAuthRequest samlSpAuthRequest) {
+		Assert.assertEquals(
+			samlSpAuthRequest.getSamlIdpEntityId(),
+			ReflectionTestUtil.invoke(
+				samlSpAuthRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "samlIdpEntityId"));
+		Assert.assertEquals(
+			samlSpAuthRequest.getSamlSpAuthRequestKey(),
+			ReflectionTestUtil.invoke(
+				samlSpAuthRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "samlSpAuthRequestKey"));
 	}
 
 	protected SamlSpAuthRequest addSamlSpAuthRequest() throws Exception {
@@ -456,6 +494,8 @@ public class SamlSpAuthRequestPersistenceTest {
 		samlSpAuthRequest.setCreateDate(RandomTestUtil.nextDate());
 
 		samlSpAuthRequest.setSamlIdpEntityId(RandomTestUtil.randomString());
+
+		samlSpAuthRequest.setSamlRelayState(RandomTestUtil.randomString());
 
 		samlSpAuthRequest.setSamlSpAuthRequestKey(
 			RandomTestUtil.randomString());

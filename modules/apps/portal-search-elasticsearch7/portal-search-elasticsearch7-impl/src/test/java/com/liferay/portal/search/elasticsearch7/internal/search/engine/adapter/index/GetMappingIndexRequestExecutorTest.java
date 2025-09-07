@@ -1,27 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.index;
 
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchFixture;
 import com.liferay.portal.search.engine.adapter.index.GetMappingIndexRequest;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
+import org.elasticsearch.client.indices.GetMappingsRequest;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -29,10 +22,13 @@ import org.junit.Test;
  */
 public class GetMappingIndexRequestExecutorTest {
 
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
-		_elasticsearchFixture = new ElasticsearchFixture(
-			GetMappingIndexRequestExecutorTest.class.getSimpleName());
+		_elasticsearchFixture = new ElasticsearchFixture();
 
 		_elasticsearchFixture.setUp();
 	}
@@ -48,21 +44,15 @@ public class GetMappingIndexRequestExecutorTest {
 			new GetMappingIndexRequest(
 				new String[] {_INDEX_NAME}, _MAPPING_NAME);
 
-		GetMappingIndexRequestExecutorImpl getMappingIndexRequestExecutorImpl =
-			new GetMappingIndexRequestExecutorImpl() {
-				{
-					setElasticsearchClientResolver(_elasticsearchFixture);
-				}
-			};
+		GetMappingIndexRequestExecutor getMappingIndexRequestExecutor =
+			new GetMappingIndexRequestExecutor(_elasticsearchFixture);
 
 		GetMappingsRequest getMappingsRequest =
-			getMappingIndexRequestExecutorImpl.createGetMappingsRequest(
+			getMappingIndexRequestExecutor.createGetMappingsRequest(
 				getMappingIndexRequest);
 
 		Assert.assertArrayEquals(
 			new String[] {_INDEX_NAME}, getMappingsRequest.indices());
-		Assert.assertArrayEquals(
-			new String[] {_MAPPING_NAME}, getMappingsRequest.types());
 	}
 
 	private static final String _INDEX_NAME = "test_request_index";

@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_3;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.log.Log;
@@ -34,44 +24,40 @@ public class UpgradeOracle extends UpgradeProcess {
 
 	protected void alterVarchar2Columns() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select table_name, column_name, data_length from " +
 					"user_tab_columns where data_type = 'VARCHAR2' and " +
 						"char_used = 'B'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String tableName = rs.getString(1);
+			while (resultSet.next()) {
+				String tableName = resultSet.getString(1);
 
 				if (!isPortal62TableName(tableName)) {
 					continue;
 				}
 
-				String columnName = rs.getString(2);
+				String columnName = resultSet.getString(2);
 
 				try {
 					runSQL(
 						StringBundler.concat(
 							"alter table ", tableName, " modify ", columnName,
-							" varchar2(", rs.getInt(3), " char)"));
+							" varchar2(", resultSet.getInt(3), " char)"));
 				}
-				catch (SQLException sqle) {
-					if (sqle.getErrorCode() == 1441) {
+				catch (SQLException sqlException) {
+					if (sqlException.getErrorCode() == 1441) {
 						if (_log.isWarnEnabled()) {
-							StringBundler sb = new StringBundler(6);
-
-							sb.append("Unable to alter length of column ");
-							sb.append(columnName);
-							sb.append(" for table ");
-							sb.append(tableName);
-							sb.append(" because it contains values that are ");
-							sb.append("larger than the new column length");
-
-							_log.warn(sb.toString());
+							_log.warn(
+								StringBundler.concat(
+									"Unable to alter length of column ",
+									columnName, " for table ", tableName,
+									" because it contains values that are ",
+									"larger than the new column length"));
 						}
 					}
 					else {
-						throw sqle;
+						throw sqlException;
 					}
 				}
 			}
@@ -80,9 +66,7 @@ public class UpgradeOracle extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		DB db = DBManagerUtil.getDB();
-
-		if (db.getDBType() != DBType.ORACLE) {
+		if (DBManagerUtil.getDBType() != DBType.ORACLE) {
 			return;
 		}
 

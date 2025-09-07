@@ -1,94 +1,101 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import getClassName from 'classnames';
-import React from 'react';
+import ClayDropDown from '@clayui/drop-down';
+import {ClayCheckbox, ClayRadio, ClayRadioGroup} from '@clayui/form';
+import React, {useEffect, useState} from 'react';
 
-export default class FilterItem extends React.Component {
-	onChange(event) {
-		const {multiple, onChange} = this.props;
+const FilterItem = ({
+	active = false,
+	description,
+	dividerAfter,
+	hideControl,
+	labelPropertyName = 'name',
+	multiple,
+	name,
+	onClick,
+	...otherProps
+}) => {
+	const [checked, setChecked] = useState(active);
+	const [selectedValue, setSelectedValue] = useState();
+	const itemLabel = otherProps[labelPropertyName] || name;
 
-		onChange(event);
-
-		if (!multiple) {
-			document.dispatchEvent(new Event('mousedown'));
-		}
-	}
-
-	render() {
-		const {
-			active,
-			description,
-			dividerAfter,
-			hideControl,
-			itemKey,
-			multiple,
-			name,
-			onClick
-		} = this.props;
-
-		const controlClassName = getClassName(
-			'custom-control',
-			multiple ? 'custom-checkbox' : 'custom-radio'
-		);
-
-		const dropDownClassName = getClassName(
-			'dropdown-item',
-			active && 'active',
-			description && 'with-description',
-			hideControl && 'control-hidden'
-		);
-
-		const inputProps = {
-			type: 'checkbox'
-		};
-
-		if (!multiple) {
-			inputProps.name = 'filter-item-radio-group';
-			inputProps.type = 'radio';
+	useEffect(() => {
+		if (!hideControl && !multiple && active) {
+			setSelectedValue(itemLabel);
 		}
 
-		return (
-			<>
-				<li className={dropDownClassName} data-testid="filterItem">
-					<label className={controlClassName}>
-						<input
-							{...inputProps}
-							checked={!!active}
-							className="custom-control-input"
-							data-key={itemKey}
-							data-testid="filterItemInput"
-							onChange={this.onChange.bind(this)}
-							onClick={onClick}
-						/>
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-						<span className="custom-control-label">
-							<span
-								className="custom-control-label-text"
-								data-testid="filterItemName"
-							>
-								{name}
-							</span>
+	useEffect(() => {
+		if (!multiple && !hideControl && !active) {
+			setSelectedValue();
+		}
+		else if (multiple) {
+			setChecked(active);
+		}
 
-							{description && (
-								<span className="custom-control-label-text dropdown-item-description">
-									{description}
-								</span>
-							)}
-						</span>
-					</label>
-				</li>
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [active, selectedValue]);
 
-				{dividerAfter && <li className="dropdown-divider" />}
-			</>
-		);
-	}
-}
+	const onClickDescription = () => {
+		onClick();
+
+		if (multiple) {
+			setChecked(!checked);
+		}
+		else {
+			if (!hideControl && !active) {
+				setSelectedValue(itemLabel);
+			}
+		}
+	};
+
+	return (
+		<>
+			<ClayDropDown.Item
+				active={active}
+				className={hideControl && 'control-hidden'}
+			>
+				{multiple ? (
+					<ClayCheckbox
+						checked={checked}
+						label={itemLabel}
+						onChange={() => {
+							onClick();
+							setChecked(!checked);
+						}}
+					/>
+				) : hideControl ? (
+					<div onClick={onClick}>{itemLabel}</div>
+				) : (
+					<ClayRadioGroup
+						onChange={(newValue) => {
+							onClick();
+							setSelectedValue(newValue);
+						}}
+						value={selectedValue}
+					>
+						<ClayRadio label={itemLabel} value={itemLabel} />
+					</ClayRadioGroup>
+				)}
+
+				{description && (
+					<div
+						className="filter-dropdown-item-description"
+						onClick={onClickDescription}
+					>
+						{description}
+					</div>
+				)}
+			</ClayDropDown.Item>
+
+			{dividerAfter && <div className="dropdown-divider" />}
+		</>
+	);
+};
+
+export {FilterItem};

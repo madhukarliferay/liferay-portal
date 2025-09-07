@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.display.page.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.asset.display.page.model.AssetDisplayPageEntry;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for AssetDisplayPageEntry. This utility wraps
@@ -32,38 +25,30 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class AssetDisplayPageEntryServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.asset.display.page.service.impl.AssetDisplayPageEntryServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetDisplayPageEntryServiceUtil} to access the asset display page entry remote service. Add custom service methods to <code>com.liferay.asset.display.page.service.impl.AssetDisplayPageEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
-			addAssetDisplayPageEntry(
-				long userId, long groupId, long classNameId, long classPK,
-				long layoutPageTemplateEntryId, int type,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public static AssetDisplayPageEntry addAssetDisplayPageEntry(
+			long groupId, long classNameId, long classPK,
+			long layoutPageTemplateEntryId, int type,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws Exception {
 
 		return getService().addAssetDisplayPageEntry(
-			userId, groupId, classNameId, classPK, layoutPageTemplateEntryId,
-			type, serviceContext);
+			groupId, classNameId, classPK, layoutPageTemplateEntryId, type,
+			serviceContext);
 	}
 
-	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
-			addAssetDisplayPageEntry(
-				long userId, long groupId, long classNameId, long classPK,
-				long layoutPageTemplateEntryId,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public static AssetDisplayPageEntry addAssetDisplayPageEntry(
+			long groupId, long classNameId, long classPK,
+			long layoutPageTemplateEntryId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws Exception {
 
 		return getService().addAssetDisplayPageEntry(
-			userId, groupId, classNameId, classPK, layoutPageTemplateEntryId,
+			groupId, classNameId, classPK, layoutPageTemplateEntryId,
 			serviceContext);
 	}
 
@@ -74,23 +59,50 @@ public class AssetDisplayPageEntryServiceUtil {
 		getService().deleteAssetDisplayPageEntry(groupId, classNameId, classPK);
 	}
 
-	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
-			fetchAssetDisplayPageEntry(
-				long groupId, long classNameId, long classPK)
+	public static AssetDisplayPageEntry fetchAssetDisplayPageEntry(
+			long groupId, long classNameId, long classPK)
 		throws Exception {
 
 		return getService().fetchAssetDisplayPageEntry(
 			groupId, classNameId, classPK);
 	}
 
-	public static java.util.List
-		<com.liferay.asset.display.page.model.AssetDisplayPageEntry>
-			getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
-				long layoutPageTemplateEntryId) {
+	public static List<AssetDisplayPageEntry> getAssetDisplayPageEntries(
+		long classNameId, long classTypeId, long layoutPageTemplateEntryId,
+		boolean defaultTemplate, int start, int end,
+		OrderByComparator<AssetDisplayPageEntry> orderByComparator) {
+
+		return getService().getAssetDisplayPageEntries(
+			classNameId, classTypeId, layoutPageTemplateEntryId,
+			defaultTemplate, start, end, orderByComparator);
+	}
+
+	public static List<AssetDisplayPageEntry>
+		getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
+			long layoutPageTemplateEntryId) {
 
 		return getService().
 			getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
 				layoutPageTemplateEntryId);
+	}
+
+	public static List<AssetDisplayPageEntry>
+		getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
+			long layoutPageTemplateEntryId, int start, int end,
+			OrderByComparator<AssetDisplayPageEntry> orderByComparator) {
+
+		return getService().
+			getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
+				layoutPageTemplateEntryId, start, end, orderByComparator);
+	}
+
+	public static int getAssetDisplayPageEntriesCount(
+		long classNameId, long classTypeId, long layoutPageTemplateEntryId,
+		boolean defaultTemplate) {
+
+		return getService().getAssetDisplayPageEntriesCount(
+			classNameId, classTypeId, layoutPageTemplateEntryId,
+			defaultTemplate);
 	}
 
 	public static int
@@ -111,10 +123,9 @@ public class AssetDisplayPageEntryServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
-			updateAssetDisplayPageEntry(
-				long assetDisplayPageEntryId, long layoutPageTemplateEntryId,
-				int type)
+	public static AssetDisplayPageEntry updateAssetDisplayPageEntry(
+			long assetDisplayPageEntryId, long layoutPageTemplateEntryId,
+			int type)
 		throws Exception {
 
 		return getService().updateAssetDisplayPageEntry(
@@ -122,29 +133,12 @@ public class AssetDisplayPageEntryServiceUtil {
 	}
 
 	public static AssetDisplayPageEntryService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<AssetDisplayPageEntryService, AssetDisplayPageEntryService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<AssetDisplayPageEntryService>
+		_serviceSnapshot = new Snapshot<>(
+			AssetDisplayPageEntryServiceUtil.class,
 			AssetDisplayPageEntryService.class);
-
-		ServiceTracker
-			<AssetDisplayPageEntryService, AssetDisplayPageEntryService>
-				serviceTracker =
-					new ServiceTracker
-						<AssetDisplayPageEntryService,
-						 AssetDisplayPageEntryService>(
-							 bundle.getBundleContext(),
-							 AssetDisplayPageEntryService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

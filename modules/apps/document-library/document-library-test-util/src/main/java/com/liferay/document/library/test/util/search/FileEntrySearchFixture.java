@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.test.util.search;
@@ -57,7 +48,8 @@ public class FileEntrySearchFixture {
 		else {
 			fileEntry = addFileEntryWithWorkflow(
 				fileEntryBlueprint.getUserId(), fileEntryBlueprint.getGroupId(),
-				fileEntryBlueprint.getTitle(), serviceContext);
+				fileEntryBlueprint.getFileName(), fileEntryBlueprint.getTitle(),
+				serviceContext);
 		}
 
 		_fileEntries.add(fileEntry);
@@ -102,30 +94,31 @@ public class FileEntrySearchFixture {
 
 		try {
 			return dlAppLocalService.addFileEntry(
-				serviceContext.getUserId(), serviceContext.getScopeGroupId(),
+				null, serviceContext.getUserId(),
+				serviceContext.getScopeGroupId(),
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, fileName,
 				MimeTypesUtil.getContentType(fileName), title, StringPool.BLANK,
-				StringPool.BLANK, file, serviceContext);
+				StringPool.BLANK, StringPool.BLANK, file, null, null, null,
+				serviceContext);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
 	protected FileEntry addFileEntryWithWorkflow(
-		long userId, long groupId, String title,
+		long userId, long groupId, String fileName, String title,
 		ServiceContext serviceContext) {
 
 		try {
 			return DLAppTestUtil.addFileEntryWithWorkflow(
-				userId, groupId, 0, StringPool.BLANK, title, true,
-				serviceContext);
+				userId, groupId, 0, fileName, title, true, serviceContext);
 		}
-		catch (RuntimeException re) {
-			throw re;
+		catch (RuntimeException runtimeException) {
+			throw runtimeException;
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 
@@ -133,8 +126,8 @@ public class FileEntrySearchFixture {
 		try {
 			return FileUtil.createTempFile(inputStream);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -151,8 +144,8 @@ public class FileEntrySearchFixture {
 			return ServiceContextTestUtil.getServiceContext(
 				fileEntryBlueprint.getGroupId());
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 

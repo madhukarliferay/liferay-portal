@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.release.versions;
@@ -132,7 +123,7 @@ public class ReleaseVersionsTest {
 
 		Version masterVersion = versionPathPair.getKey();
 
-		if ((masterVersion.getMajor() == (releaseVersion.getMajor() + 1)) ||
+		if ((masterVersion.getMajor() > releaseVersion.getMajor()) ||
 			(masterVersion.equals(releaseVersion) &&
 			 (masterVersion.getMinor() == 0) &&
 			 (masterVersion.getMicro() == 0))) {
@@ -302,6 +293,13 @@ public class ReleaseVersionsTest {
 		return null;
 	}
 
+	private boolean _hasGitCommitMarkerFile(Path dirPath) {
+		Path gitCommitPath = dirPath.resolve(
+			"git-commit-" + String.valueOf(dirPath.getFileName()));
+
+		return Files.exists(gitCommitPath);
+	}
+
 	private boolean _isInGitRepoReadOnly(Path dirPath) throws IOException {
 		Path gitRepoPath = _getGitRepoPath(dirPath);
 
@@ -395,7 +393,9 @@ public class ReleaseVersionsTest {
 
 					String dirName = String.valueOf(dirPath.getFileName());
 
-					if (Objects.equals(dirName, "node_modules")) {
+					if (Objects.equals(dirName, "node_modules") ||
+						_hasGitCommitMarkerFile(dirPath)) {
+
 						return FileVisitResult.SKIP_SUBTREE;
 					}
 
@@ -408,19 +408,13 @@ public class ReleaseVersionsTest {
 					Path lfrbuildRelengIgnorePath = dirPath.resolve(
 						".lfrbuild-releng-ignore");
 
-					if (Files.exists(lfrbuildRelengIgnorePath)) {
-						return FileVisitResult.CONTINUE;
-					}
-
-					if (dirName.endsWith("-test") ||
+					if (Files.exists(lfrbuildRelengIgnorePath) ||
+						dirName.endsWith("-test") ||
 						dirName.endsWith("-test-api") ||
 						dirName.endsWith("-test-impl") ||
-						dirName.endsWith("-test-service")) {
+						dirName.endsWith("-test-service") ||
+						_isInGitRepoReadOnly(dirPath)) {
 
-						return FileVisitResult.CONTINUE;
-					}
-
-					if (_isInGitRepoReadOnly(dirPath)) {
 						return FileVisitResult.CONTINUE;
 					}
 

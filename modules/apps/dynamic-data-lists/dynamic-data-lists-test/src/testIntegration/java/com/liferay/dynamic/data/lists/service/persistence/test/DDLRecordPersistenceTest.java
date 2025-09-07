@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -127,6 +118,8 @@ public class DDLRecordPersistenceTest {
 
 		newDDLRecord.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDLRecord.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDLRecord.setUuid(RandomTestUtil.randomString());
 
 		newDDLRecord.setGroupId(RandomTestUtil.nextLong());
@@ -151,6 +144,10 @@ public class DDLRecordPersistenceTest {
 
 		newDDLRecord.setRecordSetVersion(RandomTestUtil.randomString());
 
+		newDDLRecord.setClassName(RandomTestUtil.randomString());
+
+		newDDLRecord.setClassPK(RandomTestUtil.nextLong());
+
 		newDDLRecord.setVersion(RandomTestUtil.randomString());
 
 		newDDLRecord.setDisplayIndex(RandomTestUtil.nextInt());
@@ -164,6 +161,9 @@ public class DDLRecordPersistenceTest {
 
 		Assert.assertEquals(
 			existingDDLRecord.getMvccVersion(), newDDLRecord.getMvccVersion());
+		Assert.assertEquals(
+			existingDDLRecord.getCtCollectionId(),
+			newDDLRecord.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDLRecord.getUuid(), newDDLRecord.getUuid());
 		Assert.assertEquals(
@@ -196,6 +196,10 @@ public class DDLRecordPersistenceTest {
 		Assert.assertEquals(
 			existingDDLRecord.getRecordSetVersion(),
 			newDDLRecord.getRecordSetVersion());
+		Assert.assertEquals(
+			existingDDLRecord.getClassName(), newDDLRecord.getClassName());
+		Assert.assertEquals(
+			existingDDLRecord.getClassPK(), newDDLRecord.getClassPK());
 		Assert.assertEquals(
 			existingDDLRecord.getVersion(), newDDLRecord.getVersion());
 		Assert.assertEquals(
@@ -265,6 +269,15 @@ public class DDLRecordPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_C() throws Exception {
+		_persistence.countByC_C("", RandomTestUtil.nextLong());
+
+		_persistence.countByC_C("null", 0L);
+
+		_persistence.countByC_C((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		DDLRecord newDDLRecord = addDDLRecord();
 
@@ -289,11 +302,12 @@ public class DDLRecordPersistenceTest {
 
 	protected OrderByComparator<DDLRecord> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DDLRecord", "mvccVersion", true, "uuid", true, "recordId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "versionUserId", true, "versionUserName", true, "createDate",
-			true, "modifiedDate", true, "DDMStorageId", true, "recordSetId",
-			true, "recordSetVersion", true, "version", true, "displayIndex",
+			"DDLRecord", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "recordId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "versionUserId", true,
+			"versionUserName", true, "createDate", true, "modifiedDate", true,
+			"DDMStorageId", true, "recordSetId", true, "recordSetVersion", true,
+			"className", true, "classPK", true, "version", true, "displayIndex",
 			true, "lastPublishDate", true);
 	}
 
@@ -507,18 +521,60 @@ public class DDLRecordPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDLRecord existingDDLRecord = _persistence.findByPrimaryKey(
-			newDDLRecord.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDDLRecord.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDLRecord.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDDLRecord, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDLRecord newDDLRecord = addDDLRecord();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDLRecord.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("recordId", newDDLRecord.getRecordId()));
+
+		List<DDLRecord> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDLRecord ddlRecord) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDLRecord.getGroupId()),
+			ddlRecord.getUuid(),
+			ReflectionTestUtil.invoke(
+				ddlRecord, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(ddlRecord.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDLRecord, "getOriginalGroupId", new Class<?>[0]));
+				ddlRecord, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected DDLRecord addDDLRecord() throws Exception {
@@ -527,6 +583,8 @@ public class DDLRecordPersistenceTest {
 		DDLRecord ddlRecord = _persistence.create(pk);
 
 		ddlRecord.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddlRecord.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddlRecord.setUuid(RandomTestUtil.randomString());
 
@@ -551,6 +609,10 @@ public class DDLRecordPersistenceTest {
 		ddlRecord.setRecordSetId(RandomTestUtil.nextLong());
 
 		ddlRecord.setRecordSetVersion(RandomTestUtil.randomString());
+
+		ddlRecord.setClassName(RandomTestUtil.randomString());
+
+		ddlRecord.setClassPK(RandomTestUtil.nextLong());
 
 		ddlRecord.setVersion(RandomTestUtil.randomString());
 

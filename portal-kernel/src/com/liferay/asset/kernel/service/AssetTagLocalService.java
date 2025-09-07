@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
@@ -17,7 +8,9 @@ package com.liferay.asset.kernel.service;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCachable;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -25,6 +18,8 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.increment.BufferedIncrement;
+import com.liferay.portal.kernel.increment.NumberIncrement;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.SystemEventConstants;
@@ -37,6 +32,7 @@ import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.change.tracking.CTService;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -59,6 +55,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see AssetTagLocalServiceUtil
  * @generated
  */
+@CTAware
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.asset.kernel.model.AssetTag"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -67,21 +67,26 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface AssetTagLocalService
 	extends BaseLocalService, CTService<AssetTag>, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetTagLocalServiceUtil} to access the asset tag local service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the asset tag local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link AssetTagLocalServiceUtil} if injection and service tracking are not available.
 	 */
-	public void addAssetEntryAssetTag(long entryId, AssetTag assetTag);
+	public boolean addAssetEntryAssetTag(long entryId, AssetTag assetTag);
 
-	public void addAssetEntryAssetTag(long entryId, long tagId);
+	public boolean addAssetEntryAssetTag(long entryId, long tagId);
 
-	public void addAssetEntryAssetTags(long entryId, List<AssetTag> assetTags);
+	public boolean addAssetEntryAssetTags(
+		long entryId, List<AssetTag> assetTags);
 
-	public void addAssetEntryAssetTags(long entryId, long[] tagIds);
+	public boolean addAssetEntryAssetTags(long entryId, long[] tagIds);
 
 	/**
 	 * Adds the asset tag to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was added
@@ -92,17 +97,18 @@ public interface AssetTagLocalService
 	/**
 	 * Adds an asset tag.
 	 *
-	 * @param userId the primary key of the user adding the asset tag
-	 * @param groupId the primary key of the group in which the asset tag is to
+	 * @param externalReferenceCode
+	 * @param userId                the primary key of the user adding the asset tag
+	 * @param groupId               the primary key of the group in which the asset tag is to
 	 be added
-	 * @param name the asset tag's name
-	 * @param serviceContext the service context to be applied
+	 * @param name                  the asset tag's name
+	 * @param serviceContext        the service context to be applied
 	 * @return the asset tag that was added
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public AssetTag addTag(
-			long userId, long groupId, String name,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			String name, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -149,6 +155,12 @@ public interface AssetTagLocalService
 	public AssetTag createAssetTag(long tagId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Decrements the number of assets to which the asset tag has been applied.
 	 *
 	 * @param tagId the primary key of the asset tag
@@ -172,6 +184,10 @@ public interface AssetTagLocalService
 	/**
 	 * Deletes the asset tag from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was removed
 	 */
@@ -180,6 +196,10 @@ public interface AssetTagLocalService
 
 	/**
 	 * Deletes the asset tag with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param tagId the primary key of the asset tag
 	 * @return the asset tag that was removed
@@ -217,6 +237,12 @@ public interface AssetTagLocalService
 	 * @param tagId the primary key of the asset tag
 	 */
 	public void deleteTag(long tagId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -287,6 +313,10 @@ public interface AssetTagLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AssetTag fetchAssetTag(long tagId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetTag fetchAssetTagByExternalReferenceCode(
+		String externalReferenceCode, long groupId);
+
 	/**
 	 * Returns the asset tag matching the UUID and group.
 	 *
@@ -344,6 +374,11 @@ public interface AssetTagLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AssetTag getAssetTag(long tagId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetTag getAssetTagByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
 
 	/**
 	 * Returns the asset tag matching the UUID and group.
@@ -448,6 +483,21 @@ public interface AssetTagLocalService
 	public List<AssetTag> getGroupTags(long groupId, int start, int end);
 
 	/**
+	 * Returns a range of all the asset tags in the group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param start the lower bound of the range of asset tags
+	 * @param end the upper bound of the range of asset tags (not inclusive)
+	 * @param orderByComparator the comparator to order the asset tags
+	 (optionally <code>null</code>)
+	 * @return the range of matching asset tags
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AssetTag> getGroupTags(
+		long groupId, int start, int end,
+		OrderByComparator<AssetTag> orderByComparator);
+
+	/**
 	 * Returns the number of asset tags in the group.
 	 *
 	 * @param groupId the primary key of the group
@@ -466,20 +516,13 @@ public interface AssetTagLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetTag> getSocialActivityCounterOffsetTags(
-		long groupId, String socialActivityCounterName, int startOffset,
-		int endOffset);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetTag> getSocialActivityCounterPeriodTags(
-		long groupId, String socialActivityCounterName, int startPeriod,
-		int endPeriod);
 
 	/**
 	 * Returns the asset tag with the primary key.
@@ -607,9 +650,6 @@ public interface AssetTagLocalService
 	public int getTagsSize(long groupId, long classNameId, String name);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getTagsSize(long groupId, String name);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public boolean hasAssetEntryAssetTag(long entryId, long tagId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -635,6 +675,7 @@ public interface AssetTagLocalService
 	 tag is being applied
 	 * @return the asset tag
 	 */
+	@BufferedIncrement(incrementClass = NumberIncrement.class)
 	@Indexable(type = IndexableType.REINDEX)
 	public AssetTag incrementAssetCount(long tagId, long classNameId)
 		throws PortalException;
@@ -681,8 +722,17 @@ public interface AssetTagLocalService
 
 	public void setAssetEntryAssetTags(long entryId, long[] tagIds);
 
+	public void subscribeTag(long userId, long groupId, long tagId)
+		throws PortalException;
+
+	public void unsubscribeTag(long userId, long tagId) throws PortalException;
+
 	/**
 	 * Updates the asset tag in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was updated
@@ -692,7 +742,8 @@ public interface AssetTagLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public AssetTag updateTag(
-			long userId, long tagId, String name, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long tagId, String name,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	@Override

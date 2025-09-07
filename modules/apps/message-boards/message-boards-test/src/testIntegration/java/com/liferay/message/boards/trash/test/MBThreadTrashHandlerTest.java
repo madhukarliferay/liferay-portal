@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.trash.test;
@@ -31,15 +22,19 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.exception.TrashEntryException;
 import com.liferay.trash.test.util.BaseTrashHandlerTestCase;
@@ -177,7 +172,7 @@ public class MBThreadTrashHandlerTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 	}
 
 	@Test
@@ -219,23 +214,13 @@ public class MBThreadTrashHandlerTest
 	@Override
 	@Test(expected = TrashEntryException.class)
 	public void testTrashParentAndBaseModel() throws Exception {
-		try {
-			super.testTrashParentAndBaseModel();
-		}
-		catch (com.liferay.trash.kernel.exception.TrashEntryException tee) {
-			throw new TrashEntryException();
-		}
+		super.testTrashParentAndBaseModel();
 	}
 
 	@Override
 	@Test(expected = RestoreEntryException.class)
 	public void testTrashParentAndRestoreParentAndBaseModel() throws Exception {
-		try {
-			super.testTrashParentAndRestoreParentAndBaseModel();
-		}
-		catch (com.liferay.trash.kernel.exception.RestoreEntryException ree) {
-			throw new RestoreEntryException();
-		}
+		super.testTrashParentAndRestoreParentAndBaseModel();
 	}
 
 	@Override
@@ -329,7 +314,7 @@ public class MBThreadTrashHandlerTest
 		throws Exception {
 
 		return MBCategoryLocalServiceUtil.addCategory(
-			TestPropsValues.getUserId(), parentBaseModelId,
+			null, TestPropsValues.getUserId(), parentBaseModelId,
 			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
 	}
 
@@ -339,9 +324,22 @@ public class MBThreadTrashHandlerTest
 		throws Exception {
 
 		return MBCategoryLocalServiceUtil.addCategory(
-			TestPropsValues.getUserId(),
+			null, TestPropsValues.getUserId(),
 			MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
 			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
+	}
+
+	@Override
+	protected TrashHandler getTrashHandler(String className) {
+		if (className.equals(MBCategory.class.getName())) {
+			return _mbCategoryTrashHandler;
+		}
+
+		if (className.equals(MBThread.class.getName())) {
+			return _mbThreadTrashHandler;
+		}
+
+		return null;
 	}
 
 	@Override
@@ -355,6 +353,11 @@ public class MBThreadTrashHandlerTest
 	}
 
 	@Override
+	protected boolean isInTrashContainer(TrashedModel trashedModel) {
+		return _trashHelper.isInTrashContainer(trashedModel);
+	}
+
+	@Override
 	protected void moveBaseModelToTrash(long primaryKey) throws Exception {
 		MBThreadServiceUtil.moveThreadToTrash(primaryKey);
 	}
@@ -362,20 +365,31 @@ public class MBThreadTrashHandlerTest
 	protected void replyMessage(BaseModel<?> baseModel) throws Exception {
 		MBThread thread = (MBThread)baseModel;
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				thread.getGroupId(), TestPropsValues.getUserId());
-
 		MBMessageLocalServiceUtil.addMessage(
 			TestPropsValues.getUserId(), RandomTestUtil.randomString(),
 			thread.getGroupId(), thread.getCategoryId(), thread.getThreadId(),
 			thread.getRootMessageId(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), MBMessageConstants.DEFAULT_FORMAT,
 			Collections.<ObjectValuePair<String, InputStream>>emptyList(),
-			false, 0.0, false, serviceContext);
+			false, 0.0, false,
+			ServiceContextTestUtil.getServiceContext(
+				thread.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	private static final String _SUBJECT = "Subject";
+
+	@Inject(
+		filter = "model.class.name=com.liferay.message.boards.model.MBCategory"
+	)
+	private static TrashHandler _mbCategoryTrashHandler;
+
+	@Inject(
+		filter = "model.class.name=com.liferay.message.boards.model.MBThread"
+	)
+	private static TrashHandler _mbThreadTrashHandler;
+
+	@Inject
+	private TrashHelper _trashHelper;
 
 	private final WhenIsAssetable _whenIsAssetable =
 		new DefaultWhenIsAssetable();

@@ -1,27 +1,22 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-content-management"
 definition {
 
 	property custom.properties = "default.layout.template.id=1_column";
 	property osgi.app.includes = "my-subscriptions";
+	property plugins.deployment.type = "osgi";
 	property portal.release = "false";
 	property portal.upstream = "true";
-	property plugins.deployment.type = "osgi";
-	property testray.main.component.name = "My Subscriptions";
 	property test.assert.warning.exceptions = "true";
+	property testray.main.component.name = "My Subscriptions Widget";
 
 	setUp {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
-
-		SitePages.addPublicPage(
-			pageName = "My Subscriptions Page",
-			sitePageType = "Widget Page");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "My Subscriptions Page");
 
 		Navigator.gotoPage(pageName = "My Subscriptions Page");
 
@@ -29,46 +24,52 @@ definition {
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			Page.tearDownCP();
+			PagesAdmin.tearDownCP();
 		}
 	}
 
-	test SubscribeAndUnsubscribetoBookmarksRootFolder {
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+	@priority = 3
+	test SubscribeAndUnsubscribetoDMFolder {
+		property custom.properties = "dl.actions.visible=true";
 
-		SitePages.addPublicPage(
-			pageName = "Bookmarks Page",
-			sitePageType = "Widget Page");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page");
 
-		Navigator.gotoPage(pageName = "Bookmarks Page");
+		JSONLayout.addWidgetToPublicLayout(
+			column = 1,
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Documents and Media");
 
-		Portlet.addPG(portletName = "Bookmarks");
+		JSONFolder.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder",
+			groupName = "Guest");
+
+		Navigator.gotoPage(pageName = "Test Page");
 
 		Subscriptions.subscribeViaInfoPanelPG();
 
 		Navigator.gotoPage(pageName = "My Subscriptions Page");
 
 		Subscriptions.viewSubscription(
-			assetName = "Bookmarks Folder",
 			assetTitle = "Home",
-			assetType = "Bookmarks Folder");
+			assetType = "Documents Folder");
 
-		Subscriptions.unsubscribeViaMySubscriptions(rowNumber = "1");
+		Subscriptions.unsubscribeViaMySubscriptions(rowNumber = 1);
 
 		Navigator.gotoPage(pageName = "My Subscriptions Page");
 
 		Subscriptions.viewDefaultPG();
 
-		Navigator.gotoPage(pageName = "Bookmarks Page");
+		Navigator.gotoPage(pageName = "Test Page");
 
 		Subscriptions.viewUnsubscribedViaInfoPanel();
 	}

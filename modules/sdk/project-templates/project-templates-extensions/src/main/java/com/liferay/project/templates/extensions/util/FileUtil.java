@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.extensions.util;
@@ -64,7 +55,7 @@ public class FileUtil {
 
 				@Override
 				public FileVisitResult postVisitDirectory(
-						Path dirPath, IOException ioe)
+						Path dirPath, IOException ioException)
 					throws IOException {
 
 					Files.delete(dirPath);
@@ -145,9 +136,7 @@ public class FileUtil {
 						Path path, BasicFileAttributes basicFileAttributes)
 					throws IOException {
 
-					Path fileNamePath = path.getFileName();
-
-					String fileName = fileNamePath.toString();
+					String fileName = String.valueOf(path.getFileName());
 
 					Matcher matcher = pattern.matcher(fileName);
 
@@ -161,8 +150,7 @@ public class FileUtil {
 			});
 	}
 
-	public static void extractDirectory(
-			String dirName, final Path destinationDirPath)
+	public static void extractDirectory(String dirName, Path destinationDirPath)
 		throws Exception {
 
 		Map<String, InputStream> filesAndDirectories = _getFilesFromClasspath(
@@ -185,8 +173,8 @@ public class FileUtil {
 					try {
 						Files.copy(inputStream, destinationPath);
 					}
-					catch (Throwable th) {
-						throw new RuntimeException(th);
+					catch (Throwable throwable) {
+						throw new RuntimeException(throwable);
 					}
 				}
 				else {
@@ -221,9 +209,7 @@ public class FileUtil {
 			while (iterator.hasNext()) {
 				Path path = iterator.next();
 
-				Path fileNamePath = path.getFileName();
-
-				String fileName = fileNamePath.toString();
+				String fileName = String.valueOf(path.getFileName());
 
 				if (fileName.matches(regex)) {
 					return path;
@@ -235,9 +221,7 @@ public class FileUtil {
 	}
 
 	public static Path getJarPath() throws URISyntaxException {
-		URI jarUri = _getJarUri();
-
-		return Paths.get(jarUri);
+		return Paths.get(_getJarURI());
 	}
 
 	public static String getManifestProperty(File file, String name)
@@ -283,6 +267,18 @@ public class FileUtil {
 		return properties;
 	}
 
+	public static void replaceString(File file, String search, String replace)
+		throws IOException {
+
+		Path path = file.toPath();
+
+		String content = read(path);
+
+		String newContent = content.replace(search, replace);
+
+		Files.write(path, newContent.getBytes(StandardCharsets.UTF_8));
+	}
+
 	public static void setPosixFilePermissions(
 			Path path, Set<PosixFilePermission> posixFilePermissions)
 		throws IOException {
@@ -290,15 +286,13 @@ public class FileUtil {
 		try {
 			Files.setPosixFilePermissions(path, posixFilePermissions);
 		}
-		catch (UnsupportedOperationException uoe) {
+		catch (UnsupportedOperationException unsupportedOperationException) {
 		}
 	}
 
 	private static Map<String, InputStream> _getFilesFromClasspath(
 			String dirPathString)
 		throws Exception {
-
-		Map<String, InputStream> pathMap = new HashMap<>();
 
 		if ((dirPathString != null) && (File.separatorChar == '\\')) {
 			dirPathString = dirPathString.replace('\\', '/');
@@ -311,6 +305,8 @@ public class FileUtil {
 
 			throw new NoSuchElementException(errorMessage);
 		}
+
+		Map<String, InputStream> pathMap = new HashMap<>();
 
 		URI uri = url.toURI();
 
@@ -332,10 +328,10 @@ public class FileUtil {
 						pathMap.putAll(_getFilesFromClasspath(pathString));
 					}
 					else {
-						InputStream is = FileUtil.class.getResourceAsStream(
-							pathString);
+						InputStream inputStream =
+							FileUtil.class.getResourceAsStream(pathString);
 
-						pathMap.put(pathString, is);
+						pathMap.put(pathString, inputStream);
 					}
 				}
 			}
@@ -350,10 +346,8 @@ public class FileUtil {
 					Path folderNamePath = Paths.get(dirPathString);
 					Path relativeDirPath = path.relativize(dirPath);
 
-					Path pathToResolve = folderNamePath.resolve(
-						relativeDirPath);
-
-					String pathToResolveString = pathToResolve.toString();
+					String pathToResolveString = String.valueOf(
+						folderNamePath.resolve(relativeDirPath));
 
 					if (Files.isDirectory(dirPath)) {
 						pathMap.put(pathToResolveString + File.separator, null);
@@ -373,25 +367,21 @@ public class FileUtil {
 		return pathMap;
 	}
 
-	private static FileSystem _getJarFileSystem()
-		throws IOException, URISyntaxException {
+	private static FileSystem _getJarFileSystem() throws Exception {
+		Path jarPath = Paths.get(_getJarURI());
 
-		URI jarUri = _getJarUri();
-
-		Path jarPath = Paths.get(jarUri);
-
-		return FileSystems.newFileSystem(jarPath, null);
+		return FileSystems.newFileSystem(jarPath, (ClassLoader)null);
 	}
 
-	private static URI _getJarUri() throws URISyntaxException {
+	private static URI _getJarURI() throws URISyntaxException {
 		ProtectionDomain protectionDomain =
 			FileUtil.class.getProtectionDomain();
 
 		CodeSource codeSource = protectionDomain.getCodeSource();
 
-		URL jarUrl = codeSource.getLocation();
+		URL jarURL = codeSource.getLocation();
 
-		return jarUrl.toURI();
+		return jarURL.toURI();
 	}
 
 }

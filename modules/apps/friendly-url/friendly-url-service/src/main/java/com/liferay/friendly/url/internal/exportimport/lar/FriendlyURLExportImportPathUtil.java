@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.friendly.url.internal.exportimport.lar;
@@ -19,23 +10,20 @@ import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 
 /**
- * Provides utility methods for generating paths for friendlyURLs serialized
- * with the portal's export/import framework.
+ * Generates friendly URL paths serialized with the export/import framework.
  *
  * @author Jorge García Jiménez
- * @review
  */
 public class FriendlyURLExportImportPathUtil {
 
 	/**
-	 * Returns a model path based on the portlet data context and friendly url
+	 * Returns a model path based on the portlet data context and friendly URL
 	 * entry.
 	 *
 	 * @param  portletDataContext the context of the current export/import
 	 *         process
-	 * @param  friendlyURLEntry the friendly url entry the path is needed for
-	 * @return a model path for the friendly url entry
-	 * @review
+	 * @param  friendlyURLEntry the friendly URL entry the path is needed for
+	 * @return a model path for the friendly URL entry
 	 */
 	public static String getModelPath(
 		PortletDataContext portletDataContext,

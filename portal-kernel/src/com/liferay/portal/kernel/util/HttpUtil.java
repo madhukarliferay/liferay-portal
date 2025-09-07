@@ -1,315 +1,116 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
+
+import com.liferay.portal.kernel.module.service.Snapshot;
+
+import jakarta.servlet.http.Cookie;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.net.URL;
 
-import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.RenderRequest;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * @author Brian Wing Shun Chan
  */
 public class HttpUtil {
 
-	public static String addParameter(String url, String name, boolean value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String addParameter(String url, String name, double value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String addParameter(String url, String name, int value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String addParameter(String url, String name, long value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String addParameter(String url, String name, short value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String addParameter(String url, String name, String value) {
-		return getHttp().addParameter(url, name, value);
-	}
-
-	public static String decodePath(String path) {
-		return getHttp().decodePath(path);
-	}
-
-	public static String decodeURL(String url) {
-		return getHttp().decodeURL(url);
-	}
-
-	public static String encodeParameters(String url) {
-		return getHttp().encodeParameters(url);
-	}
-
-	public static String encodePath(String path) {
-		return getHttp().encodePath(path);
-	}
-
-	public static String fixPath(String path) {
-		return getHttp().fixPath(path);
-	}
-
-	public static String fixPath(
-		String path, boolean leading, boolean trailing) {
-
-		return getHttp().fixPath(path, leading, trailing);
-	}
-
-	public static String getCompleteURL(HttpServletRequest httpServletRequest) {
-		return getHttp().getCompleteURL(httpServletRequest);
-	}
-
 	public static Cookie[] getCookies() {
-		return getHttp().getCookies();
-	}
+		Http http = _httpSnapshot.get();
 
-	public static String getDomain(String url) {
-		return getHttp().getDomain(url);
+		return http.getCookies();
 	}
 
 	public static Http getHttp() {
-		return _http;
-	}
-
-	public static String getIpAddress(String url) {
-		return getHttp().getIpAddress(url);
-	}
-
-	public static String getParameter(String url, String name) {
-		return getHttp().getParameter(url, name);
-	}
-
-	public static String getParameter(
-		String url, String name, boolean escaped) {
-
-		return getHttp().getParameter(url, name, escaped);
-	}
-
-	public static Map<String, String[]> getParameterMap(String queryString) {
-		return getHttp().getParameterMap(queryString);
-	}
-
-	public static String getPath(String url) {
-		return getHttp().getPath(url);
-	}
-
-	public static String getProtocol(ActionRequest actionRequest) {
-		return getHttp().getProtocol(actionRequest);
-	}
-
-	public static String getProtocol(boolean secure) {
-		return getHttp().getProtocol(secure);
-	}
-
-	public static String getProtocol(HttpServletRequest httpServletRequest) {
-		return getHttp().getProtocol(httpServletRequest);
-	}
-
-	public static String getProtocol(RenderRequest renderRequest) {
-		return getHttp().getProtocol(renderRequest);
-	}
-
-	public static String getProtocol(String url) {
-		return getHttp().getProtocol(url);
-	}
-
-	public static String getQueryString(String url) {
-		return getHttp().getQueryString(url);
-	}
-
-	public static String getRequestURL(HttpServletRequest httpServletRequest) {
-		return getHttp().getRequestURL(httpServletRequest);
-	}
-
-	public static boolean hasDomain(String url) {
-		return getHttp().hasDomain(url);
-	}
-
-	public static boolean hasProtocol(String url) {
-		return getHttp().hasProtocol(url);
+		return _httpSnapshot.get();
 	}
 
 	public static boolean hasProxyConfig() {
-		return getHttp().hasProxyConfig();
+		Http http = _httpSnapshot.get();
+
+		return http.hasProxyConfig();
 	}
 
 	public static boolean isNonProxyHost(String host) {
-		return getHttp().isNonProxyHost(host);
+		Http http = _httpSnapshot.get();
+
+		return http.isNonProxyHost(host);
 	}
 
 	public static boolean isProxyHost(String host) {
-		return getHttp().isProxyHost(host);
-	}
+		Http http = _httpSnapshot.get();
 
-	public static boolean isSecure(String url) {
-		return getHttp().isSecure(url);
-	}
-
-	public static String normalizePath(String uri) {
-		return getHttp().normalizePath(uri);
-	}
-
-	public static Map<String, String[]> parameterMapFromString(
-		String queryString) {
-
-		return getHttp().parameterMapFromString(queryString);
-	}
-
-	public static String parameterMapToString(
-		Map<String, String[]> parameterMap) {
-
-		return getHttp().parameterMapToString(parameterMap);
-	}
-
-	public static String parameterMapToString(
-		Map<String, String[]> parameterMap, boolean addQuestion) {
-
-		return getHttp().parameterMapToString(parameterMap, addQuestion);
-	}
-
-	public static String protocolize(String url, ActionRequest actionRequest) {
-		return getHttp().protocolize(url, actionRequest);
-	}
-
-	public static String protocolize(String url, boolean secure) {
-		return getHttp().protocolize(url, secure);
-	}
-
-	public static String protocolize(
-		String url, HttpServletRequest httpServletRequest) {
-
-		return getHttp().protocolize(url, httpServletRequest);
-	}
-
-	public static String protocolize(String url, int port, boolean secure) {
-		return getHttp().protocolize(url, port, secure);
-	}
-
-	public static String protocolize(String url, RenderRequest renderRequest) {
-		return getHttp().protocolize(url, renderRequest);
-	}
-
-	public static String removeDomain(String url) {
-		return getHttp().removeDomain(url);
-	}
-
-	public static String removeParameter(String url, String name) {
-		return getHttp().removeParameter(url, name);
-	}
-
-	public static String removePathParameters(String uri) {
-		return getHttp().removePathParameters(uri);
-	}
-
-	public static String removeProtocol(String url) {
-		return getHttp().removeProtocol(url);
-	}
-
-	public static String sanitizeHeader(String header) {
-		return getHttp().sanitizeHeader(header);
-	}
-
-	public static String setParameter(String url, String name, boolean value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String setParameter(String url, String name, double value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String setParameter(String url, String name, int value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String setParameter(String url, String name, long value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String setParameter(String url, String name, short value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String setParameter(String url, String name, String value) {
-		return getHttp().setParameter(url, name, value);
-	}
-
-	public static String shortenURL(String url) {
-		return getHttp().shortenURL(url);
+		return http.isProxyHost(host);
 	}
 
 	public static byte[] URLtoByteArray(Http.Options options)
 		throws IOException {
 
-		return getHttp().URLtoByteArray(options);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoByteArray(options);
 	}
 
 	public static byte[] URLtoByteArray(String location) throws IOException {
-		return getHttp().URLtoByteArray(location);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoByteArray(location);
 	}
 
 	public static byte[] URLtoByteArray(String location, boolean post)
 		throws IOException {
 
-		return getHttp().URLtoByteArray(location, post);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoByteArray(location, post);
 	}
 
 	public static InputStream URLtoInputStream(Http.Options options)
 		throws IOException {
 
-		return getHttp().URLtoInputStream(options);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoInputStream(options);
 	}
 
 	public static InputStream URLtoInputStream(String location)
 		throws IOException {
 
-		return getHttp().URLtoInputStream(location);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoInputStream(location);
 	}
 
 	public static InputStream URLtoInputStream(String location, boolean post)
 		throws IOException {
 
-		return getHttp().URLtoInputStream(location, post);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoInputStream(location, post);
 	}
 
 	public static String URLtoString(Http.Options options) throws IOException {
-		return getHttp().URLtoString(options);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoString(options);
 	}
 
 	public static String URLtoString(String location) throws IOException {
-		return getHttp().URLtoString(location);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoString(location);
 	}
 
 	public static String URLtoString(String location, boolean post)
 		throws IOException {
 
-		return getHttp().URLtoString(location, post);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoString(location, post);
 	}
 
 	/**
@@ -324,13 +125,12 @@ public class HttpUtil {
 	 * @throws IOException if an IO Exception occurred
 	 */
 	public static String URLtoString(URL url) throws IOException {
-		return getHttp().URLtoString(url);
+		Http http = _httpSnapshot.get();
+
+		return http.URLtoString(url);
 	}
 
-	public void setHttp(Http http) {
-		_http = http;
-	}
-
-	private static Http _http;
+	private static final Snapshot<Http> _httpSnapshot = new Snapshot<>(
+		HttpUtil.class, Http.class);
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.definition;
 
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.workflow.kaleo.definition.exception.KaleoDefinitionValidationException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +20,9 @@ import java.util.Set;
 public class Notification {
 
 	public Notification(
-		String name, String description, String executionType, String template,
-		String templateLanguage) {
+			String name, String description, String executionType,
+			String template, String templateLanguage)
+		throws KaleoDefinitionValidationException {
 
 		_name = name;
 		_description = description;
@@ -45,7 +38,9 @@ public class Notification {
 		_templateLanguage = TemplateLanguage.parse(templateLanguage);
 	}
 
-	public void addNotificationType(String notificationType) {
+	public void addNotificationType(String notificationType)
+		throws KaleoDefinitionValidationException {
+
 		_notificationTypes.add(NotificationType.parse(notificationType));
 	}
 
@@ -64,16 +59,16 @@ public class Notification {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof Notification)) {
+		if (!(object instanceof Notification)) {
 			return false;
 		}
 
-		Notification notification = (Notification)obj;
+		Notification notification = (Notification)object;
 
 		if (Objects.equals(_name, notification._name)) {
 			return true;

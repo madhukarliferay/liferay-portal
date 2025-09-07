@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.templateparser;
@@ -19,35 +10,41 @@ import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
-import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
 
 /**
  * @author Alexander Chow
@@ -66,11 +63,35 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 		put("data", data);
 		put("type", type);
 		put("options", new ArrayList<String>());
-		put("optionsMap", new HashMap<String, String>());
+		put("optionsMap", new LinkedHashMap<String, String>());
 	}
 
 	public void appendChild(TemplateNode templateNode) {
 		_childTemplateNodes.put(templateNode.getName(), templateNode);
+
+		if (Objects.equals(templateNode.getName(), "attributes")) {
+			put(_RANDOM_ID + "Attributes", getAttributes());
+		}
+
+		if (Objects.equals(templateNode.getName(), "data")) {
+			put(_RANDOM_ID + "Data", _getData());
+		}
+
+		if (Objects.equals(templateNode.getName(), "name")) {
+			put(_RANDOM_ID + "Name", getName());
+		}
+
+		if (Objects.equals(templateNode.getName(), "options")) {
+			put(_RANDOM_ID + "Options", getOptions());
+		}
+
+		if (Objects.equals(templateNode.getName(), "optionsMap")) {
+			put(_RANDOM_ID + "OptionsMap", getOptionsMap());
+		}
+
+		if (Objects.equals(templateNode.getName(), "type")) {
+			put(_RANDOM_ID + "Type", getType());
+		}
 
 		put(templateNode.getName(), templateNode);
 	}
@@ -109,6 +130,31 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 		_siblingTemplateNodes.add(templateNode);
 	}
 
+	@Override
+	public Object clone() {
+		TemplateNode templateNode = new TemplateNode(
+			_themeDisplay, getName(), getData(), getType(), getAttributes());
+
+		for (Map.Entry<String, TemplateNode> entry :
+				_childTemplateNodes.entrySet()) {
+
+			templateNode.appendChild(entry.getValue());
+		}
+
+		templateNode.appendOptions(getOptions());
+		templateNode.appendOptionsMap(getOptionsMap());
+
+		for (TemplateNode siblingTemplateNode : _siblingTemplateNodes) {
+			templateNode.appendSibling(siblingTemplateNode);
+		}
+
+		for (Map.Entry<String, Object> entry : entrySet()) {
+			templateNode.put(entry.getKey(), entry.getValue());
+		}
+
+		return templateNode;
+	}
+
 	public String getAttribute(String name) {
 		Map<String, String> attributes = getAttributes();
 
@@ -120,6 +166,13 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 	}
 
 	public Map<String, String> getAttributes() {
+		if (super.containsKey(_RANDOM_ID + "Attributes") ||
+			MapUtil.isNotEmpty(
+				(Map<String, String>)get(_RANDOM_ID + "Attributes"))) {
+
+			return (Map<String, String>)get(_RANDOM_ID + "Attributes");
+		}
+
 		return (Map<String, String>)get("attributes");
 	}
 
@@ -134,38 +187,78 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 	public String getData() {
 		String type = getType();
 
-		if (type.equals("document_library") || type.equals("image")) {
+		if (type.equals("color") || type.equals("ddm-color")) {
+			return _getColorData();
+		}
+		else if (type.equals("ddm-decimal") || type.equals("ddm-number") ||
+				 type.equals("numeric")) {
+
+			return _getNumericData();
+		}
+		else if (type.equals("ddm-journal-article") ||
+				 type.equals("journal_article")) {
+
+			return _getLatestArticleData();
+		}
+		else if (type.equals("document_library") || type.equals("image")) {
 			return _getFileEntryData();
 		}
-		else if (type.equals("link_to_layout")) {
-			return _getLinkToLayoutData();
+		else if (type.equals("geolocation")) {
+			return _getGeolocationData();
 		}
 
-		return (String)get("data");
+		return _getData();
 	}
 
 	public String getFriendlyUrl() {
 		String type = getType();
 
-		if (type.equals("ddm-journal-article")) {
+		if (type.equals("ddm-journal-article") ||
+			type.equals("journal_article")) {
+
 			return _getDDMJournalArticleFriendlyURL();
 		}
-		else if (type.equals("link_to_layout")) {
-			return _getLinkToLayoutFriendlyURL();
+		else if (type.equals("ddm-link-to-page") ||
+				 type.equals("link_to_layout")) {
+
+			return getUrl();
 		}
 
 		return StringPool.BLANK;
 	}
 
 	public String getName() {
-		return (String)get("name");
+		if (super.containsKey(_RANDOM_ID + "Name")) {
+			return (String)get(_RANDOM_ID + "Name");
+		}
+
+		Object name = get("name");
+
+		if ((name == null) || (name instanceof String)) {
+			return (String)name;
+		}
+
+		return "name";
 	}
 
 	public List<String> getOptions() {
+		if (super.containsKey(_RANDOM_ID + "Options") ||
+			ListUtil.isNotEmpty((List<String>)get(_RANDOM_ID + "Options"))) {
+
+			return (List<String>)get(_RANDOM_ID + "Options");
+		}
+
 		return (List<String>)get("options");
 	}
 
 	public Map<String, String> getOptionsMap() {
+		if (super.containsKey(_RANDOM_ID + "OptionsMap") ||
+			MapUtil.isNotEmpty(
+				(Map<String, String>)get(_RANDOM_ID + "OptionsMap"))) {
+
+			return (Map<String, String>)get(_RANDOM_ID + "OptionsMap");
+		}
+
 		return (Map<String, String>)get("optionsMap");
 	}
 
@@ -174,98 +267,73 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 	}
 
 	public String getType() {
-		return (String)get("type");
+		if (super.containsKey(_RANDOM_ID + "Type") ||
+			Validator.isNotNull((String)get(_RANDOM_ID + "Type"))) {
+
+			return (String)get(_RANDOM_ID + "Type");
+		}
+
+		Object type = get("type");
+
+		if ((type == null) || (type instanceof String)) {
+			return (String)type;
+		}
+
+		return StringPool.BLANK;
 	}
 
 	public String getUrl() {
-		String type = getType();
-
-		if (!type.equals("link_to_layout")) {
+		if (_themeDisplay == null) {
 			return StringPool.BLANK;
 		}
 
-		String layoutType = getLayoutType();
+		String data = _getData();
 
-		if (Validator.isNull(layoutType)) {
+		if (!JSONUtil.isJSONObject(data)) {
 			return StringPool.BLANK;
 		}
-
-		StringBundler sb = new StringBundler(5);
-
-		if (layoutType.equals(_LAYOUT_TYPE_PRIVATE_GROUP)) {
-			sb.append(PortalUtil.getPathFriendlyURLPrivateGroup());
-		}
-		else if (layoutType.equals(_LAYOUT_TYPE_PRIVATE_USER)) {
-			sb.append(PortalUtil.getPathFriendlyURLPrivateUser());
-		}
-		else if (layoutType.equals(_LAYOUT_TYPE_PUBLIC)) {
-			sb.append(PortalUtil.getPathFriendlyURLPublic());
-		}
-		else {
-			sb.append("@friendly_url_current@");
-		}
-
-		sb.append(StringPool.SLASH);
 
 		try {
-			Group group = GroupLocalServiceUtil.getGroup(getLayoutGroupId());
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
 
-			String name = group.getFriendlyURL();
+			Layout layout = LayoutLocalServiceUtil.fetchLayout(
+				jsonObject.getLong("groupId"),
+				jsonObject.getBoolean("privateLayout"),
+				jsonObject.getLong("layoutId"));
 
-			name = name.substring(1);
-
-			sb.append(name);
-		}
-		catch (Exception e) {
-			sb.append("@group_id@");
-		}
-
-		sb.append(StringPool.SLASH);
-		sb.append(getLayoutId());
-
-		return sb.toString();
-	}
-
-	protected long getLayoutGroupId() {
-		String data = (String)get("data");
-
-		int pos = data.lastIndexOf(CharPool.AT);
-
-		if (pos != -1) {
-			data = data.substring(pos + 1);
-		}
-
-		return GetterUtil.getLong(data);
-	}
-
-	protected long getLayoutId() {
-		String data = (String)get("data");
-
-		int pos = data.indexOf(CharPool.AT);
-
-		if (pos != -1) {
-			data = data.substring(0, pos);
-		}
-
-		return GetterUtil.getLong(data);
-	}
-
-	protected String getLayoutType() {
-		String data = (String)get("data");
-
-		int x = data.indexOf(CharPool.AT);
-		int y = data.lastIndexOf(CharPool.AT);
-
-		if ((x != -1) && (y != -1)) {
-			if (x == y) {
-				data = data.substring(x + 1);
+			if (layout == null) {
+				return StringPool.BLANK;
 			}
-			else {
-				data = data.substring(x + 1, y);
+
+			return PortalUtil.getLayoutRelativeURL(layout, _themeDisplay);
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to parse JSON from data: " + data);
 			}
+
+			return StringPool.BLANK;
+		}
+	}
+
+	private String _getColorData() {
+		String data = _getData();
+
+		if (data.startsWith(StringPool.POUND)) {
+			return data;
 		}
 
-		return data;
+		return StringPool.POUND + data;
+	}
+
+	private String _getData() {
+		if (super.containsKey(_RANDOM_ID + "Data") ||
+			Validator.isNotNull((String)get(_RANDOM_ID + "Data"))) {
+
+			return (String)get(_RANDOM_ID + "Data");
+		}
+
+		return (String)get("data");
 	}
 
 	private String _getDDMJournalArticleFriendlyURL() {
@@ -273,7 +341,7 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 			return StringPool.BLANK;
 		}
 
-		String data = (String)get("data");
+		String data = _getData();
 
 		try {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
@@ -300,24 +368,27 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 
 			PortletRequest portletRequest =
 				(PortletRequest)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_REQUEST);
+					JavaConstants.JAKARTA_PORTLET_REQUEST);
 			PortletResponse portletResponse =
 				(PortletResponse)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE);
+					JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 			return assetRenderer.getURLViewInContext(
 				PortalUtil.getLiferayPortletRequest(portletRequest),
 				PortalUtil.getLiferayPortletResponse(portletResponse),
 				StringPool.BLANK);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return StringPool.BLANK;
 	}
 
 	private String _getFileEntryData() {
-		String data = (String)get("data");
+		String data = _getData();
 
 		try {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
@@ -334,78 +405,148 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 					uuid, groupId);
 
 			return DLUtil.getPreviewURL(
-				fileEntry, fileEntry.getFileVersion(), null, StringPool.BLANK,
-				false, true);
+				fileEntry, fileEntry.getFileVersion(), _themeDisplay,
+				StringPool.BLANK, false, false);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return StringPool.BLANK;
 	}
 
-	private String _getLinkToLayoutData() {
-		String data = (String)get("data");
+	private String _getGeolocationData() {
+		String data = _getData();
 
-		int pos = data.indexOf(CharPool.AT);
-
-		if (pos != -1) {
-			data = data.substring(0, pos);
-		}
-
-		return data;
-	}
-
-	private String _getLinkToLayoutFriendlyURL() {
-		if (_themeDisplay == null) {
-			return getUrl();
-		}
-
-		String layoutType = getLayoutType();
-
-		if (Validator.isNull(layoutType)) {
+		if (Validator.isNull(data)) {
 			return StringPool.BLANK;
 		}
 
-		long groupId = getLayoutGroupId();
-
-		if (groupId == 0) {
-			groupId = _themeDisplay.getScopeGroupId();
-		}
-
-		boolean privateLayout = layoutType.startsWith("private");
-
 		try {
-			Layout layout = LayoutLocalServiceUtil.getLayout(
-				groupId, privateLayout, getLayoutId());
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
 
-			String layoutFriendlyURL = PortalUtil.getLayoutFriendlyURL(
-				layout, _themeDisplay);
-
-			return HttpUtil.removeDomain(layoutFriendlyURL);
-		}
-		catch (Exception e) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Unable to get friendly URL for URL " +
-						_themeDisplay.getURLCurrent(),
-					e);
+			if (jsonObject.has("latitude") && jsonObject.has("longitude")) {
+				return data;
 			}
 
-			return getUrl();
+			if (!jsonObject.has("lat") || !jsonObject.has("lng")) {
+				return data;
+			}
+
+			jsonObject.put(
+				"latitude", jsonObject.get("lat")
+			).put(
+				"longitude", jsonObject.get("lng")
+			);
+
+			return jsonObject.toString();
 		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return StringPool.BLANK;
 	}
 
-	private static final String _LAYOUT_TYPE_PRIVATE_GROUP = "private-group";
+	private String _getLatestArticleData() {
+		String data = _getData();
 
-	private static final String _LAYOUT_TYPE_PRIVATE_USER = "private-user";
+		try {
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
 
-	private static final String _LAYOUT_TYPE_PUBLIC = "public";
+			AssetRendererFactory<?> assetRendererFactory =
+				AssetRendererFactoryRegistryUtil.
+					getAssetRendererFactoryByClassName(
+						jsonObject.getString("className"));
+
+			if (assetRendererFactory == null) {
+				return StringPool.BLANK;
+			}
+
+			long classPK = GetterUtil.getLong(jsonObject.getLong("classPK"));
+
+			AssetRenderer<?> assetRenderer =
+				assetRendererFactory.getAssetRenderer(classPK);
+
+			if (assetRenderer == null) {
+				return StringPool.BLANK;
+			}
+
+			if (Objects.equals(
+					jsonObject.getString("uuid"), assetRenderer.getUuid())) {
+
+				return data;
+			}
+
+			String updatedTitle = assetRenderer.getTitle(
+				LocaleUtil.fromLanguageId(
+					assetRenderer.getDefaultLanguageId()));
+
+			jsonObject.put("title", updatedTitle);
+
+			Map<Locale, String> titleMap = new HashMap<>();
+
+			for (String languageId : assetRenderer.getAvailableLanguageIds()) {
+				Locale locale = LocaleUtil.fromLanguageId(languageId);
+
+				if (locale != null) {
+					titleMap.put(locale, assetRenderer.getTitle(locale));
+				}
+			}
+
+			jsonObject.put(
+				"titleMap", titleMap
+			).put(
+				"uuid", assetRenderer.getUuid()
+			);
+
+			return jsonObject.toString();
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to parse JSON from data: " + data);
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return _getData();
+	}
+
+	private String _getNumericData() {
+		String data = _getData();
+
+		DecimalFormat decimalFormat = (DecimalFormat)DecimalFormat.getInstance(
+			LocaleUtil.getMostRelevantLocale());
+
+		DecimalFormatSymbols decimalFormatSymbols =
+			decimalFormat.getDecimalFormatSymbols();
+
+		decimalFormatSymbols.setZeroDigit('0');
+
+		decimalFormat.setDecimalFormatSymbols(decimalFormatSymbols);
+
+		decimalFormat.setGroupingUsed(false);
+		decimalFormat.setMaximumFractionDigits(Integer.MAX_VALUE);
+		decimalFormat.setParseBigDecimal(true);
+
+		return decimalFormat.format(GetterUtil.getDouble(data));
+	}
+
+	private static final String _RANDOM_ID = StringUtil.randomId();
 
 	private static final Log _log = LogFactoryUtil.getLog(TemplateNode.class);
 
 	private final Map<String, TemplateNode> _childTemplateNodes =
 		new LinkedHashMap<>();
 	private final List<TemplateNode> _siblingTemplateNodes = new ArrayList<>();
-	private ThemeDisplay _themeDisplay;
+	private final ThemeDisplay _themeDisplay;
 
 }

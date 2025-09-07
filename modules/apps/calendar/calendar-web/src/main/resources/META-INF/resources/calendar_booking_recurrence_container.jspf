@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -86,7 +77,7 @@ if (recurrence != null) {
 						for (Frequency curFrequency : Frequency.values()) {
 						%>
 
-							<aui:option selected="<%= frequency == curFrequency %>" value="<%= curFrequency.getValue() %>"><%= LanguageUtil.get(request, StringUtil.toLowerCase(curFrequency.getValue())) %></aui:option>
+							<aui:option selected="<%= frequency == curFrequency %>" value="<%= curFrequency.getValue() %>"><liferay-ui:message key="<%= StringUtil.toLowerCase(curFrequency.getValue()) %>" /></aui:option>
 
 						<%
 						}
@@ -139,16 +130,15 @@ if (recurrence != null) {
 
 						<%
 						for (Weekday weekday : weekdaysArray) {
-							String weekdayLabel = "weekday." + weekday.getValue();
 						%>
 
-							<aui:input checked="<%= weekdays.contains(weekday) %>" id="<%= weekday.getValue() %>" label="<%= weekdayLabel %>" name="weekdays" type="checkbox" value="<%= weekday.getValue() %>" />
+							<aui:input checked="<%= weekdays.isEmpty() ? (weekday == startTimeWeekday) : weekdays.contains(weekday) %>" id="<%= weekday.getValue() %>" label='<%= "weekday." + weekday.getValue() %>' name="weekdays" type="checkbox" value="<%= weekday.getValue() %>" />
 
 						<%
 						}
 						%>
 
-						<aui:input name="weekdays" type="hidden" value="<%= startTimeWeekday.getValue() %>" />
+						<aui:input name="startTimeWeekday" type="hidden" value="<%= startTimeWeekday.getValue() %>" />
 					</aui:field-wrapper>
 				</td>
 			</tr>
@@ -170,7 +160,7 @@ if (recurrence != null) {
 						Weekday weekday = positionalWeekday.getWeekday();
 						%>
 
-						<aui:input checked="<%= positionalWeekday.getPosition() == -1 %>" label="repeat-on-month-last-day-of-the-week" name="lastPosition" type="checkbox" />
+						<aui:input checked="<%= positionalWeekday.getPosition() == -1 %>" label="repeat-on-months-last-day-of-the-week" name="lastPosition" type="checkbox" />
 
 						<aui:input name="position" type="hidden" value="<%= positionalWeekday.getPosition() %>" />
 
@@ -203,7 +193,7 @@ if (recurrence != null) {
 					</aui:field-wrapper>
 
 					<aui:field-wrapper cssClass="calendar-portlet-field-date calendar-portlet-recurrence-limit" label="">
-						<aui:input checked="<%= onChecked %>" label="<%= StringPool.BLANK %>" name="ends" type="radio" value="on" />
+						<aui:input checked="<%= onChecked %>" id="endsRadio" label="<%= StringPool.BLANK %>" name="ends" type="radio" value="on" />
 
 						<div class="calendar-portlet-field-datepicker clearfix">
 							<label><liferay-ui:message key="stop-repeating-on" /></label>
@@ -246,8 +236,34 @@ if (recurrence != null) {
 	var recurrenceContainerNode = A.one(
 		'#<portlet:namespace />recurrenceContainer'
 	);
-	var repeatCheckboxNode = A.one('#<portlet:namespace />repeat');
+
+	var repeatCheckboxNode = document.getElementById('<portlet:namespace />repeat');
 	var summaryNode = A.one('#<portlet:namespace />summary');
+
+	var afterInput = A.one('#<portlet:namespace />ends_3');
+	var neverInput = A.one('#<portlet:namespace />ends_1');
+	var onInput = A.one('#<portlet:namespace />endsRadio');
+	var untilDate = A.one('#<portlet:namespace />untilDate');
+
+	let onRadioChange = (radioButton) => {
+		radioButton.on('change', (event) => {
+			document
+				.querySelector('span.has-success')
+				.classList.remove('has-success');
+		});
+	};
+
+	let onInputDateChange = (radioButton) => {
+		radioButton.on('change', (event) => {
+			document
+				.getElementById('<portlet:namespace />untilDate')
+				.classList.remove('disabled');
+		});
+	};
+
+	onRadioChange(afterInput);
+	onRadioChange(neverInput);
+	onInputDateChange(onInput);
 
 	var recurrenceDialogController = new Liferay.RecurrenceDialogController({
 		container: '#<portlet:namespace />recurrenceContainer',
@@ -258,7 +274,7 @@ if (recurrence != null) {
 		limitCountInput: '#<portlet:namespace />count',
 		limitCountRadioButton: '[name=<portlet:namespace />ends][value=after]',
 		limitDateDatePicker: Liferay.component(
-			'<%= renderResponse.getNamespace() + HtmlUtil.getAUICompatibleId("untilDateDatePicker") %>'
+			'<%= liferayPortletResponse.getNamespace() + HtmlUtil.getAUICompatibleId("untilDateDatePicker") %>'
 		),
 		limitDateRadioButton: '[name=<portlet:namespace />ends][value=on]',
 		monthlyRecurrenceOptions: '#<portlet:namespace />viewPositionInMonth',
@@ -275,12 +291,13 @@ if (recurrence != null) {
 			'<portlet:namespace />startTimeDatePicker'
 		),
 		summaryNode: '#<portlet:namespace />summary',
-		weeklyRecurrenceOptions: '#<portlet:namespace />view<%= Frequency.WEEKLY %>'
+		weeklyRecurrenceOptions:
+			'#<portlet:namespace />view<%= Frequency.WEEKLY %>',
 	});
 
 	recurrenceDialogController.saveState();
 
-	var getRecurrenceDialogTitle = function() {
+	var getRecurrenceDialogTitle = function () {
 		var summary = recurrenceDialogController.get('summary');
 
 		return (
@@ -289,12 +306,12 @@ if (recurrence != null) {
 		);
 	};
 
-	window.<portlet:namespace />openRecurrenceDialog = function(visible) {
+	window.<portlet:namespace />openRecurrenceDialog = function (visible) {
 		recurrenceContainerNode.toggle(visible);
 
 		editEventFormNode.once(
 			'key',
-			function(event) {
+			(event) => {
 				if (window.<portlet:namespace />recurrenceDialog.get('visible')) {
 					event.stopPropagation();
 				}
@@ -302,14 +319,14 @@ if (recurrence != null) {
 			'esc'
 		);
 
-		window.<portlet:namespace />recurrenceDialog = Liferay.Util.Window.getWindow(
-			{
+		window.<portlet:namespace />recurrenceDialog =
+			Liferay.Util.Window.getWindow({
 				dialog: {
 					after: {
 						visibleChange: A.rbind(
 							'_afterVisibilityChange',
 							recurrenceDialogController
-						)
+						),
 					},
 					bodyContent: recurrenceContainerNode,
 					centered: true,
@@ -318,18 +335,17 @@ if (recurrence != null) {
 						{
 							eventName: 'key',
 							keyCode: 'esc',
-							node: editEventFormNode
-						}
+							node: editEventFormNode,
+						},
 					],
 					id: '<portlet:namespace />recurrenceDialog',
 					modal: true,
 					render: '#<portlet:namespace />fm',
 					visible: visible,
-					width: 600
+					width: 600,
 				},
-				title: getRecurrenceDialogTitle()
-			}
-		);
+				title: getRecurrenceDialogTitle(),
+			});
 
 		window.<portlet:namespace />recurrenceDialog.addToolbar(
 			[
@@ -341,24 +357,32 @@ if (recurrence != null) {
 							'_hideModal',
 							recurrenceDialogController,
 							true
-						)
-					}
+						),
+					},
 				},
 				{
 					label: '<liferay-ui:message key="cancel" />',
 					on: {
-						click: A.rbind('_hideModal', recurrenceDialogController)
-					}
-				}
+						click: A.rbind('_hideModal', recurrenceDialogController),
+					},
+				},
 			],
 			'footer'
 		);
 
-		var destroyRecurrenceDialog = function(event) {
-			if (event.portletId === '<%= portletDisplay.getId() %>') {
-				window.<portlet:namespace />recurrenceDialog.destroy();
+		var destroyRecurrenceDialog = function (event) {
+			var recurrenceDialogPortletName =
+				'<portlet:namespace />recurrenceDialog';
 
-				delete window['<portlet:namespace />recurrenceDialog'];
+			var recurrenceDialogGlobalObject = window[recurrenceDialogPortletName];
+
+			if (
+				recurrenceDialogGlobalObject &&
+				event.portletId === '<%= portletDisplay.getId() %>'
+			) {
+				recurrenceDialogGlobalObject.destroy();
+
+				delete window[recurrenceDialogPortletName];
 
 				Liferay.detach('destroyPortlet', destroyRecurrenceDialog);
 			}
@@ -367,29 +391,52 @@ if (recurrence != null) {
 		Liferay.on('destroyPortlet', destroyRecurrenceDialog);
 	};
 
-	repeatCheckboxNode.on('change', function(event) {
-		var checked = event.currentTarget.get('checked');
+	repeatCheckboxNode.addEventListener('change', (event) => {
+		var checked = event.currentTarget.checked;
 
 		if (!checked) {
 			summaryNode.empty();
-		} else {
+		}
+		else {
 			window.<portlet:namespace />updateSummaries();
 		}
 
 		<portlet:namespace />openRecurrenceDialog(checked);
 	});
 
-	summaryNode.on('click', function(event) {
+	summaryNode.on('click', (event) => {
 		<portlet:namespace />openRecurrenceDialog(true);
 
 		event.halt();
 	});
 
-	recurrenceDialogController.on('recurrenceChange', function(event) {
+	recurrenceDialogController.on('recurrenceChange', (event) => {
 		window.<portlet:namespace />updateSummaries();
 	});
 
-	window.<portlet:namespace />updateSummary = function(element) {
+	const startTimeWeekdayValue = '<%= startTimeWeekday %>';
+
+	const weekdays = document.querySelectorAll(
+		'input[name="<portlet:namespace />weekdays"]'
+	);
+
+	weekdays.forEach((weekday) => {
+		weekday.addEventListener('change', () => {
+			const daysChecked = Array.from(weekdays).filter(
+				(checkbox) => checkbox.checked
+			);
+
+			if (daysChecked.length === 0) {
+				const eventStartDay = Array.from(weekdays).find(
+					(checkbox) => checkbox.value === startTimeWeekdayValue
+				);
+
+				eventStartDay.checked = true;
+			}
+		});
+	});
+
+	window.<portlet:namespace />updateSummary = function (element) {
 		var previewNode = A.one(element);
 
 		if (previewNode) {
@@ -397,7 +444,7 @@ if (recurrence != null) {
 		}
 	};
 
-	window.<portlet:namespace />updateSummaries = function() {
+	window.<portlet:namespace />updateSummaries = function () {
 		window.<portlet:namespace />updateSummary(summaryNode);
 		window.<portlet:namespace />updateSummary(
 			'#<portlet:namespace />summaryPreview'

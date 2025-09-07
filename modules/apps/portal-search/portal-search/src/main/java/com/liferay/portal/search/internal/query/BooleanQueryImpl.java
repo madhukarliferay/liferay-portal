@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -35,6 +26,7 @@ public class BooleanQueryImpl extends BaseQueryImpl implements BooleanQuery {
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public BooleanQuery addFilterQueryClauses(Query... clauses) {
 		if (ArrayUtil.isEmpty(clauses)) {
 			return this;
@@ -45,6 +37,7 @@ public class BooleanQueryImpl extends BaseQueryImpl implements BooleanQuery {
 		return this;
 	}
 
+	@Override
 	public BooleanQuery addMustNotQueryClauses(Query... clauses) {
 		if (ArrayUtil.isEmpty(clauses)) {
 			return this;
@@ -55,6 +48,7 @@ public class BooleanQueryImpl extends BaseQueryImpl implements BooleanQuery {
 		return this;
 	}
 
+	@Override
 	public BooleanQuery addMustQueryClauses(Query... clauses) {
 		if (ArrayUtil.isEmpty(clauses)) {
 			return this;
@@ -65,6 +59,7 @@ public class BooleanQueryImpl extends BaseQueryImpl implements BooleanQuery {
 		return this;
 	}
 
+	@Override
 	public BooleanQuery addShouldQueryClauses(Query... clauses) {
 		if (ArrayUtil.isEmpty(clauses)) {
 			return this;
@@ -75,54 +70,53 @@ public class BooleanQueryImpl extends BaseQueryImpl implements BooleanQuery {
 		return this;
 	}
 
+	@Override
 	public Boolean getAdjustPureNegative() {
 		return _adjustPureNegative;
 	}
 
+	@Override
 	public List<Query> getFilterQueryClauses() {
 		return Collections.unmodifiableList(_filterQueryClauses);
 	}
 
+	@Override
 	public Integer getMinimumShouldMatch() {
 		return _minimumShouldMatch;
 	}
 
+	@Override
 	public List<Query> getMustNotQueryClauses() {
 		return Collections.unmodifiableList(_mustNotQueryClauses);
 	}
 
+	@Override
 	public List<Query> getMustQueryClauses() {
 		return Collections.unmodifiableList(_mustQueryClauses);
 	}
 
+	@Override
 	public List<Query> getShouldQueryClauses() {
 		return Collections.unmodifiableList(_shouldQueryClauses);
 	}
 
+	@Override
 	public boolean hasClauses() {
-		if (!_filterQueryClauses.isEmpty()) {
-			return true;
-		}
+		if (!_filterQueryClauses.isEmpty() || !_mustQueryClauses.isEmpty() ||
+			!_mustNotQueryClauses.isEmpty() || !_shouldQueryClauses.isEmpty()) {
 
-		if (!_mustQueryClauses.isEmpty()) {
-			return true;
-		}
-
-		if (!_mustNotQueryClauses.isEmpty()) {
-			return true;
-		}
-
-		if (!_shouldQueryClauses.isEmpty()) {
 			return true;
 		}
 
 		return false;
 	}
 
+	@Override
 	public void setAdjustPureNegative(Boolean adjustPureNegative) {
 		_adjustPureNegative = adjustPureNegative;
 	}
 
+	@Override
 	public void setMinimumShouldMatch(Integer minimumShouldMatch) {
 		_minimumShouldMatch = minimumShouldMatch;
 	}

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.servlet.jsp.compiler.test;
@@ -20,13 +11,13 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.util.StringUtil;
 
-import java.io.IOException;
+import jakarta.portlet.PortletContext;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequestDispatcher;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
-import javax.portlet.PortletContext;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequestDispatcher;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
+import java.io.IOException;
 
 /**
  * @author Matthew Tambara
@@ -38,22 +29,15 @@ public class JspPrecompilePortlet extends MVCPortlet {
 		CharPool.UNDERLINE);
 
 	public static String getJspFileNameParameterName() {
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(StringPool.UNDERLINE);
-		sb.append(PORTLET_NAME);
-		sb.append(StringPool.UNDERLINE);
-		sb.append(_JSP_FILE_NAME_PARAMETER_NAME);
-
-		return sb.toString();
+		return StringBundler.concat(
+			StringPool.UNDERLINE, PORTLET_NAME, StringPool.UNDERLINE,
+			_JSP_FILE_NAME_PARAMETER_NAME);
 	}
 
 	@Override
 	public void render(
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws IOException, PortletException {
-
-		PortletContext portletContext = getPortletContext();
 
 		String jspFileName = renderRequest.getParameter(
 			_JSP_FILE_NAME_PARAMETER_NAME);
@@ -62,6 +46,8 @@ public class JspPrecompilePortlet extends MVCPortlet {
 			throw new IllegalArgumentException(
 				_JSP_FILE_NAME_PARAMETER_NAME + " query must not be null");
 		}
+
+		PortletContext portletContext = getPortletContext();
 
 		PortletRequestDispatcher portletRequestDispatcher =
 			portletContext.getRequestDispatcher(jspFileName);

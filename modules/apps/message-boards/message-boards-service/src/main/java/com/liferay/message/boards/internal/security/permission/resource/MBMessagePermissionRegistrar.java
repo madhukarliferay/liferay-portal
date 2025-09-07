@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.internal.security.permission.resource;
@@ -27,6 +18,7 @@ import com.liferay.message.boards.service.MBMessageLocalService;
 import com.liferay.message.boards.service.MBThreadLocalService;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.DynamicInheritancePermissionLogic;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
@@ -34,8 +26,7 @@ import com.liferay.portal.kernel.security.permission.resource.PortletResourcePer
 import com.liferay.portal.kernel.security.permission.resource.StagedModelPermissionLogic;
 import com.liferay.portal.kernel.security.permission.resource.WorkflowedModelPermissionLogic;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.workflow.permission.WorkflowPermission;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.util.PropsValues;
 
 import java.util.Dictionary;
@@ -50,17 +41,19 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Preston Crary
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class MBMessagePermissionRegistrar {
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("model.class.name", MBMessage.class.getName());
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"model.class.name", MBMessage.class.getName()
+			).build();
 
 		_serviceRegistration = bundleContext.registerService(
-			ModelResourcePermission.class,
+			(Class<ModelResourcePermission<MBMessage>>)
+				(Class<?>)ModelResourcePermission.class,
 			ModelResourcePermissionFactory.create(
 				MBMessage.class, MBMessage::getMessageId,
 				(Long resourcePrimKey) -> {
@@ -86,6 +79,17 @@ public class MBMessagePermissionRegistrar {
 								return false;
 							}
 
+							MBThread thread = message.getThread();
+
+							if (!message.isRoot() &&
+								!modelResourcePermission.contains(
+									permissionChecker,
+									thread.getRootMessageId(),
+									ActionKeys.VIEW)) {
+
+								return false;
+							}
+
 							return null;
 						});
 					consumer.accept(
@@ -94,8 +98,8 @@ public class MBMessagePermissionRegistrar {
 							MBMessage::getMessageId));
 					consumer.accept(
 						new WorkflowedModelPermissionLogic<>(
-							_workflowPermission, modelResourcePermission,
-							_groupLocalService, MBMessage::getMessageId));
+							modelResourcePermission, _groupLocalService,
+							MBMessage::getMessageId));
 
 					if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 						consumer.accept(
@@ -157,12 +161,10 @@ public class MBMessagePermissionRegistrar {
 	@Reference(target = "(resource.name=" + MBConstants.RESOURCE_NAME + ")")
 	private PortletResourcePermission _portletResourcePermission;
 
-	private ServiceRegistration<ModelResourcePermission> _serviceRegistration;
+	private ServiceRegistration<ModelResourcePermission<MBMessage>>
+		_serviceRegistration;
 
 	@Reference
 	private StagingPermission _stagingPermission;
-
-	@Reference
-	private WorkflowPermission _workflowPermission;
 
 }

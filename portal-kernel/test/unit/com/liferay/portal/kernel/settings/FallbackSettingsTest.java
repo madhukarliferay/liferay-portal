@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.settings;
@@ -20,23 +11,21 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
-import org.powermock.api.mockito.PowerMockito;
-
 /**
  * @author Iván Zaera
  */
-public class FallbackSettingsTest extends PowerMockito {
+public class FallbackSettingsTest {
 
 	public FallbackSettingsTest() {
-		_settings = mock(Settings.class);
+		_settings = Mockito.mock(Settings.class);
 
-		_fallbackKeys = new FallbackKeys();
+		FallbackKeys fallbackKeys = new FallbackKeys();
 
-		_fallbackKeys.add("key1", "key2", "key3");
-		_fallbackKeys.add("key2", "key7");
-		_fallbackKeys.add("key3", "key5");
+		fallbackKeys.add("key1", "key2", "key3");
+		fallbackKeys.add("key2", "key7");
+		fallbackKeys.add("key3", "key5");
 
-		_fallbackSettings = new FallbackSettings(_settings, _fallbackKeys);
+		_fallbackSettings = new FallbackSettings(_settings, fallbackKeys);
 	}
 
 	@Test
@@ -45,15 +34,14 @@ public class FallbackSettingsTest extends PowerMockito {
 
 		String[] mockValues = {"value"};
 
-		when(
+		Mockito.when(
 			_settings.getValues("key2", null)
 		).thenReturn(
 			mockValues
 		);
 
-		String[] values = _fallbackSettings.getValues("key1", defaultValues);
-
-		Assert.assertArrayEquals(mockValues, values);
+		Assert.assertArrayEquals(
+			mockValues, _fallbackSettings.getValues("key1", defaultValues));
 
 		verifyGetValues("key1", "key2");
 	}
@@ -62,33 +50,30 @@ public class FallbackSettingsTest extends PowerMockito {
 	public void testGetValuesWhenUnconfigured() {
 		String[] defaultValues = {"default"};
 
-		String[] values = _fallbackSettings.getValues("key1", defaultValues);
-
-		Assert.assertArrayEquals(defaultValues, values);
+		Assert.assertArrayEquals(
+			defaultValues, _fallbackSettings.getValues("key1", defaultValues));
 
 		verifyGetValues("key1", "key2", "key3");
 	}
 
 	@Test
 	public void testGetValueWhenConfigured() {
-		when(
+		Mockito.when(
 			_settings.getValue("key2", null)
 		).thenReturn(
 			"value"
 		);
 
-		String value = _fallbackSettings.getValue("key1", "default");
-
-		Assert.assertEquals("value", value);
+		Assert.assertEquals(
+			"value", _fallbackSettings.getValue("key1", "default"));
 
 		verifyGetValue("key1", "key2");
 	}
 
 	@Test
 	public void testGetValueWhenUnconfigured() {
-		String value = _fallbackSettings.getValue("key1", "default");
-
-		Assert.assertEquals("default", value);
+		Assert.assertEquals(
+			"default", _fallbackSettings.getValue("key1", "default"));
 
 		verifyGetValue("key1", "key2", "key3");
 	}
@@ -97,9 +82,11 @@ public class FallbackSettingsTest extends PowerMockito {
 		InOrder inOrder = Mockito.inOrder(_settings);
 
 		for (String key : keys) {
-			inOrder.verify(_settings);
-
-			_settings.getValue(key, null);
+			inOrder.verify(
+				_settings
+			).getValue(
+				key, null
+			);
 		}
 	}
 
@@ -107,13 +94,14 @@ public class FallbackSettingsTest extends PowerMockito {
 		InOrder inOrder = Mockito.inOrder(_settings);
 
 		for (String key : keys) {
-			inOrder.verify(_settings);
-
-			_settings.getValues(key, null);
+			inOrder.verify(
+				_settings
+			).getValues(
+				key, null
+			);
 		}
 	}
 
-	private final FallbackKeys _fallbackKeys;
 	private final FallbackSettings _fallbackSettings;
 	private final Settings _settings;
 

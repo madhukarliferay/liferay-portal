@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,16 +10,26 @@
 <%
 AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttribute(AccountWebKeys.ACCOUNT_ENTRY_DISPLAY);
 
+String redirect = ParamUtil.getString(request, "redirect");
+
 String backURL = ParamUtil.getString(request, "backURL");
 
 if (Validator.isNull(backURL)) {
-	PortletURL viewAccountUserURL = renderResponse.createRenderURL();
+	backURL = redirect;
+}
 
-	viewAccountUserURL.setParameter("mvcRenderCommandName", "/account_admin/edit_account_entry");
-	viewAccountUserURL.setParameter("screenNavigationCategoryKey", AccountScreenNavigationEntryConstants.CATEGORY_KEY_USERS);
-	viewAccountUserURL.setParameter("accountEntryId", String.valueOf(accountEntryDisplay.getAccountEntryId()));
-
-	backURL = viewAccountUserURL.toString();
+if (Validator.isNull(backURL)) {
+	backURL = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCRenderCommandName(
+		"/account_admin/edit_account_entry"
+	).setParameter(
+		"accountEntryId", accountEntryDisplay.getAccountEntryId()
+	).setParameter(
+		"screenNavigationCategoryKey", AccountScreenNavigationEntryConstants.CATEGORY_KEY_USERS
+	).setWindowState(
+		LiferayWindowState.MAXIMIZED
+	).buildString();
 }
 
 portletDisplay.setShowBackIcon(true);
@@ -43,44 +44,126 @@ renderResponse.setTitle(LanguageUtil.format(request, "add-new-user-to-x", accoun
 	action="<%= addAccountUsersURL %>"
 >
 	<liferay-frontend:edit-form-body>
-		<aui:input name="redirect" type="hidden" value="<%= backURL %>" />
+		<portlet:renderURL var="defaultRedirect">
+			<portlet:param name="mvcPath" value="/account_users_admin/edit_account_user.jsp" />
+		</portlet:renderURL>
+
+		<aui:input name="redirect" type="hidden" value="<%= GetterUtil.getString(redirect, defaultRedirect) %>" />
 		<aui:input name="accountEntryId" type="hidden" value="<%= String.valueOf(accountEntryDisplay.getAccountEntryId()) %>" />
 
 		<h2 class="sheet-title">
-			<%= LanguageUtil.get(request, "information") %>
+			<liferay-ui:message key="information" />
 		</h2>
 
-		<div class="sheet-section">
+		<clay:sheet-section>
 			<h3 class="sheet-subtitle">
-				<%= LanguageUtil.get(request, "user-display-data") %>
+				<liferay-ui:message key="user-display-data" />
 			</h3>
 
-			<aui:row>
-				<aui:col width="<%= 50 %>">
-					<aui:input label="screen-name" name="screenName" required="<%= true %>" type="text" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeDuplicate.class %>" focusField="screenName" message="the-screen-name-you-requested-is-already-taken" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeNull.class %>" focusField="screenName" message="the-screen-name-cannot-be-blank" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeNumeric.class %>" focusField="screenName" message="the-screen-name-cannot-contain-only-numeric-values" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeReserved.class %>" focusField="screenName" message="the-screen-name-you-requested-is-reserved" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeReservedForAnonymous.class %>" focusField="screenName" message="the-screen-name-you-requested-is-reserved-for-the-anonymous-user" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeUsedByGroup.class %>" focusField="screenName" message="the-screen-name-you-requested-is-already-taken-by-a-site" />
 
-					<aui:input label="email-address" name="emailAddress" required="<%= true %>" type="text" />
+			<liferay-ui:error exception="<%= UserScreenNameException.MustNotExceedMaximumLength.class %>" focusField="screenName">
 
-					<liferay-ui:user-name-fields />
-				</aui:col>
+				<%
+				int screenNameMaxLength = ModelHintsUtil.getMaxLength(User.class.getName(), "screenName");
+				%>
 
-				<aui:col width="<%= 40 %>">
-					<div class="text-center">
-						<liferay-ui:logo-selector
-							currentLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
-							defaultLogo="<%= true %>"
-							defaultLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
-							tempImageFileName="0"
-						/>
-					</div>
-				</aui:col>
-			</aui:row>
-		</div>
+				<liferay-ui:message arguments="<%= String.valueOf(screenNameMaxLength) %>" key="please-enter-a-screen-name-with-fewer-than-x-characters" />
+			</liferay-ui:error>
+
+			<liferay-ui:error exception="<%= UserScreenNameException.MustProduceValidFriendlyURL.class %>" focusField="screenName" message="the-screen-name-you-requested-must-produce-a-valid-friendly-url" />
+
+			<liferay-ui:error exception="<%= UserScreenNameException.MustValidate.class %>" focusField="screenName">
+
+				<%
+				UserScreenNameException.MustValidate usne = (UserScreenNameException.MustValidate)errorException;
+				%>
+
+				<liferay-ui:message key="<%= usne.screenNameValidator.getDescription(locale) %>" />
+			</liferay-ui:error>
+
+			<aui:model-context model="<%= User.class %>" />
+
+			<liferay-frontend:logo-selector
+				currentLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
+				defaultLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
+				label='<%= LanguageUtil.get(request, "image") %>'
+				type="user_portrait"
+			/>
+
+			<aui:input label="job-title" maxlength='<%= ModelHintsUtil.getMaxLength(Contact.class.getName(), "jobTitle") %>' name="jobTitle" type="text" />
+
+			<aui:input name="screenName">
+
+				<%
+				ScreenNameValidator screenNameValidator = ScreenNameValidatorFactory.getInstance();
+				%>
+
+				<c:if test="<%= Validator.isNotNull(screenNameValidator.getAUIValidatorJS()) %>">
+					<aui:validator errorMessage="<%= screenNameValidator.getDescription(locale) %>" name="custom">
+						<%= screenNameValidator.getAUIValidatorJS() %>
+					</aui:validator>
+				</c:if>
+			</aui:input>
+
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeDuplicate.class %>" focusField="emailAddress" message="the-email-address-you-requested-is-already-taken" />
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeNull.class %>" focusField="emailAddress" message="please-enter-an-email-address" />
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBePOP3User.class %>" focusField="emailAddress" message="the-email-address-you-requested-is-reserved" />
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeReserved.class %>" focusField="emailAddress" message="the-email-address-you-requested-is-reserved" />
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustNotUseCompanyMx.class %>" focusField="emailAddress" message="the-email-address-you-requested-is-not-valid-because-its-domain-is-reserved" />
+			<liferay-ui:error exception="<%= UserEmailAddressException.MustValidate.class %>" focusField="emailAddress" message="please-enter-a-valid-email-address" />
+
+			<aui:input label="email-address" name="emailAddress" required="<%= true %>" type="text">
+				<aui:validator name="email" />
+			</aui:input>
+
+			<liferay-user:user-name-fields />
+		</clay:sheet-section>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= backURL %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= backURL %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
+
+<c:if test="<%= !Objects.equals(accountEntryDisplay.getType(), AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON) && (accountEntryDisplay.isValidateUserEmailAddress() || Validator.isNotNull(AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()))) %>">
+
+	<%
+	Map<String, Object> context = HashMapBuilder.<String, Object>put(
+		"accountEntryNames", accountEntryDisplay.getName()
+	).build();
+
+	if (Validator.isNotNull(AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()))) {
+		context.put("blockedDomains", AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()));
+	}
+
+	if (accountEntryDisplay.isValidateUserEmailAddress()) {
+		context.put("validDomains", accountEntryDisplay.getDomains());
+
+		PortletURL viewValidDomainsURL = PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCPath(
+			"/account_users_admin/account_user/view_valid_domains.jsp"
+		).setParameter(
+			"validDomains", accountEntryDisplay.getDomains()
+		).setWindowState(
+			LiferayWindowState.POP_UP
+		).buildPortletURL();
+
+		context.put("viewValidDomainsURL", viewValidDomainsURL.toString());
+	}
+	%>
+
+	<liferay-frontend:component
+		componentId="AccountUserEmailDomainValidator"
+		context="<%= context %>"
+		module="{AccountUserEmailDomainValidator} from account-admin-web"
+	/>
+</c:if>

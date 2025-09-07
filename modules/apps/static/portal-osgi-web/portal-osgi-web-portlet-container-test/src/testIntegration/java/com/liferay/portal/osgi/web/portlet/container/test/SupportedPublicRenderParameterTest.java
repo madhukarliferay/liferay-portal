@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.portlet.container.test;
@@ -20,10 +11,9 @@ import com.liferay.portal.kernel.model.PublicRenderParameter;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.Dictionary;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -46,14 +36,14 @@ public class SupportedPublicRenderParameterTest
 
 	@Test
 	public void testPortalProvidedPRP() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
 		String prpName = "categoryId";
 
-		properties.put(
-			"javax.portlet.supported-public-render-parameter", prpName);
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"jakarta.portlet.supported-public-render-parameter", prpName
+			).build(),
+			TEST_PORTLET_ID);
 
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
 			TestPropsValues.getCompanyId(), TEST_PORTLET_ID);
@@ -80,15 +70,15 @@ public class SupportedPublicRenderParameterTest
 
 	@Test
 	public void testPortletProvidedPRP() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
 		String prpName = "myprp";
 
-		properties.put(
-			"javax.portlet.supported-public-render-parameter",
-			prpName + ";http://some.uri.tld/space");
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"jakarta.portlet.supported-public-render-parameter",
+				prpName + ";http://some.uri.tld/space"
+			).build(),
+			TEST_PORTLET_ID);
 
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
 			TestPropsValues.getCompanyId(), TEST_PORTLET_ID);

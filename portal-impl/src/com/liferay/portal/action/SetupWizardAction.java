@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.action;
 
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
@@ -33,10 +26,10 @@ import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 import com.liferay.portal.util.PropsValues;
 
-import java.sql.SQLException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.sql.SQLException;
 
 /**
  * @author Manuel de la Peña
@@ -91,14 +84,15 @@ public class SetupWizardAction implements Action {
 
 			return null;
 		}
-		catch (Exception e) {
-			if (e instanceof PrincipalException) {
-				SessionErrors.add(httpServletRequest, e.getClass());
+		catch (Exception exception) {
+			if (exception instanceof PrincipalException) {
+				SessionErrors.add(httpServletRequest, exception.getClass());
 
 				return actionMapping.getActionForward("portal.setup_wizard");
 			}
 
-			PortalUtil.sendError(e, httpServletRequest, httpServletResponse);
+			PortalUtil.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}
@@ -133,12 +127,17 @@ public class SetupWizardAction implements Action {
 				httpServletRequest, jsonObject,
 				"database-connection-was-established-successfully");
 		}
-		catch (ClassNotFoundException cnfe) {
+		catch (ClassNotFoundException classNotFoundException) {
 			putMessage(
 				httpServletRequest, jsonObject,
-				"database-driver-x-is-not-present", cnfe.getLocalizedMessage());
+				"database-driver-x-is-not-present",
+				classNotFoundException.getLocalizedMessage());
 		}
-		catch (SQLException sqle) {
+		catch (SQLException sqlException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(sqlException);
+			}
+
 			putMessage(
 				httpServletRequest, jsonObject,
 				"database-connection-could-not-be-established");
@@ -151,5 +150,8 @@ public class SetupWizardAction implements Action {
 
 		ServletResponseUtil.write(httpServletResponse, jsonObject.toString());
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SetupWizardAction.class);
 
 }

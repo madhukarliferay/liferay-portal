@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.test;
@@ -40,11 +31,11 @@ import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.permission.PortletPermission;
+import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletId;
+import com.liferay.portal.kernel.upgrade.BasePortletIdUpgradeProcess;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -70,7 +61,7 @@ import org.junit.runner.RunWith;
  * @author Raymond Augé
  */
 @RunWith(Arquillian.class)
-public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
+public class BaseUpgradePortletIdTest extends BasePortletIdUpgradeProcess {
 
 	@ClassRule
 	@Rule
@@ -115,8 +106,8 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 
 	@After
 	public void tearDown() throws Exception {
-		try (Connection con = DataAccess.getConnection()) {
-			connection = con;
+		try (Connection connection = DataAccess.getConnection()) {
+			this.connection = connection;
 
 			String[][] renamePortletIdsArray = getRenamePortletIdsArray();
 
@@ -131,7 +122,7 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 			}
 		}
 		finally {
-			connection = null;
+			this.connection = null;
 		}
 
 		for (String portletId : _PORTLET_IDS) {
@@ -169,7 +160,7 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 	protected Layout addLayout() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		return LayoutTestUtil.addLayout(group, false);
+		return LayoutTestUtil.addTypePortletLayout(group, false);
 	}
 
 	protected void addPortletPreferences(Layout layout, String portletId)
@@ -212,7 +203,7 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 
 			addPortletPreferences(layout, portletId);
 
-			String portletPrimaryKey = _portletPermission.getPrimaryKey(
+			String portletPrimaryKey = PortletPermissionUtil.getPrimaryKey(
 				layout.getPlid(), portletId);
 
 			_resourcePermissionLocalService.setResourcePermissions(
@@ -285,9 +276,9 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 					": ", StringUtil.merge(layoutTypePortlet.getPortletIds())),
 				portletIds.contains(newPortletId));
 
-			String oldPortletPrimaryKey = _portletPermission.getPrimaryKey(
+			String oldPortletPrimaryKey = PortletPermissionUtil.getPrimaryKey(
 				layout.getPlid(), oldPortletId);
-			String newPortletPrimaryKey = _portletPermission.getPrimaryKey(
+			String newPortletPrimaryKey = PortletPermissionUtil.getPrimaryKey(
 				layout.getPlid(), newPortletId);
 
 			ResourcePermission resourcePermission =
@@ -302,18 +293,15 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 					layout.getPlid(), " via primKey ", oldPortletPrimaryKey),
 				resourcePermission);
 
-			resourcePermission =
-				_resourcePermissionLocalService.fetchResourcePermission(
-					TestPropsValues.getCompanyId(), newRootPortletId,
-					ResourceConstants.SCOPE_INDIVIDUAL, newPortletPrimaryKey,
-					role.getRoleId());
-
 			Assert.assertNotNull(
 				StringBundler.concat(
 					newPortletId, " does not have a resource permission on ",
 					"page ", layout.getPlid(), " via primKey ",
 					newPortletPrimaryKey),
-				resourcePermission);
+				_resourcePermissionLocalService.fetchResourcePermission(
+					TestPropsValues.getCompanyId(), newRootPortletId,
+					ResourceConstants.SCOPE_INDIVIDUAL, newPortletPrimaryKey,
+					role.getRoleId()));
 
 			boolean hasViewPermission =
 				_resourcePermissionLocalService.hasResourcePermission(
@@ -381,7 +369,7 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 	private static final String _INSTANCE_ID = "_INSTANCE_LhZwzy867qfr";
 
 	private static final String[] _PORTLET_IDS = {
-		"47", com.liferay.portlet.util.test.PortletKeys.TEST
+		"47", "com_liferay_test_portlet_TestPortlet"
 	};
 
 	@Inject
@@ -400,9 +388,6 @@ public class BaseUpgradePortletIdTest extends BaseUpgradePortletId {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
-
-	@Inject
-	private PortletPermission _portletPermission;
 
 	@Inject
 	private PortletPreferencesLocalService _portletPreferencesLocalService;

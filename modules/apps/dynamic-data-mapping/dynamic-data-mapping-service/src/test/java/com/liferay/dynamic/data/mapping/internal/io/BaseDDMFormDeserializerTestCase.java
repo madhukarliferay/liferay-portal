@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.io;
@@ -17,6 +8,7 @@ package com.liferay.dynamic.data.mapping.internal.io;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.DDMFormSuccessPageSettings;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
@@ -39,14 +31,11 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 
 	@Test
 	public void testDDMFormAndFieldsDefaultLocales() throws Exception {
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("ddm-form-");
-		sb.append(getDeserializerType());
-		sb.append("-deserializer-different-default-locale");
-		sb.append(getTestFileExtension());
-
-		String serializedDDMForm = read(sb.toString());
+		String serializedDDMForm = read(
+			StringBundler.concat(
+				"ddm-form-", getDeserializerType(),
+				"-deserializer-different-default-locale",
+				getTestFileExtension()));
 
 		DDMForm ddmForm = deserialize(serializedDDMForm);
 
@@ -75,14 +64,10 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 
 	@Test
 	public void testDDMFormDeserialization() throws Exception {
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("ddm-form-");
-		sb.append(getDeserializerType());
-		sb.append("-deserializer-test-data");
-		sb.append(getTestFileExtension());
-
-		String serializedDDMForm = read(sb.toString());
+		String serializedDDMForm = read(
+			StringBundler.concat(
+				"ddm-form-", getDeserializerType(), "-deserializer-test-data",
+				getTestFileExtension()));
 
 		DDMForm ddmForm = deserialize(serializedDDMForm);
 
@@ -94,13 +79,13 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 			ddmForm.getDDMFormFieldsMap(true);
 
 		testBooleanDDMFormField(ddmFormFieldsMap.get("Boolean2282"));
-		testDateDDMFormField(ddmFormFieldsMap.get("Date2510"));
+		_testDateDDMFormField(ddmFormFieldsMap.get("Date2510"));
 		testDecimalDDMFormField(ddmFormFieldsMap.get("Decimal3479"));
-		testDocumentLibraryDDMFormField(
+		_testDocumentLibraryDDMFormField(
 			ddmFormFieldsMap.get("Documents_and_Media4036"));
-		testHTMLDDMFormField(ddmFormFieldsMap.get("HTML4512"));
-		testNestedDDMFormFields(ddmFormFieldsMap.get("Text6980"));
-		testRadioDDMFormField(ddmFormFieldsMap.get("Radio5699"));
+		_testHTMLDDMFormField(ddmFormFieldsMap.get("HTML4512"));
+		_testNestedDDMFormFields(ddmFormFieldsMap.get("Text6980"));
+		_testRadioDDMFormField(ddmFormFieldsMap.get("Radio5699"));
 
 		testDDMFormSuccessPageSettings(ddmForm.getDDMFormSuccessPageSettings());
 	}
@@ -145,14 +130,6 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 		Assert.assertFalse(ddmFormField.isShowLabel());
 	}
 
-	protected void testDateDDMFormField(DDMFormField ddmFormField) {
-		Assert.assertNotNull(ddmFormField);
-		Assert.assertEquals("date", ddmFormField.getDataType());
-		Assert.assertEquals("ddm", ddmFormField.getFieldNamespace());
-		Assert.assertEquals("ddm-date", ddmFormField.getType());
-		Assert.assertTrue(ddmFormField.isShowLabel());
-	}
-
 	protected void testDDMFormRules(List<DDMFormRule> ddmFormRules) {
 	}
 
@@ -180,33 +157,42 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 		Assert.assertNotNull(ddmFormField);
 		Assert.assertEquals("double", ddmFormField.getDataType());
 		Assert.assertEquals("ddm", ddmFormField.getFieldNamespace());
-		Assert.assertEquals("ddm-decimal", ddmFormField.getType());
+		Assert.assertEquals(DDMFormFieldType.DECIMAL, ddmFormField.getType());
 	}
 
 	protected void testDefaultLocale(DDMForm ddmForm) {
 		Assert.assertEquals(LocaleUtil.US, ddmForm.getDefaultLocale());
 	}
 
-	protected void testDocumentLibraryDDMFormField(DDMFormField ddmFormField) {
+	private void _testDateDDMFormField(DDMFormField ddmFormField) {
 		Assert.assertNotNull(ddmFormField);
-		Assert.assertEquals("document-library", ddmFormField.getDataType());
+		Assert.assertEquals("date", ddmFormField.getDataType());
 		Assert.assertEquals("ddm", ddmFormField.getFieldNamespace());
-		Assert.assertEquals("ddm-documentlibrary", ddmFormField.getType());
+		Assert.assertEquals(DDMFormFieldType.DATE, ddmFormField.getType());
 		Assert.assertTrue(ddmFormField.isShowLabel());
 	}
 
-	protected void testHTMLDDMFormField(DDMFormField ddmFormField) {
+	private void _testDocumentLibraryDDMFormField(DDMFormField ddmFormField) {
+		Assert.assertNotNull(ddmFormField);
+		Assert.assertEquals("document-library", ddmFormField.getDataType());
+		Assert.assertEquals("ddm", ddmFormField.getFieldNamespace());
+		Assert.assertEquals(
+			DDMFormFieldType.DOCUMENT_LIBRARY, ddmFormField.getType());
+		Assert.assertTrue(ddmFormField.isShowLabel());
+	}
+
+	private void _testHTMLDDMFormField(DDMFormField ddmFormField) {
 		Assert.assertNotNull(ddmFormField);
 		Assert.assertEquals("html", ddmFormField.getDataType());
 		Assert.assertEquals("ddm", ddmFormField.getFieldNamespace());
-		Assert.assertEquals("ddm-text-html", ddmFormField.getType());
+		Assert.assertEquals(DDMFormFieldType.TEXT_HTML, ddmFormField.getType());
 		Assert.assertFalse(ddmFormField.isReadOnly());
 		Assert.assertFalse(ddmFormField.isRepeatable());
 		Assert.assertFalse(ddmFormField.isRequired());
 		Assert.assertTrue(ddmFormField.isShowLabel());
 	}
 
-	protected void testNestedDDMFormFields(DDMFormField ddmFormField) {
+	private void _testNestedDDMFormFields(DDMFormField ddmFormField) {
 		Assert.assertNotNull(ddmFormField);
 
 		List<DDMFormField> nestedDDMFormFields =
@@ -231,12 +217,13 @@ public abstract class BaseDDMFormDeserializerTestCase extends BaseDDMTestCase {
 		DDMFormFieldOptions selectDDMFormFieldOptions =
 			selectDDMFormField.getDDMFormFieldOptions();
 
-		Set<String> optionValues = selectDDMFormFieldOptions.getOptionsValues();
+		Set<String> optionsValues =
+			selectDDMFormFieldOptions.getOptionsValues();
 
-		Assert.assertEquals(optionValues.toString(), 3, optionValues.size());
+		Assert.assertEquals(optionsValues.toString(), 3, optionsValues.size());
 	}
 
-	protected void testRadioDDMFormField(DDMFormField ddmFormField) {
+	private void _testRadioDDMFormField(DDMFormField ddmFormField) {
 		Assert.assertNotNull(ddmFormField);
 		Assert.assertEquals("string", ddmFormField.getDataType());
 		Assert.assertEquals("radio", ddmFormField.getType());

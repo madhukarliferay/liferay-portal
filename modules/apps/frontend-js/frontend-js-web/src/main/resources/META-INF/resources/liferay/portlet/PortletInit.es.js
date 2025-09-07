@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {isDefAndNotNull, isFunction, isObject, isString} from 'metal';
-import uuidv1 from 'uuid/v1';
+import {v4 as uuidv4} from 'uuid';
 
 import fetch from './../util/fetch.es';
+import isObject from './../util/is_object';
 import RenderState from './RenderState.es';
 import PortletConstants from './portlet_constants.es';
 import {
@@ -26,7 +17,7 @@ import {
 	validateArguments,
 	validateForm,
 	validateParameters,
-	validateState
+	validateState,
 } from './portlet_util.es';
 
 /**
@@ -95,13 +86,11 @@ class PortletInit {
 			this._updateHistory(true);
 		}
 
-		this.portletModes = pageRenderState.portlets[
-			this._portletId
-		].allowedPM.slice(0);
+		this.portletModes =
+			pageRenderState.portlets[this._portletId].allowedPM.slice(0);
 
-		this.windowStates = pageRenderState.portlets[
-			this._portletId
-		].allowedWS.slice(0);
+		this.windowStates =
+			pageRenderState.portlets[this._portletId].allowedWS.slice(0);
 	}
 
 	/**
@@ -115,7 +104,7 @@ class PortletInit {
 	_executeAction(parameters, element) {
 		return new Promise((resolve, reject) => {
 			getUrl(pageRenderState, 'ACTION', this._portletId, parameters).then(
-				url => {
+				(url) => {
 					const options = generateActionUrl(
 						this._portletId,
 						url,
@@ -123,8 +112,8 @@ class PortletInit {
 					);
 
 					fetch(options.url, options)
-						.then(res => res.text())
-						.then(text => {
+						.then((res) => res.text())
+						.then((text) => {
 							const updatedIds = this._updatePageStateFromString(
 								text,
 								this._portletId
@@ -132,8 +121,8 @@ class PortletInit {
 
 							resolve(updatedIds);
 						})
-						.catch(err => {
-							reject(err);
+						.catch((error) => {
+							reject(error);
 						});
 				}
 			);
@@ -151,7 +140,7 @@ class PortletInit {
 
 	_hasListener(portletId) {
 		const eventListenerPortletIds = Object.keys(eventListeners).map(
-			key => eventListeners[key].id
+			(key) => eventListeners[key].id
 		);
 
 		return eventListenerPortletIds.includes(portletId);
@@ -167,8 +156,8 @@ class PortletInit {
 	 * @review
 	 */
 
-	_reportError(portletId, err) {
-		Object.keys(eventListeners).map(key => {
+	_reportError(portletId, error) {
+		Object.keys(eventListeners).map((key) => {
 			const listener = eventListeners[key];
 
 			if (
@@ -176,9 +165,10 @@ class PortletInit {
 				listener.type === 'portlet.onError'
 			) {
 				setTimeout(() => {
-					listener.handler('portlet.onError', err);
+					listener.handler('portlet.onError', error);
 				});
 			}
+
 			return false;
 		});
 	}
@@ -201,18 +191,18 @@ class PortletInit {
 	 */
 
 	_setPageState(portletId, updateString) {
-		if (!isString(updateString)) {
+		if (typeof updateString !== 'string') {
 			throw new TypeError(`Invalid update string: ${updateString}`);
 		}
 
 		this._updatePageState(updateString, portletId).then(
-			updatedIds => {
+			(updatedIds) => {
 				this._updatePortletStates(updatedIds);
 			},
-			err => {
+			(error) => {
 				busy = false;
 
-				this._reportError(portletId, err);
+				this._reportError(portletId, error);
 			}
 		);
 	}
@@ -239,14 +229,14 @@ class PortletInit {
 
 		const parameterKeys = Object.keys(publicRenderParameters);
 
-		parameterKeys.forEach(parameterKey => {
+		parameterKeys.forEach((parameterKey) => {
 			const newValue = publicRenderParameters[parameterKey];
 
 			const groupMap = pageRenderState.prpMap[parameterKey];
 
 			const groupKeys = Object.keys(groupMap);
 
-			groupKeys.forEach(groupKey => {
+			groupKeys.forEach((groupKey) => {
 				if (groupKey !== this._portletId) {
 					const parts = groupMap[groupKey].split('|');
 
@@ -257,7 +247,8 @@ class PortletInit {
 					if (newValue === undefined) {
 						delete pageRenderState.portlets[portletId].state
 							.parameters[parameterName];
-					} else {
+					}
+					else {
 						pageRenderState.portlets[portletId].state.parameters[
 							parameterName
 						] = [...newValue];
@@ -278,7 +269,7 @@ class PortletInit {
 		// Delete render data for all affected portlets in order to avoid dispatching
 		// stale render data
 
-		updatedIds.forEach(updatedId => {
+		updatedIds.forEach((updatedId) => {
 			pageRenderState.portlets[updatedId].renderData.content = null;
 		});
 
@@ -305,33 +296,33 @@ class PortletInit {
 		if (this.isInProgress()) {
 			throw {
 				message: 'Operation is already in progress',
-				name: 'AccessDeniedException'
+				name: 'AccessDeniedException',
 			};
 		}
 
 		if (!this._hasListener(this._portletId)) {
 			throw {
 				message: `No onStateChange listener registered for portlet: ${this._portletId}`,
-				name: 'NotInitializedException'
+				name: 'NotInitializedException',
 			};
 		}
 
 		busy = true;
 
 		return this._executeAction(parameters, element).then(
-			updatedIds => {
+			(updatedIds) => {
 				return this._updatePortletStates(updatedIds).then(
-					updatedIds => {
+					(updatedIds) => {
 						busy = false;
 
 						return updatedIds;
 					}
 				);
 			},
-			err => {
+			(error) => {
 				busy = false;
 
-				this._reportError(this._portletId, err);
+				this._reportError(this._portletId, error);
 			}
 		);
 	}
@@ -347,16 +338,20 @@ class PortletInit {
 
 	_updateHistory(replace) {
 		if (doHistory) {
-			getUrl(pageRenderState, 'RENDER', null, {}).then(url => {
+			getUrl(pageRenderState, 'RENDER', null, {}).then((url) => {
 				const token = JSON.stringify(pageRenderState);
 
 				if (replace) {
 					history.replaceState(token, '');
-				} else {
+				}
+				else {
 					try {
 						history.pushState(token, '', url);
-					} catch (e) {
+					}
+					catch (error) {
+
 						// Do nothing
+
 					}
 				}
 			});
@@ -382,8 +377,11 @@ class PortletInit {
 				);
 
 				resolve(updatedIds);
-			} catch (e) {
-				reject(new Error(`Partial Action decode status: ${e.message}`));
+			}
+			catch (error) {
+				reject(
+					new Error(`Partial Action decode status: ${error.message}`)
+				);
 			}
 		});
 	}
@@ -438,11 +436,12 @@ class PortletInit {
 	 */
 
 	_updatePortletStates(updatedIds) {
-		return new Promise(resolve => {
-			if (updatedIds.length === 0) {
+		return new Promise((resolve) => {
+			if (!updatedIds.length) {
 				busy = false;
-			} else {
-				updatedIds.forEach(updatedId => {
+			}
+			else {
+				updatedIds.forEach((updatedId) => {
 					this._updateStateForPortlet(updatedId);
 				});
 			}
@@ -464,24 +463,25 @@ class PortletInit {
 		if (busy) {
 			throw {
 				message: 'Operation in progress',
-				name: 'AccessDeniedException'
+				name: 'AccessDeniedException',
 			};
-		} else if (!this._hasListener(this._portletId)) {
+		}
+		else if (!this._hasListener(this._portletId)) {
 			throw {
 				message: `No onStateChange listener registered for portlet: ${this._portletId}`,
-				name: 'NotInitializedException'
+				name: 'NotInitializedException',
 			};
 		}
 
 		busy = true;
 
 		this._setState(state)
-			.then(updatedIds => {
+			.then((updatedIds) => {
 				this._updatePortletStates(updatedIds);
 			})
-			.catch(err => {
+			.catch((error) => {
 				busy = false;
-				this._reportError(this._portletId, err);
+				this._reportError(this._portletId, error);
 			});
 	}
 
@@ -497,7 +497,7 @@ class PortletInit {
 	 */
 
 	_updateStateForPortlet(portletId) {
-		const updateQueueIds = eventListenersQueue.map(item => item.handle);
+		const updateQueueIds = eventListenersQueue.map((item) => item.handle);
 
 		const entries = Object.entries(eventListeners);
 
@@ -511,11 +511,11 @@ class PortletInit {
 			}
 		});
 
-		if (eventListenersQueue.length > 0) {
+		if (eventListenersQueue.length) {
 			setTimeout(() => {
 				busy = true;
 
-				while (eventListenersQueue.length > 0) {
+				while (eventListenersQueue.length) {
 					const eventData = eventListenersQueue.shift();
 					const handler = eventData.handler;
 					const id = eventData.id;
@@ -535,7 +535,8 @@ class PortletInit {
 							renderState,
 							renderData
 						);
-					} else {
+					}
+					else {
 						handler('portlet.onStateChange', renderState);
 					}
 				}
@@ -562,18 +563,19 @@ class PortletInit {
 	action(...args) {
 		let actionParameters = null;
 		let argCount = 0;
-		let el = null;
+		let element = null;
 
-		args.forEach(arg => {
+		args.forEach((arg) => {
 			if (arg instanceof HTMLFormElement) {
-				if (el !== null) {
+				if (element !== null) {
 					throw new TypeError(
-						`Too many [object HTMLFormElement] arguments: ${arg}, ${el}`
+						`Too many [object HTMLFormElement] arguments: ${arg}, ${element}`
 					);
 				}
 
-				el = arg;
-			} else if (isObject(arg)) {
+				element = arg;
+			}
+			else if (isObject(arg)) {
 				validateParameters(arg);
 
 				if (actionParameters !== null) {
@@ -581,27 +583,29 @@ class PortletInit {
 				}
 
 				actionParameters = arg;
-			} else if (arg !== undefined) {
+			}
+			else if (arg !== undefined) {
 				const type = Object.prototype.toString.call(arg);
 
 				throw new TypeError(
-					`Invalid argument type. Argument ${argCount +
-						1} is of type ${type}`
+					`Invalid argument type. Argument ${
+						argCount + 1
+					} is of type ${type}`
 				);
 			}
 			argCount++;
 		});
 
-		if (el) {
-			validateForm(el);
+		if (element) {
+			validateForm(element);
 		}
 
-		return this._setupAction(actionParameters, el)
-			.then(val => {
+		return this._setupAction(actionParameters, element)
+			.then((val) => {
 				Promise.resolve(val);
 			})
-			.catch(err => {
-				Promise.reject(err);
+			.catch((error) => {
+				Promise.reject(error);
 			});
 	}
 
@@ -623,7 +627,7 @@ class PortletInit {
 			);
 		}
 
-		if (!isString(type) || !isFunction(handler)) {
+		if (typeof type !== 'string' || typeof handler !== 'function') {
 			throw new TypeError('Invalid arguments passed to addEventListener');
 		}
 
@@ -640,13 +644,13 @@ class PortletInit {
 			}
 		}
 
-		const handle = uuidv1();
+		const handle = uuidv4();
 
 		const listener = {
 			handle,
 			handler,
 			id,
-			type
+			type,
 		};
 
 		eventListeners[handle] = listener;
@@ -682,7 +686,8 @@ class PortletInit {
 		if (parameters) {
 			if (isObject(parameters)) {
 				validateParameters(parameters);
-			} else {
+			}
+			else {
 				throw new TypeError(
 					'Invalid argument type. Resource parameters must be a parameters object.'
 				);
@@ -692,19 +697,21 @@ class PortletInit {
 		let cacheability = null;
 
 		if (cache) {
-			if (isString(cache)) {
+			if (typeof cache === 'string') {
 				if (
 					cache === 'cacheLevelPage' ||
 					cache === 'cacheLevelPortlet' ||
 					cache === 'cacheLevelFull'
 				) {
 					cacheability = cache;
-				} else {
+				}
+				else {
 					throw new TypeError(
 						`Invalid cacheability argument: ${cache}`
 					);
 				}
-			} else {
+			}
+			else {
 				throw new TypeError(
 					'Invalid argument type. Cacheability argument must be a string.'
 				);
@@ -715,7 +722,7 @@ class PortletInit {
 			cacheability = 'cacheLevelPage';
 		}
 
-		if (resourceId && !isString(resourceId)) {
+		if (resourceId && typeof resourceId !== 'string') {
 			throw new TypeError(
 				'Invalid argument type. Resource ID argument must be a string.'
 			);
@@ -755,6 +762,7 @@ class PortletInit {
 				listener.handler(type, payload);
 				amount++;
 			}
+
 			return amount;
 		}, 0);
 	}
@@ -781,11 +789,12 @@ class PortletInit {
 	newParameters(optParameters = {}) {
 		const newParameters = {};
 
-		Object.keys(optParameters).forEach(key => {
+		Object.keys(optParameters).forEach((key) => {
 			if (Array.isArray(optParameters[key])) {
 				newParameters[key] = [...optParameters[key]];
 			}
 		});
+
 		return newParameters;
 	}
 
@@ -820,7 +829,7 @@ class PortletInit {
 			);
 		}
 
-		if (!isDefAndNotNull(handle)) {
+		if (handle === undefined || handle === null) {
 			throw new TypeError(
 				`The event handle provided is ${typeof handle}`
 			);
@@ -901,12 +910,14 @@ class PortletInit {
 
 		if (arguments.length > 1) {
 			throw new TypeError('Too many arguments. 1 arguments are allowed');
-		} else if (actionParameters !== undefined) {
+		}
+		else if (actionParameters !== undefined) {
 			if (isObject(actionParameters)) {
 				validateParameters(actionParameters);
 
 				parameters = actionParameters;
-			} else {
+			}
+			else {
 				throw new TypeError(
 					`Invalid argument type. Argument is of type ${typeof actionParameters}`
 				);
@@ -916,12 +927,13 @@ class PortletInit {
 		if (busy === true) {
 			throw {
 				message: 'Operation in progress',
-				name: 'AccessDeniedException'
+				name: 'AccessDeniedException',
 			};
-		} else if (!this._hasListener(this._portletId)) {
+		}
+		else if (!this._hasListener(this._portletId)) {
 			throw {
 				message: `No onStateChange listener registered for portlet: ${this._portletId}`,
-				name: 'NotInitializedException'
+				name: 'NotInitializedException',
 			};
 		}
 
@@ -931,7 +943,7 @@ class PortletInit {
 			setPageState(updateString) {
 				instance._setPageState(instance._portletId, updateString);
 			},
-			url: ''
+			url: '',
 		};
 
 		return getUrl(
@@ -939,8 +951,9 @@ class PortletInit {
 			'PARTIAL_ACTION',
 			this._portletId,
 			parameters
-		).then(url => {
+		).then((url) => {
 			partialActionInitObject.url = url;
+
 			return partialActionInitObject;
 		});
 	}

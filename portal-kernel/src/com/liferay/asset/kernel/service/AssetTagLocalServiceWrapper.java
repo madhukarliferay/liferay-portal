@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
@@ -17,6 +8,7 @@ package com.liferay.asset.kernel.service;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -29,41 +21,44 @@ import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersisten
 public class AssetTagLocalServiceWrapper
 	implements AssetTagLocalService, ServiceWrapper<AssetTagLocalService> {
 
+	public AssetTagLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AssetTagLocalServiceWrapper(
 		AssetTagLocalService assetTagLocalService) {
 
 		_assetTagLocalService = assetTagLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetTagLocalServiceUtil} to access the asset tag local service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public void addAssetEntryAssetTag(long entryId, AssetTag assetTag) {
-		_assetTagLocalService.addAssetEntryAssetTag(entryId, assetTag);
+	public boolean addAssetEntryAssetTag(long entryId, AssetTag assetTag) {
+		return _assetTagLocalService.addAssetEntryAssetTag(entryId, assetTag);
 	}
 
 	@Override
-	public void addAssetEntryAssetTag(long entryId, long tagId) {
-		_assetTagLocalService.addAssetEntryAssetTag(entryId, tagId);
+	public boolean addAssetEntryAssetTag(long entryId, long tagId) {
+		return _assetTagLocalService.addAssetEntryAssetTag(entryId, tagId);
 	}
 
 	@Override
-	public void addAssetEntryAssetTags(
+	public boolean addAssetEntryAssetTags(
 		long entryId, java.util.List<AssetTag> assetTags) {
 
-		_assetTagLocalService.addAssetEntryAssetTags(entryId, assetTags);
+		return _assetTagLocalService.addAssetEntryAssetTags(entryId, assetTags);
 	}
 
 	@Override
-	public void addAssetEntryAssetTags(long entryId, long[] tagIds) {
-		_assetTagLocalService.addAssetEntryAssetTags(entryId, tagIds);
+	public boolean addAssetEntryAssetTags(long entryId, long[] tagIds) {
+		return _assetTagLocalService.addAssetEntryAssetTags(entryId, tagIds);
 	}
 
 	/**
 	 * Adds the asset tag to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was added
@@ -76,21 +71,23 @@ public class AssetTagLocalServiceWrapper
 	/**
 	 * Adds an asset tag.
 	 *
-	 * @param userId the primary key of the user adding the asset tag
-	 * @param groupId the primary key of the group in which the asset tag is to
+	 * @param externalReferenceCode
+	 * @param userId                the primary key of the user adding the asset tag
+	 * @param groupId               the primary key of the group in which the asset tag is to
 	 be added
-	 * @param name the asset tag's name
-	 * @param serviceContext the service context to be applied
+	 * @param name                  the asset tag's name
+	 * @param serviceContext        the service context to be applied
 	 * @return the asset tag that was added
 	 */
 	@Override
 	public AssetTag addTag(
-			long userId, long groupId, String name,
+			String externalReferenceCode, long userId, long groupId,
+			String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetTagLocalService.addTag(
-			userId, groupId, name, serviceContext);
+			externalReferenceCode, userId, groupId, name, serviceContext);
 	}
 
 	/**
@@ -153,6 +150,17 @@ public class AssetTagLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetTagLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Decrements the number of assets to which the asset tag has been applied.
 	 *
 	 * @param tagId the primary key of the asset tag
@@ -192,6 +200,10 @@ public class AssetTagLocalServiceWrapper
 	/**
 	 * Deletes the asset tag from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was removed
 	 */
@@ -202,6 +214,10 @@ public class AssetTagLocalServiceWrapper
 
 	/**
 	 * Deletes the asset tag with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param tagId the primary key of the asset tag
 	 * @return the asset tag that was removed
@@ -260,6 +276,18 @@ public class AssetTagLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_assetTagLocalService.deleteTag(tagId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _assetTagLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _assetTagLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -357,6 +385,14 @@ public class AssetTagLocalServiceWrapper
 		return _assetTagLocalService.fetchAssetTag(tagId);
 	}
 
+	@Override
+	public AssetTag fetchAssetTagByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return _assetTagLocalService.fetchAssetTagByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the asset tag matching the UUID and group.
 	 *
@@ -441,6 +477,15 @@ public class AssetTagLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetTagLocalService.getAssetTag(tagId);
+	}
+
+	@Override
+	public AssetTag getAssetTagByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetTagLocalService.getAssetTagByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -578,6 +623,26 @@ public class AssetTagLocalServiceWrapper
 	}
 
 	/**
+	 * Returns a range of all the asset tags in the group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param start the lower bound of the range of asset tags
+	 * @param end the upper bound of the range of asset tags (not inclusive)
+	 * @param orderByComparator the comparator to order the asset tags
+	 (optionally <code>null</code>)
+	 * @return the range of matching asset tags
+	 */
+	@Override
+	public java.util.List<AssetTag> getGroupTags(
+		long groupId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
+			orderByComparator) {
+
+		return _assetTagLocalService.getGroupTags(
+			groupId, start, end, orderByComparator);
+	}
+
+	/**
 	 * Returns the number of asset tags in the group.
 	 *
 	 * @param groupId the primary key of the group
@@ -605,30 +670,15 @@ public class AssetTagLocalServiceWrapper
 		return _assetTagLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetTagLocalService.getPersistedModel(primaryKeyObj);
-	}
-
-	@Override
-	public java.util.List<AssetTag> getSocialActivityCounterOffsetTags(
-		long groupId, String socialActivityCounterName, int startOffset,
-		int endOffset) {
-
-		return _assetTagLocalService.getSocialActivityCounterOffsetTags(
-			groupId, socialActivityCounterName, startOffset, endOffset);
-	}
-
-	@Override
-	public java.util.List<AssetTag> getSocialActivityCounterPeriodTags(
-		long groupId, String socialActivityCounterName, int startPeriod,
-		int endPeriod) {
-
-		return _assetTagLocalService.getSocialActivityCounterPeriodTags(
-			groupId, socialActivityCounterName, startPeriod, endPeriod);
 	}
 
 	/**
@@ -794,11 +844,6 @@ public class AssetTagLocalServiceWrapper
 	}
 
 	@Override
-	public int getTagsSize(long groupId, String name) {
-		return _assetTagLocalService.getTagsSize(groupId, name);
-	}
-
-	@Override
 	public boolean hasAssetEntryAssetTag(long entryId, long tagId) {
 		return _assetTagLocalService.hasAssetEntryAssetTag(entryId, tagId);
 	}
@@ -900,8 +945,26 @@ public class AssetTagLocalServiceWrapper
 		_assetTagLocalService.setAssetEntryAssetTags(entryId, tagIds);
 	}
 
+	@Override
+	public void subscribeTag(long userId, long groupId, long tagId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_assetTagLocalService.subscribeTag(userId, groupId, tagId);
+	}
+
+	@Override
+	public void unsubscribeTag(long userId, long tagId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_assetTagLocalService.unsubscribeTag(userId, tagId);
+	}
+
 	/**
 	 * Updates the asset tag in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetTagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetTag the asset tag
 	 * @return the asset tag that was updated
@@ -913,12 +976,17 @@ public class AssetTagLocalServiceWrapper
 
 	@Override
 	public AssetTag updateTag(
-			long userId, long tagId, String name,
+			String externalReferenceCode, long userId, long tagId, String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetTagLocalService.updateTag(
-			userId, tagId, name, serviceContext);
+			externalReferenceCode, userId, tagId, name, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _assetTagLocalService.getBasePersistence();
 	}
 
 	@Override

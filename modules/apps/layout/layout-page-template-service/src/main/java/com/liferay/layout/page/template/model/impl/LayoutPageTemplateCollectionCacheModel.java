@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model.impl;
@@ -38,18 +29,18 @@ public class LayoutPageTemplateCollectionCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutPageTemplateCollectionCacheModel)) {
+		if (!(object instanceof LayoutPageTemplateCollectionCacheModel)) {
 			return false;
 		}
 
 		LayoutPageTemplateCollectionCacheModel
 			layoutPageTemplateCollectionCacheModel =
-				(LayoutPageTemplateCollectionCacheModel)obj;
+				(LayoutPageTemplateCollectionCacheModel)object;
 
 		if ((layoutPageTemplateCollectionId ==
 				layoutPageTemplateCollectionCacheModel.
@@ -82,12 +73,16 @@ public class LayoutPageTemplateCollectionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", layoutPageTemplateCollectionId=");
 		sb.append(layoutPageTemplateCollectionId);
 		sb.append(", groupId=");
@@ -102,10 +97,16 @@ public class LayoutPageTemplateCollectionCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", parentLayoutPageTemplateCollectionId=");
+		sb.append(parentLayoutPageTemplateCollectionId);
+		sb.append(", layoutPageTemplateCollectionKey=");
+		sb.append(layoutPageTemplateCollectionKey);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", description=");
 		sb.append(description);
+		sb.append(", type=");
+		sb.append(type);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append("}");
@@ -119,12 +120,21 @@ public class LayoutPageTemplateCollectionCacheModel
 			new LayoutPageTemplateCollectionImpl();
 
 		layoutPageTemplateCollectionImpl.setMvccVersion(mvccVersion);
+		layoutPageTemplateCollectionImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			layoutPageTemplateCollectionImpl.setUuid("");
 		}
 		else {
 			layoutPageTemplateCollectionImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			layoutPageTemplateCollectionImpl.setExternalReferenceCode("");
+		}
+		else {
+			layoutPageTemplateCollectionImpl.setExternalReferenceCode(
+				externalReferenceCode);
 		}
 
 		layoutPageTemplateCollectionImpl.setLayoutPageTemplateCollectionId(
@@ -156,6 +166,19 @@ public class LayoutPageTemplateCollectionCacheModel
 				new Date(modifiedDate));
 		}
 
+		layoutPageTemplateCollectionImpl.
+			setParentLayoutPageTemplateCollectionId(
+				parentLayoutPageTemplateCollectionId);
+
+		if (layoutPageTemplateCollectionKey == null) {
+			layoutPageTemplateCollectionImpl.setLayoutPageTemplateCollectionKey(
+				"");
+		}
+		else {
+			layoutPageTemplateCollectionImpl.setLayoutPageTemplateCollectionKey(
+				layoutPageTemplateCollectionKey);
+		}
+
 		if (name == null) {
 			layoutPageTemplateCollectionImpl.setName("");
 		}
@@ -169,6 +192,8 @@ public class LayoutPageTemplateCollectionCacheModel
 		else {
 			layoutPageTemplateCollectionImpl.setDescription(description);
 		}
+
+		layoutPageTemplateCollectionImpl.setType(type);
 
 		if (lastPublishDate == Long.MIN_VALUE) {
 			layoutPageTemplateCollectionImpl.setLastPublishDate(null);
@@ -186,7 +211,10 @@ public class LayoutPageTemplateCollectionCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		layoutPageTemplateCollectionId = objectInput.readLong();
 
@@ -198,8 +226,13 @@ public class LayoutPageTemplateCollectionCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+
+		parentLayoutPageTemplateCollectionId = objectInput.readLong();
+		layoutPageTemplateCollectionKey = objectInput.readUTF();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
+
+		type = objectInput.readInt();
 		lastPublishDate = objectInput.readLong();
 	}
 
@@ -207,11 +240,20 @@ public class LayoutPageTemplateCollectionCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(layoutPageTemplateCollectionId);
@@ -232,6 +274,15 @@ public class LayoutPageTemplateCollectionCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		objectOutput.writeLong(parentLayoutPageTemplateCollectionId);
+
+		if (layoutPageTemplateCollectionKey == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(layoutPageTemplateCollectionKey);
+		}
+
 		if (name == null) {
 			objectOutput.writeUTF("");
 		}
@@ -246,11 +297,14 @@ public class LayoutPageTemplateCollectionCacheModel
 			objectOutput.writeUTF(description);
 		}
 
+		objectOutput.writeInt(type);
 		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long layoutPageTemplateCollectionId;
 	public long groupId;
 	public long companyId;
@@ -258,8 +312,11 @@ public class LayoutPageTemplateCollectionCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long parentLayoutPageTemplateCollectionId;
+	public String layoutPageTemplateCollectionKey;
 	public String name;
 	public String description;
+	public int type;
 	public long lastPublishDate;
 
 }

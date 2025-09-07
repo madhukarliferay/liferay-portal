@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.users.admin.web.internal.search;
@@ -17,6 +8,8 @@ package com.liferay.users.admin.web.internal.search;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.exception.NoSuchOrganizationException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -28,9 +21,9 @@ import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
 import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
-import javax.portlet.RenderResponse;
+import jakarta.portlet.RenderResponse;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Pei-Jung Lan
@@ -42,15 +35,15 @@ public class OrganizationUserChecker extends EmptyOnClickRowChecker {
 	}
 
 	@Override
-	public boolean isDisabled(Object obj) {
+	public boolean isDisabled(Object object) {
 		Organization organization = null;
 		User user = null;
 
-		if (obj instanceof Organization) {
-			organization = (Organization)obj;
+		if (object instanceof Organization) {
+			organization = (Organization)object;
 		}
 		else {
-			user = (User)obj;
+			user = (User)object;
 		}
 
 		try {
@@ -71,10 +64,13 @@ public class OrganizationUserChecker extends EmptyOnClickRowChecker {
 				return true;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
-		return super.isDisabled(obj);
+		return super.isDisabled(object);
 	}
 
 	@Override
@@ -90,8 +86,8 @@ public class OrganizationUserChecker extends EmptyOnClickRowChecker {
 
 			name += Organization.class.getSimpleName();
 		}
-		catch (Exception e1) {
-			if (e1 instanceof NoSuchOrganizationException) {
+		catch (Exception exception1) {
+			if (exception1 instanceof NoSuchOrganizationException) {
 				try {
 					long userId = GetterUtil.getLong(value);
 
@@ -99,7 +95,11 @@ public class OrganizationUserChecker extends EmptyOnClickRowChecker {
 
 					name += User.class.getSimpleName();
 				}
-				catch (Exception e2) {
+				catch (Exception exception2) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception2);
+					}
+
 					return StringPool.BLANK;
 				}
 			}
@@ -109,5 +109,8 @@ public class OrganizationUserChecker extends EmptyOnClickRowChecker {
 			httpServletRequest, checked, disabled, name, value, checkBoxRowIds,
 			checkBoxAllRowIds, checkBoxPostOnClick);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		OrganizationUserChecker.class);
 
 }

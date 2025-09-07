@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
@@ -24,17 +16,16 @@ import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.io.Serializable;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -48,6 +39,9 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see ReleaseLocalServiceUtil
  * @generated
  */
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.portal.kernel.model.Release"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -56,14 +50,18 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface ReleaseLocalService
 	extends BaseLocalService, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link ReleaseLocalServiceUtil} to access the release local service. Add custom service methods to <code>com.liferay.portal.service.impl.ReleaseLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.ReleaseLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the release local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ReleaseLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the release to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param release the release
 	 * @return the release that was added
@@ -76,6 +74,12 @@ public interface ReleaseLocalService
 	public Release addRelease(String servletContextName, String schemaVersion);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Creates a new release with the primary key. Does not add the release to the database.
 	 *
 	 * @param releaseId the primary key for the new release
@@ -83,12 +87,6 @@ public interface ReleaseLocalService
 	 */
 	@Transactional(enabled = false)
 	public Release createRelease(long releaseId);
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public void createTablesAndPopulate();
 
 	/**
 	 * @throws PortalException
@@ -100,6 +98,10 @@ public interface ReleaseLocalService
 	/**
 	 * Deletes the release with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param releaseId the primary key of the release
 	 * @return the release that was removed
 	 * @throws PortalException if a release with the primary key could not be found
@@ -110,11 +112,21 @@ public interface ReleaseLocalService
 	/**
 	 * Deletes the release from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param release the release
 	 * @return the release that was removed
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	public Release deleteRelease(Release release);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -191,13 +203,6 @@ public interface ReleaseLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	@Transactional
-	public int getBuildNumberOrCreate() throws PortalException;
-
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
 
@@ -208,6 +213,9 @@ public interface ReleaseLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -253,23 +261,17 @@ public interface ReleaseLocalService
 	/**
 	 * Updates the release in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param release the release
 	 * @return the release that was updated
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public Release updateRelease(Release release);
 
-	public void updateRelease(
-			String servletContextName, List<UpgradeProcess> upgradeProcesses,
-			int buildNumber, int previousBuildNumber, boolean indexOnUpgrade)
-		throws PortalException;
-
-	public void updateRelease(
-			String servletContextName, List<UpgradeProcess> upgradeProcesses,
-			Properties unfilteredPortalProperties)
-		throws Exception;
-
-	public void updateRelease(
+	public Release updateRelease(
 		String servletContextName, String schemaVersion,
 		String previousSchemaVersion);
 

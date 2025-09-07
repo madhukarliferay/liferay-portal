@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.extensions;
 
 import com.liferay.gradle.plugins.internal.util.GradleUtil;
+import com.liferay.gradle.util.GUtil;
 import com.liferay.gradle.util.OSDetector;
 
 import java.io.File;
@@ -27,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.gradle.api.Project;
-import org.gradle.util.GUtil;
 
 /**
  * @author Andrea Di Giorgi
@@ -83,6 +74,10 @@ public class AppServer {
 		return GradleUtil.toInteger(_portNumber);
 	}
 
+	public File getShieldedContainerLibPortalDir() {
+		return GradleUtil.toFile(project, _shieldedContainerLibPortalDir);
+	}
+
 	public String getStartExecutable() {
 		return GradleUtil.toString(_startExecutable);
 	}
@@ -123,7 +118,7 @@ public class AppServer {
 				return true;
 			}
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		return false;
@@ -155,6 +150,12 @@ public class AppServer {
 
 	public void setPortNumber(Object portNumber) {
 		_portNumber = portNumber;
+	}
+
+	public void setShieldedContainerLibPortalDir(
+		Object shieldedContainerLibPortalDir) {
+
+		_shieldedContainerLibPortalDir = shieldedContainerLibPortalDir;
 	}
 
 	public void setStartExecutable(Object startExecutable) {
@@ -197,6 +198,7 @@ public class AppServer {
 	private final String _name;
 	private Object _portalDir;
 	private Object _portNumber = 8080;
+	private Object _shieldedContainerLibPortalDir;
 	private Object _startExecutable;
 	private final List<Object> _startExecutableArgs = new ArrayList<>();
 	private Object _stopExecutable;

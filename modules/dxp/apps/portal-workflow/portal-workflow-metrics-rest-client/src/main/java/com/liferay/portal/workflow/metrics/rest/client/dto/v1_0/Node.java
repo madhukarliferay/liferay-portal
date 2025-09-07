@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.client.dto.v1_0;
@@ -17,16 +8,65 @@ package com.liferay.portal.workflow.metrics.rest.client.dto.v1_0;
 import com.liferay.portal.workflow.metrics.rest.client.function.UnsafeSupplier;
 import com.liferay.portal.workflow.metrics.rest.client.serdes.v1_0.NodeSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author Rafael Praxedes
  * @generated
  */
 @Generated("")
-public class Node {
+public class Node implements Cloneable, Serializable {
+
+	public static Node toDTO(String json) {
+		return NodeSerDes.toDTO(json);
+	}
+
+	public Date getDateCreated() {
+		return dateCreated;
+	}
+
+	public void setDateCreated(Date dateCreated) {
+		this.dateCreated = dateCreated;
+	}
+
+	public void setDateCreated(
+		UnsafeSupplier<Date, Exception> dateCreatedUnsafeSupplier) {
+
+		try {
+			dateCreated = dateCreatedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Date dateCreated;
+
+	public Date getDateModified() {
+		return dateModified;
+	}
+
+	public void setDateModified(Date dateModified) {
+		this.dateModified = dateModified;
+	}
+
+	public void setDateModified(
+		UnsafeSupplier<Date, Exception> dateModifiedUnsafeSupplier) {
+
+		try {
+			dateModified = dateModifiedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Date dateModified;
 
 	public Long getId() {
 		return id;
@@ -68,6 +108,27 @@ public class Node {
 
 	protected Boolean initial;
 
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public void setLabel(
+		UnsafeSupplier<String, Exception> labelUnsafeSupplier) {
+
+		try {
+			label = labelUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String label;
+
 	public String getName() {
 		return name;
 	}
@@ -86,6 +147,48 @@ public class Node {
 	}
 
 	protected String name;
+
+	public Long getProcessId() {
+		return processId;
+	}
+
+	public void setProcessId(Long processId) {
+		this.processId = processId;
+	}
+
+	public void setProcessId(
+		UnsafeSupplier<Long, Exception> processIdUnsafeSupplier) {
+
+		try {
+			processId = processIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long processId;
+
+	public String getProcessVersion() {
+		return processVersion;
+	}
+
+	public void setProcessVersion(String processVersion) {
+		this.processVersion = processVersion;
+	}
+
+	public void setProcessVersion(
+		UnsafeSupplier<String, Exception> processVersionUnsafeSupplier) {
+
+		try {
+			processVersion = processVersionUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String processVersion;
 
 	public Boolean getTerminal() {
 		return terminal;
@@ -126,6 +229,11 @@ public class Node {
 	}
 
 	protected String type;
+
+	@Override
+	public Node clone() throws CloneNotSupportedException {
+		return (Node)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

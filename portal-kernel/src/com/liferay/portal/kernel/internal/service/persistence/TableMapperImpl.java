@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.internal.service.persistence;
@@ -24,15 +15,20 @@ import com.liferay.portal.kernel.dao.jdbc.ParamSetter;
 import com.liferay.portal.kernel.dao.jdbc.RowMapper;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ArgumentsResolver;
+import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.internal.cache.DummyPortalCache;
+import com.liferay.portal.kernel.internal.dao.orm.TableMapperArgumentResolver;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.ModelListenerRegistrationUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.impl.TableMapper;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
@@ -42,6 +38,9 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Shuyang Zhou
@@ -55,6 +54,7 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 		Class<R> rightModelClass, BasePersistence<L> leftBasePersistence,
 		BasePersistence<R> rightBasePersistence, boolean cacheless) {
 
+		_tableName = tableName;
 		this.leftColumnName = leftColumnName;
 		this.rightColumnName = rightColumnName;
 		this.leftModelClass = leftModelClass;
@@ -83,6 +83,16 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 				PortalCacheManagerNames.MULTI_VM, rightToLeftPortalCacheName);
 		}
 
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		_serviceRegistration = bundleContext.registerService(
+			ArgumentsResolver.class, new TableMapperArgumentResolver(tableName),
+			HashMapDictionaryBuilder.put(
+				"class.name", tableName
+			).put(
+				"table.name", tableName
+			).build());
+
 		init(tableName, companyColumnName, leftColumnName, rightColumnName);
 	}
 
@@ -96,6 +106,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		leftToRightPortalCache.remove(leftPrimaryKey);
 		rightToLeftPortalCache.remove(rightPrimaryKey);
+
+		FinderCacheUtil.clearDSLQueryCache(_tableName);
 
 		_addTableMapping(companyId, leftPrimaryKey, rightPrimaryKey);
 
@@ -125,6 +137,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		if (!addedRightPrimaryKeys.isEmpty()) {
 			leftToRightPortalCache.remove(leftPrimaryKey);
+
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
 		}
 
 		return ArrayUtil.toLongArray(addedRightPrimaryKeys);
@@ -153,6 +167,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		if (!addedLeftPrimaryKeys.isEmpty()) {
 			rightToLeftPortalCache.remove(rightPrimaryKey);
+
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
 		}
 
 		return ArrayUtil.toLongArray(addedLeftPrimaryKeys);
@@ -167,18 +183,30 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 	@Override
 	public int deleteLeftPrimaryKeyTableMappings(long leftPrimaryKey) {
-		return deleteTableMappings(
+		int count = deleteTableMappings(
 			leftModelClass, rightModelClass, leftToRightPortalCache,
 			rightToLeftPortalCache, getRightPrimaryKeysSqlQuery,
 			deleteLeftPrimaryKeyTableMappingsSqlUpdate, leftPrimaryKey);
+
+		if (count > 0) {
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
+		}
+
+		return count;
 	}
 
 	@Override
 	public int deleteRightPrimaryKeyTableMappings(long rightPrimaryKey) {
-		return deleteTableMappings(
+		int count = deleteTableMappings(
 			rightModelClass, leftModelClass, rightToLeftPortalCache,
 			leftToRightPortalCache, getLeftPrimaryKeysSqlQuery,
 			deleteRightPrimaryKeyTableMappingsSqlUpdate, rightPrimaryKey);
+
+		if (count > 0) {
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
+		}
+
+		return count;
 	}
 
 	@Override
@@ -191,6 +219,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		leftToRightPortalCache.remove(leftPrimaryKey);
 		rightToLeftPortalCache.remove(rightPrimaryKey);
+
+		FinderCacheUtil.clearDSLQueryCache(_tableName);
 
 		return _deleteTableMapping(leftPrimaryKey, rightPrimaryKey);
 	}
@@ -221,6 +251,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		if (clearCache) {
 			leftToRightPortalCache.remove(leftPrimaryKey);
+
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
 		}
 
 		return ArrayUtil.toLongArray(deletedRightPrimaryKeys);
@@ -252,6 +284,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		if (clearCache) {
 			rightToLeftPortalCache.remove(rightPrimaryKey);
+
+			FinderCacheUtil.clearDSLQueryCache(_tableName);
 		}
 
 		return ArrayUtil.toLongArray(deletedLeftPrimaryKeys);
@@ -265,15 +299,18 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 		PortalCacheHelperUtil.removePortalCache(
 			PortalCacheManagerNames.MULTI_VM,
 			rightToLeftPortalCache.getPortalCacheName());
+
+		_serviceRegistration.unregister();
 	}
 
 	@Override
 	public List<L> getLeftBaseModels(
-		long rightPrimaryKey, int start, int end, OrderByComparator<L> obc) {
+		long rightPrimaryKey, int start, int end,
+		OrderByComparator<L> orderByComparator) {
 
 		return getBaseModels(
 			rightToLeftPortalCache, getLeftPrimaryKeysSqlQuery, rightPrimaryKey,
-			leftBasePersistence, start, end, obc);
+			leftBasePersistence, start, end, orderByComparator);
 	}
 
 	@Override
@@ -290,11 +327,12 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 	@Override
 	public List<R> getRightBaseModels(
-		long leftPrimaryKey, int start, int end, OrderByComparator<R> obc) {
+		long leftPrimaryKey, int start, int end,
+		OrderByComparator<R> orderByComparator) {
 
 		return getBaseModels(
 			leftToRightPortalCache, getRightPrimaryKeysSqlQuery, leftPrimaryKey,
-			rightBasePersistence, start, end, obc);
+			rightBasePersistence, start, end, orderByComparator);
 	}
 
 	@Override
@@ -361,11 +399,13 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		int rowCount = 0;
 
-		try {
-			rowCount = deleteSqlUpdate.update(masterPrimaryKey);
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		if (slavePrimaryKeys.length > 0) {
+			try {
+				rowCount = deleteSqlUpdate.update(masterPrimaryKey);
+			}
+			catch (Exception exception) {
+				throw new SystemException(exception);
+			}
 		}
 
 		if ((masterModelListeners.length > 0) ||
@@ -397,7 +437,7 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 		PortalCache<Long, long[]> portalCache,
 		MappingSqlQuery<Long> mappingSqlQuery, long masterPrimaryKey,
 		BasePersistence<T> slaveBasePersistence, int start, int end,
-		OrderByComparator<T> obc) {
+		OrderByComparator<T> orderByComparator) {
 
 		long[] slavePrimaryKeys = getPrimaryKeys(
 			portalCache, mappingSqlQuery, masterPrimaryKey, true);
@@ -414,12 +454,12 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 					slaveBasePersistence.findByPrimaryKey(slavePrimaryKey));
 			}
 		}
-		catch (NoSuchModelException nsme) {
-			throw new SystemException(nsme);
+		catch (NoSuchModelException noSuchModelException) {
+			throw new SystemException(noSuchModelException);
 		}
 
-		if (obc != null) {
-			Collections.sort(slaveBaseModels, obc);
+		if (orderByComparator != null) {
+			Collections.sort(slaveBaseModels, orderByComparator);
 		}
 
 		return ListUtil.subList(slaveBaseModels, start, end);
@@ -438,8 +478,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 			try {
 				primaryKeysList = mappingSqlQuery.execute(masterPrimaryKey);
 			}
-			catch (Exception e) {
-				throw new SystemException(e);
+			catch (Exception exception) {
+				throw new SystemException(exception);
 			}
 
 			primaryKeys = new long[primaryKeysList.size()];
@@ -469,8 +509,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 				counts = containsTableMappingSQL.execute(
 					leftPrimaryKey, rightPrimaryKey);
 			}
-			catch (Exception e) {
-				throw new SystemException(e);
+			catch (Exception exception) {
+				throw new SystemException(exception);
 			}
 
 			if (counts.isEmpty()) {
@@ -599,8 +639,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 			addTableMappingSqlUpdate.update(
 				companyId, leftPrimaryKey, rightPrimaryKey);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 
 		for (ModelListener<L> leftModelListener : leftModelListeners) {
@@ -639,8 +679,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 			rowCount = deleteTableMappingSqlUpdate.update(
 				leftPrimaryKey, rightPrimaryKey);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 
 		if (rowCount > 0) {
@@ -659,5 +699,8 @@ public class TableMapperImpl<L extends BaseModel<L>, R extends BaseModel<R>>
 
 		return false;
 	}
+
+	private final ServiceRegistration<?> _serviceRegistration;
+	private final String _tableName;
 
 }

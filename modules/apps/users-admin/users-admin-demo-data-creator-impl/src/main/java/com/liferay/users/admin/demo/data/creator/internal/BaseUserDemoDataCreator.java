@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.users.admin.demo.data.creator.internal;
@@ -29,15 +20,14 @@ import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.users.admin.demo.data.creator.UserDemoDataCreator;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import java.net.URL;
 
@@ -75,13 +65,9 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 		Date birthDate = new Date();
 		byte[] portraitBytes = null;
 
-		try (InputStream is = new URL(
-				_RANDOM_USER_API
-			).openStream()) {
-
-			String json = StringUtil.read(is);
-
-			JSONObject rootJSONObject = JSONFactoryUtil.createJSONObject(json);
+		try {
+			JSONObject rootJSONObject = JSONFactoryUtil.createJSONObject(
+				URLUtil.toString(new URL(_RANDOM_USER_API)));
 
 			JSONArray jsonArray = rootJSONObject.getJSONArray("results");
 
@@ -99,9 +85,9 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 
 			portraitBytes = _getBytes(new URL(portraitURL));
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(ioe, ioe);
+				_log.warn(ioException);
 			}
 
 			if (Validator.isNull(emailAddress)) {
@@ -140,39 +126,14 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 				userLocalService.deleteUser(userId);
 			}
 		}
-		catch (NoSuchUserException nsue) {
+		catch (NoSuchUserException noSuchUserException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(nsue, nsue);
+				_log.warn(noSuchUserException);
 			}
 		}
 	}
 
-	protected String[] getFullNameArray(String emailAddress) {
-		String emailAccountName = emailAddress.substring(
-			0, emailAddress.indexOf(StringPool.AT));
-
-		String[] fullNameArray = StringUtil.split(
-			emailAccountName, StringPool.PERIOD);
-
-		String firstName = StringUtil.randomString();
-		String lastName = StringUtil.randomString();
-
-		if (fullNameArray.length > 0) {
-			firstName = StringUtil.upperCaseFirstLetter(fullNameArray[0]);
-		}
-
-		if (fullNameArray.length > 1) {
-			lastName = StringUtil.upperCaseFirstLetter(fullNameArray[1]);
-		}
-
-		return new String[] {firstName, lastName};
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		this.userLocalService = userLocalService;
-	}
-
+	@Reference
 	protected UserLocalService userLocalService;
 
 	private static List<String> _read(String fileName) {
@@ -189,7 +150,7 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 			String firstName, String lastName, boolean male, Date birthDate)
 		throws PortalException {
 
-		String[] fullNameArray = getFullNameArray(emailAddress);
+		String[] fullNameArray = _getFullNameArray(emailAddress);
 
 		if (Validator.isNull(firstName)) {
 			firstName = fullNameArray[0];
@@ -203,12 +164,10 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 		String password1 = "test";
 		String password2 = "test";
 		boolean autoScreenName = Validator.isNull(screenName);
-		long facebookId = 0;
-		String openId = StringPool.BLANK;
 		Locale locale = LocaleUtil.getDefault();
 		String middleName = StringPool.BLANK;
-		long prefixId = 0;
-		long suffixId = 0;
+		long prefixListTypeId = 0;
+		long suffixListTypeId = 0;
 
 		Calendar calendar = Calendar.getInstance();
 
@@ -227,11 +186,11 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 
 		return userLocalService.addUser(
 			UserConstants.USER_ID_DEFAULT, companyId, autoPassword, password1,
-			password2, autoScreenName, screenName, emailAddress, facebookId,
-			openId, locale, firstName, middleName, lastName, prefixId, suffixId,
-			male, birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
-			organizationIds, roleIds, userGroupIds, sendMail,
-			new ServiceContext());
+			password2, autoScreenName, screenName, emailAddress, locale,
+			firstName, middleName, lastName, prefixListTypeId, suffixListTypeId,
+			male, birthdayMonth, birthdayDay, birthdayYear, jobTitle,
+			UserConstants.TYPE_REGULAR, groupIds, organizationIds, roleIds,
+			userGroupIds, sendMail, new ServiceContext());
 	}
 
 	private Date _getBirthDate(Date birthDate, JSONObject userJSONObject) {
@@ -243,9 +202,9 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 
 			birthDate = dateFormat.parse(dob);
 		}
-		catch (ParseException pe) {
+		catch (ParseException parseException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(pe, pe);
+				_log.warn(parseException);
 			}
 		}
 
@@ -253,9 +212,7 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 	}
 
 	private byte[] _getBytes(URL url) throws IOException {
-		try (InputStream is = url.openStream()) {
-			return FileUtil.getBytes(is);
-		}
+		return URLUtil.toByteArray(url);
 	}
 
 	private String _getEmailAddress(
@@ -281,6 +238,27 @@ public abstract class BaseUserDemoDataCreator implements UserDemoDataCreator {
 		}
 
 		return emailAddress;
+	}
+
+	private String[] _getFullNameArray(String emailAddress) {
+		String emailAccountName = emailAddress.substring(
+			0, emailAddress.indexOf(StringPool.AT));
+
+		String[] fullNameArray = StringUtil.split(
+			emailAccountName, StringPool.PERIOD);
+
+		String firstName = StringUtil.randomString();
+		String lastName = StringUtil.randomString();
+
+		if (fullNameArray.length > 0) {
+			firstName = StringUtil.upperCaseFirstLetter(fullNameArray[0]);
+		}
+
+		if (fullNameArray.length > 1) {
+			lastName = StringUtil.upperCaseFirstLetter(fullNameArray[1]);
+		}
+
+		return new String[] {firstName, lastName};
 	}
 
 	private String _getRandomElement(List<String> list) {

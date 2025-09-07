@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.my.sites.web.internal.servlet.taglib.util;
@@ -17,28 +8,26 @@ package com.liferay.site.my.sites.web.internal.servlet.taglib.util;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.MembershipRequestConstants;
-import com.liferay.portal.kernel.security.membershippolicy.SiteMembershipPolicyUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutServiceUtil;
 import com.liferay.portal.kernel.service.MembershipRequestLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.membershippolicy.SiteMembershipPolicyUtil;
+
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Objects;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -112,19 +101,21 @@ public class SiteActionDropdownItemsProvider {
 	private UnsafeConsumer<DropdownItem, Exception>
 		_getJoinSiteActionUnsafeConsumer() {
 
-		PortletURL joinSiteURL = _renderResponse.createActionURL();
-
-		joinSiteURL.setParameter(ActionRequest.ACTION_NAME, "updateGroupUsers");
-
-		joinSiteURL.setParameter("redirect", _themeDisplay.getURLCurrent());
-		joinSiteURL.setParameter(
-			"groupId", String.valueOf(_group.getGroupId()));
-		joinSiteURL.setParameter(
-			"addUserIds", String.valueOf(_themeDisplay.getUserId()));
-
 		return dropdownItem -> {
 			dropdownItem.putData("action", "joinSite");
-			dropdownItem.putData("joinSiteURL", joinSiteURL.toString());
+			dropdownItem.putData(
+				"joinSiteURL",
+				PortletURLBuilder.createActionURL(
+					_renderResponse
+				).setActionName(
+					"updateGroupUsers"
+				).setRedirect(
+					_themeDisplay.getURLCurrent()
+				).setParameter(
+					"addUserIds", _themeDisplay.getUserId()
+				).setParameter(
+					"groupId", _group.getGroupId()
+				).buildString());
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "join"));
 		};
@@ -133,22 +124,23 @@ public class SiteActionDropdownItemsProvider {
 	private UnsafeConsumer<DropdownItem, Exception>
 		_getLeaveSiteActionUnsafeConsumer() {
 
-		PortletURL leaveSiteURL = _renderResponse.createActionURL();
-
-		leaveSiteURL.setParameter(
-			ActionRequest.ACTION_NAME, "updateGroupUsers");
-
-		leaveSiteURL.setParameter("redirect", _themeDisplay.getURLCurrent());
-		leaveSiteURL.setParameter(
-			"groupId", String.valueOf(_group.getGroupId()));
-		leaveSiteURL.setParameter(
-			"removeUserIds", String.valueOf(_themeDisplay.getUserId()));
-
 		return dropdownItem -> {
 			dropdownItem.putData("action", "leaveSite");
-			dropdownItem.putData("leaveSiteURL", leaveSiteURL.toString());
+			dropdownItem.putData(
+				"leaveSiteURL",
+				PortletURLBuilder.createActionURL(
+					_renderResponse
+				).setActionName(
+					"updateGroupUsers"
+				).setRedirect(
+					_themeDisplay.getURLCurrent()
+				).setParameter(
+					"groupId", _group.getGroupId()
+				).setParameter(
+					"removeUserIds", _themeDisplay.getUserId()
+				).buildString());
 			dropdownItem.setLabel(
-				LanguageUtil.get(_httpServletRequest, "leave"));
+				LanguageUtil.get(_httpServletRequest, "leave-site"));
 		};
 	}
 
@@ -179,9 +171,12 @@ public class SiteActionDropdownItemsProvider {
 
 		return dropdownItem -> {
 			dropdownItem.setHref(_group.getDisplayURL(_themeDisplay, true));
-			dropdownItem.setTarget("_blank");
 			dropdownItem.setLabel(
-				LanguageUtil.get(_httpServletRequest, "go-to-private-pages"));
+				LanguageUtil.format(
+					_httpServletRequest, "go-to-x",
+					_group.getLayoutRootNodeName(
+						true, _themeDisplay.getLocale())));
+			dropdownItem.setTarget("_blank");
 		};
 	}
 
@@ -190,47 +185,34 @@ public class SiteActionDropdownItemsProvider {
 
 		return dropdownItem -> {
 			dropdownItem.setHref(_group.getDisplayURL(_themeDisplay, false));
-			dropdownItem.setTarget("_blank");
 			dropdownItem.setLabel(
-				LanguageUtil.get(_httpServletRequest, "go-to-public-pages"));
+				LanguageUtil.format(
+					_httpServletRequest, "go-to-x",
+					_group.getLayoutRootNodeName(
+						false, _themeDisplay.getLocale())));
+			dropdownItem.setTarget("_blank");
 		};
 	}
 
-	private boolean _isShowLeaveAction() throws PortalException {
-		if ((_group.getType() != GroupConstants.TYPE_SITE_OPEN) &&
-			(_group.getType() != GroupConstants.TYPE_SITE_RESTRICTED)) {
-
-			return false;
-		}
-
-		if (!GroupLocalServiceUtil.hasUserGroup(
+	private boolean _isShowLeaveAction() throws Exception {
+		if (((_group.getType() != GroupConstants.TYPE_SITE_OPEN) &&
+			 (_group.getType() != GroupConstants.TYPE_SITE_RESTRICTED)) ||
+			!GroupLocalServiceUtil.hasUserGroup(
 				_themeDisplay.getUserId(), _group.getGroupId(), false)) {
 
 			return false;
 		}
 
-		if (SiteMembershipPolicyUtil.isMembershipRequired(
-				_themeDisplay.getUserId(), _group.getGroupId())) {
-
-			return false;
-		}
-
-		return true;
+		return !SiteMembershipPolicyUtil.isMembershipRequired(
+			_themeDisplay.getUserId(), _group.getGroupId());
 	}
 
-	private boolean _isShowMembershipRequestAction() throws PortalException {
-		if (_group.getType() != GroupConstants.TYPE_SITE_RESTRICTED) {
-			return false;
-		}
-
-		if (MembershipRequestLocalServiceUtil.hasMembershipRequest(
+	private boolean _isShowMembershipRequestAction() throws Exception {
+		if ((_group.getType() != GroupConstants.TYPE_SITE_RESTRICTED) ||
+			MembershipRequestLocalServiceUtil.hasMembershipRequest(
 				_themeDisplay.getUserId(), _group.getGroupId(),
-				MembershipRequestConstants.STATUS_PENDING)) {
-
-			return false;
-		}
-
-		if (!SiteMembershipPolicyUtil.isMembershipAllowed(
+				MembershipRequestConstants.STATUS_PENDING) ||
+			!SiteMembershipPolicyUtil.isMembershipAllowed(
 				_themeDisplay.getUserId(), _group.getGroupId())) {
 
 			return false;
@@ -240,14 +222,9 @@ public class SiteActionDropdownItemsProvider {
 	}
 
 	private boolean _isShowMembershipRequestedAction() {
-		if (MembershipRequestLocalServiceUtil.hasMembershipRequest(
-				_themeDisplay.getUserId(), _group.getGroupId(),
-				MembershipRequestConstants.STATUS_PENDING)) {
-
-			return true;
-		}
-
-		return false;
+		return MembershipRequestLocalServiceUtil.hasMembershipRequest(
+			_themeDisplay.getUserId(), _group.getGroupId(),
+			MembershipRequestConstants.STATUS_PENDING);
 	}
 
 	private final Group _group;

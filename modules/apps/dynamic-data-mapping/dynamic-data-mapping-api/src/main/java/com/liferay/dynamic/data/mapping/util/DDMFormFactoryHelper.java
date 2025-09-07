@@ -1,21 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.util;
 
 import com.liferay.dynamic.data.mapping.annotations.DDMForm;
 import com.liferay.dynamic.data.mapping.annotations.DDMFormRule;
+import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderInputParametersSettings;
+import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderOutputParametersSettings;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
@@ -33,13 +29,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author Marcellus Tavares
@@ -102,13 +100,16 @@ public class DDMFormFactoryHelper {
 				resourceBundles.add(resourceBundle);
 			}
 		}
-		catch (MissingResourceException mre) {
+		catch (MissingResourceException missingResourceException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(missingResourceException);
+			}
 		}
 	}
 
 	protected Set<Locale> getAvailableLocales() {
 		if (Validator.isNull(_ddmForm.availableLanguageIds())) {
-			return SetUtil.fromArray(new Locale[] {getDefaultLocale()});
+			return SetUtil.fromArray(getDefaultLocale());
 		}
 
 		Set<Locale> availableLocales = new HashSet<>();
@@ -124,9 +125,19 @@ public class DDMFormFactoryHelper {
 	}
 
 	protected Collection<Method> getDDMFormFieldMethods() {
-		Map<String, Method> methodsMap = new TreeMap<>();
+		Map<String, Method> methodsMap = new LinkedHashMap<>();
 
 		collectDDMFormFieldMethodsMap(_clazz, methodsMap);
+
+		String className = _clazz.getName();
+
+		if (className.equals(
+				DDMDataProviderInputParametersSettings.class.getName()) ||
+			className.equals(
+				DDMDataProviderOutputParametersSettings.class.getName())) {
+
+			return getSortedMethods(methodsMap);
+		}
 
 		return methodsMap.values();
 	}
@@ -134,47 +145,47 @@ public class DDMFormFactoryHelper {
 	protected List<com.liferay.dynamic.data.mapping.model.DDMFormField>
 		getDDMFormFields() {
 
-		List<com.liferay.dynamic.data.mapping.model.DDMFormField>
-			ddmFormFields = new ArrayList<>();
+		return TransformUtil.transform(
+			getDDMFormFieldMethods(),
+			method -> {
+				DDMFormFieldFactoryHelper ddmFormFieldFactoryHelper =
+					new DDMFormFieldFactoryHelper(this, method);
 
-		for (Method method : getDDMFormFieldMethods()) {
-			DDMFormFieldFactoryHelper ddmFormFieldFactoryHelper =
-				new DDMFormFieldFactoryHelper(this, method);
+				ddmFormFieldFactoryHelper.setAvailableLocales(
+					_availableLocales);
+				ddmFormFieldFactoryHelper.setDefaultLocale(_defaultLocale);
 
-			ddmFormFieldFactoryHelper.setAvailableLocales(_availableLocales);
-			ddmFormFieldFactoryHelper.setDefaultLocale(_defaultLocale);
-
-			ddmFormFields.add(ddmFormFieldFactoryHelper.createDDMFormField());
-		}
-
-		return ddmFormFields;
+				return ddmFormFieldFactoryHelper.createDDMFormField();
+			});
 	}
 
 	protected List<com.liferay.dynamic.data.mapping.model.DDMFormRule>
 		getDDMFormRules() {
 
-		List<com.liferay.dynamic.data.mapping.model.DDMFormRule> ddmFormRules =
-			new ArrayList<>();
-
-		for (DDMFormRule ddmFormRule : _ddmForm.rules()) {
-			ddmFormRules.add(
+		return TransformUtil.transformToList(
+			_ddmForm.rules(),
+			ddmFormRule ->
 				new com.liferay.dynamic.data.mapping.model.DDMFormRule(
-					ddmFormRule.condition(),
-					ListUtil.fromArray(ddmFormRule.actions())));
-		}
-
-		return ddmFormRules;
+					ListUtil.fromArray(ddmFormRule.actions()),
+					ddmFormRule.condition()));
 	}
 
 	protected Locale getDefaultLocale() {
 		if (Validator.isNull(_ddmForm.defaultLanguageId())) {
-			Locale defaultLocale = LocaleThreadLocal.getThemeDisplayLocale();
+			Locale themeDisplayLocale =
+				LocaleThreadLocal.getThemeDisplayLocale();
 
-			if (defaultLocale == null) {
-				defaultLocale = LocaleUtil.getDefault();
+			if (themeDisplayLocale != null) {
+				return themeDisplayLocale;
 			}
 
-			return defaultLocale;
+			Locale siteDefaultLocale = LocaleThreadLocal.getSiteDefaultLocale();
+
+			if (siteDefaultLocale != null) {
+				return siteDefaultLocale;
+			}
+
+			return LocaleUtil.getDefault();
 		}
 
 		return LocaleUtil.fromLanguageId(_ddmForm.defaultLanguageId());
@@ -218,9 +229,43 @@ public class DDMFormFactoryHelper {
 		return "content.Language";
 	}
 
+	protected Collection<Method> getSortedMethods(
+		Map<String, Method> methodsMap) {
+
+		Map<String, Method> sortedMethodsMap = new LinkedHashMap<>();
+
+		SortedSet<String> keys = new TreeSet<>(methodsMap.keySet());
+
+		for (String key : keys) {
+			sortedMethodsMap.put(key, methodsMap.get(key));
+		}
+
+		moveInputParameterRequiredToLastPosition(sortedMethodsMap);
+
+		return sortedMethodsMap.values();
+	}
+
+	protected void moveInputParameterRequiredToLastPosition(
+		Map<String, Method> methodsMap) {
+
+		Method inputParameterRequiredMethod = methodsMap.get(
+			"inputParameterRequired");
+
+		if (inputParameterRequiredMethod == null) {
+			return;
+		}
+
+		methodsMap.remove("inputParameterRequired");
+
+		methodsMap.put("inputParameterRequired", inputParameterRequiredMethod);
+	}
+
 	private static final Class<? extends Annotation>
 		_DDM_FORM_FIELD_ANNOTATION =
 			com.liferay.dynamic.data.mapping.annotations.DDMFormField.class;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMFormFactoryHelper.class);
 
 	private final Set<Locale> _availableLocales;
 	private final Class<?> _clazz;

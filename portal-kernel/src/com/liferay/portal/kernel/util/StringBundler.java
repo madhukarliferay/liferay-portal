@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -115,8 +106,8 @@ public class StringBundler implements Serializable {
 		return append(String.valueOf(l));
 	}
 
-	public StringBundler append(Object obj) {
-		return append(String.valueOf(obj));
+	public StringBundler append(Object object) {
+		return append(String.valueOf(object));
 	}
 
 	public StringBundler append(String s) {
@@ -290,8 +281,7 @@ public class StringBundler implements Serializable {
 		StringBuilder sb = null;
 
 		if (length > _THREAD_LOCAL_BUFFER_LIMIT) {
-			Reference<StringBuilder> reference =
-				_stringBuilderThreadLocal.get();
+			Reference<StringBuilder> reference = _stringBuilderReference.get();
 
 			if (reference != null) {
 				sb = reference.get();
@@ -300,7 +290,7 @@ public class StringBundler implements Serializable {
 			if (sb == null) {
 				sb = new StringBuilder(length);
 
-				_stringBuilderThreadLocal.set(new SoftReference<>(sb));
+				_stringBuilderReference.set(new SoftReference<>(sb));
 			}
 			else {
 				sb.setLength(length);
@@ -324,12 +314,12 @@ public class StringBundler implements Serializable {
 	private static final int _THREAD_LOCAL_BUFFER_LIMIT;
 
 	private static final ThreadLocal<Reference<StringBuilder>>
-		_stringBuilderThreadLocal;
+		_stringBuilderReference;
 	private static final long serialVersionUID = 1L;
 
 	static {
 		int threadLocalBufferLimit = GetterUtil.getInteger(
-			System.getProperty(
+			SystemProperties.get(
 				StringBundler.class.getName() + ".threadlocal.buffer.limit"),
 			Integer.MAX_VALUE);
 
@@ -338,12 +328,12 @@ public class StringBundler implements Serializable {
 
 			_THREAD_LOCAL_BUFFER_LIMIT = threadLocalBufferLimit;
 
-			_stringBuilderThreadLocal = new CentralizedThreadLocal<>(false);
+			_stringBuilderReference = new CentralizedThreadLocal<>(false);
 		}
 		else {
 			_THREAD_LOCAL_BUFFER_LIMIT = Integer.MAX_VALUE;
 
-			_stringBuilderThreadLocal = null;
+			_stringBuilderReference = null;
 		}
 	}
 

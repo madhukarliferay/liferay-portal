@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.test;
@@ -19,29 +10,30 @@ import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.internal.test.util.URLConnectionUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+import com.liferay.portal.vulcan.jaxrs.exception.mapper.BaseExceptionMapper;
+import com.liferay.portal.vulcan.jaxrs.exception.mapper.Problem;
+
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 import java.io.IOException;
 
 import java.net.HttpURLConnection;
 
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
-
-import javax.ws.rs.DELETE;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Application;
-
-import org.apache.log4j.Level;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -50,6 +42,11 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Javier Gamarra
@@ -64,27 +61,41 @@ public class TransactionContainerRequestFilterTest {
 
 	@Before
 	public void setUp() {
-		Registry registry = RegistryUtil.getRegistry();
+		Bundle bundle = FrameworkUtil.getBundle(
+			TransactionContainerRequestFilterTest.class);
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			"liferay.auth.verifier", true
-		).put(
-			"liferay.oauth2", false
-		).put(
-			"osgi.jaxrs.application.base", "/test-vulcan"
-		).put(
-			"osgi.jaxrs.extension.select", "(osgi.jaxrs.name=Liferay.Vulcan)"
-		).build();
+		BundleContext bundleContext = bundle.getBundleContext();
 
-		_serviceRegistration = registry.registerService(
-			Application.class,
-			new TransactionContainerRequestFilterTest.TestApplication(),
-			properties);
+		_serviceRegistrations = Arrays.asList(
+			bundleContext.registerService(
+				Application.class, new TestApplication(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"liferay.auth.verifier", true
+				).put(
+					"liferay.oauth2", false
+				).put(
+					"osgi.jaxrs.application.base", "/test-vulcan"
+				).put(
+					"osgi.jaxrs.extension.select",
+					"(osgi.jaxrs.name=Liferay.Vulcan)"
+				).put(
+					"osgi.jaxrs.name", "Test.Vulcan"
+				).build()),
+			bundleContext.registerService(
+				ExceptionMapper.class, new TestExceptionMapper(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"osgi.jaxrs.application.select",
+					"(osgi.jaxrs.name=Test.Vulcan)"
+				).put(
+					"osgi.jaxrs.extension", "true"
+				).put(
+					"osgi.jaxrs.name", "TestVulcan.TestExceptionMapper"
+				).build()));
 	}
 
 	@After
 	public void tearDown() {
-		_serviceRegistration.unregister();
+		_serviceRegistrations.forEach(ServiceRegistration::unregister);
 	}
 
 	@Test(expected = NoSuchGroupException.class)
@@ -103,15 +114,24 @@ public class TransactionContainerRequestFilterTest {
 	public void testRollback() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_CLASS_NAME_EXCEPTION_MAPPER, Level.ERROR)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_EXCEPTION_MAPPER, LoggerTestUtil.ERROR)) {
 
 			Assert.assertEquals(
 				500,
 				_getResponseCode(
 					"http://localhost:8080/o/test-vulcan/rollback/" +
-						group.getGroupId()));
+						group.getGroupId() + "?failInExceptionMapper=false"));
+
+			Assert.assertNotNull(
+				GroupLocalServiceUtil.getGroup(group.getGroupId()));
+
+			Assert.assertEquals(
+				500,
+				_getResponseCode(
+					"http://localhost:8080/o/test-vulcan/rollback/" +
+						group.getGroupId() + "?failInExceptionMapper=true"));
+
 			Assert.assertNotNull(
 				GroupLocalServiceUtil.getGroup(group.getGroupId()));
 		}
@@ -134,12 +154,47 @@ public class TransactionContainerRequestFilterTest {
 
 		@DELETE
 		@Path("/rollback/{siteId}")
-		public void testRollback(@PathParam("siteId") long siteId)
+		public void testRollback(
+				@QueryParam("failInExceptionMapper") boolean
+					failInExceptionMapper,
+				@PathParam("siteId") long siteId)
 			throws Exception {
 
 			GroupLocalServiceUtil.deleteGroup(siteId);
 
-			throw new RuntimeException();
+			throw new TestException(failInExceptionMapper);
+		}
+
+	}
+
+	public static class TestException extends RuntimeException {
+
+		public TestException(boolean failInExceptionMapper) {
+			_failInExceptionMapper = failInExceptionMapper;
+		}
+
+		public boolean isFailInExceptionMapper() {
+			return _failInExceptionMapper;
+		}
+
+		private final boolean _failInExceptionMapper;
+
+	}
+
+	public static class TestExceptionMapper
+		extends BaseExceptionMapper<TestException> {
+
+		@Override
+		protected Problem getProblem(TestException testException) {
+			if (testException.isFailInExceptionMapper()) {
+				throw testException;
+			}
+
+			return new Problem() {
+				{
+					setStatus(Response.Status.INTERNAL_SERVER_ERROR);
+				}
+			};
 		}
 
 	}
@@ -157,6 +212,6 @@ public class TransactionContainerRequestFilterTest {
 		"com.liferay.portal.vulcan.internal.jaxrs.exception.mapper." +
 			"ExceptionMapper";
 
-	private ServiceRegistration<Application> _serviceRegistration;
+	private List<ServiceRegistration<?>> _serviceRegistrations;
 
 }

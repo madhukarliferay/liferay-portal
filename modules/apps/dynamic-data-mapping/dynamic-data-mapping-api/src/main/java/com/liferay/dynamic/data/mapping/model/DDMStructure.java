@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
@@ -33,7 +24,7 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface DDMStructure extends DDMStructureModel, PersistedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this interface directly. Add methods to <code>com.liferay.dynamic.data.mapping.model.impl.DDMStructureImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
@@ -61,6 +52,8 @@ public interface DDMStructure extends DDMStructureModel, PersistedModel {
 	public DDMForm createFullHierarchyDDMForm()
 		throws com.liferay.portal.kernel.exception.PortalException;
 
+	public DDMStructureLayout fetchDDMStructureLayout();
+
 	public java.util.List<String> getChildrenFieldNames(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
@@ -69,11 +62,16 @@ public interface DDMStructure extends DDMStructureModel, PersistedModel {
 	public DDMFormField getDDMFormField(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
+	public DDMFormField getDDMFormFieldByFieldReference(String fieldReference)
+		throws com.liferay.portal.kernel.exception.PortalException;
+
 	public java.util.List<DDMFormField> getDDMFormFields(
 		boolean includeTransientFields);
 
 	public DDMFormLayout getDDMFormLayout()
 		throws com.liferay.portal.kernel.exception.PortalException;
+
+	public long getDefaultDDMStructureLayoutId();
 
 	public String getFieldDataType(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException;
@@ -87,6 +85,10 @@ public interface DDMStructure extends DDMStructureModel, PersistedModel {
 	public java.util.Set<String> getFieldNames();
 
 	public String getFieldProperty(String fieldName, String property)
+		throws com.liferay.portal.kernel.exception.PortalException;
+
+	public String getFieldPropertyByFieldReference(
+			String fieldReference, String property)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
 	public boolean getFieldRepeatable(String fieldName)
@@ -138,6 +140,8 @@ public interface DDMStructure extends DDMStructureModel, PersistedModel {
 		String webDAVToken);
 
 	public boolean hasField(String fieldName);
+
+	public boolean hasFieldByFieldReference(String fieldReference);
 
 	public boolean isFieldRepeatable(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException;

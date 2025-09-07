@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.wsdl.builder;
@@ -33,13 +24,17 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.file.CopySpec;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.SourceSet;
@@ -60,12 +55,12 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
-		GradleUtil.applyPlugin(project, JavaPlugin.class);
+		GradleUtil.applyPlugin(project, JavaLibraryPlugin.class);
+
+		BuildWSDLTask buildWSDLTask = _addTaskBuildWSDL(project);
 
 		final Configuration wsdlBuilderConfiguration =
-			_addConfigurationWSDLBuilder(project);
-
-		_addTaskBuildWSDL(project);
+			_addConfigurationWSDLBuilder(project, buildWSDLTask);
 
 		project.afterEvaluate(
 			new Action<Project>() {
@@ -78,7 +73,9 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 			});
 	}
 
-	private Configuration _addConfigurationWSDLBuilder(final Project project) {
+	private Configuration _addConfigurationWSDLBuilder(
+		final Project project, final BuildWSDLTask buildWSDLTask) {
+
 		Configuration configuration = GradleUtil.addConfiguration(
 			project, CONFIGURATION_NAME);
 
@@ -87,7 +84,7 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 
 				@Override
 				public void execute(DependencySet dependencySet) {
-					_addDependenciesWSDLBuilder(project);
+					_addDependenciesWSDLBuilder(project, buildWSDLTask);
 				}
 
 			});
@@ -96,31 +93,52 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 			"Configures Apache Axis for generating WSDL client stubs.");
 		configuration.setVisible(false);
 
+		if (buildWSDLTask.getAxisVersion() == 2) {
+			Configuration apiConfiguration = GradleUtil.getConfiguration(
+				project, JavaPlugin.API_CONFIGURATION_NAME);
+
+			configuration.extendsFrom(apiConfiguration);
+		}
+
 		return configuration;
 	}
 
-	private void _addDependenciesWSDLBuilder(Project project) {
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "axis", "axis-wsdl4j", "1.5.1");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "com.liferay", "org.apache.axis",
-			"1.4.LIFERAY-PATCHED-1");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "commons-discovery",
-			"commons-discovery", "0.2");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "commons-logging", "commons-logging",
-			"1.0.4");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "javax.activation", "activation",
-			"1.1");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "javax.mail", "mail", "1.4");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "org.apache.axis", "axis-jaxrpc",
-			"1.4");
-		GradleUtil.addDependency(
-			project, CONFIGURATION_NAME, "org.apache.axis", "axis-saaj", "1.4");
+	private void _addDependenciesWSDLBuilder(
+		Project project, BuildWSDLTask buildWSDLTask) {
+
+		if (buildWSDLTask.getAxisVersion() == 2) {
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "org.apache.axis2", "axis2",
+				"1.7.9");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "org.apache.axis2",
+				"axis2-xmlbeans", "1.7.9");
+		}
+		else {
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "axis", "axis-wsdl4j", "1.5.1");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "com.liferay", "org.apache.axis",
+				"1.4.LIFERAY-PATCHED-1");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "commons-discovery",
+				"commons-discovery", "0.2");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "commons-logging",
+				"commons-logging", "1.0.4");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "javax.activation", "activation",
+				"1.1");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "com.sun.mail", "jakarta.mail",
+				"1.6.6");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "org.apache.axis", "axis-jaxrpc",
+				"1.4");
+			GradleUtil.addDependency(
+				project, CONFIGURATION_NAME, "org.apache.axis", "axis-saaj",
+				"1.4");
+		}
 	}
 
 	private BuildWSDLTask _addTaskBuildWSDL(Project project) {
@@ -167,19 +185,20 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 		BuildWSDLTask buildWSDLTask, FileCollection classpath, File inputFile,
 		File tmpDir, Task generateTask) {
 
-		Project project = buildWSDLTask.getProject();
-
-		String taskName = GradleUtil.getTaskName(
-			buildWSDLTask.getName() + "Compile", inputFile);
-
 		JavaCompile javaCompile = GradleUtil.addTask(
-			project, taskName, JavaCompile.class);
+			buildWSDLTask.getProject(),
+			GradleUtil.getTaskName(
+				buildWSDLTask.getName() + "Compile", inputFile),
+			JavaCompile.class);
 
 		javaCompile.setClasspath(classpath);
 
 		File tmpBinDir = new File(tmpDir, "bin");
 
-		javaCompile.setDestinationDir(tmpBinDir);
+		DirectoryProperty directoryProperty =
+			javaCompile.getDestinationDirectory();
+
+		directoryProperty.set(tmpBinDir);
 
 		javaCompile.setSource(generateTask.getOutputs());
 
@@ -190,21 +209,35 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 		BuildWSDLTask buildWSDLTask, FileCollection classpath, File inputFile,
 		final File destinationDir, boolean deleteDestinationDir) {
 
-		Project project = buildWSDLTask.getProject();
-
-		String taskName = GradleUtil.getTaskName(
-			buildWSDLTask.getName() + "Generate", inputFile);
-
 		JavaExec javaExec = GradleUtil.addTask(
-			project, taskName, JavaExec.class);
+			buildWSDLTask.getProject(),
+			GradleUtil.getTaskName(
+				buildWSDLTask.getName() + "Generate", inputFile),
+			JavaExec.class);
 
 		GenerateOptions generateOptions = buildWSDLTask.getGenerateOptions();
 
 		javaExec.args(generateOptions.getArgs());
 
-		javaExec.args("--output=" + FileUtil.getAbsolutePath(destinationDir));
+		if (buildWSDLTask.getAxisVersion() == 2) {
+			Property<String> mainClass = javaExec.getMainClass();
 
-		javaExec.args(FileUtil.getAbsolutePath(inputFile));
+			mainClass.set("org.apache.axis2.wsdl.WSDL2Code");
+
+			javaExec.args("--output", FileUtil.getAbsolutePath(destinationDir));
+			javaExec.args("-uri", FileUtil.getAbsolutePath(inputFile));
+		}
+		else {
+			Property<String> mainClass = javaExec.getMainClass();
+
+			mainClass.set("org.apache.axis.wsdl.WSDL2Java");
+
+			String outputPath = FileUtil.getAbsolutePath(destinationDir);
+
+			javaExec.args("--output=" + outputPath);
+
+			javaExec.args(FileUtil.getAbsolutePath(inputFile));
+		}
 
 		if (deleteDestinationDir) {
 			javaExec.doFirst(
@@ -221,7 +254,6 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 		}
 
 		javaExec.setClasspath(classpath);
-		javaExec.setMain("org.apache.axis.wsdl.WSDL2Java");
 
 		TaskInputs taskInputs = javaExec.getInputs();
 
@@ -240,12 +272,42 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 
 		Project project = buildWSDLTask.getProject();
 
-		String taskName = GradleUtil.getTaskName(
-			buildWSDLTask.getName(), inputFile);
-
-		Jar jar = GradleUtil.addTask(project, taskName, Jar.class);
+		Jar jar = GradleUtil.addTask(
+			project, GradleUtil.getTaskName(buildWSDLTask.getName(), inputFile),
+			Jar.class);
 
 		jar.from(compileTask.getOutputs());
+
+		GenerateOptions generateOptions = buildWSDLTask.getGenerateOptions();
+
+		if ((buildWSDLTask.getAxisVersion() == 2) &&
+			(generateOptions.getDatabinding() ==
+				GenerateOptions.Databinding.XMLBEANS)) {
+
+			TaskOutputs taskOutputs = generateTask.getOutputs();
+
+			FileCollection fileCollection = taskOutputs.getFiles();
+
+			final File dir = fileCollection.getSingleFile();
+
+			jar.from(
+				new Callable<File>() {
+
+					@Override
+					public File call() throws Exception {
+						return new File(dir, "schemaorg_apache_xmlbeans");
+					}
+
+				},
+				new Closure<Void>(project) {
+
+					@SuppressWarnings("unused")
+					public void doCall(CopySpec copySpec) {
+						copySpec.into("schemaorg_apache_xmlbeans");
+					}
+
+				});
+		}
 
 		if (buildWSDLTask.isIncludeSource()) {
 			jar.into(
@@ -260,11 +322,15 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 				});
 		}
 
-		jar.setDestinationDir(buildWSDLTask.getDestinationDir());
+		DirectoryProperty directoryProperty = jar.getDestinationDirectory();
+
+		directoryProperty.set(buildWSDLTask.getDestinationDir());
 
 		String wsdlName = FileUtil.stripExtension(inputFile.getName());
 
-		jar.setArchiveName(wsdlName + "-ws.jar");
+		Property<String> property = jar.getArchiveFileName();
+
+		property.set(wsdlName + "-ws.jar");
 
 		return jar;
 	}
@@ -330,11 +396,14 @@ public class WSDLBuilderPlugin implements Plugin<Project> {
 			TaskOutputs taskOutputs = buildWSDLTask.getOutputs();
 
 			GradleUtil.addDependency(
-				project, JavaPlugin.COMPILE_CONFIGURATION_NAME,
+				project, JavaPlugin.API_CONFIGURATION_NAME,
 				taskOutputs.getFiles());
 		}
 
 		if (buildWSDLTask.isIncludeWSDLs() && (processResourcesTask != null)) {
+			processResourcesTask.setDuplicatesStrategy(
+				DuplicatesStrategy.INCLUDE);
+
 			processResourcesTask.into(
 				"wsdl",
 				new Closure<Void>(project) {

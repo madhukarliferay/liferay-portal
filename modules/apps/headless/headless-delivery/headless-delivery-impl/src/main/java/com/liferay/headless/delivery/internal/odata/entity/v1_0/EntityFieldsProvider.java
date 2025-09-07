@@ -1,33 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.internal.odata.entity.v1_0;
 
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
-import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.storage.FieldConstants;
+import com.liferay.dynamic.data.mapping.storage.constants.FieldConstants;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.BooleanEntityField;
 import com.liferay.portal.odata.entity.DateEntityField;
+import com.liferay.portal.odata.entity.DateTimeEntityField;
 import com.liferay.portal.odata.entity.DoubleEntityField;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.IntegerEntityField;
@@ -36,7 +30,6 @@ import com.liferay.portal.odata.entity.StringEntityField;
 import java.text.DateFormat;
 import java.text.ParseException;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -54,20 +47,9 @@ public class EntityFieldsProvider {
 	public List<EntityField> provide(DDMStructure ddmStructure)
 		throws Exception {
 
-		List<EntityField> entityFields = new ArrayList<>();
-
-		List<DDMFormField> ddmFormFields = ddmStructure.getDDMFormFields(false);
-
-		for (DDMFormField ddmFormField : ddmFormFields) {
-			EntityField entityField = _createEntityField(
-				ddmStructure, ddmFormField);
-
-			if (entityField != null) {
-				entityFields.add(entityField);
-			}
-		}
-
-		return entityFields;
+		return TransformUtil.transform(
+			ddmStructure.getDDMFormFields(false),
+			ddmFormField -> _createEntityField(ddmStructure, ddmFormField));
 	}
 
 	private EntityField _createEntityField(
@@ -81,25 +63,39 @@ public class EntityFieldsProvider {
 			return null;
 		}
 
-		if (Objects.equals(ddmFormField.getType(), DDMFormFieldType.CHECKBOX)) {
+		if (Objects.equals(
+				ddmFormField.getType(), DDMFormFieldTypeConstants.CHECKBOX)) {
+
 			return new BooleanEntityField(
-				ddmFormField.getName(),
+				ddmFormField.getFieldReference(),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "String"));
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"));
 		}
 		else if (Objects.equals(
 					ddmFormField.getDataType(), FieldConstants.DATE)) {
 
 			return new DateEntityField(
-				ddmFormField.getName(),
+				ddmFormField.getFieldReference(),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "String"),
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "String"),
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"),
 				this::_toFieldValue);
+		}
+		else if (Objects.equals(
+					ddmFormField.getDataType(), FieldConstants.DATETIME)) {
+
+			return new DateTimeEntityField(
+				ddmFormField.getFieldReference(),
+				locale -> _toFilterableOrSortableFieldName(
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"),
+				locale -> _toFilterableOrSortableFieldName(
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"));
 		}
 		else if (Objects.equals(
 					ddmFormField.getDataType(), FieldConstants.DOUBLE) ||
@@ -107,10 +103,10 @@ public class EntityFieldsProvider {
 					 ddmFormField.getDataType(), FieldConstants.NUMBER)) {
 
 			return new DoubleEntityField(
-				ddmFormField.getName(),
+				ddmFormField.getFieldReference(),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "Number"));
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "Number"));
 		}
 		else if (Objects.equals(
 					ddmFormField.getDataType(), FieldConstants.INTEGER) ||
@@ -118,22 +114,29 @@ public class EntityFieldsProvider {
 					 ddmFormField.getDataType(), FieldConstants.LONG)) {
 
 			return new IntegerEntityField(
-				ddmFormField.getName(),
+				ddmFormField.getFieldReference(),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "Number"));
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "Number"));
 		}
 		else if (Objects.equals(
-					ddmFormField.getDataType(), DDMFormFieldType.RADIO) ||
-				 (Objects.equals(
-					 ddmFormField.getType(), DDMFormFieldType.TEXT) &&
-				  Objects.equals(ddmFormField.getIndexType(), "keyword"))) {
+					ddmFormField.getType(), DDMFormFieldTypeConstants.RADIO) ||
+				 (Objects.equals(ddmFormField.getIndexType(), "keyword") &&
+				  (Objects.equals(
+					  ddmFormField.getType(),
+					  DDMFormFieldTypeConstants.CHECKBOX_MULTIPLE) ||
+				   Objects.equals(
+					   ddmFormField.getType(),
+					   DDMFormFieldTypeConstants.SELECT) ||
+				   Objects.equals(
+					   ddmFormField.getType(),
+					   DDMFormFieldTypeConstants.TEXT)))) {
 
 			return new StringEntityField(
-				ddmFormField.getName(),
+				ddmFormField.getFieldReference(),
 				locale -> _toFilterableOrSortableFieldName(
-					ddmStructure.getStructureId(), ddmFormField.getName(),
-					locale, "String"));
+					ddmStructure.getStructureId(),
+					ddmFormField.getFieldReference(), locale, "String"));
 		}
 
 		return null;
@@ -147,21 +150,23 @@ public class EntityFieldsProvider {
 			Date date = indexDateFormat.parse(String.valueOf(fieldValue));
 
 			DateFormat searchDateFormat =
-				DateFormatFactoryUtil.getSimpleDateFormat("yyyy-MM-dd");
+				DateFormatFactoryUtil.getSimpleDateFormat(
+					"yyyy-MM-dd", LocaleUtil.US);
 
 			return searchDateFormat.format(date);
 		}
-		catch (ParseException pe) {
-			throw new RuntimeException(pe);
+		catch (ParseException parseException) {
+			throw new RuntimeException(parseException);
 		}
 	}
 
 	private String _toFilterableOrSortableFieldName(
-		long ddmStructureId, String fieldName, Locale locale, String type) {
+		long ddmStructureId, String fieldReference, Locale locale,
+		String type) {
 
 		return Field.getSortableFieldName(
 			StringBundler.concat(
-				_ddmIndexer.encodeName(ddmStructureId, fieldName, locale),
+				_ddmIndexer.encodeName(ddmStructureId, fieldReference, locale),
 				StringPool.UNDERLINE, type));
 	}
 

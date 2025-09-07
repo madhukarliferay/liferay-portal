@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.knowledge.base.exception.DuplicateKBFolderExternalReferenceCodeException;
 import com.liferay.knowledge.base.exception.NoSuchFolderException;
 import com.liferay.knowledge.base.model.KBFolder;
 import com.liferay.knowledge.base.service.KBFolderLocalServiceUtil;
@@ -26,6 +18,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,7 +118,11 @@ public class KBFolderPersistenceTest {
 
 		newKBFolder.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKBFolder.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKBFolder.setUuid(RandomTestUtil.randomString());
+
+		newKBFolder.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		newKBFolder.setGroupId(RandomTestUtil.nextLong());
 
@@ -150,6 +146,14 @@ public class KBFolderPersistenceTest {
 
 		newKBFolder.setLastPublishDate(RandomTestUtil.nextDate());
 
+		newKBFolder.setStatus(RandomTestUtil.nextInt());
+
+		newKBFolder.setStatusByUserId(RandomTestUtil.nextLong());
+
+		newKBFolder.setStatusByUserName(RandomTestUtil.randomString());
+
+		newKBFolder.setStatusDate(RandomTestUtil.nextDate());
+
 		_kbFolders.add(_persistence.update(newKBFolder));
 
 		KBFolder existingKBFolder = _persistence.findByPrimaryKey(
@@ -157,7 +161,13 @@ public class KBFolderPersistenceTest {
 
 		Assert.assertEquals(
 			existingKBFolder.getMvccVersion(), newKBFolder.getMvccVersion());
+		Assert.assertEquals(
+			existingKBFolder.getCtCollectionId(),
+			newKBFolder.getCtCollectionId());
 		Assert.assertEquals(existingKBFolder.getUuid(), newKBFolder.getUuid());
+		Assert.assertEquals(
+			existingKBFolder.getExternalReferenceCode(),
+			newKBFolder.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingKBFolder.getKbFolderId(), newKBFolder.getKbFolderId());
 		Assert.assertEquals(
@@ -185,6 +195,37 @@ public class KBFolderPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingKBFolder.getLastPublishDate()),
 			Time.getShortTimestamp(newKBFolder.getLastPublishDate()));
+		Assert.assertEquals(
+			existingKBFolder.getStatus(), newKBFolder.getStatus());
+		Assert.assertEquals(
+			existingKBFolder.getStatusByUserId(),
+			newKBFolder.getStatusByUserId());
+		Assert.assertEquals(
+			existingKBFolder.getStatusByUserName(),
+			newKBFolder.getStatusByUserName());
+		Assert.assertEquals(
+			Time.getShortTimestamp(existingKBFolder.getStatusDate()),
+			Time.getShortTimestamp(newKBFolder.getStatusDate()));
+	}
+
+	@Test(expected = DuplicateKBFolderExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		KBFolder kbFolder = addKBFolder();
+
+		KBFolder newKBFolder = addKBFolder();
+
+		newKBFolder.setGroupId(kbFolder.getGroupId());
+
+		newKBFolder = _persistence.update(newKBFolder);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newKBFolder);
+
+		newKBFolder.setExternalReferenceCode(
+			kbFolder.getExternalReferenceCode());
+
+		_persistence.update(newKBFolder);
 	}
 
 	@Test
@@ -212,6 +253,13 @@ public class KBFolderPersistenceTest {
 		_persistence.countByUuid_C("null", 0L);
 
 		_persistence.countByUuid_C((String)null, 0L);
+	}
+
+	@Test
+	public void testCountByCompanyId() throws Exception {
+		_persistence.countByCompanyId(RandomTestUtil.nextLong());
+
+		_persistence.countByCompanyId(0L);
 	}
 
 	@Test
@@ -243,6 +291,24 @@ public class KBFolderPersistenceTest {
 	}
 
 	@Test
+	public void testCountByG_P_S() throws Exception {
+		_persistence.countByG_P_S(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextInt());
+
+		_persistence.countByG_P_S(0L, 0L, 0);
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		KBFolder newKBFolder = addKBFolder();
 
@@ -267,11 +333,13 @@ public class KBFolderPersistenceTest {
 
 	protected OrderByComparator<KBFolder> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KBFolder", "mvccVersion", true, "uuid", true, "kbFolderId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "parentKBFolderId",
-			true, "name", true, "urlTitle", true, "description", true,
-			"lastPublishDate", true);
+			"KBFolder", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "kbFolderId", true, "groupId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "parentKBFolderId", true,
+			"name", true, "urlTitle", true, "description", true,
+			"lastPublishDate", true, "status", true, "statusByUserId", true,
+			"statusByUserName", true, "statusDate", true);
 	}
 
 	@Test
@@ -487,48 +555,103 @@ public class KBFolderPersistenceTest {
 
 		_persistence.clearCache();
 
-		KBFolder existingKBFolder = _persistence.findByPrimaryKey(
-			newKBFolder.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newKBFolder.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingKBFolder.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingKBFolder, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		KBFolder newKBFolder = addKBFolder();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			KBFolder.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"kbFolderId", newKBFolder.getKbFolderId()));
+
+		List<KBFolder> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(KBFolder kbFolder) {
 		Assert.assertEquals(
-			Long.valueOf(existingKBFolder.getGroupId()),
+			kbFolder.getUuid(),
+			ReflectionTestUtil.invoke(
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(kbFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBFolder, "getOriginalGroupId", new Class<?>[0]));
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingKBFolder.getGroupId()),
+			Long.valueOf(kbFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBFolder, "getOriginalGroupId", new Class<?>[0]));
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingKBFolder.getParentKBFolderId()),
+			Long.valueOf(kbFolder.getParentKBFolderId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBFolder, "getOriginalParentKBFolderId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingKBFolder.getName(),
-				ReflectionTestUtil.invoke(
-					existingKBFolder, "getOriginalName", new Class<?>[0])));
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "parentKBFolderId"));
+		Assert.assertEquals(
+			kbFolder.getName(),
+			ReflectionTestUtil.invoke(
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingKBFolder.getGroupId()),
+			Long.valueOf(kbFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBFolder, "getOriginalGroupId", new Class<?>[0]));
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingKBFolder.getParentKBFolderId()),
+			Long.valueOf(kbFolder.getParentKBFolderId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBFolder, "getOriginalParentKBFolderId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingKBFolder.getUrlTitle(),
-				ReflectionTestUtil.invoke(
-					existingKBFolder, "getOriginalUrlTitle", new Class<?>[0])));
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "parentKBFolderId"));
+		Assert.assertEquals(
+			kbFolder.getUrlTitle(),
+			ReflectionTestUtil.invoke(
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "urlTitle"));
+
+		Assert.assertEquals(
+			kbFolder.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(kbFolder.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				kbFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected KBFolder addKBFolder() throws Exception {
@@ -538,7 +661,11 @@ public class KBFolderPersistenceTest {
 
 		kbFolder.setMvccVersion(RandomTestUtil.nextLong());
 
+		kbFolder.setCtCollectionId(RandomTestUtil.nextLong());
+
 		kbFolder.setUuid(RandomTestUtil.randomString());
+
+		kbFolder.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		kbFolder.setGroupId(RandomTestUtil.nextLong());
 
@@ -561,6 +688,14 @@ public class KBFolderPersistenceTest {
 		kbFolder.setDescription(RandomTestUtil.randomString());
 
 		kbFolder.setLastPublishDate(RandomTestUtil.nextDate());
+
+		kbFolder.setStatus(RandomTestUtil.nextInt());
+
+		kbFolder.setStatusByUserId(RandomTestUtil.nextLong());
+
+		kbFolder.setStatusByUserName(RandomTestUtil.randomString());
+
+		kbFolder.setStatusDate(RandomTestUtil.nextDate());
 
 		_kbFolders.add(_persistence.update(kbFolder));
 

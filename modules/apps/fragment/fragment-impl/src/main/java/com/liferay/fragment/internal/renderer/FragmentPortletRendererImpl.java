@@ -1,41 +1,36 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.internal.renderer;
 
 import com.liferay.fragment.exception.FragmentEntryContentException;
+import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentPortletRenderer;
+import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
-import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryConstants;
+import com.liferay.portal.kernel.portlet.constants.PortletPreferencesFactoryConstants;
+import com.liferay.portal.kernel.servlet.PipingServletResponse;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.portletext.RuntimeTag;
-import com.liferay.taglib.servlet.PipingServletResponse;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = FragmentPortletRenderer.class)
+@Component(service = FragmentPortletRenderer.class)
 public class FragmentPortletRendererImpl implements FragmentPortletRenderer {
 
 	@Override
 	public String renderPortlet(
+			FragmentEntryLink fragmentEntryLink,
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse, String portletName,
 			String instanceId, String defaultPreferences)
@@ -43,19 +38,30 @@ public class FragmentPortletRendererImpl implements FragmentPortletRenderer {
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
-		PipingServletResponse pipingServletResponse = new PipingServletResponse(
-			httpServletResponse, unsyncStringWriter);
+		boolean inheritedFromMaster = false;
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if ((themeDisplay != null) &&
+			(fragmentEntryLink.getPlid() != themeDisplay.getPlid())) {
+
+			inheritedFromMaster = true;
+		}
 
 		try {
 			RuntimeTag.doTag(
 				portletName, instanceId, StringPool.BLANK,
 				PortletPreferencesFactoryConstants.
 					SETTINGS_SCOPE_PORTLET_INSTANCE,
-				defaultPreferences, false, null, httpServletRequest,
-				pipingServletResponse);
+				defaultPreferences, inheritedFromMaster, null,
+				httpServletRequest,
+				new PipingServletResponse(
+					httpServletResponse, unsyncStringWriter));
 		}
-		catch (Exception e) {
-			throw new FragmentEntryContentException(e);
+		catch (Exception exception) {
+			throw new FragmentEntryContentException(exception);
 		}
 
 		return unsyncStringWriter.toString();

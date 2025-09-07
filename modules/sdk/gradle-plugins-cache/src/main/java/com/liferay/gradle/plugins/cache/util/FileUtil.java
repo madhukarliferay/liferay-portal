@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.cache.util;
 
 import com.liferay.gradle.util.Validator;
+import com.liferay.gradle.util.hash.HashUtil;
+import com.liferay.gradle.util.hash.HashValue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -44,8 +37,6 @@ import org.gradle.api.Project;
 import org.gradle.api.UncheckedIOException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.internal.hash.HashUtil;
-import org.gradle.internal.hash.HashValue;
 import org.gradle.process.ExecSpec;
 import org.gradle.process.internal.ExecException;
 
@@ -98,12 +89,12 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 			digest = Integer.toHexString(lines.hashCode());
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 
 			// File is not a text file
 
 			if (_logger.isDebugEnabled()) {
-				_logger.debug(file + " is not a text file", ioe);
+				_logger.debug(file + " is not a text file", ioException);
 			}
 
 			HashValue hashValue = HashUtil.sha1(file);
@@ -123,27 +114,23 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 		long start = System.currentTimeMillis();
 
-		StringBuilder sb = new StringBuilder();
-
 		SortedSet<File> sortedFiles = null;
 
 		try {
 			sortedFiles = flattenAndSort(files);
 		}
-		catch (IOException ioe) {
-			throw new GradleException("Unable to flatten files", ioe);
+		catch (IOException ioException) {
+			throw new GradleException("Unable to flatten files", ioException);
 		}
 
 		if (excludeIgnoredFiles) {
 			removeIgnoredFiles(project, sortedFiles);
 		}
 
-		for (File file : sortedFiles) {
-			if (!file.exists()) {
-				continue;
-			}
+		StringBuilder sb = new StringBuilder();
 
-			if (Objects.equals(file.getName(), ".DS_Store")) {
+		for (File file : sortedFiles) {
+			if (!file.exists() || Objects.equals(file.getName(), ".DS_Store")) {
 				continue;
 			}
 
@@ -247,9 +234,9 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 			return canonicalPath;
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new UncheckedIOException(
-				"Unable to get canonical path of " + file, ioe);
+				"Unable to get canonical path of " + file, ioException);
 		}
 	}
 
@@ -311,7 +298,7 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 			return gitIgnoreDirs;
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			if (_logger.isWarnEnabled()) {
 				_logger.warn("Unable to get .gitignore files");
 			}
@@ -340,9 +327,9 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 				});
 		}
-		catch (ExecException ee) {
+		catch (ExecException execException) {
 			if (_logger.isInfoEnabled()) {
-				_logger.info(ee.getMessage(), ee);
+				_logger.info(execException.getMessage(), execException);
 			}
 		}
 

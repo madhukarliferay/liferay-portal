@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -23,6 +16,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 import com.liferay.portal.kernel.service.permission.TeamPermissionUtil;
 import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.service.base.TeamServiceBaseImpl;
 
@@ -93,8 +87,17 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 	public List<Team> getUserTeams(long userId, long groupId)
 		throws PortalException {
 
-		GroupPermissionUtil.check(
-			getPermissionChecker(), groupId, ActionKeys.MANAGE_TEAMS);
+		PermissionChecker permissionChecker = getPermissionChecker();
+
+		if (!GroupPermissionUtil.contains(
+				permissionChecker, groupId, ActionKeys.MANAGE_TEAMS) &&
+			!UserPermissionUtil.contains(
+				permissionChecker, userId, ActionKeys.UPDATE)) {
+
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, Group.class.getName(), groupId,
+				ActionKeys.MANAGE_TEAMS, ActionKeys.UPDATE);
+		}
 
 		return teamLocalService.getUserTeams(userId, groupId);
 	}
@@ -118,17 +121,17 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 				ActionKeys.MANAGE_TEAMS, ActionKeys.UPDATE);
 		}
 
-		return userPersistence.containsTeam(userId, teamId);
+		return _userPersistence.containsTeam(userId, teamId);
 	}
 
 	@Override
 	public List<Team> search(
 		long groupId, String name, String description,
 		LinkedHashMap<String, Object> params, int start, int end,
-		OrderByComparator<Team> obc) {
+		OrderByComparator<Team> orderByComparator) {
 
 		return teamFinder.filterFindByG_N_D(
-			groupId, name, description, params, start, end, obc);
+			groupId, name, description, params, start, end, orderByComparator);
 	}
 
 	@Override
@@ -149,5 +152,8 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 
 		return teamLocalService.updateTeam(teamId, name, description);
 	}
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

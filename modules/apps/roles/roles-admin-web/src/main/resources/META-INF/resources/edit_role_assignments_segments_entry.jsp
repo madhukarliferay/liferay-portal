@@ -1,28 +1,15 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
-<%
-SearchContainer searchContainer = (SearchContainer)request.getAttribute("edit_role_assignments.jsp-searchContainer");
-%>
-
 <liferay-ui:search-container
 	id="assigneesSearch"
-	searchContainer="<%= searchContainer %>"
+	searchContainer='<%= (SearchContainer)request.getAttribute("edit_role_assignments.jsp-searchContainer") %>'
 	var="segmentsEntrySearchContainer"
 >
 	<liferay-ui:search-container-row
@@ -39,6 +26,7 @@ SearchContainer searchContainer = (SearchContainer)request.getAttribute("edit_ro
 		<liferay-ui:search-container-column-text
 			cssClass="table-cell-expand-smallest table-cell-minw-150"
 			name="active"
+			translate="<%= true %>"
 			value='<%= segmentsEntry.getActive() ? "yes" : "no" %>'
 		/>
 
@@ -51,7 +39,7 @@ SearchContainer searchContainer = (SearchContainer)request.getAttribute("edit_ro
 		<liferay-ui:search-container-column-text
 			cssClass="table-cell-expand-smallest table-cell-minw-150"
 			name="scope"
-			value="<%= HtmlUtil.escape(SegmentsEntryDisplayContext.getGroupDescriptiveName(segmentsEntry, locale)) %>"
+			value="<%= HtmlUtil.escape(SegmentsEntryDisplayUtil.getGroupDescriptiveName(segmentsEntry, locale)) %>"
 		/>
 
 		<liferay-ui:search-container-column-date
@@ -60,34 +48,49 @@ SearchContainer searchContainer = (SearchContainer)request.getAttribute("edit_ro
 			value="<%= segmentsEntry.getCreateDate() %>"
 		/>
 
-		<liferay-ui:search-container-column-text
-			cssClass="table-cell-expand-smallest table-cell-minw-150"
-			name="members"
-			value="<%= String.valueOf(SegmentsEntryDisplayContext.getSegmentsEntryUsersCount(segmentsEntry.getSegmentsEntryId())) %>"
-		/>
+		<c:choose>
+			<c:when test='<%= Objects.equals(ParamUtil.getString(request, "tabs3"), "current") %>'>
+				<portlet:renderURL var="viewMembersURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+					<portlet:param name="mvcPath" value="/view_segments_entry_users.jsp" />
+					<portlet:param name="segmentsEntryId" value="<%= String.valueOf(segmentsEntry.getSegmentsEntryId()) %>" />
+				</portlet:renderURL>
 
-		<c:if test='<%= Objects.equals(ParamUtil.getString(request, "tabs3"), "current") %>'>
-			<liferay-ui:search-container-column-text>
-				<liferay-ui:icon-menu
-					direction="left-side"
-					icon="<%= StringPool.BLANK %>"
-					markupView="lexicon"
-					message="<%= StringPool.BLANK %>"
-					showWhenSingleIcon="<%= true %>"
+				<liferay-ui:search-container-column-text
+					cssClass="table-cell-expand-smallest table-cell-minw-150"
+					name="members"
 				>
-					<portlet:renderURL var="viewMembersURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-						<portlet:param name="mvcPath" value="/view_segments_entry_users.jsp" />
-						<portlet:param name="segmentsEntryId" value="<%= String.valueOf(segmentsEntry.getSegmentsEntryId()) %>" />
-					</portlet:renderURL>
-
 					<liferay-ui:icon
-						message="view-members"
-						onClick='<%= renderResponse.getNamespace() + "openViewMembersDialog(event);" %>'
+						label="<%= true %>"
+						message="<%= String.valueOf(SegmentsEntryDisplayUtil.getSegmentsEntryUsersCount(segmentsEntry.getSegmentsEntryId())) %>"
+						onClick='<%= liferayPortletResponse.getNamespace() + "openViewMembersDialog(event);" %>'
 						url="<%= viewMembersURL %>"
 					/>
-				</liferay-ui:icon-menu>
-			</liferay-ui:search-container-column-text>
-		</c:if>
+				</liferay-ui:search-container-column-text>
+
+				<liferay-ui:search-container-column-text>
+					<liferay-ui:icon-menu
+						direction="left-side"
+						icon="<%= StringPool.BLANK %>"
+						markupView="lexicon"
+						message="<%= StringPool.BLANK %>"
+						showWhenSingleIcon="<%= true %>"
+					>
+						<liferay-ui:icon
+							message="view-members"
+							onClick='<%= liferayPortletResponse.getNamespace() + "openViewMembersDialog(event);" %>'
+							url="<%= viewMembersURL %>"
+						/>
+					</liferay-ui:icon-menu>
+				</liferay-ui:search-container-column-text>
+			</c:when>
+			<c:otherwise>
+				<liferay-ui:search-container-column-text
+					cssClass="table-cell-expand-smallest table-cell-minw-150"
+					name="members"
+					value="<%= String.valueOf(SegmentsEntryDisplayUtil.getSegmentsEntryUsersCount(segmentsEntry.getSegmentsEntryId())) %>"
+				/>
+			</c:otherwise>
+		</c:choose>
 	</liferay-ui:search-container-row>
 
 	<liferay-ui:search-iterator
@@ -96,17 +99,14 @@ SearchContainer searchContainer = (SearchContainer)request.getAttribute("edit_ro
 </liferay-ui:search-container>
 
 <aui:script>
-	function <portlet:namespace/>openViewMembersDialog(event) {
-		Liferay.Util.openInDialog(event, {
-			dialog: {
-				constrain: true,
-				destroyOnHide: true,
-				height: 768,
-				modal: true,
-				width: 600
-			},
-			uri: event.currentTarget.href,
-			title: '<liferay-ui:message key="members" />'
+	function <portlet:namespace />openViewMembersDialog(event) {
+		event.preventDefault();
+
+		Liferay.Util.openModal({
+			containerProps: {},
+			iframeBodyCssClass: '',
+			title: '<liferay-ui:message key="members" />',
+			url: event.currentTarget.href,
 		});
 	}
 </aui:script>

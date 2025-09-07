@@ -1,28 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.template;
 
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+
+import org.osgi.framework.BundleContext;
 
 /**
  * @author Tina Tian
@@ -30,69 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TemplateResourceLoaderUtil {
 
 	public static void clearCache() {
-		_templateResourceLoaderUtil._clearCache();
-	}
-
-	public static void clearCache(String templateResourceLoaderName)
-		throws TemplateException {
-
-		_templateResourceLoaderUtil._clearCache(templateResourceLoaderName);
-	}
-
-	public static void clearCache(
-			String templateResourceLoaderName, String templateId)
-		throws TemplateException {
-
-		_templateResourceLoaderUtil._clearCache(
-			templateResourceLoaderName, templateId);
-	}
-
-	public static TemplateResource getTemplateResource(
-			String templateResourceLoaderName, String templateId)
-		throws TemplateException {
-
-		return _templateResourceLoaderUtil._getTemplateResource(
-			templateResourceLoaderName, templateId);
-	}
-
-	public static TemplateResourceLoader getTemplateResourceLoader(
-			String templateResourceLoaderName)
-		throws TemplateException {
-
-		return _templateResourceLoaderUtil._getTemplateResourceLoader(
-			templateResourceLoaderName);
-	}
-
-	public static Set<String> getTemplateResourceLoaderNames() {
-		return _templateResourceLoaderUtil._getTemplateResourceLoaderNames();
-	}
-
-	public static boolean hasTemplateResource(
-			String templateResourceLoaderName, String templateId)
-		throws TemplateException {
-
-		return _templateResourceLoaderUtil._hasTemplateResource(
-			templateResourceLoaderName, templateId);
-	}
-
-	public static boolean hasTemplateResourceLoader(
-		String templateResourceLoaderName) {
-
-		return _templateResourceLoaderUtil._hasTemplateResourceLoader(
-			templateResourceLoaderName);
-	}
-
-	private TemplateResourceLoaderUtil() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			TemplateResourceLoader.class,
-			new TemplateResourceLoaderTrackerCustomizer());
-
-		_serviceTracker.open();
-	}
-
-	private void _clearCache() {
 		for (TemplateResourceLoader templateResourceLoader :
 				_templateResourceLoaders.values()) {
 
@@ -100,7 +26,7 @@ public class TemplateResourceLoaderUtil {
 		}
 	}
 
-	private void _clearCache(String templateResourceLoaderName)
+	public static void clearCache(String templateResourceLoaderName)
 		throws TemplateException {
 
 		TemplateResourceLoader templateResourceLoader =
@@ -109,7 +35,7 @@ public class TemplateResourceLoaderUtil {
 		templateResourceLoader.clearCache();
 	}
 
-	private void _clearCache(
+	public static void clearCache(
 			String templateResourceLoaderName, String templateId)
 		throws TemplateException {
 
@@ -119,7 +45,7 @@ public class TemplateResourceLoaderUtil {
 		templateResourceLoader.clearCache(templateId);
 	}
 
-	private TemplateResource _getTemplateResource(
+	public static TemplateResource getTemplateResource(
 			String templateResourceLoaderName, String templateId)
 		throws TemplateException {
 
@@ -129,12 +55,39 @@ public class TemplateResourceLoaderUtil {
 		return templateResourceLoader.getTemplateResource(templateId);
 	}
 
-	private TemplateResourceLoader _getTemplateResourceLoader(
+	public static TemplateResourceLoader getTemplateResourceLoader(
+			String templateResourceLoaderName)
+		throws TemplateException {
+
+		return _getTemplateResourceLoader(templateResourceLoaderName);
+	}
+
+	public static Set<String> getTemplateResourceLoaderNames() {
+		return _templateResourceLoaders.keySet();
+	}
+
+	public static boolean hasTemplateResource(
+			String templateResourceLoaderName, String templateId)
+		throws TemplateException {
+
+		TemplateResourceLoader templateResourceLoader =
+			_getTemplateResourceLoader(templateResourceLoaderName);
+
+		return templateResourceLoader.hasTemplateResource(templateId);
+	}
+
+	public static boolean hasTemplateResourceLoader(
+		String templateResourceLoaderName) {
+
+		return _templateResourceLoaders.containsKey(templateResourceLoaderName);
+	}
+
+	private static TemplateResourceLoader _getTemplateResourceLoader(
 			String templateResourceLoaderName)
 		throws TemplateException {
 
 		TemplateResourceLoader templateResourceLoader =
-			_templateResourceLoaders.get(templateResourceLoaderName);
+			_templateResourceLoaders.getService(templateResourceLoaderName);
 
 		if (templateResourceLoader == null) {
 			throw new TemplateException(
@@ -145,75 +98,22 @@ public class TemplateResourceLoaderUtil {
 		return templateResourceLoader;
 	}
 
-	private Set<String> _getTemplateResourceLoaderNames() {
-		return _templateResourceLoaders.keySet();
+	private TemplateResourceLoaderUtil() {
 	}
 
-	private boolean _hasTemplateResource(
-			String templateResourceLoaderName, String templateId)
-		throws TemplateException {
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 
-		TemplateResourceLoader templateResourceLoader =
-			_getTemplateResourceLoader(templateResourceLoaderName);
+	private static final ServiceTrackerMap<String, TemplateResourceLoader>
+		_templateResourceLoaders = ServiceTrackerMapFactory.openSingleValueMap(
+			_bundleContext, TemplateResourceLoader.class, null,
+			(serviceReference, emitter) -> {
+				TemplateResourceLoader templateResourceLoader =
+					_bundleContext.getService(serviceReference);
 
-		return templateResourceLoader.hasTemplateResource(templateId);
-	}
+				emitter.emit(templateResourceLoader.getName());
 
-	private boolean _hasTemplateResourceLoader(
-		String templateResourceLoaderName) {
-
-		return _templateResourceLoaders.containsKey(templateResourceLoaderName);
-	}
-
-	private static final TemplateResourceLoaderUtil
-		_templateResourceLoaderUtil = new TemplateResourceLoaderUtil();
-
-	private final ServiceTracker<TemplateResourceLoader, TemplateResourceLoader>
-		_serviceTracker;
-	private final Map<String, TemplateResourceLoader> _templateResourceLoaders =
-		new ConcurrentHashMap<>();
-
-	private class TemplateResourceLoaderTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<TemplateResourceLoader, TemplateResourceLoader> {
-
-		@Override
-		public TemplateResourceLoader addingService(
-			ServiceReference<TemplateResourceLoader> serviceReference) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			TemplateResourceLoader templateResourceLoader = registry.getService(
-				serviceReference);
-
-			_templateResourceLoaders.put(
-				templateResourceLoader.getName(), templateResourceLoader);
-
-			return templateResourceLoader;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<TemplateResourceLoader> serviceReference,
-			TemplateResourceLoader templateResourceLoader) {
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<TemplateResourceLoader> serviceReference,
-			TemplateResourceLoader templateResourceLoader) {
-
-			_templateResourceLoaders.remove(templateResourceLoader.getName());
-
-			templateResourceLoader.clearCache();
-
-			templateResourceLoader.destroy();
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-		}
-
-	}
+				_bundleContext.ungetService(serviceReference);
+			});
 
 }

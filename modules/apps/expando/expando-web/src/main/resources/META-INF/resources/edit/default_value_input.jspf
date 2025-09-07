@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -21,20 +12,19 @@
 		boolean curValue = true;
 
 		if (defaultValue != null) {
-			curValue = ((Boolean)defaultValue).booleanValue();
+			Boolean defaultValueBoolean = (Boolean)defaultValue;
+
+			curValue = defaultValueBoolean.booleanValue();
 		}
 		%>
 
-		<aui:select name="defaultValue">
-			<aui:option label="<%= true %>" selected="<%= curValue %>" value="<%= true %>" />
-			<aui:option label="<%= false %>" selected="<%= !curValue %>" value="<%= false %>" />
-		</aui:select>
+		<aui:input inlineLabel="right" label="default-value" labelCssClass="simple-toggle-switch" name="defaultValue" type="toggle-switch" value="<%= curValue %>" />
 	</c:when>
 	<c:when test="<%= propertyDisplayType.equals(ExpandoColumnConstants.PROPERTY_DISPLAY_TYPE_CHECKBOX) || propertyDisplayType.equals(ExpandoColumnConstants.PROPERTY_DISPLAY_TYPE_RADIO) || propertyDisplayType.equals(ExpandoColumnConstants.PROPERTY_DISPLAY_TYPE_SELECTION_LIST) %>">
 		<aui:select disabled="<%= expandoColumn != null %>" label="data-type" name="dataType" onChange="setDataType(true)" value="<%= ExpandoColumnConstants.getDataType(type) %>">
-			<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_TEXT %>" />
-			<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_DECIMAL %>" />
-			<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_INTEGER %>" />
+			<aui:option label='<%= LanguageUtil.get(request, "text") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_TEXT %>" />
+			<aui:option label='<%= LanguageUtil.get(request, "decimal") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_DECIMAL %>" />
+			<aui:option label='<%= LanguageUtil.get(request, "integer") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_INTEGER %>" />
 		</aui:select>
 
 		<%
@@ -127,52 +117,26 @@
 			/>
 		</div>
 
-		<aui:script require="map-common/js/MapBase.es as MapBase">
-			var geolocationField = {
-				init: function() {
-					Liferay.MapBase.get('<portlet:namespace /><%= name %>', function(map) {
-						map.on(
-							'positionChange',
-							geolocationField.onPositionChange,
-							geolocationField
-						);
-					});
-				},
-				onPositionChange: function(event) {
-					var inputName = '<portlet:namespace /><%= name %>';
-					var inputNode = document.querySelector('[name="' + inputName + '"]');
-
-					var location = event.newVal.location;
-
-					if (inputNode) {
-						inputNode.setAttribute(
-							'value',
-							JSON.stringify({
-								latitude: location.lat,
-								longitude: location.lng
-							})
-						);
-					}
-
-					var locationNode = document.getElementById(inputName + 'Location');
-
-					if (locationNode) {
-						locationNode.innerHTML = event.newVal.address;
-					}
-				}
-			};
-
-			geolocationField.init();
-		</aui:script>
+		<liferay-frontend:component
+			componentId="GeoLocationField"
+			context='<%=
+				HashMapBuilder.<String, Object>put(
+					"inputName", "<portlet:namespace /><%= name %>"
+				).put(
+					"mapName", "<portlet:namespace /><%= name %>"
+				).build()
+			%>'
+			module="{GeoLocationField} from expando-web"
+		/>
 
 		<aui:input name="<%= name %>" type="hidden" value="<%= value.toString() %>" />
 	</c:when>
 	<c:otherwise>
 		<c:if test="<%= propertyDisplayType.equals(ExpandoColumnConstants.PROPERTY_DISPLAY_TYPE_INPUT_FIELD) %>">
 			<aui:select disabled="<%= expandoColumn != null %>" label="data-type" name="dataType" onChange="setDataType(false)" value="<%= ExpandoColumnConstants.getDataType(type) %>">
-				<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_TEXT %>" />
-				<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_DECIMAL %>" />
-				<aui:option label="<%= ExpandoColumnConstants.DATA_TYPE_INTEGER %>" />
+				<aui:option label='<%= LanguageUtil.get(request, "text") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_TEXT %>" />
+				<aui:option label='<%= LanguageUtil.get(request, "decimal") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_DECIMAL %>" />
+				<aui:option label='<%= LanguageUtil.get(request, "integer") %>' value="<%= ExpandoColumnConstants.DATA_TYPE_INTEGER %>" />
 			</aui:select>
 		</c:if>
 
@@ -200,7 +164,7 @@
 
 		<c:if test="<%= ((type == ExpandoColumnConstants.STRING) || (type == ExpandoColumnConstants.STRING_LOCALIZED)) && (expandoColumn == null) %>">
 			<div id="<portlet:namespace />textFieldLocalizedCheckbox">
-				<aui:input label="make-field-localizable" name="Property--localize-field--" onChange='<%= renderResponse.getNamespace() + "onLocalizeFieldChange(event);" %>' type="checkbox" value="<%= type == ExpandoColumnConstants.STRING_LOCALIZED %>" />
+				<aui:input label="make-field-localizable" name="Property--localize-field--" onChange='<%= liferayPortletResponse.getNamespace() + "onLocalizeFieldChange(event);" %>' type="checkbox" value="<%= type == ExpandoColumnConstants.STRING_LOCALIZED %>" />
 
 				<aui:script>
 					Liferay.Util.toggleBoxes(
@@ -232,7 +196,7 @@
 	}
 </aui:script>
 
-<script>
+<aui:script>
 	function setDataType(selectionType) {
 		var dataTypeElement = document.getElementById(
 			'<portlet:namespace />dataType'
@@ -249,7 +213,7 @@
 					[
 						'indexTypeSearchableAsKeyword',
 						'indexTypeSearchableAsKeywordToggleSwitch',
-						'precisionTypeSelect'
+						'precisionTypeSelect',
 					],
 					'disable'
 				);
@@ -258,7 +222,7 @@
 					[
 						'indexTypeKeyword',
 						'indexTypeText',
-						'searchableKeyWordOrText'
+						'searchableKeyWordOrText',
 					],
 					'enable'
 				);
@@ -276,7 +240,8 @@
 					['precisionTypeAdvanced', 'searchableAsKeyword'],
 					'hide'
 				);
-			} else if (
+			}
+			else if (
 				currentSelectedDataType ==
 					'<%= ExpandoColumnConstants.DATA_TYPE_DECIMAL %>' ||
 				currentSelectedDataType ==
@@ -286,7 +251,7 @@
 					[
 						'indexTypeKeyword',
 						'indexTypeText',
-						'searchableKeyWordOrText'
+						'searchableKeyWordOrText',
 					],
 					'disable'
 				);
@@ -295,7 +260,7 @@
 					[
 						'indexTypeSearchableAsKeyword',
 						'indexTypeSearchableAsKeywordToggleSwitch',
-						'precisionTypeSelect'
+						'precisionTypeSelect',
 					],
 					'enable'
 				);
@@ -320,7 +285,7 @@
 	}
 
 	function updateElement(formElementIds, action) {
-		formElementIds.forEach(function(formElementId) {
+		formElementIds.forEach((formElementId) => {
 			var formElement = document.getElementById(
 				'<portlet:namespace />' + formElementId
 			);
@@ -330,14 +295,17 @@
 					formElement.removeAttribute('disabled');
 
 					formElement.classList.remove('disabled');
-				} else if (action == 'disable') {
+				}
+				else if (action == 'disable') {
 					formElement.setAttribute('disabled', 'true');
-				} else if (action == 'hide') {
+				}
+				else if (action == 'hide') {
 					formElement.classList.add('hide');
-				} else if (action == 'unhide') {
+				}
+				else if (action == 'unhide') {
 					formElement.classList.remove('hide');
 				}
 			}
 		});
 	}
-</script>
+</aui:script>

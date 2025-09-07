@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharepoint.rest.repository.internal.util;
@@ -21,19 +12,20 @@ import com.liferay.document.library.repository.external.ExtRepositoryFolder;
 import com.liferay.document.library.repository.external.ExtRepositoryObject;
 import com.liferay.document.library.repository.external.ExtRepositoryObjectType;
 import com.liferay.document.library.repository.external.ExtRepositorySearchResult;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.sharepoint.rest.repository.internal.document.library.repository.external.model.SharepointFileEntry;
 import com.liferay.sharepoint.rest.repository.internal.document.library.repository.external.model.SharepointFileVersion;
 import com.liferay.sharepoint.rest.repository.internal.document.library.repository.external.model.SharepointFolder;
 import com.liferay.sharepoint.rest.repository.internal.document.library.repository.external.model.SharepointModel;
+import com.liferay.sharepoint.rest.repository.internal.helper.SharepointURLHelper;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -128,7 +120,7 @@ public class SharepointServerResponseConverter {
 	}
 
 	public <T extends ExtRepositoryObject> T getExtRepositoryObject(
-		ExtRepositoryObjectType extRepositoryObjectType,
+		ExtRepositoryObjectType<?> extRepositoryObjectType,
 		JSONObject jsonObject) {
 
 		if (extRepositoryObjectType == ExtRepositoryObjectType.FILE) {
@@ -183,8 +175,8 @@ public class SharepointServerResponseConverter {
 			JSONArray cellsResultsJSONArray = cellsJSONObject.getJSONArray(
 				"results");
 
-			ExtRepositoryObjectType extRepositoryObjectType =
-				ExtRepositoryObjectType.OBJECT;
+			ExtRepositoryObjectType<? extends ExtRepositoryObject>
+				extRepositoryObjectType = ExtRepositoryObjectType.OBJECT;
 
 			String extension = null;
 			String parentLink = null;
@@ -382,7 +374,7 @@ public class SharepointServerResponseConverter {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(strings.length * 2 - 1);
+		StringBundler sb = new StringBundler((strings.length * 2) - 1);
 
 		sb.append(strings[0]);
 
@@ -405,8 +397,8 @@ public class SharepointServerResponseConverter {
 
 			return simpleDateFormat.parse(dateString);
 		}
-		catch (ParseException pe) {
-			throw new RuntimeException(pe);
+		catch (ParseException parseException) {
+			throw new RuntimeException(parseException);
 		}
 	}
 

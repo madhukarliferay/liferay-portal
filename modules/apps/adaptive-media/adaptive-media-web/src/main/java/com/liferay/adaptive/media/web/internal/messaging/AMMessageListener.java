@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.web.internal.messaging;
@@ -37,7 +28,6 @@ import org.osgi.service.component.annotations.Deactivate;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = "destination.name=" + AMDestinationNames.ADAPTIVE_MEDIA_PROCESSOR,
 	service = MessageListener.class
 )
@@ -46,7 +36,9 @@ public class AMMessageListener extends BaseMessageListener {
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, AMProcessor.class, "(model.class.name=*)",
+			bundleContext,
+			(Class<AMProcessor<Object>>)(Class<?>)AMProcessor.class,
+			"(model.class.name=*)",
 			(serviceReference, emitter) -> emitter.emit(
 				(String)serviceReference.getProperty("model.class.name")));
 	}
@@ -60,7 +52,7 @@ public class AMMessageListener extends BaseMessageListener {
 	protected void doReceive(Message message) throws Exception {
 		String className = message.getString("className");
 
-		List<AMProcessor> amProcessors = _serviceTrackerMap.getService(
+		List<AMProcessor<Object>> amProcessors = _serviceTrackerMap.getService(
 			className);
 
 		if (amProcessors == null) {
@@ -73,18 +65,18 @@ public class AMMessageListener extends BaseMessageListener {
 		Object model = message.get("model");
 		String modelId = (String)message.get("modelId");
 
-		for (AMProcessor amProcessor : amProcessors) {
+		for (AMProcessor<Object> amProcessor : amProcessors) {
 			try {
 				amProcessorCommand.execute(amProcessor, model, modelId);
 			}
-			catch (NoSuchFileEntryException nsfee) {
+			catch (NoSuchFileEntryException noSuchFileEntryException) {
 				if (_log.isInfoEnabled()) {
-					_log.info(nsfee, nsfee);
+					_log.info(noSuchFileEntryException);
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn(e, e);
+					_log.warn(exception);
 				}
 			}
 		}
@@ -95,6 +87,7 @@ public class AMMessageListener extends BaseMessageListener {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AMMessageListener.class);
 
-	private ServiceTrackerMap<String, List<AMProcessor>> _serviceTrackerMap;
+	private ServiceTrackerMap<String, List<AMProcessor<Object>>>
+		_serviceTrackerMap;
 
 }

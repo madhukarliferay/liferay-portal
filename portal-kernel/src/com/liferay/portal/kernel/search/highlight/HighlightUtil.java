@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.search.highlight;
@@ -36,7 +27,7 @@ public class HighlightUtil {
 	public static final String HIGHLIGHT_TAG_OPEN = "<liferay-hl>";
 
 	public static final String[] HIGHLIGHTS = {
-		"<span class=\"highlight\">", "</span>"
+		"<span class=\"highlight mark\">", "</span>"
 	};
 
 	public static void addSnippet(
@@ -50,18 +41,13 @@ public class HighlightUtil {
 				queryTerms.add(matcher.group(1));
 			}
 
-			snippet = StringUtil.replace(
-				snippet, HIGHLIGHT_TAG_OPEN, StringPool.BLANK);
-			snippet = StringUtil.replace(
-				snippet, HIGHLIGHT_TAG_CLOSE, StringPool.BLANK);
+			snippet = StringUtil.removeSubstring(snippet, HIGHLIGHT_TAG_OPEN);
+			snippet = StringUtil.removeSubstring(snippet, HIGHLIGHT_TAG_CLOSE);
 		}
 
 		document.addText(
-			Field.SNIPPET.concat(
-				StringPool.UNDERLINE
-			).concat(
-				snippetFieldName
-			),
+			StringBundler.concat(
+				Field.SNIPPET, StringPool.UNDERLINE, snippetFieldName),
 			snippet);
 	}
 
@@ -76,7 +62,7 @@ public class HighlightUtil {
 			return s;
 		}
 
-		StringBundler sb = new StringBundler(3 * queryTerms.length - 1);
+		StringBundler sb = new StringBundler((3 * queryTerms.length) - 1);
 
 		for (int i = 0; i < queryTerms.length; i++) {
 			if (i != 0) {

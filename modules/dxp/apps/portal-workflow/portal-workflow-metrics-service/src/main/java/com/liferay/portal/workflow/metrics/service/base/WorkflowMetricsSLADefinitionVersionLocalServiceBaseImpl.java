@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.base;
@@ -21,11 +12,11 @@ import com.liferay.exportimport.kernel.lar.StagedModelDataHandler;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerRegistryUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Criterion;
 import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
@@ -40,28 +31,33 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinitionVersion;
 import com.liferay.portal.workflow.metrics.service.WorkflowMetricsSLADefinitionVersionLocalService;
-import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionPersistence;
 import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionVersionFinder;
 import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionVersionPersistence;
 
 import java.io.Serializable;
 
+import java.sql.Connection;
+
 import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -80,7 +76,7 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	implements AopService, IdentifiableOSGiService,
 			   WorkflowMetricsSLADefinitionVersionLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Use <code>WorkflowMetricsSLADefinitionVersionLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>com.liferay.portal.workflow.metrics.service.WorkflowMetricsSLADefinitionVersionLocalServiceUtil</code>.
@@ -88,6 +84,10 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 
 	/**
 	 * Adds the workflow metrics sla definition version to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WorkflowMetricsSLADefinitionVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param workflowMetricsSLADefinitionVersion the workflow metrics sla definition version
 	 * @return the workflow metrics sla definition version that was added
@@ -124,6 +124,10 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	/**
 	 * Deletes the workflow metrics sla definition version with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WorkflowMetricsSLADefinitionVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param workflowMetricsSLADefinitionVersionId the primary key of the workflow metrics sla definition version
 	 * @return the workflow metrics sla definition version that was removed
 	 * @throws PortalException if a workflow metrics sla definition version with the primary key could not be found
@@ -142,6 +146,10 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	/**
 	 * Deletes the workflow metrics sla definition version from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WorkflowMetricsSLADefinitionVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param workflowMetricsSLADefinitionVersion the workflow metrics sla definition version
 	 * @return the workflow metrics sla definition version that was removed
 	 */
@@ -154,6 +162,19 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 
 		return workflowMetricsSLADefinitionVersionPersistence.remove(
 			workflowMetricsSLADefinitionVersion);
+	}
+
+	@Override
+	public <T> T dslQuery(DSLQuery dslQuery) {
+		return workflowMetricsSLADefinitionVersionPersistence.dslQuery(
+			dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(DSLQuery dslQuery) {
+		Long count = dslQuery(dslQuery);
+
+		return count.intValue();
 	}
 
 	@Override
@@ -447,14 +468,40 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	 * @throws PortalException
 	 */
 	@Override
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
+
+		return workflowMetricsSLADefinitionVersionPersistence.create(
+			((Long)primaryKeyObj).longValue());
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement WorkflowMetricsSLADefinitionVersionLocalServiceImpl#deleteWorkflowMetricsSLADefinitionVersion(WorkflowMetricsSLADefinitionVersion) to avoid orphaned data");
+		}
 
 		return workflowMetricsSLADefinitionVersionLocalService.
 			deleteWorkflowMetricsSLADefinitionVersion(
 				(WorkflowMetricsSLADefinitionVersion)persistedModel);
 	}
 
+	@Override
+	public BasePersistence<WorkflowMetricsSLADefinitionVersion>
+		getBasePersistence() {
+
+		return workflowMetricsSLADefinitionVersionPersistence;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException {
@@ -550,6 +597,10 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	/**
 	 * Updates the workflow metrics sla definition version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WorkflowMetricsSLADefinitionVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param workflowMetricsSLADefinitionVersion the workflow metrics sla definition version
 	 * @return the workflow metrics sla definition version that was updated
 	 */
@@ -562,6 +613,10 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 
 		return workflowMetricsSLADefinitionVersionPersistence.update(
 			workflowMetricsSLADefinitionVersion);
+	}
+
+	@Deactivate
+	protected void deactivate() {
 	}
 
 	@Override
@@ -602,28 +657,29 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	 * @param sql the sql query
 	 */
 	protected void runSQL(String sql) {
+		DataSource dataSource =
+			workflowMetricsSLADefinitionVersionPersistence.getDataSource();
+
+		DB db = DBManagerUtil.getDB();
+
+		Connection currentConnection = CurrentConnectionUtil.getConnection(
+			dataSource);
+
 		try {
-			DataSource dataSource =
-				workflowMetricsSLADefinitionVersionPersistence.getDataSource();
+			if (currentConnection != null) {
+				db.runSQL(currentConnection, new String[] {sql});
 
-			DB db = DBManagerUtil.getDB();
+				return;
+			}
 
-			sql = db.buildSQL(sql);
-			sql = PortalUtil.transformSQL(sql);
-
-			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(
-				dataSource, sql);
-
-			sqlUpdate.update();
+			try (Connection connection = dataSource.getConnection()) {
+				db.runSQL(connection, new String[] {sql});
+			}
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
-
-	@Reference
-	protected WorkflowMetricsSLADefinitionPersistence
-		workflowMetricsSLADefinitionPersistence;
 
 	protected WorkflowMetricsSLADefinitionVersionLocalService
 		workflowMetricsSLADefinitionVersionLocalService;
@@ -640,16 +696,7 @@ public abstract class WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameLocalService
-		classNameLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ResourceLocalService
-		resourceLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		WorkflowMetricsSLADefinitionVersionLocalServiceBaseImpl.class);
 
 }

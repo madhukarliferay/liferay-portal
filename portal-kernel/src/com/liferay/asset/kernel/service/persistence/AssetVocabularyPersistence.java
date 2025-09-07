@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service.persistence;
@@ -36,7 +27,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface AssetVocabularyPersistence
 	extends BasePersistence<AssetVocabulary>, CTPersistence<AssetVocabulary> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link AssetVocabularyUtil} to access the asset vocabulary persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -667,7 +658,7 @@ public interface AssetVocabularyPersistence
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param start the lower bound of the range of asset vocabularies
 	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -1138,57 +1129,415 @@ public interface AssetVocabularyPersistence
 	public int filterCountByG_LikeN(long groupId, String name);
 
 	/**
-	 * Returns the asset vocabulary where companyId = &#63; and externalReferenceCode = &#63; or throws a <code>NoSuchVocabularyException</code> if it could not be found.
+	 * Returns all the asset vocabularies where groupId = &#63; and visibilityType = &#63;.
 	 *
-	 * @param companyId the company ID
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @return the matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long groupId, int visibilityType);
+
+	/**
+	 * Returns a range of all the asset vocabularies where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @return the range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long groupId, int visibilityType, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long groupId, int visibilityType, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long groupId, int visibilityType, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset vocabulary
+	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
+	 */
+	public AssetVocabulary findByG_V_First(
+			long groupId, int visibilityType,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+				orderByComparator)
+		throws NoSuchVocabularyException;
+
+	/**
+	 * Returns the first asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
+	 */
+	public AssetVocabulary fetchByG_V_First(
+		long groupId, int visibilityType,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset vocabulary
+	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
+	 */
+	public AssetVocabulary findByG_V_Last(
+			long groupId, int visibilityType,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+				orderByComparator)
+		throws NoSuchVocabularyException;
+
+	/**
+	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
+	 */
+	public AssetVocabulary fetchByG_V_Last(
+		long groupId, int visibilityType,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param vocabularyId the primary key of the current asset vocabulary
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset vocabulary
+	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
+	 */
+	public AssetVocabulary[] findByG_V_PrevAndNext(
+			long vocabularyId, long groupId, int visibilityType,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+				orderByComparator)
+		throws NoSuchVocabularyException;
+
+	/**
+	 * Returns all the asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @return the matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long groupId, int visibilityType);
+
+	/**
+	 * Returns a range of all the asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @return the range of matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long groupId, int visibilityType, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies that the user has permissions to view where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long groupId, int visibilityType, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set of asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param vocabularyId the primary key of the current asset vocabulary
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset vocabulary
+	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
+	 */
+	public AssetVocabulary[] filterFindByG_V_PrevAndNext(
+			long vocabularyId, long groupId, int visibilityType,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+				orderByComparator)
+		throws NoSuchVocabularyException;
+
+	/**
+	 * Returns all the asset vocabularies that the user has permission to view where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @return the matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long[] groupIds, int[] visibilityTypes);
+
+	/**
+	 * Returns a range of all the asset vocabularies that the user has permission to view where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @return the range of matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long[] groupIds, int[] visibilityTypes, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies that the user has permission to view where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset vocabularies that the user has permission to view
+	 */
+	public java.util.List<AssetVocabulary> filterFindByG_V(
+		long[] groupIds, int[] visibilityTypes, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns all the asset vocabularies where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @return the matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long[] groupIds, int[] visibilityTypes);
+
+	/**
+	 * Returns a range of all the asset vocabularies where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @return the range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long[] groupIds, int[] visibilityTypes, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long[] groupIds, int[] visibilityTypes, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the asset vocabularies where groupId = &#63; and visibilityType = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetVocabularyModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @param start the lower bound of the range of asset vocabularies
+	 * @param end the upper bound of the range of asset vocabularies (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset vocabularies
+	 */
+	public java.util.List<AssetVocabulary> findByG_V(
+		long[] groupIds, int[] visibilityTypes, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Removes all the asset vocabularies where groupId = &#63; and visibilityType = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 */
+	public void removeByG_V(long groupId, int visibilityType);
+
+	/**
+	 * Returns the number of asset vocabularies where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @return the number of matching asset vocabularies
+	 */
+	public int countByG_V(long groupId, int visibilityType);
+
+	/**
+	 * Returns the number of asset vocabularies where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @return the number of matching asset vocabularies
+	 */
+	public int countByG_V(long[] groupIds, int[] visibilityTypes);
+
+	/**
+	 * Returns the number of asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param visibilityType the visibility type
+	 * @return the number of matching asset vocabularies that the user has permission to view
+	 */
+	public int filterCountByG_V(long groupId, int visibilityType);
+
+	/**
+	 * Returns the number of asset vocabularies that the user has permission to view where groupId = any &#63; and visibilityType = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param visibilityTypes the visibility types
+	 * @return the number of matching asset vocabularies that the user has permission to view
+	 */
+	public int filterCountByG_V(long[] groupIds, int[] visibilityTypes);
+
+	/**
+	 * Returns the asset vocabulary where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchVocabularyException</code> if it could not be found.
+	 *
 	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
 	 * @return the matching asset vocabulary
 	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
 	 */
-	public AssetVocabulary findByC_ERC(
-			long companyId, String externalReferenceCode)
+	public AssetVocabulary findByERC_G(
+			String externalReferenceCode, long groupId)
 		throws NoSuchVocabularyException;
 
 	/**
-	 * Returns the asset vocabulary where companyId = &#63; and externalReferenceCode = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the asset vocabulary where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
 	 * @return the matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
 	 */
-	public AssetVocabulary fetchByC_ERC(
-		long companyId, String externalReferenceCode);
+	public AssetVocabulary fetchByERC_G(
+		String externalReferenceCode, long groupId);
 
 	/**
-	 * Returns the asset vocabulary where companyId = &#63; and externalReferenceCode = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the asset vocabulary where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
 	 */
-	public AssetVocabulary fetchByC_ERC(
-		long companyId, String externalReferenceCode, boolean useFinderCache);
+	public AssetVocabulary fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache);
 
 	/**
-	 * Removes the asset vocabulary where companyId = &#63; and externalReferenceCode = &#63; from the database.
+	 * Removes the asset vocabulary where externalReferenceCode = &#63; and groupId = &#63; from the database.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
 	 * @return the asset vocabulary that was removed
 	 */
-	public AssetVocabulary removeByC_ERC(
-			long companyId, String externalReferenceCode)
+	public AssetVocabulary removeByERC_G(
+			String externalReferenceCode, long groupId)
 		throws NoSuchVocabularyException;
 
 	/**
-	 * Returns the number of asset vocabularies where companyId = &#63; and externalReferenceCode = &#63;.
+	 * Returns the number of asset vocabularies where externalReferenceCode = &#63; and groupId = &#63;.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
 	 * @return the number of matching asset vocabularies
 	 */
-	public int countByC_ERC(long companyId, String externalReferenceCode);
+	public int countByERC_G(String externalReferenceCode, long groupId);
 
 	/**
 	 * Caches the asset vocabulary in the entity cache if it is enabled.

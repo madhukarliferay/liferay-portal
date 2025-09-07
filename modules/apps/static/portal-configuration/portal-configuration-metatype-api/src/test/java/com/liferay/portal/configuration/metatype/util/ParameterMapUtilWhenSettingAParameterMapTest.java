@@ -1,26 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.metatype.util;
 
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-
-import java.util.Map;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -28,28 +20,30 @@ import org.junit.Test;
  */
 public class ParameterMapUtilWhenSettingAParameterMapTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws ConfigurationException {
-		ParameterMapUtilTestUtil.TestBean testBean =
-			ParameterMapUtilTestUtil.getTestBean();
-
-		Map<String, String[]> parameterMap = HashMapBuilder.put(
-			"testBoolean1", new String[] {"false"}
-		).put(
-			"testString1",
-			new String[] {ParameterMapUtilTestUtil.PARAMETER_MAP_STRING}
-		).put(
-			"testStringArray1",
-			ParameterMapUtilTestUtil.PARAMETER_MAP_STRING_ARRAY
-		).build();
-
 		_testBean = ParameterMapUtil.setParameterMap(
-			ParameterMapUtilTestUtil.TestBean.class, testBean, parameterMap);
+			ParameterMapUtilTestUtil.TestBean.class,
+			ParameterMapUtilTestUtil.getTestBean(),
+			HashMapBuilder.put(
+				"testBoolean1", new String[] {"false"}
+			).put(
+				"testString1",
+				new String[] {ParameterMapUtilTestUtil.PARAMETER_MAP_STRING}
+			).put(
+				"testStringArray1",
+				ParameterMapUtilTestUtil.PARAMETER_MAP_STRING_ARRAY
+			).build());
 	}
 
 	@Test
 	public void testValuesInTheParameterMapAreReadFirst() {
-		Assert.assertEquals(false, _testBean.testBoolean1());
+		Assert.assertFalse(_testBean.testBoolean1());
 		Assert.assertEquals(
 			ParameterMapUtilTestUtil.PARAMETER_MAP_STRING,
 			_testBean.testString1());
@@ -60,7 +54,7 @@ public class ParameterMapUtilWhenSettingAParameterMapTest {
 
 	@Test
 	public void testValuesNotInTheParameterMapAreReadFromBean() {
-		Assert.assertEquals(true, _testBean.testBoolean2());
+		Assert.assertTrue(_testBean.testBoolean2());
 		Assert.assertEquals(
 			ParameterMapUtilTestUtil.TEST_BEAN_STRING, _testBean.testString2());
 		Assert.assertArrayEquals(

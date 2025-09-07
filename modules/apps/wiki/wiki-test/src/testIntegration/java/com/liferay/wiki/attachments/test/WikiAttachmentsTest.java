@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.attachments.test;
@@ -20,7 +11,6 @@ import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.Hits;
@@ -36,9 +26,10 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.SearchContextTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.wiki.model.WikiNode;
@@ -69,7 +60,7 @@ public class WikiAttachmentsTest {
 
 	@Before
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 	}
@@ -303,6 +294,9 @@ public class WikiAttachmentsTest {
 		Assert.assertEquals(2, _searchCount(title, true));
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected void addWikiNode() throws Exception {
 		if (_group == null) {
 			_group = GroupTestUtil.addGroup();
@@ -325,20 +319,20 @@ public class WikiAttachmentsTest {
 			addWikiPage();
 		}
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			_page.getUserId(), _page.getNodeId(), _page.getTitle(), getClass());
 	}
 
-	private void _addFileEntry(String title) throws PortalException {
+	private void _addFileEntry(String title) throws Exception {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
 		_dlAppLocalService.addFileEntry(
-			serviceContext.getUserId(), _group.getGroupId(),
+			null, serviceContext.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			StringUtil.randomString(), ContentTypes.TEXT_PLAIN, title,
-			StringPool.BLANK, StringPool.BLANK, _CONTENT.getBytes(),
-			serviceContext);
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+			_CONTENT.getBytes(), null, null, null, serviceContext);
 	}
 
 	private void _addWikiPageWithAttachmentFileName(String fileName)
@@ -348,7 +342,7 @@ public class WikiAttachmentsTest {
 			addWikiPage();
 		}
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			_page.getUserId(), _page.getNodeId(), _page.getTitle(), fileName,
 			getClass());
 	}
@@ -377,7 +371,7 @@ public class WikiAttachmentsTest {
 
 		String fileName = RandomTestUtil.randomString() + ".docx";
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			TestPropsValues.getUserId(), _node.getNodeId(), _page.getTitle(),
 			fileName, getClass());
 
@@ -400,7 +394,7 @@ public class WikiAttachmentsTest {
 		if (restore) {
 			_wikiPageLocalService.restorePageAttachmentFromTrash(
 				TestPropsValues.getUserId(), _page.getNodeId(),
-				_page.getTitle(), fileName);
+				_page.getTitle(), fileEntry.getFileName());
 
 			Assert.assertEquals(
 				initialNotInTrashCount + 1,

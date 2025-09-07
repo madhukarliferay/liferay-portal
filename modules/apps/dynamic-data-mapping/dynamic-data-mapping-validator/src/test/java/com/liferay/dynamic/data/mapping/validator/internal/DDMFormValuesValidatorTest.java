@@ -1,24 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.validator.internal;
 
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionFactory;
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.expression.internal.DDMExpressionFactoryImpl;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
@@ -37,19 +29,28 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationExcepti
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationException.MustSetValidValue;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationException.MustSetValidValuesSize;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationException.RequiredValue;
+import com.liferay.dynamic.data.mapping.validator.internal.expression.DDMFormFieldValueExpressionParameterAccessor;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ProxyFactory;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -57,9 +58,84 @@ import org.junit.Test;
  */
 public class DDMFormValuesValidatorTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
-		setUpDDMFormValuesValidator();
+		_setUpDDMFormValuesValidator();
+	}
+
+	@Test
+	public void testEvaluateValidationExpression() throws Exception {
+		Assert.assertTrue(
+			_ddmFormValuesValidatorImpl.evaluateValidationExpression(
+				new DDMFormField("Field", DDMFormFieldTypeConstants.DATE),
+				_createDDMFormFieldValidation(
+					new DDMFormFieldValidationExpression() {
+						{
+							setValue("dateValidation(Field, \"{parameter}\")");
+						}
+					},
+					DDMFormValuesTestUtil.createLocalizedValue(
+						"{\"startsFrom\": \"responseDate\"}", LocaleUtil.US)),
+				DDMFormValuesTestUtil.createLocalizedDDMFormFieldValue(
+					"Field", null)));
+		Assert.assertTrue(
+			_ddmFormValuesValidatorImpl.evaluateValidationExpression(
+				new DDMFormField("Field", DDMFormFieldTypeConstants.NUMERIC),
+				_createDDMFormFieldValidation(
+					new DDMFormFieldValidationExpression() {
+						{
+							setName("eq");
+							setValue("Field=={parameter}");
+						}
+					},
+					DDMFormValuesTestUtil.createLocalizedValue(
+						"10.0", LocaleUtil.US)),
+				DDMFormValuesTestUtil.createLocalizedDDMFormFieldValue(
+					"Field", "10")));
+		Assert.assertTrue(
+			_ddmFormValuesValidatorImpl.evaluateValidationExpression(
+				new DDMFormField("Field", DDMFormFieldTypeConstants.NUMERIC),
+				_createDDMFormFieldValidation(
+					new DDMFormFieldValidationExpression() {
+						{
+							setName("eq");
+							setValue("Field=={parameter}");
+						}
+					},
+					DDMFormValuesTestUtil.createLocalizedValue(
+						null, "10.0", LocaleUtil.US)),
+				DDMFormValuesTestUtil.createDDMFormFieldValue(
+					"Field",
+					DDMFormValuesTestUtil.createLocalizedValue(
+						null, "10,0", LocaleUtil.BRAZIL))));
+		Assert.assertTrue(
+			_ddmFormValuesValidatorImpl.evaluateValidationExpression(
+				new DDMFormField("Field", DDMFormFieldTypeConstants.NUMERIC),
+				_createDDMFormFieldValidation(
+					new DDMFormFieldValidationExpression() {
+						{
+							setName("gt");
+							setValue("Field>{parameter}");
+						}
+					},
+					DDMFormValuesTestUtil.createLocalizedValue(
+						"999999999", LocaleUtil.US)),
+				DDMFormValuesTestUtil.createLocalizedDDMFormFieldValue(
+					"Field", "3245870178")));
+		Assert.assertTrue(
+			_ddmFormValuesValidatorImpl.evaluateValidationExpression(
+				new DDMFormField("Field", DDMFormFieldTypeConstants.TEXT),
+				_createDDMFormFieldValidation(
+					null,
+					DDMFormValuesTestUtil.createLocalizedValue(
+						StringUtil.randomString(), LocaleUtil.US)),
+				DDMFormValuesTestUtil.createLocalizedDDMFormFieldValue(
+					"Field", StringUtil.randomString())));
 	}
 
 	@Test(expected = MustSetValidValue.class)
@@ -165,6 +241,40 @@ public class DDMFormValuesValidatorTest {
 		ddmFormValues.addDDMFormFieldValue(
 			DDMFormValuesTestUtil.createUnlocalizedDDMFormFieldValue(
 				"Country", "Spain"));
+
+		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
+	}
+
+	@Test
+	public void testValidationWithAvailableLocales() throws Exception {
+		DDMForm ddmForm = DDMFormTestUtil.createDDMForm(
+			SetUtil.fromArray(LocaleUtil.SPAIN, LocaleUtil.US), LocaleUtil.US);
+
+		DDMFormTestUtil.addDDMFormFields(
+			ddmForm,
+			DDMFormTestUtil.createLocalizableTextDDMFormField("textField"));
+
+		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
+			ddmForm);
+
+		ddmFormValues.setDDMFormFieldValues(
+			Collections.singletonList(
+				DDMFormValuesTestUtil.createDDMFormFieldValue(
+					"textField",
+					DDMFormValuesTestUtil.createLocalizedValue(
+						"Joe", "João", LocaleUtil.US))));
+
+		AssertUtils.assertFailure(
+			MustSetValidAvailableLocales.class,
+			"Invalid available locales set for field name textField",
+			() -> _ddmFormValuesValidatorImpl.validate(ddmFormValues));
+
+		ddmFormValues.setDDMFormFieldValues(
+			Collections.singletonList(
+				DDMFormValuesTestUtil.createDDMFormFieldValue(
+					"textField",
+					DDMFormValuesTestUtil.createLocalizedValue(
+						"Joe", LocaleUtil.US))));
 
 		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
 	}
@@ -508,7 +618,7 @@ public class DDMFormValuesValidatorTest {
 
 		LocalizedValue localizedValue = new LocalizedValue(LocaleUtil.US);
 
-		localizedValue.addString(LocaleUtil.US, StringUtil.randomString());
+		localizedValue.addString(LocaleUtil.US, StringPool.BLANK);
 		localizedValue.addString(LocaleUtil.BRAZIL, StringPool.BLANK);
 
 		DDMFormFieldValue ddmFormFieldValue =
@@ -520,7 +630,7 @@ public class DDMFormValuesValidatorTest {
 		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
 	}
 
-	@Test(expected = MustSetValidAvailableLocales.class)
+	@Test(expected = RequiredValue.class)
 	public void testValidationWithRequiredFieldAndNullValue() throws Exception {
 		DDMForm ddmForm = DDMFormTestUtil.createDDMForm(
 			DDMFormTestUtil.createAvailableLocales(LocaleUtil.US),
@@ -669,30 +779,6 @@ public class DDMFormValuesValidatorTest {
 		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
 	}
 
-	@Test(expected = MustSetValidAvailableLocales.class)
-	public void testValidationWithWrongAvailableLocales() throws Exception {
-		DDMForm ddmForm = DDMFormTestUtil.createDDMForm();
-
-		DDMFormField ddmFormField =
-			DDMFormTestUtil.createLocalizableTextDDMFormField("name");
-
-		DDMFormTestUtil.addDDMFormFields(ddmForm, ddmFormField);
-
-		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
-			ddmForm);
-
-		LocalizedValue localizedValue = new LocalizedValue(LocaleUtil.US);
-
-		localizedValue.addString(LocaleUtil.BRAZIL, "Joao");
-		localizedValue.addString(LocaleUtil.US, "Joe");
-
-		ddmFormValues.addDDMFormFieldValue(
-			DDMFormValuesTestUtil.createDDMFormFieldValue(
-				"name", localizedValue));
-
-		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
-	}
-
 	@Test(expected = MustSetValidDefaultLocale.class)
 	public void testValidationWithWrongDefaultLocale() throws Exception {
 		DDMForm ddmForm = DDMFormTestUtil.createDDMForm();
@@ -795,20 +881,45 @@ public class DDMFormValuesValidatorTest {
 		_ddmFormValuesValidatorImpl.validate(ddmFormValues);
 	}
 
-	protected void setUpDDMFormValuesValidator() throws Exception {
+	private DDMFormFieldValidation _createDDMFormFieldValidation(
+		DDMFormFieldValidationExpression ddmFormFieldValidationExpression,
+		LocalizedValue localizedValue) {
+
+		DDMFormFieldValidation ddmFormFieldValidation =
+			new DDMFormFieldValidation();
+
+		ddmFormFieldValidation.setDDMFormFieldValidationExpression(
+			ddmFormFieldValidationExpression);
+		ddmFormFieldValidation.setParameterLocalizedValue(localizedValue);
+
+		return ddmFormFieldValidation;
+	}
+
+	private void _setUpDDMFormValuesValidator() throws Exception {
 		DDMExpressionFactoryImpl ddmExpressionFactoryImpl =
 			new DDMExpressionFactoryImpl();
 
 		ReflectionTestUtil.setFieldValue(
-			ddmExpressionFactoryImpl, "ddmExpressionFunctionTracker",
-			new DDMExpressionFunctionTracker() {
+			ddmExpressionFactoryImpl, "ddmExpressionFunctionRegistry",
+			new DDMExpressionFunctionRegistry() {
+
+				@Override
+				public Map<String, DDMExpressionFunction>
+					getCustomDDMExpressionFunctions() {
+
+					return Collections.emptyMap();
+				}
 
 				@Override
 				public Map<String, DDMExpressionFunctionFactory>
 					getDDMExpressionFunctionFactories(
 						Set<String> functionNames) {
 
-					return Collections.emptyMap();
+					return HashMapBuilder.
+						<String, DDMExpressionFunctionFactory>put(
+							"dateValidation",
+							new DateValidationFunctionFactory()
+						).build();
 				}
 
 				@Override
@@ -826,18 +937,50 @@ public class DDMFormValuesValidatorTest {
 
 			});
 
-		_ddmFormValuesValidatorImpl.setDDMExpressionFactory(
+		ReflectionTestUtil.setFieldValue(
+			_ddmFormValuesValidatorImpl, "_ddmExpressionFactory",
 			ddmExpressionFactoryImpl);
 
-		_ddmFormValuesValidatorImpl.setJSONFactory(new JSONFactoryImpl());
-
 		ReflectionTestUtil.setFieldValue(
-			_ddmFormValuesValidatorImpl, "_ddmFormFieldTypeServicesTracker",
+			_ddmFormValuesValidatorImpl, "_ddmFormFieldTypeServicesRegistry",
 			ProxyFactory.newDummyInstance(
-				DDMFormFieldTypeServicesTracker.class));
+				DDMFormFieldTypeServicesRegistry.class));
+		ReflectionTestUtil.setFieldValue(
+			_ddmFormValuesValidatorImpl,
+			"_ddmFormFieldValueExpressionParameterAccessor",
+			new DDMFormFieldValueExpressionParameterAccessor(
+				new JSONFactoryImpl(), null, null));
+		ReflectionTestUtil.setFieldValue(
+			_ddmFormValuesValidatorImpl, "_serviceTrackerMap",
+			ProxyFactory.newDummyInstance(ServiceTrackerMap.class));
 	}
 
 	private final DDMFormValuesValidatorImpl _ddmFormValuesValidatorImpl =
 		new DDMFormValuesValidatorImpl();
+
+	private static class DateValidationFunction
+		implements DDMExpressionFunction.Function2<String, String, Boolean> {
+
+		@Override
+		public Boolean apply(String fieldName, String parameter) {
+			return StringUtil.equals(parameter, "{startsFrom: responseDate}");
+		}
+
+		@Override
+		public String getName() {
+			return "dateValidation";
+		}
+
+	}
+
+	private static class DateValidationFunctionFactory
+		implements DDMExpressionFunctionFactory {
+
+		@Override
+		public DDMExpressionFunction create() {
+			return new DateValidationFunction();
+		}
+
+	}
 
 }

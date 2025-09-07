@@ -1,36 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.admin.web.internal.portlet.action;
 
-import com.liferay.asset.display.page.service.AssetDisplayPageEntryLocalService;
 import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
-import com.liferay.layout.page.template.exception.RequiredLayoutPageTemplateEntryException;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.servlet.MultiSessionMessages;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import java.util.Objects;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,10 +34,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
-		"mvc.command.name=/layout_page_template/delete_layout_page_template_entry"
+		"jakarta.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
+		"mvc.command.name=/layout_page_template_admin/delete_layout_page_template_entry"
 	},
 	service = MVCActionCommand.class
 )
@@ -53,6 +47,9 @@ public class DeleteLayoutPageTemplateEntryMVCActionCommand
 	protected void doProcessAction(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
+
+		List<Long> deleteLayoutPageTemplateEntryIdsList = new ArrayList<>();
+		Set<Class<?>> exceptionClasses = new HashSet<>();
 
 		long[] deleteLayoutPageTemplateEntryIds = null;
 
@@ -69,58 +66,80 @@ public class DeleteLayoutPageTemplateEntryMVCActionCommand
 				actionRequest, "rowIds");
 		}
 
-		List<Long> deleteLayoutPageTemplateIdsList = new ArrayList<>();
-
 		for (long deleteLayoutPageTemplateEntryId :
 				deleteLayoutPageTemplateEntryIds) {
 
-			int assetDisplayPageEntriesCount =
-				_assetDisplayPageEntryLocalService.
-					getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryId(
-						deleteLayoutPageTemplateEntryId);
-
 			try {
-				if (assetDisplayPageEntriesCount > 0) {
-					deleteLayoutPageTemplateIdsList.add(
-						deleteLayoutPageTemplateEntryId);
-
-					SessionErrors.add(
-						actionRequest,
-						RequiredLayoutPageTemplateEntryException.class);
-				}
-				else {
-					_layoutPageTemplateEntryService.
-						deleteLayoutPageTemplateEntry(
-							deleteLayoutPageTemplateEntryId);
-				}
-			}
-			catch (PortalException pe) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(pe, pe);
-				}
-
-				deleteLayoutPageTemplateIdsList.add(
+				_layoutPageTemplateEntryService.deleteLayoutPageTemplateEntry(
 					deleteLayoutPageTemplateEntryId);
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+
+				deleteLayoutPageTemplateEntryIdsList.add(
+					deleteLayoutPageTemplateEntryId);
+
+				exceptionClasses.add(exception.getClass());
+
+				Throwable throwable = exception.getCause();
+
+				if (throwable != null) {
+					exceptionClasses.add(throwable.getClass());
+				}
 			}
 		}
 
-		if (!deleteLayoutPageTemplateIdsList.isEmpty()) {
+		if (deleteLayoutPageTemplateEntryIds.length ==
+				deleteLayoutPageTemplateEntryIdsList.size()) {
+
 			SessionErrors.add(actionRequest, PortalException.class);
+
+			for (Class<?> clazz : exceptionClasses) {
+				SessionErrors.add(actionRequest, clazz);
+			}
 
 			hideDefaultErrorMessage(actionRequest);
 
 			sendRedirect(actionRequest, actionResponse);
+
+			return;
 		}
+
+		String tabs1 = ParamUtil.getString(actionRequest, "tabs1");
+
+		if (!Objects.equals(tabs1, "display-page-templates")) {
+			sendRedirect(actionRequest, actionResponse);
+
+			return;
+		}
+
+		hideDefaultSuccessMessage(actionRequest);
+
+		MultiSessionMessages.add(
+			actionRequest, "displayPageTemplateDeleted",
+			_language.format(
+				_portal.getHttpServletRequest(actionRequest),
+				"you-successfully-deleted-x-display-page-templates",
+				new Object[] {
+					deleteLayoutPageTemplateEntryIds.length -
+						deleteLayoutPageTemplateEntryIdsList.size()
+				}));
+
+		sendRedirect(actionRequest, actionResponse);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DeleteLayoutPageTemplateEntryMVCActionCommand.class);
 
 	@Reference
-	private AssetDisplayPageEntryLocalService
-		_assetDisplayPageEntryLocalService;
+	private Language _language;
 
 	@Reference
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
+
+	@Reference
+	private Portal _portal;
 
 }

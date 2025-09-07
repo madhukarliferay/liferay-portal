@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,26 +11,31 @@
 WikiPage wikiPage = (WikiPage)request.getAttribute(WikiWebKeys.WIKI_PAGE);
 
 double sourceVersion = ParamUtil.getDouble(request, "sourceVersion");
-String eventName = ParamUtil.getString(request, "eventName", renderResponse.getNamespace() + "selectVersionFm");
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcRenderCommandName", "/wiki/select_version");
-portletURL.setParameter("redirect", currentURL);
-portletURL.setParameter("nodeId", String.valueOf(wikiPage.getNodeId()));
-portletURL.setParameter("title", HtmlUtil.unescape(wikiPage.getTitle()));
-portletURL.setParameter("sourceVersion", String.valueOf(sourceVersion));
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCRenderCommandName(
+	"/wiki/select_version"
+).setRedirect(
+	currentURL
+).setParameter(
+	"nodeId", wikiPage.getNodeId()
+).setParameter(
+	"sourceVersion", sourceVersion
+).setParameter(
+	"title", HtmlUtil.unescape(wikiPage.getTitle())
+).buildPortletURL();
 %>
 
-<div class="container-fluid-1280">
-	<aui:form action="<%= portletURL.toString() %>" method="post" name="selectVersionFm">
+<clay:container-fluid>
+	<aui:form action="<%= portletURL %>" method="post" name="selectVersionFm">
 		<liferay-ui:search-container
 			id="wikiPageVersionSearchContainer"
 			iteratorURL="<%= portletURL %>"
 			total="<%= WikiPageLocalServiceUtil.getPagesCount(wikiPage.getNodeId(), wikiPage.getTitle()) %>"
 		>
 			<liferay-ui:search-container-results
-				results="<%= WikiPageLocalServiceUtil.getPages(wikiPage.getNodeId(), wikiPage.getTitle(), searchContainer.getStart(), searchContainer.getEnd(), new PageVersionComparator()) %>"
+				results="<%= WikiPageLocalServiceUtil.getPages(wikiPage.getNodeId(), wikiPage.getTitle(), searchContainer.getStart(), searchContainer.getEnd(), PageVersionComparator.getInstance(false)) %>"
 			/>
 
 			<liferay-ui:search-container-row
@@ -62,14 +58,19 @@ portletURL.setParameter("sourceVersion", String.valueOf(sourceVersion));
 								curTargetVersion = curSourceVersion;
 								curSourceVersion = tempVersion;
 							}
-
-							Map<String, Object> data = new HashMap<String, Object>();
-
-							data.put("sourceversion", curSourceVersion);
-							data.put("targetversion", curTargetVersion);
 							%>
 
-							<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+							<aui:a
+								cssClass="selector-button"
+								data='<%=
+									HashMapBuilder.<String, Object>put(
+										"sourceversion", curSourceVersion
+									).put(
+										"targetversion", curTargetVersion
+									).build()
+								%>'
+								href="javascript:void(0);"
+							>
 								<%= String.valueOf(curWikiPage.getVersion()) %>
 							</aui:a>
 						</c:when>
@@ -90,11 +91,4 @@ portletURL.setParameter("sourceVersion", String.valueOf(sourceVersion));
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectVersionFm',
-		'<%= HtmlUtil.escapeJS(eventName) %>'
-	);
-</aui:script>
+</clay:container-fluid>

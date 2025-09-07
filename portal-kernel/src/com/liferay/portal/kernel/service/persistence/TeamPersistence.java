@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
 
 import com.liferay.portal.kernel.exception.NoSuchTeamException;
 import com.liferay.portal.kernel.model.Team;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -31,9 +23,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-public interface TeamPersistence extends BasePersistence<Team> {
+public interface TeamPersistence
+	extends BasePersistence<Team>, CTPersistence<Team> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link TeamUtil} to access the team persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -384,6 +377,149 @@ public interface TeamPersistence extends BasePersistence<Team> {
 	 * @return the number of matching teams
 	 */
 	public int countByUuid_C(String uuid, long companyId);
+
+	/**
+	 * Returns all the teams where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the matching teams
+	 */
+	public java.util.List<Team> findByCompanyId(long companyId);
+
+	/**
+	 * Returns a range of all the teams where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>TeamModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of teams
+	 * @param end the upper bound of the range of teams (not inclusive)
+	 * @return the range of matching teams
+	 */
+	public java.util.List<Team> findByCompanyId(
+		long companyId, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the teams where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>TeamModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of teams
+	 * @param end the upper bound of the range of teams (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching teams
+	 */
+	public java.util.List<Team> findByCompanyId(
+		long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<Team>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the teams where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>TeamModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of teams
+	 * @param end the upper bound of the range of teams (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching teams
+	 */
+	public java.util.List<Team> findByCompanyId(
+		long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<Team>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first team in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching team
+	 * @throws NoSuchTeamException if a matching team could not be found
+	 */
+	public Team findByCompanyId_First(
+			long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator<Team>
+				orderByComparator)
+		throws NoSuchTeamException;
+
+	/**
+	 * Returns the first team in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching team, or <code>null</code> if a matching team could not be found
+	 */
+	public Team fetchByCompanyId_First(
+		long companyId,
+		com.liferay.portal.kernel.util.OrderByComparator<Team>
+			orderByComparator);
+
+	/**
+	 * Returns the last team in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching team
+	 * @throws NoSuchTeamException if a matching team could not be found
+	 */
+	public Team findByCompanyId_Last(
+			long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator<Team>
+				orderByComparator)
+		throws NoSuchTeamException;
+
+	/**
+	 * Returns the last team in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching team, or <code>null</code> if a matching team could not be found
+	 */
+	public Team fetchByCompanyId_Last(
+		long companyId,
+		com.liferay.portal.kernel.util.OrderByComparator<Team>
+			orderByComparator);
+
+	/**
+	 * Returns the teams before and after the current team in the ordered set where companyId = &#63;.
+	 *
+	 * @param teamId the primary key of the current team
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next team
+	 * @throws NoSuchTeamException if a team with the primary key could not be found
+	 */
+	public Team[] findByCompanyId_PrevAndNext(
+			long teamId, long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator<Team>
+				orderByComparator)
+		throws NoSuchTeamException;
+
+	/**
+	 * Removes all the teams where companyId = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 */
+	public void removeByCompanyId(long companyId);
+
+	/**
+	 * Returns the number of teams where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching teams
+	 */
+	public int countByCompanyId(long companyId);
 
 	/**
 	 * Returns all the teams where groupId = &#63;.
@@ -837,32 +973,36 @@ public interface TeamPersistence extends BasePersistence<Team> {
 	 *
 	 * @param pk the primary key of the team
 	 * @param userPK the primary key of the user
+	 * @return <code>true</code> if an association between the team and the user was added; <code>false</code> if they were already associated
 	 */
-	public void addUser(long pk, long userPK);
+	public boolean addUser(long pk, long userPK);
 
 	/**
 	 * Adds an association between the team and the user. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the team
 	 * @param user the user
+	 * @return <code>true</code> if an association between the team and the user was added; <code>false</code> if they were already associated
 	 */
-	public void addUser(long pk, com.liferay.portal.kernel.model.User user);
+	public boolean addUser(long pk, com.liferay.portal.kernel.model.User user);
 
 	/**
 	 * Adds an association between the team and the users. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the team
 	 * @param userPKs the primary keys of the users
+	 * @return <code>true</code> if at least one association between the team and the users was added; <code>false</code> if they were all already associated
 	 */
-	public void addUsers(long pk, long[] userPKs);
+	public boolean addUsers(long pk, long[] userPKs);
 
 	/**
 	 * Adds an association between the team and the users. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the team
 	 * @param users the users
+	 * @return <code>true</code> if at least one association between the team and the users was added; <code>false</code> if they were all already associated
 	 */
-	public void addUsers(
+	public boolean addUsers(
 		long pk, java.util.List<com.liferay.portal.kernel.model.User> users);
 
 	/**
@@ -1003,16 +1143,18 @@ public interface TeamPersistence extends BasePersistence<Team> {
 	 *
 	 * @param pk the primary key of the team
 	 * @param userGroupPK the primary key of the user group
+	 * @return <code>true</code> if an association between the team and the user group was added; <code>false</code> if they were already associated
 	 */
-	public void addUserGroup(long pk, long userGroupPK);
+	public boolean addUserGroup(long pk, long userGroupPK);
 
 	/**
 	 * Adds an association between the team and the user group. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the team
 	 * @param userGroup the user group
+	 * @return <code>true</code> if an association between the team and the user group was added; <code>false</code> if they were already associated
 	 */
-	public void addUserGroup(
+	public boolean addUserGroup(
 		long pk, com.liferay.portal.kernel.model.UserGroup userGroup);
 
 	/**
@@ -1020,16 +1162,18 @@ public interface TeamPersistence extends BasePersistence<Team> {
 	 *
 	 * @param pk the primary key of the team
 	 * @param userGroupPKs the primary keys of the user groups
+	 * @return <code>true</code> if at least one association between the team and the user groups was added; <code>false</code> if they were all already associated
 	 */
-	public void addUserGroups(long pk, long[] userGroupPKs);
+	public boolean addUserGroups(long pk, long[] userGroupPKs);
 
 	/**
 	 * Adds an association between the team and the user groups. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the team
 	 * @param userGroups the user groups
+	 * @return <code>true</code> if at least one association between the team and the user groups was added; <code>false</code> if they were all already associated
 	 */
-	public void addUserGroups(
+	public boolean addUserGroups(
 		long pk,
 		java.util.List<com.liferay.portal.kernel.model.UserGroup> userGroups);
 

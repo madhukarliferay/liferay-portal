@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.audit.storage.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link AuditEventLocalService}.
@@ -26,6 +18,10 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class AuditEventLocalServiceWrapper
 	implements AuditEventLocalService, ServiceWrapper<AuditEventLocalService> {
 
+	public AuditEventLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AuditEventLocalServiceWrapper(
 		AuditEventLocalService auditEventLocalService) {
 
@@ -34,6 +30,10 @@ public class AuditEventLocalServiceWrapper
 
 	/**
 	 * Adds the audit event to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AuditEventLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param auditEvent the audit event
 	 * @return the audit event that was added
@@ -55,6 +55,14 @@ public class AuditEventLocalServiceWrapper
 		return _auditEventLocalService.addAuditEvent(auditMessage);
 	}
 
+	@Override
+	public void addAuditEvents(
+		java.util.List<com.liferay.portal.kernel.audit.AuditMessage>
+			auditMessages) {
+
+		_auditEventLocalService.addAuditEvents(auditMessages);
+	}
+
 	/**
 	 * Creates a new audit event with the primary key. Does not add the audit event to the database.
 	 *
@@ -69,7 +77,22 @@ public class AuditEventLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _auditEventLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the audit event from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AuditEventLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param auditEvent the audit event
 	 * @return the audit event that was removed
@@ -85,6 +108,10 @@ public class AuditEventLocalServiceWrapper
 
 	/**
 	 * Deletes the audit event with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AuditEventLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param auditEventId the primary key of the audit event
 	 * @return the audit event that was removed
@@ -107,6 +134,18 @@ public class AuditEventLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _auditEventLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _auditEventLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _auditEventLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -261,7 +300,8 @@ public class AuditEventLocalServiceWrapper
 			getAuditEvents(
 				long companyId, int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.portal.security.audit.storage.model.AuditEvent>
+						orderByComparator) {
 
 		return _auditEventLocalService.getAuditEvents(
 			companyId, start, end, orderByComparator);
@@ -271,7 +311,7 @@ public class AuditEventLocalServiceWrapper
 	public java.util.List
 		<com.liferay.portal.security.audit.storage.model.AuditEvent>
 			getAuditEvents(
-				long companyId, long userId, String userName,
+				long companyId, long groupId, long userId, String userName,
 				java.util.Date createDateGT, java.util.Date createDateLT,
 				String eventType, String className, String classPK,
 				String clientHost, String clientIP, String serverName,
@@ -279,28 +319,29 @@ public class AuditEventLocalServiceWrapper
 				int end) {
 
 		return _auditEventLocalService.getAuditEvents(
-			companyId, userId, userName, createDateGT, createDateLT, eventType,
-			className, classPK, clientHost, clientIP, serverName, serverPort,
-			sessionID, andSearch, start, end);
+			companyId, groupId, userId, userName, createDateGT, createDateLT,
+			eventType, className, classPK, clientHost, clientIP, serverName,
+			serverPort, sessionID, andSearch, start, end);
 	}
 
 	@Override
 	public java.util.List
 		<com.liferay.portal.security.audit.storage.model.AuditEvent>
 			getAuditEvents(
-				long companyId, long userId, String userName,
+				long companyId, long groupId, long userId, String userName,
 				java.util.Date createDateGT, java.util.Date createDateLT,
 				String eventType, String className, String classPK,
 				String clientHost, String clientIP, String serverName,
 				int serverPort, String sessionID, boolean andSearch, int start,
 				int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.portal.security.audit.storage.model.AuditEvent>
+						orderByComparator) {
 
 		return _auditEventLocalService.getAuditEvents(
-			companyId, userId, userName, createDateGT, createDateLT, eventType,
-			className, classPK, clientHost, clientIP, serverName, serverPort,
-			sessionID, andSearch, start, end, orderByComparator);
+			companyId, groupId, userId, userName, createDateGT, createDateLT,
+			eventType, className, classPK, clientHost, clientIP, serverName,
+			serverPort, sessionID, andSearch, start, end, orderByComparator);
 	}
 
 	/**
@@ -320,16 +361,16 @@ public class AuditEventLocalServiceWrapper
 
 	@Override
 	public int getAuditEventsCount(
-		long companyId, long userId, String userName,
+		long companyId, long groupId, long userId, String userName,
 		java.util.Date createDateGT, java.util.Date createDateLT,
 		String eventType, String className, String classPK, String clientHost,
 		String clientIP, String serverName, int serverPort, String sessionID,
 		boolean andSearch) {
 
 		return _auditEventLocalService.getAuditEventsCount(
-			companyId, userId, userName, createDateGT, createDateLT, eventType,
-			className, classPK, clientHost, clientIP, serverName, serverPort,
-			sessionID, andSearch);
+			companyId, groupId, userId, userName, createDateGT, createDateLT,
+			eventType, className, classPK, clientHost, clientIP, serverName,
+			serverPort, sessionID, andSearch);
 	}
 
 	@Override
@@ -349,6 +390,9 @@ public class AuditEventLocalServiceWrapper
 		return _auditEventLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -360,6 +404,10 @@ public class AuditEventLocalServiceWrapper
 	/**
 	 * Updates the audit event in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AuditEventLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param auditEvent the audit event
 	 * @return the audit event that was updated
 	 */
@@ -370,6 +418,11 @@ public class AuditEventLocalServiceWrapper
 				auditEvent) {
 
 		return _auditEventLocalService.updateAuditEvent(auditEvent);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _auditEventLocalService.getBasePersistence();
 	}
 
 	@Override

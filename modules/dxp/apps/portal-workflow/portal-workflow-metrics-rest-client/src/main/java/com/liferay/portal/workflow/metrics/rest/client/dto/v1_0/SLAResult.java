@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.client.dto.v1_0;
@@ -17,48 +8,44 @@ package com.liferay.portal.workflow.metrics.rest.client.dto.v1_0;
 import com.liferay.portal.workflow.metrics.rest.client.function.UnsafeSupplier;
 import com.liferay.portal.workflow.metrics.rest.client.serdes.v1_0.SLAResultSerDes;
 
+import jakarta.annotation.Generated;
+
+import java.io.Serializable;
+
 import java.util.Date;
 import java.util.Objects;
-
-import javax.annotation.Generated;
 
 /**
  * @author Rafael Praxedes
  * @generated
  */
 @Generated("")
-public class SLAResult {
+public class SLAResult implements Cloneable, Serializable {
 
-	public static enum Status {
-
-		PAUSED("Paused"), RUNNING("Running"), STOPPED("Stopped");
-
-		public static Status create(String value) {
-			for (Status status : values()) {
-				if (Objects.equals(status.getValue(), value)) {
-					return status;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Status(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
+	public static SLAResult toDTO(String json) {
+		return SLAResultSerDes.toDTO(json);
 	}
+
+	public Date getDateModified() {
+		return dateModified;
+	}
+
+	public void setDateModified(Date dateModified) {
+		this.dateModified = dateModified;
+	}
+
+	public void setDateModified(
+		UnsafeSupplier<Date, Exception> dateModifiedUnsafeSupplier) {
+
+		try {
+			dateModified = dateModifiedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Date dateModified;
 
 	public Date getDateOverdue() {
 		return dateOverdue;
@@ -191,6 +178,11 @@ public class SLAResult {
 	protected Status status;
 
 	@Override
+	public SLAResult clone() throws CloneNotSupportedException {
+		return (SLAResult)super.clone();
+	}
+
+	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
 			return true;
@@ -214,6 +206,39 @@ public class SLAResult {
 
 	public String toString() {
 		return SLAResultSerDes.toJSON(this);
+	}
+
+	public static enum Status {
+
+		NEW("NEW"), PAUSED("PAUSED"), RUNNING("RUNNING"), STOPPED("STOPPED");
+
+		public static Status create(String value) {
+			for (Status status : values()) {
+				if (Objects.equals(status.getValue(), value) ||
+					Objects.equals(status.name(), value)) {
+
+					return status;
+				}
+			}
+
+			return null;
+		}
+
+		public String getValue() {
+			return _value;
+		}
+
+		@Override
+		public String toString() {
+			return _value;
+		}
+
+		private Status(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
 	}
 
 }

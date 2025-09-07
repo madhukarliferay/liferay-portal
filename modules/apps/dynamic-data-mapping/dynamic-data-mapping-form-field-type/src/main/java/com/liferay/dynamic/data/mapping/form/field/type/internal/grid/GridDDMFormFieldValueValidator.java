@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.grid;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidationException;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidator;
-import com.liferay.dynamic.data.mapping.model.DDMForm;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.Value;
@@ -27,6 +18,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
@@ -36,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pedro Queiroz
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=grid",
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.GRID,
 	service = DDMFormFieldValueValidator.class
 )
 public class GridDDMFormFieldValueValidator
@@ -67,23 +59,27 @@ public class GridDDMFormFieldValueValidator
 				"Rows and columns must contain at least one alternative each");
 		}
 
-		DDMForm ddmForm = ddmFormField.getDDMForm();
+		if (value == null) {
+			return;
+		}
 
-		validateSelectedValue(
-			ddmFormField, rowValues, columnValues,
-			value.getString(ddmForm.getDefaultLocale()));
+		for (Locale availableLocale : value.getAvailableLocales()) {
+			_validateSelectedValue(
+				ddmFormField, rowValues, columnValues,
+				value.getString(availableLocale));
+		}
 	}
 
 	protected JSONObject createJSONObject(String fieldName, String json) {
 		try {
 			return jsonFactory.createJSONObject(json);
 		}
-		catch (JSONException jsone) {
+		catch (JSONException jsonException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(jsone, jsone);
+				_log.debug(jsonException);
 			}
 
 			throw new IllegalStateException(
@@ -92,7 +88,10 @@ public class GridDDMFormFieldValueValidator
 		}
 	}
 
-	protected void validateSelectedValue(
+	@Reference
+	protected JSONFactory jsonFactory;
+
+	private void _validateSelectedValue(
 			DDMFormField ddmFormField, Set<String> rowValues,
 			Set<String> columnValues, String selectedValues)
 		throws DDMFormFieldValueValidationException {
@@ -102,10 +101,10 @@ public class GridDDMFormFieldValueValidator
 		JSONObject jsonObject = createJSONObject(
 			ddmFormFieldName, selectedValues);
 
-		Iterator<String> keys = jsonObject.keys();
+		Iterator<String> iterator = jsonObject.keys();
 
-		while (keys.hasNext()) {
-			String key = keys.next();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
 
 			String value = jsonObject.getString(key);
 
@@ -117,9 +116,6 @@ public class GridDDMFormFieldValueValidator
 			}
 		}
 	}
-
-	@Reference
-	protected JSONFactory jsonFactory;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		GridDDMFormFieldValueValidator.class);

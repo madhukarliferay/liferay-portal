@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model.impl;
@@ -37,17 +28,17 @@ public class FragmentEntryCacheModel
 	implements CacheModel<FragmentEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof FragmentEntryCacheModel)) {
+		if (!(object instanceof FragmentEntryCacheModel)) {
 			return false;
 		}
 
 		FragmentEntryCacheModel fragmentEntryCacheModel =
-			(FragmentEntryCacheModel)obj;
+			(FragmentEntryCacheModel)object;
 
 		if ((fragmentEntryId == fragmentEntryCacheModel.fragmentEntryId) &&
 			(mvccVersion == fragmentEntryCacheModel.mvccVersion)) {
@@ -77,12 +68,18 @@ public class FragmentEntryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(49);
+		StringBundler sb = new StringBundler(63);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
+		sb.append(", headId=");
+		sb.append(headId);
 		sb.append(", fragmentEntryId=");
 		sb.append(fragmentEntryId);
 		sb.append(", groupId=");
@@ -109,14 +106,22 @@ public class FragmentEntryCacheModel
 		sb.append(html);
 		sb.append(", js=");
 		sb.append(js);
+		sb.append(", cacheable=");
+		sb.append(cacheable);
 		sb.append(", configuration=");
 		sb.append(configuration);
+		sb.append(", icon=");
+		sb.append(icon);
 		sb.append(", previewFileEntryId=");
 		sb.append(previewFileEntryId);
+		sb.append(", marketplace=");
+		sb.append(marketplace);
 		sb.append(", readOnly=");
 		sb.append(readOnly);
 		sb.append(", type=");
 		sb.append(type);
+		sb.append(", typeOptions=");
+		sb.append(typeOptions);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append(", status=");
@@ -137,6 +142,7 @@ public class FragmentEntryCacheModel
 		FragmentEntryImpl fragmentEntryImpl = new FragmentEntryImpl();
 
 		fragmentEntryImpl.setMvccVersion(mvccVersion);
+		fragmentEntryImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			fragmentEntryImpl.setUuid("");
@@ -145,6 +151,15 @@ public class FragmentEntryCacheModel
 			fragmentEntryImpl.setUuid(uuid);
 		}
 
+		if (externalReferenceCode == null) {
+			fragmentEntryImpl.setExternalReferenceCode("");
+		}
+		else {
+			fragmentEntryImpl.setExternalReferenceCode(externalReferenceCode);
+		}
+
+		fragmentEntryImpl.setHeadId(headId);
+		fragmentEntryImpl.setHead(head);
 		fragmentEntryImpl.setFragmentEntryId(fragmentEntryId);
 		fragmentEntryImpl.setGroupId(groupId);
 		fragmentEntryImpl.setCompanyId(companyId);
@@ -208,6 +223,8 @@ public class FragmentEntryCacheModel
 			fragmentEntryImpl.setJs(js);
 		}
 
+		fragmentEntryImpl.setCacheable(cacheable);
+
 		if (configuration == null) {
 			fragmentEntryImpl.setConfiguration("");
 		}
@@ -215,9 +232,24 @@ public class FragmentEntryCacheModel
 			fragmentEntryImpl.setConfiguration(configuration);
 		}
 
+		if (icon == null) {
+			fragmentEntryImpl.setIcon("");
+		}
+		else {
+			fragmentEntryImpl.setIcon(icon);
+		}
+
 		fragmentEntryImpl.setPreviewFileEntryId(previewFileEntryId);
+		fragmentEntryImpl.setMarketplace(marketplace);
 		fragmentEntryImpl.setReadOnly(readOnly);
 		fragmentEntryImpl.setType(type);
+
+		if (typeOptions == null) {
+			fragmentEntryImpl.setTypeOptions("");
+		}
+		else {
+			fragmentEntryImpl.setTypeOptions(typeOptions);
+		}
 
 		if (lastPublishDate == Long.MIN_VALUE) {
 			fragmentEntryImpl.setLastPublishDate(null);
@@ -249,9 +281,18 @@ public class FragmentEntryCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
+
+		headId = objectInput.readLong();
+
+		head = objectInput.readBoolean();
 
 		fragmentEntryId = objectInput.readLong();
 
@@ -267,16 +308,22 @@ public class FragmentEntryCacheModel
 		fragmentCollectionId = objectInput.readLong();
 		fragmentEntryKey = objectInput.readUTF();
 		name = objectInput.readUTF();
-		css = objectInput.readUTF();
-		html = objectInput.readUTF();
-		js = objectInput.readUTF();
-		configuration = objectInput.readUTF();
+		css = (String)objectInput.readObject();
+		html = (String)objectInput.readObject();
+		js = (String)objectInput.readObject();
+
+		cacheable = objectInput.readBoolean();
+		configuration = (String)objectInput.readObject();
+		icon = objectInput.readUTF();
 
 		previewFileEntryId = objectInput.readLong();
+
+		marketplace = objectInput.readBoolean();
 
 		readOnly = objectInput.readBoolean();
 
 		type = objectInput.readInt();
+		typeOptions = (String)objectInput.readObject();
 		lastPublishDate = objectInput.readLong();
 
 		status = objectInput.readInt();
@@ -290,12 +337,25 @@ public class FragmentEntryCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
 		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
+
+		objectOutput.writeLong(headId);
+
+		objectOutput.writeBoolean(head);
 
 		objectOutput.writeLong(fragmentEntryId);
 
@@ -332,38 +392,57 @@ public class FragmentEntryCacheModel
 		}
 
 		if (css == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(css);
+			objectOutput.writeObject(css);
 		}
 
 		if (html == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(html);
+			objectOutput.writeObject(html);
 		}
 
 		if (js == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(js);
+			objectOutput.writeObject(js);
 		}
 
+		objectOutput.writeBoolean(cacheable);
+
 		if (configuration == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(configuration);
+		}
+
+		if (icon == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(configuration);
+			objectOutput.writeUTF(icon);
 		}
 
 		objectOutput.writeLong(previewFileEntryId);
 
+		objectOutput.writeBoolean(marketplace);
+
 		objectOutput.writeBoolean(readOnly);
 
 		objectOutput.writeInt(type);
+
+		if (typeOptions == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(typeOptions);
+		}
+
 		objectOutput.writeLong(lastPublishDate);
 
 		objectOutput.writeInt(status);
@@ -381,7 +460,11 @@ public class FragmentEntryCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
+	public long headId;
+	public boolean head;
 	public long fragmentEntryId;
 	public long groupId;
 	public long companyId;
@@ -395,10 +478,14 @@ public class FragmentEntryCacheModel
 	public String css;
 	public String html;
 	public String js;
+	public boolean cacheable;
 	public String configuration;
+	public String icon;
 	public long previewFileEntryId;
+	public boolean marketplace;
 	public boolean readOnly;
 	public int type;
+	public String typeOptions;
 	public long lastPublishDate;
 	public int status;
 	public long statusByUserId;

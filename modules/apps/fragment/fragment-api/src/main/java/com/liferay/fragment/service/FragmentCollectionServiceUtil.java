@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.fragment.model.FragmentCollection;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for FragmentCollection. This utility wraps
@@ -32,121 +26,161 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class FragmentCollectionServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.fragment.service.impl.FragmentCollectionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link FragmentCollectionServiceUtil} to access the fragment collection remote service. Add custom service methods to <code>com.liferay.fragment.service.impl.FragmentCollectionServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.fragment.model.FragmentCollection
-			addFragmentCollection(
-				long groupId, String name, String description,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentCollection addFragmentCollection(
+			String externalReferenceCode, long groupId, String name,
+			String description,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addFragmentCollection(
-			groupId, name, description, serviceContext);
+			externalReferenceCode, groupId, name, description, serviceContext);
 	}
 
-	public static com.liferay.fragment.model.FragmentCollection
-			addFragmentCollection(
-				long groupId, String fragmentCollectionKey, String name,
-				String description,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentCollection addFragmentCollection(
+			String externalReferenceCode, long groupId,
+			String fragmentCollectionKey, String name, String description,
+			boolean marketplace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addFragmentCollection(
-			groupId, fragmentCollectionKey, name, description, serviceContext);
+			externalReferenceCode, groupId, fragmentCollectionKey, name,
+			description, marketplace, serviceContext);
 	}
 
-	public static com.liferay.fragment.model.FragmentCollection
-			deleteFragmentCollection(long fragmentCollectionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentCollection deleteFragmentCollection(
+			long fragmentCollectionId)
+		throws PortalException {
 
 		return getService().deleteFragmentCollection(fragmentCollectionId);
 	}
 
+	public static FragmentCollection deleteFragmentCollection(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().deleteFragmentCollection(
+			externalReferenceCode, groupId);
+	}
+
 	public static void deleteFragmentCollections(long[] fragmentCollectionIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteFragmentCollections(fragmentCollectionIds);
 	}
 
-	public static com.liferay.fragment.model.FragmentCollection
-			fetchFragmentCollection(long fragmentCollectionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentCollection fetchFragmentCollection(
+			long fragmentCollectionId)
+		throws PortalException {
 
 		return getService().fetchFragmentCollection(fragmentCollectionId);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(long groupId) {
+	public static FragmentCollection
+			getFragmentCollectionByExternalReferenceCode(
+				String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getFragmentCollectionByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	public static List<com.liferay.portal.kernel.repository.model.FileEntry>
+			getFragmentCollectionFileEntries(long fragmentCollectionId)
+		throws PortalException {
+
+		return getService().getFragmentCollectionFileEntries(
+			fragmentCollectionId);
+	}
+
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId) {
 
 		return getService().getFragmentCollections(groupId);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(long groupId, boolean includeSystem) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, boolean includeSystem) {
 
 		return getService().getFragmentCollections(groupId, includeSystem);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(long groupId, int start, int end) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, boolean includeSystem, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getService().getFragmentCollections(
+			groupId, includeSystem, start, end, orderByComparator);
+	}
+
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, int start, int end) {
 
 		return getService().getFragmentCollections(groupId, start, end);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long groupId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
 
 		return getService().getFragmentCollections(
 			groupId, start, end, orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long groupId, String name, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, String name, boolean includeSystem, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getService().getFragmentCollections(
+			groupId, name, includeSystem, start, end, orderByComparator);
+	}
+
+	public static List<FragmentCollection> getFragmentCollections(
+		long groupId, String name, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
 
 		return getService().getFragmentCollections(
 			groupId, name, start, end, orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(long[] groupIds) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long[] groupIds) {
 
 		return getService().getFragmentCollections(groupIds);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long[] groupIds, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long[] groupIds, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getService().getFragmentCollections(
+			groupIds, marketplace, start, end, orderByComparator);
+	}
+
+	public static List<FragmentCollection> getFragmentCollections(
+		long[] groupIds, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
 
 		return getService().getFragmentCollections(
 			groupIds, start, end, orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long[] groupIds, String name, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public static List<FragmentCollection> getFragmentCollections(
+		long[] groupIds, String name, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getService().getFragmentCollections(
+			groupIds, name, marketplace, start, end, orderByComparator);
+	}
+
+	public static List<FragmentCollection> getFragmentCollections(
+		long[] groupIds, String name, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
 
 		return getService().getFragmentCollections(
 			groupIds, name, start, end, orderByComparator);
@@ -156,8 +190,21 @@ public class FragmentCollectionServiceUtil {
 		return getService().getFragmentCollectionsCount(groupId);
 	}
 
+	public static int getFragmentCollectionsCount(
+		long groupId, boolean includeSystem) {
+
+		return getService().getFragmentCollectionsCount(groupId, includeSystem);
+	}
+
 	public static int getFragmentCollectionsCount(long groupId, String name) {
 		return getService().getFragmentCollectionsCount(groupId, name);
+	}
+
+	public static int getFragmentCollectionsCount(
+		long groupId, String name, boolean includeSystem) {
+
+		return getService().getFragmentCollectionsCount(
+			groupId, name, includeSystem);
 	}
 
 	public static int getFragmentCollectionsCount(long[] groupIds) {
@@ -165,9 +212,22 @@ public class FragmentCollectionServiceUtil {
 	}
 
 	public static int getFragmentCollectionsCount(
+		long[] groupIds, boolean marketplace) {
+
+		return getService().getFragmentCollectionsCount(groupIds, marketplace);
+	}
+
+	public static int getFragmentCollectionsCount(
 		long[] groupIds, String name) {
 
 		return getService().getFragmentCollectionsCount(groupIds, name);
+	}
+
+	public static int getFragmentCollectionsCount(
+		long[] groupIds, String name, boolean marketplace) {
+
+		return getService().getFragmentCollectionsCount(
+			groupIds, name, marketplace);
 	}
 
 	/**
@@ -180,41 +240,26 @@ public class FragmentCollectionServiceUtil {
 	}
 
 	public static String[] getTempFileNames(long groupId, String folderName)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getTempFileNames(groupId, folderName);
 	}
 
-	public static com.liferay.fragment.model.FragmentCollection
-			updateFragmentCollection(
-				long fragmentCollectionId, String name, String description)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentCollection updateFragmentCollection(
+			long fragmentCollectionId, String name, String description)
+		throws PortalException {
 
 		return getService().updateFragmentCollection(
 			fragmentCollectionId, name, description);
 	}
 
 	public static FragmentCollectionService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<FragmentCollectionService, FragmentCollectionService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<FragmentCollectionService> _serviceSnapshot =
+		new Snapshot<>(
+			FragmentCollectionServiceUtil.class,
 			FragmentCollectionService.class);
-
-		ServiceTracker<FragmentCollectionService, FragmentCollectionService>
-			serviceTracker =
-				new ServiceTracker
-					<FragmentCollectionService, FragmentCollectionService>(
-						bundle.getBundleContext(),
-						FragmentCollectionService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

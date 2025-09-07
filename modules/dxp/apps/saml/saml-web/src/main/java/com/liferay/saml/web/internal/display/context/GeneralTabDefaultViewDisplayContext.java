@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.web.internal.display.context;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.saml.runtime.SamlException;
+import com.liferay.saml.runtime.configuration.SamlConfiguration;
+import com.liferay.saml.runtime.exception.CredentialAuthException;
 import com.liferay.saml.runtime.metadata.LocalEntityManager;
 
-import java.security.KeyStoreException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 
 import java.util.HashMap;
@@ -31,9 +23,11 @@ import java.util.Map;
 public class GeneralTabDefaultViewDisplayContext {
 
 	public GeneralTabDefaultViewDisplayContext(
-		LocalEntityManager localEntityManager) {
+		LocalEntityManager localEntityManager,
+		SamlConfiguration samlConfiguration) {
 
 		_localEntityManager = localEntityManager;
+		_samlConfiguration = samlConfiguration;
 	}
 
 	public X509CertificateStatus getX509CertificateStatus() {
@@ -44,97 +38,12 @@ public class GeneralTabDefaultViewDisplayContext {
 	public X509CertificateStatus getX509CertificateStatus(
 		LocalEntityManager.CertificateUsage certificateUsage) {
 
-		X509CertificateStatus x509CertificateStatus =
-			_x509CertificateStatuses.get(certificateUsage);
+		return _x509CertificateStatuses.computeIfAbsent(
+			certificateUsage, this::doGetX509CertificateStatus);
+	}
 
-		if (x509CertificateStatus != null) {
-			return x509CertificateStatus;
-		}
-
-		try {
-			X509Certificate x509Certificate =
-				_localEntityManager.getLocalEntityCertificate(certificateUsage);
-
-			if (x509Certificate != null) {
-				x509CertificateStatus = new X509CertificateStatus(
-					x509Certificate, X509CertificateStatus.Status.BOUND);
-			}
-			else {
-				x509CertificateStatus = new X509CertificateStatus(
-					null, X509CertificateStatus.Status.UNBOUND);
-			}
-		}
-		catch (Exception e) {
-			Throwable cause = _getCause(e, KeyStoreException.class);
-			X509CertificateStatus.Status status;
-
-			if (cause != null) {
-				Throwable unrecoverableKeyException;
-
-				unrecoverableKeyException = _getCause(
-					cause, UnrecoverableKeyException.class);
-
-				if (unrecoverableKeyException != null) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to get local entity certificate because " +
-								"of incorrect keystore password",
-							cause);
-					}
-
-					status =
-						X509CertificateStatus.Status.
-							SAML_KEYSTORE_PASSWORD_INCORRECT;
-				}
-				else {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to get local entity certificate because " +
-								"of keystore loading issue",
-							cause);
-					}
-
-					status =
-						X509CertificateStatus.Status.SAML_KEYSTORE_EXCEPTION;
-				}
-			}
-			else {
-				cause = _getCause(e, UnrecoverableKeyException.class);
-
-				if (cause != null) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to get local entity certificate because " +
-								"of incorrect key credential password",
-							cause);
-					}
-
-					status =
-						X509CertificateStatus.Status.
-							SAML_X509_CERTIFICATE_AUTH_NEEDED;
-				}
-				else {
-					String message =
-						"Unable to get local entity certificate: " +
-							e.getMessage();
-
-					if (_log.isDebugEnabled()) {
-						_log.debug(message, e);
-					}
-					else if (_log.isWarnEnabled()) {
-						_log.warn(message);
-					}
-
-					status = X509CertificateStatus.Status.UNKNOWN_EXCEPTION;
-				}
-			}
-
-			x509CertificateStatus = new X509CertificateStatus(null, status);
-		}
-
-		_x509CertificateStatuses.put(certificateUsage, x509CertificateStatus);
-
-		return x509CertificateStatus;
+	public boolean isRoleIdPAvailable() {
+		return _samlConfiguration.idpRoleConfigurationEnabled();
 	}
 
 	public static class X509CertificateStatus {
@@ -166,29 +75,79 @@ public class GeneralTabDefaultViewDisplayContext {
 
 	}
 
-	private Throwable _getCause(Throwable e, Class<?> exceptionType) {
-		if (e == null) {
-			return null;
-		}
+	protected X509CertificateStatus doGetX509CertificateStatus(
+		LocalEntityManager.CertificateUsage certificateUsage) {
 
-		Throwable cause = e.getCause();
+		try {
+			X509Certificate x509Certificate =
+				_localEntityManager.getLocalEntityCertificate(certificateUsage);
 
-		while (cause != null) {
-			if (exceptionType.isInstance(cause)) {
-				return cause;
+			if (x509Certificate != null) {
+				return new X509CertificateStatus(
+					x509Certificate, X509CertificateStatus.Status.BOUND);
 			}
 
-			cause = cause.getCause();
+			return new X509CertificateStatus(
+				null, X509CertificateStatus.Status.UNBOUND);
+		}
+		catch (CredentialAuthException.InvalidCredentialPassword
+					credentialAuthException) {
+
+			return _buildX509CertificateStatus(
+				credentialAuthException, false,
+				X509CertificateStatus.Status.SAML_X509_CERTIFICATE_AUTH_NEEDED);
+		}
+		catch (CredentialAuthException.InvalidKeyStore
+					credentialAuthException) {
+
+			return _buildX509CertificateStatus(
+				credentialAuthException, true,
+				X509CertificateStatus.Status.SAML_KEYSTORE_EXCEPTION);
+		}
+		catch (CredentialAuthException.InvalidKeyStorePassword
+					credentialAuthException) {
+
+			return _buildX509CertificateStatus(
+				credentialAuthException, true,
+				X509CertificateStatus.Status.SAML_KEYSTORE_PASSWORD_INCORRECT);
+		}
+		catch (CredentialAuthException credentialAuthException) {
+			return _buildX509CertificateStatus(
+				credentialAuthException, true,
+				X509CertificateStatus.Status.UNKNOWN_EXCEPTION);
+		}
+		catch (SamlException samlException) {
+			return _buildX509CertificateStatus(
+				samlException, false, X509CertificateStatus.Status.UNBOUND);
+		}
+	}
+
+	private X509CertificateStatus _buildX509CertificateStatus(
+		Exception exception, boolean logError,
+		X509CertificateStatus.Status status) {
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				"Unable to get local entity certificate: " +
+					exception.getMessage(),
+				exception);
+		}
+		else if (logError) {
+			_log.error(
+				"Unable to get local entity certificate: " +
+					exception.getMessage());
 		}
 
-		return null;
+		return new X509CertificateStatus(null, status);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		GeneralTabDefaultViewDisplayContext.class);
 
 	private final LocalEntityManager _localEntityManager;
-	private Map<LocalEntityManager.CertificateUsage, X509CertificateStatus>
-		_x509CertificateStatuses = new HashMap<>();
+	private final SamlConfiguration _samlConfiguration;
+	private final Map
+		<LocalEntityManager.CertificateUsage, X509CertificateStatus>
+			_x509CertificateStatuses = new HashMap<>();
 
 }

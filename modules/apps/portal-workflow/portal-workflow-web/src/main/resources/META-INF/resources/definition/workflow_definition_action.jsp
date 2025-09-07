@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -26,7 +17,7 @@ WorkflowDefinition workflowDefinition = (WorkflowDefinition)row.getObject();
 String duplicateTitle = workflowDefinitionDisplayContext.getDuplicateTitle(workflowDefinition);
 %>
 
-<liferay-portlet:actionURL name="duplicateWorkflowDefinition" var="duplicateWorkflowDefinition">
+<liferay-portlet:actionURL name="/portal_workflow/duplicate_workflow_definition" var="duplicateWorkflowDefinition">
 	<portlet:param name="mvcPath" value="/definition/edit_workflow_definition.jsp" />
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </liferay-portlet:actionURL>
@@ -62,9 +53,17 @@ String duplicateTitle = workflowDefinitionDisplayContext.getDuplicateTitle(workf
 		url="<%= editURL %>"
 	/>
 
+	<c:if test="<%= workflowDefinitionDisplayContext.canPublishWorkflowDefinition() %>">
+		<liferay-ui:icon
+			id='<%= "duplicate" + HtmlUtil.getAUICompatibleId(workflowDefinition.getName()) %>'
+			message="duplicate"
+			url="javascript:void(0);"
+		/>
+	</c:if>
+
 	<c:choose>
 		<c:when test="<%= workflowDefinition.isActive() %>">
-			<liferay-portlet:actionURL name="deactivateWorkflowDefinition" var="deactivateWorkflowDefinitionURL">
+			<liferay-portlet:actionURL name="/portal_workflow/deactivate_workflow_definition" var="deactivateWorkflowDefinitionURL">
 				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="name" value="<%= workflowDefinition.getName() %>" />
 				<portlet:param name="version" value="<%= String.valueOf(workflowDefinition.getVersion()) %>" />
@@ -74,17 +73,9 @@ String duplicateTitle = workflowDefinitionDisplayContext.getDuplicateTitle(workf
 				message="unpublish"
 				url="<%= deactivateWorkflowDefinitionURL %>"
 			/>
-
-			<c:if test="<%= workflowDefinitionDisplayContext.canPublishWorkflowDefinition() %>">
-				<liferay-ui:icon
-					id='<%= "duplicate" + HtmlUtil.getAUICompatibleId(workflowDefinition.getName()) %>'
-					message="duplicate"
-					url="javascript:;"
-				/>
-			</c:if>
 		</c:when>
 		<c:otherwise>
-			<liferay-portlet:actionURL name="deleteWorkflowDefinition" var="deleteWorkflowDefinitionURL">
+			<liferay-portlet:actionURL name="/portal_workflow/delete_workflow_definition" var="deleteWorkflowDefinitionURL">
 				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="name" value="<%= workflowDefinition.getName() %>" />
 				<portlet:param name="version" value="<%= String.valueOf(workflowDefinition.getVersion()) %>" />
@@ -92,7 +83,7 @@ String duplicateTitle = workflowDefinitionDisplayContext.getDuplicateTitle(workf
 
 			<liferay-ui:icon
 				message="delete"
-				onClick='<%= renderResponse.getNamespace() + "confirmDeleteDefinition('" + deleteWorkflowDefinitionURL + "'); return false;" %>'
+				onClick='<%= liferayPortletResponse.getNamespace() + "confirmDeleteDefinition('" + deleteWorkflowDefinitionURL + "'); return false;" %>'
 				url="<%= deleteWorkflowDefinitionURL %>"
 			/>
 		</c:otherwise>
@@ -106,21 +97,26 @@ String duplicateTitle = workflowDefinitionDisplayContext.getDuplicateTitle(workf
 		<aui:input name="name" type="hidden" value="<%= PortalUUIDUtil.generate() %>" />
 		<aui:input name="content" type="hidden" value="<%= workflowDefinition.getContent() %>" />
 		<aui:input name="defaultDuplicationTitle" type="hidden" value="<%= duplicateTitle %>" />
+		<aui:input name="duplicatedDefinitionName" type="hidden" value="<%= workflowDefinition.getName() %>" />
 		<aui:input name="duplicatedDefinitionTitle" type="hidden" value="<%= workflowDefinition.getTitle(LanguageUtil.getLanguageId(request)) %>" />
 
 		<aui:fieldset>
-			<aui:col>
+			<clay:col
+				size="12"
+			>
 				<aui:field-wrapper label="title">
 					<liferay-ui:input-localized
 						name='<%= randomNamespace + "title" %>'
 						xml="<%= duplicateTitle %>"
 					/>
 				</aui:field-wrapper>
-			</aui:col>
+			</clay:col>
 
-			<aui:col>
+			<clay:col
+				size="12"
+			>
 				<liferay-ui:message key="copy-does-not-include-revisions" />
-			</aui:col>
+			</clay:col>
 		</aui:fieldset>
 	</aui:form>
 </div>

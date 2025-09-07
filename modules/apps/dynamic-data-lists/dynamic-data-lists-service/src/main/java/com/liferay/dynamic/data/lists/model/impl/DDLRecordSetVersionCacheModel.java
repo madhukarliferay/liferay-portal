@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.model.impl;
@@ -37,17 +28,17 @@ public class DDLRecordSetVersionCacheModel
 	implements CacheModel<DDLRecordSetVersion>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDLRecordSetVersionCacheModel)) {
+		if (!(object instanceof DDLRecordSetVersionCacheModel)) {
 			return false;
 		}
 
 		DDLRecordSetVersionCacheModel ddlRecordSetVersionCacheModel =
-			(DDLRecordSetVersionCacheModel)obj;
+			(DDLRecordSetVersionCacheModel)object;
 
 		if ((recordSetVersionId ==
 				ddlRecordSetVersionCacheModel.recordSetVersionId) &&
@@ -78,10 +69,12 @@ public class DDLRecordSetVersionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", recordSetVersionId=");
 		sb.append(recordSetVersionId);
 		sb.append(", groupId=");
@@ -125,6 +118,7 @@ public class DDLRecordSetVersionCacheModel
 			new DDLRecordSetVersionImpl();
 
 		ddlRecordSetVersionImpl.setMvccVersion(mvccVersion);
+		ddlRecordSetVersionImpl.setCtCollectionId(ctCollectionId);
 		ddlRecordSetVersionImpl.setRecordSetVersionId(recordSetVersionId);
 		ddlRecordSetVersionImpl.setGroupId(groupId);
 		ddlRecordSetVersionImpl.setCompanyId(companyId);
@@ -198,8 +192,12 @@ public class DDLRecordSetVersionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		recordSetVersionId = objectInput.readLong();
 
@@ -216,7 +214,7 @@ public class DDLRecordSetVersionCacheModel
 		DDMStructureVersionId = objectInput.readLong();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
-		settings = objectInput.readUTF();
+		settings = (String)objectInput.readObject();
 		version = objectInput.readUTF();
 
 		status = objectInput.readInt();
@@ -229,6 +227,8 @@ public class DDLRecordSetVersionCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(recordSetVersionId);
 
@@ -266,10 +266,10 @@ public class DDLRecordSetVersionCacheModel
 		}
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		if (version == null) {
@@ -294,6 +294,7 @@ public class DDLRecordSetVersionCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long recordSetVersionId;
 	public long groupId;
 	public long companyId;

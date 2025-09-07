@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.web.internal.asset.model;
@@ -23,6 +14,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -33,15 +25,15 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.trash.TrashHelper;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Eudaldo Alonso
@@ -54,11 +46,13 @@ public class BookmarksFolderAssetRenderer
 
 	public BookmarksFolderAssetRenderer(
 		BookmarksFolder folder, TrashHelper trashHelper,
-		ModelResourcePermission<BookmarksFolder> modelResourcePermission) {
+		ModelResourcePermission<BookmarksFolder>
+			bookmarksFolderModelResourcePermission) {
 
 		_folder = folder;
 		_trashHelper = trashHelper;
-		_bookmarksFolderModelResourcePermission = modelResourcePermission;
+		_bookmarksFolderModelResourcePermission =
+			bookmarksFolderModelResourcePermission;
 	}
 
 	@Override
@@ -141,16 +135,16 @@ public class BookmarksFolderAssetRenderer
 			group = themeDisplay.getScopeGroup();
 		}
 
-		PortletURL portletURL = PortalUtil.getControlPanelPortletURL(
-			liferayPortletRequest, group, BookmarksPortletKeys.BOOKMARKS_ADMIN,
-			0, 0, PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/bookmarks/edit_folder");
-		portletURL.setParameter(
-			"folderId", String.valueOf(_folder.getFolderId()));
-
-		return portletURL;
+		return PortletURLBuilder.create(
+			PortalUtil.getControlPanelPortletURL(
+				liferayPortletRequest, group,
+				BookmarksPortletKeys.BOOKMARKS_ADMIN, 0, 0,
+				PortletRequest.RENDER_PHASE)
+		).setMVCRenderCommandName(
+			"/bookmarks/edit_folder"
+		).setParameter(
+			"folderId", _folder.getFolderId()
+		).buildPortletURL();
 	}
 
 	@Override
@@ -162,16 +156,15 @@ public class BookmarksFolderAssetRenderer
 		AssetRendererFactory<BookmarksFolder> assetRendererFactory =
 			getAssetRendererFactory();
 
-		PortletURL portletURL = assetRendererFactory.getURLView(
-			liferayPortletResponse, windowState);
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/bookmarks/view_folder");
-		portletURL.setParameter(
-			"folderId", String.valueOf(_folder.getFolderId()));
-		portletURL.setWindowState(windowState);
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			assetRendererFactory.getURLView(liferayPortletResponse, windowState)
+		).setMVCRenderCommandName(
+			"/bookmarks/view_folder"
+		).setParameter(
+			"folderId", _folder.getFolderId()
+		).setWindowState(
+			windowState
+		).buildString();
 	}
 
 	@Override
@@ -183,6 +176,15 @@ public class BookmarksFolderAssetRenderer
 		return getURLViewInContext(
 			liferayPortletRequest, noSuchEntryRedirect,
 			"/bookmarks/find_folder", "folderId", _folder.getFolderId());
+	}
+
+	@Override
+	public String getURLViewInContext(
+		ThemeDisplay themeDisplay, String noSuchEntryRedirect) {
+
+		return getURLViewInContext(
+			themeDisplay, noSuchEntryRedirect, "/bookmarks/find_folder",
+			"folderId", _folder.getFolderId());
 	}
 
 	@Override

@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
@@ -25,11 +18,14 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.search.document.DocumentBuilderFactory;
+import com.liferay.portal.search.model.uid.UIDFactory;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
 import com.liferay.portal.search.test.util.IndexedFieldsFixture;
 import com.liferay.portal.search.test.util.IndexerFixture;
@@ -41,6 +37,7 @@ import com.liferay.users.admin.test.util.search.UserSearchFixture;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -97,8 +94,13 @@ public class LayoutIndexerIndexedFieldsTest {
 
 		indexedFieldsFixture.postProcessDocument(document);
 
+		_postProcessDocument(document, layout);
+
 		FieldValuesAssert.assertFieldValues(
-			_expectedFieldValues(layout), document, searchTerm);
+			document, _expectedFieldValues(layout),
+			name ->
+				!name.contains(StringPool.PERIOD) && !name.equals("timestamp"),
+			searchTerm);
 	}
 
 	protected void setTestLocale(Locale locale) throws Exception {
@@ -109,7 +111,8 @@ public class LayoutIndexerIndexedFieldsTest {
 
 	protected void setUpIndexedFieldsFixture() {
 		indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService, searchEngineHelper);
+			resourcePermissionLocalService, searchEngineHelper, uidFactory,
+			documentBuilderFactory);
 	}
 
 	protected void setUpLayoutFixture() {
@@ -135,6 +138,10 @@ public class LayoutIndexerIndexedFieldsTest {
 	}
 
 	protected Locale defaultLocale;
+
+	@Inject
+	protected DocumentBuilderFactory documentBuilderFactory;
+
 	protected IndexedFieldsFixture indexedFieldsFixture;
 	protected LayoutFixture layoutFixture;
 	protected IndexerFixture<Layout> layoutIndexerFixture;
@@ -145,10 +152,15 @@ public class LayoutIndexerIndexedFieldsTest {
 	@Inject
 	protected SearchEngineHelper searchEngineHelper;
 
+	@Inject
+	protected UIDFactory uidFactory;
+
 	protected UserSearchFixture userSearchFixture;
 
 	private Map<String, String> _expectedFieldValues(Layout layout)
 		throws Exception {
+
+		User user = TestPropsValues.getUser();
 
 		Map<String, String> map = HashMapBuilder.put(
 			Field.CLASS_NAME_ID, String.valueOf(layout.getClassNameId())
@@ -169,22 +181,36 @@ public class LayoutIndexerIndexedFieldsTest {
 		).put(
 			Field.STAGING_GROUP, "false"
 		).put(
+			Field.STATUS, String.valueOf(layout.getStatus())
+		).put(
 			Field.TYPE, layout.getType()
 		).put(
 			Field.USER_ID, String.valueOf(layout.getUserId())
 		).put(
 			Field.USER_NAME, StringUtil.toLowerCase(layout.getUserName())
 		).put(
+			"externalReferenceCode", layout.getExternalReferenceCode()
+		).put(
+			"groupExternalReferenceCode", _group.getExternalReferenceCode()
+		).put(
 			"privateLayout", "false"
 		).put(
+			"scopeGroupExternalReferenceCode", _group.getExternalReferenceCode()
+		).put(
+			"statusByUserExternalReferenceCode", user.getExternalReferenceCode()
+		).put(
+			"statusByUserId", String.valueOf(layout.getStatusByUserId())
+		).put(
 			"title_ja_JP", layout.getName(LocaleUtil.JAPAN)
+		).put(
+			"userExternalReferenceCode", user.getExternalReferenceCode()
 		).build();
 
-		indexedFieldsFixture.populateUID(
-			Layout.class.getName(), layout.getPrimaryKey(), map);
+		indexedFieldsFixture.populateUID(layout, map);
 
-		_populateName(layout, map);
 		_populateDates(layout, map);
+		_populateLocalizedTitle(layout, map);
+		_populateName(layout, map);
 		_populateRoles(layout, map);
 
 		return map;
@@ -195,6 +221,23 @@ public class LayoutIndexerIndexedFieldsTest {
 			Field.MODIFIED_DATE, layout.getModifiedDate(), map);
 		indexedFieldsFixture.populateDate(
 			Field.CREATE_DATE, layout.getCreateDate(), map);
+	}
+
+	private void _populateLocalizedTitle(
+		Layout layout, Map<String, String> map) {
+
+		map.put(
+			"localized_" + Field.TITLE,
+			layout.getName(layout.getDefaultLanguageId()));
+
+		for (Locale locale :
+				LanguageUtil.getAvailableLocales(layout.getGroupId())) {
+
+			String key = LocalizationUtil.getLocalizedName(
+				Field.TITLE, LocaleUtil.toLanguageId(locale));
+
+			map.put("localized_" + key, layout.getName(locale));
+		}
 	}
 
 	private void _populateName(Layout layout, Map<String, String> map) {
@@ -215,6 +258,22 @@ public class LayoutIndexerIndexedFieldsTest {
 		indexedFieldsFixture.populateRoleIdFields(
 			layout.getCompanyId(), Layout.class.getName(),
 			layout.getPrimaryKey(), layout.getGroupId(), null, map);
+	}
+
+	private void _postProcessDocument(Document document, Layout layout) {
+		Set<Locale> locales = LanguageUtil.getAvailableLocales(
+			layout.getGroupId());
+
+		for (Locale locale : locales) {
+			document.remove(
+				LocalizationUtil.getLocalizedName(
+					Field.CONTENT, LocaleUtil.toLanguageId(locale)));
+
+			String key = LocalizationUtil.getLocalizedName(
+				Field.TITLE, LocaleUtil.toLanguageId(locale));
+
+			document.remove("localized_" + key + "_sortable");
+		}
 	}
 
 	private Group _group;

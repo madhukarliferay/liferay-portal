@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service;
 
+import com.liferay.asset.list.model.AssetListEntryUsage;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link AssetListEntryUsageLocalService}.
@@ -27,6 +22,10 @@ public class AssetListEntryUsageLocalServiceWrapper
 	implements AssetListEntryUsageLocalService,
 			   ServiceWrapper<AssetListEntryUsageLocalService> {
 
+	public AssetListEntryUsageLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AssetListEntryUsageLocalServiceWrapper(
 		AssetListEntryUsageLocalService assetListEntryUsageLocalService) {
 
@@ -36,30 +35,31 @@ public class AssetListEntryUsageLocalServiceWrapper
 	/**
 	 * Adds the asset list entry usage to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetListEntryUsageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param assetListEntryUsage the asset list entry usage
 	 * @return the asset list entry usage that was added
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		addAssetListEntryUsage(
-			com.liferay.asset.list.model.AssetListEntryUsage
-				assetListEntryUsage) {
+	public AssetListEntryUsage addAssetListEntryUsage(
+		AssetListEntryUsage assetListEntryUsage) {
 
 		return _assetListEntryUsageLocalService.addAssetListEntryUsage(
 			assetListEntryUsage);
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-			addAssetListEntryUsage(
-				long userId, long groupId, long assetListEntryId,
-				long classNameId, long classPK, String portletId,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public AssetListEntryUsage addAssetListEntryUsage(
+			long userId, long groupId, long classNameId, String containerKey,
+			long containerType, String key, long plid,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryUsageLocalService.addAssetListEntryUsage(
-			userId, groupId, assetListEntryId, classNameId, classPK, portletId,
-			serviceContext);
+			userId, groupId, classNameId, containerKey, containerType, key,
+			plid, serviceContext);
 	}
 
 	/**
@@ -69,24 +69,38 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @return the new asset list entry usage
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		createAssetListEntryUsage(long assetListEntryUsageId) {
+	public AssetListEntryUsage createAssetListEntryUsage(
+		long assetListEntryUsageId) {
 
 		return _assetListEntryUsageLocalService.createAssetListEntryUsage(
 			assetListEntryUsageId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetListEntryUsageLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the asset list entry usage from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetListEntryUsageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetListEntryUsage the asset list entry usage
 	 * @return the asset list entry usage that was removed
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		deleteAssetListEntryUsage(
-			com.liferay.asset.list.model.AssetListEntryUsage
-				assetListEntryUsage) {
+	public AssetListEntryUsage deleteAssetListEntryUsage(
+		AssetListEntryUsage assetListEntryUsage) {
 
 		return _assetListEntryUsageLocalService.deleteAssetListEntryUsage(
 			assetListEntryUsage);
@@ -95,17 +109,35 @@ public class AssetListEntryUsageLocalServiceWrapper
 	/**
 	 * Deletes the asset list entry usage with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetListEntryUsageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param assetListEntryUsageId the primary key of the asset list entry usage
 	 * @return the asset list entry usage that was removed
 	 * @throws PortalException if a asset list entry usage with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-			deleteAssetListEntryUsage(long assetListEntryUsageId)
+	public AssetListEntryUsage deleteAssetListEntryUsage(
+			long assetListEntryUsageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryUsageLocalService.deleteAssetListEntryUsage(
 			assetListEntryUsageId);
+	}
+
+	@Override
+	public void deleteAssetListEntryUsages(long containerType, long plid) {
+		_assetListEntryUsageLocalService.deleteAssetListEntryUsages(
+			containerType, plid);
+	}
+
+	@Override
+	public void deleteAssetListEntryUsages(
+		String containerKey, long containerType, long plid) {
+
+		_assetListEntryUsageLocalService.deleteAssetListEntryUsages(
+			containerKey, containerType, plid);
 	}
 
 	/**
@@ -118,6 +150,18 @@ public class AssetListEntryUsageLocalServiceWrapper
 
 		return _assetListEntryUsageLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _assetListEntryUsageLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _assetListEntryUsageLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -212,20 +256,20 @@ public class AssetListEntryUsageLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		fetchAssetListEntryUsage(long assetListEntryUsageId) {
+	public AssetListEntryUsage fetchAssetListEntryUsage(
+		long assetListEntryUsageId) {
 
 		return _assetListEntryUsageLocalService.fetchAssetListEntryUsage(
 			assetListEntryUsageId);
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		fetchAssetListEntryUsage(
-			long classNameId, long classPK, String portletId) {
+	public AssetListEntryUsage fetchAssetListEntryUsage(
+		long groupId, long classNameId, String containerKey, long containerType,
+		String key, long plid) {
 
 		return _assetListEntryUsageLocalService.fetchAssetListEntryUsage(
-			classNameId, classPK, portletId);
+			groupId, classNameId, containerKey, containerType, key, plid);
 	}
 
 	/**
@@ -236,8 +280,8 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @return the matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		fetchAssetListEntryUsageByUuidAndGroupId(String uuid, long groupId) {
+	public AssetListEntryUsage fetchAssetListEntryUsageByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _assetListEntryUsageLocalService.
 			fetchAssetListEntryUsageByUuidAndGroupId(uuid, groupId);
@@ -250,6 +294,22 @@ public class AssetListEntryUsageLocalServiceWrapper
 		return _assetListEntryUsageLocalService.getActionableDynamicQuery();
 	}
 
+	@Override
+	public java.util.List<AssetListEntryUsage> getAssetEntryListUsages(
+		long containerType, long plid) {
+
+		return _assetListEntryUsageLocalService.getAssetEntryListUsages(
+			containerType, plid);
+	}
+
+	@Override
+	public java.util.List<AssetListEntryUsage> getAssetEntryListUsagesByPlid(
+		long plid) {
+
+		return _assetListEntryUsageLocalService.getAssetEntryListUsagesByPlid(
+			plid);
+	}
+
 	/**
 	 * Returns the asset list entry usage with the primary key.
 	 *
@@ -258,8 +318,8 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @throws PortalException if a asset list entry usage with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-			getAssetListEntryUsage(long assetListEntryUsageId)
+	public AssetListEntryUsage getAssetListEntryUsage(
+			long assetListEntryUsageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsage(
@@ -275,8 +335,8 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @throws PortalException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-			getAssetListEntryUsageByUuidAndGroupId(String uuid, long groupId)
+	public AssetListEntryUsage getAssetListEntryUsageByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryUsageLocalService.
@@ -295,51 +355,56 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @return the range of asset list entry usages
 	 */
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
-		getAssetListEntryUsages(int start, int end) {
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		int start, int end) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
 			start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
-		getAssetListEntryUsages(long assetListEntryId) {
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		long groupId, long classNameId, String key) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
-			assetListEntryId);
+			groupId, classNameId, key);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
-		getAssetListEntryUsages(
-			long assetListEntryId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntryUsage>
-					orderByComparator) {
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		long groupId, long classNameId, String key, int type) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
-			assetListEntryId, start, end, orderByComparator);
+			groupId, classNameId, key, type);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
-		getAssetListEntryUsages(long assetListEntryId, long classNameId) {
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		long groupId, long classNameId, String key, int type, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntryUsage>
+			orderByComparator) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
-			assetListEntryId, classNameId);
+			groupId, classNameId, key, type, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
-		getAssetListEntryUsages(
-			long assetListEntryId, long classNameId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntryUsage>
-					orderByComparator) {
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		long groupId, long classNameId, String key, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntryUsage>
+			orderByComparator) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
-			assetListEntryId, classNameId, start, end, orderByComparator);
+			groupId, classNameId, key, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<AssetListEntryUsage> getAssetListEntryUsages(
+		String containerKey, long containerType, long plid) {
+
+		return _assetListEntryUsageLocalService.getAssetListEntryUsages(
+			containerKey, containerType, plid);
 	}
 
 	/**
@@ -350,7 +415,7 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @return the matching asset list entry usages, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
+	public java.util.List<AssetListEntryUsage>
 		getAssetListEntryUsagesByUuidAndCompanyId(String uuid, long companyId) {
 
 		return _assetListEntryUsageLocalService.
@@ -368,12 +433,11 @@ public class AssetListEntryUsageLocalServiceWrapper
 	 * @return the range of matching asset list entry usages, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntryUsage>
+	public java.util.List<AssetListEntryUsage>
 		getAssetListEntryUsagesByUuidAndCompanyId(
 			String uuid, long companyId, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntryUsage>
-					orderByComparator) {
+				<AssetListEntryUsage> orderByComparator) {
 
 		return _assetListEntryUsageLocalService.
 			getAssetListEntryUsagesByUuidAndCompanyId(
@@ -391,17 +455,27 @@ public class AssetListEntryUsageLocalServiceWrapper
 	}
 
 	@Override
-	public int getAssetListEntryUsagesCount(long assetListEntryId) {
+	public int getAssetListEntryUsagesCount(
+		long groupId, long classNameId, String key) {
+
 		return _assetListEntryUsageLocalService.getAssetListEntryUsagesCount(
-			assetListEntryId);
+			groupId, classNameId, key);
 	}
 
 	@Override
 	public int getAssetListEntryUsagesCount(
-		long assetListEntryId, long classNameId) {
+		long groupId, long classNameId, String key, int type) {
 
 		return _assetListEntryUsageLocalService.getAssetListEntryUsagesCount(
-			assetListEntryId, classNameId);
+			groupId, classNameId, key, type);
+	}
+
+	@Override
+	public int getCompanyAssetListEntryUsagesCount(
+		long companyId, long classNameId, String key) {
+
+		return _assetListEntryUsageLocalService.
+			getCompanyAssetListEntryUsagesCount(companyId, classNameId, key);
 	}
 
 	@Override
@@ -432,6 +506,9 @@ public class AssetListEntryUsageLocalServiceWrapper
 		return _assetListEntryUsageLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -444,17 +521,44 @@ public class AssetListEntryUsageLocalServiceWrapper
 	/**
 	 * Updates the asset list entry usage in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetListEntryUsageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param assetListEntryUsage the asset list entry usage
 	 * @return the asset list entry usage that was updated
 	 */
 	@Override
-	public com.liferay.asset.list.model.AssetListEntryUsage
-		updateAssetListEntryUsage(
-			com.liferay.asset.list.model.AssetListEntryUsage
-				assetListEntryUsage) {
+	public AssetListEntryUsage updateAssetListEntryUsage(
+		AssetListEntryUsage assetListEntryUsage) {
 
 		return _assetListEntryUsageLocalService.updateAssetListEntryUsage(
 			assetListEntryUsage);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _assetListEntryUsageLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<AssetListEntryUsage> getCTPersistence() {
+		return _assetListEntryUsageLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<AssetListEntryUsage> getModelClass() {
+		return _assetListEntryUsageLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<AssetListEntryUsage>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _assetListEntryUsageLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

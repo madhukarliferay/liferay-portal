@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.spring.aop;
@@ -65,8 +56,8 @@ public class RetryAdvice extends ChainableMethodAdvice {
 
 			return new RetryContext(retryAcceptor, properties, retries);
 		}
-		catch (ReflectiveOperationException roe) {
-			_log.error(roe, roe);
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			_log.error(reflectiveOperationException);
 
 			return null;
 		}
@@ -92,7 +83,7 @@ public class RetryAdvice extends ChainableMethodAdvice {
 		}
 
 		Object returnValue = null;
-		Throwable throwable = null;
+		Throwable throwable1 = null;
 
 		while ((retries < 0) || (retries-- > 0)) {
 			try {
@@ -115,11 +106,11 @@ public class RetryAdvice extends ChainableMethodAdvice {
 							" more times due to result ", returnValue));
 				}
 			}
-			catch (Throwable t) {
-				throwable = t;
+			catch (Throwable throwable2) {
+				throwable1 = throwable2;
 
-				if (!retryAcceptor.acceptException(t, properties)) {
-					throw t;
+				if (!retryAcceptor.acceptException(throwable2, properties)) {
+					throw throwable2;
 				}
 
 				if (_log.isWarnEnabled() && (retries != 0)) {
@@ -132,24 +123,24 @@ public class RetryAdvice extends ChainableMethodAdvice {
 					_log.warn(
 						StringBundler.concat(
 							"Retry on ", aopMethodInvocation, " for ", number,
-							" more times due to exception ", throwable),
-						throwable);
+							" more times due to exception ", throwable1),
+						throwable1);
 				}
 			}
 		}
 
-		if (throwable != null) {
+		if (throwable1 != null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Give up retrying on ", aopMethodInvocation, " after ",
 						totalRetries,
 						" retries and rethrow last retry's exception ",
-						throwable),
-					throwable);
+						throwable1),
+					throwable1);
 			}
 
-			throw throwable;
+			throw throwable1;
 		}
 
 		if (_log.isWarnEnabled()) {

@@ -14,7 +14,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 
 import org.osgi.service.component.annotations.Component;
-#if (${liferayVersion.startsWith("7.1")} || ${liferayVersion.startsWith("7.2")})
+#if (!${liferayVersion.startsWith("7.0")})
 import org.osgi.service.jaxrs.whiteboard.JaxrsWhiteboardConstants;
 #end
 
@@ -23,7 +23,7 @@ import org.osgi.service.jaxrs.whiteboard.JaxrsWhiteboardConstants;
  */
 #if (${liferayVersion.startsWith("7.0")})
 @ApplicationPath("/greetings")
-@Component(immediate = true, #else
+@Component(#else
 @Component(
 	property = {
 		JaxrsWhiteboardConstants.JAX_RS_APPLICATION_BASE + "=/greetings",

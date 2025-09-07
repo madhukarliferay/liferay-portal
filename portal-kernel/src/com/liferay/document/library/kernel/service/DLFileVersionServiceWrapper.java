@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.service;
 
+import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,30 +18,27 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class DLFileVersionServiceWrapper
 	implements DLFileVersionService, ServiceWrapper<DLFileVersionService> {
 
+	public DLFileVersionServiceWrapper() {
+		this(null);
+	}
+
 	public DLFileVersionServiceWrapper(
 		DLFileVersionService dlFileVersionService) {
 
 		_dlFileVersionService = dlFileVersionService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DLFileVersionServiceUtil} to access the document library file version remote service. Add custom service methods to <code>com.liferay.portlet.documentlibrary.service.impl.DLFileVersionServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.document.library.kernel.model.DLFileVersion
-			getFileVersion(long fileVersionId)
+	public DLFileVersion getFileVersion(long fileVersionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlFileVersionService.getFileVersion(fileVersionId);
 	}
 
 	@Override
-	public java.util.List
-		<com.liferay.document.library.kernel.model.DLFileVersion>
-				getFileVersions(long fileEntryId, int status)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public java.util.List<DLFileVersion> getFileVersions(
+			long fileEntryId, int status)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlFileVersionService.getFileVersions(fileEntryId, status);
 	}
@@ -62,16 +51,15 @@ public class DLFileVersionServiceWrapper
 	}
 
 	@Override
-	public com.liferay.document.library.kernel.model.DLFileVersion
-			getLatestFileVersion(long fileEntryId)
+	public DLFileVersion getLatestFileVersion(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlFileVersionService.getLatestFileVersion(fileEntryId);
 	}
 
 	@Override
-	public com.liferay.document.library.kernel.model.DLFileVersion
-			getLatestFileVersion(long fileEntryId, boolean excludeWorkingCopy)
+	public DLFileVersion getLatestFileVersion(
+			long fileEntryId, boolean excludeWorkingCopy)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlFileVersionService.getLatestFileVersion(

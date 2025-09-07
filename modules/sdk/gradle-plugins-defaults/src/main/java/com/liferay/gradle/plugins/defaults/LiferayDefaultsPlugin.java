@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults;
@@ -22,9 +13,13 @@ import com.liferay.gradle.plugins.defaults.internal.LiferayCIPatcherPlugin;
 import com.liferay.gradle.plugins.defaults.internal.LiferayCIPlugin;
 import com.liferay.gradle.plugins.defaults.internal.LiferayProfileDXPPlugin;
 import com.liferay.gradle.plugins.defaults.internal.LiferayRelengPlugin;
-import com.liferay.gradle.plugins.defaults.internal.MavenDefaultsPlugin;
+import com.liferay.gradle.plugins.defaults.internal.MavenPublishDefaultsPlugin;
 import com.liferay.gradle.plugins.defaults.internal.NodeDefaultsPlugin;
+import com.liferay.gradle.plugins.defaults.internal.util.CIUtil;
+import com.liferay.gradle.plugins.defaults.internal.util.LiferayRelengUtil;
 import com.liferay.gradle.util.Validator;
+
+import java.io.File;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -44,21 +39,32 @@ public class LiferayDefaultsPlugin extends LiferayPlugin {
 
 		JavaDefaultsPlugin.INSTANCE.apply(project);
 		LiferayBaseDefaultsPlugin.INSTANCE.apply(project);
-		LiferayRelengPlugin.INSTANCE.apply(project);
-		MavenDefaultsPlugin.INSTANCE.apply(project);
+		MavenPublishDefaultsPlugin.INSTANCE.apply(project);
 		NodeDefaultsPlugin.INSTANCE.apply(project);
+
+		String buildProfile = System.getProperty("build.profile");
+
+		if (Validator.isNull(buildProfile)) {
+			File relengDir = LiferayRelengUtil.getRelengDir(project);
+
+			if (relengDir != null) {
+				LiferayRelengPlugin.INSTANCE.apply(project);
+			}
+		}
 
 		String projectPath = project.getPath();
 
-		if (projectPath.startsWith(":dxp:") && !_isRunningInCIEnvironment()) {
+		if (projectPath.startsWith(":dxp:") &&
+			!CIUtil.isRunningInCIEnvironment()) {
+
 			LiferayProfileDXPPlugin.INSTANCE.apply(project);
 		}
 
-		if (_isRunningInCIEnvironment()) {
+		if (CIUtil.isRunningInCIEnvironment()) {
 			LiferayCIPlugin.INSTANCE.apply(project);
 		}
 
-		if (_isRunningInCIPatcherEnvironment()) {
+		if (CIUtil.isRunningInCIPatcherEnvironment()) {
 			LiferayCIPatcherPlugin.INSTANCE.apply(project);
 		}
 	}
@@ -76,24 +82,6 @@ public class LiferayDefaultsPlugin extends LiferayPlugin {
 	@Override
 	protected Class<? extends Plugin<Project>> getThemePluginClass() {
 		return LiferayThemeDefaultsPlugin.class;
-	}
-
-	private boolean _isRunningInCIEnvironment() {
-		if (Validator.isNotNull(System.getenv("JENKINS_HOME"))) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean _isRunningInCIPatcherEnvironment() {
-		if (Validator.isNotNull(
-				System.getenv("FIX_PACKS_RELEASE_ENVIRONMENT"))) {
-
-			return true;
-		}
-
-		return false;
 	}
 
 }

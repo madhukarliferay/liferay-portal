@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,14 +17,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -132,6 +127,8 @@ public class DDMDataProviderInstancePersistenceTest {
 
 		newDDMDataProviderInstance.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDMDataProviderInstance.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDMDataProviderInstance.setUuid(RandomTestUtil.randomString());
 
 		newDDMDataProviderInstance.setGroupId(RandomTestUtil.nextLong());
@@ -155,6 +152,9 @@ public class DDMDataProviderInstancePersistenceTest {
 
 		newDDMDataProviderInstance.setType(RandomTestUtil.randomString());
 
+		newDDMDataProviderInstance.setLastPublishDate(
+			RandomTestUtil.nextDate());
+
 		_ddmDataProviderInstances.add(
 			_persistence.update(newDDMDataProviderInstance));
 
@@ -165,6 +165,9 @@ public class DDMDataProviderInstancePersistenceTest {
 		Assert.assertEquals(
 			existingDDMDataProviderInstance.getMvccVersion(),
 			newDDMDataProviderInstance.getMvccVersion());
+		Assert.assertEquals(
+			existingDDMDataProviderInstance.getCtCollectionId(),
+			newDDMDataProviderInstance.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDMDataProviderInstance.getUuid(),
 			newDDMDataProviderInstance.getUuid());
@@ -204,6 +207,11 @@ public class DDMDataProviderInstancePersistenceTest {
 		Assert.assertEquals(
 			existingDDMDataProviderInstance.getType(),
 			newDDMDataProviderInstance.getType());
+		Assert.assertEquals(
+			Time.getShortTimestamp(
+				existingDDMDataProviderInstance.getLastPublishDate()),
+			Time.getShortTimestamp(
+				newDDMDataProviderInstance.getLastPublishDate()));
 	}
 
 	@Test
@@ -280,6 +288,24 @@ public class DDMDataProviderInstancePersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
@@ -288,10 +314,11 @@ public class DDMDataProviderInstancePersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"DDMDataProviderInstance", "mvccVersion", true, "uuid", true,
-			"dataProviderInstanceId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "name", true, "type", true);
+			"DDMDataProviderInstance", "mvccVersion", true, "ctCollectionId",
+			true, "uuid", true, "dataProviderInstanceId", true, "groupId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "name", true, "type", true,
+			"lastPublishDate", true);
 	}
 
 	@Test
@@ -537,21 +564,66 @@ public class DDMDataProviderInstancePersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMDataProviderInstance existingDDMDataProviderInstance =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newDDMDataProviderInstance.getPrimaryKey());
+				newDDMDataProviderInstance.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDMDataProviderInstance.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDDMDataProviderInstance, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMDataProviderInstance newDDMDataProviderInstance =
+			addDDMDataProviderInstance();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMDataProviderInstance.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"dataProviderInstanceId",
+				newDDMDataProviderInstance.getDataProviderInstanceId()));
+
+		List<DDMDataProviderInstance> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		DDMDataProviderInstance ddmDataProviderInstance) {
+
 		Assert.assertEquals(
-			Long.valueOf(existingDDMDataProviderInstance.getGroupId()),
+			ddmDataProviderInstance.getUuid(),
+			ReflectionTestUtil.invoke(
+				ddmDataProviderInstance, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(ddmDataProviderInstance.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMDataProviderInstance, "getOriginalGroupId",
-				new Class<?>[0]));
+				ddmDataProviderInstance, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected DDMDataProviderInstance addDDMDataProviderInstance()
@@ -563,6 +635,8 @@ public class DDMDataProviderInstancePersistenceTest {
 			pk);
 
 		ddmDataProviderInstance.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddmDataProviderInstance.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddmDataProviderInstance.setUuid(RandomTestUtil.randomString());
 
@@ -585,6 +659,8 @@ public class DDMDataProviderInstancePersistenceTest {
 		ddmDataProviderInstance.setDefinition(RandomTestUtil.randomString());
 
 		ddmDataProviderInstance.setType(RandomTestUtil.randomString());
+
+		ddmDataProviderInstance.setLastPublishDate(RandomTestUtil.nextDate());
 
 		_ddmDataProviderInstances.add(
 			_persistence.update(ddmDataProviderInstance));

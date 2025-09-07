@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
@@ -17,14 +8,15 @@ package com.liferay.portal.kernel.servlet;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropertiesUtil;
-import com.liferay.portal.kernel.util.SortedProperties;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 import java.io.IOException;
 
@@ -32,15 +24,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author László Csontos
@@ -49,38 +32,12 @@ import javax.servlet.http.HttpSession;
  */
 public class SanitizedServletResponse extends HttpServletResponseWrapper {
 
-	public static void disableXSSAuditor(
-		HttpServletResponse httpServletResponse) {
-
-		httpServletResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
-	}
-
-	public static void disableXSSAuditor(PortletResponse portletResponse) {
-		disableXSSAuditor(PortalUtil.getHttpServletResponse(portletResponse));
-	}
-
-	public static void disableXSSAuditorOnNextRequest(
-		HttpServletRequest httpServletRequest) {
-
-		HttpSession session = httpServletRequest.getSession();
-
-		session.setAttribute(_DISABLE_XSS_AUDITOR, Boolean.TRUE);
-	}
-
-	public static void disableXSSAuditorOnNextRequest(
-		PortletRequest portletRequest) {
-
-		disableXSSAuditorOnNextRequest(
-			PortalUtil.getHttpServletRequest(portletRequest));
-	}
-
 	public static HttpServletResponse getSanitizedServletResponse(
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
 
 		setXContentOptions(httpServletRequest, httpServletResponse);
 		setXFrameOptions(httpServletRequest, httpServletResponse);
-		setXXSSProtection(httpServletRequest, httpServletResponse);
 
 		return httpServletResponse;
 	}
@@ -88,28 +45,30 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 	@Override
 	public void addHeader(String name, String value) {
 		super.addHeader(
-			HttpUtil.sanitizeHeader(name), HttpUtil.sanitizeHeader(value));
+			HttpComponentsUtil.sanitizeHeader(name),
+			HttpComponentsUtil.sanitizeHeader(value));
 	}
 
 	@Override
 	public void sendRedirect(String location) throws IOException {
-		super.sendRedirect(HttpUtil.sanitizeHeader(location));
+		super.sendRedirect(HttpComponentsUtil.sanitizeHeader(location));
 	}
 
 	@Override
 	public void setCharacterEncoding(String charset) {
-		super.setCharacterEncoding(HttpUtil.sanitizeHeader(charset));
+		super.setCharacterEncoding(HttpComponentsUtil.sanitizeHeader(charset));
 	}
 
 	@Override
 	public void setContentType(String contentType) {
-		super.setContentType(HttpUtil.sanitizeHeader(contentType));
+		super.setContentType(HttpComponentsUtil.sanitizeHeader(contentType));
 	}
 
 	@Override
 	public void setHeader(String name, String value) {
 		super.setHeader(
-			HttpUtil.sanitizeHeader(name), HttpUtil.sanitizeHeader(value));
+			HttpComponentsUtil.sanitizeHeader(name),
+			HttpComponentsUtil.sanitizeHeader(value));
 	}
 
 	protected static void setXContentOptions(
@@ -163,36 +122,9 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 		httpServletResponse.setHeader(HttpHeaders.X_FRAME_OPTIONS, "DENY");
 	}
 
-	protected static void setXXSSProtection(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
-
-		HttpSession session = httpServletRequest.getSession(false);
-
-		if ((session != null) &&
-			(session.getAttribute(_DISABLE_XSS_AUDITOR) != null)) {
-
-			session.removeAttribute(_DISABLE_XSS_AUDITOR);
-
-			httpServletResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
-
-			return;
-		}
-
-		if (_X_XSS_PROTECTION == null) {
-			return;
-		}
-
-		httpServletResponse.setHeader(
-			HttpHeaders.X_XSS_PROTECTION, _X_XSS_PROTECTION);
-	}
-
 	private SanitizedServletResponse(HttpServletResponse httpServletResponse) {
 		super(httpServletResponse);
 	}
-
-	private static final String _DISABLE_XSS_AUDITOR =
-		SanitizedServletResponse.class.getName() + "DISABLE_XSS_AUDITOR";
 
 	private static final boolean _X_CONTENT_TYPE_OPTIONS =
 		GetterUtil.getBoolean(
@@ -200,13 +132,10 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 			true);
 
 	private static final String[] _X_CONTENT_TYPE_OPTIONS_URLS_EXCLUDES =
-		StringUtil.split(
-			SystemProperties.get(
-				"http.header.secure.x.content.type.options.urls.excludes"));
+		SystemProperties.getArray(
+			"http.header.secure.x.content.type.options.urls.excludes");
 
 	private static final boolean _X_FRAME_OPTIONS;
-
-	private static final String _X_XSS_PROTECTION;
 
 	private static final KeyValuePair[] _xFrameOptionKVPs;
 
@@ -214,26 +143,19 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 		String httpHeaderSecureXFrameOptionsKey =
 			"http.header.secure.x.frame.options";
 
-		Properties properties = new SortedProperties(
-			new Comparator<String>() {
-
-				@Override
-				public int compare(String key1, String key2) {
-					return GetterUtil.getIntegerStrict(key1) -
-						GetterUtil.getIntegerStrict(key2);
-				}
-
-			},
-			PropertiesUtil.getProperties(
-				SystemProperties.getProperties(),
-				httpHeaderSecureXFrameOptionsKey.concat(StringPool.PERIOD),
-				true));
+		Map<String, String> properties = SystemProperties.getProperties(
+			httpHeaderSecureXFrameOptionsKey.concat(StringPool.PERIOD), true);
 
 		List<KeyValuePair> xFrameOptionKVPs = new ArrayList<>(
 			properties.size());
 
-		for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-			String propertyValue = (String)entry.getValue();
+		List<String> propertyNames = new ArrayList<>(properties.keySet());
+
+		propertyNames.sort(
+			Comparator.comparingInt(GetterUtil::getIntegerStrict));
+
+		for (String propertyName : propertyNames) {
+			String propertyValue = properties.get(propertyName);
 
 			String[] propertyValueParts = StringUtil.split(
 				propertyValue, CharPool.PIPE);
@@ -271,16 +193,6 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 		else {
 			_X_FRAME_OPTIONS = GetterUtil.getBoolean(
 				SystemProperties.get(httpHeaderSecureXFrameOptionsKey), true);
-		}
-
-		String xXssProtection = SystemProperties.get(
-			"http.header.secure.x.xss.protection");
-
-		if (Validator.isNull(xXssProtection)) {
-			_X_XSS_PROTECTION = null;
-		}
-		else {
-			_X_XSS_PROTECTION = xXssProtection;
 		}
 	}
 

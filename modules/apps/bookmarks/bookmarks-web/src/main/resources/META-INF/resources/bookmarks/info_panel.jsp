@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,12 +16,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 
 	folders = new ArrayList<BookmarksFolder>();
 
-	BookmarksFolder folder = (BookmarksFolder)request.getAttribute("view.jsp-folder");
-
-	if (folder != null) {
-		folders.add(folder);
-	}
-	else if (folderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+	if (folderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 		folders.add(BookmarksFolderLocalServiceUtil.getFolder(folderId));
 	}
 	else {
@@ -49,20 +35,26 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 		%>
 
 		<div class="sidebar-header">
-			<ul class="sidebar-actions">
-				<li>
-					<liferay-util:include page="/bookmarks/subscribe.jsp" servletContext="<%= application %>" />
-				</li>
-				<li>
-					<liferay-util:include page="/bookmarks/folder_action.jsp" servletContext="<%= application %>" />
-				</li>
-			</ul>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title"><%= (folder != null) ? HtmlUtil.escape(folder.getName()) : LanguageUtil.get(request, "home") %></div>
 
-			<h4 class="sidebar-title"><%= (folder != null) ? HtmlUtil.escape(folder.getName()) : LanguageUtil.get(request, "home") %></h4>
+					<div class="component-subtitle">
+						<liferay-ui:message key="folder" />
+					</div>
+				</div>
 
-			<h5 class="sidebar-subtitle">
-				<liferay-ui:message key="folder" />
-			</h5>
+				<div class="autofit-col">
+					<ul class="autofit-padded-no-gutters autofit-row">
+						<li class="autofit-col">
+							<liferay-util:include page="/bookmarks/subscribe.jsp" servletContext="<%= application %>" />
+						</li>
+						<li class="autofit-col">
+							<liferay-util:include page="/bookmarks/folder_action.jsp" servletContext="<%= application %>" />
+						</li>
+					</ul>
+				</div>
+			</div>
 		</div>
 
 		<clay:navigation-bar
@@ -72,7 +64,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 						add(
 							navigationItem -> {
 								navigationItem.setActive(true);
-								navigationItem.setLabel(LanguageUtil.get(request, "details"));
+								navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "details"));
 							});
 					}
 				}
@@ -80,7 +72,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 		/>
 
 		<div class="sidebar-body">
-			<dl class="sidebar-block">
+			<dl class="sidebar-dl sidebar-section">
 				<dt class="sidebar-dt">
 					<liferay-ui:message key="num-of-items" />
 				</dt>
@@ -117,20 +109,26 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 		%>
 
 		<div class="sidebar-header">
-			<ul class="sidebar-actions">
-				<li>
-					<liferay-util:include page="/bookmarks/subscribe.jsp" servletContext="<%= application %>" />
-				</li>
-				<li>
-					<liferay-util:include page="/bookmarks/entry_action.jsp" servletContext="<%= application %>" />
-				</li>
-			</ul>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title"><%= HtmlUtil.escape(entry.getName()) %></div>
 
-			<h4 class="sidebar-title"><%= HtmlUtil.escape(entry.getName()) %></h4>
+					<div class="h5">
+						<liferay-ui:message key="entry" />
+					</div>
+				</div>
 
-			<h5>
-				<liferay-ui:message key="entry" />
-			</h5>
+				<div class="autofit-col">
+					<ul class="autofit-padded-no-gutters autofit-row">
+						<li class="autofit-col">
+							<liferay-util:include page="/bookmarks/subscribe.jsp" servletContext="<%= application %>" />
+						</li>
+						<li class="autofit-col">
+							<liferay-util:include page="/bookmarks/entry_action.jsp" servletContext="<%= application %>" />
+						</li>
+					</ul>
+				</div>
+			</div>
 		</div>
 
 		<clay:navigation-bar
@@ -140,7 +138,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 						add(
 							navigationItem -> {
 								navigationItem.setActive(true);
-								navigationItem.setLabel(LanguageUtil.get(request, "details"));
+								navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "details"));
 							});
 					}
 				}
@@ -148,7 +146,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 		/>
 
 		<div class="sidebar-body">
-			<dl class="sidebar-block">
+			<dl class="sidebar-dl sidebar-section">
 				<dt class="sidebar-dt">
 					<liferay-ui:message key="created" />
 				</dt>
@@ -179,14 +177,14 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 				</dd>
 			</dl>
 
-			<div class="lfr-asset-categories sidebar-block">
+			<div class="lfr-asset-categories sidebar-section">
 				<liferay-asset:asset-categories-summary
 					className="<%= BookmarksEntry.class.getName() %>"
 					classPK="<%= entry.getEntryId() %>"
 				/>
 			</div>
 
-			<div class="lfr-asset-tags sidebar-block">
+			<div class="lfr-asset-tags sidebar-section">
 				<liferay-asset:asset-tags-summary
 					className="<%= BookmarksEntry.class.getName() %>"
 					classPK="<%= entry.getEntryId() %>"
@@ -194,7 +192,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 				/>
 			</div>
 
-			<liferay-ui:ratings
+			<liferay-ratings:ratings
 				className="<%= BookmarksEntry.class.getName() %>"
 				classPK="<%= entry.getEntryId() %>"
 				inTrash="<%= entry.isInTrash() %>"
@@ -227,7 +225,11 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 	</c:when>
 	<c:otherwise>
 		<div class="sidebar-header">
-			<h4 class="sidebar-title"><liferay-ui:message arguments="<%= folders.size() + entries.size() %>" key="x-items-are-selected" /></h4>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title"><liferay-ui:message arguments="<%= folders.size() + entries.size() %>" key="x-items-are-selected" /></div>
+				</div>
+			</div>
 		</div>
 
 		<clay:navigation-bar
@@ -237,7 +239,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 						add(
 							navigationItem -> {
 								navigationItem.setActive(true);
-								navigationItem.setLabel(LanguageUtil.get(request, "details"));
+								navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "details"));
 							});
 					}
 				}
@@ -245,7 +247,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(entries)) {
 		/>
 
 		<div class="sidebar-body">
-			<h5><liferay-ui:message arguments="<%= folders.size() + entries.size() %>" key="x-items-are-selected" /></h5>
+			<div class="h5"><liferay-ui:message arguments="<%= folders.size() + entries.size() %>" key="x-items-are-selected" /></div>
 		</div>
 	</c:otherwise>
 </c:choose>

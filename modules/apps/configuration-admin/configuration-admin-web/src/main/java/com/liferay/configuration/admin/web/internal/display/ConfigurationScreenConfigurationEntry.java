@@ -1,28 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.configuration.admin.web.internal.display;
 
 import com.liferay.configuration.admin.display.ConfigurationScreen;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import java.util.Locale;
 import java.util.Objects;
-
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 
 /**
  * @author Jorge Ferrer
@@ -38,16 +29,16 @@ public class ConfigurationScreenConfigurationEntry
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof ConfigurationEntry)) {
+		if (!(object instanceof ConfigurationEntry)) {
 			return false;
 		}
 
-		ConfigurationEntry configurationEntry = (ConfigurationEntry)obj;
+		ConfigurationEntry configurationEntry = (ConfigurationEntry)object;
 
 		if (Objects.equals(getCategory(), configurationEntry.getCategory()) &&
 			Objects.equals(getKey(), configurationEntry.getKey()) &&
@@ -68,14 +59,13 @@ public class ConfigurationScreenConfigurationEntry
 	public String getEditURL(
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
-		PortletURL portletURL = renderResponse.createRenderURL();
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/view_configuration_screen");
-		portletURL.setParameter(
-			"configurationScreenKey", _configurationScreen.getKey());
-
-		return portletURL.toString();
+		return PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCRenderCommandName(
+			"/configuration_admin/view_configuration_screen"
+		).setParameter(
+			"configurationScreenKey", _configurationScreen.getKey()
+		).buildString();
 	}
 
 	@Override
@@ -101,6 +91,11 @@ public class ConfigurationScreenConfigurationEntry
 		hash = HashUtil.hash(hash, getScope());
 
 		return hash;
+	}
+
+	@Override
+	public boolean isDeprecated() {
+		return _configurationScreen.isDeprecated();
 	}
 
 	private final ConfigurationScreen _configurationScreen;

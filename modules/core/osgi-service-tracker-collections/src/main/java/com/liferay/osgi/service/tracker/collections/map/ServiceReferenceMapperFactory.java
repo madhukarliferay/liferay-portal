@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.osgi.service.tracker.collections.map;
@@ -26,39 +17,57 @@ import org.osgi.framework.ServiceReference;
 public final class ServiceReferenceMapperFactory {
 
 	public static <K, S> ServiceReferenceMapper<K, S> create(
-		final BundleContext bundleContext,
-		final ServiceMapper<K, S> serviceMapper) {
+		BundleContext bundleContext, ServiceMapper<K, S> serviceMapper) {
 
-		return new ServiceReferenceMapper<K, S>() {
+		return (serviceReference, emitter) -> {
+			S service = bundleContext.getService(serviceReference);
 
-			@Override
-			public void map(
-				ServiceReference<S> serviceReference, Emitter<K> emitter) {
-
-				S service = bundleContext.getService(serviceReference);
-
-				try {
-					serviceMapper.map(service, emitter);
-				}
-				finally {
-					bundleContext.ungetService(serviceReference);
-				}
+			try {
+				serviceMapper.map(service, emitter);
 			}
-
+			finally {
+				bundleContext.ungetService(serviceReference);
+			}
 		};
 	}
 
 	public static <K, S> Function<BundleContext, ServiceReferenceMapper<K, S>>
-		createFromFunction(BiFunction<ServiceReference<S>, S, K> function) {
+		createFromBiFunction(BiFunction<ServiceReference<S>, S, K> biFunction) {
 
-		return b -> (serviceReference, emitter) -> {
-			S service = b.getService(serviceReference);
+		return bundleContext -> (serviceReference, emitter) -> {
+			S service = bundleContext.getService(serviceReference);
 
 			try {
-				emitter.emit(function.apply(serviceReference, service));
+				emitter.emit(biFunction.apply(serviceReference, service));
 			}
-			catch (Exception e) {
-				b.ungetService(serviceReference);
+			catch (Exception exception) {
+				bundleContext.ungetService(serviceReference);
+			}
+		};
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #createFromBiFunction(BiFunction)}
+	 */
+	@Deprecated
+	public static <K, S> Function<BundleContext, ServiceReferenceMapper<K, S>>
+		createFromFunction(BiFunction<ServiceReference<S>, S, K> biFunction) {
+
+		return createFromBiFunction(biFunction);
+	}
+
+	public static <K, S> ServiceReferenceMapper<K, S> createFromFunction(
+		BundleContext bundleContext, Function<S, K> function) {
+
+		return (serviceReference, emitter) -> {
+			S service = bundleContext.getService(serviceReference);
+
+			try {
+				emitter.emit(function.apply(service));
+			}
+			finally {
+				bundleContext.ungetService(serviceReference);
 			}
 		};
 	}

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.configuration.admin.internal.search.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 import com.liferay.portal.configuration.metatype.definitions.ExtendedAttributeDefinition;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedObjectClassDefinition;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
@@ -31,6 +23,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -75,24 +68,23 @@ public class ConfigurationModelIndexerTest {
 
 		_bundleContext = _bundle.getBundleContext();
 
-		Bundle configAdminWebBundle = _getBundle(
-			"com.liferay.configuration.admin.web");
+		Bundle configAdminWebBundle = BundleUtil.getBundle(
+			_bundleContext, "com.liferay.configuration.admin.web");
 
 		Class<?> configurationModelClass = configAdminWebBundle.loadClass(
 			"com.liferay.configuration.admin.web.internal.model." +
 				"ConfigurationModel");
 
 		_configurationModelConstructor = configurationModelClass.getConstructor(
-			ExtendedObjectClassDefinition.class, Configuration.class,
-			String.class, String.class, boolean.class);
+			String.class, String.class, Configuration.class,
+			ExtendedObjectClassDefinition.class, boolean.class);
 	}
 
 	@After
 	public void tearDown() throws SearchException {
 		for (Document document : _documents) {
 			_indexWriterHelper.deleteDocument(
-				_indexer.getSearchEngineId(), CompanyConstants.SYSTEM,
-				document.getUID(), true);
+				CompanyConstants.SYSTEM, document.getUID(), true);
 		}
 
 		_documents.clear();
@@ -118,8 +110,8 @@ public class ConfigurationModelIndexerTest {
 				extendedAttributeDefinitions, extensionAttributes);
 
 		Object configurationModel = _configurationModelConstructor.newInstance(
-			extendedObjectClassDefinition, null,
-			"com.liferay.configuration.admin.web", StringPool.QUESTION, true);
+			StringPool.QUESTION, "com.liferay.configuration.admin.web", null,
+			extendedObjectClassDefinition, true);
 
 		Document document = _indexer.getDocument(configurationModel);
 
@@ -146,33 +138,33 @@ public class ConfigurationModelIndexerTest {
 		_assertSearchResults();
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	private Configuration _addCompanyFactoryConfiguration() throws Exception {
 		Configuration configuration = OSGiServiceUtil.callService(
 			_bundleContext, ConfigurationAdmin.class,
 			configurationAdmin -> configurationAdmin.createFactoryConfiguration(
 				_PID, StringPool.QUESTION));
 
-		Map<String, String> extensionAttributes = HashMapBuilder.put(
-			"factoryInstanceLabelAttribute", "companyId"
-		).put(
-			"scope", Scope.COMPANY.toString()
-		).build();
-
 		ExtendedObjectClassDefinition extendedObjectClassDefinition =
 			new SimpleExtendedObjectClassDefinition(
-				configuration, extensionAttributes);
+				configuration,
+				HashMapBuilder.put(
+					"factoryInstanceLabelAttribute", "companyId"
+				).put(
+					"scope", Scope.COMPANY.toString()
+				).build());
 
 		Object configurationModel = _configurationModelConstructor.newInstance(
-			extendedObjectClassDefinition, configuration,
-			_bundle.getSymbolicName(), StringPool.QUESTION, true);
+			StringPool.QUESTION, _bundle.getSymbolicName(), configuration,
+			extendedObjectClassDefinition, true);
 
 		Document document = _indexer.getDocument(configurationModel);
 
 		_documents.add(document);
 
-		_indexWriterHelper.addDocument(
-			_indexer.getSearchEngineId(), CompanyConstants.SYSTEM, document,
-			true);
+		_indexWriterHelper.addDocument(CompanyConstants.SYSTEM, document, true);
 
 		return configuration;
 	}
@@ -190,27 +182,17 @@ public class ConfigurationModelIndexerTest {
 		Assert.assertEquals(hits.toString(), 1, hits.getLength());
 	}
 
-	private Bundle _getBundle(String bundleSymbolicName) {
-		Bundle[] bundles = _bundleContext.getBundles();
-
-		for (Bundle bundle : bundles) {
-			if (bundleSymbolicName.equals(bundle.getSymbolicName())) {
-				return bundle;
-			}
-		}
-
-		return null;
-	}
-
 	private static final String _PID = RandomTestUtil.randomString(50);
 
 	private Bundle _bundle;
 	private BundleContext _bundleContext;
-	private Constructor _configurationModelConstructor;
+	private Constructor<?> _configurationModelConstructor;
 	private final List<Document> _documents = new ArrayList<>();
 
-	@Inject(filter = "component.name=*.ConfigurationModelIndexer")
-	private Indexer _indexer;
+	@Inject(
+		filter = "component.name=com.liferay.configuration.admin.web.internal.search.ConfigurationModelIndexer"
+	)
+	private Indexer<Object> _indexer;
 
 	@Inject
 	private IndexWriterHelper _indexWriterHelper;

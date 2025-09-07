@@ -1,95 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {useState} from 'react';
 
-import {pushToHistory} from '../../../shared/components/filter/util/filterUtil.es';
-import {
-	parse,
-	stringify
-} from '../../../shared/components/router/queryString.es';
-import {useRouter} from '../../../shared/hooks/useRouter.es';
+import {getCapitalizedFilterKey} from '../../../shared/components/filter/util/filterUtil.es';
+import {useFilter} from '../../../shared/hooks/useFilter.es';
 import {useRouterParams} from '../../../shared/hooks/useRouterParams.es';
+import {getLocaleDateFormat} from '../../../shared/util/date.es';
 import moment from '../../../shared/util/moment.es';
 import {
-	formatDateEnLocale,
-	formatQueryDate,
-	parseDateMomentEnLocale
+	convertQueryDate,
+	formatDateTime,
+	parseDateMoment,
 } from '../util/timeRangeUtil.es';
 
-const useCustomTimeRange = (filterKey, prefixKey = '') => {
-	const [errors, setErrors] = useState(undefined);
-
-	const dateEndKey = `${prefixKey}dateEnd`;
-	const dateStartKey = `${prefixKey}dateStart`;
-	const prefixedFilterKey = `${prefixKey}${filterKey}`;
-
-	const {filters} = useRouterParams();
-
-	const [dateEnd, setDateEnd] = useState(
-		formatDateEnLocale(filters[dateEndKey])
-	);
-	const [dateStart, setDateStart] = useState(
-		formatDateEnLocale(filters[dateStartKey])
-	);
-
-	const routerProps = useRouter();
-
-	const applyCustomFilter = () => {
-		if (!errors) {
-			const query = parse(routerProps.location.search);
-
-			query.filters = {
-				...query.filters,
-				[dateEndKey]: formatQueryDate(dateEnd, true),
-				[dateStartKey]: formatQueryDate(dateStart),
-				[prefixedFilterKey]: ['custom']
-			};
-
-			pushToHistory(stringify(query), routerProps);
-		}
-	};
-
-	const validate = () => {
-		const dateEndMoment = parseDateMomentEnLocale(dateEnd);
-		const dateStartMoment = parseDateMomentEnLocale(dateStart);
-
-		let errors = validateDate(dateEndMoment, dateStartMoment);
-
-		if (!errors) {
-			errors = validateRangeConsistency(dateEndMoment, dateStartMoment);
-		}
-
-		if (!errors) {
-			errors = validateEarlierDate(dateEndMoment, dateStartMoment);
-		}
-
-		setErrors(errors);
-
-		return errors;
-	};
-
-	return {
-		applyCustomFilter,
-		dateEnd,
-		dateStart,
-		errors,
-		setDateEnd,
-		setDateStart,
-		validate
-	};
-};
+const updateErrors = (errors, fieldName, message) => ({
+	...(errors || {}),
+	[fieldName]: message,
+});
 
 const validateDate = (dateEndMoment, dateStartMoment) => {
-	const dateNow = new Date();
+	const dateNow = moment();
 	let errors;
 
 	if (!dateEndMoment.isValid() || dateEndMoment.isAfter(dateNow)) {
@@ -112,10 +45,7 @@ const validateDate = (dateEndMoment, dateStartMoment) => {
 };
 
 const validateEarlierDate = (dateEndMoment, dateStartMoment) => {
-	const earlierDate = moment()
-		.date(1)
-		.month(1)
-		.year(1970);
+	const earlierDate = moment.utc([1970, 0, 1, 0]);
 	let errors;
 
 	if (dateEndMoment.isBefore(earlierDate)) {
@@ -163,9 +93,63 @@ const validateRangeConsistency = (dateEndMoment, dateStartMoment) => {
 	return errors;
 };
 
-const updateErrors = (errors, fieldName, message) => ({
-	...(errors || {}),
-	[fieldName]: message
-});
+const useCustomTimeRange = (prefixKey, withoutRouteParams) => {
+	const [errors, setErrors] = useState(undefined);
+	const {filters} = useRouterParams();
+	const {filterValues} = useFilter({
+		withoutRouteParams,
+	});
+
+	const dateEndKey = getCapitalizedFilterKey(prefixKey, 'dateEnd');
+	const dateFormat = getLocaleDateFormat();
+	const dateStartKey = getCapitalizedFilterKey(prefixKey, 'dateStart');
+
+	const values = !withoutRouteParams ? filters : filterValues;
+
+	const [dateEnd, setDateEnd] = useState(
+		convertQueryDate(values[dateEndKey], dateFormat)
+	);
+	const [dateStart, setDateStart] = useState(
+		convertQueryDate(values[dateStartKey], dateFormat)
+	);
+
+	const applyCustomFilter = (handleApply) => {
+		const {dateEnd: dateEndError, dateStart: dateStartError} = errors || {};
+
+		if (!dateEndError && !dateStartError) {
+			handleApply({
+				dateEnd: formatDateTime(dateEnd, dateFormat, true),
+				dateStart: formatDateTime(dateStart, dateFormat),
+				key: 'custom',
+			});
+		}
+	};
+
+	const validate = () => {
+		const dateEndMoment = parseDateMoment(dateEnd, dateFormat);
+		const dateStartMoment = parseDateMoment(dateStart, dateFormat);
+
+		const errors = {
+			...validateDate(dateEndMoment, dateStartMoment),
+			...validateEarlierDate(dateEndMoment, dateStartMoment),
+			...validateRangeConsistency(dateEndMoment, dateStartMoment),
+		};
+
+		setErrors(errors);
+
+		return errors;
+	};
+
+	return {
+		applyCustomFilter,
+		dateEnd,
+		dateFormat,
+		dateStart,
+		errors,
+		setDateEnd,
+		setDateStart,
+		validate,
+	};
+};
 
 export {useCustomTimeRange};

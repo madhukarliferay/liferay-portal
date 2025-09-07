@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.impl;
@@ -148,12 +139,14 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 
 		if (!_calendarModelResourcePermission.contains(
 				getPermissionChecker(), calendarId,
-				CalendarActionKeys.MANAGE_BOOKINGS)) {
+				CalendarActionKeys.MANAGE_BOOKINGS) ||
+			!_calendarModelResourcePermission.contains(
+				getPermissionChecker(), calendarId, ActionKeys.VIEW)) {
 
 			return false;
 		}
 
-		Calendar calendar = getCalendar(calendarId);
+		Calendar calendar = calendarLocalService.getCalendar(calendarId);
 
 		if (calendarLocalService.hasStagingCalendar(calendar)) {
 			return false;
@@ -193,7 +186,7 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 			companyId, groupIds, calendarResourceIds, keywords, start, end,
 			orderByComparator);
 
-		return filterCalendars(calendars, actionId);
+		return _filterCalendars(calendars, actionId);
 	}
 
 	@Override
@@ -220,7 +213,7 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 			companyId, groupIds, calendarResourceIds, name, description,
 			andOperator, start, end, orderByComparator);
 
-		return filterCalendars(calendars, actionId);
+		return _filterCalendars(calendars, actionId);
 	}
 
 	@Override
@@ -242,8 +235,7 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 
 		List<Calendar> calendars = search(
 			companyId, groupIds, calendarResourceIds, keywords, andOperator,
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			(OrderByComparator<Calendar>)null);
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		return calendars.size();
 	}
@@ -268,8 +260,7 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 
 		List<Calendar> calendars = search(
 			companyId, groupIds, calendarResourceIds, name, description,
-			andOperator, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			(OrderByComparator<Calendar>)null, actionId);
+			andOperator, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null, actionId);
 
 		return calendars.size();
 	}
@@ -316,21 +307,21 @@ public class CalendarServiceImpl extends CalendarServiceBaseImpl {
 			calendarId, color, serviceContext);
 	}
 
-	protected List<Calendar> filterCalendars(
+	private List<Calendar> _filterCalendars(
 			List<Calendar> calendars, String actionId)
 		throws PortalException {
 
 		calendars = ListUtil.copy(calendars);
 
-		Iterator<Calendar> itr = calendars.iterator();
+		Iterator<Calendar> iterator = calendars.iterator();
 
-		while (itr.hasNext()) {
-			Calendar calendar = itr.next();
+		while (iterator.hasNext()) {
+			Calendar calendar = iterator.next();
 
 			if (!_calendarModelResourcePermission.contains(
 					getPermissionChecker(), calendar, actionId)) {
 
-				itr.remove();
+				iterator.remove();
 			}
 		}
 

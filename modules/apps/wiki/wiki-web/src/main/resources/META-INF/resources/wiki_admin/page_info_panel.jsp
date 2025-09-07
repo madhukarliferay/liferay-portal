@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,7 +10,7 @@
 <%
 WikiEngineRenderer wikiEngineRenderer = (WikiEngineRenderer)request.getAttribute(WikiWebKeys.WIKI_ENGINE_RENDERER);
 
-WikiPageInfoPanelDisplayContext wikiPageInfoPanelDisplayContext = wikiDisplayContextProvider.getWikiPageInfoPanelDisplayContext(request, response);
+WikiPageInfoPanelDisplayContext wikiPageInfoPanelDisplayContext = new WikiPageInfoPanelDisplayContext(request);
 
 request.setAttribute("page_info_panel.jsp-wikiPage", wikiPageInfoPanelDisplayContext.getFirstPage());
 %>
@@ -29,32 +20,47 @@ request.setAttribute("page_info_panel.jsp-wikiPage", wikiPageInfoPanelDisplayCon
 		<div class="sidebar-header">
 			<c:choose>
 				<c:when test="<%= wikiPageInfoPanelDisplayContext.isSinglePageSelection() %>">
-					<ul class="sidebar-actions">
-						<li>
-							<liferay-util:include page="/wiki/subscribe.jsp" servletContext="<%= application %>" />
-						</li>
-						<li>
-							<liferay-util:include page="/wiki/page_action.jsp" servletContext="<%= application %>" />
-						</li>
-					</ul>
+					<div class="autofit-row sidebar-section">
+						<div class="autofit-col autofit-col-expand">
 
-					<%
-					WikiPage wikiPage = wikiPageInfoPanelDisplayContext.getFirstPage();
-					%>
+							<%
+							WikiPage wikiPage = wikiPageInfoPanelDisplayContext.getFirstPage();
+							%>
 
-					<h4 class="sidebar-title">
-						<%= HtmlUtil.escape(wikiPage.getTitle()) %>
-					</h4>
+							<div class="component-title">
+								<%= HtmlUtil.escape(wikiPage.getTitle()) %>
+							</div>
 
-					<h5 class="sidebar-subtitle">
-						<liferay-ui:message key="page" />
-					</h5>
+							<div class="component-subtitle">
+								<liferay-ui:message key="page" />
+							</div>
+						</div>
+
+						<div class="autofit-col">
+							<ul class="autofit-padded-no-gutters autofit-row">
+								<li class="autofit-col">
+									<liferay-util:include page="/wiki/subscribe.jsp" servletContext="<%= application %>" />
+								</li>
+								<li class="autofit-col">
+									<liferay-util:include page="/wiki/page_action.jsp" servletContext="<%= application %>" />
+								</li>
+							</ul>
+						</div>
+					</div>
 				</c:when>
 				<c:when test="<%= wikiPageInfoPanelDisplayContext.isMultiplePageSelection() %>">
-					<h4 class="sidebar-title"><liferay-ui:message arguments="<%= wikiPageInfoPanelDisplayContext.getSelectedPagesCount() %>" key="x-items-are-selected" /></h4>
+					<div class="autofit-row sidebar-section">
+						<div class="autofit-col autofit-col-expand">
+							<div class="component-title"><liferay-ui:message arguments="<%= wikiPageInfoPanelDisplayContext.getSelectedPagesCount() %>" key="x-items-are-selected" /></div>
+						</div>
+					</div>
 				</c:when>
 				<c:otherwise>
-					<h4 class="sidebar-title"><liferay-ui:message key="pages" /></h4>
+					<div class="autofit-row sidebar-section">
+						<div class="autofit-col autofit-col-expand">
+							<div class="component-title"><liferay-ui:message key="pages" /></div>
+						</div>
+					</div>
 				</c:otherwise>
 			</c:choose>
 		</div>
@@ -66,9 +72,13 @@ request.setAttribute("page_info_panel.jsp-wikiPage", wikiPageInfoPanelDisplayCon
 			WikiPage wikiPage = wikiPageInfoPanelDisplayContext.getFirstPage();
 			%>
 
-			<h4 class="sidebar-title">
-				<%= HtmlUtil.escape(wikiPage.getTitle()) %>
-			</h4>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title">
+						<%= HtmlUtil.escape(wikiPage.getTitle()) %>
+					</div>
+				</div>
+			</div>
 		</div>
 	</c:otherwise>
 </c:choose>
@@ -96,7 +106,7 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 					WikiPage wikiPage = wikiPageInfoPanelDisplayContext.getFirstPage();
 					%>
 
-					<dl class="sidebar-block">
+					<dl class="sidebar-dl sidebar-section">
 						<c:if test="<%= Validator.isNotNull(wikiPage.getSummary()) %>">
 							<dt class="sidebar-dt">
 								<liferay-ui:message key="summary" />
@@ -126,13 +136,13 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 							<liferay-ui:message key="create-date" />
 						</dt>
 						<dd class="sidebar-dd">
-							<%= dateFormatDateTime.format(wikiPage.getCreateDate()) %>
+							<%= dateTimeFormat.format(wikiPage.getCreateDate()) %>
 						</dd>
 						<dt class="sidebar-dt">
 							<liferay-ui:message key="last-modified" />
 						</dt>
 						<dd class="sidebar-dd">
-							<%= dateFormatDateTime.format(wikiPage.getModifiedDate()) %>
+							<%= dateTimeFormat.format(wikiPage.getModifiedDate()) %>
 						</dd>
 						<dt class="sidebar-dt">
 							<liferay-ui:message key="attachments" />
@@ -150,7 +160,7 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 						</dd>
 					</dl>
 
-					<div class="lfr-asset-categories sidebar-block">
+					<div class="lfr-asset-categories sidebar-section">
 						<liferay-asset:asset-categories-summary
 							className="<%= WikiPage.class.getName() %>"
 							classPK="<%= wikiPage.getResourcePrimKey() %>"
@@ -158,7 +168,7 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 						/>
 					</div>
 
-					<div class="lfr-asset-tags sidebar-block">
+					<div class="lfr-asset-tags sidebar-section">
 						<liferay-asset:asset-tags-summary
 							className="<%= WikiPage.class.getName() %>"
 							classPK="<%= wikiPage.getResourcePrimKey() %>"
@@ -167,7 +177,7 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 					</div>
 
 					<c:if test="<%= wikiPortletInstanceSettingsHelper.isEnablePageRatings() %>">
-						<liferay-ui:ratings
+						<liferay-ratings:ratings
 							className="<%= WikiPage.class.getName() %>"
 							classPK="<%= wikiPage.getResourcePrimKey() %>"
 							inTrash="<%= wikiPage.isInTrash() %>"
@@ -198,10 +208,10 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 					</c:if>
 				</c:when>
 				<c:when test="<%= wikiPageInfoPanelDisplayContext.isMultiplePageSelection() %>">
-					<h5><liferay-ui:message arguments="<%= wikiPageInfoPanelDisplayContext.getSelectedPagesCount() %>" key="x-items-are-selected" /></h5>
+					<div class="h5"><liferay-ui:message arguments="<%= wikiPageInfoPanelDisplayContext.getSelectedPagesCount() %>" key="x-items-are-selected" /></div>
 				</c:when>
 				<c:otherwise>
-					<dl class="sidebar-block">
+					<dl class="sidebar-dl sidebar-section">
 						<dt class="sidebar-dt">
 							<liferay-ui:message key="num-of-items" />
 						</dt>
@@ -222,26 +232,24 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 
 		<liferay-ui:section>
 			<div class="sidebar-body">
-				<ul class="sidebar-block tabular-list-group-unstyled">
+				<ul class="list-group sidebar-list-group">
 
 					<%
-					List<WikiPage> pages = WikiPageLocalServiceUtil.getPages(wikiPage.getNodeId(), wikiPage.getTitle(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, new PageVersionComparator());
-
-					for (WikiPage curPage : pages) {
+					for (WikiPage curPage : WikiPageLocalServiceUtil.getPages(wikiPage.getNodeId(), wikiPage.getTitle(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, PageVersionComparator.getInstance(false))) {
 					%>
 
-						<li class="list-group-item">
-							<div class="list-group-item-content">
+						<li class="list-group-item list-group-item-flex">
+							<div class="autofit-col autofit-col-expand">
 								<div class="h5">
 									<liferay-ui:message arguments="<%= curPage.getVersion() %>" key="version-x" />
 								</div>
 
 								<div class="h6 sidebar-caption">
-									<liferay-ui:message arguments='<%= new Object[] {HtmlUtil.escape(Validator.isNotNull(curPage.getUserName()) ? curPage.getUserName() : "Liferay"), dateFormatDateTime.format(curPage.getStatusDate())} %>' key="by-x-on-x" />
+									<liferay-ui:message arguments='<%= new Object[] {HtmlUtil.escape(Validator.isNotNull(curPage.getUserName()) ? curPage.getUserName() : "Liferay"), dateTimeFormat.format(curPage.getStatusDate())} %>' key="by-x-on-x" />
 								</div>
 							</div>
 
-							<div class="list-group-item-field">
+							<div class="autofit-col">
 
 								<%
 								request.setAttribute("page_info_panel.jsp-wikiPage", curPage);
@@ -261,7 +269,7 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 
 		<liferay-ui:section>
 			<div class="sidebar-body">
-				<ul class="sidebar-block tabular-list-group-unstyled">
+				<ul class="list-group sidebar-list-group">
 
 					<%
 					WikiSocialActivityHelper wikiSocialActivityHelper = new WikiSocialActivityHelper(wikiRequestHelper);
@@ -274,19 +282,19 @@ if (wikiPageInfoPanelDisplayContext.isSinglePageSelection()) {
 						String path = wikiSocialActivityHelper.getSocialActivityActionJSP(socialActivity, extraDataJSONObject);
 					%>
 
-						<li class="list-group-item">
-							<div class="list-group-item-content">
+						<li class="list-group-item list-group-item-flex">
+							<div class="autofit-col autofit-col-expand">
 								<div class="h5">
 									<%= wikiSocialActivityHelper.getSocialActivityDescription(wikiPage, socialActivity, extraDataJSONObject, resourceBundle) %>
 								</div>
 
 								<div class="h6 sidebar-caption">
-									<%= dateFormatDateTime.format(socialActivity.getCreateDate()) %>
+									<%= dateTimeFormat.format(socialActivity.getCreateDate()) %>
 								</div>
 							</div>
 
 							<c:if test="<%= Validator.isNotNull(path) %>">
-								<div class="list-group-item-field">
+								<div class="autofit-col">
 
 									<%
 									request.setAttribute(WikiWebKeys.WIKI_PAGE, wikiPage);

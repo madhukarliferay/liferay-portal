@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -32,6 +24,7 @@ import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
+import com.liferay.site.navigation.exception.DuplicateSiteNavigationMenuItemExternalReferenceCodeException;
 import com.liferay.site.navigation.exception.NoSuchMenuItemException;
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 import com.liferay.site.navigation.service.SiteNavigationMenuItemLocalServiceUtil;
@@ -45,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -130,7 +122,12 @@ public class SiteNavigationMenuItemPersistenceTest {
 
 		newSiteNavigationMenuItem.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSiteNavigationMenuItem.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSiteNavigationMenuItem.setUuid(RandomTestUtil.randomString());
+
+		newSiteNavigationMenuItem.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newSiteNavigationMenuItem.setGroupId(RandomTestUtil.nextLong());
 
@@ -172,8 +169,14 @@ public class SiteNavigationMenuItemPersistenceTest {
 			existingSiteNavigationMenuItem.getMvccVersion(),
 			newSiteNavigationMenuItem.getMvccVersion());
 		Assert.assertEquals(
+			existingSiteNavigationMenuItem.getCtCollectionId(),
+			newSiteNavigationMenuItem.getCtCollectionId());
+		Assert.assertEquals(
 			existingSiteNavigationMenuItem.getUuid(),
 			newSiteNavigationMenuItem.getUuid());
+		Assert.assertEquals(
+			existingSiteNavigationMenuItem.getExternalReferenceCode(),
+			newSiteNavigationMenuItem.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingSiteNavigationMenuItem.getSiteNavigationMenuItemId(),
 			newSiteNavigationMenuItem.getSiteNavigationMenuItemId());
@@ -223,6 +226,32 @@ public class SiteNavigationMenuItemPersistenceTest {
 				newSiteNavigationMenuItem.getLastPublishDate()));
 	}
 
+	@Test(
+		expected = DuplicateSiteNavigationMenuItemExternalReferenceCodeException.class
+	)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		SiteNavigationMenuItem siteNavigationMenuItem =
+			addSiteNavigationMenuItem();
+
+		SiteNavigationMenuItem newSiteNavigationMenuItem =
+			addSiteNavigationMenuItem();
+
+		newSiteNavigationMenuItem.setGroupId(
+			siteNavigationMenuItem.getGroupId());
+
+		newSiteNavigationMenuItem = _persistence.update(
+			newSiteNavigationMenuItem);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newSiteNavigationMenuItem);
+
+		newSiteNavigationMenuItem.setExternalReferenceCode(
+			siteNavigationMenuItem.getExternalReferenceCode());
+
+		_persistence.update(newSiteNavigationMenuItem);
+	}
+
 	@Test
 	public void testCountByUuid() throws Exception {
 		_persistence.countByUuid("");
@@ -251,6 +280,13 @@ public class SiteNavigationMenuItemPersistenceTest {
 	}
 
 	@Test
+	public void testCountByCompanyId() throws Exception {
+		_persistence.countByCompanyId(RandomTestUtil.nextLong());
+
+		_persistence.countByCompanyId(0L);
+	}
+
+	@Test
 	public void testCountBySiteNavigationMenuId() throws Exception {
 		_persistence.countBySiteNavigationMenuId(RandomTestUtil.nextLong());
 
@@ -263,6 +299,15 @@ public class SiteNavigationMenuItemPersistenceTest {
 			RandomTestUtil.nextLong());
 
 		_persistence.countByParentSiteNavigationMenuItemId(0L);
+	}
+
+	@Test
+	public void testCountByType() throws Exception {
+		_persistence.countByType("");
+
+		_persistence.countByType("null");
+
+		_persistence.countByType((String)null);
 	}
 
 	@Test
@@ -280,6 +325,15 @@ public class SiteNavigationMenuItemPersistenceTest {
 		_persistence.countByS_LikeN(0L, "null");
 
 		_persistence.countByS_LikeN(0L, (String)null);
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
 	}
 
 	@Test
@@ -310,7 +364,8 @@ public class SiteNavigationMenuItemPersistenceTest {
 
 	protected OrderByComparator<SiteNavigationMenuItem> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SiteNavigationMenuItem", "mvccVersion", true, "uuid", true,
+			"SiteNavigationMenuItem", "mvccVersion", true, "ctCollectionId",
+			true, "uuid", true, "externalReferenceCode", true,
 			"siteNavigationMenuItemId", true, "groupId", true, "companyId",
 			true, "userId", true, "userName", true, "createDate", true,
 			"modifiedDate", true, "siteNavigationMenuId", true,
@@ -561,21 +616,77 @@ public class SiteNavigationMenuItemPersistenceTest {
 
 		_persistence.clearCache();
 
-		SiteNavigationMenuItem existingSiteNavigationMenuItem =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newSiteNavigationMenuItem.getPrimaryKey());
+				newSiteNavigationMenuItem.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingSiteNavigationMenuItem.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingSiteNavigationMenuItem, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SiteNavigationMenuItem newSiteNavigationMenuItem =
+			addSiteNavigationMenuItem();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SiteNavigationMenuItem.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"siteNavigationMenuItemId",
+				newSiteNavigationMenuItem.getSiteNavigationMenuItemId()));
+
+		List<SiteNavigationMenuItem> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		SiteNavigationMenuItem siteNavigationMenuItem) {
+
 		Assert.assertEquals(
-			Long.valueOf(existingSiteNavigationMenuItem.getGroupId()),
+			siteNavigationMenuItem.getUuid(),
+			ReflectionTestUtil.invoke(
+				siteNavigationMenuItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(siteNavigationMenuItem.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSiteNavigationMenuItem, "getOriginalGroupId",
-				new Class<?>[0]));
+				siteNavigationMenuItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			siteNavigationMenuItem.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				siteNavigationMenuItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(siteNavigationMenuItem.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				siteNavigationMenuItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected SiteNavigationMenuItem addSiteNavigationMenuItem()
@@ -587,7 +698,12 @@ public class SiteNavigationMenuItemPersistenceTest {
 
 		siteNavigationMenuItem.setMvccVersion(RandomTestUtil.nextLong());
 
+		siteNavigationMenuItem.setCtCollectionId(RandomTestUtil.nextLong());
+
 		siteNavigationMenuItem.setUuid(RandomTestUtil.randomString());
+
+		siteNavigationMenuItem.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		siteNavigationMenuItem.setGroupId(RandomTestUtil.nextLong());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal.display.context;
@@ -24,7 +15,6 @@ import com.liferay.oauth2.provider.web.internal.constants.OAuth2ProviderPortletK
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -32,7 +22,7 @@ import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
 /**
  * @author Tomas Polesovsky
@@ -49,7 +39,7 @@ public abstract class BaseOAuth2PortletDisplayContext {
 		}
 
 		long oAuth2ApplicationId = ParamUtil.getLong(
-			portletRequest, "oAuth2ApplicationId", 0);
+			portletRequest, "oAuth2ApplicationId");
 
 		if (oAuth2ApplicationId > 0) {
 			oAuth2Application = oAuth2ApplicationService.getOAuth2Application(
@@ -70,10 +60,10 @@ public abstract class BaseOAuth2PortletDisplayContext {
 			return getDefaultIconURL();
 		}
 
-		FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(
-			oAuth2Application.getIconFileEntryId());
-
-		return dlURLHelper.getThumbnailSrc(fileEntry, themeDisplay);
+		return dlURLHelper.getThumbnailSrc(
+			DLAppLocalServiceUtil.getFileEntry(
+				oAuth2Application.getIconFileEntryId()),
+			themeDisplay);
 	}
 
 	public boolean hasAddApplicationPermission() {
@@ -84,6 +74,16 @@ public abstract class BaseOAuth2PortletDisplayContext {
 			0, OAuth2ProviderConstants.RESOURCE_NAME,
 			OAuth2ProviderConstants.RESOURCE_NAME,
 			OAuth2ProviderActionKeys.ACTION_ADD_APPLICATION);
+	}
+
+	public boolean hasAddTrustedApplicationPermission() {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		return permissionChecker.hasPermission(
+			0, OAuth2ProviderConstants.RESOURCE_NAME,
+			OAuth2ProviderConstants.RESOURCE_NAME,
+			OAuth2ProviderActionKeys.ACTION_ADD_TRUSTED_APPLICATION);
 	}
 
 	public boolean hasDeletePermission(OAuth2Application oAuth2Application) {
@@ -116,6 +116,16 @@ public abstract class BaseOAuth2PortletDisplayContext {
 		return hasPermission(oAuth2Application, ActionKeys.PERMISSIONS);
 	}
 
+	public boolean hasRememberDevicePermission() {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		return permissionChecker.hasPermission(
+			0, OAuth2ProviderConstants.RESOURCE_NAME,
+			OAuth2ProviderConstants.RESOURCE_NAME,
+			OAuth2ProviderActionKeys.ACTION_ADD_REMEMBER_DEVICE);
+	}
+
 	public boolean hasRevokeTokenPermission(
 		OAuth2Application oAuth2Application) {
 
@@ -136,11 +146,22 @@ public abstract class BaseOAuth2PortletDisplayContext {
 				permissionChecker, OAuth2ProviderPortletKeys.OAUTH2_ADMIN,
 				OAuth2ProviderActionKeys.ACTION_VIEW_GRANTED_AUTHORIZATIONS);
 		}
-		catch (PortalException pe) {
-			_log.error(pe, pe);
+		catch (PortalException portalException) {
+			_log.error(portalException);
 
 			return false;
 		}
+	}
+
+	protected BaseOAuth2PortletDisplayContext(
+		DLURLHelper dlURLHelper,
+		OAuth2ApplicationService oAuth2ApplicationService,
+		PortletRequest portletRequest, ThemeDisplay themeDisplay) {
+
+		this.dlURLHelper = dlURLHelper;
+		this.oAuth2ApplicationService = oAuth2ApplicationService;
+		this.portletRequest = portletRequest;
+		this.themeDisplay = themeDisplay;
 	}
 
 	protected DLURLHelper dlURLHelper;

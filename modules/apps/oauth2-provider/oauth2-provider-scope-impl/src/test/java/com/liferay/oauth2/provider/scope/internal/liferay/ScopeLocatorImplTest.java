@@ -1,65 +1,91 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.scope.internal.liferay;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.hasItems;
-
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-
 import com.liferay.oauth2.provider.scope.internal.configuration.ScopeLocatorConfiguration;
-import com.liferay.oauth2.provider.scope.internal.liferay.ScopeLocatorImpl.ScopeLocatorConfigurationProvider;
 import com.liferay.oauth2.provider.scope.internal.spi.scope.matcher.StrictScopeMatcherFactory;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
-import com.liferay.oauth2.provider.scope.liferay.ScopedServiceTrackerMap;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandler;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandlerFactory;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
 import com.liferay.oauth2.provider.scope.spi.scope.mapper.ScopeMapper;
 import com.liferay.oauth2.provider.scope.spi.scope.matcher.ScopeMatcherFactory;
 import com.liferay.osgi.service.tracker.collections.ServiceReferenceServiceTuple;
+import com.liferay.osgi.service.tracker.collections.map.ScopedServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
-
-import java.lang.reflect.Field;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.remote.jaxrs.whiteboard.lifecycle.JAXRSLifecycle;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import org.hamcrest.CoreMatchers;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Stian Sigvartsen
  */
-@RunWith(PowerMockRunner.class)
-public class ScopeLocatorImplTest extends PowerMockito {
+public class ScopeLocatorImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() {
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		Mockito.when(
+			FrameworkUtil.getBundle(Mockito.any())
+		).thenReturn(
+			bundleContext.getBundle()
+		);
+
+		Dictionary<String, Object> properties = new Hashtable<>();
+
+		properties.put("osgi.jaxrs.name", "Default");
+
+		_prefixHandlerFactoryServiceRegistration =
+			bundleContext.registerService(
+				PrefixHandlerFactory.class,
+				Mockito.mock(PrefixHandlerFactory.class), properties);
+
+		_scopeMapperServiceRegistration = bundleContext.registerService(
+			ScopeMapper.class, Mockito.mock(ScopeMapper.class), properties);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		_frameworkUtilMockedStatic.close();
+		_prefixHandlerFactoryServiceRegistration.unregister();
+		_scopeMapperServiceRegistration.unregister();
+	}
 
 	@Test
 	public void testPrefixHandlerFactoryByNameAndCompany() throws Exception {
@@ -93,11 +119,11 @@ public class ScopeLocatorImplTest extends PowerMockito {
 		for (String scope : scopesSet1) {
 			Assert.assertThat(
 				application1ScopeAliases,
-				hasItem(defaultPrefixHandler.addPrefix(scope)));
+				CoreMatchers.hasItem(defaultPrefixHandler.addPrefix(scope)));
 
 			Assert.assertThat(
 				application2ScopeAliases,
-				hasItem(defaultPrefixHandler.addPrefix(scope)));
+				CoreMatchers.hasItem(defaultPrefixHandler.addPrefix(scope)));
 		}
 
 		PrefixHandler appPrefixHandler = target -> "app/" + target;
@@ -133,11 +159,11 @@ public class ScopeLocatorImplTest extends PowerMockito {
 		for (String scope : scopesSet1) {
 			Assert.assertThat(
 				application1ScopeAliases,
-				hasItem(appPrefixHandler.addPrefix(scope)));
+				CoreMatchers.hasItem(appPrefixHandler.addPrefix(scope)));
 
 			Assert.assertThat(
 				application2ScopeAliases,
-				hasItem(companyPrefixHandler.addPrefix(scope)));
+				CoreMatchers.hasItem(companyPrefixHandler.addPrefix(scope)));
 		}
 	}
 
@@ -165,11 +191,13 @@ public class ScopeLocatorImplTest extends PowerMockito {
 			scopeLocatorImpl.getScopeAliases(_COMPANY_ID, applicationName2);
 
 		for (String scope : scopesSet1) {
-			Assert.assertThat(application1ScopeAliases, hasItem(scope));
+			Assert.assertThat(
+				application1ScopeAliases, CoreMatchers.hasItem(scope));
 		}
 
 		for (String scope : scopedSet2) {
-			Assert.assertThat(application2ScopesAliasesDefault, hasItem(scope));
+			Assert.assertThat(
+				application2ScopesAliasesDefault, CoreMatchers.hasItem(scope));
 		}
 
 		Assert.assertNotEquals(
@@ -206,9 +234,11 @@ public class ScopeLocatorImplTest extends PowerMockito {
 			scopeLocatorImpl.getScopeAliases(_COMPANY_ID, applicationName2);
 
 		for (String scope : scopesSet1) {
-			Assert.assertThat(application1ScopeAliases, hasItem(scope));
+			Assert.assertThat(
+				application1ScopeAliases, CoreMatchers.hasItem(scope));
 
-			Assert.assertThat(application2ScopeAliases, hasItem(scope));
+			Assert.assertThat(
+				application2ScopeAliases, CoreMatchers.hasItem(scope));
 		}
 
 		ScopeMapper appScopeMapper = scope -> Collections.singleton(
@@ -242,7 +272,7 @@ public class ScopeLocatorImplTest extends PowerMockito {
 		for (String scope : scopesSet1) {
 			Assert.assertThat(
 				application1ScopesAliases,
-				hasItems(
+				CoreMatchers.hasItems(
 					appScopeMapper.map(
 						scope
 					).toArray(
@@ -251,7 +281,7 @@ public class ScopeLocatorImplTest extends PowerMockito {
 
 			Assert.assertThat(
 				application2ScopesAliases,
-				hasItems(
+				CoreMatchers.hasItems(
 					companyScopeMapper.map(
 						scope
 					).toArray(
@@ -307,7 +337,7 @@ public class ScopeLocatorImplTest extends PowerMockito {
 		PrefixHandlerFactory testPrefixHandlerFactory =
 			propertyAccessor -> target -> "test/" + target;
 
-		final ScopeMatcherFactory scopeMatcherFactory = Mockito.spy(
+		ScopeMatcherFactory scopeMatcherFactory = Mockito.spy(
 			new StrictScopeMatcherFactory());
 
 		Builder builder = new Builder();
@@ -345,38 +375,28 @@ public class ScopeLocatorImplTest extends PowerMockito {
 	protected final Set<String> scopesSet1 = new HashSet<>(
 		Arrays.asList("everything", "everything.readonly"));
 
-	private static void _set(Object object, String fieldName, Object value) {
-		Class<?> clazz = object.getClass();
-
-		try {
-			Field field = clazz.getDeclaredField(fieldName);
-
-			field.setAccessible(true);
-
-			field.set(object, value);
-		}
-		catch (Exception e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
-
 	private Set<String> _getScopes(
 		Collection<LiferayOAuth2Scope> liferayOAuth2Scopes) {
 
-		Stream<LiferayOAuth2Scope> stream = liferayOAuth2Scopes.stream();
+		Set<String> scopes = new HashSet<>();
 
-		return stream.flatMap(
-			liferayOAuth2Scope -> Collections.singleton(
-				liferayOAuth2Scope.getScope()
-			).stream()
-		).collect(
-			Collectors.toSet()
-		);
+		for (LiferayOAuth2Scope liferayOAuth2Scope : liferayOAuth2Scopes) {
+			scopes.add(liferayOAuth2Scope.getScope());
+		}
+
+		return scopes;
 	}
 
 	private static final String _APPLICATION_NAME = "com.liferay.test1";
 
 	private static final long _COMPANY_ID = 1;
+
+	private static final MockedStatic<FrameworkUtil>
+		_frameworkUtilMockedStatic = Mockito.mockStatic(FrameworkUtil.class);
+	private static ServiceRegistration<PrefixHandlerFactory>
+		_prefixHandlerFactoryServiceRegistration;
+	private static ServiceRegistration<ScopeMapper>
+		_scopeMapperServiceRegistration;
 
 	private class Builder {
 
@@ -409,12 +429,18 @@ public class ScopeLocatorImplTest extends PowerMockito {
 					});
 			}
 
-			if (!_scopeLocatorConfigurationProvidersInitialized) {
-				withScopeLocatorConfigurationProviders(
-					() -> new TestScopeLocatorConfiguration(),
-					registrator -> {
-					});
-			}
+			ReflectionTestUtil.setFieldValue(
+				_scopeLocatorImpl, "_jaxrsLifecycle",
+				new JAXRSLifecycle() {
+
+					@Override
+					public void ensureReady() {
+					}
+
+				});
+			ReflectionTestUtil.setFieldValue(
+				_scopeLocatorImpl, "_scopeLocatorConfiguration",
+				new TestScopeLocatorConfiguration());
 
 			return _scopeLocatorImpl;
 		}
@@ -424,17 +450,9 @@ public class ScopeLocatorImplTest extends PowerMockito {
 				CompanyAndKeyConfigurator<PrefixHandlerFactory> configurator)
 			throws IllegalAccessException {
 
-			ScopedServiceTrackerMap<PrefixHandlerFactory>
-				prefixHandlerFactoriesScopedServiceTrackerMap =
-					_prepareScopedServiceTrackerMapMock(
-						defaultPrefixHandlerFactory, configurator);
-
-			_set(
-				_scopeLocatorImpl, "_defaultPrefixHandlerFactory",
-				defaultPrefixHandlerFactory);
-
 			_scopeLocatorImpl.setPrefixHandlerFactoriesScopedServiceTrackerMap(
-				prefixHandlerFactoriesScopedServiceTrackerMap);
+				_prepareScopedServiceTrackerMapMock(
+					defaultPrefixHandlerFactory, configurator));
 
 			_prefixHandlerFactoriesInitialized = true;
 
@@ -465,7 +483,7 @@ public class ScopeLocatorImplTest extends PowerMockito {
 					ServiceReference<?> serviceReference = Mockito.mock(
 						ServiceReference.class);
 
-					when(
+					Mockito.when(
 						scopeFinderByNameServiceTrackerMap.getService(
 							applicationName)
 					).thenReturn(
@@ -473,7 +491,7 @@ public class ScopeLocatorImplTest extends PowerMockito {
 							serviceReference, service)
 					);
 
-					when(
+					Mockito.when(
 						scopeFindersScopedServiceTrackerMap.getService(
 							companyId, applicationName)
 					).thenReturn(
@@ -486,45 +504,14 @@ public class ScopeLocatorImplTest extends PowerMockito {
 			return this;
 		}
 
-		public Builder withScopeLocatorConfigurationProviders(
-				ScopeLocatorConfigurationProvider
-					defaultScopeLocatorConfigurationProvider,
-				CompanyAndKeyConfigurator<ScopeLocatorConfigurationProvider>
-					configurator)
-			throws IllegalAccessException {
-
-			ScopedServiceTrackerMap<ScopeLocatorConfigurationProvider>
-				scopeLocatorConfigurationProvidersScopeServiceTrackerMap =
-					_prepareScopedServiceTrackerMapMock(
-						defaultScopeLocatorConfigurationProvider, configurator);
-
-			_set(
-				_scopeLocatorImpl, "_defaultScopeLocatorConfigurationProvider",
-				defaultScopeLocatorConfigurationProvider);
-
-			_scopeLocatorImpl.
-				setScopeLocatorConfigurationProvidersScopedServiceTrackerMap(
-					scopeLocatorConfigurationProvidersScopeServiceTrackerMap);
-
-			_scopeLocatorConfigurationProvidersInitialized = true;
-
-			return this;
-		}
-
 		public Builder withScopeMappers(
 				ScopeMapper defaultScopeMapper,
 				CompanyAndKeyConfigurator<ScopeMapper> configurator)
 			throws IllegalAccessException {
 
-			ScopedServiceTrackerMap<ScopeMapper>
-				scopeMappersScopedServiceTrackerMap =
-					_prepareScopedServiceTrackerMapMock(
-						defaultScopeMapper, configurator);
-
-			_set(_scopeLocatorImpl, "_defaultScopeMapper", defaultScopeMapper);
-
 			_scopeLocatorImpl.setScopeMappersScopedServiceTrackerMap(
-				scopeMappersScopedServiceTrackerMap);
+				_prepareScopedServiceTrackerMapMock(
+					defaultScopeMapper, configurator));
 
 			_scopeMappersInitialized = true;
 
@@ -540,14 +527,15 @@ public class ScopeLocatorImplTest extends PowerMockito {
 				scopeMatcherFactoriesServiceTrackerMap = Mockito.mock(
 					ServiceTrackerMap.class);
 
-			_scopeLocatorImpl.setDefaultScopeMatcherFactory(
+			ReflectionTestUtil.setFieldValue(
+				_scopeLocatorImpl, "_defaultScopeMatcherFactory",
 				defaultScopeMatcherFactory);
 
 			_scopeLocatorImpl.setScopeMatcherFactoriesServiceTrackerMap(
 				scopeMatcherFactoriesServiceTrackerMap);
 
 			configurator.configure(
-				(companyId, service) -> when(
+				(companyId, service) -> Mockito.when(
 					scopeMatcherFactoriesServiceTrackerMap.getService(companyId)
 				).thenReturn(
 					service
@@ -569,14 +557,15 @@ public class ScopeLocatorImplTest extends PowerMockito {
 				new TestScopedServiceTrackerMap<>(defaultService);
 
 			Answer<T> answer = invocation -> {
-				long companyId = invocation.getArgumentAt(0, Long.class);
-				String key = invocation.getArgumentAt(1, String.class);
+				long companyId = invocation.getArgument(0, Long.class);
+				String key = invocation.getArgument(1, String.class);
 
 				return testScopedServiceTrackerMap.getService(companyId, key);
 			};
 
-			when(
-				scopedServiceTrackerMap.getService(anyLong(), anyString())
+			Mockito.when(
+				scopedServiceTrackerMap.getService(
+					Mockito.anyLong(), Mockito.anyString())
 			).thenAnswer(
 				answer
 			);
@@ -588,7 +577,6 @@ public class ScopeLocatorImplTest extends PowerMockito {
 
 		private boolean _prefixHandlerFactoriesInitialized;
 		private boolean _scopeFindersInitialized;
-		private boolean _scopeLocatorConfigurationProvidersInitialized;
 		private final ScopeLocatorImpl _scopeLocatorImpl =
 			new ScopeLocatorImpl();
 		private boolean _scopeMappersInitialized;

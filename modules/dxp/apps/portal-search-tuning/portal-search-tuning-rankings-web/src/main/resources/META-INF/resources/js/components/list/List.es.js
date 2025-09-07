@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {PropTypes} from 'prop-types';
 import React, {PureComponent} from 'react';
-import {DragDropContext as dragDropContext} from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
+import {DndProvider} from 'react-dnd';
+import {HTML5Backend} from 'react-dnd-html5-backend';
 
 import {KEY_CODES} from '../../utils/constants.es';
 import {isNull, toggleListItem} from '../../utils/util.es';
@@ -28,8 +22,9 @@ class List extends PureComponent {
 	static propTypes = {
 		dataLoading: PropTypes.bool,
 		dataMap: PropTypes.object,
+		disabled: PropTypes.bool,
 		displayError: PropTypes.bool,
-		fetchDocumentsSearchUrl: PropTypes.string,
+		fetchDocumentsSearchURL: PropTypes.string,
 		onAddResultSubmit: PropTypes.func,
 		onClickHide: PropTypes.func,
 		onClickPin: PropTypes.func,
@@ -37,18 +32,19 @@ class List extends PureComponent {
 		onMove: PropTypes.func,
 		resultIds: PropTypes.arrayOf(Number),
 		resultIdsPinned: PropTypes.arrayOf(Number),
-		showLoadMore: PropTypes.bool
+		showLoadMore: PropTypes.bool,
 	};
 
 	static defaultProps = {
 		dataLoading: false,
-		resultIds: []
+		disabled: false,
+		resultIds: [],
 	};
 
 	state = {
 		focusIndex: null,
 		reorder: false,
-		selectedIds: []
+		selectedIds: [],
 	};
 
 	_handleItemBlur = () => {
@@ -56,14 +52,14 @@ class List extends PureComponent {
 		this._handleReorder(false);
 	};
 
-	_handleItemFocus = index => {
+	_handleItemFocus = (index) => {
 		this.setState({focusIndex: index});
 	};
 
 	/**
 	 * Will trigger the KeyDownFocus as long as focusIndex is defined.
 	 */
-	_handleKeyDown = event => {
+	_handleKeyDown = (event) => {
 		if (!isNull(this.state.focusIndex)) {
 			this._handleKeyDownFocus(event);
 		}
@@ -74,18 +70,19 @@ class List extends PureComponent {
 	 * pinned items up or down. If reorder is false, it will scroll through
 	 * all items.
 	 */
-	_handleKeyDownFocus = event => {
+	_handleKeyDownFocus = (event) => {
 		const {onMove, resultIds, resultIdsPinned} = this.props;
 
 		const {focusIndex, reorder} = this.state;
 
 		const pinLength = resultIdsPinned ? resultIdsPinned.length : 0;
 
-		if (event.key === KEY_CODES.SPACE || event.key == KEY_CODES.ENTER) {
+		if (event.key === KEY_CODES.SPACE || event.key === KEY_CODES.ENTER) {
 			event.preventDefault();
 
 			this._handleReorder(!reorder && focusIndex < pinLength);
-		} else if (event.key === KEY_CODES.ARROW_DOWN) {
+		}
+		else if (event.key === KEY_CODES.ARROW_DOWN) {
 			event.preventDefault();
 
 			if (focusIndex + 1 < resultIds.length) {
@@ -97,7 +94,8 @@ class List extends PureComponent {
 					this._handleItemFocus(focusIndex + 1);
 				}
 			}
-		} else if (event.key === KEY_CODES.ARROW_UP) {
+		}
+		else if (event.key === KEY_CODES.ARROW_UP) {
 			event.preventDefault();
 
 			if (focusIndex > 0) {
@@ -118,19 +116,19 @@ class List extends PureComponent {
 	 * Used in case where pinning/hiding needs to remove itself from the
 	 * selected ids list.
 	 */
-	_handleRemoveSelect = ids => {
-		this.setState(state => ({
-			selectedIds: state.selectedIds.filter(id => !ids.includes(id))
+	_handleRemoveSelect = (ids) => {
+		this.setState((state) => ({
+			selectedIds: state.selectedIds.filter((id) => !ids.includes(id)),
 		}));
 	};
 
-	_handleReorder = val => {
+	_handleReorder = (val) => {
 		this.setState({reorder: val});
 	};
 
-	_handleSelect = id => {
-		this.setState(state => ({
-			selectedIds: toggleListItem(state.selectedIds, id)
+	_handleSelect = (id) => {
+		this.setState((state) => ({
+			selectedIds: toggleListItem(state.selectedIds, id),
 		}));
 	};
 
@@ -177,7 +175,7 @@ class List extends PureComponent {
 	 * @param {number} index The item's position in the list.
 	 */
 	_renderItem = (id, index) => {
-		const {dataMap, onClickHide, onMove} = this.props;
+		const {dataMap, disabled, onClickHide, onMove} = this.props;
 
 		const {focusIndex, reorder, selectedIds} = this.state;
 
@@ -189,7 +187,9 @@ class List extends PureComponent {
 				author={item.author}
 				clicks={item.clicks}
 				date={item.date}
+				deleted={item.deleted}
 				description={item.description}
+				disabled={disabled}
 				focus={index === focusIndex}
 				hidden={item.hidden}
 				icon={item.icon}
@@ -208,6 +208,7 @@ class List extends PureComponent {
 				selected={selectedIds.includes(item.id)}
 				title={item.title}
 				type={item.type}
+				viewURL={item.viewURL}
 			/>
 		) : null;
 	};
@@ -216,93 +217,108 @@ class List extends PureComponent {
 		const {
 			dataLoading,
 			dataMap,
+			disabled,
 			displayError,
-			fetchDocumentsSearchUrl,
+			fetchDocumentsSearchURL,
 			onAddResultSubmit,
 			onClickHide,
 			onClickPin,
 			resultIds,
-			showLoadMore
+			showLoadMore,
 		} = this.props;
 
 		const {selectedIds} = this.state;
 
 		return (
-			<div className="result-ranking-list-root">
-				<ItemDragLayer />
+			<DndProvider backend={HTML5Backend}>
+				<div className="result-ranking-list-root">
+					<ItemDragLayer />
 
-				<SearchBar
-					dataMap={dataMap}
-					fetchDocumentsSearchUrl={fetchDocumentsSearchUrl}
-					onAddResultSubmit={onAddResultSubmit}
-					onClickHide={onClickHide}
-					onClickPin={onClickPin}
-					onRemoveSelect={this._handleRemoveSelect}
-					onSelectAll={this._handleSelectAll}
-					onSelectClear={this._handleSelectClear}
-					resultIds={resultIds}
-					selectedIds={selectedIds}
-				/>
+					<SearchBar
+						dataMap={dataMap}
+						disabled={disabled}
+						fetchDocumentsSearchURL={fetchDocumentsSearchURL}
+						onAddResultSubmit={onAddResultSubmit}
+						onClickHide={onClickHide}
+						onClickPin={onClickPin}
+						onRemoveSelect={this._handleRemoveSelect}
+						onSelectAll={this._handleSelectAll}
+						onSelectClear={this._handleSelectClear}
+						resultIds={resultIds}
+						selectedIds={selectedIds}
+					/>
 
-				<ErrorBoundary toast>
-					{!!resultIds.length && (
-						<ul
-							className="list-group show-quick-actions-on-hover"
-							onKeyDown={this._handleKeyDown}
-						>
-							{resultIds.map((id, index, arr) =>
-								this._renderItem(id, index, arr)
-							)}
-						</ul>
-					)}
+					<ErrorBoundary toast>
+						{!!resultIds.length && (
+							<ul
+								className="list-group show-quick-actions-on-hover"
+								onKeyDown={this._handleKeyDown}
+							>
+								{resultIds.map((id, index, array) =>
+									this._renderItem(id, index, array)
+								)}
+							</ul>
+						)}
 
-					{dataLoading && (
-						<div className="load-more-container">
-							<ClayLoadingIndicator />
-						</div>
-					)}
+						{dataLoading && (
+							<div className="load-more-container">
+								<ClayLoadingIndicator />
+							</div>
+						)}
 
-					{!dataLoading && (
-						<>
-							{!displayError && !resultIds.length && (
-								<ClayEmptyState />
-							)}
-
-							{displayError && (
-								<ClayEmptyState
-									actionLabel={Liferay.Language.get(
-										'try-again'
-									)}
-									description={Liferay.Language.get(
-										'an-error-has-occurred-and-we-were-unable-to-load-the-results'
-									)}
-									displayState={DISPLAY_STATES.EMPTY}
-									onClickAction={this._handleLoadMoreResults}
-									title={Liferay.Language.get(
-										'unable-to-load-content'
-									)}
-								/>
-							)}
-
-							{showLoadMore && (
-								<div className="load-more-container">
-									<ClayButton
-										className="load-more-button"
-										displayType="secondary"
-										onClick={this._handleLoadMoreResults}
-									>
-										{Liferay.Language.get(
-											'load-more-results'
+						{!dataLoading && (
+							<>
+								{!displayError && !resultIds.length && (
+									<ClayEmptyState
+										description={Liferay.Language.get(
+											'sorry,-no-results-were-found'
 										)}
-									</ClayButton>
-								</div>
-							)}
-						</>
-					)}
-				</ErrorBoundary>
-			</div>
+										title={Liferay.Language.get(
+											'no-results-found'
+										)}
+									/>
+								)}
+
+								{displayError && (
+									<ClayEmptyState
+										actionLabel={Liferay.Language.get(
+											'try-again'
+										)}
+										description={Liferay.Language.get(
+											'an-error-has-occurred-and-we-were-unable-to-load-the-results'
+										)}
+										displayState={DISPLAY_STATES.EMPTY}
+										onClickAction={
+											this._handleLoadMoreResults
+										}
+										title={Liferay.Language.get(
+											'unable-to-load-content'
+										)}
+									/>
+								)}
+
+								{showLoadMore && (
+									<div className="load-more-container">
+										<ClayButton
+											className="load-more-button"
+											displayType="secondary"
+											onClick={
+												this._handleLoadMoreResults
+											}
+										>
+											{Liferay.Language.get(
+												'load-more-results'
+											)}
+										</ClayButton>
+									</div>
+								)}
+							</>
+						)}
+					</ErrorBoundary>
+				</div>
+			</DndProvider>
 		);
 	}
 }
 
-export default dragDropContext(HTML5Backend)(List);
+export default List;

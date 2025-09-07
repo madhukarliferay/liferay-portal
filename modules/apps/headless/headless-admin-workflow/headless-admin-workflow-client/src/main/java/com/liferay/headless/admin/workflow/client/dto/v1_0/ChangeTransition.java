@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.workflow.client.dto.v1_0;
@@ -17,16 +8,22 @@ package com.liferay.headless.admin.workflow.client.dto.v1_0;
 import com.liferay.headless.admin.workflow.client.function.UnsafeSupplier;
 import com.liferay.headless.admin.workflow.client.serdes.v1_0.ChangeTransitionSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class ChangeTransition {
+public class ChangeTransition implements Cloneable, Serializable {
+
+	public static ChangeTransition toDTO(String json) {
+		return ChangeTransitionSerDes.toDTO(json);
+	}
 
 	public String getComment() {
 		return comment;
@@ -69,6 +66,32 @@ public class ChangeTransition {
 	}
 
 	protected String transitionName;
+
+	public Long getWorkflowTaskId() {
+		return workflowTaskId;
+	}
+
+	public void setWorkflowTaskId(Long workflowTaskId) {
+		this.workflowTaskId = workflowTaskId;
+	}
+
+	public void setWorkflowTaskId(
+		UnsafeSupplier<Long, Exception> workflowTaskIdUnsafeSupplier) {
+
+		try {
+			workflowTaskId = workflowTaskIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long workflowTaskId;
+
+	@Override
+	public ChangeTransition clone() throws CloneNotSupportedException {
+		return (ChangeTransition)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

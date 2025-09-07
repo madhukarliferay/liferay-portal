@@ -2,11 +2,13 @@
 <head>
 <title>DocumentsAndMediaSelectFolder</title>
 </head>
+
 <body>
-<table cellpadding="1" cellspacing="1" border="1">
+<table border="1" cellpadding="1" cellspacing="1">
 <thead>
 <tr><td rowspan="1" colspan="3">DocumentsAndMediaSelectFolder</td></tr>
 </thead>
+
 <tbody>
 <tr>
 	<td>SELECT_FOLDER_IFRAME</td>
@@ -16,6 +18,11 @@
 <tr>
 	<td>FOLDER</td>
 	<td>//a[contains(.,'${key_dmFolderName}')]//span[contains(@class,'taglib-text')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FOLDER_LINK</td>
+	<td>//tr[@data-qa-id='row']//td//a[contains(.,'${key_dmFolderName}')]</td>
 	<td></td>
 </tr>
 <tr>

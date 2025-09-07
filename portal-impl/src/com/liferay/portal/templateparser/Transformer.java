@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.templateparser;
@@ -32,9 +23,12 @@ import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.templateparser.TransformException;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.net.URL;
 
@@ -85,7 +79,9 @@ public class Transformer {
 	public String transform(
 			ThemeDisplay themeDisplay, Map<String, Object> contextObjects,
 			String script, String langType,
-			UnsyncStringWriter unsyncStringWriter)
+			UnsyncStringWriter unsyncStringWriter,
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
 		throws Exception {
 
 		if (Validator.isNull(langType)) {
@@ -106,10 +102,9 @@ public class Transformer {
 
 		String templateId = String.valueOf(contextObjects.get("template_id"));
 
-		templateId = getTemplateId(
-			templateId, companyId, companyGroupId, scopeGroupId);
-
-		Template template = getTemplate(templateId, script, langType);
+		Template template = getTemplate(
+			getTemplateId(templateId, companyId, companyGroupId, scopeGroupId),
+			script, langType);
 
 		try {
 			prepareTemplate(themeDisplay, template);
@@ -136,6 +131,8 @@ public class Transformer {
 			template.put("siteGroupId", siteGroupId);
 			template.put("templatesPath", templatesPath);
 
+			template.prepareTaglib(httpServletRequest, httpServletResponse);
+
 			// Deprecated variables
 
 			template.put("groupId", scopeGroupId);
@@ -144,8 +141,8 @@ public class Transformer {
 			template.processTemplate(
 				unsyncStringWriter, () -> getErrorTemplateResource(langType));
 		}
-		catch (Exception e) {
-			throw new TransformException("Unhandled exception", e);
+		catch (Exception exception) {
+			throw new TransformException("Unhandled exception", exception);
 		}
 
 		return unsyncStringWriter.toString();
@@ -214,17 +211,9 @@ public class Transformer {
 	protected String getTemplatesPath(
 		long companyId, long groupId, long classNameId) {
 
-		StringBundler sb = new StringBundler(7);
-
-		sb.append(TemplateConstants.TEMPLATE_SEPARATOR);
-		sb.append(StringPool.SLASH);
-		sb.append(companyId);
-		sb.append(StringPool.SLASH);
-		sb.append(groupId);
-		sb.append(StringPool.SLASH);
-		sb.append(classNameId);
-
-		return sb.toString();
+		return StringBundler.concat(
+			TemplateConstants.TEMPLATE_SEPARATOR, StringPool.SLASH, companyId,
+			StringPool.SLASH, groupId, StringPool.SLASH, classNameId);
 	}
 
 	protected void prepareTemplate(ThemeDisplay themeDisplay, Template template)

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,42 +10,50 @@
 <%
 DepotAdminDisplayContext depotAdminDisplayContext = new DepotAdminDisplayContext(request, liferayPortletRequest, liferayPortletResponse);
 
-DepotAdminManagementToolbarDisplayContext depotAdminManagementToolbarDisplayContext = new DepotAdminManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, depotAdminDisplayContext);
+DepotAdminManagementToolbarDisplayContext depotAdminManagementToolbarDisplayContext = new DepotAdminManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, depotAdminDisplayContext);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= depotAdminManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= depotAdminManagementToolbarDisplayContext %>"
+	propsTransformer="{DepotAdminManagementToolbarPropsTransformer} from depot-web"
 />
 
-<div class="closed container-fluid-1280 sidenav-container sidenav-right">
-	<div class="sidenav-content">
+<div class="closed sidenav-container sidenav-right">
+	<clay:container-fluid
+		cssClass="sidenav-content"
+	>
+		<liferay-ui:error exception="<%= DepotEntryStagedException.class %>" message="cannot-delete-a-staged-asset-library.-unstage-the-asset-library-and-try-again" />
+		<liferay-ui:error exception="<%= RequiredFileEntryTypeException.class %>" message="cannot-delete-a-document-type-that-is-presently-used-by-one-or-more-documents-in-a-connected-site" />
+
 		<portlet:actionURL name="deleteGroups" var="deleteGroupsURL" />
 
-		<aui:form action="<%= depotAdminDisplayContext.getIteratorURL() %>" cssClass="container-fluid-1280" name="fm">
+		<aui:form action="<%= depotAdminDisplayContext.getIteratorURL() %>" name="fm">
 			<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 
 			<liferay-ui:search-container
 				id="<%= depotAdminDisplayContext.getSearchContainerId() %>"
-				searchContainer="<%= depotAdminDisplayContext.getGroupSearch() %>"
+				searchContainer="<%= depotAdminDisplayContext.searchContainer() %>"
 			>
 				<liferay-ui:search-container-row
-					className="com.liferay.portal.kernel.model.Group"
-					cssClass="entry-display-style"
+					className="com.liferay.depot.model.DepotEntry"
 					escapedModel="<%= true %>"
-					keyProperty="classPK"
-					modelVar="curGroup"
-					rowIdProperty="groupId"
+					keyProperty="depotEntryId"
+					rowIdProperty="depotEntryId"
 				>
 
 					<%
-					row.setData(depotAdminManagementToolbarDisplayContext.getRowData(curGroup));
+					DepotEntry depotEntry = (DepotEntry)row.getObject();
+
+					Group depotEntryGroup = depotEntry.getGroup();
+
+					row.setData(depotAdminManagementToolbarDisplayContext.getRowData(depotEntry));
 					%>
 
 					<c:choose>
 						<c:when test="<%= depotAdminDisplayContext.isDisplayStyleDescriptive() %>">
 							<liferay-ui:search-container-column-text>
 								<liferay-ui:search-container-column-icon
-									icon="repository"
+									icon="books"
 									toggleRowChecker="<%= true %>"
 								/>
 							</liferay-ui:search-container-column-text>
@@ -62,29 +61,34 @@ DepotAdminManagementToolbarDisplayContext depotAdminManagementToolbarDisplayCont
 							<liferay-ui:search-container-column-text
 								colspan="<%= 2 %>"
 							>
-								<h5>
-									<aui:a cssClass="selector-button" href="<%= depotAdminDisplayContext.getViewDepotURL(curGroup) %>">
-										<%= HtmlUtil.escape(curGroup.getDescriptiveName(locale)) %>
+								<div class="h5">
+									<aui:a cssClass="selector-button" href="<%= depotAdminDisplayContext.getViewDepotURL(depotEntry) %>">
+										<%= HtmlUtil.escape(depotEntryGroup.getDescriptiveName(locale)) %>
 									</aui:a>
-								</h5>
+								</div>
+
+								<div class="h6">
+
+									<%
+									int depotEntryConnectedGroupsCount = depotAdminDisplayContext.getDepotEntryConnectedGroupsCount(depotEntry);
+									%>
+
+									<liferay-ui:message arguments="<%= depotEntryConnectedGroupsCount %>" key='<%= (depotEntryConnectedGroupsCount != 1) ? "x-connected-sites" : "x-connected-site" %>' />
+								</div>
 							</liferay-ui:search-container-column-text>
 
 							<liferay-ui:search-container-column-text>
 								<clay:dropdown-actions
-									defaultEventHandler="<%= DepotAdminWebKeys.DEPOT_ENTRY_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-									dropdownItems="<%= depotAdminDisplayContext.getActionDropdownItems(curGroup) %>"
+									aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+									dropdownItems="<%= depotAdminDisplayContext.getActionDropdownItems(depotEntry) %>"
+									propsTransformer="{DepotEntryDropdownPropsTransformer} from depot-web"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:when>
 						<c:when test="<%= depotAdminDisplayContext.isDisplayStyleIcon() %>">
-
-							<%
-							row.setCssClass("entry-card lfr-asset-item " + row.getCssClass());
-							%>
-
 							<liferay-ui:search-container-column-text>
 								<clay:vertical-card
-									verticalCard="<%= depotAdminDisplayContext.getDepotEntryVerticalCard(curGroup) %>"
+									verticalCard="<%= depotAdminDisplayContext.getDepotEntryVerticalCard(depotEntry) %>"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:when>
@@ -94,13 +98,20 @@ DepotAdminManagementToolbarDisplayContext depotAdminManagementToolbarDisplayCont
 								name="name"
 								orderable="<%= true %>"
 							>
-								<aui:a href="<%= depotAdminDisplayContext.getViewDepotURL(curGroup) %>" label="<%= HtmlUtil.escape(curGroup.getDescriptiveName(locale)) %>" localizeLabel="<%= false %>" />
+								<aui:a href="<%= depotAdminDisplayContext.getViewDepotURL(depotEntry) %>" label="<%= HtmlUtil.escape(depotEntryGroup.getDescriptiveName(locale)) %>" localizeLabel="<%= false %>" />
 							</liferay-ui:search-container-column-text>
+
+							<liferay-ui:search-container-column-text
+								cssClass="table-cell-expand table-cell-minw-200"
+								name="num-of-connections"
+								value="<%= String.valueOf(depotAdminDisplayContext.getDepotEntryConnectedGroupsCount(depotEntry)) %>"
+							/>
 
 							<liferay-ui:search-container-column-text>
 								<clay:dropdown-actions
-									defaultEventHandler="<%= DepotAdminWebKeys.DEPOT_ENTRY_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-									dropdownItems="<%= depotAdminDisplayContext.getActionDropdownItems(curGroup) %>"
+									aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+									dropdownItems="<%= depotAdminDisplayContext.getActionDropdownItems(depotEntry) %>"
+									propsTransformer="{DepotEntryDropdownPropsTransformer} from depot-web"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:otherwise>
@@ -114,16 +125,10 @@ DepotAdminManagementToolbarDisplayContext depotAdminManagementToolbarDisplayCont
 				/>
 			</liferay-ui:search-container>
 		</aui:form>
-	</div>
+	</clay:container-fluid>
 </div>
 
 <liferay-frontend:component
 	componentId="<%= DepotAdminWebKeys.DEPOT_ENTRY_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-	module="js/DepotEntryDropdownDefaultEventHandler.es"
-/>
-
-<liferay-frontend:component
-	componentId="<%= depotAdminManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	context="<%= depotAdminManagementToolbarDisplayContext.getComponentContext() %>"
-	module="js/DepotAdminManagementToolbarDefaultEventHandler.es"
+	module="{DepotEntryDropdownDefaultEventHandler} from depot-web"
 />

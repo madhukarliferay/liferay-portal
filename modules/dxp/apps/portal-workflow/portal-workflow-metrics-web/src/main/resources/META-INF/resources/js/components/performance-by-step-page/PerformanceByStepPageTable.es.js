@@ -1,27 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
+
+/* eslint-disable @liferay/empty-line-between-elements */
 
 import ClayTable from '@clayui/table';
 import React from 'react';
 
 import ListHeadItem from '../../shared/components/list/ListHeadItem.es';
 import {formatDuration} from '../../shared/util/duration.es';
-import {getFormattedPercentage} from '../../shared/util/util.es';
+import {getFormattedPercentage, isValidNumber} from '../../shared/util/util.es';
 
-const Item = ({
+function Item({
 	breachedInstanceCount,
 	breachedInstancePercentage,
 	durationAvg,
-	name
-}) => {
+	node: {label},
+}) {
 	const formattedDuration = formatDuration(durationAvg);
 	const formattedPercentage = getFormattedPercentage(
 		breachedInstancePercentage,
@@ -30,25 +26,23 @@ const Item = ({
 
 	return (
 		<ClayTable.Row>
-			<ClayTable.Cell className="table-title" data-testid="stepName">
-				{name}
+			<ClayTable.Cell className="table-title">{label}</ClayTable.Cell>
+
+			<ClayTable.Cell className="text-right">
+				{isValidNumber(breachedInstanceCount)
+					? breachedInstanceCount
+					: 0}{' '}
+				({formattedPercentage})
 			</ClayTable.Cell>
 
-			<ClayTable.Cell className="text-right" data-testid="stepSla">
-				{breachedInstanceCount} ({formattedPercentage})
-			</ClayTable.Cell>
-
-			<ClayTable.Cell
-				className="text-right"
-				data-testid="durationTaskAvg"
-			>
+			<ClayTable.Cell className="text-right">
 				{formattedDuration}
 			</ClayTable.Cell>
 		</ClayTable.Row>
 	);
-};
+}
 
-const Table = ({items}) => {
+function Table({items}) {
 	return (
 		<ClayTable>
 			<ClayTable.Head>
@@ -90,8 +84,8 @@ const Table = ({items}) => {
 			</ClayTable.Body>
 		</ClayTable>
 	);
-};
+}
 
 Table.Item = Item;
 
-export {Table};
+export default Table;

@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.PasswordTracker;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
+import com.liferay.portal.kernel.service.PasswordPolicyLocalService;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.service.base.PasswordTrackerLocalServiceBaseImpl;
 
 import java.util.Date;
@@ -40,7 +34,7 @@ public class PasswordTrackerLocalServiceImpl
 	public boolean isSameAsCurrentPassword(long userId, String newClearTextPwd)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		String currentPwd = user.getPassword();
 
@@ -48,18 +42,10 @@ public class PasswordTrackerLocalServiceImpl
 			String newEncPwd = PasswordEncryptorUtil.encrypt(
 				newClearTextPwd, user.getPassword());
 
-			if (currentPwd.equals(newEncPwd)) {
-				return true;
-			}
-
-			return false;
+			return currentPwd.equals(newEncPwd);
 		}
 
-		if (currentPwd.equals(newClearTextPwd)) {
-			return true;
-		}
-
-		return false;
+		return currentPwd.equals(newClearTextPwd);
 	}
 
 	@Override
@@ -67,7 +53,7 @@ public class PasswordTrackerLocalServiceImpl
 		throws PortalException {
 
 		PasswordPolicy passwordPolicy =
-			passwordPolicyLocalService.getPasswordPolicyByUserId(userId);
+			_passwordPolicyLocalService.getPasswordPolicyByUserId(userId);
 
 		if ((passwordPolicy == null) || !passwordPolicy.isHistory()) {
 			return true;
@@ -81,7 +67,7 @@ public class PasswordTrackerLocalServiceImpl
 			passwordTrackerPersistence.findByUserId(userId);
 
 		for (PasswordTracker passwordTracker : passwordTrackers) {
-			if (historyCount >= passwordPolicy.getHistoryCount()) {
+			if (historyCount > passwordPolicy.getHistoryCount()) {
 				break;
 			}
 
@@ -105,7 +91,7 @@ public class PasswordTrackerLocalServiceImpl
 		throws PortalException {
 
 		PasswordPolicy passwordPolicy =
-			passwordPolicyLocalService.getPasswordPolicyByUserId(userId);
+			_passwordPolicyLocalService.getPasswordPolicyByUserId(userId);
 
 		if ((passwordPolicy != null) && passwordPolicy.isHistory()) {
 			long passwordTrackerId = counterLocalService.increment();
@@ -120,5 +106,11 @@ public class PasswordTrackerLocalServiceImpl
 			passwordTrackerPersistence.update(passwordTracker);
 		}
 	}
+
+	@BeanReference(type = PasswordPolicyLocalService.class)
+	private PasswordPolicyLocalService _passwordPolicyLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -27,8 +20,8 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
-import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.ldap.SafeLdapContext;
@@ -64,6 +57,7 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.PagedResultsResponseControl;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -84,10 +78,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Tomas Polesovsky
  * @author Marta Medio
  */
-@Component(
-	configurationPid = "com.liferay.portal.security.ldap.configuration.LDAPConfiguration",
-	immediate = true, service = SafePortalLDAP.class
-)
+@Component(service = SafePortalLDAP.class)
 public class SafePortalLDAPImpl implements SafePortalLDAP {
 
 	@Override
@@ -105,7 +96,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		SafeLdapContext safeLdapContext = getSafeLdapContext(
 			ldapServerId, companyId);
 
-		NamingEnumeration<SearchResult> enu = null;
+		NamingEnumeration<SearchResult> enumeration = null;
 
 		try {
 			if (safeLdapContext == null) {
@@ -129,19 +120,19 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			SearchControls searchControls = new SearchControls(
 				SearchControls.SUBTREE_SCOPE, 1, 0, null, false, false);
 
-			enu = safeLdapContext.search(
+			enumeration = safeLdapContext.search(
 				LDAPUtil.getGroupsDNSafeLdapName(ldapServerConfiguration),
 				safeLdapFilter, searchControls);
 
-			if (enu.hasMoreElements()) {
-				return enu.nextElement();
+			if (enumeration.hasMoreElements()) {
+				return enumeration.nextElement();
 			}
 
 			return null;
 		}
 		finally {
-			if (enu != null) {
-				enu.close();
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			if (safeLdapContext != null) {
@@ -321,7 +312,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			}
 		}
 
-		if (!ListUtil.isEmpty(ldapServerConfigurations)) {
+		if (ListUtil.isNotEmpty(ldapServerConfigurations)) {
 			LDAPServerConfiguration ldapServerConfiguration =
 				ldapServerConfigurations.get(0);
 
@@ -368,16 +359,16 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				break;
 			}
 
-			NamingEnumeration<? extends Attribute> enu = null;
+			NamingEnumeration<? extends Attribute> enumeration = null;
 
 			try {
-				enu = attributes.getAll();
+				enumeration = attributes.getAll();
 
-				if (!enu.hasMoreElements()) {
+				if (!enumeration.hasMoreElements()) {
 					break;
 				}
 
-				Attribute currentAttribute = enu.nextElement();
+				Attribute currentAttribute = enumeration.nextElement();
 
 				for (int i = 0; i < currentAttribute.size(); i++) {
 					attribute.add(currentAttribute.get(i));
@@ -392,8 +383,8 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				}
 			}
 			finally {
-				if (enu != null) {
-					enu.close();
+				if (enumeration != null) {
+					enumeration.close();
 				}
 			}
 
@@ -468,13 +459,15 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 					environmentProperties, null, Context.SECURITY_CREDENTIALS));
 		}
 
-		try {
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				SafeLdapContextImpl.class.getClassLoader())) {
+
 			return new SafeLdapContextImpl(
 				new InitialLdapContext(environmentProperties, null));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to bind to the LDAP server", e);
+				_log.warn("Unable to bind to the LDAP server", exception);
 			}
 
 			return null;
@@ -488,19 +481,20 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		return getUser(
-			ldapServerId, companyId, screenName, emailAddress, false);
+			ldapServerId, companyId, screenName, emailAddress, false, true);
 	}
 
 	@Override
 	public Binding getUser(
 			long ldapServerId, long companyId, String screenName,
-			String emailAddress, boolean checkOriginalEmail)
+			String emailAddress, boolean checkOriginalEmailAddress,
+			boolean useUserSearchSafeLdapFilter)
 		throws Exception {
 
 		SafeLdapContext safeLdapContext = getSafeLdapContext(
 			ldapServerId, companyId);
 
-		NamingEnumeration<SearchResult> enu = null;
+		NamingEnumeration<SearchResult> enumeration = null;
 
 		try {
 			if (safeLdapContext == null) {
@@ -548,26 +542,29 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			SafeLdapFilter safeLdapFilter = SafeLdapFilterConstraints.eq(
 				loginMapping, login);
 
-			SafeLdapFilter userSearchSafeLdapFilter =
-				LDAPUtil.getUserSearchSafeLdapFilter(
-					ldapServerConfiguration, _ldapFilterValidator);
+			if (useUserSearchSafeLdapFilter) {
+				SafeLdapFilter userSearchSafeLdapFilter =
+					LDAPUtil.getUserSearchSafeLdapFilter(
+						ldapServerConfiguration, _ldapFilterValidator);
 
-			if (userSearchSafeLdapFilter != null) {
-				safeLdapFilter = safeLdapFilter.and(userSearchSafeLdapFilter);
+				if (userSearchSafeLdapFilter != null) {
+					safeLdapFilter = safeLdapFilter.and(
+						userSearchSafeLdapFilter);
+				}
 			}
 
 			SearchControls searchControls = new SearchControls(
 				SearchControls.SUBTREE_SCOPE, 1, 0, null, false, false);
 
-			enu = safeLdapContext.search(
+			enumeration = safeLdapContext.search(
 				LDAPUtil.getBaseDNSafeLdapName(ldapServerConfiguration),
 				safeLdapFilter, searchControls);
 
-			if (enu.hasMoreElements()) {
-				return enu.nextElement();
+			if (enumeration.hasMoreElements()) {
+				return enumeration.nextElement();
 			}
 
-			if (checkOriginalEmail) {
+			if (checkOriginalEmailAddress) {
 				String originalEmailAddress =
 					UserImportTransactionThreadLocal.getOriginalEmailAddress();
 
@@ -576,7 +573,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 
 					return getUser(
 						ldapServerId, companyId, screenName,
-						originalEmailAddress, false);
+						originalEmailAddress, false, true);
 				}
 			}
 
@@ -592,8 +589,8 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			return null;
 		}
 		finally {
-			if (enu != null) {
-				enu.close();
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			if (safeLdapContext != null) {
@@ -610,17 +607,17 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 
 		Properties userMappings = _ldapSettings.getUserMappings(
 			ldapServerId, companyId);
-		Properties userExpandoMappings = _ldapSettings.getUserExpandoMappings(
-			ldapServerId, companyId);
 
-		PropertiesUtil.merge(userMappings, userExpandoMappings);
+		PropertiesUtil.merge(
+			userMappings,
+			_ldapSettings.getUserExpandoMappings(ldapServerId, companyId));
 
 		Properties contactMappings = _ldapSettings.getContactMappings(
 			ldapServerId, companyId);
-		Properties contactExpandoMappings =
-			_ldapSettings.getContactExpandoMappings(ldapServerId, companyId);
 
-		PropertiesUtil.merge(contactMappings, contactExpandoMappings);
+		PropertiesUtil.merge(
+			contactMappings,
+			_ldapSettings.getContactExpandoMappings(ldapServerId, companyId));
 
 		PropertiesUtil.merge(userMappings, contactMappings);
 
@@ -783,7 +780,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		SafeLdapContext safeLdapContext = getSafeLdapContext(
 			ldapServerId, companyId);
 
-		NamingEnumeration<SearchResult> enu = null;
+		NamingEnumeration<SearchResult> enumeration = null;
 
 		try {
 			if (safeLdapContext == null) {
@@ -799,25 +796,25 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			SearchControls searchControls = new SearchControls(
 				SearchControls.SUBTREE_SCOPE, 1, 0, null, false, false);
 
-			enu = safeLdapContext.search(
+			enumeration = safeLdapContext.search(
 				groupSafeLdapName, safeLdapFilter, searchControls);
 
-			if (enu.hasMoreElements()) {
+			if (enumeration.hasMoreElements()) {
 				return true;
 			}
 		}
-		catch (NameNotFoundException nnfe) {
+		catch (NameNotFoundException nameNotFoundException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Unable to determine if user DN ", userSafeLdapName,
 						" is a member of group DN ", groupSafeLdapName),
-					nnfe);
+					nameNotFoundException);
 			}
 		}
 		finally {
-			if (enu != null) {
-				enu.close();
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			if (safeLdapContext != null) {
@@ -837,7 +834,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		SafeLdapContext safeLdapContext = getSafeLdapContext(
 			ldapServerId, companyId);
 
-		NamingEnumeration<SearchResult> enu = null;
+		NamingEnumeration<SearchResult> enumeration = null;
 
 		try {
 			if (safeLdapContext == null) {
@@ -854,25 +851,25 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			SearchControls searchControls = new SearchControls(
 				SearchControls.SUBTREE_SCOPE, 1, 0, null, false, false);
 
-			enu = safeLdapContext.search(
+			enumeration = safeLdapContext.search(
 				userSafeLdapName, safeLdapFilter, searchControls);
 
-			if (enu.hasMoreElements()) {
+			if (enumeration.hasMoreElements()) {
 				return true;
 			}
 		}
-		catch (NameNotFoundException nnfe) {
+		catch (NameNotFoundException nameNotFoundException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Unable to determine if group DN ", groupSafeLdapName,
 						" is a member of user DN ", userSafeLdapName),
-					nnfe);
+					nameNotFoundException);
 			}
 		}
 		finally {
-			if (enu != null) {
-				enu.close();
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			if (safeLdapContext != null) {
@@ -895,7 +892,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			SearchControls.SUBTREE_SCOPE, maxResults, 0, attributeIds, false,
 			false);
 
-		NamingEnumeration<SearchResult> enu = null;
+		NamingEnumeration<SearchResult> enumeration = null;
 
 		try {
 			if (cookie != null) {
@@ -920,33 +917,37 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 						});
 				}
 
-				enu = safeLdapContext.search(
+				enumeration = safeLdapContext.search(
 					baseDNSafeLdapName, safeLdapFilter, searchControls);
 
-				while (enu.hasMoreElements()) {
-					searchResults.add(enu.nextElement());
+				while (enumeration.hasMoreElements()) {
+					searchResults.add(enumeration.nextElement());
 				}
 
 				return _getCookie(safeLdapContext.getResponseControls());
 			}
 		}
-		catch (OperationNotSupportedException onse) {
-			if (enu != null) {
-				enu.close();
+		catch (OperationNotSupportedException operationNotSupportedException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(operationNotSupportedException);
+			}
+
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			safeLdapContext.setRequestControls(null);
 
-			enu = safeLdapContext.search(
+			enumeration = safeLdapContext.search(
 				baseDNSafeLdapName, safeLdapFilter, searchControls);
 
-			while (enu.hasMoreElements()) {
-				searchResults.add(enu.nextElement());
+			while (enumeration.hasMoreElements()) {
+				searchResults.add(enumeration.nextElement());
 			}
 		}
 		finally {
-			if (enu != null) {
-				enu.close();
+			if (enumeration != null) {
+				enumeration.close();
 			}
 
 			safeLdapContext.setRequestControls(null);
@@ -955,37 +956,10 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		return null;
 	}
 
-	@Reference(
-		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration)",
-		unbind = "-"
-	)
-	protected void setLDAPServerConfigurationProvider(
-		ConfigurationProvider<LDAPServerConfiguration>
-			ldapServerConfigurationProvider) {
-
-		_ldapServerConfigurationProvider = ldapServerConfigurationProvider;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLdapSettings(LDAPSettings ldapSettings) {
-		_ldapSettings = ldapSettings;
-	}
-
-	@Reference(unbind = "-")
-	protected void setProps(Props props) {
+	@Activate
+	protected void activate() {
 		_companySecurityAuthType = GetterUtil.getString(
-			props.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
-	}
-
-	@Reference(
-		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration)",
-		unbind = "-"
-	)
-	protected void setSystemLDAPConfigurationProvider(
-		ConfigurationProvider<SystemLDAPConfiguration>
-			systemLDAPConfigurationProvider) {
-
-		_systemLDAPConfigurationProvider = systemLDAPConfigurationProvider;
+			PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
 	}
 
 	private Attributes _getAttributes(
@@ -1006,21 +980,21 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 
 			attributes = ldapContext.getAttributes(fullDNSafeLdapName);
 
-			NamingEnumeration<? extends Attribute> enu = null;
+			NamingEnumeration<? extends Attribute> enumeration = null;
 
 			try {
 				Attributes auditAttributes = ldapContext.getAttributes(
 					fullDNSafeLdapName, auditAttributeIds);
 
-				enu = auditAttributes.getAll();
+				enumeration = auditAttributes.getAll();
 
-				while (enu.hasMoreElements()) {
-					attributes.put(enu.nextElement());
+				while (enumeration.hasMoreElements()) {
+					attributes.put(enumeration.nextElement());
 				}
 			}
 			finally {
-				if (enu != null) {
-					enu.close();
+				if (enumeration != null) {
+					enumeration.close();
 				}
 			}
 		}
@@ -1089,16 +1063,8 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			end += systemLDAPConfiguration.rangeSize();
 		}
 
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(originalAttributeId);
-		sb.append(StringPool.SEMICOLON);
-		sb.append("range=");
-		sb.append(start);
-		sb.append(StringPool.DASH);
-		sb.append(end);
-
-		return sb.toString();
+		return StringBundler.concat(
+			originalAttributeId, ";range=", start, StringPool.DASH, end);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -1112,9 +1078,18 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 	)
 	private volatile LDAPFilterValidator _ldapFilterValidator;
 
+	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration)"
+	)
 	private ConfigurationProvider<LDAPServerConfiguration>
 		_ldapServerConfigurationProvider;
+
+	@Reference
 	private LDAPSettings _ldapSettings;
+
+	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration)"
+	)
 	private ConfigurationProvider<SystemLDAPConfiguration>
 		_systemLDAPConfigurationProvider;
 

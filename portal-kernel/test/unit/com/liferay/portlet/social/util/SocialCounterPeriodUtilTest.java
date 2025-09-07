@@ -1,39 +1,42 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.util;
 
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.social.kernel.util.SocialCounterPeriodUtil;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Zsolt Berentey
  */
 public class SocialCounterPeriodUtilTest {
 
+	@AfterClass
+	public static void tearDownClass() {
+		_propsUtilMockedStatic.close();
+	}
+
 	@Before
 	public void setUp() throws Exception {
-		PropsTestUtil.setProps(
-			PropsKeys.SOCIAL_ACTIVITY_COUNTER_PERIOD_LENGTH, "1");
+		_propsUtilMockedStatic.when(
+			() -> PropsUtil.get(PropsKeys.SOCIAL_ACTIVITY_COUNTER_PERIOD_LENGTH)
+		).thenReturn(
+			"1"
+		);
 	}
 
 	@Test
@@ -89,5 +92,8 @@ public class SocialCounterPeriodUtilTest {
 		Assert.assertEquals(
 			startPeriod - 1, SocialCounterPeriodUtil.getStartPeriod(-1));
 	}
+
+	private static final MockedStatic<PropsUtil> _propsUtilMockedStatic =
+		Mockito.mockStatic(PropsUtil.class);
 
 }

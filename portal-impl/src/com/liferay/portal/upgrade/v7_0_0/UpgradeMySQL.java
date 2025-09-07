@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_0;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
@@ -41,10 +31,8 @@ public class UpgradeMySQL extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		DB db = DBManagerUtil.getDB();
-
-		if ((db.getDBType() == DBType.MARIADB) ||
-			(db.getDBType() == DBType.MYSQL)) {
+		if ((DBManagerUtil.getDBType() == DBType.MARIADB) ||
+			(DBManagerUtil.getDBType() == DBType.MYSQL)) {
 
 			upgradeDatetimePrecision();
 			upgradeTableEngine();
@@ -55,23 +43,19 @@ public class UpgradeMySQL extends UpgradeProcess {
 			Statement statement, String tableName, String columnName)
 		throws SQLException {
 
-		StringBundler sb = new StringBundler(5);
+		try (ResultSet resultSet = statement.executeQuery(
+				StringBundler.concat(
+					"show columns from ", tableName, " like \"", columnName,
+					"\""))) {
 
-		sb.append("show columns from ");
-		sb.append(tableName);
-		sb.append(" like \"");
-		sb.append(columnName);
-		sb.append("\"");
-
-		try (ResultSet rs = statement.executeQuery(sb.toString())) {
-			if (!rs.next()) {
+			if (!resultSet.next()) {
 				throw new IllegalStateException(
 					StringBundler.concat(
 						"Table ", tableName, " does not have column ",
 						columnName));
 			}
 
-			return rs.getString("Type");
+			return resultSet.getString("Type");
 		}
 	}
 
@@ -82,20 +66,21 @@ public class UpgradeMySQL extends UpgradeProcess {
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
 			Statement statement = connection.createStatement();
-			ResultSet rs = databaseMetaData.getTables(
+			ResultSet resultSet = databaseMetaData.getTables(
 				dbInspector.getCatalog(), dbInspector.getSchema(), null,
 				new String[] {"TABLE"})) {
 
-			while (rs.next()) {
-				String tableName = rs.getString("TABLE_NAME");
+			while (resultSet.next()) {
+				String tableName = resultSet.getString("TABLE_NAME");
 
 				if (!isPortal62TableName(tableName)) {
 					continue;
 				}
 
 				upgradeDatetimePrecision(
-					databaseMetaData, statement, rs.getString("TABLE_CAT"),
-					rs.getString("TABLE_SCHEM"), tableName);
+					databaseMetaData, statement,
+					resultSet.getString("TABLE_CAT"),
+					resultSet.getString("TABLE_SCHEM"), tableName);
 			}
 		}
 	}
@@ -105,17 +90,17 @@ public class UpgradeMySQL extends UpgradeProcess {
 			String catalog, String schemaPattern, String tableName)
 		throws SQLException {
 
-		try (ResultSet rs = databaseMetaData.getColumns(
+		try (ResultSet resultSet = databaseMetaData.getColumns(
 				catalog, schemaPattern, tableName, null)) {
 
 			String modifyClause = StringPool.BLANK;
 
-			while (rs.next()) {
-				if (Types.TIMESTAMP != rs.getInt("DATA_TYPE")) {
+			while (resultSet.next()) {
+				if (Types.TIMESTAMP != resultSet.getInt("DATA_TYPE")) {
 					continue;
 				}
 
-				String columnName = rs.getString("COLUMN_NAME");
+				String columnName = resultSet.getString("COLUMN_NAME");
 
 				String actualColumnType = getActualColumnType(
 					statement, tableName, columnName);
@@ -151,22 +136,24 @@ public class UpgradeMySQL extends UpgradeProcess {
 	protected void upgradeTableEngine() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
 			Statement statement = connection.createStatement();
-			ResultSet rs = statement.executeQuery("show table status")) {
+			ResultSet resultSet = statement.executeQuery("show table status")) {
 
-			while (rs.next()) {
-				String tableName = rs.getString("Name");
+			while (resultSet.next()) {
+				String tableName = resultSet.getString("Name");
 
 				if (!isPortal62TableName(tableName)) {
 					continue;
 				}
 
-				String comment = GetterUtil.getString(rs.getString("Comment"));
+				String comment = GetterUtil.getString(
+					resultSet.getString("Comment"));
 
 				if (StringUtil.equalsIgnoreCase(comment, "VIEW")) {
 					continue;
 				}
 
-				String engine = GetterUtil.getString(rs.getString("Engine"));
+				String engine = GetterUtil.getString(
+					resultSet.getString("Engine"));
 
 				if (StringUtil.equalsIgnoreCase(
 						engine, PropsValues.DATABASE_MYSQL_ENGINE)) {

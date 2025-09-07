@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -125,6 +116,8 @@ public class KaleoNodePersistenceTest {
 
 		newKaleoNode.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKaleoNode.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKaleoNode.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoNode.setCompanyId(RandomTestUtil.nextLong());
@@ -137,9 +130,13 @@ public class KaleoNodePersistenceTest {
 
 		newKaleoNode.setModifiedDate(RandomTestUtil.nextDate());
 
+		newKaleoNode.setKaleoDefinitionId(RandomTestUtil.nextLong());
+
 		newKaleoNode.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 
 		newKaleoNode.setName(RandomTestUtil.randomString());
+
+		newKaleoNode.setLabel(RandomTestUtil.randomString());
 
 		newKaleoNode.setMetadata(RandomTestUtil.randomString());
 
@@ -159,6 +156,9 @@ public class KaleoNodePersistenceTest {
 		Assert.assertEquals(
 			existingKaleoNode.getMvccVersion(), newKaleoNode.getMvccVersion());
 		Assert.assertEquals(
+			existingKaleoNode.getCtCollectionId(),
+			newKaleoNode.getCtCollectionId());
+		Assert.assertEquals(
 			existingKaleoNode.getKaleoNodeId(), newKaleoNode.getKaleoNodeId());
 		Assert.assertEquals(
 			existingKaleoNode.getGroupId(), newKaleoNode.getGroupId());
@@ -175,10 +175,15 @@ public class KaleoNodePersistenceTest {
 			Time.getShortTimestamp(existingKaleoNode.getModifiedDate()),
 			Time.getShortTimestamp(newKaleoNode.getModifiedDate()));
 		Assert.assertEquals(
+			existingKaleoNode.getKaleoDefinitionId(),
+			newKaleoNode.getKaleoDefinitionId());
+		Assert.assertEquals(
 			existingKaleoNode.getKaleoDefinitionVersionId(),
 			newKaleoNode.getKaleoDefinitionVersionId());
 		Assert.assertEquals(
 			existingKaleoNode.getName(), newKaleoNode.getName());
+		Assert.assertEquals(
+			existingKaleoNode.getLabel(), newKaleoNode.getLabel());
 		Assert.assertEquals(
 			existingKaleoNode.getMetadata(), newKaleoNode.getMetadata());
 		Assert.assertEquals(
@@ -238,12 +243,12 @@ public class KaleoNodePersistenceTest {
 
 	protected OrderByComparator<KaleoNode> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KaleoNode", "mvccVersion", true, "kaleoNodeId", true, "groupId",
-			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true,
-			"kaleoDefinitionVersionId", true, "name", true, "metadata", true,
-			"description", true, "type", true, "initial", true, "terminal",
-			true);
+			"KaleoNode", "mvccVersion", true, "ctCollectionId", true,
+			"kaleoNodeId", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true, "modifiedDate", true,
+			"kaleoDefinitionId", true, "kaleoDefinitionVersionId", true, "name",
+			true, "label", true, "metadata", true, "description", true, "type",
+			true, "initial", true, "terminal", true);
 	}
 
 	@Test
@@ -462,6 +467,8 @@ public class KaleoNodePersistenceTest {
 
 		kaleoNode.setMvccVersion(RandomTestUtil.nextLong());
 
+		kaleoNode.setCtCollectionId(RandomTestUtil.nextLong());
+
 		kaleoNode.setGroupId(RandomTestUtil.nextLong());
 
 		kaleoNode.setCompanyId(RandomTestUtil.nextLong());
@@ -474,9 +481,13 @@ public class KaleoNodePersistenceTest {
 
 		kaleoNode.setModifiedDate(RandomTestUtil.nextDate());
 
+		kaleoNode.setKaleoDefinitionId(RandomTestUtil.nextLong());
+
 		kaleoNode.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 
 		kaleoNode.setName(RandomTestUtil.randomString());
+
+		kaleoNode.setLabel(RandomTestUtil.randomString());
 
 		kaleoNode.setMetadata(RandomTestUtil.randomString());
 

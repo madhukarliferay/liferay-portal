@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.io.ProtectedObjectInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
@@ -45,22 +37,26 @@ public class Base64 {
 		return _encode(raw, 0, raw.length, true);
 	}
 
-	public static String objectToString(Object o) {
-		if (o == null) {
+	public static String objectToString(Object object) {
+		if (object == null) {
 			return null;
 		}
 
-		UnsyncByteArrayOutputStream ubaos = new UnsyncByteArrayOutputStream(
-			32000);
+		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+			new UnsyncByteArrayOutputStream(32000);
 
-		try (ObjectOutputStream os = new ObjectOutputStream(ubaos)) {
-			os.writeObject(o);
+		try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+				unsyncByteArrayOutputStream)) {
+
+			objectOutputStream.writeObject(object);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
-		return _encode(ubaos.unsafeGetByteArray(), 0, ubaos.size(), false);
+		return _encode(
+			unsyncByteArrayOutputStream.unsafeGetByteArray(), 0,
+			unsyncByteArrayOutputStream.size(), false);
 	}
 
 	public static Object stringToObject(String s) {
@@ -80,26 +76,30 @@ public class Base64 {
 			return new byte[0];
 		}
 
+		char padChar = CharPool.EQUAL;
+
+		if (url) {
+			padChar = CharPool.STAR;
+		}
+
 		int pad = 0;
 
-		for (int i = base64.length() - 1; base64.charAt(i) == CharPool.EQUAL;
-			 i--) {
-
+		for (int i = base64.length() - 1; base64.charAt(i) == padChar; i--) {
 			pad++;
 		}
 
-		int length = (base64.length() * 6) / 8 - pad;
+		int length = ((base64.length() * 6) / 8) - pad;
 
 		byte[] raw = new byte[length];
 
 		int rawindex = 0;
 
 		for (int i = 0; i < base64.length(); i += 4) {
-			int block = _getValue(base64.charAt(i), url) << 18;
+			int block = _getValue(base64, i, url) << 18;
 
-			block += _getValue(base64.charAt(i + 1), url) << 12;
-			block += _getValue(base64.charAt(i + 2), url) << 6;
-			block += _getValue(base64.charAt(i + 3), url);
+			block += _getValue(base64, i + 1, url) << 12;
+			block += _getValue(base64, i + 2, url) << 6;
+			block += _getValue(base64, i + 3, url);
 
 			for (int j = 0; (j < 3) && ((rawindex + j) < raw.length); j++) {
 				raw[rawindex + j] = (byte)((block >> (8 * (2 - j))) & 0xff);
@@ -116,8 +116,8 @@ public class Base64 {
 
 		int lastIndex = Math.min(raw.length, offset + length);
 
-		StringBuilder sb = new StringBuilder(
-			((lastIndex - offset) / 3 + 1) * 4);
+		StringBundler sb = new StringBundler(
+			(((lastIndex - offset) / 3) + 1) * 4);
 
 		for (int i = offset; i < lastIndex; i += 3) {
 			sb.append(_encodeBlock(raw, i, lastIndex, url));
@@ -205,7 +205,16 @@ public class Base64 {
 		return CharPool.SLASH;
 	}
 
-	private static int _getValue(char c, boolean url) {
+	private static int _getValue(String base64, int index, boolean url) {
+		if (index >= base64.length()) {
+
+			// Padding is missing. Pretend that it exists.
+
+			return 0;
+		}
+
+		char c = base64.charAt(index);
+
 		if ((c >= CharPool.UPPER_CASE_A) && (c <= CharPool.UPPER_CASE_Z)) {
 			return c - 65;
 		}
@@ -228,7 +237,8 @@ public class Base64 {
 			}
 
 			if (c != CharPool.STAR) {
-				return -1;
+				throw new IllegalArgumentException(
+					String.format("Found illegal character: %c", c));
 			}
 		}
 		else {
@@ -241,7 +251,8 @@ public class Base64 {
 			}
 
 			if (c != CharPool.EQUAL) {
-				return -1;
+				throw new IllegalArgumentException(
+					String.format("Found illegal character: %c", c));
 			}
 		}
 
@@ -257,25 +268,26 @@ public class Base64 {
 
 		byte[] bytes = _decode(s, false);
 
-		UnsyncByteArrayInputStream ubais = new UnsyncByteArrayInputStream(
-			bytes);
+		UnsyncByteArrayInputStream unsyncByteArrayInputStream =
+			new UnsyncByteArrayInputStream(bytes);
 
 		try {
-			ObjectInputStream is = null;
+			ObjectInputStream objectInputStream = null;
 
 			if (classLoader == null) {
-				is = new ProtectedObjectInputStream(ubais);
+				objectInputStream = new ProtectedObjectInputStream(
+					unsyncByteArrayInputStream);
 			}
 			else {
-				is = new ProtectedClassLoaderObjectInputStream(
-					ubais, classLoader);
+				objectInputStream = new ProtectedClassLoaderObjectInputStream(
+					unsyncByteArrayInputStream, classLoader);
 			}
 
-			return is.readObject();
+			return objectInputStream.readObject();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (!silent) {
-				_log.error(e, e);
+				_log.error(exception);
 			}
 		}
 

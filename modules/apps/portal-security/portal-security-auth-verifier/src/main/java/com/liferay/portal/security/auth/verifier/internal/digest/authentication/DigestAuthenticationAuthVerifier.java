@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth.verifier.internal.digest.authentication;
@@ -18,20 +9,25 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
-import com.liferay.portal.kernel.security.auth.http.HttpAuthManagerUtil;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.security.auth.http.HttpAuthManagerUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Properties;
 
-import javax.servlet.http.HttpServletRequest;
+import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Tomas Polesovsky
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Component(service = AuthVerifier.class)
+@Deprecated
 public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
 	@Override
@@ -84,11 +80,11 @@ public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
 			return authVerifierResult;
 		}
-		catch (PortalException pe) {
-			throw new AuthException(pe);
+		catch (PortalException portalException) {
+			throw new AuthException(portalException);
 		}
-		catch (SystemException se) {
-			throw new AuthException(se);
+		catch (SystemException systemException) {
+			throw new AuthException(systemException);
 		}
 	}
 

@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.model.PluginSetting;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -39,7 +29,7 @@ import java.util.Set;
  */
 public class PluginSettingUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -301,12 +291,12 @@ public class PluginSettingUtil {
 	 * @return the matching plugin setting
 	 * @throws NoSuchPluginSettingException if a matching plugin setting could not be found
 	 */
-	public static PluginSetting findByC_I_T(
+	public static PluginSetting findByC_P_P(
 			long companyId, String pluginId, String pluginType)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchPluginSettingException {
 
-		return getPersistence().findByC_I_T(companyId, pluginId, pluginType);
+		return getPersistence().findByC_P_P(companyId, pluginId, pluginType);
 	}
 
 	/**
@@ -317,10 +307,10 @@ public class PluginSettingUtil {
 	 * @param pluginType the plugin type
 	 * @return the matching plugin setting, or <code>null</code> if a matching plugin setting could not be found
 	 */
-	public static PluginSetting fetchByC_I_T(
+	public static PluginSetting fetchByC_P_P(
 		long companyId, String pluginId, String pluginType) {
 
-		return getPersistence().fetchByC_I_T(companyId, pluginId, pluginType);
+		return getPersistence().fetchByC_P_P(companyId, pluginId, pluginType);
 	}
 
 	/**
@@ -332,11 +322,11 @@ public class PluginSettingUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching plugin setting, or <code>null</code> if a matching plugin setting could not be found
 	 */
-	public static PluginSetting fetchByC_I_T(
+	public static PluginSetting fetchByC_P_P(
 		long companyId, String pluginId, String pluginType,
 		boolean useFinderCache) {
 
-		return getPersistence().fetchByC_I_T(
+		return getPersistence().fetchByC_P_P(
 			companyId, pluginId, pluginType, useFinderCache);
 	}
 
@@ -348,12 +338,12 @@ public class PluginSettingUtil {
 	 * @param pluginType the plugin type
 	 * @return the plugin setting that was removed
 	 */
-	public static PluginSetting removeByC_I_T(
+	public static PluginSetting removeByC_P_P(
 			long companyId, String pluginId, String pluginType)
 		throws com.liferay.portal.kernel.exception.
 			NoSuchPluginSettingException {
 
-		return getPersistence().removeByC_I_T(companyId, pluginId, pluginType);
+		return getPersistence().removeByC_P_P(companyId, pluginId, pluginType);
 	}
 
 	/**
@@ -364,10 +354,10 @@ public class PluginSettingUtil {
 	 * @param pluginType the plugin type
 	 * @return the number of matching plugin settings
 	 */
-	public static int countByC_I_T(
+	public static int countByC_P_P(
 		long companyId, String pluginId, String pluginType) {
 
-		return getPersistence().countByC_I_T(companyId, pluginId, pluginType);
+		return getPersistence().countByC_P_P(companyId, pluginId, pluginType);
 	}
 
 	/**
@@ -521,15 +511,13 @@ public class PluginSettingUtil {
 	}
 
 	public static PluginSettingPersistence getPersistence() {
-		if (_persistence == null) {
-			_persistence =
-				(PluginSettingPersistence)PortalBeanLocatorUtil.locate(
-					PluginSettingPersistence.class.getName());
-		}
-
 		return _persistence;
 	}
 
-	private static PluginSettingPersistence _persistence;
+	public static void setPersistence(PluginSettingPersistence persistence) {
+		_persistence = persistence;
+	}
+
+	private static volatile PluginSettingPersistence _persistence;
 
 }

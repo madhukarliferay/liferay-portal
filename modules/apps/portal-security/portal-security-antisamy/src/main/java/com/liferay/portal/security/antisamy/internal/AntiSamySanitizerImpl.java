@@ -1,19 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.antisamy.internal;
 
+import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -29,6 +23,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,19 +40,14 @@ public class AntiSamySanitizerImpl implements Sanitizer {
 	public AntiSamySanitizerImpl(
 		String[] blacklist, URL url, String[] whitelist) {
 
-		try (InputStream inputstream = url.openStream()) {
-			_policy = Policy.getInstance(inputstream);
-		}
-		catch (Exception e) {
-			throw new IllegalStateException("Unable to initialize policy", e);
-		}
+		_url = url;
 
 		if (blacklist != null) {
 			for (String blacklistItem : blacklist) {
 				blacklistItem = blacklistItem.trim();
 
 				if (!blacklistItem.isEmpty()) {
-					blacklistItem = stripTrailingStar(blacklistItem);
+					blacklistItem = _stripTrailingStar(blacklistItem);
 
 					_blacklist.add(blacklistItem);
 				}
@@ -69,12 +59,28 @@ public class AntiSamySanitizerImpl implements Sanitizer {
 				whitelistItem = whitelistItem.trim();
 
 				if (!whitelistItem.isEmpty()) {
-					whitelistItem = stripTrailingStar(whitelistItem);
+					whitelistItem = _stripTrailingStar(whitelistItem);
 
 					_whitelist.add(whitelistItem);
 				}
 			}
 		}
+	}
+
+	public void addPolicy(String className, URL url) {
+		try (InputStream inputStream = url.openStream()) {
+			Policy policy = Policy.getInstance(inputStream);
+
+			_policies.put(className, policy);
+		}
+		catch (Exception exception) {
+			throw new IllegalStateException(
+				"Unable to initialize policy", exception);
+		}
+	}
+
+	public void removePolicy(String className) {
+		_policies.remove(className);
 	}
 
 	@Override
@@ -89,35 +95,69 @@ public class AntiSamySanitizerImpl implements Sanitizer {
 				StringBundler.concat("Sanitizing ", className, "#", classPK));
 		}
 
-		if (Validator.isNull(content)) {
-			return content;
-		}
-
-		if (Validator.isNull(contentType) ||
-			!contentType.equals(ContentTypes.TEXT_HTML)) {
+		if (Validator.isNull(content) || Validator.isNull(contentType) ||
+			!contentType.equals(ContentTypes.TEXT_HTML) ||
+			_isWhitelisted(className, classPK)) {
 
 			return content;
 		}
 
-		if (isWhitelisted(className, classPK)) {
-			return content;
-		}
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				AntiSamySanitizerImpl.class.getClassLoader())) {
 
-		try {
+			CleanResults cleanResults = null;
+
 			AntiSamy antiSamy = new AntiSamy();
 
-			CleanResults cleanResults = antiSamy.scan(content, _policy);
+			if (_isConfigured(className, classPK)) {
+				Policy policy = _policies.get(className);
+
+				cleanResults = antiSamy.scan(content, policy, AntiSamy.SAX);
+			}
+			else {
+				cleanResults = antiSamy.scan(
+					content,
+					_policyDCLSingleton.getSingleton(this::_getPolicy));
+			}
+
+			if (_log.isWarnEnabled()) {
+				for (String errorMessage : cleanResults.getErrorMessages()) {
+					_log.warn(errorMessage);
+				}
+			}
 
 			return cleanResults.getCleanHTML();
 		}
-		catch (Exception e) {
-			_log.error("Unable to sanitize input", e);
+		catch (Exception exception) {
+			_log.error("Unable to sanitize input", exception);
 
-			throw new SanitizerException(e);
+			throw new SanitizerException(exception);
 		}
 	}
 
-	protected boolean isWhitelisted(String className, long classPK) {
+	private Policy _getPolicy() {
+		try (InputStream inputStream = _url.openStream()) {
+			return Policy.getInstance(inputStream);
+		}
+		catch (Exception exception) {
+			throw new IllegalStateException(
+				"Unable to initialize policy", exception);
+		}
+	}
+
+	private boolean _isConfigured(String className, long classPK) {
+		String classNameAndClassPK = className + StringPool.POUND + classPK;
+
+		for (String policyClassName : _policies.keySet()) {
+			if (classNameAndClassPK.startsWith(policyClassName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _isWhitelisted(String className, long classPK) {
 		String classNameAndClassPK = className + StringPool.POUND + classPK;
 
 		for (String blacklistItem : _blacklist) {
@@ -139,7 +179,7 @@ public class AntiSamySanitizerImpl implements Sanitizer {
 		return false;
 	}
 
-	protected String stripTrailingStar(String item) {
+	private String _stripTrailingStar(String item) {
 		if (item.equals(StringPool.STAR)) {
 			return item;
 		}
@@ -157,7 +197,10 @@ public class AntiSamySanitizerImpl implements Sanitizer {
 		AntiSamySanitizerImpl.class);
 
 	private final List<String> _blacklist = new ArrayList<>();
-	private final Policy _policy;
+	private final Map<String, Policy> _policies = new HashMap<>();
+	private final DCLSingleton<Policy> _policyDCLSingleton =
+		new DCLSingleton<>();
+	private final URL _url;
 	private final List<String> _whitelist = new ArrayList<>();
 
 }

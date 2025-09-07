@@ -2,42 +2,48 @@
 @summary = "Assert that the text within the confirmation window equals the value '${value1}' and execute the confirmation"
 definition {
 
-	function assertConfirmation {
-		selenium.assertConfirmation();
+	function assertConfirmation(value1) {
+		selenium.assertAlertText(${value1});
 
-		selenium.assertJavaScriptErrors();
+		selenium.acceptAlert();
 
-		selenium.assertLiferayErrors();
-
-		WaitForSPARefresh();
-	}
-
-	function assertConfirmationNoError {
-		selenium.assertConfirmation();
-	}
-
-	function assertConfirmationNoWait {
-		selenium.assertConfirmation();
-
-		selenium.assertJavaScriptErrors();
-
-		selenium.assertLiferayErrors();
-	}
-
-	function assertPartialConfirmation {
-		selenium.assertPartialConfirmation();
-
-		selenium.assertJavaScriptErrors();
+		selenium.assertJavaScriptErrors("true");
 
 		selenium.assertLiferayErrors();
 
 		WaitForSPARefresh();
 	}
 
-	function waitForConfirmation {
-		selenium.waitForConfirmation();
+	function assertConfirmationNoError(value1) {
+		selenium.assertAlertText(${value1});
 
-		selenium.assertJavaScriptErrors();
+		selenium.acceptAlert();
+	}
+
+	function assertConfirmationNoWait(value1) {
+		selenium.assertAlertText(${value1});
+
+		selenium.acceptAlert();
+
+		selenium.assertJavaScriptErrors("true");
+
+		selenium.assertLiferayErrors();
+	}
+
+	function assertPartialConfirmation(value1) {
+		selenium.assertPartialConfirmation(${value1});
+
+		selenium.assertJavaScriptErrors("true");
+
+		selenium.assertLiferayErrors();
+
+		WaitForSPARefresh();
+	}
+
+	function waitForConfirmation(value1) {
+		selenium.waitForConfirmation(${value1});
+
+		selenium.assertJavaScriptErrors("true");
 
 		selenium.assertLiferayErrors();
 

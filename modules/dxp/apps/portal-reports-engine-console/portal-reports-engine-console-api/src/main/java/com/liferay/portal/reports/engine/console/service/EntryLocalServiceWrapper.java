@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link EntryLocalService}.
@@ -26,12 +18,20 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class EntryLocalServiceWrapper
 	implements EntryLocalService, ServiceWrapper<EntryLocalService> {
 
+	public EntryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public EntryLocalServiceWrapper(EntryLocalService entryLocalService) {
 		_entryLocalService = entryLocalService;
 	}
 
 	/**
 	 * Adds the entry to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect EntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param entry the entry
 	 * @return the entry that was added
@@ -92,6 +92,17 @@ public class EntryLocalServiceWrapper
 		return _entryLocalService.createEntry(entryId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _entryLocalService.createPersistedModel(primaryKeyObj);
+	}
+
 	@Override
 	public void deleteAttachment(long companyId, String fileName)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -101,6 +112,10 @@ public class EntryLocalServiceWrapper
 
 	/**
 	 * Deletes the entry from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect EntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param entry the entry
 	 * @return the entry that was removed
@@ -116,6 +131,10 @@ public class EntryLocalServiceWrapper
 
 	/**
 	 * Deletes the entry with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect EntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param entryId the primary key of the entry
 	 * @return the entry that was removed
@@ -138,6 +157,18 @@ public class EntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _entryLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _entryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _entryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -257,6 +288,13 @@ public class EntryLocalServiceWrapper
 		return _entryLocalService.getActionableDynamicQuery();
 	}
 
+	@Override
+	public String[] getAttachmentsFileNames(
+		com.liferay.portal.reports.engine.console.model.Entry entry) {
+
+		return _entryLocalService.getAttachmentsFileNames(entry);
+	}
+
 	/**
 	 * Returns a range of all the entries.
 	 *
@@ -282,7 +320,8 @@ public class EntryLocalServiceWrapper
 			java.util.Date createDateGT, java.util.Date createDateLT,
 			boolean andSearch, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				orderByComparator) {
+				<com.liferay.portal.reports.engine.console.model.Entry>
+					orderByComparator) {
 
 		return _entryLocalService.getEntries(
 			groupId, definitionName, userName, createDateGT, createDateLT,
@@ -342,6 +381,9 @@ public class EntryLocalServiceWrapper
 		return _entryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -370,6 +412,10 @@ public class EntryLocalServiceWrapper
 	/**
 	 * Updates the entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect EntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param entry the entry
 	 * @return the entry that was updated
 	 */
@@ -397,6 +443,11 @@ public class EntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_entryLocalService.updateEntryStatus(entryId, status, errorMessage);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _entryLocalService.getBasePersistence();
 	}
 
 	@Override

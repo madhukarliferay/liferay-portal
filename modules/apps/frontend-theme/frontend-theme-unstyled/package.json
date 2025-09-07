@@ -1,11 +1,10 @@
 {
 	"dependencies": {
-		"clay-css": "2.19.0"
 	},
 	"name": "liferay-frontend-theme-unstyled",
 	"scripts": {
-		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix"
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format"
 	},
-	"version": "5.0.0"
+	"version": "6.0.82"
 }

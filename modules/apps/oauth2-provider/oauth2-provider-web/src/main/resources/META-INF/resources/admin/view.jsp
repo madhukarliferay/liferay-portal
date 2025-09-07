@@ -1,66 +1,44 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/admin/init.jsp" %>
 
 <%
-int oAuth2ApplicationsCount = OAuth2ApplicationServiceUtil.getOAuth2ApplicationsCount(themeDisplay.getCompanyId());
+OAuth2ApplicationsDisplayContext oAuth2ApplicationsDisplayContext = new OAuth2ApplicationsDisplayContext(liferayPortletRequest, liferayPortletResponse);
 
-OAuth2ApplicationsManagementToolbarDisplayContext oAuth2ApplicationsManagementToolbarDisplayContext = new OAuth2ApplicationsManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, currentURLObj);
+OAuth2ApplicationsManagementToolbarDisplayContext oAuth2ApplicationsManagementToolbarDisplayContext = new OAuth2ApplicationsManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, oAuth2ApplicationsDisplayContext.getSearchContainer());
 
 String displayStyle = oAuth2ApplicationsManagementToolbarDisplayContext.getDisplayStyle();
 %>
 
-<clay:navigation-bar
-	inverted="<%= true %>"
-	navigationItems="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getNavigationItems() %>"
-/>
+<liferay-ui:error embed="<%= false %>" exception="<%= RequiredOAuth2ApplicationException.class %>">
+
+	<%
+	RequiredOAuth2ApplicationException requiredOAuth2ApplicationException = (RequiredOAuth2ApplicationException)errorException;
+	%>
+
+	<liferay-ui:message key="<%= requiredOAuth2ApplicationException.getMessage() %>" />
+</liferay-ui:error>
 
 <clay:management-toolbar
-	actionDropdownItems="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getActionDropdownItems() %>"
-	creationMenu="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getCreationMenu() %>"
-	disabled="<%= oAuth2ApplicationsCount == 0 %>"
-	filterDropdownItems="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getFilterDropdownItems() %>"
-	itemsTotal="<%= oAuth2ApplicationsCount %>"
-	namespace="<%= renderResponse.getNamespace() %>"
-	searchContainerId="oAuth2ApplicationsSearchContainer"
-	selectable="<%= true %>"
-	showCreationMenu="<%= oAuth2AdminPortletDisplayContext.hasAddApplicationPermission() %>"
-	showSearch="<%= false %>"
-	sortingOrder="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getOrderByType() %>"
-	sortingURL="<%= String.valueOf(oAuth2ApplicationsManagementToolbarDisplayContext.getSortingURL()) %>"
-	viewTypeItems="<%= oAuth2ApplicationsManagementToolbarDisplayContext.getViewTypes() %>"
+	managementToolbarDisplayContext="<%= oAuth2ApplicationsManagementToolbarDisplayContext %>"
+	propsTransformer="{OAuth2ApplicationsManagementToolbarPropsTransformer} from oauth2-provider-web"
 />
 
-<div class="closed container-fluid-1280">
+<clay:container-fluid
+	cssClass="closed"
+>
 	<aui:form action="<%= currentURLObj %>" method="get" name="fm">
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 		<aui:input name="oAuth2ApplicationIds" type="hidden" />
 
 		<liferay-ui:search-container
-			emptyResultsMessage="no-applications-were-found"
-			id="oAuth2ApplicationsSearchContainer"
-			iteratorURL="<%= currentURLObj %>"
-			rowChecker="<%= new EmptyOnClickRowChecker(renderResponse) %>"
-			total="<%= oAuth2ApplicationsCount %>"
+			searchContainer="<%= oAuth2ApplicationsDisplayContext.getSearchContainer() %>"
 		>
-			<liferay-ui:search-container-results
-				results="<%= OAuth2ApplicationServiceUtil.getOAuth2Applications(themeDisplay.getCompanyId(), searchContainer.getStart(), searchContainer.getEnd(), oAuth2ApplicationsManagementToolbarDisplayContext.getOrderByComparator()) %>"
-			/>
-
 			<liferay-ui:search-container-row
 				className="com.liferay.oauth2.provider.model.OAuth2Application"
 				escapedModel="<%= true %>"
@@ -68,7 +46,7 @@ String displayStyle = oAuth2ApplicationsManagementToolbarDisplayContext.getDispl
 				modelVar="oAuth2Application"
 			>
 				<portlet:renderURL var="editURL">
-					<portlet:param name="mvcRenderCommandName" value="/admin/update_oauth2_application" />
+					<portlet:param name="mvcRenderCommandName" value="/oauth2_provider/update_oauth2_application" />
 					<portlet:param name="oAuth2ApplicationId" value="<%= String.valueOf(oAuth2Application.getOAuth2ApplicationId()) %>" />
 					<portlet:param name="redirect" value="<%= currentURL %>" />
 				</portlet:renderURL>
@@ -135,6 +113,13 @@ String displayStyle = oAuth2ApplicationsManagementToolbarDisplayContext.getDispl
 							value="<%= String.valueOf(oAuth2AdminPortletDisplayContext.getOAuth2AuthorizationsCount(oAuth2Application)) %>"
 						/>
 
+						<c:if test="<%= oAuth2AdminPortletDisplayContext.hasAddTrustedApplicationPermission() || oAuth2AdminPortletDisplayContext.hasRememberDevicePermission() %>">
+							<liferay-ui:search-container-column-text
+								name="extra-properties"
+								value="<%= oAuth2AdminPortletDisplayContext.getExtraPropertiesContent(oAuth2Application) %>"
+							/>
+						</c:if>
+
 						<liferay-ui:search-container-column-jsp
 							align="right"
 							path="/admin/application_actions.jsp"
@@ -149,27 +134,4 @@ String displayStyle = oAuth2ApplicationsManagementToolbarDisplayContext.getDispl
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<script>
-	function <portlet:namespace />deleteOAuth2Applications() {
-		if (
-			confirm(
-				'<%= HtmlUtil.escapeJS(LanguageUtil.get(request, "are-you-sure-you-want-to-delete-the-selected-entries-this-action-revokes-all-authorizations-and-associated-tokens")) %>'
-			)
-		) {
-			var form = document.<portlet:namespace />fm;
-
-			Liferay.Util.postForm(form, {
-				data: {
-					oAuth2ApplicationIds: Liferay.Util.listCheckedExcept(
-						form,
-						'<portlet:namespace />allRowIds'
-					)
-				},
-				url:
-					'<portlet:actionURL name="/admin/delete_oauth2_applications" />'
-			});
-		}
-	}
-</script>
+</clay:container-fluid>

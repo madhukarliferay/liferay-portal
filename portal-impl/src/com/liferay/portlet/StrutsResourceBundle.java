@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.language.LanguageResources;
@@ -85,7 +79,11 @@ public class StrutsResourceBundle extends ResourceBundle {
 			try {
 				return parent.getObject(key);
 			}
-			catch (MissingResourceException mre) {
+			catch (MissingResourceException missingResourceException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(missingResourceException);
+				}
+
 				return null;
 			}
 		}
@@ -94,21 +92,18 @@ public class StrutsResourceBundle extends ResourceBundle {
 	}
 
 	private String _buildKey(String key) {
-		return key.concat(
-			StringPool.PERIOD
-		).concat(
-			_portletName
-		);
+		return StringBundler.concat(key, StringPool.PERIOD, _portletName);
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		StrutsResourceBundle.class);
+
 	private static final Set<String> _keys = SetUtil.fromArray(
-		new String[] {
-			JavaConstants.JAVAX_PORTLET_DESCRIPTION,
-			JavaConstants.JAVAX_PORTLET_KEYWORDS,
-			JavaConstants.JAVAX_PORTLET_LONG_TITLE,
-			JavaConstants.JAVAX_PORTLET_SHORT_TITLE,
-			JavaConstants.JAVAX_PORTLET_TITLE
-		});
+		JavaConstants.JAKARTA_PORTLET_DESCRIPTION,
+		JavaConstants.JAKARTA_PORTLET_KEYWORDS,
+		JavaConstants.JAKARTA_PORTLET_LONG_TITLE,
+		JavaConstants.JAKARTA_PORTLET_SHORT_TITLE,
+		JavaConstants.JAKARTA_PORTLET_TITLE);
 
 	private final Locale _locale;
 	private final String _portletName;

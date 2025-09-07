@@ -1,32 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.calendar.model.CalendarResource;
-import com.liferay.calendar.service.CalendarResourceLocalServiceUtil;
-import com.liferay.calendar.service.CalendarResourceServiceUtil;
+import com.liferay.calendar.service.CalendarResourceLocalService;
+import com.liferay.calendar.service.CalendarResourceService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -35,8 +26,9 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.util.Locale;
 import java.util.Map;
@@ -51,19 +43,22 @@ import org.junit.runner.RunWith;
 /**
  * @author Adam Brandizzi
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CalendarResourceServiceTest {
 
 	@ClassRule
 	@Rule
-	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
-		new LiferayIntegrationTestRule();
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
 		_user = UserTestUtil.addUser();
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 	}
 
 	@Test
@@ -78,13 +73,12 @@ public class CalendarResourceServiceTest {
 			ServiceContextTestUtil.getServiceContext(
 				group.getGroupId(), user.getUserId());
 
-		ModelPermissions modelPermissions = ModelPermissionsFactory.create(
-			_CALENDAR_RESOURCE_GROUP_PERMISSIONS, null);
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(
+				_CALENDAR_RESOURCE_GROUP_PERMISSIONS, null));
 
 		CalendarResource calendarResource =
-			CalendarResourceLocalServiceUtil.addCalendarResource(
+			_calendarResourceLocalService.addCalendarResource(
 				user.getUserId(), user.getGroupId(), classNameId, 0,
 				PortalUUIDUtil.generate(), RandomTestUtil.randomString(8),
 				RandomTestUtil.randomLocaleStringMap(),
@@ -99,12 +93,12 @@ public class CalendarResourceServiceTest {
 
 		Map<Locale, String> nameMap = createNameMap();
 
-		CalendarResourceLocalServiceUtil.addCalendarResource(
+		_calendarResourceLocalService.addCalendarResource(
 			_user.getUserId(), _user.getGroupId(), classNameId, 0,
 			PortalUUIDUtil.generate(), RandomTestUtil.randomString(8), nameMap,
 			RandomTestUtil.randomLocaleStringMap(), true, new ServiceContext());
 
-		int count = CalendarResourceServiceUtil.searchCount(
+		int count = _calendarResourceService.searchCount(
 			_user.getCompanyId(), new long[] {_user.getGroupId()},
 			new long[] {classNameId}, nameMap.get(LocaleUtil.getSiteDefault()),
 			true);
@@ -125,7 +119,12 @@ public class CalendarResourceServiceTest {
 		"ADD_CALENDAR", "DELETE", "PERMISSIONS", "UPDATE", "VIEW"
 	};
 
-	@DeleteAfterTestRun
+	@Inject
+	private CalendarResourceLocalService _calendarResourceLocalService;
+
+	@Inject
+	private CalendarResourceService _calendarResourceService;
+
 	private User _user;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
@@ -22,12 +13,12 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.lang.reflect.Field;
 
 import java.util.Map;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Igor Spasic
@@ -77,22 +68,20 @@ public class NonSerializableObjectRequestWrapper
 		try {
 			object = super.getAttribute(name);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 
 			// LPS-31885
 
-			String message = e.getMessage();
+			String message = exception.getMessage();
 
 			if ((message == null) || !message.contains("BEA-101362")) {
-				_log.error(e, e);
+				_log.error(exception);
 			}
 
 			return null;
 		}
 
-		object = NonSerializableObjectHandler.getValue(object);
-
-		return object;
+		return NonSerializableObjectHandler.getValue(object);
 	}
 
 	@Override
@@ -134,19 +123,21 @@ public class NonSerializableObjectRequestWrapper
 
 			isWebLogicClassLoaderField.set(attribute, false);
 		}
-		catch (NoSuchFieldException nsfe) {
+		catch (NoSuchFieldException noSuchFieldException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
-					"Unable to get fields from a Weblogic servlet request");
+					"Unable to get fields from a Weblogic servlet request",
+					noSuchFieldException);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					StringBundler.concat(
 						"Unable to set WebLogic class loader flag for ",
 						"attribute ", attributeName, " in servlet request ",
-						servletRequest));
+						servletRequest),
+					exception);
 			}
 		}
 	}

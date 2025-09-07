@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.search;
@@ -49,6 +40,25 @@ public class Field implements Serializable {
 	public static final String ASSET_CATEGORY_TITLE = "assetCategoryTitle";
 
 	public static final String ASSET_CATEGORY_TITLES = "assetCategoryTitles";
+
+	public static final String ASSET_ENTRY_ID = "assetEntryId";
+
+	public static final String ASSET_ENTRY_IDS = "assetEntryIds";
+
+	public static final String ASSET_INTERNAL_CATEGORY_ID =
+		"assetInternalCategoryId";
+
+	public static final String ASSET_INTERNAL_CATEGORY_IDS =
+		"assetInternalCategoryIds";
+
+	public static final String ASSET_INTERNAL_CATEGORY_TITLE =
+		"assetInternalCategoryTitle";
+
+	public static final String ASSET_INTERNAL_CATEGORY_TITLES =
+		"assetInternalCategoryTitles";
+
+	public static final String ASSET_INTERNAL_VOCABULARY_IDS =
+		"assetInternalVocabularyIds";
 
 	public static final String ASSET_PARENT_CATEGORY_ID = "parentCategoryId";
 
@@ -135,11 +145,15 @@ public class Field implements Serializable {
 
 	public static final String ROLE_ID = "roleId";
 
+	public static final String ROLE_IDS = "roleIds";
+
 	public static final String ROOT_ENTRY_CLASS_NAME = "rootEntryClassName";
 
 	public static final String ROOT_ENTRY_CLASS_PK = "rootEntryClassPK";
 
 	public static final String SCOPE_GROUP_ID = "scopeGroupId";
+
+	public static final String SENT_DATE = "sentDate";
 
 	public static final String SNIPPET = "snippet";
 
@@ -175,9 +189,13 @@ public class Field implements Serializable {
 
 	public static final String USER_NAME = "userName";
 
+	public static final String UUID = "uuid";
+
 	public static final String VERSION = "version";
 
 	public static final String VIEW_ACTION_ID = "viewActionId";
+
+	public static final String VISIBILITY_TYPE = "visibilityType";
 
 	public static String getLocalizedName(Locale locale, String name) {
 		if (locale == null) {
@@ -194,11 +212,8 @@ public class Field implements Serializable {
 	}
 
 	public static String getSortableFieldName(String name) {
-		return name.concat(
-			StringPool.UNDERLINE
-		).concat(
-			SORTABLE_FIELD_SUFFIX
-		);
+		return StringBundler.concat(
+			name, StringPool.UNDERLINE, SORTABLE_FIELD_SUFFIX);
 	}
 
 	public static String getSortFieldName(Sort sort, String scoreFieldName) {
@@ -216,6 +231,10 @@ public class Field implements Serializable {
 			!DocumentImpl.isSortableTextField(fieldName)) {
 
 			return scoreFieldName;
+		}
+
+		if (fieldName.equals(Field.ENTRY_CLASS_PK)) {
+			return fieldName;
 		}
 
 		return getSortableFieldName(fieldName);
@@ -515,39 +534,27 @@ public class Field implements Serializable {
 	protected void validate(String name) {
 		if (name.contains(StringPool.COMMA)) {
 			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not contain ", StringPool.COMMA, ": ", name));
-		}
-
-		if (name.contains(StringPool.PERIOD)) {
-			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not contain ", StringPool.PERIOD, ": ", name));
+				"Name must not contain ,: " + name);
 		}
 
 		if (name.contains(StringPool.POUND)) {
 			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not contain ", StringPool.POUND, ": ", name));
+				"Name must not contain #: " + name);
 		}
 
 		if (name.contains(StringPool.SLASH)) {
 			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not contain ", StringPool.SLASH, ": ", name));
+				"Name must not contain /: " + name);
 		}
 
 		if (name.contains(StringPool.STAR)) {
 			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not contain ", StringPool.STAR, ": ", name));
+				"Name must not contain *: " + name);
 		}
 
 		if (name.startsWith(StringPool.UNDERLINE)) {
 			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Name must not start with ", StringPool.UNDERLINE, ": ",
-					name));
+				"Name must not start with _: " + name);
 		}
 	}
 

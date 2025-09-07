@@ -1,42 +1,48 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
+import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.cache.CacheRegistryItem;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.NoSuchResourceActionException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.persistence.ResourcePermissionPersistence;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.service.base.ResourceActionLocalServiceBaseImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -44,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Shuyang Zhou
  */
 public class ResourceActionLocalServiceImpl
-	extends ResourceActionLocalServiceBaseImpl {
+	extends ResourceActionLocalServiceBaseImpl implements CacheRegistryItem {
 
 	@Override
 	public ResourceAction addResourceAction(
@@ -63,8 +69,10 @@ public class ResourceActionLocalServiceImpl
 			resourceAction.setActionId(actionId);
 			resourceAction.setBitwiseValue(bitwiseValue);
 
-			resourceActionPersistence.update(resourceAction);
+			resourceAction = resourceActionPersistence.update(resourceAction);
 		}
+
+		_resourceActions.put(encodeKey(name, actionId), resourceAction);
 
 		return resourceAction;
 	}
@@ -109,7 +117,7 @@ public class ResourceActionLocalServiceImpl
 			for (String actionId : actionIds) {
 				String key = encodeKey(name, actionId);
 
-				if (_resourceActions.get(key) != null) {
+				if (fetchResourceAction(name, actionId) != null) {
 					continue;
 				}
 
@@ -178,15 +186,19 @@ public class ResourceActionLocalServiceImpl
 					resourceAction.setActionId(actionId);
 					resourceAction.setBitwiseValue(bitwiseValue);
 
-					resourceActionPersistence.update(resourceAction);
-				}
-				catch (Throwable t) {
-					resourceAction =
-						resourceActionLocalService.addResourceAction(
-							name, actionId, bitwiseValue);
-				}
+					resourceAction = resourceActionPersistence.update(
+						resourceAction);
 
-				_resourceActions.put(key, resourceAction);
+					_resourceActions.put(key, resourceAction);
+				}
+				catch (Throwable throwable) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(throwable);
+					}
+
+					resourceActionLocalService.addResourceAction(
+						name, actionId, bitwiseValue);
+				}
 			}
 
 			if (!addDefaultActions) {
@@ -221,19 +233,19 @@ public class ResourceActionLocalServiceImpl
 			}
 
 			if (guestBitwiseValue > 0) {
-				resourcePermissionLocalService.addResourcePermissions(
+				_resourcePermissionLocalService.addResourcePermissions(
 					name, RoleConstants.GUEST,
 					ResourceConstants.SCOPE_INDIVIDUAL, guestBitwiseValue);
 			}
 
 			if (ownerBitwiseValue > 0) {
-				resourcePermissionLocalService.addResourcePermissions(
+				_resourcePermissionLocalService.addResourcePermissions(
 					name, RoleConstants.OWNER,
 					ResourceConstants.SCOPE_INDIVIDUAL, ownerBitwiseValue);
 			}
 
 			if (siteMemberBitwiseValue > 0) {
-				resourcePermissionLocalService.addResourcePermissions(
+				_resourcePermissionLocalService.addResourcePermissions(
 					name, RoleConstants.SITE_MEMBER,
 					ResourceConstants.SCOPE_INDIVIDUAL, siteMemberBitwiseValue);
 			}
@@ -250,50 +262,62 @@ public class ResourceActionLocalServiceImpl
 
 	@Override
 	public ResourceAction deleteResourceAction(ResourceAction resourceAction) {
-		final String name = resourceAction.getName();
-		final long bitwiseValue = resourceAction.getBitwiseValue();
+		String name = resourceAction.getName();
 
-		ActionableDynamicQuery.AddCriteriaMethod addCriteriaMethod =
-			dynamicQuery -> {
-				Property nameProperty = PropertyFactoryUtil.forName("name");
+		Set<String> names = MassDeleteCacheThreadLocal.getMassDeleteCache(
+			ResourcePermissionLocalService.class.getName(), HashSet::new);
 
-				dynamicQuery.add(nameProperty.eq(name));
-			};
+		if (names == null) {
+			long bitwiseValue = resourceAction.getBitwiseValue();
 
-		for (Company company : companyLocalService.getCompanies()) {
-			ActionableDynamicQuery actionableDynamicQuery =
-				resourcePermissionLocalService.getActionableDynamicQuery();
+			ActionableDynamicQuery.AddCriteriaMethod addCriteriaMethod =
+				dynamicQuery -> {
+					Property nameProperty = PropertyFactoryUtil.forName("name");
 
-			actionableDynamicQuery.setAddCriteriaMethod(addCriteriaMethod);
-			actionableDynamicQuery.setCompanyId(company.getCompanyId());
-			actionableDynamicQuery.setPerformActionMethod(
-				(ResourcePermission resourcePermission) -> {
-					long actionIds = resourcePermission.getActionIds();
+					dynamicQuery.add(nameProperty.eq(name));
+				};
 
-					if ((actionIds & bitwiseValue) != 0) {
-						actionIds &= ~bitwiseValue;
+			_companyLocalService.forEachCompanyId(
+				companyId -> {
+					ActionableDynamicQuery actionableDynamicQuery =
+						_resourcePermissionLocalService.
+							getActionableDynamicQuery();
 
-						resourcePermission.setActionIds(actionIds);
-						resourcePermission.setViewActionId(
-							(actionIds % 2) == 1);
+					actionableDynamicQuery.setAddCriteriaMethod(
+						addCriteriaMethod);
+					actionableDynamicQuery.setCompanyId(companyId);
+					actionableDynamicQuery.setPerformActionMethod(
+						(ResourcePermission resourcePermission) -> {
+							long actionIds = resourcePermission.getActionIds();
 
-						resourcePermissionPersistence.update(
-							resourcePermission);
+							if ((actionIds & bitwiseValue) != 0) {
+								actionIds &= ~bitwiseValue;
+
+								resourcePermission.setActionIds(actionIds);
+								resourcePermission.setViewActionId(
+									(actionIds % 2) == 1);
+
+								_resourcePermissionPersistence.update(
+									resourcePermission);
+							}
+						});
+
+					try {
+						actionableDynamicQuery.performActions();
+					}
+					catch (PortalException portalException) {
+						throw new SystemException(portalException);
 					}
 				});
-
-			try {
-				actionableDynamicQuery.performActions();
-			}
-			catch (PortalException pe) {
-				throw new SystemException(pe);
-			}
 		}
+		else {
+			names.add(name);
+		}
+
+		resourceActionPersistence.remove(resourceAction);
 
 		_resourceActions.remove(
 			encodeKey(resourceAction.getName(), resourceAction.getActionId()));
-
-		resourceActionPersistence.remove(resourceAction);
 
 		PermissionCacheUtil.clearCache();
 
@@ -301,27 +325,45 @@ public class ResourceActionLocalServiceImpl
 	}
 
 	@Override
-	@Transactional(enabled = false)
 	public ResourceAction fetchResourceAction(String name, String actionId) {
-		String key = encodeKey(name, actionId);
-
-		return _resourceActions.get(key);
-	}
-
-	@Override
-	@Transactional(enabled = false)
-	public ResourceAction getResourceAction(String name, String actionId)
-		throws PortalException {
-
-		String key = encodeKey(name, actionId);
-
-		ResourceAction resourceAction = _resourceActions.get(key);
+		ResourceAction resourceAction = _resourceActions.get(
+			encodeKey(name, actionId));
 
 		if (resourceAction == null) {
-			throw new NoSuchResourceActionException(key);
+			resourceAction = resourceActionPersistence.fetchByN_A(
+				name, actionId);
+
+			if (resourceAction == null) {
+				_resourceActions.put(encodeKey(name, actionId), _NULL_HOLDER);
+			}
+			else {
+				_resourceActions.put(encodeKey(name, actionId), resourceAction);
+			}
+		}
+
+		if (resourceAction == _NULL_HOLDER) {
+			return null;
 		}
 
 		return resourceAction;
+	}
+
+	@Override
+	public String getRegistryName() {
+		return ResourceActionLocalServiceImpl.class.getName();
+	}
+
+	@Override
+	public ResourceAction getResourceAction(String name, String actionId)
+		throws PortalException {
+
+		ResourceAction resourceAction = fetchResourceAction(name, actionId);
+
+		if (resourceAction != null) {
+			return resourceAction;
+		}
+
+		throw new NoSuchResourceActionException(encodeKey(name, actionId));
 	}
 
 	@Override
@@ -334,15 +376,46 @@ public class ResourceActionLocalServiceImpl
 		return resourceActionPersistence.countByName(name);
 	}
 
-	protected String encodeKey(String name, String actionId) {
-		return name.concat(
-			StringPool.POUND
-		).concat(
-			actionId
-		);
+	@Override
+	public void invalidate() {
+		if (!DBPartition.isPartitionEnabled() ||
+			(CompanyThreadLocal.getCompanyId() == CompanyConstants.SYSTEM)) {
+
+			_resourceActions.clear();
+
+			return;
+		}
+
+		for (String key : _resourceActions.keySet()) {
+			if (key.endsWith(
+					StringPool.AT + CompanyThreadLocal.getCompanyId())) {
+
+				_resourceActions.remove(key);
+			}
+		}
 	}
+
+	protected String encodeKey(String name, String actionId) {
+		return DBPartitionUtil.getPartitionKey(
+			StringBundler.concat(name, StringPool.POUND, actionId));
+	}
+
+	private static final ResourceAction _NULL_HOLDER =
+		ProxyFactory.newDummyInstance(ResourceAction.class);
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ResourceActionLocalServiceImpl.class);
 
 	private static final Map<String, ResourceAction> _resourceActions =
 		new ConcurrentHashMap<>();
+
+	@BeanReference(type = CompanyLocalService.class)
+	private CompanyLocalService _companyLocalService;
+
+	@BeanReference(type = ResourcePermissionLocalService.class)
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@BeanReference(type = ResourcePermissionPersistence.class)
+	private ResourcePermissionPersistence _resourcePermissionPersistence;
 
 }

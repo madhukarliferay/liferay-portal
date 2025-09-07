@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults.internal.util;
@@ -20,6 +11,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -36,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UncheckedIOException;
@@ -59,11 +54,7 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 		String content = new String(
 			Files.readAllBytes(path), StandardCharsets.UTF_8);
 
-		if (content.contains(s)) {
-			return true;
-		}
-
-		return false;
+		return content.contains(s);
 	}
 
 	public static File findFile(File dir, final String fileName)
@@ -101,11 +92,7 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 				@Override
 				public boolean accept(File file) {
-					if (file.isDirectory()) {
-						return true;
-					}
-
-					return false;
+					return file.isDirectory();
 				}
 
 			});
@@ -125,11 +112,7 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 
 					String name = file.getName();
 
-					if (!name.startsWith(prefix)) {
-						return false;
-					}
-
-					if (!name.endsWith(suffix)) {
+					if (!name.startsWith(prefix) || !name.endsWith(suffix)) {
 						return false;
 					}
 
@@ -161,19 +144,33 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 		return relativePath.replace('\\', '/');
 	}
 
+	public static String getUrl(File file) {
+		URI uri = file.toURI();
+
+		try {
+			uri = new URI("file", "", uri.getPath(), null, null);
+		}
+		catch (URISyntaxException uriSyntaxException) {
+			throw new GradleException(
+				"Unable to create URI for " + file, uriSyntaxException);
+		}
+
+		return uri.toString();
+	}
+
 	public static boolean hasFiles(
 		FileCollection fileCollection, Spec<File> spec) {
 
 		fileCollection = fileCollection.filter(spec);
 
-		if (fileCollection.isEmpty()) {
-			return false;
-		}
-
-		return true;
+		return !fileCollection.isEmpty();
 	}
 
 	public static boolean hasSourceFiles(Task task, Spec<File> spec) {
+		if (exists(task.getProject(), ".lfrbuild-releng-skip-source")) {
+			return false;
+		}
+
 		TaskInputs taskInputs = task.getInputs();
 
 		return hasFiles(taskInputs.getSourceFiles(), spec);
@@ -248,8 +245,8 @@ public class FileUtil extends com.liferay.gradle.util.FileUtil {
 				bufferedWriter.write(value);
 			}
 		}
-		catch (IOException ioe) {
-			throw new UncheckedIOException(ioe);
+		catch (IOException ioException) {
+			throw new UncheckedIOException(ioException);
 		}
 	}
 

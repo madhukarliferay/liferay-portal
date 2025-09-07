@@ -1,23 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.TypedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -34,9 +27,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface ExpandoTableModel
-	extends BaseModel<ExpandoTable>, ShardedModel, TypedModel {
+	extends BaseModel<ExpandoTable>, CTModel<ExpandoTable>, MVCCModel,
+			ShardedModel, TypedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a expando table model instance should use the {@link ExpandoTable} interface instead.
@@ -47,6 +41,7 @@ public interface ExpandoTableModel
 	 *
 	 * @return the primary key of this expando table
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,7 +49,40 @@ public interface ExpandoTableModel
 	 *
 	 * @param primaryKey the primary key of this expando table
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
+
+	/**
+	 * Returns the mvcc version of this expando table.
+	 *
+	 * @return the mvcc version of this expando table
+	 */
+	@Override
+	public long getMvccVersion();
+
+	/**
+	 * Sets the mvcc version of this expando table.
+	 *
+	 * @param mvccVersion the mvcc version of this expando table
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this expando table.
+	 *
+	 * @return the ct collection ID of this expando table
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this expando table.
+	 *
+	 * @param ctCollectionId the ct collection ID of this expando table
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the table ID of this expando table.
@@ -126,5 +154,12 @@ public interface ExpandoTableModel
 	 * @param name the name of this expando table
 	 */
 	public void setName(String name);
+
+	@Override
+	public ExpandoTable cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

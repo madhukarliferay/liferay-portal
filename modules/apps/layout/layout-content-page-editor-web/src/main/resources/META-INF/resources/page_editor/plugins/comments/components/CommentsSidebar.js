@@ -1,57 +1,65 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React, {useContext} from 'react';
+import {useSessionState} from 'frontend-js-components-web';
+import React from 'react';
 
-import {useActiveItemId} from '../../../app/components/Controls';
+import {HIGHLIGHTED_COMMENT_ID_KEY} from '../../../app/config/constants/highlightedCommentIdKey';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../app/config/constants/layoutDataItemTypes';
-import {StoreContext} from '../../../app/store/index';
+import {useActiveItemIds} from '../../../app/contexts/ControlsContext';
+import {useSelectorCallback} from '../../../app/contexts/StoreContext';
+import MultiSelectMessage from '../../../common/components/MultiSelectMessage';
 import FragmentComments from './FragmentComments';
 import FragmentEntryLinksWithComments from './FragmentEntryLinksWithComments';
 
-function getActiveFragmentEntryLink(itemId, fragmentEntryLinks, layoutData) {
-	const item = layoutData.items[itemId];
+export default function CommentsSidebar() {
+	const activeItemIds = useActiveItemIds();
 
-	if (item) {
-		if (item.type === LAYOUT_DATA_ITEM_TYPES.fragment) {
-			return fragmentEntryLinks[item.config.fragmentEntryLinkId];
-		} else if (item.parentId) {
-			return getActiveFragmentEntryLink(
-				item.parentId,
-				fragmentEntryLinks,
-				layoutData
-			);
-		}
+	if (activeItemIds.length > 1) {
+		return <MultiSelectMessage />;
 	}
-
-	return null;
+	else {
+		return <CommentsSidebarContent activeItemId={activeItemIds[0]} />;
+	}
 }
 
-export default function CommentsSidebar() {
-	const {fragmentEntryLinks, layoutData} = useContext(StoreContext);
+function CommentsSidebarContent({activeItemId}) {
+	const [highlightedMessageId] = useSessionState(HIGHLIGHTED_COMMENT_ID_KEY);
 
-	const activeItemId = useActiveItemId();
+	const activeFragmentEntryLink = useSelectorCallback(
+		(state) => {
+			const getActiveFragmentEntryLink = (itemId) => {
+				const item = state.layoutData.items[itemId];
 
-	const activeFragmentEntryLink = getActiveFragmentEntryLink(
-		activeItemId,
-		fragmentEntryLinks,
-		layoutData
+				if (item) {
+					if (item.type === LAYOUT_DATA_ITEM_TYPES.fragment) {
+						return (
+							state.fragmentEntryLinks[
+								item.config.fragmentEntryLinkId
+							] || null
+						);
+					}
+					else if (item.parentId) {
+						return getActiveFragmentEntryLink(item.parentId);
+					}
+				}
+
+				return null;
+			};
+
+			return getActiveFragmentEntryLink(activeItemId);
+		},
+		[activeItemId, highlightedMessageId]
 	);
 
 	return (
 		<div
-			onMouseDown={event => event.nativeEvent.stopImmediatePropagation()}
+			className="d-flex flex-column"
+			onMouseDown={(event) =>
+				event.nativeEvent.stopImmediatePropagation()
+			}
 		>
 			{activeFragmentEntryLink ? (
 				<FragmentComments fragmentEntryLink={activeFragmentEntryLink} />

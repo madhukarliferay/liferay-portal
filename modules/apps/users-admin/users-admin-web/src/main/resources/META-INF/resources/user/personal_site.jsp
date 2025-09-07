@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -74,7 +65,7 @@ if (selUser != null) {
 boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(permissionChecker, ActionKeys.UNLINK_LAYOUT_SET_PROTOTYPE);
 %>
 
-<div class="sheet-section">
+<clay:sheet-section>
 	<h3 class="sheet-subtitle"><liferay-ui:message key="profile" /></h3>
 
 	<c:choose>
@@ -116,12 +107,14 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 								Group selUserGroup = selUser.getGroup();
 								%>
 
-								<liferay-ui:icon
-									label="<%= true %>"
-									message="open-pages"
-									method="get"
+								<clay:link
+									aria-label='<%= LanguageUtil.get(request, "go-to-profile-pages") + StringPool.SPACE + LanguageUtil.get(request, "opens-new-window") %>'
+									decoration="underline"
+									displayType="primary"
+									href="<%= selUserGroup.getDisplayURL(themeDisplay, false) %>"
+									iconAfter="shortcut"
+									label='<%= LanguageUtil.get(request, "my-profile") %>'
 									target="_blank"
-									url="<%= selUserGroup.getDisplayURL(themeDisplay, false) %>"
 								/>
 							</c:when>
 							<c:otherwise>
@@ -151,9 +144,9 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 			</aui:field-wrapper>
 		</c:otherwise>
 	</c:choose>
-</div>
+</clay:sheet-section>
 
-<div class="sheet-section">
+<clay:sheet-section>
 	<h3 class="sheet-subtitle"><liferay-ui:message key="dashboard" /></h3>
 
 	<c:choose>
@@ -195,12 +188,14 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 								Group selUserGroup = selUser.getGroup();
 								%>
 
-								<liferay-ui:icon
-									label="<%= true %>"
-									message="open-pages"
-									method="get"
+								<clay:link
+									aria-label='<%= LanguageUtil.get(request, "go-to-dashboard-pages") + StringPool.SPACE + LanguageUtil.get(request, "opens-new-window") %>'
+									decoration="underline"
+									displayType="primary"
+									href="<%= selUserGroup.getDisplayURL(themeDisplay, true) %>"
+									iconAfter="shortcut"
+									label='<%= LanguageUtil.get(request, "my-dashboard") %>'
 									target="_blank"
-									url="<%= selUserGroup.getDisplayURL(themeDisplay, true) %>"
 								/>
 							</c:when>
 							<c:otherwise>
@@ -230,7 +225,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 			</aui:field-wrapper>
 		</c:otherwise>
 	</c:choose>
-</div>
+</clay:sheet-section>
 
 <%
 if ((selUser == null) && layoutSetPrototypes.isEmpty()) {

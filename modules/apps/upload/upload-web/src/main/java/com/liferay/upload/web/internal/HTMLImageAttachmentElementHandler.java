@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.upload.web.internal;
 
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.editor.EditorConstants;
+import com.liferay.portal.kernel.editor.constants.EditorConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -24,6 +15,8 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.upload.AttachmentElementHandler;
 import com.liferay.upload.AttachmentElementReplacer;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,21 +43,28 @@ public class HTMLImageAttachmentElementHandler
 				saveTempFileUnsafeFunction)
 		throws PortalException {
 
-		Matcher matcher = _tempAttachmentPattern.matcher(content);
-
 		StringBuffer sb = new StringBuffer(content.length());
 
-		while (matcher.find()) {
-			FileEntry tempAttachmentFileEntry = _getFileEntry(matcher);
+		Map<String, FileEntry> fileEntries = new HashMap<>();
 
-			FileEntry attachmentFileEntry = saveTempFileUnsafeFunction.apply(
-				tempAttachmentFileEntry);
+		Matcher matcher = _tempAttachmentPattern.matcher(content);
+
+		while (matcher.find()) {
+			String fileName = matcher.group(0);
+
+			FileEntry fileEntry = fileEntries.get(fileName);
+
+			if (fileEntry == null) {
+				fileEntry = saveTempFileUnsafeFunction.apply(
+					_getFileEntry(matcher));
+
+				fileEntries.put(fileName, fileEntry);
+			}
 
 			matcher.appendReplacement(
 				sb,
 				Matcher.quoteReplacement(
-					_attachmentElementReplacer.replace(
-						matcher.group(0), attachmentFileEntry)));
+					_attachmentElementReplacer.replace(fileName, fileEntry)));
 		}
 
 		matcher.appendTail(sb);
@@ -84,18 +84,11 @@ public class HTMLImageAttachmentElementHandler
 	private static final Pattern _tempAttachmentPattern;
 
 	static {
-		StringBundler sb = new StringBundler(8);
-
-		sb.append("<\\s*?img");
-		sb.append(_ATTRIBUTE_LIST_REGEXP);
-		sb.append(EditorConstants.ATTRIBUTE_DATA_IMAGE_ID);
-		sb.append("\\s*?=\\s*?\"");
-		sb.append("([^\"]*)");
-		sb.append("\"");
-		sb.append(_ATTRIBUTE_LIST_REGEXP);
-		sb.append("/>");
-
-		_tempAttachmentPattern = Pattern.compile(sb.toString());
+		_tempAttachmentPattern = Pattern.compile(
+			StringBundler.concat(
+				"<\\s*?img", _ATTRIBUTE_LIST_REGEXP,
+				EditorConstants.ATTRIBUTE_DATA_IMAGE_ID, "\\s*?=\\s*?\"",
+				"([^\"]*)\"", _ATTRIBUTE_LIST_REGEXP, "/>"));
 	}
 
 	@Reference(

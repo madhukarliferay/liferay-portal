@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.portlet.container.test;
@@ -19,29 +10,25 @@ import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.LifecycleAction;
 import com.liferay.portal.kernel.events.LifecycleEvent;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
-import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.osgi.web.portlet.container.test.util.PortletContainerTestUtil;
-import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletSession;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-import java.util.Dictionary;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletSession;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,11 +38,6 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class SharedSessionPortletContainerTest
 	extends BasePortletContainerTestCase {
-
-	@ClassRule
-	@Rule
-	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testPrivateFalsePortalToPortlet() throws Exception {
@@ -83,12 +65,12 @@ public class SharedSessionPortletContainerTest
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"com.liferay.portlet.private-session-attributes", Boolean.FALSE);
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"com.liferay.portlet.private-session-attributes", Boolean.FALSE
+			).build(),
+			TEST_PORTLET_ID);
 
 		LifecycleAction lifecycleAction = new LifecycleAction() {
 
@@ -99,25 +81,22 @@ public class SharedSessionPortletContainerTest
 				HttpServletRequest httpServletRequest =
 					lifecycleEvent.getRequest();
 
-				HttpSession session = httpServletRequest.getSession(true);
+				HttpSession httpSession = httpServletRequest.getSession(true);
 
-				session.setAttribute(attributeKey, attributeValue);
+				httpSession.setAttribute(attributeKey, attributeValue);
 			}
 
 		};
 
-		properties = new HashMapDictionary<>();
-
-		properties.put("key", "servlet.service.events.pre");
-
-		registerService(LifecycleAction.class, lifecycleAction, properties);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		registerService(
+			LifecycleAction.class, lifecycleAction,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"key", "servlet.service.events.pre"
+			).build());
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -153,12 +132,12 @@ public class SharedSessionPortletContainerTest
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"com.liferay.portlet.private-session-attributes", Boolean.FALSE);
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"com.liferay.portlet.private-session-attributes", Boolean.FALSE
+			).build(),
+			TEST_PORTLET_ID);
 
 		LifecycleAction lifecycleAction = new LifecycleAction() {
 
@@ -169,27 +148,24 @@ public class SharedSessionPortletContainerTest
 				HttpServletRequest httpServletRequest =
 					lifecycleEvent.getRequest();
 
-				HttpSession session = httpServletRequest.getSession(true);
+				HttpSession httpSession = httpServletRequest.getSession(true);
 
-				Object value = session.getAttribute(attributeKey);
+				Object value = httpSession.getAttribute(attributeKey);
 
 				sessionValue.set(value);
 			}
 
 		};
 
-		properties = new HashMapDictionary<>();
-
-		properties.put("key", "servlet.service.events.post");
-
-		registerService(LifecycleAction.class, lifecycleAction, properties);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		registerService(
+			LifecycleAction.class, lifecycleAction,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"key", "servlet.service.events.post"
+			).build());
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -239,25 +215,22 @@ public class SharedSessionPortletContainerTest
 				HttpServletRequest httpServletRequest =
 					lifecycleEvent.getRequest();
 
-				HttpSession session = httpServletRequest.getSession(true);
+				HttpSession httpSession = httpServletRequest.getSession(true);
 
-				session.setAttribute(attributeKey, attributeValue);
+				httpSession.setAttribute(attributeKey, attributeValue);
 			}
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("key", "servlet.service.events.pre");
-
-		registerService(LifecycleAction.class, lifecycleAction, properties);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		registerService(
+			LifecycleAction.class, lifecycleAction,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"key", "servlet.service.events.pre"
+			).build());
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -309,25 +282,22 @@ public class SharedSessionPortletContainerTest
 				HttpServletRequest httpServletRequest =
 					lifecycleEvent.getRequest();
 
-				HttpSession session = httpServletRequest.getSession(true);
+				HttpSession httpSession = httpServletRequest.getSession(true);
 
-				session.setAttribute(attributeKey, attributeValue);
+				httpSession.setAttribute(attributeKey, attributeValue);
 			}
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("key", "servlet.service.events.pre");
-
-		registerService(LifecycleAction.class, lifecycleAction, properties);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		registerService(
+			LifecycleAction.class, lifecycleAction,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"key", "servlet.service.events.pre"
+			).build());
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -376,27 +346,24 @@ public class SharedSessionPortletContainerTest
 				HttpServletRequest httpServletRequest =
 					lifecycleEvent.getRequest();
 
-				HttpSession session = httpServletRequest.getSession(true);
+				HttpSession httpSession = httpServletRequest.getSession(true);
 
-				Object value = session.getAttribute(attributeKey);
+				Object value = httpSession.getAttribute(attributeKey);
 
 				sessionValue.set(value);
 			}
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("key", "servlet.service.events.post");
-
-		registerService(LifecycleAction.class, lifecycleAction, properties);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		registerService(
+			LifecycleAction.class, lifecycleAction,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"key", "servlet.service.events.post"
+			).build());
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 @generated
@@ -19,9 +10,13 @@
 <%@ include file="/html/taglib/taglib-init.jsp" %>
 
 <%
+List<String> activeLanguageIds = (List<String>)request.getAttribute("aui:input:activeLanguageIds");
+boolean adminMode = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:adminMode")));
 boolean autoFocus = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:autoFocus")));
 boolean autoSize = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:autoSize")));
 java.lang.Object bean = (java.lang.Object)request.getAttribute("aui:input:bean");
+java.lang.String buttonIconOff = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:buttonIconOff"));
+java.lang.String buttonIconOn = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:buttonIconOn"));
 boolean changesContext = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:changesContext")));
 boolean checked = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:checked")));
 long classPK = GetterUtil.getLong(String.valueOf(request.getAttribute("aui:input:classPK")));
@@ -37,12 +32,17 @@ boolean first = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:i
 java.lang.String formName = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:formName"));
 java.lang.String helpMessage = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:helpMessage"));
 java.lang.String helpTextCssClass = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:helpTextCssClass"), "input-group-addon");
+java.lang.String iconOff = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:iconOff"));
+java.lang.String iconOn = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:iconOn"));
 java.lang.String id = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:id"));
 boolean ignoreRequestValue = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:ignoreRequestValue")));
 boolean inlineField = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:inlineField")));
 java.lang.String inlineLabel = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:inlineLabel"));
 java.lang.String label = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:label"));
+java.lang.String labelCssClass = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:labelCssClass"));
 java.lang.String languageId = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:languageId"));
+java.lang.String languagesDropdownDirection = GetterUtil.getString((java.lang.String)request.getAttribute("aui:input:languagesDropdownDirection"));
+boolean languagesDropdownVisible = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:languagesDropdownVisible")));
 boolean last = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:last")));
 boolean localized = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:localized")));
 boolean localizeLabel = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:input:localizeLabel")), true);

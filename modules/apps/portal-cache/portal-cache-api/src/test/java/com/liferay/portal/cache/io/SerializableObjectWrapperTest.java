@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cache.io;
@@ -17,9 +8,14 @@ package com.liferay.portal.cache.io;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.petra.lang.ClassLoaderPool;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -27,11 +23,10 @@ import java.io.Serializable;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -40,8 +35,10 @@ import org.junit.Test;
 public class SerializableObjectWrapperTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		CodeCoverageAssertor.INSTANCE;
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			CodeCoverageAssertor.INSTANCE, LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testEquals() throws Exception {
@@ -111,50 +108,43 @@ public class SerializableObjectWrapperTest {
 	public void testWithBrokenClassLoader() throws Exception {
 		ClassLoaderPool.unregister(ClassLoaderPool.class.getClassLoader());
 
-		Thread currentThread = Thread.currentThread();
+		ClassNotFoundException classNotFoundException =
+			new ClassNotFoundException();
 
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				new ClassLoader() {
 
-		ClassNotFoundException cnfe = new ClassNotFoundException();
+					@Override
+					public Class<?> loadClass(String name)
+						throws ClassNotFoundException {
 
-		currentThread.setContextClassLoader(
-			new ClassLoader() {
+						if (name.equals(TestSerializable.class.getName())) {
+							throw classNotFoundException;
+						}
 
-				@Override
-				public Class<?> loadClass(String name)
-					throws ClassNotFoundException {
-
-					if (name.equals(TestSerializable.class.getName())) {
-						throw cnfe;
+						return super.loadClass(name);
 					}
 
-					return super.loadClass(name);
-				}
-
-			});
-
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					SerializableObjectWrapper.class.getName(), Level.ALL)) {
+				});
+			LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				SerializableObjectWrapper.class.getName(),
+				LoggerTestUtil.ALL)) {
 
 			// Test unwrap
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
 			Assert.assertNull(
 				SerializableObjectWrapper.unwrap(
 					_cloneBySerialization(_testSerializableObjectWrapper)));
 
-			Assert.assertEquals(logRecords.toString(), 1, logRecords.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LogRecord logRecord = logRecords.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
 			Assert.assertEquals(
-				"Unable to deserialize object", logRecord.getMessage());
-			Assert.assertSame(cnfe, logRecord.getThrown());
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
+				"Unable to deserialize object", logEntry.getMessage());
+			Assert.assertSame(classNotFoundException, logEntry.getThrowable());
 		}
 	}
 
@@ -162,19 +152,24 @@ public class SerializableObjectWrapperTest {
 			SerializableObjectWrapper serializableObjectWrapper)
 		throws Exception {
 
-		try (UnsyncByteArrayOutputStream ubaos =
+		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 				new UnsyncByteArrayOutputStream()) {
 
-			try (ObjectOutputStream oos = new ObjectOutputStream(ubaos)) {
-				oos.writeObject(serializableObjectWrapper);
+			try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+					unsyncByteArrayOutputStream)) {
+
+				objectOutputStream.writeObject(serializableObjectWrapper);
 			}
 
-			try (UnsyncByteArrayInputStream ubais =
+			try (UnsyncByteArrayInputStream unsyncByteArrayInputStream =
 					new UnsyncByteArrayInputStream(
-						ubaos.unsafeGetByteArray(), 0, ubaos.size());
-				ObjectInputStream ois = new ObjectInputStream(ubais)) {
+						unsyncByteArrayOutputStream.unsafeGetByteArray(), 0,
+						unsyncByteArrayOutputStream.size());
+				ObjectInputStream objectInputStream = new ObjectInputStream(
+					unsyncByteArrayInputStream)) {
 
-				return (SerializableObjectWrapper)ois.readObject();
+				return (SerializableObjectWrapper)
+					objectInputStream.readObject();
 			}
 		}
 	}

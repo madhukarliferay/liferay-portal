@@ -1,86 +1,143 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {fireEvent} from '@testing-library/react';
+import {act, cleanup, render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {PageProvider} from 'data-engine-js-components-web';
+import React from 'react';
 
-import ColorPicker from '../../../src/main/resources/META-INF/resources/ColorPicker/ColorPicker.es';
+import ColorPicker from '../../../src/main/resources/META-INF/resources/js/ColorPicker/ColorPicker.es';
 
-let component;
 const name = 'colorPicker';
 const spritemap = 'icons.svg';
 
+const ColorPickerWithProvider = (props) => (
+	<PageProvider value={{editingLanguageId: 'en_US'}}>
+		<ColorPicker {...props} />
+	</PageProvider>
+);
+
 describe('Field Color Picker', () => {
-	beforeEach(() => {
-		jest.useFakeTimers();
+
+	// eslint-disable-next-line no-console
+	const originalWarn = console.warn;
+
+	beforeAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = (...args) => {
+			if (/DataProvider: Trying/.test(args[0])) {
+				return;
+			}
+			originalWarn.call(console, ...args);
+		};
 	});
 
-	afterEach(() => {
-		if (component) {
-			component.dispose();
-		}
+	afterAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = originalWarn;
+	});
+
+	afterEach(cleanup);
+
+	beforeEach(() => {
+		jest.useFakeTimers();
+		fetch.mockResponseOnce(JSON.stringify({}));
 	});
 
 	it('renders field disabled', () => {
-		component = new ColorPicker({
-			name,
-			readOnly: false,
-			spritemap
+		const {container} = render(
+			<ColorPickerWithProvider
+				name={name}
+				readOnly={true}
+				spritemap={spritemap}
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('renders field with helptext', () => {
-		component = new ColorPicker({
-			name,
-			spritemap,
-			tip: 'Helptext'
+		const {container} = render(
+			<ColorPickerWithProvider
+				name={name}
+				spritemap={spritemap}
+				tip="Helptext"
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('renders field with label', () => {
-		component = new ColorPicker({
-			label: 'Label',
-			name,
-			spritemap
+		const {container} = render(
+			<ColorPickerWithProvider
+				label="label"
+				name={name}
+				spritemap={spritemap}
+				tip="Helptext"
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
-	it.skip('emits field edit event on field change', () => {
-		const handleFieldEdited = jest.fn();
+	it('renders with basic color', () => {
+		const color = '#FF67AA';
 
-		const events = {fieldEdited: handleFieldEdited};
+		const {container} = render(
+			<ColorPickerWithProvider
+				name={name}
+				readOnly
+				spritemap={spritemap}
+				value={color}
+			/>
+		);
 
-		component = new ColorPicker({
-			events,
-			name,
-			spritemap
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		const {fieldBase} = component.refs;
+		expect(container.querySelector('input').value).toBe(color);
+	});
 
-		const inputEl = fieldBase.element.querySelector('input');
+	it.skip('should call the onChange callback on the field change', () => {
+		const handleFieldEdited = jest.fn();
 
-		jest.runAllTimers();
+		render(
+			<ColorPickerWithProvider
+				name={name}
+				onChange={handleFieldEdited}
+				spritemap={spritemap}
+			/>
+		);
 
-		fireEvent.change(inputEl, {target: {value: 'ffffff'}});
+		userEvent.click(document.body.querySelector('input'), {
+			target: {value: 'ffffff'},
+		});
 
-		expect(handleFieldEdited).toBeCalledTimes(1);
-		expect(handleFieldEdited.mock.calls[0][0][0]).toBe('ffffff');
+		act(() => {
+			jest.runAllTimers();
+		});
+
+		expect(handleFieldEdited).toHaveBeenCalled();
+
+		const inputEl = document.body.querySelector('input');
+		expect(inputEl.value).toBe('ffffff');
 	});
 });

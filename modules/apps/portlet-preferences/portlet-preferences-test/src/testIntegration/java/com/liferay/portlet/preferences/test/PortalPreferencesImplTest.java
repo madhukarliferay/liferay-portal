@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.preferences.test;
@@ -23,21 +14,26 @@ import com.liferay.portal.kernel.portlet.PortletPreferencesFactory;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalService;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.SynchronousInvocationHandler;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.service.test.SynchronousInvocationHandler;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
 import com.liferay.portal.spring.transaction.DefaultTransactionExecutor;
 import com.liferay.portal.spring.transaction.TransactionAttributeAdapter;
 import com.liferay.portal.spring.transaction.TransactionInterceptor;
 import com.liferay.portal.spring.transaction.TransactionStatusAdapter;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.ExpectedDBType;
+import com.liferay.portal.test.rule.ExpectedLog;
+import com.liferay.portal.test.rule.ExpectedLogs;
+import com.liferay.portal.test.rule.ExpectedType;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portlet.PortalPreferencesWrapperCacheUtil;
 
 import java.lang.reflect.Method;
 
@@ -45,6 +41,9 @@ import java.util.ConcurrentModificationException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.FutureTask;
+
+import org.hibernate.engine.jdbc.batch.internal.BatchingBatch;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -73,8 +72,8 @@ public class PortalPreferencesImplTest {
 	public static void setUpClass() throws NoSuchMethodException {
 		_updatePreferencesMethod =
 			PortalPreferencesLocalService.class.getMethod(
-				"updatePortalPreferences",
-				com.liferay.portal.kernel.model.PortalPreferences.class);
+				"updatePreferences", long.class, int.class,
+				PortalPreferences.class);
 
 		_aopInvocationHandler = ProxyUtil.fetchInvocationHandler(
 			_portalPreferencesLocalService, AopInvocationHandler.class);
@@ -83,13 +82,13 @@ public class PortalPreferencesImplTest {
 			_aopInvocationHandler, "_transactionInterceptor");
 
 		_originalTransactionExecutor = ReflectionTestUtil.getFieldValue(
-			_transactionInterceptor, "_transactionHandler");
+			_transactionInterceptor, "_transactionExecutor");
 
 		_platformTransactionManager = ReflectionTestUtil.getFieldValue(
 			_originalTransactionExecutor, "_platformTransactionManager");
 
-		_synchronizeThreadLocal = ReflectionTestUtil.getFieldValue(
-			SynchronousInvocationHandler.class, "_synchronizeThreadLocal");
+		_synchronized = ReflectionTestUtil.getFieldValue(
+			SynchronousInvocationHandler.class, "_synchronized");
 	}
 
 	@Before
@@ -125,11 +124,18 @@ public class PortalPreferencesImplTest {
 
 				return null;
 			});
-
-		PortalPreferencesWrapperCacheUtil.remove(
-			_testOwnerId, PortletKeys.PREFS_OWNER_TYPE_USER);
 	}
 
+	@ExpectedLogs(
+		expectedLogs = {
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.NONE,
+				expectedLog = "HHH000315: Exception executing batch [org.hibernate.StaleStateException",
+				expectedType = ExpectedType.PREFIX
+			)
+		},
+		level = "ERROR", loggerClass = BatchingBatch.class
+	)
 	@Test
 	public void testReset() {
 		Callable<Void> callable = () -> {
@@ -148,14 +154,29 @@ public class PortalPreferencesImplTest {
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Throwable cause = e.getCause();
+		catch (Exception exception) {
+			Throwable throwable = exception.getCause();
 
 			Assert.assertSame(
-				ConcurrentModificationException.class, cause.getClass());
+				ConcurrentModificationException.class, throwable.getClass());
 		}
 	}
 
+	@ExpectedLogs(
+		expectedLogs = {
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.DB2,
+				expectedLog = "HHH000315: Exception executing batch [com.ibm.db2.jcc.am.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			),
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.NONE,
+				expectedLog = "HHH000315: Exception executing batch [java.sql.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			)
+		},
+		level = "ERROR", loggerClass = BatchingBatch.class
+	)
 	@Test
 	public void testSetSameKeyDifferentValues() {
 		FutureTask<Void> futureTask1 = new FutureTask<>(
@@ -181,16 +202,18 @@ public class PortalPreferencesImplTest {
 				return null;
 			});
 
-		try {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				SqlExceptionHelper.class.getName(), LoggerTestUtil.OFF)) {
+
 			updateSynchronously(futureTask1, futureTask2);
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Throwable cause = e.getCause();
+		catch (Exception exception) {
+			Throwable throwable = exception.getCause();
 
 			Assert.assertSame(
-				ConcurrentModificationException.class, cause.getClass());
+				ConcurrentModificationException.class, throwable.getClass());
 		}
 	}
 
@@ -229,6 +252,21 @@ public class PortalPreferencesImplTest {
 			_VALUE_1, portalPreferences.getValue(_NAMESPACE, _KEY_2));
 	}
 
+	@ExpectedLogs(
+		expectedLogs = {
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.DB2,
+				expectedLog = "HHH000315: Exception executing batch [com.ibm.db2.jcc.am.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			),
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.NONE,
+				expectedLog = "HHH000315: Exception executing batch [java.sql.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			)
+		},
+		level = "ERROR", loggerClass = BatchingBatch.class
+	)
 	@Test
 	public void testSetValueSameKey() {
 		FutureTask<Void> futureTask1 = new FutureTask<>(
@@ -253,16 +291,18 @@ public class PortalPreferencesImplTest {
 				return null;
 			});
 
-		try {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				SqlExceptionHelper.class.getName(), LoggerTestUtil.OFF)) {
+
 			updateSynchronously(futureTask1, futureTask2);
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Throwable cause = e.getCause();
+		catch (Exception exception) {
+			Throwable throwable = exception.getCause();
 
 			Assert.assertSame(
-				ConcurrentModificationException.class, cause.getClass());
+				ConcurrentModificationException.class, throwable.getClass());
 		}
 	}
 
@@ -301,6 +341,21 @@ public class PortalPreferencesImplTest {
 			_VALUES_1, portalPreferences.getValues(_NAMESPACE, _KEY_2));
 	}
 
+	@ExpectedLogs(
+		expectedLogs = {
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.DB2,
+				expectedLog = "HHH000315: Exception executing batch [com.ibm.db2.jcc.am.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			),
+			@ExpectedLog(
+				expectedDBType = ExpectedDBType.NONE,
+				expectedLog = "HHH000315: Exception executing batch [java.sql.BatchUpdateException",
+				expectedType = ExpectedType.PREFIX
+			)
+		},
+		level = "ERROR", loggerClass = BatchingBatch.class
+	)
 	@Test
 	public void testSetValuesSameKey() {
 		FutureTask<Void> futureTask1 = new FutureTask<>(
@@ -325,16 +380,18 @@ public class PortalPreferencesImplTest {
 				return null;
 			});
 
-		try {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				SqlExceptionHelper.class.getName(), LoggerTestUtil.OFF)) {
+
 			updateSynchronously(futureTask1, futureTask2);
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Throwable cause = e.getCause();
+		catch (Exception exception) {
+			Throwable throwable = exception.getCause();
 
 			Assert.assertSame(
-				ConcurrentModificationException.class, cause.getClass());
+				ConcurrentModificationException.class, throwable.getClass());
 		}
 	}
 
@@ -351,7 +408,7 @@ public class PortalPreferencesImplTest {
 					2,
 					() -> {
 						ReflectionTestUtil.setFieldValue(
-							_transactionInterceptor, "_transactionHandler",
+							_transactionInterceptor, "_transactionExecutor",
 							new SynchronizedTransactionExecutor(_testOwnerId));
 
 						_aopInvocationHandler.setTarget(
@@ -387,7 +444,7 @@ public class PortalPreferencesImplTest {
 			TransactionAttributeAdapter transactionAttributeAdapter,
 			TransactionStatusAdapter transactionStatusAdapter) {
 
-			if (!_synchronizeThreadLocal.get()) {
+			if (!_synchronized.get()) {
 				_originalTransactionExecutor.commit(
 					transactionAttributeAdapter, transactionStatusAdapter);
 
@@ -400,12 +457,8 @@ public class PortalPreferencesImplTest {
 				_originalTransactionExecutor.commit(
 					transactionAttributeAdapter, transactionStatusAdapter);
 			}
-			catch (Throwable t) {
-				ReflectionUtil.throwException(t);
-			}
-			finally {
-				PortalPreferencesWrapperCacheUtil.remove(
-					_testOwnerId, PortletKeys.PREFS_OWNER_TYPE_USER);
+			catch (Throwable throwable) {
+				ReflectionUtil.throwException(throwable);
 			}
 		}
 
@@ -422,7 +475,7 @@ public class PortalPreferencesImplTest {
 				@Override
 				public void run() {
 					ReflectionTestUtil.setFieldValue(
-						_transactionInterceptor, "_transactionHandler",
+						_transactionInterceptor, "_transactionExecutor",
 						_originalTransactionExecutor);
 
 					_aopInvocationHandler.setTarget(
@@ -456,7 +509,7 @@ public class PortalPreferencesImplTest {
 	@Inject
 	private static PortalPreferencesLocalService _portalPreferencesLocalService;
 
-	private static ThreadLocal<Boolean> _synchronizeThreadLocal;
+	private static ThreadLocal<Boolean> _synchronized;
 	private static TransactionInterceptor _transactionInterceptor;
 	private static Method _updatePreferencesMethod;
 

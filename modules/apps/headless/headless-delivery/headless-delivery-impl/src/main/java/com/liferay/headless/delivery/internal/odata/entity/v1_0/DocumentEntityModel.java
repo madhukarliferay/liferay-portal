@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.internal.odata.entity.v1_0;
 
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsMapFactory;
 import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -38,13 +28,13 @@ import java.util.Map;
 public class DocumentEntityModel implements EntityModel {
 
 	public DocumentEntityModel(List<EntityField> entityFields) {
-		_entityFieldsMap = EntityModel.toEntityFieldsMap(
+		_entityFieldsMap = EntityFieldsMapFactory.create(
 			new CollectionEntityField(
 				new IntegerEntityField(
 					"taxonomyCategoryIds", locale -> "assetCategoryIds")),
 			new CollectionEntityField(
 				new StringEntityField(
-					"keywords", locale -> "assetTagNames.raw")),
+					"keywords", locale -> "assetTagNames.lowercase")),
 			new ComplexEntityField("customFields", entityFields),
 			new DateTimeEntityField(
 				"dateCreated",
@@ -56,9 +46,7 @@ public class DocumentEntityModel implements EntityModel {
 				locale -> Field.MODIFIED_DATE),
 			new IdEntityField(
 				"encodingFormat",
-				locale -> Field.getSortableFieldName(
-					StringBundler.concat(
-						"mimeType", StringPool.UNDERLINE, "String")),
+				locale -> Field.getSortableFieldName("mimeType_String"),
 				mimeType -> {
 					String encodingFormat = String.valueOf(mimeType);
 
@@ -70,14 +58,18 @@ public class DocumentEntityModel implements EntityModel {
 				"sizeInBytes", locale -> Field.getSortableFieldName("size")),
 			new StringEntityField(
 				"fileExtension",
-				locale -> Field.getSortableFieldName(
-					StringBundler.concat(
-						"extension", StringPool.UNDERLINE, "String"))),
+				locale -> Field.getSortableFieldName("extension_String")),
 			new StringEntityField(
 				"title",
 				locale -> Field.getSortableFieldName(
-					"localized_title_".concat(
-						LocaleUtil.toLanguageId(locale)))));
+					"localized_title_".concat(LocaleUtil.toLanguageId(locale))),
+				locale -> {
+					String sortableFieldName = Field.getSortableFieldName(
+						"localized_title_".concat(
+							LocaleUtil.toLanguageId(locale)));
+
+					return sortableFieldName.concat(".keyword_lowercase");
+				}));
 	}
 
 	@Override

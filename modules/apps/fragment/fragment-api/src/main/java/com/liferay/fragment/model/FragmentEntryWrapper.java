@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,10 @@ public class FragmentEntryWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
+		attributes.put("headId", getHeadId());
 		attributes.put("fragmentEntryId", getFragmentEntryId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -58,10 +54,14 @@ public class FragmentEntryWrapper
 		attributes.put("css", getCss());
 		attributes.put("html", getHtml());
 		attributes.put("js", getJs());
+		attributes.put("cacheable", isCacheable());
 		attributes.put("configuration", getConfiguration());
+		attributes.put("icon", getIcon());
 		attributes.put("previewFileEntryId", getPreviewFileEntryId());
+		attributes.put("marketplace", isMarketplace());
 		attributes.put("readOnly", isReadOnly());
 		attributes.put("type", getType());
+		attributes.put("typeOptions", getTypeOptions());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
 		attributes.put("statusByUserId", getStatusByUserId());
@@ -79,10 +79,29 @@ public class FragmentEntryWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
+		}
+
+		Long headId = (Long)attributes.get("headId");
+
+		if (headId != null) {
+			setHeadId(headId);
 		}
 
 		Long fragmentEntryId = (Long)attributes.get("fragmentEntryId");
@@ -164,16 +183,34 @@ public class FragmentEntryWrapper
 			setJs(js);
 		}
 
+		Boolean cacheable = (Boolean)attributes.get("cacheable");
+
+		if (cacheable != null) {
+			setCacheable(cacheable);
+		}
+
 		String configuration = (String)attributes.get("configuration");
 
 		if (configuration != null) {
 			setConfiguration(configuration);
 		}
 
+		String icon = (String)attributes.get("icon");
+
+		if (icon != null) {
+			setIcon(icon);
+		}
+
 		Long previewFileEntryId = (Long)attributes.get("previewFileEntryId");
 
 		if (previewFileEntryId != null) {
 			setPreviewFileEntryId(previewFileEntryId);
+		}
+
+		Boolean marketplace = (Boolean)attributes.get("marketplace");
+
+		if (marketplace != null) {
+			setMarketplace(marketplace);
 		}
 
 		Boolean readOnly = (Boolean)attributes.get("readOnly");
@@ -186,6 +223,12 @@ public class FragmentEntryWrapper
 
 		if (type != null) {
 			setType(type);
+		}
+
+		String typeOptions = (String)attributes.get("typeOptions");
+
+		if (typeOptions != null) {
+			setTypeOptions(typeOptions);
 		}
 
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
@@ -217,6 +260,26 @@ public class FragmentEntryWrapper
 		if (statusDate != null) {
 			setStatusDate(statusDate);
 		}
+	}
+
+	@Override
+	public FragmentEntry cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
+	public FragmentEntry fetchDraftFragmentEntry() {
+		return model.fetchDraftFragmentEntry();
+	}
+
+	/**
+	 * Returns the cacheable of this fragment entry.
+	 *
+	 * @return the cacheable of this fragment entry
+	 */
+	@Override
+	public boolean getCacheable() {
+		return model.getCacheable();
 	}
 
 	/**
@@ -265,6 +328,26 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this fragment entry.
+	 *
+	 * @return the ct collection ID of this fragment entry
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the external reference code of this fragment entry.
+	 *
+	 * @return the external reference code of this fragment entry
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
+	/**
 	 * Returns the fragment collection ID of this fragment entry.
 	 *
 	 * @return the fragment collection ID of this fragment entry
@@ -310,6 +393,16 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Returns the head ID of this fragment entry.
+	 *
+	 * @return the head ID of this fragment entry
+	 */
+	@Override
+	public long getHeadId() {
+		return model.getHeadId();
+	}
+
+	/**
 	 * Returns the html of this fragment entry.
 	 *
 	 * @return the html of this fragment entry
@@ -317,6 +410,16 @@ public class FragmentEntryWrapper
 	@Override
 	public String getHtml() {
 		return model.getHtml();
+	}
+
+	/**
+	 * Returns the icon of this fragment entry.
+	 *
+	 * @return the icon of this fragment entry
+	 */
+	@Override
+	public String getIcon() {
+		return model.getIcon();
 	}
 
 	@Override
@@ -344,6 +447,16 @@ public class FragmentEntryWrapper
 	@Override
 	public Date getLastPublishDate() {
 		return model.getLastPublishDate();
+	}
+
+	/**
+	 * Returns the marketplace of this fragment entry.
+	 *
+	 * @return the marketplace of this fragment entry
+	 */
+	@Override
+	public boolean getMarketplace() {
+		return model.getMarketplace();
 	}
 
 	/**
@@ -471,6 +584,16 @@ public class FragmentEntryWrapper
 		return model.getTypeLabel();
 	}
 
+	/**
+	 * Returns the type options of this fragment entry.
+	 *
+	 * @return the type options of this fragment entry
+	 */
+	@Override
+	public String getTypeOptions() {
+		return model.getTypeOptions();
+	}
+
 	@Override
 	public int getUsageCount() {
 		return model.getUsageCount();
@@ -527,6 +650,16 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this fragment entry is cacheable.
+	 *
+	 * @return <code>true</code> if this fragment entry is cacheable; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isCacheable() {
+		return model.isCacheable();
+	}
+
+	/**
 	 * Returns <code>true</code> if this fragment entry is denied.
 	 *
 	 * @return <code>true</code> if this fragment entry is denied; <code>false</code> otherwise
@@ -577,6 +710,16 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this fragment entry is marketplace.
+	 *
+	 * @return <code>true</code> if this fragment entry is marketplace; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isMarketplace() {
+		return model.isMarketplace();
+	}
+
+	/**
 	 * Returns <code>true</code> if this fragment entry is pending.
 	 *
 	 * @return <code>true</code> if this fragment entry is pending; <code>false</code> otherwise
@@ -606,14 +749,36 @@ public class FragmentEntryWrapper
 		return model.isScheduled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a fragment entry model instance should use the <code>FragmentEntry</code> interface instead.
-	 */
+	@Override
+	public boolean isTypeComponent() {
+		return model.isTypeComponent();
+	}
+
+	@Override
+	public boolean isTypeInput() {
+		return model.isTypeInput();
+	}
+
+	@Override
+	public boolean isTypeReact() {
+		return model.isTypeReact();
+	}
+
+	@Override
+	public boolean isTypeSection() {
+		return model.isTypeSection();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	@Override
+	public void populateVersionModel(
+		FragmentEntryVersion fragmentEntryVersion) {
+
+		model.populateVersionModel(fragmentEntryVersion);
 	}
 
 	@Override
@@ -622,6 +787,16 @@ public class FragmentEntryWrapper
 		throws Exception {
 
 		model.populateZipWriter(zipWriter, path);
+	}
+
+	/**
+	 * Sets whether this fragment entry is cacheable.
+	 *
+	 * @param cacheable the cacheable of this fragment entry
+	 */
+	@Override
+	public void setCacheable(boolean cacheable) {
+		model.setCacheable(cacheable);
 	}
 
 	/**
@@ -665,6 +840,26 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this fragment entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this fragment entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the external reference code of this fragment entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this fragment entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
 	 * Sets the fragment collection ID of this fragment entry.
 	 *
 	 * @param fragmentCollectionId the fragment collection ID of this fragment entry
@@ -705,6 +900,16 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Sets the head ID of this fragment entry.
+	 *
+	 * @param headId the head ID of this fragment entry
+	 */
+	@Override
+	public void setHeadId(long headId) {
+		model.setHeadId(headId);
+	}
+
+	/**
 	 * Sets the html of this fragment entry.
 	 *
 	 * @param html the html of this fragment entry
@@ -712,6 +917,16 @@ public class FragmentEntryWrapper
 	@Override
 	public void setHtml(String html) {
 		model.setHtml(html);
+	}
+
+	/**
+	 * Sets the icon of this fragment entry.
+	 *
+	 * @param icon the icon of this fragment entry
+	 */
+	@Override
+	public void setIcon(String icon) {
+		model.setIcon(icon);
 	}
 
 	@Override
@@ -737,6 +952,16 @@ public class FragmentEntryWrapper
 	@Override
 	public void setLastPublishDate(Date lastPublishDate) {
 		model.setLastPublishDate(lastPublishDate);
+	}
+
+	/**
+	 * Sets whether this fragment entry is marketplace.
+	 *
+	 * @param marketplace the marketplace of this fragment entry
+	 */
+	@Override
+	public void setMarketplace(boolean marketplace) {
+		model.setMarketplace(marketplace);
 	}
 
 	/**
@@ -860,6 +1085,16 @@ public class FragmentEntryWrapper
 	}
 
 	/**
+	 * Sets the type options of this fragment entry.
+	 *
+	 * @param typeOptions the type options of this fragment entry
+	 */
+	@Override
+	public void setTypeOptions(String typeOptions) {
+		model.setTypeOptions(typeOptions);
+	}
+
+	/**
 	 * Sets the user ID of this fragment entry.
 	 *
 	 * @param userId the user ID of this fragment entry
@@ -900,8 +1135,32 @@ public class FragmentEntryWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<FragmentEntry, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<FragmentEntry, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
+	}
+
+	@Override
 	public StagedModelType getStagedModelType() {
 		return model.getStagedModelType();
+	}
+
+	@Override
+	public boolean isHead() {
+		return model.isHead();
 	}
 
 	@Override

@@ -6,39 +6,11 @@
 	<import file="../build-common-java.xml" />
 
 	<property name="copy.jar" value="false" />
-	<property name="deploy.dir" value="${app.server.lib.portal.dir}" />
+	<property name="deploy.dir" value="${app.server.shielded-container-lib.portal.dir}" />
 	<property name="jar.file" value="${ant.project.name}" />
 	<property name="manifest.bundle.name" value="Liferay Portal Impl" />
 	<property name="manifest.bundle.symbolic.name" value="com.liferay.portal.impl;singleton:=true" />
 	<property name="service.file" value="service.xml" />
-
-	<target name="build-alloy-taglib-jar">
-		<if>
-			<not>
-				<isset property="alloy.taglibs.dir" />
-			</not>
-			<then>
-				<fail>
-.
-
-Please set the property "alloy.taglibs.dir" to point to a checked out version of
-svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
-				</fail>
-			</then>
-		</if>
-
-		<ant dir="${alloy.taglibs.dir}" inheritAll="false" target="clean" />
-		<ant dir="${alloy.taglibs.dir}" inheritAll="false" target="start" />
-
-		<copy
-			preservelastmodified="true"
-			todir="${project.dir}/lib/development"
-		>
-			<fileset
-				file="${alloy.taglibs.dir}/alloy-taglib/alloy-taglib.jar"
-			/>
-		</copy>
-	</target>
 
 	<target name="build-db">
 		<ant dir="../sql" target="build-db" />
@@ -53,6 +25,7 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 		>
 			<jvmarg value="-Dexternal-properties=com/liferay/portal/tools/dependencies/portal-tools.properties" />
 			<arg value="src/com/liferay/portal/tools/instance_wrappers.xml" />
+			<env key="JDK_JAVA_OPTIONS" value="--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED" />
 		</java>
 	</target>
 
@@ -161,6 +134,7 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 			<jvmarg value="-Dexternal-properties=com/liferay/portal/tools/dependencies/portal-tools.properties" />
 			<arg value="${project.dir}/lib/versions.xsl" />
 			<arg value="${project.dir}/lib/versions.html" />
+			<env key="JDK_JAVA_OPTIONS" value="--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED" />
 		</java>
 
 		<if>
@@ -182,14 +156,16 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 		</if>
 	</target>
 
-	<target if="release.info" name="build-releaseinfo">
+	<target depends="compile" name="build-lib-versions-with-date">
 		<java
-			classname="com.liferay.portal.tools.ReleaseInfoBuilder"
+			classname="com.liferay.portal.tools.PublishDateBuilder"
 			classpathref="project.classpath"
 			fork="true"
+			inputstring="${project.dir}/lib/versions.xml,${project.dir}/lib/versions-ext.xml,${project.dir}/lib/versions-complete.xml"
 			newenvironment="true"
 		>
-			<jvmarg value="-Dexternal-properties=com/liferay/portal/tools/dependencies/portal-tools.properties" />
+			<jvmarg value="-Dproject.dir=${project.dir}" />
+			<jvmarg value="-Dproject.modules.dir=${project.dir}/modules" />
 		</java>
 	</target>
 
@@ -201,19 +177,22 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 			/>
 		</path>
 
+		<property name="hbm.file" value="portal-hbm.xml" />
+
 		<java
 			classname="com.liferay.portal.tools.service.builder.ServiceBuilder"
 			classpathref="service.builder.classpath"
+			failonerror="true"
 			fork="true"
+			logError="true"
 			newenvironment="true"
-			outputproperty="build-service.output"
 		>
 			<jvmarg if:true="${jvm.debug}" value="${jpda.settings}" />
 			<jvmarg value="-Dfile.encoding=UTF-8" />
 			<jvmarg value="-Xms512m" />
 			<jvmarg value="-Xmx1024m" />
 			<jvmarg value="-Xss2048k" />
-			<jvmarg value="-XX:MaxPermSize=512m" />
+			<jvmarg value="-XX:MaxMetaspaceSize=512m" />
 			<arg value="-Dexternal-properties=com/liferay/portal/tools/dependencies/portal-tools.properties" />
 			<arg value="-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger" />
 			<arg value="service.api.dir=${basedir}/../portal-kernel/src" />
@@ -222,14 +201,15 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 			<arg value="service.bean.locator.util=com.liferay.portal.kernel.bean.PortalBeanLocatorUtil" />
 			<arg value="service.build.number=1" />
 			<arg value="service.build.number.increment=true" />
-			<arg value="service.hbm.file=${basedir}/src/META-INF/portal-hbm.xml" />
+			<arg value="service.hbm.file=${basedir}/src/META-INF/${hbm.file}" />
 			<arg value="service.impl.dir=${basedir}/src" />
+			<arg value="service.incubation.features=${service.builder.incubation.features}" />
 			<arg value="service.input.file=${service.file}" />
 			<arg value="service.model.hints.configs=${basedir}/src/META-INF/portal-model-hints.xml" />
 			<arg value="service.model.hints.file=${basedir}/src/META-INF/portal-model-hints.xml" />
 			<arg value="service.osgi.module=false" />
 			<arg value="service.plugin.name=" />
-			<arg value="service.props.util=com.liferay.portal.util.PropsUtil" />
+			<arg value="service.props.util=com.liferay.portal.kernel.util.PropsUtil" />
 			<arg value="service.resources.dir=${basedir}/src" />
 			<arg value="service.spring.file=${basedir}/src/META-INF/portal-spring.xml" />
 			<arg value="service.spring.namespaces=beans" />
@@ -243,20 +223,12 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 
 		<delete file="ServiceBuilder.temp" />
 
-		<echo>${build-service.output}</echo>
-
-		<if>
-			<contains string="${build-service.output}" substring="Error" />
-			<then>
-				<fail>Service Builder generated exceptions.</fail>
-			</then>
-		</if>
-
 		<ant dir="../portal-kernel" inheritAll="false" target="compile" />
 	</target>
 
 	<target name="build-service-counter">
 		<antcall target="build-service">
+			<param name="hbm.file" value="counter-hbm.xml" />
 			<param name="service.file" value="${basedir}/src/com/liferay/counter/service.xml" />
 		</antcall>
 	</target>
@@ -324,14 +296,11 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 		<antcall target="build-service-portal" />
 		<antcall target="build-service-portlets" />
 
-		<property name="com.liferay.portal.tools.service.builder.ignore.local" value="true" />
-
 		<gradle-execute dir="../modules" forcedcacheenabled="false" task="buildService">
 			<arg value="--continue" />
 			<arg unless:true="${build.services.baseline.enabled}" value="--exclude-task" />
 			<arg unless:true="${build.services.baseline.enabled}" value="baseline" />
-			<arg value="-DbuildService.skipReadOnly=${build.services.skip.read.only}" />
-			<arg value="-Pcom.liferay.portal.tools.service.builder.ignore.local=${com.liferay.portal.tools.service.builder.ignore.local}" />
+			<arg value="-Dskip.read.only=${build.services.skip.read.only}" />
 		</gradle-execute>
 	</target>
 
@@ -364,128 +333,6 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 				</java>
 			</then>
 		</if>
-	</target>
-
-	<target depends="compile" name="build-wsdd">
-		<path id="wsdd.builder.classpath">
-			<fileset
-				dir="${sdk.dir}/dependencies/com.liferay.portal.tools.wsdd.builder/lib"
-				includes="*.jar"
-			/>
-			<path refid="project.classpath" />
-		</path>
-
-		<java
-			classname="com.liferay.portal.tools.wsdd.builder.WSDDBuilder"
-			classpathref="wsdd.builder.classpath"
-			fork="true"
-			maxmemory="512m"
-			newenvironment="true"
-			outputproperty="build-wsdd.output"
-		>
-			<jvmarg value="-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger" />
-			<arg value="wsdd.output.path=src/" />
-			<arg value="wsdd.server.config.file=${basedir}/../portal-web/docroot/WEB-INF/server-config.wsdd" />
-			<arg value="wsdd.service.namespace=Portlet" />
-			<arg value="wsdd.input.file=${service.file}" />
-		</java>
-
-		<echo>${build-wsdd.output}</echo>
-
-		<if>
-			<contains string="${build-wsdd.output}" substring="IOException" />
-			<then>
-				<fail>WSDD Builder generated exceptions.</fail>
-			</then>
-		</if>
-	</target>
-
-	<target name="build-wsdd-portal">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portal/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-announcements">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/announcements/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-asset">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/asset/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-calendar">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/calendar/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-documentlibrary">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/documentlibrary/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-expando">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/expando/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-exportimport">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/exportimport/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-ratings">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/ratings/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlet-social">
-		<antcall target="build-wsdd">
-			<param name="service.file" value="${basedir}/src/com/liferay/portlet/social/service.xml" />
-		</antcall>
-	</target>
-
-	<target name="build-wsdd-portlets">
-		<antcall target="build-wsdd-portlet-announcements" />
-		<antcall target="build-wsdd-portlet-asset" />
-		<antcall target="build-wsdd-portlet-documentlibrary" />
-		<antcall target="build-wsdd-portlet-expando" />
-		<antcall target="build-wsdd-portlet-exportimport" />
-		<antcall target="build-wsdd-portlet-ratings" />
-		<antcall target="build-wsdd-portlet-social" />
-	</target>
-
-	<target name="build-wsdds">
-		<antcall target="build-wsdd-portal" />
-		<antcall target="build-wsdd-portlets" />
-
-		<gradle-execute dir="../modules" task="buildWSDD" />
-	</target>
-
-	<target name="build-yui-compressor-jar">
-		<setup-libs />
-
-		<taskdef
-			classname="com.tonicsystems.jarjar.JarJarTask"
-			classpath="${project.dir}/lib/development/jarjar.jar"
-			name="jarjar"
-		/>
-
-		<jarjar jarfile="${project.dir}/lib/portal/liferay-yui-compressor.jar.new">
-			<rule pattern="org.mozilla.**" result="com.yahoo.platform.yui.mozilla.@1" />
-			<zipfileset
-				src="${project.dir}/tools/yuicompressor-2.4.7.jar"
-			/>
-		</jarjar>
 	</target>
 
 	<target depends="build-common-java.clean" name="clean">
@@ -552,7 +399,7 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 				/>
 
 				<copy
-					file="classes/log4j.properties"
+					file="classes/log4j2.properties"
 					preservelastmodified="true"
 					todir="${app.server.classes.portal.dir}"
 				/>
@@ -566,205 +413,62 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 	</target>
 
 	<target name="format-source">
-		<java
-			classname="com.liferay.portal.tools.GitUtil"
-			classpathref="project.classpath"
-			dir="${project.dir}"
-			fork="true"
-			newenvironment="true"
-			outputProperty="baseline.current.branch.file.names"
-			resultproperty="baseline.current.branch.result"
-		>
-			<arg value="git.type=current-branch" />
-			<arg value="git.working.branch.name=${git.working.branch.name}" />
-		</java>
-
-		<if>
-			<or>
-				<equals arg1="${baseline.current.branch.file.names}" arg2="" />
-				<not>
-					<equals arg1="${baseline.current.branch.result}" arg2="0" />
-				</not>
-			</or>
-			<then>
-				<antcall target="format-source-all" />
-			</then>
-			<else>
-				<echo>
-Running SourceFormatter on added/modified files in the current branch only. Please run the following command to run SourceFormatter on all files:
-
-ant format-source-all
-				</echo>
-
-				<antcall target="format-source-current-branch" />
-			</else>
-		</if>
+		<antcall target="format-source-files">
+			<param name="format.source.default.task" value="true" />
+		</antcall>
 	</target>
 
 	<target name="format-source-all">
-		<property location="${project.dir}/modules" name="source.formatter.modules.dir.absolute.path" />
-
-		<if>
-			<not>
-				<isset property="env.JENKINS_HOME" />
-			</not>
-			<then>
-				<var name="source.formatter.gradle.args" value="" />
-				<var name="source.formatter.gradle.task" value="formatSource" />
-
-				<if>
-					<isset property="source.file.extensions" />
-					<then>
-						<var name="source.formatter.gradle.args" value="${source.formatter.gradle.args} -DformatSource.file.extensions=${source.file.extensions}" />
-					</then>
-				</if>
-
-				<if>
-					<isset property="source.files" />
-					<then>
-						<var name="source.formatter.gradle.args" value="${source.formatter.gradle.args} -DformatSource.file.names=${source.files}" />
-					</then>
-				</if>
-
-				<if>
-					<istrue value="${source.formatter.show.debug.information}" />
-					<then>
-						<var name="source.formatter.gradle.args" value="${source.formatter.gradle.args} -Psource.formatter.show.debug.information=true" />
-					</then>
-				</if>
-
-				<if>
-					<istrue value="${jvm.debug}" />
-					<then>
-						<var name="source.formatter.gradle.args" value="${source.formatter.gradle.args} --jvm-debug" />
-					</then>
-				</if>
-
-				<if>
-					<istrue value="${format.current.branch}" />
-					<then>
-						<var name="source.formatter.gradle.task" value="formatSourceCurrentBranch" />
-					</then>
-				</if>
-
-				<if>
-					<istrue value="${format.latest.author}" />
-					<then>
-						<var name="source.formatter.gradle.task" value="formatSourceLatestAuthor" />
-					</then>
-				</if>
-
-				<if>
-					<istrue value="${format.local.changes}" />
-					<then>
-						<var name="source.formatter.gradle.task" value="formatSourceLocalChanges" />
-					</then>
-				</if>
-
-				<echo>
-Please run the following command from ${source.formatter.modules.dir.absolute.path} to show status updates during the Source Formatter execution:
-
-../gradlew -b util.gradle ${source.formatter.gradle.task}${source.formatter.gradle.args}
-				</echo>
-			</then>
-		</if>
-
-		<path id="source.formatter.classpath">
-			<fileset
-				dir="${sdk.dir}/dependencies/com.liferay.source.formatter/lib"
-				includes="*.jar"
-			/>
-			<path refid="project.classpath" />
-		</path>
-
-		<if>
-			<not>
-				<isset property="source.formatter.dir" />
-			</not>
-			<then>
-				<property name="source.formatter.dir" value="${project.dir}" />
-			</then>
-		</if>
-
-		<java
-			classname="com.liferay.source.formatter.SourceFormatter"
-			classpathref="source.formatter.classpath"
-			dir="${source.formatter.dir}"
-			failonerror="true"
-			fork="true"
-			newenvironment="true"
-		>
-			<jvmarg if:true="${jvm.debug}" value="${jpda.settings}" />
-			<jvmarg value="-Xmx512m" />
-			<jvmarg value="-Xss2048k" />
-			<jvmarg value="-Dsource.formatter.check.registry.in.test.classes=${source.formatter.check.registry.in.test.classes}" />
-			<jvmarg value="-Dsource.formatter.excludes=${source.formatter.excludes}" />
-			<arg value="format.current.branch=${format.current.branch}" />
-			<arg value="format.latest.author=${format.latest.author}" />
-			<arg value="format.local.changes=${format.local.changes}" />
-			<arg value="git.working.branch.name=${git.working.branch.name}" />
-			<arg value="include.subrepositories=${source.formatter.include.subrepositories}" />
-			<arg value="max.line.length=${source.formatter.max.line.length}" />
-			<arg value="processor.thread.count=${source.formatter.processor.thread.count}" />
-			<arg value="show.debug.information=${source.formatter.show.debug.information}" />
-			<arg value="show.documentation=${source.formatter.show.documentation}" />
-			<arg value="source.auto.fix=${source.auto.fix}" />
-			<arg value="source.base.dir=${source.base.dir}" />
-			<arg value="source.check.name=${source.check.name}" />
-			<arg value="source.file.extensions=${source.file.extensions}" />
-			<arg value="source.files=${source.files}" />
-			<arg value="source.print.errors=${source.print.errors}" />
-			<arg value="source.throw.exception=${source.throw.exception}" />
-		</java>
-
-		<delete file="ServiceBuilder.temp" />
-
-		<if>
-			<and>
-				<not>
-					<or>
-						<isset property="skip.node.task" />
-						<isset property="source.file.extensions" />
-						<isset property="source.files" />
-					</or>
-				</not>
-				<resourcecount count="0" when="greater">
-					<fileset
-						dir="${project.dir}/modules"
-						excludes="**/.gradle/,**/bin/,**/build/,**/classes/,**/node_modules/,**/tmp/"
-						includes="**/yarn-*.js"
-					/>
-				</resourcecount>
-			</and>
-			<then>
-				<if>
-					<and>
-						<isset property="source.auto.fix" />
-						<isfalse value="${source.auto.fix}" />
-					</and>
-					<then>
-						<gradle-execute dir="${project.dir}/modules" task=":yarnCheckFormat">
-							<env key="LIFERAY_NPM_SCRIPTS_WORKING_BRANCH_NAME" value="${git.working.branch.name}" />
-						</gradle-execute>
-					</then>
-					<else>
-						<gradle-execute dir="${project.dir}/modules" task=":yarnFormat">
-							<env key="LIFERAY_NPM_SCRIPTS_WORKING_BRANCH_NAME" value="${git.working.branch.name}" />
-						</gradle-execute>
-					</else>
-				</if>
-			</then>
-		</if>
+		<antcall target="format-source-files" />
 	</target>
 
 	<target name="format-source-bnd">
-		<antcall target="format-source-all">
+		<antcall target="format-source-files">
+			<param name="skip.check.names" value="BNDBreakingChangeCommitMessageCheck" />
 			<param name="source.file.extensions" value="bnd,gradle,json" />
 		</antcall>
 	</target>
 
+	<target name="format-source-copyright">
+		<if>
+			<available file="${project.dir}/modules/util/copyright-formatter" />
+			<then>
+				<gradle-execute dir="${project.dir}/modules/util/copyright-formatter" task="deploy" />
+
+				<path id="copyright.formatter.classpath">
+					<fileset
+						dir="${sdk.dir}/dependencies/com.liferay.copyright.formatter/lib"
+						includes="*.jar"
+					/>
+				</path>
+
+				<if>
+					<not>
+						<isset property="source.base.dir" />
+					</not>
+					<then>
+						<property name="source.base.dir" value="${project.dir}" />
+					</then>
+				</if>
+
+				<java
+					classname="com.liferay.copyright.formatter.CopyrightFormatter"
+					classpathref="copyright.formatter.classpath"
+					fork="true"
+					newenvironment="true"
+				>
+					<jvmarg if:true="${jvm.debug}" value="${jpda.settings}" />
+					<jvmarg value="-Dfile.encoding=UTF-8" />
+					<jvmarg value="-Duser.country=US" />
+					<jvmarg value="-Duser.language=en" />
+					<arg value="source.base.dir=${source.base.dir}" />
+				</java>
+			</then>
+		</if>
+	</target>
+
 	<target name="format-source-current-branch">
-		<antcall target="format-source-all">
+		<antcall target="format-source-files">
 			<param name="format.current.branch" value="true" />
 		</antcall>
 	</target>
@@ -776,13 +480,252 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 	</target>
 
 	<target name="format-source-debug">
-		<antcall target="format-source-all">
+		<antcall target="format-source-files">
 			<param name="source.formatter.show.debug.information" value="true" />
 		</antcall>
 	</target>
 
+	<target name="format-source-deprecated-api">
+		<antcall target="format-source-files">
+			<param name="source.check.names" value="DeprecatedAPICheck" />
+		</antcall>
+	</target>
+
+	<target name="format-source-files">
+		<exec executable="git" failonerror="true" outputproperty="current.branch.name">
+			<arg value="rev-parse" />
+			<arg value="--abbrev-ref" />
+			<arg value="HEAD" />
+		</exec>
+
+		<path id="source.formatter.classpath">
+			<fileset
+				dir="${sdk.dir}/dependencies/com.liferay.source.formatter/lib"
+				includes="*.jar"
+			/>
+			<path refid="project.classpath" />
+		</path>
+
+		<if>
+			<equals arg1="${current.branch.name}" arg2="${git.working.branch.name}" />
+			<then>
+				<if>
+					<isset property="format.current.branch" />
+					<then>
+						<property name="source.formatter.message" value="The current branch is the same as the working branch (${git.working.branch.name}).${line.separator}Not executing Source Formatter task." />
+						<property name="source.formatter.skip" value="true" />
+					</then>
+				</if>
+			</then>
+			<else>
+				<java
+					classname="com.liferay.portal.tools.GitUtil"
+					classpathref="source.formatter.classpath"
+					dir="${project.dir}"
+					fork="true"
+					newenvironment="true"
+					outputProperty="baseline.current.branch.file.names"
+					resultproperty="baseline.current.branch.result"
+				>
+					<arg value="git.type=current-branch" />
+					<arg value="git.working.branch.name=${git.working.branch.name}" />
+				</java>
+
+				<if>
+					<and>
+						<not>
+							<equals arg1="${baseline.current.branch.file.names}" arg2="" />
+						</not>
+						<equals arg1="${baseline.current.branch.result}" arg2="0" />
+					</and>
+					<then>
+						<if>
+							<isset property="format.source.default.task" />
+							<then>
+								<property name="check.vulnerabilities" value="true" />
+								<property name="format.current.branch" value="true" />
+								<property name="source.formatter.message" value="Running SourceFormatter on added/modified files in the current branch (${current.branch.name}) only. Please run the following command to run SourceFormatter on all files:${line.separator}${line.separator}ant format-source-all" />
+								<property name="validate.commit.messages" value="true" />
+							</then>
+						</if>
+
+						<if>
+							<or>
+								<matches pattern="modules/test/poshi" string="${baseline.current.branch.file.names}" />
+								<not>
+									<matches pattern="\.(js|json|jsp|jspf|scss|ts|tsx)(${line.separator}|$)" string="${baseline.current.branch.file.names}" />
+								</not>
+							</or>
+							<then>
+								<property name="skip.node.task" value="true" />
+							</then>
+						</if>
+
+						<if>
+							<not>
+								<matches pattern="modules/test/playwright" string="${baseline.current.branch.file.names}" />
+							</not>
+							<then>
+								<property name="skip.playwright.task" value="true" />
+							</then>
+						</if>
+					</then>
+					<else>
+						<if>
+							<isset property="format.source.default.task" />
+							<then>
+								<property name="source.formatter.message" value="There are no modified files on the current branch (${current.branch.name}).${line.separator}Executing Source Formatter task on all files." />
+							</then>
+							<else>
+								<if>
+									<isset property="format.current.branch" />
+									<then>
+										<property name="source.formatter.message" value="There are no modified files on the current branch (${current.branch.name}).${line.separator}Not executing Source Formatter task." />
+										<property name="source.formatter.skip" value="true" />
+									</then>
+								</if>
+							</else>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+		<if>
+			<isset property="source.formatter.message" />
+			<then>
+				<echo></echo>
+				<echo>${source.formatter.message}</echo>
+				<echo></echo>
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<isset property="source.formatter.skip" />
+			</not>
+			<then>
+				<if>
+					<not>
+						<isset property="source.formatter.dir" />
+					</not>
+					<then>
+						<property name="source.formatter.dir" value="${project.dir}" />
+					</then>
+				</if>
+
+				<java
+					classname="com.liferay.source.formatter.SourceFormatter"
+					classpathref="source.formatter.classpath"
+					dir="${source.formatter.dir}"
+					failonerror="true"
+					fork="true"
+					newenvironment="true"
+				>
+					<jvmarg if:true="${jvm.debug}" value="${jpda.settings}" />
+					<jvmarg value="-Xmx2048m" />
+					<jvmarg value="-Xss2048k" />
+					<jvmarg value="-Dfile.encoding=UTF-8" />
+					<jvmarg value="-Dsource.formatter.check.registry.in.test.classes=${source.formatter.check.registry.in.test.classes}" />
+					<jvmarg value="-Dsource.formatter.excludes=${source.formatter.excludes}" />
+					<arg value="check.vulnerabilities=${check.vulnerabilities}" />
+					<arg value="commit.count=${source.formatter.commit.count}" />
+					<arg value="format.current.branch=${format.current.branch}" />
+					<arg value="format.latest.author=${format.latest.author}" />
+					<arg value="format.local.changes=${format.local.changes}" />
+					<arg value="git.working.branch.name=${git.working.branch.name}" />
+					<arg value="include.subrepositories=${source.formatter.include.subrepositories}" />
+					<arg value="java.parser.enabled=${java.parser.enabled}" />
+					<arg value="max.line.length=${source.formatter.max.line.length}" />
+					<arg value="processor.thread.count=${source.formatter.processor.thread.count}" />
+					<arg value="show.debug.information=${source.formatter.show.debug.information}" />
+					<arg value="skip.check.names=${skip.check.names}" />
+					<arg value="source.auto.fix=${source.auto.fix}" />
+					<arg value="source.base.dir=${source.base.dir}" />
+					<arg value="source.check.category.names=${source.check.category.names}" />
+					<arg value="source.check.names=${source.check.names}" />
+					<arg value="source.fail.on.auto.fix=${source.fail.on.auto.fix}" />
+					<arg value="source.fail.on.has.warning=${source.fail.on.has.warning}" />
+					<arg value="source.file.extensions=${source.file.extensions}" />
+					<arg value="source.files=${source.files}" />
+					<arg value="source.formatter.properties=${source.formatter.properties}" />
+					<arg value="source.print.errors=${source.print.errors}" />
+					<arg value="use.ci.github.access.token=${use.ci.github.access.token}" />
+					<arg value="validate.commit.messages=${validate.commit.messages}" />
+				</java>
+
+				<delete file="ServiceBuilder.temp" />
+
+				<if>
+					<and>
+						<not>
+							<or>
+								<isset property="skip.node.task" />
+								<isset property="source.file.extensions" />
+								<isset property="source.files" />
+							</or>
+						</not>
+						<resourcecount count="0" when="greater">
+							<fileset
+								dir="${project.dir}/modules"
+								excludes="**/.gradle/,**/bin/,**/build/,**/classes/,**/node_modules/,**/tmp/"
+								includes="**/yarn.lock"
+							/>
+						</resourcecount>
+					</and>
+					<then>
+						<if>
+							<and>
+								<isset property="source.auto.fix" />
+								<isfalse value="${source.auto.fix}" />
+							</and>
+							<then>
+								<gradle-execute dir="${project.dir}/modules" task=":portalYarnCheckFormat" />
+
+								<if>
+									<not>
+										<isset property="skip.playwright.task" />
+									</not>
+									<then>
+										<gradle-execute dir="${project.dir}/modules/test/playwright" task="packageRunCheckFormat" />
+									</then>
+								</if>
+							</then>
+							<else>
+								<if>
+									<isset property="format.current.branch" />
+									<then>
+										<gradle-execute dir="${project.dir}/modules" task=":portalYarnFormatCurrentBranch" />
+									</then>
+									<elseif>
+										<isset property="format.local.changes" />
+										<then>
+											<gradle-execute dir="${project.dir}/modules" task=":portalYarnFormatLocalChanges" />
+										</then>
+									</elseif>
+									<else>
+										<gradle-execute dir="${project.dir}/modules" task=":portalYarnFormat" />
+									</else>
+								</if>
+
+								<if>
+									<not>
+										<isset property="skip.playwright.task" />
+									</not>
+									<then>
+										<gradle-execute dir="${project.dir}/modules/test/playwright" task="packageRunFormat" />
+									</then>
+								</if>
+							</else>
+						</if>
+					</then>
+				</if>
+			</then>
+		</if>
+	</target>
+
 	<target name="format-source-latest-author">
-		<antcall target="format-source-all">
+		<antcall target="format-source-files">
 			<param name="format.latest.author" value="true" />
 		</antcall>
 	</target>
@@ -794,7 +737,7 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 	</target>
 
 	<target name="format-source-local-changes">
-		<antcall target="format-source-all">
+		<antcall target="format-source-files">
 			<param name="format.local.changes" value="true" />
 		</antcall>
 	</target>
@@ -802,6 +745,12 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 	<target name="format-source-local-changes-debug">
 		<antcall target="format-source-local-changes">
 			<param name="source.formatter.show.debug.information" value="true" />
+		</antcall>
+	</target>
+
+	<target name="format-source-missing-override">
+		<antcall target="format-source-files">
+			<param name="source.check.names" value="JavaMissingOverrideCheck" />
 		</antcall>
 	</target>
 
@@ -825,6 +774,36 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 		</java>
 
 		<delete file="ServiceBuilder.temp" />
+	</target>
+
+	<target name="git-util">
+		<path id="source.formatter.classpath">
+			<fileset
+				dir="${sdk.dir}/dependencies/com.liferay.source.formatter/lib"
+				includes="*.jar"
+			/>
+			<path refid="project.classpath" />
+		</path>
+
+		<if>
+			<not>
+				<isset property="git.type" />
+			</not>
+			<then>
+				<property name="git.type" value="current-branch" />
+			</then>
+		</if>
+
+		<java
+			classname="com.liferay.portal.tools.GitUtil"
+			classpathref="source.formatter.classpath"
+			dir="${project.dir}"
+			fork="true"
+			newenvironment="true"
+		>
+			<arg value="git.type=${git.type}" />
+			<arg value="git.working.branch.name=${git.working.branch.name}" />
+		</java>
 	</target>
 
 	<target depends="build-common-java.init-compile" name="init-compile">
@@ -857,12 +836,12 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 		>
 			<fileset
 				dir="${project.dir}/sql"
-				includes="portal-data-common.sql,portal-data-counter.sql,portal-tables.sql,indexes.properties,indexes.sql,sequences.sql,update-*.sql"
+				includes="portal-data-counter.sql,portal-tables.sql,indexes.properties,indexes.sql,sequences.sql,update-*.sql"
 			/>
 		</copy>
 
 		<copy
-			file="${project.dir}/classes/log4j.properties"
+			file="${project.dir}/classes/log4j2.properties"
 			preservelastmodified="true"
 			todir="${portal-impl.classes.dir}"
 		/>
@@ -886,6 +865,7 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 	<target depends="build-common-java.init-jar" name="init-jar">
 		<ant dir="../util-bridges" inheritAll="false" target="jar" />
 		<ant dir="../util-java" inheritAll="false" target="jar" />
+		<ant dir="../util-slf4j" inheritAll="false" target="jar" />
 		<ant dir="../util-taglib" inheritAll="false" target="jar" />
 
 		<property name="portal.deploy.dependencies.dir" value="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies" />
@@ -986,8 +966,42 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 		</for>
 	</target>
 
-	<target name="rebuild-hypersonic">
-		<ant dir="../sql" target="rebuild-hypersonic" />
+	<target name="sanitize-lang">
+		<if>
+			<available file="${project.dir}/modules/util/lang-sanitizer" />
+			<then>
+				<gradle-execute dir="${project.dir}/modules/util/lang-sanitizer" task="deploy" />
+
+				<path id="lang.sanitizer.classpath">
+					<fileset
+						dir="${sdk.dir}/dependencies/com.liferay.lang.sanitizer/lib"
+						includes="*.jar"
+					/>
+				</path>
+
+				<if>
+					<not>
+						<isset property="source.sanitizer.dir" />
+					</not>
+					<then>
+						<property name="source.sanitizer.dir" value="${project.dir}" />
+					</then>
+				</if>
+
+				<java
+					classname="com.liferay.lang.sanitizer.LangSanitizer"
+					classpathref="lang.sanitizer.classpath"
+					fork="true"
+					newenvironment="true"
+				>
+					<jvmarg if:true="${jvm.debug}" value="${jpda.settings}" />
+					<jvmarg value="-Dfile.encoding=UTF-8" />
+					<jvmarg value="-Duser.country=US" />
+					<jvmarg value="-Duser.language=en" />
+					<arg value="source.base.dir=${source.sanitizer.dir}" />
+				</java>
+			</then>
+		</if>
 	</target>
 
 	<target name="sync-plugins-git-to-svn">
@@ -1013,17 +1027,6 @@ Please run the following command from ${source.formatter.modules.dir.absolute.pa
 			<jvmarg value="-Dgit.plugins.dir=L:/projects/github/liferay-plugins" />
 			<jvmarg value="-Dsvn.plugins.dir=L:/projects/liferay.public/plugins/trunk" />
 			<jvmarg value="-Dsync.to=git" />
-		</java>
-	</target>
-
-	<target name="tcpmon">
-		<java
-			classname="org.apache.axis.utils.tcpmon"
-			classpathref="project.classpath"
-			fork="true"
-			newenvironment="true"
-		>
-			<jvmarg value="-Xmx128m" />
 		</java>
 	</target>
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.service;
@@ -17,11 +8,11 @@ package com.liferay.project.templates.service;
 import com.liferay.maven.executor.MavenExecutor;
 import com.liferay.project.templates.BaseProjectTemplatesTestCase;
 import com.liferay.project.templates.extensions.util.Validator;
+import com.liferay.project.templates.extensions.util.VersionUtil;
 import com.liferay.project.templates.util.FileTestUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
 
 import java.net.URI;
 
@@ -29,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -38,15 +30,29 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * @author Gregory Amerson
+ * @author Lawrence Lee
  */
+@RunWith(Parameterized.class)
 public class ProjectTemplatesServiceTest
 	implements BaseProjectTemplatesTestCase {
 
 	@ClassRule
 	public static final MavenExecutor mavenExecutor = new MavenExecutor();
+
+	@Parameterized.Parameters(name = "Testcase-{index}: testing {1} {0}")
+	public static Iterable<Object[]> data() {
+		return Arrays.asList(
+			new Object[][] {
+				{"dxp", "7.0.10.17"}, {"dxp", "7.1.10.7"}, {"dxp", "7.2.10.7"},
+				{"portal", "7.3.7"}, {"portal", "7.4.3.56"},
+				{"dxp", "2024.q1.1"}
+			});
+	}
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -64,137 +70,83 @@ public class ProjectTemplatesServiceTest
 		_gradleDistribution = URI.create(gradleDistribution);
 	}
 
+	public ProjectTemplatesServiceTest(
+		String liferayProduct, String liferayVersion) {
+
+		_liferayProduct = liferayProduct;
+		_liferayVersion = liferayVersion;
+	}
+
 	@Test
-	public void testBuildTemplateService70() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"service", "servicepreaction", "--class-name", "FooAction",
-			"--service", "com.liferay.portal.kernel.events.LifecycleAction",
-			"--liferay-version", "7.0.6");
+	public void testBuildTemplateService() throws Exception {
+		String template = "service";
+		String name = "servicepreaction";
 
-		testExists(gradleProjectDir, "bnd.bnd");
+		File gradleWorkspaceDir = buildWorkspace(
+			temporaryFolder, "gradle", "gradleWS", _liferayVersion,
+			mavenExecutor);
 
-		testContains(
-			gradleProjectDir, "build.gradle",
-			"apply plugin: \"com.liferay.plugin\"",
-			DEPENDENCY_PORTAL_KERNEL + ", version: \"2.0.0");
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			_liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
+
+		File gradleWorkspaceModulesDir = new File(
+			gradleWorkspaceDir, "modules");
+
+		File gradleProjectDir = buildTemplateWithGradle(
+			gradleWorkspaceModulesDir, template, name, "--class-name",
+			"FooAction", "--liferay-product", _liferayProduct,
+			"--liferay-version", _liferayVersion, "--service",
+			"com.liferay.portal.kernel.events.LifecycleAction");
+
+		if (VersionUtil.getMinorVersion(_liferayVersion) < 3) {
+			testContains(
+				gradleProjectDir, "build.gradle", DEPENDENCY_RELEASE_DXP_API);
+		}
+		else {
+			testContains(
+				gradleProjectDir, "build.gradle",
+				DEPENDENCY_RELEASE_PORTAL_API);
+		}
+
+		testNotContains(gradleProjectDir, "build.gradle", "version: \"[0-9].*");
+
+		File mavenWorkspaceDir = buildWorkspace(
+			temporaryFolder, "maven", "mavenWS", _liferayVersion,
+			mavenExecutor);
+
+		File mavenModulesDir = new File(mavenWorkspaceDir, "modules");
 
 		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "service", "servicepreaction", "com.test",
+			mavenModulesDir, mavenModulesDir, template, name, "com.test",
 			mavenExecutor, "-DclassName=FooAction",
-			"-Dpackage=servicepreaction",
-			"-DserviceClass=com.liferay.portal.kernel.events.LifecycleAction",
-			"-DliferayVersion=7.0.6");
+			"-DliferayProduct=" + _liferayProduct,
+			"-DliferayVersion=" + _liferayVersion, "-Dpackage=servicepreaction",
+			"-DserviceClass=com.liferay.portal.kernel.events.LifecycleAction");
 
 		if (isBuildProjects()) {
 			_writeServiceClass(gradleProjectDir);
 			_writeServiceClass(mavenProjectDir);
 
-			buildProjects(
-				_gradleDistribution, mavenExecutor, gradleProjectDir,
-				mavenProjectDir);
-		}
-	}
-
-	@Test
-	public void testBuildTemplateService71() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"service", "servicepreaction", "--class-name", "FooAction",
-			"--service", "com.liferay.portal.kernel.events.LifecycleAction",
-			"--liferay-version", "7.1.3");
-
-		testContains(
-			gradleProjectDir, "build.gradle",
-			"apply plugin: \"com.liferay.plugin\"",
-			DEPENDENCY_PORTAL_KERNEL + ", version: \"3.0.0");
-
-		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "service", "servicepreaction", "com.test",
-			mavenExecutor, "-DclassName=FooAction",
-			"-Dpackage=servicepreaction",
-			"-DserviceClass=com.liferay.portal.kernel.events.LifecycleAction",
-			"-DliferayVersion=7.1.3");
-
-		if (isBuildProjects()) {
-			_writeServiceClass(gradleProjectDir);
-			_writeServiceClass(mavenProjectDir);
+			File gradleOutputDir = new File(gradleProjectDir, "build/libs");
+			File mavenOutputDir = new File(mavenProjectDir, "target");
 
 			buildProjects(
-				_gradleDistribution, mavenExecutor, gradleProjectDir,
-				mavenProjectDir);
-		}
-	}
-
-	@Test
-	public void testBuildTemplateService72() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"service", "servicepreaction", "--class-name", "FooAction",
-			"--service", "com.liferay.portal.kernel.events.LifecycleAction",
-			"--liferay-version", "7.2.1");
-
-		testContains(
-			gradleProjectDir, "build.gradle",
-			"apply plugin: \"com.liferay.plugin\"",
-			DEPENDENCY_PORTAL_KERNEL + ", version: \"4.4.0");
-
-		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "service", "servicepreaction", "com.test",
-			mavenExecutor, "-DclassName=FooAction",
-			"-Dpackage=servicepreaction",
-			"-DserviceClass=com.liferay.portal.kernel.events.LifecycleAction",
-			"-DliferayVersion=7.2.1");
-
-		if (isBuildProjects()) {
-			_writeServiceClass(gradleProjectDir);
-			_writeServiceClass(mavenProjectDir);
-
-			buildProjects(
-				_gradleDistribution, mavenExecutor, gradleProjectDir,
-				mavenProjectDir);
-		}
-	}
-
-	@Test
-	public void testBuildTemplateServiceInWorkspace() throws Exception {
-		File workspaceDir = buildWorkspace(temporaryFolder);
-
-		enableTargetPlatformInWorkspace(workspaceDir, "7.2.1");
-
-		File modulesDir = new File(workspaceDir, "modules");
-
-		File workspaceProjectDir = buildTemplateWithGradle(
-			modulesDir, "service", "servicepreaction", "--class-name",
-			"FooAction", "--service",
-			"com.liferay.portal.kernel.events.LifecycleAction",
-			"--dependency-management-enabled");
-
-		testNotContains(
-			workspaceProjectDir, "build.gradle", true, "^repositories \\{.*");
-		testNotContains(
-			workspaceProjectDir, "build.gradle", "version: \"[0-9].*");
-
-		if (isBuildProjects()) {
-			_writeServiceClass(workspaceProjectDir);
-
-			executeGradle(
-				workspaceDir, _gradleDistribution,
-				":modules:servicepreaction:build");
-
-			testExists(
-				workspaceProjectDir, "build/libs/servicepreaction-1.0.0.jar");
+				_gradleDistribution, mavenExecutor, gradleWorkspaceDir,
+				mavenProjectDir, gradleOutputDir, mavenOutputDir,
+				":modules:" + name + GRADLE_TASK_PATH_BUILD);
 		}
 	}
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-	private File _buildTemplateWithGradle(
-			String template, String name, String... args)
-		throws Exception {
-
-		return buildTemplateWithGradle(temporaryFolder, template, name, args);
-	}
-
-	private void _writeServiceClass(File projectDir) throws IOException {
+	private void _writeServiceClass(File projectDir) throws Exception {
 		String importLine =
 			"import com.liferay.portal.kernel.events.LifecycleAction;";
 		String classLine =
@@ -237,5 +189,8 @@ public class ProjectTemplatesServiceTest
 	}
 
 	private static URI _gradleDistribution;
+
+	private final String _liferayProduct;
+	private final String _liferayVersion;
 
 }

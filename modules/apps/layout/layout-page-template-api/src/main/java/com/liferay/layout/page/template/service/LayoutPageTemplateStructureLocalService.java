@@ -1,21 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -30,6 +24,8 @@ import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -52,22 +48,28 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see LayoutPageTemplateStructureLocalServiceUtil
  * @generated
  */
+@CTAware
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface LayoutPageTemplateStructureLocalService
-	extends BaseLocalService, PersistedModelLocalService {
+	extends BaseLocalService, CTService<LayoutPageTemplateStructure>,
+			PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link LayoutPageTemplateStructureLocalServiceUtil} to access the layout page template structure local service. Add custom service methods to <code>com.liferay.layout.page.template.service.impl.LayoutPageTemplateStructureLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.layout.page.template.service.impl.LayoutPageTemplateStructureLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the layout page template structure local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link LayoutPageTemplateStructureLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the layout page template structure to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutPageTemplateStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutPageTemplateStructure the layout page template structure
 	 * @return the layout page template structure that was added
@@ -77,7 +79,7 @@ public interface LayoutPageTemplateStructureLocalService
 		LayoutPageTemplateStructure layoutPageTemplateStructure);
 
 	public LayoutPageTemplateStructure addLayoutPageTemplateStructure(
-			long userId, long groupId, long classNameId, long classPK,
+			long userId, long groupId, long plid, long segmentsExperienceId,
 			String data, ServiceContext serviceContext)
 		throws PortalException;
 
@@ -92,7 +94,17 @@ public interface LayoutPageTemplateStructureLocalService
 		long layoutPageTemplateStructureId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Deletes the layout page template structure from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutPageTemplateStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutPageTemplateStructure the layout page template structure
 	 * @return the layout page template structure that was removed
@@ -105,6 +117,10 @@ public interface LayoutPageTemplateStructureLocalService
 	/**
 	 * Deletes the layout page template structure with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutPageTemplateStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param layoutPageTemplateStructureId the primary key of the layout page template structure
 	 * @return the layout page template structure that was removed
 	 * @throws PortalException if a layout page template structure with the primary key could not be found
@@ -115,7 +131,7 @@ public interface LayoutPageTemplateStructureLocalService
 		throws PortalException;
 
 	public LayoutPageTemplateStructure deleteLayoutPageTemplateStructure(
-			long groupId, long classNameId, long classPK)
+			long groupId, long plid)
 		throws PortalException;
 
 	/**
@@ -124,6 +140,12 @@ public interface LayoutPageTemplateStructureLocalService
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -197,13 +219,7 @@ public interface LayoutPageTemplateStructureLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public LayoutPageTemplateStructure fetchLayoutPageTemplateStructure(
-		long groupId, long classNameId, long classPK);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public LayoutPageTemplateStructure fetchLayoutPageTemplateStructure(
-			long groupId, long classNameId, long classPK,
-			boolean rebuildStructure)
-		throws PortalException;
+		long groupId, long plid);
 
 	/**
 	 * Returns the layout page template structure matching the UUID and group.
@@ -311,17 +327,20 @@ public interface LayoutPageTemplateStructureLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
-	public LayoutPageTemplateStructure rebuildLayoutPageTemplateStructure(
-			long groupId, long classNameId, long classPK)
-		throws PortalException;
-
 	/**
 	 * Updates the layout page template structure in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutPageTemplateStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutPageTemplateStructure the layout page template structure
 	 * @return the layout page template structure that was updated
@@ -330,13 +349,28 @@ public interface LayoutPageTemplateStructureLocalService
 	public LayoutPageTemplateStructure updateLayoutPageTemplateStructure(
 		LayoutPageTemplateStructure layoutPageTemplateStructure);
 
-	public LayoutPageTemplateStructure updateLayoutPageTemplateStructure(
-			long groupId, long classNameId, long classPK,
-			long segmentsExperienceId, String data)
+	public LayoutPageTemplateStructure updateLayoutPageTemplateStructureData(
+			long userId, long groupId, long plid, long segmentsExperienceId,
+			String data)
 		throws PortalException;
 
-	public LayoutPageTemplateStructure updateLayoutPageTemplateStructure(
-			long groupId, long classNameId, long classPK, String data)
+	public LayoutPageTemplateStructure updateLayoutPageTemplateStructureData(
+			long userId, long groupId, long plid, String data)
 		throws PortalException;
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<LayoutPageTemplateStructure> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<LayoutPageTemplateStructure> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<LayoutPageTemplateStructure>, R, E>
+				updateUnsafeFunction)
+		throws E;
 
 }

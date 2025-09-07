@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.verify.test;
@@ -19,6 +10,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryMetadata;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
+import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
@@ -30,6 +22,7 @@ import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUt
 import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLTrashServiceUtil;
 import com.liferay.document.library.test.util.DLTestUtil;
+import com.liferay.document.library.util.DLFileEntryTypeUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
@@ -38,25 +31,23 @@ import com.liferay.dynamic.data.mapping.kernel.DDMFormField;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
 import com.liferay.dynamic.data.mapping.kernel.UnlocalizedValue;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
-import com.liferay.dynamic.data.mapping.util.DDMBeanTranslatorUtil;
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.model.Company;
+import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -70,6 +61,7 @@ import com.liferay.portal.verify.test.util.BaseVerifyProcessTestCase;
 
 import java.io.ByteArrayInputStream;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -102,8 +94,6 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_company = CompanyTestUtil.addCompany();
-
 		_group = GroupTestUtil.addGroup();
 	}
 
@@ -115,27 +105,22 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 
 		DLFileEntryType dlFileEntryType = dlFileEntry.getDLFileEntryType();
 
-		List<com.liferay.dynamic.data.mapping.kernel.DDMStructure>
-			ddmStructures = dlFileEntryType.getDDMStructures();
+		List<DDMStructure> ddmStructures = DLFileEntryTypeUtil.getDDMStructures(
+			dlFileEntryType);
 
-		com.liferay.dynamic.data.mapping.kernel.DDMStructure ddmStructure =
-			ddmStructures.get(0);
+		DDMStructure ddmStructure = ddmStructures.get(0);
 
-		DDMStructure modelDDMStructure =
-			DDMStructureLocalServiceUtil.getDDMStructure(
-				ddmStructure.getStructureId());
-
-		modelDDMStructure.setCompanyId(_company.getCompanyId());
+		ddmStructure.setCompanyId(0);
 
 		try {
-			modelDDMStructure = DDMStructureLocalServiceUtil.updateDDMStructure(
-				modelDDMStructure);
+			ddmStructure = DDMStructureLocalServiceUtil.updateDDMStructure(
+				ddmStructure);
 
 			DLFileVersion dlFileVersion = dlFileEntry.getFileVersion();
 
 			DLFileEntryMetadata dlFileEntryMetadata =
 				DLFileEntryMetadataLocalServiceUtil.fetchFileEntryMetadata(
-					modelDDMStructure.getStructureId(),
+					ddmStructure.getStructureId(),
 					dlFileVersion.getFileVersionId());
 
 			Assert.assertNotNull(dlFileEntryMetadata);
@@ -144,15 +129,15 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 
 			dlFileEntryMetadata =
 				DLFileEntryMetadataLocalServiceUtil.fetchFileEntryMetadata(
-					modelDDMStructure.getStructureId(),
+					ddmStructure.getStructureId(),
 					dlFileVersion.getFileVersionId());
 
 			Assert.assertNull(dlFileEntryMetadata);
 		}
 		finally {
-			modelDDMStructure.setCompanyId(dlFileEntryType.getCompanyId());
+			ddmStructure.setCompanyId(dlFileEntryType.getCompanyId());
 
-			DDMStructureLocalServiceUtil.updateDDMStructure(modelDDMStructure);
+			DDMStructureLocalServiceUtil.updateDDMStructure(ddmStructure);
 		}
 	}
 
@@ -160,13 +145,10 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 	public void testDeleteNoStructuresDLFileEntryMetadatas() throws Exception {
 		DLFileEntry dlFileEntry = addDLFileEntry();
 
-		DLFileEntryType dlFileEntryType = dlFileEntry.getDLFileEntryType();
+		List<DDMStructure> ddmStructures = DLFileEntryTypeUtil.getDDMStructures(
+			dlFileEntry.getDLFileEntryType());
 
-		List<com.liferay.dynamic.data.mapping.kernel.DDMStructure>
-			ddmStructures = dlFileEntryType.getDDMStructures();
-
-		com.liferay.dynamic.data.mapping.kernel.DDMStructure ddmStructure =
-			ddmStructures.get(0);
+		DDMStructure ddmStructure = ddmStructures.get(0);
 
 		DDMStructureLocalServiceUtil.deleteDDMStructure(
 			ddmStructure.getStructureId());
@@ -194,14 +176,12 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 	public void testDLFileEntryTreePathWithDLFileEntryInTrash()
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			serviceContext);
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 
 		FileEntry fileEntry = addFileEntry(parentFolder.getFolderId());
 
@@ -222,12 +202,13 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Folder grandparentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), grandparentFolder.getFolderId(),
+			null, _group.getGroupId(), grandparentFolder.getFolderId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
@@ -276,14 +257,15 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		FileEntry fileEntry = addFileEntry(parentFolder.getFolderId());
 
 		FileShortcut fileShortcut = DLAppLocalServiceUtil.addFileShortcut(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			parentFolder.getFolderId(), fileEntry.getFileEntryId(),
 			serviceContext);
 
@@ -305,12 +287,13 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Folder grandparentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), grandparentFolder.getFolderId(),
+			null, _group.getGroupId(), grandparentFolder.getFolderId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
@@ -331,12 +314,13 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		Folder folder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), parentFolder.getFolderId(),
+			null, _group.getGroupId(), parentFolder.getFolderId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
@@ -357,17 +341,18 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Folder grandparentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		Folder parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), grandparentFolder.getFolderId(),
+			null, _group.getGroupId(), grandparentFolder.getFolderId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
 		DLAppServiceUtil.addFolder(
-			_group.getGroupId(), parentFolder.getFolderId(),
+			null, _group.getGroupId(), parentFolder.getFolderId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
@@ -421,11 +406,9 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 			ddmFormDeserializerDeserializeResponse =
 				_ddmFormDeserializer.deserialize(builder.build());
 
-		com.liferay.dynamic.data.mapping.model.DDMForm ddmForm =
-			ddmFormDeserializerDeserializeResponse.getDDMForm();
-
-		serviceContext.setAttribute(
-			"ddmForm", DDMBeanTranslatorUtil.translate(ddmForm));
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			DLFileEntryMetadata.class.getName(),
+			ddmFormDeserializerDeserializeResponse.getDDMForm());
 
 		User user = TestPropsValues.getUser();
 
@@ -433,15 +416,12 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 
 		DLFileEntryType dlFileEntryType =
 			DLFileEntryTypeLocalServiceUtil.addFileEntryType(
-				TestPropsValues.getUserId(), _group.getGroupId(),
-				RandomTestUtil.randomString(), StringPool.BLANK, new long[0],
+				null, TestPropsValues.getUserId(), _group.getGroupId(),
+				ddmStructure.getStructureId(), null,
+				Collections.singletonMap(LocaleUtil.US, "New File Entry Type"),
+				Collections.singletonMap(LocaleUtil.US, "New File Entry Type"),
+				DLFileEntryTypeConstants.FILE_ENTRY_TYPE_SCOPE_DEFAULT,
 				serviceContext);
-
-		List<com.liferay.dynamic.data.mapping.kernel.DDMStructure>
-			ddmStructures = dlFileEntryType.getDDMStructures();
-
-		com.liferay.dynamic.data.mapping.kernel.DDMStructure ddmStructure =
-			ddmStructures.get(0);
 
 		Map<String, DDMFormValues> ddmFormValuesMap = getDDMFormValuesMap(
 			ddmStructure.getStructureKey(), user.getLocale());
@@ -450,23 +430,22 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 			TestDataConstants.TEST_BYTE_ARRAY);
 
 		return DLFileEntryLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), null, RandomTestUtil.randomString(),
-			null, null, dlFileEntryType.getFileEntryTypeId(), ddmFormValuesMap,
-			null, byteArrayInputStream, byteArrayInputStream.available(),
-			serviceContext);
+			RandomTestUtil.randomString(), null, null,
+			dlFileEntryType.getFileEntryTypeId(), ddmFormValuesMap, null,
+			byteArrayInputStream, byteArrayInputStream.available(), null, null,
+			null, serviceContext);
 	}
 
 	protected FileEntry addFileEntry(long folderId) throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		return DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(), folderId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), folderId,
 			RandomTestUtil.randomString() + ".txt", ContentTypes.TEXT_PLAIN,
-			TestDataConstants.TEST_BYTE_ARRAY, serviceContext);
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	protected Map<String, DDMFormValues> getDDMFormValuesMap(
@@ -484,7 +463,7 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 				ddmForm.setDefaultLocale(currentLocale);
 
 				DDMFormField ddmFormField = new DDMFormField(
-					"date_an", "ddm-date");
+					"date_an", DDMFormFieldType.DATE);
 
 				ddmFormField.setDataType("date");
 
@@ -513,13 +492,10 @@ public class DLServiceVerifyProcessTest extends BaseVerifyProcessTestCase {
 	}
 
 	@Inject(
-		filter = "verify.process.name=com.liferay.document.library.service",
+		filter = "component.name=com.liferay.document.library.internal.verify.DLServiceVerifyProcess",
 		type = VerifyProcess.class
 	)
 	private static VerifyProcess _verifyProcess;
-
-	@DeleteAfterTestRun
-	private Company _company;
 
 	@Inject(filter = "ddm.form.deserializer.type=xsd")
 	private DDMFormDeserializer _ddmFormDeserializer;

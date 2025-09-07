@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.social.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -56,7 +48,7 @@ public class WikiActivityInterpreterTest
 
 		_attachmentFileName = RandomTestUtil.randomString() + ".docx";
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			_page.getUserId(), _page.getNodeId(), _page.getTitle(),
 			_attachmentFileName, getClass());
 	}
@@ -86,9 +78,12 @@ public class WikiActivityInterpreterTest
 
 	@Override
 	protected void moveModelsToTrash() throws Exception {
-		WikiPageLocalServiceUtil.movePageAttachmentToTrash(
-			TestPropsValues.getUserId(), _page.getNodeId(), _page.getTitle(),
-			_attachmentFileName);
+		FileEntry fileEntry =
+			WikiPageLocalServiceUtil.movePageAttachmentToTrash(
+				TestPropsValues.getUserId(), _page.getNodeId(),
+				_page.getTitle(), _attachmentFileName);
+
+		_trashFileName = fileEntry.getFileName();
 
 		_page = WikiPageLocalServiceUtil.movePageToTrash(
 			TestPropsValues.getUserId(), _page);
@@ -103,13 +98,11 @@ public class WikiActivityInterpreterTest
 		TrashEntry trashEntry = TrashEntryLocalServiceUtil.getEntry(
 			WikiPage.class.getName(), _page.getResourcePrimKey());
 
-		String trashTitle = trashHelper.getTrashTitle(trashEntry.getEntryId());
-
-		_page.setTitle(trashTitle);
+		_page.setTitle(trashHelper.getTrashTitle(trashEntry.getEntryId()));
 
 		WikiPageLocalServiceUtil.restorePageAttachmentFromTrash(
 			TestPropsValues.getUserId(), _page.getNodeId(), _page.getTitle(),
-			_attachmentFileName);
+			_trashFileName);
 
 		WikiPageLocalServiceUtil.restorePageFromTrash(
 			TestPropsValues.getUserId(), _page);
@@ -117,5 +110,6 @@ public class WikiActivityInterpreterTest
 
 	private String _attachmentFileName;
 	private WikiPage _page;
+	private String _trashFileName;
 
 }

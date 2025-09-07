@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.membership.policy.site.test;
@@ -39,8 +30,6 @@ import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -125,11 +114,9 @@ public class SiteMembershipPolicyMembershipsTest
 	public void testAssignUserToForbiddenGroups() throws Exception {
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, addForbiddenGroups(), null,
-			Collections.<UserGroupRole>emptyList());
+			UserLocalServiceUtil.getUser(userIds[0]), null, null,
+			addForbiddenGroups(), null, Collections.<UserGroupRole>emptyList());
 	}
 
 	@Test
@@ -141,15 +128,15 @@ public class SiteMembershipPolicyMembershipsTest
 		int initialGroupUsersCount = UserLocalServiceUtil.getGroupUsersCount(
 			requiredGroupIds[0]);
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, new long[] {requiredGroupIds[0]}, null,
+			UserLocalServiceUtil.getUser(userIds[0]), null, null,
+			new long[] {requiredGroupIds[0]}, null,
 			Collections.<UserGroupRole>emptyList());
 
 		Assert.assertEquals(
 			initialGroupUsersCount + 1,
 			UserLocalServiceUtil.getGroupUsersCount(requiredGroupIds[0]));
+
 		Assert.assertTrue(isPropagateMembership());
 	}
 
@@ -179,11 +166,9 @@ public class SiteMembershipPolicyMembershipsTest
 
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, addRequiredGroups(), null,
-			Collections.<UserGroupRole>emptyList());
+			UserLocalServiceUtil.getUser(userIds[0]), null, null,
+			addRequiredGroups(), null, Collections.<UserGroupRole>emptyList());
 
 		Assert.assertTrue(isPropagateMembership());
 	}
@@ -300,12 +285,11 @@ public class SiteMembershipPolicyMembershipsTest
 	public void testVerifyWhenUpdatingGroup() throws Exception {
 		Group group = MembershipPolicyTestUtil.addGroup();
 
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.getDefault(), RandomTestUtil.randomString()
-		).build();
-
 		GroupServiceUtil.updateGroup(
-			group.getGroupId(), group.getParentGroupId(), nameMap,
+			group.getGroupId(), group.getParentGroupId(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
 			group.getDescriptionMap(), group.getType(),
 			group.isManualMembership(), group.getMembershipRestriction(),
 			group.getFriendlyURL(), group.isInheritContent(), group.isActive(),

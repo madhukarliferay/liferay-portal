@@ -1,27 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.analytics.settings.internal.security.auth.verifier;
 
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
 import com.liferay.analytics.settings.security.constants.AnalyticsSecurityConstants;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
@@ -31,7 +23,10 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.StringBundler;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.nio.charset.Charset;
 
 import java.security.KeyFactory;
 import java.security.Signature;
@@ -44,17 +39,17 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Shinn Lok
  */
 @Component(
-	enabled = false,
-	property = "auth.verifier.AnalyticsSecurityAuthVerifier.urls.includes=/api/jsonws/*",
+	configurationPid = "com.liferay.analytics.settings.configuration.AnalyticsConfiguration.scoped",
+	configurationPolicy = ConfigurationPolicy.REQUIRE,
+	property = "auth.verifier.AnalyticsSecurityAuthVerifier.urls.includes=/o/segments-asah/v1.0/experiments/*,/v1.0/experiments/*",
 	service = AuthVerifier.class
 )
 public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
@@ -98,7 +93,7 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 			}
 
 			Set<String> hostsAllowed = JSONUtil.toStringSet(
-				JSONFactoryUtil.createJSONArray(
+				_jsonFactory.createJSONArray(
 					analyticsConfiguration.hostsAllowed()));
 
 			if (!hostsAllowed.isEmpty() &&
@@ -154,8 +149,8 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 
 			return authVerifierResult;
 		}
-		catch (Exception e) {
-			throw new AuthException(e);
+		catch (Exception exception) {
+			throw new AuthException(exception);
 		}
 	}
 
@@ -190,8 +185,9 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 		sortedParameters.put(
 			"Liferay-Analytics-Cloud-Security-Timestamp", timestamp);
 
-		StringBundler sb = new StringBundler((2 * sortedParameters.size()) + 2);
+		StringBundler sb = new StringBundler((2 * sortedParameters.size()) + 3);
 
+		sb.append(httpServletRequest.getContextPath());
 		sb.append(httpServletRequest.getServletPath());
 		sb.append(httpServletRequest.getPathInfo());
 
@@ -202,7 +198,7 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 
 		String requestContent = sb.toString();
 
-		signature.update(requestContent.getBytes());
+		signature.update(requestContent.getBytes(Charset.defaultCharset()));
 
 		return signature.verify(Base64.decode(signatureString));
 	}
@@ -214,6 +210,9 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;

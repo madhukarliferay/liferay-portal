@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder.test.service.persistence.impl;
@@ -30,16 +21,21 @@ import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.service.persistence.impl.TableMapper;
 import com.liferay.portal.kernel.service.persistence.impl.TableMapperFactory;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.spring.extender.service.ServiceReference;
 import com.liferay.portal.tools.service.builder.test.exception.NoSuchBigDecimalEntryException;
 import com.liferay.portal.tools.service.builder.test.model.BigDecimalEntry;
+import com.liferay.portal.tools.service.builder.test.model.BigDecimalEntryTable;
 import com.liferay.portal.tools.service.builder.test.model.impl.BigDecimalEntryImpl;
 import com.liferay.portal.tools.service.builder.test.model.impl.BigDecimalEntryModelImpl;
 import com.liferay.portal.tools.service.builder.test.service.persistence.BigDecimalEntryPersistence;
+import com.liferay.portal.tools.service.builder.test.service.persistence.BigDecimalEntryUtil;
 import com.liferay.portal.tools.service.builder.test.service.persistence.LVEntryPersistence;
 
 import java.io.Serializable;
@@ -68,7 +64,7 @@ public class BigDecimalEntryPersistenceImpl
 	extends BasePersistenceImpl<BigDecimalEntry>
 	implements BigDecimalEntryPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>BigDecimalEntryUtil</code> to access the big decimal entry persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -203,54 +199,54 @@ public class BigDecimalEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+				sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
 				list = (List<BigDecimalEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -258,12 +254,8 @@ public class BigDecimalEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -294,16 +286,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue=");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue=");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -349,16 +341,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue=");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue=");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -425,8 +417,8 @@ public class BigDecimalEntryPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -439,28 +431,28 @@ public class BigDecimalEntryPersistenceImpl
 		OrderByComparator<BigDecimalEntry> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+		sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 		boolean bindBigDecimalValue = false;
 
 		if (bigDecimalValue == null) {
-			query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
+			sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
 		}
 		else {
 			bindBigDecimalValue = true;
 
-			query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
+			sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
 		}
 
 		if (orderByComparator != null) {
@@ -468,72 +460,72 @@ public class BigDecimalEntryPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+			sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindBigDecimalValue) {
-			qPos.add(bigDecimalValue);
+			queryPos.add(bigDecimalValue);
 		}
 
 		if (orderByComparator != null) {
@@ -541,11 +533,11 @@ public class BigDecimalEntryPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						bigDecimalEntry)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<BigDecimalEntry> list = q.list();
+		List<BigDecimalEntry> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -586,44 +578,42 @@ public class BigDecimalEntryPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_BIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -747,56 +737,54 @@ public class BigDecimalEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(
-					_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(
-					_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+				sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
 				list = (List<BigDecimalEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -804,12 +792,8 @@ public class BigDecimalEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -840,16 +824,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue>");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue>");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -895,16 +879,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue>");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue>");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -971,8 +955,8 @@ public class BigDecimalEntryPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -985,28 +969,28 @@ public class BigDecimalEntryPersistenceImpl
 		OrderByComparator<BigDecimalEntry> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+		sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 		boolean bindBigDecimalValue = false;
 
 		if (bigDecimalValue == null) {
-			query.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+			sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 		}
 		else {
 			bindBigDecimalValue = true;
 
-			query.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+			sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 		}
 
 		if (orderByComparator != null) {
@@ -1014,72 +998,72 @@ public class BigDecimalEntryPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+			sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindBigDecimalValue) {
-			qPos.add(bigDecimalValue);
+			queryPos.add(bigDecimalValue);
 		}
 
 		if (orderByComparator != null) {
@@ -1087,11 +1071,11 @@ public class BigDecimalEntryPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						bigDecimalEntry)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<BigDecimalEntry> list = q.list();
+		List<BigDecimalEntry> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1133,46 +1117,42 @@ public class BigDecimalEntryPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(
-					_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(
-					_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_GTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1296,56 +1276,54 @@ public class BigDecimalEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(
-					_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(
-					_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+				sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
 				list = (List<BigDecimalEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1353,12 +1331,8 @@ public class BigDecimalEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1389,16 +1363,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue<");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue<");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -1444,16 +1418,16 @@ public class BigDecimalEntryPersistenceImpl
 			return bigDecimalEntry;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("bigDecimalValue<");
-		msg.append(bigDecimalValue);
+		sb.append("bigDecimalValue<");
+		sb.append(bigDecimalValue);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchBigDecimalEntryException(msg.toString());
+		throw new NoSuchBigDecimalEntryException(sb.toString());
 	}
 
 	/**
@@ -1520,8 +1494,8 @@ public class BigDecimalEntryPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1534,28 +1508,28 @@ public class BigDecimalEntryPersistenceImpl
 		OrderByComparator<BigDecimalEntry> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
+		sb.append(_SQL_SELECT_BIGDECIMALENTRY_WHERE);
 
 		boolean bindBigDecimalValue = false;
 
 		if (bigDecimalValue == null) {
-			query.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+			sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 		}
 		else {
 			bindBigDecimalValue = true;
 
-			query.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+			sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 		}
 
 		if (orderByComparator != null) {
@@ -1563,72 +1537,72 @@ public class BigDecimalEntryPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
+			sb.append(BigDecimalEntryModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindBigDecimalValue) {
-			qPos.add(bigDecimalValue);
+			queryPos.add(bigDecimalValue);
 		}
 
 		if (orderByComparator != null) {
@@ -1636,11 +1610,11 @@ public class BigDecimalEntryPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						bigDecimalEntry)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<BigDecimalEntry> list = q.list();
+		List<BigDecimalEntry> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1682,46 +1656,42 @@ public class BigDecimalEntryPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
+			sb.append(_SQL_COUNT_BIGDECIMALENTRY_WHERE);
 
 			boolean bindBigDecimalValue = false;
 
 			if (bigDecimalValue == null) {
-				query.append(
-					_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
+				sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_1);
 			}
 			else {
 				bindBigDecimalValue = true;
 
-				query.append(
-					_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
+				sb.append(_FINDER_COLUMN_LTBIGDECIMALVALUE_BIGDECIMALVALUE_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindBigDecimalValue) {
-					qPos.add(bigDecimalValue);
+					queryPos.add(bigDecimalValue);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1744,7 +1714,8 @@ public class BigDecimalEntryPersistenceImpl
 
 		setModelImplClass(BigDecimalEntryImpl.class);
 		setModelPKClass(long.class);
-		setEntityCacheEnabled(BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED);
+
+		setTable(BigDecimalEntryTable.INSTANCE);
 	}
 
 	/**
@@ -1755,12 +1726,11 @@ public class BigDecimalEntryPersistenceImpl
 	@Override
 	public void cacheResult(BigDecimalEntry bigDecimalEntry) {
 		entityCache.putResult(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
 			BigDecimalEntryImpl.class, bigDecimalEntry.getPrimaryKey(),
 			bigDecimalEntry);
-
-		bigDecimalEntry.resetOriginalValues();
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the big decimal entries in the entity cache if it is enabled.
@@ -1769,16 +1739,20 @@ public class BigDecimalEntryPersistenceImpl
 	 */
 	@Override
 	public void cacheResult(List<BigDecimalEntry> bigDecimalEntries) {
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (bigDecimalEntries.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (BigDecimalEntry bigDecimalEntry : bigDecimalEntries) {
 			if (entityCache.getResult(
-					BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
 					BigDecimalEntryImpl.class,
 					bigDecimalEntry.getPrimaryKey()) == null) {
 
 				cacheResult(bigDecimalEntry);
-			}
-			else {
-				bigDecimalEntry.resetOriginalValues();
 			}
 		}
 	}
@@ -1794,9 +1768,7 @@ public class BigDecimalEntryPersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(BigDecimalEntryImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(BigDecimalEntryImpl.class);
 	}
 
 	/**
@@ -1808,36 +1780,23 @@ public class BigDecimalEntryPersistenceImpl
 	 */
 	@Override
 	public void clearCache(BigDecimalEntry bigDecimalEntry) {
-		entityCache.removeResult(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, bigDecimalEntry.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		entityCache.removeResult(BigDecimalEntryImpl.class, bigDecimalEntry);
 	}
 
 	@Override
 	public void clearCache(List<BigDecimalEntry> bigDecimalEntries) {
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (BigDecimalEntry bigDecimalEntry : bigDecimalEntries) {
 			entityCache.removeResult(
-				BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-				BigDecimalEntryImpl.class, bigDecimalEntry.getPrimaryKey());
+				BigDecimalEntryImpl.class, bigDecimalEntry);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(BigDecimalEntryImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
-			entityCache.removeResult(
-				BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-				BigDecimalEntryImpl.class, primaryKey);
+			entityCache.removeResult(BigDecimalEntryImpl.class, primaryKey);
 		}
 	}
 
@@ -1903,11 +1862,11 @@ public class BigDecimalEntryPersistenceImpl
 
 			return remove(bigDecimalEntry);
 		}
-		catch (NoSuchBigDecimalEntryException nsee) {
-			throw nsee;
+		catch (NoSuchBigDecimalEntryException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1934,8 +1893,8 @@ public class BigDecimalEntryPersistenceImpl
 				session.delete(bigDecimalEntry);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1977,70 +1936,27 @@ public class BigDecimalEntryPersistenceImpl
 		try {
 			session = openSession();
 
-			if (bigDecimalEntry.isNew()) {
+			if (isNew) {
 				session.save(bigDecimalEntry);
-
-				bigDecimalEntry.setNew(false);
 			}
 			else {
 				bigDecimalEntry = (BigDecimalEntry)session.merge(
 					bigDecimalEntry);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!BigDecimalEntryModelImpl.COLUMN_BITMASK_ENABLED) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				bigDecimalEntryModelImpl.getBigDecimalValue()
-			};
-
-			finderCache.removeResult(_finderPathCountByBigDecimalValue, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByBigDecimalValue, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((bigDecimalEntryModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByBigDecimalValue.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					bigDecimalEntryModelImpl.getOriginalBigDecimalValue()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByBigDecimalValue, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByBigDecimalValue, args);
-
-				args = new Object[] {
-					bigDecimalEntryModelImpl.getBigDecimalValue()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByBigDecimalValue, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByBigDecimalValue, args);
-			}
-		}
-
 		entityCache.putResult(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, bigDecimalEntry.getPrimaryKey(),
-			bigDecimalEntry, false);
+			BigDecimalEntryImpl.class, bigDecimalEntryModelImpl, false, true);
+
+		if (isNew) {
+			bigDecimalEntry.setNew(false);
+		}
 
 		bigDecimalEntry.resetOriginalValues();
 
@@ -2186,19 +2102,19 @@ public class BigDecimalEntryPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 			String sql = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					2 + (orderByComparator.getOrderByFields().length * 2));
 
-				query.append(_SQL_SELECT_BIGDECIMALENTRY);
+				sb.append(_SQL_SELECT_BIGDECIMALENTRY);
 
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				sql = query.toString();
+				sql = sb.toString();
 			}
 			else {
 				sql = _SQL_SELECT_BIGDECIMALENTRY;
@@ -2211,10 +2127,10 @@ public class BigDecimalEntryPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
 				list = (List<BigDecimalEntry>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -2222,12 +2138,8 @@ public class BigDecimalEntryPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2264,18 +2176,15 @@ public class BigDecimalEntryPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(_SQL_COUNT_BIGDECIMALENTRY);
+				Query query = session.createQuery(_SQL_COUNT_BIGDECIMALENTRY);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(
 					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2404,17 +2313,18 @@ public class BigDecimalEntryPersistenceImpl
 	 *
 	 * @param pk the primary key of the big decimal entry
 	 * @param lvEntryPK the primary key of the lv entry
+	 * @return <code>true</code> if an association between the big decimal entry and the lv entry was added; <code>false</code> if they were already associated
 	 */
 	@Override
-	public void addLVEntry(long pk, long lvEntryPK) {
+	public boolean addLVEntry(long pk, long lvEntryPK) {
 		BigDecimalEntry bigDecimalEntry = fetchByPrimaryKey(pk);
 
 		if (bigDecimalEntry == null) {
-			bigDecimalEntryToLVEntryTableMapper.addTableMapping(
+			return bigDecimalEntryToLVEntryTableMapper.addTableMapping(
 				CompanyThreadLocal.getCompanyId(), pk, lvEntryPK);
 		}
 		else {
-			bigDecimalEntryToLVEntryTableMapper.addTableMapping(
+			return bigDecimalEntryToLVEntryTableMapper.addTableMapping(
 				bigDecimalEntry.getCompanyId(), pk, lvEntryPK);
 		}
 	}
@@ -2424,20 +2334,21 @@ public class BigDecimalEntryPersistenceImpl
 	 *
 	 * @param pk the primary key of the big decimal entry
 	 * @param lvEntry the lv entry
+	 * @return <code>true</code> if an association between the big decimal entry and the lv entry was added; <code>false</code> if they were already associated
 	 */
 	@Override
-	public void addLVEntry(
+	public boolean addLVEntry(
 		long pk,
 		com.liferay.portal.tools.service.builder.test.model.LVEntry lvEntry) {
 
 		BigDecimalEntry bigDecimalEntry = fetchByPrimaryKey(pk);
 
 		if (bigDecimalEntry == null) {
-			bigDecimalEntryToLVEntryTableMapper.addTableMapping(
+			return bigDecimalEntryToLVEntryTableMapper.addTableMapping(
 				CompanyThreadLocal.getCompanyId(), pk, lvEntry.getPrimaryKey());
 		}
 		else {
-			bigDecimalEntryToLVEntryTableMapper.addTableMapping(
+			return bigDecimalEntryToLVEntryTableMapper.addTableMapping(
 				bigDecimalEntry.getCompanyId(), pk, lvEntry.getPrimaryKey());
 		}
 	}
@@ -2447,9 +2358,10 @@ public class BigDecimalEntryPersistenceImpl
 	 *
 	 * @param pk the primary key of the big decimal entry
 	 * @param lvEntryPKs the primary keys of the lv entries
+	 * @return <code>true</code> if at least one association between the big decimal entry and the lv entries was added; <code>false</code> if they were all already associated
 	 */
 	@Override
-	public void addLVEntries(long pk, long[] lvEntryPKs) {
+	public boolean addLVEntries(long pk, long[] lvEntryPKs) {
 		long companyId = 0;
 
 		BigDecimalEntry bigDecimalEntry = fetchByPrimaryKey(pk);
@@ -2461,8 +2373,14 @@ public class BigDecimalEntryPersistenceImpl
 			companyId = bigDecimalEntry.getCompanyId();
 		}
 
-		bigDecimalEntryToLVEntryTableMapper.addTableMappings(
+		long[] addedKeys = bigDecimalEntryToLVEntryTableMapper.addTableMappings(
 			companyId, pk, lvEntryPKs);
+
+		if (addedKeys.length > 0) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -2470,14 +2388,15 @@ public class BigDecimalEntryPersistenceImpl
 	 *
 	 * @param pk the primary key of the big decimal entry
 	 * @param lvEntries the lv entries
+	 * @return <code>true</code> if at least one association between the big decimal entry and the lv entries was added; <code>false</code> if they were all already associated
 	 */
 	@Override
-	public void addLVEntries(
+	public boolean addLVEntries(
 		long pk,
 		List<com.liferay.portal.tools.service.builder.test.model.LVEntry>
 			lvEntries) {
 
-		addLVEntries(
+		return addLVEntries(
 			pk,
 			ListUtil.toLongArray(
 				lvEntries,
@@ -2613,8 +2532,8 @@ public class BigDecimalEntryPersistenceImpl
 
 			setLVEntries(pk, lvEntryPKs);
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 	}
 
@@ -2642,91 +2561,76 @@ public class BigDecimalEntryPersistenceImpl
 	 * Initializes the big decimal entry persistence.
 	 */
 	public void afterPropertiesSet() {
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
+
 		bigDecimalEntryToLVEntryTableMapper = TableMapperFactory.getTableMapper(
 			"BigDecimalEntries_LVEntries", "companyId", "bigDecimalEntryId",
 			"lvEntryId", this, lvEntryPersistence);
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-			"findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-			"findByBigDecimalValue",
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByBigDecimalValue",
 			new String[] {
 				BigDecimal.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"bigDecimalValue"}, true);
 
 		_finderPathWithoutPaginationFindByBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByBigDecimalValue",
 			new String[] {BigDecimal.class.getName()},
-			BigDecimalEntryModelImpl.BIGDECIMALVALUE_COLUMN_BITMASK);
+			new String[] {"bigDecimalValue"}, true);
 
 		_finderPathCountByBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByBigDecimalValue",
-			new String[] {BigDecimal.class.getName()});
+			new String[] {BigDecimal.class.getName()},
+			new String[] {"bigDecimalValue"}, false);
 
 		_finderPathWithPaginationFindByGtBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-			"findByGtBigDecimalValue",
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGtBigDecimalValue",
 			new String[] {
 				BigDecimal.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"bigDecimalValue"}, true);
 
 		_finderPathWithPaginationCountByGtBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGtBigDecimalValue",
-			new String[] {BigDecimal.class.getName()});
+			new String[] {BigDecimal.class.getName()},
+			new String[] {"bigDecimalValue"}, false);
 
 		_finderPathWithPaginationFindByLtBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED,
-			BigDecimalEntryImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-			"findByLtBigDecimalValue",
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByLtBigDecimalValue",
 			new String[] {
 				BigDecimal.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"bigDecimalValue"}, true);
 
 		_finderPathWithPaginationCountByLtBigDecimalValue = new FinderPath(
-			BigDecimalEntryModelImpl.ENTITY_CACHE_ENABLED,
-			BigDecimalEntryModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByLtBigDecimalValue",
-			new String[] {BigDecimal.class.getName()});
+			new String[] {BigDecimal.class.getName()},
+			new String[] {"bigDecimalValue"}, false);
+
+		BigDecimalEntryUtil.setPersistence(this);
 	}
 
 	public void destroy() {
+		BigDecimalEntryUtil.setPersistence(null);
+
 		entityCache.removeCache(BigDecimalEntryImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 
 		TableMapperFactory.removeTableMapper("BigDecimalEntries_LVEntries");
 	}
@@ -2767,5 +2671,10 @@ public class BigDecimalEntryPersistenceImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BigDecimalEntryPersistenceImpl.class);
+
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
+	}
 
 }

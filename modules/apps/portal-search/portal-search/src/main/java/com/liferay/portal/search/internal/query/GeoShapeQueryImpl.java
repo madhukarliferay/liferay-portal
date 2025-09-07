@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -48,66 +39,82 @@ public class GeoShapeQueryImpl extends BaseQueryImpl implements GeoShapeQuery {
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public String getField() {
 		return _field;
 	}
 
+	@Override
 	public Boolean getIgnoreUnmapped() {
 		return _ignoreUnmapped;
 	}
 
+	@Override
 	public String getIndexedShapeId() {
 		return _indexedShapeId;
 	}
 
+	@Override
 	public String getIndexedShapeIndex() {
 		return _indexedShapeIndex;
 	}
 
+	@Override
 	public String getIndexedShapePath() {
 		return _indexedShapePath;
 	}
 
+	@Override
 	public String getIndexedShapeRouting() {
 		return _indexedShapeRouting;
 	}
 
+	@Override
 	public String getIndexedShapeType() {
 		return _indexedShapeType;
 	}
 
+	@Override
 	public Shape getShape() {
 		return _shape;
 	}
 
+	@Override
 	public ShapeRelation getShapeRelation() {
 		return _shapeRelation;
 	}
 
+	@Override
 	public SpatialStrategy getSpatialStrategy() {
 		return _spatialStrategy;
 	}
 
+	@Override
 	public void setIgnoreUnmapped(Boolean ignoreUnmapped) {
 		_ignoreUnmapped = ignoreUnmapped;
 	}
 
+	@Override
 	public void setIndexedShapeIndex(String indexedShapeIndex) {
 		_indexedShapeIndex = indexedShapeIndex;
 	}
 
+	@Override
 	public void setIndexedShapePath(String indexedShapePath) {
 		_indexedShapePath = indexedShapePath;
 	}
 
+	@Override
 	public void setIndexedShapeRouting(String indexedShapeRouting) {
 		_indexedShapeRouting = indexedShapeRouting;
 	}
 
+	@Override
 	public void setShapeRelation(ShapeRelation shapeRelation) {
 		_shapeRelation = shapeRelation;
 	}
 
+	@Override
 	public void setSpatialStrategy(SpatialStrategy spatialStrategy) {
 		_spatialStrategy = spatialStrategy;
 	}

@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
@@ -38,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -94,6 +85,19 @@ public class LayoutMultiLanguageSearchTest {
 		_testLocaleKeywords(LocaleUtil.JAPAN, _JAPANESE_KEYWORD, _TITLE);
 	}
 
+	@Test
+	public void testLocalizedFields() throws Exception {
+		setTestLocale(LocaleUtil.US);
+
+		_addLayoutMultiLanguage();
+
+		Document document = layoutIndexerFixture.searchOnlyOne(
+			_ENGLISH_KEYWORD, LocaleUtil.US);
+
+		Assert.assertEquals(
+			_ENGLISH_KEYWORD, document.get("localized_title_en_US"));
+	}
+
 	protected void assertFieldValues(
 		String prefix, Locale locale, Map<String, String> titleStrings,
 		String searchTerm) {
@@ -138,7 +142,7 @@ public class LayoutMultiLanguageSearchTest {
 	protected IndexerFixture<Layout> layoutIndexerFixture;
 	protected UserSearchFixture userSearchFixture;
 
-	private void _addLayoutMultiLanguage() throws PortalException {
+	private void _addLayoutMultiLanguage() throws Exception {
 		layoutFixture.createLayout(
 			new LocalizedValuesMap() {
 				{

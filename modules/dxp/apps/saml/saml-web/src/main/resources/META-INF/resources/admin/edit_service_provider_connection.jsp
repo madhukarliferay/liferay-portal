@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,21 +13,24 @@ String redirect = ParamUtil.getString(request, "redirect");
 SamlIdpSpConnection samlIdpSpConnection = (SamlIdpSpConnection)request.getAttribute(SamlWebKeys.SAML_IDP_SP_CONNECTION);
 
 long assertionLifetime = GetterUtil.getLong(request.getAttribute(SamlWebKeys.SAML_ASSERTION_LIFETIME), samlProviderConfiguration.defaultAssertionLifetime());
+boolean metadataXmlUploaded = (samlIdpSpConnection != null) && Validator.isNull(samlIdpSpConnection.getMetadataUrl()) && Validator.isNotNull(samlIdpSpConnection.getMetadataXml());
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid
+	cssClass="container-fluid container-fluid-max-xl sheet"
+>
 	<liferay-ui:header
 		backURL="<%= redirect %>"
 		title='<%= (samlIdpSpConnection != null) ? samlIdpSpConnection.getName() : "new-service-provider" %>'
 	/>
-</div>
+</clay:container-fluid>
 
-<portlet:actionURL name="/admin/updateServiceProviderConnection" var="updateServiceProviderConnectionURL">
+<portlet:actionURL name="/admin/update_service_provider_connection" var="updateServiceProviderConnectionURL">
 	<portlet:param name="mvcRenderCommandName" value="/admin/edit_service_provider_connection" />
 	<portlet:param name="samlIdpSpConnectionId" value='<%= (samlIdpSpConnection != null) ? String.valueOf(samlIdpSpConnection.getSamlIdpSpConnectionId()) : "" %>' />
 </portlet:actionURL>
 
-<aui:form action="<%= updateServiceProviderConnectionURL %>" cssClass="container-fluid-1280" enctype="multipart/form-data">
+<aui:form action="<%= updateServiceProviderConnectionURL %>" cssClass="container-fluid container-fluid-max-xl sheet" enctype="multipart/form-data">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
 	<liferay-ui:error exception="<%= DuplicateSamlIdpSpConnectionSamlSpEntityIdException.class %>" message="please-enter-a-unique-service-provider-entity-id" />
@@ -64,16 +58,23 @@ long assertionLifetime = GetterUtil.getLong(request.getAttribute(SamlWebKeys.SAM
 	</aui:fieldset>
 
 	<aui:fieldset helpMessage="service-provider-metadata-help" label="metadata">
-		<aui:input name="metadataUrl" />
+		<c:if test="<%= metadataXmlUploaded %>">
+			<div class="portlet-msg-alert">
+				<liferay-ui:message key="the-connected-provider-is-configured-through-an-uploaded-metadata-file" />
+			</div>
+		</c:if>
 
-		<aui:button-row>
-			<aui:button onClick='<%= renderResponse.getNamespace() + "uploadMetadataXml();" %>' value="upload-metadata-xml" />
-		</aui:button-row>
+		<aui:input checked="<%= !metadataXmlUploaded %>" label="connect-to-a-metadata-url" name="metadataDelivery" onClick='<%= liferayPortletResponse.getNamespace() + "uploadMetadataXml(false);" %>' type="radio" value="metadataUrl" />
+		<aui:input checked="<%= metadataXmlUploaded %>" id="metadataDeliveryXml" label="upload-metadata-xml" name="metadataDelivery" onClick='<%= liferayPortletResponse.getNamespace() + "uploadMetadataXml(true);" %>' type="radio" value="metadataXml" />
+
+		<br />
+
+		<div class="" id="<portlet:namespace />metadataUrlForm">
+			<aui:input name="metadataUrl" />
+		</div>
 
 		<div class="hide" id="<portlet:namespace />uploadMetadataXmlForm">
-			<aui:fieldset label="upload-metadata">
-				<aui:input name="metadataXml" type="file" />
-			</aui:fieldset>
+			<aui:input name="metadataXml" type="file" />
 		</div>
 	</aui:fieldset>
 
@@ -109,20 +110,25 @@ long assertionLifetime = GetterUtil.getLong(request.getAttribute(SamlWebKeys.SAM
 </aui:form>
 
 <aui:script>
-	Liferay.provide(
-		window,
-		'<portlet:namespace />uploadMetadataXml',
-		function() {
-			var A = AUI();
+	window['<portlet:namespace />uploadMetadataXml'] = function (selected) {
+		var metadataUrlForm = document.getElementById(
+			'<portlet:namespace />metadataUrlForm'
+		);
+		var metadataXmlForm = document.getElementById(
+			'<portlet:namespace />uploadMetadataXmlForm'
+		);
 
-			var uploadMetadataXmlForm = A.one(
-				'#<portlet:namespace />uploadMetadataXmlForm'
-			);
+		if (selected) {
+			metadataUrlForm.classList.add('hide');
+			metadataXmlForm.classList.remove('hide');
+		}
+		else {
+			metadataUrlForm.classList.remove('hide');
+			metadataXmlForm.classList.add('hide');
+		}
+	};
 
-			if (uploadMetadataXmlForm) {
-				uploadMetadataXmlForm.show();
-			}
-		},
-		['aui-base']
+	<portlet:namespace />uploadMetadataXml(
+		document.getElementById('<portlet:namespace />metadataDeliveryXml').checked
 	);
 </aui:script>

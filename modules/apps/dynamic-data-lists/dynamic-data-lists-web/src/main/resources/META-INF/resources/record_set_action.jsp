@@ -1,25 +1,16 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-SearchContainer searchContainer = (SearchContainer)request.getAttribute(WebKeys.SEARCH_CONTAINER);
+SearchContainer<?> searchContainer = (SearchContainer)request.getAttribute(WebKeys.SEARCH_CONTAINER);
 
-String redirect = searchContainer.getIteratorURL().toString();
+String redirect = String.valueOf(searchContainer.getIteratorURL());
 
 ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 
@@ -76,7 +67,7 @@ boolean hasViewPermission = ddlDisplayContext.isAdminPortlet() && DDLRecordSetPe
 	</c:if>
 
 	<c:if test="<%= hasViewPermission %>">
-		<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="exportRecordSet" var="exportRecordSetURL">
+		<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/dynamic_data_lists/export_record_set" var="exportRecordSetURL">
 			<portlet:param name="recordSetId" value="<%= String.valueOf(recordSet.getRecordSetId()) %>" />
 		</liferay-portlet:resourceURL>
 
@@ -84,7 +75,7 @@ boolean hasViewPermission = ddlDisplayContext.isAdminPortlet() && DDLRecordSetPe
 		StringBundler sb = new StringBundler(5);
 
 		sb.append("javascript:");
-		sb.append(renderResponse.getNamespace());
+		sb.append(liferayPortletResponse.getNamespace());
 		sb.append("exportRecordSet('");
 		sb.append(exportRecordSetURL);
 		sb.append("');");
@@ -114,7 +105,7 @@ boolean hasViewPermission = ddlDisplayContext.isAdminPortlet() && DDLRecordSetPe
 	</c:if>
 
 	<c:if test="<%= ((selRecordSet == null) || (selRecordSet.getRecordSetId() != recordSet.getRecordSetId())) && DDLRecordSetPermission.contains(permissionChecker, recordSet, ActionKeys.DELETE) %>">
-		<liferay-portlet:actionURL name="deleteRecordSet" portletName="<%= DDLPortletKeys.DYNAMIC_DATA_LISTS %>" var="deleteRecordSetURL">
+		<liferay-portlet:actionURL name="/dynamic_data_lists/delete_record_set" portletName="<%= DDLPortletKeys.DYNAMIC_DATA_LISTS %>" var="deleteRecordSetURL">
 			<portlet:param name="redirect" value="<%= redirect %>" />
 			<portlet:param name="recordSetId" value="<%= String.valueOf(recordSet.getRecordSetId()) %>" />
 		</liferay-portlet:actionURL>

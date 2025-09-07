@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
-import com.liferay.portal.kernel.service.persistence.UserGroupRolePK;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -31,9 +22,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface UserGroupRoleModel
-	extends BaseModel<UserGroupRole>, MVCCModel, ShardedModel {
+	extends BaseModel<UserGroupRole>, CTModel<UserGroupRole>, MVCCModel,
+			ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a user group role model instance should use the {@link UserGroupRole} interface instead.
@@ -44,14 +36,16 @@ public interface UserGroupRoleModel
 	 *
 	 * @return the primary key of this user group role
 	 */
-	public UserGroupRolePK getPrimaryKey();
+	@Override
+	public long getPrimaryKey();
 
 	/**
 	 * Sets the primary key of this user group role.
 	 *
 	 * @param primaryKey the primary key of this user group role
 	 */
-	public void setPrimaryKey(UserGroupRolePK primaryKey);
+	@Override
+	public void setPrimaryKey(long primaryKey);
 
 	/**
 	 * Returns the mvcc version of this user group role.
@@ -68,6 +62,52 @@ public interface UserGroupRoleModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this user group role.
+	 *
+	 * @return the ct collection ID of this user group role
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this user group role.
+	 *
+	 * @param ctCollectionId the ct collection ID of this user group role
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
+	 * Returns the user group role ID of this user group role.
+	 *
+	 * @return the user group role ID of this user group role
+	 */
+	public long getUserGroupRoleId();
+
+	/**
+	 * Sets the user group role ID of this user group role.
+	 *
+	 * @param userGroupRoleId the user group role ID of this user group role
+	 */
+	public void setUserGroupRoleId(long userGroupRoleId);
+
+	/**
+	 * Returns the company ID of this user group role.
+	 *
+	 * @return the company ID of this user group role
+	 */
+	@Override
+	public long getCompanyId();
+
+	/**
+	 * Sets the company ID of this user group role.
+	 *
+	 * @param companyId the company ID of this user group role
+	 */
+	@Override
+	public void setCompanyId(long companyId);
 
 	/**
 	 * Returns the user ID of this user group role.
@@ -125,20 +165,11 @@ public interface UserGroupRoleModel
 	 */
 	public void setRoleId(long roleId);
 
-	/**
-	 * Returns the company ID of this user group role.
-	 *
-	 * @return the company ID of this user group role
-	 */
 	@Override
-	public long getCompanyId();
+	public UserGroupRole cloneWithOriginalValues();
 
-	/**
-	 * Sets the company ID of this user group role.
-	 *
-	 * @param companyId the company ID of this user group role
-	 */
-	@Override
-	public void setCompanyId(long companyId);
+	public default String toXmlString() {
+		return null;
+	}
 
 }

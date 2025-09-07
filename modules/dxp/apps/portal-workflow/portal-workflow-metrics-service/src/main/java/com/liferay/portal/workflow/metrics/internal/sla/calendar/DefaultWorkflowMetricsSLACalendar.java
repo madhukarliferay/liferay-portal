@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.internal.sla.calendar;
 
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.workflow.metrics.sla.calendar.WorkflowMetricsSLACalendar;
 
 import java.time.Duration;
@@ -30,10 +20,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(
-	immediate = false, property = "sla.calendar.key=default",
-	service = WorkflowMetricsSLACalendar.class
-)
+@Component(immediate = false, service = WorkflowMetricsSLACalendar.class)
 public class DefaultWorkflowMetricsSLACalendar
 	implements WorkflowMetricsSLACalendar {
 
@@ -42,6 +29,11 @@ public class DefaultWorkflowMetricsSLACalendar
 		LocalDateTime startLocalDateTime, LocalDateTime endLocalDateTime) {
 
 		return Duration.between(startLocalDateTime, endLocalDateTime);
+	}
+
+	@Override
+	public String getKey() {
+		return WorkflowMetricsSLACalendar.DEFAULT_KEY;
 	}
 
 	@Override
@@ -54,10 +46,7 @@ public class DefaultWorkflowMetricsSLACalendar
 
 	@Override
 	public String getTitle(Locale locale) {
-		return _language.get(
-			ResourceBundleUtil.getBundle(
-				locale, DefaultWorkflowMetricsSLACalendar.class),
-			"default-calendar-title");
+		return _language.get(locale, "default-calendar-title");
 	}
 
 	@Reference

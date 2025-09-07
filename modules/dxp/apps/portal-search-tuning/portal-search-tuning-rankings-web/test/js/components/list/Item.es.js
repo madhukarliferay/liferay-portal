@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {fireEvent, render, within} from '@testing-library/react';
@@ -18,9 +12,10 @@ import '@testing-library/jest-dom/extend-expect';
 
 /* eslint-disable no-unused-vars */
 jest.mock('react-dnd', () => ({
-	DragSource: el => el => el,
-	DropTarget: el => el => el
+	DragSource: (element) => (element) => element,
+	DropTarget: (element) => (element) => element,
 }));
+
 /* eslint-enable no-unused-vars */
 
 const HIDE_BUTTON_LABEL = 'hide-result';
@@ -31,18 +26,17 @@ const onClickHideFn = jest.fn();
 const onClickPinFn = jest.fn();
 const onFocusFn = jest.fn();
 
-function renderTestItem() {
+function renderTestItem(props) {
 	return render(
 		<Item
 			addedResult={false}
-			author={'Test Test'}
+			author="Test Test"
 			clicks={289}
-			date={'Apr 18 2018, 11:04 AM'}
-			description={
-				'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod'
-			}
+			date="Apr 18 2018, 11:04 AM"
+			deleted={false}
+			description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod"
 			hidden={false}
-			icon={'web-content'}
+			icon="web-content"
 			id={101}
 			index={1}
 			key={101}
@@ -57,8 +51,9 @@ function renderTestItem() {
 			pinned={true}
 			reorder={true}
 			selected={true}
-			title={'This is a Web Content Example'}
-			type={'Web Content'}
+			title="This is a Web Content Example"
+			type="Web Content"
+			{...props}
 		/>
 	);
 }
@@ -77,9 +72,9 @@ describe('Item', () => {
 	`('shows the appropriate $name', ({selector, text}) => {
 		const {container} = renderTestItem();
 
-		text.forEach((txt, idx) =>
+		text.forEach((txt, i) =>
 			expect(
-				container.querySelectorAll(`.${selector}`)[idx]
+				container.querySelectorAll(`.${selector}`)[i]
 			).toHaveTextContent(txt)
 		);
 	});
@@ -121,5 +116,19 @@ describe('Item', () => {
 		fireEvent.focus(getByTitle(UNPIN_BUTTON_LABEL));
 
 		expect(onFocusFn.mock.calls.length).toBe(0);
+	});
+
+	it('renders a link to viewURL', () => {
+		const viewURL = '#';
+
+		const {container} = renderTestItem({viewURL});
+
+		expect(container.querySelector('a').getAttribute('href')).toBe(viewURL);
+	});
+
+	it('displays a deleted label if deleted is true', () => {
+		const {container} = renderTestItem({deleted: true});
+
+		expect(container).toHaveTextContent('deleted');
 	});
 });

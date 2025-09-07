@@ -1,29 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.test.util.search.DLFolderSearchFixture;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.search.Document;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
@@ -31,7 +28,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
@@ -101,16 +100,20 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 			parentFolder.getFolderId(), folderName,
 			RandomTestUtil.randomString(), serviceContext);
 
-		Document document = dlSearchFixture.searchOnlyOne(
-			folderName, LocaleUtil.US);
-
-		indexedFieldsFixture.postProcessDocument(document);
+		SearchResponse searchResponse =
+			dlSearchFixture.searchOnlyOneSearchResponse(
+				folderName, LocaleUtil.US);
 
 		Map<String, String> map = new HashMap<>();
 
 		populateExpectedFieldValues(childFolder, map);
 
-		FieldValuesAssert.assertFieldValues(map, document, folderName);
+		FieldValuesAssert.assertFieldValues(
+			map,
+			name ->
+				!name.contains(StringPool.PERIOD) && !name.equals("score") &&
+				!name.equals("timestamp"),
+			searchResponse);
 	}
 
 	protected ServiceContext getServiceContext() {
@@ -118,8 +121,8 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 			return ServiceContextTestUtil.getServiceContext(
 				dlFixture.getGroupId(), dlFixture.getUserId());
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -138,6 +141,8 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 			DLFolder dlFolder, Map<String, String> map)
 		throws Exception {
 
+		map.put(
+			Field.ASSET_ENTRY_ID, String.valueOf(_getAssetEntryId(dlFolder)));
 		map.put(Field.COMPANY_ID, String.valueOf(dlFolder.getCompanyId()));
 		map.put(Field.DESCRIPTION, dlFolder.getDescription());
 		map.put(Field.ENTRY_CLASS_NAME, dlFolder.getModelClassName());
@@ -154,6 +159,23 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 			StringUtil.lowerCase(dlFolder.getName()));
 		map.put(Field.USER_ID, String.valueOf(dlFolder.getUserId()));
 		map.put(Field.USER_NAME, StringUtil.lowerCase(dlFolder.getUserName()));
+		map.put(
+			"assetEntryId_sortable",
+			String.valueOf(_getAssetEntryId(dlFolder)));
+		map.put("externalReferenceCode", dlFolder.getExternalReferenceCode());
+
+		Group group = _groupLocalService.getGroup(dlFixture.getGroupId());
+
+		map.put("groupExternalReferenceCode", group.getExternalReferenceCode());
+		map.put(
+			"scopeGroupExternalReferenceCode",
+			group.getExternalReferenceCode());
+
+		map.put("statusByUserId", String.valueOf(dlFolder.getStatusByUserId()));
+
+		User user = _userLocalService.getUser(dlFixture.getUserId());
+
+		map.put("userExternalReferenceCode", user.getExternalReferenceCode());
 
 		map.put("visible", "true");
 
@@ -165,8 +187,7 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 		indexedFieldsFixture.populateRoleIdFields(
 			dlFolder.getCompanyId(), dlFolder.getModelClassName(),
 			dlFolder.getPrimaryKey(), dlFolder.getGroupId(), null, map);
-		indexedFieldsFixture.populateUID(
-			dlFolder.getModelClassName(), dlFolder.getFolderId(), map);
+		indexedFieldsFixture.populateUID(dlFolder, map);
 		indexedFieldsFixture.populateViewCount(
 			DLFolder.class, dlFolder.getFolderId(), map);
 
@@ -208,6 +229,26 @@ public class DLFolderIndexerIndexedFieldsTest extends BaseDLIndexerTestCase {
 
 	protected DLFolderSearchFixture dlFolderSearchFixture;
 
+	private long _getAssetEntryId(DLFolder dlFolder) {
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
+			DLFolder.class.getName(), dlFolder.getFolderId());
+
+		if (assetEntry == null) {
+			return 0;
+		}
+
+		return assetEntry.getEntryId();
+	}
+
 	private static final int _FOLDER_NAME_MAX_LENGTH = 100;
+
+	@Inject
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 }

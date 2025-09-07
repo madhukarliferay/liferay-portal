@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.model.EmailAddress;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -39,7 +29,7 @@ import java.util.Set;
  */
 public class EmailAddressUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -1413,6 +1403,76 @@ public class EmailAddressUtil {
 	}
 
 	/**
+	 * Returns the email address where externalReferenceCode = &#63; and companyId = &#63; or throws a <code>NoSuchEmailAddressException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching email address
+	 * @throws NoSuchEmailAddressException if a matching email address could not be found
+	 */
+	public static EmailAddress findByERC_C(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.NoSuchEmailAddressException {
+
+		return getPersistence().findByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the email address where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching email address, or <code>null</code> if a matching email address could not be found
+	 */
+	public static EmailAddress fetchByERC_C(
+		String externalReferenceCode, long companyId) {
+
+		return getPersistence().fetchByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the email address where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching email address, or <code>null</code> if a matching email address could not be found
+	 */
+	public static EmailAddress fetchByERC_C(
+		String externalReferenceCode, long companyId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_C(
+			externalReferenceCode, companyId, useFinderCache);
+	}
+
+	/**
+	 * Removes the email address where externalReferenceCode = &#63; and companyId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the email address that was removed
+	 */
+	public static EmailAddress removeByERC_C(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.NoSuchEmailAddressException {
+
+		return getPersistence().removeByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the number of email addresses where externalReferenceCode = &#63; and companyId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the number of matching email addresses
+	 */
+	public static int countByERC_C(
+		String externalReferenceCode, long companyId) {
+
+		return getPersistence().countByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
 	 * Caches the email address in the entity cache if it is enabled.
 	 *
 	 * @param emailAddress the email address
@@ -1560,15 +1620,13 @@ public class EmailAddressUtil {
 	}
 
 	public static EmailAddressPersistence getPersistence() {
-		if (_persistence == null) {
-			_persistence =
-				(EmailAddressPersistence)PortalBeanLocatorUtil.locate(
-					EmailAddressPersistence.class.getName());
-		}
-
 		return _persistence;
 	}
 
-	private static EmailAddressPersistence _persistence;
+	public static void setPersistence(EmailAddressPersistence persistence) {
+		_persistence = persistence;
+	}
+
+	private static volatile EmailAddressPersistence _persistence;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.web.internal.exportimport.portlet.preferences.processor;
@@ -20,6 +11,8 @@ import com.liferay.exportimport.kernel.lar.PortletDataException;
 import com.liferay.exportimport.portlet.preferences.processor.Capability;
 import com.liferay.exportimport.portlet.preferences.processor.ExportImportPortletPreferencesProcessor;
 import com.liferay.exportimport.portlet.preferences.processor.ExportImportPortletPreferencesProcessorHelper;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
@@ -32,11 +25,11 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import javax.portlet.PortletPreferences;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -45,8 +38,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + BlogsPortletKeys.BLOGS_AGGREGATOR,
+	property = "jakarta.portlet.name=" + BlogsPortletKeys.BLOGS_AGGREGATOR,
 	service = ExportImportPortletPreferencesProcessor.class
 )
 public class BlogsAggregatorExportImportPortletPreferencesProcessor
@@ -69,11 +61,15 @@ public class BlogsAggregatorExportImportPortletPreferencesProcessor
 		throws PortletDataException {
 
 		try {
-			return updateExportPortletPreferences(
+			return _updateExportPortletPreferences(
 				portletDataContext, portletDataContext.getRootPortletId(),
 				portletPreferences);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return portletPreferences;
 		}
 	}
@@ -85,15 +81,19 @@ public class BlogsAggregatorExportImportPortletPreferencesProcessor
 		throws PortletDataException {
 
 		try {
-			return updateImportPortletPreferences(
+			return _updateImportPortletPreferences(
 				portletDataContext, portletPreferences);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return portletPreferences;
 		}
 	}
 
-	protected PortletPreferences updateExportPortletPreferences(
+	private PortletPreferences _updateExportPortletPreferences(
 			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
@@ -113,17 +113,16 @@ public class BlogsAggregatorExportImportPortletPreferencesProcessor
 						_organizationLocalService.fetchOrganization(
 							primaryKeyLong);
 
-					if (organization != null) {
-						portletDataContext.addReferenceElement(
-							portlet,
-							portletDataContext.getExportDataRootElement(),
-							organization,
-							PortletDataContext.REFERENCE_TYPE_DEPENDENCY, true);
-
-						return organization.getUuid();
+					if (organization == null) {
+						return null;
 					}
 
-					return null;
+					portletDataContext.addReferenceElement(
+						portlet, portletDataContext.getExportDataRootElement(),
+						organization,
+						PortletDataContext.REFERENCE_TYPE_DEPENDENCY, true);
+
+					return organization.getUuid();
 				};
 
 			_exportImportPortletPreferencesProcessorHelper.
@@ -136,7 +135,7 @@ public class BlogsAggregatorExportImportPortletPreferencesProcessor
 		return portletPreferences;
 	}
 
-	protected PortletPreferences updateImportPortletPreferences(
+	private PortletPreferences _updateImportPortletPreferences(
 			PortletDataContext portletDataContext,
 			PortletPreferences portletPreferences)
 		throws Exception {
@@ -181,6 +180,9 @@ public class BlogsAggregatorExportImportPortletPreferencesProcessor
 
 		return portletPreferences;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BlogsAggregatorExportImportPortletPreferencesProcessor.class);
 
 	@Reference
 	private CompanyLocalService _companyLocalService;

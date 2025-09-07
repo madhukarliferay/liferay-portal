@@ -72,6 +72,11 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<name>layoutSelectorURL</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
 			<name>localizable</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -97,6 +102,12 @@
 		</attribute>
 		<attribute>
 			<name>showEmptyFieldLabel</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<type>boolean</type>
+		</attribute>
+		<attribute>
+			<name>showLanguageSelector</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
 			<type>boolean</type>
@@ -197,6 +208,7 @@
 		<dynamic-attributes>true</dynamic-attributes>
 	</tag>
 	<tag>
+		<description>Deprecated as of Cavanaugh (7.4.x), replaced by <![CDATA[<code>liferay-template:template-selector</code>]]>.</description>
 		<name>template-selector</name>
 		<tag-class>com.liferay.dynamic.data.mapping.taglib.servlet.taglib.TemplateSelectorTag</tag-class>
 		<body-content>JSP</body-content>

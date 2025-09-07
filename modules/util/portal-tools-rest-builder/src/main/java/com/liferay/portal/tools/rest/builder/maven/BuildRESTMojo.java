@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.rest.builder.maven;
@@ -37,8 +28,8 @@ public class BuildRESTMojo extends AbstractMojo {
 
 			restBuilder.build();
 		}
-		catch (Exception e) {
-			throw new MojoExecutionException(e.getMessage(), e);
+		catch (Exception exception) {
+			throw new MojoExecutionException(exception.getMessage(), exception);
 		}
 	}
 
@@ -47,6 +38,33 @@ public class BuildRESTMojo extends AbstractMojo {
 	 */
 	public void setCopyrightFile(File copyrightFile) {
 		_restBuilderArgs.setCopyrightFile(copyrightFile);
+	}
+
+	/**
+	 * @parameter
+	 */
+	public void setForceClientVersionDescription(
+		Boolean forceClientVersionDescription) {
+
+		_restBuilderArgs.setForceClientVersionDescription(
+			forceClientVersionDescription);
+	}
+
+	/**
+	 * @parameter
+	 */
+	public void setForcePredictableOperationId(
+		Boolean forcePredictableOperationId) {
+
+		_restBuilderArgs.setForcePredictableOperationId(
+			forcePredictableOperationId);
+	}
+
+	/**
+	 * @parameter
+	 */
+	public void setJavaEEPackage(String javaEEPackage) {
+		_restBuilderArgs.setJavaEEPackage(javaEEPackage);
 	}
 
 	/**

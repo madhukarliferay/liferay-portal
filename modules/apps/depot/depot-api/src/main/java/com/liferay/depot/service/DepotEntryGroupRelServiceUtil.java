@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.depot.model.DepotEntryGroupRel;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DepotEntryGroupRel. This utility wraps
@@ -32,41 +25,59 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DepotEntryGroupRelServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.depot.service.impl.DepotEntryGroupRelServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DepotEntryGroupRelServiceUtil} to access the depot entry group rel remote service. Add custom service methods to <code>com.liferay.depot.service.impl.DepotEntryGroupRelServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.depot.model.DepotEntryGroupRel
-		addDepotEntryGroupRel(long depotEntryId, long toGroupId) {
+	public static DepotEntryGroupRel addDepotEntryGroupRel(
+			long depotEntryId, long toGroupId)
+		throws PortalException {
 
 		return getService().addDepotEntryGroupRel(depotEntryId, toGroupId);
 	}
 
-	public static com.liferay.depot.model.DepotEntryGroupRel
-			deleteDepotEntryGroupRel(long depotEntryGroupRelId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DepotEntryGroupRel deleteDepotEntryGroupRel(
+			long depotEntryGroupRelId)
+		throws PortalException {
 
 		return getService().deleteDepotEntryGroupRel(depotEntryGroupRelId);
 	}
 
-	public static java.util.List<com.liferay.depot.model.DepotEntryGroupRel>
-			getDepotEntryGroupRels(long groupId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DepotEntryGroupRel
+			getDepotEntryGroupRelByDepotEntryIdToGroupId(
+				long depotEntryId, long toGroupId)
+		throws PortalException {
 
-		return getService().getDepotEntryGroupRels(groupId, start, end);
+		return getService().getDepotEntryGroupRelByDepotEntryIdToGroupId(
+			depotEntryId, toGroupId);
 	}
 
-	public static int getDepotEntryGroupRelsCount(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DepotEntryGroupRel> getDepotEntryGroupRels(
+			com.liferay.depot.model.DepotEntry depotEntry, int start, int end)
+		throws PortalException {
 
-		return getService().getDepotEntryGroupRelsCount(groupId);
+		return getService().getDepotEntryGroupRels(depotEntry, start, end);
+	}
+
+	public static List<DepotEntryGroupRel> getDepotEntryGroupRels(
+			long groupId, int type, int start, int end)
+		throws PortalException {
+
+		return getService().getDepotEntryGroupRels(groupId, type, start, end);
+	}
+
+	public static int getDepotEntryGroupRelsCount(
+			com.liferay.depot.model.DepotEntry depotEntry)
+		throws PortalException {
+
+		return getService().getDepotEntryGroupRelsCount(depotEntry);
+	}
+
+	public static int getDepotEntryGroupRelsCount(long groupId, int type)
+		throws PortalException {
+
+		return getService().getDepotEntryGroupRelsCount(groupId, type);
 	}
 
 	/**
@@ -78,34 +89,28 @@ public class DepotEntryGroupRelServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.depot.model.DepotEntryGroupRel updateSearchable(
+	public static DepotEntryGroupRel updateDDMStructuresAvailable(
+			long depotEntryGroupRelId, boolean ddmStructuresAvailable)
+		throws PortalException {
+
+		return getService().updateDDMStructuresAvailable(
+			depotEntryGroupRelId, ddmStructuresAvailable);
+	}
+
+	public static DepotEntryGroupRel updateSearchable(
 			long depotEntryGroupRelId, boolean searchable)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateSearchable(depotEntryGroupRelId, searchable);
 	}
 
 	public static DepotEntryGroupRelService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DepotEntryGroupRelService, DepotEntryGroupRelService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DepotEntryGroupRelService> _serviceSnapshot =
+		new Snapshot<>(
+			DepotEntryGroupRelServiceUtil.class,
 			DepotEntryGroupRelService.class);
-
-		ServiceTracker<DepotEntryGroupRelService, DepotEntryGroupRelService>
-			serviceTracker =
-				new ServiceTracker
-					<DepotEntryGroupRelService, DepotEntryGroupRelService>(
-						bundle.getBundleContext(),
-						DepotEntryGroupRelService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

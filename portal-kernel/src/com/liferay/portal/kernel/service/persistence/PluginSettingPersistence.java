@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
@@ -34,7 +25,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface PluginSettingPersistence
 	extends BasePersistence<PluginSetting> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link PluginSettingUtil} to access the plugin setting persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -192,7 +183,7 @@ public interface PluginSettingPersistence
 	 * @return the matching plugin setting
 	 * @throws NoSuchPluginSettingException if a matching plugin setting could not be found
 	 */
-	public PluginSetting findByC_I_T(
+	public PluginSetting findByC_P_P(
 			long companyId, String pluginId, String pluginType)
 		throws NoSuchPluginSettingException;
 
@@ -204,7 +195,7 @@ public interface PluginSettingPersistence
 	 * @param pluginType the plugin type
 	 * @return the matching plugin setting, or <code>null</code> if a matching plugin setting could not be found
 	 */
-	public PluginSetting fetchByC_I_T(
+	public PluginSetting fetchByC_P_P(
 		long companyId, String pluginId, String pluginType);
 
 	/**
@@ -216,7 +207,7 @@ public interface PluginSettingPersistence
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching plugin setting, or <code>null</code> if a matching plugin setting could not be found
 	 */
-	public PluginSetting fetchByC_I_T(
+	public PluginSetting fetchByC_P_P(
 		long companyId, String pluginId, String pluginType,
 		boolean useFinderCache);
 
@@ -228,7 +219,7 @@ public interface PluginSettingPersistence
 	 * @param pluginType the plugin type
 	 * @return the plugin setting that was removed
 	 */
-	public PluginSetting removeByC_I_T(
+	public PluginSetting removeByC_P_P(
 			long companyId, String pluginId, String pluginType)
 		throws NoSuchPluginSettingException;
 
@@ -240,7 +231,7 @@ public interface PluginSettingPersistence
 	 * @param pluginType the plugin type
 	 * @return the number of matching plugin settings
 	 */
-	public int countByC_I_T(long companyId, String pluginId, String pluginType);
+	public int countByC_P_P(long companyId, String pluginId, String pluginType);
 
 	/**
 	 * Caches the plugin setting in the entity cache if it is enabled.

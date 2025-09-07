@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.java.parser;
@@ -19,16 +10,25 @@ import com.liferay.petra.string.StringBundler;
 /**
  * @author Hugo Huijser
  */
-public class JavaTernaryOperator extends JavaExpression {
+public class JavaTernaryOperator extends BaseJavaExpression {
 
 	public JavaTernaryOperator(
 		JavaExpression conditionJavaExpression,
-		JavaExpression trueValueJavaExpression,
-		JavaExpression falseValueJavaExpression) {
+		JavaExpression falseValueJavaExpression,
+		JavaExpression trueValueJavaExpression) {
 
 		_conditionJavaExpression = conditionJavaExpression;
-		_trueValueJavaExpression = trueValueJavaExpression;
 		_falseValueJavaExpression = falseValueJavaExpression;
+		_trueValueJavaExpression = trueValueJavaExpression;
+	}
+
+	@Override
+	public boolean hasSurroundingParentheses() {
+		if (getChainedJavaExpression() != null) {
+			return true;
+		}
+
+		return super.hasSurroundingParentheses();
 	}
 
 	@Override
@@ -39,23 +39,19 @@ public class JavaTernaryOperator extends JavaExpression {
 		StringBundler sb = new StringBundler();
 
 		sb.append(indent);
-		sb.append(prefix);
 
-		append(sb, _conditionJavaExpression, indent, "", " ? ", maxLineLength);
-		append(sb, _trueValueJavaExpression, indent, "", " : ", maxLineLength);
+		indent = "\t" + indent;
+
+		indent = append(
+			sb, _conditionJavaExpression, indent, prefix, " ? ", maxLineLength);
+
+		indent = append(
+			sb, _trueValueJavaExpression, indent, "", " : ", maxLineLength);
+
 		append(
 			sb, _falseValueJavaExpression, indent, "", suffix, maxLineLength);
 
 		return sb.toString();
-	}
-
-	@Override
-	protected boolean hasSurroundingParentheses() {
-		if (getChainedJavaExpression() != null) {
-			return true;
-		}
-
-		return super.hasSurroundingParentheses();
 	}
 
 	private final JavaExpression _conditionJavaExpression;

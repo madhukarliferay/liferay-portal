@@ -1,38 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet.filters.invoker;
 
 import com.liferay.portal.kernel.servlet.HttpMethods;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.tools.ToolDependencies;
-import com.liferay.portal.util.HttpImpl;
-import com.liferay.portal.util.PropsImpl;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockFilterChain;
@@ -44,15 +33,13 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 public class InvokerFilterTest {
 
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() {
 		ToolDependencies.wireCaches();
-
-		HttpUtil httpUtil = new HttpUtil();
-
-		httpUtil.setHttp(new HttpImpl());
-
-		PropsUtil.setProps(new PropsImpl());
 	}
 
 	@Test
@@ -128,26 +115,24 @@ public class InvokerFilterTest {
 
 		MockFilterChain mockFilterChain = new MockFilterChain();
 
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					InvokerFilter.class.getName(), Level.WARNING)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				InvokerFilter.class.getName(), LoggerTestUtil.WARN)) {
 
 			invokerFilter.doFilter(
 				mockHttpServletRequest, mockHttpServletResponse,
 				mockFilterChain);
 
-			int status = mockHttpServletResponse.getStatus();
-
 			Assert.assertEquals(
-				HttpServletResponse.SC_REQUEST_URI_TOO_LONG, status);
+				HttpServletResponse.SC_REQUEST_URI_TOO_LONG,
+				mockHttpServletResponse.getStatus());
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(logRecords.toString(), 1, logRecords.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LogRecord logRecord = logRecords.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			String message = logRecord.getMessage();
+			String message = logEntry.getMessage();
 
 			Assert.assertTrue(message.startsWith("Rejected " + urlPrefix));
 		}

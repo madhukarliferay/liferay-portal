@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.ui;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.language.UnicodeLanguageUtil;
+import com.liferay.portal.kernel.servlet.FileAvailabilityUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.Http;
-import com.liferay.taglib.FileAvailabilityUtil;
 import com.liferay.taglib.util.TagResourceBundleUtil;
 
 /**
@@ -42,30 +33,19 @@ public class IconDeactivateTag extends IconTag {
 		if (url.startsWith(Http.HTTP_WITH_SLASH) ||
 			url.startsWith(Http.HTTPS_WITH_SLASH)) {
 
-			url = "submitForm(document.hrefFm, '".concat(
-				HtmlUtil.escapeJS(url)
-			).concat(
-				"');"
-			);
+			url = StringBundler.concat(
+				"submitForm(document.hrefFm, '", HtmlUtil.escapeJS(url), "');");
 		}
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("javascript:if (confirm('");
-
-		sb.append(
-			UnicodeLanguageUtil.get(
-				TagResourceBundleUtil.getResourceBundle(pageContext),
-				"are-you-sure-you-want-to-deactivate-this"));
-
-		sb.append("')) { ");
-		sb.append(url);
-		sb.append(" } else { self.focus(); }");
-
-		url = sb.toString();
-
 		setMessage("deactivate");
-		setUrl(url);
+		setUrl(
+			StringBundler.concat(
+				"javascript:Liferay.Util.openConfirmModal({message: '",
+				UnicodeLanguageUtil.get(
+					TagResourceBundleUtil.getResourceBundle(pageContext),
+					"are-you-sure-you-want-to-deactivate-this"),
+				"', onConfirm: (isConfirmed) => {if (isConfirmed) {", url,
+				" } else {self.focus();}}});"));
 
 		return super.getPage();
 	}

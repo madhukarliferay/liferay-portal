@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.admin.web.internal.display.context;
@@ -17,54 +8,75 @@ package com.liferay.portal.search.admin.web.internal.display.context;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.test.portlet.MockRenderRequest;
+import com.liferay.portal.kernel.test.portlet.MockRenderResponse;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.Props;
-import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.language.LanguageImpl;
+import com.liferay.portal.search.admin.web.internal.display.context.builder.SearchAdminDisplayContextBuilder;
 import com.liferay.portal.search.index.IndexInformation;
-import com.liferay.portal.util.HttpImpl;
-
-import javax.portlet.RenderRequest;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
 import org.mockito.Mockito;
-
-import org.springframework.mock.web.portlet.MockRenderRequest;
-import org.springframework.mock.web.portlet.MockRenderResponse;
 
 /**
  * @author Adam Brandizzi
  */
 public class SearchAdminDisplayContextTest {
 
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() {
-		setUpHttpUtil();
-		setUpIndexInformation();
-		setUpLanguage();
-		setUpParamUtil();
-		setUpPortalUtil();
+		_setUpIndexInformation();
+		_setUpLanguage();
+		_setUpPermissionChecker();
+		_setUpPortalUtil();
+		_setUpRenderRequest();
 	}
 
 	@Test
 	public void testGetNavigationItemListWithIndexInformation() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal, new MockRenderRequest(),
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(
+		searchAdminDisplayContextBuilder.setIndexInformation(
 			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
+
+		NavigationItemList navigationItemList =
+			searchAdminDisplayContext.getNavigationItemList();
+
+		Assert.assertEquals(
+			navigationItemList.toString(), 3, navigationItemList.size());
+	}
+
+	@Test
+	public void testGetNavigationItemListWithoutIndexInformation() {
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
+				new MockRenderResponse());
+
+		searchAdminDisplayContextBuilder.setIndexInformation(null);
+
+		SearchAdminDisplayContext searchAdminDisplayContext =
+			searchAdminDisplayContextBuilder.build();
 
 		NavigationItemList navigationItemList =
 			searchAdminDisplayContext.getNavigationItemList();
@@ -74,54 +86,55 @@ public class SearchAdminDisplayContextTest {
 	}
 
 	@Test
-	public void testGetNavigationItemListWithoutIndexInformation() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal, new MockRenderRequest(),
+	public void testGetTabConnections() {
+		_mockRenderRequest.setParameter("tabs1", "connections");
+
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(null);
+		searchAdminDisplayContextBuilder.setIndexInformation(
+			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
-
-		NavigationItemList navigationItemList =
-			searchAdminDisplayContext.getNavigationItemList();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
-			navigationItemList.toString(), 1, navigationItemList.size());
+			"connections", searchAdminDisplayContext.getSelectedTab());
 	}
 
 	@Test
 	public void testGetTabDefault() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal, new MockRenderRequest(),
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(
+		searchAdminDisplayContextBuilder.setIndexInformation(
 			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
-			"index-actions", searchAdminDisplayContext.getSelectedTab());
+			"connections", searchAdminDisplayContext.getSelectedTab());
 	}
 
 	@Test
 	public void testGetTabFieldMappings() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal,
-				getRenderRequestWithSelectedTab("field-mappings"),
+		_mockRenderRequest.setParameter("tabs1", "field-mappings");
+
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(
+		searchAdminDisplayContextBuilder.setIndexInformation(
 			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
 			"field-mappings", searchAdminDisplayContext.getSelectedTab());
@@ -129,34 +142,36 @@ public class SearchAdminDisplayContextTest {
 
 	@Test
 	public void testGetTabFieldMappingsNoIndexInformation() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal,
-				getRenderRequestWithSelectedTab("field-mappings"),
+		_mockRenderRequest.setParameter("tabs1", "field-mappings");
+
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(null);
+		searchAdminDisplayContextBuilder.setIndexInformation(null);
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
-			"index-actions", searchAdminDisplayContext.getSelectedTab());
+			"connections", searchAdminDisplayContext.getSelectedTab());
 	}
 
 	@Test
 	public void testGetTabIndexActions() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal,
-				getRenderRequestWithSelectedTab("index-actions"),
+		_mockRenderRequest.setParameter("tabs1", "index-actions");
+
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(
+		searchAdminDisplayContextBuilder.setIndexInformation(
 			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
 			"index-actions", searchAdminDisplayContext.getSelectedTab());
@@ -164,70 +179,26 @@ public class SearchAdminDisplayContextTest {
 
 	@Test
 	public void testGetTabUnavailable() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal,
-				getRenderRequestWithSelectedTab(RandomTestUtil.randomString()),
+		_mockRenderRequest.setParameter("tabs1", RandomTestUtil.randomString());
+
+		SearchAdminDisplayContextBuilder searchAdminDisplayContextBuilder =
+			new SearchAdminDisplayContextBuilder(
+				_language, _portal, _mockRenderRequest,
 				new MockRenderResponse());
 
-		searchAdminDisplayBuilder.setIndexInformation(
+		searchAdminDisplayContextBuilder.setIndexInformation(
 			Mockito.mock(IndexInformation.class));
 
 		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
+			searchAdminDisplayContextBuilder.build();
 
 		Assert.assertEquals(
-			"index-actions", searchAdminDisplayContext.getSelectedTab());
+			"connections", searchAdminDisplayContext.getSelectedTab());
 	}
 
-	@Test
-	public void testIsIndexInformationAvailable() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal, new MockRenderRequest(),
-				new MockRenderResponse());
+	protected IndexInformation indexInformation;
 
-		searchAdminDisplayBuilder.setIndexInformation(
-			Mockito.mock(IndexInformation.class));
-
-		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
-
-		Assert.assertTrue(
-			searchAdminDisplayContext.isIndexInformationAvailable());
-	}
-
-	@Test
-	public void testIsIndexInformationAvailableFalse() {
-		SearchAdminDisplayBuilder searchAdminDisplayBuilder =
-			new SearchAdminDisplayBuilder(
-				_language, _portal, new MockRenderRequest(),
-				new MockRenderResponse());
-
-		searchAdminDisplayBuilder.setIndexInformation(null);
-
-		SearchAdminDisplayContext searchAdminDisplayContext =
-			searchAdminDisplayBuilder.build();
-
-		Assert.assertTrue(
-			!searchAdminDisplayContext.isIndexInformationAvailable());
-	}
-
-	protected RenderRequest getRenderRequestWithSelectedTab(
-		String selectedTab) {
-
-		MockRenderRequest mockRenderRequest = new MockRenderRequest();
-
-		mockRenderRequest.setParameter("tabs1", selectedTab);
-
-		return mockRenderRequest;
-	}
-
-	protected void setUpHttpUtil() {
-		http = new HttpImpl();
-	}
-
-	protected void setUpIndexInformation() {
+	private void _setUpIndexInformation() {
 		indexInformation = Mockito.mock(IndexInformation.class);
 
 		Mockito.when(
@@ -237,26 +208,34 @@ public class SearchAdminDisplayContextTest {
 		);
 
 		Mockito.when(
-			indexInformation.getCompanyIndexName(Matchers.anyLong())
+			indexInformation.getCompanyIndexName(Mockito.anyLong())
 		).thenAnswer(
 			invocation -> "index" + invocation.getArguments()[0]
 		);
 	}
 
-	protected void setUpLanguage() {
+	private void _setUpLanguage() {
 		_language = new LanguageImpl();
 	}
 
-	protected void setUpParamUtil() {
-		PropsUtil.setProps(Mockito.mock(Props.class));
+	private void _setUpPermissionChecker() {
+		Mockito.doReturn(
+			_permissionChecker
+		).when(
+			_themeDisplay
+		).getPermissionChecker();
+
+		Mockito.doReturn(
+			true
+		).when(
+			_permissionChecker
+		).isOmniadmin();
 	}
 
-	protected void setUpPortalUtil() {
-		_portal = Mockito.mock(Portal.class);
-
+	private void _setUpPortalUtil() {
 		Mockito.doAnswer(
 			invocation -> new String[] {
-				invocation.getArgumentAt(0, String.class), StringPool.BLANK
+				invocation.getArgument(0, String.class), StringPool.BLANK
 			}
 		).when(
 			_portal
@@ -269,10 +248,18 @@ public class SearchAdminDisplayContextTest {
 		portalUtil.setPortal(_portal);
 	}
 
-	protected Http http;
-	protected IndexInformation indexInformation;
+	private void _setUpRenderRequest() {
+		_mockRenderRequest = new MockRenderRequest();
+
+		_mockRenderRequest.setAttribute(WebKeys.THEME_DISPLAY, _themeDisplay);
+	}
+
+	private static MockRenderRequest _mockRenderRequest;
 
 	private Language _language;
-	private Portal _portal;
+	private final PermissionChecker _permissionChecker = Mockito.mock(
+		PermissionChecker.class);
+	private final Portal _portal = Mockito.mock(Portal.class);
+	private final ThemeDisplay _themeDisplay = Mockito.mock(ThemeDisplay.class);
 
 }

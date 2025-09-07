@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.model.impl;
@@ -18,6 +9,7 @@ import com.liferay.document.library.model.DLFileVersionPreview;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -31,23 +23,24 @@ import java.io.ObjectOutput;
  * @generated
  */
 public class DLFileVersionPreviewCacheModel
-	implements CacheModel<DLFileVersionPreview>, Externalizable {
+	implements CacheModel<DLFileVersionPreview>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DLFileVersionPreviewCacheModel)) {
+		if (!(object instanceof DLFileVersionPreviewCacheModel)) {
 			return false;
 		}
 
 		DLFileVersionPreviewCacheModel dlFileVersionPreviewCacheModel =
-			(DLFileVersionPreviewCacheModel)obj;
+			(DLFileVersionPreviewCacheModel)object;
 
-		if (dlFileVersionPreviewId ==
-				dlFileVersionPreviewCacheModel.dlFileVersionPreviewId) {
+		if ((dlFileVersionPreviewId ==
+				dlFileVersionPreviewCacheModel.dlFileVersionPreviewId) &&
+			(mvccVersion == dlFileVersionPreviewCacheModel.mvccVersion)) {
 
 			return true;
 		}
@@ -57,14 +50,30 @@ public class DLFileVersionPreviewCacheModel
 
 	@Override
 	public int hashCode() {
-		return HashUtil.hash(0, dlFileVersionPreviewId);
+		int hashCode = HashUtil.hash(0, dlFileVersionPreviewId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
+	@Override
+	public long getMvccVersion() {
+		return mvccVersion;
+	}
+
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		this.mvccVersion = mvccVersion;
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
+		StringBundler sb = new StringBundler(17);
 
-		sb.append("{dlFileVersionPreviewId=");
+		sb.append("{mvccVersion=");
+		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
+		sb.append(", dlFileVersionPreviewId=");
 		sb.append(dlFileVersionPreviewId);
 		sb.append(", groupId=");
 		sb.append(groupId);
@@ -86,6 +95,8 @@ public class DLFileVersionPreviewCacheModel
 		DLFileVersionPreviewImpl dlFileVersionPreviewImpl =
 			new DLFileVersionPreviewImpl();
 
+		dlFileVersionPreviewImpl.setMvccVersion(mvccVersion);
+		dlFileVersionPreviewImpl.setCtCollectionId(ctCollectionId);
 		dlFileVersionPreviewImpl.setDlFileVersionPreviewId(
 			dlFileVersionPreviewId);
 		dlFileVersionPreviewImpl.setGroupId(groupId);
@@ -101,6 +112,10 @@ public class DLFileVersionPreviewCacheModel
 
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
+		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
+
 		dlFileVersionPreviewId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -116,6 +131,10 @@ public class DLFileVersionPreviewCacheModel
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
+
 		objectOutput.writeLong(dlFileVersionPreviewId);
 
 		objectOutput.writeLong(groupId);
@@ -129,6 +148,8 @@ public class DLFileVersionPreviewCacheModel
 		objectOutput.writeInt(previewStatus);
 	}
 
+	public long mvccVersion;
+	public long ctCollectionId;
 	public long dlFileVersionPreviewId;
 	public long groupId;
 	public long companyId;

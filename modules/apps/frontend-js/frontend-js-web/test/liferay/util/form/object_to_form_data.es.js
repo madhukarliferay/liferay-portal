@@ -1,18 +1,7 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import objectToFormData from '../../../../src/main/resources/META-INF/resources/liferay/util/form/object_to_form_data.es';
 
@@ -21,7 +10,7 @@ describe('Liferay.Util.objectToFormData', () => {
 		it('converts the object string entries into string FormData entries', () => {
 			const body = {
 				value1: 'value1',
-				value2: 'value2'
+				value2: 'value2',
 			};
 
 			const formData = objectToFormData(body);
@@ -33,7 +22,7 @@ describe('Liferay.Util.objectToFormData', () => {
 		it('converts the object boolean entries into string FormData entries', () => {
 			const body = {
 				value1: true,
-				value2: false
+				value2: false,
 			};
 
 			const formData = objectToFormData(body);
@@ -45,7 +34,7 @@ describe('Liferay.Util.objectToFormData', () => {
 		it('converts the object number entries into string FormData entries', () => {
 			const body = {
 				value1: 1,
-				value2: -1
+				value2: -1,
 			};
 
 			const formData = objectToFormData(body);
@@ -56,7 +45,7 @@ describe('Liferay.Util.objectToFormData', () => {
 
 		it('converts the object File entries into File FormData entries', () => {
 			const body = {
-				value1: new File([''], '')
+				value1: new File([''], ''),
 			};
 
 			const formData = objectToFormData(body);
@@ -68,7 +57,7 @@ describe('Liferay.Util.objectToFormData', () => {
 	describe('for objects with array values', () => {
 		it('generates a grouped field matching the key of the array', () => {
 			const body = {
-				array: ['value1', 'value2']
+				array: ['value1', 'value2'],
 			};
 
 			const formData = objectToFormData(body);
@@ -85,10 +74,10 @@ describe('Liferay.Util.objectToFormData', () => {
 				objectValue: {
 					arrayValue: ['arrayValue1', 'arrayValue2'],
 					objectValue: {
-						stringValue: 'objectValue.stringValue'
+						stringValue: 'objectValue.stringValue',
 					},
-					stringValue: 'stringValue'
-				}
+					stringValue: 'stringValue',
+				},
 			};
 
 			const formData = objectToFormData(body);

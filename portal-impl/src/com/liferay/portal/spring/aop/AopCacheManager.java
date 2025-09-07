@@ -1,40 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.spring.aop;
 
 import com.liferay.portal.cache.thread.local.ThreadLocalCacheAdvice;
-import com.liferay.portal.dao.jdbc.aop.DynamicDataSourceAdvice;
 import com.liferay.portal.increment.BufferedIncrementAdvice;
 import com.liferay.portal.internal.cluster.ClusterableAdvice;
-import com.liferay.portal.internal.cluster.SPIClusterableAdvice;
 import com.liferay.portal.kernel.aop.ChainableMethodAdvice;
-import com.liferay.portal.kernel.dao.jdbc.aop.DynamicDataSourceTargetSource;
-import com.liferay.portal.kernel.resiliency.spi.SPIUtil;
-import com.liferay.portal.kernel.util.InfrastructureUtil;
-import com.liferay.portal.resiliency.service.PortalResiliencyAdvice;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.search.IndexableAdvice;
 import com.liferay.portal.security.access.control.AccessControlAdvice;
 import com.liferay.portal.service.ServiceContextAdvice;
-import com.liferay.portal.spring.transaction.TransactionHandler;
+import com.liferay.portal.spring.transaction.TransactionExecutor;
 import com.liferay.portal.systemevent.SystemEventAdvice;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,18 +24,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
+
 /**
  * @author Preston Crary
  */
 public class AopCacheManager {
 
 	public static synchronized AopInvocationHandler create(
-		Object target, TransactionHandler transactionHandler) {
+		Object target, TransactionExecutor transactionExecutor) {
 
 		AopInvocationHandler aopInvocationHandler = new AopInvocationHandler(
 			target,
 			_chainableMethodAdvices.toArray(new ChainableMethodAdvice[0]),
-			transactionHandler);
+			transactionExecutor);
 
 		_aopInvocationHandlers.add(aopInvocationHandler);
 
@@ -80,27 +66,11 @@ public class AopCacheManager {
 			chainableMethodAdvices.add(new ClusterableAdvice());
 		}
 
-		DynamicDataSourceTargetSource dynamicDataSourceTargetSource =
-			InfrastructureUtil.getDynamicDataSourceTargetSource();
-
-		if (dynamicDataSourceTargetSource != null) {
-			chainableMethodAdvices.add(
-				new DynamicDataSourceAdvice(dynamicDataSourceTargetSource));
-		}
-
 		chainableMethodAdvices.add(new IndexableAdvice());
-
-		if (PropsValues.PORTAL_RESILIENCY_ENABLED) {
-			chainableMethodAdvices.add(new PortalResiliencyAdvice());
-		}
 
 		chainableMethodAdvices.add(new RetryAdvice());
 
 		chainableMethodAdvices.add(new ServiceContextAdvice());
-
-		if (SPIUtil.isSPI()) {
-			chainableMethodAdvices.add(new SPIClusterableAdvice());
-		}
 
 		chainableMethodAdvices.add(new SystemEventAdvice());
 
@@ -125,6 +95,8 @@ public class AopCacheManager {
 
 	private static final Set<AopInvocationHandler> _aopInvocationHandlers =
 		new HashSet<>();
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 	private static final List<ChainableMethodAdvice> _chainableMethodAdvices =
 		_createStaticChainableMethodAdvices();
 
@@ -136,10 +108,8 @@ public class AopCacheManager {
 		public ChainableMethodAdvice addingService(
 			ServiceReference<ChainableMethodAdvice> serviceReference) {
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			ChainableMethodAdvice chainableMethodAdvice = registry.getService(
-				serviceReference);
+			ChainableMethodAdvice chainableMethodAdvice =
+				_bundleContext.getService(serviceReference);
 
 			synchronized (AopCacheManager.class) {
 				int index = Collections.binarySearch(
@@ -183,12 +153,10 @@ public class AopCacheManager {
 				_reset();
 			}
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
+			_bundleContext.ungetService(serviceReference);
 		}
 
-		private static void _reset() {
+		private void _reset() {
 			ChainableMethodAdvice[] chainableMethodAdvices =
 				_chainableMethodAdvices.toArray(new ChainableMethodAdvice[0]);
 
@@ -203,10 +171,8 @@ public class AopCacheManager {
 	}
 
 	static {
-		Registry registry = RegistryUtil.getRegistry();
-
-		ServiceTracker<?, ?> serviceTracker = registry.trackServices(
-			ChainableMethodAdvice.class,
+		ServiceTracker<?, ?> serviceTracker = new ServiceTracker<>(
+			_bundleContext, ChainableMethodAdvice.class,
 			new ChainableMethodAdviceServiceTrackerCustomizer());
 
 		serviceTracker.open();

@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.PluginSetting;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for PluginSetting. This utility wraps
@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class PluginSettingLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.PluginSettingLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -39,21 +39,32 @@ public class PluginSettingLocalServiceUtil {
 	/**
 	 * Adds the plugin setting to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was added
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-		addPluginSetting(
-			com.liferay.portal.kernel.model.PluginSetting pluginSetting) {
-
+	public static PluginSetting addPluginSetting(PluginSetting pluginSetting) {
 		return getService().addPluginSetting(pluginSetting);
 	}
 
 	public static void checkPermission(
 			long userId, String pluginId, String pluginType)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().checkPermission(userId, pluginId, pluginType);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -62,19 +73,16 @@ public class PluginSettingLocalServiceUtil {
 	 * @param pluginSettingId the primary key for the new plugin setting
 	 * @return the new plugin setting
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-		createPluginSetting(long pluginSettingId) {
-
+	public static PluginSetting createPluginSetting(long pluginSettingId) {
 		return getService().createPluginSetting(pluginSettingId);
 	}
 
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -82,13 +90,16 @@ public class PluginSettingLocalServiceUtil {
 	/**
 	 * Deletes the plugin setting with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSettingId the primary key of the plugin setting
 	 * @return the plugin setting that was removed
 	 * @throws PortalException if a plugin setting with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-			deletePluginSetting(long pluginSettingId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PluginSetting deletePluginSetting(long pluginSettingId)
+		throws PortalException {
 
 		return getService().deletePluginSetting(pluginSettingId);
 	}
@@ -96,19 +107,28 @@ public class PluginSettingLocalServiceUtil {
 	/**
 	 * Deletes the plugin setting from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was removed
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-		deletePluginSetting(
-			com.liferay.portal.kernel.model.PluginSetting pluginSetting) {
+	public static PluginSetting deletePluginSetting(
+		PluginSetting pluginSetting) {
 
 		return getService().deletePluginSetting(pluginSetting);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -118,9 +138,7 @@ public class PluginSettingLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -136,9 +154,8 @@ public class PluginSettingLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -156,10 +173,9 @@ public class PluginSettingLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -171,9 +187,7 @@ public class PluginSettingLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -185,15 +199,13 @@ public class PluginSettingLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.portal.kernel.model.PluginSetting
-		fetchPluginSetting(long pluginSettingId) {
-
+	public static PluginSetting fetchPluginSetting(long pluginSettingId) {
 		return getService().fetchPluginSetting(pluginSettingId);
 	}
 
@@ -203,9 +215,7 @@ public class PluginSettingLocalServiceUtil {
 		return getService().getActionableDynamicQuery();
 	}
 
-	public static com.liferay.portal.kernel.model.PluginSetting
-		getDefaultPluginSetting() {
-
+	public static PluginSetting getDefaultPluginSetting() {
 		return getService().getDefaultPluginSetting();
 	}
 
@@ -225,9 +235,11 @@ public class PluginSettingLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
@@ -239,15 +251,14 @@ public class PluginSettingLocalServiceUtil {
 	 * @return the plugin setting
 	 * @throws PortalException if a plugin setting with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-			getPluginSetting(long pluginSettingId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PluginSetting getPluginSetting(long pluginSettingId)
+		throws PortalException {
 
 		return getService().getPluginSetting(pluginSettingId);
 	}
 
-	public static com.liferay.portal.kernel.model.PluginSetting
-		getPluginSetting(long companyId, String pluginId, String pluginType) {
+	public static PluginSetting getPluginSetting(
+		long companyId, String pluginId, String pluginType) {
 
 		return getService().getPluginSetting(companyId, pluginId, pluginType);
 	}
@@ -263,9 +274,7 @@ public class PluginSettingLocalServiceUtil {
 	 * @param end the upper bound of the range of plugin settings (not inclusive)
 	 * @return the range of plugin settings
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.PluginSetting>
-		getPluginSettings(int start, int end) {
-
+	public static List<PluginSetting> getPluginSettings(int start, int end) {
 		return getService().getPluginSettings(start, end);
 	}
 
@@ -284,10 +293,9 @@ public class PluginSettingLocalServiceUtil {
 		return getService().hasPermission(userId, pluginId, pluginType);
 	}
 
-	public static com.liferay.portal.kernel.model.PluginSetting
-		updatePluginSetting(
-			long companyId, String pluginId, String pluginType, String roles,
-			boolean active) {
+	public static PluginSetting updatePluginSetting(
+		long companyId, String pluginId, String pluginType, String roles,
+		boolean active) {
 
 		return getService().updatePluginSetting(
 			companyId, pluginId, pluginType, roles, active);
@@ -296,25 +304,27 @@ public class PluginSettingLocalServiceUtil {
 	/**
 	 * Updates the plugin setting in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was updated
 	 */
-	public static com.liferay.portal.kernel.model.PluginSetting
-		updatePluginSetting(
-			com.liferay.portal.kernel.model.PluginSetting pluginSetting) {
+	public static PluginSetting updatePluginSetting(
+		PluginSetting pluginSetting) {
 
 		return getService().updatePluginSetting(pluginSetting);
 	}
 
 	public static PluginSettingLocalService getService() {
-		if (_service == null) {
-			_service = (PluginSettingLocalService)PortalBeanLocatorUtil.locate(
-				PluginSettingLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static PluginSettingLocalService _service;
+	public static void setService(PluginSettingLocalService service) {
+		_service = service;
+	}
+
+	private static volatile PluginSettingLocalService _service;
 
 }

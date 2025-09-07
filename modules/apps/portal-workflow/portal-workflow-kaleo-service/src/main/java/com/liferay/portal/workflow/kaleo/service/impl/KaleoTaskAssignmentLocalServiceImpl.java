@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.impl;
@@ -19,7 +10,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.workflow.kaleo.definition.Assignment;
 import com.liferay.portal.workflow.kaleo.definition.AssignmentType;
@@ -28,15 +21,16 @@ import com.liferay.portal.workflow.kaleo.definition.RoleAssignment;
 import com.liferay.portal.workflow.kaleo.definition.ScriptAssignment;
 import com.liferay.portal.workflow.kaleo.definition.ScriptLanguage;
 import com.liferay.portal.workflow.kaleo.definition.UserAssignment;
+import com.liferay.portal.workflow.kaleo.internal.util.RoleUtil;
 import com.liferay.portal.workflow.kaleo.model.KaleoTask;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignment;
-import com.liferay.portal.workflow.kaleo.runtime.util.RoleUtil;
 import com.liferay.portal.workflow.kaleo.service.base.KaleoTaskAssignmentLocalServiceBaseImpl;
 
 import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -50,13 +44,14 @@ public class KaleoTaskAssignmentLocalServiceImpl
 
 	@Override
 	public KaleoTaskAssignment addKaleoTaskAssignment(
-			String kaleoClassName, long kaleoClassPK,
+			String kaleoClassName, long kaleoClassPK, long kaleoDefinitionId,
 			long kaleoDefinitionVersionId, Assignment assignment,
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
-		Date now = new Date();
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
+		Date date = new Date();
 
 		long kaleoTaskAssignmentId = counterLocalService.increment();
 
@@ -66,20 +61,19 @@ public class KaleoTaskAssignmentLocalServiceImpl
 		kaleoTaskAssignment.setCompanyId(user.getCompanyId());
 		kaleoTaskAssignment.setUserId(user.getUserId());
 		kaleoTaskAssignment.setUserName(user.getFullName());
-		kaleoTaskAssignment.setCreateDate(now);
-		kaleoTaskAssignment.setModifiedDate(now);
+		kaleoTaskAssignment.setCreateDate(date);
+		kaleoTaskAssignment.setModifiedDate(date);
 		kaleoTaskAssignment.setKaleoClassName(kaleoClassName);
 		kaleoTaskAssignment.setKaleoClassPK(kaleoClassPK);
+		kaleoTaskAssignment.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoTaskAssignment.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 		kaleoTaskAssignment.setKaleoNodeId(
 			kaleoTaskAssignment.getKaleoNodeId());
 
-		setAssignee(kaleoTaskAssignment, assignment, serviceContext);
+		_setAssignee(kaleoTaskAssignment, assignment, serviceContext);
 
-		kaleoTaskAssignmentPersistence.update(kaleoTaskAssignment);
-
-		return kaleoTaskAssignment;
+		return kaleoTaskAssignmentPersistence.update(kaleoTaskAssignment);
 	}
 
 	@Override
@@ -131,7 +125,7 @@ public class KaleoTaskAssignmentLocalServiceImpl
 			KaleoTask.class.getName(), kaleoTaskId, assigneeClassName);
 	}
 
-	protected void setAssignee(
+	private void _setAssignee(
 			KaleoTaskAssignment kaleoTaskAssignment, Assignment assignment,
 			ServiceContext serviceContext)
 		throws PortalException {
@@ -156,15 +150,13 @@ public class KaleoTaskAssignmentLocalServiceImpl
 			Role role = null;
 
 			if (Validator.isNotNull(roleAssignment.getRoleName())) {
-				int roleType = RoleUtil.getRoleType(
-					roleAssignment.getRoleType());
-
 				role = RoleUtil.getRole(
-					roleAssignment.getRoleName(), roleType,
+					roleAssignment.getRoleName(),
+					RoleUtil.getRoleType(roleAssignment.getRoleType()),
 					roleAssignment.isAutoCreate(), serviceContext);
 			}
 			else {
-				role = roleLocalService.getRole(roleAssignment.getRoleId());
+				role = _roleLocalService.getRole(roleAssignment.getRoleId());
 			}
 
 			kaleoTaskAssignment.setAssigneeClassPK(role.getRoleId());
@@ -194,15 +186,15 @@ public class KaleoTaskAssignmentLocalServiceImpl
 			User user = null;
 
 			if (userAssignment.getUserId() > 0) {
-				user = userLocalService.getUser(userAssignment.getUserId());
+				user = _userLocalService.getUser(userAssignment.getUserId());
 			}
 			else if (Validator.isNotNull(userAssignment.getEmailAddress())) {
-				user = userLocalService.getUserByEmailAddress(
+				user = _userLocalService.getUserByEmailAddress(
 					serviceContext.getCompanyId(),
 					userAssignment.getEmailAddress());
 			}
 			else if (Validator.isNotNull(userAssignment.getScreenName())) {
-				user = userLocalService.getUserByScreenName(
+				user = _userLocalService.getUserByScreenName(
 					serviceContext.getCompanyId(),
 					userAssignment.getScreenName());
 			}
@@ -215,5 +207,11 @@ public class KaleoTaskAssignmentLocalServiceImpl
 			}
 		}
 	}
+
+	@Reference
+	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.service.persistence.test;
@@ -123,6 +114,8 @@ public class CTMessagePersistenceTest {
 
 		newCTMessage.setMvccVersion(RandomTestUtil.nextLong());
 
+		newCTMessage.setCompanyId(RandomTestUtil.nextLong());
+
 		newCTMessage.setCtCollectionId(RandomTestUtil.nextLong());
 
 		newCTMessage.setMessageContent(RandomTestUtil.randomString());
@@ -137,6 +130,8 @@ public class CTMessagePersistenceTest {
 		Assert.assertEquals(
 			existingCTMessage.getCtMessageId(), newCTMessage.getCtMessageId());
 		Assert.assertEquals(
+			existingCTMessage.getCompanyId(), newCTMessage.getCompanyId());
+		Assert.assertEquals(
 			existingCTMessage.getCtCollectionId(),
 			newCTMessage.getCtCollectionId());
 		Assert.assertEquals(
@@ -145,10 +140,10 @@ public class CTMessagePersistenceTest {
 	}
 
 	@Test
-	public void testCountByCTCollectionId() throws Exception {
-		_persistence.countByCTCollectionId(RandomTestUtil.nextLong());
+	public void testCountByCtCollectionId() throws Exception {
+		_persistence.countByCtCollectionId(RandomTestUtil.nextLong());
 
-		_persistence.countByCTCollectionId(0L);
+		_persistence.countByCtCollectionId(0L);
 	}
 
 	@Test
@@ -176,8 +171,8 @@ public class CTMessagePersistenceTest {
 
 	protected OrderByComparator<CTMessage> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"CTMessage", "mvccVersion", true, "ctMessageId", true,
-			"ctCollectionId", true);
+			"CTMessage", "mvccVersion", true, "ctMessageId", true, "companyId",
+			true, "ctCollectionId", true);
 	}
 
 	@Test
@@ -395,6 +390,8 @@ public class CTMessagePersistenceTest {
 		CTMessage ctMessage = _persistence.create(pk);
 
 		ctMessage.setMvccVersion(RandomTestUtil.nextLong());
+
+		ctMessage.setCompanyId(RandomTestUtil.nextLong());
 
 		ctMessage.setCtCollectionId(RandomTestUtil.nextLong());
 

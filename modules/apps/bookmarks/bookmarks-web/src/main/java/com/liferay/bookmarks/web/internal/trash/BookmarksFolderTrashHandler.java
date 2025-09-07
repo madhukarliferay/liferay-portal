@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.web.internal.trash;
@@ -25,14 +16,14 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -46,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 	property = "model.class.name=com.liferay.bookmarks.model.BookmarksFolder",
 	service = TrashHandler.class
 )
-public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
+public class BookmarksFolderTrashHandler extends BaseBookmarksTrashHandler {
 
 	@Override
 	public void deleteTrashEntry(long classPK) throws PortalException {
@@ -67,7 +58,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 	public ContainerModel getParentContainerModel(long classPK)
 		throws PortalException {
 
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		long parentFolderId = folder.getParentFolderId();
 
@@ -83,7 +74,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return BookmarksUtil.getControlPanelLink(
 			portletRequest, folder.getFolderId());
@@ -94,7 +85,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return BookmarksUtil.getControlPanelLink(
 			portletRequest, folder.getParentFolderId());
@@ -104,7 +95,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 	public String getRestoreMessage(PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return BookmarksUtil.getAbsolutePath(
 			portletRequest, folder.getParentFolderId());
@@ -117,7 +108,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 
 	@Override
 	public TrashRenderer getTrashRenderer(long classPK) throws PortalException {
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return new BookmarksFolderAssetRenderer(
 			folder, _trashHelper, _bookmarksFolderModelResourcePermission);
@@ -130,7 +121,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 		throws PortalException {
 
 		if (trashActionId.equals(TrashActionKeys.MOVE)) {
-			return ModelResourcePermissionHelper.contains(
+			return ModelResourcePermissionUtil.contains(
 				_bookmarksFolderModelResourcePermission, permissionChecker,
 				groupId, classPK, ActionKeys.ADD_FOLDER);
 		}
@@ -146,7 +137,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 
 	@Override
 	public boolean isMovable(long classPK) throws PortalException {
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		if (folder.getParentFolderId() > 0) {
 			BookmarksFolder parentFolder =
@@ -163,7 +154,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 
 	@Override
 	public boolean isRestorable(long classPK) throws PortalException {
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		if (folder.getParentFolderId() > 0) {
 			BookmarksFolder parentFolder =
@@ -182,7 +173,7 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 			return false;
 		}
 
-		return !folder.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(folder);
 	}
 
 	@Override
@@ -211,15 +202,9 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 		_bookmarksFolderLocalService.restoreFolderFromTrash(userId, classPK);
 	}
 
-	protected BookmarksFolder getBookmarksFolder(long classPK)
-		throws PortalException {
-
-		return _bookmarksFolderLocalService.getFolder(classPK);
-	}
-
 	@Override
 	protected long getGroupId(long classPK) throws PortalException {
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return folder.getGroupId();
 	}
@@ -229,10 +214,16 @@ public class BookmarksFolderTrashHandler extends BookmarksBaseTrashHandler {
 			PermissionChecker permissionChecker, long classPK, String actionId)
 		throws PortalException {
 
-		BookmarksFolder folder = getBookmarksFolder(classPK);
+		BookmarksFolder folder = _getBookmarksFolder(classPK);
 
 		return _bookmarksFolderModelResourcePermission.contains(
 			permissionChecker, folder, actionId);
+	}
+
+	private BookmarksFolder _getBookmarksFolder(long classPK)
+		throws PortalException {
+
+		return _bookmarksFolderLocalService.getFolder(classPK);
 	}
 
 	@Reference

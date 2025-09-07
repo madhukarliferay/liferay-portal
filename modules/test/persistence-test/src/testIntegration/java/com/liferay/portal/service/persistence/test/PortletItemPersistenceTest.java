@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchPortletItemException;
 import com.liferay.portal.kernel.model.PortletItem;
 import com.liferay.portal.kernel.service.PortletItemLocalServiceUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -451,29 +442,71 @@ public class PortletItemPersistenceTest {
 
 		_persistence.clearCache();
 
-		PortletItem existingPortletItem = _persistence.findByPrimaryKey(
-			newPortletItem.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newPortletItem.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		PortletItem newPortletItem = addPortletItem();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			PortletItem.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"portletItemId", newPortletItem.getPortletItemId()));
+
+		List<PortletItem> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(PortletItem portletItem) {
 		Assert.assertEquals(
-			Long.valueOf(existingPortletItem.getGroupId()),
+			Long.valueOf(portletItem.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPortletItem, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingPortletItem.getName(),
-				ReflectionTestUtil.invoke(
-					existingPortletItem, "getOriginalName", new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingPortletItem.getPortletId(),
-				ReflectionTestUtil.invoke(
-					existingPortletItem, "getOriginalPortletId",
-					new Class<?>[0])));
+				portletItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingPortletItem.getClassNameId()),
+			portletItem.getName(),
+			ReflectionTestUtil.invoke(
+				portletItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+		Assert.assertEquals(
+			portletItem.getPortletId(),
+			ReflectionTestUtil.invoke(
+				portletItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "portletId"));
+		Assert.assertEquals(
+			Long.valueOf(portletItem.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPortletItem, "getOriginalClassNameId",
-				new Class<?>[0]));
+				portletItem, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 	}
 
 	protected PortletItem addPortletItem() throws Exception {

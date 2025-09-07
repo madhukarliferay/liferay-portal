@@ -1,22 +1,13 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
-<div class="sheet sheet-lg" id="<portlet:namespace/>connectedApp">
+<div class="sheet sheet-lg" id="<portlet:namespace />connectedApp">
 	<div class="sheet-header">
 		<h2 class="sheet-title">
 			<liferay-ui:message key="apps" />
@@ -26,16 +17,16 @@
 	</div>
 
 	<div class="sheet-section">
-		<liferay-portlet:actionURL name="/users_admin/revoke_connected_app" varImpl="actionCommandURL" />
+		<liferay-portlet:actionURL name="/connected_app/revoke_connected_app" varImpl="actionCommandURL" />
 
-		<aui:form action="<%= actionCommandURL.toString() %>" cssClass="portlet-users-admin-edit-user" data-senna-off="true" method="post" name="fm">
+		<aui:form action="<%= actionCommandURL %>" cssClass="portlet-users-admin-edit-user" data-senna-off="true" method="post" name="fm">
 
 			<%
 			User selUser = PortalUtil.getSelectedUser(request);
 			%>
 
-			<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 			<aui:input name="p_u_i_d" type="hidden" value="<%= selUser.getUserId() %>" />
+			<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 			<aui:input name="connectedAppKey" type="hidden" value="<%= StringPool.BLANK %>" />
 
 			<%
@@ -46,39 +37,38 @@
 			for (ConnectedApp connectedApp : connectedApps) {
 			%>
 
-				<div class="autofit-padded-no-gutters-x autofit-row autofit-row-center mb-3">
-					<div class="autofit-col">
+				<clay:content-row
+					cssClass="mb-3"
+					noGutters="x"
+					verticalAlign="center"
+				>
+					<clay:content-col>
 						<img class="icon-monospaced" src="<%= HtmlUtil.escapeAttribute(connectedApp.getImageURL()) %>" />
-					</div>
+					</clay:content-col>
 
-					<div class="autofit-col autofit-col-expand">
+					<clay:content-col
+						expand="<%= true %>"
+					>
 						<%= HtmlUtil.escape(connectedApp.getName(locale)) %>
-					</div>
+					</clay:content-col>
 
-					<div class="autofit-col">
-
-						<%
-						Map<String, String> data = new HashMap<>();
-
-						data.put("key", connectedApp.getKey());
-						%>
-
+					<clay:content-col>
 						<clay:button
-							data="<%= data %>"
-							elementClasses="btn-secondary"
-							label='<%= LanguageUtil.get(resourceBundle, "revoke") %>'
-							size="sm"
+							data-key="<%= connectedApp.getKey() %>"
+							displayType="secondary"
+							label="revoke"
+							small="<%= true %>"
 							type="submit"
 						/>
-					</div>
-				</div>
+					</clay:content-col>
+				</clay:content-row>
 
 			<%
 			}
 			%>
 
 			<c:if test="<%= connectedApps.isEmpty() %>">
-				<span class="text-muted">
+				<span class="text-secondary">
 					<liferay-ui:message key="no-applications-have-been-approved-yet" />
 				</span>
 			</c:if>
@@ -86,16 +76,16 @@
 	</div>
 </div>
 
-<aui:script require="metal-dom/src/dom as dom">
+<aui:script sandbox="<%= true %>">
 	var connectedAppKeyInput = document.querySelector(
-		'[name=<portlet:namespace/>connectedAppKey]'
+		'[name=<portlet:namespace />connectedAppKey]'
 	);
 
-	dom.delegate(
-		document.getElementById('<portlet:namespace/>connectedApp'),
+	Liferay.Util.delegate(
+		document.getElementById('<portlet:namespace />connectedApp'),
 		'click',
 		'[data-key]',
-		function(event) {
+		(event) => {
 			connectedAppKeyInput.setAttribute('value', event.target.dataset.key);
 		}
 	);

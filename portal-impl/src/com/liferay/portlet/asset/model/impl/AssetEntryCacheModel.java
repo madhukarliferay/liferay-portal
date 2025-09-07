@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.model.impl;
@@ -37,16 +28,17 @@ public class AssetEntryCacheModel
 	implements CacheModel<AssetEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AssetEntryCacheModel)) {
+		if (!(object instanceof AssetEntryCacheModel)) {
 			return false;
 		}
 
-		AssetEntryCacheModel assetEntryCacheModel = (AssetEntryCacheModel)obj;
+		AssetEntryCacheModel assetEntryCacheModel =
+			(AssetEntryCacheModel)object;
 
 		if ((entryId == assetEntryCacheModel.entryId) &&
 			(mvccVersion == assetEntryCacheModel.mvccVersion)) {
@@ -265,7 +257,9 @@ public class AssetEntryCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		ctCollectionId = objectInput.readLong();
@@ -296,9 +290,9 @@ public class AssetEntryCacheModel
 		publishDate = objectInput.readLong();
 		expirationDate = objectInput.readLong();
 		mimeType = objectInput.readUTF();
-		title = objectInput.readUTF();
-		description = objectInput.readUTF();
-		summary = objectInput.readUTF();
+		title = (String)objectInput.readObject();
+		description = (String)objectInput.readObject();
+		summary = (String)objectInput.readObject();
 		url = objectInput.readUTF();
 		layoutUuid = objectInput.readUTF();
 
@@ -362,24 +356,24 @@ public class AssetEntryCacheModel
 		}
 
 		if (title == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(title);
+			objectOutput.writeObject(title);
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (summary == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(summary);
+			objectOutput.writeObject(summary);
 		}
 
 		if (url == null) {

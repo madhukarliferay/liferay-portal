@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.model;
@@ -46,6 +37,7 @@ public class CTPreferencesWrapper
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
 		attributes.put("ctCollectionId", getCtCollectionId());
+		attributes.put("previousCtCollectionId", getPreviousCtCollectionId());
 		attributes.put("confirmationEnabled", isConfirmationEnabled());
 
 		return attributes;
@@ -83,12 +75,24 @@ public class CTPreferencesWrapper
 			setCtCollectionId(ctCollectionId);
 		}
 
+		Long previousCtCollectionId = (Long)attributes.get(
+			"previousCtCollectionId");
+
+		if (previousCtCollectionId != null) {
+			setPreviousCtCollectionId(previousCtCollectionId);
+		}
+
 		Boolean confirmationEnabled = (Boolean)attributes.get(
 			"confirmationEnabled");
 
 		if (confirmationEnabled != null) {
 			setConfirmationEnabled(confirmationEnabled);
 		}
+	}
+
+	@Override
+	public CTPreferences cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -142,6 +146,16 @@ public class CTPreferencesWrapper
 	}
 
 	/**
+	 * Returns the previous ct collection ID of this ct preferences.
+	 *
+	 * @return the previous ct collection ID of this ct preferences
+	 */
+	@Override
+	public long getPreviousCtCollectionId() {
+		return model.getPreviousCtCollectionId();
+	}
+
+	/**
 	 * Returns the primary key of this ct preferences.
 	 *
 	 * @return the primary key of this ct preferences
@@ -181,11 +195,6 @@ public class CTPreferencesWrapper
 		return model.isConfirmationEnabled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a ct preferences model instance should use the <code>CTPreferences</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -242,6 +251,16 @@ public class CTPreferencesWrapper
 	}
 
 	/**
+	 * Sets the previous ct collection ID of this ct preferences.
+	 *
+	 * @param previousCtCollectionId the previous ct collection ID of this ct preferences
+	 */
+	@Override
+	public void setPreviousCtCollectionId(long previousCtCollectionId) {
+		model.setPreviousCtCollectionId(previousCtCollectionId);
+	}
+
+	/**
 	 * Sets the primary key of this ct preferences.
 	 *
 	 * @param primaryKey the primary key of this ct preferences
@@ -269,6 +288,11 @@ public class CTPreferencesWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

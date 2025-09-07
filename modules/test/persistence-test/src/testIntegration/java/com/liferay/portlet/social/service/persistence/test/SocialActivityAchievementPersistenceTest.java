@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -127,6 +118,11 @@ public class SocialActivityAchievementPersistenceTest {
 		SocialActivityAchievement newSocialActivityAchievement =
 			_persistence.create(pk);
 
+		newSocialActivityAchievement.setMvccVersion(RandomTestUtil.nextLong());
+
+		newSocialActivityAchievement.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newSocialActivityAchievement.setGroupId(RandomTestUtil.nextLong());
 
 		newSocialActivityAchievement.setCompanyId(RandomTestUtil.nextLong());
@@ -147,6 +143,12 @@ public class SocialActivityAchievementPersistenceTest {
 			_persistence.findByPrimaryKey(
 				newSocialActivityAchievement.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingSocialActivityAchievement.getMvccVersion(),
+			newSocialActivityAchievement.getMvccVersion());
+		Assert.assertEquals(
+			existingSocialActivityAchievement.getCtCollectionId(),
+			newSocialActivityAchievement.getCtCollectionId());
 		Assert.assertEquals(
 			existingSocialActivityAchievement.getActivityAchievementId(),
 			newSocialActivityAchievement.getActivityAchievementId());
@@ -251,9 +253,10 @@ public class SocialActivityAchievementPersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"SocialActivityAchievement", "activityAchievementId", true,
-			"groupId", true, "companyId", true, "userId", true, "createDate",
-			true, "name", true, "firstInGroup", true);
+			"SocialActivityAchievement", "mvccVersion", true, "ctCollectionId",
+			true, "activityAchievementId", true, "groupId", true, "companyId",
+			true, "userId", true, "createDate", true, "name", true,
+			"firstInGroup", true);
 	}
 
 	@Test
@@ -506,26 +509,71 @@ public class SocialActivityAchievementPersistenceTest {
 
 		_persistence.clearCache();
 
-		SocialActivityAchievement existingSocialActivityAchievement =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newSocialActivityAchievement.getPrimaryKey());
+				newSocialActivityAchievement.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SocialActivityAchievement newSocialActivityAchievement =
+			addSocialActivityAchievement();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SocialActivityAchievement.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"activityAchievementId",
+				newSocialActivityAchievement.getActivityAchievementId()));
+
+		List<SocialActivityAchievement> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		SocialActivityAchievement socialActivityAchievement) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingSocialActivityAchievement.getGroupId()),
+			Long.valueOf(socialActivityAchievement.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialActivityAchievement, "getOriginalGroupId",
-				new Class<?>[0]));
+				socialActivityAchievement, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSocialActivityAchievement.getUserId()),
+			Long.valueOf(socialActivityAchievement.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialActivityAchievement, "getOriginalUserId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingSocialActivityAchievement.getName(),
-				ReflectionTestUtil.invoke(
-					existingSocialActivityAchievement, "getOriginalName",
-					new Class<?>[0])));
+				socialActivityAchievement, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
+		Assert.assertEquals(
+			socialActivityAchievement.getName(),
+			ReflectionTestUtil.invoke(
+				socialActivityAchievement, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 	}
 
 	protected SocialActivityAchievement addSocialActivityAchievement()
@@ -535,6 +583,10 @@ public class SocialActivityAchievementPersistenceTest {
 
 		SocialActivityAchievement socialActivityAchievement =
 			_persistence.create(pk);
+
+		socialActivityAchievement.setMvccVersion(RandomTestUtil.nextLong());
+
+		socialActivityAchievement.setCtCollectionId(RandomTestUtil.nextLong());
 
 		socialActivityAchievement.setGroupId(RandomTestUtil.nextLong());
 

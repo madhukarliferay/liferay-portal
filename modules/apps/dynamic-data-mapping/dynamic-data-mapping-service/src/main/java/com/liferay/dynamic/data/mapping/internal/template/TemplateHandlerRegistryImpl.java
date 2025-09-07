@@ -1,41 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.template;
 
-import com.liferay.dynamic.data.mapping.internal.util.ResourceBundleLoaderProvider;
-import com.liferay.dynamic.data.mapping.kernel.DDMTemplateManager;
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.osgi.service.tracker.collections.EagerServiceTrackerCustomizer;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.resource.bundle.AggregateResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ClassResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistry;
-import com.liferay.portal.kernel.util.AggregateResourceBundleLoader;
-import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.language.LanguageResources;
@@ -50,189 +47,120 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = TemplateHandlerRegistry.class)
+@Component(service = TemplateHandlerRegistry.class)
 public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 
 	@Override
 	public long[] getClassNameIds() {
-		return ArrayUtil.toLongArray(_classNameIdTemplateHandlers.keySet());
+		return TransformUtil.transformToLongArray(
+			_serviceTrackerMap.keySet(),
+			_classNameLocalService::getClassNameId);
 	}
 
 	@Override
 	public TemplateHandler getTemplateHandler(long classNameId) {
-		return _classNameIdTemplateHandlers.get(classNameId);
+		ClassName className = _classNameLocalService.fetchByClassNameId(
+			classNameId);
+
+		if (className == null) {
+			return null;
+		}
+
+		return _serviceTrackerMap.getService(className.getValue());
 	}
 
 	@Override
 	public TemplateHandler getTemplateHandler(String className) {
-		return _classNameTemplateHandlers.get(className);
+		return _serviceTrackerMap.getService(className);
 	}
 
 	@Override
 	public List<TemplateHandler> getTemplateHandlers() {
-		return new ArrayList<>(_classNameTemplateHandlers.values());
+		return new ArrayList<>(_serviceTrackerMap.values());
 	}
 
 	@Activate
-	protected synchronized void activate(BundleContext bundleContext) {
+	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
 
-		for (Map.Entry<String, TemplateHandler> entry :
-				_classNameTemplateHandlers.entrySet()) {
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			bundleContext, TemplateHandler.class, null,
+			(serviceReference, emitter) -> {
+				TemplateHandler templateHandler = bundleContext.getService(
+					serviceReference);
 
-			String className = entry.getKey();
-			TemplateHandler templateHandler = entry.getValue();
+				emitter.emit(templateHandler.getClassName());
 
-			_classNameIdTemplateHandlers.put(
-				_portal.getClassNameId(className), templateHandler);
-
-			if (_serviceRegistrations.containsKey(className)) {
-				continue;
-			}
-
-			registerPortalInstanceLifecycleListener(templateHandler);
-		}
-	}
-
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY
-	)
-	protected synchronized void addTemplateHandler(
-		TemplateHandler templateHandler) {
-
-		String className = templateHandler.getClassName();
-
-		_classNameTemplateHandlers.put(className, templateHandler);
-
-		if (_bundleContext == null) {
-			return;
-		}
-
-		_classNameIdTemplateHandlers.put(
-			_portal.getClassNameId(className), templateHandler);
-
-		registerPortalInstanceLifecycleListener(templateHandler);
+				bundleContext.ungetService(serviceReference);
+			},
+			new TemplateHandlerServiceTrackerCustomizer());
 	}
 
 	@Deactivate
-	protected synchronized void deactivate() {
-		_classNameIdTemplateHandlers.clear();
-		_classNameTemplateHandlers.clear();
-
-		for (ServiceRegistration<?> serviceRegistration :
-				_serviceRegistrations.values()) {
-
-			serviceRegistration.unregister();
-		}
-
-		_serviceRegistrations.clear();
+	protected void deactivate() {
+		_serviceTrackerMap.close();
 
 		_bundleContext = null;
 	}
 
-	protected void registerPortalInstanceLifecycleListener(
-		TemplateHandler templateHandler) {
-
-		ServiceRegistration<?> serviceRegistration = _serviceRegistrations.get(
-			templateHandler.getClassName());
-
-		if (serviceRegistration != null) {
-			serviceRegistration.unregister();
-		}
-
-		PortalInstanceLifecycleListener portalInstanceLifecycleListener =
-			new TemplateHandlerPortalInstanceLifecycleListener(templateHandler);
-
-		serviceRegistration = _bundleContext.registerService(
-			PortalInstanceLifecycleListener.class,
-			portalInstanceLifecycleListener,
-			new HashMapDictionary<String, Object>());
-
-		_serviceRegistrations.put(
-			templateHandler.getClassName(), serviceRegistration);
-	}
-
-	protected synchronized void removeTemplateHandler(
-		TemplateHandler templateHandler) {
-
-		String className = templateHandler.getClassName();
-
-		_classNameTemplateHandlers.remove(className);
-
-		if (_portal != null) {
-			_classNameIdTemplateHandlers.remove(
-				_portal.getClassNameId(className));
-		}
-
-		ServiceRegistration<?> serviceRegistration =
-			_serviceRegistrations.remove(className);
-
-		if (serviceRegistration != null) {
-			serviceRegistration.unregister();
-		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(
-		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMTemplate)",
-		unbind = "-"
-	)
-	protected void setModelResourcePermission(
-		ModelResourcePermission<DDMTemplate> modelResourcePermission) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setPortal(Portal portal) {
-		_portal = portal;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
+	private BundleContext _bundleContext;
 
 	@Reference
-	protected ResourceBundleLoaderProvider resourceBundleLoaderProvider;
-
-	private BundleContext _bundleContext;
-	private final Map<Long, TemplateHandler> _classNameIdTemplateHandlers =
-		new ConcurrentHashMap<>();
-	private final Map<String, TemplateHandler> _classNameTemplateHandlers =
-		new ConcurrentHashMap<>();
+	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
-	private final Map<String, ServiceRegistration<?>> _serviceRegistrations =
-		new ConcurrentHashMap<>();
+
+	private final Map<TemplateHandler, ServiceRegistration<?>>
+		_serviceRegistrations = new ConcurrentHashMap<>();
+	private ServiceTrackerMap<String, TemplateHandler> _serviceTrackerMap;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 	private class TemplateHandlerPortalInstanceLifecycleListener
 		extends BasePortalInstanceLifecycleListener {
 
 		@Override
+		public long getLastModifiedTime() {
+			return _lastModifiedTime;
+		}
+
+		@Override
+		public String getName() {
+			return _name;
+		}
+
+		@Override
 		public void portalInstanceRegistered(Company company) throws Exception {
+			List<Element> templateElements =
+				_templateHandler.getDefaultTemplateElements();
+
+			if (templateElements.isEmpty()) {
+				return;
+			}
+
 			long classNameId = _portal.getClassNameId(
 				_templateHandler.getClassName());
 
@@ -245,13 +173,10 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 
 			serviceContext.setScopeGroupId(group.getGroupId());
 
-			long userId = _userLocalService.getDefaultUserId(
+			long userId = _userLocalService.getGuestUserId(
 				company.getCompanyId());
 
 			serviceContext.setUserId(userId);
-
-			List<Element> templateElements =
-				_templateHandler.getDefaultTemplateElements();
 
 			for (Element templateElement : templateElements) {
 				String templateKey = templateElement.elementText(
@@ -287,15 +212,14 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 				Bundle bundle = FrameworkUtil.getBundle(clazz);
 
 				if (bundle != null) {
-					resourceBundleLoader =
-						resourceBundleLoaderProvider.getResourceBundleLoader(
-							bundle.getSymbolicName());
+					resourceBundleLoader = _getResourceBundleLoader(
+						bundle.getSymbolicName());
 				}
 				else {
 					resourceBundleLoader = new AggregateResourceBundleLoader(
-						ResourceBundleUtil.getResourceBundleLoader(
+						new ClassResourceBundleLoader(
 							"content.Language", clazz.getClassLoader()),
-						LanguageResources.RESOURCE_BUNDLE_LOADER);
+						LanguageResources.PORTAL_RESOURCE_BUNDLE_LOADER);
 				}
 
 				Map<Locale, String> nameMap = getLocalizationMap(
@@ -308,7 +232,7 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 				String type = templateElement.elementText("type");
 
 				if (type == null) {
-					type = DDMTemplateManager.TEMPLATE_TYPE_DISPLAY;
+					type = DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY;
 				}
 
 				String language = templateElement.elementText("language");
@@ -318,9 +242,9 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 
 				if (ddmTemplate == null) {
 					_ddmTemplateLocalService.addTemplate(
-						userId, group.getGroupId(), classNameId, 0,
+						null, userId, group.getGroupId(), classNameId, 0,
 						_portal.getClassNameId(
-							_PORTLET_DISPLAY_TEMPLATE_CLASS_NAME),
+							_CLASS_NAME_PORTLET_DISPLAY_TEMPLATE),
 						templateKey, nameMap, descriptionMap, type, null,
 						language, script, cacheable, false, null, null,
 						serviceContext);
@@ -345,11 +269,11 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 
 			Map<Locale, String> map = new HashMap<>();
 
-			for (Locale locale : LanguageUtil.getAvailableLocales(groupId)) {
+			for (Locale locale : _language.getAvailableLocales(groupId)) {
 				ResourceBundle resourceBundle =
 					resourceBundleLoader.loadResourceBundle(locale);
 
-				map.put(locale, LanguageUtil.get(resourceBundle, key));
+				map.put(locale, _language.get(resourceBundle, key));
 			}
 
 			return map;
@@ -359,12 +283,94 @@ public class TemplateHandlerRegistryImpl implements TemplateHandlerRegistry {
 			TemplateHandler templateHandler) {
 
 			_templateHandler = templateHandler;
+
+			Class<?> clazz = templateHandler.getClass();
+
+			Bundle bundle = FrameworkUtil.getBundle(clazz);
+
+			_lastModifiedTime = bundle.getLastModified();
+
+			_name = StringBundler.concat(
+				super.getName(), StringPool.POUND, clazz.getName());
 		}
 
-		private static final String _PORTLET_DISPLAY_TEMPLATE_CLASS_NAME =
+		private ResourceBundleLoader _getResourceBundleLoader(
+			String bundleSymbolicName) {
+
+			ResourceBundleLoader resourceBundleLoader =
+				ResourceBundleLoaderUtil.
+					getResourceBundleLoaderByBundleSymbolicName(
+						bundleSymbolicName);
+
+			if (resourceBundleLoader == null) {
+				return ResourceBundleLoaderUtil.getPortalResourceBundleLoader();
+			}
+
+			return new AggregateResourceBundleLoader(
+				resourceBundleLoader,
+				ResourceBundleLoaderUtil.getPortalResourceBundleLoader());
+		}
+
+		private static final String _CLASS_NAME_PORTLET_DISPLAY_TEMPLATE =
 			"com.liferay.portlet.display.template.PortletDisplayTemplate";
 
+		private final long _lastModifiedTime;
+		private final String _name;
 		private final TemplateHandler _templateHandler;
+
+	}
+
+	private class TemplateHandlerServiceTrackerCustomizer
+		implements EagerServiceTrackerCustomizer
+			<TemplateHandler, TemplateHandler> {
+
+		@Override
+		public TemplateHandler addingService(
+			ServiceReference<TemplateHandler> serviceReference) {
+
+			TemplateHandler templateHandler = _bundleContext.getService(
+				serviceReference);
+
+			int serviceRanking = GetterUtil.getInteger(
+				serviceReference.getProperty(Constants.SERVICE_RANKING));
+
+			ServiceRegistration<?> serviceRegistration =
+				_serviceRegistrations.put(
+					templateHandler,
+					_bundleContext.registerService(
+						PortalInstanceLifecycleListener.class,
+						new TemplateHandlerPortalInstanceLifecycleListener(
+							templateHandler),
+						MapUtil.singletonDictionary(
+							Constants.SERVICE_RANKING, serviceRanking)));
+
+			if (serviceRegistration != null) {
+				serviceRegistration.unregister();
+			}
+
+			return templateHandler;
+		}
+
+		@Override
+		public void modifiedService(
+			ServiceReference<TemplateHandler> serviceReference,
+			TemplateHandler templateHandler) {
+		}
+
+		@Override
+		public void removedService(
+			ServiceReference<TemplateHandler> serviceReference,
+			TemplateHandler templateHandler) {
+
+			ServiceRegistration<?> serviceRegistration =
+				_serviceRegistrations.remove(templateHandler);
+
+			if (serviceRegistration != null) {
+				serviceRegistration.unregister();
+			}
+
+			_bundleContext.ungetService(serviceReference);
+		}
 
 	}
 

@@ -1,10 +1,10 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-content-management"
 definition {
 
-	property portal.release = "true";
+	property custom.properties = "default.layout.template.id=1_column${line.separator}feature.flag.LPD-35013=false${line.separator}jsonws.web.service.paths.excludes=";
+	property osgi.modules.includes = "wiki";
+	property portal.release = "false";
 	property portal.upstream = "true";
-	property custom.properties = "default.layout.template.id=1_column";
-	property testray.component.names = "Mentions";
 	property testray.main.component.name = "Mentions";
 
 	setUp {
@@ -12,73 +12,37 @@ definition {
 
 		User.firstLoginPG();
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+		WikiPortlet.enableWiki();
 
-		SitePages.addPublicPage(
-			pageName = "Wiki Page",
-			sitePageType = "Widget Page");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Wiki Page");
 
-		Navigator.gotoPage(pageName = "Wiki Page");
-
-		Portlet.addPG(portletName = "Wiki");
-
-		Navigator.gotoPage(pageName = "Wiki Page");
+		JSONLayout.addWidgetToPublicLayout(
+			column = 1,
+			groupName = "Guest",
+			layoutName = "Wiki Page",
+			widgetName = "Wiki");
 
 		JSONUser.addUser(
-			userEmailAddress = PropsUtil.get("email.address.4"),
+			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "userea@liferay.com",
+			userLoginFullName = "userfn userln");
 
-		User.editPasswordCP(
-			password = "password",
-			userEmailAddress = PropsUtil.get("email.address.4"),
-			userScreenName = "usersn");
-
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.assignRegularRoleCP(
-			roleTitle = "Administrator",
-			userScreenName = "usersn");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Server Administration");
-
-		ServerAdministration.configureMailServerSettings(
-			userName = PropsUtil.get("email.address.1"),
-			userPassword = PropsUtil.get("email.password.1"));
-
-		Navigator.gotoPage(pageName = "Wiki Page");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Virtual Instances");
-
-		PortalInstances.editCP(
-			mailDomain = "gmail.com",
-			virtualHost = "localhost");
-
-		Navigator.gotoPage(pageName = "Wiki Page");
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -86,42 +50,26 @@ definition {
 
 			JSONUser.tearDownNonAdminUsers();
 
-			Page.tearDownCP();
+			PagesAdmin.tearDownCP();
 		}
 	}
 
-	@priority = "5"
-	test ViewWikiCommentMentionedUser {
-		property test.name.skip.portal.instance = "MentionsWiki#ViewWikiCommentMentionedUser";
+	@priority = 5
+	@refactordone
+	test CanViewWikiCommentMentionedUser {
+		property portal.acceptance = "true";
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Wiki");
-
-		WikiNavigator.gotoNode(wikiNodeName = "Main");
-
-		WikiNavigator.gotoAllPagesCP();
-
-		LexiconEntry.gotoAdd();
-
-		WikiEntry.addPageTitle(wikiPageTitle = "Wiki Page Title");
-
-		WikiEntry.addPageContent(wikiPageContent = "Wiki Page Content");
-
-		PortletEntry.publish();
-
-		Navigator.openURL();
+		JSONWiki.addWikiPage(
+			groupName = "Guest",
+			wikiNodeName = "Main",
+			wikiPageContent = "Wiki Page Content",
+			wikiPageName = "Wiki Page Title");
 
 		Navigator.gotoPage(pageName = "Wiki Page");
 
 		WikiNavigator.gotoAllPagesPG();
 
 		WikiNavigator.gotoEntryViaPGTable(wikiPageTitle = "Wiki Page Title");
-
-		Pause(locator1 = "30000");
 
 		Mentions.addMentionViaComments(
 			entryComment = "Comment mentioning",

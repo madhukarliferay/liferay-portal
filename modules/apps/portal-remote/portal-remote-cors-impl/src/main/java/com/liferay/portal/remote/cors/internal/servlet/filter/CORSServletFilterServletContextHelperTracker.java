@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.cors.internal.servlet.filter;
@@ -18,16 +9,18 @@ import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.remote.cors.configuration.WebContextCORSConfiguration;
 import com.liferay.portal.remote.cors.internal.CORSSupport;
 
+import jakarta.servlet.Filter;
+
 import java.util.Dictionary;
 import java.util.Map;
-
-import javax.servlet.Filter;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -48,8 +41,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  */
 @Component(
 	configurationPid = "com.liferay.portal.remote.cors.configuration.WebContextCORSConfiguration",
-	configurationPolicy = ConfigurationPolicy.REQUIRE, immediate = true,
-	service = {}
+	configurationPolicy = ConfigurationPolicy.REQUIRE, service = {}
 )
 public class CORSServletFilterServletContextHelperTracker {
 
@@ -81,6 +73,9 @@ public class CORSServletFilterServletContextHelperTracker {
 	protected void deactivate() {
 		_serviceTracker.close();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CORSServletFilterServletContextHelperTracker.class);
 
 	private BundleContext _bundleContext;
 	private Map<String, String> _corsHeaders;
@@ -122,24 +117,29 @@ public class CORSServletFilterServletContextHelperTracker {
 			try {
 				serviceRegistration.unregister();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
 		private Dictionary<String, Object> _buildProperties(
 			ServiceReference<ServletContextHelper> serviceReference) {
 
-			Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-			properties.put(Constants.SERVICE_RANKING, -1);
-			properties.put(
-				HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT,
-				GetterUtil.getString(
-					serviceReference.getProperty(
-						HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME)));
-			properties.put(
-				HttpWhiteboardConstants.HTTP_WHITEBOARD_FILTER_NAME,
-				CORSServletFilter.class.getName());
+			Dictionary<String, Object> properties =
+				HashMapDictionaryBuilder.<String, Object>put(
+					Constants.SERVICE_RANKING, -1
+				).put(
+					HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT,
+					GetterUtil.getString(
+						serviceReference.getProperty(
+							HttpWhiteboardConstants.
+								HTTP_WHITEBOARD_CONTEXT_NAME))
+				).put(
+					HttpWhiteboardConstants.HTTP_WHITEBOARD_FILTER_NAME,
+					CORSServletFilter.class.getName()
+				).build();
 
 			if (ArrayUtil.isEmpty(_filterMappingUrlPatterns) ||
 				ArrayUtil.contains(

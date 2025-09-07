@@ -1,27 +1,36 @@
 {
 	"dependencies": {
-		"@clayui/button": "3.0.3",
-		"@clayui/drop-down": "3.1.2",
-		"@clayui/form": "3.2.1",
-		"@clayui/icon": "3.0.1",
-		"@clayui/label": "3.0.1",
-		"clay-dropdown": "2.19.0",
-		"clay-label": "2.19.0",
+		"@clayui/alert": "3.144.1",
+		"@clayui/button": "3.144.1",
+		"@clayui/core": "3.145.0",
+		"@clayui/date-picker": "3.145.0",
+		"@clayui/drop-down": "3.145.0",
+		"@clayui/empty-state": "3.144.1",
+		"@clayui/form": "3.145.0",
+		"@clayui/icon": "3.144.1",
+		"@clayui/label": "3.144.1",
+		"@clayui/layout": "3.144.1",
+		"@clayui/loading-indicator": "3.144.1",
+		"@clayui/modal": "3.145.0",
+		"@clayui/popover": "3.145.0",
+		"@clayui/table": "3.144.1",
+		"@liferay/frontend-js-react-web": "*",
+		"@liferay/layout-js-components-web": "*",
+		"@liferay/template-web": "*",
+		"classnames": "2.3.1",
+		"data-engine-js-components-web": "*",
 		"frontend-js-components-web": "*",
 		"frontend-js-web": "*",
-		"metal": "2.16.8",
-		"metal-dom": "2.16.8",
-		"metal-soy": "2.16.8",
-		"metal-state": "2.16.8",
 		"prop-types": "15.7.2",
-		"react": "16.9.0"
+		"react": "18.2.0"
 	},
+	"main": "js/index.js",
 	"name": "journal-web",
 	"scripts": {
-		"build": "liferay-npm-scripts build",
-		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix",
-		"test": "liferay-npm-scripts test"
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format",
+		"test": "USE_REACT_16=true node-scripts test"
 	},
-	"version": "4.0.0"
+	"version": "5.0.198"
 }

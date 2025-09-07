@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.internal.model.listener;
@@ -20,8 +11,7 @@ import com.liferay.changeset.service.ChangesetCollectionLocalService;
 import com.liferay.changeset.service.ChangesetEntryLocalService;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandler;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerRegistryUtil;
-import com.liferay.exportimport.kernel.staging.Staging;
-import com.liferay.exportimport.kernel.staging.StagingConstants;
+import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalArticleResource;
 import com.liferay.journal.service.JournalArticleLocalService;
@@ -30,10 +20,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.model.listener.StagingModelListener;
 
 import java.util.HashSet;
@@ -46,13 +39,17 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Akos Thurzo
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class JournalArticleStagingModelListener
 	extends BaseModelListener<JournalArticle> {
 
 	@Override
 	public void onAfterCreate(JournalArticle journalArticle)
 		throws ModelListenerException {
+
+		if (!_isJournalArticleStaged(journalArticle)) {
+			return;
+		}
 
 		_stagingModelListener.onAfterCreate(journalArticle);
 
@@ -63,14 +60,24 @@ public class JournalArticleStagingModelListener
 	public void onAfterRemove(JournalArticle journalArticle)
 		throws ModelListenerException {
 
+		if (!_isJournalArticleStaged(journalArticle)) {
+			return;
+		}
+
 		_stagingModelListener.onAfterRemove(journalArticle);
 
 		_cleanUpJournalArticleResourceFromChangesetCollection(journalArticle);
 	}
 
 	@Override
-	public void onAfterUpdate(JournalArticle journalArticle)
+	public void onAfterUpdate(
+			JournalArticle originalJournalArticle,
+			JournalArticle journalArticle)
 		throws ModelListenerException {
+
+		if (!_isJournalArticleStaged(journalArticle)) {
+			return;
+		}
 
 		_stagingModelListener.onAfterUpdate(journalArticle);
 
@@ -120,12 +127,12 @@ public class JournalArticleStagingModelListener
 				journalArticleResourceClassNameId,
 				journalArticleResource.getPrimaryKey());
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to process journal article resource for article " +
 						journalArticle.getArticleId(),
-					pe);
+					portalException);
 			}
 		}
 	}
@@ -146,9 +153,11 @@ public class JournalArticleStagingModelListener
 
 			Set<Long> classPKs = new HashSet<>();
 
-			StagedModelDataHandler stagedModelDataHandler =
-				StagedModelDataHandlerRegistryUtil.getStagedModelDataHandler(
-					JournalArticle.class.getName());
+			StagedModelDataHandler<JournalArticle> stagedModelDataHandler =
+				(StagedModelDataHandler<JournalArticle>)
+					StagedModelDataHandlerRegistryUtil.
+						getStagedModelDataHandler(
+							JournalArticle.class.getName());
 
 			for (JournalArticle journalArticleResourceArticle :
 					journalArticleResourceArticles) {
@@ -181,14 +190,25 @@ public class JournalArticleStagingModelListener
 					journalArticle.getResourcePrimKey());
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to process journal article resource for article " +
 						journalArticle.getArticleId(),
-					pe);
+					portalException);
 			}
 		}
+	}
+
+	private boolean _isJournalArticleStaged(JournalArticle journalArticle) {
+		Group group = _groupLocalService.fetchGroup(
+			journalArticle.getGroupId());
+
+		if (group == null) {
+			return false;
+		}
+
+		return _stagingGroupHelper.isStagingGroup(group);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -204,10 +224,13 @@ public class JournalArticleStagingModelListener
 	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference
-	private Staging _staging;
+	private StagingGroupHelper _stagingGroupHelper;
 
 	@Reference
 	private StagingModelListener<JournalArticle> _stagingModelListener;

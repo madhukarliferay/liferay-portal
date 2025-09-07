@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.io;
@@ -68,9 +59,10 @@ public class OutputStreamWriter extends Writer {
 
 		_outputStream = outputStream;
 		_charsetName = charsetName;
+		_autoFlush = autoFlush;
+
 		_charsetEncoder = CharsetEncoderUtil.getCharsetEncoder(charsetName);
 		_outputByteBuffer = ByteBuffer.allocate(outputBufferSize);
-		_autoFlush = autoFlush;
 	}
 
 	@Override
@@ -116,9 +108,14 @@ public class OutputStreamWriter extends Writer {
 
 	@Override
 	public void write(int c) throws IOException {
-		_inputCharBuffer.put((char)c);
+		if (_inputCharBuffer.hasRemaining()) {
+			_inputCharBuffer.put((char)c);
 
-		_write(_EMPTY_CHAR_BUFFER);
+			_write(_EMPTY_CHAR_BUFFER);
+		}
+		else {
+			_write(CharBuffer.wrap(new char[] {(char)c}));
+		}
 	}
 
 	@Override
@@ -149,9 +146,12 @@ public class OutputStreamWriter extends Writer {
 
 		_inputCharBuffer.flip();
 
-		_encodeLoop(_inputCharBuffer, endOfInput);
-
-		_inputCharBuffer.compact();
+		try {
+			_encodeLoop(_inputCharBuffer, endOfInput);
+		}
+		finally {
+			_inputCharBuffer.compact();
+		}
 	}
 
 	private void _encodeLoop(CharBuffer inputCharBuffer, boolean endOfInput)
@@ -170,10 +170,12 @@ public class OutputStreamWriter extends Writer {
 					_flushBuffer();
 				}
 
-				if ((_inputCharBuffer != inputCharBuffer) &&
-					inputCharBuffer.hasRemaining()) {
+				if (_inputCharBuffer != inputCharBuffer) {
+					_inputCharBuffer.clear();
 
-					_inputCharBuffer.put(inputCharBuffer.get());
+					if (inputCharBuffer.hasRemaining()) {
+						_inputCharBuffer.put(inputCharBuffer.get());
+					}
 				}
 
 				break;

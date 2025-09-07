@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.expando.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -122,6 +114,10 @@ public class ExpandoRowPersistenceTest {
 
 		ExpandoRow newExpandoRow = _persistence.create(pk);
 
+		newExpandoRow.setMvccVersion(RandomTestUtil.nextLong());
+
+		newExpandoRow.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newExpandoRow.setCompanyId(RandomTestUtil.nextLong());
 
 		newExpandoRow.setModifiedDate(RandomTestUtil.nextDate());
@@ -135,6 +131,12 @@ public class ExpandoRowPersistenceTest {
 		ExpandoRow existingExpandoRow = _persistence.findByPrimaryKey(
 			newExpandoRow.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingExpandoRow.getMvccVersion(),
+			newExpandoRow.getMvccVersion());
+		Assert.assertEquals(
+			existingExpandoRow.getCtCollectionId(),
+			newExpandoRow.getCtCollectionId());
 		Assert.assertEquals(
 			existingExpandoRow.getRowId(), newExpandoRow.getRowId());
 		Assert.assertEquals(
@@ -195,8 +197,9 @@ public class ExpandoRowPersistenceTest {
 
 	protected OrderByComparator<ExpandoRow> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"ExpandoRow", "rowId", true, "companyId", true, "modifiedDate",
-			true, "tableId", true, "classPK", true);
+			"ExpandoRow", "mvccVersion", true, "ctCollectionId", true, "rowId",
+			true, "companyId", true, "modifiedDate", true, "tableId", true,
+			"classPK", true);
 	}
 
 	@Test
@@ -409,23 +412,70 @@ public class ExpandoRowPersistenceTest {
 
 		_persistence.clearCache();
 
-		ExpandoRow existingExpandoRow = _persistence.findByPrimaryKey(
-			newExpandoRow.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newExpandoRow.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		ExpandoRow newExpandoRow = addExpandoRow();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			ExpandoRow.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("rowId", newExpandoRow.getRowId()));
+
+		List<ExpandoRow> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(ExpandoRow expandoRow) {
 		Assert.assertEquals(
-			Long.valueOf(existingExpandoRow.getTableId()),
+			Long.valueOf(expandoRow.getTableId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingExpandoRow, "getOriginalTableId", new Class<?>[0]));
+				expandoRow, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "tableId"));
 		Assert.assertEquals(
-			Long.valueOf(existingExpandoRow.getClassPK()),
+			Long.valueOf(expandoRow.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingExpandoRow, "getOriginalClassPK", new Class<?>[0]));
+				expandoRow, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected ExpandoRow addExpandoRow() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		ExpandoRow expandoRow = _persistence.create(pk);
+
+		expandoRow.setMvccVersion(RandomTestUtil.nextLong());
+
+		expandoRow.setCtCollectionId(RandomTestUtil.nextLong());
 
 		expandoRow.setCompanyId(RandomTestUtil.nextLong());
 

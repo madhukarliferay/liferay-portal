@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedModel;
@@ -42,10 +34,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface BatchEngineExportTaskModel
-	extends BaseModel<BatchEngineExportTask>, MVCCModel, ShardedModel,
-			StagedModel {
+	extends BaseModel<BatchEngineExportTask>, ExternalReferenceCodeModel,
+			MVCCModel, ShardedModel, StagedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a batch engine export task model instance should use the {@link BatchEngineExportTask} interface instead.
@@ -97,6 +89,23 @@ public interface BatchEngineExportTaskModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this batch engine export task.
+	 *
+	 * @return the external reference code of this batch engine export task
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this batch engine export task.
+	 *
+	 * @param externalReferenceCode the external reference code of this batch engine export task
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the batch engine export task ID of this batch engine export task.
@@ -321,6 +330,20 @@ public interface BatchEngineExportTaskModel
 	public void setParameters(Map<String, Serializable> parameters);
 
 	/**
+	 * Returns the processed items count of this batch engine export task.
+	 *
+	 * @return the processed items count of this batch engine export task
+	 */
+	public int getProcessedItemsCount();
+
+	/**
+	 * Sets the processed items count of this batch engine export task.
+	 *
+	 * @param processedItemsCount the processed items count of this batch engine export task
+	 */
+	public void setProcessedItemsCount(int processedItemsCount);
+
+	/**
 	 * Returns the start time of this batch engine export task.
 	 *
 	 * @return the start time of this batch engine export task
@@ -335,18 +358,39 @@ public interface BatchEngineExportTaskModel
 	public void setStartTime(Date startTime);
 
 	/**
-	 * Returns the version of this batch engine export task.
+	 * Returns the task item delegate name of this batch engine export task.
 	 *
-	 * @return the version of this batch engine export task
+	 * @return the task item delegate name of this batch engine export task
 	 */
 	@AutoEscape
-	public String getVersion();
+	public String getTaskItemDelegateName();
 
 	/**
-	 * Sets the version of this batch engine export task.
+	 * Sets the task item delegate name of this batch engine export task.
 	 *
-	 * @param version the version of this batch engine export task
+	 * @param taskItemDelegateName the task item delegate name of this batch engine export task
 	 */
-	public void setVersion(String version);
+	public void setTaskItemDelegateName(String taskItemDelegateName);
+
+	/**
+	 * Returns the total items count of this batch engine export task.
+	 *
+	 * @return the total items count of this batch engine export task
+	 */
+	public int getTotalItemsCount();
+
+	/**
+	 * Sets the total items count of this batch engine export task.
+	 *
+	 * @param totalItemsCount the total items count of this batch engine export task
+	 */
+	public void setTotalItemsCount(int totalItemsCount);
+
+	@Override
+	public BatchEngineExportTask cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.flags.taglib.servlet.taglib.react;
@@ -26,20 +17,23 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
+import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.language.LanguageResources;
 import com.liferay.taglib.util.IncludeTag;
 import com.liferay.taglib.util.TagResourceBundleUtil;
 
-import java.util.Map;
-import java.util.ResourceBundle;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 /**
  * @author Ambrín Chaudhary
@@ -155,55 +149,19 @@ public class FlagsTag extends IncludeTag {
 				"liferay-flags:flags:data", _getData(message));
 
 			httpServletRequest.setAttribute(
-				"liferay-flags:flags:elementClasses", _getElementClasses());
+				"liferay-flags:flags:elementClasses", _elementClasses);
 			httpServletRequest.setAttribute(
 				"liferay-flags:flags:message", message);
 			httpServletRequest.setAttribute(
 				"liferay-flags:flags:onlyIcon", !_label);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
 	private Map<String, Object> _getData(String message)
 		throws PortalException {
-
-		HttpServletRequest httpServletRequest = getRequest();
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		Map<String, Object> props = HashMapBuilder.<String, Object>put(
-			"baseData", _getDataJSONObject(themeDisplay)
-		).put(
-			"companyName",
-			() -> {
-				Company company = themeDisplay.getCompany();
-
-				return company.getName();
-			}
-		).put(
-			"disabled", !_enabled
-		).put(
-			"forceLogin", !FlagsTagUtil.isFlagsEnabled(themeDisplay)
-		).build();
-
-		if (Validator.isNotNull(message)) {
-			props.put("message", message);
-		}
-
-		props.put("onlyIcon", !_label);
-		props.put(
-			"pathTermsOfUse",
-			PortalUtil.getPathMain() + "/portal/terms_of_use");
-		props.put(
-			"reasons",
-			FlagsTagUtil.getReasons(
-				themeDisplay.getCompanyId(), httpServletRequest));
-		props.put("signedIn", themeDisplay.isSignedIn());
-		props.put("uri", FlagsTagUtil.getURI(httpServletRequest));
 
 		return HashMapBuilder.<String, Object>put(
 			"context",
@@ -211,7 +169,60 @@ public class FlagsTag extends IncludeTag {
 				"namespace", PortalUtil.getPortletNamespace(PortletKeys.FLAGS)
 			).build()
 		).put(
-			"props", props
+			"props",
+			() -> {
+				HttpServletRequest httpServletRequest = getRequest();
+
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				return HashMapBuilder.<String, Object>put(
+					"baseData", _getDataJSONObject(themeDisplay)
+				).put(
+					"captchaURI", FlagsTagUtil.getCaptchaURI(httpServletRequest)
+				).put(
+					"companyName",
+					() -> {
+						Company company = themeDisplay.getCompany();
+
+						return company.getName();
+					}
+				).put(
+					"disabled", !_enabled
+				).put(
+					"forceLogin", !FlagsTagUtil.isFlagsEnabled(themeDisplay)
+				).put(
+					"message",
+					() -> {
+						if (Validator.isNotNull(message)) {
+							return message;
+						}
+
+						return null;
+					}
+				).put(
+					"onlyIcon", !_label
+				).put(
+					"pathTermsOfUse",
+					PortalUtil.getPathMain() + "/portal/terms_of_use"
+				).put(
+					"reasons",
+					FlagsTagUtil.getReasons(
+						themeDisplay.getCompanyId(), httpServletRequest)
+				).put(
+					"signedIn", themeDisplay.isSignedIn()
+				).put(
+					"uri", FlagsTagUtil.getURI(httpServletRequest)
+				).put(
+					"viewMode",
+					Objects.equals(
+						Constants.VIEW,
+						ParamUtil.getString(
+							themeDisplay.getRequest(), "p_l_mode",
+							Constants.VIEW))
+				).build();
+			}
 		).build();
 	}
 
@@ -224,7 +235,7 @@ public class FlagsTag extends IncludeTag {
 			contentURL = FlagsTagUtil.getCurrentURL(getRequest());
 		}
 
-		JSONObject dataJSONObject = JSONUtil.put(
+		return JSONUtil.put(
 			namespace + "className", _className
 		).put(
 			namespace + "classPK", _classPK
@@ -234,28 +245,25 @@ public class FlagsTag extends IncludeTag {
 			namespace + "contentURL", contentURL
 		).put(
 			namespace + "reportedUserId", _reportedUserId
+		).put(
+			namespace + "reporterEmailAddress",
+			() -> {
+				if (!themeDisplay.isSignedIn()) {
+					return null;
+				}
+
+				User user = themeDisplay.getUser();
+
+				return user.getEmailAddress();
+			}
 		);
-
-		if (themeDisplay.isSignedIn()) {
-			User user = themeDisplay.getUser();
-
-			dataJSONObject.put(
-				namespace + "reporterEmailAddress", user.getEmailAddress());
-		}
-
-		return dataJSONObject;
-	}
-
-	private String _getElementClasses() {
-		return _elementClasses;
 	}
 
 	private String _getMessage() {
 		ResourceBundle resourceBundle = new AggregateResourceBundle(
 			TagResourceBundleUtil.getResourceBundle(pageContext),
-			ResourceBundleUtil.getBundle(
-				PortalUtil.getLocale(getRequest()),
-				"com.liferay.flags.taglib"));
+			LanguageResources.getResourceBundle(
+				PortalUtil.getLocale(getRequest())));
 
 		if (Validator.isNotNull(_message)) {
 			return LanguageUtil.get(resourceBundle, _message);

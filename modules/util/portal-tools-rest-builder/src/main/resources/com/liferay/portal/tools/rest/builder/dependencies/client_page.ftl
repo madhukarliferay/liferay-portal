@@ -1,14 +1,18 @@
 package ${configYAML.apiPackagePath}.client.pagination;
 
+import ${configYAML.apiPackagePath}.client.aggregation.Facet;
 import ${configYAML.apiPackagePath}.client.json.BaseJSONParser;
 
-import java.util.Collection;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import ${configYAML.javaEEPackage}.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author ${configYAML.author}
@@ -23,6 +27,24 @@ public class Page<T> {
 		PageJSONParser pageJSONParser = new PageJSONParser(toDTOFunction);
 
 		return (Page<T>)pageJSONParser.parseToDTO(json);
+	}
+
+	public T fetchFirstItem() {
+		Iterator<T> iterator = _items.iterator();
+
+		if (iterator.hasNext()) {
+			return iterator.next();
+		}
+
+		return null;
+	}
+
+	public Map<String, Map<String, String>> getActions() {
+		return _actions;
+	}
+
+	public List<Facet> getFacets() {
+		return _facets;
 	}
 
 	public Collection<T> getItems() {
@@ -65,6 +87,14 @@ public class Page<T> {
 		return false;
 	}
 
+	public void setActions(Map<String, Map<String, String>> actions) {
+		_actions = actions;
+	}
+
+	public void setFacets(List<Facet> facets) {
+		_facets = facets;
+	}
+
 	public void setItems(Collection<T> items) {
 		_items = items;
 	}
@@ -81,12 +111,39 @@ public class Page<T> {
 		_totalCount = totalCount;
 	}
 
-	private Collection<T> _items;
-	private long _page;
-	private long _pageSize;
-	private long _totalCount;
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{\"actions\": ");
 
-	private static class PageJSONParser<T> extends BaseJSONParser<Page> {
+		sb.append(_toString((Map)_actions));
+		sb.append(", \"items\": [");
+
+		Iterator<T> iterator = _items.iterator();
+
+		while (iterator.hasNext()) {
+			sb.append(iterator.next());
+
+			if (iterator.hasNext()) {
+				sb.append(", ");
+			}
+		}
+
+		sb.append("], \"page\": ");
+		sb.append(_page);
+		sb.append(", \"pageSize\": ");
+		sb.append(_pageSize);
+		sb.append(", \"totalCount\": ");
+		sb.append(_totalCount);
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	public static class PageJSONParser<T> extends BaseJSONParser<Page> {
+
+		public PageJSONParser() {
+			_toDTOFunction = null;
+		}
 
 		public PageJSONParser(Function<String, T> toDTOFunction) {
 			_toDTOFunction = toDTOFunction;
@@ -103,17 +160,72 @@ public class Page<T> {
 		}
 
 		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "facets")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "items")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "lastPage")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "page")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "pageSize")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "totalCount")) {
+				return false;
+			}
+			else {
+				throw new IllegalArgumentException("Unsupported field name " + jsonParserFieldName);
+			}
+		}
+
+		@Override
 		protected void setField(Page page, String jsonParserFieldName, Object jsonParserFieldValue) {
-			if (Objects.equals(jsonParserFieldName, "items")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
 				if (jsonParserFieldValue != null) {
-					page.setItems(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							string -> _toDTOFunction.apply(string)
-						).collect(
-							Collectors.toList()
-						));
+					page.setActions((Map<String, Map<String, String>>)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "facets")) {
+				if (jsonParserFieldValue == null) {
+					return;
+				}
+
+				List<Facet> facets = new ArrayList<>();
+
+				for (Object object1 : (Object[])jsonParserFieldValue) {
+					List<Facet.FacetValue> facetValues = new ArrayList<>();
+
+					Map<String, Object> jsonParserFieldValuesMap = this.parseToMap((String)object1);
+
+					for (Object object2 : (Object[])jsonParserFieldValuesMap.get("facetValues")){
+						Map<String, Object> facetValueMap = this.parseToMap((String)object2);
+
+						facetValues.add(new Facet.FacetValue(Integer.valueOf((String)facetValueMap.get("numberOfOccurrences")), (String)facetValueMap.get("term")));
+					}
+
+					facets.add(new Facet((String)jsonParserFieldValuesMap.get("facetCriteria"), facetValues));
+				}
+
+				page.setFacets(facets);
+			}
+			else if (Objects.equals(jsonParserFieldName, "items")) {
+				if (jsonParserFieldValue != null) {
+					List<T> items = new ArrayList<>();
+
+					for (Object object : (Object[])jsonParserFieldValue) {
+						items.add(_toDTOFunction.apply((String)object));
+					}
+
+					page.setItems(items);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "lastPage")) {
@@ -141,5 +253,47 @@ public class Page<T> {
 		private final Function<String, T> _toDTOFunction;
 
 	}
+
+	private String _toString(Map<String, Object> map) {
+		StringBuilder sb = new StringBuilder("{");
+
+		Set<Map.Entry<String, Object>> entries = map.entrySet();
+
+		Iterator<Map.Entry<String, Object>> iterator = entries.iterator();
+
+		while (iterator.hasNext()) {
+			Map.Entry<String, Object> entry = iterator.next();
+
+			sb.append("\"");
+			sb.append(entry.getKey());
+			sb.append("\": ");
+
+			Object value = entry.getValue();
+
+			if (value instanceof Map) {
+				sb.append(_toString((Map)value));
+			}
+			else {
+				sb.append("\"");
+				sb.append(value);
+				sb.append("\"");
+			}
+
+			if (iterator.hasNext()) {
+				sb.append(", ");
+			}
+		}
+
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	private Map<String, Map<String, String>> _actions;
+	private List<Facet> _facets = new ArrayList<>();
+	private Collection<T> _items;
+	private long _page;
+	private long _pageSize;
+	private long _totalCount;
 
 }

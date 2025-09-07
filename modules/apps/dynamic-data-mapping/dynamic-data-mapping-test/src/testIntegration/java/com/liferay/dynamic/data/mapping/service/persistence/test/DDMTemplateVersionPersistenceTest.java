@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -517,21 +508,63 @@ public class DDMTemplateVersionPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMTemplateVersion existingDDMTemplateVersion =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newDDMTemplateVersion.getPrimaryKey());
+				newDDMTemplateVersion.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMTemplateVersion newDDMTemplateVersion = addDDMTemplateVersion();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMTemplateVersion.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"templateVersionId",
+				newDDMTemplateVersion.getTemplateVersionId()));
+
+		List<DDMTemplateVersion> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDMTemplateVersion ddmTemplateVersion) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDMTemplateVersion.getTemplateId()),
+			Long.valueOf(ddmTemplateVersion.getTemplateId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMTemplateVersion, "getOriginalTemplateId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDMTemplateVersion.getVersion(),
-				ReflectionTestUtil.invoke(
-					existingDDMTemplateVersion, "getOriginalVersion",
-					new Class<?>[0])));
+				ddmTemplateVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "templateId"));
+		Assert.assertEquals(
+			ddmTemplateVersion.getVersion(),
+			ReflectionTestUtil.invoke(
+				ddmTemplateVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "version"));
 	}
 
 	protected DDMTemplateVersion addDDMTemplateVersion() throws Exception {

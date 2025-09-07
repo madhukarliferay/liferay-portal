@@ -1,52 +1,37 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.captcha;
 
 import com.liferay.captcha.taglib.servlet.taglib.CaptchaTag;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.template.soy.data.SoyDataFactory;
-import com.liferay.portal.template.soy.util.SoyRawData;
 import com.liferay.taglib.servlet.PageContextFactoryUtil;
-import com.liferay.taglib.servlet.PipingServletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Collections;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.PageContext;
-
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Bruno Basto
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=captcha",
-	service = {
-		CaptchaDDMFormFieldTemplateContextContributor.class,
-		DDMFormFieldTemplateContextContributor.class
-	}
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.CAPTCHA,
+	service = DDMFormFieldTemplateContextContributor.class
 )
 public class CaptchaDDMFormFieldTemplateContextContributor
 	implements DDMFormFieldTemplateContextContributor {
@@ -61,13 +46,11 @@ public class CaptchaDDMFormFieldTemplateContextContributor
 		try {
 			html = renderCaptchaTag(ddmFormField, ddmFormFieldRenderingContext);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
-		SoyRawData soyRawData = _soyDataFactory.createSoyRawData(html);
-
-		return Collections.singletonMap("html", soyRawData.getValue());
+		return Collections.singletonMap("html", html);
 	}
 
 	protected String renderCaptchaTag(
@@ -87,11 +70,11 @@ public class CaptchaDDMFormFieldTemplateContextContributor
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
-		PageContext pageContext = PageContextFactoryUtil.create(
-			httpServletRequest,
-			new PipingServletResponse(httpServletResponse, unsyncStringWriter));
-
-		captchaTag.setPageContext(pageContext);
+		captchaTag.setPageContext(
+			PageContextFactoryUtil.create(
+				httpServletRequest,
+				new PipingServletResponse(
+					httpServletResponse, unsyncStringWriter)));
 
 		captchaTag.runTag();
 
@@ -100,8 +83,5 @@ public class CaptchaDDMFormFieldTemplateContextContributor
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CaptchaDDMFormFieldTemplateContextContributor.class);
-
-	@Reference
-	private SoyDataFactory _soyDataFactory;
 
 }

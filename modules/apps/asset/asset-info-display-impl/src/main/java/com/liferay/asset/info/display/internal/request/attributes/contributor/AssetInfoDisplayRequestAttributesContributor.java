@@ -1,33 +1,30 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.info.display.internal.request.attributes.contributor;
 
-import com.liferay.asset.display.page.constants.AssetDisplayPageWebKeys;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.info.constants.InfoDisplayWebKeys;
-import com.liferay.info.display.contributor.InfoDisplayContributor;
-import com.liferay.info.display.contributor.InfoDisplayContributorTracker;
-import com.liferay.info.display.contributor.InfoDisplayObjectProvider;
 import com.liferay.info.display.request.attributes.contributor.InfoDisplayRequestAttributesContributor;
+import com.liferay.info.item.ClassPKInfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemDetailsProvider;
+import com.liferay.info.item.provider.InfoItemObjectProvider;
+import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
+import com.liferay.layout.display.page.LayoutDisplayPageProvider;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
+import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -35,9 +32,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(
-	immediate = true, service = InfoDisplayRequestAttributesContributor.class
-)
+@Component(service = InfoDisplayRequestAttributesContributor.class)
 public class AssetInfoDisplayRequestAttributesContributor
 	implements InfoDisplayRequestAttributesContributor {
 
@@ -65,30 +60,58 @@ public class AssetInfoDisplayRequestAttributesContributor
 			return;
 		}
 
-		InfoDisplayContributor infoDisplayContributor =
-			_infoDisplayContributorTracker.getInfoDisplayContributor(
-				assetEntry.getClassName());
+		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
+			_layoutDisplayPageProviderRegistry.
+				getLayoutDisplayPageProviderByClassName(
+					assetEntry.getClassName());
 
 		httpServletRequest.setAttribute(
-			InfoDisplayWebKeys.INFO_DISPLAY_CONTRIBUTOR,
-			infoDisplayContributor);
+			LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_PROVIDER,
+			layoutDisplayPageProvider);
 
 		try {
-			InfoDisplayObjectProvider infoDisplayObjectProvider =
-				infoDisplayContributor.getInfoDisplayObjectProvider(
-					assetEntry.getClassPK());
+			LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider =
+				layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
+					new InfoItemReference(
+						assetEntry.getClassName(), assetEntry.getClassPK()));
 
-			if (infoDisplayObjectProvider != null) {
+			if (layoutDisplayPageObjectProvider != null) {
 				httpServletRequest.setAttribute(
-					AssetDisplayPageWebKeys.INFO_DISPLAY_OBJECT_PROVIDER,
-					infoDisplayObjectProvider);
+					LayoutDisplayPageWebKeys.
+						LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
+					layoutDisplayPageObjectProvider);
+			}
+
+			InfoItemObjectProvider<?> infoItemObjectProvider =
+				_infoItemServiceRegistry.getFirstInfoItemService(
+					InfoItemObjectProvider.class, assetEntry.getClassName(),
+					ClassPKInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
+
+			if (infoItemObjectProvider != null) {
+				Object infoItem = infoItemObjectProvider.getInfoItem(
+					new ClassPKInfoItemIdentifier(assetEntry.getClassPK()));
+
+				httpServletRequest.setAttribute(
+					InfoDisplayWebKeys.INFO_ITEM, infoItem);
+
+				InfoItemDetailsProvider infoItemDetailsProvider =
+					_infoItemServiceRegistry.getFirstInfoItemService(
+						InfoItemDetailsProvider.class,
+						assetEntry.getClassName());
+
+				httpServletRequest.setAttribute(
+					InfoDisplayWebKeys.INFO_ITEM_DETAILS,
+					infoItemDetailsProvider.getInfoItemDetails(infoItem));
 			}
 		}
-		catch (Exception e) {
-			_log.error("Unable to get info display object provider", e);
+		catch (Exception exception) {
+			_log.error("Unable to get info display object provider", exception);
 		}
 
 		httpServletRequest.setAttribute(WebKeys.LAYOUT_ASSET_ENTRY, assetEntry);
+
+		LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+			httpServletRequest, assetEntry.getEntryId());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -98,6 +121,10 @@ public class AssetInfoDisplayRequestAttributesContributor
 	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Reference
-	private InfoDisplayContributorTracker _infoDisplayContributorTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 }

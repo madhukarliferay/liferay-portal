@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence;
@@ -52,8 +43,8 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		return _assigneeClassName;
 	}
 
-	public Long getAssigneeClassPK() {
-		return _assigneeClassPK;
+	public Long[] getAssigneeClassPKs() {
+		return _assigneeClassPKs;
 	}
 
 	public long getCompanyId() {
@@ -72,8 +63,12 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		return _end;
 	}
 
-	public Long getKaleoInstanceId() {
-		return _kaleoInstanceId;
+	public Long getKaleoDefinitionId() {
+		return _kaleoDefinitionId;
+	}
+
+	public Long[] getKaleoInstanceIds() {
+		return _kaleoInstanceIds;
 	}
 
 	public OrderByComparator<KaleoTaskInstanceToken> getOrderByComparator() {
@@ -92,8 +87,8 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		return _start;
 	}
 
-	public String getTaskName() {
-		return _taskName;
+	public String[] getTaskNames() {
+		return _taskNames;
 	}
 
 	public long getUserId() {
@@ -106,6 +101,10 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 
 	public Boolean isCompleted() {
 		return _completed;
+	}
+
+	public boolean isSearchByActiveWorkflowHandlers() {
+		return _searchByActiveWorkflowHandlers;
 	}
 
 	public Boolean isSearchByUserRoles() {
@@ -132,8 +131,8 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		_assigneeClassName = assigneeClassName;
 	}
 
-	public void setAssigneeClassPK(Long assigneeClassPK) {
-		_assigneeClassPK = assigneeClassPK;
+	public void setAssigneeClassPKs(Long[] assigneeClassPKs) {
+		_assigneeClassPKs = assigneeClassPKs;
 	}
 
 	public void setCompanyId(long companyId) {
@@ -156,8 +155,12 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		_end = end;
 	}
 
-	public void setKaleoInstanceId(Long kaleoInstanceId) {
-		_kaleoInstanceId = kaleoInstanceId;
+	public void setKaleoDefinitionId(Long kaleoDefinitionId) {
+		_kaleoDefinitionId = kaleoDefinitionId;
+	}
+
+	public void setKaleoInstanceIds(Long[] kaleoInstanceIds) {
+		_kaleoInstanceIds = kaleoInstanceIds;
 	}
 
 	public void setOrderByComparator(
@@ -168,6 +171,12 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 
 	public void setRoleIds(List<Long> roleIds) {
 		_roleIds = roleIds;
+	}
+
+	public void setSearchByActiveWorkflowHandlers(
+		boolean searchByActiveWorkflowHandlers) {
+
+		_searchByActiveWorkflowHandlers = searchByActiveWorkflowHandlers;
 	}
 
 	public void setSearchByUserRoles(Boolean searchByUserRoles) {
@@ -182,8 +191,8 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 		_start = start;
 	}
 
-	public void setTaskName(String taskName) {
-		_taskName = taskName;
+	public void setTaskNames(String[] taskNames) {
+		_taskNames = taskNames;
 	}
 
 	public void setUserId(long userId) {
@@ -195,19 +204,21 @@ public class KaleoTaskInstanceTokenQuery implements Serializable {
 	private String _assetTitle;
 	private String[] _assetTypes;
 	private String _assigneeClassName;
-	private Long _assigneeClassPK;
+	private Long[] _assigneeClassPKs;
 	private long _companyId;
 	private Boolean _completed;
 	private Date _dueDateGT;
 	private Date _dueDateLT;
 	private int _end = QueryUtil.ALL_POS;
-	private Long _kaleoInstanceId;
+	private Long _kaleoDefinitionId;
+	private Long[] _kaleoInstanceIds;
 	private OrderByComparator<KaleoTaskInstanceToken> _orderByComparator;
 	private List<Long> _roleIds;
+	private boolean _searchByActiveWorkflowHandlers;
 	private Boolean _searchByUserRoles;
 	private ServiceContext _serviceContext;
 	private int _start = QueryUtil.ALL_POS;
-	private String _taskName;
+	private String[] _taskNames;
 	private long _userId;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.web.internal.template;
@@ -25,8 +16,6 @@ import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
-import com.liferay.portal.kernel.template.TemplateManager;
-import com.liferay.portal.kernel.template.TemplateManagerUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -34,9 +23,9 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.templateparser.Transformer;
 
-import java.util.Map;
+import jakarta.portlet.RenderRequest;
 
-import javax.portlet.RenderRequest;
+import java.util.Map;
 
 /**
  * @author Marcellus Tavares
@@ -56,13 +45,6 @@ public class DDLDisplayTemplateTransformer {
 	public String transform() throws Exception {
 		Transformer transformer = TransformerHolder.getTransformer();
 
-		String viewMode = Constants.VIEW;
-
-		if (_renderRequest != null) {
-			viewMode = ParamUtil.getString(
-				_renderRequest, "viewMode", Constants.VIEW);
-		}
-
 		Map<String, Object> contextObjects = HashMapBuilder.<String, Object>put(
 			DDLConstants.RESERVED_DDM_STRUCTURE_ID,
 			_recordSet.getDDMStructureId()
@@ -79,7 +61,15 @@ public class DDLDisplayTemplateTransformer {
 		).put(
 			TemplateConstants.TEMPLATE_ID, _ddmTemplateId
 		).put(
-			"viewMode", viewMode
+			"viewMode",
+			() -> {
+				if (_renderRequest != null) {
+					return ParamUtil.getString(
+						_renderRequest, "viewMode", Constants.VIEW);
+				}
+
+				return Constants.VIEW;
+			}
 		).build();
 
 		DDMTemplate ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
@@ -88,23 +78,17 @@ public class DDLDisplayTemplateTransformer {
 		contextObjects.put(
 			TemplateConstants.CLASS_NAME_ID, ddmTemplate.getClassNameId());
 
-		TemplateManager templateManager =
-			TemplateManagerUtil.getTemplateManager(ddmTemplate.getLanguage());
-
 		TemplateHandler templateHandler =
 			TemplateHandlerRegistryUtil.getTemplateHandler(
 				DDLRecordSet.class.getName());
 
-		templateManager.addContextObjects(
-			contextObjects, templateHandler.getCustomContextObjects());
-
-		templateManager.addTaglibSupport(
-			contextObjects, PortalUtil.getHttpServletRequest(_renderRequest),
-			_themeDisplay.getResponse());
+		contextObjects.putAll(templateHandler.getCustomContextObjects());
 
 		return transformer.transform(
 			_themeDisplay, contextObjects, ddmTemplate.getScript(),
-			ddmTemplate.getLanguage(), new UnsyncStringWriter());
+			ddmTemplate.getLanguage(), new UnsyncStringWriter(),
+			PortalUtil.getHttpServletRequest(_renderRequest),
+			_themeDisplay.getResponse());
 	}
 
 	private final long _ddmTemplateId;

@@ -1,28 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.dao.orm;
 
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+
 import java.io.Serializable;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
+@ProviderType
 public interface Session {
+
+	public void apply(UnsafeConsumer<Connection, SQLException> unsafeConsumer)
+		throws ORMException;
 
 	public void clear() throws ORMException;
 
@@ -40,6 +41,9 @@ public interface Session {
 	public SQLQuery createSQLQuery(String queryString, boolean strictName)
 		throws ORMException;
 
+	public SQLQuery createSynchronizedSQLQuery(DSLQuery dslQuery)
+		throws ORMException;
+
 	public SQLQuery createSynchronizedSQLQuery(String queryString)
 		throws ORMException;
 
@@ -47,7 +51,13 @@ public interface Session {
 			String queryString, boolean strictName)
 		throws ORMException;
 
+	public SQLQuery createSynchronizedSQLQuery(
+			String queryString, boolean strictName, String[] tableNames)
+		throws ORMException;
+
 	public void delete(Object object) throws ORMException;
+
+	public void evict(Class<?> clazz, Serializable id) throws ORMException;
 
 	public void evict(Object object) throws ORMException;
 

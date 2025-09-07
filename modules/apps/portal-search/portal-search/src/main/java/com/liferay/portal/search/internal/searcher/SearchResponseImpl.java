@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.searcher;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SearchContext;
@@ -24,10 +16,14 @@ import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.groupby.GroupByResponse;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
+import com.liferay.portal.search.hits.SearchHitsBuilder;
+import com.liferay.portal.search.hits.SearchHitsBuilderFactory;
+import com.liferay.portal.search.internal.hits.SearchHitsBuilderFactoryImpl;
 import com.liferay.portal.search.internal.legacy.searcher.FacetContextImpl;
 import com.liferay.portal.search.searcher.FacetContext;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchResponse;
+import com.liferay.portal.search.searcher.SearchTimeValue;
 import com.liferay.portal.search.stats.StatsResponse;
 
 import java.io.Serializable;
@@ -41,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * @author André de Oliveira
@@ -49,8 +44,9 @@ import java.util.stream.Stream;
 public class SearchResponseImpl implements SearchResponse, Serializable {
 
 	public SearchResponseImpl(SearchContext searchContext) {
-		_facetContextImpl = new FacetContextImpl(searchContext);
 		_searchContext = searchContext;
+
+		_facetContextImpl = new FacetContextImpl(searchContext);
 	}
 
 	public void addFederatedSearchResponse(SearchResponse searchResponse) {
@@ -74,26 +70,22 @@ public class SearchResponseImpl implements SearchResponse, Serializable {
 	}
 
 	@Override
+	public List<Document> getDocuments() {
+		if (_searchHits == null) {
+			return Collections.emptyList();
+		}
+
+		return TransformUtil.transform(
+			_searchHits.getSearchHits(), SearchHit::getDocument);
+	}
+
+	@Override
 	public List<com.liferay.portal.kernel.search.Document> getDocuments71() {
 		if (_hits == null) {
 			return Collections.emptyList();
 		}
 
 		return Arrays.asList(_hits.getDocs());
-	}
-
-	@Override
-	public Stream<Document> getDocumentsStream() {
-		if (_searchHits == null) {
-			return Stream.empty();
-		}
-
-		List<SearchHit> list = _searchHits.getSearchHits();
-
-		return list.stream(
-		).map(
-			SearchHit::getDocument
-		);
 	}
 
 	@Override
@@ -111,11 +103,8 @@ public class SearchResponseImpl implements SearchResponse, Serializable {
 	}
 
 	@Override
-	public Stream<SearchResponse> getFederatedSearchResponsesStream() {
-		Collection<SearchResponse> searchResponses =
-			_federatedSearchResponsesMap.values();
-
-		return searchResponses.stream();
+	public Collection<SearchResponse> getFederatedSearchResponses() {
+		return _federatedSearchResponsesMap.values();
 	}
 
 	@Override
@@ -140,7 +129,19 @@ public class SearchResponseImpl implements SearchResponse, Serializable {
 
 	@Override
 	public SearchHits getSearchHits() {
+		if (_searchHits == null) {
+			SearchHitsBuilder searchHitsBuilder =
+				_searchHitsBuilderFactory.getSearchHitsBuilder();
+
+			return searchHitsBuilder.build();
+		}
+
 		return _searchHits;
+	}
+
+	@Override
+	public SearchTimeValue getSearchTimeValue() {
+		return _searchTimeValue;
 	}
 
 	@Override
@@ -199,6 +200,10 @@ public class SearchResponseImpl implements SearchResponse, Serializable {
 		_searchHits = searchHits;
 	}
 
+	public void setSearchTimeValue(SearchTimeValue searchTimeValue) {
+		_searchTimeValue = searchTimeValue;
+	}
+
 	public void setStatsResponseMap(Map<String, StatsResponse> map) {
 		_statsResponseMap.clear();
 
@@ -252,7 +257,10 @@ public class SearchResponseImpl implements SearchResponse, Serializable {
 	private String _responseString = StringPool.BLANK;
 	private final SearchContext _searchContext;
 	private SearchHits _searchHits;
+	private final SearchHitsBuilderFactory _searchHitsBuilderFactory =
+		new SearchHitsBuilderFactoryImpl();
 	private SearchRequest _searchRequest;
+	private SearchTimeValue _searchTimeValue;
 	private final Map<String, StatsResponse> _statsResponseMap =
 		new LinkedHashMap<>();
 

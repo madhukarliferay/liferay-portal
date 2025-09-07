@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.changeset.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ChangesetEntryLocalService}.
@@ -27,6 +19,10 @@ public class ChangesetEntryLocalServiceWrapper
 	implements ChangesetEntryLocalService,
 			   ServiceWrapper<ChangesetEntryLocalService> {
 
+	public ChangesetEntryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ChangesetEntryLocalServiceWrapper(
 		ChangesetEntryLocalService changesetEntryLocalService) {
 
@@ -35,6 +31,10 @@ public class ChangesetEntryLocalServiceWrapper
 
 	/**
 	 * Adds the changeset entry to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ChangesetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param changesetEntry the changeset entry
 	 * @return the changeset entry that was added
@@ -70,23 +70,34 @@ public class ChangesetEntryLocalServiceWrapper
 			changesetEntryId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
-	public void deleteChangesetEntries(long changesetCollectionId)
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
+		return _changesetEntryLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	@Override
+	public void deleteChangesetEntries(long changesetCollectionId) {
 		_changesetEntryLocalService.deleteChangesetEntries(
 			changesetCollectionId);
 	}
 
 	@Override
-	public void deleteChangesetEntries(java.util.Set<Long> changesetEntryIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public void deleteChangesetEntries(java.util.Set<Long> changesetEntryIds) {
 		_changesetEntryLocalService.deleteChangesetEntries(changesetEntryIds);
 	}
 
 	/**
 	 * Deletes the changeset entry from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ChangesetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param changesetEntry the changeset entry
 	 * @return the changeset entry that was removed
@@ -100,6 +111,10 @@ public class ChangesetEntryLocalServiceWrapper
 
 	/**
 	 * Deletes the changeset entry with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ChangesetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param changesetEntryId the primary key of the changeset entry
 	 * @return the changeset entry that was removed
@@ -129,6 +144,18 @@ public class ChangesetEntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _changesetEntryLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _changesetEntryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _changesetEntryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -354,6 +381,9 @@ public class ChangesetEntryLocalServiceWrapper
 		return _changesetEntryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -365,6 +395,10 @@ public class ChangesetEntryLocalServiceWrapper
 	/**
 	 * Updates the changeset entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ChangesetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param changesetEntry the changeset entry
 	 * @return the changeset entry that was updated
 	 */
@@ -373,6 +407,11 @@ public class ChangesetEntryLocalServiceWrapper
 		com.liferay.changeset.model.ChangesetEntry changesetEntry) {
 
 		return _changesetEntryLocalService.updateChangesetEntry(changesetEntry);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _changesetEntryLocalService.getBasePersistence();
 	}
 
 	@Override

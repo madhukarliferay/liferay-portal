@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.trash.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the trash version service. This utility wraps <code>com.liferay.trash.service.persistence.impl.TrashVersionPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class TrashVersionUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -296,8 +283,10 @@ public class TrashVersionUtil {
 	 * @param classNameId the class name ID
 	 * @return the matching trash versions
 	 */
-	public static List<TrashVersion> findByE_C(long entryId, long classNameId) {
-		return getPersistence().findByE_C(entryId, classNameId);
+	public static List<TrashVersion> findByE_CN(
+		long entryId, long classNameId) {
+
+		return getPersistence().findByE_CN(entryId, classNameId);
 	}
 
 	/**
@@ -313,10 +302,10 @@ public class TrashVersionUtil {
 	 * @param end the upper bound of the range of trash versions (not inclusive)
 	 * @return the range of matching trash versions
 	 */
-	public static List<TrashVersion> findByE_C(
+	public static List<TrashVersion> findByE_CN(
 		long entryId, long classNameId, int start, int end) {
 
-		return getPersistence().findByE_C(entryId, classNameId, start, end);
+		return getPersistence().findByE_CN(entryId, classNameId, start, end);
 	}
 
 	/**
@@ -333,11 +322,11 @@ public class TrashVersionUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching trash versions
 	 */
-	public static List<TrashVersion> findByE_C(
+	public static List<TrashVersion> findByE_CN(
 		long entryId, long classNameId, int start, int end,
 		OrderByComparator<TrashVersion> orderByComparator) {
 
-		return getPersistence().findByE_C(
+		return getPersistence().findByE_CN(
 			entryId, classNameId, start, end, orderByComparator);
 	}
 
@@ -356,12 +345,12 @@ public class TrashVersionUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching trash versions
 	 */
-	public static List<TrashVersion> findByE_C(
+	public static List<TrashVersion> findByE_CN(
 		long entryId, long classNameId, int start, int end,
 		OrderByComparator<TrashVersion> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByE_C(
+		return getPersistence().findByE_CN(
 			entryId, classNameId, start, end, orderByComparator,
 			useFinderCache);
 	}
@@ -375,12 +364,12 @@ public class TrashVersionUtil {
 	 * @return the first matching trash version
 	 * @throws NoSuchVersionException if a matching trash version could not be found
 	 */
-	public static TrashVersion findByE_C_First(
+	public static TrashVersion findByE_CN_First(
 			long entryId, long classNameId,
 			OrderByComparator<TrashVersion> orderByComparator)
 		throws com.liferay.trash.exception.NoSuchVersionException {
 
-		return getPersistence().findByE_C_First(
+		return getPersistence().findByE_CN_First(
 			entryId, classNameId, orderByComparator);
 	}
 
@@ -392,11 +381,11 @@ public class TrashVersionUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching trash version, or <code>null</code> if a matching trash version could not be found
 	 */
-	public static TrashVersion fetchByE_C_First(
+	public static TrashVersion fetchByE_CN_First(
 		long entryId, long classNameId,
 		OrderByComparator<TrashVersion> orderByComparator) {
 
-		return getPersistence().fetchByE_C_First(
+		return getPersistence().fetchByE_CN_First(
 			entryId, classNameId, orderByComparator);
 	}
 
@@ -409,12 +398,12 @@ public class TrashVersionUtil {
 	 * @return the last matching trash version
 	 * @throws NoSuchVersionException if a matching trash version could not be found
 	 */
-	public static TrashVersion findByE_C_Last(
+	public static TrashVersion findByE_CN_Last(
 			long entryId, long classNameId,
 			OrderByComparator<TrashVersion> orderByComparator)
 		throws com.liferay.trash.exception.NoSuchVersionException {
 
-		return getPersistence().findByE_C_Last(
+		return getPersistence().findByE_CN_Last(
 			entryId, classNameId, orderByComparator);
 	}
 
@@ -426,11 +415,11 @@ public class TrashVersionUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching trash version, or <code>null</code> if a matching trash version could not be found
 	 */
-	public static TrashVersion fetchByE_C_Last(
+	public static TrashVersion fetchByE_CN_Last(
 		long entryId, long classNameId,
 		OrderByComparator<TrashVersion> orderByComparator) {
 
-		return getPersistence().fetchByE_C_Last(
+		return getPersistence().fetchByE_CN_Last(
 			entryId, classNameId, orderByComparator);
 	}
 
@@ -444,12 +433,12 @@ public class TrashVersionUtil {
 	 * @return the previous, current, and next trash version
 	 * @throws NoSuchVersionException if a trash version with the primary key could not be found
 	 */
-	public static TrashVersion[] findByE_C_PrevAndNext(
+	public static TrashVersion[] findByE_CN_PrevAndNext(
 			long versionId, long entryId, long classNameId,
 			OrderByComparator<TrashVersion> orderByComparator)
 		throws com.liferay.trash.exception.NoSuchVersionException {
 
-		return getPersistence().findByE_C_PrevAndNext(
+		return getPersistence().findByE_CN_PrevAndNext(
 			versionId, entryId, classNameId, orderByComparator);
 	}
 
@@ -459,8 +448,8 @@ public class TrashVersionUtil {
 	 * @param entryId the entry ID
 	 * @param classNameId the class name ID
 	 */
-	public static void removeByE_C(long entryId, long classNameId) {
-		getPersistence().removeByE_C(entryId, classNameId);
+	public static void removeByE_CN(long entryId, long classNameId) {
+		getPersistence().removeByE_CN(entryId, classNameId);
 	}
 
 	/**
@@ -470,8 +459,8 @@ public class TrashVersionUtil {
 	 * @param classNameId the class name ID
 	 * @return the number of matching trash versions
 	 */
-	public static int countByE_C(long entryId, long classNameId) {
-		return getPersistence().countByE_C(entryId, classNameId);
+	public static int countByE_CN(long entryId, long classNameId) {
+		return getPersistence().countByE_CN(entryId, classNameId);
 	}
 
 	/**
@@ -482,10 +471,10 @@ public class TrashVersionUtil {
 	 * @return the matching trash version
 	 * @throws NoSuchVersionException if a matching trash version could not be found
 	 */
-	public static TrashVersion findByC_C(long classNameId, long classPK)
+	public static TrashVersion findByCN_CPK(long classNameId, long classPK)
 		throws com.liferay.trash.exception.NoSuchVersionException {
 
-		return getPersistence().findByC_C(classNameId, classPK);
+		return getPersistence().findByCN_CPK(classNameId, classPK);
 	}
 
 	/**
@@ -495,8 +484,8 @@ public class TrashVersionUtil {
 	 * @param classPK the class pk
 	 * @return the matching trash version, or <code>null</code> if a matching trash version could not be found
 	 */
-	public static TrashVersion fetchByC_C(long classNameId, long classPK) {
-		return getPersistence().fetchByC_C(classNameId, classPK);
+	public static TrashVersion fetchByCN_CPK(long classNameId, long classPK) {
+		return getPersistence().fetchByCN_CPK(classNameId, classPK);
 	}
 
 	/**
@@ -507,10 +496,10 @@ public class TrashVersionUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching trash version, or <code>null</code> if a matching trash version could not be found
 	 */
-	public static TrashVersion fetchByC_C(
+	public static TrashVersion fetchByCN_CPK(
 		long classNameId, long classPK, boolean useFinderCache) {
 
-		return getPersistence().fetchByC_C(
+		return getPersistence().fetchByCN_CPK(
 			classNameId, classPK, useFinderCache);
 	}
 
@@ -521,10 +510,10 @@ public class TrashVersionUtil {
 	 * @param classPK the class pk
 	 * @return the trash version that was removed
 	 */
-	public static TrashVersion removeByC_C(long classNameId, long classPK)
+	public static TrashVersion removeByCN_CPK(long classNameId, long classPK)
 		throws com.liferay.trash.exception.NoSuchVersionException {
 
-		return getPersistence().removeByC_C(classNameId, classPK);
+		return getPersistence().removeByCN_CPK(classNameId, classPK);
 	}
 
 	/**
@@ -534,8 +523,8 @@ public class TrashVersionUtil {
 	 * @param classPK the class pk
 	 * @return the number of matching trash versions
 	 */
-	public static int countByC_C(long classNameId, long classPK) {
-		return getPersistence().countByC_C(classNameId, classPK);
+	public static int countByCN_CPK(long classNameId, long classPK) {
+		return getPersistence().countByCN_CPK(classNameId, classPK);
 	}
 
 	/**
@@ -686,25 +675,13 @@ public class TrashVersionUtil {
 	}
 
 	public static TrashVersionPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<TrashVersionPersistence, TrashVersionPersistence> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(TrashVersionPersistence.class);
-
-		ServiceTracker<TrashVersionPersistence, TrashVersionPersistence>
-			serviceTracker =
-				new ServiceTracker
-					<TrashVersionPersistence, TrashVersionPersistence>(
-						bundle.getBundleContext(),
-						TrashVersionPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(TrashVersionPersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile TrashVersionPersistence _persistence;
 
 }

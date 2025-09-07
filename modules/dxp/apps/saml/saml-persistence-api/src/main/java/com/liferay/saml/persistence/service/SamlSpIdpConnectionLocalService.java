@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service;
 
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
@@ -57,14 +49,27 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface SamlSpIdpConnectionLocalService
 	extends BaseLocalService, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link SamlSpIdpConnectionLocalServiceUtil} to access the saml sp idp connection local service. Add custom service methods to <code>com.liferay.saml.persistence.service.impl.SamlSpIdpConnectionLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.saml.persistence.service.impl.SamlSpIdpConnectionLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the saml sp idp connection local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link SamlSpIdpConnectionLocalServiceUtil} if injection and service tracking are not available.
 	 */
+	public SamlSpIdpConnection addSamlSpIdpConnection(
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, String userIdentifierExpression,
+			ServiceContext serviceContext)
+		throws PortalException;
 
 	/**
 	 * Adds the saml sp idp connection to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was added
@@ -73,13 +78,10 @@ public interface SamlSpIdpConnectionLocalService
 	public SamlSpIdpConnection addSamlSpIdpConnection(
 		SamlSpIdpConnection samlSpIdpConnection);
 
-	public SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
+	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
 	/**
@@ -102,6 +104,10 @@ public interface SamlSpIdpConnectionLocalService
 	/**
 	 * Deletes the saml sp idp connection with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpIdpConnectionId the primary key of the saml sp idp connection
 	 * @return the saml sp idp connection that was removed
 	 * @throws PortalException if a saml sp idp connection with the primary key could not be found
@@ -114,12 +120,22 @@ public interface SamlSpIdpConnectionLocalService
 	/**
 	 * Deletes the saml sp idp connection from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was removed
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	public SamlSpIdpConnection deleteSamlSpIdpConnection(
 		SamlSpIdpConnection samlSpIdpConnection);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -204,6 +220,9 @@ public interface SamlSpIdpConnectionLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -251,7 +270,7 @@ public interface SamlSpIdpConnectionLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<SamlSpIdpConnection> getSamlSpIdpConnections(
 		long companyId, int start, int end,
-		OrderByComparator orderByComparator);
+		OrderByComparator<SamlSpIdpConnection> orderByComparator);
 
 	/**
 	 * Returns the number of saml sp idp connections.
@@ -268,16 +287,22 @@ public interface SamlSpIdpConnectionLocalService
 		throws PortalException;
 
 	public SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean forceAuthn,
+			boolean ldapImportEnabled, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, String userIdentifierExpression,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Updates the saml sp idp connection in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was updated

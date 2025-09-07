@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class KBFolderWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("kbFolderId", getKbFolderId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -57,6 +52,10 @@ public class KBFolderWrapper
 		attributes.put("urlTitle", getUrlTitle());
 		attributes.put("description", getDescription());
 		attributes.put("lastPublishDate", getLastPublishDate());
+		attributes.put("status", getStatus());
+		attributes.put("statusByUserId", getStatusByUserId());
+		attributes.put("statusByUserName", getStatusByUserName());
+		attributes.put("statusDate", getStatusDate());
 
 		return attributes;
 	}
@@ -69,10 +68,23 @@ public class KBFolderWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long kbFolderId = (Long)attributes.get("kbFolderId");
@@ -146,6 +158,35 @@ public class KBFolderWrapper
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
+
+		Long statusByUserId = (Long)attributes.get("statusByUserId");
+
+		if (statusByUserId != null) {
+			setStatusByUserId(statusByUserId);
+		}
+
+		String statusByUserName = (String)attributes.get("statusByUserName");
+
+		if (statusByUserName != null) {
+			setStatusByUserName(statusByUserName);
+		}
+
+		Date statusDate = (Date)attributes.get("statusDate");
+
+		if (statusDate != null) {
+			setStatusDate(statusDate);
+		}
+	}
+
+	@Override
+	public KBFolder cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -153,6 +194,13 @@ public class KBFolderWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getAncestorKBFolderIds();
+	}
+
+	@Override
+	public java.util.List<KBFolder> getAncestorKBFolders()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getAncestorKBFolders();
 	}
 
 	@Override
@@ -171,6 +219,26 @@ public class KBFolderWrapper
 	}
 
 	/**
+	 * Returns the container model ID of this kb folder.
+	 *
+	 * @return the container model ID of this kb folder
+	 */
+	@Override
+	public long getContainerModelId() {
+		return model.getContainerModelId();
+	}
+
+	/**
+	 * Returns the container name of this kb folder.
+	 *
+	 * @return the container name of this kb folder
+	 */
+	@Override
+	public String getContainerModelName() {
+		return model.getContainerModelName();
+	}
+
+	/**
 	 * Returns the create date of this kb folder.
 	 *
 	 * @return the create date of this kb folder
@@ -181,6 +249,16 @@ public class KBFolderWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this kb folder.
+	 *
+	 * @return the ct collection ID of this kb folder
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the description of this kb folder.
 	 *
 	 * @return the description of this kb folder
@@ -188,6 +266,16 @@ public class KBFolderWrapper
 	@Override
 	public String getDescription() {
 		return model.getDescription();
+	}
+
+	/**
+	 * Returns the external reference code of this kb folder.
+	 *
+	 * @return the external reference code of this kb folder
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -250,6 +338,16 @@ public class KBFolderWrapper
 		return model.getName();
 	}
 
+	/**
+	 * Returns the parent container model ID of this kb folder.
+	 *
+	 * @return the parent container model ID of this kb folder
+	 */
+	@Override
+	public long getParentContainerModelId() {
+		return model.getParentContainerModelId();
+	}
+
 	@Override
 	public KBFolder getParentKBFolder()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -282,6 +380,66 @@ public class KBFolderWrapper
 	@Override
 	public long getPrimaryKey() {
 		return model.getPrimaryKey();
+	}
+
+	/**
+	 * Returns the status of this kb folder.
+	 *
+	 * @return the status of this kb folder
+	 */
+	@Override
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
+	 * Returns the status by user ID of this kb folder.
+	 *
+	 * @return the status by user ID of this kb folder
+	 */
+	@Override
+	public long getStatusByUserId() {
+		return model.getStatusByUserId();
+	}
+
+	/**
+	 * Returns the status by user name of this kb folder.
+	 *
+	 * @return the status by user name of this kb folder
+	 */
+	@Override
+	public String getStatusByUserName() {
+		return model.getStatusByUserName();
+	}
+
+	/**
+	 * Returns the status by user uuid of this kb folder.
+	 *
+	 * @return the status by user uuid of this kb folder
+	 */
+	@Override
+	public String getStatusByUserUuid() {
+		return model.getStatusByUserUuid();
+	}
+
+	/**
+	 * Returns the status date of this kb folder.
+	 *
+	 * @return the status date of this kb folder
+	 */
+	@Override
+	public Date getStatusDate() {
+		return model.getStatusDate();
+	}
+
+	/**
+	 * Returns the class primary key of the trash entry for this kb folder.
+	 *
+	 * @return the class primary key of the trash entry for this kb folder
+	 */
+	@Override
+	public long getTrashEntryClassPK() {
+		return model.getTrashEntryClassPK();
 	}
 
 	/**
@@ -334,11 +492,91 @@ public class KBFolderWrapper
 		return model.getUuid();
 	}
 
+	/**
+	 * Returns <code>true</code> if this kb folder is approved.
+	 *
+	 * @return <code>true</code> if this kb folder is approved; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isApproved() {
+		return model.isApproved();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is denied.
+	 *
+	 * @return <code>true</code> if this kb folder is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied() {
+		return model.isDenied();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is a draft.
+	 *
+	 * @return <code>true</code> if this kb folder is a draft; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDraft() {
+		return model.isDraft();
+	}
+
 	@Override
 	public boolean isEmpty()
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.isEmpty();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is expired.
+	 *
+	 * @return <code>true</code> if this kb folder is expired; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isExpired() {
+		return model.isExpired();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is inactive.
+	 *
+	 * @return <code>true</code> if this kb folder is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive() {
+		return model.isInactive();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is incomplete.
+	 *
+	 * @return <code>true</code> if this kb folder is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete() {
+		return model.isIncomplete();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this kb folder is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash() {
+		return model.isInTrash();
+	}
+
+	/**
+	 * Returns <code>true</code> if this kb folder is pending.
+	 *
+	 * @return <code>true</code> if this kb folder is pending; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPending() {
+		return model.isPending();
 	}
 
 	@Override
@@ -347,10 +585,15 @@ public class KBFolderWrapper
 	}
 
 	/**
-	 * NOTE FOR DEVELOPERS:
+	 * Returns <code>true</code> if this kb folder is scheduled.
 	 *
-	 * Never modify or reference this class directly. All methods that expect a kb folder model instance should use the <code>KBFolder</code> interface instead.
+	 * @return <code>true</code> if this kb folder is scheduled; <code>false</code> otherwise
 	 */
+	@Override
+	public boolean isScheduled() {
+		return model.isScheduled();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -367,6 +610,16 @@ public class KBFolderWrapper
 	}
 
 	/**
+	 * Sets the container model ID of this kb folder.
+	 *
+	 * @param containerModelId the container model ID of this kb folder
+	 */
+	@Override
+	public void setContainerModelId(long containerModelId) {
+		model.setContainerModelId(containerModelId);
+	}
+
+	/**
 	 * Sets the create date of this kb folder.
 	 *
 	 * @param createDate the create date of this kb folder
@@ -377,6 +630,16 @@ public class KBFolderWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this kb folder.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kb folder
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the description of this kb folder.
 	 *
 	 * @param description the description of this kb folder
@@ -384,6 +647,16 @@ public class KBFolderWrapper
 	@Override
 	public void setDescription(String description) {
 		model.setDescription(description);
+	}
+
+	/**
+	 * Sets the external reference code of this kb folder.
+	 *
+	 * @param externalReferenceCode the external reference code of this kb folder
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -447,6 +720,16 @@ public class KBFolderWrapper
 	}
 
 	/**
+	 * Sets the parent container model ID of this kb folder.
+	 *
+	 * @param parentContainerModelId the parent container model ID of this kb folder
+	 */
+	@Override
+	public void setParentContainerModelId(long parentContainerModelId) {
+		model.setParentContainerModelId(parentContainerModelId);
+	}
+
+	/**
 	 * Sets the parent kb folder ID of this kb folder.
 	 *
 	 * @param parentKBFolderId the parent kb folder ID of this kb folder
@@ -464,6 +747,56 @@ public class KBFolderWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
+	}
+
+	/**
+	 * Sets the status of this kb folder.
+	 *
+	 * @param status the status of this kb folder
+	 */
+	@Override
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
+	 * Sets the status by user ID of this kb folder.
+	 *
+	 * @param statusByUserId the status by user ID of this kb folder
+	 */
+	@Override
+	public void setStatusByUserId(long statusByUserId) {
+		model.setStatusByUserId(statusByUserId);
+	}
+
+	/**
+	 * Sets the status by user name of this kb folder.
+	 *
+	 * @param statusByUserName the status by user name of this kb folder
+	 */
+	@Override
+	public void setStatusByUserName(String statusByUserName) {
+		model.setStatusByUserName(statusByUserName);
+	}
+
+	/**
+	 * Sets the status by user uuid of this kb folder.
+	 *
+	 * @param statusByUserUuid the status by user uuid of this kb folder
+	 */
+	@Override
+	public void setStatusByUserUuid(String statusByUserUuid) {
+		model.setStatusByUserUuid(statusByUserUuid);
+	}
+
+	/**
+	 * Sets the status date of this kb folder.
+	 *
+	 * @param statusDate the status date of this kb folder
+	 */
+	@Override
+	public void setStatusDate(Date statusDate) {
+		model.setStatusDate(statusDate);
 	}
 
 	/**
@@ -514,6 +847,25 @@ public class KBFolderWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<KBFolder, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<KBFolder, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.NoSuchPortletItemException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.PortletItemNameException;
@@ -22,6 +14,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PortletItem;
 import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.base.PortletItemLocalServiceBaseImpl;
 
@@ -39,8 +33,7 @@ public class PortletItemLocalServiceImpl
 			String className)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
-		long classNameId = classNameLocalService.getClassNameId(className);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		validate(name);
 
@@ -54,11 +47,10 @@ public class PortletItemLocalServiceImpl
 		portletItem.setUserName(user.getFullName());
 		portletItem.setName(name);
 		portletItem.setPortletId(portletId);
-		portletItem.setClassNameId(classNameId);
+		portletItem.setClassNameId(
+			_classNameLocalService.getClassNameId(className));
 
-		portletItemPersistence.update(portletItem);
-
-		return portletItem;
+		return portletItemPersistence.update(portletItem);
 	}
 
 	@Override
@@ -68,13 +60,13 @@ public class PortletItemLocalServiceImpl
 
 		return portletItemPersistence.findByG_N_P_C(
 			groupId, name, portletId,
-			classNameLocalService.getClassNameId(className));
+			_classNameLocalService.getClassNameId(className));
 	}
 
 	@Override
 	public List<PortletItem> getPortletItems(long groupId, String className) {
 		return portletItemPersistence.findByG_C(
-			groupId, classNameLocalService.getClassNameId(className));
+			groupId, _classNameLocalService.getClassNameId(className));
 	}
 
 	@Override
@@ -83,7 +75,7 @@ public class PortletItemLocalServiceImpl
 
 		return portletItemPersistence.findByG_P_C(
 			groupId, portletId,
-			classNameLocalService.getClassNameId(className));
+			_classNameLocalService.getClassNameId(className));
 	}
 
 	@Override
@@ -95,7 +87,7 @@ public class PortletItemLocalServiceImpl
 		PortletItem portletItem = null;
 
 		try {
-			User user = userPersistence.findByPrimaryKey(userId);
+			User user = _userPersistence.findByPrimaryKey(userId);
 
 			portletItem = getPortletItem(
 				groupId, name, portletId, PortletPreferences.class.getName());
@@ -103,14 +95,14 @@ public class PortletItemLocalServiceImpl
 			portletItem.setUserId(userId);
 			portletItem.setUserName(user.getFullName());
 
-			portletItemPersistence.update(portletItem);
+			portletItem = portletItemPersistence.update(portletItem);
 		}
-		catch (NoSuchPortletItemException nspie) {
+		catch (NoSuchPortletItemException noSuchPortletItemException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nspie, nspie);
+				_log.debug(noSuchPortletItemException);
 			}
 
 			portletItem = addPortletItem(
@@ -129,5 +121,11 @@ public class PortletItemLocalServiceImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletItemLocalServiceImpl.class);
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

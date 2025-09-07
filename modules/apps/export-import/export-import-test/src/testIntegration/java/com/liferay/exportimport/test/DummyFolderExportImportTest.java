@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerRegistryUtil;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepositoryRegistryUtil;
 import com.liferay.exportimport.test.util.constants.DummyFolderPortletKeys;
+import com.liferay.exportimport.test.util.exportimport.data.handler.DummyFolderStagedModelDataHandler;
 import com.liferay.exportimport.test.util.lar.BasePortletExportImportTestCase;
 import com.liferay.exportimport.test.util.model.DummyFolder;
 import com.liferay.exportimport.test.util.model.util.DummyFolderTestUtil;
@@ -28,8 +21,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Date;
@@ -37,7 +30,6 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +54,7 @@ public class DummyFolderExportImportTest
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		super.setUp();
 
@@ -70,6 +62,13 @@ public class DummyFolderExportImportTest
 			(StagedModelRepository<DummyFolder>)
 				StagedModelRepositoryRegistryUtil.getStagedModelRepository(
 					DummyFolder.class.getName());
+
+		_dummyFolderStagedModelDataHandler =
+			(DummyFolderStagedModelDataHandler)
+				StagedModelDataHandlerRegistryUtil.getStagedModelDataHandler(
+					DummyFolder.class.getName());
+
+		_dummyFolderStagedModelDataHandler.setEnabled(true);
 
 		DynamicQueryFactoryUtil dynamicQueryFactoryUtil =
 			new DynamicQueryFactoryUtil();
@@ -91,7 +90,6 @@ public class DummyFolderExportImportTest
 			});
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testExportImportAssetLinks() throws Exception {
@@ -150,5 +148,8 @@ public class DummyFolderExportImportTest
 	}
 
 	protected StagedModelRepository<DummyFolder> stagedModelRepository;
+
+	private static DummyFolderStagedModelDataHandler
+		_dummyFolderStagedModelDataHandler;
 
 }

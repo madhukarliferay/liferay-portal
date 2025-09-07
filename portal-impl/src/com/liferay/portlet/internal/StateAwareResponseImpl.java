@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
@@ -27,6 +18,15 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portlet.PublicRenderParametersPool;
 
+import jakarta.portlet.Event;
+import jakarta.portlet.MutableRenderParameters;
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletModeException;
+import jakarta.portlet.WindowState;
+import jakarta.portlet.WindowStateException;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.Serializable;
 
 import java.util.ArrayList;
@@ -36,15 +36,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.Event;
-import javax.portlet.MutableRenderParameters;
-import javax.portlet.PortletMode;
-import javax.portlet.PortletModeException;
-import javax.portlet.WindowState;
-import javax.portlet.WindowStateException;
-
-import javax.servlet.http.HttpServletResponse;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
@@ -94,11 +85,11 @@ public abstract class StateAwareResponseImpl
 	public Map<String, String[]> getRenderParameterMap() {
 		Map<String, String[]> renderParameterMap = new LinkedHashMap<>();
 
-		Map<String, String[]> mutableRenderParametersMap =
+		Map<String, String[]> mutableRenderParameterMap =
 			_mutableRenderParametersImpl.getParameterMap();
 
 		for (Map.Entry<String, String[]> entry :
-				mutableRenderParametersMap.entrySet()) {
+				mutableRenderParameterMap.entrySet()) {
 
 			String parameterName = entry.getKey();
 
@@ -168,11 +159,11 @@ public abstract class StateAwareResponseImpl
 			RenderParametersImpl renderParametersImpl =
 				(RenderParametersImpl)portletRequestImpl.getRenderParameters();
 
-			Map<String, String[]> liferayRenderParametersMap =
+			Map<String, String[]> liferayRenderParameterMap =
 				renderParametersImpl.getParameterMap();
 
 			for (Map.Entry<String, String[]> entry :
-					liferayRenderParametersMap.entrySet()) {
+					liferayRenderParameterMap.entrySet()) {
 
 				String renderParameterName = entry.getKey();
 
@@ -267,8 +258,8 @@ public abstract class StateAwareResponseImpl
 
 			portletRequestImpl.setPortletMode(_portletMode);
 		}
-		catch (Exception e) {
-			throw new PortletModeException(e, portletMode);
+		catch (Exception exception) {
+			throw new PortletModeException(exception, portletMode);
 		}
 
 		_calledSetRenderParameter = true;
@@ -384,8 +375,8 @@ public abstract class StateAwareResponseImpl
 
 			portletRequestImpl.setWindowState(_windowState);
 		}
-		catch (Exception e) {
-			throw new WindowStateException(e, windowState);
+		catch (Exception exception) {
+			throw new WindowStateException(exception, windowState);
 		}
 
 		_calledSetRenderParameter = true;
@@ -398,9 +389,9 @@ public abstract class StateAwareResponseImpl
 		try {
 			setPortletMode(PortletMode.VIEW);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to reset portlet mode to VIEW", e);
+				_log.warn("Unable to reset portlet mode to VIEW", exception);
 			}
 		}
 
@@ -411,9 +402,9 @@ public abstract class StateAwareResponseImpl
 		try {
 			setWindowState(WindowState.NORMAL);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to reset window state to NORMAL", e);
+				_log.warn("Unable to reset window state to NORMAL", exception);
 			}
 		}
 
@@ -432,9 +423,6 @@ public abstract class StateAwareResponseImpl
 			return false;
 		}
 
-		com.liferay.portal.kernel.xml.QName qName =
-			publicRenderParameter.getQName();
-
 		String[] oldValues = _publicRenderParameters.get(name);
 
 		if (oldValues != null) {
@@ -442,7 +430,9 @@ public abstract class StateAwareResponseImpl
 		}
 
 		_publicRenderParameters.put(
-			PortletQNameUtil.getPublicRenderParameterName(qName), values);
+			PortletQNameUtil.getPublicRenderParameterName(
+				publicRenderParameter.getQName()),
+			values);
 
 		return true;
 	}

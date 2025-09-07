@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.license.deployer.internal.installer;
 
-import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.file.install.FileInstaller;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.license.util.LicenseManagerUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
@@ -24,15 +18,19 @@ import com.liferay.portal.kernel.xml.SAXReaderUtil;
 
 import java.io.File;
 
-import org.apache.felix.fileinstall.ArtifactInstaller;
+import java.net.URL;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Amos Fong
  */
-public class LicenseInstaller implements ArtifactInstaller {
+@Component(enabled = false, service = FileInstaller.class)
+public class LicenseInstaller implements FileInstaller {
 
 	@Override
-	public boolean canHandle(File artifact) {
+	public boolean canTransformURL(File artifact) {
 		String extension = FileUtil.getExtension(artifact.getName());
 
 		if (!extension.equals("xml")) {
@@ -54,27 +52,31 @@ public class LicenseInstaller implements ArtifactInstaller {
 				return true;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return false;
 	}
 
 	@Override
-	public void install(File file) throws Exception {
-		String content = FileUtil.read(file);
+	public URL transformURL(File file) throws Exception {
+		LicenseManagerUtil.registerLicense(
+			JSONUtil.put("licenseXML", FileUtil.read(file)));
 
-		JSONObject jsonObject = JSONUtil.put("licenseXML", content);
-
-		LicenseManagerUtil.registerLicense(jsonObject);
+		return null;
 	}
 
 	@Override
-	public void uninstall(File file) throws Exception {
+	public void uninstall(File file) {
 	}
 
-	@Override
-	public void update(File file) throws Exception {
-	}
+	private static final Log _log = LogFactoryUtil.getLog(
+		LicenseInstaller.class);
+
+	@Reference(target = ModuleServiceLifecycle.LICENSE_INSTALL)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 }

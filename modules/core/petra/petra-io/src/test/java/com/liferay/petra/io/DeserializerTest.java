@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io;
 
+import com.liferay.petra.io.constants.SerializationConstants;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.petra.lang.ClassLoaderPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
@@ -42,6 +36,7 @@ import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -50,16 +45,20 @@ import org.junit.Test;
 public class DeserializerTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor() {
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new CodeCoverageAssertor() {
 
-			@Override
-			public void appendAssertClasses(List<Class<?>> assertClasses) {
-				assertClasses.add(AnnotatedObjectOutputStream.class);
-				assertClasses.add(ProtectedAnnotatedObjectInputStream.class);
-			}
+				@Override
+				public void appendAssertClasses(List<Class<?>> assertClasses) {
+					assertClasses.add(AnnotatedObjectOutputStream.class);
+					assertClasses.add(
+						ProtectedAnnotatedObjectInputStream.class);
+				}
 
-		};
+			},
+			LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testBufferInputStream() throws Exception {
@@ -121,13 +120,14 @@ public class DeserializerTest {
 
 			Assert.fail();
 		}
-		catch (InvocationTargetException ite) {
-			Throwable cause = ite.getCause();
+		catch (InvocationTargetException invocationTargetException) {
+			Throwable throwable = invocationTargetException.getCause();
 
 			Assert.assertTrue(
-				cause.toString(), cause instanceof IllegalStateException);
+				throwable.toString(),
+				throwable instanceof IllegalStateException);
 
-			Assert.assertEquals("Buffer underflow", cause.getMessage());
+			Assert.assertEquals("Buffer underflow", throwable.getMessage());
 		}
 	}
 
@@ -532,9 +532,10 @@ public class DeserializerTest {
 
 			Assert.fail();
 		}
-		catch (RuntimeException re) {
+		catch (RuntimeException runtimeException) {
 			Assert.assertTrue(
-				re.getCause() instanceof StreamCorruptedException);
+				runtimeException.getCause() instanceof
+					StreamCorruptedException);
 		}
 	}
 
@@ -579,17 +580,18 @@ public class DeserializerTest {
 		Assert.assertTrue(object instanceof String);
 		Assert.assertEquals(asciiString, object);
 
-		String nonAsciiString = "非ASCII Code中文测试";
+		String nonasciiString = "非ASCII Code中文测试";
 
-		buffer = new byte[nonAsciiString.length() * 2 + 6];
+		buffer = new byte[(nonasciiString.length() * 2) + 6];
 
 		buffer[0] = SerializationConstants.TC_STRING;
 		buffer[1] = 0;
 
-		BigEndianCodec.putInt(buffer, 2, nonAsciiString.length());
+		BigEndianCodec.putInt(buffer, 2, nonasciiString.length());
 
-		for (int i = 0; i < nonAsciiString.length(); i++) {
-			BigEndianCodec.putChar(buffer, 6 + i * 2, nonAsciiString.charAt(i));
+		for (int i = 0; i < nonasciiString.length(); i++) {
+			BigEndianCodec.putChar(
+				buffer, 6 + (i * 2), nonasciiString.charAt(i));
 		}
 
 		byteBuffer = ByteBuffer.wrap(buffer);
@@ -599,7 +601,7 @@ public class DeserializerTest {
 		object = deserializer.readObject();
 
 		Assert.assertTrue(object instanceof String);
-		Assert.assertEquals(nonAsciiString, object);
+		Assert.assertEquals(nonasciiString, object);
 	}
 
 	@Test
@@ -613,8 +615,9 @@ public class DeserializerTest {
 		try {
 			deserializer.readObject();
 		}
-		catch (IllegalStateException ise) {
-			Assert.assertEquals("Unkown TC code 12", ise.getMessage());
+		catch (IllegalStateException illegalStateException) {
+			Assert.assertEquals(
+				"Unkown TC code 12", illegalStateException.getMessage());
 		}
 	}
 
@@ -663,16 +666,17 @@ public class DeserializerTest {
 
 		Assert.assertEquals(asciiString, resultString);
 
-		String nonAsciiString = "非ASCII Code中文测试";
+		String nonasciiString = "非ASCII Code中文测试";
 
-		buffer = new byte[nonAsciiString.length() * 2 + 5];
+		buffer = new byte[(nonasciiString.length() * 2) + 5];
 
 		buffer[0] = 0;
 
-		BigEndianCodec.putInt(buffer, 1, nonAsciiString.length());
+		BigEndianCodec.putInt(buffer, 1, nonasciiString.length());
 
-		for (int i = 0; i < nonAsciiString.length(); i++) {
-			BigEndianCodec.putChar(buffer, 5 + i * 2, nonAsciiString.charAt(i));
+		for (int i = 0; i < nonasciiString.length(); i++) {
+			BigEndianCodec.putChar(
+				buffer, 5 + (i * 2), nonasciiString.charAt(i));
 		}
 
 		byteBuffer = ByteBuffer.wrap(buffer);
@@ -681,7 +685,7 @@ public class DeserializerTest {
 
 		resultString = deserializer.readString();
 
-		Assert.assertEquals(nonAsciiString, resultString);
+		Assert.assertEquals(nonasciiString, resultString);
 	}
 
 	private static final int _COUNT = 1024;
@@ -720,8 +724,9 @@ public class DeserializerTest {
 				_readBytesMethod = ReflectionTestUtil.getMethod(
 					clazz, "read", byte[].class);
 			}
-			catch (ReflectiveOperationException roe) {
-				throw new ExceptionInInitializerError(roe);
+			catch (ReflectiveOperationException reflectiveOperationException) {
+				throw new ExceptionInInitializerError(
+					reflectiveOperationException);
 			}
 		}
 

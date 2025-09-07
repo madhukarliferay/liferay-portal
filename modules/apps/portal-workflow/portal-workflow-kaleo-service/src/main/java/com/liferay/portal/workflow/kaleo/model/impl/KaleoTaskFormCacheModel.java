@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoTaskFormCacheModel
 	implements CacheModel<KaleoTaskForm>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoTaskFormCacheModel)) {
+		if (!(object instanceof KaleoTaskFormCacheModel)) {
 			return false;
 		}
 
 		KaleoTaskFormCacheModel kaleoTaskFormCacheModel =
-			(KaleoTaskFormCacheModel)obj;
+			(KaleoTaskFormCacheModel)object;
 
 		if ((kaleoTaskFormId == kaleoTaskFormCacheModel.kaleoTaskFormId) &&
 			(mvccVersion == kaleoTaskFormCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class KaleoTaskFormCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(43);
+		StringBundler sb = new StringBundler(47);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoTaskFormId=");
 		sb.append(kaleoTaskFormId);
 		sb.append(", groupId=");
@@ -95,6 +88,8 @@ public class KaleoTaskFormCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoNodeId=");
@@ -131,6 +126,7 @@ public class KaleoTaskFormCacheModel
 		KaleoTaskFormImpl kaleoTaskFormImpl = new KaleoTaskFormImpl();
 
 		kaleoTaskFormImpl.setMvccVersion(mvccVersion);
+		kaleoTaskFormImpl.setCtCollectionId(ctCollectionId);
 		kaleoTaskFormImpl.setKaleoTaskFormId(kaleoTaskFormId);
 		kaleoTaskFormImpl.setGroupId(groupId);
 		kaleoTaskFormImpl.setCompanyId(companyId);
@@ -157,6 +153,7 @@ public class KaleoTaskFormCacheModel
 			kaleoTaskFormImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		kaleoTaskFormImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoTaskFormImpl.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 		kaleoTaskFormImpl.setKaleoNodeId(kaleoNodeId);
 		kaleoTaskFormImpl.setKaleoTaskId(kaleoTaskId);
@@ -219,6 +216,8 @@ public class KaleoTaskFormCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		kaleoTaskFormId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -229,6 +228,8 @@ public class KaleoTaskFormCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+
+		kaleoDefinitionId = objectInput.readLong();
 
 		kaleoDefinitionVersionId = objectInput.readLong();
 
@@ -255,6 +256,8 @@ public class KaleoTaskFormCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		objectOutput.writeLong(kaleoTaskFormId);
 
 		objectOutput.writeLong(groupId);
@@ -272,6 +275,8 @@ public class KaleoTaskFormCacheModel
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
+
+		objectOutput.writeLong(kaleoDefinitionId);
 
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
@@ -331,6 +336,7 @@ public class KaleoTaskFormCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoTaskFormId;
 	public long groupId;
 	public long companyId;
@@ -338,6 +344,7 @@ public class KaleoTaskFormCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public long kaleoNodeId;
 	public long kaleoTaskId;

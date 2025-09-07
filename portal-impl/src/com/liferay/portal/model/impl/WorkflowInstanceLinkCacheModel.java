@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,17 +28,17 @@ public class WorkflowInstanceLinkCacheModel
 	implements CacheModel<WorkflowInstanceLink>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof WorkflowInstanceLinkCacheModel)) {
+		if (!(object instanceof WorkflowInstanceLinkCacheModel)) {
 			return false;
 		}
 
 		WorkflowInstanceLinkCacheModel workflowInstanceLinkCacheModel =
-			(WorkflowInstanceLinkCacheModel)obj;
+			(WorkflowInstanceLinkCacheModel)object;
 
 		if ((workflowInstanceLinkId ==
 				workflowInstanceLinkCacheModel.workflowInstanceLinkId) &&
@@ -78,10 +69,12 @@ public class WorkflowInstanceLinkCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(25);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", workflowInstanceLinkId=");
 		sb.append(workflowInstanceLinkId);
 		sb.append(", groupId=");
@@ -113,6 +106,7 @@ public class WorkflowInstanceLinkCacheModel
 			new WorkflowInstanceLinkImpl();
 
 		workflowInstanceLinkImpl.setMvccVersion(mvccVersion);
+		workflowInstanceLinkImpl.setCtCollectionId(ctCollectionId);
 		workflowInstanceLinkImpl.setWorkflowInstanceLinkId(
 			workflowInstanceLinkId);
 		workflowInstanceLinkImpl.setGroupId(groupId);
@@ -153,6 +147,8 @@ public class WorkflowInstanceLinkCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		workflowInstanceLinkId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -174,6 +170,8 @@ public class WorkflowInstanceLinkCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(workflowInstanceLinkId);
 
@@ -201,6 +199,7 @@ public class WorkflowInstanceLinkCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long workflowInstanceLinkId;
 	public long groupId;
 	public long companyId;

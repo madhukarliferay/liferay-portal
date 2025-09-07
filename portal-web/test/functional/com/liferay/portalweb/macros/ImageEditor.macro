@@ -1,88 +1,24 @@
 definition {
 
-	macro _applyChanges {
-		AssertClick(
-			locator1 = "Button#APPLY_EFFECTS",
-			value1 = "Apply");
+	@summary = "Default summary"
+	macro resizeImage(dimension = null) {
+		Select(
+			locator1 = "Select#IMAGE_RATIO",
+			value1 = ${dimension});
 	}
 
-	macro _saveFile {
-		AssertClick(
-			locator1 = "Button#SAVE",
-			value1 = "Save");
+	@summary = "Default summary"
+	macro rotateImage() {
+		Click(
+			key_text = "rotate",
+			locator1 = "Icon#ANY");
 	}
 
-	macro applyChangesAndSaveFile {
-		ImageEditor._applyChanges();
+	@summary = "Default summary"
+	macro saveChanges() {
+		Button.clickSave();
 
-		Pause(locator1 = "3000");
-
-		ImageEditor._saveFile();
-	}
-
-	macro gotoImageEditorViaDM {
-		var key_dmDocumentTitle = "${dmDocumentTitle}";
-
-		Click(locator1 = "DocumentsAndMedia#ICON_DOCUMENT_VERTICAL_ELLIPSIS");
-
-		MenuItem.click(menuItem = "Edit With Image Editor");
-
-		Pause(locator1 = "5000");
-
-		SelectFrame(locator1 = "ImageEditor#IMAGE_EDITOR_IFRAME");
-	}
-
-	macro gotoImageEditorViaItemSelector {
-		ItemSelector.gotoItemSelectorViaAlloyEditor();
-
-		SelectFrame(locator1 = "ItemSelector#ITEM_SELECTOR_IFRAME");
-
-		var key_navTab = "${navTab}";
-
-		AssertClick(
-			locator1 = "ItemSelector#NAVIGATION_SPECIFIC_TAB",
-			value1 = "${navTab}");
-
-		var key_imageFileName = StringUtil.replace("${imageFileName}", " ", "+");
-
-		Pause(locator1 = "1000");
-
-		Click(locator1 = "Icon#EYE_PREVIEW");
-
-		SelectFrameTop(value1 = "relative=top");
-
-		SelectFrame(locator1 = "ItemSelector#ITEM_SELECTOR_IFRAME");
-
-		Click(locator1 = "Icon#EDIT_PENCIL");
-
-		SelectFrameTop(value1 = "relative=top");
-
-		SelectFrame(locator1 = "ImageEditor#IMAGE_EDITOR_IFRAME");
-	}
-
-	macro gotoRotateImage {
-		Click(locator1 = "Button#TRANSFORM");
-
-		MenuItem.click(menuItem = "Rotate");
-	}
-
-	macro rotateImage {
-		ImageEditor.gotoRotateImage();
-
-		if ("${rotateDirection}" == "left") {
-			Click(locator1 = "Button#ROTATE_LEFT");
-		}
-		else if ("${rotateDirection}" == "right") {
-			Click(locator1 = "Button#ROTATE_RIGHT");
-		}
-	}
-
-	macro viewBaseControls {
-		AssertVisible(locator1 = "Button#TRANSFORM");
-
-		AssertVisible(locator1 = "Button#FILTER_EFFECT");
-
-		AssertVisible(locator1 = "Button#COLOR_EFFECT");
+		SelectFrameTop();
 	}
 
 }

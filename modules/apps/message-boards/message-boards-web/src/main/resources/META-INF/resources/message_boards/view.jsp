@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -39,9 +30,11 @@ String assetTagName = ParamUtil.getString(request, "tag");
 
 boolean useAssetEntryQuery = Validator.isNotNull(assetTagName);
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcRenderCommandName", mvcRenderCommandName);
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCRenderCommandName(
+	mvcRenderCommandName
+).buildPortletURL();
 
 int cur1 = ParamUtil.getInteger(request, "cur1");
 
@@ -56,6 +49,12 @@ if (cur2 > 0) {
 }
 
 portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
+
+String searchCategoryId = ParamUtil.getString(request, "searchCategoryId");
+
+if (Validator.isNotNull(searchCategoryId)) {
+	portletURL.setParameter("searchCategoryId", searchCategoryId);
+}
 
 String keywords = ParamUtil.getString(request, "keywords");
 
@@ -76,10 +75,10 @@ if (orderByType.equals("asc")) {
 OrderByComparator threadOrderByComparator = null;
 
 if (orderByCol.equals("modified-date")) {
-	threadOrderByComparator = new ThreadModifiedDateComparator(orderByAsc);
+	threadOrderByComparator = ThreadModifiedDateComparator.getInstance(orderByAsc);
 }
 
-MBListDisplayContext mbListDisplayContext = mbDisplayContextProvider.getMbListDisplayContext(request, response, categoryId, mvcRenderCommandName);
+MBListDisplayContext mbListDisplayContext = MBDisplayContextUtil.getMBListDisplayContext(request, response, categoryId, mvcRenderCommandName);
 
 request.setAttribute("view.jsp-categorySubscriptionClassPKs", categorySubscriptionClassPKs);
 request.setAttribute("view.jsp-threadSubscriptionClassPKs", threadSubscriptionClassPKs);
@@ -112,7 +111,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 		MBCategoryDisplay categoryDisplay = new MBCategoryDisplay(scopeGroupId, categoryId);
 		%>
 
-		<div class="main-content-body">
+		<div class="main-content-body mt-4">
 			<h3><liferay-ui:message key="my-subscriptions" /></h3>
 
 			<liferay-ui:search-container
@@ -167,7 +166,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 	<c:when test='<%= mbListDisplayContext.isShowSearch() || mvcRenderCommandName.equals("/message_boards/view") || mvcRenderCommandName.equals("/message_boards/view_category") || mbListDisplayContext.isShowMyPosts() || mbListDisplayContext.isShowRecentPosts() %>'>
 		<c:choose>
 			<c:when test='<%= mvcRenderCommandName.equals("/message_boards/search") || mvcRenderCommandName.equals("/message_boards/view") || mvcRenderCommandName.equals("/message_boards/view_category") %>'>
-				<div class="main-content-body">
+				<div class="main-content-body mt-4">
 					<c:if test="<%= mbListDisplayContext.isShowSearch() %>">
 						<liferay-ui:header
 							backURL="<%= redirect %>"
@@ -191,19 +190,20 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 						MBBreadcrumbUtil.addPortletBreadcrumbEntries(categoryId, request, renderResponse);
 						%>
 
-						<liferay-ui:breadcrumb
-							showCurrentGroup="<%= false %>"
-							showGuestGroup="<%= false %>"
-							showLayout="<%= false %>"
-							showParentGroups="<%= false %>"
+						<liferay-site-navigation:breadcrumb
+							breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 						/>
 					</c:if>
 
-					<div class="autofit-float autofit-row">
-						<div class="autofit-col autofit-col-expand">
+					<clay:content-row
+						floatElements="end"
+					>
+						<clay:content-col
+							expand="<%= true %>"
+						>
 							<c:choose>
 								<c:when test="<%= category != null %>">
-									<h3><%= HtmlUtil.escape(category.getName()) %></h3>
+									<h3 class="component-title"><%= HtmlUtil.escape(category.getName()) %></h3>
 								</c:when>
 								<c:otherwise>
 
@@ -211,17 +211,14 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 									MBBreadcrumbUtil.addPortletBreadcrumbEntries(categoryId, request, renderResponse);
 									%>
 
-									<liferay-ui:breadcrumb
-										showCurrentGroup="<%= false %>"
-										showGuestGroup="<%= false %>"
-										showLayout="<%= false %>"
-										showParentGroups="<%= false %>"
+									<liferay-site-navigation:breadcrumb
+										breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 									/>
 								</c:otherwise>
 							</c:choose>
-						</div>
+						</clay:content-col>
 
-						<div class="autofit-col autofit-col-end">
+						<clay:content-col>
 							<div class="btn-group">
 								<c:if test="<%= showAddCategoryButton %>">
 									<portlet:renderURL var="editCategoryURL">
@@ -232,10 +229,12 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 
 									<div class="btn-group-item">
 										<clay:link
-											buttonStyle="secondary"
-											elementClasses="btn-sm"
+											data-senna-off="<%= true %>"
+											displayType="secondary"
 											href="<%= editCategoryURL %>"
-											label='<%= LanguageUtil.get(request, "add-category[message-board]") %>'
+											label="add-category[message-board]"
+											small="<%= true %>"
+											type="button"
 										/>
 									</div>
 								</c:if>
@@ -249,10 +248,11 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 
 									<div class="btn-group-item">
 										<clay:link
-											buttonStyle="primary"
-											elementClasses="btn-sm"
+											displayType="primary"
 											href="<%= editMessageURL %>"
-											label='<%= LanguageUtil.get(request, "new-thread") %>'
+											label="new-thread"
+											small="<%= true %>"
+											type="button"
 										/>
 									</div>
 								</c:if>
@@ -381,8 +381,8 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 									</c:choose>
 								</liferay-ui:icon-menu>
 							</div>
-						</div>
-					</div>
+						</clay:content-col>
+					</clay:content-row>
 
 					<%
 					SearchContainer categoryEntriesSearchContainer = new SearchContainer(renderRequest, null, null, "cur1", 0, mbListDisplayContext.getCategoryEntriesDelta(), PortletURLUtil.clone(portletURL, renderResponse), null, "there-are-no-threads-or-categories");
@@ -390,7 +390,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 					mbListDisplayContext.setCategoryEntriesDelta(categoryEntriesSearchContainer);
 
 					categoryEntriesSearchContainer.setOrderByCol(orderByCol);
-					categoryEntriesSearchContainer.setOrderByComparator(new CategoryTitleComparator(true));
+					categoryEntriesSearchContainer.setOrderByComparator(CategoryTitleComparator.getInstance(true));
 					categoryEntriesSearchContainer.setOrderByType(orderByType);
 
 					mbListDisplayContext.populateCategoriesResultsAndTotal(categoryEntriesSearchContainer);
@@ -419,8 +419,9 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 					</c:if>
 
 					<c:if test="<%= (categoryEntriesSearchContainer.getTotal() <= 0) && (threadEntriesSearchContainer.getTotal() <= 0) %>">
-						<liferay-ui:empty-result-message
-							message="there-are-no-threads-or-categories"
+						<liferay-frontend:empty-result-message
+							animationType="<%= EmptyResultMessageKeys.AnimationType.EMPTY %>"
+							title="<%= LanguageUtil.get(resourceBundle, mbListDisplayContext.getEmptyResultsMessage()) %>"
 						/>
 					</c:if>
 
@@ -434,15 +435,19 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 				</div>
 			</c:when>
 			<c:when test="<%= mbListDisplayContext.isShowMyPosts() || mbListDisplayContext.isShowRecentPosts() %>">
-				<div class="main-content-body">
+				<div class="main-content-body mt-4">
 					<c:choose>
 						<c:when test="<%= mbListDisplayContext.isShowRecentPosts() %>">
-							<div class="autofit-float autofit-row">
-								<div class="autofit-col autofit-col-expand">
-									<h3><liferay-ui:message key="recent-posts" /></h3>
-								</div>
+							<clay:content-row
+								floatElements="end"
+							>
+								<clay:content-col
+									expand="<%= true %>"
+								>
+									<h3 class="component-title"><liferay-ui:message key="recent-posts" /></h3>
+								</clay:content-col>
 
-								<div class="autofit-col autofit-col-end">
+								<clay:content-col>
 									<div class="btn-group">
 										<c:if test="<%= enableRSS %>">
 											<liferay-ui:icon-menu
@@ -462,8 +467,8 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 											</liferay-ui:icon-menu>
 										</c:if>
 									</div>
-								</div>
-							</div>
+								</clay:content-col>
+							</clay:content-row>
 
 							<c:if test="<%= groupThreadsUserId > 0 %>">
 								<div class="alert alert-info">
@@ -479,12 +484,16 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 							}
 							%>
 
-							<div class="autofit-float autofit-row">
-								<div class="autofit-col autofit-col-expand">
-									<h3><liferay-ui:message key="my-posts" /></h3>
-								</div>
+							<clay:content-row
+								floatElements="end"
+							>
+								<clay:content-col
+									expand="<%= true %>"
+								>
+									<h3 class="component-title"><liferay-ui:message key="my-posts" /></h3>
+								</clay:content-col>
 
-								<div class="autofit-col autofit-col-end">
+								<clay:content-col>
 									<div class="btn-group">
 										<c:if test="<%= enableRSS %>">
 											<liferay-ui:icon-menu
@@ -504,8 +513,8 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 											</liferay-ui:icon-menu>
 										</c:if>
 									</div>
-								</div>
-							</div>
+								</clay:content-col>
+							</clay:content-row>
 						</c:otherwise>
 					</c:choose>
 
@@ -513,9 +522,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 					if (groupThreadsUserId > 0) {
 						portletURL.setParameter("groupThreadsUserId", String.valueOf(groupThreadsUserId));
 					}
-					%>
 
-					<%
 					SearchContainer threadEntriesSearchContainer = new SearchContainer(renderRequest, null, null, "cur1", 0, mbListDisplayContext.getThreadEntriesDelta(), portletURL, null, "there-are-no-threads");
 
 					mbListDisplayContext.setThreadEntriesDelta(threadEntriesSearchContainer);
@@ -550,5 +557,5 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 </c:choose>
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("com_liferay_message_boards_web.message_boards.view_jsp");
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_message_boards_web.message_boards.view_jsp");
 %>

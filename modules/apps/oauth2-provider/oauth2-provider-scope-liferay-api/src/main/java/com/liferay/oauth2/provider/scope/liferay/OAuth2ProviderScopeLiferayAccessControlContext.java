@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.scope.liferay;
 
+import com.liferay.oauth2.provider.scope.liferay.constants.OAuth2ProviderScopeLiferayConstants;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
@@ -29,11 +21,18 @@ public class OAuth2ProviderScopeLiferayAccessControlContext {
 		AccessControlContext accessControlContext =
 			AccessControlUtil.getAccessControlContext();
 
+		if (accessControlContext == null) {
+			return false;
+		}
+
 		AuthVerifierResult authVerifierResult =
 			accessControlContext.getAuthVerifierResult();
 
-		if ((authVerifierResult != null) &&
-			AuthVerifierResult.State.SUCCESS.equals(
+		if (authVerifierResult == null) {
+			return false;
+		}
+
+		if (AuthVerifierResult.State.SUCCESS.equals(
 				authVerifierResult.getState())) {
 
 			String authType = MapUtil.getString(

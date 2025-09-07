@@ -1,41 +1,41 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.admin.web.internal.portlet.action;
 
+import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.constants.AccountPortletKeys;
 import com.liferay.account.exception.AccountEntryDomainsException;
+import com.liferay.account.exception.DuplicateAccountEntryExternalReferenceCodeException;
 import com.liferay.account.model.AccountEntry;
-import com.liferay.account.service.AccountEntryLocalService;
+import com.liferay.account.service.AccountEntryService;
+import com.liferay.account.service.AccountEntryUserRelService;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
+import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.File;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.PortletException;
+
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,94 +44,151 @@ import org.osgi.service.component.annotations.Reference;
  * @author Albert Lee
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
+		"jakarta.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
+		"jakarta.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_MANAGEMENT,
 		"mvc.command.name=/account_admin/edit_account_entry"
 	},
 	service = MVCActionCommand.class
 )
-public class EditAccountEntryMVCActionCommand extends BaseMVCActionCommand {
-
-	protected AccountEntry addAccountEntry(ActionRequest actionRequest)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long parentAccountEntryId = ParamUtil.getInteger(
-			actionRequest, "parentAccountEntryId");
-		String name = ParamUtil.getString(actionRequest, "name");
-		String description = ParamUtil.getString(actionRequest, "description");
-		String domains = ParamUtil.getString(actionRequest, "domains");
-
-		return _accountEntryLocalService.addAccountEntry(
-			themeDisplay.getUserId(), parentAccountEntryId, name, description,
-			StringUtil.split(domains), _getLogoBytes(actionRequest),
-			_getStatus(actionRequest));
-	}
+public class EditAccountEntryMVCActionCommand
+	extends BaseTransactionalMVCActionCommand {
 
 	@Override
-	protected void doProcessAction(
+	protected void doTransactionalCommand(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
 		try {
-			String redirect = ParamUtil.getString(actionRequest, "redirect");
+			AccountEntry accountEntry = null;
 
 			if (cmd.equals(Constants.ADD)) {
-				AccountEntry accountEntry = addAccountEntry(actionRequest);
+				accountEntry = _addAccountEntry(actionRequest);
 
-				redirect = _http.setParameter(
-					redirect, actionResponse.getNamespace() + "accountEntryId",
-					accountEntry.getAccountEntryId());
+				actionRequest.setAttribute(
+					WebKeys.REDIRECT,
+					HttpComponentsUtil.setParameter(
+						ParamUtil.getString(actionRequest, "redirect"),
+						actionResponse.getNamespace() + "accountEntryId",
+						accountEntry.getAccountEntryId()));
 			}
 			else if (cmd.equals(Constants.UPDATE)) {
-				updateAccountEntry(actionRequest);
+				accountEntry = updateAccountEntry(actionRequest);
 			}
 
-			if (Validator.isNotNull(redirect)) {
-				sendRedirect(actionRequest, actionResponse, redirect);
+			if (accountEntry != null) {
+				accountEntry.setRestrictMembership(
+					ParamUtil.getBoolean(
+						actionRequest, "restrictMembership",
+						accountEntry.isRestrictMembership()));
+
+				_accountEntryService.updateAccountEntry(accountEntry);
 			}
 		}
-		catch (Exception e) {
-			String mvcPath = "/account_entries_admin/edit_account_entry.jsp";
+		catch (Exception exception) {
+			if (exception instanceof PrincipalException) {
+				SessionErrors.add(actionRequest, exception.getClass());
 
-			if (e instanceof PrincipalException) {
-				SessionErrors.add(actionRequest, e.getClass());
+				actionResponse.setRenderParameter(
+					"mvcPath", "/account_entries_admin/error.jsp");
+			}
+			else if (exception instanceof AccountEntryDomainsException ||
+					 exception instanceof
+						 DuplicateAccountEntryExternalReferenceCodeException) {
 
-				mvcPath = "/account_entries_admin/error.jsp";
+				hideDefaultErrorMessage(actionRequest);
+				hideDefaultSuccessMessage(actionRequest);
+
+				sendRedirect(actionRequest, actionResponse);
 			}
-			else if (e instanceof AccountEntryDomainsException) {
-				SessionErrors.add(actionRequest, e.getClass());
-			}
-			else {
-				throw e;
+			else if ((exception instanceof ModelListenerException) &&
+					 (exception.getCause() instanceof PortalException)) {
+
+				throw (PortalException)exception.getCause();
 			}
 
-			actionResponse.setRenderParameter("mvcPath", mvcPath);
+			throw new PortletException(exception);
 		}
 	}
 
-	protected void updateAccountEntry(ActionRequest actionRequest)
+	protected AccountEntry updateAccountEntry(ActionRequest actionRequest)
 		throws Exception {
 
 		long accountEntryId = ParamUtil.getLong(
 			actionRequest, "accountEntryId");
 
-		long parentAccountEntryId = ParamUtil.getInteger(
-			actionRequest, "parentAccountEntryId");
-		String name = ParamUtil.getString(actionRequest, "name");
-		String description = ParamUtil.getString(actionRequest, "description");
-		boolean deleteLogo = ParamUtil.getBoolean(actionRequest, "deleteLogo");
-		String domains = ParamUtil.getString(actionRequest, "domains");
+		AccountEntry accountEntry = _accountEntryService.getAccountEntry(
+			accountEntryId);
 
-		_accountEntryLocalService.updateAccountEntry(
-			accountEntryId, parentAccountEntryId, name, description, deleteLogo,
-			StringUtil.split(domains), _getLogoBytes(actionRequest),
-			_getStatus(actionRequest));
+		String[] domains = accountEntry.getDomainsArray();
+
+		if (_isAllowUpdateDomains(accountEntry.getType())) {
+			domains = ParamUtil.getStringValues(actionRequest, "domains");
+		}
+
+		accountEntry = _accountEntryService.updateAccountEntry(
+			ParamUtil.getString(actionRequest, "externalReferenceCode"),
+			accountEntryId, accountEntry.getParentAccountEntryId(),
+			ParamUtil.getString(actionRequest, "name"),
+			ParamUtil.getString(actionRequest, "description"),
+			ParamUtil.getBoolean(actionRequest, "deleteLogo"), domains,
+			ParamUtil.getString(actionRequest, "emailAddress"),
+			_getLogoBytes(actionRequest),
+			ParamUtil.getString(actionRequest, "taxIdNumber"),
+			accountEntry.getStatus(),
+			ServiceContextFactory.getInstance(
+				AccountEntry.class.getName(), actionRequest));
+
+		if (Objects.equals(
+				AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON,
+				accountEntry.getType())) {
+
+			long personAccountEntryUserId = ParamUtil.getLong(
+				actionRequest, "personAccountEntryUserId");
+
+			_accountEntryUserRelService.setPersonTypeAccountEntryUser(
+				accountEntryId, personAccountEntryUserId);
+		}
+		else {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Skipping user updates for business account entry: " +
+						accountEntryId);
+			}
+		}
+
+		return accountEntry;
+	}
+
+	private AccountEntry _addAccountEntry(ActionRequest actionRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		String[] domains = new String[0];
+
+		String type = ParamUtil.getString(
+			actionRequest, "type",
+			AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS);
+
+		if (_isAllowUpdateDomains(type)) {
+			domains = ParamUtil.getStringValues(actionRequest, "domains");
+		}
+
+		return _accountEntryService.addAccountEntry(
+			ParamUtil.getString(actionRequest, "externalReferenceCode"),
+			themeDisplay.getUserId(), AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT,
+			ParamUtil.getString(actionRequest, "name"),
+			ParamUtil.getString(actionRequest, "description"), domains,
+			ParamUtil.getString(actionRequest, "emailAddress"),
+			_getLogoBytes(actionRequest),
+			ParamUtil.getString(actionRequest, "taxIdNumber"), type,
+			WorkflowConstants.STATUS_APPROVED,
+			ServiceContextFactory.getInstance(
+				AccountEntry.class.getName(), actionRequest));
 	}
 
 	private byte[] _getLogoBytes(ActionRequest actionRequest) throws Exception {
@@ -143,26 +200,27 @@ public class EditAccountEntryMVCActionCommand extends BaseMVCActionCommand {
 
 		FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
 
-		return FileUtil.getBytes(fileEntry.getContentStream());
+		return _file.getBytes(fileEntry.getContentStream());
 	}
 
-	private int _getStatus(ActionRequest actionRequest) {
-		boolean active = ParamUtil.getBoolean(actionRequest, "active");
-
-		if (active) {
-			return WorkflowConstants.STATUS_APPROVED;
-		}
-
-		return WorkflowConstants.STATUS_INACTIVE;
+	private boolean _isAllowUpdateDomains(String type) {
+		return Objects.equals(
+			AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS, type);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		EditAccountEntryMVCActionCommand.class);
 
 	@Reference
-	private AccountEntryLocalService _accountEntryLocalService;
+	private AccountEntryService _accountEntryService;
+
+	@Reference
+	private AccountEntryUserRelService _accountEntryUserRelService;
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
-	private Http _http;
+	private File _file;
 
 }

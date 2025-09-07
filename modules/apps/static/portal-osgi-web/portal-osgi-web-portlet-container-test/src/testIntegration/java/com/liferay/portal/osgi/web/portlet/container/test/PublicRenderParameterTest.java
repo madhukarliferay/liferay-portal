@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.portlet.container.test;
@@ -22,36 +13,29 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletQName;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.test.randomizerbumpers.NumericStringRandomizerBumper;
 import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
-import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.osgi.web.portlet.container.test.util.PortletContainerTestUtil;
-import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import java.util.Dictionary;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,11 +44,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class PublicRenderParameterTest extends BasePortletContainerTestCase {
-
-	@ClassRule
-	@Rule
-	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testWithModuleLayoutTypeController() throws Exception {
@@ -95,18 +74,18 @@ public class PublicRenderParameterTest extends BasePortletContainerTestCase {
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"com.liferay.portlet.application-type",
-			new String[] {
-				ApplicationType.FULL_PAGE_APPLICATION.toString(),
-				ApplicationType.WIDGET.toString()
-			});
-		properties.put(
-			"javax.portlet.supported-public-render-parameter", prpName);
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID, false);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"com.liferay.portlet.application-type",
+				new String[] {
+					ApplicationType.FULL_PAGE_APPLICATION.toString(),
+					ApplicationType.WIDGET.toString()
+				}
+			).put(
+				"jakarta.portlet.supported-public-render-parameter", prpName
+			).build(),
+			TEST_PORTLET_ID, false);
 
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
 			TestPropsValues.getCompanyId(), TEST_PORTLET_ID);
@@ -119,30 +98,27 @@ public class PublicRenderParameterTest extends BasePortletContainerTestCase {
 			UniqueStringRandomizerBumper.INSTANCE);
 
 		layout = LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), group.getGroupId(), false,
+			null, TestPropsValues.getUserId(), group.getGroupId(), false,
 			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, name, null, null,
 			"full_page_application", false,
 			StringPool.SLASH + FriendlyURLNormalizerUtil.normalize(name),
 			ServiceContextTestUtil.getServiceContext());
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			layout.getTypeSettingsProperties();
 
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"fullPageApplicationPortlet", TEST_PORTLET_ID);
 
 		LayoutLocalServiceUtil.updateLayout(layout);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(prpName, prpValue);
-
-		String portletURLString = portletURL.toString();
+		String portletURLString = PortletURLBuilder.create(
+			PortletURLFactoryUtil.create(
+				PortletContainerTestUtil.getHttpServletRequest(group, layout),
+				TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE)
+		).setParameter(
+			prpName, prpValue
+		).buildString();
 
 		Assert.assertTrue(
 			portletURLString,
@@ -186,23 +162,20 @@ public class PublicRenderParameterTest extends BasePortletContainerTestCase {
 
 		};
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"jakarta.portlet.supported-public-render-parameter", prpName
+			).build(),
+			TEST_PORTLET_ID);
 
-		properties.put(
-			"javax.portlet.supported-public-render-parameter", prpName);
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(prpName, prpValue);
-
-		String portletURLString = portletURL.toString();
+		String portletURLString = PortletURLBuilder.create(
+			PortletURLFactoryUtil.create(
+				PortletContainerTestUtil.getHttpServletRequest(group, layout),
+				TEST_PORTLET_ID, layout.getPlid(), PortletRequest.RENDER_PHASE)
+		).setParameter(
+			prpName, prpValue
+		).buildString();
 
 		Assert.assertTrue(
 			portletURLString,

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -17,30 +8,16 @@ package com.liferay.jenkins.results.parser;
 import java.io.File;
 import java.io.IOException;
 
+import java.util.List;
 import java.util.Properties;
-import java.util.Set;
+
+import org.json.JSONObject;
 
 /**
  * @author Peter Yoo
  */
-public class PluginsGitRepositoryJob
+public abstract class PluginsGitRepositoryJob
 	extends GitRepositoryJob implements PortalTestClassJob {
-
-	@Override
-	public Set<String> getBatchNames() {
-		String testBatchNames = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(), "test.batch.names");
-
-		return getSetFromString(testBatchNames);
-	}
-
-	@Override
-	public Set<String> getDistTypes() {
-		String testBatchDistAppServers = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(), "test.batch.dist.app.servers");
-
-		return getSetFromString(testBatchDistAppServers);
-	}
 
 	@Override
 	public GitWorkingDirectory getGitWorkingDirectory() {
@@ -60,14 +37,45 @@ public class PluginsGitRepositoryJob
 		return gitWorkingDirectory;
 	}
 
+	public abstract List<File> getPluginsTestBaseDirs();
+
 	@Override
 	public PortalGitWorkingDirectory getPortalGitWorkingDirectory() {
 		return portalGitWorkingDirectory;
 	}
 
-	protected PluginsGitRepositoryJob(String jobName) {
-		super(jobName);
+	protected PluginsGitRepositoryJob(
+		BuildProfile buildProfile, String jobName, String upstreamBranchName) {
 
+		super(buildProfile, jobName, upstreamBranchName);
+
+		_initialize();
+	}
+
+	protected PluginsGitRepositoryJob(JSONObject jsonObject) {
+		super(jsonObject);
+
+		_initialize();
+	}
+
+	protected String getBuildPropertyValue(String buildPropertyName) {
+		if (buildProperties == null) {
+			try {
+				buildProperties = JenkinsResultsParserUtil.getBuildProperties();
+			}
+			catch (IOException ioException) {
+				throw new RuntimeException(
+					"Unable to get build properties", ioException);
+			}
+		}
+
+		return buildProperties.getProperty(buildPropertyName);
+	}
+
+	protected Properties buildProperties;
+	protected PortalGitWorkingDirectory portalGitWorkingDirectory;
+
+	private void _initialize() {
 		getGitWorkingDirectory();
 
 		setGitRepositoryDir(gitWorkingDirectory.getWorkingDirectory());
@@ -86,29 +94,10 @@ public class PluginsGitRepositoryJob
 		jobPropertiesFiles.add(
 			new File(portalGitRepositoryDir, "test.properties"));
 
-		readJobProperties();
-
 		portalGitWorkingDirectory =
 			(PortalGitWorkingDirectory)
 				GitWorkingDirectoryFactory.newGitWorkingDirectory(
 					portalBranchName, portalGitRepositoryDir.getPath());
 	}
-
-	protected String getBuildPropertyValue(String buildPropertyName) {
-		if (buildProperties == null) {
-			try {
-				buildProperties = JenkinsResultsParserUtil.getBuildProperties();
-			}
-			catch (IOException ioe) {
-				throw new RuntimeException(
-					"Unable to get build properties", ioe);
-			}
-		}
-
-		return buildProperties.getProperty(buildPropertyName);
-	}
-
-	protected Properties buildProperties;
-	protected PortalGitWorkingDirectory portalGitWorkingDirectory;
 
 }

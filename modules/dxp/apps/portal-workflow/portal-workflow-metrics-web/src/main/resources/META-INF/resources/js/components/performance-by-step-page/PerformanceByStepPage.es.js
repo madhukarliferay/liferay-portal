@@ -1,70 +1,74 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React, {useMemo} from 'react';
 
-import PromisesResolver from '../../shared/components/request/PromisesResolver.es';
+import PromisesResolver from '../../shared/components/promises-resolver/PromisesResolver.es';
 import {parse} from '../../shared/components/router/queryString.es';
 import {useFetch} from '../../shared/hooks/useFetch.es';
 import {useFilter} from '../../shared/hooks/useFilter.es';
 import {useProcessTitle} from '../../shared/hooks/useProcessTitle.es';
-import {isValidDate} from '../filter/util/timeRangeUtil.es';
-import {Body} from './PerformanceByStepPageBody.es';
-import {Header} from './PerformanceByStepPageHeader.es';
+import {useTimeRangeFetch} from '../filter/hooks/useTimeRangeFetch.es';
+import {getTimeRangeParams} from '../filter/util/timeRangeUtil.es';
+import Body from './PerformanceByStepPageBody.es';
+import Header from './PerformanceByStepPageHeader.es';
 
-const PerformanceByStepPage = ({query, routeParams}) => {
-	const {processId} = routeParams;
+function PerformanceByStepPage({query, routeParams}) {
+	useTimeRangeFetch();
+
+	const {processId, ...paginationParams} = routeParams;
+	const {search = null} = parse(query);
+	const filterKeys = ['processVersion'];
+	const hideFilters = ['processVersion'];
 
 	useProcessTitle(processId, Liferay.Language.get('performance-by-step'));
 
-	const {search = null} = parse(query);
-
 	const {
-		dispatch,
-		filterState: {timeRange}
-	} = useFilter();
+		filterValues: {dateEnd, dateStart, processVersion},
+		prefixedKeys,
+		selectedFilters,
+	} = useFilter({filterKeys});
 
-	const {dateEnd, dateStart} =
-		timeRange && timeRange.length ? timeRange[0] : {};
-
-	let timeRangeParams = {};
-
-	if (isValidDate(dateEnd) && isValidDate(dateStart)) {
-		timeRangeParams = {
-			dateEnd: dateEnd.toISOString(),
-			dateStart: dateStart.toISOString()
-		};
-	}
-
-	const {data, fetchData} = useFetch(`/processes/${processId}/tasks`, {
-		completed: true,
-		key: search,
-		...routeParams,
-		...timeRangeParams
+	const {data, fetchData} = useFetch({
+		params: {
+			completed: true,
+			key: search,
+			processVersion:
+				processVersion?.indexOf('allVersions') === -1
+					? processVersion
+					: undefined,
+			...paginationParams,
+			...getTimeRangeParams(dateStart, dateEnd),
+		},
+		url: `/processes/${processId}/nodes/metrics`,
 	});
 
-	const promises = useMemo(() => [fetchData()], [fetchData]);
+	const promises = useMemo(
+		() => [fetchData()],
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[routeParams]
+	);
 
 	return (
 		<PromisesResolver promises={promises}>
 			<PerformanceByStepPage.Header
-				dispatch={dispatch}
+				filterKeys={prefixedKeys}
+				hideFilters={hideFilters}
 				routeParams={{...routeParams, search}}
-				totalCount={data.totalCount}
+				selectedFilters={selectedFilters}
+				totalCount={data?.totalCount}
 			/>
 
-			<PerformanceByStepPage.Body data={data} filtered={search} />
+			<PerformanceByStepPage.Body
+				{...data}
+				filtered={search || !!selectedFilters.length}
+			/>
 		</PromisesResolver>
 	);
-};
+}
 
 PerformanceByStepPage.Body = Body;
 PerformanceByStepPage.Header = Header;

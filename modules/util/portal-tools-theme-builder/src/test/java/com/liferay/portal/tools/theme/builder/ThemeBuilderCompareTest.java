@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.theme.builder;
@@ -134,7 +125,7 @@ public class ThemeBuilderCompareTest {
 
 		ThemeBuilder themeBuilder = new ThemeBuilder(
 			_diffsDir, _name, outputDir, _parentDir, _parentName,
-			_templateExtension, _unstyledJarFile);
+			_templateExtension, null, null, _unstyledJarFile);
 
 		themeBuilder.build();
 
@@ -178,77 +169,6 @@ public class ThemeBuilderCompareTest {
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-	private static Map<String, byte[]> _getFileNameDigests(
-			final Path dirPath, String... excludePatterns)
-		throws Exception {
-
-		final Map<String, byte[]> fileNameDigests = new HashMap<>();
-
-		final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-
-		final List<PathMatcher> excludePathMatchers = new ArrayList<>(
-			excludePatterns.length);
-
-		FileSystem fileSystem = dirPath.getFileSystem();
-
-		String dirName = dirPath.toString();
-
-		if (File.separatorChar != '/') {
-			dirName = dirName.replace(File.separatorChar, '/');
-		}
-
-		for (String pattern : excludePatterns) {
-			PathMatcher pathMatcher = fileSystem.getPathMatcher(
-				"glob:" + dirName + "/" + pattern);
-
-			excludePathMatchers.add(pathMatcher);
-		}
-
-		Files.walkFileTree(
-			dirPath,
-			new SimpleFileVisitor<Path>() {
-
-				@Override
-				public FileVisitResult visitFile(
-						Path path, BasicFileAttributes basicFileAttributes)
-					throws IOException {
-
-					for (PathMatcher pathMatcher : excludePathMatchers) {
-						if (pathMatcher.matches(path)) {
-							return FileVisitResult.CONTINUE;
-						}
-					}
-
-					Path relativePath = dirPath.relativize(path);
-
-					messageDigest.reset();
-
-					messageDigest.update(Files.readAllBytes(path));
-
-					fileNameDigests.put(
-						relativePath.toString(), messageDigest.digest());
-
-					return FileVisitResult.CONTINUE;
-				}
-
-			});
-
-		return fileNameDigests;
-	}
-
-	private static File _getParentDir(String parentName) {
-		if (parentName.equals(ThemeBuilder.STYLED)) {
-			return _styledJarFile;
-		}
-
-		if (parentName.equals(ThemeBuilder.UNSTYLED)) {
-			return _unstyledJarFile;
-		}
-
-		throw new IllegalArgumentException(
-			"Unsupported parent name " + parentName);
-	}
 
 	private static Object[] _getTestTheme(
 			String dirName, String warFileName,
@@ -309,7 +229,76 @@ public class ThemeBuilderCompareTest {
 		};
 	}
 
-	private static void _unzip(File file, File outputDir) throws IOException {
+	private Map<String, byte[]> _getFileNameDigests(
+			final Path dirPath, String... excludePatterns)
+		throws Exception {
+
+		final Map<String, byte[]> fileNameDigests = new HashMap<>();
+
+		final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+
+		final List<PathMatcher> excludePathMatchers = new ArrayList<>(
+			excludePatterns.length);
+
+		FileSystem fileSystem = dirPath.getFileSystem();
+
+		String dirName = dirPath.toString();
+
+		if (File.separatorChar != '/') {
+			dirName = dirName.replace(File.separatorChar, '/');
+		}
+
+		for (String pattern : excludePatterns) {
+			excludePathMatchers.add(
+				fileSystem.getPathMatcher("glob:" + dirName + "/" + pattern));
+		}
+
+		Files.walkFileTree(
+			dirPath,
+			new SimpleFileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult visitFile(
+						Path path, BasicFileAttributes basicFileAttributes)
+					throws IOException {
+
+					for (PathMatcher pathMatcher : excludePathMatchers) {
+						if (pathMatcher.matches(path)) {
+							return FileVisitResult.CONTINUE;
+						}
+					}
+
+					Path relativePath = dirPath.relativize(path);
+
+					messageDigest.reset();
+
+					messageDigest.update(Files.readAllBytes(path));
+
+					fileNameDigests.put(
+						relativePath.toString(), messageDigest.digest());
+
+					return FileVisitResult.CONTINUE;
+				}
+
+			});
+
+		return fileNameDigests;
+	}
+
+	private File _getParentDir(String parentName) {
+		if (parentName.equals(ThemeBuilder.STYLED)) {
+			return _styledJarFile;
+		}
+
+		if (parentName.equals(ThemeBuilder.UNSTYLED)) {
+			return _unstyledJarFile;
+		}
+
+		throw new IllegalArgumentException(
+			"Unsupported parent name " + parentName);
+	}
+
+	private void _unzip(File file, File outputDir) throws Exception {
 		Path outputDirPath = outputDir.toPath();
 
 		try (ZipFile zipFile = new ZipFile(file)) {

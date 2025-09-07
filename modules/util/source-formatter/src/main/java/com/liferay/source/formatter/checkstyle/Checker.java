@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter.checkstyle;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.source.formatter.SourceFormatterMessage;
-import com.liferay.source.formatter.checks.configuration.SourceFormatterSuppressions;
+import com.liferay.source.formatter.check.configuration.SourceFormatterSuppressions;
 import com.liferay.source.formatter.checkstyle.util.CheckstyleLogger;
 import com.liferay.source.formatter.checkstyle.util.CheckstyleUtil;
 
@@ -36,7 +29,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.FilterSet;
-import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.api.Violation;
 import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.io.File;
@@ -64,7 +57,10 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 
 		_configuration = configuration;
 		_auditListener = auditListener;
+
 		_checkstyleLogger = checkstyleLogger;
+
+		_checkstyleLogger.clearSourceFormatterMessages();
 
 		_filterSet = sourceFormatterSuppressions.getCheckstyleFilterSet();
 
@@ -85,9 +81,7 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 	}
 
 	@Override
-	public void fireErrors(
-		String fileName, SortedSet<LocalizedMessage> errors) {
-
+	public void fireErrors(String fileName, SortedSet<Violation> errors) {
 		super.fireErrors(_normalizeFileName(fileName), errors);
 	}
 
@@ -184,7 +178,7 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 			filePath.toString(), CharPool.BACK_SLASH, CharPool.SLASH);
 	}
 
-	private SortedSet<LocalizedMessage> _processContent(
+	private SortedSet<Violation> _processContent(
 			String fileName, String content, List<AbstractCheck> checks)
 		throws IOException {
 
@@ -198,7 +192,11 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 
 			return _walk(rootDetailAST, fileContents, checks);
 		}
-		catch (CheckstyleException ce) {
+		catch (CheckstyleException checkstyleException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(checkstyleException);
+			}
+
 			return new TreeSet<>();
 		}
 	}
@@ -220,14 +218,14 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 		}
 	}
 
-	private SortedSet<LocalizedMessage> _walk(
+	private SortedSet<Violation> _walk(
 		DetailAST rootDetailAST, FileContents fileContents,
 		List<AbstractCheck> checks) {
 
-		SortedSet<LocalizedMessage> messages = new TreeSet<>();
+		SortedSet<Violation> messages = new TreeSet<>();
 
 		for (AbstractCheck check : checks) {
-			check.clearMessages();
+			check.clearViolations();
 			check.setFileContents(fileContents);
 
 			check.beginTree(rootDetailAST);
@@ -262,11 +260,13 @@ public class Checker extends com.puppycrawl.tools.checkstyle.Checker {
 		for (AbstractCheck check : checks) {
 			check.finishTree(rootDetailAST);
 
-			messages.addAll(check.getMessages());
+			messages.addAll(check.getViolations());
 		}
 
 		return messages;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(Checker.class);
 
 	private final AuditListener _auditListener;
 	private final CheckstyleLogger _checkstyleLogger;

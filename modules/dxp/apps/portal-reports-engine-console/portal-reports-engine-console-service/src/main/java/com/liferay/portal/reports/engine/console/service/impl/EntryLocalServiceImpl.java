@@ -1,23 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service.impl;
 
-import com.liferay.document.library.kernel.store.DLStoreUtil;
-import com.liferay.petra.memory.DeleteFileFinalizeAction;
-import com.liferay.petra.memory.FinalizeManager;
+import com.liferay.document.library.kernel.store.Store;
+import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -27,23 +21,21 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.Trigger;
-import com.liferay.portal.kernel.scheduler.TriggerFactoryUtil;
+import com.liferay.portal.kernel.scheduler.TriggerFactory;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
-import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SubscriptionSender;
 import com.liferay.portal.kernel.util.Validator;
@@ -54,19 +46,19 @@ import com.liferay.portal.reports.engine.ReportRequest;
 import com.liferay.portal.reports.engine.ReportRequestContext;
 import com.liferay.portal.reports.engine.console.configuration.ReportsGroupServiceEmailConfiguration;
 import com.liferay.portal.reports.engine.console.constants.ReportsEngineConsoleConstants;
-import com.liferay.portal.reports.engine.console.constants.ReportsEngineConsoleDestinationNames;
 import com.liferay.portal.reports.engine.console.exception.DefinitionNameException;
 import com.liferay.portal.reports.engine.console.exception.EntryEmailDeliveryException;
 import com.liferay.portal.reports.engine.console.exception.EntryEmailNotificationsException;
+import com.liferay.portal.reports.engine.console.internal.constants.ReportsEngineDestinationNames;
 import com.liferay.portal.reports.engine.console.internal.util.ReportsEngineConsoleSubscriptionSender;
 import com.liferay.portal.reports.engine.console.model.Definition;
 import com.liferay.portal.reports.engine.console.model.Entry;
 import com.liferay.portal.reports.engine.console.model.Source;
 import com.liferay.portal.reports.engine.console.service.base.EntryLocalServiceBaseImpl;
+import com.liferay.portal.reports.engine.console.service.persistence.DefinitionPersistence;
+import com.liferay.portal.reports.engine.console.service.persistence.SourcePersistence;
 import com.liferay.portal.reports.engine.console.status.ReportStatus;
-import com.liferay.portal.reports.engine.constants.ReportsEngineDestinationNames;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -102,10 +94,10 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		// Entry
 
-		User user = userLocalService.getUser(userId);
-		Date now = new Date();
+		User user = _userLocalService.getUser(userId);
+		Date date = new Date();
 
-		validate(emailNotifications, emailDelivery, reportName);
+		_validate(emailNotifications, emailDelivery, reportName);
 
 		long entryId = counterLocalService.increment();
 
@@ -115,42 +107,35 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		entry.setCompanyId(user.getCompanyId());
 		entry.setUserId(user.getUserId());
 		entry.setUserName(user.getFullName());
-		entry.setCreateDate(serviceContext.getCreateDate(now));
-		entry.setModifiedDate(serviceContext.getModifiedDate(now));
+		entry.setCreateDate(serviceContext.getCreateDate(date));
+		entry.setModifiedDate(serviceContext.getModifiedDate(date));
 		entry.setDefinitionId(definitionId);
 		entry.setFormat(format);
 		entry.setScheduleRequest(schedulerRequest);
 		entry.setStartDate(startDate);
 		entry.setEndDate(endDate);
-		entry.setReportParameters(reportParameters);
 		entry.setRepeating(repeating);
 		entry.setRecurrence(recurrence);
 		entry.setEmailNotifications(emailNotifications);
 		entry.setEmailDelivery(emailDelivery);
 		entry.setPortletId(portletId);
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(pageURL);
-		sb.append("&");
-		sb.append(_portal.getPortletNamespace(portletId));
-		sb.append("entryId=");
-		sb.append(entryId);
-
-		entry.setPageURL(sb.toString());
-
+		entry.setReportParameters(reportParameters);
+		entry.setPageURL(
+			StringBundler.concat(
+				pageURL, "&", _portal.getPortletNamespace(portletId),
+				"entryId=", entryId));
 		entry.setStatus(ReportStatus.PENDING.getValue());
 
-		entryPersistence.update(entry);
+		entry = entryPersistence.update(entry);
 
 		// Resources
 
-		resourceLocalService.addModelResources(entry, serviceContext);
+		_resourceLocalService.addModelResources(entry, serviceContext);
 
 		// Scheduler
 
 		if (schedulerRequest) {
-			scheduleEntry(entry, reportName);
+			_scheduleEntry(entry, reportName);
 		}
 
 		// Report
@@ -168,7 +153,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			boolean addGuestPermissions)
 		throws PortalException {
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			entry.getCompanyId(), entry.getGroupId(), entry.getUserId(),
 			Entry.class.getName(), entry.getEntryId(), false,
 			addCommunityPermissions, addGuestPermissions);
@@ -180,7 +165,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			String[] guestPermissions)
 		throws PortalException {
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			entry.getCompanyId(), entry.getGroupId(), entry.getUserId(),
 			Entry.class.getName(), entry.getEntryId(), communityPermissions,
 			guestPermissions);
@@ -190,10 +175,11 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 	public void deleteAttachment(long companyId, String fileName)
 		throws PortalException {
 
-		DLStoreUtil.deleteFile(companyId, CompanyConstants.SYSTEM, fileName);
+		_store.deleteDirectory(companyId, CompanyConstants.SYSTEM, fileName);
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public Entry deleteEntry(Entry entry) throws PortalException {
 
 		// Entry
@@ -202,21 +188,21 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			entry.getCompanyId(), Entry.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, entry.getEntryId());
 
 		// Scheduler
 
 		if (entry.isRepeating()) {
-			_schedulerEngineHelper.unschedule(
-				entry.getJobName(), entry.getSchedulerRequestName(),
+			_schedulerEngineHelper.delete(
+				_getSchedulerJobName(entry), entry.getSchedulerRequestName(),
 				StorageType.PERSISTED);
 		}
 
 		// Attachments
 
-		DLStoreUtil.deleteDirectory(
+		_store.deleteDirectory(
 			entry.getCompanyId(), CompanyConstants.SYSTEM,
 			entry.getAttachmentsDir());
 
@@ -234,7 +220,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 	public void generateReport(long entryId) throws PortalException {
 		Entry entry = entryPersistence.findByPrimaryKey(entryId);
 
-		Definition definition = definitionPersistence.findByPrimaryKey(
+		Definition definition = _definitionPersistence.findByPrimaryKey(
 			entry.getDefinitionId());
 
 		generateReport(entryId, definition.getReportName());
@@ -246,18 +232,15 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		Entry entry = entryPersistence.findByPrimaryKey(entryId);
 
-		Definition definition = definitionPersistence.findByPrimaryKey(
+		Definition definition = _definitionPersistence.findByPrimaryKey(
 			entry.getDefinitionId());
 
-		String[] existingFiles = definition.getAttachmentsFiles();
-
-		byte[] templateFile = DLStoreUtil.getFileAsBytes(
-			definition.getCompanyId(), CompanyConstants.SYSTEM,
-			existingFiles[0]);
+		String[] existingFiles = definition.getAttachmentsFileNames();
 
 		ReportDesignRetriever retriever = new MemoryReportDesignRetriever(
 			reportName + StringPool.PERIOD + entry.getFormat(),
-			definition.getModifiedDate(), templateFile);
+			definition.getModifiedDate(),
+			_getTemplateFileBytes(definition, existingFiles));
 
 		long sourceId = definition.getSourceId();
 
@@ -282,7 +265,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 				ReportDataSourceType.PORTAL);
 		}
 		else {
-			Source source = sourcePersistence.findByPrimaryKey(sourceId);
+			Source source = _sourcePersistence.findByPrimaryKey(sourceId);
 
 			reportRequestContext = new ReportRequestContext(
 				ReportDataSourceType.JDBC);
@@ -306,8 +289,6 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		Message message = new Message();
 
 		message.setPayload(reportRequest);
-		message.setResponseDestinationName(
-			ReportsEngineConsoleDestinationNames.REPORTS_ADMIN);
 		message.setResponseId(String.valueOf(entry.getEntryId()));
 
 		_messageBus.sendMessage(
@@ -315,10 +296,17 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 	}
 
 	@Override
+	public String[] getAttachmentsFileNames(Entry entry) {
+		return _store.getFileNames(
+			entry.getCompanyId(), CompanyConstants.SYSTEM,
+			entry.getAttachmentsDir());
+	}
+
+	@Override
 	public List<Entry> getEntries(
 		long groupId, String definitionName, String userName, Date createDateGT,
 		Date createDateLT, boolean andSearch, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<Entry> orderByComparator) {
 
 		return entryFinder.findByG_CD_N_SN(
 			groupId, definitionName, userName, createDateGT, createDateLT,
@@ -344,13 +332,13 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		Entry entry = entryLocalService.getEntry(entryId);
 
 		try {
-			notifySubscribers(entry, emailAddresses, fileName, notification);
+			_notifySubscribers(entry, emailAddresses, fileName, notification);
 		}
-		catch (IOException ioe) {
-			throw new PortalException(ioe.getMessage());
+		catch (IOException ioException) {
+			throw new PortalException(ioException.getMessage());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
@@ -361,10 +349,10 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		entry.setScheduleRequest(false);
 		entry.setRepeating(false);
 
-		entryPersistence.update(entry);
+		entry = entryPersistence.update(entry);
 
-		_schedulerEngineHelper.unschedule(
-			entry.getJobName(), entry.getSchedulerRequestName(),
+		_schedulerEngineHelper.delete(
+			_getSchedulerJobName(entry), entry.getSchedulerRequestName(),
 			StorageType.PERSISTED);
 	}
 
@@ -374,7 +362,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		throws PortalException {
 
 		Entry entry = entryPersistence.findByPrimaryKey(entryId);
-		Date now = new Date();
+		Date date = new Date();
 
 		if (entry.isScheduleRequest()) {
 			StringBundler sb = new StringBundler(4);
@@ -384,7 +372,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
 				"MM_dd_yyyy_HH_mm");
 
-			sb.append(dateFormat.format(now));
+			sb.append(dateFormat.format(date));
 
 			sb.append(StringPool.PERIOD);
 			sb.append(StringUtil.extractLast(reportName, StringPool.PERIOD));
@@ -395,9 +383,16 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		String fileName =
 			entry.getAttachmentsDir() + StringPool.SLASH + reportName;
 
-		DLStoreUtil.addFile(
-			entry.getCompanyId(), CompanyConstants.SYSTEM, fileName, false,
-			reportResults);
+		try (InputStream inputStream = new UnsyncByteArrayInputStream(
+				reportResults)) {
+
+			_store.addFile(
+				entry.getCompanyId(), CompanyConstants.SYSTEM, fileName,
+				Store.VERSION_DEFAULT, inputStream);
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
 
 		String[] emailAddresses = StringUtil.split(entry.getEmailDelivery());
 
@@ -407,7 +402,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		sendEmails(entryId, fileName, emailAddresses, true);
 
-		entry.setModifiedDate(now);
+		entry.setModifiedDate(date);
 		entry.setStatus(ReportStatus.COMPLETE.getValue());
 
 		entryPersistence.update(entry);
@@ -420,15 +415,34 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		Entry entry = entryLocalService.getEntry(entryId);
 
-		entry.setStatus(status.getValue());
 		entry.setErrorMessage(errorMessage);
+		entry.setStatus(status.getValue());
 
 		entryPersistence.update(entry);
 	}
 
-	protected ReportsGroupServiceEmailConfiguration
-			getReportsGroupServiceEmailConfiguration(long groupId)
-		throws ConfigurationException {
+	private InputStream _getReportFileInputStream(
+			Entry entry, String fileName, boolean notification)
+		throws Exception {
+
+		if (notification) {
+			return null;
+		}
+
+		InputStream inputStream = _store.getFileAsStream(
+			entry.getCompanyId(), CompanyConstants.SYSTEM, fileName,
+			StringPool.BLANK);
+
+		if (inputStream == null) {
+			throw new IOException("Unable to open file " + fileName);
+		}
+
+		return inputStream;
+	}
+
+	private ReportsGroupServiceEmailConfiguration
+			_getReportsGroupServiceEmailConfiguration(long groupId)
+		throws Exception {
 
 		return _configurationProvider.getConfiguration(
 			ReportsGroupServiceEmailConfiguration.class,
@@ -436,26 +450,27 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 				groupId, ReportsEngineConsoleConstants.SERVICE_NAME));
 	}
 
-	protected File getTemporaryReportFile(
-			Entry entry, String fileName, boolean notification)
-		throws IOException, PortalException {
+	private String _getSchedulerJobName(Entry entry) {
+		return StringBundler.concat(
+			entry.getJobName(), StringPool.AT, entry.getCompanyId());
+	}
 
-		if (notification) {
-			return null;
+	private byte[] _getTemplateFileBytes(
+			Definition definition, String[] existingFiles)
+		throws PortalException {
+
+		try {
+			return StreamUtil.toByteArray(
+				_store.getFileAsStream(
+					definition.getCompanyId(), CompanyConstants.SYSTEM,
+					existingFiles[0], StringPool.BLANK));
 		}
-
-		try (InputStream inputStream = DLStoreUtil.getFileAsStream(
-				entry.getCompanyId(), CompanyConstants.SYSTEM, fileName)) {
-
-			if (inputStream == null) {
-				throw new IOException("Unable to open file " + fileName);
-			}
-
-			return FileUtil.createTempFile(inputStream);
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
 		}
 	}
 
-	protected void notifySubscribers(
+	private void _notifySubscribers(
 			Entry entry, String[] emailAddresses, String fileName,
 			boolean notification)
 		throws Exception {
@@ -468,7 +483,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		ReportsGroupServiceEmailConfiguration
 			reportsGroupServiceEmailConfiguration =
-				getReportsGroupServiceEmailConfiguration(entry.getGroupId());
+				_getReportsGroupServiceEmailConfiguration(entry.getGroupId());
 
 		String fromName = reportsGroupServiceEmailConfiguration.emailFromName();
 
@@ -479,18 +494,18 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		Map<Locale, String> localizedBodyMap = null;
 
 		if (notification) {
-			localizedBodyMap = LocalizationUtil.getMap(
+			localizedBodyMap = _localization.getMap(
 				reportsGroupServiceEmailConfiguration.emailNotificationsBody());
 
-			localizedSubjectMap = LocalizationUtil.getMap(
+			localizedSubjectMap = _localization.getMap(
 				reportsGroupServiceEmailConfiguration.
 					emailNotificationsSubject());
 		}
 		else {
-			localizedBodyMap = LocalizationUtil.getMap(
+			localizedBodyMap = _localization.getMap(
 				reportsGroupServiceEmailConfiguration.emailDeliveryBody());
 
-			localizedSubjectMap = LocalizationUtil.getMap(
+			localizedSubjectMap = _localization.getMap(
 				reportsGroupServiceEmailConfiguration.emailDeliverySubject());
 		}
 
@@ -501,17 +516,11 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			fileName, StringPool.FORWARD_SLASH);
 
 		if (!notification) {
-			File file = getTemporaryReportFile(entry, fileName, notification);
-
-			FinalizeManager.register(
-				subscriptionSender,
-				new DeleteFileFinalizeAction(file.getAbsolutePath()),
-				FinalizeManager.PHANTOM_REFERENCE_FACTORY);
-
-			subscriptionSender.addFileAttachment(file, reportName);
+			subscriptionSender.addFileAttachment(
+				reportName,
+				_getReportFileInputStream(entry, fileName, notification));
 		}
 
-		subscriptionSender.setCompanyId(entry.getCompanyId());
 		subscriptionSender.setContextAttributes(
 			"[$FROM_ADDRESS$]", fromAddress, "[$FROM_NAME$]", fromName,
 			"[$PAGE_URL$]", entry.getPageURL(), "[$REPORT_NAME$]", reportName);
@@ -523,7 +532,6 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		subscriptionSender.setLocalizedSubjectMap(localizedSubjectMap);
 		subscriptionSender.setMailId("reports_entry", entry.getEntryId());
 		subscriptionSender.setReplyToAddress(fromAddress);
-
 		subscriptionSender.setPortletId(portletId);
 
 		subscriptionSender.setScopeGroupId(entry.getGroupId());
@@ -543,24 +551,25 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		subscriptionSender.flushNotificationsAsync();
 	}
 
-	protected void scheduleEntry(Entry entry, String reportName)
+	private void _scheduleEntry(Entry entry, String reportName)
 		throws PortalException {
 
-		Trigger trigger = TriggerFactoryUtil.createTrigger(
-			entry.getJobName(), entry.getSchedulerRequestName(),
+		Trigger trigger = _triggerFactory.createTrigger(
+			_getSchedulerJobName(entry), entry.getSchedulerRequestName(),
 			entry.getStartDate(), entry.getEndDate(), entry.getRecurrence());
 
 		Message message = new Message();
 
+		message.put("companyId", entry.getCompanyId());
 		message.put("entryId", entry.getEntryId());
 		message.put("reportName", reportName);
 
 		_schedulerEngineHelper.schedule(
 			trigger, StorageType.PERSISTED, null,
-			"liferay/reports_scheduler_event", message, 0);
+			ReportsEngineDestinationNames.REPORTS_SCHEDULER_EVENT, message);
 	}
 
-	protected void validate(
+	private void _validate(
 			String emailNotifications, String emailDelivery, String reportName)
 		throws PortalException {
 
@@ -585,7 +594,13 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
+	private DefinitionPersistence _definitionPersistence;
+
+	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private MessageBus _messageBus;
@@ -594,7 +609,19 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 	private Portal _portal;
 
 	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;
+
+	@Reference
+	private SourcePersistence _sourcePersistence;
+
+	@Reference(target = "(default=true)")
+	private Store _store;
+
+	@Reference
+	private TriggerFactory _triggerFactory;
 
 	@Reference
 	private UserLocalService _userLocalService;

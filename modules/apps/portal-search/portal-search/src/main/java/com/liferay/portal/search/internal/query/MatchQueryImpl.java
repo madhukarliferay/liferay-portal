@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -34,74 +25,92 @@ public class MatchQueryImpl extends BaseQueryImpl implements MatchQuery {
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public String getAnalyzer() {
 		return _analyzer;
 	}
 
+	@Override
 	public Float getCutOffFrequency() {
 		return _cutOffFrequency;
 	}
 
+	@Override
 	public String getField() {
 		return _field;
 	}
 
+	@Override
 	public Float getFuzziness() {
 		return _fuzziness;
 	}
 
+	@Override
 	public RewriteMethod getFuzzyRewriteMethod() {
 		return _fuzzyRewriteMethod;
 	}
 
+	@Override
 	public Integer getMaxExpansions() {
 		return _maxExpansions;
 	}
 
+	@Override
 	public String getMinShouldMatch() {
 		return _minShouldMatch;
 	}
 
+	@Override
 	public Operator getOperator() {
 		return _operator;
 	}
 
+	@Override
 	public Integer getPrefixLength() {
 		return _prefixLength;
 	}
 
+	@Override
 	public Integer getSlop() {
 		return _slop;
 	}
 
+	@Override
 	public Type getType() {
 		return _type;
 	}
 
+	@Override
 	public Object getValue() {
 		return _value;
 	}
 
+	@Override
 	public ZeroTermsQuery getZeroTermsQuery() {
 		return _zeroTermsQuery;
 	}
 
+	@Override
 	public Boolean isFuzzyTranspositions() {
 		return _fuzzyTranspositions;
 	}
 
+	@Override
 	public Boolean isLenient() {
 		return _lenient;
 	}
 
+	@Override
 	public void setAnalyzer(String analyzer) {
 		_analyzer = analyzer;
 	}
 
+	@Override
 	public void setCutOffFrequency(Float cutOffFrequency) {
 		_cutOffFrequency = cutOffFrequency;
 	}
 
+	@Override
 	public void setFuzziness(Float fuzziness) {
 		_fuzziness = fuzziness;
 	}
@@ -110,30 +119,37 @@ public class MatchQueryImpl extends BaseQueryImpl implements MatchQuery {
 		_fuzzyRewriteMethod = fuzzyRewriteMethod;
 	}
 
+	@Override
 	public void setFuzzyTranspositions(Boolean fuzzyTranspositions) {
 		_fuzzyTranspositions = fuzzyTranspositions;
 	}
 
+	@Override
 	public void setLenient(Boolean lenient) {
 		_lenient = lenient;
 	}
 
+	@Override
 	public void setMaxExpansions(Integer maxExpansions) {
 		_maxExpansions = maxExpansions;
 	}
 
+	@Override
 	public void setMinShouldMatch(String minShouldMatch) {
 		_minShouldMatch = minShouldMatch;
 	}
 
+	@Override
 	public void setOperator(Operator operator) {
 		_operator = operator;
 	}
 
+	@Override
 	public void setPrefixLength(Integer prefixLength) {
 		_prefixLength = prefixLength;
 	}
 
+	@Override
 	public void setSlop(Integer slop) {
 		_slop = slop;
 	}

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -29,7 +20,8 @@ int end = startAndEnd[1];
 
 long folderId = kbAttachmentItemSelectorViewDisplayContext.getAttachmentsFolderId();
 
-List portletFileEntries = null;
+List<RepositoryEntry> portletFileEntries = new ArrayList<>();
+
 int portletFileEntriesCount = 0;
 
 if (kbAttachmentItemSelectorViewDisplayContext.isSearch()) {
@@ -45,11 +37,7 @@ if (kbAttachmentItemSelectorViewDisplayContext.isSearch()) {
 
 	portletFileEntriesCount = hits.getLength();
 
-	Document[] docs = hits.getDocs();
-
-	portletFileEntries = new ArrayList(docs.length);
-
-	for (Document doc : docs) {
+	for (Document doc : hits.getDocs()) {
 		long fileEntryId = GetterUtil.getLong(doc.get(Field.ENTRY_CLASS_PK));
 
 		FileEntry fileEntry = null;
@@ -69,12 +57,7 @@ if (kbAttachmentItemSelectorViewDisplayContext.isSearch()) {
 	}
 }
 else {
-	String orderByCol = ParamUtil.getString(request, "orderByCol", "title");
-	String orderByType = ParamUtil.getString(request, "orderByType", "asc");
-
-	OrderByComparator<FileEntry> orderByComparator = DLUtil.getRepositoryModelOrderByComparator(orderByCol, orderByType);
-
-	portletFileEntries = PortletFileRepositoryUtil.getPortletFileEntries(scopeGroupId, folderId, WorkflowConstants.STATUS_APPROVED, start, end, orderByComparator);
+	portletFileEntries.addAll(PortletFileRepositoryUtil.getPortletFileEntries(scopeGroupId, folderId, WorkflowConstants.STATUS_APPROVED, start, end, kbAttachmentItemSelectorViewDisplayContext.getOrderByComparator()));
 	portletFileEntriesCount = PortletFileRepositoryUtil.getPortletFileEntriesCount(scopeGroupId, folderId, WorkflowConstants.STATUS_APPROVED);
 }
 %>
@@ -92,5 +75,5 @@ else {
 />
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("com_liferay_knowledge_base_item_selector_web.kb_article_attachments_jsp");
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_knowledge_base_item_selector_web.kb_article_attachments_jsp");
 %>

@@ -1,38 +1,32 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.taglib.servlet.taglib;
 
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.dynamic.data.mapping.taglib.internal.util.PortletDisplayTemplateUtil;
 import com.liferay.dynamic.data.mapping.taglib.servlet.taglib.base.BaseTemplateSelectorTag;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portlet.display.template.util.PortletDisplayTemplateUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
-
 /**
  * @author Juan Fernández
+ * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+ *             com.liferay.template.taglib.servlet.taglib.TemplateSelectorTag}
  */
+@Deprecated
 public class TemplateSelectorTag extends BaseTemplateSelectorTag {
 
 	@Override
@@ -59,8 +53,11 @@ public class TemplateSelectorTag extends BaseTemplateSelectorTag {
 			return displayStyleGroupId;
 		}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return themeDisplay.getScopeGroupId();
 	}
@@ -85,7 +82,7 @@ public class TemplateSelectorTag extends BaseTemplateSelectorTag {
 	}
 
 	protected ResourceBundle getResourceBundle() {
-		Locale locale = PortalUtil.getLocale(request);
+		Locale locale = PortalUtil.getLocale(getRequest());
 
 		Class<?> clazz = getClass();
 

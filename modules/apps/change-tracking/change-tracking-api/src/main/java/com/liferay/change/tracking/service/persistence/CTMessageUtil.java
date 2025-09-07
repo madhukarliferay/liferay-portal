@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the ct message service. This utility wraps <code>com.liferay.change.tracking.service.persistence.impl.CTMessagePersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class CTMessageUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -129,8 +116,8 @@ public class CTMessageUtil {
 	 * @param ctCollectionId the ct collection ID
 	 * @return the matching ct messages
 	 */
-	public static List<CTMessage> findByCTCollectionId(long ctCollectionId) {
-		return getPersistence().findByCTCollectionId(ctCollectionId);
+	public static List<CTMessage> findByCtCollectionId(long ctCollectionId) {
+		return getPersistence().findByCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -145,10 +132,10 @@ public class CTMessageUtil {
 	 * @param end the upper bound of the range of ct messages (not inclusive)
 	 * @return the range of matching ct messages
 	 */
-	public static List<CTMessage> findByCTCollectionId(
+	public static List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end) {
 
-		return getPersistence().findByCTCollectionId(
+		return getPersistence().findByCtCollectionId(
 			ctCollectionId, start, end);
 	}
 
@@ -165,11 +152,11 @@ public class CTMessageUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching ct messages
 	 */
-	public static List<CTMessage> findByCTCollectionId(
+	public static List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end,
 		OrderByComparator<CTMessage> orderByComparator) {
 
-		return getPersistence().findByCTCollectionId(
+		return getPersistence().findByCtCollectionId(
 			ctCollectionId, start, end, orderByComparator);
 	}
 
@@ -187,12 +174,12 @@ public class CTMessageUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching ct messages
 	 */
-	public static List<CTMessage> findByCTCollectionId(
+	public static List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end,
 		OrderByComparator<CTMessage> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByCTCollectionId(
+		return getPersistence().findByCtCollectionId(
 			ctCollectionId, start, end, orderByComparator, useFinderCache);
 	}
 
@@ -204,11 +191,11 @@ public class CTMessageUtil {
 	 * @return the first matching ct message
 	 * @throws NoSuchMessageException if a matching ct message could not be found
 	 */
-	public static CTMessage findByCTCollectionId_First(
+	public static CTMessage findByCtCollectionId_First(
 			long ctCollectionId, OrderByComparator<CTMessage> orderByComparator)
 		throws com.liferay.change.tracking.exception.NoSuchMessageException {
 
-		return getPersistence().findByCTCollectionId_First(
+		return getPersistence().findByCtCollectionId_First(
 			ctCollectionId, orderByComparator);
 	}
 
@@ -219,10 +206,10 @@ public class CTMessageUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching ct message, or <code>null</code> if a matching ct message could not be found
 	 */
-	public static CTMessage fetchByCTCollectionId_First(
+	public static CTMessage fetchByCtCollectionId_First(
 		long ctCollectionId, OrderByComparator<CTMessage> orderByComparator) {
 
-		return getPersistence().fetchByCTCollectionId_First(
+		return getPersistence().fetchByCtCollectionId_First(
 			ctCollectionId, orderByComparator);
 	}
 
@@ -234,11 +221,11 @@ public class CTMessageUtil {
 	 * @return the last matching ct message
 	 * @throws NoSuchMessageException if a matching ct message could not be found
 	 */
-	public static CTMessage findByCTCollectionId_Last(
+	public static CTMessage findByCtCollectionId_Last(
 			long ctCollectionId, OrderByComparator<CTMessage> orderByComparator)
 		throws com.liferay.change.tracking.exception.NoSuchMessageException {
 
-		return getPersistence().findByCTCollectionId_Last(
+		return getPersistence().findByCtCollectionId_Last(
 			ctCollectionId, orderByComparator);
 	}
 
@@ -249,10 +236,10 @@ public class CTMessageUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching ct message, or <code>null</code> if a matching ct message could not be found
 	 */
-	public static CTMessage fetchByCTCollectionId_Last(
+	public static CTMessage fetchByCtCollectionId_Last(
 		long ctCollectionId, OrderByComparator<CTMessage> orderByComparator) {
 
-		return getPersistence().fetchByCTCollectionId_Last(
+		return getPersistence().fetchByCtCollectionId_Last(
 			ctCollectionId, orderByComparator);
 	}
 
@@ -265,12 +252,12 @@ public class CTMessageUtil {
 	 * @return the previous, current, and next ct message
 	 * @throws NoSuchMessageException if a ct message with the primary key could not be found
 	 */
-	public static CTMessage[] findByCTCollectionId_PrevAndNext(
+	public static CTMessage[] findByCtCollectionId_PrevAndNext(
 			long ctMessageId, long ctCollectionId,
 			OrderByComparator<CTMessage> orderByComparator)
 		throws com.liferay.change.tracking.exception.NoSuchMessageException {
 
-		return getPersistence().findByCTCollectionId_PrevAndNext(
+		return getPersistence().findByCtCollectionId_PrevAndNext(
 			ctMessageId, ctCollectionId, orderByComparator);
 	}
 
@@ -279,8 +266,8 @@ public class CTMessageUtil {
 	 *
 	 * @param ctCollectionId the ct collection ID
 	 */
-	public static void removeByCTCollectionId(long ctCollectionId) {
-		getPersistence().removeByCTCollectionId(ctCollectionId);
+	public static void removeByCtCollectionId(long ctCollectionId) {
+		getPersistence().removeByCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -289,8 +276,8 @@ public class CTMessageUtil {
 	 * @param ctCollectionId the ct collection ID
 	 * @return the number of matching ct messages
 	 */
-	public static int countByCTCollectionId(long ctCollectionId) {
-		return getPersistence().countByCTCollectionId(ctCollectionId);
+	public static int countByCtCollectionId(long ctCollectionId) {
+		return getPersistence().countByCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -441,24 +428,13 @@ public class CTMessageUtil {
 	}
 
 	public static CTMessagePersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker<CTMessagePersistence, CTMessagePersistence>
-		_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(CTMessagePersistence.class);
-
-		ServiceTracker<CTMessagePersistence, CTMessagePersistence>
-			serviceTracker =
-				new ServiceTracker<CTMessagePersistence, CTMessagePersistence>(
-					bundle.getBundleContext(), CTMessagePersistence.class,
-					null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(CTMessagePersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile CTMessagePersistence _persistence;
 
 }

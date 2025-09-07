@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the account entry user rel service. This utility wraps <code>com.liferay.account.service.persistence.impl.AccountEntryUserRelPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class AccountEntryUserRelUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -132,8 +119,10 @@ public class AccountEntryUserRelUtil {
 	 * @param accountEntryId the account entry ID
 	 * @return the matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAEI(long accountEntryId) {
-		return getPersistence().findByAEI(accountEntryId);
+	public static List<AccountEntryUserRel> findByAccountEntryId(
+		long accountEntryId) {
+
+		return getPersistence().findByAccountEntryId(accountEntryId);
 	}
 
 	/**
@@ -148,10 +137,11 @@ public class AccountEntryUserRelUtil {
 	 * @param end the upper bound of the range of account entry user rels (not inclusive)
 	 * @return the range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAEI(
+	public static List<AccountEntryUserRel> findByAccountEntryId(
 		long accountEntryId, int start, int end) {
 
-		return getPersistence().findByAEI(accountEntryId, start, end);
+		return getPersistence().findByAccountEntryId(
+			accountEntryId, start, end);
 	}
 
 	/**
@@ -167,11 +157,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAEI(
+	public static List<AccountEntryUserRel> findByAccountEntryId(
 		long accountEntryId, int start, int end,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().findByAEI(
+		return getPersistence().findByAccountEntryId(
 			accountEntryId, start, end, orderByComparator);
 	}
 
@@ -189,12 +179,12 @@ public class AccountEntryUserRelUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAEI(
+	public static List<AccountEntryUserRel> findByAccountEntryId(
 		long accountEntryId, int start, int end,
 		OrderByComparator<AccountEntryUserRel> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByAEI(
+		return getPersistence().findByAccountEntryId(
 			accountEntryId, start, end, orderByComparator, useFinderCache);
 	}
 
@@ -206,12 +196,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the first matching account entry user rel
 	 * @throws NoSuchEntryUserRelException if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel findByAEI_First(
+	public static AccountEntryUserRel findByAccountEntryId_First(
 			long accountEntryId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAEI_First(
+		return getPersistence().findByAccountEntryId_First(
 			accountEntryId, orderByComparator);
 	}
 
@@ -222,11 +212,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching account entry user rel, or <code>null</code> if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel fetchByAEI_First(
+	public static AccountEntryUserRel fetchByAccountEntryId_First(
 		long accountEntryId,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().fetchByAEI_First(
+		return getPersistence().fetchByAccountEntryId_First(
 			accountEntryId, orderByComparator);
 	}
 
@@ -238,12 +228,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the last matching account entry user rel
 	 * @throws NoSuchEntryUserRelException if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel findByAEI_Last(
+	public static AccountEntryUserRel findByAccountEntryId_Last(
 			long accountEntryId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAEI_Last(
+		return getPersistence().findByAccountEntryId_Last(
 			accountEntryId, orderByComparator);
 	}
 
@@ -254,11 +244,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching account entry user rel, or <code>null</code> if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel fetchByAEI_Last(
+	public static AccountEntryUserRel fetchByAccountEntryId_Last(
 		long accountEntryId,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().fetchByAEI_Last(
+		return getPersistence().fetchByAccountEntryId_Last(
 			accountEntryId, orderByComparator);
 	}
 
@@ -271,12 +261,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the previous, current, and next account entry user rel
 	 * @throws NoSuchEntryUserRelException if a account entry user rel with the primary key could not be found
 	 */
-	public static AccountEntryUserRel[] findByAEI_PrevAndNext(
+	public static AccountEntryUserRel[] findByAccountEntryId_PrevAndNext(
 			long accountEntryUserRelId, long accountEntryId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAEI_PrevAndNext(
+		return getPersistence().findByAccountEntryId_PrevAndNext(
 			accountEntryUserRelId, accountEntryId, orderByComparator);
 	}
 
@@ -285,8 +275,8 @@ public class AccountEntryUserRelUtil {
 	 *
 	 * @param accountEntryId the account entry ID
 	 */
-	public static void removeByAEI(long accountEntryId) {
-		getPersistence().removeByAEI(accountEntryId);
+	public static void removeByAccountEntryId(long accountEntryId) {
+		getPersistence().removeByAccountEntryId(accountEntryId);
 	}
 
 	/**
@@ -295,8 +285,8 @@ public class AccountEntryUserRelUtil {
 	 * @param accountEntryId the account entry ID
 	 * @return the number of matching account entry user rels
 	 */
-	public static int countByAEI(long accountEntryId) {
-		return getPersistence().countByAEI(accountEntryId);
+	public static int countByAccountEntryId(long accountEntryId) {
+		return getPersistence().countByAccountEntryId(accountEntryId);
 	}
 
 	/**
@@ -305,8 +295,10 @@ public class AccountEntryUserRelUtil {
 	 * @param accountUserId the account user ID
 	 * @return the matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAUI(long accountUserId) {
-		return getPersistence().findByAUI(accountUserId);
+	public static List<AccountEntryUserRel> findByAccountUserId(
+		long accountUserId) {
+
+		return getPersistence().findByAccountUserId(accountUserId);
 	}
 
 	/**
@@ -321,10 +313,10 @@ public class AccountEntryUserRelUtil {
 	 * @param end the upper bound of the range of account entry user rels (not inclusive)
 	 * @return the range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAUI(
+	public static List<AccountEntryUserRel> findByAccountUserId(
 		long accountUserId, int start, int end) {
 
-		return getPersistence().findByAUI(accountUserId, start, end);
+		return getPersistence().findByAccountUserId(accountUserId, start, end);
 	}
 
 	/**
@@ -340,11 +332,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAUI(
+	public static List<AccountEntryUserRel> findByAccountUserId(
 		long accountUserId, int start, int end,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().findByAUI(
+		return getPersistence().findByAccountUserId(
 			accountUserId, start, end, orderByComparator);
 	}
 
@@ -362,12 +354,12 @@ public class AccountEntryUserRelUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching account entry user rels
 	 */
-	public static List<AccountEntryUserRel> findByAUI(
+	public static List<AccountEntryUserRel> findByAccountUserId(
 		long accountUserId, int start, int end,
 		OrderByComparator<AccountEntryUserRel> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByAUI(
+		return getPersistence().findByAccountUserId(
 			accountUserId, start, end, orderByComparator, useFinderCache);
 	}
 
@@ -379,12 +371,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the first matching account entry user rel
 	 * @throws NoSuchEntryUserRelException if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel findByAUI_First(
+	public static AccountEntryUserRel findByAccountUserId_First(
 			long accountUserId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAUI_First(
+		return getPersistence().findByAccountUserId_First(
 			accountUserId, orderByComparator);
 	}
 
@@ -395,11 +387,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching account entry user rel, or <code>null</code> if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel fetchByAUI_First(
+	public static AccountEntryUserRel fetchByAccountUserId_First(
 		long accountUserId,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().fetchByAUI_First(
+		return getPersistence().fetchByAccountUserId_First(
 			accountUserId, orderByComparator);
 	}
 
@@ -411,12 +403,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the last matching account entry user rel
 	 * @throws NoSuchEntryUserRelException if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel findByAUI_Last(
+	public static AccountEntryUserRel findByAccountUserId_Last(
 			long accountUserId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAUI_Last(
+		return getPersistence().findByAccountUserId_Last(
 			accountUserId, orderByComparator);
 	}
 
@@ -427,11 +419,11 @@ public class AccountEntryUserRelUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching account entry user rel, or <code>null</code> if a matching account entry user rel could not be found
 	 */
-	public static AccountEntryUserRel fetchByAUI_Last(
+	public static AccountEntryUserRel fetchByAccountUserId_Last(
 		long accountUserId,
 		OrderByComparator<AccountEntryUserRel> orderByComparator) {
 
-		return getPersistence().fetchByAUI_Last(
+		return getPersistence().fetchByAccountUserId_Last(
 			accountUserId, orderByComparator);
 	}
 
@@ -444,12 +436,12 @@ public class AccountEntryUserRelUtil {
 	 * @return the previous, current, and next account entry user rel
 	 * @throws NoSuchEntryUserRelException if a account entry user rel with the primary key could not be found
 	 */
-	public static AccountEntryUserRel[] findByAUI_PrevAndNext(
+	public static AccountEntryUserRel[] findByAccountUserId_PrevAndNext(
 			long accountEntryUserRelId, long accountUserId,
 			OrderByComparator<AccountEntryUserRel> orderByComparator)
 		throws com.liferay.account.exception.NoSuchEntryUserRelException {
 
-		return getPersistence().findByAUI_PrevAndNext(
+		return getPersistence().findByAccountUserId_PrevAndNext(
 			accountEntryUserRelId, accountUserId, orderByComparator);
 	}
 
@@ -458,8 +450,8 @@ public class AccountEntryUserRelUtil {
 	 *
 	 * @param accountUserId the account user ID
 	 */
-	public static void removeByAUI(long accountUserId) {
-		getPersistence().removeByAUI(accountUserId);
+	public static void removeByAccountUserId(long accountUserId) {
+		getPersistence().removeByAccountUserId(accountUserId);
 	}
 
 	/**
@@ -468,8 +460,8 @@ public class AccountEntryUserRelUtil {
 	 * @param accountUserId the account user ID
 	 * @return the number of matching account entry user rels
 	 */
-	public static int countByAUI(long accountUserId) {
-		return getPersistence().countByAUI(accountUserId);
+	public static int countByAccountUserId(long accountUserId) {
+		return getPersistence().countByAccountUserId(accountUserId);
 	}
 
 	/**
@@ -697,29 +689,15 @@ public class AccountEntryUserRelUtil {
 	}
 
 	public static AccountEntryUserRelPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<AccountEntryUserRelPersistence, AccountEntryUserRelPersistence>
-			_serviceTracker;
+	public static void setPersistence(
+		AccountEntryUserRelPersistence persistence) {
 
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			AccountEntryUserRelPersistence.class);
-
-		ServiceTracker
-			<AccountEntryUserRelPersistence, AccountEntryUserRelPersistence>
-				serviceTracker =
-					new ServiceTracker
-						<AccountEntryUserRelPersistence,
-						 AccountEntryUserRelPersistence>(
-							 bundle.getBundleContext(),
-							 AccountEntryUserRelPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+		_persistence = persistence;
 	}
+
+	private static volatile AccountEntryUserRelPersistence _persistence;
 
 }

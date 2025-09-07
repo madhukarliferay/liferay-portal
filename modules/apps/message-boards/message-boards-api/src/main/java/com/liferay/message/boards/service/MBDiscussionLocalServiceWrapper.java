@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service;
 
+import com.liferay.message.boards.model.MBDiscussion;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link MBDiscussionLocalService}.
@@ -27,19 +22,18 @@ public class MBDiscussionLocalServiceWrapper
 	implements MBDiscussionLocalService,
 			   ServiceWrapper<MBDiscussionLocalService> {
 
+	public MBDiscussionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public MBDiscussionLocalServiceWrapper(
 		MBDiscussionLocalService mbDiscussionLocalService) {
 
 		_mbDiscussionLocalService = mbDiscussionLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link MBDiscussionLocalServiceUtil} to access the message boards discussion local service. Add custom service methods to <code>com.liferay.message.boards.service.impl.MBDiscussionLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion addDiscussion(
+	public MBDiscussion addDiscussion(
 			long userId, long groupId, long classNameId, long classPK,
 			long threadId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -52,13 +46,15 @@ public class MBDiscussionLocalServiceWrapper
 	/**
 	 * Adds the message boards discussion to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MBDiscussionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param mbDiscussion the message boards discussion
 	 * @return the message boards discussion that was added
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion addMBDiscussion(
-		com.liferay.message.boards.model.MBDiscussion mbDiscussion) {
-
+	public MBDiscussion addMBDiscussion(MBDiscussion mbDiscussion) {
 		return _mbDiscussionLocalService.addMBDiscussion(mbDiscussion);
 	}
 
@@ -69,22 +65,34 @@ public class MBDiscussionLocalServiceWrapper
 	 * @return the new message boards discussion
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion createMBDiscussion(
-		long discussionId) {
-
+	public MBDiscussion createMBDiscussion(long discussionId) {
 		return _mbDiscussionLocalService.createMBDiscussion(discussionId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _mbDiscussionLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the message boards discussion with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MBDiscussionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param discussionId the primary key of the message boards discussion
 	 * @return the message boards discussion that was removed
 	 * @throws PortalException if a message boards discussion with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion deleteMBDiscussion(
-			long discussionId)
+	public MBDiscussion deleteMBDiscussion(long discussionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.deleteMBDiscussion(discussionId);
@@ -93,13 +101,15 @@ public class MBDiscussionLocalServiceWrapper
 	/**
 	 * Deletes the message boards discussion from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MBDiscussionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param mbDiscussion the message boards discussion
 	 * @return the message boards discussion that was removed
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion deleteMBDiscussion(
-		com.liferay.message.boards.model.MBDiscussion mbDiscussion) {
-
+	public MBDiscussion deleteMBDiscussion(MBDiscussion mbDiscussion) {
 		return _mbDiscussionLocalService.deleteMBDiscussion(mbDiscussion);
 	}
 
@@ -112,6 +122,18 @@ public class MBDiscussionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _mbDiscussionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _mbDiscussionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -205,30 +227,22 @@ public class MBDiscussionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion fetchDiscussion(
-		long discussionId) {
-
+	public MBDiscussion fetchDiscussion(long discussionId) {
 		return _mbDiscussionLocalService.fetchDiscussion(discussionId);
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion fetchDiscussion(
-		long classNameId, long classPK) {
-
+	public MBDiscussion fetchDiscussion(long classNameId, long classPK) {
 		return _mbDiscussionLocalService.fetchDiscussion(classNameId, classPK);
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion fetchDiscussion(
-		String className, long classPK) {
-
+	public MBDiscussion fetchDiscussion(String className, long classPK) {
 		return _mbDiscussionLocalService.fetchDiscussion(className, classPK);
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion fetchMBDiscussion(
-		long discussionId) {
-
+	public MBDiscussion fetchMBDiscussion(long discussionId) {
 		return _mbDiscussionLocalService.fetchMBDiscussion(discussionId);
 	}
 
@@ -240,17 +254,15 @@ public class MBDiscussionLocalServiceWrapper
 	 * @return the matching message boards discussion, or <code>null</code> if a matching message boards discussion could not be found
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion
-		fetchMBDiscussionByUuidAndGroupId(String uuid, long groupId) {
+	public MBDiscussion fetchMBDiscussionByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _mbDiscussionLocalService.fetchMBDiscussionByUuidAndGroupId(
 			uuid, groupId);
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion fetchThreadDiscussion(
-		long threadId) {
-
+	public MBDiscussion fetchThreadDiscussion(long threadId) {
 		return _mbDiscussionLocalService.fetchThreadDiscussion(threadId);
 	}
 
@@ -262,25 +274,25 @@ public class MBDiscussionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion getDiscussion(
-			long discussionId)
+	public MBDiscussion getDiscussion(long discussionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.getDiscussion(discussionId);
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion getDiscussion(
-			String className, long classPK)
+	public MBDiscussion getDiscussion(String className, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.getDiscussion(className, classPK);
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
-	public java.util.List<com.liferay.message.boards.model.MBDiscussion>
-		getDiscussions(String className) {
-
+	public java.util.List<MBDiscussion> getDiscussions(String className) {
 		return _mbDiscussionLocalService.getDiscussions(className);
 	}
 
@@ -309,8 +321,7 @@ public class MBDiscussionLocalServiceWrapper
 	 * @throws PortalException if a message boards discussion with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion getMBDiscussion(
-			long discussionId)
+	public MBDiscussion getMBDiscussion(long discussionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.getMBDiscussion(discussionId);
@@ -325,8 +336,8 @@ public class MBDiscussionLocalServiceWrapper
 	 * @throws PortalException if a matching message boards discussion could not be found
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion
-			getMBDiscussionByUuidAndGroupId(String uuid, long groupId)
+	public MBDiscussion getMBDiscussionByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.getMBDiscussionByUuidAndGroupId(
@@ -345,9 +356,7 @@ public class MBDiscussionLocalServiceWrapper
 	 * @return the range of message boards discussions
 	 */
 	@Override
-	public java.util.List<com.liferay.message.boards.model.MBDiscussion>
-		getMBDiscussions(int start, int end) {
-
+	public java.util.List<MBDiscussion> getMBDiscussions(int start, int end) {
 		return _mbDiscussionLocalService.getMBDiscussions(start, end);
 	}
 
@@ -359,8 +368,8 @@ public class MBDiscussionLocalServiceWrapper
 	 * @return the matching message boards discussions, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.message.boards.model.MBDiscussion>
-		getMBDiscussionsByUuidAndCompanyId(String uuid, long companyId) {
+	public java.util.List<MBDiscussion> getMBDiscussionsByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return _mbDiscussionLocalService.getMBDiscussionsByUuidAndCompanyId(
 			uuid, companyId);
@@ -377,12 +386,10 @@ public class MBDiscussionLocalServiceWrapper
 	 * @return the range of matching message boards discussions, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.message.boards.model.MBDiscussion>
-		getMBDiscussionsByUuidAndCompanyId(
-			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.message.boards.model.MBDiscussion>
-					orderByComparator) {
+	public java.util.List<MBDiscussion> getMBDiscussionsByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<MBDiscussion>
+			orderByComparator) {
 
 		return _mbDiscussionLocalService.getMBDiscussionsByUuidAndCompanyId(
 			uuid, companyId, start, end, orderByComparator);
@@ -408,6 +415,9 @@ public class MBDiscussionLocalServiceWrapper
 		return _mbDiscussionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -417,8 +427,7 @@ public class MBDiscussionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion getThreadDiscussion(
-			long threadId)
+	public MBDiscussion getThreadDiscussion(long threadId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbDiscussionLocalService.getThreadDiscussion(threadId);
@@ -445,14 +454,41 @@ public class MBDiscussionLocalServiceWrapper
 	/**
 	 * Updates the message boards discussion in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MBDiscussionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param mbDiscussion the message boards discussion
 	 * @return the message boards discussion that was updated
 	 */
 	@Override
-	public com.liferay.message.boards.model.MBDiscussion updateMBDiscussion(
-		com.liferay.message.boards.model.MBDiscussion mbDiscussion) {
-
+	public MBDiscussion updateMBDiscussion(MBDiscussion mbDiscussion) {
 		return _mbDiscussionLocalService.updateMBDiscussion(mbDiscussion);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _mbDiscussionLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<MBDiscussion> getCTPersistence() {
+		return _mbDiscussionLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<MBDiscussion> getModelClass() {
+		return _mbDiscussionLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<MBDiscussion>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _mbDiscussionLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

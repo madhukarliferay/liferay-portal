@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -41,7 +32,7 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 <portlet:actionURL name="editPasswordPolicy" var="editPasswordPolicyURL" />
 
-<aui:form action="<%= editPasswordPolicyURL %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= editPasswordPolicyURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= (passwordPolicyId > 0) ? currentURL : String.valueOf(renderResponse.createRenderURL()) %>" />
 	<aui:input name="passwordPolicyId" type="hidden" value="<%= passwordPolicyId %>" />
 
@@ -50,31 +41,24 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 	<aui:model-context bean="<%= passwordPolicy %>" model="<%= PasswordPolicy.class %>" />
 
-	<aui:fieldset-group markupView="lexicon">
-		<aui:fieldset>
-			<aui:input autoFocus="<%= !defaultPolicy && windowState.equals(WindowState.MAXIMIZED) %>" disabled="<%= defaultPolicy %>" name="name" required="<%= true %>" />
+	<clay:sheet
+		size="full"
+	>
+		<clay:sheet-section>
+			<aui:input disabled="<%= defaultPolicy %>" name="name" required="<%= true %>" />
 
-			<aui:input autoFocus="<%= defaultPolicy && windowState.equals(WindowState.MAXIMIZED) %>" name="description" />
-		</aui:fieldset>
+			<aui:input name="description" />
+		</clay:sheet-section>
 
-		<liferay-ui:panel-container
-			extended="<%= true %>"
-			id="passwordPoliciesAdminPasswordPolicyPanelContainer"
-			persistState="<%= true %>"
-		>
-			<liferay-ui:panel
-				collapsible="<%= true %>"
-				extended="<%= false %>"
-				id="passwordPoliciesAdminPasswordPolicyPasswordPanel"
-				markupView="lexicon"
-				persistState="<%= true %>"
-				title="password-changes"
+		<clay:panel-group>
+			<clay:panel
+				displayTitle='<%= LanguageUtil.get(request, "password-changes") %>'
 			>
-				<aui:fieldset>
-					<aui:input helpMessage="changeable-help" name="changeable" type="toggle-switch" value="<%= passwordPolicy.isChangeable() %>" />
+				<div class="panel-body">
+					<aui:input helpMessage="changeable-help" inlineLabel="right" labelCssClass="simple-toggle-switch" name="changeable" type="toggle-switch" value="<%= passwordPolicy.isChangeable() %>" />
 
 					<div class="password-policy-options" id="<portlet:namespace />changeableSettings">
-						<aui:input helpMessage="change-required-help" name="changeRequired" type="toggle-switch" value="<%= passwordPolicy.isChangeRequired() %>" />
+						<aui:input helpMessage="change-required-help" inlineLabel="right" labelCssClass="simple-toggle-switch" name="changeRequired" type="toggle-switch" value="<%= passwordPolicy.isChangeRequired() %>" />
 
 						<aui:select helpMessage="minimum-age-help" label="minimum-age" name="minAge">
 							<aui:option label="none" value="0" />
@@ -106,22 +90,18 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 						%>
 
 					</aui:select>
-				</aui:fieldset>
-			</liferay-ui:panel>
+				</div>
+			</clay:panel>
 
-			<liferay-ui:panel
-				collapsible="<%= true %>"
-				extended="<%= false %>"
-				id="passwordPoliciesAdminPasswordPolicySyntaxPanel"
-				markupView="lexicon"
-				persistState="<%= true %>"
-				title="password-syntax-checking"
+			<clay:panel
+				collapseClassNames="mt-3"
+				displayTitle='<%= LanguageUtil.get(request, "password-syntax-checking") %>'
 			>
-				<aui:fieldset>
-					<aui:input helpMessage="enable-syntax-checking-help" label="enable-syntax-checking" name="checkSyntax" type="toggle-switch" value="<%= passwordPolicy.isCheckSyntax() %>" />
+				<div class="panel-body">
+					<aui:input helpMessage="enable-syntax-checking-help" inlineLabel="right" label="enable-syntax-checking" labelCssClass="simple-toggle-switch" name="checkSyntax" type="toggle-switch" value="<%= passwordPolicy.isCheckSyntax() %>" />
 
 					<div class="password-policy-options" id="<portlet:namespace />syntaxSettings">
-						<aui:input helpMessage="allow-dictionary-words-help" name="allowDictionaryWords" type="toggle-switch" value="<%= passwordPolicy.isAllowDictionaryWords() %>" />
+						<aui:input helpMessage="allow-dictionary-words-help" inlineLabel="right" labelCssClass="simple-toggle-switch" name="allowDictionaryWords" type="toggle-switch" value="<%= passwordPolicy.isAllowDictionaryWords() %>" />
 
 						<aui:input helpMessage="minimum-alpha-numeric-help" label="minimum-alpha-numeric" name="minAlphanumeric" />
 
@@ -141,19 +121,15 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 						<aui:input helpMessage="<%= taglibHelpMessage %>" label="regular-expression" name="regex" />
 					</div>
-				</aui:fieldset>
-			</liferay-ui:panel>
+				</div>
+			</clay:panel>
 
-			<liferay-ui:panel
-				collapsible="<%= true %>"
-				extended="<%= false %>"
-				id="passwordPoliciesAdminPasswordPolicyHistoryPanel"
-				markupView="lexicon"
-				persistState="<%= true %>"
-				title="password-history"
+			<clay:panel
+				collapseClassNames="mt-3"
+				displayTitle='<%= LanguageUtil.get(request, "password-history") %>'
 			>
-				<aui:fieldset>
-					<aui:input helpMessage="enable-history-help" label="enable-history" name="history" type="toggle-switch" value="<%= passwordPolicy.isHistory() %>" />
+				<div class="panel-body">
+					<aui:input helpMessage="enable-history-help" inlineLabel="right" label="enable-history" labelCssClass="simple-toggle-switch" name="history" type="toggle-switch" value="<%= passwordPolicy.isHistory() %>" />
 
 					<div class="password-policy-options" id="<portlet:namespace />historySettings">
 						<aui:select helpMessage="history-count-help" name="historyCount">
@@ -170,19 +146,15 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 						</aui:select>
 					</div>
-				</aui:fieldset>
-			</liferay-ui:panel>
+				</div>
+			</clay:panel>
 
-			<liferay-ui:panel
-				collapsible="<%= true %>"
-				extended="<%= false %>"
-				id="passwordPoliciesAdminPasswordPolicyExpirationPanel"
-				markupView="lexicon"
-				persistState="<%= true %>"
-				title="password-expiration"
+			<clay:panel
+				collapseClassNames="mt-3"
+				displayTitle='<%= LanguageUtil.get(request, "password-expiration") %>'
 			>
-				<aui:fieldset>
-					<aui:input helpMessage="enable-expiration-help" label="enable-expiration" name="expireable" type="toggle-switch" value="<%= passwordPolicy.isExpireable() %>" />
+				<div class="panel-body">
+					<aui:input helpMessage="enable-expiration-help" inlineLabel="right" label="enable-expiration" labelCssClass="simple-toggle-switch" name="expireable" type="toggle-switch" value="<%= passwordPolicy.isExpireable() %>" />
 
 					<div class="password-policy-options" id="<portlet:namespace />expirationSettings">
 						<aui:select helpMessage="maximum-age-help" label="maximum-age" name="maxAge">
@@ -216,19 +188,15 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 						<aui:input helpMessage="grace-limit-help" name="graceLimit" />
 					</div>
-				</aui:fieldset>
-			</liferay-ui:panel>
+				</div>
+			</clay:panel>
 
-			<liferay-ui:panel
-				collapsible="<%= true %>"
-				extended="<%= false %>"
-				id="passwordPoliciesAdminPasswordPolicyLockoutPanel"
-				markupView="lexicon"
-				persistState="<%= true %>"
-				title="lockout"
+			<clay:panel
+				collapseClassNames="mt-3"
+				displayTitle='<%= LanguageUtil.get(request, "lockout") %>'
 			>
-				<aui:fieldset>
-					<aui:input helpMessage="enable-lockout-help" label="enable-lockout" name="lockout" type="toggle-switch" value="<%= passwordPolicy.isLockout() %>" />
+				<div class="panel-body">
+					<aui:input helpMessage="enable-lockout-help" inlineLabel="right" label="enable-lockout" labelCssClass="simple-toggle-switch" name="lockout" type="toggle-switch" value="<%= passwordPolicy.isLockout() %>" />
 
 					<div class="password-policy-options" id="<portlet:namespace />lockoutSettings">
 						<aui:input helpMessage="maximum-failure-help" label="maximum-failure" name="maxFailure" />
@@ -262,16 +230,16 @@ renderResponse.setTitle(passwordPolicy.isNew() ? LanguageUtil.get(request, "new-
 
 						</aui:select>
 					</div>
-				</aui:fieldset>
-			</liferay-ui:panel>
-		</liferay-ui:panel-container>
-	</aui:fieldset-group>
+				</div>
+			</clay:panel>
+		</clay:panel-group>
 
-	<aui:button-row>
-		<aui:button type="submit" />
+		<clay:sheet-footer>
+			<aui:button type="submit" />
 
-		<aui:button href="<%= String.valueOf(renderResponse.createRenderURL()) %>" type="cancel" />
-	</aui:button-row>
+			<aui:button href="<%= String.valueOf(renderResponse.createRenderURL()) %>" type="cancel" />
+		</clay:sheet-footer>
+	</clay:sheet>
 </aui:form>
 
 <aui:script>

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.asah.connector.internal.client.model;
+
+import com.liferay.petra.string.StringBundler;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,9 +17,6 @@ import java.util.Map;
  * @author Matthew Kong
  */
 public class Individual {
-
-	public Individual() {
-	}
 
 	public List<DataSourceIndividualPK> getDataSourceIndividualPKs() {
 		return _dataSourceIndividualPKs;
@@ -80,29 +70,14 @@ public class Individual {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(11);
-
-		sb.append("{dataSourceIndividualPKs=");
-		sb.append(_dataSourceIndividualPKs);
-		sb.append(", dateCreated=");
-		sb.append(_dateCreated);
-		sb.append(", dateModified=");
-		sb.append(_dateModified);
-		sb.append(", demographics=");
-		sb.append(_demographics);
-		sb.append(", id=");
-		sb.append(_id);
-		sb.append(", individualSegmentIds=");
-		sb.append(_individualSegmentIds);
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{dataSourceIndividualPKs=", _dataSourceIndividualPKs,
+			", dateCreated=", _dateCreated, ", dateModified=", _dateModified,
+			", demographics=", _demographics, ", id=", _id,
+			", individualSegmentIds=", _individualSegmentIds, "}");
 	}
 
 	public static class DataSourceIndividualPK {
-
-		public DataSourceIndividualPK() {
-		}
 
 		public String getDataSourceId() {
 			return _dataSourceId;

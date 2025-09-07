@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,6 +37,7 @@ public class KBArticleWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("kbArticleId", getKbArticleId());
 		attributes.put("resourcePrimKey", getResourcePrimKey());
@@ -53,6 +47,7 @@ public class KBArticleWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("rootResourcePrimKey", getRootResourcePrimKey());
 		attributes.put(
 			"parentResourceClassNameId", getParentResourceClassNameId());
@@ -68,6 +63,9 @@ public class KBArticleWrapper
 		attributes.put("latest", isLatest());
 		attributes.put("main", isMain());
 		attributes.put("sourceURL", getSourceURL());
+		attributes.put("displayDate", getDisplayDate());
+		attributes.put("expirationDate", getExpirationDate());
+		attributes.put("reviewDate", getReviewDate());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
 		attributes.put("statusByUserId", getStatusByUserId());
@@ -83,6 +81,12 @@ public class KBArticleWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -137,6 +141,13 @@ public class KBArticleWrapper
 
 		if (modifiedDate != null) {
 			setModifiedDate(modifiedDate);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long rootResourcePrimKey = (Long)attributes.get("rootResourcePrimKey");
@@ -225,6 +236,24 @@ public class KBArticleWrapper
 			setSourceURL(sourceURL);
 		}
 
+		Date displayDate = (Date)attributes.get("displayDate");
+
+		if (displayDate != null) {
+			setDisplayDate(displayDate);
+		}
+
+		Date expirationDate = (Date)attributes.get("expirationDate");
+
+		if (expirationDate != null) {
+			setExpirationDate(expirationDate);
+		}
+
+		Date reviewDate = (Date)attributes.get("reviewDate");
+
+		if (reviewDate != null) {
+			setReviewDate(reviewDate);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
@@ -256,6 +285,28 @@ public class KBArticleWrapper
 		}
 	}
 
+	/**
+	 * @see com.liferay.portal.model.impl.OrganizationBaseImpl#buildTreePath()
+	 */
+	@Override
+	public String buildTreePath()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.buildTreePath();
+	}
+
+	@Override
+	public KBArticle cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
+	public java.util.List<KBArticle> getAncestorKBArticles()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getAncestorKBArticles();
+	}
+
 	@Override
 	public java.util.List<Long> getAncestorResourcePrimaryKeys()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -269,6 +320,16 @@ public class KBArticleWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getAttachmentsFileEntries();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry
+			getAttachmentsFileEntryByExternalReferenceCode(
+				String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getAttachmentsFileEntryByExternalReferenceCode(
+			externalReferenceCode);
 	}
 
 	@Override
@@ -319,6 +380,16 @@ public class KBArticleWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this kb article.
+	 *
+	 * @return the ct collection ID of this kb article
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the description of this kb article.
 	 *
 	 * @return the description of this kb article
@@ -326,6 +397,36 @@ public class KBArticleWrapper
 	@Override
 	public String getDescription() {
 		return model.getDescription();
+	}
+
+	/**
+	 * Returns the display date of this kb article.
+	 *
+	 * @return the display date of this kb article
+	 */
+	@Override
+	public Date getDisplayDate() {
+		return model.getDisplayDate();
+	}
+
+	/**
+	 * Returns the expiration date of this kb article.
+	 *
+	 * @return the expiration date of this kb article
+	 */
+	@Override
+	public Date getExpirationDate() {
+		return model.getExpirationDate();
+	}
+
+	/**
+	 * Returns the external reference code of this kb article.
+	 *
+	 * @return the external reference code of this kb article
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -473,6 +574,16 @@ public class KBArticleWrapper
 	}
 
 	/**
+	 * Returns the review date of this kb article.
+	 *
+	 * @return the review date of this kb article
+	 */
+	@Override
+	public Date getReviewDate() {
+		return model.getReviewDate();
+	}
+
+	/**
 	 * Returns the root resource prim key of this kb article.
 	 *
 	 * @return the root resource prim key of this kb article
@@ -563,6 +674,16 @@ public class KBArticleWrapper
 	}
 
 	/**
+	 * Returns the class primary key of the trash entry for this kb article.
+	 *
+	 * @return the class primary key of the trash entry for this kb article
+	 */
+	@Override
+	public long getTrashEntryClassPK() {
+		return model.getTrashEntryClassPK();
+	}
+
+	/**
 	 * Returns the url title of this kb article.
 	 *
 	 * @return the url title of this kb article
@@ -625,6 +746,11 @@ public class KBArticleWrapper
 	@Override
 	public long getViewCount() {
 		return model.getViewCount();
+	}
+
+	@Override
+	public boolean hasParentKBArticle() {
+		return model.hasParentKBArticle();
 	}
 
 	/**
@@ -693,6 +819,16 @@ public class KBArticleWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this kb article is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this kb article is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash() {
+		return model.isInTrash();
+	}
+
+	/**
 	 * Returns <code>true</code> if this kb article is latest.
 	 *
 	 * @return <code>true</code> if this kb article is latest; <code>false</code> otherwise
@@ -742,11 +878,6 @@ public class KBArticleWrapper
 		return model.isScheduled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a kb article model instance should use the <code>KBArticle</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -783,6 +914,16 @@ public class KBArticleWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this kb article.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kb article
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the description of this kb article.
 	 *
 	 * @param description the description of this kb article
@@ -790,6 +931,36 @@ public class KBArticleWrapper
 	@Override
 	public void setDescription(String description) {
 		model.setDescription(description);
+	}
+
+	/**
+	 * Sets the display date of this kb article.
+	 *
+	 * @param displayDate the display date of this kb article
+	 */
+	@Override
+	public void setDisplayDate(Date displayDate) {
+		model.setDisplayDate(displayDate);
+	}
+
+	/**
+	 * Sets the expiration date of this kb article.
+	 *
+	 * @param expirationDate the expiration date of this kb article
+	 */
+	@Override
+	public void setExpirationDate(Date expirationDate) {
+		model.setExpirationDate(expirationDate);
+	}
+
+	/**
+	 * Sets the external reference code of this kb article.
+	 *
+	 * @param externalReferenceCode the external reference code of this kb article
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -920,6 +1091,16 @@ public class KBArticleWrapper
 	@Override
 	public void setResourcePrimKey(long resourcePrimKey) {
 		model.setResourcePrimKey(resourcePrimKey);
+	}
+
+	/**
+	 * Sets the review date of this kb article.
+	 *
+	 * @param reviewDate the review date of this kb article
+	 */
+	@Override
+	public void setReviewDate(Date reviewDate) {
+		model.setReviewDate(reviewDate);
 	}
 
 	/**
@@ -1070,6 +1251,25 @@ public class KBArticleWrapper
 	@Override
 	public void setVersion(int version) {
 		model.setVersion(version);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<KBArticle, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<KBArticle, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

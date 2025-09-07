@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
@@ -25,7 +16,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import javax.portlet.PortletPreferences;
+import jakarta.portlet.PortletPreferences;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -75,8 +66,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -103,8 +94,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -129,8 +120,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -157,8 +148,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -176,11 +167,13 @@ public class PortletDataHandlerExceptionTest {
 					PortletPreferences portletPreferences)
 				throws Exception {
 
-				PortletDataException pde = new PortletDataException(message);
+				PortletDataException portletDataException =
+					new PortletDataException(message);
 
-				pde.setType(PortletDataException.INVALID_GROUP);
+				portletDataException.setType(
+					PortletDataException.INVALID_GROUP);
 
-				throw pde;
+				throw portletDataException;
 			}
 
 		};
@@ -189,8 +182,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -216,8 +209,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.deleteData(
 				_portletDataContextImport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -240,8 +233,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -268,8 +261,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -294,8 +287,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -322,8 +315,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -341,11 +334,13 @@ public class PortletDataHandlerExceptionTest {
 					PortletPreferences portletPreferences)
 				throws Exception {
 
-				PortletDataException pde = new PortletDataException(message);
+				PortletDataException portletDataException =
+					new PortletDataException(message);
 
-				pde.setType(PortletDataException.INVALID_GROUP);
+				portletDataException.setType(
+					PortletDataException.INVALID_GROUP);
 
-				throw pde;
+				throw portletDataException;
 			}
 
 		};
@@ -354,8 +349,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -381,8 +376,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.exportData(
 				_portletDataContextExport, RandomTestUtil.randomString(), null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -406,8 +401,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -435,8 +430,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -462,8 +457,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -491,8 +486,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -510,11 +505,13 @@ public class PortletDataHandlerExceptionTest {
 					PortletPreferences portletPreferences, String data)
 				throws Exception {
 
-				PortletDataException pde = new PortletDataException(message);
+				PortletDataException portletDataException =
+					new PortletDataException(message);
 
-				pde.setType(PortletDataException.INVALID_GROUP);
+				portletDataException.setType(
+					PortletDataException.INVALID_GROUP);
 
-				throw pde;
+				throw portletDataException;
 			}
 
 		};
@@ -524,8 +521,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -552,8 +549,8 @@ public class PortletDataHandlerExceptionTest {
 				_portletDataContextImport, RandomTestUtil.randomString(), null,
 				null);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -578,8 +575,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -606,8 +603,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -632,8 +629,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
@@ -660,8 +657,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -679,11 +676,13 @@ public class PortletDataHandlerExceptionTest {
 					PortletPreferences portletPreferences)
 				throws Exception {
 
-				PortletDataException pde = new PortletDataException(message);
+				PortletDataException portletDataException =
+					new PortletDataException(message);
 
-				pde.setType(PortletDataException.INVALID_GROUP);
+				portletDataException.setType(
+					PortletDataException.INVALID_GROUP);
 
-				throw pde;
+				throw portletDataException;
 			}
 
 		};
@@ -692,8 +691,8 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, message);
+		catch (Exception exception) {
+			_validateException(exception, message);
 		}
 	}
 
@@ -719,23 +718,24 @@ public class PortletDataHandlerExceptionTest {
 			portletDataHandler.prepareManifestSummary(
 				_portletDataContextExport);
 		}
-		catch (Exception e) {
-			_validateException(e, null);
+		catch (Exception exception) {
+			_validateException(exception, null);
 		}
 	}
 
-	private void _validateException(Exception e, String message) {
+	private void _validateException(Exception exception, String message) {
 
 		// Ensure that thrown exceptions are an instance of PortletDataException
 
 		Assert.assertTrue(
 			"Exception thrown always have to be type of PortletDataException",
-			e instanceof PortletDataException);
+			exception instanceof PortletDataException);
 
-		PortletDataException pde = (PortletDataException)e;
+		PortletDataException portletDataException =
+			(PortletDataException)exception;
 
-		String portletId = pde.getPortletId();
-		int type = pde.getType();
+		String portletId = portletDataException.getPortletId();
+		int type = portletDataException.getType();
 
 		// At this point, the portlet ID is mandatory
 
@@ -753,7 +753,7 @@ public class PortletDataHandlerExceptionTest {
 
 		// If there was a message, validate that it has not disappeared
 
-		Assert.assertEquals(message, pde.getMessage());
+		Assert.assertEquals(message, portletDataException.getMessage());
 	}
 
 	private static PortletDataContext _portletDataContextExport;

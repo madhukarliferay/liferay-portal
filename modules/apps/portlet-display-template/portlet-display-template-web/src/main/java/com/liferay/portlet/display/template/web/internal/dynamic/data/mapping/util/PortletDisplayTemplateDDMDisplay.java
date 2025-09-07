@@ -1,30 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.display.template.web.internal.dynamic.data.mapping.util;
 
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.util.BaseDDMDisplay;
 import com.liferay.dynamic.data.mapping.util.DDMDisplay;
 import com.liferay.dynamic.data.mapping.util.DDMDisplayTabItem;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -33,13 +25,13 @@ import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portlet.display.template.PortletDisplayTemplate;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -48,7 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	property = "javax.portlet.name=" + PortletKeys.PORTLET_DISPLAY_TEMPLATE,
+	property = "jakarta.portlet.name=" + PortletKeys.PORTLET_DISPLAY_TEMPLATE,
 	service = DDMDisplay.class
 )
 public class PortletDisplayTemplateDDMDisplay extends BaseDDMDisplay {
@@ -139,7 +131,7 @@ public class PortletDisplayTemplateDDMDisplay extends BaseDDMDisplay {
 		Locale locale) {
 
 		if (search) {
-			return LanguageUtil.get(locale, "templates");
+			return _language.get(locale, "templates");
 		}
 
 		if (controlPanel) {
@@ -157,12 +149,12 @@ public class PortletDisplayTemplateDDMDisplay extends BaseDDMDisplay {
 
 	@Override
 	protected String getDefaultEditTemplateTitle(Locale locale) {
-		return LanguageUtil.get(locale, "new-widget-template");
+		return _language.get(locale, "new-widget-template");
 	}
 
 	@Override
 	protected String getDefaultViewTemplateTitle(Locale locale) {
-		return LanguageUtil.get(locale, "widget-templates");
+		return _language.get(locale, "widget-templates");
 	}
 
 	@Override
@@ -182,32 +174,32 @@ public class PortletDisplayTemplateDDMDisplay extends BaseDDMDisplay {
 				PortletRequest.RENDER_PHASE);
 		}
 		else {
-			long groupId = _portal.getScopeGroupId(liferayPortletRequest);
-
-			portletURL = liferayPortletResponse.createRenderURL();
-
-			portletURL.setParameter("mvcPath", "/view_template.jsp");
-			portletURL.setParameter("groupId", String.valueOf(groupId));
-			portletURL.setParameter("classNameId", String.valueOf(classNameId));
-			portletURL.setParameter("classPK", String.valueOf(classPK));
-
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
+			portletURL = PortletURLBuilder.createRenderURL(
+				liferayPortletResponse
+			).setMVCPath(
+				"/view_template.jsp"
+			).setParameter(
+				"classNameId", classNameId
+			).setParameter(
+				"classPK", classPK
+			).setParameter(
+				"groupId", _portal.getScopeGroupId(liferayPortletRequest)
+			).setWindowState(
+				LiferayWindowState.POP_UP
+			).buildPortletURL();
 		}
 
 		return portletURL.toString();
 	}
 
-	@Reference(unbind = "-")
-	protected void setPortletDisplayTemplate(
-		PortletDisplayTemplate portletDisplayTemplate) {
-
-		this.portletDisplayTemplate = portletDisplayTemplate;
-	}
-
+	@Reference
 	protected PortletDisplayTemplate portletDisplayTemplate;
 
 	private static final Set<String> _viewTemplateExcludedColumnNames =
-		SetUtil.fromArray(new String[] {"language", "mode", "structure"});
+		SetUtil.fromArray("language", "mode", "structure");
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

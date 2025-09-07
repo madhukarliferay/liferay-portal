@@ -1,31 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.dynamic.data.lists.constants.DDLRecordConstants;
 import com.liferay.dynamic.data.lists.exception.RecordGroupIdException;
 import com.liferay.dynamic.data.lists.helper.DDLRecordSetTestHelper;
 import com.liferay.dynamic.data.lists.helper.DDLRecordTestHelper;
-import com.liferay.dynamic.data.lists.helper.DDLRecordTestUtil;
+import com.liferay.dynamic.data.lists.helper.test.util.DDLRecordTestUtil;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
-import com.liferay.dynamic.data.lists.model.DDLRecordConstants;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.lists.model.DDLRecordVersion;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalServiceUtil;
 import com.liferay.dynamic.data.lists.service.DDLRecordVersionLocalServiceUtil;
-import com.liferay.dynamic.data.mapping.exception.StorageException;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
@@ -33,28 +23,21 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
-import com.liferay.dynamic.data.mapping.storage.StorageAdapter;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormValuesTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestHelper;
-import com.liferay.dynamic.data.mapping.test.util.storage.FailStorageAdapter;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
 
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +45,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -83,26 +65,12 @@ public class DDLRecordServiceTest {
 		new LiferayIntegrationTestRule();
 
 	@BeforeClass
-	public static void setUpClass() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceRegistration = registry.registerService(
-			StorageAdapter.class, new FailStorageAdapter());
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		_serviceRegistration.unregister();
+	public static void setUpClass() throws Exception {
+		_group = GroupTestUtil.addGroup();
 	}
 
 	@Before
 	public void setUp() throws Exception {
-		_availableLocales = DDMFormTestUtil.createAvailableLocales(
-			LocaleUtil.US);
-		_defaultLocale = LocaleUtil.US;
-
-		_group = GroupTestUtil.addGroup();
-
 		_ddmStructureTestHelper = new DDMStructureTestHelper(
 			PortalUtil.getClassNameId(DDLRecordSet.class), _group);
 		_recordSetTestHelper = new DDLRecordSetTestHelper(_group);
@@ -186,27 +154,12 @@ public class DDLRecordServiceTest {
 	public void testAddRecordWithDifferentGroupIdFromRecordSet()
 		throws Exception {
 
-		long groupId = RandomTestUtil.nextLong();
-
 		DDMForm ddmForm = DDMFormTestUtil.createDDMForm("Field");
 
 		DDLRecordSet ddlRecordSet = addRecordSet(ddmForm);
 
 		DDLRecordTestHelper ddlRecordTestHelper = new DDLRecordTestHelper(
-			GroupTestUtil.addGroup(groupId), ddlRecordSet);
-
-		ddlRecordTestHelper.addRecord();
-	}
-
-	@Test(expected = StorageException.class)
-	public void testAddRecordWithFailStorage() throws Exception {
-		DDMForm ddmForm = DDMFormTestUtil.createDDMForm("Field");
-
-		DDLRecordSet ddlRecordSet = addRecordSet(
-			ddmForm, FailStorageAdapter.STORAGE_TYPE);
-
-		DDLRecordTestHelper ddlRecordTestHelper = new DDLRecordTestHelper(
-			_group, ddlRecordSet);
+			GroupTestUtil.addGroup(), ddlRecordSet);
 
 		ddlRecordTestHelper.addRecord();
 	}
@@ -440,8 +393,30 @@ public class DDLRecordServiceTest {
 		assertRecordFieldValue(record, "Phone", "123456");
 	}
 
+	@Test
+	public void testUpdateRecordIncreaseRecordVersion() throws Exception {
+		DDMForm ddmForm = createDDMForm();
+
+		ddmForm.addDDMFormField(createTextDDMFormField("Name", true, false));
+
+		DDLRecordSet recordSet = addRecordSet(ddmForm);
+
+		DDLRecordTestHelper recordTestHelper = new DDLRecordTestHelper(
+			_group, recordSet);
+
+		DDLRecord record = recordTestHelper.addRecord();
+
+		DDLRecord updatedRecord = DDLRecordLocalServiceUtil.updateRecord(
+			TestPropsValues.getUserId(), record.getRecordId(),
+			record.getDDMStorageId(),
+			DDLRecordTestUtil.getServiceContext(
+				WorkflowConstants.ACTION_PUBLISH));
+
+		Assert.assertNotEquals(record.getVersion(), updatedRecord.getVersion());
+	}
+
 	protected DDLRecordSet addRecordSet(DDMForm ddmForm) throws Exception {
-		return addRecordSet(ddmForm, StorageType.JSON.toString());
+		return addRecordSet(ddmForm, StorageType.DEFAULT.toString());
 	}
 
 	protected DDLRecordSet addRecordSet(DDMForm ddmForm, String storageType)
@@ -567,24 +542,16 @@ public class DDLRecordServiceTest {
 			long recordId, DDMFormValues ddmFormValues, int workflowAction)
 		throws Exception {
 
-		ServiceContext serviceContext = DDLRecordTestUtil.getServiceContext(
-			workflowAction);
-
 		return DDLRecordLocalServiceUtil.updateRecord(
 			TestPropsValues.getUserId(), recordId, false,
 			DDLRecordConstants.DISPLAY_INDEX_DEFAULT, ddmFormValues,
-			serviceContext);
+			DDLRecordTestUtil.getServiceContext(workflowAction));
 	}
 
-	private static ServiceRegistration<StorageAdapter> _serviceRegistration;
+	private static Group _group;
 
-	private Set<Locale> _availableLocales;
 	private DDMStructureTestHelper _ddmStructureTestHelper;
-	private Locale _defaultLocale;
-
-	@DeleteAfterTestRun
-	private Group _group;
-
+	private final Locale _defaultLocale = LocaleUtil.US;
 	private DDLRecordSetTestHelper _recordSetTestHelper;
 
 }

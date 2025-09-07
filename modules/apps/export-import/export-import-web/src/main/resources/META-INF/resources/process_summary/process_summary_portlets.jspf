@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -31,13 +22,15 @@
 	<c:otherwise>
 
 		<%
+		ProcessSummaryDisplayContext processSummaryDisplayContext = new ProcessSummaryDisplayContext();
+
 		List<String> portletIds = new ArrayList<>();
 
 		for (String key : parameterMap.keySet()) {
 			String changesetPortletName = StringBundler.concat(PortletDataHandlerKeys.PORTLET_DATA, StringPool.UNDERLINE, ChangesetPortletKeys.CHANGESET);
 
 			if (key.startsWith(PortletDataHandlerKeys.PORTLET_DATA + "_com") && MapUtil.getBoolean(parameterMap, key) && !key.equals(changesetPortletName)) {
-				portletIds.add(key.substring((PortletDataHandlerKeys.PORTLET_DATA + "_").length()));
+				portletIds.add(key.substring(PortletDataHandlerKeys.PORTLET_DATA.length() + 1));
 			}
 		}
 
@@ -50,9 +43,7 @@
 		Map<String, Map<String, Long>> deletions = new HashMap<>();
 
 		if (portletIds.isEmpty()) {
-			List<Portlet> dataSiteLevelPortlets = ExportImportHelperUtil.getDataSiteLevelPortlets(company.getCompanyId(), false);
-
-			for (Portlet dataSiteLevelPortlet : dataSiteLevelPortlets) {
+			for (Portlet dataSiteLevelPortlet : ExportImportHelperUtil.getDataSiteLevelPortlets(company.getCompanyId(), false)) {
 				portletIds.add(dataSiteLevelPortlet.getPortletId());
 			}
 		}
@@ -66,14 +57,16 @@
 
 			PortletDataHandler portletDataHandler = portlet.getPortletDataHandlerInstance();
 
+			if (!portletDataHandler.isEnabled(company.getCompanyId())) {
+				continue;
+			}
+
 			PortletDataHandlerControl[] exportControls = portletDataHandler.getExportControls();
 
 			PortletDataHandlerControl[] metadataControls = portletDataHandler.getExportMetadataControls();
 
-			PortletDataHandlerControl[] stagingControls = portletDataHandler.getStagingControls();
-
 			if (!type.equals(Constants.EXPORT) && liveGroup.isStagedPortlet(portlet.getRootPortletId())) {
-				exportControls = stagingControls;
+				exportControls = portletDataHandler.getStagingControls();
 			}
 
 			if (ArrayUtil.isEmpty(exportControls) && ArrayUtil.isEmpty(metadataControls)) {
@@ -93,16 +86,28 @@
 
 				String controlClass = control.getClassName();
 
+				if (modelAdditionCounters == null) {
+					continue;
+				}
+
 				if (modelAdditionCounters.containsKey(controlClass)) {
-					Long value = modelAdditionCounters.get(controlClass).getValue();
+					LongWrapper modelAdditionCounter = modelAdditionCounters.get(controlClass);
+
+					Long value = modelAdditionCounter.getValue();
 
 					currentAdditions.put(controlLabel, value);
 
 					totalAdditions += value;
 				}
 
+				if (modelDeletionCounters == null) {
+					continue;
+				}
+
 				if (modelDeletionCounters.containsKey(controlClass)) {
-					Long value = modelDeletionCounters.get(controlClass).getValue();
+					LongWrapper modelDeletionCounter = modelDeletionCounters.get(controlClass);
+
+					Long value = modelDeletionCounter.getValue();
 
 					currentDeletions.put(controlLabel, value);
 
@@ -124,7 +129,7 @@
 		}
 		%>
 
-		<c:if test="<%= portletIds.size() > 0 %>">
+		<c:if test="<%= !portletIds.isEmpty() %>">
 			<div class="process-summary-section">
 				<div>
 					<label class="process-summary-label">
@@ -145,6 +150,8 @@
 					if ((currentAdditions == null) || (currentDeletions == null)) {
 						continue;
 					}
+
+					String assetTitle = processSummaryDisplayContext.getAssetTitle(taskContextMap, portlet);
 				%>
 
 					<div class="process-summary-subsection">
@@ -155,6 +162,10 @@
 
 							<c:if test='<%= currentDeletions.get("total") > 0 %>'>
 								<i>(<%= LanguageUtil.format(resourceBundle, "x-items-deleted", currentDeletions.get("total")) %>)</i>
+							</c:if>
+
+							<c:if test="<%= !Validator.isNull(assetTitle) %>">
+								<label><liferay-ui:message key="title" />: <%= assetTitle %></label>
 							</c:if>
 						</div>
 
@@ -168,9 +179,13 @@
 
 								String mainLabel = additionEntry.getKey();
 
-								if (mainLabel.equals("total"))continue;
+								if (mainLabel.equals("total")) {
+									continue;
+								}
 
-								String additionsString = "(" + additionEntry.getValue().toString() + ")";
+								Long addition = additionEntry.getValue();
+
+								String additionsString = "(" + addition.toString() + ")";
 
 								if (currentAdditions.size() != i) {
 									additionsString += ", ";

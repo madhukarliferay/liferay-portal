@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults.internal;
@@ -24,7 +15,8 @@ import com.liferay.gradle.plugins.BaseDefaultsPlugin;
 import com.liferay.gradle.plugins.defaults.internal.util.GradlePluginsDefaultsUtil;
 import com.liferay.gradle.plugins.defaults.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.defaults.internal.util.StringUtil;
-import com.liferay.gradle.plugins.util.BndBuilderUtil;
+import com.liferay.gradle.plugins.extensions.BundleExtension;
+import com.liferay.gradle.plugins.util.BndUtil;
 import com.liferay.gradle.util.Validator;
 
 import java.io.File;
@@ -39,7 +31,7 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.publish.plugins.PublishingPlugin;
 import org.gradle.api.specs.Spec;
 import org.gradle.util.GUtil;
 
@@ -53,12 +45,16 @@ public class PublishPluginDefaultsPlugin
 		new PublishPluginDefaultsPlugin();
 
 	@Override
-	protected void configureDefaults(
+	protected void applyPluginDefaults(
 		Project project, PublishPlugin publishPlugin) {
 
-		_configurePluginBundle(project);
+		BundleExtension bundleExtension = BndUtil.getBundleExtension(
+			project.getExtensions());
+
+		_configurePluginBundle(project, bundleExtension);
+
 		_configureTaskPublishPlugins(project);
-		_configureTaskUploadArchives(project);
+		_configureTaskPublish(project);
 	}
 
 	@Override
@@ -69,7 +65,9 @@ public class PublishPluginDefaultsPlugin
 	private PublishPluginDefaultsPlugin() {
 	}
 
-	private void _configurePluginBundle(Project project) {
+	private void _configurePluginBundle(
+		Project project, final BundleExtension bundleExtension) {
+
 		final PluginBundleExtension pluginBundleExtension =
 			GradleUtil.getExtension(project, PluginBundleExtension.class);
 
@@ -94,10 +92,8 @@ public class PublishPluginDefaultsPlugin
 			PluginConfig pluginConfig = pluginConfigs.create(name);
 
 			if (gradlePluginFiles.length == 1) {
-				String displayName = BndBuilderUtil.getInstruction(
-					project, Constants.BUNDLE_NAME);
-
-				pluginConfig.setDisplayName(displayName);
+				pluginConfig.setDisplayName(
+					bundleExtension.getInstruction(Constants.BUNDLE_NAME));
 			}
 
 			pluginConfig.setId(fileName.substring(0, fileName.length() - 11));
@@ -116,10 +112,9 @@ public class PublishPluginDefaultsPlugin
 					if (Validator.isNull(
 							pluginBundleExtension.getDescription())) {
 
-						String description = BndBuilderUtil.getInstruction(
-							project, Constants.BUNDLE_DESCRIPTION);
-
-						pluginBundleExtension.setDescription(description);
+						pluginBundleExtension.setDescription(
+							bundleExtension.getInstruction(
+								Constants.BUNDLE_DESCRIPTION));
 					}
 
 					Set<String> pluginBundleTags = new TreeSet<>(
@@ -142,6 +137,13 @@ public class PublishPluginDefaultsPlugin
 			});
 	}
 
+	private void _configureTaskPublish(Project project) {
+		Task publishTask = GradleUtil.getTask(
+			project, PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME);
+
+		publishTask.dependsOn(_PUBLISH_PLUGINS_TASK_NAME);
+	}
+
 	private void _configureTaskPublishPlugins(Project project) {
 		Task task = GradleUtil.getTask(project, _PUBLISH_PLUGINS_TASK_NAME);
 
@@ -150,23 +152,11 @@ public class PublishPluginDefaultsPlugin
 
 				@Override
 				public boolean isSatisfiedBy(Task task) {
-					if (GradlePluginsDefaultsUtil.isSnapshot(
-							task.getProject())) {
-
-						return false;
-					}
-
-					return true;
+					return !GradlePluginsDefaultsUtil.isSnapshot(
+						task.getProject());
 				}
 
 			});
-	}
-
-	private void _configureTaskUploadArchives(Project project) {
-		Task uploadArchivesTask = GradleUtil.getTask(
-			project, BasePlugin.UPLOAD_ARCHIVES_TASK_NAME);
-
-		uploadArchivesTask.dependsOn(_PUBLISH_PLUGINS_TASK_NAME);
 	}
 
 	private static final String _BASE_URL =

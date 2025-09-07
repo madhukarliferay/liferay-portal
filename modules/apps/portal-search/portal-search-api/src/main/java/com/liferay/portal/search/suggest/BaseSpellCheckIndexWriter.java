@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.suggest;
@@ -29,11 +20,10 @@ import com.liferay.portal.kernel.search.suggest.SuggestionConstants;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
-import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.InputStream;
@@ -89,8 +79,8 @@ public abstract class BaseSpellCheckIndexWriter
 				searchContext.getKeywords(), weight, keywordFieldName,
 				typeFieldValue, maxNGramLength);
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -108,8 +98,8 @@ public abstract class BaseSpellCheckIndexWriter
 					_querySuggestionMaxNGramLength);
 			}
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -124,8 +114,8 @@ public abstract class BaseSpellCheckIndexWriter
 				Field.KEYWORD_SEARCH, SuggestionConstants.TYPE_QUERY_SUGGESTION,
 				_querySuggestionMaxNGramLength);
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -142,8 +132,8 @@ public abstract class BaseSpellCheckIndexWriter
 					SuggestionConstants.TYPE_SPELL_CHECKER, 0);
 			}
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -158,8 +148,8 @@ public abstract class BaseSpellCheckIndexWriter
 				Field.SPELL_CHECK_WORD, SuggestionConstants.TYPE_SPELL_CHECKER,
 				0);
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -167,17 +157,6 @@ public abstract class BaseSpellCheckIndexWriter
 		int querySuggestionMaxNGramLength) {
 
 		_querySuggestionMaxNGramLength = querySuggestionMaxNGramLength;
-	}
-
-	protected Digester getDigester() {
-
-		// See LPS-72507 and LPS-76500
-
-		if (digester != null) {
-			return digester;
-		}
-
-		return DigesterUtil.getDigester();
 	}
 
 	protected URL getResource(String name) {
@@ -199,7 +178,8 @@ public abstract class BaseSpellCheckIndexWriter
 
 	protected String[] getSupportedLocales() {
 		return StringUtil.split(
-			props.get(PropsKeys.INDEX_SEARCH_SPELL_CHECKER_SUPPORTED_LOCALES));
+			PropsUtil.get(
+				PropsKeys.INDEX_SEARCH_SPELL_CHECKER_SUPPORTED_LOCALES));
 	}
 
 	protected String getUID(
@@ -220,8 +200,6 @@ public abstract class BaseSpellCheckIndexWriter
 		}
 
 		try {
-			Digester digester = getDigester();
-
 			CharsetEncoder charsetEncoder =
 				CharsetEncoderUtil.getCharsetEncoder(StringPool.UTF8);
 
@@ -243,13 +221,13 @@ public abstract class BaseSpellCheckIndexWriter
 
 			String key = keySB.toString();
 
-			byte[] bytes = digester.digestRaw(
-				Digester.MD5, charsetEncoder.encode(CharBuffer.wrap(key)));
+			byte[] bytes = DigesterUtil.digestRaw(
+				DigesterUtil.MD5, charsetEncoder.encode(CharBuffer.wrap(key)));
 
 			uidSB.append(Base64.encode(bytes));
 		}
-		catch (Exception e) {
-			throw new IllegalStateException(e);
+		catch (Exception exception) {
+			throw new IllegalStateException(exception);
 		}
 
 		return uidSB.toString();
@@ -276,7 +254,9 @@ public abstract class BaseSpellCheckIndexWriter
 		for (String dictionaryFileName : dictionaryFileNames) {
 			if (_log.isInfoEnabled()) {
 				_log.info(
-					"Start indexing dictionary for " + dictionaryFileName);
+					StringBundler.concat(
+						"Start indexing dictionary ", dictionaryFileName,
+						" for company ", searchContext.getCompanyId()));
 			}
 
 			URL url = getResource(dictionaryFileName);
@@ -297,7 +277,9 @@ public abstract class BaseSpellCheckIndexWriter
 
 			if (_log.isInfoEnabled()) {
 				_log.info(
-					"Finished indexing dictionary for " + dictionaryFileName);
+					StringBundler.concat(
+						"Finished indexing dictionary ", dictionaryFileName,
+						" for company ", searchContext.getCompanyId()));
 			}
 		}
 	}
@@ -307,7 +289,7 @@ public abstract class BaseSpellCheckIndexWriter
 			String keywordFieldName, String typeFieldValue, int maxNGramLength)
 		throws Exception {
 
-		String[] dictionaryFileNames = props.getArray(
+		String[] dictionaryFileNames = PropsUtil.getArray(
 			propsKey, new Filter(languageId));
 
 		indexKeywords(
@@ -317,7 +299,7 @@ public abstract class BaseSpellCheckIndexWriter
 		List<Group> groups = groupLocalService.getLiveGroups();
 
 		for (Group group : groups) {
-			String[] groupDictionaryFileNames = props.getArray(
+			String[] groupDictionaryFileNames = PropsUtil.getArray(
 				propsKey,
 				new Filter(languageId, String.valueOf(group.getGroupId())));
 
@@ -332,13 +314,8 @@ public abstract class BaseSpellCheckIndexWriter
 		}
 	}
 
-	protected Digester digester;
-
 	@Reference
 	protected GroupLocalService groupLocalService;
-
-	@Reference
-	protected Props props;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseSpellCheckIndexWriter.class);

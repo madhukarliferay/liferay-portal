@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.background.task.service.impl;
@@ -18,13 +9,15 @@ import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.background.task.internal.BackgroundTaskImpl;
-import com.liferay.portal.background.task.internal.lock.BackgroundTaskLockHelper;
+import com.liferay.portal.background.task.internal.BackgroundTaskInExecutionUtil;
+import com.liferay.portal.background.task.internal.lock.helper.BackgroundTaskLockHelper;
 import com.liferay.portal.background.task.model.BackgroundTask;
 import com.liferay.portal.background.task.service.base.BackgroundTaskLocalServiceBaseImpl;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskConstants;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatus;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusRegistry;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocalManager;
+import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.cluster.Clusterable;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.LockManager;
@@ -33,12 +26,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
-import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
-import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -55,7 +51,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -69,6 +64,7 @@ import org.osgi.service.component.annotations.Reference;
 	property = "model.class.name=com.liferay.portal.background.task.model.BackgroundTask",
 	service = AopService.class
 )
+@CTAware
 public class BackgroundTaskLocalServiceImpl
 	extends BackgroundTaskLocalServiceBaseImpl {
 
@@ -87,19 +83,14 @@ public class BackgroundTaskLocalServiceImpl
 
 		backgroundTask = super.addBackgroundTask(backgroundTask);
 
-		final long backgroundTaskId = backgroundTask.getBackgroundTaskId();
+		long backgroundTaskId = backgroundTask.getBackgroundTaskId();
 
 		TransactionCommitCallbackUtil.registerCallback(
-			new Callable<Void>() {
+			() -> {
+				backgroundTaskLocalService.triggerBackgroundTask(
+					backgroundTaskId);
 
-				@Override
-				public Void call() throws Exception {
-					backgroundTaskLocalService.triggerBackgroundTask(
-						backgroundTaskId);
-
-					return null;
-				}
-
+				return null;
 			});
 
 		return backgroundTask;
@@ -113,9 +104,8 @@ public class BackgroundTaskLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		return addBackgroundTask(
-			userId, groupId, name, null, taskExecutorClassName, taskContextMap,
-			serviceContext);
+		return _addBackgroundTask(
+			userId, groupId, name, null, taskExecutorClassName, taskContextMap);
 	}
 
 	@Override
@@ -126,9 +116,9 @@ public class BackgroundTaskLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		return addBackgroundTask(
+		return _addBackgroundTask(
 			userId, groupId, name, servletContextNames,
-			taskExecutorClass.getName(), taskContextMap, serviceContext);
+			taskExecutorClass.getName(), taskContextMap);
 	}
 
 	@Override
@@ -140,11 +130,11 @@ public class BackgroundTaskLocalServiceImpl
 
 		Folder folder = backgroundTask.addAttachmentsFolder();
 
-		PortletFileRepositoryUtil.addPortletFileEntry(
-			backgroundTask.getGroupId(), userId, BackgroundTask.class.getName(),
-			backgroundTask.getPrimaryKey(), PortletKeys.BACKGROUND_TASK,
-			folder.getFolderId(), file, fileName, ContentTypes.APPLICATION_ZIP,
-			false);
+		_portletFileRepository.addPortletFileEntry(
+			null, backgroundTask.getGroupId(), userId,
+			BackgroundTask.class.getName(), backgroundTask.getPrimaryKey(),
+			PortletKeys.BACKGROUND_TASK, folder.getFolderId(), file, fileName,
+			ContentTypes.APPLICATION_ZIP, false);
 	}
 
 	@Override
@@ -157,11 +147,11 @@ public class BackgroundTaskLocalServiceImpl
 
 		Folder folder = backgroundTask.addAttachmentsFolder();
 
-		PortletFileRepositoryUtil.addPortletFileEntry(
-			backgroundTask.getGroupId(), userId, BackgroundTask.class.getName(),
-			backgroundTask.getPrimaryKey(), PortletKeys.BACKGROUND_TASK,
-			folder.getFolderId(), inputStream, fileName,
-			ContentTypes.APPLICATION_ZIP, false);
+		_portletFileRepository.addPortletFileEntry(
+			null, backgroundTask.getGroupId(), userId,
+			BackgroundTask.class.getName(), backgroundTask.getPrimaryKey(),
+			PortletKeys.BACKGROUND_TASK, folder.getFolderId(), inputStream,
+			fileName, ContentTypes.APPLICATION_ZIP, false);
 	}
 
 	@Override
@@ -205,46 +195,42 @@ public class BackgroundTaskLocalServiceImpl
 			backgroundTask.setStatusMessage(statusMessage);
 		}
 
-		backgroundTaskPersistence.update(backgroundTask);
-
-		return backgroundTask;
+		return backgroundTaskPersistence.update(backgroundTask);
 	}
 
 	@Clusterable(onMaster = true)
 	@Override
-	public void cleanUpBackgroundTask(long backgroundTaskId, final int status) {
-		final BackgroundTask backgroundTask = fetchBackgroundTask(
-			backgroundTaskId);
+	public void cleanUpBackgroundTask(long backgroundTaskId, int status) {
+		BackgroundTask backgroundTask = fetchBackgroundTask(backgroundTaskId);
 
 		try {
 			_backgroundTaskLockHelper.unlockBackgroundTask(
 				new BackgroundTaskImpl(backgroundTask));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		TransactionCommitCallbackUtil.registerCallback(
-			new Callable<Void>() {
+			() -> {
+				Message message = new Message();
 
-				@Override
-				public Void call() throws Exception {
-					Message message = new Message();
+				message.put(
+					BackgroundTaskConstants.MESSAGE_KEY_BACKGROUND_TASK_ID,
+					backgroundTask.getBackgroundTaskId());
+				message.put("companyId", backgroundTask.getCompanyId());
+				message.put("name", backgroundTask.getName());
+				message.put("status", status);
+				message.put(
+					"taskExecutorClassName",
+					backgroundTask.getTaskExecutorClassName());
 
-					message.put(
-						BackgroundTaskConstants.BACKGROUND_TASK_ID,
-						backgroundTask.getBackgroundTaskId());
-					message.put("name", backgroundTask.getName());
-					message.put("status", status);
-					message.put(
-						"taskExecutorClassName",
-						backgroundTask.getTaskExecutorClassName());
+				_messageBus.sendMessage(
+					DestinationNames.BACKGROUND_TASK_STATUS, message);
 
-					_messageBus.sendMessage(
-						DestinationNames.BACKGROUND_TASK_STATUS, message);
-
-					return null;
-				}
-
+				return null;
 			});
 	}
 
@@ -255,13 +241,16 @@ public class BackgroundTaskLocalServiceImpl
 			backgroundTaskPersistence.findByCompleted(false);
 
 		for (BackgroundTask backgroundTask : backgroundTasks) {
-			if (backgroundTask.getStatus() ==
-					BackgroundTaskConstants.STATUS_IN_PROGRESS) {
+			if ((backgroundTask.getStatus() ==
+					BackgroundTaskConstants.STATUS_IN_PROGRESS) &&
+				!BackgroundTaskInExecutionUtil.isInExecution(
+					backgroundTask.getBackgroundTaskId())) {
 
 				backgroundTask.setCompleted(true);
 				backgroundTask.setStatus(BackgroundTaskConstants.STATUS_FAILED);
 
-				backgroundTaskPersistence.update(backgroundTask);
+				backgroundTask = backgroundTaskPersistence.update(
+					backgroundTask);
 			}
 
 			cleanUpBackgroundTask(
@@ -271,13 +260,14 @@ public class BackgroundTaskLocalServiceImpl
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public BackgroundTask deleteBackgroundTask(BackgroundTask backgroundTask)
 		throws PortalException {
 
 		long folderId = backgroundTask.getAttachmentsFolderId();
 
 		if (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-			PortletFileRepositoryUtil.deletePortletFolder(folderId);
+			_portletFileRepository.deletePortletFolder(folderId);
 		}
 
 		if (backgroundTask.getStatus() ==
@@ -660,7 +650,9 @@ public class BackgroundTaskLocalServiceImpl
 		Message message = new Message();
 
 		message.put(
-			BackgroundTaskConstants.BACKGROUND_TASK_ID, backgroundTaskId);
+			BackgroundTaskConstants.MESSAGE_KEY_BACKGROUND_TASK_ID,
+			backgroundTaskId);
+		message.put("companyId", backgroundTask.getCompanyId());
 
 		_messageBus.sendMessage(DestinationNames.BACKGROUND_TASK, message);
 	}
@@ -668,6 +660,19 @@ public class BackgroundTaskLocalServiceImpl
 	@Clusterable(onMaster = true)
 	@Override
 	public void triggerBackgroundTask(long backgroundTaskId) {
+		BackgroundTask backgroundTask =
+			backgroundTaskPersistence.fetchByPrimaryKey(backgroundTaskId);
+
+		if (backgroundTask == null) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"No background task found for background task ID " +
+						backgroundTaskId);
+			}
+
+			return;
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug(
 				"Attempting to trigger background task " + backgroundTaskId);
@@ -676,7 +681,9 @@ public class BackgroundTaskLocalServiceImpl
 		Message message = new Message();
 
 		message.put(
-			BackgroundTaskConstants.BACKGROUND_TASK_ID, backgroundTaskId);
+			BackgroundTaskConstants.MESSAGE_KEY_BACKGROUND_TASK_ID,
+			backgroundTaskId);
+		message.put("companyId", backgroundTask.getCompanyId());
 
 		_messageBus.sendMessage(DestinationNames.BACKGROUND_TASK, message);
 	}
@@ -686,20 +693,19 @@ public class BackgroundTaskLocalServiceImpl
 		_backgroundTaskLockHelper = new BackgroundTaskLockHelper(_lockManager);
 	}
 
-	protected BackgroundTask addBackgroundTask(
+	private BackgroundTask _addBackgroundTask(
 			long userId, long groupId, String name,
 			String[] servletContextNames, String taskExecutorClassName,
-			Map<String, Serializable> taskContextMap,
-			ServiceContext serviceContext)
+			Map<String, Serializable> taskContextMap)
 		throws PortalException {
 
 		User user = null;
 
 		if (userId != UserConstants.USER_ID_DEFAULT) {
-			user = userLocalService.fetchUser(userId);
+			user = _userLocalService.fetchUser(userId);
 		}
 
-		final long backgroundTaskId = counterLocalService.increment();
+		long backgroundTaskId = counterLocalService.increment();
 
 		BackgroundTask backgroundTask = backgroundTaskPersistence.create(
 			backgroundTaskId);
@@ -709,7 +715,8 @@ public class BackgroundTaskLocalServiceImpl
 			backgroundTask.setUserName(user.getFullName());
 		}
 		else {
-			backgroundTask.setCompanyId(CompanyConstants.SYSTEM);
+			backgroundTask.setCompanyId(
+				CompanyThreadLocal.getNonsystemCompanyId());
 			backgroundTask.setUserName(StringPool.BLANK);
 		}
 
@@ -731,22 +738,16 @@ public class BackgroundTaskLocalServiceImpl
 		_backgroundTaskThreadLocalManager.serializeThreadLocals(taskContextMap);
 
 		backgroundTask.setTaskContextMap(taskContextMap);
-
 		backgroundTask.setStatus(BackgroundTaskConstants.STATUS_NEW);
 
-		backgroundTaskPersistence.update(backgroundTask);
+		backgroundTask = backgroundTaskPersistence.update(backgroundTask);
 
 		TransactionCommitCallbackUtil.registerCallback(
-			new Callable<Void>() {
+			() -> {
+				backgroundTaskLocalService.triggerBackgroundTask(
+					backgroundTaskId);
 
-				@Override
-				public Void call() throws Exception {
-					backgroundTaskLocalService.triggerBackgroundTask(
-						backgroundTaskId);
-
-					return null;
-				}
-
+				return null;
 			});
 
 		return backgroundTask;
@@ -768,5 +769,11 @@ public class BackgroundTaskLocalServiceImpl
 
 	@Reference
 	private MessageBus _messageBus;
+
+	@Reference
+	private PortletFileRepository _portletFileRepository;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

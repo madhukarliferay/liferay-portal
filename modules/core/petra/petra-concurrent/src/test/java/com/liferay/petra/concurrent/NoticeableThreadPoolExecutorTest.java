@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.concurrent;
@@ -17,9 +8,14 @@ package com.liferay.petra.concurrent;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.test.util.ThreadTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -34,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -42,15 +39,18 @@ import org.junit.Test;
 public class NoticeableThreadPoolExecutorTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor() {
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new CodeCoverageAssertor() {
 
-			@Override
-			public void appendAssertClasses(List<Class<?>> assertClasses) {
-				assertClasses.add(BaseNoticeableExecutorService.class);
-			}
+				@Override
+				public void appendAssertClasses(List<Class<?>> assertClasses) {
+					assertClasses.add(BaseNoticeableExecutorService.class);
+				}
 
-		};
+			},
+			LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testAdjustSize() throws InterruptedException {
@@ -71,20 +71,20 @@ public class NoticeableThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 			Assert.assertEquals(
 				"To ensure FIFO, core pool size must be 1 or greater",
-				iae.getMessage());
+				illegalArgumentException.getMessage());
 		}
-
-		noticeableThreadPoolExecutor.setCorePoolSize(2);
-
-		Assert.assertEquals(2, noticeableThreadPoolExecutor.getCorePoolSize());
 
 		noticeableThreadPoolExecutor.setMaximumPoolSize(3);
 
 		Assert.assertEquals(
 			3, noticeableThreadPoolExecutor.getMaximumPoolSize());
+
+		noticeableThreadPoolExecutor.setCorePoolSize(2);
+
+		Assert.assertEquals(2, noticeableThreadPoolExecutor.getCorePoolSize());
 
 		noticeableThreadPoolExecutor.shutdown();
 
@@ -136,10 +136,10 @@ public class NoticeableThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 			Assert.assertEquals(
 				"To ensure FIFO, core pool size must be 1 or greater",
-				iae.getMessage());
+				illegalArgumentException.getMessage());
 		}
 
 		new NoticeableThreadPoolExecutor(
@@ -165,7 +165,7 @@ public class NoticeableThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		Assert.assertFalse(noticeableThreadPoolExecutor.isShutdown());
@@ -209,8 +209,8 @@ public class NoticeableThreadPoolExecutorTest {
 			try {
 				semaphore.acquire();
 			}
-			catch (InterruptedException ie) {
-				ReflectionUtil.throwException(ie);
+			catch (InterruptedException interruptedException) {
+				ReflectionUtil.throwException(interruptedException);
 			}
 		};
 
@@ -258,8 +258,8 @@ public class NoticeableThreadPoolExecutorTest {
 			try {
 				semaphore.acquire();
 			}
-			catch (InterruptedException ie) {
-				ReflectionUtil.throwException(ie);
+			catch (InterruptedException interruptedException) {
+				ReflectionUtil.throwException(interruptedException);
 			}
 		};
 
@@ -287,7 +287,32 @@ public class NoticeableThreadPoolExecutorTest {
 	}
 
 	@Test
-	public void testRejectedByShutdown() throws InterruptedException {
+	public void testRejectedByShutdownNoticeableThreadPoolExecutor()
+		throws InterruptedException {
+
+		BlockingQueue<Runnable> rejectedTasks = new LinkedBlockingQueue<>();
+
+		NoticeableThreadPoolExecutor noticeableThreadPoolExecutor =
+			new NoticeableThreadPoolExecutor(
+				1, 1, 1, TimeUnit.NANOSECONDS, new SynchronousQueue<>(),
+				new MethodNameThreadFactory(),
+				(runnable, threadPoolExecutor) -> rejectedTasks.add(runnable),
+				new ThreadPoolHandlerAdapter());
+
+		noticeableThreadPoolExecutor.shutdown();
+
+		Runnable runnable = () -> {
+		};
+
+		noticeableThreadPoolExecutor.execute(runnable);
+
+		Assert.assertSame(runnable, rejectedTasks.take());
+	}
+
+	@Test
+	public void testRejectedByShutdownWorkerThreadPoolExecutor()
+		throws InterruptedException {
+
 		BlockingQueue<Runnable> rejectedTasks = new LinkedBlockingQueue<>();
 
 		NoticeableThreadPoolExecutor noticeableThreadPoolExecutor =
@@ -309,6 +334,57 @@ public class NoticeableThreadPoolExecutorTest {
 		noticeableThreadPoolExecutor.execute(runnable);
 
 		Assert.assertSame(runnable, rejectedTasks.take());
+	}
+
+	@Test
+	public void testRejectedWithDiscardOldestStylePolicy()
+		throws InterruptedException {
+
+		List<Runnable> rejectedRunnables = new ArrayList<>();
+
+		NoticeableThreadPoolExecutor noticeableThreadPoolExecutor =
+			new NoticeableThreadPoolExecutor(
+				1, 1, 1, TimeUnit.NANOSECONDS, new SynchronousQueue<>(),
+				new MethodNameThreadFactory(),
+				(runnable, threadPoolExecutor) -> {
+					rejectedRunnables.add(runnable);
+
+					if (rejectedRunnables.size() > 1) {
+						return;
+					}
+
+					Queue<Runnable> queue = threadPoolExecutor.getQueue();
+
+					queue.poll();
+
+					threadPoolExecutor.execute(runnable);
+				},
+				new ThreadPoolHandlerAdapter());
+
+		Runnable slowRunnable = () -> {
+			try {
+				Thread.sleep(Long.MAX_VALUE);
+			}
+			catch (InterruptedException interruptedException) {
+			}
+		};
+
+		noticeableThreadPoolExecutor.execute(slowRunnable);
+		noticeableThreadPoolExecutor.execute(slowRunnable);
+
+		Assert.assertEquals(
+			rejectedRunnables.toString(), 2, rejectedRunnables.size());
+
+		Runnable runnable = rejectedRunnables.get(0);
+
+		Assert.assertSame(slowRunnable, rejectedRunnables.get(0));
+		Assert.assertSame(slowRunnable, rejectedRunnables.get(1));
+
+		noticeableThreadPoolExecutor.shutdownNow();
+
+		Assert.assertTrue(
+			noticeableThreadPoolExecutor.awaitTermination(
+				10, TimeUnit.MINUTES));
 	}
 
 	@Test
@@ -356,8 +432,8 @@ public class NoticeableThreadPoolExecutorTest {
 			try {
 				semaphore.acquire();
 			}
-			catch (InterruptedException ie) {
-				ReflectionUtil.throwException(ie);
+			catch (InterruptedException interruptedException) {
+				ReflectionUtil.throwException(interruptedException);
 			}
 		};
 
@@ -506,8 +582,9 @@ public class NoticeableThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
-			Assert.assertEquals("Callable is null", npe.getMessage());
+		catch (NullPointerException nullPointerException) {
+			Assert.assertEquals(
+				"Callable is null", nullPointerException.getMessage());
 		}
 
 		NoticeableFuture<String> noticeableFuture1 =
@@ -529,8 +606,9 @@ public class NoticeableThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
-			Assert.assertEquals("Runnable is null", npe.getMessage());
+		catch (NullPointerException nullPointerException) {
+			Assert.assertEquals(
+				"Runnable is null", nullPointerException.getMessage());
 		}
 
 		NoticeableFuture<String> noticeableFuture3 =
@@ -665,7 +743,7 @@ public class NoticeableThreadPoolExecutorTest {
 			try {
 				semaphore.acquire();
 			}
-			catch (InterruptedException ie) {
+			catch (InterruptedException interruptedException) {
 			}
 		};
 
@@ -708,11 +786,24 @@ public class NoticeableThreadPoolExecutorTest {
 		}
 
 		private MethodNameThreadFactory() {
-			Exception e = new Exception();
+			Exception exception = new Exception();
 
-			StackTraceElement[] stackTraceElements = e.getStackTrace();
+			String prefix = null;
 
-			_prefix = stackTraceElements[2].getMethodName() + "-";
+			for (StackTraceElement stackTraceElement :
+					exception.getStackTrace()) {
+
+				if (Objects.equals(
+						NoticeableThreadPoolExecutorTest.class.getName(),
+						stackTraceElement.getClassName())) {
+
+					prefix = stackTraceElement.getMethodName() + "-";
+
+					break;
+				}
+			}
+
+			_prefix = prefix;
 		}
 
 		private final AtomicInteger _counter = new AtomicInteger();

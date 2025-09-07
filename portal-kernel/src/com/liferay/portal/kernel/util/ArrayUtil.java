@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -35,6 +27,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -660,8 +653,8 @@ public class ArrayUtil {
 			return false;
 		}
 
-		for (Object obj : array) {
-			if (Objects.equals(value, obj)) {
+		for (Object object : array) {
+			if (Objects.equals(value, object)) {
 				return true;
 			}
 		}
@@ -809,8 +802,8 @@ public class ArrayUtil {
 			return false;
 		}
 
-		for (Object obj : array2) {
-			if (!contains(array1, obj)) {
+		for (Object object : array2) {
+			if (!contains(array1, object)) {
 				return false;
 			}
 		}
@@ -873,6 +866,26 @@ public class ArrayUtil {
 		}
 
 		return set.toArray(new String[0]);
+	}
+
+	public static boolean equalsIgnoreCase(String[] array1, String[] array2) {
+		if (array1 == array2) {
+			return true;
+		}
+
+		if (isEmpty(array1) || isEmpty(array2) ||
+			(array1.length != array2.length)) {
+
+			return false;
+		}
+
+		for (int i = 0; i < array1.length; i++) {
+			if (!StringUtil.equalsIgnoreCase(array1[i], array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public static <T> boolean exists(T[] array, Predicate<T> predicate) {
@@ -1163,6 +1176,14 @@ public class ArrayUtil {
 		return !isEmpty(array);
 	}
 
+	public static <T> void isNotEmptyForEach(T[] array, Consumer<T> consumer) {
+		if (isNotEmpty(array)) {
+			for (T t : array) {
+				consumer.accept(t);
+			}
+		}
+	}
+
 	public static boolean[] remove(boolean[] array, boolean value) {
 		if (isEmpty(array)) {
 			return array;
@@ -1314,9 +1335,9 @@ public class ArrayUtil {
 
 		List<T> list = new ArrayList<>();
 
-		for (T obj : array) {
-			if (value != obj) {
-				list.add(obj);
+		for (T object : array) {
+			if (value != object) {
+				list.add(object);
 			}
 		}
 
@@ -1864,14 +1885,6 @@ public class ArrayUtil {
 		return newArray;
 	}
 
-	/**
-	 * @deprecated As of Mueller (7.2.x), with no direct replacement
-	 */
-	@Deprecated
-	public static String[] toArray(String[] array) {
-		return array.clone();
-	}
-
 	public static <T, A> A[] toArray(T[] list, Accessor<T, A> accessor) {
 		A[] aArray = (A[])Array.newInstance(
 			accessor.getAttributeClass(), list.length);
@@ -1881,6 +1894,33 @@ public class ArrayUtil {
 		}
 
 		return aArray;
+	}
+
+	public static boolean[] toBooleanArray(Collection<Boolean> collection) {
+		boolean[] newArray = new boolean[collection.size()];
+
+		if (collection instanceof List) {
+			List<Boolean> list = (List<Boolean>)collection;
+
+			for (int i = 0; i < list.size(); i++) {
+				Boolean value = list.get(i);
+
+				newArray[i] = value.booleanValue();
+			}
+		}
+		else {
+			int i = 0;
+
+			Iterator<Boolean> iterator = collection.iterator();
+
+			while (iterator.hasNext()) {
+				Boolean value = iterator.next();
+
+				newArray[i++] = value.booleanValue();
+			}
+		}
+
+		return newArray;
 	}
 
 	public static double[] toDoubleArray(
@@ -2025,14 +2065,16 @@ public class ArrayUtil {
 		return newArray;
 	}
 
-	public static short[] toShortArray(Collection<Short> collection) {
+	public static short[] toShortArray(
+		Collection<? extends Number> collection) {
+
 		short[] newArray = new short[collection.size()];
 
 		if (collection instanceof List) {
-			List<Short> list = (List<Short>)collection;
+			List<Number> list = (List<Number>)collection;
 
 			for (int i = 0; i < list.size(); i++) {
-				Short value = list.get(i);
+				Number value = list.get(i);
 
 				newArray[i] = value.shortValue();
 			}
@@ -2040,10 +2082,10 @@ public class ArrayUtil {
 		else {
 			int i = 0;
 
-			Iterator<Short> iterator = collection.iterator();
+			Iterator<? extends Number> iterator = collection.iterator();
 
 			while (iterator.hasNext()) {
-				Short value = iterator.next();
+				Number value = iterator.next();
 
 				newArray[i++] = value.shortValue();
 			}
@@ -2075,12 +2117,19 @@ public class ArrayUtil {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			Object bean = array[i];
 
-			Object value = BeanPropertiesUtil.getObject(bean, param);
+			Object value = null;
+
+			if (Validator.isNull(param)) {
+				value = String.valueOf(bean);
+			}
+			else {
+				value = BeanPropertiesUtil.getObject(bean, param);
+			}
 
 			if (value != null) {
 				if (locale != null) {
@@ -2122,7 +2171,7 @@ public class ArrayUtil {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(2 * list.length - 1);
+		StringBundler sb = new StringBundler((2 * list.length) - 1);
 
 		for (int i = 0; i < list.length; i++) {
 			T bean = list[i];
@@ -2176,14 +2225,14 @@ public class ArrayUtil {
 		return newArray;
 	}
 
-	public static String[] toStringArray(Collection<String> collection) {
+	public static String[] toStringArray(Collection<?> collection) {
 		String[] newArray = new String[collection.size()];
 
 		if (collection instanceof List) {
-			List<String> list = (List<String>)collection;
+			List<?> list = (List<?>)collection;
 
 			for (int i = 0; i < list.size(); i++) {
-				String value = list.get(i);
+				Object value = list.get(i);
 
 				newArray[i] = String.valueOf(value);
 			}
@@ -2191,10 +2240,10 @@ public class ArrayUtil {
 		else {
 			int i = 0;
 
-			Iterator<String> iterator = collection.iterator();
+			Iterator<?> iterator = collection.iterator();
 
 			while (iterator.hasNext()) {
-				String value = iterator.next();
+				Object value = iterator.next();
 
 				newArray[i++] = String.valueOf(value);
 			}
@@ -2243,11 +2292,11 @@ public class ArrayUtil {
 		return newArray;
 	}
 
-	public static String[] toStringArray(JSONArray array) {
-		String[] newArray = new String[array.length()];
+	public static String[] toStringArray(JSONArray jsonArray) {
+		String[] newArray = new String[jsonArray.length()];
 
-		for (int i = 0; i < array.length(); i++) {
-			newArray[i] = array.getString(i);
+		for (int i = 0; i < jsonArray.length(); i++) {
+			newArray[i] = jsonArray.getString(i);
 		}
 
 		return newArray;

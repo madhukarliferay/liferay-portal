@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.model;
@@ -18,6 +9,9 @@ import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
+import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.StagedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -36,9 +30,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface LayoutClassedModelUsageModel
-	extends AttachedModel, BaseModel<LayoutClassedModelUsage>, MVCCModel {
+	extends AttachedModel, BaseModel<LayoutClassedModelUsage>,
+			CTModel<LayoutClassedModelUsage>, MVCCModel, ShardedModel,
+			StagedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a layout classed model usage model instance should use the {@link LayoutClassedModelUsage} interface instead.
@@ -49,6 +45,7 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @return the primary key of this layout classed model usage
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -56,6 +53,7 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @param primaryKey the primary key of this layout classed model usage
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -75,11 +73,28 @@ public interface LayoutClassedModelUsageModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this layout classed model usage.
+	 *
+	 * @return the ct collection ID of this layout classed model usage
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this layout classed model usage.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout classed model usage
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this layout classed model usage.
 	 *
 	 * @return the uuid of this layout classed model usage
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -87,6 +102,7 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @param uuid the uuid of this layout classed model usage
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -118,10 +134,27 @@ public interface LayoutClassedModelUsageModel
 	public void setGroupId(long groupId);
 
 	/**
+	 * Returns the company ID of this layout classed model usage.
+	 *
+	 * @return the company ID of this layout classed model usage
+	 */
+	@Override
+	public long getCompanyId();
+
+	/**
+	 * Sets the company ID of this layout classed model usage.
+	 *
+	 * @param companyId the company ID of this layout classed model usage
+	 */
+	@Override
+	public void setCompanyId(long companyId);
+
+	/**
 	 * Returns the create date of this layout classed model usage.
 	 *
 	 * @return the create date of this layout classed model usage
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -129,6 +162,7 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @param createDate the create date of this layout classed model usage
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -136,6 +170,7 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @return the modified date of this layout classed model usage
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -143,7 +178,24 @@ public interface LayoutClassedModelUsageModel
 	 *
 	 * @param modifiedDate the modified date of this layout classed model usage
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
+
+	/**
+	 * Returns the class external reference code of this layout classed model usage.
+	 *
+	 * @return the class external reference code of this layout classed model usage
+	 */
+	@AutoEscape
+	public String getClassExternalReferenceCode();
+
+	/**
+	 * Sets the class external reference code of this layout classed model usage.
+	 *
+	 * @param classExternalReferenceCode the class external reference code of this layout classed model usage
+	 */
+	public void setClassExternalReferenceCode(
+		String classExternalReferenceCode);
 
 	/**
 	 * Returns the fully qualified class name of this layout classed model usage.
@@ -257,5 +309,12 @@ public interface LayoutClassedModelUsageModel
 	 * @param lastPublishDate the last publish date of this layout classed model usage
 	 */
 	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public LayoutClassedModelUsage cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

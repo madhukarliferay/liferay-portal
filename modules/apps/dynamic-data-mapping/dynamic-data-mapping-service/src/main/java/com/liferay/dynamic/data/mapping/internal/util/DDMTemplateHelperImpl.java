@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.util;
@@ -25,6 +16,8 @@ import com.liferay.portal.kernel.bean.BeanParamUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.template.StringTemplateResource;
 import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
@@ -35,7 +28,9 @@ import com.liferay.portal.kernel.template.TemplateVariableGroup;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.template.TemplateContextHelper;
+import com.liferay.portal.template.engine.TemplateContextHelper;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -47,8 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -56,7 +49,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Juan Fernández
  * @author Jorge Ferrer
  */
-@Component(immediate = true, service = DDMTemplateHelper.class)
+@Component(service = DDMTemplateHelper.class)
 public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 
 	@Override
@@ -69,7 +62,10 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 					template.getClassPK());
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return null;
@@ -86,7 +82,7 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		JSONObject variablesJSONObject = _jsonFactory.createJSONObject();
 
 		for (TemplateVariableDefinition templateVariableDefinition :
-				getAutocompleteTemplateVariableDefinitions(
+				_getAutocompleteTemplateVariableDefinitions(
 					httpServletRequest, language)) {
 
 			Class<?> clazz = templateVariableDefinition.getClazz();
@@ -98,12 +94,13 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 			else {
 				if (!typesJSONObject.has(clazz.getName())) {
 					typesJSONObject.put(
-						clazz.getName(), getAutocompleteClassJSONObject(clazz));
+						clazz.getName(),
+						_getAutocompleteClassJSONObject(clazz));
 				}
 
 				variablesJSONObject.put(
 					templateVariableDefinition.getName(),
-					getAutocompleteVariableJSONObject(clazz));
+					_getAutocompleteVariableJSONObject(clazz));
 			}
 		}
 
@@ -127,11 +124,11 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		return false;
 	}
 
-	protected JSONObject getAutocompleteClassJSONObject(Class<?> clazz) {
+	private JSONObject _getAutocompleteClassJSONObject(Class<?> clazz) {
 		JSONObject typeJSONObject = _jsonFactory.createJSONObject();
 
 		for (Field field : clazz.getFields()) {
-			JSONObject fieldJSONObject = getAutocompleteVariableJSONObject(
+			JSONObject fieldJSONObject = _getAutocompleteVariableJSONObject(
 				field.getType());
 
 			typeJSONObject.put(field.getName(), fieldJSONObject);
@@ -140,15 +137,15 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		for (Method method : clazz.getMethods()) {
 			JSONObject methodJSONObject = _jsonFactory.createJSONObject();
 
-			JSONArray parametersTypesArray = _jsonFactory.createJSONArray();
+			JSONArray parametersTypesJSONArray = _jsonFactory.createJSONArray();
 
 			Class<?>[] parameterTypes = method.getParameterTypes();
 
 			for (Class<?> parameterType : parameterTypes) {
-				parametersTypesArray.put(parameterType.getCanonicalName());
+				parametersTypesJSONArray.put(parameterType.getCanonicalName());
 			}
 
-			methodJSONObject.put("argumentTypes", parametersTypesArray);
+			methodJSONObject.put("argumentTypes", parametersTypesJSONArray);
 
 			Class<?> returnTypeClass = method.getReturnType();
 
@@ -164,8 +161,8 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		return typeJSONObject;
 	}
 
-	protected List<TemplateVariableDefinition>
-			getAutocompleteTemplateVariableDefinitions(
+	private List<TemplateVariableDefinition>
+			_getAutocompleteTemplateVariableDefinitions(
 				HttpServletRequest httpServletRequest, String language)
 		throws Exception {
 
@@ -240,7 +237,7 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		return new ArrayList<>(templateVariableDefinitions);
 	}
 
-	protected JSONObject getAutocompleteVariableJSONObject(Class<?> clazz) {
+	private JSONObject _getAutocompleteVariableJSONObject(Class<?> clazz) {
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		jsonObject.put("type", clazz.getName());
@@ -248,31 +245,20 @@ public class DDMTemplateHelperImpl implements DDMTemplateHelper {
 		return jsonObject;
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		_ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureService(
-		DDMStructureService ddmStructureService) {
-
-		_ddmStructureService = ddmStructureService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJSONFactory(JSONFactory jsonFactory) {
-		_jsonFactory = jsonFactory;
-	}
-
 	private static final String _TEMPLATE_CONTENT = "# Placeholder";
 
 	private static final String _TEMPLATE_ID = "0";
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMTemplateHelperImpl.class);
+
+	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
 	private DDMStructureService _ddmStructureService;
+
+	@Reference
 	private JSONFactory _jsonFactory;
 
 	@Reference

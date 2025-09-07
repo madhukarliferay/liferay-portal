@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,30 +13,23 @@ PortletURL portletURL = renderResponse.createRenderURL();
 
 <c:choose>
 	<c:when test="<%= wikiPage != null %>">
-		<liferay-ui:panel-container
-			extended="<%= true %>"
-			id="pageMenu"
-			persistState="<%= true %>"
-		>
+		<clay:panel-group>
 
 			<%
 			List<MenuItem> menuItems = MenuItem.fromWikiPage(wikiPage, portletURL);
 
 			for (MenuItem menuItem : menuItems) {
-				String label = menuItem.getLabel();
+				String name = menuItem.getName();
 			%>
 
 				<c:choose>
-					<c:when test="<%= Validator.isNotNull(label) %>">
-						<liferay-ui:panel
-							collapsible="<%= true %>"
-							extended="<%= true %>"
-							id='<%= "pageMenu_" + label %>'
-							persistState="<%= true %>"
-							title="<%= label %>"
+					<c:when test="<%= Validator.isNotNull(name) %>">
+						<clay:panel
+							displayTitle="<%= name %>"
+							expanded="<%= true %>"
 						>
 							<%= _buildPageMenuLinksHTML(menuItem.getChildren()) %>
-						</liferay-ui:panel>
+						</clay:panel>
 					</c:when>
 					<c:otherwise>
 						<%= _buildPageMenuLinksHTML(menuItem.getChildren()) %>
@@ -56,7 +40,7 @@ PortletURL portletURL = renderResponse.createRenderURL();
 			}
 			%>
 
-		</liferay-ui:panel-container>
+		</clay:panel-group>
 
 		<c:if test="<%= PortletPermissionUtil.contains(permissionChecker, plid, portletDisplay.getId(), ActionKeys.CONFIGURATION) && WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.UPDATE) %>">
 			<br />
@@ -88,12 +72,11 @@ private String _buildPageMenuLinksHTML(List<MenuItem> menuItems) {
 	sb.append("<ul class=\"page-menu\">");
 
 	for (MenuItem menuItem : menuItems) {
-		String label = menuItem.getLabel();
-		String url = menuItem.getURL();
+		String name = menuItem.getName();
 
 		sb.append("<li>");
 		sb.append("<a href=\"");
-		sb.append(url);
+		sb.append(menuItem.getURL());
 		sb.append("\"");
 
 		if (menuItem.getExternalURL()) {
@@ -101,7 +84,7 @@ private String _buildPageMenuLinksHTML(List<MenuItem> menuItems) {
 		}
 
 		sb.append(">");
-		sb.append(label);
+		sb.append(name);
 		sb.append("</a>");
 		sb.append("</li>");
 	}

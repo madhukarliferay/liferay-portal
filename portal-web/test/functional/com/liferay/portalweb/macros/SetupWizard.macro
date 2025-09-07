@@ -1,20 +1,22 @@
 definition {
 
-	macro configureAdministratorUserPG {
+	@summary = "Configure the Administrator User"
+	macro configureAdministratorUserPG(administratorEmail = null, administratorFirstName = null, administratorLastName = null) {
 		Type(
 			locator1 = "TextInput#FIRST_NAME",
-			value1 = "${administratorFirstName}");
+			value1 = ${administratorFirstName});
 
 		Type(
 			locator1 = "TextInput#LAST_NAME",
-			value1 = "${administratorLastName}");
+			value1 = ${administratorLastName});
 
 		Type(
 			locator1 = "TextInput#EMAIL",
-			value1 = "${administratorEmail}");
+			value1 = ${administratorEmail});
 	}
 
-	macro configureDatabasePG {
+	@summary = "Configure the Database"
+	macro configureDatabasePG(databaseType = null, databaseName = null, databasePassword = null, jdbcDriverClassName = null, databaseUserName = null) {
 		if (IsElementNotPresent(locator1 = "SetupWizard#DATABASE_CHANGE_USE_CONFIGURED_DATABASE_LINK")) {
 			AssertClick(
 				locator1 = "SetupWizard#DATABASE_CHANGE_LINK",
@@ -24,31 +26,39 @@ definition {
 		if (isSet(databaseName)) {
 			var originalDatabaseName = PropsUtil.get("database.mysql.schema");
 
-			var jdbcURL = StringUtil.replace("${jdbcURL}", "${originalDatabaseName}", "${databaseName}");
+			var jdbcURL = StringUtil.replace(${jdbcURL}, ${originalDatabaseName}, ${databaseName});
 		}
 
 		Select(
 			locator1 = "SetupWizard#DATABASE_CHANGE_DATABASE_TYPE_SELECT",
-			value1 = "${databaseType}");
+			value1 = ${databaseType});
 
 		Type(
 			locator1 = "SetupWizard#DATABASE_CHANGE_JDBC_URL_FIELD",
-			value1 = "${jdbcURL}");
+			value1 = ${jdbcURL});
 
 		Type(
 			locator1 = "SetupWizard#DATABASE_CHANGE_JDBC_DRIVER_CLASS_NAME_FIELD",
-			value1 = "${jdbcDriverClassName}");
+			value1 = ${jdbcDriverClassName});
 
 		Type(
 			locator1 = "SetupWizard#DATABASE_CHANGE_USER_NAME_FIELD",
-			value1 = "${databaseUserName}");
+			value1 = ${databaseUserName});
 
 		Type(
 			locator1 = "SetupWizard#DATABASE_CHANGE_PASSWORD_FIELD",
-			value1 = "${databasePassword}");
+			value1 = ${databasePassword});
 	}
 
-	macro configureDefaultPG {
+	@summary = "Configure the default language"
+	macro configureDefaultLanguagePG(defaultLanguage = null) {
+		Select(
+			locator1 = "SetupWizard#DEFAULT_LANGUAGE",
+			value1 = ${defaultLanguage});
+	}
+
+	@summary = "Configure the portal setup wizard with default values"
+	macro configureDefaultPG(base_branch = null, virtualHostsURL = null, newPassword = null) {
 		SetupWizard.viewDefaultPortalNamePG();
 
 		SetupWizard.viewDefaultAdministratorUserPG();
@@ -66,11 +76,11 @@ definition {
 		Portlet.shutdownServer();
 
 		Portlet.startServer(
-			base_branch = "${base_branch}",
+			base_branch = ${base_branch},
 			deleteLiferayHome = "false");
 
 		if (isSet(virtualHostsURL)) {
-			Navigator.openSpecificURL(url = "${virtualHostsURL}");
+			Navigator.openSpecificURL(url = ${virtualHostsURL});
 		}
 		else {
 			Navigator.openURL();
@@ -78,41 +88,40 @@ definition {
 
 		User.acceptEndUserLicenseAgreement();
 
-		User.resetPassword(
-			resetPassword = "${resetPassword}",
-			setupWizardEnabled = "${setupWizardEnabled}",
-			syntaxCheckingEnabled = "${syntaxCheckingEnabled}");
+		User.resetPassword(newPassword = ${newPassword});
 
 		User.answerPasswordReminder();
 
 		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
 
+		Click(locator1 = "Button#DONE");
+
 		User.viewLoggedInPG();
 	}
 
-	@summary = "Configure JDBC to ${databaseType} for Liferay with the Setup Wizard"
-	macro configurePG {
+	@summary = "Configure the portal setup wizard"
+	macro configurePG(base_branch = null, databaseName = null, addSampleData = null, virtualHostsURL = null, administratorFirstName = null, newPassword = null, administratorLastName = null, jdbcDriverClassName = null, databaseUserName = null, databaseType = null, portalName = null, administratorEmail = null, jdbcURL = null, databasePassword = null) {
 		if (isSet(portalName)) {
-			SetupWizard.configurePortalNamePG(portalName = "${portalName}");
+			SetupWizard.configurePortalNamePG(portalName = ${portalName});
 		}
 		else {
 			SetupWizard.viewDefaultPortalNamePG();
 		}
 
 		SetupWizard.configureAdministratorUserPG(
-			administratorEmail = "${administratorEmail}",
-			administratorFirstName = "${administratorFirstName}",
-			administratorLastName = "${administratorLastName}");
+			administratorEmail = ${administratorEmail},
+			administratorFirstName = ${administratorFirstName},
+			administratorLastName = ${administratorLastName});
 
 		SetupWizard.configureDatabasePG(
-			databaseName = "${databaseName}",
-			databasePassword = "${databasePassword}",
-			databaseType = "${databaseType}",
-			databaseUserName = "${databaseUserName}",
-			jdbcDriverClassName = "${jdbcDriverClassName}",
-			jdbcURL = "${jdbcURL}");
+			databaseName = ${databaseName},
+			databasePassword = ${databasePassword},
+			databaseType = ${databaseType},
+			databaseUserName = ${databaseUserName},
+			jdbcDriverClassName = ${jdbcDriverClassName},
+			jdbcURL = ${jdbcURL});
 
-		SetupWizard.configureSampleDataPG(addSampleData = "${addSampleData}");
+		SetupWizard.configureSampleDataPG(addSampleData = ${addSampleData});
 
 		SetupWizard.finishConfigurationPG();
 
@@ -121,99 +130,122 @@ definition {
 		Portlet.shutdownServer();
 
 		Portlet.startServer(
-			base_branch = "${base_branch}",
+			base_branch = ${base_branch},
 			deleteLiferayHome = "false");
 
-		SetupWizard.viewConfiguredDatabaseInConsole(databaseType = "${databaseType}");
+		SetupWizard.viewConfiguredDatabaseInConsole(databaseType = ${databaseType});
 
-		if (isSet(virtualHostsURL)) {
-			Navigator.openSpecificURL(url = "${virtualHostsURL}");
-		}
-		else {
-			Navigator.openURL();
-		}
+		Refresh();
 
 		User.acceptEndUserLicenseAgreement();
 
-		User.resetPassword(
-			resetPassword = "${resetPassword}",
-			setupWizardEnabled = "${setupWizardEnabled}",
-			syntaxCheckingEnabled = "${syntaxCheckingEnabled}");
+		User.resetPassword(newPassword = ${newPassword});
 
 		User.answerPasswordReminder();
 
 		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
 
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
+
+		if (IsElementPresent(locator1 = "Button#DONE")) {
+			Click(locator1 = "Button#DONE");
+		}
+
+		if (isSet(virtualHostsURL)) {
+			Navigator.openSpecificURL(url = ${virtualHostsURL});
+		}
+		else {
+			Navigator.openURL();
+		}
+
 		User.viewLoggedInPG();
 	}
 
-	macro configurePortalNamePG {
+	@summary = "Configure the portal name"
+	macro configurePortalNamePG(portalName = null) {
 		Type(
 			locator1 = "TextInput#PORTAL_NAME",
-			value1 = "${portalName}");
+			value1 = ${portalName});
 	}
 
-	macro configureSampleDataPG {
+	@summary = "Configure the Sample Data"
+	macro configureSampleDataPG(addSampleData = null) {
 		if (IsElementNotPresent(locator1 = "SetupWizard#DATABASE_CHANGE_USE_CONFIGURED_DATABASE_LINK")) {
 			AssertClick(
 				locator1 = "SetupWizard#DATABASE_CHANGE_LINK",
 				value1 = "(Change)");
 		}
 
-		if ("${addSampleData}" == "true") {
+		if (${addSampleData} == "true") {
 			Check(locator1 = "Checkbox#ADD_SAMPLE_DATA");
 		}
 
-		if ("${addSampleData}" == "false") {
+		if (${addSampleData} == "false") {
 			Uncheck(locator1 = "Checkbox#ADD_SAMPLE_DATA");
 		}
 	}
 
-	macro finishConfigurationPG {
+	@summary = "Finish the configuration"
+	macro finishConfigurationPG() {
 		AssertClick(
 			locator1 = "Button#FINISH_CONFIGURATION",
 			value1 = "Finish Configuration");
 	}
 
-	macro viewConfigurationSavedPG {
-		Alert.viewSuccessMessageText(successMessage = "Your configuration was saved successfully.");
+	@summary = "Assert the configuration was saved"
+	macro viewConfigurationSavedPG(localization = null) {
+		if (isSet(localization) && (${localization} == "ES")) {
+			Alert.viewSuccessMessageText(successMessage = "La configuración fue guardada con éxito.");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "SetupWizard#CONFIGURATION_SAVE_MESSAGE",
-			value1 = "The configuration was saved in");
+			AssertTextEquals.assertPartialText(
+				locator1 = "SetupWizard#CONFIGURATION_SAVE_MESSAGE",
+				value1 = "Se ha guardado la configuración en");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "SetupWizard#CONFIGURATION_SAVE_LOCATION",
-			value1 = "portal-setup-wizard.properties");
+			AssertTextEquals.assertPartialText(
+				locator1 = "SetupWizard#CONFIGURATION_SAVE_LOCATION",
+				value1 = "portal-setup-wizard.properties");
 
-		Alert.viewInfoMessageSpecific(infoMessage = "Changes will take effect once the portal is restarted. Please restart the portal now.");
+			Alert.viewInfoMessageSpecific(infoMessage = "Los cambios surtirán efecto en cuanto el portal sea reiniciado. Por favor, reinicie el portal ahora.");
+		}
+		else {
+			Alert.viewSuccessMessageText(successMessage = "Your configuration was saved successfully.");
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "SetupWizard#CONFIGURATION_SAVE_MESSAGE",
+				value1 = "The configuration was saved in");
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "SetupWizard#CONFIGURATION_SAVE_LOCATION",
+				value1 = "portal-setup-wizard.properties");
+
+			Alert.viewInfoMessageSpecific(infoMessage = "Changes will take effect once the portal is restarted. Please restart the portal now.");
+		}
 	}
 
-	macro viewConfiguredDatabaseInConsole {
-		if ("${databaseType}" == "DB2") {
+	@summary = "Assert the configured database in the console"
+	macro viewConfiguredDatabaseInConsole(databaseType = null) {
+		if (${databaseType} == "DB2") {
 			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.DB2Dialect for DB2");
 		}
-		else if ("${databaseType}" == "HSQL") {
+		else if (${databaseType} == "HSQL") {
 			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.HSQLDialect for HSQL Database Engine");
 		}
-		else if ("${databaseType}" == "MariaDB") {
-			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.MariaDBDialect for MySQL");
+		else if (${databaseType} == "MariaDB") {
+			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.MariaDBDialect for MariaDB");
 		}
-		else if ("${databaseType}" == "MySQL") {
-			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.MySQLDialect for MySQL");
+		else if (${databaseType} == "MySQL") {
+			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.MySQL");
 		}
-		else if ("${databaseType}" == "Oracle") {
-			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.Oracle10gDialect for Oracle");
+		else if (${databaseType} == "Oracle") {
+			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.Oracle");
 		}
-		else if ("${databaseType}" == "PostgreSQL") {
-			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.PostgreSQLDialect for PostgreSQL");
-		}
-		else if ("${databaseType}" == "Sybase") {
-			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.SybaseASE157Dialect for Adaptive Server Enterprise");
+		else if (${databaseType} == "PostgreSQL") {
+			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.PostgreSQL");
 		}
 	}
 
-	macro viewDefaultAdministratorUserPG {
+	@summary = "Assert the default administrator user"
+	macro viewDefaultAdministratorUserPG() {
 		AssertSelectedLabel(
 			locator1 = "SetupWizard#DEFAULT_LANGUAGE",
 			value1 = "English (United States)");
@@ -231,7 +263,8 @@ definition {
 			value1 = "");
 	}
 
-	macro viewDefaultDatabasePG {
+	@summary = "Assert the default database"
+	macro viewDefaultDatabasePG() {
 		if (IsElementPresent(locator1 = "SetupWizard#DATABASE_DEFAULT_LABEL")) {
 			AssertTextEquals.assertText(
 				locator1 = "SetupWizard#DATABASE_DEFAULT_LABEL",
@@ -276,10 +309,11 @@ definition {
 		}
 	}
 
-	macro viewDefaultPortalNamePG {
+	@summary = "Assert the default portal name"
+	macro viewDefaultPortalNamePG() {
 		var testRunEnvironment = PropsUtil.get("test.run.environment");
 
-		if ("${testRunEnvironment}" == "EE") {
+		if (${testRunEnvironment} == "EE") {
 			AssertTextEquals.assertValue(
 				locator1 = "TextInput#PORTAL_NAME",
 				value1 = "Liferay DXP");
@@ -291,20 +325,15 @@ definition {
 		}
 	}
 
-	macro viewPopulatedSampleData {
+	@summary = "Assert the populated sample data"
+	macro viewPopulatedSampleData() {
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
+
 		AssertConsoleTextPresent(value1 = "Finished adding data");
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Search");
+		SearchAdministration.executeReindex();
 
-		SearchAdministration.executeSearchActions(actionsDescription = "Reindex all search indexes.");
-
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		Pagination.viewResults(results = "Showing 1 to 20 of 101 entries.");
 
@@ -318,48 +347,75 @@ definition {
 
 		UsersAndOrganizationsNavigator.gotoOrganizations();
 
-		Organization.viewCP(
-			orgName = "Liferay, Inc.",
-			orgType = "Organization");
+		if (${testRunEnvironment} == "EE") {
+			Organization.viewCP(
+				orgName = "Liferay DXP, Inc.",
+				orgType = "Organization");
 
-		Navigator.gotoBack();
+			Organization.gotoCP(orgName = "Liferay DXP, Inc.");
 
-		Organization.gotoCP(
-			orgName = "Liferay, Inc.",
-			searchToken = "Liferay, Inc.");
+			User.searchCP(searchTerm = "Test DLC 1");
 
-		User.searchCP(searchTerm = "Test DLC 1");
+			Organization.viewUser(userName = "Test DLC 1");
 
-		Organization.viewAssignMemberCP(userName = "Test DLC 1");
+			Search.searchCP(searchTerm = "Liferay DXPChicago");
 
-		Search.searchCP(searchTerm = "LiferayChicago");
+			var key_suborgName = "Liferay DXPChicago";
 
-		var key_suborgName = "LiferayChicago";
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_NAME",
+				value1 = "Liferay DXPChicago");
 
-		AssertTextEquals(
-			locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_NAME",
-			value1 = "LiferayChicago");
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_TYPE",
+				value1 = "Organization");
 
-		AssertTextEquals(
-			locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_TYPE",
-			value1 = "Organization");
+			Site.openSitesAdmin();
 
-		ProductMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
+			AssertTextEquals.assertPartialText(
+				key_siteName = "Liferay DXP, Inc.",
+				locator1 = "Sites#SITE_TABLE_NAME",
+				value1 = "Liferay DXP, Inc.");
+		}
+		else {
+			Organization.viewCP(
+				orgName = "Liferay, Inc.",
+				orgType = "Organization");
 
-		AssertTextEquals.assertPartialText(
-			key_siteName = "Liferay, Inc.",
-			locator1 = "Sites#SITE_TABLE_NAME",
-			value1 = "Liferay, Inc.");
+			Organization.gotoCP(orgName = "Liferay, Inc.");
+
+			User.searchCP(searchTerm = "Test DLC 1");
+
+			Organization.viewUser(userName = "Test DLC 1");
+
+			Search.searchCP(searchTerm = "LiferayChicago");
+
+			var key_suborgName = "LiferayChicago";
+
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_NAME",
+				value1 = "LiferayChicago");
+
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsOrganization#SUBORGANIZATION_TABLE_TYPE",
+				value1 = "Organization");
+
+			Site.openSitesAdmin();
+
+			AssertTextEquals.assertPartialText(
+				key_siteName = "Liferay, Inc.",
+				locator1 = "Sites#SITE_TABLE_NAME",
+				value1 = "Liferay, Inc.");
+		}
 	}
 
-	macro viewSampleDataEnabledInPropertiesFile {
+	@summary = "Assert the sample data is enabled in the setup wizard properties file"
+	macro viewSampleDataEnabledInPropertiesFile() {
 		var liferayHome = PropsUtil.get("liferay.home.dir.name");
+
 		var fileContent = FileUtil.read("${liferayHome}/portal-setup-wizard.properties");
 
-		if (contains("${fileContent}", "setup.wizard.add.sample.data=on")) {
+		if (contains(${fileContent}, "setup.wizard.add.sample.data=on")) {
 			echo("The Sample Data property was saved successfully in portal-setup-wizard.properties!");
 		}
 		else {

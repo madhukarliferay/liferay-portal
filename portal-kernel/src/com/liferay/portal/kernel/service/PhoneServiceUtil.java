@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Phone;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for Phone. This utility wraps
@@ -30,31 +24,32 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class PhoneServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.PhoneServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PhoneServiceUtil} to access the phone remote service. Add custom service methods to <code>com.liferay.portal.service.impl.PhoneServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.portal.kernel.model.Phone addPhone(
-			String className, long classPK, String number, String extension,
-			long typeId, boolean primary, ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Phone addPhone(
+			String externalReferenceCode, String className, long classPK,
+			String number, String extension, long typeId, boolean primary,
+			ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addPhone(
-			className, classPK, number, extension, typeId, primary,
-			serviceContext);
+			externalReferenceCode, className, classPK, number, extension,
+			typeId, primary, serviceContext);
 	}
 
-	public static void deletePhone(long phoneId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void deletePhone(long phoneId) throws PortalException {
 		getService().deletePhone(phoneId);
+	}
+
+	public static Phone fetchPhoneByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().fetchPhoneByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -66,37 +61,41 @@ public class PhoneServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.Phone getPhone(long phoneId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Phone getPhone(long phoneId) throws PortalException {
 		return getService().getPhone(phoneId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Phone>
-			getPhones(String className, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Phone getPhoneByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getPhoneByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
+	public static List<Phone> getPhones(String className, long classPK)
+		throws PortalException {
 
 		return getService().getPhones(className, classPK);
 	}
 
-	public static com.liferay.portal.kernel.model.Phone updatePhone(
-			long phoneId, String number, String extension, long typeId,
-			boolean primary)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Phone updatePhone(
+			String externalReferenceCode, long phoneId, String number,
+			String extension, long typeId, boolean primary)
+		throws PortalException {
 
 		return getService().updatePhone(
-			phoneId, number, extension, typeId, primary);
+			externalReferenceCode, phoneId, number, extension, typeId, primary);
 	}
 
 	public static PhoneService getService() {
-		if (_service == null) {
-			_service = (PhoneService)PortalBeanLocatorUtil.locate(
-				PhoneService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static PhoneService _service;
+	public static void setService(PhoneService service) {
+		_service = service;
+	}
+
+	private static volatile PhoneService _service;
 
 }

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service;
 
+import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,31 +18,18 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class FragmentEntryServiceWrapper
 	implements FragmentEntryService, ServiceWrapper<FragmentEntryService> {
 
+	public FragmentEntryServiceWrapper() {
+		this(null);
+	}
+
 	public FragmentEntryServiceWrapper(
 		FragmentEntryService fragmentEntryService) {
 
 		_fragmentEntryService = fragmentEntryService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link FragmentEntryServiceUtil} to access the fragment entry remote service. Add custom service methods to <code>com.liferay.fragment.service.impl.FragmentEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.fragment.model.FragmentEntry addFragmentEntry(
-			long groupId, long fragmentCollectionId, String fragmentEntryKey,
-			String name, long previewFileEntryId, int type, int status,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _fragmentEntryService.addFragmentEntry(
-			groupId, fragmentCollectionId, fragmentEntryKey, name,
-			previewFileEntryId, type, status, serviceContext);
-	}
-
-	@Override
-	public com.liferay.fragment.model.FragmentEntry addFragmentEntry(
+	public FragmentEntry addFragmentEntry(
 			long groupId, long fragmentCollectionId, String fragmentEntryKey,
 			String name, String css, String html, String js,
 			String configuration, long previewFileEntryId, int type, int status,
@@ -64,13 +43,32 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry copyFragmentEntry(
-			long groupId, long fragmentEntryId, long fragmentCollectionId,
+	public FragmentEntry addFragmentEntry(
+			String externalReferenceCode, long groupId,
+			long fragmentCollectionId, String fragmentEntryKey, String name,
+			String css, String html, String js, boolean cacheable,
+			String configuration, String icon, long previewFileEntryId,
+			boolean marketplace, boolean readOnly, int type, String typeOptions,
+			int status,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.addFragmentEntry(
+			externalReferenceCode, groupId, fragmentCollectionId,
+			fragmentEntryKey, name, css, html, js, cacheable, configuration,
+			icon, previewFileEntryId, marketplace, readOnly, type, typeOptions,
+			status, serviceContext);
+	}
+
+	@Override
+	public FragmentEntry copyFragmentEntry(
+			long groupId, long sourceFragmentEntryId, long fragmentCollectionId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentEntryService.copyFragmentEntry(
-			groupId, fragmentEntryId, fragmentCollectionId, serviceContext);
+			groupId, sourceFragmentEntryId, fragmentCollectionId,
+			serviceContext);
 	}
 
 	@Override
@@ -81,67 +79,121 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry deleteFragmentEntry(
-			long fragmentEntryId)
+	public FragmentEntry deleteFragmentEntry(long fragmentEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentEntryService.deleteFragmentEntry(fragmentEntryId);
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry fetchFragmentEntry(
-			long fragmentEntryId)
+	public FragmentEntry deleteFragmentEntry(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.deleteFragmentEntry(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public FragmentEntry fetchDraft(long primaryKey) {
+		return _fragmentEntryService.fetchDraft(primaryKey);
+	}
+
+	@Override
+	public FragmentEntry fetchFragmentEntry(long fragmentEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentEntryService.fetchFragmentEntry(fragmentEntryId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntries(long fragmentCollectionId) {
+	public FragmentEntry getDraft(long primaryKey)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.getDraft(primaryKey);
+	}
+
+	@Override
+	public java.util.List<Object> getFragmentCompositionsAndFragmentEntries(
+		long groupId, long fragmentCollectionId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<?> orderByComparator) {
+
+		return _fragmentEntryService.getFragmentCompositionsAndFragmentEntries(
+			groupId, fragmentCollectionId, status, start, end,
+			orderByComparator);
+	}
+
+	@Override
+	public java.util.List<Object> getFragmentCompositionsAndFragmentEntries(
+		long groupId, long fragmentCollectionId, String name, int status,
+		int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<?> orderByComparator) {
+
+		return _fragmentEntryService.getFragmentCompositionsAndFragmentEntries(
+			groupId, fragmentCollectionId, name, status, start, end,
+			orderByComparator);
+	}
+
+	@Override
+	public int getFragmentCompositionsAndFragmentEntriesCount(
+		long groupId, long fragmentCollectionId, int status) {
+
+		return _fragmentEntryService.
+			getFragmentCompositionsAndFragmentEntriesCount(
+				groupId, fragmentCollectionId, status);
+	}
+
+	@Override
+	public int getFragmentCompositionsAndFragmentEntriesCount(
+		long groupId, long fragmentCollectionId, String name, int status) {
+
+		return _fragmentEntryService.
+			getFragmentCompositionsAndFragmentEntriesCount(
+				groupId, fragmentCollectionId, name, status);
+	}
+
+	@Override
+	public java.util.List<FragmentEntry> getFragmentEntries(
+		long fragmentCollectionId) {
 
 		return _fragmentEntryService.getFragmentEntries(fragmentCollectionId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntries(
-			long groupId, long fragmentCollectionId, int start, int end) {
+	public java.util.List<FragmentEntry> getFragmentEntries(
+		long groupId, long fragmentCollectionId, int start, int end) {
 
 		return _fragmentEntryService.getFragmentEntries(
 			groupId, fragmentCollectionId, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntries(
-			long groupId, long fragmentCollectionId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntries(
+		long groupId, long fragmentCollectionId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntries(
 			groupId, fragmentCollectionId, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByName(
-			long groupId, long fragmentCollectionId, String name, int start,
-			int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByName(
+		long groupId, long fragmentCollectionId, String name, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntriesByName(
 			groupId, fragmentCollectionId, name, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByNameAndStatus(
-			long groupId, long fragmentCollectionId, String name, int status,
-			int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByNameAndStatus(
+		long groupId, long fragmentCollectionId, String name, int status,
+		int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntriesByNameAndStatus(
 			groupId, fragmentCollectionId, name, status, start, end,
@@ -149,21 +201,18 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByStatus(
-			long groupId, long fragmentCollectionId, int status) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByStatus(
+		long groupId, long fragmentCollectionId, int status) {
 
 		return _fragmentEntryService.getFragmentEntriesByStatus(
 			groupId, fragmentCollectionId, status);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByStatus(
-			long groupId, long fragmentCollectionId, int status, int start,
-			int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByStatus(
+		long groupId, long fragmentCollectionId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntriesByStatus(
 			groupId, fragmentCollectionId, status, start, end,
@@ -171,33 +220,29 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByType(
-			long groupId, long fragmentCollectionId, int type, int start,
-			int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByType(
+		long groupId, long fragmentCollectionId, int type, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntriesByType(
 			groupId, fragmentCollectionId, type, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByTypeAndStatus(
-			long groupId, long fragmentCollectionId, int type, int status) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByTypeAndStatus(
+		long groupId, long fragmentCollectionId, int type, int status) {
 
 		return _fragmentEntryService.getFragmentEntriesByTypeAndStatus(
 			groupId, fragmentCollectionId, type, status);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentEntry>
-		getFragmentEntriesByTypeAndStatus(
-			long groupId, long fragmentCollectionId, int type, int status,
-			int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentEntry> orderByComparator) {
+	public java.util.List<FragmentEntry> getFragmentEntriesByTypeAndStatus(
+		long groupId, long fragmentCollectionId, int type, int status,
+		int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentEntry>
+			orderByComparator) {
 
 		return _fragmentEntryService.getFragmentEntriesByTypeAndStatus(
 			groupId, fragmentCollectionId, type, status, start, end,
@@ -252,6 +297,15 @@ public class FragmentEntryServiceWrapper
 			groupId, fragmentCollectionId, type, status);
 	}
 
+	@Override
+	public FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.getFragmentEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -270,7 +324,7 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry moveFragmentEntry(
+	public FragmentEntry moveFragmentEntry(
 			long fragmentEntryId, long fragmentCollectionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -279,7 +333,37 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry updateFragmentEntry(
+	public FragmentEntry publishDraft(FragmentEntry draftFragmentEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.publishDraft(draftFragmentEntry);
+	}
+
+	@Override
+	public FragmentEntry updateDraft(FragmentEntry draftFragmentEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.updateDraft(draftFragmentEntry);
+	}
+
+	@Override
+	public FragmentEntry updateFragmentEntry(FragmentEntry fragmentEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.updateFragmentEntry(fragmentEntry);
+	}
+
+	@Override
+	public FragmentEntry updateFragmentEntry(
+			long fragmentEntryId, boolean cacheable)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.updateFragmentEntry(
+			fragmentEntryId, cacheable);
+	}
+
+	@Override
+	public FragmentEntry updateFragmentEntry(
 			long fragmentEntryId, long previewFileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -288,33 +372,24 @@ public class FragmentEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentEntry updateFragmentEntry(
-			long fragmentEntryId, String name)
+	public FragmentEntry updateFragmentEntry(
+			long fragmentEntryId, long fragmentCollectionId, String name,
+			String css, String html, String js, boolean cacheable,
+			String configuration, String icon, long previewFileEntryId,
+			boolean readOnly, String typeOptions, int status)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryService.updateFragmentEntry(
+			fragmentEntryId, fragmentCollectionId, name, css, html, js,
+			cacheable, configuration, icon, previewFileEntryId, readOnly,
+			typeOptions, status);
+	}
+
+	@Override
+	public FragmentEntry updateFragmentEntry(long fragmentEntryId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentEntryService.updateFragmentEntry(fragmentEntryId, name);
-	}
-
-	@Override
-	public com.liferay.fragment.model.FragmentEntry updateFragmentEntry(
-			long fragmentEntryId, String name, String css, String html,
-			String js, String configuration, int status)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _fragmentEntryService.updateFragmentEntry(
-			fragmentEntryId, name, css, html, js, configuration, status);
-	}
-
-	@Override
-	public com.liferay.fragment.model.FragmentEntry updateFragmentEntry(
-			long fragmentEntryId, String name, String css, String html,
-			String js, String configuration, long previewFileEntryId,
-			int status)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _fragmentEntryService.updateFragmentEntry(
-			fragmentEntryId, name, css, html, js, configuration,
-			previewFileEntryId, status);
 	}
 
 	@Override

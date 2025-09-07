@@ -1,31 +1,19 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String domainNameValue = ParamUtil.getString(request, "domainName", domainName);
-String rulesValue = ParamUtil.getString(request, "rules", rules);
-String userCustomAttributeNamesValue = ParamUtil.getString(request, "userCustomAttributeNamesValue", userCustomAttributeNames);
 long[] classNameIdValues = StringUtil.split(ParamUtil.getString(request, "classNameIds", StringUtil.merge(classNameIds)), 0L);
 %>
 
 <liferay-portlet:actionURL portletConfiguration="<%= true %>" var="configurationActionURL" />
 
-<aui:form action="<%= configurationActionURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveConfiguration();" %>'>
+<aui:form action="<%= configurationActionURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "saveConfiguration();" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 	<aui:input name="classNameIds" type="hidden" />
 
@@ -34,11 +22,18 @@ long[] classNameIdValues = StringUtil.split(ParamUtil.getString(request, "classN
 	<liferay-ui:error key="rules" message="please-enter-valid-rules" />
 	<liferay-ui:error key="rulesEngineException" message="please-check-the-syntax-of-your-rules" />
 
-	<div class="container-fluid-1280">
-		<aui:fieldset>
-			<aui:input name="domainName" value="<%= domainNameValue %>" wrapperCssClass="lfr-input-text-container" />
+	<aui:style type="text/css">
+		.lfr-rules-configuration--textarea {
+			height: 250px !important;
+			width: 100% !important;
+		}
+	</aui:style>
 
-			<aui:input name="rules" style="height: 250px; width: 100%;" type="textarea" value="<%= rulesValue %>" wrap="off" wrapperCssClass="lfr-textarea-container" />
+	<clay:container-fluid>
+		<aui:fieldset>
+			<aui:input name="domainName" value='<%= ParamUtil.getString(request, "domainName", domainName) %>' wrapperCssClass="lfr-input-text-container" />
+
+			<aui:input cssClass="lfr-rules-configuration--textarea" name="rules" type="textarea" value='<%= ParamUtil.getString(request, "rules", rules) %>' wrap="off" wrapperCssClass="lfr-textarea-container" />
 
 			<%
 
@@ -67,7 +62,7 @@ long[] classNameIdValues = StringUtil.split(ParamUtil.getString(request, "classN
 			}
 			%>
 
-			<aui:input name="userCustomAttributeNames" value="<%= userCustomAttributeNamesValue %>" wrapperCssClass="lfr-input-text-container" />
+			<aui:input name="userCustomAttributeNames" value='<%= ParamUtil.getString(request, "userCustomAttributeNamesValue", userCustomAttributeNames) %>' wrapperCssClass="lfr-input-text-container" />
 
 			<liferay-ui:input-move-boxes
 				leftBoxName="currentClassNameIds"
@@ -82,7 +77,7 @@ long[] classNameIdValues = StringUtil.split(ParamUtil.getString(request, "classN
 				<aui:button type="submit" />
 			</aui:button-row>
 		</aui:fieldset>
-	</div>
+	</clay:container-fluid>
 </aui:form>
 
 <aui:script>
@@ -100,7 +95,7 @@ long[] classNameIdValues = StringUtil.split(ParamUtil.getString(request, "classN
 			if (classNameIds && currentClassNameIds) {
 				classNameIds.setAttribute(
 					'value',
-					Liferay.Util.listSelect(currentClassNameIds)
+					Liferay.Util.getSelectedOptionValues(currentClassNameIds)
 				);
 			}
 

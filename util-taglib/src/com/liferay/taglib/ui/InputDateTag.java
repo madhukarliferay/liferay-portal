@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.ui;
@@ -17,15 +8,19 @@ package com.liferay.taglib.ui;
 import com.liferay.petra.string.StringPool;
 import com.liferay.taglib.BaseValidatorTagSupport;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Calendar;
 import java.util.Date;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class InputDateTag extends BaseValidatorTagSupport {
+
+	public String getAutoComplete() {
+		return _autoComplete;
+	}
 
 	public String getCssClass() {
 		return _cssClass;
@@ -112,6 +107,14 @@ public class InputDateTag extends BaseValidatorTagSupport {
 		return _showDisableCheckbox;
 	}
 
+	public boolean isUseNamespace() {
+		return _useNamespace;
+	}
+
+	public void setAutoComplete(String autoComplete) {
+		_autoComplete = autoComplete;
+	}
+
 	public void setAutoFocus(boolean autoFocus) {
 		_autoFocus = autoFocus;
 	}
@@ -184,6 +187,10 @@ public class InputDateTag extends BaseValidatorTagSupport {
 		_showDisableCheckbox = showDisableCheckbox;
 	}
 
+	public void setUseNamespace(boolean useNamespace) {
+		_useNamespace = useNamespace;
+	}
+
 	public void setYearParam(String yearParam) {
 		_yearParam = yearParam;
 	}
@@ -196,6 +203,7 @@ public class InputDateTag extends BaseValidatorTagSupport {
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_autoComplete = null;
 		_autoFocus = false;
 		_cssClass = null;
 		_dateTogglerCheckboxLabel = null;
@@ -214,6 +222,7 @@ public class InputDateTag extends BaseValidatorTagSupport {
 		_nullable = false;
 		_required = false;
 		_showDisableCheckbox = true;
+		_useNamespace = true;
 		_yearParam = null;
 		_yearValue = 0;
 	}
@@ -225,6 +234,8 @@ public class InputDateTag extends BaseValidatorTagSupport {
 
 	@Override
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
+		httpServletRequest.setAttribute(
+			"liferay-ui:input-date:autoComplete", _autoComplete);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-date:autoFocus", String.valueOf(_autoFocus));
 		httpServletRequest.setAttribute(
@@ -265,6 +276,9 @@ public class InputDateTag extends BaseValidatorTagSupport {
 			"liferay-ui:input-date:showDisableCheckbox",
 			String.valueOf(_showDisableCheckbox));
 		httpServletRequest.setAttribute(
+			"liferay-ui:input-date:useNamespace",
+			String.valueOf(_useNamespace));
+		httpServletRequest.setAttribute(
 			"liferay-ui:input-date:yearParam", _yearParam);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-date:yearValue", String.valueOf(_yearValue));
@@ -272,6 +286,7 @@ public class InputDateTag extends BaseValidatorTagSupport {
 
 	private static final String _PAGE = "/html/taglib/ui/input_date/page.jsp";
 
+	private String _autoComplete;
 	private boolean _autoFocus;
 	private String _cssClass;
 	private String _dateTogglerCheckboxLabel;
@@ -290,6 +305,7 @@ public class InputDateTag extends BaseValidatorTagSupport {
 	private boolean _nullable;
 	private boolean _required;
 	private boolean _showDisableCheckbox = true;
+	private boolean _useNamespace = true;
 	private String _yearParam;
 	private int _yearValue;
 

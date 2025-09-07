@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.web.internal.social;
@@ -18,22 +9,24 @@ import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.journal.constants.JournalActivityKeys;
+import com.liferay.journal.constants.JournalArticleConstants;
 import com.liferay.journal.constants.JournalPortletKeys;
+import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.journal.model.JournalArticleConstants;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.service.JournalArticleLocalService;
-import com.liferay.journal.web.internal.util.JournalResourceBundleLoader;
+import com.liferay.journal.util.JournalHelper;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.social.kernel.model.BaseSocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialActivity;
@@ -48,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Zsolt Berentey
  */
 @Component(
-	property = "javax.portlet.name=" + JournalPortletKeys.JOURNAL,
+	property = "jakarta.portlet.name=" + JournalPortletKeys.JOURNAL,
 	service = SocialActivityInterpreter.class
 )
 public class JournalArticleActivityInterpreter
@@ -64,50 +57,74 @@ public class JournalArticleActivityInterpreter
 			SocialActivity activity, ServiceContext serviceContext)
 		throws Exception {
 
-		LiferayPortletRequest liferayPortletRequest =
-			serviceContext.getLiferayPortletRequest();
+		try {
+			LiferayPortletRequest liferayPortletRequest =
+				serviceContext.getLiferayPortletRequest();
 
-		LiferayPortletResponse liferayPortletResponse =
-			serviceContext.getLiferayPortletResponse();
+			LiferayPortletResponse liferayPortletResponse =
+				serviceContext.getLiferayPortletResponse();
 
-		if ((liferayPortletRequest != null) &&
-			(liferayPortletResponse != null)) {
+			if ((liferayPortletRequest != null) &&
+				(liferayPortletResponse != null)) {
 
-			AssetRendererFactory journalArticleAssetRendererFactory =
-				AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
-					JournalArticle.class);
+				AssetRendererFactory<?> journalArticleAssetRendererFactory =
+					AssetRendererFactoryRegistryUtil.
+						getAssetRendererFactoryByClass(JournalArticle.class);
 
-			AssetRenderer journalArticleAssetRenderer =
-				journalArticleAssetRendererFactory.getAssetRenderer(
+				AssetRenderer<?> journalArticleAssetRenderer =
+					journalArticleAssetRendererFactory.getAssetRenderer(
+						activity.getClassPK());
+
+				return journalArticleAssetRenderer.getURLViewInContext(
+					serviceContext.getLiferayPortletRequest(),
+					serviceContext.getLiferayPortletResponse(), null);
+			}
+
+			JournalArticle article =
+				_journalArticleLocalService.getLatestArticle(
 					activity.getClassPK());
 
-			return journalArticleAssetRenderer.getURLViewInContext(
-				serviceContext.getLiferayPortletRequest(),
-				serviceContext.getLiferayPortletResponse(), null);
+			Layout layout = article.getLayout();
+
+			if (layout == null) {
+				return null;
+			}
+
+			ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+
+			return _journalHelper.createURLPattern(
+				article, themeDisplay.getLocale(), layout.isPrivateLayout(),
+				JournalArticleConstants.CANONICAL_URL_SEPARATOR, themeDisplay);
 		}
+		catch (NoSuchArticleException noSuchArticleException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchArticleException);
+			}
 
-		JournalArticle article = _journalArticleLocalService.getLatestArticle(
-			activity.getClassPK());
-
-		Layout layout = article.getLayout();
-
-		if (layout != null) {
-			String groupFriendlyURL = _portal.getGroupFriendlyURL(
-				layout.getLayoutSet(), serviceContext.getThemeDisplay());
-
-			return groupFriendlyURL.concat(
-				JournalArticleConstants.CANONICAL_URL_SEPARATOR
-			).concat(
-				article.getUrlTitle()
-			);
+			return null;
 		}
-
-		return null;
 	}
 
 	@Override
-	protected ResourceBundleLoader getResourceBundleLoader() {
-		return JournalResourceBundleLoader.INSTANCE;
+	protected Object[] getTitleArguments(
+			String groupName, SocialActivity activity, String link,
+			String title, ServiceContext serviceContext)
+		throws Exception {
+
+		if (activity.getType() == SocialActivityConstants.TYPE_ADD_COMMENT) {
+			String creatorUserName = getUserName(
+				activity.getUserId(), serviceContext);
+			String receiverUserName = getUserName(
+				activity.getReceiverUserId(), serviceContext);
+
+			return new Object[] {
+				groupName, creatorUserName, receiverUserName,
+				wrapLink(link, title)
+			};
+		}
+
+		return super.getTitleArguments(
+			groupName, activity, link, title, serviceContext);
 	}
 
 	@Override
@@ -129,6 +146,13 @@ public class JournalArticleActivityInterpreter
 			}
 
 			return "activity-journal-article-update-web-content-in";
+		}
+		else if (activityType == SocialActivityConstants.TYPE_ADD_COMMENT) {
+			if (Validator.isNull(groupName)) {
+				return "activity-journal-article-add-comment";
+			}
+
+			return "activity-journal-article-add-comment-in";
 		}
 		else if (activityType == SocialActivityConstants.TYPE_MOVE_TO_TRASH) {
 			if (Validator.isNull(groupName)) {
@@ -163,7 +187,7 @@ public class JournalArticleActivityInterpreter
 				_journalArticleLocalService.getLatestArticle(
 					activity.getClassPK());
 
-			return ModelResourcePermissionHelper.contains(
+			return ModelResourcePermissionUtil.contains(
 				_journalFolderModelResourcePermission, permissionChecker,
 				article.getGroupId(), article.getFolderId(),
 				ActionKeys.ADD_ARTICLE);
@@ -177,17 +201,14 @@ public class JournalArticleActivityInterpreter
 			permissionChecker, activity.getClassPK(), actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setJournalArticleLocalService(
-		JournalArticleLocalService journalArticleLocalService) {
-
-		_journalArticleLocalService = journalArticleLocalService;
-	}
-
 	private static final String[] _CLASS_NAMES = {
 		JournalArticle.class.getName()
 	};
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		JournalArticleActivityInterpreter.class);
+
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference(
@@ -203,6 +224,6 @@ public class JournalArticleActivityInterpreter
 		_journalFolderModelResourcePermission;
 
 	@Reference
-	private Portal _portal;
+	private JournalHelper _journalHelper;
 
 }

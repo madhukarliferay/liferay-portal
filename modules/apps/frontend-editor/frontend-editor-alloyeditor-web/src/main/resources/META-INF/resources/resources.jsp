@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -21,63 +12,70 @@ String editorName = (String)request.getAttribute(AlloyEditorConstants.ATTRIBUTE_
 %>
 
 <liferay-util:html-top
-	outputKey="js_editor_alloyeditor_skip_editor_loading"
+	outputKey="com.liferay.frontend.editor.alloyeditor.web#/resources.jsp"
 >
-	<link data-senna-track="temporary" href="<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/assets/alloy-editor-atlas.css") %>" rel="stylesheet" type="text/css" />
+	<aui:link href='<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/assets/alloy-editor-atlas.css") %>' rel="stylesheet" senna="temporary" type="text/css" />
 
 	<%
 	long javaScriptLastModified = PortalWebResourcesUtil.getLastModified(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR);
 	%>
 
-	<script data-senna-track="temporary" type="text/javascript">
+	<aui:script senna="temporary" type="text/javascript">
 		window.ALLOYEDITOR_BASEPATH =
 			'<%= PortalUtil.getPathProxy() + application.getContextPath() %>/alloyeditor/';
-	</script>
+	</aui:script>
 
-	<script data-senna-track="temporary" id="<%= namespace %>ckEditorScript" src="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_CKEDITOR) + "/ckeditor/ckeditor.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+	<aui:script id='<%= namespace + "ckEditorScript" %>' senna="temporary" src='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_CKEDITOR) + "/ckeditor/ckeditor.js", javaScriptLastModified)) %>' type="text/javascript"></aui:script>
 
-	<script data-senna-track="temporary" id="<%= namespace %>alloyEditorScript" src="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/alloy-editor-no-ckeditor-min.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+	<aui:script id='<%= namespace + "alloyEditorScript" %>' senna="temporary" src='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/alloy-editor-no-ckeditor-min.js", javaScriptLastModified)) %>' type="text/javascript"></aui:script>
 
 	<liferay-util:dynamic-include key='<%= "com.liferay.frontend.editor.alloyeditor.web#" + editorName + "#additionalResources" %>' />
 
-	<script data-senna-track="temporary" type="text/javascript">
-		AlloyEditor.regexBasePath = /(^|.*[\\\/])(?:liferay-alloy-editor[^/]+|liferay-alloy-editor)\.js(?:\?.*|;.*)?$/i;
+	<aui:script senna="temporary" type="text/javascript">
+		AlloyEditor.regexBasePath =
+			/(^|.*[\\\/])(?:liferay-alloy-editor[^/]+|liferay-alloy-editor)\.js(?:\?.*|;.*)?$/i;
 
 		var alloyEditorDisposeResources = false;
 		var alloyEditorInstances = 0;
 
-		var cleanupAlloyEditorResources = function() {
+		var cleanupAlloyEditorResources = function () {
 			if (!alloyEditorInstances && alloyEditorDisposeResources) {
 				window.AlloyEditor = undefined;
-				window.CKEDITOR = undefined;
 
 				alloyEditorInstances = 0;
 				alloyEditorDisposeResources = false;
+
+				if (
+					window.CKEDITOR &&
+					Object.keys(window.CKEDITOR.instances).length === 0
+				) {
+					delete window.CKEDITOR;
+				}
 			}
 		};
 
 		Liferay.namespace('EDITORS').alloyEditor = {
-			addInstance: function() {
+			addInstance: function () {
 				alloyEditorInstances++;
 			},
-			removeInstance: function() {
+			removeInstance: function () {
 				alloyEditorInstances--;
 
 				cleanupAlloyEditorResources();
-			}
+			},
 		};
 
-		CKEDITOR.scriptLoader.loadScripts = function(scripts, success, failure) {
+		CKEDITOR.scriptLoader.loadScripts = function (scripts, success, failure) {
 			CKEDITOR.scriptLoader.load(scripts, success, failure);
 		};
 
-		CKEDITOR.getNextZIndex = function() {
+		CKEDITOR.getNextZIndex = function () {
 			return CKEDITOR.dialog._.currentZIndex
 				? CKEDITOR.dialog._.currentZIndex + 10
 				: Liferay.zIndex.WINDOW + 10;
 		};
 
-		var destroyGlobalAlloyEditor = function() {
+		var destroyGlobalAlloyEditor = function () {
 			alloyEditorDisposeResources = true;
 
 			cleanupAlloyEditorResources();
@@ -86,5 +84,5 @@ String editorName = (String)request.getAttribute(AlloyEditorConstants.ATTRIBUTE_
 		};
 
 		Liferay.on('beforeScreenFlip', destroyGlobalAlloyEditor);
-	</script>
+	</aui:script>
 </liferay-util:html-top>

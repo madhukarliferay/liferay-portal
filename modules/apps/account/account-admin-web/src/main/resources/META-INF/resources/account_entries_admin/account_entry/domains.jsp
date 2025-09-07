@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,11 +10,7 @@
 <%
 AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttribute(AccountWebKeys.ACCOUNT_ENTRY_DISPLAY);
 
-List<String> domains = Collections.emptyList();
-
-if (accountEntryDisplay != null) {
-	domains = accountEntryDisplay.getDomains();
-}
+boolean allowUpdateDomains = AccountEntryPermission.contains(permissionChecker, accountEntryDisplay.getAccountEntryId(), AccountActionKeys.MANAGE_DOMAINS);
 %>
 
 <liferay-ui:error exception="<%= AccountEntryDomainsException.class %>" message="please-enter-a-valid-mail-domain" />
@@ -38,27 +25,38 @@ if (accountEntryDisplay != null) {
 	/>
 </liferay-util:buffer>
 
-<div class="sheet-section">
-	<h3 class="autofit-row sheet-subtitle">
-		<span class="autofit-col autofit-col-expand">
+<clay:sheet-section>
+	<clay:content-row
+		containerElement="h3"
+		cssClass="sheet-subtitle"
+	>
+		<clay:content-col
+			containerElement="span"
+			expand="<%= true %>"
+		>
 			<span class="heading-text"><liferay-ui:message key="valid-domains" /></span>
-		</span>
-		<span class="autofit-col">
-			<span class="heading-end">
-				<liferay-ui:icon
-					cssClass="modify-link"
-					id="addDomains"
-					label="<%= true %>"
-					linkCssClass="btn btn-secondary btn-sm"
-					message="add"
-					method="get"
-					url="javascript:;"
-				/>
-			</span>
-		</span>
-	</h3>
+		</clay:content-col>
 
-	<aui:input name="domains" type="hidden" value="<%= StringUtil.merge(domains) %>" />
+		<c:if test="<%= allowUpdateDomains %>">
+			<clay:content-col
+				containerElement="span"
+			>
+				<span class="heading-end">
+					<liferay-ui:icon
+						cssClass="modify-link"
+						id="addDomains"
+						label="<%= true %>"
+						linkCssClass="btn btn-secondary btn-sm"
+						message="add"
+						method="get"
+						url="javascript:void(0);"
+					/>
+				</span>
+			</clay:content-col>
+		</c:if>
+	</clay:content-row>
+
+	<aui:input name="domains" type="hidden" value="<%= accountEntryDisplay.getDomains() %>" />
 
 	<liferay-ui:search-container
 		compactEmptyResultsMessage="<%= true %>"
@@ -66,10 +64,11 @@ if (accountEntryDisplay != null) {
 		headerNames="title,null"
 		id="accountDomainsSearchContainer"
 		iteratorURL="<%= currentURLObj %>"
-		total="<%= domains.size() %>"
+		total="<%= ArrayUtil.getLength(accountEntryDisplay.getDomainsArray()) %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%= domains.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+			calculateStartAndEnd="<%= true %>"
+			results="<%= ListUtil.fromArray(accountEntryDisplay.getDomainsArray()) %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -77,112 +76,116 @@ if (accountEntryDisplay != null) {
 			modelVar="domain"
 		>
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="name"
 				value="<%= domain %>"
 			/>
 
-			<liferay-ui:search-container-column-text>
-				<a class="modify-link pull-right" data-rowId="<%= domain %>" href="javascript:;"><%= removeDomainIcon %></a>
-			</liferay-ui:search-container-column-text>
+			<c:if test="<%= allowUpdateDomains %>">
+				<liferay-ui:search-container-column-text>
+					<a class="float-right modify-link" data-rowId="<%= domain %>" href="javascript:void(0);"><%= removeDomainIcon %></a>
+				</liferay-ui:search-container-column-text>
+			</c:if>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</div>
 
-<aui:script use="liferay-search-container">
-	var searchContainer = Liferay.SearchContainer.get(
-		'<portlet:namespace />accountDomainsSearchContainer'
-	);
+	<c:if test="<%= allowUpdateDomains %>">
+		<aui:field-wrapper cssClass="form-group lfr-input-text-container">
+			<aui:input label="restrict-membership-to-domains" labelOff="not-restricted" labelOn="restricted" name="restrictMembership" type="toggle-switch" value="<%= accountEntryDisplay.isRestrictMembership() %>" />
+		</aui:field-wrapper>
+	</c:if>
+</clay:sheet-section>
 
-	var searchContainerContentBox = searchContainer.get('contentBox');
-
-	var domainsInput =
-		document.<portlet:namespace />fm.<portlet:namespace />domains;
-
-	var domains = domainsInput.value.split(',').filter(Boolean);
-
-	searchContainerContentBox.delegate(
-		'click',
-		function(event) {
-			var link = event.currentTarget;
-
-			var rowId = link.attr('data-rowId');
-
-			var tr = link.ancestor('tr');
-
-			searchContainer.deleteRow(tr, rowId);
-
-			A.Array.removeItem(domains, rowId);
-
-			domainsInput.value = domains.join(',');
-		},
-		'.modify-link'
-	);
-
-	var addDomainsIcon = document.getElementById('<portlet:namespace />addDomains');
-
-	if (addDomainsIcon) {
-		addDomainsIcon.addEventListener('click', function(event) {
-			event.preventDefault();
-
-			Liferay.Util.selectEntity(
-				{
-					dialog: {
-						constrain: true,
-						destroyOnHide: true,
-						height: 350,
-						modal: true,
-						width: 800
-					},
-					dialogIframe: {
-						bodyCssClass: 'dialog-with-footer'
-					},
-					id:
-						'<%= liferayPortletResponse.getNamespace() + "addDomains" %>',
-					title: '<liferay-ui:message key="add-domain" />',
-
-					<%
-					PortletURL addDomainsURL = renderResponse.createRenderURL();
-
-					addDomainsURL.setParameter("mvcPath", "/account_entries_admin/account_entry/add_domains.jsp");
-					addDomainsURL.setWindowState(LiferayWindowState.POP_UP);
-					%>
-
-					uri: '<%= addDomainsURL.toString() %>'
-				},
-				function(event) {
-					var newDomains = event.data.split(',');
-
-					newDomains.forEach(function(domain) {
-						if (!domains.includes(domain)) {
-							addRow(domain.trim());
-						}
-					});
-
-					searchContainer.updateDataStore();
-
-					domainsInput.value = domains.join(',');
-				}
-			);
-		});
-	}
-
-	Liferay.provide(window, 'addRow', function(domain) {
-		var rowColumns = [];
-
-		rowColumns.push(Liferay.Util.escape(domain));
-		rowColumns.push(
-			'<a class="modify-link pull-right" data-rowId="' +
-				domain +
-				'" href="javascript:;"><%= UnicodeFormatter.toString(removeDomainIcon) %></a>'
+<c:if test="<%= allowUpdateDomains %>">
+	<aui:script use="liferay-search-container">
+		var searchContainer = Liferay.SearchContainer.get(
+			'<portlet:namespace />accountDomainsSearchContainer'
 		);
 
-		searchContainer.addRow(rowColumns, domain);
+		var searchContainerContentBox = searchContainer.get('contentBox');
 
-		domains.push(domain);
-	});
-</aui:script>
+		var domainsInput =
+			document.<portlet:namespace />fm.<portlet:namespace />domains;
+
+		var domains = domainsInput.value.split(',').filter(Boolean);
+
+		searchContainerContentBox.delegate(
+			'click',
+			(event) => {
+				var link = event.currentTarget;
+
+				var rowId = link.attr('data-rowId');
+
+				var tr = link.ancestor('tr');
+
+				searchContainer.deleteRow(tr, rowId);
+
+				A.Array.removeItem(domains, rowId);
+
+				domainsInput.value = domains.join(',');
+			},
+			'.modify-link'
+		);
+
+		var addDomainsIcon = document.getElementById('<portlet:namespace />addDomains');
+
+		if (addDomainsIcon) {
+			addDomainsIcon.addEventListener('click', (event) => {
+				event.preventDefault();
+
+				Liferay.Util.openModal({
+					containerProps: {
+						className: '',
+					},
+					customEvents: [
+						{
+							name: '<%= liferayPortletResponse.getNamespace() %>addDomains',
+							onEvent: function (event) {
+								var newDomains = event.data.split(',');
+
+								newDomains.forEach((domain) => {
+									domain = domain.trim().toLowerCase();
+
+									if (!domains.includes(domain)) {
+										var rowColumns = [];
+
+										rowColumns.push(Liferay.Util.escape(domain));
+										rowColumns.push(
+											'<a class="float-right modify-link" data-rowId="' +
+												domain +
+												'" href="javascript:void(0);"><%= UnicodeFormatter.toString(removeDomainIcon) %></a>'
+										);
+
+										searchContainer.addRow(rowColumns, domain);
+
+										domains.push(domain);
+									}
+								});
+
+								searchContainer.updateDataStore();
+
+								domainsInput.value = domains.join(',');
+							},
+						},
+					],
+					id: '<%= liferayPortletResponse.getNamespace() %>addDomains',
+					iframeBodyCssClass: '',
+					title: '<liferay-ui:message key="add-domain" />',
+					url: '<%=
+						PortletURLBuilder.createRenderURL(
+							renderResponse
+						).setMVCPath(
+							"/account_entries_admin/account_entry/add_domains.jsp"
+						).setWindowState(
+							LiferayWindowState.POP_UP
+						).buildPortletURL()
+					%>',
+				});
+			});
+		}
+	</aui:script>
+</c:if>

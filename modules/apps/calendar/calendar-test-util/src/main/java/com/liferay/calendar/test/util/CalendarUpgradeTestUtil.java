@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.test.util;
@@ -18,8 +9,6 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
 
 import java.sql.SQLException;
 
@@ -28,14 +17,6 @@ import java.sql.SQLException;
  */
 public class CalendarUpgradeTestUtil {
 
-	public static UpgradeProcess getServiceUpgradeStep(
-		String upgradeStepClassName) {
-
-		return getUpgradeStep(
-			"com.liferay.calendar.internal.upgrade.CalendarServiceUpgrade",
-			upgradeStepClassName);
-	}
-
 	public static UpgradeDatabaseTestHelper getUpgradeDatabaseTestHelper()
 		throws SQLException {
 
@@ -43,28 +24,15 @@ public class CalendarUpgradeTestUtil {
 	}
 
 	public static UpgradeProcess getUpgradeStep(
-		String upgradeClassName, String upgradeStepClassName) {
-
-		Registry registry = RegistryUtil.getRegistry();
-
-		return registry.callService(
-			upgradeClassName,
-			(UpgradeStepRegistrator upgradeStepRegistror) -> {
-				SearchRegistry searchRegistry = new SearchRegistry(
-					upgradeStepClassName);
-
-				upgradeStepRegistror.register(searchRegistry);
-
-				return searchRegistry.getUpgradeStep();
-			});
-	}
-
-	public static UpgradeProcess getWebUpgradeStep(
+		UpgradeStepRegistrator upgradeStepRegistrator,
 		String upgradeStepClassName) {
 
-		return getUpgradeStep(
-			"com.liferay.calendar.web.internal.upgrade.CalendarWebUpgrade",
+		SearchRegistry searchRegistry = new SearchRegistry(
 			upgradeStepClassName);
+
+		upgradeStepRegistrator.register(searchRegistry);
+
+		return searchRegistry.getUpgradeStep();
 	}
 
 	private static class SearchRegistry

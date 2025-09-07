@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.model;
@@ -63,6 +54,7 @@ public class OAuth2AuthorizationWrapper
 		attributes.put("refreshTokenCreateDate", getRefreshTokenCreateDate());
 		attributes.put(
 			"refreshTokenExpirationDate", getRefreshTokenExpirationDate());
+		attributes.put("rememberDeviceContent", getRememberDeviceContent());
 
 		return attributes;
 	}
@@ -180,6 +172,18 @@ public class OAuth2AuthorizationWrapper
 		if (refreshTokenExpirationDate != null) {
 			setRefreshTokenExpirationDate(refreshTokenExpirationDate);
 		}
+
+		String rememberDeviceContent = (String)attributes.get(
+			"rememberDeviceContent");
+
+		if (rememberDeviceContent != null) {
+			setRememberDeviceContent(rememberDeviceContent);
+		}
+	}
+
+	@Override
+	public OAuth2Authorization cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -323,6 +327,16 @@ public class OAuth2AuthorizationWrapper
 	}
 
 	/**
+	 * Returns the remember device content of this o auth2 authorization.
+	 *
+	 * @return the remember device content of this o auth2 authorization
+	 */
+	@Override
+	public String getRememberDeviceContent() {
+		return model.getRememberDeviceContent();
+	}
+
+	/**
 	 * Returns the remote host info of this o auth2 authorization.
 	 *
 	 * @return the remote host info of this o auth2 authorization
@@ -372,11 +386,6 @@ public class OAuth2AuthorizationWrapper
 		return model.getUserUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a o auth2 authorization model instance should use the <code>OAuth2Authorization</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -526,6 +535,16 @@ public class OAuth2AuthorizationWrapper
 	}
 
 	/**
+	 * Sets the remember device content of this o auth2 authorization.
+	 *
+	 * @param rememberDeviceContent the remember device content of this o auth2 authorization
+	 */
+	@Override
+	public void setRememberDeviceContent(String rememberDeviceContent) {
+		model.setRememberDeviceContent(rememberDeviceContent);
+	}
+
+	/**
 	 * Sets the remote host info of this o auth2 authorization.
 	 *
 	 * @param remoteHostInfo the remote host info of this o auth2 authorization
@@ -573,6 +592,11 @@ public class OAuth2AuthorizationWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

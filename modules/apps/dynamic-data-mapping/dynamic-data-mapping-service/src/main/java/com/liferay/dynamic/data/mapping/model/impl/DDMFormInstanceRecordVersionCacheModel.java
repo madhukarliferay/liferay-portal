@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -38,18 +29,18 @@ public class DDMFormInstanceRecordVersionCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMFormInstanceRecordVersionCacheModel)) {
+		if (!(object instanceof DDMFormInstanceRecordVersionCacheModel)) {
 			return false;
 		}
 
 		DDMFormInstanceRecordVersionCacheModel
 			ddmFormInstanceRecordVersionCacheModel =
-				(DDMFormInstanceRecordVersionCacheModel)obj;
+				(DDMFormInstanceRecordVersionCacheModel)object;
 
 		if ((formInstanceRecordVersionId ==
 				ddmFormInstanceRecordVersionCacheModel.
@@ -82,10 +73,12 @@ public class DDMFormInstanceRecordVersionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(33);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", formInstanceRecordVersionId=");
 		sb.append(formInstanceRecordVersionId);
 		sb.append(", groupId=");
@@ -127,6 +120,7 @@ public class DDMFormInstanceRecordVersionCacheModel
 			new DDMFormInstanceRecordVersionImpl();
 
 		ddmFormInstanceRecordVersionImpl.setMvccVersion(mvccVersion);
+		ddmFormInstanceRecordVersionImpl.setCtCollectionId(ctCollectionId);
 		ddmFormInstanceRecordVersionImpl.setFormInstanceRecordVersionId(
 			formInstanceRecordVersionId);
 		ddmFormInstanceRecordVersionImpl.setGroupId(groupId);
@@ -197,6 +191,8 @@ public class DDMFormInstanceRecordVersionCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		formInstanceRecordVersionId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -225,6 +221,8 @@ public class DDMFormInstanceRecordVersionCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(formInstanceRecordVersionId);
 
@@ -278,6 +276,7 @@ public class DDMFormInstanceRecordVersionCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long formInstanceRecordVersionId;
 	public long groupId;
 	public long companyId;

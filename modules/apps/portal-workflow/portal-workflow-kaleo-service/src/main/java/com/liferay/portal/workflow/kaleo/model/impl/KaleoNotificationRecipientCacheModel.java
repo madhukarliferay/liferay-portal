@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -38,18 +29,18 @@ public class KaleoNotificationRecipientCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoNotificationRecipientCacheModel)) {
+		if (!(object instanceof KaleoNotificationRecipientCacheModel)) {
 			return false;
 		}
 
 		KaleoNotificationRecipientCacheModel
 			kaleoNotificationRecipientCacheModel =
-				(KaleoNotificationRecipientCacheModel)obj;
+				(KaleoNotificationRecipientCacheModel)object;
 
 		if ((kaleoNotificationRecipientId ==
 				kaleoNotificationRecipientCacheModel.
@@ -81,10 +72,12 @@ public class KaleoNotificationRecipientCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(37);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoNotificationRecipientId=");
 		sb.append(kaleoNotificationRecipientId);
 		sb.append(", groupId=");
@@ -99,6 +92,8 @@ public class KaleoNotificationRecipientCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoNotificationId=");
@@ -130,6 +125,7 @@ public class KaleoNotificationRecipientCacheModel
 			new KaleoNotificationRecipientImpl();
 
 		kaleoNotificationRecipientImpl.setMvccVersion(mvccVersion);
+		kaleoNotificationRecipientImpl.setCtCollectionId(ctCollectionId);
 		kaleoNotificationRecipientImpl.setKaleoNotificationRecipientId(
 			kaleoNotificationRecipientId);
 		kaleoNotificationRecipientImpl.setGroupId(groupId);
@@ -158,6 +154,7 @@ public class KaleoNotificationRecipientCacheModel
 				new Date(modifiedDate));
 		}
 
+		kaleoNotificationRecipientImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoNotificationRecipientImpl.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 		kaleoNotificationRecipientImpl.setKaleoNotificationId(
@@ -218,8 +215,12 @@ public class KaleoNotificationRecipientCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoNotificationRecipientId = objectInput.readLong();
 
@@ -232,6 +233,8 @@ public class KaleoNotificationRecipientCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		kaleoDefinitionId = objectInput.readLong();
+
 		kaleoDefinitionVersionId = objectInput.readLong();
 
 		kaleoNotificationId = objectInput.readLong();
@@ -240,7 +243,7 @@ public class KaleoNotificationRecipientCacheModel
 		recipientClassPK = objectInput.readLong();
 
 		recipientRoleType = objectInput.readInt();
-		recipientScript = objectInput.readUTF();
+		recipientScript = (String)objectInput.readObject();
 		recipientScriptLanguage = objectInput.readUTF();
 		recipientScriptContexts = objectInput.readUTF();
 		address = objectInput.readUTF();
@@ -250,6 +253,8 @@ public class KaleoNotificationRecipientCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoNotificationRecipientId);
 
@@ -269,6 +274,8 @@ public class KaleoNotificationRecipientCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		objectOutput.writeLong(kaleoDefinitionId);
+
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
 		objectOutput.writeLong(kaleoNotificationId);
@@ -285,10 +292,10 @@ public class KaleoNotificationRecipientCacheModel
 		objectOutput.writeInt(recipientRoleType);
 
 		if (recipientScript == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(recipientScript);
+			objectOutput.writeObject(recipientScript);
 		}
 
 		if (recipientScriptLanguage == null) {
@@ -321,6 +328,7 @@ public class KaleoNotificationRecipientCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoNotificationRecipientId;
 	public long groupId;
 	public long companyId;
@@ -328,6 +336,7 @@ public class KaleoNotificationRecipientCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public long kaleoNotificationId;
 	public String recipientClassName;

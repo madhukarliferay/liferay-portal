@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.test.util.search.JournalArticleBlueprint;
@@ -22,6 +14,7 @@ import com.liferay.journal.test.util.search.JournalArticleContent;
 import com.liferay.journal.test.util.search.JournalArticleDescription;
 import com.liferay.journal.test.util.search.JournalArticleSearchFixture;
 import com.liferay.journal.test.util.search.JournalArticleTitle;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
@@ -38,7 +31,9 @@ import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.search.constants.SearchContextAttributes;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.DocumentsAssert;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -46,8 +41,6 @@ import com.liferay.users.admin.test.util.search.UserSearchFixture;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +68,7 @@ public class JournalArticleMultiLanguageSearchTest {
 		_indexer = indexerRegistry.getIndexer(JournalArticle.class);
 
 		_journalArticleSearchFixture = new JournalArticleSearchFixture(
-			journalArticleLocalService);
+			ddmStructureLocalService, journalArticleLocalService, portal);
 
 		_journalArticleSearchFixture.setUp();
 
@@ -166,6 +159,9 @@ public class JournalArticleMultiLanguageSearchTest {
 
 		assertSearchMatchesAllArticles(LocaleUtil.NETHERLANDS, US_TITLE);
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected void addArticlesWithEnglishWordsInUsAndNlTranslations() {
 		addJournalArticle(
@@ -259,17 +255,11 @@ public class JournalArticleMultiLanguageSearchTest {
 	protected void assertSearchMatchesAllArticles(SearchContext searchContext) {
 		Hits hits = search(searchContext);
 
-		Stream<JournalArticle> stream = _journalArticles.stream();
-
-		List<String> articleIds = stream.map(
-			JournalArticle::getArticleId
-		).collect(
-			Collectors.toList()
-		);
-
 		DocumentsAssert.assertValuesIgnoreRelevance(
 			(String)searchContext.getAttribute("queryString"), hits.getDocs(),
-			Field.ARTICLE_ID, articleIds);
+			Field.ARTICLE_ID,
+			TransformUtil.transform(
+				_journalArticles, JournalArticle::getArticleId));
 	}
 
 	protected SearchContext getSearchContext(Locale locale) {
@@ -286,8 +276,8 @@ public class JournalArticleMultiLanguageSearchTest {
 
 			return searchContext;
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -303,10 +293,12 @@ public class JournalArticleMultiLanguageSearchTest {
 		try {
 			return _indexer.search(searchContext);
 		}
-		catch (SearchException se) {
-			throw new RuntimeException(se);
+		catch (SearchException searchException) {
+			throw new RuntimeException(searchException);
 		}
 	}
+
+	protected static final String ES_TITLE = "ingles";
 
 	protected static final String NL_CONTENT = "inhoud";
 
@@ -321,10 +313,16 @@ public class JournalArticleMultiLanguageSearchTest {
 	protected static final String US_TITLE = "english";
 
 	@Inject
+	protected static DDMStructureLocalService ddmStructureLocalService;
+
+	@Inject
 	protected IndexerRegistry indexerRegistry;
 
 	@Inject
 	protected JournalArticleLocalService journalArticleLocalService;
+
+	@Inject
+	protected Portal portal;
 
 	private Group _group;
 

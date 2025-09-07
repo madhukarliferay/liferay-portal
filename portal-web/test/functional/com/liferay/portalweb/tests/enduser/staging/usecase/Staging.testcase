@@ -1,16 +1,27 @@
-@component-name = "portal-staging"
+@component-name = "portal-headless"
 definition {
 
-	property portal.release = "true";
+	property ci.retries.disabled = "true";
+	property custom.properties = "feature.flag.LPD-35013=false";
+	property osgi.modules.includes = "wiki";
+	property portal.release = "false";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Staging";
 
 	setUp {
+		var portalURL = PropsUtil.get("portal.url");
+
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
 
-		JSONGroup.addGroup(groupName = "Site Name");
+		task ("Enable dynamic and manual selection") {
+			AssetPublisherPortlet.enableDynamicAndManualSelection();
+		}
+
+		WikiPortlet.enableWiki();
+
+		HeadlessSite.addSite(siteName = "Site Name");
 
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
@@ -18,9 +29,9 @@ definition {
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -29,9 +40,10 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-72088."
-	@priority = "5"
+	@priority = 3
 	test ActivateStagingAfterChangingInstanceLanguageToSpanish {
-		property test.name.skip.portal.instance = "Staging#ActivateStagingAfterChangingInstanceLanguageToSpanish";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		PortalSettings.gotoConfiguration(
 			configurationCategory = "Localization",
@@ -40,32 +52,20 @@ definition {
 
 		PortalSettings.configureCurrentLanguagesCP(defaultPortalLanguage = "Spanish (Spain)");
 
-		User.logoutPG();
+		UserBar.signOut();
 
 		User.loginPG(
 			localization = "ES",
 			userLoginEmailAddress = "test@liferay.com",
 			userLoginFullName = "Test Test");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 	}
 
 	@description = "This is a use case for LPS-88197."
-	@priority = "3"
+	@priority = 3
 	test ActivateStagingOnGlobalSiteWithDDMStructure {
-		SitePages.openPagesAdmin(siteURLKey = "Global");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "global");
 
 		NavItem.gotoStructures();
 
@@ -73,8 +73,7 @@ definition {
 			structureDescription = "Structure Description",
 			structureName = "Structure Name");
 
-		DynamicDataMapping.addField(
-			field = "Text",
+		DataEngine.addField(
 			fieldFieldLabel = "Text",
 			fieldName = "Text");
 
@@ -84,21 +83,9 @@ definition {
 			structureDescription = "Structure Description",
 			structureName = "Structure Name");
 
-		SitePages.openPagesAdmin(siteURLKey = "Global");
+		JSONStaging.enableLocalStaging(groupName = "Global");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Global");
-
-		ProductMenu.gotoLiveSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "global");
 
 		NavItem.gotoStructures();
 
@@ -107,58 +94,45 @@ definition {
 			structureName = "Structure Name");
 	}
 
-	@priority = "5"
+	@priority = 3
 	test ActivateStagingPageVersioningWithCustomDefaultLanguage {
-		property test.name.skip.portal.instance = "Staging#ActivateStagingPageVersioningWithCustomDefaultLanguage";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Enable private pages") {
+			PagesAdmin.enablePrivatePages();
+		}
 
 		JSONLayout.addPrivateLayout(
 			groupName = "Site Name",
 			layoutName = "Private Staging Page");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Settings");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
 		Site.configureCurrentLanguagesCP(
 			currentSiteLanguages = "English (United States)",
 			defaultSiteLanguage = "English (United States)",
 			displaySettings = "Display Settings");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 	}
 
 	@description = "This is a use case for LPS-94325."
-	@priority = "3"
+	@priority = 3
 	test ActivateStagingWithWCDOnFragment {
 		JSONFragment.addFragmentCollection(
 			groupName = "Site Name",
 			name = "Collection Name");
 
-		FragmentsAdminNavigator.openFragmentsAdmin(siteURLKey = "site-name");
-
-		FragmentsAdminNavigator.gotoCollection(collectionName = "Collection Name");
-
-		FragmentsAdmin.addFragment(fragmentName = "Fragment Name");
-
-		var fragmentHTML = '''<lfr-widget-web-content>''';
-
-		FragmentsEditor.autocompleteFragmentHTML(
-			autocompleteField = "lfr-widget-web-content",
-			fragmentHTML = "${fragmentHTML}");
-
-		PortletEntry.publish();
+		JSONFragment.addSection(
+			collectionName = "Collection Name",
+			fragmentStatus = "Approved",
+			groupName = "Site Name",
+			html = "<lfr-widget-web-content></lfr-widget-web-content>",
+			name = "Fragment Name");
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
@@ -168,9 +142,9 @@ definition {
 			webContentContent = "WC WebContent Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
-		SitePages.openPagesAdmin(siteURLKey = "site-name");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name");
 
 		ContentPages.addPage(pageName = "Test Content Page Name");
 
@@ -178,49 +152,706 @@ definition {
 			collectionName = "Collection Name",
 			fragmentName = "Fragment Name");
 
-		WebContentDisplayPortlet.selectWebContent(
-			contentPage = "true",
-			webContentTitle = "WC WebContent Title");
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "WC WebContent Title");
 
-		PageEditor.clickPublish();
+		IFrame.closeFrame();
+
+		PageEditor.publish();
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/site-name/test-content-page-name");
 
-		WebContent.viewPGViaWCD(webContentContent = "WC WebContent Content");
+		WebContentDisplayPortlet.viewContent(webContentContent = "WC WebContent Content");
 
-		SitePages.openPagesAdmin(siteURLKey = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Test Content Page Name",
 			siteName = "Site Name");
 
-		WebContent.viewPGViaWCD(webContentContent = "WC WebContent Content");
+		WebContentDisplayPortlet.viewContent(webContentContent = "WC WebContent Content");
 
 		Navigator.gotoSitePage(
 			pageName = "Test Content Page Name",
 			siteName = "Site Name");
 
-		WebContent.viewPGViaWCD(webContentContent = "WC WebContent Content");
+		WebContentDisplayPortlet.viewContent(webContentContent = "WC WebContent Content");
+	}
+
+	@description = "This is a use case for LPS-29586 and LPS-37405. Verify that the unselected child page cannot be published on local staging."
+	@priority = 3
+	test AssertCannotPublishUnselectedChildPage {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable local staging with a blank site") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+		}
+
+		task ("Given: Add a page with 2 child pages on staging and attempt to publish them to live") {
+			for (var i : list "1,2") {
+				JSONLayout.addPublicLayout(
+					groupName = "Site Name (Staging)",
+					layoutName = "Test Child Page ${i}",
+					parentLayoutName = "Staging Test Page",
+					site = "false");
+			}
+
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+		}
+
+		task ("When: Select the root node "Pages" in the form and unselect one of the child pages to publish to live") {
+			Staging.configurePublishToLive(
+				checkPageName = "Staging Test Page",
+				uncheckChildPagesNameList = "Test Child Page 2");
+
+			Staging.publishToLive();
+		}
+
+		task ("Then: Assert the unselected child page is not published to live") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "site-name");
+
+			for (var pageNames : list "Staging Test Page,Test Child Page 1") {
+				PagesAdmin.viewPageItemPresent(
+					depth = 1,
+					pageName = ${pageNames});
+			}
+
+			PagesAdmin.viewPageItemNotPresent(
+				depth = 1,
+				pageName = "Test Child Page 2");
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-7 TC-8. Verify Instance level settings overwrite System level settings when configuring the advanced staging configuration checkbox."
+	@priority = 3
+	test AssertInstanceLevelOverwriteSystemSettingForAdvancedStagingConfiguration {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable local staging with advanced staging configuration checkbox unchecked in system setting.") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+			Navigator.openURL();
+
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "System Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+		}
+
+		task ("When: Enable advanced staging configuration checkbox in instance setting") {
+			PortalSettings.openInstanceSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Show Advanced Staging Configuration by Default");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is displayed.") {
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_SIMPLE_PUBLICATION",
+				value1 = "Switch to Simple Publish Process");
+		}
+	}
+
+	@description = "This is a use case for LPS-190015, TC3. Canceling the multi publishing of several webcontents, stops them process properly and no webcontnts are published."
+	@priority = 3
+	test CanceledMultiPublisDoesNotPublishAnyWebContent {
+		task ("Activate local live staging") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+		}
+
+		task ("Add web contents") {
+			for (var i : list "1,2,3,4,5") {
+				JSONWebcontent.addWebContent(
+					content = "WC Content ${i}",
+					groupName = "Site Name (Staging)",
+					site = "false",
+					title = "WC Title ${i}");
+			}
+		}
+
+		task ("Cancele publication of all web contents") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+			PortletEntry.selectAll();
+
+			Click(locator1 = "ManagementBar#MORE_ACTIONS_ELLIPSIS");
+
+			MenuItem.click(menuItem = "Publish Selected Elements");
+
+			AssertTextEquals(
+				index = 1,
+				locator1 = "Modal#BODY_MESSAGE",
+				value1 = "Are you sure you want to publish the selected entities?");
+
+			Click(
+				buttonName = "Cancel",
+				locator1 = "Modal#SECONDARY_BUTTON");
+		}
+
+		task ("Assert webcontents are not published") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+			for (var i : list "1,2,3,4,5") {
+				AssertElementNotPresent(
+					key_webContentTitle = "WC Title ${i}",
+					locator1 = "WC#ENTRY_LIST_TITLE_NAME");
+			}
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-11. Verify OSGi configs with companyID can setup show Advanced Staging Configuration."
+	@priority = 3
+	test CanEnableAdvancedStagingConfigurationByCompanyId {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Place a config file into OSGi folder to configure Show Advanced Staging Configuration") {
+			var companyId = JSONCompany.getCompanyId();
+
+			OSGiConfig.deployOSGiConfigFile(
+				osgiConfigFileName = "com.liferay.exportimport.configuration.ExportImportServiceConfiguration.scoped~companyId.config",
+				osgiConfigs = "companyId=L\"${companyId}\",showAdvancedStagingConfigurationByDefault=B\"true\"");
+
+			OSGiConfig.waitForOSGiConfig();
+		}
+
+		task ("When: Go to instance settings") {
+			PortalSettings.openInstanceSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is enabled.") {
+			AssertChecked.assertCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-9. Verify can enable advanced staging configuration checkbox for remote staging."
+	@priority = 3
+	test CanEnableAdvancedStagingConfigurationForRemoteStaging {
+		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}feature.flag.LPD-35013=true${line.separator}tunneling.servlet.shared.secret=1234567890123456";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable remote staging with advanced staging configuration checkbox unchecked in system setting.") {
+			Staging.remoteStagingSetUpViaJson(groupName = "Site Name");
+
+			Navigator.openURL();
+
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "System Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+		}
+
+		task ("When: Enable advanced staging configuration checkbox") {
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Show Advanced Staging Configuration by Default");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is displayed.") {
+			Navigator.openSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_SIMPLE_PUBLICATION",
+				value1 = "Switch to Simple Publish Process");
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-10. Verify can enable advanced staging configuration checkbox for virtual instance."
+	@priority = 3
+	test CanEnableAdvancedStagingConfigurationForVirtualInstance {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable local staging with advanced staging configuration checkbox unchecked in instance setting.") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+			HeadlessPortalInstanceAPI.addPortalInstance(
+				domain = "www.able.com",
+				portalInstanceId = "www.able.com",
+				virtualHost = "www.able.com");
+
+			PortalSettings.openInstanceSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_ADVANCED_PUBLICATION",
+				value1 = "Switch to Advanced Publish Process");
+		}
+
+		task ("And: Add site in virtual instance enable local site staging.") {
+			HeadlessPortalInstanceAPI.addPortalInstance(
+				domain = "www.able.com",
+				portalInstanceId = "www.able.com",
+				virtualHost = "www.able.com");
+
+			User.logoutPG();
+
+			User.firstLoginUI(
+				password = PropsUtil.get("default.admin.password"),
+				specificURL = "http://www.able.com:8080",
+				userEmailAddress = "test@www.able.com");
+
+			ProductMenu.gotoPortlet(
+				category = "Publishing",
+				portlet = "Staging");
+
+			Staging.activateStagingCP(siteName = "www.able.com");
+		}
+
+		task ("When: Enable advanced staging configuration checkbox in virtual instance") {
+			PortalSettings.openInstanceSettingsAdmin(baseURL = "http://www.able.com:8080");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Show Advanced Staging Configuration by Default");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is displayed.") {
+			Navigator.openSpecificURL(url = "http://www.able.com:8080/web/guest-staging/home");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_SIMPLE_PUBLICATION",
+				value1 = "Switch to Simple Publish Process");
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-2 TC-5 TC-6. Verify there is advanced staging configuration checkbox with description in Instance Setting,the configuration checkbox can be enabled."
+	@priority = 3
+	test CanEnableAdvancedStagingConfigurationInInstanceSetting {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable local staging with advanced staging configuration checkbox unchecked in instance setting.") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+			PortalSettings.openInstanceSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			SystemSettings.viewTextLabel(fieldLabel = "Show Advanced Staging Configuration by Default");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+
+			SystemSettings.viewSettingsText(settingsText = "If checked, then the advanced publication configuration screen will be displayed by default when publishing pages.");
+		}
+
+		task ("When: Enable advanced staging configuration checkbox") {
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Show Advanced Staging Configuration by Default");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is displayed.") {
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_SIMPLE_PUBLICATION",
+				value1 = "Switch to Simple Publish Process");
+		}
+	}
+
+	@description = "This is a test for LPS-189238 TC-1 TC-3 TC-4. Verify there is advanced staging configuration checkbox with description in System Setting,the configuration checkbox can be enabled."
+	@priority = 3
+	test CanEnableAdvancedStagingConfigurationInSystemSetting {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Enable local staging with advanced staging configuration checkbox unchecked in system setting.") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+			Navigator.openURL();
+
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "System Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			SystemSettings.viewTextLabel(fieldLabel = "Show Advanced Staging Configuration by Default");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Show Advanced Staging Configuration by Default",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+
+			SystemSettings.viewSettingsText(settingsText = "If checked, then the advanced publication configuration screen will be displayed by default when publishing pages.");
+		}
+
+		task ("When: Enable advanced staging configuration checkbox") {
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Show Advanced Staging Configuration by Default");
+		}
+
+		task ("Then: Verify the configuration of the advanced staging process is displayed.") {
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			AssertTextEquals(
+				locator1 = "StagingPublishToLive#SWITCH_TO_SIMPLE_PUBLICATION",
+				value1 = "Switch to Simple Publish Process");
+		}
+	}
+
+	@description = "This is a test for LPS-146160. Verify Admin can enable local staging on the inherited site even site template propagation is disabled. The testcase is blocked by LPS-146160."
+	@priority = 3
+	test CanEnableLocalStagingOnInheritedSite {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Create a site with new site template with disable allow site administrators to modify pages associated with this site template, even when propagation of changes is enabled and Ready for Propagation,the testcase is blocked by LPS-146160.") {
+			SiteTemplates.addCP(
+				disableChanges = "true",
+				disablePropagation = "true",
+				siteTemplateName = "Site Template Name1");
+
+			SiteTemplates.addSitePageViaSiteTemplateCP(
+				pageName = "Widget Page Name",
+				siteTemplateName = "Site Template Name1");
+
+			Site.openSitesAdmin();
+
+			Site.addCP(
+				siteName = "Site Name1",
+				siteTemplateName = "Site Template Name1",
+				siteTemplateTab = "Custom Site Templates",
+				siteType = "Site Template");
+		}
+
+		task ("When: Enable local staging for site") {
+			Staging.openStagingAdmin(siteURLKey = "site-name1");
+		}
+
+		task ("Then: Verify user is able to enable local staging on inherited site.") {
+			Staging.activateStagingCP(siteName = "Site Name1");
+		}
+	}
+
+	@description = "This is a use case for LPS-159626. Verify that can publish web content with URL references to live via remote staging."
+	@priority = 3
+	test CanPublishWCWithURLReferenceViaRemoteStaging {
+		property app.server.bundles.size = "1";
+		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}feature.flag.LPD-35013=true${line.separator}tunneling.servlet.shared.secret=1234567890123456";
+		property databases.size = "1";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Add 10 content pages with 2 Grid modules and 2 WCD in each") {
+			for (var pageCount : list "1,2,3") {
+				JSONLayout.addPublicLayout(
+					groupName = "Site Name",
+					layoutName = "Page ${pageCount}",
+					type = "content");
+
+				for (var i : list "1,2") {
+					JSONLayout.addPublicLayout(
+						groupName = "Site Name",
+						layoutName = "Page ${pageCount}${i}",
+						parentLayoutName = "Page ${pageCount}",
+						type = "content");
+				}
+			}
+
+			JSONLayout.addPublicLayout(
+				groupName = "Site Name",
+				layoutName = "Page 111",
+				parentLayoutName = "Page 11",
+				type = "content");
+
+			for (var nums : list "1,2,3,11,12,111,21,22,31,32") {
+				ContentPagesNavigator.openEditContentPage(
+					pageName = "Page ${nums}",
+					siteName = "Site Name");
+
+				PageEditor.addFragment(
+					collectionName = "Layout Elements",
+					fragmentName = "Grid");
+
+				PageEditor.editLayoutGrid(
+					columnCount = 2,
+					panel = "General");
+
+				for (var n : list "1,2") {
+					PageEditor.addElementToColumn(
+						columnNumber = ${n},
+						navTab = "Widgets",
+						portletName = "Web Content Display");
+				}
+
+				PageEditor.publish();
+			}
+		}
+
+		task ("And: Add a structure and template with 20 text fields and create a menu WC using the created structure 1 with pages name and URLs") {
+			WebContentStructures.openWebContentStructuresAdmin(siteURLKey = "site-name");
+
+			WebContentStructures.addCP(structureName = "WC Structure 1");
+
+			for (var num : list "1,2,3,11,12,111,21,22,31,32") {
+				DataEngine.addField(
+					fieldFieldLabel = "Open page ${num}",
+					fieldName = "Text");
+
+				DataEngine.addField(
+					fieldFieldLabel = "URL${num}",
+					fieldName = "Text");
+			}
+
+			WebContentStructures.saveCP();
+
+			WebContentNavigator.gotoManageTemplatesViaStructures(structureName = "WC Structure 1");
+
+			var templateScript = '''
+<p> <a href="${URL1.getData()}">${Openpage1.getData()}</a> </p>
+<p> <a href="${URL2.getData()}">${Openpage2.getData()}</a> </p>
+<p> <a href="${URL3.getData()}">${Openpage3.getData()}</a> </p>
+<p> <a href="${URL11.getData()}">${Openpage11.getData()}</a> </p>
+<p> <a href="${URL12.getData()}">${Openpage12.getData()}</a> </p>
+<p> <a href="${URL111.getData()}">${Openpage111.getData()}</a> </p>
+<p> <a href="${URL21.getData()}">${Openpage21.getData()}</a> </p>
+<p> <a href="${URL22.getData()}">${Openpage22.getData()}</a> </p>
+<p> <a href="${URL31.getData()}">${Openpage31.getData()}</a> </p>
+<p> <a href="${URL32.getData()}">${Openpage32.getData()}</a> </p>
+''';
+
+			WebContentTemplates.addCP(
+				templateName = "WC Template 1",
+				templateScript = ${templateScript});
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+			WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure 1");
+
+			PortletEntry.inputTitle(title = "Menu");
+
+			for (var num : list "1,2,3,11,12,111,21,22,31,32") {
+				DERenderer.inputDataInTextField(
+					fieldLabel = "Open page ${num}",
+					value = "Open page ${num}");
+
+				DERenderer.inputDataInTextField(
+					fieldLabel = "URL${num}",
+					value = "/web/site-name/page-${num}");
+			}
+
+			WebContent.publishWithPermissions();
+		}
+
+		task ("And: Add another structure and template with 2 text fields and create 10 WC articles for their pages using the created structure 2") {
+			WebContentStructures.openWebContentStructuresAdmin(siteURLKey = "site-name");
+
+			WebContentStructures.addCP(structureName = "WC Structure 2");
+
+			DataEngine.addField(
+				fieldFieldLabel = "Title",
+				fieldName = "Text");
+
+			DataEngine.addField(
+				fieldFieldLabel = "Content",
+				fieldLocation = 2,
+				fieldName = "Text");
+
+			WebContentStructures.saveCP();
+
+			WebContentNavigator.gotoManageTemplatesViaStructures(structureName = "WC Structure 2");
+
+			var templateScript = '''
+<h1>${Title.getData()}</h1>
+<p>${Content.getData()}</p>
+''';
+
+			WebContentTemplates.addCP(
+				templateName = "WC Template 2",
+				templateScript = ${templateScript});
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+			for (var num : list "1,2,3,11,12,111,21,22,31,32") {
+				WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure 2");
+
+				PortletEntry.inputTitle(title = "Content-${num}");
+
+				DERenderer.inputDataInTextField(
+					fieldLabel = "Title",
+					value = "Content-${num}");
+
+				DERenderer.inputDataInTextField(
+					fieldLabel = "Content",
+					value = "Text Content-${num}");
+
+				WebContent.publishWithPermissions();
+			}
+		}
+
+		task ("And: Edit each page to show their WC articles and a menu WC via the WCDs") {
+			for (var nums : list "1,2,3,11,12,111,21,22,31,32") {
+				ContentPagesNavigator.openEditContentPage(
+					pageName = "Page ${nums}",
+					siteName = "Site Name");
+
+				WebContentDisplayPortlet.selectWebContent(webContentTitle = "Menu");
+
+				IFrame.closeFrame();
+
+				WebContentDisplayPortlet.selectWebContent(
+					portletIndex = 2,
+					webContentTitle = "Content-${nums}");
+
+				IFrame.closeFrame();
+
+				PortletEntry.publish();
+			}
+		}
+
+		task ("When: Enable remote staging using the same site names and publish all the site web contents to live") {
+			HeadlessSite.addSite(
+				portalURL = "http://localhost:9080",
+				siteName = "Site Name");
+
+			var remoteGroupId = JSONGroupSetter.setGroupId(
+				groupName = "Site Name",
+				portalURL = "http://localhost:9080");
+
+			JSONStaging.enableRemoteStaging(
+				branchingPrivate = "true",
+				branchingPublic = "true",
+				groupName = "Site Name",
+				remoteGroupId = ${remoteGroupId},
+				remotePort = 9080);
+
+			Navigator.openSiteURL(siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			Staging.configurePublishToLive(
+				checkContentNameList = "Web Content",
+				contentDateRange = "All");
+
+			Staging.publishToLive(remoteStaging = "true");
+		}
+
+		task ("Then: Assert the links point to the correct pages and show the correct articles on the page on the remote live site") {
+			User.logoutPG();
+
+			User.firstLoginUI(
+				password = PropsUtil.get("default.admin.password"),
+				specificURL = "http://localhost:9080",
+				userEmailAddress = "test@liferay.com");
+
+			Navigator.openSitePage(
+				baseURL = "http://localhost:9080",
+				pageName = "Page 1",
+				siteName = "Site Name");
+
+			for (var nums : list "111,21,3") {
+				ClickNoError(
+					key_text = "Open page ${nums}",
+					locator1 = "Link#ANY");
+
+				AssertTextEquals.assertPartialText(
+					index = 2,
+					locator1 = "WCD#WEB_CONTENT_CONTENT",
+					value1 = "Content-${nums}");
+
+				AssertLocation.assertPartialLocation(value1 = "/web/site-name/page-${nums}");
+			}
+		}
 	}
 
 	@description = "This is a use case for LPS-90127."
-	@priority = "3"
+	@priority = 3
 	test ConfigureDDMStructureViaAPWhenNotStagedAssets {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		Navigator.openSiteURL(siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Asset Publisher");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name");
 
 		Staging.activateStagingCP(
 			noContent = "true",
@@ -238,10 +869,7 @@ definition {
 			structureDescription = "WC Structure Description",
 			structureName = "WC Structure Name");
 
-		DynamicDataMapping.addField(
-			field = "Text",
-			fieldFieldLabel = "Text",
-			fieldName = "Text");
+		DataEngine.addFields(fieldNameList = "Text,Select from List,Single Selection,Multiple Selection,Grid,Date,Numeric,Image,Rich Text,Upload,Color,Web Content,Geolocation,Link to Page,Separator");
 
 		WebContentStructures.saveCP(structureName = "WC Structure Name");
 
@@ -252,7 +880,7 @@ definition {
 		WebContentTemplates.addCP(
 			structureName = "WC Structure Name",
 			templateDescription = "WC Template Description",
-			templateFieldNames = "Text",
+			templateFieldNames = "Text,Select from List,Single Selection,Multiple Selection,Grid,Date,Numeric,Image,Rich Text,Upload,Color,Web Content,Geolocation,Link to Page",
 			templateName = "WC Template Name");
 
 		Navigator.gotoStagedSitePage(
@@ -265,85 +893,55 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-92039 and LPS-92636."
-	@priority = "3"
+	@priority = 3
 	test CreateWidgetTemplateWhenNotStagedADT {
-		Navigator.openSiteURL(siteName = "Site Name");
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Widget Templates");
+		WidgetTemplates.openWidgetTemplatesAdmin(siteURLKey = "site-name");
 
 		AssertVisible(locator1 = "Button#PLUS");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name");
 
 		Staging.activateStagingCP(
 			siteName = "Site Name",
-			uncheckContent = "Widget Templates");
+			uncheckContent = "Templates");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Widget Templates");
+		WidgetTemplates.openWidgetTemplatesAdmin(siteURLKey = "site-name-staging");
 
-		ApplicationDisplayTemplates.addADTWithFieldEntryCP(
+		WidgetTemplates.addADTWithFieldEntryCP(
 			fieldName = "Asset Entry",
 			portletName = "Asset Publisher");
 
-		AssertTextEquals(
-			locator1 = "ApplicationDisplayTemplates#ADT_TABLE_NAME_1",
-			value1 = "Asset Publisher Test ADT");
+		AssertVisible(
+			key_tableEntry = "Asset Publisher Test ADT",
+			locator1 = "LexiconTable#TABLE_ENTRY_TITLE");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		WidgetTemplates.openWidgetTemplatesAdmin(siteURLKey = "site-name");
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Widget Templates");
-
-		ApplicationDisplayTemplates.addADTWithFieldEntryCP(
+		WidgetTemplates.addADTWithFieldEntryCP(
 			fieldName = "Blog Entries",
 			portletName = "Blogs");
 
-		AssertTextEquals(
-			locator1 = "ApplicationDisplayTemplates#ADT_TABLE_NAME_2",
-			value1 = "Blogs Test ADT");
+		AssertVisible(
+			key_tableEntry = "Blogs Test ADT",
+			locator1 = "LexiconTable#TABLE_ENTRY_TITLE");
 	}
 
-	@priority = "4"
+	@priority = 3
 	test DeletePublishTemplate {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Settings");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
 		Site.disableRecycleBinCP();
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
 		Staging.addPublishTemplate(
 			publishTemplateDescription = "Publish Template Description",
@@ -353,134 +951,375 @@ definition {
 			publishTemplateDescription = "Publish Template Description",
 			publishTemplateName = "Publish Template Name");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Navigator.gotoStagedView();
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
 		Staging.deletePublishTemplate(publishTemplateName = "Publish Template Name");
 	}
 
-	@description = "This is a use case for LPS-89546"
-	@priority = "3"
-	test EditPageCreatedBasedOnPageTemplateWithPageVersioning {
-		Navigator.openSiteURL(siteName = "Site Name");
+	@description = "This is a use case for LPS-190064 (TC-3). The name of multiple published Web Contents are NOT displayed in the Publication Summary even when the actions are different."
+	@priority = 4
+	test DifferentlyModifiedWebContentTitlesAreNotDisplayedInPublicationSummary {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		var randomSiteURLKey = "guest";
+		var randomSiteName = "Liferay DXP";
 
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		task ("Given: Replicate Individual Deletions is active, MULTIPLE (specifically two) Web Contents are created and Staging is enabled") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "System Settings");
 
-		PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "site-name-staging");
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Export/Import, Staging",
+				configurationScope = "Virtual Instance Scope");
 
-		PageTemplatesAdmin.addCollection(collectionName = "Page Template Collection");
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Replicate Individual Deletions by Default");
 
-		PageTemplatesAdmin.addPageTemplate(
-			pageTemplateName = "Page Template Name",
-			pageTemplateType = "Widget Page Template");
+			for (var webContentTitle : list "Palpatine, Tyranus") {
+				WebContentNavigator.openWebContentAdmin(siteURLKey = ${randomSiteURLKey});
 
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
+				WebContentNavigator.gotoAddCP();
 
-		SitePages.addPublicPage(
-			collectionName = "Page Template Collection",
-			pageName = "Test Page Name",
-			pageTemplateName = "Page Template Name");
+				WebContent.addCP(
+					webContentContent = "Quality Content",
+					webContentTitle = ${webContentTitle});
 
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
+				WebContent.publishWithPermissions();
+			}
 
-		SitePages.gotoPageMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page Name");
+			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
 
-		Page.editName(pageNameEdit = "Test Page Edit");
+			Staging.activateStagingCP(siteName = ${randomSiteName});
+		}
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Test Page Edit",
-			siteName = "Site Name");
+		task ("When: One of the Web Contents is deleted, a new one is created and one is edited, then they are Published to Live") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
 
-		Page.view(
-			pageName = "Test Page Edit",
-			privacy = "Public Pages");
+			WebContent.moveToRecycleBinCP(webContentTitle = "Tyranus");
+
+			WebContentNavigator.gotoAddCP();
+
+			WebContent.addCP(
+				webContentContent = "Quality Content",
+				webContentTitle = "Vader");
+
+			WebContent.publishWithPermissions();
+
+			WebContentNavigator.gotoEditCP(webContentTitle = "Palpatine");
+
+			WebContent.editCP(webContentTitleEdit = "Sidious");
+
+			Staging.openStagingAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("Then: In the summary of the publishing process the titles of the Web Contents are NOT displayed just the action types and their numbers (Exported: 2, Deleted:1)") {
+			Staging.viewPublicationSummary(publicationTitle = "Untitled");
+		}
 	}
 
-	@priority = "4"
-	test EnableStagingWithWebContentReferencedFromDeletedSite {
-		JSONWebcontent.addWebContent(
-			content = "WC Content",
+	@description = "This is a use case for LPS-190064 (TC-5). The name of a Drafted Web Content is NOT displayed in the Publication Summary."
+	@priority = 4
+	test DraftedWebContentTitleIsNotDisplayedInPublicationSummary {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		var randomSiteURLKey = "guest";
+		var randomSiteName = "Liferay DXP";
+
+		task ("Given: Staging is enabled and a Web Content is SAVED AS DRAFT") {
+			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
+
+			Staging.activateStagingCP(siteName = ${randomSiteName});
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			WebContentNavigator.gotoAddCP();
+
+			WebContent.addDraft(
+				webContentContent = "Quality Content",
+				webContentTitle = "If you can see this in the Publication Summary, then something is wrong!");
+
+			PortletEntry.saveAsDraft();
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+		}
+
+		task ("When: A new publication to Live is executed") {
+			Staging.openStagingAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("Then: In the summary of the publishing process the title of the DRAFTED Web Content is NOT displayed") {
+			Staging.viewPublicationSummary(publicationTitle = "Untitled");
+		}
+	}
+
+	@description = "This is a use case for LPS-100807."
+	@priority = 3
+	test EditWikiPageInLiveSiteWhenWikiNotStaged {
+		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Site Name",
-			title = "WC Title");
+			layoutName = "Staging Test Page",
+			widgetName = "Wiki");
 
-		JSONGroup.addGroup(groupName = "Site B Name");
+		Navigator.openSiteURL(siteName = "Site Name");
 
-		JSONLayout.addPublicLayout(
-			groupName = "Site B Name",
-			layoutName = "Site B Test Page");
+		WikiNavigator.gotoAllPagesPG();
+
+		WikiPage.addPG(
+			wikiPageContent = "Wiki Page Content",
+			wikiPageTitle = "Wiki Page Title");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name");
+
+		Staging.activateStagingCP(
+			siteName = "Site Name",
+			uncheckContent = "Wiki");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		WikiNavigator.gotoAllPagesPG();
+
+		WikiNavigator.gotoEntryEditViaPGTable(wikiPageTitle = "Wiki Page Title");
+
+		WikiEntry.addPageContent(wikiPageContent = "Edited Wiki Page Content");
+
+		SelectFrame(value1 = "relative=top");
+
+		PortletEntry.publish();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		WikiNavigator.gotoAllPagesPG();
+
+		AssertTextEquals.assertPartialText(
+			key_wikiPageTitle = "Wiki Page Title",
+			locator1 = "WikiTable#ALL_PAGES_REVISION",
+			value1 = "1.1");
+
+		WikiNavigator.gotoPG(wikiPageTitle = "Wiki Page Title");
+
+		WikiPage.viewPG(
+			wikiPageContent = "Edited Wiki Page Content",
+			wikiPageTitle = "Wiki Page Title");
 
 		Navigator.gotoSitePage(
-			pageName = "Site B Test Page",
-			siteName = "Site B Name");
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
 
-		Portlet.addPG(portletName = "Web Content Display");
+		WikiNavigator.gotoAllPagesPG();
 
-		WebContentDisplayPortlet.selectOtherSiteWebContent(
+		AssertTextEquals.assertPartialText(
+			key_wikiPageTitle = "Wiki Page Title",
+			locator1 = "WikiTable#ALL_PAGES_REVISION",
+			value1 = "1.1");
+
+		WikiNavigator.gotoPG(wikiPageTitle = "Wiki Page Title");
+
+		WikiPage.viewPG(
+			wikiPageContent = "Edited Wiki Page Content",
+			wikiPageTitle = "Wiki Page Title");
+
+		Navigator.gotoSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		WikiNavigator.gotoAllPagesPG();
+
+		WikiNavigator.gotoEntryEditViaPGTable(wikiPageTitle = "Wiki Page Title");
+
+		WikiEntry.addPageContent(wikiPageContent = "Edited Edited Wiki Page Content");
+
+		SelectFrame(value1 = "relative=top");
+
+		PortletEntry.publish();
+	}
+
+	@priority = 3
+	test EnableStagingWithWebContentReferencedFromDeletedSite {
+		JSONWebcontent.addWebContent(
+			content = "WC Content 1",
+			groupName = "Site Name",
+			title = "WC Title 1");
+
+		HeadlessSite.addSite(siteName = "Site B");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-b");
+
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(
+			structureDescription = "Structure Description",
+			structureName = "Structure Name");
+
+		DataEngine.addField(
+			fieldFieldLabel = "Web Content",
+			fieldName = "Web Content");
+
+		WebContentStructures.saveCP(structureName = "Structure Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-b");
+
+		NavItem.gotoTemplates();
+
+		WebContentTemplates.addCP(
+			structureName = "Structure Name",
+			templateDescription = "Template Description",
+			templateFieldNames = "Web Content",
+			templateName = "Template Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-b");
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "Structure Name");
+
+		WebContent.addWithStructureCP(
 			otherSiteName = "Site Name",
-			webContentTitle = "WC Title");
+			structureName = "Structure Name",
+			templateName = "Template Name",
+			webContentTitle = "WC Title 2",
+			webContentWebContent = "WC Title 1");
+
+		WebContent.publishWithPermissions();
 
 		JSONGroup.deleteGroupByName(groupName = "Site Name");
 
-		Navigator.openSiteURL(siteName = "Site B Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site B Name");
+		JSONStaging.enableLocalStaging(groupName = "Site B");
 	}
 
-	@priority = "3"
-	test ModifyInitalPageVariationSetup {
-		Navigator.openSiteURL(siteName = "Site Name");
+	@priority = 3
+	test ImportLarFrom70ToCurrent {
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.modifyVariation(enableOnPublicPages = "true");
+		LAR.importPortlet(
+			importSchemaVersionMismatching = "true",
+			larFileName = "7.0.10.14_webcontent.lar",
+			portletName = "Web Content",
+			uploadFrom = "dependencies");
 	}
 
-	@priority = "5"
+	@description = "This is a use case for LPS-189191. TC-2 and TC-4: Verify that the instance setting can overwrite the system setting via OSGi file to ignore previews and thumbnails during the local staging publish process."
+	@priority = 3
+	test InstanceSettingOfPreviewsAndThumbnailsCanOverwriteSystemSetting {
+		property test.liferay.virtual.instance = "false";
+
+		task ("Given: Instance setting overwrite system setting via OSGi file") {
+			var companyId = JSONCompany.getCompanyId();
+
+			OSGiConfig.deployOSGiConfigFile(
+				osgiConfigFileName = "com.liferay.exportimport.configuration.ExportImportServiceConfiguration.scoped~companyId.config",
+				osgiConfigs = "companyId=L\"${companyId}\",includeThumbnailsAndPreviewsDuringStaging=B\"false\"");
+
+			OSGiConfig.waitForOSGiConfig();
+
+			StagingNavigator.openToConfigInSystemSettings(portlet = "Export/Import, Staging");
+
+			AssertChecked.assertCheckedNotVisible(
+				key_settingFieldName = "Include Thumbnails And Previews During Staging",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+
+			StagingNavigator.openToConfigInInstanceSettings(portlet = "Export/Import, Staging");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_settingFieldName = "Include Thumbnails And Previews During Staging",
+				locator1 = "SystemSettings#SETTING_FIELD_NAME_CHECKBOX");
+		}
+
+		task ("And: Enable local staging and add a new file to DM") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "DM Document Title",
+				groupName = "Site Name-staging",
+				mimeType = "image/jpeg",
+				sourceFileName = "Document_1.jpg");
+		}
+
+		task ("When: Create a new publish process") {
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+		}
+
+		task ("Then: Assert the Previews and Thumbnails are not displayed under DM item") {
+			Staging.configurePublishToLive(
+				checkContentNameList = "Documents and Media",
+				includeThumbnailsAndPreviewsDuringStaging = "false");
+
+			Staging.publishToLive();
+
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
+
+			DMDocument.viewPG(dmDocumentTitle = "DM Document Title");
+		}
+
+		task ("And: Verify the new LAR does not contain adaptive-media folder") {
+			Staging.validateFolderNotExist();
+		}
+	}
+
+	@description = "This is a use case for LPS-190064 (TC-2). The name of multiple published Web Contents are NOT displayed in the Publication Summary."
+	@priority = 4
+	test MultipleWebContentTitlesAreNotDisplayedInPublicationSummary {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		var randomSiteURLKey = "guest";
+		var randomSiteName = "Liferay DXP";
+
+		task ("Given: Staging is enabled and MULTIPLE (specifically three) Web Contents are created") {
+			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
+
+			Staging.activateStagingCP(siteName = ${randomSiteName});
+
+			for (var webContentTitle : list "The Fellowship of the Ring,The Two Towers,The Return of the King") {
+				WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+				WebContentNavigator.gotoAddCP();
+
+				WebContent.addCP(
+					webContentContent = "Quality Content",
+					webContentTitle = ${webContentTitle});
+
+				WebContent.publishWithPermissions();
+			}
+		}
+
+		task ("When: The new Web Contents are Published to Live") {
+			Staging.openStagingAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("Then: In the summary of the publishing process the titles of the Web Contents are NOT displayed") {
+			Staging.viewPublicationSummary(publicationTitle = "Untitled");
+		}
+	}
+
+	@priority = 3
 	test NotStagedAssets {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name");
 
 		Staging.activateStagingCP(
 			noContent = "true",
 			siteName = "Site Name");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Blogs");
 
 		Staging.viewNotStagedAssetMessageOnStaging();
@@ -490,36 +1329,97 @@ definition {
 		Navigator.openSiteURL(siteName = "Site Name");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Blogs");
 
 		Staging.viewAddButtonExists();
 	}
 
+	@description = "This is a use case for LPS-124180 and LPS-136025."
+	@priority = 3
+	test PublishChildPageWithoutItsParentPage {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Child Page",
+			parentLayoutName = "Staging Test Page");
+
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "System Settings");
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "Infrastructure",
+			configurationName = "Staging",
+			configurationScope = "Virtual Instance Scope");
+
+		SystemSettings.configureSystemSetting(
+			enableSetting = "false",
+			settingFieldName = "Publish Parent Pages by Default");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		Portlet.addPG(portletName = "Web Content Display");
+
+		Navigator.openSitePage(
+			pageName = "Child Page",
+			siteName = "Site Name Staging");
+
+		Portlet.addPG(portletName = "Web Content Display");
+
+		Staging.gotoPublishToLive();
+
+		Staging.configurePublishToLive(checkPageName = "Child Page");
+
+		Staging.publishToLive(publicationName = "summCheck");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.viewPublicationSummary(
+			pagesNotToPublish = '''<div>Staging Test Page</div>''',
+			pagesToPublish = '''/Child Page''',
+			publicationTitle = "summCheck");
+
+		Navigator.gotoSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		Portlet.viewNoSpecificPG(portletName = "Web Content Display");
+
+		Navigator.openSitePage(
+			pageName = "Child Page",
+			siteName = "Site Name");
+
+		Portlet.viewPG(portletName = "Web Content Display");
+	}
+
 	@description = "This is a use case for LPS-88045."
-	@priority = "3"
+	@priority = 3
 	test PublishChildSiteViaRemoteStagingWithParentStructure {
 		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
+		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}feature.flag.LPD-35013=true${line.separator}tunneling.servlet.shared.secret=1234567890123456";
 		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#PublishChildSiteViaRemoteStagingWithParentStructure";
+		property minimum.slave.ram = "24";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		JSONGroup.addChildSite(
-			groupName = "Child SiteName",
-			parentGroupName = "Site Name");
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
+		HeadlessSite.addSite(
+			parentSiteName = "Site Name",
 			siteName = "Child SiteName");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		Staging.remoteStagingSetUpViaJson(
+			groupName = "Child SiteName",
+			parentGroupName = "Site Name",
+			remotePort = 9080);
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		NavItem.gotoStructures();
 
@@ -527,34 +1427,21 @@ definition {
 			structureDescription = "Structure Description",
 			structureName = "Structure Name");
 
-		DynamicDataMapping.addField(
-			field = "Text",
-			fieldFieldLabel = "Text",
-			fieldName = "Text");
+		DataEngine.addFields(fieldNameList = "Text,Select from List,Single Selection,Multiple Selection,Grid,Date,Numeric,Image,Rich Text,Upload,Color,Web Content,Geolocation,Link to Page,Separator");
 
 		WebContentStructures.saveCP(structureName = "Structure Name");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		NavItem.gotoTemplates();
 
 		WebContentTemplates.addCP(
 			structureName = "Structure Name",
 			templateDescription = "Template Description",
-			templateFieldNames = "Text",
+			templateFieldNames = "Text,Select from List,Single Selection,Multiple Selection,Grid,Date,Numeric,Image,Rich Text,Upload,Color,Web Content,Geolocation,Link to Page",
 			templateName = "Template Name");
 
-		SitePages.openPagesAdmin(siteURLKey = "Child SiteName");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "child-siteName");
 
 		WebContentNavigator.gotoAddWithStructureCP(structureName = "Structure Name");
 
@@ -564,7 +1451,26 @@ definition {
 			webContentText = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.addWithStructureCP(
+			column = 1,
+			dmNavTab = "User Personal Folder",
+			navTab = "Web Content Images",
+			row = 1,
+			structureName = "Structure Name",
+			templateName = "Template Name",
+			webContentColor = "FF0D0D",
+			webContentDate = "10/10/2020",
+			webContentGrid = "true",
+			webContentImage = "Document_3.png",
+			webContentMultipleSelection = "Option 1",
+			webContentNumeric = 9,
+			webContentRichText = "This is a Rich Text field",
+			webContentSelectFromList = "Option 2",
+			webContentSingleSelection = "Option 3",
+			webContentText = "Web Content Content",
+			webContentTitle = "Web Content Title");
+
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "Web Content Title");
 
@@ -576,7 +1482,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-93695."
-	@priority = "3"
+	@priority = 3
 	test PublishContentPageWithCategory {
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
@@ -584,18 +1490,11 @@ definition {
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/site-name/search");
 
-		Portlet.addPG(portletName = "Search Results");
+		SearchPage.addWidgetsOnWidgetPageViaUI(searchPortletList = "Search Results");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
 		ContentPages.addPage(pageName = "Test Content Page");
 
@@ -615,21 +1514,35 @@ definition {
 			categoryName = "Category Name",
 			vocabularyName = "Vocabulary Name");
 
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+		WebContentNavigator.gotoAddCP();
+
+		WebContent.addWithCategoryCP(
+			categoryName = "Category Name",
+			vocabularyName = "Vocabulary Name",
+			webContentContent = "WC WebContent Content",
+			webContentTitle = "WC WebContent Title");
+
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/site-name-staging/test-content-page");
 
-		ContentPages.clickPencil();
+		ContentPages.gotoPageEditor();
 
-		PageEditor.addWidget(portletName = "Categories Navigation");
+		PageEditor.addWidget(portletName = "Web Content Display");
 
-		PageEditor.clickPublish();
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "WC WebContent Title");
+
+		IFrame.closeFrame();
+
+		PageEditor.publish();
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/site-name-staging/test-content-page");
 
-		SearchPortlets.searchEmbedded(searchTerm = "Category Name");
+		SearchPage.searchEmbedded(searchTerm = "Category Name");
 
-		SearchResultPortlet.viewSearchResults(
-			searchAssetTitle = "Test Content Page",
-			searchAssetType = "Categories");
+		SearchResults.viewSearchResults(
+			searchAssetTitle = "WC WebContent Title",
+			searchAssetType = "Web Content");
 
 		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
@@ -639,241 +1552,107 @@ definition {
 			pageName = "Search",
 			siteName = "Site Name");
 
-		SearchPortlets.searchEmbedded(searchTerm = "Category Name");
+		SearchPage.searchEmbedded(searchTerm = "Category Name");
 
-		SearchResultPortlet.viewSearchResults(
-			searchAssetTitle = "Test Content Page",
-			searchAssetType = "Categories");
+		SearchResults.viewSearchResults(
+			searchAssetTitle = "WC WebContent Title",
+			searchAssetType = "Web Content");
 	}
 
-	@description = "This is a use case for LPS-72545."
-	@priority = "4"
-	test PublishCustomFieldDeletionviaRemoteStaging {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#PublishCustomFieldDeletionviaRemoteStaging";
+	@description = "This is a use case for LPS-190015, TC2. Publishing several webcontents from the first page of wcs by multi publish option."
+	@priority = 3
+	test PublishMoreWebContentWithMultiPublishOption {
+		task ("Activate local live staging") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+		}
 
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
+		task ("Add web contents") {
+			for (var i : list "1,2,3,4,5") {
+				JSONWebcontent.addWebContent(
+					content = "WC Content ${i}",
+					groupName = "Site Name (Staging)",
+					site = "false",
+					title = "WC Title ${i}");
+			}
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
+		task ("Publish all web contents from first page") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
-		CustomFields.addCP(
-			customFieldName = "Text Field",
-			customFieldType = "Input Field",
-			customInputDataType = "Text",
-			resourceName = "Document");
+			Pagination.changePagination(itemsPerPage = 4);
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
+			PortletEntry.selectAll();
 
-		LAR.exportPortlet(
-			larFileName = "custom_fields.portlet.lar",
-			portletName = "Custom Fields");
+			Staging.publishWithMultiPublishOption();
+		}
 
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+		task ("Assert all selected webcontents are published") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+			for (var i : list "2,3,4,5") {
+				AssertElementPresent(
+					key_webContentTitle = "WC Title ${i}",
+					locator1 = "WC#ENTRY_LIST_TITLE_NAME");
+			}
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
+			AssertElementNotPresent(
+				key_webContentTitle = "WC Title 1",
+				locator1 = "WC#ENTRY_LIST_TITLE_NAME");
+		}
+	}
 
-		LAR.importPortlet(larFileName = "custom_fields.portlet.lar");
+	@description = "This is a use case for LPS-190015, TC1. Publishing a single webcontent by multi publish option."
+	@priority = 3
+	test PublishOneWebContentWithMultiPublishOption {
+		task ("Activate local live staging") {
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+		}
 
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+		task ("Add web contents") {
+			for (var i : list "1,2") {
+				JSONWebcontent.addWebContent(
+					content = "WC Content ${i}",
+					groupName = "Site Name (Staging)",
+					site = "false",
+					title = "WC Title ${i}");
+			}
+		}
 
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+		task ("Publish one web content with multi publish option") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+			Click(
+				content_title = "WC Title 1",
+				locator1 = "Checkbox#ENTRY_BY_TITLE");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
+			Staging.publishWithMultiPublishOption();
+		}
 
-		DMDocument.addCP(
-			customFieldText = "DM Document Custom Field",
-			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_1.txt",
-			dmDocumentTitle = "DM Document Title");
+		task ("Assert web content is published") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
+			AssertElementPresent(
+				key_webContentTitle = "WC Title 1",
+				locator1 = "WC#ENTRY_LIST_TITLE_NAME");
 
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewCP(
-			customFieldName = "Text Field",
-			customFieldValue = "DM Document Custom Field",
-			dmDocumentTitle = "DM Document Title");
-
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
-
-		CustomFields.deleteCP(
-			customFieldName = "Text Field",
-			resourceName = "Document");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
-
-		LAR.exportPortlet(
-			exportIndividualDeletions = "true",
-			larFileName = "custom_fields_deletion.portlet.lar",
-			portletName = "Custom Fields");
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Custom Fields");
-
-		LAR.importPortlet(
-			importDeletions = "true",
-			larFileName = "custom_fields_deletion.portlet.lar");
-
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewDocumentNoCustomFieldCP(
-			customFieldName = "Text Field",
-			customFieldValue = "DM Document Custom Field",
-			dmDocumentTitle = "DM Document Title");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewDocumentNoCustomFieldCP(
-			customFieldName = "Text Field",
-			customFieldValue = "DM Document Custom Field",
-			dmDocumentTitle = "DM Document Title");
+			AssertElementNotPresent(
+				key_webContentTitle = "WC Title 2",
+				locator1 = "WC#ENTRY_LIST_TITLE_NAME");
+		}
 	}
 
 	@description = "This is a use case for LPS-91959."
-	@priority = "3"
+	@priority = 3
 	test PublishPageDeletions {
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Test Page");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
-
-		SitePages.deletePage(pageName = "Staging Test Page");
+		PagesAdmin.deletePage(pageName = "Staging Test Page");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Test Page",
@@ -898,140 +1677,8 @@ definition {
 		Page.viewNoPG(pageName = "Staging Test Page");
 	}
 
-	@description = "This is a use case for LPS-90924."
-	@priority = "3"
-	test PublishPageRevisionWithPortletSettingsChanges {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Workflow");
-
-		Workflow.configureWorkflow(
-			workflowDefinition = "Single Approver",
-			workflowResourceValue = "Page Revision");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
-
-		SitePages.addPublicPage(pageName = "Page Revision Page");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Blogs");
-
-		Staging.submitForPublicationPageRevision();
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.assignToMeTaskByActions(
-			workflowAssetTitle = "Page Revision Page",
-			workflowAssetType = "Page Revision",
-			workflowTask = "Review");
-
-		Workflow.viewTaskAssignedToMeDetails(
-			workflowAssetContent = "Page Revision Page",
-			workflowAssetTitle = "Page Revision Page",
-			workflowAssetType = "Page Revision",
-			workflowTask = "Review");
-
-		Workflow.gotoPreviewView();
-
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		Portlet.gotoPortletOptions(
-			portletName = "Blogs",
-			portletOption = "Look and Feel Configuration");
-
-		IFrame.selectConfigurationFrame();
-
-		Portlet.selectApplicationDecorator(decorator = "Barebone");
-
-		PortletEntry.save();
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.viewTaskAssignedToMeDetails(
-			workflowAssetContent = "Page Revision Page",
-			workflowAssetTitle = "Page Revision Page",
-			workflowAssetType = "Page Revision",
-			workflowTask = "Review");
-
-		Workflow.gotoPreviewView();
-
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.approveTaskByActions(
-			workflowAssetTitle = "Page Revision Page",
-			workflowAssetType = "Page Revision",
-			workflowTask = "Review");
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.viewCompletedTask(
-			workflowAssetTitle = "Page Revision Page",
-			workflowAssetType = "Page Revision",
-			workflowTask = "Review");
-
-		Workflow.gotoAssetViaTableTitle(workflowAssetTitle = "Page Revision Page");
-
-		Workflow.gotoPreviewView();
-
-		Page.viewWithWorkflowPG(workflowStatus = "Ready for Publication");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.gotoSitePage(
-			pageName = "Page Revision Page",
-			siteName = "Site Name");
-
-		Portlet.viewApplicationDecorator(decorator = "Barebone");
-	}
-
 	@description = "This is a use case for LPS-80492."
-	@priority = "4"
+	@priority = 3
 	test PublishRenamedTags {
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Site Name",
@@ -1042,11 +1689,13 @@ definition {
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		WebContent.addPGViaWCD(
+		WebContentDisplayPortlet.add(
 			webContentContent = "WebContent Content",
 			webContentTitle = "WebContent Title");
 
-		WebContent.viewPGViaWCD(webContentContent = "WebContent Content");
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "WebContent Content",
+			webContentTitle = "WebContent Title");
 
 		Navigator.gotoSitePage(
 			pageName = "Staging Test Page",
@@ -1056,14 +1705,11 @@ definition {
 			menuItem = "Edit Web Content",
 			webContentTitle = "WebContent Title");
 
-		WebContent.addTagPGViaWCD(tagName = "tag name");
+		WebContentDisplayPortlet.addTag(
+			edit = "true",
+			tagNameList = "tag name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -1071,10 +1717,9 @@ definition {
 
 		ProductMenu.gotoPortlet(
 			category = "Categorization",
-			panel = "Site Administration",
 			portlet = "Tags");
 
-		Tag.viewCP(tagName = "tag name");
+		Tag.viewCP(tagNameList = "tag name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -1082,7 +1727,6 @@ definition {
 
 		ProductMenu.gotoPortlet(
 			category = "Categorization",
-			panel = "Site Administration",
 			portlet = "Tags");
 
 		LexiconEntry.gotoEntryMenuItem(
@@ -1105,10 +1749,9 @@ definition {
 
 		ProductMenu.gotoPortlet(
 			category = "Categorization",
-			panel = "Site Administration",
 			portlet = "Tags");
 
-		Tag.viewCP(tagName = "tag name edit");
+		Tag.viewCP(tagNameList = "tag name edit");
 
 		LexiconEntry.viewNoEntryMenuItem(
 			menuItem = "Merge",
@@ -1120,8 +1763,11 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-96155."
-	@priority = "4"
+	@priority = 3
 	test PublishReviewedPageRevision {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Staging Test Page 1");
@@ -1134,32 +1780,22 @@ definition {
 			groupName = "Site Name",
 			layoutName = "Staging Test Page 3");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "Site Name");
+		PagesAdmin.openPagesAdmin(siteURLKey = "Site Name");
 
 		ProductMenu.gotoPortlet(
 			category = "Configuration",
-			panel = "Site Administration",
 			portlet = "Workflow");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Page Revision");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.addCP(
 			userEmailAddress = "userea1@liferay.com",
@@ -1167,28 +1803,19 @@ definition {
 			userLastName = "userln1",
 			userScreenName = "usersn1");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editPasswordCP(
 			userEmailAddress = "userea1@liferay.com",
 			userScreenName = "usersn1");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.assignRegularRoleCP(
 			roleTitle = "Administrator",
 			userScreenName = "usersn1");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.addCP(
 			userEmailAddress = "userea2@liferay.com",
@@ -1196,19 +1823,13 @@ definition {
 			userLastName = "userln2",
 			userScreenName = "usersn2");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editPasswordCP(
 			userEmailAddress = "userea2@liferay.com",
 			userScreenName = "usersn2");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.assignRegularRoleCP(
 			roleTitle = "Administrator",
@@ -1217,8 +1838,12 @@ definition {
 		User.logoutPG();
 
 		User.loginUserPG(
-			password = "test",
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "userea1@liferay.com");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
 
 		for (var pageCount : list "1,2,3") {
 			Navigator.gotoStagedSitePage(
@@ -1227,15 +1852,33 @@ definition {
 
 			Portlet.addPG(portletName = "Web Content Display");
 
-			Staging.submitForPublicationPageRevision();
+			WaitForElementNotPresent(locator1 = "Message#SUCCESS_DISMISSIBLE");
+
+			Portlet.viewPG(portletName = "Web Content Display");
+
+			var count = 0;
+
+			while (${count} != 10) {
+				Refresh();
+
+				WaitForPageLoad();
+
+				WaitForElementPresent(locator1 = "Message#WORKFLOW_STATUS");
+
+				var count = ${count} + 1;
+			}
+
+			AssertTextEquals(
+				locator1 = "Message#WORKFLOW_STATUS",
+				value1 = "Draft");
+
+			Staging.submitForWorkflowPageRevision();
 		}
 
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "userea1@liferay.com");
+		User.logoutPG();
 
-		User.loginPG(
-			password = "test",
+		User.loginUserPG(
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "userea2@liferay.com");
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
@@ -1268,12 +1911,10 @@ definition {
 
 		AssertElementPresent(locator1 = "Portlet#SPECIFIC_TITLE");
 
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "userea2@liferay.com");
+		User.logoutPG();
 
-		User.loginPG(
-			password = "test",
+		User.loginUserPG(
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "userea1@liferay.com");
 
 		for (var pageCount : list "1,2,3") {
@@ -1283,15 +1924,19 @@ definition {
 
 			Portlet.addPG(portletName = "Asset Publisher");
 
-			Staging.submitForPublicationPageRevision();
+			Portlet.viewPG(portletName = "Asset Publisher");
+
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page ${pageCount}",
+				siteName = "Site Name");
+
+			Staging.submitForWorkflowPageRevision();
 		}
 
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "userea1@liferay.com");
+		User.logoutPG();
 
-		User.loginPG(
-			password = "test",
+		User.loginUserPG(
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "userea2@liferay.com");
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
@@ -1331,20 +1976,22 @@ definition {
 		AssertElementNotPresent(locator1 = "Portlet#SPECIFIC_TITLE");
 	}
 
-	@priority = "4"
+	@priority = 3
 	test PublishTemplateWithPages {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Enable private pages") {
+			PagesAdmin.enablePrivatePages();
+		}
+
 		JSONLayout.addPrivateLayout(
 			groupName = "Site Name",
 			layoutName = "Private Staging Page");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
 		Staging.addPublishTemplate(
 			publishTemplateDescription = "Publish Template Description",
@@ -1353,57 +2000,238 @@ definition {
 		Staging.configurePublishToLive(checkPrivatePages = "Private Staging Page");
 
 		Staging.configurePublishToLive(checkPublicPages = "Staging Test Page");
+
+		Staging.savePublishTemplate(
+			publishTemplateDescription = "Publish Template Description",
+			publishTemplateName = "Publish Template Name");
+	}
+
+	@description = "This is a use case for LPS-131578 and LPS-149374. Users can configure the portal to exclude displayed contents from publishing."
+	@priority = 3
+	test PublishViaPortletWithoutContent {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		task ("Given: Unable the publish displayed content by default function and enable local staging") {
+			SystemSettings.openSystemSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			SystemSettings.configureSystemSetting(
+				enableSetting = "false",
+				settingFieldName = "Publish Displayed Content by Default");
+
+			JSONStaging.enableLocalStaging(groupName = "Site Name");
+		}
+
+		task ("And: Create 1WC, 1Form, 1Wiki content and connect them to display portlets on the page") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+			WebContentNavigator.gotoAddCP();
+
+			WebContent.addCP(
+				webContentContent = "Web Content Content",
+				webContentTitle = "Web Content Title");
+
+			WebContent.publishWithPermissions();
+
+			FormsAdminNavigator.openFormsAdmin(siteURLKey = "site-name-staging");
+
+			FormsAdminNavigator.gotoAddForm();
+
+			Form.editName(formName = "Test Form");
+
+			Form.editDescription(formDescription = "Test description");
+
+			Form.editPageTitle(
+				formPageName = "Test Page",
+				formTitleNumber = 1);
+
+			Form.editPageDescription(formPageDescriptionName = "Test page description");
+
+			Form.addTextField(fieldPositionNumber = 0);
+
+			Form.publishForm();
+
+			WikiNavigator.openWikiAdmin(siteURLKey = "site-name-staging");
+
+			WikiNode.addCP(wikiNodeName = "Wiki Node Name");
+
+			WikiNavigator.gotoNode(wikiNodeName = "Wiki Node Name");
+
+			WikiPage.addCP(
+				wikiPageContent = "Wiki Page Content",
+				wikiPageTitle = "Wiki Page Title");
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
+
+			PagesAdmin.configurePage(
+				columnName = "1 Column",
+				pageName = "Staging Test Page",
+				sitePageType = "Widget Page");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				site = "false",
+				widgetName = "Web Content Display");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				site = "false",
+				widgetName = "Form");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				site = "false",
+				widgetName = "Wiki Display");
+
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+			IFrame.closeFrame();
+
+			FormPortletNavigator.gotoSelectForm();
+
+			FormPortletConfiguration.selectForm(formName = "Test Form");
+
+			PortletEntry.save();
+
+			IFrame.closeFrame();
+
+			WikiDisplayPortlet.configureSetupPG(
+				wikiNodeName = "Wiki Node Name",
+				wikiPageName = "Wiki Page Title");
+
+			IFrame.closeFrame();
+		}
+
+		task ("And: Publish staging without any content and verify that on Live the portlets are present but not the contents from them") {
+			Staging.gotoPublishToLive();
+
+			Staging.configurePublishToLive(
+				checkPageName = "Staging Test Page",
+				contentDateRange = "All",
+				uncheckContentNameList = "Web Content,Forms,Wiki");
+
+			Staging.publishToLive();
+
+			Navigator.gotoSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Alert.viewWarningSpecific(warningMessage = "The selected web content no longer exists.");
+
+			Alert.viewWarningSpecific(warningMessage = "This form is not available or it was not published.");
+
+			Portlet.viewPG(
+				portletBody = "Please configure this portlet to make it visible to all users.",
+				portletName = "Wiki Display");
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+			WebContentAdmin.viewEntryNotPresent(entry = "Web Content Title");
+
+			FormsAdminNavigator.openFormsAdmin(siteURLKey = "site-name");
+
+			AssertElementNotPresent(
+				key_formName = "Test Form",
+				locator1 = "FormsAdmin#FORMS_TABLE_NAME");
+
+			WikiNavigator.openWikiAdmin(siteURLKey = "site-name");
+
+			WikiNode.viewNoCP(wikiNodeName = "Wiki Node Name");
+		}
+
+		task ("When: Enable the publish displayed content by default function and republish staging without any content") {
+			SystemSettings.openSystemSettingsAdmin();
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Infrastructure",
+				configurationName = "Staging",
+				configurationScope = "Virtual Instance Scope");
+
+			SystemSettings.configureSystemSetting(
+				enableSetting = "true",
+				settingFieldName = "Publish Displayed Content by Default");
+
+			Navigator.gotoStagedSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			Staging.gotoPublishToLive();
+
+			Staging.configurePublishToLive(
+				checkPageName = "Staging Test Page",
+				contentDateRange = "All",
+				uncheckContentNameList = "Web Content,Forms,Wiki");
+
+			Staging.publishToLive();
+		}
+
+		task ("Then: Verify that on Live the portlets are present with the contents displayed in them") {
+			Navigator.gotoSitePage(
+				pageName = "Staging Test Page",
+				siteName = "Site Name");
+
+			WebContentDisplayPortlet.viewContent(
+				webContentContent = "Web Content Content",
+				webContentTitle = "Web Content Title");
+
+			AssertTextPresent(value1 = "Test Form");
+
+			WikiPage.viewPG(
+				wikiPageContent = "Wiki Page Content",
+				wikiPageTitle = "Wiki Page Title");
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+			LexiconList.viewListEntryPresent(listEntry = "Web Content Title");
+
+			FormsAdminNavigator.openFormsAdmin(siteURLKey = "site-name");
+
+			FormsAdmin.viewForm(
+				formDescription = "Test description",
+				formName = "Test Form");
+
+			WikiNavigator.openToWikiPage(
+				siteURLKey = "site-name",
+				wikiNodeName = "Wiki Node Name",
+				wikiPageTitle = "Wiki Page Title");
+
+			WikiPage.viewCP(
+				wikiPageContent = "Wiki Page Content",
+				wikiPageTitle = "Wiki Page Title");
+		}
 	}
 
 	@description = "This is a use case for LPS-89981 and LPS-88298."
-	@priority = "5"
+	@priority = 3
 	test PublishVocabularyDeletionViaRemoteStagingOnGlobalSite {
 		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
+		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}feature.flag.LPD-35013=true${line.separator}tunneling.servlet.shared.secret=1234567890123456";
 		property databases.size = "1";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		User.logoutPG();
+		var siteId = JSONGroupSetter.setGroupId(
+			groupName = "Global",
+			portalURL = "http://localhost:9080");
 
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		SitePages.openPagesAdmin(
-			baseURL = "http://localhost:9080",
-			siteURLKey = "global");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Settings");
-
-		var siteID = "siteID";
-
-		Copy(
-			locator1 = "SitesEditSite#SITE_ID",
-			value1 = "siteID");
-
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		SitePages.openPagesAdmin(siteURLKey = "Global");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "global");
 
 		Staging.activateStagingCP(
-			remotePort = "9080",
+			remotePort = 9080,
 			remoteStaging = "true",
-			siteID = "${siteID}",
+			siteId = ${siteId},
 			siteName = "Global");
 
 		Category.openCategoriesAdmin(siteURLKey = "global");
@@ -1414,29 +2242,21 @@ definition {
 
 		User.logoutPG();
 
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
+		User.firstLoginUI(
+			password = PropsUtil.get("default.admin.password"),
+			specificURL = "http://localhost:9080",
 			userEmailAddress = "test@liferay.com");
 
-		SitePages.openPagesAdmin(
+		Category.openCategoriesAdmin(
 			baseURL = "http://localhost:9080",
 			siteURLKey = "global");
 
-		ProductMenu.gotoPortlet(
-			category = "Categorization",
-			panel = "Site Administration",
-			portlet = "Categories");
-
 		Vocabulary.viewCP(vocabularyName = "Vocabulary Name");
 
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+		User.logoutPG(specificURL = "http://localhost:9080");
 
 		User.loginPG(
-			password = "test",
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "test@liferay.com");
 
 		Category.openCategoriesAdmin(siteURLKey = "global");
@@ -1447,56 +2267,35 @@ definition {
 
 		User.logoutPG();
 
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
+		User.firstLoginUI(
+			password = PropsUtil.get("default.admin.password"),
+			specificURL = "http://localhost:9080",
 			userEmailAddress = "test@liferay.com");
 
-		SitePages.openPagesAdmin(
+		Category.openCategoriesAdmin(
 			baseURL = "http://localhost:9080",
 			siteURLKey = "global");
 
-		ProductMenu.gotoPortlet(
-			category = "Categorization",
-			panel = "Site Administration",
-			portlet = "Categories");
-
 		AssertTextNotPresent(
-			locator1 = "Categories#VOCABULARY_ENTRY",
+			key_navNested = "Vocabulary Name",
+			locator1 = "NavNested#NAV_NESTED_LINK",
 			value1 = "Vocabulary Name");
 	}
 
-	@priority = "4"
+	@priority = 3
 	test PublishWCFriendlyURL {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		WebContentNavigator.gotoAddCP();
 
 		WebContent.addWithFriendlyURL(
-			friendlyUrl = "pepe",
+			friendlyURL = "pepe",
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1510,19 +2309,12 @@ definition {
 
 		Staging.publishToLive();
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
 		WebContentNavigator.gotoAddCP();
 
 		WebContent.addWithFriendlyURL(
-			friendlyUrl = "pepe",
+			friendlyURL = "pepe",
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title 2");
 
@@ -1535,514 +2327,249 @@ definition {
 		Staging.publishToLive();
 	}
 
-	@priority = "4"
-	test RemoveTagsFromPublishBlogAndDM {
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
+	@description = "This is a use case for LPS-110701."
+	@priority = 3
+	test PublishWebContentWithUnchangedReferencedContent {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Staging Test Page",
+			widgetName = "Web Content Display");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Blogs");
-
-		BlogsNavigator.gotoAddEntry();
-
-		BlogsEntry.addTitle(entryTitle = "Blogs Entry Title");
-
-		BlogsEntry.addContent(entryContent = "Blogs Entry Content");
-
-		Panel.expandPanel(panel = "Categorization");
-
-		AssetCategorization.addTag(tagName = "stagingtag");
-
-		PortletEntry.publish();
-
-		BlogsNavigator.gotoEntryPG(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title");
-
-		BlogsEntry.viewTagPG(
-			entryTitle = "Blogs Entry Title",
-			tagName = "stagingtag");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Documents and Media");
-
-		DMDocument.addPG(
-			dmDocumentFile = "Document_1.doc",
-			dmDocumentTitle = "DM Document Title",
-			tagNameList = "stagingtag");
-
-		DMNavigator.gotoDocumentPG(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewTag(tagName = "stagingtag");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		BlogsNavigator.gotoEntryPG(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title");
-
-		BlogsEntry.viewTagPG(
-			entryTitle = "Blogs Entry Title",
-			tagName = "stagingtag");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		DMNavigator.gotoDocumentPG(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewTag(tagName = "stagingtag");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Tag.tearDownCP(stagingSite = "true");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		BlogsNavigator.gotoEntryPG(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title");
-
-		BlogsEntry.viewNoTag(
-			entryTitle = "Blogs Entry Title",
-			tagName = "stagingtag");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		DMNavigator.gotoDocumentPG(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewNoTag(tagName = "stagingtag");
-	}
-
-	@description = "This test covers LPS-92578. It ensures that DM succeeds to publish to live when file exists in the recycle bin."
-	@priority = "4"
-	test SinglePublicationAfterDeleteDocument {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
 		DMDocument.addCP(
 			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_2.jpg",
-			dmDocumentTitle = "Document_2.jpg");
+			dmDocumentFile = "Document_1.jpg",
+			dmDocumentTitle = "DM Document Title");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
+		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
 
-		DMDocument.deleteCP(dmDocumentTitle = "Document_2.jpg");
+		DMNavigator.gotoURLDetail();
 
-		RecycleBin.openRecycleBinAdmin(siteURLKey = "site-name-staging");
-
-		RecycleBin.viewCP(
-			assetName = "Document_2.jpg",
-			assetType = "Document",
-			deleteUser = "Test Test");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		AssertConsoleTextNotPresent(value1 = "java.lang.NullPointerException");
-	}
-
-	@priority = "3"
-	test StagingAssetPublisher {
-		ProductMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
-
-		Site.addCommunityCP(
-			siteName = "Community Site Name",
-			uncheckPropagation = "true");
-
-		Navigator.gotoSitePage(
-			pageName = "Home",
-			siteName = "Community Site Name");
-
-		Portlet.addPG(portletName = "Asset Publisher");
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Community Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Home",
-			siteName = "Community Site Name");
-
-		Portlet.gotoPortletOptions(
-			portletName = "Asset Publisher",
-			portletOption = "Configuration");
-
-		AssetPublisherPortlet.viewAssetTypeNotAvailable(assetType = "Page Revision");
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		Navigator.gotoStagedView();
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.deactivateStagingCP(siteName = "Community Site Name");
-
-		Navigator.gotoSitePage(
-			pageName = "Home",
-			siteName = "Community Site Name");
-
-		Portlet.gotoPortletOptions(
-			portletName = "Asset Publisher",
-			portletOption = "Configuration");
-
-		AssetPublisherPortlet.viewAssetTypeNotAvailable(assetType = "Page Revision");
-	}
-
-	@priority = "4"
-	test StagingCopyFromLive {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.viewSitePagesVariationPG(sitePagesVariationName = "Main Variation");
-
-		Portlet.addPG(portletName = "Blogs");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
-
-		BlogsNavigator.gotoAddEntry();
-
-		BlogsEntry.addEntryContent(
-			entryContent = "Bodzavirágból, bodzavirágból hullik a, hullik a sárga virágpor.",
-			entrySubtitle = "Nemes Nagy Ágnes",
-			entryTitle = "Tavaszi felhők");
-
-		PortletEntry.publish();
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.markAsReadyForPublication();
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Blogs.editEntryPG(
-			entryContent = "Bodzavirágból, bodzavirágból hullik a, hullik a sárga virágpor.",
-			entryContentEdit = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-			entrySubtitle = "Nemes Nagy Ágnes",
-			entrySubtitleEdit = "Nemes Nagy Ágnes",
-			entryTitle = "Tavaszi felhők",
-			entryTitleEdit = "Tavaszi felhők");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.copyFromLive(
-			portletName = "Blogs",
-			portletOption = "Staging");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		BlogsEntry.viewEntry(
-			entryContent = "Bodzavirágból, bodzavirágból hullik a, hullik a sárga virágpor.",
-			entryTitle = "Tavaszi felhők");
-	}
-
-	@description = "This is a use case for LPS-77728."
-	@priority = "5"
-	test StagingDraftWebContent {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addDraft(
-			webContentContent = "WC WebContent Content",
-			webContentTitle = "WC WebContent Title");
+		var dmDocumentURL = selenium.getElementValue("//input[contains(@id,'url')]");
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
-		WebContentNavigator.gotoViewStatus(
-			webContentStatus = "DRAFT",
-			webContentTitle = "WC WebContent Title");
+		WebContentNavigator.gotoAddCP();
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		WebContent.addCP(
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
 
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
+		ItemSelector.gotoItemSelectorViaCKEditor();
+
+		ItemSelector.addImageFromURL(
+			imageSourceURL = ${dmDocumentURL},
+			navTab = "URL");
+
+		WebContent.publishWithPermissions();
+
+		Navigator.gotoSitePage(
+			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		ProductMenu.gotoLiveSite();
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		AssertTextNotPresent(value1 = "WC WebContent Title");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.addCustomPublication();
+
+		Staging.publishToLive(publicationName = "summCheck");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.viewPublicationSummary(
+			contentList = "Documents and Media,Web Content",
+			publicationTitle = "summCheck");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.addPublishTemplate(
+			publishTemplateDescription = "Publish Template Description",
+			publishTemplateName = "Publish Template Name");
+
+		Staging.configurePublishToLive(
+			contentName = "Web Content",
+			subContent = "Web Content");
+
+		Staging.savePublishTemplate(
+			publishTemplateDescription = "Publish Template Description",
+			publishTemplateName = "Publish Template Name");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.addCustomPublication(publishTemplateName = "Publish Template Name");
+
+		Staging.publishToLive(publicationName = "No Content Update");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.viewPublicationSummary(
+			noContentList = "Documents and Media,Web Content",
+			publicationTitle = "No Content Update");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		WebContent.editCP(
+			webContentTitle = "Web Content Title",
+			webContentTitleEdit = "Web Content Title Edit");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.addCustomPublication(publishTemplateName = "Publish Template Name");
+
+		Staging.publishToLive(publicationName = "Content Update");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.viewPublicationSummary(
+			contentList = "Documents and Media,Web Content",
+			publicationTitle = "Content Update");
 	}
 
-	@description = "This is a use case for LPS-82431."
-	@priority = "5"
-	test StagingEditWebContents {
-		Navigator.openSiteURL(siteName = "Site Name");
+	@description = "This is a use case for LPS-190064 (TC-4). The name of a solely published Web Content that is inside of a Web Content Folder is displayed in the Publication Summary without the title of the folder."
+	@priority = 4
+	test SingleFolderedWebContentTitleIsProperlyDisplayedInPublicationSummary {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		for (var webContentTitle : list "WC WebContent Title 1,WC WebContent Title 2,WC WebContent Title 3") {
-			ProductMenu.gotoPortlet(
-				category = "Content &amp; Data",
-				panel = "Site Administration",
-				portlet = "Web Content");
+		var randomSiteURLKey = "guest";
+		var randomSiteName = "Liferay DXP";
+
+		task ("Given: Staging is enabled and ONE Web Content is created and moved into a Web Content Folder") {
+			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
+
+			Staging.activateStagingCP(siteName = ${randomSiteName});
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			WebContentFolder.addCP(
+				folderDescription = "Back to the roots.",
+				folderName = "AC");
 
 			WebContentNavigator.gotoAddCP();
 
 			WebContent.addCP(
-				webContentContent = "WC WebContent Content",
-				webContentTitle = "${webContentTitle}");
+				webContentContent = "Quality Content",
+				webContentTitle = "Mirage");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
-			ProductMenu.gotoPortlet(
-				category = "Content &amp; Data",
-				panel = "Site Administration",
-				portlet = "Web Content");
-
-			WebContent.viewTitle(webContentTitle = "${webContentTitle}");
+			WebContent.moveToFolderCP(
+				folderName = "AC",
+				webContentTitle = "Mirage");
 		}
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
+		task ("When: The new Web Content (within the folder) is Published to Live") {
+			Staging.openStagingAdmin(siteURLKey = "${randomSiteURLKey}-staging");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+			Staging.publishCustomPublication();
+		}
 
-		Staging.activateStagingCP(siteName = "Site Name");
+		task ("Then: In the summary of the publishing process the title of the Web Content is displayed while the title of the folder is NOT") {
+			Staging.viewPublicationSummary(publicationTitle = "Untitled");
+		}
+	}
+
+	@description = "This is a use case for LPS-190064 (TC-1). The name of a solely published Web Content is displayed in the Publication Summary without any UI break."
+	@priority = 4
+	test SingleWebContentTitleIsProperlyDisplayedInPublicationSummary {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		var randomSiteURLKey = "guest";
+		var randomSiteName = "Liferay DXP";
+
+		task ("Given: Staging is enabled and ONE Web Content is created") {
+			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
+
+			Staging.activateStagingCP(siteName = ${randomSiteName});
+
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			WebContentNavigator.gotoAddCP();
+
+			WebContent.addCP(
+				webContentContent = "Web Content - Content",
+				webContentTitle = "Web Content - Title");
+
+			WebContent.publishWithPermissions();
+		}
+
+		task ("When: The new Web Content is Published to Live") {
+			Staging.openStagingAdmin(siteURLKey = "${randomSiteURLKey}-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("Then: In the summary of the publishing process the title of the Web Content is displayed") {
+			Staging.viewPublicationSummary(publicationTitle = "Untitled");
+		}
+	}
+
+	@priority = 3
+	test StagingAssetPublisher {
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		Portlet.addPG(portletName = "Asset Publisher");
+
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		for (var webContentTitle : list "WC WebContent Title 1,WC WebContent Title 2,WC WebContent Title 3") {
-			ProductMenu.gotoPortlet(
-				category = "Content &amp; Data",
-				panel = "Site Administration",
-				portlet = "Web Content");
+		Portlet.gotoPortletOptions(
+			portletName = "Asset Publisher",
+			portletOption = "Configuration");
 
-			WebContentNavigator.gotoEditCP(webContentTitle = "${webContentTitle}");
+		AssetPublisherPortlet.viewAssetTypeNotAvailable(assetType = "Page Revision");
 
-			WebContent.editCP(
-				webContentContentEdit = "WC WebContent Content Edit",
-				webContentTitle = "${webContentTitle}",
-				webContentTitleEdit = "${webContentTitle} Edit");
-		}
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.deactivateStagingCP(siteName = "Site Name");
+
+		Navigator.gotoSitePage(
+			pageName = "Staging Test Page",
+			siteName = "Site Name");
+
+		Portlet.gotoPortletOptions(
+			portletName = "Asset Publisher",
+			portletOption = "Configuration");
+
+		AssetPublisherPortlet.viewAssetTypeNotAvailable(assetType = "Page Revision");
 	}
 
-	@priority = "3"
-	test StagingKaleoPageRevision {
-		ProductMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
-
-		Site.addCommunityCP(
-			siteName = "Community Site Name",
-			uncheckPropagation = "true");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Community Site Name",
-			layoutName = "Test Page Name 1");
-
-		Navigator.gotoSitePage(
-			pageName = "Test Page Name 1",
-			siteName = "Community Site Name");
-
-		Portlet.addPG(portletName = "Message Boards");
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Community Site Name",
-			layoutName = "Test Page Name 2");
-
-		Navigator.gotoSitePage(
-			pageName = "Test Page Name 2",
-			siteName = "Community Site Name");
-
-		Portlet.addPG(portletName = "Wiki");
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Community Site Name",
-			layoutName = "Test Page Name 3");
-
-		Navigator.gotoSitePage(
-			pageName = "Test Page Name 3",
-			siteName = "Community Site Name");
-
-		Portlet.addPG(portletName = "Language Selector");
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Workflow");
-
-		Workflow.configureWorkflow(
-			workflowDefinition = "Single Approver",
-			workflowResourceValue = "Page Revision");
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.viewDefaultMyWorkflowTasksCP();
-
-		Navigator.openSiteURL(siteName = "Community Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Community Site Name");
-
-		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
-
-		Workflow.viewDefaultMyWorkflowTasksCP();
-
-		Navigator.gotoSitePage(
-			pageName = "Test Page Name 1",
-			siteName = "Community Site Name");
-
-		Page.viewSpecificPG(pageNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
-	}
-
-	@priority = "3"
+	@priority = 3
 	test StagingKaleoWebContentLinkingUnapprovedContent {
 		Navigator.openSiteURL(siteName = "Site Name");
 
 		ProductMenu.gotoPortlet(
 			category = "Configuration",
-			panel = "Site Administration",
 			portlet = "Workflow");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Page Revision");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		Workflow.configureWCWorkflowViaFolderInfo(workflowDefinition = "Single Approver");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -2050,11 +2577,11 @@ definition {
 
 		Portlet.addPG(portletName = "Web Content Display");
 
-		WebContent.addWithWorkflowPGViaWCD(
+		WebContentDisplayPortlet.addWithWorkflow(
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		Staging.submitForPublicationPageRevision();
+		Staging.submitForWorkflowPageRevision();
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
 
@@ -2068,7 +2595,7 @@ definition {
 			workflowAssetType = "Page Revision",
 			workflowTask = "Review");
 
-		User.logoutUserPG();
+		User.logoutPG();
 
 		Navigator.openSiteURL(siteName = "Organization Name");
 
@@ -2077,7 +2604,7 @@ definition {
 		AssertElementNotPresent(locator1 = "Portlet#SPECIFIC_TITLE");
 
 		User.loginPG(
-			password = "test",
+			password = PropsUtil.get("default.admin.password"),
 			userEmailAddress = "test@liferay.com");
 
 		Navigator.gotoSitePage(
@@ -2097,10 +2624,10 @@ definition {
 			value1 = "Web Content Title is not approved.");
 	}
 
-	@priority = "5"
+	@priority = 3
 	test StagingMultipleDM {
-		property portal.acceptance = "quarantine";
-		property testray.component.names = "Training";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Site Name",
@@ -2113,19 +2640,11 @@ definition {
 
 		DMDocument.enableActionsMenuOnPortlet();
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name");
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
-
-		SitePages.configurePage(
+		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "Staging Test Page",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.gotoSitePage(
@@ -2140,36 +2659,32 @@ definition {
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
-		for (var dmDocumentTitle : list "Document_1.jpeg,Document_2.docx,Document_3.mp3,Document_4.txt") {
+		for (var dmDocumentTitle : list "Document_1,Document_2,Document_3,Document_4") {
 			Navigator.gotoSitePage(
 				pageName = "Staging Test Page",
 				siteName = "Site Name");
 
-			DMDocument.viewPG(dmDocumentTitle = "${dmDocumentTitle}");
+			DMDocument.viewPG(dmDocumentTitle = ${dmDocumentTitle});
 		}
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		Staging.openStagingAdmin(siteURLKey = "site-name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		Staging.activateStagingCP(siteName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
+		LexiconEntry.changeDisplayStyle(displayStyle = "list");
+
 		DMDocument.viewStagingDetailsPG();
 	}
 
-	@priority = "5"
+	@priority = 3
 	test StagingOnlyApprovedPublishToLive {
-		property portal.acceptance = "true";
-		property testray.component.names = "Training";
+		property portal.acceptance = "quarantine";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
@@ -2185,31 +2700,20 @@ definition {
 			layoutName = "Staging Test Page 2",
 			widgetName = "Web Content Display");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		Workflow.configureWCWorkflowViaFolderInfo(workflowDefinition = "Single Approver");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		WebContent.addWithWorkflowPGViaWCD(
+		WebContentDisplayPortlet.addWithWorkflow(
 			webContentContent = "Web Content Content 1",
 			webContentTitle = "Web Content Title 1");
 
@@ -2217,7 +2721,7 @@ definition {
 			pageName = "Staging Test Page 2",
 			siteName = "Site Name");
 
-		WebContent.addWithWorkflowPGViaWCD(
+		WebContentDisplayPortlet.addWithWorkflow(
 			webContentContent = "Web Content Content 2",
 			webContentTitle = "Web Content Title 2");
 
@@ -2238,6 +2742,7 @@ definition {
 			siteName = "Site Name");
 
 		AssertTextEquals.assertPartialText(
+			index = 1,
 			locator1 = "WCD#WEB_CONTENT_CONTENT",
 			value1 = "Web Content Content 1");
 
@@ -2268,6 +2773,7 @@ definition {
 			siteName = "Site Name");
 
 		AssertTextEquals.assertPartialText(
+			index = 1,
 			locator1 = "WCD#WEB_CONTENT_CONTENT",
 			value1 = "Web Content Content 1");
 
@@ -2275,13 +2781,16 @@ definition {
 			pageName = "Staging Test Page 2",
 			siteName = "Site Name");
 
-		if (IsElementPresent(locator1 = "WCD#WEB_CONTENT_CONTENT")) {
+		if (IsElementPresent(index = 1, locator1 = "WCD#WEB_CONTENT_CONTENT")) {
 			AssertTextNotEquals(
+				index = 1,
 				locator1 = "WCD#WEB_CONTENT_CONTENT",
 				value1 = "Web Content Title 2");
 		}
 		else {
-			AssertElementNotPresent(locator1 = "WCD#WEB_CONTENT_CONTENT");
+			AssertElementNotPresent(
+				index = 1,
+				locator1 = "WCD#WEB_CONTENT_CONTENT");
 		}
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
@@ -2311,17 +2820,11 @@ definition {
 			siteName = "Site Name");
 
 		AssertTextEquals.assertPartialText(
+			index = 1,
 			locator1 = "WCD#WEB_CONTENT_CONTENT",
 			value1 = "Web Content Content 2");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoStagingSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
 		WebContent.moveToRecycleBinCP(
 			assetType = "Web Content Article",
@@ -2331,7 +2834,7 @@ definition {
 			pageName = "Staging Test Page 2",
 			siteName = "Site Name");
 
-		WebContentDisplayPortlet.viewRecycleBinMessage(webContentTitle = "Web Content Title 2");
+		WebContentDisplayPortlet.viewMessage(recycleBinWebContentTitle = "Web Content Title 2");
 
 		Staging.gotoPublishToLive();
 
@@ -2341,581 +2844,20 @@ definition {
 			pageName = "Staging Test Page 2",
 			siteName = "Site Name");
 
-		WebContentDisplayPortlet.viewRecycleBinMessage(webContentTitle = "Web Content Title 2");
-	}
-
-	@description = "This is a use case for LPS-80494."
-	@priority = "3"
-	test StagingRemoteDMDocumentType {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteDMDocumentType";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentType();
-
-		DMDocumentType.add(
-			dmDocumentTypeDescription = "DM Document Type Description",
-			dmDocumentTypeFieldNames = "Link to Page",
-			dmDocumentTypeName = "DM Document Type Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMDocument.addCP(
-			dmDocumentDescription = "DM Document Type Description",
-			dmDocumentFile = "Document_1.doc",
-			dmDocumentTitle = "DM Document Type Title",
-			dmDocumentTypeName = "DM Document Type Name");
-
-		JSONLayout.addWidgetToPublicLayout(
-			groupName = "Site Name",
-			layoutName = "Staging Test Page",
-			widgetName = "Asset Publisher");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		AssetPublisherPortlet.configureAssetTypePG(
-			assetSubtype = "DM Document Type Name",
-			selectedAsset = "Document");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Type Title");
-
-		DMDocument.viewCP(dmDocumentTitle = "DM Document Type Title");
-
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		AssetPublisherPortlet.viewAssetPG(
-			assetContent = "DM Document Type Description",
-			assetTitle = "DM Document Type Title");
-	}
-
-	@description = "This is a use case for LPS-72478."
-	@priority = "5"
-	test StagingRemoteLivePolls {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteLivePolls";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Polls Display");
-
-		Polls.addPollPG(
-			pollsQuestion = "Test Remote Staging Poll Display",
-			pollsQuestionChoiceA = "Yes",
-			pollsQuestionChoiceB = "No",
-			pollsQuestionTitle = "Remote Staging Polls Name");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Polls.selectPollPG(pollsQuestionTitle = "Remote Staging Polls Name");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Polls.viewPollPG(
-			pollsQuestion = "Test Remote Staging Poll Display",
-			pollsQuestionChoiceList = "Yes,No");
-
-		Polls.votePollPG(pollsQuestionChoice = "Yes");
-
-		Polls.viewVotedPollPG(
-			pollsQuestionChoice = "Yes",
-			pollsQuestionTotalVotes = "1",
-			pollsQuestionVoteCount = "1",
-			pollsQuestionVotePercent = "100%");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		Polls.viewVotedPollPG(
-			pollsQuestionChoice = "Yes",
-			pollsQuestionTotalVotes = "1",
-			pollsQuestionVoteCount = "1",
-			pollsQuestionVotePercent = "100%");
-	}
-
-	@priority = "4"
-	test StagingRemoteLiveWebContent {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteLiveWebContent";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		JSONLayout.addWidgetToPublicLayout(
-			groupName = "Site Name",
-			layoutName = "Staging Test Page",
-			widgetName = "Web Content Display");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.addCP(
-			structureDescription = "Structure Description",
-			structureName = "Structure Name");
-
-		for (var structureFieldName : list "Text,Text Box") {
-			DynamicDataMapping.addField(
-				field = "${structureFieldName}",
-				fieldFieldLabel = "${structureFieldName}",
-				fieldName = StringUtil.replace("${structureFieldName}", " ", ""));
-		}
-
-		WebContentStructures.saveCP(structureName = "Structure Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		NavItem.gotoTemplates();
-
-		WebContentTemplates.addCP(
-			structureName = "Structure Name",
-			templateDescription = "Template Description",
-			templateFieldNames = "Text,Text Box",
-			templateName = "Template Name");
-
-		Navigator.openURL();
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddWithStructureCP(structureName = "Structure Name");
-
-		WebContent.addWithStructureCP(
-			structureName = "Structure Name",
-			templateName = "Template Name",
-			webContentText = "Staging Web Content Text",
-			webContentTextBox = "Staging Web Content Body",
-			webContentTitle = "Web Content Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "Web Content Title");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		var dateRangeEndDate = '''1/2''';
-
-		var dateRangeStartDate = '''1/1''';
-
-		Staging.setContentDateRange(
-			dateRangeEndDate = "${dateRangeEndDate}",
-			dateRangeStartDate = "${dateRangeStartDate}");
-
-		var key_contentName = "Web Content";
-
-		AssertElementNotPresent(locator1 = "PagesConfiguration#CONTENT_CHOOSE_CONTENT_CONTENT_CHECKBOX");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoStagingSite();
-
-		Staging.gotoPublishToLive();
-
-		Staging.configurePublishToLive(contentDateRange = "All");
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		var key_webContentTitle = "Web Content Title";
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "WC#ENTRY_LIST_TITLE_ON_LIVE",
-			value1 = "Web Content Title");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.viewCP(
-			structureDescription = "Structure Description",
-			structureName = "Structure Name");
-	}
-
-	@description = "This is a use case for LPS-82839."
-	@priority = "5"
-	test StagingRemoteLiveWebContentViaPortletCP {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteLiveWebContentViaPortletCP";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addCP(
-			webContentContent = "Web Content Content",
-			webContentTitle = "Web Content Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "Web Content Title");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		Staging.publishToLiveNowViaPortletCP();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		WebContentNavigator.openWebContentAdmin(
-			baseURL = "http://localhost:9080",
-			siteURLKey = "remote-site");
-
-		WebContent.viewTitle(
-			onLive = "true",
-			webContentTitle = "Web Content Title");
-	}
-
-	@description = "This is a use case for LPS-81950."
-	@priority = "5"
-	test StagingRemoteLiveWebContentViaPortletPG {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteLiveWebContentViaPortletPG";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		JSONLayout.addWidgetToPublicLayout(
-			groupName = "Site Name",
-			layoutName = "Staging Test Page",
-			widgetName = "Web Content Display");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.gotoPortletOptions(
-			portletName = "Web Content Display",
-			portletOption = "Staging");
-
-		IFrame.selectConfigurationFrame();
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "Staging#STAGING_PUBLISH_PAGE_FIRST_MESSAGE",
-			value1 = "This widget is placed in a page that does not exist in the live site. Publish the page first.");
-
-		AssertElementNotPresent(locator1 = "Staging#STAGING_PUBLISH_TO_LIVE_BUTTON");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		WebContent.addPGViaWCD(
-			webContentContent = "WC WebContent Content",
-			webContentTitle = "WC WebContent Title");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.publishToLiveNowViaPortletPG();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		WebContent.viewPGViaWCD(webContentContent = "WC WebContent Content");
-	}
-
-	@description = "This is a use case for LPS-81953"
-	@priority = "3"
-	test StagingRemoteLiveWebContentWithManualChosenID {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteLiveWebContentWithManualChosenID";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Web Content",
-			configurationName = "Administration",
-			configurationScope = "System Scope");
-
-		FormFields.disableCheckbox(fieldName = "journalArticleForceAutogenerateId");
-
-		SystemSettings.saveConfiguration();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Web Content",
-			configurationName = "Administration",
-			configurationScope = "System Scope");
-
-		FormFields.disableCheckbox(fieldName = "journalArticleForceAutogenerateId");
-
-		SystemSettings.saveConfiguration();
-
-		User.logoutPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addCP(
-			webContentContent = "WC WebContent Content",
-			webContentId = "12345",
-			webContentTitle = "WC WebContent Title");
-
-		PortletEntry.publish();
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		Navigator.gotoSitePage(
-			baseURL = "http://localhost:9080",
-			pageName = "Staging Test Page",
-			siteName = "Remote Site");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		LexiconEntry.changeDisplayStyle(displayStyle = "table");
-
-		AssertTextEquals(
-			key_webContentTitle = "WC WebContent Title",
-			locator1 = "WC#ENTRY_TABLE_ID",
-			value1 = "12345");
+		WebContentDisplayPortlet.viewMessage(recycleBinWebContentTitle = "Web Content Title 2");
 	}
 
 	@description = "This is a use case for LPS-89629."
-	@priority = "3"
+	@priority = 3
 	test StagingRemoteWithDynamicExportLimit {
 		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
+		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}feature.flag.LPD-35013=true${line.separator}tunneling.servlet.shared.secret=1234567890123456";
 		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#StagingRemoteWithDynamicExportLimit";
+		property minimum.slave.ram = "24";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Asset Publisher");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Assets",
-			configurationName = "Asset Publisher",
-			configurationScope = "System Scope");
+		APNavigator.openToConfigInSystemSettings(portlet = "Asset Publisher");
 
 		SystemSettings.configureSystemSetting(
 			enableSetting = "true",
@@ -2925,26 +2867,34 @@ definition {
 			enableSetting = "true",
 			settingFieldName = "Enable Manual Export");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
+		SystemSettings.configureDynamicExportLimit(exportLimitNumber = 1);
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
+		Staging.remoteStagingSetUpViaJson(
+			groupName = "Site Name",
+			remotePort = 9080);
 
-		Blogs.addEntry(
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Staging Test Page",
+			widgetName = "Asset Publisher");
+
+		JSONBlog.addEntry(
 			entryContent = "Blogs Entry1 Content",
-			entryTitle = "Blogs Entry1 Title");
+			entryTitle = "Blogs Entry1 Title",
+			groupName = "Site Name");
 
-		Blogs.addEntry(
+		JSONBlog.addEntry(
 			entryContent = "Blogs Entry2 Content",
-			entryTitle = "Blogs Entry2 Title");
+			entryTitle = "Blogs Entry2 Title",
+			groupName = "Site Name");
 
 		Navigator.gotoSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
+
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
+		Refresh();
 
 		AssetPublisherPortlet.viewAssetPG(
 			assetContent = "Blogs Entry1 Content",
@@ -2954,39 +2904,25 @@ definition {
 			assetContent = "Blogs Entry2 Content",
 			assetTitle = "Blogs Entry2 Title");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Assets",
-			configurationName = "Asset Publisher",
-			configurationScope = "System Scope");
-
-		SystemSettings.configureDynamicExportLimit(exportLimitNumber = "1");
-
 		Staging.openStagingAdmin(siteURLKey = "site-name");
 
 		Staging.publishToRemoteUncheckContentViaCustomPublication(contentName = "Blogs");
 
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
+		User.logoutPG();
 
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
+		User.firstLoginUI(
+			password = PropsUtil.get("default.admin.password"),
+			specificURL = "http://localhost:9080",
 			userEmailAddress = "test@liferay.com");
 
 		Navigator.gotoSitePage(
 			baseURL = "http://localhost:9080",
 			pageName = "Staging Test Page",
 			siteName = "Remote Site");
+
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
+		Refresh();
 
 		AssetPublisherPortlet.viewAssetPG(
 			assetContent = "Blogs Entry2 Content",
@@ -2997,9 +2933,10 @@ definition {
 			assetTitle = "Blogs Entry1 Title");
 	}
 
-	@priority = "4"
+	@priority = 3
 	test StagingWithPublishTemplate {
-		property test.name.skip.portal.instance = "Staging#StagingWithPublishTemplate";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
@@ -3013,14 +2950,9 @@ definition {
 			groupName = "Site Name",
 			layoutName = "Test Page 3");
 
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
+
 		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Test Page 1",
@@ -3038,6 +2970,12 @@ definition {
 
 		Portlet.addPG(portletName = "Documents and Media");
 
+		DMDocument.enableActionsMenuOnPortlet();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Test Page 1",
+			siteName = "Site Name");
+
 		DMDocument.addPG(
 			dmDocumentDescription = "DM Document Description",
 			dmDocumentFile = "Document_1.doc",
@@ -3049,17 +2987,21 @@ definition {
 
 		Portlet.addPG(portletName = "Web Content Display");
 
-		WebContent.addPGViaWCD(
+		WebContentDisplayPortlet.add(
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		WebContent.viewPGViaWCD(webContentContent = "Web Content Content");
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Test Page 2",
 			siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Asset Publisher");
+
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
 
 		AssetPublisherPortlet.configureAssetLinkBehaviorPG(assetLinkBehavior = "Show Full Content");
 
@@ -3069,24 +3011,21 @@ definition {
 
 		Portlet.addPG(portletName = "Asset Publisher");
 
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
 		Navigator.gotoStagedSitePage(
 			pageName = "Test Page 1",
 			siteName = "Site Name");
 
-		WebContent.addPGViaWCD(
+		WebContentDisplayPortlet.add(
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		WebContent.viewPGViaWCD(webContentContent = "Web Content Content");
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Navigator.gotoStagedView();
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
 		Staging.addPublishTemplate(
 			publishTemplateDescription = "Publish Template Description",
@@ -3121,7 +3060,9 @@ definition {
 
 		Page.viewSpecificPG(pageNameList = "Test Page 1,Test Page 2");
 
-		WebContent.viewPGViaWCD(webContentContent = "Web Content Content");
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
 
 		Portlet.viewSpecificPG(portletName = "Blogs");
 
@@ -3142,139 +3083,141 @@ definition {
 			dmDocumentTitle = "DM Document Title");
 	}
 
-	@description = "This is a use case for LPS-98473."
-	@priority = "3"
-	test SubscribeWebContentWithStaging {
-		JSONGroup.addGroup(groupName = "Test Site");
+	@description = "This is a use case for LPS-110838 and LPS-190360 TC-5."
+	@priority = 3
+	test StagingWithReplicateIndividualDeletionsByDefault {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "System Settings");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "Infrastructure",
+			configurationName = "Export/Import, Staging",
+			configurationScope = "Virtual Instance Scope");
 
-		Staging.activateStagingCP(siteName = "Site Name");
+		SystemSettings.configureSystemSetting(
+			enableSetting = "true",
+			settingFieldName = "Replicate Individual Deletions by Default");
 
-		JSONRole.addRegularRole(
-			roleKey = "Web Content Subscriber Role",
-			roleTitle = "Web Content Subscriber Role");
+		SystemSettings.configureSystemSetting(
+			enableSetting = "true",
+			settingFieldName = "Publish Permissions by Default");
 
-		for (var resourceActionIndex : list "VIEW,SUBSCRIBE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com.liferay.journal",
-				roleTitle = "Web Content Subscriber Role");
-		}
-
-		Permissions.definePermissionViaJSONAPI(
-			resourceAction = "SUBSCRIBE",
-			resourceName = "com.liferay.journal.model.JournalFolder",
-			roleTitle = "Web Content Subscriber Role");
-
-		Permissions.definePermissionViaJSONAPI(
-			resourceAction = "ACCESS_IN_CONTROL_PANEL",
-			resourceName = "com_liferay_journal_web_portlet_JournalPortlet",
-			roleTitle = "Web Content Subscriber Role");
-
-		User.openUsersAdmin();
-
-		User.addCP(
-			userEmailAddress = "userea@liferay.com",
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		User.openUsersAdmin();
-
-		User.editPasswordCP(
-			userEmailAddress = "userea@liferay.com",
-			userScreenName = "usersn");
-
-		Role.openRolesAdmin();
-
-		Role.assignRegRoleCP(
-			roleTitle = "Web Content Subscriber Role",
-			userScreenName = "usersn");
-
-		SitePages.openPagesAdmin(siteURLKey = "Test Site");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			panel = "Site Administration",
-			portlet = "Memberships");
-
-		Site.assignUserAsMemberCP(
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			panel = "Site Administration",
-			portlet = "Memberships");
-
-		Site.assignUserAsMemberCP(
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		User.logoutPG();
-
-		User.loginPG(
-			password = "test",
-			userEmailAddress = "userea@liferay.com");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "Test Site");
-
-		WebContent.subscribeToCurrentFolderCP();
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
-
-		WebContent.subscribeToCurrentFolderCP();
-	}
-
-	@description = "This is a use case for LPS-89116."
-	@priority = "3"
-	test ValidateFriendlyURLWithSpecialCharacters {
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		WebContentNavigator.gotoAddCP();
 
 		WebContent.addCP(
-			webContentContent = "Web Content Content",
-			webContentTitle = '''Special Char aŐb''');
+			webContentContent = "Web Content Content 1",
+			webContentTitle = "Web Content Title 1");
 
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = '''Special Char aŐb''');
-
-		WebContentNavigator.gotoEditCP(webContentTitle = '''Special Char aŐb''');
-
-		WebContent.viewFriendlyURLCP(friendlyUrl = '''special-char-aŐb''');
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoAddCP();
 
-		WebContent.addWithFriendlyURL(
-			friendlyUrl = "special-char-a-c5-90b",
-			webContentContent = "Web Content Content2",
-			webContentTitle = "Web Content Title");
+		WebContent.addCP(
+			webContentContent = "Web Content Content 2",
+			webContentTitle = "Web Content Title 2");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		WebContent.publishWithPermissions();
 
-		Staging.activateStagingCP(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+		WebContent.deleteCP(
+			siteURLKey = "site-name-staging",
+			webContentTitle = "Web Content Title 1");
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.addCustomPublication();
+
+		AssertTextEquals(
+			locator1 = "Message#WARNING",
+			value1 = "Recommendation:Publish small incremental changes to avoid large publishing processes that can take a long time to execute.");
+
+		Staging.viewDefaultConfiguration(configurationNameList = "Replicate Individual Deletions");
+
+		Staging.publishToLive();
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
+
+		WebContent.viewNotPresentCP(webContentTitle = "Web Content Title 1");
+
+		WebContent.viewTitle(
+			onLive = "true",
+			webContentTitle = "Web Content Title 2");
 	}
 
-	@priority = "4"
+	@description = "This is a use case for LPS-164933. Verify that it's possible to view the HTML Title and Description in SEO after changing the page name."
+	@priority = 3
+	test TitleAndDescriptionAreViewableInSEOAfterChangingPageName {
+		task ("Given: Enable local staging with page versioning") {
+			JSONStaging.enableLocalStaging(
+				branchingPrivate = "true",
+				branchingPublic = "true",
+				groupName = "Site Name");
+		}
+
+		task ("And: Configure the page to add HTML Title and Description in SEO") {
+			Navigator.openToGroupPagesPortlet(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				portlet = "SEO",
+				site = "false",
+				siteURLKey = "site-name-staging");
+
+			PortletEntry.inputText(
+				fieldLabel = "HTML Title",
+				text = "Page HTML Title");
+
+			PortletEntry.inputText(
+				fieldLabel = "Description",
+				text = "Page Description");
+
+			Button.clickSave();
+		}
+
+		task ("When: Edit the page name in General") {
+			Navigator.openToGroupPagesPortlet(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				portlet = "General",
+				site = "false",
+				siteURLKey = "site-name-staging");
+
+			PagesAdmin.editName(pageNameEdit = "Staging Test Page Edit");
+		}
+
+		task ("Then: Assert the HTML Title and Description are displayed in SEO") {
+			Navigator.openToGroupPagesPortlet(
+				groupName = "Site Name (Staging)",
+				layoutName = "Staging Test Page",
+				portlet = "SEO",
+				site = "false",
+				siteURLKey = "site-name-staging");
+
+			AssertTextEquals(
+				key_fieldLabel = "HTML Title",
+				locator1 = "TextInput#GENERIC_TEXT_INPUT",
+				value1 = "Page HTML Title");
+
+			AssertTextEquals(
+				key_fieldLabel = "Description",
+				locator1 = "TextInput#GENERIC_TEXT_INPUT",
+				value1 = "Page Description");
+		}
+	}
+
+	@priority = 3
 	test ViewHistoryVersionWithDeletedUser {
-		property test.name.skip.portal.instance = "Staging#ViewHistoryVersionWithDeletedUser";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
@@ -3284,60 +3227,33 @@ definition {
 
 		Navigator.openSiteURL(siteName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editPasswordCP(
 			password = "password",
 			userEmailAddress = "userea@liferay.com",
 			userScreenName = "usersn");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONGroup.assignUserToGroup(
+			groupName = "Site Name",
+			userEmailAddress = "userea@liferay.com");
 
-		ProductMenu.gotoPortlet(
-			category = "People",
-			panel = "Site Administration",
-			portlet = "Memberships");
-
-		Site.assignUserAsMemberCP(
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.assignSiteRoleCP(
 			siteRoleName = "Site Administrator",
 			userScreenName = "usersn");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
 		User.logoutAndLoginPG(
 			userLoginEmailAddress = "userea@liferay.com",
 			userLoginFullName = "userfn userln");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Navigator.gotoStagedView();
-
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -3349,11 +3265,7 @@ definition {
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
-		Click(locator1 = "Icon#HISTORY_VERTICAL_ELLIPSIS");
-
-		Click(locator1 = "Staging#HISTORY_BUTTON");
-
-		SelectFrame(locator1 = "IFrame#METADATA_SETS_IFRAME");
+		Staging.gotoHistory();
 
 		AssertElementPresent(locator1 = "Staging#HISTORY_VERSION");
 
@@ -3363,10 +3275,7 @@ definition {
 			userLoginEmailAddress = "test@liferay.com",
 			userLoginFullName = "test test");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.deactivateCP(userFirstName = "userfn");
 
@@ -3380,37 +3289,23 @@ definition {
 			pageVariationName = "Main Variation",
 			pageVariationNameMenulistName = "Test Page Variation Name");
 
-		Staging.viewHistoryVersionPG(historyVersion = "${historyVersion}");
+		Staging.viewHistoryVersionPG(historyVersion = ${historyVersion});
 	}
 
 	@description = "This is a use case for LPS-79092."
-	@priority = "4"
+	@priority = 3
 	test ViewLastPublishDateBehaviourAfterInitialPublication {
-		property portal.release = "false";
-		property test.name.skip.portal.instance = "Staging#ViewLastPublishDateBehaviourAfterInitialPublication";
-
-		Navigator.openSiteURL(siteName = "Site Name");
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONWebcontent.addWebContent(
 			content = "Web Content Content",
 			groupName = "Site Name",
 			title = "Web Content Title");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoStagingSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		DMDocument.addCP(
 			dmDocumentDescription = "DM Document Description",
@@ -3432,83 +3327,37 @@ definition {
 
 		Staging.publishToLive();
 
-		ProductMenu.gotoLiveSite();
+		ProductMenu.gotoLiveSite(site = "Site Name");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Documents and Media");
 
 		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
 
 		DMDocument.viewCP(dmDocumentTitle = "DM Document Title");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		WebContent.viewTitle(
 			onLive = "true",
 			webContentTitle = "Web Content Title");
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
 
 		Staging.deactivateStagingCP(siteName = "Site Name");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		WebContent.viewTitle(webContentTitle = "Web Content Title");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
 		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
 
 		DMDocument.viewCP(dmDocumentTitle = "DM Document Title");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoStagingSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Bookmarks");
-
-		Bookmark.addCP(
-			bookmarkDescription = "This is a test bookmark!",
-			bookmarkName = "Test Bookmark",
-			bookmarkURL = "https://www.liferay.com");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -3524,26 +3373,14 @@ definition {
 			key_itemName = "Documents and Media",
 			locator1 = "StagingPublishToLive#SIMPLE_PUBLICATION_CONTENT_TYPE");
 
-		AssertElementPresent(
-			key_itemName = "Bookmarks",
-			locator1 = "StagingPublishToLive#SIMPLE_PUBLICATION_CONTENT_TYPE");
-
 		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Bookmarks");
-
-		Bookmark.viewBookmark(
-			bookmarkName = "Test Bookmark",
-			bookmarkURL = "https://www.liferay.com");
 	}
 
-	@priority = "4"
+	@priority = 3
 	test ViewPageOrderWithStaging {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Test Page 1");
@@ -3554,36 +3391,23 @@ definition {
 
 		Navigator.openSiteURL(siteName = "Site Name");
 
-		Page.viewPagesOrderOnPage(
-			pageName1 = "Staging Test Page",
-			pageName2 = "Test Page 1",
-			pageName3 = "Test Page 2");
+		NavigationMenusWidget.viewMenuItemsOrder(menuItemList = "Staging Test Page,Test Page 1,Test Page 2");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
-
-		Page.viewPagesOrder(
-			pageName1 = "Staging Test Page",
-			pageName2 = "Test Page 1",
-			pageName3 = "Test Page 2");
+		PagesAdmin.viewPagesOrder(
+			depth = 1,
+			pageNameList = "Staging Test Page,Test Page 1,Test Page 2");
 	}
 
 	@description = "This is a use case for LPS-97827."
-	@priority = "2"
+	@priority = 3
 	test ViewParentPageNameAfterPublishChangesInChildPage {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		JSONLayout.addPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Child Page A",
@@ -3599,24 +3423,18 @@ definition {
 			layoutName = "Child Page C",
 			parentLayoutName = "Staging Test Page");
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(
+			branchingPrivate = "true",
+			branchingPublic = "true",
+			groupName = "Site Name");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
-
-		SitePages.gotoPageMenuItem(
+		PagesAdmin.gotoPageEllipsisMenuItem(
 			menuItem = "Configure",
 			pageName = "Staging Test Page");
 
-		Page.editName(pageNameEdit = "Staging Page Edit");
+		PagesAdmin.editName(pageNameEdit = "Staging Page Edit");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Page Edit",
@@ -3632,48 +3450,39 @@ definition {
 			pageName = "Staging Page Edit",
 			siteName = "Site Name");
 
-		Page.view(
-			pageName = "Staging Page Edit",
-			privacy = "Public Pages");
+		PagesAdmin.viewPageItemPresent(pageName = "Staging Page Edit");
 
 		Navigator.gotoSitePage(
 			pageName = "Staging Page Edit",
 			siteName = "Site Name");
 
-		Page.view(
-			pageName = "Staging Page Edit",
-			privacy = "Public Pages");
+		PagesAdmin.viewPageItemPresent(pageName = "Staging Page Edit");
 
 		Navigator.openSiteURL(siteName = "Site Name");
 
 		ProductMenu.gotoPortlet(
 			category = "Configuration",
-			panel = "Site Administration",
 			portlet = "Workflow");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Page Revision");
 
-		Navigator.openStagingSiteURL(siteName = "Site Name");
-
-		Page.gotoChildPagePG(
-			childPageName = "Child Page A",
-			pageName = "Staging Page Edit");
+		Navigator.openSitePage(
+			pageName = "Child Page A",
+			siteName = "Site Name Staging");
 
 		Portlet.addPG(portletName = "Blogs");
 
 		Page.viewWithWorkflowPG(workflowStatus = "Draft");
 
-		Staging.submitForPublicationPageRevision();
+		Staging.submitForWorkflowPageRevision();
 
-		Navigator.openStagingSiteURL(siteName = "Site Name");
+		Navigator.openSitePage(
+			pageName = "Child Page A",
+			siteName = "Site Name Staging");
 
-		Page.gotoChildPagePG(
-			childPageName = "Child Page A",
-			pageName = "Staging Page Edit");
-
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
+		Page.viewWithWorkflowPG(workflowStatus = "Pending");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Page Edit",
@@ -3693,11 +3502,9 @@ definition {
 			workflowAssetType = "Page Revision",
 			workflowTask = "Review");
 
-		Navigator.openStagingSiteURL(siteName = "Site Name");
-
-		Page.gotoChildPagePG(
-			childPageName = "Child Page A",
-			pageName = "Staging Page Edit");
+		Navigator.openSitePage(
+			pageName = "Child Page A",
+			siteName = "Site Name Staging");
 
 		Page.viewWithWorkflowPG(workflowStatus = "Ready for Publication");
 
@@ -3707,21 +3514,17 @@ definition {
 
 		Page.viewWithWorkflowPG(workflowStatus = "Ready for Publication");
 
-		Navigator.openStagingSiteURL(siteName = "Site Name");
-
-		Page.gotoChildPagePG(
-			childPageName = "Child Page A",
-			pageName = "Staging Page Edit");
+		Navigator.openSitePage(
+			pageName = "Child Page A",
+			siteName = "Site Name Staging");
 
 		Staging.gotoPublishToLive();
 
 		Staging.publishToLive();
 
-		Navigator.openStagingSiteURL(siteName = "Site Name");
-
-		Page.gotoChildPagePG(
-			childPageName = "Child Page A",
-			pageName = "Staging Page Edit");
+		Navigator.openSitePage(
+			pageName = "Child Page A",
+			siteName = "Site Name Staging");
 
 		Portlet.viewPG(portletName = "Blogs");
 
@@ -3729,37 +3532,28 @@ definition {
 			pageName = "Staging Page Edit",
 			siteName = "Site Name");
 
-		Page.view(
-			pageName = "Staging Page Edit",
-			privacy = "Public Pages");
+		PagesAdmin.viewPageItemPresent(pageName = "Staging Page Edit");
 	}
 
 	@description = "This is a use case for LPS-82355."
-	@priority = "5"
+	@priority = 3
 	test ViewPublishDocumentTypeWithConfiguredAssetType {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Staging Test Page",
 			widgetName = "Asset Publisher");
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
 			siteName = "Site Name");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Documents and Media");
 
 		DMDocument.addCP(
@@ -3783,16 +3577,7 @@ definition {
 			dmDocumentDescription = "DM Document Description",
 			dmDocumentTitle = "DM Document Title");
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentType();
+		DMNavigator.openDocumentTypesAdmin(siteURLKey = "site-name-staging");
 
 		DMDocumentType.add(
 			dmDocumentTypeDescription = "DM Document Type Description",
@@ -3817,16 +3602,7 @@ definition {
 
 		Staging.publishToLive();
 
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentType();
+		DMNavigator.openDocumentTypesAdmin(siteURLKey = "site-name");
 
 		DMDocumentType.viewCP(dmDocumentTypeName = "DM Document Type Name");
 
@@ -3841,282 +3617,20 @@ definition {
 		AssertConsoleTextNotPresent(value1 = "com.liferay.exportimport.kernel.exception.MissingReferenceException");
 	}
 
-	@priority = "4"
-	test ViewPublishedContentAfterStagingUndo {
-		property portal.release = "false";
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Calendar");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Portlet.addPG(portletName = "Wiki");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Portlet.addPG(portletName = "Documents and Media");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Portlet.addPG(portletName = "Bookmarks");
-
-		Staging.undoStagingPageVersioningPG();
-
-		Portlet.viewNoSpecificPG(portletName = "Bookmarks");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		for (var publishedPortlet : list "Calendar,Wiki,Documents and Media") {
-			Portlet.viewPG(portletName = "${publishedPortlet}");
-		}
-	}
-
-	@description = "This is a use case for LPS-96721."
-	@priority = "4"
-	test ViewPublishedContentWithSpecialCharsInDocumentTitle {
-		property test.name.skip.portal.instance = "Staging#ViewPublishedContentWithSpecialCharsInDocumentTitle";
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		DMDocument.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
-
-		DMDocument.addCP(
-			dmDocumentFile = "Document_1.pdf",
-			dmDocumentTitle = '''example (“PDF”).pdf''');
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.addCP(
-			structureDescription = "Structure Description",
-			structureName = "Structure Name");
-
-		DynamicDataMapping.addField(
-			field = "Documents and Media",
-			fieldFieldLabel = "Documents and Media",
-			fieldName = "DocumentsandMedia");
-
-		WebContentStructures.saveCP(structureName = "Structure Name");
-
-		WebContentStructures.viewCP(
-			structureDescription = "Structure Description",
-			structureName = "Structure Name");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
-
-		NavItem.gotoTemplates();
-
-		WebContentTemplates.addCP(
-			structureName = "Structure Name",
-			templateDescription = "Template Description",
-			templateFieldNames = "Documents and Media",
-			templateName = "Template Name");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
-
-		WebContentNavigator.gotoAddWithStructureCP(structureName = "Structure Name");
-
-		WebContent.addWithStructureCP(
-			fieldName = "DocumentsandMedia",
-			structureName = "Structure Name",
-			templateName = "Template Name",
-			webContentDocumentsAndMedia = '''example (“PDF”).pdf''',
-			webContentTitle = "WC WebContent Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "WC WebContent Title");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Web Content Display");
-
-		WebContentDisplayPortlet.selectWebContent(webContentTitle = "WC WebContent Title");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		var downloadURL = selenium.getAttribute("//div[contains(@class,'journal-content-article')]/a@href");
-		var stagingGroupId = StringUtil.extractLast("${downloadURL}", "documents/");
-		var stagingGroupId = StringUtil.extractFirst("${stagingGroupId}", "/");
-
-		echo("## * Staging GroupId: ${stagingGroupId}");
-
-		Navigator.gotoSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		var downloadURL = selenium.getAttribute("//div[contains(@class,'journal-content-article')]/a@href");
-		var liveGroupId = StringUtil.extractLast("${downloadURL}", "documents/");
-		var liveGroupId = StringUtil.extractFirst("${liveGroupId}", "/");
-
-		echo("## * Live GroupId: ${liveGroupId}");
-
-		if ("${liveGroupId}" == "${stagingGroupId}") {
-			fail("The groupID should be different in live site.");
-		}
-	}
-
-	@description = "This is a use case for LPS-87280."
-	@priority = "4"
-	test ViewPublishedWCWithApostropheInImageField {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.addCP(
-			structureDescription = "Structure Description",
-			structureName = "Structure Name");
-		DynamicDataMapping.addField(
-			field = "Image",
-			fieldFieldLabel = "Image",
-			fieldName = StringUtil.replace("Image", " ", ""));
-
-		DynamicDataMapping.selectDynamicDataMappingFrame();
-
-		DynamicDataMapping.editFieldSettings(fieldFieldLabel = "Image");
-
-		DynamicDataMapping.makeFieldRequired();
-
-		WebContentStructures.saveCP(structureName = "Structure Name");
-
-		NavItem.gotoTemplates();
-
-		WebContentTemplates.addCP(
-			structureName = "Structure Name",
-			templateDescription = "Template Description",
-			templateFieldNames = "Image",
-			templateName = "Template Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddWithStructureCP(structureName = "Structure Name");
-
-		WebContent.addWithStructureCP(
-			structureName = "Structure Name",
-			templateName = "Template Name",
-			webContentImage = "Document_2.jpeg",
-			webContentImageDescription = "this image doesn't work",
-			webContentTitle = "WebContent Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "WebContent Title");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Web Content Display");
-
-		WebContentDisplayPortlet.selectWebContent(webContentTitle = "WebContent Title");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		WebContentDisplayPortlet.viewImageFieldViaWCD();
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		AssertConsoleTextNotPresent(value1 = "Invalid XPath expression");
-
-		ProductMenu.gotoLiveSite();
-
-		WebContentDisplayPortlet.viewImageFieldViaWCD();
-	}
-
 	@description = "This is a use case for LPS-82688."
-	@priority = "3"
+	@priority = 3
 	test ViewPublishWCWithConfiguredCategoriesFilter {
-		Navigator.openSiteURL(siteName = "Site Name");
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Site Name",
 			layoutName = "Staging Test Page",
 			widgetName = "Asset Publisher");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
 		WebContent.addArticleCP(
 			webContentContent = "Web Content Without Category",
@@ -4144,7 +3658,6 @@ definition {
 
 		ProductMenu.gotoPortlet(
 			category = "Categorization",
-			panel = "Site Administration",
 			portlet = "Categories");
 
 		Vocabulary.addCP(vocabularyName = "Vocabulary Name");
@@ -4153,14 +3666,7 @@ definition {
 			categoryName = "Category Name",
 			vocabularyName = "Vocabulary Name");
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
 		WebContent.addArticleCP(
 			webContentContent = "Web Content With Category",
@@ -4172,6 +3678,7 @@ definition {
 
 		WebContent.addWithCategoryCP(
 			categoryName = "Category Name",
+			edit = "true",
 			vocabularyName = "Vocabulary Name",
 			webContentContent = "Web Content With Category",
 			webContentTitle = "Web Content Title 2");
@@ -4217,49 +3724,16 @@ definition {
 			assetTitle = "Web Content Title 2");
 	}
 
-	@description = "This is a use case for LPS-98019."
-	@priority = "3"
-	test ViewSearchPageKeywordsParameterWithStaging {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Search Bar");
-
-		SearchPortlets.configureWidgetParameterNames(keywordsParameterName = "query");
-
-		SearchPortlets.searchWidget(searchTerm = "test");
-
-		var currentURL = Navigator.getCurrentURL();
-		var keywordsParameterName = StringUtil.extractLast("${currentURL}", "?");
-		var keywordsParameter = StringUtil.extractFirst("${keywordsParameterName}", "=");
-
-		echo("## Keywords Parameter: ${keywordsParameter}");
-
-		if ("${keywordsParameter}" != "query") {
-			fail("Invalid keywords parameter.");
-		}
-	}
-
 	@description = "This is a use case for LPS-77935."
-	@priority = "4"
+	@priority = 3
 	test ViewSimplePublicationAfterDeleteDocumentInGlobal {
-		SitePages.openPagesAdmin(siteURLKey = "Global");
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
+		PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "global");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Documents and Media");
 
 		DMDocument.addCP(
@@ -4267,12 +3741,7 @@ definition {
 			dmDocumentFile = "Document_2.jpg",
 			dmDocumentTitle = "Document_2.jpg");
 
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name");
 
 		WebContentNavigator.gotoAddCP();
 
@@ -4281,18 +3750,12 @@ definition {
 			siteName = "Global",
 			webContentTitle = "Document_2.jpg");
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		JSONStaging.enableLocalStaging(groupName = "Site Name");
 
-		Staging.activateStagingCP(siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "Global");
+		PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "global");
 
 		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
+			category = "Content & Data",
 			portlet = "Documents and Media");
 
 		DMDocument.deleteCP(dmDocumentTitle = "Document_2.jpg");
@@ -4308,207 +3771,51 @@ definition {
 			locator1 = "StagingPublishToLive#SIMPLE_PUBLICATION_DELETION");
 	}
 
-	@description = "This is a use case for LPS-76633."
-	@priority = "5"
-	test ViewSingleAssetPublication {
-		property portal.release = "false";
+	@description = "This is a use case for LPS-143852."
+	@priority = 3
+	test ViewVirtualHostStagingPublicPageAsGuest {
+		task ("Enable private pages") {
+			PagesAdmin.enablePrivatePages();
+		}
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		task ("Delete Staging Test Page") {
+			JSONLayout.deletePublicLayout(
+				groupName = "Site Name",
+				layoutName = "Staging Test Page");
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
+		task ("Activate local live staging") {
+			JSONStaging.enableLocalStaging(
+				branchingPrivate = "true",
+				branchingPublic = "true",
+				groupName = "Site Name");
+		}
 
-		Staging.activateStagingCP(siteName = "Site Name");
+		task ("Add a widget page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Site Name (Staging)",
+				layoutName = "Test Page",
+				site = "false");
+		}
 
-		Navigator.openSiteURL(siteName = "Site Name");
+		task ("Configure the Staging Public Pages in site configuration") {
+			Site.openSiteSettingsAdmin(siteURLKey = "site-name-staging");
 
-		ProductMenu.gotoStagingSite();
+			Site.addVirtualHostsURLCP(stagingPublicPages = "www.able.com");
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
+		task ("Sign out") {
+			User.logoutPG();
+		}
 
-		WebContentNavigator.gotoAddCP();
+		task ("View virtual host staging public page in incognito tab") {
+			Navigator.openSpecificURL(url = "http://www.able.com:8080");
 
-		WebContent.addCP(
-			webContentContent = "Web Content Content",
-			webContentTitle = "Web Content Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "Web Content Title");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Bookmarks");
-
-		Bookmark.addCP(
-			bookmarkDescription = "This is a test bookmark!",
-			bookmarkName = "Test Bookmark",
-			bookmarkURL = "https://www.liferay.com");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoStagingSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMDocument.addCP(
-			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_1.jpg",
-			dmDocumentTitle = "DM Document Title");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging Test Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		Staging.publishViaSAP(
-			confirmMessage = "Are you sure you want to publish the selected web content?",
-			entry = "Web Content Title");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Bookmarks");
-
-		Staging.publishViaSAP(
-			confirmMessage = "Are you sure you want to publish to live?",
-			entry = "Test Bookmark");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		Staging.publishViaSAP(
-			confirmMessage = "Are you sure you want to publish the selected document?",
-			entry = "DM Document Title");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContent.viewTitle(
-			onLive = "true",
-			webContentTitle = "Web Content Title");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Bookmarks");
-
-		Bookmark.viewBookmark(
-			bookmarkName = "Test Bookmark",
-			bookmarkURL = "https://www.liferay.com");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title");
-
-		DMDocument.viewCP(dmDocumentTitle = "DM Document Title");
-	}
-
-	@description = "This is a use case for LPS-81836."
-	@priority = "4"
-	test ViewSingleAssetRemotePublication {
-		property app.server.bundles.size = "1";
-		property custom.properties = "tunneling.servlet.shared.secret=1234567890123456${line.separator}auth.verifier.TunnelAuthVerifier.hosts.allowed=";
-		property databases.size = "1";
-		property test.name.skip.portal.instance = "Staging#ViewSingleAssetRemotePublication";
-
-		Staging.remoteStagingSetUp(
-			remotePort = "9080",
-			remoteStaging = "true",
-			siteName = "Site Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addCP(
-			webContentContent = "Web Content Content",
-			webContentTitle = "Web Content Title");
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(webContentTitle = "Web Content Title");
-
-		Staging.publishViaSAP(
-			confirmMessage = "Are you sure you want to publish the selected web content?",
-			entry = "Web Content Title");
-
-		User.logoutPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		User.loginPG(
-			nodePort = "9080",
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-
-		WebContentNavigator.openWebContentAdmin(
-			baseURL = "http://localhost:9080",
-			siteURLKey = "remote-site");
-
-		WebContent.viewTitle(
-			onLive = "true",
-			webContentTitle = "Web Content Title");
-	}
-
-	@description = "This is a use case for LPS-98894."
-	@priority = "4"
-	test ViewSummaryScreenWithDraftPage {
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Publishing",
-			panel = "Site Administration",
-			portlet = "Staging");
-
-		Staging.activateStagingCP(
-			pageVersioningEnabled = "true",
-			siteName = "Site Name");
-
-		SitePages.openPagesAdmin(siteURLKey = "site-name-staging");
-
-		SitePages.addPublicPage(pageName = "Draft Page");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Draft Page",
-			siteName = "Site Name");
-
-		Page.viewWithWorkflowPG(workflowStatus = "Draft");
-
-		Staging.gotoPublishToLive(pleaseDoNotMarkAsReady = "true");
-
-		AssertTextEquals(
-			locator1 = "Staging#STAGING_CONTENT_COUNT",
-			value1 = "1");
+			User.firstLoginUI(
+				password = PropsUtil.get("default.admin.password"),
+				specificURL = "http://www.able.com:8080",
+				userEmailAddress = "test@liferay.com");
+		}
 	}
 
 }

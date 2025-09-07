@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.client.serdes.v1_0;
@@ -17,13 +8,13 @@ package com.liferay.headless.delivery.client.serdes.v1_0;
 import com.liferay.headless.delivery.client.dto.v1_0.RenderedContent;
 import com.liferay.headless.delivery.client.json.BaseJSONParser;
 
+import jakarta.annotation.Generated;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-
-import javax.annotation.Generated;
 
 /**
  * @author Javier Gamarra
@@ -55,6 +46,54 @@ public class RenderedContentSerDes {
 
 		sb.append("{");
 
+		if (renderedContent.getContentTemplateId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"contentTemplateId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(renderedContent.getContentTemplateId()));
+
+			sb.append("\"");
+		}
+
+		if (renderedContent.getContentTemplateName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"contentTemplateName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(renderedContent.getContentTemplateName()));
+
+			sb.append("\"");
+		}
+
+		if (renderedContent.getContentTemplateName_i18n() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"contentTemplateName_i18n\": ");
+
+			sb.append(_toJSON(renderedContent.getContentTemplateName_i18n()));
+		}
+
+		if (renderedContent.getMarkedAsDefault() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"markedAsDefault\": ");
+
+			sb.append(renderedContent.getMarkedAsDefault());
+		}
+
 		if (renderedContent.getRenderedContentURL() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -69,16 +108,16 @@ public class RenderedContentSerDes {
 			sb.append("\"");
 		}
 
-		if (renderedContent.getTemplateName() != null) {
+		if (renderedContent.getRenderedContentValue() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"templateName\": ");
+			sb.append("\"renderedContentValue\": ");
 
 			sb.append("\"");
 
-			sb.append(_escape(renderedContent.getTemplateName()));
+			sb.append(_escape(renderedContent.getRenderedContentValue()));
 
 			sb.append("\"");
 		}
@@ -102,6 +141,42 @@ public class RenderedContentSerDes {
 
 		Map<String, String> map = new TreeMap<>();
 
+		if (renderedContent.getContentTemplateId() == null) {
+			map.put("contentTemplateId", null);
+		}
+		else {
+			map.put(
+				"contentTemplateId",
+				String.valueOf(renderedContent.getContentTemplateId()));
+		}
+
+		if (renderedContent.getContentTemplateName() == null) {
+			map.put("contentTemplateName", null);
+		}
+		else {
+			map.put(
+				"contentTemplateName",
+				String.valueOf(renderedContent.getContentTemplateName()));
+		}
+
+		if (renderedContent.getContentTemplateName_i18n() == null) {
+			map.put("contentTemplateName_i18n", null);
+		}
+		else {
+			map.put(
+				"contentTemplateName_i18n",
+				String.valueOf(renderedContent.getContentTemplateName_i18n()));
+		}
+
+		if (renderedContent.getMarkedAsDefault() == null) {
+			map.put("markedAsDefault", null);
+		}
+		else {
+			map.put(
+				"markedAsDefault",
+				String.valueOf(renderedContent.getMarkedAsDefault()));
+		}
+
 		if (renderedContent.getRenderedContentURL() == null) {
 			map.put("renderedContentURL", null);
 		}
@@ -111,13 +186,13 @@ public class RenderedContentSerDes {
 				String.valueOf(renderedContent.getRenderedContentURL()));
 		}
 
-		if (renderedContent.getTemplateName() == null) {
-			map.put("templateName", null);
+		if (renderedContent.getRenderedContentValue() == null) {
+			map.put("renderedContentValue", null);
 		}
 		else {
 			map.put(
-				"templateName",
-				String.valueOf(renderedContent.getTemplateName()));
+				"renderedContentValue",
+				String.valueOf(renderedContent.getRenderedContentValue()));
 		}
 
 		return map;
@@ -137,25 +212,85 @@ public class RenderedContentSerDes {
 		}
 
 		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "contentTemplateId")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "contentTemplateName")) {
+
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "contentTemplateName_i18n")) {
+
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "markedAsDefault")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "renderedContentURL")) {
+
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "renderedContentValue")) {
+
+				return false;
+			}
+
+			return false;
+		}
+
+		@Override
 		protected void setField(
 			RenderedContent renderedContent, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "renderedContentURL")) {
+			if (Objects.equals(jsonParserFieldName, "contentTemplateId")) {
+				if (jsonParserFieldValue != null) {
+					renderedContent.setContentTemplateId(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "contentTemplateName")) {
+
+				if (jsonParserFieldValue != null) {
+					renderedContent.setContentTemplateName(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "contentTemplateName_i18n")) {
+
+				if (jsonParserFieldValue != null) {
+					renderedContent.setContentTemplateName_i18n(
+						(Map<String, String>)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "markedAsDefault")) {
+				if (jsonParserFieldValue != null) {
+					renderedContent.setMarkedAsDefault(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "renderedContentURL")) {
+
 				if (jsonParserFieldValue != null) {
 					renderedContent.setRenderedContentURL(
 						(String)jsonParserFieldValue);
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "templateName")) {
+			else if (Objects.equals(
+						jsonParserFieldName, "renderedContentValue")) {
+
 				if (jsonParserFieldValue != null) {
-					renderedContent.setTemplateName(
+					renderedContent.setRenderedContentValue(
 						(String)jsonParserFieldValue);
 				}
-			}
-			else {
-				throw new IllegalArgumentException(
-					"Unsupported field name " + jsonParserFieldName);
 			}
 		}
 
@@ -185,46 +320,56 @@ public class RenderedContentSerDes {
 
 			sb.append("\"");
 			sb.append(entry.getKey());
-			sb.append("\":");
+			sb.append("\": ");
 
 			Object value = entry.getValue();
 
-			Class<?> valueClass = value.getClass();
-
-			if (value instanceof Map) {
-				sb.append(_toJSON((Map)value));
-			}
-			else if (valueClass.isArray()) {
-				Object[] values = (Object[])value;
-
-				sb.append("[");
-
-				for (int i = 0; i < values.length; i++) {
-					sb.append("\"");
-					sb.append(_escape(values[i]));
-					sb.append("\"");
-
-					if ((i + 1) < values.length) {
-						sb.append(", ");
-					}
-				}
-
-				sb.append("]");
-			}
-			else {
-				sb.append("\"");
-				sb.append(_escape(entry.getValue()));
-				sb.append("\"");
-			}
+			sb.append(_toJSON(value));
 
 			if (iterator.hasNext()) {
-				sb.append(",");
+				sb.append(", ");
 			}
 		}
 
 		sb.append("}");
 
 		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
 	}
 
 }

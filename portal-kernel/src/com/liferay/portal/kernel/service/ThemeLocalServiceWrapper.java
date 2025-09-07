@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
@@ -24,15 +15,14 @@ package com.liferay.portal.kernel.service;
 public class ThemeLocalServiceWrapper
 	implements ServiceWrapper<ThemeLocalService>, ThemeLocalService {
 
+	public ThemeLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ThemeLocalServiceWrapper(ThemeLocalService themeLocalService) {
 		_themeLocalService = themeLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ThemeLocalServiceUtil} to access the theme local service. Add custom service methods to <code>com.liferay.portal.service.impl.ThemeLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.ColorScheme fetchColorScheme(
 		long companyId, java.lang.String themeId,
@@ -124,7 +114,7 @@ public class ThemeLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.Theme> init(
-		javax.servlet.ServletContext servletContext,
+		jakarta.servlet.ServletContext servletContext,
 		java.lang.String themesPath, boolean loadFromServletContext,
 		java.lang.String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
@@ -137,7 +127,7 @@ public class ThemeLocalServiceWrapper
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.Theme> init(
 		java.lang.String servletContextName,
-		javax.servlet.ServletContext servletContext,
+		jakarta.servlet.ServletContext servletContext,
 		java.lang.String themesPath, boolean loadFromServletContext,
 		java.lang.String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
@@ -24,7 +15,7 @@ export default function ResolveButton({
 	disabled = false,
 	loading,
 	onClick,
-	resolved
+	resolved,
 }) {
 	let icon = (
 		<span className="text-lowercase">
@@ -36,7 +27,8 @@ export default function ResolveButton({
 	if (loading) {
 		title = undefined;
 		icon = <Loader />;
-	} else if (resolved) {
+	}
+	else if (resolved) {
 		icon = (
 			<span className="text-lowercase text-success">
 				<ClayIcon symbol="check-circle-full" />
@@ -49,7 +41,7 @@ export default function ResolveButton({
 		<ClayButton
 			borderless
 			className={classNames('flex-shrink-0', {
-				'lfr-portal-tooltip': !!title
+				'lfr-portal-tooltip': !!title,
 			})}
 			data-title={title}
 			disabled={disabled || loading}
@@ -57,7 +49,7 @@ export default function ResolveButton({
 			monospaced
 			onClick={onClick}
 			outline
-			small
+			size="sm"
 		>
 			{icon}
 		</ClayButton>
@@ -68,5 +60,5 @@ ResolveButton.propTypes = {
 	disabled: PropTypes.bool,
 	loading: PropTypes.bool.isRequired,
 	onClick: PropTypes.func.isRequired,
-	resolved: PropTypes.bool.isRequired
+	resolved: PropTypes.bool.isRequired,
 };

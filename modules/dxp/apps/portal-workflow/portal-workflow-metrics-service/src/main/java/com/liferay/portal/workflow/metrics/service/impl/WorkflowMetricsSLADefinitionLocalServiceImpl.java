@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.impl;
@@ -21,7 +12,9 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -33,11 +26,13 @@ import com.liferay.portal.search.aggregation.bucket.Bucket;
 import com.liferay.portal.search.aggregation.bucket.FilterAggregation;
 import com.liferay.portal.search.aggregation.bucket.FilterAggregationResult;
 import com.liferay.portal.search.aggregation.bucket.TermsAggregationResult;
+import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.engine.adapter.search.SearchRequestExecutor;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
+import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.search.query.BooleanQuery;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.query.TermsQuery;
@@ -52,18 +47,19 @@ import com.liferay.portal.workflow.metrics.internal.search.index.SLAInstanceResu
 import com.liferay.portal.workflow.metrics.internal.search.index.SLATaskResultWorkflowMetricsIndexer;
 import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinition;
 import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinitionVersion;
+import com.liferay.portal.workflow.metrics.search.index.constants.WorkflowMetricsIndexNameConstants;
 import com.liferay.portal.workflow.metrics.service.base.WorkflowMetricsSLADefinitionLocalServiceBaseImpl;
+import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionVersionPersistence;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -88,7 +84,7 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		String latestProcessVersion = _getLatestProcessVersion(
 			serviceContext.getCompanyId(), processId);
 
-		validate(
+		_validate(
 			0, serviceContext.getCompanyId(), processId, latestProcessVersion,
 			name, duration, pauseNodeKeys, startNodeKeys, stopNodeKeys);
 
@@ -101,15 +97,16 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		workflowMetricsSLADefinition.setCompanyId(
 			serviceContext.getCompanyId());
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
 
 		workflowMetricsSLADefinition.setUserId(user.getUserId());
 		workflowMetricsSLADefinition.setUserName(user.getFullName());
 
-		Date now = new Date();
+		Date date = new Date();
 
-		workflowMetricsSLADefinition.setCreateDate(now);
-		workflowMetricsSLADefinition.setModifiedDate(now);
+		workflowMetricsSLADefinition.setCreateDate(date);
+		workflowMetricsSLADefinition.setModifiedDate(date);
 
 		workflowMetricsSLADefinition.setActive(true);
 		workflowMetricsSLADefinition.setCalendarKey(calendarKey);
@@ -128,10 +125,11 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		workflowMetricsSLADefinition.setStatus(
 			WorkflowConstants.STATUS_APPROVED);
 
-		workflowMetricsSLADefinitionPersistence.update(
-			workflowMetricsSLADefinition);
+		workflowMetricsSLADefinition =
+			workflowMetricsSLADefinitionPersistence.update(
+				workflowMetricsSLADefinition);
 
-		addWorkflowMetricsSLADefinitionVersion(
+		_addWorkflowMetricsSLADefinitionVersion(
 			user, workflowMetricsSLADefinition);
 
 		return workflowMetricsSLADefinition;
@@ -147,28 +145,27 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 				workflowMetricsSLADefinitionId);
 
 		workflowMetricsSLADefinition.setActive(false);
+		workflowMetricsSLADefinition.setVersion(
+			_getNextVersion(workflowMetricsSLADefinition.getVersion()));
 
-		workflowMetricsSLADefinitionPersistence.update(
+		workflowMetricsSLADefinition =
+			workflowMetricsSLADefinitionPersistence.update(
+				workflowMetricsSLADefinition);
+
+		_addWorkflowMetricsSLADefinitionVersion(
+			_userLocalService.getUser(serviceContext.getGuestOrUserId()),
 			workflowMetricsSLADefinition);
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
-
-		addWorkflowMetricsSLADefinitionVersion(
-			user, workflowMetricsSLADefinition);
+		long companyId = workflowMetricsSLADefinition.getCompanyId();
+		long processId = workflowMetricsSLADefinition.getProcessId();
 
 		_workflowMetricsPortalExecutor.execute(
 			() -> _slaInstanceResultWorkflowMetricsIndexer.deleteDocuments(
-				workflowMetricsSLADefinition.getCompanyId(),
-				workflowMetricsSLADefinition.getProcessId(),
-				workflowMetricsSLADefinition.
-					getWorkflowMetricsSLADefinitionId()));
+				companyId, processId, workflowMetricsSLADefinitionId));
 
 		_workflowMetricsPortalExecutor.execute(
 			() -> _slaTaskResultWorkflowMetricsIndexer.deleteDocuments(
-				workflowMetricsSLADefinition.getCompanyId(),
-				workflowMetricsSLADefinition.getProcessId(),
-				workflowMetricsSLADefinition.
-					getWorkflowMetricsSLADefinitionId()));
+				companyId, processId, workflowMetricsSLADefinitionId));
 	}
 
 	@Override
@@ -183,10 +180,12 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 	@Override
 	public List<WorkflowMetricsSLADefinition> getWorkflowMetricsSLADefinitions(
 		long companyId, boolean active, long processId, int status, int start,
-		int end, OrderByComparator<WorkflowMetricsSLADefinition> obc) {
+		int end,
+		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator) {
 
 		return workflowMetricsSLADefinitionPersistence.findByC_A_P_S(
-			companyId, active, processId, status, start, end, obc);
+			companyId, active, processId, status, start, end,
+			orderByComparator);
 	}
 
 	@Override
@@ -204,6 +203,14 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 
 		return workflowMetricsSLADefinitionPersistence.findByC_S(
 			companyId, status);
+	}
+
+	@Override
+	public List<WorkflowMetricsSLADefinition> getWorkflowMetricsSLADefinitions(
+		long companyId, String name, long processId) {
+
+		return workflowMetricsSLADefinitionPersistence.findByC_A_N_P(
+			companyId, true, name, processId);
 	}
 
 	@Override
@@ -239,7 +246,7 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 			workflowMetricsSLADefinition.getProcessId());
 
 		if (Objects.equals(WorkflowConstants.STATUS_APPROVED, status)) {
-			validate(
+			_validate(
 				workflowMetricsSLADefinition.
 					getWorkflowMetricsSLADefinitionId(),
 				workflowMetricsSLADefinition.getCompanyId(),
@@ -248,10 +255,10 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 				startNodeKeys, stopNodeKeys);
 		}
 
-		Date now = new Date();
+		Date date = new Date();
 
 		workflowMetricsSLADefinition.setModifiedDate(
-			serviceContext.getModifiedDate(now));
+			serviceContext.getModifiedDate(date));
 
 		workflowMetricsSLADefinition.setCalendarKey(calendarKey);
 		workflowMetricsSLADefinition.setDescription(description);
@@ -265,42 +272,48 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		workflowMetricsSLADefinition.setStopNodeKeys(
 			StringUtil.merge(stopNodeKeys));
 		workflowMetricsSLADefinition.setVersion(
-			getNextVersion(workflowMetricsSLADefinition.getVersion()));
+			_getNextVersion(workflowMetricsSLADefinition.getVersion()));
 		workflowMetricsSLADefinition.setStatus(status);
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
 
 		workflowMetricsSLADefinition.setStatusByUserId(user.getUserId());
 		workflowMetricsSLADefinition.setStatusByUserName(user.getFullName());
 
 		workflowMetricsSLADefinition.setStatusDate(
-			serviceContext.getModifiedDate(now));
+			serviceContext.getModifiedDate(date));
 
-		workflowMetricsSLADefinitionPersistence.update(
-			workflowMetricsSLADefinition);
+		workflowMetricsSLADefinition =
+			workflowMetricsSLADefinitionPersistence.update(
+				workflowMetricsSLADefinition);
 
-		addWorkflowMetricsSLADefinitionVersion(
+		_addWorkflowMetricsSLADefinitionVersion(
 			user, workflowMetricsSLADefinition);
 
-		_workflowMetricsPortalExecutor.execute(
-			() -> _slaInstanceResultWorkflowMetricsIndexer.deleteDocuments(
-				workflowMetricsSLADefinition.getCompanyId(),
-				workflowMetricsSLADefinition.getProcessId(),
-				workflowMetricsSLADefinition.
-					getWorkflowMetricsSLADefinitionId()));
+		long companyId = workflowMetricsSLADefinition.getCompanyId();
+		long processId = workflowMetricsSLADefinition.getProcessId();
+
+		if (status == WorkflowConstants.STATUS_DRAFT) {
+			_workflowMetricsPortalExecutor.execute(
+				() -> _slaInstanceResultWorkflowMetricsIndexer.blockDocuments(
+					companyId, processId, workflowMetricsSLADefinitionId));
+		}
+		else {
+			_workflowMetricsPortalExecutor.execute(
+				() -> _slaInstanceResultWorkflowMetricsIndexer.deleteDocuments(
+					companyId, processId, workflowMetricsSLADefinitionId));
+		}
 
 		_workflowMetricsPortalExecutor.execute(
 			() -> _slaTaskResultWorkflowMetricsIndexer.deleteDocuments(
-				workflowMetricsSLADefinition.getCompanyId(),
-				workflowMetricsSLADefinition.getProcessId(),
-				workflowMetricsSLADefinition.
-					getWorkflowMetricsSLADefinitionId()));
+				companyId, processId, workflowMetricsSLADefinitionId));
 
 		return workflowMetricsSLADefinition;
 	}
 
-	protected WorkflowMetricsSLADefinitionVersion
-		addWorkflowMetricsSLADefinitionVersion(
+	private WorkflowMetricsSLADefinitionVersion
+		_addWorkflowMetricsSLADefinitionVersion(
 			User user,
 			WorkflowMetricsSLADefinition workflowMetricsSLADefinition) {
 
@@ -309,24 +322,23 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 
 		WorkflowMetricsSLADefinitionVersion
 			workflowMetricsSLADefinitionVersion =
-				workflowMetricsSLADefinitionVersionPersistence.create(
+				_workflowMetricsSLADefinitionVersionPersistence.create(
 					workflowMetricsSLADefinitionVersionId);
 
 		workflowMetricsSLADefinitionVersion.setGroupId(
 			workflowMetricsSLADefinition.getGroupId());
 		workflowMetricsSLADefinitionVersion.setCompanyId(
 			workflowMetricsSLADefinition.getCompanyId());
-
 		workflowMetricsSLADefinitionVersion.setUserId(user.getUserId());
 		workflowMetricsSLADefinitionVersion.setUserName(user.getFullName());
 
-		Date now = new Date();
+		Date date = new Date();
 
-		workflowMetricsSLADefinitionVersion.setCreateDate(now);
-		workflowMetricsSLADefinitionVersion.setModifiedDate(now);
+		workflowMetricsSLADefinitionVersion.setCreateDate(date);
+		workflowMetricsSLADefinitionVersion.setModifiedDate(date);
 
 		workflowMetricsSLADefinitionVersion.setActive(
-			workflowMetricsSLADefinition.getActive());
+			workflowMetricsSLADefinition.isActive());
 		workflowMetricsSLADefinitionVersion.setCalendarKey(
 			workflowMetricsSLADefinition.getCalendarKey());
 		workflowMetricsSLADefinitionVersion.setDescription(
@@ -351,24 +363,96 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 			workflowMetricsSLADefinition.getWorkflowMetricsSLADefinitionId());
 		workflowMetricsSLADefinitionVersion.setStatus(
 			workflowMetricsSLADefinition.getStatus());
+
 		workflowMetricsSLADefinition.setStatusByUserId(user.getUserId());
 		workflowMetricsSLADefinition.setStatusByUserName(user.getFullName());
-		workflowMetricsSLADefinition.setStatusDate(now);
+		workflowMetricsSLADefinition.setStatusDate(date);
 
-		workflowMetricsSLADefinitionVersionPersistence.update(
+		return _workflowMetricsSLADefinitionVersionPersistence.update(
 			workflowMetricsSLADefinitionVersion);
-
-		return workflowMetricsSLADefinitionVersion;
 	}
 
-	protected String getNextVersion(String version) {
+	private FilterAggregation _createNodeIdAggregation(
+		String aggregationName, Set<String> nodeIds) {
+
+		TermsQuery termsQuery = _queries.terms("nodeId");
+
+		termsQuery.addValues(nodeIds.toArray());
+
+		FilterAggregation filterAggregation = _aggregations.filter(
+			aggregationName, termsQuery);
+
+		filterAggregation.addChildAggregation(
+			_aggregations.terms("nodeId", "nodeId"));
+
+		return filterAggregation;
+	}
+
+	private String _getLatestProcessVersion(long companyId, long processId) {
+		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
+
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(companyId) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS);
+
+		BooleanQuery booleanQuery = _queries.booleanQuery();
+
+		booleanQuery.addMustQueryClauses(
+			_queries.term("companyId", companyId),
+			_queries.term("processId", processId));
+
+		searchSearchRequest.setQuery(booleanQuery);
+
+		searchSearchRequest.setSelectedFieldNames("version");
+
+		SearchSearchResponse searchSearchResponse =
+			_searchRequestExecutor.executeSearchRequest(searchSearchRequest);
+
+		SearchHits searchHits = searchSearchResponse.getSearchHits();
+
+		for (SearchHit searchHit : searchHits.getSearchHits()) {
+			Document document = searchHit.getDocument();
+
+			return GetterUtil.getString(document.getString("version"));
+		}
+
+		return StringPool.BLANK;
+	}
+
+	private String _getNextVersion(String version) {
 		int[] versionParts = StringUtil.split(version, StringPool.PERIOD, 0);
 
 		return StringBundler.concat(
 			++versionParts[0], StringPool.PERIOD, versionParts[1]);
 	}
 
-	protected void validate(
+	private Set<String> _getNodeIds(String[] nodeKeys) {
+		if (nodeKeys == null) {
+			return Collections.emptySet();
+		}
+
+		Set<String> nodeIds = new HashSet<>();
+
+		for (String nodeKey : nodeKeys) {
+			nodeIds.add(StringUtil.split(nodeKey, CharPool.COLON)[0]);
+		}
+
+		return nodeIds;
+	}
+
+	private long _getNodeIdsCount(
+		FilterAggregationResult filterAggregationResult) {
+
+		TermsAggregationResult termsAggregationResult =
+			(TermsAggregationResult)
+				filterAggregationResult.getChildAggregationResult("nodeId");
+
+		Collection<Bucket> buckets = termsAggregationResult.getBuckets();
+
+		return buckets.size();
+	}
+
+	private void _validate(
 			long workflowMetricsSLADefinitionId, long companyId, long processId,
 			String processVersion, String name, long duration,
 			String[] pauseNodeKeys, String[] startNodeKeys,
@@ -409,12 +493,12 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 			throw new WorkflowMetricsSLADefinitionDuplicateNameException();
 		}
 
-		validateTimeframe(
+		_validateTimeframe(
 			companyId, pauseNodeKeys, processId, processVersion, startNodeKeys,
 			stopNodeKeys);
 	}
 
-	protected void validateTimeframe(
+	private void _validateTimeframe(
 			long companyId, String[] pauseNodeKeys, long processId,
 			String processVersion, String[] startNodeKeys,
 			String[] stopNodeKeys)
@@ -445,7 +529,9 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		searchSearchRequest.addAggregation(
 			_createNodeIdAggregation("stop", stopNodeIds));
 
-		searchSearchRequest.setIndexNames("workflow-metrics-nodes");
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(companyId) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_NODE);
 
 		BooleanQuery booleanQuery = _queries.booleanQuery();
 
@@ -490,87 +576,13 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		}
 	}
 
-	private FilterAggregation _createNodeIdAggregation(
-		String aggregationName, Set<String> nodeIds) {
-
-		TermsQuery termsQuery = _queries.terms("nodeId");
-
-		termsQuery.addValues(nodeIds.toArray());
-
-		FilterAggregation filterAggregation = _aggregations.filter(
-			aggregationName, termsQuery);
-
-		filterAggregation.addChildAggregation(
-			_aggregations.terms("nodeId", "nodeId"));
-
-		return filterAggregation;
-	}
-
-	private String _getLatestProcessVersion(long companyId, long processId) {
-		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
-
-		searchSearchRequest.setIndexNames("workflow-metrics-processes");
-
-		BooleanQuery booleanQuery = _queries.booleanQuery();
-
-		booleanQuery.addMustQueryClauses(
-			_queries.term("companyId", companyId),
-			_queries.term("processId", processId));
-
-		searchSearchRequest.setQuery(booleanQuery);
-
-		searchSearchRequest.setSelectedFieldNames("version");
-
-		return Stream.of(
-			_searchRequestExecutor.executeSearchRequest(searchSearchRequest)
-		).map(
-			SearchSearchResponse::getSearchHits
-		).map(
-			SearchHits::getSearchHits
-		).flatMap(
-			List::parallelStream
-		).map(
-			SearchHit::getDocument
-		).findFirst(
-		).map(
-			document -> document.getString("version")
-		).orElseGet(
-			() -> StringPool.BLANK
-		);
-	}
-
-	private Set<String> _getNodeIds(String[] nodeKeys) {
-		if (nodeKeys == null) {
-			return Collections.emptySet();
-		}
-
-		return Stream.of(
-			nodeKeys
-		).map(
-			nodeKey -> StringUtil.split(nodeKey, CharPool.COLON)
-		).map(
-			nodeKeyParts -> nodeKeyParts[0]
-		).collect(
-			Collectors.toSet()
-		);
-	}
-
-	private long _getNodeIdsCount(
-		FilterAggregationResult filterAggregationResult) {
-
-		TermsAggregationResult termsAggregationResult =
-			(TermsAggregationResult)
-				filterAggregationResult.getChildAggregationResult("nodeId");
-
-		Collection<Bucket> buckets = termsAggregationResult.getBuckets();
-
-		return buckets.size();
-	}
-
 	private static final String _VERSION_DEFAULT = "1.0";
 
 	@Reference
 	private Aggregations _aggregations;
+
+	@Reference
+	private IndexNameBuilder _indexNameBuilder;
 
 	@Reference
 	private Queries _queries;
@@ -587,6 +599,13 @@ public class WorkflowMetricsSLADefinitionLocalServiceImpl
 		_slaTaskResultWorkflowMetricsIndexer;
 
 	@Reference
+	private UserLocalService _userLocalService;
+
+	@Reference
 	private WorkflowMetricsPortalExecutor _workflowMetricsPortalExecutor;
+
+	@Reference
+	private WorkflowMetricsSLADefinitionVersionPersistence
+		_workflowMetricsSLADefinitionVersionPersistence;
 
 }

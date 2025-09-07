@@ -1,46 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.external.data.source.test.controller.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncPrintWriter;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.InputStream;
 
-import java.net.URL;
-
-import java.sql.Connection;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -64,6 +49,9 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.runtime.ServiceComponentRuntime;
+import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.util.promise.Promise;
 
 /**
  * @author Preston Crary
@@ -78,9 +66,7 @@ public class ExternalDataSourceControllerTest {
 			new AssumeTestRule("assume"), new LiferayIntegrationTestRule());
 
 	public static void assume() {
-		DB db = DBManagerUtil.getDB();
-
-		Assume.assumeTrue(DBType.HYPERSONIC.equals(db.getDBType()));
+		Assume.assumeFalse(DBPartition.isPartitionEnabled());
 	}
 
 	@Before
@@ -100,24 +86,32 @@ public class ExternalDataSourceControllerTest {
 			"/com.liferay.external.data.source.test.api.jar");
 		_serviceBundle = _installServiceBundle();
 
-		DB db = DBManagerUtil.getDB(DBType.HYPERSONIC, null);
-
-		Properties properties = new Properties();
-
-		properties.put("password", "");
-		properties.put("user", "sa");
-
-		URL resource = _serviceBundle.getResource("/META-INF/sql/tables.sql");
-
-		try (Connection con = JDBCDriver.getConnection(_JDBC_URL, properties);
-			InputStream is = resource.openStream()) {
-
-			db.runSQL(con, StringUtil.read(is));
-		}
-
 		_apiBundle.start();
 
-		_serviceBundle.start();
+		String originalUpgradeDatabaseAutoRun = PropsUtil.get(
+			PropsKeys.UPGRADE_DATABASE_AUTO_RUN);
+
+		try {
+			PropsUtil.set(PropsKeys.UPGRADE_DATABASE_AUTO_RUN, "true");
+
+			_serviceBundle.start();
+
+			ComponentDescriptionDTO componentDescriptionDTO =
+				_serviceComponentRuntime.getComponentDescriptionDTO(
+					_serviceBundle,
+					"com.liferay.external.data.source.test.internal.upgrade." +
+						"registry.TestEntityUpgradeStepRegistrator");
+
+			Promise<Void> promise = _serviceComponentRuntime.enableComponent(
+				componentDescriptionDTO);
+
+			promise.getValue();
+		}
+		finally {
+			PropsUtil.set(
+				PropsKeys.UPGRADE_DATABASE_AUTO_RUN,
+				originalUpgradeDatabaseAutoRun);
+		}
 	}
 
 	@After
@@ -145,8 +139,8 @@ public class ExternalDataSourceControllerTest {
 
 			testRunListener.rethrow(null);
 		}
-		catch (Exception e) {
-			testRunListener.rethrow(e);
+		catch (Exception exception) {
+			testRunListener.rethrow(exception);
 		}
 		finally {
 			serviceRegistration.unregister();
@@ -167,10 +161,10 @@ public class ExternalDataSourceControllerTest {
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 			new UnsyncByteArrayOutputStream();
 
-		try (InputStream is =
+		try (InputStream inputStream =
 				ExternalDataSourceControllerTest.class.getResourceAsStream(
 					path);
-			JarInputStream jarInputStream = new JarInputStream(is);
+			JarInputStream jarInputStream = new JarInputStream(inputStream);
 			JarOutputStream jarOutputStream = new JarOutputStream(
 				unsyncByteArrayOutputStream)) {
 
@@ -194,7 +188,7 @@ public class ExternalDataSourceControllerTest {
 				jarOutputStream.closeEntry();
 			}
 
-			try (InputStream extSpringInputSteam =
+			try (InputStream extSpringInputStream =
 					ExternalDataSourceControllerTest.class.getResourceAsStream(
 						getResourceSource())) {
 
@@ -202,7 +196,7 @@ public class ExternalDataSourceControllerTest {
 					new JarEntry(getResourceDestination()));
 
 				StreamUtil.transfer(
-					extSpringInputSteam, jarOutputStream, false);
+					extSpringInputStream, jarOutputStream, false);
 
 				jarOutputStream.closeEntry();
 			}
@@ -212,11 +206,11 @@ public class ExternalDataSourceControllerTest {
 	}
 
 	private Bundle _installBundle(String path) throws Exception {
-		try (InputStream is =
+		try (InputStream inputStream =
 				ExternalDataSourceControllerTest.class.getResourceAsStream(
 					path)) {
 
-			return _bundleContext.installBundle(path, is);
+			return _bundleContext.installBundle(path, inputStream);
 		}
 	}
 
@@ -240,6 +234,9 @@ public class ExternalDataSourceControllerTest {
 	private BundleContext _bundleContext;
 	private Bundle _serviceBundle;
 
+	@Inject
+	private ServiceComponentRuntime _serviceComponentRuntime;
+
 	/**
 	 * A carrier Throwable to overcome Arquillian Exception serialization
 	 * limitation which can not handle suppressed Throwables.
@@ -254,26 +251,26 @@ public class ExternalDataSourceControllerTest {
 
 	private static class TestRunListener extends RunListener {
 
-		public void rethrow(Throwable t) throws Throwable {
-			if (t == null) {
+		public void rethrow(Throwable throwable) throws Throwable {
+			if (throwable == null) {
 				if (_failures.isEmpty()) {
 					return;
 				}
 
-				t = new AssertionError(
+				throwable = new AssertionError(
 					"Inner test bundle junit execution errors:");
 			}
 
 			for (Failure failure : _failures) {
-				t.addSuppressed(failure.getException());
+				throwable.addSuppressed(failure.getException());
 			}
 
 			try (UnsyncStringWriter unsyncStringWriter =
 					new UnsyncStringWriter();
-				UnsyncPrintWriter unsycPrintWriter = new UnsyncPrintWriter(
+				UnsyncPrintWriter unsyncPrintWriter = new UnsyncPrintWriter(
 					unsyncStringWriter)) {
 
-				t.printStackTrace(unsycPrintWriter);
+				throwable.printStackTrace(unsyncPrintWriter);
 
 				throw new ArquillianThrowable(unsyncStringWriter.toString());
 			}

@@ -1,26 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.web.internal.portlet.action;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -33,13 +31,13 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
 import com.liferay.wiki.configuration.WikiGroupServiceConfiguration;
+import com.liferay.wiki.constants.WikiPageConstants;
 import com.liferay.wiki.constants.WikiWebKeys;
 import com.liferay.wiki.engine.WikiEngineRenderer;
 import com.liferay.wiki.exception.NoSuchNodeException;
 import com.liferay.wiki.exception.NoSuchPageException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
-import com.liferay.wiki.model.WikiPageConstants;
 import com.liferay.wiki.service.WikiNodeLocalServiceUtil;
 import com.liferay.wiki.service.WikiNodeServiceUtil;
 import com.liferay.wiki.service.WikiPageLocalServiceUtil;
@@ -49,19 +47,19 @@ import com.liferay.wiki.web.internal.security.permission.resource.WikiNodePermis
 import com.liferay.wiki.web.internal.util.WikiUtil;
 import com.liferay.wiki.web.internal.util.WikiWebComponentProvider;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
@@ -147,12 +145,15 @@ public class ActionUtil {
 			themeDisplay.getScopeGroupId());
 
 		if (nodesCount == 0) {
-			Layout layout = themeDisplay.getLayout();
+			Group group = GroupLocalServiceUtil.fetchGroup(
+				themeDisplay.getScopeGroupId());
 
 			ServiceContext serviceContext = ServiceContextFactory.getInstance(
 				WikiNode.class.getName(), portletRequest);
 
 			serviceContext.setAddGroupPermissions(true);
+
+			Layout layout = themeDisplay.getLayout();
 
 			if (layout.isPublicLayout() || layout.isTypeControlPanel()) {
 				serviceContext.setAddGuestPermissions(true);
@@ -161,8 +162,13 @@ public class ActionUtil {
 				serviceContext.setAddGuestPermissions(false);
 			}
 
-			node = WikiNodeLocalServiceUtil.addDefaultNode(
-				themeDisplay.getDefaultUserId(), serviceContext);
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						group.getCtCollectionId())) {
+
+				node = WikiNodeLocalServiceUtil.addDefaultNode(
+					themeDisplay.getGuestUserId(), serviceContext);
+			}
 		}
 		else {
 			node = getFirstNode(portletRequest);
@@ -181,9 +187,6 @@ public class ActionUtil {
 			long nodeId, PortletRequest portletRequest)
 		throws PortalException {
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
 		WikiWebComponentProvider wikiWebComponentProvider =
 			WikiWebComponentProvider.getWikiWebComponentProvider();
 
@@ -194,19 +197,28 @@ public class ActionUtil {
 			nodeId, wikiGroupServiceConfiguration.frontPageName(), 0);
 
 		if (page == null) {
+			WikiNode node = WikiNodeLocalServiceUtil.getNode(nodeId);
+
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)portletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
 			ServiceContext serviceContext = ServiceContextFactory.getInstance(
 				WikiPage.class.getName(), portletRequest);
 
-			serviceContext.setAddGuestPermissions(true);
 			serviceContext.setAddGroupPermissions(true);
+			serviceContext.setAddGuestPermissions(true);
 
 			boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
 
-			try {
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						node.getCtCollectionId())) {
+
 				WorkflowThreadLocal.setEnabled(false);
 
 				page = WikiPageLocalServiceUtil.addPage(
-					themeDisplay.getDefaultUserId(), nodeId,
+					themeDisplay.getGuestUserId(), nodeId,
 					wikiGroupServiceConfiguration.frontPageName(), null,
 					WikiPageConstants.NEW, true, serviceContext);
 			}
@@ -238,48 +250,55 @@ public class ActionUtil {
 		LiferayPortletResponse liferayPortletResponse =
 			PortalUtil.getLiferayPortletResponse(portletResponse);
 
-		PortletURL viewPageURL = liferayPortletResponse.createRenderURL();
+		PortletURL viewPageURL = PortletURLBuilder.createRenderURL(
+			liferayPortletResponse
+		).setMVCRenderCommandName(
+			"wiki/view"
+		).setParameter(
+			"nodeName",
+			() -> {
+				WikiNode sourceNode = sourcePage.getNode();
 
-		viewPageURL.setParameter("mvcRenderCommandName", "wiki/view");
-
-		WikiNode sourceNode = sourcePage.getNode();
-
-		viewPageURL.setParameter("nodeName", sourceNode.getName());
-
-		PortletURL editPageURL = liferayPortletResponse.createRenderURL();
-
-		editPageURL.setParameter("mvcRenderCommandName", "wiki/edit_page");
-		editPageURL.setParameter("nodeId", String.valueOf(nodeId));
-		editPageURL.setParameter("title", title);
-
-		String attachmentURLPrefix = WikiUtil.getAttachmentURLPrefix(
-			themeDisplay.getPathMain(), themeDisplay.getPlid(), nodeId, title);
+				return sourceNode.getName();
+			}
+		).buildPortletURL();
 
 		return wikiEngineRenderer.diffHtml(
-			sourcePage, targetPage, viewPageURL, editPageURL,
-			attachmentURLPrefix);
+			sourcePage, targetPage, viewPageURL,
+			PortletURLBuilder.createRenderURL(
+				liferayPortletResponse
+			).setMVCRenderCommandName(
+				"wiki/edit_page"
+			).setParameter(
+				"nodeId", nodeId
+			).setParameter(
+				"title", title
+			).buildPortletURL(),
+			WikiUtil.getAttachmentURLPrefix(
+				themeDisplay.getPathMain(), themeDisplay.getPlid(), nodeId,
+				title));
 	}
 
 	public static WikiNode getNode(PortletRequest portletRequest)
 		throws Exception {
 
-		HttpServletRequest httpServletRequest =
-			PortalUtil.getHttpServletRequest(portletRequest);
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		WikiNode node = null;
 
 		long nodeId = ParamUtil.getLong(portletRequest, "nodeId");
 		String nodeName = ParamUtil.getString(portletRequest, "nodeName");
-
-		WikiNode node = null;
 
 		try {
 			if (nodeId > 0) {
 				node = WikiNodeServiceUtil.getNode(nodeId);
 			}
 			else if (Validator.isNotNull(nodeName)) {
+				HttpServletRequest httpServletRequest =
+					PortalUtil.getHttpServletRequest(portletRequest);
+
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
 				node = WikiNodeServiceUtil.getNode(
 					themeDisplay.getScopeGroupId(), nodeName);
 			}
@@ -287,7 +306,11 @@ public class ActionUtil {
 				throw new NoSuchNodeException();
 			}
 		}
-		catch (NoSuchNodeException nsne) {
+		catch (NoSuchNodeException noSuchNodeException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchNodeException);
+			}
+
 			node = getFirstVisibleNode(portletRequest);
 		}
 
@@ -332,7 +355,10 @@ public class ActionUtil {
 				node = WikiNodeServiceUtil.getNode(nodeId);
 			}
 		}
-		catch (NoSuchNodeException nsne) {
+		catch (NoSuchNodeException noSuchNodeException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchNodeException);
+			}
 		}
 
 		if (node == null) {
@@ -357,14 +383,14 @@ public class ActionUtil {
 		try {
 			return WikiPageServiceUtil.getPage(nodeId, title, version);
 		}
-		catch (NoSuchPageException nspe) {
+		catch (NoSuchPageException noSuchPageException) {
 			if (title.equals(wikiGroupServiceConfiguration.frontPageName()) &&
 				(version == 0)) {
 
 				return getFirstVisiblePage(nodeId, portletRequest);
 			}
 
-			throw nspe;
+			throw noSuchPageException;
 		}
 	}
 
@@ -402,16 +428,16 @@ public class ActionUtil {
 
 			getFirstVisiblePage(node.getNodeId(), renderRequest);
 		}
-		catch (Exception e) {
-			if (e instanceof NoSuchNodeException ||
-				e instanceof PrincipalException) {
+		catch (Exception exception) {
+			if (exception instanceof NoSuchNodeException ||
+				exception instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass());
+				SessionErrors.add(renderRequest, exception.getClass());
 
 				return "/wiki/error.jsp";
 			}
 
-			throw new PortletException(e);
+			throw new PortletException(exception);
 		}
 
 		long categoryId = ParamUtil.getLong(renderRequest, "categoryId");
@@ -423,5 +449,7 @@ public class ActionUtil {
 
 		return defaultForward;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(ActionUtil.class);
 
 }

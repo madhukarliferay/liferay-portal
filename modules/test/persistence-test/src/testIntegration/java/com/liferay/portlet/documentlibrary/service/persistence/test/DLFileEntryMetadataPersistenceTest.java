@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.documentlibrary.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.document.library.kernel.exception.DuplicateDLFileEntryMetadataExternalReferenceCodeException;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryMetadataException;
 import com.liferay.document.library.kernel.model.DLFileEntryMetadata;
 import com.liferay.document.library.kernel.service.DLFileEntryMetadataLocalServiceUtil;
@@ -26,6 +18,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -125,7 +118,12 @@ public class DLFileEntryMetadataPersistenceTest {
 
 		newDLFileEntryMetadata.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDLFileEntryMetadata.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDLFileEntryMetadata.setUuid(RandomTestUtil.randomString());
+
+		newDLFileEntryMetadata.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newDLFileEntryMetadata.setCompanyId(RandomTestUtil.nextLong());
 
@@ -147,8 +145,14 @@ public class DLFileEntryMetadataPersistenceTest {
 			existingDLFileEntryMetadata.getMvccVersion(),
 			newDLFileEntryMetadata.getMvccVersion());
 		Assert.assertEquals(
+			existingDLFileEntryMetadata.getCtCollectionId(),
+			newDLFileEntryMetadata.getCtCollectionId());
+		Assert.assertEquals(
 			existingDLFileEntryMetadata.getUuid(),
 			newDLFileEntryMetadata.getUuid());
+		Assert.assertEquals(
+			existingDLFileEntryMetadata.getExternalReferenceCode(),
+			newDLFileEntryMetadata.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingDLFileEntryMetadata.getFileEntryMetadataId(),
 			newDLFileEntryMetadata.getFileEntryMetadataId());
@@ -167,6 +171,28 @@ public class DLFileEntryMetadataPersistenceTest {
 		Assert.assertEquals(
 			existingDLFileEntryMetadata.getFileVersionId(),
 			newDLFileEntryMetadata.getFileVersionId());
+	}
+
+	@Test(
+		expected = DuplicateDLFileEntryMetadataExternalReferenceCodeException.class
+	)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		DLFileEntryMetadata dlFileEntryMetadata = addDLFileEntryMetadata();
+
+		DLFileEntryMetadata newDLFileEntryMetadata = addDLFileEntryMetadata();
+
+		newDLFileEntryMetadata.setCompanyId(dlFileEntryMetadata.getCompanyId());
+
+		newDLFileEntryMetadata = _persistence.update(newDLFileEntryMetadata);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newDLFileEntryMetadata);
+
+		newDLFileEntryMetadata.setExternalReferenceCode(
+			dlFileEntryMetadata.getExternalReferenceCode());
+
+		_persistence.update(newDLFileEntryMetadata);
 	}
 
 	@Test
@@ -210,6 +236,15 @@ public class DLFileEntryMetadataPersistenceTest {
 	}
 
 	@Test
+	public void testCountByERC_C() throws Exception {
+		_persistence.countByERC_C("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_C("null", 0L);
+
+		_persistence.countByERC_C((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		DLFileEntryMetadata newDLFileEntryMetadata = addDLFileEntryMetadata();
 
@@ -236,10 +271,10 @@ public class DLFileEntryMetadataPersistenceTest {
 
 	protected OrderByComparator<DLFileEntryMetadata> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DLFileEntryMetadata", "mvccVersion", true, "uuid", true,
-			"fileEntryMetadataId", true, "companyId", true, "DDMStorageId",
-			true, "DDMStructureId", true, "fileEntryId", true, "fileVersionId",
-			true);
+			"DLFileEntryMetadata", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "externalReferenceCode", true, "fileEntryMetadataId",
+			true, "companyId", true, "DDMStorageId", true, "DDMStructureId",
+			true, "fileEntryId", true, "fileVersionId", true);
 	}
 
 	@Test
@@ -472,20 +507,76 @@ public class DLFileEntryMetadataPersistenceTest {
 
 		_persistence.clearCache();
 
-		DLFileEntryMetadata existingDLFileEntryMetadata =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newDLFileEntryMetadata.getPrimaryKey());
+				newDLFileEntryMetadata.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DLFileEntryMetadata newDLFileEntryMetadata = addDLFileEntryMetadata();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DLFileEntryMetadata.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"fileEntryMetadataId",
+				newDLFileEntryMetadata.getFileEntryMetadataId()));
+
+		List<DLFileEntryMetadata> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		DLFileEntryMetadata dlFileEntryMetadata) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingDLFileEntryMetadata.getDDMStructureId()),
+			Long.valueOf(dlFileEntryMetadata.getDDMStructureId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDLFileEntryMetadata, "getOriginalDDMStructureId",
-				new Class<?>[0]));
+				dlFileEntryMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "DDMStructureId"));
 		Assert.assertEquals(
-			Long.valueOf(existingDLFileEntryMetadata.getFileVersionId()),
+			Long.valueOf(dlFileEntryMetadata.getFileVersionId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDLFileEntryMetadata, "getOriginalFileVersionId",
-				new Class<?>[0]));
+				dlFileEntryMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "fileVersionId"));
+
+		Assert.assertEquals(
+			dlFileEntryMetadata.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				dlFileEntryMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(dlFileEntryMetadata.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				dlFileEntryMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 	}
 
 	protected DLFileEntryMetadata addDLFileEntryMetadata() throws Exception {
@@ -495,7 +586,12 @@ public class DLFileEntryMetadataPersistenceTest {
 
 		dlFileEntryMetadata.setMvccVersion(RandomTestUtil.nextLong());
 
+		dlFileEntryMetadata.setCtCollectionId(RandomTestUtil.nextLong());
+
 		dlFileEntryMetadata.setUuid(RandomTestUtil.randomString());
+
+		dlFileEntryMetadata.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		dlFileEntryMetadata.setCompanyId(RandomTestUtil.nextLong());
 

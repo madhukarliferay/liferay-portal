@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service;
 
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.segments.model.SegmentsEntryRole;
 
 /**
  * Provides a wrapper for {@link SegmentsEntryRoleLocalService}.
@@ -27,19 +22,18 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	implements SegmentsEntryRoleLocalService,
 			   ServiceWrapper<SegmentsEntryRoleLocalService> {
 
+	public SegmentsEntryRoleLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SegmentsEntryRoleLocalServiceWrapper(
 		SegmentsEntryRoleLocalService segmentsEntryRoleLocalService) {
 
 		_segmentsEntryRoleLocalService = segmentsEntryRoleLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SegmentsEntryRoleLocalServiceUtil} to access the segments entry role local service. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRoleLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole addSegmentsEntryRole(
+	public SegmentsEntryRole addSegmentsEntryRole(
 			long segmentsEntryId, long roleId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -51,15 +45,31 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	/**
 	 * Adds the segments entry role to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was added
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole addSegmentsEntryRole(
-		com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public SegmentsEntryRole addSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return _segmentsEntryRoleLocalService.addSegmentsEntryRole(
 			segmentsEntryRole);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _segmentsEntryRoleLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -69,9 +79,7 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	 * @return the new segments entry role
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole createSegmentsEntryRole(
-		long segmentsEntryRoleId) {
-
+	public SegmentsEntryRole createSegmentsEntryRole(long segmentsEntryRoleId) {
 		return _segmentsEntryRoleLocalService.createSegmentsEntryRole(
 			segmentsEntryRoleId);
 	}
@@ -91,13 +99,16 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	/**
 	 * Deletes the segments entry role with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRoleId the primary key of the segments entry role
 	 * @return the segments entry role that was removed
 	 * @throws PortalException if a segments entry role with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole deleteSegmentsEntryRole(
-			long segmentsEntryRoleId)
+	public SegmentsEntryRole deleteSegmentsEntryRole(long segmentsEntryRoleId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _segmentsEntryRoleLocalService.deleteSegmentsEntryRole(
@@ -105,7 +116,7 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole deleteSegmentsEntryRole(
+	public SegmentsEntryRole deleteSegmentsEntryRole(
 			long segmentsEntryId, long roleId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -116,12 +127,16 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	/**
 	 * Deletes the segments entry role from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was removed
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole deleteSegmentsEntryRole(
-		com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public SegmentsEntryRole deleteSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return _segmentsEntryRoleLocalService.deleteSegmentsEntryRole(
 			segmentsEntryRole);
@@ -140,6 +155,18 @@ public class SegmentsEntryRoleLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_segmentsEntryRoleLocalService.deleteSegmentsEntryRolesByRoleId(roleId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _segmentsEntryRoleLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _segmentsEntryRoleLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -234,9 +261,7 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole fetchSegmentsEntryRole(
-		long segmentsEntryRoleId) {
-
+	public SegmentsEntryRole fetchSegmentsEntryRole(long segmentsEntryRoleId) {
 		return _segmentsEntryRoleLocalService.fetchSegmentsEntryRole(
 			segmentsEntryRoleId);
 	}
@@ -266,6 +291,9 @@ public class SegmentsEntryRoleLocalServiceWrapper
 		return _segmentsEntryRoleLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -282,8 +310,7 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	 * @throws PortalException if a segments entry role with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole getSegmentsEntryRole(
-			long segmentsEntryRoleId)
+	public SegmentsEntryRole getSegmentsEntryRole(long segmentsEntryRoleId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _segmentsEntryRoleLocalService.getSegmentsEntryRole(
@@ -302,23 +329,23 @@ public class SegmentsEntryRoleLocalServiceWrapper
 	 * @return the range of segments entry roles
 	 */
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRoles(int start, int end) {
+	public java.util.List<SegmentsEntryRole> getSegmentsEntryRoles(
+		int start, int end) {
 
 		return _segmentsEntryRoleLocalService.getSegmentsEntryRoles(start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRoles(long segmentsEntryId) {
+	public java.util.List<SegmentsEntryRole> getSegmentsEntryRoles(
+		long segmentsEntryId) {
 
 		return _segmentsEntryRoleLocalService.getSegmentsEntryRoles(
 			segmentsEntryId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRolesByRoleId(long roleId) {
+	public java.util.List<SegmentsEntryRole> getSegmentsEntryRolesByRoleId(
+		long roleId) {
 
 		return _segmentsEntryRoleLocalService.getSegmentsEntryRolesByRoleId(
 			roleId);
@@ -352,18 +379,57 @@ public class SegmentsEntryRoleLocalServiceWrapper
 			segmentsEntryId, roleId);
 	}
 
+	@Override
+	public void setSegmentsEntrySiteRoles(
+			long segmentsEntryId, long[] siteRoleIds,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_segmentsEntryRoleLocalService.setSegmentsEntrySiteRoles(
+			segmentsEntryId, siteRoleIds, serviceContext);
+	}
+
 	/**
 	 * Updates the segments entry role in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was updated
 	 */
 	@Override
-	public com.liferay.segments.model.SegmentsEntryRole updateSegmentsEntryRole(
-		com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public SegmentsEntryRole updateSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return _segmentsEntryRoleLocalService.updateSegmentsEntryRole(
 			segmentsEntryRole);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _segmentsEntryRoleLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<SegmentsEntryRole> getCTPersistence() {
+		return _segmentsEntryRoleLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<SegmentsEntryRole> getModelClass() {
+		return _segmentsEntryRoleLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<SegmentsEntryRole>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _segmentsEntryRoleLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

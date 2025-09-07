@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model;
@@ -33,7 +24,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface JournalArticle
 	extends JournalArticleModel, PersistedModel, TreeModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this interface directly. Add methods to <code>com.liferay.journal.model.impl.JournalArticleImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
@@ -97,10 +88,21 @@ public interface JournalArticle
 
 	public String[] getAvailableLanguageIds();
 
+	@com.liferay.portal.kernel.json.JSON
+	public String getContent();
+
 	public String getContentByLocale(String languageId);
+
+	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		getDDMFormValues();
+
+	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		getDDMFormValues(boolean addMissingDDMFormFieldValues);
 
 	public com.liferay.dynamic.data.mapping.model.DDMStructure
 		getDDMStructure();
+
+	public String getDDMStructureKey();
 
 	public com.liferay.dynamic.data.mapping.model.DDMTemplate getDDMTemplate();
 
@@ -115,11 +117,18 @@ public interface JournalArticle
 
 	public String getDescription(String languageId, boolean useDefault);
 
+	@com.liferay.portal.kernel.json.JSON
+	public String getDescriptionCurrentValue();
+
 	public java.util.Map<java.util.Locale, String> getDescriptionMap();
 
+	@com.liferay.portal.kernel.json.JSON
 	public String getDescriptionMapAsXML();
 
 	public com.liferay.portal.kernel.xml.Document getDocument();
+
+	public com.liferay.portal.kernel.xml.Document getDocumentByLocale(
+		String languageId);
 
 	public JournalFolder getFolder()
 		throws com.liferay.portal.kernel.exception.PortalException;
@@ -141,7 +150,9 @@ public interface JournalArticle
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry>
 			getImagesFileEntries(
 				int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator obc)
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.portal.kernel.repository.model.FileEntry>
+						orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
 	public int getImagesFileEntriesCount()
@@ -151,34 +162,8 @@ public interface JournalArticle
 
 	public com.liferay.portal.kernel.model.Layout getLayout();
 
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	public String getLegacyDescription();
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	public String getLegacyTitle();
-
 	public String getSmallImageType()
 		throws com.liferay.portal.kernel.exception.PortalException;
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #getDDMStructureKey()}
-	 */
-	@Deprecated
-	public String getStructureId();
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #getDDMTemplateKey()}
-	 */
-	@Deprecated
-	public String getTemplateId();
 
 	@com.liferay.portal.kernel.json.JSON
 	public String getTitle();
@@ -196,24 +181,13 @@ public interface JournalArticle
 
 	public java.util.Map<java.util.Locale, String> getTitleMap();
 
+	@com.liferay.portal.kernel.json.JSON
 	public String getTitleMapAsXML();
 
 	public String getUrlTitle(java.util.Locale locale)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
 	public boolean hasApprovedVersion();
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), with no direct replacement
-	 */
-	@Deprecated
-	public boolean isTemplateDriven();
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	public void setDescription(String description);
 
 	public void setDescriptionMap(
 		java.util.Map<java.util.Locale, String> descriptionMap);
@@ -223,26 +197,6 @@ public interface JournalArticle
 	public void setImagesFolderId(long imagesFolderId);
 
 	public void setSmallImageType(String smallImageType);
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #setDDMStructureKey(String)}
-	 */
-	@Deprecated
-	public void setStructureId(String ddmStructureKey);
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #setDDMTemplateKey(String)}
-	 */
-	@Deprecated
-	public void setTemplateId(String ddmTemplateKey);
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	public void setTitle(String title);
 
 	public void setTitleMap(java.util.Map<java.util.Locale, String> titleMap);
 

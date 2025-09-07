@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.model.impl;
@@ -35,17 +26,17 @@ public class CTPreferencesCacheModel
 	implements CacheModel<CTPreferences>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof CTPreferencesCacheModel)) {
+		if (!(object instanceof CTPreferencesCacheModel)) {
 			return false;
 		}
 
 		CTPreferencesCacheModel ctPreferencesCacheModel =
-			(CTPreferencesCacheModel)obj;
+			(CTPreferencesCacheModel)object;
 
 		if ((ctPreferencesId == ctPreferencesCacheModel.ctPreferencesId) &&
 			(mvccVersion == ctPreferencesCacheModel.mvccVersion)) {
@@ -75,7 +66,7 @@ public class CTPreferencesCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
+		StringBundler sb = new StringBundler(15);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -87,6 +78,8 @@ public class CTPreferencesCacheModel
 		sb.append(userId);
 		sb.append(", ctCollectionId=");
 		sb.append(ctCollectionId);
+		sb.append(", previousCtCollectionId=");
+		sb.append(previousCtCollectionId);
 		sb.append(", confirmationEnabled=");
 		sb.append(confirmationEnabled);
 		sb.append("}");
@@ -103,6 +96,7 @@ public class CTPreferencesCacheModel
 		ctPreferencesImpl.setCompanyId(companyId);
 		ctPreferencesImpl.setUserId(userId);
 		ctPreferencesImpl.setCtCollectionId(ctCollectionId);
+		ctPreferencesImpl.setPreviousCtCollectionId(previousCtCollectionId);
 		ctPreferencesImpl.setConfirmationEnabled(confirmationEnabled);
 
 		ctPreferencesImpl.resetOriginalValues();
@@ -122,6 +116,8 @@ public class CTPreferencesCacheModel
 
 		ctCollectionId = objectInput.readLong();
 
+		previousCtCollectionId = objectInput.readLong();
+
 		confirmationEnabled = objectInput.readBoolean();
 	}
 
@@ -137,6 +133,8 @@ public class CTPreferencesCacheModel
 
 		objectOutput.writeLong(ctCollectionId);
 
+		objectOutput.writeLong(previousCtCollectionId);
+
 		objectOutput.writeBoolean(confirmationEnabled);
 	}
 
@@ -145,6 +143,7 @@ public class CTPreferencesCacheModel
 	public long companyId;
 	public long userId;
 	public long ctCollectionId;
+	public long previousCtCollectionId;
 	public boolean confirmationEnabled;
 
 }

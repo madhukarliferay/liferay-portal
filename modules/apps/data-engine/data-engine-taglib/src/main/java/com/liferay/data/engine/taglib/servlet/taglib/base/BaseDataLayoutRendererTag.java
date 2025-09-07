@@ -1,76 +1,133 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.taglib.servlet.taglib.base;
 
 import com.liferay.data.engine.taglib.internal.servlet.ServletContextUtil;
+import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+
+import java.util.Map;
 
 /**
  * @author Jeyvison Nascimento
  * @author Leonardo Barros
- * @generated
  */
-public abstract class BaseDataLayoutRendererTag extends com.liferay.taglib.util.IncludeTag {
+public abstract class BaseDataLayoutRendererTag extends IncludeTag {
 
 	@Override
 	public int doStartTag() throws JspException {
-		setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
+		setAttributeNamespace(ATTRIBUTE_NAMESPACE);
 
 		return super.doStartTag();
 	}
 
-	public java.lang.String getContainerId() {
+	public String getContainerId() {
 		return _containerId;
 	}
 
-	public java.lang.Long getDataLayoutId() {
+	public String getContentType() {
+		return _contentType;
+	}
+
+	public Long getDataDefinitionId() {
+		return _dataDefinitionId;
+	}
+
+	public Long getDataLayoutId() {
 		return _dataLayoutId;
 	}
 
-	public java.lang.Long getDataRecordId() {
+	public Long getDataRecordId() {
 		return _dataRecordId;
 	}
 
-	public java.util.Map getDataRecordValues() {
+	public Map<String, Object> getDataRecordValues() {
 		return _dataRecordValues;
 	}
 
-	public java.lang.String getNamespace() {
+	public String getDefaultLanguageId() {
+		return _defaultLanguageId;
+	}
+
+	public boolean getDisableFieldRepetition() {
+		return _disableFieldRepetition;
+	}
+
+	public String getDisplayType() {
+		return _displayType;
+	}
+
+	public String getLanguageId() {
+		return _languageId;
+	}
+
+	public String getNamespace() {
 		return _namespace;
 	}
 
-	public void setContainerId(java.lang.String containerId) {
+	public boolean getPersistDefaultValues() {
+		return _persistDefaultValues;
+	}
+
+	public boolean getPersisted() {
+		return _persisted;
+	}
+
+	public boolean getReadOnly() {
+		return _readOnly;
+	}
+
+	public boolean getSubmittable() {
+		return _submittable;
+	}
+
+	public void setContainerId(String containerId) {
 		_containerId = containerId;
 	}
 
-	public void setDataLayoutId(java.lang.Long dataLayoutId) {
+	public void setContentType(String contentType) {
+		_contentType = contentType;
+	}
+
+	public void setDataDefinitionId(Long dataDefinitionId) {
+		_dataDefinitionId = dataDefinitionId;
+	}
+
+	public void setDataLayoutId(Long dataLayoutId) {
 		_dataLayoutId = dataLayoutId;
 	}
 
-	public void setDataRecordId(java.lang.Long dataRecordId) {
+	public void setDataRecordId(Long dataRecordId) {
 		_dataRecordId = dataRecordId;
 	}
 
-	public void setDataRecordValues(java.util.Map dataRecordValues) {
+	public void setDataRecordValues(Map<String, Object> dataRecordValues) {
 		_dataRecordValues = dataRecordValues;
 	}
 
-	public void setNamespace(java.lang.String namespace) {
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		_defaultLanguageId = defaultLanguageId;
+	}
+
+	public void setDisableFieldRepetition(boolean disableFieldRepetition) {
+		_disableFieldRepetition = disableFieldRepetition;
+	}
+
+	public void setDisplayType(String displayType) {
+		_displayType = displayType;
+	}
+
+	public void setLanguageId(String languageId) {
+		_languageId = languageId;
+	}
+
+	public void setNamespace(String namespace) {
 		_namespace = namespace;
 	}
 
@@ -81,15 +138,41 @@ public abstract class BaseDataLayoutRendererTag extends com.liferay.taglib.util.
 		setServletContext(ServletContextUtil.getServletContext());
 	}
 
+	public void setPersistDefaultValues(boolean persistDefaultValues) {
+		_persistDefaultValues = persistDefaultValues;
+	}
+
+	public void setPersisted(boolean persisted) {
+		_persisted = persisted;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		_readOnly = readOnly;
+	}
+
+	public void setSubmittable(boolean submittable) {
+		_submittable = submittable;
+	}
+
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
 		_containerId = null;
+		_contentType = null;
+		_dataDefinitionId = null;
 		_dataLayoutId = null;
 		_dataRecordId = null;
 		_dataRecordValues = null;
+		_defaultLanguageId = null;
+		_disableFieldRepetition = false;
+		_displayType = null;
+		_languageId = null;
 		_namespace = null;
+		_persistDefaultValues = false;
+		_persisted = false;
+		_readOnly = false;
+		_submittable = true;
 	}
 
 	@Override
@@ -98,23 +181,51 @@ public abstract class BaseDataLayoutRendererTag extends com.liferay.taglib.util.
 	}
 
 	@Override
-	protected void setAttributes(HttpServletRequest request) {
-		setNamespacedAttribute(request, "containerId", _containerId);
-		setNamespacedAttribute(request, "dataLayoutId", _dataLayoutId);
-		setNamespacedAttribute(request, "dataRecordId", _dataRecordId);
-		setNamespacedAttribute(request, "dataRecordValues", _dataRecordValues);
-		setNamespacedAttribute(request, "namespace", _namespace);
+	protected void setAttributes(HttpServletRequest httpServletRequest) {
+		setNamespacedAttribute(httpServletRequest, "containerId", _containerId);
+		setNamespacedAttribute(httpServletRequest, "contentType", _contentType);
+		setNamespacedAttribute(
+			httpServletRequest, "dataDefinitionId", _dataDefinitionId);
+		setNamespacedAttribute(
+			httpServletRequest, "dataLayoutId", _dataLayoutId);
+		setNamespacedAttribute(
+			httpServletRequest, "dataRecordId", _dataRecordId);
+		setNamespacedAttribute(
+			httpServletRequest, "dataRecordValues", _dataRecordValues);
+		setNamespacedAttribute(
+			httpServletRequest, "defaultLanguageId", _defaultLanguageId);
+		setNamespacedAttribute(
+			httpServletRequest, "disableFieldRepetition",
+			_disableFieldRepetition);
+		setNamespacedAttribute(httpServletRequest, "displayType", _displayType);
+		setNamespacedAttribute(httpServletRequest, "languageId", _languageId);
+		setNamespacedAttribute(httpServletRequest, "namespace", _namespace);
+		setNamespacedAttribute(
+			httpServletRequest, "persistDefaultValues", _persistDefaultValues);
+		setNamespacedAttribute(httpServletRequest, "persisted", _persisted);
+		setNamespacedAttribute(httpServletRequest, "readOnly", _readOnly);
+		setNamespacedAttribute(httpServletRequest, "submittable", _submittable);
 	}
 
-	protected static final String _ATTRIBUTE_NAMESPACE = "liferay-data-engine:data-layout-renderer:";
+	protected static final String ATTRIBUTE_NAMESPACE =
+		"liferay-data-engine:data-layout-renderer:";
 
-	private static final String _PAGE =
-		"/data_layout_renderer/page.jsp";
+	private static final String _PAGE = "/data_layout_renderer/page.jsp";
 
-	private java.lang.String _containerId = null;
-	private java.lang.Long _dataLayoutId = null;
-	private java.lang.Long _dataRecordId = null;
-	private java.util.Map _dataRecordValues = null;
-	private java.lang.String _namespace = null;
+	private String _containerId;
+	private String _contentType;
+	private Long _dataDefinitionId;
+	private Long _dataLayoutId;
+	private Long _dataRecordId;
+	private Map<String, Object> _dataRecordValues;
+	private String _defaultLanguageId;
+	private boolean _disableFieldRepetition;
+	private String _displayType;
+	private String _languageId;
+	private String _namespace;
+	private boolean _persistDefaultValues;
+	private boolean _persisted;
+	private boolean _readOnly;
+	private boolean _submittable = true;
 
 }

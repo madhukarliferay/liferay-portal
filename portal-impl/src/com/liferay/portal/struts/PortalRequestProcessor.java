@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.struts;
@@ -17,6 +8,7 @@ package com.liferay.portal.struts;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.action.UpdatePasswordActionUtil;
 import com.liferay.portal.kernel.exception.LayoutPermissionException;
 import com.liferay.portal.kernel.exception.PortletActiveException;
 import com.liferay.portal.kernel.exception.UserActiveException;
@@ -24,7 +16,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
-import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserTracker;
@@ -32,7 +23,6 @@ import com.liferay.portal.kernel.model.UserTrackerPath;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
-import com.liferay.portal.kernel.security.auth.InterruptedPortletRequestWhitelistUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -44,19 +34,28 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.struts.LastPath;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.liveusers.LiveUsers;
+import com.liferay.portal.security.auth.InterruptedPortletRequestWhitelistUtil;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 import com.liferay.portal.struts.model.ModuleConfig;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
@@ -66,14 +65,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Brian Wing Shun Chan
@@ -85,16 +76,18 @@ import javax.servlet.http.HttpSession;
 public class PortalRequestProcessor {
 
 	public static final String INCLUDE_PATH_INFO =
-		"javax.servlet.include.path_info";
+		"jakarta.servlet.include.path_info";
 
 	public static final String INCLUDE_SERVLET_PATH =
-		"javax.servlet.include.servlet_path";
+		"jakarta.servlet.include.servlet_path";
 
 	public PortalRequestProcessor(
-		ServletContext servletContext, ModuleConfig moduleConfig) {
+		ModuleConfig moduleConfig, ServletContext servletContext,
+		String servletName) {
 
-		_servletContext = servletContext;
 		_moduleConfig = moduleConfig;
+		_servletContext = servletContext;
+		_servletName = servletName;
 
 		_definitions = (Map<String, Definition>)servletContext.getAttribute(
 			TilesUtil.DEFINITIONS);
@@ -109,17 +102,13 @@ public class PortalRequestProcessor {
 
 		// auth.public.path.
 
-		_publicPaths = new HashSet<>();
-
 		_publicPaths.add(_PATH_C);
 		_publicPaths.add(_PATH_PORTAL_API_JSONWS);
-		_publicPaths.add(_PATH_PORTAL_FLASH);
 		_publicPaths.add(_PATH_PORTAL_J_LOGIN);
 		_publicPaths.add(_PATH_PORTAL_LAYOUT);
 		_publicPaths.add(_PATH_PORTAL_LICENSE);
 		_publicPaths.add(_PATH_PORTAL_LOGIN);
 		_publicPaths.add(_PATH_PORTAL_RENDER_PORTLET);
-		_publicPaths.add(_PATH_PORTAL_RESILIENCY);
 		_publicPaths.add(_PATH_PORTAL_TCK);
 		_publicPaths.add(_PATH_PORTAL_UPDATE_LANGUAGE);
 		_publicPaths.add(_PATH_PORTAL_UPDATE_PASSWORD);
@@ -137,6 +126,34 @@ public class PortalRequestProcessor {
 		throws IOException, ServletException {
 
 		String path = _processPath(httpServletRequest);
+
+		try {
+			User user = PortalUtil.getUser(httpServletRequest);
+
+			if (path.equals(_PATH_PORTAL_UPDATE_PASSWORD) &&
+				Validator.isNull(
+					ParamUtil.getString(httpServletRequest, "ticketId")) &&
+				(user != null) && !user.isGuestUser() &&
+				user.isPasswordReset()) {
+
+				String updatePasswordURL =
+					UpdatePasswordActionUtil.generateUpdatePasswordURL(
+						httpServletRequest, user);
+
+				if (_log.isDebugEnabled()) {
+					_log.debug("Update password URL " + updatePasswordURL);
+				}
+
+				httpServletResponse.sendRedirect(updatePasswordURL);
+
+				return;
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
 
 		ActionMapping actionMapping = _moduleConfig.getActionMapping(path);
 
@@ -223,22 +240,18 @@ public class PortalRequestProcessor {
 		}
 
 		if ((portlet == null) || !portlet.isActive()) {
-			return layoutFriendlyURL.concat(
-				StringPool.QUESTION
-			).concat(
-				httpServletRequest.getQueryString()
-			);
+			return StringBundler.concat(
+				layoutFriendlyURL, StringPool.QUESTION,
+				httpServletRequest.getQueryString());
 		}
 
 		FriendlyURLMapper friendlyURLMapper =
 			portlet.getFriendlyURLMapperInstance();
 
 		if (friendlyURLMapper == null) {
-			return layoutFriendlyURL.concat(
-				StringPool.QUESTION
-			).concat(
-				httpServletRequest.getQueryString()
-			);
+			return StringBundler.concat(
+				layoutFriendlyURL, StringPool.QUESTION,
+				httpServletRequest.getQueryString());
 		}
 
 		String namespace = PortalUtil.getPortletNamespace(portletId);
@@ -265,39 +278,24 @@ public class PortalRequestProcessor {
 			return layoutFriendlyURL.concat(portletFriendlyURL);
 		}
 
-		return layoutFriendlyURL.concat(
-			StringPool.QUESTION
-		).concat(
-			httpServletRequest.getQueryString()
-		);
+		return StringBundler.concat(
+			layoutFriendlyURL, StringPool.QUESTION,
+			httpServletRequest.getQueryString());
 	}
 
 	private String _getLastPath(HttpServletRequest httpServletRequest) {
-		HttpSession session = httpServletRequest.getSession();
+		StringBundler sb = new StringBundler(5);
+
+		String portalURL = PortalUtil.getPortalURL(httpServletRequest);
+
+		sb.append(portalURL);
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		Boolean httpsInitial = (Boolean)session.getAttribute(
-			WebKeys.HTTPS_INITIAL);
-
-		String portalURL = null;
-
-		if (PropsValues.COMPANY_SECURITY_AUTH_REQUIRES_HTTPS &&
-			!PropsValues.SESSION_ENABLE_PHISHING_PROTECTION &&
-			(httpsInitial != null) && !httpsInitial.booleanValue()) {
-
-			portalURL = PortalUtil.getPortalURL(httpServletRequest, false);
-		}
-		else {
-			portalURL = PortalUtil.getPortalURL(httpServletRequest);
-		}
-
-		StringBundler sb = new StringBundler(7);
-
-		sb.append(portalURL);
 		sb.append(themeDisplay.getPathMain());
+
 		sb.append(_PATH_PORTAL_LAYOUT);
 
 		if (!PropsValues.AUTH_FORWARD_BY_LAST_PATH) {
@@ -307,16 +305,17 @@ public class PortalRequestProcessor {
 				// forward to the user's default layout to prevent a lagging
 				// loop
 
-				sb.append(StringPool.QUESTION);
-				sb.append("p_l_id");
-				sb.append(StringPool.EQUAL);
+				sb.append("?p_l_id=");
 				sb.append(LayoutConstants.DEFAULT_PLID);
 			}
 
 			return sb.toString();
 		}
 
-		LastPath lastPath = (LastPath)session.getAttribute(WebKeys.LAST_PATH);
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		LastPath lastPath = (LastPath)httpSession.getAttribute(
+			WebKeys.LAST_PATH);
 
 		if (lastPath == null) {
 			return sb.toString();
@@ -338,14 +337,9 @@ public class PortalRequestProcessor {
 			}
 		}
 
-		StringBundler lastPathSB = new StringBundler(4);
-
-		lastPathSB.append(portalURL);
-		lastPathSB.append(lastPath.getContextPath());
-		lastPathSB.append(lastPath.getPath());
-		lastPathSB.append(parameters);
-
-		return lastPathSB.toString();
+		return StringBundler.concat(
+			portalURL, lastPath.getContextPath(), lastPath.getPath(),
+			parameters);
 	}
 
 	private void _internalModuleRelativeForward(
@@ -362,7 +356,8 @@ public class PortalRequestProcessor {
 		}
 
 		StrutsUtil.forward(
-			uri, _servletContext, httpServletRequest, httpServletResponse);
+			httpServletRequest, httpServletResponse, _servletContext,
+			_servletName, null, uri);
 	}
 
 	private boolean _isPortletPath(String path) {
@@ -398,12 +393,8 @@ public class PortalRequestProcessor {
 		httpServletResponse.setContentType("text/html; charset=UTF-8");
 
 		if (!_processRoles(
-				httpServletRequest, httpServletResponse, actionMapping)) {
-
-			return;
-		}
-
-		if (!_processForward(
+				httpServletRequest, httpServletResponse, actionMapping) ||
+			!_processForward(
 				httpServletRequest, httpServletResponse, actionMapping)) {
 
 			return;
@@ -421,11 +412,11 @@ public class PortalRequestProcessor {
 					httpServletResponse);
 			}
 		}
-		catch (IOException | ServletException e) {
-			throw e;
+		catch (IOException | ServletException exception) {
+			throw exception;
 		}
-		catch (Exception e) {
-			throw new ServletException(e);
+		catch (Exception exception) {
+			throw new ServletException(exception);
 		}
 	}
 
@@ -448,23 +439,23 @@ public class PortalRequestProcessor {
 	}
 
 	private void _processLocale(HttpServletRequest httpServletRequest) {
-		HttpSession session = httpServletRequest.getSession();
+		HttpSession httpSession = httpServletRequest.getSession();
 
-		if (session.getAttribute(WebKeys.LOCALE) != null) {
+		if (httpSession.getAttribute(WebKeys.LOCALE) != null) {
 			return;
 		}
 
 		Locale locale = httpServletRequest.getLocale();
 
 		if (locale != null) {
-			session.setAttribute(WebKeys.LOCALE, locale);
+			httpSession.setAttribute(WebKeys.LOCALE, locale);
 		}
 	}
 
 	private String _processPath(HttpServletRequest httpServletRequest) {
 		String path = _findPath(httpServletRequest);
 
-		HttpSession session = httpServletRequest.getSession();
+		HttpSession httpSession = httpServletRequest.getSession();
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
@@ -473,7 +464,7 @@ public class PortalRequestProcessor {
 		// Current users
 
 		UserTracker userTracker = LiveUsers.getUserTracker(
-			themeDisplay.getCompanyId(), session.getId());
+			themeDisplay.getCompanyId(), httpSession.getId());
 
 		if ((userTracker != null) && !path.equals(_PATH_C) &&
 			!path.contains(_PATH_J_SECURITY_CHECK) &&
@@ -488,8 +479,8 @@ public class PortalRequestProcessor {
 						path, themeDisplay, httpServletRequest);
 				}
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 
 			String fullPathWithoutQueryString = fullPath;
@@ -500,11 +491,8 @@ public class PortalRequestProcessor {
 				fullPathWithoutQueryString = path;
 
 				if (Validator.isNotNull(queryString)) {
-					fullPath = path.concat(
-						StringPool.QUESTION
-					).concat(
-						queryString
-					);
+					fullPath = StringBundler.concat(
+						path, StringPool.QUESTION, queryString);
 				}
 				else {
 					fullPath = path;
@@ -530,14 +518,15 @@ public class PortalRequestProcessor {
 			}
 		}
 
-		String remoteUser = httpServletRequest.getRemoteUser();
-
 		User user = null;
 
 		try {
 			user = PortalUtil.getUser(httpServletRequest);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		// Last path
@@ -568,11 +557,17 @@ public class PortalRequestProcessor {
 				if (lastPath == null) {
 					lastPath = new LastPath(
 						themeDisplay.getPathMain(), path,
-						HttpUtil.parameterMapToString(
+						HttpComponentsUtil.parameterMapToString(
 							httpServletRequest.getParameterMap()));
 				}
 
-				session.setAttribute(WebKeys.LAST_PATH, lastPath);
+				String lastPathPath = lastPath.getPath();
+
+				// Ignore files that end with .map. See LPS-141963.
+
+				if (!lastPathPath.endsWith(".map")) {
+					httpSession.setAttribute(WebKeys.LAST_PATH, lastPath);
+				}
 			}
 		}
 
@@ -588,6 +583,8 @@ public class PortalRequestProcessor {
 		else if (path.equals(_PATH_PORTAL_SETUP_WIZARD)) {
 			return _PATH_PORTAL_LAYOUT;
 		}
+
+		String remoteUser = httpServletRequest.getRemoteUser();
 
 		if ((remoteUser != null) || (user != null)) {
 
@@ -624,24 +621,25 @@ public class PortalRequestProcessor {
 			return _PATH_PORTAL_LOGOUT;
 		}
 
-		long companyId = PortalUtil.getCompanyId(httpServletRequest);
-		String portletId = ParamUtil.getString(httpServletRequest, "p_p_id");
-
 		// Authenticated users must be active
 
 		if (user != null) {
 			if (!user.isActive()) {
-				SessionErrors.add(session, UserActiveException.class.getName());
+				SessionErrors.add(
+					httpSession, UserActiveException.class.getName());
 
 				return _PATH_PORTAL_ERROR;
 			}
+
+			String portletId = ParamUtil.getString(
+				httpServletRequest, "p_p_id");
 
 			if (!path.equals(_PATH_PORTAL_JSON_SERVICE) &&
 				!path.equals(_PATH_PORTAL_RENDER_PORTLET) &&
 				!themeDisplay.isImpersonated() &&
 				!InterruptedPortletRequestWhitelistUtil.
 					isPortletInvocationWhitelisted(
-						companyId, portletId,
+						PortalUtil.getCompanyId(httpServletRequest), portletId,
 						PortalUtil.getStrutsAction(httpServletRequest))) {
 
 				// Authenticated users should agree to Terms of Use
@@ -663,24 +661,10 @@ public class PortalRequestProcessor {
 				// Authenticated users must have a current password
 
 				if (user.isPasswordReset()) {
-					try {
-						PasswordPolicy passwordPolicy =
-							user.getPasswordPolicy();
-
-						if ((passwordPolicy == null) ||
-							passwordPolicy.isChangeable()) {
-
-							return _PATH_PORTAL_UPDATE_PASSWORD;
-						}
-					}
-					catch (Exception e) {
-						_log.error(e, e);
-
-						return _PATH_PORTAL_UPDATE_PASSWORD;
-					}
+					return _PATH_PORTAL_UPDATE_PASSWORD;
 				}
 				else if (path.equals(_PATH_PORTAL_UPDATE_PASSWORD)) {
-					return _PATH_PORTAL_LAYOUT;
+					return _PATH_PORTAL_UPDATE_PASSWORD;
 				}
 
 				// Authenticated users must have an email address
@@ -691,7 +675,7 @@ public class PortalRequestProcessor {
 
 				// Authenticated users should have a reminder query
 
-				if (!user.isDefaultUser() && !user.isReminderQueryComplete()) {
+				if (!user.isGuestUser() && !user.isReminderQueryComplete()) {
 					return _PATH_PORTAL_UPDATE_REMINDER_QUERY;
 				}
 			}
@@ -700,7 +684,7 @@ public class PortalRequestProcessor {
 
 			// Users must sign in
 
-			SessionErrors.add(session, PrincipalException.class.getName());
+			SessionErrors.add(httpSession, PrincipalException.class.getName());
 
 			return _PATH_PORTAL_LOGIN;
 		}
@@ -708,7 +692,7 @@ public class PortalRequestProcessor {
 		// Authenticated users must have access to at least one layout
 
 		if (SessionErrors.contains(
-				session, LayoutPermissionException.class.getName())) {
+				httpSession, LayoutPermissionException.class.getName())) {
 
 			return _PATH_PORTAL_ERROR;
 		}
@@ -735,7 +719,10 @@ public class PortalRequestProcessor {
 		try {
 			user = PortalUtil.getUser(httpServletRequest);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		if ((user != null) && _isPortletPath(path)) {
@@ -798,7 +785,11 @@ public class PortalRequestProcessor {
 					authorized = false;
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+
 				SessionErrors.add(
 					httpServletRequest, PrincipalException.class.getName());
 
@@ -840,8 +831,6 @@ public class PortalRequestProcessor {
 	private static final String _PATH_PORTAL_EXTEND_SESSION =
 		"/portal/extend_session";
 
-	private static final String _PATH_PORTAL_FLASH = "/portal/flash";
-
 	private static final String _PATH_PORTAL_J_LOGIN = "/portal/j_login";
 
 	private static final String _PATH_PORTAL_JSON_SERVICE =
@@ -859,8 +848,6 @@ public class PortalRequestProcessor {
 
 	private static final String _PATH_PORTAL_RENDER_PORTLET =
 		"/portal/render_portlet";
-
-	private static final String _PATH_PORTAL_RESILIENCY = "/portal/resiliency";
 
 	private static final String _PATH_PORTAL_SETUP_WIZARD =
 		"/portal/setup_wizard";
@@ -896,8 +883,9 @@ public class PortalRequestProcessor {
 	private final Map<String, Definition> _definitions;
 	private final Set<String> _lastPaths;
 	private final ModuleConfig _moduleConfig;
-	private final Set<String> _publicPaths;
+	private final Set<String> _publicPaths = new HashSet<>();
 	private final ServletContext _servletContext;
+	private final String _servletName;
 	private final Set<String> _trackerIgnorePaths;
 
 }

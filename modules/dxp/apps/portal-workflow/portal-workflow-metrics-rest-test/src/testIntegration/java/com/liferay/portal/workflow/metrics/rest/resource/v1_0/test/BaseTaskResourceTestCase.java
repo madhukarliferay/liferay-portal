@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.resource.v1_0.test;
@@ -22,57 +13,52 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
-import com.liferay.petra.function.UnsafeTriConsumer;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Task;
 import com.liferay.portal.workflow.metrics.rest.client.http.HttpInvoker;
 import com.liferay.portal.workflow.metrics.rest.client.pagination.Page;
-import com.liferay.portal.workflow.metrics.rest.client.pagination.Pagination;
 import com.liferay.portal.workflow.metrics.rest.client.resource.v1_0.TaskResource;
 import com.liferay.portal.workflow.metrics.rest.client.serdes.v1_0.TaskSerDes;
 
-import java.lang.reflect.InvocationTargetException;
+import jakarta.annotation.Generated;
+
+import jakarta.ws.rs.core.MultivaluedHashMap;
+
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.commons.lang.time.DateUtils;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -96,7 +82,7 @@ public abstract class BaseTaskResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -110,9 +96,16 @@ public abstract class BaseTaskResourceTestCase {
 
 		_taskResource.setContextCompany(testCompany);
 
-		TaskResource.Builder builder = TaskResource.builder();
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
-		taskResource = builder.locale(
+		taskResource = TaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
 			LocaleUtil.getDefault()
 		).build();
 	}
@@ -125,7 +118,32 @@ public abstract class BaseTaskResourceTestCase {
 
 	@Test
 	public void testClientSerDesToDTO() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Task task1 = randomTask();
+
+		String json = objectMapper.writeValueAsString(task1);
+
+		Task task2 = TaskSerDes.toDTO(json);
+
+		Assert.assertTrue(equals(task1, task2));
+	}
+
+	@Test
+	public void testClientSerDesToJSON() throws Exception {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Task task = randomTask();
+
+		String json1 = objectMapper.writeValueAsString(task);
+		String json2 = TaskSerDes.toJSON(task);
+
+		Assert.assertEquals(
+			objectMapper.readTree(json1), objectMapper.readTree(json2));
+	}
+
+	protected ObjectMapper getClientSerDesObjectMapper() {
+		return new ObjectMapper() {
 			{
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				configure(
@@ -140,40 +158,6 @@ public abstract class BaseTaskResourceTestCase {
 					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
 			}
 		};
-
-		Task task1 = randomTask();
-
-		String json = objectMapper.writeValueAsString(task1);
-
-		Task task2 = TaskSerDes.toDTO(json);
-
-		Assert.assertTrue(equals(task1, task2));
-	}
-
-	@Test
-	public void testClientSerDesToJSON() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
-
-		Task task = randomTask();
-
-		String json1 = objectMapper.writeValueAsString(task);
-		String json2 = TaskSerDes.toJSON(task);
-
-		Assert.assertEquals(
-			objectMapper.readTree(json1), objectMapper.readTree(json2));
 	}
 
 	@Test
@@ -182,8 +166,12 @@ public abstract class BaseTaskResourceTestCase {
 
 		Task task = randomTask();
 
-		task.setKey(regex);
+		task.setAssetTitle(regex);
+		task.setAssetType(regex);
+		task.setClassName(regex);
+		task.setLabel(regex);
 		task.setName(regex);
+		task.setProcessVersion(regex);
 
 		String json = TaskSerDes.toJSON(task);
 
@@ -191,181 +179,234 @@ public abstract class BaseTaskResourceTestCase {
 
 		task = TaskSerDes.toDTO(json);
 
-		Assert.assertEquals(regex, task.getKey());
+		Assert.assertEquals(regex, task.getAssetTitle());
+		Assert.assertEquals(regex, task.getAssetType());
+		Assert.assertEquals(regex, task.getClassName());
+		Assert.assertEquals(regex, task.getLabel());
 		Assert.assertEquals(regex, task.getName());
+		Assert.assertEquals(regex, task.getProcessVersion());
+	}
+
+	@Test
+	public void testDeleteProcessTask() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Task task = testDeleteProcessTask_addTask();
+
+		assertHttpResponseStatusCode(
+			204,
+			taskResource.deleteProcessTaskHttpResponse(
+				testDeleteProcessTask_getProcessId(task), task.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			taskResource.getProcessTaskHttpResponse(
+				testDeleteProcessTask_getProcessId(task), task.getId()));
+		assertHttpResponseStatusCode(
+			404,
+			taskResource.getProcessTaskHttpResponse(
+				testDeleteProcessTask_getProcessId(task), 0L));
+	}
+
+	protected Task testDeleteProcessTask_addTask() throws Exception {
+		return testPostProcessTask_addTask(randomTask());
+	}
+
+	protected Long testDeleteProcessTask_getProcessId(Task task)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetProcessTask() throws Exception {
+		Task postTask = testGetProcessTask_addTask();
+
+		Task getTask = taskResource.getProcessTask(
+			testGetProcessTask_getProcessId(postTask), postTask.getId());
+
+		assertEquals(postTask, getTask);
+		assertValid(getTask);
+	}
+
+	protected Task testGetProcessTask_addTask() throws Exception {
+		return testPostProcessTask_addTask(randomTask());
+	}
+
+	protected Long testGetProcessTask_getProcessId(Task task) throws Exception {
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetProcessTask() throws Exception {
+		Task task = testGraphQLGetProcessTask_addTask();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				task,
+				TaskSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"processTask",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"processId",
+											testGraphQLGetProcessTask_getProcessId(
+												task));
+										put("taskId", task.getId());
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data", "Object/processTask"))));
+
+		// Using the namespace portalWorkflowMetrics_v1_0
+
+		Assert.assertTrue(
+			equals(
+				task,
+				TaskSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"portalWorkflowMetrics_v1_0",
+								new GraphQLField(
+									"processTask",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"processId",
+												testGraphQLGetProcessTask_getProcessId(
+													task));
+											put("taskId", task.getId());
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data",
+						"JSONObject/portalWorkflowMetrics_v1_0",
+						"Object/processTask"))));
+	}
+
+	protected Long testGraphQLGetProcessTask_getProcessId(Task task)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetProcessTaskNotFound() throws Exception {
+		Long irrelevantProcessId = RandomTestUtil.randomLong();
+		Long irrelevantTaskId = RandomTestUtil.randomLong();
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"processTask",
+						new HashMap<String, Object>() {
+							{
+								put("processId", irrelevantProcessId);
+								put("taskId", irrelevantTaskId);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace portalWorkflowMetrics_v1_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"portalWorkflowMetrics_v1_0",
+						new GraphQLField(
+							"processTask",
+							new HashMap<String, Object>() {
+								{
+									put("processId", irrelevantProcessId);
+									put("taskId", irrelevantTaskId);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected Task testGraphQLGetProcessTask_addTask() throws Exception {
+		return testGraphQLTask_addTask();
 	}
 
 	@Test
 	public void testGetProcessTasksPage() throws Exception {
-		Page<Task> page = taskResource.getProcessTasksPage(
-			testGetProcessTasksPage_getProcessId(), null,
-			RandomTestUtil.nextDate(), RandomTestUtil.nextDate(),
-			RandomTestUtil.randomString(), Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long processId = testGetProcessTasksPage_getProcessId();
 		Long irrelevantProcessId =
 			testGetProcessTasksPage_getIrrelevantProcessId();
 
-		if ((irrelevantProcessId != null)) {
+		Page<Task> page = taskResource.getProcessTasksPage(processId);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantProcessId != null) {
 			Task irrelevantTask = testGetProcessTasksPage_addTask(
 				irrelevantProcessId, randomIrrelevantTask());
 
-			page = taskResource.getProcessTasksPage(
-				irrelevantProcessId, null, null, null, null,
-				Pagination.of(1, 2), null);
+			page = taskResource.getProcessTasksPage(irrelevantProcessId);
 
-			Assert.assertEquals(1, page.getTotalCount());
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
 
-			assertEquals(
-				Arrays.asList(irrelevantTask), (List<Task>)page.getItems());
-			assertValid(page);
+			assertContains(irrelevantTask, (List<Task>)page.getItems());
+			assertValid(
+				page,
+				testGetProcessTasksPage_getExpectedActions(
+					irrelevantProcessId));
 		}
 
 		Task task1 = testGetProcessTasksPage_addTask(processId, randomTask());
 
 		Task task2 = testGetProcessTasksPage_addTask(processId, randomTask());
 
-		page = taskResource.getProcessTasksPage(
-			processId, null, null, null, null, Pagination.of(1, 2), null);
+		page = taskResource.getProcessTasksPage(processId);
 
-		Assert.assertEquals(2, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(task1, task2), (List<Task>)page.getItems());
-		assertValid(page);
+		assertContains(task1, (List<Task>)page.getItems());
+		assertContains(task2, (List<Task>)page.getItems());
+		assertValid(
+			page, testGetProcessTasksPage_getExpectedActions(processId));
 	}
 
-	@Test
-	public void testGetProcessTasksPageWithPagination() throws Exception {
-		Long processId = testGetProcessTasksPage_getProcessId();
-
-		Task task1 = testGetProcessTasksPage_addTask(processId, randomTask());
-
-		Task task2 = testGetProcessTasksPage_addTask(processId, randomTask());
-
-		Task task3 = testGetProcessTasksPage_addTask(processId, randomTask());
-
-		Page<Task> page1 = taskResource.getProcessTasksPage(
-			processId, null, null, null, null, Pagination.of(1, 2), null);
-
-		List<Task> tasks1 = (List<Task>)page1.getItems();
-
-		Assert.assertEquals(tasks1.toString(), 2, tasks1.size());
-
-		Page<Task> page2 = taskResource.getProcessTasksPage(
-			processId, null, null, null, null, Pagination.of(2, 2), null);
-
-		Assert.assertEquals(3, page2.getTotalCount());
-
-		List<Task> tasks2 = (List<Task>)page2.getItems();
-
-		Assert.assertEquals(tasks2.toString(), 1, tasks2.size());
-
-		Page<Task> page3 = taskResource.getProcessTasksPage(
-			processId, null, null, null, null, Pagination.of(1, 3), null);
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(task1, task2, task3), (List<Task>)page3.getItems());
-	}
-
-	@Test
-	public void testGetProcessTasksPageWithSortDateTime() throws Exception {
-		testGetProcessTasksPageWithSort(
-			EntityField.Type.DATE_TIME,
-			(entityField, task1, task2) -> {
-				BeanUtils.setProperty(
-					task1, entityField.getName(),
-					DateUtils.addMinutes(new Date(), -2));
-			});
-	}
-
-	@Test
-	public void testGetProcessTasksPageWithSortInteger() throws Exception {
-		testGetProcessTasksPageWithSort(
-			EntityField.Type.INTEGER,
-			(entityField, task1, task2) -> {
-				BeanUtils.setProperty(task1, entityField.getName(), 0);
-				BeanUtils.setProperty(task2, entityField.getName(), 1);
-			});
-	}
-
-	@Test
-	public void testGetProcessTasksPageWithSortString() throws Exception {
-		testGetProcessTasksPageWithSort(
-			EntityField.Type.STRING,
-			(entityField, task1, task2) -> {
-				Class<?> clazz = task1.getClass();
-
-				Method method = clazz.getMethod(
-					"get" +
-						StringUtil.upperCaseFirstLetter(entityField.getName()));
-
-				Class<?> returnType = method.getReturnType();
-
-				if (returnType.isAssignableFrom(Map.class)) {
-					BeanUtils.setProperty(
-						task1, entityField.getName(),
-						Collections.singletonMap("Aaa", "Aaa"));
-					BeanUtils.setProperty(
-						task2, entityField.getName(),
-						Collections.singletonMap("Bbb", "Bbb"));
-				}
-				else {
-					BeanUtils.setProperty(task1, entityField.getName(), "Aaa");
-					BeanUtils.setProperty(task2, entityField.getName(), "Bbb");
-				}
-			});
-	}
-
-	protected void testGetProcessTasksPageWithSort(
-			EntityField.Type type,
-			UnsafeTriConsumer<EntityField, Task, Task, Exception>
-				unsafeTriConsumer)
+	protected Map<String, Map<String, String>>
+			testGetProcessTasksPage_getExpectedActions(Long processId)
 		throws Exception {
 
-		List<EntityField> entityFields = getEntityFields(type);
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
 
-		if (entityFields.isEmpty()) {
-			return;
-		}
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/portal-workflow-metrics/v1.0/processes/{processId}/tasks/batch".
+				replace("{processId}", String.valueOf(processId)));
 
-		Long processId = testGetProcessTasksPage_getProcessId();
+		expectedActions.put("createBatch", createBatchAction);
 
-		Task task1 = randomTask();
-		Task task2 = randomTask();
-
-		for (EntityField entityField : entityFields) {
-			unsafeTriConsumer.accept(entityField, task1, task2);
-		}
-
-		task1 = testGetProcessTasksPage_addTask(processId, task1);
-
-		task2 = testGetProcessTasksPage_addTask(processId, task2);
-
-		for (EntityField entityField : entityFields) {
-			Page<Task> ascPage = taskResource.getProcessTasksPage(
-				processId, null, null, null, null, Pagination.of(1, 2),
-				entityField.getName() + ":asc");
-
-			assertEquals(
-				Arrays.asList(task1, task2), (List<Task>)ascPage.getItems());
-
-			Page<Task> descPage = taskResource.getProcessTasksPage(
-				processId, null, null, null, null, Pagination.of(1, 2),
-				entityField.getName() + ":desc");
-
-			assertEquals(
-				Arrays.asList(task2, task1), (List<Task>)descPage.getItems());
-		}
+		return expectedActions;
 	}
 
 	protected Task testGetProcessTasksPage_addTask(Long processId, Task task)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		return taskResource.postProcessTask(processId, task);
 	}
 
 	protected Long testGetProcessTasksPage_getProcessId() throws Exception {
@@ -377,6 +418,105 @@ public abstract class BaseTaskResourceTestCase {
 		throws Exception {
 
 		return null;
+	}
+
+	@Test
+	public void testPatchProcessTask() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Task task = testPatchProcessTask_addTask();
+
+		assertHttpResponseStatusCode(
+			204,
+			taskResource.patchProcessTaskHttpResponse(
+				testPatchProcessTask_getProcessId(task), task.getId(), task));
+
+		assertHttpResponseStatusCode(
+			404,
+			taskResource.patchProcessTaskHttpResponse(
+				testPatchProcessTask_getProcessId(task), 0L, task));
+	}
+
+	protected Long testPatchProcessTask_getProcessId(Task task)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Task testPatchProcessTask_addTask() throws Exception {
+		return testPostProcessTask_addTask(randomTask());
+	}
+
+	@Test
+	public void testPatchProcessTaskComplete() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Task task = testPatchProcessTaskComplete_addTask();
+
+		assertHttpResponseStatusCode(
+			204,
+			taskResource.patchProcessTaskCompleteHttpResponse(
+				testPatchProcessTaskComplete_getProcessId(task), task.getId(),
+				task));
+
+		assertHttpResponseStatusCode(
+			404,
+			taskResource.patchProcessTaskCompleteHttpResponse(
+				testPatchProcessTaskComplete_getProcessId(task), 0L, task));
+	}
+
+	protected Long testPatchProcessTaskComplete_getProcessId(Task task)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Task testPatchProcessTaskComplete_addTask() throws Exception {
+		return testPostProcessTask_addTask(randomTask());
+	}
+
+	@Test
+	public void testPostProcessTask() throws Exception {
+		Task randomTask = randomTask();
+
+		Task postTask = testPostProcessTask_addTask(randomTask);
+
+		assertEquals(randomTask, postTask);
+		assertValid(postTask);
+	}
+
+	protected Task testPostProcessTask_addTask(Task task) throws Exception {
+		return taskResource.postProcessTask(
+			testGetProcessTasksPage_getProcessId(), task);
+	}
+
+	@Test
+	public void testPostTasksPage() throws Exception {
+		Assert.assertTrue(false);
+	}
+
+	@Test
+	public void testBatchEngineDeleteImportTask() throws Exception {
+		Assert.assertTrue(true);
+	}
+
+	protected Task testGraphQLTask_addTask() throws Exception {
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected void assertContains(Task task, List<Task> tasks) {
+		boolean contains = false;
+
+		for (Task item : tasks) {
+			if (equals(task, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(tasks + " does not contain " + task, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -423,69 +563,122 @@ public abstract class BaseTaskResourceTestCase {
 		}
 	}
 
-	protected void assertEqualsJSONArray(
-		List<Task> tasks, JSONArray jsonArray) {
-
-		for (Task task : tasks) {
-			boolean contains = false;
-
-			for (Object object : jsonArray) {
-				if (equalsJSONObject(task, (JSONObject)object)) {
-					contains = true;
-
-					break;
-				}
-			}
-
-			Assert.assertTrue(
-				jsonArray + " does not contain " + task, contains);
-		}
-	}
-
-	protected void assertValid(Task task) {
+	protected void assertValid(Task task) throws Exception {
 		boolean valid = true;
+
+		if (task.getDateCreated() == null) {
+			valid = false;
+		}
+
+		if (task.getDateModified() == null) {
+			valid = false;
+		}
+
+		if (task.getId() == null) {
+			valid = false;
+		}
 
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals(
-					"breachedInstanceCount", additionalAssertFieldName)) {
-
-				if (task.getBreachedInstanceCount() == null) {
+			if (Objects.equals("assetTitle", additionalAssertFieldName)) {
+				if (task.getAssetTitle() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals(
-					"breachedInstancePercentage", additionalAssertFieldName)) {
-
-				if (task.getBreachedInstancePercentage() == null) {
+			if (Objects.equals("assetTitle_i18n", additionalAssertFieldName)) {
+				if (task.getAssetTitle_i18n() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals("durationAvg", additionalAssertFieldName)) {
-				if (task.getDurationAvg() == null) {
+			if (Objects.equals("assetType", additionalAssertFieldName)) {
+				if (task.getAssetType() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals("instanceCount", additionalAssertFieldName)) {
-				if (task.getInstanceCount() == null) {
+			if (Objects.equals("assetType_i18n", additionalAssertFieldName)) {
+				if (task.getAssetType_i18n() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals("key", additionalAssertFieldName)) {
-				if (task.getKey() == null) {
+			if (Objects.equals("assignee", additionalAssertFieldName)) {
+				if (task.getAssignee() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("className", additionalAssertFieldName)) {
+				if (task.getClassName() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("classPK", additionalAssertFieldName)) {
+				if (task.getClassPK() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("completed", additionalAssertFieldName)) {
+				if (task.getCompleted() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("completionUserId", additionalAssertFieldName)) {
+				if (task.getCompletionUserId() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateCompletion", additionalAssertFieldName)) {
+				if (task.getDateCompletion() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("duration", additionalAssertFieldName)) {
+				if (task.getDuration() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("instanceId", additionalAssertFieldName)) {
+				if (task.getInstanceId() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("label", additionalAssertFieldName)) {
+				if (task.getLabel() == null) {
 					valid = false;
 				}
 
@@ -500,20 +693,24 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"onTimeInstanceCount", additionalAssertFieldName)) {
-
-				if (task.getOnTimeInstanceCount() == null) {
+			if (Objects.equals("nodeId", additionalAssertFieldName)) {
+				if (task.getNodeId() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals(
-					"overdueInstanceCount", additionalAssertFieldName)) {
+			if (Objects.equals("processId", additionalAssertFieldName)) {
+				if (task.getProcessId() == null) {
+					valid = false;
+				}
 
-				if (task.getOverdueInstanceCount() == null) {
+				continue;
+			}
+
+			if (Objects.equals("processVersion", additionalAssertFieldName)) {
+				if (task.getProcessVersion() == null) {
 					valid = false;
 				}
 
@@ -529,6 +726,12 @@ public abstract class BaseTaskResourceTestCase {
 	}
 
 	protected void assertValid(Page<Task> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Task> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Task> tasks = page.getItems();
@@ -543,19 +746,76 @@ public abstract class BaseTaskResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		assertValid(page.getActions(), expectedActions);
+	}
+
+	protected void assertValid(
+		Map<String, Map<String, String>> actions1,
+		Map<String, Map<String, String>> actions2) {
+
+		for (String key : actions2.keySet()) {
+			Map action = actions1.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map<String, String> expectedAction = actions2.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[0];
 	}
 
-	protected List<GraphQLField> getGraphQLFields() {
+	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(
+					com.liferay.portal.workflow.metrics.rest.dto.v1_0.Task.
+						class)) {
 
-			graphQLFields.add(new GraphQLField(additionalAssertFieldName));
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
+
+				continue;
+			}
+
+			graphQLFields.addAll(getGraphQLFields(field));
+		}
+
+		return graphQLFields;
+	}
+
+	protected List<GraphQLField> getGraphQLFields(
+			java.lang.reflect.Field... fields)
+		throws Exception {
+
+		List<GraphQLField> graphQLFields = new ArrayList<>();
+
+		for (java.lang.reflect.Field field : fields) {
+			com.liferay.portal.vulcan.graphql.annotation.GraphQLField
+				vulcanGraphQLField = field.getAnnotation(
+					com.liferay.portal.vulcan.graphql.annotation.GraphQLField.
+						class);
+
+			if (vulcanGraphQLField != null) {
+				Class<?> clazz = field.getType();
+
+				if (clazz.isArray()) {
+					clazz = clazz.getComponentType();
+				}
+
+				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
+					getDeclaredFields(clazz));
+
+				graphQLFields.add(
+					new GraphQLField(field.getName(), childrenGraphQLFields));
+			}
 		}
 
 		return graphQLFields;
@@ -573,12 +833,9 @@ public abstract class BaseTaskResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals(
-					"breachedInstanceCount", additionalAssertFieldName)) {
-
+			if (Objects.equals("assetTitle", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						task1.getBreachedInstanceCount(),
-						task2.getBreachedInstanceCount())) {
+						task1.getAssetTitle(), task2.getAssetTitle())) {
 
 					return false;
 				}
@@ -586,12 +843,10 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"breachedInstancePercentage", additionalAssertFieldName)) {
-
-				if (!Objects.deepEquals(
-						task1.getBreachedInstancePercentage(),
-						task2.getBreachedInstancePercentage())) {
+			if (Objects.equals("assetTitle_i18n", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)task1.getAssetTitle_i18n(),
+						(Map)task2.getAssetTitle_i18n())) {
 
 					return false;
 				}
@@ -599,9 +854,9 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("durationAvg", additionalAssertFieldName)) {
+			if (Objects.equals("assetType", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						task1.getDurationAvg(), task2.getDurationAvg())) {
+						task1.getAssetType(), task2.getAssetType())) {
 
 					return false;
 				}
@@ -609,9 +864,10 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("instanceCount", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(
-						task1.getInstanceCount(), task2.getInstanceCount())) {
+			if (Objects.equals("assetType_i18n", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)task1.getAssetType_i18n(),
+						(Map)task2.getAssetType_i18n())) {
 
 					return false;
 				}
@@ -619,8 +875,117 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("key", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(task1.getKey(), task2.getKey())) {
+			if (Objects.equals("assignee", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getAssignee(), task2.getAssignee())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("className", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getClassName(), task2.getClassName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("classPK", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getClassPK(), task2.getClassPK())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("completed", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getCompleted(), task2.getCompleted())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("completionUserId", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getCompletionUserId(),
+						task2.getCompletionUserId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateCompletion", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getDateCompletion(), task2.getDateCompletion())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateCreated", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getDateCreated(), task2.getDateCreated())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateModified", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getDateModified(), task2.getDateModified())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("duration", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getDuration(), task2.getDuration())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("id", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(task1.getId(), task2.getId())) {
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("instanceId", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						task1.getInstanceId(), task2.getInstanceId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("label", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(task1.getLabel(), task2.getLabel())) {
 					return false;
 				}
 
@@ -635,12 +1000,17 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"onTimeInstanceCount", additionalAssertFieldName)) {
+			if (Objects.equals("nodeId", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(task1.getNodeId(), task2.getNodeId())) {
+					return false;
+				}
 
+				continue;
+			}
+
+			if (Objects.equals("processId", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						task1.getOnTimeInstanceCount(),
-						task2.getOnTimeInstanceCount())) {
+						task1.getProcessId(), task2.getProcessId())) {
 
 					return false;
 				}
@@ -648,12 +1018,9 @@ public abstract class BaseTaskResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"overdueInstanceCount", additionalAssertFieldName)) {
-
+			if (Objects.equals("processVersion", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						task1.getOverdueInstanceCount(),
-						task2.getOverdueInstanceCount())) {
+						task1.getProcessVersion(), task2.getProcessVersion())) {
 
 					return false;
 				}
@@ -669,99 +1036,49 @@ public abstract class BaseTaskResourceTestCase {
 		return true;
 	}
 
-	protected boolean equalsJSONObject(Task task, JSONObject jsonObject) {
-		for (String fieldName : getAdditionalAssertFieldNames()) {
-			if (Objects.equals("breachedInstanceCount", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getBreachedInstanceCount(),
-						jsonObject.getLong("breachedInstanceCount"))) {
+	protected boolean equals(
+		Map<String, Object> map1, Map<String, Object> map2) {
+
+		if (Objects.equals(map1.keySet(), map2.keySet())) {
+			for (Map.Entry<String, Object> entry : map1.entrySet()) {
+				if (entry.getValue() instanceof Map) {
+					if (!equals(
+							(Map)entry.getValue(),
+							(Map)map2.get(entry.getKey()))) {
+
+						return false;
+					}
+				}
+				else if (!Objects.deepEquals(
+							entry.getValue(), map2.get(entry.getKey()))) {
 
 					return false;
 				}
-
-				continue;
 			}
 
-			if (Objects.equals("breachedInstancePercentage", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getBreachedInstancePercentage(),
-						jsonObject.getDouble("breachedInstancePercentage"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("durationAvg", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getDurationAvg(),
-						jsonObject.getLong("durationAvg"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("instanceCount", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getInstanceCount(),
-						jsonObject.getLong("instanceCount"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("key", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getKey(), jsonObject.getString("key"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("name", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getName(), jsonObject.getString("name"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("onTimeInstanceCount", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getOnTimeInstanceCount(),
-						jsonObject.getLong("onTimeInstanceCount"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("overdueInstanceCount", fieldName)) {
-				if (!Objects.deepEquals(
-						task.getOverdueInstanceCount(),
-						jsonObject.getLong("overdueInstanceCount"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			throw new IllegalArgumentException(
-				"Invalid field name " + fieldName);
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
+		throws Exception {
+
+		if (clazz.getClassLoader() == null) {
+			return new java.lang.reflect.Field[0];
+		}
+
+		return TransformUtil.transform(
+			ReflectionUtil.getDeclaredFields(clazz),
+			field -> {
+				if (field.isSynthetic()) {
+					return null;
+				}
+
+				return field;
+			},
+			java.lang.reflect.Field.class);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()
@@ -778,6 +1095,10 @@ public abstract class BaseTaskResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -787,18 +1108,18 @@ public abstract class BaseTaskResourceTestCase {
 	protected List<EntityField> getEntityFields(EntityField.Type type)
 		throws Exception {
 
-		java.util.Collection<EntityField> entityFields = getEntityFields();
+		return TransformUtil.transform(
+			getEntityFields(),
+			entityField -> {
+				if (!Objects.equals(entityField.getType(), type) ||
+					ArrayUtil.contains(
+						getIgnoredEntityFieldNames(), entityField.getName())) {
 
-		Stream<EntityField> stream = entityFields.stream();
+					return null;
+				}
 
-		return stream.filter(
-			entityField ->
-				Objects.equals(entityField.getType(), type) &&
-				!ArrayUtil.contains(
-					getIgnoredEntityFieldNames(), entityField.getName())
-		).collect(
-			Collectors.toList()
-		);
+				return entityField;
+			});
 	}
 
 	protected String getFilterString(
@@ -814,50 +1135,422 @@ public abstract class BaseTaskResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
-		if (entityFieldName.equals("breachedInstanceCount")) {
+		if (entityFieldName.equals("assetTitle")) {
+			Object object = task.getAssetTitle();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("assetTitle_i18n")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("breachedInstancePercentage")) {
+		if (entityFieldName.equals("assetType")) {
+			Object object = task.getAssetType();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("assetType_i18n")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("durationAvg")) {
+		if (entityFieldName.equals("assignee")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("instanceCount")) {
+		if (entityFieldName.equals("className")) {
+			Object object = task.getClassName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("classPK")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("key")) {
-			sb.append("'");
-			sb.append(String.valueOf(task.getKey()));
-			sb.append("'");
+		if (entityFieldName.equals("completed")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("completionUserId")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("dateCompletion")) {
+			if (operator.equals("between")) {
+				Date date = task.getDateCompletion();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(task.getDateCompletion()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("dateCreated")) {
+			if (operator.equals("between")) {
+				Date date = task.getDateCreated();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(task.getDateCreated()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("dateModified")) {
+			if (operator.equals("between")) {
+				Date date = task.getDateModified();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(task.getDateModified()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("duration")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("id")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("instanceId")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("label")) {
+			Object object = task.getLabel();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
 
 		if (entityFieldName.equals("name")) {
-			sb.append("'");
-			sb.append(String.valueOf(task.getName()));
-			sb.append("'");
+			Object object = task.getName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
 
-		if (entityFieldName.equals("onTimeInstanceCount")) {
+		if (entityFieldName.equals("nodeId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("overdueInstanceCount")) {
+		if (entityFieldName.equals("processId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("processVersion")) {
+			Object object = task.getProcessVersion();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		throw new IllegalArgumentException(
@@ -874,24 +1567,58 @@ public abstract class BaseTaskResourceTestCase {
 			"application/json");
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
 		httpInvoker.path("http://localhost:8080/o/graphql");
-		httpInvoker.userNameAndPassword("test@liferay.com:test");
+		httpInvoker.userNameAndPassword(
+			"test@liferay.com:" + PropsValues.DEFAULT_ADMIN_PASSWORD);
 
 		HttpInvoker.HttpResponse httpResponse = httpInvoker.invoke();
 
 		return httpResponse.getContent();
 	}
 
+	protected JSONObject invokeGraphQLMutation(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField mutationGraphQLField = new GraphQLField(
+			"mutation", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(mutationGraphQLField.toString()));
+	}
+
+	protected JSONObject invokeGraphQLQuery(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField queryGraphQLField = new GraphQLField(
+			"query", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(queryGraphQLField.toString()));
+	}
+
 	protected Task randomTask() throws Exception {
 		return new Task() {
 			{
-				breachedInstanceCount = RandomTestUtil.randomLong();
-				breachedInstancePercentage = RandomTestUtil.randomDouble();
-				durationAvg = RandomTestUtil.randomLong();
-				instanceCount = RandomTestUtil.randomLong();
-				key = RandomTestUtil.randomString();
-				name = RandomTestUtil.randomString();
-				onTimeInstanceCount = RandomTestUtil.randomLong();
-				overdueInstanceCount = RandomTestUtil.randomLong();
+				assetTitle = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				assetType = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				className = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				classPK = RandomTestUtil.randomLong();
+				completed = RandomTestUtil.randomBoolean();
+				completionUserId = RandomTestUtil.randomLong();
+				dateCompletion = RandomTestUtil.nextDate();
+				dateCreated = RandomTestUtil.nextDate();
+				dateModified = RandomTestUtil.nextDate();
+				duration = RandomTestUtil.randomLong();
+				id = RandomTestUtil.randomLong();
+				instanceId = RandomTestUtil.randomLong();
+				label = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				nodeId = RandomTestUtil.randomLong();
+				processId = RandomTestUtil.randomLong();
+				processVersion = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 			}
 		};
 	}
@@ -907,9 +1634,131 @@ public abstract class BaseTaskResourceTestCase {
 	}
 
 	protected TaskResource taskResource;
-	protected Group irrelevantGroup;
-	protected Company testCompany;
-	protected Group testGroup;
+	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
+	protected com.liferay.portal.kernel.model.Company testCompany;
+	protected com.liferay.portal.kernel.model.Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = source.getClass();
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					_getAllDeclaredFields(sourceClass)) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				try {
+					Method setMethod = _getMethod(
+						targetClass, field.getName(), "set",
+						getMethod.getReturnType());
+
+					setMethod.invoke(target, getMethod.invoke(source));
+				}
+				catch (Exception e) {
+					continue;
+				}
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static List<java.lang.reflect.Field> _getAllDeclaredFields(
+			Class<?> clazz) {
+
+			List<java.lang.reflect.Field> fields = new ArrayList<>();
+
+			while ((clazz != null) && (clazz != Object.class)) {
+				for (java.lang.reflect.Field field :
+						clazz.getDeclaredFields()) {
+
+					fields.add(field);
+				}
+
+				clazz = clazz.getSuperclass();
+			}
+
+			return fields;
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -917,9 +1766,22 @@ public abstract class BaseTaskResourceTestCase {
 			this(key, new HashMap<>(), graphQLFields);
 		}
 
+		public GraphQLField(String key, List<GraphQLField> graphQLFields) {
+			this(key, new HashMap<>(), graphQLFields);
+		}
+
 		public GraphQLField(
 			String key, Map<String, Object> parameterMap,
 			GraphQLField... graphQLFields) {
+
+			_key = key;
+			_parameterMap = parameterMap;
+			_graphQLFields = Arrays.asList(graphQLFields);
+		}
+
+		public GraphQLField(
+			String key, Map<String, Object> parameterMap,
+			List<GraphQLField> graphQLFields) {
 
 			_key = key;
 			_parameterMap = parameterMap;
@@ -937,25 +1799,25 @@ public abstract class BaseTaskResourceTestCase {
 						_parameterMap.entrySet()) {
 
 					sb.append(entry.getKey());
-					sb.append(":");
+					sb.append(": ");
 					sb.append(entry.getValue());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append(")");
 			}
 
-			if (_graphQLFields.length > 0) {
+			if (!_graphQLFields.isEmpty()) {
 				sb.append("{");
 
 				for (GraphQLField graphQLField : _graphQLFields) {
 					sb.append(graphQLField.toString());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append("}");
 			}
@@ -963,28 +1825,18 @@ public abstract class BaseTaskResourceTestCase {
 			return sb.toString();
 		}
 
-		private final GraphQLField[] _graphQLFields;
+		private final List<GraphQLField> _graphQLFields;
 		private final String _key;
 		private final Map<String, Object> _parameterMap;
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseTaskResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseTaskResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
+	private static Format _format;
 
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
-	private static DateFormat _dateFormat;
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.portal.workflow.metrics.rest.resource.v1_0.TaskResource

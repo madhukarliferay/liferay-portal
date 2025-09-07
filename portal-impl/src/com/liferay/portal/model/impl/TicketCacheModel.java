@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,16 +28,16 @@ public class TicketCacheModel
 	implements CacheModel<Ticket>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof TicketCacheModel)) {
+		if (!(object instanceof TicketCacheModel)) {
 			return false;
 		}
 
-		TicketCacheModel ticketCacheModel = (TicketCacheModel)obj;
+		TicketCacheModel ticketCacheModel = (TicketCacheModel)object;
 
 		if ((ticketId == ticketCacheModel.ticketId) &&
 			(mvccVersion == ticketCacheModel.mvccVersion)) {
@@ -150,7 +141,9 @@ public class TicketCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		ticketId = objectInput.readLong();
@@ -164,7 +157,7 @@ public class TicketCacheModel
 		key = objectInput.readUTF();
 
 		type = objectInput.readInt();
-		extraInfo = objectInput.readUTF();
+		extraInfo = (String)objectInput.readObject();
 		expirationDate = objectInput.readLong();
 	}
 
@@ -191,10 +184,10 @@ public class TicketCacheModel
 		objectOutput.writeInt(type);
 
 		if (extraInfo == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(extraInfo);
+			objectOutput.writeObject(extraInfo);
 		}
 
 		objectOutput.writeLong(expirationDate);

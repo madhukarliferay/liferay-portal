@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.web.internal.upgrade.v1_1_1;
@@ -28,13 +19,13 @@ import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletId;
+import com.liferay.portal.kernel.upgrade.BasePortletIdUpgradeProcess;
 import com.liferay.portal.kernel.util.StringUtil;
 
 /**
  * @author Marcellus Tavares
  */
-public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
+public class UpgradeEventsDisplayPortletId extends BasePortletIdUpgradeProcess {
 
 	public UpgradeEventsDisplayPortletId(
 		PortletPreferencesLocalService portletPreferencesLocalService,
@@ -44,9 +35,77 @@ public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
 		_resourcePermissionLocalService = resourcePermissionLocalService;
 	}
 
-	protected void deleteResourcePermissions(
-			final String oldRootPortletId, final String newRootPortletId)
-		throws PortalException {
+	@Override
+	protected String[][] getRenamePortletIdsArray() {
+		return new String[][] {
+			{"1_WAR_eventsdisplayportlet", CalendarPortletKeys.CALENDAR}
+		};
+	}
+
+	@Override
+	protected void updateInstanceablePortletPreferences(
+			String oldRootPortletId, String newRootPortletId)
+		throws Exception {
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			_portletPreferencesLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> {
+				Junction junction = RestrictionsFactoryUtil.disjunction();
+
+				Property property = PropertyFactoryUtil.forName("portletId");
+
+				junction.add(property.eq(oldRootPortletId));
+				junction.add(property.like(oldRootPortletId + "_INSTANCE_%"));
+				junction.add(
+					property.like(oldRootPortletId + "_USER_%_INSTANCE_%"));
+
+				dynamicQuery.add(junction);
+			});
+		actionableDynamicQuery.setPerformActionMethod(
+			(PortletPreferences portletPreferences) ->
+				_updatePortletPreferences(
+					portletPreferences, oldRootPortletId, newRootPortletId));
+
+		actionableDynamicQuery.performActions();
+	}
+
+	@Override
+	protected void updatePortlet(
+			String oldRootPortletId, String newRootPortletId)
+		throws Exception {
+
+		try {
+			updateResourcePermission(oldRootPortletId, newRootPortletId, true);
+
+			updateInstanceablePortletPreferences(
+				oldRootPortletId, newRootPortletId);
+
+			updateLayouts(oldRootPortletId, newRootPortletId, false);
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+		}
+	}
+
+	@Override
+	protected void updateResourcePermission(
+			String oldRootPortletId, String newRootPortletId,
+			boolean updateName)
+		throws Exception {
+
+		_deleteResourcePermissions(oldRootPortletId, newRootPortletId);
+
+		super.updateResourcePermission(
+			oldRootPortletId, newRootPortletId, updateName);
+	}
+
+	private void _deleteResourcePermissions(
+			String oldRootPortletId, String newRootPortletId)
+		throws Exception {
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_resourcePermissionLocalService.getActionableDynamicQuery();
@@ -59,7 +118,7 @@ public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
 			});
 		actionableDynamicQuery.setPerformActionMethod(
 			(ResourcePermission resourcePermission) -> {
-				long total = getResourcePermissionsCount(
+				long total = _getResourcePermissionsCount(
 					resourcePermission.getCompanyId(), newRootPortletId,
 					resourcePermission.getScope(),
 					resourcePermission.getRoleId());
@@ -73,16 +132,8 @@ public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
 		actionableDynamicQuery.performActions();
 	}
 
-	@Override
-	protected String[][] getRenamePortletIdsArray() {
-		return new String[][] {
-			{"1_WAR_eventsdisplayportlet", CalendarPortletKeys.CALENDAR}
-		};
-	}
-
-	protected long getResourcePermissionsCount(
-			final long companyId, final String name, final int scope,
-			final long roleId)
+	private long _getResourcePermissionsCount(
+			long companyId, String name, int scope, long roleId)
 		throws PortalException {
 
 		ActionableDynamicQuery actionableDynamicQuery =
@@ -111,56 +162,7 @@ public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
 		return actionableDynamicQuery.performCount();
 	}
 
-	@Override
-	protected void updateInstanceablePortletPreferences(
-			final String oldRootPortletId, final String newRootPortletId)
-		throws Exception {
-
-		ActionableDynamicQuery actionableDynamicQuery =
-			_portletPreferencesLocalService.getActionableDynamicQuery();
-
-		actionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> {
-				Junction junction = RestrictionsFactoryUtil.disjunction();
-
-				Property property = PropertyFactoryUtil.forName("portletId");
-
-				junction.add(property.eq(oldRootPortletId));
-				junction.add(property.like(oldRootPortletId + "_INSTANCE_%"));
-				junction.add(
-					property.like(oldRootPortletId + "_USER_%_INSTANCE_%"));
-
-				dynamicQuery.add(junction);
-			});
-		actionableDynamicQuery.setParallel(true);
-		actionableDynamicQuery.setPerformActionMethod(
-			(PortletPreferences portletPreference) -> updatePortletPreferences(
-				portletPreference, oldRootPortletId, newRootPortletId));
-
-		actionableDynamicQuery.performActions();
-	}
-
-	@Override
-	protected void updatePortlet(
-			String oldRootPortletId, String newRootPortletId)
-		throws Exception {
-
-		try {
-			updateResourcePermission(oldRootPortletId, newRootPortletId, true);
-
-			updateInstanceablePortletPreferences(
-				oldRootPortletId, newRootPortletId);
-
-			updateLayouts(oldRootPortletId, newRootPortletId, false);
-		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
-			}
-		}
-	}
-
-	protected void updatePortletPreferences(
+	private void _updatePortletPreferences(
 		PortletPreferences portletPreferences, String oldRootPortletId,
 		String newRootPortletId) {
 
@@ -170,40 +172,28 @@ public class UpgradeEventsDisplayPortletId extends BaseUpgradePortletId {
 
 		portletPreferences.setPortletId(newPortletId);
 
-		StringBundler sb = new StringBundler(12);
+		portletPreferences =
+			_portletPreferencesLocalService.updatePortletPreferences(
+				portletPreferences);
 
-		sb.append("<portlet-preferences>");
-		sb.append(String.format(_PREFERENCE_FORMAT, "defaultView", "agenda"));
-		sb.append(
-			String.format(
-				_PREFERENCE_FORMAT, "displaySchedulerHeader", "false"));
-		sb.append(
-			String.format(_PREFERENCE_FORMAT, "displaySchedulerOnly", "true"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "eventsPerPage", "10"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "maxDaysDisplayed", "1"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "showAgendaView", "true"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "showDayView", "false"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "showMonthView", "false"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "showWeekView", "false"));
-		sb.append(String.format(_PREFERENCE_FORMAT, "showUserEvents", "false"));
-		sb.append("</portlet-preferences>");
-
-		portletPreferences.setPreferences(sb.toString());
-
-		_portletPreferencesLocalService.updatePortletPreferences(
-			portletPreferences);
-	}
-
-	@Override
-	protected void updateResourcePermission(
-			String oldRootPortletId, String newRootPortletId,
-			boolean updateName)
-		throws Exception {
-
-		deleteResourcePermissions(oldRootPortletId, newRootPortletId);
-
-		super.updateResourcePermission(
-			oldRootPortletId, newRootPortletId, updateName);
+		_portletPreferencesLocalService.updatePreferences(
+			portletPreferences.getOwnerId(), portletPreferences.getOwnerType(),
+			portletPreferences.getPlid(), portletPreferences.getPortletId(),
+			StringBundler.concat(
+				"<portlet-preferences>",
+				String.format(_PREFERENCE_FORMAT, "defaultView", "agenda"),
+				String.format(
+					_PREFERENCE_FORMAT, "displaySchedulerHeader", "false"),
+				String.format(
+					_PREFERENCE_FORMAT, "displaySchedulerOnly", "true"),
+				String.format(_PREFERENCE_FORMAT, "eventsPerPage", "10"),
+				String.format(_PREFERENCE_FORMAT, "maxDaysDisplayed", "1"),
+				String.format(_PREFERENCE_FORMAT, "showAgendaView", "true"),
+				String.format(_PREFERENCE_FORMAT, "showDayView", "false"),
+				String.format(_PREFERENCE_FORMAT, "showMonthView", "false"),
+				String.format(_PREFERENCE_FORMAT, "showWeekView", "false"),
+				String.format(_PREFERENCE_FORMAT, "showUserEvents", "false"),
+				"</portlet-preferences>"));
 	}
 
 	private static final String _PREFERENCE_FORMAT =

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service;
@@ -50,10 +41,10 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface SourceService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link SourceServiceUtil} to access the source remote service. Add custom service methods to <code>com.liferay.portal.reports.engine.console.service.impl.SourceServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.reports.engine.console.service.impl.SourceServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the source remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link SourceServiceUtil} if injection and service tracking are not available.
 	 */
 	public Source addSource(
 			long groupId, Map<Locale, String> nameMap, String driverClassName,
@@ -76,7 +67,7 @@ public interface SourceService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<Source> getSources(
 			long groupId, String name, String driverUrl, boolean andSearch,
-			int start, int end, OrderByComparator orderByComparator)
+			int start, int end, OrderByComparator<Source> orderByComparator)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

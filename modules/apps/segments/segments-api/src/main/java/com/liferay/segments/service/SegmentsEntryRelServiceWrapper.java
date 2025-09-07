@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.segments.model.SegmentsEntryRel;
 
 /**
  * Provides a wrapper for {@link SegmentsEntryRelService}.
@@ -27,41 +19,14 @@ public class SegmentsEntryRelServiceWrapper
 	implements SegmentsEntryRelService,
 			   ServiceWrapper<SegmentsEntryRelService> {
 
+	public SegmentsEntryRelServiceWrapper() {
+		this(null);
+	}
+
 	public SegmentsEntryRelServiceWrapper(
 		SegmentsEntryRelService segmentsEntryRelService) {
 
 		_segmentsEntryRelService = segmentsEntryRelService;
-	}
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SegmentsEntryRelServiceUtil} to access the segments entry rel remote service. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRelServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	@Override
-	public com.liferay.segments.model.SegmentsEntryRel addSegmentsEntryRel(
-			long segmentsEntryId, long classNameId, long classPK,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _segmentsEntryRelService.addSegmentsEntryRel(
-			segmentsEntryId, classNameId, classPK, serviceContext);
-	}
-
-	@Override
-	public void deleteSegmentsEntryRel(long segmentsEntryRelId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		_segmentsEntryRelService.deleteSegmentsEntryRel(segmentsEntryRelId);
-	}
-
-	@Override
-	public void deleteSegmentsEntryRel(
-			long segmentsEntryId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		_segmentsEntryRelService.deleteSegmentsEntryRel(
-			segmentsEntryId, classNameId, classPK);
 	}
 
 	/**
@@ -75,20 +40,18 @@ public class SegmentsEntryRelServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(long segmentsEntryId)
+	public java.util.List<SegmentsEntryRel> getSegmentsEntryRels(
+			long segmentsEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _segmentsEntryRelService.getSegmentsEntryRels(segmentsEntryId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(
-				long segmentsEntryId, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.segments.model.SegmentsEntryRel>
-						orderByComparator)
+	public java.util.List<SegmentsEntryRel> getSegmentsEntryRels(
+			long segmentsEntryId, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator<SegmentsEntryRel>
+				orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _segmentsEntryRelService.getSegmentsEntryRels(
@@ -96,8 +59,8 @@ public class SegmentsEntryRelServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(long groupId, long classNameId, long classPK)
+	public java.util.List<SegmentsEntryRel> getSegmentsEntryRels(
+			long groupId, long classNameId, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _segmentsEntryRelService.getSegmentsEntryRels(

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.persistence.test;
@@ -26,14 +17,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +121,8 @@ public class CalendarResourcePersistenceTest {
 
 		newCalendarResource.setMvccVersion(RandomTestUtil.nextLong());
 
+		newCalendarResource.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newCalendarResource.setUuid(RandomTestUtil.randomString());
 
 		newCalendarResource.setGroupId(RandomTestUtil.nextLong());
@@ -164,6 +161,9 @@ public class CalendarResourcePersistenceTest {
 		Assert.assertEquals(
 			existingCalendarResource.getMvccVersion(),
 			newCalendarResource.getMvccVersion());
+		Assert.assertEquals(
+			existingCalendarResource.getCtCollectionId(),
+			newCalendarResource.getCtCollectionId());
 		Assert.assertEquals(
 			existingCalendarResource.getUuid(), newCalendarResource.getUuid());
 		Assert.assertEquals(
@@ -286,13 +286,14 @@ public class CalendarResourcePersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_C_A() throws Exception {
-		_persistence.countByC_C_A(
+	public void testCountByC_LikeC_A() throws Exception {
+		_persistence.countByC_LikeC_A(
 			RandomTestUtil.nextLong(), "", RandomTestUtil.randomBoolean());
 
-		_persistence.countByC_C_A(0L, "null", RandomTestUtil.randomBoolean());
+		_persistence.countByC_LikeC_A(
+			0L, "null", RandomTestUtil.randomBoolean());
 
-		_persistence.countByC_C_A(
+		_persistence.countByC_LikeC_A(
 			0L, (String)null, RandomTestUtil.randomBoolean());
 	}
 
@@ -321,16 +322,34 @@ public class CalendarResourcePersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<CalendarResource> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"CalendarResource", "mvccVersion", true, "uuid", true,
-			"calendarResourceId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "classNameId", true, "classPK", true,
+			"CalendarResource", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "calendarResourceId", true, "groupId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "classNameId", true, "classPK", true,
 			"classUuid", true, "code", true, "name", true, "description", true,
 			"active", true, "lastPublishDate", true);
 	}
@@ -558,31 +577,73 @@ public class CalendarResourcePersistenceTest {
 
 		_persistence.clearCache();
 
-		CalendarResource existingCalendarResource =
-			_persistence.findByPrimaryKey(newCalendarResource.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newCalendarResource.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingCalendarResource.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingCalendarResource, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		CalendarResource newCalendarResource = addCalendarResource();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			CalendarResource.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"calendarResourceId",
+				newCalendarResource.getCalendarResourceId()));
+
+		List<CalendarResource> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(CalendarResource calendarResource) {
 		Assert.assertEquals(
-			Long.valueOf(existingCalendarResource.getGroupId()),
+			calendarResource.getUuid(),
+			ReflectionTestUtil.invoke(
+				calendarResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(calendarResource.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCalendarResource, "getOriginalGroupId",
-				new Class<?>[0]));
+				calendarResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingCalendarResource.getClassNameId()),
+			Long.valueOf(calendarResource.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCalendarResource, "getOriginalClassNameId",
-				new Class<?>[0]));
+				calendarResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingCalendarResource.getClassPK()),
+			Long.valueOf(calendarResource.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCalendarResource, "getOriginalClassPK",
-				new Class<?>[0]));
+				calendarResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected CalendarResource addCalendarResource() throws Exception {
@@ -591,6 +652,8 @@ public class CalendarResourcePersistenceTest {
 		CalendarResource calendarResource = _persistence.create(pk);
 
 		calendarResource.setMvccVersion(RandomTestUtil.nextLong());
+
+		calendarResource.setCtCollectionId(RandomTestUtil.nextLong());
 
 		calendarResource.setUuid(RandomTestUtil.randomString());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.parser.bbcode.internal;
@@ -40,17 +31,13 @@ public class BBCodeParser {
 
 	public BBCodeParser() {
 		_blockElements = SetUtil.fromArray(
-			new String[] {
-				"*", "center", "code", "justify", "left", "li", "list", "q",
-				"quote", "right", "table", "td", "th", "tr"
-			});
+			"*", "center", "code", "justify", "left", "li", "list", "q",
+			"quote", "right", "table", "td", "th", "tr");
 
 		_inlineElements = SetUtil.fromArray(
-			new String[] {
-				"b", "color", "font", "i", "img", "s", "size", "u", "url"
-			});
+			"b", "color", "font", "i", "img", "s", "size", "u", "url");
 
-		_selfCloseElements = SetUtil.fromArray(new String[] {"*"});
+		_selfCloseElements = SetUtil.fromArray("*");
 	}
 
 	public List<BBCodeItem> parse(String text) {
@@ -128,7 +115,7 @@ public class BBCodeParser {
 				tag = bbCodeToken.getEndTag();
 			}
 
-			if (isValidTag(tag)) {
+			if (_isValidTag(tag)) {
 				length = bbCodeToken.getStart();
 			}
 		}
@@ -177,7 +164,7 @@ public class BBCodeParser {
 
 		String startTag = bbCodeToken.getStartTag();
 
-		if (!isValidTag(startTag)) {
+		if (!_isValidTag(startTag)) {
 			return;
 		}
 
@@ -213,7 +200,7 @@ public class BBCodeParser {
 		bbCodeItems.add(bbCodeItem);
 	}
 
-	protected boolean isValidTag(String tag) {
+	private boolean _isValidTag(String tag) {
 		if ((tag != null) && (tag.length() > 0)) {
 			Matcher matcher = _tagPattern.matcher(tag);
 

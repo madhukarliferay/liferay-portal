@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
-import java.util.Properties;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.Properties;
 
 /**
  * @author Brian Wing Shun Chan
@@ -24,149 +15,145 @@ import javax.portlet.PortletPreferences;
 public class PrefsPropsUtil {
 
 	public static boolean getBoolean(long companyId, String name) {
-		return getPrefsProps().getBoolean(companyId, name);
+		return _prefsProps.getBoolean(companyId, name);
 	}
 
 	public static boolean getBoolean(
 		long companyId, String name, boolean defaultValue) {
 
-		return getPrefsProps().getBoolean(companyId, name, defaultValue);
+		return _prefsProps.getBoolean(companyId, name, defaultValue);
 	}
 
 	public static boolean getBoolean(
-		PortletPreferences preferences, String name) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getBoolean(preferences, name);
+		return _prefsProps.getBoolean(portletPreferences, name);
 	}
 
 	public static boolean getBoolean(
-		PortletPreferences preferences, String name, boolean defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		boolean defaultValue) {
 
-		return getPrefsProps().getBoolean(preferences, name, defaultValue);
+		return _prefsProps.getBoolean(portletPreferences, name, defaultValue);
 	}
 
 	public static boolean getBoolean(String name) {
-		return getPrefsProps().getBoolean(name);
+		return _prefsProps.getBoolean(name);
 	}
 
 	public static boolean getBoolean(String name, boolean defaultValue) {
-		return getPrefsProps().getBoolean(name, defaultValue);
+		return _prefsProps.getBoolean(name, defaultValue);
 	}
 
 	public static String getContent(long companyId, String name) {
-		return getPrefsProps().getContent(companyId, name);
+		return _prefsProps.getContent(companyId, name);
 	}
 
 	public static String getContent(
-		PortletPreferences preferences, String name) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getContent(preferences, name);
+		return _prefsProps.getContent(portletPreferences, name);
 	}
 
 	public static String getContent(String name) {
-		return getPrefsProps().getContent(name);
+		return _prefsProps.getContent(name);
 	}
 
 	public static double getDouble(long companyId, String name) {
-		return getPrefsProps().getDouble(companyId, name);
+		return _prefsProps.getDouble(companyId, name);
 	}
 
 	public static double getDouble(
 		long companyId, String name, double defaultValue) {
 
-		return getPrefsProps().getDouble(companyId, name, defaultValue);
+		return _prefsProps.getDouble(companyId, name, defaultValue);
 	}
 
 	public static double getDouble(
-		PortletPreferences preferences, String name) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getDouble(preferences, name);
+		return _prefsProps.getDouble(portletPreferences, name);
 	}
 
 	public static double getDouble(
-		PortletPreferences preferences, String name, double defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		double defaultValue) {
 
-		return getPrefsProps().getDouble(preferences, name, defaultValue);
+		return _prefsProps.getDouble(portletPreferences, name, defaultValue);
 	}
 
 	public static double getDouble(String name) {
-		return getPrefsProps().getDouble(name);
+		return _prefsProps.getDouble(name);
 	}
 
 	public static double getDouble(String name, double defaultValue) {
-		return getPrefsProps().getDouble(name, defaultValue);
+		return _prefsProps.getDouble(name, defaultValue);
 	}
 
 	public static int getInteger(long companyId, String name) {
-		return getPrefsProps().getInteger(companyId, name);
+		return _prefsProps.getInteger(companyId, name);
 	}
 
 	public static int getInteger(
 		long companyId, String name, int defaultValue) {
 
-		return getPrefsProps().getInteger(companyId, name, defaultValue);
-	}
-
-	public static int getInteger(PortletPreferences preferences, String name) {
-		return getPrefsProps().getInteger(preferences, name);
+		return _prefsProps.getInteger(companyId, name, defaultValue);
 	}
 
 	public static int getInteger(
-		PortletPreferences preferences, String name, int defaultValue) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getInteger(preferences, name, defaultValue);
+		return _prefsProps.getInteger(portletPreferences, name);
+	}
+
+	public static int getInteger(
+		PortletPreferences portletPreferences, String name, int defaultValue) {
+
+		return _prefsProps.getInteger(portletPreferences, name, defaultValue);
 	}
 
 	public static int getInteger(String name) {
-		return getPrefsProps().getInteger(name);
+		return _prefsProps.getInteger(name);
 	}
 
 	public static int getInteger(String name, int defaultValue) {
-		return getPrefsProps().getInteger(name, defaultValue);
+		return _prefsProps.getInteger(name, defaultValue);
 	}
 
 	public static long getLong(long companyId, String name) {
-		return getPrefsProps().getLong(companyId, name);
+		return _prefsProps.getLong(companyId, name);
 	}
 
 	public static long getLong(long companyId, String name, long defaultValue) {
-		return getPrefsProps().getLong(companyId, name, defaultValue);
-	}
-
-	public static long getLong(PortletPreferences preferences, String name) {
-		return getPrefsProps().getLong(preferences, name);
+		return _prefsProps.getLong(companyId, name, defaultValue);
 	}
 
 	public static long getLong(
-		PortletPreferences preferences, String name, long defaultValue) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getLong(preferences, name, defaultValue);
+		return _prefsProps.getLong(portletPreferences, name);
+	}
+
+	public static long getLong(
+		PortletPreferences portletPreferences, String name, long defaultValue) {
+
+		return _prefsProps.getLong(portletPreferences, name, defaultValue);
 	}
 
 	public static long getLong(String name) {
-		return getPrefsProps().getLong(name);
+		return _prefsProps.getLong(name);
 	}
 
 	public static long getLong(String name, long defaultValue) {
-		return getPrefsProps().getLong(name, defaultValue);
+		return _prefsProps.getLong(name, defaultValue);
 	}
 
 	public static PortletPreferences getPreferences() {
-		return getPrefsProps().getPreferences();
-	}
-
-	public static PortletPreferences getPreferences(boolean readOnly) {
-		return getPrefsProps().getPreferences(readOnly);
+		return _prefsProps.getPreferences();
 	}
 
 	public static PortletPreferences getPreferences(long companyId) {
-		return getPrefsProps().getPreferences(companyId);
-	}
-
-	public static PortletPreferences getPreferences(
-		long companyId, boolean readOnly) {
-
-		return getPrefsProps().getPreferences(companyId, readOnly);
+		return _prefsProps.getPreferences(companyId);
 	}
 
 	public static PrefsProps getPrefsProps() {
@@ -174,144 +161,153 @@ public class PrefsPropsUtil {
 	}
 
 	public static Properties getProperties(
-		PortletPreferences preferences, String prefix, boolean removePrefix) {
+		PortletPreferences portletPreferences, String prefix,
+		boolean removePrefix) {
 
-		return getPrefsProps().getProperties(preferences, prefix, removePrefix);
+		return _prefsProps.getProperties(
+			portletPreferences, prefix, removePrefix);
 	}
 
 	public static Properties getProperties(
 		String prefix, boolean removePrefix) {
 
-		return getPrefsProps().getProperties(prefix, removePrefix);
+		return _prefsProps.getProperties(prefix, removePrefix);
 	}
 
 	public static short getShort(long companyId, String name) {
-		return getPrefsProps().getShort(companyId, name);
+		return _prefsProps.getShort(companyId, name);
 	}
 
 	public static short getShort(
 		long companyId, String name, short defaultValue) {
 
-		return getPrefsProps().getShort(companyId, name, defaultValue);
-	}
-
-	public static short getShort(PortletPreferences preferences, String name) {
-		return getPrefsProps().getShort(preferences, name);
+		return _prefsProps.getShort(companyId, name, defaultValue);
 	}
 
 	public static short getShort(
-		PortletPreferences preferences, String name, short defaultValue) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getShort(preferences, name, defaultValue);
+		return _prefsProps.getShort(portletPreferences, name);
+	}
+
+	public static short getShort(
+		PortletPreferences portletPreferences, String name,
+		short defaultValue) {
+
+		return _prefsProps.getShort(portletPreferences, name, defaultValue);
 	}
 
 	public static short getShort(String name) {
-		return getPrefsProps().getShort(name);
+		return _prefsProps.getShort(name);
 	}
 
 	public static short getShort(String name, short defaultValue) {
-		return getPrefsProps().getShort(name, defaultValue);
+		return _prefsProps.getShort(name, defaultValue);
 	}
 
 	public static String getString(long companyId, String name) {
-		return getPrefsProps().getString(companyId, name);
+		return _prefsProps.getString(companyId, name);
 	}
 
 	public static String getString(
 		long companyId, String name, String defaultValue) {
 
-		return getPrefsProps().getString(companyId, name, defaultValue);
+		return _prefsProps.getString(companyId, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name) {
+		PortletPreferences portletPreferences, String name) {
 
-		return getPrefsProps().getString(preferences, name);
+		return _prefsProps.getString(portletPreferences, name);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, boolean defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		boolean defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, double defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		double defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, int defaultValue) {
+		PortletPreferences portletPreferences, String name, int defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, long defaultValue) {
+		PortletPreferences portletPreferences, String name, long defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, short defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		short defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(
-		PortletPreferences preferences, String name, String defaultValue) {
+		PortletPreferences portletPreferences, String name,
+		String defaultValue) {
 
-		return getPrefsProps().getString(preferences, name, defaultValue);
+		return _prefsProps.getString(portletPreferences, name, defaultValue);
 	}
 
 	public static String getString(String name) {
-		return getPrefsProps().getString(name);
+		return _prefsProps.getString(name);
 	}
 
 	public static String getString(String name, String defaultValue) {
-		return getPrefsProps().getString(name, defaultValue);
+		return _prefsProps.getString(name, defaultValue);
 	}
 
 	public static String[] getStringArray(
 		long companyId, String name, String delimiter) {
 
-		return getPrefsProps().getStringArray(companyId, name, delimiter);
+		return _prefsProps.getStringArray(companyId, name, delimiter);
 	}
 
 	public static String[] getStringArray(
 		long companyId, String name, String delimiter, String[] defaultValue) {
 
-		return getPrefsProps().getStringArray(
+		return _prefsProps.getStringArray(
 			companyId, name, delimiter, defaultValue);
 	}
 
 	public static String[] getStringArray(
-		PortletPreferences preferences, String name, String delimiter) {
+		PortletPreferences portletPreferences, String name, String delimiter) {
 
-		return getPrefsProps().getStringArray(preferences, name, delimiter);
+		return _prefsProps.getStringArray(portletPreferences, name, delimiter);
 	}
 
 	public static String[] getStringArray(
-		PortletPreferences preferences, String name, String delimiter,
+		PortletPreferences portletPreferences, String name, String delimiter,
 		String[] defaultValue) {
 
-		return getPrefsProps().getStringArray(
-			preferences, name, delimiter, defaultValue);
+		return _prefsProps.getStringArray(
+			portletPreferences, name, delimiter, defaultValue);
 	}
 
 	public static String[] getStringArray(String name, String delimiter) {
-		return getPrefsProps().getStringArray(name, delimiter);
+		return _prefsProps.getStringArray(name, delimiter);
 	}
 
 	public static String[] getStringArray(
 		String name, String delimiter, String[] defaultValue) {
 
-		return getPrefsProps().getStringArray(name, delimiter, defaultValue);
+		return _prefsProps.getStringArray(name, delimiter, defaultValue);
 	}
 
 	public static String getStringFromNames(long companyId, String... names) {
-		return getPrefsProps().getStringFromNames(companyId, names);
+		return _prefsProps.getStringFromNames(companyId, names);
 	}
 
 	public void setPrefsProps(PrefsProps prefsProps) {

@@ -1,4 +1,4 @@
-#parse ("definitions.vm")
+#parse ("/definitions.vm")
 package ${package}.form.field;
 
 import com.liferay.dynamic.data.mapping.form.field.type.BaseDDMFormFieldRenderer;
@@ -15,7 +15,6 @@ import org.osgi.service.component.annotations.Component;
  * @author ${author}
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=${formFieldTypeName}",
 	service = DDMFormFieldRenderer.class
 )

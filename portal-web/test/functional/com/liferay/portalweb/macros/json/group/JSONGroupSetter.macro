@@ -1,56 +1,105 @@
 definition {
 
-	macro setGrandParentGroupId {
-		if (isSet(grandParentGroupName)) {
-			var grandParentGroupId = JSONGroupAPI._getGroupIdByName(groupName = "${grandParentGroupName}");
+	@summary = "Default summary"
+	macro setAllowManualMembershipManagement(allowManualMembershipManagement = null) {
+		if (${allowManualMembershipManagement} == "false") {
+			var manualMembership = "false";
 		}
 		else {
-			var grandParentGroupId = "0";
+			var manualMembership = "true";
 		}
 
-		return "${grandParentGroupId}";
+		return ${manualMembership};
 	}
 
-	macro setGroupDescriptionMap {
-		if (isSet(groupDescription)) {
-			var groupDescription = URLUtil.encodeUTF8("${groupDescription}");
+	@summary = "Default summary"
+	macro setGrandParentGroupId(grandParentGroupName = null) {
+		if (isSet(grandParentGroupName)) {
+			if (!(isSet(site))) {
+				var site = "true";
+			}
 
+			var grandParentGroupId = JSONGroupAPI._getGrandParentGroupIdByName(
+				groupName = ${grandParentGroupName},
+				site = ${site});
+		}
+		else {
+			var grandParentGroupId = 0;
+		}
+
+		return ${grandParentGroupId};
+	}
+
+	@summary = "Default summary"
+	macro setGroupDescriptionMap(groupDescriptionEncoded = null) {
+		if (isSet(groupDescription)) {
+			var groupDescription = URLUtil.encodeUTF8(${groupDescription});
 			var groupDescriptionMap = '''{"en_US":"${groupDescriptionEncoded}"}''';
 		}
 		else {
 			var groupDescriptionMap = "{}";
 		}
 
-		return "${groupDescriptionMap}";
+		return ${groupDescriptionMap};
 	}
 
-	macro setGroupId {
-		Variables.assertDefined(parameterList = "${groupName}");
+	@summary = "Default summary"
+	macro setGroupId(groupName = null, portalInstanceName = null, portalURL = null, parentGroupName = null) {
+		Variables.assertDefined(parameterList = ${groupName});
 
-		var groupId = JSONGroupAPI._getGroupIdByName(groupName = "${groupName}");
+		if (!(isSet(site))) {
+			var site = "true";
+		}
 
-		return "${groupId}";
+		var groupId = JSONGroupAPI._getGroupIdByName(
+			groupName = ${groupName},
+			parentGroupName = ${parentGroupName},
+			portalInstanceName = ${portalInstanceName},
+			portalURL = ${portalURL},
+			site = ${site});
+
+		return ${groupId};
 	}
 
-	macro setGroupNameMap {
-		Variables.assertDefined(parameterList = "${groupName}");
+	@summary = "Default summary"
+	macro setGroupNameMap(groupName = null) {
+		Variables.assertDefined(parameterList = ${groupName});
 
-		var groupNameMap = URLUtil.encodeUTF8("${groupName}");
-
+		var groupNameMap = URLUtil.encodeUTF8(${groupName});
 		var groupNameMap = '''{"en_US":"${groupName}"}''';
 
-		return "${groupNameMap}";
+		return ${groupNameMap};
 	}
 
-	macro setParentGroupId {
-		if (isSet(parentGroupName)) {
-			var parentGroupId = JSONGroupAPI._getParentGroupIdByName(groupName = "${parentGroupName}", grandParentGroupName = "${grandParentGroupName}");
+	@summary = "Default summary"
+	macro setMembershipType(membershipType = null) {
+		if (${membershipType} == "Private") {
+			var type = 3;
+		}
+		else if (${membershipType} == "Restricted") {
+			var type = 2;
 		}
 		else {
-			var parentGroupId = "0";
+			var type = 1;
 		}
 
-		return "${parentGroupId}";
+		return ${type};
+	}
+
+	@summary = "Default summary"
+	macro setParentGroupId(portalInstanceName = null, portalURL = null, grandParentGroupName = null, parentGroupName = null) {
+		if (isSet(parentGroupName)) {
+			var parentGroupId = JSONGroupAPI._getParentGroupIdByName(
+				grandParentGroupName = ${grandParentGroupName},
+				groupName = ${parentGroupName},
+				portalInstanceName = ${portalInstanceName},
+				portalURL = ${portalURL});
+		}
+		else {
+			var parentGroupId = 0;
+		}
+
+		return ${parentGroupId};
 	}
 
 }

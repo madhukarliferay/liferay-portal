@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.membership.policy.organization.test;
@@ -121,10 +112,9 @@ public class OrganizationMembershipPolicyMembershipsTest
 	public void testAssignUserToForbiddenOrganizations() throws Exception {
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, addForbiddenOrganizations(), null, null, null,
+			UserLocalServiceUtil.getUser(userIds[0]),
+			addForbiddenOrganizations(), null, null, null,
 			Collections.<UserGroupRole>emptyList());
 	}
 
@@ -138,16 +128,16 @@ public class OrganizationMembershipPolicyMembershipsTest
 			UserLocalServiceUtil.getOrganizationUsersCount(
 				requiredOrganizationIds[0]);
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, new long[] {requiredOrganizationIds[0]}, null, null, null,
+			UserLocalServiceUtil.getUser(userIds[0]),
+			new long[] {requiredOrganizationIds[0]}, null, null, null,
 			Collections.<UserGroupRole>emptyList());
 
 		Assert.assertEquals(
 			initialOrganizationUsersCount + 1,
 			UserLocalServiceUtil.getOrganizationUsersCount(
 				requiredOrganizationIds[0]));
+
 		Assert.assertTrue(isPropagateMembership());
 	}
 
@@ -179,10 +169,9 @@ public class OrganizationMembershipPolicyMembershipsTest
 
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, addRequiredOrganizations(), null, null, null,
+			UserLocalServiceUtil.getUser(userIds[0]),
+			addRequiredOrganizations(), null, null, null,
 			Collections.<UserGroupRole>emptyList());
 
 		Assert.assertTrue(isPropagateMembership());
@@ -305,9 +294,9 @@ public class OrganizationMembershipPolicyMembershipsTest
 		Organization organization = MembershipPolicyTestUtil.addOrganization();
 
 		OrganizationServiceUtil.updateOrganization(
-			organization.getOrganizationId(),
+			null, organization.getOrganizationId(),
 			organization.getParentOrganizationId(), organization.getName(),
-			organization.getType(), 0, 0, organization.getStatusId(),
+			organization.getType(), 0, 0, organization.getStatusListTypeId(),
 			organization.getComments(), false,
 			ServiceContextTestUtil.getServiceContext());
 

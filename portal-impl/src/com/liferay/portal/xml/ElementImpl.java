@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.xml;
 
-import com.liferay.petra.xml.Dom4jUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Attribute;
 import com.liferay.portal.kernel.xml.CDATA;
@@ -25,8 +15,6 @@ import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.QName;
 import com.liferay.portal.kernel.xml.Text;
 import com.liferay.portal.kernel.xml.Visitor;
-
-import java.io.IOException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -334,48 +322,31 @@ public class ElementImpl extends BranchImpl implements Element {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (obj instanceof NodeImpl) {
-			NodeImpl nodeImpl = (NodeImpl)obj;
+		if (object instanceof NodeImpl) {
+			NodeImpl nodeImpl = (NodeImpl)object;
 
 			if (nodeImpl.getWrappedNode() instanceof org.dom4j.Element) {
-				obj = new ElementImpl(
+				object = new ElementImpl(
 					(org.dom4j.Element)nodeImpl.getWrappedNode());
 			}
 			else {
 				return false;
 			}
 		}
-		else if (!(obj instanceof ElementImpl)) {
+		else if (!(object instanceof ElementImpl)) {
 			return false;
 		}
 
-		ElementImpl elementImpl = (ElementImpl)obj;
+		ElementImpl elementImpl = (ElementImpl)object;
 
 		org.dom4j.Element element = elementImpl.getWrappedElement();
 
 		return _element.equals(element);
-	}
-
-	@Override
-	public String formattedString() throws IOException {
-		return Dom4jUtil.toString(_element);
-	}
-
-	@Override
-	public String formattedString(String indent) throws IOException {
-		return Dom4jUtil.toString(_element, indent);
-	}
-
-	@Override
-	public String formattedString(String indent, boolean expandEmptyElements)
-		throws IOException {
-
-		return Dom4jUtil.toString(_element, indent, expandEmptyElements);
 	}
 
 	@Override

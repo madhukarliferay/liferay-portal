@@ -1,20 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
 
@@ -25,10 +23,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Provides utility methods for reading request parameters.
@@ -2543,8 +2537,7 @@ public class ParamUtil {
 
 			for (int i = 0; i < values.length; i++) {
 				System.out.println(
-					StringBundler.concat(
-						name, "[", String.valueOf(i), "] = ", values[i]));
+					StringBundler.concat(name, "[", i, "] = ", values[i]));
 			}
 		}
 	}
@@ -2556,17 +2549,16 @@ public class ParamUtil {
 	 *        parameters
 	 */
 	public static void print(PortletRequest portletRequest) {
-		Enumeration<String> enu = portletRequest.getParameterNames();
+		Enumeration<String> enumeration = portletRequest.getParameterNames();
 
-		while (enu.hasMoreElements()) {
-			String param = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String param = enumeration.nextElement();
 
 			String[] values = portletRequest.getParameterValues(param);
 
 			for (int i = 0; i < values.length; i++) {
 				System.out.println(
-					StringBundler.concat(
-						param, "[", String.valueOf(i), "] = ", values[i]));
+					StringBundler.concat(param, "[", i, "] = ", values[i]));
 			}
 		}
 	}
@@ -2608,6 +2600,8 @@ public class ParamUtil {
 
 	private static final Normalizer.Form _FORM;
 
+	private static final Log _log = LogFactoryUtil.getLog(ParamUtil.class);
+
 	static {
 		String formString = PropsUtil.get(
 			PropsKeys.UNICODE_TEXT_NORMALIZER_FORM);
@@ -2621,7 +2615,11 @@ public class ParamUtil {
 			try {
 				form = Normalizer.Form.valueOf(formString);
 			}
-			catch (IllegalArgumentException iae) {
+			catch (IllegalArgumentException illegalArgumentException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalArgumentException);
+				}
+
 				form = null;
 			}
 

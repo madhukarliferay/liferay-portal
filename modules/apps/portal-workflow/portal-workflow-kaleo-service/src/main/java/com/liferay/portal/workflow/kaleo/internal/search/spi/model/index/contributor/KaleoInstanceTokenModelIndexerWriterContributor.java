@@ -1,39 +1,41 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.internal.search.spi.model.index.contributor;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.search.batch.BatchIndexingActionable;
 import com.liferay.portal.search.batch.DynamicQueryBatchIndexingActionableFactory;
 import com.liferay.portal.search.spi.model.index.contributor.ModelIndexerWriterContributor;
 import com.liferay.portal.search.spi.model.index.contributor.helper.ModelIndexerWriterDocumentHelper;
+import com.liferay.portal.workflow.kaleo.model.KaleoInstance;
 import com.liferay.portal.workflow.kaleo.model.KaleoInstanceToken;
+import com.liferay.portal.workflow.kaleo.service.KaleoInstanceLocalService;
 import com.liferay.portal.workflow.kaleo.service.KaleoInstanceTokenLocalService;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author István András Dézsi
  */
-@Component(
-	immediate = true,
-	property = "indexer.class.name=com.liferay.portal.workflow.kaleo.model.KaleoInstanceToken",
-	service = ModelIndexerWriterContributor.class
-)
 public class KaleoInstanceTokenModelIndexerWriterContributor
 	implements ModelIndexerWriterContributor<KaleoInstanceToken> {
+
+	public KaleoInstanceTokenModelIndexerWriterContributor(
+		DynamicQueryBatchIndexingActionableFactory
+			dynamicQueryBatchIndexingActionableFactory,
+		KaleoInstanceLocalService kaleoInstanceLocalService,
+		KaleoInstanceTokenLocalService kaleoInstanceTokenLocalService) {
+
+		_dynamicQueryBatchIndexingActionableFactory =
+			dynamicQueryBatchIndexingActionableFactory;
+		_kaleoInstanceLocalService = kaleoInstanceLocalService;
+		_kaleoInstanceTokenLocalService = kaleoInstanceTokenLocalService;
+	}
 
 	@Override
 	public void customize(
@@ -49,9 +51,9 @@ public class KaleoInstanceTokenModelIndexerWriterContributor
 
 	@Override
 	public BatchIndexingActionable getBatchIndexingActionable() {
-		return dynamicQueryBatchIndexingActionableFactory.
+		return _dynamicQueryBatchIndexingActionableFactory.
 			getBatchIndexingActionable(
-				kaleoInstanceTokenLocalService.
+				_kaleoInstanceTokenLocalService.
 					getIndexableActionableDynamicQuery());
 	}
 
@@ -60,11 +62,28 @@ public class KaleoInstanceTokenModelIndexerWriterContributor
 		return kaleoInstanceToken.getCompanyId();
 	}
 
-	@Reference
-	protected DynamicQueryBatchIndexingActionableFactory
-		dynamicQueryBatchIndexingActionableFactory;
+	@Override
+	public void modelIndexed(KaleoInstanceToken kaleoInstanceToken) {
+		Indexer<KaleoInstance> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			KaleoInstance.class);
 
-	@Reference
-	protected KaleoInstanceTokenLocalService kaleoInstanceTokenLocalService;
+		try {
+			indexer.reindex(
+				_kaleoInstanceLocalService.getKaleoInstance(
+					kaleoInstanceToken.getKaleoInstanceId()));
+		}
+		catch (SearchException searchException) {
+			throw new SystemException(searchException);
+		}
+		catch (PortalException portalException) {
+			throw new SystemException(portalException);
+		}
+	}
+
+	private final DynamicQueryBatchIndexingActionableFactory
+		_dynamicQueryBatchIndexingActionableFactory;
+	private final KaleoInstanceLocalService _kaleoInstanceLocalService;
+	private final KaleoInstanceTokenLocalService
+		_kaleoInstanceTokenLocalService;
 
 }

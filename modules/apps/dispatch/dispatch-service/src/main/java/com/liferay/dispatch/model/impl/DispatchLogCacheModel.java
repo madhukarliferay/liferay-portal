@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dispatch.model.impl;
@@ -30,24 +21,24 @@ import java.util.Date;
 /**
  * The cache model class for representing DispatchLog in entity cache.
  *
- * @author Alessio Antonio Rendina
+ * @author Matija Petanjek
  * @generated
  */
 public class DispatchLogCacheModel
 	implements CacheModel<DispatchLog>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DispatchLogCacheModel)) {
+		if (!(object instanceof DispatchLogCacheModel)) {
 			return false;
 		}
 
 		DispatchLogCacheModel dispatchLogCacheModel =
-			(DispatchLogCacheModel)obj;
+			(DispatchLogCacheModel)object;
 
 		if ((dispatchLogId == dispatchLogCacheModel.dispatchLogId) &&
 			(mvccVersion == dispatchLogCacheModel.mvccVersion)) {
@@ -149,19 +140,8 @@ public class DispatchLogCacheModel
 			dispatchLogImpl.setEndDate(new Date(endDate));
 		}
 
-		if (error == null) {
-			dispatchLogImpl.setError("");
-		}
-		else {
-			dispatchLogImpl.setError(error);
-		}
-
-		if (output == null) {
-			dispatchLogImpl.setOutput("");
-		}
-		else {
-			dispatchLogImpl.setOutput(output);
-		}
+		dispatchLogImpl.setError(error);
+		dispatchLogImpl.setOutput(output);
 
 		if (startDate == Long.MIN_VALUE) {
 			dispatchLogImpl.setStartDate(null);
@@ -178,7 +158,9 @@ public class DispatchLogCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		dispatchLogId = objectInput.readLong();
@@ -192,8 +174,8 @@ public class DispatchLogCacheModel
 
 		dispatchTriggerId = objectInput.readLong();
 		endDate = objectInput.readLong();
-		error = objectInput.readUTF();
-		output = objectInput.readUTF();
+		error = (String)objectInput.readObject();
+		output = (String)objectInput.readObject();
 		startDate = objectInput.readLong();
 
 		status = objectInput.readInt();
@@ -223,17 +205,17 @@ public class DispatchLogCacheModel
 		objectOutput.writeLong(endDate);
 
 		if (error == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(error);
+			objectOutput.writeObject(error);
 		}
 
 		if (output == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(output);
+			objectOutput.writeObject(output);
 		}
 
 		objectOutput.writeLong(startDate);

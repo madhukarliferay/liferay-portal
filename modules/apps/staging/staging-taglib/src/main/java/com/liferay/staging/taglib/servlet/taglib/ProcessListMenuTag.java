@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.taglib.servlet.taglib;
@@ -18,8 +9,8 @@ import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
 import com.liferay.staging.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Péter Borkuti
@@ -32,6 +23,10 @@ public class ProcessListMenuTag extends IncludeTag {
 
 	public boolean isDeleteMenu() {
 		return _deleteMenu;
+	}
+
+	public boolean isDetailsMenu() {
+		return _detailsMenu;
 	}
 
 	public boolean isLocalPublishing() {
@@ -54,6 +49,10 @@ public class ProcessListMenuTag extends IncludeTag {
 		_deleteMenu = deleteMenu;
 	}
 
+	public void setDetailsMenu(boolean detailsMenu) {
+		_detailsMenu = detailsMenu;
+	}
+
 	public void setLocalPublishing(boolean localPublishing) {
 		_localPublishing = localPublishing;
 	}
@@ -62,7 +61,7 @@ public class ProcessListMenuTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setRelaunchMenu(boolean relaunchMenu) {
@@ -79,6 +78,7 @@ public class ProcessListMenuTag extends IncludeTag {
 
 		_backgroundTask = null;
 		_deleteMenu = true;
+		_detailsMenu = false;
 		_localPublishing = false;
 		_relaunchMenu = true;
 		_summaryMenu = true;
@@ -97,6 +97,8 @@ public class ProcessListMenuTag extends IncludeTag {
 		httpServletRequest.setAttribute(
 			"liferay-staging:process-list-menu:deleteMenu", _deleteMenu);
 		httpServletRequest.setAttribute(
+			"liferay-staging:process-list-menu:detailsMenu", _detailsMenu);
+		httpServletRequest.setAttribute(
 			"liferay-staging:process-list-menu:localPublishing",
 			_localPublishing);
 		httpServletRequest.setAttribute(
@@ -109,6 +111,7 @@ public class ProcessListMenuTag extends IncludeTag {
 
 	private BackgroundTask _backgroundTask;
 	private boolean _deleteMenu = true;
+	private boolean _detailsMenu;
 	private boolean _localPublishing;
 	private boolean _relaunchMenu = true;
 	private boolean _summaryMenu = true;

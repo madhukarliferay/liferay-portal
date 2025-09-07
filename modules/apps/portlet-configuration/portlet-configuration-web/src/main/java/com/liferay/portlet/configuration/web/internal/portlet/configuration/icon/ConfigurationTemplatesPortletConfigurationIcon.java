@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.configuration.web.internal.portlet.configuration.icon;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -25,6 +16,7 @@ import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
@@ -35,17 +27,17 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.configuration.kernel.util.PortletConfigurationApplicationType;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.WindowState;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
  */
-@Component(immediate = true, service = PortletConfigurationIcon.class)
+@Component(service = PortletConfigurationIcon.class)
 public class ConfigurationTemplatesPortletConfigurationIcon
 	extends BasePortletConfigurationIcon {
 
@@ -54,7 +46,7 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		return LanguageUtil.get(
+		return _language.get(
 			themeDisplay.getLocale(), "configuration-templates");
 	}
 
@@ -63,44 +55,58 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
 		try {
-			String redirect = ParamUtil.getString(portletRequest, "redirect");
-			String returnToFullPageURL = ParamUtil.getString(
-				portletRequest, "returnToFullPageURL");
+			return PortletURLBuilder.create(
+				PortletProviderUtil.getPortletURL(
+					portletRequest,
+					PortletConfigurationApplicationType.PortletConfiguration.
+						CLASS_NAME,
+					PortletProvider.Action.VIEW)
+			).setMVCPath(
+				"/edit_configuration_templates.jsp"
+			).setRedirect(
+				() -> {
+					String redirect = ParamUtil.getString(
+						portletRequest, "redirect");
 
-			PortletURL portletURL = PortletProviderUtil.getPortletURL(
-				portletRequest,
-				PortletConfigurationApplicationType.PortletConfiguration.
-					CLASS_NAME,
-				PortletProvider.Action.VIEW);
+					if (Validator.isNotNull(redirect)) {
+						return redirect;
+					}
 
-			portletURL.setParameter(
-				"mvcPath", "/edit_configuration_templates.jsp");
+					return null;
+				}
+			).setPortletResource(
+				() -> {
+					ThemeDisplay themeDisplay =
+						(ThemeDisplay)portletRequest.getAttribute(
+							WebKeys.THEME_DISPLAY);
 
-			if (Validator.isNotNull(redirect)) {
-				portletURL.setParameter("redirect", redirect);
-			}
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
 
-			if (Validator.isNotNull(returnToFullPageURL)) {
-				portletURL.setParameter(
-					"returnToFullPageURL", returnToFullPageURL);
-			}
+					return portletDisplay.getId();
+				}
+			).setParameter(
+				"portletConfiguration", true
+			).setParameter(
+				"returnToFullPageURL",
+				() -> {
+					String returnToFullPageURL = ParamUtil.getString(
+						portletRequest, "returnToFullPageURL");
 
-			portletURL.setParameter(
-				"portletConfiguration", Boolean.TRUE.toString());
+					if (Validator.isNotNull(returnToFullPageURL)) {
+						return returnToFullPageURL;
+					}
 
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)portletRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
-
-			PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-			portletURL.setParameter("portletResource", portletDisplay.getId());
-
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-
-			return portletURL.toString();
+					return null;
+				}
+			).setWindowState(
+				LiferayWindowState.POP_UP
+			).buildString();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return StringPool.BLANK;
@@ -108,7 +114,7 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 
 	@Override
 	public double getWeight() {
-		return 12.0;
+		return 13.0;
 	}
 
 	@Override
@@ -127,12 +133,12 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 				return false;
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(portalException);
 			}
 
 			return false;
@@ -146,11 +152,9 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 
 		Layout layout = themeDisplay.getLayout();
 
-		if (layout.isTypeControlPanel()) {
-			return false;
-		}
+		if (layout.isTypeControlPanel() ||
+			layout.isEmbeddedPersonalApplication()) {
 
-		if (isEmbeddedPersonalApplicationLayout(layout)) {
 			return false;
 		}
 
@@ -160,11 +164,19 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 	}
 
 	@Override
+	public boolean isShowInEditMode(PortletRequest portletRequest) {
+		return true;
+	}
+
+	@Override
 	public boolean isUseDialog() {
 		return true;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ConfigurationTemplatesPortletConfigurationIcon.class);
+
+	@Reference
+	private Language _language;
 
 }

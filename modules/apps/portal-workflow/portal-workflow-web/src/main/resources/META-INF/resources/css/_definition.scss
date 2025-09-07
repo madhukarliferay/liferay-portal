@@ -2,11 +2,7 @@
 	margin: 0 !important;
 }
 
-#wrapper .main-content-card {
-	margin: 0 !important;
-}
-
-.dialog-iframe-popup {
+.portal.popup {
 	background: #fff;
 }
 
@@ -15,15 +11,6 @@
 		height: calc(100vh - 148px);
 		overflow: auto;
 	}
-}
-
-.info-bar-item {
-	margin-top: -3px;
-	position: absolute;
-}
-
-.info-bar-container .info-bar-default .btn.sidenav-transition {
-	pointer-events: none;
 }
 
 .info-content {
@@ -39,9 +26,10 @@
 .sidenav-container {
 	padding-bottom: 75px;
 
-	.sidenav-content {
-		padding-top: 20px;
+	.sidenav-content .container-form-lg {
+		padding-top: 2rem;
 	}
+
 	.sidenav-menu-slider {
 		z-index: 101;
 	}
@@ -74,6 +62,7 @@
 .lfr-sidebar-list-group-workflow {
 	&.sidebar-list-group {
 		margin-top: 0;
+		padding-top: 0;
 	}
 
 	.list-group-item {
@@ -87,8 +76,14 @@
 	}
 }
 
-.workflow-definition-container {
-	margin-top: 20px;
+.modal-footer .btn-toolbar .btn-secondary {
+	margin-right: 10px;
+}
+
+.modal-open .modal {
+	min-height: 325px;
+	min-width: 500px;
+	overflow-y: hidden !important;
 }
 
 .workflow-definition-content {

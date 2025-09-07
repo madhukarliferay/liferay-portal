@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.roles.admin.internal.exportimport.data.handler;
@@ -36,12 +27,12 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.roles.admin.constants.RolesAdminPortletKeys;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.portlet.PortletPreferences;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -52,15 +43,14 @@ import org.osgi.service.component.annotations.Reference;
  * @author David Mendez Gonzalez
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + RolesAdminPortletKeys.ROLES_ADMIN,
+	property = "jakarta.portlet.name=" + RolesAdminPortletKeys.ROLES_ADMIN,
 	service = PortletDataHandler.class
 )
 public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 
 	public static final String NAMESPACE = "roles_admin";
 
-	public static final String SCHEMA_VERSION = "1.0.0";
+	public static final String SCHEMA_VERSION = "4.0.0";
 
 	@Override
 	public String getSchemaVersion() {
@@ -84,6 +74,11 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 						NAMESPACE, "system-roles", true, false)
 				},
 				Role.class.getName(), StagedModelType.REFERRER_CLASS_NAME_ALL));
+
+		Collections.addAll(
+			_allSystemRoleNames, _portal.getSystemOrganizationRoles());
+		Collections.addAll(_allSystemRoleNames, _portal.getSystemRoles());
+		Collections.addAll(_allSystemRoleNames, _portal.getSystemSiteRoles());
 	}
 
 	@Override
@@ -112,7 +107,7 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 
 	@Override
 	protected String doExportData(
-			final PortletDataContext portletDataContext, String portletId,
+			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
@@ -124,7 +119,7 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 			"group-id", String.valueOf(portletDataContext.getScopeGroupId()));
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			getRoleActionableDynamicQuery(portletDataContext, true);
+			_getRoleActionableDynamicQuery(portletDataContext, true);
 
 		actionableDynamicQuery.performActions();
 
@@ -159,13 +154,13 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 		throws Exception {
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			getRoleActionableDynamicQuery(portletDataContext, false);
+			_getRoleActionableDynamicQuery(portletDataContext, false);
 
 		actionableDynamicQuery.performCount();
 	}
 
-	protected ActionableDynamicQuery getRoleActionableDynamicQuery(
-		final PortletDataContext portletDataContext, final boolean export) {
+	private ActionableDynamicQuery _getRoleActionableDynamicQuery(
+		PortletDataContext portletDataContext, boolean export) {
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_roleLocalService.getExportActionableDynamicQuery(
@@ -216,20 +211,10 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 		return actionableDynamicQuery;
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setPortal(Portal portal) {
-		Collections.addAll(
-			_allSystemRoleNames, portal.getSystemOrganizationRoles());
-		Collections.addAll(_allSystemRoleNames, portal.getSystemRoles());
-		Collections.addAll(_allSystemRoleNames, portal.getSystemSiteRoles());
-	}
-
 	private final Set<String> _allSystemRoleNames = new HashSet<>();
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private Portal _portal;
@@ -252,13 +237,10 @@ public class RolesAdminPortletDataHandler extends BasePortletDataHandler {
 
 		@Override
 		public void performAction(Role role) throws PortalException {
-			if (!_export) {
-				return;
-			}
-
-			if (!_portletDataContext.getBooleanParameter(
+			if (!_export ||
+				(!_portletDataContext.getBooleanParameter(
 					NAMESPACE, "system-roles") &&
-				_allSystemRoleNames.contains(role.getName())) {
+				 _allSystemRoleNames.contains(role.getName()))) {
 
 				return;
 			}

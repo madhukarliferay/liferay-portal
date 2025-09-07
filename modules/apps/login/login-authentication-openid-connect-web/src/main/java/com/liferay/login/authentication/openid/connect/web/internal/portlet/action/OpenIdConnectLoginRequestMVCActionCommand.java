@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.login.authentication.openid.connect.web.internal.portlet.action;
@@ -17,26 +8,26 @@ package com.liferay.login.authentication.openid.connect.web.internal.portlet.act
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnect;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceHandler;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.ActionURL;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -100,11 +91,10 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true,
 	property = {
 		"auth.token.ignore.mvc.action=true",
-		"javax.portlet.name=" + PortletKeys.FAST_LOGIN,
-		"javax.portlet.name=" + PortletKeys.LOGIN,
+		"jakarta.portlet.name=" + PortletKeys.FAST_LOGIN,
+		"jakarta.portlet.name=" + PortletKeys.LOGIN,
 		"mvc.command.name=" + OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME
 	},
 	service = MVCActionCommand.class
@@ -118,9 +108,14 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 		throws Exception {
 
 		try {
-			String openIdConnectProviderName = ParamUtil.getString(
-				actionRequest,
-				OpenIdConnectWebKeys.OPEN_ID_CONNECT_PROVIDER_NAME);
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+
+			if (themeDisplay.isSignedIn()) {
+				sendRedirect(actionRequest, actionResponse);
+
+				return;
+			}
 
 			HttpServletRequest httpServletRequest =
 				_portal.getHttpServletRequest(actionRequest);
@@ -131,68 +126,84 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 			HttpServletResponse httpServletResponse =
 				_portal.getHttpServletResponse(actionResponse);
 
-			HttpSession session = httpServletRequest.getSession();
+			HttpSession httpSession = httpServletRequest.getSession();
 
-			LiferayPortletResponse liferayPortletResponse =
-				_portal.getLiferayPortletResponse(actionResponse);
+			httpSession.setAttribute(
+				OpenIdConnectWebKeys.OPEN_ID_CONNECT_ACTION_URL,
+				PortletURLBuilder.createActionURL(
+					_portal.getLiferayPortletResponse(actionResponse)
+				).setActionName(
+					OpenIdConnectWebKeys.OPEN_ID_CONNECT_RESPONSE_ACTION_NAME
+				).setRedirect(
+					() -> {
+						String redirect = ParamUtil.getString(
+							actionRequest, "redirect");
 
-			ActionURL actionURL = liferayPortletResponse.createActionURL();
+						if (Validator.isNotNull(redirect)) {
+							return redirect;
+						}
 
-			actionURL.setParameter(
-				ActionRequest.ACTION_NAME,
-				OpenIdConnectWebKeys.OPEN_ID_CONNECT_RESPONSE_ACTION_NAME);
-			actionURL.setParameter("saveLastPath", Boolean.FALSE.toString());
+						return null;
+					}
+				).setParameter(
+					"saveLastPath", false
+				).buildString());
 
-			String redirect = ParamUtil.getString(actionRequest, "redirect");
+			String openIdConnectProviderName = ParamUtil.getString(
+				actionRequest,
+				OpenIdConnectWebKeys.OPEN_ID_CONNECT_PROVIDER_NAME);
 
-			if (Validator.isNotNull(redirect)) {
-				actionURL.setParameter("redirect", redirect);
+			if (Validator.isNotNull(openIdConnectProviderName)) {
+				_openIdConnectAuthenticationHandler.requestAuthentication(
+					openIdConnectProviderName, httpServletRequest,
+					httpServletResponse);
 			}
 
-			session.setAttribute(
-				OpenIdConnectWebKeys.OPEN_ID_CONNECT_ACTION_URL,
-				actionURL.toString());
+			long oAuthClientEntryId = ParamUtil.getLong(
+				actionRequest, "oAuthClientEntryId");
 
-			_openIdConnectServiceHandler.requestAuthentication(
-				openIdConnectProviderName, httpServletRequest,
-				httpServletResponse);
+			if (oAuthClientEntryId > 0) {
+				_openIdConnectAuthenticationHandler.requestAuthentication(
+					oAuthClientEntryId, httpServletRequest,
+					httpServletResponse);
+			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			actionResponse.setRenderParameter(
 				"mvcRenderCommandName",
 				OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME);
 
-			if (e instanceof OpenIdConnectServiceException) {
+			if (exception instanceof OpenIdConnectServiceException) {
 				String message =
 					"Unable to communicate with OpenID Connect provider: " +
-						e.getMessage();
+						exception.getMessage();
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(message, e);
+					_log.debug(message, exception);
 				}
 
 				if (_log.isWarnEnabled()) {
 					_log.warn(message);
 				}
 
-				SessionErrors.add(actionRequest, e.getClass());
+				SessionErrors.add(actionRequest, exception.getClass());
 			}
-			else if (e instanceof
+			else if (exception instanceof
 						UserEmailAddressException.MustNotBeDuplicate) {
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(e, e);
+					_log.debug(exception);
 				}
 
-				SessionErrors.add(actionRequest, e.getClass());
+				SessionErrors.add(actionRequest, exception.getClass());
 			}
 			else {
 				_log.error(
 					"Unable to process the OpenID Connect login: " +
-						e.getMessage(),
-					e);
+						exception.getMessage(),
+					exception);
 
-				_portal.sendError(e, actionRequest, actionResponse);
+				_portal.sendError(exception, actionRequest, actionResponse);
 			}
 		}
 	}
@@ -201,10 +212,8 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 		OpenIdConnectLoginRequestMVCActionCommand.class);
 
 	@Reference
-	private OpenIdConnect _openIdConnect;
-
-	@Reference
-	private OpenIdConnectServiceHandler _openIdConnectServiceHandler;
+	private OpenIdConnectAuthenticationHandler
+		_openIdConnectAuthenticationHandler;
 
 	@Reference
 	private Portal _portal;

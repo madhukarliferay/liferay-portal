@@ -1,19 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
 
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.orm.Dialect;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Projection;
@@ -30,6 +24,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.sql.DataSource;
 
@@ -108,6 +103,14 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	public long countWithDynamicQuery(
 		DynamicQuery dynamicQuery, Projection projection);
 
+	public <R> R dslQuery(DSLQuery dslQuery);
+
+	public default int dslQueryCount(DSLQuery dslQuery) {
+		Long count = dslQuery(dslQuery);
+
+		return count.intValue();
+	}
+
 	/**
 	 * Returns the model instance with the primary key or returns
 	 * <code>null</code> if it could not be found.
@@ -159,7 +162,7 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	 * @return the range of matching rows
 	 * @see    com.liferay.portal.kernel.dao.orm.QueryUtil#list(
 	 *         com.liferay.portal.kernel.dao.orm.Query,
-	 *         com.liferay.portal.kernel.dao.orm.Dialect, int, int)
+	 *         Dialect, int, int)
 	 */
 	public <V> List<V> findWithDynamicQuery(
 		DynamicQuery dynamicQuery, int start, int end);
@@ -203,6 +206,10 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	 */
 	public DataSource getDataSource();
 
+	public DB getDB();
+
+	public Dialect getDialect();
+
 	/**
 	 * Returns the listeners registered for this model.
 	 *
@@ -215,7 +222,7 @@ public interface BasePersistence<T extends BaseModel<T>> {
 
 	public Session openSession() throws ORMException;
 
-	public SystemException processException(Exception e);
+	public SystemException processException(Exception exception);
 
 	/**
 	 * Registers a new listener for this model.
@@ -227,7 +234,7 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	 *
 	 * @param listener the model listener to register
 	 */
-	public void registerListener(ModelListener<T> listener);
+	public void registerListener(ModelListener<T> modelListener);
 
 	/**
 	 * Removes the model instance with the primary key from the database. Also
@@ -247,6 +254,8 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	 */
 	public T remove(T model);
 
+	public T removeByFunction(T model, Function<T, T> function);
+
 	/**
 	 * Sets the data source for this model.
 	 *
@@ -260,7 +269,7 @@ public interface BasePersistence<T extends BaseModel<T>> {
 	 * @param listener the model listener to unregister
 	 * @see   #registerListener(ModelListener)
 	 */
-	public void unregisterListener(ModelListener<T> listener);
+	public void unregisterListener(ModelListener<T> modelListener);
 
 	/**
 	 * Updates the model instance in the database or adds it if it does not yet

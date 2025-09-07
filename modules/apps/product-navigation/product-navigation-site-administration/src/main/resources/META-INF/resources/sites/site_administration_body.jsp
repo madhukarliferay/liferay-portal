@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,18 +10,22 @@
 <%
 PanelCategory panelCategory = (PanelCategory)request.getAttribute(ApplicationListWebKeys.PANEL_CATEGORY);
 
-SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDisplayContext = new SiteAdministrationPanelCategoryDisplayContext(liferayPortletRequest, liferayPortletResponse, null);
+SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDisplayContext = new SiteAdministrationPanelCategoryDisplayContext(liferayPortletRequest, null);
 %>
 
 <c:if test="<%= siteAdministrationPanelCategoryDisplayContext.getGroup() != null %>">
-	<div class="row">
-		<div class="col-md-12">
+	<clay:row
+		cssClass="navigation-link-container"
+	>
+		<clay:col
+			md="12"
+		>
 			<c:if test="<%= siteAdministrationPanelCategoryDisplayContext.isShowStagingInfo() %>">
 
 				<%
-				Map<String, Object> data = new HashMap<String, Object>();
-
-				data.put("qa-id", "staging");
+				Map<String, Object> data = HashMapBuilder.<String, Object>put(
+					"qa-id", "staging"
+				).build();
 				%>
 
 				<div class="float-right staging-links">
@@ -54,7 +49,7 @@ SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDis
 					}
 					catch (RemoteExportException | SystemException e) {
 						if (e instanceof SystemException) {
-							_log.error(e, e);
+							_log.error(e);
 						}
 					%>
 
@@ -68,7 +63,7 @@ SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDis
 								position: 'right',
 								trigger: A.one('#<portlet:namespace />remoteLiveLink'),
 								visible: false,
-								zIndex: Liferay.zIndex.TOOLTIP
+								zIndex: Liferay.zIndex.TOOLTIP,
 							}).render();
 						</aui:script>
 
@@ -80,10 +75,26 @@ SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDis
 			</c:if>
 
 			<c:if test="<%= siteAdministrationPanelCategoryDisplayContext.isDisplaySiteLink() %>">
-				<aui:a cssClass="goto-link list-group-heading panel-header-link" href="<%= siteAdministrationPanelCategoryDisplayContext.getGroupURL() %>" label="go-to-site" />
+				<clay:link
+					cssClass='<%= "list-group-heading navigation-link panel-header-link" + (siteAdministrationPanelCategoryDisplayContext.isFirstLayout() ? " first-layout" : "") %>'
+					href="<%= siteAdministrationPanelCategoryDisplayContext.getGroupURL() %>"
+					icon="home"
+					label="home"
+				/>
 			</c:if>
-		</div>
-	</div>
+
+			<c:if test="<%= siteAdministrationPanelCategoryDisplayContext.isShowLayoutsTree() %>">
+				<clay:button
+					cssClass="list-group-heading navigation-link panel-header-link"
+					disabled="<%= siteAdministrationPanelCategoryDisplayContext.isLayoutsTreeDisabled() %>"
+					displayType="unstyled"
+					icon="pages-tree"
+					id='<%= liferayPortletResponse.getNamespace() + "pagesTreeSidenavToggleId" %>'
+					label="page-tree"
+				/>
+			</c:if>
+		</clay:col>
+	</clay:row>
 
 	<c:if test="<%= siteAdministrationPanelCategoryDisplayContext.isShowSiteAdministration() %>">
 		<liferay-application-list:panel-category-body
@@ -92,6 +103,54 @@ SiteAdministrationPanelCategoryDisplayContext siteAdministrationPanelCategoryDis
 	</c:if>
 </c:if>
 
+<c:if test="<%= (siteAdministrationPanelCategoryDisplayContext.getGroup() != null) && siteAdministrationPanelCategoryDisplayContext.isShowLayoutsTree() %>">
+	<aui:script sandbox="<%= true %>">
+		var pagesTreeToggle = document.getElementById(
+			'<portlet:namespace />pagesTreeSidenavToggleId'
+		);
+
+		pagesTreeToggle.addEventListener('click', (event) => {
+			Liferay.Portlet.destroy('#p_p_id<portlet:namespace />');
+
+			Liferay.Util.Session.set(
+				'com.liferay.product.navigation.product.menu.web_pagesTreeState',
+				'open'
+			).then(() => {
+				Liferay.Util.fetch(
+					'<%= siteAdministrationPanelCategoryDisplayContext.getPageTreeURL() %>'
+				)
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error(
+								'<liferay-ui:message key="an-unexpected-error-occurred" />'
+							);
+						}
+
+						return response.text();
+					})
+					.then((response) => {
+						var sidebar = document.querySelector(
+							'.lfr-product-menu-sidebar .sidebar-body'
+						);
+
+						sidebar.innerHTML = '';
+
+						var range = document.createRange();
+						range.selectNode(sidebar);
+
+						var fragment = range.createContextualFragment(response);
+
+						var pagesTree = document.createElement('div');
+						pagesTree.setAttribute('class', 'pages-tree');
+						pagesTree.appendChild(fragment);
+
+						sidebar.appendChild(pagesTree);
+					});
+			});
+		});
+	</aui:script>
+</c:if>
+
 <%!
-private static Log _log = LogFactoryUtil.getLog("com_liferay_product_navigation_site_administration.sites.site_administration_body_jsp");
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_product_navigation_site_administration.sites.site_administration_body_jsp");
 %>

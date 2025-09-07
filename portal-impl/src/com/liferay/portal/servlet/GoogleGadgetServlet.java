@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet;
@@ -23,18 +14,19 @@ import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
 
-import java.io.IOException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @author Alberto Montero
@@ -65,11 +57,11 @@ public class GoogleGadgetServlet extends HttpServlet {
 				ServletResponseUtil.write(httpServletResponse, content);
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 
 			PortalUtil.sendError(
-				HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e,
+				HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception,
 				httpServletRequest, httpServletResponse);
 		}
 	}
@@ -89,15 +81,11 @@ public class GoogleGadgetServlet extends HttpServlet {
 			return null;
 		}
 
-		long companyId = PortalUtil.getCompanyId(httpServletRequest);
-
 		String portletId = path.substring(
 			pos + Portal.FRIENDLY_URL_SEPARATOR.length());
 
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
-			companyId, portletId);
-
-		String title = portlet.getDisplayName();
+			PortalUtil.getCompanyId(httpServletRequest), portletId);
 
 		String widgetURL = String.valueOf(httpServletRequest.getRequestURL());
 
@@ -110,12 +98,12 @@ public class GoogleGadgetServlet extends HttpServlet {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<Module>");
 		sb.append("<ModulePrefs title=\"");
-		sb.append(title);
+		sb.append(HtmlUtil.escapeAttribute(portlet.getDisplayName()));
 		sb.append("\"/>");
 		sb.append("<Content type=\"html\">");
 		sb.append("<![CDATA[");
 		sb.append("<iframe frameborder=\"0\" height=\"100%\" src=\"");
-		sb.append(widgetURL);
+		sb.append(HtmlUtil.escapeAttribute(widgetURL));
 		sb.append("\" width=\"100%\">");
 		sb.append("</iframe>");
 		sb.append("]]>");

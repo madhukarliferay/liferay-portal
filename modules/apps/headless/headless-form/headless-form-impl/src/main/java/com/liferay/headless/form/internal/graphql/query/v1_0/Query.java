@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.form.internal.graphql.query.v1_0;
@@ -25,8 +16,8 @@ import com.liferay.headless.form.resource.v1_0.FormResource;
 import com.liferay.headless.form.resource.v1_0.FormStructureResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
-import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
@@ -34,16 +25,17 @@ import com.liferay.portal.vulcan.graphql.annotation.GraphQLTypeExtension;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
+import jakarta.annotation.Generated;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import jakarta.validation.constraints.NotEmpty;
+
+import jakarta.ws.rs.core.UriInfo;
+
+import java.util.Map;
 import java.util.function.BiFunction;
-
-import javax.annotation.Generated;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import javax.validation.constraints.NotEmpty;
-
-import javax.ws.rs.core.UriInfo;
 
 import org.osgi.service.component.ComponentServiceObjects;
 
@@ -89,7 +81,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {form(formId: ___){availableLanguages, creator, dateCreated, dateModified, datePublished, defaultLanguage, description, formRecords, formRecordsIds, id, name, siteId, structure, structureId}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {form(formId: ___){availableLanguages, creator, dateCreated, dateModified, datePublished, defaultLanguage, description, description_i18n, formRecords, formRecordsIds, id, name, name_i18n, siteId, structure, structureId}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public Form form(@GraphQLName("formId") Long formId) throws Exception {
@@ -139,17 +131,18 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formRecord(formRecordId: ___){creator, dateCreated, dateModified, datePublished, draft, formFieldValues, formId, id}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formFormRecordByLatestDraft(formId: ___){creator, dateCreated, dateModified, datePublished, draft, formFieldValues, formId, id}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
-	public FormRecord formRecord(@GraphQLName("formRecordId") Long formRecordId)
+	public FormRecord formFormRecordByLatestDraft(
+			@GraphQLName("formId") Long formId)
 		throws Exception {
 
 		return _applyComponentServiceObjects(
 			_formRecordResourceComponentServiceObjects,
 			this::_populateResourceContext,
-			formRecordResource -> formRecordResource.getFormRecord(
-				formRecordId));
+			formRecordResource ->
+				formRecordResource.getFormFormRecordByLatestDraft(formId));
 	}
 
 	/**
@@ -175,24 +168,23 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formFormRecordByLatestDraft(formId: ___){creator, dateCreated, dateModified, datePublished, draft, formFieldValues, formId, id}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formRecord(formRecordId: ___){creator, dateCreated, dateModified, datePublished, draft, formFieldValues, formId, id}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
-	public FormRecord formFormRecordByLatestDraft(
-			@GraphQLName("formId") Long formId)
+	public FormRecord formRecord(@GraphQLName("formRecordId") Long formRecordId)
 		throws Exception {
 
 		return _applyComponentServiceObjects(
 			_formRecordResourceComponentServiceObjects,
 			this::_populateResourceContext,
-			formRecordResource ->
-				formRecordResource.getFormFormRecordByLatestDraft(formId));
+			formRecordResource -> formRecordResource.getFormRecord(
+				formRecordId));
 	}
 
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formStructure(formStructureId: ___){availableLanguages, creator, dateCreated, dateModified, description, formPages, formSuccessPage, id, name, siteId}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {formStructure(formStructureId: ___){availableLanguages, creator, dateCreated, dateModified, description, description_i18n, formPages, formSuccessPage, id, name, name_i18n, siteId}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public FormStructure formStructure(
@@ -270,12 +262,17 @@ public class Query {
 	public class FormPage {
 
 		public FormPage(Page formPage) {
+			actions = formPage.getActions();
+
 			items = formPage.getItems();
 			lastPage = formPage.getLastPage();
 			page = formPage.getPage();
 			pageSize = formPage.getPageSize();
 			totalCount = formPage.getTotalCount();
 		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<Form> items;
@@ -298,12 +295,17 @@ public class Query {
 	public class FormDocumentPage {
 
 		public FormDocumentPage(Page formDocumentPage) {
+			actions = formDocumentPage.getActions();
+
 			items = formDocumentPage.getItems();
 			lastPage = formDocumentPage.getLastPage();
 			page = formDocumentPage.getPage();
 			pageSize = formDocumentPage.getPageSize();
 			totalCount = formDocumentPage.getTotalCount();
 		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<FormDocument> items;
@@ -326,12 +328,17 @@ public class Query {
 	public class FormRecordPage {
 
 		public FormRecordPage(Page formRecordPage) {
+			actions = formRecordPage.getActions();
+
 			items = formRecordPage.getItems();
 			lastPage = formRecordPage.getLastPage();
 			page = formRecordPage.getPage();
 			pageSize = formRecordPage.getPageSize();
 			totalCount = formRecordPage.getTotalCount();
 		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<FormRecord> items;
@@ -354,12 +361,17 @@ public class Query {
 	public class FormStructurePage {
 
 		public FormStructurePage(Page formStructurePage) {
+			actions = formStructurePage.getActions();
+
 			items = formStructurePage.getItems();
 			lastPage = formStructurePage.getLastPage();
 			page = formStructurePage.getPage();
 			pageSize = formStructurePage.getPageSize();
 			totalCount = formStructurePage.getTotalCount();
 		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<FormStructure> items;
@@ -406,6 +418,8 @@ public class Query {
 		formResource.setContextHttpServletResponse(_httpServletResponse);
 		formResource.setContextUriInfo(_uriInfo);
 		formResource.setContextUser(_user);
+		formResource.setGroupLocalService(_groupLocalService);
+		formResource.setRoleLocalService(_roleLocalService);
 	}
 
 	private void _populateResourceContext(
@@ -419,6 +433,8 @@ public class Query {
 			_httpServletResponse);
 		formDocumentResource.setContextUriInfo(_uriInfo);
 		formDocumentResource.setContextUser(_user);
+		formDocumentResource.setGroupLocalService(_groupLocalService);
+		formDocumentResource.setRoleLocalService(_roleLocalService);
 	}
 
 	private void _populateResourceContext(FormRecordResource formRecordResource)
@@ -430,6 +446,8 @@ public class Query {
 		formRecordResource.setContextHttpServletResponse(_httpServletResponse);
 		formRecordResource.setContextUriInfo(_uriInfo);
 		formRecordResource.setContextUser(_user);
+		formRecordResource.setGroupLocalService(_groupLocalService);
+		formRecordResource.setRoleLocalService(_roleLocalService);
 	}
 
 	private void _populateResourceContext(
@@ -443,6 +461,8 @@ public class Query {
 			_httpServletResponse);
 		formStructureResource.setContextUriInfo(_uriInfo);
 		formStructureResource.setContextUser(_user);
+		formStructureResource.setGroupLocalService(_groupLocalService);
+		formStructureResource.setRoleLocalService(_roleLocalService);
 	}
 
 	private static ComponentServiceObjects<FormResource>
@@ -455,12 +475,17 @@ public class Query {
 		_formStructureResourceComponentServiceObjects;
 
 	private AcceptLanguage _acceptLanguage;
-	private BiFunction<Object, String, Filter> _filterBiFunction;
-	private BiFunction<Object, String, Sort[]> _sortsBiFunction;
 	private com.liferay.portal.kernel.model.Company _company;
-	private com.liferay.portal.kernel.model.User _user;
+	private BiFunction
+		<Object, String, com.liferay.portal.kernel.search.filter.Filter>
+			_filterBiFunction;
+	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private RoleLocalService _roleLocalService;
+	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]>
+		_sortsBiFunction;
 	private UriInfo _uriInfo;
+	private com.liferay.portal.kernel.model.User _user;
 
 }

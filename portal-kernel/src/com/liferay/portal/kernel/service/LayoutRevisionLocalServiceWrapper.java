@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link LayoutRevisionLocalService}.
@@ -25,6 +18,10 @@ public class LayoutRevisionLocalServiceWrapper
 	implements LayoutRevisionLocalService,
 			   ServiceWrapper<LayoutRevisionLocalService> {
 
+	public LayoutRevisionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public LayoutRevisionLocalServiceWrapper(
 		LayoutRevisionLocalService layoutRevisionLocalService) {
 
@@ -33,6 +30,10 @@ public class LayoutRevisionLocalServiceWrapper
 
 	/**
 	 * Adds the layout revision to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutRevisionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutRevision the layout revision
 	 * @return the layout revision that was added
@@ -48,12 +49,10 @@ public class LayoutRevisionLocalServiceWrapper
 	public com.liferay.portal.kernel.model.LayoutRevision addLayoutRevision(
 			long userId, long layoutSetBranchId, long layoutBranchId,
 			long parentLayoutRevisionId, boolean head, long plid,
-			long portletPreferencesPlid, boolean privateLayout,
-			java.lang.String name, java.lang.String title,
-			java.lang.String description, java.lang.String keywords,
-			java.lang.String robots, java.lang.String typeSettings,
-			boolean iconImage, long iconImageId, java.lang.String themeId,
-			java.lang.String colorSchemeId, java.lang.String css,
+			long portletPreferencesPlid, boolean privateLayout, String name,
+			String title, String description, String keywords, String robots,
+			String typeSettings, boolean iconImage, long iconImageId,
+			String themeId, String colorSchemeId, String css,
 			ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -78,6 +77,17 @@ public class LayoutRevisionLocalServiceWrapper
 			layoutRevisionId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutRevisionLocalService.createPersistedModel(primaryKeyObj);
+	}
+
 	@Override
 	public void deleteLayoutLayoutRevisions(long plid)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -87,6 +97,10 @@ public class LayoutRevisionLocalServiceWrapper
 
 	/**
 	 * Deletes the layout revision from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutRevisionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutRevision the layout revision
 	 * @return the layout revision that was removed
@@ -102,6 +116,10 @@ public class LayoutRevisionLocalServiceWrapper
 
 	/**
 	 * Deletes the layout revision with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutRevisionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutRevisionId the primary key of the layout revision
 	 * @return the layout revision that was removed
@@ -150,6 +168,18 @@ public class LayoutRevisionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutRevisionLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _layoutRevisionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _layoutRevisionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -259,19 +289,20 @@ public class LayoutRevisionLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.portal.kernel.model.LayoutRevision
+		fetchLatestLayoutRevision(
+			long layoutSetBranchId, long layoutBranchId, long plid) {
+
+		return _layoutRevisionLocalService.fetchLatestLayoutRevision(
+			layoutSetBranchId, layoutBranchId, plid);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.model.LayoutRevision fetchLayoutRevision(
 		long layoutRevisionId) {
 
 		return _layoutRevisionLocalService.fetchLayoutRevision(
 			layoutRevisionId);
-	}
-
-	@Override
-	public com.liferay.portal.kernel.model.LayoutRevision fetchLayoutRevision(
-		long layoutSetBranchId, long layoutBranchId, boolean head, long plid) {
-
-		return _layoutRevisionLocalService.fetchLayoutRevision(
-			layoutSetBranchId, layoutBranchId, head, plid);
 	}
 
 	@Override
@@ -460,6 +491,11 @@ public class LayoutRevisionLocalServiceWrapper
 	}
 
 	@Override
+	public int getLayoutRevisionsCount(long plid) {
+		return _layoutRevisionLocalService.getLayoutRevisionsCount(plid);
+	}
+
+	@Override
 	public int getLayoutRevisionsCount(
 		long layoutSetBranchId, long layoutBranchId, long plid) {
 
@@ -473,10 +509,13 @@ public class LayoutRevisionLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _layoutRevisionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -487,6 +526,10 @@ public class LayoutRevisionLocalServiceWrapper
 
 	/**
 	 * Updates the layout revision in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutRevisionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutRevision the layout revision
 	 * @return the layout revision that was updated
@@ -501,11 +544,9 @@ public class LayoutRevisionLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.LayoutRevision updateLayoutRevision(
 			long userId, long layoutRevisionId, long layoutBranchId,
-			java.lang.String name, java.lang.String title,
-			java.lang.String description, java.lang.String keywords,
-			java.lang.String robots, java.lang.String typeSettings,
-			boolean iconImage, long iconImageId, java.lang.String themeId,
-			java.lang.String colorSchemeId, java.lang.String css,
+			String name, String title, String description, String keywords,
+			String robots, String typeSettings, boolean iconImage,
+			long iconImageId, String themeId, String colorSchemeId, String css,
 			ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -523,6 +564,11 @@ public class LayoutRevisionLocalServiceWrapper
 
 		return _layoutRevisionLocalService.updateStatus(
 			userId, layoutRevisionId, status, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _layoutRevisionLocalService.getBasePersistence();
 	}
 
 	@Override

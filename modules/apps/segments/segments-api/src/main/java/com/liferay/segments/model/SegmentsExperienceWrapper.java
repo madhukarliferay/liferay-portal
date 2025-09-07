@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class SegmentsExperienceWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("segmentsExperienceId", getSegmentsExperienceId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -54,11 +49,11 @@ public class SegmentsExperienceWrapper
 		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("segmentsEntryId", getSegmentsEntryId());
 		attributes.put("segmentsExperienceKey", getSegmentsExperienceKey());
-		attributes.put("classNameId", getClassNameId());
-		attributes.put("classPK", getClassPK());
+		attributes.put("plid", getPlid());
 		attributes.put("name", getName());
 		attributes.put("priority", getPriority());
 		attributes.put("active", isActive());
+		attributes.put("typeSettings", getTypeSettings());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -72,10 +67,23 @@ public class SegmentsExperienceWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long segmentsExperienceId = (Long)attributes.get(
@@ -134,16 +142,10 @@ public class SegmentsExperienceWrapper
 			setSegmentsExperienceKey(segmentsExperienceKey);
 		}
 
-		Long classNameId = (Long)attributes.get("classNameId");
+		Long plid = (Long)attributes.get("plid");
 
-		if (classNameId != null) {
-			setClassNameId(classNameId);
-		}
-
-		Long classPK = (Long)attributes.get("classPK");
-
-		if (classPK != null) {
-			setClassPK(classPK);
+		if (plid != null) {
+			setPlid(plid);
 		}
 
 		String name = (String)attributes.get("name");
@@ -164,11 +166,22 @@ public class SegmentsExperienceWrapper
 			setActive(active);
 		}
 
+		String typeSettings = (String)attributes.get("typeSettings");
+
+		if (typeSettings != null) {
+			setTypeSettings(typeSettings);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+	}
+
+	@Override
+	public SegmentsExperience cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -184,36 +197,6 @@ public class SegmentsExperienceWrapper
 	@Override
 	public String[] getAvailableLanguageIds() {
 		return model.getAvailableLanguageIds();
-	}
-
-	/**
-	 * Returns the fully qualified class name of this segments experience.
-	 *
-	 * @return the fully qualified class name of this segments experience
-	 */
-	@Override
-	public String getClassName() {
-		return model.getClassName();
-	}
-
-	/**
-	 * Returns the class name ID of this segments experience.
-	 *
-	 * @return the class name ID of this segments experience
-	 */
-	@Override
-	public long getClassNameId() {
-		return model.getClassNameId();
-	}
-
-	/**
-	 * Returns the class pk of this segments experience.
-	 *
-	 * @return the class pk of this segments experience
-	 */
-	@Override
-	public long getClassPK() {
-		return model.getClassPK();
 	}
 
 	/**
@@ -236,9 +219,29 @@ public class SegmentsExperienceWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this segments experience.
+	 *
+	 * @return the ct collection ID of this segments experience
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
 	@Override
 	public String getDefaultLanguageId() {
 		return model.getDefaultLanguageId();
+	}
+
+	/**
+	 * Returns the external reference code of this segments experience.
+	 *
+	 * @return the external reference code of this segments experience
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -358,6 +361,16 @@ public class SegmentsExperienceWrapper
 	}
 
 	/**
+	 * Returns the plid of this segments experience.
+	 *
+	 * @return the plid of this segments experience
+	 */
+	@Override
+	public long getPlid() {
+		return model.getPlid();
+	}
+
+	/**
 	 * Returns the primary key of this segments experience.
 	 *
 	 * @return the primary key of this segments experience
@@ -405,6 +418,23 @@ public class SegmentsExperienceWrapper
 	@Override
 	public String getSegmentsExperienceKey() {
 		return model.getSegmentsExperienceKey();
+	}
+
+	/**
+	 * Returns the type settings of this segments experience.
+	 *
+	 * @return the type settings of this segments experience
+	 */
+	@Override
+	public String getTypeSettings() {
+		return model.getTypeSettings();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.util.UnicodeProperties
+		getTypeSettingsUnicodeProperties() {
+
+		return model.getTypeSettingsUnicodeProperties();
 	}
 
 	/**
@@ -462,11 +492,6 @@ public class SegmentsExperienceWrapper
 		return model.isActive();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a segments experience model instance should use the <code>SegmentsExperience</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -497,31 +522,6 @@ public class SegmentsExperienceWrapper
 		model.setActive(active);
 	}
 
-	@Override
-	public void setClassName(String className) {
-		model.setClassName(className);
-	}
-
-	/**
-	 * Sets the class name ID of this segments experience.
-	 *
-	 * @param classNameId the class name ID of this segments experience
-	 */
-	@Override
-	public void setClassNameId(long classNameId) {
-		model.setClassNameId(classNameId);
-	}
-
-	/**
-	 * Sets the class pk of this segments experience.
-	 *
-	 * @param classPK the class pk of this segments experience
-	 */
-	@Override
-	public void setClassPK(long classPK) {
-		model.setClassPK(classPK);
-	}
-
 	/**
 	 * Sets the company ID of this segments experience.
 	 *
@@ -540,6 +540,26 @@ public class SegmentsExperienceWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this segments experience.
+	 *
+	 * @param ctCollectionId the ct collection ID of this segments experience
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the external reference code of this segments experience.
+	 *
+	 * @param externalReferenceCode the external reference code of this segments experience
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -646,6 +666,16 @@ public class SegmentsExperienceWrapper
 	}
 
 	/**
+	 * Sets the plid of this segments experience.
+	 *
+	 * @param plid the plid of this segments experience
+	 */
+	@Override
+	public void setPlid(long plid) {
+		model.setPlid(plid);
+	}
+
+	/**
 	 * Sets the primary key of this segments experience.
 	 *
 	 * @param primaryKey the primary key of this segments experience
@@ -696,6 +726,24 @@ public class SegmentsExperienceWrapper
 	}
 
 	/**
+	 * Sets the type settings of this segments experience.
+	 *
+	 * @param typeSettings the type settings of this segments experience
+	 */
+	@Override
+	public void setTypeSettings(String typeSettings) {
+		model.setTypeSettings(typeSettings);
+	}
+
+	@Override
+	public void setTypeSettingsUnicodeProperties(
+		com.liferay.portal.kernel.util.UnicodeProperties
+			typeSettingsUnicodeProperties) {
+
+		model.setTypeSettingsUnicodeProperties(typeSettingsUnicodeProperties);
+	}
+
+	/**
 	 * Sets the user ID of this segments experience.
 	 *
 	 * @param userId the user ID of this segments experience
@@ -733,6 +781,25 @@ public class SegmentsExperienceWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<SegmentsExperience, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<SegmentsExperience, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

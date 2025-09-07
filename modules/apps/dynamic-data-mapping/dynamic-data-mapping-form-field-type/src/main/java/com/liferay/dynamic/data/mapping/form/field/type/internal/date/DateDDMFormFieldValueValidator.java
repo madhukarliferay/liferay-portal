@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.date;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidationException;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidator;
-import com.liferay.dynamic.data.mapping.model.DDMForm;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -37,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pedro Queiroz
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=date",
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DATE,
 	service = DDMFormFieldValueValidator.class
 )
 public class DateDDMFormFieldValueValidator
@@ -47,26 +38,27 @@ public class DateDDMFormFieldValueValidator
 	public void validate(DDMFormField ddmFormField, Value value)
 		throws DDMFormFieldValueValidationException {
 
-		DDMForm ddmForm = ddmFormField.getDDMForm();
-
-		Locale defaultLocale = ddmForm.getDefaultLocale();
-
-		String valueString = value.getString(defaultLocale);
-
-		validateDateValue(ddmFormField, defaultLocale, valueString);
+		for (Locale availableLocale : value.getAvailableLocales()) {
+			_validateDateValue(
+				ddmFormField, availableLocale,
+				value.getString(availableLocale));
+		}
 	}
 
-	protected void validateDateValue(
-			DDMFormField ddmFormField, Locale defaultLocale, String valueString)
+	@Reference
+	protected JSONFactory jsonFactory;
+
+	private void _validateDateValue(
+			DDMFormField ddmFormField, Locale locale, String valueString)
 		throws DDMFormFieldValueValidationException {
 
 		if (Validator.isNotNull(valueString)) {
 			try {
-				DateUtil.formatDate("yyyy-MM-dd", valueString, defaultLocale);
+				DateUtil.formatDate("yyyy-MM-dd", valueString, locale);
 			}
-			catch (ParseException pe) {
+			catch (ParseException parseException) {
 				if (_log.isDebugEnabled()) {
-					_log.debug(pe, pe);
+					_log.debug(parseException);
 				}
 
 				throw new DDMFormFieldValueValidationException(
@@ -75,16 +67,7 @@ public class DateDDMFormFieldValueValidator
 						ddmFormField.getName()));
 			}
 		}
-		else if (ddmFormField.isRequired()) {
-			throw new DDMFormFieldValueValidationException(
-				String.format(
-					"Date input cannot be null \"%s\"",
-					ddmFormField.getName()));
-		}
 	}
-
-	@Reference
-	protected JSONFactory jsonFactory;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DateDDMFormFieldValueValidator.class);

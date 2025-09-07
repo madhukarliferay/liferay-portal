@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.form.client.serdes.v1_0;
@@ -17,6 +8,8 @@ package com.liferay.headless.form.client.serdes.v1_0;
 import com.liferay.headless.form.client.dto.v1_0.Form;
 import com.liferay.headless.form.client.dto.v1_0.FormRecord;
 import com.liferay.headless.form.client.json.BaseJSONParser;
+
+import jakarta.annotation.Generated;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -26,9 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
 
 /**
  * @author Javier Gamarra
@@ -59,7 +49,7 @@ public class FormSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (form.getAvailableLanguages() != null) {
 			if (sb.length() > 1) {
@@ -71,11 +61,7 @@ public class FormSerDes {
 			sb.append("[");
 
 			for (int i = 0; i < form.getAvailableLanguages().length; i++) {
-				sb.append("\"");
-
-				sb.append(_escape(form.getAvailableLanguages()[i]));
-
-				sb.append("\"");
+				sb.append(_toJSON(form.getAvailableLanguages()[i]));
 
 				if ((i + 1) < form.getAvailableLanguages().length) {
 					sb.append(", ");
@@ -165,6 +151,16 @@ public class FormSerDes {
 			sb.append("\"");
 		}
 
+		if (form.getDescription_i18n() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"description_i18n\": ");
+
+			sb.append(_toJSON(form.getDescription_i18n()));
+		}
+
 		if (form.getFormRecords() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -229,6 +225,16 @@ public class FormSerDes {
 			sb.append("\"");
 		}
 
+		if (form.getName_i18n() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"name_i18n\": ");
+
+			sb.append(_toJSON(form.getName_i18n()));
+		}
+
 		if (form.getSiteId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -278,7 +284,7 @@ public class FormSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (form.getAvailableLanguages() == null) {
 			map.put("availableLanguages", null);
@@ -296,17 +302,32 @@ public class FormSerDes {
 			map.put("creator", String.valueOf(form.getCreator()));
 		}
 
-		map.put(
-			"dateCreated",
-			liferayToJSONDateFormat.format(form.getDateCreated()));
+		if (form.getDateCreated() == null) {
+			map.put("dateCreated", null);
+		}
+		else {
+			map.put(
+				"dateCreated",
+				liferayToJSONDateFormat.format(form.getDateCreated()));
+		}
 
-		map.put(
-			"dateModified",
-			liferayToJSONDateFormat.format(form.getDateModified()));
+		if (form.getDateModified() == null) {
+			map.put("dateModified", null);
+		}
+		else {
+			map.put(
+				"dateModified",
+				liferayToJSONDateFormat.format(form.getDateModified()));
+		}
 
-		map.put(
-			"datePublished",
-			liferayToJSONDateFormat.format(form.getDatePublished()));
+		if (form.getDatePublished() == null) {
+			map.put("datePublished", null);
+		}
+		else {
+			map.put(
+				"datePublished",
+				liferayToJSONDateFormat.format(form.getDatePublished()));
+		}
 
 		if (form.getDefaultLanguage() == null) {
 			map.put("defaultLanguage", null);
@@ -321,6 +342,14 @@ public class FormSerDes {
 		}
 		else {
 			map.put("description", String.valueOf(form.getDescription()));
+		}
+
+		if (form.getDescription_i18n() == null) {
+			map.put("description_i18n", null);
+		}
+		else {
+			map.put(
+				"description_i18n", String.valueOf(form.getDescription_i18n()));
 		}
 
 		if (form.getFormRecords() == null) {
@@ -349,6 +378,13 @@ public class FormSerDes {
 		}
 		else {
 			map.put("name", String.valueOf(form.getName()));
+		}
+
+		if (form.getName_i18n() == null) {
+			map.put("name_i18n", null);
+		}
+		else {
+			map.put("name_i18n", String.valueOf(form.getName_i18n()));
 		}
 
 		if (form.getSiteId() == null) {
@@ -385,6 +421,60 @@ public class FormSerDes {
 		@Override
 		protected Form[] createDTOArray(int size) {
 			return new Form[size];
+		}
+
+		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "availableLanguages")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateModified")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "datePublished")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "defaultLanguage")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "description")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "description_i18n")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "formRecords")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "formRecordsIds")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "id")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "name")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "name_i18n")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "siteId")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "structure")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "structureId")) {
+				return false;
+			}
+
+			return false;
 		}
 
 		@Override
@@ -429,16 +519,26 @@ public class FormSerDes {
 					form.setDescription((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "description_i18n")) {
+				if (jsonParserFieldValue != null) {
+					form.setDescription_i18n(
+						(Map<String, String>)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "formRecords")) {
 				if (jsonParserFieldValue != null) {
-					form.setFormRecords(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> FormRecordSerDes.toDTO((String)object)
-						).toArray(
-							size -> new FormRecord[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					FormRecord[] formRecordsArray =
+						new FormRecord[jsonParserFieldValues.length];
+
+					for (int i = 0; i < formRecordsArray.length; i++) {
+						formRecordsArray[i] = FormRecordSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					form.setFormRecords(formRecordsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "formRecordsIds")) {
@@ -455,6 +555,12 @@ public class FormSerDes {
 			else if (Objects.equals(jsonParserFieldName, "name")) {
 				if (jsonParserFieldValue != null) {
 					form.setName((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "name_i18n")) {
+				if (jsonParserFieldValue != null) {
+					form.setName_i18n(
+						(Map<String, String>)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "siteId")) {
@@ -474,10 +580,6 @@ public class FormSerDes {
 					form.setStructureId(
 						Long.valueOf((String)jsonParserFieldValue));
 				}
-			}
-			else {
-				throw new IllegalArgumentException(
-					"Unsupported field name " + jsonParserFieldName);
 			}
 		}
 
@@ -507,46 +609,56 @@ public class FormSerDes {
 
 			sb.append("\"");
 			sb.append(entry.getKey());
-			sb.append("\":");
+			sb.append("\": ");
 
 			Object value = entry.getValue();
 
-			Class<?> valueClass = value.getClass();
-
-			if (value instanceof Map) {
-				sb.append(_toJSON((Map)value));
-			}
-			else if (valueClass.isArray()) {
-				Object[] values = (Object[])value;
-
-				sb.append("[");
-
-				for (int i = 0; i < values.length; i++) {
-					sb.append("\"");
-					sb.append(_escape(values[i]));
-					sb.append("\"");
-
-					if ((i + 1) < values.length) {
-						sb.append(", ");
-					}
-				}
-
-				sb.append("]");
-			}
-			else {
-				sb.append("\"");
-				sb.append(_escape(entry.getValue()));
-				sb.append("\"");
-			}
+			sb.append(_toJSON(value));
 
 			if (iterator.hasNext()) {
-				sb.append(",");
+				sb.append(", ");
 			}
 		}
 
 		sb.append("}");
 
 		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
 	}
 
 }

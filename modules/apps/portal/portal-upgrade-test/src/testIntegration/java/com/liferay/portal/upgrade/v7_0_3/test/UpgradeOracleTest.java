@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_3.test;
@@ -95,23 +86,23 @@ public class UpgradeOracleTest {
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select char_used from user_tab_columns where table_name ",
 					"= '", tableName, "' and column_name = '", columnName,
 					"'"))) {
 
-			ResultSet rs = ps.executeQuery();
+			ResultSet resultSet = preparedStatement.executeQuery();
 
-			rs.next();
+			resultSet.next();
 
-			return rs.getString(1);
+			return resultSet.getString(1);
 		}
 	}
 
 	private static final String _FIELD_NAME = "INDUSTRY";
 
-	private static final String _TABLE_NAME = "ACCOUNT_";
+	private static final String _TABLE_NAME = "COMPANY";
 
 	private static DB _db;
 

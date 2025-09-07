@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -34,8 +25,11 @@ MBTreeWalker treeWalker = messageDisplay.getTreeWalker();
 int[] range = treeWalker.getChildrenRange(treeWalker.getRoot());
 
 MBMessageIterator mbMessageIterator = new MBMessageIterator(treeWalker.getMessages(), rootIndexPage, range[1]);
+%>
 
-if (mbMessageIterator != null) {
+<c:if test="<%= mbMessageIterator != null %>">
+
+	<%
 	while (mbMessageIterator.hasNext()) {
 		rootIndexPage = mbMessageIterator.getIndexPage();
 
@@ -50,19 +44,24 @@ if (mbMessageIterator != null) {
 		request.setAttribute(WebKeys.MESSAGE_BOARDS_TREE_WALKER_LAST_NODE, Boolean.valueOf(false));
 		request.setAttribute(WebKeys.MESSAGE_BOARDS_TREE_WALKER_SEL_MESSAGE, message);
 		request.setAttribute(WebKeys.MESSAGE_BOARDS_TREE_WALKER_THREAD, thread);
-%>
+	%>
 
 		<div class="card-tab message-container">
 			<liferay-util:include page="/message_boards/view_thread_tree.jsp" servletContext="<%= application %>" />
 		</div>
 
-<%
+	<%
 		index = GetterUtil.getInteger(request.getAttribute(WebKeys.MESSAGE_BOARDS_TREE_INDEX));
 	}
-}
+	%>
+
+</c:if>
+
+<%
+List<MBMessage> messages = treeWalker.getMessages();
 %>
 
-<script>
+<aui:script>
 	var index = document.getElementById('<portlet:namespace />index');
 
 	if (index) {
@@ -77,7 +76,7 @@ if (mbMessageIterator != null) {
 		rootIndexPage.value = '<%= String.valueOf(rootIndexPage) %>';
 	}
 
-	<c:if test="<%= treeWalker.getMessages().size() <= (index + 1) %>">
+	<c:if test="<%= messages.size() <= (index + 1) %>">
 		var moreMessagesLink = document.getElementById(
 			'<portlet:namespace />moreMessages'
 		);
@@ -86,4 +85,4 @@ if (mbMessageIterator != null) {
 			moreMessagesLink.classList.add('hide');
 		}
 	</c:if>
-</script>
+</aui:script>

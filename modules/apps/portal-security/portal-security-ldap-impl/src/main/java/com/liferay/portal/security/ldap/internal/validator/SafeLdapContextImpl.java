@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.internal.validator;
@@ -57,40 +48,40 @@ public class SafeLdapContextImpl implements SafeLdapContext {
 	}
 
 	@Override
-	public void bind(Name name, Object obj) throws NamingException {
+	public void bind(Name name, Object object) throws NamingException {
 		if (!(name instanceof SafeLdapName)) {
 			_logUnsafeParameter();
 		}
 
-		_ldapContext.bind(name, obj);
+		_ldapContext.bind(name, object);
 	}
 
 	@Override
-	public void bind(Name name, Object obj, Attributes attributes)
+	public void bind(Name name, Object object, Attributes attributes)
 		throws NamingException {
 
 		if (!(name instanceof SafeLdapName)) {
 			_logUnsafeParameter();
 		}
 
-		_ldapContext.bind(name, obj, attributes);
+		_ldapContext.bind(name, object, attributes);
 	}
 
 	@Override
-	public void bind(String name, Object obj) throws NamingException {
+	public void bind(String name, Object object) throws NamingException {
 		_logUnsafeMethod();
 
-		_ldapContext.bind(SafeLdapNameFactory.fromUnsafe(name), obj);
+		_ldapContext.bind(SafeLdapNameFactory.fromUnsafe(name), object);
 	}
 
 	@Override
-	public void bind(String name, Object obj, Attributes attributes)
+	public void bind(String name, Object object, Attributes attributes)
 		throws NamingException {
 
 		_logUnsafeMethod();
 
 		_ldapContext.bind(
-			SafeLdapNameFactory.fromUnsafe(name), obj, attributes);
+			SafeLdapNameFactory.fromUnsafe(name), object, attributes);
 	}
 
 	@Override
@@ -416,40 +407,40 @@ public class SafeLdapContextImpl implements SafeLdapContext {
 	}
 
 	@Override
-	public void rebind(Name name, Object obj) throws NamingException {
+	public void rebind(Name name, Object object) throws NamingException {
 		if (!(name instanceof SafeLdapName)) {
 			_logUnsafeParameter();
 		}
 
-		_ldapContext.rebind(name, obj);
+		_ldapContext.rebind(name, object);
 	}
 
 	@Override
-	public void rebind(Name name, Object obj, Attributes attributes)
+	public void rebind(Name name, Object object, Attributes attributes)
 		throws NamingException {
 
 		if (!(name instanceof SafeLdapName)) {
 			_logUnsafeParameter();
 		}
 
-		_ldapContext.rebind(name, obj, attributes);
+		_ldapContext.rebind(name, object, attributes);
 	}
 
 	@Override
-	public void rebind(String name, Object obj) throws NamingException {
+	public void rebind(String name, Object object) throws NamingException {
 		_logUnsafeMethod();
 
-		_ldapContext.rebind(SafeLdapNameFactory.fromUnsafe(name), obj);
+		_ldapContext.rebind(SafeLdapNameFactory.fromUnsafe(name), object);
 	}
 
 	@Override
-	public void rebind(String name, Object obj, Attributes attributes)
+	public void rebind(String name, Object object, Attributes attributes)
 		throws NamingException {
 
 		_logUnsafeMethod();
 
 		_ldapContext.rebind(
-			SafeLdapNameFactory.fromUnsafe(name), obj, attributes);
+			SafeLdapNameFactory.fromUnsafe(name), object, attributes);
 	}
 
 	@Override

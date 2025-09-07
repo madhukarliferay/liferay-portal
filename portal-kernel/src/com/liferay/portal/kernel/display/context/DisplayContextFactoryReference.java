@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.display.context;
 
-import com.liferay.registry.ServiceReference;
-
 import java.util.Objects;
+
+import org.osgi.framework.ServiceReference;
 
 /**
  * @author Iván Zaera
@@ -40,26 +31,21 @@ public class DisplayContextFactoryReference<T extends DisplayContextFactory>
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DisplayContextFactoryReference)) {
+		if (!(object instanceof DisplayContextFactoryReference)) {
 			return false;
 		}
 
 		DisplayContextFactoryReference<?> displayContextFactoryReference =
-			(DisplayContextFactoryReference<?>)obj;
+			(DisplayContextFactoryReference<?>)object;
 
-		if (Objects.equals(
-				_serviceReference,
-				displayContextFactoryReference._serviceReference)) {
-
-			return true;
-		}
-
-		return false;
+		return Objects.equals(
+			_serviceReference,
+			displayContextFactoryReference._serviceReference);
 	}
 
 	public T getDisplayContextFactory() {

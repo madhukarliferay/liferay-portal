@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.content.service.impl;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.jdbc.OutputBlob;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.io.ByteArrayInputStream;
@@ -78,9 +70,7 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 
 		dlContent.setSize(bytes.length);
 
-		dlContentPersistence.update(dlContent);
-
-		return dlContent;
+		return dlContentPersistence.update(dlContent);
 	}
 
 	@Override
@@ -121,7 +111,7 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 
 		DLContent dlContent = null;
 
-		try (InputStream is = inputStream) {
+		try (InputStream copyInputStream = inputStream) {
 			long contentId = counterLocalService.increment();
 
 			dlContent = dlContentPersistence.create(contentId);
@@ -131,17 +121,17 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 			dlContent.setPath(path);
 			dlContent.setVersion(version);
 
-			OutputBlob dataOutputBlob = new OutputBlob(is, size);
+			OutputBlob dataOutputBlob = new OutputBlob(copyInputStream, size);
 
 			dlContent.setData(dataOutputBlob);
 
 			dlContent.setSize(size);
 
-			dlContentPersistence.update(dlContent);
+			dlContent = dlContentPersistence.update(dlContent);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(ioe, ioe);
+				_log.warn(ioException);
 			}
 		}
 
@@ -199,12 +189,12 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 		throws NoSuchContentException {
 
 		OrderByComparator<DLContent> orderByComparator =
-			new DLContentVersionComparator();
+			DLContentVersionComparator.getInstance(false);
 
 		List<DLContent> dlContents = dlContentPersistence.findByC_R_P(
 			companyId, repositoryId, path, 0, 1, orderByComparator);
 
-		if ((dlContents == null) || dlContents.isEmpty()) {
+		if (ListUtil.isEmpty(dlContents)) {
 			throw new NoSuchContentException(path);
 		}
 
@@ -218,12 +208,12 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 
 		if (version.isEmpty()) {
 			OrderByComparator<DLContent> orderByComparator =
-				new DLContentVersionComparator();
+				DLContentVersionComparator.getInstance(false);
 
 			List<DLContent> dlContents = dlContentPersistence.findByC_R_P(
 				companyId, repositoryId, path, 0, 1, orderByComparator);
 
-			if ((dlContents == null) || dlContents.isEmpty()) {
+			if (ListUtil.isEmpty(dlContents)) {
 				throw new NoSuchContentException(path);
 			}
 
@@ -342,10 +332,11 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 			try {
 				return new OutputBlob(inputStream, fileChannel.size());
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
-						"Unable to detect file size from file channel", ioe);
+						"Unable to detect file size from file channel",
+						ioException);
 				}
 			}
 		}
@@ -358,8 +349,8 @@ public class DLContentLocalServiceImpl extends DLContentLocalServiceBaseImpl {
 
 			return new OutputBlob(unsyncByteArrayInputStream, bytes.length);
 		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
 		}
 	}
 

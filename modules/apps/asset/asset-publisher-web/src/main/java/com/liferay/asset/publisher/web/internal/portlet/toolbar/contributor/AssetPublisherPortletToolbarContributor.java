@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.publisher.web.internal.portlet.toolbar.contributor;
@@ -17,18 +8,17 @@ package com.liferay.asset.publisher.web.internal.portlet.toolbar.contributor;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
 import com.liferay.asset.publisher.constants.AssetPublisherWebKeys;
 import com.liferay.asset.publisher.web.internal.display.context.AssetPublisherDisplayContext;
-import com.liferay.asset.publisher.web.internal.util.AssetPublisherWebUtil;
+import com.liferay.asset.publisher.web.internal.helper.AssetPublisherWebHelper;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.BasePortletToolbarContributor;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.PortletToolbarContributor;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.servlet.taglib.ui.MenuItem;
 import com.liferay.portal.kernel.servlet.taglib.ui.URLMenuItem;
@@ -38,20 +28,18 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -60,20 +48,33 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + AssetPublisherPortletKeys.ASSET_PUBLISHER,
+		"jakarta.portlet.name=" + AssetPublisherPortletKeys.ASSET_PUBLISHER,
 		"mvc.path=-", "mvc.path=/view.jsp"
 	},
-	service = {
-		AssetPublisherPortletToolbarContributor.class,
-		PortletToolbarContributor.class
-	}
+	service = PortletToolbarContributor.class
 )
 public class AssetPublisherPortletToolbarContributor
 	extends BasePortletToolbarContributor {
 
-	protected void addPortletTitleAddAssetEntryMenuItems(
+	@Override
+	protected List<MenuItem> getPortletTitleMenuItems(
+		PortletRequest portletRequest, PortletResponse portletResponse) {
+
+		List<MenuItem> menuItems = new ArrayList<>();
+
+		try {
+			_addPortletTitleAddAssetEntryMenuItems(
+				menuItems, portletRequest, portletResponse);
+		}
+		catch (Exception exception) {
+			_log.error("Unable to add folder menu item", exception);
+		}
+
+		return menuItems;
+	}
+
+	private void _addPortletTitleAddAssetEntryMenuItems(
 			List<MenuItem> menuItems, PortletRequest portletRequest,
 			PortletResponse portletResponse)
 		throws Exception {
@@ -101,11 +102,11 @@ public class AssetPublisherPortletToolbarContributor
 			WebKeys.THEME_DISPLAY);
 
 		if (scopeAssetPublisherAddItemHolders.size() == 1) {
-			Set<Map.Entry<Long, List<AssetPublisherAddItemHolder>>> entrySet =
+			Set<Map.Entry<Long, List<AssetPublisherAddItemHolder>>> entries =
 				scopeAssetPublisherAddItemHolders.entrySet();
 
 			Iterator<Map.Entry<Long, List<AssetPublisherAddItemHolder>>>
-				iterator = entrySet.iterator();
+				iterator = entries.iterator();
 
 			Map.Entry<Long, List<AssetPublisherAddItemHolder>>
 				scopeAddPortletURL = iterator.next();
@@ -130,57 +131,34 @@ public class AssetPublisherPortletToolbarContributor
 
 		URLMenuItem urlMenuItem = new URLMenuItem();
 
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", themeDisplay.getLocale(), getClass());
+		String title = _language.get(
+			themeDisplay.getLocale(), "add-content-select-scope-and-type");
 
-		String title = LanguageUtil.get(
-			resourceBundle, "add-content-select-scope-and-type");
+		urlMenuItem.setData(
+			HashMapBuilder.<String, Object>put(
+				"id",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
 
-		Map<String, Object> data = HashMapBuilder.<String, Object>put(
-			"id",
-			() -> {
-				PortletDisplay portletDisplay =
-					themeDisplay.getPortletDisplay();
-
-				return HtmlUtil.escape(portletDisplay.getNamespace()) +
-					"editAsset";
-			}
-		).put(
-			"title", title
-		).build();
-
-		urlMenuItem.setData(data);
-
+					return HtmlUtil.escape(portletDisplay.getNamespace()) +
+						"editAsset";
+				}
+			).put(
+				"title", title
+			).build());
 		urlMenuItem.setLabel(title);
 
-		LiferayPortletResponse liferayPortletResponse =
-			_portal.getLiferayPortletResponse(portletResponse);
-
-		PortletURL portletURL = liferayPortletResponse.createRenderURL();
-
-		portletURL.setParameter("mvcPath", "/add_asset_selector.jsp");
-		portletURL.setParameter("redirect", themeDisplay.getURLCurrent());
-
-		urlMenuItem.setURL(portletURL.toString());
+		urlMenuItem.setURL(
+			PortletURLBuilder.createRenderURL(
+				_portal.getLiferayPortletResponse(portletResponse)
+			).setMVCPath(
+				"/add_asset_selector.jsp"
+			).setRedirect(
+				themeDisplay.getURLCurrent()
+			).buildString());
 
 		menuItems.add(urlMenuItem);
-	}
-
-	@Override
-	protected List<MenuItem> getPortletTitleMenuItems(
-		PortletRequest portletRequest, PortletResponse portletResponse) {
-
-		List<MenuItem> menuItems = new ArrayList<>();
-
-		try {
-			addPortletTitleAddAssetEntryMenuItems(
-				menuItems, portletRequest, portletResponse);
-		}
-		catch (Exception e) {
-			_log.error("Unable to add folder menu item", e);
-		}
-
-		return menuItems;
 	}
 
 	private URLMenuItem _getPortletTitleAddAssetEntryMenuItem(
@@ -194,16 +172,15 @@ public class AssetPublisherPortletToolbarContributor
 
 		String message = assetPublisherAddItemHolder.getModelResource();
 
-		Map<String, Object> data = HashMapBuilder.<String, Object>put(
-			"id", HtmlUtil.escape(portletDisplay.getNamespace()) + "editAsset"
-		).put(
-			"title",
-			LanguageUtil.format(
-				themeDisplay.getLocale(), "new-x", message, false)
-		).build();
-
-		urlMenuItem.setData(data);
-
+		urlMenuItem.setData(
+			HashMapBuilder.<String, Object>put(
+				"id",
+				HtmlUtil.escape(portletDisplay.getNamespace()) + "editAsset"
+			).put(
+				"title",
+				_language.format(
+					themeDisplay.getLocale(), "new-x", message, false)
+			).build());
 		urlMenuItem.setLabel(message);
 
 		long curGroupId = groupId;
@@ -217,21 +194,21 @@ public class AssetPublisherPortletToolbarContributor
 			curGroupId = group.getLiveGroupId();
 		}
 
-		PortletURL portletURL = assetPublisherAddItemHolder.getPortletURL();
-
-		portletURL.setParameter(
-			"portletResource", AssetPublisherPortletKeys.ASSET_PUBLISHER);
+		PortletURL portletURL = PortletURLBuilder.create(
+			assetPublisherAddItemHolder.getPortletURL()
+		).setPortletResource(
+			AssetPublisherPortletKeys.ASSET_PUBLISHER
+		).buildPortletURL();
 
 		boolean addDisplayPageParameter =
-			_assetPublisherWebUtil.isDefaultAssetPublisher(
+			_assetPublisherWebHelper.isDefaultAssetPublisher(
 				themeDisplay.getLayout(), portletDisplay.getId(),
 				assetPublisherDisplayContext.getPortletResource());
 
-		String url = _assetHelper.getAddURLPopUp(
-			curGroupId, themeDisplay.getPlid(), portletURL,
-			addDisplayPageParameter, themeDisplay.getLayout());
-
-		urlMenuItem.setURL(url);
+		urlMenuItem.setURL(
+			_assetHelper.getAddURLPopUp(
+				curGroupId, themeDisplay.getPlid(), portletURL,
+				addDisplayPageParameter, themeDisplay.getLayout()));
 
 		return urlMenuItem;
 	}
@@ -239,7 +216,7 @@ public class AssetPublisherPortletToolbarContributor
 	private boolean _isVisible(
 			AssetPublisherDisplayContext assetPublisherDisplayContext,
 			PortletRequest portletRequest)
-		throws PortalException {
+		throws Exception {
 
 		if (!assetPublisherDisplayContext.isShowAddContentButton()) {
 			return false;
@@ -269,16 +246,10 @@ public class AssetPublisherPortletToolbarContributor
 		String portletName = portletDisplay.getPortletName();
 
 		if (portletName.equals(
-				AssetPublisherPortletKeys.HIGHEST_RATED_ASSETS)) {
+				AssetPublisherPortletKeys.HIGHEST_RATED_ASSETS) ||
+			portletName.equals(AssetPublisherPortletKeys.MOST_VIEWED_ASSETS) ||
+			portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS)) {
 
-			return false;
-		}
-
-		if (portletName.equals(AssetPublisherPortletKeys.MOST_VIEWED_ASSETS)) {
-			return false;
-		}
-
-		if (portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS)) {
 			return false;
 		}
 
@@ -292,10 +263,13 @@ public class AssetPublisherPortletToolbarContributor
 	private AssetHelper _assetHelper;
 
 	@Reference
-	private AssetPublisherWebUtil _assetPublisherWebUtil;
+	private AssetPublisherWebHelper _assetPublisherWebHelper;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

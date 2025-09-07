@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test;
@@ -24,8 +15,11 @@ import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.expando.test.util.ExpandoTestUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
@@ -34,9 +28,6 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -50,10 +41,11 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portlet.documentlibrary.util.DLSearcher;
-import com.liferay.portlet.expando.util.test.ExpandoTestUtil;
 
 import java.io.Serializable;
 
@@ -83,17 +75,13 @@ public class ExpandoSearchTest {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
 		_indexer = _indexerRegistry.getIndexer(User.class);
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()));
 	}
 
 	@After
@@ -103,8 +91,6 @@ public class ExpandoSearchTest {
 		}
 
 		_fileEntries.clear();
-
-		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
 	@Test
@@ -298,16 +284,16 @@ public class ExpandoSearchTest {
 		assertNoHits("\"ngineer\"");
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected FileEntry addDLFileEntry(String columnName, String columnValue)
 		throws Exception {
-
-		ServiceContext serviceContext = getServiceContext(
-			columnName, columnValue);
 
 		FileEntry fileEntry = DLAppTestUtil.addFileEntryWithWorkflow(
 			TestPropsValues.getUserId(), TestPropsValues.getGroupId(), 0,
 			StringPool.BLANK, RandomTestUtil.randomString(), true,
-			serviceContext);
+			getServiceContext(columnName, columnValue));
 
 		_fileEntries.add(fileEntry);
 
@@ -352,38 +338,37 @@ public class ExpandoSearchTest {
 
 	protected User addUser(ServiceContext serviceContext) throws Exception {
 		long creatorUserId = TestPropsValues.getUserId();
-		long companyId = TestPropsValues.getCompanyId();
+
 		boolean autoPassword = true;
 		String password1 = null;
 		String password2 = null;
 		boolean autoScreenName = false;
 		String screenName = RandomTestUtil.randomString();
 		String emailAddress = RandomTestUtil.randomString() + "@liferay.com";
-		long facebookId = 0;
-		String openId = null;
 		Locale locale = LocaleUtil.getDefault();
 		String firstName = RandomTestUtil.randomString();
 		String middleName = RandomTestUtil.randomString();
 		String lastName = RandomTestUtil.randomString();
-		long prefixId = 0;
-		long suffixId = 0;
+		long prefixListTypeId = 0;
+		long suffixListTypeId = 0;
 		boolean male = false;
 		int birthdayMonth = Calendar.JANUARY;
 		int birthdayDay = 1;
 		int birthdayYear = 1970;
 		String jobTitle = null;
-		long[] groupIds = {TestPropsValues.getGroupId()};
 		long[] organizationIds = null;
 		long[] roleIds = null;
 		long[] userGroupIds = null;
 		boolean sendMail = false;
 
 		User user = _userLocalService.addUser(
-			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, facebookId, openId,
-			locale, firstName, middleName, lastName, prefixId, suffixId, male,
-			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
-			organizationIds, roleIds, userGroupIds, sendMail, serviceContext);
+			creatorUserId, TestPropsValues.getCompanyId(), autoPassword,
+			password1, password2, autoScreenName, screenName, emailAddress,
+			locale, firstName, middleName, lastName, prefixListTypeId,
+			suffixListTypeId, male, birthdayMonth, birthdayDay, birthdayYear,
+			jobTitle, UserConstants.TYPE_REGULAR,
+			new long[] {TestPropsValues.getGroupId()}, organizationIds, roleIds,
+			userGroupIds, sendMail, serviceContext);
 
 		_users.add(user);
 
@@ -393,10 +378,7 @@ public class ExpandoSearchTest {
 	protected User addUser(String columnName, String columnValue)
 		throws Exception {
 
-		ServiceContext serviceContext = getServiceContext(
-			columnName, columnValue);
-
-		return addUser(serviceContext);
+		return addUser(getServiceContext(columnName, columnValue));
 	}
 
 	protected void assertNoHits(String keywords) throws Exception {
@@ -443,13 +425,8 @@ public class ExpandoSearchTest {
 	protected List<String> getExpandoColumnValues(Hits hits) {
 		List<Document> documents = hits.toList();
 
-		List<String> values = new ArrayList<>(documents.size());
-
-		for (Document document : documents) {
-			values.add(getExpandoColumnValue(document));
-		}
-
-		return values;
+		return TransformUtil.transform(
+			documents, document -> getExpandoColumnValue(document));
 	}
 
 	protected ServiceContext getServiceContext(
@@ -459,17 +436,15 @@ public class ExpandoSearchTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext();
 
-		Map<String, Serializable> expandoBridgeAttributes =
+		serviceContext.setExpandoBridgeAttributes(
 			HashMapBuilder.<String, Serializable>put(
 				columnName, columnValue
-			).build();
-
-		serviceContext.setExpandoBridgeAttributes(expandoBridgeAttributes);
+			).build());
 
 		return serviceContext;
 	}
 
-	private static String _toString(List<String> list) {
+	private String _toString(List<String> list) {
 		List<String> sorted = new ArrayList<>(list);
 
 		Collections.sort(sorted);
@@ -502,7 +477,6 @@ public class ExpandoSearchTest {
 	private final List<FileEntry> _fileEntries = new ArrayList<>();
 
 	private Indexer<User> _indexer;
-	private PermissionChecker _originalPermissionChecker;
 
 	@DeleteAfterTestRun
 	private final List<User> _users = new ArrayList<>();

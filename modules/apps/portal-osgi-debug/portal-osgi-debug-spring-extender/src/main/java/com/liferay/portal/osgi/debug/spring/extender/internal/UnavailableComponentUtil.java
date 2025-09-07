@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.debug.spring.extender.internal;
@@ -72,43 +63,43 @@ public class UnavailableComponentUtil {
 				}
 			}
 
-			if (!unavailableComponentDeclarations.isEmpty()) {
-				BundleContext bundleContext =
-					dependencyManager.getBundleContext();
+			if (unavailableComponentDeclarations.isEmpty()) {
+				continue;
+			}
 
-				Bundle bundle = bundleContext.getBundle();
+			BundleContext bundleContext = dependencyManager.getBundleContext();
 
-				sb.append("\nBundle {id: ");
-				sb.append(bundle.getBundleId());
-				sb.append(", name: ");
-				sb.append(bundle.getSymbolicName());
-				sb.append(", version: ");
-				sb.append(bundle.getVersion());
-				sb.append("}.\n");
+			Bundle bundle = bundleContext.getBundle();
 
-				for (Map.Entry
-						<ComponentDeclaration,
-						 List<ComponentDependencyDeclaration>> entry :
-							unavailableComponentDeclarations.entrySet()) {
+			sb.append("\nBundle {id: ");
+			sb.append(bundle.getBundleId());
+			sb.append(", name: ");
+			sb.append(bundle.getSymbolicName());
+			sb.append(", version: ");
+			sb.append(bundle.getVersion());
+			sb.append("}.\n");
 
-					sb.append("\tComponent with ID ");
+			for (Map.Entry
+					<ComponentDeclaration, List<ComponentDependencyDeclaration>>
+						entry : unavailableComponentDeclarations.entrySet()) {
 
-					ComponentDeclaration componentDeclaration = entry.getKey();
+				sb.append("\tComponent with ID ");
 
-					sb.append(componentDeclaration.getId());
+				ComponentDeclaration componentDeclaration = entry.getKey();
 
-					sb.append(" is unavailable due to missing required ");
-					sb.append("dependencies:\n\t\t");
+				sb.append(componentDeclaration.getId());
 
-					for (ComponentDependencyDeclaration
-							componentDependencyDeclaration : entry.getValue()) {
+				sb.append(" is unavailable due to missing required ");
+				sb.append("dependencies:\n\t\t");
 
-						sb.append(componentDependencyDeclaration);
-						sb.append("\n\t\t");
-					}
+				for (ComponentDependencyDeclaration
+						componentDependencyDeclaration : entry.getValue()) {
 
-					sb.setIndex(sb.index() - 1);
+					sb.append(componentDependencyDeclaration);
+					sb.append("\n\t\t");
 				}
+
+				sb.setIndex(sb.index() - 1);
 			}
 		}
 

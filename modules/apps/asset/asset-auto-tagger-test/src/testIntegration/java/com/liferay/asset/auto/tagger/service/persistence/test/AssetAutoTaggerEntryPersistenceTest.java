@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.auto.tagger.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -128,6 +120,8 @@ public class AssetAutoTaggerEntryPersistenceTest {
 
 		newAssetAutoTaggerEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newAssetAutoTaggerEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newAssetAutoTaggerEntry.setGroupId(RandomTestUtil.nextLong());
 
 		newAssetAutoTaggerEntry.setCompanyId(RandomTestUtil.nextLong());
@@ -150,6 +144,9 @@ public class AssetAutoTaggerEntryPersistenceTest {
 		Assert.assertEquals(
 			existingAssetAutoTaggerEntry.getMvccVersion(),
 			newAssetAutoTaggerEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingAssetAutoTaggerEntry.getCtCollectionId(),
+			newAssetAutoTaggerEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingAssetAutoTaggerEntry.getAssetAutoTaggerEntryId(),
 			newAssetAutoTaggerEntry.getAssetAutoTaggerEntryId());
@@ -225,7 +222,7 @@ public class AssetAutoTaggerEntryPersistenceTest {
 
 	protected OrderByComparator<AssetAutoTaggerEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"AssetAutoTaggerEntry", "mvccVersion", true,
+			"AssetAutoTaggerEntry", "mvccVersion", true, "ctCollectionId", true,
 			"assetAutoTaggerEntryId", true, "groupId", true, "companyId", true,
 			"createDate", true, "modifiedDate", true, "assetEntryId", true,
 			"assetTagId", true);
@@ -474,20 +471,66 @@ public class AssetAutoTaggerEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		AssetAutoTaggerEntry existingAssetAutoTaggerEntry =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newAssetAutoTaggerEntry.getPrimaryKey());
+				newAssetAutoTaggerEntry.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AssetAutoTaggerEntry newAssetAutoTaggerEntry =
+			addAssetAutoTaggerEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AssetAutoTaggerEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"assetAutoTaggerEntryId",
+				newAssetAutoTaggerEntry.getAssetAutoTaggerEntryId()));
+
+		List<AssetAutoTaggerEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		AssetAutoTaggerEntry assetAutoTaggerEntry) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingAssetAutoTaggerEntry.getAssetEntryId()),
+			Long.valueOf(assetAutoTaggerEntry.getAssetEntryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetAutoTaggerEntry, "getOriginalAssetEntryId",
-				new Class<?>[0]));
+				assetAutoTaggerEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "assetEntryId"));
 		Assert.assertEquals(
-			Long.valueOf(existingAssetAutoTaggerEntry.getAssetTagId()),
+			Long.valueOf(assetAutoTaggerEntry.getAssetTagId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetAutoTaggerEntry, "getOriginalAssetTagId",
-				new Class<?>[0]));
+				assetAutoTaggerEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "assetTagId"));
 	}
 
 	protected AssetAutoTaggerEntry addAssetAutoTaggerEntry() throws Exception {
@@ -496,6 +539,8 @@ public class AssetAutoTaggerEntryPersistenceTest {
 		AssetAutoTaggerEntry assetAutoTaggerEntry = _persistence.create(pk);
 
 		assetAutoTaggerEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		assetAutoTaggerEntry.setCtCollectionId(RandomTestUtil.nextLong());
 
 		assetAutoTaggerEntry.setGroupId(RandomTestUtil.nextLong());
 

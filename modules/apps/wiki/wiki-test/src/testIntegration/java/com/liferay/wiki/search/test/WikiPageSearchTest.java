@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.search.test;
@@ -28,9 +19,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.SearchContextTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.test.util.BaseSearchTestCase;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.service.WikiNodeLocalServiceUtil;
@@ -44,7 +35,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,48 +53,41 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		super.setUp();
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testLocalizedSearch() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchByDDMStructureField() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchByKeywordsInsideParentBaseModel() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchMyEntries() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchRecentEntries() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchStatus() throws Exception {
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testSearchWithinDDMStructure() throws Exception {
@@ -122,7 +105,7 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 	protected void addAttachment(ClassedModel classedModel) throws Exception {
 		WikiPage page = (WikiPage)classedModel;
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			TestPropsValues.getUserId(), page.getNodeId(), page.getTitle(),
 			WikiPageSearchTest.class);
 	}
@@ -141,7 +124,9 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 
 	@Override
 	protected void deleteBaseModel(long primaryKey) throws Exception {
-		WikiPageLocalServiceUtil.deleteWikiPage(primaryKey);
+		WikiPage page = WikiPageLocalServiceUtil.getPageByPageId(primaryKey);
+
+		WikiPageLocalServiceUtil.deletePage(page);
 	}
 
 	@Override
@@ -275,16 +260,12 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 		}
 
 		protected boolean isSearchSpecificFieldsImplementedForSearchEngine() {
-			SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine(
-				SearchEngineHelperUtil.getDefaultSearchEngineId());
+			SearchEngine searchEngine =
+				SearchEngineHelperUtil.getSearchEngine();
 
 			String vendor = searchEngine.getVendor();
 
-			if (vendor.equals("Lucene")) {
-				return true;
-			}
-
-			return false;
+			return vendor.equals("Lucene");
 		}
 
 		private final BaseModel<?> _parentBaseModel;

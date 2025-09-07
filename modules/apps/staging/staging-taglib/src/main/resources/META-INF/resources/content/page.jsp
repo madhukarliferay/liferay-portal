@@ -1,24 +1,15 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/content/init.jsp" %>
 
-<c:if test="<%= !dataSiteLevelPortlets.isEmpty() %>">
+<c:if test="<%= !portlets.isEmpty() %>">
 	<aui:fieldset cssClass="options-group" markupView="lexicon">
-		<div class="sheet-section">
+		<clay:sheet-section>
 			<h3 class="sheet-subtitle"><liferay-ui:message key="content" /></h3>
 
 			<ul class="list-unstyled">
@@ -32,13 +23,13 @@
 								<ul class="list-unstyled">
 									<li class="tree-item">
 										<aui:fieldset cssClass="portlet-data-section" label="date-range">
-											<div class="flex-container">
+											<div class="align-items-center c-mb-3 d-flex flex-wrap">
 
 												<%
 												String selectedRange = MapUtil.getString(parameterMap, "range", defaultRange);
 												%>
 
-												<div class="flex-item-center range-options">
+												<div class="c-p-4 range-options">
 													<liferay-staging:radio
 														checked="<%= selectedRange.equals(ExportImportDateUtil.RANGE_ALL) %>"
 														disabled="<%= disableInputs %>"
@@ -50,7 +41,7 @@
 												</div>
 
 												<c:if test="<%= !type.equals(Constants.EXPORT) %>">
-													<div class="flex-item-center range-options">
+													<div class="c-p-4 range-options">
 														<liferay-staging:radio
 															checked="<%= selectedRange.equals(ExportImportDateUtil.RANGE_FROM_LAST_PUBLISH_DATE) %>"
 															disabled="<%= disableInputs %>"
@@ -62,7 +53,7 @@
 													</div>
 												</c:if>
 
-												<div class="flex-item-center range-options">
+												<div class="c-p-4 range-options">
 													<liferay-staging:radio
 														checked="<%= selectedRange.equals(ExportImportDateUtil.RANGE_DATE_RANGE) %>"
 														disabled="<%= disableInputs %>"
@@ -74,25 +65,26 @@
 													/>
 												</div>
 
-												<div class="flex-item-center range-options">
+												<div class="c-p-4 range-options">
 													<liferay-staging:radio
 														checked="<%= selectedRange.equals(ExportImportDateUtil.RANGE_LAST) %>"
 														disabled="<%= disableInputs %>"
 														id="rangeLast"
 														label='<%= LanguageUtil.get(request, "last") + StringPool.TRIPLE_PERIOD %>'
 														name="range"
+														popover="export-last-range-help"
 														value="<%= ExportImportDateUtil.RANGE_LAST %>"
 													/>
 												</div>
 
-												<div class="flex-item-center range-options <%= disableInputs ? "hide" : StringPool.BLANK %>">
-													<clay:icon
-														symbol="reload"
+												<div class="range-options c-p-4 <%= disableInputs ? "hide" : StringPool.BLANK %>">
+													<clay:link
+														cssClass="modify-link"
+														href="javascript:void(0);"
+														icon="reload"
+														id='<%= liferayPortletResponse.getNamespace() + "rangeLink" %>'
+														label="refresh-counts"
 													/>
-
-													<aui:a cssClass="modify-link" href="javascript:;" id="rangeLink" method="get">
-														<liferay-ui:message key="refresh-counts" />
-													</aui:a>
 												</div>
 											</div>
 
@@ -113,8 +105,22 @@
 											}
 											%>
 
+											<ul class="hide list-unstyled" id="<portlet:namespace />warningSection">
+												<clay:alert
+													displayType="warning"
+													message="publishing-all-content-or-using-wide-date-range-will-take-some-time"
+													symbol="page"
+												/>
+											</ul>
+
 											<ul class="date-range-options hide list-unstyled" id="<portlet:namespace />startEndDate">
-												<li class="flex-container">
+												<clay:alert
+													displayType="warning"
+													message="publishing-all-content-or-using-wide-date-range-will-take-some-time"
+													symbol="page"
+												/>
+
+												<li class="d-flex flex-wrap">
 													<liferay-ui:input-date
 														cssClass="form-group form-group-inline"
 														dayParam="startDateDay"
@@ -207,7 +213,7 @@
 							<liferay-staging:portlet-list
 								disableInputs="<%= disableInputs %>"
 								exportImportConfigurationId="<%= exportImportConfigurationId %>"
-								portlets="<%= dataSiteLevelPortlets %>"
+								portlets="<%= portlets %>"
 								showAllPortlets="<%= showAllPortlets %>"
 								type="<%= type %>"
 							/>
@@ -215,6 +221,6 @@
 					</ul>
 				</li>
 			</ul>
-		</div>
+		</clay:sheet-section>
 	</aui:fieldset>
 </c:if>

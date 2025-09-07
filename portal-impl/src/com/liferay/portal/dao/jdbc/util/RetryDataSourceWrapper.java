@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.jdbc.util;
@@ -34,42 +25,42 @@ public class RetryDataSourceWrapper extends DataSourceWrapper {
 	public Connection getConnection() throws SQLException {
 		int retries = PropsValues.RETRY_DATA_SOURCE_MAX_RETRIES;
 
-		SQLException sqlException = null;
+		SQLException sqlException1 = null;
 
 		while (retries-- >= 0) {
 			try {
 				return super.getConnection();
 			}
-			catch (SQLException sqle) {
-				if (sqlException == null) {
-					sqlException = sqle;
+			catch (SQLException sqlException2) {
+				if (sqlException1 == null) {
+					sqlException1 = sqlException2;
 				}
 			}
 		}
 
-		throw sqlException;
+		throw sqlException1;
 	}
 
 	@Override
-	public Connection getConnection(String username, String password)
+	public Connection getConnection(String userName, String password)
 		throws SQLException {
 
 		int retries = PropsValues.RETRY_DATA_SOURCE_MAX_RETRIES;
 
-		SQLException sqlException = null;
+		SQLException sqlException1 = null;
 
 		while (retries-- >= 0) {
 			try {
-				return super.getConnection(username, password);
+				return super.getConnection(userName, password);
 			}
-			catch (SQLException sqle) {
-				if (sqlException == null) {
-					sqlException = sqle;
+			catch (SQLException sqlException2) {
+				if (sqlException1 == null) {
+					sqlException1 = sqlException2;
 				}
 			}
 		}
 
-		throw sqlException;
+		throw sqlException1;
 	}
 
 }

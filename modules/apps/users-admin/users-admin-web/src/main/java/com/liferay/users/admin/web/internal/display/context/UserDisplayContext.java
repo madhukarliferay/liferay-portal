@@ -1,44 +1,37 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.users.admin.web.internal.display.context;
 
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
+import com.liferay.item.selector.ItemSelector;
+import com.liferay.item.selector.criteria.GroupItemSelectorReturnType;
+import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
+import com.liferay.organizations.item.selector.OrganizationItemSelectorCriterion;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.UserGroupGroupRole;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
+import com.liferay.portal.kernel.service.OrganizationServiceUtil;
 import com.liferay.portal.kernel.service.PasswordPolicyLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupGroupRoleLocalServiceUtil;
-import com.liferay.portal.kernel.service.UserGroupRoleLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -46,17 +39,22 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+import com.liferay.portal.security.membershippolicy.RoleMembershipPolicyUtil;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
+import com.liferay.site.item.selector.SiteItemSelectorCriterion;
+import com.liferay.user.groups.admin.item.selector.UserGroupItemSelectorCriterion;
+
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Pei-Jung Lan
@@ -65,11 +63,13 @@ public class UserDisplayContext {
 
 	public UserDisplayContext(
 			HttpServletRequest httpServletRequest,
-			InitDisplayContext initDisplayContext)
+			InitDisplayContext initDisplayContext,
+			LiferayPortletResponse liferayPortletResponse)
 		throws PortalException {
 
 		_httpServletRequest = httpServletRequest;
 		_initDisplayContext = initDisplayContext;
+		_liferayPortletResponse = liferayPortletResponse;
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
@@ -77,24 +77,11 @@ public class UserDisplayContext {
 
 		_permissionChecker = themeDisplay.getPermissionChecker();
 
-		_renderResponse = (RenderResponse)_httpServletRequest.getAttribute(
-			JavaConstants.JAVAX_PORTLET_RESPONSE);
+		_renderResponse = (RenderResponse)httpServletRequest.getAttribute(
+			JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 		_selUser = PortalUtil.getSelectedUser(httpServletRequest);
 		_themeDisplay = themeDisplay;
-	}
-
-	public List<Group> getAllGroups() throws PortalException {
-		List<Group> allGroups = new ArrayList<>();
-
-		allGroups.addAll(getGroups());
-		allGroups.addAll(getInheritedSites());
-		allGroups.addAll(
-			GroupLocalServiceUtil.getOrganizationsGroups(getOrganizations()));
-		allGroups.addAll(
-			GroupLocalServiceUtil.getUserGroupsGroups(getUserGroups()));
-
-		return allGroups;
 	}
 
 	public Contact getContact() throws PortalException {
@@ -105,72 +92,118 @@ public class UserDisplayContext {
 		return null;
 	}
 
+	public String getGroupItemSelectorURL() {
+		ItemSelector itemSelector =
+			(ItemSelector)_httpServletRequest.getAttribute(
+				ItemSelector.class.getName());
+
+		SiteItemSelectorCriterion siteItemSelectorCriterion =
+			new SiteItemSelectorCriterion();
+
+		siteItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new GroupItemSelectorReturnType());
+		siteItemSelectorCriterion.setIncludeCompany(false);
+		siteItemSelectorCriterion.setIncludeRecentSites(false);
+
+		return String.valueOf(
+			itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
+				_liferayPortletResponse.getNamespace() + "selectGroup",
+				siteItemSelectorCriterion));
+	}
+
 	public List<Group> getGroups() throws PortalException {
-		List<Group> groups = Collections.emptyList();
-
-		if (_selUser != null) {
-			groups = _selUser.getGroups();
-
-			if (_initDisplayContext.isFilterManageableGroups()) {
-				groups = UsersAdminUtil.filterGroups(
-					_themeDisplay.getPermissionChecker(), groups);
-			}
+		if (_selUser == null) {
+			return Collections.emptyList();
 		}
 
-		return groups;
+		if (!_initDisplayContext.isFilterManageableGroups()) {
+			return _selUser.getGroups();
+		}
+
+		return UsersAdminUtil.filterGroups(
+			_themeDisplay.getPermissionChecker(), _selUser.getGroups());
+	}
+
+	public List<Group> getInheritedSiteGroups() throws PortalException {
+		SortedSet<Group> inheritedSiteGroupsSet = new TreeSet<>();
+
+		inheritedSiteGroupsSet.addAll(
+			ListUtil.filter(
+				GroupLocalServiceUtil.getUserGroupsRelatedGroups(
+					getUserGroups()),
+				group -> !group.isDepot()));
+		inheritedSiteGroupsSet.addAll(
+			ListUtil.filter(
+				_getOrganizationRelatedGroups(), group -> !group.isDepot()));
+
+		return ListUtil.fromCollection(inheritedSiteGroupsSet);
 	}
 
 	public List<UserGroupGroupRole> getInheritedSiteRoles() {
-		List<UserGroupGroupRole> inheritedSiteRoles = Collections.emptyList();
-
-		if (_selUser != null) {
-			inheritedSiteRoles =
-				UserGroupGroupRoleLocalServiceUtil.getUserGroupGroupRolesByUser(
-					_selUser.getUserId());
+		if (_selUser == null) {
+			return Collections.emptyList();
 		}
 
-		return inheritedSiteRoles;
+		return UserGroupGroupRoleLocalServiceUtil.getUserGroupGroupRolesByUser(
+			_selUser.getUserId());
 	}
 
-	public List<Group> getInheritedSites() throws PortalException {
-		SortedSet<Group> inheritedSitesSet = new TreeSet<>();
+	public String getOrganizationItemSelectorURL(boolean multiSelection)
+		throws PortalException {
 
-		inheritedSitesSet.addAll(
-			GroupLocalServiceUtil.getUserGroupsRelatedGroups(getUserGroups()));
-		inheritedSitesSet.addAll(_getOrganizationRelatedGroups());
+		ItemSelector itemSelector =
+			(ItemSelector)_httpServletRequest.getAttribute(
+				ItemSelector.class.getName());
 
-		return ListUtil.fromCollection(inheritedSitesSet);
+		OrganizationItemSelectorCriterion organizationItemSelectorCriterion =
+			new OrganizationItemSelectorCriterion();
+
+		organizationItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new UUIDItemSelectorReturnType());
+		organizationItemSelectorCriterion.setMultiSelection(multiSelection);
+		organizationItemSelectorCriterion.setSelectedOrganizationIds(
+			_getSelectedOrganizationIds());
+
+		return String.valueOf(
+			itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
+				_liferayPortletResponse.getNamespace() + "selectOrganization",
+				organizationItemSelectorCriterion));
 	}
 
 	public List<UserGroupRole> getOrganizationRoles() throws PortalException {
-		return ListUtil.filter(getUserGroupRoles(), this::_isOrganizationRole);
+		return ListUtil.filter(
+			_getUserGroupRoles(), UserGroupRole::hasOrganizationRole);
 	}
 
 	public List<Organization> getOrganizations() throws PortalException {
-		List<Organization> organizations = Collections.emptyList();
-
 		if (_selUser != null) {
-			organizations = _selUser.getOrganizations();
+			List<Organization> organizations = _selUser.getOrganizations();
 
-			if (_initDisplayContext.isFilterManageableOrganizations()) {
-				organizations = UsersAdminUtil.filterOrganizations(
-					_themeDisplay.getPermissionChecker(), organizations);
+			if (!PropsValues.ORGANIZATIONS_MEMBERSHIP_STRICT) {
+				organizations.addAll(_getParentOrganizations(organizations));
 			}
-		}
-		else {
-			String organizationIds = ParamUtil.getString(
-				_httpServletRequest, "organizationsSearchContainerPrimaryKeys");
 
-			if (Validator.isNotNull(organizationIds)) {
-				long[] organizationIdsArray = StringUtil.split(
-					organizationIds, 0L);
-
-				organizations = OrganizationLocalServiceUtil.getOrganizations(
-					organizationIdsArray);
+			if (!_initDisplayContext.isFilterManageableOrganizations()) {
+				return organizations;
 			}
+
+			return UsersAdminUtil.filterOrganizations(
+				_themeDisplay.getPermissionChecker(), organizations);
 		}
 
-		return organizations;
+		String organizationIds = ParamUtil.getString(
+			_httpServletRequest, "organizationsSearchContainerPrimaryKeys");
+
+		if (Validator.isNull(organizationIds)) {
+			return Collections.emptyList();
+		}
+
+		long[] organizationIdsArray = StringUtil.split(organizationIds, 0L);
+
+		return OrganizationLocalServiceUtil.getOrganizations(
+			organizationIdsArray);
 	}
 
 	public PasswordPolicy getPasswordPolicy() throws PortalException {
@@ -184,149 +217,182 @@ public class UserDisplayContext {
 
 	public List<Group> getRoleGroups() throws PortalException {
 		return ListUtil.filter(
-			getAllGroups(),
+			_getAllGroups(),
 			group -> RoleLocalServiceUtil.hasGroupRoles(group.getGroupId()));
 	}
 
-	public List<Role> getRoles() throws PortalException {
-		List<Role> roles = Collections.emptyList();
-
-		if (_selUser != null) {
-			roles = _selUser.getRoles();
-
-			if (_initDisplayContext.isFilterManageableRoles()) {
-				roles = UsersAdminUtil.filterRoles(_permissionChecker, roles);
-			}
+	public List<Role> getRoles() {
+		if (_selUser == null) {
+			return Collections.emptyList();
 		}
 
-		return roles;
+		if (!_initDisplayContext.isFilterManageableRoles()) {
+			return _selUser.getRoles();
+		}
+
+		return UsersAdminUtil.filterRoles(
+			_permissionChecker, _selUser.getRoles());
 	}
 
 	public User getSelectedUser() {
 		return _selUser;
 	}
 
+	public List<Group> getSiteGroups() throws PortalException {
+		if (_selUser == null) {
+			return Collections.emptyList();
+		}
+
+		if (!_initDisplayContext.isFilterManageableGroups()) {
+			return _selUser.getSiteGroups();
+		}
+
+		return UsersAdminUtil.filterGroups(
+			_themeDisplay.getPermissionChecker(), _selUser.getSiteGroups());
+	}
+
 	public List<UserGroupRole> getSiteRoles() throws PortalException {
-		return ListUtil.filter(getUserGroupRoles(), this::_isSiteRole);
+		return ListUtil.filter(
+			_getUserGroupRoles(), UserGroupRole::hasSiteRole);
 	}
 
-	public List<UserGroupRole> getUserGroupRoles() throws PortalException {
-		List<UserGroupRole> userGroupRoles = Collections.emptyList();
+	public String getUserGroupItemSelectorURL() {
+		ItemSelector itemSelector =
+			(ItemSelector)_httpServletRequest.getAttribute(
+				ItemSelector.class.getName());
 
-		if (_selUser != null) {
-			userGroupRoles = UserGroupRoleLocalServiceUtil.getUserGroupRoles(
-				_selUser.getUserId());
+		UserGroupItemSelectorCriterion userGroupItemSelectorCriterion =
+			new UserGroupItemSelectorCriterion();
 
-			if (_initDisplayContext.isFilterManageableUserGroupRoles()) {
-				userGroupRoles = UsersAdminUtil.filterUserGroupRoles(
-					_permissionChecker, userGroupRoles);
-			}
+		userGroupItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new UUIDItemSelectorReturnType());
+		userGroupItemSelectorCriterion.setFilterManageableUserGroups(
+			_initDisplayContext.isFilterManageableUserGroups());
+
+		return String.valueOf(
+			itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
+				_liferayPortletResponse.getNamespace() + "selectUserGroup",
+				userGroupItemSelectorCriterion));
+	}
+
+	public List<UserGroup> getUserGroups() {
+		if (_selUser == null) {
+			return Collections.emptyList();
 		}
 
-		return userGroupRoles;
-	}
-
-	public List<UserGroup> getUserGroups() throws PortalException {
-		List<UserGroup> userGroups = Collections.emptyList();
-
-		if (_selUser != null) {
-			userGroups = _selUser.getUserGroups();
-
-			if (_initDisplayContext.isFilterManageableUserGroups()) {
-				userGroups = UsersAdminUtil.filterUserGroups(
-					_permissionChecker, userGroups);
-			}
+		if (!_initDisplayContext.isFilterManageableUserGroups()) {
+			return _selUser.getUserGroups();
 		}
 
-		return userGroups;
+		return UsersAdminUtil.filterUserGroups(
+			_permissionChecker, _selUser.getUserGroups());
 	}
 
-	public List<NavigationItem> getViewNavigationItems(String portletName) {
-		return new NavigationItemList() {
-			{
-				String toolbarItem = ParamUtil.getString(
-					_httpServletRequest, "toolbarItem", "view-all-users");
+	public boolean isAllowRemoveRole(Role role) throws PortalException {
+		User selUser = getSelectedUser();
 
-				add(
-					navigationItem -> {
-						navigationItem.setActive(
-							toolbarItem.equals("view-all-users"));
-						navigationItem.setHref(
-							_renderResponse.createRenderURL(), "toolbarItem",
-							"view-all-users", "saveUsersListView", true,
-							"usersListView",
-							UserConstants.LIST_VIEW_FLAT_USERS);
-						navigationItem.setLabel(
-							LanguageUtil.get(_httpServletRequest, "users"));
-					});
+		if (RoleMembershipPolicyUtil.isRoleRequired(
+				selUser.getUserId(), role.getRoleId())) {
 
-				add(
-					navigationItem -> {
-						navigationItem.setActive(
-							toolbarItem.equals("view-all-organizations"));
-						navigationItem.setHref(
-							_renderResponse.createRenderURL(), "toolbarItem",
-							"view-all-organizations", "saveUsersListView", true,
-							"usersListView",
-							UserConstants.LIST_VIEW_FLAT_ORGANIZATIONS);
-						navigationItem.setLabel(
-							LanguageUtil.get(
-								_httpServletRequest, "organizations"));
-					});
-			}
-		};
-	}
-
-	private List<Group> _getOrganizationRelatedGroups() throws PortalException {
-		List<Group> organizationsRelatedGroups = Collections.emptyList();
-		List<Organization> organizations = getOrganizations();
-
-		if (!organizations.isEmpty()) {
-			organizationsRelatedGroups =
-				GroupLocalServiceUtil.getOrganizationsRelatedGroups(
-					organizations);
+			return false;
 		}
 
-		return organizationsRelatedGroups;
-	}
-
-	private boolean _isOrganizationRole(UserGroupRole userGroupRole) {
-		Role role = RoleLocalServiceUtil.fetchRole(userGroupRole.getRoleId());
-
-		if ((role != null) &&
-			(role.getType() == RoleConstants.TYPE_ORGANIZATION)) {
-
+		if (!Objects.equals(RoleConstants.ADMINISTRATOR, role.getName())) {
 			return true;
 		}
 
-		return false;
-	}
-
-	private boolean _isSiteRole(UserGroupRole userGroupRole) {
-		try {
-			Group group = userGroupRole.getGroup();
-			Role role = userGroupRole.getRole();
-
-			if ((group != null) && group.isSite() && (role != null) &&
-				(role.getType() == RoleConstants.TYPE_SITE)) {
-
-				return true;
-			}
-		}
-		catch (PortalException pe) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(pe, pe);
-			}
+		if (UserLocalServiceUtil.getRoleUsersCount(role.getRoleId()) == 1) {
+			return false;
 		}
 
-		return false;
+		return true;
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		UserDisplayContext.class);
+	private List<Group> _getAllGroups() throws PortalException {
+		List<Group> allGroups = new ArrayList<>();
+
+		allGroups.addAll(getGroups());
+		allGroups.addAll(getInheritedSiteGroups());
+		allGroups.addAll(
+			GroupLocalServiceUtil.getOrganizationsGroups(getOrganizations()));
+		allGroups.addAll(
+			GroupLocalServiceUtil.getUserGroupsGroups(getUserGroups()));
+
+		return allGroups;
+	}
+
+	private List<Group> _getOrganizationRelatedGroups() throws PortalException {
+		List<Organization> organizations = getOrganizations();
+
+		if (organizations.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		return GroupLocalServiceUtil.getOrganizationsRelatedGroups(
+			organizations);
+	}
+
+	private List<Organization> _getParentOrganizations(
+			List<Organization> organizations)
+		throws PortalException {
+
+		List<Organization> parentOrganizations = new ArrayList<>();
+
+		for (Organization organization : organizations) {
+			Organization parentOrganization =
+				organization.getParentOrganization();
+
+			if ((parentOrganization != null) &&
+				!organizations.contains(parentOrganization) &&
+				!parentOrganizations.contains(parentOrganization)) {
+
+				parentOrganizations.add(parentOrganization);
+			}
+		}
+
+		return parentOrganizations;
+	}
+
+	private long[] _getSelectedOrganizationIds() throws PortalException {
+		long[] selectedOrganizationIds = new long[0];
+
+		if (_selUser != null) {
+			selectedOrganizationIds = _selUser.getOrganizationIds();
+		}
+
+		long organizationId = ParamUtil.getLong(
+			_httpServletRequest, "organizationId");
+
+		Organization organization = OrganizationServiceUtil.fetchOrganization(
+			organizationId);
+
+		if (organization == null) {
+			return selectedOrganizationIds;
+		}
+
+		return ArrayUtil.append(
+			selectedOrganizationIds, organization.getOrganizationId());
+	}
+
+	private List<UserGroupRole> _getUserGroupRoles() throws PortalException {
+		if (_selUser == null) {
+			return Collections.emptyList();
+		}
+
+		List<UserGroupRole> userGroupRoles = _selUser.getUserGroupRoles();
+
+		if (!_initDisplayContext.isFilterManageableUserGroupRoles()) {
+			return userGroupRoles;
+		}
+
+		return UsersAdminUtil.filterUserGroupRoles(
+			_permissionChecker, userGroupRoles);
+	}
 
 	private final HttpServletRequest _httpServletRequest;
 	private final InitDisplayContext _initDisplayContext;
+	private final LiferayPortletResponse _liferayPortletResponse;
 	private final PermissionChecker _permissionChecker;
 	private final RenderResponse _renderResponse;
 	private final User _selUser;

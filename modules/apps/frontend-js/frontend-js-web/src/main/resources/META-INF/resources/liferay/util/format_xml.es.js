@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {isString} from 'metal';
-
 const NEW_LINE = '\r\n';
+
+const REGEX_CDATA = /<!\[CDATA\[.*?\]\]>/gs;
 
 const REGEX_DECLARATIVE_CLOSE = /-->|\]>/;
 
@@ -50,11 +41,15 @@ const STR_BLANK = '';
 
 const STR_TOKEN = '~::~';
 
+const STR_TOKEN_CDATA = '<' + STR_TOKEN + 'CDATA' + STR_TOKEN + '>';
+
+const REGEX_TOKEN_CDATA = new RegExp(STR_TOKEN_CDATA, 'g');
+
 const TAG_INDENT = '\t';
 
 const DEFAULT_OPTIONS = {
 	newLine: NEW_LINE,
-	tagIndent: TAG_INDENT
+	tagIndent: TAG_INDENT,
 };
 
 /**
@@ -66,17 +61,25 @@ const DEFAULT_OPTIONS = {
 export default function formatXML(content, options = {}) {
 	const {newLine, tagIndent} = {
 		...DEFAULT_OPTIONS,
-		...options
+		...options,
 	};
 
-	if (!isString(content)) {
+	if (typeof content !== 'string') {
 		throw new TypeError('Parameter content must be a string');
 	}
 
+	const cdata = [];
+
 	content = content.trim();
+	content = content.replace(REGEX_CDATA, (match) => {
+		cdata.push(match);
+
+		return STR_TOKEN_CDATA;
+	});
 	content = content.replace(REGEX_WHITESPACE_BETWEEN_TAGS, '><');
 	content = content.replace(REGEX_TAG_OPEN, STR_TOKEN + '<');
 	content = content.replace(REGEX_NAMESPACE_XML_ATTR, STR_TOKEN + '$1$2');
+	content = content.replace(REGEX_TOKEN_CDATA, () => cdata.shift());
 
 	let commentCounter = 0;
 	let inComment = false;
@@ -85,7 +88,10 @@ export default function formatXML(content, options = {}) {
 	let result = '';
 
 	items.forEach((item, index) => {
-		if (REGEX_DECLARATIVE_OPEN.test(item)) {
+		if (REGEX_CDATA.test(item)) {
+			result += indent(level, newLine, tagIndent) + item;
+		}
+		else if (REGEX_DECLARATIVE_OPEN.test(item)) {
 			result += indent(level, newLine, tagIndent) + item;
 
 			commentCounter++;
@@ -100,62 +106,74 @@ export default function formatXML(content, options = {}) {
 
 				inComment = commentCounter !== 0;
 			}
-		} else if (REGEX_DECLARATIVE_CLOSE.test(item)) {
+		}
+		else if (REGEX_DECLARATIVE_CLOSE.test(item)) {
 			result += item;
 
 			commentCounter--;
 
 			inComment = commentCounter !== 0;
-		} else if (
+		}
+		else if (
 			REGEX_ELEMENT.exec(items[index - 1]) &&
 			REGEX_ELEMENT_CLOSE.exec(item) &&
-			REGEX_ELEMENT_NAMESPACED.exec(items[index - 1]) ==
-				REGEX_ELEMENT_NAMESPACED_CLOSE.exec(item)[0].replace(
-					'/',
-					STR_BLANK
-				)
+			REGEX_ELEMENT_NAMESPACED.exec(items[index - 1]).toString() ===
+				REGEX_ELEMENT_NAMESPACED_CLOSE.exec(item)[0]
+					.replace('/', STR_BLANK)
+					.toString()
 		) {
 			result += item;
 
 			if (!inComment) {
 				--level;
 			}
-		} else if (
+		}
+		else if (
 			REGEX_ELEMENT_OPEN.test(item) &&
 			!REGEX_TAG_CLOSE.test(item) &&
 			!REGEX_TAG_SINGLE_CLOSE.test(item)
 		) {
 			if (inComment) {
 				result += item;
-			} else {
+			}
+			else {
 				result += indent(level++, newLine, tagIndent) + item;
 			}
-		} else if (
+		}
+		else if (
 			REGEX_ELEMENT_OPEN.test(item) &&
 			REGEX_TAG_CLOSE.test(item)
 		) {
 			if (inComment) {
 				result += item;
-			} else {
+			}
+			else {
 				result += indent(level, newLine, tagIndent) + item;
 			}
-		} else if (REGEX_TAG_CLOSE.test(item)) {
+		}
+		else if (REGEX_TAG_CLOSE.test(item)) {
 			if (inComment) {
 				result += item;
-			} else {
+			}
+			else {
 				result += indent(--level, newLine, tagIndent) + item;
 			}
-		} else if (REGEX_TAG_SINGLE_CLOSE.test(item)) {
+		}
+		else if (REGEX_TAG_SINGLE_CLOSE.test(item)) {
 			if (inComment) {
 				result += item;
-			} else {
+			}
+			else {
 				result += indent(level, newLine, tagIndent) + item;
 			}
-		} else if (REGEX_DIRECTIVE.test(item)) {
+		}
+		else if (REGEX_DIRECTIVE.test(item)) {
 			result += indent(level, newLine, tagIndent) + item;
-		} else if (REGEX_NAMESPACE_XML) {
+		}
+		else if (REGEX_NAMESPACE_XML) {
 			result += indent(level, newLine, tagIndent) + item;
-		} else {
+		}
+		else {
 			result += item;
 		}
 

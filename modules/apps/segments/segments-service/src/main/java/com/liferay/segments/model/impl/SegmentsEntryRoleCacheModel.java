@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model.impl;
@@ -37,17 +28,17 @@ public class SegmentsEntryRoleCacheModel
 	implements CacheModel<SegmentsEntryRole>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SegmentsEntryRoleCacheModel)) {
+		if (!(object instanceof SegmentsEntryRoleCacheModel)) {
 			return false;
 		}
 
 		SegmentsEntryRoleCacheModel segmentsEntryRoleCacheModel =
-			(SegmentsEntryRoleCacheModel)obj;
+			(SegmentsEntryRoleCacheModel)object;
 
 		if ((segmentsEntryRoleId ==
 				segmentsEntryRoleCacheModel.segmentsEntryRoleId) &&
@@ -78,10 +69,12 @@ public class SegmentsEntryRoleCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(19);
+		StringBundler sb = new StringBundler(21);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", segmentsEntryRoleId=");
 		sb.append(segmentsEntryRoleId);
 		sb.append(", companyId=");
@@ -109,6 +102,7 @@ public class SegmentsEntryRoleCacheModel
 			new SegmentsEntryRoleImpl();
 
 		segmentsEntryRoleImpl.setMvccVersion(mvccVersion);
+		segmentsEntryRoleImpl.setCtCollectionId(ctCollectionId);
 		segmentsEntryRoleImpl.setSegmentsEntryRoleId(segmentsEntryRoleId);
 		segmentsEntryRoleImpl.setCompanyId(companyId);
 		segmentsEntryRoleImpl.setUserId(userId);
@@ -146,6 +140,8 @@ public class SegmentsEntryRoleCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		segmentsEntryRoleId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
@@ -163,6 +159,8 @@ public class SegmentsEntryRoleCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(segmentsEntryRoleId);
 
@@ -186,6 +184,7 @@ public class SegmentsEntryRoleCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long segmentsEntryRoleId;
 	public long companyId;
 	public long userId;

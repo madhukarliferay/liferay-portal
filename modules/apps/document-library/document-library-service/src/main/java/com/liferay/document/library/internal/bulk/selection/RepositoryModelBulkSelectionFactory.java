@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.bulk.selection;
@@ -38,14 +29,13 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = "model.class.name=com.liferay.portal.kernel.repository.model.RepositoryModel",
-	service = {
-		BulkSelectionFactory.class, RepositoryModelBulkSelectionFactory.class
-	}
+	service = BulkSelectionFactory.class
 )
 public class RepositoryModelBulkSelectionFactory
-	implements BulkSelectionFactory<RepositoryModel> {
+	implements BulkSelectionFactory<RepositoryModel<?>> {
 
-	public BulkSelection<RepositoryModel> create(
+	@Override
+	public BulkSelection<RepositoryModel<?>> create(
 		Map<String, String[]> parameterMap) {
 
 		return _combine(
@@ -54,19 +44,24 @@ public class RepositoryModelBulkSelectionFactory
 			_folderBulkSelectionFactory.create(parameterMap));
 	}
 
-	private BulkSelection<RepositoryModel> _combine(
+	private BulkSelection<RepositoryModel<?>> _combine(
 		Map<String, String[]> parameterMap,
-		BulkSelection<? extends RepositoryModel>... bulkSelections) {
+		BulkSelection<? extends RepositoryModel<?>>... bulkSelections) {
 
-		return new BulkSelection<RepositoryModel>() {
+		return new BulkSelection<RepositoryModel<?>>() {
 
 			@Override
 			public <E extends PortalException> void forEach(
-					UnsafeConsumer<RepositoryModel, E> unsafeConsumer)
+					UnsafeConsumer<RepositoryModel<?>, E> unsafeConsumer)
 				throws PortalException {
 
-				for (BulkSelection bulkSelection : bulkSelections) {
-					bulkSelection.forEach(unsafeConsumer);
+				for (BulkSelection<? extends RepositoryModel> bulkSelection :
+						bulkSelections) {
+
+					BulkSelection<RepositoryModel<?>> repositoryBulkSelection =
+						(BulkSelection<RepositoryModel<?>>)bulkSelection;
+
+					repositoryBulkSelection.forEach(unsafeConsumer);
 				}
 			}
 
@@ -86,7 +81,7 @@ public class RepositoryModelBulkSelectionFactory
 			public long getSize() throws PortalException {
 				long size = 0;
 
-				for (BulkSelection<? extends RepositoryModel> bulkSelection :
+				for (BulkSelection<? extends RepositoryModel<?>> bulkSelection :
 						bulkSelections) {
 
 					size += bulkSelection.getSize();
@@ -102,10 +97,12 @@ public class RepositoryModelBulkSelectionFactory
 
 			@Override
 			public BulkSelection<AssetEntry> toAssetEntryBulkSelection() {
-				List<BulkSelection> assetEntryBulkSelections =
+				List<BulkSelection<AssetEntry>> assetEntryBulkSelections =
 					new ArrayList<>();
 
-				for (BulkSelection bulkSelection : bulkSelections) {
+				for (BulkSelection<? extends RepositoryModel> bulkSelection :
+						bulkSelections) {
+
 					assetEntryBulkSelections.add(
 						bulkSelection.toAssetEntryBulkSelection());
 				}

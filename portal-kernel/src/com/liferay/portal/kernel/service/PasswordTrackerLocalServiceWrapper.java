@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link PasswordTrackerLocalService}.
@@ -25,6 +18,10 @@ public class PasswordTrackerLocalServiceWrapper
 	implements PasswordTrackerLocalService,
 			   ServiceWrapper<PasswordTrackerLocalService> {
 
+	public PasswordTrackerLocalServiceWrapper() {
+		this(null);
+	}
+
 	public PasswordTrackerLocalServiceWrapper(
 		PasswordTrackerLocalService passwordTrackerLocalService) {
 
@@ -33,6 +30,10 @@ public class PasswordTrackerLocalServiceWrapper
 
 	/**
 	 * Adds the password tracker to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordTracker the password tracker
 	 * @return the password tracker that was added
@@ -59,7 +60,22 @@ public class PasswordTrackerLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _passwordTrackerLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the password tracker with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordTrackerId the primary key of the password tracker
 	 * @return the password tracker that was removed
@@ -76,6 +92,10 @@ public class PasswordTrackerLocalServiceWrapper
 
 	/**
 	 * Deletes the password tracker from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordTracker the password tracker
 	 * @return the password tracker that was removed
@@ -104,6 +124,18 @@ public class PasswordTrackerLocalServiceWrapper
 
 		return _passwordTrackerLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _passwordTrackerLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _passwordTrackerLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -226,7 +258,7 @@ public class PasswordTrackerLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _passwordTrackerLocalService.getOSGiServiceIdentifier();
 	}
 
@@ -274,6 +306,9 @@ public class PasswordTrackerLocalServiceWrapper
 		return _passwordTrackerLocalService.getPasswordTrackersCount();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -283,8 +318,7 @@ public class PasswordTrackerLocalServiceWrapper
 	}
 
 	@Override
-	public boolean isSameAsCurrentPassword(
-			long userId, java.lang.String newClearTextPwd)
+	public boolean isSameAsCurrentPassword(long userId, String newClearTextPwd)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordTrackerLocalService.isSameAsCurrentPassword(
@@ -292,8 +326,7 @@ public class PasswordTrackerLocalServiceWrapper
 	}
 
 	@Override
-	public boolean isValidPassword(
-			long userId, java.lang.String newClearTextPwd)
+	public boolean isValidPassword(long userId, String newClearTextPwd)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordTrackerLocalService.isValidPassword(
@@ -301,7 +334,7 @@ public class PasswordTrackerLocalServiceWrapper
 	}
 
 	@Override
-	public void trackPassword(long userId, java.lang.String encPassword)
+	public void trackPassword(long userId, String encPassword)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_passwordTrackerLocalService.trackPassword(userId, encPassword);
@@ -309,6 +342,10 @@ public class PasswordTrackerLocalServiceWrapper
 
 	/**
 	 * Updates the password tracker in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordTracker the password tracker
 	 * @return the password tracker that was updated
@@ -320,6 +357,11 @@ public class PasswordTrackerLocalServiceWrapper
 
 		return _passwordTrackerLocalService.updatePasswordTracker(
 			passwordTracker);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _passwordTrackerLocalService.getBasePersistence();
 	}
 
 	@Override

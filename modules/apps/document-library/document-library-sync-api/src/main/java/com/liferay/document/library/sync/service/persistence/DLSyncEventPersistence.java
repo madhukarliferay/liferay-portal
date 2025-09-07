@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.sync.service.persistence;
@@ -34,7 +25,7 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link DLSyncEventUtil} to access the dl sync event persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -46,7 +37,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param modifiedTime the modified time
 	 * @return the matching dl sync events
 	 */
-	public java.util.List<DLSyncEvent> findByModifiedTime(long modifiedTime);
+	public java.util.List<DLSyncEvent> findByGtModifiedTime(long modifiedTime);
 
 	/**
 	 * Returns a range of all the dl sync events where modifiedTime &gt; &#63;.
@@ -60,7 +51,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param end the upper bound of the range of dl sync events (not inclusive)
 	 * @return the range of matching dl sync events
 	 */
-	public java.util.List<DLSyncEvent> findByModifiedTime(
+	public java.util.List<DLSyncEvent> findByGtModifiedTime(
 		long modifiedTime, int start, int end);
 
 	/**
@@ -76,7 +67,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching dl sync events
 	 */
-	public java.util.List<DLSyncEvent> findByModifiedTime(
+	public java.util.List<DLSyncEvent> findByGtModifiedTime(
 		long modifiedTime, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 			orderByComparator);
@@ -95,7 +86,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching dl sync events
 	 */
-	public java.util.List<DLSyncEvent> findByModifiedTime(
+	public java.util.List<DLSyncEvent> findByGtModifiedTime(
 		long modifiedTime, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 			orderByComparator,
@@ -109,7 +100,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @return the first matching dl sync event
 	 * @throws NoSuchEventException if a matching dl sync event could not be found
 	 */
-	public DLSyncEvent findByModifiedTime_First(
+	public DLSyncEvent findByGtModifiedTime_First(
 			long modifiedTime,
 			com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 				orderByComparator)
@@ -122,7 +113,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching dl sync event, or <code>null</code> if a matching dl sync event could not be found
 	 */
-	public DLSyncEvent fetchByModifiedTime_First(
+	public DLSyncEvent fetchByGtModifiedTime_First(
 		long modifiedTime,
 		com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 			orderByComparator);
@@ -135,7 +126,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @return the last matching dl sync event
 	 * @throws NoSuchEventException if a matching dl sync event could not be found
 	 */
-	public DLSyncEvent findByModifiedTime_Last(
+	public DLSyncEvent findByGtModifiedTime_Last(
 			long modifiedTime,
 			com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 				orderByComparator)
@@ -148,7 +139,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching dl sync event, or <code>null</code> if a matching dl sync event could not be found
 	 */
-	public DLSyncEvent fetchByModifiedTime_Last(
+	public DLSyncEvent fetchByGtModifiedTime_Last(
 		long modifiedTime,
 		com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 			orderByComparator);
@@ -162,7 +153,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @return the previous, current, and next dl sync event
 	 * @throws NoSuchEventException if a dl sync event with the primary key could not be found
 	 */
-	public DLSyncEvent[] findByModifiedTime_PrevAndNext(
+	public DLSyncEvent[] findByGtModifiedTime_PrevAndNext(
 			long syncEventId, long modifiedTime,
 			com.liferay.portal.kernel.util.OrderByComparator<DLSyncEvent>
 				orderByComparator)
@@ -173,7 +164,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 *
 	 * @param modifiedTime the modified time
 	 */
-	public void removeByModifiedTime(long modifiedTime);
+	public void removeByGtModifiedTime(long modifiedTime);
 
 	/**
 	 * Returns the number of dl sync events where modifiedTime &gt; &#63;.
@@ -181,7 +172,7 @@ public interface DLSyncEventPersistence extends BasePersistence<DLSyncEvent> {
 	 * @param modifiedTime the modified time
 	 * @return the number of matching dl sync events
 	 */
-	public int countByModifiedTime(long modifiedTime);
+	public int countByGtModifiedTime(long modifiedTime);
 
 	/**
 	 * Returns the dl sync event where typePK = &#63; or throws a <code>NoSuchEventException</code> if it could not be found.

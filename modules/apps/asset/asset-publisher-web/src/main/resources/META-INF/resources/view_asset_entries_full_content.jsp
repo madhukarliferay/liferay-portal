@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,9 +13,15 @@ long previewClassPK = ParamUtil.getLong(request, "previewClassPK");
 int previewType = ParamUtil.getInteger(request, "previewType");
 
 AssetEntryResult assetEntryResult = (AssetEntryResult)request.getAttribute("view.jsp-assetEntryResult");
+%>
 
+<c:if test="<%= Validator.isNotNull(assetEntryResult.getTitle()) %>">
+	<p class="asset-entries-group-label h3"><%= HtmlUtil.escape(assetEntryResult.getTitle()) %></p>
+</c:if>
+
+<%
 for (AssetEntry assetEntry : assetEntryResult.getAssetEntries()) {
-	AssetRendererFactory<?> assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassNameId(assetEntry.getClassNameId());
+	AssetRendererFactory<?> assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(assetEntry.getClassName());
 
 	if (assetRendererFactory == null) {
 		continue;
@@ -42,7 +39,7 @@ for (AssetEntry assetEntry : assetEntryResult.getAssetEntries()) {
 	}
 	catch (Exception e) {
 		if (_log.isWarnEnabled()) {
-			_log.warn(e, e);
+			_log.warn(e);
 		}
 	}
 
@@ -55,12 +52,14 @@ for (AssetEntry assetEntry : assetEntryResult.getAssetEntries()) {
 	request.setAttribute("view.jsp-assetRendererFactory", assetRendererFactory);
 %>
 
-	<liferay-util:include page="/view_asset_entry_full_content.jsp" servletContext="<%= application %>" />
+	<liferay-util:include page="/view_asset_entry_full_content.jsp" servletContext="<%= application %>">
+		<liferay-util:param name="viewSingleAsset" value="false" />
+	</liferay-util:include>
 
 <%
 }
 %>
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("com_liferay_asset_publisher_web.view_asset_entries_full_content_jsp");
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_asset_publisher_web.view_asset_entries_full_content_jsp");
 %>

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ListTypeLocalService}.
@@ -24,6 +17,10 @@ package com.liferay.portal.kernel.service;
 public class ListTypeLocalServiceWrapper
 	implements ListTypeLocalService, ServiceWrapper<ListTypeLocalService> {
 
+	public ListTypeLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ListTypeLocalServiceWrapper(
 		ListTypeLocalService listTypeLocalService) {
 
@@ -32,6 +29,10 @@ public class ListTypeLocalServiceWrapper
 
 	/**
 	 * Adds the list type to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ListTypeLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param listType the list type
 	 * @return the list type that was added
@@ -45,9 +46,9 @@ public class ListTypeLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.ListType addListType(
-		java.lang.String name, java.lang.String type) {
+		long companyId, String name, String type) {
 
-		return _listTypeLocalService.addListType(name, type);
+		return _listTypeLocalService.addListType(companyId, name, type);
 	}
 
 	/**
@@ -64,7 +65,22 @@ public class ListTypeLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the list type from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ListTypeLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param listType the list type
 	 * @return the list type that was removed
@@ -79,6 +95,10 @@ public class ListTypeLocalServiceWrapper
 	/**
 	 * Deletes the list type with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ListTypeLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param listTypeId the primary key of the list type
 	 * @return the list type that was removed
 	 * @throws PortalException if a list type with the primary key could not be found
@@ -91,6 +111,11 @@ public class ListTypeLocalServiceWrapper
 		return _listTypeLocalService.deleteListType(listTypeId);
 	}
 
+	@Override
+	public void deleteListTypes(long companyId) {
+		_listTypeLocalService.deleteListTypes(companyId);
+	}
+
 	/**
 	 * @throws PortalException
 	 */
@@ -100,6 +125,18 @@ public class ListTypeLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _listTypeLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _listTypeLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _listTypeLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -199,11 +236,36 @@ public class ListTypeLocalServiceWrapper
 		return _listTypeLocalService.fetchListType(listTypeId);
 	}
 
+	/**
+	 * Returns the list type with the matching UUID and company.
+	 *
+	 * @param uuid the list type's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching list type, or <code>null</code> if a matching list type could not be found
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.ListType
+		fetchListTypeByUuidAndCompanyId(String uuid, long companyId) {
+
+		return _listTypeLocalService.fetchListTypeByUuidAndCompanyId(
+			uuid, companyId);
+	}
+
 	@Override
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
 		return _listTypeLocalService.getActionableDynamicQuery();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return _listTypeLocalService.getExportActionableDynamicQuery(
+			portletDataContext);
 	}
 
 	@Override
@@ -229,9 +291,31 @@ public class ListTypeLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.ListType getListType(
-		java.lang.String name, java.lang.String type) {
+		long companyId, String name, String type) {
 
-		return _listTypeLocalService.getListType(name, type);
+		return _listTypeLocalService.getListType(companyId, name, type);
+	}
+
+	/**
+	 * Returns the list type with the matching UUID and company.
+	 *
+	 * @param uuid the list type's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching list type
+	 * @throws PortalException if a matching list type could not be found
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.ListType
+			getListTypeByUuidAndCompanyId(String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeLocalService.getListTypeByUuidAndCompanyId(
+			uuid, companyId);
+	}
+
+	@Override
+	public long getListTypeId(long companyId, String name, String type) {
+		return _listTypeLocalService.getListTypeId(companyId, name, type);
 	}
 
 	/**
@@ -254,9 +338,9 @@ public class ListTypeLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.ListType>
-		getListTypes(java.lang.String type) {
+		getListTypes(long companyId, String type) {
 
-		return _listTypeLocalService.getListTypes(type);
+		return _listTypeLocalService.getListTypes(companyId, type);
 	}
 
 	/**
@@ -275,10 +359,13 @@ public class ListTypeLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _listTypeLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -289,6 +376,10 @@ public class ListTypeLocalServiceWrapper
 
 	/**
 	 * Updates the list type in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ListTypeLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param listType the list type
 	 * @return the list type that was updated
@@ -301,18 +392,22 @@ public class ListTypeLocalServiceWrapper
 	}
 
 	@Override
-	public void validate(
-			long listTypeId, long classNameId, java.lang.String type)
+	public void validate(long listTypeId, long classNameId, String type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_listTypeLocalService.validate(listTypeId, classNameId, type);
 	}
 
 	@Override
-	public void validate(long listTypeId, java.lang.String type)
+	public void validate(long listTypeId, String type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_listTypeLocalService.validate(listTypeId, type);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _listTypeLocalService.getBasePersistence();
 	}
 
 	@Override

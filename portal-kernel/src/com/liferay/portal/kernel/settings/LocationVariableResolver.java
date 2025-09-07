@@ -1,27 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.settings;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.resource.ResourceRetriever;
 import com.liferay.portal.kernel.resource.manager.ResourceManager;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Iván Zaera
@@ -43,7 +42,20 @@ public class LocationVariableResolver {
 
 		if (value.startsWith(_LOCATION_VARIABLE_START) &&
 			value.endsWith(_LOCATION_VARIABLE_END) &&
-			value.contains(_LOCATION_VARIABLE_PROTOCOL_SEPARATOR)) {
+			value.contains(_LOCATION_VARIABLE_PROTOCOL_SEPARATOR) &&
+			LocationVariableProtocol.isProtocol(_getProtocol(value))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isLocationVariable(
+		String value, LocationVariableProtocol locationVariableProtocol) {
+
+		if (isLocationVariable(value) &&
+			locationVariableProtocol.equals(_getProtocol(value))) {
 
 			return true;
 		}
@@ -55,13 +67,16 @@ public class LocationVariableResolver {
 		String protocol = _getProtocol(value);
 		String location = _getLocation(value);
 
-		if (protocol.equals("resource")) {
-			return _resolveResource(location);
-		}
-		else if (protocol.equals("file")) {
+		if (LocationVariableProtocol.FILE.equals(protocol)) {
 			return _resolveFile(location);
 		}
-		else if (protocol.equals("server-property")) {
+		else if (LocationVariableProtocol.LANGUAGE.equals(protocol)) {
+			return _resolveLanguage(location);
+		}
+		else if (LocationVariableProtocol.RESOURCE.equals(protocol)) {
+			return _resolveResource(location);
+		}
+		else if (LocationVariableProtocol.SERVER_PROPERTY.equals(protocol)) {
 			return _resolveServerProperty(location);
 		}
 
@@ -92,9 +107,27 @@ public class LocationVariableResolver {
 		try {
 			return StringUtil.read(new FileInputStream(location.substring(2)));
 		}
-		catch (IOException ioe) {
-			throw new SystemException("Unable to read file " + location, ioe);
+		catch (IOException ioException) {
+			throw new SystemException(
+				"Unable to read file " + location, ioException);
 		}
+	}
+
+	private String _resolveLanguage(String location) {
+		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+
+		Set<Locale> availableLocales = LanguageUtil.getCompanyAvailableLocales(
+			CompanyThreadLocal.getCompanyId());
+
+		for (Locale locale : availableLocales) {
+			String message = LanguageUtil.get(locale, location);
+
+			if (!message.equals(location)) {
+				jsonObject.put(LocaleUtil.toLanguageId(locale), message);
+			}
+		}
+
+		return jsonObject.toString();
 	}
 
 	private String _resolveResource(String location) {
@@ -104,9 +137,9 @@ public class LocationVariableResolver {
 		try {
 			return StringUtil.read(resourceRetriever.getInputStream());
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new SystemException(
-				"Unable to read resource " + location, ioe);
+				"Unable to read resource " + location, ioException);
 		}
 	}
 

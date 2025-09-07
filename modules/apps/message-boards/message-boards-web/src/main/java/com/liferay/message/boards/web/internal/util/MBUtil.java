@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.web.internal.util;
@@ -24,6 +15,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.PortletDisplay;
@@ -34,15 +26,13 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderResponse;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.RenderResponse;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Sergio González
@@ -52,37 +42,23 @@ public class MBUtil {
 	public static String getBBCodeQuoteBody(
 		HttpServletRequest httpServletRequest, MBMessage parentMessage) {
 
-		String parentAuthor = _getParentAuthor(
-			parentMessage, httpServletRequest);
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("[quote=");
-		sb.append(
+		return StringBundler.concat(
+			"[quote=",
 			StringUtil.replace(
-				parentAuthor, new String[] {"[", "]", "(", ")"},
-				new String[] {"&#91;", "&#93;", "&#40;", "&#41;"}));
-		sb.append("]\n");
-		sb.append(parentMessage.getBody(false));
-		sb.append("[/quote]\n\n\n");
-
-		return sb.toString();
+				_getParentAuthor(parentMessage, httpServletRequest),
+				new String[] {"[", "]"}, new String[] {"&#91;", "&#93;"}),
+			"]\n", parentMessage.getBody(false), "[/quote]\n\n\n");
 	}
 
 	public static String getBBCodeSplitThreadBody(
 		HttpServletRequest httpServletRequest) {
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("[url=");
-		sb.append(MBThreadConstants.NEW_THREAD_URL);
-		sb.append("]");
-		sb.append(MBThreadConstants.NEW_THREAD_URL);
-		sb.append("[/url]");
-
 		return LanguageUtil.format(
 			httpServletRequest, "the-new-thread-can-be-found-at-x",
-			sb.toString(), false);
+			StringBundler.concat(
+				"[url=", MBThreadConstants.NEW_THREAD_URL, "]",
+				MBThreadConstants.NEW_THREAD_URL, "[/url]"),
+			false);
 	}
 
 	public static long getCategoryId(
@@ -94,10 +70,8 @@ public class MBUtil {
 			categoryId = category.getCategoryId();
 		}
 
-		categoryId = ParamUtil.getLong(
+		return ParamUtil.getLong(
 			httpServletRequest, "mbCategoryId", categoryId);
-
-		return categoryId;
 	}
 
 	public static long getCategoryId(
@@ -109,63 +83,50 @@ public class MBUtil {
 			categoryId = message.getCategoryId();
 		}
 
-		categoryId = ParamUtil.getLong(
+		return ParamUtil.getLong(
 			httpServletRequest, "mbCategoryId", categoryId);
+	}
 
-		return categoryId;
+	public static long getCategoryId(
+		PortletRequest portletRequest, MBCategory category) {
+
+		long categoryId = MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID;
+
+		if (category != null) {
+			categoryId = category.getCategoryId();
+		}
+
+		return ParamUtil.getLong(portletRequest, "mbCategoryId", categoryId);
 	}
 
 	public static String getEditorName(String messageFormat) {
-		String editorName = PropsUtil.get(
-			"editor.wysiwyg.portal-web.docroot.html.portlet.message_boards." +
-				"edit_message.html.jsp");
-
-		if (!messageFormat.equals("bbcode")) {
-			return editorName;
+		if (messageFormat.equals("bbcode")) {
+			return "ckeditor_bbcode";
 		}
 
-		String bbCodeEditorName = PropsUtil.get(
-			com.liferay.message.boards.util.MBUtil.
-				BB_CODE_EDITOR_WYSIWYG_IMPL_KEY);
-
-		if (!bbCodeEditorName.equals("bbcode")) {
-			return bbCodeEditorName;
-		}
-
-		return "alloyeditor_bbcode";
+		return "ckeditor_classic";
 	}
 
 	public static String getHtmlQuoteBody(
 		HttpServletRequest httpServletRequest, MBMessage parentMessage) {
 
-		String parentAuthor = _getParentAuthor(
-			parentMessage, httpServletRequest);
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("<blockquote><div class=\"quote-title\">");
-		sb.append(parentAuthor);
-		sb.append(": </div><div class=\"quote\"><div class=\"quote-content\">");
-		sb.append(parentMessage.getBody(false));
-		sb.append("</div></blockquote><br /><br /><br />");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"<blockquote><div class=\"quote-title\">",
+			_getParentAuthor(parentMessage, httpServletRequest),
+			": </div><div class=\"quote\"><div class=\"quote-content\">",
+			parentMessage.getBody(false),
+			"</div></blockquote><br /><br /><br />");
 	}
 
 	public static String getHtmlSplitThreadBody(
 		HttpServletRequest httpServletRequest) {
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("<a href=");
-		sb.append(MBThreadConstants.NEW_THREAD_URL);
-		sb.append(">");
-		sb.append(MBThreadConstants.NEW_THREAD_URL);
-		sb.append("</a>");
-
 		return LanguageUtil.format(
 			httpServletRequest, "the-new-thread-can-be-found-at-x",
-			sb.toString(), false);
+			StringBundler.concat(
+				"<a href=", MBThreadConstants.NEW_THREAD_URL, ">",
+				MBThreadConstants.NEW_THREAD_URL, "</a>"),
+			false);
 	}
 
 	public static String getMBMessageURL(
@@ -177,31 +138,33 @@ public class MBUtil {
 
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, portletDisplay.getId(),
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/message_boards/view_message");
-		portletURL.setParameter("messageId", String.valueOf(messageId));
-
 		return StringBundler.concat(
-			portletURL.toString(), StringPool.POUND,
-			portletDisplay.getNamespace(), "message_", messageId);
+			PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest, portletDisplay.getId(),
+					PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/message_boards/view_message"
+			).setParameter(
+				"messageId", messageId
+			).buildString(),
+			StringPool.POUND, portletDisplay.getNamespace(), "message_",
+			messageId);
 	}
 
 	public static String getMBMessageURL(
 		long messageId, RenderResponse renderResponse) {
 
-		PortletURL portletURL = renderResponse.createRenderURL();
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/message_boards/view_message");
-		portletURL.setParameter("messageId", String.valueOf(messageId));
-
 		return StringBundler.concat(
-			portletURL.toString(), StringPool.POUND,
-			renderResponse.getNamespace(), "message_", messageId);
+			PortletURLBuilder.createRenderURL(
+				renderResponse
+			).setMVCRenderCommandName(
+				"/message_boards/view_message"
+			).setParameter(
+				"messageId", messageId
+			).buildString(),
+			StringPool.POUND, renderResponse.getNamespace(), "message_",
+			messageId);
 	}
 
 	public static String getMBMessageURL(
@@ -247,14 +210,10 @@ public class MBUtil {
 			themeDisplay.getPermissionChecker();
 
 		if (!MBMessagePermission.contains(
-				permissionChecker, parentMessage, ActionKeys.VIEW)) {
-
-			return false;
-		}
-
-		if ((message.getMessageId() != parentMessage.getMessageId()) &&
-			!MBMessagePermission.contains(
-				permissionChecker, message, ActionKeys.VIEW)) {
+				permissionChecker, parentMessage, ActionKeys.VIEW) ||
+			((message.getMessageId() != parentMessage.getMessageId()) &&
+			 !MBMessagePermission.contains(
+				 permissionChecker, message, ActionKeys.VIEW))) {
 
 			return false;
 		}
@@ -281,11 +240,12 @@ public class MBUtil {
 				continue;
 			}
 
-			String priorityName = priorityArray[0];
-			String priorityImage = priorityArray[1];
 			double priorityValue = GetterUtil.getDouble(priorityArray[2]);
 
 			if (value == priorityValue) {
+				String priorityName = priorityArray[0];
+				String priorityImage = priorityArray[1];
+
 				return new String[] {priorityName, priorityImage};
 			}
 		}

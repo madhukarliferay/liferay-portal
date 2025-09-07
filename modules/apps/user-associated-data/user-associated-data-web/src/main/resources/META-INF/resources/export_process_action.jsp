@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,21 +23,17 @@ BackgroundTask backgroundTask = (BackgroundTask)row.getObject();
 		<%
 		FileEntry fileEntry = UADExportProcessUtil.getFileEntry(backgroundTask);
 
-		Map<String, Object> data = new HashMap<String, Object>();
-
-		data.put("senna-off", "true");
-
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(LanguageUtil.get(request, "download"));
 		sb.append(StringPool.SPACE);
 		sb.append(StringPool.OPEN_PARENTHESIS);
-		sb.append(TextFormatter.formatStorageSize(fileEntry.getSize(), locale));
+		sb.append(LanguageUtil.formatStorageSize(fileEntry.getSize(), locale));
 		sb.append(StringPool.CLOSE_PARENTHESIS);
 		%>
 
 		<liferay-ui:icon
-			data="<%= data %>"
+			data='<%= Collections.singletonMap("senna-off", "true") %>'
 			label="<%= true %>"
 			markupView="lexicon"
 			message="<%= sb.toString() %>"
@@ -55,13 +42,8 @@ BackgroundTask backgroundTask = (BackgroundTask)row.getObject();
 		/>
 	</c:if>
 
-	<portlet:renderURL var="viewUADExportProcesses">
-		<portlet:param name="mvcRenderCommandName" value="/view_uad_export_processes" />
-		<portlet:param name="p_u_i_d" value="<%= String.valueOf(selectedUser.getUserId()) %>" />
-	</portlet:renderURL>
-
-	<portlet:actionURL name="/delete_uad_export_background_task" var="deleteBackgroundTaskURL">
-		<portlet:param name="redirect" value="<%= viewUADExportProcesses.toString() %>" />
+	<portlet:actionURL name="/user_associated_data/delete_uad_export_background_task" var="deleteBackgroundTaskURL">
+		<portlet:param name="redirect" value="<%= currentURL %>" />
 		<portlet:param name="backgroundTaskId" value="<%= String.valueOf(backgroundTask.getBackgroundTaskId()) %>" />
 	</portlet:actionURL>
 
@@ -70,6 +52,7 @@ BackgroundTask backgroundTask = (BackgroundTask)row.getObject();
 	%>
 
 	<liferay-ui:icon-delete
+		confirmation='<%= ((completionDate != null) && completionDate.before(new Date())) ? "are-you-sure-you-want-to-delete-this" : "are-you-sure-you-want-to-cancel" %>'
 		label="<%= true %>"
 		message='<%= ((completionDate != null) && completionDate.before(new Date())) ? "delete" : "cancel" %>'
 		url="<%= deleteBackgroundTaskURL.toString() %>"

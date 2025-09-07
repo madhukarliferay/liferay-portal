@@ -1,59 +1,46 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import {ClayInput} from '@clayui/form';
-import ClayManagementToolbar from '@clayui/management-toolbar';
-import React, {useState, useEffect} from 'react';
+import {ManagementToolbar} from 'frontend-js-components-web';
+import React, {useEffect, useState} from 'react';
 
 import {useRouter} from '../../hooks/useRouter.es';
-import {pushToHistory} from '../filter/util/filterUtil.es';
+import {replaceHistory} from '../filter/util/filterUtil.es';
 import {parse, stringify} from '../router/queryString.es';
 
-const SearchField = props => {
+const SearchField = ({
+	disabled,
+	placeholder = Liferay.Language.get('search-for'),
+}) => {
 	const routerProps = useRouter();
 
 	const query = parse(routerProps.location.search);
-	const {search = null} = query;
+	const {search = ''} = query;
 
-	const {disabled, placeholder = Liferay.Language.get('search-for')} = props;
-
-	const spritemap = `${Liferay.ThemeDisplay.getPathThemeImages()}/lexicon/icons.svg`;
-
-	const [searchValue, setSearchValue] = useState(null);
-	const [redirect, setRedirect] = useState(false);
+	const [searchValue, setSearchValue] = useState('');
 
 	useEffect(() => {
 		setSearchValue(search);
 	}, [search]);
 
-	const handleChange = event => {
+	const handleChange = (event) => {
 		setSearchValue(event.target.value);
 	};
 
-	const handleSubmit = event => {
+	const handleSubmit = (event) => {
 		event.preventDefault();
-		setRedirect(true);
-	};
-
-	if (redirect) {
-		setRedirect(false);
 
 		query.search = searchValue;
 
-		pushToHistory(stringify(query), routerProps);
-	}
+		replaceHistory(stringify(query), routerProps);
+	};
 
 	return (
-		<ClayManagementToolbar.Search
+		<ManagementToolbar.Search
 			method="GET"
 			onSubmit={handleSubmit}
 			showMobile={true}
@@ -72,22 +59,14 @@ const SearchField = props => {
 
 					<ClayInput.GroupInsetItem after tag="span">
 						<ClayButtonWithIcon
-							className="navbar-breakpoint-d-none"
 							displayType="unstyled"
-							spritemap={spritemap}
-							symbol="times"
-						/>
-
-						<ClayButtonWithIcon
-							displayType="unstyled"
-							spritemap={spritemap}
 							symbol="search"
 							type="submit"
 						/>
 					</ClayInput.GroupInsetItem>
 				</ClayInput.GroupItem>
 			</ClayInput.Group>
-		</ClayManagementToolbar.Search>
+		</ManagementToolbar.Search>
 	);
 };
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.odata.internal.filter;
@@ -21,6 +12,7 @@ import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.filter.FilterParser;
 import com.liferay.portal.odata.filter.expression.Expression;
 import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
+import com.liferay.portal.odata.filter.expression.factory.ExpressionFactory;
 import com.liferay.portal.odata.internal.filter.expression.ExpressionVisitorImpl;
 
 import org.apache.olingo.commons.api.ex.ODataException;
@@ -40,7 +32,11 @@ import org.apache.olingo.server.core.uri.parser.UriParserSemanticException;
  */
 public class FilterParserImpl implements FilterParser {
 
-	public FilterParserImpl(EntityModel entityModel) {
+	public FilterParserImpl(
+		EntityModel entityModel, ExpressionFactory expressionFactory) {
+
+		_expressionFactory = expressionFactory;
+
 		_parser = new Parser(
 			new EdmProviderImpl(
 				new EntityModelSchemaBasedEdmProvider(entityModel)),
@@ -68,10 +64,12 @@ public class FilterParserImpl implements FilterParser {
 			expression = filterOption.getExpression();
 
 		try {
-			return expression.accept(new ExpressionVisitorImpl());
+			return expression.accept(
+				new ExpressionVisitorImpl(_expressionFactory));
 		}
-		catch (Exception e) {
-			throw new ExpressionVisitException(e.getMessage(), e);
+		catch (Exception exception) {
+			throw new ExpressionVisitException(
+				exception.getMessage(), exception);
 		}
 	}
 
@@ -82,28 +80,31 @@ public class FilterParserImpl implements FilterParser {
 			return _parser.parseUri(
 				_path, "$filter=" + Encoder.encode(filterString), null, null);
 		}
-		catch (UriParserSemanticException upse) {
-			String message = upse.getMessage();
+		catch (UriParserSemanticException uriParserSemanticException) {
+			String message = uriParserSemanticException.getMessage();
 
 			if (UriParserSemanticException.MessageKeys.
 					EXPRESSION_PROPERTY_NOT_IN_TYPE.equals(
-						upse.getMessageKey())) {
+						uriParserSemanticException.getMessageKey())) {
 
 				message =
 					"A property used in the filter criteria is not " +
 						"supported: " + filterString;
 			}
 
-			throw new ExpressionVisitException(message, upse);
+			throw new ExpressionVisitException(
+				message, uriParserSemanticException);
 		}
-		catch (ODataException ode) {
-			throw new ExpressionVisitException(ode.getMessage(), ode);
+		catch (ODataException oDataException) {
+			throw new ExpressionVisitException(
+				oDataException.getMessage(), oDataException);
 		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FilterParserImpl.class);
 
+	private final ExpressionFactory _expressionFactory;
 	private final Parser _parser;
 	private final String _path;
 

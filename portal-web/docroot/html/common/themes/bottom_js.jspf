@@ -1,20 +1,24 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
-<%@ include file="/html/portal/layout/view/portlet_js.jspf" %>
+<c:if test="<%= (layout != null) && LayoutPermissionUtil.contains(permissionChecker, layout, ActionKeys.UPDATE) %>">
+	<aui:script>
+		Liferay.provide(
+			Liferay.Portlet,
+			'refreshLayout',
+			function(portletBound) {
+				if (!portletBound.isStatic) {
+					Liferay.Layout.refresh(portletBound);
+				}
+			},
+			['liferay-layout']
+		);
+	</aui:script>
+</c:if>
 
 <aui:script position="inline">
 	<c:choose>
@@ -24,7 +28,7 @@
 				{
 					doc: document,
 					win: window,
-					windowName: Liferay.Util.getWindowName()
+					windowName: window.name
 				}
 			);
 		</c:when>
@@ -44,45 +48,39 @@
 			</c:if>
 		</c:otherwise>
 	</c:choose>
-
-	Liferay.BrowserSelectors.run();
 </aui:script>
 
 <aui:script>
-	if (Liferay.Data.ICONS_INLINE_SVG) {
+	if (window.svg4everybody && Liferay.Data.ICONS_INLINE_SVG) {
 		svg4everybody(
 			{
-				attributeName: 'data-href',
-				polyfill: true
+				polyfill: true,
+				validate: function (src, svg, use) {
+					return !src || !src.startsWith('#');
+				}
 			}
 		);
 	}
 </aui:script>
 
-<aui:script require="metal-dom/src/all/dom as dom" sandbox="<%= true %>">
-	var focusInPortletHandler = dom.delegate(
+<aui:script sandbox="<%= true %>">
+	Liferay.Util.delegate(
 		document,
 		'focusin',
 		'.portlet',
 		function(event) {
-			dom.addClasses(dom.closest(event.delegateTarget, '.portlet'), 'open');
+			event.delegateTarget.closest('.portlet').classList.add('open');
 		}
 	);
 
-	var focusOutPortletHandler = dom.delegate(
+	Liferay.Util.delegate(
 		document,
 		'focusout',
 		'.portlet',
 		function(event) {
-			dom.removeClasses(dom.closest(event.delegateTarget, '.portlet'), 'open');
+			event.delegateTarget.closest('.portlet').classList.remove('open');
 		}
 	);
-</aui:script>
-
-<aui:script use="aui-base">
-	if (A.UA.mobile) {
-		Liferay.Util.addInputCancel();
-	}
 </aui:script>
 
 <%
@@ -133,30 +131,24 @@ if (layout != null) {
 	<aui:script use="event-move,liferay-navigation">
 		var navBlock = A.one(Liferay.Data.NAV_SELECTOR);
 
-		Liferay.once(
-			'initNavigation',
-			function() {
-				new Liferay.Navigation(
-					{
-						navBlock: navBlock
-					}
-				);
-			}
-		);
-
 		if (navBlock) {
 			if (A.UA.touchMobile) {
-				AUI.$(Liferay.Data.NAV_SELECTOR_MOBILE).one(
-					'shown.bs.collapse',
-					function() {
-						Liferay.fire('initNavigation');
+				var panel = document.querySelector(Liferay.Data.NAV_SELECTOR_MOBILE);
+
+				Liferay.on('liferay.collapse.shown',
+					function(event) {
+						var panelId = event.panel.geAttribute('id');
+
+						if (panelId === panel.geAttribute('id')) {
+							Liferay.fire('initNavigation');
+						}
 					}
 				);
 			}
 			else {
 				navBlock.once(
 					['gesturemovestart', 'mousemove'],
-					function() {
+					function () {
 						Liferay.fire('initNavigation');
 					}
 				);
@@ -165,33 +157,25 @@ if (layout != null) {
 
 		A.on(
 			'io:complete',
-			function() {
+			function () {
 				Liferay.fire('io:complete');
 			}
 		);
 	</aui:script>
 </c:if>
 
-<aui:script use="liferay-menu,liferay-notice,liferay-poller">
+<aui:script use="liferay-menu">
 	new Liferay.Menu();
 
 	var liferayNotices = Liferay.Data.notices;
 
-	for (var i = 1; i < liferayNotices.length; i++) {
-		new Liferay.Notice(liferayNotices[i]);
+	for (var i = 0; i < liferayNotices.length; i++) {
+		Liferay.Util.openToast(liferayNotices[i]);
 	}
 
-	<c:if test="<%= themeDisplay.isSignedIn() %>">
-		Liferay.Poller.init(
-			{
-				encryptedUserId: '<%= Encryptor.encrypt(company.getKeyObj(), String.valueOf(themeDisplay.getUserId())) %>',
-				supportsComet: <%= ServerDetector.isSupportsComet() %>
-			}
-		);
-	</c:if>
 </aui:script>
 
-<script type="text/javascript">
+<aui:script type="text/javascript">
 	// <![CDATA[
 
 		<%
@@ -202,39 +186,49 @@ if (layout != null) {
 		Liferay.currentURLEncoded = '<%= HtmlUtil.escapeJS(URLCodec.encodeURL(currentURL)) %>';
 
 	// ]]>
-</script>
+</aui:script>
 
-<c:if test="<%= layout != null %>">
+<c:if test="<%= (layout != null) && !layout.isTypeControlPanel() %>">
 
 	<%-- User Inputted Layout and LayoutSet JavaScript --%>
 
 	<%
-	LayoutSet layoutSet = themeDisplay.getLayoutSet();
-
-	UnicodeProperties layoutSetSettings = layoutSet.getSettingsProperties();
-
-	UnicodeProperties masterLayoutTypeSettings = new UnicodeProperties();
+	UnicodeProperties masterLayoutTypeSettingsUnicodeProperties = new UnicodeProperties();
 
 	if (layout.getMasterLayoutPlid() > 0) {
 		Layout masterLayout = LayoutLocalServiceUtil.fetchLayout(layout.getMasterLayoutPlid());
 
 		if (masterLayout != null) {
-			masterLayoutTypeSettings = masterLayout.getTypeSettingsProperties();
+			masterLayoutTypeSettingsUnicodeProperties = masterLayout.getTypeSettingsProperties();
 		}
 	}
 
-	UnicodeProperties layoutTypeSettings = layout.getTypeSettingsProperties();
+	LayoutSet layoutSet = themeDisplay.getLayoutSet();
+
+	UnicodeProperties layoutSetSettingsUnicodeProperties = layoutSet.getSettingsProperties();
+
+	UnicodeProperties layoutTypeSettingsUnicodeProperties = layout.getTypeSettingsProperties();
+
+	String snippet = GetterUtil.getString(layoutSetSettingsUnicodeProperties.getProperty("javascript"));
 	%>
 
-	<script type="text/javascript">
-		// <![CDATA[
-			<c:if test="<%= !layout.isTypeControlPanel() %>">
-				<%= GetterUtil.getString(layoutSetSettings.getProperty("javascript")) %>
+	<c:if test="<%= Validator.isNotNull(snippet) %>">
+		<%@ include file="/html/common/themes/bottom_js_script.jspf" %>
+	</c:if>
 
-				<%= GetterUtil.getString(masterLayoutTypeSettings.getProperty("javascript")) %>
+	<%
+	snippet = GetterUtil.getString(masterLayoutTypeSettingsUnicodeProperties.getProperty("javascript"));
+	%>
 
-				<%= GetterUtil.getString(layoutTypeSettings.getProperty("javascript")) %>
-			</c:if>
-		// ]]>
-	</script>
+	<c:if test="<%= Validator.isNotNull(snippet) %>">
+		<%@ include file="/html/common/themes/bottom_js_script.jspf" %>
+	</c:if>
+
+	<%
+	snippet = GetterUtil.getString(layoutTypeSettingsUnicodeProperties.getProperty("javascript"));
+	%>
+
+	<c:if test="<%= Validator.isNotNull(snippet) %>">
+		<%@ include file="/html/common/themes/bottom_js_script.jspf" %>
+	</c:if>
 </c:if>

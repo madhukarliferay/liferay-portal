@@ -1,40 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.web.internal.portlet.configuration.icon;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
-import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.workflow.constants.WorkflowPortletKeys;
 
-import java.util.ResourceBundle;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * Defines the icon triggering the deactivation of a workflow definition.
@@ -42,9 +26,8 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Jeyvison Nascimento
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
+		"jakarta.portlet.name=" + WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
 		"path=/definition/edit_workflow_definition.jsp"
 	},
 	service = PortletConfigurationIcon.class
@@ -54,10 +37,7 @@ public class UnpublishDefinitionPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		ResourceBundle resourceBundle =
-			_resourceBundleLoader.loadResourceBundle(getLocale(portletRequest));
-
-		return LanguageUtil.get(resourceBundle, "unpublish");
+		return _language.get(getLocale(portletRequest), "unpublish");
 	}
 
 	/**
@@ -72,21 +52,19 @@ public class UnpublishDefinitionPortletConfigurationIcon
 	public String getURL(
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
-		PortletURL portletURL = _portal.getControlPanelPortletURL(
-			portletRequest, WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
-			PortletRequest.ACTION_PHASE);
-
-		portletURL.setParameter(
-			ActionRequest.ACTION_NAME, "deactivateWorkflowDefinition");
-		portletURL.setParameter(
-			"mvcPath", portletRequest.getParameter("mvcPath"));
-		portletURL.setParameter(
-			"redirect", ParamUtil.getString(portletRequest, "redirect"));
-		portletURL.setParameter("name", portletRequest.getParameter("name"));
-		portletURL.setParameter(
-			"version", portletRequest.getParameter("version"));
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			_portal.getControlPanelPortletURL(
+				portletRequest, WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
+				PortletRequest.ACTION_PHASE)
+		).setActionName(
+			"/portal_workflow/deactivate_workflow_definition"
+		).setMVCPath(
+			portletRequest.getParameter("mvcPath")
+		).setParameter(
+			"name", portletRequest.getParameter("name")
+		).setParameter(
+			"version", portletRequest.getParameter("version")
+		).buildString();
 	}
 
 	@Override
@@ -103,13 +81,9 @@ public class UnpublishDefinitionPortletConfigurationIcon
 	}
 
 	@Reference
-	private Portal _portal;
+	private Language _language;
 
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.portal.workflow.web)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
+	@Reference
+	private Portal _portal;
 
 }

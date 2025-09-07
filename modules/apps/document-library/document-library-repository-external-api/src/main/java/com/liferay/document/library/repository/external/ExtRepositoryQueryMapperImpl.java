@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.repository.external;
@@ -58,12 +49,12 @@ public class ExtRepositoryQueryMapperImpl implements ExtRepositoryQueryMapper {
 
 				return searchSimpleDateFormat.parse(fieldValue);
 			}
-			catch (ParseException pe) {
+			catch (ParseException parseException) {
 				throw new SearchException(
 					StringBundler.concat(
 						"Unable to parse date ", fieldValue, " for field ",
 						fieldName),
-					pe);
+					parseException);
 			}
 		}
 		else {
@@ -89,13 +80,15 @@ public class ExtRepositoryQueryMapperImpl implements ExtRepositoryQueryMapper {
 				return _extRepositoryAdapter.getExtRepositoryObjectKey(
 					folderId);
 			}
-			catch (PortalException pe) {
+			catch (PortalException portalException) {
 				throw new SearchException(
-					"Unable to get folder folder " + fieldValue, pe);
+					"Unable to get folder folder " + fieldValue,
+					portalException);
 			}
-			catch (SystemException se) {
+			catch (SystemException systemException) {
 				throw new SearchException(
-					"Unable to get folder folder " + fieldValue, se);
+					"Unable to get folder folder " + fieldValue,
+					systemException);
 			}
 		}
 		else if (fieldName.equals(Field.USER_ID)) {
@@ -106,9 +99,9 @@ public class ExtRepositoryQueryMapperImpl implements ExtRepositoryQueryMapper {
 
 				return user.getScreenName();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new SearchException(
-					"Unable to get user user " + fieldValue, e);
+					"Unable to get user user " + fieldValue, exception);
 			}
 		}
 		else {

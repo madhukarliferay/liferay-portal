@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,24 +10,33 @@
 <%
 AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttribute(AccountWebKeys.ACCOUNT_ENTRY_DISPLAY);
 
-SearchContainer accountUserDisplaySearchContainer = AccountUserDisplaySearchContainerFactory.create(accountEntryDisplay.getAccountEntryId(), liferayPortletRequest, liferayPortletResponse);
+SearchContainer<AccountUserDisplay> accountUserDisplaySearchContainer = AccountUserDisplaySearchContainerFactory.create(accountEntryDisplay.getAccountEntryId(), liferayPortletRequest, liferayPortletResponse);
 
 ViewAccountUsersManagementToolbarDisplayContext viewAccountUsersManagementToolbarDisplayContext = new ViewAccountUsersManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, accountUserDisplaySearchContainer);
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(ParamUtil.getString(request, "backURL", String.valueOf(renderResponse.createRenderURL())));
 
-renderResponse.setTitle((accountEntryDisplay == null) ? "" : accountEntryDisplay.getName());
+renderResponse.setTitle(accountEntryDisplay.getName());
 %>
 
 <clay:management-toolbar
-	displayContext="<%= viewAccountUsersManagementToolbarDisplayContext %>"
+	additionalProps='<%=
+		HashMapBuilder.<String, Object>put(
+			"accountEntryName", accountEntryDisplay.getName()
+		).build()
+	%>'
+	managementToolbarDisplayContext="<%= viewAccountUsersManagementToolbarDisplayContext %>"
+	propsTransformer="{AccountUsersManagementToolbarPropsTransformer} from account-admin-web"
 />
 
-<aui:container cssClass="container-fluid container-fluid-max-xl">
+<clay:container-fluid>
 	<aui:form method="post" name="fm">
+		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 		<aui:input name="accountEntryId" type="hidden" value="<%= accountEntryDisplay.getAccountEntryId() %>" />
 		<aui:input name="accountUserIds" type="hidden" />
+
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustHaveValidDomain.class %>" message="one-or-more-of-the-selected-users-have-invalid-email-address-domains" />
 
 		<liferay-ui:search-container
 			searchContainer="<%= accountUserDisplaySearchContainer %>"
@@ -46,33 +46,52 @@ renderResponse.setTitle((accountEntryDisplay == null) ? "" : accountEntryDisplay
 				keyProperty="userId"
 				modelVar="accountUser"
 			>
+
+				<%
+				String rowURL = null;
+
+				AccountUserActionDropdownItemsProvider accountUserActionDropdownItemsProvider = new AccountUserActionDropdownItemsProvider(accountEntryDisplay, accountUser, permissionChecker, renderRequest, renderResponse);
+
+				if (AccountUserPermission.hasEditUserPermission(permissionChecker, portletName, accountEntryDisplay, accountUser.getUser())) {
+					rowURL = accountUserActionDropdownItemsProvider.getEditAccountUserURL();
+				}
+				%>
+
 				<liferay-ui:search-container-column-text
 					cssClass="table-cell-expand-small table-cell-minw-150"
+					href="<%= rowURL %>"
 					name="name"
-					property="name"
+					value="<%= HtmlUtil.escape(accountUser.getName()) %>"
 				/>
 
 				<liferay-ui:search-container-column-text
 					cssClass="table-cell-expand-small table-cell-minw-150"
+					href="<%= rowURL %>"
 					name="email-address"
 					property="emailAddress"
 				/>
 
 				<liferay-ui:search-container-column-text
 					cssClass="table-cell-expand-small table-cell-minw-150"
+					href="<%= rowURL %>"
 					name="job-title"
-					property="jobTitle"
+					value="<%= HtmlUtil.escape(accountUser.getJobTitle()) %>"
 				/>
 
 				<liferay-ui:search-container-column-text
 					cssClass="table-cell-expand-small table-cell-minw-150"
+					href="<%= rowURL %>"
 					name="account-roles"
-					property="accountRoles"
+					value="<%= HtmlUtil.escape(accountUser.getAccountRoleNamesString(accountEntryDisplay.getAccountEntryId(), locale)) %>"
 				/>
 
-				<liferay-ui:search-container-column-jsp
-					path="/account_entries_admin/account_user_action.jsp"
-				/>
+				<liferay-ui:search-container-column-text>
+					<clay:dropdown-actions
+						aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+						dropdownItems="<%= accountUserActionDropdownItemsProvider.getActionDropdownItems() %>"
+						propsTransformer="{AccountUserDropdownDefaultPropsTransformer} from account-admin-web"
+					/>
+				</liferay-ui:search-container-column-text>
 			</liferay-ui:search-container-row>
 
 			<liferay-ui:search-iterator
@@ -80,9 +99,4 @@ renderResponse.setTitle((accountEntryDisplay == null) ? "" : accountEntryDisplay
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</aui:container>
-
-<liferay-frontend:component
-	componentId="<%= viewAccountUsersManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="account_entries_admin/js/AccountUsersManagementToolbarDefaultEventHandler.es"
-/>
+</clay:container-fluid>

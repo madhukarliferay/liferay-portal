@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
@@ -17,6 +8,7 @@ package com.liferay.dynamic.data.mapping.service;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,6 +22,10 @@ public class DDMStructureLocalServiceWrapper
 	implements DDMStructureLocalService,
 			   ServiceWrapper<DDMStructureLocalService> {
 
+	public DDMStructureLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DDMStructureLocalServiceWrapper(
 		DDMStructureLocalService ddmStructureLocalService) {
 
@@ -39,45 +35,16 @@ public class DDMStructureLocalServiceWrapper
 	/**
 	 * Adds the ddm structure to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStructure the ddm structure
 	 * @return the ddm structure that was added
 	 */
 	@Override
 	public DDMStructure addDDMStructure(DDMStructure ddmStructure) {
 		return _ddmStructureLocalService.addDDMStructure(ddmStructure);
-	}
-
-	@Override
-	public DDMStructure addStructure(
-			long userId, long groupId, long parentStructureId, long classNameId,
-			String structureKey,
-			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap,
-			com.liferay.dynamic.data.mapping.model.DDMForm ddmForm,
-			com.liferay.dynamic.data.mapping.model.DDMFormLayout ddmFormLayout,
-			String storageType, int type,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmStructureLocalService.addStructure(
-			userId, groupId, parentStructureId, classNameId, structureKey,
-			nameMap, descriptionMap, ddmForm, ddmFormLayout, storageType, type,
-			serviceContext);
-	}
-
-	@Override
-	public DDMStructure addStructure(
-			long userId, long groupId, long parentStructureId, long classNameId,
-			String structureKey,
-			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap,
-			String definition, String storageType,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmStructureLocalService.addStructure(
-			userId, groupId, parentStructureId, classNameId, structureKey,
-			nameMap, descriptionMap, definition, storageType, serviceContext);
 	}
 
 	@Override
@@ -112,6 +79,40 @@ public class DDMStructureLocalServiceWrapper
 			userId, groupId, parentStructureKey, classNameId, structureKey,
 			nameMap, descriptionMap, ddmForm, ddmFormLayout, storageType, type,
 			serviceContext);
+	}
+
+	@Override
+	public DDMStructure addStructure(
+			String externalReferenceCode, long userId, long groupId,
+			long parentStructureId, long classNameId, String structureKey,
+			java.util.Map<java.util.Locale, String> nameMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			com.liferay.dynamic.data.mapping.model.DDMForm ddmForm,
+			com.liferay.dynamic.data.mapping.model.DDMFormLayout ddmFormLayout,
+			String storageType, int type,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLocalService.addStructure(
+			externalReferenceCode, userId, groupId, parentStructureId,
+			classNameId, structureKey, nameMap, descriptionMap, ddmForm,
+			ddmFormLayout, storageType, type, serviceContext);
+	}
+
+	@Override
+	public DDMStructure addStructure(
+			String externalReferenceCode, long userId, long groupId,
+			long parentStructureId, long classNameId, String structureKey,
+			java.util.Map<java.util.Locale, String> nameMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String definition, String storageType,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLocalService.addStructure(
+			externalReferenceCode, userId, groupId, parentStructureId,
+			classNameId, structureKey, nameMap, descriptionMap, definition,
+			storageType, serviceContext);
 	}
 
 	/**
@@ -154,7 +155,7 @@ public class DDMStructureLocalServiceWrapper
 	 * and description.
 	 *
 	 * @param userId the primary key of the structure's creator/owner
-	 * @param structureId the primary key of the structure to be copied
+	 * @param sourceStructureId the primary key of the structure to be copied
 	 * @param nameMap the new structure's locales and localized names
 	 * @param descriptionMap the new structure's locales and localized
 	 descriptions
@@ -165,24 +166,24 @@ public class DDMStructureLocalServiceWrapper
 	 */
 	@Override
 	public DDMStructure copyStructure(
-			long userId, long structureId,
+			long userId, long sourceStructureId,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddmStructureLocalService.copyStructure(
-			userId, structureId, nameMap, descriptionMap, serviceContext);
+			userId, sourceStructureId, nameMap, descriptionMap, serviceContext);
 	}
 
 	@Override
 	public DDMStructure copyStructure(
-			long userId, long structureId,
+			long userId, long sourceStructureId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddmStructureLocalService.copyStructure(
-			userId, structureId, serviceContext);
+			userId, sourceStructureId, serviceContext);
 	}
 
 	/**
@@ -197,7 +198,22 @@ public class DDMStructureLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ddm structure from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmStructure the ddm structure
 	 * @return the ddm structure that was removed
@@ -209,6 +225,10 @@ public class DDMStructureLocalServiceWrapper
 
 	/**
 	 * Deletes the ddm structure with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param structureId the primary key of the ddm structure
 	 * @return the ddm structure that was removed
@@ -311,6 +331,18 @@ public class DDMStructureLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_ddmStructureLocalService.deleteStructures(groupId, classNameId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ddmStructureLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ddmStructureLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -483,6 +515,14 @@ public class DDMStructureLocalServiceWrapper
 
 		return _ddmStructureLocalService.fetchStructure(
 			groupId, classNameId, structureKey, includeAncestorStructures);
+	}
+
+	@Override
+	public DDMStructure fetchStructureByExternalReferenceCode(
+		String externalReferenceCode, long groupId, long classNameId) {
+
+		return _ddmStructureLocalService.fetchStructureByExternalReferenceCode(
+			externalReferenceCode, groupId, classNameId);
 	}
 
 	@Override
@@ -692,6 +732,9 @@ public class DDMStructureLocalServiceWrapper
 		return _ddmStructureLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -777,6 +820,15 @@ public class DDMStructureLocalServiceWrapper
 
 		return _ddmStructureLocalService.getStructure(
 			groupId, name, description);
+	}
+
+	@Override
+	public DDMStructure getStructureByExternalReferenceCode(
+			String externalReferenceCode, long groupId, long classNameId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLocalService.getStructureByExternalReferenceCode(
+			externalReferenceCode, groupId, classNameId);
 	}
 
 	@Override
@@ -1093,8 +1145,17 @@ public class DDMStructureLocalServiceWrapper
 	}
 
 	@Override
+	public boolean hasStructure(
+		long groupId, long classNameId, String structureKey) {
+
+		return _ddmStructureLocalService.hasStructure(
+			groupId, classNameId, structureKey);
+	}
+
+	@Override
 	public String prepareLocalizedDefinitionForImport(
-		DDMStructure structure, java.util.Locale defaultImportLocale) {
+			DDMStructure structure, java.util.Locale defaultImportLocale)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddmStructureLocalService.prepareLocalizedDefinitionForImport(
 			structure, defaultImportLocale);
@@ -1269,6 +1330,10 @@ public class DDMStructureLocalServiceWrapper
 	/**
 	 * Updates the ddm structure in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStructure the ddm structure
 	 * @return the ddm structure that was updated
 	 */
@@ -1322,7 +1387,9 @@ public class DDMStructureLocalServiceWrapper
 
 	@Override
 	public DDMStructure updateStructure(
-			long userId, long structureId, long parentStructureId,
+			String externalReferenceCode, long userId, long structureId,
+			long groupId, long parentStructureId, long classNameId,
+			String structureKey,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
 			String definition,
@@ -1330,8 +1397,14 @@ public class DDMStructureLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddmStructureLocalService.updateStructure(
-			userId, structureId, parentStructureId, nameMap, descriptionMap,
-			definition, serviceContext);
+			externalReferenceCode, userId, structureId, groupId,
+			parentStructureId, classNameId, structureKey, nameMap,
+			descriptionMap, definition, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ddmStructureLocalService.getBasePersistence();
 	}
 
 	@Override

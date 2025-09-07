@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.persistence;
@@ -17,6 +8,7 @@ package com.liferay.calendar.service.persistence;
 import com.liferay.calendar.exception.NoSuchResourceException;
 import com.liferay.calendar.model.CalendarResource;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +25,9 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface CalendarResourcePersistence
-	extends BasePersistence<CalendarResource> {
+	extends BasePersistence<CalendarResource>, CTPersistence<CalendarResource> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link CalendarResourceUtil} to access the calendar resource persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -1039,7 +1031,7 @@ public interface CalendarResourcePersistence
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CalendarResourceModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param code the code
 	 * @param start the lower bound of the range of calendar resources
 	 * @param end the upper bound of the range of calendar resources (not inclusive)
@@ -1380,7 +1372,7 @@ public interface CalendarResourcePersistence
 	 * @param active the active
 	 * @return the matching calendar resources
 	 */
-	public java.util.List<CalendarResource> findByC_C_A(
+	public java.util.List<CalendarResource> findByC_LikeC_A(
 		long companyId, String code, boolean active);
 
 	/**
@@ -1397,7 +1389,7 @@ public interface CalendarResourcePersistence
 	 * @param end the upper bound of the range of calendar resources (not inclusive)
 	 * @return the range of matching calendar resources
 	 */
-	public java.util.List<CalendarResource> findByC_C_A(
+	public java.util.List<CalendarResource> findByC_LikeC_A(
 		long companyId, String code, boolean active, int start, int end);
 
 	/**
@@ -1415,7 +1407,7 @@ public interface CalendarResourcePersistence
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching calendar resources
 	 */
-	public java.util.List<CalendarResource> findByC_C_A(
+	public java.util.List<CalendarResource> findByC_LikeC_A(
 		long companyId, String code, boolean active, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 			orderByComparator);
@@ -1436,7 +1428,7 @@ public interface CalendarResourcePersistence
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching calendar resources
 	 */
-	public java.util.List<CalendarResource> findByC_C_A(
+	public java.util.List<CalendarResource> findByC_LikeC_A(
 		long companyId, String code, boolean active, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 			orderByComparator,
@@ -1452,7 +1444,7 @@ public interface CalendarResourcePersistence
 	 * @return the first matching calendar resource
 	 * @throws NoSuchResourceException if a matching calendar resource could not be found
 	 */
-	public CalendarResource findByC_C_A_First(
+	public CalendarResource findByC_LikeC_A_First(
 			long companyId, String code, boolean active,
 			com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 				orderByComparator)
@@ -1467,7 +1459,7 @@ public interface CalendarResourcePersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching calendar resource, or <code>null</code> if a matching calendar resource could not be found
 	 */
-	public CalendarResource fetchByC_C_A_First(
+	public CalendarResource fetchByC_LikeC_A_First(
 		long companyId, String code, boolean active,
 		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 			orderByComparator);
@@ -1482,7 +1474,7 @@ public interface CalendarResourcePersistence
 	 * @return the last matching calendar resource
 	 * @throws NoSuchResourceException if a matching calendar resource could not be found
 	 */
-	public CalendarResource findByC_C_A_Last(
+	public CalendarResource findByC_LikeC_A_Last(
 			long companyId, String code, boolean active,
 			com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 				orderByComparator)
@@ -1497,7 +1489,7 @@ public interface CalendarResourcePersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching calendar resource, or <code>null</code> if a matching calendar resource could not be found
 	 */
-	public CalendarResource fetchByC_C_A_Last(
+	public CalendarResource fetchByC_LikeC_A_Last(
 		long companyId, String code, boolean active,
 		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
 			orderByComparator);
@@ -1513,7 +1505,7 @@ public interface CalendarResourcePersistence
 	 * @return the previous, current, and next calendar resource
 	 * @throws NoSuchResourceException if a calendar resource with the primary key could not be found
 	 */
-	public CalendarResource[] findByC_C_A_PrevAndNext(
+	public CalendarResource[] findByC_LikeC_A_PrevAndNext(
 			long calendarResourceId, long companyId, String code,
 			boolean active,
 			com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
@@ -1527,7 +1519,7 @@ public interface CalendarResourcePersistence
 	 * @param code the code
 	 * @param active the active
 	 */
-	public void removeByC_C_A(long companyId, String code, boolean active);
+	public void removeByC_LikeC_A(long companyId, String code, boolean active);
 
 	/**
 	 * Returns the number of calendar resources where companyId = &#63; and code LIKE &#63; and active = &#63;.
@@ -1537,7 +1529,7 @@ public interface CalendarResourcePersistence
 	 * @param active the active
 	 * @return the number of matching calendar resources
 	 */
-	public int countByC_C_A(long companyId, String code, boolean active);
+	public int countByC_LikeC_A(long companyId, String code, boolean active);
 
 	/**
 	 * Caches the calendar resource in the entity cache if it is enabled.

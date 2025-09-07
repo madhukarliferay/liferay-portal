@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.service.test;
@@ -30,11 +21,11 @@ import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.service.RepositoryLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -77,27 +68,25 @@ public class DLFolderFinderTest {
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId());
 
-		long classNameId = PortalUtil.getClassNameId(
-			PortletRepository.class.getName());
-
 		RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), _group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			PortalUtil.getClassNameId(PortletRepository.class.getName()),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Test Repository",
 			StringUtil.randomString(), StringUtil.randomString(),
 			new UnicodeProperties(), false, serviceContext);
 
 		_folder = DLAppLocalServiceUtil.addFolder(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Folder A",
 			StringPool.BLANK, serviceContext);
 
 		DLAppLocalServiceUtil.addFolder(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			_folder.getFolderId(), "Folder B", StringPool.BLANK,
 			serviceContext);
 
 		Folder folder = DLAppLocalServiceUtil.addFolder(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			_folder.getFolderId(), "Folder C", StringPool.BLANK,
 			serviceContext);
 
@@ -108,7 +97,7 @@ public class DLFolderFinderTest {
 			ContentTypes.TEXT_PLAIN);
 
 		_fileShortcut = DLAppLocalServiceUtil.addFileShortcut(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			fileEntry.getFolderId(), fileEntry.getFileEntryId(),
 			serviceContext);
 
@@ -330,7 +319,7 @@ public class DLFolderFinderTest {
 				FileShortcut fileShortcut = (FileShortcut)result;
 
 				Assert.assertEquals(
-					this._fileShortcut.getFileShortcutId(),
+					_fileShortcut.getFileShortcutId(),
 					fileShortcut.getFileShortcutId());
 			}
 			else if (result instanceof DLFolder) {
@@ -380,8 +369,9 @@ public class DLFolderFinderTest {
 				groupId, TestPropsValues.getUserId());
 
 		return DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), groupId, folderId, sourceFileName,
-			mimeType, TestDataConstants.TEST_BYTE_ARRAY, serviceContext);
+			null, TestPropsValues.getUserId(), groupId, folderId,
+			sourceFileName, mimeType, TestDataConstants.TEST_BYTE_ARRAY, null,
+			null, null, serviceContext);
 	}
 
 	private FileShortcut _fileShortcut;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.opensaml.integration.internal.util;
@@ -37,7 +28,6 @@ import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
@@ -548,9 +538,7 @@ public class OpenSamlUtil {
 		authnRequest.setIsPassive(false);
 		authnRequest.setIssueInstant(now);
 
-		Issuer issuer = buildIssuer(spEntityId);
-
-		authnRequest.setIssuer(issuer);
+		authnRequest.setIssuer(buildIssuer(spEntityId));
 
 		authnRequest.setAssertionConsumerServiceURL(
 			assertionConsumerService.getLocation());
@@ -606,7 +594,7 @@ public class OpenSamlUtil {
 	}
 
 	public static KeyDescriptor buildKeyDescriptor(
-		UsageType useType, KeyInfo keyInfo) {
+		UsageType usageType, KeyInfo keyInfo) {
 
 		SAMLObjectBuilder<KeyDescriptor> samlObjectBuilder =
 			(SAMLObjectBuilder<KeyDescriptor>)_getBuilder(
@@ -615,7 +603,7 @@ public class OpenSamlUtil {
 		KeyDescriptor keyDescriptor = samlObjectBuilder.buildObject();
 
 		keyDescriptor.setKeyInfo(keyInfo);
-		keyDescriptor.setUse(useType);
+		keyDescriptor.setUse(usageType);
 
 		return keyDescriptor;
 	}
@@ -846,8 +834,8 @@ public class OpenSamlUtil {
 
 			signatureSigningParameters.setSigningCredential(credential);
 		}
-		catch (ResolverException re) {
-			throw new PortalException(re);
+		catch (ResolverException resolverException) {
+			throw new PortalException(resolverException);
 		}
 	}
 
@@ -859,16 +847,15 @@ public class OpenSamlUtil {
 		Signature signature = buildSignature(credential);
 
 		try {
-			SignatureSigningParameters signatureSigningParameters =
-				_getSignatureSigningParameters(credential, peerRoleDescriptor);
-
 			SignatureSupport.prepareSignatureParams(
-				signature, signatureSigningParameters);
+				signature,
+				_getSignatureSigningParameters(credential, peerRoleDescriptor));
 
 			signableObject.setSignature(signature);
 
 			XMLObjectProviderRegistry xmlObjectProviderRegistry =
-				ConfigurationService.get(XMLObjectProviderRegistry.class);
+				ConfigurationServiceBootstrapUtil.get(
+					XMLObjectProviderRegistry.class);
 
 			MarshallerFactory marshallerFactory =
 				xmlObjectProviderRegistry.getMarshallerFactory();
@@ -880,8 +867,8 @@ public class OpenSamlUtil {
 
 			Signer.signObject(signature);
 		}
-		catch (ResolverException re) {
-			throw new SignatureException(re);
+		catch (ResolverException resolverException) {
+			throw new SignatureException(resolverException);
 		}
 	}
 
@@ -889,7 +876,8 @@ public class OpenSamlUtil {
 		throws UnmarshallingException, XMLParserException {
 
 		XMLObjectProviderRegistry xmlObjectProviderRegistry =
-			ConfigurationService.get(XMLObjectProviderRegistry.class);
+			ConfigurationServiceBootstrapUtil.get(
+				XMLObjectProviderRegistry.class);
 
 		return XMLObjectSupport.unmarshallFromInputStream(
 			xmlObjectProviderRegistry.getParserPool(),
@@ -916,11 +904,12 @@ public class OpenSamlUtil {
 		if (globalSignatureSigningConfiguration instanceof
 				BasicSignatureSigningConfiguration) {
 
-			BasicSignatureSigningConfiguration signatureSigningConfiguration =
-				(BasicSignatureSigningConfiguration)
-					globalSignatureSigningConfiguration;
+			BasicSignatureSigningConfiguration
+				basicSignatureSigningConfiguration =
+					(BasicSignatureSigningConfiguration)
+						globalSignatureSigningConfiguration;
 
-			signatureSigningConfiguration.setSigningCredentials(
+			basicSignatureSigningConfiguration.setSigningCredentials(
 				Collections.singletonList(credential));
 		}
 
@@ -944,7 +933,8 @@ public class OpenSamlUtil {
 
 	static {
 		XMLObjectProviderRegistry xmlObjectProviderRegistry =
-			ConfigurationService.get(XMLObjectProviderRegistry.class);
+			ConfigurationServiceBootstrapUtil.get(
+				XMLObjectProviderRegistry.class);
 
 		_xmlObjectBuilderFactory =
 			xmlObjectProviderRegistry.getBuilderFactory();

@@ -1,52 +1,53 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-CKEDITOR.on('dialogDefinition', event => {
-	if (event.editor === ckEditor) {
-		var dialogDefinition = event.data.definition;
+CKEDITOR.on('dialogDefinition', (event) => {
+	const boundingWindow = event.editor.window;
 
-		var onShow = dialogDefinition.onShow;
+	const dialogDefinition = event.data.definition;
 
-		dialogDefinition.onShow = function() {
-			if (typeof onShow === 'function') {
-				onShow.apply(this, arguments);
-			}
+	const dialog = event.data.dialog;
 
-			if (window.top != window.self) {
-				var editorElement = this.getParentEditor().container;
+	const onShow = dialogDefinition.onShow;
 
-				var documentPosition = editorElement
-					.getLast()
-					.getDocumentPosition();
+	const centerDialog = function () {
+		const dialogSize = dialog.getSize();
 
-				var dialogSize = this.getSize();
+		const x = window.innerWidth / 2 - dialogSize.width / 2;
+		const y = window.innerHeight / 2 - dialogSize.height / 2;
 
-				var x =
-					documentPosition.x +
-					((editorElement.getLast().getSize('width', true) -
-						dialogSize.width) /
-						2 -
-						window.scrollX);
-				var y =
-					documentPosition.y +
-					((editorElement.getLast().getSize('height', true) -
-						dialogSize.height) /
-						2 -
-						window.scrollY);
+		dialog.move(x, y, false);
+	};
 
-				this.move(x, y, false);
-			}
+	dialogDefinition.onShow = function () {
+		if (typeof onShow === 'function') {
+			onShow.apply(this, arguments);
+		}
+
+		centerDialog();
+	};
+
+	const debounce = function (fn, delay) {
+		return function debounced() {
+			clearTimeout(debounced.id);
+			debounced.id = setTimeout(() => {
+				fn();
+			}, delay);
 		};
-	}
+	};
+
+	const debounced = boundingWindow.on(
+		'resize',
+		debounce(() => {
+			centerDialog();
+		}, 250)
+	);
+
+	const clearEventHandler = function () {
+		clearTimeout(debounced.id);
+	};
+
+	Liferay.once('destroyPortlet', clearEventHandler);
 });

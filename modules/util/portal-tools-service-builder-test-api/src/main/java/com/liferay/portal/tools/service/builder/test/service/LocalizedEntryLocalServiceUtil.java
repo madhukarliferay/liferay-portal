@@ -1,22 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder.test.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.tools.service.builder.test.model.LocalizedEntry;
+
+import java.io.Serializable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the local service utility for LocalizedEntry. This utility wraps
@@ -32,7 +31,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class LocalizedEntryLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.tools.service.builder.test.service.impl.LocalizedEntryLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -41,14 +40,15 @@ public class LocalizedEntryLocalServiceUtil {
 	/**
 	 * Adds the localized entry to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LocalizedEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param localizedEntry the localized entry
 	 * @return the localized entry that was added
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-			addLocalizedEntry(
-				com.liferay.portal.tools.service.builder.test.model.
-					LocalizedEntry localizedEntry) {
+	public static LocalizedEntry addLocalizedEntry(
+		LocalizedEntry localizedEntry) {
 
 		return getService().addLocalizedEntry(localizedEntry);
 	}
@@ -59,24 +59,32 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param localizedEntryId the primary key for the new localized entry
 	 * @return the new localized entry
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-			createLocalizedEntry(long localizedEntryId) {
-
+	public static LocalizedEntry createLocalizedEntry(long localizedEntryId) {
 		return getService().createLocalizedEntry(localizedEntryId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	/**
 	 * Deletes the localized entry from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LocalizedEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param localizedEntry the localized entry
 	 * @return the localized entry that was removed
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-			deleteLocalizedEntry(
-				com.liferay.portal.tools.service.builder.test.model.
-					LocalizedEntry localizedEntry) {
+	public static LocalizedEntry deleteLocalizedEntry(
+		LocalizedEntry localizedEntry) {
 
 		return getService().deleteLocalizedEntry(localizedEntry);
 	}
@@ -84,14 +92,16 @@ public class LocalizedEntryLocalServiceUtil {
 	/**
 	 * Deletes the localized entry with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LocalizedEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param localizedEntryId the primary key of the localized entry
 	 * @return the localized entry that was removed
 	 * @throws PortalException if a localized entry with the primary key could not be found
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-				deleteLocalizedEntry(long localizedEntryId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static LocalizedEntry deleteLocalizedEntry(long localizedEntryId)
+		throws PortalException {
 
 		return getService().deleteLocalizedEntry(localizedEntryId);
 	}
@@ -99,17 +109,22 @@ public class LocalizedEntryLocalServiceUtil {
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -119,9 +134,7 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -137,9 +150,8 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -157,10 +169,9 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -172,9 +183,7 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -186,16 +195,13 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-			fetchLocalizedEntry(long localizedEntryId) {
-
+	public static LocalizedEntry fetchLocalizedEntry(long localizedEntryId) {
 		return getService().fetchLocalizedEntry(localizedEntryId);
 	}
 
@@ -231,10 +237,7 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @param end the upper bound of the range of localized entries (not inclusive)
 	 * @return the range of localized entries
 	 */
-	public static java.util.List
-		<com.liferay.portal.tools.service.builder.test.model.LocalizedEntry>
-			getLocalizedEntries(int start, int end) {
-
+	public static List<LocalizedEntry> getLocalizedEntries(int start, int end) {
 		return getService().getLocalizedEntries(start, end);
 	}
 
@@ -254,10 +257,8 @@ public class LocalizedEntryLocalServiceUtil {
 	 * @return the localized entry
 	 * @throws PortalException if a localized entry with the primary key could not be found
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-				getLocalizedEntry(long localizedEntryId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static LocalizedEntry getLocalizedEntry(long localizedEntryId)
+		throws PortalException {
 
 		return getService().getLocalizedEntry(localizedEntryId);
 	}
@@ -265,13 +266,13 @@ public class LocalizedEntryLocalServiceUtil {
 	public static com.liferay.portal.tools.service.builder.test.model.
 		LocalizedEntryLocalization getLocalizedEntryLocalization(
 				long localizedEntryId, String languageId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+			throws PortalException {
 
 		return getService().getLocalizedEntryLocalization(
 			localizedEntryId, languageId);
 	}
 
-	public static java.util.List
+	public static List
 		<com.liferay.portal.tools.service.builder.test.model.
 			LocalizedEntryLocalization> getLocalizedEntryLocalizations(
 				long localizedEntryId) {
@@ -288,9 +289,11 @@ public class LocalizedEntryLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
@@ -298,64 +301,48 @@ public class LocalizedEntryLocalServiceUtil {
 	/**
 	 * Updates the localized entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LocalizedEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param localizedEntry the localized entry
 	 * @return the localized entry that was updated
 	 */
-	public static
-		com.liferay.portal.tools.service.builder.test.model.LocalizedEntry
-			updateLocalizedEntry(
-				com.liferay.portal.tools.service.builder.test.model.
-					LocalizedEntry localizedEntry) {
+	public static LocalizedEntry updateLocalizedEntry(
+		LocalizedEntry localizedEntry) {
 
 		return getService().updateLocalizedEntry(localizedEntry);
 	}
 
 	public static com.liferay.portal.tools.service.builder.test.model.
 		LocalizedEntryLocalization updateLocalizedEntryLocalization(
-				com.liferay.portal.tools.service.builder.test.model.
-					LocalizedEntry localizedEntry,
-				String languageId, String title, String content)
-			throws com.liferay.portal.kernel.exception.PortalException {
+				LocalizedEntry localizedEntry, String languageId, String title,
+				String content)
+			throws PortalException {
 
 		return getService().updateLocalizedEntryLocalization(
 			localizedEntry, languageId, title, content);
 	}
 
-	public static java.util.List
+	public static List
 		<com.liferay.portal.tools.service.builder.test.model.
 			LocalizedEntryLocalization> updateLocalizedEntryLocalizations(
-					com.liferay.portal.tools.service.builder.test.model.
-						LocalizedEntry localizedEntry,
-					java.util.Map<String, String> titleMap,
-					java.util.Map<String, String> contentMap)
-				throws com.liferay.portal.kernel.exception.PortalException {
+					LocalizedEntry localizedEntry, Map<String, String> titleMap,
+					Map<String, String> contentMap)
+				throws PortalException {
 
 		return getService().updateLocalizedEntryLocalizations(
 			localizedEntry, titleMap, contentMap);
 	}
 
 	public static LocalizedEntryLocalService getService() {
-		return _serviceTracker.getService();
+		return _service;
 	}
 
-	private static ServiceTracker
-		<LocalizedEntryLocalService, LocalizedEntryLocalService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			LocalizedEntryLocalService.class);
-
-		ServiceTracker<LocalizedEntryLocalService, LocalizedEntryLocalService>
-			serviceTracker =
-				new ServiceTracker
-					<LocalizedEntryLocalService, LocalizedEntryLocalService>(
-						bundle.getBundleContext(),
-						LocalizedEntryLocalService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setService(LocalizedEntryLocalService service) {
+		_service = service;
 	}
+
+	private static volatile LocalizedEntryLocalService _service;
 
 }

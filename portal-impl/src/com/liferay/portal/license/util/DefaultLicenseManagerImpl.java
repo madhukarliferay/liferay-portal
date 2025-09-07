@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.license.util;
@@ -86,8 +77,6 @@ public class DefaultLicenseManagerImpl implements LicenseManager {
 		try {
 			JSONObject jsonObject = new JSONObjectImpl();
 
-			byte[] serverIdBytes = LicenseUtil.getServerIdBytes();
-
 			jsonObject.put(
 				Constants.CMD, "GET_LICENSE_STATE"
 			).put(
@@ -104,15 +93,14 @@ public class DefaultLicenseManagerImpl implements LicenseManager {
 
 			jsonObject.put("productVersion", productVersion);
 
-			UUID uuid = new UUID(
-				SecureRandomUtil.nextLong(), SecureRandomUtil.nextLong());
-
-			String randomUuid = uuid.toString();
+			String randomUuid = String.valueOf(
+				new UUID(
+					SecureRandomUtil.nextLong(), SecureRandomUtil.nextLong()));
 
 			jsonObject.put(
 				"randomUuid", randomUuid
 			).put(
-				"serverId", Arrays.toString(serverIdBytes)
+				"serverId", Arrays.toString(LicenseUtil.getServerIdBytes())
 			);
 
 			String userCount = licenseProperties.get("userCount");
@@ -140,8 +128,8 @@ public class DefaultLicenseManagerImpl implements LicenseManager {
 				return responseJSONObject.getInt("licenseState");
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return 0;
@@ -149,11 +137,10 @@ public class DefaultLicenseManagerImpl implements LicenseManager {
 
 	@Override
 	public int getLicenseState(String productId) {
-		Map<String, String> licenseProperties = HashMapBuilder.put(
-			"productId", productId
-		).build();
-
-		return getLicenseState(licenseProperties);
+		return getLicenseState(
+			HashMapBuilder.put(
+				"productId", productId
+			).build());
 	}
 
 	@Override

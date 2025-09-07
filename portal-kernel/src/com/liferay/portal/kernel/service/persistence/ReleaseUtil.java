@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -39,7 +29,7 @@ import java.util.Set;
  */
 public class ReleaseUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -327,14 +317,13 @@ public class ReleaseUtil {
 	}
 
 	public static ReleasePersistence getPersistence() {
-		if (_persistence == null) {
-			_persistence = (ReleasePersistence)PortalBeanLocatorUtil.locate(
-				ReleasePersistence.class.getName());
-		}
-
 		return _persistence;
 	}
 
-	private static ReleasePersistence _persistence;
+	public static void setPersistence(ReleasePersistence persistence) {
+		_persistence = persistence;
+	}
+
+	private static volatile ReleasePersistence _persistence;
 
 }

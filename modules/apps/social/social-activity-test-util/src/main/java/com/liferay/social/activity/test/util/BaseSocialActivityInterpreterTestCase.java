@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.activity.test.util;
@@ -25,31 +16,30 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivityFeedEntry;
 import com.liferay.social.kernel.model.SocialActivityInterpreter;
 import com.liferay.social.kernel.service.SocialActivityLocalServiceUtil;
 import com.liferay.trash.TrashHelper;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -59,25 +49,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 public abstract class BaseSocialActivityInterpreterTestCase {
 
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(TrashHelper.class);
-
-		_serviceTracker.open();
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		_serviceTracker.close();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		group = GroupTestUtil.addGroup();
-
-		trashHelper = _serviceTracker.getService();
 
 		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
@@ -99,107 +73,29 @@ public abstract class BaseSocialActivityInterpreterTestCase {
 	public void testActivityInterpreter() throws Exception {
 		addActivities();
 
-		long time = System.currentTimeMillis();
+		List<SocialActivity> originalActivities = getActivities();
 
 		renameModels();
+
+		_checkRenaming(originalActivities);
 
 		if (isSupportsTrash()) {
 			moveModelsToTrash();
 
-			checkLinks();
+			_checkLinks();
 
 			restoreModelsFromTrash();
 		}
 
-		checkInterpret(time);
+		_checkInterpret();
 	}
 
 	protected abstract void addActivities() throws Exception;
 
-	protected void checkInterpret(long time) throws Exception {
-		List<SocialActivity> activities = getActivities();
-
-		Assert.assertFalse(activities.toString(), activities.isEmpty());
-
-		Map<String, String> entryTitles = new HashMap<>();
-
-		SocialActivityInterpreter activityInterpreter =
-			getActivityInterpreter();
-
-		for (SocialActivity activity : activities) {
-			String title = activity.getExtraDataValue(
-				"title", serviceContext.getLocale());
-
-			if (isSupportsRename(activity.getClassName()) &&
-				Validator.isNotNull(title)) {
-
-				if (activity.getCreateDate() < time) {
-					entryTitles.put(activity.getClassName(), title);
-				}
-				else {
-					Assert.assertNotNull(
-						entryTitles.get(activity.getClassName()));
-					Assert.assertNotEquals(
-						entryTitles.get(activity.getClassName()), title);
-				}
-			}
-
-			if (hasClassName(activityInterpreter, activity.getClassName()) &&
-				hasActivityType(activity.getType())) {
-
-				SocialActivityFeedEntry activityFeedEntry =
-					activityInterpreter.interpret(activity, serviceContext);
-
-				Assert.assertNotNull(activityFeedEntry);
-
-				title = activityFeedEntry.getTitle();
-
-				Assert.assertFalse(
-					"Title contains parameters: " + title,
-					title.matches("\\{\\d\\}"));
-			}
-		}
-	}
-
-	protected void checkLinks() throws Exception {
-		List<SocialActivity> activities = getActivities();
-
-		Assert.assertFalse(activities.toString(), activities.isEmpty());
-
-		SocialActivityInterpreter activityInterpreter =
-			getActivityInterpreter();
-
-		for (SocialActivity activity : activities) {
-			if (hasClassName(activityInterpreter, activity.getClassName()) &&
-				hasActivityType(activity.getType())) {
-
-				SocialActivityFeedEntry activityFeedEntry =
-					activityInterpreter.interpret(activity, serviceContext);
-
-				PortletURL portletURL = trashHelper.getViewContentURL(
-					serviceContext.getRequest(), activity.getClassName(),
-					activity.getClassPK());
-
-				if (Validator.isNull(activityFeedEntry.getLink()) &&
-					(portletURL == null)) {
-
-					continue;
-				}
-
-				Assert.assertEquals(
-					portletURL.toString(), activityFeedEntry.getLink());
-			}
-		}
-	}
-
 	protected List<SocialActivity> getActivities() throws Exception {
-		List<SocialActivity> activities = new ArrayList<>(
+		return new ArrayList<>(
 			SocialActivityLocalServiceUtil.getGroupActivities(
 				group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS));
-
-		Collections.reverse(activities);
-
-		return activities;
 	}
 
 	protected abstract SocialActivityInterpreter getActivityInterpreter();
@@ -208,28 +104,36 @@ public abstract class BaseSocialActivityInterpreterTestCase {
 		String portletId, String className) {
 
 		try {
-			Registry registry = RegistryUtil.getRegistry();
+			Bundle bundle = FrameworkUtil.getBundle(getClass());
 
-			Collection<SocialActivityInterpreter> socialActivityInterpreters =
-				registry.getServices(
-					SocialActivityInterpreter.class,
-					"(javax.portlet.name=" + portletId + ")");
+			BundleContext bundleContext = bundle.getBundleContext();
 
-			for (SocialActivityInterpreter socialActivityInterpreter :
-					socialActivityInterpreters) {
+			for (ServiceReference<SocialActivityInterpreter> serviceReference :
+					bundleContext.getServiceReferences(
+						SocialActivityInterpreter.class,
+						"(jakarta.portlet.name=" + portletId + ")")) {
 
-				if (ArrayUtil.contains(
-						socialActivityInterpreter.getClassNames(), className)) {
+				SocialActivityInterpreter socialActivityInterpreter =
+					bundleContext.getService(serviceReference);
 
-					return socialActivityInterpreter;
+				try {
+					if (ArrayUtil.contains(
+							socialActivityInterpreter.getClassNames(),
+							className)) {
+
+						return socialActivityInterpreter;
+					}
+				}
+				finally {
+					bundleContext.ungetService(serviceReference);
 				}
 			}
 
 			throw new IllegalStateException(
 				"No activity interpreter found for class " + className);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 
@@ -275,8 +179,110 @@ public abstract class BaseSocialActivityInterpreterTestCase {
 	protected Group group;
 
 	protected ServiceContext serviceContext;
+
+	@Inject
 	protected TrashHelper trashHelper;
 
-	private static ServiceTracker<TrashHelper, TrashHelper> _serviceTracker;
+	private void _checkInterpret() throws Exception {
+		List<SocialActivity> activities = getActivities();
+
+		Assert.assertFalse(activities.toString(), activities.isEmpty());
+
+		SocialActivityInterpreter activityInterpreter =
+			getActivityInterpreter();
+
+		for (SocialActivity activity : activities) {
+			if (hasClassName(activityInterpreter, activity.getClassName()) &&
+				hasActivityType(activity.getType())) {
+
+				SocialActivityFeedEntry activityFeedEntry =
+					activityInterpreter.interpret(activity, serviceContext);
+
+				Assert.assertNotNull(activityFeedEntry);
+
+				String title = activityFeedEntry.getTitle();
+
+				Assert.assertFalse(
+					"Title contains parameters: " + title,
+					title.matches("\\{\\d\\}"));
+			}
+		}
+	}
+
+	private void _checkLinks() throws Exception {
+		List<SocialActivity> activities = getActivities();
+
+		Assert.assertFalse(activities.toString(), activities.isEmpty());
+
+		SocialActivityInterpreter activityInterpreter =
+			getActivityInterpreter();
+
+		for (SocialActivity activity : activities) {
+			if (hasClassName(activityInterpreter, activity.getClassName()) &&
+				hasActivityType(activity.getType())) {
+
+				SocialActivityFeedEntry activityFeedEntry =
+					activityInterpreter.interpret(activity, serviceContext);
+
+				PortletURL portletURL = trashHelper.getViewContentURL(
+					serviceContext.getRequest(), activity.getClassName(),
+					activity.getClassPK());
+
+				if (Validator.isNull(activityFeedEntry.getLink()) &&
+					(portletURL == null)) {
+
+					continue;
+				}
+
+				Assert.assertEquals(
+					portletURL.toString(), activityFeedEntry.getLink());
+			}
+		}
+	}
+
+	private void _checkRenaming(List<SocialActivity> originalActivities)
+		throws Exception {
+
+		Assert.assertFalse(
+			originalActivities.toString(), originalActivities.isEmpty());
+
+		Set<Long> originalActivitiesIds = _getActivitiesIds(originalActivities);
+		String originalTitle = _getFirstActivityTitle(originalActivities);
+
+		List<SocialActivity> activities = getActivities();
+
+		Assert.assertFalse(activities.toString(), activities.isEmpty());
+
+		for (SocialActivity activity : activities) {
+			if (!originalActivitiesIds.contains(activity.getActivityId())) {
+				String title = activity.getExtraDataValue(
+					"title", serviceContext.getLocale());
+
+				if (isSupportsRename(activity.getClassName()) &&
+					Validator.isNotNull(title)) {
+
+					Assert.assertNotEquals(originalTitle, title);
+				}
+			}
+		}
+	}
+
+	private Set<Long> _getActivitiesIds(List<SocialActivity> activities) {
+		Set<Long> activitiesIds = new HashSet<>();
+
+		for (SocialActivity activity : activities) {
+			activitiesIds.add(activity.getActivityId());
+		}
+
+		return activitiesIds;
+	}
+
+	private String _getFirstActivityTitle(List<SocialActivity> activities)
+		throws Exception {
+
+		SocialActivity activity = activities.get(0);
+
+		return activity.getExtraDataValue("title", serviceContext.getLocale());
+	}
 
 }

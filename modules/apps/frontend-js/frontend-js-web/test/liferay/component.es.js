@@ -1,36 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import {
 	component,
 	componentReady,
 	destroyComponent,
 	destroyComponents,
-	destroyUnfulfilledPromises
+	destroyUnfulfilledPromises,
 } from '../../src/main/resources/META-INF/resources/liferay/component.es';
 
 describe('Liferay', () => {
 	afterEach(() => {
 		destroyComponents();
-	});
-
-	beforeEach(() => {
-		Liferay = {
-			fire: () => 0
-		};
 	});
 
 	describe('Liferay.component', () => {
@@ -48,7 +31,7 @@ describe('Liferay', () => {
 		it('warns through console when a component is registered twice', () => {
 			let msg = '';
 
-			console.warn = function() {
+			console.warn = function () {
 				for (let i = 0; i < arguments.length; i++) {
 					msg += arguments[i].toString();
 					msg += ' ';
@@ -68,7 +51,7 @@ describe('Liferay', () => {
 		it('returns a single component if called before it is registered', () => {
 			const myButton = {myButton: 'myButton'};
 
-			const promise = componentReady('myButton').then(component => {
+			const promise = componentReady('myButton').then((component) => {
 				expect(component).toBe(myButton);
 			});
 
@@ -82,7 +65,7 @@ describe('Liferay', () => {
 
 			component('myButton', myButton);
 
-			return componentReady('myButton').then(component => {
+			return componentReady('myButton').then((component) => {
 				expect(component).toBe(myButton);
 			});
 		});
@@ -144,7 +127,7 @@ describe('Liferay', () => {
 			const destroyFn = jest.fn();
 
 			component(componentId, {
-				destroy: destroyFn
+				destroy: destroyFn,
 			});
 
 			destroyComponent(componentId);
@@ -157,7 +140,7 @@ describe('Liferay', () => {
 			const disposeFn = jest.fn();
 
 			component(componentId, {
-				dispose: disposeFn
+				dispose: disposeFn,
 			});
 
 			destroyComponent(componentId);

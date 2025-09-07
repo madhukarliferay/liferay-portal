@@ -1,23 +1,14 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/com.liferay.portal.settings.web/init.jsp" %>
 
 <%
-long ldapServerId = ParamUtil.getLong(request, "ldapServerId", 0);
+long ldapServerId = ParamUtil.getLong(request, "ldapServerId");
 
 String baseProviderURL = ParamUtil.getString(request, "baseProviderURL");
 String baseDN = ParamUtil.getString(request, "baseDN");
@@ -25,16 +16,17 @@ String principal = ParamUtil.getString(request, "principal");
 
 String credentials = request.getParameter("credentials");
 
+long companyId = ActionUtil.getCompanyId(request);
+
 if (credentials.equals(Portal.TEMP_OBFUSCATION_VALUE)) {
-	LDAPServerConfiguration ldapServerConfiguration = ldapServerConfigurationProvider.getConfiguration(themeDisplay.getCompanyId(), ldapServerId);
+	LDAPServerConfiguration ldapServerConfiguration = ldapServerConfigurationProvider.getConfiguration(companyId, ldapServerId);
 
 	credentials = ldapServerConfiguration.securityCredential();
-
 }
 
 SafePortalLDAP safePortalLDAP = SafePortalLDAPUtil.getSafePortalLDAP();
 
-SafeLdapContext safeLdapContext = safePortalLDAP.getSafeLdapContext(themeDisplay.getCompanyId(), baseProviderURL, principal, credentials);
+SafeLdapContext safeLdapContext = safePortalLDAP.getSafeLdapContext(companyId, baseProviderURL, principal, credentials);
 
 if (safeLdapContext == null) {
 %>
@@ -69,15 +61,33 @@ if (!ldapFilterValidator.isValid(userFilter)) {
 	return;
 }
 
-String userMappingsParams =
-	"screenName=" + ParamUtil.getString(request, "userMappingScreenName") +
-	"\npassword=" + ParamUtil.getString(request, "userMappingPassword") +
-	"\nemailAddress=" + ParamUtil.getString(request, "userMappingEmailAddress") +
-	"\nfullName=" + ParamUtil.getString(request, "userMappingFullName") +
-	"\nfirstName=" + ParamUtil.getString(request, "userMappingFirstName") +
-	"\nlastName=" + ParamUtil.getString(request, "userMappingLastName") +
-	"\njobTitle=" + ParamUtil.getString(request, "userMappingJobTitle") +
-	"\ngroup=" + ParamUtil.getString(request, "userMappingGroup");
+StringBundler sb = new StringBundler(23);
+
+sb.append("screenName=");
+sb.append(ParamUtil.getString(request, "userMappingScreenName"));
+sb.append("\n");
+sb.append("password=");
+sb.append(ParamUtil.getString(request, "userMappingPassword"));
+sb.append("\n");
+sb.append("emailAddress=");
+sb.append(ParamUtil.getString(request, "userMappingEmailAddress"));
+sb.append("\n");
+sb.append("fullName=");
+sb.append(ParamUtil.getString(request, "userMappingFullName"));
+sb.append("\n");
+sb.append("firstName=");
+sb.append(ParamUtil.getString(request, "userMappingFirstName"));
+sb.append("\n");
+sb.append("lastName=");
+sb.append(ParamUtil.getString(request, "userMappingLastName"));
+sb.append("\n");
+sb.append("jobTitle=");
+sb.append(ParamUtil.getString(request, "userMappingJobTitle"));
+sb.append("\n");
+sb.append("group=");
+sb.append(ParamUtil.getString(request, "userMappingGroup"));
+
+String userMappingsParams = sb.toString();
 
 Properties userMappings = PropertiesUtil.load(userMappingsParams);
 
@@ -89,7 +99,7 @@ if (Validator.isNotNull(userFilter) && !userFilter.equals(StringPool.STAR)) {
 	try {
 		safePortalLDAP.getUsers(themeDisplay.getCompanyId(), safeLdapContext, new byte[0], 20, SafeLdapNameFactory.fromUnsafe(baseDN), SafeLdapFilterFactory.fromUnsafeFilter(userFilter, ldapFilterValidator), attributeIds, searchResults);
 	}
-	catch (NameNotFoundException | InvalidNameException nnfe) {
+	catch (InvalidNameException | NameNotFoundException exception) {
 %>
 
 		<liferay-ui:message key="please-enter-a-valid-ldap-base-dn" />
@@ -108,34 +118,15 @@ if (Validator.isNotNull(userFilter) && !userFilter.equals(StringPool.STAR)) {
 
 <%
 boolean showMissingAttributeMessage = false;
-
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcRenderCommandName", "/portal_settings/test_ldap_users");
-portletURL.setParameter("ldapServerId", String.valueOf(ldapServerId));
-portletURL.setParameter("baseProviderURL", baseProviderURL);
-portletURL.setParameter("baseDN", baseDN);
-portletURL.setParameter("principal", principal);
-portletURL.setParameter("credentials", credentials);
-portletURL.setParameter("importUserSearchFilter", userFilter);
-portletURL.setParameter("userMappingScreenName", ParamUtil.getString(request, "userMappingScreenName"));
-portletURL.setParameter("userMappingPassword", ParamUtil.getString(request, "userMappingPassword"));
-portletURL.setParameter("userMappingEmailAddress", ParamUtil.getString(request, "userMappingEmailAddress"));
-portletURL.setParameter("userMappingFullName", ParamUtil.getString(request, "userMappingFullName"));
-portletURL.setParameter("userMappingFirstName", ParamUtil.getString(request, "userMappingFirstName"));
-portletURL.setParameter("userMappingLastName", ParamUtil.getString(request, "userMappingLastName"));
-portletURL.setParameter("userMappingJobTitle", ParamUtil.getString(request, "userMappingJobTitle"));
-portletURL.setParameter("userMappingGroup", ParamUtil.getString(request, "userMappingGroup"));
-portletURL.setWindowState(LiferayWindowState.POP_UP);
 %>
 
 <liferay-ui:search-container
 	emptyResultsMessage="no-users-were-found"
-	iteratorURL="<%= portletURL %>"
 	total="<%= searchResults.size() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= ListUtil.subList(searchResults, searchContainer.getStart(), searchContainer.getEnd()) %>"
+		calculateStartAndEnd="<%= true %>"
+		results="<%= searchResults %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -189,20 +180,18 @@ portletURL.setWindowState(LiferayWindowState.POP_UP);
 		/>
 	</liferay-ui:search-container-row>
 
-	<liferay-ui:search-iterator />
+	<liferay-ui:search-iterator
+		paginate="<%= false %>"
+	/>
 </liferay-ui:search-container>
 
-<%
-if (showMissingAttributeMessage) {
-%>
-
+<c:if test="<%= showMissingAttributeMessage %>">
 	<div class="alert alert-info">
 		<liferay-ui:message key="the-above-results-include-users-which-are-missing-the-required-attributes-(screen-name,-password,-email-address,-first-name,-and-last-name).-these-users-will-not-be-imported-until-these-attributes-are-filled-in" />
 	</div>
+</c:if>
 
 <%
-}
-
 if (safeLdapContext != null) {
 	safeLdapContext.close();
 }

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -60,7 +51,7 @@ DLConfiguration dlConfiguration = ConfigurationProviderUtil.getSystemConfigurati
 	<portlet:param name="title" value="<%= wikiPage.getTitle() %>" />
 </liferay-portlet:actionURL>
 
-<aui:script use="liferay-portlet-url,liferay-upload">
+<aui:script use="liferay-upload">
 	var uploader = new Liferay.Upload({
 		boundingBox: '#<portlet:namespace />fileUpload',
 
@@ -73,18 +64,19 @@ DLConfiguration dlConfiguration = ConfigurationProviderUtil.getSystemConfigurati
 		fallback: '#<portlet:namespace />fallback',
 		fileDescription:
 			'<%= StringUtil.merge(dlConfiguration.fileExtensions()) %>',
-		maxFileSize: '<%= dlConfiguration.fileMaxSize() %> ',
+		maxFileSize:
+			'<%= DLValidatorUtil.getMaxAllowableSize(themeDisplay.getScopeGroupId(), null) %> ',
 		namespace: '<portlet:namespace />',
 		rootElement: '#<portlet:namespace />uploaderContainer',
 		tempFileURL: {
 			method: Liferay.Service.bind('/wiki.wikipage/get-temp-file-names'),
 			params: {
 				nodeId: <%= node.getNodeId() %>,
-				folderName: '<%= WikiConstants.TEMP_FOLDER_NAME %>'
-			}
+				folderName: '<%= WikiConstants.TEMP_FOLDER_NAME %>',
+			},
 		},
 		tempRandomSuffix: '<%= TempFileEntryUtil.TEMP_RANDOM_SUFFIX %>',
 		uploadFile:
-			'<liferay-portlet:actionURL name="/wiki/edit_page_attachment"><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD_TEMP %>" /><portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" /><portlet:param name="title" value="<%= wikiPage.getTitle() %>" /></liferay-portlet:actionURL>'
+			'<liferay-portlet:actionURL name="/wiki/edit_page_attachment"><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD_TEMP %>" /><portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" /><portlet:param name="title" value="<%= wikiPage.getTitle() %>" /></liferay-portlet:actionURL>',
 	});
 </aui:script>

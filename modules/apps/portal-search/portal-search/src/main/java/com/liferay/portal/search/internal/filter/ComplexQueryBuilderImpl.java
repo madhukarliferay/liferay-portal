@@ -1,25 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.filter;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.filter.ComplexQueryBuilder;
 import com.liferay.portal.search.filter.ComplexQueryPart;
+import com.liferay.portal.search.internal.filter.range.RangeTermQueryValue;
+import com.liferay.portal.search.internal.filter.range.RangeTermQueryValueParser;
 import com.liferay.portal.search.internal.util.SearchStringUtil;
 import com.liferay.portal.search.query.BooleanQuery;
+import com.liferay.portal.search.query.NestedQuery;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.query.Query;
 import com.liferay.portal.search.query.SimpleStringQuery;
@@ -32,9 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author André de Oliveira
@@ -57,18 +50,27 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 
 	@Override
 	public Query build() {
-		Stream<ComplexQueryPart> stream = _complexQueryParts.stream();
+		Map<String, ComplexQueryPart> complexQueryPartsMap = new HashMap<>();
 
-		Map<String, ComplexQueryPart> complexQueryPartsMap = stream.filter(
-			filterQueryDefinition -> !Validator.isBlank(
-				filterQueryDefinition.getName())
-		).collect(
-			Collectors.toMap(ComplexQueryPart::getName, Function.identity())
-		);
+		for (ComplexQueryPart complexQueryPart : _complexQueryParts) {
+			if (Validator.isBlank(complexQueryPart.getName())) {
+				continue;
+			}
+
+			complexQueryPartsMap.put(
+				complexQueryPart.getName(), complexQueryPart);
+		}
 
 		Build build = new Build(complexQueryPartsMap, _getRootBooleanQuery());
 
 		return build.build();
+	}
+
+	@Override
+	public Query buildPart(ComplexQueryPart complexQueryPart) {
+		Build build = new Build(null, null);
+
+		return build.getQuery(complexQueryPart);
 	}
 
 	@Override
@@ -85,6 +87,9 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 
 		return _queries.booleanQuery();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ComplexQueryBuilderImpl.class);
 
 	private BooleanQuery _booleanQuery;
 	private final List<ComplexQueryPart> _complexQueryParts = new ArrayList<>();
@@ -114,9 +119,20 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 				return null;
 			}
 
+			String occur = complexQueryPart.getOccur();
+
+			if (complexQueryPart.isAdditive() && !occur.equals("should")) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Additive complex query part with " +
+							complexQueryPart.getOccur() +
+								" occur may not behave as expected");
+				}
+			}
+
 			addQueryClause(
-				getParentBooleanQuery(complexQueryPart.getParent()),
-				complexQueryPart.getOccur(), query);
+				getParentBooleanQuery(complexQueryPart.getParent()), occur,
+				query);
 
 			return query;
 		}
@@ -127,13 +143,13 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 			if (Validator.isBlank(occur) || occur.equals("filter")) {
 				booleanQuery.addFilterQueryClauses(query);
 			}
-			else if (Objects.equals("must", occur)) {
+			else if (Objects.equals(occur, "must")) {
 				booleanQuery.addMustQueryClauses(query);
 			}
-			else if (Objects.equals("must_not", occur)) {
+			else if (Objects.equals(occur, "must_not")) {
 				booleanQuery.addMustNotQueryClauses(query);
 			}
-			else if (Objects.equals("should", occur)) {
+			else if (Objects.equals(occur, "should")) {
 				booleanQuery.addShouldQueryClauses(query);
 			}
 		}
@@ -141,6 +157,21 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 		protected Query buildQuery(String type, String field, String value) {
 			if (Objects.equals(type, "bool")) {
 				return _queries.booleanQuery();
+			}
+
+			if (Objects.equals(type, "date_range")) {
+				RangeTermQueryValue rangeTermQueryValue =
+					_rangeTermQueryParser.parse(value);
+
+				if (rangeTermQueryValue == null) {
+					return null;
+				}
+
+				return _queries.dateRangeTerm(
+					field, rangeTermQueryValue.isIncludesLower(),
+					rangeTermQueryValue.isIncludesUpper(),
+					rangeTermQueryValue.getLowerBound(),
+					rangeTermQueryValue.getUpperBound());
 			}
 
 			if (Objects.equals(type, "exists")) {
@@ -188,6 +219,10 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 					value, SearchStringUtil.splitAndUnquote(field));
 			}
 
+			if (Objects.equals(type, "nested")) {
+				return _queries.nested(field, _queries.booleanQuery());
+			}
+
 			if (Objects.equals(type, "prefix")) {
 				if (Validator.isBlank(value)) {
 					return null;
@@ -208,6 +243,21 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 				}
 
 				return stringQuery;
+			}
+
+			if (Objects.equals(type, "range")) {
+				RangeTermQueryValue rangeTermQueryValue =
+					_rangeTermQueryParser.parse(value);
+
+				if (rangeTermQueryValue == null) {
+					return null;
+				}
+
+				return _queries.rangeTerm(
+					field, rangeTermQueryValue.isIncludesLower(),
+					rangeTermQueryValue.isIncludesUpper(),
+					rangeTermQueryValue.getLowerBound(),
+					rangeTermQueryValue.getUpperBound());
 			}
 
 			if (Objects.equals(type, "regexp")) {
@@ -249,15 +299,11 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 				return _queries.term(field, value);
 			}
 
-			if (Objects.equals(type, "wildcard")) {
-				if (Validator.isBlank(value)) {
-					return null;
-				}
-
-				return _queries.wildcard(field, value);
+			if (!Objects.equals(type, "wildcard") || Validator.isBlank(value)) {
+				return null;
 			}
 
-			return null;
+			return _queries.wildcard(field, value);
 		}
 
 		protected Query getNamedQuery(String name) {
@@ -271,6 +317,12 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 
 				if (complexQueryPart != null) {
 					Query query = hydrate(complexQueryPart);
+
+					if (query instanceof NestedQuery) {
+						NestedQuery nestedQuery = (NestedQuery)query;
+
+						query = nestedQuery.getQuery();
+					}
 
 					if (query instanceof BooleanQuery) {
 						return (BooleanQuery)query;
@@ -335,6 +387,8 @@ public class ComplexQueryBuilderImpl implements ComplexQueryBuilder {
 
 		private final Map<String, ComplexQueryPart> _complexQueryPartsMap;
 		private final Map<String, Query> _queriesMap = new HashMap<>();
+		private final RangeTermQueryValueParser _rangeTermQueryParser =
+			new RangeTermQueryValueParser();
 		private final BooleanQuery _rootBooleanQuery;
 
 	}

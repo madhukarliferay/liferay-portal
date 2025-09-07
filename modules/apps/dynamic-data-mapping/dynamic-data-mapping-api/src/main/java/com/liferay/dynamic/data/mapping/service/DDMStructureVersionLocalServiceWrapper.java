@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
@@ -17,6 +8,7 @@ package com.liferay.dynamic.data.mapping.service;
 import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,6 +22,10 @@ public class DDMStructureVersionLocalServiceWrapper
 	implements DDMStructureVersionLocalService,
 			   ServiceWrapper<DDMStructureVersionLocalService> {
 
+	public DDMStructureVersionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DDMStructureVersionLocalServiceWrapper(
 		DDMStructureVersionLocalService ddmStructureVersionLocalService) {
 
@@ -38,6 +34,10 @@ public class DDMStructureVersionLocalServiceWrapper
 
 	/**
 	 * Adds the ddm structure version to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmStructureVersion the ddm structure version
 	 * @return the ddm structure version that was added
@@ -65,7 +65,23 @@ public class DDMStructureVersionLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureVersionLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ddm structure version from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmStructureVersion the ddm structure version
 	 * @return the ddm structure version that was removed
@@ -80,6 +96,10 @@ public class DDMStructureVersionLocalServiceWrapper
 
 	/**
 	 * Deletes the ddm structure version with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param structureVersionId the primary key of the ddm structure version
 	 * @return the ddm structure version that was removed
@@ -104,6 +124,18 @@ public class DDMStructureVersionLocalServiceWrapper
 
 		return _ddmStructureVersionLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ddmStructureVersionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ddmStructureVersionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -282,6 +314,9 @@ public class DDMStructureVersionLocalServiceWrapper
 		return _ddmStructureVersionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -344,6 +379,10 @@ public class DDMStructureVersionLocalServiceWrapper
 	/**
 	 * Updates the ddm structure version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStructureVersion the ddm structure version
 	 * @return the ddm structure version that was updated
 	 */
@@ -353,6 +392,11 @@ public class DDMStructureVersionLocalServiceWrapper
 
 		return _ddmStructureVersionLocalService.updateDDMStructureVersion(
 			ddmStructureVersion);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ddmStructureVersionLocalService.getBasePersistence();
 	}
 
 	@Override

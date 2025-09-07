@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service.persistence.impl;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -23,7 +15,6 @@ import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.reports.engine.console.model.Definition;
@@ -119,16 +110,14 @@ public class DefinitionFinderImpl
 			}
 
 			if (groupId <= 0) {
-				sql = StringUtil.replace(
-					sql, "(Reports_Definition.groupId = ?) AND",
-					StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(Reports_Definition.groupId = ?) AND");
 			}
 
 			if (sourceId <= 0) {
-				sql = StringUtil.replace(
+				sql = StringUtil.removeSubstring(
 					sql,
-					"(Reports_Definition.sourceId = ?) [$AND_OR_CONNECTOR$]",
-					StringPool.BLANK);
+					"(Reports_Definition.sourceId = ?) [$AND_OR_CONNECTOR$]");
 			}
 
 			sql = _customSQL.replaceKeywords(
@@ -143,28 +132,28 @@ public class DefinitionFinderImpl
 
 			sql = _customSQL.replaceAndOperator(sql, andOperator);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
 			if (groupId > 0) {
-				qPos.add(groupId);
+				queryPos.add(groupId);
 			}
 
 			if (sourceId > 0) {
-				qPos.add(sourceId);
+				queryPos.add(sourceId);
 			}
 
-			qPos.add(names, 2);
-			qPos.add(descriptions, 2);
-			qPos.add(reportNames, 2);
+			queryPos.add(names, 2);
+			queryPos.add(descriptions, 2);
+			queryPos.add(reportNames, 2);
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -173,8 +162,8 @@ public class DefinitionFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -211,16 +200,14 @@ public class DefinitionFinderImpl
 			}
 
 			if (groupId <= 0) {
-				sql = StringUtil.replace(
-					sql, "(Reports_Definition.groupId = ?) AND",
-					StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(Reports_Definition.groupId = ?) AND");
 			}
 
 			if (sourceId <= 0) {
-				sql = StringUtil.replace(
+				sql = StringUtil.removeSubstring(
 					sql,
-					"(Reports_Definition.sourceId = ?) [$AND_OR_CONNECTOR$]",
-					StringPool.BLANK);
+					"(Reports_Definition.sourceId = ?) [$AND_OR_CONNECTOR$]");
 			}
 
 			sql = _customSQL.replaceKeywords(
@@ -239,29 +226,29 @@ public class DefinitionFinderImpl
 				sql = _customSQL.replaceOrderBy(sql, orderByComparator);
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("Reports_Definition", DefinitionImpl.class);
+			sqlQuery.addEntity("Reports_Definition", DefinitionImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
 			if (groupId > 0) {
-				qPos.add(groupId);
+				queryPos.add(groupId);
 			}
 
 			if (sourceId > 0) {
-				qPos.add(sourceId);
+				queryPos.add(sourceId);
 			}
 
-			qPos.add(names, 2);
-			qPos.add(descriptions, 2);
-			qPos.add(reportNames, 2);
+			queryPos.add(names, 2);
+			queryPos.add(descriptions, 2);
+			queryPos.add(reportNames, 2);
 
 			return (List<Definition>)QueryUtil.list(
-				q, getDialect(), start, end);
+				sqlQuery, getDialect(), start, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);

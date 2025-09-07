@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.client.dto.v1_0;
@@ -17,48 +8,46 @@ package com.liferay.headless.delivery.client.dto.v1_0;
 import com.liferay.headless.delivery.client.function.UnsafeSupplier;
 import com.liferay.headless.delivery.client.serdes.v1_0.MessageBoardMessageSerDes;
 
-import java.util.Date;
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class MessageBoardMessage {
+public class MessageBoardMessage implements Cloneable, Serializable {
 
-	public static enum ViewableBy {
-
-		ANYONE("Anyone"), MEMBERS("Members"), OWNER("Owner");
-
-		public static ViewableBy create(String value) {
-			for (ViewableBy viewableBy : values()) {
-				if (Objects.equals(viewableBy.getValue(), value)) {
-					return viewableBy;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private ViewableBy(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
+	public static MessageBoardMessage toDTO(String json) {
+		return MessageBoardMessageSerDes.toDTO(json);
 	}
+
+	public Map<String, Map<String, String>> getActions() {
+		return actions;
+	}
+
+	public void setActions(Map<String, Map<String, String>> actions) {
+		this.actions = actions;
+	}
+
+	public void setActions(
+		UnsafeSupplier<Map<String, Map<String, String>>, Exception>
+			actionsUnsafeSupplier) {
+
+		try {
+			actions = actionsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, Map<String, String>> actions;
 
 	public AggregateRating getAggregateRating() {
 		return aggregateRating;
@@ -145,16 +134,45 @@ public class MessageBoardMessage {
 
 	protected Creator creator;
 
-	public CustomField[] getCustomFields() {
+	public CreatorStatistics getCreatorStatistics() {
+		return creatorStatistics;
+	}
+
+	public void setCreatorStatistics(CreatorStatistics creatorStatistics) {
+		this.creatorStatistics = creatorStatistics;
+	}
+
+	public void setCreatorStatistics(
+		UnsafeSupplier<CreatorStatistics, Exception>
+			creatorStatisticsUnsafeSupplier) {
+
+		try {
+			creatorStatistics = creatorStatisticsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected CreatorStatistics creatorStatistics;
+
+	public com.liferay.headless.delivery.client.custom.field.CustomField[]
+		getCustomFields() {
+
 		return customFields;
 	}
 
-	public void setCustomFields(CustomField[] customFields) {
+	public void setCustomFields(
+		com.liferay.headless.delivery.client.custom.field.CustomField[]
+			customFields) {
+
 		this.customFields = customFields;
 	}
 
 	public void setCustomFields(
-		UnsafeSupplier<CustomField[], Exception> customFieldsUnsafeSupplier) {
+		UnsafeSupplier
+			<com.liferay.headless.delivery.client.custom.field.CustomField[],
+			 Exception> customFieldsUnsafeSupplier) {
 
 		try {
 			customFields = customFieldsUnsafeSupplier.get();
@@ -164,7 +182,8 @@ public class MessageBoardMessage {
 		}
 	}
 
-	protected CustomField[] customFields;
+	protected com.liferay.headless.delivery.client.custom.field.CustomField[]
+		customFields;
 
 	public Date getDateCreated() {
 		return dateCreated;
@@ -229,6 +248,69 @@ public class MessageBoardMessage {
 
 	protected String encodingFormat;
 
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String externalReferenceCode;
+
+	public String getFriendlyUrlPath() {
+		return friendlyUrlPath;
+	}
+
+	public void setFriendlyUrlPath(String friendlyUrlPath) {
+		this.friendlyUrlPath = friendlyUrlPath;
+	}
+
+	public void setFriendlyUrlPath(
+		UnsafeSupplier<String, Exception> friendlyUrlPathUnsafeSupplier) {
+
+		try {
+			friendlyUrlPath = friendlyUrlPathUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String friendlyUrlPath;
+
+	public Boolean getHasCompanyMx() {
+		return hasCompanyMx;
+	}
+
+	public void setHasCompanyMx(Boolean hasCompanyMx) {
+		this.hasCompanyMx = hasCompanyMx;
+	}
+
+	public void setHasCompanyMx(
+		UnsafeSupplier<Boolean, Exception> hasCompanyMxUnsafeSupplier) {
+
+		try {
+			hasCompanyMx = hasCompanyMxUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean hasCompanyMx;
+
 	public String getHeadline() {
 		return headline;
 	}
@@ -290,6 +372,27 @@ public class MessageBoardMessage {
 
 	protected String[] keywords;
 
+	public Long getMessageBoardSectionId() {
+		return messageBoardSectionId;
+	}
+
+	public void setMessageBoardSectionId(Long messageBoardSectionId) {
+		this.messageBoardSectionId = messageBoardSectionId;
+	}
+
+	public void setMessageBoardSectionId(
+		UnsafeSupplier<Long, Exception> messageBoardSectionIdUnsafeSupplier) {
+
+		try {
+			messageBoardSectionId = messageBoardSectionIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long messageBoardSectionId;
+
 	public Long getMessageBoardThreadId() {
 		return messageBoardThreadId;
 	}
@@ -310,6 +413,27 @@ public class MessageBoardMessage {
 	}
 
 	protected Long messageBoardThreadId;
+
+	public Boolean getModified() {
+		return modified;
+	}
+
+	public void setModified(Boolean modified) {
+		this.modified = modified;
+	}
+
+	public void setModified(
+		UnsafeSupplier<Boolean, Exception> modifiedUnsafeSupplier) {
+
+		try {
+			modified = modifiedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean modified;
 
 	public Integer getNumberOfMessageBoardAttachments() {
 		return numberOfMessageBoardAttachments;
@@ -360,6 +484,31 @@ public class MessageBoardMessage {
 	}
 
 	protected Integer numberOfMessageBoardMessages;
+
+	public Long getParentMessageBoardMessageId() {
+		return parentMessageBoardMessageId;
+	}
+
+	public void setParentMessageBoardMessageId(
+		Long parentMessageBoardMessageId) {
+
+		this.parentMessageBoardMessageId = parentMessageBoardMessageId;
+	}
+
+	public void setParentMessageBoardMessageId(
+		UnsafeSupplier<Long, Exception>
+			parentMessageBoardMessageIdUnsafeSupplier) {
+
+		try {
+			parentMessageBoardMessageId =
+				parentMessageBoardMessageIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long parentMessageBoardMessageId;
 
 	public RelatedContent[] getRelatedContents() {
 		return relatedContents;
@@ -425,6 +574,27 @@ public class MessageBoardMessage {
 
 	protected Long siteId;
 
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public void setStatus(
+		UnsafeSupplier<String, Exception> statusUnsafeSupplier) {
+
+		try {
+			status = statusUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String status;
+
 	public Boolean getSubscribed() {
 		return subscribed;
 	}
@@ -476,6 +646,11 @@ public class MessageBoardMessage {
 	protected ViewableBy viewableBy;
 
 	@Override
+	public MessageBoardMessage clone() throws CloneNotSupportedException {
+		return (MessageBoardMessage)super.clone();
+	}
+
+	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
 			return true;
@@ -499,6 +674,39 @@ public class MessageBoardMessage {
 
 	public String toString() {
 		return MessageBoardMessageSerDes.toJSON(this);
+	}
+
+	public static enum ViewableBy {
+
+		ANYONE("Anyone"), MEMBERS("Members"), OWNER("Owner");
+
+		public static ViewableBy create(String value) {
+			for (ViewableBy viewableBy : values()) {
+				if (Objects.equals(viewableBy.getValue(), value) ||
+					Objects.equals(viewableBy.name(), value)) {
+
+					return viewableBy;
+				}
+			}
+
+			return null;
+		}
+
+		public String getValue() {
+			return _value;
+		}
+
+		@Override
+		public String toString() {
+			return _value;
+		}
+
+		private ViewableBy(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
 	}
 
 }

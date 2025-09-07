@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -286,16 +277,14 @@ public class ArrayUtilTest {
 
 	@Test
 	public void testCountStringArray() {
-		String[] array = {"a", "b", "c"};
-
-		Assert.assertEquals(1, ArrayUtil.count(array, s -> s.equals("b")));
+		Assert.assertEquals(
+			1,
+			ArrayUtil.count(new String[] {"a", "b", "c"}, s -> s.equals("b")));
 	}
 
 	@Test
 	public void testCountStringEmptyArray() {
-		String[] array = {};
-
-		Assert.assertEquals(0, ArrayUtil.count(array, s -> true));
+		Assert.assertEquals(0, ArrayUtil.count(new String[0], s -> true));
 	}
 
 	@Test
@@ -303,6 +292,22 @@ public class ArrayUtilTest {
 		String[] array = null;
 
 		Assert.assertEquals(0, ArrayUtil.count(array, s -> true));
+	}
+
+	@Test
+	public void testEqualsIgnoreCase() {
+		Assert.assertFalse(
+			ArrayUtil.equalsIgnoreCase(
+				new String[] {"A", "A"}, new String[] {"B", "B"}));
+		Assert.assertTrue(
+			ArrayUtil.equalsIgnoreCase(
+				new String[] {"A", "B"}, new String[] {"A", "B"}));
+		Assert.assertTrue(
+			ArrayUtil.equalsIgnoreCase(
+				new String[] {"a", "A"}, new String[] {"A", "a"}));
+		Assert.assertTrue(
+			ArrayUtil.equalsIgnoreCase(
+				new String[] {"a", "b"}, new String[] {"a", "b"}));
 	}
 
 	@Test

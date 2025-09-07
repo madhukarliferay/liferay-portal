@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.web.internal.asset.model;
@@ -20,9 +11,12 @@ import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.web.internal.security.permission.resource.JournalFolderPermission;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
@@ -32,14 +26,14 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.trash.TrashHelper;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Alexander Chow
@@ -80,13 +74,13 @@ public class JournalFolderAssetRenderer
 	public String getJspPath(
 		HttpServletRequest httpServletRequest, String template) {
 
-		if (template.equals(TEMPLATE_FULL_CONTENT)) {
-			httpServletRequest.setAttribute(WebKeys.JOURNAL_FOLDER, _folder);
-
-			return "/asset/folder_" + template + ".jsp";
+		if (!template.equals(TEMPLATE_FULL_CONTENT)) {
+			return null;
 		}
 
-		return null;
+		httpServletRequest.setAttribute(WebKeys.JOURNAL_FOLDER, _folder);
+
+		return "/asset/folder_" + template + ".jsp";
 	}
 
 	@Override
@@ -139,15 +133,15 @@ public class JournalFolderAssetRenderer
 			group = themeDisplay.getScopeGroup();
 		}
 
-		PortletURL portletURL = PortalUtil.getControlPanelPortletURL(
-			liferayPortletRequest, group, JournalPortletKeys.JOURNAL, 0, 0,
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter("mvcPath", "/edit_folder.jsp");
-		portletURL.setParameter(
-			"folderId", String.valueOf(_folder.getFolderId()));
-
-		return portletURL;
+		return PortletURLBuilder.create(
+			PortalUtil.getControlPanelPortletURL(
+				liferayPortletRequest, group, JournalPortletKeys.JOURNAL, 0, 0,
+				PortletRequest.RENDER_PHASE)
+		).setMVCPath(
+			"/edit_folder.jsp"
+		).setParameter(
+			"folderId", _folder.getFolderId()
+		).buildPortletURL();
 	}
 
 	@Override
@@ -159,15 +153,15 @@ public class JournalFolderAssetRenderer
 		AssetRendererFactory<JournalFolder> assetRendererFactory =
 			getAssetRendererFactory();
 
-		PortletURL portletURL = assetRendererFactory.getURLView(
-			liferayPortletResponse, windowState);
-
-		portletURL.setParameter("mvcPath", "/asset/folder_full_content.jsp");
-		portletURL.setParameter(
-			"folderId", String.valueOf(_folder.getFolderId()));
-		portletURL.setWindowState(windowState);
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			assetRendererFactory.getURLView(liferayPortletResponse, windowState)
+		).setMVCPath(
+			"/asset/folder_full_content.jsp"
+		).setParameter(
+			"folderId", _folder.getFolderId()
+		).setWindowState(
+			windowState
+		).buildString();
 	}
 
 	@Override
@@ -179,7 +173,11 @@ public class JournalFolderAssetRenderer
 		try {
 			return getURLView(liferayPortletResponse, WindowState.MAXIMIZED);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return noSuchEntryRedirect;
 		}
 	}
@@ -214,6 +212,9 @@ public class JournalFolderAssetRenderer
 		return JournalFolderPermission.contains(
 			permissionChecker, _folder, ActionKeys.VIEW);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		JournalFolderAssetRenderer.class);
 
 	private final JournalFolder _folder;
 	private final TrashHelper _trashHelper;

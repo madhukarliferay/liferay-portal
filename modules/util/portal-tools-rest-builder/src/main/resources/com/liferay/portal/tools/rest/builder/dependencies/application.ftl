@@ -1,8 +1,8 @@
 package ${configYAML.apiPackagePath}.internal.jaxrs.application;
 
-import javax.annotation.Generated;
+import ${configYAML.javaEEPackage}.annotation.Generated;
 
-import javax.ws.rs.core.Application;
+import ${configYAML.javaEEPackage}.ws.rs.core.Application;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -11,6 +11,7 @@ import org.osgi.service.component.annotations.Component;
  * @generated
  */
 @Component(
+	<#if configYAML.liferayEnterpriseApp>enabled = false,</#if>
 	property = {
 		"liferay.jackson=false",
 		"osgi.jaxrs.application.base=${configYAML.application.baseURI}",

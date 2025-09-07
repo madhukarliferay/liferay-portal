@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the o auth2 scope grant service. This utility wraps <code>com.liferay.oauth2.provider.service.persistence.impl.OAuth2ScopeGrantPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class OAuth2ScopeGrantUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -670,11 +657,13 @@ public class OAuth2ScopeGrantUtil {
 	 *
 	 * @param pk the primary key of the o auth2 scope grant
 	 * @param oAuth2AuthorizationPK the primary key of the o auth2 authorization
+	 * @return <code>true</code> if an association between the o auth2 scope grant and the o auth2 authorization was added; <code>false</code> if they were already associated
 	 */
-	public static void addOAuth2Authorization(
+	public static boolean addOAuth2Authorization(
 		long pk, long oAuth2AuthorizationPK) {
 
-		getPersistence().addOAuth2Authorization(pk, oAuth2AuthorizationPK);
+		return getPersistence().addOAuth2Authorization(
+			pk, oAuth2AuthorizationPK);
 	}
 
 	/**
@@ -682,13 +671,14 @@ public class OAuth2ScopeGrantUtil {
 	 *
 	 * @param pk the primary key of the o auth2 scope grant
 	 * @param oAuth2Authorization the o auth2 authorization
+	 * @return <code>true</code> if an association between the o auth2 scope grant and the o auth2 authorization was added; <code>false</code> if they were already associated
 	 */
-	public static void addOAuth2Authorization(
+	public static boolean addOAuth2Authorization(
 		long pk,
 		com.liferay.oauth2.provider.model.OAuth2Authorization
 			oAuth2Authorization) {
 
-		getPersistence().addOAuth2Authorization(pk, oAuth2Authorization);
+		return getPersistence().addOAuth2Authorization(pk, oAuth2Authorization);
 	}
 
 	/**
@@ -696,11 +686,13 @@ public class OAuth2ScopeGrantUtil {
 	 *
 	 * @param pk the primary key of the o auth2 scope grant
 	 * @param oAuth2AuthorizationPKs the primary keys of the o auth2 authorizations
+	 * @return <code>true</code> if at least one association between the o auth2 scope grant and the o auth2 authorizations was added; <code>false</code> if they were all already associated
 	 */
-	public static void addOAuth2Authorizations(
+	public static boolean addOAuth2Authorizations(
 		long pk, long[] oAuth2AuthorizationPKs) {
 
-		getPersistence().addOAuth2Authorizations(pk, oAuth2AuthorizationPKs);
+		return getPersistence().addOAuth2Authorizations(
+			pk, oAuth2AuthorizationPKs);
 	}
 
 	/**
@@ -708,13 +700,15 @@ public class OAuth2ScopeGrantUtil {
 	 *
 	 * @param pk the primary key of the o auth2 scope grant
 	 * @param oAuth2Authorizations the o auth2 authorizations
+	 * @return <code>true</code> if at least one association between the o auth2 scope grant and the o auth2 authorizations was added; <code>false</code> if they were all already associated
 	 */
-	public static void addOAuth2Authorizations(
+	public static boolean addOAuth2Authorizations(
 		long pk,
 		List<com.liferay.oauth2.provider.model.OAuth2Authorization>
 			oAuth2Authorizations) {
 
-		getPersistence().addOAuth2Authorizations(pk, oAuth2Authorizations);
+		return getPersistence().addOAuth2Authorizations(
+			pk, oAuth2Authorizations);
 	}
 
 	/**
@@ -805,27 +799,13 @@ public class OAuth2ScopeGrantUtil {
 	}
 
 	public static OAuth2ScopeGrantPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<OAuth2ScopeGrantPersistence, OAuth2ScopeGrantPersistence>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			OAuth2ScopeGrantPersistence.class);
-
-		ServiceTracker<OAuth2ScopeGrantPersistence, OAuth2ScopeGrantPersistence>
-			serviceTracker =
-				new ServiceTracker
-					<OAuth2ScopeGrantPersistence, OAuth2ScopeGrantPersistence>(
-						bundle.getBundleContext(),
-						OAuth2ScopeGrantPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(OAuth2ScopeGrantPersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile OAuth2ScopeGrantPersistence _persistence;
 
 }

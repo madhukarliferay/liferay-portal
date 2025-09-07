@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.bundle.support.commands;
@@ -70,7 +61,7 @@ public class CreateTokenCommand implements Command {
 		}
 
 		String token = HttpUtil.createToken(
-			_tokenUrl.toURI(), _emailAddress, _password);
+			_tokenURL.toURI(), _emailAddress, _password);
 
 		Path tokenPath = _tokenFile.toPath();
 
@@ -100,7 +91,7 @@ public class CreateTokenCommand implements Command {
 	}
 
 	public URL getTokenUrl() {
-		return _tokenUrl;
+		return _tokenURL;
 	}
 
 	public boolean isForce() {
@@ -127,8 +118,8 @@ public class CreateTokenCommand implements Command {
 		_tokenFile = tokenFile;
 	}
 
-	public void setTokenUrl(URL tokenUrl) {
-		_tokenUrl = tokenUrl;
+	public void setTokenUrl(URL tokenURL) {
+		_tokenURL = tokenURL;
 	}
 
 	private static final URL _DEFAULT_TOKEN_URL;
@@ -138,8 +129,8 @@ public class CreateTokenCommand implements Command {
 			_DEFAULT_TOKEN_URL = new URL(
 				BundleSupportConstants.DEFAULT_TOKEN_URL);
 		}
-		catch (MalformedURLException murle) {
-			throw new ExceptionInInitializerError(murle);
+		catch (MalformedURLException malformedURLException) {
+			throw new ExceptionInInitializerError(malformedURLException);
 		}
 	}
 
@@ -172,6 +163,6 @@ public class CreateTokenCommand implements Command {
 	)
 	private File _tokenFile = BundleSupportConstants.DEFAULT_TOKEN_FILE;
 
-	private URL _tokenUrl = _DEFAULT_TOKEN_URL;
+	private URL _tokenURL = _DEFAULT_TOKEN_URL;
 
 }

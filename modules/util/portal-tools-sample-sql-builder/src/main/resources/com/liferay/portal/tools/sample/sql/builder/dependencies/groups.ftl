@@ -1,20 +1,12 @@
-<#assign guestGroupModel = dataFactory.newGuestGroupModel() />
+<#include "sample_user.ftl">
 
-<#include "default_user.ftl">
+<#include "default_service_account_user.ftl">
 
-<#assign layoutModel = dataFactory.newLayoutModel(guestGroupModel.groupId, "welcome", "com_liferay_login_web_portlet_LoginPortlet,", "com_liferay_hello_world_web_portlet_HelloWorldPortlet,") />
+<#include "commerce_groups.ftl">
 
-<@insertLayout _layoutModel=layoutModel />
+<#include "asset.ftl">
 
-<@insertGroup _groupModel=dataFactory.commerceCatalogGroupModel />
-
-<@insertGroup _groupModel=dataFactory.commerceChannelGroupModel />
-
-<@insertGroup _groupModel=dataFactory.newGlobalGroupModel() />
-
-<@insertGroup _groupModel=guestGroupModel />
-
-<@insertGroup _groupModel=dataFactory.newUserPersonalSiteGroupModel() />
+<#include "ddm.ftl">
 
 <#list dataFactory.newGroupModels() as groupModel>
 	<#assign groupId = groupModel.groupId />
@@ -31,24 +23,68 @@
 
 	<#include "mb.ftl">
 
+	<#include "object_definition_layout.ftl">
+
 	<#include "users.ftl">
 
-	<#include "wiki.ftl">
-
 	<@insertDLFolder
-		_ddmStructureId=dataFactory.defaultDLDDMStructureId
-		_dlFolderDepth=1
-		_groupId=groupId
-		_parentDLFolderId=0
+		_ddmStructureId = dataFactory.defaultDLDDMStructureId
+		_dlFolderDepth = 1
+		_groupModel = groupModel
+		_parentDLFolderId = 0
 	/>
 
-	<#assign publicLayoutModels = dataFactory.newPublicLayoutModels(groupId) />
+	<#assign
+		homePageContentLayoutModels = dataFactory.newContentPageLayoutModels(groupId, "home")
+		homePageSegmentsExperienceModels = dataFactory.newSegmentsExperienceModels(homePageContentLayoutModels)
+	 />
 
-	<#list publicLayoutModels as publicLayoutModel>
-		<@insertLayout _layoutModel=publicLayoutModel />
+	 <#list homePageSegmentsExperienceModels as homePageSegmentsExperienceModel>
+	 	${dataFactory.toInsertSQL(homePageSegmentsExperienceModel)}
+	 </#list>
+
+	<@insertContentPageLayout
+		_fragmentEntryLinkModels = dataFactory.newFragmentEntryLinkModels(homePageContentLayoutModels, homePageSegmentsExperienceModels)
+		_layoutModels = homePageContentLayoutModels
+		_templateFileName = "default-homepage-layout-definition.json"
+	/>
+
+	<#list dataFactory.newGroupLayoutModels(groupId) as groupLayoutModel>
+		<@insertLayout _layoutModel = groupLayoutModel />
 	</#list>
 
-	<@insertGroup _groupModel=groupModel />
+	<@insertGroup _groupModel = groupModel />
 
-	${dataFactory.getCSVWriter("repository").write(groupId + ", " + groupModel.name + "\n")}
+	${csvFileWriter.write("repository", virtualHostModel.hostname + "," + groupModel.friendlyURL + "," + groupId + ", " + groupModel.name + "\n")}
 </#list>
+
+<#assign
+	defaultSiteHomePageContentLayoutModels = dataFactory.newContentPageLayoutModels(guestGroupModel.groupId, "home")
+	defaultSiteHomePageSegmentsExperienceModels = dataFactory.newSegmentsExperienceModels(defaultSiteHomePageContentLayoutModels)
+/>
+<#list defaultSiteHomePageSegmentsExperienceModels as defaultSiteHomePageSegmentsExperienceModel>
+	${dataFactory.toInsertSQL(defaultSiteHomePageSegmentsExperienceModel)}
+</#list>
+
+<@insertContentPageLayout
+	_fragmentEntryLinkModels = dataFactory.newFragmentEntryLinkModels(defaultSiteHomePageContentLayoutModels, defaultSiteHomePageSegmentsExperienceModels)
+	_layoutModels = defaultSiteHomePageContentLayoutModels
+	_templateFileName = "default-homepage-layout-definition.json"
+/>
+
+<#include "segments.ftl">
+
+<#assign
+	searchLayoutModel = dataFactory.newSearchLayoutModel(guestGroupModel.groupId, true)
+	layoutPrototypeModel = dataFactory.newLayoutPrototypeModel(defaultAdminUserModel.userId)
+	searchTemplateGroupModel = dataFactory.newSearchTemplateGroupModel(layoutPrototypeModel.layoutPrototypeId, defaultAdminUserModel.userId)
+	searchGroupLayoutModel = dataFactory.newSearchGroupLayoutModel(searchTemplateGroupModel.groupId, searchLayoutModel)
+/>
+
+<@insertLayout _layoutModel = searchLayoutModel />
+
+<@insertLayout _layoutModel = searchGroupLayoutModel />
+
+${dataFactory.toInsertSQL(layoutPrototypeModel)}
+
+<@insertGroup _groupModel = searchTemplateGroupModel />

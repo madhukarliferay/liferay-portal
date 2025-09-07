@@ -1,3 +1,11 @@
-@import '_search_bar';
-@import '_search_facet';
-@import '_suggestions';
+@import 'atlas-variables';
+@import 'cadmin-variables';
+
+@import 'components/search_auto_fields';
+@import 'components/search_bar_configuration_suggestions';
+@import 'components/select_vocabularies';
+
+@import 'search_bar';
+@import 'search_facet_display_vocabulary';
+@import 'search_insights';
+@import 'search_portlet';

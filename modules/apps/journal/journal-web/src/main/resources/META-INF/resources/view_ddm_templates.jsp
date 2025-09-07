@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,7 +10,7 @@
 <%
 JournalDDMTemplateDisplayContext journalDDMTemplateDisplayContext = new JournalDDMTemplateDisplayContext(renderRequest, renderResponse);
 
-JournalDDMTemplateManagementToolbarDisplayContext journalDDMTemplateManagementToolbarDisplayContext = new JournalDDMTemplateManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, journalDDMTemplateDisplayContext);
+JournalDDMTemplateManagementToolbarDisplayContext journalDDMTemplateManagementToolbarDisplayContext = new JournalDDMTemplateManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, journalDDMTemplateDisplayContext);
 
 DDMStructure ddmStructure = journalDDMTemplateDisplayContext.getDDMStructure();
 
@@ -30,25 +21,32 @@ if (ddmStructure != null) {
 
 <clay:navigation-bar
 	inverted="<%= true %>"
-	navigationItems='<%= journalDisplayContext.getNavigationBarItems("templates") %>'
+	navigationItems='<%= journalDisplayContext.getNavigationItems("templates") %>'
 />
 
 <clay:management-toolbar
-	displayContext="<%= journalDDMTemplateManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= journalDDMTemplateManagementToolbarDisplayContext %>"
+	propsTransformer="{DDMTemplatesManagementToolbarPropsTransformer} from journal-web"
 />
 
 <portlet:actionURL name="/journal/delete_ddm_template" var="deleteDDMTemplateURL">
 	<portlet:param name="mvcPath" value="/view_ddm_templates.jsp" />
 </portlet:actionURL>
 
-<aui:form action="<%= deleteDDMTemplateURL %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= deleteDDMTemplateURL %>" cssClass="container-fluid container-fluid-max-xxxl" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
+
+	<c:if test="<%= !journalDisplayContext.isNavigationMine() && !journalDisplayContext.isNavigationRecent() %>">
+		<liferay-site-navigation:breadcrumb
+			breadcrumbEntries="<%= new ArrayList<>() %>"
+		/>
+	</c:if>
 
 	<liferay-ui:error exception="<%= RequiredTemplateException.MustNotDeleteTemplateReferencedByTemplateLinks.class %>" message="the-template-cannot-be-deleted-because-it-is-required-by-one-or-more-template-links" />
 
 	<liferay-ui:search-container
 		id="ddmTemplates"
-		searchContainer="<%= journalDDMTemplateDisplayContext.getDDMTemplateSearch() %>"
+		searchContainer="<%= journalDDMTemplateDisplayContext.getDDMTemplateSearchContainer() %>"
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.dynamic.data.mapping.model.DDMTemplate"
@@ -60,31 +58,28 @@ if (ddmStructure != null) {
 			String rowHREF = StringPool.BLANK;
 
 			if (DDMTemplatePermission.contains(permissionChecker, ddmTemplate, ActionKeys.UPDATE)) {
-				PortletURL rowURL = renderResponse.createRenderURL();
-
-				rowURL.setParameter("mvcPath", "/edit_ddm_template.jsp");
-				rowURL.setParameter("redirect", currentURL);
-				rowURL.setParameter("ddmTemplateId", String.valueOf(ddmTemplate.getTemplateId()));
-
-				rowHREF = rowURL.toString();
+				rowHREF = PortletURLBuilder.createRenderURL(
+					renderResponse
+				).setMVCPath(
+					"/edit_ddm_template.jsp"
+				).setRedirect(
+					currentURL
+				).setParameter(
+					"ddmTemplateId", ddmTemplate.getTemplateId()
+				).buildString();
 			}
 
-			Map<String, Object> rowData = new HashMap<>();
-
-			rowData.put("actions", journalDDMTemplateManagementToolbarDisplayContext.getAvailableActions(ddmTemplate));
-
-			row.setData(rowData);
+			row.setData(
+				HashMapBuilder.<String, Object>put(
+					"actions", journalDDMTemplateManagementToolbarDisplayContext.getAvailableActions(ddmTemplate)
+				).build());
 			%>
 
 			<c:choose>
 				<c:when test='<%= Objects.equals(journalDDMTemplateDisplayContext.getDisplayStyle(), "icon") %>'>
-
-					<%
-					row.setCssClass("entry-card lfr-asset-item " + row.getCssClass());
-					%>
-
 					<liferay-ui:search-container-column-text>
 						<clay:vertical-card
+							propsTransformer="{DDMTemplateElementsDefaultPropsTransformer} from journal-web"
 							verticalCard="<%= new JournalDDMTemplateVerticalCard(ddmTemplate, renderRequest, renderResponse, searchContainer.getRowChecker()) %>"
 						/>
 					</liferay-ui:search-container-column-text>
@@ -96,14 +91,14 @@ if (ddmStructure != null) {
 					/>
 
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-content"
+						cssClass="table-cell-expand"
 						href="<%= rowHREF %>"
 						name="name"
 						value="<%= HtmlUtil.escape(ddmTemplate.getName(locale)) %>"
 					/>
 
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-content"
+						cssClass="table-cell-expand"
 						name="description"
 						value="<%= HtmlUtil.escape(ddmTemplate.getDescription(locale)) %>"
 					/>
@@ -149,8 +144,9 @@ if (ddmStructure != null) {
 
 					<liferay-ui:search-container-column-text>
 						<clay:dropdown-actions
-							defaultEventHandler="<%= JournalWebConstants.JOURNAL_DDM_TEMPLATE_ELEMENTS_DEFAULT_EVENT_HANDLER %>"
+							aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 							dropdownItems="<%= journalDDMTemplateDisplayContext.getDDMTemplateActionDropdownItems(ddmTemplate) %>"
+							propsTransformer="{DDMTemplateElementsDefaultPropsTransformer} from journal-web"
 						/>
 					</liferay-ui:search-container-column-text>
 				</c:otherwise>
@@ -163,13 +159,3 @@ if (ddmStructure != null) {
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= journalDDMTemplateManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/DDMTemplatesManagementToolbarDefaultEventHandler.es"
-/>
-
-<liferay-frontend:component
-	componentId="<%= JournalWebConstants.JOURNAL_DDM_TEMPLATE_ELEMENTS_DEFAULT_EVENT_HANDLER %>"
-	module="js/DDMTemplateElementsDefaultEventHandler.es"
-/>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cluster.multiple.internal.jgroups;
@@ -25,15 +16,13 @@ import com.liferay.portal.cluster.multiple.configuration.ClusterExecutorConfigur
 import com.liferay.portal.cluster.multiple.internal.ClusterChannel;
 import com.liferay.portal.cluster.multiple.internal.ClusterChannelFactory;
 import com.liferay.portal.cluster.multiple.internal.ClusterReceiver;
-import com.liferay.portal.cluster.multiple.internal.io.ClusterClassLoaderPool;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SocketUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -45,32 +34,30 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
 import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolStackConfigurator;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleEvent;
-import org.osgi.framework.wiring.BundleWiring;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.util.tracker.BundleTracker;
-
 /**
  * @author Tina Tian
  */
-@Component(
-	configurationPid = "com.liferay.portal.cluster.multiple.configuration.ClusterExecutorConfiguration",
-	enabled = false, immediate = true, service = ClusterChannelFactory.class
-)
 public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
+
+	public JGroupsClusterChannelFactory(
+		ClusterExecutorConfiguration clusterExecutorConfiguration) {
+
+		_clusterExecutorConfiguration = clusterExecutorConfiguration;
+
+		_initSystemProperties(
+			PropsUtil.getArray(
+				PropsKeys.CLUSTER_LINK_CHANNEL_SYSTEM_PROPERTIES));
+
+		_initBindAddress(
+			GetterUtil.getString(
+				PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTODETECT_ADDRESS)));
+	}
 
 	@Override
 	public ClusterChannel createClusterChannel(
@@ -85,9 +72,9 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 				clusterReceiver, _bindInetAddress,
 				_clusterExecutorConfiguration, _classLoaders);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SystemException(
-				"Unable to create JGroupsClusterChannel", e);
+				"Unable to create JGroupsClusterChannel", exception);
 		}
 	}
 
@@ -101,59 +88,29 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 		return _bindNetworkInterface;
 	}
 
-	@Activate
-	@Modified
-	protected synchronized void activate(
-		BundleContext bundleContext, Map<String, Object> properties) {
+	private InputStream _getInputStream(String channelPropertiesLocation)
+		throws IOException {
 
-		_clusterExecutorConfiguration = ConfigurableUtil.createConfigurable(
-			ClusterExecutorConfiguration.class, properties);
+		InputStream inputStream = ConfiguratorFactory.getConfigStream(
+			channelPropertiesLocation);
 
-		initSystemProperties(
-			_props.getArray(PropsKeys.CLUSTER_LINK_CHANNEL_SYSTEM_PROPERTIES));
+		if (inputStream == null) {
+			ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
 
-		initBindAddress(
-			GetterUtil.getString(
-				_props.get(PropsKeys.CLUSTER_LINK_AUTODETECT_ADDRESS)));
-
-		_bundleTracker = new BundleTracker<ClassLoader>(
-			bundleContext, Bundle.ACTIVE, null) {
-
-			@Override
-			public ClassLoader addingBundle(Bundle bundle, BundleEvent event) {
-				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
-
-				ClassLoader classLoader = bundleWiring.getClassLoader();
-
-				ClusterClassLoaderPool.registerFallback(
-					bundle.getSymbolicName(), bundle.getVersion(), classLoader);
-
-				return classLoader;
-			}
-
-			@Override
-			public void removedBundle(
-				Bundle bundle, BundleEvent event, ClassLoader classLoader) {
-
-				ClusterClassLoaderPool.unregisterFallback(
-					bundle.getSymbolicName(), bundle.getVersion());
-			}
-
-		};
-
-		_bundleTracker.open();
-	}
-
-	@Deactivate
-	protected synchronized void deactivate() {
-		if (_bundleTracker != null) {
-			_bundleTracker.close();
+			inputStream = classLoader.getResourceAsStream(
+				channelPropertiesLocation);
 		}
 
-		_classLoaders.clear();
+		if (inputStream == null) {
+			throw new FileNotFoundException(
+				"Unable to load channel properties from " +
+					channelPropertiesLocation);
+		}
+
+		return inputStream;
 	}
 
-	protected void initBindAddress(String autodetectAddress) {
+	private void _initBindAddress(String autodetectAddress) {
 		if (Validator.isNull(autodetectAddress)) {
 			return;
 		}
@@ -183,14 +140,14 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 
 			_bindNetworkInterface = bindInfo.getNetworkInterface();
 		}
-		catch (IOException e) {
+		catch (IOException ioException1) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to detect bind address for JGroups, using " +
 						"loopback");
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(e, e);
+					_log.debug(ioException1);
 				}
 			}
 
@@ -200,8 +157,9 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 				_bindNetworkInterface = NetworkInterface.getByInetAddress(
 					_bindInetAddress);
 			}
-			catch (IOException ie) {
-				_log.error("Unable to bind to lopoback interface", ie);
+			catch (IOException ioException2) {
+				_log.error(
+					"Unable to bind to lopoback interface", ioException2);
 			}
 		}
 
@@ -214,7 +172,7 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 		}
 	}
 
-	protected void initSystemProperties(String[] channelSystemPropertiesArray) {
+	private void _initSystemProperties(String[] channelSystemPropertiesArray) {
 		for (String channelSystemProperty : channelSystemPropertiesArray) {
 			int index = channelSystemProperty.indexOf(CharPool.COLON);
 
@@ -236,36 +194,23 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setProps(Props props) {
-		_props = props;
-	}
-
-	private InputStream _getInputStream(String channelPropertiesLocation)
-		throws IOException {
-
-		InputStream inputStream = ConfiguratorFactory.getConfigStream(
-			channelPropertiesLocation);
-
-		if (inputStream == null) {
-			ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
-
-			inputStream = classLoader.getResourceAsStream(
-				channelPropertiesLocation);
-		}
-
-		if (inputStream == null) {
-			throw new FileNotFoundException(
-				"Unable to load channel properties from " +
-					channelPropertiesLocation);
-		}
-
-		return inputStream;
-	}
-
 	private ProtocolStackConfigurator _parseChannelProperties(
 			String channelPropertiesLocation)
 		throws Exception {
+
+		if (channelPropertiesLocation.startsWith("jgroups/secure/md5/") &&
+			_log.isWarnEnabled() && _defaultMD5Warning) {
+
+			_log.warn(
+				StringBundler.concat(
+					"Clustering authentication is using MD5 default ",
+					"implementation. Please note that this implementation is ",
+					"not secure enough to be used in production. Refer to the ",
+					"documentation for details on configuring secure JGroups ",
+					"connections."));
+
+			_defaultMD5Warning = false;
+		}
 
 		try (InputStream inputStream = _getInputStream(
 				channelPropertiesLocation)) {
@@ -294,10 +239,25 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 				String propertyKey = configXML.substring(
 					startIndex + 2, endIndex);
 
-				Object value = _props.get(
+				Object value = PropsUtil.get(
 					StringUtil.replace(
 						propertyKey, _ENCODED_CHARACTERS,
 						_ORIGINAL_CHARACTERS));
+
+				if (propertyKey.equals(PropsKeys.CLUSTER_LINK_AUTH_VALUE) &&
+					value.equals("liferay-cluster") && _log.isWarnEnabled() &&
+					_defaultSecretWarning) {
+
+					_log.warn(
+						StringBundler.concat(
+							"Clustering authentication is using default ",
+							"cluster link authentication value. Please ",
+							"configure the property \"",
+							PropsKeys.CLUSTER_LINK_AUTH_VALUE,
+							"\" in portal.properties."));
+
+					_defaultSecretWarning = false;
+				}
 
 				if (value instanceof String) {
 					sb.append(configXML.substring(index, startIndex));
@@ -340,13 +300,14 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 	private static final Log _log = LogFactoryUtil.getLog(
 		JGroupsClusterChannelFactory.class);
 
+	private static boolean _defaultMD5Warning = true;
+	private static boolean _defaultSecretWarning = true;
+
 	private InetAddress _bindInetAddress;
 	private NetworkInterface _bindNetworkInterface;
-	private BundleTracker<ClassLoader> _bundleTracker;
 	private final ConcurrentMap<ClassLoader, ClassLoader> _classLoaders =
 		new ConcurrentReferenceKeyHashMap<>(
 			FinalizeManager.WEAK_REFERENCE_FACTORY);
 	private volatile ClusterExecutorConfiguration _clusterExecutorConfiguration;
-	private Props _props;
 
 }

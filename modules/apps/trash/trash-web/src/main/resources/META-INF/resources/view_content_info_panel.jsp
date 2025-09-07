@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -26,32 +17,52 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 
 <c:if test="<%= trashRenderer != null %>">
 	<div class="sidebar-header">
-		<ul class="sidebar-header-actions">
-			<li>
+		<clay:content-row
+			cssClass="sidebar-section"
+		>
+			<clay:content-col
+				expand="<%= true %>"
+			>
+				<div class="component-title"><%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %></div>
+			</clay:content-col>
 
-				<%
-				TrashContainerActionDropdownItemsProvider trashContainerActionDropdownItemsProvider = new TrashContainerActionDropdownItemsProvider(liferayPortletRequest, liferayPortletResponse, trashDisplayContext);
-				%>
+			<clay:content-col>
+				<ul class="autofit-padded-no-gutters autofit-row">
+					<li class="autofit-col">
 
-				<clay:dropdown-actions
-					defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
-					dropdownItems="<%= trashContainerActionDropdownItemsProvider.getActionDropdownItems() %>"
-				/>
-			</li>
-		</ul>
+						<%
+						TrashContainerActionDropdownItemsProvider trashContainerActionDropdownItemsProvider = new TrashContainerActionDropdownItemsProvider(liferayPortletRequest, liferayPortletResponse, trashDisplayContext);
+						%>
 
-		<h4><%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %></h4>
+						<clay:dropdown-actions
+							additionalProps='<%=
+								HashMapBuilder.<String, Object>put(
+									"portletNamespace", liferayPortletResponse.getNamespace()
+								).build()
+							%>'
+							aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+							dropdownItems="<%= trashContainerActionDropdownItemsProvider.getActionDropdownItems() %>"
+							propsTransformer="{EntriesPropsTransformer} from trash-web"
+						/>
+					</li>
+				</ul>
+			</clay:content-col>
+		</clay:content-row>
 	</div>
 
-	<clay:navigation-bar
-		navigationItems="<%= trashDisplayContext.getInfoPanelNavigationItems() %>"
-	/>
+	<div class="sheet-body">
+		<clay:tabs
+			tabsItems="<%= trashDisplayContext.getTabsItems() %>"
+		>
+			<clay:tabs-panel>
+				<dl class="sidebar-dl sidebar-section">
+					<dt class="sidebar-dt"><liferay-ui:message key="num-of-items" /></dt>
 
-	<div class="sidebar-body">
-		<h5><liferay-ui:message key="num-of-items" /></h5>
-
-		<p>
-			<%= trashHandler.getTrashModelsCount(classPK) %>
-		</p>
+					<dd class="sidebar-dd">
+						<%= trashHandler.getTrashModelsCount(classPK) %>
+					</dd>
+				</dl>
+			</clay:tabs-panel>
+		</clay:tabs>
 	</div>
 </c:if>

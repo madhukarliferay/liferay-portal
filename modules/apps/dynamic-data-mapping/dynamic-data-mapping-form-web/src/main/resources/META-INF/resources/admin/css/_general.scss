@@ -1,3 +1,11 @@
+.col-md-4 {
+	.lfr-ddm-form-pagination-controls {
+		button {
+			width: 100%;
+		}
+	}
+}
+
 .cursor-pointer {
 	cursor: pointer;
 }
@@ -35,6 +43,10 @@ td.lfr-name-column {
 
 	.btn-primary {
 		margin-left: 0;
+	}
+
+	&.button-holder {
+		margin: 20px 0 0;
 	}
 }
 
@@ -88,9 +100,43 @@ td.lfr-name-column {
 		}
 	}
 
+	.input-group-item.input-group-append:first-child {
+		.ddm-field-text.form-control {
+			border-bottom-right-radius: 0.25rem;
+			border-top-right-radius: 0.25rem;
+		}
+	}
+
+	.modal-body {
+		padding: 0;
+
+		.component-tbar {
+			height: 48px;
+			padding: 0 12px;
+
+			.nav-link {
+				height: 100%;
+			}
+		}
+
+		.tab-pane {
+			padding: 16px 12px 8px;
+		}
+	}
+
+	.modal-footer {
+		padding-right: 20px;
+	}
+
 	.navbar-nav {
 		float: none;
 		margin-right: 0;
+	}
+}
+
+.ddm-icon-check {
+	.sticker {
+		color: #287d3c;
 	}
 }
 
@@ -145,34 +191,28 @@ td.lfr-name-column {
 	}
 }
 
-.form-builder-page-manager-popover-header {
-	.popover-content {
-		left: -16px;
-		padding: 0;
-		position: absolute;
-		top: 30px;
-		transform: translate3d(-208px, 32px, 0);
-		will-change: transform;
-	}
+.editing-form-entry {
+	background-color: white;
 
-	li {
-		color: #869cad;
-		cursor: pointer;
-		font-size: 15px;
-		font-weight: normal;
-		line-height: 16px;
-		list-style-type: none;
-		padding: 5px 0;
-	}
-
-	ul {
-		margin: 0;
-		padding: 0;
+	.ddm-form-basic-info {
+		padding-left: 20px;
+		padding-top: 15px;
 	}
 }
 
-.form-builder-page-manager-popover-header.popover.left > .arrow {
-	margin-left: 19px;
+.editing-form-entry-admin {
+	background-color: white;
+
+	.ddm-form-basic-info {
+		padding-bottom: 8px;
+		padding-left: 20px;
+		padding-top: 15px;
+
+		.ddm-form-name {
+			font-weight: bold !important;
+			padding-top: 0 !important;
+		}
+	}
 }
 
 .form-builder-section-title {
@@ -188,14 +228,22 @@ td.lfr-name-column {
 	text-align: center;
 }
 
+div.lfr-de__partial-results--background {
+	.ddm-form-builder-app {
+		margin-top: 0;
+		padding-top: 28px;
+	}
+}
+
 .form-builder-sidebar,
 .portlet-forms {
-	.form-group
-		.alloy-editor-container.input-group
-		.alloy-editor-placeholder.ae-placeholder {
-		border-left: 0;
-		padding-left: 0;
-		width: inherit;
+	.forms-navigation-bar,
+	.navigation-bar-secondary,
+	.management-bar {
+		position: sticky;
+		top: var(--control-menu-container-height);
+		width: 100%;
+		z-index: 51;
 	}
 
 	.icon-asterisk {
@@ -212,6 +260,12 @@ td.lfr-name-column {
 		z-index: 2;
 	}
 
+	.management-bar {
+		top: calc(
+			var(--control-menu-container-height) + #{$form-navigation-bar-height}
+		);
+	}
+
 	.radio-inline {
 		padding-top: 11px;
 
@@ -224,6 +278,10 @@ td.lfr-name-column {
 .lfr-ddm-field-settings-yes {
 	padding-left: 21px;
 	padding-right: 21px;
+}
+
+.lfr-ddm-form-container .lfr-ddm-form-pagination-controls {
+	overflow: hidden;
 }
 
 .portal-popup,
@@ -244,6 +302,8 @@ td.lfr-name-column {
 	}
 
 	.ddm-form-basic-info {
+		.h4,
+		.h5,
 		h1,
 		h2,
 		h3,
@@ -253,12 +313,6 @@ td.lfr-name-column {
 			margin: 0;
 		}
 
-		.ae-placeholder:empty:before {
-			content: attr(data-placeholder);
-		}
-
-		.alloy-editor-container
-			.alloy-editor.alloy-editor-placeholder.ae-placeholder:not(:focus):not(.form-control),
 		.ddm-form-name,
 		.ddm-form-description {
 			border-width: 0;
@@ -272,15 +326,6 @@ td.lfr-name-column {
 			p {
 				margin: 0;
 			}
-		}
-
-		.alloy-editor.alloy-editor-placeholder {
-			color: #000;
-			font-weight: 500;
-		}
-
-		.alloy-editor.alloy-editor-placeholder:empty:not(:focus) {
-			color: #c0ccd3;
 		}
 
 		.ddm-form-name {
@@ -348,16 +393,15 @@ td.lfr-name-column {
 		}
 	}
 
-	.form-builder-tabview,
-	.lfr-ddm-form-wizard {
-		border-bottom: 1px solid #dee4e9;
-		padding: 20px 34px 11px;
-		position: relative;
-	}
-
 	.form-instance-id,
 	.form-instance-modified-date {
 		margin-right: 20px;
+	}
+
+	.taglib-workflow-status {
+		.workflow-version {
+			color: #6b6c7e;
+		}
 	}
 }
 
@@ -406,5 +450,69 @@ td.lfr-name-column {
 		position: absolute;
 		right: 0;
 		width: 12px;
+	}
+}
+
+.search-container-column-language {
+	.lexicon-icon {
+		width: 1em;
+	}
+}
+
+.modal {
+	max-width: none;
+}
+
+.portlet-forms {
+	.ddm-form-basic-info {
+		h1 > .form-group {
+			margin-bottom: 0;
+		}
+
+		.form-control {
+			background: transparent;
+			box-shadow: none;
+			font-weight: 600;
+			overflow: hidden;
+			resize: none;
+
+			&.ddm-form-name {
+				font-weight: 600;
+
+				&::placeholder {
+					color: #b0b4bb;
+					font-weight: 500;
+				}
+			}
+
+			&.ddm-form-description {
+				color: #000;
+				font-size: 14px;
+				font-weight: 400;
+				height: auto;
+				padding-top: 0;
+
+				&::placeholder {
+					color: #b0b4bb;
+				}
+			}
+		}
+
+		.ddm-placeholder {
+			&:focus::placeholder {
+				color: transparent;
+			}
+		}
+
+		.hidden {
+			display: none;
+		}
+	}
+}
+
+.mobile.touch body:first-of-type .portlet-content .lfr-icon-actions {
+	.lfr-icon-menu-text,
+	.taglib-text {
+		max-width: 200px;
 	}
 }

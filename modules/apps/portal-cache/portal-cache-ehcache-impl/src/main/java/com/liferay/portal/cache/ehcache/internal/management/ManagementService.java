@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cache.ehcache.internal.management;
@@ -30,119 +21,102 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import net.sf.ehcache.CacheException;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Status;
-import net.sf.ehcache.distribution.CacheManagerPeerProvider;
-import net.sf.ehcache.event.CacheManagerEventListener;
-import net.sf.ehcache.event.CacheManagerEventListenerRegistry;
-import net.sf.ehcache.management.Cache;
-import net.sf.ehcache.management.CacheConfiguration;
-import net.sf.ehcache.management.CacheConfigurationMBean;
-import net.sf.ehcache.management.CacheMBean;
-import net.sf.ehcache.management.CacheStatistics;
-import net.sf.ehcache.management.CacheStatisticsMBean;
-import net.sf.ehcache.management.ManagedCacheManagerPeerProvider;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.Status;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.Configuration;
+import org.ehcache.core.events.CacheManagerListener;
+import org.ehcache.core.spi.service.StatisticsService;
+import org.ehcache.core.spi.store.InternalCacheManager;
 
 /**
  * @author Preston Crary
  */
-public class ManagementService implements CacheManagerEventListener {
+public class ManagementService implements CacheManagerListener {
 
 	public ManagementService(
-		CacheManager cacheManager, MBeanServer mBeanServer) {
+		CacheManager cacheManager, String cacheManagerName,
+		MBeanServer mBeanServer, StatisticsService statisticsService) {
 
 		_cacheManager = cacheManager;
+		_cacheManagerName = cacheManagerName;
 		_mBeanServer = mBeanServer;
-
-		_status = Status.STATUS_UNINITIALISED;
+		_statisticsService = statisticsService;
 	}
 
 	@Override
+	public void cacheAdded(String alias, Cache<?, ?> cache) {
+		_registerCache(alias, cache);
+	}
+
+	@Override
+	public void cacheRemoved(String alias, Cache<?, ?> cache) {
+		_unregisterMBeans(
+			_mBeanServer.queryNames(
+				_getObjectName(StringPool.STAR, _cacheManagerName, alias),
+				null));
+	}
+
 	public void dispose() {
 		_unregisterMBeans(
 			_mBeanServer.queryNames(
-				_getObjectName("CacheManager", null, _cacheManager.getName()),
-				null));
+				_getObjectName("CacheManager", null, _cacheManagerName), null));
 
 		_unregisterMBeans(
 			_mBeanServer.queryNames(
 				_getObjectName(
-					StringPool.STAR, _cacheManager.getName(), StringPool.STAR),
+					StringPool.STAR, _cacheManagerName, StringPool.STAR),
 				null));
-
-		_status = Status.STATUS_SHUTDOWN;
 	}
 
-	@Override
-	public Status getStatus() {
-		return _status;
-	}
-
-	@Override
 	public void init() {
 		try {
 			_mBeanServer.registerMBean(
-				new net.sf.ehcache.management.CacheManager(_cacheManager),
-				_getObjectName("CacheManager", null, _cacheManager.getName()));
+				new CacheManagerMBeanImpl(_cacheManagerName, _cacheManager),
+				_getObjectName("CacheManager", null, _cacheManagerName));
 		}
-		catch (Exception e) {
-			throw new CacheException(e);
-		}
-
-		Map<String, CacheManagerPeerProvider> cacheManagerPeerProviders =
-			_cacheManager.getCacheManagerPeerProviders();
-
-		for (CacheManagerPeerProvider cacheManagerPeerProvider :
-				cacheManagerPeerProviders.values()) {
-
-			if (cacheManagerPeerProvider instanceof
-					ManagedCacheManagerPeerProvider) {
-
-				ManagedCacheManagerPeerProvider
-					managedCacheManagerPeerProvider =
-						(ManagedCacheManagerPeerProvider)
-							cacheManagerPeerProvider;
-
-				managedCacheManagerPeerProvider.register(_mBeanServer);
-			}
+		catch (Exception exception) {
+			ReflectionUtil.throwException(exception);
 		}
 
-		CacheManagerEventListenerRegistry cacheManagerEventListenerRegistry =
-			_cacheManager.getCacheManagerEventListenerRegistry();
+		InternalCacheManager internalCacheManager =
+			(InternalCacheManager)_cacheManager;
 
-		cacheManagerEventListenerRegistry.registerListener(this);
+		internalCacheManager.registerListener(this);
 
 		synchronized (_cacheManager) {
-			for (String cacheName : _cacheManager.getCacheNames()) {
-				_registerCache(cacheName);
-			}
+			Configuration configuration =
+				_cacheManager.getRuntimeConfiguration();
+
+			Map<String, CacheConfiguration<?, ?>> cacheConfigurations =
+				configuration.getCacheConfigurations();
+
+			cacheConfigurations.forEach(
+				(cacheName, cacheConfiguration) -> _registerCache(
+					cacheName,
+					_cacheManager.getCache(
+						cacheName, cacheConfiguration.getKeyType(),
+						cacheConfiguration.getValueType())));
 		}
-
-		_status = Status.STATUS_ALIVE;
 	}
 
 	@Override
-	public void notifyCacheAdded(String cacheName) {
-		_registerCache(cacheName);
+	public void stateTransition(Status fromStatus, Status toStatus) {
+		if (toStatus == Status.UNINITIALIZED) {
+			dispose();
+		}
+		else if (toStatus == Status.AVAILABLE) {
+			init();
+		}
 	}
 
-	@Override
-	public void notifyCacheRemoved(String cacheName) {
-		_unregisterMBeans(
-			_mBeanServer.queryNames(
-				_getObjectName(
-					StringPool.STAR, _cacheManager.getName(), cacheName),
-				null));
-	}
-
-	private static ObjectName _getObjectName(
+	private ObjectName _getObjectName(
 		String type, String cacheManagerName, String name) {
 
 		StringBundler sb = new StringBundler(6);
 
-		sb.append("net.sf.ehcache:type=");
+		sb.append("org.ehcache:type=");
 		sb.append(type);
 
 		if (cacheManagerName != null) {
@@ -170,48 +144,31 @@ public class ManagementService implements CacheManagerEventListener {
 		try {
 			return new ObjectName(sb.toString());
 		}
-		catch (MalformedObjectNameException mone) {
-			return ReflectionUtil.throwException(mone);
+		catch (MalformedObjectNameException malformedObjectNameException) {
+			return ReflectionUtil.throwException(malformedObjectNameException);
 		}
 	}
 
-	private void _registerCache(String cacheName) {
-		Ehcache ehcache = _cacheManager.getEhcache(cacheName);
-
-		CacheMBean cacheMBean = new Cache(ehcache);
-
+	private void _registerCache(String cacheName, Cache<?, ?> cache) {
 		try {
 			_mBeanServer.registerMBean(
-				cacheMBean,
-				_getObjectName(
-					"Cache", _cacheManager.getName(), cacheMBean.getName()));
-
-			CacheStatisticsMBean cacheStatisticsMBean = new CacheStatistics(
-				ehcache);
-
+				new CacheMBeanImpl(cacheName, cache),
+				_getObjectName("Cache", _cacheManagerName, cacheName));
 			_mBeanServer.registerMBean(
-				cacheStatisticsMBean,
+				new CacheStatisticsMBeanImpl(
+					cacheName,
+					_statisticsService.getCacheStatistics(cacheName)),
 				_getObjectName(
-					"CacheStatistics", _cacheManager.getName(),
-					cacheStatisticsMBean.getAssociatedCacheName()));
-
-			CacheConfigurationMBean cacheConfigurationMBean =
-				new CacheConfiguration(ehcache);
-
-			_mBeanServer.registerMBean(
-				cacheConfigurationMBean,
-				_getObjectName(
-					"CacheConfiguration", _cacheManager.getName(),
-					cacheConfigurationMBean.getName()));
+					"CacheStatistics", _cacheManagerName, cacheName));
 		}
-		catch (InstanceAlreadyExistsException iaee) {
+		catch (InstanceAlreadyExistsException instanceAlreadyExistsException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(iaee, iaee);
+				_log.debug(instanceAlreadyExistsException);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 	}
@@ -223,9 +180,9 @@ public class ManagementService implements CacheManagerEventListener {
 					_mBeanServer.unregisterMBean(objectName);
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn(e, e);
+					_log.warn(exception);
 				}
 			}
 		}
@@ -235,7 +192,8 @@ public class ManagementService implements CacheManagerEventListener {
 		ManagementService.class);
 
 	private final CacheManager _cacheManager;
+	private final String _cacheManagerName;
 	private final MBeanServer _mBeanServer;
-	private Status _status;
+	private final StatisticsService _statisticsService;
 
 }

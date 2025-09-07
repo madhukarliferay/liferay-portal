@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.process.local;
@@ -34,25 +25,25 @@ class RequestProcessCallable<T extends Serializable>
 	@Override
 	public T call() throws ProcessException {
 		T result = null;
-		Throwable throwable = null;
+		Throwable throwable1 = null;
 
 		try {
 			result = _processCallable.call();
 
 			return result;
 		}
-		catch (Throwable t) {
-			throwable = t;
+		catch (Throwable throwable2) {
+			throwable1 = throwable2;
 
-			throw t;
+			throw throwable2;
 		}
 		finally {
 			try {
 				LocalProcessLauncher.ProcessContext.writeProcessCallable(
-					new ResponseProcessCallable<>(_id, result, throwable));
+					new ResponseProcessCallable<>(_id, result, throwable1));
 			}
-			catch (IOException ioe) {
-				throw new ProcessException(ioe);
+			catch (IOException ioException) {
+				throw new ProcessException(ioException);
 			}
 		}
 	}

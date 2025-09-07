@@ -1,24 +1,13 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-all-organizations");
-
 String displayStyle = ParamUtil.getString(request, "displayStyle");
 
 if (Validator.isNull(displayStyle)) {
@@ -32,9 +21,13 @@ else {
 
 String usersListView = (String)request.getAttribute("view.jsp-usersListView");
 
-PortletURL portletURL = (PortletURL)request.getAttribute("view.jsp-portletURL");
-
-portletURL.setParameter("displayStyle", displayStyle);
+PortletURL portletURL = PortletURLBuilder.create(
+	(PortletURL)request.getAttribute("view.jsp-portletURL")
+).setParameter(
+	"displayStyle", displayStyle
+).setParameter(
+	"screenNavigationCategoryKey", UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS
+).buildPortletURL();
 
 String keywords = ParamUtil.getString(request, "keywords");
 
@@ -54,21 +47,24 @@ if (filterManageableOrganizations) {
 }
 %>
 
+<liferay-ui:success key="userAdded" message="the-user-was-created-successfully" />
+
 <c:choose>
 	<c:when test="<%= showList %>">
 
 		<%
 		ViewOrganizationsManagementToolbarDisplayContext viewOrganizationsManagementToolbarDisplayContext = new ViewOrganizationsManagementToolbarDisplayContext(request, renderRequest, renderResponse, displayStyle);
 
-		SearchContainer searchContainer = viewOrganizationsManagementToolbarDisplayContext.getSearchContainer(organizationParams, filterManageableOrganizations);
+		SearchContainer<Organization> searchContainer = viewOrganizationsManagementToolbarDisplayContext.getSearchContainer(organizationParams, filterManageableOrganizations);
 		%>
 
 		<clay:management-toolbar
 			actionDropdownItems="<%= viewOrganizationsManagementToolbarDisplayContext.getActionDropdownItems() %>"
 			clearResultsURL="<%= viewOrganizationsManagementToolbarDisplayContext.getClearResultsURL() %>"
 			creationMenu="<%= viewOrganizationsManagementToolbarDisplayContext.getCreationMenu() %>"
-			filterDropdownItems="<%= viewOrganizationsManagementToolbarDisplayContext.getFilterDropdownItems() %>"
 			itemsTotal="<%= searchContainer.getTotal() %>"
+			orderDropdownItems="<%= viewOrganizationsManagementToolbarDisplayContext.getOrderByDropdownItems() %>"
+			propsTransformer="{ViewFlatOrganizationsAndUsersManagementToolbarPropsTransformer} from users-admin-web"
 			searchActionURL="<%= viewOrganizationsManagementToolbarDisplayContext.getSearchActionURL() %>"
 			searchContainerId="organizations"
 			searchFormName="searchFm"
@@ -80,16 +76,17 @@ if (filterManageableOrganizations) {
 			viewTypeItems="<%= viewOrganizationsManagementToolbarDisplayContext.getViewTypeItems() %>"
 		/>
 
-		<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "search();" %>'>
+		<aui:form action="<%= portletURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "search();" %>'>
 			<liferay-portlet:renderURLParams varImpl="portletURL" />
 			<aui:input name="<%= Constants.CMD %>" type="hidden" />
-			<aui:input name="toolbarItem" type="hidden" value="<%= toolbarItem %>" />
 			<aui:input name="redirect" type="hidden" value="<%= portletURL.toString() %>" />
+			<aui:input name="screenNavigationCategoryKey" type="hidden" value="<%= UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS %>" />
 
 			<liferay-ui:error exception="<%= RequiredOrganizationException.class %>" message="you-cannot-delete-organizations-that-have-suborganizations-or-users" />
 
 			<liferay-ui:search-container
 				id="organizations"
+				iteratorURL="<%= portletURL %>"
 				searchContainer="<%= searchContainer %>"
 				var="organizationSearchContainer"
 			>
@@ -97,11 +94,8 @@ if (filterManageableOrganizations) {
 
 				<c:if test="<%= usersListView.equals(UserConstants.LIST_VIEW_FLAT_ORGANIZATIONS) %>">
 					<div id="breadcrumb">
-						<liferay-ui:breadcrumb
-							showCurrentGroup="<%= false %>"
-							showGuestGroup="<%= false %>"
-							showLayout="<%= false %>"
-							showPortletBreadcrumb="<%= true %>"
+						<liferay-site-navigation:breadcrumb
+							breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 						/>
 					</div>
 				</c:if>
@@ -113,17 +107,19 @@ if (filterManageableOrganizations) {
 					modelVar="organization"
 				>
 					<liferay-portlet:renderURL varImpl="rowURL">
-						<portlet:param name="mvcRenderCommandName" value="/users_admin/view" />
-						<portlet:param name="toolbarItem" value="view-all-organizations" />
-						<portlet:param name="usersListView" value="<%= UserConstants.LIST_VIEW_TREE %>" />
+						<portlet:param name="mvcRenderCommandName" value="/users_admin/organizations_view_tree" />
 						<portlet:param name="redirect" value="<%= organizationSearchContainer.getIteratorURL().toString() %>" />
 						<portlet:param name="organizationId" value="<%= String.valueOf(organization.getOrganizationId()) %>" />
+						<portlet:param name="screenNavigationCategoryKey" value="<%= UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS %>" />
+						<portlet:param name="usersListView" value="<%= UserConstants.LIST_VIEW_TREE %>" />
 					</liferay-portlet:renderURL>
 
 					<%
 					if (!OrganizationPermissionUtil.contains(permissionChecker, organization, ActionKeys.VIEW)) {
 						rowURL = null;
 					}
+
+					OrganizationActionDropdownItems organizationActionDropdownItems = new OrganizationActionDropdownItems(organization, renderRequest, renderResponse);
 					%>
 
 					<%@ include file="/organization/search_columns.jspf" %>
@@ -138,9 +134,7 @@ if (filterManageableOrganizations) {
 	</c:when>
 	<c:otherwise>
 		<clay:alert
-			message='<%= LanguageUtil.get(request, "you-do-not-belong-to-an-organization-and-are-not-allowed-to-view-other-organizations") %>'
-			style="info"
-			title='<%= LanguageUtil.get(request, "info") + ":" %>'
+			message="you-do-not-belong-to-an-organization-and-are-not-allowed-to-view-other-organizations"
 		/>
 	</c:otherwise>
 </c:choose>

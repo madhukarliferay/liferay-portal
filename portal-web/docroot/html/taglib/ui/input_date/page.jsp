@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,10 +10,11 @@
 <%
 String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_input_date_page") + StringPool.UNDERLINE;
 
-if (GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-date:disableNamespace"))) {
+if (!GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-date:useNamespace"), true)) {
 	namespace = StringPool.BLANK;
 }
 
+String autoComplete = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-date:autoComplete"));
 String cssClass = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-date:cssClass"));
 String dateTogglerCheckboxLabel = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-date:dateTogglerCheckboxLabel"), "disable");
 boolean disabled = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-date:disabled"));
@@ -46,7 +38,18 @@ String monthParamId = namespace + HtmlUtil.getAUICompatibleId(monthParam);
 String nameId = namespace + HtmlUtil.getAUICompatibleId(name);
 String yearParamId = namespace + HtmlUtil.getAUICompatibleId(yearParam);
 
-Calendar calendar = CalendarFactoryUtil.getCalendar(yearValue, monthValue, dayValue);
+Calendar calendar = null;
+
+if (required && (yearValue == 0) && (monthValue == -1) && (dayValue == 0)) {
+	calendar = CalendarFactoryUtil.getCalendar(timeZone);
+
+	dayValue = calendar.get(Calendar.DAY_OF_MONTH);
+	monthValue = calendar.get(Calendar.MONTH);
+	yearValue = calendar.get(Calendar.YEAR);
+}
+else {
+	calendar = CalendarFactoryUtil.getCalendar(yearValue, monthValue, dayValue);
+}
 
 String mask = _MASK_YMD;
 String simpleDateFormatPattern = _SIMPLE_DATE_FORMAT_PATTERN_HTML5;
@@ -58,15 +61,22 @@ if (!BrowserSnifferUtil.isMobile(request)) {
 
 	simpleDateFormatPattern = shortDateFormatSimpleDateFormat.toPattern();
 
-	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("yyyy", "yy");
+	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("yyyy", "y");
+	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("yy", "y");
 	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("MM", "M");
 	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("dd", "d");
 
-	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("yy", "yyyy");
+	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("y", "yyyy");
 	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("M", "MM");
 	simpleDateFormatPattern = simpleDateFormatPattern.replaceAll("d", "dd");
 
 	mask = simpleDateFormatPattern;
+
+	// Replace single quotes to prevent the string from breaking when passing
+	// into the A.DatePicker mask. This is used for the zh_HK locale which
+	// returns the format yyyy'年'MM'月'dd'日'. See LPS-191923.
+
+	mask = mask.replaceAll("'", "");
 
 	mask = mask.replaceAll("yyyy", "%Y");
 	mask = mask.replaceAll("MM", "%m");
@@ -103,29 +113,58 @@ else {
 <span class="lfr-input-date" id="<%= randomNamespace %>displayDate">
 	<c:choose>
 		<c:when test="<%= BrowserSnifferUtil.isMobile(request) %>">
-			<input class="form-control <%= cssClass %>" <%= disabled ? "disabled=\"disabled\"" : "" %> id="<%= nameId %>" name="<%= namespace + HtmlUtil.escapeAttribute(name) %>" type="date" value="<%= format.format(calendar.getTime()) %>" />
+			<input <%= Validator.isNotNull(autoComplete) ? "autocomplete=\"" + autoComplete + "\"" : StringPool.BLANK %> class="form-control <%= cssClass %>" <%= disabled ? "disabled=\"disabled\"" : "" %> id="<%= nameId %>" name="<%= namespace + HtmlUtil.escapeAttribute(name) %>" type="date" value="<%= dateString %>" />
 		</c:when>
 		<c:otherwise>
-			<aui:input cssClass="<%= cssClass %>" disabled="<%= disabled %>" id="<%= HtmlUtil.getAUICompatibleId(name) %>" label="" name="<%= name %>" placeholder="<%= StringUtil.toLowerCase(placeholderValue) %>" required="<%= required %>" title="" type="text" value="<%= dateString %>" wrappedField="<%= true %>">
-				<aui:validator errorMessage="please-enter-a-valid-date" name="custom">
-					function(val) {
-						return AUI().use('aui-datatype-date-parse').Parsers.date('<%= mask %>', val);
-					}
-				</aui:validator>
-			</aui:input>
+			<c:choose>
+				<c:when test="<%= Validator.isNotNull(autoComplete) %>">
+					<aui:input autocomplete="<%= autoComplete %>" cssClass="<%= cssClass %>" disabled="<%= disabled %>" id="<%= HtmlUtil.getAUICompatibleId(name) %>" label="" name="<%= name %>" placeholder="<%= StringUtil.toLowerCase(placeholderValue) %>" required="<%= required %>" title="" type="text" useNamespace="<%= !StringPool.BLANK.equals(namespace) %>" value="<%= dateString %>" wrappedField="<%= true %>">
+						<aui:validator errorMessage="please-enter-a-valid-date" name="custom">
+							function(val) {
+								const dateValidation = AUI().use('aui-datatype-date-parse').Parsers.date('<%= mask %>', val);
+
+								if (!dateValidation) {
+									let parentNode = A.one('#<%= nameId %>')._node.parentElement;
+
+									let feedbackElement = parentNode.querySelector('.form-feedback-item');
+
+									if (feedbackElement) {
+										parentNode.removeChild(feedbackElement);
+									}
+								}
+
+								return dateValidation;
+							}
+						</aui:validator>
+					</aui:input>
+				</c:when>
+				<c:otherwise>
+					<aui:input cssClass="<%= cssClass %>" disabled="<%= disabled %>" id="<%= HtmlUtil.getAUICompatibleId(name) %>" label="" name="<%= name %>" placeholder="<%= StringUtil.toLowerCase(placeholderValue) %>" required="<%= required %>" title="" type="text" useNamespace="<%= !StringPool.BLANK.equals(namespace) %>" value="<%= dateString %>" wrappedField="<%= true %>">
+						<aui:validator errorMessage="please-enter-a-valid-date" name="custom">
+							function(val) {
+								const dateValidation = AUI().use('aui-datatype-date-parse').Parsers.date('<%= mask %>', val);
+
+								if (!dateValidation) {
+									let parentNode = A.one('#<%= nameId %>')._node.parentElement;
+
+									let feedbackElement = parentNode.querySelector('.form-feedback-item');
+
+									if (feedbackElement) {
+										parentNode.removeChild(feedbackElement);
+									}
+								}
+								return dateValidation;
+							}
+						</aui:validator>
+					</aui:input>
+				</c:otherwise>
+			</c:choose>
 		</c:otherwise>
 	</c:choose>
 
 	<input <%= disabled ? "disabled=\"disabled\"" : "" %> id="<%= dayParamId %>" name="<%= namespace + HtmlUtil.escapeAttribute(dayParam) %>" type="hidden" value="<%= dayValue %>" />
 	<input <%= disabled ? "disabled=\"disabled\"" : "" %> id="<%= monthParamId %>" name="<%= namespace + HtmlUtil.escapeAttribute(monthParam) %>" type="hidden" value="<%= monthValue %>" />
 	<input <%= disabled ? "disabled=\"disabled\"" : "" %> id="<%= yearParamId %>" name="<%= namespace + HtmlUtil.escapeAttribute(yearParam) %>" type="hidden" value="<%= yearValue %>" />
-
-	<%
-	DateFormat shortDateFormat = DateFormat.getDateInstance(DateFormat.SHORT, locale);
-
-	SimpleDateFormat shortDateFormatSimpleDateFormat = (SimpleDateFormat)shortDateFormat;
-	%>
-
 </span>
 
 <c:if test="<%= nullable && !required && showDisableCheckbox %>">
@@ -136,8 +175,8 @@ else {
 
 	<aui:input label="<%= dateTogglerCheckboxLabel %>" name="<%= randomNamespace + dateTogglerCheckboxName %>" type="checkbox" value="<%= disabled %>" />
 
-	<script>
-		(function() {
+	<aui:script>
+		(function () {
 			var form = document.<%= namespace + formName %>;
 
 			var checkbox = document.getElementById('<%= namespace + randomNamespace + dateTogglerCheckboxName %>');
@@ -145,7 +184,7 @@ else {
 			if (checkbox) {
 				checkbox.addEventListener(
 					'click',
-					function(event) {
+					function () {
 						var checked = checkbox.checked;
 
 						if (!form) {
@@ -195,17 +234,42 @@ else {
 				);
 			}
 		})();
-	</script>
+	</aui:script>
 </c:if>
 
 <aui:script use='<%= "aui-datepicker" + (BrowserSnifferUtil.isMobile(request) ? "-native" : StringPool.BLANK) %>'>
 	Liferay.component(
 		'<%= nameId %>DatePicker',
-		function() {
+		function () {
+			var keysPressed = {};
+
+			var onKeyDown = function (domEvent) {
+				if (domEvent.keyCode === 16) {
+					keysPressed[domEvent.keyCode] = true;
+				}
+			};
+
+			var onKeyUp = function (domEvent) {
+				if (domEvent.keyCode === 16) {
+					delete keysPressed[domEvent.keyCode];
+				}
+			};
+
+			var closePopoverOnKeyboardNavigation = function (instance) {
+				instance.hide();
+
+				keysPressed = {};
+
+				var trigger = A.one('#<%= nameId %>');
+
+				if (trigger) {
+					Liferay.Util.focusFormField(trigger);
+				}
+			}
+
 			var datePicker = new A.DatePicker<%= BrowserSnifferUtil.isMobile(request) ? "Native" : StringPool.BLANK %>(
 				{
 					calendar: {
-
 						<%
 						String calendarOptions = String.format("headerRenderer: '%s'", LanguageUtil.get(resourceBundle, "b-y"));
 
@@ -227,6 +291,10 @@ else {
 					container: '#<%= randomNamespace %>displayDate',
 					mask: '<%= mask %>',
 					on: {
+						destroy: function () {
+							document.removeEventListener('keydown', onKeyDown);
+							document.removeEventListener('keyup', onKeyUp);
+						},
 						disabledChange: function(event) {
 							var instance = this;
 
@@ -239,7 +307,7 @@ else {
 							container.one('#<%= nameId %>').attr('disabled', newVal);
 							container.one('#<%= yearParamId %>').attr('disabled', newVal);
 						},
-						enterKey: function(event) {
+						enterKey: function () {
 							var instance = this;
 
 							var inputVal = instance.get('activeInput').val();
@@ -252,6 +320,25 @@ else {
 							else if (<%= nullable %> && !date) {
 								datePicker.updateValue('');
 							}
+
+							var countInterval = 0;
+
+							var intervalId = setInterval(function () {
+								var trigger = A.one('.datepicker-popover:not(.popover-hidden) .yui3-calendarnav-prevmonth');
+
+								if (trigger) {
+									Liferay.Util.focusFormField(trigger);
+									clearInterval(intervalId);
+								} else if (countInterval > 10) {
+									clearInterval(intervalId);
+								}
+
+								countInterval++;
+							}, 100);
+						},
+						init: function () {
+							document.addEventListener('keydown', onKeyDown);
+							document.addEventListener('keyup', onKeyUp);
 						},
 						selectionChange: function(event) {
 							var newSelection = event.newSelection[0];
@@ -261,8 +348,41 @@ else {
 							var date = A.DataType.Date.parse(newSelection);
 							var invalidNumber = isNaN(newSelection);
 
-							if ((invalidNumber && !nullable) || (invalidNumber && !date && nullable && newSelection)) {
+							if ((invalidNumber && !nullable) || (invalidNumber && !date && nullable && newSelection) || (newSelection.getFullYear() > 9999)) {
 								event.newSelection[0] = new Date();
+
+								const instance = this;
+
+								const container = instance.get('container');
+
+								let year = container.one('#<%= yearParamId %>');
+
+								const fullYear = newSelection.getFullYear();
+
+								year.val(fullYear);
+
+								const parentNode = A.one('#<%= nameId %>')._node.parentElement;
+
+								const feedbackElement = parentNode.querySelector('.form-feedback-item');
+
+								if (!feedbackElement) {
+									let input = A.one('#<%= nameId %>');
+
+									let changeAlert = document.createElement('div');
+									let feedback = document.createElement('span');
+									let sr = document.createElement('span');
+
+									changeAlert.className = 'form-feedback-item';
+									changeAlert.role = 'alert';
+									feedback.className = 'form-feedback-indicator';
+									feedback.innerHTML = 'The Date has been corrected.';
+									sr.className = 'sr-only'
+									sr.className = 'New Date: ' + event.newSelection[0];
+
+									changeAlert.append(feedback);
+									changeAlert.append(sr);
+									input._node.insertAdjacentElement('afterEnd', changeAlert);
+								}
 							}
 
 							var updatedVal = '';
@@ -281,15 +401,41 @@ else {
 
 								var domEvent = event.domEvent;
 
-								if (domEvent.keyCode == 9 && domEvent.target.hasClass('yui3-calendar-grid')) {
-									instance.hide();
+								keysPressed[domEvent.keyCode] = true;
 
-									var trigger = A.one('#<%= nameId %>');
+								var isTabPressed = domEvent.keyCode === 9 || keysPressed[9];
 
-									if (trigger) {
-										Liferay.Util.focusFormField(trigger);
-									}
+								var isShiftPressed = domEvent.keyCode === 16 || keysPressed[16];
+
+								var isForwardNavigation = isTabPressed && !isShiftPressed;
+
+								var isEscapePressed = domEvent.keyCode === 27 || keysPressed[27];
+
+								var hasClassName = domEvent.target.hasClass('yui3-calendar-grid') ||
+								domEvent.target.hasClass('yui3-calendar-day');
+
+								if ((isForwardNavigation && hasClassName) || isEscapePressed) {
+									closePopoverOnKeyboardNavigation(instance);
 								}
+							},
+							keyup: function(event) {
+								var instance = this;
+
+								var domEvent = event.domEvent;
+
+								var isTabPressed = domEvent.keyCode === 9 || keysPressed[9];
+
+								var isShiftPressed = domEvent.keyCode === 16 || keysPressed[16];
+
+								var isBackwardNavigation = isTabPressed && isShiftPressed;
+
+								var hasClassName = domEvent.target.hasClass('yui3-calendar-focused');
+
+								if (isBackwardNavigation && hasClassName) {
+									closePopoverOnKeyboardNavigation(instance);
+								}
+
+								delete keysPressed[domEvent.keyCode];
 							}
 						},
 						zIndex: Liferay.zIndex.POPOVER
@@ -298,7 +444,7 @@ else {
 				}
 			);
 
-			datePicker.getDate = function() {
+			datePicker.getDate = function () {
 				var instance = this;
 
 				var container = instance.get('container');
@@ -307,13 +453,13 @@ else {
 			};
 
 			datePicker.updateValue = function(date) {
-				var instance = this;
+				const instance = this;
 
-				var container = instance.get('container');
+				const container = instance.get('container');
 
-				var dateVal = '';
-				var monthVal = '';
-				var yearVal = '';
+				let dateVal = '';
+				let monthVal = '';
+				let yearVal = '';
 
 				if (date && !isNaN(date)) {
 					dateVal = date.getDate();
@@ -321,14 +467,30 @@ else {
 					yearVal = date.getFullYear();
 				}
 
-				container.one('#<%= dayParamId %>').val(dateVal);
-				container.one('#<%= monthParamId %>').val(monthVal);
-				container.one('#<%= yearParamId %>').val(yearVal);
+				let day = container.one('#<%= dayParamId %>');
+				let month = container.one('#<%= monthParamId %>');
+				let year = container.one('#<%= yearParamId %>');
+
+				if (!(yearVal < 9999 && year._node.value > 9999)) {
+					if (day._node.value != dateVal || month._node.value != monthVal || year._node.value !=yearVal) {
+						const parentNode = A.one('#<%= nameId %>')._node.parentElement;
+
+						const feedbackElement = parentNode.querySelector('.form-feedback-item');
+
+						if (feedbackElement) {
+							parentNode.removeChild(feedbackElement);
+						}
+					}
+				}
+
+				day.val(dateVal);
+				month.val(monthVal);
+				year.val(yearVal);
 			};
 
 			datePicker.after(
 				'selectionChange',
-				function(event) {
+				function () {
 					var input = A.one('#<%= nameId %>');
 
 					if (input) {
@@ -347,7 +509,7 @@ else {
 
 			Liferay.once(
 				'screenLoad',
-				function() {
+				function () {
 					datePicker.destroy();
 				}
 			);

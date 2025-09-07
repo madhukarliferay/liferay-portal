@@ -1,21 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.rss.internal.export;
 
+import com.liferay.normalizer.Normalizer;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.rss.export.RSSExporter;
 import com.liferay.rss.model.SyndContent;
 import com.liferay.rss.model.SyndEnclosure;
@@ -23,20 +18,20 @@ import com.liferay.rss.model.SyndEntry;
 import com.liferay.rss.model.SyndFeed;
 import com.liferay.rss.model.SyndLink;
 
-import com.sun.syndication.feed.synd.SyndContentImpl;
-import com.sun.syndication.feed.synd.SyndEnclosureImpl;
-import com.sun.syndication.feed.synd.SyndEntryImpl;
-import com.sun.syndication.feed.synd.SyndFeedImpl;
-import com.sun.syndication.feed.synd.SyndLinkImpl;
-import com.sun.syndication.io.FeedException;
-import com.sun.syndication.io.SyndFeedOutput;
+import com.rometools.rome.feed.synd.SyndContentImpl;
+import com.rometools.rome.feed.synd.SyndEnclosureImpl;
+import com.rometools.rome.feed.synd.SyndEntryImpl;
+import com.rometools.rome.feed.synd.SyndFeedImpl;
+import com.rometools.rome.feed.synd.SyndLinkImpl;
+import com.rometools.rome.io.FeedException;
+import com.rometools.rome.io.SyndFeedOutput;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.jdom.IllegalDataException;
+import org.jdom2.IllegalDataException;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Shuyang Zhou
@@ -46,7 +41,7 @@ public class RSSExporterImpl implements RSSExporter {
 
 	@Override
 	public String export(SyndFeed syndFeed) {
-		com.sun.syndication.feed.synd.SyndFeed realSyndFeed = _toRealSyndFeed(
+		com.rometools.rome.feed.synd.SyndFeed realSyndFeed = _toRealSyndFeed(
 			syndFeed);
 
 		SyndFeedOutput output = new SyndFeedOutput();
@@ -54,7 +49,10 @@ public class RSSExporterImpl implements RSSExporter {
 		try {
 			return output.outputString(realSyndFeed);
 		}
-		catch (IllegalDataException ide) {
+		catch (IllegalDataException illegalDataException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(illegalDataException);
+			}
 
 			// LEP-4450
 
@@ -63,37 +61,17 @@ public class RSSExporterImpl implements RSSExporter {
 			try {
 				return output.outputString(realSyndFeed);
 			}
-			catch (FeedException fe) {
-				throw new SystemException(fe);
+			catch (FeedException feedException) {
+				throw new SystemException(feedException);
 			}
 		}
-		catch (FeedException fe) {
-			throw new SystemException(fe);
+		catch (FeedException feedException) {
+			throw new SystemException(feedException);
 		}
 	}
 
-	private static void _regexpStrip(
-		com.sun.syndication.feed.synd.SyndFeed syndFeed) {
-
-		syndFeed.setTitle(_regexpStrip(syndFeed.getTitle()));
-		syndFeed.setDescription(_regexpStrip(syndFeed.getDescription()));
-
-		@SuppressWarnings("unchecked")
-		List<com.sun.syndication.feed.synd.SyndEntry> syndEntries =
-			syndFeed.getEntries();
-
-		for (com.sun.syndication.feed.synd.SyndEntry syndEntry : syndEntries) {
-			syndEntry.setTitle(_regexpStrip(syndEntry.getTitle()));
-
-			com.sun.syndication.feed.synd.SyndContent syndContent =
-				syndEntry.getDescription();
-
-			syndContent.setValue(_regexpStrip(syndContent.getValue()));
-		}
-	}
-
-	private static String _regexpStrip(String text) {
-		text = Normalizer.normalizeToAscii(text);
+	private String _regexpStrip(String text) {
+		text = _normalizer.normalizeToAscii(text);
 
 		char[] array = text.toCharArray();
 
@@ -108,10 +86,28 @@ public class RSSExporterImpl implements RSSExporter {
 		return new String(array);
 	}
 
-	private com.sun.syndication.feed.synd.SyndContent _toRealSyncContent(
+	private void _regexpStrip(com.rometools.rome.feed.synd.SyndFeed syndFeed) {
+		syndFeed.setTitle(_regexpStrip(syndFeed.getTitle()));
+		syndFeed.setDescription(_regexpStrip(syndFeed.getDescription()));
+
+		@SuppressWarnings("unchecked")
+		List<com.rometools.rome.feed.synd.SyndEntry> syndEntries =
+			syndFeed.getEntries();
+
+		for (com.rometools.rome.feed.synd.SyndEntry syndEntry : syndEntries) {
+			syndEntry.setTitle(_regexpStrip(syndEntry.getTitle()));
+
+			com.rometools.rome.feed.synd.SyndContent syndContent =
+				syndEntry.getDescription();
+
+			syndContent.setValue(_regexpStrip(syndContent.getValue()));
+		}
+	}
+
+	private com.rometools.rome.feed.synd.SyndContent _toRealSyncContent(
 		SyndContent syndContent) {
 
-		com.sun.syndication.feed.synd.SyndContent realSyndContent =
+		com.rometools.rome.feed.synd.SyndContent realSyndContent =
 			new SyndContentImpl();
 
 		realSyndContent.setType(syndContent.getType());
@@ -120,67 +116,60 @@ public class RSSExporterImpl implements RSSExporter {
 		return realSyndContent;
 	}
 
-	private List<com.sun.syndication.feed.synd.SyndEnclosure>
+	private List<com.rometools.rome.feed.synd.SyndEnclosure>
 		_toRealSyndEnclosures(List<SyndEnclosure> syndEnclosures) {
 
 		if (syndEnclosures == null) {
 			return null;
 		}
 
-		List<com.sun.syndication.feed.synd.SyndEnclosure> realSyndEnclosures =
-			new ArrayList<>();
+		return TransformUtil.transform(
+			syndEnclosures,
+			syndEnclosure -> {
+				com.rometools.rome.feed.synd.SyndEnclosure realSyndEnclosure =
+					new SyndEnclosureImpl();
 
-		for (SyndEnclosure syndEnclosure : syndEnclosures) {
-			com.sun.syndication.feed.synd.SyndEnclosure realSyndEnclosure =
-				new SyndEnclosureImpl();
+				realSyndEnclosure.setLength(syndEnclosure.getLength());
+				realSyndEnclosure.setType(syndEnclosure.getType());
+				realSyndEnclosure.setUrl(syndEnclosure.getUrl());
 
-			realSyndEnclosure.setLength(syndEnclosure.getLength());
-			realSyndEnclosure.setType(syndEnclosure.getType());
-			realSyndEnclosure.setUrl(syndEnclosure.getUrl());
-
-			realSyndEnclosures.add(realSyndEnclosure);
-		}
-
-		return realSyndEnclosures;
+				return realSyndEnclosure;
+			});
 	}
 
-	private List<com.sun.syndication.feed.synd.SyndEntry> _toRealSyndEntries(
+	private List<com.rometools.rome.feed.synd.SyndEntry> _toRealSyndEntries(
 		List<SyndEntry> syndEntries) {
 
 		if (syndEntries == null) {
 			return null;
 		}
 
-		List<com.sun.syndication.feed.synd.SyndEntry> realSyndEntries =
-			new ArrayList<>();
+		return TransformUtil.transform(
+			syndEntries,
+			syndEntry -> {
+				com.rometools.rome.feed.synd.SyndEntry realSyndEntry =
+					new SyndEntryImpl();
 
-		for (SyndEntry syndEntry : syndEntries) {
-			com.sun.syndication.feed.synd.SyndEntry realSyndEntry =
-				new SyndEntryImpl();
+				realSyndEntry.setAuthor(syndEntry.getAuthor());
+				realSyndEntry.setDescription(
+					_toRealSyncContent(syndEntry.getDescription()));
+				realSyndEntry.setEnclosures(
+					_toRealSyndEnclosures(syndEntry.getEnclosures()));
+				realSyndEntry.setLink(syndEntry.getLink());
+				realSyndEntry.setLinks(_toRealSyndLinks(syndEntry.getLinks()));
+				realSyndEntry.setPublishedDate(syndEntry.getPublishedDate());
+				realSyndEntry.setTitle(syndEntry.getTitle());
+				realSyndEntry.setUpdatedDate(syndEntry.getUpdatedDate());
+				realSyndEntry.setUri(syndEntry.getUri());
 
-			realSyndEntry.setAuthor(syndEntry.getAuthor());
-			realSyndEntry.setDescription(
-				_toRealSyncContent(syndEntry.getDescription()));
-			realSyndEntry.setEnclosures(
-				_toRealSyndEnclosures(syndEntry.getEnclosures()));
-			realSyndEntry.setLink(syndEntry.getLink());
-			realSyndEntry.setLinks(_toRealSyndLinks(syndEntry.getLinks()));
-			realSyndEntry.setPublishedDate(syndEntry.getPublishedDate());
-			realSyndEntry.setTitle(syndEntry.getTitle());
-			realSyndEntry.setUpdatedDate(syndEntry.getUpdatedDate());
-			realSyndEntry.setUri(syndEntry.getUri());
-
-			realSyndEntries.add(realSyndEntry);
-		}
-
-		return realSyndEntries;
+				return realSyndEntry;
+			});
 	}
 
-	private com.sun.syndication.feed.synd.SyndFeed _toRealSyndFeed(
+	private com.rometools.rome.feed.synd.SyndFeed _toRealSyndFeed(
 		SyndFeed syndFeed) {
 
-		com.sun.syndication.feed.synd.SyndFeed realSyndFeed =
-			new SyndFeedImpl();
+		com.rometools.rome.feed.synd.SyndFeed realSyndFeed = new SyndFeedImpl();
 
 		realSyndFeed.setDescription(syndFeed.getDescription());
 		realSyndFeed.setEntries(_toRealSyndEntries(syndFeed.getEntries()));
@@ -193,31 +182,34 @@ public class RSSExporterImpl implements RSSExporter {
 		return realSyndFeed;
 	}
 
-	private List<com.sun.syndication.feed.synd.SyndLink> _toRealSyndLinks(
+	private List<com.rometools.rome.feed.synd.SyndLink> _toRealSyndLinks(
 		List<SyndLink> syndLinks) {
 
 		if (syndLinks == null) {
 			return null;
 		}
 
-		List<com.sun.syndication.feed.synd.SyndLink> realSyndLinks =
-			new ArrayList<>();
+		return TransformUtil.transform(
+			syndLinks,
+			syndLink -> {
+				com.rometools.rome.feed.synd.SyndLink realSyndLink =
+					new SyndLinkImpl();
 
-		for (SyndLink syndLink : syndLinks) {
-			com.sun.syndication.feed.synd.SyndLink realSyndLink =
-				new SyndLinkImpl();
+				realSyndLink.setHref(syndLink.getHref());
+				realSyndLink.setLength(syndLink.getLength());
+				realSyndLink.setRel(syndLink.getRel());
+				realSyndLink.setType(syndLink.getType());
 
-			realSyndLink.setHref(syndLink.getHref());
-			realSyndLink.setLength(syndLink.getLength());
-			realSyndLink.setRel(syndLink.getRel());
-			realSyndLink.setType(syndLink.getType());
-
-			realSyndLinks.add(realSyndLink);
-		}
-
-		return realSyndLinks;
+				return realSyndLink;
+			});
 	}
 
 	private static final String _REGEXP_STRIP = "[\\d\\w]";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		RSSExporterImpl.class);
+
+	@Reference
+	private Normalizer _normalizer;
 
 }

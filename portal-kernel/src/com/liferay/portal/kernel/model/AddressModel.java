@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -33,10 +25,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface AddressModel
-	extends AttachedModel, BaseModel<Address>, MVCCModel, ShardedModel,
+	extends AttachedModel, BaseModel<Address>, CTModel<Address>,
+			ExternalReferenceCodeModel, MVCCModel, ShardedModel,
 			StagedAuditedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a address model instance should use the {@link Address} interface instead.
@@ -47,6 +40,7 @@ public interface AddressModel
 	 *
 	 * @return the primary key of this address
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,6 +48,7 @@ public interface AddressModel
 	 *
 	 * @param primaryKey the primary key of this address
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -73,6 +68,22 @@ public interface AddressModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this address.
+	 *
+	 * @return the ct collection ID of this address
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this address.
+	 *
+	 * @param ctCollectionId the ct collection ID of this address
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this address.
 	 *
 	 * @return the uuid of this address
@@ -88,6 +99,23 @@ public interface AddressModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this address.
+	 *
+	 * @return the external reference code of this address
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this address.
+	 *
+	 * @param externalReferenceCode the external reference code of this address
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the address ID of this address.
@@ -243,6 +271,163 @@ public interface AddressModel
 	public void setClassPK(long classPK);
 
 	/**
+	 * Returns the country ID of this address.
+	 *
+	 * @return the country ID of this address
+	 */
+	public long getCountryId();
+
+	/**
+	 * Sets the country ID of this address.
+	 *
+	 * @param countryId the country ID of this address
+	 */
+	public void setCountryId(long countryId);
+
+	/**
+	 * Returns the list type ID of this address.
+	 *
+	 * @return the list type ID of this address
+	 */
+	public long getListTypeId();
+
+	/**
+	 * Sets the list type ID of this address.
+	 *
+	 * @param listTypeId the list type ID of this address
+	 */
+	public void setListTypeId(long listTypeId);
+
+	/**
+	 * Returns the region ID of this address.
+	 *
+	 * @return the region ID of this address
+	 */
+	public long getRegionId();
+
+	/**
+	 * Sets the region ID of this address.
+	 *
+	 * @param regionId the region ID of this address
+	 */
+	public void setRegionId(long regionId);
+
+	/**
+	 * Returns the city of this address.
+	 *
+	 * @return the city of this address
+	 */
+	@AutoEscape
+	public String getCity();
+
+	/**
+	 * Sets the city of this address.
+	 *
+	 * @param city the city of this address
+	 */
+	public void setCity(String city);
+
+	/**
+	 * Returns the description of this address.
+	 *
+	 * @return the description of this address
+	 */
+	@AutoEscape
+	public String getDescription();
+
+	/**
+	 * Sets the description of this address.
+	 *
+	 * @param description the description of this address
+	 */
+	public void setDescription(String description);
+
+	/**
+	 * Returns the latitude of this address.
+	 *
+	 * @return the latitude of this address
+	 */
+	public double getLatitude();
+
+	/**
+	 * Sets the latitude of this address.
+	 *
+	 * @param latitude the latitude of this address
+	 */
+	public void setLatitude(double latitude);
+
+	/**
+	 * Returns the longitude of this address.
+	 *
+	 * @return the longitude of this address
+	 */
+	public double getLongitude();
+
+	/**
+	 * Sets the longitude of this address.
+	 *
+	 * @param longitude the longitude of this address
+	 */
+	public void setLongitude(double longitude);
+
+	/**
+	 * Returns the mailing of this address.
+	 *
+	 * @return the mailing of this address
+	 */
+	public boolean getMailing();
+
+	/**
+	 * Returns <code>true</code> if this address is mailing.
+	 *
+	 * @return <code>true</code> if this address is mailing; <code>false</code> otherwise
+	 */
+	public boolean isMailing();
+
+	/**
+	 * Sets whether this address is mailing.
+	 *
+	 * @param mailing the mailing of this address
+	 */
+	public void setMailing(boolean mailing);
+
+	/**
+	 * Returns the name of this address.
+	 *
+	 * @return the name of this address
+	 */
+	@AutoEscape
+	public String getName();
+
+	/**
+	 * Sets the name of this address.
+	 *
+	 * @param name the name of this address
+	 */
+	public void setName(String name);
+
+	/**
+	 * Returns the primary of this address.
+	 *
+	 * @return the primary of this address
+	 */
+	public boolean getPrimary();
+
+	/**
+	 * Returns <code>true</code> if this address is primary.
+	 *
+	 * @return <code>true</code> if this address is primary; <code>false</code> otherwise
+	 */
+	public boolean isPrimary();
+
+	/**
+	 * Sets whether this address is primary.
+	 *
+	 * @param primary the primary of this address
+	 */
+	public void setPrimary(boolean primary);
+
+	/**
 	 * Returns the street1 of this address.
 	 *
 	 * @return the street1 of this address
@@ -288,19 +473,47 @@ public interface AddressModel
 	public void setStreet3(String street3);
 
 	/**
-	 * Returns the city of this address.
+	 * Returns the subtype of this address.
 	 *
-	 * @return the city of this address
+	 * @return the subtype of this address
 	 */
 	@AutoEscape
-	public String getCity();
+	public String getSubtype();
 
 	/**
-	 * Sets the city of this address.
+	 * Sets the subtype of this address.
 	 *
-	 * @param city the city of this address
+	 * @param subtype the subtype of this address
 	 */
-	public void setCity(String city);
+	public void setSubtype(String subtype);
+
+	/**
+	 * Returns the validation date of this address.
+	 *
+	 * @return the validation date of this address
+	 */
+	public Date getValidationDate();
+
+	/**
+	 * Sets the validation date of this address.
+	 *
+	 * @param validationDate the validation date of this address
+	 */
+	public void setValidationDate(Date validationDate);
+
+	/**
+	 * Returns the validation status of this address.
+	 *
+	 * @return the validation status of this address
+	 */
+	public int getValidationStatus();
+
+	/**
+	 * Sets the validation status of this address.
+	 *
+	 * @param validationStatus the validation status of this address
+	 */
+	public void setValidationStatus(int validationStatus);
 
 	/**
 	 * Returns the zip of this address.
@@ -318,87 +531,24 @@ public interface AddressModel
 	public void setZip(String zip);
 
 	/**
-	 * Returns the region ID of this address.
+	 * Returns the status of this address.
 	 *
-	 * @return the region ID of this address
+	 * @return the status of this address
 	 */
-	public long getRegionId();
+	public int getStatus();
 
 	/**
-	 * Sets the region ID of this address.
+	 * Sets the status of this address.
 	 *
-	 * @param regionId the region ID of this address
+	 * @param status the status of this address
 	 */
-	public void setRegionId(long regionId);
+	public void setStatus(int status);
 
-	/**
-	 * Returns the country ID of this address.
-	 *
-	 * @return the country ID of this address
-	 */
-	public long getCountryId();
+	@Override
+	public Address cloneWithOriginalValues();
 
-	/**
-	 * Sets the country ID of this address.
-	 *
-	 * @param countryId the country ID of this address
-	 */
-	public void setCountryId(long countryId);
-
-	/**
-	 * Returns the type ID of this address.
-	 *
-	 * @return the type ID of this address
-	 */
-	public long getTypeId();
-
-	/**
-	 * Sets the type ID of this address.
-	 *
-	 * @param typeId the type ID of this address
-	 */
-	public void setTypeId(long typeId);
-
-	/**
-	 * Returns the mailing of this address.
-	 *
-	 * @return the mailing of this address
-	 */
-	public boolean getMailing();
-
-	/**
-	 * Returns <code>true</code> if this address is mailing.
-	 *
-	 * @return <code>true</code> if this address is mailing; <code>false</code> otherwise
-	 */
-	public boolean isMailing();
-
-	/**
-	 * Sets whether this address is mailing.
-	 *
-	 * @param mailing the mailing of this address
-	 */
-	public void setMailing(boolean mailing);
-
-	/**
-	 * Returns the primary of this address.
-	 *
-	 * @return the primary of this address
-	 */
-	public boolean getPrimary();
-
-	/**
-	 * Returns <code>true</code> if this address is primary.
-	 *
-	 * @return <code>true</code> if this address is primary; <code>false</code> otherwise
-	 */
-	public boolean isPrimary();
-
-	/**
-	 * Sets whether this address is primary.
-	 *
-	 * @param primary the primary of this address
-	 */
-	public void setPrimary(boolean primary);
+	public default String toXmlString() {
+		return null;
+	}
 
 }

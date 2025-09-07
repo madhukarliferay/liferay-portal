@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.service.persistence;
@@ -17,6 +8,7 @@ package com.liferay.document.library.kernel.service.persistence;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -32,9 +24,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
+public interface DLFileEntryPersistence
+	extends BasePersistence<DLFileEntry>, CTPersistence<DLFileEntry> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link DLFileEntryUtil} to access the document library file entry persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -2266,7 +2259,7 @@ public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param folderId the folder ID
+	 * @param folderIds the folder IDs
 	 * @param start the lower bound of the range of document library file entries
 	 * @param end the upper bound of the range of document library file entries (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2953,7 +2946,7 @@ public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
 	 *
 	 * @param groupId the group ID
 	 * @param userId the user ID
-	 * @param folderId the folder ID
+	 * @param folderIds the folder IDs
 	 * @param start the lower bound of the range of document library file entries
 	 * @param end the upper bound of the range of document library file entries (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -3507,7 +3500,7 @@ public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param folderId the folder ID
+	 * @param folderIds the folder IDs
 	 * @param fileEntryTypeId the file entry type ID
 	 * @param start the lower bound of the range of document library file entries
 	 * @param end the upper bound of the range of document library file entries (not inclusive)
@@ -3574,6 +3567,172 @@ public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
 	 */
 	public int filterCountByG_F_F(
 		long groupId, long[] folderIds, long fileEntryTypeId);
+
+	/**
+	 * Returns all the document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @return the matching document library file entries
+	 */
+	public java.util.List<DLFileEntry> findByC_C_C(
+		long companyId, long classNameId, long classPK);
+
+	/**
+	 * Returns a range of all the document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DLFileEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of document library file entries
+	 * @param end the upper bound of the range of document library file entries (not inclusive)
+	 * @return the range of matching document library file entries
+	 */
+	public java.util.List<DLFileEntry> findByC_C_C(
+		long companyId, long classNameId, long classPK, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DLFileEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of document library file entries
+	 * @param end the upper bound of the range of document library file entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching document library file entries
+	 */
+	public java.util.List<DLFileEntry> findByC_C_C(
+		long companyId, long classNameId, long classPK, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DLFileEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of document library file entries
+	 * @param end the upper bound of the range of document library file entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching document library file entries
+	 */
+	public java.util.List<DLFileEntry> findByC_C_C(
+		long companyId, long classNameId, long classPK, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first document library file entry in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching document library file entry
+	 * @throws NoSuchFileEntryException if a matching document library file entry could not be found
+	 */
+	public DLFileEntry findByC_C_C_First(
+			long companyId, long classNameId, long classPK,
+			com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+				orderByComparator)
+		throws NoSuchFileEntryException;
+
+	/**
+	 * Returns the first document library file entry in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching document library file entry, or <code>null</code> if a matching document library file entry could not be found
+	 */
+	public DLFileEntry fetchByC_C_C_First(
+		long companyId, long classNameId, long classPK,
+		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+			orderByComparator);
+
+	/**
+	 * Returns the last document library file entry in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching document library file entry
+	 * @throws NoSuchFileEntryException if a matching document library file entry could not be found
+	 */
+	public DLFileEntry findByC_C_C_Last(
+			long companyId, long classNameId, long classPK,
+			com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+				orderByComparator)
+		throws NoSuchFileEntryException;
+
+	/**
+	 * Returns the last document library file entry in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching document library file entry, or <code>null</code> if a matching document library file entry could not be found
+	 */
+	public DLFileEntry fetchByC_C_C_Last(
+		long companyId, long classNameId, long classPK,
+		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+			orderByComparator);
+
+	/**
+	 * Returns the document library file entries before and after the current document library file entry in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param fileEntryId the primary key of the current document library file entry
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next document library file entry
+	 * @throws NoSuchFileEntryException if a document library file entry with the primary key could not be found
+	 */
+	public DLFileEntry[] findByC_C_C_PrevAndNext(
+			long fileEntryId, long companyId, long classNameId, long classPK,
+			com.liferay.portal.kernel.util.OrderByComparator<DLFileEntry>
+				orderByComparator)
+		throws NoSuchFileEntryException;
+
+	/**
+	 * Removes all the document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 */
+	public void removeByC_C_C(long companyId, long classNameId, long classPK);
+
+	/**
+	 * Returns the number of document library file entries where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @return the number of matching document library file entries
+	 */
+	public int countByC_C_C(long companyId, long classNameId, long classPK);
 
 	/**
 	 * Returns all the document library file entries where smallImageId = &#63; and largeImageId = &#63; and custom1ImageId = &#63; and custom2ImageId = &#63;.
@@ -3764,6 +3923,56 @@ public interface DLFileEntryPersistence extends BasePersistence<DLFileEntry> {
 	public int countByS_L_C1_C2(
 		long smallImageId, long largeImageId, long custom1ImageId,
 		long custom2ImageId);
+
+	/**
+	 * Returns the document library file entry where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchFileEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching document library file entry
+	 * @throws NoSuchFileEntryException if a matching document library file entry could not be found
+	 */
+	public DLFileEntry findByERC_G(String externalReferenceCode, long groupId)
+		throws NoSuchFileEntryException;
+
+	/**
+	 * Returns the document library file entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching document library file entry, or <code>null</code> if a matching document library file entry could not be found
+	 */
+	public DLFileEntry fetchByERC_G(String externalReferenceCode, long groupId);
+
+	/**
+	 * Returns the document library file entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching document library file entry, or <code>null</code> if a matching document library file entry could not be found
+	 */
+	public DLFileEntry fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache);
+
+	/**
+	 * Removes the document library file entry where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the document library file entry that was removed
+	 */
+	public DLFileEntry removeByERC_G(String externalReferenceCode, long groupId)
+		throws NoSuchFileEntryException;
+
+	/**
+	 * Returns the number of document library file entries where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching document library file entries
+	 */
+	public int countByERC_G(String externalReferenceCode, long groupId);
 
 	/**
 	 * Caches the document library file entry in the entity cache if it is enabled.

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.model.impl;
@@ -39,17 +30,17 @@ public class BatchEngineExportTaskCacheModel
 	implements CacheModel<BatchEngineExportTask>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof BatchEngineExportTaskCacheModel)) {
+		if (!(object instanceof BatchEngineExportTaskCacheModel)) {
 			return false;
 		}
 
 		BatchEngineExportTaskCacheModel batchEngineExportTaskCacheModel =
-			(BatchEngineExportTaskCacheModel)obj;
+			(BatchEngineExportTaskCacheModel)object;
 
 		if ((batchEngineExportTaskId ==
 				batchEngineExportTaskCacheModel.batchEngineExportTaskId) &&
@@ -80,12 +71,14 @@ public class BatchEngineExportTaskCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", batchEngineExportTaskId=");
 		sb.append(batchEngineExportTaskId);
 		sb.append(", companyId=");
@@ -112,10 +105,14 @@ public class BatchEngineExportTaskCacheModel
 		sb.append(executeStatus);
 		sb.append(", parameters=");
 		sb.append(parameters);
+		sb.append(", processedItemsCount=");
+		sb.append(processedItemsCount);
 		sb.append(", startTime=");
 		sb.append(startTime);
-		sb.append(", version=");
-		sb.append(version);
+		sb.append(", taskItemDelegateName=");
+		sb.append(taskItemDelegateName);
+		sb.append(", totalItemsCount=");
+		sb.append(totalItemsCount);
 		sb.append("}");
 
 		return sb.toString();
@@ -133,6 +130,14 @@ public class BatchEngineExportTaskCacheModel
 		}
 		else {
 			batchEngineExportTaskImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			batchEngineExportTaskImpl.setExternalReferenceCode("");
+		}
+		else {
+			batchEngineExportTaskImpl.setExternalReferenceCode(
+				externalReferenceCode);
 		}
 
 		batchEngineExportTaskImpl.setBatchEngineExportTaskId(
@@ -204,6 +209,7 @@ public class BatchEngineExportTaskCacheModel
 		}
 
 		batchEngineExportTaskImpl.setParameters(parameters);
+		batchEngineExportTaskImpl.setProcessedItemsCount(processedItemsCount);
 
 		if (startTime == Long.MIN_VALUE) {
 			batchEngineExportTaskImpl.setStartTime(null);
@@ -212,12 +218,15 @@ public class BatchEngineExportTaskCacheModel
 			batchEngineExportTaskImpl.setStartTime(new Date(startTime));
 		}
 
-		if (version == null) {
-			batchEngineExportTaskImpl.setVersion("");
+		if (taskItemDelegateName == null) {
+			batchEngineExportTaskImpl.setTaskItemDelegateName("");
 		}
 		else {
-			batchEngineExportTaskImpl.setVersion(version);
+			batchEngineExportTaskImpl.setTaskItemDelegateName(
+				taskItemDelegateName);
 		}
+
+		batchEngineExportTaskImpl.setTotalItemsCount(totalItemsCount);
 
 		batchEngineExportTaskImpl.resetOriginalValues();
 
@@ -230,6 +239,7 @@ public class BatchEngineExportTaskCacheModel
 
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		batchEngineExportTaskId = objectInput.readLong();
 
@@ -242,12 +252,16 @@ public class BatchEngineExportTaskCacheModel
 		className = objectInput.readUTF();
 		contentType = objectInput.readUTF();
 		endTime = objectInput.readLong();
-		errorMessage = objectInput.readUTF();
+		errorMessage = (String)objectInput.readObject();
 		fieldNames = objectInput.readUTF();
 		executeStatus = objectInput.readUTF();
 		parameters = (Map<String, Serializable>)objectInput.readObject();
+
+		processedItemsCount = objectInput.readInt();
 		startTime = objectInput.readLong();
-		version = objectInput.readUTF();
+		taskItemDelegateName = objectInput.readUTF();
+
+		totalItemsCount = objectInput.readInt();
 	}
 
 	@Override
@@ -259,6 +273,13 @@ public class BatchEngineExportTaskCacheModel
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(batchEngineExportTaskId);
@@ -293,10 +314,10 @@ public class BatchEngineExportTaskCacheModel
 		objectOutput.writeLong(endTime);
 
 		if (errorMessage == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(errorMessage);
+			objectOutput.writeObject(errorMessage);
 		}
 
 		if (fieldNames == null) {
@@ -314,18 +335,23 @@ public class BatchEngineExportTaskCacheModel
 		}
 
 		objectOutput.writeObject(parameters);
+
+		objectOutput.writeInt(processedItemsCount);
 		objectOutput.writeLong(startTime);
 
-		if (version == null) {
+		if (taskItemDelegateName == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(version);
+			objectOutput.writeUTF(taskItemDelegateName);
 		}
+
+		objectOutput.writeInt(totalItemsCount);
 	}
 
 	public long mvccVersion;
 	public String uuid;
+	public String externalReferenceCode;
 	public long batchEngineExportTaskId;
 	public long companyId;
 	public long userId;
@@ -339,7 +365,9 @@ public class BatchEngineExportTaskCacheModel
 	public String fieldNames;
 	public String executeStatus;
 	public Map<String, Serializable> parameters;
+	public int processedItemsCount;
 	public long startTime;
-	public String version;
+	public String taskItemDelegateName;
+	public int totalItemsCount;
 
 }

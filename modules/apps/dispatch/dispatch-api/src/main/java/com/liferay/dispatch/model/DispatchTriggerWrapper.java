@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dispatch.model;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
@@ -26,7 +18,7 @@ import java.util.Map;
  * This class is a wrapper for {@link DispatchTrigger}.
  * </p>
  *
- * @author Alessio Antonio Rendina
+ * @author Matija Petanjek
  * @see DispatchTrigger
  * @generated
  */
@@ -43,6 +35,8 @@ public class DispatchTriggerWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("dispatchTriggerId", getDispatchTriggerId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
@@ -51,12 +45,16 @@ public class DispatchTriggerWrapper
 		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("active", isActive());
 		attributes.put("cronExpression", getCronExpression());
+		attributes.put("dispatchTaskClusterMode", getDispatchTaskClusterMode());
+		attributes.put(
+			"dispatchTaskExecutorType", getDispatchTaskExecutorType());
+		attributes.put("dispatchTaskSettings", getDispatchTaskSettings());
 		attributes.put("endDate", getEndDate());
 		attributes.put("name", getName());
+		attributes.put("overlapAllowed", isOverlapAllowed());
 		attributes.put("startDate", getStartDate());
 		attributes.put("system", isSystem());
-		attributes.put("type", getType());
-		attributes.put("typeSettings", getTypeSettings());
+		attributes.put("timeZoneId", getTimeZoneId());
 
 		return attributes;
 	}
@@ -67,6 +65,19 @@ public class DispatchTriggerWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long dispatchTriggerId = (Long)attributes.get("dispatchTriggerId");
@@ -117,6 +128,27 @@ public class DispatchTriggerWrapper
 			setCronExpression(cronExpression);
 		}
 
+		Integer dispatchTaskClusterMode = (Integer)attributes.get(
+			"dispatchTaskClusterMode");
+
+		if (dispatchTaskClusterMode != null) {
+			setDispatchTaskClusterMode(dispatchTaskClusterMode);
+		}
+
+		String dispatchTaskExecutorType = (String)attributes.get(
+			"dispatchTaskExecutorType");
+
+		if (dispatchTaskExecutorType != null) {
+			setDispatchTaskExecutorType(dispatchTaskExecutorType);
+		}
+
+		String dispatchTaskSettings = (String)attributes.get(
+			"dispatchTaskSettings");
+
+		if (dispatchTaskSettings != null) {
+			setDispatchTaskSettings(dispatchTaskSettings);
+		}
+
 		Date endDate = (Date)attributes.get("endDate");
 
 		if (endDate != null) {
@@ -127,6 +159,12 @@ public class DispatchTriggerWrapper
 
 		if (name != null) {
 			setName(name);
+		}
+
+		Boolean overlapAllowed = (Boolean)attributes.get("overlapAllowed");
+
+		if (overlapAllowed != null) {
+			setOverlapAllowed(overlapAllowed);
 		}
 
 		Date startDate = (Date)attributes.get("startDate");
@@ -141,17 +179,16 @@ public class DispatchTriggerWrapper
 			setSystem(system);
 		}
 
-		String type = (String)attributes.get("type");
+		String timeZoneId = (String)attributes.get("timeZoneId");
 
-		if (type != null) {
-			setType(type);
+		if (timeZoneId != null) {
+			setTimeZoneId(timeZoneId);
 		}
+	}
 
-		String typeSettings = (String)attributes.get("typeSettings");
-
-		if (typeSettings != null) {
-			setTypeSettings(typeSettings);
-		}
+	@Override
+	public DispatchTrigger cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -195,6 +232,50 @@ public class DispatchTriggerWrapper
 	}
 
 	/**
+	 * Returns the dispatch task cluster mode of this dispatch trigger.
+	 *
+	 * @return the dispatch task cluster mode of this dispatch trigger
+	 */
+	@Override
+	public int getDispatchTaskClusterMode() {
+		return model.getDispatchTaskClusterMode();
+	}
+
+	/**
+	 * Returns the dispatch task executor type of this dispatch trigger.
+	 *
+	 * @return the dispatch task executor type of this dispatch trigger
+	 */
+	@Override
+	public String getDispatchTaskExecutorType() {
+		return model.getDispatchTaskExecutorType();
+	}
+
+	/**
+	 * Returns the dispatch task settings of this dispatch trigger.
+	 *
+	 * @return the dispatch task settings of this dispatch trigger
+	 */
+	@Override
+	public String getDispatchTaskSettings() {
+		return model.getDispatchTaskSettings();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.util.UnicodeProperties
+		getDispatchTaskSettingsUnicodeProperties() {
+
+		return model.getDispatchTaskSettingsUnicodeProperties();
+	}
+
+	@Override
+	public com.liferay.dispatch.executor.DispatchTaskStatus
+		getDispatchTaskStatus() {
+
+		return model.getDispatchTaskStatus();
+	}
+
+	/**
 	 * Returns the dispatch trigger ID of this dispatch trigger.
 	 *
 	 * @return the dispatch trigger ID of this dispatch trigger
@@ -212,6 +293,16 @@ public class DispatchTriggerWrapper
 	@Override
 	public Date getEndDate() {
 		return model.getEndDate();
+	}
+
+	/**
+	 * Returns the external reference code of this dispatch trigger.
+	 *
+	 * @return the external reference code of this dispatch trigger
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -244,6 +335,21 @@ public class DispatchTriggerWrapper
 		return model.getName();
 	}
 
+	@Override
+	public Date getNextFireDate() {
+		return model.getNextFireDate();
+	}
+
+	/**
+	 * Returns the overlap allowed of this dispatch trigger.
+	 *
+	 * @return the overlap allowed of this dispatch trigger
+	 */
+	@Override
+	public boolean getOverlapAllowed() {
+		return model.getOverlapAllowed();
+	}
+
 	/**
 	 * Returns the primary key of this dispatch trigger.
 	 *
@@ -274,24 +380,24 @@ public class DispatchTriggerWrapper
 		return model.getSystem();
 	}
 
-	/**
-	 * Returns the type of this dispatch trigger.
-	 *
-	 * @return the type of this dispatch trigger
-	 */
 	@Override
-	public String getType() {
-		return model.getType();
+	public Date getTimeZoneEndDate() {
+		return model.getTimeZoneEndDate();
 	}
 
 	/**
-	 * Returns the type settings of this dispatch trigger.
+	 * Returns the time zone ID of this dispatch trigger.
 	 *
-	 * @return the type settings of this dispatch trigger
+	 * @return the time zone ID of this dispatch trigger
 	 */
 	@Override
-	public String getTypeSettings() {
-		return model.getTypeSettings();
+	public String getTimeZoneId() {
+		return model.getTimeZoneId();
+	}
+
+	@Override
+	public Date getTimeZoneStartDate() {
+		return model.getTimeZoneStartDate();
 	}
 
 	/**
@@ -325,6 +431,16 @@ public class DispatchTriggerWrapper
 	}
 
 	/**
+	 * Returns the uuid of this dispatch trigger.
+	 *
+	 * @return the uuid of this dispatch trigger
+	 */
+	@Override
+	public String getUuid() {
+		return model.getUuid();
+	}
+
+	/**
 	 * Returns <code>true</code> if this dispatch trigger is active.
 	 *
 	 * @return <code>true</code> if this dispatch trigger is active; <code>false</code> otherwise
@@ -332,6 +448,16 @@ public class DispatchTriggerWrapper
 	@Override
 	public boolean isActive() {
 		return model.isActive();
+	}
+
+	/**
+	 * Returns <code>true</code> if this dispatch trigger is overlap allowed.
+	 *
+	 * @return <code>true</code> if this dispatch trigger is overlap allowed; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isOverlapAllowed() {
+		return model.isOverlapAllowed();
 	}
 
 	/**
@@ -344,11 +470,6 @@ public class DispatchTriggerWrapper
 		return model.isSystem();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a dispatch trigger model instance should use the <code>DispatchTrigger</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -395,6 +516,45 @@ public class DispatchTriggerWrapper
 	}
 
 	/**
+	 * Sets the dispatch task cluster mode of this dispatch trigger.
+	 *
+	 * @param dispatchTaskClusterMode the dispatch task cluster mode of this dispatch trigger
+	 */
+	@Override
+	public void setDispatchTaskClusterMode(int dispatchTaskClusterMode) {
+		model.setDispatchTaskClusterMode(dispatchTaskClusterMode);
+	}
+
+	/**
+	 * Sets the dispatch task executor type of this dispatch trigger.
+	 *
+	 * @param dispatchTaskExecutorType the dispatch task executor type of this dispatch trigger
+	 */
+	@Override
+	public void setDispatchTaskExecutorType(String dispatchTaskExecutorType) {
+		model.setDispatchTaskExecutorType(dispatchTaskExecutorType);
+	}
+
+	/**
+	 * Sets the dispatch task settings of this dispatch trigger.
+	 *
+	 * @param dispatchTaskSettings the dispatch task settings of this dispatch trigger
+	 */
+	@Override
+	public void setDispatchTaskSettings(String dispatchTaskSettings) {
+		model.setDispatchTaskSettings(dispatchTaskSettings);
+	}
+
+	@Override
+	public void setDispatchTaskSettingsUnicodeProperties(
+		com.liferay.portal.kernel.util.UnicodeProperties
+			dispatchTaskSettingsUnicodeProperties) {
+
+		model.setDispatchTaskSettingsUnicodeProperties(
+			dispatchTaskSettingsUnicodeProperties);
+	}
+
+	/**
 	 * Sets the dispatch trigger ID of this dispatch trigger.
 	 *
 	 * @param dispatchTriggerId the dispatch trigger ID of this dispatch trigger
@@ -412,6 +572,16 @@ public class DispatchTriggerWrapper
 	@Override
 	public void setEndDate(Date endDate) {
 		model.setEndDate(endDate);
+	}
+
+	/**
+	 * Sets the external reference code of this dispatch trigger.
+	 *
+	 * @param externalReferenceCode the external reference code of this dispatch trigger
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -445,6 +615,16 @@ public class DispatchTriggerWrapper
 	}
 
 	/**
+	 * Sets whether this dispatch trigger is overlap allowed.
+	 *
+	 * @param overlapAllowed the overlap allowed of this dispatch trigger
+	 */
+	@Override
+	public void setOverlapAllowed(boolean overlapAllowed) {
+		model.setOverlapAllowed(overlapAllowed);
+	}
+
+	/**
 	 * Sets the primary key of this dispatch trigger.
 	 *
 	 * @param primaryKey the primary key of this dispatch trigger
@@ -475,23 +655,13 @@ public class DispatchTriggerWrapper
 	}
 
 	/**
-	 * Sets the type of this dispatch trigger.
+	 * Sets the time zone ID of this dispatch trigger.
 	 *
-	 * @param type the type of this dispatch trigger
+	 * @param timeZoneId the time zone ID of this dispatch trigger
 	 */
 	@Override
-	public void setType(String type) {
-		model.setType(type);
-	}
-
-	/**
-	 * Sets the type settings of this dispatch trigger.
-	 *
-	 * @param typeSettings the type settings of this dispatch trigger
-	 */
-	@Override
-	public void setTypeSettings(String typeSettings) {
-		model.setTypeSettings(typeSettings);
+	public void setTimeZoneId(String timeZoneId) {
+		model.setTimeZoneId(timeZoneId);
 	}
 
 	/**
@@ -522,6 +692,26 @@ public class DispatchTriggerWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	/**
+	 * Sets the uuid of this dispatch trigger.
+	 *
+	 * @param uuid the uuid of this dispatch trigger
+	 */
+	@Override
+	public void setUuid(String uuid) {
+		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return model.getStagedModelType();
 	}
 
 	@Override

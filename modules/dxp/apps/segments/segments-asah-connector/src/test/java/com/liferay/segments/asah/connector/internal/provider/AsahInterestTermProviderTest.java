@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.asah.connector.internal.provider;
@@ -19,22 +10,26 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.segments.asah.connector.internal.cache.AsahInterestTermCache;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author Sarai Díaz
  */
-@RunWith(MockitoJUnitRunner.class)
 public class AsahInterestTermProviderTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() {
@@ -61,7 +56,9 @@ public class AsahInterestTermProviderTest {
 		);
 
 		Assert.assertArrayEquals(
-			interestTerms, _asahInterestTermProvider.getInterestTerms(userId));
+			interestTerms,
+			_asahInterestTermProvider.getInterestTerms(
+				RandomTestUtil.randomLong(), userId));
 
 		Mockito.verify(
 			_messageBus, Mockito.never()
@@ -74,7 +71,8 @@ public class AsahInterestTermProviderTest {
 	public void testGetInterestTermsWithEmptyAcClientUserId() {
 		Assert.assertArrayEquals(
 			new String[0],
-			_asahInterestTermProvider.getInterestTerms(StringPool.BLANK));
+			_asahInterestTermProvider.getInterestTerms(
+				RandomTestUtil.randomLong(), StringPool.BLANK));
 	}
 
 	@Test
@@ -88,7 +86,9 @@ public class AsahInterestTermProviderTest {
 		);
 
 		Assert.assertArrayEquals(
-			new String[0], _asahInterestTermProvider.getInterestTerms(userId));
+			new String[0],
+			_asahInterestTermProvider.getInterestTerms(
+				RandomTestUtil.randomLong(), userId));
 
 		Mockito.verify(
 			_messageBus, Mockito.times(1)
@@ -97,13 +97,10 @@ public class AsahInterestTermProviderTest {
 		);
 	}
 
-	@Mock
-	private AsahInterestTermCache _asahInterestTermCache;
-
+	private final AsahInterestTermCache _asahInterestTermCache = Mockito.mock(
+		AsahInterestTermCache.class);
 	private final AsahInterestTermProvider _asahInterestTermProvider =
 		new AsahInterestTermProvider();
-
-	@Mock
-	private MessageBus _messageBus;
+	private final MessageBus _messageBus = Mockito.mock(MessageBus.class);
 
 }

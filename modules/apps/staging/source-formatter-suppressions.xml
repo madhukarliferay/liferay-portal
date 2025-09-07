@@ -2,6 +2,7 @@
 
 <suppressions>
 	<checkstyle>
-		<suppress checks="BuilderCheck" files="modules/apps/staging/staging-test/src/testIntegration/java/com/liferay/staging/test/StagingLocalizationTest\.java" />
+		<suppress checks="MapBuilderCheck" files="staging-test/src/testIntegration/java/com/liferay/staging/test/StagingLocalizationTest\.java" />
+		<suppress checks="PersistenceCallCheck" files="staging-impl/src/main/java/com/liferay/staging/internal/service/LayoutLocalServiceStagingAdvice\.java" />
 	</checkstyle>
 </suppressions>

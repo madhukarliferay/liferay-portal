@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.users.admin.search.test;
@@ -18,22 +9,23 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.SearchEngineHelper;
-import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.search.test.util.IndexedFieldsFixture;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.IndexerFixture;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.users.admin.test.util.search.GroupBlueprint;
+import com.liferay.users.admin.test.util.search.GroupSearchFixture;
 import com.liferay.users.admin.test.util.search.UserSearchFixture;
 
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -57,74 +49,65 @@ public class UserIndexerReindexTest {
 
 	@Before
 	public void setUp() throws Exception {
-		setUpIndexedFieldsFixture();
-		setUpIndexerFixture();
-		setUpUserSearchFixture();
+		GroupSearchFixture groupSearchFixture = new GroupSearchFixture();
+
+		UserSearchFixture userSearchFixture = new UserSearchFixture(
+			userLocalService, groupSearchFixture, null, null);
+
+		_groups = groupSearchFixture.getGroups();
+
+		_groupSearchFixture = groupSearchFixture;
+
+		_indexerFixture = new IndexerFixture<>(User.class);
+
+		_users = userSearchFixture.getUsers();
+
+		_userSearchFixture = userSearchFixture;
+
+		_userSearchFixture.setUp();
+	}
+
+	@After
+	public void tearDown() {
+		_userSearchFixture.tearDown();
 	}
 
 	@Test
 	public void testReindex() throws Exception {
-		User user = createNewUser();
+		Group group = _groupSearchFixture.addGroup(new GroupBlueprint());
 
-		String searchTearm = user.getFirstName();
-
-		Document document = indexerFixture.searchOnlyOne(searchTearm);
-
-		indexerFixture.deleteDocument(document);
-
-		indexerFixture.searchNoOne(searchTearm);
-
-		indexerFixture.reindex(user.getCompanyId());
-
-		indexerFixture.searchOnlyOne(searchTearm);
-	}
-
-	protected User createNewUser() throws Exception {
 		String screenName = RandomTestUtil.randomString();
 
-		return userSearchFixture.addUser(screenName, group);
+		User user = _userSearchFixture.addUser(screenName, group);
+
+		String searchTerm = user.getFirstName();
+
+		Document document = _indexerFixture.searchOnlyOne(searchTerm);
+
+		_indexerFixture.deleteDocument(document);
+
+		_indexerFixture.searchNoOne(searchTerm);
+
+		_indexerFixture.reindex(user.getCompanyId());
+
+		_indexerFixture.searchOnlyOne(searchTerm);
 	}
 
-	protected void setUpIndexedFieldsFixture() {
-		indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService, searchEngineHelper);
-	}
-
-	protected void setUpIndexerFixture() {
-		indexerFixture = new IndexerFixture<>(User.class);
-	}
-
-	protected void setUpUserSearchFixture() throws Exception {
-		userSearchFixture = new UserSearchFixture();
-
-		userSearchFixture.setUp();
-
-		_groups = userSearchFixture.getGroups();
-
-		_users = userSearchFixture.getUsers();
-
-		group = userSearchFixture.addGroup();
-	}
-
-	protected Group group;
-	protected IndexedFieldsFixture indexedFieldsFixture;
-	protected IndexerFixture<User> indexerFixture;
-
-	@Inject
-	protected ResourcePermissionLocalService resourcePermissionLocalService;
-
-	@Inject
-	protected SearchEngineHelper searchEngineHelper;
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	@Inject
 	protected UserLocalService userLocalService;
 
-	protected UserSearchFixture userSearchFixture;
-
 	@DeleteAfterTestRun
 	private List<Group> _groups;
 
+	private GroupSearchFixture _groupSearchFixture;
+	private IndexerFixture<User> _indexerFixture;
+
 	@DeleteAfterTestRun
 	private List<User> _users;
+
+	private UserSearchFixture _userSearchFixture;
 
 }

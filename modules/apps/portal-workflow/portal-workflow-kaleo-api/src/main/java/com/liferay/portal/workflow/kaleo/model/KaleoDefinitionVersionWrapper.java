@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model;
@@ -20,6 +11,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -45,17 +38,16 @@ public class KaleoDefinitionVersionWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put(
 			"kaleoDefinitionVersionId", getKaleoDefinitionVersionId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
 		attributes.put("userName", getUserName());
-		attributes.put("statusByUserId", getStatusByUserId());
-		attributes.put("statusByUserName", getStatusByUserName());
-		attributes.put("statusDate", getStatusDate());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("kaleoDefinitionId", getKaleoDefinitionId());
 		attributes.put("name", getName());
 		attributes.put("title", getTitle());
 		attributes.put("description", getDescription());
@@ -63,6 +55,9 @@ public class KaleoDefinitionVersionWrapper
 		attributes.put("version", getVersion());
 		attributes.put("startKaleoNodeId", getStartKaleoNodeId());
 		attributes.put("status", getStatus());
+		attributes.put("statusByUserId", getStatusByUserId());
+		attributes.put("statusByUserName", getStatusByUserName());
+		attributes.put("statusDate", getStatusDate());
 
 		return attributes;
 	}
@@ -73,6 +68,12 @@ public class KaleoDefinitionVersionWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		Long kaleoDefinitionVersionId = (Long)attributes.get(
@@ -106,24 +107,6 @@ public class KaleoDefinitionVersionWrapper
 			setUserName(userName);
 		}
 
-		Long statusByUserId = (Long)attributes.get("statusByUserId");
-
-		if (statusByUserId != null) {
-			setStatusByUserId(statusByUserId);
-		}
-
-		String statusByUserName = (String)attributes.get("statusByUserName");
-
-		if (statusByUserName != null) {
-			setStatusByUserName(statusByUserName);
-		}
-
-		Date statusDate = (Date)attributes.get("statusDate");
-
-		if (statusDate != null) {
-			setStatusDate(statusDate);
-		}
-
 		Date createDate = (Date)attributes.get("createDate");
 
 		if (createDate != null) {
@@ -134,6 +117,12 @@ public class KaleoDefinitionVersionWrapper
 
 		if (modifiedDate != null) {
 			setModifiedDate(modifiedDate);
+		}
+
+		Long kaleoDefinitionId = (Long)attributes.get("kaleoDefinitionId");
+
+		if (kaleoDefinitionId != null) {
+			setKaleoDefinitionId(kaleoDefinitionId);
 		}
 
 		String name = (String)attributes.get("name");
@@ -177,15 +166,29 @@ public class KaleoDefinitionVersionWrapper
 		if (status != null) {
 			setStatus(status);
 		}
+
+		Long statusByUserId = (Long)attributes.get("statusByUserId");
+
+		if (statusByUserId != null) {
+			setStatusByUserId(statusByUserId);
+		}
+
+		String statusByUserName = (String)attributes.get("statusByUserName");
+
+		if (statusByUserName != null) {
+			setStatusByUserName(statusByUserName);
+		}
+
+		Date statusDate = (Date)attributes.get("statusDate");
+
+		if (statusDate != null) {
+			setStatusDate(statusDate);
+		}
 	}
 
-	/**
-	 * @deprecated As of Mueller (7.2.x), with no direct replacement
-	 */
-	@Deprecated
 	@Override
-	public KaleoDefinition fetchKaleoDefinition() {
-		return model.fetchKaleoDefinition();
+	public KaleoDefinitionVersion cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -213,6 +216,11 @@ public class KaleoDefinitionVersionWrapper
 		return model.getContent();
 	}
 
+	@Override
+	public String getContentAsXML() {
+		return model.getContentAsXML();
+	}
+
 	/**
 	 * Returns the create date of this kaleo definition version.
 	 *
@@ -221,6 +229,16 @@ public class KaleoDefinitionVersionWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the ct collection ID of this kaleo definition version.
+	 *
+	 * @return the ct collection ID of this kaleo definition version
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	@Override
@@ -253,6 +271,16 @@ public class KaleoDefinitionVersionWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getKaleoDefinition();
+	}
+
+	/**
+	 * Returns the kaleo definition ID of this kaleo definition version.
+	 *
+	 * @return the kaleo definition ID of this kaleo definition version
+	 */
+	@Override
+	public long getKaleoDefinitionId() {
+		return model.getKaleoDefinitionId();
 	}
 
 	/**
@@ -489,15 +517,6 @@ public class KaleoDefinitionVersionWrapper
 	}
 
 	/**
-	 * @deprecated As of Mueller (7.2.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public boolean hasIncompleteKaleoInstances() {
-		return model.hasIncompleteKaleoInstances();
-	}
-
-	/**
 	 * Returns <code>true</code> if this kaleo definition version is approved.
 	 *
 	 * @return <code>true</code> if this kaleo definition version is approved; <code>false</code> otherwise
@@ -577,11 +596,6 @@ public class KaleoDefinitionVersionWrapper
 		return model.isScheduled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a kaleo definition version model instance should use the <code>KaleoDefinitionVersion</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -622,6 +636,11 @@ public class KaleoDefinitionVersionWrapper
 		model.setContent(content);
 	}
 
+	@Override
+	public void setContentAsXML(String contentAsXML) {
+		model.setContentAsXML(contentAsXML);
+	}
+
 	/**
 	 * Sets the create date of this kaleo definition version.
 	 *
@@ -630,6 +649,16 @@ public class KaleoDefinitionVersionWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this kaleo definition version.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kaleo definition version
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -650,6 +679,16 @@ public class KaleoDefinitionVersionWrapper
 	@Override
 	public void setGroupId(long groupId) {
 		model.setGroupId(groupId);
+	}
+
+	/**
+	 * Sets the kaleo definition ID of this kaleo definition version.
+	 *
+	 * @param kaleoDefinitionId the kaleo definition ID of this kaleo definition version
+	 */
+	@Override
+	public void setKaleoDefinitionId(long kaleoDefinitionId) {
+		model.setKaleoDefinitionId(kaleoDefinitionId);
 	}
 
 	/**
@@ -864,6 +903,25 @@ public class KaleoDefinitionVersionWrapper
 	@Override
 	public void setVersion(String version) {
 		model.setVersion(version);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<KaleoDefinitionVersion, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<KaleoDefinitionVersion, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

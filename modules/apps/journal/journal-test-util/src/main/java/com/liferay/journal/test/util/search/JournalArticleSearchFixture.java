@@ -1,25 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.test.util.search;
 
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.journal.model.JournalFolderConstants;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.util.Portal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,23 +26,29 @@ import java.util.Map;
 public class JournalArticleSearchFixture {
 
 	public JournalArticleSearchFixture(
-		JournalArticleLocalService journalArticleLocalService) {
+		DDMStructureLocalService ddmStructureLocalService,
+		JournalArticleLocalService journalArticleLocalService, Portal portal) {
 
+		_ddmStructureLocalService = ddmStructureLocalService;
 		_journalArticleLocalService = journalArticleLocalService;
+		_portal = portal;
 	}
 
 	public JournalArticle addArticle(
 		JournalArticleBlueprint journalArticleBlueprint) {
 
-		String ddmStructureKey = "BASIC-WEB-CONTENT";
-		String ddmTemplateKey = "BASIC-WEB-CONTENT";
+		DDMStructure ddmStructure = _ddmStructureLocalService.fetchStructure(
+			_portal.getSiteGroupId(journalArticleBlueprint.getGroupId()),
+			_portal.getClassNameId(JournalArticle.class.getName()),
+			"BASIC-WEB-CONTENT", true);
 
 		return addArticle(
-			journalArticleBlueprint, ddmStructureKey, ddmTemplateKey);
+			journalArticleBlueprint, ddmStructure.getStructureId(),
+			"BASIC-WEB-CONTENT");
 	}
 
 	public JournalArticle addArticle(
-		JournalArticleBlueprint journalArticleBlueprint, String ddmStructureKey,
+		JournalArticleBlueprint journalArticleBlueprint, long ddmStructureId,
 		String ddmTemplateKey) {
 
 		long userId = journalArticleBlueprint.getUserId();
@@ -59,10 +59,13 @@ public class JournalArticleSearchFixture {
 			journalArticleBlueprint.getDescriptionMap();
 		String contentString = journalArticleBlueprint.getContentString();
 
-		ServiceContext serviceContext = getServiceContext(groupId, userId);
+		ServiceContext serviceContext = getServiceContext(
+			journalArticleBlueprint);
 
 		serviceContext.setAssetCategoryIds(
 			journalArticleBlueprint.getAssetCategoryIds());
+		serviceContext.setExpandoBridgeAttributes(
+			journalArticleBlueprint.getExpandoBridgeAttributes());
 
 		if (journalArticleBlueprint.isWorkflowEnabled()) {
 			serviceContext.setWorkflowAction(
@@ -71,7 +74,7 @@ public class JournalArticleSearchFixture {
 
 		JournalArticle journalArticle = addArticle(
 			userId, groupId, folderId, titleMap, descriptionMap, contentString,
-			ddmStructureKey, ddmTemplateKey, serviceContext);
+			ddmStructureId, ddmTemplateKey, serviceContext);
 
 		_journalArticles.add(journalArticle);
 
@@ -108,29 +111,52 @@ public class JournalArticleSearchFixture {
 	protected JournalArticle addArticle(
 		long userId, long groupId, long folderId, Map<Locale, String> titleMap,
 		Map<Locale, String> descriptionMap, String contentString,
-		String ddmStructureKey, String ddmTemplateKey,
+		long ddmStructureId, String ddmTemplateKey,
 		ServiceContext serviceContext) {
 
 		try {
 			return _journalArticleLocalService.addArticle(
-				userId, groupId, folderId, titleMap, descriptionMap,
-				contentString, ddmStructureKey, ddmTemplateKey, serviceContext);
+				null, userId, groupId, folderId, titleMap, descriptionMap,
+				contentString, ddmStructureId, ddmTemplateKey, serviceContext);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
+	protected ServiceContext getServiceContext(
+		JournalArticleBlueprint journalArticleBlueprint) {
+
+		if (journalArticleBlueprint.getServiceContext() != null) {
+			return journalArticleBlueprint.getServiceContext();
+		}
+
+		try {
+			return ServiceContextTestUtil.getServiceContext(
+				journalArticleBlueprint.getGroupId(),
+				journalArticleBlueprint.getUserId());
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x)
+	 */
+	@Deprecated
 	protected ServiceContext getServiceContext(long groupId, long userId) {
 		try {
 			return ServiceContextTestUtil.getServiceContext(groupId, userId);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
+	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final JournalArticleLocalService _journalArticleLocalService;
 	private final List<JournalArticle> _journalArticles = new ArrayList<>();
+	private final Portal _portal;
 
 }

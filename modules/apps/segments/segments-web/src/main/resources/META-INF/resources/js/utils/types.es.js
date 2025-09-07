@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import PropTypes from 'prop-types';
@@ -24,12 +15,12 @@ const propertyShape = PropTypes.shape({
 	label: PropTypes.string,
 	name: PropTypes.string.isRequired,
 	options: PropTypes.array,
-	type: PropTypes.string.isRequired
+	type: PropTypes.string.isRequired,
 });
 
 const conjunctionShape = PropTypes.shape({
 	label: PropTypes.string.isRequired,
-	name: PropTypes.string.isRequired
+	name: PropTypes.string.isRequired,
 });
 
 /**
@@ -44,8 +35,8 @@ const criterionShape = PropTypes.shape({
 	value: PropTypes.oneOfType([
 		PropTypes.array,
 		PropTypes.number,
-		PropTypes.string
-	])
+		PropTypes.string,
+	]),
 });
 
 /**
@@ -54,7 +45,7 @@ const criterionShape = PropTypes.shape({
  */
 const criteriaShape = PropTypes.shape({
 	conjunctionName: PropTypes.string,
-	groupId: PropTypes.string
+	groupId: PropTypes.string,
 });
 
 criteriaShape.items = PropTypes.arrayOf(
@@ -77,10 +68,10 @@ const initialContributorShape = PropTypes.shape({
 	conjunctionInputId: PropTypes.string.isRequired,
 	initialQuery: PropTypes.oneOfType([
 		PropTypes.string,
-		PropTypes.shape(null)
+		PropTypes.shape(null),
 	]),
 	inputId: PropTypes.string.isRequired,
-	propertyKey: PropTypes.string.isRequired
+	propertyKey: PropTypes.string.isRequired,
 });
 
 /**
@@ -105,7 +96,7 @@ const contributorShape = PropTypes.shape({
 	modelLabel: PropTypes.string,
 	properties: PropTypes.arrayOf(propertyShape),
 	propertyKey: PropTypes.string,
-	query: PropTypes.string
+	query: PropTypes.string,
 });
 
 /**
@@ -115,7 +106,7 @@ const contributorShape = PropTypes.shape({
  */
 const operatorShape = PropTypes.shape({
 	label: PropTypes.string.isRequired,
-	name: PropTypes.string.isRequired
+	name: PropTypes.string.isRequired,
 });
 
 /**
@@ -126,7 +117,7 @@ const propertyGroupShape = PropTypes.shape({
 	entityName: PropTypes.string.isRequired,
 	name: PropTypes.string.isRequired,
 	properties: PropTypes.arrayOf(propertyShape).isRequired,
-	propertyKey: PropTypes.string.isRequired
+	propertyKey: PropTypes.string.isRequired,
 });
 
 /**
@@ -139,7 +130,7 @@ const propertyTypesShape = PropTypes.shape({
 	double: PropTypes.arrayOf(PropTypes.string).isRequired,
 	id: PropTypes.arrayOf(PropTypes.string).isRequired,
 	integer: PropTypes.arrayOf(PropTypes.string).isRequired,
-	string: PropTypes.arrayOf(PropTypes.string).isRequired
+	string: PropTypes.arrayOf(PropTypes.string).isRequired,
 });
 
 export {
@@ -151,5 +142,5 @@ export {
 	contributorShape,
 	operatorShape,
 	propertyGroupShape,
-	propertyShape
+	propertyShape,
 };

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,58 +11,88 @@
 	<p>Labels are a mechanism to categorize information providing quick recognition.</p>
 </blockquote>
 
-<div class="mb-3 row">
-	<div class="col-2">
-		<div><clay:label label="Label text" style="info" /></div>
-		<div><clay:label label="Label text" size="lg" style="info" /></div>
-	</div>
+<clay:row
+	cssClass="mb-3"
+>
+	<clay:col
+		size="2"
+	>
+		<div>
+			<clay:label
+				displayType="info"
+				label="Label text"
+			/>
+		</div>
 
-	<div class="col-2">
+		<div>
+			<clay:label
+				displayType="info"
+				label="Label text"
+				large="<%= true %>"
+			/>
+		</div>
+	</clay:col>
+
+	<clay:col
+		size="2"
+	>
 		<div><clay:label label="Status" /></div>
-		<div><clay:label label="Status" size="lg" /></div>
-	</div>
+		<div><clay:label label="Status" large="<%= true %>" /></div>
+	</clay:col>
 
-	<div class="col-2">
-		<div><clay:label label="Pending" style="warning" /></div>
-		<div><clay:label label="Pending" size="lg" style="warning" /></div>
-	</div>
+	<clay:col
+		size="2"
+	>
+		<div><clay:label displayType="warning" label="Pending" /></div>
+		<div><clay:label displayType="warning" label="Pending" large="<%= true %>" /></div>
+	</clay:col>
 
-	<div class="col-2">
-		<div><clay:label label="Rejected" style="danger" /></div>
-		<div><clay:label label="Rejected" size="lg" style="danger" /></div>
-	</div>
+	<clay:col
+		size="2"
+	>
+		<div><clay:label displayType="danger" label="Rejected" /></div>
+		<div><clay:label displayType="danger" label="Rejected" large="<%= true %>" /></div>
+	</clay:col>
 
-	<div class="col-2">
-		<div><clay:label label="Approved" style="success" /></div>
-		<div><clay:label label="Approved" size="lg" style="success" /></div>
-	</div>
-</div>
+	<clay:col
+		size="2"
+	>
+		<div><clay:label displayType="success" label="Approved" /></div>
+		<div><clay:label displayType="success" label="Approved" large="<%= true %>" /></div>
+	</clay:col>
+</clay:row>
 
 <h3>LABEL REMOVABLE</h3>
 
-<div class="mb-3 row">
-	<div class="col-12">
+<clay:row
+	cssClass="row"
+>
+	<clay:col
+		size="12"
+	>
 		<clay:label
-			closeable="<%= true %>"
+			dismissible="<%= true %>"
 			label="Normal Label"
 		/>
 
 		<clay:label
-			closeable="<%= true %>"
+			dismissible="<%= true %>"
+			displayType="success"
 			label="Large Label"
-			size="lg"
-			style="success"
+			large="<%= true %>"
 		/>
-	</div>
-</div>
+	</clay:col>
+</clay:row>
 
 <h3>LABEL WITH LINK</h3>
 
-<div class="row">
-	<div class="col-12">
+<clay:row>
+	<clay:col
+		size="12"
+	>
 		<clay:label
 			href="#"
 			label="Label Text"
 		/>
-	</div>
-</div>
+	</clay:col>
+</clay:row>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -124,6 +115,8 @@ public class LayoutSetPrototypePersistenceTest {
 
 		newLayoutSetPrototype.setMvccVersion(RandomTestUtil.nextLong());
 
+		newLayoutSetPrototype.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newLayoutSetPrototype.setUuid(RandomTestUtil.randomString());
 
 		newLayoutSetPrototype.setCompanyId(RandomTestUtil.nextLong());
@@ -153,6 +146,9 @@ public class LayoutSetPrototypePersistenceTest {
 		Assert.assertEquals(
 			existingLayoutSetPrototype.getMvccVersion(),
 			newLayoutSetPrototype.getMvccVersion());
+		Assert.assertEquals(
+			existingLayoutSetPrototype.getCtCollectionId(),
+			newLayoutSetPrototype.getCtCollectionId());
 		Assert.assertEquals(
 			existingLayoutSetPrototype.getUuid(),
 			newLayoutSetPrototype.getUuid());
@@ -248,10 +244,10 @@ public class LayoutSetPrototypePersistenceTest {
 
 	protected OrderByComparator<LayoutSetPrototype> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"LayoutSetPrototype", "mvccVersion", true, "uuid", true,
-			"layoutSetPrototypeId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"settings", true, "active", true);
+			"LayoutSetPrototype", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "layoutSetPrototypeId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "settings", true, "active", true);
 	}
 
 	@Test
@@ -483,6 +479,8 @@ public class LayoutSetPrototypePersistenceTest {
 		LayoutSetPrototype layoutSetPrototype = _persistence.create(pk);
 
 		layoutSetPrototype.setMvccVersion(RandomTestUtil.nextLong());
+
+		layoutSetPrototype.setCtCollectionId(RandomTestUtil.nextLong());
 
 		layoutSetPrototype.setUuid(RandomTestUtil.randomString());
 

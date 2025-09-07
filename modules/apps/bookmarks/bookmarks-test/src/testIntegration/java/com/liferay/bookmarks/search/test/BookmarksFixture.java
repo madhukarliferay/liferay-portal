@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.search.test;
 
+import com.liferay.bookmarks.constants.BookmarksFolderConstants;
 import com.liferay.bookmarks.model.BookmarksEntry;
 import com.liferay.bookmarks.model.BookmarksFolder;
-import com.liferay.bookmarks.model.BookmarksFolderConstants;
-import com.liferay.bookmarks.service.BookmarksEntryLocalServiceUtil;
-import com.liferay.bookmarks.test.util.BookmarksTestUtil;
+import com.liferay.bookmarks.service.BookmarksEntryLocalService;
+import com.liferay.bookmarks.service.BookmarksFolderService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -43,7 +34,12 @@ import java.util.Map;
  */
 public class BookmarksFixture {
 
-	public BookmarksFixture(Group group, User user) {
+	public BookmarksFixture(
+		BookmarksEntryLocalService bookmarksEntryLocalService,
+		BookmarksFolderService bookmarksFolderService, Group group, User user) {
+
+		_bookmarksEntryLocalService = bookmarksEntryLocalService;
+		_bookmarksFolderService = bookmarksFolderService;
 		_group = group;
 		_user = user;
 	}
@@ -64,13 +60,11 @@ public class BookmarksFixture {
 			long folderId, String name, String description)
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
-
-		BookmarksEntry bookmarksEntry = BookmarksEntryLocalServiceUtil.addEntry(
+		BookmarksEntry bookmarksEntry = _bookmarksEntryLocalService.addEntry(
 			_user.getUserId(), _group.getGroupId(), folderId, name,
-			"https://www.liferay.com", description, serviceContext);
+			"https://www.liferay.com", description,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), _user.getUserId()));
 
 		_bookmarksEntries.add(bookmarksEntry);
 
@@ -89,13 +83,10 @@ public class BookmarksFixture {
 	}
 
 	public BookmarksFolder createBookmarksFolder(String name) throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
-
-		BookmarksFolder bookmarksFolder = BookmarksTestUtil.addFolder(
+		BookmarksFolder bookmarksFolder = addFolder(
 			BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID, name,
-			serviceContext);
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), _user.getUserId()));
 
 		_bookmarksFolders.add(bookmarksFolder);
 
@@ -139,8 +130,20 @@ public class BookmarksFixture {
 		_group.setModelAttributes(group.getModelAttributes());
 	}
 
+	protected BookmarksFolder addFolder(
+			long parentFolderId, String name, ServiceContext serviceContext)
+		throws Exception {
+
+		String description = "This is a test folder.";
+
+		return _bookmarksFolderService.addFolder(
+			parentFolderId, name, description, serviceContext);
+	}
+
 	private final List<BookmarksEntry> _bookmarksEntries = new ArrayList<>();
+	private final BookmarksEntryLocalService _bookmarksEntryLocalService;
 	private final List<BookmarksFolder> _bookmarksFolders = new ArrayList<>();
+	private final BookmarksFolderService _bookmarksFolderService;
 	private final Group _group;
 	private final User _user;
 

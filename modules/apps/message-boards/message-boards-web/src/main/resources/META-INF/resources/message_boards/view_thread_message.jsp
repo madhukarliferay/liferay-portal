@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -29,42 +20,39 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 if (message.isAnonymous() || thread.isInTrash()) {
 	showRecentPosts = false;
 }
+
+User messageUser = UserLocalServiceUtil.fetchUser(message.getUserId());
 %>
 
 <a id="<portlet:namespace />message_<%= message.getMessageId() %>"></a>
 
 <div class="card panel">
 	<div class="panel-heading">
-		<div class="autofit-padded autofit-row card-body">
-			<div class="autofit-col">
+		<clay:content-row
+			cssClass="card-body"
+			padded="<%= true %>"
+		>
+			<clay:content-col>
 				<div class="list-group-card-icon">
-					<liferay-ui:user-portrait
+					<liferay-user:user-portrait
 						userId="<%= !message.isAnonymous() ? message.getUserId() : 0 %>"
 					/>
 				</div>
-			</div>
+			</clay:content-col>
 
-			<div class="autofit-col autofit-col-expand">
+			<clay:content-col
+				expand="<%= true %>"
+			>
 
 				<%
-				String messageUserName = "anonymous";
-
-				if (!message.isAnonymous()) {
-					messageUserName = message.getUserName();
-				}
-
-				Date modifiedDate = message.getModifiedDate();
-
-				String modifiedDateDescription = LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - modifiedDate.getTime(), true);
-
-				String userDisplayText = LanguageUtil.format(request, "x-modified-x-ago", new Object[] {messageUserName, modifiedDateDescription});
+				String userDisplayText = mbDisplayContext.getModifiedLabel(message);
 				%>
 
-				<h5 class="message-user-display text-default" title="<%= HtmlUtil.escapeAttribute(userDisplayText) %>">
+				<span class="message-user-display text-default" title="<%= HtmlUtil.escapeAttribute(userDisplayText) %>">
 					<%= HtmlUtil.escape(userDisplayText) %>
-				</h5>
+				</span>
 
-				<h4 title="<%= HtmlUtil.escape(message.getSubject()) %>">
+				<div class="h4" title="<%= HtmlUtil.escape(message.getSubject()) %>">
 					<c:choose>
 						<c:when test="<%= showPermanentLink %>">
 							<a href="#<portlet:namespace />message_<%= message.getMessageId() %>" title="<liferay-ui:message key="permanent-link-to-this-item" />">
@@ -77,29 +65,27 @@ if (message.isAnonymous() || thread.isInTrash()) {
 					</c:choose>
 
 					<c:if test="<%= message.isAnswer() %>">
-						(<liferay-ui:message key="answer" />)
+						(<liferay-ui:message key="answer[noun]" />)
 					</c:if>
-				</h4>
+				</div>
 
 				<%
-				MBStatsUser statsUser = null;
+				int messageCount = 0;
 
 				if (!message.isAnonymous()) {
-					statsUser = MBStatsUserLocalServiceUtil.getStatsUser(scopeGroupId, message.getUserId());
+					messageCount = MBStatsUserLocalServiceUtil.getMessageCount(scopeGroupId, message.getUserId());
 				}
 
-				int posts = message.isAnonymous() ? 1 : statsUser.getMessageCount();
+				int posts = message.isAnonymous() ? 1 : messageCount;
 
 				String[] ranks = {StringPool.BLANK, StringPool.BLANK};
 
-				if (!message.isAnonymous()) {
-					ranks = MBUserRankUtil.getUserRank(mbGroupServiceSettings, themeDisplay.getLanguageId(), statsUser);
+				if (!message.isAnonymous() && (messageUser != null)) {
+					ranks = MBStatsUserLocalServiceUtil.getUserRank(themeDisplay.getSiteGroupId(), themeDisplay.getLanguageId(), message.getUserId());
 				}
-
-				User messageUser = UserLocalServiceUtil.fetchUser(message.getUserId());
 				%>
 
-				<c:if test="<%= (messageUser != null) && !messageUser.isDefaultUser() %>">
+				<c:if test="<%= (messageUser != null) && !messageUser.isGuestUser() %>">
 					<c:if test="<%= Validator.isNotNull(ranks[1]) %>">
 						<span class="h5 text-default" title="<%= HtmlUtil.escape(ranks[1]) %>">
 							<%= HtmlUtil.escape(ranks[1]) %>
@@ -125,7 +111,7 @@ if (message.isAnonymous() || thread.isInTrash()) {
 
 					<c:if test="<%= !message.isAnonymous() %>">
 						<span class="h5 text-default">
-							<span><liferay-ui:message key="join-date" />:</span> <%= dateFormatDate.format(messageUser.getCreateDate()) %>
+							<span><liferay-ui:message key="join-date" />:</span> <%= dateFormat.format(messageUser.getCreateDate()) %>
 						</span>
 					</c:if>
 
@@ -147,19 +133,22 @@ if (message.isAnonymous() || thread.isInTrash()) {
 							/>
 						</span>
 					</c:if>
+				</c:if>
 
-					<c:if test="<%= !message.isApproved() %>">
-						<span class="h5 text-default">
-							<aui:workflow-status markupView="lexicon" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= message.getStatus() %>" />
-						</span>
-					</c:if>
+				<c:if test="<%= !message.isApproved() %>">
+					<span class="h5 text-default">
+						<liferay-portal-workflow:status
+							showStatusLabel="<%= false %>"
+							status="<%= message.getStatus() %>"
+						/>
+					</span>
 				</c:if>
 
 				<c:if test="<%= enableFlags || enableRatings %>">
 					<div class="social-interaction">
 						<c:if test="<%= enableRatings %>">
 							<div id="<portlet:namespace />mbRatings">
-								<liferay-ui:ratings
+								<liferay-ratings:ratings
 									className="<%= MBMessage.class.getName() %>"
 									classPK="<%= message.getMessageId() %>"
 									inTrash="<%= message.isInTrash() %>"
@@ -181,9 +170,9 @@ if (message.isAnonymous() || thread.isInTrash()) {
 						</c:if>
 					</div>
 				</c:if>
-			</div>
+			</clay:content-col>
 
-			<div class="autofit-col">
+			<clay:content-col>
 				<c:if test="<%= editable %>">
 
 					<%
@@ -383,8 +372,8 @@ if (message.isAnonymous() || thread.isInTrash()) {
 						</liferay-ui:icon-menu>
 					</c:if>
 				</c:if>
-			</div>
-		</div>
+			</clay:content-col>
+		</clay:content-row>
 	</div>
 
 	<div class="divider"></div>
@@ -403,13 +392,9 @@ if (message.isAnonymous() || thread.isInTrash()) {
 			<%= msgBody %>
 		</div>
 
-		<%
-		String assetTagNames = (String)request.getAttribute("edit_message.jsp-assetTagNames");
-		%>
-
 		<div class="card-body tags">
 			<liferay-asset:asset-tags-summary
-				assetTagNames="<%= assetTagNames %>"
+				assetTagNames='<%= (String)request.getAttribute("edit_message.jsp-assetTagNames") %>'
 				className="<%= MBMessage.class.getName() %>"
 				classPK="<%= message.getMessageId() %>"
 				portletURL="<%= liferayPortletResponse.createRenderURL() %>"
@@ -444,7 +429,7 @@ if (message.isAnonymous() || thread.isInTrash()) {
 
 			<c:if test="<%= attachmentsFileEntriesCount > 0 %>">
 				<div class="card-body message-attachments">
-					<h3><liferay-ui:message key="attachments" />:</h3>
+					<p class="h3"><liferay-ui:message key="attachments" />:</p>
 
 					<ul>
 
@@ -460,7 +445,7 @@ if (message.isAnonymous() || thread.isInTrash()) {
 								sb.append(fileEntry.getTitle());
 								sb.append(StringPool.SPACE);
 								sb.append(StringPool.OPEN_PARENTHESIS);
-								sb.append(TextFormatter.formatStorageSize(fileEntry.getSize(), locale));
+								sb.append(LanguageUtil.formatStorageSize(fileEntry.getSize(), locale));
 								sb.append(StringPool.CLOSE_PARENTHESIS);
 
 								AssetRendererFactory<?> assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(DLFileEntry.class.getName());
@@ -472,7 +457,7 @@ if (message.isAnonymous() || thread.isInTrash()) {
 									icon="<%= assetRenderer.getIconCssClass() %>"
 									label="<%= true %>"
 									markupView="lexicon"
-									message="<%= sb.toString() %>"
+									message="<%= HtmlUtil.escape(sb.toString()) %>"
 									method="get"
 									url="<%= PortletFileRepositoryUtil.getDownloadPortletFileEntryURL(themeDisplay, fileEntry, StringPool.BLANK) %>"
 								/>

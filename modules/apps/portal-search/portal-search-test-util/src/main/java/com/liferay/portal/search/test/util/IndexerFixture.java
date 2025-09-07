@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test.util;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Hits;
@@ -22,15 +14,13 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
+import com.liferay.portal.search.searcher.SearchResponse;
 
 import java.io.Serializable;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Lucas Marques de Paula
@@ -38,36 +28,36 @@ import java.util.stream.Stream;
 public class IndexerFixture<T> {
 
 	public IndexerFixture(Class<T> clazz) {
+		this(clazz, null);
+	}
+
+	public IndexerFixture(
+		Class<T> clazz,
+		SearchRequestBuilderFactory searchRequestBuilderFactory) {
+
+		_searchRequestBuilderFactory = searchRequestBuilderFactory;
+
 		_indexer = IndexerRegistryUtil.getIndexer(clazz);
 	}
 
 	public void deleteDocument(Document document) {
 		try {
 			IndexWriterHelperUtil.deleteDocument(
-				_indexer.getSearchEngineId(), TestPropsValues.getCompanyId(),
-				document.getUID(), true);
+				TestPropsValues.getCompanyId(), document.getUID(), true);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
 	public void deleteDocuments(Document[] docs) {
 		try {
-			Stream<Document> stream = Arrays.stream(docs);
-
-			List<String> uids = stream.map(
-				document -> document.getUID()
-			).collect(
-				Collectors.toList()
-			);
-
 			IndexWriterHelperUtil.deleteDocuments(
-				_indexer.getSearchEngineId(), TestPropsValues.getCompanyId(),
-				uids, true);
+				TestPropsValues.getCompanyId(),
+				TransformUtil.transformToList(docs, Document::getUID), true);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -77,16 +67,14 @@ public class IndexerFixture<T> {
 
 	public Document[] search(long userId, String keywords, Locale locale) {
 		try {
-			SearchContext searchContext =
+			Hits hits = _indexer.search(
 				SearchContextTestUtil.getSearchContext(
-					userId, keywords, locale);
-
-			Hits hits = _indexer.search(searchContext);
+					userId, keywords, locale));
 
 			return hits.getDocs();
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -94,8 +82,8 @@ public class IndexerFixture<T> {
 		try {
 			return search(TestPropsValues.getUserId(), keywords, null);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -108,16 +96,14 @@ public class IndexerFixture<T> {
 		Map<String, Serializable> attributes) {
 
 		try {
-			SearchContext searchContext =
+			Hits hits = _indexer.search(
 				SearchContextTestUtil.getSearchContext(
-					userId, null, keywords, locale, attributes);
-
-			Hits hits = _indexer.search(searchContext);
+					userId, null, keywords, locale, attributes));
 
 			HitsAssert.assertNoHits(hits);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -136,8 +122,8 @@ public class IndexerFixture<T> {
 			searchNoOne(
 				TestPropsValues.getUserId(), keywords, locale, attributes);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -156,10 +142,11 @@ public class IndexerFixture<T> {
 
 			Hits hits = _indexer.search(searchContext);
 
-			return HitsAssert.assertOnlyOne(hits);
+			return HitsAssert.assertOnlyOne(
+				(String)searchContext.getAttribute("queryString"), hits);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -178,8 +165,8 @@ public class IndexerFixture<T> {
 			return searchOnlyOne(
 				TestPropsValues.getUserId(), keywords, locale, attributes);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -189,6 +176,34 @@ public class IndexerFixture<T> {
 		return searchOnlyOne(keywords, null, attributes);
 	}
 
+	public SearchResponse searchOnlyOneSearchResponse(
+		String keywords, Locale locale) {
+
+		try {
+			SearchContext searchContext =
+				SearchContextTestUtil.getSearchContext(
+					TestPropsValues.getUserId(), keywords, locale);
+
+			_searchRequestBuilderFactory.builder(
+				searchContext
+			).fetchSourceIncludes(
+				new String[] {"*_sortable"}
+			).build();
+
+			Hits hits = _indexer.search(searchContext);
+
+			HitsAssert.assertOnlyOne(
+				(String)searchContext.getAttribute("queryString"), hits);
+
+			return (SearchResponse)searchContext.getAttribute(
+				"search.response");
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
 	private final Indexer<T> _indexer;
+	private final SearchRequestBuilderFactory _searchRequestBuilderFactory;
 
 }

@@ -1,20 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the remote service utility for Group. This utility wraps
@@ -30,25 +26,19 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class GroupServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.GroupServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link GroupServiceUtil} to access the group remote service. Add custom service methods to <code>com.liferay.portal.service.impl.GroupServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.portal.kernel.model.Group addGroup(
+	public static Group addGroup(
 			long parentGroupId, long liveGroupId,
-			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap, int type,
+			Map<java.util.Locale, String> nameMap,
+			Map<java.util.Locale, String> descriptionMap, int type,
 			boolean manualMembership, int membershipRestriction,
 			String friendlyURL, boolean site, boolean inheritContent,
 			boolean active, ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addGroup(
 			parentGroupId, liveGroupId, nameMap, descriptionMap, type,
@@ -56,19 +46,34 @@ public class GroupServiceUtil {
 			inheritContent, active, serviceContext);
 	}
 
-	public static com.liferay.portal.kernel.model.Group addGroup(
+	public static Group addGroup(
 			long parentGroupId, long liveGroupId,
-			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap, int type,
+			Map<java.util.Locale, String> nameMap,
+			Map<java.util.Locale, String> descriptionMap, int type,
 			boolean manualMembership, int membershipRestriction,
 			String friendlyURL, boolean site, boolean active,
 			ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addGroup(
 			parentGroupId, liveGroupId, nameMap, descriptionMap, type,
 			manualMembership, membershipRestriction, friendlyURL, site, active,
 			serviceContext);
+	}
+
+	public static Group addOrUpdateGroup(
+			String externalReferenceCode, long parentGroupId, long liveGroupId,
+			Map<java.util.Locale, String> nameMap,
+			Map<java.util.Locale, String> descriptionMap, int type,
+			boolean manualMembership, int membershipRestriction,
+			String friendlyURL, boolean site, boolean inheritContent,
+			boolean active, ServiceContext serviceContext)
+		throws Exception {
+
+		return getService().addOrUpdateGroup(
+			externalReferenceCode, parentGroupId, liveGroupId, nameMap,
+			descriptionMap, type, manualMembership, membershipRestriction,
+			friendlyURL, site, inheritContent, active, serviceContext);
 	}
 
 	/**
@@ -79,7 +84,7 @@ public class GroupServiceUtil {
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public static void addRoleGroups(long roleId, long[] groupIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().addRoleGroups(roleId, groupIds);
 	}
@@ -92,7 +97,7 @@ public class GroupServiceUtil {
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public static void checkRemoteStagingGroup(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().checkRemoteStagingGroup(groupId);
 	}
@@ -110,22 +115,24 @@ public class GroupServiceUtil {
 	 * @param groupId the primary key of the group
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static void deleteGroup(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void deleteGroup(long groupId) throws PortalException {
 		getService().deleteGroup(groupId);
 	}
 
-	public static void disableStaging(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void disableStaging(long groupId) throws PortalException {
 		getService().disableStaging(groupId);
 	}
 
-	public static void enableStaging(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void enableStaging(long groupId) throws PortalException {
 		getService().enableStaging(groupId);
+	}
+
+	public static Group fetchGroupByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().fetchGroupByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -135,10 +142,7 @@ public class GroupServiceUtil {
 	 * @return the group associated with the company
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group getCompanyGroup(
-			long companyId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Group getCompanyGroup(long companyId) throws PortalException {
 		return getService().getCompanyGroup(companyId);
 	}
 
@@ -149,9 +153,7 @@ public class GroupServiceUtil {
 	 * @return the group with the primary key
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group getGroup(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Group getGroup(long groupId) throws PortalException {
 		return getService().getGroup(groupId);
 	}
 
@@ -163,9 +165,8 @@ public class GroupServiceUtil {
 	 * @return the group with the group key
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group getGroup(
-			long companyId, String groupKey)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Group getGroup(long companyId, String groupKey)
+		throws PortalException {
 
 		return getService().getGroup(companyId, groupKey);
 	}
@@ -183,7 +184,7 @@ public class GroupServiceUtil {
 	 */
 	public static String getGroupDisplayURL(
 			long groupId, boolean privateLayout, boolean secureConnection)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getGroupDisplayURL(
 			groupId, privateLayout, secureConnection);
@@ -199,9 +200,9 @@ public class GroupServiceUtil {
 	 found
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getGroups(long companyId, long parentGroupId, boolean site)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getGroups(
+			long companyId, long parentGroupId, boolean site)
+		throws PortalException {
 
 		return getService().getGroups(companyId, parentGroupId, site);
 	}
@@ -218,21 +219,19 @@ public class GroupServiceUtil {
 	 found
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getGroups(
-				long companyId, long parentGroupId, boolean site, int start,
-				int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getGroups(
+			long companyId, long parentGroupId, boolean site, int start,
+			int end)
+		throws PortalException {
 
 		return getService().getGroups(
 			companyId, parentGroupId, site, start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getGroups(
-				long companyId, long parentGroupId, String name, boolean site,
-				int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getGroups(
+			long companyId, long parentGroupId, String name, boolean site,
+			int start, int end)
+		throws PortalException {
 
 		return getService().getGroups(
 			companyId, parentGroupId, name, site, start, end);
@@ -249,14 +248,14 @@ public class GroupServiceUtil {
 	 */
 	public static int getGroupsCount(
 			long companyId, long parentGroupId, boolean site)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getGroupsCount(companyId, parentGroupId, site);
 	}
 
 	public static int getGroupsCount(
 			long companyId, long parentGroupId, String name, boolean site)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getGroupsCount(
 			companyId, parentGroupId, name, site);
@@ -273,16 +272,15 @@ public class GroupServiceUtil {
 	 */
 	public static int getGroupsCount(
 			long companyId, String className, long parentGroupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getGroupsCount(companyId, className, parentGroupId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getGtGroups(
-				long gtGroupId, long companyId, long parentGroupId,
-				boolean site, int size)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getGtGroups(
+			long gtGroupId, long companyId, long parentGroupId, boolean site,
+			int size)
+		throws PortalException {
 
 		return getService().getGtGroups(
 			gtGroupId, companyId, parentGroupId, site, size);
@@ -299,12 +297,11 @@ public class GroupServiceUtil {
 	 access
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getManageableSiteGroups(
-				java.util.Collection<com.liferay.portal.kernel.model.Portlet>
-					portlets,
-				int max)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getManageableSiteGroups(
+			java.util.Collection<com.liferay.portal.kernel.model.Portlet>
+				portlets,
+			int max)
+		throws PortalException {
 
 		return getService().getManageableSiteGroups(portlets, max);
 	}
@@ -316,11 +313,9 @@ public class GroupServiceUtil {
 	 * @return the groups associated with the organizations
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getOrganizationsGroups(
-				java.util.List<com.liferay.portal.kernel.model.Organization>
-					organizations)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getOrganizationsGroups(
+			List<com.liferay.portal.kernel.model.Organization> organizations)
+		throws PortalException {
 
 		return getService().getOrganizationsGroups(organizations);
 	}
@@ -342,9 +337,8 @@ public class GroupServiceUtil {
 	 * @return the group directly associated with the user
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group getUserGroup(
-			long companyId, long userId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Group getUserGroup(long companyId, long userId)
+		throws PortalException {
 
 		return getService().getUserGroup(companyId, userId);
 	}
@@ -356,11 +350,9 @@ public class GroupServiceUtil {
 	 * @return the groups associated with the user groups
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getUserGroupsGroups(
-				java.util.List<com.liferay.portal.kernel.model.UserGroup>
-					userGroups)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getUserGroupsGroups(
+			List<com.liferay.portal.kernel.model.UserGroup> userGroups)
+		throws PortalException {
 
 		return getService().getUserGroupsGroups(userGroups);
 	}
@@ -387,18 +379,22 @@ public class GroupServiceUtil {
 	 * @return the range of groups associated with the user's organizations
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getUserOrganizationsGroups(long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getUserOrganizationsGroups(
+			long userId, int start, int end)
+		throws PortalException {
 
 		return getService().getUserOrganizationsGroups(userId, start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getUserSitesGroups()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static List<Group> getUserSitesGroups() throws PortalException {
 		return getService().getUserSitesGroups();
+	}
+
+	public static List<Group> getUserSitesGroups(
+			long userId, int start, int end)
+		throws PortalException {
+
+		return getService().getUserSitesGroups(userId, start, end);
 	}
 
 	/**
@@ -434,9 +430,9 @@ public class GroupServiceUtil {
 	 * @return the user's groups &quot;sites&quot;
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getUserSitesGroups(long userId, String[] classNames, int max)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getUserSitesGroups(
+			long userId, String[] classNames, int max)
+		throws PortalException {
 
 		return getService().getUserSitesGroups(userId, classNames, max);
 	}
@@ -473,9 +469,8 @@ public class GroupServiceUtil {
 	 * @return the user's groups &quot;sites&quot;
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group>
-			getUserSitesGroups(String[] classNames, int max)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Group> getUserSitesGroups(String[] classNames, int max)
+		throws PortalException {
 
 		return getService().getUserSitesGroups(classNames, max);
 	}
@@ -489,9 +484,7 @@ public class GroupServiceUtil {
 	 * @return the number of user's groups &quot;sites&quot;
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static int getUserSitesGroupsCount()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static int getUserSitesGroupsCount() throws PortalException {
 		return getService().getUserSitesGroupsCount();
 	}
 
@@ -507,33 +500,32 @@ public class GroupServiceUtil {
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public static boolean hasUserGroup(long userId, long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().hasUserGroup(userId, groupId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Group> search(
+	public static List<Group> search(
 			long companyId, long[] classNameIds, String keywords,
 			java.util.LinkedHashMap<String, Object> params, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Group> obc)
-		throws com.liferay.portal.kernel.exception.PortalException {
+			OrderByComparator<Group> orderByComparator)
+		throws PortalException {
 
 		return getService().search(
-			companyId, classNameIds, keywords, params, start, end, obc);
+			companyId, classNameIds, keywords, params, start, end,
+			orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Group> search(
+	public static List<Group> search(
 			long companyId, long[] classNameIds, String name,
 			String description, java.util.LinkedHashMap<String, Object> params,
 			boolean andOperator, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Group> obc)
-		throws com.liferay.portal.kernel.exception.PortalException {
+			OrderByComparator<Group> orderByComparator)
+		throws PortalException {
 
 		return getService().search(
 			companyId, classNameIds, name, description, params, andOperator,
-			start, end, obc);
+			start, end, orderByComparator);
 	}
 
 	/**
@@ -567,10 +559,10 @@ public class GroupServiceUtil {
 	 * @return the matching groups ordered by name
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Group> search(
+	public static List<Group> search(
 			long companyId, String name, String description, String[] params,
 			int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().search(
 			companyId, name, description, params, start, end);
@@ -616,7 +608,7 @@ public class GroupServiceUtil {
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public static void setRoleGroups(long roleId, long[] groupIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().setRoleGroups(roleId, groupIds);
 	}
@@ -629,7 +621,7 @@ public class GroupServiceUtil {
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public static void unsetRoleGroups(long roleId, long[] groupIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().unsetRoleGroups(roleId, groupIds);
 	}
@@ -643,21 +635,20 @@ public class GroupServiceUtil {
 	 * @return the group
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group updateFriendlyURL(
-			long groupId, String friendlyURL)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Group updateFriendlyURL(long groupId, String friendlyURL)
+		throws PortalException {
 
 		return getService().updateFriendlyURL(groupId, friendlyURL);
 	}
 
-	public static com.liferay.portal.kernel.model.Group updateGroup(
+	public static Group updateGroup(
 			long groupId, long parentGroupId,
-			java.util.Map<java.util.Locale, String> nameMap,
-			java.util.Map<java.util.Locale, String> descriptionMap, int type,
+			Map<java.util.Locale, String> nameMap,
+			Map<java.util.Locale, String> descriptionMap, int type,
 			boolean manualMembership, int membershipRestriction,
 			String friendlyURL, boolean inheritContent, boolean active,
 			ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateGroup(
 			groupId, parentGroupId, nameMap, descriptionMap, type,
@@ -674,29 +665,27 @@ public class GroupServiceUtil {
 	 * @return the group
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static com.liferay.portal.kernel.model.Group updateGroup(
-			long groupId, String typeSettings)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Group updateGroup(long groupId, String typeSettings)
+		throws PortalException {
 
 		return getService().updateGroup(groupId, typeSettings);
 	}
 
 	public static void updateStagedPortlets(
-			long groupId, java.util.Map<String, String> stagedPortletIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+			long groupId, Map<String, String> stagedPortletIds)
+		throws PortalException {
 
 		getService().updateStagedPortlets(groupId, stagedPortletIds);
 	}
 
 	public static GroupService getService() {
-		if (_service == null) {
-			_service = (GroupService)PortalBeanLocatorUtil.locate(
-				GroupService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static GroupService _service;
+	public static void setService(GroupService service) {
+		_service = service;
+	}
+
+	private static volatile GroupService _service;
 
 }

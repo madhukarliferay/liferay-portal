@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.asah.connector.internal.client.model;
@@ -23,9 +14,6 @@ import java.util.List;
  * @author Sarai Díaz
  */
 public class Topic {
-
-	public Topic() {
-	}
 
 	public int getId() {
 		return _id;
@@ -53,23 +41,11 @@ public class Topic {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(7);
-
-		sb.append("{id=");
-		sb.append(_id);
-		sb.append(", terms=");
-		sb.append(_terms);
-		sb.append(", weight=");
-		sb.append(_weight);
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{id=", _id, ", terms=", _terms, ", weight=", _weight, "}");
 	}
 
 	public static class TopicTerm {
-
-		public TopicTerm() {
-		}
 
 		public String getKeyword() {
 			return _keyword;

@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.web.internal.portlet.action;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -35,10 +28,10 @@ import com.liferay.wiki.service.WikiNodeService;
 import com.liferay.wiki.service.WikiPageService;
 import com.liferay.wiki.web.internal.util.WikiWebComponentProvider;
 
-import javax.portlet.PortletException;
-import javax.portlet.PortletPreferences;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -47,9 +40,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Brian Wing Shun Chan
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
 		"mvc.command.name=/", "mvc.command.name=/wiki_display/view"
 	},
 	service = MVCRenderCommand.class
@@ -62,11 +54,18 @@ public class WikiDisplayViewMVCRenderCommand implements MVCRenderCommand {
 		throws PortletException {
 
 		try {
-			PortletPreferences portletPreferences =
-				renderRequest.getPreferences();
-
 			ThemeDisplay themeDisplay =
 				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
+
+			WikiNode node = getNode(renderRequest);
+
+			if (node.getGroupId() != themeDisplay.getScopeGroupId()) {
+				throw new NoSuchNodeException(
+					"{nodeId=" + node.getNodeId() + "}");
+			}
+
+			PortletPreferences portletPreferences =
+				renderRequest.getPreferences();
 
 			WikiWebComponentProvider wikiWebComponentProvider =
 				WikiWebComponentProvider.getWikiWebComponentProvider();
@@ -80,13 +79,6 @@ public class WikiDisplayViewMVCRenderCommand implements MVCRenderCommand {
 					"title", wikiGroupServiceConfiguration.frontPageName()));
 
 			double version = ParamUtil.getDouble(renderRequest, "version");
-
-			WikiNode node = getNode(renderRequest);
-
-			if (node.getGroupId() != themeDisplay.getScopeGroupId()) {
-				throw new NoSuchNodeException(
-					"{nodeId=" + node.getNodeId() + "}");
-			}
 
 			WikiPage page = _wikiPageService.fetchPage(
 				node.getNodeId(), title, version);
@@ -104,14 +96,22 @@ public class WikiDisplayViewMVCRenderCommand implements MVCRenderCommand {
 
 			return "/wiki_display/view.jsp";
 		}
-		catch (NoSuchNodeException nsne) {
+		catch (NoSuchNodeException noSuchNodeException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchNodeException);
+			}
+
 			return "/wiki_display/portlet_not_setup.jsp";
 		}
-		catch (NoSuchPageException nspe) {
+		catch (NoSuchPageException noSuchPageException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchPageException);
+			}
+
 			return "/wiki_display/portlet_not_setup.jsp";
 		}
-		catch (PortalException pe) {
-			SessionErrors.add(renderRequest, pe.getClass());
+		catch (PortalException portalException) {
+			SessionErrors.add(renderRequest, portalException.getClass());
 
 			return "/wiki/error.jsp";
 		}
@@ -120,17 +120,17 @@ public class WikiDisplayViewMVCRenderCommand implements MVCRenderCommand {
 	protected WikiNode getNode(RenderRequest renderRequest)
 		throws PortalException {
 
-		PortletPreferences portletPreferences = renderRequest.getPreferences();
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
 		String nodeName = ParamUtil.getString(renderRequest, "nodeName");
 
 		if (Validator.isNotNull(nodeName)) {
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
+
 			return _wikiNodeService.getNode(
 				themeDisplay.getScopeGroupId(), nodeName);
 		}
+
+		PortletPreferences portletPreferences = renderRequest.getPreferences();
 
 		long nodeId = GetterUtil.getLong(
 			portletPreferences.getValue("nodeId", StringPool.BLANK));
@@ -138,25 +138,16 @@ public class WikiDisplayViewMVCRenderCommand implements MVCRenderCommand {
 		return _wikiNodeService.getNode(nodeId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setWikiEngineRenderer(
-		WikiEngineRenderer wikiEngineRenderer) {
+	private static final Log _log = LogFactoryUtil.getLog(
+		WikiDisplayViewMVCRenderCommand.class);
 
-		_wikiEngineRenderer = wikiEngineRenderer;
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiNodeService(WikiNodeService wikiNodeService) {
-		_wikiNodeService = wikiNodeService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiPageService(WikiPageService wikiPageService) {
-		_wikiPageService = wikiPageService;
-	}
-
+	@Reference
 	private WikiEngineRenderer _wikiEngineRenderer;
+
+	@Reference
 	private WikiNodeService _wikiNodeService;
+
+	@Reference
 	private WikiPageService _wikiPageService;
 
 }

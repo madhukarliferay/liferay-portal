@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.client.dto.v1_0;
@@ -17,16 +8,69 @@ package com.liferay.headless.delivery.client.dto.v1_0;
 import com.liferay.headless.delivery.client.function.UnsafeSupplier;
 import com.liferay.headless.delivery.client.serdes.v1_0.ContentFieldSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class ContentField {
+public class ContentField implements Cloneable, Serializable {
+
+	public static ContentField toDTO(String json) {
+		return ContentFieldSerDes.toDTO(json);
+	}
+
+	public ContentFieldValue getContentFieldValue() {
+		return contentFieldValue;
+	}
+
+	public void setContentFieldValue(ContentFieldValue contentFieldValue) {
+		this.contentFieldValue = contentFieldValue;
+	}
+
+	public void setContentFieldValue(
+		UnsafeSupplier<ContentFieldValue, Exception>
+			contentFieldValueUnsafeSupplier) {
+
+		try {
+			contentFieldValue = contentFieldValueUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected ContentFieldValue contentFieldValue;
+
+	public Map<String, ContentFieldValue> getContentFieldValue_i18n() {
+		return contentFieldValue_i18n;
+	}
+
+	public void setContentFieldValue_i18n(
+		Map<String, ContentFieldValue> contentFieldValue_i18n) {
+
+		this.contentFieldValue_i18n = contentFieldValue_i18n;
+	}
+
+	public void setContentFieldValue_i18n(
+		UnsafeSupplier<Map<String, ContentFieldValue>, Exception>
+			contentFieldValue_i18nUnsafeSupplier) {
+
+		try {
+			contentFieldValue_i18n = contentFieldValue_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, ContentFieldValue> contentFieldValue_i18n;
 
 	public String getDataType() {
 		return dataType;
@@ -91,6 +135,28 @@ public class ContentField {
 
 	protected String label;
 
+	public Map<String, String> getLabel_i18n() {
+		return label_i18n;
+	}
+
+	public void setLabel_i18n(Map<String, String> label_i18n) {
+		this.label_i18n = label_i18n;
+	}
+
+	public void setLabel_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			label_i18nUnsafeSupplier) {
+
+		try {
+			label_i18n = label_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> label_i18n;
+
 	public String getName() {
 		return name;
 	}
@@ -153,24 +219,10 @@ public class ContentField {
 
 	protected Boolean repeatable;
 
-	public Value getValue() {
-		return value;
+	@Override
+	public ContentField clone() throws CloneNotSupportedException {
+		return (ContentField)super.clone();
 	}
-
-	public void setValue(Value value) {
-		this.value = value;
-	}
-
-	public void setValue(UnsafeSupplier<Value, Exception> valueUnsafeSupplier) {
-		try {
-			value = valueUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Value value;
 
 	@Override
 	public boolean equals(Object object) {

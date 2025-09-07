@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
@@ -17,6 +8,8 @@ package com.liferay.dynamic.data.mapping.service;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -59,6 +52,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see DDMTemplateLocalServiceUtil
  * @generated
  */
+@CTAware
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -68,14 +62,18 @@ public interface DDMTemplateLocalService
 	extends BaseLocalService, CTService<DDMTemplate>,
 			PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link DDMTemplateLocalServiceUtil} to access the ddm template local service. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the ddm template local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link DDMTemplateLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the ddm template to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplate the ddm template
 	 * @return the ddm template that was added
@@ -86,6 +84,7 @@ public interface DDMTemplateLocalService
 	/**
 	 * Adds a template.
 	 *
+	 * @param externalReferenceCode the template's external reference code
 	 * @param userId the primary key of the template's creator/owner
 	 * @param groupId the primary key of the group
 	 * @param classNameId the primary key of the class name for the template's
@@ -109,15 +108,17 @@ public interface DDMTemplateLocalService
 	 * @throws PortalException if a portal exception occurred
 	 */
 	public DDMTemplate addTemplate(
-			long userId, long groupId, long classNameId, long classPK,
-			long resourceClassNameId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, String type, String mode,
-			String language, String script, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			long classNameId, long classPK, long resourceClassNameId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String type, String mode, String language, String script,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Adds a template with additional parameters.
 	 *
+	 * @param externalReferenceCode the template's external reference code
 	 * @param userId the primary key of the template's creator/owner
 	 * @param groupId the primary key of the group
 	 * @param classNameId the primary key of the class name for the template's
@@ -150,12 +151,13 @@ public interface DDMTemplateLocalService
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public DDMTemplate addTemplate(
-			long userId, long groupId, long classNameId, long classPK,
-			long resourceClassNameId, String templateKey,
-			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
-			String type, String mode, String language, String script,
-			boolean cacheable, boolean smallImage, String smallImageURL,
-			File smallImageFile, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			long classNameId, long classPK, long resourceClassNameId,
+			String templateKey, Map<Locale, String> nameMap,
+			Map<Locale, String> descriptionMap, String type, String mode,
+			String language, String script, boolean cacheable,
+			boolean smallImage, String smallImageURL, File smallImageFile,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -188,7 +190,7 @@ public interface DDMTemplateLocalService
 	 * and description.
 	 *
 	 * @param userId the primary key of the template's creator/owner
-	 * @param templateId the primary key of the template to be copied
+	 * @param sourceTemplateId the primary key of the template to be copied
 	 * @param nameMap the new template's locales and localized names
 	 * @param descriptionMap the new template's locales and localized
 	 descriptions
@@ -198,13 +200,15 @@ public interface DDMTemplateLocalService
 	 * @return the new template
 	 * @throws PortalException if a portal exception occurred
 	 */
+	@Indexable(type = IndexableType.REINDEX)
 	public DDMTemplate copyTemplate(
-			long userId, long templateId, Map<Locale, String> nameMap,
+			long userId, long sourceTemplateId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, ServiceContext serviceContext)
 		throws PortalException;
 
+	@Indexable(type = IndexableType.REINDEX)
 	public DDMTemplate copyTemplate(
-			long userId, long templateId, ServiceContext serviceContext)
+			long userId, long sourceTemplateId, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -215,8 +219,8 @@ public interface DDMTemplateLocalService
 	 * @param userId the primary key of the template's creator/owner
 	 * @param classNameId the primary key of the class name for the template's
 	 related model
-	 * @param oldClassPK the primary key of the old template's related entity
-	 * @param newClassPK the primary key of the new template's related entity
+	 * @param sourceClassPK the primary key of the old template's related entity
+	 * @param targetClassPK the primary key of the new template's related entity
 	 * @param type the template's type. For more information, see
 	 DDMTemplateConstants in the dynamic-data-mapping-api module.
 	 * @param serviceContext the service context to be applied. Can set the
@@ -225,9 +229,10 @@ public interface DDMTemplateLocalService
 	 * @return the new templates
 	 * @throws PortalException if a portal exception occurred
 	 */
+	@Indexable(type = IndexableType.REINDEX)
 	public List<DDMTemplate> copyTemplates(
-			long userId, long classNameId, long oldClassPK, long newClassPK,
-			String type, ServiceContext serviceContext)
+			long userId, long classNameId, long sourceClassPK,
+			long targetClassPK, String type, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -240,7 +245,17 @@ public interface DDMTemplateLocalService
 	public DDMTemplate createDDMTemplate(long templateId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Deletes the ddm template from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplate the ddm template
 	 * @return the ddm template that was removed
@@ -250,6 +265,10 @@ public interface DDMTemplateLocalService
 
 	/**
 	 * Deletes the ddm template with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param templateId the primary key of the ddm template
 	 * @return the ddm template that was removed
@@ -285,6 +304,10 @@ public interface DDMTemplateLocalService
 	 */
 	public void deleteTemplate(long templateId) throws PortalException;
 
+	public DDMTemplate deleteTemplate(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
 	/**
 	 * Deletes all the templates of the group.
 	 *
@@ -295,6 +318,12 @@ public interface DDMTemplateLocalService
 
 	public void deleteTemplates(long groupId, long classNameId)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -364,6 +393,15 @@ public interface DDMTemplateLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DDMTemplate fetchDDMTemplate(long templateId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public DDMTemplate fetchDDMTemplateByExternalReferenceCode(
+		String externalReferenceCode, long groupId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public DDMTemplate fetchDDMTemplateByExternalReferenceCode(
+		String externalReferenceCode, long groupId,
+		boolean includeAncestorTemplates);
 
 	/**
 	 * Returns the ddm template matching the UUID and group.
@@ -440,6 +478,11 @@ public interface DDMTemplateLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DDMTemplate getDDMTemplate(long templateId) throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public DDMTemplate getDDMTemplateByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
 	/**
 	 * Returns the ddm template matching the UUID and group.
 	 *
@@ -514,6 +557,9 @@ public interface DDMTemplateLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -652,6 +698,12 @@ public interface DDMTemplateLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDMTemplate> getTemplates(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
+		long resourceClassNameId, int start, int end,
+		OrderByComparator<DDMTemplate> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<DDMTemplate> getTemplates(
 		long[] groupIds, long classNameId, long classPK);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -757,6 +809,11 @@ public interface DDMTemplateLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getTemplatesCount(long groupId, long classNameId, long classPK);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getTemplatesCount(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
+		long resourceClassNameId);
 
 	/**
 	 * Returns the number of templates matching the group IDs, class name ID,
@@ -1110,6 +1167,10 @@ public interface DDMTemplateLocalService
 
 	/**
 	 * Updates the ddm template in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplate the ddm template
 	 * @return the ddm template that was updated

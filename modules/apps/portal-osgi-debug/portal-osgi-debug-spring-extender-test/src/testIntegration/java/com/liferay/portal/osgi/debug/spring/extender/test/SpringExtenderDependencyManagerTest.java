@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.debug.spring.extender.test;
@@ -25,12 +16,14 @@ import com.liferay.portal.kernel.log.SanitizerLogWrapper;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.osgi.debug.spring.extender.test.reference.SpringExtenderTestComponentReference;
 import com.liferay.portal.osgi.debug.spring.extender.test.service.impl.SpringExtenderTestComponentLocalServiceImpl;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -42,15 +35,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -89,7 +80,7 @@ public class SpringExtenderDependencyManagerTest {
 			_configurationAdmin.getConfiguration(
 				"com.liferay.portal.osgi.debug.spring.extender.internal." +
 					"configuration.UnavailableComponentScannerConfiguration",
-				null);
+				StringPool.QUESTION);
 
 		_properties = _unavailableComponentScannerConfiguration.getProperties();
 
@@ -110,18 +101,16 @@ public class SpringExtenderDependencyManagerTest {
 	public void testSpringExtenderDependencyManagerResolvedDependencies()
 		throws Exception {
 
-		try (CaptureAppender captureAppender = _configureLog4JLogger()) {
-			_captureLog(captureAppender);
+		try (LogCapture logCapture = _configureLog4JLogger()) {
+			_captureLog(logCapture);
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 2, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 2, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			String message = (String)loggingEvent.getMessage();
+			String message = logEntry.getMessage();
 
 			Assert.assertEquals(
 				message,
@@ -129,21 +118,17 @@ public class SpringExtenderDependencyManagerTest {
 					"registered",
 				message);
 
-			Level level = loggingEvent.getLevel();
+			Assert.assertEquals(LoggerTestUtil.INFO, logEntry.getPriority());
 
-			Assert.assertEquals(level.toString(), Level.INFO, level);
+			logEntry = logEntries.get(1);
 
-			loggingEvent = loggingEvents.get(1);
-
-			message = (String)loggingEvent.getMessage();
+			message = logEntry.getMessage();
 
 			Assert.assertEquals(
 				message, "Stopped scanning for unavailable components",
 				message);
 
-			level = loggingEvent.getLevel();
-
-			Assert.assertEquals(level.toString(), Level.INFO, level);
+			Assert.assertEquals(LoggerTestUtil.INFO, logEntry.getPriority());
 		}
 	}
 
@@ -156,18 +141,16 @@ public class SpringExtenderDependencyManagerTest {
 
 		bundle.start();
 
-		try (CaptureAppender captureAppender = _configureLog4JLogger()) {
-			_captureLog(captureAppender);
+		try (LogCapture logCapture = _configureLog4JLogger()) {
+			_captureLog(logCapture);
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 2, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 2, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			String message = (String)loggingEvent.getMessage();
+			String message = logEntry.getMessage();
 
 			StringBundler sb = new StringBundler(5);
 
@@ -181,51 +164,44 @@ public class SpringExtenderDependencyManagerTest {
 			}
 
 			sb.append("\t\tservice dependency [");
-			sb.append(_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE_CLASS_NAME);
+			sb.append(_CLASS_NAME_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE);
 			sb.append("]");
 
 			Assert.assertTrue(message, message.contains(sb.toString()));
 
-			Level level = loggingEvent.getLevel();
+			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
 
-			Assert.assertEquals(
-				level.toString(), Level.WARN, loggingEvent.getLevel());
+			logEntry = logEntries.get(1);
 
-			loggingEvent = loggingEvents.get(1);
-
-			message = (String)loggingEvent.getMessage();
+			message = logEntry.getMessage();
 
 			Assert.assertEquals(
 				message, "Stopped scanning for unavailable components",
 				message);
 
-			level = loggingEvent.getLevel();
-
-			Assert.assertEquals(level.toString(), Level.INFO, level);
+			Assert.assertEquals(LoggerTestUtil.INFO, logEntry.getPriority());
 		}
 		finally {
 			bundle.uninstall();
 		}
 	}
 
-	private static void _captureLog(CaptureAppender captureAppender)
-		throws Exception {
-
+	private static void _captureLog(LogCapture logCapture) throws Exception {
 		AtomicReference<Thread> scanningThreadReference =
 			new AtomicReference<>();
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		ReflectionTestUtil.setFieldValue(
-			captureAppender, "_loggingEvents",
-			new CopyOnWriteArrayList<LoggingEvent>() {
+			logCapture, "_logEntries",
+			new CopyOnWriteArrayList<LogEntry>() {
 
 				@Override
-				public boolean add(LoggingEvent loggingEvent) {
-					boolean added = super.add(loggingEvent);
+				public boolean add(LogEntry logEntry) {
+					boolean added = super.add(logEntry);
 
 					if (Objects.equals(
-							loggingEvent.getMessage(),
+							logEntry.getMessage(),
 							"Stopped scanning for unavailable components")) {
 
 						return added;
@@ -235,8 +211,8 @@ public class SpringExtenderDependencyManagerTest {
 						_unavailableComponentScannerConfiguration.update(
 							new HashMapDictionary<String, Object>());
 					}
-					catch (IOException ioe) {
-						ReflectionUtil.throwException(ioe);
+					catch (IOException ioException) {
+						ReflectionUtil.throwException(ioException);
 					}
 
 					Thread thread = Thread.currentThread();
@@ -253,33 +229,34 @@ public class SpringExtenderDependencyManagerTest {
 
 			});
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
+		_unavailableComponentScannerConfiguration.update(
+			HashMapDictionaryBuilder.<String, Object>put(
+				"unavailableComponentScanningInterval", "1"
+			).build());
 
-		properties.put("unavailableComponentScanningInterval", "1");
-
-		_unavailableComponentScannerConfiguration.update(properties);
-
-		countDownLatch.await();
+		Assert.assertTrue(
+			"Scanning thread did not send a response",
+			countDownLatch.await(30, TimeUnit.SECONDS));
 
 		Thread scanningThread = scanningThreadReference.get();
 
 		scanningThread.join();
 	}
 
-	private static CaptureAppender _configureLog4JLogger() {
-		return Log4JLoggerTestUtil.configureLog4JLogger(
+	private static LogCapture _configureLog4JLogger() {
+		return LoggerTestUtil.configureLog4JLogger(
 			"com.liferay.portal.osgi.debug.spring.extender.internal." +
 				"UnavailableComponentScanner",
-			Level.INFO);
+			LoggerTestUtil.INFO);
 	}
 
 	private static void _ensureStopScanning() throws Exception {
-		try (CaptureAppender captureAppender = _configureLog4JLogger()) {
-			_captureLog(captureAppender);
+		try (LogCapture logCapture = _configureLog4JLogger()) {
+			_captureLog(logCapture);
 		}
 	}
 
-	private InputStream _createBundle() throws IOException {
+	private InputStream _createBundle() throws Exception {
 		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 				new UnsyncByteArrayOutputStream()) {
 
@@ -315,7 +292,7 @@ public class SpringExtenderDependencyManagerTest {
 					new ZipEntry("OSGI-INF/context/context.dependencies"));
 
 				jarOutputStream.write(
-					_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE_CLASS_NAME.
+					_CLASS_NAME_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE.
 						getBytes());
 
 				jarOutputStream.closeEntry();
@@ -352,7 +329,7 @@ public class SpringExtenderDependencyManagerTest {
 	}
 
 	private static final String
-		_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE_CLASS_NAME =
+		_CLASS_NAME_SPRING_EXTENDER_TEST_COMPONENT_REFERENCE =
 			SpringExtenderTestComponentReference.class.getName();
 
 	private static BundleContext _bundleContext;

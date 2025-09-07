@@ -1,5 +1,9 @@
 package ${configYAML.apiPackagePath}.internal.graphql.query.${escapedVersion};
 
+<#list allExternalSchemas?keys as schemaName>
+	import ${configYAML.apiPackagePath}.resource.${escapedVersion}.${schemaName}Resource;
+</#list>
+
 <#list allSchemas?keys as schemaName>
 	import ${configYAML.apiPackagePath}.dto.${escapedVersion}.${schemaName};
 	import ${configYAML.apiPackagePath}.resource.${escapedVersion}.${schemaName}Resource;
@@ -7,28 +11,41 @@ package ${configYAML.apiPackagePath}.internal.graphql.query.${escapedVersion};
 
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
-import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+
+<#assign
+	javaMethodSignatures = freeMarkerTool.getGraphQLJavaMethodSignatures(configYAML, "query", openAPIYAML)
+
+	generateAggregationFunction = freeMarkerTool.containsParameterType(javaMethodSignatures, "com.liferay.portal.vulcan.aggregation.Aggregation")
+/>
+
+<#if generateAggregationFunction>
+	import com.liferay.portal.vulcan.aggregation.Aggregation;
+	import com.liferay.portal.vulcan.aggregation.Facet;
+</#if>
+
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLTypeExtension;
 import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import ${configYAML.javaEEPackage}.annotation.Generated;
+
+import ${configYAML.javaEEPackage}.servlet.http.HttpServletRequest;
+import ${configYAML.javaEEPackage}.servlet.http.HttpServletResponse;
+
+import ${configYAML.javaEEPackage}.validation.constraints.NotEmpty;
+
+import ${configYAML.javaEEPackage}.ws.rs.core.Response;
+import ${configYAML.javaEEPackage}.ws.rs.core.UriInfo;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
-
-import javax.annotation.Generated;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import javax.validation.constraints.NotEmpty;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import org.osgi.service.component.ComponentServiceObjects;
 
@@ -40,8 +57,6 @@ import org.osgi.service.component.ComponentServiceObjects;
 public class Query {
 
 	<#assign
-		javaMethodSignatures = freeMarkerTool.getGraphQLJavaMethodSignatures(configYAML, "query", openAPIYAML)
-
 		schemaNames = freeMarkerTool.getGraphQLSchemaNames(javaMethodSignatures)
 	/>
 
@@ -107,14 +122,14 @@ public class Query {
 						Query.this::_populateResourceContext,
 						${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource ->
 							new ${javaMethodSignature.schemaName}Page(
-								${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource.${javaMethodSignature.methodName}(_${javaMethodSignature.parentSchemaName?uncap_first}.get${freeMarkerTool.getGraphQLJavaParameterName(configYAML, openAPIYAML, javaMethodSignature.parentSchemaName, javaMethodSignature.javaMethodParameters[0])}()
+								${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource.${javaMethodSignature.methodName}(_${javaMethodSignature.parentSchemaName?uncap_first}.get${freeMarkerTool.getGraphQLJavaParameterName(configYAML, openAPIYAML, javaMethodSignature.parentSchemaName, allSchemas, javaMethodSignature.javaMethodParameters[0])}()
 
 								<#if arguments?has_content>
 									, ${arguments}
 								</#if>)));
 				<#else>
 					return _applyComponentServiceObjects(_${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}ResourceComponentServiceObjects, Query.this::_populateResourceContext, ${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource -> ${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource.${javaMethodSignature.methodName}(
-						_${javaMethodSignature.parentSchemaName?uncap_first}.get${freeMarkerTool.getGraphQLJavaParameterName(configYAML, openAPIYAML, javaMethodSignature.parentSchemaName, javaMethodSignature.javaMethodParameters[0])}()
+						_${javaMethodSignature.parentSchemaName?uncap_first}.get${freeMarkerTool.getGraphQLJavaParameterName(configYAML, openAPIYAML, javaMethodSignature.parentSchemaName, allSchemas, javaMethodSignature.javaMethodParameters[0])}()
 
 						<#if arguments?has_content>
 							, ${arguments}
@@ -132,6 +147,12 @@ public class Query {
 		public class ${schemaName}Page {
 
 			public ${schemaName}Page(Page ${freeMarkerTool.getSchemaVarName(schemaName)}Page) {
+				actions = ${freeMarkerTool.getSchemaVarName(schemaName)}Page.getActions();
+
+				<#if generateAggregationFunction>
+					facets = ${freeMarkerTool.getSchemaVarName(schemaName)}Page.getFacets();
+				</#if>
+
 				items = ${freeMarkerTool.getSchemaVarName(schemaName)}Page.getItems();
 				lastPage = ${freeMarkerTool.getSchemaVarName(schemaName)}Page.getLastPage();
 				page = ${freeMarkerTool.getSchemaVarName(schemaName)}Page.getPage();
@@ -140,7 +161,21 @@ public class Query {
 			}
 
 			@GraphQLField
-			protected java.util.Collection<${schemaName}> items;
+			protected Map<String, Map<String, String>> actions;
+
+			<#if generateAggregationFunction>
+				@GraphQLField
+				protected List<Facet> facets;
+			</#if>
+
+			@GraphQLField
+			protected java.util.Collection<
+					<#if !stringUtil.startsWith(javaDataTypeMap[schemaName], configYAML.apiPackagePath)>
+						${javaDataTypeMap[schemaName]}
+					<#else>
+						${schemaName}
+					</#if>
+				> items;
 
 			@GraphQLField
 			protected long lastPage;
@@ -153,6 +188,35 @@ public class Query {
 
 			@GraphQLField
 			protected long totalCount;
+
+		}
+	</#list>
+
+	<#list freeMarkerTool.getParentGraphQLRelationJavaMethodSignatures(configYAML, "query", openAPIYAML) as javaMethodSignature>
+		@GraphQLTypeExtension(${javaMethodSignature.parentSchemaName}.class)
+		public class Parent${javaMethodSignature.parentSchemaName}${javaMethodSignature.javaMethodParameters[0].parameterName?cap_first}TypeExtension {
+
+			public Parent${javaMethodSignature.parentSchemaName}${javaMethodSignature.javaMethodParameters[0].parameterName?cap_first}TypeExtension(${javaMethodSignature.parentSchemaName} ${javaMethodSignature.parentSchemaName?uncap_first}) {
+				_${javaMethodSignature.parentSchemaName?uncap_first} = ${javaMethodSignature.parentSchemaName?uncap_first};
+			}
+
+			${freeMarkerTool.getGraphQLMethodAnnotations(javaMethodSignature)}
+			public ${javaMethodSignature.returnType} parent${javaMethodSignature.parentSchemaName}(${freeMarkerTool.getGraphQLParameters(javaMethodSignature.javaMethodParameters[1..*(javaMethodSignature.javaMethodParameters?size - 1)], javaMethodSignature.operation, true)}) throws Exception {
+				<#assign arguments = freeMarkerTool.getGraphQLArguments(javaMethodSignature.javaMethodParameters[1..*(javaMethodSignature.javaMethodParameters?size - 1)], freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)) />
+
+				if (_${javaMethodSignature.parentSchemaName?uncap_first}.getParent${javaMethodSignature.javaMethodParameters[0].parameterName?cap_first}() == null) {
+					return null;
+				}
+
+				return _applyComponentServiceObjects(_${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}ResourceComponentServiceObjects, Query.this::_populateResourceContext, ${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource -> ${freeMarkerTool.getSchemaVarName(javaMethodSignature.schemaName)}Resource.${javaMethodSignature.methodName}(
+					_${javaMethodSignature.parentSchemaName?uncap_first}.getParent${javaMethodSignature.javaMethodParameters[0].parameterName?cap_first}()
+
+					<#if arguments?has_content>
+						, ${arguments}
+					</#if>));
+			}
+
+			private ${javaMethodSignature.parentSchemaName} _${javaMethodSignature.parentSchemaName?uncap_first};
 
 		}
 	</#list>
@@ -178,6 +242,8 @@ public class Query {
 			${freeMarkerTool.getSchemaVarName(schemaName)}Resource.setContextHttpServletResponse(_httpServletResponse);
 			${freeMarkerTool.getSchemaVarName(schemaName)}Resource.setContextUriInfo(_uriInfo);
 			${freeMarkerTool.getSchemaVarName(schemaName)}Resource.setContextUser(_user);
+			${freeMarkerTool.getSchemaVarName(schemaName)}Resource.setGroupLocalService(_groupLocalService);
+			${freeMarkerTool.getSchemaVarName(schemaName)}Resource.setRoleLocalService(_roleLocalService);
 		}
 	</#list>
 
@@ -186,12 +252,19 @@ public class Query {
 	</#list>
 
 	private AcceptLanguage _acceptLanguage;
-	private BiFunction<Object, String, Filter> _filterBiFunction;
-	private BiFunction<Object, String, Sort[]> _sortsBiFunction;
+
+	<#if generateAggregationFunction>
+		private BiFunction<Object, List<String>, Aggregation> _aggregationBiFunction;
+	</#if>
+
 	private com.liferay.portal.kernel.model.Company _company;
-	private com.liferay.portal.kernel.model.User _user;
+	private BiFunction<Object, String, com.liferay.portal.kernel.search.filter.Filter> _filterBiFunction;
+	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private RoleLocalService _roleLocalService;
+	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]> _sortsBiFunction;
 	private UriInfo _uriInfo;
+	private com.liferay.portal.kernel.model.User _user;
 
 }

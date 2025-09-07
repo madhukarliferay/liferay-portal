@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,79 +11,29 @@
 long classPK = GetterUtil.getLong((String)request.getAttribute("liferay-layout:layout-classed-model-usages-admin:classPK"));
 String className = GetterUtil.getString(request.getAttribute("liferay-layout:layout-classed-model-usages-admin:className"));
 
-LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = new LayoutClassedModelUsagesDisplayContext(renderRequest, renderResponse, className, classPK);
+LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = new LayoutClassedModelUsagesDisplayContext(request, renderRequest, renderResponse, className, classPK);
 %>
 
-<div class="container-fluid container-fluid-max-xl container-form-lg">
-	<div class="row">
-		<div class="col-lg-3">
-			<nav class="menubar menubar-transparent menubar-vertical-expand-lg">
-				<ul class="nav nav-nested">
-					<li class="nav-item">
-						<strong class="text-uppercase">
-							<liferay-ui:message key="usages" />
-						</strong>
+<clay:container-fluid
+	cssClass="container-form-lg"
+	size="xxxl"
+>
+	<clay:row>
+		<clay:col
+			lg="3"
+		>
+			<strong class="text-uppercase">
+				<liferay-ui:message key="usages" />
+			</strong>
 
-						<ul class="nav nav-stacked">
-							<li class="nav-item">
+			<clay:vertical-nav
+				verticalNavItems="<%= layoutClassedModelUsagesDisplayContext.getVerticalNavItemList() %>"
+			/>
+		</clay:col>
 
-								<%
-								PortletURL allNavigationURL = layoutClassedModelUsagesDisplayContext.getPortletURL();
-
-								allNavigationURL.setParameter("navigation", "all");
-								allNavigationURL.setParameter("resetCur", Boolean.TRUE.toString());
-								%>
-
-								<a class="nav-link <%= Objects.equals(layoutClassedModelUsagesDisplayContext.getNavigation(), "all") ? "active" : StringPool.BLANK %>" href="<%= allNavigationURL.toString() %>">
-									<liferay-ui:message arguments="<%= layoutClassedModelUsagesDisplayContext.getAllUsageCount() %>" key="all-x" />
-								</a>
-							</li>
-							<li class="nav-item">
-
-								<%
-								PortletURL pagesNavigationURL = layoutClassedModelUsagesDisplayContext.getPortletURL();
-
-								pagesNavigationURL.setParameter("navigation", "pages");
-								pagesNavigationURL.setParameter("resetCur", Boolean.TRUE.toString());
-								%>
-
-								<a class="nav-link <%= Objects.equals(layoutClassedModelUsagesDisplayContext.getNavigation(), "pages") ? "active" : StringPool.BLANK %>" href="<%= pagesNavigationURL.toString() %>">
-									<liferay-ui:message arguments="<%= layoutClassedModelUsagesDisplayContext.getPagesUsageCount() %>" key="pages-x" />
-								</a>
-							</li>
-							<li class="nav-item">
-
-								<%
-								PortletURL pageTemplatesNavigationURL = layoutClassedModelUsagesDisplayContext.getPortletURL();
-
-								pageTemplatesNavigationURL.setParameter("navigation", "page-templates");
-								pageTemplatesNavigationURL.setParameter("resetCur", Boolean.TRUE.toString());
-								%>
-
-								<a class="nav-link <%= Objects.equals(layoutClassedModelUsagesDisplayContext.getNavigation(), "page-templates") ? "active" : StringPool.BLANK %>" href="<%= pageTemplatesNavigationURL.toString() %>">
-									<liferay-ui:message arguments="<%= layoutClassedModelUsagesDisplayContext.getPageTemplatesUsageCount() %>" key="page-templates-x" />
-								</a>
-							</li>
-							<li class="nav-item">
-
-								<%
-								PortletURL displayPagesNavigationURL = layoutClassedModelUsagesDisplayContext.getPortletURL();
-
-								displayPagesNavigationURL.setParameter("navigation", "display-page-templates");
-								displayPagesNavigationURL.setParameter("resetCur", Boolean.TRUE.toString());
-								%>
-
-								<a class="nav-link <%= Objects.equals(layoutClassedModelUsagesDisplayContext.getNavigation(), "display-page-templates") ? "active" : StringPool.BLANK %>" href="<%= displayPagesNavigationURL.toString() %>">
-									<liferay-ui:message arguments="<%= layoutClassedModelUsagesDisplayContext.getDisplayPagesUsageCount() %>" key="display-page-templates-x" />
-								</a>
-							</li>
-						</ul>
-					</li>
-				</ul>
-			</nav>
-		</div>
-
-		<div class="col-lg-9">
+		<clay:col
+			lg="9"
+		>
 			<div class="sheet">
 				<h3 class="sheet-title">
 					<c:choose>
@@ -112,7 +53,7 @@ LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = 
 				</h3>
 
 				<clay:management-toolbar
-					displayContext="<%= new LayoutClassedModelUsagesManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, layoutClassedModelUsagesDisplayContext.getSearchContainer()) %>"
+					managementToolbarDisplayContext="<%= new LayoutClassedModelUsagesManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, layoutClassedModelUsagesDisplayContext.getSearchContainer()) %>"
 				/>
 
 				<liferay-ui:search-container
@@ -127,7 +68,7 @@ LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = 
 						<liferay-ui:search-container-column-text
 							cssClass="table-cell-expand table-cell-minw-200 table-title"
 							name="name"
-							value="<%= layoutClassedModelUsagesDisplayContext.getLayoutClassedModelUsageName(layoutClassedModelUsage) %>"
+							value="<%= HtmlUtil.escape(layoutClassedModelUsagesDisplayContext.getLayoutClassedModelUsageName(layoutClassedModelUsage)) %>"
 						/>
 
 						<liferay-ui:search-container-column-text
@@ -160,6 +101,7 @@ LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = 
 
 							<c:if test="<%= ListUtil.isNotEmpty(dropdownItems) %>">
 								<clay:dropdown-actions
+									aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 									dropdownItems="<%= dropdownItems %>"
 								/>
 							</c:if>
@@ -173,6 +115,6 @@ LayoutClassedModelUsagesDisplayContext layoutClassedModelUsagesDisplayContext = 
 					/>
 				</liferay-ui:search-container>
 			</div>
-		</div>
-	</div>
-</div>
+		</clay:col>
+	</clay:row>
+</clay:container-fluid>

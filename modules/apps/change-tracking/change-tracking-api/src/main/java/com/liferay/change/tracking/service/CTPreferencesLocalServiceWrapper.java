@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link CTPreferencesLocalService}.
@@ -27,17 +19,16 @@ public class CTPreferencesLocalServiceWrapper
 	implements CTPreferencesLocalService,
 			   ServiceWrapper<CTPreferencesLocalService> {
 
+	public CTPreferencesLocalServiceWrapper() {
+		this(null);
+	}
+
 	public CTPreferencesLocalServiceWrapper(
 		CTPreferencesLocalService ctPreferencesLocalService) {
 
 		_ctPreferencesLocalService = ctPreferencesLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link CTPreferencesLocalServiceUtil} to access the ct preferences local service. Add custom service methods to <code>com.liferay.change.tracking.service.impl.CTPreferencesLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.change.tracking.model.CTPreferences addCTPreference(
 		long companyId, long userId) {
@@ -47,6 +38,10 @@ public class CTPreferencesLocalServiceWrapper
 
 	/**
 	 * Adds the ct preferences to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctPreferences the ct preferences
 	 * @return the ct preferences that was added
@@ -72,7 +67,22 @@ public class CTPreferencesLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ctPreferencesLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ct preferences from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctPreferences the ct preferences
 	 * @return the ct preferences that was removed
@@ -86,6 +96,10 @@ public class CTPreferencesLocalServiceWrapper
 
 	/**
 	 * Deletes the ct preferences with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctPreferencesId the primary key of the ct preferences
 	 * @return the ct preferences that was removed
@@ -108,6 +122,18 @@ public class CTPreferencesLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ctPreferencesLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ctPreferencesLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ctPreferencesLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -289,6 +315,9 @@ public class CTPreferencesLocalServiceWrapper
 		return _ctPreferencesLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -297,8 +326,17 @@ public class CTPreferencesLocalServiceWrapper
 		return _ctPreferencesLocalService.getPersistedModel(primaryKeyObj);
 	}
 
+	@Override
+	public void resetCTPreferences(long ctCollectionId) {
+		_ctPreferencesLocalService.resetCTPreferences(ctCollectionId);
+	}
+
 	/**
 	 * Updates the ct preferences in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctPreferences the ct preferences
 	 * @return the ct preferences that was updated
@@ -308,6 +346,11 @@ public class CTPreferencesLocalServiceWrapper
 		com.liferay.change.tracking.model.CTPreferences ctPreferences) {
 
 		return _ctPreferencesLocalService.updateCTPreferences(ctPreferences);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ctPreferencesLocalService.getBasePersistence();
 	}
 
 	@Override

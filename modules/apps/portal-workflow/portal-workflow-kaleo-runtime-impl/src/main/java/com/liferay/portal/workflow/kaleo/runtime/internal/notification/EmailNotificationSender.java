@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.internal.notification;
@@ -17,12 +8,9 @@ package com.liferay.portal.workflow.kaleo.runtime.internal.notification;
 import com.liferay.mail.kernel.model.MailMessage;
 import com.liferay.mail.kernel.service.MailService;
 import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
-import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.workflow.constants.MyWorkflowTasksConstants;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
 import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.runtime.internal.settings.WorkflowGroupServiceSettings;
@@ -30,18 +18,14 @@ import com.liferay.portal.workflow.kaleo.runtime.notification.BaseNotificationSe
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationRecipient;
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationSender;
 
+import jakarta.mail.internet.InternetAddress;
+
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -50,16 +34,19 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true,
 	property = {
 		"fromAddress=no-reply@liferay.com",
-		"fromName=Liferay Portal Workflow Notifications",
-		"notification.type=email"
+		"fromName=Liferay Portal Workflow Notifications"
 	},
 	service = NotificationSender.class
 )
 public class EmailNotificationSender
 	extends BaseNotificationSender implements NotificationSender {
+
+	@Override
+	public String getNotificationType() {
+		return "email";
+	}
 
 	protected void activate(Map<String, Object> properties) {
 		_fromAddress = (String)properties.get("fromAddress");
@@ -117,43 +104,28 @@ public class EmailNotificationSender
 		MailMessage mailMessage = new MailMessage(
 			from, subject, notificationMessage, true);
 
+		mailMessage.setTo(
+			_getInternetAddresses(
+				getDeliverableNotificationRecipients(
+					notificationRecipients.get(NotificationReceptionType.TO),
+					UserNotificationDeliveryConstants.TYPE_EMAIL)));
 		mailMessage.setCC(
-			getInternetAddresses(
-				notificationRecipients.get(NotificationReceptionType.CC)));
+			_getInternetAddresses(
+				getDeliverableNotificationRecipients(
+					notificationRecipients.get(NotificationReceptionType.CC),
+					UserNotificationDeliveryConstants.TYPE_EMAIL)));
 		mailMessage.setBCC(
-			getInternetAddresses(
-				notificationRecipients.get(NotificationReceptionType.BCC)));
-
-		List<InternetAddress> internetAddresses = new ArrayList<>();
-
-		Collection<Set<NotificationRecipient>>
-			notificationRecipientsCollection = notificationRecipients.values();
-
-		Iterator<Set<NotificationRecipient>> iterator =
-			notificationRecipientsCollection.iterator();
-
-		for (NotificationRecipient notificationRecipient : iterator.next()) {
-			if (UserNotificationManagerUtil.isDeliver(
-					notificationRecipient.getUserId(),
-					PortletKeys.MY_WORKFLOW_TASK, 0,
-					MyWorkflowTasksConstants.
-						NOTIFICATION_TYPE_MY_WORKFLOW_TASKS,
-					UserNotificationDeliveryConstants.TYPE_EMAIL)) {
-
-				internetAddresses.add(
-					notificationRecipient.getInternetAddress());
-			}
-		}
-
-		mailMessage.setBulkAddresses(
-			internetAddresses.toArray(new InternetAddress[0]));
+			_getInternetAddresses(
+				getDeliverableNotificationRecipients(
+					notificationRecipients.get(NotificationReceptionType.BCC),
+					UserNotificationDeliveryConstants.TYPE_EMAIL)));
 
 		_mailService.sendEmail(mailMessage);
 	}
 
-	protected InternetAddress[] getInternetAddresses(
+	private InternetAddress[] _getInternetAddresses(
 			Set<NotificationRecipient> notificationRecipients)
-		throws AddressException, UnsupportedEncodingException {
+		throws Exception {
 
 		if (notificationRecipients == null) {
 			return new InternetAddress[0];

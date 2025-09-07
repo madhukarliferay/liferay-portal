@@ -1,80 +1,33 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
+<portlet:actionURL name="/dynamic_data_mapping/delete_structure" var="deleteStructuresURL">
+	<portlet:param name="mvcPath" value="/view.jsp" />
+</portlet:actionURL>
+
 <clay:management-toolbar
 	actionDropdownItems='<%= ddmDisplayContext.getActionItemsDropdownItems("deleteStructures") %>'
+	additionalProps='<%=
+		HashMapBuilder.<String, Object>put(
+			"deleteStructuresURL", deleteStructuresURL.toString()
+		).build()
+	%>'
 	clearResultsURL="<%= ddmDisplayContext.getClearResultsURL() %>"
-	componentId="ddmStructureManagementToolbar"
 	creationMenu="<%= ddmDisplayContext.getStructureCreationMenu() %>"
 	disabled="<%= ddmDisplayContext.isDisabledManagementBar(DDMWebKeys.DYNAMIC_DATA_MAPPING_STRUCTURE) %>"
-	filterDropdownItems="<%= ddmDisplayContext.getFilterItemsDropdownItems() %>"
 	itemsTotal="<%= ddmDisplayContext.getTotalItems(DDMWebKeys.DYNAMIC_DATA_MAPPING_STRUCTURE) %>"
-	namespace="<%= renderResponse.getNamespace() %>"
+	orderDropdownItems="<%= ddmDisplayContext.getOrderItemsDropdownItems() %>"
+	propsTransformer="{DDMStructureManagementToolbarPropsTransformer} from dynamic-data-mapping-web"
 	searchActionURL="<%= ddmDisplayContext.getStructureSearchActionURL() %>"
 	searchContainerId="<%= ddmDisplayContext.getStructureSearchContainerId() %>"
 	searchFormName="fm1"
-	selectable="<%= !user.isDefaultUser() %>"
+	selectable="<%= !user.isGuestUser() %>"
 	sortingOrder="<%= ddmDisplayContext.getOrderByType() %>"
 	sortingURL="<%= ddmDisplayContext.getSortingURL() %>"
 />
-
-<aui:script sandbox="<%= true %>">
-	var deleteStructures = function() {
-		if (
-			confirm(
-				'<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-delete-this") %>'
-			)
-		) {
-			var searchContainer = document.getElementById(
-				'<portlet:namespace />entriesContainer'
-			);
-
-			if (searchContainer) {
-				<portlet:actionURL name="deleteStructure" var="deleteStructuresURL">
-					<portlet:param name="mvcPath" value="/view.jsp" />
-				</portlet:actionURL>
-
-				Liferay.Util.postForm(document.<portlet:namespace />fm, {
-					data: {
-						deleteStructureIds: Liferay.Util.listCheckedExcept(
-							searchContainer,
-							'<portlet:namespace />allRowIds'
-						)
-					},
-					url: '<%= deleteStructuresURL %>'
-				});
-			}
-		}
-	};
-
-	var ACTIONS = {
-		deleteStructures: deleteStructures
-	};
-
-	Liferay.componentReady('ddmStructureManagementToolbar').then(function(
-		managementToolbar
-	) {
-		managementToolbar.on('actionItemClicked', function(event) {
-			var itemData = event.data.item.data;
-
-			if (itemData && itemData.action && ACTIONS[itemData.action]) {
-				ACTIONS[itemData.action]();
-			}
-		});
-	});
-</aui:script>

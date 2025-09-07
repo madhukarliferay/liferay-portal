@@ -1,22 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.image.internal.util;
 
 import com.liferay.adaptive.media.exception.AMRuntimeException;
-import com.liferay.portal.kernel.image.ImageToolUtil;
+import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.image.ImageToolUtil;
+import com.liferay.portal.kernel.exception.ImageResolutionException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.util.PropsValues;
 
 import java.awt.image.RenderedImage;
 
@@ -35,23 +33,23 @@ import javax.imageio.stream.ImageInputStream;
 public class RenderedImageUtil {
 
 	public static byte[] getRenderedImageContentStream(
-			RenderedImage renderedImage, String mimeType)
-		throws IOException {
+		RenderedImage renderedImage, String mimeType) {
 
-		try (UnsyncByteArrayOutputStream baos =
+		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 				new UnsyncByteArrayOutputStream()) {
 
-			ImageToolUtil.write(renderedImage, mimeType, baos);
+			ImageToolUtil.write(
+				renderedImage, mimeType, unsyncByteArrayOutputStream);
 
-			return baos.toByteArray();
+			return unsyncByteArrayOutputStream.toByteArray();
 		}
-		catch (IOException ioe) {
-			throw new AMRuntimeException.IOException(ioe);
+		catch (IOException ioException) {
+			throw new AMRuntimeException.IOException(ioException);
 		}
 	}
 
 	public static RenderedImage readImage(InputStream inputStream)
-		throws IOException {
+		throws IOException, PortalException {
 
 		ImageInputStream imageInputStream = ImageIO.createImageInputStream(
 			inputStream);
@@ -65,20 +63,49 @@ public class RenderedImageUtil {
 			try {
 				imageReader = iterator.next();
 
-				imageReader.setInput(imageInputStream);
+				imageReader.setInput(imageInputStream, false, true);
+
+				int height = imageReader.getHeight(0);
+				int width = imageReader.getWidth(0);
+
+				if (((PropsValues.IMAGE_TOOL_IMAGE_MAX_HEIGHT > 0) &&
+					 (height > PropsValues.IMAGE_TOOL_IMAGE_MAX_HEIGHT)) ||
+					((PropsValues.IMAGE_TOOL_IMAGE_MAX_WIDTH > 0) &&
+					 (width > PropsValues.IMAGE_TOOL_IMAGE_MAX_WIDTH))) {
+
+					throw new ImageResolutionException(
+						StringBundler.concat(
+							"Image's dimensions of ", height, " px high and ",
+							width, " px wide exceed max dimensions of ",
+							PropsValues.IMAGE_TOOL_IMAGE_MAX_HEIGHT,
+							" px high and ",
+							PropsValues.IMAGE_TOOL_IMAGE_MAX_WIDTH,
+							" px wide"));
+				}
 
 				return imageReader.read(0);
 			}
-			catch (Exception e) {
+			catch (ImageResolutionException imageResolutionException) {
+				throw imageResolutionException;
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 			finally {
 				if (imageReader != null) {
 					imageReader.dispose();
 				}
+
+				StreamUtil.cleanUp(imageInputStream, inputStream);
 			}
 		}
 
 		throw new IOException("Unsupported image type");
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		RenderedImageUtil.class);
 
 }

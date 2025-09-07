@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.web.internal.social;
@@ -28,7 +19,6 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portlet.documentlibrary.social.DLActivityKeys;
 import com.liferay.social.kernel.model.BaseSocialActivityInterpreter;
@@ -38,8 +28,6 @@ import com.liferay.social.kernel.model.SocialActivityInterpreter;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Ryan Park
@@ -47,7 +35,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  */
 @Component(
 	property = {
-		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
+		"jakarta.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
 		"model.class.name=com.liferay.document.library.kernel.model.DLFileEntry"
 	},
 	service = SocialActivityInterpreter.class
@@ -77,14 +65,22 @@ public class DLFileEntryActivityInterpreter
 			}
 		}
 
-		StringBundler sb = new StringBundler(3);
-
 		AssetRendererFactory<?> assetRendererFactory =
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
 				DLFileEntry.class.getName());
 
+		if (assetRendererFactory == null) {
+			return StringPool.BLANK;
+		}
+
 		AssetRenderer<?> assetRenderer = assetRendererFactory.getAssetRenderer(
 			fileEntry.getFileEntryId());
+
+		if (assetRenderer == null) {
+			return StringPool.BLANK;
+		}
+
+		StringBundler sb = new StringBundler(3);
 
 		String fileEntryLink = assetRenderer.getURLDownload(
 			serviceContext.getThemeDisplay());
@@ -93,7 +89,7 @@ public class DLFileEntryActivityInterpreter
 
 		sb.append(StringPool.SPACE);
 
-		String folderLink = getFolderLink(fileEntry, serviceContext);
+		String folderLink = _getFolderLink(fileEntry, serviceContext);
 
 		folderLink = addNoSuchEntryRedirect(
 			folderLink, DLFolder.class.getName(), fileEntry.getFolderId(),
@@ -104,32 +100,12 @@ public class DLFileEntryActivityInterpreter
 		return sb.toString();
 	}
 
-	protected String getFolderLink(
-		FileEntry fileEntry, ServiceContext serviceContext) {
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(serviceContext.getPortalURL());
-		sb.append(serviceContext.getPathMain());
-		sb.append("/document_library/find_folder?groupId=");
-		sb.append(fileEntry.getRepositoryId());
-		sb.append("&folderId=");
-		sb.append(fileEntry.getFolderId());
-
-		return sb.toString();
-	}
-
 	@Override
 	protected String getPath(
 		SocialActivity activity, ServiceContext serviceContext) {
 
 		return "/document_library/find_file_entry?fileEntryId=" +
 			activity.getClassPK();
-	}
-
-	@Override
-	protected ResourceBundleLoader getResourceBundleLoader() {
-		return _resourceBundleLoader;
 	}
 
 	@Override
@@ -219,13 +195,18 @@ public class DLFileEntryActivityInterpreter
 			permissionChecker, activity.getClassPK(), actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
+	private String _getFolderLink(
+		FileEntry fileEntry, ServiceContext serviceContext) {
+
+		return StringBundler.concat(
+			serviceContext.getPortalURL(), serviceContext.getPathMain(),
+			"/document_library/find_folder?groupId=",
+			fileEntry.getRepositoryId(), "&folderId=", fileEntry.getFolderId());
 	}
 
 	private static final String[] _CLASS_NAMES = {DLFileEntry.class.getName()};
 
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference(
@@ -233,12 +214,5 @@ public class DLFileEntryActivityInterpreter
 	)
 	private ModelResourcePermission<FileEntry>
 		_fileEntryModelResourcePermission;
-
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.document.library.web)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
 
 }

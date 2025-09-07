@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -33,58 +24,72 @@ public class FuzzyQueryImpl extends BaseQueryImpl implements FuzzyQuery {
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public String getField() {
 		return _field;
 	}
 
+	@Override
 	public Float getFuzziness() {
 		return _fuzziness;
 	}
 
+	@Override
 	public Integer getMaxEdits() {
 		return _maxEdits;
 	}
 
+	@Override
 	public Integer getMaxExpansions() {
 		return _maxExpansions;
 	}
 
+	@Override
 	public Integer getPrefixLength() {
 		return _prefixLength;
 	}
 
+	@Override
 	public String getRewrite() {
 		return _rewrite;
 	}
 
+	@Override
 	public Boolean getTranspositions() {
 		return _transpositions;
 	}
 
+	@Override
 	public String getValue() {
 		return _value;
 	}
 
+	@Override
 	public void setFuzziness(Float fuzziness) {
 		_fuzziness = fuzziness;
 	}
 
+	@Override
 	public void setMaxEdits(Integer maxEdits) {
 		_maxEdits = maxEdits;
 	}
 
+	@Override
 	public void setMaxExpansions(Integer maxExpansions) {
 		_maxExpansions = maxExpansions;
 	}
 
+	@Override
 	public void setPrefixLength(Integer prefixLength) {
 		_prefixLength = prefixLength;
 	}
 
+	@Override
 	public void setRewrite(String rewrite) {
 		_rewrite = rewrite;
 	}
 
+	@Override
 	public void setTranspositions(Boolean transpositions) {
 		_transpositions = transpositions;
 	}

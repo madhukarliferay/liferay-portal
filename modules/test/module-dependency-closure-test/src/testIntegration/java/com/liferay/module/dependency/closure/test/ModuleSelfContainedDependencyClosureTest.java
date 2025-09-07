@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.module.dependency.closure.test;
@@ -28,8 +19,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -64,14 +56,32 @@ public class ModuleSelfContainedDependencyClosureTest {
 			FrameworkWiring.class);
 
 		for (Bundle testBundle : testBundles) {
-			Collection<Bundle> dependencyClosure =
-				frameworkWiring.getDependencyClosure(Arrays.asList(testBundle));
+			Set<Bundle> dependencyClosure = new HashSet<>(
+				frameworkWiring.getDependencyClosure(
+					Arrays.asList(testBundle)));
+
+			dependencyClosure.removeAll(testBundles);
+
+			if (!dependencyClosure.isEmpty()) {
+				Iterator<Bundle> iterator = dependencyClosure.iterator();
+
+				while (iterator.hasNext()) {
+					Bundle dependencyBundle = iterator.next();
+
+					Dictionary<String, String> headers =
+						dependencyBundle.getHeaders(null);
+
+					if (headers.get("Test-Bridge-Pass-Code") != null) {
+						iterator.remove();
+					}
+				}
+			}
 
 			Assert.assertTrue(
-				"Test bundle " + testBundle + " has a dependency closure " +
-					dependencyClosure + " that is larger than self contained " +
+				"Test bundle " + testBundle + " has dependencies " +
+					dependencyClosure + " that are not in self contained " +
 						"scope " + testBundles,
-				testBundles.containsAll(dependencyClosure));
+				dependencyClosure.isEmpty());
 		}
 	}
 
@@ -91,6 +101,8 @@ public class ModuleSelfContainedDependencyClosureTest {
 			for (Path jarPath : directoryStream) {
 				Path deployedJarPath = modulesPath.resolve(
 					jarPath.getFileName());
+
+				deployedJarPath = deployedJarPath.normalize();
 
 				File deployedJarFile = deployedJarPath.toFile();
 

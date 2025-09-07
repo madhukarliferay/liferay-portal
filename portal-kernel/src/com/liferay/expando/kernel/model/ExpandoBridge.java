@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.model;
@@ -46,6 +37,24 @@ public interface ExpandoBridge {
 			String name, int type, Serializable defaultValue, boolean secure)
 		throws PortalException;
 
+	public default void addAttribute(String name, String type)
+		throws PortalException {
+	}
+
+	public default void addAttribute(String name, String type, boolean secure)
+		throws PortalException {
+	}
+
+	public default void addAttribute(
+			String name, String type, Serializable defaultValue)
+		throws PortalException {
+	}
+
+	public default void addAttribute(
+			String name, String type, Serializable defaultValue, boolean secure)
+		throws PortalException {
+	}
+
 	public Serializable getAttribute(String name);
 
 	public Serializable getAttribute(String name, boolean secure);
@@ -75,8 +84,6 @@ public interface ExpandoBridge {
 
 	public boolean hasAttribute(String name);
 
-	public boolean isIndexEnabled();
-
 	public void setAttribute(String name, Serializable value);
 
 	public void setAttribute(String name, Serializable value, boolean secure);
@@ -84,10 +91,10 @@ public interface ExpandoBridge {
 	public void setAttributeDefault(String name, Serializable defaultValue);
 
 	public void setAttributeProperties(
-		String name, UnicodeProperties properties);
+		String name, UnicodeProperties unicodeProperties);
 
 	public void setAttributeProperties(
-		String name, UnicodeProperties properties, boolean secure);
+		String name, UnicodeProperties unicodeProperties, boolean secure);
 
 	public void setAttributes(Map<String, Serializable> attributes);
 
@@ -103,7 +110,5 @@ public interface ExpandoBridge {
 	public void setClassPK(long classPK);
 
 	public void setCompanyId(long companyId);
-
-	public void setIndexEnabled(boolean indexEnabled);
 
 }

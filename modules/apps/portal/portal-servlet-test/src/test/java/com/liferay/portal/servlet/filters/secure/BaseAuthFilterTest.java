@@ -1,71 +1,80 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.secure;
 
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControl;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
+import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.UserImpl;
 import com.liferay.portal.security.access.control.AccessControlImpl;
+import com.liferay.portal.security.auth.http.HttpAuthManagerUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
-import com.liferay.portal.util.PropsImpl;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * @author Eric Yan
  */
 public class BaseAuthFilterTest {
 
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@BeforeClass
 	public static void setUpClass() {
 		_portalUtil.setPortal(_testPortalImpl);
 
-		PropsUtil.setProps(new PropsImpl());
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		Registry registry = new BasicRegistryImpl();
+		_serviceRegistration = bundleContext.registerService(
+			AccessControl.class, new TestAccessControlImpl(), null);
+	}
 
-		registry.registerService(
-			AccessControl.class, new TestAccessControlImpl());
-
-		RegistryUtil.setRegistry(registry);
+	@AfterClass
+	public static void tearDownClass() {
+		_serviceRegistration.unregister();
 	}
 
 	@Before
@@ -75,11 +84,56 @@ public class BaseAuthFilterTest {
 		_mockFilterConfig = new MockFilterConfig();
 		_mockHttpServletRequest = new MockHttpServletRequest();
 		_mockHttpServletResponse = new MockHttpServletResponse();
+		_mockHttpSession = new MockHttpSession();
 	}
 
 	@After
 	public void tearDown() {
 		AccessControlUtil.setAccessControlContext(null);
+	}
+
+	@Test
+	public void testDigestModified() {
+		_mockFilterConfig.addInitParameter("digest_auth", "true");
+
+		User user = _setUpUser(WorkflowConstants.STATUS_APPROVED);
+
+		Assert.assertFalse(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_DIGEST, user));
+
+		user.setDigest(RandomTestUtil.randomString());
+
+		Assert.assertTrue(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_DIGEST, user));
+	}
+
+	@Test
+	public void testHttpSessionIsInvalid() {
+		_mockFilterConfig.addInitParameter("basic_auth", "true");
+
+		Assert.assertFalse(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_BASIC,
+				_setUpUser(WorkflowConstants.STATUS_APPROVED)));
+		Assert.assertTrue(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_BASIC,
+				_setUpUser(WorkflowConstants.STATUS_INACTIVE)));
+
+		setUp();
+
+		_mockFilterConfig.addInitParameter("digest_auth", "true");
+
+		Assert.assertFalse(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_DIGEST,
+				_setUpUser(WorkflowConstants.STATUS_APPROVED)));
+		Assert.assertTrue(
+			_testHttpSessionIsInvalid(
+				HttpAuthorizationHeader.SCHEME_DIGEST,
+				_setUpUser(WorkflowConstants.STATUS_INACTIVE)));
 	}
 
 	@Test
@@ -121,6 +175,7 @@ public class BaseAuthFilterTest {
 		}
 		finally {
 			_portalUtil.setPortal(_testPortalImpl);
+
 			_setPortalProperty("PORTAL_PROXY_PATH", portalProxyPath);
 		}
 
@@ -149,6 +204,7 @@ public class BaseAuthFilterTest {
 		}
 		finally {
 			_portalUtil.setPortal(_testPortalImpl);
+
 			_setPortalProperty("PORTAL_PROXY_PATH", portalProxyPath);
 		}
 
@@ -254,7 +310,61 @@ public class BaseAuthFilterTest {
 			PropsValues.class, propertyName, value);
 	}
 
+	private User _setUpUser(int status) {
+		User user = new UserImpl();
+
+		String digest = RandomTestUtil.randomString();
+
+		user.setDigest(digest);
+
+		user.setStatus(status);
+
+		_mockHttpSession.setAttribute(WebKeys.USER, user);
+
+		_mockHttpSession.setAttribute(WebKeys.USER_DIGEST, digest);
+
+		_mockHttpServletRequest.setSession(_mockHttpSession);
+
+		return user;
+	}
+
+	private boolean _testHttpSessionIsInvalid(String scheme, User user) {
+		try (MockedStatic<HttpAuthManagerUtil> httpAuthManagerUtilMockedStatic =
+				Mockito.mockStatic(HttpAuthManagerUtil.class);
+			MockedStatic<UserLocalServiceUtil>
+				userLocalServiceUtilMockedStatic = Mockito.mockStatic(
+					UserLocalServiceUtil.class)) {
+
+			httpAuthManagerUtilMockedStatic.when(
+				() -> HttpAuthManagerUtil.generateChallenge(
+					Mockito.any(), Mockito.any(), Mockito.any())
+			).then(
+				invocationOnMock -> {
+					HttpAuthorizationHeader httpAuthorizationHeader =
+						invocationOnMock.getArgument(
+							2, HttpAuthorizationHeader.class);
+
+					Assert.assertEquals(
+						scheme, httpAuthorizationHeader.getScheme());
+
+					return null;
+				}
+			);
+
+			userLocalServiceUtilMockedStatic.when(
+				() -> UserLocalServiceUtil.getUser(ArgumentMatchers.anyLong())
+			).thenReturn(
+				user
+			);
+
+			_processFilter();
+
+			return _mockHttpSession.isInvalid();
+		}
+	}
+
 	private static final PortalUtil _portalUtil = new PortalUtil();
+	private static ServiceRegistration<?> _serviceRegistration;
 	private static final PortalImpl _testPortalImpl = new TestPortalImpl();
 
 	private TestAuthFilter _authFilter;
@@ -262,6 +372,7 @@ public class BaseAuthFilterTest {
 	private MockFilterConfig _mockFilterConfig;
 	private MockHttpServletRequest _mockHttpServletRequest;
 	private MockHttpServletResponse _mockHttpServletResponse;
+	private MockHttpSession _mockHttpSession;
 
 	private static class TestAccessControlImpl extends AccessControlImpl {
 

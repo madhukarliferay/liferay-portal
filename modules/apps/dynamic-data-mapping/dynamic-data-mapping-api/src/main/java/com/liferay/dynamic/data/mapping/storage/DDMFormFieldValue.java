@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.storage;
@@ -19,6 +10,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -43,16 +35,16 @@ public class DDMFormFieldValue implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMFormFieldValue)) {
+		if (!(object instanceof DDMFormFieldValue)) {
 			return false;
 		}
 
-		DDMFormFieldValue ddmFormFieldValue = (DDMFormFieldValue)obj;
+		DDMFormFieldValue ddmFormFieldValue = (DDMFormFieldValue)object;
 
 		if (Objects.equals(_instanceId, ddmFormFieldValue._instanceId) &&
 			Objects.equals(_name, ddmFormFieldValue._name) &&
@@ -67,6 +59,10 @@ public class DDMFormFieldValue implements Serializable {
 		return false;
 	}
 
+	public Object getConfirmationValue() {
+		return _confirmationValue;
+	}
+
 	public DDMFormField getDDMFormField() {
 		DDMForm ddmForm = _ddmFormValues.getDDMForm();
 
@@ -78,6 +74,20 @@ public class DDMFormFieldValue implements Serializable {
 
 	public DDMFormValues getDDMFormValues() {
 		return _ddmFormValues;
+	}
+
+	public String getFieldReference() {
+		if (Validator.isNotNull(_fieldReference)) {
+			return _fieldReference;
+		}
+
+		DDMFormField ddmFormField = getDDMFormField();
+
+		if (ddmFormField == null) {
+			return _name;
+		}
+
+		return ddmFormField.getFieldReference();
 	}
 
 	public String getInstanceId() {
@@ -98,29 +108,29 @@ public class DDMFormFieldValue implements Serializable {
 		Map<String, List<DDMFormFieldValue>> nestedDDMFormFieldValuesMap =
 			new HashMap<>();
 
-		for (DDMFormFieldValue nestedDDMFormFieldValue :
-				_nestedDDMFormFieldValues) {
-
-			List<DDMFormFieldValue> nestedDDMFormFieldValues =
-				nestedDDMFormFieldValuesMap.get(
-					nestedDDMFormFieldValue.getName());
-
-			if (nestedDDMFormFieldValues == null) {
-				nestedDDMFormFieldValues = new ArrayList<>();
-
-				nestedDDMFormFieldValuesMap.put(
-					nestedDDMFormFieldValue.getName(),
-					nestedDDMFormFieldValues);
-			}
-
-			nestedDDMFormFieldValues.add(nestedDDMFormFieldValue);
-		}
+		populateNestedDDMFormFieldValuesMap(nestedDDMFormFieldValuesMap);
 
 		return nestedDDMFormFieldValuesMap;
 	}
 
+	public Map<String, List<DDMFormFieldValue>>
+		getNestedDDMFormFieldValuesReferencesMap() {
+
+		Map<String, List<DDMFormFieldValue>>
+			nestedDDMFormFieldValuesReferencesMap = new HashMap<>();
+
+		populateNestedDDMFormFieldValuesReferencesMap(
+			nestedDDMFormFieldValuesReferencesMap);
+
+		return nestedDDMFormFieldValuesReferencesMap;
+	}
+
 	public String getType() {
 		DDMFormField ddmFormField = getDDMFormField();
+
+		if (ddmFormField == null) {
+			return null;
+		}
 
 		return ddmFormField.getType();
 	}
@@ -139,6 +149,62 @@ public class DDMFormFieldValue implements Serializable {
 		return HashUtil.hash(hash, _value);
 	}
 
+	public void populateNestedDDMFormFieldValuesMap(
+		Map<String, List<DDMFormFieldValue>> nestedDDMFormFieldValuesMap) {
+
+		for (DDMFormFieldValue nestedDDMFormFieldValue :
+				_nestedDDMFormFieldValues) {
+
+			List<DDMFormFieldValue> nestedDDMFormFieldValues =
+				nestedDDMFormFieldValuesMap.get(
+					nestedDDMFormFieldValue.getName());
+
+			if (nestedDDMFormFieldValues == null) {
+				nestedDDMFormFieldValues = new ArrayList<>();
+
+				nestedDDMFormFieldValuesMap.put(
+					nestedDDMFormFieldValue.getName(),
+					nestedDDMFormFieldValues);
+			}
+
+			nestedDDMFormFieldValues.add(nestedDDMFormFieldValue);
+
+			nestedDDMFormFieldValue.populateNestedDDMFormFieldValuesMap(
+				nestedDDMFormFieldValuesMap);
+		}
+	}
+
+	public void populateNestedDDMFormFieldValuesReferencesMap(
+		Map<String, List<DDMFormFieldValue>>
+			nestedDDMFormFieldValuesReferencesMap) {
+
+		for (DDMFormFieldValue nestedDDMFormFieldValue :
+				_nestedDDMFormFieldValues) {
+
+			List<DDMFormFieldValue> nestedDDMFormFieldValues =
+				nestedDDMFormFieldValuesReferencesMap.get(
+					nestedDDMFormFieldValue.getFieldReference());
+
+			if (nestedDDMFormFieldValues == null) {
+				nestedDDMFormFieldValues = new ArrayList<>();
+
+				nestedDDMFormFieldValuesReferencesMap.put(
+					nestedDDMFormFieldValue.getFieldReference(),
+					nestedDDMFormFieldValues);
+			}
+
+			nestedDDMFormFieldValues.add(nestedDDMFormFieldValue);
+
+			nestedDDMFormFieldValue.
+				populateNestedDDMFormFieldValuesReferencesMap(
+					nestedDDMFormFieldValuesReferencesMap);
+		}
+	}
+
+	public void setConfirmationValue(Object confirmationValue) {
+		_confirmationValue = confirmationValue;
+	}
+
 	public void setDDMFormValues(DDMFormValues ddmFormValues) {
 		for (DDMFormFieldValue nestedDDMFormFieldValue :
 				_nestedDDMFormFieldValues) {
@@ -147,6 +213,10 @@ public class DDMFormFieldValue implements Serializable {
 		}
 
 		_ddmFormValues = ddmFormValues;
+	}
+
+	public void setFieldReference(String fieldReference) {
+		_fieldReference = fieldReference;
 	}
 
 	public void setInstanceId(String instanceId) {
@@ -167,7 +237,9 @@ public class DDMFormFieldValue implements Serializable {
 		_value = value;
 	}
 
+	private Object _confirmationValue;
 	private DDMFormValues _ddmFormValues;
+	private String _fieldReference;
 	private String _instanceId = StringUtil.randomString();
 	private String _name;
 	private List<DDMFormFieldValue> _nestedDDMFormFieldValues =

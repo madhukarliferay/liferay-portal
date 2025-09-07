@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.util.transport;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.net.DatagramPacket;
@@ -32,14 +25,21 @@ public class MulticastServerTool {
 
 	public static void main(String[] args) {
 		try {
+			String multicastAddress = args[0];
 			int port = GetterUtil.getInteger(args[1]);
 			long interval = GetterUtil.getLong(args[2]);
+
+			String bindAddress = null;
+
+			if (args.length > 3) {
+				bindAddress = args[3];
+			}
 
 			DatagramHandler handler = new DatagramHandler() {
 
 				@Override
-				public void errorReceived(Throwable t) {
-					t.printStackTrace();
+				public void errorReceived(Throwable throwable) {
+					throwable.printStackTrace();
 				}
 
 				@Override
@@ -53,7 +53,7 @@ public class MulticastServerTool {
 			};
 
 			MulticastTransport transport = new MulticastTransport(
-				handler, args[0], port);
+				handler, multicastAddress, port, bindAddress);
 
 			transport.connect();
 
@@ -72,15 +72,18 @@ public class MulticastServerTool {
 				Thread.sleep(interval);
 			}
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			_log.error(exception);
 
 			System.err.println(
 				"Usage: java MulticastServerTool multicastAddress port " +
-					"interval");
+					"interval bindAddress");
 
 			System.exit(1);
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		MulticastServerTool.class);
 
 }

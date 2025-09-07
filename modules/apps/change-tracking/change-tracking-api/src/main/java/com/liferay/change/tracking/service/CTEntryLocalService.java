@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.service;
 
 import com.liferay.change.tracking.model.CTEntry;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -56,14 +50,18 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface CTEntryLocalService
 	extends BaseLocalService, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link CTEntryLocalServiceUtil} to access the ct entry local service. Add custom service methods to <code>com.liferay.change.tracking.service.impl.CTEntryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.change.tracking.service.impl.CTEntryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the ct entry local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link CTEntryLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the ct entry to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctEntry the ct entry
 	 * @return the ct entry that was added
@@ -72,8 +70,9 @@ public interface CTEntryLocalService
 	public CTEntry addCTEntry(CTEntry ctEntry);
 
 	public CTEntry addCTEntry(
-			long ctCollectionId, long modelClassNameId, CTModel<?> ctModel,
-			long userId, int changeType)
+			String externalReferenceCode, long ctCollectionId,
+			long modelClassNameId, CTModel<?> ctModel, long userId,
+			int changeType)
 		throws PortalException;
 
 	/**
@@ -86,7 +85,17 @@ public interface CTEntryLocalService
 	public CTEntry createCTEntry(long ctEntryId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Deletes the ct entry from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctEntry the ct entry
 	 * @return the ct entry that was removed
@@ -95,8 +104,15 @@ public interface CTEntryLocalService
 	@Indexable(type = IndexableType.DELETE)
 	public CTEntry deleteCTEntry(CTEntry ctEntry) throws PortalException;
 
+	public CTEntry deleteCTEntry(CTEntry ctEntry, boolean force)
+		throws PortalException;
+
 	/**
 	 * Deletes the ct entry with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctEntryId the primary key of the ct entry
 	 * @return the ct entry that was removed
@@ -111,6 +127,12 @@ public interface CTEntryLocalService
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -186,6 +208,20 @@ public interface CTEntryLocalService
 		long ctCollectionId, long modelClassNameId, long modelClassPK);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public CTEntry fetchCTEntryByExternalReferenceCode(
+		String externalReferenceCode, long companyId);
+
+	/**
+	 * Returns the ct entry with the matching UUID and company.
+	 *
+	 * @param uuid the ct entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching ct entry, or <code>null</code> if a matching ct entry could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public CTEntry fetchCTEntryByUuidAndCompanyId(String uuid, long companyId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -217,6 +253,9 @@ public interface CTEntryLocalService
 	public List<CTEntry> getCTEntries(
 		long ctCollectionId, long modelClassNameId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<CTEntry> getCTEntries(long[] ctEntryIds);
+
 	/**
 	 * Returns the number of ct entries.
 	 *
@@ -236,8 +275,32 @@ public interface CTEntryLocalService
 	public CTEntry getCTEntry(long ctEntryId) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public CTEntry getCTEntryByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
+
+	/**
+	 * Returns the ct entry with the matching UUID and company.
+	 *
+	 * @param uuid the ct entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching ct entry
+	 * @throws PortalException if a matching ct entry could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public CTEntry getCTEntryByUuidAndCompanyId(String uuid, long companyId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public long getCTRowCTCollectionId(CTEntry ctEntry) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<Long> getExclusiveModelClassPKs(
 		long ctCollectionId, long modelClassNameId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		PortletDataContext portletDataContext);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
@@ -249,6 +312,9 @@ public interface CTEntryLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -257,13 +323,28 @@ public interface CTEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public boolean hasCTEntries(long ctCollectionId, long modelClassNameId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasCTEntry(
+		long ctCollectionId, long modelClassNameId, long modelClassPK);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasUnpublishedCTEntries(
+		long modelClassNameId, long modelClassPK, int changeType);
+
 	/**
 	 * Updates the ct entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctEntry the ct entry
 	 * @return the ct entry that was updated
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public CTEntry updateCTEntry(CTEntry ctEntry);
+
+	public CTEntry updateModelMvccVersion(
+		long ctEntryId, long modelMvccVersion);
 
 }

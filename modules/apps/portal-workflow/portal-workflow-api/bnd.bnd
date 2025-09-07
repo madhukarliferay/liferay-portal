@@ -1,14 +1,16 @@
 Bundle-Name: Liferay Portal Workflow API
 Bundle-SymbolicName: com.liferay.portal.workflow.api
-Bundle-Version: 6.0.0
+Bundle-Version: 13.1.1
 Export-Package:\
+	com.liferay.portal.workflow.comparator,\
 	com.liferay.portal.workflow.configuration,\
 	com.liferay.portal.workflow.constants,\
+	com.liferay.portal.workflow.definition.groovy.script.use,\
 	com.liferay.portal.workflow.definition.link.update.handler,\
 	com.liferay.portal.workflow.exception,\
-	com.liferay.portal.workflow.portlet.tab
-Provide-Capability:\
-	liferay.resource.bundle;\
-		resource.bundle.aggregate:String="(bundle.symbolic.name=com.liferay.portal.workflow.lang)";\
-		resource.bundle.base.name="content.Language"
+	com.liferay.portal.workflow.instance.tracker.url.provider,\
+	com.liferay.portal.workflow.manager,\
+	com.liferay.portal.workflow.portlet.tab,\
+	com.liferay.portal.workflow.security.permission,\
+	com.liferay.portal.workflow.util
 -dsannotations-options: inherit

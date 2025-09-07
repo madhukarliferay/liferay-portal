@@ -1,33 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {ClayCheckbox} from '@clayui/form';
-import React, {useContext} from 'react';
+import React, {useEffect} from 'react';
 
 import toggleShowResolvedComments from '../../../app/actions/toggleShowResolvedComments';
-import {StoreContext} from '../../../app/store/index';
-import AppContext from '../../../core/AppContext';
+import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
 
 export default function ResolvedCommentsToggle() {
-	const {dispatch} = useContext(AppContext);
-	const {fragmentEntryLinks, showResolvedComments} = useContext(StoreContext);
+	const dispatch = useDispatch();
 
-	const hasResolvedComments = Object.values(fragmentEntryLinks).some(
-		fragmentEntryLink =>
-			fragmentEntryLink.comments &&
-			fragmentEntryLink.comments.some(comment => comment.resolved)
+	const showResolvedComments = useSelector(
+		(state) => !!state.showResolvedComments
 	);
+
+	const hasResolvedComments = useSelector((state) =>
+		Object.values(state.fragmentEntryLinks || {}).some(
+			(fragmentEntryLink) =>
+				fragmentEntryLink.comments &&
+				fragmentEntryLink.comments.some((comment) => comment.resolved)
+		)
+	);
+
+	useEffect(() => {
+		if (!hasResolvedComments) {
+			dispatch(
+				toggleShowResolvedComments({
+					showResolvedComments: false,
+				})
+			);
+		}
+	}, [dispatch, hasResolvedComments]);
 
 	return (
 		<div className="pb-3 px-3">
@@ -35,10 +40,10 @@ export default function ResolvedCommentsToggle() {
 				checked={showResolvedComments}
 				disabled={!showResolvedComments && !hasResolvedComments}
 				label={Liferay.Language.get('show-resolved-comments')}
-				onChange={event =>
+				onChange={(event) =>
 					dispatch(
 						toggleShowResolvedComments({
-							showResolvedComments: Boolean(event.target.checked)
+							showResolvedComments: Boolean(event.target.checked),
 						})
 					)
 				}

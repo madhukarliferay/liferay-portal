@@ -1,77 +1,52 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/dynamic_include/init.jsp" %>
 
 <%
-PortletURL manageCollaboratorsURL = PortletProviderUtil.getPortletURL(request, SharingEntry.class.getName(), PortletProvider.Action.MANAGE);
+PortletURL manageCollaboratorsURL = PortletURLBuilder.create(
+	PortletProviderUtil.getPortletURL(request, SharingEntry.class.getName(), PortletProvider.Action.MANAGE)
+).setWindowState(
+	LiferayWindowState.POP_UP
+).buildPortletURL();
 
-manageCollaboratorsURL.setWindowState(LiferayWindowState.POP_UP);
-
-PortletURL sharingURL = PortletProviderUtil.getPortletURL(request, SharingEntry.class.getName(), PortletProvider.Action.EDIT);
-
-sharingURL.setWindowState(LiferayWindowState.POP_UP);
+PortletURL sharingURL = PortletURLBuilder.create(
+	PortletProviderUtil.getPortletURL(request, SharingEntry.class.getName(), PortletProvider.Action.EDIT)
+).setWindowState(
+	LiferayWindowState.POP_UP
+).buildPortletURL();
 %>
 
 <aui:script sandbox="<%= true %>">
 	function showDialog(uri, title) {
-		Liferay.Util.openWindow({
-			dialog: {
-				centered: true,
-				constrain: true,
-				cssClass: 'sharing-dialog',
-				destroyOnHide: true,
-				modal: true,
-				height: 540,
-				width: 600
-			},
+		Liferay.Util.openModal({
+			height: '475px',
 			id: 'sharingDialog',
+			iframeBodyCssClass: 'sharing-dialog',
+			size: 'md',
 			title: title,
-			uri: uri
+			url: uri,
 		});
 	}
 
-	var Sharing = {};
+	var Sharing = {
+		copyLink: function (link) {
+			navigator.clipboard.writeText(link);
 
-	Liferay.provide(
-		Sharing,
-		'share',
-		function(classNameId, classPK, title) {
-			var sharingParameters = {
-				classNameId: classNameId,
-				classPK: classPK
-			};
-
-			var sharingURL = Liferay.Util.PortletURL.createPortletURL(
-				'<%= sharingURL.toString() %>',
-				sharingParameters
-			);
-
-			showDialog(sharingURL.toString(), title);
+			Liferay.Util.openToast({
+				message:
+					'<%= LanguageUtil.get(resourceBundle, "copied-link-to-the-clipboard") %>',
+			});
 		},
-		['liferay-util-window']
-	);
 
-	Liferay.provide(
-		Sharing,
-		'manageCollaborators',
-		function(classNameId, classPK) {
+		manageCollaborators: function (classNameId, classPK) {
 			var manageCollaboratorsParameters = {
 				classNameId: classNameId,
-				classPK: classPK
+				classPK: classPK,
 			};
 
 			var manageCollaboratorsURL = Liferay.Util.PortletURL.createPortletURL(
@@ -84,8 +59,21 @@ sharingURL.setWindowState(LiferayWindowState.POP_UP);
 				'<%= LanguageUtil.get(resourceBundle, "manage-collaborators") %>'
 			);
 		},
-		['liferay-util-window']
-	);
+
+		share: function (classNameId, classPK, title) {
+			var sharingParameters = {
+				classNameId: classNameId,
+				classPK: classPK,
+			};
+
+			var sharingURL = Liferay.Util.PortletURL.createPortletURL(
+				'<%= sharingURL.toString() %>',
+				sharingParameters
+			);
+
+			showDialog(sharingURL.toString(), title);
+		},
+	};
 
 	Liferay.Sharing = Sharing;
 </aui:script>

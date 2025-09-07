@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.image.service.impl;
@@ -22,6 +13,7 @@ import com.liferay.adaptive.media.image.internal.storage.ImageStorage;
 import com.liferay.adaptive.media.image.model.AMImageEntry;
 import com.liferay.adaptive.media.image.service.base.AMImageEntryLocalServiceBaseImpl;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.aop.AopService;
@@ -32,10 +24,8 @@ import com.liferay.portal.kernel.repository.model.FileVersion;
 
 import java.io.InputStream;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -159,8 +149,8 @@ public class AMImageEntryLocalServiceImpl
 				_imageStorage.delete(
 					fileVersion, amImageEntry.getConfigurationUuid());
 			}
-			catch (AMRuntimeException.IOException amreioe) {
-				_log.error(amreioe, amreioe);
+			catch (AMRuntimeException.IOException ioException) {
+				_log.error(ioException);
 			}
 		}
 	}
@@ -209,6 +199,18 @@ public class AMImageEntryLocalServiceImpl
 	}
 
 	/**
+	 * Returns the list of adaptive media image entries generated for the
+	 * file version.
+	 *
+	 * @param  fileVersionId the primary key of the file version
+	 * @return the list of adaptive media image entries in the file version
+	 */
+	@Override
+	public List<AMImageEntry> getAMImageEntries(long fileVersionId) {
+		return amImageEntryPersistence.findByFileVersionId(fileVersionId);
+	}
+
+	/**
 	 * Returns the number of adaptive media image entries generated for the
 	 * configuration in the company.
 	 *
@@ -241,7 +243,7 @@ public class AMImageEntryLocalServiceImpl
 		AMImageConfigurationEntry amImageConfigurationEntry,
 		FileVersion fileVersion) {
 
-		return _imageStorage.getContentStream(
+		return _imageStorage.getContentInputStream(
 			fileVersion, amImageConfigurationEntry.getUUID());
 	}
 
@@ -256,15 +258,13 @@ public class AMImageEntryLocalServiceImpl
 	 */
 	@Override
 	public int getExpectedAMImageEntriesCount(long companyId) {
-		Collection<AMImageCounter> amImageCounters =
-			_serviceTrackerMap.values();
+		int count = 0;
 
-		Stream<AMImageCounter> amImageCounterStream = amImageCounters.stream();
+		for (AMImageCounter amImageCounter : _serviceTrackerMap.values()) {
+			count += amImageCounter.countExpectedAMImageEntries(companyId);
+		}
 
-		return amImageCounterStream.mapToInt(
-			amImageCounter -> amImageCounter.countExpectedAMImageEntries(
-				companyId)
-		).sum();
+		return count;
 	}
 
 	/**
@@ -280,8 +280,15 @@ public class AMImageEntryLocalServiceImpl
 	 */
 	@Override
 	public int getPercentage(long companyId, String configurationUuid) {
-		int expectedAMImageEntriesCount = getExpectedAMImageEntriesCount(
-			companyId);
+		return getPercentage(
+			companyId, configurationUuid,
+			getExpectedAMImageEntriesCount(companyId));
+	}
+
+	@Override
+	public int getPercentage(
+		long companyId, String configurationUuid,
+		int expectedAMImageEntriesCount) {
 
 		if (expectedAMImageEntriesCount == 0) {
 			return 0;
@@ -296,14 +303,26 @@ public class AMImageEntryLocalServiceImpl
 		return Math.min(percentage, 100);
 	}
 
+	@Override
+	public boolean hasAMImageEntryContent(
+		String configurationUuid, FileVersion fileVersion) {
+
+		return _imageStorage.hasContent(fileVersion, configurationUuid);
+	}
+
 	@Activate
 	protected void activate(BundleContext bundleContext) {
+		_imageStorage = new ImageStorage(_store);
+
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
 			bundleContext, AMImageCounter.class, "adaptive.media.key");
 	}
 
 	@Deactivate
+	@Override
 	protected void deactivate() {
+		super.deactivate();
+
 		_serviceTrackerMap.close();
 	}
 
@@ -325,9 +344,10 @@ public class AMImageEntryLocalServiceImpl
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
-	@Reference
 	private ImageStorage _imageStorage;
-
 	private ServiceTrackerMap<String, AMImageCounter> _serviceTrackerMap;
+
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 }

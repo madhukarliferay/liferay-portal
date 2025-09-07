@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.impl;
@@ -21,6 +12,7 @@ import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.service.OAuth2ScopeGrantLocalService;
 import com.liferay.oauth2.provider.service.base.OAuth2ApplicationScopeAliasesLocalServiceBaseImpl;
+import com.liferay.oauth2.provider.service.persistence.OAuth2ApplicationPersistence;
 import com.liferay.oauth2.provider.util.builder.OAuth2ScopeBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.aop.AopService;
@@ -40,8 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
@@ -57,6 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 	extends OAuth2ApplicationScopeAliasesLocalServiceBaseImpl {
 
+	@Override
 	public OAuth2ApplicationScopeAliases addOAuth2ApplicationScopeAliases(
 			long companyId, long userId, String userName,
 			long oAuth2ApplicationId,
@@ -165,7 +156,8 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 		long oAuth2ApplicationId, List<String> scopeAliasesList) {
 
 		OAuth2Application oAuth2Application =
-			oAuth2ApplicationPersistence.fetchByPrimaryKey(oAuth2ApplicationId);
+			_oAuth2ApplicationPersistence.fetchByPrimaryKey(
+				oAuth2ApplicationId);
 
 		if (oAuth2Application == null) {
 			return null;
@@ -179,14 +171,14 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 		List<String> assignedScopeAliases = getScopeAliasesList(
 			oAuth2ApplicationScopeAliasesId);
 
-		if ((scopeAliases.size() == assignedScopeAliases.size()) &&
-			assignedScopeAliases.containsAll(scopeAliases)) {
+		if ((scopeAliases.size() != assignedScopeAliases.size()) ||
+			!assignedScopeAliases.containsAll(scopeAliases)) {
 
-			return fetchOAuth2ApplicationScopeAliases(
-				oAuth2ApplicationScopeAliasesId);
+			return null;
 		}
 
-		return null;
+		return fetchOAuth2ApplicationScopeAliases(
+			oAuth2ApplicationScopeAliasesId);
 	}
 
 	@Override
@@ -205,12 +197,10 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 	public List<String> getScopeAliasesList(
 		long oAuth2ApplicationScopeAliasesId) {
 
-		Collection<OAuth2ScopeGrant> oAuth2ScopeGrants =
+		return _getScopeAliasesList(
 			_oAuth2ScopeGrantLocalService.getOAuth2ScopeGrants(
 				oAuth2ApplicationScopeAliasesId, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS, null);
-
-		return _getScopeAliasesList(oAuth2ScopeGrants);
+				QueryUtil.ALL_POS, null));
 	}
 
 	@Override
@@ -223,11 +213,10 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 					getOAuth2ApplicationScopeAliasesId(),
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
-		List<String> scopeAliasesList = _getScopeAliasesList(oAuth2ScopeGrants);
-
 		Map<LiferayOAuth2Scope, List<String>> liferayOAuth2ScopesScopeAliases =
 			_getLiferayOAuth2ScopesScopeAliases(
-				oAuth2ApplicationScopeAliases.getCompanyId(), scopeAliasesList);
+				oAuth2ApplicationScopeAliases.getCompanyId(),
+				_getScopeAliasesList(oAuth2ScopeGrants));
 
 		if (_hasUpToDateScopeGrants(
 				oAuth2ScopeGrants, liferayOAuth2ScopesScopeAliases)) {
@@ -243,23 +232,20 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 				oAuth2ApplicationScopeAliases.getOAuth2ApplicationId(),
 				liferayOAuth2ScopesScopeAliases);
 		}
-		catch (PortalException pe) {
-			throw new IllegalArgumentException(pe);
+		catch (PortalException portalException) {
+			throw new IllegalArgumentException(portalException);
 		}
 	}
 
 	protected static class OAuth2ScopeBuilderImpl
-		implements OAuth2ScopeBuilder,
-				   OAuth2ScopeBuilder.ApplicationScopeAssigner,
-				   OAuth2ScopeBuilder.ApplicationScope {
+		implements OAuth2ScopeBuilder, OAuth2ScopeBuilder.ApplicationScope,
+				   OAuth2ScopeBuilder.ApplicationScopeAssigner {
 
 		public OAuth2ScopeBuilderImpl(
 			Map<Map.Entry<ScopeNamespace, String>, List<String>>
 				simpleEntryScopeAliases) {
 
 			_simpleEntryScopeAliases = simpleEntryScopeAliases;
-			_scopes = new ArrayList<>();
-			_scopeAliases = new ArrayList<>();
 		}
 
 		public ApplicationScope assignScope(Collection<String> scope) {
@@ -308,9 +294,9 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 			_scopeAliases = _scopes;
 		}
 
-		private Collection<String> _scopeAliases;
+		private Collection<String> _scopeAliases = new ArrayList<>();
 		private ScopeNamespace _scopeNamespace;
-		private final Collection<String> _scopes;
+		private final Collection<String> _scopes = new ArrayList<>();
 		private final Map<Map.Entry<ScopeNamespace, String>, List<String>>
 			_simpleEntryScopeAliases;
 
@@ -326,8 +312,8 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			ScopeNamespace scopeNamespace = (ScopeNamespace)obj;
+		public boolean equals(Object object) {
+			ScopeNamespace scopeNamespace = (ScopeNamespace)object;
 
 			if (Objects.equals(
 					_applicationName, scopeNamespace._applicationName) &&
@@ -426,14 +412,11 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 	private List<String> _getScopeAliasesList(
 		Collection<OAuth2ScopeGrant> oAuth2ScopeGrants) {
 
-		Stream<OAuth2ScopeGrant> stream = oAuth2ScopeGrants.stream();
+		Set<String> scopeAliases = new HashSet<>();
 
-		Set<String> scopeAliases = stream.flatMap(
-			oa2sg -> oa2sg.getScopeAliasesList(
-			).stream()
-		).collect(
-			Collectors.toSet()
-		);
+		for (OAuth2ScopeGrant oAuth2ScopeGrant : oAuth2ScopeGrants) {
+			scopeAliases.addAll(oAuth2ScopeGrant.getScopeAliasesList());
+		}
 
 		return new ArrayList<>(scopeAliases);
 	}
@@ -486,6 +469,9 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 
 		return true;
 	}
+
+	@Reference
+	private OAuth2ApplicationPersistence _oAuth2ApplicationPersistence;
 
 	@Reference
 	private OAuth2ScopeGrantLocalService _oAuth2ScopeGrantLocalService;

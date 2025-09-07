@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.validator.internal;
 
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayoutColumn;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayoutPage;
@@ -26,6 +18,8 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationExcepti
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationException.MustSetDefaultLocale;
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationException.MustSetEqualLocaleForLayoutAndTitle;
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidator;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
+import com.liferay.dynamic.data.mapping.validator.internal.util.DDMFormRuleValidatorUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 
 import java.util.HashSet;
@@ -33,37 +27,32 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pablo Carvalho
  */
-@Component(immediate = true, service = DDMFormLayoutValidator.class)
+@Component(service = DDMFormLayoutValidator.class)
 public class DDMFormLayoutValidatorImpl implements DDMFormLayoutValidator {
 
 	@Override
 	public void validate(DDMFormLayout ddmFormLayout)
-		throws DDMFormLayoutValidationException {
+		throws DDMFormLayoutValidationException, DDMFormValidationException {
 
-		validateDDMFormLayoutDefaultLocale(ddmFormLayout);
+		DDMFormRuleValidatorUtil.validateDDMFormRules(
+			_ddmExpressionFactory, ddmFormLayout.getDDMFormRules());
+
+		_validateDDMFormLayoutDefaultLocale(ddmFormLayout);
 
 		_validateDDMFormFieldNames(ddmFormLayout);
 		_validateDDMFormLayoutPageTitles(ddmFormLayout);
 		_validateDDMFormLayoutRowSizes(ddmFormLayout);
 	}
 
-	protected void validateDDMFormLayoutDefaultLocale(
-			DDMFormLayout ddmFormLayout)
-		throws DDMFormLayoutValidationException {
-
-		Locale defaultLocale = ddmFormLayout.getDefaultLocale();
-
-		if (defaultLocale == null) {
-			throw new MustSetDefaultLocale();
-		}
-	}
-
 	private void _validateDDMFormFieldNames(DDMFormLayout ddmFormLayout)
 		throws DDMFormLayoutValidationException {
+
+		Set<String> duplicatedDDMFormFieldNames = new HashSet<>();
 
 		Set<String> ddmFormFieldNames = new HashSet<>();
 
@@ -76,19 +65,30 @@ public class DDMFormLayoutValidatorImpl implements DDMFormLayoutValidator {
 				for (DDMFormLayoutColumn ddmFormLayoutColumn :
 						ddmFormLayoutRow.getDDMFormLayoutColumns()) {
 
-					Set<String> intersectDDMFormFieldNames = SetUtil.intersect(
-						ddmFormFieldNames,
-						ddmFormLayoutColumn.getDDMFormFieldNames());
+					for (String ddmFormFieldName :
+							ddmFormLayoutColumn.getDDMFormFieldNames()) {
 
-					if (!intersectDDMFormFieldNames.isEmpty()) {
-						throw new MustNotDuplicateFieldName(
-							intersectDDMFormFieldNames);
+						if (!ddmFormFieldNames.add(ddmFormFieldName)) {
+							duplicatedDDMFormFieldNames.add(ddmFormFieldName);
+						}
 					}
-
-					ddmFormFieldNames.addAll(
-						ddmFormLayoutColumn.getDDMFormFieldNames());
 				}
 			}
+		}
+
+		if (SetUtil.isNotEmpty(duplicatedDDMFormFieldNames)) {
+			throw new MustNotDuplicateFieldName(duplicatedDDMFormFieldNames);
+		}
+	}
+
+	private void _validateDDMFormLayoutDefaultLocale(
+			DDMFormLayout ddmFormLayout)
+		throws DDMFormLayoutValidationException {
+
+		Locale defaultLocale = ddmFormLayout.getDefaultLocale();
+
+		if (defaultLocale == null) {
+			throw new MustSetDefaultLocale();
 		}
 	}
 
@@ -139,5 +139,8 @@ public class DDMFormLayoutValidatorImpl implements DDMFormLayoutValidator {
 	}
 
 	private static final int _MAX_ROW_SIZE = 12;
+
+	@Reference
+	private DDMExpressionFactory _ddmExpressionFactory;
 
 }

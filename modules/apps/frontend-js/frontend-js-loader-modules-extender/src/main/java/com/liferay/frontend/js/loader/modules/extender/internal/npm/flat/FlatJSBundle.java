@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.internal.npm.flat;
 
 import com.liferay.frontend.js.loader.modules.extender.npm.JSBundle;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackage;
+import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 
@@ -23,10 +15,9 @@ import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
+import java.util.function.Consumer;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.Version;
 
 /**
  * Provides a complete implementation of {@link JSBundle}.
@@ -40,8 +31,9 @@ public class FlatJSBundle implements JSBundle {
 	 *
 	 * @param bundle the OSGi bundle to which this object refers
 	 */
-	public FlatJSBundle(Bundle bundle) {
+	public FlatJSBundle(Bundle bundle, Consumer<FlatJSBundle> initConsumer) {
 		_bundle = bundle;
+		_initConsumer = initConsumer;
 	}
 
 	/**
@@ -53,21 +45,6 @@ public class FlatJSBundle implements JSBundle {
 		_jsPackages.add(jsPackage);
 	}
 
-	/**
-	 * Returns the entries inside an OSGi bundle path given the glob pattern.
-	 *
-	 * @param  path the path where the search must start
-	 * @param  filePattern the glob pattern of files to look for
-	 * @param  recurse whether to exclusively look for files in the path;
-	 *         otherwise, look for files in the path and its subfolders
-	 * @return the entries inside an OSGi bundle path
-	 */
-	public Enumeration<URL> findEntries(
-		String path, String filePattern, boolean recurse) {
-
-		return _bundle.findEntries(path, filePattern, recurse);
-	}
-
 	@Override
 	public String getId() {
 		return String.valueOf(_bundle.getBundleId());
@@ -75,7 +52,7 @@ public class FlatJSBundle implements JSBundle {
 
 	@Override
 	public Collection<JSPackage> getJSPackages() {
-		return _jsPackages;
+		return _jsPackagesDCLSingleton.getSingleton(this::_init);
 	}
 
 	@Override
@@ -90,25 +67,25 @@ public class FlatJSBundle implements JSBundle {
 
 	@Override
 	public String getVersion() {
-		Version version = _bundle.getVersion();
-
-		return version.toString();
+		return String.valueOf(_bundle.getVersion());
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(5);
+		return StringBundler.concat(
+			getId(), StringPool.COLON, getName(), StringPool.AT, getVersion());
+	}
 
-		sb.append(getId());
-		sb.append(StringPool.COLON);
-		sb.append(getName());
-		sb.append(StringPool.AT);
-		sb.append(getVersion());
+	private Collection<JSPackage> _init() {
+		_initConsumer.accept(this);
 
-		return sb.toString();
+		return _jsPackages;
 	}
 
 	private final Bundle _bundle;
+	private final Consumer<FlatJSBundle> _initConsumer;
 	private final Collection<JSPackage> _jsPackages = new ArrayList<>();
+	private final DCLSingleton<Collection<JSPackage>> _jsPackagesDCLSingleton =
+		new DCLSingleton<>();
 
 }

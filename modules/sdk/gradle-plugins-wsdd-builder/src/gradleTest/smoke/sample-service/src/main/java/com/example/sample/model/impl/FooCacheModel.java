@@ -1,27 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.example.sample.model.impl;
-
-import aQute.bnd.annotation.ProviderType;
 
 import com.example.sample.model.Foo;
 
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringPool;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,21 +22,21 @@ import java.util.Date;
  * The cache model class for representing Foo in entity cache.
  *
  * @author Brian Wing Shun Chan
- * @see Foo
  * @generated
  */
 public class FooCacheModel implements CacheModel<Foo>, Externalizable {
+
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof FooCacheModel)) {
+		if (!(object instanceof FooCacheModel)) {
 			return false;
 		}
 
-		FooCacheModel fooCacheModel = (FooCacheModel)obj;
+		FooCacheModel fooCacheModel = (FooCacheModel)object;
 
 		if (fooId == fooCacheModel.fooId) {
 			return true;
@@ -102,7 +90,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		FooImpl fooImpl = new FooImpl();
 
 		if (uuid == null) {
-			fooImpl.setUuid(StringPool.BLANK);
+			fooImpl.setUuid("");
 		}
 		else {
 			fooImpl.setUuid(uuid);
@@ -114,7 +102,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		fooImpl.setUserId(userId);
 
 		if (userName == null) {
-			fooImpl.setUserName(StringPool.BLANK);
+			fooImpl.setUserName("");
 		}
 		else {
 			fooImpl.setUserName(userName);
@@ -135,7 +123,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		}
 
 		if (field1 == null) {
-			fooImpl.setField1(StringPool.BLANK);
+			fooImpl.setField1("");
 		}
 		else {
 			fooImpl.setField1(field1);
@@ -152,7 +140,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		}
 
 		if (field5 == null) {
-			fooImpl.setField5(StringPool.BLANK);
+			fooImpl.setField5("");
 		}
 		else {
 			fooImpl.setField5(field5);
@@ -187,10 +175,9 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 	}
 
 	@Override
-	public void writeExternal(ObjectOutput objectOutput)
-		throws IOException {
+	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		if (uuid == null) {
-			objectOutput.writeUTF(StringPool.BLANK);
+			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
@@ -205,7 +192,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		objectOutput.writeLong(userId);
 
 		if (userName == null) {
-			objectOutput.writeUTF(StringPool.BLANK);
+			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(userName);
@@ -215,7 +202,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		objectOutput.writeLong(modifiedDate);
 
 		if (field1 == null) {
-			objectOutput.writeUTF(StringPool.BLANK);
+			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(field1);
@@ -227,7 +214,7 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 		objectOutput.writeLong(field4);
 
 		if (field5 == null) {
-			objectOutput.writeUTF(StringPool.BLANK);
+			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(field5);
@@ -247,4 +234,5 @@ public class FooCacheModel implements CacheModel<Foo>, Externalizable {
 	public int field3;
 	public long field4;
 	public String field5;
+
 }

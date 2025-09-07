@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link PluginSettingLocalService}.
@@ -25,6 +18,10 @@ public class PluginSettingLocalServiceWrapper
 	implements PluginSettingLocalService,
 			   ServiceWrapper<PluginSettingLocalService> {
 
+	public PluginSettingLocalServiceWrapper() {
+		this(null);
+	}
+
 	public PluginSettingLocalServiceWrapper(
 		PluginSettingLocalService pluginSettingLocalService) {
 
@@ -33,6 +30,10 @@ public class PluginSettingLocalServiceWrapper
 
 	/**
 	 * Adds the plugin setting to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was added
@@ -45,12 +46,22 @@ public class PluginSettingLocalServiceWrapper
 	}
 
 	@Override
-	public void checkPermission(
-			long userId, java.lang.String pluginId, java.lang.String pluginType)
+	public void checkPermission(long userId, String pluginId, String pluginType)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_pluginSettingLocalService.checkPermission(
 			userId, pluginId, pluginType);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _pluginSettingLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -80,6 +91,10 @@ public class PluginSettingLocalServiceWrapper
 	/**
 	 * Deletes the plugin setting with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSettingId the primary key of the plugin setting
 	 * @return the plugin setting that was removed
 	 * @throws PortalException if a plugin setting with the primary key could not be found
@@ -95,6 +110,10 @@ public class PluginSettingLocalServiceWrapper
 	/**
 	 * Deletes the plugin setting from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was removed
 	 */
@@ -103,6 +122,18 @@ public class PluginSettingLocalServiceWrapper
 		com.liferay.portal.kernel.model.PluginSetting pluginSetting) {
 
 		return _pluginSettingLocalService.deletePluginSetting(pluginSetting);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _pluginSettingLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _pluginSettingLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -230,10 +261,13 @@ public class PluginSettingLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _pluginSettingLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -259,8 +293,7 @@ public class PluginSettingLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PluginSetting getPluginSetting(
-		long companyId, java.lang.String pluginId,
-		java.lang.String pluginType) {
+		long companyId, String pluginId, String pluginType) {
 
 		return _pluginSettingLocalService.getPluginSetting(
 			companyId, pluginId, pluginType);
@@ -296,7 +329,7 @@ public class PluginSettingLocalServiceWrapper
 
 	@Override
 	public boolean hasPermission(
-		long userId, java.lang.String pluginId, java.lang.String pluginType) {
+		long userId, String pluginId, String pluginType) {
 
 		return _pluginSettingLocalService.hasPermission(
 			userId, pluginId, pluginType);
@@ -304,8 +337,8 @@ public class PluginSettingLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PluginSetting updatePluginSetting(
-		long companyId, java.lang.String pluginId, java.lang.String pluginType,
-		java.lang.String roles, boolean active) {
+		long companyId, String pluginId, String pluginType, String roles,
+		boolean active) {
 
 		return _pluginSettingLocalService.updatePluginSetting(
 			companyId, pluginId, pluginType, roles, active);
@@ -313,6 +346,10 @@ public class PluginSettingLocalServiceWrapper
 
 	/**
 	 * Updates the plugin setting in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PluginSettingLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param pluginSetting the plugin setting
 	 * @return the plugin setting that was updated
@@ -322,6 +359,11 @@ public class PluginSettingLocalServiceWrapper
 		com.liferay.portal.kernel.model.PluginSetting pluginSetting) {
 
 		return _pluginSettingLocalService.updatePluginSetting(pluginSetting);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _pluginSettingLocalService.getBasePersistence();
 	}
 
 	@Override

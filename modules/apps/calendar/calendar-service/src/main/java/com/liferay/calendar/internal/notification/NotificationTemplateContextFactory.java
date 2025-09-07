@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.internal.notification;
@@ -18,10 +9,10 @@ import com.liferay.calendar.configuration.CalendarServiceConfigurationValues;
 import com.liferay.calendar.constants.CalendarPortletKeys;
 import com.liferay.calendar.model.Calendar;
 import com.liferay.calendar.model.CalendarBooking;
-import com.liferay.calendar.model.CalendarNotificationTemplate;
 import com.liferay.calendar.notification.NotificationTemplateContext;
 import com.liferay.calendar.notification.NotificationTemplateType;
 import com.liferay.calendar.notification.NotificationType;
+import com.liferay.calendar.service.CalendarBookingLocalService;
 import com.liferay.calendar.service.CalendarNotificationTemplateLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -32,39 +23,40 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.CalendarUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.portlet.WindowState;
 
 import java.io.Serializable;
 
 import java.text.Format;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
-
-import javax.portlet.WindowState;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eduardo Lundgren
  */
-@Component(immediate = true, service = {})
 public class NotificationTemplateContextFactory {
 
 	public static NotificationTemplateContext getInstance(
-			NotificationType notificationType,
+			CalendarBooking calendarBooking,
 			NotificationTemplateType notificationTemplateType,
-			CalendarBooking calendarBooking, User user)
+			NotificationType notificationType, String layoutURL,
+			String portalURL, User user)
 		throws Exception {
 
 		CalendarBooking parentCalendarBooking =
@@ -77,15 +69,11 @@ public class NotificationTemplateContextFactory {
 				CalendarServiceConfigurationValues.
 					CALENDAR_NOTIFICATION_DEFAULT_TYPE);
 
-		CalendarNotificationTemplate calendarNotificationTemplate =
+		notificationTemplateContext.setCalendarNotificationTemplate(
 			CalendarNotificationTemplateLocalServiceUtil.
 				fetchCalendarNotificationTemplate(
 					calendar.getCalendarId(), notificationType,
-					notificationTemplateType);
-
-		notificationTemplateContext.setCalendarNotificationTemplate(
-			calendarNotificationTemplate);
-
+					notificationTemplateType));
 		notificationTemplateContext.setCompanyId(
 			calendarBooking.getCompanyId());
 		notificationTemplateContext.setGroupId(calendarBooking.getGroupId());
@@ -103,6 +91,8 @@ public class NotificationTemplateContextFactory {
 
 		Map<String, Serializable> attributes =
 			HashMapBuilder.<String, Serializable>put(
+				"calendarBookingId", calendarBooking.getCalendarBookingId()
+			).put(
 				"calendarName", calendar.getName(user.getLocale(), true)
 			).put(
 				"endTime",
@@ -110,26 +100,46 @@ public class NotificationTemplateContextFactory {
 					userDateTimeFormat.format(calendarBooking.getEndTime()),
 					StringPool.SPACE, userTimezoneDisplayName)
 			).put(
+				"icsFile",
+				() -> {
+					if (!Objects.equals(
+							notificationTemplateContext.
+								getNotificationTemplateType(),
+							NotificationTemplateType.INVITE)) {
+
+						return null;
+					}
+
+					CalendarBookingLocalService calendarBookingLocalService =
+						_calendarBookingLocalServiceSnapshot.get();
+
+					String calendarBookingString =
+						calendarBookingLocalService.exportCalendarBooking(
+							calendarBooking.getCalendarBookingId(),
+							CalendarUtil.ICAL_EXTENSION);
+
+					return calendarBookingString.getBytes();
+				}
+			).put(
 				"location", calendarBooking.getLocation()
 			).put(
 				"portalURL",
-				() -> {
-					Group group = _groupLocalService.getGroup(
-						user.getCompanyId(), GroupConstants.GUEST);
-
-					return _getPortalURL(
-						group.getCompanyId(), group.getGroupId());
-				}
+				() -> _getPortalURLOrCompanyPortalURL(
+					portalURL, user.getCompanyId(),
+					calendarBooking.getGroupId())
 			).put(
 				"portletName",
 				LanguageUtil.get(
-					ResourceBundleUtil.getBundle(
-						user.getLocale(), "com.liferay.calendar.web"),
-					"javax.portlet.title.".concat(CalendarPortletKeys.CALENDAR))
+					user.getLocale(),
+					"jakarta.portlet.title.".concat(
+						CalendarPortletKeys.CALENDAR))
 			).put(
 				"siteName",
 				() -> {
-					Group calendarGroup = _groupLocalService.getGroup(
+					GroupLocalService groupLocalService =
+						_groupLocalServiceSnapshot.get();
+
+					Group calendarGroup = groupLocalService.getGroup(
 						calendar.getGroupId());
 
 					if (calendarGroup.isSite()) {
@@ -148,7 +158,7 @@ public class NotificationTemplateContextFactory {
 			).put(
 				"url",
 				_getCalendarBookingURL(
-					user, calendarBooking.getCalendarBookingId())
+					calendarBooking, layoutURL, portalURL, user)
 			).build();
 
 		notificationTemplateContext.setAttributes(attributes);
@@ -163,8 +173,17 @@ public class NotificationTemplateContextFactory {
 			ServiceContext serviceContext)
 		throws Exception {
 
+		String layoutURL = null;
+		String portalURL = null;
+
+		if (serviceContext != null) {
+			layoutURL = serviceContext.getLayoutURL();
+			portalURL = serviceContext.getPortalURL();
+		}
+
 		NotificationTemplateContext notificationTemplateContext = getInstance(
-			notificationType, notificationTemplateType, calendarBooking, user);
+			calendarBooking, notificationTemplateType, notificationType,
+			layoutURL, portalURL, user);
 
 		if ((serviceContext != null) &&
 			Validator.isNotNull(
@@ -189,63 +208,92 @@ public class NotificationTemplateContextFactory {
 		return notificationTemplateContext;
 	}
 
-	@Reference(unbind = "-")
-	protected void setCompanyLocalService(
-		CompanyLocalService companyLocalService) {
-
-		_companyLocalService = companyLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
+	/**
+	 * See {@link
+	 * com.liferay.calendar.web.internal.info.item.provider.CalendarBookingInfoItemFieldValuesProvider#_getCalendarBookingURL(
+	 * CalendarBooking)}
+	 */
 	private static String _getCalendarBookingURL(
-			User user, long calendarBookingId)
-		throws PortalException {
+			CalendarBooking calendarBooking, String layoutURL, String portalURL,
+			User user)
+		throws Exception {
 
-		Group group = _groupLocalService.getGroup(
-			user.getCompanyId(), GroupConstants.GUEST);
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
 
-		Layout layout = _layoutLocalService.fetchLayout(
-			group.getDefaultPublicPlid());
+		if (serviceContext != null) {
+			ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
 
-		String portalURL = _getPortalURL(
-			group.getCompanyId(), group.getGroupId());
+			if (themeDisplay != null) {
+				return StringBundler.concat(
+					themeDisplay.getPortalURL(),
+					themeDisplay.getPathFriendlyURLPublic(),
+					"/calendar/shared/-/calendar/",
+					calendarBooking.getCalendarBookingId());
+			}
+		}
 
-		String layoutActualURL = PortalUtil.getLayoutActualURL(layout);
+		String url = layoutURL;
 
-		String url = portalURL + layoutActualURL;
+		if (layoutURL == null) {
+			GroupLocalService groupLocalService =
+				_groupLocalServiceSnapshot.get();
+
+			Group group = groupLocalService.getGroup(
+				calendarBooking.getGroupId());
+
+			LayoutLocalService layoutLocalService =
+				_layoutLocalServiceSnapshot.get();
+
+			Layout layout = layoutLocalService.fetchLayout(
+				group.getDefaultPublicPlid());
+
+			if (layout == null) {
+				Group guestGroup = groupLocalService.getGroup(
+					user.getCompanyId(), GroupConstants.GUEST);
+
+				layout = layoutLocalService.fetchLayout(
+					guestGroup.getDefaultPublicPlid());
+			}
+
+			layoutURL = PortalUtil.getLayoutActualURL(layout);
+
+			portalURL = _getPortalURLOrCompanyPortalURL(
+				portalURL, user.getCompanyId(), group.getGroupId());
+
+			url = portalURL + layoutURL;
+		}
 
 		String namespace = PortalUtil.getPortletNamespace(
 			CalendarPortletKeys.CALENDAR);
 
-		url = HttpUtil.addParameter(
+		url = HttpComponentsUtil.addParameter(
 			url, namespace + "mvcPath", "/view_calendar_booking.jsp");
 
-		url = HttpUtil.addParameter(
+		url = HttpComponentsUtil.addParameter(
 			url, "p_p_id", CalendarPortletKeys.CALENDAR);
-		url = HttpUtil.addParameter(url, "p_p_lifecycle", "0");
-		url = HttpUtil.addParameter(
+		url = HttpComponentsUtil.addParameter(url, "p_p_lifecycle", "0");
+		url = HttpComponentsUtil.addParameter(
 			url, "p_p_state", WindowState.MAXIMIZED.toString());
-		url = HttpUtil.addParameter(
-			url, namespace + "calendarBookingId", calendarBookingId);
+		url = HttpComponentsUtil.addParameter(
+			url, namespace + "calendarBookingId",
+			calendarBooking.getCalendarBookingId());
 
 		return url;
 	}
 
-	private static String _getPortalURL(long companyId, long groupId)
+	private static String _getPortalURLOrCompanyPortalURL(
+			String portalURL, long companyId, long groupId)
 		throws PortalException {
 
-		Company company = _companyLocalService.getCompany(companyId);
+		if (portalURL != null) {
+			return portalURL;
+		}
+
+		CompanyLocalService companyLocalService =
+			_companyLocalServiceSnapshot.get();
+
+		Company company = companyLocalService.getCompany(companyId);
 
 		return company.getPortalURL(groupId);
 	}
@@ -253,25 +301,36 @@ public class NotificationTemplateContextFactory {
 	private static Format _getUserDateTimeFormat(
 		CalendarBooking calendarBooking, User user) {
 
-		TimeZone userTimezone = user.getTimeZone();
+		TimeZone userTimeZone = user.getTimeZone();
 
 		if ((calendarBooking != null) && calendarBooking.isAllDay()) {
-			userTimezone = TimeZone.getTimeZone(StringPool.UTC);
+			userTimeZone = TimeZone.getTimeZone(StringPool.UTC);
 		}
 
 		return FastDateFormatFactoryUtil.getDateTime(
-			user.getLocale(), userTimezone);
+			user.getLocale(), userTimeZone);
 	}
 
 	private static String _getUserTimezoneDisplayName(User user) {
-		TimeZone userTimezone = user.getTimeZone();
+		TimeZone userTimeZone = user.getTimeZone();
 
-		return userTimezone.getDisplayName(
+		return userTimeZone.getDisplayName(
 			false, TimeZone.SHORT, user.getLocale());
 	}
 
-	private static CompanyLocalService _companyLocalService;
-	private static GroupLocalService _groupLocalService;
-	private static LayoutLocalService _layoutLocalService;
+	private static final Snapshot<CalendarBookingLocalService>
+		_calendarBookingLocalServiceSnapshot = new Snapshot<>(
+			NotificationTemplateContextFactory.class,
+			CalendarBookingLocalService.class);
+	private static final Snapshot<CompanyLocalService>
+		_companyLocalServiceSnapshot = new Snapshot<>(
+			NotificationTemplateContextFactory.class,
+			CompanyLocalService.class);
+	private static final Snapshot<GroupLocalService>
+		_groupLocalServiceSnapshot = new Snapshot<>(
+			NotificationTemplateContextFactory.class, GroupLocalService.class);
+	private static final Snapshot<LayoutLocalService>
+		_layoutLocalServiceSnapshot = new Snapshot<>(
+			NotificationTemplateContextFactory.class, LayoutLocalService.class);
 
 }

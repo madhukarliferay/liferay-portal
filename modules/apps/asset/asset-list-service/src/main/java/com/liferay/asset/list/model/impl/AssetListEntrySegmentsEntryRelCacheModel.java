@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model.impl;
@@ -38,18 +29,18 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AssetListEntrySegmentsEntryRelCacheModel)) {
+		if (!(object instanceof AssetListEntrySegmentsEntryRelCacheModel)) {
 			return false;
 		}
 
 		AssetListEntrySegmentsEntryRelCacheModel
 			assetListEntrySegmentsEntryRelCacheModel =
-				(AssetListEntrySegmentsEntryRelCacheModel)obj;
+				(AssetListEntrySegmentsEntryRelCacheModel)object;
 
 		if ((assetListEntrySegmentsEntryRelId ==
 				assetListEntrySegmentsEntryRelCacheModel.
@@ -82,10 +73,12 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(31);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", assetListEntrySegmentsEntryRelId=");
@@ -104,6 +97,8 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 		sb.append(modifiedDate);
 		sb.append(", assetListEntryId=");
 		sb.append(assetListEntryId);
+		sb.append(", priority=");
+		sb.append(priority);
 		sb.append(", segmentsEntryId=");
 		sb.append(segmentsEntryId);
 		sb.append(", typeSettings=");
@@ -121,6 +116,7 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 			new AssetListEntrySegmentsEntryRelImpl();
 
 		assetListEntrySegmentsEntryRelImpl.setMvccVersion(mvccVersion);
+		assetListEntrySegmentsEntryRelImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			assetListEntrySegmentsEntryRelImpl.setUuid("");
@@ -160,6 +156,7 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 
 		assetListEntrySegmentsEntryRelImpl.setAssetListEntryId(
 			assetListEntryId);
+		assetListEntrySegmentsEntryRelImpl.setPriority(priority);
 		assetListEntrySegmentsEntryRelImpl.setSegmentsEntryId(segmentsEntryId);
 
 		if (typeSettings == null) {
@@ -183,8 +180,12 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		assetListEntrySegmentsEntryRelId = objectInput.readLong();
@@ -200,14 +201,18 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 
 		assetListEntryId = objectInput.readLong();
 
+		priority = objectInput.readInt();
+
 		segmentsEntryId = objectInput.readLong();
-		typeSettings = objectInput.readUTF();
+		typeSettings = (String)objectInput.readObject();
 		lastPublishDate = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -236,19 +241,22 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 
 		objectOutput.writeLong(assetListEntryId);
 
+		objectOutput.writeInt(priority);
+
 		objectOutput.writeLong(segmentsEntryId);
 
 		if (typeSettings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(typeSettings);
+			objectOutput.writeObject(typeSettings);
 		}
 
 		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long assetListEntrySegmentsEntryRelId;
 	public long groupId;
@@ -258,6 +266,7 @@ public class AssetListEntrySegmentsEntryRelCacheModel
 	public long createDate;
 	public long modifiedDate;
 	public long assetListEntryId;
+	public int priority;
 	public long segmentsEntryId;
 	public String typeSettings;
 	public long lastPublishDate;

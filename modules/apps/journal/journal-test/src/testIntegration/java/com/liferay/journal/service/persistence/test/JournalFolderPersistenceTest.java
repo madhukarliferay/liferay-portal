@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.journal.exception.DuplicateJournalFolderExternalReferenceCodeException;
 import com.liferay.journal.exception.NoSuchFolderException;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.service.JournalFolderLocalServiceUtil;
@@ -26,14 +18,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -130,6 +126,9 @@ public class JournalFolderPersistenceTest {
 
 		newJournalFolder.setUuid(RandomTestUtil.randomString());
 
+		newJournalFolder.setExternalReferenceCode(
+			RandomTestUtil.randomString());
+
 		newJournalFolder.setGroupId(RandomTestUtil.nextLong());
 
 		newJournalFolder.setCompanyId(RandomTestUtil.nextLong());
@@ -175,6 +174,9 @@ public class JournalFolderPersistenceTest {
 			newJournalFolder.getCtCollectionId());
 		Assert.assertEquals(
 			existingJournalFolder.getUuid(), newJournalFolder.getUuid());
+		Assert.assertEquals(
+			existingJournalFolder.getExternalReferenceCode(),
+			newJournalFolder.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingJournalFolder.getFolderId(),
 			newJournalFolder.getFolderId());
@@ -222,6 +224,26 @@ public class JournalFolderPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingJournalFolder.getStatusDate()),
 			Time.getShortTimestamp(newJournalFolder.getStatusDate()));
+	}
+
+	@Test(expected = DuplicateJournalFolderExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		JournalFolder journalFolder = addJournalFolder();
+
+		JournalFolder newJournalFolder = addJournalFolder();
+
+		newJournalFolder.setGroupId(journalFolder.getGroupId());
+
+		newJournalFolder = _persistence.update(newJournalFolder);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newJournalFolder);
+
+		newJournalFolder.setExternalReferenceCode(
+			journalFolder.getExternalReferenceCode());
+
+		_persistence.update(newJournalFolder);
 	}
 
 	@Test
@@ -319,12 +341,21 @@ public class JournalFolderPersistenceTest {
 	}
 
 	@Test
-	public void testCountByF_C_P_NotS() throws Exception {
-		_persistence.countByF_C_P_NotS(
+	public void testCountByGtF_C_P_NotS() throws Exception {
+		_persistence.countByGtF_C_P_NotS(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
-		_persistence.countByF_C_P_NotS(0L, 0L, 0L, 0);
+		_persistence.countByGtF_C_P_NotS(0L, 0L, 0L, 0);
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
 	}
 
 	@Test
@@ -352,6 +383,24 @@ public class JournalFolderPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
@@ -359,12 +408,13 @@ public class JournalFolderPersistenceTest {
 	protected OrderByComparator<JournalFolder> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"JournalFolder", "mvccVersion", true, "ctCollectionId", true,
-			"uuid", true, "folderId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "parentFolderId", true, "treePath", true,
-			"name", true, "description", true, "restrictionType", true,
-			"lastPublishDate", true, "status", true, "statusByUserId", true,
-			"statusByUserName", true, "statusDate", true);
+			"uuid", true, "externalReferenceCode", true, "folderId", true,
+			"groupId", true, "companyId", true, "userId", true, "userName",
+			true, "createDate", true, "modifiedDate", true, "parentFolderId",
+			true, "treePath", true, "name", true, "description", true,
+			"restrictionType", true, "lastPublishDate", true, "status", true,
+			"statusByUserId", true, "statusByUserName", true, "statusDate",
+			true);
 	}
 
 	@Test
@@ -582,46 +632,99 @@ public class JournalFolderPersistenceTest {
 
 		_persistence.clearCache();
 
-		JournalFolder existingJournalFolder = _persistence.findByPrimaryKey(
-			newJournalFolder.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newJournalFolder.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingJournalFolder.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingJournalFolder, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		JournalFolder newJournalFolder = addJournalFolder();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			JournalFolder.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"folderId", newJournalFolder.getFolderId()));
+
+		List<JournalFolder> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(JournalFolder journalFolder) {
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFolder.getGroupId()),
+			journalFolder.getUuid(),
+			ReflectionTestUtil.invoke(
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(journalFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFolder, "getOriginalGroupId", new Class<?>[0]));
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFolder.getGroupId()),
+			Long.valueOf(journalFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFolder, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingJournalFolder.getName(),
-				ReflectionTestUtil.invoke(
-					existingJournalFolder, "getOriginalName",
-					new Class<?>[0])));
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			journalFolder.getName(),
+			ReflectionTestUtil.invoke(
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFolder.getGroupId()),
+			Long.valueOf(journalFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFolder, "getOriginalGroupId", new Class<?>[0]));
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFolder.getParentFolderId()),
+			Long.valueOf(journalFolder.getParentFolderId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFolder, "getOriginalParentFolderId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingJournalFolder.getName(),
-				ReflectionTestUtil.invoke(
-					existingJournalFolder, "getOriginalName",
-					new Class<?>[0])));
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "parentFolderId"));
+		Assert.assertEquals(
+			journalFolder.getName(),
+			ReflectionTestUtil.invoke(
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+
+		Assert.assertEquals(
+			journalFolder.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(journalFolder.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				journalFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected JournalFolder addJournalFolder() throws Exception {
@@ -634,6 +737,8 @@ public class JournalFolderPersistenceTest {
 		journalFolder.setCtCollectionId(RandomTestUtil.nextLong());
 
 		journalFolder.setUuid(RandomTestUtil.randomString());
+
+		journalFolder.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		journalFolder.setGroupId(RandomTestUtil.nextLong());
 

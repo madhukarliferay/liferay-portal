@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.baseline;
@@ -51,15 +42,11 @@ import java.util.Set;
  * @author Raymond Augé
  * @author Andrea Di Giorgi
  */
-public abstract class Baseline {
+public class Baseline {
 
 	public boolean execute() throws Exception {
 		_headerPrinted = false;
 		_printWriter = null;
-
-		if (_logFile.exists()) {
-			_logFile.delete();
-		}
 
 		File logDir = _logFile.getParentFile();
 
@@ -670,12 +657,37 @@ public abstract class Baseline {
 			}
 		}
 
+		Resource resource = jar.getResource(
+			info.packageName.replace('.', '/') + "/packageinfo");
+
+		if (resource != null) {
+			String content = IO.collect(resource.openInputStream());
+
+			if (content.startsWith("version ")) {
+				Version version = Version.parseVersion(content.substring(8));
+
+				if (version.getMajor() == 0) {
+					return true;
+				}
+			}
+		}
+
 		return false;
 	}
 
-	protected abstract void log(Reporter reporter);
+	protected void log(Reporter reporter) {
+		for (String message : reporter.getErrors()) {
+			System.out.println(message);
+		}
 
-	protected abstract void log(String output);
+		for (String message : reporter.getWarnings()) {
+			System.out.println(message);
+		}
+	}
+
+	protected void log(String output) {
+		System.out.println(output);
+	}
 
 	protected void persistLog(String output) throws IOException {
 		if (_logFile == null) {

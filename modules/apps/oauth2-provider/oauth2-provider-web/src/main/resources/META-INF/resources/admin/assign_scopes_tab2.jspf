@@ -1,23 +1,16 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <div aria-orientation="vertical" class="panel-group" id="<portlet:namespace />globalAccordion" role="tablist">
 
 	<%
-	for (Map.Entry<AssignableScopes, AssignScopesDisplayContext.Relations> scopeAliasAssignableScopesEntry : assignScopesDisplayContext.getGlobalAssignableScopesRelations().entrySet()) {
+	Map<AssignableScopes, AssignScopesDisplayContext.Relations> globalAssignableScopesRelations = assignScopesDisplayContext.getGlobalAssignableScopesRelations();
+
+	for (Map.Entry<AssignableScopes, AssignScopesDisplayContext.Relations> scopeAliasAssignableScopesEntry : globalAssignableScopesRelations.entrySet()) {
 		AssignScopesDisplayContext.Relations relations = scopeAliasAssignableScopesEntry.getValue();
 
 		Set<String> assignedScopeAliases = relations.getAssignedScopeAliases();
@@ -34,7 +27,7 @@
 
 		Iterator<String> iterator = relatedScopeAliasesList.iterator();
 
-		StringBundler sb = new StringBundler(scopeAliases.size() * 2 - 1);
+		StringBundler sb = new StringBundler((scopeAliases.size() * 2) - 1);
 
 		while (iterator.hasNext()) {
 			String scopeAlias = iterator.next();
@@ -60,10 +53,10 @@
 		<div class="panel panel-secondary<c:if test="<%= scopeAliases.size() == 0 %>"> removed-scope</c:if>" data-master="<%= scopeAliasesString %>" id="<portlet:namespace /><%= id %>">
 			<div class="collapse-icon panel-header panel-header-link" id="<portlet:namespace />globalAccordionHeading<%= id %>">
 				<div class="inline">
-					<aui:input checked="<%= !assignedScopeAliases.isEmpty() %>" id='<%= "scopeAlias" + id %>' label="<%= sb.toString() %>" name="scopeAliases" onChange='<%= renderResponse.getNamespace() + "recalculateDependants(this)" %>' type="checkbox" value="<%= scopeAliasesString %>" />
+					<aui:input checked="<%= !assignedScopeAliases.isEmpty() %>" id='<%= "scopeAlias" + id %>' label="<%= sb.toString() %>" name="scopeAliases" onChange='<%= liferayPortletResponse.getNamespace() + "recalculateDependants(this)" %>' type="checkbox" value="<%= scopeAliasesString %>" />
 				</div>
 
-				<a aria-controls="<portlet:namespace />globalAccordion<%= id %>" aria-expanded="false" class="collapsed" data-parent="#<portlet:namespace />globalAccordion" data-toggle="collapse" href="#<portlet:namespace />globalAccordion<%= id %>" role="tab">
+				<a aria-controls="<portlet:namespace />globalAccordion<%= id %>" aria-expanded="false" class="collapsed" data-toggle="liferay-collapse" href="#<portlet:namespace />globalAccordion<%= id %>" role="tab">
 					<span>(<liferay-ui:message key="details" />)</span>
 
 					<span class="collapse-icon-closed">
@@ -93,7 +86,11 @@
 					if (assignedAssignableScopes != null) {
 						newAssignableScopes = assignableScopes.subtract(assignedAssignableScopes);
 						removedAssignableScopes = assignedAssignableScopes.subtract(assignableScopes);
-						unchangedAssignableScopes = assignableScopes.subtract(newAssignableScopes).subtract(removedAssignableScopes);
+
+						AssignableScopes subtractAssignableScopes = assignableScopes.subtract(newAssignableScopes);
+
+						unchangedAssignableScopes = subtractAssignableScopes.subtract(removedAssignableScopes);
+
 						assignableScopes = assignableScopes.add(assignedAssignableScopes);
 					}
 
@@ -109,7 +106,7 @@
 								</div>
 
 								<div class="autofit-col autofit-col-expand">
-									<h4 class="list-group-title text-truncate"><%= HtmlUtil.escape(assignScopesDisplayContext.getApplicationDescription(applicationName)) %></h4>
+									<div class="list-group-title text-truncate"><%= HtmlUtil.escape(assignScopesDisplayContext.getApplicationDescription(applicationName)) %></div>
 
 									<p class="list-group-subtitle text-truncate">
 										<c:choose>
@@ -136,7 +133,7 @@
 														<c:if test="<%= !firstLine %>">+ </c:if>
 
 														<%
-														firstLine = firstLine && applicationScopeDescription.length() == 0;
+														firstLine = firstLine && (applicationScopeDescription.length() == 0);
 														%>
 
 														<%= applicationScopeDescription %>

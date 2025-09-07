@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.sso.openid.connect.configuration;
@@ -17,6 +8,8 @@ package com.liferay.portal.security.sso.openid.connect.configuration;
 import aQute.bnd.annotation.metatype.Meta;
 
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * Defines the configuration property keys and default values.
@@ -35,12 +28,26 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 	localization = "content/Language",
 	name = "open-id-connect-configuration-name"
 )
+@ProviderType
 public interface OpenIdConnectConfiguration {
 
 	@Meta.AD(
-		deflt = "false", description = "enabled-help", name = "enabled",
+		deflt = "false", description = "enabled-help[openid]", name = "enabled",
 		required = false
 	)
 	public boolean enabled();
+
+	@Meta.AD(
+		deflt = "30", description = "token-refresh-offset-description",
+		name = "token-refresh-offset", required = false
+	)
+	public int tokenRefreshOffset();
+
+	@Meta.AD(
+		deflt = "480",
+		description = "token-refresh-scheduled-interval-description",
+		name = "token-refresh-scheduled-interval", required = false
+	)
+	public int tokenRefreshScheduledInterval();
 
 }

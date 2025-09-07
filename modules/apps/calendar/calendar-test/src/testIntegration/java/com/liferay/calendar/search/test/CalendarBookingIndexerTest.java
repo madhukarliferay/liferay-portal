@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.search.test;
@@ -22,44 +13,30 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
-import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.test.util.HitsAssert;
-import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
  * @author Adam Brandizzi
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CalendarBookingIndexerTest extends BaseCalendarIndexerTestCase {
-
-	@ClassRule
-	@Rule
-	public static final AggregateTestRule aggregateTestRule =
-		new AggregateTestRule(
-			new LiferayIntegrationTestRule(),
-			PermissionCheckerMethodTestRule.INSTANCE,
-			SynchronousMailTestRule.INSTANCE);
 
 	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
-		setGroup(calendarFixture.addGroup());
 		setIndexerClass(CalendarBooking.class);
-		setUser(calendarFixture.addUser());
 	}
 
 	@Test
@@ -73,7 +50,7 @@ public class CalendarBookingIndexerTest extends BaseCalendarIndexerTestCase {
 				}
 			});
 
-		calendarSearchFixture.searchOnlyOne(title, LocaleUtil.US);
+		searchOnlyOne(title, LocaleUtil.US);
 	}
 
 	@Test
@@ -89,7 +66,7 @@ public class CalendarBookingIndexerTest extends BaseCalendarIndexerTestCase {
 				}
 			});
 
-		calendarSearchFixture.searchOnlyOne("nev", LocaleUtil.HUNGARY);
+		searchOnlyOne("nev", LocaleUtil.HUNGARY);
 	}
 
 	@Test
@@ -106,24 +83,19 @@ public class CalendarBookingIndexerTest extends BaseCalendarIndexerTestCase {
 		calendarBookingLocalService.moveCalendarBookingToTrash(
 			TestPropsValues.getUserId(), calendarBooking);
 
-		HitsAssert.assertNoHits(
-			calendarSearchFixture.search(
-				calendarSearchFixture.getSearchContext(title, LocaleUtil.US)));
+		HitsAssert.assertNoHits(search(getSearchContext(title, LocaleUtil.US)));
 
 		HitsAssert.assertOnlyOne(
-			calendarSearchFixture.search(
-				withStatusInTrash(
-					calendarSearchFixture.getSearchContext(
-						title, LocaleUtil.US))));
+			search(withStatusInTrash(getSearchContext(title, LocaleUtil.US))));
 	}
 
 	protected CalendarBooking addCalendarBooking(
 		LocalizedValuesMap titleLocalizedValuesMap) {
 
 		try {
-			ServiceContext serviceContext = calendarFixture.getServiceContext();
+			ServiceContext serviceContext = getServiceContext();
 
-			Calendar calendar = calendarFixture.addCalendar(
+			Calendar calendar = addCalendar(
 				new LocalizedValuesMap() {
 					{
 						put(
@@ -133,11 +105,11 @@ public class CalendarBookingIndexerTest extends BaseCalendarIndexerTestCase {
 				},
 				new LocalizedValuesMap(), serviceContext);
 
-			return calendarFixture.addCalendarBooking(
+			return addCalendarBooking(
 				titleLocalizedValuesMap, calendar, serviceContext);
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 

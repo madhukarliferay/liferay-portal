@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults.internal.util;
@@ -33,6 +24,7 @@ import org.gradle.api.artifacts.repositories.AuthenticationContainer;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.gradle.internal.authentication.DefaultBasicAuthentication;
+import org.gradle.util.GradleVersion;
 
 /**
  * @author Andrea Di Giorgi
@@ -47,8 +39,15 @@ public class GradlePluginsDefaultsUtil {
 	};
 
 	public static final String[] PARENT_THEME_PROJECT_NAMES = {
-		"frontend-theme-styled", "frontend-theme-unstyled"
+		GradlePluginsDefaultsUtil.PARENT_THEME_STYLED_PROJECT_NAME,
+		GradlePluginsDefaultsUtil.PARENT_THEME_UNSTYLED_PROJECT_NAME
 	};
+
+	public static final String PARENT_THEME_STYLED_PROJECT_NAME =
+		"frontend-theme-styled";
+
+	public static final String PARENT_THEME_UNSTYLED_PROJECT_NAME =
+		"frontend-theme-unstyled";
 
 	public static final String SNAPSHOT_PROPERTY_NAME = "snapshot";
 
@@ -65,7 +64,28 @@ public class GradlePluginsDefaultsUtil {
 		RepositoryHandler repositoryHandler = project.getRepositories();
 
 		if (!Boolean.getBoolean("maven.local.ignore")) {
-			repositoryHandler.mavenLocal();
+			GradleVersion gradleVersion = GradleVersion.current();
+
+			if (gradleVersion.compareTo(GradleVersion.version("6.0")) > 0) {
+				repositoryHandler.mavenLocal(
+					new Action<MavenArtifactRepository>() {
+
+						@Override
+						public void execute(
+							MavenArtifactRepository mavenArtifactRepository) {
+
+							MavenArtifactRepository.MetadataSources
+								metadataSources =
+									mavenArtifactRepository.
+										getMetadataSources();
+
+							metadataSources.mavenPom();
+
+							metadataSources.artifact();
+						}
+
+					});
+			}
 
 			File tmpMavenRepositoryDir = null;
 
@@ -227,11 +247,7 @@ public class GradlePluginsDefaultsUtil {
 	public static boolean isSnapshot(Project project) {
 		String version = String.valueOf(project.getVersion());
 
-		if (version.endsWith(SNAPSHOT_VERSION_SUFFIX)) {
-			return true;
-		}
-
-		return false;
+		return version.endsWith(SNAPSHOT_VERSION_SUFFIX);
 	}
 
 	public static boolean isSnapshot(Project project, String... propertyNames) {
@@ -278,8 +294,11 @@ public class GradlePluginsDefaultsUtil {
 
 	public static boolean isTestProject(File dir) {
 		String dirName = dir.getName();
+		String dirPath = dir.getPath();
 
-		if (dirName.endsWith(_TEST_PROJECT_SUFFIX)) {
+		if (dirName.endsWith(_TEST_PROJECT_SUFFIX) &&
+			!dirPath.contains(_THIRD_PARTY_DIR_NAME)) {
+
 			return true;
 		}
 
@@ -287,9 +306,11 @@ public class GradlePluginsDefaultsUtil {
 	}
 
 	public static boolean isTestProject(Project project) {
-		String projectName = project.getName();
+		String projectPath = project.getPath();
 
-		if (projectName.endsWith(_TEST_PROJECT_SUFFIX)) {
+		if (projectPath.endsWith(_TEST_PROJECT_SUFFIX) &&
+			!projectPath.contains(_THIRD_PARTY_DIR_NAME)) {
+
 			return true;
 		}
 
@@ -311,5 +332,7 @@ public class GradlePluginsDefaultsUtil {
 	private static final String _BUILD_PROFILE_FILE_NAME_PREFIX = ".lfrbuild-";
 
 	private static final String _TEST_PROJECT_SUFFIX = "-test";
+
+	private static final String _THIRD_PARTY_DIR_NAME = "third-party";
 
 }

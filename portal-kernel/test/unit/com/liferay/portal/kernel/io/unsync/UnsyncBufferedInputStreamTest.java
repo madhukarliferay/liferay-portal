@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.io.unsync;
@@ -79,7 +70,8 @@ public class UnsyncBufferedInputStreamTest {
 			Assert.assertEquals(i, buffer[i - 10]);
 		}
 
-		Assert.assertEquals(_SIZE - size * 2, byteArrayInputStream.available());
+		Assert.assertEquals(
+			_SIZE - (size * 2), byteArrayInputStream.available());
 		Assert.assertEquals(_SIZE - 15, unsyncBufferedInputStream.available());
 
 		// Fill the buffer
@@ -94,7 +86,8 @@ public class UnsyncBufferedInputStreamTest {
 			Assert.assertEquals(i, buffer[i - 15]);
 		}
 
-		Assert.assertEquals(_SIZE - size * 3, byteArrayInputStream.available());
+		Assert.assertEquals(
+			_SIZE - (size * 3), byteArrayInputStream.available());
 		Assert.assertEquals(_SIZE - 25, unsyncBufferedInputStream.available());
 
 		// Leave 5 bytes
@@ -111,6 +104,7 @@ public class UnsyncBufferedInputStreamTest {
 		read = unsyncBufferedInputStream.read(buffer);
 
 		Assert.assertEquals(5, read);
+
 		Assert.assertEquals(-1, unsyncBufferedInputStream.read(buffer));
 
 		// Mark and EOF
@@ -146,7 +140,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -154,7 +148,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -162,7 +156,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -170,7 +164,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		try {
@@ -178,7 +172,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		unsyncBufferedInputStream.close();
@@ -205,7 +199,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -214,7 +208,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 	}
 
@@ -280,7 +274,7 @@ public class UnsyncBufferedInputStreamTest {
 
 		Assert.assertEquals(bufferSize, unsyncBufferedInputStream.index);
 		Assert.assertEquals(
-			_SIZE - bufferSize * 2, unsyncBufferedInputStream.available());
+			_SIZE - (bufferSize * 2), unsyncBufferedInputStream.available());
 		Assert.assertEquals(-1, unsyncBufferedInputStream.markLimitIndex);
 
 		try {
@@ -288,7 +282,7 @@ public class UnsyncBufferedInputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 		}
 
 		// Shuffle
@@ -361,7 +355,8 @@ public class UnsyncBufferedInputStreamTest {
 			Assert.assertEquals(i, unsyncBufferedInputStream.read());
 		}
 
-		Assert.assertEquals(_SIZE - size * 2, byteArrayInputStream.available());
+		Assert.assertEquals(
+			_SIZE - (size * 2), byteArrayInputStream.available());
 		Assert.assertEquals(
 			_SIZE - size - 1, unsyncBufferedInputStream.available());
 
@@ -436,7 +431,7 @@ public class UnsyncBufferedInputStreamTest {
 		// Clear out buffer
 
 		Assert.assertEquals(
-			size * 2 - 1, unsyncBufferedInputStream.skip(size * 2));
+			(size * 2) - 1, unsyncBufferedInputStream.skip(size * 2));
 
 		// Mark a large size for EOF
 

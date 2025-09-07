@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.layout.page.template.exception.DuplicateLayoutPageTemplateCollectionExternalReferenceCodeException;
 import com.liferay.layout.page.template.exception.NoSuchPageTemplateCollectionException;
 import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
 import com.liferay.layout.page.template.service.LayoutPageTemplateCollectionLocalServiceUtil;
@@ -26,14 +18,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -133,7 +129,13 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 		newLayoutPageTemplateCollection.setMvccVersion(
 			RandomTestUtil.nextLong());
 
+		newLayoutPageTemplateCollection.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newLayoutPageTemplateCollection.setUuid(RandomTestUtil.randomString());
+
+		newLayoutPageTemplateCollection.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newLayoutPageTemplateCollection.setGroupId(RandomTestUtil.nextLong());
 
@@ -150,10 +152,18 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 		newLayoutPageTemplateCollection.setModifiedDate(
 			RandomTestUtil.nextDate());
 
+		newLayoutPageTemplateCollection.setParentLayoutPageTemplateCollectionId(
+			RandomTestUtil.nextLong());
+
+		newLayoutPageTemplateCollection.setLayoutPageTemplateCollectionKey(
+			RandomTestUtil.randomString());
+
 		newLayoutPageTemplateCollection.setName(RandomTestUtil.randomString());
 
 		newLayoutPageTemplateCollection.setDescription(
 			RandomTestUtil.randomString());
+
+		newLayoutPageTemplateCollection.setType(RandomTestUtil.nextInt());
 
 		newLayoutPageTemplateCollection.setLastPublishDate(
 			RandomTestUtil.nextDate());
@@ -169,8 +179,14 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 			existingLayoutPageTemplateCollection.getMvccVersion(),
 			newLayoutPageTemplateCollection.getMvccVersion());
 		Assert.assertEquals(
+			existingLayoutPageTemplateCollection.getCtCollectionId(),
+			newLayoutPageTemplateCollection.getCtCollectionId());
+		Assert.assertEquals(
 			existingLayoutPageTemplateCollection.getUuid(),
 			newLayoutPageTemplateCollection.getUuid());
+		Assert.assertEquals(
+			existingLayoutPageTemplateCollection.getExternalReferenceCode(),
+			newLayoutPageTemplateCollection.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingLayoutPageTemplateCollection.
 				getLayoutPageTemplateCollectionId(),
@@ -199,16 +215,55 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 			Time.getShortTimestamp(
 				newLayoutPageTemplateCollection.getModifiedDate()));
 		Assert.assertEquals(
+			existingLayoutPageTemplateCollection.
+				getParentLayoutPageTemplateCollectionId(),
+			newLayoutPageTemplateCollection.
+				getParentLayoutPageTemplateCollectionId());
+		Assert.assertEquals(
+			existingLayoutPageTemplateCollection.
+				getLayoutPageTemplateCollectionKey(),
+			newLayoutPageTemplateCollection.
+				getLayoutPageTemplateCollectionKey());
+		Assert.assertEquals(
 			existingLayoutPageTemplateCollection.getName(),
 			newLayoutPageTemplateCollection.getName());
 		Assert.assertEquals(
 			existingLayoutPageTemplateCollection.getDescription(),
 			newLayoutPageTemplateCollection.getDescription());
 		Assert.assertEquals(
+			existingLayoutPageTemplateCollection.getType(),
+			newLayoutPageTemplateCollection.getType());
+		Assert.assertEquals(
 			Time.getShortTimestamp(
 				existingLayoutPageTemplateCollection.getLastPublishDate()),
 			Time.getShortTimestamp(
 				newLayoutPageTemplateCollection.getLastPublishDate()));
+	}
+
+	@Test(
+		expected = DuplicateLayoutPageTemplateCollectionExternalReferenceCodeException.class
+	)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		LayoutPageTemplateCollection layoutPageTemplateCollection =
+			addLayoutPageTemplateCollection();
+
+		LayoutPageTemplateCollection newLayoutPageTemplateCollection =
+			addLayoutPageTemplateCollection();
+
+		newLayoutPageTemplateCollection.setGroupId(
+			layoutPageTemplateCollection.getGroupId());
+
+		newLayoutPageTemplateCollection = _persistence.update(
+			newLayoutPageTemplateCollection);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newLayoutPageTemplateCollection);
+
+		newLayoutPageTemplateCollection.setExternalReferenceCode(
+			layoutPageTemplateCollection.getExternalReferenceCode());
+
+		_persistence.update(newLayoutPageTemplateCollection);
 	}
 
 	@Test
@@ -246,21 +301,78 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 	}
 
 	@Test
-	public void testCountByG_N() throws Exception {
-		_persistence.countByG_N(RandomTestUtil.nextLong(), "");
+	public void testCountByG_P() throws Exception {
+		_persistence.countByG_P(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
 
-		_persistence.countByG_N(0L, "null");
-
-		_persistence.countByG_N(0L, (String)null);
+		_persistence.countByG_P(0L, 0L);
 	}
 
 	@Test
-	public void testCountByG_LikeN() throws Exception {
-		_persistence.countByG_LikeN(RandomTestUtil.nextLong(), "");
+	public void testCountByG_T() throws Exception {
+		_persistence.countByG_T(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
-		_persistence.countByG_LikeN(0L, "null");
+		_persistence.countByG_T(0L, 0);
+	}
 
-		_persistence.countByG_LikeN(0L, (String)null);
+	@Test
+	public void testCountByG_P_T() throws Exception {
+		_persistence.countByG_P_T(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextInt());
+
+		_persistence.countByG_P_T(0L, 0L, 0);
+	}
+
+	@Test
+	public void testCountByG_LPTCK_T() throws Exception {
+		_persistence.countByG_LPTCK_T(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextInt());
+
+		_persistence.countByG_LPTCK_T(0L, "null", 0);
+
+		_persistence.countByG_LPTCK_T(0L, (String)null, 0);
+	}
+
+	@Test
+	public void testCountByG_N_T() throws Exception {
+		_persistence.countByG_N_T(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextInt());
+
+		_persistence.countByG_N_T(0L, "null", 0);
+
+		_persistence.countByG_N_T(0L, (String)null, 0);
+	}
+
+	@Test
+	public void testCountByG_LikeN_T() throws Exception {
+		_persistence.countByG_LikeN_T(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextInt());
+
+		_persistence.countByG_LikeN_T(0L, "null", 0);
+
+		_persistence.countByG_LikeN_T(0L, (String)null, 0);
+	}
+
+	@Test
+	public void testCountByG_P_N_T() throws Exception {
+		_persistence.countByG_P_N_T(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(), "",
+			RandomTestUtil.nextInt());
+
+		_persistence.countByG_P_N_T(0L, 0L, "null", 0);
+
+		_persistence.countByG_P_N_T(0L, 0L, (String)null, 0);
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
 	}
 
 	@Test
@@ -292,6 +404,24 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
@@ -300,11 +430,13 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"LayoutPageTemplateCollection", "mvccVersion", true, "uuid", true,
+			"LayoutPageTemplateCollection", "mvccVersion", true,
+			"ctCollectionId", true, "uuid", true, "externalReferenceCode", true,
 			"layoutPageTemplateCollectionId", true, "groupId", true,
 			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "name", true, "description", true,
-			"lastPublishDate", true);
+			true, "modifiedDate", true, "parentLayoutPageTemplateCollectionId",
+			true, "layoutPageTemplateCollectionKey", true, "name", true,
+			"description", true, "type", true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -561,33 +693,117 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 
 		_persistence.clearCache();
 
-		LayoutPageTemplateCollection existingLayoutPageTemplateCollection =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newLayoutPageTemplateCollection.getPrimaryKey());
+				newLayoutPageTemplateCollection.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingLayoutPageTemplateCollection.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingLayoutPageTemplateCollection, "getOriginalUuid",
-					new Class<?>[0])));
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutPageTemplateCollection.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutPageTemplateCollection, "getOriginalGroupId",
-				new Class<?>[0]));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		LayoutPageTemplateCollection newLayoutPageTemplateCollection =
+			addLayoutPageTemplateCollection();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			LayoutPageTemplateCollection.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"layoutPageTemplateCollectionId",
+				newLayoutPageTemplateCollection.
+					getLayoutPageTemplateCollectionId()));
+
+		List<LayoutPageTemplateCollection> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		LayoutPageTemplateCollection layoutPageTemplateCollection) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingLayoutPageTemplateCollection.getGroupId()),
+			layoutPageTemplateCollection.getUuid(),
+			ReflectionTestUtil.invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(layoutPageTemplateCollection.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLayoutPageTemplateCollection, "getOriginalGroupId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingLayoutPageTemplateCollection.getName(),
-				ReflectionTestUtil.invoke(
-					existingLayoutPageTemplateCollection, "getOriginalName",
-					new Class<?>[0])));
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			Long.valueOf(layoutPageTemplateCollection.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			layoutPageTemplateCollection.getLayoutPageTemplateCollectionKey(),
+			ReflectionTestUtil.invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "lptCollectionKey"));
+		Assert.assertEquals(
+			Integer.valueOf(layoutPageTemplateCollection.getType()),
+			ReflectionTestUtil.<Integer>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "type_"));
+
+		Assert.assertEquals(
+			Long.valueOf(layoutPageTemplateCollection.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			Long.valueOf(
+				layoutPageTemplateCollection.
+					getParentLayoutPageTemplateCollectionId()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "parentLPTCollectionId"));
+		Assert.assertEquals(
+			layoutPageTemplateCollection.getName(),
+			ReflectionTestUtil.invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+		Assert.assertEquals(
+			Integer.valueOf(layoutPageTemplateCollection.getType()),
+			ReflectionTestUtil.<Integer>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "type_"));
+
+		Assert.assertEquals(
+			layoutPageTemplateCollection.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(layoutPageTemplateCollection.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutPageTemplateCollection, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected LayoutPageTemplateCollection addLayoutPageTemplateCollection()
@@ -600,7 +816,13 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 
 		layoutPageTemplateCollection.setMvccVersion(RandomTestUtil.nextLong());
 
+		layoutPageTemplateCollection.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		layoutPageTemplateCollection.setUuid(RandomTestUtil.randomString());
+
+		layoutPageTemplateCollection.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		layoutPageTemplateCollection.setGroupId(RandomTestUtil.nextLong());
 
@@ -614,10 +836,18 @@ public class LayoutPageTemplateCollectionPersistenceTest {
 
 		layoutPageTemplateCollection.setModifiedDate(RandomTestUtil.nextDate());
 
+		layoutPageTemplateCollection.setParentLayoutPageTemplateCollectionId(
+			RandomTestUtil.nextLong());
+
+		layoutPageTemplateCollection.setLayoutPageTemplateCollectionKey(
+			RandomTestUtil.randomString());
+
 		layoutPageTemplateCollection.setName(RandomTestUtil.randomString());
 
 		layoutPageTemplateCollection.setDescription(
 			RandomTestUtil.randomString());
+
+		layoutPageTemplateCollection.setType(RandomTestUtil.nextInt());
 
 		layoutPageTemplateCollection.setLastPublishDate(
 			RandomTestUtil.nextDate());

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.service;
@@ -27,17 +18,16 @@ public class DLAppHelperLocalServiceWrapper
 	implements DLAppHelperLocalService,
 			   ServiceWrapper<DLAppHelperLocalService> {
 
+	public DLAppHelperLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DLAppHelperLocalServiceWrapper(
 		DLAppHelperLocalService dlAppHelperLocalService) {
 
 		_dlAppHelperLocalService = dlAppHelperLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DLAppHelperLocalServiceUtil} to access the dl app helper local service. Add custom service methods to <code>com.liferay.portlet.documentlibrary.service.impl.DLAppHelperLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public void addFolder(
 			long userId,
@@ -140,6 +130,14 @@ public class DLAppHelperLocalServiceWrapper
 
 		return _dlAppHelperLocalService.getFileShortcutsCount(
 			groupId, folderId, active, status);
+	}
+
+	@Override
+	public java.util.List
+		<com.liferay.document.library.kernel.model.DLFileShortcut>
+			getGroupFileShortcuts(long groupId) {
+
+		return _dlAppHelperLocalService.getGroupFileShortcuts(groupId);
 	}
 
 	@Override
@@ -330,13 +328,11 @@ public class DLAppHelperLocalServiceWrapper
 			long userId,
 			com.liferay.portal.kernel.repository.model.FileEntry fileEntry,
 			com.liferay.portal.kernel.repository.model.FileVersion fileVersion,
-			long[] assetCategoryIds, String[] assetTagNames,
-			long[] assetLinkEntryIds)
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlAppHelperLocalService.updateAsset(
-			userId, fileEntry, fileVersion, assetCategoryIds, assetTagNames,
-			assetLinkEntryIds);
+			userId, fileEntry, fileVersion, serviceContext);
 	}
 
 	@Override

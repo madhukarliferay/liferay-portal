@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -126,6 +118,8 @@ public class SegmentsEntryRolePersistenceTest {
 
 		newSegmentsEntryRole.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSegmentsEntryRole.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSegmentsEntryRole.setCompanyId(RandomTestUtil.nextLong());
 
 		newSegmentsEntryRole.setUserId(RandomTestUtil.nextLong());
@@ -148,6 +142,9 @@ public class SegmentsEntryRolePersistenceTest {
 		Assert.assertEquals(
 			existingSegmentsEntryRole.getMvccVersion(),
 			newSegmentsEntryRole.getMvccVersion());
+		Assert.assertEquals(
+			existingSegmentsEntryRole.getCtCollectionId(),
+			newSegmentsEntryRole.getCtCollectionId());
 		Assert.assertEquals(
 			existingSegmentsEntryRole.getSegmentsEntryRoleId(),
 			newSegmentsEntryRole.getSegmentsEntryRoleId());
@@ -221,10 +218,10 @@ public class SegmentsEntryRolePersistenceTest {
 
 	protected OrderByComparator<SegmentsEntryRole> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SegmentsEntryRole", "mvccVersion", true, "segmentsEntryRoleId",
-			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true, "segmentsEntryId", true,
-			"roleId", true);
+			"SegmentsEntryRole", "mvccVersion", true, "ctCollectionId", true,
+			"segmentsEntryRoleId", true, "companyId", true, "userId", true,
+			"userName", true, "createDate", true, "modifiedDate", true,
+			"segmentsEntryId", true, "roleId", true);
 	}
 
 	@Test
@@ -453,19 +450,63 @@ public class SegmentsEntryRolePersistenceTest {
 
 		_persistence.clearCache();
 
-		SegmentsEntryRole existingSegmentsEntryRole =
-			_persistence.findByPrimaryKey(newSegmentsEntryRole.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(
+				newSegmentsEntryRole.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SegmentsEntryRole newSegmentsEntryRole = addSegmentsEntryRole();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SegmentsEntryRole.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"segmentsEntryRoleId",
+				newSegmentsEntryRole.getSegmentsEntryRoleId()));
+
+		List<SegmentsEntryRole> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(SegmentsEntryRole segmentsEntryRole) {
 		Assert.assertEquals(
-			Long.valueOf(existingSegmentsEntryRole.getSegmentsEntryId()),
+			Long.valueOf(segmentsEntryRole.getSegmentsEntryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsEntryRole, "getOriginalSegmentsEntryId",
-				new Class<?>[0]));
+				segmentsEntryRole, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "segmentsEntryId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSegmentsEntryRole.getRoleId()),
+			Long.valueOf(segmentsEntryRole.getRoleId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsEntryRole, "getOriginalRoleId",
-				new Class<?>[0]));
+				segmentsEntryRole, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "roleId"));
 	}
 
 	protected SegmentsEntryRole addSegmentsEntryRole() throws Exception {
@@ -474,6 +515,8 @@ public class SegmentsEntryRolePersistenceTest {
 		SegmentsEntryRole segmentsEntryRole = _persistence.create(pk);
 
 		segmentsEntryRole.setMvccVersion(RandomTestUtil.nextLong());
+
+		segmentsEntryRole.setCtCollectionId(RandomTestUtil.nextLong());
 
 		segmentsEntryRole.setCompanyId(RandomTestUtil.nextLong());
 

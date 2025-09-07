@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -42,9 +33,9 @@ public class PortalPreferencesWrapper
 
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("portalPreferencesId", getPortalPreferencesId());
+		attributes.put("companyId", getCompanyId());
 		attributes.put("ownerId", getOwnerId());
 		attributes.put("ownerType", getOwnerType());
-		attributes.put("preferences", getPreferences());
 
 		return attributes;
 	}
@@ -63,6 +54,12 @@ public class PortalPreferencesWrapper
 			setPortalPreferencesId(portalPreferencesId);
 		}
 
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
 		Long ownerId = (Long)attributes.get("ownerId");
 
 		if (ownerId != null) {
@@ -74,12 +71,21 @@ public class PortalPreferencesWrapper
 		if (ownerType != null) {
 			setOwnerType(ownerType);
 		}
+	}
 
-		String preferences = (String)attributes.get("preferences");
+	@Override
+	public PortalPreferences cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
 
-		if (preferences != null) {
-			setPreferences(preferences);
-		}
+	/**
+	 * Returns the company ID of this portal preferences.
+	 *
+	 * @return the company ID of this portal preferences
+	 */
+	@Override
+	public long getCompanyId() {
+		return model.getCompanyId();
 	}
 
 	/**
@@ -123,16 +129,6 @@ public class PortalPreferencesWrapper
 	}
 
 	/**
-	 * Returns the preferences of this portal preferences.
-	 *
-	 * @return the preferences of this portal preferences
-	 */
-	@Override
-	public String getPreferences() {
-		return model.getPreferences();
-	}
-
-	/**
 	 * Returns the primary key of this portal preferences.
 	 *
 	 * @return the primary key of this portal preferences
@@ -142,14 +138,19 @@ public class PortalPreferencesWrapper
 		return model.getPrimaryKey();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a portal preferences model instance should use the <code>PortalPreferences</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets the company ID of this portal preferences.
+	 *
+	 * @param companyId the company ID of this portal preferences
+	 */
+	@Override
+	public void setCompanyId(long companyId) {
+		model.setCompanyId(companyId);
 	}
 
 	/**
@@ -193,16 +194,6 @@ public class PortalPreferencesWrapper
 	}
 
 	/**
-	 * Sets the preferences of this portal preferences.
-	 *
-	 * @param preferences the preferences of this portal preferences
-	 */
-	@Override
-	public void setPreferences(String preferences) {
-		model.setPreferences(preferences);
-	}
-
-	/**
 	 * Sets the primary key of this portal preferences.
 	 *
 	 * @param primaryKey the primary key of this portal preferences
@@ -210,6 +201,11 @@ public class PortalPreferencesWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

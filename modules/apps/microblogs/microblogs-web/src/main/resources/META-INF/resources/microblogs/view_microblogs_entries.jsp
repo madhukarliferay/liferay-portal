@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,8 +11,6 @@
 List<MicroblogsEntry> microblogsEntries = (List<MicroblogsEntry>)request.getAttribute(WebKeys.MICROBLOGS_ENTRIES);
 
 PortletURL microblogsEntriesURL = (PortletURL)request.getAttribute(WebKeys.MICROBLOGS_ENTRIES_URL);
-
-boolean comment = GetterUtil.getBoolean((String)request.getAttribute("view_comments.jsp-comment"));
 %>
 
 <c:if test="<%= microblogsEntries.isEmpty() %>">
@@ -48,17 +37,18 @@ boolean comment = GetterUtil.getBoolean((String)request.getAttribute("view_comme
 	</div>
 </c:if>
 
-<%
-if (microblogsEntries != null) {
+<c:if test="<%= microblogsEntries != null %>">
+
+	<%
 	for (MicroblogsEntry microblogsEntry : microblogsEntries) {
 		String userFullName = HtmlUtil.escape(PortalUtil.getUserName(microblogsEntry));
 
 		User curUser = UserLocalServiceUtil.fetchUserById(microblogsEntry.getUserId());
-%>
+	%>
 
 		<div class="microblogs-entry" id="<portlet:namespace />microblogsEntry<%= microblogsEntry.getMicroblogsEntryId() %>">
 			<span class="thumbnail">
-				<liferay-ui:user-portrait
+				<liferay-user:user-portrait
 					userId="<%= microblogsEntry.getUserId() %>"
 				/>
 			</span>
@@ -80,14 +70,9 @@ if (microblogsEntries != null) {
 				</div>
 
 				<div class="content">
-
-					<%
-					String content = HtmlUtil.replaceNewLine(MicroblogsWebUtil.getProcessedContent(microblogsEntry, ServiceContextFactory.getInstance(request)));
-					%>
-
 					<span>
 						<p>
-							<%= content %>
+							<%= HtmlUtil.replaceNewLine(MicroblogsWebUtil.getProcessedContent(microblogsEntry, ServiceContextFactory.getInstance(request))) %>
 						</p>
 					</span>
 				</div>
@@ -96,7 +81,7 @@ if (microblogsEntries != null) {
 
 				<div class="footer">
 					<div class="modified-date">
-						<%= dateFormatDateTime.format(microblogsEntry.getModifiedDate()) %>
+						<%= dateTimeFormat.format(microblogsEntry.getModifiedDate()) %>
 					</div>
 
 					<div class="action-container">
@@ -124,11 +109,11 @@ if (microblogsEntries != null) {
 							</portlet:renderURL>
 
 							<%
-							String repostURL = "javascript:Liferay.Microblogs.displayPopup('" + repostMicroblogsEntryURL + "','" + LanguageUtil.get(request, "repost") + "');";
+							String taglibRepostURL = "javascript:Liferay.Microblogs.displayPopup('" + repostMicroblogsEntryURL + "','" + LanguageUtil.get(request, "repost") + "');";
 							%>
 
 							<span class="action repost">
-								<a data-microblogsEntryId="<%= microblogsEntry.getMicroblogsEntryId() %>" href="<%= repostURL %>"><liferay-ui:message key="repost" /></a>
+								<a data-microblogsEntryId="<%= microblogsEntry.getMicroblogsEntryId() %>" href="<%= taglibRepostURL %>"><liferay-ui:message key="repost" /></a>
 							</span>
 						</c:if>
 
@@ -161,7 +146,8 @@ if (microblogsEntries != null) {
 			<div class="comments-container reply" id="<portlet:namespace />commentsContainer<%= microblogsEntry.getMicroblogsEntryId() %>"><!-- --></div>
 		</div>
 
-<%
+	<%
 	}
-}
-%>
+	%>
+
+</c:if>

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,6 +13,8 @@ page import="com.liferay.taglib.ui.InputEditorTag" %>
 <%
 String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_input_localized") + StringPool.UNDERLINE;
 
+List<String> activeLanguageIds = (List<String>)request.getAttribute("liferay-ui:input-localized:activeLanguageIds");
+boolean adminMode = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-localized:adminMode"));
 boolean autoFocus = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-localized:autoFocus"));
 boolean autoSize = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-localized:autoSize"));
 Set<Locale> availableLocales = (Set<Locale>)request.getAttribute("liferay-ui:input-localized:availableLocales");
@@ -37,6 +30,8 @@ String id = HtmlUtil.getAUICompatibleId((String)request.getAttribute("liferay-ui
 boolean ignoreRequestValue = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-localized:ignoreRequestValue"));
 String inputAddon = (String)request.getAttribute("liferay-ui:input-localized:inputAddon");
 String languageId = (String)request.getAttribute("liferay-ui:input-localized:languageId");
+String languagesDropdownDirection = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-localized:languagesDropdownDirection"));
+boolean languagesDropdownVisible = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-localized:languagesDropdownVisible"));
 String maxLength = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-localized:maxLength"));
 String name = (String)request.getAttribute("liferay-ui:input-localized:name");
 String placeholder = (String)request.getAttribute("liferay-ui:input-localized:placeholder");
@@ -52,6 +47,7 @@ if (Validator.isNotNull(defaultLanguageId)) {
 }
 else {
 	defaultLocale = LocaleUtil.getSiteDefault();
+
 	defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 }
 
@@ -73,10 +69,6 @@ String mainLanguageValue = LocalizationUtil.getLocalization(xml, mainLanguageId,
 
 if (!ignoreRequestValue) {
 	mainLanguageValue = ParamUtil.getString(request, name + StringPool.UNDERLINE + mainLanguageId, mainLanguageValue);
-}
-
-if (Validator.isNull(mainLanguageValue)) {
-	mainLanguageValue = LocalizationUtil.getLocalization(xml, defaultLanguageId, true);
 }
 
 String fieldNamePrefix = StringPool.BLANK;

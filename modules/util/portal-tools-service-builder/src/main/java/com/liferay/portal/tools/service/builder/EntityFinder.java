@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,18 +19,22 @@ import java.util.List;
 public class EntityFinder {
 
 	public EntityFinder(
-		String name, String returnType, boolean unique, String where,
+		ServiceBuilder serviceBuilder, String name, String pluralName,
+		boolean pretouch, String returnType, boolean unique, String where,
 		String dbWhere, boolean dbIndex, List<EntityColumn> entityColumns) {
 
+		_serviceBuilder = serviceBuilder;
 		_name = name;
+		_pluralName = GetterUtil.getString(
+			pluralName, serviceBuilder.formatPlural(name));
+		_pretouch = pretouch;
 		_returnType = returnType;
 		_unique = unique;
 		_where = where;
 		_dbWhere = dbWhere;
 		_dbIndex = dbIndex;
-		_entityColumns = entityColumns;
 
-		_arrayableColumns = new ArrayList<>();
+		_entityColumns = entityColumns;
 
 		for (EntityColumn column : _entityColumns) {
 			if (column.hasArrayableOperator()) {
@@ -107,8 +102,8 @@ public class EntityFinder {
 		return _name;
 	}
 
-	public String getNames() {
-		return TextFormatter.formatPlural(_name);
+	public String getPluralName() {
+		return _pluralName;
 	}
 
 	public String getReturnType() {
@@ -152,7 +147,7 @@ public class EntityFinder {
 	}
 
 	public boolean hasEntityColumn(String name) {
-		return Entity.hasEntityColumn(name, _entityColumns);
+		return Entity.hasEntityColumn(_serviceBuilder, name, _entityColumns);
 	}
 
 	public boolean isCollection() {
@@ -167,16 +162,23 @@ public class EntityFinder {
 		return _dbIndex;
 	}
 
+	public boolean isPretouch() {
+		return _pretouch;
+	}
+
 	public boolean isUnique() {
 		return _unique;
 	}
 
-	private final List<EntityColumn> _arrayableColumns;
+	private final List<EntityColumn> _arrayableColumns = new ArrayList<>();
 	private final boolean _dbIndex;
 	private final String _dbWhere;
 	private final List<EntityColumn> _entityColumns;
 	private final String _name;
+	private final String _pluralName;
+	private final boolean _pretouch;
 	private final String _returnType;
+	private final ServiceBuilder _serviceBuilder;
 	private final boolean _unique;
 	private final String _where;
 

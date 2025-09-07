@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,14 +17,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -127,6 +122,8 @@ public class DDMFormInstancePersistenceTest {
 
 		newDDMFormInstance.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDMFormInstance.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDMFormInstance.setUuid(RandomTestUtil.randomString());
 
 		newDDMFormInstance.setGroupId(RandomTestUtil.nextLong());
@@ -165,6 +162,9 @@ public class DDMFormInstancePersistenceTest {
 		Assert.assertEquals(
 			existingDDMFormInstance.getMvccVersion(),
 			newDDMFormInstance.getMvccVersion());
+		Assert.assertEquals(
+			existingDDMFormInstance.getCtCollectionId(),
+			newDDMFormInstance.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDMFormInstance.getUuid(), newDDMFormInstance.getUuid());
 		Assert.assertEquals(
@@ -254,6 +254,13 @@ public class DDMFormInstancePersistenceTest {
 	}
 
 	@Test
+	public void testCountByStructureId() throws Exception {
+		_persistence.countByStructureId(RandomTestUtil.nextLong());
+
+		_persistence.countByStructureId(0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		DDMFormInstance newDDMFormInstance = addDDMFormInstance();
 
@@ -278,18 +285,36 @@ public class DDMFormInstancePersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<DDMFormInstance> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DDMFormInstance", "mvccVersion", true, "uuid", true,
-			"formInstanceId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "versionUserId", true,
+			"DDMFormInstance", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "formInstanceId", true, "groupId", true, "companyId",
+			true, "userId", true, "userName", true, "versionUserId", true,
 			"versionUserName", true, "createDate", true, "modifiedDate", true,
-			"structureId", true, "version", true, "name", true, "description",
-			true, "lastPublishDate", true);
+			"structureId", true, "version", true, "name", true,
+			"lastPublishDate", true);
 	}
 
 	@Test
@@ -512,20 +537,67 @@ public class DDMFormInstancePersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMFormInstance existingDDMFormInstance = _persistence.findByPrimaryKey(
-			newDDMFormInstance.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDDMFormInstance.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDMFormInstance.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDDMFormInstance, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMFormInstance newDDMFormInstance = addDDMFormInstance();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMFormInstance.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"formInstanceId", newDDMFormInstance.getFormInstanceId()));
+
+		List<DDMFormInstance> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDMFormInstance ddmFormInstance) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDMFormInstance.getGroupId()),
+			ddmFormInstance.getUuid(),
+			ReflectionTestUtil.invoke(
+				ddmFormInstance, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(ddmFormInstance.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMFormInstance, "getOriginalGroupId",
-				new Class<?>[0]));
+				ddmFormInstance, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			Long.valueOf(ddmFormInstance.getStructureId()),
+			ReflectionTestUtil.<Long>invoke(
+				ddmFormInstance, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "structureId"));
 	}
 
 	protected DDMFormInstance addDDMFormInstance() throws Exception {
@@ -534,6 +606,8 @@ public class DDMFormInstancePersistenceTest {
 		DDMFormInstance ddmFormInstance = _persistence.create(pk);
 
 		ddmFormInstance.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddmFormInstance.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddmFormInstance.setUuid(RandomTestUtil.randomString());
 

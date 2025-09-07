@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,20 +18,20 @@ KaleoDefinitionVersion kaleoDefinitionVersion = (KaleoDefinitionVersion)row.getO
 %>
 
 <portlet:renderURL var="viewURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-	<portlet:param name="mvcPath" value="/designer/edit_kaleo_definition_version.jsp" />
+	<portlet:param name="mvcPath" value="/designer/edit_workflow_definition.jsp" />
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 	<portlet:param name="name" value="<%= kaleoDefinitionVersion.getName() %>" />
 	<portlet:param name="draftVersion" value="<%= kaleoDefinitionVersion.getVersion() %>" />
 	<portlet:param name="<%= WorkflowWebKeys.WORKFLOW_JSP_STATE %>" value="<%= WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE %>" />
 </portlet:renderURL>
 
-<liferay-portlet:actionURL name="revertKaleoDefinitionVersion" var="revertURL">
+<liferay-portlet:actionURL name="/kaleo_designer/revert_kaleo_definition_version" var="revertURL">
 	<portlet:param name="redirect" value="<%= redirect %>" />
 	<portlet:param name="name" value="<%= kaleoDefinitionVersion.getName() %>" />
 	<portlet:param name="draftVersion" value="<%= kaleoDefinitionVersion.getVersion() %>" />
 </liferay-portlet:actionURL>
 
-<c:if test="<%= !kaleoDefinitionVersion.getVersion().equals(currentKaleoDefinitionVersion.getVersion()) %>">
+<c:if test="<%= !Objects.equals(kaleoDefinitionVersion.getVersion(), currentKaleoDefinitionVersion.getVersion()) %>">
 	<liferay-ui:icon-menu
 		direction="left-side"
 		icon="<%= StringPool.BLANK %>"
@@ -52,7 +43,7 @@ KaleoDefinitionVersion kaleoDefinitionVersion = (KaleoDefinitionVersion)row.getO
 		<liferay-ui:icon
 			id='<%= "previewBeforeRevert" + kaleoDefinitionVersion.getVersion() %>'
 			message="preview"
-			url="javascript:;"
+			url="javascript:void(0);"
 		/>
 
 		<liferay-ui:icon

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
@@ -26,11 +17,17 @@ import com.liferay.portal.kernel.servlet.TempAttributesServletRequest;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.xml.QName;
+
+import jakarta.portlet.Event;
+import jakarta.portlet.MimeResponse;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
@@ -40,13 +37,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import javax.portlet.Event;
-import javax.portlet.MimeResponse;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Shuyang Zhou
@@ -66,8 +56,8 @@ public class PortletContainerUtil {
 					layout.getGroupId(), layout.isPrivateLayout(),
 					LayoutConstants.TYPE_PORTLET);
 			}
-			catch (PortalException pe) {
-				throw new PortletContainerException(pe);
+			catch (PortalException portalException) {
+				throw new PortletContainerException(portalException);
 			}
 
 			List<LayoutTypePortlet> layoutTypePortlets = new ArrayList<>(
@@ -105,7 +95,7 @@ public class PortletContainerUtil {
 			HttpServletRequest httpServletRequest, Portlet portlet)
 		throws PortletContainerException {
 
-		getPortletContainer().preparePortlet(httpServletRequest, portlet);
+		_portletContainer.preparePortlet(httpServletRequest, portlet);
 	}
 
 	public static void processAction(
@@ -113,7 +103,7 @@ public class PortletContainerUtil {
 			HttpServletResponse httpServletResponse, Portlet portlet)
 		throws PortletContainerException {
 
-		PortletContainer portletContainer = getPortletContainer();
+		PortletContainer portletContainer = _portletContainer;
 
 		ActionResult actionResult = portletContainer.processAction(
 			httpServletRequest, httpServletResponse, portlet);
@@ -164,16 +154,16 @@ public class PortletContainerUtil {
 					location = liferayPortletURL.toString();
 				}
 			}
-			catch (MalformedURLException murle) {
-				throw new PortletContainerException(murle);
+			catch (MalformedURLException malformedURLException) {
+				throw new PortletContainerException(malformedURLException);
 			}
 		}
 
 		try {
 			httpServletResponse.sendRedirect(location);
 		}
-		catch (IOException ioe) {
-			throw new PortletContainerException(ioe);
+		catch (IOException ioException) {
+			throw new PortletContainerException(ioException);
 		}
 	}
 
@@ -183,7 +173,7 @@ public class PortletContainerUtil {
 			Layout layout, Event event)
 		throws PortletContainerException {
 
-		PortletContainer portletContainer = getPortletContainer();
+		PortletContainer portletContainer = _portletContainer;
 
 		List<Event> events = portletContainer.processEvent(
 			httpServletRequest, httpServletResponse, portlet, layout, event);
@@ -196,14 +186,14 @@ public class PortletContainerUtil {
 	public static void processPublicRenderParameters(
 		HttpServletRequest httpServletRequest, Layout layout) {
 
-		getPortletContainer().processPublicRenderParameters(
+		_portletContainer.processPublicRenderParameters(
 			httpServletRequest, layout);
 	}
 
 	public static void processPublicRenderParameters(
 		HttpServletRequest httpServletRequest, Layout layout, Portlet portlet) {
 
-		getPortletContainer().processPublicRenderParameters(
+		_portletContainer.processPublicRenderParameters(
 			httpServletRequest, layout, portlet);
 	}
 
@@ -212,7 +202,7 @@ public class PortletContainerUtil {
 			HttpServletResponse httpServletResponse, Portlet portlet)
 		throws PortletContainerException {
 
-		getPortletContainer().render(
+		_portletContainer.render(
 			httpServletRequest, httpServletResponse, portlet);
 	}
 
@@ -221,7 +211,7 @@ public class PortletContainerUtil {
 			HttpServletResponse httpServletResponse, Portlet portlet)
 		throws PortletContainerException {
 
-		getPortletContainer().renderHeaders(
+		_portletContainer.renderHeaders(
 			httpServletRequest, httpServletResponse, portlet);
 	}
 
@@ -230,7 +220,7 @@ public class PortletContainerUtil {
 			HttpServletResponse httpServletResponse, Portlet portlet)
 		throws PortletContainerException {
 
-		getPortletContainer().serveResource(
+		_portletContainer.serveResource(
 			httpServletRequest, httpServletResponse, portlet);
 	}
 
@@ -248,9 +238,7 @@ public class PortletContainerUtil {
 		String columnId, Integer columnPos, Integer columnCount,
 		Boolean boundary, Boolean decorate) {
 
-		if ((_LAYOUT_PARALLEL_RENDER_ENABLE && ServerDetector.isTomcat()) ||
-			_PORTLET_CONTAINER_RESTRICT) {
-
+		if (_PORTLET_CONTAINER_RESTRICT) {
 			RestrictPortletServletRequest restrictPortletServletRequest =
 				new RestrictPortletServletRequest(httpServletRequest);
 
@@ -349,21 +337,14 @@ public class PortletContainerUtil {
 
 		int y2 = length + x2;
 
-		if (y2 > queryString2.length()) {
-			return false;
-		}
-
-		if ((y2 != queryString2.length()) &&
-			(queryString2.charAt(y2) != CharPool.AMPERSAND)) {
+		if ((y2 > queryString2.length()) ||
+			((y2 != queryString2.length()) &&
+			 (queryString2.charAt(y2) != CharPool.AMPERSAND))) {
 
 			return false;
 		}
 
-		if (queryString1.regionMatches(x1, queryString2, x2, length)) {
-			return true;
-		}
-
-		return false;
+		return queryString1.regionMatches(x1, queryString2, x2, length);
 	}
 
 	private static void _processEvents(
@@ -382,8 +363,8 @@ public class PortletContainerUtil {
 			try {
 				portlets = layoutTypePortlet.getAllPortlets();
 			}
-			catch (Exception e) {
-				throw new PortletContainerException(e);
+			catch (Exception exception) {
+				throw new PortletContainerException(exception);
 			}
 
 			for (Portlet portlet : portlets) {
@@ -404,8 +385,6 @@ public class PortletContainerUtil {
 			}
 		}
 	}
-
-	private static final boolean _LAYOUT_PARALLEL_RENDER_ENABLE = false;
 
 	private static final boolean _PORTLET_CONTAINER_RESTRICT =
 		GetterUtil.getBoolean(

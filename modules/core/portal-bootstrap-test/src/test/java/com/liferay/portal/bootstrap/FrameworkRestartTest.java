@@ -1,26 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.bootstrap;
 
+import com.liferay.petra.concurrent.NoticeableFuture;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.petra.process.local.LocalProcessExecutor;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.test.rule.NewEnvTestRule;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.ServiceLoader;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +32,10 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -47,6 +43,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -63,8 +60,14 @@ import org.osgi.framework.wiring.FrameworkWiring;
  */
 public class FrameworkRestartTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	public static void doTestFrameworkRestart() throws Exception {
-		URL url = FrameworkRestartTest.class.getResource("security.policy");
+		URL url = FrameworkRestartTest.class.getResource(
+			"dependencies/security.policy");
 
 		System.setProperty("java.security.policy", url.getFile());
 
@@ -76,11 +79,15 @@ public class FrameworkRestartTest {
 			Constants.FRAMEWORK_STORAGE, frameworkStoragePath.toString()
 		).build();
 
-		List<FrameworkFactory> frameworkFactories = ServiceLoader.load(
-			FrameworkRestartTest.class.getClassLoader(),
-			FrameworkFactory.class);
+		ServiceLoader<FrameworkFactory> serviceLoader = ServiceLoader.load(
+			FrameworkFactory.class,
+			FrameworkRestartTest.class.getClassLoader());
 
-		FrameworkFactory frameworkFactory = frameworkFactories.get(0);
+		Iterator<FrameworkFactory> iterator = serviceLoader.iterator();
+
+		Assert.assertTrue(iterator.hasNext());
+
+		FrameworkFactory frameworkFactory = iterator.next();
 
 		Framework framework = frameworkFactory.newFramework(properties);
 
@@ -155,9 +162,8 @@ public class FrameworkRestartTest {
 							BasicFileAttributes basicFileAttributes)
 						throws IOException {
 
-						Path fileNamePath = filePath.getFileName();
-
-						String fileNameString = fileNamePath.toString();
+						String fileNameString = String.valueOf(
+							filePath.getFileName());
 
 						if (fileNameString.equals("bundleFile")) {
 							Files.delete(filePath);
@@ -183,18 +189,21 @@ public class FrameworkRestartTest {
 		ClassLoader classLoader = new URLClassLoader(
 			_getURLS(
 				Assert.class, FrameworkFactory.class,
-				FrameworkRestartTest.class, UnsyncByteArrayOutputStream.class),
+				FrameworkRestartTest.class, LiferayUnitTestRule.class,
+				LocalProcessExecutor.class, NoticeableFuture.class,
+				UnsyncByteArrayOutputStream.class),
 			null);
 
 		Class<?> clazz = classLoader.loadClass(
 			FrameworkRestartTest.class.getName());
 
-		ReflectionTestUtil.invoke(
-			clazz, "doTestFrameworkRestart", new Class<?>[0]);
-	}
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				classLoader)) {
 
-	@Rule
-	public final NewEnvTestRule newEnvTestRule = NewEnvTestRule.INSTANCE;
+			ReflectionTestUtil.invoke(
+				clazz, "doTestFrameworkRestart", new Class<?>[0]);
+		}
+	}
 
 	private static InputStream _createJAR(
 			String symbolicName, String version, String exportPackage,
@@ -250,7 +259,7 @@ public class FrameworkRestartTest {
 
 				@Override
 				public FileVisitResult postVisitDirectory(
-						Path dirPath, IOException ioe)
+						Path dirPath, IOException ioException)
 					throws IOException {
 
 					Files.delete(dirPath);

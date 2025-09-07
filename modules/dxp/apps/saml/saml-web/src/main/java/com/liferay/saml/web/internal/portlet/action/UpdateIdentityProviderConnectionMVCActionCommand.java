@@ -1,34 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.web.internal.portlet.action;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.saml.constants.SamlPortletKeys;
+import com.liferay.saml.opensaml.integration.field.expression.handler.registry.SamlSpIdpConnectionFieldExpressionHandlerRegistry;
+import com.liferay.saml.opensaml.integration.processor.SamlSpIdpConnectionProcessor;
+import com.liferay.saml.opensaml.integration.processor.factory.SamlSpIdpConnectionProcessorFactory;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
-import com.liferay.saml.web.internal.constants.SamlAdminPortletKeys;
 
-import java.io.InputStream;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import java.util.List;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -37,10 +34,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
-		"mvc.command.name=/admin/updateIdentityProviderConnection"
+		"jakarta.portlet.name=" + SamlPortletKeys.SAML_ADMIN,
+		"mvc.command.name=/admin/update_identity_provider_connection"
 	},
 	service = MVCActionCommand.class
 )
@@ -58,52 +54,71 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 		long samlSpIdpConnectionId = ParamUtil.getLong(
 			uploadPortletRequest, "samlSpIdpConnectionId");
 
-		String samlIdpEntityId = ParamUtil.getString(
-			uploadPortletRequest, "samlIdpEntityId");
-		boolean assertionSignatureRequired = ParamUtil.getBoolean(
-			uploadPortletRequest, "assertionSignatureRequired");
-		long clockSkew = ParamUtil.getLong(uploadPortletRequest, "clockSkew");
-		boolean enabled = ParamUtil.getBoolean(uploadPortletRequest, "enabled");
-		boolean forceAuthn = ParamUtil.getBoolean(
-			uploadPortletRequest, "forceAuthn");
-		boolean ldapImportEnabled = ParamUtil.getBoolean(
-			uploadPortletRequest, "ldapImportEnabled");
-		String metadataUrl = ParamUtil.getString(
-			uploadPortletRequest, "metadataUrl");
-		InputStream metadataXmlInputStream =
-			uploadPortletRequest.getFileAsStream("metadataXml");
-		String name = ParamUtil.getString(uploadPortletRequest, "name");
-		String nameIdFormat = ParamUtil.getString(
-			uploadPortletRequest, "nameIdFormat");
-		boolean signAuthnRequest = ParamUtil.getBoolean(
-			uploadPortletRequest, "signAuthnRequest");
-		String userAttributeMappings = ParamUtil.getString(
-			uploadPortletRequest, "userAttributeMappings");
+		SamlSpIdpConnection samlSpIdpConnection = null;
+
+		if (samlSpIdpConnectionId <= 0) {
+			samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.createSamlSpIdpConnection(0);
+		}
+		else {
+			samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.fetchSamlSpIdpConnection(
+					samlSpIdpConnectionId);
+		}
+
+		SamlSpIdpConnectionProcessor samlSpIdpConnectionProcessor =
+			_samlSpIdpConnectionProcessorFactory.create(
+				samlSpIdpConnection,
+				_samlSpIdpConnectionFieldExpressionHandlerRegistry);
+
+		Map<String, List<String>> regularParameterMap =
+			uploadPortletRequest.getRegularParameterMap();
+
+		for (Map.Entry<String, List<String>> entry :
+				regularParameterMap.entrySet()) {
+
+			List<String> value = entry.getValue();
+
+			samlSpIdpConnectionProcessor.setValueArray(
+				entry.getKey(), value.toArray(new String[0]));
+		}
+
+		for (String booleanFieldExpression : _BOOLEAN_FIELD_EXPRESSIONS) {
+			if (!regularParameterMap.containsKey(booleanFieldExpression)) {
+				samlSpIdpConnectionProcessor.setValueArray(
+					booleanFieldExpression, new String[] {StringPool.BLANK});
+			}
+		}
+
+		Map<String, FileItem[]> multipartParameterMap =
+			uploadPortletRequest.getMultipartParameterMap();
+
+		multipartParameterMap.forEach(
+			samlSpIdpConnectionProcessor::setFileItemArray);
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			SamlSpIdpConnection.class.getName(), actionRequest);
 
-		if (samlSpIdpConnectionId <= 0) {
-			_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
-				samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
-				forceAuthn, ldapImportEnabled, metadataUrl,
-				metadataXmlInputStream, name, nameIdFormat, signAuthnRequest,
-				userAttributeMappings, serviceContext);
-		}
-		else {
-			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
-				samlSpIdpConnectionId, samlIdpEntityId,
-				assertionSignatureRequired, clockSkew, enabled, forceAuthn,
-				ldapImportEnabled, metadataUrl, metadataXmlInputStream, name,
-				nameIdFormat, signAuthnRequest, userAttributeMappings,
-				serviceContext);
-		}
+		samlSpIdpConnectionProcessor.process(serviceContext);
 	}
+
+	private static final String[] _BOOLEAN_FIELD_EXPRESSIONS = {
+		"assertionSignatureRequired", "enabled", "forceAuthn",
+		"ldapImportEnabled", "unknownUsersAreStrangers", "signAuthnRequest"
+	};
 
 	@Reference
 	private Portal _portal;
 
 	@Reference
+	private SamlSpIdpConnectionFieldExpressionHandlerRegistry
+		_samlSpIdpConnectionFieldExpressionHandlerRegistry;
+
+	@Reference
 	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
+
+	@Reference
+	private SamlSpIdpConnectionProcessorFactory
+		_samlSpIdpConnectionProcessorFactory;
 
 }

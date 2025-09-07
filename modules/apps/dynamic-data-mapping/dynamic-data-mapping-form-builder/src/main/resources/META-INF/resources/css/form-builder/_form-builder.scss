@@ -6,8 +6,6 @@
 @import './form-pagination';
 @import './moveable';
 @import './resizeable';
-@import './share_url_popover';
-@import './sidebar';
 
 $c: '.ddm-form-builder';
 
@@ -30,26 +28,35 @@ $c: '.ddm-form-builder';
 	.ddm-field-container {
 		border: 2px solid transparent;
 
-		&:hover,
+		&:focus,
+		&:focus-within,
 		&.dragging,
 		&.expanded,
-		&.selected {
+		&.hovered,
+		&.selected,
+		&.targetOver {
 			border-color: $active-blue;
+
+			&.ddm-fieldset {
+				border-color: #5aca75;
+			}
 		}
 
-		&:hover {
-			border-width: 1px;
-			margin: 1px 2px;
+		&.active-drop-child {
+			border-color: $light-blue;
+			border-style: dashed;
 		}
 
-		&.selected {
+		&.active-drop-child,
+		&.selected,
+		&.targetOver {
 			border-width: 2px;
-			margin: 0 1px;
+			margin: 0;
 		}
 	}
 
 	.form-builder-layout {
-		padding: 1em;
+		padding: 1em 1.5rem;
 	}
 }
 

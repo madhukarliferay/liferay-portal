@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.util;
@@ -25,6 +16,7 @@ import com.liferay.portal.kernel.portlet.PortletBag;
 import com.liferay.portal.kernel.portlet.PortletBagPool;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
+import com.liferay.portal.kernel.servlet.FileAvailabilityUtil;
 import com.liferay.portal.kernel.servlet.taglib.TagDynamicIdFactory;
 import com.liferay.portal.kernel.servlet.taglib.TagDynamicIdFactoryRegistry;
 import com.liferay.portal.kernel.servlet.taglib.TagDynamicIncludeUtil;
@@ -37,22 +29,21 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.FileAvailabilityUtil;
-import com.liferay.taglib.servlet.PipingServletResponse;
+import com.liferay.taglib.servlet.PipingServletResponseFactory;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyContent;
 
 import java.io.IOException;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyContent;
 
 /**
  * @author Brian Wing Shun Chan
@@ -89,8 +80,8 @@ public class IncludeTag extends AttributesTagSupport {
 
 			return EVAL_PAGE;
 		}
-		catch (Exception e) {
-			throw new JspException(e);
+		catch (Exception exception) {
+			throw new JspException(exception);
 		}
 		finally {
 			doClearTag();
@@ -120,8 +111,8 @@ public class IncludeTag extends AttributesTagSupport {
 
 			return EVAL_BODY_INCLUDE;
 		}
-		catch (Exception e) {
-			throw new JspException(e);
+		catch (Exception exception) {
+			throw new JspException(exception);
 		}
 	}
 
@@ -216,7 +207,7 @@ public class IncludeTag extends AttributesTagSupport {
 		try {
 			include(page, dynamicIncludeAscendingPriority);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			HttpServletRequest httpServletRequest = getRequest();
 
 			String currentURL = (String)httpServletRequest.getAttribute(
@@ -224,12 +215,12 @@ public class IncludeTag extends AttributesTagSupport {
 
 			String message = StringBundler.concat(
 				"Current URL ", currentURL, " generates exception: ",
-				e.getMessage());
+				exception.getMessage());
 
-			LogUtil.log(_log, e, message);
+			LogUtil.log(_log, exception, message);
 
-			if (e instanceof JspException) {
-				throw (JspException)e;
+			if (exception instanceof JspException) {
+				throw (JspException)exception;
 			}
 		}
 	}
@@ -286,11 +277,12 @@ public class IncludeTag extends AttributesTagSupport {
 			group = group.getLiveGroup();
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			group.getTypeSettingsProperties();
 
-		String customJspServletContextName = typeSettingsProperties.getProperty(
-			"customJspServletContextName");
+		String customJspServletContextName =
+			typeSettingsUnicodeProperties.getProperty(
+				"customJspServletContextName");
 
 		if (Validator.isNull(customJspServletContextName)) {
 			return null;
@@ -355,7 +347,8 @@ public class IncludeTag extends AttributesTagSupport {
 
 		if (tagDynamicIdFactory != null) {
 			httpServletResponse =
-				PipingServletResponse.createPipingServletResponse(pageContext);
+				PipingServletResponseFactory.createPipingServletResponse(
+					pageContext);
 
 			tagDynamicId = tagDynamicIdFactory.getTagDynamicId(
 				httpServletRequest, httpServletResponse, this);
@@ -381,7 +374,8 @@ public class IncludeTag extends AttributesTagSupport {
 
 		includePage(
 			page,
-			PipingServletResponse.createPipingServletResponse(pageContext));
+			PipingServletResponseFactory.createPipingServletResponse(
+				pageContext));
 
 		if (_THEME_JSP_OVERRIDE_ENABLED) {
 			httpServletRequest.removeAttribute(
@@ -527,10 +521,7 @@ public class IncludeTag extends AttributesTagSupport {
 			page);
 
 		if (_log.isDebugEnabled() && exists) {
-			String resourcePath = theme.getResourcePath(
-				getServletContext(), null, page);
-
-			_log.debug(resourcePath);
+			_log.debug(theme.getResourcePath(getServletContext(), null, page));
 		}
 
 		return exists;
@@ -554,10 +545,10 @@ public class IncludeTag extends AttributesTagSupport {
 		extends HttpServletRequestWrapper {
 
 		@Override
-		public void setAttribute(String name, Object obj) {
+		public void setAttribute(String name, Object object) {
 			_setAttributeNames.add(name);
 
-			super.setAttribute(name, obj);
+			super.setAttribute(name, object);
 		}
 
 		private TrackedServletRequest(

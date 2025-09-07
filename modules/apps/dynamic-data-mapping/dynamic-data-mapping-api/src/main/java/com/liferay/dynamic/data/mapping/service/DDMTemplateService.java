@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
@@ -44,6 +36,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -52,15 +45,16 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface DDMTemplateService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link DDMTemplateServiceUtil} to access the ddm template remote service. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the ddm template remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link DDMTemplateServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds a template.
 	 *
+	 * @param externalReferenceCode the template's external reference code
 	 * @param groupId the primary key of the group
 	 * @param classNameId the primary key of the class name for template's
 	 related model
@@ -83,8 +77,8 @@ public interface DDMTemplateService extends BaseService {
 	 * @return the template
 	 */
 	public DDMTemplate addTemplate(
-			long groupId, long classNameId, long classPK,
-			long resourceClassNameId, Map<Locale, String> nameMap,
+			String externalReferenceCode, long groupId, long classNameId,
+			long classPK, long resourceClassNameId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, String type, String mode,
 			String language, String script, ServiceContext serviceContext)
 		throws PortalException;
@@ -92,6 +86,7 @@ public interface DDMTemplateService extends BaseService {
 	/**
 	 * Adds a template with additional parameters.
 	 *
+	 * @param externalReferenceCode the template's external reference code
 	 * @param groupId the primary key of the group
 	 * @param classNameId the primary key of the class name for template's
 	 related model
@@ -122,8 +117,8 @@ public interface DDMTemplateService extends BaseService {
 	 * @return the template
 	 */
 	public DDMTemplate addTemplate(
-			long groupId, long classNameId, long classPK,
-			long resourceClassNameId, String templateKey,
+			String externalReferenceCode, long groupId, long classNameId,
+			long classPK, long resourceClassNameId, String templateKey,
 			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
 			String type, String mode, String language, String script,
 			boolean cacheable, boolean smallImage, String smallImageURL,
@@ -135,7 +130,7 @@ public interface DDMTemplateService extends BaseService {
 	 * extracted from the original one. This method supports defining a new name
 	 * and description.
 	 *
-	 * @param templateId the primary key of the template to be copied
+	 * @param sourceTemplateId the primary key of the template to be copied
 	 * @param nameMap the new template's locales and localized names
 	 * @param descriptionMap the new template's locales and localized
 	 descriptions
@@ -146,12 +141,12 @@ public interface DDMTemplateService extends BaseService {
 	 * @return the new template
 	 */
 	public DDMTemplate copyTemplate(
-			long templateId, Map<Locale, String> nameMap,
+			long sourceTemplateId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, ServiceContext serviceContext)
 		throws PortalException;
 
 	public DDMTemplate copyTemplate(
-			long templateId, ServiceContext serviceContext)
+			long sourceTemplateId, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -161,10 +156,10 @@ public interface DDMTemplateService extends BaseService {
 	 *
 	 * @param classNameId the primary key of the class name for template's
 	 related model
-	 * @param oldClassPK the primary key of the old template's related entity
+	 * @param sourceClassPK the primary key of the old template's related entity
 	 * @param resourceClassNameId the primary key of the class name for
 	 template's resource model
-	 * @param newClassPK the primary key of the new template's related entity
+	 * @param targetClassPK the primary key of the new template's related entity
 	 * @param type the template's type. For more information, see
 	 DDMTemplateConstants in the dynamic-data-mapping-api module.
 	 * @param serviceContext the service context to be applied. Must have the
@@ -174,8 +169,8 @@ public interface DDMTemplateService extends BaseService {
 	 * @return the new template
 	 */
 	public List<DDMTemplate> copyTemplates(
-			long classNameId, long oldClassPK, long resourceClassNameId,
-			long newClassPK, String type, ServiceContext serviceContext)
+			long classNameId, long sourceClassPK, long resourceClassNameId,
+			long targetClassPK, String type, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -184,6 +179,10 @@ public interface DDMTemplateService extends BaseService {
 	 * @param templateId the primary key of the template to be deleted
 	 */
 	public void deleteTemplate(long templateId) throws PortalException;
+
+	public DDMTemplate deleteTemplate(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
 
 	/**
 	 * Returns the template matching the group and template key.
@@ -258,6 +257,11 @@ public interface DDMTemplateService extends BaseService {
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public DDMTemplate getTemplateByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDMTemplate> getTemplates(
 		long companyId, long groupId, long classNameId,
 		long resourceClassNameId, int status);
@@ -298,6 +302,12 @@ public interface DDMTemplateService extends BaseService {
 	public List<DDMTemplate> getTemplates(
 		long companyId, long groupId, long classNameId, long classPK,
 		long resourceClassNameId, String type, String mode, int status);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<DDMTemplate> getTemplates(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
+		long resourceClassNameId, int start, int end,
+		OrderByComparator<DDMTemplate> orderByComparator);
 
 	/**
 	 * Returns all the templates matching the group, class PK, and resource
@@ -358,6 +368,11 @@ public interface DDMTemplateService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getTemplatesByStructureClassNameIdCount(
 		long groupId, long structureClassNameId, int status);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getTemplatesCount(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
+		long resourceClassNameId);
 
 	public void revertTemplate(
 			long templateId, String version, ServiceContext serviceContext)

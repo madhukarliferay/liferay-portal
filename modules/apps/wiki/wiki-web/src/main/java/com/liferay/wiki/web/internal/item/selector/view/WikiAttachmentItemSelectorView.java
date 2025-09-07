@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.web.internal.item.selector.view;
@@ -19,25 +10,25 @@ import com.liferay.item.selector.ItemSelectorReturnTypeResolverHandler;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.wiki.item.selector.WikiAttachmentItemSelectorCriterion;
 import com.liferay.wiki.item.selector.constants.WikiItemSelectorViewConstants;
-import com.liferay.wiki.item.selector.criterion.WikiAttachmentItemSelectorCriterion;
 import com.liferay.wiki.web.internal.item.selector.constants.WikiItemSelectorWebKeys;
 import com.liferay.wiki.web.internal.item.selector.view.display.context.WikiAttachmentItemSelectorViewDisplayContext;
+
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -75,11 +66,6 @@ public class WikiAttachmentItemSelectorView
 	}
 
 	@Override
-	public boolean isVisible(ThemeDisplay themeDisplay) {
-		return true;
-	}
-
-	@Override
 	public void renderHTML(
 			ServletRequest servletRequest, ServletResponse servletResponse,
 			WikiAttachmentItemSelectorCriterion
@@ -87,23 +73,23 @@ public class WikiAttachmentItemSelectorView
 			PortletURL portletURL, String itemSelectedEventName, boolean search)
 		throws IOException, ServletException {
 
-		WikiAttachmentItemSelectorViewDisplayContext
-			wikiAttachmentItemSelectorViewDisplayContext =
-				new WikiAttachmentItemSelectorViewDisplayContext(
-					wikiAttachmentItemSelectorCriterion, this,
-					_itemSelectorReturnTypeResolverHandler,
-					itemSelectedEventName, search, portletURL);
-
-		servletRequest.setAttribute(
-			WikiItemSelectorWebKeys.
-				WIKI_ATTACHMENT_ITEM_SELECTOR_VIEW_DISPLAY_CONTEXT,
-			wikiAttachmentItemSelectorViewDisplayContext);
-
 		ServletContext servletContext = getServletContext();
 
 		RequestDispatcher requestDispatcher =
 			servletContext.getRequestDispatcher(
 				"/item/selector/wiki_page_attachments.jsp");
+
+		WikiAttachmentItemSelectorViewDisplayContext
+			wikiAttachmentItemSelectorViewDisplayContext =
+				new WikiAttachmentItemSelectorViewDisplayContext(
+					(HttpServletRequest)servletRequest, itemSelectedEventName,
+					_itemSelectorReturnTypeResolverHandler, portletURL, search,
+					wikiAttachmentItemSelectorCriterion, this);
+
+		servletRequest.setAttribute(
+			WikiItemSelectorWebKeys.
+				WIKI_ATTACHMENT_ITEM_SELECTOR_VIEW_DISPLAY_CONTEXT,
+			wikiAttachmentItemSelectorViewDisplayContext);
 
 		requestDispatcher.include(servletRequest, servletResponse);
 	}

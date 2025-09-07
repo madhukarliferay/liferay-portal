@@ -1,23 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
-
-import dom from 'metal-dom';
 
 import getFormElement from '../../../../src/main/resources/META-INF/resources/liferay/util/form/get_form_element.es';
 import postForm from '../../../../src/main/resources/META-INF/resources/liferay/util/form/post_form.es';
+import buildFragment from '../../../../src/main/resources/META-INF/resources/main/util/build_fragment';
 
 describe('Liferay.Util.postForm', () => {
 	afterEach(() => {
@@ -29,7 +17,7 @@ describe('Liferay.Util.postForm', () => {
 	});
 
 	it('does nothing if the form parameter is not a form node', () => {
-		const fragment = dom.buildFragment('<div />');
+		const fragment = buildFragment('<div />');
 
 		postForm(undefined);
 		postForm(fragment.firstElementChild);
@@ -38,7 +26,7 @@ describe('Liferay.Util.postForm', () => {
 	});
 
 	it('submits form even if options parameter is not set', () => {
-		const fragment = dom.buildFragment('<form />');
+		const fragment = buildFragment('<form />');
 
 		const form = fragment.firstElementChild;
 
@@ -48,7 +36,7 @@ describe('Liferay.Util.postForm', () => {
 	});
 
 	it('does nothing if the url optional parameter is not a string', () => {
-		const fragment = dom.buildFragment('<form />');
+		const fragment = buildFragment('<form />');
 
 		const form = fragment.firstElementChild;
 
@@ -59,7 +47,7 @@ describe('Liferay.Util.postForm', () => {
 	});
 
 	it('does nothing if the data optional parameter is not an object', () => {
-		const fragment = dom.buildFragment('<form />');
+		const fragment = buildFragment('<form />');
 
 		const form = fragment.firstElementChild;
 
@@ -70,7 +58,7 @@ describe('Liferay.Util.postForm', () => {
 	});
 
 	it('sets given element values in data parameter, and submit form to a given url', () => {
-		const fragment = dom.buildFragment(`
+		const fragment = buildFragment(`
 					<form data-fm-namespace="_com_liferay_test_portlet_" id="fm">
 						<input name="_com_liferay_test_portlet_foo" type="text" value="abc">
 						<input name="_com_liferay_test_portlet_bar" type="text" value="123">
@@ -82,9 +70,9 @@ describe('Liferay.Util.postForm', () => {
 		postForm(form, {
 			data: {
 				bar: '456',
-				foo: 'def'
+				foo: 'def',
 			},
-			url: 'http://sampleurl.com'
+			url: 'http://sampleurl.com',
 		});
 
 		const barElement = getFormElement(form, 'bar');

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -130,6 +121,9 @@ public class KaleoNotificationRecipientPersistenceTest {
 
 		newKaleoNotificationRecipient.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKaleoNotificationRecipient.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newKaleoNotificationRecipient.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoNotificationRecipient.setCompanyId(RandomTestUtil.nextLong());
@@ -143,6 +137,9 @@ public class KaleoNotificationRecipientPersistenceTest {
 
 		newKaleoNotificationRecipient.setModifiedDate(
 			RandomTestUtil.nextDate());
+
+		newKaleoNotificationRecipient.setKaleoDefinitionId(
+			RandomTestUtil.nextLong());
 
 		newKaleoNotificationRecipient.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());
@@ -184,6 +181,9 @@ public class KaleoNotificationRecipientPersistenceTest {
 			existingKaleoNotificationRecipient.getMvccVersion(),
 			newKaleoNotificationRecipient.getMvccVersion());
 		Assert.assertEquals(
+			existingKaleoNotificationRecipient.getCtCollectionId(),
+			newKaleoNotificationRecipient.getCtCollectionId());
+		Assert.assertEquals(
 			existingKaleoNotificationRecipient.
 				getKaleoNotificationRecipientId(),
 			newKaleoNotificationRecipient.getKaleoNotificationRecipientId());
@@ -209,6 +209,9 @@ public class KaleoNotificationRecipientPersistenceTest {
 				existingKaleoNotificationRecipient.getModifiedDate()),
 			Time.getShortTimestamp(
 				newKaleoNotificationRecipient.getModifiedDate()));
+		Assert.assertEquals(
+			existingKaleoNotificationRecipient.getKaleoDefinitionId(),
+			newKaleoNotificationRecipient.getKaleoDefinitionId());
 		Assert.assertEquals(
 			existingKaleoNotificationRecipient.getKaleoDefinitionVersionId(),
 			newKaleoNotificationRecipient.getKaleoDefinitionVersionId());
@@ -292,14 +295,15 @@ public class KaleoNotificationRecipientPersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"KaleoNotificationRecipient", "mvccVersion", true,
-			"kaleoNotificationRecipientId", true, "groupId", true, "companyId",
-			true, "userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "kaleoDefinitionVersionId", true,
-			"kaleoNotificationId", true, "recipientClassName", true,
-			"recipientClassPK", true, "recipientRoleType", true,
-			"recipientScriptLanguage", true, "recipientScriptContexts", true,
-			"address", true, "notificationReceptionType", true);
+			"KaleoNotificationRecipient", "mvccVersion", true, "ctCollectionId",
+			true, "kaleoNotificationRecipientId", true, "groupId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "kaleoDefinitionId", true,
+			"kaleoDefinitionVersionId", true, "kaleoNotificationId", true,
+			"recipientClassName", true, "recipientClassPK", true,
+			"recipientRoleType", true, "recipientScriptLanguage", true,
+			"recipientScriptContexts", true, "address", true,
+			"notificationReceptionType", true);
 	}
 
 	@Test
@@ -557,6 +561,8 @@ public class KaleoNotificationRecipientPersistenceTest {
 
 		kaleoNotificationRecipient.setMvccVersion(RandomTestUtil.nextLong());
 
+		kaleoNotificationRecipient.setCtCollectionId(RandomTestUtil.nextLong());
+
 		kaleoNotificationRecipient.setGroupId(RandomTestUtil.nextLong());
 
 		kaleoNotificationRecipient.setCompanyId(RandomTestUtil.nextLong());
@@ -568,6 +574,9 @@ public class KaleoNotificationRecipientPersistenceTest {
 		kaleoNotificationRecipient.setCreateDate(RandomTestUtil.nextDate());
 
 		kaleoNotificationRecipient.setModifiedDate(RandomTestUtil.nextDate());
+
+		kaleoNotificationRecipient.setKaleoDefinitionId(
+			RandomTestUtil.nextLong());
 
 		kaleoNotificationRecipient.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());

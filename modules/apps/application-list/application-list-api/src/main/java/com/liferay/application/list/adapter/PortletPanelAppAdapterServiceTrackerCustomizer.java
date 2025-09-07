@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.application.list.adapter;
@@ -17,11 +8,10 @@ package com.liferay.application.list.adapter;
 import com.liferay.application.list.PanelApp;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PortletCategoryUtil;
 
-import java.util.Dictionary;
 import java.util.Map;
 
 import org.osgi.framework.BundleContext;
@@ -47,7 +37,7 @@ public class PortletPanelAppAdapterServiceTrackerCustomizer
 	@Override
 	public PanelApp addingService(ServiceReference<Portlet> serviceReference) {
 		String portletId = (String)serviceReference.getProperty(
-			"javax.portlet.name");
+			"jakarta.portlet.name");
 
 		if (Validator.isNull(portletId)) {
 			return null;
@@ -60,24 +50,19 @@ public class PortletPanelAppAdapterServiceTrackerCustomizer
 			return null;
 		}
 
-		PanelApp portletPanelAppAdapter = new PortletPanelAppAdapter(portletId);
-
-		Dictionary<String, Object> panelAppProperties =
-			new HashMapDictionary<>();
-
-		panelAppProperties.put(
-			"panel.category.key",
-			PortletCategoryUtil.getPortletCategoryKey(controlPanelCategory));
-
-		Integer serviceRanking = getServiceRanking(serviceReference);
-
-		if (serviceRanking != null) {
-			panelAppProperties.put("service.ranking", serviceRanking);
-		}
+		PanelApp portletPanelAppAdapter = new PortletPanelAppAdapter(
+			portletId, () -> _bundleContext.getService(serviceReference));
 
 		ServiceRegistration<PanelApp> serviceRegistration =
 			_bundleContext.registerService(
-				PanelApp.class, portletPanelAppAdapter, panelAppProperties);
+				PanelApp.class, portletPanelAppAdapter,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"panel.category.key",
+					PortletCategoryUtil.getPortletCategoryKey(
+						controlPanelCategory)
+				).put(
+					"service.ranking", () -> getServiceRanking(serviceReference)
+				).build());
 
 		_serviceRegistrations.put(serviceReference, serviceRegistration);
 
@@ -109,12 +94,12 @@ public class PortletPanelAppAdapterServiceTrackerCustomizer
 		String controlPanelEntryWeight = (String)serviceReference.getProperty(
 			"com.liferay.portlet.control-panel-entry-weight");
 
-		if (Validator.isNotNull(controlPanelEntryWeight)) {
-			return (int)Math.ceil(
-				GetterUtil.getDouble(controlPanelEntryWeight) * 100);
+		if (Validator.isNull(controlPanelEntryWeight)) {
+			return null;
 		}
 
-		return null;
+		return (int)Math.ceil(
+			GetterUtil.getDouble(controlPanelEntryWeight) * 100);
 	}
 
 	private final BundleContext _bundleContext;

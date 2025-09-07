@@ -1,136 +1,112 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.announcements.web.internal.display.context;
 
-import com.liferay.announcements.kernel.model.AnnouncementsEntry;
+import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchContainerManagementToolbarDisplayContext;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuUtil;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemList;
-import com.liferay.portal.kernel.dao.search.SearchContainer;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemListBuilder;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
-import com.liferay.portal.kernel.portlet.PortletURLUtil;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portlet.announcements.service.permission.AnnouncementsEntryPermission;
 
-import java.util.ArrayList;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Alejandro Tardín
  */
-public class AnnouncementsAdminViewManagementToolbarDisplayContext {
+public class AnnouncementsAdminViewManagementToolbarDisplayContext
+	extends SearchContainerManagementToolbarDisplayContext {
 
 	public AnnouncementsAdminViewManagementToolbarDisplayContext(
-		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse,
+		AnnouncementsAdminViewDisplayContext
+			announcementsAdminViewDisplayContext,
 		HttpServletRequest httpServletRequest,
-		SearchContainer searchContainer) {
+		LiferayPortletRequest liferayPortletRequest,
+		LiferayPortletResponse liferayPortletResponse) {
 
-		_liferayPortletRequest = liferayPortletRequest;
-		_liferayPortletResponse = liferayPortletResponse;
-		_httpServletRequest = httpServletRequest;
-		_searchContainer = searchContainer;
+		super(
+			httpServletRequest, liferayPortletRequest, liferayPortletResponse,
+			announcementsAdminViewDisplayContext.getSearchContainer());
 
 		_announcementsAdminViewDisplayContext =
-			new DefaultAnnouncementsAdminViewDisplayContext(
-				_httpServletRequest);
-		_currentURLObj = PortletURLUtil.getCurrent(
-			_liferayPortletRequest, _liferayPortletResponse);
+			announcementsAdminViewDisplayContext;
 	}
 
+	@Override
 	public List<DropdownItem> getActionDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.putData("action", "deleteEntries");
-						dropdownItem.setIcon("times");
-						dropdownItem.setLabel(
-							LanguageUtil.get(_httpServletRequest, "delete"));
-						dropdownItem.setQuickAction(true);
-					});
-			}
-		};
-	}
-
-	public List<String> getAvailableActions(
-			AnnouncementsEntry announcementsEntry)
-		throws PortalException {
-
-		List<String> availableActions = new ArrayList<>();
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)_httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		if (AnnouncementsEntryPermission.contains(
-				themeDisplay.getPermissionChecker(), announcementsEntry,
-				ActionKeys.DELETE)) {
-
-			availableActions.add("deleteEntries");
-		}
-
-		return availableActions;
-	}
-
-	public String getClearResultsURL() {
-		PortletURL clearResultsURL = _liferayPortletResponse.createRenderURL();
-
-		clearResultsURL.setParameter("navigation", _getNavigation());
-
-		return clearResultsURL.toString();
-	}
-
-	public CreationMenu getCreationMenu() {
-		return CreationMenuUtil.addDropdownItem(
+		return DropdownItemListBuilder.add(
 			dropdownItem -> {
-				PortletURL addEntryURL =
-					_liferayPortletResponse.createRenderURL();
+				dropdownItem.putData("action", "deleteEntries");
+				dropdownItem.setIcon("trash");
+				dropdownItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "delete"));
+				dropdownItem.setQuickAction(true);
+			}
+		).build();
+	}
 
-				addEntryURL.setParameter(
-					"mvcRenderCommandName", "/announcements/edit_entry");
-				addEntryURL.setParameter(
-					"redirect", PortalUtil.getCurrentURL(_httpServletRequest));
+	@Override
+	public Map<String, Object> getAdditionalProps() {
+		return HashMapBuilder.<String, Object>put(
+			"deleteEntriesURL",
+			PortletURLBuilder.createActionURL(
+				liferayPortletResponse
+			).setActionName(
+				"/announcements/edit_entry"
+			).buildString()
+		).put(
+			"inputId", Constants.CMD
+		).put(
+			"inputValue", Constants.DELETE
+		).build();
+	}
 
-				String navigation = _getNavigation();
+	@Override
+	public String getClearResultsURL() {
+		return PortletURLBuilder.createRenderURL(
+			liferayPortletResponse
+		).setNavigation(
+			_announcementsAdminViewDisplayContext.getNavigation()
+		).buildString();
+	}
 
-				addEntryURL.setParameter(
-					"alert",
-					String.valueOf(
-						String.valueOf(navigation.equals("alerts"))));
+	@Override
+	public CreationMenu getCreationMenu() {
+		return CreationMenuBuilder.addDropdownItem(
+			dropdownItem -> {
+				String navigation =
+					_announcementsAdminViewDisplayContext.getNavigation();
 
-				addEntryURL.setParameter(
-					"distributionScope", _getDistributionScope());
-
-				dropdownItem.setHref(addEntryURL);
+				dropdownItem.setHref(
+					PortletURLBuilder.createRenderURL(
+						liferayPortletResponse
+					).setMVCRenderCommandName(
+						"/announcements/edit_entry"
+					).setRedirect(
+						PortalUtil.getCurrentURL(httpServletRequest)
+					).setParameter(
+						"alert", navigation.equals("alerts")
+					).setParameter(
+						"distributionScope",
+						_announcementsAdminViewDisplayContext.
+							getDistributionScope()
+					).buildPortletURL());
 
 				String label = null;
 
@@ -142,63 +118,53 @@ public class AnnouncementsAdminViewManagementToolbarDisplayContext {
 				}
 
 				dropdownItem.setLabel(
-					LanguageUtil.get(_httpServletRequest, label));
-			});
+					LanguageUtil.get(httpServletRequest, label));
+			}
+		).build();
 	}
 
+	@Override
 	public List<DropdownItem> getFilterDropdownItems() {
-		return new DropdownItemList() {
-			{
-				addGroup(
-					dropdownGroupItem -> {
-						dropdownGroupItem.setDropdownItems(
-							_getFilterNavigationDropdownItems());
-						dropdownGroupItem.setLabel(
-							LanguageUtil.get(
-								_httpServletRequest, "filter-by-navigation"));
-					});
+		return DropdownItemListBuilder.addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					_getFilterNavigationDropdownItems());
+				dropdownGroupItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "filter-by"));
 			}
-		};
+		).build();
 	}
 
+	@Override
 	public List<LabelItem> getFilterLabelItems() {
-		return new LabelItemList() {
-			{
-				String distributionScope = _getDistributionScope();
+		return LabelItemListBuilder.add(
+			() -> Validator.isNotNull(
+				_announcementsAdminViewDisplayContext.getDistributionScope()),
+			labelItem -> {
+				labelItem.putData(
+					"removeLabelURL",
+					PortletURLBuilder.create(
+						getPortletURL()
+					).setParameter(
+						"distributionScope", (String)null
+					).buildString());
 
-				if (Validator.isNotNull(distributionScope)) {
-					add(
-						labelItem -> {
-							PortletURL removeLabelURL = PortletURLUtil.clone(
-								_currentURLObj, _liferayPortletResponse);
-
-							removeLabelURL.setParameter(
-								"distributionScope", (String)null);
-
-							labelItem.putData(
-								"removeLabelURL", removeLabelURL.toString());
-
-							labelItem.setCloseable(true);
-
-							labelItem.setLabel(
-								_announcementsAdminViewDisplayContext.
-									getCurrentDistributionScopeLabel());
-						});
-				}
+				labelItem.setCloseable(true);
+				labelItem.setLabel(
+					_announcementsAdminViewDisplayContext.
+						getCurrentDistributionScopeLabel());
 			}
-		};
+		).build();
 	}
 
-	public int getTotal() {
-		return _searchContainer.getTotal();
+	@Override
+	public String getSearchContainerId() {
+		return _announcementsAdminViewDisplayContext.getSearchContainerId();
 	}
 
-	public boolean isDisabled() {
+	@Override
+	public Boolean isShowSearch() {
 		return false;
-	}
-
-	private String _getDistributionScope() {
-		return ParamUtil.getString(_httpServletRequest, "distributionScope");
 	}
 
 	private List<DropdownItem> _getFilterNavigationDropdownItems()
@@ -206,9 +172,6 @@ public class AnnouncementsAdminViewManagementToolbarDisplayContext {
 
 		return new DropdownItemList() {
 			{
-				PortletURL navigationURL = PortletURLUtil.clone(
-					_currentURLObj, _liferayPortletResponse);
-
 				String currentDistributionScopeLabel =
 					_announcementsAdminViewDisplayContext.
 						getCurrentDistributionScopeLabel();
@@ -226,11 +189,11 @@ public class AnnouncementsAdminViewManagementToolbarDisplayContext {
 								currentDistributionScopeLabel.equals(
 									distributionScopeEntry.getKey()));
 							dropdownItem.setHref(
-								navigationURL, "distributionScope",
+								getPortletURL(), "distributionScope",
 								distributionScopeEntry.getValue());
 							dropdownItem.setLabel(
 								LanguageUtil.get(
-									_httpServletRequest,
+									httpServletRequest,
 									distributionScopeEntry.getKey()));
 						});
 				}
@@ -238,17 +201,7 @@ public class AnnouncementsAdminViewManagementToolbarDisplayContext {
 		};
 	}
 
-	private String _getNavigation() {
-		return ParamUtil.getString(
-			_httpServletRequest, "navigation", "announcements");
-	}
-
 	private final AnnouncementsAdminViewDisplayContext
 		_announcementsAdminViewDisplayContext;
-	private final PortletURL _currentURLObj;
-	private final HttpServletRequest _httpServletRequest;
-	private final LiferayPortletRequest _liferayPortletRequest;
-	private final LiferayPortletResponse _liferayPortletResponse;
-	private final SearchContainer _searchContainer;
 
 }

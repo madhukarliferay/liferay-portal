@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
@@ -37,14 +28,14 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.HashMap;
@@ -72,17 +63,16 @@ public class PortletDataContextReferencesTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			_group.getGroupId(), TestPropsValues.getUserId());
 
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
-
 		_portletDataContext =
 			PortletDataContextFactoryUtil.createExportPortletDataContext(
 				TestPropsValues.getCompanyId(), _group.getGroupId(),
-				new HashMap<String, String[]>(), null, null, zipWriter);
+				new HashMap<String, String[]>(), null, null,
+				_zipWriterFactory.getZipWriter());
 
 		Document document = SAXReaderUtil.createDocument();
 
@@ -92,14 +82,13 @@ public class PortletDataContextReferencesTest {
 
 		Element element = rootElement.addElement("PortletDataRootElement");
 
+		element.addAttribute("self-path", "dummyPortletDataPath");
+
 		_portletDataContext.setExportDataRootElement(element);
 		_portletDataContext.setImportDataRootElement(element);
 
-		Element missingReferencesElement = rootElement.addElement(
-			"missing-references");
-
 		_portletDataContext.setMissingReferencesElement(
-			missingReferencesElement);
+			rootElement.addElement("missing-references"));
 
 		_bookmarksFolder = BookmarksTestUtil.addFolder(
 			_group.getGroupId(), RandomTestUtil.randomString());
@@ -350,9 +339,7 @@ public class PortletDataContextReferencesTest {
 
 	@Test
 	public void testNotReferenceMissingReference() throws Exception {
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
-
-		_portletDataContext.setZipWriter(zipWriter);
+		_portletDataContext.setZipWriter(_zipWriterFactory.getZipWriter());
 
 		Element bookmarksEntryElement =
 			_portletDataContext.getExportDataElement(_bookmarksEntry);
@@ -405,18 +392,50 @@ public class PortletDataContextReferencesTest {
 			missingReferenceElements.toString(), 1,
 			missingReferenceElements.size());
 
-		List<Element> referencesElements =
+		List<Element> referenceElements =
 			_portletDataContext.getReferenceElements(
 				_bookmarksEntry, BookmarksFolder.class);
 
 		Assert.assertEquals(
-			referencesElements.toString(), 1, referencesElements.size());
+			referenceElements.toString(), 1, referenceElements.size());
 
-		for (Element referenceElement : referencesElements) {
+		for (Element referenceElement : referenceElements) {
 			Assert.assertTrue(
 				GetterUtil.getBoolean(
 					referenceElement.attributeValue("missing")));
 		}
+	}
+
+	@Test
+	public void testSetImportDataElementCacheEnabled() throws Exception {
+		_portletDataContext.setImportDataElementCacheEnabled(true);
+
+		_portletDataContext.addClassedModel(
+			_portletDataContext.getExportDataElement(_bookmarksEntry),
+			ExportImportPathUtil.getModelPath(_bookmarksEntry), _bookmarksEntry,
+			BookmarksEntry.class);
+
+		Assert.assertTrue(
+			_portletDataContext.getImportDataElement(_bookmarksEntry) ==
+				_portletDataContext.getImportDataElement(_bookmarksEntry));
+
+		_portletDataContext.addClassedModel(
+			_portletDataContext.getExportDataElement(_bookmarksFolder),
+			ExportImportPathUtil.getModelPath(_bookmarksFolder),
+			_bookmarksFolder, BookmarksFolder.class);
+
+		Assert.assertTrue(
+			_portletDataContext.getImportDataElement(_bookmarksFolder) ==
+				_portletDataContext.getImportDataElement(_bookmarksFolder));
+
+		_portletDataContext.setImportDataElementCacheEnabled(false);
+
+		Assert.assertFalse(
+			_portletDataContext.getImportDataElement(_bookmarksEntry) ==
+				_portletDataContext.getImportDataElement(_bookmarksEntry));
+		Assert.assertFalse(
+			_portletDataContext.getImportDataElement(_bookmarksFolder) ==
+				_portletDataContext.getImportDataElement(_bookmarksFolder));
 	}
 
 	private BookmarksEntry _bookmarksEntry;
@@ -427,5 +446,8 @@ public class PortletDataContextReferencesTest {
 
 	private PortletDataContext _portletDataContext;
 	private ServiceContext _serviceContext;
+
+	@Inject
+	private ZipWriterFactory _zipWriterFactory;
 
 }

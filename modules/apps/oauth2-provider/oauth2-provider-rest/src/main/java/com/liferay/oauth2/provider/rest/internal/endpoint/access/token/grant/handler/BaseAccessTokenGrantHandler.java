@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.access.token.grant.handler;
@@ -28,10 +19,9 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.MapUtil;
 
-import java.util.List;
-import java.util.Objects;
+import jakarta.ws.rs.core.MultivaluedMap;
 
-import javax.ws.rs.core.MultivaluedMap;
+import java.util.Objects;
 
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
@@ -60,18 +50,7 @@ public abstract class BaseAccessTokenGrantHandler
 				"User does not have permission to create token");
 		}
 
-		AccessTokenGrantHandler accessTokenGrantHandler =
-			getAccessTokenGrantHandler();
-
-		return accessTokenGrantHandler.createAccessToken(client, params);
-	}
-
-	@Override
-	public List<String> getSupportedGrantTypes() {
-		AccessTokenGrantHandler accessTokenGrantHandler =
-			getAccessTokenGrantHandler();
-
-		return accessTokenGrantHandler.getSupportedGrantTypes();
+		return doCreateAccessToken(client, params);
 	}
 
 	protected boolean clientsMatch(Client client1, Client client2) {
@@ -86,14 +65,11 @@ public abstract class BaseAccessTokenGrantHandler
 			client2.getProperties(),
 			OAuth2ProviderRESTEndpointConstants.PROPERTY_KEY_COMPANY_ID);
 
-		if (Objects.equals(companyId1, companyId2)) {
-			return true;
-		}
-
-		return false;
+		return Objects.equals(companyId1, companyId2);
 	}
 
-	protected abstract AccessTokenGrantHandler getAccessTokenGrantHandler();
+	protected abstract ServerAccessToken doCreateAccessToken(
+		Client client, MultivaluedMap<String, String> params);
 
 	protected boolean hasCreateTokenPermission(
 		long userId, OAuth2Application oAuth2Application) {
@@ -105,10 +81,11 @@ public abstract class BaseAccessTokenGrantHandler
 
 			permissionChecker = PermissionCheckerFactoryUtil.create(user);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
-					"Unable to create permission checker for user " + userId);
+					"Unable to create permission checker for user " + userId,
+					exception);
 			}
 
 			return false;
@@ -122,25 +99,21 @@ public abstract class BaseAccessTokenGrantHandler
 				return true;
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"Unable to check permissions for application " +
 						oAuth2Application,
-					pe);
+					portalException);
 			}
 		}
 
 		if (_log.isDebugEnabled()) {
-			StringBundler sb = new StringBundler(5);
-
-			sb.append("User ");
-			sb.append(userId);
-			sb.append(" does not have permission to create access token for ");
-			sb.append("client ");
-			sb.append(oAuth2Application.getClientId());
-
-			_log.debug(sb.toString());
+			_log.debug(
+				StringBundler.concat(
+					"User ", userId,
+					" does not have permission to create access token for ",
+					"client ", oAuth2Application.getClientId()));
 		}
 
 		return false;

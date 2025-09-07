@@ -1,27 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.security.auth.tunnel;
 
 import com.liferay.portal.kernel.security.auth.AuthException;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.HttpURLConnection;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Tomas Polesovsky
@@ -31,34 +19,22 @@ public class TunnelAuthenticationManagerUtil {
 	public static long getUserId(HttpServletRequest httpServletRequest)
 		throws AuthException {
 
-		return _getTunnelManagerUtil().getUserId(httpServletRequest);
+		return _tunnelAuthenticationManager.getUserId(httpServletRequest);
 	}
 
 	public static void setCredentials(
 			String login, HttpURLConnection httpURLConnection)
 		throws Exception {
 
-		_getTunnelManagerUtil().setCredentials(login, httpURLConnection);
+		_tunnelAuthenticationManager.setCredentials(login, httpURLConnection);
 	}
 
-	private static TunnelAuthenticationManager _getTunnelManagerUtil() {
-		return _tunnelAuthenticationManagerUtil._serviceTracker.getService();
+	public void setTunnelAuthenticationManager(
+		TunnelAuthenticationManager tunnelAuthenticationManager) {
+
+		_tunnelAuthenticationManager = tunnelAuthenticationManager;
 	}
 
-	private TunnelAuthenticationManagerUtil() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			TunnelAuthenticationManager.class);
-
-		_serviceTracker.open();
-	}
-
-	private static final TunnelAuthenticationManagerUtil
-		_tunnelAuthenticationManagerUtil =
-			new TunnelAuthenticationManagerUtil();
-
-	private final ServiceTracker<?, TunnelAuthenticationManager>
-		_serviceTracker;
+	private static TunnelAuthenticationManager _tunnelAuthenticationManager;
 
 }

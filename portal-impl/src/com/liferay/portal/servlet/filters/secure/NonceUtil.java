@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.secure;
@@ -22,7 +13,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
-import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MethodHandler;
@@ -52,14 +42,16 @@ public class NonceUtil {
 
 			companyKey = company.getKey();
 		}
-		catch (Exception e) {
-			throw new RuntimeException("Invalid companyId " + companyId, e);
+		catch (Exception exception) {
+			throw new RuntimeException(
+				"Invalid companyId " + companyId, exception);
 		}
 
 		long timestamp = System.currentTimeMillis();
 
 		String nonce = DigesterUtil.digestHex(
-			Digester.MD5, remoteAddress, String.valueOf(timestamp), companyKey);
+			DigesterUtil.MD5, remoteAddress, String.valueOf(timestamp),
+			companyKey);
 
 		_nonceDelayQueue.put(new NonceDelayed(nonce));
 
@@ -118,10 +110,11 @@ public class NonceUtil {
 				}
 			}
 		}
-		catch (InterruptedException ie) {
+		catch (InterruptedException interruptedException) {
 			_log.error(
 				"Interrupted while waiting for nonce verification in the " +
-					"cluster");
+					"cluster",
+				interruptedException);
 		}
 
 		return false;
@@ -154,6 +147,7 @@ public class NonceUtil {
 			}
 
 			_nonce = nonce;
+
 			_createTime = System.currentTimeMillis();
 		}
 
@@ -174,14 +168,10 @@ public class NonceUtil {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			NonceDelayed nonceDelayed = (NonceDelayed)obj;
+		public boolean equals(Object object) {
+			NonceDelayed nonceDelayed = (NonceDelayed)object;
 
-			if (_nonce.equals(nonceDelayed._nonce)) {
-				return true;
-			}
-
-			return false;
+			return _nonce.equals(nonceDelayed._nonce);
 		}
 
 		@Override

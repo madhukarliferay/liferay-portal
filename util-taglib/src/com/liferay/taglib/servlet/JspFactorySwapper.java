@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.servlet;
 
 import com.liferay.portal.kernel.util.ServerDetector;
 
-import javax.servlet.jsp.JspFactory;
+import jakarta.servlet.jsp.JspFactory;
 
 /**
  * @author Shuyang Zhou
@@ -24,25 +15,25 @@ import javax.servlet.jsp.JspFactory;
 public class JspFactorySwapper {
 
 	public static void swap() {
+		if (!ServerDetector.isTomcat()) {
+			return;
+		}
+
 		JspFactory jspFactory = JspFactory.getDefaultFactory();
 
-		if (jspFactory instanceof AutoCloseJspFactoryWrapper) {
+		if (jspFactory instanceof JspFactoryWrapper) {
 			return;
 		}
 
 		synchronized (JspFactorySwapper.class) {
-			if (_jspFactory == null) {
-				if (ServerDetector.isTomcat()) {
-					jspFactory = new JspFactoryWrapper(jspFactory);
-				}
-
-				_jspFactory = new AutoCloseJspFactoryWrapper(jspFactory);
+			if (_jspFactoryWrapper == null) {
+				_jspFactoryWrapper = new JspFactoryWrapper(jspFactory);
 			}
 
-			JspFactory.setDefaultFactory(_jspFactory);
+			JspFactory.setDefaultFactory(_jspFactoryWrapper);
 		}
 	}
 
-	private static JspFactory _jspFactory;
+	private static JspFactoryWrapper _jspFactoryWrapper;
 
 }

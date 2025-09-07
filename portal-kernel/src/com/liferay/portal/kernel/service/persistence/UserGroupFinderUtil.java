@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence;
@@ -73,10 +64,10 @@ public class UserGroupFinderUtil {
 			long companyId, String keywords,
 			java.util.LinkedHashMap<String, Object> params, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().filterFindByKeywords(
-			companyId, keywords, params, start, end, obc);
+			companyId, keywords, params, start, end, orderByComparator);
 	}
 
 	public static java.util.List<com.liferay.portal.kernel.model.UserGroup>
@@ -85,10 +76,11 @@ public class UserGroupFinderUtil {
 			java.util.LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().filterFindByC_N_D(
-			companyId, name, description, params, andOperator, start, end, obc);
+			companyId, name, description, params, andOperator, start, end,
+			orderByComparator);
 	}
 
 	public static java.util.List<com.liferay.portal.kernel.model.UserGroup>
@@ -97,11 +89,11 @@ public class UserGroupFinderUtil {
 			java.util.LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().filterFindByC_N_D(
 			companyId, names, descriptions, params, andOperator, start, end,
-			obc);
+			orderByComparator);
 	}
 
 	public static java.util.List<com.liferay.portal.kernel.model.UserGroup>
@@ -109,17 +101,10 @@ public class UserGroupFinderUtil {
 			long companyId, String keywords,
 			java.util.LinkedHashMap<String, Object> params, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().findByKeywords(
-			companyId, keywords, params, start, end, obc);
-	}
-
-	public static com.liferay.portal.kernel.model.UserGroup findByC_N(
-			long companyId, String name)
-		throws com.liferay.portal.kernel.exception.NoSuchUserGroupException {
-
-		return getFinder().findByC_N(companyId, name);
+			companyId, keywords, params, start, end, orderByComparator);
 	}
 
 	public static java.util.List<com.liferay.portal.kernel.model.UserGroup>
@@ -128,10 +113,11 @@ public class UserGroupFinderUtil {
 			java.util.LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().findByC_N_D(
-			companyId, name, description, params, andOperator, start, end, obc);
+			companyId, name, description, params, andOperator, start, end,
+			orderByComparator);
 	}
 
 	public static java.util.List<com.liferay.portal.kernel.model.UserGroup>
@@ -140,11 +126,11 @@ public class UserGroupFinderUtil {
 			java.util.LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.UserGroup> obc) {
+				<com.liferay.portal.kernel.model.UserGroup> orderByComparator) {
 
 		return getFinder().findByC_N_D(
 			companyId, names, descriptions, params, andOperator, start, end,
-			obc);
+			orderByComparator);
 	}
 
 	public static UserGroupFinder getFinder() {

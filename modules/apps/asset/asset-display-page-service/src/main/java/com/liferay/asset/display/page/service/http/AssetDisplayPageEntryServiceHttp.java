@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.display.page.service.http;
@@ -46,16 +37,14 @@ import com.liferay.portal.kernel.util.MethodKey;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see AssetDisplayPageEntryServiceSoap
  * @generated
  */
 public class AssetDisplayPageEntryServiceHttp {
 
 	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
 			addAssetDisplayPageEntry(
-				HttpPrincipal httpPrincipal, long userId, long groupId,
-				long classNameId, long classPK, long layoutPageTemplateEntryId,
-				int type,
+				HttpPrincipal httpPrincipal, long groupId, long classNameId,
+				long classPK, long layoutPageTemplateEntryId, int type,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws Exception {
 
@@ -66,7 +55,7 @@ public class AssetDisplayPageEntryServiceHttp {
 				_addAssetDisplayPageEntryParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, userId, groupId, classNameId, classPK,
+				methodKey, groupId, classNameId, classPK,
 				layoutPageTemplateEntryId, type, serviceContext);
 
 			Object returnObj = null;
@@ -74,29 +63,31 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof Exception) {
-					throw (Exception)e;
+			catch (Exception exception) {
+				if (exception instanceof Exception) {
+					throw (Exception)exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.asset.display.page.model.AssetDisplayPageEntry)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static com.liferay.asset.display.page.model.AssetDisplayPageEntry
 			addAssetDisplayPageEntry(
-				HttpPrincipal httpPrincipal, long userId, long groupId,
-				long classNameId, long classPK, long layoutPageTemplateEntryId,
+				HttpPrincipal httpPrincipal, long groupId, long classNameId,
+				long classPK, long layoutPageTemplateEntryId,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws Exception {
 
@@ -107,7 +98,7 @@ public class AssetDisplayPageEntryServiceHttp {
 				_addAssetDisplayPageEntryParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, userId, groupId, classNameId, classPK,
+				methodKey, groupId, classNameId, classPK,
 				layoutPageTemplateEntryId, serviceContext);
 
 			Object returnObj = null;
@@ -115,22 +106,24 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof Exception) {
-					throw (Exception)e;
+			catch (Exception exception) {
+				if (exception instanceof Exception) {
+					throw (Exception)exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.asset.display.page.model.AssetDisplayPageEntry)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -151,19 +144,21 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof Exception) {
-					throw (Exception)e;
+			catch (Exception exception) {
+				if (exception instanceof Exception) {
+					throw (Exception)exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -187,22 +182,67 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof Exception) {
-					throw (Exception)e;
+			catch (Exception exception) {
+				if (exception instanceof Exception) {
+					throw (Exception)exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.asset.display.page.model.AssetDisplayPageEntry)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static java.util.List
+		<com.liferay.asset.display.page.model.AssetDisplayPageEntry>
+			getAssetDisplayPageEntries(
+				HttpPrincipal httpPrincipal, long classNameId, long classTypeId,
+				long layoutPageTemplateEntryId, boolean defaultTemplate,
+				int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.asset.display.page.model.AssetDisplayPageEntry>
+						orderByComparator) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				AssetDisplayPageEntryServiceUtil.class,
+				"getAssetDisplayPageEntries",
+				_getAssetDisplayPageEntriesParameterTypes4);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, classNameId, classTypeId, layoutPageTemplateEntryId,
+				defaultTemplate, start, end, orderByComparator);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (java.util.List
+				<com.liferay.asset.display.page.model.AssetDisplayPageEntry>)
+					returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -215,7 +255,7 @@ public class AssetDisplayPageEntryServiceHttp {
 			MethodKey methodKey = new MethodKey(
 				AssetDisplayPageEntryServiceUtil.class,
 				"getAssetDisplayPageEntriesByLayoutPageTemplateEntryId",
-				_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes4);
+				_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, layoutPageTemplateEntryId);
@@ -225,19 +265,98 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List
 				<com.liferay.asset.display.page.model.AssetDisplayPageEntry>)
 					returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static java.util.List
+		<com.liferay.asset.display.page.model.AssetDisplayPageEntry>
+			getAssetDisplayPageEntriesByLayoutPageTemplateEntryId(
+				HttpPrincipal httpPrincipal, long layoutPageTemplateEntryId,
+				int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.asset.display.page.model.AssetDisplayPageEntry>
+						orderByComparator) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				AssetDisplayPageEntryServiceUtil.class,
+				"getAssetDisplayPageEntriesByLayoutPageTemplateEntryId",
+				_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes6);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, layoutPageTemplateEntryId, start, end,
+				orderByComparator);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (java.util.List
+				<com.liferay.asset.display.page.model.AssetDisplayPageEntry>)
+					returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static int getAssetDisplayPageEntriesCount(
+		HttpPrincipal httpPrincipal, long classNameId, long classTypeId,
+		long layoutPageTemplateEntryId, boolean defaultTemplate) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				AssetDisplayPageEntryServiceUtil.class,
+				"getAssetDisplayPageEntriesCount",
+				_getAssetDisplayPageEntriesCountParameterTypes7);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, classNameId, classTypeId, layoutPageTemplateEntryId,
+				defaultTemplate);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return ((Integer)returnObj).intValue();
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -249,7 +368,7 @@ public class AssetDisplayPageEntryServiceHttp {
 			MethodKey methodKey = new MethodKey(
 				AssetDisplayPageEntryServiceUtil.class,
 				"getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryId",
-				_getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryIdParameterTypes5);
+				_getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryIdParameterTypes8);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, layoutPageTemplateEntryId);
@@ -259,17 +378,19 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Integer)returnObj).intValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -283,7 +404,7 @@ public class AssetDisplayPageEntryServiceHttp {
 			MethodKey methodKey = new MethodKey(
 				AssetDisplayPageEntryServiceUtil.class,
 				"updateAssetDisplayPageEntry",
-				_updateAssetDisplayPageEntryParameterTypes6);
+				_updateAssetDisplayPageEntryParameterTypes9);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, assetDisplayPageEntryId, layoutPageTemplateEntryId,
@@ -294,22 +415,24 @@ public class AssetDisplayPageEntryServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof Exception) {
-					throw (Exception)e;
+			catch (Exception exception) {
+				if (exception instanceof Exception) {
+					throw (Exception)exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.asset.display.page.model.AssetDisplayPageEntry)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -318,12 +441,12 @@ public class AssetDisplayPageEntryServiceHttp {
 
 	private static final Class<?>[] _addAssetDisplayPageEntryParameterTypes0 =
 		new Class[] {
-			long.class, long.class, long.class, long.class, long.class,
-			int.class, com.liferay.portal.kernel.service.ServiceContext.class
+			long.class, long.class, long.class, long.class, int.class,
+			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[] _addAssetDisplayPageEntryParameterTypes1 =
 		new Class[] {
-			long.class, long.class, long.class, long.class, long.class,
+			long.class, long.class, long.class, long.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[]
@@ -332,14 +455,29 @@ public class AssetDisplayPageEntryServiceHttp {
 		};
 	private static final Class<?>[] _fetchAssetDisplayPageEntryParameterTypes3 =
 		new Class[] {long.class, long.class, long.class};
+	private static final Class<?>[] _getAssetDisplayPageEntriesParameterTypes4 =
+		new Class[] {
+			long.class, long.class, long.class, boolean.class, int.class,
+			int.class, com.liferay.portal.kernel.util.OrderByComparator.class
+		};
 	private static final Class<?>[]
-		_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes4 =
+		_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes5 =
 			new Class[] {long.class};
 	private static final Class<?>[]
-		_getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryIdParameterTypes5 =
+		_getAssetDisplayPageEntriesByLayoutPageTemplateEntryIdParameterTypes6 =
+			new Class[] {
+				long.class, int.class, int.class,
+				com.liferay.portal.kernel.util.OrderByComparator.class
+			};
+	private static final Class<?>[]
+		_getAssetDisplayPageEntriesCountParameterTypes7 = new Class[] {
+			long.class, long.class, long.class, boolean.class
+		};
+	private static final Class<?>[]
+		_getAssetDisplayPageEntriesCountByLayoutPageTemplateEntryIdParameterTypes8 =
 			new Class[] {long.class};
 	private static final Class<?>[]
-		_updateAssetDisplayPageEntryParameterTypes6 = new Class[] {
+		_updateAssetDisplayPageEntryParameterTypes9 = new Class[] {
 			long.class, long.class, int.class
 		};
 

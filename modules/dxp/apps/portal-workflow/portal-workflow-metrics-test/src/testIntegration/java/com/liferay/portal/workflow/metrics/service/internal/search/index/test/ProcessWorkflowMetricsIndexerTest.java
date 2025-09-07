@@ -1,23 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.internal.search.index.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.search.query.TermsQuery;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.workflow.kaleo.model.KaleoDefinition;
+import com.liferay.portal.workflow.metrics.search.index.constants.WorkflowMetricsIndexNameConstants;
 import com.liferay.portal.workflow.metrics.service.util.BaseWorkflowMetricsIndexerTestCase;
 
 import org.junit.ClassRule;
@@ -39,72 +33,90 @@ public class ProcessWorkflowMetricsIndexerTest
 
 	@Test
 	public void testAddProcess() throws Exception {
-		KaleoDefinition kaleoDefinition = getKaleoDefinition();
-
-		retryAssertCount(
-			"workflow-metrics-processes", "WorkflowMetricsProcessType",
-			"companyId", kaleoDefinition.getCompanyId(), "deleted", false,
-			"processId", kaleoDefinition.getKaleoDefinitionId(), "version",
-			"1.0");
-		retryAssertCount(
-			"workflow-metrics-instances", "WorkflowMetricsInstanceType",
-			"companyId", kaleoDefinition.getCompanyId(), "deleted", false,
-			"processId", kaleoDefinition.getKaleoDefinitionId(), "instanceId",
-			0);
-		retryAssertCount(
-			"workflow-metrics-sla-instance-results",
+		assertCount(
+			_indexNameBuilder.getIndexName(workflowDefinition.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS,
+			"WorkflowMetricsProcessType", "companyId",
+			workflowDefinition.getCompanyId(), "deleted", false, "processId",
+			workflowDefinition.getWorkflowDefinitionId(), "version", "1.0",
+			"versions", "1.0");
+		assertCount(
+			_indexNameBuilder.getIndexName(workflowDefinition.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_INSTANCE,
+			"WorkflowMetricsInstanceType", "companyId",
+			workflowDefinition.getCompanyId(), "deleted", false, "processId",
+			workflowDefinition.getWorkflowDefinitionId(), "instanceId", 0);
+		assertCount(
+			_indexNameBuilder.getIndexName(workflowDefinition.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_SLA_INSTANCE_RESULT,
 			"WorkflowMetricsSLAInstanceResultType", "companyId",
-			kaleoDefinition.getCompanyId(), "deleted", false, "processId",
-			kaleoDefinition.getKaleoDefinitionId(), "slaDefinitionId", 0);
+			workflowDefinition.getCompanyId(), "deleted", false, "processId",
+			workflowDefinition.getWorkflowDefinitionId(), "slaDefinitionId", 0);
 	}
 
 	@Test
 	public void testDeleteProcess() throws Exception {
-		KaleoDefinition kaleoDefinition = getKaleoDefinition();
+		long companyId = workflowDefinition.getCompanyId();
+		long workflowDefinitionId =
+			workflowDefinition.getWorkflowDefinitionId();
 
-		deleteKaleoDefinition(kaleoDefinition);
+		undeployWorkflowDefinition();
 
-		retryAssertCount(
-			"workflow-metrics-processes", "WorkflowMetricsProcessType",
-			"companyId", kaleoDefinition.getCompanyId(), "deleted", true,
-			"processId", kaleoDefinition.getKaleoDefinitionId(), "version",
-			"1.0");
+		assertCount(
+			_indexNameBuilder.getIndexName(companyId) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS,
+			"WorkflowMetricsProcessType", "companyId", companyId, "deleted",
+			true, "processId", workflowDefinitionId, "version", "1.0");
 	}
 
 	@Test
 	public void testReindex() throws Exception {
-		KaleoDefinition kaleoDefinition = getKaleoDefinition();
+		String indexName = _indexNameBuilder.getIndexName(
+			workflowDefinition.getCompanyId());
 
 		assertReindex(
 			new String[] {
-				"workflow-metrics-processes", "workflow-metrics-instances",
-				"workflow-metrics-sla-instance-results"
+				indexName + WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS,
+				indexName + WorkflowMetricsIndexNameConstants.SUFFIX_INSTANCE,
+				indexName +
+					WorkflowMetricsIndexNameConstants.SUFFIX_SLA_INSTANCE_RESULT
 			},
 			new String[] {
 				"WorkflowMetricsProcessType", "WorkflowMetricsInstanceType",
 				"WorkflowMetricsSLAInstanceResultType"
 			},
-			"companyId", kaleoDefinition.getCompanyId(), "processId",
-			kaleoDefinition.getKaleoDefinitionId());
+			"companyId", workflowDefinition.getCompanyId(), "processId",
+			workflowDefinition.getWorkflowDefinitionId());
 	}
 
 	@Test
 	public void testUpdateProcess() throws Exception {
-		KaleoDefinition kaleoDefinition = getKaleoDefinition();
+		assertCount(
+			_indexNameBuilder.getIndexName(workflowDefinition.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS,
+			"WorkflowMetricsProcessType", "companyId",
+			workflowDefinition.getCompanyId(), "deleted", false, "processId",
+			workflowDefinition.getWorkflowDefinitionId(), "version", "1.0");
 
-		retryAssertCount(
-			"workflow-metrics-processes", "WorkflowMetricsProcessType",
-			"companyId", kaleoDefinition.getCompanyId(), "deleted", false,
-			"processId", kaleoDefinition.getKaleoDefinitionId(), "version",
-			"1.0");
+		updateWorkflowDefinition();
 
-		updateKaleoDefinition(kaleoDefinition);
+		assertCount(
+			booleanQuery -> {
+				TermsQuery termsQuery = queries.terms("versions");
 
-		retryAssertCount(
-			"workflow-metrics-processes", "WorkflowMetricsProcessType",
-			"companyId", kaleoDefinition.getCompanyId(), "deleted", false,
-			"processId", kaleoDefinition.getKaleoDefinitionId(), "version",
-			"2.0");
+				termsQuery.addValues("1.0", "2.0");
+
+				booleanQuery.addMustQueryClauses(termsQuery);
+			},
+			1,
+			_indexNameBuilder.getIndexName(workflowDefinition.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS,
+			"WorkflowMetricsProcessType", "companyId",
+			workflowDefinition.getCompanyId(), "deleted", false, "processId",
+			workflowDefinition.getWorkflowDefinitionId(), "version", "2.0");
 	}
+
+	@Inject
+	private IndexNameBuilder _indexNameBuilder;
 
 }

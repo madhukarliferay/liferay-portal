@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -26,7 +17,6 @@ import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.service.LayoutRevisionLocalServiceUtil;
 import com.liferay.portal.kernel.service.persistence.LayoutRevisionPersistence;
 import com.liferay.portal.kernel.service.persistence.LayoutRevisionUtil;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -343,15 +333,6 @@ public class LayoutRevisionPersistenceTest {
 	}
 
 	@Test
-	public void testCountByL_H_P() throws Exception {
-		_persistence.countByL_H_P(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(),
-			RandomTestUtil.nextLong());
-
-		_persistence.countByL_H_P(0L, RandomTestUtil.randomBoolean(), 0L);
-	}
-
-	@Test
 	public void testCountByL_H_P_Collection() throws Exception {
 		_persistence.countByL_H_P_Collection(
 			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(),
@@ -377,15 +358,6 @@ public class LayoutRevisionPersistenceTest {
 			RandomTestUtil.nextInt());
 
 		_persistence.countByL_P_S(0L, 0L, 0);
-	}
-
-	@Test
-	public void testCountByL_L_H_P() throws Exception {
-		_persistence.countByL_L_H_P(
-			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
-			RandomTestUtil.randomBoolean(), RandomTestUtil.nextLong());
-
-		_persistence.countByL_L_H_P(0L, 0L, RandomTestUtil.randomBoolean(), 0L);
 	}
 
 	@Test
@@ -636,49 +608,6 @@ public class LayoutRevisionPersistenceTest {
 		List<Object> result = _persistence.findWithDynamicQuery(dynamicQuery);
 
 		Assert.assertEquals(0, result.size());
-	}
-
-	@Test
-	public void testResetOriginalValues() throws Exception {
-		LayoutRevision newLayoutRevision = addLayoutRevision();
-
-		_persistence.clearCache();
-
-		LayoutRevision existingLayoutRevision = _persistence.findByPrimaryKey(
-			newLayoutRevision.getPrimaryKey());
-
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutRevision.getLayoutSetBranchId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutRevision, "getOriginalLayoutSetBranchId",
-				new Class<?>[0]));
-		Assert.assertEquals(
-			Boolean.valueOf(existingLayoutRevision.getHead()),
-			ReflectionTestUtil.<Boolean>invoke(
-				existingLayoutRevision, "getOriginalHead", new Class<?>[0]));
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutRevision.getPlid()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutRevision, "getOriginalPlid", new Class<?>[0]));
-
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutRevision.getLayoutSetBranchId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutRevision, "getOriginalLayoutSetBranchId",
-				new Class<?>[0]));
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutRevision.getLayoutBranchId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutRevision, "getOriginalLayoutBranchId",
-				new Class<?>[0]));
-		Assert.assertEquals(
-			Boolean.valueOf(existingLayoutRevision.getHead()),
-			ReflectionTestUtil.<Boolean>invoke(
-				existingLayoutRevision, "getOriginalHead", new Class<?>[0]));
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutRevision.getPlid()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutRevision, "getOriginalPlid", new Class<?>[0]));
 	}
 
 	protected LayoutRevision addLayoutRevision() throws Exception {

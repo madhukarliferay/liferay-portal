@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import PropTypes from 'prop-types';
@@ -18,7 +12,7 @@ export const GeometryType = PropTypes.shape({
 	left: PropTypes.number.isRequired,
 	right: PropTypes.number.isRequired,
 	top: PropTypes.number.isRequired,
-	width: PropTypes.number.isRequired
+	width: PropTypes.number.isRequired,
 });
 
 /**
@@ -26,9 +20,12 @@ export const GeometryType = PropTypes.shape({
  */
 export function stopImmediatePropagation(event) {
 	if (event.nativeEvent) {
+
 		// This is a React synthetic event; must access nativeEvent instead.
+
 		event.nativeEvent.stopImmediatePropagation();
-	} else {
+	}
+	else {
 		event.stopImmediatePropagation();
 	}
 }
@@ -36,15 +33,34 @@ export function stopImmediatePropagation(event) {
 /**
  * Returns all targetable elements within `element`
  *
- * Currently, that means all visible "a" and "button" elements which
- * have an "id".
+ * Currently, that means all visible "a", "button" and "input[type=submit]"
+ * elements which have an "id".
  */
-export function getTargetableElements(element) {
-	const elements = element.querySelectorAll('a, button');
+export function getTargetableElements(element, selectedTarget) {
 
-	// As first cut, only deal with items that have an id.
-	return Array.from(elements).filter(element => {
-		return element.id && _isVisible(element);
+	// Allowed targetable elements with id
+
+	const selector = [
+		'[id^=analytics-targetable-collection]',
+		'a[id]',
+		'button[id]',
+		'input[type=submit][id]',
+	];
+
+	// Other targetable element already selected
+
+	if (selectedTarget) {
+		selector.push(`#${selectedTarget}`);
+	}
+
+	// Look for links, buttons or inputs with type submit
+
+	const elements = element.querySelectorAll(selector.join());
+
+	// As first cut, only deal with visible items
+
+	return Array.from(elements).filter((element) => {
+		return _isVisible(element);
 	});
 }
 
@@ -68,20 +84,15 @@ function _isVisible(element) {
  * Used here to get measurements for the "root" ("#content") element.
  */
 export function getRootElementGeometry(rootElement) {
-	const {
-		height,
-		left,
-		right,
-		top,
-		width
-	} = rootElement.getBoundingClientRect();
+	const {height, left, right, top, width} =
+		rootElement.getBoundingClientRect();
 
 	return {
 		height: height + TARGET_OFFSET,
 		left: left + TARGET_OFFSET / 2,
 		right: right - TARGET_OFFSET / 2,
 		top: top + TARGET_OFFSET / 2,
-		width: width + TARGET_OFFSET
+		width: width + TARGET_OFFSET,
 	};
 }
 
@@ -91,14 +102,8 @@ export function getRootElementGeometry(rootElement) {
  * Used here to get measurements for the "target" element.
  */
 export function getElementGeometry(element) {
-	const {
-		bottom,
-		height,
-		left,
-		right,
-		top,
-		width
-	} = element.getBoundingClientRect();
+	const {bottom, height, left, right, top, width} =
+		element.getBoundingClientRect();
 
 	return {
 		bottom,
@@ -106,6 +111,6 @@ export function getElementGeometry(element) {
 		left,
 		right,
 		top,
-		width: width + TARGET_OFFSET
+		width: width + TARGET_OFFSET,
 	};
 }

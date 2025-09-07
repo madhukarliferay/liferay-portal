@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Provides the local service utility for LayoutTemplate. This utility wraps
@@ -30,16 +22,10 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class LayoutTemplateLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.LayoutTemplateLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
-	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link LayoutTemplateLocalServiceUtil} to access the layout template local service. Add custom service methods to <code>com.liferay.portal.service.impl.LayoutTemplateLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
 	public static String getContent(
 		String layoutTemplateId, boolean standard, String themeId) {
@@ -61,13 +47,13 @@ public class LayoutTemplateLocalServiceUtil {
 			layoutTemplateId, standard, themeId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.LayoutTemplate>
+	public static List<com.liferay.portal.kernel.model.LayoutTemplate>
 		getLayoutTemplates() {
 
 		return getService().getLayoutTemplates();
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.LayoutTemplate>
+	public static List<com.liferay.portal.kernel.model.LayoutTemplate>
 		getLayoutTemplates(String themeId) {
 
 		return getService().getLayoutTemplates(themeId);
@@ -82,28 +68,26 @@ public class LayoutTemplateLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.LayoutTemplate>
-		init(
-			javax.servlet.ServletContext servletContext, String[] xmls,
-			com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
+	public static List<com.liferay.portal.kernel.model.LayoutTemplate> init(
+		jakarta.servlet.ServletContext servletContext, String[] xmls,
+		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 
 		return getService().init(servletContext, xmls, pluginPackage);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.LayoutTemplate>
-		init(
-			String servletContextName,
-			javax.servlet.ServletContext servletContext, String[] xmls,
-			com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
+	public static List<com.liferay.portal.kernel.model.LayoutTemplate> init(
+		String servletContextName,
+		jakarta.servlet.ServletContext servletContext, String[] xmls,
+		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 
 		return getService().init(
 			servletContextName, servletContext, xmls, pluginPackage);
 	}
 
 	public static void readLayoutTemplate(
-		String servletContextName, javax.servlet.ServletContext servletContext,
-		java.util.Set<com.liferay.portal.kernel.model.LayoutTemplate>
-			layoutTemplates,
+		String servletContextName,
+		jakarta.servlet.ServletContext servletContext,
+		Set<com.liferay.portal.kernel.model.LayoutTemplate> layoutTemplates,
 		com.liferay.portal.kernel.xml.Element element, boolean standard,
 		String themeId,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
@@ -124,14 +108,13 @@ public class LayoutTemplateLocalServiceUtil {
 	}
 
 	public static LayoutTemplateLocalService getService() {
-		if (_service == null) {
-			_service = (LayoutTemplateLocalService)PortalBeanLocatorUtil.locate(
-				LayoutTemplateLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static LayoutTemplateLocalService _service;
+	public static void setService(LayoutTemplateLocalService service) {
+		_service = service;
+	}
+
+	private static volatile LayoutTemplateLocalService _service;
 
 }

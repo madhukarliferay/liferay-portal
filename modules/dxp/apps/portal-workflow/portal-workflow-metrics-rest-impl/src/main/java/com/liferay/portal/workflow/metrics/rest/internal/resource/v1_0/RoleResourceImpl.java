@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.internal.resource.v1_0;
@@ -17,31 +8,30 @@ package com.liferay.portal.workflow.metrics.rest.internal.resource.v1_0;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.search.aggregation.AggregationResult;
 import com.liferay.portal.search.aggregation.Aggregations;
-import com.liferay.portal.search.aggregation.bucket.Bucket;
 import com.liferay.portal.search.aggregation.bucket.TermsAggregation;
 import com.liferay.portal.search.aggregation.bucket.TermsAggregationResult;
 import com.liferay.portal.search.engine.adapter.search.SearchRequestExecutor;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
+import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.search.query.BooleanQuery;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.workflow.metrics.rest.dto.v1_0.Role;
 import com.liferay.portal.workflow.metrics.rest.resource.v1_0.RoleResource;
+import com.liferay.portal.workflow.metrics.search.index.constants.WorkflowMetricsIndexNameConstants;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,14 +53,15 @@ public class RoleResourceImpl extends BaseRoleResourceImpl {
 		return Page.of(_getRoles(GetterUtil.getBoolean(completed), processId));
 	}
 
-	private BooleanQuery _createTokensBooleanQuery(
+	private BooleanQuery _createTasksBooleanQuery(
 		boolean completed, long processId) {
 
 		BooleanQuery booleanQuery = _queries.booleanQuery();
 
-		booleanQuery.addMustNotQueryClauses(_queries.term("tokenId", "0"));
+		booleanQuery.addMustNotQueryClauses(_queries.term("taskId", "0"));
 
 		return booleanQuery.addMustQueryClauses(
+			_queries.term("assigneeType", User.class.getName()),
 			_queries.term("companyId", contextCompany.getCompanyId()),
 			_queries.term("completed", completed),
 			_queries.term("deleted", Boolean.FALSE),
@@ -82,38 +73,35 @@ public class RoleResourceImpl extends BaseRoleResourceImpl {
 		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
 
 		TermsAggregation termsAggregation = _aggregations.terms(
-			"assigneeId", "assigneeId");
+			"assigneeId", "assigneeIds");
 
 		termsAggregation.setSize(10000);
 
 		searchSearchRequest.addAggregation(termsAggregation);
 
-		searchSearchRequest.setIndexNames("workflow-metrics-tokens");
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(contextCompany.getCompanyId()) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_TASK);
 		searchSearchRequest.setQuery(
-			_createTokensBooleanQuery(completed, processId));
+			_createTasksBooleanQuery(completed, processId));
 
-		return Stream.of(
-			_searchRequestExecutor.executeSearchRequest(searchSearchRequest)
-		).map(
-			SearchSearchResponse::getAggregationResultsMap
-		).map(
-			aggregationResultsMap ->
-				(TermsAggregationResult)aggregationResultsMap.get("assigneeId")
-		).map(
-			TermsAggregationResult::getBuckets
-		).flatMap(
-			Collection::stream
-		).map(
-			Bucket::getKey
-		).map(
-			GetterUtil::getLong
-		).collect(
-			Collectors.toSet()
-		);
+		SearchSearchResponse searchSearchResponse =
+			_searchRequestExecutor.executeSearchRequest(searchSearchRequest);
+
+		Map<String, AggregationResult> aggregationResultsMap =
+			searchSearchResponse.getAggregationResultsMap();
+
+		TermsAggregationResult termsAggregationResult =
+			(TermsAggregationResult)aggregationResultsMap.get("assigneeId");
+
+		return new HashSet<>(
+			transform(
+				termsAggregationResult.getBuckets(),
+				bucket -> GetterUtil.getLong(bucket.getKey())));
 	}
 
 	private Set<Role> _getRoles(boolean completed, Long processId)
-		throws PortalException {
+		throws Exception {
 
 		Set<Long> assigneeIds = _getAssigneeIds(completed, processId);
 
@@ -145,9 +133,10 @@ public class RoleResourceImpl extends BaseRoleResourceImpl {
 	private Role _toRole(com.liferay.portal.kernel.model.Role role) {
 		return new Role() {
 			{
-				id = role.getRoleId();
-				name = role.getTitle(
-					contextAcceptLanguage.getPreferredLocale());
+				setId(role::getRoleId);
+				setName(
+					() -> role.getTitle(
+						contextAcceptLanguage.getPreferredLocale()));
 			}
 		};
 	}
@@ -156,10 +145,10 @@ public class RoleResourceImpl extends BaseRoleResourceImpl {
 	private Aggregations _aggregations;
 
 	@Reference
-	private Queries _queries;
+	private IndexNameBuilder _indexNameBuilder;
 
 	@Reference
-	private RoleLocalService _roleLocalService;
+	private Queries _queries;
 
 	@Reference
 	private SearchRequestExecutor _searchRequestExecutor;

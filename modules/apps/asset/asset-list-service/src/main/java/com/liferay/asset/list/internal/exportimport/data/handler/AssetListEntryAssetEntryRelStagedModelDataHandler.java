@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.internal.exportimport.data.handler;
@@ -25,9 +16,12 @@ import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandler;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Element;
+import com.liferay.segments.model.SegmentsEntry;
 
 import java.util.Map;
 
@@ -37,7 +31,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Jürgen Kappler
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class AssetListEntryAssetEntryRelStagedModelDataHandler
 	extends BaseStagedModelDataHandler<AssetListEntryAssetEntryRel> {
 
@@ -142,6 +136,25 @@ public class AssetListEntryAssetEntryRelStagedModelDataHandler
 		importedAssetListEntryAssetEntryRel.setAssetEntryUuid(
 			assetListEntryAssetEntryRel.getAssetEntryUuid());
 
+		Group currentGroup = _groupLocalService.fetchGroup(
+			portletDataContext.getScopeGroupId());
+
+		Map<Long, Long> segmentsEntryIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				SegmentsEntry.class);
+
+		long segmentsEntryId = assetListEntryAssetEntryRel.getSegmentsEntryId();
+
+		if (!currentGroup.isStagingGroup() && (segmentsEntryId > 0) &&
+			!segmentsEntryIds.isEmpty() &&
+			segmentsEntryIds.containsKey(segmentsEntryId)) {
+
+			long newSegmentsEntryId = segmentsEntryIds.get(segmentsEntryId);
+
+			importedAssetListEntryAssetEntryRel.setSegmentsEntryId(
+				newSegmentsEntryId);
+		}
+
 		AssetListEntryAssetEntryRel existingAssetListEntryAssetEntryRel =
 			_stagedModelRepository.fetchStagedModelByUuidAndGroupId(
 				assetListEntryAssetEntryRel.getUuid(),
@@ -163,6 +176,10 @@ public class AssetListEntryAssetEntryRelStagedModelDataHandler
 					portletDataContext, importedAssetListEntryAssetEntryRel);
 		}
 
+		if (importedAssetListEntryAssetEntryRel == null) {
+			return;
+		}
+
 		portletDataContext.importClassedModel(
 			assetListEntryAssetEntryRel, importedAssetListEntryAssetEntryRel);
 	}
@@ -176,6 +193,9 @@ public class AssetListEntryAssetEntryRelStagedModelDataHandler
 
 	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.asset.list.model.AssetListEntryAssetEntryRel)"

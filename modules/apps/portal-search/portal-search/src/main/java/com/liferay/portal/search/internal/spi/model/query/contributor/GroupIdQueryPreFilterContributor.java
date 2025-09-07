@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.spi.model.query.contributor;
@@ -35,7 +26,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = QueryPreFilterContributor.class)
+@Component(service = QueryPreFilterContributor.class)
 public class GroupIdQueryPreFilterContributor
 	implements QueryPreFilterContributor {
 
@@ -70,23 +61,22 @@ public class GroupIdQueryPreFilterContributor
 
 			Group group = _getGroup(groupId);
 
-			if (!groupLocalService.isLiveGroupActive(group)) {
+			if (!_groupLocalService.isLiveGroupActive(group)) {
 				continue;
 			}
 
-			long parentGroupId = groupId;
+			_addTermsFilters(
+				group, groupId, groupIds, groupIdsTermsFilter, i,
+				scopeGroupIdsTermsFilter, searchContext);
+		}
 
-			if (group.isLayout()) {
-				parentGroupId = group.getParentGroupId();
-			}
+		if ((groupIds.length == 1) && (groupIds[0] > 0) &&
+			groupIdsTermsFilter.isEmpty()) {
 
-			groupIdsTermsFilter.addValue(String.valueOf(parentGroupId));
-
-			groupIds[i] = parentGroupId;
-
-			if (group.isLayout() || searchContext.isScopeStrict()) {
-				scopeGroupIdsTermsFilter.addValue(String.valueOf(groupId));
-			}
+			_addTermsFilters(
+				_getGroup(groupIds[0]), groupIds[0], groupIds,
+				groupIdsTermsFilter, 0, scopeGroupIdsTermsFilter,
+				searchContext);
 		}
 
 		if (!groupIdsTermsFilter.isEmpty()) {
@@ -99,27 +89,25 @@ public class GroupIdQueryPreFilterContributor
 				scopeGroupIdsTermsFilter, BooleanClauseOccur.MUST);
 		}
 
-		booleanFilter.add(scopeBooleanFilter, BooleanClauseOccur.MUST);
+		if (scopeBooleanFilter.hasClauses()) {
+			booleanFilter.add(scopeBooleanFilter, BooleanClauseOccur.MUST);
+		}
 	}
-
-	@Reference
-	protected GroupLocalService groupLocalService;
 
 	private void _addInactiveGroupsBooleanFilter(
 		BooleanFilter booleanFilter, SearchContext searchContext) {
 
-		List<Group> inactiveGroups = groupLocalService.getActiveGroups(
+		List<Long> inactiveGroupIds = _groupLocalService.getGroupIds(
 			searchContext.getCompanyId(), false);
 
-		if (ListUtil.isEmpty(inactiveGroups)) {
+		if (ListUtil.isEmpty(inactiveGroupIds)) {
 			return;
 		}
 
 		TermsFilter groupIdTermsFilter = new TermsFilter(Field.GROUP_ID);
 
 		groupIdTermsFilter.addValues(
-			ArrayUtil.toStringArray(
-				ListUtil.toArray(inactiveGroups, Group.GROUP_ID_ACCESSOR)));
+			ArrayUtil.toStringArray(inactiveGroupIds.toArray(new Long[0])));
 
 		booleanFilter.add(groupIdTermsFilter, BooleanClauseOccur.MUST_NOT);
 	}
@@ -134,13 +122,36 @@ public class GroupIdQueryPreFilterContributor
 		}
 	}
 
-	private Group _getGroup(long groupId) {
-		try {
-			return groupLocalService.getGroup(groupId);
+	private void _addTermsFilters(
+		Group group, long groupId, long[] groupIds,
+		TermsFilter groupIdsTermsFilter, int index,
+		TermsFilter scopeGroupIdsTermsFilter, SearchContext searchContext) {
+
+		long parentGroupId = groupId;
+
+		if (group.isLayout()) {
+			parentGroupId = group.getParentGroupId();
 		}
-		catch (PortalException pe) {
-			throw new SystemException(pe);
+
+		groupIdsTermsFilter.addValue(String.valueOf(parentGroupId));
+
+		groupIds[index] = parentGroupId;
+
+		if (group.isLayout() || searchContext.isScopeStrict()) {
+			scopeGroupIdsTermsFilter.addValue(String.valueOf(groupId));
 		}
 	}
+
+	private Group _getGroup(long groupId) {
+		try {
+			return _groupLocalService.getGroup(groupId);
+		}
+		catch (PortalException portalException) {
+			throw new SystemException(portalException);
+		}
+	}
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 }

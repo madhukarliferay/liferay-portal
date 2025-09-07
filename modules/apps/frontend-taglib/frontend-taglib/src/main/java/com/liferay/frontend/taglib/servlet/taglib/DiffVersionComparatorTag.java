@@ -1,22 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.servlet.taglib;
 
+import com.liferay.diff.DiffVersion;
+import com.liferay.diff.DiffVersionsInfo;
 import com.liferay.frontend.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.portal.kernel.diff.DiffVersion;
-import com.liferay.portal.kernel.diff.DiffVersionsInfo;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -27,6 +19,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
@@ -35,18 +28,18 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Chema Balsas
@@ -57,29 +50,11 @@ public class DiffVersionComparatorTag extends IncludeTag {
 			DiffVersion diffVersion, PortletURL sourceURL, PortletURL targetURL)
 		throws PortalException {
 
-		Date modifiedDate = diffVersion.getModifiedDate();
-
-		String timeDescription = LanguageUtil.getTimeDescription(
-			request, System.currentTimeMillis() - modifiedDate.getTime(), true);
-
-		JSONObject diffVersionJSONObject = JSONUtil.put(
-			"displayDate",
-			LanguageUtil.format(request, "x-ago", timeDescription, false)
-		).put(
-			"inRange",
-			(diffVersion.getVersion() > _sourceVersion) &&
-			(diffVersion.getVersion() <= _targetVersion)
-		);
+		HttpServletRequest httpServletRequest = getRequest();
 
 		String diffVersionString = String.valueOf(diffVersion.getVersion());
 
-		diffVersionJSONObject.put(
-			"label",
-			LanguageUtil.format(request, "version-x", diffVersionString));
-
 		sourceURL.setParameter("sourceVersion", diffVersionString);
-
-		diffVersionJSONObject.put("sourceURL", sourceURL.toString());
 
 		if (Validator.isNotNull(_languageId)) {
 			targetURL.setParameter("languageId", _languageId);
@@ -87,19 +62,41 @@ public class DiffVersionComparatorTag extends IncludeTag {
 
 		targetURL.setParameter("targetVersion", diffVersionString);
 
-		diffVersionJSONObject.put("targetURL", targetURL.toString());
+		User user = UserLocalServiceUtil.fetchUser(diffVersion.getUserId());
 
-		User user = UserLocalServiceUtil.getUser(diffVersion.getUserId());
+		return JSONUtil.put(
+			"displayDate",
+			() -> {
+				Date modifiedDate = diffVersion.getModifiedDate();
 
-		diffVersionJSONObject.put(
-			"userInitials", user.getInitials()
+				return LanguageUtil.format(
+					httpServletRequest, "x-ago",
+					LanguageUtil.getTimeDescription(
+						httpServletRequest,
+						System.currentTimeMillis() - modifiedDate.getTime(),
+						true),
+					false);
+			}
 		).put(
-			"userName", user.getFullName()
+			"inRange",
+			(diffVersion.getVersion() > _sourceVersion) &&
+			(diffVersion.getVersion() <= _targetVersion)
+		).put(
+			"label",
+			LanguageUtil.format(
+				httpServletRequest, "version-x", diffVersionString)
+		).put(
+			"sourceURL", sourceURL.toString()
+		).put(
+			"targetURL", targetURL.toString()
+		).put(
+			"userInitials",
+			(user != null) ? user.getInitials() : StringPool.BLANK
+		).put(
+			"userName", (user != null) ? user.getFullName() : StringPool.BLANK
 		).put(
 			"version", diffVersionString
 		);
-
-		return diffVersionJSONObject;
 	}
 
 	public Set<Locale> getAvailableLocales() {
@@ -154,7 +151,7 @@ public class DiffVersionComparatorTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setPortletURL(PortletURL portletURL) {
@@ -200,23 +197,27 @@ public class DiffVersionComparatorTag extends IncludeTag {
 
 		Map<String, Object> data = new HashMap<>();
 
+		HttpServletRequest parentHttpServletRequest = getRequest();
+
 		try {
 			if (_availableLocales != null) {
-				ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-					WebKeys.THEME_DISPLAY);
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)parentHttpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
 
 				JSONArray availableLocalesJSONArray =
 					JSONFactoryUtil.createJSONArray();
 
 				for (Locale availableLocale : _availableLocales) {
-					JSONObject availableLocaleJSONObject = JSONUtil.put(
-						"displayName",
-						availableLocale.getDisplayName(themeDisplay.getLocale())
-					).put(
-						"languageId", LocaleUtil.toLanguageId(availableLocale)
-					);
-
-					availableLocalesJSONArray.put(availableLocaleJSONObject);
+					availableLocalesJSONArray.put(
+						JSONUtil.put(
+							"displayName",
+							availableLocale.getDisplayName(
+								themeDisplay.getLocale())
+						).put(
+							"languageId",
+							LocaleUtil.toLanguageId(availableLocale)
+						));
 				}
 
 				data.put("availableLocales", availableLocalesJSONArray);
@@ -225,20 +226,20 @@ public class DiffVersionComparatorTag extends IncludeTag {
 			data.put("diffHtmlResults", _diffHtmlResults);
 
 			RenderResponse renderResponse =
-				(RenderResponse)request.getAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE);
+				(RenderResponse)parentHttpServletRequest.getAttribute(
+					JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
-			PortletURL sourceURL = PortletURLUtil.clone(
-				_portletURL, renderResponse);
+			PortletURL sourceURL = PortletURLBuilder.create(
+				PortletURLUtil.clone(_portletURL, renderResponse)
+			).setParameter(
+				"targetVersion", _targetVersion
+			).buildPortletURL();
 
-			sourceURL.setParameter(
-				"targetVersion", String.valueOf(_targetVersion));
-
-			PortletURL targetURL = PortletURLUtil.clone(
-				_portletURL, renderResponse);
-
-			targetURL.setParameter(
-				"sourceVersion", String.valueOf(_sourceVersion));
+			PortletURL targetURL = PortletURLBuilder.create(
+				PortletURLUtil.clone(_portletURL, renderResponse)
+			).setParameter(
+				"sourceVersion", _sourceVersion
+			).buildPortletURL();
 
 			JSONArray diffVersionsJSONArray = JSONFactoryUtil.createJSONArray();
 
@@ -272,9 +273,9 @@ public class DiffVersionComparatorTag extends IncludeTag {
 			data.put("sourceVersion", String.valueOf(_sourceVersion));
 			data.put("targetVersion", String.valueOf(_targetVersion));
 		}
-		catch (PortalException | PortletException e) {
+		catch (PortalException | PortletException exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 		}
 

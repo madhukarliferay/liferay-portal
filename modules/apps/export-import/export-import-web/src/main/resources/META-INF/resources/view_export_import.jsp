@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -31,12 +22,14 @@ if (Validator.isNotNull(backURL)) {
 renderResponse.setTitle(LanguageUtil.get(request, "process-details"));
 %>
 
-<div class="container-fluid-1280" id="<portlet:namespace />exportImportProcessContainer">
+<clay:container-fluid
+	id='<%= liferayPortletResponse.getNamespace() + "exportImportProcessContainer" %>'
+>
 	<liferay-util:include page="/export_import_process.jsp" servletContext="<%= application %>" />
-</div>
+</clay:container-fluid>
 
 <aui:script use="liferay-export-import-export-import">
-	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="exportImport" var="exportImportProcessURL">
+	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/export_import/export_import" var="exportImportProcessURL">
 		<portlet:param name="<%= Constants.CMD %>" value="export_import" />
 		<portlet:param name="backgroundTaskId" value="<%= String.valueOf(backgroundTaskId) %>" />
 	</liferay-portlet:resourceURL>
@@ -48,6 +41,6 @@ renderResponse.setTitle(LanguageUtil.get(request, "process-details"));
 		namespace: '<portlet:namespace />',
 		processesNode: '#exportImportProcessContainer',
 		processesResourceURL: '<%= HtmlUtil.escapeJS(exportImportProcessURL) %>',
-		timeZoneOffset: <%= timeZoneOffset %>
+		timeZoneOffset: <%= timeZoneOffset %>,
 	});
 </aui:script>

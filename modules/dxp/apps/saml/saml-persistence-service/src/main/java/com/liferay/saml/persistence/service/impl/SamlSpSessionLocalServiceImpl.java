@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.impl;
@@ -18,15 +9,21 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.persistence.exception.NoSuchSpSessionException;
+import com.liferay.saml.persistence.model.SamlPeerBinding;
 import com.liferay.saml.persistence.model.SamlSpSession;
+import com.liferay.saml.persistence.service.SamlPeerBindingLocalService;
 import com.liferay.saml.persistence.service.base.SamlSpSessionLocalServiceBaseImpl;
+import com.liferay.saml.persistence.service.persistence.SamlPeerBindingPersistence;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Mika Koivisto
@@ -40,15 +37,39 @@ public class SamlSpSessionLocalServiceImpl
 
 	@Override
 	public SamlSpSession addSamlSpSession(
-			String samlIdpEntityId, String samlSpSessionKey,
 			String assertionXml, String jSessionId, String nameIdFormat,
 			String nameIdNameQualifier, String nameIdSPNameQualifier,
-			String nameIdValue, String sessionIndex,
-			ServiceContext serviceContext)
+			String nameIdValue, String samlIdpEntityId, String samlSpSessionKey,
+			String sessionIndex, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUserById(serviceContext.getUserId());
-		Date now = new Date();
+		User user = _userLocalService.getUserById(serviceContext.getUserId());
+
+		SamlPeerBinding samlPeerBinding =
+			_samlPeerBindingLocalService.fetchSamlPeerBinding(
+				user.getCompanyId(), false, nameIdFormat, nameIdNameQualifier,
+				nameIdValue, samlIdpEntityId);
+
+		if ((samlPeerBinding != null) &&
+			(user.getUserId() != samlPeerBinding.getUserId())) {
+
+			samlPeerBinding.setDeleted(true);
+
+			_samlPeerBindingPersistence.update(samlPeerBinding);
+
+			samlPeerBinding = null;
+		}
+
+		if (samlPeerBinding == null) {
+			_deleteSamlPeerBindings(
+				_samlPeerBindingLocalService.getUserSamlPeerBindings(
+					user.getUserId(), false, nameIdFormat, nameIdNameQualifier,
+					samlIdpEntityId));
+
+			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
+				user.getUserId(), nameIdFormat, nameIdNameQualifier,
+				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
+		}
 
 		long samlSpSessionId = counterLocalService.increment(
 			SamlSpSession.class.getName());
@@ -56,25 +77,18 @@ public class SamlSpSessionLocalServiceImpl
 		SamlSpSession samlSpSession = samlSpSessionPersistence.create(
 			samlSpSessionId);
 
-		samlSpSession.setCompanyId(serviceContext.getCompanyId());
+		samlSpSession.setCompanyId(user.getCompanyId());
 		samlSpSession.setUserId(user.getUserId());
 		samlSpSession.setUserName(user.getFullName());
-		samlSpSession.setCreateDate(now);
-		samlSpSession.setModifiedDate(now);
-		samlSpSession.setSamlSpSessionKey(samlSpSessionKey);
-		samlSpSession.setSamlIdpEntityId(samlIdpEntityId);
+		samlSpSession.setSamlPeerBindingId(
+			samlPeerBinding.getSamlPeerBindingId());
 		samlSpSession.setAssertionXml(assertionXml);
 		samlSpSession.setJSessionId(jSessionId);
-		samlSpSession.setNameIdFormat(nameIdFormat);
-		samlSpSession.setNameIdNameQualifier(nameIdNameQualifier);
-		samlSpSession.setNameIdSPNameQualifier(nameIdSPNameQualifier);
-		samlSpSession.setNameIdValue(nameIdValue);
+		samlSpSession.setSamlSpSessionKey(samlSpSessionKey);
 		samlSpSession.setSessionIndex(sessionIndex);
 		samlSpSession.setTerminated(false);
 
-		samlSpSessionPersistence.update(samlSpSession);
-
-		return samlSpSession;
+		return samlSpSessionPersistence.update(samlSpSession);
 	}
 
 	@Override
@@ -91,12 +105,26 @@ public class SamlSpSessionLocalServiceImpl
 	}
 
 	@Override
-	public SamlSpSession fetchSamlSpSessionBySessionIndex(String sessionIndex) {
+	public SamlSpSession fetchSamlSpSessionBySessionIndex(
+		long companyId, String sessionIndex) {
+
 		if (Validator.isNull(sessionIndex)) {
 			return null;
 		}
 
-		return samlSpSessionPersistence.fetchBySessionIndex(sessionIndex);
+		return samlSpSessionPersistence.fetchByC_SI_First(
+			companyId, sessionIndex, null);
+	}
+
+	@Override
+	public List<SamlSpSession> fetchSamlSpSessionsBySessionIndex(
+		long companyId, String sessionIndex) {
+
+		if (Validator.isNull(sessionIndex)) {
+			return null;
+		}
+
+		return samlSpSessionPersistence.findByC_SI(companyId, sessionIndex);
 	}
 
 	@Override
@@ -116,19 +144,47 @@ public class SamlSpSessionLocalServiceImpl
 	}
 
 	@Override
-	public SamlSpSession getSamlSpSessionBySessionIndex(String sessionIndex)
+	public SamlSpSession getSamlSpSessionBySessionIndex(
+			long companyId, String sessionIndex)
 		throws PortalException {
 
 		if (Validator.isNull(sessionIndex)) {
 			throw new NoSuchSpSessionException(sessionIndex);
 		}
 
-		return samlSpSessionPersistence.findBySessionIndex(sessionIndex);
+		return samlSpSessionPersistence.findByC_SI_First(
+			companyId, sessionIndex, null);
 	}
 
 	@Override
-	public List<SamlSpSession> getSamlSpSessions(String nameIdValue) {
-		return samlSpSessionPersistence.findByNameIdValue(nameIdValue);
+	public List<SamlSpSession> getSamlSpSessions(
+		long companyId, String nameIdFormat, String nameIdNameQualifier,
+		String nameIdSPNameQualifier, String nameIdValue,
+		String samlIdpEntityId) {
+
+		List<SamlSpSession> samlSpSessions = new ArrayList<>();
+
+		for (SamlPeerBinding samlPeerBinding :
+				_samlPeerBindingLocalService.getSamlPeerBindings(
+					companyId, false, nameIdFormat, nameIdNameQualifier,
+					nameIdValue, samlIdpEntityId)) {
+
+			samlSpSessions.addAll(
+				samlSpSessionPersistence.findBySamlPeerBindingId(
+					samlPeerBinding.getSamlPeerBindingId()));
+		}
+
+		for (SamlPeerBinding samlPeerBinding :
+				_samlPeerBindingLocalService.getSamlPeerBindings(
+					companyId, true, nameIdFormat, nameIdNameQualifier,
+					nameIdValue, samlIdpEntityId)) {
+
+			samlSpSessions.addAll(
+				samlSpSessionPersistence.findBySamlPeerBindingId(
+					samlPeerBinding.getSamlPeerBindingId()));
+		}
+
+		return samlSpSessions;
 	}
 
 	@Override
@@ -142,42 +198,65 @@ public class SamlSpSessionLocalServiceImpl
 		samlSpSession.setModifiedDate(new Date());
 		samlSpSession.setJSessionId(jSessionId);
 
-		samlSpSessionPersistence.update(samlSpSession);
-
-		return samlSpSession;
+		return samlSpSessionPersistence.update(samlSpSession);
 	}
 
 	@Override
 	public SamlSpSession updateSamlSpSession(
-			long samlSpSessionId, String samlIdpEntityId,
-			String samlSpSessionKey, String assertionXml, String jSessionId,
+			long samlSpSessionId, String assertionXml, String jSessionId,
 			String nameIdFormat, String nameIdNameQualifier,
 			String nameIdSPNameQualifier, String nameIdValue,
+			String samlIdpEntityId, String samlSpSessionKey,
 			String sessionIndex, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUserById(serviceContext.getUserId());
+		User user = _userLocalService.getUserById(serviceContext.getUserId());
+
+		SamlPeerBinding samlPeerBinding =
+			_samlPeerBindingLocalService.fetchSamlPeerBinding(
+				user.getCompanyId(), false, nameIdFormat, nameIdNameQualifier,
+				nameIdValue, samlIdpEntityId);
+
+		if (samlPeerBinding == null) {
+			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
+				user.getUserId(), nameIdFormat, nameIdNameQualifier,
+				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
+		}
 
 		SamlSpSession samlSpSession = samlSpSessionPersistence.findByPrimaryKey(
 			samlSpSessionId);
 
-		samlSpSession.setCompanyId(serviceContext.getCompanyId());
+		samlSpSession.setCompanyId(user.getCompanyId());
 		samlSpSession.setUserId(user.getUserId());
 		samlSpSession.setUserName(user.getFullName());
 		samlSpSession.setModifiedDate(new Date());
-		samlSpSession.setSamlSpSessionKey(samlSpSessionKey);
-		samlSpSession.setSamlIdpEntityId(samlIdpEntityId);
+		samlSpSession.setSamlPeerBindingId(
+			samlPeerBinding.getSamlPeerBindingId());
 		samlSpSession.setAssertionXml(assertionXml);
 		samlSpSession.setJSessionId(jSessionId);
-		samlSpSession.setNameIdFormat(nameIdFormat);
-		samlSpSession.setNameIdNameQualifier(nameIdNameQualifier);
-		samlSpSession.setNameIdSPNameQualifier(nameIdSPNameQualifier);
-		samlSpSession.setNameIdValue(nameIdValue);
+		samlSpSession.setSamlSpSessionKey(samlSpSessionKey);
 		samlSpSession.setSessionIndex(sessionIndex);
 
-		samlSpSessionPersistence.update(samlSpSession);
-
-		return samlSpSession;
+		return samlSpSessionPersistence.update(samlSpSession);
 	}
+
+	private void _deleteSamlPeerBindings(
+		List<SamlPeerBinding> samlPeerBindings) {
+
+		for (SamlPeerBinding samlPeerBinding : samlPeerBindings) {
+			samlPeerBinding.setDeleted(true);
+
+			_samlPeerBindingPersistence.update(samlPeerBinding);
+		}
+	}
+
+	@Reference
+	private SamlPeerBindingLocalService _samlPeerBindingLocalService;
+
+	@Reference
+	private SamlPeerBindingPersistence _samlPeerBindingPersistence;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

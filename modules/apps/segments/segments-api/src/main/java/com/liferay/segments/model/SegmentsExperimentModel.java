@@ -1,26 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedAuditedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -39,10 +30,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface SegmentsExperimentModel
-	extends AttachedModel, BaseModel<SegmentsExperiment>, GroupedModel,
-			MVCCModel, ShardedModel, StagedAuditedModel {
+	extends BaseModel<SegmentsExperiment>, CTModel<SegmentsExperiment>,
+			GroupedModel, MVCCModel, ShardedModel, StagedAuditedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a segments experiment model instance should use the {@link SegmentsExperiment} interface instead.
@@ -53,6 +44,7 @@ public interface SegmentsExperimentModel
 	 *
 	 * @return the primary key of this segments experiment
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -60,6 +52,7 @@ public interface SegmentsExperimentModel
 	 *
 	 * @param primaryKey the primary key of this segments experiment
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -77,6 +70,22 @@ public interface SegmentsExperimentModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this segments experiment.
+	 *
+	 * @return the ct collection ID of this segments experiment
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this segments experiment.
+	 *
+	 * @param ctCollectionId the ct collection ID of this segments experiment
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this segments experiment.
@@ -266,46 +275,18 @@ public interface SegmentsExperimentModel
 	public void setSegmentsExperimentKey(String segmentsExperimentKey);
 
 	/**
-	 * Returns the fully qualified class name of this segments experiment.
+	 * Returns the plid of this segments experiment.
 	 *
-	 * @return the fully qualified class name of this segments experiment
+	 * @return the plid of this segments experiment
 	 */
-	@Override
-	public String getClassName();
-
-	public void setClassName(String className);
+	public long getPlid();
 
 	/**
-	 * Returns the class name ID of this segments experiment.
+	 * Sets the plid of this segments experiment.
 	 *
-	 * @return the class name ID of this segments experiment
+	 * @param plid the plid of this segments experiment
 	 */
-	@Override
-	public long getClassNameId();
-
-	/**
-	 * Sets the class name ID of this segments experiment.
-	 *
-	 * @param classNameId the class name ID of this segments experiment
-	 */
-	@Override
-	public void setClassNameId(long classNameId);
-
-	/**
-	 * Returns the class pk of this segments experiment.
-	 *
-	 * @return the class pk of this segments experiment
-	 */
-	@Override
-	public long getClassPK();
-
-	/**
-	 * Sets the class pk of this segments experiment.
-	 *
-	 * @param classPK the class pk of this segments experiment
-	 */
-	@Override
-	public void setClassPK(long classPK);
+	public void setPlid(long plid);
 
 	/**
 	 * Returns the name of this segments experiment.
@@ -365,5 +346,12 @@ public interface SegmentsExperimentModel
 	 * @param status the status of this segments experiment
 	 */
 	public void setStatus(int status);
+
+	@Override
+	public SegmentsExperiment cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

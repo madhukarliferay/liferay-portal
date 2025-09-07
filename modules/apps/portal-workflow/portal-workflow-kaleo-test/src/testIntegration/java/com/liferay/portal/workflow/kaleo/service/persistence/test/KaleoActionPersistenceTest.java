@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -125,6 +116,8 @@ public class KaleoActionPersistenceTest {
 
 		newKaleoAction.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKaleoAction.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKaleoAction.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoAction.setCompanyId(RandomTestUtil.nextLong());
@@ -140,6 +133,8 @@ public class KaleoActionPersistenceTest {
 		newKaleoAction.setKaleoClassName(RandomTestUtil.randomString());
 
 		newKaleoAction.setKaleoClassPK(RandomTestUtil.nextLong());
+
+		newKaleoAction.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		newKaleoAction.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 
@@ -159,6 +154,10 @@ public class KaleoActionPersistenceTest {
 
 		newKaleoAction.setPriority(RandomTestUtil.nextInt());
 
+		newKaleoAction.setType(RandomTestUtil.randomString());
+
+		newKaleoAction.setStatus(RandomTestUtil.nextInt());
+
 		_kaleoActions.add(_persistence.update(newKaleoAction));
 
 		KaleoAction existingKaleoAction = _persistence.findByPrimaryKey(
@@ -167,6 +166,9 @@ public class KaleoActionPersistenceTest {
 		Assert.assertEquals(
 			existingKaleoAction.getMvccVersion(),
 			newKaleoAction.getMvccVersion());
+		Assert.assertEquals(
+			existingKaleoAction.getCtCollectionId(),
+			newKaleoAction.getCtCollectionId());
 		Assert.assertEquals(
 			existingKaleoAction.getKaleoActionId(),
 			newKaleoAction.getKaleoActionId());
@@ -191,6 +193,9 @@ public class KaleoActionPersistenceTest {
 			existingKaleoAction.getKaleoClassPK(),
 			newKaleoAction.getKaleoClassPK());
 		Assert.assertEquals(
+			existingKaleoAction.getKaleoDefinitionId(),
+			newKaleoAction.getKaleoDefinitionId());
+		Assert.assertEquals(
 			existingKaleoAction.getKaleoDefinitionVersionId(),
 			newKaleoAction.getKaleoDefinitionVersionId());
 		Assert.assertEquals(
@@ -214,6 +219,10 @@ public class KaleoActionPersistenceTest {
 			newKaleoAction.getScriptRequiredContexts());
 		Assert.assertEquals(
 			existingKaleoAction.getPriority(), newKaleoAction.getPriority());
+		Assert.assertEquals(
+			existingKaleoAction.getType(), newKaleoAction.getType());
+		Assert.assertEquals(
+			existingKaleoAction.getStatus(), newKaleoAction.getStatus());
 	}
 
 	@Test
@@ -240,12 +249,32 @@ public class KaleoActionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_KCN_KCPK() throws Exception {
+		_persistence.countByC_KCN_KCPK(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong());
+
+		_persistence.countByC_KCN_KCPK(0L, "null", 0L);
+
+		_persistence.countByC_KCN_KCPK(0L, (String)null, 0L);
+	}
+
+	@Test
 	public void testCountByKCN_KCPK_ET() throws Exception {
 		_persistence.countByKCN_KCPK_ET("", RandomTestUtil.nextLong(), "");
 
 		_persistence.countByKCN_KCPK_ET("null", 0L, "null");
 
 		_persistence.countByKCN_KCPK_ET((String)null, 0L, (String)null);
+	}
+
+	@Test
+	public void testCountByC_KCN_KCPK_ET() throws Exception {
+		_persistence.countByC_KCN_KCPK_ET(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong(), "");
+
+		_persistence.countByC_KCN_KCPK_ET(0L, "null", 0L, "null");
+
+		_persistence.countByC_KCN_KCPK_ET(0L, (String)null, 0L, (String)null);
 	}
 
 	@Test
@@ -273,13 +302,14 @@ public class KaleoActionPersistenceTest {
 
 	protected OrderByComparator<KaleoAction> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KaleoAction", "mvccVersion", true, "kaleoActionId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "kaleoClassName",
-			true, "kaleoClassPK", true, "kaleoDefinitionVersionId", true,
-			"kaleoNodeName", true, "name", true, "description", true,
-			"executionType", true, "scriptLanguage", true,
-			"scriptRequiredContexts", true, "priority", true);
+			"KaleoAction", "mvccVersion", true, "ctCollectionId", true,
+			"kaleoActionId", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true, "modifiedDate", true,
+			"kaleoClassName", true, "kaleoClassPK", true, "kaleoDefinitionId",
+			true, "kaleoDefinitionVersionId", true, "kaleoNodeName", true,
+			"name", true, "description", true, "executionType", true,
+			"scriptLanguage", true, "scriptRequiredContexts", true, "priority",
+			true, "type", true, "status", true);
 	}
 
 	@Test
@@ -498,6 +528,8 @@ public class KaleoActionPersistenceTest {
 
 		kaleoAction.setMvccVersion(RandomTestUtil.nextLong());
 
+		kaleoAction.setCtCollectionId(RandomTestUtil.nextLong());
+
 		kaleoAction.setGroupId(RandomTestUtil.nextLong());
 
 		kaleoAction.setCompanyId(RandomTestUtil.nextLong());
@@ -513,6 +545,8 @@ public class KaleoActionPersistenceTest {
 		kaleoAction.setKaleoClassName(RandomTestUtil.randomString());
 
 		kaleoAction.setKaleoClassPK(RandomTestUtil.nextLong());
+
+		kaleoAction.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		kaleoAction.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 
@@ -531,6 +565,10 @@ public class KaleoActionPersistenceTest {
 		kaleoAction.setScriptRequiredContexts(RandomTestUtil.randomString());
 
 		kaleoAction.setPriority(RandomTestUtil.nextInt());
+
+		kaleoAction.setType(RandomTestUtil.randomString());
+
+		kaleoAction.setStatus(RandomTestUtil.nextInt());
 
 		_kaleoActions.add(_persistence.update(kaleoAction));
 

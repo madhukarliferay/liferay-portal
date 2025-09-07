@@ -1,55 +1,34 @@
 <?xml version="1.0"?>
 
-<project basedir="." default="war" name="portal-web" xmlns:antelope="antlib:ise.antelope.tasks">
+<project basedir="." default="war" name="portal-web" xmlns:antelope="antlib:ise.antelope.tasks" xmlns:if="ant:if">
 	<import file="../build-common-web.xml" />
 
-	<property name="artifact.version" value="4.0.0" />
+	<property name="artifact.version" value="5.0.241" />
 	<property name="war.file" value="${ant.project.name}" />
 
 	<path id="jspc.common.classpath">
 		<path refid="lib.pre.classpath" />
 		<pathelement path="docroot/WEB-INF/classes" />
-		<pathelement location="${project.dir}/modules/core/registry-api/classes" />
+		<pathelement location="${ant.core.lib}" />
 		<pathelement location="${project.dir}/portal-impl/portal-impl.jar" />
 		<pathelement location="${project.dir}/portal-kernel/portal-kernel.jar" />
 		<pathelement location="${project.dir}/util-bridges/util-bridges.jar" />
 		<pathelement location="${project.dir}/util-java/util-java.jar" />
 		<pathelement location="${project.dir}/util-taglib/util-taglib.jar" />
 		<pathelement location="${project.dir}/lib/development/activation.jar" />
+		<pathelement location="${project.dir}/lib/development/jstl-api.jar" />
+		<pathelement location="${project.dir}/lib/development/jstl-impl.jar" />
 		<pathelement location="${project.dir}/lib/development/mail.jar" />
+		<pathelement location="${project.dir}/lib/development/portlet.jar" />
 		<pathelement location="${project.dir}/lib/development/velocity.jar" />
-		<pathelement location="${project.dir}/lib/global/portal-settings-shared.jar" />
-		<pathelement location="${project.dir}/lib/global/portlet.jar" />
-		<pathelement location="${project.dir}/lib/portal/ant.jar" />
-		<pathelement location="${project.dir}/lib/portal/commons-collections.jar" />
-		<pathelement location="${project.dir}/lib/portal/commons-fileupload.jar" />
 		<pathelement location="${project.dir}/lib/portal/commons-lang.jar" />
 		<pathelement location="${project.dir}/lib/portal/commons-logging.jar" />
-		<pathelement location="${project.dir}/lib/portal/commons-math.jar" />
-		<pathelement location="${project.dir}/lib/portal/displaytag.jar" />
 		<pathelement location="${project.dir}/lib/portal/dom4j.jar" />
 		<pathelement location="${project.dir}/lib/portal/jabsorb.jar" />
-		<pathelement location="${project.dir}/lib/portal/jcifs.jar" />
-		<pathelement location="${project.dir}/lib/portal/jcommon.jar" />
-		<pathelement location="${project.dir}/lib/portal/jdom.jar" />
-		<pathelement location="${project.dir}/lib/portal/jfreechart.jar" />
-		<pathelement location="${project.dir}/lib/portal/jstl-api.jar" />
-		<pathelement location="${project.dir}/lib/portal/jstl-impl.jar" />
-		<pathelement location="${project.dir}/lib/portal/liferay-icu4j.jar" />
-		<pathelement location="${project.dir}/lib/portal/log4j.jar" />
+		<pathelement location="${project.dir}/lib/portal/log4j-api.jar" />
+		<pathelement location="${project.dir}/lib/portal/log4j-core.jar" />
 		<pathelement location="${project.dir}/lib/portal/openid4java.jar" />
-		<pathelement location="${project.dir}/lib/portal/rome.jar" />
 	</path>
-
-	<target name="build-dtd">
-		<copy
-			todir="docroot/dtd"
-		>
-			<fileset
-				dir="${project.dir}/definitions"
-			/>
-		</copy>
-	</target>
 
 	<target depends="build-common-web.clean,clean-tlds" name="clean">
 		<delete dir="classes" />
@@ -100,11 +79,13 @@
 		<java
 			classname="org.apache.jasper.JspC"
 			classpathref="jspc.classpath"
-			fork="true"
+			fork="${fork.mode}"
 			jvm="${jspc.java.home}/bin/java"
 			newenvironment="true"
 			outputproperty="jspc.output"
 		>
+			<jvmarg if:true="${jvm.debug}" line="${jpda.settings}" />
+			<sysproperty key="log4j2.disable.jmx" value="true" />
 			<arg line="${arg.line}" />
 		</java>
 
@@ -182,6 +163,7 @@ ${oversize.files.jsp}</fail>
 		<javac
 			classpathref="jspc.classpath"
 			compiler="${javac.compiler}"
+			debug="${javac.debug}"
 			deprecation="${javac.deprecation}"
 			destdir="${jspc.classes.dir}"
 			encoding="${javac.encoding}"
@@ -219,24 +201,23 @@ ${oversize.files.jsp}</fail>
 		<path id="jspc.classpath">
 			<pathelement location="${jspc.java.home}/jre/lib/rt.jar" />
 			<path refid="jspc.common.classpath" />
-			<pathelement location="${app.server.dir}/lib/el-api.jar" />
-			<pathelement location="${app.server.dir}/lib/jasper.jar" />
-			<pathelement location="${app.server.dir}/lib/jasper-el.jar" />
-			<pathelement location="${app.server.dir}/lib/jasper-jdt.jar" />
-			<pathelement location="${app.server.dir}/lib/jsp-api.jar" />
-			<pathelement location="${app.server.dir}/lib/servlet-api.jar" />
-			<pathelement location="${app.server.dir}/lib/tomcat-api.jar" />
-			<pathelement location="${app.server.dir}/lib/tomcat-util.jar" />
-			<pathelement location="${app.server.dir}/lib/tomcat-util-scan.jar" />
-			<pathelement location="${app.server.bin.dir}/tomcat-juli.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-api.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-el-api.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-jasper-el.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-jasper.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-jsp-api.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-juli.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-servlet-api.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-util-scan.jar" />
+			<pathelement location="${project.dir}/lib/development/tomcat-util.jar" />
 		</path>
 
 		<antcall inheritrefs="true" target="compile-common-jsp">
-			<param name="arg.line" value="-d ${jspc.classes.dir} -webapp ${jsp.precompile.dir}" />
+			<param name="arg.line" value="-d ${basedir}/${jspc.classes.dir} -poolingEnabled ${jsp.precompile.pooling.enabled.portal.web} -webapp ${basedir}/${jsp.precompile.dir}" />
 		</antcall>
 	</target>
 
-	<target depends="build-dtd" name="deploy">
+	<target name="deploy">
 		<manifest-macro />
 
 		<antcall target="build-common-web.deploy" />
@@ -270,7 +251,7 @@ ${oversize.files.jsp}</fail>
 		</gradle-execute>
 	</target>
 
-	<target depends="build-dtd" name="war">
+	<target name="war">
 		<manifest-macro />
 
 		<if>

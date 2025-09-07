@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.jmx.internal;
@@ -46,7 +37,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = MBeanRegistry.class)
+@Component(service = MBeanRegistry.class)
 public class MBeanRegistryImpl implements MBeanRegistry {
 
 	@Override
@@ -84,7 +75,11 @@ public class MBeanRegistryImpl implements MBeanRegistry {
 		try {
 			register(objectCacheKey, object, objectName);
 		}
-		catch (InstanceAlreadyExistsException iaee) {
+		catch (InstanceAlreadyExistsException instanceAlreadyExistsException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(instanceAlreadyExistsException);
+			}
+
 			unregister(objectCacheKey, objectName);
 
 			register(objectCacheKey, object, objectName);
@@ -107,10 +102,11 @@ public class MBeanRegistryImpl implements MBeanRegistry {
 					_mBeanServer.unregisterMBean(objectName);
 				}
 			}
-			catch (InstanceNotFoundException infe) {
+			catch (InstanceNotFoundException instanceNotFoundException) {
 				if (_log.isInfoEnabled()) {
 					_log.info(
-						"Unable to unregister " + defaultObjectName, infe);
+						"Unable to unregister " + defaultObjectName,
+						instanceNotFoundException);
 				}
 			}
 		}
@@ -136,12 +132,12 @@ public class MBeanRegistryImpl implements MBeanRegistry {
 				try {
 					_mBeanServer.unregisterMBean(objectName);
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Unable to unregister mbean" +
 								objectName.getCanonicalName(),
-							e);
+							exception);
 					}
 				}
 			}
@@ -180,9 +176,9 @@ public class MBeanRegistryImpl implements MBeanRegistry {
 				return register(
 					objectNameCacheKey, service, new ObjectName(objectName));
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn("Unable to register mbean", e);
+					_log.warn("Unable to register mbean", exception);
 				}
 			}
 
@@ -213,9 +209,9 @@ public class MBeanRegistryImpl implements MBeanRegistry {
 			try {
 				unregister(objectNameCacheKey, new ObjectName(objectName));
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn("Unable to register mbean", e);
+					_log.warn("Unable to register mbean", exception);
 				}
 			}
 		}

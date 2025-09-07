@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.arquillian.extension.junit.bridge.client;
@@ -84,10 +75,10 @@ public class ClientState {
 
 				_socketState.connect(passCode);
 			}
-			catch (Throwable t) {
+			catch (Throwable throwable) {
 				_frameworkState.uninstallBundle(_bundleId);
 
-				throw t;
+				throw throwable;
 			}
 		}
 
@@ -103,10 +94,10 @@ public class ClientState {
 					try {
 						_frameworkState.uninstallBundle(_bundleId);
 					}
-					catch (Throwable t) {
+					catch (Throwable throwable) {
 						throw new IOException(
 							"Unable to uninstall bundle " + _bundleId + ": " +
-								t);
+								throwable);
 					}
 					finally {
 						_frameworkState.close();
@@ -150,7 +141,7 @@ public class ClientState {
 
 	}
 
-	private static Set<Class<?>> _getTestClasses(Class<?> testClass) {
+	private Set<Class<?>> _getTestClasses(Class<?> testClass) {
 		if (_testClasses == null) {
 			Set<Class<?>> testClasses = new HashSet<>();
 
@@ -174,9 +165,8 @@ public class ClientState {
 							Path filePath,
 							BasicFileAttributes basicFileAttributes) {
 
-							Path relativePath = startPath.relativize(filePath);
-
-							String relativePathString = relativePath.toString();
+							String relativePathString = String.valueOf(
+								startPath.relativize(filePath));
 
 							if (!relativePathString.endsWith("Test.class")) {
 								return FileVisitResult.CONTINUE;
@@ -205,8 +195,11 @@ public class ClientState {
 									testClasses.add(clazz);
 								}
 							}
-							catch (ClassNotFoundException cnfe) {
-								throw new RuntimeException(cnfe);
+							catch (ClassNotFoundException
+										classNotFoundException) {
+
+								throw new RuntimeException(
+									classNotFoundException);
 							}
 
 							return FileVisitResult.CONTINUE;
@@ -214,11 +207,11 @@ public class ClientState {
 
 					});
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
-			catch (URISyntaxException urise) {
-				throw new RuntimeException(urise);
+			catch (URISyntaxException uriSyntaxException) {
+				throw new RuntimeException(uriSyntaxException);
 			}
 
 			if (!testClasses.contains(testClass)) {
@@ -233,7 +226,7 @@ public class ClientState {
 		return _testClasses;
 	}
 
-	private static long _installBundle(
+	private long _installBundle(
 			Map<String, List<String>> filteredMethodNamesMap,
 			InetAddress inetAddress, int port, long passCode)
 		throws Throwable {

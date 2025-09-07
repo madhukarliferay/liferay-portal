@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth.verifier.internal.portal.session;
@@ -27,15 +18,19 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Portal;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Properties;
 
-import javax.servlet.http.HttpServletRequest;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
  */
+@Component(service = AuthVerifier.class)
 public class PortalSessionAuthVerifier implements AuthVerifier {
 
 	public static final String AUTH_TYPE = HttpServletRequest.FORM_AUTH;
@@ -56,9 +51,9 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 			HttpServletRequest httpServletRequest =
 				accessControlContext.getRequest();
 
-			User user = PortalUtil.getUser(httpServletRequest);
+			User user = _portal.getUser(httpServletRequest);
 
-			if ((user == null) || user.isDefaultUser()) {
+			if ((user == null) || user.isGuestUser()) {
 				return authVerifierResult;
 			}
 
@@ -67,7 +62,7 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 
 			if (checkCSRFToken) {
 				HttpServletRequest originalHttpServletRequest =
-					PortalUtil.getOriginalServletRequest(httpServletRequest);
+					_portal.getOriginalServletRequest(httpServletRequest);
 
 				String requestURI = originalHttpServletRequest.getRequestURI();
 
@@ -75,12 +70,12 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 					AuthTokenUtil.checkCSRFToken(
 						originalHttpServletRequest, requestURI);
 				}
-				catch (PrincipalException pe) {
+				catch (PrincipalException principalException) {
 					if (_log.isDebugEnabled()) {
 						_log.debug(
 							StringBundler.concat(
 								"Unable to verify CSRF token for ", requestURI,
-								": ", pe.getMessage()));
+								": ", principalException.getMessage()));
 					}
 
 					return authVerifierResult;
@@ -93,15 +88,18 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 
 			return authVerifierResult;
 		}
-		catch (PortalException pe) {
-			throw new AuthException(pe);
+		catch (PortalException portalException) {
+			throw new AuthException(portalException);
 		}
-		catch (SystemException se) {
-			throw new AuthException(se);
+		catch (SystemException systemException) {
+			throw new AuthException(systemException);
 		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortalSessionAuthVerifier.class);
+
+	@Reference
+	private Portal _portal;
 
 }

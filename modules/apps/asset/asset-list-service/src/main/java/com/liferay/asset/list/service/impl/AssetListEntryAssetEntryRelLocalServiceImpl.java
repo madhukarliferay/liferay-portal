@@ -1,40 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service.impl;
 
-import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
-import com.liferay.asset.kernel.model.AssetEntry;
-import com.liferay.asset.kernel.model.AssetRendererFactory;
-import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.list.exception.AssetListEntryAssetEntryRelPostionException;
 import com.liferay.asset.list.model.AssetListEntryAssetEntryRel;
 import com.liferay.asset.list.service.base.AssetListEntryAssetEntryRelLocalServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,7 +50,7 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 			throw new AssetListEntryAssetEntryRelPostionException();
 		}
 
-		User user = userLocalService.getUser(serviceContext.getUserId());
+		User user = _userLocalService.getUser(serviceContext.getUserId());
 
 		long assetListEntryAssetEntryRelId = counterLocalService.increment();
 
@@ -115,16 +102,18 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 	@Override
 	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public AssetListEntryAssetEntryRel deleteAssetListEntryAssetEntryRel(
-			long assetListEntryId, long segmentsEntryId, int position)
+			AssetListEntryAssetEntryRel assetListEntryAssetEntryRel)
 		throws PortalException {
 
-		AssetListEntryAssetEntryRel assetListEntryAssetEntryRel =
-			assetListEntryAssetEntryRelPersistence.removeByA_S_P(
-				assetListEntryId, segmentsEntryId, position);
+		assetListEntryAssetEntryRel =
+			assetListEntryAssetEntryRelPersistence.remove(
+				assetListEntryAssetEntryRel);
 
 		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
 			assetListEntryAssetEntryRelPersistence.findByA_S_GtP(
-				assetListEntryId, segmentsEntryId, position);
+				assetListEntryAssetEntryRel.getAssetListEntryId(),
+				assetListEntryAssetEntryRel.getSegmentsEntryId(),
+				assetListEntryAssetEntryRel.getPosition());
 
 		for (AssetListEntryAssetEntryRel curAssetListEntryAssetEntryRel :
 				assetListEntryAssetEntryRels) {
@@ -140,6 +129,57 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
+	public AssetListEntryAssetEntryRel deleteAssetListEntryAssetEntryRel(
+			long assetListEntryId, long segmentsEntryId, int position)
+		throws PortalException {
+
+		return deleteAssetListEntryAssetEntryRel(
+			assetListEntryAssetEntryRelPersistence.findByA_S_P(
+				assetListEntryId, segmentsEntryId, position));
+	}
+
+	@Override
+	public void deleteAssetListEntryAssetEntryRelByAssetEntryId(
+			long assetEntryId)
+		throws PortalException {
+
+		String ownerName =
+			AssetListEntryAssetEntryRelLocalServiceImpl.class.getName() +
+				".deleteAssetListEntryAssetEntryRelByAssetEntryId";
+
+		Map<Long, List<AssetListEntryAssetEntryRel>>
+			partitionAssetListEntryAssetEntryRels =
+				MassDeleteCacheThreadLocal.getMassDeleteCache(
+					ownerName,
+					() -> MapUtil.toPartitionMap(
+						assetListEntryAssetEntryRelPersistence.findAll(),
+						AssetListEntryAssetEntryRel::getAssetEntryId));
+
+		if (partitionAssetListEntryAssetEntryRels == null) {
+			for (AssetListEntryAssetEntryRel assetListEntryAssetEntryRel :
+					assetListEntryAssetEntryRelPersistence.findByAssetEntryId(
+						assetEntryId)) {
+
+				deleteAssetListEntryAssetEntryRel(assetListEntryAssetEntryRel);
+			}
+		}
+		else {
+			List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
+				partitionAssetListEntryAssetEntryRels.remove(assetEntryId);
+
+			if (assetListEntryAssetEntryRels != null) {
+				for (AssetListEntryAssetEntryRel assetListEntryAssetEntryRel :
+						assetListEntryAssetEntryRels) {
+
+					deleteAssetListEntryAssetEntryRel(
+						assetListEntryAssetEntryRel);
+				}
+			}
+		}
+	}
+
+	@Override
 	public void deleteAssetListEntryAssetEntryRelByAssetListEntryId(
 		long assetListEntryId) {
 
@@ -148,25 +188,35 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 	}
 
 	@Override
+	public List<AssetListEntryAssetEntryRel>
+		getAssetListEntryAssetEntryRelByAssetEntryId(long assetEntryId) {
+
+		return assetListEntryAssetEntryRelPersistence.findByAssetEntryId(
+			assetEntryId);
+	}
+
+	@Override
 	public List<AssetListEntryAssetEntryRel> getAssetListEntryAssetEntryRels(
 		long assetListEntryId, int start, int end) {
 
-		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
-			assetListEntryAssetEntryRelPersistence.findByAssetListEntryId(
-				assetListEntryId, start, end);
-
-		return _getAssetListEntryAssetEntryRels(assetListEntryAssetEntryRels);
+		return assetListEntryAssetEntryRelPersistence.findByAssetListEntryId(
+			assetListEntryId, start, end);
 	}
 
 	@Override
 	public List<AssetListEntryAssetEntryRel> getAssetListEntryAssetEntryRels(
 		long assetListEntryId, long segmentsEntryId, int start, int end) {
 
-		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
-			assetListEntryAssetEntryRelPersistence.findByA_S(
-				assetListEntryId, segmentsEntryId, start, end);
+		return assetListEntryAssetEntryRelPersistence.findByA_S(
+			assetListEntryId, segmentsEntryId, start, end);
+	}
 
-		return _getAssetListEntryAssetEntryRels(assetListEntryAssetEntryRels);
+	@Override
+	public List<AssetListEntryAssetEntryRel> getAssetListEntryAssetEntryRels(
+		long assetListEntryId, long[] segmentsEntryIds, int start, int end) {
+
+		return assetListEntryAssetEntryRelPersistence.findByA_S(
+			assetListEntryId, segmentsEntryIds, start, end);
 	}
 
 	@Override
@@ -181,6 +231,14 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 
 		return assetListEntryAssetEntryRelPersistence.countByA_S(
 			assetListEntryId, segmentsEntryId);
+	}
+
+	@Override
+	public int getAssetListEntryAssetEntryRelsCount(
+		long assetListEntryId, long[] segmentsEntryIds) {
+
+		return assetListEntryAssetEntryRelPersistence.countByA_S(
+			assetListEntryId, segmentsEntryIds);
 	}
 
 	@Override
@@ -214,13 +272,21 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 
 		assetListEntryAssetEntryRel.setPosition(-1);
 
-		assetListEntryAssetEntryRelPersistence.update(
-			assetListEntryAssetEntryRel);
+		assetListEntryAssetEntryRel =
+			assetListEntryAssetEntryRelPersistence.update(
+				assetListEntryAssetEntryRel);
+
+		long assetListEntryAssetEntryRelId =
+			assetListEntryAssetEntryRel.getAssetListEntryAssetEntryRelId();
 
 		swapAssetListEntryAssetEntryRel.setPosition(-2);
 
-		assetListEntryAssetEntryRelPersistence.update(
-			swapAssetListEntryAssetEntryRel);
+		swapAssetListEntryAssetEntryRel =
+			assetListEntryAssetEntryRelPersistence.update(
+				swapAssetListEntryAssetEntryRel);
+
+		long swapAssetListEntryAssetEntryRelId =
+			swapAssetListEntryAssetEntryRel.getAssetListEntryAssetEntryRelId();
 
 		TransactionCommitCallbackUtil.registerCallback(
 			() -> {
@@ -228,8 +294,7 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 					callbackAssetListEntryAssetEntryRel =
 						assetListEntryAssetEntryRelLocalService.
 							fetchAssetListEntryAssetEntryRel(
-								assetListEntryAssetEntryRel.
-									getAssetListEntryAssetEntryRelId());
+								assetListEntryAssetEntryRelId);
 
 				callbackAssetListEntryAssetEntryRel.setPosition(newPosition);
 
@@ -240,8 +305,7 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 				callbackAssetListEntryAssetEntryRel =
 					assetListEntryAssetEntryRelLocalService.
 						fetchAssetListEntryAssetEntryRel(
-							swapAssetListEntryAssetEntryRel.
-								getAssetListEntryAssetEntryRelId());
+							swapAssetListEntryAssetEntryRelId);
 
 				callbackAssetListEntryAssetEntryRel.setPosition(position);
 
@@ -270,57 +334,11 @@ public class AssetListEntryAssetEntryRelLocalServiceImpl
 		assetListEntryAssetEntryRel.setSegmentsEntryId(segmentsEntryId);
 		assetListEntryAssetEntryRel.setPosition(position);
 
-		assetListEntryAssetEntryRelPersistence.update(
+		return assetListEntryAssetEntryRelPersistence.update(
 			assetListEntryAssetEntryRel);
-
-		return assetListEntryAssetEntryRel;
 	}
-
-	private List<AssetListEntryAssetEntryRel> _getAssetListEntryAssetEntryRels(
-		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels) {
-
-		Stream<AssetListEntryAssetEntryRel> stream =
-			assetListEntryAssetEntryRels.stream();
-
-		return stream.filter(
-			assetListEntryAssetEntryRel -> {
-				AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
-					assetListEntryAssetEntryRel.getAssetEntryId());
-
-				if (assetEntry == null) {
-					return false;
-				}
-
-				if (!assetEntry.isVisible()) {
-					return false;
-				}
-
-				AssetRendererFactory assetRendererFactory =
-					AssetRendererFactoryRegistryUtil.
-						getAssetRendererFactoryByClassName(
-							assetEntry.getClassName());
-
-				if (assetRendererFactory == null) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"No asset renderer factory found for class " +
-								assetEntry.getClassName());
-					}
-
-					return false;
-				}
-
-				return true;
-			}
-		).collect(
-			Collectors.toList()
-		);
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		AssetListEntryAssetEntryRelLocalServiceImpl.class);
 
 	@Reference
-	private AssetEntryLocalService _assetEntryLocalService;
+	private UserLocalService _userLocalService;
 
 }

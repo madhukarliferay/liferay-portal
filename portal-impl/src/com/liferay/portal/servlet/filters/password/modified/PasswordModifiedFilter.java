@@ -1,39 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.password.modified;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
-import com.liferay.portal.kernel.servlet.HttpMethods;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 
-import java.util.Date;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.util.Date;
 
 /**
  * @author Marta Medio
+ * @author Stian Sigvartsen
  */
 public class PasswordModifiedFilter extends BasePortalFilter {
 
@@ -43,45 +35,56 @@ public class PasswordModifiedFilter extends BasePortalFilter {
 			HttpServletResponse httpServletResponse, FilterChain filterChain)
 		throws Exception {
 
-		if (_isPasswordModified(httpServletRequest)) {
-			AuthenticatedSessionManagerUtil.logout(
-				httpServletRequest, httpServletResponse);
+		String requestPath = _getRequestPath(httpServletRequest);
 
-			String redirect = PortalUtil.getCurrentCompleteURL(
-				httpServletRequest);
+		if (!requestPath.equals("/c/portal/logout") &&
+			_isPasswordModified(httpServletRequest)) {
 
-			if (!StringUtil.equals(
-					httpServletRequest.getMethod(), HttpMethods.GET)) {
-
-				redirect = PortalUtil.getPortalURL(httpServletRequest);
-			}
-
-			httpServletResponse.sendRedirect(redirect);
+			httpServletResponse.sendRedirect(
+				PortalUtil.getPathMain() + "/portal/logout");
 		}
 		else {
 			filterChain.doFilter(httpServletRequest, httpServletResponse);
 		}
 	}
 
-	private boolean _isPasswordModified(HttpServletRequest httpServletRequest) {
-		HttpSession session = httpServletRequest.getSession(false);
+	private String _getRequestPath(HttpServletRequest httpServletRequest) {
+		String requestURI = httpServletRequest.getRequestURI();
 
-		if (session == null) {
-			return false;
+		String contextPath = PortalUtil.getPathContext();
+
+		if (Validator.isNotNull(contextPath)) {
+			String proxyPath = PortalUtil.getPathProxy();
+
+			if (Validator.isNotNull(proxyPath) &&
+				contextPath.startsWith(proxyPath)) {
+
+				contextPath = contextPath.substring(proxyPath.length());
+			}
+
+			if (!contextPath.equals(StringPool.SLASH)) {
+				requestURI = requestURI.substring(contextPath.length());
+			}
 		}
 
-		if (!httpServletRequest.isRequestedSessionIdValid()) {
+		return HttpComponentsUtil.removePathParameters(requestURI);
+	}
+
+	private boolean _isPasswordModified(HttpServletRequest httpServletRequest) {
+		HttpSession httpSession = httpServletRequest.getSession(false);
+
+		if ((httpSession == null) ||
+			!httpServletRequest.isRequestedSessionIdValid()) {
+
 			return false;
 		}
 
 		try {
 			User user = PortalUtil.getUser(httpServletRequest);
 
-			if ((user == null) || user.isDefaultUser()) {
-				return false;
-			}
+			if ((user == null) || user.isGuestUser() ||
+				!_isValidRealUserId(httpSession, user)) {
 
-			if (!_isValidRealUserId(session, user)) {
 				return false;
 			}
 
@@ -91,24 +94,34 @@ public class PasswordModifiedFilter extends BasePortalFilter {
 				return false;
 			}
 
+			Long sessionPasswordModifiedTime = (Long)httpSession.getAttribute(
+				WebKeys.USER_PASSWORD_MODIFIED_TIME);
+
+			if ((sessionPasswordModifiedTime != null) &&
+				(sessionPasswordModifiedTime >=
+					passwordModifiedDate.getTime())) {
+
+				return false;
+			}
+
 			if (!httpServletRequest.isRequestedSessionIdValid() ||
-				(session == null) ||
-				(session.getCreationTime() < passwordModifiedDate.getTime())) {
+				(httpSession.getCreationTime() <
+					passwordModifiedDate.getTime())) {
 
 				return true;
 			}
 
 			return false;
 		}
-		catch (PortalException pe) {
-			_log.error(pe, pe);
+		catch (PortalException portalException) {
+			_log.error(portalException);
 
 			return false;
 		}
 	}
 
-	private boolean _isValidRealUserId(HttpSession session, User user) {
-		Long realUserId = (Long)session.getAttribute(WebKeys.USER_ID);
+	private boolean _isValidRealUserId(HttpSession httpSession, User user) {
+		Long realUserId = (Long)httpSession.getAttribute(WebKeys.USER_ID);
 
 		if ((realUserId == null) || (user.getUserId() != realUserId)) {
 			return false;

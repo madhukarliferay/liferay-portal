@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -26,7 +17,21 @@ boolean editable = PrefsParamUtil.getBoolean(PortletPreferencesFactoryUtil.getPo
 boolean formView = PrefsParamUtil.getBoolean(PortletPreferencesFactoryUtil.getPortletSetup(renderRequest), renderRequest, "formView", false);
 long formDDMTemplateId = PrefsParamUtil.getLong(PortletPreferencesFactoryUtil.getPortletSetup(renderRequest), renderRequest, "formDDMTemplateId");
 long recordSetId = PrefsParamUtil.getLong(PortletPreferencesFactoryUtil.getPortletSetup(renderRequest), renderRequest, "recordSetId");
+String scopeType = PrefsParamUtil.getString(PortletPreferencesFactoryUtil.getPortletSetup(renderRequest), renderRequest, "lfrScopeType");
 boolean spreadsheet = PrefsParamUtil.getBoolean(PortletPreferencesFactoryUtil.getPortletSetup(renderRequest), renderRequest, "spreadsheet");
+
+Group scopeGroup = themeDisplay.getScopeGroup();
+
+if (scopeType.equals("company")) {
+	scopeGroup = GroupLocalServiceUtil.getGroup(themeDisplay.getCompanyGroupId());
+
+	scopeGroupId = scopeGroup.getGroupId();
+}
+
+if (scopeGroup.isStagingGroup() && !scopeGroup.isInStagingPortlet(DDLPortletKeys.DYNAMIC_DATA_LISTS)) {
+	scopeGroupId = scopeGroup.getLiveGroupId();
+}
+
 long[] templateGroupIds = PortalUtil.getCurrentAndAncestorSiteGroupIds(scopeGroupId);
 
 DDLRecordSet selRecordSet = DDLRecordSetServiceUtil.fetchRecordSet(recordSetId);
@@ -48,7 +53,7 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 			<aui:input name="redirect" type="hidden" value="<%= configurationRenderURL.toString() %>" />
 
 			<liferay-ui:section>
-				<div class="container-fluid-1280">
+				<clay:container-fluid>
 					<div class="alert alert-info">
 						<span class="displaying-help-message-holder <%= (selRecordSet == null) ? StringPool.BLANK : "hide" %>">
 							<liferay-ui:message key="please-select-a-list-entry-from-the-list-below" />
@@ -58,23 +63,30 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 						</span>
 					</div>
 
-					<%
-					int searchTotal = DDLRecordSetServiceUtil.searchCount(company.getCompanyId(), scopeGroupId, keywords, DDLRecordSetConstants.SCOPE_DYNAMIC_DATA_LISTS);
-					%>
-
 					<aui:fieldset>
 						<div class="lfr-ddl-content">
-							<div class="sheet sheet-lg">
+							<clay:sheet>
 								<liferay-ui:search-container
 									emptyResultsMessage="no-lists-were-found"
 									iteratorURL="<%= configurationRenderURL %>"
-									total="<%= searchTotal %>"
+									total="<%= DDLRecordSetServiceUtil.searchCount(company.getCompanyId(), scopeGroupId, keywords, DDLRecordSetConstants.SCOPE_DYNAMIC_DATA_LISTS) %>"
 								>
 									<div class="form-search input-append">
-										<liferay-ui:input-search
-											autoFocus="<%= true %>"
-											placeholder='<%= LanguageUtil.get(request, "keywords") %>'
-										/>
+										<div class="input-group">
+											<div class="input-group-item">
+												<input aria-label="<%= LanguageUtil.get(request, "search") %>" class="form-control input-group-inset input-group-inset-after search-query" data-qa-id="searchInput" id="<portlet:namespace />keywords" name="<portlet:namespace />keywords" placeholder="<%= LanguageUtil.get(request, "keywords") %>" title="<%= LanguageUtil.get(request, "search") %>" type="text" value="<%= HtmlUtil.escapeAttribute(ParamUtil.getString(request, "keywords")) %>" />
+
+												<div class="input-group-inset-item input-group-inset-item-after">
+													<clay:button
+														data-qa-id="searchButton"
+														displayType="unstyled"
+														icon="search"
+														monospaced="<%= false %>"
+														type="submit"
+													/>
+												</div>
+											</div>
+										</div>
 									</div>
 
 									<liferay-ui:search-container-results
@@ -92,7 +104,7 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 										StringBundler sb = new StringBundler(7);
 
 										sb.append("javascript:");
-										sb.append(renderResponse.getNamespace());
+										sb.append(liferayPortletResponse.getNamespace());
 										sb.append("selectRecordSet('");
 										sb.append(recordSet.getRecordSetId());
 										sb.append("','");
@@ -124,27 +136,28 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 										/>
 									</liferay-ui:search-container-row>
 
-									<div class="separator"></div>
+									<hr class="separator" />
 
 									<liferay-ui:search-iterator
+										markupView="lexicon"
 										searchResultCssClass="show-quick-actions-on-hover table table-autofit"
 									/>
 								</liferay-ui:search-container>
-							</div>
+							</clay:sheet>
 						</div>
 					</aui:fieldset>
-				</div>
+				</clay:container-fluid>
 			</liferay-ui:section>
 		</aui:form>
 
 		<aui:form action="<%= configurationActionURL %>" method="post" name="fm">
 			<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
-			<aui:input name="redirect" type="hidden" value='<%= configurationRenderURL.toString() + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur" + cur %>' />
+			<aui:input name="redirect" type="hidden" value='<%= configurationRenderURL.toString() + StringPool.AMPERSAND + liferayPortletResponse.getNamespace() + "cur" + cur %>' />
 			<aui:input name="preferences--recordSetId--" type="hidden" value="<%= recordSetId %>" />
 
 			<c:if test="<%= selRecordSet != null %>">
 				<liferay-ui:section>
-					<div class="container-fluid-1280">
+					<clay:container-fluid>
 						<div class="alert alert-info">
 							<span class="displaying-record-set-id-holder <%= (selRecordSet == null) ? "hide" : StringPool.BLANK %>">
 								<liferay-ui:message key="displaying-list" />: <span class="displaying-record-set-id"><%= (selRecordSet != null) ? HtmlUtil.escape(selRecordSet.getName(locale)) : StringPool.BLANK %></span>
@@ -153,8 +166,8 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 
 						<aui:fieldset>
 							<div class="lfr-ddl-content">
-								<div class="sheet sheet-lg">
-									<aui:select helpMessage="select-the-display-template-used-to-diplay-the-list-records" label="display-template" name="preferences--displayDDMTemplateId--">
+								<clay:sheet>
+									<aui:select helpMessage="select-the-display-template-used-to-display-the-list-records" label="display-template" name="preferences--displayDDMTemplateId--">
 										<aui:option label="default" value="<%= 0 %>" />
 
 										<%
@@ -223,10 +236,10 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 									<aui:input helpMessage="check-to-display-the-form-entry-view" label="form-view" name="preferences--formView--" type="checkbox" value="<%= formView %>" />
 
 									<aui:input helpMessage="check-to-view-the-list-records-in-a-spreadsheet" label="spreadsheet-view" name="preferences--spreadsheet--" type="checkbox" value="<%= spreadsheet %>" />
-								</div>
+								</clay:sheet>
 							</div>
 						</aui:fieldset>
-					</div>
+					</clay:container-fluid>
 				</liferay-ui:section>
 			</c:if>
 		</aui:form>
@@ -243,7 +256,7 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 	var submitButton = A.one('#<portlet:namespace />fm_submit');
 
 	if (submitButton) {
-		submitButton.on('click', function(event) {
+		submitButton.on('click', (event) => {
 			if (form) {
 				form.submit();
 			}
@@ -252,27 +265,34 @@ String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 </aui:script>
 
 <aui:script>
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectRecordSet',
-		function(recordSetId, recordSetName) {
-			var A = AUI();
+	window['<portlet:namespace />selectRecordSet'] = function (
+		recordSetId,
+		recordSetName
+	) {
+		document.<portlet:namespace />fm.<portlet:namespace />recordSetId.value =
+			recordSetId;
 
-			document.<portlet:namespace />fm.<portlet:namespace />recordSetId.value = recordSetId;
+		var displayingRecordSetIdHolder = document.querySelector(
+			'.displaying-record-set-id-holder'
+		);
+		displayingRecordSetIdHolder.classList.remove('hide');
+		displayingRecordSetIdHolder.removeAttribute('hidden');
+		displayingRecordSetIdHolder.style.display = '';
 
-			A.one('.displaying-record-set-id-holder').show();
-			A.one('.displaying-help-message-holder').hide();
+		var displayingHelpMessageHolder = document.querySelector(
+			'.displaying-help-message-holder'
+		);
+		displayingHelpMessageHolder.classList.add('hide');
+		displayingHelpMessageHolder.setAttribute('hidden', 'hidden');
+		displayingHelpMessageHolder.style.display = 'none';
 
-			var displayRecordSetId = A.one('.displaying-record-set-id');
-
-			displayRecordSetId.set(
-				'innerHTML',
-				recordSetName + ' (<liferay-ui:message key="modified" />)'
-			);
-			displayRecordSetId.addClass('modified');
-		},
-		['aui-base']
-	);
+		var displayRecordSetId = document.querySelector(
+			'.displaying-record-set-id'
+		);
+		displayRecordSetId.innerHTML =
+			recordSetName + ' (<liferay-ui:message key="modified" />)';
+		displayRecordSetId.classList.add('modified');
+	};
 </aui:script>
 
 <%!
@@ -286,13 +306,13 @@ private OrderByComparator<DDLRecordSet> getDDLRecordSetOrderByComparator(String 
 	OrderByComparator<DDLRecordSet> orderByComparator = null;
 
 	if (orderByCol.equals("create-date")) {
-		orderByComparator = new DDLRecordSetCreateDateComparator(orderByAsc);
+		orderByComparator = DDLRecordSetCreateDateComparator.getInstance(orderByAsc);
 	}
 	else if (orderByCol.equals("modified-date")) {
 		orderByComparator = new DDLRecordSetModifiedDateComparator(orderByAsc);
 	}
 	else if (orderByCol.equals("name")) {
-		orderByComparator = new DDLRecordSetNameComparator(orderByAsc);
+		orderByComparator = DDLRecordSetNameComparator.getInstance(orderByAsc);
 	}
 
 	return orderByComparator;

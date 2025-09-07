@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link WebDAVPropsLocalService}.
@@ -25,6 +18,10 @@ public class WebDAVPropsLocalServiceWrapper
 	implements ServiceWrapper<WebDAVPropsLocalService>,
 			   WebDAVPropsLocalService {
 
+	public WebDAVPropsLocalServiceWrapper() {
+		this(null);
+	}
+
 	public WebDAVPropsLocalServiceWrapper(
 		WebDAVPropsLocalService webDAVPropsLocalService) {
 
@@ -34,6 +31,10 @@ public class WebDAVPropsLocalServiceWrapper
 	/**
 	 * Adds the web dav props to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebDAVPropsLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param webDAVProps the web dav props
 	 * @return the web dav props that was added
 	 */
@@ -42,6 +43,17 @@ public class WebDAVPropsLocalServiceWrapper
 		com.liferay.portal.kernel.model.WebDAVProps webDAVProps) {
 
 		return _webDAVPropsLocalService.addWebDAVProps(webDAVProps);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _webDAVPropsLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -71,6 +83,10 @@ public class WebDAVPropsLocalServiceWrapper
 	/**
 	 * Deletes the web dav props with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebDAVPropsLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param webDavPropsId the primary key of the web dav props
 	 * @return the web dav props that was removed
 	 * @throws PortalException if a web dav props with the primary key could not be found
@@ -84,12 +100,16 @@ public class WebDAVPropsLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteWebDAVProps(java.lang.String className, long classPK) {
+	public void deleteWebDAVProps(String className, long classPK) {
 		_webDAVPropsLocalService.deleteWebDAVProps(className, classPK);
 	}
 
 	/**
 	 * Deletes the web dav props from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebDAVPropsLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param webDAVProps the web dav props
 	 * @return the web dav props that was removed
@@ -99,6 +119,18 @@ public class WebDAVPropsLocalServiceWrapper
 		com.liferay.portal.kernel.model.WebDAVProps webDAVProps) {
 
 		return _webDAVPropsLocalService.deleteWebDAVProps(webDAVProps);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _webDAVPropsLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _webDAVPropsLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -218,10 +250,13 @@ public class WebDAVPropsLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _webDAVPropsLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -247,7 +282,7 @@ public class WebDAVPropsLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.WebDAVProps getWebDAVProps(
-		long companyId, java.lang.String className, long classPK) {
+		long companyId, String className, long classPK) {
 
 		return _webDAVPropsLocalService.getWebDAVProps(
 			companyId, className, classPK);
@@ -292,6 +327,10 @@ public class WebDAVPropsLocalServiceWrapper
 	/**
 	 * Updates the web dav props in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebDAVPropsLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param webDAVProps the web dav props
 	 * @return the web dav props that was updated
 	 */
@@ -300,6 +339,11 @@ public class WebDAVPropsLocalServiceWrapper
 		com.liferay.portal.kernel.model.WebDAVProps webDAVProps) {
 
 		return _webDAVPropsLocalService.updateWebDAVProps(webDAVProps);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _webDAVPropsLocalService.getBasePersistence();
 	}
 
 	@Override

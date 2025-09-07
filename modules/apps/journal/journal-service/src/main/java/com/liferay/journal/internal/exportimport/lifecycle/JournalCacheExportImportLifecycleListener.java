@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.internal.exportimport.lifecycle;
@@ -19,6 +10,7 @@ import com.liferay.exportimport.kernel.lifecycle.EventAwareExportImportLifecycle
 import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleListener;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.journal.constants.JournalPortletKeys;
+import com.liferay.journal.internal.exportimport.content.processor.JournalArticleExportImportProcessorCache;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.portal.kernel.model.StagedModel;
 
@@ -41,6 +33,8 @@ public class JournalCacheExportImportLifecycleListener
 	public void onLayoutExportFailed(
 			PortletDataContext portletDataContext, Throwable throwable)
 		throws Exception {
+
+		_journalArticleExportImportCache.clear();
 	}
 
 	@Override
@@ -51,6 +45,8 @@ public class JournalCacheExportImportLifecycleListener
 	@Override
 	public void onLayoutExportSucceeded(PortletDataContext portletDataContext)
 		throws Exception {
+
+		_journalArticleExportImportCache.clear();
 	}
 
 	@Override
@@ -64,7 +60,7 @@ public class JournalCacheExportImportLifecycleListener
 			PortletDataContext portletDataContext)
 		throws Exception {
 
-		clearCache();
+		_clearCache();
 	}
 
 	@Override
@@ -148,7 +144,7 @@ public class JournalCacheExportImportLifecycleListener
 			return;
 		}
 
-		clearCache();
+		_clearCache();
 	}
 
 	@Override
@@ -218,15 +214,15 @@ public class JournalCacheExportImportLifecycleListener
 		throws Exception {
 	}
 
-	protected void clearCache() {
+	private void _clearCache() {
 		_journalContent.clearCache();
 	}
 
-	@Reference(unbind = "-")
-	protected void setJournalContent(JournalContent journalContent) {
-		_journalContent = journalContent;
-	}
+	@Reference
+	private JournalArticleExportImportProcessorCache
+		_journalArticleExportImportCache;
 
+	@Reference
 	private JournalContent _journalContent;
 
 }

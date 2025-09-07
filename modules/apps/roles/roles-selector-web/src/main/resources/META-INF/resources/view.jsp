@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -57,12 +48,17 @@ if (group.isOrganization()) {
 
 String className = ParamUtil.getString(request, "className", User.class.getName());
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("tabs1", tabs1);
-portletURL.setParameter("redirect", redirect);
-portletURL.setParameter("className", className);
-portletURL.setParameter("groupId", String.valueOf(group.getGroupId()));
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setRedirect(
+	redirect
+).setTabs1(
+	tabs1
+).setParameter(
+	"className", className
+).setParameter(
+	"groupId", group.getGroupId()
+).buildPortletURL();
 
 if (role != null) {
 	portletURL.setParameter("roleId", String.valueOf(roleId));
@@ -93,8 +89,7 @@ request.setAttribute("edit_roles.jsp-portletURL", portletURL);
 					add(
 						navigationItem -> {
 							navigationItem.setActive(true);
-							navigationItem.setHref(StringPool.BLANK);
-							navigationItem.setLabel(LanguageUtil.get(request, "roles"));
+							navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "roles"));
 						});
 				}
 				else {
@@ -102,14 +97,14 @@ request.setAttribute("edit_roles.jsp-portletURL", portletURL);
 						navigationItem -> {
 							navigationItem.setActive(tabs1.equals("current"));
 							navigationItem.setHref(portletURL, "tabs1", "current");
-							navigationItem.setLabel(LanguageUtil.get(request, "current"));
+							navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "current"));
 						});
 
 					add(
 						navigationItem -> {
 							navigationItem.setActive(tabs1.equals("available"));
 							navigationItem.setHref(portletURL, "tabs1", "available");
-							navigationItem.setLabel(LanguageUtil.get(request, "available"));
+							navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "available"));
 						});
 				}
 			}
@@ -118,76 +113,82 @@ request.setAttribute("edit_roles.jsp-portletURL", portletURL);
 />
 
 <%
-String stripeMessage;
+String stripeMessage = null;
 
 if (role == null) {
 	stripeMessage = LanguageUtil.format(request, "step-x-of-x", new String[] {"1", "2"}, false) + StringPool.SPACE + LanguageUtil.get(request, "choose-a-role");
 }
 else {
-	stripeMessage =
-		LanguageUtil.format(request, "step-x-of-x", new String[] {"2", "2"}, false) + StringPool.SPACE +
-		LanguageUtil.format(
-			request, "current-signifies-current-users-associated-with-the-x-role.-available-signifies-all-users-associated-with-the-x-x",
-			new String[] {
-				HtmlUtil.escape(role.getTitle(locale)),
-				HtmlUtil.escape(groupDescriptiveName),
-				LanguageUtil.get(request, (group.isOrganization() ? "organization" : "site"))
-			});
+	stripeMessage = LanguageUtil.format(request, "step-x-of-x", new String[] {"2", "2"}, false) + StringPool.SPACE + LanguageUtil.format(request, "current-signifies-current-users-associated-with-the-x-role.-available-signifies-all-users-associated-with-the-x-x", new String[] {HtmlUtil.escape(role.getTitle(locale)), HtmlUtil.escape(groupDescriptiveName), LanguageUtil.get(request, group.isOrganization() ? "organization" : "site")});
 }
 %>
 
 <clay:stripe
-	destroyOnHide="<%= true %>"
 	message="<%= stripeMessage %>"
-	title='<%= LanguageUtil.get(request, "info") %>'
 />
 
+<%
+String methodName = null;
+%>
+
+<liferay-util:buffer
+	var="resultsHTML"
+>
+	<c:choose>
+		<c:when test="<%= role == null %>">
+			<liferay-util:include page="/edit_roles.jsp" servletContext="<%= application %>" />
+		</c:when>
+		<c:otherwise>
+			<c:choose>
+				<c:when test="<%= className.equals(User.class.getName()) %>">
+
+					<%
+					methodName = "updateUserGroupRoleUsers";
+					%>
+
+					<liferay-util:include page="/edit_roles_users.jsp" servletContext="<%= application %>" />
+				</c:when>
+				<c:otherwise>
+
+					<%
+					methodName = "updateUserGroupGroupRoleUsers";
+					%>
+
+					<liferay-util:include page="/edit_roles_user_groups.jsp" servletContext="<%= application %>" />
+				</c:otherwise>
+			</c:choose>
+		</c:otherwise>
+	</c:choose>
+</liferay-util:buffer>
+
+<%
+PortletURL clearResultsURL = PortletURLBuilder.create(
+	(PortletURL)request.getAttribute("edit_roles.jsp-portletURL")
+).setKeywords(
+	StringPool.BLANK
+).buildPortletURL();
+
+SearchContainer<?> searchContainer = (SearchContainer<?>)request.getAttribute("liferay-ui:search:searchContainer");
+%>
+
 <clay:management-toolbar
-	clearResultsURL="<%= portletURL.toString() %>"
-	namespace="<%= renderResponse.getNamespace() %>"
+	clearResultsURL="<%= clearResultsURL.toString() %>"
+	itemsTotal="<%= searchContainer.getTotal() %>"
 	searchActionURL="<%= portletURL.toString() %>"
 	selectable="<%= false %>"
 	showCreationMenu="<%= false %>"
 />
 
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
+<aui:form action="<%= portletURL %>" method="post" name="fm">
 	<aui:input name="tabs1" type="hidden" value="<%= tabs1 %>" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="groupId" type="hidden" value="<%= String.valueOf(group.getGroupId()) %>" />
 	<aui:input name="roleId" type="hidden" value="<%= roleId %>" />
 
-	<%
-	String methodName = null;
-	%>
-
 	<div class="roles-selector-body">
-		<div class="container-fluid-1280">
-			<c:choose>
-				<c:when test="<%= role == null %>">
-					<liferay-util:include page="/edit_roles.jsp" servletContext="<%= application %>" />
-				</c:when>
-				<c:otherwise>
-					<c:choose>
-						<c:when test="<%= className.equals(User.class.getName()) %>">
-
-							<%
-							methodName = "updateUserGroupRoleUsers";
-							%>
-
-							<liferay-util:include page="/edit_roles_users.jsp" servletContext="<%= application %>" />
-						</c:when>
-						<c:otherwise>
-
-							<%
-							methodName = "updateUserGroupGroupRoleUsers";
-							%>
-
-							<liferay-util:include page="/edit_roles_user_groups.jsp" servletContext="<%= application %>" />
-						</c:otherwise>
-					</c:choose>
-				</c:otherwise>
-			</c:choose>
-		</div>
+		<clay:container-fluid>
+			<%= resultsHTML %>
+		</clay:container-fluid>
 	</div>
 
 	<aui:button-row>
@@ -196,7 +197,7 @@ else {
 			<%
 			portletURL.setParameter("cur", String.valueOf(cur));
 
-			String taglibOnClick = renderResponse.getNamespace() + methodName + "('" + portletURL.toString() + "');";
+			String taglibOnClick = liferayPortletResponse.getNamespace() + methodName + "('" + portletURL.toString() + "');";
 			%>
 
 			<aui:button onClick="<%= taglibOnClick %>" primary="<%= true %>" value="update-associations" />
@@ -206,7 +207,7 @@ else {
 	</aui:button-row>
 </aui:form>
 
-<script>
+<aui:script>
 	function <portlet:namespace />updateUserGroupGroupRoleUsers(redirect) {
 		var Util = Liferay.Util;
 
@@ -215,16 +216,16 @@ else {
 		Util.postForm(form, {
 			data: {
 				redirect: redirect,
-				addUserGroupIds: Util.listCheckedExcept(
+				addUserGroupIds: Util.getCheckedCheckboxes(
 					form,
 					'<portlet:namespace />allRowIds'
 				),
-				removeUserGroupIds: Util.listUncheckedExcept(
+				removeUserGroupIds: Util.getUncheckedCheckboxes(
 					form,
 					'<portlet:namespace />allRowIds'
-				)
+				),
 			},
-			url: '<portlet:actionURL name="editUserGroupGroupRoleUsers" />'
+			url: '<portlet:actionURL name="editUserGroupGroupRoleUsers" />',
 		});
 	}
 
@@ -236,16 +237,16 @@ else {
 		Util.postForm(form, {
 			data: {
 				redirect: redirect,
-				addUserIds: Util.listCheckedExcept(
+				addUserIds: Util.getCheckedCheckboxes(
 					form,
 					'<portlet:namespace />allRowIds'
 				),
-				removeUserIds: Util.listUncheckedExcept(
+				removeUserIds: Util.getUncheckedCheckboxes(
 					form,
 					'<portlet:namespace />allRowIds'
-				)
+				),
 			},
-			url: '<portlet:actionURL name="editUserGroupRoleUsers" />'
+			url: '<portlet:actionURL name="editUserGroupRoleUsers" />',
 		});
 	}
-</script>
+</aui:script>

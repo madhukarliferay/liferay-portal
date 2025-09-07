@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.type;
@@ -17,23 +8,27 @@ package com.liferay.site.navigation.type;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Pavel Savinov
@@ -49,14 +44,47 @@ public interface SiteNavigationMenuItemType {
 		return true;
 	}
 
+	public default String getAddTitle(Locale locale) {
+		return LanguageUtil.format(locale, "add-x", getLabel(locale));
+	}
+
 	public default PortletURL getAddURL(
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
 		return null;
 	}
 
+	public default List<SiteNavigationMenuItem>
+			getChildrenSiteNavigationMenuItems(
+				HttpServletRequest httpServletRequest,
+				SiteNavigationMenuItem siteNavigationMenuItem)
+		throws Exception {
+
+		if (isDynamic()) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException();
+	}
+
+	public default String getDisplayIcon(
+		SiteNavigationMenuItem siteNavigationMenuItem) {
+
+		UnicodeProperties unicodeProperties = UnicodePropertiesBuilder.fastLoad(
+			siteNavigationMenuItem.getTypeSettings()
+		).build();
+
+		return unicodeProperties.getProperty("displayIcon", StringPool.BLANK);
+	}
+
 	public default String getIcon() {
 		return "magic";
+	}
+
+	public default String getItemSelectorURL(
+		HttpServletRequest httpServletRequest) {
+
+		return null;
 	}
 
 	public String getLabel(Locale locale);
@@ -68,11 +96,12 @@ public interface SiteNavigationMenuItemType {
 	}
 
 	public default String getName(String typeSettings) {
-		UnicodeProperties typeSettingsProperties = new UnicodeProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			UnicodePropertiesBuilder.fastLoad(
+				typeSettings
+			).build();
 
-		typeSettingsProperties.fastLoad(typeSettings);
-
-		return typeSettingsProperties.get("name");
+		return typeSettingsUnicodeProperties.get("name");
 	}
 
 	public default String getRegularURL(
@@ -95,6 +124,24 @@ public interface SiteNavigationMenuItemType {
 			HttpServletRequest httpServletRequest,
 			SiteNavigationMenuItem siteNavigationMenuItem)
 		throws Exception {
+
+		return StringPool.BLANK;
+	}
+
+	public default List<SiteNavigationMenuItem> getSiteNavigationMenuItems(
+			HttpServletRequest httpServletRequest,
+			SiteNavigationMenuItem siteNavigationMenuItem)
+		throws Exception {
+
+		if (isDynamic()) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException();
+	}
+
+	public default String getStatusIcon(
+		SiteNavigationMenuItem siteNavigationMenuItem) {
 
 		return StringPool.BLANK;
 	}
@@ -155,6 +202,12 @@ public interface SiteNavigationMenuItemType {
 		return true;
 	}
 
+	public default boolean isAvailable(
+		SiteNavigationMenuItemTypeContext siteNavigationMenuItemTypeContext) {
+
+		return true;
+	}
+
 	public default boolean isBrowsable(
 		SiteNavigationMenuItem siteNavigationMenuItem) {
 
@@ -166,6 +219,18 @@ public interface SiteNavigationMenuItemType {
 			Layout curLayout)
 		throws PortalException {
 
+		return false;
+	}
+
+	public default boolean isDynamic() {
+		return false;
+	}
+
+	public default boolean isItemSelector() {
+		return false;
+	}
+
+	public default boolean isMultiSelection() {
 		return false;
 	}
 

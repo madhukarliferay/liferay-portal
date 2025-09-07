@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DDMStructureLayout. This utility wraps
@@ -32,7 +26,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMStructureLayoutServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMStructureLayoutServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -47,10 +41,9 @@ public class DDMStructureLayoutServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStructureLayout>
-				getStructureLayouts(long groupId, int start, int end)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMStructureLayout> getStructureLayouts(
+			long groupId, int start, int end)
+		throws PortalException {
 
 		return getService().getStructureLayouts(groupId, start, end);
 	}
@@ -59,14 +52,11 @@ public class DDMStructureLayoutServiceUtil {
 		return getService().getStructureLayoutsCount(groupId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStructureLayout> search(
-				long companyId, long[] groupIds, long classNameId,
-				String keywords, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.dynamic.data.mapping.model.DDMStructureLayout>
-						orderByComparator)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMStructureLayout> search(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			int start, int end,
+			OrderByComparator<DDMStructureLayout> orderByComparator)
+		throws PortalException {
 
 		return getService().search(
 			companyId, groupIds, classNameId, keywords, start, end,
@@ -74,26 +64,12 @@ public class DDMStructureLayoutServiceUtil {
 	}
 
 	public static DDMStructureLayoutService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMStructureLayoutService, DDMStructureLayoutService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMStructureLayoutService> _serviceSnapshot =
+		new Snapshot<>(
+			DDMStructureLayoutServiceUtil.class,
 			DDMStructureLayoutService.class);
-
-		ServiceTracker<DDMStructureLayoutService, DDMStructureLayoutService>
-			serviceTracker =
-				new ServiceTracker
-					<DDMStructureLayoutService, DDMStructureLayoutService>(
-						bundle.getBundleContext(),
-						DDMStructureLayoutService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

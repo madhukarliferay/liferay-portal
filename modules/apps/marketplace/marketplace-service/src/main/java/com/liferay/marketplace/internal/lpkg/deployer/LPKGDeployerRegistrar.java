@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.marketplace.internal.lpkg.deployer;
@@ -57,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Shuyang Zhou
  * @author Ryan Park
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class LPKGDeployerRegistrar {
 
 	@Activate
@@ -66,6 +57,10 @@ public class LPKGDeployerRegistrar {
 
 		Map<Bundle, List<Bundle>> deployedLPKGBundles =
 			_lpkgDeployer.getDeployedLPKGBundles();
+
+		if (deployedLPKGBundles.isEmpty()) {
+			return;
+		}
 
 		Map<Long, App> apps = new HashMap<>();
 
@@ -98,13 +93,6 @@ public class LPKGDeployerRegistrar {
 		bundleContext.removeBundleListener(_bundleListener);
 	}
 
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.marketplace.service)(release.schema.version=2.0.2))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
-	}
-
 	private void _doRegister(
 			Bundle lpkgBundle, Map<Long, App> apps,
 			Map<Long, List<Module>> modules)
@@ -116,8 +104,7 @@ public class LPKGDeployerRegistrar {
 			return;
 		}
 
-		Properties properties = PropertiesUtil.load(
-			url.openStream(), StringPool.ISO_8859_1);
+		Properties properties = PropertiesUtil.load(url);
 
 		long remoteAppId = GetterUtil.getLong(
 			properties.getProperty("remote-app-id"));
@@ -209,7 +196,11 @@ public class LPKGDeployerRegistrar {
 		}
 
 		for (Tuple tuple : oldTuples) {
-			_moduleLocalService.deleteModule(tuple._moduleId);
+			Module module = _moduleLocalService.fetchModule(tuple._moduleId);
+
+			if (module != null) {
+				_moduleLocalService.deleteModule(tuple._moduleId);
+			}
 		}
 
 		for (Tuple tuple : newTuples) {
@@ -226,11 +217,11 @@ public class LPKGDeployerRegistrar {
 		try {
 			_doRegister(lpkgBundle, apps, modules);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_log.error(
 				"Unable to track installed app " +
 					lpkgBundle.getSymbolicName() + " with Marketplace",
-				e);
+				exception);
 		}
 	}
 
@@ -258,11 +249,16 @@ public class LPKGDeployerRegistrar {
 	@Reference
 	private ModuleLocalService _moduleLocalService;
 
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.marketplace.service)(release.schema.version=2.0.3))"
+	)
+	private Release _release;
+
 	private static class Tuple {
 
 		@Override
-		public boolean equals(Object obj) {
-			Tuple tuple = (Tuple)obj;
+		public boolean equals(Object object) {
+			Tuple tuple = (Tuple)object;
 
 			if (Objects.equals(_symbolicName, tuple._symbolicName) &&
 				Objects.equals(_version, tuple._version) &&

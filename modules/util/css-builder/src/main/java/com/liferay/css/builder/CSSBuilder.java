@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.css.builder;
@@ -19,12 +10,11 @@ import com.beust.jcommander.ParameterException;
 
 import com.liferay.css.builder.internal.util.CSSBuilderUtil;
 import com.liferay.css.builder.internal.util.FileUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.rtl.css.RTLCSSConverter;
 import com.liferay.sass.compiler.SassCompiler;
-import com.liferay.sass.compiler.SassCompilerException;
-import com.liferay.sass.compiler.jni.internal.JniSassCompiler;
-import com.liferay.sass.compiler.jsass.internal.JSassCompiler;
-import com.liferay.sass.compiler.ruby.internal.RubySassCompiler;
+import com.liferay.sass.compiler.dart.internal.DartSassCompiler;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +31,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -81,8 +70,8 @@ public class CSSBuilder implements AutoCloseable {
 				}
 			}
 		}
-		catch (ParameterException pe) {
-			System.err.println(pe.getMessage());
+		catch (ParameterException parameterException) {
+			System.err.println(parameterException.getMessage());
 
 			_printHelp(jCommander);
 
@@ -93,16 +82,16 @@ public class CSSBuilder implements AutoCloseable {
 	public CSSBuilder(CSSBuilderArgs cssBuilderArgs) throws Exception {
 		_cssBuilderArgs = cssBuilderArgs;
 
-		List<File> importPaths = _cssBuilderArgs.getImportPaths();
+		List<File> importPaths = cssBuilderArgs.getImportPaths();
 
-		List<String> excludes = _cssBuilderArgs.getExcludes();
+		List<String> excludes = cssBuilderArgs.getExcludes();
 
 		_excludes = excludes.toArray(new String[0]);
 
 		_importPath = Files.createTempDirectory("portalCssImportPath");
 
 		if ((importPaths != null) && !importPaths.isEmpty()) {
-			StringBuilder sb = new StringBuilder();
+			StringBundler sb = new StringBundler();
 
 			for (File importPath : importPaths) {
 				if (importPath.isFile()) {
@@ -120,7 +109,7 @@ public class CSSBuilder implements AutoCloseable {
 		}
 
 		List<String> rtlExcludedPathRegexps =
-			_cssBuilderArgs.getRtlExcludedPathRegexps();
+			cssBuilderArgs.getRtlExcludedPathRegexps();
 
 		_rtlExcludedPathPatterns = new Pattern[rtlExcludedPathRegexps.size()];
 
@@ -129,7 +118,7 @@ public class CSSBuilder implements AutoCloseable {
 				rtlExcludedPathRegexps.get(i));
 		}
 
-		_initSassCompiler(_cssBuilderArgs.getSassCompilerClassName());
+		_initSassCompiler(cssBuilderArgs.getSassCompilerClassName());
 	}
 
 	@Override
@@ -140,13 +129,13 @@ public class CSSBuilder implements AutoCloseable {
 	}
 
 	public void execute() throws Exception {
-		List<String> fileNames = new ArrayList<>();
-
 		File baseDir = _cssBuilderArgs.getBaseDir();
 
 		if (!baseDir.exists()) {
 			throw new IOException("Directory " + baseDir + " does not exist");
 		}
+
+		List<String> fileNames = new ArrayList<>();
 
 		for (String dirName : _cssBuilderArgs.getDirNames()) {
 			List<String> sassFileNames = _collectSassFiles(dirName, baseDir);
@@ -166,9 +155,9 @@ public class CSSBuilder implements AutoCloseable {
 			_parseSassFile(fileName);
 
 			System.out.println(
-				"Parsed " + fileName + " in " +
-					String.valueOf(System.currentTimeMillis() - startTime) +
-						"ms");
+				StringBundler.concat(
+					"Parsed ", fileName, " in ",
+					System.currentTimeMillis() - startTime, "ms"));
 		}
 	}
 
@@ -198,13 +187,11 @@ public class CSSBuilder implements AutoCloseable {
 		String[] scssFiles = _getScssFiles(basedir);
 
 		if (!_isModified(basedir, scssFiles)) {
-			long oldestSassModifiedTime = _getOldestModifiedTime(
-				basedir, scssFiles);
+			long oldestSassModifiedTime = _getModifiedTime(
+				basedir, scssFiles, Comparator.naturalOrder());
 
-			String[] scssFragments = _getScssFragments(basedir);
-
-			long newestFragmentModifiedTime = _getNewestModifiedTime(
-				basedir, scssFragments);
+			long newestFragmentModifiedTime = _getModifiedTime(
+				basedir, _getScssFragments(basedir), Comparator.reverseOrder());
 
 			if (oldestSassModifiedTime > newestFragmentModifiedTime) {
 				return fileNames;
@@ -222,32 +209,21 @@ public class CSSBuilder implements AutoCloseable {
 		return fileNames;
 	}
 
-	private long _getNewestModifiedTime(String baseDir, String[] fileNames) {
-		return Stream.of(
-			fileNames
-		).map(
-			fileName -> Paths.get(baseDir, fileName)
-		).map(
-			FileUtil::getLastModifiedTime
-		).max(
-			Comparator.naturalOrder()
-		).orElse(
-			Long.MIN_VALUE
-		);
-	}
+	private long _getModifiedTime(
+		String baseDir, String[] fileNames, Comparator<Long> comparator) {
 
-	private long _getOldestModifiedTime(String baseDir, String[] fileNames) {
-		return Stream.of(
-			fileNames
-		).map(
-			fileName -> Paths.get(baseDir, fileName)
-		).map(
-			FileUtil::getLastModifiedTime
-		).min(
-			Comparator.naturalOrder()
-		).orElse(
-			Long.MIN_VALUE
-		);
+		List<Long> lastModifiedTimes = TransformUtil.transformToList(
+			fileNames,
+			fileName -> FileUtil.getLastModifiedTime(
+				Paths.get(baseDir, fileName)));
+
+		if (lastModifiedTimes.isEmpty()) {
+			return Long.MIN_VALUE;
+		}
+
+		lastModifiedTimes.sort(comparator);
+
+		return lastModifiedTimes.get(0);
 	}
 
 	private String _getRtlCss(String fileName, String css) {
@@ -260,16 +236,17 @@ public class CSSBuilder implements AutoCloseable {
 
 			rtlCss = _rtlCSSConverter.process(rtlCss);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			System.out.println(
-				"Unable to generate RTL version for " + fileName + ", " +
-					e.getMessage());
+				StringBundler.concat(
+					"Unable to generate RTL version for ", fileName, ", ",
+					exception.getMessage()));
 		}
 
 		return rtlCss;
 	}
 
-	private String[] _getScssFiles(String baseDir) throws IOException {
+	private String[] _getScssFiles(String baseDir) throws Exception {
 		String[] includes = {"**/*.scss"};
 
 		String[] excludes = Arrays.copyOf(_excludes, _excludes.length + 1);
@@ -279,10 +256,9 @@ public class CSSBuilder implements AutoCloseable {
 		return FileUtil.getFilesFromDirectory(baseDir, includes, excludes);
 	}
 
-	private String[] _getScssFragments(String baseDir) throws IOException {
-		String[] includes = {"**/_*.scss"};
-
-		return FileUtil.getFilesFromDirectory(baseDir, includes, _excludes);
+	private String[] _getScssFragments(String baseDir) throws Exception {
+		return FileUtil.getFilesFromDirectory(
+			baseDir, new String[] {"**/_*.scss"}, _excludes);
 	}
 
 	private void _initSassCompiler(String sassCompilerClassName)
@@ -292,47 +268,26 @@ public class CSSBuilder implements AutoCloseable {
 
 		if ((sassCompilerClassName == null) ||
 			sassCompilerClassName.isEmpty() ||
-			sassCompilerClassName.equals("jni")) {
+			sassCompilerClassName.equals("dart")) {
 
-			try {
-				_sassCompiler = new JSassCompiler(precision);
-
-				System.out.println("Using native Sass compiler");
-			}
-			catch (Throwable t) {
-				System.out.println(
-					"Unable to load native compiler, falling back to Ruby");
-
-				_sassCompiler = new RubySassCompiler(precision);
-			}
+			System.out.println("Using Dart Sass compiler");
 		}
-		else if (sassCompilerClassName.equals("jni32")) {
-			try {
-				System.setProperty("jna.nosys", Boolean.TRUE.toString());
+		else if (sassCompilerClassName.equals("jni") ||
+				 sassCompilerClassName.equals("jni32") ||
+				 sassCompilerClassName.equals("ruby")) {
 
-				_sassCompiler = new JniSassCompiler(precision);
-
-				System.out.println("Using native 32-bit Sass compiler");
-			}
-			catch (Throwable t) {
-				System.out.println(
-					"Unable to load native compiler, falling back to Ruby");
-
-				_sassCompiler = new RubySassCompiler(precision);
-			}
+			System.out.println(
+				"Using Dart Sass compiler because other sass compilers are " +
+					"no longer supported");
 		}
-		else if (sassCompilerClassName.equals("ruby")) {
-			try {
-				_sassCompiler = new RubySassCompiler(precision);
 
-				System.out.println("Using Ruby Sass compiler");
-			}
-			catch (Exception e) {
-				System.out.println(
-					"Unable to load Ruby compiler, falling back to native");
+		try {
+			_sassCompiler = new DartSassCompiler(precision);
+		}
+		catch (Throwable throwable) {
+			System.out.println("Unable to load sass compiler");
 
-				_sassCompiler = new JSassCompiler(precision);
-			}
+			throw throwable;
 		}
 	}
 
@@ -365,12 +320,10 @@ public class CSSBuilder implements AutoCloseable {
 		return fileName;
 	}
 
-	private String _parseSass(String fileName) throws SassCompilerException {
+	private String _parseSass(String fileName) throws Exception {
 		File sassFile = new File(_cssBuilderArgs.getBaseDir(), fileName);
 
-		Path path = sassFile.toPath();
-
-		String filePath = path.toString();
+		String filePath = String.valueOf(sassFile.toPath());
 
 		String cssBasePath = filePath;
 
@@ -427,7 +380,7 @@ public class CSSBuilder implements AutoCloseable {
 		_writeOutputFile(fileName, rtlContent, true);
 	}
 
-	private File _unzipImport(File importFile) throws IOException {
+	private File _unzipImport(File importFile) throws Exception {
 		Path outputPath = _importPath.resolve(importFile.getName());
 
 		try (ZipFile zipFile = new ZipFile(importFile)) {
@@ -447,6 +400,12 @@ public class CSSBuilder implements AutoCloseable {
 				name = name.substring(19);
 
 				Path path = outputPath.resolve(name);
+
+				Path canonicalPath = path.normalize();
+
+				if (!canonicalPath.equals(path)) {
+					continue;
+				}
 
 				Files.createDirectories(path.getParent());
 

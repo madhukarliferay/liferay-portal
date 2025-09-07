@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -50,7 +41,6 @@ public class PortletPreferencesWrapper
 		attributes.put("ownerType", getOwnerType());
 		attributes.put("plid", getPlid());
 		attributes.put("portletId", getPortletId());
-		attributes.put("preferences", getPreferences());
 
 		return attributes;
 	}
@@ -105,12 +95,11 @@ public class PortletPreferencesWrapper
 		if (portletId != null) {
 			setPortletId(portletId);
 		}
+	}
 
-		String preferences = (String)attributes.get("preferences");
-
-		if (preferences != null) {
-			setPreferences(preferences);
-		}
+	@Override
+	public PortletPreferences cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -194,16 +183,6 @@ public class PortletPreferencesWrapper
 	}
 
 	/**
-	 * Returns the preferences of this portlet preferences.
-	 *
-	 * @return the preferences of this portlet preferences
-	 */
-	@Override
-	public String getPreferences() {
-		return model.getPreferences();
-	}
-
-	/**
 	 * Returns the primary key of this portlet preferences.
 	 *
 	 * @return the primary key of this portlet preferences
@@ -213,11 +192,6 @@ public class PortletPreferencesWrapper
 		return model.getPrimaryKey();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a portlet preferences model instance should use the <code>PortletPreferences</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -304,16 +278,6 @@ public class PortletPreferencesWrapper
 	}
 
 	/**
-	 * Sets the preferences of this portlet preferences.
-	 *
-	 * @param preferences the preferences of this portlet preferences
-	 */
-	@Override
-	public void setPreferences(String preferences) {
-		model.setPreferences(preferences);
-	}
-
-	/**
 	 * Sets the primary key of this portlet preferences.
 	 *
 	 * @param primaryKey the primary key of this portlet preferences
@@ -321,6 +285,11 @@ public class PortletPreferencesWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

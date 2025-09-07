@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.model.impl;
@@ -37,16 +28,16 @@ public class WikiPageCacheModel
 	implements CacheModel<WikiPage>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof WikiPageCacheModel)) {
+		if (!(object instanceof WikiPageCacheModel)) {
 			return false;
 		}
 
-		WikiPageCacheModel wikiPageCacheModel = (WikiPageCacheModel)obj;
+		WikiPageCacheModel wikiPageCacheModel = (WikiPageCacheModel)object;
 
 		if ((pageId == wikiPageCacheModel.pageId) &&
 			(mvccVersion == wikiPageCacheModel.mvccVersion)) {
@@ -76,10 +67,12 @@ public class WikiPageCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(51);
+		StringBundler sb = new StringBundler(55);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", pageId=");
@@ -98,6 +91,8 @@ public class WikiPageCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", nodeId=");
 		sb.append(nodeId);
 		sb.append(", title=");
@@ -138,6 +133,7 @@ public class WikiPageCacheModel
 		WikiPageImpl wikiPageImpl = new WikiPageImpl();
 
 		wikiPageImpl.setMvccVersion(mvccVersion);
+		wikiPageImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			wikiPageImpl.setUuid("");
@@ -171,6 +167,13 @@ public class WikiPageCacheModel
 		}
 		else {
 			wikiPageImpl.setModifiedDate(new Date(modifiedDate));
+		}
+
+		if (externalReferenceCode == null) {
+			wikiPageImpl.setExternalReferenceCode("");
+		}
+		else {
+			wikiPageImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		wikiPageImpl.setNodeId(nodeId);
@@ -252,8 +255,12 @@ public class WikiPageCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		pageId = objectInput.readLong();
@@ -268,6 +275,7 @@ public class WikiPageCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+		externalReferenceCode = objectInput.readUTF();
 
 		nodeId = objectInput.readLong();
 		title = objectInput.readUTF();
@@ -275,7 +283,7 @@ public class WikiPageCacheModel
 		version = objectInput.readDouble();
 
 		minorEdit = objectInput.readBoolean();
-		content = objectInput.readUTF();
+		content = (String)objectInput.readObject();
 		summary = objectInput.readUTF();
 		format = objectInput.readUTF();
 
@@ -294,6 +302,8 @@ public class WikiPageCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -322,6 +332,13 @@ public class WikiPageCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
+
 		objectOutput.writeLong(nodeId);
 
 		if (title == null) {
@@ -336,10 +353,10 @@ public class WikiPageCacheModel
 		objectOutput.writeBoolean(minorEdit);
 
 		if (content == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(content);
+			objectOutput.writeObject(content);
 		}
 
 		if (summary == null) {
@@ -389,6 +406,7 @@ public class WikiPageCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long pageId;
 	public long resourcePrimKey;
@@ -398,6 +416,7 @@ public class WikiPageCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public String externalReferenceCode;
 	public long nodeId;
 	public String title;
 	public double version;

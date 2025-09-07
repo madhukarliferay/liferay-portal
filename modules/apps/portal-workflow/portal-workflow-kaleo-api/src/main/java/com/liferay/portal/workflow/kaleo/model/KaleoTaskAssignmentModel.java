@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model;
@@ -19,6 +10,7 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -37,10 +29,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface KaleoTaskAssignmentModel
-	extends BaseModel<KaleoTaskAssignment>, GroupedModel, MVCCModel,
-			ShardedModel {
+	extends BaseModel<KaleoTaskAssignment>, CTModel<KaleoTaskAssignment>,
+			GroupedModel, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a kaleo task assignment model instance should use the {@link KaleoTaskAssignment} interface instead.
@@ -51,6 +43,7 @@ public interface KaleoTaskAssignmentModel
 	 *
 	 * @return the primary key of this kaleo task assignment
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -58,6 +51,7 @@ public interface KaleoTaskAssignmentModel
 	 *
 	 * @param primaryKey the primary key of this kaleo task assignment
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -75,6 +69,22 @@ public interface KaleoTaskAssignmentModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this kaleo task assignment.
+	 *
+	 * @return the ct collection ID of this kaleo task assignment
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this kaleo task assignment.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kaleo task assignment
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the kaleo task assignment ID of this kaleo task assignment.
@@ -233,6 +243,20 @@ public interface KaleoTaskAssignmentModel
 	public void setKaleoClassPK(long kaleoClassPK);
 
 	/**
+	 * Returns the kaleo definition ID of this kaleo task assignment.
+	 *
+	 * @return the kaleo definition ID of this kaleo task assignment
+	 */
+	public long getKaleoDefinitionId();
+
+	/**
+	 * Sets the kaleo definition ID of this kaleo task assignment.
+	 *
+	 * @param kaleoDefinitionId the kaleo definition ID of this kaleo task assignment
+	 */
+	public void setKaleoDefinitionId(long kaleoDefinitionId);
+
+	/**
 	 * Returns the kaleo definition version ID of this kaleo task assignment.
 	 *
 	 * @return the kaleo definition version ID of this kaleo task assignment
@@ -349,5 +373,12 @@ public interface KaleoTaskAssignmentModel
 	 */
 	public void setAssigneeScriptRequiredContexts(
 		String assigneeScriptRequiredContexts);
+
+	@Override
+	public KaleoTaskAssignment cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

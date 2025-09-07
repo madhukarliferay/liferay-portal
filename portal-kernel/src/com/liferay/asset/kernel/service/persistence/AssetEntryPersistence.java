@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service.persistence;
@@ -38,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface AssetEntryPersistence
 	extends BasePersistence<AssetEntry>, CTPersistence<AssetEntry> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link AssetEntryUtil} to access the asset entry persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -953,6 +944,161 @@ public interface AssetEntryPersistence
 	public int countByG_CU(long groupId, String classUuid);
 
 	/**
+	 * Returns all the asset entries where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @return the matching asset entries
+	 */
+	public java.util.List<AssetEntry> findByC_CN(
+		long companyId, long classNameId);
+
+	/**
+	 * Returns a range of all the asset entries where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param start the lower bound of the range of asset entries
+	 * @param end the upper bound of the range of asset entries (not inclusive)
+	 * @return the range of matching asset entries
+	 */
+	public java.util.List<AssetEntry> findByC_CN(
+		long companyId, long classNameId, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the asset entries where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param start the lower bound of the range of asset entries
+	 * @param end the upper bound of the range of asset entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset entries
+	 */
+	public java.util.List<AssetEntry> findByC_CN(
+		long companyId, long classNameId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the asset entries where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param start the lower bound of the range of asset entries
+	 * @param end the upper bound of the range of asset entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset entries
+	 */
+	public java.util.List<AssetEntry> findByC_CN(
+		long companyId, long classNameId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first asset entry in the ordered set where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset entry
+	 * @throws NoSuchEntryException if a matching asset entry could not be found
+	 */
+	public AssetEntry findByC_CN_First(
+			long companyId, long classNameId,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+				orderByComparator)
+		throws NoSuchEntryException;
+
+	/**
+	 * Returns the first asset entry in the ordered set where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset entry, or <code>null</code> if a matching asset entry could not be found
+	 */
+	public AssetEntry fetchByC_CN_First(
+		long companyId, long classNameId,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+			orderByComparator);
+
+	/**
+	 * Returns the last asset entry in the ordered set where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset entry
+	 * @throws NoSuchEntryException if a matching asset entry could not be found
+	 */
+	public AssetEntry findByC_CN_Last(
+			long companyId, long classNameId,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+				orderByComparator)
+		throws NoSuchEntryException;
+
+	/**
+	 * Returns the last asset entry in the ordered set where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset entry, or <code>null</code> if a matching asset entry could not be found
+	 */
+	public AssetEntry fetchByC_CN_Last(
+		long companyId, long classNameId,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+			orderByComparator);
+
+	/**
+	 * Returns the asset entries before and after the current asset entry in the ordered set where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param entryId the primary key of the current asset entry
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset entry
+	 * @throws NoSuchEntryException if a asset entry with the primary key could not be found
+	 */
+	public AssetEntry[] findByC_CN_PrevAndNext(
+			long entryId, long companyId, long classNameId,
+			com.liferay.portal.kernel.util.OrderByComparator<AssetEntry>
+				orderByComparator)
+		throws NoSuchEntryException;
+
+	/**
+	 * Removes all the asset entries where companyId = &#63; and classNameId = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 */
+	public void removeByC_CN(long companyId, long classNameId);
+
+	/**
+	 * Returns the number of asset entries where companyId = &#63; and classNameId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @return the number of matching asset entries
+	 */
+	public int countByC_CN(long companyId, long classNameId);
+
+	/**
 	 * Returns the asset entry where classNameId = &#63; and classPK = &#63; or throws a <code>NoSuchEntryException</code> if it could not be found.
 	 *
 	 * @param classNameId the class name ID
@@ -1473,181 +1619,6 @@ public interface AssetEntryPersistence
 	public int countAll();
 
 	/**
-	 * Returns the primaryKeys of asset categories associated with the asset entry.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @return long[] of the primaryKeys of asset categories associated with the asset entry
-	 */
-	public long[] getAssetCategoryPrimaryKeys(long pk);
-
-	/**
-	 * Returns all the asset categories associated with the asset entry.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @return the asset categories associated with the asset entry
-	 */
-	public java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-		getAssetCategories(long pk);
-
-	/**
-	 * Returns a range of all the asset categories associated with the asset entry.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param start the lower bound of the range of asset entries
-	 * @param end the upper bound of the range of asset entries (not inclusive)
-	 * @return the range of asset categories associated with the asset entry
-	 */
-	public java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-		getAssetCategories(long pk, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the asset categories associated with the asset entry.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param start the lower bound of the range of asset entries
-	 * @param end the upper bound of the range of asset entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of asset categories associated with the asset entry
-	 */
-	public java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-		getAssetCategories(
-			long pk, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.kernel.model.AssetCategory>
-					orderByComparator);
-
-	/**
-	 * Returns the number of asset categories associated with the asset entry.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @return the number of asset categories associated with the asset entry
-	 */
-	public int getAssetCategoriesSize(long pk);
-
-	/**
-	 * Returns <code>true</code> if the asset category is associated with the asset entry.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPK the primary key of the asset category
-	 * @return <code>true</code> if the asset category is associated with the asset entry; <code>false</code> otherwise
-	 */
-	public boolean containsAssetCategory(long pk, long assetCategoryPK);
-
-	/**
-	 * Returns <code>true</code> if the asset entry has any asset categories associated with it.
-	 *
-	 * @param pk the primary key of the asset entry to check for associations with asset categories
-	 * @return <code>true</code> if the asset entry has any asset categories associated with it; <code>false</code> otherwise
-	 */
-	public boolean containsAssetCategories(long pk);
-
-	/**
-	 * Adds an association between the asset entry and the asset category. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPK the primary key of the asset category
-	 */
-	public void addAssetCategory(long pk, long assetCategoryPK);
-
-	/**
-	 * Adds an association between the asset entry and the asset category. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategory the asset category
-	 */
-	public void addAssetCategory(
-		long pk, com.liferay.asset.kernel.model.AssetCategory assetCategory);
-
-	/**
-	 * Adds an association between the asset entry and the asset categories. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPKs the primary keys of the asset categories
-	 */
-	public void addAssetCategories(long pk, long[] assetCategoryPKs);
-
-	/**
-	 * Adds an association between the asset entry and the asset categories. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategories the asset categories
-	 */
-	public void addAssetCategories(
-		long pk,
-		java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-			assetCategories);
-
-	/**
-	 * Clears all associations between the asset entry and its asset categories. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry to clear the associated asset categories from
-	 */
-	public void clearAssetCategories(long pk);
-
-	/**
-	 * Removes the association between the asset entry and the asset category. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPK the primary key of the asset category
-	 */
-	public void removeAssetCategory(long pk, long assetCategoryPK);
-
-	/**
-	 * Removes the association between the asset entry and the asset category. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategory the asset category
-	 */
-	public void removeAssetCategory(
-		long pk, com.liferay.asset.kernel.model.AssetCategory assetCategory);
-
-	/**
-	 * Removes the association between the asset entry and the asset categories. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPKs the primary keys of the asset categories
-	 */
-	public void removeAssetCategories(long pk, long[] assetCategoryPKs);
-
-	/**
-	 * Removes the association between the asset entry and the asset categories. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategories the asset categories
-	 */
-	public void removeAssetCategories(
-		long pk,
-		java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-			assetCategories);
-
-	/**
-	 * Sets the asset categories associated with the asset entry, removing and adding associations as necessary. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategoryPKs the primary keys of the asset categories to be associated with the asset entry
-	 */
-	public void setAssetCategories(long pk, long[] assetCategoryPKs);
-
-	/**
-	 * Sets the asset categories associated with the asset entry, removing and adding associations as necessary. Also notifies the appropriate model listeners and clears the mapping table finder cache.
-	 *
-	 * @param pk the primary key of the asset entry
-	 * @param assetCategories the asset categories to be associated with the asset entry
-	 */
-	public void setAssetCategories(
-		long pk,
-		java.util.List<com.liferay.asset.kernel.model.AssetCategory>
-			assetCategories);
-
-	/**
 	 * Returns the primaryKeys of asset tags associated with the asset entry.
 	 *
 	 * @param pk the primary key of the asset entry
@@ -1727,16 +1698,18 @@ public interface AssetEntryPersistence
 	 *
 	 * @param pk the primary key of the asset entry
 	 * @param assetTagPK the primary key of the asset tag
+	 * @return <code>true</code> if an association between the asset entry and the asset tag was added; <code>false</code> if they were already associated
 	 */
-	public void addAssetTag(long pk, long assetTagPK);
+	public boolean addAssetTag(long pk, long assetTagPK);
 
 	/**
 	 * Adds an association between the asset entry and the asset tag. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the asset entry
 	 * @param assetTag the asset tag
+	 * @return <code>true</code> if an association between the asset entry and the asset tag was added; <code>false</code> if they were already associated
 	 */
-	public void addAssetTag(
+	public boolean addAssetTag(
 		long pk, com.liferay.asset.kernel.model.AssetTag assetTag);
 
 	/**
@@ -1744,16 +1717,18 @@ public interface AssetEntryPersistence
 	 *
 	 * @param pk the primary key of the asset entry
 	 * @param assetTagPKs the primary keys of the asset tags
+	 * @return <code>true</code> if at least one association between the asset entry and the asset tags was added; <code>false</code> if they were all already associated
 	 */
-	public void addAssetTags(long pk, long[] assetTagPKs);
+	public boolean addAssetTags(long pk, long[] assetTagPKs);
 
 	/**
 	 * Adds an association between the asset entry and the asset tags. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 	 *
 	 * @param pk the primary key of the asset entry
 	 * @param assetTags the asset tags
+	 * @return <code>true</code> if at least one association between the asset entry and the asset tags was added; <code>false</code> if they were all already associated
 	 */
-	public void addAssetTags(
+	public boolean addAssetTags(
 		long pk,
 		java.util.List<com.liferay.asset.kernel.model.AssetTag> assetTags);
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.vulcan.yaml.openapi;
@@ -27,6 +18,10 @@ public class Operation {
 		return _description;
 	}
 
+	public OperationDefinition getOperationDefinition() {
+		return _operationDefinition;
+	}
+
 	public String getOperationId() {
 		return _operationId;
 	}
@@ -39,7 +34,7 @@ public class Operation {
 		return _requestBody;
 	}
 
-	public Map<Integer, Response> getResponses() {
+	public Map<ResponseCode, Response> getResponses() {
 		return _responses;
 	}
 
@@ -49,6 +44,12 @@ public class Operation {
 
 	public void setDescription(String description) {
 		_description = description;
+	}
+
+	public void setOperationDefinition(
+		OperationDefinition operationDefinition) {
+
+		_operationDefinition = operationDefinition;
 	}
 
 	public void setOperationId(String operationId) {
@@ -63,7 +64,7 @@ public class Operation {
 		_requestBody = requestBody;
 	}
 
-	public void setResponses(Map<Integer, Response> responses) {
+	public void setResponses(Map<ResponseCode, Response> responses) {
 		_responses = responses;
 	}
 
@@ -72,10 +73,11 @@ public class Operation {
 	}
 
 	private String _description;
+	private OperationDefinition _operationDefinition;
 	private String _operationId;
 	private List<Parameter> _parameters = new ArrayList<>();
 	private RequestBody _requestBody;
-	private Map<Integer, Response> _responses;
+	private Map<ResponseCode, Response> _responses;
 	private List<String> _tags = new ArrayList<>();
 
 }

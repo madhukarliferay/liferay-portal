@@ -1,27 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.organizations.internal.configuration.persistence.listener;
 
 import com.liferay.organizations.internal.configuration.OrganizationTypeConfiguration;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.util.LocaleThreadLocal;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Dictionary;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import org.osgi.service.cm.Configuration;
@@ -33,7 +26,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.organizations.internal.configuration.OrganizationTypeConfiguration",
 	service = ConfigurationModelListener.class
 )
@@ -49,19 +41,44 @@ public class OrganizationTypeConfigurationModelListener
 
 			_validateNameExists(name);
 
+			_validateConfigurationName(pid, name);
+
 			_validateUniqueConfiguration(pid, name);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new ConfigurationModelListenerException(
-				e.getMessage(), OrganizationTypeConfiguration.class, getClass(),
+				exception, OrganizationTypeConfiguration.class, getClass(),
 				properties);
 		}
 	}
 
 	private ResourceBundle _getResourceBundle() {
 		return ResourceBundleUtil.getBundle(
-			"content.Language", LocaleThreadLocal.getThemeDisplayLocale(),
-			getClass());
+			"content.Language", LocaleUtil.getMostRelevantLocale(), getClass());
+	}
+
+	private void _validateConfigurationName(String pid, String name)
+		throws Exception {
+
+		Configuration configuration = _configurationAdmin.getConfiguration(
+			pid, StringPool.QUESTION);
+
+		if (configuration == null) {
+			return;
+		}
+
+		Dictionary<String, Object> properties = configuration.getProperties();
+
+		if ((properties == null) ||
+			Objects.equals(properties.get("name"), name)) {
+
+			return;
+		}
+
+		String message = ResourceBundleUtil.getString(
+			_getResourceBundle(), "organization-type-name-cannot-be-changed");
+
+		throw new Exception(message);
 	}
 
 	private void _validateNameExists(String name) throws Exception {
@@ -69,10 +86,9 @@ public class OrganizationTypeConfigurationModelListener
 			return;
 		}
 
-		ResourceBundle resourceBundle = _getResourceBundle();
-
 		String message = ResourceBundleUtil.getString(
-			resourceBundle, "an-organization-type-must-have-a-valid-name");
+			_getResourceBundle(),
+			"an-organization-type-must-have-a-valid-name");
 
 		throw new Exception(message);
 	}
@@ -97,10 +113,8 @@ public class OrganizationTypeConfigurationModelListener
 			return;
 		}
 
-		ResourceBundle resourceBundle = _getResourceBundle();
-
 		String message = ResourceBundleUtil.getString(
-			resourceBundle,
+			_getResourceBundle(),
 			"there-is-already-an-organization-type-with-the-name-x", name);
 
 		throw new Exception(message);

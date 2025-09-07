@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.text.localizer.taglib.internal.address.util.test;
@@ -23,14 +14,12 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.text.localizer.address.AddressTextLocalizer;
 import com.liferay.text.localizer.taglib.servlet.taglib.AddressDisplayTag;
 
 import java.lang.reflect.Method;
-
-import java.util.Dictionary;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -152,24 +141,23 @@ public class AddressTextLocalizerUtilTest {
 
 	private Address _addAddress(User user) throws Exception {
 		return AddressLocalServiceUtil.addAddress(
-			user.getUserId(), user.getModelClassName(), user.getUserId(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
-			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(), false,
-			true, new ServiceContext());
+			null, user.getUserId(), user.getModelClassName(), user.getUserId(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), false, RandomTestUtil.randomString(),
+			true, RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), null, RandomTestUtil.randomString(),
+			null, new ServiceContext());
 	}
 
 	private ServiceRegistration<?> _registerAddressTextLocalizer(
 		AddressTextLocalizer addressTextLocalizer, String countryA2) {
 
-		Dictionary<String, String> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("country", countryA2);
-
 		return _bundleContext.registerService(
 			AddressTextLocalizer.class.getName(), addressTextLocalizer,
-			dictionary);
+			HashMapDictionaryBuilder.put(
+				"country", countryA2
+			).build());
 	}
 
 	private static BundleContext _bundleContext;
@@ -180,7 +168,7 @@ public class AddressTextLocalizerUtilTest {
 	@DeleteAfterTestRun
 	private Address _address;
 
-	private ServiceRegistration _serviceRegistration;
+	private ServiceRegistration<?> _serviceRegistration;
 
 	@DeleteAfterTestRun
 	private User _user;

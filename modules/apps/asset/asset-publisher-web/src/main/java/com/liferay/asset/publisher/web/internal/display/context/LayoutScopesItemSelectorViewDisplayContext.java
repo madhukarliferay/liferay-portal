@@ -1,36 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.publisher.web.internal.display.context;
 
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
+import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portlet.usersadmin.search.GroupSearch;
-import com.liferay.site.item.selector.criterion.SiteItemSelectorCriterion;
+import com.liferay.site.search.GroupSearch;
 
-import java.util.ArrayList;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -41,40 +33,48 @@ public class LayoutScopesItemSelectorViewDisplayContext
 	public LayoutScopesItemSelectorViewDisplayContext(
 		HttpServletRequest httpServletRequest,
 		AssetPublisherHelper assetPublisherHelper,
-		SiteItemSelectorCriterion siteItemSelectorCriterion,
-		String itemSelectedEventName, PortletURL portletURL) {
+		GroupItemSelectorCriterion groupItemSelectorCriterion,
+		PortletURL portletURL) {
 
-		super(
-			httpServletRequest, assetPublisherHelper, siteItemSelectorCriterion,
-			itemSelectedEventName, portletURL);
+		super(httpServletRequest, assetPublisherHelper, portletURL);
+
+		_groupItemSelectorCriterion = groupItemSelectorCriterion;
+	}
+
+	@Override
+	public long getGroupId() {
+		long groupId = super.getGroupId();
+
+		if (groupId <= 0) {
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)httpServletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+			return themeDisplay.getScopeGroupId();
+		}
+
+		return groupId;
 	}
 
 	@Override
 	public GroupSearch getGroupSearch() throws Exception {
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		long groupId = getGroupId();
 
-		if (groupId <= 0) {
-			groupId = themeDisplay.getScopeGroupId();
-		}
-
 		GroupSearch groupSearch = new GroupSearch(
-			getPortletRequest(), getPortletURL());
+			getPortletRequest(), portletURL);
 
-		int total = GroupLocalServiceUtil.getGroupsCount(
-			themeDisplay.getCompanyId(), Layout.class.getName(), groupId);
-
-		groupSearch.setTotal(total);
-
-		List<Group> groups = GroupLocalServiceUtil.getGroups(
-			themeDisplay.getCompanyId(), Layout.class.getName(), groupId,
-			groupSearch.getStart(), groupSearch.getEnd());
-
-		groups = _filterLayoutGroups(groups, _isPrivateLayout());
-
-		groupSearch.setResults(groups);
+		groupSearch.setResultsAndTotal(
+			() -> _filterLayoutGroups(
+				GroupLocalServiceUtil.getGroups(
+					themeDisplay.getCompanyId(), Layout.class.getName(),
+					groupId, groupSearch.getStart(), groupSearch.getEnd()),
+				_isPrivateLayout()),
+			GroupLocalServiceUtil.getGroupsCount(
+				themeDisplay.getCompanyId(), Layout.class.getName(), groupId));
 
 		return groupSearch;
 	}
@@ -88,26 +88,34 @@ public class LayoutScopesItemSelectorViewDisplayContext
 			List<Group> groups, Boolean privateLayout)
 		throws Exception {
 
+		long[] excludedGroupIds =
+			_groupItemSelectorCriterion.getExcludedGroupIds();
+
 		if (privateLayout == null) {
-			return groups;
+			return ListUtil.filter(
+				groups,
+				group -> !ArrayUtil.contains(
+					excludedGroupIds, group.getGroupId()));
 		}
 
-		List<Group> filteredGroups = new ArrayList<>();
+		return TransformUtil.transform(
+			groups,
+			group -> {
+				if (!group.isLayout() ||
+					ArrayUtil.contains(excludedGroupIds, group.getGroupId())) {
 
-		for (Group group : groups) {
-			if (!group.isLayout()) {
-				continue;
-			}
+					return null;
+				}
 
-			Layout layout = LayoutLocalServiceUtil.getLayout(
-				group.getClassPK());
+				Layout layout = LayoutLocalServiceUtil.getLayout(
+					group.getClassPK());
 
-			if (layout.isPrivateLayout() == privateLayout) {
-				filteredGroups.add(group);
-			}
-		}
+				if (layout.isPrivateLayout() == privateLayout) {
+					return group;
+				}
 
-		return filteredGroups;
+				return null;
+			});
 	}
 
 	private Boolean _isPrivateLayout() {
@@ -115,11 +123,12 @@ public class LayoutScopesItemSelectorViewDisplayContext
 			return _privateLayout;
 		}
 
-		_privateLayout = ParamUtil.getBoolean(request, "privateLayout");
+		_privateLayout = _groupItemSelectorCriterion.isPrivateLayout();
 
 		return _privateLayout;
 	}
 
+	private final GroupItemSelectorCriterion _groupItemSelectorCriterion;
 	private Boolean _privateLayout;
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.marketplace.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link AppLocalService}.
@@ -26,12 +18,20 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class AppLocalServiceWrapper
 	implements AppLocalService, ServiceWrapper<AppLocalService> {
 
+	public AppLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AppLocalServiceWrapper(AppLocalService appLocalService) {
 		_appLocalService = appLocalService;
 	}
 
 	/**
 	 * Adds the app to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AppLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param app the app
 	 * @return the app that was added
@@ -60,7 +60,22 @@ public class AppLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _appLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the app from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AppLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param app the app
 	 * @return the app that was removed
@@ -74,6 +89,10 @@ public class AppLocalServiceWrapper
 
 	/**
 	 * Deletes the app with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AppLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param appId the primary key of the app
 	 * @return the app that was removed
@@ -95,6 +114,18 @@ public class AppLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _appLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _appLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _appLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -323,6 +354,9 @@ public class AppLocalServiceWrapper
 		return _appLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -344,6 +378,11 @@ public class AppLocalServiceWrapper
 	}
 
 	@Override
+	public boolean isDownloaded(com.liferay.marketplace.model.App app) {
+		return _appLocalService.isDownloaded(app);
+	}
+
+	@Override
 	public void uninstallApp(long remoteAppId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -352,6 +391,10 @@ public class AppLocalServiceWrapper
 
 	/**
 	 * Updates the app in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AppLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param app the app
 	 * @return the app that was updated
@@ -381,6 +424,11 @@ public class AppLocalServiceWrapper
 		return _appLocalService.updateApp(
 			userId, remoteAppId, title, description, category, iconURL, version,
 			required, file);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _appLocalService.getBasePersistence();
 	}
 
 	@Override

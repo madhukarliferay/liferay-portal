@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.client.test;
@@ -18,23 +9,19 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth2.provider.internal.test.TestAnnotatedApplication;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.Dictionary;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
-import org.apache.log4j.Level;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -67,20 +54,17 @@ public class TokenExpeditionTest extends BaseClientTestCase {
 		formData.add("client_secret", "");
 		formData.add("grant_type", "client_credentials");
 
-		try (CaptureAppender captureAppender1 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.oauth2.provider.rest.internal.endpoint." +
-						"liferay.LiferayOAuthDataProvider",
-					Level.WARN);
-			CaptureAppender captureAppender2 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper",
-					Level.WARN);
-			CaptureAppender captureAppender3 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"org.apache.cxf.rs.security.oauth2.services." +
-						"AbstractOAuthService",
-					Level.WARN)) {
+		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.oauth2.provider.rest.internal.endpoint.liferay." +
+					"LiferayOAuthDataProvider",
+				LoggerTestUtil.WARN);
+			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper",
+				LoggerTestUtil.WARN);
+			LogCapture logCapture3 = LoggerTestUtil.configureLog4JLogger(
+				"org.apache.cxf.rs.security.oauth2.services." +
+					"AbstractOAuthService",
+				LoggerTestUtil.WARN)) {
 
 			Response response = invocationBuilder.post(Entity.form(formData));
 
@@ -151,13 +135,12 @@ public class TokenExpeditionTest extends BaseClientTestCase {
 			"Authorization", "Bearer "
 		);
 
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"portal_web.docroot.errors.code_jsp", Level.WARN)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
 
 			Response response = invocationBuilder.get();
 
-			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals(401, response.getStatus());
 
 			invocationBuilder = webTarget.request(
 			).header(
@@ -166,36 +149,35 @@ public class TokenExpeditionTest extends BaseClientTestCase {
 
 			response = invocationBuilder.get();
 
-			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals(401, response.getStatus());
 		}
-	}
-
-	public static class TokenExpeditionTestPreparatorBundleActivator
-		extends BaseTestPreparatorBundleActivator {
-
-		@Override
-		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
-
-			Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-			properties.put("auth.verifier.guest.allowed", false);
-			properties.put("oauth2.scope.checker.type", "annotations");
-
-			registerJaxRsApplication(
-				new TestAnnotatedApplication(), "annotated", properties);
-
-			createOAuth2Application(
-				defaultCompanyId, user, "oauthTestApplication");
-		}
-
 	}
 
 	@Override
 	protected BundleActivator getBundleActivator() {
 		return new TokenExpeditionTestPreparatorBundleActivator();
+	}
+
+	private class TokenExpeditionTestPreparatorBundleActivator
+		extends BaseTestPreparatorBundleActivator {
+
+		@Override
+		protected void prepareTest() throws Exception {
+			long companyId = TestPropsValues.getCompanyId();
+
+			User user = UserTestUtil.getAdminUser(companyId);
+
+			registerJaxRsApplication(
+				new TestAnnotatedApplication(), "annotated",
+				HashMapDictionaryBuilder.<String, Object>put(
+					"auth.verifier.guest.allowed", false
+				).put(
+					"oauth2.scope.checker.type", "annotations"
+				).build());
+
+			createOAuth2Application(companyId, user, "oauthTestApplication");
+		}
+
 	}
 
 }

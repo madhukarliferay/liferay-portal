@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.web.internal;
@@ -17,6 +8,7 @@ package com.liferay.knowledge.base.web.internal;
 import com.liferay.knowledge.base.constants.KBCommentConstants;
 import com.liferay.knowledge.base.constants.KBFolderConstants;
 import com.liferay.knowledge.base.constants.KBPortletKeys;
+import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.model.KBComment;
 import com.liferay.knowledge.base.model.KBFolder;
 import com.liferay.knowledge.base.model.KBTemplate;
@@ -60,12 +52,12 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.PortletRequest;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.portlet.PortletPreferences;
-import javax.portlet.PortletRequest;
 
 /**
  * @author Roberto Díaz
@@ -81,20 +73,21 @@ public class KBUtil {
 
 		kbFolders = new ArrayList<>(kbFolders);
 
-		Iterator<KBFolder> itr = kbFolders.iterator();
+		Iterator<KBFolder> iterator = kbFolders.iterator();
 
-		while (itr.hasNext()) {
-			KBFolder kbFolder = itr.next();
+		while (iterator.hasNext()) {
+			KBFolder kbFolder = iterator.next();
 
 			if (kbFolder.isEmpty()) {
-				itr.remove();
+				iterator.remove();
 			}
 		}
 
-		return ListUtil.sort(kbFolders, new KBFolderNameComparator(false));
+		return ListUtil.sort(
+			kbFolders, KBFolderNameComparator.getInstance(false));
 	}
 
-	public static OrderByComparator getKBArticleOrderByComparator(
+	public static OrderByComparator<KBArticle> getKBArticleOrderByComparator(
 		String orderByCol, String orderByType) {
 
 		if (Validator.isNull(orderByCol) || Validator.isNull(orderByType)) {
@@ -108,28 +101,28 @@ public class KBUtil {
 		}
 
 		if (orderByCol.equals("create-date")) {
-			return new KBArticleCreateDateComparator(ascending);
+			return KBArticleCreateDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("modified-date")) {
-			return new KBArticleModifiedDateComparator(ascending);
+			return KBArticleModifiedDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("priority")) {
-			return new KBArticlePriorityComparator(ascending);
+			return KBArticlePriorityComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("status")) {
-			return new KBArticleStatusComparator(ascending);
+			return KBArticleStatusComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("title")) {
-			return new KBArticleTitleComparator(ascending);
+			return KBArticleTitleComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("user-name")) {
-			return new KBArticleUserNameComparator(ascending);
+			return KBArticleUserNameComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("version")) {
-			return new KBArticleVersionComparator(ascending);
+			return KBArticleVersionComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("view-count")) {
-			return new KBArticleViewCountComparator(ascending);
+			return KBArticleViewCountComparator.getInstance(ascending);
 		}
 
 		return null;
@@ -197,7 +190,7 @@ public class KBUtil {
 		String orderByCol, String orderByType) {
 
 		if (Validator.isNull(orderByCol) || Validator.isNull(orderByType)) {
-			return new KBCommentStatusComparator();
+			return KBCommentStatusComparator.getInstance(false);
 		}
 
 		boolean ascending = false;
@@ -207,16 +200,16 @@ public class KBUtil {
 		}
 
 		if (orderByCol.equals("create-date")) {
-			return new KBCommentCreateDateComparator(ascending);
+			return KBCommentCreateDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("modified-date")) {
-			return new KBCommentModifiedDateComparator(ascending);
+			return KBCommentModifiedDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("status")) {
-			return new KBCommentStatusComparator(ascending);
+			return KBCommentStatusComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("user-name")) {
-			return new KBCommentUserNameComparator(ascending);
+			return KBCommentUserNameComparator.getInstance(ascending);
 		}
 
 		return null;
@@ -239,13 +232,13 @@ public class KBUtil {
 			return new KBObjectsModifiedDateComparator<>(ascending, true);
 		}
 		else if (orderByCol.equals("priority")) {
-			return new KBObjectsPriorityComparator<>(ascending);
+			return KBObjectsPriorityComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("title")) {
 			return new KBObjectsTitleComparator<>(ascending, true);
 		}
 		else if (orderByCol.equals("view-count")) {
-			return new KBObjectsViewCountComparator<>(ascending);
+			return KBObjectsViewCountComparator.getInstance(ascending);
 		}
 
 		return null;
@@ -265,22 +258,22 @@ public class KBUtil {
 		}
 
 		if (orderByCol.equals("create-date")) {
-			return new KBTemplateCreateDateComparator(ascending);
+			return KBTemplateCreateDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("modified-date")) {
-			return new KBTemplateModifiedDateComparator(ascending);
+			return KBTemplateModifiedDateComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("title")) {
-			return new KBTemplateTitleComparator(ascending);
+			return KBTemplateTitleComparator.getInstance(ascending);
 		}
 		else if (orderByCol.equals("user-name")) {
-			return new KBTemplateUserNameComparator(ascending);
+			return KBTemplateUserNameComparator.getInstance(ascending);
 		}
 
 		return null;
 	}
 
-	public static final int getNextStatus(int status) {
+	public static int getNextStatus(int status) {
 		if (status == KBCommentConstants.STATUS_IN_PROGRESS) {
 			return KBCommentConstants.STATUS_COMPLETED;
 		}
@@ -305,7 +298,7 @@ public class KBUtil {
 		return jsonObject.getString(contentRootPrefix, StringPool.BLANK);
 	}
 
-	public static final int getPreviousStatus(int status) {
+	public static int getPreviousStatus(int status) {
 		if (status == KBCommentConstants.STATUS_COMPLETED) {
 			return KBCommentConstants.STATUS_IN_PROGRESS;
 		}
@@ -333,7 +326,7 @@ public class KBUtil {
 			resourceClassNameId, resourcePrimKey);
 	}
 
-	public static final String getStatusLabel(int status) {
+	public static String getStatusLabel(int status) {
 		if (status == KBCommentConstants.STATUS_COMPLETED) {
 			return "resolved";
 		}
@@ -343,13 +336,12 @@ public class KBUtil {
 		else if (status == KBCommentConstants.STATUS_NEW) {
 			return "new";
 		}
-		else {
-			throw new IllegalArgumentException(
-				String.format("Invalid suggestion status %s", status));
-		}
+
+		throw new IllegalArgumentException(
+			String.format("Invalid suggestion status %s", status));
 	}
 
-	public static final String getStatusTransitionLabel(int status) {
+	public static String getStatusTransitionLabel(int status) {
 		if (status == KBCommentConstants.STATUS_COMPLETED) {
 			return "resolve";
 		}
@@ -359,10 +351,9 @@ public class KBUtil {
 		else if (status == KBCommentConstants.STATUS_NEW) {
 			return "move-to-new";
 		}
-		else {
-			throw new IllegalArgumentException(
-				String.format("Invalid suggestion status %s", status));
-		}
+
+		throw new IllegalArgumentException(
+			String.format("Invalid suggestion status %s", status));
 	}
 
 	private static long _getCurrentRootKBFolder(

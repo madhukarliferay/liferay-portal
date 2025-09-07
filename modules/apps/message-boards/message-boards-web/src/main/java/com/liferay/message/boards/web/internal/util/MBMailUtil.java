@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.web.internal.util;
 
+import com.liferay.mail.kernel.service.MailService;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
@@ -23,9 +16,9 @@ import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
 
-import java.util.Map;
+import jakarta.portlet.PortletRequest;
 
-import javax.portlet.PortletRequest;
+import java.util.Map;
 
 /**
  * @author Sergio González
@@ -63,52 +56,79 @@ public class MBMailUtil {
 			"[$FROM_ADDRESS$]", HtmlUtil.escape(emailFromAddress)
 		).put(
 			"[$FROM_NAME$]", HtmlUtil.escape(emailFromName)
-		).build();
+		).put(
+			"[$MAILING_LIST_ADDRESS$]",
+			() -> {
+				MailService mailService = _mailServiceSnapshot.get();
 
-		if (PropsValues.POP_SERVER_NOTIFICATIONS_ENABLED) {
-			definitionTerms.put(
-				"[$MAILING_LIST_ADDRESS$]",
-				LanguageUtil.get(
+				if ((mailService == null) ||
+					!mailService.isPOPServerNotificationsEnabled(
+						themeDisplay.getCompanyId())) {
+
+					return null;
+				}
+
+				return LanguageUtil.get(
 					themeDisplay.getLocale(),
-					"the-email-address-of-the-mailing-list"));
-		}
-
-		definitionTerms.put(
+					"the-email-address-of-the-mailing-list");
+			}
+		).put(
 			"[$MESSAGE_BODY$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-message-body"));
-		definitionTerms.put(
+			LanguageUtil.get(themeDisplay.getLocale(), "the-message-body")
+		).put(
 			"[$MESSAGE_ID$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-message-id"));
-		definitionTerms.put(
+			LanguageUtil.get(themeDisplay.getLocale(), "the-message-id")
+		).put(
+			"[$MESSAGE_PARENT$]",
+			LanguageUtil.get(
+				themeDisplay.getLocale(),
+				"the-message-body-of-the-parent-message")
+		).put(
+			"[$MESSAGE_SIBLINGS$]",
+			LanguageUtil.get(
+				themeDisplay.getLocale(),
+				"the-message-thread-of-messages-at-the-same-level")
+		).put(
 			"[$MESSAGE_SUBJECT$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-message-subject"));
-		definitionTerms.put(
+			LanguageUtil.get(themeDisplay.getLocale(), "the-message-subject")
+		).put(
 			"[$MESSAGE_URL$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-message-url"));
-		definitionTerms.put(
+			LanguageUtil.get(themeDisplay.getLocale(), "the-message-url")
+		).put(
 			"[$MESSAGE_USER_ADDRESS$]",
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
-				"the-email-address-of-the-user-who-added-the-message"));
-		definitionTerms.put(
+				"the-email-address-of-the-user-who-added-the-message")
+		).put(
 			"[$MESSAGE_USER_NAME$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(), "the-user-who-added-the-message"));
+				themeDisplay.getLocale(), "the-user-who-added-the-message")
+		).put(
+			"[$PORTAL_URL$]",
+			() -> {
+				Company company = themeDisplay.getCompany();
 
-		Company company = themeDisplay.getCompany();
+				return company.getVirtualHostname();
+			}
+		).put(
+			"[$PORTLET_NAME$]",
+			() -> {
+				PortletDisplay portletDisplay =
+					themeDisplay.getPortletDisplay();
 
-		definitionTerms.put("[$PORTAL_URL$]", company.getVirtualHostname());
-
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-		definitionTerms.put(
-			"[$PORTLET_NAME$]", HtmlUtil.escape(portletDisplay.getTitle()));
-
-		definitionTerms.put(
+				return HtmlUtil.escape(portletDisplay.getTitle());
+			}
+		).put(
+			"[$ROOT_MESSAGE_BODY$]",
+			LanguageUtil.get(
+				themeDisplay.getLocale(),
+				"the-message-body-of-the-original-message")
+		).put(
 			"[$SITE_NAME$]",
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
-				"the-site-name-associated-with-the-message-board"));
+				"the-site-name-associated-with-the-message-board")
+		).build();
 
 		if (!PropsValues.MESSAGE_BOARDS_EMAIL_BULK) {
 			definitionTerms.put(
@@ -132,7 +152,7 @@ public class MBMailUtil {
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Map<String, String> definitionTerms = LinkedHashMapBuilder.put(
+		return LinkedHashMapBuilder.put(
 			"[$COMPANY_ID$]",
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
@@ -147,38 +167,48 @@ public class MBMailUtil {
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
 				"the-company-name-associated-with-the-message-board")
-		).build();
+		).put(
+			"[$MAILING_LIST_ADDRESS$]",
+			() -> {
+				MailService mailService = _mailServiceSnapshot.get();
 
-		if (PropsValues.POP_SERVER_NOTIFICATIONS_ENABLED) {
-			definitionTerms.put(
-				"[$MAILING_LIST_ADDRESS$]",
-				LanguageUtil.get(
+				if ((mailService == null) ||
+					!mailService.isPOPServerNotificationsEnabled(
+						themeDisplay.getCompanyId())) {
+
+					return null;
+				}
+
+				return LanguageUtil.get(
 					themeDisplay.getLocale(),
-					"the-email-address-of-the-mailing-list"));
-		}
-
-		definitionTerms.put(
+					"the-email-address-of-the-mailing-list");
+			}
+		).put(
 			"[$MESSAGE_USER_ADDRESS$]",
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
-				"the-email-address-of-the-user-who-added-the-message"));
-		definitionTerms.put(
+				"the-email-address-of-the-user-who-added-the-message")
+		).put(
 			"[$MESSAGE_USER_NAME$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(), "the-user-who-added-the-message"));
+				themeDisplay.getLocale(), "the-user-who-added-the-message")
+		).put(
+			"[$PORTLET_NAME$]",
+			() -> {
+				PortletDisplay portletDisplay =
+					themeDisplay.getPortletDisplay();
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-		definitionTerms.put(
-			"[$PORTLET_NAME$]", HtmlUtil.escape(portletDisplay.getTitle()));
-
-		definitionTerms.put(
+				return HtmlUtil.escape(portletDisplay.getTitle());
+			}
+		).put(
 			"[$SITE_NAME$]",
 			LanguageUtil.get(
 				themeDisplay.getLocale(),
-				"the-site-name-associated-with-the-message-board"));
-
-		return definitionTerms;
+				"the-site-name-associated-with-the-message-board")
+		).build();
 	}
+
+	private static final Snapshot<MailService> _mailServiceSnapshot =
+		new Snapshot<>(MBMailUtil.class, MailService.class);
 
 }

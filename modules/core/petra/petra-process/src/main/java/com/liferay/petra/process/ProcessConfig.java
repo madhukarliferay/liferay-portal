@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.process;
@@ -20,7 +11,9 @@ import com.liferay.petra.string.StringUtil;
 import java.io.File;
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -68,8 +61,43 @@ public class ProcessConfig implements Serializable {
 
 	public static class Builder {
 
+		public Builder() {
+		}
+
+		public Builder(ProcessConfig processConfig) {
+			List<String> arguments = processConfig.getArguments();
+
+			if (!arguments.isEmpty()) {
+				_arguments = new ArrayList<>(arguments);
+			}
+
+			_bootstrapClassPath = processConfig.getBootstrapClassPath();
+
+			Map<String, String> environment = processConfig.getEnvironment();
+
+			if (environment != null) {
+				_environment = new HashMap<>(environment);
+			}
+
+			_javaExecutable = processConfig.getJavaExecutable();
+
+			_processLogConsumer = processConfig.getProcessLogConsumer();
+
+			_reactClassLoader = processConfig.getReactClassLoader();
+
+			_runtimeClassPath = processConfig.getRuntimeClassPath();
+		}
+
 		public ProcessConfig build() {
 			return new ProcessConfig(this);
+		}
+
+		public List<String> getArguments() {
+			return _arguments;
+		}
+
+		public Map<String, String> getEnvironment() {
+			return _environment;
 		}
 
 		public Builder setArguments(List<String> arguments) {
@@ -142,7 +170,7 @@ public class ProcessConfig implements Serializable {
 	}
 
 	private String _merge(PathHolder[] pathHolders) {
-		StringBundler sb = new StringBundler(2 * pathHolders.length - 1);
+		StringBundler sb = new StringBundler((2 * pathHolders.length) - 1);
 
 		for (int i = 0; i < pathHolders.length; i++) {
 			sb.append(pathHolders[i]);

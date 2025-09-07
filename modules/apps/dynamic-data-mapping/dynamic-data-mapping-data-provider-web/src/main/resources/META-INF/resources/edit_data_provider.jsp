@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,8 +15,6 @@ DDMDataProviderInstance ddmDataProviderInstance = ddmDataProviderDisplayContext.
 long dataProviderInstanceId = BeanParamUtil.getLong(ddmDataProviderInstance, request, "dataProviderInstanceId");
 
 long groupId = BeanParamUtil.getLong(ddmDataProviderInstance, request, "groupId", scopeGroupId);
-String name = BeanParamUtil.getString(ddmDataProviderInstance, request, "name");
-String description = BeanParamUtil.getString(ddmDataProviderInstance, request, "description");
 String type = BeanParamUtil.getString(ddmDataProviderInstance, request, "type");
 
 portletDisplay.setShowBackIcon(true);
@@ -34,11 +23,11 @@ portletDisplay.setURLBack(redirect);
 renderResponse.setTitle((ddmDataProviderInstance == null) ? LanguageUtil.get(request, type) : ddmDataProviderInstance.getName(locale));
 %>
 
-<portlet:actionURL name="addDataProvider" var="addDataProviderURL">
+<portlet:actionURL name="/dynamic_data_mapping_data_provider/add_data_provider" var="addDataProviderURL">
 	<portlet:param name="mvcPath" value="/edit_data_provider.jsp" />
 </portlet:actionURL>
 
-<portlet:actionURL name="updateDataProvider" var="updateDataProviderURL">
+<portlet:actionURL name="/dynamic_data_mapping_data_provider/update_data_provider" var="updateDataProviderURL">
 	<portlet:param name="mvcPath" value="/edit_data_provider.jsp" />
 </portlet:actionURL>
 
@@ -51,51 +40,55 @@ renderResponse.setTitle((ddmDataProviderInstance == null) ? LanguageUtil.get(req
 
 	<%@ include file="/exceptions.jspf" %>
 
-	<div class="container-fluid-1280 lfr-ddm-edit-data-provider">
-		<aui:fieldset-group markupView="lexicon">
-			<aui:fieldset>
-				<liferay-util:buffer
-					var="requiredMark"
-				>
-					<span class="hide-accessible"><liferay-ui:message key="required" />&nbsp;</span>
+	<clay:container-fluid
+		cssClass="container-form-lg lfr-ddm-edit-data-provider"
+	>
+		<div class="sheet">
+			<div class="panel-group panel-group-flush">
+				<aui:fieldset>
+					<liferay-util:buffer
+						var="requiredMark"
+					>
+						<span class="hide-accessible sr-only"><liferay-ui:message key="required" />&nbsp;</span>
 
-					<svg aria-hidden="true" class="lexicon-icon lexicon-icon-asterisk reference-mark">
-						<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg#asterisk" />
-					</svg>
-				</liferay-util:buffer>
+						<svg aria-hidden="true" class="lexicon-icon lexicon-icon-asterisk reference-mark">
+							<use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#asterisk" />
+						</svg>
+					</liferay-util:buffer>
 
-				<label class="required-warning">
-					<liferay-ui:message arguments="<%= requiredMark %>" key="all-fields-marked-with-x-are-required" translateArguments="<%= false %>" />
-				</label>
+					<label class="required-warning">
+						<liferay-ui:message arguments="<%= requiredMark %>" key="all-fields-marked-with-x-are-required" translateArguments="<%= false %>" />
+					</label>
 
-				<aui:input name="name" placeholder="enter-the-data-provider-name" required="<%= true %>" type="text" value="<%= ddmDataProviderDisplayContext.getDataProviderInstanceName() %>" />
+					<aui:input name="name" placeholder="enter-the-data-providers-name" required="<%= true %>" type="text" value="<%= ddmDataProviderDisplayContext.getDataProviderInstanceName() %>" />
 
-				<aui:input name="description" placeholder="enter-a-short-description" type="textarea" value="<%= ddmDataProviderDisplayContext.getDataProviderInstanceDescription() %>" />
-			</aui:fieldset>
-
-			<aui:fieldset>
-				<%= ddmDataProviderDisplayContext.getDataProviderInstanceDDMFormHTML() %>
-			</aui:fieldset>
-
-			<c:if test="<%= ddmDataProviderInstance == null %>">
-				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="permissions">
-					<liferay-ui:input-permissions
-						modelName="<%= DDMDataProviderInstance.class.getName() %>"
-					/>
+					<aui:input name="description" placeholder="enter-a-short-description" type="textarea" value="<%= ddmDataProviderDisplayContext.getDataProviderInstanceDescription() %>" />
 				</aui:fieldset>
-			</c:if>
-		</aui:fieldset-group>
-	</div>
 
-	<c:if test="<%= !windowState.equals(LiferayWindowState.POP_UP) %>">
-		<div class="container-fluid-1280">
-			<aui:button-row>
-				<aui:button id="submit" label="save" type="submit" />
+				<aui:fieldset>
+					<%= ddmDataProviderDisplayContext.getDataProviderInstanceDDMFormHTML() %>
+				</aui:fieldset>
 
-				<aui:button href="<%= redirect %>" name="cancelButton" type="cancel" />
-			</aui:button-row>
+				<c:if test="<%= ddmDataProviderInstance == null %>">
+					<div id="<portlet:namespace />dataProviderPermissions">
+						<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="permissions">
+							<liferay-ui:input-permissions
+								modelName="<%= DDMDataProviderInstance.class.getName() %>"
+							/>
+						</aui:fieldset>
+					</div>
+				</c:if>
+
+				<c:if test="<%= !windowState.equals(LiferayWindowState.POP_UP) %>">
+					<div class="sheet-footer">
+						<aui:button id="submit" label="save" type="submit" />
+
+						<aui:button href="<%= redirect %>" name="cancelButton" type="cancel" />
+					</div>
+				</c:if>
+			</div>
 		</div>
-	</c:if>
+	</clay:container-fluid>
 
 	<aui:button cssClass="hide" type="submit" />
 </aui:form>
@@ -115,20 +108,20 @@ renderResponse.setTitle((ddmDataProviderInstance == null) ? LanguageUtil.get(req
 						cssClass: 'btn-primary',
 						label: '<liferay-ui:message key="save" />',
 						on: {
-							click: function() {
+							click: function () {
 								document.<portlet:namespace />fm.submit();
-							}
-						}
+							},
+						},
 					},
 					{
 						cssClass: 'btn-link',
 						label: '<liferay-ui:message key="cancel" />',
 						on: {
-							click: function() {
+							click: function () {
 								location.href = '<%= viewDataProviderURL.toString() %>';
-							}
-						}
-					}
+							},
+						},
+					},
 				],
 				'footer'
 			);

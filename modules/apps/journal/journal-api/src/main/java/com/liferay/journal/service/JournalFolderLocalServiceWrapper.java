@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service;
@@ -17,6 +8,7 @@ package com.liferay.journal.service;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,30 +22,34 @@ public class JournalFolderLocalServiceWrapper
 	implements JournalFolderLocalService,
 			   ServiceWrapper<JournalFolderLocalService> {
 
+	public JournalFolderLocalServiceWrapper() {
+		this(null);
+	}
+
 	public JournalFolderLocalServiceWrapper(
 		JournalFolderLocalService journalFolderLocalService) {
 
 		_journalFolderLocalService = journalFolderLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link JournalFolderLocalServiceUtil} to access the journal folder local service. Add custom service methods to <code>com.liferay.journal.service.impl.JournalFolderLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public JournalFolder addFolder(
-			long userId, long groupId, long parentFolderId, String name,
-			String description,
+			String externalReferenceCode, long userId, long groupId,
+			long parentFolderId, String name, String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalFolderLocalService.addFolder(
-			userId, groupId, parentFolderId, name, description, serviceContext);
+			externalReferenceCode, userId, groupId, parentFolderId, name,
+			description, serviceContext);
 	}
 
 	/**
 	 * Adds the journal folder to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect JournalFolderLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param journalFolder the journal folder
 	 * @return the journal folder that was added
@@ -72,6 +68,17 @@ public class JournalFolderLocalServiceWrapper
 	@Override
 	public JournalFolder createJournalFolder(long folderId) {
 		return _journalFolderLocalService.createJournalFolder(folderId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _journalFolderLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	@Override
@@ -116,6 +123,10 @@ public class JournalFolderLocalServiceWrapper
 	/**
 	 * Deletes the journal folder from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect JournalFolderLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param journalFolder the journal folder
 	 * @return the journal folder that was removed
 	 */
@@ -126,6 +137,10 @@ public class JournalFolderLocalServiceWrapper
 
 	/**
 	 * Deletes the journal folder with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect JournalFolderLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param folderId the primary key of the journal folder
 	 * @return the journal folder that was removed
@@ -147,6 +162,18 @@ public class JournalFolderLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalFolderLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _journalFolderLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _journalFolderLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -263,6 +290,15 @@ public class JournalFolderLocalServiceWrapper
 		return _journalFolderLocalService.fetchJournalFolder(folderId);
 	}
 
+	@Override
+	public JournalFolder fetchJournalFolderByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return _journalFolderLocalService.
+			fetchJournalFolderByExternalReferenceCode(
+				externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the journal folder matching the UUID and group.
 	 *
@@ -306,6 +342,19 @@ public class JournalFolderLocalServiceWrapper
 
 		return _journalFolderLocalService.getDDMStructures(
 			groupIds, folderId, restrictionType);
+	}
+
+	@Override
+	public java.util.List<com.liferay.dynamic.data.mapping.model.DDMStructure>
+			getDDMStructures(
+				long[] groupIds, long folderId, int restrictionType,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.dynamic.data.mapping.model.DDMStructure>
+						orderByComparator)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _journalFolderLocalService.getDDMStructures(
+			groupIds, folderId, restrictionType, orderByComparator);
 	}
 
 	@Override
@@ -380,19 +429,19 @@ public class JournalFolderLocalServiceWrapper
 	@Override
 	public java.util.List<Object> getFoldersAndArticles(
 		long groupId, long folderId, int status, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<?> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<?> orderByComparator) {
 
 		return _journalFolderLocalService.getFoldersAndArticles(
-			groupId, folderId, status, start, end, obc);
+			groupId, folderId, status, start, end, orderByComparator);
 	}
 
 	@Override
 	public java.util.List<Object> getFoldersAndArticles(
 		long groupId, long folderId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<?> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<?> orderByComparator) {
 
 		return _journalFolderLocalService.getFoldersAndArticles(
-			groupId, folderId, start, end, obc);
+			groupId, folderId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -456,6 +505,16 @@ public class JournalFolderLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalFolderLocalService.getJournalFolder(folderId);
+	}
+
+	@Override
+	public JournalFolder getJournalFolderByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _journalFolderLocalService.
+			getJournalFolderByExternalReferenceCode(
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -559,6 +618,9 @@ public class JournalFolderLocalServiceWrapper
 			folderId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -641,12 +703,13 @@ public class JournalFolderLocalServiceWrapper
 				long companyId, long[] groupIds, long folderId,
 				int restrictionType, String keywords, int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.dynamic.data.mapping.model.DDMStructure> obc)
+					<com.liferay.dynamic.data.mapping.model.DDMStructure>
+						orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalFolderLocalService.searchDDMStructures(
 			companyId, groupIds, folderId, restrictionType, keywords, start,
-			end, obc);
+			end, orderByComparator);
 	}
 
 	@Override
@@ -712,6 +775,10 @@ public class JournalFolderLocalServiceWrapper
 	/**
 	 * Updates the journal folder in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect JournalFolderLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param journalFolder the journal folder
 	 * @return the journal folder that was updated
 	 */
@@ -734,6 +801,11 @@ public class JournalFolderLocalServiceWrapper
 
 		_journalFolderLocalService.validateFolderDDMStructures(
 			folderId, parentFolderId);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _journalFolderLocalService.getBasePersistence();
 	}
 
 	@Override

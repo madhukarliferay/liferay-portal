@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -131,6 +123,9 @@ public class DDMDataProviderInstanceLinkPersistenceTest {
 		newDDMDataProviderInstanceLink.setMvccVersion(
 			RandomTestUtil.nextLong());
 
+		newDDMDataProviderInstanceLink.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newDDMDataProviderInstanceLink.setCompanyId(RandomTestUtil.nextLong());
 
 		newDDMDataProviderInstanceLink.setDataProviderInstanceId(
@@ -149,6 +144,9 @@ public class DDMDataProviderInstanceLinkPersistenceTest {
 		Assert.assertEquals(
 			existingDDMDataProviderInstanceLink.getMvccVersion(),
 			newDDMDataProviderInstanceLink.getMvccVersion());
+		Assert.assertEquals(
+			existingDDMDataProviderInstanceLink.getCtCollectionId(),
+			newDDMDataProviderInstanceLink.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDMDataProviderInstanceLink.getDataProviderInstanceLinkId(),
 			newDDMDataProviderInstanceLink.getDataProviderInstanceLinkId());
@@ -217,8 +215,9 @@ public class DDMDataProviderInstanceLinkPersistenceTest {
 
 		return OrderByComparatorFactoryUtil.create(
 			"DDMDataProviderInstanceLink", "mvccVersion", true,
-			"dataProviderInstanceLinkId", true, "companyId", true,
-			"dataProviderInstanceId", true, "structureId", true);
+			"ctCollectionId", true, "dataProviderInstanceLinkId", true,
+			"companyId", true, "dataProviderInstanceId", true, "structureId",
+			true);
 	}
 
 	@Test
@@ -474,22 +473,68 @@ public class DDMDataProviderInstanceLinkPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMDataProviderInstanceLink existingDDMDataProviderInstanceLink =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newDDMDataProviderInstanceLink.getPrimaryKey());
+				newDDMDataProviderInstanceLink.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMDataProviderInstanceLink newDDMDataProviderInstanceLink =
+			addDDMDataProviderInstanceLink();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMDataProviderInstanceLink.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"dataProviderInstanceLinkId",
+				newDDMDataProviderInstanceLink.
+					getDataProviderInstanceLinkId()));
+
+		List<DDMDataProviderInstanceLink> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		DDMDataProviderInstanceLink ddmDataProviderInstanceLink) {
 
 		Assert.assertEquals(
 			Long.valueOf(
-				existingDDMDataProviderInstanceLink.
-					getDataProviderInstanceId()),
+				ddmDataProviderInstanceLink.getDataProviderInstanceId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMDataProviderInstanceLink,
-				"getOriginalDataProviderInstanceId", new Class<?>[0]));
+				ddmDataProviderInstanceLink, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "dataProviderInstanceId"));
 		Assert.assertEquals(
-			Long.valueOf(existingDDMDataProviderInstanceLink.getStructureId()),
+			Long.valueOf(ddmDataProviderInstanceLink.getStructureId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMDataProviderInstanceLink, "getOriginalStructureId",
-				new Class<?>[0]));
+				ddmDataProviderInstanceLink, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "structureId"));
 	}
 
 	protected DDMDataProviderInstanceLink addDDMDataProviderInstanceLink()
@@ -501,6 +546,9 @@ public class DDMDataProviderInstanceLinkPersistenceTest {
 			_persistence.create(pk);
 
 		ddmDataProviderInstanceLink.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddmDataProviderInstanceLink.setCtCollectionId(
+			RandomTestUtil.nextLong());
 
 		ddmDataProviderInstanceLink.setCompanyId(RandomTestUtil.nextLong());
 

@@ -1,35 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.admin.web.internal.dao.search;
 
+import com.liferay.account.admin.web.internal.constants.AccountWebKeys;
 import com.liferay.account.admin.web.internal.display.AccountEntryDisplay;
+import com.liferay.account.admin.web.internal.display.AccountEntryDisplayFactoryUtil;
+import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalServiceUtil;
+import com.liferay.account.service.AccountEntryServiceUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.search.BaseModelSearchResult;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 /**
@@ -37,13 +37,77 @@ import java.util.Objects;
  */
 public class AccountEntryDisplaySearchContainerFactory {
 
-	public static SearchContainer create(
-		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse) {
+	public static SearchContainer<AccountEntryDisplay> create(
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortalException {
 
-		SearchContainer accountEntryDisplaySearchContainer =
-			new SearchContainer(
-				liferayPortletRequest, liferayPortletResponse.createRenderURL(),
+		return _create(
+			liferayPortletRequest, liferayPortletResponse,
+			new LinkedHashMap<>(), true);
+	}
+
+	public static SearchContainer<AccountEntryDisplay> create(
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse,
+			boolean filterManageableAccountEntries)
+		throws PortalException {
+
+		return _create(
+			liferayPortletRequest, liferayPortletResponse,
+			new LinkedHashMap<>(), filterManageableAccountEntries);
+	}
+
+	public static SearchContainer<AccountEntryDisplay> createWithAccountGroupId(
+			long accountGroupId, LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortalException {
+
+		return _create(
+			liferayPortletRequest, liferayPortletResponse,
+			LinkedHashMapBuilder.<String, Object>put(
+				"accountGroupIds", new long[] {accountGroupId}
+			).build(),
+			false);
+	}
+
+	public static SearchContainer<AccountEntryDisplay> createWithParams(
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse,
+			LinkedHashMap<String, Object> params,
+			boolean filterManageableAccountEntries)
+		throws PortalException {
+
+		return _create(
+			liferayPortletRequest, liferayPortletResponse, params,
+			filterManageableAccountEntries);
+	}
+
+	public static SearchContainer<AccountEntryDisplay> createWithUserId(
+			long userId, LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortalException {
+
+		return _create(
+			liferayPortletRequest, liferayPortletResponse,
+			LinkedHashMapBuilder.<String, Object>put(
+				"accountUserIds", new long[] {userId}
+			).build(),
+			false);
+	}
+
+	private static SearchContainer<AccountEntryDisplay> _create(
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse,
+			LinkedHashMap<String, Object> params,
+			boolean filterManageableAccountEntries)
+		throws PortalException {
+
+		SearchContainer<AccountEntryDisplay>
+			accountEntryDisplaySearchContainer = new SearchContainer(
+				liferayPortletRequest,
+				PortletURLUtil.getCurrent(
+					liferayPortletRequest, liferayPortletResponse),
 				null, "no-accounts-were-found");
 
 		accountEntryDisplaySearchContainer.setId("accountEntries");
@@ -58,55 +122,72 @@ public class AccountEntryDisplaySearchContainerFactory {
 
 		accountEntryDisplaySearchContainer.setOrderByType(orderByType);
 
-		accountEntryDisplaySearchContainer.setOrderByComparator(
-			_getOrderByComparator(orderByCol, orderByType));
+		String keywords = ParamUtil.getString(
+			liferayPortletRequest, "keywords");
 
-		accountEntryDisplaySearchContainer.setRowChecker(
-			new EmptyOnClickRowChecker(liferayPortletResponse));
+		String navigation = ParamUtil.getString(
+			liferayPortletRequest, "navigation", "active");
+
+		params.put("status", _getStatus(navigation));
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)liferayPortletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		String navigation = ParamUtil.getString(
-			liferayPortletRequest, "navigation", "active");
+		String[] types = GetterUtil.getStringValues(
+			liferayPortletRequest.getAttribute(
+				AccountWebKeys.ACCOUNT_ENTRY_ALLOWED_TYPES),
+			AccountConstants.getAccountEntryTypes(themeDisplay.getCompanyId()));
 
-		List<AccountEntry> accountEntries =
-			AccountEntryLocalServiceUtil.getAccountEntries(
-				themeDisplay.getCompanyId(), _getStatus(navigation),
-				accountEntryDisplaySearchContainer.getStart(),
-				accountEntryDisplaySearchContainer.getEnd(),
-				accountEntryDisplaySearchContainer.getOrderByComparator());
+		String type = ParamUtil.getString(liferayPortletRequest, "type");
 
-		List<AccountEntryDisplay> accountEntryDisplays =
-			TransformUtil.transform(accountEntries, AccountEntryDisplay::of);
+		if (Validator.isNotNull(type) && !type.equals("all")) {
+			types = new String[] {type};
+		}
 
-		accountEntryDisplaySearchContainer.setResults(accountEntryDisplays);
+		params.put("types", types);
 
-		accountEntryDisplaySearchContainer.setTotal(
-			AccountEntryLocalServiceUtil.getAccountEntriesCount(
-				themeDisplay.getCompanyId(), _getStatus(navigation)));
+		BaseModelSearchResult<AccountEntry> baseModelSearchResult;
+
+		if (filterManageableAccountEntries) {
+			baseModelSearchResult =
+				AccountEntryServiceUtil.searchAccountEntries(
+					keywords, params,
+					accountEntryDisplaySearchContainer.getStart(),
+					accountEntryDisplaySearchContainer.getDelta(), orderByCol,
+					_isReverseOrder(orderByType));
+		}
+		else {
+			baseModelSearchResult =
+				AccountEntryLocalServiceUtil.searchAccountEntries(
+					CompanyThreadLocal.getCompanyId(), keywords, params,
+					accountEntryDisplaySearchContainer.getStart(),
+					accountEntryDisplaySearchContainer.getDelta(), orderByCol,
+					_isReverseOrder(orderByType));
+		}
+
+		accountEntryDisplaySearchContainer.setResultsAndTotal(
+			() -> TransformUtil.transform(
+				baseModelSearchResult.getBaseModels(),
+				accountEntry -> AccountEntryDisplayFactoryUtil.create(
+					accountEntry, liferayPortletRequest)),
+			baseModelSearchResult.getLength());
+		accountEntryDisplaySearchContainer.setRowChecker(
+			new EmptyOnClickRowChecker(liferayPortletResponse));
 
 		return accountEntryDisplaySearchContainer;
 	}
 
-	private static OrderByComparator _getOrderByComparator(
-		String orderByCol, String orderByType) {
-
-		if (Objects.equals(orderByCol, "name")) {
-			return OrderByComparatorFactoryUtil.create(
-				"AccountEntry", orderByCol, Objects.equals(orderByType, "asc"));
+	private static int _getStatus(String navigation) {
+		if (Objects.equals(navigation, "active")) {
+			return WorkflowConstants.getLabelStatus("approved");
 		}
 
-		return null;
+		return WorkflowConstants.getLabelStatus(navigation);
 	}
 
-	private static int _getStatus(String navigation) {
-		if (Objects.equals(navigation, "inactive")) {
-			return WorkflowConstants.STATUS_INACTIVE;
-		}
-
-		return WorkflowConstants.STATUS_APPROVED;
+	private static boolean _isReverseOrder(String orderByType) {
+		return Objects.equals(orderByType, "desc");
 	}
 
 }

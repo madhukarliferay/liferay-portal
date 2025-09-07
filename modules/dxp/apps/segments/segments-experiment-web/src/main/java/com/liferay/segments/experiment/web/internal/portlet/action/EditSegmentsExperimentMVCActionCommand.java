@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.experiment.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.analytics.settings.rest.manager.AnalyticsSettingsManager;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -35,12 +27,12 @@ import com.liferay.segments.experiment.web.internal.util.SegmentsExperimentUtil;
 import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.service.SegmentsExperimentService;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.concurrent.Callable;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,10 +41,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sarai Díaz
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + SegmentsPortletKeys.SEGMENTS_EXPERIMENT,
-		"mvc.command.name=/edit_segments_experiment"
+		"jakarta.portlet.name=" + SegmentsPortletKeys.SEGMENTS_EXPERIMENT,
+		"mvc.command.name=/segments_experiment/edit_segments_experiment"
 	},
 	service = MVCActionCommand.class
 )
@@ -76,8 +67,8 @@ public class EditSegmentsExperimentMVCActionCommand
 			jsonObject = TransactionInvokerUtil.invoke(
 				_transactionConfig, callable);
 		}
-		catch (Throwable t) {
-			_log.error(t, t);
+		catch (Throwable throwable) {
+			_log.error(throwable, throwable);
 
 			HttpServletResponse httpServletResponse =
 				_portal.getHttpServletResponse(actionResponse);
@@ -86,34 +77,43 @@ public class EditSegmentsExperimentMVCActionCommand
 
 			jsonObject = JSONUtil.put(
 				"error",
-				LanguageUtil.get(
+				_language.get(
 					themeDisplay.getRequest(), "an-unexpected-error-occurred"));
 		}
 
-		hideDefaultSuccessMessage(actionRequest);
-
 		JSONPortletResponseUtil.writeJSON(
 			actionRequest, actionResponse, jsonObject);
+
+		hideDefaultSuccessMessage(actionRequest);
 	}
 
 	private JSONObject _editSegmentsExperiment(ActionRequest actionRequest)
-		throws PortalException {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		SegmentsExperiment segmentsExperiment =
-			_segmentsExperimentService.updateSegmentsExperiment(
-				ParamUtil.getLong(actionRequest, "segmentsExperimentId"),
-				ParamUtil.getString(actionRequest, "name"),
-				ParamUtil.getString(actionRequest, "description"),
-				ParamUtil.getString(actionRequest, "goal"),
-				ParamUtil.getString(actionRequest, "goalTarget"));
+		throws Exception {
 
 		return JSONUtil.put(
 			"segmentsExperiment",
-			SegmentsExperimentUtil.toSegmentsExperimentJSONObject(
-				themeDisplay.getLocale(), segmentsExperiment));
+			() -> {
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)actionRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				Layout layout = themeDisplay.getLayout();
+
+				SegmentsExperiment segmentsExperiment =
+					_segmentsExperimentService.updateSegmentsExperiment(
+						ParamUtil.getLong(
+							actionRequest, "segmentsExperimentId"),
+						ParamUtil.getString(actionRequest, "name"),
+						ParamUtil.getString(actionRequest, "description"),
+						ParamUtil.getString(actionRequest, "goal"),
+						ParamUtil.getString(actionRequest, "goalTarget"));
+
+				return SegmentsExperimentUtil.toSegmentsExperimentJSONObject(
+					_analyticsSettingsManager.getAnalyticsConfiguration(
+						themeDisplay.getCompanyId()),
+					layout.getGroup(), themeDisplay.getLocale(),
+					segmentsExperiment);
+			});
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -122,6 +122,12 @@ public class EditSegmentsExperimentMVCActionCommand
 	private static final TransactionConfig _transactionConfig =
 		TransactionConfig.Factory.create(
 			Propagation.REQUIRED, new Class<?>[] {Exception.class});
+
+	@Reference
+	private AnalyticsSettingsManager _analyticsSettingsManager;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

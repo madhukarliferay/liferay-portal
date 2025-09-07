@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,45 +15,54 @@ long organizationId = organizationScreenNavigationDisplayContext.getOrganization
 List<OrgLabor> orgLabors = OrgLaborServiceUtil.getOrgLabors(organizationId);
 %>
 
-<div class="sheet-header">
-	<h2 class="autofit-row sheet-title">
-		<span class="autofit-col autofit-col-expand">
+<clay:sheet-header>
+	<clay:content-row
+		containerElement="h3"
+		cssClass="sheet-title"
+	>
+		<clay:content-col
+			expand="<%= true %>"
+		>
 			<span class="heading-text"><%= organizationScreenNavigationDisplayContext.getFormLabel() %></span>
-		</span>
-		<span class="autofit-col">
+		</clay:content-col>
+
+		<clay:content-col>
 			<span class="heading-end">
-
-				<%
-				PortletURL editURL = liferayPortletResponse.createRenderURL();
-
-				editURL.setParameter("mvcPath", "/organization/edit_opening_hours.jsp");
-				editURL.setParameter("redirect", currentURL);
-				editURL.setParameter("className", Organization.class.getName());
-				editURL.setParameter("classPK", String.valueOf(organizationId));
-				%>
-
 				<liferay-ui:icon
 					label="<%= true %>"
 					linkCssClass="add-opening-hours-link btn btn-secondary btn-sm"
 					message="add"
-					url="<%= editURL.toString() %>"
+					url='<%=
+						PortletURLBuilder.createRenderURL(
+							liferayPortletResponse
+						).setMVCPath(
+							"/organization/edit_opening_hours.jsp"
+						).setRedirect(
+							currentURL
+						).setParameter(
+							"className", Organization.class.getName()
+						).setParameter(
+							"classPK", organizationId
+						).buildString()
+					%>'
 				/>
 			</span>
-		</span>
-	</h2>
-</div>
+		</clay:content-col>
+	</clay:content-row>
+</clay:sheet-header>
 
 <c:if test="<%= orgLabors.isEmpty() %>">
 	<div class="contact-information-empty-results-message-wrapper">
-		<liferay-ui:empty-result-message
-			message="this-organization-does-not-have-any-opening-hours"
+		<liferay-frontend:empty-result-message
+			animationType="<%= EmptyResultMessageKeys.AnimationType.EMPTY %>"
+			title='<%= LanguageUtil.get(resourceBundle, "this-organization-does-not-have-any-opening-hours") %>'
 		/>
 	</div>
 </c:if>
 
 <div
 	class="<%=
-		CSSClassNames.builder(
+		CSSClasses.builder(
 			"opening-hours-wrapper"
 		).add(
 			"hide", orgLabors.isEmpty()
@@ -76,16 +76,23 @@ List<OrgLabor> orgLabors = OrgLaborServiceUtil.getOrgLabors(organizationId);
 	%>
 
 		<div class="opening-hours-entry">
-			<div class="autofit-row opening-hours-header">
-				<span class="autofit-col">
-					<h5><%= orgLaborDisplay.getTitle() %></h5>
-				</span>
-				<span class="autofit-col lfr-search-container-wrapper">
-					<liferay-util:include page="/organization/opening_hours_action.jsp" servletContext="<%= application %>">
-						<liferay-util:param name="orgLaborId" value="<%= String.valueOf(orgLabor.getOrgLaborId()) %>" />
-					</liferay-util:include>
-				</span>
-			</div>
+			<clay:content-row
+				cssClass="opening-hours-header"
+			>
+				<clay:content-col>
+					<div class="h5"><%= orgLaborDisplay.getTitle() %></div>
+				</clay:content-col>
+
+				<clay:content-col
+					cssClass="lfr-search-container-wrapper"
+				>
+					<div data-qa-id="editOrgLaborIconMenu">
+						<liferay-util:include page="/organization/opening_hours_action.jsp" servletContext="<%= application %>">
+							<liferay-util:param name="orgLaborId" value="<%= String.valueOf(orgLabor.getOrgLaborId()) %>" />
+						</liferay-util:include>
+					</div>
+				</clay:content-col>
+			</clay:content-row>
 
 			<div class="table-responsive">
 				<table class="table table-autofit">

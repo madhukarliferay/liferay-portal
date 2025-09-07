@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,17 +28,17 @@ public class LayoutSetPrototypeCacheModel
 	implements CacheModel<LayoutSetPrototype>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutSetPrototypeCacheModel)) {
+		if (!(object instanceof LayoutSetPrototypeCacheModel)) {
 			return false;
 		}
 
 		LayoutSetPrototypeCacheModel layoutSetPrototypeCacheModel =
-			(LayoutSetPrototypeCacheModel)obj;
+			(LayoutSetPrototypeCacheModel)object;
 
 		if ((layoutSetPrototypeId ==
 				layoutSetPrototypeCacheModel.layoutSetPrototypeId) &&
@@ -78,10 +69,12 @@ public class LayoutSetPrototypeCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(27);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", layoutSetPrototypeId=");
@@ -115,6 +108,7 @@ public class LayoutSetPrototypeCacheModel
 			new LayoutSetPrototypeImpl();
 
 		layoutSetPrototypeImpl.setMvccVersion(mvccVersion);
+		layoutSetPrototypeImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			layoutSetPrototypeImpl.setUuid("");
@@ -177,8 +171,12 @@ public class LayoutSetPrototypeCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		layoutSetPrototypeId = objectInput.readLong();
@@ -189,8 +187,8 @@ public class LayoutSetPrototypeCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-		name = objectInput.readUTF();
-		description = objectInput.readUTF();
+		name = (String)objectInput.readObject();
+		description = (String)objectInput.readObject();
 		settings = objectInput.readUTF();
 
 		active = objectInput.readBoolean();
@@ -199,6 +197,8 @@ public class LayoutSetPrototypeCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -224,17 +224,17 @@ public class LayoutSetPrototypeCacheModel
 		objectOutput.writeLong(modifiedDate);
 
 		if (name == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(name);
+			objectOutput.writeObject(name);
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (settings == null) {
@@ -248,6 +248,7 @@ public class LayoutSetPrototypeCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long layoutSetPrototypeId;
 	public long companyId;

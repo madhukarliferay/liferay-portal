@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -49,6 +40,7 @@ public class ReleaseWrapper
 		attributes.put("schemaVersion", getSchemaVersion());
 		attributes.put("buildNumber", getBuildNumber());
 		attributes.put("buildDate", getBuildDate());
+		attributes.put("versionDisplayName", getVersionDisplayName());
 		attributes.put("verified", isVerified());
 		attributes.put("state", getState());
 		attributes.put("testString", getTestString());
@@ -107,6 +99,13 @@ public class ReleaseWrapper
 			setBuildDate(buildDate);
 		}
 
+		String versionDisplayName = (String)attributes.get(
+			"versionDisplayName");
+
+		if (versionDisplayName != null) {
+			setVersionDisplayName(versionDisplayName);
+		}
+
 		Boolean verified = (Boolean)attributes.get("verified");
 
 		if (verified != null) {
@@ -124,6 +123,11 @@ public class ReleaseWrapper
 		if (testString != null) {
 			setTestString(testString);
 		}
+	}
+
+	@Override
+	public Release cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -252,6 +256,16 @@ public class ReleaseWrapper
 	}
 
 	/**
+	 * Returns the version display name of this release.
+	 *
+	 * @return the version display name of this release
+	 */
+	@Override
+	public String getVersionDisplayName() {
+		return model.getVersionDisplayName();
+	}
+
+	/**
 	 * Returns <code>true</code> if this release is verified.
 	 *
 	 * @return <code>true</code> if this release is verified; <code>false</code> otherwise
@@ -261,11 +275,6 @@ public class ReleaseWrapper
 		return model.isVerified();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a release model instance should use the <code>Release</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -389,6 +398,21 @@ public class ReleaseWrapper
 	@Override
 	public void setVerified(boolean verified) {
 		model.setVerified(verified);
+	}
+
+	/**
+	 * Sets the version display name of this release.
+	 *
+	 * @param versionDisplayName the version display name of this release
+	 */
+	@Override
+	public void setVersionDisplayName(String versionDisplayName) {
+		model.setVersionDisplayName(versionDisplayName);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

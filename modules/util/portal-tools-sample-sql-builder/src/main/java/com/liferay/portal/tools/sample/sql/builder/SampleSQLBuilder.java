@@ -1,53 +1,48 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.sample.sql.builder;
 
+import com.liferay.petra.io.OutputStreamWriter;
+import com.liferay.petra.io.unsync.UnsyncBufferedReader;
+import com.liferay.petra.io.unsync.UnsyncBufferedWriter;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.freemarker.FreeMarkerUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
-import com.liferay.portal.kernel.io.OutputStreamWriter;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedWriter;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.SortedProperties;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.tools.ToolDependencies;
 import com.liferay.portal.tools.sample.sql.builder.io.CharPipe;
 import com.liferay.portal.tools.sample.sql.builder.io.UnsyncTeeWriter;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 
+import java.net.URL;
+
 import java.nio.channels.FileChannel;
 
+import java.sql.SQLException;
+
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author Brian Wing Shun Chan
@@ -55,54 +50,12 @@ import java.util.Properties;
  */
 public class SampleSQLBuilder {
 
-	public static void main(String[] args) {
+	public SampleSQLBuilder() {
 		ToolDependencies.wireBasic();
-
-		Reader reader = null;
-
-		try {
-			Properties properties = new SortedProperties();
-
-			reader = new FileReader(args[0]);
-
-			properties.load(reader);
-
-			DataFactory dataFactory = new DataFactory(properties);
-
-			new SampleSQLBuilder(properties, dataFactory);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				}
-				catch (IOException ioe) {
-					ioe.printStackTrace();
-				}
-			}
-		}
-	}
-
-	public SampleSQLBuilder(Properties properties, DataFactory dataFactory)
-		throws Exception {
-
-		_dbType = DBType.valueOf(
-			StringUtil.toUpperCase(
-				properties.getProperty("sample.sql.db.type")));
-
-		_optimizeBufferSize = GetterUtil.getInteger(
-			properties.getProperty("sample.sql.optimize.buffer.size"));
-		_outputDir = properties.getProperty("sample.sql.output.dir");
-		_script = properties.getProperty("sample.sql.script");
-
-		_dataFactory = dataFactory;
 
 		// Generic
 
-		File tempDir = new File(_outputDir, "temp");
+		File tempDir = new File(_OUTPUT_DIR, "temp");
 
 		tempDir.mkdirs();
 
@@ -116,19 +69,17 @@ public class SampleSQLBuilder {
 
 			// Merge
 
-			boolean outputMerge = GetterUtil.getBoolean(
-				properties.getProperty("sample.sql.output.merge"));
-
-			if (outputMerge) {
+			if (BenchmarksPropsValues.OUTPUT_MERGE) {
 				File sqlFile = new File(
-					_outputDir, "sample-" + _dbType + ".sql");
+					_OUTPUT_DIR,
+					"sample-" + BenchmarksPropsValues.DB_TYPE + ".sql");
 
 				FileUtil.delete(sqlFile);
 
 				mergeSQL(tempDir, sqlFile);
 			}
 			else {
-				File outputDir = new File(_outputDir, "output");
+				File outputDir = new File(_OUTPUT_DIR, "output");
 
 				FileUtil.deltree(outputDir);
 
@@ -141,38 +92,45 @@ public class SampleSQLBuilder {
 				}
 			}
 		}
+		catch (Exception exception) {
+			exception.printStackTrace();
+		}
 		finally {
 			FileUtil.deltree(tempDir);
 		}
-
-		StringBundler sb = new StringBundler();
-
-		for (String key : properties.stringPropertyNames()) {
-			if (!key.startsWith("sample.sql")) {
-				continue;
-			}
-
-			String value = properties.getProperty(key);
-
-			sb.append(key);
-			sb.append(StringPool.EQUAL);
-			sb.append(value);
-			sb.append(StringPool.NEW_LINE);
-		}
-
-		FileUtil.write(
-			new File(_outputDir, "benchmarks-actual.properties"),
-			sb.toString());
 	}
 
 	protected void compressSQL(
-			DB db, File directory, Map<String, Writer> insertSQLWriters,
-			Map<String, StringBundler> sqls, String insertSQL)
-		throws IOException {
+			DB db, File directory, Map<String, Writer> sqlWriters,
+			Map<String, StringBundler> sqls, String sql)
+		throws IOException, SQLException {
 
-		String tableName = insertSQL.substring(0, insertSQL.indexOf(' '));
+		String tableName = null;
 
-		int index = insertSQL.indexOf(" values ") + 8;
+		if (sql.startsWith("create")) {
+			if (sql.startsWith("create table ")) {
+				tableName = sql.substring(
+					13, sql.indexOf(StringPool.OPEN_PARENTHESIS) - 1);
+			}
+			else {
+				int index = sql.indexOf(" on ");
+
+				tableName = sql.substring(
+					index + 4, sql.indexOf(StringPool.OPEN_PARENTHESIS) - 1);
+			}
+
+			sql = db.buildSQL(sql) + StringPool.NEW_LINE;
+
+			writeToSQLFile(directory, tableName, sqlWriters, sql);
+
+			return;
+		}
+
+		sql = sql.substring(12);
+
+		tableName = sql.substring(0, sql.indexOf(' '));
+
+		int index = sql.indexOf(" values ") + 8;
 
 		StringBundler sb = sqls.get(tableName);
 
@@ -182,39 +140,46 @@ public class SampleSQLBuilder {
 			sqls.put(tableName, sb);
 
 			sb.append("insert into ");
-			sb.append(insertSQL.substring(0, index));
-			sb.append("\n");
+			sb.append(sql.substring(0, index));
+			sb.append(StringPool.NEW_LINE);
 		}
 		else {
-			sb.append(",\n");
+			sb.append(StringPool.COMMA);
+			sb.append(StringPool.NEW_LINE);
 		}
 
-		String values = insertSQL.substring(index, insertSQL.length() - 1);
+		String values = sql.substring(index, sql.length() - 1);
 
 		sb.append(values);
 
-		if (sb.index() >= _optimizeBufferSize) {
-			sb.append(";\n");
+		if (sb.index() >= BenchmarksPropsValues.OPTIMIZE_BUFFER_SIZE) {
+			sb.append(StringPool.SEMICOLON);
+			sb.append(StringPool.NEW_LINE);
 
-			insertSQL = db.buildSQL(sb.toString());
+			sql = db.buildSQL(sb.toString());
 
 			sb.setIndex(0);
 
-			writeToInsertSQLFile(
-				directory, tableName, insertSQLWriters, insertSQL);
+			writeToSQLFile(directory, tableName, sqlWriters, sql);
 		}
 	}
 
 	protected void compressSQL(Reader reader, File dir) throws Exception {
-		DB db = DBManagerUtil.getDB(_dbType, null);
+		DB db = DBManagerUtil.getDB(BenchmarksPropsValues.DB_TYPE, null);
 
-		if ((_dbType == DBType.MARIADB) || (_dbType == DBType.MYSQL)) {
+		if ((BenchmarksPropsValues.DB_TYPE == DBType.MARIADB) ||
+			(BenchmarksPropsValues.DB_TYPE == DBType.MYSQL)) {
+
 			db = new SampleMySQLDB(db.getMajorVersion(), db.getMinorVersion());
 		}
+		else if (BenchmarksPropsValues.DB_TYPE == DBType.POSTGRESQL) {
+			db = new SamplePostgreSQLDB(
+				db.getMajorVersion(), db.getMinorVersion());
+		}
 
-		Map<String, Writer> insertSQLWriters = new HashMap<>();
+		Map<String, Writer> sqlWriters = new HashMap<>();
 		Map<String, StringBundler> insertSQLs = new HashMap<>();
-		List<String> miscSQLs = new ArrayList<>();
+		List<String> counterSQLs = new ArrayList<>();
 
 		try (UnsyncBufferedReader unsyncBufferedReader =
 				new UnsyncBufferedReader(reader)) {
@@ -227,13 +192,28 @@ public class SampleSQLBuilder {
 				s = s.trim();
 
 				if (s.length() > 0) {
-					if (s.startsWith("insert into ")) {
-						compressSQL(
-							db, dir, insertSQLWriters, insertSQLs,
-							s.substring(12));
+					if (s.startsWith("create") ||
+						s.startsWith("insert into ")) {
+
+						if (!s.endsWith(");")) {
+							StringBundler sb = new StringBundler();
+
+							while (!s.endsWith(");")) {
+								sb.append(s);
+								sb.append(StringPool.NEW_LINE);
+
+								s = unsyncBufferedReader.readLine();
+							}
+
+							sb.append(s);
+
+							s = sb.toString();
+						}
+
+						compressSQL(db, dir, sqlWriters, insertSQLs, s);
 					}
-					else {
-						miscSQLs.add(s);
+					else if (!s.contains("##")) {
+						counterSQLs.add(s);
 					}
 				}
 			}
@@ -251,22 +231,30 @@ public class SampleSQLBuilder {
 			if (sb.index() > 0) {
 				String insertSQL = db.buildSQL(sb.toString());
 
-				writeToInsertSQLFile(
-					dir, tableName, insertSQLWriters, insertSQL);
+				writeToSQLFile(dir, tableName, sqlWriters, insertSQL);
 			}
 
-			try (Writer insertSQLWriter = insertSQLWriters.remove(tableName)) {
-				insertSQLWriter.write(";\n");
+			try (Writer insertSQLWriter = sqlWriters.remove(tableName)) {
+				insertSQLWriter.write(StringPool.SEMICOLON);
+				insertSQLWriter.write(StringPool.NEW_LINE);
 			}
 		}
 
-		try (Writer miscSQLWriter = new FileWriter(new File(dir, "misc.sql"))) {
-			for (String miscSQL : miscSQLs) {
-				miscSQL = db.buildSQL(miscSQL);
+		for (Map.Entry<String, Writer> entry : sqlWriters.entrySet()) {
+			Writer writer = entry.getValue();
 
-				miscSQLWriter.write(miscSQL);
+			writer.close();
+		}
 
-				miscSQLWriter.write(StringPool.NEW_LINE);
+		try (Writer counterSQLWriter = new FileWriter(
+				new File(dir, "Counter.sql"), true)) {
+
+			for (String counterSQL : counterSQLs) {
+				counterSQL = db.buildSQL(counterSQL);
+
+				counterSQLWriter.write(counterSQL);
+
+				counterSQLWriter.write(StringPool.NEW_LINE);
 			}
 		}
 	}
@@ -276,66 +264,40 @@ public class SampleSQLBuilder {
 
 		Writer writer = new OutputStreamWriter(fileOutputStream);
 
-		return createUnsyncBufferedWriter(writer);
-	}
-
-	protected Writer createUnsyncBufferedWriter(Writer writer) {
-		return new UnsyncBufferedWriter(writer, _WRITER_BUFFER_SIZE) {
-
-			@Override
-			public void flush() {
-
-				// Disable FreeMarker from flushing
-
-			}
-
-		};
+		return new UnsyncBufferedWriter(writer, _WRITER_BUFFER_SIZE);
 	}
 
 	protected Reader generateSQL() {
-		final CharPipe charPipe = new CharPipe(_PIPE_BUFFER_SIZE);
+		CharPipe charPipe = new CharPipe(_PIPE_BUFFER_SIZE);
 
-		Thread thread = new Thread() {
+		Thread thread = new Thread(
+			() -> {
+				try (CSVFileWriter csvFileWriter = new CSVFileWriter(
+						new File(_OUTPUT_DIR));
+					Writer sampleSQLWriter = new UnsyncTeeWriter(
+						new UnsyncBufferedWriter(
+							charPipe.getWriter(), _WRITER_BUFFER_SIZE),
+						createFileWriter(
+							new File(_OUTPUT_DIR, "sample.sql")))) {
 
-			@Override
-			public void run() {
-				Writer sampleSQLWriter = null;
-
-				try {
-					sampleSQLWriter = new UnsyncTeeWriter(
-						createUnsyncBufferedWriter(charPipe.getWriter()),
-						createFileWriter(new File(_outputDir, "sample.sql")));
+					_loadCreateSQLs(sampleSQLWriter);
 
 					FreeMarkerUtil.process(
-						_script,
-						Collections.singletonMap("dataFactory", _dataFactory),
+						BenchmarksPropsValues.SCRIPT,
+						HashMapBuilder.<String, Object>put(
+							"csvFileWriter", csvFileWriter
+						).put(
+							"dataFactory", new DataFactory()
+						).build(),
 						sampleSQLWriter);
 				}
-				catch (Throwable t) {
-					_freeMarkerThrowable = t;
+				catch (Throwable throwable) {
+					_freeMarkerThrowable = throwable;
 				}
 				finally {
-					try {
-						_dataFactory.closeCSVWriters();
-					}
-					catch (IOException ioe) {
-						ioe.printStackTrace();
-					}
-
-					if (sampleSQLWriter != null) {
-						try {
-							sampleSQLWriter.close();
-						}
-						catch (IOException ioe) {
-							ioe.printStackTrace();
-						}
-					}
-
 					charPipe.close();
 				}
-			}
-
-		};
+			});
 
 		thread.start();
 
@@ -351,13 +313,13 @@ public class SampleSQLBuilder {
 		try (FileChannel outputFileChannel =
 				outputSQLFileOutputStream.getChannel()) {
 
-			File miscSQLFile = null;
+			File counterSQLFile = null;
 
 			for (File inputFile : inputDir.listFiles()) {
 				String inputFileName = inputFile.getName();
 
-				if (inputFileName.equals("misc.sql")) {
-					miscSQLFile = inputFile;
+				if (inputFileName.equals("Counter.sql")) {
+					counterSQLFile = inputFile;
 
 					continue;
 				}
@@ -365,8 +327,8 @@ public class SampleSQLBuilder {
 				mergeSQL(inputFile, outputFileChannel);
 			}
 
-			if (miscSQLFile != null) {
-				mergeSQL(miscSQLFile, outputFileChannel);
+			if (counterSQLFile != null) {
+				mergeSQL(counterSQLFile, outputFileChannel);
 			}
 		}
 	}
@@ -384,33 +346,73 @@ public class SampleSQLBuilder {
 		inputFile.delete();
 	}
 
-	protected void writeToInsertSQLFile(
-			File dir, String tableName, Map<String, Writer> insertSQLWriters,
-			String insertSQL)
+	protected void writeToSQLFile(
+			File dir, String tableName, Map<String, Writer> sqlWriters,
+			String sql)
 		throws IOException {
 
-		Writer insertSQLWriter = insertSQLWriters.get(tableName);
+		Writer writer = sqlWriters.get(tableName);
 
-		if (insertSQLWriter == null) {
+		if (writer == null) {
 			File file = new File(dir, tableName + ".sql");
 
-			insertSQLWriter = createFileWriter(file);
+			writer = createFileWriter(file);
 
-			insertSQLWriters.put(tableName, insertSQLWriter);
+			sqlWriters.put(tableName, writer);
 		}
 
-		insertSQLWriter.write(insertSQL);
+		writer.write(sql);
 	}
+
+	private void _loadCreateSQL(URL url, Writer writer) throws IOException {
+		try (InputStream inputStream = url.openStream();
+			Reader reader = new InputStreamReader(inputStream);
+			BufferedReader bufferedReader = new BufferedReader(reader)) {
+
+			String line;
+
+			while ((line = bufferedReader.readLine()) != null) {
+				writer.append(line);
+				writer.append(System.lineSeparator());
+			}
+		}
+	}
+
+	private void _loadCreateSQLs(Writer writer) throws IOException {
+		Class<?> clazz = getClass();
+
+		ClassLoader classLoader = clazz.getClassLoader();
+
+		for (String sqlFileName : _createSQLTemplateFileNames) {
+			if (sqlFileName.contains("META-INF")) {
+				Enumeration<URL> enumeration = classLoader.getResources(
+					sqlFileName);
+
+				while (enumeration.hasMoreElements()) {
+					_loadCreateSQL(enumeration.nextElement(), writer);
+				}
+			}
+			else {
+				_loadCreateSQL(classLoader.getResource(sqlFileName), writer);
+			}
+		}
+
+		writer.flush();
+	}
+
+	private static final String _OUTPUT_DIR = System.getProperty("user.dir");
 
 	private static final int _PIPE_BUFFER_SIZE = 16 * 1024 * 1024;
 
 	private static final int _WRITER_BUFFER_SIZE = 16 * 1024;
 
-	private final DataFactory _dataFactory;
-	private final DBType _dbType;
+	private static final List<String> _createSQLTemplateFileNames =
+		Arrays.asList(
+			"com/liferay/portal/tools/sql/dependencies/portal-tables.sql",
+			"com/liferay/portal/tools/sql/dependencies/portal-data-counter.sql",
+			"com/liferay/portal/tools/sql/dependencies/indexes.sql",
+			"META-INF/sql/tables.sql", "META-INF/sql/indexes.sql");
+
 	private volatile Throwable _freeMarkerThrowable;
-	private final int _optimizeBufferSize;
-	private final String _outputDir;
-	private final String _script;
 
 }

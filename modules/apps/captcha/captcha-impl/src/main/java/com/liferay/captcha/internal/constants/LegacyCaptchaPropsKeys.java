@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.captcha.internal.constants;
@@ -32,6 +23,34 @@ public class LegacyCaptchaPropsKeys {
 	public static final String
 		CAPTCHA_CHECK_PORTLET_MESSAGE_BOARDS_EDIT_MESSAGE =
 			"captcha.check.portlet.message_boards.edit_message";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_BLOCK_GYMPY_RENDERER_CLASS =
+			"com.liferay.captcha.simplecaptcha.gimpy.BlockGimpyRenderer";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_BLOCK_GYMPY_RENDERER_DEPRECATED_CLASS =
+			"nl.captcha.gimpy.BlockGimpyRenderer";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_DROP_SHADOW_GYMPY_RENDERER_CLASS =
+			"com.liferay.captcha.simplecaptcha.gimpy.DropShadowGimpyRenderer";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_DROP_SHADOW_GYMPY_RENDERER_DEPRECATED_CLASS =
+			"nl.captcha.gimpy.DropShadowGimpyRenderer";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_GIMPY_RENDERERS_PROPERTY =
+			"simpleCaptchaGimpyRenderers";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_RIPPLE_GYMPY_RENDERER_CLASS =
+			"com.liferay.captcha.simplecaptcha.gimpy.RippleGimpyRenderer";
+
+	public static final String
+		CAPTCHA_CONFIGURATION_SIMPLECAPTCHA_RIPPLE_GYMPY_RENDERER_DEPRECATED_CLASS =
+			"nl.captcha.gimpy.RippleGimpyRenderer";
 
 	public static final String CAPTCHA_ENGINE_IMPL = "captcha.engine.impl";
 

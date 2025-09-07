@@ -1,61 +1,95 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.tuning.synonyms.web.internal.portlet.action;
 
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
+import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexNameBuilder;
+import com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration;
 import com.liferay.portal.search.tuning.synonyms.web.internal.constants.SynonymsPortletKeys;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSet;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexReader;
-import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexWriter;
-import com.liferay.portal.search.tuning.synonyms.web.internal.synonym.SynonymIndexer;
+import com.liferay.portal.search.tuning.synonyms.web.internal.storage.SynonymSetStorageAdapter;
+import com.liferay.portal.search.tuning.synonyms.web.internal.synchronizer.IndexToFilterSynchronizer;
 
-import java.util.Arrays;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Map;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Filipe Oshiro
  */
 @Component(
-	immediate = true,
+	configurationPid = "com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration",
 	property = {
-		"javax.portlet.name=" + SynonymsPortletKeys.SYNONYMS,
-		"mvc.command.name=deleteSynonymSet"
+		"jakarta.portlet.name=" + SynonymsPortletKeys.SYNONYMS,
+		"mvc.command.name=/synonyms/delete_synonym_sets"
 	},
 	service = MVCActionCommand.class
 )
 public class DeleteSynonymSetsMVCActionCommand extends BaseMVCActionCommand {
 
-	protected void deleteSynonymSetsFromIndex(
-		List<SynonymSet> deletedSynonymSets, String indexName) {
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_synonymSetIndexReader = new SynonymSetIndexReader(
+			_searchEngineAdapter);
 
-		for (SynonymSet synonymSet : deletedSynonymSets) {
-			_synonymSetIndexWriter.remove(synonymSet.getId());
+		modified(properties);
+	}
+
+	protected void deleteSynonymSets(ActionRequest actionRequest)
+		throws PortalException {
+
+		long companyId = _portal.getCompanyId(actionRequest);
+
+		SynonymSetIndexName synonymSetIndexName =
+			_synonymSetIndexNameBuilder.getSynonymSetIndexName(companyId);
+
+		List<SynonymSet> synonymSets = getDeletedSynonymSets(
+			actionRequest, synonymSetIndexName);
+
+		if (ListUtil.isEmpty(synonymSets)) {
+			if (!ParamUtil.getBoolean(actionRequest, "deleteAllSynonymSets")) {
+				return;
+			}
+
+			synonymSets = _synonymSetIndexReader.search(synonymSetIndexName);
+		}
+
+		deleteSynonymSets(synonymSetIndexName, synonymSets);
+
+		_indexToFilterSynchronizer.copyToFilter(
+			synonymSetIndexName, _indexNameBuilder.getIndexName(companyId),
+			true);
+	}
+
+	protected void deleteSynonymSets(
+			SynonymSetIndexName synonymSetIndexName,
+			List<SynonymSet> synonymSets)
+		throws PortalException {
+
+		for (SynonymSet synonymSet : synonymSets) {
+			_synonymSetStorageAdapter.delete(
+				synonymSetIndexName, synonymSet.getSynonymSetDocumentId());
 		}
 	}
 
@@ -64,90 +98,47 @@ public class DeleteSynonymSetsMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		long companyId = portal.getCompanyId(actionRequest);
+		deleteSynonymSets(actionRequest);
 
-		String[] synonymSetIds = ParamUtil.getStringValues(
-			actionRequest, "rowIds");
-
-		List<SynonymSet> deletedSynonymSets = getDeletedSynonymSets(
-			synonymSetIds);
-
-		List<String> deletedSynonyms = getDeletedSynonymsArray(
-			deletedSynonymSets);
-
-		for (String filterName : _FILTER_NAMES) {
-			String[] synonymSets = _synonymIndexer.getSynonymSets(
-				companyId, filterName);
-
-			for (String synonymToBeDeleted : deletedSynonyms) {
-				synonymSets = _removeSynonym(synonymSets, synonymToBeDeleted);
-			}
-
-			_synonymIndexer.updateSynonymSets(
-				companyId, filterName, synonymSets);
-		}
-
-		deleteSynonymSetsFromIndex(
-			deletedSynonymSets, _indexNameBuilder.getIndexName(companyId));
-
-		String redirect = ParamUtil.getString(actionRequest, "redirect");
-
-		sendRedirect(actionRequest, actionResponse, redirect);
+		sendRedirect(actionRequest, actionResponse);
 	}
 
-	protected List<String> getDeletedSynonymsArray(
-		List<SynonymSet> deletedSynonymSets) {
+	protected List<SynonymSet> getDeletedSynonymSets(
+		ActionRequest actionRequest, SynonymSetIndexName synonymSetIndexName) {
 
-		Stream<SynonymSet> stream = deletedSynonymSets.stream();
-
-		return stream.map(
-			SynonymSet::getSynonyms
-		).collect(
-			Collectors.toList()
-		);
+		return TransformUtil.transformToList(
+			ParamUtil.getStringValues(actionRequest, "rowIds"),
+			id -> _synonymSetIndexReader.fetch(synonymSetIndexName, id));
 	}
 
-	protected List<SynonymSet> getDeletedSynonymSets(String[] synonymSetIds) {
-		Stream<String> stream = Arrays.stream(synonymSetIds);
+	@Modified
+	protected void modified(Map<String, Object> properties) {
+		SynonymsConfiguration synonymsConfiguration =
+			ConfigurableUtil.createConfigurable(
+				SynonymsConfiguration.class, properties);
 
-		return stream.map(
-			_synonymSetIndexReader::fetchOptional
-		).filter(
-			Optional::isPresent
-		).map(
-			Optional::get
-		).collect(
-			Collectors.toList()
-		);
+		_indexToFilterSynchronizer = new IndexToFilterSynchronizer(
+			synonymsConfiguration.filterNames(), _searchEngineAdapter,
+			_synonymSetIndexReader);
 	}
-
-	@Reference
-	protected Portal portal;
-
-	private String[] _removeSynonym(
-		String[] synonymSets, String synonymToBeDeleted) {
-
-		if (ArrayUtil.contains(synonymSets, synonymToBeDeleted, true)) {
-			synonymSets = ArrayUtil.remove(synonymSets, synonymToBeDeleted);
-		}
-
-		return synonymSets;
-	}
-
-	private static final String[] _FILTER_NAMES = {
-		"liferay_filter_synonym_en", "liferay_filter_synonym_es"
-	};
 
 	@Reference
 	private IndexNameBuilder _indexNameBuilder;
 
-	@Reference
-	private SynonymIndexer _synonymIndexer;
+	private volatile IndexToFilterSynchronizer _indexToFilterSynchronizer;
 
 	@Reference
+	private Portal _portal;
+
+	@Reference
+	private SearchEngineAdapter _searchEngineAdapter;
+
+	@Reference
+	private SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder;
+
 	private SynonymSetIndexReader _synonymSetIndexReader;
 
 	@Reference
-	private SynonymSetIndexWriter _synonymSetIndexWriter;
+	private SynonymSetStorageAdapter _synonymSetStorageAdapter;
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser.test.clazz.group;
 
-import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+import com.liferay.jenkins.results.parser.Job;
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 
 import java.io.File;
 
@@ -25,72 +17,12 @@ import java.util.List;
  */
 public interface TestClassGroup {
 
+	public Job getJob();
+
 	public List<TestClass> getTestClasses();
 
-	public List<TestClass.TestClassFile> getTestClassFiles();
+	public List<File> getTestClassFiles();
 
-	public interface TestClass extends Comparable<TestClass> {
-
-		public TestClassFile getTestClassFile();
-
-		public List<TestClassMethod> getTestClassMethods();
-
-		public static class TestClassFile extends File {
-
-			public TestClassFile(File parent, String child) {
-				super(parent, child);
-			}
-
-			public TestClassFile(String pathname) {
-				super(pathname);
-			}
-
-			public String getRelativePath(File workingDirectory) {
-				String canonicalPath =
-					JenkinsResultsParserUtil.getCanonicalPath(this);
-				String workingDirectoryCanonicalPath =
-					JenkinsResultsParserUtil.getCanonicalPath(workingDirectory);
-
-				if (!canonicalPath.startsWith(workingDirectoryCanonicalPath)) {
-					throw new IllegalArgumentException(
-						"Working directory does not contain this file");
-				}
-
-				return canonicalPath.replaceAll(
-					workingDirectoryCanonicalPath, "");
-			}
-
-		}
-
-		public static class TestClassMethod {
-
-			public String getName() {
-				return _name;
-			}
-
-			public TestClassGroup.TestClass getTestClass() {
-				return _testClass;
-			}
-
-			public boolean isIgnored() {
-				return _ignored;
-			}
-
-			protected TestClassMethod(
-				boolean ignored, String name,
-				BaseTestClassGroup.BaseTestClass testClass) {
-
-				_ignored = ignored;
-				_name = name;
-				_testClass = testClass;
-			}
-
-			private final boolean _ignored;
-			private final String _name;
-			private final TestClassGroup.TestClass _testClass;
-
-		}
-
-	}
+	public boolean hasTestClasses();
 
 }

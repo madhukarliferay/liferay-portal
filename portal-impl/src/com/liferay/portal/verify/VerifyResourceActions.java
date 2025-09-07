@@ -1,62 +1,52 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.verify;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.StringBundler;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 /**
- * @author     Michael Bowerman
- * @deprecated As of Mueller (7.2.x), with no direct replacement
+ * @author Michael Bowerman
  */
-@Deprecated
 public class VerifyResourceActions extends VerifyProcess {
 
 	protected void deleteDuplicateBitwiseValuesOnResource() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select name, bitwiseValue, min(resourceActionId) as " +
 					"minResourceActionId from ResourceAction group by name, " +
 						"bitwiseValue having count(resourceActionId) > 1");
-			PreparedStatement ps2 = connection.prepareStatement(
+			PreparedStatement preparedStatement2 = connection.prepareStatement(
 				"select resourceActionId, actionId from ResourceAction where " +
 					"name = ? and bitwiseValue = ? and resourceActionId != ?");
-			ResultSet rs1 = ps1.executeQuery()) {
+			ResultSet resultSet1 = preparedStatement1.executeQuery()) {
 
-			while (rs1.next()) {
-				String name = rs1.getString("name");
-				long bitwiseValue = rs1.getLong("bitwiseValue");
-				long minResourceActionId = rs1.getLong("minResourceActionId");
+			while (resultSet1.next()) {
+				String name = resultSet1.getString("name");
+				long bitwiseValue = resultSet1.getLong("bitwiseValue");
+				long minResourceActionId = resultSet1.getLong(
+					"minResourceActionId");
 
-				ps2.setString(1, name);
-				ps2.setLong(2, bitwiseValue);
-				ps2.setLong(3, minResourceActionId);
+				preparedStatement2.setString(1, name);
+				preparedStatement2.setLong(2, bitwiseValue);
+				preparedStatement2.setLong(3, minResourceActionId);
 
-				try (ResultSet rs2 = ps2.executeQuery()) {
-					while (rs2.next()) {
+				try (ResultSet resultSet2 = preparedStatement2.executeQuery()) {
+					while (resultSet2.next()) {
 						if (_log.isInfoEnabled()) {
 							StringBundler sb = new StringBundler(7);
 
 							sb.append("Deleting resource action ");
-							sb.append(rs2.getString("actionId"));
+							sb.append(resultSet2.getString("actionId"));
 							sb.append(" from resource ");
 							sb.append(name);
 							sb.append(" because its bitwise value is the ");
@@ -67,7 +57,7 @@ public class VerifyResourceActions extends VerifyProcess {
 						}
 
 						ResourceActionLocalServiceUtil.deleteResourceAction(
-							rs2.getLong("resourceActionId"));
+							resultSet2.getLong("resourceActionId"));
 					}
 				}
 			}

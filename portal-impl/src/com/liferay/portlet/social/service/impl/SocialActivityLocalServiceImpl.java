@@ -1,37 +1,55 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
 import com.liferay.portal.kernel.messaging.async.Async;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portlet.asset.util.DeletedAssetEntryThreadLocal;
 import com.liferay.portlet.social.service.base.SocialActivityLocalServiceBaseImpl;
 import com.liferay.portlet.social.util.SocialActivityHierarchyEntry;
 import com.liferay.portlet.social.util.SocialActivityHierarchyEntryThreadLocal;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivityConstants;
 import com.liferay.social.kernel.model.SocialActivityDefinition;
+import com.liferay.social.kernel.model.SocialActivityTable;
+import com.liferay.social.kernel.service.SocialActivityCounterLocalService;
+import com.liferay.social.kernel.service.SocialActivityInterpreterLocalService;
+import com.liferay.social.kernel.service.SocialActivitySetLocalService;
+import com.liferay.social.kernel.service.SocialActivitySettingLocalService;
+import com.liferay.social.kernel.service.persistence.SocialActivityCounterPersistence;
+import com.liferay.social.kernel.service.persistence.SocialActivityLimitPersistence;
+import com.liferay.social.kernel.service.persistence.SocialActivitySetPersistence;
+import com.liferay.social.kernel.service.persistence.SocialActivitySettingPersistence;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 /**
@@ -102,14 +120,14 @@ public class SocialActivityLocalServiceImpl
 			return;
 		}
 
-		User user = userPersistence.findByPrimaryKey(userId);
-		long classNameId = classNameLocalService.getClassNameId(className);
+		User user = _userPersistence.findByPrimaryKey(userId);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		if (groupId > 0) {
-			Group group = groupLocalService.getGroup(groupId);
+			Group group = _groupLocalService.getGroup(groupId);
 
 			if (group.isLayout()) {
-				Layout layout = layoutLocalService.getLayout(
+				Layout layout = _layoutLocalService.getLayout(
 					group.getClassPK());
 
 				groupId = layout.getGroupId();
@@ -139,7 +157,7 @@ public class SocialActivityLocalServiceImpl
 		activity.setExtraData(extraData);
 		activity.setReceiverUserId(receiverUserId);
 
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
 			className, classPK);
 
 		activity.setAssetEntry(assetEntry);
@@ -228,12 +246,10 @@ public class SocialActivityLocalServiceImpl
 		}
 
 		if (isLogActivity(activity)) {
-			long activityId = counterLocalService.increment(
-				SocialActivity.class.getName());
+			activity.setActivityId(
+				counterLocalService.increment(SocialActivity.class.getName()));
 
-			activity.setActivityId(activityId);
-
-			socialActivityPersistence.update(activity);
+			activity = socialActivityPersistence.update(activity);
 
 			if (mirrorActivity != null) {
 				long mirrorActivityId = counterLocalService.increment(
@@ -246,11 +262,11 @@ public class SocialActivityLocalServiceImpl
 				socialActivityPersistence.update(mirrorActivity);
 			}
 
-			socialActivityInterpreterLocalService.updateActivitySet(
+			_socialActivityInterpreterLocalService.updateActivitySet(
 				activity.getActivityId());
 		}
 
-		socialActivityCounterLocalService.addActivityCounters(activity);
+		_socialActivityCounterLocalService.addActivityCounters(activity);
 	}
 
 	/**
@@ -280,7 +296,7 @@ public class SocialActivityLocalServiceImpl
 		SocialActivity socialActivity =
 			socialActivityPersistence.fetchByG_U_CD_C_C_T_R(
 				groupId, userId, createDate.getTime(),
-				classNameLocalService.getClassNameId(className), classPK, type,
+				_classNameLocalService.getClassNameId(className), classPK, type,
 				receiverUserId);
 
 		if (socialActivity != null) {
@@ -316,7 +332,7 @@ public class SocialActivityLocalServiceImpl
 		throws PortalException {
 
 		int count = socialActivityPersistence.countByG_U_C_C_T_R(
-			groupId, userId, classNameLocalService.getClassNameId(className),
+			groupId, userId, _classNameLocalService.getClassNameId(className),
 			classPK, type, receiverUserId);
 
 		if (count > 0) {
@@ -340,15 +356,15 @@ public class SocialActivityLocalServiceImpl
 
 	@Override
 	public void deleteActivities(long groupId) {
-		socialActivitySetPersistence.removeByGroupId(groupId);
+		_socialActivitySetPersistence.removeByGroupId(groupId);
 
 		socialActivityPersistence.removeByGroupId(groupId);
 
-		socialActivityCounterPersistence.removeByGroupId(groupId);
+		_socialActivityCounterPersistence.removeByGroupId(groupId);
 
-		socialActivityLimitPersistence.removeByGroupId(groupId);
+		_socialActivityLimitPersistence.removeByGroupId(groupId);
 
-		socialActivitySettingPersistence.removeByGroupId(groupId);
+		_socialActivitySettingPersistence.removeByGroupId(groupId);
 	}
 
 	/**
@@ -363,7 +379,7 @@ public class SocialActivityLocalServiceImpl
 		throws PortalException {
 
 		deleteActivities(
-			classNameLocalService.getClassNameId(className), classPK);
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	/**
@@ -386,7 +402,7 @@ public class SocialActivityLocalServiceImpl
 	 */
 	@Override
 	public void deleteActivity(SocialActivity activity) throws PortalException {
-		socialActivitySetLocalService.decrementActivityCount(
+		_socialActivitySetLocalService.decrementActivityCount(
 			activity.getActivitySetId());
 
 		socialActivityPersistence.remove(activity);
@@ -417,7 +433,7 @@ public class SocialActivityLocalServiceImpl
 				userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		for (SocialActivity activity : activities) {
-			socialActivitySetLocalService.decrementActivityCount(
+			_socialActivitySetLocalService.decrementActivityCount(
 				activity.getActivitySetId());
 
 			socialActivityPersistence.remove(activity);
@@ -427,13 +443,13 @@ public class SocialActivityLocalServiceImpl
 			userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		for (SocialActivity activity : activities) {
-			socialActivitySetLocalService.decrementActivityCount(
+			_socialActivitySetLocalService.decrementActivityCount(
 				activity.getActivitySetId());
 
 			socialActivityPersistence.remove(activity);
 		}
 
-		socialActivityCounterLocalService.deleteActivityCounters(
+		_socialActivityCounterLocalService.deleteActivityCounters(
 			User.class.getName(), userId);
 	}
 
@@ -442,34 +458,39 @@ public class SocialActivityLocalServiceImpl
 		String className, long classPK, int type) {
 
 		return socialActivityPersistence.fetchByC_C_T_First(
-			classNameLocalService.getClassNameId(className), classPK, type,
+			_classNameLocalService.getClassNameId(className), classPK, type,
 			null);
 	}
 
 	/**
-	 * Returns a range of all the activities done on assets identified by the
-	 * class name ID.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end -
-	 * start</code> instances. <code>start</code> and <code>end</code> are not
-	 * primary keys, they are indexes in the result set. Thus, <code>0</code>
-	 * refers to the first result in the set. Setting both <code>start</code>
-	 * and <code>end</code> to {@link QueryUtil#ALL_POS} will return the full
-	 * result set.
-	 * </p>
-	 *
-	 * @param  classNameId the target asset's class name ID
-	 * @param  start the lower bound of the range of results
-	 * @param  end the upper bound of the range of results (not inclusive)
-	 * @return the range of matching activities
+	 * @param      classNameId the target asset's class name ID
+	 * @param      start the lower bound of the range of results
+	 * @param      end the upper bound of the range of results (not inclusive)
+	 * @return     the range of matching activities
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getActivities(long, String, int, int)}  Returns a range of
+	 *             all the activities done on assets identified by the class
+	 *             name ID.  <p> Useful when paginating results. Returns a
+	 *             maximum of <code>end - start</code> instances.
+	 *             <code>start</code> and <code>end</code> are not primary keys,
+	 *             they are indexes in the result set. Thus, <code>0</code>
+	 *             refers to the first result in the set. Setting both
+	 *             <code>start</code> and <code>end</code> to {@link
+	 *             QueryUtil#ALL_POS} will return the full result set.</p>
 	 */
+	@Deprecated
 	@Override
 	public List<SocialActivity> getActivities(
 		long classNameId, int start, int end) {
 
-		return socialActivityPersistence.findByClassNameId(
-			classNameId, start, end);
+		DynamicQuery dynamicQuery = dynamicQuery();
+
+		Property classNameIdProperty = PropertyFactoryUtil.forName(
+			"classNameId");
+
+		dynamicQuery.add(classNameIdProperty.eq(classNameId));
+
+		return dynamicQuery(dynamicQuery);
 	}
 
 	/**
@@ -503,6 +524,47 @@ public class SocialActivityLocalServiceImpl
 	}
 
 	/**
+	 * Returns a range of all the activities done on assets identified by the
+	 * company ID and class name.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end -
+	 * start</code> instances. <code>start</code> and <code>end</code> are not
+	 * primary keys, they are indexes in the result set. Thus, <code>0</code>
+	 * refers to the first result in the set. Setting both <code>start</code>
+	 * and <code>end</code> to {@link QueryUtil#ALL_POS} will return the full
+	 * result set.
+	 * </p>
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  className the target asset's class name
+	 * @param  start the lower bound of the range of results
+	 * @param  end the upper bound of the range of results (not inclusive)
+	 * @return the range of matching activities
+	 */
+	@Override
+	public List<SocialActivity> getActivities(
+		long companyId, String className, int start, int end) {
+
+		DSLQuery dslQuery = DSLQueryFactoryUtil.select(
+			SocialActivityTable.INSTANCE
+		).from(
+			SocialActivityTable.INSTANCE
+		).where(
+			SocialActivityTable.INSTANCE.companyId.eq(
+				companyId
+			).and(
+				SocialActivityTable.INSTANCE.classNameId.eq(
+					_classNameLocalService.getClassNameId(className))
+			)
+		).limit(
+			start, end
+		);
+
+		return socialActivityPersistence.dslQuery(dslQuery);
+	}
+
+	/**
 	 * Returns a range of all the activities done on the asset identified by the
 	 * class name and the class primary key that are mirrors of the activity
 	 * identified by the mirror activity ID.
@@ -529,46 +591,29 @@ public class SocialActivityLocalServiceImpl
 		int end) {
 
 		return getActivities(
-			mirrorActivityId, classNameLocalService.getClassNameId(className),
+			mirrorActivityId, _classNameLocalService.getClassNameId(className),
 			classPK, start, end);
 	}
 
 	/**
-	 * Returns a range of all the activities done on assets identified by the
-	 * class name.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end -
-	 * start</code> instances. <code>start</code> and <code>end</code> are not
-	 * primary keys, they are indexes in the result set. Thus, <code>0</code>
-	 * refers to the first result in the set. Setting both <code>start</code>
-	 * and <code>end</code> to {@link QueryUtil#ALL_POS} will return the full
-	 * result set.
-	 * </p>
-	 *
-	 * @param  className the target asset's class name
-	 * @param  start the lower bound of the range of results
-	 * @param  end the upper bound of the range of results (not inclusive)
-	 * @return the range of matching activities
+	 * @param      classNameId the target asset's class name ID
+	 * @return     the number of matching activities
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getActivitiesCount(long, String)}
 	 */
-	@Override
-	public List<SocialActivity> getActivities(
-		String className, int start, int end) {
-
-		return getActivities(
-			classNameLocalService.getClassNameId(className), start, end);
-	}
-
-	/**
-	 * Returns the number of activities done on assets identified by the class
-	 * name ID.
-	 *
-	 * @param  classNameId the target asset's class name ID
-	 * @return the number of matching activities
-	 */
+	@Deprecated
 	@Override
 	public int getActivitiesCount(long classNameId) {
-		return socialActivityPersistence.countByClassNameId(classNameId);
+		DynamicQuery dynamicQuery = dynamicQuery();
+
+		Property classNameIdProperty = PropertyFactoryUtil.forName(
+			"classNameId");
+
+		dynamicQuery.add(classNameIdProperty.eq(classNameId));
+
+		Long count = dynamicQueryCount(dynamicQuery);
+
+		return count.intValue();
 	}
 
 	@Override
@@ -578,7 +623,7 @@ public class SocialActivityLocalServiceImpl
 
 		return socialActivityPersistence.countByG_U_CD_C_C_T_R(
 			groupId, userId, createDate.getTime(),
-			classNameLocalService.getClassNameId(className), classPK, type,
+			_classNameLocalService.getClassNameId(className), classPK, type,
 			receiverUserId);
 	}
 
@@ -601,6 +646,31 @@ public class SocialActivityLocalServiceImpl
 	}
 
 	/**
+	 * Returns the number of activities done on assets identified by company ID
+	 * and class name.
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  className the target asset's class name
+	 * @return the number of matching activities
+	 */
+	@Override
+	public int getActivitiesCount(long companyId, String className) {
+		DSLQuery dslQuery = DSLQueryFactoryUtil.count(
+		).from(
+			SocialActivityTable.INSTANCE
+		).where(
+			SocialActivityTable.INSTANCE.companyId.eq(
+				companyId
+			).and(
+				SocialActivityTable.INSTANCE.classNameId.eq(
+					_classNameLocalService.getClassNameId(className))
+			)
+		);
+
+		return socialActivityPersistence.dslQueryCount(dslQuery);
+	}
+
+	/**
 	 * Returns the number of activities done on the asset identified by the
 	 * class name and class primary key that are mirrors of the activity
 	 * identified by the mirror activity ID.
@@ -615,20 +685,8 @@ public class SocialActivityLocalServiceImpl
 		long mirrorActivityId, String className, long classPK) {
 
 		return getActivitiesCount(
-			mirrorActivityId, classNameLocalService.getClassNameId(className),
+			mirrorActivityId, _classNameLocalService.getClassNameId(className),
 			classPK);
-	}
-
-	/**
-	 * Returns the number of activities done on assets identified by class name.
-	 *
-	 * @param  className the target asset's class name
-	 * @return the number of matching activities
-	 */
-	@Override
-	public int getActivitiesCount(String className) {
-		return getActivitiesCount(
-			classNameLocalService.getClassNameId(className));
 	}
 
 	/**
@@ -648,6 +706,41 @@ public class SocialActivityLocalServiceImpl
 
 		return socialActivityPersistence.findByActivitySetId(
 			activitySetId, start, end);
+	}
+
+	@Override
+	public List<SocialActivity> getApprovedActivities(
+		long classPK, double version) {
+
+		String versionString = String.valueOf(version);
+
+		if (Math.floor(version) == version) {
+			versionString = String.valueOf((int)version);
+		}
+
+		return dslQuery(
+			DSLQueryFactoryUtil.select(
+				SocialActivityTable.INSTANCE
+			).from(
+				SocialActivityTable.INSTANCE
+			).where(
+				SocialActivityTable.INSTANCE.classPK.eq(
+					classPK
+				).and(
+					SocialActivityTable.INSTANCE.type.notIn(
+						new Integer[] {
+							SocialActivityConstants.TYPE_ADD_ATTACHMENT,
+							SocialActivityConstants.
+								TYPE_MOVE_ATTACHMENT_TO_TRASH,
+							SocialActivityConstants.
+								TYPE_RESTORE_ATTACHMENT_FROM_TRASH
+						}
+					).or(
+						SocialActivityTable.INSTANCE.extraData.notLike(
+							"%version\":" + versionString + ",%")
+					).withParentheses()
+				)
+			));
 	}
 
 	/**
@@ -1057,13 +1150,43 @@ public class SocialActivityLocalServiceImpl
 	protected void deleteActivities(long classNameId, long classPK)
 		throws PortalException {
 
-		socialActivitySetLocalService.decrementActivityCount(
-			classNameId, classPK);
+		Map<Long, List<SocialActivity>> partitionSocialActivities =
+			MassDeleteCacheThreadLocal.getMassDeleteCache(
+				SocialActivityLocalServiceImpl.class.getName() +
+					".deleteActivities#" + classNameId,
+				() -> MapUtil.toPartitionMap(
+					socialActivityPersistence.findByC_CN(
+						CompanyThreadLocal.getCompanyId(), classNameId),
+					SocialActivity::getClassPK));
 
-		socialActivityPersistence.removeByC_C(classNameId, classPK);
+		if (partitionSocialActivities == null) {
+			_socialActivitySetLocalService.decrementActivityCount(
+				classNameId, classPK);
 
-		socialActivityCounterLocalService.deleteActivityCounters(
-			classNameId, classPK);
+			socialActivityPersistence.removeByC_C(classNameId, classPK);
+		}
+		else {
+			List<SocialActivity> socialActivities =
+				partitionSocialActivities.remove(classPK);
+
+			if (socialActivities != null) {
+				for (SocialActivity socialActivity : socialActivities) {
+					_socialActivitySetLocalService.decrementActivityCount(
+						classNameId, classPK);
+
+					socialActivityPersistence.remove(socialActivity);
+				}
+			}
+		}
+
+		if (!DeletedAssetEntryThreadLocal.isDeletedAssetEntry(
+				classNameId, classPK) &&
+			!Objects.equals(
+				User.class.getName(), PortalUtil.getClassName(classNameId))) {
+
+			_socialActivityCounterLocalService.deleteActivityCounters(
+				classNameId, classPK);
+		}
 	}
 
 	protected boolean isLogActivity(SocialActivity activity) {
@@ -1076,7 +1199,7 @@ public class SocialActivityLocalServiceImpl
 		}
 
 		SocialActivityDefinition activityDefinition =
-			socialActivitySettingLocalService.getActivityDefinition(
+			_socialActivitySettingLocalService.getActivityDefinition(
 				activity.getGroupId(), activity.getClassName(),
 				activity.getType());
 
@@ -1090,5 +1213,47 @@ public class SocialActivityLocalServiceImpl
 
 		return false;
 	}
+
+	@BeanReference(type = AssetEntryLocalService.class)
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = GroupLocalService.class)
+	private GroupLocalService _groupLocalService;
+
+	@BeanReference(type = LayoutLocalService.class)
+	private LayoutLocalService _layoutLocalService;
+
+	@BeanReference(type = SocialActivityCounterLocalService.class)
+	private SocialActivityCounterLocalService
+		_socialActivityCounterLocalService;
+
+	@BeanReference(type = SocialActivityCounterPersistence.class)
+	private SocialActivityCounterPersistence _socialActivityCounterPersistence;
+
+	@BeanReference(type = SocialActivityInterpreterLocalService.class)
+	private SocialActivityInterpreterLocalService
+		_socialActivityInterpreterLocalService;
+
+	@BeanReference(type = SocialActivityLimitPersistence.class)
+	private SocialActivityLimitPersistence _socialActivityLimitPersistence;
+
+	@BeanReference(type = SocialActivitySetLocalService.class)
+	private SocialActivitySetLocalService _socialActivitySetLocalService;
+
+	@BeanReference(type = SocialActivitySetPersistence.class)
+	private SocialActivitySetPersistence _socialActivitySetPersistence;
+
+	@BeanReference(type = SocialActivitySettingLocalService.class)
+	private SocialActivitySettingLocalService
+		_socialActivitySettingLocalService;
+
+	@BeanReference(type = SocialActivitySettingPersistence.class)
+	private SocialActivitySettingPersistence _socialActivitySettingPersistence;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

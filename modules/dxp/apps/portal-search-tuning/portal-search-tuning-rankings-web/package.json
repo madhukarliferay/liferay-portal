@@ -1,30 +1,35 @@
 {
 	"dependencies": {
-		"@clayui/button": "3.0.3",
-		"@clayui/data-provider": "3.0.4",
-		"@clayui/drop-down": "3.1.2",
-		"@clayui/form": "3.2.1",
-		"@clayui/icon": "3.0.1",
-		"@clayui/link": "3.0.1",
-		"@clayui/loading-indicator": "3.0.0",
-		"@clayui/management-toolbar": "3.0.4",
-		"@clayui/modal": "3.1.3",
-		"@clayui/multi-select": "3.2.0",
-		"@clayui/pagination-bar": "3.0.4",
-		"@clayui/tabs": "3.0.4",
-		"@clayui/tooltip": "3.0.5",
-		"classnames": "2.2.6",
-		"lodash.isfunction": "3.0.9",
-		"lodash.times": "^4.3.2",
+		"@clayui/alert": "3.144.1",
+		"@clayui/button": "3.144.1",
+		"@clayui/data-provider": "3.145.0",
+		"@clayui/drop-down": "3.145.0",
+		"@clayui/empty-state": "3.144.1",
+		"@clayui/form": "3.145.0",
+		"@clayui/icon": "3.144.1",
+		"@clayui/label": "3.144.1",
+		"@clayui/layout": "3.144.1",
+		"@clayui/link": "3.144.1",
+		"@clayui/loading-indicator": "3.144.1",
+		"@clayui/modal": "3.145.0",
+		"@clayui/multi-select": "3.145.0",
+		"@clayui/navigation-bar": "3.145.0",
+		"@clayui/pagination-bar": "3.145.0",
+		"@clayui/sticker": "3.144.1",
+		"@clayui/table": "3.144.1",
+		"@clayui/tabs": "3.145.0",
+		"@liferay/frontend-js-react-web": "*",
+		"classnames": "2.3.1",
+		"frontend-js-components-web": "*",
+		"frontend-js-web": "*",
 		"prop-types": "15.7.2",
-		"react": "16.9.0",
-		"react-dnd": "7.7.0",
-		"react-dnd-html5-backend": "7.7.0",
-		"react-dom": "16.9.0"
+		"react": "18.2.0",
+		"react-dnd": "11.1.1",
+		"react-dnd-html5-backend": "11.1.1",
+		"react-dom": "18.2.0"
 	},
 	"jest": {
 		"setupFilesAfterEnv": [
-			"@testing-library/react/cleanup-after-each",
 			"<rootDir>/test/js/setup.es.js"
 		],
 		"testPathIgnorePatterns": [
@@ -32,15 +37,14 @@
 			"<rootDir>/test/js/setup.es.js"
 		]
 	},
-	"main": "js/index.es.js",
+	"main": "js/index.js",
 	"name": "portal-search-ranking-web",
 	"private": true,
 	"scripts": {
-		"build": "liferay-npm-scripts build",
-		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix",
-		"storybook": "liferay-npm-scripts storybook",
-		"test": "liferay-npm-scripts test"
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format",
+		"test": "node-scripts test"
 	},
-	"version": "2.0.0"
+	"version": "3.0.109"
 }

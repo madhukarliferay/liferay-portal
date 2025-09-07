@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,41 +11,37 @@
 String redirect = ParamUtil.getString(request, "redirect");
 
 CalendarResource calendarResource = (CalendarResource)request.getAttribute(CalendarWebKeys.CALENDAR_RESOURCE);
-
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcPath", "/view_calendars.jsp");
-portletURL.setParameter("redirect", redirect);
-portletURL.setParameter("calendarResourceId", String.valueOf(calendarResource.getCalendarResourceId()));
 %>
 
-<liferay-ui:header
-	backURL="<%= redirect %>"
-	localizeTitle="<%= false %>"
-	title='<%= LanguageUtil.format(request, "x-calendars", calendarResource.getName(locale), false) %>'
-/>
+<clay:container-fluid>
+	<liferay-ui:header
+		backURL="<%= redirect %>"
+		localizeTitle="<%= false %>"
+		title='<%= LanguageUtil.format(request, "x-calendars", calendarResource.getName(locale), false) %>'
+	/>
 
-<c:if test="<%= CalendarResourcePermission.contains(permissionChecker, calendarResource, CalendarActionKeys.ADD_CALENDAR) %>">
-	<aui:button-row>
-		<liferay-portlet:renderURL var="editCalendarURL">
-			<liferay-portlet:param name="mvcPath" value="/edit_calendar.jsp" />
-			<liferay-portlet:param name="redirect" value="<%= currentURL %>" />
-			<liferay-portlet:param name="backURL" value="<%= currentURL %>" />
-			<liferay-portlet:param name="calendarResourceId" value="<%= String.valueOf(calendarResource.getCalendarResourceId()) %>" />
-		</liferay-portlet:renderURL>
+	<c:if test="<%= CalendarResourcePermission.contains(permissionChecker, calendarResource, CalendarActionKeys.ADD_CALENDAR) %>">
+		<aui:button-row>
+			<liferay-portlet:renderURL var="editCalendarURL">
+				<liferay-portlet:param name="mvcPath" value="/edit_calendar.jsp" />
+				<liferay-portlet:param name="redirect" value="<%= currentURL %>" />
+				<liferay-portlet:param name="backURL" value="<%= currentURL %>" />
+				<liferay-portlet:param name="calendarResourceId" value="<%= String.valueOf(calendarResource.getCalendarResourceId()) %>" />
+			</liferay-portlet:renderURL>
 
-		<aui:button href="<%= editCalendarURL %>" primary="<%= true %>" value="add-calendar" />
-	</aui:button-row>
-</c:if>
+			<aui:button href="<%= editCalendarURL %>" primary="<%= true %>" value="add-calendar" />
+		</aui:button-row>
+	</c:if>
+</clay:container-fluid>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<liferay-ui:search-container
 		emptyResultsMessage="there-are-no-calendars-for-the-selected-resource"
 		iteratorURL="<%= renderResponse.createRenderURL() %>"
 		total="<%= CalendarServiceUtil.searchCount(themeDisplay.getCompanyId(), new long[] {calendarResource.getGroupId()}, new long[] {calendarResource.getCalendarResourceId()}, null, false) %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%= CalendarServiceUtil.search(themeDisplay.getCompanyId(), new long[] {calendarResource.getGroupId()}, new long[] {calendarResource.getCalendarResourceId()}, null, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, new CalendarNameComparator(true)) %>"
+			results="<%= CalendarServiceUtil.search(themeDisplay.getCompanyId(), new long[] {calendarResource.getGroupId()}, new long[] {calendarResource.getCalendarResourceId()}, null, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, CalendarNameComparator.getInstance(true)) %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -76,7 +63,13 @@ portletURL.setParameter("calendarResourceId", String.valueOf(calendarResource.ge
 				align="center"
 				name="color"
 			>
-				<span class="calendar-portlet-color-box" style="background-color:<%= ColorUtil.toHexString(calendar.getColor()) %>;">&nbsp;</span>
+				<aui:style type="text/css">
+					.calendar-portlet-color-box {
+						background-color: <%= ColorUtil.toHexString(calendar.getColor()) %>;
+					}
+				</aui:style>
+
+				<span class="calendar-portlet-color-box">&nbsp;</span>
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
@@ -101,9 +94,10 @@ portletURL.setParameter("calendarResourceId", String.valueOf(calendarResource.ge
 
 		<liferay-ui:search-iterator
 			markupView="lexicon"
+			paginate="<%= false %>"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>
 
 <div class="calendar-portlet-import-container hide" id="<portlet:namespace />importCalendarContainer">
 	<div class="hide portlet-msg-error" id="<portlet:namespace />portletErrorMessage"></div>
@@ -122,106 +116,132 @@ portletURL.setParameter("calendarResourceId", String.valueOf(calendarResource.ge
 </div>
 
 <aui:script use="io-upload-iframe">
-	var <portlet:namespace />importDialog;
+	let importDialog;
 
 	Liferay.provide(
 		window,
 		'<portlet:namespace />importCalendar',
-		function(url) {
-			var A = AUI();
+		(url) => {
+			function hideMessage(messageElement) {
+				messageElement.hidden = true;
+				messageElement.classList.add('hide');
+			}
 
-			if (!<portlet:namespace />importDialog) {
-				var importCalendarContainer = A.one(
-					'#<portlet:namespace />importCalendarContainer'
-				);
+			function showMessage(messageElement) {
+				messageElement.hidden = false;
+				messageElement.classList.remove('hide');
+			}
 
-				var buttons = [
+			if (!importDialog) {
+				const buttons = [
 					{
 						label: '<liferay-ui:message key="import" />',
 						on: {
-							click: function() {
-								var form = document.getElementById(
+							click: function () {
+								const form = document.getElementById(
 									'<portlet:namespace />importFm'
 								);
 
 								Liferay.Util.fetch(url, {
 									body: new FormData(form),
-									method: 'POST'
+									method: 'POST',
 								})
-									.then(function(response) {
+									.then((response) => {
 										return response.text();
 									})
-									.then(function(data) {
-										var responseData = {};
+									.then((data) => {
+										const responseData = {};
 
 										try {
 											responseData = JSON.parse(data);
-										} catch (e) {}
+										}
+										catch (e) {}
 
-										var portletErrorMessage = A.one(
-											'#<portlet:namespace />portletErrorMessage'
-										);
+										const portletErrorMessage =
+											document.getElementById(
+												'<portlet:namespace />portletErrorMessage'
+											);
 
-										var portletSuccessMessage = A.one(
-											'#<portlet:namespace />portletSuccessMessage'
-										);
+										const portletSuccessMessage =
+											document.getElementById(
+												'<portlet:namespace />portletSuccessMessage'
+											);
 
-										var error =
+										const error =
 											responseData && responseData.error;
 
 										if (error) {
-											portletErrorMessage.show();
-											portletSuccessMessage.hide();
+											showMessage(portletErrorMessage);
 
-											portletErrorMessage.html(error);
-										} else {
-											portletErrorMessage.hide();
-											portletSuccessMessage.show();
+											hideMessage(portletSuccessMessage);
+
+											portletErrorMessage.innerHTML = error;
+										}
+										else {
+											hideMessage(portletErrorMessage);
+
+											showMessage(portletSuccessMessage);
 										}
 									});
-							}
-						}
-					}
+							},
+						},
+					},
 				];
 
-				var buttonClose = [
+				const buttonClose = [
 					{
 						cssClass: 'close',
-						label: '\u00D7',
+						labelHTML: '<span aria-label="close">&times;</span>',
 						on: {
-							click: function() {
-								<portlet:namespace />importDialog.hide();
-							}
+							click: function () {
+								importDialog.hide();
+							},
 						},
-						render: true
-					}
+						render: true,
+					},
 				];
 
-				<portlet:namespace />importDialog = Liferay.Util.Window.getWindow({
+				const importCalendarContainer = document.getElementById(
+					'<portlet:namespace />importCalendarContainer'
+				);
+
+				importDialog = Liferay.Util.Window.getWindow({
 					dialog: {
-						bodyContent: importCalendarContainer.html(),
+						bodyContent: importCalendarContainer.innerHTML,
 						modal: true,
 						on: {
-							visibleChange: function(event) {
-								A.one('#<portlet:namespace />importFm').reset();
-								A.one(
-									'#<portlet:namespace />portletErrorMessage'
-								).hide();
-								A.one(
-									'#<portlet:namespace />portletSuccessMessage'
-								).hide();
-							}
+							visibleChange: function (event) {
+								const importForm = document.getElementById(
+									'<portlet:namespace />importFm'
+								);
+
+								if (importForm) {
+									importForm.reset();
+								}
+
+								const portletErrorMessage = document.getElementById(
+									'<portlet:namespace />portletErrorMessage'
+								);
+								const portletSuccessMessage =
+									document.getElementById(
+										'<portlet:namespace />portletSuccessMessage'
+									);
+
+								hideMessage(portletErrorMessage);
+
+								hideMessage(portletSuccessMessage);
+							},
 						},
 						toolbars: {
 							footer: buttons,
-							header: buttonClose
-						}
+							header: buttonClose,
+						},
 					},
-					title: '<liferay-ui:message key="import" />'
+					title: '<liferay-ui:message key="import" />',
 				}).render();
 			}
 
-			<portlet:namespace />importDialog.show();
+			importDialog.show();
 		},
 		['aui-io', 'liferay-util-window']
 	);

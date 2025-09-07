@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.portlet.container.upload.test;
@@ -21,6 +12,8 @@ import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.Lock;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.capabilities.Capability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileShortcut;
@@ -46,7 +39,6 @@ public class TestFileEntry implements FileEntry {
 	public TestFileEntry(
 		String fileName, long folderId, long groupId, InputStream inputStream) {
 
-		_date = new Date();
 		_fileName = fileName;
 		_folderId = folderId;
 		_groupId = groupId;
@@ -100,7 +92,17 @@ public class TestFileEntry implements FileEntry {
 	}
 
 	@Override
+	public Date getDisplayDate() {
+		return null;
+	}
+
+	@Override
 	public ExpandoBridge getExpandoBridge() {
+		return null;
+	}
+
+	@Override
+	public Date getExpirationDate() {
 		return null;
 	}
 
@@ -140,6 +142,11 @@ public class TestFileEntry implements FileEntry {
 	}
 
 	@Override
+	public List<FileVersion> getFileVersions(int status, int start, int end) {
+		return Collections.emptyList();
+	}
+
+	@Override
 	public int getFileVersionsCount(int status) {
 		return 0;
 	}
@@ -149,7 +156,11 @@ public class TestFileEntry implements FileEntry {
 		try {
 			return DLAppLocalServiceUtil.getFolder(_folderId);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
 			return null;
 		}
 	}
@@ -256,6 +267,11 @@ public class TestFileEntry implements FileEntry {
 	}
 
 	@Override
+	public Date getReviewDate() {
+		return null;
+	}
+
+	@Override
 	public long getSize() {
 		return 0;
 	}
@@ -292,21 +308,6 @@ public class TestFileEntry implements FileEntry {
 
 	@Override
 	public String getVersion() {
-		return RandomTestUtil.randomString();
-	}
-
-	@Override
-	public long getVersionUserId() {
-		return 0;
-	}
-
-	@Override
-	public String getVersionUserName() {
-		return RandomTestUtil.randomString();
-	}
-
-	@Override
-	public String getVersionUserUuid() {
 		return RandomTestUtil.randomString();
 	}
 
@@ -415,15 +416,7 @@ public class TestFileEntry implements FileEntry {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(_groupId);
-		sb.append("_");
-		sb.append(_folderId);
-		sb.append("_");
-		sb.append(_fileName);
-
-		return sb.toString();
+		return StringBundler.concat(_groupId, "_", _folderId, "_", _fileName);
 	}
 
 	@Override
@@ -431,7 +424,9 @@ public class TestFileEntry implements FileEntry {
 		return this;
 	}
 
-	private final Date _date;
+	private static final Log _log = LogFactoryUtil.getLog(TestFileEntry.class);
+
+	private final Date _date = new Date();
 	private final String _fileName;
 	private final long _folderId;
 	private long _groupId;

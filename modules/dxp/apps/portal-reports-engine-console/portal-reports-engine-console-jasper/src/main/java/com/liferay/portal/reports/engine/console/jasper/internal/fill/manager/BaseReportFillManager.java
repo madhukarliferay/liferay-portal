@@ -1,26 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.jasper.internal.fill.manager;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.reports.engine.ReportRequest;
@@ -63,14 +54,14 @@ public abstract class BaseReportFillManager implements ReportFillManager {
 		try {
 			connection = getConnection(reportRequest);
 		}
-		catch (JRException jre) {
-			throw jre;
+		catch (JRException jrException) {
+			throw jrException;
 		}
-		catch (Exception e) {
-			throw new JRException(e);
+		catch (Exception exception) {
+			throw new JRException(exception);
 		}
 
-		Map<String, Object> reportParameters = getReportParameters(
+		Map<String, Object> reportParameters = _getReportParameters(
 			jasperReport, reportRequest);
 
 		if (connection != null) {
@@ -88,11 +79,11 @@ public abstract class BaseReportFillManager implements ReportFillManager {
 		try {
 			jrDataSource = getJRDataSource(reportRequest);
 		}
-		catch (JRException jre) {
-			throw jre;
+		catch (JRException jrException) {
+			throw jrException;
 		}
-		catch (Exception e) {
-			throw new JRException(e);
+		catch (Exception exception) {
+			throw new JRException(exception);
 		}
 
 		if (jrDataSource != null) {
@@ -152,7 +143,7 @@ public abstract class BaseReportFillManager implements ReportFillManager {
 		return null;
 	}
 
-	protected Map<String, Object> getReportParameters(
+	private Map<String, Object> _getReportParameters(
 		JasperReport jasperReport, ReportRequest reportRequest) {
 
 		Map<String, Object> reportParameters = new HashMap<>();
@@ -177,8 +168,9 @@ public abstract class BaseReportFillManager implements ReportFillManager {
 				try {
 					value = dateFormat.parse(stringValue);
 				}
-				catch (ParseException pe) {
-					_log.error(stringValue + " is not yyyy-MM-dd");
+				catch (ParseException parseException) {
+					_log.error(
+						stringValue + " is not yyyy-MM-dd", parseException);
 				}
 			}
 			else if (clazz.equals(List.class)) {

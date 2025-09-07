@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.upload.util.test;
@@ -18,7 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.editor.EditorConstants;
+import com.liferay.portal.kernel.editor.constants.EditorConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
@@ -33,13 +24,10 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.xml.Attribute;
 import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
 import com.liferay.upload.AttachmentContentUpdater;
 
 import java.io.InputStream;
@@ -49,10 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,27 +56,10 @@ public class EntryAttachmentContentUpdaterTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-	@BeforeClass
-	public static void setUpClass() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			AttachmentContentUpdater.class.getName());
-
-		_serviceTracker.open();
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		_serviceTracker.close();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 		_user = UserTestUtil.addUser();
-
-		_attachmentContentUpdater = _serviceTracker.getService();
 	}
 
 	@Test
@@ -100,15 +69,13 @@ public class EntryAttachmentContentUpdaterTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			_getInputStream(), ContentTypes.IMAGE_JPEG);
 
-		Map<String, String> attributes = HashMapBuilder.put(
-			"alt", "A big image"
-		).put(
-			"class", "image-big"
-		).build();
-
 		String tempFileEntryImgTag = _getTempEntryAttachmentFileEntryImgTag(
 			tempFileEntry.getFileEntryId(), _TEMP_FILE_ENTRY_IMAGE_URL,
-			attributes);
+			HashMapBuilder.put(
+				"alt", "A big image"
+			).put(
+				"class", "image-big"
+			).build());
 
 		String originalContent =
 			"<p>Sample Text</p><a href=\"www.liferay.com\">" +
@@ -358,7 +325,7 @@ public class EntryAttachmentContentUpdaterTest {
 		return sb.toString();
 	}
 
-	private List<Element> _parseHtml(String html) throws DocumentException {
+	private List<Element> _parseHtml(String html) throws Exception {
 		Document document = SAXReaderUtil.read("<div>" + html + "</div>");
 
 		Element rootElement = document.getRootElement();
@@ -369,9 +336,7 @@ public class EntryAttachmentContentUpdaterTest {
 	private static final String _TEMP_FILE_ENTRY_IMAGE_URL =
 		"www.liferay.com/temp_logo";
 
-	private static ServiceTracker
-		<AttachmentContentUpdater, AttachmentContentUpdater> _serviceTracker;
-
+	@Inject
 	private AttachmentContentUpdater _attachmentContentUpdater;
 
 	@DeleteAfterTestRun

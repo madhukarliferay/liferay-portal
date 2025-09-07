@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -28,6 +19,19 @@ import org.junit.Test;
  * @author Shuyang Zhou
  */
 public class SetUtilTest {
+
+	@Test
+	public void testAsymmetricDifference() {
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("a", "b", "c")),
+			SetUtil.asymmetricDifference(
+				Arrays.asList("a", "b", "c"), Arrays.asList("x", "y", "z")));
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("d")),
+			SetUtil.asymmetricDifference(
+				Arrays.asList("a", "b", "c", "d"),
+				Arrays.asList("a", "b", "c")));
+	}
 
 	@Test
 	public void testConstructor() {
@@ -49,14 +53,22 @@ public class SetUtilTest {
 		Set<String> set1 = new HashSet<>(Arrays.asList("a", "b", "c"));
 		Set<String> set2 = new HashSet<>(Arrays.asList("c", "d"));
 
-		Assert.assertSame(set2, SetUtil.intersect(set1, set2));
-		Assert.assertEquals(set2, new HashSet<String>(Arrays.asList("c")));
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("a", "b", "c")), set1);
+		Assert.assertEquals(new HashSet<String>(Arrays.asList("c", "d")), set2);
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("c")),
+			SetUtil.intersect(set1, set2));
 
 		Set<String> set3 = new HashSet<>(Arrays.asList("c", "d", "e"));
 
-		Assert.assertSame(set1, SetUtil.intersect(set1, set3));
-
-		Assert.assertEquals(set1, new HashSet<String>(Arrays.asList("c")));
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("a", "b", "c")), set1);
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("c", "d", "e")), set3);
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("c")),
+			SetUtil.intersect(set1, set3));
 	}
 
 	@Test
@@ -64,15 +76,60 @@ public class SetUtilTest {
 		List<String> list1 = Arrays.asList("a", "b", "c");
 		List<String> list2 = Arrays.asList("c", "d");
 
-		Set<String> set = SetUtil.intersect(list1, list2);
-
-		Assert.assertEquals(set, new HashSet<String>(Arrays.asList("c")));
+		Assert.assertEquals(
+			SetUtil.intersect(list1, list2),
+			new HashSet<String>(Arrays.asList("c")));
 
 		List<String> list3 = Arrays.asList("c", "d", "e");
 
-		set = SetUtil.intersect(list1, list3);
+		Assert.assertEquals(
+			SetUtil.intersect(list1, list3),
+			new HashSet<String>(Arrays.asList("c")));
+	}
 
-		Assert.assertEquals(set, new HashSet<String>(Arrays.asList("c")));
+	@Test
+	public void testRandomElement() {
+		Assert.assertNull(SetUtil.randomElement(null));
+		Assert.assertEquals("a", SetUtil.randomElement(SetUtil.fromArray("a")));
+
+		boolean foundA = false;
+		boolean foundB = false;
+		boolean foundC = false;
+
+		for (int i = 0; i < 100; i++) {
+			String string = SetUtil.randomElement(
+				SetUtil.fromArray("a", "b", "c"));
+
+			if (string.equals("a")) {
+				foundA = true;
+			}
+			else if (string.equals("b")) {
+				foundB = true;
+			}
+			else if (string.equals("c")) {
+				foundC = true;
+			}
+			else {
+				throw new IllegalStateException("Invalid string: " + string);
+			}
+
+			if (foundA && foundB && foundC) {
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void testSymmetricDifference() {
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("a", "b", "c", "x", "y", "z")),
+			SetUtil.symmetricDifference(
+				Arrays.asList("a", "b", "c"), Arrays.asList("x", "y", "z")));
+		Assert.assertEquals(
+			new HashSet<String>(Arrays.asList("d")),
+			SetUtil.symmetricDifference(
+				Arrays.asList("a", "b", "c", "d"),
+				Arrays.asList("a", "b", "c")));
 	}
 
 }

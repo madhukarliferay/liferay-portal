@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.rest.builder;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.FileConverter;
 
 import java.io.File;
@@ -30,12 +22,40 @@ public class RESTBuilderArgs {
 		return _copyrightFile;
 	}
 
+	public String getJavaEEPackage() {
+		return _javaEEPackage;
+	}
+
 	public File getRESTConfigDir() {
 		return _restConfigDir;
 	}
 
+	public Boolean isForceClientVersionDescription() {
+		return _forceClientVersionDescription;
+	}
+
+	public Boolean isForcePredictableOperationId() {
+		return _forcePredictableOperationId;
+	}
+
 	public void setCopyrightFile(File copyrightFile) {
 		_copyrightFile = copyrightFile;
+	}
+
+	public void setForceClientVersionDescription(
+		Boolean forceClientVersionDescription) {
+
+		_forceClientVersionDescription = forceClientVersionDescription;
+	}
+
+	public void setForcePredictableOperationId(
+		Boolean forcePredictableOperationId) {
+
+		_forcePredictableOperationId = forcePredictableOperationId;
+	}
+
+	public void setJavaEEPackage(String javaEEPackage) {
+		_javaEEPackage = javaEEPackage;
 	}
 
 	public void setRESTConfigDir(File restConfigDir) {
@@ -54,10 +74,30 @@ public class RESTBuilderArgs {
 	private File _copyrightFile;
 
 	@Parameter(
+		arity = 1, converter = BooleanConverter.class,
+		description = "Updates client version with bnd version information.",
+		names = {"-f", "--force-client-version-description"}
+	)
+	private Boolean _forceClientVersionDescription;
+
+	@Parameter(
+		arity = 1, converter = BooleanConverter.class,
+		description = "Updates the operation ID.",
+		names = {"-o", "--force-predictable-operation-id"}
+	)
+	private Boolean _forcePredictableOperationId;
+
+	@Parameter(
 		description = "Print this message.", help = true,
 		names = {"-h", "--help"}
 	)
 	private boolean _help;
+
+	@Parameter(
+		description = "The Java EE package to use (jakarta or javax).",
+		names = {"-j", "--javaee-package"}
+	)
+	private String _javaEEPackage;
 
 	@Parameter(
 		converter = FileConverter.class,

@@ -1,21 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -23,11 +21,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Brian Wing Shun Chan
@@ -70,22 +63,24 @@ public class PortalMessages {
 		add(httpServletRequest.getSession(), key, value);
 	}
 
-	public static void add(HttpSession session, Class<?> clazz) {
-		add(session, clazz.getName());
+	public static void add(HttpSession httpSession, Class<?> clazz) {
+		add(httpSession, clazz.getName());
 	}
 
-	public static void add(HttpSession session, Class<?> clazz, Object value) {
-		add(session, clazz.getName(), value);
+	public static void add(
+		HttpSession httpSession, Class<?> clazz, Object value) {
+
+		add(httpSession, clazz.getName(), value);
 	}
 
-	public static void add(HttpSession session, String key) {
-		Map<String, Object> map = _getMap(session, true);
+	public static void add(HttpSession httpSession, String key) {
+		Map<String, Object> map = _getMap(httpSession, true);
 
 		map.put(key, key);
 	}
 
-	public static void add(HttpSession session, String key, Object value) {
-		Map<String, Object> map = _getMap(session, true);
+	public static void add(HttpSession httpSession, String key, Object value) {
+		Map<String, Object> map = _getMap(httpSession, true);
 
 		map.put(key, value);
 	}
@@ -116,8 +111,8 @@ public class PortalMessages {
 		clear(httpServletRequest.getSession());
 	}
 
-	public static void clear(HttpSession session) {
-		Map<String, Object> map = _getMap(session, false);
+	public static void clear(HttpSession httpSession) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map != null) {
 			map.clear();
@@ -140,12 +135,12 @@ public class PortalMessages {
 		return contains(httpServletRequest.getSession(), key);
 	}
 
-	public static boolean contains(HttpSession session, Class<?> clazz) {
-		return contains(session, clazz.getName());
+	public static boolean contains(HttpSession httpSession, Class<?> clazz) {
+		return contains(httpSession, clazz.getName());
 	}
 
-	public static boolean contains(HttpSession session, String key) {
-		Map<String, Object> map = _getMap(session, false);
+	public static boolean contains(HttpSession httpSession, String key) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			return false;
@@ -177,12 +172,12 @@ public class PortalMessages {
 		return get(httpServletRequest.getSession(), key);
 	}
 
-	public static Object get(HttpSession session, Class<?> clazz) {
-		return get(session, clazz.getName());
+	public static Object get(HttpSession httpSession, Class<?> clazz) {
+		return get(httpSession, clazz.getName());
 	}
 
-	public static Object get(HttpSession session, String key) {
-		Map<String, Object> map = _getMap(session, false);
+	public static Object get(HttpSession httpSession, String key) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			return null;
@@ -204,8 +199,8 @@ public class PortalMessages {
 		return isEmpty(httpServletRequest.getSession());
 	}
 
-	public static boolean isEmpty(HttpSession session) {
-		Map<String, Object> map = _getMap(session, false);
+	public static boolean isEmpty(HttpSession httpSession) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			return true;
@@ -224,8 +219,8 @@ public class PortalMessages {
 		return iterator(httpServletRequest.getSession());
 	}
 
-	public static Iterator<String> iterator(HttpSession session) {
-		Map<String, Object> map = _getMap(session, false);
+	public static Iterator<String> iterator(HttpSession httpSession) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			List<String> list = Collections.<String>emptyList();
@@ -246,8 +241,8 @@ public class PortalMessages {
 		return keySet(httpServletRequest.getSession());
 	}
 
-	public static Set<String> keySet(HttpSession session) {
-		Map<String, Object> map = _getMap(session, false);
+	public static Set<String> keySet(HttpSession httpSession) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			return Collections.emptySet();
@@ -264,11 +259,11 @@ public class PortalMessages {
 		print(httpServletRequest.getSession());
 	}
 
-	public static void print(HttpSession session) {
-		Iterator<String> itr = iterator(session);
+	public static void print(HttpSession httpSession) {
+		Iterator<String> iterator = iterator(httpSession);
 
-		while (itr.hasNext()) {
-			System.out.println(itr.next());
+		while (iterator.hasNext()) {
+			System.out.println(iterator.next());
 		}
 	}
 
@@ -280,8 +275,8 @@ public class PortalMessages {
 		return size(httpServletRequest.getSession());
 	}
 
-	public static int size(HttpSession session) {
-		Map<String, Object> map = _getMap(session, false);
+	public static int size(HttpSession httpSession) {
+		Map<String, Object> map = _getMap(httpSession, false);
 
 		if (map == null) {
 			return 0;
@@ -295,21 +290,24 @@ public class PortalMessages {
 	}
 
 	private static Map<String, Object> _getMap(
-		HttpSession session, boolean createIfAbsent) {
+		HttpSession httpSession, boolean createIfAbsent) {
 
 		Map<String, Object> map = null;
 
 		try {
-			map = (Map<String, Object>)session.getAttribute(
+			map = (Map<String, Object>)httpSession.getAttribute(
 				WebKeys.PORTAL_MESSAGES);
 
 			if ((map == null) && createIfAbsent) {
 				map = new LinkedHashMap<>();
 
-				session.setAttribute(WebKeys.PORTAL_MESSAGES, map);
+				httpSession.setAttribute(WebKeys.PORTAL_MESSAGES, map);
 			}
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(illegalStateException);
+			}
 
 			// Session is already invalidated, just return a null map
 
@@ -317,5 +315,7 @@ public class PortalMessages {
 
 		return map;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(PortalMessages.class);
 
 }

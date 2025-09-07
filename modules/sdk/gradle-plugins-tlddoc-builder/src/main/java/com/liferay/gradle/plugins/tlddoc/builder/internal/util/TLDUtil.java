@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.tlddoc.builder.internal.util;
 
 import java.io.File;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -48,10 +40,39 @@ public class TLDUtil {
 			return;
 		}
 
+		Map<String, File> definitionFiles = _getDefinitionFiles(tldFile);
 		Document document = _getDocument(tldFile);
 
-		_scanDTD(document, dtdConsumer);
-		_scanXSD(document, xsdConsumer);
+		_scanDTD(document, definitionFiles, dtdConsumer);
+		_scanXSD(document, definitionFiles, xsdConsumer);
+	}
+
+	private static Map<String, File> _getDefinitionFiles(File tldFile) {
+		if (!_portalDefinitions.isEmpty()) {
+			return _portalDefinitions;
+		}
+
+		File tldDir = tldFile.getParentFile();
+
+		if (tldDir == null) {
+			return Collections.emptyMap();
+		}
+
+		File definitionFilesDir = new File(tldDir, "definitions");
+
+		if (!definitionFilesDir.exists()) {
+			return Collections.emptyMap();
+		}
+
+		Map<String, File> definitionFiles = new HashMap<>();
+
+		for (File definitionFile : definitionFilesDir.listFiles()) {
+			String definitionFileName = definitionFile.getName();
+
+			definitionFiles.put(definitionFileName, definitionFile);
+		}
+
+		return definitionFiles;
 	}
 
 	private static Document _getDocument(File file) throws Exception {
@@ -79,7 +100,8 @@ public class TLDUtil {
 	}
 
 	private static void _scanDTD(
-		Document document, BiConsumer<String, File> dtdConsumer) {
+		Document document, Map<String, File> definitionFiles,
+		BiConsumer<String, File> dtdConsumer) {
 
 		DocumentType documentType = document.getDoctype();
 
@@ -101,7 +123,7 @@ public class TLDUtil {
 
 		String definitionFileName = _getFileName(systemId);
 
-		File dtdFile = _portalDefinitions.get(definitionFileName);
+		File dtdFile = definitionFiles.get(definitionFileName);
 
 		if (dtdFile == null) {
 			return;
@@ -110,7 +132,8 @@ public class TLDUtil {
 		dtdConsumer.accept(publicId, dtdFile);
 	}
 
-	private static Map<String, File> _scanNestedXSD(File xsdFile)
+	private static Map<String, File> _scanNestedXSD(
+			File xsdFile, Map<String, File> definitionFiles)
 		throws Exception {
 
 		Map<String, File> nestedXSDs = new HashMap<>();
@@ -152,9 +175,8 @@ public class TLDUtil {
 					continue;
 				}
 
-				String fileName = _getFileName(schemaLocation);
-
-				File curDefinitionFile = _portalDefinitions.get(fileName);
+				File curDefinitionFile = definitionFiles.get(
+					_getFileName(schemaLocation));
 
 				if (curDefinitionFile == null) {
 					continue;
@@ -186,9 +208,8 @@ public class TLDUtil {
 					continue;
 				}
 
-				String fileName = _getFileName(schemaLocation);
-
-				File curDefinitionFile = _portalDefinitions.get(fileName);
+				File curDefinitionFile = definitionFiles.get(
+					_getFileName(schemaLocation));
 
 				if (curDefinitionFile == null) {
 					continue;
@@ -202,7 +223,8 @@ public class TLDUtil {
 	}
 
 	private static void _scanXSD(
-			Document document, BiConsumer<String, File> xsdConsumer)
+			Document document, Map<String, File> definitionFiles,
+			BiConsumer<String, File> xsdConsumer)
 		throws Exception {
 
 		Node rootNode = document.getDocumentElement();
@@ -224,33 +246,35 @@ public class TLDUtil {
 
 		String[] values = schemLocation.split("\\s+");
 
-		if (values.length != 2) {
+		if ((values.length % 2) != 0) {
 			return;
 		}
 
-		String definitionFileName = _getFileName(values[1]);
+		for (int i = 0; i < values.length; i += 2) {
+			String definitionFileName = _getFileName(values[i + 1]);
 
-		File xsdFile = _portalDefinitions.get(definitionFileName);
+			File xsdFile = definitionFiles.get(definitionFileName);
 
-		if (xsdFile == null) {
-			return;
-		}
+			if (xsdFile == null) {
+				return;
+			}
 
-		xsdConsumer.accept(values[0], xsdFile);
+			xsdConsumer.accept(values[i], xsdFile);
 
-		Map<String, File> nestedXSDFiles = _nestedXSDCache.computeIfAbsent(
-			xsdFile,
-			keyXSDFile -> {
-				try {
-					return _scanNestedXSD(keyXSDFile);
-				}
-				catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			});
+			Map<String, File> nestedXSDFiles = _nestedXSDCache.computeIfAbsent(
+				xsdFile,
+				keyXSDFile -> {
+					try {
+						return _scanNestedXSD(keyXSDFile, definitionFiles);
+					}
+					catch (Exception exception) {
+						throw new RuntimeException(exception);
+					}
+				});
 
-		for (Map.Entry<String, File> entry : nestedXSDFiles.entrySet()) {
-			xsdConsumer.accept(entry.getKey(), entry.getValue());
+			for (Map.Entry<String, File> entry : nestedXSDFiles.entrySet()) {
+				xsdConsumer.accept(entry.getKey(), entry.getValue());
+			}
 		}
 	}
 
@@ -266,11 +290,13 @@ public class TLDUtil {
 				String gradleUserHome = System.getProperty("gradle.user.home");
 
 				if (gradleUserHome != null) {
-					File definitionsDir = new File(
+					File definitionFilesDir = new File(
 						gradleUserHome, "/../definitions");
 
-					if (definitionsDir.exists()) {
-						for (File definitionFile : definitionsDir.listFiles()) {
+					if (definitionFilesDir.exists()) {
+						for (File definitionFile :
+								definitionFilesDir.listFiles()) {
+
 							String definitionFileName =
 								definitionFile.getName();
 

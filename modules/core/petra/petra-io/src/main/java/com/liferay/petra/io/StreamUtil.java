@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io;
@@ -38,29 +29,29 @@ public class StreamUtil {
 		StreamUtil.class.getName() + ".force.tio");
 
 	public static void cleanUp(Closeable... closeables) throws IOException {
-		IOException ioException = null;
+		IOException ioException1 = null;
 
 		for (Closeable closeable : closeables) {
 			if (closeable != null) {
 				try {
 					closeable.close();
 				}
-				catch (IOException ioe) {
-					if (ioException == null) {
-						ioException = ioe;
+				catch (IOException ioException2) {
+					if (ioException1 == null) {
+						ioException1 = ioException2;
 					}
 					else {
-						ioException.addSuppressed(ioe);
+						ioException1.addSuppressed(ioException2);
 					}
 				}
 			}
 		}
 
-		if (ioException == null) {
+		if (ioException1 == null) {
 			return;
 		}
 
-		throw ioException;
+		throw ioException1;
 	}
 
 	public static byte[] toByteArray(InputStream inputStream)

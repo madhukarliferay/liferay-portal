@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service;
 
+import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -25,6 +17,10 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
  */
 public class DDLRecordSetServiceWrapper
 	implements DDLRecordSetService, ServiceWrapper<DDLRecordSetService> {
+
+	public DDLRecordSetServiceWrapper() {
+		this(null);
+	}
 
 	public DDLRecordSetServiceWrapper(DDLRecordSetService ddlRecordSetService) {
 		_ddlRecordSetService = ddlRecordSetService;
@@ -54,7 +50,7 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet addRecordSet(
+	public DDLRecordSet addRecordSet(
 			long groupId, long ddmStructureId, String recordSetKey,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
@@ -89,8 +85,7 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet fetchRecordSet(
-			long recordSetId)
+	public DDLRecordSet fetchRecordSet(long recordSetId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordSetService.fetchRecordSet(recordSetId);
@@ -116,8 +111,7 @@ public class DDLRecordSetServiceWrapper
 	 record set
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet getRecordSet(
-			long recordSetId)
+	public DDLRecordSet getRecordSet(long recordSetId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordSetService.getRecordSet(recordSetId);
@@ -131,9 +125,7 @@ public class DDLRecordSetServiceWrapper
 	 * @return the matching record sets
 	 */
 	@Override
-	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordSet>
-		getRecordSets(long[] groupIds) {
-
+	public java.util.List<DDLRecordSet> getRecordSets(long[] groupIds) {
 		return _ddlRecordSetService.getRecordSets(groupIds);
 	}
 
@@ -170,13 +162,11 @@ public class DDLRecordSetServiceWrapper
 	 * @return the range of matching record sets ordered by the comparator
 	 */
 	@Override
-	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordSet>
-		search(
-			long companyId, long groupId, String keywords, int scope, int start,
-			int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.dynamic.data.lists.model.DDLRecordSet>
-					orderByComparator) {
+	public java.util.List<DDLRecordSet> search(
+		long companyId, long groupId, String keywords, int scope, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
+			orderByComparator) {
 
 		return _ddlRecordSetService.search(
 			companyId, groupId, keywords, scope, start, end, orderByComparator);
@@ -220,13 +210,11 @@ public class DDLRecordSetServiceWrapper
 	 * @return the range of matching record sets ordered by the comparator
 	 */
 	@Override
-	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordSet>
-		search(
-			long companyId, long groupId, String name, String description,
-			int scope, boolean andOperator, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.dynamic.data.lists.model.DDLRecordSet>
-					orderByComparator) {
+	public java.util.List<DDLRecordSet> search(
+		long companyId, long groupId, String name, String description,
+		int scope, boolean andOperator, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
+			orderByComparator) {
 
 		return _ddlRecordSetService.search(
 			companyId, groupId, name, description, scope, andOperator, start,
@@ -306,10 +294,9 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet
-			updateMinDisplayRows(
-				long recordSetId, int minDisplayRows,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public DDLRecordSet updateMinDisplayRows(
+			long recordSetId, int minDisplayRows,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordSetService.updateMinDisplayRows(
@@ -327,7 +314,7 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet updateRecordSet(
+	public DDLRecordSet updateRecordSet(
 			long recordSetId,
 			com.liferay.dynamic.data.mapping.storage.DDMFormValues
 				settingsDDMFormValues)
@@ -354,7 +341,7 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet updateRecordSet(
+	public DDLRecordSet updateRecordSet(
 			long recordSetId, long ddmStructureId,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
@@ -385,7 +372,7 @@ public class DDLRecordSetServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordSet updateRecordSet(
+	public DDLRecordSet updateRecordSet(
 			long groupId, long ddmStructureId, String recordSetKey,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,

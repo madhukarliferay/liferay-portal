@@ -1,29 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service.impl;
 
+import com.liferay.dynamic.data.lists.constants.DDLRecordSetConstants;
 import com.liferay.dynamic.data.lists.exception.RecordSetDDMStructureIdException;
 import com.liferay.dynamic.data.lists.exception.RecordSetDuplicateRecordSetKeyException;
-import com.liferay.dynamic.data.lists.exception.RecordSetNameException;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
-import com.liferay.dynamic.data.lists.model.DDLRecordSetConstants;
 import com.liferay.dynamic.data.lists.model.DDLRecordSetSettings;
 import com.liferay.dynamic.data.lists.model.DDLRecordSetVersion;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalService;
 import com.liferay.dynamic.data.lists.service.DDLRecordSetVersionLocalService;
 import com.liferay.dynamic.data.lists.service.base.DDLRecordSetLocalServiceBaseImpl;
+import com.liferay.dynamic.data.lists.service.persistence.DDLRecordSetVersionPersistence;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeResponse;
@@ -49,7 +40,11 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -115,13 +110,15 @@ public class DDLRecordSetLocalServiceImpl
 
 		// Record set
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		if (Validator.isNull(recordSetKey)) {
 			recordSetKey = String.valueOf(counterLocalService.increment());
 		}
 
-		validate(groupId, ddmStructureId, recordSetKey, nameMap);
+		_addDefaultName(nameMap);
+
+		_validate(groupId, ddmStructureId, recordSetKey);
 
 		long recordSetId = counterLocalService.increment();
 
@@ -164,17 +161,15 @@ public class DDLRecordSetLocalServiceImpl
 
 		// Record set version
 
-		addRecordSetVersion(
-			getDDMStructureVersionId(ddmStructureId), user, recordSet,
+		_addRecordSetVersion(
+			_getDDMStructureVersionId(ddmStructureId), user, recordSet,
 			DDLRecordSetConstants.VERSION_DEFAULT, serviceContext);
 
 		// Dynamic data mapping structure link
 
-		long classNameId = classNameLocalService.getClassNameId(
-			DDLRecordSet.class);
-
 		ddmStructureLinkLocalService.addStructureLink(
-			classNameId, recordSetId, ddmStructureId);
+			_classNameLocalService.getClassNameId(DDLRecordSet.class),
+			recordSetId, ddmStructureId);
 
 		return updatedRecordSet;
 	}
@@ -193,7 +188,7 @@ public class DDLRecordSetLocalServiceImpl
 			boolean addGuestPermissions)
 		throws PortalException {
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			recordSet.getCompanyId(), recordSet.getGroupId(),
 			recordSet.getUserId(), DDLRecordSet.class.getName(),
 			recordSet.getRecordSetId(), false, addGroupPermissions,
@@ -212,7 +207,7 @@ public class DDLRecordSetLocalServiceImpl
 			DDLRecordSet recordSet, ModelPermissions modelPermissions)
 		throws PortalException {
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			recordSet.getCompanyId(), recordSet.getGroupId(),
 			recordSet.getUserId(), DDLRecordSet.class.getName(),
 			recordSet.getRecordSetId(), modelPermissions);
@@ -226,7 +221,7 @@ public class DDLRecordSetLocalServiceImpl
 			ddmStructureId);
 
 		for (DDLRecordSet ddlRecordSet : ddlRecordSets) {
-			deleteRecordSet(ddlRecordSet);
+			ddlRecordSetLocalService.deleteRecordSet(ddlRecordSet);
 		}
 	}
 
@@ -245,11 +240,11 @@ public class DDLRecordSetLocalServiceImpl
 
 		// Record set
 
-		super.deleteDDLRecordSet(recordSet);
+		ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			recordSet.getCompanyId(), DDLRecordSet.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, recordSet.getRecordSetId());
 
@@ -265,12 +260,12 @@ public class DDLRecordSetLocalServiceImpl
 		// Dynamic data mapping structure link
 
 		ddmStructureLinkLocalService.deleteStructureLinks(
-			classNameLocalService.getClassNameId(DDLRecordSet.class),
+			_classNameLocalService.getClassNameId(DDLRecordSet.class),
 			recordSet.getRecordSetId());
 
 		// Workflow
 
-		workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
+		_workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
 			recordSet.getCompanyId(), recordSet.getGroupId(),
 			DDLRecordSet.class.getName(), recordSet.getRecordSetId(), 0);
 	}
@@ -319,11 +314,11 @@ public class DDLRecordSetLocalServiceImpl
 	 */
 	@Override
 	public void deleteRecordSets(long groupId) throws PortalException {
-		List<DDLRecordSet> recordSets = ddlRecordSetPersistence.findByGroupId(
-			groupId);
+		List<DDLRecordSet> ddlRecordSets =
+			ddlRecordSetPersistence.findByGroupId(groupId);
 
-		for (DDLRecordSet recordSet : recordSets) {
-			ddlRecordSetLocalService.deleteRecordSet(recordSet);
+		for (DDLRecordSet ddlRecordSet : ddlRecordSets) {
+			ddlRecordSetLocalService.deleteRecordSet(ddlRecordSet);
 		}
 	}
 
@@ -401,6 +396,7 @@ public class DDLRecordSetLocalServiceImpl
 		return ddlRecordSetPersistence.findByGroupId(groupId);
 	}
 
+	@Override
 	public List<DDLRecordSet> getRecordSets(long groupId, int start, int end) {
 		return ddlRecordSetPersistence.findByGroupId(groupId, start, end);
 	}
@@ -442,12 +438,11 @@ public class DDLRecordSetLocalServiceImpl
 	 */
 	@Override
 	public DDMFormValues getRecordSetSettingsDDMFormValues(
-			DDLRecordSet recordSet)
-		throws PortalException {
+		DDLRecordSet recordSet) {
 
 		DDMForm ddmForm = DDMFormFactory.create(DDLRecordSetSettings.class);
 
-		return deserialize(recordSet.getSettings(), ddmForm);
+		return _deserialize(recordSet.getSettings(), ddmForm);
 	}
 
 	/**
@@ -639,9 +634,7 @@ public class DDLRecordSetLocalServiceImpl
 
 		recordSet.setMinDisplayRows(minDisplayRows);
 
-		ddlRecordSetPersistence.update(recordSet);
-
-		return recordSet;
+		return ddlRecordSetPersistence.update(recordSet);
 	}
 
 	/**
@@ -659,15 +652,15 @@ public class DDLRecordSetLocalServiceImpl
 			long recordSetId, DDMFormValues settingsDDMFormValues)
 		throws PortalException {
 
-		Date now = new Date();
+		Date date = new Date();
 
 		ddmFormValuesValidator.validate(settingsDDMFormValues);
 
 		DDLRecordSet recordSet = ddlRecordSetPersistence.findByPrimaryKey(
 			recordSetId);
 
-		recordSet.setModifiedDate(now);
-		recordSet.setSettings(serialize(settingsDDMFormValues));
+		recordSet.setModifiedDate(date);
+		recordSet.setSettings(_serialize(settingsDDMFormValues));
 
 		return ddlRecordSetPersistence.update(recordSet);
 	}
@@ -699,7 +692,7 @@ public class DDLRecordSetLocalServiceImpl
 		DDLRecordSet recordSet = ddlRecordSetPersistence.findByPrimaryKey(
 			recordSetId);
 
-		return doUpdateRecordSet(
+		return _updateRecordSet(
 			serviceContext.getUserId(), ddmStructureId, nameMap, descriptionMap,
 			minDisplayRows, serviceContext, recordSet);
 	}
@@ -731,12 +724,32 @@ public class DDLRecordSetLocalServiceImpl
 		DDLRecordSet recordSet = ddlRecordSetPersistence.findByG_R(
 			groupId, recordSetKey);
 
-		return doUpdateRecordSet(
+		return _updateRecordSet(
 			serviceContext.getUserId(), ddmStructureId, nameMap, descriptionMap,
 			minDisplayRows, serviceContext, recordSet);
 	}
 
-	protected DDLRecordSetVersion addRecordSetVersion(
+	@Reference
+	protected DDMFormValuesValidator ddmFormValuesValidator;
+
+	@Reference
+	protected DDMStructureLinkLocalService ddmStructureLinkLocalService;
+
+	@Reference
+	protected DDMStructureLocalService ddmStructureLocalService;
+
+	@Reference
+	protected DDMStructureVersionLocalService ddmStructureVersionLocalService;
+
+	private void _addDefaultName(Map<Locale, String> nameMap) {
+		Locale locale = LocaleUtil.getSiteDefault();
+
+		if (Validator.isNull(nameMap.get(locale))) {
+			nameMap.put(locale, "Untitled Dynamic Data List");
+		}
+	}
+
+	private DDLRecordSetVersion _addRecordSetVersion(
 			long ddmStructureVersionId, User user, DDLRecordSet recordSet,
 			String version, ServiceContext serviceContext)
 		throws PortalException {
@@ -744,7 +757,7 @@ public class DDLRecordSetLocalServiceImpl
 		long recordSetVersionId = counterLocalService.increment();
 
 		DDLRecordSetVersion recordSetVersion =
-			ddlRecordSetVersionPersistence.create(recordSetVersionId);
+			_ddlRecordSetVersionPersistence.create(recordSetVersionId);
 
 		recordSetVersion.setGroupId(recordSet.getGroupId());
 		recordSetVersion.setCompanyId(recordSet.getCompanyId());
@@ -756,23 +769,18 @@ public class DDLRecordSetLocalServiceImpl
 		recordSetVersion.setName(recordSet.getName());
 		recordSetVersion.setDescription(recordSet.getDescription());
 		recordSetVersion.setVersion(version);
-
-		int status = GetterUtil.getInteger(
-			serviceContext.getAttribute("status"),
-			WorkflowConstants.STATUS_APPROVED);
-
-		recordSetVersion.setStatus(status);
-
+		recordSetVersion.setStatus(
+			GetterUtil.getInteger(
+				serviceContext.getAttribute("status"),
+				WorkflowConstants.STATUS_APPROVED));
 		recordSetVersion.setStatusByUserId(user.getUserId());
 		recordSetVersion.setStatusByUserName(user.getFullName());
 		recordSetVersion.setStatusDate(recordSet.getModifiedDate());
 
-		ddlRecordSetVersionPersistence.update(recordSetVersion);
-
-		return recordSetVersion;
+		return _ddlRecordSetVersionPersistence.update(recordSetVersion);
 	}
 
-	protected DDMFormValues deserialize(String content, DDMForm ddmForm) {
+	private DDMFormValues _deserialize(String content, DDMForm ddmForm) {
 		DDMFormValuesDeserializerDeserializeRequest.Builder builder =
 			DDMFormValuesDeserializerDeserializeRequest.Builder.newBuilder(
 				content, ddmForm);
@@ -784,7 +792,45 @@ public class DDLRecordSetLocalServiceImpl
 		return ddmFormValuesDeserializerDeserializeResponse.getDDMFormValues();
 	}
 
-	protected DDLRecordSet doUpdateRecordSet(
+	private long _getDDMStructureVersionId(long ddmStructureId)
+		throws PortalException {
+
+		DDMStructure ddmStructure = ddmStructureLocalService.getStructure(
+			ddmStructureId);
+
+		DDMStructureVersion ddmStructureVersion =
+			ddmStructure.getStructureVersion();
+
+		return ddmStructureVersion.getStructureVersionId();
+	}
+
+	private String _getNextVersion(String version, boolean majorVersion) {
+		int[] versionParts = StringUtil.split(version, StringPool.PERIOD, 0);
+
+		if (majorVersion) {
+			versionParts[0]++;
+			versionParts[1] = 0;
+		}
+		else {
+			versionParts[1]++;
+		}
+
+		return versionParts[0] + StringPool.PERIOD + versionParts[1];
+	}
+
+	private String _serialize(DDMFormValues ddmFormValues) {
+		DDMFormValuesSerializerSerializeRequest.Builder builder =
+			DDMFormValuesSerializerSerializeRequest.Builder.newBuilder(
+				ddmFormValues);
+
+		DDMFormValuesSerializerSerializeResponse
+			ddmFormValuesSerializerSerializeResponse =
+				_jsonDDMFormValuesSerializer.serialize(builder.build());
+
+		return ddmFormValuesSerializerSerializeResponse.getContent();
+	}
+
+	private DDLRecordSet _updateRecordSet(
 			long userId, long ddmStructureId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, int minDisplayRows,
 			ServiceContext serviceContext, DDLRecordSet recordSet)
@@ -792,10 +838,11 @@ public class DDLRecordSetLocalServiceImpl
 
 		// Record set
 
-		validateDDMStructureId(ddmStructureId);
-		validateName(nameMap);
+		_addDefaultName(nameMap);
 
-		User user = userLocalService.getUser(userId);
+		_validateDDMStructureId(ddmStructureId);
+
+		User user = _userLocalService.getUser(userId);
 
 		long oldDDMStructureId = recordSet.getDDMStructureId();
 
@@ -821,14 +868,13 @@ public class DDLRecordSetLocalServiceImpl
 		boolean majorVersion = GetterUtil.getBoolean(
 			serviceContext.getAttribute("majorVersion"));
 
-		String version = getNextVersion(
+		String version = _getNextVersion(
 			latestRecordSetVersion.getVersion(), majorVersion);
 
 		if (!updateVersion) {
-			recordSet.setVersion(version);
-
 			recordSet.setVersionUserId(user.getUserId());
 			recordSet.setVersionUserName(user.getFullName());
+			recordSet.setVersion(version);
 		}
 
 		recordSet.setNameMap(nameMap);
@@ -840,13 +886,13 @@ public class DDLRecordSetLocalServiceImpl
 
 		// Record set version
 
-		long ddmStructureVersionId = getDDMStructureVersionId(ddmStructureId);
+		long ddmStructureVersionId = _getDDMStructureVersionId(ddmStructureId);
 
 		if (updateVersion) {
-			updateRecordSetVersion(ddmStructureVersionId, user, recordSet);
+			_updateRecordSetVersion(ddmStructureVersionId, user, recordSet);
 		}
 		else {
-			addRecordSetVersion(
+			_addRecordSetVersion(
 				ddmStructureVersionId, user, recordSet, version,
 				serviceContext);
 		}
@@ -859,7 +905,7 @@ public class DDLRecordSetLocalServiceImpl
 
 			// Dynamic data mapping structure link
 
-			long classNameId = classNameLocalService.getClassNameId(
+			long classNameId = _classNameLocalService.getClassNameId(
 				DDLRecordSet.class);
 
 			DDMStructureLink ddmStructureLink =
@@ -874,54 +920,7 @@ public class DDLRecordSetLocalServiceImpl
 		return updatedRecordSet;
 	}
 
-	protected DDMStructureVersion getDDMStructureVersion(long ddmStructureId)
-		throws PortalException {
-
-		DDMStructure ddmStructure = ddmStructureLocalService.getStructure(
-			ddmStructureId);
-
-		return ddmStructure.getStructureVersion();
-	}
-
-	protected long getDDMStructureVersionId(long ddmStructureId)
-		throws PortalException {
-
-		DDMStructure ddmStructure = ddmStructureLocalService.getStructure(
-			ddmStructureId);
-
-		DDMStructureVersion ddmStructureVersion =
-			ddmStructure.getStructureVersion();
-
-		return ddmStructureVersion.getStructureVersionId();
-	}
-
-	protected String getNextVersion(String version, boolean majorVersion) {
-		int[] versionParts = StringUtil.split(version, StringPool.PERIOD, 0);
-
-		if (majorVersion) {
-			versionParts[0]++;
-			versionParts[1] = 0;
-		}
-		else {
-			versionParts[1]++;
-		}
-
-		return versionParts[0] + StringPool.PERIOD + versionParts[1];
-	}
-
-	protected String serialize(DDMFormValues ddmFormValues) {
-		DDMFormValuesSerializerSerializeRequest.Builder builder =
-			DDMFormValuesSerializerSerializeRequest.Builder.newBuilder(
-				ddmFormValues);
-
-		DDMFormValuesSerializerSerializeResponse
-			ddmFormValuesSerializerSerializeResponse =
-				_jsonDDMFormValuesSerializer.serialize(builder.build());
-
-		return ddmFormValuesSerializerSerializeResponse.getContent();
-	}
-
-	protected void updateRecordSetVersion(
+	private void _updateRecordSetVersion(
 			long ddmStructureVersionId, User user, DDLRecordSet recordSet)
 		throws PortalException {
 
@@ -938,34 +937,33 @@ public class DDLRecordSetLocalServiceImpl
 		recordSetVersion.setStatusByUserName(user.getFullName());
 		recordSetVersion.setStatusDate(recordSet.getModifiedDate());
 
-		ddlRecordSetVersionPersistence.update(recordSetVersion);
+		_ddlRecordSetVersionPersistence.update(recordSetVersion);
 	}
 
-	protected void validate(
-			long groupId, long ddmStructureId, String recordSetKey,
-			Map<Locale, String> nameMap)
+	private void _validate(
+			long groupId, long ddmStructureId, String recordSetKey)
 		throws PortalException {
 
-		validateDDMStructureId(ddmStructureId);
+		_validateDDMStructureId(ddmStructureId);
 
 		if (Validator.isNotNull(recordSetKey)) {
 			DDLRecordSet recordSet = ddlRecordSetPersistence.fetchByG_R(
 				groupId, recordSetKey);
 
 			if (recordSet != null) {
-				RecordSetDuplicateRecordSetKeyException rsdrske =
-					new RecordSetDuplicateRecordSetKeyException();
+				RecordSetDuplicateRecordSetKeyException
+					recordSetDuplicateRecordSetKeyException =
+						new RecordSetDuplicateRecordSetKeyException();
 
-				rsdrske.setRecordSetKey(recordSet.getRecordSetKey());
+				recordSetDuplicateRecordSetKeyException.setRecordSetKey(
+					recordSet.getRecordSetKey());
 
-				throw rsdrske;
+				throw recordSetDuplicateRecordSetKeyException;
 			}
 		}
-
-		validateName(nameMap);
 	}
 
-	protected void validateDDMStructureId(long ddmStructureId)
+	private void _validateDDMStructureId(long ddmStructureId)
 		throws PortalException {
 
 		DDMStructure ddmStructure = ddmStructureLocalService.fetchStructure(
@@ -978,30 +976,8 @@ public class DDLRecordSetLocalServiceImpl
 		}
 	}
 
-	protected void validateName(Map<Locale, String> nameMap)
-		throws PortalException {
-
-		Locale locale = LocaleUtil.getSiteDefault();
-
-		String name = nameMap.get(locale);
-
-		if (Validator.isNull(name)) {
-			throw new RecordSetNameException(
-				"Name is null for locale " + locale.getDisplayName());
-		}
-	}
-
 	@Reference
-	protected DDMFormValuesValidator ddmFormValuesValidator;
-
-	@Reference
-	protected DDMStructureLinkLocalService ddmStructureLinkLocalService;
-
-	@Reference
-	protected DDMStructureLocalService ddmStructureLocalService;
-
-	@Reference
-	protected DDMStructureVersionLocalService ddmStructureVersionLocalService;
+	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private DDLRecordLocalService _ddlRecordLocalService;
@@ -1009,10 +985,23 @@ public class DDLRecordSetLocalServiceImpl
 	@Reference
 	private DDLRecordSetVersionLocalService _ddlRecordSetVersionLocalService;
 
+	@Reference
+	private DDLRecordSetVersionPersistence _ddlRecordSetVersionPersistence;
+
 	@Reference(target = "(ddm.form.values.deserializer.type=json)")
 	private DDMFormValuesDeserializer _jsonDDMFormValuesDeserializer;
 
 	@Reference(target = "(ddm.form.values.serializer.type=json)")
 	private DDMFormValuesSerializer _jsonDDMFormValuesSerializer;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
+
+	@Reference
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }

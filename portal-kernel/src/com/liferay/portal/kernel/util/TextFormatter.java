@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -176,19 +167,27 @@ public class TextFormatter {
 			return s;
 		}
 
-		if (s.endsWith("s")) {
-			s = s.substring(0, s.length() - 1) + "ses";
-		}
-		else if (s.endsWith("y")) {
-			s = s.substring(0, s.length() - 1) + "ies";
-		}
-		else {
-			s = s + "s";
+		if (s.endsWith("ch") || s.endsWith("s") || s.endsWith("sh") ||
+			s.endsWith("x") || s.endsWith("z")) {
+
+			return s + "es";
 		}
 
-		return s;
+		if (s.endsWith("y") && !s.endsWith("ay") && !s.endsWith("ey") &&
+			!s.endsWith("oy") && !s.endsWith("uy")) {
+
+			return s.substring(0, s.length() - 1) + "ies";
+		}
+
+		return s + "s";
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             com.liferay.portal.kernel.language.LanguageUtil#formatStorageSize(
+	 *             double, Locale) }
+	 */
+	@Deprecated
 	public static String formatStorageSize(double size, Locale locale) {
 		String suffix = _STORAGE_SIZE_SUFFIX_B;
 
@@ -277,7 +276,7 @@ public class TextFormatter {
 	}
 
 	private static String _formatH(String s) {
-		StringBuilder sb = new StringBuilder(s.length() * 2);
+		StringBundler sb = new StringBundler(s.length() * 2);
 
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
@@ -317,7 +316,7 @@ public class TextFormatter {
 			String lowerCaseFirstChar = StringUtil.toLowerCase(
 				s.substring(0, 1));
 
-			return s = lowerCaseFirstChar.concat(s.substring(1));
+			return lowerCaseFirstChar.concat(s.substring(1));
 		}
 
 		StringBuilder sb = new StringBuilder(s);
@@ -372,11 +371,11 @@ public class TextFormatter {
 
 		String lowerCaseFirstChar = StringUtil.toLowerCase(s.substring(0, 1));
 
-		return s = lowerCaseFirstChar.concat(s.substring(1));
+		return lowerCaseFirstChar.concat(s.substring(1));
 	}
 
 	private static String _formatM(String s) {
-		StringBuilder sb = new StringBuilder(s.length());
+		StringBundler sb = new StringBundler(s.length());
 
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);

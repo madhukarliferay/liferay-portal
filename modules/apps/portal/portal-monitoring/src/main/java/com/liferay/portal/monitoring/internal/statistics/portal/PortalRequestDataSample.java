@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.monitoring.internal.statistics.portal;
@@ -67,23 +58,10 @@ public class PortalRequestDataSample extends BaseDataSample {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
-
-		sb.append("{referer=");
-		sb.append(_referer);
-		sb.append(", remoteAddr=");
-		sb.append(_remoteAddr);
-		sb.append(", requestURL=");
-		sb.append(_requestURL);
-		sb.append(", statusCode=");
-		sb.append(_statusCode);
-		sb.append(", userAgent=");
-		sb.append(_userAgent);
-		sb.append(", ");
-		sb.append(super.toString());
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{referer=", _referer, ", remoteAddr=", _remoteAddr,
+			", requestURL=", _requestURL, ", statusCode=", _statusCode,
+			", userAgent=", _userAgent, ", ", super.toString(), "}");
 	}
 
 	private final String _referer;

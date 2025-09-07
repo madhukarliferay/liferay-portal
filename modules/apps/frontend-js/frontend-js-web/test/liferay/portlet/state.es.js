@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import RenderState from '../../../src/main/resources/META-INF/resources/liferay/portlet/RenderState.es';
@@ -21,14 +12,14 @@ describe('PortletHub', () => {
 		it('returns a new RenderState object', () => {
 			expect.assertions(3);
 
-			return register('PortletB').then(hub => {
+			return register('PortletB').then((hub) => {
 				const renderState = hub.newState({
 					parameters: {
 						a: [1, 2, 3],
-						b: [4]
+						b: [4],
 					},
 					portletMode: 'view',
-					windowState: 'normal'
+					windowState: 'normal',
 				});
 
 				const valuesA = renderState.getValues('a');
@@ -48,12 +39,12 @@ describe('PortletHub', () => {
 		it('returns new parameters according to the data passed', () => {
 			expect.assertions(4);
 
-			return register('PortletC').then(hub => {
+			return register('PortletC').then((hub) => {
 				const parameters1 = {
 					a: [1, 2, 3],
 					b: null,
 					c: 'foo',
-					d: ['four', 'five', 'six']
+					d: ['four', 'five', 'six'],
 				};
 
 				const parameters2 = hub.newParameters(parameters1);
@@ -80,10 +71,10 @@ describe('PortletHub', () => {
 						a: [null],
 						b: [1, 2, 3],
 						c: null,
-						d: 2
+						d: 2,
 					},
 					portletMode: 'edit',
-					windowState: 'maximized'
+					windowState: 'maximized',
 				};
 
 				const renderState = new RenderState(mockData);
@@ -111,10 +102,10 @@ describe('PortletHub', () => {
 					parameters: {
 						a: [1, 2, 3],
 						b: 'foo',
-						c: ['bar', null]
+						c: ['bar', null],
 					},
 					portletMode: 'view',
-					windowState: 'minimized'
+					windowState: 'minimized',
 				});
 
 				const renderState2 = renderState1.clone();
@@ -154,10 +145,10 @@ describe('PortletHub', () => {
 			it('throws an error if specified parameter is not a string', () => {
 				const renderState = new RenderState({
 					parameters: {
-						a: [1, 2, 3]
+						a: [1, 2, 3],
 					},
 					portletMode: 'edit',
-					windowState: 'normal'
+					windowState: 'normal',
 				});
 
 				const testFn = () => {
@@ -180,10 +171,10 @@ describe('PortletHub', () => {
 			it('returns a parameter value if it is defined', () => {
 				const renderState = new RenderState({
 					parameters: {
-						a: ['foo']
+						a: ['foo'],
 					},
 					portletMode: 'edit',
-					windowState: 'normal'
+					windowState: 'normal',
 				});
 
 				const value = renderState.getValue('a');
@@ -214,10 +205,10 @@ describe('PortletHub', () => {
 			it("returns a parameter's value if it is defined", () => {
 				const renderState = new RenderState({
 					parameters: {
-						data: ['something', 'here']
+						data: ['something', 'here'],
 					},
 					portletMode: 'edit',
-					windowState: 'normal'
+					windowState: 'normal',
 				});
 
 				const values = renderState.getValues('data');
@@ -242,10 +233,10 @@ describe('PortletHub', () => {
 			it('does not remove a existing parameter', () => {
 				const renderState = new RenderState({
 					parameters: {
-						data: [1, 2, 3]
+						data: [1, 2, 3],
 					},
 					portletMode: 'edit',
-					windowState: 'normal'
+					windowState: 'normal',
 				});
 
 				const values = renderState.getValues('data');
@@ -284,7 +275,7 @@ describe('PortletHub', () => {
 
 				const testFn = () => {
 					renderState.setValue('a', {
-						foo: 'bar'
+						foo: 'bar',
 					});
 				};
 
@@ -360,7 +351,7 @@ describe('PortletHub', () => {
 
 				const testFn = () => {
 					renderState.setValues('c', {
-						foo: 'bar'
+						foo: 'bar',
 					});
 				};
 

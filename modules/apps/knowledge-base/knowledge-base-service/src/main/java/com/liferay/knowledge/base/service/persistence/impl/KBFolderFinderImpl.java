@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service.persistence.impl;
@@ -33,6 +24,7 @@ import com.liferay.portal.kernel.security.permission.InlineSQLHelper;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -124,7 +116,11 @@ public class KBFolderFinderImpl
 			sb.append(sql);
 			sb.append(") UNION ALL (");
 
-			sql = _customSQL.get(getClass(), COUNT_F_BY_G_P, queryDefinition);
+			QueryDefinition<?> kbFolderQueryDefinition =
+				_getKBFolderQueryDefinition(queryDefinition);
+
+			sql = _customSQL.get(
+				getClass(), COUNT_F_BY_G_P, kbFolderQueryDefinition);
 
 			if (inlineSQLHelper) {
 				sql = _inlineSQLHelper.replacePermissionCheck(
@@ -135,25 +131,27 @@ public class KBFolderFinderImpl
 			sb.append(sql);
 			sb.append(StringPool.CLOSE_PARENTHESIS);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sb.toString());
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(
+				sb.toString());
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(parentResourcePrimKey);
-			qPos.add(true);
-			qPos.add(queryDefinition.getStatus());
-			qPos.add(groupId);
-			qPos.add(parentResourcePrimKey);
+			queryPos.add(groupId);
+			queryPos.add(parentResourcePrimKey);
+			queryPos.add(true);
+			queryPos.add(queryDefinition.getStatus());
+			queryPos.add(groupId);
+			queryPos.add(parentResourcePrimKey);
+			queryPos.add(kbFolderQueryDefinition.getStatus());
 
 			int count = 0;
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			while (itr.hasNext()) {
-				Long l = itr.next();
+			while (iterator.hasNext()) {
+				Long l = iterator.next();
 
 				if (l != null) {
 					count += l.intValue();
@@ -162,8 +160,8 @@ public class KBFolderFinderImpl
 
 			return count;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -215,7 +213,11 @@ public class KBFolderFinderImpl
 			sb.append(sql);
 			sb.append(" UNION ALL ");
 
-			sql = _customSQL.get(getClass(), FIND_F_BY_G_P, queryDefinition);
+			QueryDefinition<?> kbFolderQueryDefinition =
+				_getKBFolderQueryDefinition(queryDefinition);
+
+			sql = _customSQL.get(
+				getClass(), FIND_F_BY_G_P, kbFolderQueryDefinition);
 
 			if (inlineSQLHelper) {
 				sql = _inlineSQLHelper.replacePermissionCheck(
@@ -230,68 +232,91 @@ public class KBFolderFinderImpl
 
 			sql = _customSQL.replaceOrderBy(sql, orderByComparator);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar("modelId", Type.LONG);
-			q.addScalar("modelFolder", Type.LONG);
-			q.addScalar("modifiedDate", Type.DATE);
-			q.addScalar("priority", Type.DOUBLE);
-			q.addScalar("title", Type.STRING);
-			q.addScalar("viewCount", Type.INTEGER);
+			sqlQuery.addScalar("modelId", Type.LONG);
+			sqlQuery.addScalar("modelFolder", Type.LONG);
+			sqlQuery.addScalar("modifiedDate", Type.DATE);
+			sqlQuery.addScalar("priority", Type.DOUBLE);
+			sqlQuery.addScalar("title", Type.STRING);
+			sqlQuery.addScalar("viewCount", Type.INTEGER);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
 			if (orderByViewCount) {
 				long classNameId = _classNameLocalService.getClassNameId(
 					KBArticle.class);
 
-				qPos.add(classNameId);
-				qPos.add(groupId);
-				qPos.add(parentResourcePrimKey);
-				qPos.add(true);
-				qPos.add(queryDefinition.getStatus());
-				qPos.add(classNameId);
+				queryPos.add(classNameId);
+
+				queryPos.add(groupId);
+				queryPos.add(parentResourcePrimKey);
+				queryPos.add(true);
+				queryPos.add(queryDefinition.getStatus());
+				queryPos.add(classNameId);
 			}
 
-			qPos.add(groupId);
-			qPos.add(parentResourcePrimKey);
-			qPos.add(true);
-			qPos.add(queryDefinition.getStatus());
-			qPos.add(groupId);
-			qPos.add(parentResourcePrimKey);
+			queryPos.add(groupId);
+			queryPos.add(parentResourcePrimKey);
+			queryPos.add(true);
+			queryPos.add(queryDefinition.getStatus());
+			queryPos.add(groupId);
+			queryPos.add(parentResourcePrimKey);
+			queryPos.add(kbFolderQueryDefinition.getStatus());
 
 			List<Object> models = new ArrayList<>();
 
-			Iterator<Object[]> itr = (Iterator<Object[]>)QueryUtil.iterate(
-				q, getDialect(), queryDefinition.getStart(),
+			Iterator<Object[]> iterator = (Iterator<Object[]>)QueryUtil.iterate(
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 
-			while (itr.hasNext()) {
-				Object[] array = itr.next();
+			while (iterator.hasNext()) {
+				Object[] array = iterator.next();
 
 				long modelId = (Long)array[0];
 				long modelFolder = (Long)array[1];
 
-				Object obj = null;
+				Object object = null;
 
 				if (modelFolder == 1) {
-					obj = _kBFolderPersistence.findByPrimaryKey(modelId);
+					object = _kBFolderPersistence.findByPrimaryKey(modelId);
 				}
 				else {
-					obj = _kBArticlePersistence.findByPrimaryKey(modelId);
+					object = _kBArticlePersistence.findByPrimaryKey(modelId);
 				}
 
-				models.add(obj);
+				models.add(object);
 			}
 
 			return models;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
+	}
+
+	private QueryDefinition<?> _getKBFolderQueryDefinition(
+		QueryDefinition<?> queryDefinition) {
+
+		QueryDefinition<?> kbFolderQueryDefinition = new QueryDefinition<>();
+
+		kbFolderQueryDefinition.setStatus(
+			queryDefinition.getStatus(), queryDefinition.isExcludeStatus());
+
+		if (!queryDefinition.isExcludeStatus() &&
+			(queryDefinition.getStatus() !=
+				WorkflowConstants.STATUS_APPROVED) &&
+			(queryDefinition.getStatus() !=
+				WorkflowConstants.STATUS_IN_TRASH)) {
+
+			kbFolderQueryDefinition.setStatus(
+				WorkflowConstants.STATUS_APPROVED);
+		}
+
+		return kbFolderQueryDefinition;
 	}
 
 	@Reference

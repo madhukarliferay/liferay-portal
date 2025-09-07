@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.dynamiccss;
@@ -29,13 +20,13 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.net.URLDecoder;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Raymond Augé
@@ -49,15 +40,15 @@ public class DynamicCSSUtil {
 			HttpServletRequest httpServletRequest, String content)
 		throws Exception {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
 		Theme theme = _getTheme(httpServletRequest);
 
 		if (theme == null) {
 			return content;
 		}
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return replaceToken(
 			servletContext, httpServletRequest, themeDisplay, theme, content);
@@ -77,15 +68,13 @@ public class DynamicCSSUtil {
 			baseURL = baseURL.substring(0, baseURL.length() - 1);
 		}
 
-		parsedContent = StringUtil.replace(
+		return StringUtil.replace(
 			parsedContent,
 			new String[] {"@base_url@", "@portal_ctx@", "@theme_image_path@"},
 			new String[] {
 				baseURL, PortalUtil.getPathContext(),
 				_getThemeImagesPath(httpServletRequest, themeDisplay, theme)
 			});
-
-		return parsedContent;
 	}
 
 	/**
@@ -95,7 +84,7 @@ public class DynamicCSSUtil {
 	protected static String propagateQueryString(
 		String content, String queryString) {
 
-		StringBuilder sb = new StringBuilder(content.length());
+		StringBundler sb = new StringBundler(content.length());
 
 		int pos = 0;
 
@@ -165,8 +154,8 @@ public class DynamicCSSUtil {
 			try {
 				return ThemeLocalServiceUtil.getTheme(companyId, themeId);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -193,14 +182,9 @@ public class DynamicCSSUtil {
 				themePathId = StringUtil.replace(
 					themePathId, CharPool.UNDERLINE, StringPool.BLANK);
 
-				StringBundler sb = new StringBundler(4);
-
-				sb.append(themePathId);
-				sb.append(PortletConstants.WAR_SEPARATOR);
-				sb.append(themePathId);
-				sb.append("theme");
-
-				themePathId = sb.toString();
+				themePathId = StringBundler.concat(
+					themePathId, PortletConstants.WAR_SEPARATOR, themePathId,
+					"theme");
 
 				themeId = PortalUtil.getJsSafePortletId(themePathId);
 			}
@@ -213,8 +197,8 @@ public class DynamicCSSUtil {
 		try {
 			return ThemeLocalServiceUtil.getTheme(companyId, themeId);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return null;

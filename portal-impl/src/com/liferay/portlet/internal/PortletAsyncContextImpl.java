@@ -1,41 +1,33 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.async.PortletAsyncListenerFactory;
 import com.liferay.portal.kernel.portlet.async.PortletAsyncScopeManager;
 import com.liferay.portal.kernel.portlet.async.PortletAsyncScopeManagerFactory;
 import com.liferay.portlet.AsyncPortletServletRequest;
 import com.liferay.portlet.PortletAsyncListenerAdapter;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
 
-import javax.portlet.PortletAsyncContext;
-import javax.portlet.PortletAsyncListener;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletContext;
-import javax.portlet.PortletException;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
+import jakarta.portlet.PortletAsyncContext;
+import jakarta.portlet.PortletAsyncListener;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletContext;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Neil Griffin
@@ -238,32 +230,6 @@ public class PortletAsyncContextImpl implements PortletAsyncContext {
 		}
 	}
 
-	private static PortletAsyncListenerFactory _getPortletAsyncListenerFactory(
-		String servletContextName) {
-
-		PortletAsyncListenerFactory portletAsyncListenerFactory =
-			_portletAsyncListenerFactories.getService(servletContextName);
-
-		if (portletAsyncListenerFactory == null) {
-			portletAsyncListenerFactory = _dummyPortletAsyncListenerFactory;
-		}
-
-		return portletAsyncListenerFactory;
-	}
-
-	private static PortletAsyncScopeManager _getPortletAsyncScopeManager(
-		String servletContextName) {
-
-		PortletAsyncScopeManagerFactory portletAsyncScopeManagerFactory =
-			_portletAsyncScopeManagerFactories.getService(servletContextName);
-
-		if (portletAsyncScopeManagerFactory == null) {
-			return _dummyPortletAsyncScopeManager;
-		}
-
-		return portletAsyncScopeManagerFactory.getPortletAsyncScopeManager();
-	}
-
 	private ServletRequest _getOriginalServletRequest() {
 		ServletRequest originalServletRequest = _asyncPortletServletRequest;
 
@@ -277,6 +243,32 @@ public class PortletAsyncContextImpl implements PortletAsyncContext {
 		return originalServletRequest;
 	}
 
+	private PortletAsyncListenerFactory _getPortletAsyncListenerFactory(
+		String servletContextName) {
+
+		PortletAsyncListenerFactory portletAsyncListenerFactory =
+			_portletAsyncListenerFactories.getService(servletContextName);
+
+		if (portletAsyncListenerFactory == null) {
+			portletAsyncListenerFactory = _dummyPortletAsyncListenerFactory;
+		}
+
+		return portletAsyncListenerFactory;
+	}
+
+	private PortletAsyncScopeManager _getPortletAsyncScopeManager(
+		String servletContextName) {
+
+		PortletAsyncScopeManagerFactory portletAsyncScopeManagerFactory =
+			_portletAsyncScopeManagerFactories.getService(servletContextName);
+
+		if (portletAsyncScopeManagerFactory == null) {
+			return _dummyPortletAsyncScopeManager;
+		}
+
+		return portletAsyncScopeManagerFactory.getPortletAsyncScopeManager();
+	}
+
 	private static final PortletAsyncListenerFactory
 		_dummyPortletAsyncListenerFactory = new PortletAsyncListenerFactory() {
 
@@ -288,8 +280,10 @@ public class PortletAsyncContextImpl implements PortletAsyncContext {
 				try {
 					return clazz.newInstance();
 				}
-				catch (ReflectiveOperationException roe) {
-					throw new PortletException(roe);
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new PortletException(reflectiveOperationException);
 				}
 			}
 
@@ -317,12 +311,14 @@ public class PortletAsyncContextImpl implements PortletAsyncContext {
 
 	private static final ServiceTrackerMap<String, PortletAsyncListenerFactory>
 		_portletAsyncListenerFactories =
-			ServiceTrackerCollections.openSingleValueMap(
+			ServiceTrackerMapFactory.openSingleValueMap(
+				SystemBundleUtil.getBundleContext(),
 				PortletAsyncListenerFactory.class, "servlet.context.name");
 	private static final ServiceTrackerMap
 		<String, PortletAsyncScopeManagerFactory>
 			_portletAsyncScopeManagerFactories =
-				ServiceTrackerCollections.openSingleValueMap(
+				ServiceTrackerMapFactory.openSingleValueMap(
+					SystemBundleUtil.getBundleContext(),
 					PortletAsyncScopeManagerFactory.class,
 					"servlet.context.name");
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.model.impl;
@@ -37,17 +28,17 @@ public class SiteNavigationMenuCacheModel
 	implements CacheModel<SiteNavigationMenu>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SiteNavigationMenuCacheModel)) {
+		if (!(object instanceof SiteNavigationMenuCacheModel)) {
 			return false;
 		}
 
 		SiteNavigationMenuCacheModel siteNavigationMenuCacheModel =
-			(SiteNavigationMenuCacheModel)obj;
+			(SiteNavigationMenuCacheModel)object;
 
 		if ((siteNavigationMenuId ==
 				siteNavigationMenuCacheModel.siteNavigationMenuId) &&
@@ -78,12 +69,16 @@ public class SiteNavigationMenuCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(31);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", siteNavigationMenuId=");
 		sb.append(siteNavigationMenuId);
 		sb.append(", groupId=");
@@ -117,12 +112,21 @@ public class SiteNavigationMenuCacheModel
 			new SiteNavigationMenuImpl();
 
 		siteNavigationMenuImpl.setMvccVersion(mvccVersion);
+		siteNavigationMenuImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			siteNavigationMenuImpl.setUuid("");
 		}
 		else {
 			siteNavigationMenuImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			siteNavigationMenuImpl.setExternalReferenceCode("");
+		}
+		else {
+			siteNavigationMenuImpl.setExternalReferenceCode(
+				externalReferenceCode);
 		}
 
 		siteNavigationMenuImpl.setSiteNavigationMenuId(siteNavigationMenuId);
@@ -177,7 +181,10 @@ public class SiteNavigationMenuCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		siteNavigationMenuId = objectInput.readLong();
 
@@ -201,11 +208,20 @@ public class SiteNavigationMenuCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(siteNavigationMenuId);
@@ -240,7 +256,9 @@ public class SiteNavigationMenuCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long siteNavigationMenuId;
 	public long groupId;
 	public long companyId;

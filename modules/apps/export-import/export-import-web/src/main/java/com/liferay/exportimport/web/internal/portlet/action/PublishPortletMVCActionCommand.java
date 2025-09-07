@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.web.internal.portlet.action;
@@ -37,8 +28,8 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -47,10 +38,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + ExportImportPortletKeys.EXPORT_IMPORT,
-		"mvc.command.name=publishPortlet"
+		"jakarta.portlet.name=" + ExportImportPortletKeys.EXPORT_IMPORT,
+		"mvc.command.name=/export_import/publish_portlet"
 	},
 	service = MVCActionCommand.class
 )
@@ -66,8 +56,8 @@ public class PublishPortletMVCActionCommand extends BaseMVCActionCommand {
 		try {
 			portlet = ActionUtil.getPortlet(actionRequest);
 		}
-		catch (PrincipalException pe) {
-			SessionErrors.add(actionRequest, pe.getClass());
+		catch (PrincipalException principalException) {
+			SessionErrors.add(actionRequest, principalException.getClass());
 
 			actionResponse.setRenderParameter("mvcPath", "/error.jsp");
 
@@ -99,20 +89,21 @@ public class PublishPortletMVCActionCommand extends BaseMVCActionCommand {
 				_staging.publishToLive(actionRequest, portlet);
 			}
 		}
-		catch (Exception e) {
-			if (e instanceof LARFileException ||
-				e instanceof LARFileNameException ||
-				e instanceof LARFileSizeException ||
-				e instanceof LARTypeException || e instanceof LocaleException ||
-				e instanceof NoSuchLayoutException ||
-				e instanceof PortletIdException ||
-				e instanceof PrincipalException ||
-				e instanceof StructureDuplicateStructureKeyException) {
+		catch (Exception exception) {
+			if (exception instanceof LARFileException ||
+				exception instanceof LARFileNameException ||
+				exception instanceof LARFileSizeException ||
+				exception instanceof LARTypeException ||
+				exception instanceof LocaleException ||
+				exception instanceof NoSuchLayoutException ||
+				exception instanceof PortletIdException ||
+				exception instanceof PrincipalException ||
+				exception instanceof StructureDuplicateStructureKeyException) {
 
-				SessionErrors.add(actionRequest, e.getClass());
+				SessionErrors.add(actionRequest, exception.getClass());
 			}
 			else {
-				_log.error(e, e);
+				_log.error(exception);
 
 				SessionErrors.add(
 					actionRequest,

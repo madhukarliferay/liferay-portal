@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.highlight;
@@ -18,9 +9,6 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.search.highlight.FieldConfig;
 import com.liferay.portal.search.highlight.Highlight;
 import com.liferay.portal.search.query.QueryTranslator;
-
-import java.util.List;
-import java.util.stream.Stream;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -35,15 +23,31 @@ public class HighlightTranslator {
 
 		HighlightBuilder highlightBuilder = new HighlightBuilder();
 
-		List<FieldConfig> fieldConfigs = highlight.getFieldConfigs();
+		if (ArrayUtil.isNotEmpty(highlight.getBoundaryChars())) {
+			highlightBuilder.boundaryChars(highlight.getBoundaryChars());
+		}
 
-		Stream<FieldConfig> stream = fieldConfigs.stream();
+		if (highlight.getBoundaryMaxScan() != null) {
+			highlightBuilder.boundaryMaxScan(highlight.getBoundaryMaxScan());
+		}
 
-		stream.map(
-			this::translate
-		).forEach(
-			highlightBuilder::field
-		);
+		if (highlight.getBoundaryScannerLocale() != null) {
+			highlightBuilder.boundaryScannerLocale(
+				highlight.getBoundaryScannerLocale());
+		}
+
+		if (highlight.getBoundaryScannerType() != null) {
+			highlightBuilder.boundaryScannerType(
+				highlight.getBoundaryScannerType());
+		}
+
+		if (highlight.getEncoder() != null) {
+			highlightBuilder.encoder(highlight.getEncoder());
+		}
+
+		for (FieldConfig fieldConfig : highlight.getFieldConfigs()) {
+			highlightBuilder.field(_translate(fieldConfig, queryTranslator));
+		}
 
 		if (highlight.getForceSource() != null) {
 			highlightBuilder.forceSource(highlight.getForceSource());
@@ -74,8 +78,20 @@ public class HighlightTranslator {
 			highlightBuilder.highlighterType(highlight.getHighlighterType());
 		}
 
+		if (highlight.getNoMatchSize() != null) {
+			highlightBuilder.noMatchSize(highlight.getNoMatchSize());
+		}
+
 		if (highlight.getNumOfFragments() != null) {
 			highlightBuilder.numOfFragments(highlight.getNumOfFragments());
+		}
+
+		if (highlight.getOrder() != null) {
+			highlightBuilder.order(highlight.getOrder());
+		}
+
+		if (highlight.getPhraseLimit() != null) {
+			highlightBuilder.phraseLimit(highlight.getPhraseLimit());
 		}
 
 		if (ArrayUtil.isNotEmpty(highlight.getPreTags())) {
@@ -91,12 +107,48 @@ public class HighlightTranslator {
 				highlight.getRequireFieldMatch());
 		}
 
+		if (highlight.getTagsSchema() != null) {
+			highlightBuilder.tagsSchema(highlight.getTagsSchema());
+		}
+
+		if (highlight.getUseExplicitFieldOrder() != null) {
+			highlightBuilder.useExplicitFieldOrder(
+				highlight.getUseExplicitFieldOrder());
+		}
+
 		return highlightBuilder;
 	}
 
-	protected HighlightBuilder.Field translate(FieldConfig fieldConfig) {
+	private HighlightBuilder.Field _translate(
+		FieldConfig fieldConfig,
+		QueryTranslator<QueryBuilder> queryTranslator) {
+
 		HighlightBuilder.Field field = new HighlightBuilder.Field(
-			fieldConfig.getField());
+			fieldConfig.getFieldName());
+
+		if (ArrayUtil.isNotEmpty(fieldConfig.getBoundaryChars())) {
+			field.boundaryChars(fieldConfig.getBoundaryChars());
+		}
+
+		if (fieldConfig.getBoundaryMaxScan() != null) {
+			field.boundaryMaxScan(fieldConfig.getBoundaryMaxScan());
+		}
+
+		if (fieldConfig.getBoundaryScannerLocale() != null) {
+			field.boundaryScannerLocale(fieldConfig.getBoundaryScannerLocale());
+		}
+
+		if (fieldConfig.getBoundaryScannerType() != null) {
+			field.boundaryScannerType(fieldConfig.getBoundaryScannerType());
+		}
+
+		if (fieldConfig.getForceSource() != null) {
+			field.forceSource(fieldConfig.getForceSource());
+		}
+
+		if (fieldConfig.getFragmenter() != null) {
+			field.fragmenter(fieldConfig.getFragmenter());
+		}
 
 		if (fieldConfig.getFragmentOffset() != null) {
 			field.fragmentOffset(fieldConfig.getFragmentOffset());
@@ -106,8 +158,49 @@ public class HighlightTranslator {
 			field.fragmentSize(fieldConfig.getFragmentSize());
 		}
 
+		if (fieldConfig.getHighlighterType() != null) {
+			field.highlighterType(fieldConfig.getHighlighterType());
+		}
+
+		if (fieldConfig.getHighlightFilter() != null) {
+			field.highlightFilter(fieldConfig.getHighlightFilter());
+		}
+
+		if (fieldConfig.getHighlightQuery() != null) {
+			field.highlightQuery(
+				queryTranslator.translate(fieldConfig.getHighlightQuery()));
+		}
+
+		if (ArrayUtil.isNotEmpty(fieldConfig.getMatchedFields())) {
+			field.matchedFields(fieldConfig.getMatchedFields());
+		}
+
+		if (fieldConfig.getNoMatchSize() != null) {
+			field.noMatchSize(fieldConfig.getNoMatchSize());
+		}
+
 		if (fieldConfig.getNumFragments() != null) {
 			field.numOfFragments(fieldConfig.getNumFragments());
+		}
+
+		if (fieldConfig.getOrder() != null) {
+			field.order(fieldConfig.getOrder());
+		}
+
+		if (fieldConfig.getPhraseLimit() != null) {
+			field.phraseLimit(fieldConfig.getPhraseLimit());
+		}
+
+		if (ArrayUtil.isNotEmpty(fieldConfig.getPostTags())) {
+			field.postTags(fieldConfig.getPostTags());
+		}
+
+		if (ArrayUtil.isNotEmpty(fieldConfig.getPreTags())) {
+			field.preTags(fieldConfig.getPreTags());
+		}
+
+		if (fieldConfig.getRequireFieldMatch() != null) {
+			field.requireFieldMatch(fieldConfig.getRequireFieldMatch());
 		}
 
 		return field;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.security.permission.contributor;
@@ -20,46 +11,47 @@ import com.liferay.portal.kernel.security.permission.UserBag;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * RoleCollection is used as the argument to {@link
- * RoleContributor#contribute(RoleCollection)}. It holds the managed collection
- * of roleIds starting with the <em>initial</em> set calculated from persisted
- * role assignment and role inheritance.
+ * Represents a managed collection of role IDs, starting with the
+ * <em>initial</em> set calculated from persisted role assignment and role
+ * inheritance. The roles can be contributed via {@link
+ * RoleContributor#contribute(RoleCollection)}.
  *
  * @author Carlos Sierra Andrés
  * @author Raymond Augé
- * @review
  */
 @ProviderType
 public interface RoleCollection {
 
 	/**
-	 * Add a roleId to the collection.
+	 * Adds the role ID to the collection.
 	 *
-	 * @param  roleId to add to the collection
-	 * @return <code>true</code> if the roleId was added to the collection
+	 * @param  roleId the ID of the role
+	 * @return <code>true</code> if the role ID was added to the collection
 	 */
 	public boolean addRoleId(long roleId);
 
 	/**
-	 * Get the companyId of the Company being checked.
+	 * Returns the primary key of the company whose permissions are being
+	 * checked.
 	 *
-	 * @return the companyId of the Company being checked
+	 * @return the primary key of the company whose permissions are being
+	 *         checked
 	 */
 	public long getCompanyId();
 
 	/**
-	 * Get the groupId of the Group currently being permission checked.
+	 * Returns the primary key of the group whose permissions are being checked.
 	 *
 	 * @return the groupId of the Group currently being permission checked
 	 */
 	public long getGroupId();
 
 	/**
-	 * Get the initial set of roles calculated from persisted assignment and
-	 * inheritance.
+	 * Returns the IDs of the initial set of roles calculated from persisted
+	 * assignment and inheritance.
 	 *
-	 * @return the initial set of roles calculated from persisted assignment and
-	 *         inheritance
+	 * @return the IDs of the initial set of roles calculated from persisted
+	 *         assignment and inheritance
 	 */
 	public long[] getInitialRoleIds();
 
@@ -68,10 +60,11 @@ public interface RoleCollection {
 	public UserBag getUserBag();
 
 	/**
-	 * Check if a Role is already in the collection by roleId.
+	 * Returns <code>true</code> if the collection has the role ID.
 	 *
-	 * @param  roleId the roleId to check
-	 * @return <code>true</code> of the Role is in the collection
+	 * @param  roleId the ID of the role
+	 * @return <code>true</code> if the collection has the role ID;
+	 *         <code>false</code> otherwise
 	 */
 	public boolean hasRoleId(long roleId);
 

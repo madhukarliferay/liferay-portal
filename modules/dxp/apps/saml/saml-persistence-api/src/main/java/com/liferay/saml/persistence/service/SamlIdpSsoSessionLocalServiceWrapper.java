@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SamlIdpSsoSessionLocalService}.
@@ -27,6 +19,10 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 	implements SamlIdpSsoSessionLocalService,
 			   ServiceWrapper<SamlIdpSsoSessionLocalService> {
 
+	public SamlIdpSsoSessionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SamlIdpSsoSessionLocalServiceWrapper(
 		SamlIdpSsoSessionLocalService samlIdpSsoSessionLocalService) {
 
@@ -35,6 +31,10 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 
 	/**
 	 * Adds the saml idp sso session to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSsoSessionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlIdpSsoSession the saml idp sso session
 	 * @return the saml idp sso session that was added
@@ -58,6 +58,18 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 
 		return _samlIdpSsoSessionLocalService.addSamlIdpSsoSession(
 			samlIdpSsoSessionKey, serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _samlIdpSsoSessionLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -94,6 +106,10 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 	/**
 	 * Deletes the saml idp sso session with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSsoSessionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlIdpSsoSessionId the primary key of the saml idp sso session
 	 * @return the saml idp sso session that was removed
 	 * @throws PortalException if a saml idp sso session with the primary key could not be found
@@ -110,6 +126,10 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 	/**
 	 * Deletes the saml idp sso session from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSsoSessionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlIdpSsoSession the saml idp sso session
 	 * @return the saml idp sso session that was removed
 	 */
@@ -121,6 +141,18 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 
 		return _samlIdpSsoSessionLocalService.deleteSamlIdpSsoSession(
 			samlIdpSsoSession);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _samlIdpSsoSessionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _samlIdpSsoSessionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -255,6 +287,9 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 		return _samlIdpSsoSessionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -328,6 +363,10 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 	/**
 	 * Updates the saml idp sso session in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSsoSessionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlIdpSsoSession the saml idp sso session
 	 * @return the saml idp sso session that was updated
 	 */
@@ -339,6 +378,11 @@ public class SamlIdpSsoSessionLocalServiceWrapper
 
 		return _samlIdpSsoSessionLocalService.updateSamlIdpSsoSession(
 			samlIdpSsoSession);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _samlIdpSsoSessionLocalService.getBasePersistence();
 	}
 
 	@Override

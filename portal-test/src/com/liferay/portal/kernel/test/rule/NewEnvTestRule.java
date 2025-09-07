@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.test.rule;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.process.ClassPathUtil;
 import com.liferay.petra.process.ProcessCallable;
 import com.liferay.petra.process.ProcessChannel;
@@ -89,6 +82,8 @@ public class NewEnvTestRule implements TestRule {
 
 		builder.setArguments(createArguments(description));
 		builder.setBootstrapClassPath(CLASS_PATH);
+		builder.setJavaExecutable(
+			System.getProperty("java.home") + "/bin/java");
 		builder.setRuntimeClassPath(CLASS_PATH);
 
 		setEnvironment(builder, description);
@@ -106,9 +101,7 @@ public class NewEnvTestRule implements TestRule {
 			new LocalProcessLauncher.ShutdownHook() {
 
 				@Override
-				public boolean shutdown(
-					int shutdownCode, Throwable shutdownThrowable) {
-
+				public boolean shutdown(int shutdownCode, Throwable throwable) {
 					System.exit(shutdownCode);
 
 					return true;
@@ -153,6 +146,16 @@ public class NewEnvTestRule implements TestRule {
 	protected List<String> createArguments(Description description) {
 		List<String> arguments = new ArrayList<>();
 
+		RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+
+		for (String jvmArg : runtimeMXBean.getInputArguments()) {
+			if (jvmArg.startsWith("--add-opens") ||
+				jvmArg.contains("java.locale.providers")) {
+
+				arguments.add(jvmArg);
+			}
+		}
+
 		Class<?> testClass = description.getTestClass();
 
 		NewEnv.JVMArgsLine jvmArgsLine = testClass.getAnnotation(
@@ -175,7 +178,7 @@ public class NewEnvTestRule implements TestRule {
 			arguments.add("-Djvm.debug=true");
 		}
 
-		arguments.add("-Dliferay.mode=test");
+		arguments.add("-Dnet.bytebuddy.experimental=true");
 		arguments.add("-Dsun.zip.disableMemoryMapping=true");
 
 		String whipAgentLine = System.getProperty("whip.agent");
@@ -204,11 +207,14 @@ public class NewEnvTestRule implements TestRule {
 
 	protected ClassLoader createClassLoader(Description description) {
 		try {
+			ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+
 			return new URLClassLoader(
-				ClassPathUtil.getClassPathURLs(CLASS_PATH), null);
+				ClassPathUtil.getClassPathURLs(CLASS_PATH),
+				systemClassLoader.getParent());
 		}
-		catch (MalformedURLException murle) {
-			throw new RuntimeException(murle);
+		catch (MalformedURLException malformedURLException) {
+			throw new RuntimeException(malformedURLException);
 		}
 	}
 
@@ -232,17 +238,19 @@ public class NewEnvTestRule implements TestRule {
 		for (String variable : variables) {
 			String resolvedVariable = resolveSystemProperty(variable);
 
-			String[] parts = StringUtil.split(resolvedVariable, CharPool.EQUAL);
+			int index = resolvedVariable.indexOf(CharPool.EQUAL);
 
-			if (parts.length != 2) {
+			if (index == -1) {
 				throw new IllegalArgumentException(
 					StringBundler.concat(
 						"Wrong environment variable ", variable,
 						" resolved as ", resolvedVariable,
-						". Need to be \"key=value\" format"));
+						". Need to contain \"=\""));
 			}
 
-			environmentMap.put(parts[0], parts[1]);
+			environmentMap.put(
+				resolvedVariable.substring(0, index),
+				resolvedVariable.substring(index + 1));
 		}
 
 		return environmentMap;
@@ -401,8 +409,8 @@ public class NewEnvTestRule implements TestRule {
 					invoke(contextClassLoader, afterMethodKey, object);
 				}
 			}
-			catch (Exception e) {
-				throw new ProcessException(e);
+			catch (Exception exception) {
+				throw new ProcessException(exception);
 			}
 
 			return StringPool.BLANK;
@@ -410,14 +418,9 @@ public class NewEnvTestRule implements TestRule {
 
 		@Override
 		public String toString() {
-			StringBundler sb = new StringBundler(4);
-
-			sb.append(_testClassName);
-			sb.append(StringPool.PERIOD);
-			sb.append(_testMethodKey.getMethodName());
-			sb.append("()");
-
-			return sb.toString();
+			return StringBundler.concat(
+				_testClassName, StringPool.PERIOD,
+				_testMethodKey.getMethodName(), "()");
 		}
 
 		private static final long serialVersionUID = 1L;
@@ -451,20 +454,15 @@ public class NewEnvTestRule implements TestRule {
 		public void evaluate() throws Throwable {
 			MethodKey.resetCache();
 
-			Thread currentThread = Thread.currentThread();
-
-			ClassLoader contextClassLoader =
-				currentThread.getContextClassLoader();
-
-			currentThread.setContextClassLoader(_newClassLoader);
-
 			String quiet = System.getProperty(
 				SystemProperties.SYSTEM_PROPERTIES_QUIET);
 
 			System.setProperty(
 				SystemProperties.SYSTEM_PROPERTIES_QUIET, StringPool.TRUE);
 
-			try {
+			try (SafeCloseable safeCloseable =
+					ThreadContextClassLoaderUtil.swap(_newClassLoader)) {
+
 				Class<?> clazz = _newClassLoader.loadClass(_testClassName);
 
 				Object object = clazz.newInstance();
@@ -479,8 +477,8 @@ public class NewEnvTestRule implements TestRule {
 					invoke(_newClassLoader, afterMethodKey, object);
 				}
 			}
-			catch (InvocationTargetException ite) {
-				throw ite.getTargetException();
+			catch (InvocationTargetException invocationTargetException) {
+				throw invocationTargetException.getTargetException();
 			}
 			finally {
 				if (quiet == null) {
@@ -491,8 +489,6 @@ public class NewEnvTestRule implements TestRule {
 					System.setProperty(
 						SystemProperties.SYSTEM_PROPERTIES_QUIET, quiet);
 				}
-
-				currentThread.setContextClassLoader(contextClassLoader);
 
 				MethodKey.resetCache();
 			}
@@ -544,16 +540,16 @@ public class NewEnvTestRule implements TestRule {
 			try {
 				future.get();
 			}
-			catch (ExecutionException ee) {
-				Throwable cause = ee.getCause();
+			catch (ExecutionException executionException) {
+				Throwable throwable = executionException.getCause();
 
-				while (cause instanceof InvocationTargetException ||
-					   cause instanceof ProcessException) {
+				while (throwable instanceof InvocationTargetException ||
+					   throwable instanceof ProcessException) {
 
-					cause = cause.getCause();
+					throwable = throwable.getCause();
 				}
 
-				throw cause;
+				throw throwable;
 			}
 		}
 

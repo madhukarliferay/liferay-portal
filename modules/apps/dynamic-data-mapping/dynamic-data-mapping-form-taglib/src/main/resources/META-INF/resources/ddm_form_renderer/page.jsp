@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,9 +16,7 @@ if (ddmFormInstance != null) {
 <c:choose>
 	<c:when test="<%= ddmFormInstanceId == 0 %>">
 		<clay:alert
-			message='<%= LanguageUtil.get(resourceBundle, "select-an-existing-form-or-add-a-form-to-be-displayed-in-this-application") %>'
-			style="info"
-			title='<%= LanguageUtil.get(resourceBundle, "info") %>'
+			message="select-an-existing-form-or-add-a-form-to-be-displayed-in-this-application"
 		/>
 	</c:when>
 	<c:otherwise>
@@ -37,7 +26,7 @@ if (ddmFormInstance != null) {
 		%>
 
 		<c:choose>
-			<c:when test="<%= isFormAvailable %>">
+			<c:when test="<%= formAvailable %>">
 				<div class="portlet-forms">
 					<c:if test="<%= Validator.isNull(redirectURL) %>">
 						<aui:input name="redirect" type="hidden" value='<%= ParamUtil.getString(request, "redirect", PortalUtil.getCurrentURL(request)) %>' />
@@ -55,18 +44,30 @@ if (ddmFormInstance != null) {
 
 						<%
 						DDMFormValuesValidationException.MustSetValidValue msvv = (DDMFormValuesValidationException.MustSetValidValue)errorException;
+
+						String fieldLabelValue = msvv.getFieldLabelValue(displayLocale);
+
+						if (Validator.isNull(fieldLabelValue)) {
+							fieldLabelValue = msvv.getFieldName();
+						}
 						%>
 
-						<liferay-ui:message arguments="<%= HtmlUtil.escape(msvv.getFieldName()) %>" key="validation-failed-for-field-x" translateArguments="<%= false %>" />
+						<liferay-ui:message arguments="<%= HtmlUtil.escape(fieldLabelValue) %>" key="validation-failed-for-field-x" translateArguments="<%= false %>" />
 					</liferay-ui:error>
 
 					<liferay-ui:error exception="<%= DDMFormValuesValidationException.RequiredValue.class %>">
 
 						<%
 						DDMFormValuesValidationException.RequiredValue rv = (DDMFormValuesValidationException.RequiredValue)errorException;
+
+						String fieldLabelValue = rv.getFieldLabelValue(displayLocale);
+
+						if (Validator.isNull(fieldLabelValue)) {
+							fieldLabelValue = rv.getFieldName();
+						}
 						%>
 
-						<liferay-ui:message arguments="<%= HtmlUtil.escape(rv.getFieldName()) %>" key="no-value-is-defined-for-field-x" translateArguments="<%= false %>" />
+						<liferay-ui:message arguments="<%= HtmlUtil.escape(fieldLabelValue) %>" key="no-value-is-defined-for-field-x" translateArguments="<%= false %>" />
 					</liferay-ui:error>
 
 					<liferay-ui:error exception="<%= NoSuchFormInstanceException.class %>" message="the-selected-form-no-longer-exists" />
@@ -77,15 +78,14 @@ if (ddmFormInstance != null) {
 
 					<c:if test="<%= !hasAddFormInstanceRecordPermission %>">
 						<clay:alert
-							message='<%= LanguageUtil.get(resourceBundle, "you-do-not-have-the-permission-to-submit-this-form") %>'
-							style="warning"
-							title='<%= LanguageUtil.get(resourceBundle, "warning") %>'
+							displayType="warning"
+							message="you-do-not-have-the-permission-to-submit-this-form"
 						/>
 					</c:if>
 
 					<c:if test="<%= showFormBasicInfo %>">
 						<div class="ddm-form-basic-info">
-							<div class="container-fluid-1280">
+							<clay:container-fluid>
 								<h1 class="ddm-form-name"><%= HtmlUtil.escape(ddmFormInstance.getName(displayLocale)) %></h1>
 
 								<%
@@ -93,31 +93,31 @@ if (ddmFormInstance != null) {
 								%>
 
 								<c:if test="<%= Validator.isNotNull(description) %>">
-									<h5 class="ddm-form-description"><%= description %></h5>
+									<div class="ddm-form-description h5"><%= description %></div>
 								</c:if>
-							</div>
+							</clay:container-fluid>
 						</div>
 					</c:if>
 
-					<div class="container-fluid-1280 ddm-form-builder-app">
+					<clay:container-fluid
+						cssClass="ddm-form-builder-app"
+					>
 						<%= ddmFormHTML %>
 
 						<aui:input name="empty" type="hidden" value="" />
-					</div>
+					</clay:container-fluid>
 				</div>
 			</c:when>
 			<c:when test="<%= !hasViewFormInstancePermission %>">
 				<clay:alert
-					message='<%= LanguageUtil.get(resourceBundle, "you-do-not-have-the-permission-to-view-this-form") %>'
-					style="warning"
-					title='<%= LanguageUtil.get(resourceBundle, "warning") %>'
+					displayType="warning"
+					message="you-do-not-have-the-permission-to-view-this-form"
 				/>
 			</c:when>
 			<c:otherwise>
 				<clay:alert
-					message='<%= LanguageUtil.get(resourceBundle, "this-form-not-available-or-it-was-not-published") %>'
-					style="warning"
-					title='<%= LanguageUtil.get(resourceBundle, "warning") %>'
+					displayType="warning"
+					message="this-form-not-available-or-it-was-not-published"
 				/>
 			</c:otherwise>
 		</c:choose>

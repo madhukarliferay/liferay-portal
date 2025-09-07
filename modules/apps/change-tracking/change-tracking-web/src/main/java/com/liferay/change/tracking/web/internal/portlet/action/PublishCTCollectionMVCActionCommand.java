@@ -1,27 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.web.internal.portlet.action;
 
+import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.constants.CTPortletKeys;
+import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.change.tracking.model.CTPreferences;
+import com.liferay.change.tracking.service.CTCollectionLocalService;
+import com.liferay.change.tracking.service.CTCollectionService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
-import com.liferay.change.tracking.service.CTProcessLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -29,12 +30,9 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.PortletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,10 +41,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + CTPortletKeys.CHANGE_LISTS,
-		"mvc.command.name=/change_lists/publish_ct_collection"
+		"jakarta.portlet.name=" + CTPortletKeys.PUBLICATIONS,
+		"mvc.command.name=/change_tracking/publish_ct_collection"
 	},
 	service = MVCActionCommand.class
 )
@@ -60,44 +57,100 @@ public class PublishCTCollectionMVCActionCommand extends BaseMVCActionCommand {
 		long ctCollectionId = ParamUtil.getLong(
 			actionRequest, "ctCollectionId");
 
-		String name = ParamUtil.getString(actionRequest, "name");
-
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		if (FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-39203")) {
+
+			try {
+				_ctPreferencesLocalService.resetCTPreferences(ctCollectionId);
+
+				CTCollection ctCollection =
+					_ctCollectionLocalService.getCTCollection(ctCollectionId);
+
+				CTPreferences ctPreferences =
+					_ctPreferencesLocalService.getCTPreferences(
+						ctCollection.getCompanyId(),
+						_userLocalService.getGuestUserId(
+							ctCollection.getCompanyId()));
+
+				ctPreferences.setCtCollectionId(ctCollectionId);
+				ctPreferences.setPreviousCtCollectionId(
+					CTConstants.CT_COLLECTION_ID_PRODUCTION);
+
+				_ctPreferencesLocalService.updateCTPreferences(ctPreferences);
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						"Using publication " + ctCollection.getName() +
+							" temporarily in place of production");
+				}
+			}
+			catch (PortalException portalException) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to instantly publish publication. Attempting " +
+							"to publish normally.",
+						portalException);
+				}
+			}
+		}
+
+		String name = ParamUtil.getString(actionRequest, "name");
+
 		try {
-			_ctProcessLocalService.addCTProcess(
+			_ctCollectionService.publishCTCollection(
 				themeDisplay.getUserId(), ctCollectionId);
 		}
-		catch (PortalException pe) {
-			SessionErrors.add(actionRequest, pe.getClass());
+		catch (PortalException portalException) {
+			SessionErrors.add(actionRequest, portalException.getClass());
 		}
 
-		hideDefaultSuccessMessage(actionRequest);
-
-		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
-			actionRequest);
-
 		SessionMessages.add(
-			httpServletRequest, "requestProcessed",
-			LanguageUtil.format(
-				httpServletRequest, "publishing-x-has-started-successfully",
-				new Object[] {name}, false));
+			actionRequest, "requestProcessed",
+			_language.format(
+				_portal.getHttpServletRequest(actionRequest),
+				"publishing-x-has-started-successfully", new Object[] {name},
+				false));
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			actionRequest, CTPortletKeys.CHANGE_LISTS_HISTORY,
-			PortletRequest.RENDER_PHASE);
-
-		sendRedirect(actionRequest, actionResponse, portletURL.toString());
+		sendRedirect(
+			actionRequest, actionResponse,
+			PortletURLBuilder.create(
+				_portal.getControlPanelPortletURL(
+					actionRequest,
+					_groupLocalService.getGroup(
+						themeDisplay.getCompanyId(),
+						GroupConstants.CONTROL_PANEL),
+					CTPortletKeys.PUBLICATIONS, 0, 0,
+					PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/change_tracking/view_history"
+			).buildString());
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		PublishCTCollectionMVCActionCommand.class);
+
+	@Reference
+	private CTCollectionLocalService _ctCollectionLocalService;
+
+	@Reference
+	private CTCollectionService _ctCollectionService;
 
 	@Reference
 	private CTPreferencesLocalService _ctPreferencesLocalService;
 
 	@Reference
-	private CTProcessLocalService _ctProcessLocalService;
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

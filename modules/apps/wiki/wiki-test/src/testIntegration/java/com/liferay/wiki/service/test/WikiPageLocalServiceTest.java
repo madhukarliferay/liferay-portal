@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.test;
@@ -18,34 +9,48 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetEntry;
-import com.liferay.asset.kernel.model.AssetLink;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
-import com.liferay.asset.kernel.service.AssetLinkLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
+import com.liferay.asset.link.model.AssetLink;
+import com.liferay.asset.link.service.AssetLinkLocalServiceUtil;
 import com.liferay.asset.test.util.AssetTestUtil;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoValue;
+import com.liferay.expando.test.util.ExpandoTestUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -53,14 +58,15 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portlet.expando.util.test.ExpandoTestUtil;
 import com.liferay.wiki.exception.DuplicatePageException;
+import com.liferay.wiki.exception.DuplicateWikiPageExternalReferenceCodeException;
 import com.liferay.wiki.exception.NoSuchPageResourceException;
 import com.liferay.wiki.exception.PageTitleException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
+import com.liferay.wiki.service.WikiPageLocalService;
 import com.liferay.wiki.service.WikiPageLocalServiceUtil;
 import com.liferay.wiki.test.util.WikiTestUtil;
 
@@ -93,11 +99,12 @@ public class WikiPageLocalServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 
 		_node = WikiTestUtil.addNode(_group.getGroupId());
+		_user = UserTestUtil.addUser(_group.getGroupId());
 	}
 
 	@Test
@@ -115,11 +122,47 @@ public class WikiPageLocalServiceTest {
 			TestPropsValues.getUserId(), _node.getNodeId(), "FrontPage",
 			RandomTestUtil.randomString(), true, serviceContext);
 
-		List<AssetCategory> categories =
-			AssetCategoryLocalServiceUtil.getCategories(
-				WikiPage.class.getName(), frontPage.getResourcePrimKey());
+		Assert.assertTrue(
+			ListUtil.isNull(
+				AssetCategoryLocalServiceUtil.getCategories(
+					WikiPage.class.getName(), frontPage.getResourcePrimKey())));
+	}
 
-		Assert.assertTrue(ListUtil.isNull(categories));
+	@Test(expected = DuplicateWikiPageExternalReferenceCodeException.class)
+	public void testAddPageWithExistingExternalReferenceCode()
+		throws Exception {
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		WikiPage wikiPage = WikiTestUtil.addPage(
+			TestPropsValues.getUserId(), _node.getNodeId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), true,
+			serviceContext);
+
+		WikiPageLocalServiceUtil.addPage(
+			wikiPage.getExternalReferenceCode(), TestPropsValues.getUserId(),
+			_node.getNodeId(), RandomTestUtil.randomString(),
+			WorkflowConstants.ACTION_PUBLISH, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), false, "creole", true,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			serviceContext);
+	}
+
+	@Test
+	public void testAddPageWithExternalReferenceCode() throws Exception {
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		WikiPage wikiPage = WikiPageLocalServiceUtil.addPage(
+			externalReferenceCode, TestPropsValues.getUserId(),
+			_node.getNodeId(), RandomTestUtil.randomString(),
+			WorkflowConstants.ACTION_PUBLISH, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), false, "creole", true,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		Assert.assertEquals(
+			externalReferenceCode, wikiPage.getExternalReferenceCode());
 	}
 
 	@Test
@@ -128,35 +171,49 @@ public class WikiPageLocalServiceTest {
 
 		for (char invalidCharacter : invalidCharacters) {
 			try {
-				ServiceContext serviceContext =
-					ServiceContextTestUtil.getServiceContext(
-						_group.getGroupId());
-
 				WikiTestUtil.addPage(
 					TestPropsValues.getUserId(), _node.getNodeId(),
 					"ChildPage" + invalidCharacter,
-					RandomTestUtil.randomString(), true, serviceContext);
+					RandomTestUtil.randomString(), true,
+					ServiceContextTestUtil.getServiceContext(
+						_group.getGroupId()));
 
 				Assert.fail(
 					"Created a page with invalid character " +
 						invalidCharacter);
 			}
-			catch (PageTitleException pte) {
+			catch (PageTitleException pageTitleException) {
 			}
 		}
 	}
 
 	@Test
 	public void testAddPageWithNbspTitle() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 		WikiPage page = WikiTestUtil.addPage(
 			TestPropsValues.getUserId(), _node.getNodeId(),
 			"ChildPage" + CharPool.NO_BREAK_SPACE + "1",
-			RandomTestUtil.randomString(), true, serviceContext);
+			RandomTestUtil.randomString(), true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		Assert.assertEquals("ChildPage 1", page.getTitle());
+	}
+
+	@Test
+	public void testAddPageWithoutExternalReferenceCode() throws Exception {
+		WikiPage wikiPage1 = WikiTestUtil.addPage(
+			TestPropsValues.getUserId(), _node.getNodeId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		String externalReferenceCode = wikiPage1.getExternalReferenceCode();
+
+		Assert.assertEquals(externalReferenceCode, wikiPage1.getUuid());
+
+		WikiPage wikiPage2 =
+			WikiPageLocalServiceUtil.getLatestPageByExternalReferenceCode(
+				_group.getGroupId(), externalReferenceCode);
+
+		Assert.assertEquals(wikiPage1, wikiPage2);
 	}
 
 	@Test(expected = AssetCategoryTestException.class)
@@ -176,7 +233,11 @@ public class WikiPageLocalServiceTest {
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				true, serviceContext);
 		}
-		catch (AssetCategoryException ace) {
+		catch (AssetCategoryException assetCategoryException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(assetCategoryException);
+			}
+
 			throw new AssetCategoryTestException();
 		}
 	}
@@ -329,7 +390,7 @@ public class WikiPageLocalServiceTest {
 		WikiPage page = WikiTestUtil.addPage(
 			_group.getGroupId(), _node.getNodeId(), true);
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			page.getUserId(), page.getNodeId(), page.getTitle(), getClass());
 
 		List<FileEntry> attachmentsFileEntries =
@@ -355,6 +416,23 @@ public class WikiPageLocalServiceTest {
 			copyFileEntry.getMimeType(), fileEntry.getMimeType());
 		Assert.assertEquals(copyFileEntry.getTitle(), fileEntry.getTitle());
 		Assert.assertEquals(copyFileEntry.getSize(), fileEntry.getSize());
+	}
+
+	@Test
+	public void testCopyPageWithDraftAttachments() throws Exception {
+		WikiPage approvedPage = _createPageWithDraftAttachments();
+
+		WikiPage copyPage = WikiTestUtil.copyPage(
+			approvedPage, true,
+			ServiceContextTestUtil.getServiceContext(
+				approvedPage.getGroupId()));
+
+		List<FileEntry> copyAttachmentsFileEntries =
+			copyPage.getAttachmentsFileEntries();
+
+		Assert.assertEquals(
+			copyAttachmentsFileEntries.toString(), 1,
+			copyAttachmentsFileEntries.size());
 	}
 
 	@Test(expected = NoSuchPageResourceException.class)
@@ -413,7 +491,7 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			redirectPage = WikiPageLocalServiceUtil.getPage(
 				redirectPage.getResourcePrimKey());
 
@@ -438,7 +516,7 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			WikiPageLocalServiceUtil.getPage(redirectPage.getResourcePrimKey());
 		}
 	}
@@ -462,7 +540,7 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			childPage = WikiPageLocalServiceUtil.getPage(
 				childPage.getResourcePrimKey());
 
@@ -493,7 +571,7 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			redirectPage = WikiPageLocalServiceUtil.getPageByPageId(
 				redirectPage.getPageId());
 
@@ -520,7 +598,7 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			childPage = WikiPageLocalServiceUtil.getPageByPageId(
 				childPage.getPageId());
 
@@ -545,9 +623,43 @@ public class WikiPageLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchPageResourceException nspre) {
+		catch (NoSuchPageResourceException noSuchPageResourceException) {
 			WikiPageLocalServiceUtil.getPage(childPage.getResourcePrimKey());
 		}
+	}
+
+	@Test
+	public void testFetchPersistedModelByResourcePrimKey() throws Exception {
+		WikiPage wikiPage = WikiTestUtil.addPage(
+			_group.getGroupId(), _node.getNodeId(), true);
+
+		PersistedModel persistedModel =
+			_wikiPageLocalService.fetchPersistedModel(
+				wikiPage.getResourcePrimKey());
+
+		Assert.assertNotNull(persistedModel);
+	}
+
+	@Test
+	public void testGetAttachmentsFileEntriesWithDraftPage() throws Exception {
+		WikiPage approvedPage = _createPageWithDraftAttachments();
+
+		WikiPage draftPage = WikiPageLocalServiceUtil.getLatestPage(
+			approvedPage.getResourcePrimKey(), WorkflowConstants.STATUS_ANY,
+			false);
+
+		List<FileEntry> attachmentsFileEntries =
+			approvedPage.getAttachmentsFileEntries();
+
+		Assert.assertEquals(
+			attachmentsFileEntries.toString(), 1,
+			attachmentsFileEntries.size());
+
+		attachmentsFileEntries = draftPage.getAttachmentsFileEntries();
+
+		Assert.assertEquals(
+			attachmentsFileEntries.toString(), 2,
+			attachmentsFileEntries.size());
 	}
 
 	@Test
@@ -631,6 +743,28 @@ public class WikiPageLocalServiceTest {
 	}
 
 	@Test
+	public void testMovePageToTrashWithDraftAttachments() throws Exception {
+		WikiPage approvedPage = _createPageWithDraftAttachments();
+
+		WikiPage draftPage = WikiPageLocalServiceUtil.getLatestPage(
+			approvedPage.getResourcePrimKey(), WorkflowConstants.STATUS_ANY,
+			false);
+
+		List<FileEntry> attachmentsFileEntries =
+			draftPage.getAttachmentsFileEntries();
+
+		WikiPageLocalServiceUtil.movePageToTrash(
+			approvedPage.getUserId(), approvedPage);
+
+		FileEntry draftFileEntry = attachmentsFileEntries.get(1);
+
+		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.getFileEntry(
+			draftFileEntry.getFileEntryId());
+
+		Assert.assertTrue(dlFileEntry.isInTrash());
+	}
+
+	@Test
 	public void testOrderByModifiedDate() throws Exception {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
@@ -705,12 +839,10 @@ public class WikiPageLocalServiceTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(), true,
 			serviceContext);
 
-		serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getGroupId());
-
 		WikiPageLocalServiceUtil.renamePage(
 			TestPropsValues.getUserId(), _node.getNodeId(), page.getTitle(),
-			"New Title", true, serviceContext);
+			"New Title", true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		WikiPage renamedPage = WikiPageLocalServiceUtil.getPage(
 			_node.getNodeId(), "New Title");
@@ -742,12 +874,10 @@ public class WikiPageLocalServiceTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(), true,
 			serviceContext);
 
-		serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getGroupId());
-
 		WikiPageLocalServiceUtil.renamePage(
 			TestPropsValues.getUserId(), _node.getNodeId(), page.getTitle(),
-			"New Title", true, serviceContext);
+			"New Title", true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		WikiPage renamedPage = WikiPageLocalServiceUtil.getPage(
 			_node.getNodeId(), "New Title");
@@ -770,7 +900,7 @@ public class WikiPageLocalServiceTest {
 		AssetVocabulary assetVocabulary = AssetTestUtil.addVocabulary(
 			_group.getGroupId());
 
-		AssetCategory defaultVersionPageAssetCategory =
+		AssetCategory defaultVersionPageAssetCategory1 =
 			AssetTestUtil.addCategory(
 				_group.getGroupId(), assetVocabulary.getVocabularyId());
 		AssetCategory defaultVersionPageAssetCategory2 =
@@ -780,7 +910,7 @@ public class WikiPageLocalServiceTest {
 		long[] defaultVersionPageAssetCategoryIds = new long[2];
 
 		defaultVersionPageAssetCategoryIds[0] =
-			defaultVersionPageAssetCategory.getCategoryId();
+			defaultVersionPageAssetCategory1.getCategoryId();
 		defaultVersionPageAssetCategoryIds[1] =
 			defaultVersionPageAssetCategory2.getCategoryId();
 
@@ -918,17 +1048,63 @@ public class WikiPageLocalServiceTest {
 		checkPopulatedServiceContext(serviceContext, renamedPage, false);
 	}
 
+	@Test
+	public void testRenamePagePermissions() throws Exception {
+		WikiPage pageA = WikiTestUtil.addPage(
+			TestPropsValues.getUserId(), _group.getGroupId(), _node.getNodeId(),
+			"A", true);
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker permissionChecker =
+			PermissionCheckerFactoryUtil.create(user);
+
+		Assert.assertTrue(
+			permissionChecker.hasPermission(
+				_group.getGroupId(), WikiPage.class.getName(),
+				String.valueOf(pageA.getResourcePrimKey()), ActionKeys.VIEW));
+
+		RoleTestUtil.removeResourcePermission(
+			RoleConstants.GUEST, WikiPage.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(pageA.getResourcePrimKey()), ActionKeys.VIEW);
+
+		Assert.assertFalse(
+			permissionChecker.hasPermission(
+				_group.getGroupId(), WikiPage.class.getName(),
+				String.valueOf(pageA.getResourcePrimKey()), ActionKeys.VIEW));
+
+		WikiPageLocalServiceUtil.renamePage(
+			TestPropsValues.getUserId(), _node.getNodeId(), "A", "B", true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		WikiPage originalPageA = WikiPageLocalServiceUtil.getPage(
+			_node.getNodeId(), "A");
+
+		WikiPage pageB = WikiPageLocalServiceUtil.getPage(
+			_node.getNodeId(), "B");
+
+		Assert.assertFalse(
+			permissionChecker.hasPermission(
+				_group.getGroupId(), WikiPage.class.getName(),
+				String.valueOf(pageB.getResourcePrimKey()), ActionKeys.VIEW));
+
+		Assert.assertFalse(
+			permissionChecker.hasPermission(
+				_group.getGroupId(), WikiPage.class.getName(),
+				String.valueOf(originalPageA.getResourcePrimKey()),
+				ActionKeys.VIEW));
+	}
+
 	@Test(expected = DuplicatePageException.class)
 	public void testRenamePageSameName() throws Exception {
 		WikiPage page = WikiTestUtil.addPage(
 			_group.getGroupId(), _node.getNodeId(), true);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 		WikiPageLocalServiceUtil.renamePage(
 			TestPropsValues.getUserId(), _node.getNodeId(), page.getTitle(),
-			page.getTitle(), true, serviceContext);
+			page.getTitle(), true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 	}
 
 	@Test
@@ -958,12 +1134,10 @@ public class WikiPageLocalServiceTest {
 		WikiPage page = WikiTestUtil.addPage(
 			_group.getGroupId(), _node.getNodeId(), true);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 		WikiPageLocalServiceUtil.renamePage(
 			TestPropsValues.getUserId(), _node.getNodeId(), page.getTitle(),
-			"New" + CharPool.NO_BREAK_SPACE + "Title", true, serviceContext);
+			"New" + CharPool.NO_BREAK_SPACE + "Title", true,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		WikiPageLocalServiceUtil.getPage(_node.getNodeId(), "New Title");
 	}
@@ -1020,6 +1194,21 @@ public class WikiPageLocalServiceTest {
 	@Test
 	public void testRevertPageWithExpando() throws Exception {
 		testRevertPage(true);
+	}
+
+	@Test
+	public void testUpdatePagePreservesOriginalOwner() throws Exception {
+		WikiPage page = WikiTestUtil.addPage(
+			_group.getGroupId(), _node.getNodeId(), true);
+
+		WikiPage updatedPage = WikiPageLocalServiceUtil.updatePage(
+			_user.getUserId(), _node.getNodeId(), page.getTitle(),
+			page.getVersion(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), false, page.getFormat(), null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		Assert.assertNotEquals(page.getPageId(), updatedPage.getPageId());
+		Assert.assertEquals(page.getUserId(), updatedPage.getUserId());
 	}
 
 	protected void addExpandoValueToPage(WikiPage page) throws Exception {
@@ -1081,19 +1270,13 @@ public class WikiPageLocalServiceTest {
 
 		long classNameId = PortalUtil.getClassNameId(WikiPage.class.getName());
 
-		StringBundler sb = new StringBundler(5);
+		assetVocabulary.setSettings(
+			StringBundler.concat(
+				"multiValued=true\nrequiredClassNameIds=", classNameId,
+				":-1\nselectedClassNameIds=", classNameId, ":-1"));
 
-		sb.append("multiValued=true\nrequiredClassNameIds=");
-		sb.append(classNameId);
-		sb.append(":-1\nselectedClassNameIds=");
-		sb.append(classNameId);
-		sb.append(":-1");
-
-		assetVocabulary.setSettings(sb.toString());
-
-		AssetVocabularyLocalServiceUtil.updateAssetVocabulary(assetVocabulary);
-
-		return assetVocabulary;
+		return AssetVocabularyLocalServiceUtil.updateAssetVocabulary(
+			assetVocabulary);
 	}
 
 	protected void testChangeParent(boolean hasExpandoValues) throws Exception {
@@ -1207,10 +1390,48 @@ public class WikiPageLocalServiceTest {
 		Assert.assertArrayEquals(expectedArray, actualArray);
 	}
 
+	private WikiPage _createPageWithDraftAttachments() throws Exception {
+		WikiPage approvedPage = WikiTestUtil.addPage(
+			_group.getGroupId(), _node.getNodeId(), true);
+
+		WikiTestUtil.addPageAttachment(
+			approvedPage.getUserId(), approvedPage.getNodeId(),
+			approvedPage.getTitle(), getClass());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(approvedPage.getGroupId());
+
+		// Update the page so the modifiedDate comes after attachment
+		// modifiedDate to resemble the /wiki/edit_page action
+
+		approvedPage = WikiTestUtil.updatePage(
+			approvedPage, approvedPage.getUserId(), approvedPage.getTitle(),
+			approvedPage.getContent(), true, serviceContext);
+
+		WikiTestUtil.addPageAttachment(
+			approvedPage.getUserId(), approvedPage.getNodeId(),
+			approvedPage.getTitle(), getClass());
+
+		WikiTestUtil.updatePage(
+			approvedPage, approvedPage.getUserId(), approvedPage.getTitle(),
+			approvedPage.getContent(), false, serviceContext);
+
+		return approvedPage;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		WikiPageLocalServiceTest.class);
+
 	@DeleteAfterTestRun
 	private Group _group;
 
 	private WikiNode _node;
+
+	@DeleteAfterTestRun
+	private User _user;
+
+	@Inject
+	private WikiPageLocalService _wikiPageLocalService;
 
 	private static class AssetCategoryTestException extends PortalException {
 	}

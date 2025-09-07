@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the journal folder service. This utility wraps <code>com.liferay.journal.service.persistence.impl.JournalFolderPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class JournalFolderUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -2147,10 +2134,10 @@ public class JournalFolderUtil {
 	 * @param status the status
 	 * @return the matching journal folders
 	 */
-	public static List<JournalFolder> findByF_C_P_NotS(
+	public static List<JournalFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status) {
 
-		return getPersistence().findByF_C_P_NotS(
+		return getPersistence().findByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status);
 	}
 
@@ -2169,11 +2156,11 @@ public class JournalFolderUtil {
 	 * @param end the upper bound of the range of journal folders (not inclusive)
 	 * @return the range of matching journal folders
 	 */
-	public static List<JournalFolder> findByF_C_P_NotS(
+	public static List<JournalFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end) {
 
-		return getPersistence().findByF_C_P_NotS(
+		return getPersistence().findByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status, start, end);
 	}
 
@@ -2193,12 +2180,12 @@ public class JournalFolderUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching journal folders
 	 */
-	public static List<JournalFolder> findByF_C_P_NotS(
+	public static List<JournalFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end,
 		OrderByComparator<JournalFolder> orderByComparator) {
 
-		return getPersistence().findByF_C_P_NotS(
+		return getPersistence().findByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status, start, end,
 			orderByComparator);
 	}
@@ -2220,12 +2207,12 @@ public class JournalFolderUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching journal folders
 	 */
-	public static List<JournalFolder> findByF_C_P_NotS(
+	public static List<JournalFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end, OrderByComparator<JournalFolder> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByF_C_P_NotS(
+		return getPersistence().findByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status, start, end,
 			orderByComparator, useFinderCache);
 	}
@@ -2241,12 +2228,12 @@ public class JournalFolderUtil {
 	 * @return the first matching journal folder
 	 * @throws NoSuchFolderException if a matching journal folder could not be found
 	 */
-	public static JournalFolder findByF_C_P_NotS_First(
+	public static JournalFolder findByGtF_C_P_NotS_First(
 			long folderId, long companyId, long parentFolderId, int status,
 			OrderByComparator<JournalFolder> orderByComparator)
 		throws com.liferay.journal.exception.NoSuchFolderException {
 
-		return getPersistence().findByF_C_P_NotS_First(
+		return getPersistence().findByGtF_C_P_NotS_First(
 			folderId, companyId, parentFolderId, status, orderByComparator);
 	}
 
@@ -2260,11 +2247,11 @@ public class JournalFolderUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching journal folder, or <code>null</code> if a matching journal folder could not be found
 	 */
-	public static JournalFolder fetchByF_C_P_NotS_First(
+	public static JournalFolder fetchByGtF_C_P_NotS_First(
 		long folderId, long companyId, long parentFolderId, int status,
 		OrderByComparator<JournalFolder> orderByComparator) {
 
-		return getPersistence().fetchByF_C_P_NotS_First(
+		return getPersistence().fetchByGtF_C_P_NotS_First(
 			folderId, companyId, parentFolderId, status, orderByComparator);
 	}
 
@@ -2279,12 +2266,12 @@ public class JournalFolderUtil {
 	 * @return the last matching journal folder
 	 * @throws NoSuchFolderException if a matching journal folder could not be found
 	 */
-	public static JournalFolder findByF_C_P_NotS_Last(
+	public static JournalFolder findByGtF_C_P_NotS_Last(
 			long folderId, long companyId, long parentFolderId, int status,
 			OrderByComparator<JournalFolder> orderByComparator)
 		throws com.liferay.journal.exception.NoSuchFolderException {
 
-		return getPersistence().findByF_C_P_NotS_Last(
+		return getPersistence().findByGtF_C_P_NotS_Last(
 			folderId, companyId, parentFolderId, status, orderByComparator);
 	}
 
@@ -2298,11 +2285,11 @@ public class JournalFolderUtil {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching journal folder, or <code>null</code> if a matching journal folder could not be found
 	 */
-	public static JournalFolder fetchByF_C_P_NotS_Last(
+	public static JournalFolder fetchByGtF_C_P_NotS_Last(
 		long folderId, long companyId, long parentFolderId, int status,
 		OrderByComparator<JournalFolder> orderByComparator) {
 
-		return getPersistence().fetchByF_C_P_NotS_Last(
+		return getPersistence().fetchByGtF_C_P_NotS_Last(
 			folderId, companyId, parentFolderId, status, orderByComparator);
 	}
 
@@ -2314,10 +2301,10 @@ public class JournalFolderUtil {
 	 * @param parentFolderId the parent folder ID
 	 * @param status the status
 	 */
-	public static void removeByF_C_P_NotS(
+	public static void removeByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status) {
 
-		getPersistence().removeByF_C_P_NotS(
+		getPersistence().removeByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status);
 	}
 
@@ -2330,11 +2317,79 @@ public class JournalFolderUtil {
 	 * @param status the status
 	 * @return the number of matching journal folders
 	 */
-	public static int countByF_C_P_NotS(
+	public static int countByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status) {
 
-		return getPersistence().countByF_C_P_NotS(
+		return getPersistence().countByGtF_C_P_NotS(
 			folderId, companyId, parentFolderId, status);
+	}
+
+	/**
+	 * Returns the journal folder where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchFolderException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching journal folder
+	 * @throws NoSuchFolderException if a matching journal folder could not be found
+	 */
+	public static JournalFolder findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.journal.exception.NoSuchFolderException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the journal folder where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching journal folder, or <code>null</code> if a matching journal folder could not be found
+	 */
+	public static JournalFolder fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the journal folder where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching journal folder, or <code>null</code> if a matching journal folder could not be found
+	 */
+	public static JournalFolder fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the journal folder where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the journal folder that was removed
+	 */
+	public static JournalFolder removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.journal.exception.NoSuchFolderException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of journal folders where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching journal folders
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
 	}
 
 	/**
@@ -2486,25 +2541,13 @@ public class JournalFolderUtil {
 	}
 
 	public static JournalFolderPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<JournalFolderPersistence, JournalFolderPersistence> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(JournalFolderPersistence.class);
-
-		ServiceTracker<JournalFolderPersistence, JournalFolderPersistence>
-			serviceTracker =
-				new ServiceTracker
-					<JournalFolderPersistence, JournalFolderPersistence>(
-						bundle.getBundleContext(),
-						JournalFolderPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(JournalFolderPersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile JournalFolderPersistence _persistence;
 
 }

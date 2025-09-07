@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,31 +9,28 @@
 
 <%
 Layout selLayout = (Layout)request.getAttribute(WebKeys.SEL_LAYOUT);
-boolean setCustomName = GetterUtil.getBoolean(request.getAttribute(SiteNavigationMenuItemTypeLayoutWebKeys.SET_CUSTOM_NAME));
 SiteNavigationMenuItem siteNavigationMenuItem = (SiteNavigationMenuItem)request.getAttribute(SiteNavigationWebKeys.SITE_NAVIGATION_MENU_ITEM);
+boolean useCustomName = GetterUtil.getBoolean(request.getAttribute(SiteNavigationMenuItemTypeLayoutWebKeys.USE_CUSTOM_NAME));
 
-String taglibOnChange = "Liferay.Util.toggleDisabled('#" + renderResponse.getNamespace() + "nameBoundingBox input, [for=" + renderResponse.getNamespace() + "name]', !event.target.checked)";
+String taglibOnChange = "Liferay.Util.toggleDisabled('#" + liferayPortletResponse.getNamespace() + "nameBoundingBox input, [for=" + liferayPortletResponse.getNamespace() + "name]', !event.target.checked)";
 %>
 
 <aui:fieldset>
-	<aui:input checked="<%= setCustomName %>" helpMessage="set-custom-name-help" label="set-custom-name" name="TypeSettingsProperties--setCustomName--" onChange="<%= taglibOnChange %>" type="checkbox" />
+	<aui:input checked="<%= useCustomName %>" helpMessage="use-custom-name-help" label="use-custom-name" labelCssClass="font-weight-normal" name="TypeSettingsProperties--useCustomName--" onChange="<%= taglibOnChange %>" type="checkbox" />
 </aui:fieldset>
 
-<aui:input autoFocus="<%= true %>" disabled="<%= !setCustomName %>" label="name" localized="<%= true %>" maxlength='<%= ModelHintsUtil.getMaxLength(SiteNavigationMenuItem.class.getName(), "name") %>' name="name" placeholder="name" type="text" value='<%= SiteNavigationMenuItemUtil.getSiteNavigationMenuItemXML(siteNavigationMenuItem, "name") %>'>
-	<aui:validator name="required" />
-</aui:input>
+<aui:input disabled="<%= !useCustomName %>" label="name" localized="<%= true %>" maxlength='<%= ModelHintsUtil.getMaxLength(SiteNavigationMenuItem.class.getName(), "name") %>' name="name" placeholder="name" required="<%= true %>" type="text" value='<%= SiteNavigationMenuItemUtil.getSiteNavigationMenuItemXML(siteNavigationMenuItem, "name") %>' />
 
-<aui:input id="groupId" name="TypeSettingsProperties--groupId--" type="hidden" value="<%= (selLayout != null) ? selLayout.getGroupId() : StringPool.BLANK %>">
-	<aui:validator name="required" />
-</aui:input>
+<aui:input id="groupId" name="TypeSettingsProperties--groupId--" required="<%= true %>" type="hidden" value="<%= (selLayout != null) ? selLayout.getGroupId() : StringPool.BLANK %>" />
 
-<aui:input id="privateLayout" name="TypeSettingsProperties--privateLayout--" type="hidden" value="<%= (selLayout != null) ? selLayout.isPrivateLayout() : StringPool.BLANK %>">
-	<aui:validator name="required" />
-</aui:input>
+<aui:input id="privateLayout" name="TypeSettingsProperties--privateLayout--" required="<%= true %>" type="hidden" value="<%= (selLayout != null) ? selLayout.isPrivateLayout() : StringPool.BLANK %>" />
 
-<div class="form-group input-text-wrapper text-default">
+<div class="form-group input-text-wrapper mb-2 text-default">
 	<div class="d-inline-block" id="<portlet:namespace />layoutItemRemove" role="button">
-		<aui:icon cssClass="icon-monospaced" image="times-circle" markupView="lexicon" />
+		<clay:icon
+			monospaced="<%= true %>"
+			symbol="times-circle"
+		/>
 	</div>
 
 	<div class="d-inline-block">
@@ -58,73 +46,46 @@ String taglibOnChange = "Liferay.Util.toggleDisabled('#" + renderResponse.getNam
 		</span>
 	</div>
 
-	<aui:input id="layoutUuid" name="TypeSettingsProperties--layoutUuid--" type="hidden" value="<%= (selLayout != null) ? selLayout.getUuid() : StringPool.BLANK %>">
-		<aui:validator name="required" />
-	</aui:input>
+	<aui:input id="externalReferenceCode" name="TypeSettingsProperties--externalReferenceCode--" required="<%= true %>" type="hidden" value="<%= (selLayout != null) ? selLayout.getExternalReferenceCode() : StringPool.BLANK %>" />
+
+	<aui:input id="layoutUuid" name="TypeSettingsProperties--layoutUuid--" required="<%= true %>" type="hidden" value="<%= (selLayout != null) ? selLayout.getUuid() : StringPool.BLANK %>" />
 </div>
 
-<aui:button name="chooseLayout" value="choose" />
-
 <%
-String eventName = renderResponse.getNamespace() + "selectLayout";
+String eventName = liferayPortletResponse.getNamespace() + "selectLayout";
 
 ItemSelector itemSelector = (ItemSelector)request.getAttribute(SiteNavigationMenuItemTypeLayoutWebKeys.ITEM_SELECTOR);
 
-ItemSelectorCriterion itemSelectorCriterion = new LayoutItemSelectorCriterion();
+LayoutItemSelectorCriterion layoutItemSelectorCriterion = new LayoutItemSelectorCriterion();
 
-itemSelectorCriterion.setDesiredItemSelectorReturnTypes(new UUIDItemSelectorReturnType());
+layoutItemSelectorCriterion.setDesiredItemSelectorReturnTypes(new UUIDItemSelectorReturnType());
+layoutItemSelectorCriterion.setShowBreadcrumb(false);
 
-PortletURL itemSelectorURL = itemSelector.getItemSelectorURL(RequestBackedPortletURLFactoryUtil.create(renderRequest), eventName, itemSelectorCriterion);
+PortletURL itemSelectorURL = itemSelector.getItemSelectorURL(RequestBackedPortletURLFactoryUtil.create(renderRequest), eventName, layoutItemSelectorCriterion);
 
 if (selLayout != null) {
 	itemSelectorURL.setParameter("layoutUuid", selLayout.getUuid());
 }
 %>
 
-<aui:script use="aui-base,node-event-simulate">
-	var groupId = A.one('#<portlet:namespace />groupId');
-	var layoutItemRemove = A.one('#<portlet:namespace />layoutItemRemove');
-	var layoutNameInput = A.one('#<portlet:namespace />layoutNameInput');
-	var layoutUuid = A.one('#<portlet:namespace />layoutUuid');
-	var privateLayout = A.one('#<portlet:namespace />privateLayout');
+<clay:button
+	additionalProps='<%=
+		HashMapBuilder.<String, Object>put(
+			"eventName", eventName
+		).put(
+			"itemSelectorURL", itemSelectorURL.toString()
+		).build()
+	%>'
+	cssClass="mb-4"
+	displayType="secondary"
+	id='<%= liferayPortletResponse.getNamespace() + "chooseLayout" %>'
+	label="choose"
+	propsTransformer="{ChooseLayoutButtonPropsTransformer} from site-navigation-menu-item-layout"
+	small="<%= true %>"
+/>
 
-	A.one('#<portlet:namespace />chooseLayout').on('click', function(event) {
-		Liferay.Loader.require(
-			'frontend-js-web/liferay/ItemSelectorDialog.es',
-			function(ItemSelectorDialog) {
-				var itemSelectorDialog = new ItemSelectorDialog.default({
-					eventName: '<%= eventName %>',
-					title: '<liferay-ui:message key="select-layout" />',
-					url: '<%= itemSelectorURL.toString() %>'
-				});
-
-				itemSelectorDialog.on('selectedItemChange', function(event) {
-					var selectedItem = event.selectedItem;
-
-					if (selectedItem) {
-						groupId.val(selectedItem.groupId);
-
-						layoutUuid.val(selectedItem.id);
-
-						privateLayout.val(selectedItem.privateLayout);
-
-						layoutNameInput.html(selectedItem.name);
-						layoutNameInput.simulate('change');
-
-						layoutItemRemove.removeClass('hide');
-					}
-				});
-
-				itemSelectorDialog.open();
-			}
-		);
-	});
-
-	layoutItemRemove.on('click', function(event) {
-		layoutNameInput.html('<liferay-ui:message key="none" />');
-
-		layoutUuid.val('');
-
-		layoutItemRemove.addClass('hide');
-	});
-</aui:script>
+<liferay-frontend:component
+	componentId='<%= liferayPortletResponse.getNamespace() + "editLayout" %>'
+	module="{EditLayout} from site-navigation-menu-item-layout"
+	servletContext="<%= application %>"
+/>

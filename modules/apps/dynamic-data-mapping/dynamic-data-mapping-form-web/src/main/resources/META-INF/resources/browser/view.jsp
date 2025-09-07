@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,9 +15,8 @@
 <clay:management-toolbar
 	clearResultsURL="<%= ddmFormBrowserDisplayContext.getClearResultsURL() %>"
 	disabled="<%= ddmFormBrowserDisplayContext.isDisabledManagementBar() %>"
-	filterDropdownItems="<%= ddmFormBrowserDisplayContext.getFilterItemsDropdownItems() %>"
 	itemsTotal="<%= ddmFormBrowserDisplayContext.getTotalItems() %>"
-	namespace="<%= renderResponse.getNamespace() %>"
+	orderDropdownItems="<%= ddmFormBrowserDisplayContext.getOrderItemsDropdownItems() %>"
 	searchActionURL="<%= ddmFormBrowserDisplayContext.getSearchActionURL() %>"
 	searchContainerId="<%= ddmFormBrowserDisplayContext.getSearchContainerId() %>"
 	searchFormName="searchFm"
@@ -34,32 +24,35 @@
 	sortingURL="<%= ddmFormBrowserDisplayContext.getSortingURL() %>"
 />
 
-<div class="container-fluid-1280" id="<portlet:namespace />formContainer">
+<clay:container-fluid
+	id='<%= liferayPortletResponse.getNamespace() + "formContainer" %>'
+>
 	<aui:form action="<%= String.valueOf(ddmFormBrowserDisplayContext.getPortletURL()) %>" method="post" name="selectDDMFormFm">
 		<liferay-ui:search-container
 			id="<%= ddmFormBrowserDisplayContext.getSearchContainerId() %>"
-			searchContainer="<%= ddmFormBrowserDisplayContext.getFormInstanceSearch() %>"
+			searchContainer="<%= ddmFormBrowserDisplayContext.getDDMFormInstanceSearch() %>"
 		>
 			<liferay-ui:search-container-row
 				className="com.liferay.dynamic.data.mapping.model.DDMFormInstance"
-				cssClass="entry-display-style"
 				keyProperty="formInstanceId"
 				modelVar="formInstance"
 			>
-
-				<%
-				Map<String, Object> data = new HashMap<>();
-
-				data.put("forminstanceid", formInstance.getFormInstanceId());
-				data.put("forminstancename", formInstance.getName(locale));
-				%>
-
 				<liferay-ui:search-container-column-text
 					cssClass="content-column title-column"
 					name="name"
 					truncate="<%= true %>"
 				>
-					<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+					<aui:a
+						cssClass="selector-button"
+						data='<%=
+							HashMapBuilder.<String, Object>put(
+								"forminstanceid", formInstance.getFormInstanceId()
+							).put(
+								"forminstancename", formInstance.getName(locale)
+							).build()
+						%>'
+						href="javascript:void(0);"
+					>
 						<%= HtmlUtil.escape(formInstance.getName(locale)) %>
 					</aui:a>
 				</liferay-ui:search-container-column-text>
@@ -84,11 +77,4 @@
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectDDMFormFm',
-		'<%= HtmlUtil.escapeJS(ddmFormBrowserDisplayContext.getEventName()) %>'
-	);
-</aui:script>
+</clay:container-fluid>

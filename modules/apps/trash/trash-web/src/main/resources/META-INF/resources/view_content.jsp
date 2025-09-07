@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,10 +16,10 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 <c:choose>
 	<c:when test="<%= trashHandler.isContainerModel() %>">
 		<clay:management-toolbar
-			displayContext="<%= new TrashContainerManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, trashDisplayContext) %>"
+			managementToolbarDisplayContext="<%= new TrashContainerManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, trashDisplayContext) %>"
 		/>
 
-		<div class="closed container-fluid-1280 sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+		<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
 			<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/trash/info_panel" var="sidebarPanelURL" />
 
 			<liferay-frontend:sidebar-panel
@@ -37,7 +28,9 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 				<liferay-util:include page="/view_content_info_panel.jsp" servletContext="<%= application %>" />
 			</liferay-frontend:sidebar-panel>
 
-			<div class="sidenav-content">
+			<clay:container-fluid
+				cssClass="container-view sidenav-content"
+			>
 				<liferay-site-navigation:breadcrumb
 					breadcrumbEntries="<%= trashDisplayContext.getBaseModelBreadcrumbEntries() %>"
 				/>
@@ -52,17 +45,25 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 					>
 
 						<%
-						String modelClassName = ((ClassedModel)curTrashedModel).getModelClassName();
+						ClassedModel classedModel = (ClassedModel)curTrashedModel;
+
+						String modelClassName = classedModel.getModelClassName();
 
 						TrashHandler curTrashHandler = TrashHandlerRegistryUtil.getTrashHandler(modelClassName);
 
 						TrashRenderer curTrashRenderer = curTrashHandler.getTrashRenderer(curTrashedModel.getTrashEntryClassPK());
 
-						PortletURL rowURL = renderResponse.createRenderURL();
-
-						rowURL.setParameter("mvcPath", "/view_content.jsp");
-						rowURL.setParameter("classNameId", String.valueOf(PortalUtil.getClassNameId(curTrashRenderer.getClassName())));
-						rowURL.setParameter("classPK", String.valueOf(curTrashRenderer.getClassPK()));
+						String rowURL = PortletURLBuilder.createRenderURL(
+							renderResponse
+						).setMVCPath(
+							"/view_content.jsp"
+						).setRedirect(
+							currentURL
+						).setParameter(
+							"classNameId", PortalUtil.getClassNameId(curTrashRenderer.getClassName())
+						).setParameter(
+							"classPK", curTrashRenderer.getClassPK()
+						).buildString();
 						%>
 
 						<c:choose>
@@ -75,59 +76,65 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 								<liferay-ui:search-container-column-text
 									colspan="<%= 2 %>"
 								>
-									<h5>
-										<aui:a href="<%= rowURL.toString() %>">
+									<div class="h5">
+										<aui:a href="<%= rowURL %>">
 											<%= HtmlUtil.escape(curTrashRenderer.getTitle(locale)) %>
 										</aui:a>
-									</h5>
+									</div>
 
-									<h6 class="text-default">
+									<div class="h6 text-default">
 										<liferay-ui:message key="type" /> <%= ResourceActionsUtil.getModelResource(locale, curTrashRenderer.getClassName()) %>
-									</h6>
+									</div>
 								</liferay-ui:search-container-column-text>
 
 								<liferay-ui:search-container-column-text>
 									<clay:dropdown-actions
-										defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= trashDisplayContext.getTrashViewContentActionDropdownItems(modelClassName, curTrashedModel.getTrashEntryClassPK()) %>"
+										propsTransformer="{EntriesPropsTransformer} from trash-web"
 									/>
 								</liferay-ui:search-container-column-text>
 							</c:when>
 							<c:when test="<%= trashDisplayContext.isIconView() %>">
-
-								<%
-								row.setCssClass("entry-card lfr-asset-item");
-								%>
-
-								<liferay-ui:search-container-column-text>
-									<c:choose>
-										<c:when test="<%= !curTrashHandler.isContainerModel() %>">
+								<c:choose>
+									<c:when test="<%= !curTrashHandler.isContainerModel() %>">
+										<liferay-ui:search-container-column-text>
 											<clay:vertical-card
-												verticalCard="<%= new TrashContentVerticalCard(curTrashedModel, curTrashRenderer, renderRequest, liferayPortletResponse, rowURL.toString()) %>"
+												propsTransformer="{EntriesPropsTransformer} from trash-web"
+												verticalCard="<%= new TrashContentVerticalCard(curTrashedModel, curTrashRenderer, liferayPortletResponse, renderRequest, rowURL) %>"
 											/>
-										</c:when>
-										<c:otherwise>
+										</liferay-ui:search-container-column-text>
+									</c:when>
+									<c:otherwise>
+										<liferay-ui:search-container-column-text>
+
+											<%
+											row.setCssClass("card-page-item card-page-item-directory");
+											%>
+
 											<clay:horizontal-card
-												horizontalCard="<%= new TrashContentHorizontalCard(curTrashedModel, curTrashRenderer, renderRequest, liferayPortletResponse, rowURL.toString()) %>"
+												horizontalCard="<%= new TrashContentHorizontalCard(curTrashedModel, curTrashRenderer, liferayPortletResponse, renderRequest, rowURL) %>"
+												propsTransformer="{EntriesPropsTransformer} from trash-web"
 											/>
-										</c:otherwise>
-									</c:choose>
-								</liferay-ui:search-container-column-text>
+										</liferay-ui:search-container-column-text>
+									</c:otherwise>
+								</c:choose>
 							</c:when>
 							<c:when test="<%= trashDisplayContext.isListView() %>">
 								<liferay-ui:search-container-column-text
 									name="name"
 									truncate="<%= true %>"
 								>
-									<aui:a href="<%= rowURL.toString() %>">
+									<aui:a href="<%= rowURL %>">
 										<%= HtmlUtil.escape(curTrashRenderer.getTitle(locale)) %>
 									</aui:a>
 								</liferay-ui:search-container-column-text>
 
 								<liferay-ui:search-container-column-text>
 									<clay:dropdown-actions
-										defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= trashDisplayContext.getTrashViewContentActionDropdownItems(modelClassName, curTrashedModel.getTrashEntryClassPK()) %>"
+										propsTransformer="{EntriesPropsTransformer} from trash-web"
 									/>
 								</liferay-ui:search-container-column-text>
 							</c:when>
@@ -140,7 +147,7 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 						resultRowSplitter="<%= new TrashResultRowSplitter() %>"
 					/>
 				</liferay-ui:search-container>
-			</div>
+			</clay:container-fluid>
 		</div>
 	</c:when>
 	<c:otherwise>
@@ -148,25 +155,21 @@ TrashHandler trashHandler = trashDisplayContext.getTrashHandler();
 		<%
 		portletDisplay.setShowBackIcon(true);
 		portletDisplay.setURLBack(trashDisplayContext.getViewContentRedirectURL());
+		portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 		TrashRenderer trashRenderer = trashDisplayContext.getTrashRenderer();
 
 		renderResponse.setTitle(trashRenderer.getTitle(locale));
 		%>
 
-		<div class="container-fluid-1280">
-			<aui:fieldset-group markupView="lexicon">
-				<aui:fieldset>
-					<liferay-asset:asset-display
-						renderer="<%= trashRenderer %>"
-					/>
-				</aui:fieldset>
-			</aui:fieldset-group>
-		</div>
+		<clay:container-fluid
+			cssClass="container-view"
+		>
+			<clay:sheet>
+				<liferay-asset:asset-display
+					renderer="<%= trashRenderer %>"
+				/>
+			</clay:sheet>
+		</clay:container-fluid>
 	</c:otherwise>
 </c:choose>
-
-<liferay-frontend:component
-	componentId="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
-	module="js/EntriesDefaultEventHandler.es"
-/>

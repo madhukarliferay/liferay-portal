@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
@@ -17,6 +8,7 @@ package com.liferay.asset.kernel.service;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,6 +22,10 @@ public class AssetVocabularyLocalServiceWrapper
 	implements AssetVocabularyLocalService,
 			   ServiceWrapper<AssetVocabularyLocalService> {
 
+	public AssetVocabularyLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AssetVocabularyLocalServiceWrapper(
 		AssetVocabularyLocalService assetVocabularyLocalService) {
 
@@ -38,6 +34,10 @@ public class AssetVocabularyLocalServiceWrapper
 
 	/**
 	 * Adds the asset vocabulary to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetVocabularyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetVocabulary the asset vocabulary
 	 * @return the asset vocabulary that was added
@@ -52,6 +52,20 @@ public class AssetVocabularyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetVocabularyLocalService.addDefaultVocabulary(groupId);
+	}
+
+	@Override
+	public AssetVocabulary addVocabulary(
+			long userId, long groupId, String title,
+			java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String settings, int visibilityType,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.addVocabulary(
+			userId, groupId, title, titleMap, descriptionMap, settings,
+			visibilityType, serviceContext);
 	}
 
 	@Override
@@ -76,6 +90,35 @@ public class AssetVocabularyLocalServiceWrapper
 
 		return _assetVocabularyLocalService.addVocabulary(
 			userId, groupId, title, serviceContext);
+	}
+
+	@Override
+	public AssetVocabulary addVocabulary(
+			long userId, long groupId, String name, String title,
+			java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String settings,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.addVocabulary(
+			userId, groupId, name, title, titleMap, descriptionMap, settings,
+			serviceContext);
+	}
+
+	@Override
+	public AssetVocabulary addVocabulary(
+			String externalReferenceCode, long userId, long groupId,
+			String name, String title,
+			java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String settings, int visibilityType,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.addVocabulary(
+			externalReferenceCode, userId, groupId, name, title, titleMap,
+			descriptionMap, settings, visibilityType, serviceContext);
 	}
 
 	@Override
@@ -111,7 +154,22 @@ public class AssetVocabularyLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the asset vocabulary from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetVocabularyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetVocabulary the asset vocabulary
 	 * @return the asset vocabulary that was removed
@@ -126,6 +184,10 @@ public class AssetVocabularyLocalServiceWrapper
 
 	/**
 	 * Deletes the asset vocabulary with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetVocabularyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param vocabularyId the primary key of the asset vocabulary
 	 * @return the asset vocabulary that was removed
@@ -169,6 +231,18 @@ public class AssetVocabularyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_assetVocabularyLocalService.deleteVocabulary(vocabularyId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _assetVocabularyLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _assetVocabularyLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -267,19 +341,13 @@ public class AssetVocabularyLocalServiceWrapper
 		return _assetVocabularyLocalService.fetchAssetVocabulary(vocabularyId);
 	}
 
-	/**
-	 * Returns the asset vocabulary with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the asset vocabulary's external reference code
-	 * @return the matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
 	@Override
-	public AssetVocabulary fetchAssetVocabularyByReferenceCode(
-		long companyId, String externalReferenceCode) {
+	public AssetVocabulary fetchAssetVocabularyByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
 
-		return _assetVocabularyLocalService.fetchAssetVocabularyByReferenceCode(
-			companyId, externalReferenceCode);
+		return _assetVocabularyLocalService.
+			fetchAssetVocabularyByExternalReferenceCode(
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -388,6 +456,16 @@ public class AssetVocabularyLocalServiceWrapper
 		return _assetVocabularyLocalService.getAssetVocabulary(vocabularyId);
 	}
 
+	@Override
+	public AssetVocabulary getAssetVocabularyByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.
+			getAssetVocabularyByExternalReferenceCode(
+				externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the asset vocabulary matching the UUID and group.
 	 *
@@ -463,11 +541,10 @@ public class AssetVocabularyLocalServiceWrapper
 
 	@Override
 	public java.util.List<AssetVocabulary> getGroupVocabularies(
-		long groupId, String name, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetVocabulary> obc) {
+		long groupId, int visibilityType) {
 
 		return _assetVocabularyLocalService.getGroupVocabularies(
-			groupId, name, start, end, obc);
+			groupId, visibilityType);
 	}
 
 	@Override
@@ -475,6 +552,14 @@ public class AssetVocabularyLocalServiceWrapper
 		long[] groupIds) {
 
 		return _assetVocabularyLocalService.getGroupVocabularies(groupIds);
+	}
+
+	@Override
+	public java.util.List<AssetVocabulary> getGroupVocabularies(
+		long[] groupIds, int[] visibilityTypes) {
+
+		return _assetVocabularyLocalService.getGroupVocabularies(
+			groupIds, visibilityTypes);
 	}
 
 	@Override
@@ -497,6 +582,15 @@ public class AssetVocabularyLocalServiceWrapper
 			getIndexableActionableDynamicQuery();
 	}
 
+	@Override
+	public AssetVocabulary getOrAddEmptyVocabulary(
+			String externalReferenceCode, long userId, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.getOrAddEmptyVocabulary(
+			externalReferenceCode, userId, groupId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -507,6 +601,9 @@ public class AssetVocabularyLocalServiceWrapper
 		return _assetVocabularyLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -540,26 +637,21 @@ public class AssetVocabularyLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.search.BaseModelSearchResult
 		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end)
-			throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _assetVocabularyLocalService.searchVocabularies(
-			companyId, groupId, title, start, end);
-	}
-
-	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end,
+				long companyId, long[] groupIds, String title,
+				int[] visibilityTypes, int start, int end,
 				com.liferay.portal.kernel.search.Sort sort)
 			throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetVocabularyLocalService.searchVocabularies(
-			companyId, groupId, title, start, end, sort);
+			companyId, groupIds, title, visibilityTypes, start, end, sort);
 	}
 
 	/**
 	 * Updates the asset vocabulary in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetVocabularyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetVocabulary the asset vocabulary
 	 * @return the asset vocabulary that was updated
@@ -574,6 +666,28 @@ public class AssetVocabularyLocalServiceWrapper
 
 	@Override
 	public AssetVocabulary updateVocabulary(
+			long vocabularyId, java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String settings)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.updateVocabulary(
+			vocabularyId, titleMap, descriptionMap, settings);
+	}
+
+	@Override
+	public AssetVocabulary updateVocabulary(
+			long vocabularyId, java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String settings, int visibilityType)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetVocabularyLocalService.updateVocabulary(
+			vocabularyId, titleMap, descriptionMap, settings, visibilityType);
+	}
+
+	@Override
+	public AssetVocabulary updateVocabulary(
 			long vocabularyId, String title,
 			java.util.Map<java.util.Locale, String> titleMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
@@ -584,6 +698,11 @@ public class AssetVocabularyLocalServiceWrapper
 		return _assetVocabularyLocalService.updateVocabulary(
 			vocabularyId, title, titleMap, descriptionMap, settings,
 			serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _assetVocabularyLocalService.getBasePersistence();
 	}
 
 	@Override

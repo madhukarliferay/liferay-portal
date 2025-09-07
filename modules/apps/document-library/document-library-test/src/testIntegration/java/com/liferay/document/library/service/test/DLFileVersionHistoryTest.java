@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.service.test;
@@ -19,17 +10,18 @@ import com.liferay.document.library.kernel.exception.InvalidFileVersionException
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
 import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
-import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalServiceUtil;
 import com.liferay.document.library.test.util.BaseDLAppTestCase;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -97,20 +89,18 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 	protected FileEntry addFileEntry(long folderId, String sourceFileName)
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				group.getGroupId(), TestPropsValues.getUserId());
-
 		return DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), group.getGroupId(), folderId,
+			null, TestPropsValues.getUserId(), group.getGroupId(), folderId,
 			sourceFileName, ContentTypes.TEXT_PLAIN,
-			TestDataConstants.TEST_BYTE_ARRAY, serviceContext);
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, null,
+			ServiceContextTestUtil.getServiceContext(
+				group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	protected void assertFileEntryTitle(String fileName)
 		throws PortalException {
 
-		FileEntry fileEntry = DLAppServiceUtil.getFileEntry(
+		FileEntry fileEntry = dlAppService.getFileEntry(
 			_fileEntry.getFileEntryId());
 
 		Assert.assertEquals(fileName, fileEntry.getTitle());
@@ -130,8 +120,7 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 			String version, String fileName, boolean pwc)
 		throws PortalException {
 
-		DLAppServiceUtil.deleteFileVersion(
-			_fileEntry.getFileEntryId(), version);
+		dlAppService.deleteFileVersion(_fileEntry.getFileEntryId(), version);
 
 		if (fileName != null) {
 			if (pwc) {
@@ -151,28 +140,27 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 		long fileEntryId = _fileEntry.getFileEntryId();
 
 		if (versioned) {
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), TestPropsValues.getUserId());
-
-			DLAppServiceUtil.updateFileEntry(
+			dlAppService.updateFileEntry(
 				fileEntryId, null, ContentTypes.TEXT_PLAIN, _VERSION_1_1,
-				StringPool.BLANK, StringPool.BLANK,
-				DLVersionNumberIncrease.MINOR, (byte[])null, serviceContext);
+				StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+				DLVersionNumberIncrease.MINOR, (byte[])null,
+				_fileEntry.getDisplayDate(), _fileEntry.getExpirationDate(),
+				_fileEntry.getReviewDate(),
+				ServiceContextTestUtil.getServiceContext(
+					group.getGroupId(), TestPropsValues.getUserId()));
 		}
 
 		if (leaveCheckedOut) {
-			DLAppServiceUtil.checkOutFileEntry(
-				fileEntryId, new ServiceContext());
+			dlAppService.checkOutFileEntry(fileEntryId, new ServiceContext());
 
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), TestPropsValues.getUserId());
-
-			DLAppServiceUtil.updateFileEntry(
+			dlAppService.updateFileEntry(
 				fileEntryId, null, ContentTypes.TEXT_PLAIN, _VERSION_PWC,
-				StringPool.BLANK, StringPool.BLANK,
-				DLVersionNumberIncrease.MINOR, (byte[])null, serviceContext);
+				StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+				DLVersionNumberIncrease.MINOR, (byte[])null,
+				_fileEntry.getDisplayDate(), _fileEntry.getExpirationDate(),
+				_fileEntry.getReviewDate(),
+				ServiceContextTestUtil.getServiceContext(
+					group.getGroupId(), TestPropsValues.getUserId()));
 		}
 
 		if (versioned && leaveCheckedOut) {
@@ -217,7 +205,10 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 
 			Assert.fail();
 		}
-		catch (InvalidFileVersionException ifve) {
+		catch (InvalidFileVersionException invalidFileVersionException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(invalidFileVersionException);
+			}
 		}
 	}
 
@@ -229,7 +220,10 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 
 			Assert.fail();
 		}
-		catch (InvalidFileVersionException ifve) {
+		catch (InvalidFileVersionException invalidFileVersionException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(invalidFileVersionException);
+			}
 		}
 	}
 
@@ -243,7 +237,7 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 	protected void revertFileVersion(String version, String fileName)
 		throws PortalException {
 
-		DLAppServiceUtil.revertFileEntry(
+		dlAppService.revertFileEntry(
 			_fileEntry.getFileEntryId(), version, new ServiceContext());
 
 		if (fileName != null) {
@@ -259,28 +253,27 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 		long fileEntryId = _fileEntry.getFileEntryId();
 
 		if (versioned) {
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), TestPropsValues.getUserId());
-
-			DLAppServiceUtil.updateFileEntry(
+			dlAppService.updateFileEntry(
 				fileEntryId, null, ContentTypes.TEXT_PLAIN, _VERSION_1_1,
-				StringPool.BLANK, StringPool.BLANK,
-				DLVersionNumberIncrease.MINOR, (byte[])null, serviceContext);
+				StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+				DLVersionNumberIncrease.MINOR, (byte[])null,
+				_fileEntry.getDisplayDate(), _fileEntry.getExpirationDate(),
+				_fileEntry.getReviewDate(),
+				ServiceContextTestUtil.getServiceContext(
+					group.getGroupId(), TestPropsValues.getUserId()));
 		}
 
 		if (leaveCheckedOut) {
-			DLAppServiceUtil.checkOutFileEntry(
-				fileEntryId, new ServiceContext());
+			dlAppService.checkOutFileEntry(fileEntryId, new ServiceContext());
 
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), TestPropsValues.getUserId());
-
-			DLAppServiceUtil.updateFileEntry(
+			dlAppService.updateFileEntry(
 				fileEntryId, null, ContentTypes.TEXT_PLAIN, _VERSION_PWC,
-				StringPool.BLANK, StringPool.BLANK,
-				DLVersionNumberIncrease.MINOR, (byte[])null, serviceContext);
+				StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+				DLVersionNumberIncrease.MINOR, (byte[])null,
+				_fileEntry.getDisplayDate(), _fileEntry.getExpirationDate(),
+				_fileEntry.getReviewDate(),
+				ServiceContextTestUtil.getServiceContext(
+					group.getGroupId(), TestPropsValues.getUserId()));
 		}
 
 		if (versioned && leaveCheckedOut) {
@@ -322,6 +315,9 @@ public class DLFileVersionHistoryTest extends BaseDLAppTestCase {
 	private static final String _VERSION_1_1 = "Test Version 1.1.txt";
 
 	private static final String _VERSION_PWC = "Test Version PWC.txt";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DLFileVersionHistoryTest.class);
 
 	private FileEntry _fileEntry;
 

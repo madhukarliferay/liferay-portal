@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.service.test;
@@ -33,6 +24,7 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -62,32 +54,29 @@ public class UserServiceWhenAddingUserWithDefaultSitesEnabledTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		UnicodeProperties properties = new UnicodeProperties();
-
-		properties.put(
-			PropsKeys.ADMIN_DEFAULT_GROUP_NAMES, _group.getDescriptiveName());
-
 		_organization = OrganizationTestUtil.addOrganization(true);
 
 		Group organizationGroup = _organization.getGroup();
 
-		properties.put(
-			PropsKeys.ADMIN_DEFAULT_ORGANIZATION_GROUP_NAMES,
-			organizationGroup.getDescriptiveName());
-
 		_companyLocalService.updatePreferences(
-			_group.getCompanyId(), properties);
+			_group.getCompanyId(),
+			UnicodePropertiesBuilder.put(
+				PropsKeys.ADMIN_DEFAULT_GROUP_NAMES, _group.getDescriptiveName()
+			).put(
+				PropsKeys.ADMIN_DEFAULT_ORGANIZATION_GROUP_NAMES,
+				organizationGroup.getDescriptiveName()
+			).build());
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			_group.getTypeSettingsProperties();
 
 		_siteRole = RoleTestUtil.addRole(RoleConstants.TYPE_SITE);
 
-		typeSettingsProperties.put(
+		typeSettingsUnicodeProperties.put(
 			"defaultSiteRoleIds", String.valueOf(_siteRole.getRoleId()));
 
 		_groupLocalService.updateGroup(
-			_group.getGroupId(), typeSettingsProperties.toString());
+			_group.getGroupId(), typeSettingsUnicodeProperties.toString());
 
 		_user = UserTestUtil.addUser();
 	}

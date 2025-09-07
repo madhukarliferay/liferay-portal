@@ -1,37 +1,34 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.search.spi.model.query.contributor;
 
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
+import com.liferay.portal.kernel.search.filter.ExistsFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.QueryFilter;
 import com.liferay.portal.kernel.search.filter.TermsFilter;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.spi.model.query.contributor.ModelPreFilterContributor;
 import com.liferay.portal.search.spi.model.registrar.ModelSearchSettings;
 
 import java.io.Serializable;
+
+import java.util.List;
+import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -40,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord",
 	service = ModelPreFilterContributor.class
 )
@@ -60,15 +56,43 @@ public class DDMFormInstanceRecordModelPreFilterContributor
 			booleanFilter.addRequiredTerm(Field.STATUS, status);
 		}
 
-		long ddmFormInstanceId = GetterUtil.getLong(
-			searchContext.getAttribute("ddmFormInstanceId"));
+		long formInstanceId = GetterUtil.getLong(
+			searchContext.getAttribute("formInstanceId"));
 
-		if (ddmFormInstanceId > 0) {
-			booleanFilter.addRequiredTerm(
-				"ddmFormInstanceId", ddmFormInstanceId);
+		if (formInstanceId > 0) {
+			booleanFilter.addRequiredTerm("formInstanceId", formInstanceId);
 		}
 
-		addSearchClassTypeIds(booleanFilter, searchContext);
+		String[] languageIds = GetterUtil.getStringValues(
+			searchContext.getAttribute("languageIds"));
+		String[] notEmptyFields = GetterUtil.getStringValues(
+			searchContext.getAttribute("notEmptyFields"));
+		long structureId = GetterUtil.getLong(
+			searchContext.getAttribute("structureId"));
+
+		if ((languageIds.length > 0) && (notEmptyFields.length > 0) &&
+			(structureId > 0)) {
+
+			List<Locale> locales = TransformUtil.transformToList(
+				languageIds, LocaleUtil::fromLanguageId);
+
+			for (String notEmptyField : notEmptyFields) {
+				BooleanFilter notEmptyFieldBooleanFilter = new BooleanFilter();
+
+				for (Locale locale : locales) {
+					notEmptyFieldBooleanFilter.add(
+						new ExistsFilter(
+							ddmIndexer.encodeName(
+								structureId, notEmptyField, locale)),
+						BooleanClauseOccur.MUST);
+				}
+
+				booleanFilter.add(
+					notEmptyFieldBooleanFilter, BooleanClauseOccur.MUST_NOT);
+			}
+		}
+
+		_addSearchClassTypeIds(booleanFilter, searchContext);
 
 		String ddmStructureFieldName = (String)searchContext.getAttribute(
 			"ddmStructureFieldName");
@@ -86,15 +110,18 @@ public class DDMFormInstanceRecordModelPreFilterContributor
 
 				booleanFilter.add(queryFilter, BooleanClauseOccur.MUST);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
-					_log.debug(e, e);
+					_log.debug(exception);
 				}
 			}
 		}
 	}
 
-	protected Filter addSearchClassTypeIds(
+	@Reference
+	protected DDMIndexer ddmIndexer;
+
+	private Filter _addSearchClassTypeIds(
 		BooleanFilter contextBooleanFilter, SearchContext searchContext) {
 
 		long[] classTypeIds = searchContext.getClassTypeIds();
@@ -112,9 +139,6 @@ public class DDMFormInstanceRecordModelPreFilterContributor
 		return contextBooleanFilter.add(
 			classTypeIdsTermsFilter, BooleanClauseOccur.MUST);
 	}
-
-	@Reference
-	protected DDMIndexer ddmIndexer;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormInstanceRecordModelPreFilterContributor.class);

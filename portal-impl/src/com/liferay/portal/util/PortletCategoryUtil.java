@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.util;
@@ -98,12 +89,13 @@ public class PortletCategoryUtil {
 			LayoutTypePortlet layoutTypePortlet)
 		throws Exception {
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			layout.getTypeSettingsProperties();
 
 		Set<String> panelSelectedPortletIds = SetUtil.fromArray(
 			StringUtil.split(
-				typeSettingsProperties.getProperty("panelSelectedPortlets")));
+				typeSettingsUnicodeProperties.getProperty(
+					"panelSelectedPortlets")));
 
 		return getRelevantPortletCategory(
 			permissionChecker, companyId, layout, portletCategory,
@@ -133,35 +125,36 @@ public class PortletCategoryUtil {
 				Portlet portlet = PortletLocalServiceUtil.getPortletById(
 					companyId, portletId);
 
-				if (portlet != null) {
-					if (portlet.isSystem() || !portlet.isInclude()) {
-					}
-					else if (!portlet.isActive() ||
-							 portlet.isUndeployedPortlet()) {
-					}
-					else if (layout.isTypePanel() &&
-							 panelSelectedPortletIds.contains(
-								 portlet.getRootPortletId())) {
+				if (portlet == null) {
+					continue;
+				}
 
-						portletIds.add(portlet.getPortletId());
-					}
-					else if (layout.isTypePanel() &&
-							 !panelSelectedPortletIds.contains(
-								 portlet.getRootPortletId())) {
-					}
-					else if (!PortletPermissionUtil.contains(
-								permissionChecker, layout, portlet,
-								ActionKeys.ADD_TO_PAGE)) {
-					}
-					else if (!portlet.isInstanceable() &&
-							 layoutTypePortlet.hasPortletId(
-								 portlet.getPortletId())) {
+				if (portlet.isSystem() || !portlet.isInclude()) {
+				}
+				else if (!portlet.isActive() || portlet.isUndeployedPortlet()) {
+				}
+				else if (layout.isTypePanel() &&
+						 panelSelectedPortletIds.contains(
+							 portlet.getRootPortletId())) {
 
-						portletIds.add(portlet.getPortletId());
-					}
-					else {
-						portletIds.add(portlet.getPortletId());
-					}
+					portletIds.add(portlet.getPortletId());
+				}
+				else if (layout.isTypePanel() &&
+						 !panelSelectedPortletIds.contains(
+							 portlet.getRootPortletId())) {
+				}
+				else if (!PortletPermissionUtil.contains(
+							permissionChecker, layout, portlet,
+							ActionKeys.ADD_TO_PAGE)) {
+				}
+				else if (!portlet.isInstanceable() &&
+						 layoutTypePortlet.hasPortletId(
+							 portlet.getPortletId())) {
+
+					portletIds.add(portlet.getPortletId());
+				}
+				else {
+					portletIds.add(portlet.getPortletId());
 				}
 			}
 

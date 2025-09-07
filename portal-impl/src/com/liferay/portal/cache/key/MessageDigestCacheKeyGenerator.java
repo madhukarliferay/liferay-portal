@@ -1,77 +1,51 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cache.key;
 
 import com.liferay.petra.nio.CharsetEncoderUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.key.CacheKeyGenerator;
+import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCache;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * @author Shuyang Zhou
  */
 public class MessageDigestCacheKeyGenerator extends BaseCacheKeyGenerator {
 
-	public MessageDigestCacheKeyGenerator(String algorithm)
-		throws NoSuchAlgorithmException {
-
+	public MessageDigestCacheKeyGenerator(String algorithm) {
 		this(algorithm, StringPool.UTF8);
 	}
 
-	public MessageDigestCacheKeyGenerator(String algorithm, String charsetName)
-		throws NoSuchAlgorithmException {
+	public MessageDigestCacheKeyGenerator(
+		String algorithm, String charsetName) {
 
-		_messageDigest = MessageDigest.getInstance(algorithm);
-		_charsetEncoder = CharsetEncoderUtil.getCharsetEncoder(charsetName);
+		_algorithm = algorithm;
+		_charsetName = charsetName;
 	}
 
 	@Override
 	public CacheKeyGenerator clone() {
-		Charset charset = _charsetEncoder.charset();
-
-		try {
-			return new MessageDigestCacheKeyGenerator(
-				_messageDigest.getAlgorithm(), charset.name());
-		}
-		catch (NoSuchAlgorithmException nsae) {
-			throw new IllegalStateException(nsae);
-		}
+		return new MessageDigestCacheKeyGenerator(_algorithm, _charsetName);
 	}
 
 	@Override
 	public Serializable getCacheKey(String key) {
-		try {
-			_messageDigest.update(_charsetEncoder.encode(CharBuffer.wrap(key)));
-
-			return StringUtil.bytesToHexString(_messageDigest.digest());
-		}
-		catch (CharacterCodingException cce) {
-			throw new SystemException(cce);
-		}
+		return getCacheKey(new String[] {key}, 1);
 	}
 
 	@Override
@@ -84,28 +58,37 @@ public class MessageDigestCacheKeyGenerator extends BaseCacheKeyGenerator {
 		return getCacheKey(sb.getStrings(), sb.index());
 	}
 
-	@Override
-	public boolean isCallingGetCacheKeyThreadSafe() {
-		return _CALLING_GET_CACHE_KEY_THREAD_SAFE;
-	}
-
 	protected Serializable getCacheKey(String[] keys, int length) {
 		try {
-			for (int i = 0; i < length; i++) {
-				_messageDigest.update(
-					_charsetEncoder.encode(CharBuffer.wrap(keys[i])));
+			ThreadLocalCache<MessageDigest> threadLocalCache =
+				ThreadLocalCacheManager.getThreadLocalCache(
+					Lifecycle.ETERNAL,
+					MessageDigestCacheKeyGenerator.class.getName());
+
+			MessageDigest messageDigest = threadLocalCache.get(_algorithm);
+
+			if (messageDigest == null) {
+				messageDigest = MessageDigest.getInstance(_algorithm);
+
+				threadLocalCache.put(_algorithm, messageDigest);
 			}
 
-			return StringUtil.bytesToHexString(_messageDigest.digest());
+			CharsetEncoder charsetEncoder =
+				CharsetEncoderUtil.getCharsetEncoder(_charsetName);
+
+			for (int i = 0; i < length; i++) {
+				messageDigest.update(
+					charsetEncoder.encode(CharBuffer.wrap(keys[i])));
+			}
+
+			return StringUtil.bytesToHexString(messageDigest.digest());
 		}
-		catch (CharacterCodingException cce) {
-			throw new SystemException(cce);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
-	private static final boolean _CALLING_GET_CACHE_KEY_THREAD_SAFE = false;
-
-	private final CharsetEncoder _charsetEncoder;
-	private final MessageDigest _messageDigest;
+	private final String _algorithm;
+	private final String _charsetName;
 
 }

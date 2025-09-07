@@ -1,25 +1,14 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/document_library/init.jsp" %>
 
 <%
-DLSelectRestrictedFileEntryTypesDisplayContext selectRestrictedFileEntryTypesDisplayContext = new DLSelectRestrictedFileEntryTypesDisplayContext(renderRequest, renderResponse, request);
-
-String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "selectFileEntryType");
+DLSelectRestrictedFileEntryTypesDisplayContext selectRestrictedFileEntryTypesDisplayContext = new DLSelectRestrictedFileEntryTypesDisplayContext(request, renderRequest, renderResponse);
 %>
 
 <clay:navigation-bar
@@ -29,14 +18,14 @@ String eventName = ParamUtil.getString(request, "eventName", liferayPortletRespo
 				add(
 					navigationItem -> {
 						navigationItem.setActive(true);
-						navigationItem.setLabel(LanguageUtil.get(request, "document-types"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "document-types"));
 					});
 			}
 		}
 	%>'
 />
 
-<aui:form action="<%= selectRestrictedFileEntryTypesDisplayContext.getFormActionURL() %>" cssClass="container-fluid-1280" method="post" name="selectFileEntryTypeFm">
+<aui:form action="<%= selectRestrictedFileEntryTypesDisplayContext.getFormActionURL() %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="selectFileEntryTypeFm">
 	<liferay-ui:search-container
 		searchContainer="<%= selectRestrictedFileEntryTypesDisplayContext.getSearchContainer() %>"
 	>
@@ -52,23 +41,25 @@ String eventName = ParamUtil.getString(request, "eventName", liferayPortletRespo
 			<liferay-ui:search-container-column-text
 				colspan="<%= 2 %>"
 			>
-				<h5><%= HtmlUtil.escape(fileEntryType.getName(locale)) %></h5>
+				<div class="h5"><%= HtmlUtil.escape(fileEntryType.getName(locale)) %></div>
 
-				<h6 class="text-default">
+				<div class="h6 text-default">
 					<span><%= fileEntryType.getDescription(locale) %></span>
-				</h6>
+				</div>
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text>
-
-				<%
-				Map<String, Object> data = new HashMap<String, Object>();
-
-				data.put("entityid", fileEntryType.getFileEntryTypeId());
-				data.put("entityname", fileEntryType.getName(locale));
-				%>
-
-				<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+				<aui:button
+					cssClass="selector-button"
+					data='<%=
+						HashMapBuilder.<String, Object>put(
+							"entityid", fileEntryType.getFileEntryTypeId()
+						).put(
+							"entityname", fileEntryType.getName(locale)
+						).build()
+					%>'
+					value="choose"
+				/>
 			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
@@ -78,10 +69,3 @@ String eventName = ParamUtil.getString(request, "eventName", liferayPortletRespo
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectFileEntryTypeFm',
-		'<%= HtmlUtil.escapeJS(eventName) %>'
-	);
-</aui:script>

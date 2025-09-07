@@ -1,45 +1,9 @@
 {
-	"dependencies": {
-		"classnames": "2.2.6",
-		"clay-alert": "2.19.0",
-		"clay-checkbox": "2.19.0",
-		"clay-dropdown": "2.19.0",
-		"clay-icon": "2.19.0",
-		"clay-management-toolbar": "2.19.0",
-		"clay-modal": "2.19.0",
-		"clay-radio": "2.19.0",
-		"metal-dom": "2.16.8",
-		"metal-drag-drop": "3.3.1",
-		"metal-events": "2.16.8",
-		"metal-jsx": "2.16.8",
-		"metal-position": "2.1.2",
-		"metal-state": "2.16.8"
-	},
-	"jest": {
-		"modulePathIgnorePatterns": [
-			"/__mock__/"
-		],
-		"snapshotSerializers": [
-			"metal-jest-serializer"
-		],
-		"testPathIgnorePatterns": [
-			"Evaluator",
-			"FormBuilder",
-			"FormRenderer",
-			"LayoutProvider",
-			"PageRenderer",
-			"RuleBuilder",
-			"RuleEditor",
-			"RuleList",
-			"Sidebar"
-		]
-	},
 	"name": "dynamic-data-mapping-form-builder",
 	"scripts": {
-		"build": "liferay-npm-scripts build",
-		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix",
-		"test": "metalsoy -s \"test/**/*.soy\" -d \"test\" && liferay-npm-scripts test"
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "USE_REACT_16=true node-scripts format"
 	},
-	"version": "3.0.0"
+	"version": "4.0.70"
 }

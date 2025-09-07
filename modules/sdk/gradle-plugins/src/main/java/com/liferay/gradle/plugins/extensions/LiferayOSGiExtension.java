@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.extensions;
@@ -18,6 +9,7 @@ import aQute.bnd.osgi.Constants;
 
 import aQute.lib.spring.SpringComponent;
 
+import com.liferay.ant.bnd.enterprise.EnterpriseAnalyzerPlugin;
 import com.liferay.ant.bnd.jsp.JspAnalyzerPlugin;
 import com.liferay.ant.bnd.metatype.MetatypePlugin;
 import com.liferay.ant.bnd.npm.NpmAnalyzerPlugin;
@@ -65,6 +57,9 @@ public class LiferayOSGiExtension {
 			Constants.BUNDLE_SYMBOLICNAME, project.getName());
 		_bundleDefaultInstructions.put(Constants.CDIANNOTATIONS, "");
 		_bundleDefaultInstructions.put(
+			Constants.CONSUMER_POLICY,
+			"${replacestring;${range;[==,==]};.*,(.*)];$1}");
+		_bundleDefaultInstructions.put(
 			Constants.DONOTCOPY, "(" + DONOTCOPY_DEFAULT + ")");
 		_bundleDefaultInstructions.put(
 			Constants.FIXUPMESSAGES + ".classpath.empty", "Classpath is empty");
@@ -79,6 +74,11 @@ public class LiferayOSGiExtension {
 		_bundleDefaultInstructions.put(
 			Constants.PLUGIN + ".liferay",
 			StringUtil.merge(_BND_PLUGIN_CLASS_NAMES, ","));
+		_bundleDefaultInstructions.put(
+			Constants.PROVIDER_POLICY,
+			"${replacestring;${range;[==,==]};.*,(.*)];$1}");
+		_bundleDefaultInstructions.put(
+			Constants.REMOVEHEADERS, Constants.BND_LASTMODIFIED);
 
 		_bundleDefaultInstructions.put(
 			"Javac-Debug",
@@ -129,7 +129,7 @@ public class LiferayOSGiExtension {
 			BUNDLE_DEFAULT_INSTRUCTION_LIFERAY_SERVICE_XML,
 			"service.xml,*/service.xml");
 		_bundleDefaultInstructions.put("-contract", "*");
-		_bundleDefaultInstructions.put("-jsp", "*.jsp,*.jspf");
+		_bundleDefaultInstructions.put("-jsp", "*.jsp,*.jspf,*.jspx");
 		_bundleDefaultInstructions.put("-sass", "*");
 	}
 
@@ -192,7 +192,8 @@ public class LiferayOSGiExtension {
 		SassAnalyzerPlugin.class.getName(),
 		ServiceAnalyzerPlugin.class.getName(),
 		SocialAnalyzerPlugin.class.getName(), SpringComponent.class.getName(),
-		SpringDependencyAnalyzerPlugin.class.getName()
+		SpringDependencyAnalyzerPlugin.class.getName(),
+		EnterpriseAnalyzerPlugin.class.getName()
 	};
 
 	private boolean _autoUpdateXml = true;

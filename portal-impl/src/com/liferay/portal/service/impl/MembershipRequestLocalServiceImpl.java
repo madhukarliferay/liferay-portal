@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
 import com.liferay.mail.kernel.model.MailMessage;
-import com.liferay.mail.kernel.service.MailService;
+import com.liferay.mail.kernel.service.MailServiceUtil;
 import com.liferay.mail.kernel.template.MailTemplate;
 import com.liferay.mail.kernel.template.MailTemplateContext;
 import com.liferay.mail.kernel.template.MailTemplateContextBuilder;
@@ -37,20 +28,28 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.EscapableLocalizableFunction;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.EscapableObject;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.service.base.MembershipRequestLocalServiceBaseImpl;
-import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.ResourcePermissionUtil;
+
+import jakarta.mail.internet.InternetAddress;
 
 import java.io.IOException;
 
@@ -59,8 +58,6 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.mail.internet.InternetAddress;
 
 /**
  * @author Jorge Ferrer
@@ -76,7 +73,7 @@ public class MembershipRequestLocalServiceImpl
 
 		validateSiteMembershipPolicy(userId, groupId);
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		validate(comments);
 
@@ -93,7 +90,8 @@ public class MembershipRequestLocalServiceImpl
 		membershipRequest.setStatusId(
 			MembershipRequestConstants.STATUS_PENDING);
 
-		membershipRequestPersistence.update(membershipRequest);
+		membershipRequest = membershipRequestPersistence.update(
+			membershipRequest);
 
 		notifyGroupAdministrators(membershipRequest, serviceContext);
 
@@ -145,11 +143,7 @@ public class MembershipRequestLocalServiceImpl
 		List<MembershipRequest> membershipRequests = getMembershipRequests(
 			userId, groupId, statusId);
 
-		if (membershipRequests.isEmpty()) {
-			return false;
-		}
-
-		return true;
+		return !membershipRequests.isEmpty();
 	}
 
 	@Override
@@ -163,10 +157,10 @@ public class MembershipRequestLocalServiceImpl
 	@Override
 	public List<MembershipRequest> search(
 		long groupId, int status, int start, int end,
-		OrderByComparator<MembershipRequest> obc) {
+		OrderByComparator<MembershipRequest> orderByComparator) {
 
 		return membershipRequestPersistence.findByG_S(
-			groupId, status, start, end, obc);
+			groupId, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -193,23 +187,23 @@ public class MembershipRequestLocalServiceImpl
 			membershipRequest.setReplierUserId(replierUserId);
 		}
 		else {
-			long defaultUserId = userLocalService.getDefaultUserId(
+			long guestUserId = _userLocalService.getGuestUserId(
 				membershipRequest.getCompanyId());
 
-			membershipRequest.setReplierUserId(defaultUserId);
+			membershipRequest.setReplierUserId(guestUserId);
 		}
 
 		membershipRequest.setStatusId(statusId);
 
-		membershipRequestPersistence.update(membershipRequest);
+		membershipRequest = membershipRequestPersistence.update(
+			membershipRequest);
 
 		if ((statusId == MembershipRequestConstants.STATUS_APPROVED) &&
 			addUserToGroup) {
 
-			long[] addUserIds = {membershipRequest.getUserId()};
-
-			userLocalService.addGroupUsers(
-				membershipRequest.getGroupId(), addUserIds);
+			_userLocalService.addGroupUsers(
+				membershipRequest.getGroupId(),
+				new long[] {membershipRequest.getUserId()});
 		}
 
 		if (replierUserId != 0) {
@@ -225,16 +219,16 @@ public class MembershipRequestLocalServiceImpl
 
 		Set<Long> userIds = new LinkedHashSet<>();
 
-		Group group = groupLocalService.getGroup(groupId);
+		Group group = _groupLocalService.getGroup(groupId);
 		String modelResource = Group.class.getName();
 
 		List<Role> roles = ListUtil.copy(
 			ResourceActionsUtil.getRoles(
 				group.getCompanyId(), group, modelResource, null));
 
-		roles.addAll(roleLocalService.getTeamRoles(groupId));
+		roles.addAll(_roleLocalService.getTeamRoles(groupId));
 
-		Resource resource = resourceLocalService.getResource(
+		Resource resource = _resourceLocalService.getResource(
 			group.getCompanyId(), modelResource,
 			ResourceConstants.SCOPE_INDIVIDUAL, String.valueOf(groupId));
 
@@ -260,11 +254,11 @@ public class MembershipRequestLocalServiceImpl
 				roleName.equals(RoleConstants.ORGANIZATION_ADMINISTRATOR) ||
 				roleName.equals(RoleConstants.ORGANIZATION_OWNER)) {
 
-				Role curRole = roleLocalService.getRole(
+				Role curRole = _roleLocalService.getRole(
 					group.getCompanyId(), roleName);
 
 				List<UserGroupRole> userGroupRoles =
-					userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
+					_userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
 						groupId, curRole.getRoleId());
 
 				for (UserGroupRole userGroupRole : userGroupRoles) {
@@ -289,7 +283,7 @@ public class MembershipRequestLocalServiceImpl
 				currentCompanyActions.contains(ActionKeys.ASSIGN_MEMBERS)) {
 
 				List<UserGroupRole> currentUserGroupRoles =
-					userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
+					_userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
 						groupId, role.getRoleId());
 
 				for (UserGroupRole userGroupRole : currentUserGroupRoles) {
@@ -307,8 +301,8 @@ public class MembershipRequestLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
-		User requestUser = userPersistence.findByPrimaryKey(
+		User user = _userPersistence.findByPrimaryKey(userId);
+		User requestUser = _userPersistence.findByPrimaryKey(
 			membershipRequest.getUserId());
 
 		String fromName = PrefsPropsUtil.getStringFromNames(
@@ -328,7 +322,7 @@ public class MembershipRequestLocalServiceImpl
 		String body = PrefsPropsUtil.getContent(
 			membershipRequest.getCompanyId(), bodyProperty);
 
-		final String statusKey;
+		String statusKey;
 
 		if (membershipRequest.getStatusId() ==
 				MembershipRequestConstants.STATUS_APPROVED) {
@@ -344,9 +338,7 @@ public class MembershipRequestLocalServiceImpl
 			statusKey = "pending";
 		}
 
-		Company company = companyLocalService.getCompany(user.getCompanyId());
-
-		String portalURL = company.getPortalURL(0);
+		Company company = _companyLocalService.getCompany(user.getCompanyId());
 
 		MailTemplateContextBuilder mailTemplateContextBuilder =
 			MailTemplateFactoryUtil.createMailTemplateContextBuilder();
@@ -355,27 +347,29 @@ public class MembershipRequestLocalServiceImpl
 			"[$COMPANY_ID$]", String.valueOf(company.getCompanyId()));
 		mailTemplateContextBuilder.put("[$COMPANY_MX$]", company.getMx());
 		mailTemplateContextBuilder.put(
-			"[$COMPANY_NAME$]", HtmlUtil.escape(company.getName()));
+			"[$COMPANY_NAME$]", new EscapableObject<>(company.getName()));
 		mailTemplateContextBuilder.put(
-			"[$COMMENTS$]", HtmlUtil.escape(membershipRequest.getComments()));
+			"[$COMMENTS$]",
+			new EscapableObject<>(membershipRequest.getComments()));
 		mailTemplateContextBuilder.put("[$FROM_ADDRESS$]", fromAddress);
 		mailTemplateContextBuilder.put(
-			"[$FROM_NAME$]", HtmlUtil.escape(fromName));
-		mailTemplateContextBuilder.put("[$PORTAL_URL$]", portalURL);
+			"[$FROM_NAME$]", new EscapableObject<>(fromName));
+		mailTemplateContextBuilder.put(
+			"[$PORTAL_URL$]", company.getPortalURL(0));
 		mailTemplateContextBuilder.put(
 			"[$REPLY_COMMENTS$]",
-			HtmlUtil.escape(membershipRequest.getReplyComments()));
+			new EscapableObject<>(membershipRequest.getReplyComments()));
 		mailTemplateContextBuilder.put(
 			"[$REQUEST_USER_ADDRESS$]", requestUser.getEmailAddress());
 		mailTemplateContextBuilder.put(
 			"[$REQUEST_USER_NAME$]",
-			HtmlUtil.escape(requestUser.getFullName()));
+			new EscapableObject<>(requestUser.getFullName()));
 
-		Group group = groupLocalService.getGroup(
+		Group group = _groupLocalService.getGroup(
 			membershipRequest.getGroupId());
 
 		mailTemplateContextBuilder.put(
-			"[$SITE_NAME$]", HtmlUtil.escape(group.getDescriptiveName()));
+			"[$SITE_NAME$]", new EscapableObject<>(group.getDescriptiveName()));
 
 		mailTemplateContextBuilder.put(
 			"[$STATUS$]",
@@ -384,18 +378,15 @@ public class MembershipRequestLocalServiceImpl
 		mailTemplateContextBuilder.put(
 			"[$TO_ADDRESS$]", user.getEmailAddress());
 		mailTemplateContextBuilder.put(
-			"[$TO_NAME$]", HtmlUtil.escape(user.getFullName()));
+			"[$TO_NAME$]", new EscapableObject<>(user.getFullName()));
 		mailTemplateContextBuilder.put(
 			"[$USER_ADDRESS$]", user.getEmailAddress());
 		mailTemplateContextBuilder.put(
-			"[$USER_NAME$]", HtmlUtil.escape(user.getFullName()));
-
-		MailTemplateContext mailTemplateContext =
-			mailTemplateContextBuilder.build();
+			"[$USER_NAME$]", new EscapableObject<>(user.getFullName()));
 
 		_sendNotificationEmail(
 			fromAddress, fromName, toAddress, user, subject, body,
-			membershipRequest, mailTemplateContext);
+			membershipRequest, mailTemplateContextBuilder.build());
 	}
 
 	protected void notifyGroupAdministrators(
@@ -431,7 +422,7 @@ public class MembershipRequestLocalServiceImpl
 					groupId, " and user ", userId));
 		}
 
-		Group group = groupLocalService.getGroup(groupId);
+		Group group = _groupLocalService.getGroup(groupId);
 
 		if (!group.isManualMembership() ||
 			(group.getType() != GroupConstants.TYPE_SITE_RESTRICTED) ||
@@ -443,9 +434,6 @@ public class MembershipRequestLocalServiceImpl
 					" and user ", userId));
 		}
 	}
-
-	@BeanReference(type = MailService.class)
-	protected MailService mailService;
 
 	private void _sendNotificationEmail(
 			String fromAddress, String fromName, String toAddress, User toUser,
@@ -469,19 +457,40 @@ public class MembershipRequestLocalServiceImpl
 					toUser.getLocale(), mailTemplateContext),
 				true);
 
-			Company company = companyLocalService.getCompany(
+			Company company = _companyLocalService.getCompany(
 				toUser.getCompanyId());
 
 			mailMessage.setMessageId(
-				PortalUtil.getMailId(
+				MailServiceUtil.getMailId(
 					company.getMx(), "membership_request",
 					membershipRequest.getMembershipRequestId()));
 
-			mailService.sendEmail(mailMessage);
+			MailServiceUtil.sendEmail(mailMessage);
 		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
 		}
 	}
+
+	@BeanReference(type = CompanyLocalService.class)
+	private CompanyLocalService _companyLocalService;
+
+	@BeanReference(type = GroupLocalService.class)
+	private GroupLocalService _groupLocalService;
+
+	@BeanReference(type = ResourceLocalService.class)
+	private ResourceLocalService _resourceLocalService;
+
+	@BeanReference(type = RoleLocalService.class)
+	private RoleLocalService _roleLocalService;
+
+	@BeanReference(type = UserGroupRoleLocalService.class)
+	private UserGroupRoleLocalService _userGroupRoleLocalService;
+
+	@BeanReference(type = UserLocalService.class)
+	private UserLocalService _userLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

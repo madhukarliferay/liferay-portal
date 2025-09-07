@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -41,24 +32,24 @@ response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
 		<meta content="0" http-equiv="Expires" />
 		<meta content="1; url=<%= HtmlUtil.escapeAttribute(redirect) %>" http-equiv="refresh" />
 
-		<script src="<%= themeDisplay.getCDNHost() + themeDisplay.getPathJavaScript() %>/misc/xp_progress.js" type="text/javascript"></script>
+		<aui:link cssClass="lfr-css-file" href="<%= HtmlUtil.escapeAttribute(themeDisplay.getClayCSSURL()) %>" rel="stylesheet" type="text/css" />
 	</head>
 
-	<body onLoad="javascript:location.replace('<%= HtmlUtil.escapeJS(redirect) %>')">
-		<center>
-			<table border="0" cellpadding="0" cellspacing="0" height="100%" width="600">
-				<tr>
-					<td align="center" valign="middle">
-						<strong><liferay-ui:message key="processing-login" /></strong>
+	<liferay-ui:csp>
+		<body onload="window.location.replace('<%= HtmlUtil.escapeJS(redirect) %>');">
+			<center>
+				<table border="0" cellpadding="0" cellspacing="0" height="100%" width="600">
+					<tr>
+						<td align="center" valign="middle">
+							<strong><liferay-ui:message key="processing-login" /></strong>
 
-						<br /><br />
+							<br /><br />
 
-						<script type="text/javascript">
-							var progressBar = createBar(300, 15, '#FFFFFF', 1, '#000000', '', 85, 7, 3, '');
-						</script>
-					</td>
-				</tr>
-			</table>
-		</center>
-	</body>
+							<span aria-hidden="true" class="loading-animation loading-animation-sm"></span>
+						</td>
+					</tr>
+				</table>
+			</center>
+		</body>
+	</liferay-ui:csp>
 </html>

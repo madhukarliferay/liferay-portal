@@ -1,5 +1,4 @@
-create index IX_4410586B on Subscription (classNameId);
-create index IX_786D171A on Subscription (companyId, classNameId, classPK);
-create unique index IX_2E1A92D4 on Subscription (companyId, userId, classNameId, classPK);
-create index IX_1290B81 on Subscription (groupId, userId);
-create index IX_E8F34171 on Subscription (userId, classNameId);
+create index IX_6BBFF1A6 on Subscription (classNameId, companyId, classPK);
+create index IX_C4FAEA47 on Subscription (groupId);
+create unique index IX_6CA01A0A on Subscription (userId, classNameId, companyId, classPK, ctCollectionId);
+create index IX_C717464D on Subscription (userId, groupId);

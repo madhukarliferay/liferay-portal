@@ -1,24 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.json;
 
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +21,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -37,15 +33,14 @@ import org.junit.Test;
  */
 public class JSONUtilTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
 		JSONInit.init();
-
-		JSONFactoryImpl jsonFactoryImpl = new JSONFactoryImpl();
-
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
-
-		jsonFactoryUtil.setJSONFactory(jsonFactoryImpl);
 	}
 
 	@Test
@@ -91,29 +86,66 @@ public class JSONUtilTest {
 	public void testCreateCollector() {
 		List<String> strings = Arrays.asList("foo", "bar", "baz");
 
-		Stream<String> stringStream = strings.stream();
-
-		JSONArray jsonArray = stringStream.map(
-			String::toUpperCase
-		).collect(
-			JSONUtil.createCollector()
-		);
-
 		Assert.assertTrue(
 			JSONUtil.equals(
 				JSONUtil.concat(JSONUtil.putAll("FOO", "BAR", "BAZ")),
-				jsonArray));
+				JSONUtil.toJSONArray(strings, String::toUpperCase, _log)));
 	}
 
 	@Test
 	public void testGetValue() {
+
+		// Nested JSON array
+
 		JSONObject jsonObject = JSONUtil.put(
+			"alpha",
+			JSONUtil.put("beta", JSONUtil.put(JSONUtil.put("gamma", "delta"))));
+
+		Assert.assertEquals(
+			"delta",
+			JSONUtil.getValue(
+				jsonObject, "JSONObject/alpha", "JSONArray/beta",
+				"JSONObject/0", "Object/gamma"));
+
+		// Nested JSON object
+
+		jsonObject = JSONUtil.put(
 			"alpha", JSONUtil.put("beta", JSONUtil.put("gamma")));
 
 		Assert.assertEquals(
 			"gamma",
 			JSONUtil.getValue(
 				jsonObject, "JSONObject/alpha", "JSONArray/beta", "Object/0"));
+	}
+
+	@Test
+	public void testGetValueAsJSONArray() throws JSONException {
+		Assert.assertNull(
+			JSONUtil.getValueAsJSONArray(
+				_createJSONObject(), "JSONArray/able"));
+		Assert.assertNull(
+			JSONUtil.getValueAsJSONArray(
+				_createJSONObject("{\"able\": 1}"), "JSONArray/able"));
+
+		JSONArray jsonArray = JSONUtil.getValueAsJSONArray(
+			_createJSONObject("{\"able\": []}"), "JSONArray/able");
+
+		Assert.assertNotNull(jsonArray);
+		Assert.assertEquals(0, jsonArray.length());
+
+		jsonArray = JSONUtil.getValueAsJSONArray(
+			_createJSONObject("{\"able\": [\"0\"]}"), "JSONArray/able");
+
+		Assert.assertNotNull(jsonArray);
+		Assert.assertEquals(1, jsonArray.length());
+		Assert.assertEquals("0", jsonArray.getString(0));
+
+		jsonArray = JSONUtil.getValueAsJSONArray(
+			_createJSONObject("{\"able\": [0, 1, 2, 3]}"), "JSONArray/able");
+
+		Assert.assertNotNull(jsonArray);
+		Assert.assertEquals(4, jsonArray.length());
+		Assert.assertEquals("2", jsonArray.getString(2));
 	}
 
 	@Test
@@ -320,6 +352,93 @@ public class JSONUtilTest {
 				),
 				jsonObject -> String.valueOf(jsonObject.getInt("foo")),
 				String.class));
+	}
+
+	@Test
+	public void testToIntegerArray() {
+		Assert.assertArrayEquals(new int[0], JSONUtil.toIntegerArray(null));
+		Assert.assertArrayEquals(
+			new int[] {1, 2}, JSONUtil.toIntegerArray(JSONUtil.putAll(1, 2)));
+	}
+
+	@Test
+	public void testToIntegerArrayWithKey() {
+		Assert.assertArrayEquals(
+			new int[0], JSONUtil.toIntegerArray(null, "alpha"));
+		Assert.assertArrayEquals(
+			new int[] {1, 2},
+			JSONUtil.toIntegerArray(
+				JSONUtil.putAll(
+					JSONUtil.put("alpha", 1), JSONUtil.put("alpha", 2),
+					JSONUtil.put("beta", 3)),
+				"alpha"));
+	}
+
+	@Test
+	public void testToIntegerList() {
+		Assert.assertEquals(
+			Collections.emptyList(), JSONUtil.toIntegerList(null));
+		Assert.assertEquals(
+			new ArrayList<Integer>() {
+				{
+					add(1);
+					add(2);
+					add(3);
+				}
+			},
+			JSONUtil.toIntegerList(JSONUtil.putAll(1, 2, 3)));
+	}
+
+	@Test
+	public void testToIntegerListWithKey() {
+		Assert.assertEquals(
+			Collections.emptyList(), JSONUtil.toIntegerList(null, "alpha"));
+		Assert.assertEquals(
+			new ArrayList<Integer>() {
+				{
+					add(1);
+					add(2);
+					add(3);
+				}
+			},
+			JSONUtil.toIntegerList(
+				JSONUtil.putAll(
+					JSONUtil.put("alpha", 1), JSONUtil.put("alpha", 2),
+					JSONUtil.put("alpha", 3)),
+				"alpha"));
+	}
+
+	@Test
+	public void testToIntegerSet() {
+		Assert.assertEquals(
+			Collections.emptySet(), JSONUtil.toIntegerSet(null));
+		Assert.assertEquals(
+			new HashSet<Integer>() {
+				{
+					add(1);
+					add(2);
+					add(3);
+				}
+			},
+			JSONUtil.toIntegerSet(JSONUtil.putAll(1, 2, 3)));
+	}
+
+	@Test
+	public void testToIntegerSetWithKey() {
+		Assert.assertEquals(
+			Collections.emptySet(), JSONUtil.toIntegerSet(null, "alpha"));
+		Assert.assertEquals(
+			new HashSet<Integer>() {
+				{
+					add(1);
+					add(2);
+				}
+			},
+			JSONUtil.toIntegerSet(
+				JSONUtil.putAll(
+					JSONUtil.put("alpha", 1), JSONUtil.put("alpha", 2),
+					JSONUtil.put("beta", 3)),
+				"alpha"));
 	}
 
 	@Test
@@ -677,6 +796,29 @@ public class JSONUtilTest {
 	}
 
 	@Test
+	public void testToStringMap() {
+		Map<String, String> expectedMapValues = HashMapBuilder.put(
+			"alpha", "1"
+		).put(
+			"beta", "2"
+		).put(
+			"gamma", "3"
+		).build();
+
+		Map<String, String> actualMapValues = JSONUtil.toStringMap(
+			JSONUtil.put(
+				"alpha", "1"
+			).put(
+				"beta", "2"
+			).put(
+				"gamma", "3"
+			));
+
+		Assert.assertEquals(
+			expectedMapValues.toString(), actualMapValues.toString());
+	}
+
+	@Test
 	public void testToStringSet() {
 		Assert.assertEquals(Collections.emptySet(), JSONUtil.toStringSet(null));
 		Assert.assertEquals(
@@ -716,5 +858,11 @@ public class JSONUtilTest {
 	private JSONObject _createJSONObject() {
 		return JSONFactoryUtil.createJSONObject();
 	}
+
+	private JSONObject _createJSONObject(String json) throws JSONException {
+		return JSONFactoryUtil.createJSONObject(json);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(JSONUtilTest.class);
 
 }

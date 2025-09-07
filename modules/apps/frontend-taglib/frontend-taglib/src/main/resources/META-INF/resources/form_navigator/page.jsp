@@ -1,41 +1,31 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/form_navigator/init.jsp" %>
 
 <%
-String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_form_navigator_init") + StringPool.UNDERLINE;
+FormNavigatorDisplayContext formNavigatorDisplayContext = new FormNavigatorDisplayContext(request);
 
-String tabs1Param = randomNamespace + "tabs1";
-String tabs1Value = GetterUtil.getString(SessionClicks.get(request, namespace + id, null));
+String[] categoryKeys = formNavigatorDisplayContext.getCategoryKeys();
 %>
 
 <c:choose>
 	<c:when test="<%= categoryKeys.length > 1 %>">
 		<liferay-ui:tabs
 			names="<%= StringUtil.merge(categoryKeys, StringPool.COMMA) %>"
-			param="<%= tabs1Param %>"
+			param="<%= formNavigatorDisplayContext.getTabs1Param() %>"
 			refresh="<%= false %>"
-			value="<%= tabs1Value %>"
+			value="<%= GetterUtil.getString(SessionClicks.get(request, namespace + formNavigatorDisplayContext.getId(), null)) %>"
 		>
 
 			<%
 			for (String categoryKey : categoryKeys) {
 				request.setAttribute(FormNavigatorWebKeys.CURRENT_TAB, categoryKey);
-				request.setAttribute(FormNavigatorWebKeys.FORM_NAVIGATOR_ENTRIES, FormNavigatorEntryUtil.getFormNavigatorEntries(id, categoryKey, user, formModelBean));
+				request.setAttribute(FormNavigatorWebKeys.FORM_NAVIGATOR_ENTRIES, formNavigatorDisplayContext.getFormNavigatorEntries(categoryKey));
 			%>
 
 				<liferay-ui:section>
@@ -57,38 +47,42 @@ String tabs1Value = GetterUtil.getString(SessionClicks.get(request, namespace + 
 	<c:otherwise>
 
 		<%
-		request.setAttribute(FormNavigatorWebKeys.FORM_NAVIGATOR_ENTRIES, FormNavigatorEntryUtil.getFormNavigatorEntries(id, user, formModelBean));
+		request.setAttribute(FormNavigatorWebKeys.FORM_NAVIGATOR_ENTRIES, formNavigatorDisplayContext.getFormNavigatorEntries());
 		%>
 
 		<liferay-util:include page="/form_navigator/sections.jsp" servletContext="<%= application %>" />
 	</c:otherwise>
 </c:choose>
 
-<c:if test="<%= showButtons %>">
+<c:if test="<%= formNavigatorDisplayContext.isShowButtons() %>">
 	<div>
 		<aui:button primary="<%= true %>" type="submit" />
 
-		<aui:button href="<%= backURL %>" type="cancel" />
+		<aui:button href="<%= formNavigatorDisplayContext.getBackURL() %>" type="cancel" />
 	</div>
 </c:if>
 
-<aui:script require="metal-dom/src/dom as dom">
-	var redirectField = dom.toElement(
+<aui:script sandbox="<%= true %>">
+	var redirectField = document.querySelector(
 		'input[name="<portlet:namespace />redirect"]'
 	);
-	var tabs1Param = '<portlet:namespace /><%= tabs1Param %>';
 
-	var updateRedirectField = function(event) {
+	var tabs1Param = '<%= formNavigatorDisplayContext.getTabs1Param() %>';
+
+	var updateRedirectField = function (event) {
 		var redirectURL = new URL(redirectField.value, window.location.origin);
 
 		redirectURL.searchParams.set(tabs1Param, event.id);
 
 		redirectField.value = redirectURL.toString();
 
-		Liferay.Util.Session.set('<portlet:namespace /><%= id %>', event.id);
+		Liferay.Util.Session.set(
+			'<portlet:namespace /><%= formNavigatorDisplayContext.getId() %>',
+			event.id
+		);
 	};
 
-	var clearFormNavigatorHandles = function(event) {
+	var clearFormNavigatorHandles = function (event) {
 		if (event.portletId === '<%= portletDisplay.getRootPortletId() %>') {
 			Liferay.detach('showTab', updateRedirectField);
 			Liferay.detach('destroyPortlet', clearFormNavigatorHandles);
@@ -102,7 +96,7 @@ String tabs1Value = GetterUtil.getString(SessionClicks.get(request, namespace + 
 
 		if (tabs1Value) {
 			updateRedirectField({
-				id: tabs1Value
+				id: tabs1Value,
 			});
 		}
 

@@ -1,101 +1,220 @@
 definition {
 
-	macro assertEngineVendorAndVersions {
+	@summary = "Default summary"
+	macro assertEngineVendorAndVersions(serverVersion = null, engineVendor = null, clientVersion = null) {
 		AssertTextEquals.assertPartialText(
-			locator1 = "SearchAdmin#SEARCH_ENGINE_INFORMATION",
-			position = "1",
-			searchInformation = "${engineVendor}",
-			value1 = "${engineVendor}");
+			locator1 = "SearchAdmin#SEARCH_ENGINE_VENDOR",
+			value1 = ${engineVendor});
 
 		AssertTextEquals.assertPartialText(
-			locator1 = "SearchAdmin#SEARCH_ENGINE_INFORMATION",
-			position = "2",
-			searchInformation = "${clientVersion}",
-			value1 = "${clientVersion}");
+			locator1 = "SearchAdmin#CLIENT_VERSION",
+			value1 = ${clientVersion});
+
+		Panel.expandPanel(panel = "Nodes (1)");
 
 		AssertTextEquals.assertPartialText(
-			locator1 = "SearchAdmin#SEARCH_ENGINE_INFORMATION",
-			position = "3",
-			searchInformation = "${serverVersion}",
-			value1 = "${serverVersion}");
+			locator1 = "SearchAdmin#SERVER_VERSION",
+			value1 = ${serverVersion});
 	}
 
-	macro executeSearchActions {
+	@summary = "Default summary"
+	macro executeReindex(executionScope = null, waitForReindexFinished = null, reindexMode = null) {
+		SearchAdministration.openIndexActions();
+
 		AssertTextEquals(
 			locator1 = "Portlet#HEADER",
 			value1 = "Search");
 
-		var searchClientVersion = selenium.getText("//div[contains(@class,'alert alert-info')]//strong[2]");
-		var searchEngineVendor = selenium.getText("//div[contains(@class,'alert alert-info')]//strong[1]");
+		if (isSet(reindexMode)) {
+			Click(locator1 = "SearchAdmin#REINDEX_MODE_DROPDOWN");
 
-		if (contains("${searchEngineVendor}", "Elasticsearch")) {
-			if (contains("${searchClientVersion}", "7.") && contains("${searchEngineVendor}", "Embedded")) {
-				var curl = "http://localhost:9201/_tasks";
-			}
-			else {
-				var curl = "http://localhost:9200/_tasks";
-			}
+			Click(
+				key_reindexMode = ${reindexMode},
+				locator1 = "SearchAdmin#REINDEX_MODE_DROPDOWN_ITEM");
 		}
 
-		Panel.expandPanel(panel = "Index Actions");
+		if (${executionScope} == "All Instances") {
+			Check.checkNotVisible(
+				locator1 = "Radio#ANY",
+				radioLabel = ${executionScope});
 
-		AssertClick.assertTextClickAt(
-			key_actionsDescription = "${actionsDescription}",
-			locator1 = "Button#EXECUTE_ACTION",
-			value1 = "Execute");
+			AssertElementNotPresent(
+				key_executionScope = "System",
+				locator1 = "SearchAdmin#SELECTED_INSTANCE_INDEX_CHECKBOX");
+		}
+		else if (isSet(executionScope)) {
+			Check.checkNotVisible(
+				locator1 = "Radio#ANY",
+				radioLabel = "Selected Instances");
 
-		var reindexElapsedTime = "0";
-		var reindexStartTime = "0";
+			Check.checkNotVisible(
+				key_executionScope = ${executionScope},
+				locator1 = "SearchAdmin#SELECTED_INSTANCE_INDEX_CHECKBOX");
+		}
 
-		if (contains("${searchEngineVendor}", "Elasticsearch")) {
-			echo("Current Elasticsearch Tasks:");
+		if (!(isSet(action))) {
+			var action = "All Search Indexes";
+		}
 
-			var elasticsearchTasks = JSONCurlUtil.get("${curl}");
+		if (${waitForReindexFinished} != "false") {
+			while ((!(isSet(retryReindex)) || (${retryReindex} == "true")) && (maxIterations = "2")) {
+				SearchAdministration.startReindex(action = ${action});
 
-			while ((!(contains("${elasticsearchTasks}", "indices:data/write/bulk"))) && ("${reindexStartTime}" != "10")) {
-				Pause.pauseNoSPARefresh(locator1 = "1000");
+				var retryReindex = SearchAdministration.waitForReindexFinished(waitForReindexRequest = "true");
+			}
+		}
+		else {
+			SearchAdministration.startReindex(action = ${action});
+		}
+	}
 
-				var reindexStartTime = ${reindexStartTime} + 1;
+	@summary = "Default summary"
+	macro getSearchEngineVendor() {
+		var liferayHome = PropsUtil.get("liferay.home.dir.name");
+
+		var solrDirExists = FileUtil.exists("${liferayHome}/solr-8.11.3");
+
+		if (${solrDirExists} == "true") {
+			return "Solr";
+		}
+		else {
+			return "Elasticsearch";
+		}
+	}
+
+	@summary = "Default summary"
+	macro getServerVersion() {
+		SearchAdministration.openSearchAdmin();
+
+		Panel.expandPanel(panel = "Nodes (1)");
+
+		var serverVersion = selenium.getText("SearchAdmin#SERVER_VERSION");
+
+		return ${serverVersion};
+	}
+
+	@summary = "Default summary"
+	macro openFieldMappings(baseURL = null) {
+		Navigator.openWithAppendToBaseURL(
+			baseURL = ${baseURL},
+			urlAppend = "group/control_panel/manage?p_p_id=com_liferay_portal_search_admin_web_portlet_SearchAdminPortlet&_com_liferay_portal_search_admin_web_portlet_SearchAdminPortlet_tabs1=field-mappings");
+	}
+
+	@summary = "Default summary"
+	macro openIndexActions(baseURL = null) {
+		Navigator.openWithAppendToBaseURL(
+			baseURL = ${baseURL},
+			urlAppend = "group/control_panel/manage?p_p_id=com_liferay_portal_search_admin_web_portlet_SearchAdminPortlet&_com_liferay_portal_search_admin_web_portlet_SearchAdminPortlet_tabs1=index-actions");
+	}
+
+	@summary = "Default summary"
+	macro openSearchAdmin(baseURL = null) {
+		Navigator.openWithAppendToBaseURL(
+			baseURL = ${baseURL},
+			urlAppend = "group/control_panel/manage?p_p_id=com_liferay_portal_search_admin_web_portlet_SearchAdminPortlet");
+	}
+
+	@summary = "Default summary"
+	macro startReindex(action = null) {
+		Click(
+			key_action = ${action},
+			locator1 = "SearchAdmin#EXECUTE_REINDEX_BUTTON");
+
+		if (IsElementPresent.isElementPresentNoSPARefresh(key_text = "Execute", locator1 = "Modal#MODAL_FOOTER_BUTTON")) {
+			Click(
+				key_text = "Execute",
+				locator1 = "Modal#MODAL_FOOTER_BUTTON");
+		}
+	}
+
+	@summary = "Default summary"
+	macro waitForReindexFinished() {
+		var searchEngineVendor = SearchAdministration.getSearchEngineVendor();
+
+		if (contains(${searchEngineVendor}, "Elasticsearch")) {
+			var port = Elasticsearch.getServerPort();
+			var portalHostname = PropsUtil.get("portal.hostname");
+
+			var curl = "http://${portalHostname}:${port}/_tasks";
+		}
+
+		var reindexElapsedTime = 0;
+		var reindexStartTime = 0;
+		var waitForReindexRequest = ${waitForReindexRequest};
+
+		if (contains(${searchEngineVendor}, "Elasticsearch")) {
+			if (${waitForReindexRequest} == "true") {
+				while (!(contains(${elasticsearchTasks}, "indices:data/write/bulk")) && (${reindexStartTime} != 60)) {
+					Pause.pauseNoSPARefresh(value1 = 1000);
+
+					var reindexStartTime = ${reindexStartTime} + 1;
+
+					echo("Current Elasticsearch Tasks:");
+
+					var elasticsearchTasks = JSONCurlUtil.get(${curl});
+				}
+
+				if (${reindexStartTime} == 60) {
+					echo("Elasticsearch failed to receive reindex request after 60 seconds.");
+				}
+				else {
+					echo("Started reindexing ${reindexStartTime} second(s) after clicking 'Execute'.");
+				}
+			}
+
+			while (((contains(${elasticsearchTasks}, "indices:data/write/bulk") || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "Search#REINDEX_IN_PROGRESS_INDICATOR")) || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "//html[contains(@class,'lfr-spa-loading')]"))) && (${reindexElapsedTime} != 240)) && (maxIterations = "24")) {
+				Pause.pauseNoSPARefresh(value1 = 10000);
+
+				var reindexElapsedTime = ${reindexElapsedTime} + 10;
 
 				echo("Current Elasticsearch Tasks:");
 
-				elasticsearchTasks = JSONCurlUtil.get("${curl}");
+				var elasticsearchTasks = JSONCurlUtil.get(${curl});
+			}
+		}
+		else if (contains(${searchEngineVendor}, "Solr")) {
+			while ((IsElementNotPresent(locator1 = "Search#REINDEX_IN_PROGRESS_INDICATOR")) && (${reindexStartTime} != 60)) {
+				Pause.pauseNoSPARefresh(value1 = 1000);
+
+				var reindexStartTime = ${reindexStartTime} + 1;
 			}
 
-			if ("${reindexStartTime}" == "10") {
-				echo("Elasticsearch failed to receive reindex request after 10 seconds.");
+			if (${reindexStartTime} == 60) {
+				echo("Solr failed to receive reindex request after 60 seconds.");
 			}
 			else {
 				echo("Started reindexing ${reindexStartTime} second(s) after clicking 'Execute'.");
 			}
 
-			while (contains("${elasticsearchTasks}", "indices:data/write/bulk") && ("${reindexElapsedTime}" != "120")) {
-				Pause.pauseNoSPARefresh(locator1 = "5000");
+			while ((((IsElementPresent.isElementPresentNoSPARefresh(locator1 = "Search#REINDEX_IN_PROGRESS_INDICATOR")) || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "//html[contains(@class,'lfr-spa-loading')]"))) && (${reindexElapsedTime} != 240)) && (maxIterations = "24")) {
+				Pause.pauseNoSPARefresh(value1 = 10000);
 
-				var reindexElapsedTime = ${reindexElapsedTime} + 5;
-
-				echo("Current Elasticsearch Tasks:");
-
-				elasticsearchTasks = JSONCurlUtil.get("${curl}");
-			}
-		}
-		else if (contains("${searchEngineVendor}", "Solr")) {
-			while (IsElementPresent(locator1 = "ControlMenu#RELOAD_TOOLTIP")&& ("${reindexElapsedTime}" != "120")) {
-				Pause.pauseNoSPARefresh(locator1 = "5000");
-
-				var reindexElapsedTime = ${reindexElapsedTime} + 5;
+				var reindexElapsedTime = ${reindexElapsedTime} + 10;
 			}
 		}
 
-		while (IsElementNotPresent(locator1 = "Button#EXECUTE_ACTION", key_actionsDescription = "${actionsDescription}")) {
-			Pause(locator1 = "3000");
-		}
+		if ((${reindexElapsedTime} == 0) && (${waitForReindexRequest} == "true")) {
+			echo("Elasticsearch failed to receive reindex request.");
 
-		if ("${reindexElapsedTime}" == "120") {
-			fail("Reindex timed out after 120 seconds.");
+			takeScreenshot();
+
+			Refresh();
+
+			return "true";
+		}
+		else if (${reindexElapsedTime} == 240) {
+			echo("Reindex timed out after 240 seconds.");
+
+			takeScreenshot();
+
+			Refresh();
+
+			return "true";
 		}
 		else {
 			echo("Finished reindexing after ${reindexElapsedTime} seconds.");
+
+			return "false";
 		}
 	}
 

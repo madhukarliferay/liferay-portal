@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoInstanceCacheModel
 	implements CacheModel<KaleoInstance>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoInstanceCacheModel)) {
+		if (!(object instanceof KaleoInstanceCacheModel)) {
 			return false;
 		}
 
 		KaleoInstanceCacheModel kaleoInstanceCacheModel =
-			(KaleoInstanceCacheModel)obj;
+			(KaleoInstanceCacheModel)object;
 
 		if ((kaleoInstanceId == kaleoInstanceCacheModel.kaleoInstanceId) &&
 			(mvccVersion == kaleoInstanceCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class KaleoInstanceCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoInstanceId=");
 		sb.append(kaleoInstanceId);
 		sb.append(", groupId=");
@@ -95,6 +88,8 @@ public class KaleoInstanceCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoDefinitionName=");
@@ -103,6 +98,8 @@ public class KaleoInstanceCacheModel
 		sb.append(kaleoDefinitionVersion);
 		sb.append(", rootKaleoInstanceTokenId=");
 		sb.append(rootKaleoInstanceTokenId);
+		sb.append(", active=");
+		sb.append(active);
 		sb.append(", className=");
 		sb.append(className);
 		sb.append(", classPK=");
@@ -123,6 +120,7 @@ public class KaleoInstanceCacheModel
 		KaleoInstanceImpl kaleoInstanceImpl = new KaleoInstanceImpl();
 
 		kaleoInstanceImpl.setMvccVersion(mvccVersion);
+		kaleoInstanceImpl.setCtCollectionId(ctCollectionId);
 		kaleoInstanceImpl.setKaleoInstanceId(kaleoInstanceId);
 		kaleoInstanceImpl.setGroupId(groupId);
 		kaleoInstanceImpl.setCompanyId(companyId);
@@ -149,6 +147,7 @@ public class KaleoInstanceCacheModel
 			kaleoInstanceImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		kaleoInstanceImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoInstanceImpl.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 
 		if (kaleoDefinitionName == null) {
@@ -160,6 +159,7 @@ public class KaleoInstanceCacheModel
 
 		kaleoInstanceImpl.setKaleoDefinitionVersion(kaleoDefinitionVersion);
 		kaleoInstanceImpl.setRootKaleoInstanceTokenId(rootKaleoInstanceTokenId);
+		kaleoInstanceImpl.setActive(active);
 
 		if (className == null) {
 			kaleoInstanceImpl.setClassName("");
@@ -191,8 +191,12 @@ public class KaleoInstanceCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoInstanceId = objectInput.readLong();
 
@@ -205,24 +209,30 @@ public class KaleoInstanceCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		kaleoDefinitionId = objectInput.readLong();
+
 		kaleoDefinitionVersionId = objectInput.readLong();
 		kaleoDefinitionName = objectInput.readUTF();
 
 		kaleoDefinitionVersion = objectInput.readInt();
 
 		rootKaleoInstanceTokenId = objectInput.readLong();
+
+		active = objectInput.readBoolean();
 		className = objectInput.readUTF();
 
 		classPK = objectInput.readLong();
 
 		completed = objectInput.readBoolean();
 		completionDate = objectInput.readLong();
-		workflowContext = objectInput.readUTF();
+		workflowContext = (String)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoInstanceId);
 
@@ -242,6 +252,8 @@ public class KaleoInstanceCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		objectOutput.writeLong(kaleoDefinitionId);
+
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
 		if (kaleoDefinitionName == null) {
@@ -254,6 +266,8 @@ public class KaleoInstanceCacheModel
 		objectOutput.writeInt(kaleoDefinitionVersion);
 
 		objectOutput.writeLong(rootKaleoInstanceTokenId);
+
+		objectOutput.writeBoolean(active);
 
 		if (className == null) {
 			objectOutput.writeUTF("");
@@ -268,14 +282,15 @@ public class KaleoInstanceCacheModel
 		objectOutput.writeLong(completionDate);
 
 		if (workflowContext == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(workflowContext);
+			objectOutput.writeObject(workflowContext);
 		}
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoInstanceId;
 	public long groupId;
 	public long companyId;
@@ -283,10 +298,12 @@ public class KaleoInstanceCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public String kaleoDefinitionName;
 	public int kaleoDefinitionVersion;
 	public long rootKaleoInstanceTokenId;
+	public boolean active;
 	public String className;
 	public long classPK;
 	public boolean completed;

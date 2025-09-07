@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.async.advice.internal;
@@ -43,7 +34,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.async.advice.internal.configuration.AsyncAdviceConfiguration",
-	immediate = true, service = ChainableMethodAdvice.class
+	service = ChainableMethodAdvice.class
 )
 public class AsyncAdvice extends ChainableMethodAdvice {
 
@@ -90,32 +81,34 @@ public class AsyncAdvice extends ChainableMethodAdvice {
 		String[] targetClassNamesToDestinationNames =
 			_asyncAdviceConfiguration.targetClassNamesToDestinationNames();
 
-		if (targetClassNamesToDestinationNames != null) {
-			Map<String, String> destinationNames = new HashMap<>();
+		if (targetClassNamesToDestinationNames == null) {
+			return;
+		}
 
-			for (String targetClassNameToDestinationName :
-					targetClassNamesToDestinationNames) {
+		Map<String, String> destinationNames = new HashMap<>();
 
-				int index = targetClassNameToDestinationName.indexOf(
-					CharPool.EQUAL);
+		for (String targetClassNameToDestinationName :
+				targetClassNamesToDestinationNames) {
 
-				if (index <= 0) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Invalid target class name to destination name \"" +
-								targetClassNameToDestinationName + "\"");
-					}
-				}
-				else {
-					destinationNames.put(
-						targetClassNameToDestinationName.substring(0, index),
-						targetClassNameToDestinationName.substring(index + 1));
+			int index = targetClassNameToDestinationName.indexOf(
+				CharPool.EQUAL);
+
+			if (index <= 0) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Invalid target class name to destination name \"" +
+							targetClassNameToDestinationName + "\"");
 				}
 			}
-
-			if (!destinationNames.isEmpty()) {
-				_destinationNames = destinationNames;
+			else {
+				destinationNames.put(
+					targetClassNameToDestinationName.substring(0, index),
+					targetClassNameToDestinationName.substring(index + 1));
 			}
+		}
+
+		if (!destinationNames.isEmpty()) {
+			_destinationNames = destinationNames;
 		}
 	}
 
@@ -134,7 +127,7 @@ public class AsyncAdvice extends ChainableMethodAdvice {
 				Message message = new Message();
 
 				message.setPayload(
-					new AsyncProcessCallable(aopMethodInvocation, arguments));
+					new AsyncCallable(aopMethodInvocation, arguments));
 
 				_messageBus.sendMessage(destinationName, message);
 
@@ -146,8 +139,8 @@ public class AsyncAdvice extends ChainableMethodAdvice {
 
 	private static final Log _log = LogFactoryUtil.getLog(AsyncAdvice.class);
 
-	private AsyncAdviceConfiguration _asyncAdviceConfiguration;
-	private Map<String, String> _destinationNames;
+	private volatile AsyncAdviceConfiguration _asyncAdviceConfiguration;
+	private volatile Map<String, String> _destinationNames;
 
 	@Reference
 	private MessageBus _messageBus;

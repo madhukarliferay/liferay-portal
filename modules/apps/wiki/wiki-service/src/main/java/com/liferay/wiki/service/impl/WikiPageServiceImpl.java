@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.impl;
@@ -17,18 +8,18 @@ package com.liferay.wiki.service.impl;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
@@ -45,13 +36,14 @@ import com.liferay.rss.util.RSSUtil;
 import com.liferay.subscription.service.SubscriptionLocalService;
 import com.liferay.wiki.configuration.WikiGroupServiceOverriddenConfiguration;
 import com.liferay.wiki.constants.WikiConstants;
+import com.liferay.wiki.constants.WikiPageConstants;
 import com.liferay.wiki.constants.WikiPortletKeys;
 import com.liferay.wiki.engine.WikiEngineRenderer;
 import com.liferay.wiki.exception.NoSuchPageException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
-import com.liferay.wiki.model.WikiPageConstants;
 import com.liferay.wiki.service.base.WikiPageServiceBaseImpl;
+import com.liferay.wiki.service.persistence.WikiNodePersistence;
 import com.liferay.wiki.util.comparator.PageCreateDateComparator;
 
 import java.io.File;
@@ -100,6 +92,12 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			serviceContext);
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #addPage(String,
+	 *             long, String, String, String, boolean, String, String,
+	 *             String, ServiceContext)}
+	 */
+	@Deprecated
 	@Override
 	public WikiPage addPage(
 			long nodeId, String title, String content, String summary,
@@ -114,6 +112,37 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			getUserId(), nodeId, title, WikiPageConstants.VERSION_DEFAULT,
 			content, summary, minorEdit, format, true, parentTitle,
 			redirectTitle, serviceContext);
+	}
+
+	@Override
+	public WikiPage addPage(
+			String externalReferenceCode, long nodeId, String title,
+			double version, String content, String summary, boolean minorEdit,
+			String format, boolean head, String parentTitle,
+			String redirectTitle, ServiceContext serviceContext)
+		throws PortalException {
+
+		return wikiPageLocalService.addPage(
+			externalReferenceCode, getUserId(), nodeId, title, version, content,
+			summary, minorEdit, format, head, parentTitle, redirectTitle,
+			serviceContext);
+	}
+
+	@Override
+	public WikiPage addPage(
+			String externalReferenceCode, long nodeId, String title,
+			String content, String summary, boolean minorEdit, String format,
+			String parentTitle, String redirectTitle,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		_wikiNodeModelResourcePermission.check(
+			getPermissionChecker(), nodeId, ActionKeys.ADD_PAGE);
+
+		return wikiPageLocalService.addPage(
+			externalReferenceCode, getUserId(), nodeId, title,
+			WikiPageConstants.VERSION_DEFAULT, content, summary, minorEdit,
+			format, true, parentTitle, redirectTitle, serviceContext);
 	}
 
 	@Override
@@ -161,7 +190,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			InputStream inputStream, String mimeType)
 		throws PortalException {
 
-		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
+		WikiNode node = _wikiNodePersistence.findByPrimaryKey(nodeId);
 
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), node, ActionKeys.ADD_ATTACHMENT);
@@ -177,10 +206,10 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		WikiPage page = wikiPageLocalService.getPage(nodeId, title, null);
-
 		_wikiPageModelResourcePermission.check(
-			getPermissionChecker(), page, ActionKeys.UPDATE);
+			getPermissionChecker(),
+			wikiPageLocalService.getPage(nodeId, title, null),
+			ActionKeys.UPDATE);
 
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), nodeId, ActionKeys.ADD_PAGE);
@@ -256,7 +285,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			long nodeId, String folderName, String fileName)
 		throws PortalException {
 
-		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
+		WikiNode node = _wikiNodePersistence.findByPrimaryKey(nodeId);
 
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), node, ActionKeys.ADD_ATTACHMENT);
@@ -288,6 +317,32 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			getPermissionChecker(), page, ActionKeys.DELETE);
 
 		wikiPagePersistence.remove(page);
+	}
+
+	/**
+	 * Returns the latest wiki page matching the group and the external
+	 * reference code
+	 *
+	 * @param  groupId the primary key of the group
+	 * @param  externalReferenceCode the wiki page's external reference code
+	 * @return the latest matching wiki page, or <code>null</code> if no
+	 *         matching wiki page could be found
+	 */
+	@Override
+	public WikiPage fetchLatestPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		WikiPage page =
+			wikiPageLocalService.fetchLatestPageByExternalReferenceCode(
+				groupId, externalReferenceCode);
+
+		if (page != null) {
+			_wikiPageModelResourcePermission.check(
+				getPermissionChecker(), page, ActionKeys.VIEW);
+		}
+
+		return page;
 	}
 
 	@Override
@@ -327,6 +382,30 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			getPermissionChecker(), page, ActionKeys.VIEW);
 
 		return page;
+	}
+
+	/**
+	 * Returns the latest wiki page matching the group and the external
+	 * reference code
+	 *
+	 * @param  groupId the primary key of the group
+	 * @param  externalReferenceCode the wiki page's external reference code
+	 * @return the latest matching wiki page
+	 * @throws PortalException if a portal exception occurred
+	 */
+	@Override
+	public WikiPage getLatestPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		WikiPage wikiPage =
+			wikiPageLocalService.getLatestPageByExternalReferenceCode(
+				groupId, externalReferenceCode);
+
+		_wikiPageModelResourcePermission.check(
+			getPermissionChecker(), wikiPage, ActionKeys.VIEW);
+
+		return wikiPage;
 	}
 
 	@Override
@@ -371,11 +450,11 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), nodeId, ActionKeys.VIEW);
 
-		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
+		WikiNode node = _wikiNodePersistence.findByPrimaryKey(nodeId);
 
 		List<WikiPage> pages = getNodePages(nodeId, max);
 
-		return exportToRSS(
+		return _exportToRSS(
 			node.getName(), node.getDescription(), type, version, displayStyle,
 			feedURL, entryURL, attachmentURLPrefix, pages, false, null);
 	}
@@ -413,15 +492,8 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			return pages.get(0);
 		}
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("{nodeId=");
-		sb.append(nodeId);
-		sb.append(", title=");
-		sb.append(title);
-		sb.append("}");
-
-		throw new NoSuchPageException(sb.toString());
+		throw new NoSuchPageException(
+			StringBundler.concat("{nodeId=", nodeId, ", title=", title, "}"));
 	}
 
 	@Override
@@ -459,9 +531,19 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 	}
 
 	@Override
+	public WikiPage getPageByPageId(long pageId) throws PortalException {
+		WikiPage page = wikiPageLocalService.getPageByPageId(pageId);
+
+		_wikiPageModelResourcePermission.check(
+			getPermissionChecker(), page, ActionKeys.VIEW);
+
+		return page;
+	}
+
+	@Override
 	public List<WikiPage> getPages(
 			long groupId, long nodeId, boolean head, int status, int start,
-			int end, OrderByComparator<WikiPage> obc)
+			int end, OrderByComparator<WikiPage> orderByComparator)
 		throws PortalException {
 
 		_wikiNodeModelResourcePermission.check(
@@ -469,18 +551,18 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
 			return wikiPagePersistence.filterFindByG_N_H(
-				groupId, nodeId, head, start, end, obc);
+				groupId, nodeId, head, start, end, orderByComparator);
 		}
 
 		return wikiPagePersistence.filterFindByG_N_H_S(
-			groupId, nodeId, head, status, start, end, obc);
+			groupId, nodeId, head, status, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<WikiPage> getPages(
 			long groupId, long nodeId, boolean head, long userId,
 			boolean includeOwner, int status, int start, int end,
-			OrderByComparator<WikiPage> obc)
+			OrderByComparator<WikiPage> orderByComparator)
 		throws PortalException {
 
 		_wikiNodeModelResourcePermission.check(
@@ -490,7 +572,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			status, userId, includeOwner);
 
 		queryDefinition.setEnd(end);
-		queryDefinition.setOrderByComparator(obc);
+		queryDefinition.setOrderByComparator(orderByComparator);
 		queryDefinition.setStart(start);
 
 		return wikiPageFinder.filterFindByG_N_H_S(
@@ -509,12 +591,12 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 		if (userId > 0) {
 			return wikiPagePersistence.filterFindByG_U_N_S(
 				groupId, userId, nodeId, status, start, end,
-				new PageCreateDateComparator(false));
+				PageCreateDateComparator.getInstance(false));
 		}
 
 		return wikiPagePersistence.filterFindByG_N_S(
 			groupId, nodeId, status, start, end,
-			new PageCreateDateComparator(false));
+			PageCreateDateComparator.getInstance(false));
 	}
 
 	@Override
@@ -578,9 +660,9 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 		}
 
 		List<WikiPage> pages = wikiPageLocalService.getPages(
-			nodeId, title, 0, max, new PageCreateDateComparator(true));
+			nodeId, title, 0, max, PageCreateDateComparator.getInstance(true));
 
-		return exportToRSS(
+		return _exportToRSS(
 			title, title, type, version, displayStyle, feedURL, entryURL,
 			attachmentURLPrefix, pages, true, locale);
 	}
@@ -621,7 +703,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 	public String[] getTempFileNames(long nodeId, String folderName)
 		throws PortalException {
 
-		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
+		WikiNode node = _wikiNodePersistence.findByPrimaryKey(nodeId);
 
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), node, ActionKeys.ADD_ATTACHMENT);
@@ -635,10 +717,9 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			long nodeId, String title, String fileName)
 		throws PortalException {
 
-		WikiPage page = wikiPageLocalService.getPage(nodeId, title);
-
 		_wikiPageModelResourcePermission.check(
-			getPermissionChecker(), page, ActionKeys.DELETE);
+			getPermissionChecker(), wikiPageLocalService.getPage(nodeId, title),
+			ActionKeys.DELETE);
 
 		return wikiPageLocalService.movePageAttachmentToTrash(
 			getUserId(), nodeId, title, fileName);
@@ -679,10 +760,9 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		WikiPage page = wikiPageLocalService.fetchPage(nodeId, title);
-
 		_wikiPageModelResourcePermission.check(
-			getPermissionChecker(), page, ActionKeys.UPDATE);
+			getPermissionChecker(),
+			wikiPageLocalService.fetchPage(nodeId, title), ActionKeys.UPDATE);
 
 		_wikiNodeModelResourcePermission.check(
 			getPermissionChecker(), nodeId, ActionKeys.ADD_PAGE);
@@ -721,10 +801,10 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		WikiPage page = wikiPageLocalService.getPage(nodeId, title, version);
-
 		_wikiPageModelResourcePermission.check(
-			getPermissionChecker(), page, ActionKeys.UPDATE);
+			getPermissionChecker(),
+			wikiPageLocalService.getPage(nodeId, title, version),
+			ActionKeys.UPDATE);
 
 		return wikiPageLocalService.revertPage(
 			getUserId(), nodeId, title, version, serviceContext);
@@ -781,7 +861,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			format, parentTitle, redirectTitle, serviceContext);
 	}
 
-	protected String exportToRSS(
+	private String _exportToRSS(
 			String name, String description, String type, double version,
 			String displayStyle, String feedURL, String entryURL,
 			String attachmentURLPrefix, List<WikiPage> pages, boolean diff,
@@ -803,9 +883,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 		for (WikiPage page : pages) {
 			SyndEntry syndEntry = _syndModelFactory.createSyndEntry();
 
-			String author = _portal.getUserName(page);
-
-			syndEntry.setAuthor(author);
+			syndEntry.setAuthor(_portal.getUserName(page));
 
 			SyndContent syndContent = _syndModelFactory.createSyndContent();
 
@@ -839,14 +917,14 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 								latestPage, page, null, null,
 								attachmentURLPrefix);
 						}
-						catch (PortalException pe) {
-							throw pe;
+						catch (PortalException portalException) {
+							throw portalException;
 						}
-						catch (SystemException se) {
-							throw se;
+						catch (SystemException systemException) {
+							throw systemException;
 						}
-						catch (Exception e) {
-							throw new SystemException(e);
+						catch (Exception exception) {
+							throw new SystemException(exception);
 						}
 					}
 
@@ -870,7 +948,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 									WikiConstants.SERVICE_NAME));
 
 					value = StringUtil.shorten(
-						HtmlUtil.extractText(page.getContent()),
+						_htmlParser.extractText(page.getContent()),
 						wikiGroupServiceOverriddenConfiguration.
 							rssAbstractLength(),
 						StringPool.BLANK);
@@ -899,7 +977,7 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 			if (page.isMinorEdit()) {
 				title += StringBundler.concat(
 					StringPool.SPACE, StringPool.OPEN_PARENTHESIS,
-					LanguageUtil.get(locale, "minor-edit"),
+					_language.get(locale, "minor-edit"),
 					StringPool.CLOSE_PARENTHESIS);
 			}
 
@@ -935,6 +1013,12 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
+	private HtmlParser _htmlParser;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
 
 	@Reference
@@ -951,6 +1035,9 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 
 	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiNode)")
 	private ModelResourcePermission<WikiNode> _wikiNodeModelResourcePermission;
+
+	@Reference
+	private WikiNodePersistence _wikiNodePersistence;
 
 	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiPage)")
 	private ModelResourcePermission<WikiPage> _wikiPageModelResourcePermission;

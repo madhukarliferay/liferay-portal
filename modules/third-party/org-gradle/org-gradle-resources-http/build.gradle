@@ -1,4 +1,4 @@
-task jar(type: Jar, overwrite: true)
+task jarOverwrite(type: Jar)
 
 String gradleVersion = version.substring(0, version.lastIndexOf('.'))
 
@@ -11,18 +11,27 @@ tasks.eclipse {
 }
 
 dependencies {
-	compile fileTree(dir: gradle.gradleHomeDir, include: "lib/**/*.jar")
+	api fileTree(dir: gradle.gradleHomeDir, include: "lib/**/*.jar")
+	api group: "com.liferay", name: "com.liferay.gradle.util", version: "1.0.49"
+	api group: "org.apache.maven", name: "maven-artifact", version: "3.6.3"
 }
 
 jar {
-	baseName = "gradle-resources-http"
+	dependsOn jarOverwrite
+	setActions([])
+}
+
+jarOverwrite {
+	archiveBaseName = "org-gradle-resources-http"
 	duplicatesStrategy = "exclude"
 	from sourceSets.main.output
 
 	from zipTree(
 		{
-			configurations.compile.find {
+			configurations.runtimeClasspath.find {
 				it.name.startsWith "gradle-resources-http-"
 			}
 		})
+
+	mustRunAfter generatePomFileForMavenPublication
 }

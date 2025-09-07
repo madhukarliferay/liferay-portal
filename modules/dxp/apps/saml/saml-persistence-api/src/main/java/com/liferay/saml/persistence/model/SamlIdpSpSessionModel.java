@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -38,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface SamlIdpSpSessionModel
 	extends AuditedModel, BaseModel<SamlIdpSpSession>, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a saml idp sp session model instance should use the {@link SamlIdpSpSession} interface instead.
@@ -184,48 +175,24 @@ public interface SamlIdpSpSessionModel
 	public void setSamlIdpSsoSessionId(long samlIdpSsoSessionId);
 
 	/**
-	 * Returns the saml sp entity ID of this saml idp sp session.
+	 * Returns the saml peer binding ID of this saml idp sp session.
 	 *
-	 * @return the saml sp entity ID of this saml idp sp session
+	 * @return the saml peer binding ID of this saml idp sp session
 	 */
-	@AutoEscape
-	public String getSamlSpEntityId();
+	public long getSamlPeerBindingId();
 
 	/**
-	 * Sets the saml sp entity ID of this saml idp sp session.
+	 * Sets the saml peer binding ID of this saml idp sp session.
 	 *
-	 * @param samlSpEntityId the saml sp entity ID of this saml idp sp session
+	 * @param samlPeerBindingId the saml peer binding ID of this saml idp sp session
 	 */
-	public void setSamlSpEntityId(String samlSpEntityId);
+	public void setSamlPeerBindingId(long samlPeerBindingId);
 
-	/**
-	 * Returns the name ID format of this saml idp sp session.
-	 *
-	 * @return the name ID format of this saml idp sp session
-	 */
-	@AutoEscape
-	public String getNameIdFormat();
+	@Override
+	public SamlIdpSpSession cloneWithOriginalValues();
 
-	/**
-	 * Sets the name ID format of this saml idp sp session.
-	 *
-	 * @param nameIdFormat the name ID format of this saml idp sp session
-	 */
-	public void setNameIdFormat(String nameIdFormat);
-
-	/**
-	 * Returns the name ID value of this saml idp sp session.
-	 *
-	 * @return the name ID value of this saml idp sp session
-	 */
-	@AutoEscape
-	public String getNameIdValue();
-
-	/**
-	 * Sets the name ID value of this saml idp sp session.
-	 *
-	 * @param nameIdValue the name ID value of this saml idp sp session
-	 */
-	public void setNameIdValue(String nameIdValue);
+	public default String toXmlString() {
+		return null;
+	}
 
 }

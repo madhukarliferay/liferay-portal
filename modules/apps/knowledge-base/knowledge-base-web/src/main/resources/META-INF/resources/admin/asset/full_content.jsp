@@ -1,20 +1,11 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
-<%@ include file="/admin/init.jsp" %>
+<%@ include file="/admin/asset/init.jsp" %>
 
 <%
 KBArticle kbArticle = (KBArticle)request.getAttribute(KBWebKeys.KNOWLEDGE_BASE_KB_ARTICLE);
@@ -22,4 +13,36 @@ KBArticle kbArticle = (KBArticle)request.getAttribute(KBWebKeys.KNOWLEDGE_BASE_K
 
 <%= kbArticle.getContent() %>
 
-<liferay-util:include page="/admin/common/article_attachments.jsp" servletContext="<%= application %>" />
+<%
+List<FileEntry> attachmentsFileEntries = new ArrayList<FileEntry>();
+
+if (kbArticle != null) {
+	attachmentsFileEntries = kbArticle.getAttachmentsFileEntries();
+}
+%>
+
+<c:if test="<%= !attachmentsFileEntries.isEmpty() %>">
+	<div class="kb-attachments">
+		<div class="h5"><liferay-ui:message key="attachments" /></div>
+
+		<clay:row>
+
+			<%
+			for (FileEntry fileEntry : attachmentsFileEntries) {
+			%>
+
+				<clay:col
+					md="4"
+				>
+					<clay:horizontal-card
+						horizontalCard="<%= new KBArticleAttachmentHorizontalCard(fileEntry, request) %>"
+					/>
+				</clay:col>
+
+			<%
+			}
+			%>
+
+		</clay:row>
+	</div>
+</c:if>

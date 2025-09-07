@@ -1,23 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.radio;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.radio.helper.RadioDDMFormFieldContextHelper;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
-import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
@@ -26,7 +19,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 
 import java.util.List;
@@ -40,11 +32,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=radio",
-	service = {
-		DDMFormFieldTemplateContextContributor.class,
-		RadioDDMFormFieldTemplateContextContributor.class
-	}
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.RADIO,
+	service = DDMFormFieldTemplateContextContributor.class
 )
 public class RadioDDMFormFieldTemplateContextContributor
 	implements DDMFormFieldTemplateContextContributor {
@@ -54,26 +43,24 @@ public class RadioDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
-		Map<String, Object> parameters = HashMapBuilder.<String, Object>put(
+		return HashMapBuilder.<String, Object>put(
 			"inline", GetterUtil.getBoolean(ddmFormField.getProperty("inline"))
 		).put(
-			"options", getOptions(ddmFormField, ddmFormFieldRenderingContext)
-		).build();
-
-		String predefinedValue = getPredefinedValue(
-			ddmFormField, ddmFormFieldRenderingContext);
-
-		if (predefinedValue != null) {
-			parameters.put("predefinedValue", predefinedValue);
-		}
-
-		parameters.put(
+			"options", _getOptions(ddmFormField, ddmFormFieldRenderingContext)
+		).put(
+			"predefinedValue",
+			getValue(
+				GetterUtil.getString(
+					DDMFormFieldTypeUtil.getPropertyValue(
+						ddmFormField, ddmFormFieldRenderingContext.getLocale(),
+						"predefinedValue"),
+					"[]"))
+		).put(
 			"value",
 			getValue(
 				GetterUtil.getString(
-					ddmFormFieldRenderingContext.getValue(), "[]")));
-
-		return parameters;
+					ddmFormFieldRenderingContext.getValue(), "[]"))
+		).build();
 	}
 
 	protected DDMFormFieldOptions getDDMFormFieldOptions(
@@ -82,10 +69,7 @@ public class RadioDDMFormFieldTemplateContextContributor
 
 		DDMFormFieldOptions ddmFormFieldOptions = new DDMFormFieldOptions();
 
-		String dataSourceType = GetterUtil.getString(
-			ddmFormField.getProperty("dataSourceType"), "manual");
-
-		if (Objects.equals(dataSourceType, "manual")) {
+		if (Objects.equals(ddmFormField.getDataSourceType(), "manual")) {
 			List<Map<String, String>> keyValuePairs =
 				(List<Map<String, String>>)
 					ddmFormFieldRenderingContext.getProperty("options");
@@ -99,13 +83,33 @@ public class RadioDDMFormFieldTemplateContextContributor
 					keyValuePair.get("value"),
 					ddmFormFieldRenderingContext.getLocale(),
 					keyValuePair.get("label"));
+				ddmFormFieldOptions.addOptionReference(
+					keyValuePair.get("value"), keyValuePair.get("reference"));
 			}
 		}
 
 		return ddmFormFieldOptions;
 	}
 
-	protected List<Object> getOptions(
+	protected String getValue(String valueString) {
+		try {
+			JSONArray jsonArray = jsonFactory.createJSONArray(valueString);
+
+			return GetterUtil.getString(jsonArray.get(0));
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
+			return valueString;
+		}
+	}
+
+	@Reference
+	protected JSONFactory jsonFactory;
+
+	private List<Object> _getOptions(
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
@@ -118,45 +122,6 @@ public class RadioDDMFormFieldTemplateContextContributor
 		return radioDDMFormFieldContextHelper.getOptions(
 			ddmFormFieldRenderingContext);
 	}
-
-	protected String getPredefinedValue(
-		DDMFormField ddmFormField,
-		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
-
-		LocalizedValue predefinedValue = ddmFormField.getPredefinedValue();
-
-		if (predefinedValue == null) {
-			return null;
-		}
-
-		String predefinedValueString = GetterUtil.getString(
-			predefinedValue.getString(ddmFormFieldRenderingContext.getLocale()),
-			"[]");
-
-		if (ddmFormFieldRenderingContext.isViewMode()) {
-			predefinedValueString = HtmlUtil.extractText(predefinedValueString);
-		}
-
-		return getValue(predefinedValueString);
-	}
-
-	protected String getValue(String valueString) {
-		try {
-			JSONArray jsonArray = jsonFactory.createJSONArray(valueString);
-
-			return GetterUtil.getString(jsonArray.get(0));
-		}
-		catch (JSONException jsone) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(jsone, jsone);
-			}
-
-			return valueString;
-		}
-	}
-
-	@Reference
-	protected JSONFactory jsonFactory;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		RadioDDMFormFieldTemplateContextContributor.class);

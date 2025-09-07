@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.auto.tagger.test;
@@ -20,37 +11,37 @@ import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
 import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
 
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Alejandro Tardín
@@ -63,21 +54,20 @@ public abstract class BaseAssetAutoTaggerTestCase {
 
 	@Before
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
-
-		company = CompanyTestUtil.addCompany();
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		group = GroupTestUtil.addGroup();
 
-		Registry registry = RegistryUtil.getRegistry();
+		Bundle bundle = FrameworkUtil.getBundle(getClass());
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			"model.class.name", DLFileEntryConstants.getClassName()
-		).build();
+		BundleContext bundleContext = bundle.getBundleContext();
 
-		_assetAutoTagProviderServiceRegistration = registry.registerService(
-			AssetAutoTagProvider.class,
-			model -> Arrays.asList(ASSET_TAG_NAME_AUTO), properties);
+		_assetAutoTagProviderServiceRegistration =
+			bundleContext.registerService(
+				AssetAutoTagProvider.class,
+				model -> Arrays.asList(ASSET_TAG_NAME_AUTO),
+				MapUtil.singletonDictionary(
+					"model.class.name", DLFileEntryConstants.getClassName()));
 	}
 
 	@After
@@ -85,14 +75,28 @@ public abstract class BaseAssetAutoTaggerTestCase {
 		_assetAutoTagProviderServiceRegistration.unregister();
 	}
 
+	protected FileEntry addFileEntry(ServiceContext serviceContext)
+		throws PortalException {
+
+		return DLAppServiceUtil.addFileEntry(
+			null, group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringUtil.randomString(), StringUtil.randomString(), new byte[0],
+			null, null, null, serviceContext);
+	}
+
 	protected AssetEntry addFileEntryAssetEntry(ServiceContext serviceContext)
 		throws PortalException {
 
 		FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-			group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
-			RandomTestUtil.randomString(), StringUtil.randomString(),
-			StringUtil.randomString(), new byte[0], serviceContext);
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringUtil.randomString(), StringUtil.randomString(), new byte[0],
+			null, null, null, serviceContext);
 
 		return AssetEntryLocalServiceUtil.getEntry(
 			DLFileEntryConstants.getClassName(), fileEntry.getFileEntryId());
@@ -136,9 +140,24 @@ public abstract class BaseAssetAutoTaggerTestCase {
 	}
 
 	protected void assertHasNoTags(AssetEntry assetEntry) {
-		List<AssetTag> tags = assetEntry.getTags();
+		List<AssetTag> assetTag = assetEntry.getTags();
 
-		Assert.assertEquals(tags.toString(), 0, tags.size());
+		Assert.assertEquals(assetTag.toString(), 0, assetTag.size());
+	}
+
+	protected AssetEntry updateFileEntryAssetEntry(
+			FileEntry fileEntry, ServiceContext serviceContext)
+		throws PortalException {
+
+		DLAppServiceUtil.updateFileEntry(
+			fileEntry.getFileEntryId(), fileEntry.getFileName(), null,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			DLVersionNumberIncrease.AUTOMATIC, new byte[0], null, null, null,
+			serviceContext);
+
+		return AssetEntryLocalServiceUtil.getEntry(
+			DLFileEntryConstants.getClassName(), fileEntry.getFileEntryId());
 	}
 
 	protected void withAutoTaggerDisabled(
@@ -156,17 +175,16 @@ public abstract class BaseAssetAutoTaggerTestCase {
 	}
 
 	@DeleteAfterTestRun
-	protected Company company;
-
 	protected Group group;
 
 	private void _withAutoTagger(
 			boolean enabled, UnsafeRunnable<Exception> unsafeRunnable)
 		throws Exception {
 
-		Dictionary<String, Object> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("enabled", enabled);
+		Dictionary<String, Object> dictionary =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"enabled", enabled
+			).build();
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
 				new ConfigurationTemporarySwapper(
@@ -178,7 +196,6 @@ public abstract class BaseAssetAutoTaggerTestCase {
 		}
 	}
 
-	private ServiceRegistration<AssetAutoTagProvider>
-		_assetAutoTagProviderServiceRegistration;
+	private ServiceRegistration<?> _assetAutoTagProviderServiceRegistration;
 
 }

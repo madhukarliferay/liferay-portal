@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,11 +10,15 @@
 <%
 long groupId = ParamUtil.getLong(request, "groupId", themeDisplay.getScopeGroupId());
 
-PortletURL portletURL = currentURLObj;
-
-portletURL.setParameter("mvcRenderCommandName", "exportImport");
-portletURL.setParameter("tabs2", "export");
-portletURL.setParameter("tabs3", "current-and-previous");
+PortletURL portletURL = PortletURLBuilder.create(
+	currentURLObj
+).setMVCRenderCommandName(
+	"/export_import/export_import"
+).setTabs2(
+	"export"
+).setParameter(
+	"tabs3", "current-and-previous"
+).buildPortletURL();
 
 String orderByCol = ParamUtil.getString(request, "orderByCol");
 String orderByType = ParamUtil.getString(request, "orderByType");
@@ -36,16 +31,14 @@ else {
 	orderByCol = portalPreferences.getValue(PortletKeys.BACKGROUND_TASK, "entries-order-by-col", "create-date");
 	orderByType = portalPreferences.getValue(PortletKeys.BACKGROUND_TASK, "entries-order-by-type", "desc");
 }
-
-OrderByComparator<BackgroundTask> orderByComparator = BackgroundTaskComparatorFactoryUtil.getBackgroundTaskOrderByComparator(orderByCol, orderByType);
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<liferay-ui:search-container
 		emptyResultsMessage="no-export-processes-were-found"
 		iteratorURL="<%= portletURL %>"
 		orderByCol="<%= orderByCol %>"
-		orderByComparator="<%= orderByComparator %>"
+		orderByComparator="<%= BackgroundTaskComparatorFactoryUtil.getBackgroundTaskOrderByComparator(orderByCol, orderByType) %>"
 		orderByType="<%= orderByType %>"
 		total="<%= BackgroundTaskManagerUtil.getBackgroundTasksCount(groupId, selPortlet.getPortletId(), BackgroundTaskExecutorNames.PORTLET_EXPORT_BACKGROUND_TASK_EXECUTOR) %>"
 	>
@@ -62,10 +55,7 @@ OrderByComparator<BackgroundTask> orderByComparator = BackgroundTaskComparatorFa
 				cssClass="background-task-user-column"
 				name="user"
 			>
-				<liferay-ui:user-display
-					displayStyle="3"
-					showUserDetails="<%= false %>"
-					showUserName="<%= false %>"
+				<liferay-user:user-portrait
 					userId="<%= backgroundTask.getUserId() %>"
 				/>
 			</liferay-ui:search-container-column-text>
@@ -89,23 +79,21 @@ OrderByComparator<BackgroundTask> orderByComparator = BackgroundTaskComparatorFa
 			/>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="download"
 			>
 
 				<%
-				List<FileEntry> attachmentsFileEntries = backgroundTask.getAttachmentsFileEntries();
-
-				for (FileEntry fileEntry : attachmentsFileEntries) {
-					Map<String, Object> data = new HashMap<String, Object>();
-
-					data.put("senna-off", "true");
+				for (FileEntry fileEntry : backgroundTask.getAttachmentsFileEntries()) {
+					Map<String, Object> data = HashMapBuilder.<String, Object>put(
+						"senna-off", "true"
+					).build();
 
 					StringBundler sb = new StringBundler(4);
 
 					sb.append(fileEntry.getTitle());
 					sb.append(StringPool.OPEN_PARENTHESIS);
-					sb.append(TextFormatter.formatStorageSize(fileEntry.getSize(), locale));
+					sb.append(LanguageUtil.formatStorageSize(fileEntry.getSize(), locale));
 					sb.append(StringPool.CLOSE_PARENTHESIS);
 				%>
 
@@ -133,14 +121,14 @@ OrderByComparator<BackgroundTask> orderByComparator = BackgroundTaskComparatorFa
 					%>
 
 					<liferay-portlet:renderURL var="redirectURL">
-						<portlet:param name="mvcRenderCommandName" value="exportImport" />
+						<portlet:param name="mvcRenderCommandName" value="/export_import/export_import" />
 						<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.EXPORT %>" />
 						<portlet:param name="tabs2" value="export" />
 						<portlet:param name="tabs3" value="current-and-previous" />
 						<portlet:param name="portletResource" value="<%= portletResource %>" />
 					</liferay-portlet:renderURL>
 
-					<liferay-portlet:actionURL name="deleteBackgroundTask" portletName="<%= PortletKeys.EXPORT_IMPORT %>" var="deleteBackgroundTaskURL">
+					<liferay-portlet:actionURL name="/export_import/delete_portlet_background_task" portletName="<%= PortletKeys.EXPORT_IMPORT %>" var="deleteBackgroundTaskURL">
 						<portlet:param name="redirect" value="<%= redirectURL %>" />
 						<portlet:param name="backgroundTaskId" value="<%= String.valueOf(backgroundTask.getBackgroundTaskId()) %>" />
 					</liferay-portlet:actionURL>
@@ -166,12 +154,12 @@ OrderByComparator<BackgroundTask> orderByComparator = BackgroundTaskComparatorFa
 	</liferay-ui:search-container>
 
 	<%
-	int incompleteBackgroundTaskCount = BackgroundTaskManagerUtil.getBackgroundTasksCount(groupId, selPortlet.getPortletId(), BackgroundTaskExecutorNames.PORTLET_EXPORT_BACKGROUND_TASK_EXECUTOR, false);
+	int incompleteBackgroundTasksCount = BackgroundTaskManagerUtil.getBackgroundTasksCount(groupId, selPortlet.getPortletId(), BackgroundTaskExecutorNames.PORTLET_EXPORT_BACKGROUND_TASK_EXECUTOR, false);
 	%>
 
 	<div class="hide incomplete-process-message">
 		<liferay-util:include page="/incomplete_processes_message.jsp" servletContext="<%= application %>">
-			<liferay-util:param name="incompleteBackgroundTaskCount" value="<%= String.valueOf(incompleteBackgroundTaskCount) %>" />
+			<liferay-util:param name="incompleteBackgroundTasksCount" value="<%= String.valueOf(incompleteBackgroundTasksCount) %>" />
 		</liferay-util:include>
 	</div>
-</div>
+</clay:container-fluid>

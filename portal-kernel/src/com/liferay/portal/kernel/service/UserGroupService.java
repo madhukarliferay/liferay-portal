@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
@@ -39,6 +31,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -47,10 +40,10 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface UserGroupService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link UserGroupServiceUtil} to access the user group remote service. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the user group remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link UserGroupServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
@@ -60,6 +53,11 @@ public interface UserGroupService extends BaseService {
 	 * @param userGroupIds the primary keys of the user groups
 	 */
 	public void addGroupUserGroups(long groupId, long[] userGroupIds)
+		throws PortalException;
+
+	public UserGroup addOrUpdateUserGroup(
+			String externalReferenceCode, String name, String description,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -79,6 +77,7 @@ public interface UserGroupService extends BaseService {
 	 * including its resources, metadata, and internal data structures.
 	 * </p>
 	 *
+	 * @param externalReferenceCode the user group's external reference code
 	 * @param name the user group's name
 	 * @param description the user group's description
 	 * @param serviceContext the service context to be applied (optionally
@@ -87,7 +86,8 @@ public interface UserGroupService extends BaseService {
 	 * @return the user group
 	 */
 	public UserGroup addUserGroup(
-			String name, String description, ServiceContext serviceContext)
+			String externalReferenceCode, String name, String description,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -105,6 +105,11 @@ public interface UserGroupService extends BaseService {
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public UserGroup fetchUserGroup(long userGroupId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public UserGroup fetchUserGroupByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> getGtUserGroups(
@@ -134,6 +139,11 @@ public interface UserGroupService extends BaseService {
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public UserGroup getUserGroup(String name) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public UserGroup getUserGroupByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> getUserGroups(long companyId) throws PortalException;
@@ -176,15 +186,16 @@ public interface UserGroupService extends BaseService {
 	 * @param start the lower bound of the range of user groups to return
 	 * @param end the upper bound of the range of user groups to return (not
 	 inclusive)
-	 * @param obc the comparator to order the user groups (optionally
-	 <code>null</code>)
-	 * @return the matching user groups ordered by comparator <code>obc</code>
+	 * @param orderByComparator the comparator to order the user groups
+	 (optionally <code>null</code>)
+	 * @return the matching user groups ordered by comparator
+	 <code>orderByComparator</code>
 	 * @see com.liferay.portal.kernel.service.persistence.UserGroupFinder
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> search(
 		long companyId, String keywords, LinkedHashMap<String, Object> params,
-		int start, int end, OrderByComparator<UserGroup> obc);
+		int start, int end, OrderByComparator<UserGroup> orderByComparator);
 
 	/**
 	 * Returns an ordered range of all the user groups that match the name and
@@ -211,16 +222,17 @@ public interface UserGroupService extends BaseService {
 	 * @param start the lower bound of the range of user groups to return
 	 * @param end the upper bound of the range of user groups to return (not
 	 inclusive)
-	 * @param obc the comparator to order the user groups (optionally
-	 <code>null</code>)
-	 * @return the matching user groups ordered by comparator <code>obc</code>
+	 * @param orderByComparator the comparator to order the user groups
+	 (optionally <code>null</code>)
+	 * @return the matching user groups ordered by comparator
+	 <code>orderByComparator</code>
 	 * @see com.liferay.portal.kernel.service.persistence.UserGroupFinder
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> search(
 		long companyId, String name, String description,
 		LinkedHashMap<String, Object> params, boolean andOperator, int start,
-		int end, OrderByComparator<UserGroup> obc);
+		int end, OrderByComparator<UserGroup> orderByComparator);
 
 	/**
 	 * Returns the number of user groups that match the keywords
@@ -276,9 +288,14 @@ public interface UserGroupService extends BaseService {
 	public void unsetTeamUserGroups(long teamId, long[] userGroupIds)
 		throws PortalException;
 
+	public UserGroup updateExternalReferenceCode(
+			UserGroup userGroup, String externalReferenceCode)
+		throws PortalException;
+
 	/**
 	 * Updates the user group.
 	 *
+	 * @param externalReferenceCode the user group's external reference code
 	 * @param userGroupId the primary key of the user group
 	 * @param name the user group's name
 	 * @param description the the user group's description
@@ -288,8 +305,8 @@ public interface UserGroupService extends BaseService {
 	 * @return the user group
 	 */
 	public UserGroup updateUserGroup(
-			long userGroupId, String name, String description,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userGroupId, String name,
+			String description, ServiceContext serviceContext)
 		throws PortalException;
 
 }

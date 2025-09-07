@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.reading.time.taglib.servlet.taglib;
@@ -25,17 +16,16 @@ import com.liferay.reading.time.service.ReadingTimeEntryLocalServiceUtil;
 import com.liferay.reading.time.taglib.internal.servlet.servlet.reading.time.ReadingTimeUtil;
 import com.liferay.taglib.util.AttributesTagSupport;
 
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.tagext.BodyTag;
+
 import java.io.IOException;
 
 import java.time.Duration;
-
-import java.util.Optional;
-
-import javax.portlet.RenderResponse;
-
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.tagext.BodyTag;
 
 /**
  * @author Alejandro Tardín
@@ -45,22 +35,22 @@ public class ReadingTimeTag extends AttributesTagSupport implements BodyTag {
 	@Override
 	public int doEndTag() throws JspException {
 		try {
-			Optional<Duration> readingTimeDurationOptional =
-				_getReadingTimeDurationOptional();
+			Duration readingTimeDuration = _getReadingTimeDuration();
 
-			Optional<String> tagOptional = readingTimeDurationOptional.flatMap(
-				this::_buildTag);
+			if (readingTimeDuration != null) {
+				String tag = _buildTag(readingTimeDuration);
 
-			if (tagOptional.isPresent()) {
-				JspWriter jspWriter = pageContext.getOut();
+				if (tag != null) {
+					JspWriter jspWriter = pageContext.getOut();
 
-				jspWriter.write(tagOptional.get());
+					jspWriter.write(tag);
+				}
 			}
 
 			return EVAL_PAGE;
 		}
-		catch (IOException ioe) {
-			throw new JspException(ioe);
+		catch (IOException ioException) {
+			throw new JspException(ioException);
 		}
 	}
 
@@ -76,7 +66,7 @@ public class ReadingTimeTag extends AttributesTagSupport implements BodyTag {
 		_groupedModel = groupedModel;
 	}
 
-	private Optional<String> _buildTag(Duration readingTimeDuration) {
+	private String _buildTag(Duration readingTimeDuration) {
 		String readingTimeMessage = _getReadingTimeMessage(readingTimeDuration);
 
 		if (Validator.isNotNull(readingTimeMessage)) {
@@ -97,22 +87,25 @@ public class ReadingTimeTag extends AttributesTagSupport implements BodyTag {
 			sb.append(readingTimeMessage);
 			sb.append("</time>");
 
-			return Optional.of(sb.toString());
+			return sb.toString();
 		}
 
-		return Optional.empty();
+		return null;
 	}
 
 	private String _getNamespace() {
-		RenderResponse renderResponse = (RenderResponse)request.getAttribute(
-			JavaConstants.JAVAX_PORTLET_RESPONSE);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		RenderResponse renderResponse =
+			(RenderResponse)httpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 		return renderResponse.getNamespace();
 	}
 
-	private Optional<Duration> _getReadingTimeDurationOptional() {
+	private Duration _getReadingTimeDuration() {
 		if (_groupedModel == null) {
-			return Optional.of(Duration.ZERO);
+			return Duration.ZERO;
 		}
 
 		ReadingTimeEntry readingTimeEntry =
@@ -120,11 +113,10 @@ public class ReadingTimeTag extends AttributesTagSupport implements BodyTag {
 				_groupedModel);
 
 		if (readingTimeEntry != null) {
-			return Optional.of(
-				Duration.ofMillis(readingTimeEntry.getReadingTime()));
+			return Duration.ofMillis(readingTimeEntry.getReadingTime());
 		}
 
-		return Optional.empty();
+		return null;
 	}
 
 	private String _getReadingTimeMessage(Duration readingTimeDuration) {
@@ -136,7 +128,7 @@ public class ReadingTimeTag extends AttributesTagSupport implements BodyTag {
 		}
 
 		return readingTimeMessageProvider.provide(
-			readingTimeDuration, PortalUtil.getLocale(request));
+			readingTimeDuration, PortalUtil.getLocale(getRequest()));
 	}
 
 	private String _displayStyle = "simple";

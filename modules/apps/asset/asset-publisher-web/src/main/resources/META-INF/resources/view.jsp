@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,28 +10,50 @@
 <%
 assetPublisherDisplayContext.setPageKeywords();
 
-if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisherDisplayContext.isSelectionStyleAssetList() && assetPublisherDisplayContext.isSelectionStyleManual() && ((assetPublisherDisplayContext.getAllAssetCategoryIds().length > 0) || (assetPublisherDisplayContext.getAllAssetTagNames().length > 0))) {
-	assetPublisherDisplayContext.setSelectionStyle("dynamic");
+if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisherDisplayContext.isSelectionStyleAssetList() && assetPublisherDisplayContext.isSelectionStyleManual() && (ArrayUtil.isNotEmpty(assetPublisherDisplayContext.getAllAssetCategoryIds()) || ArrayUtil.isNotEmpty(assetPublisherDisplayContext.getAllAssetTagNames()))) {
+	assetPublisherDisplayContext.setSelectionStyle(AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC);
 }
 %>
 
 <liferay-ui:success key='<%= AssetPublisherPortletKeys.ASSET_PUBLISHER + "requestProcessed" %>' message="your-request-completed-successfully" />
 
 <c:if test="<%= assetPublisherDisplayContext.isEnableSubscriptions() %>">
-	<div class="subscribe-action">
+	<div class="mb-4 subscribe-action">
+		<c:if test="<%= PortalUtil.isRSSFeedsEnabled() && assetPublisherDisplayContext.isEnableRSS() %>">
+			<liferay-portlet:resourceURL id="getRSS" varImpl="rssURL" />
+
+			<div class="btn-group-item">
+				<clay:link
+					borderless="<%= true %>"
+					data-senna-off="<%= true %>"
+					displayType="secondary"
+					href="<%= rssURL.toString() %>"
+					icon="rss-full"
+					label="rss"
+					outline="<%= true %>"
+					small="<%= true %>"
+					type="button"
+				/>
+			</div>
+
+			<liferay-util:html-top>
+				<link href="<%= HtmlUtil.escapeAttribute(rssURL.toString()) %>" rel="alternate" title="RSS" type="application/rss+xml" />
+			</liferay-util:html-top>
+		</c:if>
+
 		<c:if test="<%= assetPublisherDisplayContext.isSubscriptionEnabled() %>">
 			<c:choose>
-				<c:when test="<%= assetPublisherWebUtil.isSubscribed(themeDisplay.getCompanyId(), user.getUserId(), themeDisplay.getPlid(), portletDisplay.getId()) %>">
+				<c:when test="<%= assetPublisherWebHelper.isSubscribed(themeDisplay.getCompanyId(), user.getUserId(), themeDisplay.getPlid(), portletDisplay.getId()) %>">
 					<portlet:actionURL name="unsubscribe" var="unsubscribeURL">
 						<portlet:param name="redirect" value="<%= currentURL %>" />
 					</portlet:actionURL>
 
-					<liferay-ui:icon
-						label="<%= true %>"
-						linkCssClass="btn btn-secondary btn-sm mb-4"
-						markupView="lexicon"
-						message="unsubscribe"
-						url="<%= unsubscribeURL %>"
+					<clay:link
+						displayType="secondary"
+						href="<%= unsubscribeURL %>"
+						label="unsubscribe"
+						small="<%= true %>"
+						type="button"
 					/>
 				</c:when>
 				<c:otherwise>
@@ -48,23 +61,15 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 						<portlet:param name="redirect" value="<%= currentURL %>" />
 					</portlet:actionURL>
 
-					<liferay-ui:icon
-						label="<%= true %>"
-						linkCssClass="btn btn-secondary btn-sm mb-4"
-						markupView="lexicon"
-						message="subscribe"
-						url="<%= subscribeURL %>"
+					<clay:link
+						displayType="secondary"
+						href="<%= subscribeURL %>"
+						label="subscribe"
+						small="<%= true %>"
+						type="button"
 					/>
 				</c:otherwise>
 			</c:choose>
-		</c:if>
-
-		<c:if test="<%= PortalUtil.isRSSFeedsEnabled() && assetPublisherDisplayContext.isEnableRSS() %>">
-			<liferay-portlet:resourceURL id="getRSS" varImpl="rssURL" />
-
-			<liferay-rss:rss
-				resourceURL="<%= rssURL %>"
-			/>
 		</c:if>
 	</div>
 </c:if>
@@ -72,6 +77,7 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 <c:if test="<%= assetPublisherDisplayContext.isShowMetadataDescriptions() %>">
 	<liferay-asset:categorization-filter
 		assetType="content"
+		groupIds="<%= assetPublisherDisplayContext.getGroupIds() %>"
 		portletURL="<%= assetPublisherDisplayContext.getPortletURL() %>"
 	/>
 </c:if>
@@ -79,7 +85,7 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 <c:choose>
 	<c:when test="<%= ListUtil.isNotEmpty(assetPublisherDisplayContext.getAssetEntryResults()) %>">
 		<c:choose>
-			<c:when test="<%= ArrayUtil.contains(assetPublisherDisplayContext.getDisplayStyles(), assetPublisherDisplayContext.getDisplayStyle()) || StringUtil.startsWith(assetPublisherDisplayContext.getDisplayStyle(), PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX) %>">
+			<c:when test="<%= ArrayUtil.contains(assetPublisherDisplayContext.getDisplayStyles(), assetPublisherDisplayContext.getDisplayStyle()) || StringUtil.startsWith(assetPublisherDisplayContext.getDisplayStyle(), PortletDisplayTemplateConstants.DISPLAY_STYLE_PREFIX) %>">
 				<liferay-util:include page="/view_asset_entry_list.jsp" servletContext="<%= application %>" />
 			</c:when>
 			<c:otherwise>
@@ -99,7 +105,7 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 			Map<Long, List<AssetPublisherAddItemHolder>> scopeAssetPublisherAddItemHolders = assetPublisherDisplayContext.getScopeAssetPublisherAddItemHolders(1);
 			%>
 
-			<c:if test="<%= MapUtil.isEmpty(scopeAssetPublisherAddItemHolders) && !((assetPublisherDisplayContext.getAssetCategoryId() > 0) || Validator.isNotNull(assetPublisherDisplayContext.getAssetTagName())) %>">
+			<c:if test="<%= portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS) || (MapUtil.isEmpty(scopeAssetPublisherAddItemHolders) && !((assetPublisherDisplayContext.getAssetCategoryId() > 0) || Validator.isNotNull(assetPublisherDisplayContext.getAssetTagName()))) %>">
 
 				<%
 				renderRequest.setAttribute(WebKeys.PORTLET_CONFIGURATOR_VISIBILITY, Boolean.TRUE);
@@ -107,16 +113,20 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 
 			</c:if>
 
-			<div class="alert alert-info text-center">
+			<clay:alert
+				displayType="info"
+			>
 				<c:choose>
-					<c:when test="<%= assetPublisherDisplayContext.isSelectionStyleAssetList() && (assetPublisherDisplayContext.fetchAssetListEntry() == null) && !portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS) %>">
-						<div>
-							<liferay-ui:message key="this-application-is-not-visible-to-users-yet" />
-						</div>
+					<c:when test="<%= assetPublisherDisplayContext.isSelectionStyleAssetList() && (assetPublisherDisplayContext.fetchAssetListEntry() == null) && Validator.isNull(assetPublisherDisplayContext.getInfoListProviderKey()) && !portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS) %>">
+						<liferay-ui:message key="this-application-is-not-visible-to-users-yet" />
 
-						<div>
-							<aui:a href="javascript:;" onClick="<%= portletDisplay.getURLConfigurationJS() %>"><liferay-ui:message key="select-a-content-set-to-make-it-visible" /></aui:a>
-						</div>
+						<clay:button
+							cssClass="align-baseline border-0 p-0"
+							displayType="link"
+							label="select-a-collection-to-make-it-visible"
+							onClick="<%= portletDisplay.getURLConfigurationJS() %>"
+							small="<%= true %>"
+						/>
 					</c:when>
 					<c:when test="<%= !portletName.equals(AssetPublisherPortletKeys.RELATED_ASSETS) %>">
 						<liferay-ui:message key="there-are-no-results" />
@@ -125,24 +135,36 @@ if (assetPublisherDisplayContext.isEnableTagBasedNavigation() && !assetPublisher
 						<liferay-ui:message key="there-are-no-related-assets" />
 					</c:otherwise>
 				</c:choose>
-			</div>
+			</clay:alert>
 		</liferay-ddm:template-renderer>
 	</c:otherwise>
 </c:choose>
 
 <%
-SearchContainer searchContainer = assetPublisherDisplayContext.getSearchContainer();
+SearchContainer<AssetEntry> searchContainer = assetPublisherDisplayContext.getSearchContainer();
 %>
 
 <c:if test="<%= !assetPublisherDisplayContext.isPaginationTypeNone() && (searchContainer.getTotal() > searchContainer.getDelta()) %>">
-	<liferay-ui:search-paginator
-		searchContainer="<%= searchContainer %>"
-		type="<%= assetPublisherDisplayContext.getPaginationType() %>"
-	/>
+	<c:choose>
+		<c:when test="<%= Objects.equals(assetPublisherDisplayContext.getPaginationType(), AssetPublisherDisplayContext.PAGINATION_TYPE_REGULAR) %>">
+			<liferay-ui:search-paginator
+				markupView="lexicon"
+				searchContainer="<%= searchContainer %>"
+				type="<%= assetPublisherDisplayContext.getPaginationType() %>"
+			/>
+		</c:when>
+		<c:otherwise>
+			<liferay-ui:search-paginator
+				searchContainer="<%= searchContainer %>"
+				type="<%= assetPublisherDisplayContext.getPaginationType() %>"
+			/>
+		</c:otherwise>
+	</c:choose>
 </c:if>
 
 <aui:script sandbox="<%= true %>">
-	var assetEntryId = '<%= assetPublisherDisplayContext.getAssetEntryId() %>';
+	var assetEntryId =
+		'<%= HtmlUtil.escape(assetPublisherDisplayContext.getAssetEntryId()) %>';
 
 	if (assetEntryId) {
 		window.location.hash = assetEntryId;

@@ -1,35 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.entry.rel.service.impl;
 
 import com.liferay.asset.entry.rel.model.AssetEntryAssetCategoryRel;
+import com.liferay.asset.entry.rel.model.AssetEntryAssetCategoryRelTable;
 import com.liferay.asset.entry.rel.service.base.AssetEntryAssetCategoryRelLocalServiceBaseImpl;
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.model.AssetEntryTable;
 import com.liferay.asset.kernel.model.AssetRenderer;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
 import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
@@ -63,10 +63,8 @@ public class AssetEntryAssetCategoryRelLocalServiceImpl
 		assetEntryAssetCategoryRel.setAssetCategoryId(assetCategoryId);
 		assetEntryAssetCategoryRel.setPriority(priority);
 
-		assetEntryAssetCategoryRelPersistence.update(
+		return assetEntryAssetCategoryRelPersistence.update(
 			assetEntryAssetCategoryRel);
-
-		return assetEntryAssetCategoryRel;
 	}
 
 	@Override
@@ -82,7 +80,7 @@ public class AssetEntryAssetCategoryRelLocalServiceImpl
 				assetEntryAssetCategoryRel);
 		}
 
-		_reindex(assetEntryId);
+		_reindex(_assetEntryLocalService.fetchEntry(assetEntryId));
 	}
 
 	@Override
@@ -98,18 +96,54 @@ public class AssetEntryAssetCategoryRelLocalServiceImpl
 				assetEntryAssetCategoryRelPersistence.remove(
 					assetEntryAssetCategoryRel);
 
-				_reindex(assetEntryAssetCategoryRel.getAssetEntryId());
+				_reindex(
+					_assetEntryLocalService.fetchEntry(
+						assetEntryAssetCategoryRel.getAssetEntryId()));
 			});
+	}
+
+	@Override
+	public void deleteAssetEntryAssetCategoryRelByAssetEntry(
+		AssetEntry assetEntry) {
+
+		Map<Long, List<AssetEntryAssetCategoryRel>>
+			partitionAssetEntryAssetCategoryRels =
+				MassDeleteCacheThreadLocal.getMassDeleteCache(
+					AssetEntryAssetCategoryRelLocalServiceImpl.class.getName() +
+						".deleteAssetEntryAssetCategoryRelByAssetEntry",
+					() -> MapUtil.toPartitionMap(
+						assetEntryAssetCategoryRelPersistence.findAll(),
+						AssetEntryAssetCategoryRel::getAssetEntryId));
+
+		if (partitionAssetEntryAssetCategoryRels == null) {
+			assetEntryAssetCategoryRelPersistence.removeByAssetEntryId(
+				assetEntry.getEntryId());
+		}
+		else {
+			List<AssetEntryAssetCategoryRel> assetEntryAssetCategoryRels =
+				partitionAssetEntryAssetCategoryRels.remove(
+					assetEntry.getEntryId());
+
+			ListUtil.isNotEmptyForEach(
+				assetEntryAssetCategoryRels,
+				assetEntryAssetCategoryRel ->
+					assetEntryAssetCategoryRelPersistence.remove(
+						assetEntryAssetCategoryRel));
+		}
+
+		_reindex(assetEntry);
 	}
 
 	@Override
 	public void deleteAssetEntryAssetCategoryRelByAssetEntryId(
 		long assetEntryId) {
 
-		assetEntryAssetCategoryRelPersistence.removeByAssetEntryId(
+		AssetEntry assetEntry = _assetEntryLocalService.fetchAssetEntry(
 			assetEntryId);
 
-		_reindex(assetEntryId);
+		if (assetEntry != null) {
+			deleteAssetEntryAssetCategoryRelByAssetEntry(assetEntry);
+		}
 	}
 
 	@Override
@@ -191,6 +225,36 @@ public class AssetEntryAssetCategoryRelLocalServiceImpl
 	}
 
 	@Override
+	public int getAssetEntryAssetCategoryRelsCountByAssetCategoryId(
+		long assetCategoryId) {
+
+		return assetEntryAssetCategoryRelPersistence.countByAssetCategoryId(
+			assetCategoryId);
+	}
+
+	@Override
+	public int getAssetEntryAssetCategoryRelsCountByClassNameId(
+		long assetCategoryId, long classNameId) {
+
+		DSLQuery dslQuery = DSLQueryFactoryUtil.count(
+		).from(
+			AssetEntryTable.INSTANCE
+		).innerJoinON(
+			AssetEntryAssetCategoryRelTable.INSTANCE,
+			AssetEntryAssetCategoryRelTable.INSTANCE.assetEntryId.eq(
+				AssetEntryTable.INSTANCE.entryId)
+		).where(
+			AssetEntryAssetCategoryRelTable.INSTANCE.assetCategoryId.eq(
+				assetCategoryId
+			).and(
+				AssetEntryTable.INSTANCE.classNameId.eq(classNameId)
+			)
+		);
+
+		return _assetEntryLocalService.dslQueryCount(dslQuery);
+	}
+
+	@Override
 	public long[] getAssetEntryPrimaryKeys(long assetCategoryId) {
 		List<AssetEntryAssetCategoryRel> assetEntryAssetCategoryRels =
 			getAssetEntryAssetCategoryRelsByAssetCategoryId(assetCategoryId);
@@ -200,45 +264,39 @@ public class AssetEntryAssetCategoryRelLocalServiceImpl
 			AssetEntryAssetCategoryRel::getAssetEntryId);
 	}
 
-	private void _reindex(long assetEntryId) {
-		if (assetEntryId <= 0) {
-			return;
-		}
-
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(assetEntryId);
-
+	private void _reindex(AssetEntry assetEntry) {
 		if (assetEntry == null) {
 			return;
 		}
 
 		try {
-			Indexer indexer = IndexerRegistryUtil.getIndexer(
+			Indexer<Object> indexer = _indexerRegistry.getIndexer(
 				assetEntry.getClassName());
 
 			if (indexer == null) {
 				return;
 			}
 
-			AssetRenderer assetRenderer = assetEntry.getAssetRenderer();
+			AssetRenderer<?> assetRenderer = assetEntry.getAssetRenderer();
 
 			if (assetRenderer == null) {
 				return;
 			}
 
-			Object assetObject = assetRenderer.getAssetObject();
-
-			if (assetObject == null) {
-				return;
-			}
-
-			indexer.reindex(assetObject);
+			indexer.reindex(assetRenderer.getAssetObject());
 		}
-		catch (SearchException se) {
-			_log.error("Unable to reindex asset entry", se);
+		catch (SearchException searchException) {
+			_log.error("Unable to reindex asset entry", searchException);
 		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AssetEntryAssetCategoryRelLocalServiceImpl.class);
+
+	@Reference
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
+	private IndexerRegistry _indexerRegistry;
 
 }

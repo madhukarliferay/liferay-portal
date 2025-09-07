@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 /**
  * Provides the remote service utility for FragmentEntryLink. This utility wraps
@@ -32,38 +23,48 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class FragmentEntryLinkServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.fragment.service.impl.FragmentEntryLinkServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link FragmentEntryLinkServiceUtil} to access the fragment entry link remote service. Add custom service methods to <code>com.liferay.fragment.service.impl.FragmentEntryLinkServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.fragment.model.FragmentEntryLink
-			addFragmentEntryLink(
-				long groupId, long originalFragmentEntryLinkId,
-				long fragmentEntryId, long classNameId, long classPK,
-				String css, String html, String js, String configuration,
-				String editableValues, String namespace, int position,
-				String rendererKey,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentEntryLink addFragmentEntryLink(
+			String externalReferenceCode, long groupId,
+			long originalFragmentEntryLinkId, long fragmentEntryId,
+			long segmentsExperienceId, long plid, String css, String html,
+			String js, String configuration, String editableValues,
+			String namespace, int position, String rendererKey, int type,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addFragmentEntryLink(
-			groupId, originalFragmentEntryLinkId, fragmentEntryId, classNameId,
-			classPK, css, html, js, configuration, editableValues, namespace,
-			position, rendererKey, serviceContext);
+			externalReferenceCode, groupId, originalFragmentEntryLinkId,
+			fragmentEntryId, segmentsExperienceId, plid, css, html, js,
+			configuration, editableValues, namespace, position, rendererKey,
+			type, serviceContext);
 	}
 
-	public static com.liferay.fragment.model.FragmentEntryLink
-			deleteFragmentEntryLink(long fragmentEntryLinkId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentEntryLink deleteFragmentEntryLink(
+			long fragmentEntryLinkId)
+		throws PortalException {
 
 		return getService().deleteFragmentEntryLink(fragmentEntryLinkId);
+	}
+
+	public static FragmentEntryLink deleteFragmentEntryLink(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().deleteFragmentEntryLink(
+			externalReferenceCode, groupId);
+	}
+
+	public static FragmentEntryLink getFragmentEntryLinkByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getFragmentEntryLinkByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -75,64 +76,36 @@ public class FragmentEntryLinkServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.fragment.model.FragmentEntryLink
-			updateFragmentEntryLink(
-				long fragmentEntryLinkId, String editableValues)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentEntryLink updateDeleted(
+			long fragmentEntryLinkId, boolean deleted)
+		throws PortalException {
+
+		return getService().updateDeleted(fragmentEntryLinkId, deleted);
+	}
+
+	public static FragmentEntryLink updateFragmentEntryLink(
+			long fragmentEntryLinkId, String editableValues)
+		throws PortalException {
 
 		return getService().updateFragmentEntryLink(
 			fragmentEntryLinkId, editableValues);
 	}
 
-	public static com.liferay.fragment.model.FragmentEntryLink
-			updateFragmentEntryLink(
-				long fragmentEntryLinkId, String editableValues,
-				boolean updateClassedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static FragmentEntryLink updateFragmentEntryLink(
+			long fragmentEntryLinkId, String editableValues,
+			boolean updateClassedModel)
+		throws PortalException {
 
 		return getService().updateFragmentEntryLink(
 			fragmentEntryLinkId, editableValues, updateClassedModel);
 	}
 
-	public static void updateFragmentEntryLinks(
-			long groupId, long classNameId, long classPK,
-			long[] fragmentEntryIds, String editableValues,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		getService().updateFragmentEntryLinks(
-			groupId, classNameId, classPK, fragmentEntryIds, editableValues,
-			serviceContext);
-	}
-
-	public static void updateFragmentEntryLinks(
-			java.util.Map<Long, String> fragmentEntryLinksEditableValuesMap)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		getService().updateFragmentEntryLinks(
-			fragmentEntryLinksEditableValuesMap);
-	}
-
 	public static FragmentEntryLinkService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<FragmentEntryLinkService, FragmentEntryLinkService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(FragmentEntryLinkService.class);
-
-		ServiceTracker<FragmentEntryLinkService, FragmentEntryLinkService>
-			serviceTracker =
-				new ServiceTracker
-					<FragmentEntryLinkService, FragmentEntryLinkService>(
-						bundle.getBundleContext(),
-						FragmentEntryLinkService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
+	private static final Snapshot<FragmentEntryLinkService> _serviceSnapshot =
+		new Snapshot<>(
+			FragmentEntryLinkServiceUtil.class, FragmentEntryLinkService.class);
 
 }

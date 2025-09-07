@@ -1,84 +1,41 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.admin.web.internal.display;
 
+import com.liferay.account.manager.CurrentAccountEntryManager;
 import com.liferay.account.model.AccountEntry;
-import com.liferay.account.service.AccountEntryLocalServiceUtil;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
-import com.liferay.petra.string.StringUtil;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.webserver.WebServerServletTokenUtil;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
-
-import java.util.List;
+import com.liferay.account.model.AccountEntryWrapper;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 /**
+ * @author Drew Brokke
  * @author Pei-Jung Lan
  */
-public class AccountEntryDisplay {
+public class AccountEntryDisplay extends AccountEntryWrapper {
 
-	public static AccountEntryDisplay of(AccountEntry accountEntry) {
-		return new AccountEntryDisplay(accountEntry);
+	public AccountEntryDisplay(AccountEntry accountEntry) {
+		super(accountEntry);
 	}
 
-	public static AccountEntryDisplay of(long accountEntryId) {
-		AccountEntry accountEntry =
-			AccountEntryLocalServiceUtil.fetchAccountEntry(accountEntryId);
-
-		if (accountEntry != null) {
-			return new AccountEntryDisplay(accountEntry);
-		}
-
-		return null;
+	public String getDefaultLogoURL() {
+		return _defaultLogoURL;
 	}
 
-	public long getAccountEntryId() {
-		return _accountEntryId;
+	public String getLogoURL() {
+		return _logoURL;
 	}
 
-	public String getDescription() {
-		return _description;
+	public String getOrganizationNames() {
+		return _organizationNames;
 	}
 
-	public List<String> getDomains() {
-		return _domains;
-	}
-
-	public long getLogoId() {
-		return _logoId;
-	}
-
-	public String getLogoURL(ThemeDisplay themeDisplay) {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(themeDisplay.getPathImage());
-		sb.append("/account_entry_logo?img_id=");
-		sb.append(getLogoId());
-		sb.append("&t=");
-		sb.append(WebServerServletTokenUtil.getToken(_logoId));
-
-		return sb.toString();
-	}
-
-	public String getName() {
-		return _name;
-	}
-
-	public String getParentAccountEntryName() {
-		return _parentAccountEntryName;
+	public User getPersonAccountEntryUser() {
+		return _personAccountEntryUser;
 	}
 
 	public String getStatusLabel() {
@@ -89,90 +46,86 @@ public class AccountEntryDisplay {
 		return _statusLabelStyle;
 	}
 
-	public boolean isActive() {
-		return _active;
+	public boolean isEmailAddressDomainValidationEnabled() {
+		return _emailAddressDomainValidationEnabled;
 	}
 
-	private AccountEntryDisplay(AccountEntry accountEntry) {
-		_accountEntryId = accountEntry.getAccountEntryId();
-		_active = _isActive(accountEntry);
-		_description = accountEntry.getDescription();
-		_domains = _getDomains(accountEntry);
-		_logoId = accountEntry.getLogoId();
-		_name = accountEntry.getName();
-		_parentAccountEntryName = _getParentAccountEntryName(accountEntry);
-		_statusLabel = _getStatusLabel(accountEntry);
-		_statusLabelStyle = _getStatusLabelStyle(accountEntry);
-	}
+	public boolean isSelectedAccountEntry(long groupId, long userId)
+		throws PortalException {
 
-	private List<String> _getDomains(AccountEntry accountEntry) {
-		return StringUtil.split(accountEntry.getDomains());
-	}
-
-	private String _getParentAccountEntryName(AccountEntry accountEntry) {
-		long parentAccountEntryId = accountEntry.getParentAccountEntryId();
-
-		if (parentAccountEntryId == 0) {
-			return StringPool.BLANK;
+		if (isNew()) {
+			return false;
 		}
 
-		AccountEntry parentAccountEntry =
-			AccountEntryLocalServiceUtil.fetchAccountEntry(
-				parentAccountEntryId);
+		long currentAccountEntryId = 0L;
 
-		if (parentAccountEntry != null) {
-			return parentAccountEntry.getName();
+		CurrentAccountEntryManager currentAccountEntryManager =
+			_currentAccountEntryManagerSnapshot.get();
+
+		AccountEntry accountEntry =
+			currentAccountEntryManager.getCurrentAccountEntry(groupId, userId);
+
+		if (accountEntry != null) {
+			currentAccountEntryId = accountEntry.getAccountEntryId();
 		}
 
-		return StringPool.BLANK;
-	}
-
-	private String _getStatusLabel(AccountEntry accountEntry) {
-		int status = accountEntry.getStatus();
-
-		if (status == WorkflowConstants.STATUS_APPROVED) {
-			return "active";
-		}
-
-		if (status == WorkflowConstants.STATUS_INACTIVE) {
-			return "inactive";
-		}
-
-		return StringPool.BLANK;
-	}
-
-	private String _getStatusLabelStyle(AccountEntry accountEntry) {
-		int status = accountEntry.getStatus();
-
-		if (status == WorkflowConstants.STATUS_APPROVED) {
-			return "success";
-		}
-
-		if (status == WorkflowConstants.STATUS_INACTIVE) {
-			return "secondary";
-		}
-
-		return StringPool.BLANK;
-	}
-
-	private boolean _isActive(AccountEntry accountEntry) {
-		int status = accountEntry.getStatus();
-
-		if (status == WorkflowConstants.STATUS_APPROVED) {
+		if (currentAccountEntryId == getAccountEntryId()) {
 			return true;
 		}
 
 		return false;
 	}
 
-	private final long _accountEntryId;
-	private final boolean _active;
-	private final String _description;
-	private final List<String> _domains;
-	private final long _logoId;
-	private final String _name;
-	private final String _parentAccountEntryName;
-	private final String _statusLabel;
-	private final String _statusLabelStyle;
+	public boolean isValidateUserEmailAddress() {
+		return _validateUserEmailAddress;
+	}
+
+	public void setDefaultLogoURL(String defaultLogoURL) {
+		_defaultLogoURL = defaultLogoURL;
+	}
+
+	public void setEmailAddressDomainValidationEnabled(
+		boolean emailAddressDomainValidationEnabled) {
+
+		_emailAddressDomainValidationEnabled =
+			emailAddressDomainValidationEnabled;
+	}
+
+	public void setLogoURL(String logoURL) {
+		_logoURL = logoURL;
+	}
+
+	public void setOrganizationNames(String organizationNames) {
+		_organizationNames = organizationNames;
+	}
+
+	public void setPersonAccountEntryUser(User personAccountEntryUser) {
+		_personAccountEntryUser = personAccountEntryUser;
+	}
+
+	public void setStatusLabel(String statusLabel) {
+		_statusLabel = statusLabel;
+	}
+
+	public void setStatusLabelStyle(String statusLabelStyle) {
+		_statusLabelStyle = statusLabelStyle;
+	}
+
+	public void setValidateUserEmailAddress(boolean validateUserEmailAddress) {
+		_validateUserEmailAddress = validateUserEmailAddress;
+	}
+
+	private static final Snapshot<CurrentAccountEntryManager>
+		_currentAccountEntryManagerSnapshot = new Snapshot<>(
+			AccountEntryDisplay.class, CurrentAccountEntryManager.class);
+
+	private String _defaultLogoURL;
+	private boolean _emailAddressDomainValidationEnabled = true;
+	private String _logoURL;
+	private String _organizationNames;
+	private User _personAccountEntryUser;
+	private String _statusLabel;
+	private String _statusLabelStyle;
+	private boolean _validateUserEmailAddress;
 
 }

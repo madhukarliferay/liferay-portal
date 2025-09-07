@@ -1,30 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service.impl;
 
+import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.base.DepotEntryGroupRelServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.service.permission.GroupPermission;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Brian Wing Shun Chan
@@ -41,7 +36,11 @@ public class DepotEntryGroupRelServiceImpl
 
 	@Override
 	public DepotEntryGroupRel addDepotEntryGroupRel(
-		long depotEntryId, long toGroupId) {
+			long depotEntryId, long toGroupId)
+		throws PortalException {
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntryId, ActionKeys.UPDATE);
 
 		return depotEntryGroupRelLocalService.addDepotEntryGroupRel(
 			depotEntryId, toGroupId);
@@ -52,31 +51,94 @@ public class DepotEntryGroupRelServiceImpl
 			long depotEntryGroupRelId)
 		throws PortalException {
 
+		DepotEntryGroupRel depotEntryGroupRel =
+			depotEntryGroupRelLocalService.getDepotEntryGroupRel(
+				depotEntryGroupRelId);
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntryGroupRel.getDepotEntryId(),
+			ActionKeys.UPDATE);
+
 		return depotEntryGroupRelLocalService.deleteDepotEntryGroupRel(
-			depotEntryGroupRelId);
+			depotEntryGroupRel);
+	}
+
+	@Override
+	public DepotEntryGroupRel getDepotEntryGroupRelByDepotEntryIdToGroupId(
+			long depotEntryId, long toGroupId)
+		throws PortalException {
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntryId, ActionKeys.VIEW);
+
+		return depotEntryGroupRelLocalService.
+			getDepotEntryGroupRelByDepotEntryIdToGroupId(
+				depotEntryId, toGroupId);
 	}
 
 	@Override
 	public List<DepotEntryGroupRel> getDepotEntryGroupRels(
-			long groupId, int start, int end)
+			DepotEntry depotEntry, int start, int end)
 		throws PortalException {
 
-		_groupPermission.check(
-			getPermissionChecker(), groupId, ActionKeys.VIEW);
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntry.getDepotEntryId(),
+			ActionKeys.VIEW);
 
 		return depotEntryGroupRelLocalService.getDepotEntryGroupRels(
-			groupId, start, end);
+			depotEntry, start, end);
 	}
 
 	@Override
-	public int getDepotEntryGroupRelsCount(long groupId)
+	public List<DepotEntryGroupRel> getDepotEntryGroupRels(
+			long groupId, int type, int start, int end)
 		throws PortalException {
 
-		_groupPermission.check(
+		GroupPermissionUtil.check(
+			getPermissionChecker(), groupId, ActionKeys.VIEW);
+
+		return depotEntryGroupRelLocalService.getDepotEntryGroupRels(
+			groupId, type, start, end);
+	}
+
+	@Override
+	public int getDepotEntryGroupRelsCount(DepotEntry depotEntry)
+		throws PortalException {
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntry.getDepotEntryId(),
+			ActionKeys.VIEW);
+
+		return depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
+			depotEntry);
+	}
+
+	@Override
+	public int getDepotEntryGroupRelsCount(long groupId, int type)
+		throws PortalException {
+
+		GroupPermissionUtil.check(
 			getPermissionChecker(), groupId, ActionKeys.VIEW);
 
 		return depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
-			groupId);
+			groupId, type);
+	}
+
+	@Override
+	public DepotEntryGroupRel updateDDMStructuresAvailable(
+			long depotEntryGroupRelId, boolean ddmStructuresAvailable)
+		throws PortalException {
+
+		DepotEntryGroupRel depotEntryGroupRel =
+			depotEntryGroupRelLocalService.getDepotEntryGroupRel(
+				depotEntryGroupRelId);
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntryGroupRel.getDepotEntryId(),
+			ActionKeys.UPDATE);
+
+		return depotEntryGroupRelLocalService.updateDDMStructuresAvailable(
+			depotEntryGroupRelId, ddmStructuresAvailable);
 	}
 
 	@Override
@@ -84,11 +146,24 @@ public class DepotEntryGroupRelServiceImpl
 			long depotEntryGroupRelId, boolean searchable)
 		throws PortalException {
 
+		DepotEntryGroupRel depotEntryGroupRel =
+			depotEntryGroupRelLocalService.getDepotEntryGroupRel(
+				depotEntryGroupRelId);
+
+		_depotEntryModelResourcePermission.check(
+			getPermissionChecker(), depotEntryGroupRel.getDepotEntryId(),
+			ActionKeys.UPDATE);
+
 		return depotEntryGroupRelLocalService.updateSearchable(
 			depotEntryGroupRelId, searchable);
 	}
 
-	@Reference
-	private GroupPermission _groupPermission;
+	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY,
+		target = "(model.class.name=com.liferay.depot.model.DepotEntry)"
+	)
+	private volatile ModelResourcePermission<DepotEntry>
+		_depotEntryModelResourcePermission;
 
 }

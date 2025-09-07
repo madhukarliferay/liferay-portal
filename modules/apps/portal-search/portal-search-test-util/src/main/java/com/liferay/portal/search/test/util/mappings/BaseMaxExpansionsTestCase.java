@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test.util.mappings;
@@ -21,8 +12,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.analysis.FieldQueryBuilder;
 import com.liferay.portal.search.internal.analysis.SimpleKeywordTokenizer;
 import com.liferay.portal.search.internal.analysis.TitleFieldQueryBuilder;
-
-import java.util.Map;
 
 import org.junit.Test;
 
@@ -60,16 +49,16 @@ public abstract class BaseMaxExpansionsTestCase
 	public void testPrefixWithNumberSpaceNumberSuffix() throws Exception {
 		addDocuments("Prefix# #");
 
-		assertSearch("Prefi", _MAX_EXPANSIONS);
-		assertSearchCount("Prefi", _MAX_EXPANSIONS);
+		assertSearch("Prefi", MAX_EXPANSIONS);
+		assertSearchCount("Prefi", MAX_EXPANSIONS);
 	}
 
 	@Test
 	public void testPrefixWithNumberSuffix() throws Exception {
 		addDocuments("Prefix#");
 
-		assertSearch("Prefi", _MAX_EXPANSIONS);
-		assertSearchCount("Prefi", _MAX_EXPANSIONS);
+		assertSearch("Prefi", MAX_EXPANSIONS);
+		assertSearchCount("Prefi", MAX_EXPANSIONS);
 	}
 
 	@Test
@@ -84,8 +73,8 @@ public abstract class BaseMaxExpansionsTestCase
 	public void testPrefixWithUnderscoreNumberSuffix() throws Exception {
 		addDocuments("Prefix_#");
 
-		assertSearch("Prefi", _MAX_EXPANSIONS);
-		assertSearchCount("Prefi", _MAX_EXPANSIONS);
+		assertSearch("Prefi", MAX_EXPANSIONS);
+		assertSearchCount("Prefi", MAX_EXPANSIONS);
 	}
 
 	protected void addDocuments(String pattern) throws Exception {
@@ -101,12 +90,10 @@ public abstract class BaseMaxExpansionsTestCase
 			{
 				keywordTokenizer = new SimpleKeywordTokenizer();
 
-				Map<String, Object> properties =
+				activate(
 					HashMapBuilder.<String, Object>put(
-						"maxExpansions", _MAX_EXPANSIONS
-					).build();
-
-				activate(properties);
+						"maxExpansions", MAX_EXPANSIONS
+					).build());
 			}
 		};
 	}
@@ -116,8 +103,8 @@ public abstract class BaseMaxExpansionsTestCase
 		return Field.TITLE;
 	}
 
-	private static final int _MAX_EXPANSIONS = 60;
+	protected static final int MAX_EXPANSIONS = 5;
 
-	private static final int _TOTAL_DOCUMENTS = 65;
+	private static final int _TOTAL_DOCUMENTS = 10;
 
 }

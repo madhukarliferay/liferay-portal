@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.service;
 
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link ExpandoTableLocalService}.
@@ -27,20 +22,18 @@ public class ExpandoTableLocalServiceWrapper
 	implements ExpandoTableLocalService,
 			   ServiceWrapper<ExpandoTableLocalService> {
 
+	public ExpandoTableLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ExpandoTableLocalServiceWrapper(
 		ExpandoTableLocalService expandoTableLocalService) {
 
 		_expandoTableLocalService = expandoTableLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ExpandoTableLocalServiceUtil} to access the expando table local service. Add custom service methods to <code>com.liferay.portlet.expando.service.impl.ExpandoTableLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable addDefaultTable(
-			long companyId, long classNameId)
+	public ExpandoTable addDefaultTable(long companyId, long classNameId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.addDefaultTable(
@@ -48,8 +41,7 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable addDefaultTable(
-			long companyId, String className)
+	public ExpandoTable addDefaultTable(long companyId, String className)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.addDefaultTable(companyId, className);
@@ -58,27 +50,27 @@ public class ExpandoTableLocalServiceWrapper
 	/**
 	 * Adds the expando table to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoTableLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoTable the expando table
 	 * @return the expando table that was added
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable addExpandoTable(
-		com.liferay.expando.kernel.model.ExpandoTable expandoTable) {
-
+	public ExpandoTable addExpandoTable(ExpandoTable expandoTable) {
 		return _expandoTableLocalService.addExpandoTable(expandoTable);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable addTable(
-			long companyId, long classNameId, String name)
+	public ExpandoTable addTable(long companyId, long classNameId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.addTable(companyId, classNameId, name);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable addTable(
-			long companyId, String className, String name)
+	public ExpandoTable addTable(long companyId, String className, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.addTable(companyId, className, name);
@@ -91,21 +83,35 @@ public class ExpandoTableLocalServiceWrapper
 	 * @return the new expando table
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable createExpandoTable(
-		long tableId) {
-
+	public ExpandoTable createExpandoTable(long tableId) {
 		return _expandoTableLocalService.createExpandoTable(tableId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _expandoTableLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
 	 * Deletes the expando table from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoTableLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoTable the expando table
 	 * @return the expando table that was removed
+	 * @throws PortalException
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable deleteExpandoTable(
-		com.liferay.expando.kernel.model.ExpandoTable expandoTable) {
+	public ExpandoTable deleteExpandoTable(ExpandoTable expandoTable)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.deleteExpandoTable(expandoTable);
 	}
@@ -113,13 +119,16 @@ public class ExpandoTableLocalServiceWrapper
 	/**
 	 * Deletes the expando table with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoTableLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param tableId the primary key of the expando table
 	 * @return the expando table that was removed
 	 * @throws PortalException if a expando table with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable deleteExpandoTable(
-			long tableId)
+	public ExpandoTable deleteExpandoTable(long tableId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.deleteExpandoTable(tableId);
@@ -137,8 +146,8 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteTable(
-		com.liferay.expando.kernel.model.ExpandoTable table) {
+	public void deleteTable(ExpandoTable table)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_expandoTableLocalService.deleteTable(table);
 	}
@@ -165,13 +174,29 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteTables(long companyId, long classNameId) {
+	public void deleteTables(long companyId, long classNameId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_expandoTableLocalService.deleteTables(companyId, classNameId);
 	}
 
 	@Override
-	public void deleteTables(long companyId, String className) {
+	public void deleteTables(long companyId, String className)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_expandoTableLocalService.deleteTables(companyId, className);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _expandoTableLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _expandoTableLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -265,30 +290,24 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable fetchDefaultTable(
-		long companyId, long classNameId) {
-
+	public ExpandoTable fetchDefaultTable(long companyId, long classNameId) {
 		return _expandoTableLocalService.fetchDefaultTable(
 			companyId, classNameId);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable fetchDefaultTable(
-		long companyId, String className) {
-
+	public ExpandoTable fetchDefaultTable(long companyId, String className) {
 		return _expandoTableLocalService.fetchDefaultTable(
 			companyId, className);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable fetchExpandoTable(
-		long tableId) {
-
+	public ExpandoTable fetchExpandoTable(long tableId) {
 		return _expandoTableLocalService.fetchExpandoTable(tableId);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable fetchTable(
+	public ExpandoTable fetchTable(
 		long companyId, long classNameId, String name) {
 
 		return _expandoTableLocalService.fetchTable(
@@ -303,8 +322,7 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getDefaultTable(
-			long companyId, long classNameId)
+	public ExpandoTable getDefaultTable(long companyId, long classNameId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getDefaultTable(
@@ -312,8 +330,7 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getDefaultTable(
-			long companyId, String className)
+	public ExpandoTable getDefaultTable(long companyId, String className)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getDefaultTable(companyId, className);
@@ -327,8 +344,7 @@ public class ExpandoTableLocalServiceWrapper
 	 * @throws PortalException if a expando table with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getExpandoTable(
-			long tableId)
+	public ExpandoTable getExpandoTable(long tableId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getExpandoTable(tableId);
@@ -346,9 +362,7 @@ public class ExpandoTableLocalServiceWrapper
 	 * @return the range of expando tables
 	 */
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoTable>
-		getExpandoTables(int start, int end) {
-
+	public java.util.List<ExpandoTable> getExpandoTables(int start, int end) {
 		return _expandoTableLocalService.getExpandoTables(start, end);
 	}
 
@@ -379,6 +393,9 @@ public class ExpandoTableLocalServiceWrapper
 		return _expandoTableLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -388,38 +405,36 @@ public class ExpandoTableLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getTable(long tableId)
+	public ExpandoTable getTable(long tableId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getTable(tableId);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getTable(
-			long companyId, long classNameId, String name)
+	public ExpandoTable getTable(long companyId, long classNameId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getTable(companyId, classNameId, name);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable getTable(
-			long companyId, String className, String name)
+	public ExpandoTable getTable(long companyId, String className, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.getTable(companyId, className, name);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoTable>
-		getTables(long companyId, long classNameId) {
+	public java.util.List<ExpandoTable> getTables(
+		long companyId, long classNameId) {
 
 		return _expandoTableLocalService.getTables(companyId, classNameId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoTable>
-		getTables(long companyId, String className) {
+	public java.util.List<ExpandoTable> getTables(
+		long companyId, String className) {
 
 		return _expandoTableLocalService.getTables(companyId, className);
 	}
@@ -427,22 +442,48 @@ public class ExpandoTableLocalServiceWrapper
 	/**
 	 * Updates the expando table in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoTableLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoTable the expando table
 	 * @return the expando table that was updated
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable updateExpandoTable(
-		com.liferay.expando.kernel.model.ExpandoTable expandoTable) {
-
+	public ExpandoTable updateExpandoTable(ExpandoTable expandoTable) {
 		return _expandoTableLocalService.updateExpandoTable(expandoTable);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoTable updateTable(
-			long tableId, String name)
+	public ExpandoTable updateTable(long tableId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoTableLocalService.updateTable(tableId, name);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _expandoTableLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<ExpandoTable> getCTPersistence() {
+		return _expandoTableLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<ExpandoTable> getModelClass() {
+		return _expandoTableLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<ExpandoTable>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _expandoTableLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

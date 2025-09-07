@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DDMFormInstanceRecord. This utility wraps
@@ -32,65 +26,53 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMFormInstanceRecordServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMFormInstanceRecordServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DDMFormInstanceRecordServiceUtil} to access the ddm form instance record remote service. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMFormInstanceRecordServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord
-			addFormInstanceRecord(
-				long groupId, long ddmFormInstanceId,
-				com.liferay.dynamic.data.mapping.storage.DDMFormValues
-					ddmFormValues,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMFormInstanceRecord addFormInstanceRecord(
+			long groupId, long ddmFormInstanceId,
+			com.liferay.dynamic.data.mapping.storage.DDMFormValues
+				ddmFormValues,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addFormInstanceRecord(
 			groupId, ddmFormInstanceId, ddmFormValues, serviceContext);
 	}
 
 	public static void deleteFormInstanceRecord(long ddmFormInstanceRecordId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteFormInstanceRecord(ddmFormInstanceRecordId);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord
-			getFormInstanceRecord(long ddmFormInstanceRecordId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMFormInstanceRecord getFormInstanceRecord(
+			long ddmFormInstanceRecordId)
+		throws PortalException {
 
 		return getService().getFormInstanceRecord(ddmFormInstanceRecordId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord>
-				getFormInstanceRecords(long ddmFormInstanceId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMFormInstanceRecord> getFormInstanceRecords(
+			long ddmFormInstanceId)
+		throws PortalException {
 
 		return getService().getFormInstanceRecords(ddmFormInstanceId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord>
-				getFormInstanceRecords(
-					long ddmFormInstanceId, int status, int start, int end,
-					com.liferay.portal.kernel.util.OrderByComparator
-						<com.liferay.dynamic.data.mapping.model.
-							DDMFormInstanceRecord> orderByComparator)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMFormInstanceRecord> getFormInstanceRecords(
+			long ddmFormInstanceId, int status, int start, int end,
+			OrderByComparator<DDMFormInstanceRecord> orderByComparator)
+		throws PortalException {
 
 		return getService().getFormInstanceRecords(
 			ddmFormInstanceId, status, start, end, orderByComparator);
 	}
 
 	public static int getFormInstanceRecordsCount(long ddmFormInstanceId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getFormInstanceRecordsCount(ddmFormInstanceId);
 	}
@@ -107,19 +89,28 @@ public class DDMFormInstanceRecordServiceUtil {
 	public static void revertFormInstanceRecord(
 			long ddmFormInstanceRecordId, String version,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().revertFormInstanceRecord(
 			ddmFormInstanceRecordId, version, serviceContext);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord
-			updateFormInstanceRecord(
-				long ddmFormInstanceRecordId, boolean majorVersion,
-				com.liferay.dynamic.data.mapping.storage.DDMFormValues
-					ddmFormValues,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static com.liferay.portal.kernel.search.BaseModelSearchResult
+		<DDMFormInstanceRecord> searchFormInstanceRecords(
+				long ddmFormInstanceId, String[] notEmptyFields, int status,
+				int start, int end, com.liferay.portal.kernel.search.Sort sort)
+			throws PortalException {
+
+		return getService().searchFormInstanceRecords(
+			ddmFormInstanceId, notEmptyFields, status, start, end, sort);
+	}
+
+	public static DDMFormInstanceRecord updateFormInstanceRecord(
+			long ddmFormInstanceRecordId, boolean majorVersion,
+			com.liferay.dynamic.data.mapping.storage.DDMFormValues
+				ddmFormValues,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().updateFormInstanceRecord(
 			ddmFormInstanceRecordId, majorVersion, ddmFormValues,
@@ -127,29 +118,12 @@ public class DDMFormInstanceRecordServiceUtil {
 	}
 
 	public static DDMFormInstanceRecordService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMFormInstanceRecordService, DDMFormInstanceRecordService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMFormInstanceRecordService>
+		_serviceSnapshot = new Snapshot<>(
+			DDMFormInstanceRecordServiceUtil.class,
 			DDMFormInstanceRecordService.class);
-
-		ServiceTracker
-			<DDMFormInstanceRecordService, DDMFormInstanceRecordService>
-				serviceTracker =
-					new ServiceTracker
-						<DDMFormInstanceRecordService,
-						 DDMFormInstanceRecordService>(
-							 bundle.getBundleContext(),
-							 DDMFormInstanceRecordService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

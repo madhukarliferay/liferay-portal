@@ -1,25 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
 import com.liferay.portal.kernel.model.WorkflowedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
+import com.liferay.portal.kernel.model.version.VersionedModel;
 
 import java.util.Date;
 
@@ -38,10 +32,12 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface FragmentEntryModel
-	extends BaseModel<FragmentEntry>, MVCCModel, ShardedModel,
-			StagedGroupedModel, WorkflowedModel {
+	extends BaseModel<FragmentEntry>, CTModel<FragmentEntry>,
+			ExternalReferenceCodeModel, MVCCModel, ShardedModel,
+			StagedGroupedModel, VersionedModel<FragmentEntryVersion>,
+			WorkflowedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a fragment entry model instance should use the {@link FragmentEntry} interface instead.
@@ -52,6 +48,7 @@ public interface FragmentEntryModel
 	 *
 	 * @return the primary key of this fragment entry
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -59,6 +56,7 @@ public interface FragmentEntryModel
 	 *
 	 * @param primaryKey the primary key of this fragment entry
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -78,6 +76,22 @@ public interface FragmentEntryModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this fragment entry.
+	 *
+	 * @return the ct collection ID of this fragment entry
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this fragment entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this fragment entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this fragment entry.
 	 *
 	 * @return the uuid of this fragment entry
@@ -93,6 +107,39 @@ public interface FragmentEntryModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this fragment entry.
+	 *
+	 * @return the external reference code of this fragment entry
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this fragment entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this fragment entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
+
+	/**
+	 * Returns the head ID of this fragment entry.
+	 *
+	 * @return the head ID of this fragment entry
+	 */
+	@Override
+	public long getHeadId();
+
+	/**
+	 * Sets the head ID of this fragment entry.
+	 *
+	 * @param headId the head ID of this fragment entry
+	 */
+	@Override
+	public void setHeadId(long headId);
 
 	/**
 	 * Returns the fragment entry ID of this fragment entry.
@@ -311,6 +358,27 @@ public interface FragmentEntryModel
 	public void setJs(String js);
 
 	/**
+	 * Returns the cacheable of this fragment entry.
+	 *
+	 * @return the cacheable of this fragment entry
+	 */
+	public boolean getCacheable();
+
+	/**
+	 * Returns <code>true</code> if this fragment entry is cacheable.
+	 *
+	 * @return <code>true</code> if this fragment entry is cacheable; <code>false</code> otherwise
+	 */
+	public boolean isCacheable();
+
+	/**
+	 * Sets whether this fragment entry is cacheable.
+	 *
+	 * @param cacheable the cacheable of this fragment entry
+	 */
+	public void setCacheable(boolean cacheable);
+
+	/**
 	 * Returns the configuration of this fragment entry.
 	 *
 	 * @return the configuration of this fragment entry
@@ -326,6 +394,21 @@ public interface FragmentEntryModel
 	public void setConfiguration(String configuration);
 
 	/**
+	 * Returns the icon of this fragment entry.
+	 *
+	 * @return the icon of this fragment entry
+	 */
+	@AutoEscape
+	public String getIcon();
+
+	/**
+	 * Sets the icon of this fragment entry.
+	 *
+	 * @param icon the icon of this fragment entry
+	 */
+	public void setIcon(String icon);
+
+	/**
 	 * Returns the preview file entry ID of this fragment entry.
 	 *
 	 * @return the preview file entry ID of this fragment entry
@@ -338,6 +421,27 @@ public interface FragmentEntryModel
 	 * @param previewFileEntryId the preview file entry ID of this fragment entry
 	 */
 	public void setPreviewFileEntryId(long previewFileEntryId);
+
+	/**
+	 * Returns the marketplace of this fragment entry.
+	 *
+	 * @return the marketplace of this fragment entry
+	 */
+	public boolean getMarketplace();
+
+	/**
+	 * Returns <code>true</code> if this fragment entry is marketplace.
+	 *
+	 * @return <code>true</code> if this fragment entry is marketplace; <code>false</code> otherwise
+	 */
+	public boolean isMarketplace();
+
+	/**
+	 * Sets whether this fragment entry is marketplace.
+	 *
+	 * @param marketplace the marketplace of this fragment entry
+	 */
+	public void setMarketplace(boolean marketplace);
 
 	/**
 	 * Returns the read only of this fragment entry.
@@ -373,6 +477,21 @@ public interface FragmentEntryModel
 	 * @param type the type of this fragment entry
 	 */
 	public void setType(int type);
+
+	/**
+	 * Returns the type options of this fragment entry.
+	 *
+	 * @return the type options of this fragment entry
+	 */
+	@AutoEscape
+	public String getTypeOptions();
+
+	/**
+	 * Sets the type options of this fragment entry.
+	 *
+	 * @param typeOptions the type options of this fragment entry
+	 */
+	public void setTypeOptions(String typeOptions);
 
 	/**
 	 * Returns the last publish date of this fragment entry.
@@ -534,5 +653,12 @@ public interface FragmentEntryModel
 	 */
 	@Override
 	public boolean isScheduled();
+
+	@Override
+	public FragmentEntry cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

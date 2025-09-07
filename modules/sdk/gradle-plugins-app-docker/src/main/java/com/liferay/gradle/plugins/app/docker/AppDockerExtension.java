@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.app.docker;
 
 import com.liferay.gradle.plugins.app.docker.internal.util.ExecStandardOutputCallable;
+import com.liferay.gradle.util.GUtil;
 import com.liferay.gradle.util.GradleUtil;
 
 import groovy.lang.Closure;
@@ -32,7 +24,6 @@ import org.gradle.api.Project;
 import org.gradle.api.specs.AndSpec;
 import org.gradle.api.specs.Spec;
 import org.gradle.util.CollectionUtils;
-import org.gradle.util.GUtil;
 
 /**
  * @author Andrea Di Giorgi
@@ -46,35 +37,31 @@ public class AppDockerExtension {
 
 			@Override
 			public String call() throws Exception {
-				return _project.getName();
+				return project.getName();
 			}
 
 		};
 
-		_inputDir = _project.getName() + "-docker";
+		_inputDir = project.getName() + "-docker";
 
 		_imageUser = new Callable<Object>() {
 
 			@Override
 			public Object call() throws Exception {
-				return _project.getGroup();
+				return project.getGroup();
 			}
 
 		};
 
 		_subprojects = CollectionUtils.filter(
-			_project.getSubprojects(),
+			project.getSubprojects(),
 			new Spec<Project>() {
 
 				@Override
 				public boolean isSatisfiedBy(Project project) {
 					Set<Project> subprojects = project.getSubprojects();
 
-					if (subprojects.isEmpty()) {
-						return true;
-					}
-
-					return false;
+					return subprojects.isEmpty();
 				}
 
 			});

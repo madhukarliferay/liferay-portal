@@ -1,20 +1,17 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
+
+<liferay-util:html-top
+	outputKey="com.liferay.blogs.web#/blogs/asset/full_content.jsp"
+>
+	<aui:link href='<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathProxy() + application.getContextPath() + "/blogs/css/common_main.css") %>' rel="stylesheet" type="text/css" />
+</liferay-util:html-top>
 
 <liferay-util:dynamic-include key="com.liferay.blogs.web#/blogs/asset/full_content.jsp#pre" />
 
@@ -24,31 +21,29 @@ BlogsEntry entry = (BlogsEntry)request.getAttribute(WebKeys.BLOGS_ENTRY);
 String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
 %>
 
-<div class="widget-mode-simple" data-analytics-asset-id="<%= String.valueOf(entry.getEntryId()) %>" data-analytics-asset-title="<%= HtmlUtil.escapeAttribute(entryTitle) %>" data-analytics-asset-type="blog">
-	<div class="widget-mode-simple-entry">
-		<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
+<div class="portlet-blogs">
+	<div class="widget-mode-simple" data-analytics-asset-id="<%= String.valueOf(entry.getEntryId()) %>" data-analytics-asset-title="<%= HtmlUtil.escapeAttribute(entryTitle) %>" data-analytics-asset-type="blog">
+		<div class="widget-mode-simple-entry">
+			<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
+				<liferay-util:include page="/blogs/entry_cover_image_caption.jsp" servletContext="<%= application %>">
+					<liferay-util:param name="coverImageCaption" value="<%= entry.getCoverImageCaption() %>" />
+					<liferay-util:param name="coverImageURL" value="<%= entry.getCoverImageURL(themeDisplay) %>" />
+				</liferay-util:include>
 
-			<%
-			String coverImageURL = entry.getCoverImageURL(themeDisplay);
-			%>
+				<%= entry.getContent() %>
+			</div>
 
-			<c:if test="<%= Validator.isNotNull(coverImageURL) %>">
-				<div class="aspect-ratio aspect-ratio-8-to-3 aspect-ratio-bg-cover cover-image" style="background-image: url(<%= coverImageURL %>)"></div>
-			</c:if>
-
-			<%= entry.getContent() %>
-		</div>
-
-		<liferay-expando:custom-attributes-available
-			className="<%= BlogsEntry.class.getName() %>"
-		>
-			<liferay-expando:custom-attribute-list
+			<liferay-expando:custom-attributes-available
 				className="<%= BlogsEntry.class.getName() %>"
-				classPK="<%= (entry != null) ? entry.getEntryId() : 0 %>"
-				editable="<%= false %>"
-				label="<%= true %>"
-			/>
-		</liferay-expando:custom-attributes-available>
+			>
+				<liferay-expando:custom-attribute-list
+					className="<%= BlogsEntry.class.getName() %>"
+					classPK="<%= (entry != null) ? entry.getEntryId() : 0 %>"
+					editable="<%= false %>"
+					label="<%= true %>"
+				/>
+			</liferay-expando:custom-attributes-available>
+		</div>
 	</div>
 </div>
 

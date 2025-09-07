@@ -1,26 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.admin.web.internal.portlet.action;
 
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
-import com.liferay.layout.admin.web.internal.handler.LayoutExceptionRequestHandler;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.layout.admin.web.internal.handler.LayoutExceptionRequestHandlerUtil;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
+import com.liferay.layout.set.prototype.helper.LayoutSetPrototypeHelper;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
@@ -40,15 +31,16 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,10 +49,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
-		"mvc.command.name=/layout/add_simple_layout"
+		"jakarta.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
+		"mvc.command.name=/layout_admin/add_simple_layout"
 	},
 	service = MVCActionCommand.class
 )
@@ -83,49 +74,60 @@ public class AddSimpleLayoutMVCActionCommand
 			actionRequest, "privateLayout");
 		long parentLayoutId = ParamUtil.getLong(
 			actionRequest, "parentLayoutId");
-		String name = ParamUtil.getString(actionRequest, "name");
+		Map<Locale, String> nameMap = HashMapBuilder.put(
+			LocaleUtil.getSiteDefault(),
+			ParamUtil.getString(actionRequest, "name")
+		).build();
 		String type = ParamUtil.getString(actionRequest, "type");
+		UnicodeProperties typeSettingsUnicodeProperties =
+			PropertiesParamUtil.getProperties(
+				actionRequest, "TypeSettingsProperties--");
+
 		long masterLayoutPlid = ParamUtil.getLong(
 			actionRequest, "masterLayoutPlid");
 
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.getSiteDefault(), name
-		).build();
+		if (!Objects.equals(type, LayoutConstants.TYPE_CONTENT)) {
+			LayoutPageTemplateEntry defaultLayoutPageTemplateEntry =
+				_layoutPageTemplateEntryService.
+					fetchDefaultLayoutPageTemplateEntry(
+						groupId,
+						LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT,
+						WorkflowConstants.STATUS_APPROVED);
+
+			if (defaultLayoutPageTemplateEntry != null) {
+				masterLayoutPlid = defaultLayoutPageTemplateEntry.getPlid();
+			}
+		}
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			Layout.class.getName(), actionRequest);
 
-		UnicodeProperties typeSettingsProperties =
-			PropertiesParamUtil.getProperties(
-				actionRequest, "TypeSettingsProperties--");
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
 		try {
 			Layout layout = _layoutService.addLayout(
-				groupId, privateLayout, parentLayoutId, nameMap,
+				null, groupId, privateLayout, parentLayoutId, nameMap,
 				new HashMap<>(), new HashMap<>(), new HashMap<>(),
-				new HashMap<>(), type, typeSettingsProperties.toString(), false,
-				masterLayoutPlid, new HashMap<>(), serviceContext);
+				new HashMap<>(), type, typeSettingsUnicodeProperties.toString(),
+				false, new HashMap<>(), masterLayoutPlid, serviceContext);
 
-			LayoutTypePortlet layoutTypePortlet =
-				(LayoutTypePortlet)layout.getLayoutType();
+			if (!Objects.equals(type, LayoutConstants.TYPE_CONTENT)) {
+				LayoutTypePortlet layoutTypePortlet =
+					(LayoutTypePortlet)layout.getLayoutType();
 
-			layoutTypePortlet.setLayoutTemplateId(
-				themeDisplay.getUserId(),
-				PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID);
+				layoutTypePortlet.setLayoutTemplateId(
+					themeDisplay.getUserId(),
+					PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID);
 
-			_layoutService.updateLayout(
-				groupId, privateLayout, layout.getLayoutId(),
-				layout.getTypeSettings());
+				_layoutService.updateLayout(
+					groupId, privateLayout, layout.getLayoutId(),
+					layout.getTypeSettings());
+			}
 
-			_actionUtil.updateLookAndFeel(
+			ActionUtil.updateLookAndFeel(
 				actionRequest, themeDisplay.getCompanyId(), liveGroupId,
 				stagingGroupId, privateLayout, layout.getLayoutId(),
 				layout.getTypeSettingsProperties());
 
-			Layout draftLayout = _layoutLocalService.fetchLayout(
-				_portal.getClassNameId(Layout.class), layout.getPlid());
+			Layout draftLayout = layout.fetchDraftLayout();
 
 			if (draftLayout != null) {
 				_layoutLocalService.updateLayout(
@@ -135,6 +137,10 @@ public class AddSimpleLayoutMVCActionCommand
 
 			MultiSessionMessages.add(actionRequest, "layoutAdded", layout);
 
+			ActionUtil.addFriendlyURLWarningSessionMessages(
+				_portal.getHttpServletRequest(actionRequest), layout,
+				_layoutSetPrototypeHelper);
+
 			String redirectURL = getRedirectURL(
 				actionRequest, actionResponse, layout);
 
@@ -142,39 +148,31 @@ public class AddSimpleLayoutMVCActionCommand
 				redirectURL = getContentRedirectURL(actionRequest, layout);
 			}
 
-			jsonObject.put("redirectURL", redirectURL);
-
 			JSONPortletResponseUtil.writeJSON(
-				actionRequest, actionResponse, jsonObject);
+				actionRequest, actionResponse,
+				JSONUtil.put("redirectURL", redirectURL));
 		}
-		catch (PortalException pe) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
-			}
-
+		catch (Exception exception) {
 			SessionErrors.add(actionRequest, "layoutNameInvalid");
 
 			hideDefaultErrorMessage(actionRequest);
 
-			_layoutExceptionRequestHandler.handlePortalException(
-				actionRequest, actionResponse, pe);
+			LayoutExceptionRequestHandlerUtil.handleException(
+				actionRequest, actionResponse, exception);
 		}
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		AddSimpleLayoutMVCActionCommand.class);
-
-	@Reference
-	private ActionUtil _actionUtil;
-
-	@Reference
-	private LayoutExceptionRequestHandler _layoutExceptionRequestHandler;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
+	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
+
+	@Reference
 	private LayoutService _layoutService;
+
+	@Reference
+	private LayoutSetPrototypeHelper _layoutSetPrototypeHelper;
 
 	@Reference
 	private Portal _portal;

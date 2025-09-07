@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.taglib.servlet.taglib;
@@ -17,13 +8,20 @@ package com.liferay.expando.taglib.servlet.taglib;
 import com.liferay.expando.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class CustomAttributeListTag extends IncludeTag {
+
+	public Set<Locale> getAvailableLocales() {
+		return _availableLocales;
+	}
 
 	public String getClassName() {
 		return _className;
@@ -43,6 +41,10 @@ public class CustomAttributeListTag extends IncludeTag {
 
 	public boolean isLabel() {
 		return _label;
+	}
+
+	public void setAvailableLocales(Set<Locale> availableLocales) {
+		_availableLocales = availableLocales;
 	}
 
 	public void setClassName(String className) {
@@ -69,13 +71,14 @@ public class CustomAttributeListTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_availableLocales = null;
 		_className = null;
 		_classPK = 0;
 		_editable = false;
@@ -90,6 +93,9 @@ public class CustomAttributeListTag extends IncludeTag {
 
 	@Override
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
+		httpServletRequest.setAttribute(
+			"liferay-expando:custom-attribute-list:availableLocales",
+			_availableLocales);
 		httpServletRequest.setAttribute(
 			"liferay-expando:custom-attribute-list:className", _className);
 		httpServletRequest.setAttribute(
@@ -108,6 +114,7 @@ public class CustomAttributeListTag extends IncludeTag {
 
 	private static final String _PAGE = "/custom_attribute_list/page.jsp";
 
+	private Set<Locale> _availableLocales;
 	private String _className;
 	private long _classPK;
 	private boolean _editable;

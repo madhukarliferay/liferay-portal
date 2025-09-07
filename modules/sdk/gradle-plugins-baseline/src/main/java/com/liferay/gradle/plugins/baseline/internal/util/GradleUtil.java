@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.baseline.internal.util;
@@ -21,13 +12,10 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
@@ -38,17 +26,6 @@ import org.gradle.api.file.SourceDirectorySet;
  * @author Andrea Di Giorgi
  */
 public class GradleUtil extends com.liferay.gradle.util.GradleUtil {
-
-	public static <T extends Task> T addTask(
-		Project project, String name, Class<T> clazz, boolean overwrite) {
-
-		Map<String, Object> args = new HashMap<>();
-
-		args.put(Task.TASK_OVERWRITE, overwrite);
-		args.put(Task.TASK_TYPE, clazz);
-
-		return (T)project.task(args, name);
-	}
 
 	public static File getSrcDir(SourceDirectorySet sourceDirectorySet) {
 		Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
@@ -73,11 +50,7 @@ public class GradleUtil extends com.liferay.gradle.util.GradleUtil {
 
 		Path repositoryPath = Paths.get(mavenArtifactRepository.getUrl());
 
-		if (FileUtil.isChild(file, repositoryPath.toFile())) {
-			return true;
-		}
-
-		return false;
+		return FileUtil.isChild(file, repositoryPath.toFile());
 	}
 
 	public static boolean toBoolean(Object object) {

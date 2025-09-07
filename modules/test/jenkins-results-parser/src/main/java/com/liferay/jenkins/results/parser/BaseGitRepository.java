@@ -1,24 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-
-import java.util.Properties;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,12 +15,6 @@ import org.json.JSONObject;
  */
 public abstract class BaseGitRepository implements GitRepository {
 
-	public static void setRepositoryProperties(
-		Properties repositoryProperties) {
-
-		_repositoryProperties = repositoryProperties;
-	}
-
 	@Override
 	public JSONObject getJSONObject() {
 		return _jsonObject;
@@ -42,6 +23,13 @@ public abstract class BaseGitRepository implements GitRepository {
 	@Override
 	public String getName() {
 		return getString("name");
+	}
+
+	@Override
+	public boolean isSubrepository() {
+		String name = getName();
+
+		return name.startsWith("com-liferay-");
 	}
 
 	protected BaseGitRepository(JSONObject jsonObject) {
@@ -58,37 +46,16 @@ public abstract class BaseGitRepository implements GitRepository {
 		validateKeys(_KEYS_REQUIRED);
 	}
 
+	protected boolean getBoolean(String key) {
+		return _jsonObject.optBoolean(key);
+	}
+
 	protected File getFile(String key) {
 		return new File(getString(key));
 	}
 
 	protected JSONArray getJSONArray(String key) {
 		return _jsonObject.getJSONArray(key);
-	}
-
-	protected Properties getRepositoryProperties() {
-		if (_repositoryProperties != null) {
-			return _repositoryProperties;
-		}
-
-		_repositoryProperties = new Properties();
-
-		try {
-			_repositoryProperties.load(
-				new StringReader(
-					JenkinsResultsParserUtil.toString(
-						_URL_PROPERTIES_REPOSITORY, false)));
-		}
-		catch (IOException ioe) {
-			System.out.println(
-				"Skipped downloading " + _URL_PROPERTIES_REPOSITORY);
-		}
-
-		_repositoryProperties.putAll(
-			JenkinsResultsParserUtil.getProperties(
-				new File("repository.properties")));
-
-		return _repositoryProperties;
 	}
 
 	protected String getString(String key) {
@@ -101,6 +68,10 @@ public abstract class BaseGitRepository implements GitRepository {
 
 	protected String optString(String key) {
 		return _jsonObject.optString(key);
+	}
+
+	protected String optString(String key, String defaultValue) {
+		return _jsonObject.optString(key, defaultValue);
 	}
 
 	protected void put(String key, Object value) {
@@ -124,12 +95,6 @@ public abstract class BaseGitRepository implements GitRepository {
 	}
 
 	private static final String[] _KEYS_REQUIRED = {"name"};
-
-	private static final String _URL_PROPERTIES_REPOSITORY =
-		"http://mirrors-no-cache.lax.liferay.com/github.com/liferay" +
-			"/liferay-jenkins-ee/commands/repository.properties";
-
-	private static Properties _repositoryProperties;
 
 	private final JSONObject _jsonObject;
 

@@ -1,32 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.module.configuration.internal;
 
-import com.liferay.petra.concurrent.ConcurrentReferenceKeyHashMap;
-import com.liferay.petra.concurrent.ConcurrentReferenceValueHashMap;
-import com.liferay.petra.memory.FinalizeManager;
+import aQute.bnd.annotation.metatype.Meta;
+
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.TypedSettings;
 
-import java.lang.ref.Reference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Preston Crary
@@ -34,6 +24,14 @@ import java.util.Map;
 public class ConfigurationOverrideInstance {
 
 	public static final Object NULL_RESULT = new Object();
+
+	public static void clearConfigurationOverrideInstance(Class<?> clazz) {
+		clearConfigurationOverrideInstance(clazz.getName());
+	}
+
+	public static void clearConfigurationOverrideInstance(String className) {
+		_configurationOverrideInstances.remove(className);
+	}
 
 	public static ConfigurationOverrideInstance
 			getConfigurationOverrideInstance(
@@ -46,15 +44,17 @@ public class ConfigurationOverrideInstance {
 			return null;
 		}
 
+		String key = _getKey(clazz);
+
 		ConfigurationOverrideInstance configurationOverrideInstance =
-			_configurationOverrideInstances.get(configurationOverrideClass);
+			_configurationOverrideInstances.get(key);
 
 		if (configurationOverrideInstance == null) {
 			configurationOverrideInstance = new ConfigurationOverrideInstance(
 				configurationOverrideClass, typedSettings);
 
 			_configurationOverrideInstances.put(
-				configurationOverrideClass, configurationOverrideInstance);
+				key, configurationOverrideInstance);
 		}
 
 		return configurationOverrideInstance;
@@ -70,15 +70,23 @@ public class ConfigurationOverrideInstance {
 		return overriddenMethod.invoke(_configurationOverrideInstance);
 	}
 
+	private static String _getKey(Class<?> clazz) {
+		for (Class<?> interfaceClazz : clazz.getInterfaces()) {
+			if (interfaceClazz.getAnnotation(Meta.OCD.class) != null) {
+				return interfaceClazz.getName();
+			}
+		}
+
+		return clazz.getName();
+	}
+
 	private static Class<?> _getOverrideClass(Class<?> clazz) {
 		Settings.OverrideClass overrideClass = clazz.getAnnotation(
 			Settings.OverrideClass.class);
 
-		if (overrideClass == null) {
-			return null;
-		}
+		if ((overrideClass == null) ||
+			(overrideClass.value() == Object.class)) {
 
-		if (overrideClass.value() == Object.class) {
 			return null;
 		}
 
@@ -99,12 +107,8 @@ public class ConfigurationOverrideInstance {
 		}
 	}
 
-	private static final Map<Class<?>, ConfigurationOverrideInstance>
-		_configurationOverrideInstances = new ConcurrentReferenceKeyHashMap<>(
-			new ConcurrentReferenceValueHashMap
-				<Reference<Class<?>>, ConfigurationOverrideInstance>(
-					FinalizeManager.WEAK_REFERENCE_FACTORY),
-			FinalizeManager.WEAK_REFERENCE_FACTORY);
+	private static final Map<String, ConfigurationOverrideInstance>
+		_configurationOverrideInstances = new ConcurrentHashMap<>();
 
 	private final Object _configurationOverrideInstance;
 	private final Map<String, Method> _methods = new HashMap<>();

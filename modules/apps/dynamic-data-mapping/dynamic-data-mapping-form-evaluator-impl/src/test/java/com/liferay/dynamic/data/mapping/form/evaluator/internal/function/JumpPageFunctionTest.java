@@ -1,49 +1,41 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 
 import com.liferay.dynamic.data.mapping.expression.ExecuteActionRequest;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import org.powermock.api.mockito.PowerMockito;
 
 /**
  * @author Inácio Nery
  * @author Leonardo Barros
  */
-@RunWith(MockitoJUnitRunner.class)
-public class JumpPageFunctionTest extends PowerMockito {
+public class JumpPageFunctionTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testExecuteAction() {
-		DefaultDDMExpressionActionHandler defaultDDMExpressionActionHandler =
-			new DefaultDDMExpressionActionHandler();
-
-		DefaultDDMExpressionActionHandler spy = spy(
-			defaultDDMExpressionActionHandler);
+		DefaultDDMExpressionActionHandler spyDefaultDDMExpressionActionHandler =
+			Mockito.spy(new DefaultDDMExpressionActionHandler());
 
 		JumpPageFunction jumpPageFunction = new JumpPageFunction();
 
-		jumpPageFunction.setDDMExpressionActionHandler(spy);
+		jumpPageFunction.setDDMExpressionActionHandler(
+			spyDefaultDDMExpressionActionHandler);
 
 		Boolean result = jumpPageFunction.apply(1, 3);
 
@@ -51,7 +43,7 @@ public class JumpPageFunctionTest extends PowerMockito {
 			ArgumentCaptor.forClass(ExecuteActionRequest.class);
 
 		Mockito.verify(
-			spy, Mockito.times(1)
+			spyDefaultDDMExpressionActionHandler, Mockito.times(1)
 		).executeAction(
 			argumentCaptor.capture()
 		);
@@ -60,15 +52,8 @@ public class JumpPageFunctionTest extends PowerMockito {
 
 		Assert.assertEquals("jumpPage", executeActionRequest.getAction());
 		Assert.assertEquals(
-			1,
-			executeActionRequest.getParameterOptional(
-				"from"
-			).get());
-		Assert.assertEquals(
-			3,
-			executeActionRequest.getParameterOptional(
-				"to"
-			).get());
+			1, (Object)executeActionRequest.getParameter("from"));
+		Assert.assertEquals(3, (Object)executeActionRequest.getParameter("to"));
 
 		Assert.assertTrue(result);
 	}

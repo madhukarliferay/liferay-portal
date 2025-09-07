@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchRecentLayoutBranchException;
 import com.liferay.portal.kernel.model.RecentLayoutBranch;
 import com.liferay.portal.kernel.service.RecentLayoutBranchLocalServiceUtil;
@@ -458,25 +450,68 @@ public class RecentLayoutBranchPersistenceTest {
 
 		_persistence.clearCache();
 
-		RecentLayoutBranch existingRecentLayoutBranch =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newRecentLayoutBranch.getPrimaryKey());
+				newRecentLayoutBranch.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		RecentLayoutBranch newRecentLayoutBranch = addRecentLayoutBranch();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			RecentLayoutBranch.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"recentLayoutBranchId",
+				newRecentLayoutBranch.getRecentLayoutBranchId()));
+
+		List<RecentLayoutBranch> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(RecentLayoutBranch recentLayoutBranch) {
 		Assert.assertEquals(
-			Long.valueOf(existingRecentLayoutBranch.getUserId()),
+			Long.valueOf(recentLayoutBranch.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingRecentLayoutBranch, "getOriginalUserId",
-				new Class<?>[0]));
+				recentLayoutBranch, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
 		Assert.assertEquals(
-			Long.valueOf(existingRecentLayoutBranch.getLayoutSetBranchId()),
+			Long.valueOf(recentLayoutBranch.getLayoutSetBranchId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingRecentLayoutBranch, "getOriginalLayoutSetBranchId",
-				new Class<?>[0]));
+				recentLayoutBranch, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "layoutSetBranchId"));
 		Assert.assertEquals(
-			Long.valueOf(existingRecentLayoutBranch.getPlid()),
+			Long.valueOf(recentLayoutBranch.getPlid()),
 			ReflectionTestUtil.<Long>invoke(
-				existingRecentLayoutBranch, "getOriginalPlid",
-				new Class<?>[0]));
+				recentLayoutBranch, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "plid"));
 	}
 
 	protected RecentLayoutBranch addRecentLayoutBranch() throws Exception {

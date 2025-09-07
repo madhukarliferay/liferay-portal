@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.uad.display;
@@ -21,8 +12,11 @@ import com.liferay.message.boards.model.MBThread;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.user.associated.data.display.UADDisplay;
+
+import jakarta.portlet.PortletRequest;
 
 import java.io.Serializable;
 
@@ -31,18 +25,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(
-	immediate = true, service = {MBMessageUADDisplay.class, UADDisplay.class}
-)
+@Component(service = UADDisplay.class)
 public class MBMessageUADDisplay extends BaseMBMessageUADDisplay {
 
 	@Override
@@ -74,18 +63,17 @@ public class MBMessageUADDisplay extends BaseMBMessageUADDisplay {
 			return StringPool.BLANK;
 		}
 
-		PortletURL portletURL = liferayPortletResponse.createLiferayPortletURL(
+		return PortletURLBuilder.createLiferayPortletURL(
+			liferayPortletResponse,
 			portal.getControlPanelPlid(liferayPortletRequest),
-			MBPortletKeys.MESSAGE_BOARDS_ADMIN, PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/message_boards/edit_message");
-		portletURL.setParameter(
-			"redirect", portal.getCurrentURL(liferayPortletRequest));
-		portletURL.setParameter(
-			"messageId", String.valueOf(mbMessage.getMessageId()));
-
-		return portletURL.toString();
+			MBPortletKeys.MESSAGE_BOARDS_ADMIN, PortletRequest.RENDER_PHASE
+		).setMVCRenderCommandName(
+			"/message_boards/edit_message"
+		).setRedirect(
+			portal.getCurrentURL(liferayPortletRequest)
+		).setParameter(
+			"messageId", mbMessage.getMessageId()
+		).buildString();
 	}
 
 	@Override

@@ -1,18 +1,7 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import createPortletURL from '../../../../src/main/resources/META-INF/resources/liferay/util/portlet_url/create_portlet_url.es';
 
@@ -24,8 +13,8 @@ describe('Liferay.Util.PortletURL.createPortletURL', () => {
 	beforeEach(() => {
 		Liferay = {
 			ThemeDisplay: {
-				getPortalURL: jest.fn(() => 'http://localhost:8080')
-			}
+				getPortalURL: jest.fn(() => 'http://localhost:8080'),
+			},
 		};
 	});
 
@@ -49,7 +38,7 @@ describe('Liferay.Util.PortletURL.createPortletURL', () => {
 			createPortletURL(
 				'http://localhost:8080/group/control_panel/manage',
 				{
-					foo: 'bar'
+					foo: 'bar',
 				}
 			)
 		).toThrow('Portlet ID must not be null if parameters are provided');
@@ -60,7 +49,7 @@ describe('Liferay.Util.PortletURL.createPortletURL', () => {
 			'http://localhost:8080/group/control_panel/manage?p_p_id=com_liferay_roles_admin_web_portlet_RolesAdminPortlet',
 			{
 				doAsGroupId: 'fooBar',
-				foo: 'bar'
+				foo: 'bar',
 			}
 		);
 
@@ -92,7 +81,7 @@ describe('Liferay.Util.PortletURL.createPortletURL', () => {
 			'http://localhost:8080/group/control_panel/manage?p_p_id=com_liferay_roles_admin_web_portlet_RolesAdminPortlet&doAsGroupId=fooBar',
 			{
 				doAsGroupId: 'barBaz',
-				foo: 'bar'
+				foo: 'bar',
 			}
 		);
 		expect(portletURL.href).toEqual(

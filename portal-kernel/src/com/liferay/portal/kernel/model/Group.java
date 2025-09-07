@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -30,7 +21,7 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface Group extends GroupModel, PersistedModel, TreeModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this interface directly. Add methods to <code>com.liferay.portal.model.impl.GroupImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
@@ -63,7 +54,8 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 
 	public java.util.List<Group> getChildrenWithLayouts(
 		boolean site, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<Group> obc);
+		com.liferay.portal.kernel.util.OrderByComparator<Group>
+			orderByComparator);
 
 	public int getChildrenWithLayoutsCount(boolean site);
 
@@ -80,12 +72,19 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 	public String getDescriptiveName(java.util.Locale locale)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
+	public java.util.Map<java.util.Locale, String> getDescriptiveNameMap()
+		throws com.liferay.portal.kernel.exception.PortalException;
+
 	public String getDisplayURL(
 		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay);
 
 	public String getDisplayURL(
 		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay,
 		boolean privateLayout);
+
+	public String getDisplayURL(
+		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay,
+		boolean privateLayout, boolean controlPanel);
 
 	public String getIconCssClass();
 
@@ -131,6 +130,9 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 	public String getScopeLabel(
 		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay);
 
+	public String getScopeSimpleName(
+		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay);
+
 	public Group getStagingGroup();
 
 	public String getTypeLabel();
@@ -154,11 +156,17 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 
 	public boolean hasStagingGroup();
 
+	public boolean isCMS();
+
 	public boolean isCompany();
 
 	public boolean isCompanyStagingGroup();
 
+	public boolean isContentSharingWithChildrenEnabled();
+
 	public boolean isControlPanel();
+
+	public boolean isDepot();
 
 	public boolean isGuest();
 
@@ -173,6 +181,8 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 	public boolean isLimitedToParentSiteMembers();
 
 	public boolean isOrganization();
+
+	public boolean isPrivateLayoutsEnabled();
 
 	public boolean isRegularSite();
 
@@ -200,6 +210,6 @@ public interface Group extends GroupModel, PersistedModel, TreeModel {
 
 	public void setTypeSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties
-			typeSettingsProperties);
+			typeSettingsUnicodeProperties);
 
 }

@@ -1,15 +1,14 @@
 {
 	"dependencies": {
-		"metal": "2.16.8",
-		"metal-dom": "2.16.8",
-		"metal-state": "2.16.8"
+		"frontend-js-web": "*"
 	},
-	"name": "map-common",
+	"main": "js/index.js",
+	"name": "@liferay/map-common",
 	"scripts": {
-		"build": "liferay-npm-scripts build",
-		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix",
-		"test": "liferay-npm-scripts test"
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format",
+		"test": "node-scripts test"
 	},
-	"version": "5.0.0"
+	"version": "6.0.30"
 }

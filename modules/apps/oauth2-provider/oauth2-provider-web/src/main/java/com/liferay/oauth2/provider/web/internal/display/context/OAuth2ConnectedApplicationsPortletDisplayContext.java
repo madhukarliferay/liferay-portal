@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal.display.context;
@@ -21,7 +12,7 @@ import com.liferay.oauth2.provider.web.internal.AssignableScopes;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
 /**
  * @author Tomas Polesovsky
@@ -30,29 +21,25 @@ public class OAuth2ConnectedApplicationsPortletDisplayContext
 	extends BaseOAuth2PortletDisplayContext {
 
 	public OAuth2ConnectedApplicationsPortletDisplayContext(
-		AssignableScopes assignableScopes, PortletRequest portletRequest,
+		AssignableScopes assignableScopes, DLURLHelper dlURLHelper,
 		OAuth2ApplicationService oAuth2ApplicationService,
-		OAuth2Authorization oAuth2Authorization, DLURLHelper dlURLHelper) {
+		OAuth2Authorization oAuth2Authorization,
+		PortletRequest portletRequest) {
 
-		this(portletRequest, dlURLHelper);
+		this(dlURLHelper, oAuth2ApplicationService, portletRequest);
 
 		_assignableScopes = assignableScopes;
-
-		super.oAuth2ApplicationService = oAuth2ApplicationService;
-		super.dlURLHelper = dlURLHelper;
-
 		_oAuth2Authorization = oAuth2Authorization;
 	}
 
 	public OAuth2ConnectedApplicationsPortletDisplayContext(
-		PortletRequest portletRequest, DLURLHelper dlURLHelper) {
+		DLURLHelper dlURLHelper,
+		OAuth2ApplicationService oAuth2ApplicationService,
+		PortletRequest portletRequest) {
 
-		super.portletRequest = portletRequest;
-
-		super.themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		this.dlURLHelper = dlURLHelper;
+		super(
+			dlURLHelper, oAuth2ApplicationService, portletRequest,
+			(ThemeDisplay)portletRequest.getAttribute(WebKeys.THEME_DISPLAY));
 	}
 
 	public AssignableScopes getAssignableScopes() {

@@ -1,131 +1,133 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/document_library/init.jsp" %>
 
 <%
-long folderId = ParamUtil.getLong(request, "folderId");
+DLAdminDisplayContext dlAdminDisplayContext = (DLAdminDisplayContext)request.getAttribute(DLAdminDisplayContext.class.getName());
 
 Folder folder = null;
 
-if (folderId != rootFolderId) {
+long folderId = ParamUtil.getLong(request, "folderId");
+
+if ((folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) && (folderId != dlAdminDisplayContext.getRootFolderId())) {
 	folder = DLAppServiceUtil.getFolder(folderId);
 }
 
-List<Folder> mountFolders = DLAppServiceUtil.getMountFolders(scopeGroupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+List<Folder> mountFolders = dlAdminDisplayContext.getMountFolders();
 %>
 
-<c:if test="<%= !(mountFolders.isEmpty() && (folder == null)) %>">
+<c:if test="<%= (folder != null) || !mountFolders.isEmpty() %>">
 	<div class="search-info">
-		<liferay-util:whitespace-remover>
-			<liferay-ui:message key="search-colon" />
 
-			<%
-			PortletURL searchEverywhereURL = liferayPortletResponse.createRenderURL();
+		<%
+		long repositoryId = ParamUtil.getLong(request, "repositoryId");
 
-			searchEverywhereURL.setParameter("mvcRenderCommandName", "/document_library/search");
+		if (repositoryId == 0) {
+			repositoryId = scopeGroupId;
+		}
 
-			long repositoryId = ParamUtil.getLong(request, "repositoryId");
+		long searchRepositoryId = ParamUtil.getLong(request, "searchRepositoryId");
 
-			if (repositoryId == 0) {
-				repositoryId = scopeGroupId;
-			}
+		if (searchRepositoryId == 0) {
+			searchRepositoryId = repositoryId;
+		}
 
-			searchEverywhereURL.setParameter("repositoryId", String.valueOf(repositoryId));
+		PortletURL searchURL = dlAdminDisplayContext.getSearchRenderURL();
 
-			long searchRepositoryId = ParamUtil.getLong(request, "searchRepositoryId");
+		long searchFolderId = ParamUtil.getLong(request, "searchFolderId");
+		%>
 
-			if (searchRepositoryId == 0) {
-				searchRepositoryId = repositoryId;
-			}
-
-			searchEverywhereURL.setParameter("searchRepositoryId", String.valueOf(searchRepositoryId));
-
-			searchEverywhereURL.setParameter("folderId", String.valueOf(folderId));
-
-			searchEverywhereURL.setParameter("searchFolderId", String.valueOf(DLFolderConstants.DEFAULT_PARENT_FOLDER_ID));
-
-			String keywords = ParamUtil.getString(request, "keywords");
-
-			searchEverywhereURL.setParameter("keywords", keywords);
-
-			searchEverywhereURL.setParameter("showSearchInfo", Boolean.TRUE.toString());
-
-			PortletURL searchFolderURL = PortletURLUtil.clone(searchEverywhereURL, liferayPortletResponse);
-
-			searchFolderURL.setParameter("searchRepositoryId", String.valueOf(scopeGroupId));
-			searchFolderURL.setParameter("folderId", String.valueOf(folderId));
-			searchFolderURL.setParameter("searchFolderId", String.valueOf(folderId));
-
-			long searchFolderId = ParamUtil.getLong(request, "searchFolderId");
-			%>
-
-			<c:if test="<%= (mountFolders.size() == 0) && (folder != null) %>">
-				<clay:link
-					buttonStyle="secondary"
-					elementClasses='<%= "btn-sm" + ((searchFolderId == rootFolderId) ? " active" : "") %>'
-					href="<%= searchEverywhereURL.toString() %>"
-					label='<%= LanguageUtil.get(resourceBundle, "everywhere") %>'
-					title='<%= LanguageUtil.get(resourceBundle, "everywhere") %>'
-				/>
-			</c:if>
-
-			<c:if test="<%= folder != null %>">
-				<clay:link
-					buttonStyle="secondary"
-					elementClasses='<%= "btn-sm" + ((searchFolderId == folder.getFolderId()) ? " active" : "") %>'
-					href="<%= searchFolderURL.toString() %>"
-					icon="folder"
-					label="<%= folder.getName() %>"
-					title="<%= folder.getName() %>"
-				/>
-			</c:if>
-
-			<c:if test="<%= mountFolders.size() > 0 %>">
+		<div class="btn-group">
+			<c:if test="<%= (folder != null) && mountFolders.isEmpty() %>">
 
 				<%
-				PortletURL searchRepositoryURL = PortletURLUtil.clone(searchEverywhereURL, liferayPortletResponse);
-
-				searchRepositoryURL.setParameter("repositoryId", String.valueOf(scopeGroupId));
-				searchRepositoryURL.setParameter("searchRepositoryId", String.valueOf(scopeGroupId));
+				PortletURL searchEverywhereURL = PortletURLBuilder.create(
+					PortletURLUtil.clone(searchURL, liferayPortletResponse)
+				).setParameter(
+					"searchFolderId", dlAdminDisplayContext.getRootFolderId()
+				).setParameter(
+					"searchRepositoryId", searchRepositoryId
+				).buildPortletURL();
 				%>
 
 				<clay:link
-					buttonStyle="secondary"
-					elementClasses='<%= "btn-sm" + (((searchRepositoryId == scopeGroupId) && (searchFolderId == rootFolderId)) ? " active" : "") %>'
+					cssClass='<%= (searchFolderId == dlAdminDisplayContext.getRootFolderId()) ? "active" : "" %>'
+					displayType="secondary"
+					href="<%= searchEverywhereURL.toString() %>"
+					label="everywhere"
+					small="<%= true %>"
+					title="everywhere"
+					type="button"
+				/>
+			</c:if>
+
+			<c:if test="<%= (folder != null) && !folder.isMountPoint() %>">
+
+				<%
+				PortletURL searchFolderURL = PortletURLBuilder.create(
+					PortletURLUtil.clone(searchURL, liferayPortletResponse)
+				).setParameter(
+					"searchFolderId", folderId
+				).setParameter(
+					"searchRepositoryId", repositoryId
+				).buildPortletURL();
+				%>
+
+				<clay:link
+					cssClass='<%= ((searchFolderId == folderId) && (searchRepositoryId == repositoryId)) ? "active" : "" %>'
+					displayType="secondary"
+					href="<%= searchFolderURL.toString() %>"
+					icon="folder"
+					label="<%= folder.getName() %>"
+					small="<%= true %>"
+					title="<%= folder.getName() %>"
+					type="button"
+				/>
+			</c:if>
+
+			<c:if test="<%= !mountFolders.isEmpty() %>">
+
+				<%
+				PortletURL searchRepositoryURL = PortletURLBuilder.create(
+					PortletURLUtil.clone(searchURL, liferayPortletResponse)
+				).setParameter(
+					"searchFolderId", dlAdminDisplayContext.getRootFolderId()
+				).setParameter(
+					"searchRepositoryId", scopeGroupId
+				).buildPortletURL();
+				%>
+
+				<clay:link
+					cssClass='<%= ((searchFolderId == dlAdminDisplayContext.getRootFolderId()) && (searchRepositoryId == scopeGroupId)) ? "active" : "" %>'
+					displayType="secondary"
 					href="<%= searchRepositoryURL.toString() %>"
 					icon="repository"
-					label='<%= LanguageUtil.get(request, "local") %>'
-					title='<%= LanguageUtil.get(request, "local") %>'
+					label="local"
+					small="<%= true %>"
+					title="local"
+					type="button"
 				/>
 
 				<%
 				for (Folder mountFolder : mountFolders) {
-					searchRepositoryURL.setParameter("repositoryId", String.valueOf(mountFolder.getRepositoryId()));
-					searchRepositoryURL.setParameter("searchRepositoryId", String.valueOf(mountFolder.getRepositoryId()));
 					searchRepositoryURL.setParameter("searchFolderId", String.valueOf(mountFolder.getFolderId()));
+					searchRepositoryURL.setParameter("searchRepositoryId", String.valueOf(mountFolder.getRepositoryId()));
 				%>
 
 					<clay:link
-						buttonStyle="secondary"
-						elementClasses='<%= "btn-sm" + ((mountFolder.getFolderId() == searchFolderId) ? " active" : "") %>'
+						cssClass='<%= (searchFolderId == mountFolder.getFolderId()) ? "active" : "" %>'
+						displayType="secondary"
 						href="<%= searchRepositoryURL.toString() %>"
 						icon="repository"
 						label="<%= mountFolder.getName() %>"
+						small="<%= true %>"
 						title="<%= mountFolder.getName() %>"
+						type="button"
 					/>
 
 				<%
@@ -133,14 +135,6 @@ List<Folder> mountFolders = DLAppServiceUtil.getMountFolders(scopeGroupId, DLFol
 				%>
 
 			</c:if>
-		</liferay-util:whitespace-remover>
+		</div>
 	</div>
-</c:if>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(
-			document.getElementsByName('<portlet:namespace />keywords')[0]
-		);
-	</aui:script>
 </c:if>

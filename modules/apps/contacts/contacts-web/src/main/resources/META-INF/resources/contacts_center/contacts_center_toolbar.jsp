@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -61,7 +52,7 @@ if (user2 != null) {
 
 <div class="lfr-button-column" id="<portlet:namespace />buttonColumn">
 	<div class="lfr-button-column-content">
-		<aui:button-row cssClass="btn-group edit-toolbar" id='<%= renderResponse.getNamespace() + "userToolbar" %>' />
+		<aui:button-row cssClass="btn-group edit-toolbar" id='<%= liferayPortletResponse.getNamespace() + "userToolbar" %>' />
 
 		<div class="btn view-more-button">
 			<liferay-ui:icon
@@ -85,14 +76,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />addConnectionButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "connect") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="requestSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_BI_CONNECTION) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -102,14 +93,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />removeConnectionButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "disconnect") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="deleteSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_BI_CONNECTION) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -119,14 +110,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />followButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "follow") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="addSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_UNI_FOLLOWER) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -136,14 +127,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />unfollowButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "unfollow") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="deleteSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_UNI_FOLLOWER) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -153,14 +144,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />blockButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "block") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="addSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_UNI_ENEMY) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -170,14 +161,14 @@ if (user2 != null) {
 			id: '<portlet:namespace />unblockButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "unblock") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<portlet:namespace />relationAction(
 						event,
 						'<portlet:actionURL name="deleteSocialRelation" windowState="<%= LiferayWindowState.NORMAL.toString() %>"><portlet:param name="type" value="<%= String.valueOf(SocialRelationConstants.TYPE_UNI_ENEMY) %>" /></portlet:actionURL>'
 					);
-				}
+				},
 			},
-			render: true
+			render: true,
 		})
 	);
 
@@ -187,7 +178,7 @@ if (user2 != null) {
 			id: '<portlet:namespace />exportButton',
 			label: '<%= UnicodeLanguageUtil.get(request, "vcard") %>',
 			on: {
-				click: function(event) {
+				click: function (event) {
 					<c:choose>
 						<c:when test="<%= user2 != null %>">
 							location.href =
@@ -199,15 +190,15 @@ if (user2 != null) {
 								A.all('.lfr-contact-grid-item input').val();
 						</c:otherwise>
 					</c:choose>
-				}
-			}
+				},
+			},
 		})
 	);
 
 	var contactsToolbar = new A.Toolbar({
 		activeState: false,
 		boundingBox: buttonRow,
-		children: contactsToolbarChildren
+		children: contactsToolbarChildren,
 	}).render();
 
 	var editToolbar = A.one('.edit-toolbar');
@@ -220,7 +211,7 @@ if (user2 != null) {
 
 	buttonColumn.delegate(
 		'click',
-		function(event) {
+		(event) => {
 			editToolbar.toggleClass('hide-more-buttons', false);
 
 			viewMoreButton.hide();
@@ -266,23 +257,23 @@ if (user2 != null) {
 			<portlet:namespace />jsonFormat: true,
 			<portlet:namespace />keywords: searchInput.get('value'),
 			<portlet:namespace />start: 0,
-			<portlet:namespace />userIds: userIds.join()
+			<portlet:namespace />userIds: userIds.join(),
 		});
 
 		Liferay.Util.fetch(uri, {
 			body: data,
-			method: 'POST'
+			method: 'POST',
 		})
-			.then(function(response) {
+			.then((response) => {
 				return response.json();
 			})
-			.then(function(data) {
+			.then((data) => {
 				Liferay.component('contactsCenter').renderSelectedContacts(
 					data,
 					lastNameAnchor
 				);
 			})
-			.catch(function() {
+			.catch(() => {
 				Liferay.component('contactsCenter').showMessage(false);
 			});
 	}

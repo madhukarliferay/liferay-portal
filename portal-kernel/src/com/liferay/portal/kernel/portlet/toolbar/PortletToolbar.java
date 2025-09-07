@@ -1,19 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet.toolbar;
 
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.PortletToolbarContributor;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.locator.PortletToolbarContributorLocator;
 import com.liferay.portal.kernel.servlet.taglib.ui.Menu;
@@ -22,22 +16,16 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Provides elements to be rendered in the portlet toolbar. To obtain those
@@ -48,15 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class PortletToolbar {
 
-	public PortletToolbar() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			PortletToolbarContributorLocator.class,
-			new PortletToolbarServiceTrackerCustomizer());
-
-		_serviceTracker.open();
-	}
+	public static final PortletToolbar INSTANCE = new PortletToolbar();
 
 	public List<Menu> getPortletTitleMenus(
 		String portletId, PortletRequest portletRequest,
@@ -112,53 +92,12 @@ public class PortletToolbar {
 		return portletTitleMenus;
 	}
 
-	private static final List<PortletToolbarContributorLocator>
-		_portletToolbarContributorLocators = new CopyOnWriteArrayList<>();
-
-	private final ServiceTracker
-		<PortletToolbarContributorLocator, PortletToolbarContributorLocator>
-			_serviceTracker;
-
-	private static class PortletToolbarServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<PortletToolbarContributorLocator,
-			 PortletToolbarContributorLocator> {
-
-		@Override
-		public PortletToolbarContributorLocator addingService(
-			ServiceReference<PortletToolbarContributorLocator>
-				serviceReference) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			PortletToolbarContributorLocator portletToolbarContributorLocator =
-				registry.getService(serviceReference);
-
-			_portletToolbarContributorLocators.add(
-				portletToolbarContributorLocator);
-
-			return portletToolbarContributorLocator;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<PortletToolbarContributorLocator> serviceReference,
-			PortletToolbarContributorLocator portletToolbarContributorLocator) {
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<PortletToolbarContributorLocator> serviceReference,
-			PortletToolbarContributorLocator portletToolbarContributorLocator) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-
-			_portletToolbarContributorLocators.remove(
-				portletToolbarContributorLocator);
-		}
-
+	private PortletToolbar() {
 	}
+
+	private static final ServiceTrackerList<PortletToolbarContributorLocator>
+		_portletToolbarContributorLocators = ServiceTrackerListFactory.open(
+			SystemBundleUtil.getBundleContext(),
+			PortletToolbarContributorLocator.class);
 
 }

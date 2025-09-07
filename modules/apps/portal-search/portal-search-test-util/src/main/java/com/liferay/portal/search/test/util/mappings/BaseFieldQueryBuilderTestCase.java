@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test.util.mappings;
@@ -83,9 +74,7 @@ public abstract class BaseFieldQueryBuilderTestCase
 			});
 	}
 
-	protected void assertSearch(final String keywords, final int size)
-		throws Exception {
-
+	protected void assertSearch(String keywords, int size) throws Exception {
 		_assertCount(keywords, size);
 	}
 
@@ -104,7 +93,7 @@ public abstract class BaseFieldQueryBuilderTestCase
 			});
 	}
 
-	protected void assertSearchCount(final String keywords, final int size)
+	protected void assertSearchCount(String keywords, int size)
 		throws Exception {
 
 		assertSearch(
@@ -137,7 +126,7 @@ public abstract class BaseFieldQueryBuilderTestCase
 		_assertCount(keywords, 0);
 	}
 
-	protected Query buildQuery(final String keywords) {
+	protected Query buildQuery(String keywords) {
 		FieldQueryBuilder fieldQueryBuilder = createFieldQueryBuilder();
 
 		Query query = fieldQueryBuilder.build(getField(), keywords);
@@ -151,7 +140,7 @@ public abstract class BaseFieldQueryBuilderTestCase
 
 	protected abstract FieldQueryBuilder createFieldQueryBuilder();
 
-	protected Hits doSearch(final String keywords) throws Exception {
+	protected Hits doSearch(String keywords) throws Exception {
 		Query query = buildQuery(keywords);
 
 		return search(createSearchContext(), query);
@@ -162,9 +151,7 @@ public abstract class BaseFieldQueryBuilderTestCase
 	protected void prepareSearch(
 		IndexingTestHelper indexingTestHelper, String keywords) {
 
-		Query query = buildQuery(keywords);
-
-		indexingTestHelper.setQuery(query);
+		indexingTestHelper.setQuery(buildQuery(keywords));
 	}
 
 	protected String[] transformFieldValues(String... values) {

@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.service.builder.internal;
 
 import com.liferay.project.templates.extensions.ProjectTemplateCustomizer;
 import com.liferay.project.templates.extensions.ProjectTemplatesArgs;
+import com.liferay.project.templates.extensions.util.FileUtil;
+import com.liferay.project.templates.extensions.util.VersionUtil;
 import com.liferay.project.templates.extensions.util.WorkspaceUtil;
 
 import java.io.File;
@@ -43,6 +36,45 @@ public class ServiceBuilderProjectTemplateCustomizer
 			ProjectTemplatesArgs projectTemplatesArgs, File destinationDir,
 			ArchetypeGenerationResult archetypeGenerationResult)
 		throws Exception {
+
+		ServiceBuilderProjectTemplatesArgs serviceBuilderProjectTemplatesArgs =
+			(ServiceBuilderProjectTemplatesArgs)
+				projectTemplatesArgs.getProjectTemplatesArgsExt();
+
+		String addOns = serviceBuilderProjectTemplatesArgs.getAddOns();
+
+		Path destinationDirPath = destinationDir.toPath();
+
+		Path projectPath = destinationDirPath.resolve(
+			projectTemplatesArgs.getName());
+
+		File projectDir = projectPath.toFile();
+
+		String artifactId = projectTemplatesArgs.getName();
+
+		if (addOns.equals("false")) {
+			File uadDir = new File(projectDir, artifactId + "-uad");
+
+			FileUtil.deleteDir(uadDir.toPath());
+		}
+
+		File serviceDir = new File(projectDir, artifactId + "-service");
+
+		File serviceXMLFile = new File(serviceDir, "service.xml");
+
+		String liferayVersion = projectTemplatesArgs.getLiferayVersion();
+
+		String minorVersionString = String.valueOf(
+			VersionUtil.getMinorVersion(liferayVersion));
+
+		if (VersionUtil.isLiferayQuarterlyVersion(liferayVersion)) {
+			minorVersionString = "4";
+		}
+
+		FileUtil.replaceString(
+			serviceXMLFile, "7.0", "7." + minorVersionString);
+		FileUtil.replaceString(
+			serviceXMLFile, "7_0", "7_" + minorVersionString);
 	}
 
 	@Override
@@ -72,7 +104,12 @@ public class ServiceBuilderProjectTemplateCustomizer
 
 			relativePath = relativePath.replace(File.separatorChar, ':');
 
-			apiPath = ":" + relativePath + ":" + artifactId + apiPath;
+			if (relativePath.isEmpty()) {
+				apiPath = ":" + artifactId + apiPath;
+			}
+			else {
+				apiPath = ":" + relativePath + ":" + artifactId + apiPath;
+			}
 		}
 
 		Properties properties = archetypeGenerationRequest.getProperties();
@@ -83,6 +120,21 @@ public class ServiceBuilderProjectTemplateCustomizer
 			(ServiceBuilderProjectTemplatesArgs)
 				projectTemplatesArgs.getProjectTemplatesArgsExt();
 
+		String addOns = serviceBuilderProjectTemplatesArgs.getAddOns();
+
+		String liferayVersion = projectTemplatesArgs.getLiferayVersion();
+
+		if (addOns.equals("true") &&
+			(liferayVersion.startsWith("7.0") ||
+			 liferayVersion.startsWith("7.1"))) {
+
+			throw new IllegalArgumentException(
+				"Add Ons are not supported in 7.0 or 7.1");
+		}
+
+		setProperty(
+			properties, "addOns",
+			serviceBuilderProjectTemplatesArgs.getAddOns());
 		setProperty(
 			properties, "dependencyInjector",
 			serviceBuilderProjectTemplatesArgs.getDependencyInjector());

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.osgi.service.tracker.collections.map;
+
+import com.liferay.osgi.service.tracker.collections.ServiceReferenceServiceTuple;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,19 +26,21 @@ public class ServiceTrackerCustomizerFactory {
 
 		return b -> new ServiceTrackerCustomizer<S, T>() {
 
+			@Override
 			public T addingService(ServiceReference<S> serviceReference) {
 				S service = b.getService(serviceReference);
 
 				try {
 					return function.apply(serviceReference, service);
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					b.ungetService(serviceReference);
 
-					throw e;
+					throw exception;
 				}
 			}
 
+			@Override
 			public void modifiedService(
 				ServiceReference<S> serviceReference, T t) {
 
@@ -54,6 +49,7 @@ public class ServiceTrackerCustomizerFactory {
 				addingService(serviceReference);
 			}
 
+			@Override
 			public void removedService(
 				ServiceReference<S> serviceReference, T t) {
 
@@ -63,43 +59,68 @@ public class ServiceTrackerCustomizerFactory {
 		};
 	}
 
+	public static <S>
+		ServiceTrackerCustomizer<S, ServiceReferenceServiceTuple<S, S>>
+			serviceReferenceServiceTuple(final BundleContext bundleContext) {
+
+		return new ServiceTrackerCustomizer
+			<S, ServiceReferenceServiceTuple<S, S>>() {
+
+			@Override
+			public ServiceReferenceServiceTuple<S, S> addingService(
+				ServiceReference<S> serviceReference) {
+
+				S service = bundleContext.getService(serviceReference);
+
+				if (service == null) {
+					return null;
+				}
+
+				return new ServiceReferenceServiceTuple<>(
+					serviceReference, service);
+			}
+
+			@Override
+			public void modifiedService(
+				ServiceReference<S> serviceReference,
+				ServiceReferenceServiceTuple<S, S>
+					serviceReferenceServiceTuple) {
+			}
+
+			@Override
+			public void removedService(
+				ServiceReference<S> serviceReference,
+				ServiceReferenceServiceTuple<S, S>
+					serviceReferenceServiceTuple) {
+
+				bundleContext.ungetService(serviceReference);
+			}
+
+		};
+	}
+
 	public static <S> ServiceTrackerCustomizer<S, ServiceWrapper<S>>
-		serviceWrapper(final BundleContext bundleContext) {
+		serviceWrapper(BundleContext bundleContext) {
 
 		return new ServiceTrackerCustomizer<S, ServiceWrapper<S>>() {
 
 			@Override
 			public ServiceWrapper<S> addingService(
-				final ServiceReference<S> serviceReference) {
+				ServiceReference<S> serviceReference) {
 
-				final S service = bundleContext.getService(serviceReference);
+				S service = bundleContext.getService(serviceReference);
 
 				if (service == null) {
 					return null;
 				}
 
 				try {
-					final Map<String, Object> properties = _getProperties(
-						serviceReference);
-
-					return new ServiceWrapper<S>() {
-
-						@Override
-						public Map<String, Object> getProperties() {
-							return properties;
-						}
-
-						@Override
-						public S getService() {
-							return service;
-						}
-
-					};
+					return new ServiceWrapperImpl<>(serviceReference, service);
 				}
-				catch (Throwable t) {
+				catch (Throwable throwable) {
 					bundleContext.ungetService(serviceReference);
 
-					throw t;
+					throw throwable;
 				}
 			}
 
@@ -107,6 +128,11 @@ public class ServiceTrackerCustomizerFactory {
 			public void modifiedService(
 				ServiceReference<S> serviceReference,
 				ServiceWrapper<S> serviceWrapper) {
+
+				ServiceWrapperImpl<S> serviceWrapperImpl =
+					(ServiceWrapperImpl<S>)serviceWrapper;
+
+				serviceWrapperImpl._resetProperties();
 			}
 
 			@Override
@@ -128,19 +154,49 @@ public class ServiceTrackerCustomizerFactory {
 
 	}
 
-	private static <S> Map<String, Object> _getProperties(
-		final ServiceReference<S> serviceReference) {
+	private static class ServiceWrapperImpl<S> implements ServiceWrapper<S> {
 
-		Map<String, Object> properties = new HashMap<>();
+		@Override
+		public Map<String, Object> getProperties() {
+			Map<String, Object> properties = _properties;
 
-		String[] propertyKeys = serviceReference.getPropertyKeys();
+			if (properties == null) {
+				properties = new HashMap<>();
 
-		for (String propertyKey : propertyKeys) {
-			properties.put(
-				propertyKey, serviceReference.getProperty(propertyKey));
+				String[] propertyKeys = _serviceReference.getPropertyKeys();
+
+				for (String propertyKey : propertyKeys) {
+					properties.put(
+						propertyKey,
+						_serviceReference.getProperty(propertyKey));
+				}
+
+				_properties = properties;
+			}
+
+			return properties;
 		}
 
-		return properties;
+		@Override
+		public S getService() {
+			return _service;
+		}
+
+		private ServiceWrapperImpl(
+			ServiceReference<S> serviceReference, S service) {
+
+			_serviceReference = serviceReference;
+			_service = service;
+		}
+
+		private void _resetProperties() {
+			_properties = null;
+		}
+
+		private volatile Map<String, Object> _properties;
+		private final S _service;
+		private final ServiceReference<S> _serviceReference;
+
 	}
 
 }

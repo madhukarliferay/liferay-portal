@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.internal.exportimport.portlet.preferences.processor.test;
@@ -35,34 +26,28 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.ratings.kernel.model.RatingsEntry;
 import com.liferay.ratings.test.util.RatingsTestUtil;
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
 import com.liferay.wiki.constants.WikiPortletKeys;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.test.util.WikiTestUtil;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.portlet.PortletPreferences;
-
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -79,37 +64,13 @@ public class WikiExportImportPortletPreferencesProcessorTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-	@BeforeClass
-	public static void setUpClass() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("(&(javax.portlet.name=");
-		sb.append(WikiPortletKeys.WIKI);
-		sb.append(")(objectClass=");
-		sb.append(ExportImportPortletPreferencesProcessor.class.getName());
-		sb.append("))");
-
-		Filter filter = registry.getFilter(sb.toString());
-
-		_serviceTracker = registry.trackServices(filter);
-
-		_serviceTracker.open();
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		_serviceTracker.close();
-	}
-
 	@Before
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group.getGroupId());
+		_layout = LayoutTestUtil.addTypePortletLayout(_group.getGroupId());
 
 		LayoutTestUtil.addPortletToLayout(
 			TestPropsValues.getUserId(), _layout, WikiPortletKeys.WIKI,
@@ -128,8 +89,6 @@ public class WikiExportImportPortletPreferencesProcessorTest {
 
 		_portletDataContextImport.setPlid(_layout.getPlid());
 		_portletDataContextImport.setPortletId(WikiPortletKeys.WIKI);
-
-		_exportImportPortletPreferencesProcessor = _serviceTracker.getService();
 
 		_portletPreferences =
 			PortletPreferencesFactoryUtil.getStrictPortletSetup(
@@ -190,9 +149,9 @@ public class WikiExportImportPortletPreferencesProcessorTest {
 			primaryKeys.toString(),
 			primaryKeys.contains(
 				StringBundler.concat(
-					String.class.getName(), StringPool.POUND,
-					"com.liferay.message.boards.model.MBMessage",
-					StringPool.POUND, commentPrimaryKey)));
+					String.class.getName(),
+					"#com.liferay.message.boards.model.MBMessage#",
+					commentPrimaryKey)));
 	}
 
 	@Test
@@ -279,10 +238,7 @@ public class WikiExportImportPortletPreferencesProcessorTest {
 			wikiPage.getPageId(), GetterUtil.getLong(importedWikiPageId));
 	}
 
-	private static ServiceTracker
-		<ExportImportPortletPreferencesProcessor,
-		 ExportImportPortletPreferencesProcessor> _serviceTracker;
-
+	@Inject(filter = "jakarta.portlet.name=" + WikiPortletKeys.WIKI)
 	private ExportImportPortletPreferencesProcessor
 		_exportImportPortletPreferencesProcessor;
 

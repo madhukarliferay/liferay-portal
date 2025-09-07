@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.util;
 
 import com.liferay.dynamic.data.mapping.BaseDDMTestCase;
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.internal.util.DDMFormTemplateSynchonizer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
@@ -24,49 +16,35 @@ import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.impl.DDMTemplateImpl;
 import com.liferay.dynamic.data.mapping.service.impl.DDMTemplateLocalServiceImpl;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ResourceBundle;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.mockito.Matchers;
-
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * @author Marcellus Tavares
  */
-@PrepareForTest({LocaleUtil.class, PropsValues.class})
-@RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor(
-	{
-		"com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil",
-		"com.liferay.portal.kernel.xml.SAXReaderUtil",
-		"com.liferay.portal.util.PropsValues"
-	}
-)
 public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	@Override
@@ -78,10 +56,6 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 		setUpDDMFormJSONDeserializer();
 		setUpJSONFactoryUtil();
 		setUpLanguageUtil();
-		setUpLocaleUtil();
-		setUpHtmlUtil();
-		setUpPortalUtil();
-		setUpPropsValues();
 		setUpSAXReaderUtil();
 	}
 
@@ -243,10 +217,8 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 
 		label.addString(LocaleUtil.US, StringUtil.randomString());
 
-		DDMFormFieldOptions ddmFormFieldOptions = createDDMFormFieldOptions(
-			availableOptions);
-
-		ddmFormField.setDDMFormFieldOptions(ddmFormFieldOptions);
+		ddmFormField.setDDMFormFieldOptions(
+			createDDMFormFieldOptions(availableOptions));
 
 		return ddmFormField;
 	}
@@ -263,10 +235,8 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 
 		label.addString(LocaleUtil.US, StringUtil.randomString());
 
-		DDMFormFieldOptions ddmFormFieldOptions = createDDMFormFieldOptions(
-			availableOptions);
-
-		ddmFormField.setDDMFormFieldOptions(ddmFormFieldOptions);
+		ddmFormField.setDDMFormFieldOptions(
+			createDDMFormFieldOptions(availableOptions));
 
 		return ddmFormField;
 	}
@@ -320,31 +290,15 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 	protected void removeDDMFormField(DDMForm ddmForm, String fieldName) {
 		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
 
-		Iterator<DDMFormField> itr = ddmFormFields.iterator();
+		Iterator<DDMFormField> iterator = ddmFormFields.iterator();
 
-		while (itr.hasNext()) {
-			DDMFormField ddmFormField = itr.next();
+		while (iterator.hasNext()) {
+			DDMFormField ddmFormField = iterator.next();
 
 			if (fieldName.equals(ddmFormField.getName())) {
-				itr.remove();
+				iterator.remove();
 			}
 		}
-	}
-
-	protected void setUpPortalUtil() {
-		PortalUtil portalUtil = new PortalUtil();
-
-		Portal portal = mock(Portal.class);
-
-		ResourceBundle resourceBundle = mock(ResourceBundle.class);
-
-		when(
-			portal.getResourceBundle(Matchers.any(Locale.class))
-		).thenReturn(
-			resourceBundle
-		);
-
-		portalUtil.setPortal(portal);
 	}
 
 	protected void testFormTemplatesAfterAddRequiredFields() throws Exception {
@@ -482,12 +436,7 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 
 		@Override
 		protected List<DDMTemplate> getDDMFormTemplates() {
-			List<DDMTemplate> ddmFormTemplates = new ArrayList<>();
-
-			ddmFormTemplates.add(_createDDMTemplate);
-			ddmFormTemplates.add(_editDDMTemplate);
-
-			return ddmFormTemplates;
+			return ListUtil.fromArray(_createDDMTemplate, _editDDMTemplate);
 		}
 
 		@Override
@@ -502,9 +451,8 @@ public class DDMFormTemplateSynchonizerTest extends BaseDDMTestCase {
 				ddmFormSerializerSerializeResponse =
 					ddmFormJSONSerializer.serialize(builder.build());
 
-			String script = ddmFormSerializerSerializeResponse.getContent();
-
-			ddmTemplate.setScript(script);
+			ddmTemplate.setScript(
+				ddmFormSerializerSerializeResponse.getContent());
 
 			if (Objects.equals(
 					ddmTemplate.getMode(),

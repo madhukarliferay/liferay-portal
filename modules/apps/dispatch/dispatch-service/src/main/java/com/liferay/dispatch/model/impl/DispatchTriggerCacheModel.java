@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dispatch.model.impl;
@@ -30,24 +21,24 @@ import java.util.Date;
 /**
  * The cache model class for representing DispatchTrigger in entity cache.
  *
- * @author Alessio Antonio Rendina
+ * @author Matija Petanjek
  * @generated
  */
 public class DispatchTriggerCacheModel
 	implements CacheModel<DispatchTrigger>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DispatchTriggerCacheModel)) {
+		if (!(object instanceof DispatchTriggerCacheModel)) {
 			return false;
 		}
 
 		DispatchTriggerCacheModel dispatchTriggerCacheModel =
-			(DispatchTriggerCacheModel)obj;
+			(DispatchTriggerCacheModel)object;
 
 		if ((dispatchTriggerId ==
 				dispatchTriggerCacheModel.dispatchTriggerId) &&
@@ -78,10 +69,14 @@ public class DispatchTriggerCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", uuid=");
+		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", dispatchTriggerId=");
 		sb.append(dispatchTriggerId);
 		sb.append(", companyId=");
@@ -98,18 +93,24 @@ public class DispatchTriggerCacheModel
 		sb.append(active);
 		sb.append(", cronExpression=");
 		sb.append(cronExpression);
+		sb.append(", dispatchTaskClusterMode=");
+		sb.append(dispatchTaskClusterMode);
+		sb.append(", dispatchTaskExecutorType=");
+		sb.append(dispatchTaskExecutorType);
+		sb.append(", dispatchTaskSettings=");
+		sb.append(dispatchTaskSettings);
 		sb.append(", endDate=");
 		sb.append(endDate);
 		sb.append(", name=");
 		sb.append(name);
+		sb.append(", overlapAllowed=");
+		sb.append(overlapAllowed);
 		sb.append(", startDate=");
 		sb.append(startDate);
 		sb.append(", system=");
 		sb.append(system);
-		sb.append(", type=");
-		sb.append(type);
-		sb.append(", typeSettings=");
-		sb.append(typeSettings);
+		sb.append(", timeZoneId=");
+		sb.append(timeZoneId);
 		sb.append("}");
 
 		return sb.toString();
@@ -120,6 +121,21 @@ public class DispatchTriggerCacheModel
 		DispatchTriggerImpl dispatchTriggerImpl = new DispatchTriggerImpl();
 
 		dispatchTriggerImpl.setMvccVersion(mvccVersion);
+
+		if (uuid == null) {
+			dispatchTriggerImpl.setUuid("");
+		}
+		else {
+			dispatchTriggerImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			dispatchTriggerImpl.setExternalReferenceCode("");
+		}
+		else {
+			dispatchTriggerImpl.setExternalReferenceCode(externalReferenceCode);
+		}
+
 		dispatchTriggerImpl.setDispatchTriggerId(dispatchTriggerId);
 		dispatchTriggerImpl.setCompanyId(companyId);
 		dispatchTriggerImpl.setUserId(userId);
@@ -154,6 +170,23 @@ public class DispatchTriggerCacheModel
 			dispatchTriggerImpl.setCronExpression(cronExpression);
 		}
 
+		dispatchTriggerImpl.setDispatchTaskClusterMode(dispatchTaskClusterMode);
+
+		if (dispatchTaskExecutorType == null) {
+			dispatchTriggerImpl.setDispatchTaskExecutorType("");
+		}
+		else {
+			dispatchTriggerImpl.setDispatchTaskExecutorType(
+				dispatchTaskExecutorType);
+		}
+
+		if (dispatchTaskSettings == null) {
+			dispatchTriggerImpl.setDispatchTaskSettings("");
+		}
+		else {
+			dispatchTriggerImpl.setDispatchTaskSettings(dispatchTaskSettings);
+		}
+
 		if (endDate == Long.MIN_VALUE) {
 			dispatchTriggerImpl.setEndDate(null);
 		}
@@ -168,6 +201,8 @@ public class DispatchTriggerCacheModel
 			dispatchTriggerImpl.setName(name);
 		}
 
+		dispatchTriggerImpl.setOverlapAllowed(overlapAllowed);
+
 		if (startDate == Long.MIN_VALUE) {
 			dispatchTriggerImpl.setStartDate(null);
 		}
@@ -177,18 +212,11 @@ public class DispatchTriggerCacheModel
 
 		dispatchTriggerImpl.setSystem(system);
 
-		if (type == null) {
-			dispatchTriggerImpl.setType("");
+		if (timeZoneId == null) {
+			dispatchTriggerImpl.setTimeZoneId("");
 		}
 		else {
-			dispatchTriggerImpl.setType(type);
-		}
-
-		if (typeSettings == null) {
-			dispatchTriggerImpl.setTypeSettings("");
-		}
-		else {
-			dispatchTriggerImpl.setTypeSettings(typeSettings);
+			dispatchTriggerImpl.setTimeZoneId(timeZoneId);
 		}
 
 		dispatchTriggerImpl.resetOriginalValues();
@@ -197,8 +225,12 @@ public class DispatchTriggerCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		dispatchTriggerId = objectInput.readLong();
 
@@ -211,18 +243,37 @@ public class DispatchTriggerCacheModel
 
 		active = objectInput.readBoolean();
 		cronExpression = objectInput.readUTF();
+
+		dispatchTaskClusterMode = objectInput.readInt();
+		dispatchTaskExecutorType = objectInput.readUTF();
+		dispatchTaskSettings = (String)objectInput.readObject();
 		endDate = objectInput.readLong();
 		name = objectInput.readUTF();
+
+		overlapAllowed = objectInput.readBoolean();
 		startDate = objectInput.readLong();
 
 		system = objectInput.readBoolean();
-		type = objectInput.readUTF();
-		typeSettings = objectInput.readUTF();
+		timeZoneId = objectInput.readUTF();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
 
 		objectOutput.writeLong(dispatchTriggerId);
 
@@ -249,6 +300,22 @@ public class DispatchTriggerCacheModel
 			objectOutput.writeUTF(cronExpression);
 		}
 
+		objectOutput.writeInt(dispatchTaskClusterMode);
+
+		if (dispatchTaskExecutorType == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(dispatchTaskExecutorType);
+		}
+
+		if (dispatchTaskSettings == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(dispatchTaskSettings);
+		}
+
 		objectOutput.writeLong(endDate);
 
 		if (name == null) {
@@ -258,26 +325,22 @@ public class DispatchTriggerCacheModel
 			objectOutput.writeUTF(name);
 		}
 
+		objectOutput.writeBoolean(overlapAllowed);
 		objectOutput.writeLong(startDate);
 
 		objectOutput.writeBoolean(system);
 
-		if (type == null) {
+		if (timeZoneId == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(type);
-		}
-
-		if (typeSettings == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(typeSettings);
+			objectOutput.writeUTF(timeZoneId);
 		}
 	}
 
 	public long mvccVersion;
+	public String uuid;
+	public String externalReferenceCode;
 	public long dispatchTriggerId;
 	public long companyId;
 	public long userId;
@@ -286,11 +349,14 @@ public class DispatchTriggerCacheModel
 	public long modifiedDate;
 	public boolean active;
 	public String cronExpression;
+	public int dispatchTaskClusterMode;
+	public String dispatchTaskExecutorType;
+	public String dispatchTaskSettings;
 	public long endDate;
 	public String name;
+	public boolean overlapAllowed;
 	public long startDate;
 	public boolean system;
-	public String type;
-	public String typeSettings;
+	public String timeZoneId;
 
 }

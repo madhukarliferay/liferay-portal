@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.security.auth;
@@ -43,6 +34,7 @@ public class DefaultScreenNameGenerator implements ScreenNameGenerator {
 		if (Validator.isNotNull(emailAddress)) {
 			screenName = StringUtil.extractFirst(emailAddress, CharPool.AT);
 
+			screenName = StringUtil.shorten(screenName, 64, StringPool.BLANK);
 			screenName = StringUtil.toLowerCase(screenName);
 
 			for (char c : screenName.toCharArray()) {
@@ -65,7 +57,7 @@ public class DefaultScreenNameGenerator implements ScreenNameGenerator {
 		if (!_USERS_SCREEN_NAME_ALLOW_NUMERIC &&
 			Validator.isNumber(screenName)) {
 
-			screenName = _NON_NUMERICAL_PREFIX + screenName;
+			screenName = _NONNUMERICAL_PREFIX + screenName;
 		}
 
 		String[] reservedScreenNames = PrefsPropsUtil.getStringArray(
@@ -120,7 +112,7 @@ public class DefaultScreenNameGenerator implements ScreenNameGenerator {
 		StringUtil.splitLines(
 			PropsUtil.get(PropsKeys.ADMIN_RESERVED_SCREEN_NAMES));
 
-	private static final String _NON_NUMERICAL_PREFIX = "user.";
+	private static final String _NONNUMERICAL_PREFIX = "user.";
 
 	private static final boolean _USERS_SCREEN_NAME_ALLOW_NUMERIC =
 		GetterUtil.getBoolean(

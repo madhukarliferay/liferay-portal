@@ -1,23 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.test.util;
 
+import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.model.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
@@ -53,6 +44,16 @@ public class DDMStructureTestHelper {
 
 		_classNameId = classNameId;
 		_group = group;
+
+		_userId = TestPropsValues.getUserId();
+	}
+
+	public DDMStructureTestHelper(long classNameId, Group group, long userId)
+		throws Exception {
+
+		_classNameId = classNameId;
+		_group = group;
+		_userId = userId;
 	}
 
 	public DDMStructure addStructure(
@@ -62,7 +63,7 @@ public class DDMStructureTestHelper {
 		return addStructure(
 			DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID, _classNameId,
 			null, "Test Structure", StringPool.BLANK, ddmForm, ddmFormLayout,
-			StorageType.JSON.toString(), DDMStructureConstants.TYPE_DEFAULT);
+			StorageType.DEFAULT.toString(), DDMStructureConstants.TYPE_DEFAULT);
 	}
 
 	public DDMStructure addStructure(DDMForm ddmForm, String storageType)
@@ -86,8 +87,8 @@ public class DDMStructureTestHelper {
 		serviceContext.setAttribute("status", status);
 
 		return DDMStructureLocalServiceUtil.addStructure(
-			TestPropsValues.getUserId(), group.getGroupId(), parentStructureId,
-			classNameId, structureKey, getDefaultLocaleMap(name),
+			null, _userId, group.getGroupId(), parentStructureId, classNameId,
+			structureKey, getDefaultLocaleMap(name),
 			getDefaultLocaleMap(description), ddmForm, ddmFormLayout,
 			storageType, type, serviceContext);
 	}
@@ -131,18 +132,28 @@ public class DDMStructureTestHelper {
 
 	public DDMStructure addStructure(
 			long classNameId, String structureKey, String name,
+			String description, DDMForm ddmForm, String storageType, int type)
+		throws Exception {
+
+		DDMFormLayout ddmFormLayout = DDMUtil.getDefaultDDMFormLayout(ddmForm);
+
+		return addStructure(
+			DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID, classNameId,
+			structureKey, name, description, ddmForm, ddmFormLayout,
+			storageType, type);
+	}
+
+	public DDMStructure addStructure(
+			long classNameId, String structureKey, String name,
 			String definition, String storageType)
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 		return DDMStructureLocalServiceUtil.addStructure(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, _userId, _group.getGroupId(),
 			DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID, classNameId,
 			structureKey, getDefaultLocaleMap(name),
 			getDefaultLocaleMap(StringPool.BLANK), definition, storageType,
-			serviceContext);
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 	}
 
 	public DDMStructure updateStructure(long structureId, DDMForm ddmForm)
@@ -167,17 +178,16 @@ public class DDMStructureTestHelper {
 			DDMFormLayout ddmFormLayout)
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 		return DDMStructureLocalServiceUtil.updateStructure(
-			TestPropsValues.getUserId(), structureId,
+			_userId, structureId,
 			DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID,
 			getDefaultLocaleMap(name), getDefaultLocaleMap(description),
-			ddmForm, ddmFormLayout, serviceContext);
+			ddmForm, ddmFormLayout,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 	}
 
 	private final long _classNameId;
 	private final Group _group;
+	private final long _userId;
 
 }

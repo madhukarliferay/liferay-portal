@@ -1,31 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.model.AssetEntry;
-import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMTemplateTestUtil;
+import com.liferay.journal.constants.JournalArticleConstants;
+import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.journal.model.JournalArticleConstants;
-import com.liferay.journal.model.JournalFolderConstants;
-import com.liferay.journal.service.JournalArticleLocalServiceUtil;
+import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
@@ -42,7 +33,8 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Calendar;
@@ -72,8 +64,6 @@ public class JournalArticleScheduledTest {
 	@Before
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
-
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
 	}
 
 	@Test
@@ -95,6 +85,9 @@ public class JournalArticleScheduledTest {
 	public void testScheduleDraftArticleToThePast() throws Exception {
 		testScheduleArticle(false, _WHEN_PAST);
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected JournalArticle addArticle(
 			long groupId, Date displayDate, int when, boolean approved)
@@ -132,25 +125,26 @@ public class JournalArticleScheduledTest {
 				WorkflowConstants.ACTION_SAVE_DRAFT);
 		}
 
-		return JournalArticleLocalServiceUtil.addArticle(
-			TestPropsValues.getUserId(), groupId,
+		return _journalArticleLocalService.addArticle(
+			null, TestPropsValues.getUserId(), groupId,
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			JournalArticleConstants.CLASSNAME_ID_DEFAULT, 0, StringPool.BLANK,
+			JournalArticleConstants.CLASS_NAME_ID_DEFAULT, 0, StringPool.BLANK,
 			true, JournalArticleConstants.VERSION_DEFAULT, titleMap,
-			descriptionMap, content, ddmStructure.getStructureKey(),
+			descriptionMap, titleMap, content, ddmStructure.getStructureId(),
 			ddmTemplate.getTemplateKey(), null,
 			displayDateCalendar.get(Calendar.MONTH),
 			displayDateCalendar.get(Calendar.DAY_OF_MONTH),
 			displayDateCalendar.get(Calendar.YEAR),
 			displayDateCalendar.get(Calendar.HOUR_OF_DAY),
 			displayDateCalendar.get(Calendar.MINUTE), 0, 0, 0, 0, 0, true, 0, 0,
-			0, 0, 0, true, true, false, null, null, null, null, serviceContext);
+			0, 0, 0, true, true, false, 0, 0, null, null, null, null,
+			serviceContext);
 	}
 
 	protected Calendar getCalendar(Date date, int when) {
 		Calendar calendar = new GregorianCalendar();
 
-		calendar.setTime(new Date(date.getTime() + Time.MINUTE * when * 5));
+		calendar.setTime(new Date(date.getTime() + (Time.MINUTE * when * 5)));
 
 		return calendar;
 	}
@@ -161,16 +155,14 @@ public class JournalArticleScheduledTest {
 		int initialSearchArticlesCount = JournalTestUtil.getSearchArticlesCount(
 			_group.getCompanyId(), _group.getGroupId());
 
-		Date now = new Date();
-
 		JournalArticle article = addArticle(
-			_group.getGroupId(), now, when, approved);
+			_group.getGroupId(), new Date(), when, approved);
 
-		JournalArticleLocalServiceUtil.checkArticles();
+		_journalArticleLocalService.checkArticles(_group.getCompanyId());
 
-		article = JournalArticleLocalServiceUtil.getArticle(article.getId());
+		article = _journalArticleLocalService.getArticle(article.getId());
 
-		AssetEntry assetEntry = AssetEntryLocalServiceUtil.getEntry(
+		AssetEntry assetEntry = _assetEntryLocalService.getEntry(
 			JournalArticle.class.getName(), article.getResourcePrimKey());
 
 		if (when == _WHEN_FUTURE) {
@@ -209,7 +201,13 @@ public class JournalArticleScheduledTest {
 
 	private static final int _WHEN_PAST = -1;
 
+	@Inject
+	private AssetEntryLocalService _assetEntryLocalService;
+
 	@DeleteAfterTestRun
 	private Group _group;
+
+	@Inject
+	private JournalArticleLocalService _journalArticleLocalService;
 
 }

@@ -1,60 +1,61 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {render, findAllByTestId, findByTestId} from '@testing-library/react';
+import {act, cleanup, render} from '@testing-library/react';
 import React from 'react';
 
 import CompletionVelocityCard from '../../../../src/main/resources/META-INF/resources/js/components/process-metrics/completion-velocity/CompletionVelocityCard.es';
+import {stringify} from '../../../../src/main/resources/META-INF/resources/js/shared/components/router/queryString.es';
+import {jsonSessionStorage} from '../../../../src/main/resources/META-INF/resources/js/shared/util/storage.es';
 import {MockRouter} from '../../../mock/MockRouter.es';
 
-const {processId, query} = {
-	processId: 12345,
-	query:
-		'?filters.completionvelocityUnit%5B0%5D=Days&filters.completiontimeRange%5B0%5D=7'
-};
+import '@testing-library/jest-dom/extend-expect';
 
+const {filters, processId} = {
+	filters: {
+		completionDateEnd: '2019-12-09T00:00:00Z',
+		completionDateStart: '2019-12-03T00:00:00Z',
+		completionTimeRange: ['7'],
+		completionVelocityUnit: ['Days'],
+	},
+	processId: 12345,
+};
 const data = {
 	histograms: [
 		{
 			key: '2019-12-03T00:00',
-			value: 0.0
+			value: 0.0,
 		},
 		{
 			key: '2019-12-04T00:00',
-			value: 0.0
+			value: 0.0,
 		},
 		{
 			key: '2019-12-05T00:00',
-			value: 0.0
+			value: 0.0,
 		},
 		{
 			key: '2019-12-06T00:00',
-			value: 0.0
+			value: 0.0,
 		},
 		{
 			key: '2019-12-07T00:00',
-			value: 0.0
+			value: 0.0,
 		},
 		{
 			key: '2019-12-08T00:00',
-			value: 0.8
+			value: 0.8,
 		},
 		{
 			key: '2019-12-09T00:00',
-			value: 0.0
-		}
+			value: 0.0,
+		},
 	],
-	value: 0.36
+	value: 0.36,
 };
-
+const query = stringify({filters});
 const timeRangeData = {
 	items: [
 		{
@@ -62,67 +63,73 @@ const timeRangeData = {
 			dateStart: '2019-12-03T00:00:00Z',
 			defaultTimeRange: false,
 			id: 7,
-			name: 'Last 7 Days'
+			name: 'Last 7 Days',
 		},
 		{
 			dateEnd: '2019-12-09T00:00:00Z',
 			dateStart: '2019-11-10T00:00:00Z',
 			defaultTimeRange: true,
 			id: 30,
-			name: 'Last 30 Days'
-		}
+			name: 'Last 30 Days',
+		},
 	],
-	totalCount: 2
+	totalCount: 2,
 };
 
 describe('The completion velocity card component should', () => {
-	let getByTestId;
+	let getAllByText;
+	let getByText;
+	const {ResizeObserver} = window;
 
-	beforeAll(() => {
-		const clientMock = {
-			get: jest
-				.fn()
-				.mockResolvedValueOnce({data: timeRangeData})
-				.mockResolvedValue({data})
-		};
+	beforeAll(async () => {
+		delete window.ResizeObserver;
+		window.ResizeObserver = jest.fn().mockImplementation(() => ({
+			disconnect: jest.fn(),
+			observe: jest.fn(),
+			unobserve: jest.fn(),
+		}));
+
+		jsonSessionStorage.set('timeRanges', timeRangeData);
+
+		fetch.mockResolvedValueOnce({
+			json: () => Promise.resolve(data),
+			ok: true,
+		});
 
 		const renderResult = render(
-			<MockRouter client={clientMock} query={query}>
+			<MockRouter query={query}>
 				<CompletionVelocityCard routeParams={{processId}} />
 			</MockRouter>
 		);
 
-		getByTestId = renderResult.getByTestId;
+		getAllByText = renderResult.getAllByText;
+		getByText = renderResult.getByText;
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Be rendered with time range filter', async () => {
-		const timeRangeFilter = getByTestId('timeRangeFilter');
-		const filterItems = await findAllByTestId(
-			timeRangeFilter,
-			'filterItem'
-		);
-		const activeItem = filterItems.find(item =>
-			item.className.includes('active')
-		);
-		const activeItemName = await findByTestId(activeItem, 'filterItemName');
+	afterAll(() => {
+		cleanup();
+		window.ResizeObserver = ResizeObserver;
+		jest.restoreAllMocks();
+	});
+
+	it('Be rendered with time range filter', () => {
+		const timeRangeFilter = getByText('Last 30 Days');
+		const activeItem = document.querySelector('.active');
 
 		expect(timeRangeFilter).not.toBeNull();
-		expect(activeItemName.innerHTML).toBe('Last 7 Days');
+		expect(activeItem).toHaveTextContent('Last 7 Days');
 	});
 
-	test('Be rendered with time range filter', async () => {
-		const velocityUnitFilter = await getByTestId('velocityUnitFilter');
-		const filterItems = await findAllByTestId(
-			velocityUnitFilter,
-			'filterItem'
-		);
+	it('Be rendered with velocity unit filter', () => {
+		const velocityUnitFilter = getAllByText('inst-day')[0];
 
-		const activeItem = filterItems.find(item =>
-			item.className.includes('active')
-		);
-		const activeItemName = await findByTestId(activeItem, 'filterItemName');
+		const activeItem = document.querySelectorAll('.active')[1];
 
 		expect(velocityUnitFilter).not.toBeNull();
-		expect(activeItemName.innerHTML).toBe('inst-day');
+		expect(activeItem).toHaveTextContent('inst-day');
 	});
 });

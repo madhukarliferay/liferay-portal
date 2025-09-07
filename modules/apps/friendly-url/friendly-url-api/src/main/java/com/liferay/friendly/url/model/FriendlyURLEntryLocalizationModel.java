@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.friendly.url.model;
@@ -19,6 +10,7 @@ import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -35,10 +27,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface FriendlyURLEntryLocalizationModel
-	extends AttachedModel, BaseModel<FriendlyURLEntryLocalization>, MVCCModel,
-			ShardedModel {
+	extends AttachedModel, BaseModel<FriendlyURLEntryLocalization>,
+			CTModel<FriendlyURLEntryLocalization>, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a friendly url entry localization model instance should use the {@link FriendlyURLEntryLocalization} interface instead.
@@ -49,6 +41,7 @@ public interface FriendlyURLEntryLocalizationModel
 	 *
 	 * @return the primary key of this friendly url entry localization
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -56,6 +49,7 @@ public interface FriendlyURLEntryLocalizationModel
 	 *
 	 * @param primaryKey the primary key of this friendly url entry localization
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -73,6 +67,22 @@ public interface FriendlyURLEntryLocalizationModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this friendly url entry localization.
+	 *
+	 * @return the ct collection ID of this friendly url entry localization
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this friendly url entry localization.
+	 *
+	 * @param ctCollectionId the ct collection ID of this friendly url entry localization
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the friendly url entry localization ID of this friendly url entry localization.
@@ -135,21 +145,6 @@ public interface FriendlyURLEntryLocalizationModel
 	public void setLanguageId(String languageId);
 
 	/**
-	 * Returns the url title of this friendly url entry localization.
-	 *
-	 * @return the url title of this friendly url entry localization
-	 */
-	@AutoEscape
-	public String getUrlTitle();
-
-	/**
-	 * Sets the url title of this friendly url entry localization.
-	 *
-	 * @param urlTitle the url title of this friendly url entry localization
-	 */
-	public void setUrlTitle(String urlTitle);
-
-	/**
 	 * Returns the group ID of this friendly url entry localization.
 	 *
 	 * @return the group ID of this friendly url entry localization
@@ -204,5 +199,27 @@ public interface FriendlyURLEntryLocalizationModel
 	 */
 	@Override
 	public void setClassPK(long classPK);
+
+	/**
+	 * Returns the url title of this friendly url entry localization.
+	 *
+	 * @return the url title of this friendly url entry localization
+	 */
+	@AutoEscape
+	public String getUrlTitle();
+
+	/**
+	 * Sets the url title of this friendly url entry localization.
+	 *
+	 * @param urlTitle the url title of this friendly url entry localization
+	 */
+	public void setUrlTitle(String urlTitle);
+
+	@Override
+	public FriendlyURLEntryLocalization cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

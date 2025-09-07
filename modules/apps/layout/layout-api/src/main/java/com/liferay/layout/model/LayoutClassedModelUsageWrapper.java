@@ -1,25 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.model;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -45,12 +39,16 @@ public class LayoutClassedModelUsageWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put(
 			"layoutClassedModelUsageId", getLayoutClassedModelUsageId());
 		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put(
+			"classExternalReferenceCode", getClassExternalReferenceCode());
 		attributes.put("classNameId", getClassNameId());
 		attributes.put("classPK", getClassPK());
 		attributes.put("containerKey", getContainerKey());
@@ -68,6 +66,12 @@ public class LayoutClassedModelUsageWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -89,6 +93,12 @@ public class LayoutClassedModelUsageWrapper
 			setGroupId(groupId);
 		}
 
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
 		Date createDate = (Date)attributes.get("createDate");
 
 		if (createDate != null) {
@@ -99,6 +109,13 @@ public class LayoutClassedModelUsageWrapper
 
 		if (modifiedDate != null) {
 			setModifiedDate(modifiedDate);
+		}
+
+		String classExternalReferenceCode = (String)attributes.get(
+			"classExternalReferenceCode");
+
+		if (classExternalReferenceCode != null) {
+			setClassExternalReferenceCode(classExternalReferenceCode);
 		}
 
 		Long classNameId = (Long)attributes.get("classNameId");
@@ -144,6 +161,21 @@ public class LayoutClassedModelUsageWrapper
 		}
 	}
 
+	@Override
+	public LayoutClassedModelUsage cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the class external reference code of this layout classed model usage.
+	 *
+	 * @return the class external reference code of this layout classed model usage
+	 */
+	@Override
+	public String getClassExternalReferenceCode() {
+		return model.getClassExternalReferenceCode();
+	}
+
 	/**
 	 * Returns the fully qualified class name of this layout classed model usage.
 	 *
@@ -175,6 +207,16 @@ public class LayoutClassedModelUsageWrapper
 	}
 
 	/**
+	 * Returns the company ID of this layout classed model usage.
+	 *
+	 * @return the company ID of this layout classed model usage
+	 */
+	@Override
+	public long getCompanyId() {
+		return model.getCompanyId();
+	}
+
+	/**
 	 * Returns the container key of this layout classed model usage.
 	 *
 	 * @return the container key of this layout classed model usage
@@ -202,6 +244,16 @@ public class LayoutClassedModelUsageWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the ct collection ID of this layout classed model usage.
+	 *
+	 * @return the ct collection ID of this layout classed model usage
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	/**
@@ -294,14 +346,21 @@ public class LayoutClassedModelUsageWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a layout classed model usage model instance should use the <code>LayoutClassedModelUsage</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets the class external reference code of this layout classed model usage.
+	 *
+	 * @param classExternalReferenceCode the class external reference code of this layout classed model usage
+	 */
+	@Override
+	public void setClassExternalReferenceCode(
+		String classExternalReferenceCode) {
+
+		model.setClassExternalReferenceCode(classExternalReferenceCode);
 	}
 
 	@Override
@@ -327,6 +386,16 @@ public class LayoutClassedModelUsageWrapper
 	@Override
 	public void setClassPK(long classPK) {
 		model.setClassPK(classPK);
+	}
+
+	/**
+	 * Sets the company ID of this layout classed model usage.
+	 *
+	 * @param companyId the company ID of this layout classed model usage
+	 */
+	@Override
+	public void setCompanyId(long companyId) {
+		model.setCompanyId(companyId);
 	}
 
 	/**
@@ -357,6 +426,16 @@ public class LayoutClassedModelUsageWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this layout classed model usage.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout classed model usage
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -447,6 +526,30 @@ public class LayoutClassedModelUsageWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<LayoutClassedModelUsage, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<LayoutClassedModelUsage, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return model.getStagedModelType();
 	}
 
 	@Override

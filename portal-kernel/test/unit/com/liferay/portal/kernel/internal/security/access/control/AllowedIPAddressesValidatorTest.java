@@ -1,26 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.internal.security.access.control;
 
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Mariano Álvaro Sáiz
@@ -29,13 +23,28 @@ public class AllowedIPAddressesValidatorTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		PropsTestUtil.setProps(
-			HashMapBuilder.<String, Object>put(
-				PropsKeys.DNS_SECURITY_ADDRESS_TIMEOUT_SECONDS,
-				String.valueOf(2)
-			).put(
-				PropsKeys.DNS_SECURITY_THREAD_LIMIT, String.valueOf(10)
-			).build());
+		_propsUtilMockedStatic.when(
+			() -> PropsUtil.get(PropsKeys.DNS_SECURITY_ADDRESS_TIMEOUT_SECONDS)
+		).thenReturn(
+			String.valueOf(2)
+		);
+
+		_propsUtilMockedStatic.when(
+			() -> PropsUtil.get(PropsKeys.DNS_SECURITY_THREAD_LIMIT)
+		).thenReturn(
+			String.valueOf(10)
+		);
+
+		_propsUtilMockedStatic.when(
+			() -> PropsUtil.get(PropsKeys.DNS_SECURITY_THREAD_QUEUE_LIMIT)
+		).thenReturn(
+			String.valueOf(5)
+		);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		_propsUtilMockedStatic.close();
 	}
 
 	@Test
@@ -188,5 +197,8 @@ public class AllowedIPAddressesValidatorTest {
 
 	private static final String _ADDRESS_IP_V6 =
 		"2001:AC8:1234:0000:0000:C1C0:ABCD:0876";
+
+	private static final MockedStatic<PropsUtil> _propsUtilMockedStatic =
+		Mockito.mockStatic(PropsUtil.class);
 
 }

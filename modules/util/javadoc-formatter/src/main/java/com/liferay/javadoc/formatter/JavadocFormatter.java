@@ -1,32 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.javadoc.formatter;
 
 import com.liferay.javadoc.formatter.util.JavadocFormatterUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.xml.Dom4jUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.tools.ArgumentsUtil;
-import com.liferay.portal.tools.JavaImportsFormatter;
 import com.liferay.portal.tools.ToolsUtil;
 import com.liferay.portal.xml.SAXReaderFactory;
 import com.liferay.util.xml.Dom4jDocUtil;
@@ -52,7 +43,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -94,8 +84,8 @@ public class JavadocFormatter {
 		try {
 			new JavadocFormatter(arguments);
 		}
-		catch (Exception e) {
-			ArgumentsUtil.processMainException(arguments, e);
+		catch (Exception exception) {
+			ArgumentsUtil.processMainException(arguments, exception);
 		}
 	}
 
@@ -164,7 +154,7 @@ public class JavadocFormatter {
 		String[] excludes = {
 			"**/.git/**", "**/.gradle/**", "**/bin/**", "**/build/**",
 			"**/classes/**", "**/node_modules/**", "**/node_modules_cache/**",
-			"**/portal-client/**", "**/tmp/**"
+			"**/tmp/**"
 		};
 
 		for (String limit : limits) {
@@ -186,7 +176,7 @@ public class JavadocFormatter {
 				includes.add("**/*.java");
 			}
 
-			List<String> fileNames = JavadocFormatterUtil.scanForFiles(
+			List<String> fileNames = JavadocFormatterUtil.scanForFileNames(
 				_inputDirName, excludes, includes.toArray(new String[0]));
 
 			if (fileNames.isEmpty() && Validator.isNotNull(limit) &&
@@ -210,9 +200,9 @@ public class JavadocFormatter {
 				try {
 					_format(fileName);
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					throw new RuntimeException(
-						"Unable to format file " + fileName, e);
+						"Unable to format file " + fileName, exception);
 				}
 			}
 		}
@@ -446,9 +436,7 @@ public class JavadocFormatter {
 		List<Element> fieldElements = classElement.elements("field");
 
 		for (Element fieldElement : fieldElements) {
-			String fieldKey = _getFieldKey(fieldElement);
-
-			fieldElementsMap.put(fieldKey, fieldElement);
+			fieldElementsMap.put(_getFieldKey(fieldElement), fieldElement);
 		}
 
 		List<JavaField> javaFields = javaClass.getFields();
@@ -534,9 +522,6 @@ public class JavadocFormatter {
 			return null;
 		}
 
-		comment = ToolsUtil.stripFullyQualifiedClassNames(
-			comment, _imports, _packagePath);
-
 		if (!comment.contains("* @deprecated ") ||
 			_hasAnnotation(javaAnnotatedElement, "Deprecated")) {
 
@@ -555,9 +540,6 @@ public class JavadocFormatter {
 
 		for (DocletTag docletTag : docletTags) {
 			String value = docletTag.getValue();
-
-			value = ToolsUtil.stripFullyQualifiedClassNames(
-				value, _imports, _packagePath);
 
 			if (name.equals("deprecated") &&
 				(_deprecationSyncDirName != null)) {
@@ -865,9 +847,6 @@ public class JavadocFormatter {
 			Dom4jDocUtil.add(paramElement, "required", true);
 		}
 
-		value = ToolsUtil.stripFullyQualifiedClassNames(
-			value, _imports, _packagePath);
-
 		value = _trimMultilineText(value);
 
 		Element commentElement = paramElement.addElement("comment");
@@ -932,9 +911,6 @@ public class JavadocFormatter {
 			Dom4jDocUtil.add(returnElement, "required", true);
 		}
 
-		comment = ToolsUtil.stripFullyQualifiedClassNames(
-			comment, _imports, _packagePath);
-
 		comment = _trimMultilineText(comment);
 
 		Element commentElement = returnElement.addElement("comment");
@@ -979,9 +955,6 @@ public class JavadocFormatter {
 
 			Dom4jDocUtil.add(throwsElement, "required", true);
 		}
-
-		value = ToolsUtil.stripFullyQualifiedClassNames(
-			value, _imports, _packagePath);
 
 		value = _trimMultilineText(value);
 
@@ -1050,7 +1023,7 @@ public class JavadocFormatter {
 		return comment;
 	}
 
-	private String _compactString(Node node) throws IOException {
+	private String _compactString(Node node) throws Exception {
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 			new UnsyncByteArrayOutputStream();
 
@@ -1100,15 +1073,17 @@ public class JavadocFormatter {
 			return;
 		}
 
-		_imports = JavaImportsFormatter.getImports(originalContent);
-
 		JavaClass javaClass = null;
 
 		try {
 			javaClass = _getJavaClass(
 				fileName, new UnsyncStringReader(originalContent));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			if (!fileName.contains("__")) {
 				System.out.println(
 					"Qdox parsing error while formatting file " + fileName);
@@ -1188,8 +1163,29 @@ public class JavadocFormatter {
 		return text;
 	}
 
-	private String _formattedString(Node node) throws IOException {
-		return Dom4jUtil.toString(node);
+	private String _formattedString(Node node) throws Exception {
+		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+			new UnsyncByteArrayOutputStream();
+
+		OutputFormat outputFormat = new OutputFormat(StringPool.TAB, true);
+
+		outputFormat.setOmitEncoding(true);
+		outputFormat.setPadText(true);
+		outputFormat.setTrimText(true);
+
+		XMLWriter xmlWriter = new XMLWriter(
+			unsyncByteArrayOutputStream, outputFormat);
+
+		xmlWriter.write(node);
+
+		String content = StringUtil.trimTrailing(
+			unsyncByteArrayOutputStream.toString(StringPool.UTF8));
+
+		while (content.contains(" \n")) {
+			content = StringUtil.replace(content, " \n", "\n");
+		}
+
+		return content;
 	}
 
 	private int _getAdjustedLineNumber(int lineNumber, JavaModel javaModel) {
@@ -1355,7 +1351,11 @@ public class JavadocFormatter {
 				JavadocFormatterUtil.getDeprecationsDocument(
 					_deprecationSyncDirName);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			_deprecationsDocument = DocumentHelper.createDocument();
 		}
 
@@ -1465,9 +1465,6 @@ public class JavadocFormatter {
 		String comment = rootElement.elementText("comment");
 
 		if (Validator.isNotNull(comment)) {
-			comment = ToolsUtil.stripFullyQualifiedClassNames(
-				comment, _imports, _packagePath);
-
 			sb.append(_wrapText(comment, indent + " * "));
 		}
 
@@ -1625,9 +1622,8 @@ public class JavadocFormatter {
 			JavaExecutable javaExecutable, String indent)
 		throws Exception {
 
-		String executableKey = _getExecutableKey(javaExecutable);
-
-		Element executableElement = executableElementsMap.get(executableKey);
+		Element executableElement = executableElementsMap.get(
+			_getExecutableKey(javaExecutable));
 
 		if (executableElement == null) {
 			return null;
@@ -1641,9 +1637,6 @@ public class JavadocFormatter {
 		String comment = executableElement.elementText("comment");
 
 		if (Validator.isNotNull(comment)) {
-			comment = ToolsUtil.stripFullyQualifiedClassNames(
-				comment, _imports, _packagePath);
-
 			sb.append(_wrapText(comment, indent + " * "));
 		}
 
@@ -1698,9 +1691,7 @@ public class JavadocFormatter {
 			String indent)
 		throws Exception {
 
-		String fieldKey = _getFieldKey(javaField);
-
-		Element fieldElement = fieldElementsMap.get(fieldKey);
+		Element fieldElement = fieldElementsMap.get(_getFieldKey(javaField));
 
 		if (fieldElement == null) {
 			return null;
@@ -1714,9 +1705,6 @@ public class JavadocFormatter {
 		String comment = fieldElement.elementText("comment");
 
 		if (Validator.isNotNull(comment)) {
-			comment = ToolsUtil.stripFullyQualifiedClassNames(
-				comment, _imports, _packagePath);
-
 			sb.append(_wrapText(comment, indent + " * "));
 		}
 
@@ -1859,7 +1847,7 @@ public class JavadocFormatter {
 	}
 
 	private SAXReader _getSAXReader() {
-		return SAXReaderFactory.getSAXReader(null, false, false);
+		return SAXReaderFactory.getSAXReader(null, false, true);
 	}
 
 	private String _getSpacesIndent(int length) {
@@ -2150,7 +2138,7 @@ public class JavadocFormatter {
 	}
 
 	private void _updateLanguageProperties(Document document, String className)
-		throws IOException {
+		throws Exception {
 
 		if (_languageProperties == null) {
 			return;
@@ -2214,7 +2202,7 @@ public class JavadocFormatter {
 	}
 
 	private void _updateLanguageProperties(String key, String value)
-		throws IOException {
+		throws Exception {
 
 		StringBundler sb = new StringBundler();
 
@@ -2258,8 +2246,7 @@ public class JavadocFormatter {
 
 		System.out.println(
 			StringBundler.concat(
-				"Updating ", String.valueOf(_languagePropertiesFile), " key ",
-				key));
+				"Updating ", _languagePropertiesFile, " key ", key));
 	}
 
 	private String _wrap(String text, int width) {
@@ -2375,9 +2362,12 @@ public class JavadocFormatter {
 		return text;
 	}
 
-	private void _write(File file, String s) throws IOException {
+	private void _write(File file, String s) throws Exception {
 		Files.write(file.toPath(), s.getBytes(StandardCharsets.UTF_8));
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		JavadocFormatter.class);
 
 	private static final Pattern _paragraphTagPattern = Pattern.compile(
 		"(^.*?(?=\n\n|$)+|(?<=<p>\n).*?(?=\n</p>))", Pattern.DOTALL);
@@ -2387,7 +2377,6 @@ public class JavadocFormatter {
 	private final String _deprecationSyncDirName;
 	private String _fullyQualifiedName;
 	private final boolean _generateXml;
-	private String _imports;
 	private final boolean _initializeMissingJavadocs;
 	private final String _inputDirName;
 	private final Map<String, Tuple> _javadocxXmlTuples = new HashMap<>();

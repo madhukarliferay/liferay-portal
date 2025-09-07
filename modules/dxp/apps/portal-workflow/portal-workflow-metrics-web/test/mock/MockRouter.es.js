@@ -1,80 +1,94 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React from 'react';
-import {MemoryRouter as Router} from 'react-router-dom';
+import {createMemoryHistory} from 'history';
+import React, {cloneElement, useMemo, useState} from 'react';
+import {Route, Router} from 'react-router-dom';
 
 import {AppContext} from '../../src/main/resources/META-INF/resources/js/components/AppContext.es';
+import {FilterContextProvider} from '../../src/main/resources/META-INF/resources/js/shared/components/filter/FilterContext.es';
 
-export class MockRouter extends React.Component {
-	constructor(props) {
-		super(props);
-
-		const {client, page = 1, query, sort} = this.props;
-
-		this.contextState = {
-			client,
-			companyId: 1,
-			defaultDelta: 20,
-			deltas: [5, 10, 20, 30, 50, 75],
-			maxPages: 3,
-			namespace: 'workflow_',
-			page,
-			query,
-			setStatus: this.setStatus.bind(this),
-			setTitle: this.setTitle.bind(this),
-			sort,
-			status: null,
-			title: null
-		};
-	}
-
-	setStatus(status, callback) {
-		this.contextState.status = status;
-
-		if (callback) {
-			callback();
-		}
-	}
-
-	setTitle(title) {
-		this.contextState.title = title;
-	}
-
-	render() {
-		const defaultPath = `/processes/1/10/${encodeURIComponent(
-			'title:asc'
-		)}`;
-
-		const {initialPath = defaultPath, page = 1, query, sort} = this.props;
-
-		const initialEntries = [
-			{
-				match: {
-					params: {
-						page,
-						sort
-					}
-				},
-				pathname: initialPath,
-				search: query || '?backPath=%2F'
+const withParamsMock =
+	(...components) =>
+	({history, location: {search: query}, match: {params: routeParams}}) => {
+		return components.map((component, key) => {
+			if (routeParams.sort) {
+				routeParams.sort = decodeURIComponent(routeParams.sort);
 			}
-		];
 
-		return (
-			<Router initialEntries={initialEntries} keyLength={0}>
-				<AppContext.Provider value={this.contextState}>
-					{this.props.children}
-				</AppContext.Provider>
-			</Router>
-		);
-	}
-}
+			return cloneElement(component, {
+				...routeParams,
+				history,
+				key,
+				query,
+				routeParams,
+			});
+		});
+	};
+
+const MockRouter = ({
+	children,
+	initialPath = '/1/20/title%3Aasc',
+	initialReindexStatuses = [],
+	isAmPm,
+	path = '/:page/:pageSize/:sort',
+	query = '?backPath=%2F',
+	userId = '1',
+	userName = 'Test Test',
+	withoutRouterProps,
+}) => {
+	const [title, setTitle] = useState(null);
+	const [reindexStatuses, setReindexStatuses] = useState(
+		initialReindexStatuses
+	);
+	const [fetchDateModified, setFetchDateModified] = useState(false);
+
+	const contextState = useMemo(
+		() => ({
+			defaultDelta: 20,
+			deltaValues: [5, 10, 20, 30, 50, 75],
+			fetchDateModified,
+			isAmPm,
+			maxPages: 3,
+			portletNamespace: 'workflow',
+			reindexStatuses,
+			setFetchDateModified,
+			setReindexStatuses,
+			setTitle,
+			title,
+			userId,
+			userName,
+		}),
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[reindexStatuses, title]
+	);
+
+	const initialEntries = useMemo(
+		() => [{pathname: initialPath, search: query}],
+		[initialPath, query]
+	);
+
+	const history = useMemo(
+		() => createMemoryHistory({initialEntries, keyLength: 0}),
+		[initialEntries]
+	);
+
+	const component = withoutRouterProps
+		? () => cloneElement(children)
+		: withParamsMock(children);
+
+	return (
+		<Router history={history}>
+			<AppContext.Provider value={contextState}>
+				<FilterContextProvider>
+					<Route path={path} render={component} />
+				</FilterContextProvider>
+			</AppContext.Provider>
+		</Router>
+	);
+};
+
+export {MockRouter};

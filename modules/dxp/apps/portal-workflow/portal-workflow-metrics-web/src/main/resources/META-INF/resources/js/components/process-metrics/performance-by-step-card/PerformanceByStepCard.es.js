@@ -1,98 +1,126 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayLayout from '@clayui/layout';
+import ClayPanel from '@clayui/panel';
 import React, {useMemo} from 'react';
 
-import Panel from '../../../shared/components/Panel.es';
-import PromisesResolver from '../../../shared/components/request/PromisesResolver.es';
+import PanelHeaderWithOptions from '../../../shared/components/panel-header-with-options/PanelHeaderWithOptions.es';
+import PromisesResolver from '../../../shared/components/promises-resolver/PromisesResolver.es';
 import {useFetch} from '../../../shared/hooks/useFetch.es';
 import {useFilter} from '../../../shared/hooks/useFilter.es';
+import ProcessVersionFilter from '../../filter/ProcessVersionFilter.es';
 import TimeRangeFilter from '../../filter/TimeRangeFilter.es';
-import {isValidDate} from '../../filter/util/timeRangeUtil.es';
+import {getTimeRangeParams} from '../../filter/util/timeRangeUtil.es';
 import {Body, Footer} from './PerformanceByStepCardBody.es';
 
-const Header = ({dispatch, prefixKey, totalCount}) => (
-	<Panel.HeaderWithOptions
-		description={Liferay.Language.get('performance-by-step-description')}
-		elementClasses="dashboard-panel-header"
-		title={Liferay.Language.get('performance-by-step')}
-	>
-		{totalCount > 0 && (
-			<div className="autofit-col m-0 management-bar management-bar-light navbar">
-				<ul className="navbar-nav">
+function Header({disableFilters, prefixKey, processId}) {
+	return (
+		<PanelHeaderWithOptions
+			className="tabs-panel-header"
+			description={Liferay.Language.get(
+				'performance-by-step-description'
+			)}
+			title={Liferay.Language.get('performance-by-step')}
+		>
+			<ClayLayout.ContentCol className="m-0 management-bar management-bar-light navbar">
+				<div className="navbar-nav">
+					<ProcessVersionFilter
+						disabled={disableFilters}
+						options={{
+							hideControl: true,
+							multiple: false,
+							withAllVersions: true,
+							withSelectionTitle: true,
+						}}
+						prefixKey={prefixKey}
+						processId={processId}
+					/>
+
 					<TimeRangeFilter
-						dispatch={dispatch}
-						options={{position: 'right'}}
+						className="pl-3"
+						disabled={disableFilters}
 						prefixKey={prefixKey}
 					/>
-				</ul>
-			</div>
-		)}
-	</Panel.HeaderWithOptions>
-);
+				</div>
+			</ClayLayout.ContentCol>
+		</PanelHeaderWithOptions>
+	);
+}
 
-const PerformanceByStepCard = ({routeParams}) => {
+function PerformanceByStepCard({routeParams}) {
 	const {processId} = routeParams;
-
-	const filterKeys = ['timeRange'];
+	const filterKeys = ['processVersion', 'timeRange'];
 	const prefixKey = 'step';
 	const prefixKeys = [prefixKey];
 
-	const {dispatch, filterState = {}} = useFilter(filterKeys, prefixKeys);
-
-	const timeRange = filterState.steptimeRange || [];
-	const timeRangeValues = timeRange && timeRange.length ? timeRange[0] : {};
-	const {dateEnd, dateStart} = timeRangeValues;
-
-	let timeRangeParams = {};
-
-	if (isValidDate(dateEnd) && isValidDate(dateStart)) {
-		timeRangeParams = {
-			dateEnd: dateEnd.toISOString(),
-			dateStart: dateStart.toISOString()
-		};
-	}
-
-	const {data, fetchData} = useFetch(`/processes/${processId}/tasks`, {
-		completed: true,
-		page: 1,
-		pageSize: 10,
-		sort: 'durationAvg:desc',
-		...timeRangeParams
+	const {
+		filterValues: {
+			stepDateEnd,
+			stepDateStart,
+			stepProcessVersion: [version] = ['allVersions'],
+			stepTimeRange: [key] = [],
+		},
+		filtersError,
+	} = useFilter({
+		filterKeys,
+		prefixKeys,
 	});
 
-	const promises = useMemo(() => [fetchData()], [fetchData]);
+	const processVersion = version !== 'allVersions' ? [version] : undefined;
+	const timeRange = useMemo(
+		() => getTimeRangeParams(stepDateStart, stepDateEnd),
+		[stepDateEnd, stepDateStart]
+	);
+
+	const {data, fetchData} = useFetch({
+		params: {
+			completed: true,
+			page: 1,
+			pageSize: 10,
+			processVersion,
+			sort: 'durationAvg:desc',
+			...timeRange,
+		},
+		url: `/processes/${processId}/nodes/metrics`,
+	});
+
+	const promises = useMemo(() => {
+		if (timeRange.dateEnd && timeRange.dateStart) {
+			return [fetchData()];
+		}
+
+		return [new Promise((_, reject) => reject(filtersError))];
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filtersError, routeParams, timeRange.dateEnd, timeRange.dateStart]);
 
 	return (
-		<Panel elementClasses="dashboard-card">
+		<ClayPanel className="mt-4 tabs-card">
 			<PromisesResolver promises={promises}>
 				<PerformanceByStepCard.Header
-					dispatch={dispatch}
+					disableFilters={filtersError}
 					prefixKey={prefixKey}
-					totalCount={data.totalCount}
+					processId={processId}
+					totalCount={data?.totalCount}
 				/>
 
-				<PerformanceByStepCard.Body data={data} />
+				<PerformanceByStepCard.Body {...data} />
 
-				{data.totalCount > 0 && (
+				{data?.totalCount > 0 && (
 					<PerformanceByStepCard.Footer
 						processId={processId}
-						timeRange={timeRangeValues}
-						totalCount={data.totalCount}
+						processVersion={processVersion}
+						timeRange={{key, ...timeRange}}
+						totalCount={data?.totalCount}
 					/>
 				)}
 			</PromisesResolver>
-		</Panel>
+		</ClayPanel>
 	);
-};
+}
 
 PerformanceByStepCard.Body = Body;
 PerformanceByStepCard.Footer = Footer;

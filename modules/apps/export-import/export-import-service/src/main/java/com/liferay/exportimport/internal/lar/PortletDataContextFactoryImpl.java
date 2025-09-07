@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.internal.lar;
@@ -25,7 +16,6 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -37,6 +27,7 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.zip.ZipReader;
 import com.liferay.portal.kernel.zip.ZipWriter;
+import com.liferay.portal.util.PortalInstances;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Máté Thurzó
  */
-@Component(immediate = true, service = PortletDataContextFactory.class)
+@Component(service = PortletDataContextFactory.class)
 public class PortletDataContextFactoryImpl
 	implements PortletDataContextFactory {
 
@@ -126,9 +117,9 @@ public class PortletDataContextFactoryImpl
 			Date startDate, Date endDate, ZipWriter zipWriter)
 		throws PortletDataException {
 
-		validateDateRange(startDate, endDate);
+		_validateDateRange(startDate, endDate);
 
-		PortletDataContext portletDataContext = createPortletDataContext(
+		PortletDataContext portletDataContext = _createPortletDataContext(
 			companyId, groupId);
 
 		portletDataContext.setEndDate(endDate);
@@ -145,21 +136,19 @@ public class PortletDataContextFactoryImpl
 			UserIdStrategy userIdStrategy, ZipReader zipReader)
 		throws PortletDataException {
 
-		PortletDataContext portletDataContext = createPortletDataContext(
+		PortletDataContext portletDataContext = _createPortletDataContext(
 			companyId, groupId);
 
-		String dataStrategy = MapUtil.getString(
-			parameterMap, PortletDataHandlerKeys.DATA_STRATEGY,
-			PortletDataHandlerKeys.DATA_STRATEGY_MIRROR);
-
-		portletDataContext.setDataStrategy(dataStrategy);
-
+		portletDataContext.setDataStrategy(
+			MapUtil.getString(
+				parameterMap, PortletDataHandlerKeys.DATA_STRATEGY,
+				PortletDataHandlerKeys.DATA_STRATEGY_MIRROR));
 		portletDataContext.setNewLayouts(new ArrayList<Layout>());
 		portletDataContext.setParameterMap(parameterMap);
 		portletDataContext.setUserIdStrategy(userIdStrategy);
 		portletDataContext.setZipReader(zipReader);
 
-		readXML(portletDataContext);
+		_readXML(portletDataContext);
 
 		Map<Long, Long> groupIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -187,9 +176,9 @@ public class PortletDataContextFactoryImpl
 			Date endDate)
 		throws PortletDataException {
 
-		validateDateRange(startDate, endDate);
+		_validateDateRange(startDate, endDate);
 
-		PortletDataContext portletDataContext = createPortletDataContext(
+		PortletDataContext portletDataContext = _createPortletDataContext(
 			companyId, groupId);
 
 		portletDataContext.setEndDate(endDate);
@@ -218,7 +207,7 @@ public class PortletDataContextFactoryImpl
 			startDate, endDate);
 	}
 
-	protected PortletDataContext createPortletDataContext(
+	private PortletDataContext _createPortletDataContext(
 		long companyId, long groupId) {
 
 		PortletDataContext portletDataContext = new PortletDataContextImpl(
@@ -232,14 +221,15 @@ public class PortletDataContextFactoryImpl
 				portletDataContext.setCompanyGroupId(companyGroup.getGroupId());
 			}
 		}
-		catch (Exception e) {
-			if (CompanyThreadLocal.isDeleteInProcess()) {
-				PortletDataException pde = new PortletDataException(
-					PortletDataException.COMPANY_BEING_DELETED, e);
+		catch (Exception exception) {
+			if (PortalInstances.isCurrentCompanyInDeletionProcess()) {
+				PortletDataException portletDataException =
+					new PortletDataException(
+						PortletDataException.COMPANY_BEING_DELETED, exception);
 
-				pde.setCompanyId(companyId);
+				portletDataException.setCompanyId(companyId);
 
-				throw new SystemException(pde);
+				throw new SystemException(portletDataException);
 			}
 		}
 
@@ -256,21 +246,22 @@ public class PortletDataContextFactoryImpl
 					userPersonalSiteGroup.getGroupId());
 			}
 		}
-		catch (Exception e) {
-			if (CompanyThreadLocal.isDeleteInProcess()) {
-				PortletDataException pde = new PortletDataException(
-					PortletDataException.COMPANY_BEING_DELETED, e);
+		catch (Exception exception) {
+			if (PortalInstances.isCurrentCompanyInDeletionProcess()) {
+				PortletDataException portletDataException =
+					new PortletDataException(
+						PortletDataException.COMPANY_BEING_DELETED, exception);
 
-				pde.setCompanyId(companyId);
+				portletDataException.setCompanyId(companyId);
 
-				throw new SystemException(pde);
+				throw new SystemException(portletDataException);
 			}
 		}
 
 		return portletDataContext;
 	}
 
-	protected void readXML(PortletDataContext portletDataContext)
+	private void _readXML(PortletDataContext portletDataContext)
 		throws PortletDataException {
 
 		String xml = portletDataContext.getZipEntryAsString("/manifest.xml");
@@ -282,37 +273,27 @@ public class PortletDataContextFactoryImpl
 
 			rootElement = document.getRootElement();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new PortletDataException(
 				"Unable to create portlet data context for the import " +
 					"process because of an invalid LAR manifest",
-				e);
+				exception);
 		}
 
 		portletDataContext.setImportDataRootElement(rootElement);
 
 		Element headerElement = rootElement.element("header");
 
-		long sourceCompanyId = GetterUtil.getLong(
-			headerElement.attributeValue("company-id"));
-
-		portletDataContext.setSourceCompanyId(sourceCompanyId);
-
-		long sourceCompanyGroupId = GetterUtil.getLong(
-			headerElement.attributeValue("company-group-id"));
-
-		portletDataContext.setSourceCompanyGroupId(sourceCompanyGroupId);
-
-		long sourceGroupId = GetterUtil.getLong(
-			headerElement.attributeValue("group-id"));
-
-		portletDataContext.setSourceGroupId(sourceGroupId);
-
-		long sourceUserPersonalSiteGroupId = GetterUtil.getLong(
-			headerElement.attributeValue("user-personal-site-group-id"));
-
+		portletDataContext.setSourceCompanyId(
+			GetterUtil.getLong(headerElement.attributeValue("company-id")));
+		portletDataContext.setSourceCompanyGroupId(
+			GetterUtil.getLong(
+				headerElement.attributeValue("company-group-id")));
+		portletDataContext.setSourceGroupId(
+			GetterUtil.getLong(headerElement.attributeValue("group-id")));
 		portletDataContext.setSourceUserPersonalSiteGroupId(
-			sourceUserPersonalSiteGroupId);
+			GetterUtil.getLong(
+				headerElement.attributeValue("user-personal-site-group-id")));
 
 		Element missingReferencesElement = rootElement.element(
 			"missing-references");
@@ -323,17 +304,7 @@ public class PortletDataContextFactoryImpl
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLockManager(LockManager lockManager) {
-		_lockManager = lockManager;
-	}
-
-	protected void validateDateRange(Date startDate, Date endDate)
+	private void _validateDateRange(Date startDate, Date endDate)
 		throws PortletDataException {
 
 		if ((startDate == null) && (endDate != null)) {
@@ -351,21 +322,24 @@ public class PortletDataContextFactoryImpl
 					PortletDataException.START_DATE_AFTER_END_DATE);
 			}
 
-			Date now = new Date();
+			Date date = new Date();
 
-			if (startDate.after(now)) {
+			if (startDate.after(date)) {
 				throw new PortletDataException(
 					PortletDataException.FUTURE_START_DATE);
 			}
 
-			if (endDate.after(now)) {
+			if (endDate.after(date)) {
 				throw new PortletDataException(
 					PortletDataException.FUTURE_END_DATE);
 			}
 		}
 	}
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private LockManager _lockManager;
 
 }

@@ -1,30 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, waitFor} from '@testing-library/react';
 
 export function testControlledInput({
 	element,
 	mockFunc,
 	newValue = 'Liferay',
 	newValueExpected,
-	value
+	value,
 }) {
 	expect(element.value).toBe(value);
 
 	fireEvent.change(element, {
-		target: {value: newValue}
+		target: {value: newValue},
 	});
 
 	expect(mockFunc.mock.calls.length).toBe(1);
@@ -33,32 +24,42 @@ export function testControlledInput({
 		newValueExpected ? {value: newValueExpected} : {value: newValue}
 	);
 
-	expect(element.value).toBe(value);
+	waitFor(() => expect(element.value).toBe(value));
 }
 
 export function testControlledDateInput({
 	element,
+	inputChange = true,
 	mockOnChangeFunc,
 	newValue = 'Liferay',
 	newValueExpected,
 	newValueOnChange,
-	value
+	value,
 }) {
 	expect(element.value).toBe(value);
 
 	fireEvent.change(element, {
-		target: {value: newValue}
+		target: {value: newValue},
 	});
 
 	expect(mockOnChangeFunc.mock.calls.length).toBe(0);
 
 	fireEvent.blur(element);
 
-	expect(mockOnChangeFunc.mock.calls.length).toBe(1);
+	if (inputChange) {
+		if (value === newValueExpected) {
+			expect(mockOnChangeFunc.mock.calls.length).toBe(0);
+		}
+		else {
+			expect(mockOnChangeFunc.mock.calls.length).toBe(1);
 
-	expect(mockOnChangeFunc.mock.calls[0][0]).toMatchObject({
-		value: newValueOnChange
-	});
-
+			expect(mockOnChangeFunc.mock.calls[0][0]).toMatchObject({
+				value: newValueOnChange,
+			});
+		}
+	}
+	else {
+		expect(mockOnChangeFunc.mock.calls.length).toBe(0);
+	}
 	expect(element.value).toBe(newValueExpected);
 }

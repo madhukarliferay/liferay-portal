@@ -1,19 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {cleanup, render, findByTestId} from '@testing-library/react';
+import {cleanup, render} from '@testing-library/react';
 import React from 'react';
 
 import VelocityUnitFilter from '../../../src/main/resources/META-INF/resources/js/components/filter/VelocityUnitFilter.es';
 import {MockRouter} from '../../mock/MockRouter.es';
+
+import '@testing-library/jest-dom/extend-expect';
 
 const query = '?filters.velocityUnit%5B0%5D=weeks';
 
@@ -22,42 +18,32 @@ const wrapper = ({children}) => (
 );
 
 describe('The velocity unit filter component should', () => {
-	let getAllByTestId;
-
 	afterEach(cleanup);
 
 	beforeEach(() => {
-		const renderResult = render(
+		render(
 			<VelocityUnitFilter
-				dispatch={() => {}}
 				processId={12345}
 				timeRange={{
 					dateEnd: '2019-12-10T20:19:34Z',
-					dateStart: '2019-09-12T00:00:00Z'
+					dateStart: '2019-09-12T00:00:00Z',
 				}}
 			/>,
 			{wrapper}
 		);
-
-		getAllByTestId = renderResult.getAllByTestId;
 	});
 
-	test('Be rendered with filter item names', async () => {
-		const filterItems = await getAllByTestId('filterItem');
+	test('Be rendered with filter item names', () => {
+		const filterItems = document.querySelectorAll('.dropdown-item');
 
-		expect(filterItems[0].innerHTML).toContain('inst-day');
-		expect(filterItems[1].innerHTML).toContain('inst-week');
-		expect(filterItems[2].innerHTML).toContain('inst-month');
+		expect(filterItems[0]).toHaveTextContent('inst-day');
+		expect(filterItems[1]).toHaveTextContent('inst-week');
+		expect(filterItems[2]).toHaveTextContent('inst-month');
 	});
 
 	test('Be rendered with active option "Weeks"', async () => {
-		const filterItems = getAllByTestId('filterItem');
+		const activeItem = document.querySelector('.active');
 
-		const activeItem = filterItems.find(item =>
-			item.className.includes('active')
-		);
-		const activeItemName = await findByTestId(activeItem, 'filterItemName');
-
-		expect(activeItemName.innerHTML).toBe('inst-week');
+		expect(activeItem).toHaveTextContent('inst-week');
 	});
 });

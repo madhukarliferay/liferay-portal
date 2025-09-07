@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.test.rule;
 
 import com.liferay.petra.process.ClassPathUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -62,11 +52,7 @@ public class CodeCoverageAssertor implements TestRule {
 	public Statement apply(
 		final Statement statement, final Description description) {
 
-		if (_skip) {
-			return statement;
-		}
-
-		if (description.getMethodName() != null) {
+		if (_skip || (description.getMethodName() != null)) {
 			return statement;
 		}
 
@@ -123,8 +109,8 @@ public class CodeCoverageAssertor implements TestRule {
 			_ASSERT_COVERAGE_METHOD.invoke(
 				null, _includeInnerClasses, assertClasses, getAssertMethods());
 		}
-		catch (InvocationTargetException ite) {
-			throw ite.getCause();
+		catch (InvocationTargetException invocationTargetException) {
+			throw invocationTargetException.getCause();
 		}
 	}
 
@@ -135,16 +121,15 @@ public class CodeCoverageAssertor implements TestRule {
 			className = className.substring(0, className.length() - 4);
 		}
 
-		String jvmClassPath = ClassPathUtil.getJVMClassPath(false);
-
-		URL[] urls = ClassPathUtil.getClassPathURLs(jvmClassPath);
+		URL[] urls = ClassPathUtil.getClassPathURLs(
+			ClassPathUtil.getJVMClassPath(false));
 
 		ClassLoader classLoader = new URLClassLoader(urls, null);
 
 		try {
 			classLoader.loadClass(className);
 		}
-		catch (ClassNotFoundException cnfe) {
+		catch (ClassNotFoundException classNotFoundException) {
 			className = null;
 		}
 
@@ -157,8 +142,8 @@ public class CodeCoverageAssertor implements TestRule {
 		try {
 			_DYNAMICALLY_INSTRUMENT_METHOD.invoke(null, includes, _excludes);
 		}
-		catch (InvocationTargetException ite) {
-			throw ite.getCause();
+		catch (InvocationTargetException invocationTargetException) {
+			throw invocationTargetException.getCause();
 		}
 
 		return className;
@@ -227,9 +212,11 @@ public class CodeCoverageAssertor implements TestRule {
 		for (int i = 0; i < assertClasses.size(); i++) {
 			Class<?> assertClass = assertClasses.get(i);
 
-			includes[i] = StringUtil.replace(
-				assertClass.getName(), new char[] {'.', '$'},
-				new String[] {"/", "\\$"});
+			String name = assertClass.getName();
+
+			name = name.replace('.', '/');
+
+			includes[i] = name.replace("$", "\\$");
 		}
 
 		return includes;
@@ -252,8 +239,8 @@ public class CodeCoverageAssertor implements TestRule {
 				instrumentationAgentClass.getMethod(
 					"dynamicallyInstrument", String[].class, String[].class);
 		}
-		catch (Exception e) {
-			throw new ExceptionInInitializerError(e);
+		catch (Exception exception) {
+			throw new ExceptionInInitializerError(exception);
 		}
 	}
 

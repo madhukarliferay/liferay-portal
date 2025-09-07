@@ -1,27 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.form.navigator.internal.configuration;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -30,34 +22,35 @@ import org.junit.Test;
 public class RetrieverWhenThereAreConfigurationsFormSeveralFormsTest
 	extends BaseFormNavigatorEntryConfigurationRetrieverTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
-		StringBundler sb1 = new StringBundler(4);
-
-		sb1.append("general");
-		sb1.append(StringPool.EQUAL);
-		sb1.append("formNavigatorEntryKey1,formNavigatorEntryKey2,");
-		sb1.append("formNavigatorEntryKey3");
-
-		StringBundler sb2 = new StringBundler(4);
-
-		sb2.append("general");
-		sb2.append(StringPool.EQUAL);
-		sb2.append("formNavigatorEntryKey4,formNavigatorEntryKey5,");
-		sb2.append("formNavigatorEntryKey6");
-
-		createConfiguration("form1", new String[] {sb1.toString()});
-		createConfiguration("form2", new String[] {sb2.toString()});
+		createConfiguration(
+			"form1",
+			new String[] {
+				"general=formNavigatorEntryKey1,formNavigatorEntryKey2," +
+					"formNavigatorEntryKey3"
+			});
+		createConfiguration(
+			"form2",
+			new String[] {
+				"general=formNavigatorEntryKey4,formNavigatorEntryKey5," +
+					"formNavigatorEntryKey6"
+			});
 	}
 
 	@Test
 	public void testContainsValuesForForm1() {
 		List<String> formNavigatorEntryKeys =
 			formNavigatorEntryConfigurationRetriever.getFormNavigatorEntryKeys(
-				"form1", "general", "add"
-			).get();
+				"form1", "general", "add");
 
 		Assert.assertEquals(
 			formNavigatorEntryKeys.toString(), 3,
@@ -74,8 +67,7 @@ public class RetrieverWhenThereAreConfigurationsFormSeveralFormsTest
 	public void testContainsValuesForForm2() {
 		List<String> formNavigatorEntryKeys =
 			formNavigatorEntryConfigurationRetriever.getFormNavigatorEntryKeys(
-				"form2", "general", "add"
-			).get();
+				"form2", "general", "add");
 
 		Assert.assertEquals(
 			formNavigatorEntryKeys.toString(), 3,
@@ -92,11 +84,9 @@ public class RetrieverWhenThereAreConfigurationsFormSeveralFormsTest
 	public void testDoesContainValuesForEntry2IfItIsDeleted() {
 		deleteConfiguration("form2");
 
-		Optional<List<String>> formNavigatorEntryKeys =
+		Assert.assertNull(
 			formNavigatorEntryConfigurationRetriever.getFormNavigatorEntryKeys(
-				"form2", "general", "update");
-
-		Assert.assertFalse(formNavigatorEntryKeys.isPresent());
+				"form2", "general", "update"));
 	}
 
 }

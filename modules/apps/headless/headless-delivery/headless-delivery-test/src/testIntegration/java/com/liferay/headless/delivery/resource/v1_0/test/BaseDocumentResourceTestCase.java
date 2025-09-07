@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.resource.v1_0.test;
@@ -22,65 +13,93 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.service.DepotEntryLocalServiceUtil;
+import com.liferay.headless.batch.engine.client.dto.v1_0.ImportTask;
+import com.liferay.headless.batch.engine.client.http.HttpInvoker.HttpResponse;
+import com.liferay.headless.batch.engine.client.resource.v1_0.ImportTaskResource;
 import com.liferay.headless.delivery.client.dto.v1_0.Document;
+import com.liferay.headless.delivery.client.dto.v1_0.Field;
 import com.liferay.headless.delivery.client.dto.v1_0.Rating;
 import com.liferay.headless.delivery.client.http.HttpInvoker;
 import com.liferay.headless.delivery.client.pagination.Page;
 import com.liferay.headless.delivery.client.pagination.Pagination;
+import com.liferay.headless.delivery.client.permission.Permission;
 import com.liferay.headless.delivery.client.resource.v1_0.DocumentResource;
 import com.liferay.headless.delivery.client.serdes.v1_0.DocumentSerDes;
+import com.liferay.oauth2.provider.scope.ScopeChecker;
 import com.liferay.petra.function.UnsafeTriConsumer;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegateBuilderRegistry;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
+
+import jakarta.annotation.Generated;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.PathSegment;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
 import java.io.File;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.net.URI;
+
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.log4j.Level;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -89,6 +108,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 /**
  * @author Javier Gamarra
@@ -99,12 +121,14 @@ public abstract class BaseDocumentResourceTestCase {
 
 	@ClassRule
 	@Rule
-	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
-		new LiferayIntegrationTestRule();
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -116,11 +140,51 @@ public abstract class BaseDocumentResourceTestCase {
 		testCompany = CompanyLocalServiceUtil.getCompany(
 			testGroup.getCompanyId());
 
+		irrelevantDepotEntry = DepotEntryLocalServiceUtil.addDepotEntry(
+			Collections.singletonMap(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+			null, DepotConstants.TYPE_ASSET_LIBRARY,
+			new ServiceContext() {
+				{
+					setCompanyId(testCompany.getCompanyId());
+					setUserId(TestPropsValues.getUserId());
+				}
+			});
+		irrelevantDepotEntryGroup = irrelevantDepotEntry.getGroup();
+		testDepotEntry = DepotEntryLocalServiceUtil.addDepotEntry(
+			Collections.singletonMap(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+			null, DepotConstants.TYPE_ASSET_LIBRARY,
+			new ServiceContext() {
+				{
+					setCompanyId(testCompany.getCompanyId());
+					setUserId(TestPropsValues.getUserId());
+				}
+			});
+		testDepotEntryGroup = testDepotEntry.getGroup();
+
 		_documentResource.setContextCompany(testCompany);
 
-		DocumentResource.Builder builder = DocumentResource.builder();
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
-		documentResource = builder.locale(
+		documentResource = DocumentResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
 			LocaleUtil.getDefault()
 		).build();
 	}
@@ -133,7 +197,32 @@ public abstract class BaseDocumentResourceTestCase {
 
 	@Test
 	public void testClientSerDesToDTO() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Document document1 = randomDocument();
+
+		String json = objectMapper.writeValueAsString(document1);
+
+		Document document2 = DocumentSerDes.toDTO(json);
+
+		Assert.assertTrue(equals(document1, document2));
+	}
+
+	@Test
+	public void testClientSerDesToJSON() throws Exception {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Document document = randomDocument();
+
+		String json1 = objectMapper.writeValueAsString(document);
+		String json2 = DocumentSerDes.toJSON(document);
+
+		Assert.assertEquals(
+			objectMapper.readTree(json1), objectMapper.readTree(json2));
+	}
+
+	protected ObjectMapper getClientSerDesObjectMapper() {
+		return new ObjectMapper() {
 			{
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				configure(
@@ -148,40 +237,6 @@ public abstract class BaseDocumentResourceTestCase {
 					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
 			}
 		};
-
-		Document document1 = randomDocument();
-
-		String json = objectMapper.writeValueAsString(document1);
-
-		Document document2 = DocumentSerDes.toDTO(json);
-
-		Assert.assertTrue(equals(document1, document2));
-	}
-
-	@Test
-	public void testClientSerDesToJSON() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
-
-		Document document = randomDocument();
-
-		String json1 = objectMapper.writeValueAsString(document);
-		String json2 = DocumentSerDes.toJSON(document);
-
-		Assert.assertEquals(
-			objectMapper.readTree(json1), objectMapper.readTree(json2));
 	}
 
 	@Test
@@ -190,10 +245,16 @@ public abstract class BaseDocumentResourceTestCase {
 
 		Document document = randomDocument();
 
+		document.setAssetLibraryKey(regex);
 		document.setContentUrl(regex);
+		document.setContentValue(regex);
 		document.setDescription(regex);
+		document.setDocumentFolderExternalReferenceCode(regex);
 		document.setEncodingFormat(regex);
+		document.setExternalReferenceCode(regex);
 		document.setFileExtension(regex);
+		document.setFileName(regex);
+		document.setFriendlyUrlPath(regex);
 		document.setTitle(regex);
 
 		String json = DocumentSerDes.toJSON(document);
@@ -202,41 +263,1365 @@ public abstract class BaseDocumentResourceTestCase {
 
 		document = DocumentSerDes.toDTO(json);
 
+		Assert.assertEquals(regex, document.getAssetLibraryKey());
 		Assert.assertEquals(regex, document.getContentUrl());
+		Assert.assertEquals(regex, document.getContentValue());
 		Assert.assertEquals(regex, document.getDescription());
+		Assert.assertEquals(
+			regex, document.getDocumentFolderExternalReferenceCode());
 		Assert.assertEquals(regex, document.getEncodingFormat());
+		Assert.assertEquals(regex, document.getExternalReferenceCode());
 		Assert.assertEquals(regex, document.getFileExtension());
+		Assert.assertEquals(regex, document.getFileName());
+		Assert.assertEquals(regex, document.getFriendlyUrlPath());
 		Assert.assertEquals(regex, document.getTitle());
 	}
 
 	@Test
+	public void testDeleteAssetLibraryDocumentByExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document =
+			testDeleteAssetLibraryDocumentByExternalReferenceCode_addDocument();
+
+		assertHttpResponseStatusCode(
+			204,
+			documentResource.
+				deleteAssetLibraryDocumentByExternalReferenceCodeHttpResponse(
+					testDeleteAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+					document.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.
+				getAssetLibraryDocumentByExternalReferenceCodeHttpResponse(
+					testDeleteAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+					document.getExternalReferenceCode()));
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.
+				getAssetLibraryDocumentByExternalReferenceCodeHttpResponse(
+					testDeleteAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+					"-"));
+	}
+
+	protected Document
+			testDeleteAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
+	}
+
+	protected Long
+			testDeleteAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testDeleteDocument() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document = testDeleteDocument_addDocument();
+
+		assertHttpResponseStatusCode(
+			204, documentResource.deleteDocumentHttpResponse(document.getId()));
+
+		assertHttpResponseStatusCode(
+			404, documentResource.getDocumentHttpResponse(document.getId()));
+		assertHttpResponseStatusCode(
+			404, documentResource.getDocumentHttpResponse(0L));
+	}
+
+	protected Document testDeleteDocument_addDocument() throws Exception {
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGraphQLDeleteDocument() throws Exception {
+
+		// No namespace
+
+		Document document1 = testGraphQLDeleteDocument_addDocument();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"deleteDocument",
+						new HashMap<String, Object>() {
+							{
+								put("documentId", document1.getId());
+							}
+						})),
+				"JSONObject/data", "Object/deleteDocument"));
+
+		JSONArray errorsJSONArray1 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"document",
+					new HashMap<String, Object>() {
+						{
+							put("documentId", document1.getId());
+						}
+					},
+					new GraphQLField("id"))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray1.length() > 0);
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Document document2 = testGraphQLDeleteDocument_addDocument();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"headlessDelivery_v1_0",
+						new GraphQLField(
+							"deleteDocument",
+							new HashMap<String, Object>() {
+								{
+									put("documentId", document2.getId());
+								}
+							}))),
+				"JSONObject/data", "JSONObject/headlessDelivery_v1_0",
+				"Object/deleteDocument"));
+
+		JSONArray errorsJSONArray2 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"headlessDelivery_v1_0",
+					new GraphQLField(
+						"document",
+						new HashMap<String, Object>() {
+							{
+								put("documentId", document2.getId());
+							}
+						},
+						new GraphQLField("id")))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray2.length() > 0);
+	}
+
+	protected Document testGraphQLDeleteDocument_addDocument()
+		throws Exception {
+
+		return testGraphQLDocument_addDocument();
+	}
+
+	@Test
+	public void testDeleteDocumentBatch() throws Exception {
+		Document document1 = testDeleteDocumentBatch_addDocument();
+
+		testDeleteDocumentBatch_deleteDocument(202, null, document1.getId());
+
+		assertHttpResponseStatusCode(
+			404, documentResource.getDocumentHttpResponse(document1.getId()));
+	}
+
+	protected Document testDeleteDocumentBatch_addDocument() throws Exception {
+		return testDeleteDocument_addDocument();
+	}
+
+	protected void testDeleteDocumentBatch_deleteDocument(
+			int expectedStatusCode, String externalReferenceCode, Long id)
+		throws Exception {
+
+		HttpInvoker.HttpResponse httpResponse =
+			documentResource.deleteDocumentBatchHttpResponse(
+				null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode
+					).put(
+						"id", () -> id
+					)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		waitForFinish(
+			"COMPLETED",
+			JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+	}
+
+	@Test
+	public void testDeleteDocumentMyRating() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document = testDeleteDocumentMyRating_addDocument();
+
+		assertHttpResponseStatusCode(
+			204,
+			documentResource.deleteDocumentMyRatingHttpResponse(
+				document.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.getDocumentMyRatingHttpResponse(document.getId()));
+		assertHttpResponseStatusCode(
+			404, documentResource.getDocumentMyRatingHttpResponse(0L));
+	}
+
+	protected Document testDeleteDocumentMyRating_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testDeleteSiteDocumentByExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document =
+			testDeleteSiteDocumentByExternalReferenceCode_addDocument();
+
+		assertHttpResponseStatusCode(
+			204,
+			documentResource.
+				deleteSiteDocumentByExternalReferenceCodeHttpResponse(
+					document.getSiteId(), document.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.getSiteDocumentByExternalReferenceCodeHttpResponse(
+				document.getSiteId(), document.getExternalReferenceCode()));
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.getSiteDocumentByExternalReferenceCodeHttpResponse(
+				document.getSiteId(), "-"));
+	}
+
+	protected Document
+			testDeleteSiteDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentByExternalReferenceCode()
+		throws Exception {
+
+		Document postDocument =
+			testGetAssetLibraryDocumentByExternalReferenceCode_addDocument();
+
+		Document getDocument =
+			documentResource.getAssetLibraryDocumentByExternalReferenceCode(
+				testGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+				postDocument.getExternalReferenceCode());
+
+		assertEquals(postDocument, getDocument);
+		assertValid(getDocument);
+	}
+
+	protected Document
+			testGetAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
+	}
+
+	protected Long
+			testGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetAssetLibraryDocumentByExternalReferenceCode()
+		throws Exception {
+
+		Document document =
+			testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_addDocument();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"assetLibraryDocumentByExternalReferenceCode",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"assetLibraryId",
+											"\"" +
+												testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId() +
+													"\"");
+										put(
+											"externalReferenceCode",
+											"\"" +
+												document.
+													getExternalReferenceCode() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/assetLibraryDocumentByExternalReferenceCode"))));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"headlessDelivery_v1_0",
+								new GraphQLField(
+									"assetLibraryDocumentByExternalReferenceCode",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"assetLibraryId",
+												"\"" +
+													testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId() +
+														"\"");
+											put(
+												"externalReferenceCode",
+												"\"" +
+													document.
+														getExternalReferenceCode() +
+															"\"");
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/headlessDelivery_v1_0",
+						"Object/assetLibraryDocumentByExternalReferenceCode"))));
+	}
+
+	protected Long
+			testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetAssetLibraryDocumentByExternalReferenceCodeNotFound()
+		throws Exception {
+
+		String irrelevantExternalReferenceCode =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"assetLibraryDocumentByExternalReferenceCode",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"assetLibraryId",
+									"\"" +
+										irrelevantDepotEntry.getDepotEntryId() +
+											"\"");
+								put(
+									"externalReferenceCode",
+									irrelevantExternalReferenceCode);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"headlessDelivery_v1_0",
+						new GraphQLField(
+							"assetLibraryDocumentByExternalReferenceCode",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"assetLibraryId",
+										"\"" +
+											irrelevantDepotEntry.
+												getDepotEntryId() + "\"");
+									put(
+										"externalReferenceCode",
+										irrelevantExternalReferenceCode);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected Document
+			testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return testGraphQLDocument_addDocument();
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document postDocument =
+			testGetAssetLibraryDocumentPermissionsPage_addDocument();
+
+		Page<Permission> page =
+			documentResource.getAssetLibraryDocumentPermissionsPage(
+				testDepotEntry.getDepotEntryId(), RoleConstants.GUEST);
+
+		Assert.assertNotNull(page);
+	}
+
+	protected Document testGetAssetLibraryDocumentPermissionsPage_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPage() throws Exception {
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId();
+		Long irrelevantAssetLibraryId =
+			testGetAssetLibraryDocumentsPage_getIrrelevantAssetLibraryId();
+
+		Page<Document> page = documentResource.getAssetLibraryDocumentsPage(
+			assetLibraryId, null, null, null, null, Pagination.of(1, 10), null);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantAssetLibraryId != null) {
+			Document irrelevantDocument =
+				testGetAssetLibraryDocumentsPage_addDocument(
+					irrelevantAssetLibraryId, randomIrrelevantDocument());
+
+			page = documentResource.getAssetLibraryDocumentsPage(
+				irrelevantAssetLibraryId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 1), null);
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(irrelevantDocument, (List<Document>)page.getItems());
+			assertValid(
+				page,
+				testGetAssetLibraryDocumentsPage_getExpectedActions(
+					irrelevantAssetLibraryId));
+		}
+
+		Document document1 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		Document document2 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		page = documentResource.getAssetLibraryDocumentsPage(
+			assetLibraryId, null, null, null, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(document1, (List<Document>)page.getItems());
+		assertContains(document2, (List<Document>)page.getItems());
+		assertValid(
+			page,
+			testGetAssetLibraryDocumentsPage_getExpectedActions(
+				assetLibraryId));
+
+		documentResource.deleteDocument(document1.getId());
+
+		documentResource.deleteDocument(document2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAssetLibraryDocumentsPage_getExpectedActions(
+				Long assetLibraryId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/headless-delivery/v1.0/asset-libraries/{assetLibraryId}/documents/batch".
+				replace("{assetLibraryId}", String.valueOf(assetLibraryId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithFilterDateTimeEquals()
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(
+			EntityField.Type.DATE_TIME);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId();
+
+		Document document1 = randomDocument();
+
+		document1 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, document1);
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> page = documentResource.getAssetLibraryDocumentsPage(
+				assetLibraryId, null, null, null,
+				getFilterString(entityField, "between", document1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(document1),
+				(List<Document>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithFilterDoubleEquals()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithFilter(
+			"eq", EntityField.Type.DOUBLE);
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithFilterStringContains()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithFilter(
+			"contains", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithFilterStringEquals()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithFilter(
+			"eq", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithFilterStringStartsWith()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithFilter(
+			"startswith", EntityField.Type.STRING);
+	}
+
+	protected void testGetAssetLibraryDocumentsPageWithFilter(
+			String operator, EntityField.Type type)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId();
+
+		Document document1 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document2 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> page = documentResource.getAssetLibraryDocumentsPage(
+				assetLibraryId, null, null, null,
+				getFilterString(entityField, operator, document1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(document1),
+				(List<Document>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithPagination()
+		throws Exception {
+
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId();
+
+		Page<Document> documentsPage =
+			documentResource.getAssetLibraryDocumentsPage(
+				assetLibraryId, null, null, null, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(documentsPage.getTotalCount());
+
+		Document document1 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		Document document2 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		Document document3 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, randomDocument());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Document> page1 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(document1, (List<Document>)page1.getItems());
+
+			Page<Document> page2 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			assertContains(document2, (List<Document>)page2.getItems());
+
+			Page<Document> page3 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+		else {
+			Page<Document> page1 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(1, totalCount + 2), null);
+
+			List<Document> documents1 = (List<Document>)page1.getItems();
+
+			Assert.assertEquals(
+				documents1.toString(), totalCount + 2, documents1.size());
+
+			Page<Document> page2 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(2, totalCount + 2), null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Document> documents2 = (List<Document>)page2.getItems();
+
+			Assert.assertEquals(documents2.toString(), 1, documents2.size());
+
+			Page<Document> page3 =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(document1, (List<Document>)page3.getItems());
+			assertContains(document2, (List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithSortDateTime()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(
+					document1, entityField.getName(),
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithSortDouble()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 0.5);
+			});
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithSortInteger()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 1);
+			});
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsPageWithSortString()
+		throws Exception {
+
+		testGetAssetLibraryDocumentsPageWithSort(
+			EntityField.Type.STRING,
+			(entityField, document1, document2) -> {
+				Class<?> clazz = document1.getClass();
+
+				String entityFieldName = entityField.getName();
+
+				Method method = clazz.getMethod(
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(Map.class)) {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						Collections.singletonMap("Aaa", "Aaa"));
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						Collections.singletonMap("Bbb", "Bbb"));
+				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
+				else {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+				}
+			});
+	}
+
+	protected void testGetAssetLibraryDocumentsPageWithSort(
+			EntityField.Type type,
+			UnsafeTriConsumer<EntityField, Document, Document, Exception>
+				unsafeTriConsumer)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId();
+
+		Document document1 = randomDocument();
+		Document document2 = randomDocument();
+
+		for (EntityField entityField : entityFields) {
+			unsafeTriConsumer.accept(entityField, document1, document2);
+		}
+
+		document1 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, document1);
+
+		document2 = testGetAssetLibraryDocumentsPage_addDocument(
+			assetLibraryId, document2);
+
+		Page<Document> page = documentResource.getAssetLibraryDocumentsPage(
+			assetLibraryId, null, null, null, null, null, null);
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> ascPage =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
+					entityField.getName() + ":asc");
+
+			assertContains(document1, (List<Document>)ascPage.getItems());
+			assertContains(document2, (List<Document>)ascPage.getItems());
+
+			Page<Document> descPage =
+				documentResource.getAssetLibraryDocumentsPage(
+					assetLibraryId, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
+					entityField.getName() + ":desc");
+
+			assertContains(document2, (List<Document>)descPage.getItems());
+			assertContains(document1, (List<Document>)descPage.getItems());
+		}
+	}
+
+	protected Document testGetAssetLibraryDocumentsPage_addDocument(
+			Long assetLibraryId, Document document)
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			assetLibraryId, document, getMultipartFiles());
+	}
+
+	protected Long testGetAssetLibraryDocumentsPage_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
+	}
+
+	protected Long
+			testGetAssetLibraryDocumentsPage_getIrrelevantAssetLibraryId()
+		throws Exception {
+
+		return irrelevantDepotEntry.getDepotEntryId();
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsRatedByMePage() throws Exception {
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsRatedByMePage_getAssetLibraryId();
+		Long irrelevantAssetLibraryId =
+			testGetAssetLibraryDocumentsRatedByMePage_getIrrelevantAssetLibraryId();
+
+		Page<Document> page =
+			documentResource.getAssetLibraryDocumentsRatedByMePage(
+				assetLibraryId, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantAssetLibraryId != null) {
+			Document irrelevantDocument =
+				testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+					irrelevantAssetLibraryId, randomIrrelevantDocument());
+
+			page = documentResource.getAssetLibraryDocumentsRatedByMePage(
+				irrelevantAssetLibraryId,
+				Pagination.of(1, (int)totalCount + 1));
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(irrelevantDocument, (List<Document>)page.getItems());
+			assertValid(
+				page,
+				testGetAssetLibraryDocumentsRatedByMePage_getExpectedActions(
+					irrelevantAssetLibraryId));
+		}
+
+		Document document1 =
+			testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+				assetLibraryId, randomDocument());
+
+		Document document2 =
+			testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+				assetLibraryId, randomDocument());
+
+		page = documentResource.getAssetLibraryDocumentsRatedByMePage(
+			assetLibraryId, Pagination.of(1, 10));
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(document1, (List<Document>)page.getItems());
+		assertContains(document2, (List<Document>)page.getItems());
+		assertValid(
+			page,
+			testGetAssetLibraryDocumentsRatedByMePage_getExpectedActions(
+				assetLibraryId));
+
+		documentResource.deleteDocument(document1.getId());
+
+		documentResource.deleteDocument(document2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAssetLibraryDocumentsRatedByMePage_getExpectedActions(
+				Long assetLibraryId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetAssetLibraryDocumentsRatedByMePageWithPagination()
+		throws Exception {
+
+		Long assetLibraryId =
+			testGetAssetLibraryDocumentsRatedByMePage_getAssetLibraryId();
+
+		Page<Document> documentsPage =
+			documentResource.getAssetLibraryDocumentsRatedByMePage(
+				assetLibraryId, null);
+
+		int totalCount = GetterUtil.getInteger(documentsPage.getTotalCount());
+
+		Document document1 =
+			testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+				assetLibraryId, randomDocument());
+
+		Document document2 =
+			testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+				assetLibraryId, randomDocument());
+
+		Document document3 =
+			testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+				assetLibraryId, randomDocument());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Document> page1 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(document1, (List<Document>)page1.getItems());
+
+			Page<Document> page2 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			assertContains(document2, (List<Document>)page2.getItems());
+
+			Page<Document> page3 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+		else {
+			Page<Document> page1 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId, Pagination.of(1, totalCount + 2));
+
+			List<Document> documents1 = (List<Document>)page1.getItems();
+
+			Assert.assertEquals(
+				documents1.toString(), totalCount + 2, documents1.size());
+
+			Page<Document> page2 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId, Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Document> documents2 = (List<Document>)page2.getItems();
+
+			Assert.assertEquals(documents2.toString(), 1, documents2.size());
+
+			Page<Document> page3 =
+				documentResource.getAssetLibraryDocumentsRatedByMePage(
+					assetLibraryId, Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(document1, (List<Document>)page3.getItems());
+			assertContains(document2, (List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+	}
+
+	protected Document testGetAssetLibraryDocumentsRatedByMePage_addDocument(
+			Long assetLibraryId, Document document)
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			assetLibraryId, document, getMultipartFiles());
+	}
+
+	protected Long testGetAssetLibraryDocumentsRatedByMePage_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
+	}
+
+	protected Long
+			testGetAssetLibraryDocumentsRatedByMePage_getIrrelevantAssetLibraryId()
+		throws Exception {
+
+		return irrelevantDepotEntry.getDepotEntryId();
+	}
+
+	@Test
+	public void testGetDocument() throws Exception {
+		Document postDocument = testGetDocument_addDocument();
+
+		Document getDocument = documentResource.getDocument(
+			postDocument.getId());
+
+		assertEquals(postDocument, getDocument);
+		assertValid(getDocument);
+	}
+
+	@Test
+	public void testVulcanCRUDItemDelegateGetItem() throws Exception {
+		Document postDocument = testGetDocument_addDocument();
+
+		Document getDocument = documentResource.getDocument(
+			postDocument.getId());
+
+		VulcanCRUDItemDelegate vulcanCRUDItemDelegate =
+			_vulcanCRUDItemDelegateBuilderRegistry.builder(
+				testCompany, "com.liferay.headless.delivery.dto.v1_0.Document"
+			).acceptLanguage(
+				new AcceptLanguage() {
+
+					@Override
+					public List<Locale> getLocales() {
+						return Arrays.asList(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public String getPreferredLanguageId() {
+						return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public Locale getPreferredLocale() {
+						return LocaleUtil.getDefault();
+					}
+
+				}
+			).groupLocalService(
+				_groupLocalService
+			).httpServletRequest(
+				testVulcanCRUDItemDelegate_getHttpServletRequest()
+			).httpServletResponse(
+				new MockHttpServletResponse()
+			).resourceActionLocalService(
+				_resourceActionLocalService
+			).resourcePermissionLocalService(
+				_resourcePermissionLocalService
+			).roleLocalService(
+				_roleLocalService
+			).scopeChecker(
+				_scopeChecker
+			).uriInfo(
+				testVulcanCRUDItemDelegate_getUriInfo()
+			).user(
+				testVulcanCRUDItemDelegate_getUser()
+			).build();
+
+		Object item = vulcanCRUDItemDelegate.getItem(postDocument.getId());
+
+		assertEquals(getDocument, DocumentSerDes.toDTO(item.toString()));
+	}
+
+	protected HttpServletRequest
+		testVulcanCRUDItemDelegate_getHttpServletRequest() {
+
+		return new MockHttpServletRequest() {
+
+			@Override
+			public StringBuffer getRequestURL() {
+				return new StringBuffer(
+					StringBundler.concat(
+						"http://localhost:8080/o/v1.0/",
+						RandomTestUtil.randomString(), "/",
+						RandomTestUtil.randomString()));
+			}
+
+		};
+	}
+
+	protected UriInfo testVulcanCRUDItemDelegate_getUriInfo() {
+		String applicationPath = RandomTestUtil.randomString() + "/";
+		String resourcePath = RandomTestUtil.randomString();
+
+		return new UriInfo() {
+
+			@Override
+			public String getPath() {
+				return resourcePath;
+			}
+
+			@Override
+			public String getPath(boolean decode) {
+				return getPath();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments(boolean decode) {
+				return getPathSegments();
+			}
+
+			@Override
+			public URI getRequestUri() {
+				return URI.create(
+					"http://localhost:8080/o/" + applicationPath +
+						resourcePath);
+			}
+
+			@Override
+			public UriBuilder getRequestUriBuilder() {
+				return UriBuilder.fromUri(getRequestUri());
+			}
+
+			@Override
+			public URI getAbsolutePath() {
+				return getRequestUri();
+			}
+
+			@Override
+			public UriBuilder getAbsolutePathBuilder() {
+				return getRequestUriBuilder();
+			}
+
+			@Override
+			public URI getBaseUri() {
+				return URI.create("http://localhost:8080/o/" + applicationPath);
+			}
+
+			@Override
+			public UriBuilder getBaseUriBuilder() {
+				return UriBuilder.fromUri(getBaseUri());
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters(
+				boolean decode) {
+
+				return getPathParameters();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters(
+				boolean decode) {
+
+				return getQueryParameters();
+			}
+
+			@Override
+			public List<String> getMatchedURIs() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<String> getMatchedURIs(boolean decode) {
+				return getMatchedURIs();
+			}
+
+			@Override
+			public List<Object> getMatchedResources() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public URI resolve(URI requestUri) {
+				return getBaseUri().resolve(requestUri);
+			}
+
+			@Override
+			public URI relativize(URI uri) {
+				return getBaseUri().relativize(uri);
+			}
+
+		};
+	}
+
+	protected com.liferay.portal.kernel.model.User
+		testVulcanCRUDItemDelegate_getUser() {
+
+		return _testCompanyAdminUser;
+	}
+
+	protected Document testGetDocument_addDocument() throws Exception {
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGraphQLGetDocument() throws Exception {
+		Document document = testGraphQLGetDocument_addDocument();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"document",
+								new HashMap<String, Object>() {
+									{
+										put("documentId", document.getId());
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data", "Object/document"))));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"headlessDelivery_v1_0",
+								new GraphQLField(
+									"document",
+									new HashMap<String, Object>() {
+										{
+											put("documentId", document.getId());
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/headlessDelivery_v1_0",
+						"Object/document"))));
+	}
+
+	@Test
+	public void testGraphQLGetDocumentNotFound() throws Exception {
+		Long irrelevantDocumentId = RandomTestUtil.randomLong();
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"document",
+						new HashMap<String, Object>() {
+							{
+								put("documentId", irrelevantDocumentId);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"headlessDelivery_v1_0",
+						new GraphQLField(
+							"document",
+							new HashMap<String, Object>() {
+								{
+									put("documentId", irrelevantDocumentId);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected Document testGraphQLGetDocument_addDocument() throws Exception {
+		return testGraphQLDocument_addDocument();
+	}
+
+	@Test
 	public void testGetDocumentFolderDocumentsPage() throws Exception {
-		Page<Document> page = documentResource.getDocumentFolderDocumentsPage(
-			testGetDocumentFolderDocumentsPage_getDocumentFolderId(), null,
-			RandomTestUtil.randomString(), null, Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long documentFolderId =
 			testGetDocumentFolderDocumentsPage_getDocumentFolderId();
 		Long irrelevantDocumentFolderId =
 			testGetDocumentFolderDocumentsPage_getIrrelevantDocumentFolderId();
 
-		if ((irrelevantDocumentFolderId != null)) {
+		Page<Document> page = documentResource.getDocumentFolderDocumentsPage(
+			documentFolderId, null, null, null, null, Pagination.of(1, 10),
+			null);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantDocumentFolderId != null) {
 			Document irrelevantDocument =
 				testGetDocumentFolderDocumentsPage_addDocument(
 					irrelevantDocumentFolderId, randomIrrelevantDocument());
 
 			page = documentResource.getDocumentFolderDocumentsPage(
-				irrelevantDocumentFolderId, null, null, null,
-				Pagination.of(1, 2), null);
+				irrelevantDocumentFolderId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 1), null);
 
-			Assert.assertEquals(1, page.getTotalCount());
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
 
-			assertEquals(
-				Arrays.asList(irrelevantDocument),
-				(List<Document>)page.getItems());
-			assertValid(page);
+			assertContains(irrelevantDocument, (List<Document>)page.getItems());
+			assertValid(
+				page,
+				testGetDocumentFolderDocumentsPage_getExpectedActions(
+					irrelevantDocumentFolderId));
 		}
 
 		Document document1 = testGetDocumentFolderDocumentsPage_addDocument(
@@ -246,18 +1631,41 @@ public abstract class BaseDocumentResourceTestCase {
 			documentFolderId, randomDocument());
 
 		page = documentResource.getDocumentFolderDocumentsPage(
-			documentFolderId, null, null, null, Pagination.of(1, 2), null);
+			documentFolderId, null, null, null, null, Pagination.of(1, 10),
+			null);
 
-		Assert.assertEquals(2, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(document1, document2),
-			(List<Document>)page.getItems());
-		assertValid(page);
+		assertContains(document1, (List<Document>)page.getItems());
+		assertContains(document2, (List<Document>)page.getItems());
+		assertValid(
+			page,
+			testGetDocumentFolderDocumentsPage_getExpectedActions(
+				documentFolderId));
 
 		documentResource.deleteDocument(document1.getId());
 
 		documentResource.deleteDocument(document2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetDocumentFolderDocumentsPage_getExpectedActions(
+				Long documentFolderId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/headless-delivery/v1.0/document-folders/{documentFolderId}/documents/batch".
+				replace(
+					"{documentFolderId}", String.valueOf(documentFolderId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
 	}
 
 	@Test
@@ -282,7 +1690,7 @@ public abstract class BaseDocumentResourceTestCase {
 		for (EntityField entityField : entityFields) {
 			Page<Document> page =
 				documentResource.getDocumentFolderDocumentsPage(
-					documentFolderId, null, null,
+					documentFolderId, null, null, null,
 					getFilterString(entityField, "between", document1),
 					Pagination.of(1, 2), null);
 
@@ -293,11 +1701,42 @@ public abstract class BaseDocumentResourceTestCase {
 	}
 
 	@Test
+	public void testGetDocumentFolderDocumentsPageWithFilterDoubleEquals()
+		throws Exception {
+
+		testGetDocumentFolderDocumentsPageWithFilter(
+			"eq", EntityField.Type.DOUBLE);
+	}
+
+	@Test
+	public void testGetDocumentFolderDocumentsPageWithFilterStringContains()
+		throws Exception {
+
+		testGetDocumentFolderDocumentsPageWithFilter(
+			"contains", EntityField.Type.STRING);
+	}
+
+	@Test
 	public void testGetDocumentFolderDocumentsPageWithFilterStringEquals()
 		throws Exception {
 
-		List<EntityField> entityFields = getEntityFields(
-			EntityField.Type.STRING);
+		testGetDocumentFolderDocumentsPageWithFilter(
+			"eq", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetDocumentFolderDocumentsPageWithFilterStringStartsWith()
+		throws Exception {
+
+		testGetDocumentFolderDocumentsPageWithFilter(
+			"startswith", EntityField.Type.STRING);
+	}
+
+	protected void testGetDocumentFolderDocumentsPageWithFilter(
+			String operator, EntityField.Type type)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
 
 		if (entityFields.isEmpty()) {
 			return;
@@ -316,8 +1755,8 @@ public abstract class BaseDocumentResourceTestCase {
 		for (EntityField entityField : entityFields) {
 			Page<Document> page =
 				documentResource.getDocumentFolderDocumentsPage(
-					documentFolderId, null, null,
-					getFilterString(entityField, "eq", document1),
+					documentFolderId, null, null, null,
+					getFilterString(entityField, operator, document1),
 					Pagination.of(1, 2), null);
 
 			assertEquals(
@@ -333,6 +1772,12 @@ public abstract class BaseDocumentResourceTestCase {
 		Long documentFolderId =
 			testGetDocumentFolderDocumentsPage_getDocumentFolderId();
 
+		Page<Document> documentsPage =
+			documentResource.getDocumentFolderDocumentsPage(
+				documentFolderId, null, null, null, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(documentsPage.getTotalCount());
+
 		Document document1 = testGetDocumentFolderDocumentsPage_addDocument(
 			documentFolderId, randomDocument());
 
@@ -342,28 +1787,74 @@ public abstract class BaseDocumentResourceTestCase {
 		Document document3 = testGetDocumentFolderDocumentsPage_addDocument(
 			documentFolderId, randomDocument());
 
-		Page<Document> page1 = documentResource.getDocumentFolderDocumentsPage(
-			documentFolderId, null, null, null, Pagination.of(1, 2), null);
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
 
-		List<Document> documents1 = (List<Document>)page1.getItems();
+		int pageSizeLimit = 500;
 
-		Assert.assertEquals(documents1.toString(), 2, documents1.size());
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Document> page1 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
 
-		Page<Document> page2 = documentResource.getDocumentFolderDocumentsPage(
-			documentFolderId, null, null, null, Pagination.of(2, 2), null);
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
 
-		Assert.assertEquals(3, page2.getTotalCount());
+			assertContains(document1, (List<Document>)page1.getItems());
 
-		List<Document> documents2 = (List<Document>)page2.getItems();
+			Page<Document> page2 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
 
-		Assert.assertEquals(documents2.toString(), 1, documents2.size());
+			assertContains(document2, (List<Document>)page2.getItems());
 
-		Page<Document> page3 = documentResource.getDocumentFolderDocumentsPage(
-			documentFolderId, null, null, null, Pagination.of(1, 3), null);
+			Page<Document> page3 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(document1, document2, document3),
-			(List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+		else {
+			Page<Document> page1 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(1, totalCount + 2), null);
+
+			List<Document> documents1 = (List<Document>)page1.getItems();
+
+			Assert.assertEquals(
+				documents1.toString(), totalCount + 2, documents1.size());
+
+			Page<Document> page2 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(2, totalCount + 2), null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Document> documents2 = (List<Document>)page2.getItems();
+
+			Assert.assertEquals(documents2.toString(), 1, documents2.size());
+
+			Page<Document> page3 =
+				documentResource.getDocumentFolderDocumentsPage(
+					documentFolderId, null, null, null, null,
+					Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(document1, (List<Document>)page3.getItems());
+			assertContains(document2, (List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
 	}
 
 	@Test
@@ -373,9 +1864,21 @@ public abstract class BaseDocumentResourceTestCase {
 		testGetDocumentFolderDocumentsPageWithSort(
 			EntityField.Type.DATE_TIME,
 			(entityField, document1, document2) -> {
-				BeanUtils.setProperty(
+				BeanTestUtil.setProperty(
 					document1, entityField.getName(),
-					DateUtils.addMinutes(new Date(), -2));
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetDocumentFolderDocumentsPageWithSortDouble()
+		throws Exception {
+
+		testGetDocumentFolderDocumentsPageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 0.5);
 			});
 	}
 
@@ -386,8 +1889,8 @@ public abstract class BaseDocumentResourceTestCase {
 		testGetDocumentFolderDocumentsPageWithSort(
 			EntityField.Type.INTEGER,
 			(entityField, document1, document2) -> {
-				BeanUtils.setProperty(document1, entityField.getName(), 0);
-				BeanUtils.setProperty(document2, entityField.getName(), 1);
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 1);
 			});
 	}
 
@@ -400,25 +1903,46 @@ public abstract class BaseDocumentResourceTestCase {
 			(entityField, document1, document2) -> {
 				Class<?> clazz = document1.getClass();
 
+				String entityFieldName = entityField.getName();
+
 				Method method = clazz.getMethod(
-					"get" +
-						StringUtil.upperCaseFirstLetter(entityField.getName()));
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
 
 				Class<?> returnType = method.getReturnType();
 
 				if (returnType.isAssignableFrom(Map.class)) {
-					BeanUtils.setProperty(
-						document1, entityField.getName(),
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
 						Collections.singletonMap("Aaa", "Aaa"));
-					BeanUtils.setProperty(
-						document2, entityField.getName(),
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
 						Collections.singletonMap("Bbb", "Bbb"));
 				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
 				else {
-					BeanUtils.setProperty(
-						document1, entityField.getName(), "Aaa");
-					BeanUtils.setProperty(
-						document2, entityField.getName(), "Bbb");
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
 				}
 			});
 	}
@@ -451,24 +1975,27 @@ public abstract class BaseDocumentResourceTestCase {
 		document2 = testGetDocumentFolderDocumentsPage_addDocument(
 			documentFolderId, document2);
 
+		Page<Document> page = documentResource.getDocumentFolderDocumentsPage(
+			documentFolderId, null, null, null, null, null, null);
+
 		for (EntityField entityField : entityFields) {
 			Page<Document> ascPage =
 				documentResource.getDocumentFolderDocumentsPage(
-					documentFolderId, null, null, null, Pagination.of(1, 2),
+					documentFolderId, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
 					entityField.getName() + ":asc");
 
-			assertEquals(
-				Arrays.asList(document1, document2),
-				(List<Document>)ascPage.getItems());
+			assertContains(document1, (List<Document>)ascPage.getItems());
+			assertContains(document2, (List<Document>)ascPage.getItems());
 
 			Page<Document> descPage =
 				documentResource.getDocumentFolderDocumentsPage(
-					documentFolderId, null, null, null, Pagination.of(1, 2),
+					documentFolderId, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
 					entityField.getName() + ":desc");
 
-			assertEquals(
-				Arrays.asList(document2, document1),
-				(List<Document>)descPage.getItems());
+			assertContains(document2, (List<Document>)descPage.getItems());
+			assertContains(document1, (List<Document>)descPage.getItems());
 		}
 	}
 
@@ -492,6 +2019,867 @@ public abstract class BaseDocumentResourceTestCase {
 		throws Exception {
 
 		return null;
+	}
+
+	@Test
+	public void testGetDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document postDocument = testGetDocumentPermissionsPage_addDocument();
+
+		Page<Permission> page = documentResource.getDocumentPermissionsPage(
+			postDocument.getId(), RoleConstants.GUEST);
+
+		Assert.assertNotNull(page);
+	}
+
+	protected Document testGetDocumentPermissionsPage_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGetDocumentRenderedContentByDisplayPageDisplayPageKey()
+		throws Exception {
+
+		Assert.assertTrue(false);
+	}
+
+	@Test
+	public void testGetSiteDocumentByExternalReferenceCode() throws Exception {
+		Document postDocument =
+			testGetSiteDocumentByExternalReferenceCode_addDocument();
+
+		Document getDocument =
+			documentResource.getSiteDocumentByExternalReferenceCode(
+				postDocument.getSiteId(),
+				postDocument.getExternalReferenceCode());
+
+		assertEquals(postDocument, getDocument);
+		assertValid(getDocument);
+	}
+
+	protected Document testGetSiteDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGraphQLGetSiteDocumentByExternalReferenceCode()
+		throws Exception {
+
+		Document document =
+			testGraphQLGetSiteDocumentByExternalReferenceCode_addDocument();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"documentByExternalReferenceCode",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"siteKey",
+											"\"" + document.getSiteId() + "\"");
+										put(
+											"externalReferenceCode",
+											"\"" +
+												document.
+													getExternalReferenceCode() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/documentByExternalReferenceCode"))));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertTrue(
+			equals(
+				document,
+				DocumentSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"headlessDelivery_v1_0",
+								new GraphQLField(
+									"documentByExternalReferenceCode",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"siteKey",
+												"\"" + document.getSiteId() +
+													"\"");
+											put(
+												"externalReferenceCode",
+												"\"" +
+													document.
+														getExternalReferenceCode() +
+															"\"");
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/headlessDelivery_v1_0",
+						"Object/documentByExternalReferenceCode"))));
+	}
+
+	@Test
+	public void testGraphQLGetSiteDocumentByExternalReferenceCodeNotFound()
+		throws Exception {
+
+		String irrelevantExternalReferenceCode =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"documentByExternalReferenceCode",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"siteKey",
+									"\"" + irrelevantGroup.getGroupId() + "\"");
+								put(
+									"externalReferenceCode",
+									irrelevantExternalReferenceCode);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"headlessDelivery_v1_0",
+						new GraphQLField(
+							"documentByExternalReferenceCode",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"siteKey",
+										"\"" + irrelevantGroup.getGroupId() +
+											"\"");
+									put(
+										"externalReferenceCode",
+										irrelevantExternalReferenceCode);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected Document
+			testGraphQLGetSiteDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return testGraphQLDocument_addDocument();
+	}
+
+	@Test
+	public void testGetSiteDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document postDocument =
+			testGetSiteDocumentPermissionsPage_addDocument();
+
+		Page<Permission> page = documentResource.getSiteDocumentPermissionsPage(
+			testGroup.getGroupId(), RoleConstants.GUEST);
+
+		Assert.assertNotNull(page);
+	}
+
+	protected Document testGetSiteDocumentPermissionsPage_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testGetSiteDocumentsPage() throws Exception {
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+		Long irrelevantSiteId = testGetSiteDocumentsPage_getIrrelevantSiteId();
+
+		Page<Document> page = documentResource.getSiteDocumentsPage(
+			siteId, null, null, null, null, Pagination.of(1, 10), null);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantSiteId != null) {
+			Document irrelevantDocument = testGetSiteDocumentsPage_addDocument(
+				irrelevantSiteId, randomIrrelevantDocument());
+
+			page = documentResource.getSiteDocumentsPage(
+				irrelevantSiteId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 1), null);
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(irrelevantDocument, (List<Document>)page.getItems());
+			assertValid(
+				page,
+				testGetSiteDocumentsPage_getExpectedActions(irrelevantSiteId));
+		}
+
+		Document document1 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		Document document2 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		page = documentResource.getSiteDocumentsPage(
+			siteId, null, null, null, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(document1, (List<Document>)page.getItems());
+		assertContains(document2, (List<Document>)page.getItems());
+		assertValid(page, testGetSiteDocumentsPage_getExpectedActions(siteId));
+
+		documentResource.deleteDocument(document1.getId());
+
+		documentResource.deleteDocument(document2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteDocumentsPage_getExpectedActions(Long siteId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/documents/batch".
+				replace("{siteId}", String.valueOf(siteId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithFilterDateTimeEquals()
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(
+			EntityField.Type.DATE_TIME);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+
+		Document document1 = randomDocument();
+
+		document1 = testGetSiteDocumentsPage_addDocument(siteId, document1);
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> page = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null,
+				getFilterString(entityField, "between", document1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(document1),
+				(List<Document>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithFilterDoubleEquals()
+		throws Exception {
+
+		testGetSiteDocumentsPageWithFilter("eq", EntityField.Type.DOUBLE);
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithFilterStringContains()
+		throws Exception {
+
+		testGetSiteDocumentsPageWithFilter("contains", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithFilterStringEquals()
+		throws Exception {
+
+		testGetSiteDocumentsPageWithFilter("eq", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithFilterStringStartsWith()
+		throws Exception {
+
+		testGetSiteDocumentsPageWithFilter(
+			"startswith", EntityField.Type.STRING);
+	}
+
+	protected void testGetSiteDocumentsPageWithFilter(
+			String operator, EntityField.Type type)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+
+		Document document1 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document2 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> page = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null,
+				getFilterString(entityField, operator, document1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(document1),
+				(List<Document>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithPagination() throws Exception {
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+
+		Page<Document> documentsPage = documentResource.getSiteDocumentsPage(
+			siteId, null, null, null, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(documentsPage.getTotalCount());
+
+		Document document1 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		Document document2 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		Document document3 = testGetSiteDocumentsPage_addDocument(
+			siteId, randomDocument());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Document> page1 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+					pageSizeLimit),
+				null);
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(document1, (List<Document>)page1.getItems());
+
+			Page<Document> page2 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+					pageSizeLimit),
+				null);
+
+			assertContains(document2, (List<Document>)page2.getItems());
+
+			Page<Document> page3 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+					pageSizeLimit),
+				null);
+
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+		else {
+			Page<Document> page1 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, totalCount + 2), null);
+
+			List<Document> documents1 = (List<Document>)page1.getItems();
+
+			Assert.assertEquals(
+				documents1.toString(), totalCount + 2, documents1.size());
+
+			Page<Document> page2 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(2, totalCount + 2), null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Document> documents2 = (List<Document>)page2.getItems();
+
+			Assert.assertEquals(documents2.toString(), 1, documents2.size());
+
+			Page<Document> page3 = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(document1, (List<Document>)page3.getItems());
+			assertContains(document2, (List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithSortDateTime() throws Exception {
+		testGetSiteDocumentsPageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(
+					document1, entityField.getName(),
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithSortDouble() throws Exception {
+		testGetSiteDocumentsPageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 0.5);
+			});
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithSortInteger() throws Exception {
+		testGetSiteDocumentsPageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, document1, document2) -> {
+				BeanTestUtil.setProperty(document1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(document2, entityField.getName(), 1);
+			});
+	}
+
+	@Test
+	public void testGetSiteDocumentsPageWithSortString() throws Exception {
+		testGetSiteDocumentsPageWithSort(
+			EntityField.Type.STRING,
+			(entityField, document1, document2) -> {
+				Class<?> clazz = document1.getClass();
+
+				String entityFieldName = entityField.getName();
+
+				Method method = clazz.getMethod(
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(Map.class)) {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						Collections.singletonMap("Aaa", "Aaa"));
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						Collections.singletonMap("Bbb", "Bbb"));
+				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
+				else {
+					BeanTestUtil.setProperty(
+						document1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						document2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+				}
+			});
+	}
+
+	protected void testGetSiteDocumentsPageWithSort(
+			EntityField.Type type,
+			UnsafeTriConsumer<EntityField, Document, Document, Exception>
+				unsafeTriConsumer)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+
+		Document document1 = randomDocument();
+		Document document2 = randomDocument();
+
+		for (EntityField entityField : entityFields) {
+			unsafeTriConsumer.accept(entityField, document1, document2);
+		}
+
+		document1 = testGetSiteDocumentsPage_addDocument(siteId, document1);
+
+		document2 = testGetSiteDocumentsPage_addDocument(siteId, document2);
+
+		Page<Document> page = documentResource.getSiteDocumentsPage(
+			siteId, null, null, null, null, null, null);
+
+		for (EntityField entityField : entityFields) {
+			Page<Document> ascPage = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, (int)page.getTotalCount() + 1),
+				entityField.getName() + ":asc");
+
+			assertContains(document1, (List<Document>)ascPage.getItems());
+			assertContains(document2, (List<Document>)ascPage.getItems());
+
+			Page<Document> descPage = documentResource.getSiteDocumentsPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, (int)page.getTotalCount() + 1),
+				entityField.getName() + ":desc");
+
+			assertContains(document2, (List<Document>)descPage.getItems());
+			assertContains(document1, (List<Document>)descPage.getItems());
+		}
+	}
+
+	protected Document testGetSiteDocumentsPage_addDocument(
+			Long siteId, Document document)
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			siteId, document, getMultipartFiles());
+	}
+
+	protected Long testGetSiteDocumentsPage_getSiteId() throws Exception {
+		return testGroup.getGroupId();
+	}
+
+	protected Long testGetSiteDocumentsPage_getIrrelevantSiteId()
+		throws Exception {
+
+		return irrelevantGroup.getGroupId();
+	}
+
+	@Test
+	public void testGraphQLGetSiteDocumentsPage() throws Exception {
+		Long siteId = testGetSiteDocumentsPage_getSiteId();
+
+		GraphQLField graphQLField = new GraphQLField(
+			"documents",
+			new HashMap<String, Object>() {
+				{
+					put("page", 1);
+					put("pageSize", 10);
+
+					put("siteKey", "\"" + siteId + "\"");
+				}
+			},
+			new GraphQLField("items", getGraphQLFields()),
+			new GraphQLField("page"), new GraphQLField("totalCount"));
+
+		// No namespace
+
+		JSONObject documentsJSONObject = JSONUtil.getValueAsJSONObject(
+			invokeGraphQLQuery(graphQLField), "JSONObject/data",
+			"JSONObject/documents");
+
+		long totalCount = documentsJSONObject.getLong("totalCount");
+
+		Document document1 = testGraphQLGetSiteDocumentsPage_addDocument();
+		Document document2 = testGraphQLGetSiteDocumentsPage_addDocument();
+
+		documentsJSONObject = JSONUtil.getValueAsJSONObject(
+			invokeGraphQLQuery(graphQLField), "JSONObject/data",
+			"JSONObject/documents");
+
+		Assert.assertEquals(
+			totalCount + 2, documentsJSONObject.getLong("totalCount"));
+
+		assertContains(
+			document1,
+			Arrays.asList(
+				DocumentSerDes.toDTOs(documentsJSONObject.getString("items"))));
+		assertContains(
+			document2,
+			Arrays.asList(
+				DocumentSerDes.toDTOs(documentsJSONObject.getString("items"))));
+
+		// Using the namespace headlessDelivery_v1_0
+
+		documentsJSONObject = JSONUtil.getValueAsJSONObject(
+			invokeGraphQLQuery(
+				new GraphQLField("headlessDelivery_v1_0", graphQLField)),
+			"JSONObject/data", "JSONObject/headlessDelivery_v1_0",
+			"JSONObject/documents");
+
+		Assert.assertEquals(
+			totalCount + 2, documentsJSONObject.getLong("totalCount"));
+
+		assertContains(
+			document1,
+			Arrays.asList(
+				DocumentSerDes.toDTOs(documentsJSONObject.getString("items"))));
+		assertContains(
+			document2,
+			Arrays.asList(
+				DocumentSerDes.toDTOs(documentsJSONObject.getString("items"))));
+	}
+
+	protected Document testGraphQLGetSiteDocumentsPage_addDocument()
+		throws Exception {
+
+		return testGraphQLDocument_addDocument();
+	}
+
+	@Test
+	public void testGetSiteDocumentsRatedByMePage() throws Exception {
+		Long siteId = testGetSiteDocumentsRatedByMePage_getSiteId();
+		Long irrelevantSiteId =
+			testGetSiteDocumentsRatedByMePage_getIrrelevantSiteId();
+
+		Page<Document> page = documentResource.getSiteDocumentsRatedByMePage(
+			siteId, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantSiteId != null) {
+			Document irrelevantDocument =
+				testGetSiteDocumentsRatedByMePage_addDocument(
+					irrelevantSiteId, randomIrrelevantDocument());
+
+			page = documentResource.getSiteDocumentsRatedByMePage(
+				irrelevantSiteId, Pagination.of(1, (int)totalCount + 1));
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(irrelevantDocument, (List<Document>)page.getItems());
+			assertValid(
+				page,
+				testGetSiteDocumentsRatedByMePage_getExpectedActions(
+					irrelevantSiteId));
+		}
+
+		Document document1 = testGetSiteDocumentsRatedByMePage_addDocument(
+			siteId, randomDocument());
+
+		Document document2 = testGetSiteDocumentsRatedByMePage_addDocument(
+			siteId, randomDocument());
+
+		page = documentResource.getSiteDocumentsRatedByMePage(
+			siteId, Pagination.of(1, 10));
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(document1, (List<Document>)page.getItems());
+		assertContains(document2, (List<Document>)page.getItems());
+		assertValid(
+			page, testGetSiteDocumentsRatedByMePage_getExpectedActions(siteId));
+
+		documentResource.deleteDocument(document1.getId());
+
+		documentResource.deleteDocument(document2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteDocumentsRatedByMePage_getExpectedActions(Long siteId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetSiteDocumentsRatedByMePageWithPagination()
+		throws Exception {
+
+		Long siteId = testGetSiteDocumentsRatedByMePage_getSiteId();
+
+		Page<Document> documentsPage =
+			documentResource.getSiteDocumentsRatedByMePage(siteId, null);
+
+		int totalCount = GetterUtil.getInteger(documentsPage.getTotalCount());
+
+		Document document1 = testGetSiteDocumentsRatedByMePage_addDocument(
+			siteId, randomDocument());
+
+		Document document2 = testGetSiteDocumentsRatedByMePage_addDocument(
+			siteId, randomDocument());
+
+		Document document3 = testGetSiteDocumentsRatedByMePage_addDocument(
+			siteId, randomDocument());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Document> page1 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(document1, (List<Document>)page1.getItems());
+
+			Page<Document> page2 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			assertContains(document2, (List<Document>)page2.getItems());
+
+			Page<Document> page3 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit));
+
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+		else {
+			Page<Document> page1 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId, Pagination.of(1, totalCount + 2));
+
+			List<Document> documents1 = (List<Document>)page1.getItems();
+
+			Assert.assertEquals(
+				documents1.toString(), totalCount + 2, documents1.size());
+
+			Page<Document> page2 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId, Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Document> documents2 = (List<Document>)page2.getItems();
+
+			Assert.assertEquals(documents2.toString(), 1, documents2.size());
+
+			Page<Document> page3 =
+				documentResource.getSiteDocumentsRatedByMePage(
+					siteId, Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(document1, (List<Document>)page3.getItems());
+			assertContains(document2, (List<Document>)page3.getItems());
+			assertContains(document3, (List<Document>)page3.getItems());
+		}
+	}
+
+	protected Document testGetSiteDocumentsRatedByMePage_addDocument(
+			Long siteId, Document document)
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			siteId, document, getMultipartFiles());
+	}
+
+	protected Long testGetSiteDocumentsRatedByMePage_getSiteId()
+		throws Exception {
+
+		return testGroup.getGroupId();
+	}
+
+	protected Long testGetSiteDocumentsRatedByMePage_getIrrelevantSiteId()
+		throws Exception {
+
+		return irrelevantGroup.getGroupId();
+	}
+
+	@Test
+	public void testPatchDocument() throws Exception {
+		Document postDocument = testPatchDocument_addDocument();
+
+		Document randomPatchDocument = randomPatchDocument();
+
+		Map<String, File> multipartFiles = getMultipartFiles();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document patchDocument = documentResource.patchDocument(
+			postDocument.getId(), randomPatchDocument, multipartFiles);
+
+		Document expectedPatchDocument = postDocument.clone();
+
+		BeanTestUtil.copyProperties(randomPatchDocument, expectedPatchDocument);
+
+		Document getDocument = documentResource.getDocument(
+			patchDocument.getId());
+
+		assertEquals(expectedPatchDocument, getDocument);
+		assertValid(getDocument);
+
+		assertValid(getDocument, multipartFiles);
+	}
+
+	protected Document testPatchDocument_addDocument() throws Exception {
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testPostAssetLibraryDocument() throws Exception {
+		Document randomDocument = randomDocument();
+
+		Map<String, File> multipartFiles = getMultipartFiles();
+
+		Document postDocument = testPostAssetLibraryDocument_addDocument(
+			randomDocument, multipartFiles);
+
+		assertEquals(randomDocument, postDocument);
+		assertValid(postDocument);
+
+		assertValid(postDocument, multipartFiles);
+	}
+
+	protected Document testPostAssetLibraryDocument_addDocument(
+			Document document, Map<String, File> multipartFiles)
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testGetAssetLibraryDocumentsPage_getAssetLibraryId(), document,
+			multipartFiles);
 	}
 
 	@Test
@@ -519,142 +2907,149 @@ public abstract class BaseDocumentResourceTestCase {
 	}
 
 	@Test
-	public void testDeleteDocument() throws Exception {
-		Document document = testDeleteDocument_addDocument();
-
-		assertHttpResponseStatusCode(
-			204, documentResource.deleteDocumentHttpResponse(document.getId()));
-
-		assertHttpResponseStatusCode(
-			404, documentResource.getDocumentHttpResponse(document.getId()));
-
-		assertHttpResponseStatusCode(
-			404, documentResource.getDocumentHttpResponse(0L));
-	}
-
-	protected Document testDeleteDocument_addDocument() throws Exception {
-		return documentResource.postSiteDocument(
-			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
-	}
-
-	@Test
-	public void testGraphQLDeleteDocument() throws Exception {
-		Document document = testGraphQLDocument_addDocument();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"mutation",
-			new GraphQLField(
-				"deleteDocument",
-				new HashMap<String, Object>() {
-					{
-						put("documentId", document.getId());
-					}
-				}));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		Assert.assertTrue(dataJSONObject.getBoolean("deleteDocument"));
-
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"graphql.execution.SimpleDataFetcherExceptionHandler",
-					Level.WARN)) {
-
-			graphQLField = new GraphQLField(
-				"query",
-				new GraphQLField(
-					"document",
-					new HashMap<String, Object>() {
-						{
-							put("documentId", document.getId());
-						}
-					},
-					new GraphQLField("id")));
-
-			jsonObject = JSONFactoryUtil.createJSONObject(
-				invoke(graphQLField.toString()));
-
-			JSONArray errorsJSONArray = jsonObject.getJSONArray("errors");
-
-			Assert.assertTrue(errorsJSONArray.length() > 0);
-		}
-	}
-
-	@Test
-	public void testGetDocument() throws Exception {
-		Document postDocument = testGetDocument_addDocument();
-
-		Document getDocument = documentResource.getDocument(
-			postDocument.getId());
-
-		assertEquals(postDocument, getDocument);
-		assertValid(getDocument);
-	}
-
-	protected Document testGetDocument_addDocument() throws Exception {
-		return documentResource.postSiteDocument(
-			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
-	}
-
-	@Test
-	public void testGraphQLGetDocument() throws Exception {
-		Document document = testGraphQLDocument_addDocument();
-
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"document",
-				new HashMap<String, Object>() {
-					{
-						put("documentId", document.getId());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		Assert.assertTrue(
-			equalsJSONObject(
-				document, dataJSONObject.getJSONObject("document")));
-	}
-
-	@Test
-	public void testPatchDocument() throws Exception {
-		Document postDocument = testPatchDocument_addDocument();
-
-		Document randomPatchDocument = randomPatchDocument();
+	public void testPostSiteDocument() throws Exception {
+		Document randomDocument = randomDocument();
 
 		Map<String, File> multipartFiles = getMultipartFiles();
 
-		Document patchDocument = documentResource.patchDocument(
-			postDocument.getId(), randomPatchDocument, multipartFiles);
+		Document postDocument = testPostSiteDocument_addDocument(
+			randomDocument, multipartFiles);
 
-		Document expectedPatchDocument = (Document)BeanUtils.cloneBean(
-			postDocument);
+		assertEquals(randomDocument, postDocument);
+		assertValid(postDocument);
 
-		_beanUtilsBean.copyProperties(
-			expectedPatchDocument, randomPatchDocument);
+		assertValid(postDocument, multipartFiles);
+	}
 
-		Document getDocument = documentResource.getDocument(
-			patchDocument.getId());
+	protected Document testPostSiteDocument_addDocument(
+			Document document, Map<String, File> multipartFiles)
+		throws Exception {
 
-		assertEquals(expectedPatchDocument, getDocument);
+		return documentResource.postSiteDocument(
+			testGetSiteDocumentsPage_getSiteId(), document, multipartFiles);
+	}
+
+	@Test
+	public void testPutAssetLibraryDocumentByExternalReferenceCode()
+		throws Exception {
+
+		Document postDocument =
+			testPutAssetLibraryDocumentByExternalReferenceCode_addDocument();
+
+		Document randomDocument = randomDocument();
+
+		Map<String, File> multipartFiles = getMultipartFiles();
+
+		Document putDocument =
+			documentResource.putAssetLibraryDocumentByExternalReferenceCode(
+				testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+				postDocument.getExternalReferenceCode(), randomDocument,
+				multipartFiles);
+
+		assertEquals(randomDocument, putDocument);
+		assertValid(putDocument);
+
+		Document getDocument =
+			documentResource.getAssetLibraryDocumentByExternalReferenceCode(
+				testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+				putDocument.getExternalReferenceCode());
+
+		assertEquals(randomDocument, getDocument);
 		assertValid(getDocument);
 
 		assertValid(getDocument, multipartFiles);
+
+		Document newDocument =
+			testPutAssetLibraryDocumentByExternalReferenceCode_createDocument();
+
+		putDocument =
+			documentResource.putAssetLibraryDocumentByExternalReferenceCode(
+				testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+				newDocument.getExternalReferenceCode(), newDocument,
+				getMultipartFiles());
+
+		assertEquals(newDocument, putDocument);
+		assertValid(putDocument);
+
+		getDocument =
+			documentResource.getAssetLibraryDocumentByExternalReferenceCode(
+				testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId(),
+				putDocument.getExternalReferenceCode());
+
+		assertEquals(newDocument, getDocument);
+
+		Assert.assertEquals(
+			newDocument.getExternalReferenceCode(),
+			putDocument.getExternalReferenceCode());
 	}
 
-	protected Document testPatchDocument_addDocument() throws Exception {
-		return documentResource.postSiteDocument(
-			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	protected Document
+			testPutAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
+	}
+
+	protected Long
+			testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Document
+			testPutAssetLibraryDocumentByExternalReferenceCode_createDocument()
+		throws Exception {
+
+		return randomDocument();
+	}
+
+	@Test
+	public void testPutAssetLibraryDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document =
+			testPutAssetLibraryDocumentPermissionsPage_addDocument();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		com.liferay.portal.kernel.model.Role role = RoleTestUtil.addRole(
+			RoleConstants.TYPE_REGULAR);
+
+		assertHttpResponseStatusCode(
+			200,
+			documentResource.putAssetLibraryDocumentPermissionsPageHttpResponse(
+				testDepotEntry.getDepotEntryId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"PERMISSIONS"});
+							setRoleName(role.getName());
+						}
+					}
+				}));
+
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.putAssetLibraryDocumentPermissionsPageHttpResponse(
+				testDepotEntry.getDepotEntryId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"-"});
+							setRoleName("-");
+						}
+					}
+				}));
+	}
+
+	protected Document testPutAssetLibraryDocumentPermissionsPage_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
 	}
 
 	@Test
@@ -686,23 +3081,42 @@ public abstract class BaseDocumentResourceTestCase {
 	}
 
 	@Test
-	public void testDeleteDocumentMyRating() throws Exception {
-		Document document = testDeleteDocumentMyRating_addDocument();
+	public void testPutDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document = testPutDocumentPermissionsPage_addDocument();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		com.liferay.portal.kernel.model.Role role = RoleTestUtil.addRole(
+			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
-			documentResource.deleteDocumentMyRatingHttpResponse(
-				document.getId()));
+			200,
+			documentResource.putDocumentPermissionsPageHttpResponse(
+				document.getId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"VIEW"});
+							setRoleName(role.getName());
+						}
+					}
+				}));
 
 		assertHttpResponseStatusCode(
 			404,
-			documentResource.getDocumentMyRatingHttpResponse(document.getId()));
-
-		assertHttpResponseStatusCode(
-			404, documentResource.getDocumentMyRatingHttpResponse(0L));
+			documentResource.putDocumentPermissionsPageHttpResponse(
+				0L,
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"-"});
+							setRoleName("-");
+						}
+					}
+				}));
 	}
 
-	protected Document testDeleteDocumentMyRating_addDocument()
+	protected Document testPutDocumentPermissionsPage_addDocument()
 		throws Exception {
 
 		return documentResource.postSiteDocument(
@@ -710,351 +3124,164 @@ public abstract class BaseDocumentResourceTestCase {
 	}
 
 	@Test
-	public void testGetSiteDocumentsPage() throws Exception {
-		Page<Document> page = documentResource.getSiteDocumentsPage(
-			testGetSiteDocumentsPage_getSiteId(), null,
-			RandomTestUtil.randomString(), null, Pagination.of(1, 2), null);
+	public void testPutSiteDocumentByExternalReferenceCode() throws Exception {
+		Document postDocument =
+			testPutSiteDocumentByExternalReferenceCode_addDocument();
 
-		Assert.assertEquals(0, page.getTotalCount());
-
-		Long siteId = testGetSiteDocumentsPage_getSiteId();
-		Long irrelevantSiteId = testGetSiteDocumentsPage_getIrrelevantSiteId();
-
-		if ((irrelevantSiteId != null)) {
-			Document irrelevantDocument = testGetSiteDocumentsPage_addDocument(
-				irrelevantSiteId, randomIrrelevantDocument());
-
-			page = documentResource.getSiteDocumentsPage(
-				irrelevantSiteId, null, null, null, Pagination.of(1, 2), null);
-
-			Assert.assertEquals(1, page.getTotalCount());
-
-			assertEquals(
-				Arrays.asList(irrelevantDocument),
-				(List<Document>)page.getItems());
-			assertValid(page);
-		}
-
-		Document document1 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		Document document2 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		page = documentResource.getSiteDocumentsPage(
-			siteId, null, null, null, Pagination.of(1, 2), null);
-
-		Assert.assertEquals(2, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(document1, document2),
-			(List<Document>)page.getItems());
-		assertValid(page);
-
-		documentResource.deleteDocument(document1.getId());
-
-		documentResource.deleteDocument(document2.getId());
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithFilterDateTimeEquals()
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(
-			EntityField.Type.DATE_TIME);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		Long siteId = testGetSiteDocumentsPage_getSiteId();
-
-		Document document1 = randomDocument();
-
-		document1 = testGetSiteDocumentsPage_addDocument(siteId, document1);
-
-		for (EntityField entityField : entityFields) {
-			Page<Document> page = documentResource.getSiteDocumentsPage(
-				siteId, null, null,
-				getFilterString(entityField, "between", document1),
-				Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(document1),
-				(List<Document>)page.getItems());
-		}
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithFilterStringEquals()
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(
-			EntityField.Type.STRING);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		Long siteId = testGetSiteDocumentsPage_getSiteId();
-
-		Document document1 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		Document document2 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		for (EntityField entityField : entityFields) {
-			Page<Document> page = documentResource.getSiteDocumentsPage(
-				siteId, null, null,
-				getFilterString(entityField, "eq", document1),
-				Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(document1),
-				(List<Document>)page.getItems());
-		}
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithPagination() throws Exception {
-		Long siteId = testGetSiteDocumentsPage_getSiteId();
-
-		Document document1 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		Document document2 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		Document document3 = testGetSiteDocumentsPage_addDocument(
-			siteId, randomDocument());
-
-		Page<Document> page1 = documentResource.getSiteDocumentsPage(
-			siteId, null, null, null, Pagination.of(1, 2), null);
-
-		List<Document> documents1 = (List<Document>)page1.getItems();
-
-		Assert.assertEquals(documents1.toString(), 2, documents1.size());
-
-		Page<Document> page2 = documentResource.getSiteDocumentsPage(
-			siteId, null, null, null, Pagination.of(2, 2), null);
-
-		Assert.assertEquals(3, page2.getTotalCount());
-
-		List<Document> documents2 = (List<Document>)page2.getItems();
-
-		Assert.assertEquals(documents2.toString(), 1, documents2.size());
-
-		Page<Document> page3 = documentResource.getSiteDocumentsPage(
-			siteId, null, null, null, Pagination.of(1, 3), null);
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(document1, document2, document3),
-			(List<Document>)page3.getItems());
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithSortDateTime() throws Exception {
-		testGetSiteDocumentsPageWithSort(
-			EntityField.Type.DATE_TIME,
-			(entityField, document1, document2) -> {
-				BeanUtils.setProperty(
-					document1, entityField.getName(),
-					DateUtils.addMinutes(new Date(), -2));
-			});
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithSortInteger() throws Exception {
-		testGetSiteDocumentsPageWithSort(
-			EntityField.Type.INTEGER,
-			(entityField, document1, document2) -> {
-				BeanUtils.setProperty(document1, entityField.getName(), 0);
-				BeanUtils.setProperty(document2, entityField.getName(), 1);
-			});
-	}
-
-	@Test
-	public void testGetSiteDocumentsPageWithSortString() throws Exception {
-		testGetSiteDocumentsPageWithSort(
-			EntityField.Type.STRING,
-			(entityField, document1, document2) -> {
-				Class<?> clazz = document1.getClass();
-
-				Method method = clazz.getMethod(
-					"get" +
-						StringUtil.upperCaseFirstLetter(entityField.getName()));
-
-				Class<?> returnType = method.getReturnType();
-
-				if (returnType.isAssignableFrom(Map.class)) {
-					BeanUtils.setProperty(
-						document1, entityField.getName(),
-						Collections.singletonMap("Aaa", "Aaa"));
-					BeanUtils.setProperty(
-						document2, entityField.getName(),
-						Collections.singletonMap("Bbb", "Bbb"));
-				}
-				else {
-					BeanUtils.setProperty(
-						document1, entityField.getName(), "Aaa");
-					BeanUtils.setProperty(
-						document2, entityField.getName(), "Bbb");
-				}
-			});
-	}
-
-	protected void testGetSiteDocumentsPageWithSort(
-			EntityField.Type type,
-			UnsafeTriConsumer<EntityField, Document, Document, Exception>
-				unsafeTriConsumer)
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(type);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		Long siteId = testGetSiteDocumentsPage_getSiteId();
-
-		Document document1 = randomDocument();
-		Document document2 = randomDocument();
-
-		for (EntityField entityField : entityFields) {
-			unsafeTriConsumer.accept(entityField, document1, document2);
-		}
-
-		document1 = testGetSiteDocumentsPage_addDocument(siteId, document1);
-
-		document2 = testGetSiteDocumentsPage_addDocument(siteId, document2);
-
-		for (EntityField entityField : entityFields) {
-			Page<Document> ascPage = documentResource.getSiteDocumentsPage(
-				siteId, null, null, null, Pagination.of(1, 2),
-				entityField.getName() + ":asc");
-
-			assertEquals(
-				Arrays.asList(document1, document2),
-				(List<Document>)ascPage.getItems());
-
-			Page<Document> descPage = documentResource.getSiteDocumentsPage(
-				siteId, null, null, null, Pagination.of(1, 2),
-				entityField.getName() + ":desc");
-
-			assertEquals(
-				Arrays.asList(document2, document1),
-				(List<Document>)descPage.getItems());
-		}
-	}
-
-	protected Document testGetSiteDocumentsPage_addDocument(
-			Long siteId, Document document)
-		throws Exception {
-
-		return documentResource.postSiteDocument(
-			siteId, document, getMultipartFiles());
-	}
-
-	protected Long testGetSiteDocumentsPage_getSiteId() throws Exception {
-		return testGroup.getGroupId();
-	}
-
-	protected Long testGetSiteDocumentsPage_getIrrelevantSiteId()
-		throws Exception {
-
-		return irrelevantGroup.getGroupId();
-	}
-
-	@Test
-	public void testGraphQLGetSiteDocumentsPage() throws Exception {
-		List<GraphQLField> graphQLFields = new ArrayList<>();
-
-		List<GraphQLField> itemsGraphQLFields = getGraphQLFields();
-
-		graphQLFields.add(
-			new GraphQLField(
-				"items", itemsGraphQLFields.toArray(new GraphQLField[0])));
-
-		graphQLFields.add(new GraphQLField("page"));
-		graphQLFields.add(new GraphQLField("totalCount"));
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"documents",
-				new HashMap<String, Object>() {
-					{
-						put("page", 1);
-						put("pageSize", 2);
-						put("siteKey", "\"" + testGroup.getGroupId() + "\"");
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		JSONObject documentsJSONObject = dataJSONObject.getJSONObject(
-			"documents");
-
-		Assert.assertEquals(0, documentsJSONObject.get("totalCount"));
-
-		Document document1 = testGraphQLDocument_addDocument();
-		Document document2 = testGraphQLDocument_addDocument();
-
-		jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		dataJSONObject = jsonObject.getJSONObject("data");
-
-		documentsJSONObject = dataJSONObject.getJSONObject("documents");
-
-		Assert.assertEquals(2, documentsJSONObject.get("totalCount"));
-
-		assertEqualsJSONArray(
-			Arrays.asList(document1, document2),
-			documentsJSONObject.getJSONArray("items"));
-	}
-
-	@Test
-	public void testPostSiteDocument() throws Exception {
 		Document randomDocument = randomDocument();
 
 		Map<String, File> multipartFiles = getMultipartFiles();
 
-		Document postDocument = testPostSiteDocument_addDocument(
-			randomDocument, multipartFiles);
+		Document putDocument =
+			documentResource.putSiteDocumentByExternalReferenceCode(
+				postDocument.getSiteId(),
+				postDocument.getExternalReferenceCode(), randomDocument,
+				multipartFiles);
 
-		assertEquals(randomDocument, postDocument);
-		assertValid(postDocument);
+		assertEquals(randomDocument, putDocument);
+		assertValid(putDocument);
 
-		assertValid(postDocument, multipartFiles);
+		Document getDocument =
+			documentResource.getSiteDocumentByExternalReferenceCode(
+				putDocument.getSiteId(),
+				putDocument.getExternalReferenceCode());
+
+		assertEquals(randomDocument, getDocument);
+		assertValid(getDocument);
+
+		assertValid(getDocument, multipartFiles);
+
+		Document newDocument =
+			testPutSiteDocumentByExternalReferenceCode_createDocument();
+
+		putDocument = documentResource.putSiteDocumentByExternalReferenceCode(
+			newDocument.getSiteId(), newDocument.getExternalReferenceCode(),
+			newDocument, getMultipartFiles());
+
+		assertEquals(newDocument, putDocument);
+		assertValid(putDocument);
+
+		getDocument = documentResource.getSiteDocumentByExternalReferenceCode(
+			putDocument.getSiteId(), putDocument.getExternalReferenceCode());
+
+		assertEquals(newDocument, getDocument);
+
+		Assert.assertEquals(
+			newDocument.getExternalReferenceCode(),
+			putDocument.getExternalReferenceCode());
 	}
 
-	protected Document testPostSiteDocument_addDocument(
-			Document document, Map<String, File> multipartFiles)
+	protected Document testPutSiteDocumentByExternalReferenceCode_addDocument()
 		throws Exception {
 
 		return documentResource.postSiteDocument(
-			testGetSiteDocumentsPage_getSiteId(), document, multipartFiles);
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	protected Document
+			testPutSiteDocumentByExternalReferenceCode_createDocument()
+		throws Exception {
+
+		return randomDocument();
 	}
 
 	@Test
-	public void testGraphQLPostSiteDocument() throws Exception {
-		Document randomDocument = randomDocument();
+	public void testPutSiteDocumentPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Document document = testPutSiteDocumentPermissionsPage_addDocument();
 
-		Document document = testGraphQLDocument_addDocument(randomDocument);
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		com.liferay.portal.kernel.model.Role role = RoleTestUtil.addRole(
+			RoleConstants.TYPE_REGULAR);
 
-		Assert.assertTrue(
-			equalsJSONObject(
-				randomDocument,
-				JSONFactoryUtil.createJSONObject(
-					JSONFactoryUtil.serialize(document))));
+		assertHttpResponseStatusCode(
+			200,
+			documentResource.putSiteDocumentPermissionsPageHttpResponse(
+				document.getSiteId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"PERMISSIONS"});
+							setRoleName(role.getName());
+						}
+					}
+				}));
+
+		assertHttpResponseStatusCode(
+			404,
+			documentResource.putSiteDocumentPermissionsPageHttpResponse(
+				document.getSiteId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"-"});
+							setRoleName("-");
+						}
+					}
+				}));
 	}
+
+	protected Document testPutSiteDocumentPermissionsPage_addDocument()
+		throws Exception {
+
+		return documentResource.postSiteDocument(
+			testGroup.getGroupId(), randomDocument(), getMultipartFiles());
+	}
+
+	@Test
+	public void testBatchEngineDeleteImportTask() throws Exception {
+		Document document1 = testBatchEngineDeleteImportTask_addDocument();
+
+		testBatchEngineDeleteImportTask_deleteDocument(
+			200, null, document1.getId());
+
+		assertHttpResponseStatusCode(
+			404, documentResource.getDocumentHttpResponse(document1.getId()));
+	}
+
+	protected Document testBatchEngineDeleteImportTask_addDocument()
+		throws Exception {
+
+		return testDeleteDocument_addDocument();
+	}
+
+	protected void testBatchEngineDeleteImportTask_deleteDocument(
+			int expectedStatusCode, String externalReferenceCode, Long id,
+			String... parameters)
+		throws Exception {
+
+		ImportTaskResource importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).parameters(
+			parameters
+		).build();
+
+		HttpResponse httpResponse =
+			importTaskResource.deleteImportTaskHttpResponse(
+				"com.liferay.headless.delivery.dto.v1_0.Document", null, null,
+				null, null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode
+					).put(
+						"id", () -> id
+					)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		if (expectedStatusCode == 200) {
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+		}
+	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	@Test
 	public void testGetDocumentMyRating() throws Exception {
@@ -1104,6 +3331,51 @@ public abstract class BaseDocumentResourceTestCase {
 		return documentResource.postDocumentMyRating(documentId, rating);
 	}
 
+	protected void appendGraphQLFieldValue(StringBuilder sb, Object value)
+		throws Exception {
+
+		if (value instanceof Object[]) {
+			StringBuilder arraySB = new StringBuilder("[");
+
+			for (Object object : (Object[])value) {
+				if (arraySB.length() > 1) {
+					arraySB.append(", ");
+				}
+
+				arraySB.append("{");
+
+				Class<?> clazz = object.getClass();
+
+				for (java.lang.reflect.Field field :
+						getDeclaredFields(clazz.getSuperclass())) {
+
+					arraySB.append(field.getName());
+					arraySB.append(": ");
+
+					appendGraphQLFieldValue(arraySB, field.get(object));
+
+					arraySB.append(", ");
+				}
+
+				arraySB.setLength(arraySB.length() - 2);
+
+				arraySB.append("}");
+			}
+
+			arraySB.append("]");
+
+			sb.append(arraySB.toString());
+		}
+		else if (value instanceof String) {
+			sb.append("\"");
+			sb.append(value);
+			sb.append("\"");
+		}
+		else {
+			sb.append(value);
+		}
+	}
+
 	protected Document testGraphQLDocument_addDocument() throws Exception {
 		return testGraphQLDocument_addDocument(randomDocument());
 	}
@@ -1111,204 +3383,69 @@ public abstract class BaseDocumentResourceTestCase {
 	protected Document testGraphQLDocument_addDocument(Document document)
 		throws Exception {
 
+		JSONDeserializer<Document> jsonDeserializer =
+			JSONFactoryUtil.createJSONDeserializer();
+
 		StringBuilder sb = new StringBuilder("{");
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(Document.class)) {
 
-			if (Objects.equals("contentUrl", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
 
-				Object value = document.getContentUrl();
+				continue;
+			}
 
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
+			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			if (Objects.equals("description", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
+			sb.append(field.getName());
+			sb.append(": ");
 
-				Object value = document.getDescription();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("documentFolderId", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getDocumentFolderId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("encodingFormat", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getEncodingFormat();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("fileExtension", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getFileExtension();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("id", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("numberOfComments", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getNumberOfComments();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("sizeInBytes", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getSizeInBytes();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("title", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = document.getTitle();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
+			appendGraphQLFieldValue(sb, field.get(document));
 		}
 
 		sb.append("}");
 
 		List<GraphQLField> graphQLFields = getGraphQLFields();
 
+		graphQLFields.add(new GraphQLField("externalReferenceCode"));
+
 		graphQLFields.add(new GraphQLField("id"));
 
-		GraphQLField graphQLField = new GraphQLField(
-			"mutation",
-			new GraphQLField(
-				"createSiteDocument",
-				new HashMap<String, Object>() {
-					{
-						put("siteKey", "\"" + testGroup.getGroupId() + "\"");
-						put("document", sb.toString());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONDeserializer<Document> jsonDeserializer =
-			JSONFactoryUtil.createJSONDeserializer();
-
-		String object = invoke(graphQLField.toString());
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(object);
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
 		return jsonDeserializer.deserialize(
-			String.valueOf(dataJSONObject.getJSONObject("createSiteDocument")),
+			JSONUtil.getValueAsString(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"createSiteDocument",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"siteKey",
+									"\"" + testGroup.getGroupId() + "\"");
+								put("document", sb.toString());
+							}
+						},
+						graphQLFields)),
+				"JSONObject/data", "JSONObject/createSiteDocument"),
 			Document.class);
+	}
+
+	protected void assertContains(Document document, List<Document> documents) {
+		boolean contains = false;
+
+		for (Document item : documents) {
+			if (equals(document, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			documents + " does not contain " + document, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -1364,26 +3501,7 @@ public abstract class BaseDocumentResourceTestCase {
 		}
 	}
 
-	protected void assertEqualsJSONArray(
-		List<Document> documents, JSONArray jsonArray) {
-
-		for (Document document : documents) {
-			boolean contains = false;
-
-			for (Object object : jsonArray) {
-				if (equalsJSONObject(document, (JSONObject)object)) {
-					contains = true;
-
-					break;
-				}
-			}
-
-			Assert.assertTrue(
-				jsonArray + " does not contain " + document, contains);
-		}
-	}
-
-	protected void assertValid(Document document) {
+	protected void assertValid(Document document) throws Exception {
 		boolean valid = true;
 
 		if (document.getDateCreated() == null) {
@@ -1398,8 +3516,24 @@ public abstract class BaseDocumentResourceTestCase {
 			valid = false;
 		}
 
+		if (!Objects.equals(
+				document.getAssetLibraryKey(),
+				testDepotEntryGroup.getGroupKey()) &&
+			!Objects.equals(document.getSiteId(), testGroup.getGroupId())) {
+
+			valid = false;
+		}
+
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
+
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (document.getActions() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
 
 			if (Objects.equals("adaptedImages", additionalAssertFieldName)) {
 				if (document.getAdaptedImages() == null) {
@@ -1417,8 +3551,24 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("assetLibraryKey", additionalAssertFieldName)) {
+				if (document.getAssetLibraryKey() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("contentUrl", additionalAssertFieldName)) {
 				if (document.getContentUrl() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("contentValue", additionalAssertFieldName)) {
+				if (document.getContentValue() == null) {
 					valid = false;
 				}
 
@@ -1441,8 +3591,35 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("dateExpired", additionalAssertFieldName)) {
+				if (document.getDateExpired() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("datePublished", additionalAssertFieldName)) {
+				if (document.getDatePublished() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("description", additionalAssertFieldName)) {
 				if (document.getDescription() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"documentFolderExternalReferenceCode",
+					additionalAssertFieldName)) {
+
+				if (document.getDocumentFolderExternalReferenceCode() == null) {
 					valid = false;
 				}
 
@@ -1457,6 +3634,14 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("documentType", additionalAssertFieldName)) {
+				if (document.getDocumentType() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("encodingFormat", additionalAssertFieldName)) {
 				if (document.getEncodingFormat() == null) {
 					valid = false;
@@ -1465,8 +3650,34 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (document.getExternalReferenceCode() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("fileExtension", additionalAssertFieldName)) {
 				if (document.getFileExtension() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("fileName", additionalAssertFieldName)) {
+				if (document.getFileName() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("friendlyUrlPath", additionalAssertFieldName)) {
+				if (document.getFriendlyUrlPath() == null) {
 					valid = false;
 				}
 
@@ -1497,6 +3708,14 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("renderedContents", additionalAssertFieldName)) {
+				if (document.getRenderedContents() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("sizeInBytes", additionalAssertFieldName)) {
 				if (document.getSizeInBytes() == null) {
 					valid = false;
@@ -1506,9 +3725,9 @@ public abstract class BaseDocumentResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"taxonomyCategories", additionalAssertFieldName)) {
+					"taxonomyCategoryBriefs", additionalAssertFieldName)) {
 
-				if (document.getTaxonomyCategories() == null) {
+				if (document.getTaxonomyCategoryBriefs() == null) {
 					valid = false;
 				}
 
@@ -1558,6 +3777,12 @@ public abstract class BaseDocumentResourceTestCase {
 	}
 
 	protected void assertValid(Page<Document> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Document> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Document> documents = page.getItems();
@@ -1572,6 +3797,25 @@ public abstract class BaseDocumentResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		assertValid(page.getActions(), expectedActions);
+	}
+
+	protected void assertValid(
+		Map<String, Map<String, String>> actions1,
+		Map<String, Map<String, String>> actions2) {
+
+		for (String key : actions2.keySet()) {
+			Map action = actions1.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map<String, String> expectedAction = actions2.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected void assertValid(Rating rating) {
@@ -1591,6 +3835,14 @@ public abstract class BaseDocumentResourceTestCase {
 
 		for (String additionalAssertFieldName :
 				getAdditionalRatingAssertFieldNames()) {
+
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (rating.getActions() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
 
 			if (Objects.equals("bestRating", additionalAssertFieldName)) {
 				if (rating.getBestRating() == null) {
@@ -1640,13 +3892,52 @@ public abstract class BaseDocumentResourceTestCase {
 		return new String[0];
 	}
 
-	protected List<GraphQLField> getGraphQLFields() {
+	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		graphQLFields.add(new GraphQLField("siteId"));
 
-			graphQLFields.add(new GraphQLField(additionalAssertFieldName));
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(
+					com.liferay.headless.delivery.dto.v1_0.Document.class)) {
+
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
+
+				continue;
+			}
+
+			graphQLFields.addAll(getGraphQLFields(field));
+		}
+
+		return graphQLFields;
+	}
+
+	protected List<GraphQLField> getGraphQLFields(
+			java.lang.reflect.Field... fields)
+		throws Exception {
+
+		List<GraphQLField> graphQLFields = new ArrayList<>();
+
+		for (java.lang.reflect.Field field : fields) {
+			com.liferay.portal.vulcan.graphql.annotation.GraphQLField
+				vulcanGraphQLField = field.getAnnotation(
+					com.liferay.portal.vulcan.graphql.annotation.GraphQLField.
+						class);
+
+			if (vulcanGraphQLField != null) {
+				Class<?> clazz = field.getType();
+
+				if (clazz.isArray()) {
+					clazz = clazz.getComponentType();
+				}
+
+				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
+					getDeclaredFields(clazz));
+
+				graphQLFields.add(
+					new GraphQLField(field.getName(), childrenGraphQLFields));
+			}
 		}
 
 		return graphQLFields;
@@ -1663,6 +3954,17 @@ public abstract class BaseDocumentResourceTestCase {
 
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
+
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)document1.getActions(),
+						(Map)document2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
 
 			if (Objects.equals("adaptedImages", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
@@ -1689,6 +3991,17 @@ public abstract class BaseDocumentResourceTestCase {
 			if (Objects.equals("contentUrl", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						document1.getContentUrl(), document2.getContentUrl())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("contentValue", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getContentValue(),
+						document2.getContentValue())) {
 
 					return false;
 				}
@@ -1728,10 +4041,32 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("dateExpired", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getDateExpired(),
+						document2.getDateExpired())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("dateModified", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						document1.getDateModified(),
 						document2.getDateModified())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("datePublished", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getDatePublished(),
+						document2.getDatePublished())) {
 
 					return false;
 				}
@@ -1750,10 +4085,35 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"documentFolderExternalReferenceCode",
+					additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						document1.getDocumentFolderExternalReferenceCode(),
+						document2.getDocumentFolderExternalReferenceCode())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("documentFolderId", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						document1.getDocumentFolderId(),
 						document2.getDocumentFolderId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("documentType", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getDocumentType(),
+						document2.getDocumentType())) {
 
 					return false;
 				}
@@ -1772,10 +4132,44 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						document1.getExternalReferenceCode(),
+						document2.getExternalReferenceCode())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("fileExtension", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						document1.getFileExtension(),
 						document2.getFileExtension())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("fileName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getFileName(), document2.getFileName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("friendlyUrlPath", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getFriendlyUrlPath(),
+						document2.getFriendlyUrlPath())) {
 
 					return false;
 				}
@@ -1823,6 +4217,17 @@ public abstract class BaseDocumentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("renderedContents", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						document1.getRenderedContents(),
+						document2.getRenderedContents())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("sizeInBytes", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						document1.getSizeInBytes(),
@@ -1835,11 +4240,11 @@ public abstract class BaseDocumentResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"taxonomyCategories", additionalAssertFieldName)) {
+					"taxonomyCategoryBriefs", additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
-						document1.getTaxonomyCategories(),
-						document2.getTaxonomyCategories())) {
+						document1.getTaxonomyCategoryBriefs(),
+						document2.getTaxonomyCategoryBriefs())) {
 
 					return false;
 				}
@@ -1888,6 +4293,32 @@ public abstract class BaseDocumentResourceTestCase {
 		return true;
 	}
 
+	protected boolean equals(
+		Map<String, Object> map1, Map<String, Object> map2) {
+
+		if (Objects.equals(map1.keySet(), map2.keySet())) {
+			for (Map.Entry<String, Object> entry : map1.entrySet()) {
+				if (entry.getValue() instanceof Map) {
+					if (!equals(
+							(Map)entry.getValue(),
+							(Map)map2.get(entry.getKey()))) {
+
+						return false;
+					}
+				}
+				else if (!Objects.deepEquals(
+							entry.getValue(), map2.get(entry.getKey()))) {
+
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	protected boolean equals(Rating rating1, Rating rating2) {
 		if (rating1 == rating2) {
 			return true;
@@ -1895,6 +4326,16 @@ public abstract class BaseDocumentResourceTestCase {
 
 		for (String additionalAssertFieldName :
 				getAdditionalRatingAssertFieldNames()) {
+
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						rating1.getActions(), rating2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
 
 			if (Objects.equals("bestRating", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
@@ -1972,112 +4413,23 @@ public abstract class BaseDocumentResourceTestCase {
 		return true;
 	}
 
-	protected boolean equalsJSONObject(
-		Document document, JSONObject jsonObject) {
+	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
+		throws Exception {
 
-		for (String fieldName : getAdditionalAssertFieldNames()) {
-			if (Objects.equals("contentUrl", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getContentUrl(),
-						jsonObject.getString("contentUrl"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("description", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getDescription(),
-						jsonObject.getString("description"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("documentFolderId", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getDocumentFolderId(),
-						jsonObject.getLong("documentFolderId"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("encodingFormat", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getEncodingFormat(),
-						jsonObject.getString("encodingFormat"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("fileExtension", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getFileExtension(),
-						jsonObject.getString("fileExtension"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("id", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getId(), jsonObject.getLong("id"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("numberOfComments", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getNumberOfComments(),
-						jsonObject.getInt("numberOfComments"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("sizeInBytes", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getSizeInBytes(),
-						jsonObject.getLong("sizeInBytes"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("title", fieldName)) {
-				if (!Objects.deepEquals(
-						document.getTitle(), jsonObject.getString("title"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			throw new IllegalArgumentException(
-				"Invalid field name " + fieldName);
+		if (clazz.getClassLoader() == null) {
+			return new java.lang.reflect.Field[0];
 		}
 
-		return true;
+		return TransformUtil.transform(
+			ReflectionUtil.getDeclaredFields(clazz),
+			field -> {
+				if (field.isSynthetic()) {
+					return null;
+				}
+
+				return field;
+			},
+			java.lang.reflect.Field.class);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()
@@ -2094,6 +4446,10 @@ public abstract class BaseDocumentResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -2103,18 +4459,18 @@ public abstract class BaseDocumentResourceTestCase {
 	protected List<EntityField> getEntityFields(EntityField.Type type)
 		throws Exception {
 
-		java.util.Collection<EntityField> entityFields = getEntityFields();
+		return TransformUtil.transform(
+			getEntityFields(),
+			entityField -> {
+				if (!Objects.equals(entityField.getType(), type) ||
+					ArrayUtil.contains(
+						getIgnoredEntityFieldNames(), entityField.getName())) {
 
-		Stream<EntityField> stream = entityFields.stream();
+					return null;
+				}
 
-		return stream.filter(
-			entityField ->
-				Objects.equals(entityField.getType(), type) &&
-				!ArrayUtil.contains(
-					getIgnoredEntityFieldNames(), entityField.getName())
-		).collect(
-			Collectors.toList()
-		);
+				return entityField;
+			});
 	}
 
 	protected String getFilterString(
@@ -2130,6 +4486,11 @@ public abstract class BaseDocumentResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
+		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("adaptedImages")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -2140,10 +4501,140 @@ public abstract class BaseDocumentResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("assetLibraryKey")) {
+			Object object = document.getAssetLibraryKey();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("contentUrl")) {
-			sb.append("'");
-			sb.append(String.valueOf(document.getContentUrl()));
-			sb.append("'");
+			Object object = document.getContentUrl();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("contentValue")) {
+			Object object = document.getContentValue();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -2160,20 +4651,18 @@ public abstract class BaseDocumentResourceTestCase {
 
 		if (entityFieldName.equals("dateCreated")) {
 			if (operator.equals("between")) {
+				Date date = document.getDateCreated();
+
 				sb = new StringBundler();
 
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(document.getDateCreated(), -2)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(document.getDateCreated(), 2)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -2183,7 +4672,36 @@ public abstract class BaseDocumentResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(document.getDateCreated()));
+				sb.append(_format.format(document.getDateCreated()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("dateExpired")) {
+			if (operator.equals("between")) {
+				Date date = document.getDateExpired();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(document.getDateExpired()));
 			}
 
 			return sb.toString();
@@ -2191,20 +4709,18 @@ public abstract class BaseDocumentResourceTestCase {
 
 		if (entityFieldName.equals("dateModified")) {
 			if (operator.equals("between")) {
+				Date date = document.getDateModified();
+
 				sb = new StringBundler();
 
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(document.getDateModified(), -2)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(document.getDateModified(), 2)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -2214,16 +4730,129 @@ public abstract class BaseDocumentResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(document.getDateModified()));
+				sb.append(_format.format(document.getDateModified()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("datePublished")) {
+			if (operator.equals("between")) {
+				Date date = document.getDatePublished();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(document.getDatePublished()));
 			}
 
 			return sb.toString();
 		}
 
 		if (entityFieldName.equals("description")) {
-			sb.append("'");
-			sb.append(String.valueOf(document.getDescription()));
-			sb.append("'");
+			Object object = document.getDescription();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("documentFolderExternalReferenceCode")) {
+			Object object = document.getDocumentFolderExternalReferenceCode();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -2233,18 +4862,237 @@ public abstract class BaseDocumentResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("documentType")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("encodingFormat")) {
-			sb.append("'");
-			sb.append(String.valueOf(document.getEncodingFormat()));
-			sb.append("'");
+			Object object = document.getEncodingFormat();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("externalReferenceCode")) {
+			Object object = document.getExternalReferenceCode();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
 
 		if (entityFieldName.equals("fileExtension")) {
-			sb.append("'");
-			sb.append(String.valueOf(document.getFileExtension()));
-			sb.append("'");
+			Object object = document.getFileExtension();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("fileName")) {
+			Object object = document.getFileName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("friendlyUrlPath")) {
+			Object object = document.getFriendlyUrlPath();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -2260,11 +5108,22 @@ public abstract class BaseDocumentResourceTestCase {
 		}
 
 		if (entityFieldName.equals("numberOfComments")) {
+			sb.append(String.valueOf(document.getNumberOfComments()));
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("relatedContents")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("relatedContents")) {
+		if (entityFieldName.equals("renderedContents")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("siteId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -2274,7 +5133,7 @@ public abstract class BaseDocumentResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("taxonomyCategories")) {
+		if (entityFieldName.equals("taxonomyCategoryBriefs")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -2285,9 +5144,47 @@ public abstract class BaseDocumentResourceTestCase {
 		}
 
 		if (entityFieldName.equals("title")) {
-			sb.append("'");
-			sb.append(String.valueOf(document.getTitle()));
-			sb.append("'");
+			Object object = document.getTitle();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -2316,33 +5213,78 @@ public abstract class BaseDocumentResourceTestCase {
 			"application/json");
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
 		httpInvoker.path("http://localhost:8080/o/graphql");
-		httpInvoker.userNameAndPassword("test@liferay.com:test");
+		httpInvoker.userNameAndPassword(
+			"test@liferay.com:" + PropsValues.DEFAULT_ADMIN_PASSWORD);
 
 		HttpInvoker.HttpResponse httpResponse = httpInvoker.invoke();
 
 		return httpResponse.getContent();
 	}
 
+	protected JSONObject invokeGraphQLMutation(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField mutationGraphQLField = new GraphQLField(
+			"mutation", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(mutationGraphQLField.toString()));
+	}
+
+	protected JSONObject invokeGraphQLQuery(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField queryGraphQLField = new GraphQLField(
+			"query", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(queryGraphQLField.toString()));
+	}
+
 	protected Document randomDocument() throws Exception {
 		return new Document() {
 			{
-				contentUrl = RandomTestUtil.randomString();
+				assetLibraryKey = String.valueOf(
+					testDepotEntry.getDepotEntryId());
+				contentUrl = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				contentValue = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
+				dateExpired = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
-				description = RandomTestUtil.randomString();
+				datePublished = RandomTestUtil.nextDate();
+				description = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				documentFolderExternalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				documentFolderId = RandomTestUtil.randomLong();
-				encodingFormat = RandomTestUtil.randomString();
-				fileExtension = RandomTestUtil.randomString();
+				encodingFormat = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				externalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				fileExtension = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				fileName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				friendlyUrlPath = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				numberOfComments = RandomTestUtil.randomInt();
+				siteId = testGroup.getGroupId();
 				sizeInBytes = RandomTestUtil.randomLong();
-				title = RandomTestUtil.randomString();
+				title = StringUtil.toLowerCase(RandomTestUtil.randomString());
 			}
 		};
 	}
 
 	protected Document randomIrrelevantDocument() throws Exception {
 		Document randomIrrelevantDocument = randomDocument();
+
+		randomIrrelevantDocument.setAssetLibraryKey(
+			String.valueOf(irrelevantDepotEntry.getDepotEntryId()));
+
+		randomIrrelevantDocument.setSiteId(irrelevantGroup.getGroupId());
 
 		return randomIrrelevantDocument;
 	}
@@ -2364,10 +5306,159 @@ public abstract class BaseDocumentResourceTestCase {
 		};
 	}
 
+	protected final JSONObject waitForFinish(
+			String expectedExecuteStatus, JSONObject jsonObject)
+		throws Exception {
+
+		while (true) {
+			ImportTask importTask = importTaskResource.getImportTask(
+				jsonObject.getLong("id"));
+
+			ImportTask.ExecuteStatus executeStatus =
+				importTask.getExecuteStatus();
+
+			if (StringUtil.equals(executeStatus.getValue(), "COMPLETED") ||
+				StringUtil.equals(executeStatus.getValue(), "FAILED")) {
+
+				Assert.assertEquals(
+					expectedExecuteStatus, executeStatus.getValue());
+
+				return jsonObject;
+			}
+		}
+	}
+
 	protected DocumentResource documentResource;
-	protected Group irrelevantGroup;
-	protected Company testCompany;
-	protected Group testGroup;
+	protected ImportTaskResource importTaskResource;
+	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
+	protected com.liferay.portal.kernel.model.Company testCompany;
+	protected DepotEntry irrelevantDepotEntry;
+	protected com.liferay.portal.kernel.model.Group irrelevantDepotEntryGroup;
+	protected DepotEntry testDepotEntry;
+	protected com.liferay.portal.kernel.model.Group testDepotEntryGroup;
+	protected com.liferay.portal.kernel.model.Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = source.getClass();
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					_getAllDeclaredFields(sourceClass)) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				try {
+					Method setMethod = _getMethod(
+						targetClass, field.getName(), "set",
+						getMethod.getReturnType());
+
+					setMethod.invoke(target, getMethod.invoke(source));
+				}
+				catch (Exception e) {
+					continue;
+				}
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static List<java.lang.reflect.Field> _getAllDeclaredFields(
+			Class<?> clazz) {
+
+			List<java.lang.reflect.Field> fields = new ArrayList<>();
+
+			while ((clazz != null) && (clazz != Object.class)) {
+				for (java.lang.reflect.Field field :
+						clazz.getDeclaredFields()) {
+
+					fields.add(field);
+				}
+
+				clazz = clazz.getSuperclass();
+			}
+
+			return fields;
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -2375,9 +5466,22 @@ public abstract class BaseDocumentResourceTestCase {
 			this(key, new HashMap<>(), graphQLFields);
 		}
 
+		public GraphQLField(String key, List<GraphQLField> graphQLFields) {
+			this(key, new HashMap<>(), graphQLFields);
+		}
+
 		public GraphQLField(
 			String key, Map<String, Object> parameterMap,
 			GraphQLField... graphQLFields) {
+
+			_key = key;
+			_parameterMap = parameterMap;
+			_graphQLFields = Arrays.asList(graphQLFields);
+		}
+
+		public GraphQLField(
+			String key, Map<String, Object> parameterMap,
+			List<GraphQLField> graphQLFields) {
 
 			_key = key;
 			_parameterMap = parameterMap;
@@ -2395,25 +5499,25 @@ public abstract class BaseDocumentResourceTestCase {
 						_parameterMap.entrySet()) {
 
 					sb.append(entry.getKey());
-					sb.append(":");
+					sb.append(": ");
 					sb.append(entry.getValue());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append(")");
 			}
 
-			if (_graphQLFields.length > 0) {
+			if (!_graphQLFields.isEmpty()) {
 				sb.append("{");
 
 				for (GraphQLField graphQLField : _graphQLFields) {
 					sb.append(graphQLField.toString());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append("}");
 			}
@@ -2421,31 +5525,43 @@ public abstract class BaseDocumentResourceTestCase {
 			return sb.toString();
 		}
 
-		private final GraphQLField[] _graphQLFields;
+		private final List<GraphQLField> _graphQLFields;
 		private final String _key;
 		private final Map<String, Object> _parameterMap;
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseDocumentResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseDocumentResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
+	private static Format _format;
 
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
-	private static DateFormat _dateFormat;
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.headless.delivery.resource.v1_0.DocumentResource
 		_documentResource;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private ScopeChecker _scopeChecker;
+
+	@Inject
+	private UserLocalService _userLocalService;
+
+	@Inject
+	private VulcanCRUDItemDelegateBuilderRegistry
+		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }

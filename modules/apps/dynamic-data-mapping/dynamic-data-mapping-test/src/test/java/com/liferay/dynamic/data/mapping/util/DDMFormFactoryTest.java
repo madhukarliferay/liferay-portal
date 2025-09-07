@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.util;
@@ -22,9 +13,12 @@ import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
 import java.util.Locale;
@@ -32,28 +26,26 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * @author Leonardo Barros
  * @author Marcellus Tavares
  */
-@PrepareForTest(ResourceBundleUtil.class)
-@RunWith(PowerMockRunner.class)
 public class DDMFormFactoryTest {
 
-	@Before
-	public void setUp() {
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() {
 		setUpLanguageUtil();
 		setUpPortalUtil();
 		setUpResourceBundleUtil();
@@ -92,7 +84,7 @@ public class DDMFormFactoryTest {
 		Assert.assertNotNull(labelDDMFormField);
 		Assert.assertEquals("string", labelDDMFormField.getDataType());
 		Assert.assertEquals("text", labelDDMFormField.getType());
-		Assert.assertEquals(true, labelDDMFormField.isLocalizable());
+		Assert.assertTrue(labelDDMFormField.isLocalizable());
 
 		DDMFormField localizableDDMFormField = ddmFormFieldsMap.get(
 			"localizable");
@@ -108,7 +100,7 @@ public class DDMFormFactoryTest {
 		Assert.assertEquals(
 			"string", predefinedValueDDMFormField.getDataType());
 		Assert.assertEquals("text", predefinedValueDDMFormField.getType());
-		Assert.assertEquals(true, predefinedValueDDMFormField.isLocalizable());
+		Assert.assertTrue(predefinedValueDDMFormField.isLocalizable());
 
 		DDMFormField readOnlyDDMFormField = ddmFormFieldsMap.get("readOnly");
 
@@ -140,7 +132,7 @@ public class DDMFormFactoryTest {
 		Assert.assertNotNull(tipDDMFormField);
 		Assert.assertEquals("string", tipDDMFormField.getDataType());
 		Assert.assertEquals("text", tipDDMFormField.getType());
-		Assert.assertEquals(true, tipDDMFormField.isLocalizable());
+		Assert.assertTrue(tipDDMFormField.isLocalizable());
 	}
 
 	@Test
@@ -216,6 +208,43 @@ public class DDMFormFactoryTest {
 		Assert.assertEquals("text", nestedDDMFormField2.getType());
 	}
 
+	protected static void setUpLanguageUtil() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		languageUtil.setLanguage(Mockito.mock(Language.class));
+	}
+
+	protected static void setUpPortalUtil() {
+		PortalUtil portalUtil = new PortalUtil();
+
+		Portal portal = Mockito.mock(Portal.class);
+
+		ResourceBundle resourceBundle = Mockito.mock(ResourceBundle.class);
+
+		Mockito.when(
+			portal.getResourceBundle(Mockito.any(Locale.class))
+		).thenReturn(
+			resourceBundle
+		);
+
+		portalUtil.setPortal(portal);
+
+		ResourceBundleLoader resourceBundleLoader = Mockito.mock(
+			ResourceBundleLoader.class);
+
+		ResourceBundleLoaderUtil.setPortalResourceBundleLoader(
+			resourceBundleLoader);
+
+		Mockito.when(
+			resourceBundleLoader.loadResourceBundle(Mockito.any(Locale.class))
+		).thenReturn(
+			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
+		);
+	}
+
+	protected static void setUpResourceBundleUtil() {
+	}
+
 	protected void assertRequiredDDMFormFieldTypeSettings(
 		Map<String, DDMFormField> ddmFormFieldsMap) {
 
@@ -224,62 +253,25 @@ public class DDMFormFactoryTest {
 		Assert.assertNotNull(dataTypeDDMFormField);
 		Assert.assertEquals("string", dataTypeDDMFormField.getDataType());
 		Assert.assertEquals("text", dataTypeDDMFormField.getType());
-		Assert.assertEquals(true, dataTypeDDMFormField.isRequired());
-		Assert.assertEquals(false, dataTypeDDMFormField.isLocalizable());
+		Assert.assertTrue(dataTypeDDMFormField.isRequired());
+		Assert.assertFalse(dataTypeDDMFormField.isLocalizable());
 
 		DDMFormField nameDDMFormField = ddmFormFieldsMap.get("name");
 
 		Assert.assertNotNull(nameDDMFormField);
 		Assert.assertEquals("string", nameDDMFormField.getDataType());
 		Assert.assertEquals("text", nameDDMFormField.getType());
-		Assert.assertEquals(true, nameDDMFormField.isRequired());
-		Assert.assertEquals(false, nameDDMFormField.isLocalizable());
+		Assert.assertTrue(nameDDMFormField.isRequired());
+		Assert.assertFalse(nameDDMFormField.isLocalizable());
 
 		DDMFormField typeDDMFormField = ddmFormFieldsMap.get("type");
 
 		Assert.assertNotNull(typeDDMFormField);
 		Assert.assertEquals("string", typeDDMFormField.getDataType());
 		Assert.assertEquals("text", typeDDMFormField.getType());
-		Assert.assertEquals(true, typeDDMFormField.isRequired());
-		Assert.assertEquals(false, typeDDMFormField.isLocalizable());
+		Assert.assertTrue(typeDDMFormField.isRequired());
+		Assert.assertFalse(typeDDMFormField.isLocalizable());
 	}
-
-	protected void setUpLanguageUtil() {
-		LanguageUtil languageUtil = new LanguageUtil();
-
-		languageUtil.setLanguage(_language);
-	}
-
-	protected void setUpPortalUtil() {
-		PortalUtil portalUtil = new PortalUtil();
-
-		Portal portal = PowerMockito.mock(Portal.class);
-
-		ResourceBundle resourceBundle = PowerMockito.mock(ResourceBundle.class);
-
-		PowerMockito.when(
-			portal.getResourceBundle(Matchers.any(Locale.class))
-		).thenReturn(
-			resourceBundle
-		);
-
-		portalUtil.setPortal(portal);
-	}
-
-	protected void setUpResourceBundleUtil() {
-		PowerMockito.mockStatic(ResourceBundleUtil.class);
-
-		Mockito.when(
-			ResourceBundleUtil.getBundle(
-				Matchers.anyString(), Matchers.any(Locale.class),
-				Matchers.any(ClassLoader.class))
-		).thenReturn(
-			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
-		);
-	}
-
-	@Mock
-	private Language _language;
 
 	@com.liferay.dynamic.data.mapping.annotations.DDMForm
 	private interface DynamicFormWithFieldSet {

@@ -1,25 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.impl;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.persistence.exception.DuplicateSamlIdpSpConnectionSamlSpEntityIdException;
 import com.liferay.saml.persistence.exception.SamlIdpSpConnectionMetadataUrlException;
@@ -50,15 +41,13 @@ public class SamlIdpSpConnectionLocalServiceImpl
 
 	@Override
 	public SamlIdpSpConnection addSamlIdpSpConnection(
-			String samlSpEntityId, int assertionLifetime, String attributeNames,
+			int assertionLifetime, String attributeNames,
 			boolean attributesEnabled, boolean attributesNamespaceEnabled,
 			boolean enabled, boolean encryptionForced, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
+			String nameIdAttribute, String nameIdFormat, String samlSpEntityId,
 			ServiceContext serviceContext)
 		throws PortalException {
-
-		Date now = new Date();
 
 		if (Validator.isNull(samlSpEntityId)) {
 			throw new SamlIdpSpConnectionSamlSpEntityIdException(
@@ -83,10 +72,11 @@ public class SamlIdpSpConnectionLocalServiceImpl
 		SamlIdpSpConnection samlIdpSpConnection =
 			samlIdpSpConnectionPersistence.create(samlIdpSpConnectionId);
 
+		Date date = new Date();
+
 		samlIdpSpConnection.setCompanyId(serviceContext.getCompanyId());
-		samlIdpSpConnection.setCreateDate(now);
-		samlIdpSpConnection.setModifiedDate(now);
-		samlIdpSpConnection.setSamlSpEntityId(samlSpEntityId);
+		samlIdpSpConnection.setCreateDate(date);
+		samlIdpSpConnection.setModifiedDate(date);
 		samlIdpSpConnection.setAssertionLifetime(assertionLifetime);
 		samlIdpSpConnection.setAttributeNames(attributeNames);
 		samlIdpSpConnection.setAttributesEnabled(attributesEnabled);
@@ -94,8 +84,7 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			attributesNamespaceEnabled);
 		samlIdpSpConnection.setEnabled(enabled);
 		samlIdpSpConnection.setEncryptionForced(encryptionForced);
-		samlIdpSpConnection.setExpandoBridgeAttributes(serviceContext);
-		samlIdpSpConnection.setMetadataUpdatedDate(now);
+		samlIdpSpConnection.setMetadataUpdatedDate(date);
 
 		if ((metadataXmlInputStream == null) &&
 			Validator.isNotNull(metadataUrl)) {
@@ -105,12 +94,12 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			try {
 				metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new SamlIdpSpConnectionMetadataUrlException(
 					StringBundler.concat(
 						"Unable to get metadata from ", metadataUrl, ": ",
-						e.getMessage()),
-					e);
+						exception.getMessage()),
+					exception);
 			}
 		}
 
@@ -120,14 +109,14 @@ public class SamlIdpSpConnectionLocalServiceImpl
 		}
 
 		samlIdpSpConnection.setMetadataXml(
-			getMetadataXml(metadataXmlInputStream, samlSpEntityId));
+			_getMetadataXml(metadataXmlInputStream, samlSpEntityId));
 		samlIdpSpConnection.setName(name);
 		samlIdpSpConnection.setNameIdAttribute(nameIdAttribute);
 		samlIdpSpConnection.setNameIdFormat(nameIdFormat);
+		samlIdpSpConnection.setSamlSpEntityId(samlSpEntityId);
+		samlIdpSpConnection.setExpandoBridgeAttributes(serviceContext);
 
-		samlIdpSpConnectionPersistence.update(samlIdpSpConnection);
-
-		return samlIdpSpConnection;
+		return samlIdpSpConnectionPersistence.update(samlIdpSpConnection);
 	}
 
 	@Override
@@ -155,7 +144,7 @@ public class SamlIdpSpConnectionLocalServiceImpl
 	@Override
 	public List<SamlIdpSpConnection> getSamlIdpSpConnections(
 		long companyId, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<SamlIdpSpConnection> orderByComparator) {
 
 		return samlIdpSpConnectionPersistence.findByCompanyId(
 			companyId, start, end, orderByComparator);
@@ -185,12 +174,12 @@ public class SamlIdpSpConnectionLocalServiceImpl
 		try {
 			metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SamlIdpSpConnectionMetadataUrlException(
 				StringBundler.concat(
 					"Unable to get metadata from ", metadataUrl, ": ",
-					e.getMessage()),
-				e);
+					exception.getMessage()),
+				exception);
 		}
 
 		String metadataXml = StringPool.BLANK;
@@ -200,29 +189,27 @@ public class SamlIdpSpConnectionLocalServiceImpl
 				metadataXmlInputStream,
 				samlIdpSpConnection.getSamlSpEntityId());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SamlIdpSpConnectionMetadataXmlException(
-				"Unable to parse SAML metadata from " + metadataUrl, e);
+				"Unable to parse SAML metadata from " + metadataUrl, exception);
 		}
 
-		samlIdpSpConnection.setMetadataUpdatedDate(new Date());
 		samlIdpSpConnection.setMetadataXml(metadataXml);
+		samlIdpSpConnection.setMetadataUpdatedDate(new Date());
 
 		samlIdpSpConnectionPersistence.update(samlIdpSpConnection);
 	}
 
 	@Override
 	public SamlIdpSpConnection updateSamlIdpSpConnection(
-			long samlIdpSpConnectionId, String samlSpEntityId,
-			int assertionLifetime, String attributeNames,
-			boolean attributesEnabled, boolean attributesNamespaceEnabled,
-			boolean enabled, boolean encryptionForced, String metadataUrl,
+			long samlIdpSpConnectionId, int assertionLifetime,
+			String attributeNames, boolean attributesEnabled,
+			boolean attributesNamespaceEnabled, boolean enabled,
+			boolean encryptionForced, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
+			String nameIdAttribute, String nameIdFormat, String samlSpEntityId,
 			ServiceContext serviceContext)
 		throws PortalException {
-
-		Date now = new Date();
 
 		if (Validator.isNull(samlSpEntityId)) {
 			throw new SamlIdpSpConnectionSamlSpEntityIdException(
@@ -244,8 +231,10 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			}
 		}
 
-		samlIdpSpConnection.setModifiedDate(now);
-		samlIdpSpConnection.setSamlSpEntityId(samlSpEntityId);
+		Date date = new Date();
+
+		samlIdpSpConnection.setModifiedDate(date);
+
 		samlIdpSpConnection.setAssertionLifetime(assertionLifetime);
 		samlIdpSpConnection.setAttributeNames(attributeNames);
 		samlIdpSpConnection.setAttributesEnabled(attributesEnabled);
@@ -253,7 +242,7 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			attributesNamespaceEnabled);
 		samlIdpSpConnection.setEnabled(enabled);
 		samlIdpSpConnection.setEncryptionForced(encryptionForced);
-		samlIdpSpConnection.setExpandoBridgeAttributes(serviceContext);
+		samlIdpSpConnection.setMetadataUrl(StringPool.BLANK);
 
 		if ((metadataXmlInputStream == null) &&
 			Validator.isNotNull(metadataUrl)) {
@@ -263,37 +252,37 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			try {
 				metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new SamlIdpSpConnectionMetadataUrlException(
 					StringBundler.concat(
 						"Unable to get metadata from ", metadataUrl, ": ",
-						e.getMessage()),
-					e);
+						exception.getMessage()),
+					exception);
 			}
 		}
 
 		String metadataXml = StringPool.BLANK;
 
 		if (metadataXmlInputStream != null) {
-			metadataXml = getMetadataXml(
+			metadataXml = _getMetadataXml(
 				metadataXmlInputStream, samlSpEntityId);
 		}
 
 		if (Validator.isNotNull(metadataXml)) {
-			samlIdpSpConnection.setMetadataUpdatedDate(now);
 			samlIdpSpConnection.setMetadataXml(metadataXml);
+			samlIdpSpConnection.setMetadataUpdatedDate(date);
 		}
 
 		samlIdpSpConnection.setName(name);
 		samlIdpSpConnection.setNameIdAttribute(nameIdAttribute);
 		samlIdpSpConnection.setNameIdFormat(nameIdFormat);
+		samlIdpSpConnection.setSamlSpEntityId(samlSpEntityId);
+		samlIdpSpConnection.setExpandoBridgeAttributes(serviceContext);
 
-		samlIdpSpConnectionPersistence.update(samlIdpSpConnection);
-
-		return samlIdpSpConnection;
+		return samlIdpSpConnectionPersistence.update(samlIdpSpConnection);
 	}
 
-	protected String getMetadataXml(
+	private String _getMetadataXml(
 			InputStream metadataXmlInputStream, String samlSpEntityId)
 		throws PortalException {
 
@@ -303,8 +292,8 @@ public class SamlIdpSpConnectionLocalServiceImpl
 			metadataXml = _metadataUtil.parseMetadataXml(
 				metadataXmlInputStream, samlSpEntityId);
 		}
-		catch (Exception e) {
-			throw new SamlIdpSpConnectionMetadataXmlException(e);
+		catch (Exception exception) {
+			throw new SamlIdpSpConnectionMetadataXmlException(exception);
 		}
 
 		if (Validator.isNull(metadataXml)) {

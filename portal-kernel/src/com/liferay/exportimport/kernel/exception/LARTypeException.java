@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.exception;
@@ -44,14 +35,14 @@ public class LARTypeException extends PortalException {
 		_type = type;
 	}
 
-	public LARTypeException(int type, String msg, Throwable cause) {
-		this(msg, cause);
+	public LARTypeException(int type, String msg, Throwable throwable) {
+		this(msg, throwable);
 
 		_type = type;
 	}
 
-	public LARTypeException(int type, Throwable cause) {
-		this(cause);
+	public LARTypeException(int type, Throwable throwable) {
+		this(throwable);
 
 		_type = type;
 	}
@@ -65,12 +56,12 @@ public class LARTypeException extends PortalException {
 		_expectedLARTypes = expectedLARTypes;
 	}
 
-	public LARTypeException(String msg, Throwable cause) {
-		super(msg, cause);
+	public LARTypeException(String msg, Throwable throwable) {
+		super(msg, throwable);
 	}
 
-	public LARTypeException(Throwable cause) {
-		super(cause);
+	public LARTypeException(Throwable throwable) {
+		super(throwable);
 	}
 
 	public String getActualLARType() {

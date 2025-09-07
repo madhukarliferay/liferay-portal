@@ -1,44 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
+import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.model.DDMStructureConstants;
-import com.liferay.dynamic.data.mapping.service.DDMStructureServiceUtil;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.dynamic.data.mapping.service.persistence.DDMStructureUtil;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.model.ResourceConstants;
-import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
-import com.liferay.portal.kernel.service.ResourcePermissionServiceUtil;
-import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
-import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -46,12 +37,14 @@ import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -64,6 +57,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Rafael Praxedes
  */
+@FeatureFlag("LPD-34651")
 @RunWith(Arquillian.class)
 public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 
@@ -97,18 +91,206 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 	}
 
 	@Test
+	public void testFetchStructureByExternalReferenceCode() throws Exception {
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		DDMStructure structure = _addStructure(externalReferenceCode);
+
+		Assert.assertNotNull(
+			_ddmStructureService.fetchStructureByExternalReferenceCode(
+				externalReferenceCode, structure.getGroupId(),
+				structure.getClassNameId()));
+
+		_ddmStructureService.deleteStructure(structure.getStructureId());
+	}
+
+	@Test
+	public void testGetStructureByExternalReferenceCode() throws Exception {
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		AssertUtils.assertFailure(
+			NoSuchStructureException.class,
+			StringBundler.concat(
+				"No DDMStructure exists with the key {externalReferenceCode=",
+				externalReferenceCode, ", groupId=", group.getGroupId(),
+				", classNameId=", _classNameId, "}"),
+			() -> _ddmStructureService.getStructureByExternalReferenceCode(
+				externalReferenceCode, group.getGroupId(), _classNameId));
+
+		DDMStructure structure = _addStructure(externalReferenceCode);
+
+		Assert.assertEquals(
+			structure,
+			_ddmStructureService.getStructureByExternalReferenceCode(
+				externalReferenceCode, structure.getGroupId(),
+				structure.getClassNameId()));
+
+		_ddmStructureService.deleteStructure(structure.getStructureId());
+	}
+
+	@Test
 	public void testGetStructures() throws Exception {
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
 
-		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
-
-		List<DDMStructure> structures = DDMStructureServiceUtil.getStructures(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId,
+		List<DDMStructure> ddmStructures = _ddmStructureService.getStructures(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), _group.getGroupId()}, _classNameId,
 			WorkflowConstants.STATUS_ANY);
 
-		Assert.assertEquals(structures.toString(), 3, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 3, ddmStructures.size());
+	}
+
+	@Test
+	public void testGetStructuresCountWithoutUserPermission() throws Exception {
+		addStructure(group, _classNameId, StringUtil.randomString());
+		addStructure(group, _classNameId, StringUtil.randomString());
+		addStructure(group, _classNameId, StringUtil.randomString());
+
+		Assert.assertEquals(
+			3,
+			_ddmStructureService.getStructuresCount(
+				group.getCompanyId(), new long[] {group.getGroupId()},
+				_classNameId));
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(user));
+
+			Assert.assertEquals(
+				0,
+				_ddmStructureService.getStructuresCount(
+					group.getCompanyId(), new long[] {group.getGroupId()},
+					_classNameId));
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+
+			_userLocalService.deleteUser(user);
+		}
+	}
+
+	@Test
+	public void testGetStructuresCountWithoutUserPermissionAndWithKeywords()
+		throws Exception {
+
+		addStructure(group, _classNameId, "Basic Structure");
+		addStructure(group, _classNameId, "Blank Structure");
+		addStructure(group, _classNameId, "Sample Structure");
+
+		Assert.assertEquals(
+			3,
+			_ddmStructureService.getStructuresCount(
+				group.getCompanyId(), new long[] {group.getGroupId()},
+				_classNameId, "Structure", WorkflowConstants.STATUS_ANY));
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(user));
+
+			Assert.assertEquals(
+				0,
+				_ddmStructureService.getStructuresCount(
+					group.getCompanyId(), new long[] {group.getGroupId()},
+					_classNameId, "Structure", WorkflowConstants.STATUS_ANY));
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+
+			_userLocalService.deleteUser(user);
+		}
+	}
+
+	@Test
+	public void testGetStructuresWithoutUserPermission() throws Exception {
+		addStructure(group, _classNameId, StringUtil.randomString());
+		addStructure(group, _classNameId, StringUtil.randomString());
+		addStructure(group, _classNameId, StringUtil.randomString());
+
+		List<DDMStructure> ddmStructures = _ddmStructureService.getStructures(
+			group.getCompanyId(), new long[] {group.getGroupId()}, _classNameId,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
+		Assert.assertEquals(ddmStructures.toString(), 3, ddmStructures.size());
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(user));
+
+			ddmStructures = _ddmStructureService.getStructures(
+				group.getCompanyId(), new long[] {group.getGroupId()},
+				_classNameId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
+			Assert.assertEquals(
+				ddmStructures.toString(), 0, ddmStructures.size());
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+
+			_userLocalService.deleteUser(user);
+		}
+	}
+
+	@Test
+	public void testGetStructuresWithoutUserPermissionAndWithKeywords()
+		throws Exception {
+
+		addStructure(group, _classNameId, "Basic Structure");
+		addStructure(group, _classNameId, "Blank Structure");
+		addStructure(group, _classNameId, "Sample Structure");
+
+		List<DDMStructure> ddmStructures = _ddmStructureService.getStructures(
+			group.getCompanyId(), new long[] {group.getGroupId()}, _classNameId,
+			"Structure", WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+
+		Assert.assertEquals(ddmStructures.toString(), 3, ddmStructures.size());
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(user));
+
+			ddmStructures = _ddmStructureService.getStructures(
+				group.getCompanyId(), new long[] {group.getGroupId()},
+				_classNameId, "Structure", WorkflowConstants.STATUS_ANY,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
+			Assert.assertEquals(
+				ddmStructures.toString(), 0, ddmStructures.size());
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+
+			_userLocalService.deleteUser(user);
+		}
 	}
 
 	@Test
@@ -118,20 +300,9 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, StringUtil.randomString());
 		DDMStructure structure2 = addStructure(
 			_classNameId, StringUtil.randomString());
-		String modelName = ResourceActionsUtil.getCompositeModelName(
-			PortalUtil.getClassName(_classNameId),
-			DDMStructure.class.getName());
 
-		List<Role> roles = RoleLocalServiceUtil.getRoles(
-			TestPropsValues.getCompanyId());
-
-		for (Role role : roles) {
-			ResourcePermissionServiceUtil.removeResourcePermission(
-				structure2.getGroupId(), structure2.getCompanyId(), modelName,
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(structure2.getPrimaryKey()), role.getRoleId(),
-				ActionKeys.VIEW);
-		}
+		_ddmStructures.add(structure1);
+		_ddmStructures.add(structure2);
 
 		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
 
@@ -141,15 +312,16 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 			PermissionThreadLocal.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(siteAdminUser));
 
-			List<DDMStructure> structures =
+			List<DDMStructure> ddmStructures =
 				DDMStructureUtil.filterFindByGroupId(groupIds);
 
-			Assert.assertEquals(structures.toString(), 2, structures.size());
-			Assert.assertEquals(structure1, structures.get(0));
-			Assert.assertEquals(structure2, structures.get(1));
+			Assert.assertEquals(
+				ddmStructures.toString(), 2, ddmStructures.size());
+			Assert.assertEquals(structure1, ddmStructures.get(0));
+			Assert.assertEquals(structure2, ddmStructures.get(1));
 		}
 		finally {
-			UserLocalServiceUtil.deleteUser(siteAdminUser);
+			_userLocalService.deleteUser(siteAdminUser);
 		}
 
 		siteAdminUser = UserTestUtil.addGroupAdminUser(_group);
@@ -158,30 +330,33 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 			PermissionThreadLocal.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(siteAdminUser));
 
-			List<DDMStructure> structures =
+			List<DDMStructure> ddmStructures =
 				DDMStructureUtil.filterFindByGroupId(groupIds);
 
-			Assert.assertEquals(structures.toString(), 0, structures.size());
+			Assert.assertEquals(
+				ddmStructures.toString(), 0, ddmStructures.size());
 		}
 		finally {
-			UserLocalServiceUtil.deleteUser(siteAdminUser);
+			_userLocalService.deleteUser(siteAdminUser);
 		}
 	}
 
 	@Test
 	public void testSearch() throws Exception {
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
 
-		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
-
-		List<DDMStructure> structures = DDMStructureServiceUtil.search(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId,
+		List<DDMStructure> ddmStructures = _ddmStructureService.search(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), _group.getGroupId()}, _classNameId,
 			StringPool.BLANK, WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 3, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 3, ddmStructures.size());
 	}
 
 	@Test
@@ -189,70 +364,78 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 		String name = StringUtil.randomString();
 		String description = StringUtil.randomString();
 
-		List<DDMStructure> expectedStructures = new ArrayList<>(3);
+		List<DDMStructure> expectedDDMStructures = new ArrayList<>(3);
 
-		expectedStructures.add(addStructure(_classNameId, name, description));
-		expectedStructures.add(
+		expectedDDMStructures.add(
+			addStructure(_classNameId, name, description));
+		expectedDDMStructures.add(
 			addStructure(_classNameId, name, StringUtil.randomString()));
-		expectedStructures.add(
+		expectedDDMStructures.add(
 			addStructure(_classNameId, StringUtil.randomString(), description));
 
-		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
+		_ddmStructures.addAll(expectedDDMStructures);
 
-		List<DDMStructure> structures = DDMStructureServiceUtil.search(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId, name,
-			description, StorageType.JSON.getValue(),
+		List<DDMStructure> ddmStructures = _ddmStructureService.search(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), _group.getGroupId()}, _classNameId,
+			name, description, StorageType.DEFAULT.getValue(),
 			DDMStructureConstants.TYPE_DEFAULT, WorkflowConstants.STATUS_ANY,
 			true, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 3, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 3, ddmStructures.size());
 
-		Stream<DDMStructure> stream = expectedStructures.stream();
-
-		Assert.assertTrue(stream.allMatch(structures::contains));
+		for (DDMStructure ddmStructure : expectedDDMStructures) {
+			Assert.assertTrue(ddmStructures.contains(ddmStructure));
+		}
 	}
 
 	@Test
 	public void testSearchByType() throws Exception {
-		addStructure(
-			0, _classNameId, null, StringUtil.randomString(), StringPool.BLANK,
-			read("test-structure.xsd"), StorageType.JSON.getValue(),
-			DDMStructureConstants.TYPE_DEFAULT,
-			WorkflowConstants.STATUS_APPROVED);
+		_ddmStructures.add(
+			addStructure(
+				0, _classNameId, null, StringUtil.randomString(),
+				StringPool.BLANK, read("test-structure.xsd"),
+				StorageType.DEFAULT.getValue(),
+				DDMStructureConstants.TYPE_DEFAULT,
+				WorkflowConstants.STATUS_APPROVED));
 
-		addStructure(
-			0, _classNameId, null, StringUtil.randomString(), StringPool.BLANK,
-			read("test-structure.xsd"), StorageType.JSON.getValue(),
-			DDMStructureConstants.TYPE_FRAGMENT,
-			WorkflowConstants.STATUS_APPROVED);
+		_ddmStructures.add(
+			addStructure(
+				0, _classNameId, null, StringUtil.randomString(),
+				StringPool.BLANK, read("test-structure.xsd"),
+				StorageType.DEFAULT.getValue(),
+				DDMStructureConstants.TYPE_FRAGMENT,
+				WorkflowConstants.STATUS_APPROVED));
 
-		List<DDMStructure> structures = DDMStructureServiceUtil.search(
+		List<DDMStructure> ddmStructures = _ddmStructureService.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			_classNameId, null, null, null, DDMStructureConstants.TYPE_DEFAULT,
 			WorkflowConstants.STATUS_APPROVED, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 1, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 1, ddmStructures.size());
 
-		structures = DDMStructureServiceUtil.search(
+		ddmStructures = _ddmStructureService.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			_classNameId, null, null, null, DDMStructureConstants.TYPE_FRAGMENT,
 			WorkflowConstants.STATUS_APPROVED, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 1, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 1, ddmStructures.size());
 	}
 
 	@Test
 	public void testSearchCount() throws Exception {
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString());
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
 
-		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
-
-		int count = DDMStructureServiceUtil.searchCount(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId,
+		int count = _ddmStructureService.searchCount(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), _group.getGroupId()}, _classNameId,
 			StringPool.BLANK, WorkflowConstants.STATUS_ANY);
 
 		Assert.assertEquals(3, count);
@@ -263,16 +446,17 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 		String name = StringUtil.randomString();
 		String description = StringUtil.randomString();
 
-		addStructure(_classNameId, name, description);
+		_ddmStructures.add(addStructure(_classNameId, name, description));
 
-		addStructure(_classNameId, name, StringUtil.randomString());
-		addStructure(_classNameId, StringUtil.randomString(), description);
+		_ddmStructures.add(
+			addStructure(_classNameId, name, StringUtil.randomString()));
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString(), description));
 
-		long[] groupIds = {group.getGroupId(), _group.getGroupId()};
-
-		int count = DDMStructureServiceUtil.searchCount(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId, name,
-			description, StorageType.JSON.getValue(),
+		int count = _ddmStructureService.searchCount(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), _group.getGroupId()}, _classNameId,
+			name, description, StorageType.DEFAULT.getValue(),
 			DDMStructureConstants.TYPE_DEFAULT, WorkflowConstants.STATUS_ANY,
 			true);
 
@@ -281,18 +465,20 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 
 	@Test
 	public void testSearchCountByType() throws Exception {
-		int initialCount = DDMStructureServiceUtil.searchCount(
+		int initialCount = _ddmStructureService.searchCount(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			_classNameId, null, null, null, DDMStructureConstants.TYPE_FRAGMENT,
 			WorkflowConstants.STATUS_ANY, true);
 
-		addStructure(
-			0, _classNameId, null, StringUtil.randomString(), StringPool.BLANK,
-			read("test-structure.xsd"), StorageType.JSON.getValue(),
-			DDMStructureConstants.TYPE_FRAGMENT,
-			WorkflowConstants.STATUS_APPROVED);
+		_ddmStructures.add(
+			addStructure(
+				0, _classNameId, null, StringUtil.randomString(),
+				StringPool.BLANK, read("test-structure.xsd"),
+				StorageType.DEFAULT.getValue(),
+				DDMStructureConstants.TYPE_FRAGMENT,
+				WorkflowConstants.STATUS_APPROVED));
 
-		int count = DDMStructureServiceUtil.searchCount(
+		int count = _ddmStructureService.searchCount(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			_classNameId, null, null, null, DDMStructureConstants.TYPE_FRAGMENT,
 			WorkflowConstants.STATUS_ANY, true);
@@ -302,75 +488,51 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 
 	@Test
 	public void testSearchWithSiteAdminPermission() throws Exception {
-		addStructure(_classNameId, StringUtil.randomString());
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
 
 		DDMStructure structure = addStructure(
 			_classNameId, StringUtil.randomString());
 
-		String modelName = ResourceActionsUtil.getCompositeModelName(
-			PortalUtil.getClassName(_classNameId),
-			DDMStructure.class.getName());
+		_ddmStructures.add(structure);
 
-		List<Role> roles = RoleLocalServiceUtil.getRoles(
-			TestPropsValues.getCompanyId());
-
-		for (Role role : roles) {
-			ResourcePermissionServiceUtil.removeResourcePermission(
-				structure.getGroupId(), structure.getCompanyId(), modelName,
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(structure.getPrimaryKey()), role.getRoleId(),
-				ActionKeys.VIEW);
-		}
-
-		long[] groupIds = {group.getGroupId(), group.getGroupId()};
-
-		List<DDMStructure> structures = DDMStructureServiceUtil.search(
-			TestPropsValues.getCompanyId(), groupIds, _classNameId,
+		List<DDMStructure> ddmStructures = _ddmStructureService.search(
+			TestPropsValues.getCompanyId(),
+			new long[] {group.getGroupId(), group.getGroupId()}, _classNameId,
 			StringPool.BLANK, WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 2, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 2, ddmStructures.size());
 	}
 
 	@Test
 	public void testSearchWithSiteMemberPermission() throws Exception {
-		addStructure(_classNameId, StringUtil.randomString());
+		_ddmStructures.add(
+			addStructure(_classNameId, StringUtil.randomString()));
 
 		DDMStructure structure = addStructure(
 			_classNameId, StringUtil.randomString());
 
-		String modelName = ResourceActionsUtil.getCompositeModelName(
-			PortalUtil.getClassName(_classNameId),
-			DDMStructure.class.getName());
-
-		List<Role> roles = RoleLocalServiceUtil.getRoles(
-			TestPropsValues.getCompanyId());
-
-		for (Role role : roles) {
-			ResourcePermissionServiceUtil.removeResourcePermission(
-				structure.getGroupId(), structure.getCompanyId(), modelName,
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(structure.getPrimaryKey()), role.getRoleId(),
-				ActionKeys.VIEW);
-		}
+		_ddmStructures.add(structure);
 
 		long[] groupIds = {group.getGroupId(), group.getGroupId()};
 
 		User siteMemberUser = UserTestUtil.addGroupUser(
 			group, RoleConstants.SITE_MEMBER);
 
-		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(siteMemberUser);
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(siteMemberUser));
 
-		PermissionThreadLocal.setPermissionChecker(permissionChecker);
-
-		List<DDMStructure> structures = DDMStructureServiceUtil.search(
+		List<DDMStructure> ddmStructures = _ddmStructureService.search(
 			TestPropsValues.getCompanyId(), groupIds, _classNameId,
 			StringPool.BLANK, WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(structures.toString(), 1, structures.size());
+		Assert.assertEquals(ddmStructures.toString(), 0, ddmStructures.size());
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected void setUpPermissionThreadLocal() throws Exception {
 		_originalPermissionChecker =
@@ -386,7 +548,33 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 		PrincipalThreadLocal.setName(_siteAdminUser.getUserId());
 	}
 
+	private DDMStructure _addStructure(String externalReferenceCode)
+		throws Exception {
+
+		DDMStructure structure = addStructure(
+			group, _classNameId, RandomTestUtil.randomString());
+
+		structure.setExternalReferenceCode(externalReferenceCode);
+
+		return _ddmStructureLocalService.updateStructure(
+			externalReferenceCode, structure.getUserId(),
+			structure.getStructureId(), structure.getGroupId(),
+			structure.getParentStructureId(), structure.getClassNameId(),
+			structure.getStructureKey(), structure.getNameMap(),
+			structure.getDescriptionMap(), structure.getDefinition(),
+			ServiceContextTestUtil.getServiceContext(structure.getGroupId()));
+	}
+
 	private static long _classNameId;
+
+	@Inject
+	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@DeleteAfterTestRun
+	private final List<DDMStructure> _ddmStructures = new ArrayList<>();
+
+	@Inject
+	private DDMStructureService _ddmStructureService;
 
 	@DeleteAfterTestRun
 	private Group _group;
@@ -396,5 +584,8 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 
 	@DeleteAfterTestRun
 	private User _siteAdminUser;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 }

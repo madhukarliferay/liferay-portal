@@ -1,22 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.db.support;
 
 import com.liferay.gradle.plugins.db.support.internal.util.GradleUtil;
-import com.liferay.gradle.plugins.db.support.tasks.BaseDBSupportTask;
-import com.liferay.gradle.plugins.db.support.tasks.CleanServiceBuilderTask;
+import com.liferay.gradle.plugins.db.support.task.BaseDBSupportTask;
+import com.liferay.gradle.plugins.db.support.task.CleanServiceBuilderTask;
+import com.liferay.gradle.util.OSGiUtil;
 
 import java.util.concurrent.Callable;
 
@@ -26,7 +18,6 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.osgi.OsgiHelper;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.tasks.TaskContainer;
@@ -117,7 +108,7 @@ public class DBSupportPlugin implements Plugin<Project> {
 					PluginContainer pluginContainer = project.getPlugins();
 
 					if (pluginContainer.hasPlugin(BasePlugin.class)) {
-						return _osgiHelper.getBundleSymbolicName(project);
+						return OSGiUtil.getBundleSymbolicName(project);
 					}
 
 					return null;
@@ -146,7 +137,5 @@ public class DBSupportPlugin implements Plugin<Project> {
 
 			});
 	}
-
-	private static final OsgiHelper _osgiHelper = new OsgiHelper();
 
 }

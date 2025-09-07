@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.impl;
@@ -52,6 +43,11 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class WikiNodeServiceImpl extends WikiNodeServiceBaseImpl {
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #addNode(String,
+	 *             String, String, ServiceContext)}
+	 */
+	@Deprecated
 	@Override
 	public WikiNode addNode(
 			String name, String description, ServiceContext serviceContext)
@@ -63,6 +59,21 @@ public class WikiNodeServiceImpl extends WikiNodeServiceBaseImpl {
 
 		return wikiNodeLocalService.addNode(
 			getUserId(), name, description, serviceContext);
+	}
+
+	@Override
+	public WikiNode addNode(
+			String externalReferenceCode, String name, String description,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		_portletResourcePermission.check(
+			getPermissionChecker(), serviceContext.getScopeGroupId(),
+			ActionKeys.ADD_NODE);
+
+		return wikiNodeLocalService.addNode(
+			externalReferenceCode, getUserId(), name, description,
+			serviceContext);
 	}
 
 	@Override
@@ -140,10 +151,10 @@ public class WikiNodeServiceImpl extends WikiNodeServiceBaseImpl {
 	@Override
 	public List<WikiNode> getNodes(
 		long groupId, int status, int start, int end,
-		OrderByComparator<WikiNode> obc) {
+		OrderByComparator<WikiNode> orderByComparator) {
 
 		return wikiNodePersistence.filterFindByG_S(
-			groupId, status, start, end, obc);
+			groupId, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -157,8 +168,22 @@ public class WikiNodeServiceImpl extends WikiNodeServiceBaseImpl {
 	}
 
 	@Override
+	public WikiNode getWikiNodeByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		WikiNode node = wikiNodeLocalService.getWikiNodeByExternalReferenceCode(
+			externalReferenceCode, groupId);
+
+		_wikiNodeModelResourcePermission.check(
+			getPermissionChecker(), node, ActionKeys.VIEW);
+
+		return node;
+	}
+
+	@Override
 	public void importPages(
-			long nodeId, String importer, InputStream[] inputStreams,
+			long nodeId, InputStream[] inputStreams,
 			Map<String, String[]> options)
 		throws PortalException {
 
@@ -166,7 +191,7 @@ public class WikiNodeServiceImpl extends WikiNodeServiceBaseImpl {
 			getPermissionChecker(), nodeId, ActionKeys.IMPORT);
 
 		wikiNodeLocalService.importPages(
-			getUserId(), nodeId, importer, inputStreams, options);
+			getUserId(), nodeId, inputStreams, options);
 	}
 
 	@Override

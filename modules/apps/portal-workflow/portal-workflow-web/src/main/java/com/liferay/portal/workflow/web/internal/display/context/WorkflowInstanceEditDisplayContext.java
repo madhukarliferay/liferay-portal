@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.web.internal.display.context;
@@ -28,6 +19,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -35,16 +27,18 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
-import com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
-import com.liferay.portal.kernel.workflow.WorkflowLogManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
-import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil;
+import com.liferay.portal.workflow.comparator.WorkflowComparatorFactory;
+import com.liferay.portal.workflow.manager.WorkflowLogManager;
+import com.liferay.portal.workflow.util.WorkflowDefinitionManagerUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
 
@@ -61,9 +55,14 @@ public class WorkflowInstanceEditDisplayContext
 
 	public WorkflowInstanceEditDisplayContext(
 		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse) {
+		LiferayPortletResponse liferayPortletResponse,
+		WorkflowComparatorFactory workflowComparatorFactory,
+		WorkflowLogManager workflowLogManager) {
 
 		super(liferayPortletRequest, liferayPortletResponse);
+
+		_workflowComparatorFactory = workflowComparatorFactory;
+		_workflowLogManager = workflowLogManager;
 	}
 
 	public AssetEntry getAssetEntry() throws PortalException {
@@ -91,14 +90,14 @@ public class WorkflowInstanceEditDisplayContext
 	}
 
 	public AssetRenderer<?> getAssetRenderer() throws PortalException {
-		WorkflowHandler<?> workflowHandler = _getWorkflowHandler();
+		WorkflowHandler<?> workflowHandler = getWorkflowHandler();
 
 		return workflowHandler.getAssetRenderer(
 			_getWorkflowContextEntryClassPK());
 	}
 
 	public AssetRendererFactory<?> getAssetRendererFactory() {
-		WorkflowHandler<?> workflowHandler = _getWorkflowHandler();
+		WorkflowHandler<?> workflowHandler = getWorkflowHandler();
 
 		return workflowHandler.getAssetRendererFactory();
 	}
@@ -108,7 +107,7 @@ public class WorkflowInstanceEditDisplayContext
 
 		User user = _getUser(workflowLog.getUserId());
 
-		if (user.isMale()) {
+		if ((user == null) || user.isMale()) {
 			return "x-assigned-the-task-to-himself";
 		}
 
@@ -121,60 +120,68 @@ public class WorkflowInstanceEditDisplayContext
 		return new Object[] {
 			HtmlUtil.escape(
 				PortalUtil.getUserName(
-					workflowLog.getAuditUserId(), StringPool.BLANK)),
+					workflowLog.getAuditUserId(),
+					String.valueOf(workflowLog.getAuditUserId()))),
 			HtmlUtil.escape(_getActorName(workflowLog))
 		};
 	}
 
 	public String getHeaderTitle() throws PortalException {
-		return LanguageUtil.get(
-			workflowInstanceRequestHelper.getRequest(),
-			_getWorkflowDefinitionName());
+		return _getWorkflowDefinitionName() + ": " +
+			getTaskContentTitleMessage();
 	}
 
 	public String getIconCssClass() {
-		WorkflowHandler<?> workflowHandler = _getWorkflowHandler();
+		WorkflowHandler<?> workflowHandler = getWorkflowHandler();
 
 		return workflowHandler.getIconCssClass();
 	}
 
 	public String getPanelTitle() {
-		String modelResource = ResourceActionsUtil.getModelResource(
-			workflowInstanceRequestHelper.getLocale(),
-			_getWorkflowContextEntryClassName());
+		HttpServletRequest httpServletRequest =
+			workflowInstanceRequestHelper.getRequest();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return LanguageUtil.format(
-			workflowInstanceRequestHelper.getRequest(), "preview-of-x",
-			modelResource, false);
+			themeDisplay.getLocale(), "preview-of-x",
+			ResourceActionsUtil.getModelResource(
+				themeDisplay.getLocale(), _getWorkflowContextEntryClassName()),
+			false);
 	}
 
 	public Object getPreviousAssigneeMessageArguments(WorkflowLog workflowLog) {
 		return HtmlUtil.escape(
 			PortalUtil.getUserName(
-				workflowLog.getPreviousUserId(), StringPool.BLANK));
+				workflowLog.getPreviousUserId(),
+				String.valueOf(workflowLog.getPreviousUserId())));
+	}
+
+	public String getStatus() {
+		return getStatus(_getWorkflowInstance());
 	}
 
 	public String getTaskCompleted(WorkflowTask workflowTask) {
-		if (workflowTask.isCompleted()) {
-			return LanguageUtil.get(
-				workflowInstanceRequestHelper.getRequest(), "yes");
-		}
-
 		return LanguageUtil.get(
-			workflowInstanceRequestHelper.getRequest(), "no");
+			workflowInstanceRequestHelper.getRequest(),
+			workflowTask.isCompleted() ? "yes" : "no");
 	}
 
 	public Object getTaskCompletionMessageArguments(WorkflowLog workflowLog) {
 		return new Object[] {
 			HtmlUtil.escape(
 				PortalUtil.getUserName(
-					workflowLog.getAuditUserId(), StringPool.BLANK)),
-			HtmlUtil.escape(workflowLog.getState())
+					workflowLog.getAuditUserId(),
+					String.valueOf(workflowLog.getAuditUserId()))),
+			workflowLog.getCurrentWorkflowNodeLabel(
+				workflowInstanceRequestHelper.getLocale())
 		};
 	}
 
 	public String getTaskContentTitleMessage() {
-		WorkflowHandler<?> workflowHandler = _getWorkflowHandler();
+		WorkflowHandler<?> workflowHandler = getWorkflowHandler();
 
 		long classPK = _getWorkflowContextEntryClassPK();
 
@@ -189,7 +196,7 @@ public class WorkflowInstanceEditDisplayContext
 				workflowInstanceRequestHelper.getRequest(), "never");
 		}
 
-		return dateFormatDateTime.format(workflowTask.getDueDate());
+		return dateTimeFormat.format(workflowTask.getDueDate());
 	}
 
 	public Object getTaskInitiallyAssignedMessageArguments(
@@ -198,28 +205,40 @@ public class WorkflowInstanceEditDisplayContext
 		return HtmlUtil.escape(_getActorName(workflowLog));
 	}
 
-	public String getTaskName(WorkflowTask workflowTask) {
-		return HtmlUtil.escape(workflowTask.getName());
-	}
-
-	public Object getTaskUpdateMessageArguments(WorkflowLog workflowLog) {
-		return HtmlUtil.escape(_getActorName(workflowLog));
+	public String getTaskUpdateMessageArguments(WorkflowLog workflowLog) {
+		return HtmlUtil.escape(
+			PortalUtil.getUserName(
+				workflowLog.getAuditUserId(),
+				String.valueOf(workflowLog.getAuditUserId())));
 	}
 
 	public Object getTransitionMessageArguments(WorkflowLog workflowLog) {
 		return new Object[] {
-			HtmlUtil.escape(_getActorName(workflowLog)),
-			HtmlUtil.escape(workflowLog.getPreviousState()),
-			HtmlUtil.escape(workflowLog.getState())
+			HtmlUtil.escape(
+				PortalUtil.getUserName(
+					workflowLog.getAuditUserId(),
+					String.valueOf(workflowLog.getAuditUserId()))),
+			workflowLog.getPreviousWorkflowNodeLabel(
+				workflowInstanceRequestHelper.getLocale()),
+			workflowLog.getCurrentWorkflowNodeLabel(
+				workflowInstanceRequestHelper.getLocale())
 		};
 	}
 
-	public String getUserFullName(WorkflowLog workflowLog)
-		throws PortalException {
-
+	public String getUserFullName(WorkflowLog workflowLog) {
 		User user = _getUser(workflowLog.getUserId());
 
+		if (user == null) {
+			return String.valueOf(workflowLog.getUserId());
+		}
+
 		return HtmlUtil.escape(user.getFullName());
+	}
+
+	public WorkflowHandler<?> getWorkflowHandler() {
+		String className = _getWorkflowContextEntryClassName();
+
+		return WorkflowHandlerRegistryUtil.getWorkflowHandler(className);
 	}
 
 	public String getWorkflowInstanceEndDate() {
@@ -230,15 +249,7 @@ public class WorkflowInstanceEditDisplayContext
 				workflowInstanceRequestHelper.getRequest(), "never");
 		}
 
-		return dateFormatDateTime.format(workflowInstance.getEndDate());
-	}
-
-	public String getWorkflowInstanceState() {
-		WorkflowInstance workflowInstance = _getWorkflowInstance();
-
-		return LanguageUtil.get(
-			workflowInstanceRequestHelper.getRequest(),
-			workflowInstance.getState());
+		return dateTimeFormat.format(workflowInstance.getEndDate());
 	}
 
 	public String getWorkflowLogComment(WorkflowLog workflowLog) {
@@ -249,16 +260,16 @@ public class WorkflowInstanceEditDisplayContext
 	}
 
 	public String getWorkflowLogCreateDate(WorkflowLog workflowLog) {
-		return dateFormatDateTime.format(workflowLog.getCreateDate());
+		return dateTimeFormat.format(workflowLog.getCreateDate());
 	}
 
 	public List<WorkflowLog> getWorkflowLogs() throws WorkflowException {
 		if (_workflowLogs == null) {
 			OrderByComparator<WorkflowLog> orderByComparator =
-				WorkflowComparatorFactoryUtil.getLogCreateDateComparator(false);
+				_workflowComparatorFactory.getLogCreateDateComparator(false);
 
 			_workflowLogs =
-				WorkflowLogManagerUtil.getWorkflowLogsByWorkflowInstance(
+				_workflowLogManager.getWorkflowLogsByWorkflowInstance(
 					workflowInstanceRequestHelper.getCompanyId(),
 					getWorkflowInstanceId(), _logTypes, QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS, orderByComparator);
@@ -377,7 +388,7 @@ public class WorkflowInstanceEditDisplayContext
 		WorkflowInstance workflowInstance = _getWorkflowInstance();
 
 		WorkflowDefinition workflowDefinition =
-			WorkflowDefinitionManagerUtil.getWorkflowDefinition(
+			WorkflowDefinitionManagerUtil.liberalGetWorkflowDefinition(
 				workflowInstanceRequestHelper.getCompanyId(),
 				workflowInstance.getWorkflowDefinitionName(),
 				workflowInstance.getWorkflowDefinitionVersion());
@@ -388,23 +399,20 @@ public class WorkflowInstanceEditDisplayContext
 					workflowInstanceRequestHelper.getRequest())));
 	}
 
-	private WorkflowHandler<?> _getWorkflowHandler() {
-		String className = _getWorkflowContextEntryClassName();
-
-		return WorkflowHandlerRegistryUtil.getWorkflowHandler(className);
-	}
-
 	private WorkflowInstance _getWorkflowInstance() {
 		return (WorkflowInstance)liferayPortletRequest.getAttribute(
 			WebKeys.WORKFLOW_INSTANCE);
 	}
 
 	private static final List<Integer> _logTypes = Arrays.asList(
-		WorkflowLog.TASK_ASSIGN, WorkflowLog.TASK_COMPLETION,
-		WorkflowLog.TASK_UPDATE, WorkflowLog.TRANSITION);
+		WorkflowLog.INSTANCE_FAIL, WorkflowLog.TASK_ASSIGN,
+		WorkflowLog.TASK_COMPLETION, WorkflowLog.TASK_UPDATE,
+		WorkflowLog.TRANSITION);
 
 	private final Map<Long, Role> _roles = new HashMap<>();
 	private final Map<Long, User> _users = new HashMap<>();
+	private final WorkflowComparatorFactory _workflowComparatorFactory;
+	private final WorkflowLogManager _workflowLogManager;
 	private List<WorkflowLog> _workflowLogs;
 
 }

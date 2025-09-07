@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.model;
 
 import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +26,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface SocialActivitySetModel
-	extends AttachedModel, BaseModel<SocialActivitySet>, ShardedModel {
+	extends AttachedModel, BaseModel<SocialActivitySet>,
+			CTModel<SocialActivitySet>, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a social activity set model instance should use the {@link SocialActivitySet} interface instead.
@@ -46,6 +40,7 @@ public interface SocialActivitySetModel
 	 *
 	 * @return the primary key of this social activity set
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -53,7 +48,40 @@ public interface SocialActivitySetModel
 	 *
 	 * @param primaryKey the primary key of this social activity set
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
+
+	/**
+	 * Returns the mvcc version of this social activity set.
+	 *
+	 * @return the mvcc version of this social activity set
+	 */
+	@Override
+	public long getMvccVersion();
+
+	/**
+	 * Sets the mvcc version of this social activity set.
+	 *
+	 * @param mvccVersion the mvcc version of this social activity set
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this social activity set.
+	 *
+	 * @return the ct collection ID of this social activity set
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this social activity set.
+	 *
+	 * @param ctCollectionId the ct collection ID of this social activity set
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the activity set ID of this social activity set.
@@ -238,5 +266,12 @@ public interface SocialActivitySetModel
 	 * @param activityCount the activity count of this social activity set
 	 */
 	public void setActivityCount(int activityCount);
+
+	@Override
+	public SocialActivitySet cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

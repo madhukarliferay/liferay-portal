@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.messaging;
@@ -266,23 +257,11 @@ public class Message implements Cloneable, Serializable {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
-
-		sb.append("{destinationName=");
-		sb.append(_destinationName);
-		sb.append(", response=");
-		sb.append(_response);
-		sb.append(", responseDestinationName=");
-		sb.append(_responseDestinationName);
-		sb.append(", responseId=");
-		sb.append(_responseId);
-		sb.append(", payload=");
-		sb.append(_payload);
-		sb.append(", values=");
-		sb.append(MapUtil.toString(_values, null, ".*[pP]assword.*"));
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{destinationName=", _destinationName, ", response=", _response,
+			", responseDestinationName=", _responseDestinationName,
+			", responseId=", _responseId, ", payload=", _payload, ", values=",
+			MapUtil.toString(_values, null, ".*[pP]assword.*"), "}");
 	}
 
 	private String _destinationName;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.dao.db.test;
@@ -19,6 +10,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
 
 import java.io.IOException;
+
+import java.sql.SQLException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,29 +23,44 @@ import org.junit.Test;
 public abstract class BaseDBTestCase {
 
 	@Test
-	public void testReplaceTemplate() throws IOException {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("select * from SomeTable where someColumn1 = ");
-		sb.append(_db.getTemplateFalse());
-		sb.append(" and someColumn2 = ");
-		sb.append(_db.getTemplateTrue());
-		sb.append(StringPool.NEW_LINE);
-
-		Assert.assertEquals(sb.toString(), buildSQL(_BOOLEAN_LITERAL_QUERY));
+	public void testReplaceTemplate() throws IOException, SQLException {
+		Assert.assertEquals(
+			StringBundler.concat(
+				"select * from SomeTable where someColumn1 = ",
+				db.getTemplateFalse(), " and someColumn2 = ",
+				db.getTemplateTrue(), StringPool.NEW_LINE),
+			buildSQL(_BOOLEAN_LITERAL_QUERY));
 
 		Assert.assertEquals(
 			_BOOLEAN_PATTERN_QUERY + StringPool.NEW_LINE,
 			buildSQL(_BOOLEAN_PATTERN_QUERY));
 	}
 
-	protected String buildSQL(String query) throws IOException {
-		return _db.buildSQL(query);
+	@Test
+	public void testRewordAlterColumnTypeWithDefaultNull() throws Exception {
+		try {
+			buildSQL(
+				"alter_column_type DLFolder userName VARCHAR(75) default " +
+					"'test test' null;");
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				"Invalid alter column type statement",
+				illegalArgumentException.getMessage());
+		}
+	}
+
+	protected String buildSQL(String query) throws IOException, SQLException {
+		return db.buildSQL(query);
 	}
 
 	protected abstract DB getDB();
 
 	protected static final String RENAME_TABLE_QUERY = "alter_table_name a b";
+
+	protected final DB db = getDB();
 
 	private static final String _BOOLEAN_LITERAL_QUERY =
 		"select * from SomeTable where someColumn1 = FALSE and someColumn2 = " +
@@ -61,7 +69,5 @@ public abstract class BaseDBTestCase {
 	private static final String _BOOLEAN_PATTERN_QUERY =
 		"select * from SomeTable where someColumn1 = [$FALSE$] and " +
 			"someColumn2 = [$TRUE$]";
-
-	private final DB _db = getDB();
 
 }

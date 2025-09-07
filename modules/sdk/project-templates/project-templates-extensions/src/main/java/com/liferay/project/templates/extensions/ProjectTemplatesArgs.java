@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.extensions;
@@ -50,6 +41,10 @@ public class ProjectTemplatesArgs {
 
 	public String getGroupId() {
 		return _groupId;
+	}
+
+	public String getLiferayProduct() {
+		return _liferayProduct;
 	}
 
 	public String getLiferayVersion() {
@@ -132,6 +127,10 @@ public class ProjectTemplatesArgs {
 
 	public void setGroupId(String groupId) {
 		_groupId = groupId;
+	}
+
+	public void setLiferayProduct(String liferayiProduct) {
+		_liferayProduct = liferayiProduct;
 	}
 
 	public void setLiferayVersion(String version) {
@@ -217,10 +216,16 @@ public class ProjectTemplatesArgs {
 	private boolean _help;
 
 	@Parameter(
+		description = "The option for Liferay Platform product. (portal)|(dxp)",
+		names = "--liferay-product"
+	)
+	private String _liferayProduct = "portal";
+
+	@Parameter(
 		description = "The version of Liferay to target when creating the project.",
 		names = "--liferay-version"
 	)
-	private String _liferayVersion = "7.2";
+	private String _liferayVersion = "7.4.0";
 
 	@Parameter(
 		description = "Print the list of available project templates.",

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.workflow;
@@ -21,6 +12,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,8 +24,23 @@ public class DefaultWorkflowDefinition
 	implements Serializable, WorkflowDefinition {
 
 	@Override
+	public long getCompanyId() {
+		return _companyId;
+	}
+
+	@Override
 	public String getContent() {
 		return _content;
+	}
+
+	@Override
+	public String getContentAsXML() {
+		return _contentAsXML;
+	}
+
+	@Override
+	public Date getCreateDate() {
+		return _createDate;
 	}
 
 	@Override
@@ -43,6 +50,11 @@ public class DefaultWorkflowDefinition
 		}
 
 		return _description;
+	}
+
+	@Override
+	public String getExternalReferenceCode() {
+		return _externalReferenceCode;
 	}
 
 	@Override
@@ -63,6 +75,11 @@ public class DefaultWorkflowDefinition
 	@Override
 	public Map<String, Object> getOptionalAttributes() {
 		return _optionalAttributes;
+	}
+
+	@Override
+	public String getScope() {
+		return _scope;
 	}
 
 	@Override
@@ -90,6 +107,21 @@ public class DefaultWorkflowDefinition
 	}
 
 	@Override
+	public long getWorkflowDefinitionId() {
+		return _workflowDefinitionId;
+	}
+
+	@Override
+	public List<WorkflowNode> getWorkflowNodes() {
+		return _workflowNodes;
+	}
+
+	@Override
+	public List<WorkflowTransition> getWorkflowTransitions() {
+		return _workflowTransitions;
+	}
+
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
@@ -98,12 +130,28 @@ public class DefaultWorkflowDefinition
 		_active = active;
 	}
 
+	public void setCompanyId(long companyId) {
+		_companyId = companyId;
+	}
+
 	public void setContent(String content) {
 		_content = content;
 	}
 
+	public void setContentAsXML(String contentAsXML) {
+		_contentAsXML = contentAsXML;
+	}
+
+	public void setCreateDate(Date createDate) {
+		_createDate = createDate;
+	}
+
 	public void setDescription(String description) {
 		_description = description;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		_externalReferenceCode = externalReferenceCode;
 	}
 
 	public void setInputStream(InputStream inputStream) {
@@ -122,6 +170,10 @@ public class DefaultWorkflowDefinition
 		_optionalAttributes = optionalAttributes;
 	}
 
+	public void setScope(String scope) {
+		_scope = scope;
+	}
+
 	public void setTitle(String title) {
 		_title = title;
 	}
@@ -134,15 +186,37 @@ public class DefaultWorkflowDefinition
 		_version = version;
 	}
 
+	public void setWorkflowDefinitionId(long workflowDefinitionId) {
+		_workflowDefinitionId = workflowDefinitionId;
+	}
+
+	public void setWorkflowNodes(List<WorkflowNode> workflowNodes) {
+		_workflowNodes = workflowNodes;
+	}
+
+	public void setWorkflowTransitions(
+		List<WorkflowTransition> workflowTransitions) {
+
+		_workflowTransitions = workflowTransitions;
+	}
+
 	private boolean _active;
+	private long _companyId;
 	private String _content;
+	private String _contentAsXML;
+	private Date _createDate;
 	private String _description;
+	private String _externalReferenceCode;
 	private InputStream _inputStream;
 	private Date _modifiedDate;
 	private String _name;
 	private Map<String, Object> _optionalAttributes;
+	private String _scope;
 	private String _title;
 	private long _userId;
 	private int _version;
+	private long _workflowDefinitionId;
+	private List<WorkflowNode> _workflowNodes;
+	private List<WorkflowTransition> _workflowTransitions;
 
 }

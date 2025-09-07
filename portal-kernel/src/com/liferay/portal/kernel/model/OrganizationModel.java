@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -33,10 +25,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface OrganizationModel
-	extends BaseModel<Organization>, MVCCModel, ShardedModel,
+	extends BaseModel<Organization>, CTModel<Organization>,
+			ExternalReferenceCodeModel, MVCCModel, ShardedModel,
 			StagedAuditedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a organization model instance should use the {@link Organization} interface instead.
@@ -47,6 +40,7 @@ public interface OrganizationModel
 	 *
 	 * @return the primary key of this organization
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,6 +48,7 @@ public interface OrganizationModel
 	 *
 	 * @param primaryKey the primary key of this organization
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -71,6 +66,22 @@ public interface OrganizationModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this organization.
+	 *
+	 * @return the ct collection ID of this organization
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this organization.
+	 *
+	 * @param ctCollectionId the ct collection ID of this organization
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this organization.
@@ -95,6 +106,7 @@ public interface OrganizationModel
 	 * @return the external reference code of this organization
 	 */
 	@AutoEscape
+	@Override
 	public String getExternalReferenceCode();
 
 	/**
@@ -102,6 +114,7 @@ public interface OrganizationModel
 	 *
 	 * @param externalReferenceCode the external reference code of this organization
 	 */
+	@Override
 	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
@@ -323,18 +336,18 @@ public interface OrganizationModel
 	public void setCountryId(long countryId);
 
 	/**
-	 * Returns the status ID of this organization.
+	 * Returns the status list type ID of this organization.
 	 *
-	 * @return the status ID of this organization
+	 * @return the status list type ID of this organization
 	 */
-	public long getStatusId();
+	public long getStatusListTypeId();
 
 	/**
-	 * Sets the status ID of this organization.
+	 * Sets the status list type ID of this organization.
 	 *
-	 * @param statusId the status ID of this organization
+	 * @param statusListTypeId the status list type ID of this organization
 	 */
-	public void setStatusId(long statusId);
+	public void setStatusListTypeId(long statusListTypeId);
 
 	/**
 	 * Returns the comments of this organization.
@@ -364,5 +377,26 @@ public interface OrganizationModel
 	 * @param logoId the logo ID of this organization
 	 */
 	public void setLogoId(long logoId);
+
+	/**
+	 * Returns the status of this organization.
+	 *
+	 * @return the status of this organization
+	 */
+	public int getStatus();
+
+	/**
+	 * Sets the status of this organization.
+	 *
+	 * @param status the status of this organization
+	 */
+	public void setStatus(int status);
+
+	@Override
+	public Organization cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

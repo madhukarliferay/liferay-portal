@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.extender.internal;
@@ -52,7 +43,7 @@ import org.osgi.util.tracker.BundleTrackerCustomizer;
  * @author Carlos Sierra Andrés
  * @author Miguel Pastor
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 
 	@Override
@@ -102,7 +93,7 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_bundleTracker = new BundleTracker<>(
-			bundleContext, Bundle.ACTIVE | Bundle.STARTING, this);
+			bundleContext, Bundle.ACTIVE, this);
 
 		_bundleTracker.open();
 	}
@@ -124,8 +115,8 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 					configurationAdmin, symbolicName,
 					namedConfigurationContent);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 	}
@@ -171,13 +162,13 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 		try {
 			properties = namedConfigurationContent.getProperties();
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Supplier from description ", namedConfigurationContent,
 						" threw an exception: "),
-					t);
+					throwable);
 			}
 
 			return;
@@ -194,18 +185,18 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 		Bundle bundle, String configurationPath,
 		List<NamedConfigurationContent> namedConfigurationContents,
 		UnsafeFunction<InputStream, Dictionary<?, ?>, IOException>
-			propertyFunction,
+			propertyUnsafeFunction,
 		String filePattern) {
 
-		Enumeration<URL> entries = bundle.findEntries(
+		Enumeration<URL> enumeration = bundle.findEntries(
 			configurationPath, filePattern, true);
 
-		if (entries == null) {
+		if (enumeration == null) {
 			return;
 		}
 
-		while (entries.hasMoreElements()) {
-			URL url = entries.nextElement();
+		while (enumeration.hasMoreElements()) {
+			URL url = enumeration.nextElement();
 
 			String name = url.getFile();
 
@@ -221,13 +212,14 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 			int index = name.lastIndexOf('-');
 
 			if (index > lastIndexOfSlash) {
-				factoryPid = name.substring(lastIndexOfSlash, index);
+				factoryPid = name.substring(lastIndexOfSlash + 1, index);
 				pid = name.substring(
 					index + 1, name.length() + 1 - filePattern.length());
 			}
 			else {
 				pid = name.substring(
-					lastIndexOfSlash, name.length() + 1 - filePattern.length());
+					lastIndexOfSlash + 1,
+					name.length() + 1 - filePattern.length());
 			}
 
 			namedConfigurationContents.add(
@@ -235,7 +227,7 @@ public class ConfiguratorExtender implements BundleTrackerCustomizer<Bundle> {
 					factoryPid, pid,
 					() -> {
 						try (InputStream inputStream = url.openStream()) {
-							return propertyFunction.apply(inputStream);
+							return propertyUnsafeFunction.apply(inputStream);
 						}
 					}));
 		}

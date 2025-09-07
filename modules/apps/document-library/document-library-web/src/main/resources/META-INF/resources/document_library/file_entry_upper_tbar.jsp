@@ -1,93 +1,92 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/document_library/init.jsp" %>
 
 <%
-DLViewFileVersionDisplayContext dlViewFileVersionDisplayContext = (DLViewFileVersionDisplayContext)request.getAttribute("file_entry_upper_tbar.jsp-dlViewFileVersionDisplayContext");
-String documentTitle = GetterUtil.getString(request.getAttribute("file_entry_upper_tbar.jsp-documentTitle"));
-FileEntry fileEntry = (FileEntry)request.getAttribute("file_entry_upper_tbar.jsp-fileEntry");
-FileVersion fileVersion = (FileVersion)request.getAttribute("file_entry_upper_tbar.jsp-fileVersion");
+DLViewFileEntryDisplayContext dlViewFileEntryDisplayContext = (DLViewFileEntryDisplayContext)request.getAttribute(DLViewFileEntryDisplayContext.class.getName());
+
+FileEntry fileEntry = dlViewFileEntryDisplayContext.getFileEntry();
+FileVersion fileVersion = dlViewFileEntryDisplayContext.getFileVersion();
 %>
 
-<div class="upper-tbar-container-fixed">
-	<div class="tbar upper-tbar">
-		<div class="container-fluid container-fluid-max-xl">
-			<ul class="tbar-nav">
-				<li class="tbar-item tbar-item-expand">
-					<div class="tbar-section text-left">
-						<h2 class="text-truncate-inline upper-tbar-title" title="<%= HtmlUtil.escapeAttribute(documentTitle) %>">
-							<span class="text-truncate"><%= HtmlUtil.escape(documentTitle) %></span>
-						</h2>
+<nav class="component-tbar subnav-tbar-light tbar upper-tbar" role="navigation">
+	<clay:container-fluid
+		fullWidth="<%= true %>"
+	>
+		<ul class="tbar-nav">
+			<li class="tbar-item tbar-item-expand">
+				<div class="tbar-section text-left">
+					<h2 class="text-truncate-inline upper-tbar-title" title="<%= HtmlUtil.escapeAttribute(dlViewFileEntryDisplayContext.getDocumentTitle()) %>">
+						<span class="text-truncate"><%= HtmlUtil.escape(dlViewFileEntryDisplayContext.getDocumentTitle()) %></span>
+					</h2>
 
-						<c:if test="<%= fileEntry.hasLock() || fileEntry.isCheckedOut() %>">
-							<span>
-								<aui:icon cssClass="icon-monospaced" image="lock" markupView="lexicon" message="locked" />
-							</span>
-						</c:if>
-					</div>
-				</li>
-				<li class="tbar-item">
-					<clay:button
-						elementClasses="btn-outline-borderless btn-outline-secondary"
-						icon="info-circle-open"
-						id='<%= liferayPortletResponse.getNamespace() + "OpenContextualSidebar" %>'
-						monospaced="true"
-						size="sm"
-						style="<%= false %>"
-						title='<%= LanguageUtil.get(resourceBundle, "info") %>'
+					<c:if test="<%= fileEntry.hasLock() || fileEntry.isCheckedOut() %>">
+						<span class="lfr-portal-tooltip" title="<%= LanguageUtil.get(request, "locked-document") %>">
+							<clay:icon
+								cssClass="inline-item inline-item-after state-icon"
+								symbol="lock"
+							/>
+						</span>
+					</c:if>
+
+					<c:if test="<%= dlViewFileEntryDisplayContext.isShared() %>">
+						<clay:icon
+							cssClass="inline-item inline-item-after lfr-portal-tooltip state-icon"
+							symbol="users"
+						/>
+					</c:if>
+				</div>
+			</li>
+			<li class="tbar-item">
+				<clay:button
+					borderless="<%= true %>"
+					data-qa-id="infoButton"
+					displayType="secondary"
+					icon="info-circle-open"
+					id='<%= liferayPortletResponse.getNamespace() + "OpenContextualSidebar" %>'
+					small="<%= true %>"
+					title='<%= LanguageUtil.get(resourceBundle, "info") %>'
+				/>
+			</li>
+
+			<c:if test="<%= dlViewFileEntryDisplayContext.isSharingLinkVisible() %>">
+				<li class="d-none d-sm-flex tbar-item">
+					<liferay-sharing:button
+						className="<%= DLFileEntryConstants.getClassName() %>"
+						classPK="<%= fileEntry.getFileEntryId() %>"
 					/>
 				</li>
+			</c:if>
 
-				<c:if test="<%= dlViewFileVersionDisplayContext.isSharingLinkVisible() %>">
-					<li class="d-none d-sm-flex tbar-item">
-						<liferay-sharing:button
-							className="<%= DLFileEntryConstants.getClassName() %>"
-							classPK="<%= fileEntry.getFileEntryId() %>"
-						/>
-					</li>
-				</c:if>
-
-				<c:if test="<%= dlViewFileVersionDisplayContext.isDownloadLinkVisible() %>">
-					<li class="d-none d-sm-flex tbar-item">
-
-						<%
-						Map<String, String> data = new HashMap<>();
-
-						data.put("analytics-file-entry-id", String.valueOf(fileEntry.getFileEntryId()));
-						%>
-
-						<clay:link
-							buttonStyle="primary"
-							data="<%= data %>"
-							elementClasses="btn-sm"
-							href="<%= DLURLHelperUtil.getDownloadURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, false, true) %>"
-							icon="download"
-							label='<%= LanguageUtil.get(resourceBundle, "download") %>'
-							title='<%= LanguageUtil.format(resourceBundle, "file-size-x", TextFormatter.formatStorageSize(fileVersion.getSize(), locale), false) %>'
-						/>
-					</li>
-				</c:if>
-
-				<li class="tbar-item">
-					<liferay-ui:menu
-						menu="<%= dlViewFileVersionDisplayContext.getMenu() %>"
+			<c:if test="<%= dlViewFileEntryDisplayContext.isDownloadLinkVisible() %>">
+				<li class="d-none d-sm-flex tbar-item">
+					<clay:link
+						data-analytics-file-entry-id="<%= fileEntry.getFileEntryId() %>"
+						data-analytics-file-entry-title="<%= fileEntry.getTitle() %>"
+						data-analytics-file-entry-version="<%= fileEntry.getVersion() %>"
+						displayType="primary"
+						href="<%= DLURLHelperUtil.getDownloadURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, false, true) %>"
+						icon="download"
+						label="download"
+						small="<%= true %>"
+						title='<%= LanguageUtil.format(resourceBundle, "file-size-x", LanguageUtil.formatStorageSize(fileVersion.getSize(), locale), false) %>'
+						type="button"
 					/>
 				</li>
-			</ul>
-		</div>
-	</div>
-</div>
+			</c:if>
+
+			<li class="tbar-item">
+				<clay:dropdown-actions
+					aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+					dropdownItems="<%= dlViewFileEntryDisplayContext.getActionDropdownItems() %>"
+					propsTransformer="{DLFileEntryDropdownPropsTransformer} from document-library-web"
+				/>
+			</li>
+		</ul>
+	</clay:container-fluid>
+</nav>

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SamlSpAuthRequestLocalService}.
@@ -27,6 +19,10 @@ public class SamlSpAuthRequestLocalServiceWrapper
 	implements SamlSpAuthRequestLocalService,
 			   ServiceWrapper<SamlSpAuthRequestLocalService> {
 
+	public SamlSpAuthRequestLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SamlSpAuthRequestLocalServiceWrapper(
 		SamlSpAuthRequestLocalService samlSpAuthRequestLocalService) {
 
@@ -35,6 +31,10 @@ public class SamlSpAuthRequestLocalServiceWrapper
 
 	/**
 	 * Adds the saml sp auth request to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpAuthRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlSpAuthRequest the saml sp auth request
 	 * @return the saml sp auth request that was added
@@ -52,11 +52,25 @@ public class SamlSpAuthRequestLocalServiceWrapper
 	@Override
 	public com.liferay.saml.persistence.model.SamlSpAuthRequest
 		addSamlSpAuthRequest(
-			String samlIdpEntityId, String samlSpAuthRequestKey,
+			String samlIdpEntityId, String samlRelayState,
+			String samlSpAuthRequestKey,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext) {
 
 		return _samlSpAuthRequestLocalService.addSamlSpAuthRequest(
-			samlIdpEntityId, samlSpAuthRequestKey, serviceContext);
+			samlIdpEntityId, samlRelayState, samlSpAuthRequestKey,
+			serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _samlSpAuthRequestLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -93,6 +107,10 @@ public class SamlSpAuthRequestLocalServiceWrapper
 	/**
 	 * Deletes the saml sp auth request with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpAuthRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpAuthnRequestId the primary key of the saml sp auth request
 	 * @return the saml sp auth request that was removed
 	 * @throws PortalException if a saml sp auth request with the primary key could not be found
@@ -109,6 +127,10 @@ public class SamlSpAuthRequestLocalServiceWrapper
 	/**
 	 * Deletes the saml sp auth request from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpAuthRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpAuthRequest the saml sp auth request
 	 * @return the saml sp auth request that was removed
 	 */
@@ -120,6 +142,18 @@ public class SamlSpAuthRequestLocalServiceWrapper
 
 		return _samlSpAuthRequestLocalService.deleteSamlSpAuthRequest(
 			samlSpAuthRequest);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _samlSpAuthRequestLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _samlSpAuthRequestLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -255,6 +289,9 @@ public class SamlSpAuthRequestLocalServiceWrapper
 		return _samlSpAuthRequestLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -320,6 +357,10 @@ public class SamlSpAuthRequestLocalServiceWrapper
 	/**
 	 * Updates the saml sp auth request in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpAuthRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpAuthRequest the saml sp auth request
 	 * @return the saml sp auth request that was updated
 	 */
@@ -331,6 +372,11 @@ public class SamlSpAuthRequestLocalServiceWrapper
 
 		return _samlSpAuthRequestLocalService.updateSamlSpAuthRequest(
 			samlSpAuthRequest);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _samlSpAuthRequestLocalService.getBasePersistence();
 	}
 
 	@Override

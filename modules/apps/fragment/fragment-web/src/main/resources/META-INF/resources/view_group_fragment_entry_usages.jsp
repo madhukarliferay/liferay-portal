@@ -1,43 +1,36 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-GroupFragmentEntryLinkDisplayContext groupFragmentEntryLinkDisplayContext = new GroupFragmentEntryLinkDisplayContext(renderRequest, renderResponse);
+GroupFragmentEntryLinkDisplayContext groupFragmentEntryLinkDisplayContext = (GroupFragmentEntryLinkDisplayContext)request.getAttribute(GroupFragmentEntryLinkDisplayContext.class.getName());
 
 FragmentEntry fragmentEntry = groupFragmentEntryLinkDisplayContext.getFragmentEntry();
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(groupFragmentEntryLinkDisplayContext.getRedirect());
+portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 renderResponse.setTitle(LanguageUtil.format(request, "usages-and-propagation-x", fragmentEntry.getName()));
 %>
 
-<div class="container-fluid container-fluid-max-xl container-form-lg">
-	<div class="sheet">
-		<div class="row">
-			<div class="col-lg-12">
-
-				<%
-				GroupFragmentEntryUsageManagementToolbarDisplayContext groupFragmentEntryUsageManagementToolbarDisplayContext = new GroupFragmentEntryUsageManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, groupFragmentEntryLinkDisplayContext.getSearchContainer());
-				%>
-
+<clay:container-fluid
+	cssClass="container-form-lg"
+	size="xxxl"
+>
+	<clay:sheet>
+		<clay:row>
+			<clay:col
+				lg="12"
+			>
 				<clay:management-toolbar
-					displayContext="<%= groupFragmentEntryUsageManagementToolbarDisplayContext %>"
+					managementToolbarDisplayContext="<%= new GroupFragmentEntryUsageManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, groupFragmentEntryLinkDisplayContext.getSearchContainer()) %>"
+					propsTransformer="{FragmentEntryUsagesManagementToolbarPropsTransformer} from fragment-web"
 				/>
 
 				<portlet:actionURL name="/fragment/propagate_group_fragment_entry_changes" var="propagateGroupFragmentEntryChangesURL">
@@ -55,11 +48,13 @@ renderResponse.setTitle(LanguageUtil.format(request, "usages-and-propagation-x",
 							modelVar="group"
 						>
 							<liferay-ui:search-container-column-text
+								cssClass="table-cell-expand table-cell-minw-200"
 								name="name"
 								value="<%= group.getDescriptiveName(locale) %>"
 							/>
 
 							<liferay-ui:search-container-column-text
+								cssClass="table-cell-expand-smallest table-cell-minw-100"
 								name="usages"
 								translate="<%= true %>"
 								value="<%= String.valueOf(groupFragmentEntryLinkDisplayContext.getFragmentGroupUsageCount(group)) %>"
@@ -74,12 +69,7 @@ renderResponse.setTitle(LanguageUtil.format(request, "usages-and-propagation-x",
 						/>
 					</liferay-ui:search-container>
 				</aui:form>
-			</div>
-		</div>
-	</div>
-</div>
-
-<liferay-frontend:component
-	componentId="<%= groupFragmentEntryUsageManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/FragmentEntryUsageManagementToolbarDefaultEventHandler.es"
-/>
+			</clay:col>
+		</clay:row>
+	</clay:sheet>
+</clay:container-fluid>

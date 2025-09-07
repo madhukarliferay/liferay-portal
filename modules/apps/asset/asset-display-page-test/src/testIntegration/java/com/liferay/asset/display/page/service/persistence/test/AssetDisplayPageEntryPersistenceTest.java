@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.display.page.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -131,6 +122,8 @@ public class AssetDisplayPageEntryPersistenceTest {
 
 		newAssetDisplayPageEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newAssetDisplayPageEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newAssetDisplayPageEntry.setUuid(RandomTestUtil.randomString());
 
 		newAssetDisplayPageEntry.setGroupId(RandomTestUtil.nextLong());
@@ -166,6 +159,9 @@ public class AssetDisplayPageEntryPersistenceTest {
 		Assert.assertEquals(
 			existingAssetDisplayPageEntry.getMvccVersion(),
 			newAssetDisplayPageEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingAssetDisplayPageEntry.getCtCollectionId(),
+			newAssetDisplayPageEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingAssetDisplayPageEntry.getUuid(),
 			newAssetDisplayPageEntry.getUuid());
@@ -252,6 +248,14 @@ public class AssetDisplayPageEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByG_CN() throws Exception {
+		_persistence.countByG_CN(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByG_CN(0L, 0L);
+	}
+
+	@Test
 	public void testCountByG_C_C() throws Exception {
 		_persistence.countByG_C_C(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
@@ -288,11 +292,12 @@ public class AssetDisplayPageEntryPersistenceTest {
 
 	protected OrderByComparator<AssetDisplayPageEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"AssetDisplayPageEntry", "mvccVersion", true, "uuid", true,
-			"assetDisplayPageEntryId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "classNameId", true, "classPK", true,
-			"layoutPageTemplateEntryId", true, "type", true, "plid", true);
+			"AssetDisplayPageEntry", "mvccVersion", true, "ctCollectionId",
+			true, "uuid", true, "assetDisplayPageEntryId", true, "groupId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "classNameId", true,
+			"classPK", true, "layoutPageTemplateEntryId", true, "type", true,
+			"plid", true);
 	}
 
 	@Test
@@ -538,37 +543,82 @@ public class AssetDisplayPageEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		AssetDisplayPageEntry existingAssetDisplayPageEntry =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newAssetDisplayPageEntry.getPrimaryKey());
+				newAssetDisplayPageEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingAssetDisplayPageEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingAssetDisplayPageEntry, "getOriginalUuid",
-					new Class<?>[0])));
-		Assert.assertEquals(
-			Long.valueOf(existingAssetDisplayPageEntry.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingAssetDisplayPageEntry, "getOriginalGroupId",
-				new Class<?>[0]));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AssetDisplayPageEntry newAssetDisplayPageEntry =
+			addAssetDisplayPageEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AssetDisplayPageEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"assetDisplayPageEntryId",
+				newAssetDisplayPageEntry.getAssetDisplayPageEntryId()));
+
+		List<AssetDisplayPageEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		AssetDisplayPageEntry assetDisplayPageEntry) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingAssetDisplayPageEntry.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingAssetDisplayPageEntry, "getOriginalGroupId",
-				new Class<?>[0]));
+			assetDisplayPageEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				assetDisplayPageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
 		Assert.assertEquals(
-			Long.valueOf(existingAssetDisplayPageEntry.getClassNameId()),
+			Long.valueOf(assetDisplayPageEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetDisplayPageEntry, "getOriginalClassNameId",
-				new Class<?>[0]));
+				assetDisplayPageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
 		Assert.assertEquals(
-			Long.valueOf(existingAssetDisplayPageEntry.getClassPK()),
+			Long.valueOf(assetDisplayPageEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetDisplayPageEntry, "getOriginalClassPK",
-				new Class<?>[0]));
+				assetDisplayPageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			Long.valueOf(assetDisplayPageEntry.getClassNameId()),
+			ReflectionTestUtil.<Long>invoke(
+				assetDisplayPageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
+		Assert.assertEquals(
+			Long.valueOf(assetDisplayPageEntry.getClassPK()),
+			ReflectionTestUtil.<Long>invoke(
+				assetDisplayPageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected AssetDisplayPageEntry addAssetDisplayPageEntry()
@@ -579,6 +629,8 @@ public class AssetDisplayPageEntryPersistenceTest {
 		AssetDisplayPageEntry assetDisplayPageEntry = _persistence.create(pk);
 
 		assetDisplayPageEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		assetDisplayPageEntry.setCtCollectionId(RandomTestUtil.nextLong());
 
 		assetDisplayPageEntry.setUuid(RandomTestUtil.randomString());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.module.configuration.internal;
@@ -19,17 +10,19 @@ import aQute.bnd.annotation.metatype.Meta;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.FallbackKeysSettingsUtil;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.settings.SettingsException;
-import com.liferay.portal.kernel.settings.SettingsFactory;
 import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.settings.TypedSettings;
+import com.liferay.portal.kernel.theme.PortletDisplay;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
@@ -48,29 +41,25 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  * @author Jorge Ferrer
  */
-@Component(immediate = true, service = ConfigurationProvider.class)
+@Component(service = ConfigurationProvider.class)
 public class ConfigurationProviderImpl implements ConfigurationProvider {
 
 	@Override
 	public <T> void deleteCompanyConfiguration(Class<T> clazz, long companyId)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
 		_deleteFactoryConfiguration(
-			configurationPid, ExtendedObjectClassDefinition.Scope.COMPANY,
-			companyId);
+			_getConfigurationPid(clazz),
+			ExtendedObjectClassDefinition.Scope.COMPANY, companyId);
 	}
 
 	@Override
 	public <T> void deleteGroupConfiguration(Class<T> clazz, long groupId)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
 		_deleteFactoryConfiguration(
-			configurationPid, ExtendedObjectClassDefinition.Scope.GROUP,
-			groupId);
+			_getConfigurationPid(clazz),
+			ExtendedObjectClassDefinition.Scope.GROUP, groupId);
 	}
 
 	@Override
@@ -78,10 +67,8 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 			Class<T> clazz, String portletId)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
 		_deleteFactoryConfiguration(
-			configurationPid,
+			_getConfigurationPid(clazz),
 			ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE, portletId);
 	}
 
@@ -89,9 +76,7 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 	public <T> void deleteSystemConfiguration(Class<T> clazz)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
-		_deleteConfiguration(configurationPid);
+		_deleteConfiguration(_getConfigurationPid(clazz));
 	}
 
 	@Override
@@ -117,13 +102,14 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 				new ConfigurationInvocationHandler<>(
 					clazz,
 					new TypedSettings(
-						_settingsFactory.getSettings(settingsLocator)));
+						FallbackKeysSettingsUtil.getSettings(settingsLocator)));
 
 			return configurationInvocationHandler.createProxy();
 		}
-		catch (ReflectiveOperationException | SettingsException e) {
+		catch (ReflectiveOperationException | SettingsException exception) {
 			throw new ConfigurationException(
-				"Unable to load configuration of type " + clazz.getName(), e);
+				"Unable to load configuration of type " + clazz.getName(),
+				exception);
 		}
 	}
 
@@ -159,6 +145,24 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 	}
 
 	@Override
+	public <T> T getPortletInstanceConfiguration(
+			Class<T> clazz, ThemeDisplay themeDisplay)
+		throws ConfigurationException {
+
+		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
+
+		String portletResource = portletDisplay.getPortletResource();
+
+		if (Validator.isNull(portletResource)) {
+			return getPortletInstanceConfiguration(
+				clazz, themeDisplay.getLayout(), portletDisplay.getId());
+		}
+
+		return getPortletInstanceConfiguration(
+			clazz, themeDisplay.getLayout(), portletResource);
+	}
+
+	@Override
 	public <T> T getSystemConfiguration(Class<T> clazz)
 		throws ConfigurationException {
 
@@ -174,11 +178,19 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 			Dictionary<String, Object> properties)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
+		_saveFactoryConfiguration(
+			_getConfigurationPid(clazz),
+			ExtendedObjectClassDefinition.Scope.COMPANY, companyId, properties);
+	}
+
+	@Override
+	public <T> void saveCompanyConfiguration(
+			long companyId, String pid, Dictionary<String, Object> properties)
+		throws ConfigurationException {
 
 		_saveFactoryConfiguration(
-			configurationPid, ExtendedObjectClassDefinition.Scope.COMPANY,
-			companyId, properties);
+			pid, ExtendedObjectClassDefinition.Scope.COMPANY, companyId,
+			properties);
 	}
 
 	@Override
@@ -186,11 +198,19 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 			Class<T> clazz, long groupId, Dictionary<String, Object> properties)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
+		_saveFactoryConfiguration(
+			_getConfigurationPid(clazz),
+			ExtendedObjectClassDefinition.Scope.GROUP, groupId, properties);
+	}
+
+	@Override
+	public <T> void saveGroupConfiguration(
+			long groupId, String pid, Dictionary<String, Object> properties)
+		throws ConfigurationException {
 
 		_saveFactoryConfiguration(
-			configurationPid, ExtendedObjectClassDefinition.Scope.GROUP,
-			groupId, properties);
+			pid, ExtendedObjectClassDefinition.Scope.GROUP, groupId,
+			properties);
 	}
 
 	@Override
@@ -199,10 +219,8 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 			Dictionary<String, Object> properties)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
 		_saveFactoryConfiguration(
-			configurationPid,
+			_getConfigurationPid(clazz),
 			ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE, portletId,
 			properties);
 	}
@@ -212,9 +230,7 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 			Class<T> clazz, Dictionary<String, Object> properties)
 		throws ConfigurationException {
 
-		String configurationPid = _getConfigurationPid(clazz);
-
-		_saveConfiguration(configurationPid, properties);
+		_saveConfiguration(_getConfigurationPid(clazz), properties);
 	}
 
 	private void _deleteConfiguration(String pid)
@@ -232,9 +248,9 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 				configurations[0].delete();
 			}
 		}
-		catch (InvalidSyntaxException | IOException e) {
+		catch (InvalidSyntaxException | IOException exception) {
 			throw new ConfigurationException(
-				"Unable to delete configuration " + pid, e);
+				"Unable to delete configuration " + pid, exception);
 		}
 	}
 
@@ -253,10 +269,10 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 				configuration.delete();
 			}
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new ConfigurationException(
 				"Unable to delete factory configuration " + scopedFactoryPid,
-				ioe);
+				ioException);
 		}
 	}
 
@@ -289,17 +305,18 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 
 			return null;
 		}
-		catch (InvalidSyntaxException | IOException e) {
+		catch (InvalidSyntaxException | IOException exception) {
 			throw new ConfigurationException(
-				"Unable to retrieve factory configuration " + factoryPid, e);
+				"Unable to retrieve factory configuration " + factoryPid,
+				exception);
 		}
 	}
 
 	private <T> String _getSettingsId(Class<T> clazz) {
+		String settingsId = null;
+
 		ExtendedObjectClassDefinition eocd = clazz.getAnnotation(
 			ExtendedObjectClassDefinition.class);
-
-		String settingsId = null;
 
 		if (eocd != null) {
 			settingsId = eocd.settingsId();
@@ -322,9 +339,9 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 
 			configuration.update(properties);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new ConfigurationException(
-				"Unable to save configuration " + pid, ioe);
+				"Unable to save configuration " + pid, ioException);
 		}
 	}
 
@@ -348,17 +365,14 @@ public class ConfigurationProviderImpl implements ConfigurationProvider {
 
 			configuration.update(properties);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new ConfigurationException(
 				"Unable to save factory configuration " + scopedFactoryPid,
-				ioe);
+				ioException);
 		}
 	}
 
 	@Reference
 	private ConfigurationAdmin _configurationAdmin;
-
-	@Reference
-	private SettingsFactory _settingsFactory;
 
 }

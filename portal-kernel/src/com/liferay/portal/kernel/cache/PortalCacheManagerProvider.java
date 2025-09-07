@@ -1,24 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.cache;
 
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
 import java.io.Serializable;
 
@@ -26,6 +13,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Tina Tian
@@ -47,6 +39,8 @@ public class PortalCacheManagerProvider {
 			_dynamicPortalCacheManagers.values());
 	}
 
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 	private static final Map
 		<String, DynamicPortalCacheManager<? extends Serializable, ?>>
 			_dynamicPortalCacheManagers = new ConcurrentHashMap<>();
@@ -55,9 +49,8 @@ public class PortalCacheManagerProvider {
 		 DynamicPortalCacheManager<? extends Serializable, ?>> _serviceTracker;
 
 	static {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
+		_serviceTracker = new ServiceTracker<>(
+			_bundleContext,
 			(Class<PortalCacheManager<? extends Serializable, ?>>)
 				(Class<?>)PortalCacheManager.class,
 			new PortalCacheProviderServiceTrackerCustomizer());
@@ -76,10 +69,8 @@ public class PortalCacheManagerProvider {
 				ServiceReference<PortalCacheManager<? extends Serializable, ?>>
 					serviceReference) {
 
-			Registry registry = RegistryUtil.getRegistry();
-
 			PortalCacheManager<? extends Serializable, ?> portalCacheManager =
-				registry.getService(serviceReference);
+				_bundleContext.getService(serviceReference);
 
 			DynamicPortalCacheManager<? extends Serializable, ?>
 				dynamicPortalCacheManager =
@@ -107,9 +98,7 @@ public class PortalCacheManagerProvider {
 			DynamicPortalCacheManager<? extends Serializable, ?>
 				dynamicPortalCacheManager) {
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
+			_bundleContext.ungetService(serviceReference);
 
 			dynamicPortalCacheManager.setPortalCacheManager(null);
 		}

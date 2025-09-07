@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service;
 
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
@@ -26,7 +18,10 @@ import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 
+import java.io.Serializable;
+
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -40,6 +35,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -48,10 +44,10 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface DDLRecordService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link DDLRecordServiceUtil} to access the ddl record remote service. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the ddl record remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link DDLRecordServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
@@ -72,6 +68,26 @@ public interface DDLRecordService extends BaseService {
 	public DDLRecord addRecord(
 			long groupId, long recordSetId, int displayIndex,
 			DDMFormValues ddmFormValues, ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * Adds a record referencing the record set.
+	 *
+	 * @param groupId the primary key of the record's group
+	 * @param recordSetId the primary key of the record set
+	 * @param displayIndex the index position in which the record is
+	 displayed in the spreadsheet view
+	 * @param fieldsMap the record values. The fieldsMap is a map of field
+	 names and its serializable values.
+	 * @param serviceContext the service context to be applied. This can
+	 set the UUID, guest permissions, and group permissions for
+	 the record.
+	 * @return the record
+	 * @throws PortalException if a portal exception occurred
+	 */
+	public DDLRecord addRecord(
+			long groupId, long recordSetId, int displayIndex,
+			Map<String, Serializable> fieldsMap, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -140,6 +156,27 @@ public interface DDLRecordService extends BaseService {
 	public DDLRecord updateRecord(
 			long recordId, boolean majorVersion, int displayIndex,
 			DDMFormValues ddmFormValues, ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * Updates a record, replacing its display index and values.
+	 *
+	 * @param recordId the primary key of the record
+	 * @param displayIndex the index position in which the record is
+	 displayed in the spreadsheet view
+	 * @param fieldsMap the record values. The fieldsMap is a map of field
+	 names and its serializable values.
+	 * @param mergeFields whether to merge the new fields with the existing
+	 ones; otherwise replace the existing fields
+	 * @param serviceContext the service context to be applied. This can
+	 set the record modified date.
+	 * @return the record
+	 * @throws PortalException if a portal exception occurred
+	 */
+	public DDLRecord updateRecord(
+			long recordId, int displayIndex,
+			Map<String, Serializable> fieldsMap, boolean mergeFields,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 }

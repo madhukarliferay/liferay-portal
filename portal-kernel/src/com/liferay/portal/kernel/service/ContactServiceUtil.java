@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Contact;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for Contact. This utility wraps
@@ -30,20 +25,30 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class ContactServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.ContactServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
+	public static Contact addContact(
+			long userId, String className, long classPK, String emailAddress,
+			String firstName, String middleName, String lastName,
+			long prefixListTypeId, long suffixListTypeId, boolean male,
+			int birthdayMonth, int birthdayDay, int birthdayYear, String smsSn,
+			String facebookSn, String jabberSn, String skypeSn,
+			String twitterSn, String jobTitle)
+		throws PortalException {
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ContactServiceUtil} to access the contact remote service. Add custom service methods to <code>com.liferay.portal.service.impl.ContactServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Contact>
-			getCompanyContacts(long companyId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		return getService().addContact(
+			userId, className, classPK, emailAddress, firstName, middleName,
+			lastName, prefixListTypeId, suffixListTypeId, male, birthdayMonth,
+			birthdayDay, birthdayYear, smsSn, facebookSn, jabberSn, skypeSn,
+			twitterSn, jobTitle);
+	}
+
+	public static List<Contact> getCompanyContacts(
+			long companyId, int start, int end)
+		throws PortalException {
 
 		return getService().getCompanyContacts(companyId, start, end);
 	}
@@ -52,26 +57,21 @@ public class ContactServiceUtil {
 		return getService().getCompanyContactsCount(companyId);
 	}
 
-	public static com.liferay.portal.kernel.model.Contact getContact(
-			long contactId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Contact getContact(long contactId) throws PortalException {
 		return getService().getContact(contactId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Contact>
-			getContacts(
-				long classNameId, long classPK, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.portal.kernel.model.Contact> orderByComparator)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<Contact> getContacts(
+			long classNameId, long classPK, int start, int end,
+			OrderByComparator<Contact> orderByComparator)
+		throws PortalException {
 
 		return getService().getContacts(
 			classNameId, classPK, start, end, orderByComparator);
 	}
 
 	public static int getContactsCount(long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getContactsCount(classNameId, classPK);
 	}
@@ -85,15 +85,29 @@ public class ContactServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static ContactService getService() {
-		if (_service == null) {
-			_service = (ContactService)PortalBeanLocatorUtil.locate(
-				ContactService.class.getName());
-		}
+	public static Contact updateContact(
+			long contactId, String emailAddress, String firstName,
+			String middleName, String lastName, long prefixListTypeId,
+			long suffixListTypeId, boolean male, int birthdayMonth,
+			int birthdayDay, int birthdayYear, String smsSn, String facebookSn,
+			String jabberSn, String skypeSn, String twitterSn, String jobTitle)
+		throws PortalException {
 
+		return getService().updateContact(
+			contactId, emailAddress, firstName, middleName, lastName,
+			prefixListTypeId, suffixListTypeId, male, birthdayMonth,
+			birthdayDay, birthdayYear, smsSn, facebookSn, jabberSn, skypeSn,
+			twitterSn, jobTitle);
+	}
+
+	public static ContactService getService() {
 		return _service;
 	}
 
-	private static ContactService _service;
+	public static void setService(ContactService service) {
+		_service = service;
+	}
+
+	private static volatile ContactService _service;
 
 }

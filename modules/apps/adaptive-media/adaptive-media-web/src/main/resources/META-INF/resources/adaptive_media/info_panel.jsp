@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -33,30 +24,40 @@ if (ListUtil.isNotEmpty(selectedAMImageConfigurationEntries)) {
 <div class="sidebar-header">
 	<c:choose>
 		<c:when test="<%= selectedConfigurationEntriesSize == 1 %>">
-			<ul class="sidebar-actions">
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title">
+						<%= HtmlUtil.escape(amImageConfigurationEntry.getName()) %>
+					</div>
 
-				<%
-				request.setAttribute("info_panel.jsp-amImageConfigurationEntry", amImageConfigurationEntry);
-				%>
+					<div class="component-subtitle">
+						<liferay-ui:message key="image-resolution" />
+					</div>
+				</div>
 
-				<li>
+				<div class="autofit-col">
+
+					<%
+					request.setAttribute("info_panel.jsp-amImageConfigurationEntry", amImageConfigurationEntry);
+					%>
+
 					<liferay-util:include page="/adaptive_media/image_configuration_entry_action.jsp" servletContext="<%= application %>" />
-				</li>
-			</ul>
-
-			<h4 class="sidebar-title">
-				<%= HtmlUtil.escape(amImageConfigurationEntry.getName()) %>
-			</h4>
-
-			<h5 class="sidebar-subtitle">
-				<liferay-ui:message key="image-resolution" />
-			</h5>
+				</div>
+			</div>
 		</c:when>
 		<c:when test="<%= selectedConfigurationEntriesSize > 1 %>">
-			<h4 class="sidebar-title"><liferay-ui:message arguments="<%= selectedConfigurationEntriesSize %>" key="x-items-are-selected" /></h4>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title"><liferay-ui:message arguments="<%= selectedConfigurationEntriesSize %>" key="x-items-are-selected" /></div>
+				</div>
+			</div>
 		</c:when>
 		<c:otherwise>
-			<h4 class="sidebar-title"><liferay-ui:message key="adaptive-media" /></h4>
+			<div class="autofit-row sidebar-section">
+				<div class="autofit-col autofit-col-expand">
+					<div class="component-title"><liferay-ui:message key="adaptive-media" /></div>
+				</div>
+			</div>
 		</c:otherwise>
 	</c:choose>
 </div>
@@ -69,7 +70,7 @@ if (ListUtil.isNotEmpty(selectedAMImageConfigurationEntries)) {
 >
 	<liferay-ui:section>
 		<div class="sidebar-body">
-			<dl class="sidebar-block">
+			<dl class="sidebar-dl sidebar-section">
 				<c:choose>
 					<c:when test="<%= selectedConfigurationEntriesSize == 1 %>">
 						<dt class="sidebar-dt">
@@ -91,11 +92,10 @@ if (ListUtil.isNotEmpty(selectedAMImageConfigurationEntries)) {
 
 							<%
 							int adaptedImages = AMImageEntryLocalServiceUtil.getAMImageEntriesCount(themeDisplay.getCompanyId(), amImageConfigurationEntry.getUUID());
-
-							int totalImages = AMImageEntryLocalServiceUtil.getExpectedAMImageEntriesCount(themeDisplay.getCompanyId());
+							int totalImages = GetterUtil.getInteger(request.getAttribute(AMWebKeys.TOTAL_IMAGES));
 							%>
 
-							<%= Math.min(adaptedImages, totalImages) + "/" + totalImages %>
+							<%= Math.min(adaptedImages, totalImages) %>/<%= totalImages %>
 						</dd>
 
 						<%

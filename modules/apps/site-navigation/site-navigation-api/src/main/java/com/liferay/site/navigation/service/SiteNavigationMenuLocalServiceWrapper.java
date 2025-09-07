@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.service;
 
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.site.navigation.model.SiteNavigationMenu;
 
 /**
  * Provides a wrapper for {@link SiteNavigationMenuLocalService}.
@@ -27,6 +22,10 @@ public class SiteNavigationMenuLocalServiceWrapper
 	implements ServiceWrapper<SiteNavigationMenuLocalService>,
 			   SiteNavigationMenuLocalService {
 
+	public SiteNavigationMenuLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SiteNavigationMenuLocalServiceWrapper(
 		SiteNavigationMenuLocalService siteNavigationMenuLocalService) {
 
@@ -34,57 +33,67 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SiteNavigationMenuLocalServiceUtil} to access the site navigation menu local service. Add custom service methods to <code>com.liferay.site.navigation.service.impl.SiteNavigationMenuLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			addSiteNavigationMenu(
-				long userId, long groupId, String name, int type, boolean auto,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
-			userId, groupId, name, type, auto, serviceContext);
-	}
-
-	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			addSiteNavigationMenu(
-				long userId, long groupId, String name, int type,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
-			userId, groupId, name, type, serviceContext);
-	}
-
-	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			addSiteNavigationMenu(
-				long userId, long groupId, String name,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
-			userId, groupId, name, serviceContext);
-	}
-
-	/**
 	 * Adds the site navigation menu to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteNavigationMenuLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param siteNavigationMenu the site navigation menu
 	 * @return the site navigation menu that was added
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		addSiteNavigationMenu(
-			com.liferay.site.navigation.model.SiteNavigationMenu
-				siteNavigationMenu) {
+	public SiteNavigationMenu addSiteNavigationMenu(
+		SiteNavigationMenu siteNavigationMenu) {
 
 		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
 			siteNavigationMenu);
+	}
+
+	@Override
+	public SiteNavigationMenu addSiteNavigationMenu(
+			String externalReferenceCode, long userId, long groupId,
+			String name, int type, boolean auto,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
+			externalReferenceCode, userId, groupId, name, type, auto,
+			serviceContext);
+	}
+
+	@Override
+	public SiteNavigationMenu addSiteNavigationMenu(
+			String externalReferenceCode, long userId, long groupId,
+			String name, int type,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
+			externalReferenceCode, userId, groupId, name, type, serviceContext);
+	}
+
+	@Override
+	public SiteNavigationMenu addSiteNavigationMenu(
+			String externalReferenceCode, long userId, long groupId,
+			String name,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.addSiteNavigationMenu(
+			externalReferenceCode, userId, groupId, name, serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -94,8 +103,8 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @return the new site navigation menu
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		createSiteNavigationMenu(long siteNavigationMenuId) {
+	public SiteNavigationMenu createSiteNavigationMenu(
+		long siteNavigationMenuId) {
 
 		return _siteNavigationMenuLocalService.createSiteNavigationMenu(
 			siteNavigationMenuId);
@@ -116,13 +125,17 @@ public class SiteNavigationMenuLocalServiceWrapper
 	/**
 	 * Deletes the site navigation menu with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteNavigationMenuLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteNavigationMenuId the primary key of the site navigation menu
 	 * @return the site navigation menu that was removed
 	 * @throws PortalException if a site navigation menu with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			deleteSiteNavigationMenu(long siteNavigationMenuId)
+	public SiteNavigationMenu deleteSiteNavigationMenu(
+			long siteNavigationMenuId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.deleteSiteNavigationMenu(
@@ -132,15 +145,17 @@ public class SiteNavigationMenuLocalServiceWrapper
 	/**
 	 * Deletes the site navigation menu from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteNavigationMenuLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteNavigationMenu the site navigation menu
 	 * @return the site navigation menu that was removed
 	 * @throws PortalException
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			deleteSiteNavigationMenu(
-				com.liferay.site.navigation.model.SiteNavigationMenu
-					siteNavigationMenu)
+	public SiteNavigationMenu deleteSiteNavigationMenu(
+			SiteNavigationMenu siteNavigationMenu)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.deleteSiteNavigationMenu(
@@ -148,8 +163,31 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteSiteNavigationMenus(long groupId) {
+	public SiteNavigationMenu deleteSiteNavigationMenu(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.deleteSiteNavigationMenu(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public void deleteSiteNavigationMenus(long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_siteNavigationMenuLocalService.deleteSiteNavigationMenus(groupId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _siteNavigationMenuLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _siteNavigationMenuLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -244,27 +282,40 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		fetchPrimarySiteNavigationMenu(long groupId) {
-
+	public SiteNavigationMenu fetchPrimarySiteNavigationMenu(long groupId) {
 		return _siteNavigationMenuLocalService.fetchPrimarySiteNavigationMenu(
 			groupId);
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		fetchSiteNavigationMenu(long siteNavigationMenuId) {
+	public SiteNavigationMenu fetchSiteNavigationMenu(
+		long siteNavigationMenuId) {
 
 		return _siteNavigationMenuLocalService.fetchSiteNavigationMenu(
 			siteNavigationMenuId);
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		fetchSiteNavigationMenu(long groupId, int type) {
-
+	public SiteNavigationMenu fetchSiteNavigationMenu(long groupId, int type) {
 		return _siteNavigationMenuLocalService.fetchSiteNavigationMenu(
 			groupId, type);
+	}
+
+	@Override
+	public SiteNavigationMenu fetchSiteNavigationMenuByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return _siteNavigationMenuLocalService.
+			fetchSiteNavigationMenuByExternalReferenceCode(
+				externalReferenceCode, groupId);
+	}
+
+	@Override
+	public SiteNavigationMenu fetchSiteNavigationMenuByName(
+		long groupId, String name) {
+
+		return _siteNavigationMenuLocalService.fetchSiteNavigationMenuByName(
+			groupId, name);
 	}
 
 	/**
@@ -275,8 +326,8 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @return the matching site navigation menu, or <code>null</code> if a matching site navigation menu could not be found
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		fetchSiteNavigationMenuByUuidAndGroupId(String uuid, long groupId) {
+	public SiteNavigationMenu fetchSiteNavigationMenuByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _siteNavigationMenuLocalService.
 			fetchSiteNavigationMenuByUuidAndGroupId(uuid, groupId);
@@ -290,8 +341,8 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
-		getAutoSiteNavigationMenus(long groupId) {
+	public java.util.List<SiteNavigationMenu> getAutoSiteNavigationMenus(
+		long groupId) {
 
 		return _siteNavigationMenuLocalService.getAutoSiteNavigationMenus(
 			groupId);
@@ -325,6 +376,9 @@ public class SiteNavigationMenuLocalServiceWrapper
 		return _siteNavigationMenuLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -341,12 +395,21 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @throws PortalException if a site navigation menu with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			getSiteNavigationMenu(long siteNavigationMenuId)
+	public SiteNavigationMenu getSiteNavigationMenu(long siteNavigationMenuId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.getSiteNavigationMenu(
 			siteNavigationMenuId);
+	}
+
+	@Override
+	public SiteNavigationMenu getSiteNavigationMenuByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteNavigationMenuLocalService.
+			getSiteNavigationMenuByExternalReferenceCode(
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -358,8 +421,8 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @throws PortalException if a matching site navigation menu could not be found
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			getSiteNavigationMenuByUuidAndGroupId(String uuid, long groupId)
+	public SiteNavigationMenu getSiteNavigationMenuByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.
@@ -378,37 +441,35 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @return the range of site navigation menus
 	 */
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
-		getSiteNavigationMenus(int start, int end) {
+	public java.util.List<SiteNavigationMenu> getSiteNavigationMenus(
+		int start, int end) {
 
 		return _siteNavigationMenuLocalService.getSiteNavigationMenus(
 			start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
-		getSiteNavigationMenus(long groupId) {
+	public java.util.List<SiteNavigationMenu> getSiteNavigationMenus(
+		long groupId) {
 
 		return _siteNavigationMenuLocalService.getSiteNavigationMenus(groupId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
-		getSiteNavigationMenus(
-			long groupId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				orderByComparator) {
+	public java.util.List<SiteNavigationMenu> getSiteNavigationMenus(
+		long groupId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenu>
+			orderByComparator) {
 
 		return _siteNavigationMenuLocalService.getSiteNavigationMenus(
 			groupId, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
-		getSiteNavigationMenus(
-			long groupId, String keywords, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				orderByComparator) {
+	public java.util.List<SiteNavigationMenu> getSiteNavigationMenus(
+		long groupId, String keywords, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenu>
+			orderByComparator) {
 
 		return _siteNavigationMenuLocalService.getSiteNavigationMenus(
 			groupId, keywords, start, end, orderByComparator);
@@ -422,7 +483,7 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @return the matching site navigation menus, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
+	public java.util.List<SiteNavigationMenu>
 		getSiteNavigationMenusByUuidAndCompanyId(String uuid, long companyId) {
 
 		return _siteNavigationMenuLocalService.
@@ -440,12 +501,11 @@ public class SiteNavigationMenuLocalServiceWrapper
 	 * @return the range of matching site navigation menus, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.site.navigation.model.SiteNavigationMenu>
+	public java.util.List<SiteNavigationMenu>
 		getSiteNavigationMenusByUuidAndCompanyId(
 			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.site.navigation.model.SiteNavigationMenu>
-					orderByComparator) {
+			com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenu>
+				orderByComparator) {
 
 		return _siteNavigationMenuLocalService.
 			getSiteNavigationMenusByUuidAndCompanyId(
@@ -475,10 +535,9 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			updateSiteNavigationMenu(
-				long userId, long siteNavigationMenuId, int type, boolean auto,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public SiteNavigationMenu updateSiteNavigationMenu(
+			long userId, long siteNavigationMenuId, int type, boolean auto,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.updateSiteNavigationMenu(
@@ -486,10 +545,9 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			updateSiteNavigationMenu(
-				long userId, long siteNavigationMenuId, long groupId,
-				String name, int type, boolean auto)
+	public SiteNavigationMenu updateSiteNavigationMenu(
+			long userId, long siteNavigationMenuId, long groupId, String name,
+			int type, boolean auto)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.updateSiteNavigationMenu(
@@ -497,10 +555,9 @@ public class SiteNavigationMenuLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-			updateSiteNavigationMenu(
-				long userId, long siteNavigationMenuId, String name,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public SiteNavigationMenu updateSiteNavigationMenu(
+			long userId, long siteNavigationMenuId, String name,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _siteNavigationMenuLocalService.updateSiteNavigationMenu(
@@ -510,17 +567,44 @@ public class SiteNavigationMenuLocalServiceWrapper
 	/**
 	 * Updates the site navigation menu in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteNavigationMenuLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteNavigationMenu the site navigation menu
 	 * @return the site navigation menu that was updated
 	 */
 	@Override
-	public com.liferay.site.navigation.model.SiteNavigationMenu
-		updateSiteNavigationMenu(
-			com.liferay.site.navigation.model.SiteNavigationMenu
-				siteNavigationMenu) {
+	public SiteNavigationMenu updateSiteNavigationMenu(
+		SiteNavigationMenu siteNavigationMenu) {
 
 		return _siteNavigationMenuLocalService.updateSiteNavigationMenu(
 			siteNavigationMenu);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _siteNavigationMenuLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<SiteNavigationMenu> getCTPersistence() {
+		return _siteNavigationMenuLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<SiteNavigationMenu> getModelClass() {
+		return _siteNavigationMenuLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<SiteNavigationMenu>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _siteNavigationMenuLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

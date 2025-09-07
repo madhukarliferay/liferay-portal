@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.http;
@@ -46,7 +37,6 @@ import com.liferay.portal.kernel.util.MethodKey;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see PortletPreferencesServiceSoap
  * @generated
  */
 public class PortletPreferencesServiceHttp {
@@ -67,22 +57,24 @@ public class PortletPreferencesServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -90,7 +82,7 @@ public class PortletPreferencesServiceHttp {
 			HttpPrincipal httpPrincipal, long groupId,
 			com.liferay.portal.kernel.model.Layout layout, String portletId,
 			long portletItemId,
-			javax.portlet.PortletPreferences jxPortletPreferences)
+			jakarta.portlet.PortletPreferences jxPortletPreferences)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -106,22 +98,24 @@ public class PortletPreferencesServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -129,7 +123,7 @@ public class PortletPreferencesServiceHttp {
 			HttpPrincipal httpPrincipal, long groupId,
 			com.liferay.portal.kernel.model.Layout layout, String portletId,
 			com.liferay.portal.kernel.model.PortletItem portletItem,
-			javax.portlet.PortletPreferences jxPortletPreferences)
+			jakarta.portlet.PortletPreferences jxPortletPreferences)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -145,29 +139,31 @@ public class PortletPreferencesServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static void restoreArchivedPreferences(
 			HttpPrincipal httpPrincipal, long groupId, String name,
 			com.liferay.portal.kernel.model.Layout layout, String portletId,
-			javax.portlet.PortletPreferences jxPortletPreferences)
+			jakarta.portlet.PortletPreferences jxPortletPreferences)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -183,29 +179,31 @@ public class PortletPreferencesServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static void updateArchivePreferences(
 			HttpPrincipal httpPrincipal, long userId, long groupId, String name,
 			String portletId,
-			javax.portlet.PortletPreferences jxPortletPreferences)
+			jakarta.portlet.PortletPreferences jxPortletPreferences)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		try {
@@ -220,22 +218,24 @@ public class PortletPreferencesServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -247,24 +247,24 @@ public class PortletPreferencesServiceHttp {
 	private static final Class<?>[] _restoreArchivedPreferencesParameterTypes1 =
 		new Class[] {
 			long.class, com.liferay.portal.kernel.model.Layout.class,
-			String.class, long.class, javax.portlet.PortletPreferences.class
+			String.class, long.class, jakarta.portlet.PortletPreferences.class
 		};
 	private static final Class<?>[] _restoreArchivedPreferencesParameterTypes2 =
 		new Class[] {
 			long.class, com.liferay.portal.kernel.model.Layout.class,
 			String.class, com.liferay.portal.kernel.model.PortletItem.class,
-			javax.portlet.PortletPreferences.class
+			jakarta.portlet.PortletPreferences.class
 		};
 	private static final Class<?>[] _restoreArchivedPreferencesParameterTypes3 =
 		new Class[] {
 			long.class, String.class,
 			com.liferay.portal.kernel.model.Layout.class, String.class,
-			javax.portlet.PortletPreferences.class
+			jakarta.portlet.PortletPreferences.class
 		};
 	private static final Class<?>[] _updateArchivePreferencesParameterTypes4 =
 		new Class[] {
 			long.class, long.class, String.class, String.class,
-			javax.portlet.PortletPreferences.class
+			jakarta.portlet.PortletPreferences.class
 		};
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -33,9 +25,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface UserModel
-	extends BaseModel<User>, MVCCModel, ShardedModel, StagedModel {
+	extends BaseModel<User>, CTModel<User>, ExternalReferenceCodeModel,
+			MVCCModel, ShardedModel, StagedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a user model instance should use the {@link User} interface instead.
@@ -46,6 +39,7 @@ public interface UserModel
 	 *
 	 * @return the primary key of this user
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -53,6 +47,7 @@ public interface UserModel
 	 *
 	 * @param primaryKey the primary key of this user
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -70,6 +65,22 @@ public interface UserModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this user.
+	 *
+	 * @return the ct collection ID of this user
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this user.
+	 *
+	 * @param ctCollectionId the ct collection ID of this user
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this user.
@@ -94,6 +105,7 @@ public interface UserModel
 	 * @return the external reference code of this user
 	 */
 	@AutoEscape
+	@Override
 	public String getExternalReferenceCode();
 
 	/**
@@ -101,6 +113,7 @@ public interface UserModel
 	 *
 	 * @param externalReferenceCode the external reference code of this user
 	 */
+	@Override
 	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
@@ -178,27 +191,6 @@ public interface UserModel
 	 */
 	@Override
 	public void setModifiedDate(Date modifiedDate);
-
-	/**
-	 * Returns the default user of this user.
-	 *
-	 * @return the default user of this user
-	 */
-	public boolean getDefaultUser();
-
-	/**
-	 * Returns <code>true</code> if this user is default user.
-	 *
-	 * @return <code>true</code> if this user is default user; <code>false</code> otherwise
-	 */
-	public boolean isDefaultUser();
-
-	/**
-	 * Sets whether this user is default user.
-	 *
-	 * @param defaultUser the default user of this user
-	 */
-	public void setDefaultUser(boolean defaultUser);
 
 	/**
 	 * Returns the contact ID of this user.
@@ -730,6 +722,20 @@ public interface UserModel
 	public void setEmailAddressVerified(boolean emailAddressVerified);
 
 	/**
+	 * Returns the type of this user.
+	 *
+	 * @return the type of this user
+	 */
+	public int getType();
+
+	/**
+	 * Sets the type of this user.
+	 *
+	 * @param type the type of this user
+	 */
+	public void setType(int type);
+
+	/**
 	 * Returns the status of this user.
 	 *
 	 * @return the status of this user
@@ -742,5 +748,12 @@ public interface UserModel
 	 * @param status the status of this user
 	 */
 	public void setStatus(int status);
+
+	@Override
+	public User cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

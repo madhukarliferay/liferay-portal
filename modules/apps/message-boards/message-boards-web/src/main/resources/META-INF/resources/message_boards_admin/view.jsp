@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -23,7 +14,7 @@ MBCategory category = (MBCategory)request.getAttribute(WebKeys.MESSAGE_BOARDS_CA
 
 long categoryId = MBUtil.getCategoryId(request, category);
 
-MBEntriesManagementToolbarDisplayContext mbEntriesManagementToolbarDisplayContext = new MBEntriesManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, currentURLObj, trashHelper);
+MBEntriesManagementToolbarDisplayContext mbEntriesManagementToolbarDisplayContext = new MBEntriesManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, currentURLObj, trashHelper);
 
 request.setAttribute("view.jsp-categorySubscriptionClassPKs", MBSubscriptionUtil.getCategorySubscriptionClassPKs(user.getUserId()));
 request.setAttribute("view.jsp-threadSubscriptionClassPKs", MBSubscriptionUtil.getThreadSubscriptionClassPKs(user.getUserId()));
@@ -38,16 +29,14 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 	portletURL="<%= restoreTrashEntriesURL %>"
 />
 
-<%@ include file="/message_boards_admin/nav.jspf" %>
+<%@ include file="/message_boards/nav.jspf" %>
 
 <%
-MBAdminListDisplayContext mbAdminListDisplayContext = mbDisplayContextProvider.getMbAdminListDisplayContext(request, response, categoryId);
-
-int entriesDelta = mbAdminListDisplayContext.getEntriesDelta();
+MBAdminListDisplayContext mbAdminListDisplayContext = MBDisplayContextUtil.getMBAdminListDisplayContext(request, response, categoryId);
 
 PortletURL portletURL = mbEntriesManagementToolbarDisplayContext.getPortletURL();
 
-SearchContainer entriesSearchContainer = new SearchContainer(renderRequest, null, null, "cur1", 0, entriesDelta, portletURL, null, "there-are-no-threads-or-categories");
+SearchContainer entriesSearchContainer = new SearchContainer(renderRequest, null, null, "cur1", 0, mbAdminListDisplayContext.getEntriesDelta(), portletURL, null, mbAdminListDisplayContext.getEmptyResultsMessage());
 
 mbAdminListDisplayContext.setEntriesDelta(entriesSearchContainer);
 
@@ -73,13 +62,15 @@ String entriesNavigation = ParamUtil.getString(request, "entriesNavigation", "al
 
 <clay:management-toolbar
 	actionDropdownItems="<%= mbEntriesManagementToolbarDisplayContext.getActionDropdownItems() %>"
+	additionalProps="<%= mbEntriesManagementToolbarDisplayContext.getAdditionalProps() %>"
 	clearResultsURL="<%= mbEntriesManagementToolbarDisplayContext.getSearchActionURL() %>"
-	componentId="mbEntriesManagementToolbar"
 	creationMenu="<%= mbEntriesManagementToolbarDisplayContext.getCreationMenu() %>"
 	disabled='<%= (entriesSearchContainer.getTotal() == 0) && (categoryId == MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) && entriesNavigation.equals("all") %>'
 	filterDropdownItems="<%= mbEntriesManagementToolbarDisplayContext.getFilterDropdownItems() %>"
 	filterLabelItems="<%= mbEntriesManagementToolbarDisplayContext.getFilterLabelItems() %>"
 	itemsTotal="<%= entriesSearchContainer.getTotal() %>"
+	orderDropdownItems="<%= mbEntriesManagementToolbarDisplayContext.getOrderByDropdownItems() %>"
+	propsTransformer="{MBEntriesManagementToolbarPropsTransformer} from message-boards-web"
 	searchActionURL="<%= mbEntriesManagementToolbarDisplayContext.getSearchActionURL() %>"
 	searchContainerId="mbEntries"
 	searchFormName="searchFm"
@@ -96,62 +87,3 @@ if (category != null) {
 	PortalUtil.setPageDescription(category.getDescription(), request);
 }
 %>
-
-<aui:script>
-	var form = document.<portlet:namespace />fm;
-
-	<portlet:actionURL name="/message_boards/edit_entry" var="editEntryURL" />
-
-	var deleteEntries = function() {
-		if (
-			<%= trashHelper.isTrashEnabled(scopeGroupId) %> ||
-			confirm(
-				'<%= UnicodeLanguageUtil.get(request, trashHelper.isTrashEnabled(scopeGroupId) ? "are-you-sure-you-want-to-move-the-selected-entries-to-the-recycle-bin" : "are-you-sure-you-want-to-delete-the-selected-entries") %>'
-			)
-		) {
-			Liferay.Util.postForm(form, {
-				data: {
-					<%= Constants.CMD %>:
-						'<%= trashHelper.isTrashEnabled(scopeGroupId) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>'
-				},
-				url: '<%= editEntryURL %>'
-			});
-		}
-	};
-
-	var lockEntries = function() {
-		Liferay.Util.postForm(form, {
-			data: {
-				<%= Constants.CMD %>: '<%= Constants.LOCK %>'
-			},
-			url: '<%= editEntryURL %>'
-		});
-	};
-
-	var unlockEntries = function() {
-		Liferay.Util.postForm(form, {
-			data: {
-				<%= Constants.CMD %>: '<%= Constants.UNLOCK %>'
-			},
-			url: '<%= editEntryURL %>'
-		});
-	};
-
-	var ACTIONS = {
-		deleteEntries: deleteEntries,
-		lockEntries: lockEntries,
-		unlockEntries: unlockEntries
-	};
-
-	Liferay.componentReady('mbEntriesManagementToolbar').then(function(
-		managementToolbar
-	) {
-		managementToolbar.on('actionItemClicked', function(event) {
-			var itemData = event.data.item.data;
-
-			if (itemData && itemData.action && ACTIONS[itemData.action]) {
-				ACTIONS[itemData.action]();
-			}
-		});
-	});
-</aui:script>

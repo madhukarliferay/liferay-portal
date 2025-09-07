@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import '@testing-library/jest-dom/extend-expect';
 import {cleanup, fireEvent, render} from '@testing-library/react';
 import React from 'react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 import Treeview from '../../src/main/resources/META-INF/resources/treeview/Treeview';
 
@@ -24,48 +16,48 @@ const nodes = [
 		children: [
 			{
 				id: '1.1',
-				name: 'Pablictor'
+				name: 'Pablictor',
 			},
 			{
 				children: [
 					{
 						id: '1.2.1',
-						name: 'Eudaldo'
-					}
+						name: 'Eudaldo',
+					},
 				],
 				id: '1.2',
-				name: 'Pabla'
-			}
+				name: 'Pabla',
+			},
 		],
 		id: '1',
-		name: 'Sandro'
+		name: 'Sandro',
 	},
 	{
 		id: '2',
-		name: 'Victor'
+		name: 'Victor',
 	},
 	{
 		children: [
 			{
 				id: '3.1',
-				name: 'Straight line'
-			}
+				name: 'Straight line',
+			},
 		],
 		expanded: true,
 		id: '3',
-		name: 'Juan'
+		name: 'Juan',
 	},
 	{
 		children: [
 			{
 				expanded: true,
 				id: '4.1',
-				name: 'Victor Son'
-			}
+				name: 'Victor Son',
+			},
 		],
 		id: '4',
-		name: 'Victor Father'
-	}
+		name: 'Victor Father',
+	},
 ];
 
 describe('Treeview', () => {
@@ -191,12 +183,11 @@ describe('Treeview', () => {
 			icon: 'cog',
 			id: '1',
 			name: 'Sandro',
-			size: 'sm'
+			size: 'sm',
 		};
 
 		const {getByText} = render(
 			<Treeview
-				initialSelectedNodeIds={[]}
 				NodeComponent={({node}) => {
 					return (
 						<button
@@ -209,6 +200,7 @@ describe('Treeview', () => {
 						</button>
 					);
 				}}
+				initialSelectedNodeIds={[]}
 				nodes={[node]}
 			/>
 		);
@@ -220,5 +212,220 @@ describe('Treeview', () => {
 		expect(button.dataset.selected).toBe('true');
 		expect(button.dataset.icon).toBe('cog');
 		expect(button.dataset.size).toBe('sm');
+	});
+
+	describe('Treeview with inheritedSelection option enabled', () => {
+		it('selects children when selecting parent', () => {
+			const onSelectedNodesChange = jest.fn();
+			const {getByText} = render(
+				<Treeview
+					inheritSelection
+					nodes={nodes}
+					onSelectedNodesChange={onSelectedNodesChange}
+				/>
+			);
+
+			fireEvent.click(getByText('Sandro'));
+
+			expect(onSelectedNodesChange).toBeCalledWith(
+				new Set(['1', '1.1', '1.2', '1.2.1'])
+			);
+		});
+
+		it('enables parent when all of its children are selected', () => {
+			const onSelectedNodesChange = jest.fn();
+			const {getByText} = render(
+				<Treeview
+					inheritSelection
+					initialSelectedNodeIds={['1.2', '1.2.1']}
+					nodes={nodes}
+					onSelectedNodesChange={onSelectedNodesChange}
+				/>
+			);
+
+			fireEvent.click(getByText('Pablictor'));
+
+			expect(onSelectedNodesChange).toBeCalledWith(
+				new Set(['1', '1.1', '1.2', '1.2.1'])
+			);
+		});
+
+		it('disables parent when deselecting on of its children', () => {
+			const onSelectedNodesChange = jest.fn();
+			const {getByText} = render(
+				<Treeview
+					inheritSelection
+					initialSelectedNodeIds={['1', '1.1', '1.2', '1.2.1']}
+					nodes={nodes}
+					onSelectedNodesChange={onSelectedNodesChange}
+				/>
+			);
+
+			fireEvent.click(getByText('Pablictor'));
+
+			expect(onSelectedNodesChange).toBeCalledWith(
+				new Set(['1.2', '1.2.1'])
+			);
+		});
+	});
+
+	describe('Treeview with filter prop', () => {
+		it('filters the node comparing the node name ignoring case when a string is supplied', () => {
+			const nodes = [
+				{
+					icon: 'cog',
+					id: '1',
+					name: 'Sandro',
+				},
+				{
+					icon: 'cog',
+					id: '2',
+					name: 'sandro polo',
+				},
+				{
+					icon: 'cog',
+					id: '3',
+					name: 'Pablo',
+				},
+			];
+
+			const {getByText} = render(
+				<Treeview filter="Sandro" nodes={nodes} />
+			);
+
+			expect(getByText('Sandro')).toBeInTheDocument();
+			expect(getByText('sandro polo')).toBeInTheDocument();
+		});
+
+		it('uses custom filter function if passed', () => {
+			const nodes = [
+				{
+					icon: 'cog',
+					id: '1',
+					name: 'Sandro',
+				},
+				{
+					icon: 'cog',
+					id: '2',
+					name: 'sandro polo',
+				},
+			];
+
+			const exactMatchFilter = (node) => node.name === 'Sandro';
+
+			const {getByText, queryByText} = render(
+				<Treeview filter={exactMatchFilter} nodes={nodes} />
+			);
+
+			expect(getByText('Sandro')).toBeInTheDocument();
+			expect(queryByText('sandro polo')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('Treeview controls icon visibility in TreeviewCard', () => {
+		it('rendering the icon if present', () => {
+			const nodes = [
+				{
+					icon: 'emoji',
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: 'react',
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('lexicon-icon').length
+			).toBe(2);
+			expect(
+				container.getElementsByClassName('lexicon-icon-emoji').length
+			).toBe(1);
+			expect(
+				container.getElementsByClassName('lexicon-icon-react').length
+			).toBe(1);
+		});
+
+		it('not rendering icon if not present or falsy', () => {
+			const nodes = [
+				{
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: null,
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('lexicon-icon').length
+			).toBe(0);
+		});
+	});
+
+	describe('Treeview controls icon css class in TreeviewCard', () => {
+		it('rendering the icon with the corresponding class if the class property is present', () => {
+			const nodes = [
+				{
+					icon: 'emoji',
+					iconCssClass: 'emoji-specific-class',
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: 'react',
+					iconCssClass: 'react-specific-class',
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('emoji-specific-class').length
+			).toBe(1);
+			expect(
+				container.getElementsByClassName('react-specific-class').length
+			).toBe(1);
+		});
+
+		it('rendering the icon if the class is not present or falsy', () => {
+			const nodes = [
+				{
+					icon: 'emoji',
+					iconCssClass: '',
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: 'react',
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('lexicon-icon').length
+			).toBe(2);
+		});
 	});
 });

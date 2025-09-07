@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link OAuth2ScopeGrantLocalService}.
@@ -27,54 +19,61 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 	implements OAuth2ScopeGrantLocalService,
 			   ServiceWrapper<OAuth2ScopeGrantLocalService> {
 
+	public OAuth2ScopeGrantLocalServiceWrapper() {
+		this(null);
+	}
+
 	public OAuth2ScopeGrantLocalServiceWrapper(
 		OAuth2ScopeGrantLocalService oAuth2ScopeGrantLocalService) {
 
 		_oAuth2ScopeGrantLocalService = oAuth2ScopeGrantLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link OAuth2ScopeGrantLocalServiceUtil} to access the o auth2 scope grant local service. Add custom service methods to <code>com.liferay.oauth2.provider.service.impl.OAuth2ScopeGrantLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public void addOAuth2AuthorizationOAuth2ScopeGrant(
+	public boolean addOAuth2AuthorizationOAuth2ScopeGrant(
 		long oAuth2AuthorizationId, long oAuth2ScopeGrantId) {
 
-		_oAuth2ScopeGrantLocalService.addOAuth2AuthorizationOAuth2ScopeGrant(
-			oAuth2AuthorizationId, oAuth2ScopeGrantId);
+		return _oAuth2ScopeGrantLocalService.
+			addOAuth2AuthorizationOAuth2ScopeGrant(
+				oAuth2AuthorizationId, oAuth2ScopeGrantId);
 	}
 
 	@Override
-	public void addOAuth2AuthorizationOAuth2ScopeGrant(
+	public boolean addOAuth2AuthorizationOAuth2ScopeGrant(
 		long oAuth2AuthorizationId,
 		com.liferay.oauth2.provider.model.OAuth2ScopeGrant oAuth2ScopeGrant) {
 
-		_oAuth2ScopeGrantLocalService.addOAuth2AuthorizationOAuth2ScopeGrant(
-			oAuth2AuthorizationId, oAuth2ScopeGrant);
+		return _oAuth2ScopeGrantLocalService.
+			addOAuth2AuthorizationOAuth2ScopeGrant(
+				oAuth2AuthorizationId, oAuth2ScopeGrant);
 	}
 
 	@Override
-	public void addOAuth2AuthorizationOAuth2ScopeGrants(
+	public boolean addOAuth2AuthorizationOAuth2ScopeGrants(
 		long oAuth2AuthorizationId,
 		java.util.List<com.liferay.oauth2.provider.model.OAuth2ScopeGrant>
 			oAuth2ScopeGrants) {
 
-		_oAuth2ScopeGrantLocalService.addOAuth2AuthorizationOAuth2ScopeGrants(
-			oAuth2AuthorizationId, oAuth2ScopeGrants);
+		return _oAuth2ScopeGrantLocalService.
+			addOAuth2AuthorizationOAuth2ScopeGrants(
+				oAuth2AuthorizationId, oAuth2ScopeGrants);
 	}
 
 	@Override
-	public void addOAuth2AuthorizationOAuth2ScopeGrants(
+	public boolean addOAuth2AuthorizationOAuth2ScopeGrants(
 		long oAuth2AuthorizationId, long[] oAuth2ScopeGrantIds) {
 
-		_oAuth2ScopeGrantLocalService.addOAuth2AuthorizationOAuth2ScopeGrants(
-			oAuth2AuthorizationId, oAuth2ScopeGrantIds);
+		return _oAuth2ScopeGrantLocalService.
+			addOAuth2AuthorizationOAuth2ScopeGrants(
+				oAuth2AuthorizationId, oAuth2ScopeGrantIds);
 	}
 
 	/**
 	 * Adds the o auth2 scope grant to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2ScopeGrantLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param oAuth2ScopeGrant the o auth2 scope grant
 	 * @return the o auth2 scope grant that was added
@@ -138,6 +137,18 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 			bundleSymbolicName, scope, scopeAliases);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuth2ScopeGrantLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
 	@Override
 	public void deleteOAuth2AuthorizationOAuth2ScopeGrant(
 		long oAuth2AuthorizationId, long oAuth2ScopeGrantId) {
@@ -178,6 +189,10 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 	/**
 	 * Deletes the o auth2 scope grant with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2ScopeGrantLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2ScopeGrantId the primary key of the o auth2 scope grant
 	 * @return the o auth2 scope grant that was removed
 	 * @throws PortalException if a o auth2 scope grant with the primary key could not be found
@@ -193,6 +208,10 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 
 	/**
 	 * Deletes the o auth2 scope grant from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2ScopeGrantLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param oAuth2ScopeGrant the o auth2 scope grant
 	 * @return the o auth2 scope grant that was removed
@@ -217,6 +236,18 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 
 		return _oAuth2ScopeGrantLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _oAuth2ScopeGrantLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _oAuth2ScopeGrantLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -475,6 +506,9 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 		return _oAuth2ScopeGrantLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -525,6 +559,10 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 	/**
 	 * Updates the o auth2 scope grant in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2ScopeGrantLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2ScopeGrant the o auth2 scope grant
 	 * @return the o auth2 scope grant that was updated
 	 */
@@ -536,6 +574,11 @@ public class OAuth2ScopeGrantLocalServiceWrapper
 
 		return _oAuth2ScopeGrantLocalService.updateOAuth2ScopeGrant(
 			oAuth2ScopeGrant);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _oAuth2ScopeGrantLocalService.getBasePersistence();
 	}
 
 	@Override

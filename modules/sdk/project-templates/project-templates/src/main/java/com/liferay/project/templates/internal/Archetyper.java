@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.internal;
@@ -54,7 +45,7 @@ public class Archetyper {
 		throws Exception {
 
 		ArchetypeArtifactManager archetypeArtifactManager =
-			newArchetypeArtifactManager();
+			_newArchetypeArtifactManager();
 
 		ReflectionUtil.setFieldValue(
 			_loggerField, archetypeArtifactManager, _logger);
@@ -95,10 +86,6 @@ public class Archetyper {
 		defaultVelocityComponent.initialize();
 
 		return defaultVelocityComponent;
-	}
-
-	protected ArchetypeArtifactManager newArchetypeArtifactManager() {
-		return new ArchetyperArchetypeArtifactManager(_archetypesDirs);
 	}
 
 	private ArchetypeGenerator _createArchetypeGenerator() throws Exception {
@@ -143,6 +130,10 @@ public class Archetyper {
 		return filesetArchetypeGenerator;
 	}
 
+	private ArchetypeArtifactManager _newArchetypeArtifactManager() {
+		return new ArchetyperArchetypeArtifactManager(_archetypesDirs);
+	}
+
 	private static final Logger _logger = new ArchetyperLogger();
 
 	private static final Field _loggerField;
@@ -152,8 +143,8 @@ public class Archetyper {
 			_loggerField = ReflectionUtil.getField(
 				AbstractLogEnabled.class, "logger");
 		}
-		catch (Exception e) {
-			throw new ExceptionInInitializerError(e);
+		catch (Exception exception) {
+			throw new ExceptionInInitializerError(exception);
 		}
 	}
 

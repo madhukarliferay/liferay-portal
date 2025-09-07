@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service.impl;
@@ -21,6 +12,7 @@ import com.liferay.knowledge.base.exception.NoSuchTemplateException;
 import com.liferay.knowledge.base.internal.util.KBCommentUtil;
 import com.liferay.knowledge.base.model.KBTemplate;
 import com.liferay.knowledge.base.service.base.KBTemplateLocalServiceBaseImpl;
+import com.liferay.knowledge.base.service.persistence.KBCommentPersistence;
 import com.liferay.knowledge.base.util.KnowledgeBaseUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -36,14 +28,20 @@ import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.social.kernel.service.SocialActivityLocalService;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -51,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Peter Shin
@@ -70,11 +69,11 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 
 		// KB template
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 		long groupId = serviceContext.getScopeGroupId();
-		Date now = new Date();
+		Date date = new Date();
 
-		validate(title, content);
+		_validate(title, content);
 
 		long kbTemplateId = counterLocalService.increment();
 
@@ -85,23 +84,23 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 		kbTemplate.setCompanyId(user.getCompanyId());
 		kbTemplate.setUserId(user.getUserId());
 		kbTemplate.setUserName(user.getFullName());
-		kbTemplate.setCreateDate(serviceContext.getCreateDate(now));
-		kbTemplate.setModifiedDate(serviceContext.getModifiedDate(now));
+		kbTemplate.setCreateDate(serviceContext.getCreateDate(date));
+		kbTemplate.setModifiedDate(serviceContext.getModifiedDate(date));
 		kbTemplate.setTitle(title);
 		kbTemplate.setContent(content);
 
-		kbTemplatePersistence.update(kbTemplate);
+		kbTemplate = kbTemplatePersistence.update(kbTemplate);
 
 		// Resources
 
-		resourceLocalService.addModelResources(kbTemplate, serviceContext);
+		_resourceLocalService.addModelResources(kbTemplate, serviceContext);
 
 		// Social
 
 		JSONObject extraDataJSONObject = JSONUtil.put(
 			"title", kbTemplate.getTitle());
 
-		socialActivityLocalService.addActivity(
+		_socialActivityLocalService.addActivity(
 			userId, groupId, KBTemplate.class.getName(), kbTemplateId,
 			AdminActivityKeys.ADD_KB_TEMPLATE, extraDataJSONObject.toString(),
 			0);
@@ -133,19 +132,19 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			kbTemplate.getCompanyId(), KBTemplate.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, kbTemplate.getKbTemplateId());
 
 		// KB Comments
 
 		KBCommentUtil.deleteKBComments(
-			KBTemplate.class.getName(), classNameLocalService,
-			kbTemplate.getKbTemplateId(), kbCommentPersistence);
+			KBTemplate.class.getName(), _classNameLocalService,
+			kbTemplate.getKbTemplateId(), _kbCommentPersistence);
 
 		// Social
 
-		socialActivityLocalService.deleteActivities(
+		_socialActivityLocalService.deleteActivities(
 			KBTemplate.class.getName(), kbTemplate.getKbTemplateId());
 
 		return kbTemplate;
@@ -170,7 +169,11 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 				kbTemplate = kbTemplatePersistence.findByPrimaryKey(
 					kbTemplateId);
 			}
-			catch (NoSuchTemplateException nste) {
+			catch (NoSuchTemplateException noSuchTemplateException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(noSuchTemplateException);
+				}
+
 				continue;
 			}
 
@@ -198,7 +201,7 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 		Date endDate, boolean andOperator, int start, int end,
 		OrderByComparator<KBTemplate> orderByComparator) {
 
-		DynamicQuery dynamicQuery = buildDynamicQuery(
+		DynamicQuery dynamicQuery = _buildDynamicQuery(
 			groupId, title, content, startDate, endDate, andOperator);
 
 		return dynamicQuery(dynamicQuery, start, end, orderByComparator);
@@ -212,7 +215,7 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 
 		// KB template
 
-		validate(title, content);
+		_validate(title, content);
 
 		KBTemplate kbTemplate = kbTemplatePersistence.findByPrimaryKey(
 			kbTemplateId);
@@ -221,14 +224,14 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 		kbTemplate.setTitle(title);
 		kbTemplate.setContent(content);
 
-		kbTemplatePersistence.update(kbTemplate);
+		kbTemplate = kbTemplatePersistence.update(kbTemplate);
 
 		// Social
 
 		JSONObject extraDataJSONObject = JSONUtil.put(
 			"title", kbTemplate.getTitle());
 
-		socialActivityLocalService.addActivity(
+		_socialActivityLocalService.addActivity(
 			kbTemplate.getUserId(), kbTemplate.getGroupId(),
 			KBTemplate.class.getName(), kbTemplateId,
 			AdminActivityKeys.UPDATE_KB_TEMPLATE,
@@ -243,13 +246,13 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 			String[] guestPermissions)
 		throws PortalException {
 
-		resourceLocalService.updateResources(
+		_resourceLocalService.updateResources(
 			kbTemplate.getCompanyId(), kbTemplate.getGroupId(),
 			KBTemplate.class.getName(), kbTemplate.getKbTemplateId(),
 			groupPermissions, guestPermissions);
 	}
 
-	protected DynamicQuery buildDynamicQuery(
+	private DynamicQuery _buildDynamicQuery(
 		long groupId, String title, String content, Date startDate,
 		Date endDate, boolean andOperator) {
 
@@ -319,7 +322,7 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 		return dynamicQuery.add(junction);
 	}
 
-	protected void validate(String title, String content)
+	private void _validate(String title, String content)
 		throws PortalException {
 
 		if (Validator.isNull(title)) {
@@ -330,5 +333,23 @@ public class KBTemplateLocalServiceImpl extends KBTemplateLocalServiceBaseImpl {
 			throw new KBTemplateContentException();
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		KBTemplateLocalServiceImpl.class);
+
+	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private KBCommentPersistence _kbCommentPersistence;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private SocialActivityLocalService _socialActivityLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

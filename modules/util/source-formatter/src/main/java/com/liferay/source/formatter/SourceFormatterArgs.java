@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter;
+
+import com.liferay.portal.tools.ToolsUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +22,14 @@ public class SourceFormatterArgs {
 
 	public static final String BASE_DIR_NAME = "./";
 
+	public static final boolean CHECK_VULNERABILITIES = false;
+
+	public static final int COMMIT_COUNT = 0;
+
+	public static final boolean FAIL_ON_AUTO_FIX = false;
+
+	public static final boolean FAIL_ON_HAS_WARNING = true;
+
 	public static final boolean FORMAT_CURRENT_BRANCH = false;
 
 	public static final boolean FORMAT_LATEST_AUTHOR = false;
@@ -41,7 +42,13 @@ public class SourceFormatterArgs {
 
 	public static final boolean INCLUDE_SUBREPOSITORIES = false;
 
+	public static final boolean JAVA_PARSER_ENABLED = true;
+
+	public static final int MAX_DIR_LEVEL = ToolsUtil.PORTAL_MAX_DIR_LEVEL;
+
 	public static final int MAX_LINE_LENGTH = 80;
+
+	public static final String OUTPUT_FILE_NAME = null;
 
 	public static final String OUTPUT_KEY_MODIFIED_FILES =
 		"source.formatter.modified.files";
@@ -52,11 +59,9 @@ public class SourceFormatterArgs {
 
 	public static final boolean SHOW_DEBUG_INFORMATION = false;
 
-	public static final boolean SHOW_DOCUMENTATION = false;
+	public static final boolean USE_CI_GITHUB_ACCESS_TOKEN = false;
 
-	public static final boolean SHOW_STATUS_UPDATES = false;
-
-	public static final boolean THROW_EXCEPTION = false;
+	public static final boolean VALIDATE_COMMIT_MESSAGES = false;
 
 	public void addRecentChangesFileNames(
 		Collection<String> fileNames, String baseDirName) {
@@ -75,8 +80,24 @@ public class SourceFormatterArgs {
 		return _baseDirName;
 	}
 
-	public String getCheckName() {
-		return _checkName;
+	public List<String> getCheckCategoryNames() {
+		return _checkCategoryNames;
+	}
+
+	public List<String> getCheckNames() {
+		return _checkNames;
+	}
+
+	public int getCommitCount() {
+		return _commitCount;
+	}
+
+	public List<String> getCurrentBranchAddedFileNames() {
+		return _currentBranchAddedFileNames;
+	}
+
+	public List<String> getCurrentBranchRenamedFileNames() {
+		return _currentBranchRenamedFileNames;
 	}
 
 	public List<String> getFileExtensions() {
@@ -91,8 +112,16 @@ public class SourceFormatterArgs {
 		return _gitWorkingBranchName;
 	}
 
+	public int getMaxDirLevel() {
+		return _maxDirLevel;
+	}
+
 	public int getMaxLineLength() {
 		return _maxLineLength;
+	}
+
+	public String getOutputFileName() {
+		return _outputFileName;
 	}
 
 	public int getProcessorThreadCount() {
@@ -107,8 +136,24 @@ public class SourceFormatterArgs {
 		return _skipCheckNames;
 	}
 
+	public List<String> getSourceFormatterProperties() {
+		return _sourceFormatterProperties;
+	}
+
 	public boolean isAutoFix() {
 		return _autoFix;
+	}
+
+	public boolean isCheckVulnerabilities() {
+		return _checkVulnerabilities;
+	}
+
+	public boolean isFailOnAutoFix() {
+		return _failOnAutoFix;
+	}
+
+	public boolean isFailOnHasWarning() {
+		return _failOnHasWarning;
 	}
 
 	public boolean isFormatCurrentBranch() {
@@ -131,6 +176,10 @@ public class SourceFormatterArgs {
 		return _includeSubrepositories;
 	}
 
+	public boolean isJavaParserEnabled() {
+		return _javaParserEnabled;
+	}
+
 	public boolean isPrintErrors() {
 		return _printErrors;
 	}
@@ -139,16 +188,12 @@ public class SourceFormatterArgs {
 		return _showDebugInformation;
 	}
 
-	public boolean isShowDocumentation() {
-		return _showDocumentation;
+	public boolean isUseCiGithubAccessToken() {
+		return _useCiGithubAccessToken;
 	}
 
-	public boolean isShowStatusUpdates() {
-		return _showStatusUpdates;
-	}
-
-	public boolean isThrowException() {
-		return _throwException;
+	public boolean isValidateCommitMessages() {
+		return _validateCommitMessages;
 	}
 
 	public void setAutoFix(boolean autoFix) {
@@ -167,8 +212,40 @@ public class SourceFormatterArgs {
 		_baseDirName = baseDirName;
 	}
 
-	public void setCheckName(String checkName) {
-		_checkName = checkName;
+	public void setCheckCategoryNames(List<String> checkCategoryNames) {
+		_checkCategoryNames = checkCategoryNames;
+	}
+
+	public void setCheckNames(List<String> checkNames) {
+		_checkNames = checkNames;
+	}
+
+	public void setCheckVulnerabilities(boolean checkVulnerabilities) {
+		_checkVulnerabilities = checkVulnerabilities;
+	}
+
+	public void setCommitCount(int commitCount) {
+		_commitCount = commitCount;
+	}
+
+	public void setCurrentBranchAddedFileNames(
+		List<String> currentBranchAddedFileNames) {
+
+		_currentBranchAddedFileNames = currentBranchAddedFileNames;
+	}
+
+	public void setCurrentBranchRenamedFileNames(
+		List<String> currentBranchRenamedFileNames) {
+
+		_currentBranchRenamedFileNames = currentBranchRenamedFileNames;
+	}
+
+	public void setFailOnAutoFix(boolean failOnAutoFix) {
+		_failOnAutoFix = failOnAutoFix;
+	}
+
+	public void setFailOnHasWarning(boolean failOnHasWarning) {
+		_failOnHasWarning = failOnHasWarning;
 	}
 
 	public void setFileExtensions(List<String> fileExtensions) {
@@ -212,8 +289,20 @@ public class SourceFormatterArgs {
 		_includeSubrepositories = includeSubrepositories;
 	}
 
+	public void setJavaParserEnabled(boolean javaParserEnabled) {
+		_javaParserEnabled = javaParserEnabled;
+	}
+
+	public void setMaxDirLevel(int maxDirLevel) {
+		_maxDirLevel = maxDirLevel;
+	}
+
 	public void setMaxLineLength(int maxLineLength) {
 		_maxLineLength = maxLineLength;
+	}
+
+	public void setOutputFileName(String outputFileName) {
+		_outputFileName = outputFileName;
 	}
 
 	public void setPrintErrors(boolean printErrors) {
@@ -228,25 +317,34 @@ public class SourceFormatterArgs {
 		_showDebugInformation = showDebugInformation;
 	}
 
-	public void setShowDocumentation(boolean showDocumentation) {
-		_showDocumentation = showDocumentation;
-	}
-
-	public void setShowStatusUpdates(boolean showStatusUpdates) {
-		_showStatusUpdates = showStatusUpdates;
-	}
-
 	public void setSkipCheckNames(List<String> skipCheckNames) {
 		_skipCheckNames = skipCheckNames;
 	}
 
-	public void setThrowException(boolean throwException) {
-		_throwException = throwException;
+	public void setSourceFormatterProperties(
+		List<String> sourceFormatterProperties) {
+
+		_sourceFormatterProperties = sourceFormatterProperties;
+	}
+
+	public void setUseCiGithubAccessToken(boolean useCiGithubAccessToken) {
+		_useCiGithubAccessToken = useCiGithubAccessToken;
+	}
+
+	public void setValidateCommitMessages(boolean validateCommitMessages) {
+		_validateCommitMessages = validateCommitMessages;
 	}
 
 	private boolean _autoFix = AUTO_FIX;
 	private String _baseDirName = BASE_DIR_NAME;
-	private String _checkName;
+	private List<String> _checkCategoryNames = new ArrayList<>();
+	private List<String> _checkNames = new ArrayList<>();
+	private boolean _checkVulnerabilities = CHECK_VULNERABILITIES;
+	private int _commitCount = COMMIT_COUNT;
+	private List<String> _currentBranchAddedFileNames = new ArrayList<>();
+	private List<String> _currentBranchRenamedFileNames = new ArrayList<>();
+	private boolean _failOnAutoFix = FAIL_ON_AUTO_FIX;
+	private boolean _failOnHasWarning = FAIL_ON_HAS_WARNING;
 	private List<String> _fileExtensions = new ArrayList<>();
 	private List<String> _fileNames;
 	private boolean _formatCurrentBranch = FORMAT_CURRENT_BRANCH;
@@ -255,14 +353,17 @@ public class SourceFormatterArgs {
 	private String _gitWorkingBranchName = GIT_WORKING_BRANCH_NAME;
 	private boolean _includeGeneratedFiles = INCLUDE_GENERATED_FILES;
 	private boolean _includeSubrepositories = INCLUDE_SUBREPOSITORIES;
+	private boolean _javaParserEnabled = JAVA_PARSER_ENABLED;
+	private int _maxDirLevel = MAX_DIR_LEVEL;
 	private int _maxLineLength = MAX_LINE_LENGTH;
+	private String _outputFileName = OUTPUT_FILE_NAME;
 	private boolean _printErrors = PRINT_ERRORS;
 	private int _processorThreadCount = PROCESSOR_THREAD_COUNT;
 	private final Set<String> _recentChangesFileNames = new HashSet<>();
 	private boolean _showDebugInformation = SHOW_DEBUG_INFORMATION;
-	private boolean _showDocumentation = SHOW_DOCUMENTATION;
-	private boolean _showStatusUpdates = SHOW_STATUS_UPDATES;
 	private List<String> _skipCheckNames = new ArrayList<>();
-	private boolean _throwException = THROW_EXCEPTION;
+	private List<String> _sourceFormatterProperties = new ArrayList<>();
+	private boolean _useCiGithubAccessToken = USE_CI_GITHUB_ACCESS_TOKEN;
+	private boolean _validateCommitMessages = VALIDATE_COMMIT_MESSAGES;
 
 }

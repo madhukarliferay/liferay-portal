@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
 
 /**
- * @author Marcellus Tavares
+ * @author     Marcellus Tavares
+ * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+ *             com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants}
  */
+@Deprecated
 public class DDMFormFieldType {
 
 	public static final String CHECKBOX = "checkbox";
@@ -27,6 +21,8 @@ public class DDMFormFieldType {
 
 	public static final String DATE = "ddm-date";
 
+	public static final String DATETIME = "datetime";
+
 	public static final String DECIMAL = "ddm-decimal";
 
 	public static final String DOCUMENT_LIBRARY = "ddm-documentlibrary";
@@ -34,6 +30,8 @@ public class DDMFormFieldType {
 	public static final String FIELDSET = "fieldset";
 
 	public static final String GEOLOCATION = "ddm-geolocation";
+
+	public static final String GRID = "grid";
 
 	public static final String IMAGE = "ddm-image";
 
@@ -43,9 +41,13 @@ public class DDMFormFieldType {
 
 	public static final String LINK_TO_PAGE = "ddm-link-to-page";
 
+	public static final String LOCALIZABLE_TEXT = "localizable_text";
+
 	public static final String NUMBER = "ddm-number";
 
 	public static final String NUMERIC = "numeric";
+
+	public static final String PARAGRAPH = "ddm-paragraph";
 
 	public static final String PASSWORD = "password";
 

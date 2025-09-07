@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
@@ -28,7 +20,6 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
-import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -41,7 +32,6 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.reports.engine.console.model.Definition;
 import com.liferay.portal.reports.engine.console.model.Entry;
@@ -132,16 +122,12 @@ public class EntryServiceTest {
 
 	@Test
 	public void testGetEntriesCountAsAdminUser() throws Exception {
-		int entriesCount = getEntriesCount(_adminPermissionChecker);
-
-		Assert.assertEquals(10, entriesCount);
+		Assert.assertEquals(10, getEntriesCount(_adminPermissionChecker));
 	}
 
 	@Test
 	public void testGetEntriesCountAsGuestUser() throws Exception {
-		int entriesCount = getEntriesCount(_guestPermissionChecker);
-
-		Assert.assertEquals(5, entriesCount);
+		Assert.assertEquals(5, getEntriesCount(_guestPermissionChecker));
 	}
 
 	@Test
@@ -216,10 +202,9 @@ public class EntryServiceTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext();
 
-		ModelPermissions modelPermissions = ModelPermissionsFactory.create(
-			_ENTRY_GROUP_PERMISSIONS, null);
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(
+				_ENTRY_GROUP_PERMISSIONS, null, Entry.class.getName()));
 
 		for (int i = 0; i < 5; i++) {
 			EntryLocalServiceUtil.addEntry(
@@ -231,10 +216,10 @@ public class EntryServiceTest {
 				serviceContext);
 		}
 
-		modelPermissions = ModelPermissionsFactory.create(
-			_ENTRY_GROUP_PERMISSIONS, new String[] {"VIEW"});
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(
+				_ENTRY_GROUP_PERMISSIONS, new String[] {"VIEW"},
+				Entry.class.getName()));
 
 		for (int i = 0; i < 5; i++) {
 			EntryLocalServiceUtil.addEntry(

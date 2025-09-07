@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service;
 
+import com.liferay.fragment.model.FragmentCollection;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link FragmentCollectionLocalService}.
@@ -27,6 +22,10 @@ public class FragmentCollectionLocalServiceWrapper
 	implements FragmentCollectionLocalService,
 			   ServiceWrapper<FragmentCollectionLocalService> {
 
+	public FragmentCollectionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public FragmentCollectionLocalServiceWrapper(
 		FragmentCollectionLocalService fragmentCollectionLocalService) {
 
@@ -36,37 +35,44 @@ public class FragmentCollectionLocalServiceWrapper
 	/**
 	 * Adds the fragment collection to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect FragmentCollectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param fragmentCollection the fragment collection
 	 * @return the fragment collection that was added
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection addFragmentCollection(
-		com.liferay.fragment.model.FragmentCollection fragmentCollection) {
+	public FragmentCollection addFragmentCollection(
+		FragmentCollection fragmentCollection) {
 
 		return _fragmentCollectionLocalService.addFragmentCollection(
 			fragmentCollection);
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentCollection addFragmentCollection(
-			long userId, long groupId, String name, String description,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _fragmentCollectionLocalService.addFragmentCollection(
-			userId, groupId, name, description, serviceContext);
-	}
-
-	@Override
-	public com.liferay.fragment.model.FragmentCollection addFragmentCollection(
-			long userId, long groupId, String fragmentCollectionKey,
+	public FragmentCollection addFragmentCollection(
+			String externalReferenceCode, long userId, long groupId,
 			String name, String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.addFragmentCollection(
-			userId, groupId, fragmentCollectionKey, name, description,
+			externalReferenceCode, userId, groupId, name, description,
 			serviceContext);
+	}
+
+	@Override
+	public FragmentCollection addFragmentCollection(
+			String externalReferenceCode, long userId, long groupId,
+			String fragmentCollectionKey, String name, String description,
+			boolean marketplace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentCollectionLocalService.addFragmentCollection(
+			externalReferenceCode, userId, groupId, fragmentCollectionKey, name,
+			description, marketplace, serviceContext);
 	}
 
 	/**
@@ -76,25 +82,39 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @return the new fragment collection
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-		createFragmentCollection(long fragmentCollectionId) {
+	public FragmentCollection createFragmentCollection(
+		long fragmentCollectionId) {
 
 		return _fragmentCollectionLocalService.createFragmentCollection(
 			fragmentCollectionId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentCollectionLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the fragment collection from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect FragmentCollectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param fragmentCollection the fragment collection
 	 * @return the fragment collection that was removed
 	 * @throws PortalException
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-			deleteFragmentCollection(
-				com.liferay.fragment.model.FragmentCollection
-					fragmentCollection)
+	public FragmentCollection deleteFragmentCollection(
+			FragmentCollection fragmentCollection)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.deleteFragmentCollection(
@@ -104,17 +124,30 @@ public class FragmentCollectionLocalServiceWrapper
 	/**
 	 * Deletes the fragment collection with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect FragmentCollectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param fragmentCollectionId the primary key of the fragment collection
 	 * @return the fragment collection that was removed
 	 * @throws PortalException if a fragment collection with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-			deleteFragmentCollection(long fragmentCollectionId)
+	public FragmentCollection deleteFragmentCollection(
+			long fragmentCollectionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.deleteFragmentCollection(
 			fragmentCollectionId);
+	}
+
+	@Override
+	public FragmentCollection deleteFragmentCollection(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentCollectionLocalService.deleteFragmentCollection(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -127,6 +160,18 @@ public class FragmentCollectionLocalServiceWrapper
 
 		return _fragmentCollectionLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _fragmentCollectionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _fragmentCollectionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -221,19 +266,28 @@ public class FragmentCollectionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-		fetchFragmentCollection(long fragmentCollectionId) {
+	public FragmentCollection fetchFragmentCollection(
+		long fragmentCollectionId) {
 
 		return _fragmentCollectionLocalService.fetchFragmentCollection(
 			fragmentCollectionId);
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-		fetchFragmentCollection(long groupId, String fragmentCollectionKey) {
+	public FragmentCollection fetchFragmentCollection(
+		long groupId, String fragmentCollectionKey) {
 
 		return _fragmentCollectionLocalService.fetchFragmentCollection(
 			groupId, fragmentCollectionKey);
+	}
+
+	@Override
+	public FragmentCollection fetchFragmentCollectionByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return _fragmentCollectionLocalService.
+			fetchFragmentCollectionByExternalReferenceCode(
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -244,8 +298,8 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @return the matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-		fetchFragmentCollectionByUuidAndGroupId(String uuid, long groupId) {
+	public FragmentCollection fetchFragmentCollectionByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _fragmentCollectionLocalService.
 			fetchFragmentCollectionByUuidAndGroupId(uuid, groupId);
@@ -282,12 +336,21 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @throws PortalException if a fragment collection with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection getFragmentCollection(
-			long fragmentCollectionId)
+	public FragmentCollection getFragmentCollection(long fragmentCollectionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.getFragmentCollection(
 			fragmentCollectionId);
+	}
+
+	@Override
+	public FragmentCollection getFragmentCollectionByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentCollectionLocalService.
+			getFragmentCollectionByExternalReferenceCode(
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -299,8 +362,8 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @throws PortalException if a matching fragment collection could not be found
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-			getFragmentCollectionByUuidAndGroupId(String uuid, long groupId)
+	public FragmentCollection getFragmentCollectionByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.
@@ -319,40 +382,36 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @return the range of fragment collections
 	 */
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(int start, int end) {
+	public java.util.List<FragmentCollection> getFragmentCollections(
+		int start, int end) {
 
 		return _fragmentCollectionLocalService.getFragmentCollections(
 			start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(long groupId, int start, int end) {
+	public java.util.List<FragmentCollection> getFragmentCollections(
+		long groupId, int start, int end) {
 
 		return _fragmentCollectionLocalService.getFragmentCollections(
 			groupId, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long groupId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public java.util.List<FragmentCollection> getFragmentCollections(
+		long groupId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentCollection>
+			orderByComparator) {
 
 		return _fragmentCollectionLocalService.getFragmentCollections(
 			groupId, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
-		getFragmentCollections(
-			long groupId, String name, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+	public java.util.List<FragmentCollection> getFragmentCollections(
+		long groupId, String name, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<FragmentCollection>
+			orderByComparator) {
 
 		return _fragmentCollectionLocalService.getFragmentCollections(
 			groupId, name, start, end, orderByComparator);
@@ -366,7 +425,7 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @return the matching fragment collections, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
+	public java.util.List<FragmentCollection>
 		getFragmentCollectionsByUuidAndCompanyId(String uuid, long companyId) {
 
 		return _fragmentCollectionLocalService.
@@ -384,12 +443,11 @@ public class FragmentCollectionLocalServiceWrapper
 	 * @return the range of matching fragment collections, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.fragment.model.FragmentCollection>
+	public java.util.List<FragmentCollection>
 		getFragmentCollectionsByUuidAndCompanyId(
 			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.fragment.model.FragmentCollection>
-					orderByComparator) {
+			com.liferay.portal.kernel.util.OrderByComparator<FragmentCollection>
+				orderByComparator) {
 
 		return _fragmentCollectionLocalService.
 			getFragmentCollectionsByUuidAndCompanyId(
@@ -424,6 +482,9 @@ public class FragmentCollectionLocalServiceWrapper
 		return _fragmentCollectionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -441,29 +502,62 @@ public class FragmentCollectionLocalServiceWrapper
 			userId, groupId, folderName);
 	}
 
+	@Override
+	public String getUniqueFragmentCollectionName(long groupId, String name) {
+		return _fragmentCollectionLocalService.getUniqueFragmentCollectionName(
+			groupId, name);
+	}
+
 	/**
 	 * Updates the fragment collection in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect FragmentCollectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param fragmentCollection the fragment collection
 	 * @return the fragment collection that was updated
 	 */
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-		updateFragmentCollection(
-			com.liferay.fragment.model.FragmentCollection fragmentCollection) {
+	public FragmentCollection updateFragmentCollection(
+		FragmentCollection fragmentCollection) {
 
 		return _fragmentCollectionLocalService.updateFragmentCollection(
 			fragmentCollection);
 	}
 
 	@Override
-	public com.liferay.fragment.model.FragmentCollection
-			updateFragmentCollection(
-				long fragmentCollectionId, String name, String description)
+	public FragmentCollection updateFragmentCollection(
+			long fragmentCollectionId, String name, String description)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _fragmentCollectionLocalService.updateFragmentCollection(
 			fragmentCollectionId, name, description);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _fragmentCollectionLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<FragmentCollection> getCTPersistence() {
+		return _fragmentCollectionLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<FragmentCollection> getModelClass() {
+		return _fragmentCollectionLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<FragmentCollection>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _fragmentCollectionLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

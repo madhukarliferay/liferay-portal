@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.friendly.url.model.impl;
@@ -36,18 +27,18 @@ public class FriendlyURLEntryLocalizationCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof FriendlyURLEntryLocalizationCacheModel)) {
+		if (!(object instanceof FriendlyURLEntryLocalizationCacheModel)) {
 			return false;
 		}
 
 		FriendlyURLEntryLocalizationCacheModel
 			friendlyURLEntryLocalizationCacheModel =
-				(FriendlyURLEntryLocalizationCacheModel)obj;
+				(FriendlyURLEntryLocalizationCacheModel)object;
 
 		if ((friendlyURLEntryLocalizationId ==
 				friendlyURLEntryLocalizationCacheModel.
@@ -80,10 +71,12 @@ public class FriendlyURLEntryLocalizationCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(19);
+		StringBundler sb = new StringBundler(21);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", friendlyURLEntryLocalizationId=");
 		sb.append(friendlyURLEntryLocalizationId);
 		sb.append(", companyId=");
@@ -92,14 +85,14 @@ public class FriendlyURLEntryLocalizationCacheModel
 		sb.append(friendlyURLEntryId);
 		sb.append(", languageId=");
 		sb.append(languageId);
-		sb.append(", urlTitle=");
-		sb.append(urlTitle);
 		sb.append(", groupId=");
 		sb.append(groupId);
 		sb.append(", classNameId=");
 		sb.append(classNameId);
 		sb.append(", classPK=");
 		sb.append(classPK);
+		sb.append(", urlTitle=");
+		sb.append(urlTitle);
 		sb.append("}");
 
 		return sb.toString();
@@ -111,6 +104,7 @@ public class FriendlyURLEntryLocalizationCacheModel
 			new FriendlyURLEntryLocalizationImpl();
 
 		friendlyURLEntryLocalizationImpl.setMvccVersion(mvccVersion);
+		friendlyURLEntryLocalizationImpl.setCtCollectionId(ctCollectionId);
 		friendlyURLEntryLocalizationImpl.setFriendlyURLEntryLocalizationId(
 			friendlyURLEntryLocalizationId);
 		friendlyURLEntryLocalizationImpl.setCompanyId(companyId);
@@ -124,16 +118,16 @@ public class FriendlyURLEntryLocalizationCacheModel
 			friendlyURLEntryLocalizationImpl.setLanguageId(languageId);
 		}
 
+		friendlyURLEntryLocalizationImpl.setGroupId(groupId);
+		friendlyURLEntryLocalizationImpl.setClassNameId(classNameId);
+		friendlyURLEntryLocalizationImpl.setClassPK(classPK);
+
 		if (urlTitle == null) {
 			friendlyURLEntryLocalizationImpl.setUrlTitle("");
 		}
 		else {
 			friendlyURLEntryLocalizationImpl.setUrlTitle(urlTitle);
 		}
-
-		friendlyURLEntryLocalizationImpl.setGroupId(groupId);
-		friendlyURLEntryLocalizationImpl.setClassNameId(classNameId);
-		friendlyURLEntryLocalizationImpl.setClassPK(classPK);
 
 		friendlyURLEntryLocalizationImpl.resetOriginalValues();
 
@@ -144,24 +138,28 @@ public class FriendlyURLEntryLocalizationCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		friendlyURLEntryLocalizationId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
 
 		friendlyURLEntryId = objectInput.readLong();
 		languageId = objectInput.readUTF();
-		urlTitle = objectInput.readUTF();
 
 		groupId = objectInput.readLong();
 
 		classNameId = objectInput.readLong();
 
 		classPK = objectInput.readLong();
+		urlTitle = objectInput.readUTF();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(friendlyURLEntryLocalizationId);
 
@@ -176,28 +174,29 @@ public class FriendlyURLEntryLocalizationCacheModel
 			objectOutput.writeUTF(languageId);
 		}
 
+		objectOutput.writeLong(groupId);
+
+		objectOutput.writeLong(classNameId);
+
+		objectOutput.writeLong(classPK);
+
 		if (urlTitle == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(urlTitle);
 		}
-
-		objectOutput.writeLong(groupId);
-
-		objectOutput.writeLong(classNameId);
-
-		objectOutput.writeLong(classPK);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long friendlyURLEntryLocalizationId;
 	public long companyId;
 	public long friendlyURLEntryId;
 	public String languageId;
-	public String urlTitle;
 	public long groupId;
 	public long classNameId;
 	public long classPK;
+	public String urlTitle;
 
 }

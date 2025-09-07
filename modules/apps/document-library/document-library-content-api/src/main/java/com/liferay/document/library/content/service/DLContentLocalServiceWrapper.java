@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.content.service;
@@ -17,6 +8,7 @@ package com.liferay.document.library.content.service;
 import com.liferay.document.library.content.model.DLContent;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -28,6 +20,10 @@ import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersisten
  */
 public class DLContentLocalServiceWrapper
 	implements DLContentLocalService, ServiceWrapper<DLContentLocalService> {
+
+	public DLContentLocalServiceWrapper() {
+		this(null);
+	}
 
 	public DLContentLocalServiceWrapper(
 		DLContentLocalService dlContentLocalService) {
@@ -75,6 +71,10 @@ public class DLContentLocalServiceWrapper
 	/**
 	 * Adds the document library content to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DLContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was added
 	 */
@@ -92,6 +92,17 @@ public class DLContentLocalServiceWrapper
 	@Override
 	public DLContent createDLContent(long contentId) {
 		return _dlContentLocalService.createDLContent(contentId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dlContentLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	@Override
@@ -122,6 +133,10 @@ public class DLContentLocalServiceWrapper
 	/**
 	 * Deletes the document library content from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DLContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was removed
 	 */
@@ -132,6 +147,10 @@ public class DLContentLocalServiceWrapper
 
 	/**
 	 * Deletes the document library content with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DLContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param contentId the primary key of the document library content
 	 * @return the document library content that was removed
@@ -153,6 +172,18 @@ public class DLContentLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlContentLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _dlContentLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _dlContentLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -372,6 +403,9 @@ public class DLContentLocalServiceWrapper
 		return _dlContentLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -396,6 +430,10 @@ public class DLContentLocalServiceWrapper
 	/**
 	 * Updates the document library content in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DLContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was updated
 	 */
@@ -415,6 +453,11 @@ public class DLContentLocalServiceWrapper
 
 		_dlContentLocalService.updateDLContent(
 			companyId, oldRepositoryId, newRepositoryId, oldPath, newPath);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _dlContentLocalService.getBasePersistence();
 	}
 
 	@Override

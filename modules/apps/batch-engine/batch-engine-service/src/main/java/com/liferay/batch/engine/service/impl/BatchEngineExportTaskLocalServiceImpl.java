@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.service.impl;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.jdbc.OutputBlob;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.io.Serializable;
 
@@ -42,15 +34,17 @@ public class BatchEngineExportTaskLocalServiceImpl
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public BatchEngineExportTask addBatchEngineExportTask(
-		long companyId, long userId, String callbackURL, String className,
-		String contentType, String executeStatus, List<String> fieldNamesList,
-		Map<String, Serializable> parameters, String version) {
+		String externalReferenceCode, long companyId, long userId,
+		String callbackURL, String className, String contentType,
+		String executeStatus, List<String> fieldNames,
+		Map<String, Serializable> parameters, String taskItemDelegateName) {
 
 		BatchEngineExportTask batchEngineExportTask =
 			batchEngineExportTaskPersistence.create(
 				counterLocalService.increment(
 					BatchEngineExportTask.class.getName()));
 
+		batchEngineExportTask.setExternalReferenceCode(externalReferenceCode);
 		batchEngineExportTask.setCompanyId(companyId);
 		batchEngineExportTask.setUserId(userId);
 		batchEngineExportTask.setCallbackURL(callbackURL);
@@ -58,12 +52,29 @@ public class BatchEngineExportTaskLocalServiceImpl
 		batchEngineExportTask.setContent(
 			new OutputBlob(new UnsyncByteArrayInputStream(new byte[0]), 0));
 		batchEngineExportTask.setContentType(contentType);
+		batchEngineExportTask.setFieldNamesList(fieldNames);
 		batchEngineExportTask.setExecuteStatus(executeStatus);
-		batchEngineExportTask.setFieldNamesList(fieldNamesList);
 		batchEngineExportTask.setParameters(parameters);
-		batchEngineExportTask.setVersion(version);
+		batchEngineExportTask.setTaskItemDelegateName(taskItemDelegateName);
 
 		return batchEngineExportTaskPersistence.update(batchEngineExportTask);
+	}
+
+	@Override
+	public List<BatchEngineExportTask> getBatchEngineExportTasks(
+		long companyId, int start, int end) {
+
+		return batchEngineExportTaskPersistence.findByCompanyId(
+			companyId, start, end);
+	}
+
+	@Override
+	public List<BatchEngineExportTask> getBatchEngineExportTasks(
+		long companyId, int start, int end,
+		OrderByComparator<BatchEngineExportTask> orderByComparator) {
+
+		return batchEngineExportTaskPersistence.findByCompanyId(
+			companyId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -72,6 +83,11 @@ public class BatchEngineExportTaskLocalServiceImpl
 
 		return batchEngineExportTaskPersistence.findByExecuteStatus(
 			executeStatus);
+	}
+
+	@Override
+	public int getBatchEngineExportTasksCount(long companyId) {
+		return batchEngineExportTaskPersistence.countByCompanyId(companyId);
 	}
 
 }

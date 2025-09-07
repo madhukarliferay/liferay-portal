@@ -1,55 +1,50 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 
 import com.liferay.dynamic.data.mapping.expression.UpdateFieldPropertyRequest;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import org.powermock.api.mockito.PowerMockito;
-
 /**
  * @author Leonardo Barros
  */
-public class SetPropertyFunctionTest extends PowerMockito {
+public class SetPropertyFunctionTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testApply() {
-		SetPropertyFunction<Boolean> setPropertyFunction =
-			new SetMultipleFunction();
+		SetMultipleFunction setMultipleFunction = new SetMultipleFunction();
 
-		DefaultDDMExpressionObserver defaultDDMExpressionObserver =
-			new DefaultDDMExpressionObserver();
+		DefaultDDMExpressionObserver spyDefaultDDMExpressionObserver =
+			Mockito.spy(new DefaultDDMExpressionObserver());
 
-		DefaultDDMExpressionObserver spy = spy(defaultDDMExpressionObserver);
+		setMultipleFunction.setDDMExpressionObserver(
+			spyDefaultDDMExpressionObserver);
 
-		setPropertyFunction.setDDMExpressionObserver(spy);
-
-		Boolean result = setPropertyFunction.apply("field", true);
+		Boolean result = setMultipleFunction.apply("field", true);
 
 		ArgumentCaptor<UpdateFieldPropertyRequest> argumentCaptor =
 			ArgumentCaptor.forClass(UpdateFieldPropertyRequest.class);
 
 		Mockito.verify(
-			spy, Mockito.times(1)
+			spyDefaultDDMExpressionObserver, Mockito.times(1)
 		).updateFieldProperty(
 			argumentCaptor.capture()
 		);
@@ -70,10 +65,9 @@ public class SetPropertyFunctionTest extends PowerMockito {
 
 	@Test
 	public void testNullObserver() {
-		SetPropertyFunction<Boolean> setPropertyFunction =
-			new SetEnabledFunction();
+		SetEnabledFunction setEnabledFunction = new SetEnabledFunction();
 
-		Assert.assertFalse(setPropertyFunction.apply("field", true));
+		Assert.assertFalse(setEnabledFunction.apply("field", true));
 	}
 
 }

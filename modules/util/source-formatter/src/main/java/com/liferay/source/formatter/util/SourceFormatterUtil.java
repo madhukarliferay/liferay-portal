@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter.util;
@@ -17,17 +8,22 @@ package com.liferay.source.formatter.util;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.tools.ToolsUtil;
 import com.liferay.source.formatter.ExcludeSyntax;
 import com.liferay.source.formatter.ExcludeSyntaxPattern;
 import com.liferay.source.formatter.SourceFormatterExcludes;
-import com.liferay.source.formatter.checks.util.SourceUtil;
+import com.liferay.source.formatter.check.util.SourceUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import java.net.URL;
 
@@ -42,10 +38,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -55,14 +54,30 @@ import java.util.regex.Pattern;
  */
 public class SourceFormatterUtil {
 
+	public static final String CHECKSTYLE_DOCUMENTATION_URL_BASE =
+		"https://checkstyle.sourceforge.io/checks/";
+
 	public static final String GIT_LIFERAY_PORTAL_BRANCH =
 		"git.liferay.portal.branch";
 
 	public static final String GIT_LIFERAY_PORTAL_URL =
 		"https://raw.githubusercontent.com/liferay/liferay-portal/";
 
+	public static final String JAKARTA_USED_BRANCH = "jakarta.used.branch";
+
 	public static final String SOURCE_FORMATTER_TEST_PATH =
 		"/source/formatter/dependencies/";
+
+	public static final String UPGRADE_FROM_VERSION = "upgrade.from.version";
+
+	public static final String UPGRADE_INPUT_DATA_DIRECTORY_NAME =
+		"upgrade-to-7.4-input-data";
+
+	public static final String UPGRADE_TO_LIFERAY_VERSION =
+		"upgrade.to.liferay.version";
+
+	public static final String UPGRADE_TO_RELEASE_VERSION =
+		"upgrade.to.release.version";
 
 	public static List<String> filterFileNames(
 		List<String> allFileNames, String[] excludes, String[] includes,
@@ -124,33 +139,33 @@ public class SourceFormatterUtil {
 			String encodedFileName = SourceUtil.getAbsolutePath(fileName);
 
 			for (String includeRegex : includeRegexList) {
-				if (encodedFileName.matches(includeRegex)) {
-					for (String excludeRegex : excludeRegexList) {
-						if (encodedFileName.matches(excludeRegex)) {
-							continue outerLoop;
-						}
+				if (!encodedFileName.matches(includeRegex)) {
+					continue;
+				}
+
+				for (String excludeRegex : excludeRegexList) {
+					if (encodedFileName.matches(excludeRegex)) {
+						continue outerLoop;
 					}
+				}
 
-					for (Map.Entry<String, List<String>> entry :
-							excludeRegexMap.entrySet()) {
+				for (Map.Entry<String, List<String>> entry :
+						excludeRegexMap.entrySet()) {
 
-						String propertiesFileLocation = entry.getKey();
+					String propertiesFileLocation = entry.getKey();
 
-						if (encodedFileName.startsWith(
-								propertiesFileLocation)) {
-
-							for (String excludeRegex : entry.getValue()) {
-								if (encodedFileName.matches(excludeRegex)) {
-									continue outerLoop;
-								}
+					if (encodedFileName.startsWith(propertiesFileLocation)) {
+						for (String excludeRegex : entry.getValue()) {
+							if (encodedFileName.matches(excludeRegex)) {
+								continue outerLoop;
 							}
 						}
 					}
-
-					fileNames.add(fileName);
-
-					continue outerLoop;
 				}
+
+				fileNames.add(fileName);
+
+				continue outerLoop;
 			}
 		}
 
@@ -166,11 +181,30 @@ public class SourceFormatterUtil {
 			return new ArrayList<>();
 		}
 
-		PathMatchers pathMatchers = _getPathMatchers(
-			excludes, includes, sourceFormatterExcludes);
-
 		return _filterRecentChangesFileNames(
-			recentChangesFileNames, pathMatchers);
+			recentChangesFileNames,
+			_getPathMatchers(excludes, includes, sourceFormatterExcludes));
+	}
+
+	public static String getDocumentationURLString(Class<?> checkClass) {
+		String documentationURLString = _getDocumentationURLString(
+			checkClass.getSimpleName());
+
+		if (documentationURLString != null) {
+			return documentationURLString;
+		}
+
+		Class<?> superclass = checkClass.getSuperclass();
+
+		String className = superclass.getSimpleName();
+
+		documentationURLString = _getDocumentationURLString(className);
+
+		if ((documentationURLString != null) || !className.startsWith("Base")) {
+			return documentationURLString;
+		}
+
+		return _getDocumentationURLString(className.substring(4));
 	}
 
 	public static File getFile(String baseDirName, String fileName, int level) {
@@ -195,16 +229,33 @@ public class SourceFormatterUtil {
 		}
 
 		try {
-			return StringUtil.read(url.openStream());
+			return URLUtil.toString(url);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ioException);
+			}
+
 			return null;
 		}
 	}
 
-	public static File getPortalDir(String baseDirName) {
-		File portalImplDir = getFile(
-			baseDirName, "portal-impl", ToolsUtil.PORTAL_MAX_DIR_LEVEL);
+	public static String getMarkdownFileName(String camelCaseName) {
+		camelCaseName = StringUtil.replace(camelCaseName, "OSGi", "OSGI");
+
+		camelCaseName = camelCaseName.replaceAll("([A-Z])s([A-Z])", "$1S$2");
+
+		String markdownFileName = TextFormatter.format(
+			camelCaseName, TextFormatter.K);
+
+		markdownFileName = TextFormatter.format(
+			markdownFileName, TextFormatter.N);
+
+		return markdownFileName + ".md";
+	}
+
+	public static File getPortalDir(String baseDirName, int maxDirLevel) {
+		File portalImplDir = getFile(baseDirName, "portal-impl", maxDirLevel);
 
 		if (portalImplDir == null) {
 			return null;
@@ -226,7 +277,11 @@ public class SourceFormatterUtil {
 					SourceFormatterUtil.GIT_LIFERAY_PORTAL_URL,
 					portalBranchName, StringPool.SLASH, fileName));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return null;
 		}
 	}
@@ -243,37 +298,31 @@ public class SourceFormatterUtil {
 
 	public static List<File> getSuppressionsFiles(
 		String baseDirName, List<String> allFileNames,
-		SourceFormatterExcludes sourceFormatterExcludes, String... fileNames) {
+		SourceFormatterExcludes sourceFormatterExcludes, int maxDirLevel) {
 
 		List<File> suppressionsFiles = new ArrayList<>();
 
-		String[] includes = new String[fileNames.length];
+		// Find suppressions files in any parent directory
 
-		for (int i = 0; i < fileNames.length; i++) {
-			String fileName = fileNames[i];
+		String parentDirName = baseDirName;
 
-			includes[i] = "**/" + fileName;
+		for (int j = 0; j < maxDirLevel; j++) {
+			File suppressionsFile = new File(
+				parentDirName + _SUPPRESSIONS_FILE_NAME);
 
-			// Find suppressions files in any parent directory
-
-			String parentDirName = baseDirName;
-
-			for (int j = 0; j < ToolsUtil.PORTAL_MAX_DIR_LEVEL; j++) {
-				File suppressionsFile = new File(parentDirName + fileName);
-
-				if (suppressionsFile.exists()) {
-					suppressionsFiles.add(suppressionsFile);
-				}
-
-				parentDirName += "../";
+			if (suppressionsFile.exists()) {
+				suppressionsFiles.add(suppressionsFile);
 			}
+
+			parentDirName += "../";
 		}
 
 		// Find suppressions files in any child directory
 
 		List<String> moduleSuppressionsFileNames = filterFileNames(
-			allFileNames, new String[0], includes, sourceFormatterExcludes,
-			true);
+			allFileNames, new String[0],
+			new String[] {"**/" + _SUPPRESSIONS_FILE_NAME},
+			sourceFormatterExcludes, true);
 
 		for (String moduleSuppressionsFileName : moduleSuppressionsFileNames) {
 			moduleSuppressionsFileName = StringUtil.replace(
@@ -286,6 +335,20 @@ public class SourceFormatterUtil {
 		return suppressionsFiles;
 	}
 
+	public static List<String> matchFileContentsForFileNames(
+		List<String> args, String baseDirName, String[] includes) {
+
+		List<String> allArgs = new ArrayList<>();
+
+		allArgs.add("grep");
+		allArgs.add("--untracked");
+		allArgs.add("-l");
+
+		allArgs.addAll(args);
+
+		return _matchFileContentsForFileNames(allArgs, baseDirName, includes);
+	}
+
 	public static void printError(String fileName, File file) {
 		printError(fileName, file.toString());
 	}
@@ -294,7 +357,47 @@ public class SourceFormatterUtil {
 		System.out.println(message);
 	}
 
-	public static List<String> scanForFiles(
+	public static List<String> scanForFileNames(
+		String baseDirName, String[] includes) {
+
+		List<String> deletedFileNames = _scanForFileNames(
+			Arrays.asList("ls-files", "-d", "-z", "--full-name"), baseDirName,
+			new String[0]);
+
+		List<String> fileNames = _scanForFileNames(
+			Arrays.asList("ls-files", "-z", "--full-name"), baseDirName,
+			includes);
+
+		fileNames = ListUtil.filter(
+			fileNames, fileName -> !deletedFileNames.contains(fileName));
+
+		PathMatchers pathMatchers = _getPathMatchers(
+			new String[0], includes, new SourceFormatterExcludes());
+
+		for (String untrackedFileName : _getUntrackedFileNames()) {
+			if (!untrackedFileName.startsWith(baseDirName) ||
+				fileNames.contains(untrackedFileName)) {
+
+				continue;
+			}
+
+			Path path = Paths.get(untrackedFileName);
+
+			for (PathMatcher pathMatcher :
+					pathMatchers.getIncludeFilePathMatchers()) {
+
+				if (pathMatcher.matches(path)) {
+					fileNames.add(untrackedFileName);
+
+					break;
+				}
+			}
+		}
+
+		return fileNames;
+	}
+
+	public static List<String> scanForFileNames(
 			String baseDirName, String[] excludes, String[] includes,
 			SourceFormatterExcludes sourceFormatterExcludes,
 			boolean includeSubrepositories)
@@ -304,10 +407,10 @@ public class SourceFormatterUtil {
 			return new ArrayList<>();
 		}
 
-		PathMatchers pathMatchers = _getPathMatchers(
-			excludes, includes, sourceFormatterExcludes);
-
-		return _scanForFiles(baseDirName, pathMatchers, includeSubrepositories);
+		return _scanForFileNames(
+			baseDirName,
+			_getPathMatchers(excludes, includes, sourceFormatterExcludes),
+			includeSubrepositories);
 	}
 
 	private static String _createRegex(String s) {
@@ -348,6 +451,44 @@ public class SourceFormatterUtil {
 		}
 
 		return sb.toString();
+	}
+
+	private static void _executeGitCommand(
+		List<String> args, String baseDirName, Consumer<String> consumer) {
+
+		List<String> allArgs = new ArrayList<>();
+
+		allArgs.add("git");
+
+		allArgs.addAll(args);
+
+		ProcessBuilder processBuilder = new ProcessBuilder(allArgs);
+
+		if (!Validator.isBlank(baseDirName)) {
+			processBuilder.directory(new File(baseDirName));
+		}
+
+		try {
+			Process process = processBuilder.start();
+
+			Scanner scanner = new Scanner(process.getInputStream());
+
+			if (allArgs.contains("ls-files") && allArgs.contains("-z")) {
+				scanner.useDelimiter("\0");
+			}
+			else {
+				scanner.useDelimiter("\n");
+			}
+
+			while (scanner.hasNext()) {
+				consumer.accept(scanner.next());
+			}
+
+			scanner.close();
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
 	}
 
 	private static List<String> _filterRecentChangesFileNames(
@@ -460,9 +601,24 @@ public class SourceFormatterUtil {
 
 			return canonicalFile.toPath();
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
+	}
+
+	private static String _getDocumentationURLString(String checkName) {
+		String markdownFileName = getMarkdownFileName(checkName);
+
+		ClassLoader classLoader = SourceFormatterUtil.class.getClassLoader();
+
+		InputStream inputStream = classLoader.getResourceAsStream(
+			"documentation/check/" + markdownFileName);
+
+		if (inputStream != null) {
+			return _DOCUMENTATION_URL + markdownFileName;
+		}
+
+		return null;
 	}
 
 	private static PathMatchers _getPathMatchers(
@@ -499,7 +655,92 @@ public class SourceFormatterUtil {
 		return pathMatchers;
 	}
 
-	private static List<String> _scanForFiles(
+	private static synchronized List<String> _getUntrackedFileNames() {
+		if (_untrackedFileNames != null) {
+			return _untrackedFileNames;
+		}
+
+		_untrackedFileNames = new ArrayList<>();
+
+		_executeGitCommand(
+			Arrays.asList("add", ".", "--dry-run", "--no-all"),
+			_gitTopLevelFolder,
+			line -> {
+				if (!line.startsWith("add ")) {
+					return;
+				}
+
+				line = line.substring(5, line.length() - 1);
+
+				_untrackedFileNames.add(
+					_gitTopLevelFolder + StringPool.SLASH + line);
+			});
+
+		return _untrackedFileNames;
+	}
+
+	private static List<String> _matchFileContentsForFileNames(
+		List<String> args, String baseDirName, String[] includes) {
+
+		List<String> allArgs = new ArrayList<>(args);
+
+		List<String> filters = new ArrayList<>();
+
+		ArrayUtil.isNotEmptyForEach(
+			includes, includeGlob -> filters.add(":(glob)" + includeGlob));
+
+		if (ListUtil.isNotEmpty(filters)) {
+			allArgs.add("--");
+
+			allArgs.addAll(filters);
+		}
+
+		List<String> fileNames = new ArrayList<>();
+
+		_executeGitCommand(
+			allArgs, baseDirName,
+			line -> fileNames.add(baseDirName + StringPool.SLASH + line));
+
+		return fileNames;
+	}
+
+	private static List<String> _scanForFileNames(
+		List<String> args, String baseDirName, String[] includes) {
+
+		if (_gitTopLevelFolder == null) {
+			List<String> lines = new ArrayList<>();
+
+			_executeGitCommand(
+				Arrays.asList("rev-parse", "--show-toplevel"), baseDirName,
+				lines::add);
+
+			_gitTopLevelFolder = lines.get(0);
+		}
+
+		List<String> allArgs = new ArrayList<>(args);
+
+		List<String> filters = new ArrayList<>();
+
+		ArrayUtil.isNotEmptyForEach(
+			includes, includeGlob -> filters.add(":(glob)" + includeGlob));
+
+		if (ListUtil.isNotEmpty(filters)) {
+			allArgs.add("--");
+
+			allArgs.addAll(filters);
+		}
+
+		List<String> fileNames = new ArrayList<>();
+
+		_executeGitCommand(
+			allArgs, baseDirName,
+			line -> fileNames.add(
+				_gitTopLevelFolder + StringPool.SLASH + line));
+
+		return fileNames;
+	}
+
+	private static List<String> _scanForFileNames(
 			final String baseDirName, final PathMatchers pathMatchers,
 			final boolean includeSubrepositories)
 		throws IOException {
@@ -538,7 +779,10 @@ public class SourceFormatterUtil {
 										return FileVisitResult.SKIP_SUBTREE;
 									}
 								}
-								catch (Exception e) {
+								catch (Exception exception) {
+									if (_log.isDebugEnabled()) {
+										_log.debug(exception);
+									}
 								}
 							}
 						}
@@ -617,7 +861,11 @@ public class SourceFormatterUtil {
 							continue;
 						}
 
-						fileNames.add(filePath.toString());
+						String fileName = StringUtil.replace(
+							filePath.toString(), CharPool.BACK_SLASH,
+							CharPool.SLASH);
+
+						fileNames.add(fileName);
 
 						return FileVisitResult.CONTINUE;
 					}
@@ -629,6 +877,19 @@ public class SourceFormatterUtil {
 
 		return fileNames;
 	}
+
+	private static final String _DOCUMENTATION_URL =
+		"https://github.com/liferay/liferay-portal/blob/master/modules/util" +
+			"/source-formatter/src/main/resources/documentation/check/";
+
+	private static final String _SUPPRESSIONS_FILE_NAME =
+		"source-formatter-suppressions.xml";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SourceFormatterUtil.class);
+
+	private static String _gitTopLevelFolder;
+	private static List<String> _untrackedFileNames;
 
 	private static class PathMatchers {
 
@@ -759,14 +1020,17 @@ public class SourceFormatterUtil {
 			return _includeFilePathMatchers;
 		}
 
-		private List<PathMatcher> _excludeDirPathMatchers = new ArrayList<>();
-		private Map<String, List<PathMatcher>> _excludeDirPathMatchersMap =
-			new HashMap<>();
-		private List<PathMatcher> _excludeFilePathMatchers = new ArrayList<>();
-		private Map<String, List<PathMatcher>> _excludeFilePathMatchersMap =
-			new HashMap<>();
+		private final List<PathMatcher> _excludeDirPathMatchers =
+			new ArrayList<>();
+		private final Map<String, List<PathMatcher>>
+			_excludeDirPathMatchersMap = new HashMap<>();
+		private final List<PathMatcher> _excludeFilePathMatchers =
+			new ArrayList<>();
+		private final Map<String, List<PathMatcher>>
+			_excludeFilePathMatchersMap = new HashMap<>();
 		private final FileSystem _fileSystem;
-		private List<PathMatcher> _includeFilePathMatchers = new ArrayList<>();
+		private final List<PathMatcher> _includeFilePathMatchers =
+			new ArrayList<>();
 
 	}
 

@@ -1,31 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dispatch.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link DispatchTriggerLocalService}.
  *
- * @author Alessio Antonio Rendina
+ * @author Matija Petanjek
  * @see DispatchTriggerLocalService
  * @generated
  */
 public class DispatchTriggerLocalServiceWrapper
 	implements DispatchTriggerLocalService,
 			   ServiceWrapper<DispatchTriggerLocalService> {
+
+	public DispatchTriggerLocalServiceWrapper() {
+		this(null);
+	}
 
 	public DispatchTriggerLocalServiceWrapper(
 		DispatchTriggerLocalService dispatchTriggerLocalService) {
@@ -36,6 +32,10 @@ public class DispatchTriggerLocalServiceWrapper
 	/**
 	 * Adds the dispatch trigger to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DispatchTriggerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param dispatchTrigger the dispatch trigger
 	 * @return the dispatch trigger that was added
 	 */
@@ -44,6 +44,37 @@ public class DispatchTriggerLocalServiceWrapper
 		com.liferay.dispatch.model.DispatchTrigger dispatchTrigger) {
 
 		return _dispatchTriggerLocalService.addDispatchTrigger(dispatchTrigger);
+	}
+
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger addDispatchTrigger(
+			String externalReferenceCode, long userId,
+			com.liferay.dispatch.executor.DispatchTaskExecutor
+				dispatchTaskExecutor,
+			String dispatchTaskExecutorType,
+			com.liferay.portal.kernel.util.UnicodeProperties
+				dispatchTaskSettingsUnicodeProperties,
+			String name, boolean system)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.addDispatchTrigger(
+			externalReferenceCode, userId, dispatchTaskExecutor,
+			dispatchTaskExecutorType, dispatchTaskSettingsUnicodeProperties,
+			name, system);
+	}
+
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger addDispatchTrigger(
+			String externalReferenceCode, long userId,
+			String dispatchTaskExecutorType,
+			com.liferay.portal.kernel.util.UnicodeProperties
+				dispatchTaskSettingsUnicodeProperties,
+			String name, boolean system)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.addDispatchTrigger(
+			externalReferenceCode, userId, dispatchTaskExecutorType,
+			dispatchTaskSettingsUnicodeProperties, name, system);
 	}
 
 	/**
@@ -61,14 +92,31 @@ public class DispatchTriggerLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the dispatch trigger from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DispatchTriggerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param dispatchTrigger the dispatch trigger
 	 * @return the dispatch trigger that was removed
+	 * @throws PortalException
 	 */
 	@Override
 	public com.liferay.dispatch.model.DispatchTrigger deleteDispatchTrigger(
-		com.liferay.dispatch.model.DispatchTrigger dispatchTrigger) {
+			com.liferay.dispatch.model.DispatchTrigger dispatchTrigger)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dispatchTriggerLocalService.deleteDispatchTrigger(
 			dispatchTrigger);
@@ -76,6 +124,10 @@ public class DispatchTriggerLocalServiceWrapper
 
 	/**
 	 * Deletes the dispatch trigger with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DispatchTriggerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param dispatchTriggerId the primary key of the dispatch trigger
 	 * @return the dispatch trigger that was removed
@@ -100,6 +152,18 @@ public class DispatchTriggerLocalServiceWrapper
 
 		return _dispatchTriggerLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _dispatchTriggerLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _dispatchTriggerLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -202,6 +266,51 @@ public class DispatchTriggerLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.dispatch.model.DispatchTrigger fetchDispatchTrigger(
+		long companyId, String name) {
+
+		return _dispatchTriggerLocalService.fetchDispatchTrigger(
+			companyId, name);
+	}
+
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger
+		fetchDispatchTriggerByExternalReferenceCode(
+			String externalReferenceCode, long companyId) {
+
+		return _dispatchTriggerLocalService.
+			fetchDispatchTriggerByExternalReferenceCode(
+				externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the dispatch trigger with the matching UUID and company.
+	 *
+	 * @param uuid the dispatch trigger's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
+	 */
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger
+		fetchDispatchTriggerByUuidAndCompanyId(String uuid, long companyId) {
+
+		return _dispatchTriggerLocalService.
+			fetchDispatchTriggerByUuidAndCompanyId(uuid, companyId);
+	}
+
+	@Override
+	public java.util.Date fetchNextFireDate(long dispatchTriggerId) {
+		return _dispatchTriggerLocalService.fetchNextFireDate(
+			dispatchTriggerId);
+	}
+
+	@Override
+	public java.util.Date fetchPreviousFireDate(long dispatchTriggerId) {
+		return _dispatchTriggerLocalService.fetchPreviousFireDate(
+			dispatchTriggerId);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -224,6 +333,52 @@ public class DispatchTriggerLocalServiceWrapper
 			dispatchTriggerId);
 	}
 
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger
+			getDispatchTriggerByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.
+			getDispatchTriggerByExternalReferenceCode(
+				externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the dispatch trigger with the matching UUID and company.
+	 *
+	 * @param uuid the dispatch trigger's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching dispatch trigger
+	 * @throws PortalException if a matching dispatch trigger could not be found
+	 */
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger
+			getDispatchTriggerByUuidAndCompanyId(String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.
+			getDispatchTriggerByUuidAndCompanyId(uuid, companyId);
+	}
+
+	@Override
+	public java.util.List<com.liferay.dispatch.model.DispatchTrigger>
+		getDispatchTriggers(boolean active) {
+
+		return _dispatchTriggerLocalService.getDispatchTriggers(active);
+	}
+
+	@Override
+	public java.util.List<com.liferay.dispatch.model.DispatchTrigger>
+		getDispatchTriggers(
+			boolean active,
+			com.liferay.dispatch.executor.DispatchTaskClusterMode
+				dispatchTaskClusterMode) {
+
+		return _dispatchTriggerLocalService.getDispatchTriggers(
+			active, dispatchTaskClusterMode);
+	}
+
 	/**
 	 * Returns a range of all the dispatch triggers.
 	 *
@@ -242,6 +397,14 @@ public class DispatchTriggerLocalServiceWrapper
 		return _dispatchTriggerLocalService.getDispatchTriggers(start, end);
 	}
 
+	@Override
+	public java.util.List<com.liferay.dispatch.model.DispatchTrigger>
+		getDispatchTriggers(long companyId, int start, int end) {
+
+		return _dispatchTriggerLocalService.getDispatchTriggers(
+			companyId, start, end);
+	}
+
 	/**
 	 * Returns the number of dispatch triggers.
 	 *
@@ -253,11 +416,33 @@ public class DispatchTriggerLocalServiceWrapper
 	}
 
 	@Override
+	public int getDispatchTriggersCount(long companyId) {
+		return _dispatchTriggerLocalService.getDispatchTriggersCount(companyId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return _dispatchTriggerLocalService.getExportActionableDynamicQuery(
+			portletDataContext);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery
 		getIndexableActionableDynamicQuery() {
 
 		return _dispatchTriggerLocalService.
 			getIndexableActionableDynamicQuery();
+	}
+
+	@Override
+	public java.util.Date getNextFireDate(long dispatchTriggerId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.getNextFireDate(dispatchTriggerId);
 	}
 
 	/**
@@ -270,6 +455,9 @@ public class DispatchTriggerLocalServiceWrapper
 		return _dispatchTriggerLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -278,8 +466,35 @@ public class DispatchTriggerLocalServiceWrapper
 		return _dispatchTriggerLocalService.getPersistedModel(primaryKeyObj);
 	}
 
+	@Override
+	public java.util.Date getPreviousFireDate(long dispatchTriggerId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.getPreviousFireDate(
+			dispatchTriggerId);
+	}
+
+	@Override
+	public java.util.List<com.liferay.dispatch.model.DispatchTrigger>
+		getUserDispatchTriggers(
+			long companyId, long userId, int start, int end) {
+
+		return _dispatchTriggerLocalService.getUserDispatchTriggers(
+			companyId, userId, start, end);
+	}
+
+	@Override
+	public int getUserDispatchTriggersCount(long companyId, long userId) {
+		return _dispatchTriggerLocalService.getUserDispatchTriggersCount(
+			companyId, userId);
+	}
+
 	/**
 	 * Updates the dispatch trigger in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DispatchTriggerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param dispatchTrigger the dispatch trigger
 	 * @return the dispatch trigger that was updated
@@ -290,6 +505,41 @@ public class DispatchTriggerLocalServiceWrapper
 
 		return _dispatchTriggerLocalService.updateDispatchTrigger(
 			dispatchTrigger);
+	}
+
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger updateDispatchTrigger(
+			long dispatchTriggerId, boolean active, String cronExpression,
+			com.liferay.dispatch.executor.DispatchTaskClusterMode
+				dispatchTaskClusterMode,
+			int endDateMonth, int endDateDay, int endDateYear, int endDateHour,
+			int endDateMinute, boolean neverEnd, boolean overlapAllowed,
+			int startDateMonth, int startDateDay, int startDateYear,
+			int startDateHour, int startDateMinute, String timeZoneId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.updateDispatchTrigger(
+			dispatchTriggerId, active, cronExpression, dispatchTaskClusterMode,
+			endDateMonth, endDateDay, endDateYear, endDateHour, endDateMinute,
+			neverEnd, overlapAllowed, startDateMonth, startDateDay,
+			startDateYear, startDateHour, startDateMinute, timeZoneId);
+	}
+
+	@Override
+	public com.liferay.dispatch.model.DispatchTrigger updateDispatchTrigger(
+			long dispatchTriggerId,
+			com.liferay.portal.kernel.util.UnicodeProperties
+				taskSettingsUnicodeProperties,
+			String name)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dispatchTriggerLocalService.updateDispatchTrigger(
+			dispatchTriggerId, taskSettingsUnicodeProperties, name);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _dispatchTriggerLocalService.getBasePersistence();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -41,20 +32,14 @@ public interface File {
 	public void copyFile(java.io.File source, java.io.File destination)
 		throws IOException;
 
-	public void copyFile(
-			java.io.File source, java.io.File destination, boolean lazy)
-		throws IOException;
-
 	public void copyFile(String source, String destination) throws IOException;
-
-	public void copyFile(String source, String destination, boolean lazy)
-		throws IOException;
 
 	public java.io.File createTempFile();
 
 	public java.io.File createTempFile(byte[] bytes) throws IOException;
 
-	public java.io.File createTempFile(InputStream is) throws IOException;
+	public java.io.File createTempFile(InputStream inputStream)
+		throws IOException;
 
 	public java.io.File createTempFile(String extension);
 
@@ -84,26 +69,20 @@ public interface File {
 
 	public boolean exists(String fileName);
 
-	public String extractText(InputStream is, String fileName);
-
-	public String extractText(
-		InputStream is, String fileName, int maxStringLength);
-
-	public String[] find(String directory, String includes, String excludes);
-
 	public String getAbsolutePath(java.io.File file);
 
 	public byte[] getBytes(Class<?> clazz, String fileName) throws IOException;
 
-	public byte[] getBytes(InputStream is) throws IOException;
+	public byte[] getBytes(java.io.File file) throws IOException;
 
-	public byte[] getBytes(InputStream is, int bufferSize) throws IOException;
+	public byte[] getBytes(InputStream inputStream) throws IOException;
+
+	public byte[] getBytes(InputStream inputStream, int bufferSize)
+		throws IOException;
 
 	public byte[] getBytes(
 			InputStream inputStream, int bufferSize, boolean cleanUpStream)
 		throws IOException;
-
-	public byte[] getBytes(java.io.File file) throws IOException;
 
 	public String getExtension(String fileName);
 
@@ -112,8 +91,6 @@ public interface File {
 	public String getPath(String fullFileName);
 
 	public String getShortFileName(String fullFileName);
-
-	public boolean isAscii(java.io.File file) throws IOException;
 
 	public boolean isSameContent(java.io.File file, byte[] bytes, int length);
 
@@ -127,7 +104,7 @@ public interface File {
 
 	public String[] listFiles(String fileName);
 
-	public void mkdirs(java.io.File file) throws IOException;
+	public void mkdirs(java.io.File file);
 
 	public void mkdirs(String pathName);
 
@@ -153,7 +130,7 @@ public interface File {
 
 	public List<String> toList(String fileName);
 
-	public Properties toProperties(FileInputStream fis);
+	public Properties toProperties(FileInputStream fileInputStream);
 
 	public Properties toProperties(String fileName);
 
@@ -176,7 +153,8 @@ public interface File {
 			boolean append)
 		throws IOException;
 
-	public void write(java.io.File file, InputStream is) throws IOException;
+	public void write(java.io.File file, InputStream inputStream)
+		throws IOException;
 
 	public void write(java.io.File file, String s) throws IOException;
 
@@ -188,7 +166,8 @@ public interface File {
 
 	public void write(String fileName, byte[] bytes) throws IOException;
 
-	public void write(String fileName, InputStream is) throws IOException;
+	public void write(String fileName, InputStream inputStream)
+		throws IOException;
 
 	public void write(String fileName, String s) throws IOException;
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.common;
@@ -17,10 +8,11 @@ package com.liferay.portal.dao.orm.common;
 import com.liferay.portal.dao.sql.transformer.HQLToJPQLTransformerLogic;
 import com.liferay.portal.dao.sql.transformer.JPQLToHQLTransformerLogic;
 import com.liferay.portal.dao.sql.transformer.SQLTransformerFactory;
+import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -41,26 +33,8 @@ public class SQLTransformer {
 		return sqlTransformer.transform(sql);
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link
-	 *             #transformFromHQLToJQPL(String)}
-	 */
-	@Deprecated
-	public static String transformFromHqlToJpql(String sql) {
-		return transformFromHQLToJQPL(sql);
-	}
-
 	public static String transformFromHQLToJQPL(String sql) {
 		return _instance._transformFromHQLToJPQL(sql);
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link
-	 *             #transformFromJPQLToHQL(String)}
-	 */
-	@Deprecated
-	public static String transformFromJpqlToHql(String sql) {
-		return transformFromJPQLToHQL(sql);
 	}
 
 	public static String transformFromJPQLToHQL(String sql) {
@@ -78,11 +52,13 @@ public class SQLTransformer {
 	}
 
 	private void _reloadSQLTransformer() {
-		if (_transformedSqls == null) {
-			_transformedSqls = new ConcurrentHashMap<>();
+		if (_transformedSQLsPortalCache == null) {
+			_transformedSQLsPortalCache = PortalCacheHelperUtil.getPortalCache(
+				PortalCacheManagerNames.SINGLE_VM,
+				SQLTransformer.class.getName());
 		}
 		else {
-			_transformedSqls.clear();
+			_transformedSQLsPortalCache.removeAll();
 		}
 
 		_sqlTransformer = SQLTransformerFactory.getSQLTransformer(
@@ -90,7 +66,7 @@ public class SQLTransformer {
 	}
 
 	private String _transformFromHQLToJPQL(String sql) {
-		String newSQL = _transformedSqls.get(sql);
+		String newSQL = _transformedSQLsPortalCache.get(sql);
 
 		if (newSQL != null) {
 			return newSQL;
@@ -108,13 +84,13 @@ public class SQLTransformer {
 			newSQL = function.apply(newSQL);
 		}
 
-		_transformedSqls.put(sql, newSQL);
+		_transformedSQLsPortalCache.put(sql, newSQL);
 
 		return newSQL;
 	}
 
 	private String _transformFromJPQLToHQL(String sql) {
-		String newSQL = _transformedSqls.get(sql);
+		String newSQL = _transformedSQLsPortalCache.get(sql);
 
 		if (newSQL != null) {
 			return newSQL;
@@ -127,7 +103,7 @@ public class SQLTransformer {
 
 		newSQL = countFunction.apply(newSQL);
 
-		_transformedSqls.put(sql, newSQL);
+		_transformedSQLsPortalCache.put(sql, newSQL);
 
 		return newSQL;
 	}
@@ -136,6 +112,6 @@ public class SQLTransformer {
 
 	private com.liferay.portal.dao.sql.transformer.SQLTransformer
 		_sqlTransformer;
-	private Map<String, String> _transformedSqls;
+	private PortalCache<String, String> _transformedSQLsPortalCache;
 
 }

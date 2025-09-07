@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.metatype.definitions.annotations.internal;
@@ -18,6 +9,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedAttributeDefinition;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.LocalizedValuesMap;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -102,12 +94,42 @@ public class AnnotationsExtendedAttributeDefinition
 
 	@Override
 	public int getType() {
+		if (_configurationBeanClass != null) {
+			try {
+				Method method = _configurationBeanClass.getMethod(
+					_attributeDefinition.getID());
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(LocalizedValuesMap.class)) {
+					return LOCALIZED_VALUES_MAP;
+				}
+			}
+			catch (NoSuchMethodException noSuchMethodException) {
+				_handleNoSuchMethodException(noSuchMethodException);
+			}
+		}
+
 		return _attributeDefinition.getType();
 	}
 
 	@Override
 	public String validate(String value) {
 		return _attributeDefinition.validate(value);
+	}
+
+	private void _handleNoSuchMethodException(
+		NoSuchMethodException noSuchMethodException) {
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				StringBundler.concat(
+					"The configuration bean class ",
+					_configurationBeanClass.getName(),
+					" does not have a method for the attribute definition ",
+					_attributeDefinition.getID()),
+				noSuchMethodException);
+		}
 	}
 
 	private void _processExtendedMetatypeFields() {
@@ -119,33 +141,31 @@ public class AnnotationsExtendedAttributeDefinition
 				method.getAnnotation(ExtendedAttributeDefinition.class);
 
 			if (extendedAttributeDefinition != null) {
-				Map<String, String> map = HashMapBuilder.put(
-					"description-arguments",
-					StringUtil.merge(
-						extendedAttributeDefinition.descriptionArguments())
-				).put(
-					"name-arguments",
-					StringUtil.merge(
-						extendedAttributeDefinition.nameArguments())
-				).put(
-					"required-input",
-					String.valueOf(extendedAttributeDefinition.requiredInput())
-				).build();
-
 				_extensionAttributes.put(
-					ExtendedAttributeDefinition.XML_NAMESPACE, map);
+					ExtendedAttributeDefinition.XML_NAMESPACE,
+					HashMapBuilder.put(
+						"description-arguments",
+						StringUtil.merge(
+							extendedAttributeDefinition.descriptionArguments())
+					).put(
+						"feature.flag.key",
+						extendedAttributeDefinition.featureFlagKey()
+					).put(
+						"name-arguments",
+						StringUtil.merge(
+							extendedAttributeDefinition.nameArguments())
+					).put(
+						"required-input",
+						String.valueOf(
+							extendedAttributeDefinition.requiredInput())
+					).put(
+						"visibility-controller-key",
+						extendedAttributeDefinition.visibilityControllerKey()
+					).build());
 			}
 		}
-		catch (NoSuchMethodException nsme) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					StringBundler.concat(
-						"The configuration bean class ",
-						_configurationBeanClass.getName(),
-						" does not have a method for the attribute definition ",
-						_attributeDefinition.getID()),
-					nsme);
-			}
+		catch (NoSuchMethodException noSuchMethodException) {
+			_handleNoSuchMethodException(noSuchMethodException);
 		}
 	}
 

@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.parser.bbcode.internal;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.util.HtmlImpl;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -28,12 +20,10 @@ import org.junit.Test;
  */
 public class HtmlBBCodeTranslatorImplTest {
 
-	@Before
-	public void setUp() {
-		HtmlUtil htmlUtil = new HtmlUtil();
-
-		htmlUtil.setHtml(new HtmlImpl());
-	}
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testAlign() {
@@ -77,7 +67,7 @@ public class HtmlBBCodeTranslatorImplTest {
 		StringBundler sb = new StringBundler(4);
 
 		sb.append("<div class=\"lfr-code\"><table><tbody><tr>");
-		sb.append("<td class=\"line-numbers\" data-line-number=\"1\"></td>");
+		sb.append("<td class=\"line-numbers\">1</td>");
 		sb.append("<td class=\"lines\"><div class=\"line\">:)</div>");
 		sb.append("</td></tr></tbody></table></div>");
 

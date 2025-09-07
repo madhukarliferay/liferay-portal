@@ -1,18 +1,7 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-import {isNumber} from 'metal';
 
 const DEFAULT_OPTIONS = {
 	addSpaceBeforeSuffix: false,
@@ -20,7 +9,7 @@ const DEFAULT_OPTIONS = {
 	denominator: 1024.0,
 	suffixGB: 'GB',
 	suffixKB: 'KB',
-	suffixMB: 'MB'
+	suffixMB: 'MB',
 };
 
 /**
@@ -38,13 +27,13 @@ export default function formatStorage(size, options = {}) {
 		denominator,
 		suffixGB,
 		suffixKB,
-		suffixMB
+		suffixMB,
 	} = {
 		...DEFAULT_OPTIONS,
-		...options
+		...options,
 	};
 
-	if (!isNumber(size)) {
+	if (typeof size !== 'number') {
 		throw new TypeError('Parameter size must be a number');
 	}
 

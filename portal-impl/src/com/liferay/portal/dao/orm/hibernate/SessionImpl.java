@@ -1,47 +1,46 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.hibernate;
 
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.petra.sql.dsl.spi.ast.DefaultASTNodeListener;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.dao.orm.LockMode;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Query;
+import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 
 import java.io.Serializable;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+
+import java.util.List;
+import java.util.Map;
 
 import org.hibernate.LockOptions;
+import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.PersistenceContext;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.event.spi.EventSource;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.persister.entity.EntityPersister;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
 public class SessionImpl implements Session {
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 *             #SessionImpl(org.hibernate.Session, ClassLoader)}
-	 */
-	@Deprecated
-	public SessionImpl(org.hibernate.Session session) {
-		this(session, null);
-	}
 
 	public SessionImpl(
 		org.hibernate.Session session, ClassLoader sessionFactoryClassLoader) {
@@ -51,32 +50,64 @@ public class SessionImpl implements Session {
 	}
 
 	@Override
+	public void apply(UnsafeConsumer<Connection, SQLException> unsafeConsumer)
+		throws ORMException {
+
+		try {
+			_session.doWork(unsafeConsumer::accept);
+		}
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
+		}
+	}
+
+	@Override
 	public void clear() throws ORMException {
 		try {
 			_session.clear();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
 	@Override
 	public Connection close() throws ORMException {
 		try {
-			return _session.close();
+			_session.close();
+
+			return null;
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
 	@Override
 	public boolean contains(Object object) throws ORMException {
 		try {
+			SessionImplementor sessionImplementor =
+				(SessionImplementor)_session;
+
+			SessionFactoryImplementor sessionFactoryImplementor =
+				sessionImplementor.getSessionFactory();
+
+			MetamodelImplementor metamodelImplementor =
+				sessionFactoryImplementor.getMetamodel();
+
+			Map<String, EntityPersister> entityPersisters =
+				metamodelImplementor.entityPersisters();
+
+			Class<?> clazz = object.getClass();
+
+			if (!entityPersisters.containsKey(clazz.getName())) {
+				return false;
+			}
+
 			return _session.contains(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -93,17 +124,10 @@ public class SessionImpl implements Session {
 			return _createQuery(queryString, strictName);
 		}
 
-		Thread currentThread = Thread.currentThread();
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				_sessionFactoryClassLoader)) {
 
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
-
-		currentThread.setContextClassLoader(_sessionFactoryClassLoader);
-
-		try {
 			return _createQuery(queryString, strictName);
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
 		}
 	}
 
@@ -122,9 +146,33 @@ public class SessionImpl implements Session {
 			return new SQLQueryImpl(
 				_session.createSQLQuery(queryString), strictName);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
+	}
+
+	@Override
+	public SQLQuery createSynchronizedSQLQuery(DSLQuery dslQuery)
+		throws ORMException {
+
+		DefaultASTNodeListener defaultASTNodeListener =
+			new DefaultASTNodeListener();
+
+		SQLQuery sqlQuery = createSynchronizedSQLQuery(
+			dslQuery.toSQL(defaultASTNodeListener), true,
+			defaultASTNodeListener.getTableNames());
+
+		List<Object> scalarValues = defaultASTNodeListener.getScalarValues();
+
+		if (!scalarValues.isEmpty()) {
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			for (Object value : scalarValues) {
+				queryPos.add(value);
+			}
+		}
+
+		return sqlQuery;
 	}
 
 	@Override
@@ -139,19 +187,28 @@ public class SessionImpl implements Session {
 			String queryString, boolean strictName)
 		throws ORMException {
 
+		return createSynchronizedSQLQuery(
+			queryString, strictName,
+			SQLQueryTableNamesUtil.getTableNames(queryString));
+	}
+
+	@Override
+	public SQLQuery createSynchronizedSQLQuery(
+			String queryString, boolean strictName, String[] tableNames)
+		throws ORMException {
+
 		try {
 			queryString = SQLTransformer.transformFromJPQLToHQL(queryString);
 
 			SQLQuery sqlQuery = new SQLQueryImpl(
 				_session.createSQLQuery(queryString), strictName);
 
-			sqlQuery.addSynchronizedQuerySpaces(
-				SQLQueryTableNamesUtil.getTableNames(queryString));
+			sqlQuery.addSynchronizedQuerySpaces(tableNames);
 
 			return sqlQuery;
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -160,8 +217,39 @@ public class SessionImpl implements Session {
 		try {
 			_session.delete(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
+		}
+	}
+
+	@Override
+	public void evict(Class<?> clazz, Serializable id) throws ORMException {
+		try {
+			EventSource eventSource = (EventSource)_session;
+
+			PersistenceContext persistenceContext =
+				eventSource.getPersistenceContext();
+
+			SessionFactoryImplementor sessionFactoryImplementor =
+				eventSource.getFactory();
+
+			MetamodelImplementor metamodelImplementor =
+				sessionFactoryImplementor.getMetamodel();
+
+			EntityPersister entityPersister =
+				metamodelImplementor.entityPersister(clazz);
+
+			Object object = persistenceContext.getEntity(
+				new EntityKey(id, entityPersister));
+
+			if (object == null) {
+				return;
+			}
+
+			eventSource.evict(object);
+		}
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -170,8 +258,8 @@ public class SessionImpl implements Session {
 		try {
 			_session.evict(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -180,8 +268,8 @@ public class SessionImpl implements Session {
 		try {
 			_session.flush();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -190,8 +278,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.get(clazz, id);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -205,8 +293,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.get(clazz, id, lockOptions);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -220,8 +308,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.isDirty();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -230,8 +318,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.load(clazz, id);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -240,8 +328,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.merge(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e, _session, object);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception, _session, object);
 		}
 	}
 
@@ -250,8 +338,8 @@ public class SessionImpl implements Session {
 		try {
 			return _session.save(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -260,20 +348,14 @@ public class SessionImpl implements Session {
 		try {
 			_session.saveOrUpdate(object);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e, _session, object);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception, _session, object);
 		}
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("{_session=");
-		sb.append(String.valueOf(_session));
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat("{_session=", _session, "}");
 	}
 
 	private Query _createQuery(String queryString, boolean strictName)
@@ -284,8 +366,8 @@ public class SessionImpl implements Session {
 
 			return new QueryImpl(_session.createQuery(queryString), strictName);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 

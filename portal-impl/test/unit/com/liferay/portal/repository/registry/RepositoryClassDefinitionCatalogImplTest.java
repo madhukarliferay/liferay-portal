@@ -1,28 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.repository.registry;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.repository.RepositoryConfigurationBuilder;
 import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.language.LanguageImpl;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -32,17 +22,25 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Leon Chi
  */
 public class RepositoryClassDefinitionCatalogImplTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@BeforeClass
 	public static void setUpClass() {
-		RegistryUtil.setRegistry(new BasicRegistryImpl());
-
 		LanguageUtil languageUtil = new LanguageUtil();
 
 		languageUtil.setLanguage(new LanguageImpl());
@@ -60,12 +58,13 @@ public class RepositoryClassDefinitionCatalogImplTest {
 
 	@Before
 	public void setUp() {
-		Registry registry = RegistryUtil.getRegistry();
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		_serviceRegistration = registry.registerService(
+		_serviceRegistration = bundleContext.registerService(
 			RepositoryDefiner.class,
 			_getRepositoryDefiner(
-				_EXTERNAL_REPOSITORY_DEFINER_CLASS_NAME, true));
+				_EXTERNAL_REPOSITORY_DEFINER_CLASS_NAME, true),
+			null);
 	}
 
 	@After
@@ -74,12 +73,13 @@ public class RepositoryClassDefinitionCatalogImplTest {
 	}
 
 	@Test
-	public void testGetExternalRepositoryClassDefinitions() {
+	public void testGetExternalRepositoryClassDefinitions() throws Exception {
 		Collection<RepositoryClassDefinition>
 			externalRepositoryClassDefinitions =
 				(Collection<RepositoryClassDefinition>)
 					_repositoryClassDefinitionCatalogImpl.
-						getExternalRepositoryClassDefinitions();
+						getExternalRepositoryClassDefinitions(
+							CompanyConstants.SYSTEM);
 
 		Assert.assertTrue(
 			_EXTERNAL_REPOSITORY_DEFINER_CLASS_NAME + " not found in " +
@@ -91,10 +91,10 @@ public class RepositoryClassDefinitionCatalogImplTest {
 	}
 
 	@Test
-	public void testGetExternalRepositoryClassNames() {
+	public void testGetExternalRepositoryClassNames() throws Exception {
 		Collection<String> externalRepositoryClassNames =
 			_repositoryClassDefinitionCatalogImpl.
-				getExternalRepositoryClassNames();
+				getExternalRepositoryClassNames(CompanyConstants.SYSTEM);
 
 		Assert.assertTrue(
 			externalRepositoryClassNames.toString(),
@@ -103,18 +103,20 @@ public class RepositoryClassDefinitionCatalogImplTest {
 	}
 
 	@Test
-	public void testGetRepositoryClassDefinition() {
-		Registry registry = RegistryUtil.getRegistry();
+	public void testGetRepositoryClassDefinition() throws Exception {
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		ServiceRegistration<RepositoryDefiner> serviceRegistration =
-			registry.registerService(
+		ServiceRegistration<?> serviceRegistration =
+			bundleContext.registerService(
 				RepositoryDefiner.class,
-				_getRepositoryDefiner(_REPOSITORY_DEFINER_CLASS_NAME, false));
+				_getRepositoryDefiner(_REPOSITORY_DEFINER_CLASS_NAME, false),
+				null);
 
 		try {
 			RepositoryClassDefinition repositoryClassDefinition =
 				_repositoryClassDefinitionCatalogImpl.
 					getRepositoryClassDefinition(
+						CompanyConstants.SYSTEM,
 						_REPOSITORY_DEFINER_CLASS_NAME);
 
 			Assert.assertEquals(
@@ -124,6 +126,7 @@ public class RepositoryClassDefinitionCatalogImplTest {
 			RepositoryClassDefinition repositoryExternalClassDefinition =
 				_repositoryClassDefinitionCatalogImpl.
 					getRepositoryClassDefinition(
+						CompanyConstants.SYSTEM,
 						_EXTERNAL_REPOSITORY_DEFINER_CLASS_NAME);
 
 			Assert.assertEquals(
@@ -135,7 +138,7 @@ public class RepositoryClassDefinitionCatalogImplTest {
 		}
 	}
 
-	private static RepositoryDefiner _getRepositoryDefiner(
+	private RepositoryDefiner _getRepositoryDefiner(
 		String className, boolean external) {
 
 		return (RepositoryDefiner)ProxyUtil.newProxyInstance(

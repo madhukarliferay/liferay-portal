@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -59,6 +50,7 @@ if (url != null) {
 	String[] urlArray = PortalUtil.stripURLAnchor(url, "&#");
 
 	anchor = urlArray[1];
+
 	url = urlArray[0];
 
 	if (!url.contains(StringPool.QUESTION)) {
@@ -69,6 +61,7 @@ if (url != null) {
 // Back url
 
 String backLabel = (String)request.getAttribute("liferay-ui:tabs:backLabel");
+
 String backURL = (String)request.getAttribute("liferay-ui:tabs:backURL");
 
 if (Validator.isNotNull(backURL) && !backURL.equals("javascript:history.go(-1);")) {
@@ -89,7 +82,7 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 
 // Type
 
-String type = GetterUtil.getString((String)request.getAttribute("liferay-ui:tabs:type"), "underline");
+String type = GetterUtil.getString((String)request.getAttribute("liferay-ui:tabs:type"), "tabs");
 %>
 
 <c:if test="<%= names.length > 0 %>">
@@ -117,22 +110,22 @@ String type = GetterUtil.getString((String)request.getAttribute("liferay-ui:tabs
 			}
 			%>
 
-			<nav class="navbar navbar-default <%= cssClass %>">
+			<nav class="navbar <%= cssClass %>">
 				<div class="container-fluid">
 					<ul class="nav navbar-nav">
 						<c:if test="<%= names.length > 1 %>">
-							<li class="active dropdown">
-								<a class="dropdown-toggle" data-toggle="dropdown" href="javascript:;">
-									<span id="<%= namespace + param + "dropdownTitle" %>"><%= LanguageUtil.get(resourceBundle, HtmlUtil.escape(name)) %></span>
+							<li class="active dropdown nav-item">
+								<button aria-haspopup="true" class="dropdown-toggle nav-link" data-toggle="liferay-dropdown">
+									<span class="navbar-text-truncate" id="<%= namespace + param %>dropdownTitle"><liferay-ui:message key="<%= HtmlUtil.escape(name) %>" /></span>
 
-									<span class="caret"></span>
-								</a>
+									<aui:icon image="caret-bottom" markupView="lexicon" />
+								</button>
 
 								<ul class="dropdown-menu">
 						</c:if>
 		</c:when>
 		<c:otherwise>
-			<ul class="mb-3 mb-lg-4 nav nav-<%= type %> <%= cssClass %>" data-tabs-namespace="<%= namespace + param %>">
+			<ul class="lfr-nav mb-3 mb-lg-4 nav nav-<%= type %> <%= cssClass %>" data-tabs-namespace="<%= namespace + param %>" role="tablist">
 		</c:otherwise>
 	</c:choose>
 
@@ -186,7 +179,7 @@ String type = GetterUtil.getString((String)request.getAttribute("liferay-ui:tabs
 			}
 			else {
 				curOnClick = "Liferay.Portal.Tabs.show('" + namespace + param + "', " + namesJS + ", '" + UnicodeFormatter.toString(names[i]) + "', " + onClick + ");";
-				curURL = "javascript:;";
+				curURL = "javascript:void(0);";
 			}
 		}
 
@@ -199,10 +192,12 @@ String type = GetterUtil.getString((String)request.getAttribute("liferay-ui:tabs
 		}
 	%>
 
-		<li class="nav-item" data-tab-name="<%= names[i] %>" id="<%= namespace %><%= param %><%= StringUtil.toCharCode(values[i]) %>TabsId">
-			<a class="<%= linkCssClass %>" href="<%= Validator.isNotNull(curURL) ? HtmlUtil.escapeAttribute(curURL) : "javascript:;" %>" onClick="<%= Validator.isNotNull(curOnClick) ? curOnClick : StringPool.BLANK %>">
-				<%= LanguageUtil.get(resourceBundle, HtmlUtil.escape(names[i])) %>
-			</a>
+		<li class="nav-item" data-tab-name="<%= names[i] %>" id="<%= namespace %><%= param %><%= StringUtil.toCharCode(values[i]) %>TabsId" role="none">
+			<liferay-ui:csp>
+				<a class="<%= linkCssClass %>" href="<%= Validator.isNotNull(curURL) ? HtmlUtil.escapeAttribute(curURL) : "javascript:void(0);" %>" onClick="<%= Validator.isNotNull(curOnClick) ? curOnClick : StringPool.BLANK %>" role="tab">
+					<liferay-ui:message key="<%= HtmlUtil.escape(names[i]) %>" />
+				</a>
+			</liferay-ui:csp>
 		</li>
 
 	<%

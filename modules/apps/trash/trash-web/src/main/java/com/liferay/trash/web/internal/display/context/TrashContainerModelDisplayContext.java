@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.trash.web.internal.display.context;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.ContainerModel;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
@@ -32,11 +24,11 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Provides utility methods moved from the trash entry model container's JSP
@@ -55,17 +47,6 @@ public class TrashContainerModelDisplayContext {
 
 		_httpServletRequest = PortalUtil.getHttpServletRequest(
 			liferayPortletRequest);
-	}
-
-	public String getBackURL() {
-		if (Validator.isNotNull(_backURL)) {
-			return _backURL;
-		}
-
-		_backURL = ParamUtil.getString(
-			_httpServletRequest, "backURL", getRedirect());
-
-		return _backURL;
 	}
 
 	public String getClassName() {
@@ -160,7 +141,7 @@ public class TrashContainerModelDisplayContext {
 			return _containerModels;
 		}
 
-		SearchContainer searchContainer = getSearchContainer();
+		SearchContainer<?> searchContainer = getSearchContainer();
 
 		TrashHandler trashHandler = getTrashHandler();
 
@@ -193,31 +174,19 @@ public class TrashContainerModelDisplayContext {
 	}
 
 	public PortletURL getContainerURL() {
-		String currentURL = (String)_httpServletRequest.getAttribute(
-			WebKeys.CURRENT_URL);
-
-		PortletURL containerURL = _liferayPortletResponse.createRenderURL();
-
-		containerURL.setParameter("mvcPath", "/view_container_model.jsp");
-		containerURL.setParameter("redirect", getRedirect());
-		containerURL.setParameter("backURL", currentURL);
-		containerURL.setParameter(
-			"classNameId", String.valueOf(getClassNameId()));
-		containerURL.setParameter("classPK", String.valueOf(getClassPK()));
-
-		return containerURL;
-	}
-
-	public String getEventName() {
-		if (Validator.isNotNull(_eventName)) {
-			return _eventName;
-		}
-
-		_eventName = ParamUtil.getString(
-			_httpServletRequest, "eventName",
-			_liferayPortletResponse.getNamespace() + "selectContainer");
-
-		return _eventName;
+		return PortletURLBuilder.createRenderURL(
+			_liferayPortletResponse
+		).setMVCPath(
+			"/view_container_model.jsp"
+		).setRedirect(
+			getRedirect()
+		).setBackURL(
+			(String)_httpServletRequest.getAttribute(WebKeys.CURRENT_URL)
+		).setParameter(
+			"classNameId", getClassNameId()
+		).setParameter(
+			"classPK", getClassPK()
+		).buildPortletURL();
 	}
 
 	public Object[] getMissingContainerMessageArguments()
@@ -258,15 +227,16 @@ public class TrashContainerModelDisplayContext {
 		return _redirect;
 	}
 
-	public SearchContainer getSearchContainer() {
+	public SearchContainer<?> getSearchContainer() {
 		if (_searchContainer != null) {
 			return _searchContainer;
 		}
 
-		PortletURL containerURL = getContainerURL();
-
-		containerURL.setParameter(
-			"containerModelId", String.valueOf(getContainerModelId()));
+		PortletURL containerURL = PortletURLBuilder.create(
+			getContainerURL()
+		).setParameter(
+			"containerModelId", getContainerModelId()
+		).buildPortletURL();
 
 		_searchContainer = new SearchContainer(
 			_liferayPortletRequest, null, null,
@@ -301,34 +271,6 @@ public class TrashContainerModelDisplayContext {
 		return _trashRenderer;
 	}
 
-	public boolean isShowBackIcon() throws PortalException {
-		if (_showBackIcon != null) {
-			return _showBackIcon;
-		}
-
-		ContainerModel containerModel = null;
-
-		if (getContainerModelId() > 0) {
-			TrashHandler containerTrashHandler =
-				TrashHandlerRegistryUtil.getTrashHandler(
-					getContainerModelClassName());
-
-			containerModel = containerTrashHandler.getContainerModel(
-				getContainerModelId());
-		}
-
-		boolean showBackIcon = false;
-
-		if (containerModel != null) {
-			showBackIcon = true;
-		}
-
-		_showBackIcon = showBackIcon;
-
-		return _showBackIcon;
-	}
-
-	private String _backURL;
 	private String _className;
 	private Long _classNameId;
 	private Long _classPK;
@@ -338,14 +280,12 @@ public class TrashContainerModelDisplayContext {
 	private String _containerModelName;
 	private List<ContainerModel> _containerModels;
 	private Integer _containerModelsCount;
-	private String _eventName;
 	private final HttpServletRequest _httpServletRequest;
 	private final LiferayPortletRequest _liferayPortletRequest;
 	private final LiferayPortletResponse _liferayPortletResponse;
 	private Object[] _missingContainerMessageArguments;
 	private String _redirect;
-	private SearchContainer _searchContainer;
-	private Boolean _showBackIcon;
+	private SearchContainer<?> _searchContainer;
 	private TrashHandler _trashHandler;
 	private TrashRenderer _trashRenderer;
 

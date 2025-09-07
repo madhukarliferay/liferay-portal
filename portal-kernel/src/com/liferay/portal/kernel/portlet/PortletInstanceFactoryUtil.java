@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
 
 import com.liferay.portal.kernel.model.Portlet;
 
-import javax.portlet.PortletException;
+import jakarta.portlet.PortletException;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -26,18 +17,18 @@ import javax.servlet.ServletContext;
 public class PortletInstanceFactoryUtil {
 
 	public static void clear(Portlet portlet) {
-		getPortletInstanceFactory().clear(portlet);
+		_portletInstanceFactory.clear(portlet);
 	}
 
 	public static void clear(Portlet portlet, boolean resetRemotePortletBag) {
-		getPortletInstanceFactory().clear(portlet, resetRemotePortletBag);
+		_portletInstanceFactory.clear(portlet, resetRemotePortletBag);
 	}
 
 	public static InvokerPortlet create(
 			Portlet portlet, ServletContext servletContext)
 		throws PortletException {
 
-		return getPortletInstanceFactory().create(portlet, servletContext);
+		return _portletInstanceFactory.create(portlet, servletContext);
 	}
 
 	public static InvokerPortlet create(
@@ -45,16 +36,16 @@ public class PortletInstanceFactoryUtil {
 			boolean destroyPrevious)
 		throws PortletException {
 
-		return getPortletInstanceFactory().create(
+		return _portletInstanceFactory.create(
 			portlet, servletContext, destroyPrevious);
 	}
 
 	public static void delete(Portlet portlet) {
-		getPortletInstanceFactory().delete(portlet);
+		_portletInstanceFactory.delete(portlet);
 	}
 
 	public static void destroy(Portlet portlet) {
-		getPortletInstanceFactory().destroy(portlet);
+		_portletInstanceFactory.destroy(portlet);
 	}
 
 	public static PortletInstanceFactory getPortletInstanceFactory() {

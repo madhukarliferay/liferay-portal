@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.test;
@@ -26,15 +17,20 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -46,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +120,10 @@ public class MBThreadPersistenceTest {
 
 		MBThread newMBThread = _persistence.create(pk);
 
+		newMBThread.setMvccVersion(RandomTestUtil.nextLong());
+
+		newMBThread.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newMBThread.setUuid(RandomTestUtil.randomString());
 
 		newMBThread.setGroupId(RandomTestUtil.nextLong());
@@ -146,8 +145,6 @@ public class MBThreadPersistenceTest {
 		newMBThread.setRootMessageUserId(RandomTestUtil.nextLong());
 
 		newMBThread.setTitle(RandomTestUtil.randomString());
-
-		newMBThread.setMessageCount(RandomTestUtil.nextInt());
 
 		newMBThread.setLastPostByUserId(RandomTestUtil.nextLong());
 
@@ -172,6 +169,11 @@ public class MBThreadPersistenceTest {
 		MBThread existingMBThread = _persistence.findByPrimaryKey(
 			newMBThread.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingMBThread.getMvccVersion(), newMBThread.getMvccVersion());
+		Assert.assertEquals(
+			existingMBThread.getCtCollectionId(),
+			newMBThread.getCtCollectionId());
 		Assert.assertEquals(existingMBThread.getUuid(), newMBThread.getUuid());
 		Assert.assertEquals(
 			existingMBThread.getThreadId(), newMBThread.getThreadId());
@@ -199,8 +201,6 @@ public class MBThreadPersistenceTest {
 			newMBThread.getRootMessageUserId());
 		Assert.assertEquals(
 			existingMBThread.getTitle(), newMBThread.getTitle());
-		Assert.assertEquals(
-			existingMBThread.getMessageCount(), newMBThread.getMessageCount());
 		Assert.assertEquals(
 			existingMBThread.getLastPostByUserId(),
 			newMBThread.getLastPostByUserId());
@@ -401,20 +401,38 @@ public class MBThreadPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<MBThread> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"MBThread", "uuid", true, "threadId", true, "groupId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "categoryId", true, "rootMessageId",
-			true, "rootMessageUserId", true, "title", true, "messageCount",
-			true, "lastPostByUserId", true, "lastPostDate", true, "priority",
-			true, "question", true, "lastPublishDate", true, "status", true,
-			"statusByUserId", true, "statusByUserName", true, "statusDate",
-			true);
+			"MBThread", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "threadId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "categoryId", true, "rootMessageId", true,
+			"rootMessageUserId", true, "title", true, "lastPostByUserId", true,
+			"lastPostDate", true, "priority", true, "question", true,
+			"lastPublishDate", true, "status", true, "statusByUserId", true,
+			"statusByUserName", true, "statusDate", true);
 	}
 
 	@Test
@@ -625,29 +643,75 @@ public class MBThreadPersistenceTest {
 
 		_persistence.clearCache();
 
-		MBThread existingMBThread = _persistence.findByPrimaryKey(
-			newMBThread.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newMBThread.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingMBThread.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingMBThread, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		MBThread newMBThread = addMBThread();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			MBThread.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("threadId", newMBThread.getThreadId()));
+
+		List<MBThread> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(MBThread mbThread) {
 		Assert.assertEquals(
-			Long.valueOf(existingMBThread.getGroupId()),
+			mbThread.getUuid(),
+			ReflectionTestUtil.invoke(
+				mbThread, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(mbThread.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBThread, "getOriginalGroupId", new Class<?>[0]));
+				mbThread, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingMBThread.getRootMessageId()),
+			Long.valueOf(mbThread.getRootMessageId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBThread, "getOriginalRootMessageId", new Class<?>[0]));
+				mbThread, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "rootMessageId"));
 	}
 
 	protected MBThread addMBThread() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		MBThread mbThread = _persistence.create(pk);
+
+		mbThread.setMvccVersion(RandomTestUtil.nextLong());
+
+		mbThread.setCtCollectionId(RandomTestUtil.nextLong());
 
 		mbThread.setUuid(RandomTestUtil.randomString());
 
@@ -670,8 +734,6 @@ public class MBThreadPersistenceTest {
 		mbThread.setRootMessageUserId(RandomTestUtil.nextLong());
 
 		mbThread.setTitle(RandomTestUtil.randomString());
-
-		mbThread.setMessageCount(RandomTestUtil.nextInt());
 
 		mbThread.setLastPostByUserId(RandomTestUtil.nextLong());
 

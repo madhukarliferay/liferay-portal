@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -20,22 +11,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.json.JSONObject;
 
 /**
  * @author Michael Hashimoto
  */
 public class PortalTestSuiteUpstreamControllerBuildRunner
 	<S extends PortalTestSuiteUpstreamControllerBuildData>
-		extends BaseBuildRunner<S, Workspace> {
+		extends BaseBuildRunner<S> {
+
+	@Override
+	public Workspace getWorkspace() {
+		if (_workspace != null) {
+			return _workspace;
+		}
+
+		_workspace = WorkspaceFactory.newWorkspace();
+
+		return _workspace;
+	}
 
 	@Override
 	public void run() {
-		keepJenkinsBuild(true);
-
 		invokeTestSuiteBuilds();
 	}
 
@@ -48,12 +53,10 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 	}
 
 	protected String getInvocationCohortName() {
-		String invocationCorhortName = System.getenv("INVOCATION_COHORT_NAME");
+		String invocationCohortName = System.getenv("INVOCATION_COHORT_NAME");
 
-		if ((invocationCorhortName != null) &&
-			!invocationCorhortName.isEmpty()) {
-
-			return invocationCorhortName;
+		if ((invocationCohortName != null) && !invocationCohortName.isEmpty()) {
+			return invocationCohortName;
 		}
 
 		BuildData buildData = getBuildData();
@@ -61,23 +64,87 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 		return buildData.getCohortName();
 	}
 
-	protected String getJobURL() {
-		String mostAvailableMasterURL =
-			JenkinsResultsParserUtil.getMostAvailableMasterURL(
-				JenkinsResultsParserUtil.combine(
-					"http://" + getInvocationCohortName() + ".liferay.com"),
-				1);
-
+	protected String getInvocationJobName() {
 		S buildData = getBuildData();
 
 		return JenkinsResultsParserUtil.combine(
-			mostAvailableMasterURL, "/job/test-portal-testsuite-upstream(",
+			"test-portal-testsuite-upstream(",
 			buildData.getPortalUpstreamBranchName(), ")");
 	}
 
-	@Override
-	protected void initWorkspace() {
-		setWorkspace(WorkspaceFactory.newSimpleWorkspace());
+	protected String getInvocationJobURL(String testSuite) {
+		String invocationJobName = getInvocationJobName();
+
+		String masterURL = null;
+
+		try {
+			masterURL = JenkinsResultsParserUtil.getBuildProperty(
+				"jenkins.osb.jenkins.web.master.url", invocationJobName,
+				testSuite);
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		if (masterURL == null) {
+			masterURL = JenkinsResultsParserUtil.getMostAvailableMasterURL(
+				"http://" + getInvocationCohortName() + ".liferay.com", null, 1,
+				invocationJobName, getSlaveLabel(testSuite), 24, 2);
+		}
+
+		return JenkinsResultsParserUtil.combine(
+			masterURL, "/job/", invocationJobName);
+	}
+
+	protected String getSlaveLabel(String testSuite) {
+		String slaveLabel = null;
+
+		String invocationJobName = getInvocationJobName();
+
+		try {
+			slaveLabel = JenkinsResultsParserUtil.getBuildProperty(
+				"jenkins.osb.jenkins.web.slave.label", invocationJobName,
+				testSuite);
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(slaveLabel)) {
+				slaveLabel = JenkinsResultsParserUtil.getBuildProperty(
+					"cloud.fleet.primary.label");
+			}
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(slaveLabel)) {
+				slaveLabel = JenkinsResultsParserUtil.getBuildProperty(
+					"master.auto.scaling.group.name");
+			}
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(slaveLabel)) {
+			slaveLabel = SLAVE_LABEL_DEFAULT;
+		}
+
+		return slaveLabel;
+	}
+
+	protected String getTestPortalBuildProfile(String testSuite) {
+		return _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.test.portal.build.profile", testSuite);
+	}
+
+	protected String getTestraySlackChannels(String testSuite) {
+		return _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.testray.slack.channels", testSuite);
+	}
+
+	protected String getTestraySlackIconEmoji(String testSuite) {
+		return _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.testray.slack.icon.emoji", testSuite);
+	}
+
+	protected String getTestraySlackUsername(String testSuite) {
+		return _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.testray.slack.username", testSuite);
 	}
 
 	protected void invokeTestSuiteBuilds() {
@@ -86,10 +153,12 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 		if (testSuiteNames.isEmpty()) {
 			System.out.println("There are no test suites to run at this time.");
 
+			keepJenkinsBuild(false);
+
 			return;
 		}
 
-		String jenkinsAuthenticationToken;
+		String jenkinsAuthenticationToken = null;
 
 		try {
 			Properties buildProperties =
@@ -98,77 +167,165 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 			jenkinsAuthenticationToken = buildProperties.getProperty(
 				"jenkins.authentication.token");
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 
 		S buildData = getBuildData();
 
+		String portalBranchSHA = buildData.getPortalBranchSHA();
+
 		for (String testSuiteName : testSuiteNames) {
-			String jobURL = getJobURL();
+			JSONObject previousBuildJSONObject =
+				_getPreviousTestSuiteBuildJSONObject(testSuiteName);
+
+			if ((previousBuildJSONObject != null) &&
+				_previousBuildHasCurrentSHA(
+					previousBuildJSONObject, portalBranchSHA)) {
+
+				System.out.println(
+					testSuiteName + " was invoked on this SHA already: " +
+						portalBranchSHA);
+
+				continue;
+			}
+
+			String invocationJobURL = getInvocationJobURL(testSuiteName);
 
 			StringBuilder sb = new StringBuilder();
 
-			sb.append(jobURL);
+			sb.append(invocationJobURL);
 			sb.append("/buildWithParameters?");
 			sb.append("token=");
 			sb.append(jenkinsAuthenticationToken);
-			sb.append("&JENKINS_GITHUB_BRANCH_NAME=");
-			sb.append(buildData.getJenkinsGitHubBranchName());
-			sb.append("&JENKINS_GITHUB_BRANCH_USERNAME=");
-			sb.append(buildData.getJenkinsGitHubUsername());
-			sb.append("&PORTAL_GIT_COMMIT=");
-			sb.append(buildData.getPortalBranchSHA());
-			sb.append("&PORTAL_GITHUB_URL=");
-			sb.append(buildData.getPortalGitHubURL());
-			sb.append("&CI_TEST_SUITE=");
-			sb.append(testSuiteName);
+
+			Map<String, String> invocationParameters = new HashMap<>();
+
+			invocationParameters.putAll(buildData.getBuildParameters());
+
+			invocationParameters.put("CI_TEST_SUITE", testSuiteName);
+			invocationParameters.put(
+				"JENKINS_GITHUB_BRANCH_NAME",
+				buildData.getJenkinsGitHubBranchName());
+			invocationParameters.put(
+				"JENKINS_GITHUB_BRANCH_USERNAME",
+				buildData.getJenkinsGitHubUsername());
+			invocationParameters.put("PORTAL_GIT_COMMIT", portalBranchSHA);
+			invocationParameters.put(
+				"PORTAL_GITHUB_URL", buildData.getPortalGitHubURL());
+			invocationParameters.put(
+				"SLAVE_LABEL", getSlaveLabel(testSuiteName));
+			invocationParameters.put(
+				"TEST_PORTAL_BUILD_PROFILE",
+				getTestPortalBuildProfile(testSuiteName));
 
 			String testrayProjectName = _getTestrayProjectName(testSuiteName);
 
 			if (testrayProjectName != null) {
-				String testrayBuildType = JenkinsResultsParserUtil.combine(
+				String testrayRoutineName = JenkinsResultsParserUtil.combine(
 					"[", buildData.getPortalUpstreamBranchName(), "] ci:test:",
 					testSuiteName);
 
-				String testraybuildName = JenkinsResultsParserUtil.combine(
-					testrayBuildType, " - ",
+				String testrayBuildName = JenkinsResultsParserUtil.combine(
+					testrayRoutineName, " - ",
 					String.valueOf(buildData.getBuildNumber()), " - ",
 					JenkinsResultsParserUtil.toDateString(
 						new Date(buildData.getStartTime()),
 						"yyyy-MM-dd[HH:mm:ss]", "America/Los_Angeles"));
 
-				sb.append("&TESTRAY_BUILD_NAME=");
-				sb.append(testraybuildName);
-				sb.append("&TESTRAY_BUILD_TYPE=");
-				sb.append(testrayBuildType);
-				sb.append("&TESTRAY_PROJECT_NAME=");
-				sb.append(testrayProjectName);
+				if (_getTestrayRoutineName(testSuiteName) != null) {
+					testrayRoutineName = _getTestrayRoutineName(testSuiteName);
+				}
+
+				invocationParameters.put(
+					"TESTRAY_BUILD_NAME", testrayBuildName);
+				invocationParameters.put(
+					"TESTRAY_PROJECT_NAME", testrayProjectName);
+				invocationParameters.put(
+					"TESTRAY_ROUTINE_NAME", testrayRoutineName);
+			}
+
+			invocationParameters.put(
+				"TESTRAY_SLACK_CHANNELS",
+				getTestraySlackChannels(testSuiteName));
+			invocationParameters.put(
+				"TESTRAY_SLACK_ICON_EMOJI",
+				getTestraySlackIconEmoji(testSuiteName));
+			invocationParameters.put(
+				"TESTRAY_SLACK_USERNAME",
+				getTestraySlackUsername(testSuiteName));
+
+			for (Map.Entry<String, String> invocationParameter :
+					invocationParameters.entrySet()) {
+
+				String invocationParameterValue =
+					invocationParameter.getValue();
+
+				if (JenkinsResultsParserUtil.isNullOrEmpty(
+						invocationParameterValue)) {
+
+					continue;
+				}
+
+				sb.append("&");
+				sb.append(invocationParameter.getKey());
+				sb.append("=");
+				sb.append(invocationParameterValue);
 			}
 
 			try {
 				JenkinsResultsParserUtil.toString(sb.toString());
 
 				System.out.println(
-					"Job for '" + testSuiteName + "' was invoked at " + jobURL);
+					JenkinsResultsParserUtil.combine(
+						"Job for '", testSuiteName, "' was invoked at ",
+						invocationJobURL));
 
 				_invokedTestSuiteNames.add(testSuiteName);
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				System.out.println(
 					JenkinsResultsParserUtil.combine(
 						"Unable to invoke a new build for test suite, '",
 						testSuiteName, "'"));
 
-				ioe.printStackTrace();
+				ioException.printStackTrace();
 			}
 		}
 
-		buildData.setBuildDescription(
-			JenkinsResultsParserUtil.join(", ", _invokedTestSuiteNames));
+		boolean keepLogs = true;
+
+		if (_invokedTestSuiteNames.isEmpty()) {
+			keepLogs = false;
+		}
+
+		keepJenkinsBuild(keepLogs);
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(JenkinsResultsParserUtil.join(", ", _invokedTestSuiteNames));
+		sb.append(",");
+		sb.append(" <strong>GIT ID</strong> - ");
+		sb.append("<a href=\"https://github.com/");
+		sb.append(buildData.getPortalGitHubUsername());
+		sb.append("/");
+		sb.append(buildData.getPortalGitHubRepositoryName());
+		sb.append("/commit/");
+
+		sb.append(portalBranchSHA);
+
+		sb.append("\">");
+
+		sb.append(_getPortalBranchAbbreviatedSHA());
+
+		sb.append("</a>");
+
+		buildData.setBuildDescription(sb.toString());
 
 		updateBuildDescription();
 	}
+
+	protected static final String SLAVE_LABEL_DEFAULT = "slave";
 
 	private List<Build> _getBuildHistory() {
 		S buildData = getBuildData();
@@ -191,18 +348,18 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 	}
 
 	private Map<String, Long> _getCandidateTestSuiteStaleDurations() {
-		S buildData = getBuildData();
-
-		String upstreamBranchName = buildData.getPortalUpstreamBranchName();
-
 		Properties buildProperties;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
+
+		S buildData = getBuildData();
+
+		String upstreamBranchName = buildData.getPortalUpstreamBranchName();
 
 		Map<String, Long> candidateTestSuiteStaleDurations =
 			new LinkedHashMap<>();
@@ -225,6 +382,8 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 	}
 
 	private Map<String, Long> _getLatestTestSuiteStartTimes() {
+		Map<String, Long> latestTestSuiteStartTimes = new LinkedHashMap<>();
+
 		List<Build> builds = _getBuildHistory();
 
 		BuildData buildData = getBuildData();
@@ -233,8 +392,6 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 			buildData.getBuildURL(), null);
 
 		builds.remove(currentBuild);
-
-		Map<String, Long> latestTestSuiteStartTimes = new LinkedHashMap<>();
 
 		for (String testSuiteName : _getTestSuiteNames()) {
 			for (Build build : builds) {
@@ -251,6 +408,37 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 		}
 
 		return latestTestSuiteStartTimes;
+	}
+
+	private String _getPortalBranchAbbreviatedSHA() {
+		S buildData = getBuildData();
+
+		String portalBranchSHA = buildData.getPortalBranchSHA();
+
+		return portalBranchSHA.substring(0, 7);
+	}
+
+	private JSONObject _getPreviousTestSuiteBuildJSONObject(
+		String testSuiteName) {
+
+		for (JSONObject previousBuildJSONObject :
+				getPreviousBuildJSONObjects()) {
+
+			String description = previousBuildJSONObject.optString(
+				"description", "");
+
+			if (description.contains("EXPIRE") ||
+				description.contains("SKIPPED")) {
+
+				continue;
+			}
+
+			if (description.contains(testSuiteName)) {
+				return previousBuildJSONObject;
+			}
+		}
+
+		return null;
 	}
 
 	private List<String> _getSelectedTestSuiteNames() {
@@ -293,20 +481,34 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 	}
 
 	private String _getTestrayProjectName(String testSuite) {
-		try {
-			Properties buildProperties =
-				JenkinsResultsParserUtil.getBuildProperties();
+		return _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.testray.project.name", testSuite);
+	}
 
-			S buildData = getBuildData();
+	private String _getTestrayRoutineName(String testSuite) {
+		String testrayRoutineName = _getTestSuiteBuildProperty(
+			"portal.testsuite.upstream.testray.routine.name", testSuite);
 
-			return buildProperties.getProperty(
-				JenkinsResultsParserUtil.combine(
-					"portal.testsuite.upstream.testray.project.name[",
-					buildData.getPortalUpstreamBranchName(), "][", testSuite,
-					"]"));
+		if (JenkinsResultsParserUtil.isNullOrEmpty(testrayRoutineName)) {
+			testrayRoutineName = _getTestSuiteBuildProperty(
+				"portal.testsuite.upstream.testray.build.type", testSuite);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+
+		return testrayRoutineName;
+	}
+
+	private String _getTestSuiteBuildProperty(
+		String propertyName, String testSuite) {
+
+		S buildData = getBuildData();
+
+		try {
+			return JenkinsResultsParserUtil.getProperty(
+				JenkinsResultsParserUtil.getBuildProperties(), propertyName,
+				buildData.getPortalUpstreamBranchName(), testSuite);
+		}
+		catch (IOException ioException) {
+			return null;
 		}
 	}
 
@@ -320,12 +522,38 @@ public class PortalTestSuiteUpstreamControllerBuildRunner
 					"portal.testsuite.upstream.suites[",
 					buildData.getPortalUpstreamBranchName(), "]"));
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
+	private boolean _previousBuildHasCurrentSHA(
+		JSONObject previousBuildJSONObject, String portalBranchSHA) {
+
+		if (previousBuildJSONObject == null) {
+			return false;
+		}
+
+		String description = previousBuildJSONObject.optString(
+			"description", "");
+
+		Matcher matcher = _portalBranchSHAPattern.matcher(description);
+
+		if (!matcher.find()) {
+			return false;
+		}
+
+		String previousPortalBranchSHA = matcher.group("branchSHA");
+
+		return portalBranchSHA.equals(previousPortalBranchSHA);
+	}
+
+	private static final Pattern _portalBranchSHAPattern = Pattern.compile(
+		"<strong>GIT ID</strong> - <a href=\"https://github.com/[^/]+/[^/]+/" +
+			"commit/(?<branchSHA>[0-9a-f]{40})\">[0-9a-f]{7}</a>");
+
 	private final List<String> _invokedTestSuiteNames = new ArrayList<>();
 	private List<String> _selectedTestSuiteNames;
+	private Workspace _workspace;
 
 }

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ClassNameLocalService}.
@@ -24,6 +17,10 @@ package com.liferay.portal.kernel.service;
 public class ClassNameLocalServiceWrapper
 	implements ClassNameLocalService, ServiceWrapper<ClassNameLocalService> {
 
+	public ClassNameLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ClassNameLocalServiceWrapper(
 		ClassNameLocalService classNameLocalService) {
 
@@ -32,6 +29,10 @@ public class ClassNameLocalServiceWrapper
 
 	/**
 	 * Adds the class name to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ClassNameLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param className the class name
 	 * @return the class name that was added
@@ -45,7 +46,7 @@ public class ClassNameLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.ClassName addClassName(
-		java.lang.String value) {
+		String value) {
 
 		return _classNameLocalService.addClassName(value);
 	}
@@ -69,7 +70,22 @@ public class ClassNameLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _classNameLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the class name from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ClassNameLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param className the class name
 	 * @return the class name that was removed
@@ -83,6 +99,10 @@ public class ClassNameLocalServiceWrapper
 
 	/**
 	 * Deletes the class name with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ClassNameLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param classNameId the primary key of the class name
 	 * @return the class name that was removed
@@ -105,6 +125,18 @@ public class ClassNameLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _classNameLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _classNameLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _classNameLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -213,7 +245,7 @@ public class ClassNameLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.ClassName fetchClassName(
-		java.lang.String value) {
+		String value) {
 
 		return _classNameLocalService.fetchClassName(value);
 	}
@@ -242,19 +274,33 @@ public class ClassNameLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.ClassName getClassName(
-		java.lang.String value) {
+		String value) {
 
 		return _classNameLocalService.getClassName(value);
 	}
 
 	@Override
-	public long getClassNameId(java.lang.Class<?> clazz) {
+	public long getClassNameId(Class<?> clazz) {
 		return _classNameLocalService.getClassNameId(clazz);
 	}
 
 	@Override
-	public long getClassNameId(java.lang.String value) {
+	public long getClassNameId(String value) {
 		return _classNameLocalService.getClassNameId(value);
+	}
+
+	@Override
+	public java.util.function.Supplier<long[]> getClassNameIdsSupplier(
+		String[] classNames) {
+
+		return _classNameLocalService.getClassNameIdsSupplier(classNames);
+	}
+
+	@Override
+	public java.util.function.Supplier<Long> getClassNameIdSupplier(
+		String className) {
+
+		return _classNameLocalService.getClassNameIdSupplier(className);
 	}
 
 	/**
@@ -298,10 +344,13 @@ public class ClassNameLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _classNameLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -311,7 +360,7 @@ public class ClassNameLocalServiceWrapper
 	}
 
 	@Override
-	public java.lang.String getRegistryName() {
+	public String getRegistryName() {
 		return _classNameLocalService.getRegistryName();
 	}
 
@@ -323,6 +372,10 @@ public class ClassNameLocalServiceWrapper
 	/**
 	 * Updates the class name in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ClassNameLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param className the class name
 	 * @return the class name that was updated
 	 */
@@ -331,6 +384,11 @@ public class ClassNameLocalServiceWrapper
 		com.liferay.portal.kernel.model.ClassName className) {
 
 		return _classNameLocalService.updateClassName(className);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _classNameLocalService.getBasePersistence();
 	}
 
 	@Override

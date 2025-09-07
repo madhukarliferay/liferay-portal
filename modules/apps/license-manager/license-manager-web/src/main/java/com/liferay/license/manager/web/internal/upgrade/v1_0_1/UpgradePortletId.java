@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.license.manager.web.internal.upgrade.v1_0_1;
 
 import com.liferay.license.manager.web.internal.constants.LicenseManagerPortletKeys;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletId;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
+import com.liferay.portal.kernel.upgrade.BasePortletIdUpgradeProcess;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,17 +17,17 @@ import java.sql.SQLException;
  * @author David Zhang
  * @author Alberto Chaparro
  */
-public class UpgradePortletId extends BaseUpgradePortletId {
+public class UpgradePortletId extends BasePortletIdUpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select id_ from Portlet where portletId = '176'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			if (rs.next()) {
-				removeDuplicatePortletPreferences();
-				removeDuplicateResourcePermissions();
+			if (resultSet.next()) {
+				_removeDuplicatePortletPreferences();
+				_removeDuplicateResourcePermissions();
 
 				runSQL(
 					"delete from Portlet where portletId = '" +
@@ -53,61 +45,55 @@ public class UpgradePortletId extends BaseUpgradePortletId {
 		};
 	}
 
-	protected void removeDuplicatePortletPreferences() throws SQLException {
-		try (PreparedStatement ps = connection.prepareStatement(
+	private void _removeDuplicatePortletPreferences() throws SQLException {
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select ownerId, ownerType, plid from PortletPreferences " +
 					"where portletId = '176'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery();
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+					connection,
+					"delete from PortletPreferences where ownerId = ? and " +
+						"ownerType = ? and plid = ? and portletId = ?")) {
 
-			while (rs.next()) {
-				long ownerId = rs.getLong(1);
-				int ownerType = rs.getInt(2);
-				long plid = rs.getLong(3);
+			while (resultSet.next()) {
+				preparedStatement2.setLong(1, resultSet.getLong(1));
+				preparedStatement2.setInt(2, resultSet.getInt(2));
+				preparedStatement2.setLong(3, resultSet.getLong(3));
+				preparedStatement2.setString(
+					4, LicenseManagerPortletKeys.LICENSE_MANAGER);
 
-				try (PreparedStatement psDelete = connection.prepareStatement(
-						"delete from PortletPreferences where ownerId = ? " +
-							"and ownerType = ? and plid = ? and portletId = " +
-								"?")) {
-
-					psDelete.setLong(1, ownerId);
-					psDelete.setInt(2, ownerType);
-					psDelete.setLong(3, plid);
-					psDelete.setString(
-						4, LicenseManagerPortletKeys.LICENSE_MANAGER);
-
-					psDelete.executeUpdate();
-				}
+				preparedStatement2.addBatch();
 			}
+
+			preparedStatement2.executeBatch();
 		}
 	}
 
-	protected void removeDuplicateResourcePermissions() throws SQLException {
-		try (PreparedStatement ps = connection.prepareStatement(
+	private void _removeDuplicateResourcePermissions() throws SQLException {
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select companyId, scope, primKey, roleId from " +
 					"ResourcePermission where name = '176'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery();
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+					connection,
+					"delete from ResourcePermission where companyId = ? and " +
+						"name = ? and scope = ? and primkey = ? and roleId = " +
+							"?")) {
 
-			while (rs.next()) {
-				long companyId = rs.getLong(1);
-				int scope = rs.getInt(2);
-				String primKey = rs.getString(3);
-				long roleId = rs.getLong(4);
+			while (resultSet.next()) {
+				preparedStatement2.setLong(1, resultSet.getLong(1));
+				preparedStatement2.setString(
+					2, LicenseManagerPortletKeys.LICENSE_MANAGER);
+				preparedStatement2.setInt(3, resultSet.getInt(2));
+				preparedStatement2.setString(4, resultSet.getString(3));
+				preparedStatement2.setLong(5, resultSet.getLong(4));
 
-				try (PreparedStatement psDelete = connection.prepareStatement(
-						"delete from ResourcePermission where companyId = ? " +
-							"and name = ? and scope = ? and primkey = ? and " +
-								"roleId = ?")) {
-
-					psDelete.setLong(1, companyId);
-					psDelete.setString(
-						2, LicenseManagerPortletKeys.LICENSE_MANAGER);
-					psDelete.setInt(3, scope);
-					psDelete.setString(4, primKey);
-					psDelete.setLong(5, roleId);
-
-					psDelete.executeUpdate();
-				}
+				preparedStatement2.addBatch();
 			}
+
+			preparedStatement2.executeBatch();
 		}
 	}
 

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -54,7 +45,7 @@ if (organizationId > 0) {
 				<aui:button name="selectOrganizationButton" value="select" />
 
 				<%
-				String taglibRemoveFolder = "Liferay.Util.removeEntitySelection('organizationId', 'organizationName', this, '" + renderResponse.getNamespace() + "');";
+				String taglibRemoveFolder = "Liferay.Util.removeEntitySelection('organizationId', 'organizationName', this, '" + liferayPortletResponse.getNamespace() + "');";
 				%>
 
 				<aui:button name="removeOrganizationButton" onClick="<%= taglibRemoveFolder %>" value="remove" />
@@ -65,73 +56,47 @@ if (organizationId > 0) {
 					'<portlet:namespace />selectOrganizationButton'
 				);
 
-				if (<portlet:namespace />selectOrganizationButton) {
-					<portlet:namespace />selectOrganizationButton.addEventListener(
-						'click',
-						function(event) {
-							Liferay.Util.selectEntity(
-								{
-									dialog: {
-										constrain: true,
-										destroyOnHide: true,
-										modal: true
-									},
+				<portlet:namespace />selectOrganizationButton.addEventListener(
+					'click',
+					(event) => {
+						Liferay.Util.openSelectionModal({
+							onSelect: function (event) {
+								var form = document.getElementById('<portlet:namespace />fm');
 
-									<%
-									String portletId = PortletProviderUtil.getPortletId(User.class.getName(), PortletProvider.Action.VIEW);
-									%>
+								if (form) {
+									const valueJSON = JSON.parse(event.value);
 
-									id:
-										'<%= PortalUtil.getPortletNamespace(portletId) %>selectOrganization',
-									title:
-										'<liferay-ui:message arguments="organization" key="select-x" />',
-
-									<%
-									PortletURL selectOrganizationURL = PortletProviderUtil.getPortletURL(request, Organization.class.getName(), PortletProvider.Action.BROWSE);
-
-									selectOrganizationURL.setWindowState(LiferayWindowState.POP_UP);
-									%>
-
-									uri: '<%= selectOrganizationURL.toString() %>'
-								},
-								function(event) {
-									var form = document.getElementById(
-										'<portlet:namespace />fm'
+									var organizationId = form.querySelector(
+										'#<portlet:namespace />organizationId'
 									);
 
-									if (form) {
-										var organizationId = form.querySelector(
-											'#<portlet:namespace />organizationId'
-										);
-
-										if (organizationId) {
-											organizationId.setAttribute(
-												'value',
-												event.entityid
-											);
-										}
-
-										var organizationName = form.querySelector(
-											'#<portlet:namespace />organizationName'
-										);
-
-										if (organizationName) {
-											organizationName.setAttribute(
-												'value',
-												event.entityname
-											);
-										}
-
-										Liferay.Util.toggleDisabled(
-											'#<portlet:namespace />removeOrganizationButton',
-											false
+									if (organizationId) {
+										organizationId.setAttribute(
+											'value',
+											valueJSON.organizationId
 										);
 									}
+
+									var organizationName = form.querySelector(
+										'#<portlet:namespace />organizationName'
+									);
+
+									if (organizationName) {
+										organizationName.setAttribute('value', valueJSON.name);
+									}
+
+									Liferay.Util.toggleDisabled(
+										'#<portlet:namespace />removeOrganizationButton',
+										false
+									);
 								}
-							);
-						}
-					);
-				}
+							},
+							selectEventName: '<portlet:namespace />selectOrganization',
+							title: '<liferay-ui:message arguments="organization" key="select-x" />',
+							url: '<%= request.getAttribute(RecentBloggersWebKeys.ORGANIZATION_ITEM_SELECTOR_URL) %>',
+						});
+					}
+				);
 
 				Liferay.Util.toggleSelectBox(
 					'<portlet:namespace />selectionMethod',
@@ -168,8 +133,6 @@ if (organizationId > 0) {
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>

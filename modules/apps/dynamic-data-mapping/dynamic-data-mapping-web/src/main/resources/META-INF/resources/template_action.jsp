@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -39,7 +30,7 @@ DDMTemplate template = (DDMTemplate)row.getObject();
 			<portlet:param name="groupId" value="<%= String.valueOf(template.getGroupId()) %>" />
 			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
 			<portlet:param name="type" value="<%= template.getType() %>" />
-			<portlet:param name="structureAvailableFields" value='<%= renderResponse.getNamespace() + "getAvailableFields" %>' />
+			<portlet:param name="structureAvailableFields" value='<%= liferayPortletResponse.getNamespace() + "getAvailableFields" %>' />
 		</portlet:renderURL>
 
 		<liferay-ui:icon
@@ -81,7 +72,7 @@ DDMTemplate template = (DDMTemplate)row.getObject();
 	</c:if>
 
 	<c:if test="<%= DDMTemplatePermission.contains(permissionChecker, template, ActionKeys.DELETE) %>">
-		<portlet:actionURL name="deleteTemplate" var="deleteURL">
+		<portlet:actionURL name="/dynamic_data_mapping/delete_template" var="deleteURL">
 			<portlet:param name="mvcPath" value="/view_template.jsp" />
 			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
 			<portlet:param name="classNameId" value="<%= String.valueOf(classNameId) %>" />

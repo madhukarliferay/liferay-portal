@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.asah.rest.internal.resource.v1_0;
 
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.segments.asah.rest.dto.v1_0.Experiment;
 import com.liferay.segments.asah.rest.resource.v1_0.ExperimentResource;
+import com.liferay.segments.constants.SegmentsExperimentConstants;
+import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.service.SegmentsExperimentService;
 
 import org.osgi.service.component.annotations.Component;
@@ -46,6 +40,36 @@ public class ExperimentResourceImpl extends BaseExperimentResourceImpl {
 		ServiceContextThreadLocal.pushServiceContext(serviceContext);
 
 		_segmentsExperimentService.deleteSegmentsExperiment(experimentId);
+	}
+
+	@Override
+	public Experiment getExperiment(String experimentId) throws Exception {
+		return _toExperiment(
+			_segmentsExperimentService.getSegmentsExperiment(experimentId));
+	}
+
+	private Experiment _toExperiment(SegmentsExperiment segmentsExperiment) {
+		return new Experiment() {
+			{
+				setDateCreated(segmentsExperiment::getCreateDate);
+				setDateModified(segmentsExperiment::getModifiedDate);
+				setDescription(segmentsExperiment::getDescription);
+				setId(segmentsExperiment::getSegmentsExperimentKey);
+				setName(segmentsExperiment::getName);
+				setSiteId(segmentsExperiment::getGroupId);
+				setStatus(
+					() -> {
+						SegmentsExperimentConstants.Status
+							segmentsExperimentConstantsStatus =
+								SegmentsExperimentConstants.Status.valueOf(
+									segmentsExperiment.getStatus());
+
+						return segmentsExperimentConstantsStatus.toString();
+					});
+				setWinnerVariantId(
+					segmentsExperiment::getWinnerSegmentsExperienceId);
+			}
+		};
 	}
 
 	@Reference

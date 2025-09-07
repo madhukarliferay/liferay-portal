@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.xml;
@@ -31,71 +22,73 @@ public class UnsecureSAXReaderUtil {
 	}
 
 	public static Document read(File file) throws DocumentException {
-		return getSAXReader().read(file);
+		return _saxReader.read(file);
 	}
 
 	public static Document read(File file, boolean validate)
 		throws DocumentException {
 
-		return getSAXReader().read(file, validate);
+		return _saxReader.read(file, validate);
 	}
 
-	public static Document read(InputStream is) throws DocumentException {
-		return getSAXReader().read(is);
-	}
-
-	public static Document read(InputStream is, boolean validate)
+	public static Document read(InputStream inputStream)
 		throws DocumentException {
 
-		return getSAXReader().read(is, validate);
+		return _saxReader.read(inputStream);
+	}
+
+	public static Document read(InputStream inputStream, boolean validate)
+		throws DocumentException {
+
+		return _saxReader.read(inputStream, validate);
 	}
 
 	public static Document read(Reader reader) throws DocumentException {
-		return getSAXReader().read(reader);
+		return _saxReader.read(reader);
 	}
 
 	public static Document read(Reader reader, boolean validate)
 		throws DocumentException {
 
-		return getSAXReader().read(reader, validate);
+		return _saxReader.read(reader, validate);
 	}
 
 	public static Document read(String xml) throws DocumentException {
-		return getSAXReader().read(xml);
+		return _saxReader.read(xml);
 	}
 
 	public static Document read(String xml, boolean validate)
 		throws DocumentException {
 
-		return getSAXReader().read(xml, validate);
+		return _saxReader.read(xml, validate);
 	}
 
 	public static Document read(String xml, XMLSchema xmlSchema)
 		throws DocumentException {
 
-		return getSAXReader().read(xml, xmlSchema);
+		return _saxReader.read(xml, xmlSchema);
 	}
 
 	public static Document read(URL url) throws DocumentException {
-		return getSAXReader().read(url);
+		return _saxReader.read(url);
 	}
 
 	public static Document read(URL url, boolean validate)
 		throws DocumentException {
 
-		return getSAXReader().read(url, validate);
+		return _saxReader.read(url, validate);
 	}
 
 	public static Document readURL(String url)
 		throws DocumentException, MalformedURLException {
 
-		return getSAXReader().readURL(url);
+		return _saxReader.readURL(url);
 	}
 
 	public static Document readURL(String url, boolean validate)
 		throws DocumentException, MalformedURLException {
 
-		return getSAXReader().readURL(url, validate);
+		return _saxReader.readURL(url, validate);
 	}
 
 	public void setSAXReader(SAXReader saxReader) {

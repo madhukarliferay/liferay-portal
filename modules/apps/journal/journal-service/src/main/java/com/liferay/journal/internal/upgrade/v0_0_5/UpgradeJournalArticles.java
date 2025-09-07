@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.internal.upgrade.v0_0_5;
@@ -27,135 +18,43 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
-import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletId;
+import com.liferay.portal.kernel.service.PortletPreferenceValueLocalService;
+import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
+import com.liferay.portal.kernel.upgrade.BasePortletIdUpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portlet.PortletPreferencesImpl;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import java.util.List;
-
-import javax.portlet.PortletPreferences;
 
 /**
  * @author Eudaldo Alonso
  */
-public class UpgradeJournalArticles extends BaseUpgradePortletId {
+public class UpgradeJournalArticles extends BasePortletIdUpgradeProcess {
 
 	public UpgradeJournalArticles(
 		AssetCategoryLocalService assetCategoryLocalService,
 		DDMStructureLocalService ddmStructureLocalService,
 		GroupLocalService groupLocalService,
-		LayoutLocalService layoutLocalService) {
+		LayoutLocalService layoutLocalService,
+		PortletPreferenceValueLocalService portletPreferenceValueLocalService,
+		PortletPreferencesLocalService portletPreferencesLocalService) {
 
 		_assetCategoryLocalService = assetCategoryLocalService;
 		_ddmStructureLocalService = ddmStructureLocalService;
 		_groupLocalService = groupLocalService;
 		_layoutLocalService = layoutLocalService;
-	}
-
-	protected long getCategoryId(long companyId, String type) throws Exception {
-		List<AssetCategory> assetCategories = _assetCategoryLocalService.search(
-			companyId, type, new String[0], QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS);
-
-		if (!assetCategories.isEmpty()) {
-			AssetCategory assetCategory = assetCategories.get(0);
-
-			return assetCategory.getCategoryId();
-		}
-
-		return 0;
-	}
-
-	protected String getNewPreferences(long plid, String preferences)
-		throws Exception {
-
-		PortletPreferences oldPortletPreferences =
-			PortletPreferencesFactoryUtil.fromDefaultXML(preferences);
-
-		String ddmStructureKey = oldPortletPreferences.getValue(
-			"ddmStructureKey", StringPool.BLANK);
-		long groupId = GetterUtil.getLong(
-			oldPortletPreferences.getValue("groupId", StringPool.BLANK));
-		String orderByCol = oldPortletPreferences.getValue(
-			"orderByCol", StringPool.BLANK);
-		String orderByType = oldPortletPreferences.getValue(
-			"orderByType", StringPool.BLANK);
-		int pageDelta = GetterUtil.getInteger(
-			oldPortletPreferences.getValue("pageDelta", StringPool.BLANK));
-		String pageUrl = oldPortletPreferences.getValue(
-			"pageUrl", StringPool.BLANK);
-		String type = oldPortletPreferences.getValue("type", StringPool.BLANK);
-
-		PortletPreferences newPortletPreferences = new PortletPreferencesImpl();
-
-		newPortletPreferences.setValue(
-			"anyAssetType",
-			String.valueOf(
-				PortalUtil.getClassNameId(JournalArticle.class.getName())));
-
-		Layout layout = _layoutLocalService.getLayout(plid);
-
-		long structureId = getStructureId(
-			layout.getCompanyId(), layout.getGroupId(), ddmStructureKey);
-
-		if (structureId > 0) {
-			newPortletPreferences.setValue(
-				"anyClassTypeJournalArticleAssetRendererFactory",
-				String.valueOf(structureId));
-		}
-
-		String assetLinkBehavior = "showFullContent";
-
-		if (pageUrl.equals("viewInContext")) {
-			assetLinkBehavior = "viewInPortlet";
-		}
-
-		newPortletPreferences.setValue("assetLinkBehavior", assetLinkBehavior);
-
-		if (structureId > 0) {
-			newPortletPreferences.setValue(
-				"classTypeIds", String.valueOf(structureId));
-		}
-
-		newPortletPreferences.setValue("delta", String.valueOf(pageDelta));
-		newPortletPreferences.setValue("displayStyle", "table");
-		newPortletPreferences.setValue("metadataFields", "publish-date,author");
-		newPortletPreferences.setValue("orderByColumn1", orderByCol);
-		newPortletPreferences.setValue("orderByType1", orderByType);
-		newPortletPreferences.setValue("paginationType", "none");
-
-		long categoryId = getCategoryId(layout.getCompanyId(), type);
-
-		if (categoryId > 0) {
-			newPortletPreferences.setValue(
-				"queryAndOperator0", Boolean.TRUE.toString());
-			newPortletPreferences.setValue(
-				"queryContains0", Boolean.TRUE.toString());
-			newPortletPreferences.setValue("queryName0", "assetCategories");
-			newPortletPreferences.setValue(
-				"queryValues0", String.valueOf(categoryId));
-		}
-
-		newPortletPreferences.setValue(
-			"showAddContentButton", Boolean.FALSE.toString());
-
-		String groupName = String.valueOf(groupId);
-
-		if (groupId == layout.getGroupId()) {
-			groupName = "default";
-		}
-
-		newPortletPreferences.setValue("scopeIds", "Group_" + groupName);
-
-		return PortletPreferencesFactoryUtil.toXML(newPortletPreferences);
+		_portletPreferenceValueLocalService =
+			portletPreferenceValueLocalService;
+		_portletPreferencesLocalService = portletPreferencesLocalService;
 	}
 
 	@Override
@@ -194,32 +93,30 @@ public class UpgradeJournalArticles extends BaseUpgradePortletId {
 			String oldRootPortletId, String newRootPortletId)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(8);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select distinct PortletPreferences.portletPreferencesId ",
+					"from PortletPreferences inner join ",
+					"PortletPreferenceValue on ",
+					"PortletPreferenceValue.portletPreferencesId = ",
+					"PortletPreferences.portletPreferencesId where portletId ",
+					"= '", oldRootPortletId, "' OR portletId like '",
+					oldRootPortletId, "_INSTANCE_%' OR portletId like '",
+					oldRootPortletId, "_USER_%_INSTANCE_%'"));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-		sb.append("select portletPreferencesId, plid, portletId, preferences ");
-		sb.append("from PortletPreferences where portletId = '");
-		sb.append(oldRootPortletId);
-		sb.append("' OR portletId like '");
-		sb.append(oldRootPortletId);
-		sb.append("_INSTANCE_%' OR portletId like '");
-		sb.append(oldRootPortletId);
-		sb.append("_USER_%_INSTANCE_%'");
+			while (resultSet.next()) {
+				long portletPreferencesId = resultSet.getLong(
+					"portletPreferencesId");
 
-		try (PreparedStatement ps = connection.prepareStatement(sb.toString());
-			ResultSet rs = ps.executeQuery()) {
+				com.liferay.portal.kernel.model.PortletPreferences
+					portletPreferences =
+						_portletPreferencesLocalService.getPortletPreferences(
+							portletPreferencesId);
 
-			while (rs.next()) {
-				String preferences = rs.getString("preferences");
+				long plid = portletPreferences.getPlid();
 
-				if (preferences.equals("<portlet-preferences />")) {
-					continue;
-				}
-
-				long portletPreferencesId = rs.getLong("portletPreferencesId");
-				long plid = rs.getLong("plid");
-				String portletId = rs.getString("portletId");
-
-				String newPreferences = getNewPreferences(plid, preferences);
+				String portletId = portletPreferences.getPortletId();
 
 				long userId = PortletIdCodec.decodeUserId(portletId);
 				String instanceId = PortletIdCodec.decodeInstanceId(portletId);
@@ -227,8 +124,24 @@ public class UpgradeJournalArticles extends BaseUpgradePortletId {
 				String newPortletId = PortletIdCodec.encode(
 					_PORTLET_ID_ASSET_PUBLISHER, userId, instanceId);
 
-				updatePortletPreference(
-					portletPreferencesId, newPortletId, newPreferences);
+				portletPreferences.setPortletId(newPortletId);
+
+				portletPreferences =
+					_portletPreferencesLocalService.updatePortletPreferences(
+						portletPreferences);
+
+				PortletPreferences oldPortletPreferences =
+					_portletPreferenceValueLocalService.getPreferences(
+						portletPreferences);
+
+				_portletPreferencesLocalService.updatePreferences(
+					portletPreferences.getOwnerId(),
+					portletPreferences.getOwnerType(),
+					portletPreferences.getPlid(),
+					portletPreferences.getPortletId(),
+					_getNewPortletPreferences(
+						oldPortletPreferences, plid, oldRootPortletId,
+						newRootPortletId));
 			}
 		}
 	}
@@ -244,32 +157,127 @@ public class UpgradeJournalArticles extends BaseUpgradePortletId {
 			updateInstanceablePortletPreferences(
 				oldRootPortletId, newRootPortletId);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 	}
 
-	protected void updatePortletPreference(
-			long portletPreferencesId, String newPortletId,
-			String newPreferences)
+	private long _getCategoryId(long companyId, String type) throws Exception {
+		List<AssetCategory> assetCategories = _assetCategoryLocalService.search(
+			companyId, type, new String[0], QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
+
+		if (!assetCategories.isEmpty()) {
+			AssetCategory assetCategory = assetCategories.get(0);
+
+			return assetCategory.getCategoryId();
+		}
+
+		return 0;
+	}
+
+	private PortletPreferences _getNewPortletPreferences(
+			PortletPreferences oldPortletPreferences, long plid,
+			String oldRootPortletId, String newRootPortletId)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
-				"update PortletPreferences set preferences = ?, portletId = " +
-					"? where portletPreferencesId = " + portletPreferencesId)) {
+		PortletPreferences newPortletPreferences = new PortletPreferencesImpl();
 
-			ps.setString(1, newPreferences);
-			ps.setString(2, newPortletId);
+		newPortletPreferences.setValue(
+			"anyAssetType",
+			String.valueOf(
+				PortalUtil.getClassNameId(JournalArticle.class.getName())));
 
-			ps.executeUpdate();
+		String ddmStructureKey = oldPortletPreferences.getValue(
+			"ddmStructureKey", StringPool.BLANK);
+		Layout layout = _layoutLocalService.getLayout(plid);
+
+		long structureId = getStructureId(
+			layout.getCompanyId(), layout.getGroupId(), ddmStructureKey);
+
+		if (structureId > 0) {
+			newPortletPreferences.setValue(
+				"anyClassTypeJournalArticleAssetRendererFactory",
+				String.valueOf(structureId));
 		}
-		catch (SQLException sqle) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(sqle, sqle);
-			}
+
+		String assetLinkBehavior = "showFullContent";
+
+		if (StringUtil.equals(
+				oldPortletPreferences.getValue("pageUrl", StringPool.BLANK),
+				"viewInContext")) {
+
+			assetLinkBehavior = "viewInPortlet";
 		}
+
+		newPortletPreferences.setValue("assetLinkBehavior", assetLinkBehavior);
+
+		if (structureId > 0) {
+			newPortletPreferences.setValue(
+				"classTypeIds", String.valueOf(structureId));
+		}
+
+		newPortletPreferences.setValue(
+			"delta",
+			String.valueOf(
+				GetterUtil.getInteger(
+					oldPortletPreferences.getValue(
+						"pageDelta", StringPool.BLANK))));
+		newPortletPreferences.setValue("displayStyle", "table");
+		newPortletPreferences.setValue("metadataFields", "publish-date,author");
+		newPortletPreferences.setValue(
+			"orderByColumn1",
+			oldPortletPreferences.getValue("orderByCol", StringPool.BLANK));
+		newPortletPreferences.setValue(
+			"orderByType1",
+			oldPortletPreferences.getValue("orderByType", StringPool.BLANK));
+		newPortletPreferences.setValue("paginationType", "none");
+
+		String portletSetupCss = oldPortletPreferences.getValue(
+			"portletSetupCss", StringPool.BLANK);
+
+		portletSetupCss = StringUtil.replace(
+			portletSetupCss,
+			new String[] {
+				"#p_p_id_" + oldRootPortletId, "#portlet_" + oldRootPortletId
+			},
+			new String[] {
+				"#p_p_id_" + newRootPortletId, "#portlet_" + newRootPortletId
+			});
+
+		newPortletPreferences.setValue("portletSetupCss", portletSetupCss);
+
+		long categoryId = _getCategoryId(
+			layout.getCompanyId(),
+			oldPortletPreferences.getValue("type", StringPool.BLANK));
+
+		if (categoryId > 0) {
+			newPortletPreferences.setValue(
+				"queryAndOperator0", Boolean.TRUE.toString());
+			newPortletPreferences.setValue(
+				"queryContains0", Boolean.TRUE.toString());
+			newPortletPreferences.setValue("queryName0", "assetCategories");
+			newPortletPreferences.setValue(
+				"queryValues0", String.valueOf(categoryId));
+		}
+
+		newPortletPreferences.setValue(
+			"showAddContentButton", Boolean.FALSE.toString());
+
+		long groupId = GetterUtil.getLong(
+			oldPortletPreferences.getValue("groupId", StringPool.BLANK));
+
+		String groupName = String.valueOf(groupId);
+
+		if (groupId == layout.getGroupId()) {
+			groupName = "default";
+		}
+
+		newPortletPreferences.setValue("scopeIds", "Group_" + groupName);
+
+		return newPortletPreferences;
 	}
 
 	private static final String _PORTLET_ID_ASSET_PUBLISHER =
@@ -284,5 +292,9 @@ public class UpgradeJournalArticles extends BaseUpgradePortletId {
 	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final GroupLocalService _groupLocalService;
 	private final LayoutLocalService _layoutLocalService;
+	private final PortletPreferencesLocalService
+		_portletPreferencesLocalService;
+	private final PortletPreferenceValueLocalService
+		_portletPreferenceValueLocalService;
 
 }

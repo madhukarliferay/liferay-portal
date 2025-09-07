@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.lpkg.deployer.override;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +41,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.osgi.framework.Version;
@@ -58,9 +52,14 @@ import org.osgi.framework.Version;
  */
 public class LPKGOverrideTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testOverrideLPKG() throws IOException {
-		String liferayHome = System.getProperty("liferay.home");
+		String liferayHome = SystemProperties.get("liferay.home");
 
 		Assert.assertFalse(
 			"Missing system property \"liferay.home\"",
@@ -81,11 +80,11 @@ public class LPKGOverrideTest {
 
 			for (Path lpkgPath : directoryStream) {
 				try (ZipFile zipFile = new ZipFile(lpkgPath.toFile())) {
-					Enumeration<? extends ZipEntry> zipEntries =
+					Enumeration<? extends ZipEntry> enumeration =
 						zipFile.entries();
 
-					while (zipEntries.hasMoreElements()) {
-						ZipEntry zipEntry = zipEntries.nextElement();
+					while (enumeration.hasMoreElements()) {
+						ZipEntry zipEntry = enumeration.nextElement();
 
 						String name = zipEntry.getName();
 
@@ -133,8 +132,8 @@ public class LPKGOverrideTest {
 							if (name.endsWith(".war")) {
 								String fileName = matcher.group(1);
 
-								fileName = StringUtil.replace(
-									fileName, "-dxp", StringPool.BLANK);
+								fileName = StringUtil.removeSubstring(
+									fileName, "-dxp");
 
 								overrides.put("war.".concat(fileName), null);
 
@@ -195,11 +194,11 @@ public class LPKGOverrideTest {
 	private void _upgradeModuleVersion(Path path, Map<String, String> overrides)
 		throws IOException {
 
-		try (FileSystem fileSystem = FileSystems.newFileSystem(path, null)) {
+		try (FileSystem fileSystem = FileSystems.newFileSystem(path)) {
 			Path manifestPath = fileSystem.getPath("META-INF/MANIFEST.MF");
 
 			try (InputStream inputStream = Files.newInputStream(manifestPath);
-				UnsyncByteArrayOutputStream outputStream =
+				UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 					new UnsyncByteArrayOutputStream()) {
 
 				Manifest manifest = new Manifest(inputStream);
@@ -224,10 +223,10 @@ public class LPKGOverrideTest {
 						versionString);
 				}
 
-				manifest.write(outputStream);
+				manifest.write(unsyncByteArrayOutputStream);
 
 				Files.write(
-					manifestPath, outputStream.toByteArray(),
+					manifestPath, unsyncByteArrayOutputStream.toByteArray(),
 					StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.WRITE);
 			}

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.web.internal.modified.facet.portlet;
@@ -18,33 +9,44 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.search.web.internal.util.PortletPreferencesHelper;
+import com.liferay.portal.search.web.internal.portlet.preferences.BasePortletPreferences;
+import com.liferay.portal.search.web.internal.user.facet.portlet.UserFacetPortletPreferences;
 
-import java.util.Optional;
-
-import javax.portlet.PortletPreferences;
+import jakarta.portlet.PortletPreferences;
 
 /**
  * @author Lino Alves
  */
 public class ModifiedFacetPortletPreferencesImpl
-	implements ModifiedFacetPortletPreferences {
+	extends BasePortletPreferences implements ModifiedFacetPortletPreferences {
 
 	public ModifiedFacetPortletPreferencesImpl(
-		Optional<PortletPreferences> portletPreferences) {
+		PortletPreferences portletPreferences) {
 
-		_portletPreferencesHelper = new PortletPreferencesHelper(
-			portletPreferences);
+		super(portletPreferences);
+	}
+
+	@Override
+	public int getFrequencyThreshold() {
+		return getInteger(
+			ModifiedFacetPortletPreferences.PREFERENCE_KEY_FREQUENCY_THRESHOLD,
+			0);
+	}
+
+	@Override
+	public String getOrder() {
+		return getString(
+			ModifiedFacetPortletPreferences.PREFERENCE_KEY_ORDER,
+			"rangesConfiguration");
 	}
 
 	@Override
 	public String getParameterName() {
-		return _portletPreferencesHelper.getString(
+		return getString(
 			ModifiedFacetPortletPreferences.PREFERENCE_KEY_PARAMETER_NAME,
 			"modified");
 	}
@@ -54,38 +56,45 @@ public class ModifiedFacetPortletPreferencesImpl
 		String rangesString = getRangesString();
 
 		if (Validator.isBlank(rangesString)) {
-			return getDefaultRangesJSONArray();
+			return _getDefaultRangesJSONArray();
 		}
 
 		try {
 			return JSONFactoryUtil.createJSONArray(rangesString);
 		}
-		catch (JSONException jsone) {
+		catch (JSONException jsonException) {
 			_log.error(
-				"Unable to create a JSON array from: " + rangesString, jsone);
+				"Unable to create a JSON array from: " + rangesString,
+				jsonException);
 
-			return getDefaultRangesJSONArray();
+			return _getDefaultRangesJSONArray();
 		}
 	}
 
 	@Override
 	public String getRangesString() {
-		return _portletPreferencesHelper.getString(
+		return getString(
 			ModifiedFacetPortletPreferences.PREFERENCE_KEY_RANGES,
 			StringPool.BLANK);
 	}
 
-	protected JSONArray getDefaultRangesJSONArray() {
+	@Override
+	public boolean isFrequenciesVisible() {
+		return getBoolean(
+			UserFacetPortletPreferences.PREFERENCE_KEY_FREQUENCIES_VISIBLE,
+			true);
+	}
+
+	private JSONArray _getDefaultRangesJSONArray() {
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
 		for (int i = 0; i < _LABELS.length; i++) {
-			JSONObject jsonObject = JSONUtil.put(
-				"label", _LABELS[i]
-			).put(
-				"range", _RANGES[i]
-			);
-
-			jsonArray.put(jsonObject);
+			jsonArray.put(
+				JSONUtil.put(
+					"label", _LABELS[i]
+				).put(
+					"range", _RANGES[i]
+				));
 		}
 
 		return jsonArray;
@@ -102,7 +111,5 @@ public class ModifiedFacetPortletPreferencesImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ModifiedFacetPortletPreferencesImpl.class);
-
-	private final PortletPreferencesHelper _portletPreferencesHelper;
 
 }

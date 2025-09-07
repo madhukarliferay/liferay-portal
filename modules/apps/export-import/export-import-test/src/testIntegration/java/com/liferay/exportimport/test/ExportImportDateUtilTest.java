@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
@@ -34,13 +25,13 @@ import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.lang.reflect.Constructor;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.portlet.PortletPreferences;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -88,7 +79,7 @@ public class ExportImportDateUtilTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group);
+		_layout = LayoutTestUtil.addTypePortletLayout(_group);
 
 		_layoutSet = _layout.getLayoutSet();
 
@@ -110,14 +101,12 @@ public class ExportImportDateUtilTest {
 			ExportImportDateUtil.RANGE_FROM_LAST_PUBLISH_DATE,
 			portletDataContextLastPublishDate);
 
-		Date portletLastPublishDate = new Date();
+		updateLastPublishDate(_portletPreferences, new Date());
 
-		updateLastPublishDate(_portletPreferences, portletLastPublishDate);
-
-		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			portletDataContext, _portletPreferences);
-
-		Assert.assertEquals(portletDataContextLastPublishDate, lastPublishDate);
+		Assert.assertEquals(
+			portletDataContextLastPublishDate,
+			ExportImportDateUtil.getLastPublishDate(
+				portletDataContext, _portletPreferences));
 	}
 
 	@Test
@@ -135,14 +124,12 @@ public class ExportImportDateUtilTest {
 			portletDataContext, ExportImportDateUtil.RANGE_ALL,
 			portletDataContextLastPublishDate);
 
-		Date portletLastPublishDate = new Date();
+		updateLastPublishDate(_portletPreferences, new Date());
 
-		updateLastPublishDate(_portletPreferences, portletLastPublishDate);
-
-		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			portletDataContext, _portletPreferences);
-
-		Assert.assertEquals(portletDataContextLastPublishDate, lastPublishDate);
+		Assert.assertEquals(
+			portletDataContextLastPublishDate,
+			ExportImportDateUtil.getLastPublishDate(
+				portletDataContext, _portletPreferences));
 	}
 
 	@Test
@@ -158,10 +145,9 @@ public class ExportImportDateUtilTest {
 			portletDataContext,
 			ExportImportDateUtil.RANGE_FROM_LAST_PUBLISH_DATE, new Date());
 
-		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			portletDataContext, _portletPreferences);
-
-		Assert.assertNull(lastPublishDate);
+		Assert.assertNull(
+			ExportImportDateUtil.getLastPublishDate(
+				portletDataContext, _portletPreferences));
 	}
 
 	@Test
@@ -181,20 +167,20 @@ public class ExportImportDateUtilTest {
 
 		updateLastPublishDate(_portletPreferences, portletLastPublishDate);
 
-		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			portletDataContext, _portletPreferences);
-
-		Assert.assertEquals(portletLastPublishDate, lastPublishDate);
+		Assert.assertEquals(
+			portletLastPublishDate,
+			ExportImportDateUtil.getLastPublishDate(
+				portletDataContext, _portletPreferences));
 	}
 
 	@Test
 	public void testUpdateLastPublishDateFirstPublishLayoutSet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		Date startDate = new Date(now.getTime() + Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() + Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -218,10 +204,10 @@ public class ExportImportDateUtilTest {
 	public void testUpdateLastPublishDateFirstPublishPortlet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		Date startDate = new Date(now.getTime() + Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() + Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -241,12 +227,12 @@ public class ExportImportDateUtilTest {
 	public void testUpdateLastPublishDateOverlappingRangeLayoutSet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_layoutSet, now);
+		updateLastPublishDate(_layoutSet, date);
 
-		Date startDate = new Date(now.getTime() - Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() - Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -267,12 +253,12 @@ public class ExportImportDateUtilTest {
 	public void testUpdateLastPublishDateOverlappingRangePortlet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_portletPreferences, now);
+		updateLastPublishDate(_portletPreferences, date);
 
-		Date startDate = new Date(now.getTime() - Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() - Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -289,12 +275,12 @@ public class ExportImportDateUtilTest {
 	public void testUpdateLastPublishDateRangeBeforeLastPublishDateLayoutSet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_layoutSet, now);
+		updateLastPublishDate(_layoutSet, date);
 
-		Date startDate = new Date(now.getTime() - Time.WEEK);
-		Date endDate = new Date(now.getTime() - Time.DAY);
+		Date startDate = new Date(date.getTime() - Time.WEEK);
+		Date endDate = new Date(date.getTime() - Time.DAY);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -308,19 +294,19 @@ public class ExportImportDateUtilTest {
 		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
 			_layoutSet);
 
-		Assert.assertEquals(now.getTime(), lastPublishDate.getTime());
+		Assert.assertEquals(date.getTime(), lastPublishDate.getTime());
 	}
 
 	@Test
 	public void testUpdateLastPublishDateRangeBeforeLastPublishDatePortlet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_portletPreferences, now);
+		updateLastPublishDate(_portletPreferences, date);
 
-		Date startDate = new Date(now.getTime() - Time.WEEK);
-		Date endDate = new Date(now.getTime() - Time.DAY);
+		Date startDate = new Date(date.getTime() - Time.WEEK);
+		Date endDate = new Date(date.getTime() - Time.DAY);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -330,17 +316,17 @@ public class ExportImportDateUtilTest {
 		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
 			_portletPreferences);
 
-		Assert.assertEquals(now.getTime(), lastPublishDate.getTime());
+		Assert.assertEquals(date.getTime(), lastPublishDate.getTime());
 	}
 
 	@Test
 	public void testUpdateLastPublishDateWithGapLayoutSet() throws Exception {
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_layoutSet, now);
+		updateLastPublishDate(_layoutSet, date);
 
-		Date startDate = new Date(now.getTime() + Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() + Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -354,17 +340,17 @@ public class ExportImportDateUtilTest {
 		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
 			_layoutSet);
 
-		Assert.assertEquals(now.getTime(), lastPublishDate.getTime());
+		Assert.assertEquals(date.getTime(), lastPublishDate.getTime());
 	}
 
 	@Test
 	public void testUpdateLastPublishDateWithGapPortlet() throws Exception {
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_portletPreferences, now);
+		updateLastPublishDate(_portletPreferences, date);
 
-		Date startDate = new Date(now.getTime() + Time.DAY);
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime() + Time.DAY);
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -374,53 +360,47 @@ public class ExportImportDateUtilTest {
 		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
 			_portletPreferences);
 
-		Assert.assertEquals(now.getTime(), lastPublishDate.getTime());
+		Assert.assertEquals(date.getTime(), lastPublishDate.getTime());
 	}
 
 	@Test
 	public void testUpdateLastPublishDateWithoutExistingLastPublishDate()
 		throws Exception {
 
-		Date lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			_portletPreferences);
+		Assert.assertNull(
+			ExportImportDateUtil.getLastPublishDate(_portletPreferences));
 
-		Assert.assertNull(lastPublishDate);
+		Date date = new Date();
 
-		Date now = new Date();
-
-		DateRange dateRange = new DateRange(now, null);
+		DateRange dateRange = new DateRange(date, null);
 
 		ExportImportDateUtil.updateLastPublishDate(
-			PortletKeys.EXPORT_IMPORT, _portletPreferences, dateRange, now);
+			PortletKeys.EXPORT_IMPORT, _portletPreferences, dateRange, date);
 
-		lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			_portletPreferences);
+		Assert.assertNull(
+			ExportImportDateUtil.getLastPublishDate(_portletPreferences));
 
-		Assert.assertNull(lastPublishDate);
-
-		dateRange = new DateRange(null, now);
+		dateRange = new DateRange(null, date);
 
 		ExportImportDateUtil.updateLastPublishDate(
-			PortletKeys.EXPORT_IMPORT, _portletPreferences, dateRange, now);
+			PortletKeys.EXPORT_IMPORT, _portletPreferences, dateRange, date);
 
-		lastPublishDate = ExportImportDateUtil.getLastPublishDate(
-			_portletPreferences);
-
-		Assert.assertEquals(now, lastPublishDate);
+		Assert.assertEquals(
+			date, ExportImportDateUtil.getLastPublishDate(_portletPreferences));
 	}
 
 	@Test
 	public void testUpdateLastPublishDateWithoutGapLayoutSet()
 		throws Exception {
 
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_layoutSet, now);
+		updateLastPublishDate(_layoutSet, date);
 
 		// Start date is exactly the last publish date
 
-		Date startDate = new Date(now.getTime());
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime());
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -436,12 +416,12 @@ public class ExportImportDateUtilTest {
 
 		Assert.assertEquals(endDate.getTime(), lastPublishDate.getTime());
 
-		updateLastPublishDate(_layoutSet, now);
+		updateLastPublishDate(_layoutSet, date);
 
 		// End date is exactly the last publish date
 
-		startDate = new Date(now.getTime() - Time.WEEK);
-		endDate = new Date(now.getTime());
+		startDate = new Date(date.getTime() - Time.WEEK);
+		endDate = new Date(date.getTime());
 
 		dateRange = new DateRange(startDate, endDate);
 
@@ -459,14 +439,14 @@ public class ExportImportDateUtilTest {
 
 	@Test
 	public void testUpdateLastPublishDateWithoutGapPortlet() throws Exception {
-		Date now = new Date();
+		Date date = new Date();
 
-		updateLastPublishDate(_portletPreferences, now);
+		updateLastPublishDate(_portletPreferences, date);
 
 		// Start date is exactly the last publish date
 
-		Date startDate = new Date(now.getTime());
-		Date endDate = new Date(now.getTime() + Time.WEEK);
+		Date startDate = new Date(date.getTime());
+		Date endDate = new Date(date.getTime() + Time.WEEK);
 
 		DateRange dateRange = new DateRange(startDate, endDate);
 
@@ -478,12 +458,12 @@ public class ExportImportDateUtilTest {
 
 		Assert.assertEquals(endDate.getTime(), lastPublishDate.getTime());
 
-		updateLastPublishDate(_portletPreferences, now);
+		updateLastPublishDate(_portletPreferences, date);
 
 		// End date is exactly the last publish date
 
-		startDate = new Date(now.getTime() - Time.WEEK);
-		endDate = new Date(now.getTime());
+		startDate = new Date(date.getTime() - Time.WEEK);
+		endDate = new Date(date.getTime());
 
 		dateRange = new DateRange(startDate, endDate);
 
@@ -500,15 +480,15 @@ public class ExportImportDateUtilTest {
 			LayoutSet layoutSet, Date lastPublishDate)
 		throws Exception {
 
-		UnicodeProperties settingsProperties =
+		UnicodeProperties settingsUnicodeProperties =
 			layoutSet.getSettingsProperties();
 
-		settingsProperties.setProperty(
+		settingsUnicodeProperties.setProperty(
 			"last-publish-date", String.valueOf(lastPublishDate.getTime()));
 
 		LayoutSetLocalServiceUtil.updateSettings(
 			layoutSet.getGroupId(), layoutSet.isPrivateLayout(),
-			settingsProperties.toString());
+			settingsUnicodeProperties.toString());
 	}
 
 	protected void updateLastPublishDate(

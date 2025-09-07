@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.service.impl;
@@ -20,10 +11,10 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
-import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.Date;
 import java.util.List;
@@ -48,7 +39,7 @@ public class LayoutPageTemplateStructureRelLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long layoutPageTemplateStructureRelId = counterLocalService.increment();
 
@@ -70,11 +61,14 @@ public class LayoutPageTemplateStructureRelLocalServiceImpl
 		layoutPageTemplateStructureRel.setSegmentsExperienceId(
 			segmentsExperienceId);
 		layoutPageTemplateStructureRel.setData(data);
+		layoutPageTemplateStructureRel.setStatus(
+			WorkflowConstants.STATUS_APPROVED);
+		layoutPageTemplateStructureRel.setStatusByUserId(userId);
+		layoutPageTemplateStructureRel.setStatusByUserName(user.getFullName());
+		layoutPageTemplateStructureRel.setStatusDate(new Date());
 
-		layoutPageTemplateStructureRelPersistence.update(
+		return layoutPageTemplateStructureRelPersistence.update(
 			layoutPageTemplateStructureRel);
-
-		return layoutPageTemplateStructureRel;
 	}
 
 	@Override
@@ -148,16 +142,36 @@ public class LayoutPageTemplateStructureRelLocalServiceImpl
 		layoutPageTemplateStructureRel.setModifiedDate(new Date());
 		layoutPageTemplateStructureRel.setData(data);
 
-		layoutPageTemplateStructureRelPersistence.update(
+		return layoutPageTemplateStructureRelPersistence.update(
 			layoutPageTemplateStructureRel);
+	}
 
-		return layoutPageTemplateStructureRel;
+	@Override
+	public LayoutPageTemplateStructureRel updateStatus(
+			long userId, long layoutPageTemplateStructureId,
+			long segmentsExperienceId, int status,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		LayoutPageTemplateStructureRel layoutPageTemplateStructureRel =
+			layoutPageTemplateStructureRelPersistence.findByL_S(
+				layoutPageTemplateStructureId, segmentsExperienceId);
+
+		layoutPageTemplateStructureRel.setStatus(status);
+
+		User user = _userLocalService.getUser(userId);
+
+		layoutPageTemplateStructureRel.setStatusByUserId(user.getUserId());
+		layoutPageTemplateStructureRel.setStatusByUserName(user.getFullName());
+
+		layoutPageTemplateStructureRel.setStatusDate(
+			serviceContext.getModifiedDate(new Date()));
+
+		return layoutPageTemplateStructureRelPersistence.update(
+			layoutPageTemplateStructureRel);
 	}
 
 	@Reference
-	private LayoutLocalService _layoutLocalService;
-
-	@Reference
-	private Portal _portal;
+	private UserLocalService _userLocalService;
 
 }

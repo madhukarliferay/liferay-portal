@@ -1,31 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.format.util.PhoneNumberFormatUtil;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PhoneNumberException;
 import com.liferay.portal.kernel.exception.PhoneNumberExtensionException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.format.PhoneNumberFormatUtil;
-import com.liferay.portal.kernel.model.Account;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.ListTypeConstants;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Phone;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ListTypeLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.base.PhoneLocalServiceBaseImpl;
@@ -39,23 +34,24 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 
 	@Override
 	public Phone addPhone(
-			long userId, String className, long classPK, String number,
-			String extension, long typeId, boolean primary,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userId, String className,
+			long classPK, String number, String extension, long listTypeId,
+			boolean primary, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
-		long classNameId = classNameLocalService.getClassNameId(className);
+		User user = _userPersistence.findByPrimaryKey(userId);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		validate(
 			0, user.getCompanyId(), classNameId, classPK, number, extension,
-			typeId, primary);
+			listTypeId, primary);
 
 		long phoneId = counterLocalService.increment();
 
 		Phone phone = phonePersistence.create(phoneId);
 
 		phone.setUuid(serviceContext.getUuid());
+		phone.setExternalReferenceCode(externalReferenceCode);
 		phone.setCompanyId(user.getCompanyId());
 		phone.setUserId(user.getUserId());
 		phone.setUserName(user.getFullName());
@@ -63,12 +59,10 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 		phone.setClassPK(classPK);
 		phone.setNumber(number);
 		phone.setExtension(extension);
-		phone.setTypeId(typeId);
+		phone.setListTypeId(listTypeId);
 		phone.setPrimary(primary);
 
-		phonePersistence.update(phone);
-
-		return phone;
+		return phonePersistence.update(phone);
 	}
 
 	@Override
@@ -92,7 +86,7 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 	@Override
 	public void deletePhones(long companyId, String className, long classPK) {
 		List<Phone> phones = phonePersistence.findByC_C_C(
-			companyId, classNameLocalService.getClassNameId(className),
+			companyId, _classNameLocalService.getClassNameId(className),
 			classPK);
 
 		for (Phone phone : phones) {
@@ -110,28 +104,27 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 		long companyId, String className, long classPK) {
 
 		return phonePersistence.findByC_C_C(
-			companyId, classNameLocalService.getClassNameId(className),
+			companyId, _classNameLocalService.getClassNameId(className),
 			classPK);
 	}
 
 	@Override
 	public Phone updatePhone(
-			long phoneId, String number, String extension, long typeId,
-			boolean primary)
+			String externalReferenceCode, long phoneId, String number,
+			String extension, long listTypeId, boolean primary)
 		throws PortalException {
 
-		validate(phoneId, 0, 0, 0, number, extension, typeId, primary);
+		validate(phoneId, 0, 0, 0, number, extension, listTypeId, primary);
 
 		Phone phone = phonePersistence.findByPrimaryKey(phoneId);
 
+		phone.setExternalReferenceCode(externalReferenceCode);
 		phone.setNumber(number);
 		phone.setExtension(extension);
-		phone.setTypeId(typeId);
+		phone.setListTypeId(listTypeId);
 		phone.setPrimary(primary);
 
-		phonePersistence.update(phone);
-
-		return phone;
+		return phonePersistence.update(phone);
 	}
 
 	protected void validate(
@@ -157,7 +150,7 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 
 	protected void validate(
 			long phoneId, long companyId, long classNameId, long classPK,
-			String number, String extension, long typeId, boolean primary)
+			String number, String extension, long listTypeId, boolean primary)
 		throws PortalException {
 
 		if (!PhoneNumberFormatUtil.validate(number)) {
@@ -180,18 +173,27 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 			classPK = phone.getClassPK();
 		}
 
-		if ((classNameId == classNameLocalService.getClassNameId(
-				Account.class)) ||
-			(classNameId == classNameLocalService.getClassNameId(
+		if ((classNameId == _classNameLocalService.getClassNameId(
+				Company.class)) ||
+			(classNameId == _classNameLocalService.getClassNameId(
 				Contact.class)) ||
-			(classNameId == classNameLocalService.getClassNameId(
+			(classNameId == _classNameLocalService.getClassNameId(
 				Organization.class))) {
 
-			listTypeLocalService.validate(
-				typeId, classNameId, ListTypeConstants.PHONE);
+			_listTypeLocalService.validate(
+				listTypeId, classNameId, ListTypeConstants.PHONE);
 		}
 
 		validate(phoneId, companyId, classNameId, classPK, primary);
 	}
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = ListTypeLocalService.class)
+	private ListTypeLocalService _listTypeLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

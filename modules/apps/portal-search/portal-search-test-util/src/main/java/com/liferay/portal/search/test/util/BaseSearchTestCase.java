@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test.util;
@@ -46,6 +37,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.randomizerbumpers.BBCodeRandomizerBumper;
 
 import java.util.Locale;
@@ -53,6 +45,7 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -83,17 +76,14 @@ public abstract class BaseSearchTestCase {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(group.getGroupId());
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
-		Map<Locale, String> keywordsMap = HashMapBuilder.put(
-			LocaleUtil.getDefault(), "entity title"
-		).put(
-			LocaleUtil.HUNGARY, "entitas neve"
-		).build();
-
 		baseModel = addBaseModelWithWorkflow(
-			parentBaseModel, true, keywordsMap, serviceContext);
+			getParentBaseModel(group, serviceContext), true,
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), "entity title"
+			).put(
+				LocaleUtil.HUNGARY, "entitas neve"
+			).build(),
+			serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsSearchCount + 1, searchContext);
 
@@ -199,6 +189,9 @@ public abstract class BaseSearchTestCase {
 		searchWithinDDMStructure();
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected void addAttachment(ClassedModel classedModel) throws Exception {
 	}
 
@@ -257,7 +250,7 @@ public abstract class BaseSearchTestCase {
 	}
 
 	protected void assertBaseModelsCount(
-			final int expectedCount, final SearchContext searchContext)
+			int expectedCount, SearchContext searchContext)
 		throws Exception {
 
 		Hits hits = searchBaseModelsCount(searchContext);
@@ -536,11 +529,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsSearchCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModelWithDDMStructure(
-			parentBaseModel, getSearchKeywords(), serviceContext);
+			getParentBaseModel(group, serviceContext), getSearchKeywords(),
+			serviceContext);
 
 		searchContext.setAttribute(
 			"ddmStructureFieldName", getDDMStructureFieldName());
@@ -567,11 +558,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsSearchCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModel(
-			parentBaseModel, true, getSearchKeywords(), serviceContext);
+			getParentBaseModel(group, serviceContext), true,
+			getSearchKeywords(), serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsSearchCount + 1, searchContext);
 	}
@@ -637,11 +626,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsSearchCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModel(
-			parentBaseModel, true, combinedKeywords, serviceContext);
+			getParentBaseModel(group, serviceContext), true, combinedKeywords,
+			serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsSearchCount + 1, searchContext);
 
@@ -748,11 +735,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModel(
-			parentBaseModel, true, getSearchKeywords(), serviceContext);
+			getParentBaseModel(group, serviceContext), true,
+			getSearchKeywords(), serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsCount + 1, searchContext);
 
@@ -933,11 +918,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsCount, "1.0", searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModel(
-			parentBaseModel, false, "Version 1.0", serviceContext);
+			getParentBaseModel(group, serviceContext), false, "Version 1.0",
+			serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsCount, searchContext);
 
@@ -976,11 +959,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModel(
-			parentBaseModel, true, getSearchKeywords(), serviceContext);
+			getParentBaseModel(group, serviceContext), true,
+			getSearchKeywords(), serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsCount + 1, searchContext);
 
@@ -1008,11 +989,9 @@ public abstract class BaseSearchTestCase {
 
 		assertBaseModelsCount(initialBaseModelsSearchCount, searchContext);
 
-		BaseModel<?> parentBaseModel = getParentBaseModel(
-			group, serviceContext);
-
 		baseModel = addBaseModelWithDDMStructure(
-			parentBaseModel, getSearchKeywords(), serviceContext);
+			getParentBaseModel(group, serviceContext), getSearchKeywords(),
+			serviceContext);
 
 		assertBaseModelsCount(initialBaseModelsSearchCount + 1, searchContext);
 	}
@@ -1052,10 +1031,8 @@ public abstract class BaseSearchTestCase {
 			PermissionThreadLocal.getPermissionChecker();
 
 		try {
-			PermissionChecker permissionChecker =
-				PermissionCheckerFactoryUtil.create(user);
-
-			PermissionThreadLocal.setPermissionChecker(permissionChecker);
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(user));
 
 			searchContext.setUserId(user.getUserId());
 

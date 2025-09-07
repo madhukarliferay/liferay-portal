@@ -1,18 +1,7 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import formatXML from '../../../src/main/resources/META-INF/resources/liferay/util/format_xml.es';
 
@@ -64,6 +53,56 @@ describe('Liferay.Util.formatXML', () => {
 			'  <a:heading>FooBar</a:heading>\n' +
 			'  <a:body>FooBarBaz!</a:body>\n' +
 			'</a:note>';
+
+		expect(formatXML(input, options)).toEqual(expectedOutput);
+	});
+
+	it('preserves original formatting inside CDATA blocks', () => {
+		const options = {newLine: '\n', tagIndent: '  '};
+
+		const input =
+			` <?xml xlmns:a="http://www.w3.org/TR/html4/" version="1.0" encoding="UTF-8"?>
+			<!DOCTYPE note>
+			
+			<a:note>  					<a:to>Foo</a:to>
+				<a:from>Bar</a:from><a:heading>FooBar</a:heading>
+								<a:body>FooBarBaz!</a:body>
+			</a:note>\n` +
+			'<script><![CDATA[<message> FooBarBaz </message> ]]></script>\n' +
+			'<script><![CDATA[\n' +
+			'    <#-- FooBarBaz -->\n' +
+			'    <#if foo && bar>\n' +
+			'      <#assign foo = "bar">\n' +
+			'    </#if>\n' +
+			'    <#if bar>\n' +
+			'            <#if baz><#assign bar = "baz">\n' +
+			'        </#if></#if>\n' +
+			'      ]]>\n' +
+			'        </script>';
+
+		const expectedOutput =
+			'<?xml xlmns:a="http://www.w3.org/TR/html4/" version="1.0" encoding="UTF-8"?>\n' +
+			'<!DOCTYPE note>\n' +
+			'<a:note>\n' +
+			'  <a:to>Foo</a:to>\n' +
+			'  <a:from>Bar</a:from>\n' +
+			'  <a:heading>FooBar</a:heading>\n' +
+			'  <a:body>FooBarBaz!</a:body>\n' +
+			'</a:note>\n' +
+			'<script>\n' +
+			'  <![CDATA[<message> FooBarBaz </message> ]]>\n' +
+			'</script>\n' +
+			'<script>\n' +
+			'  <![CDATA[\n' +
+			'    <#-- FooBarBaz -->\n' +
+			'    <#if foo && bar>\n' +
+			'      <#assign foo = "bar">\n' +
+			'    </#if>\n' +
+			'    <#if bar>\n' +
+			'            <#if baz><#assign bar = "baz">\n' +
+			'        </#if></#if>\n' +
+			'      ]]>\n' +
+			'</script>';
 
 		expect(formatXML(input, options)).toEqual(expectedOutput);
 	});

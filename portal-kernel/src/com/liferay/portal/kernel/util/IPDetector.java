@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -48,8 +39,8 @@ public class IPDetector {
 	}
 
 	public static boolean isSupportsV6() {
-		if (_suppportsV6 != null) {
-			return _suppportsV6.booleanValue();
+		if (_supportsV6 != null) {
+			return _supportsV6.booleanValue();
 		}
 
 		try {
@@ -59,27 +50,27 @@ public class IPDetector {
 				String hostAddress = inetAddress.getHostAddress();
 
 				if (hostAddress.contains(":")) {
-					_suppportsV6 = Boolean.TRUE;
+					_supportsV6 = Boolean.TRUE;
 
 					break;
 				}
 			}
 		}
-		catch (UnknownHostException uhe) {
-			_log.error(uhe, uhe);
+		catch (UnknownHostException unknownHostException) {
+			_log.error(unknownHostException);
 		}
 
-		if (_suppportsV6 == null) {
-			_suppportsV6 = Boolean.FALSE;
+		if (_supportsV6 == null) {
+			_supportsV6 = Boolean.FALSE;
 		}
 
-		return _suppportsV6.booleanValue();
+		return _supportsV6.booleanValue();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(IPDetector.class);
 
 	private static Boolean _prefersV4;
 	private static Boolean _prefersV6;
-	private static Boolean _suppportsV6;
+	private static Boolean _supportsV6;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.model.impl;
@@ -37,16 +28,16 @@ public class DDLRecordCacheModel
 	implements CacheModel<DDLRecord>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDLRecordCacheModel)) {
+		if (!(object instanceof DDLRecordCacheModel)) {
 			return false;
 		}
 
-		DDLRecordCacheModel ddlRecordCacheModel = (DDLRecordCacheModel)obj;
+		DDLRecordCacheModel ddlRecordCacheModel = (DDLRecordCacheModel)object;
 
 		if ((recordId == ddlRecordCacheModel.recordId) &&
 			(mvccVersion == ddlRecordCacheModel.mvccVersion)) {
@@ -76,10 +67,12 @@ public class DDLRecordCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", recordId=");
@@ -106,6 +99,10 @@ public class DDLRecordCacheModel
 		sb.append(recordSetId);
 		sb.append(", recordSetVersion=");
 		sb.append(recordSetVersion);
+		sb.append(", className=");
+		sb.append(className);
+		sb.append(", classPK=");
+		sb.append(classPK);
 		sb.append(", version=");
 		sb.append(version);
 		sb.append(", displayIndex=");
@@ -122,6 +119,7 @@ public class DDLRecordCacheModel
 		DDLRecordImpl ddlRecordImpl = new DDLRecordImpl();
 
 		ddlRecordImpl.setMvccVersion(mvccVersion);
+		ddlRecordImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			ddlRecordImpl.setUuid("");
@@ -175,6 +173,15 @@ public class DDLRecordCacheModel
 			ddlRecordImpl.setRecordSetVersion(recordSetVersion);
 		}
 
+		if (className == null) {
+			ddlRecordImpl.setClassName("");
+		}
+		else {
+			ddlRecordImpl.setClassName(className);
+		}
+
+		ddlRecordImpl.setClassPK(classPK);
+
 		if (version == null) {
 			ddlRecordImpl.setVersion("");
 		}
@@ -199,6 +206,8 @@ public class DDLRecordCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		recordId = objectInput.readLong();
@@ -219,6 +228,9 @@ public class DDLRecordCacheModel
 
 		recordSetId = objectInput.readLong();
 		recordSetVersion = objectInput.readUTF();
+		className = objectInput.readUTF();
+
+		classPK = objectInput.readLong();
 		version = objectInput.readUTF();
 
 		displayIndex = objectInput.readInt();
@@ -228,6 +240,8 @@ public class DDLRecordCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -274,6 +288,15 @@ public class DDLRecordCacheModel
 			objectOutput.writeUTF(recordSetVersion);
 		}
 
+		if (className == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(className);
+		}
+
+		objectOutput.writeLong(classPK);
+
 		if (version == null) {
 			objectOutput.writeUTF("");
 		}
@@ -286,6 +309,7 @@ public class DDLRecordCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long recordId;
 	public long groupId;
@@ -299,6 +323,8 @@ public class DDLRecordCacheModel
 	public long DDMStorageId;
 	public long recordSetId;
 	public String recordSetVersion;
+	public String className;
+	public long classPK;
 	public String version;
 	public int displayIndex;
 	public long lastPublishDate;

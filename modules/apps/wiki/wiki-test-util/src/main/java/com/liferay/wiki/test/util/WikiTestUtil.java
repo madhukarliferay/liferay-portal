@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.test.util;
@@ -26,16 +17,14 @@ import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
+import com.liferay.wiki.constants.WikiPageConstants;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
-import com.liferay.wiki.model.WikiPageConstants;
 import com.liferay.wiki.service.WikiNodeLocalServiceUtil;
 import com.liferay.wiki.service.WikiPageLocalServiceUtil;
 
 import java.io.File;
 import java.io.Serializable;
-
-import java.util.Map;
 
 /**
  * @author Julio Camarero
@@ -146,7 +135,6 @@ public class WikiTestUtil {
 			serviceContext = (ServiceContext)serviceContext.clone();
 
 			serviceContext.setCommand(Constants.ADD);
-
 			serviceContext.setWorkflowAction(
 				WorkflowConstants.ACTION_SAVE_DRAFT);
 
@@ -164,6 +152,57 @@ public class WikiTestUtil {
 		finally {
 			WorkflowThreadLocal.setEnabled(workflowEnabled);
 		}
+	}
+
+	public static File addPageAttachment(
+			long userId, long nodeId, String title, Class<?> clazz)
+		throws Exception {
+
+		String fileName = RandomTestUtil.randomString() + ".docx";
+
+		return addPageAttachment(userId, nodeId, title, fileName, clazz);
+	}
+
+	public static File addPageAttachment(
+			long userId, long nodeId, String title, String fileName,
+			Class<?> clazz)
+		throws Exception {
+
+		byte[] fileBytes = FileUtil.getBytes(
+			clazz, "dependencies/OSX_Test.docx");
+
+		File file = null;
+
+		if (ArrayUtil.isNotEmpty(fileBytes)) {
+			file = FileUtil.createTempFile(fileBytes);
+		}
+
+		String mimeType = MimeTypesUtil.getExtensionContentType("docx");
+
+		WikiPageLocalServiceUtil.addPageAttachment(
+			userId, nodeId, title, fileName, file, mimeType);
+
+		return file;
+	}
+
+	public static File addPageAttachment(
+			long userId, long nodeId, String title, String attachmentFileName,
+			Class<?> clazz, String testFileName)
+		throws Exception {
+
+		byte[] bytes = FileUtil.getBytes(clazz, "dependencies/" + testFileName);
+
+		if (ArrayUtil.isEmpty(bytes)) {
+			throw new RuntimeException("File not found: " + testFileName);
+		}
+
+		File file = FileUtil.createTempFile(bytes);
+
+		WikiPageLocalServiceUtil.addPageAttachment(
+			userId, nodeId, title, attachmentFileName, file,
+			MimeTypesUtil.getContentType(file));
+
+		return file;
 	}
 
 	public static WikiPage[] addPageWithChangedParentPage(
@@ -398,37 +437,6 @@ public class WikiTestUtil {
 		return new WikiPage[] {parentPage, childPage, grandchildPage};
 	}
 
-	public static File addWikiAttachment(
-			long userId, long nodeId, String title, Class<?> clazz)
-		throws Exception {
-
-		String fileName = RandomTestUtil.randomString() + ".docx";
-
-		return addWikiAttachment(userId, nodeId, title, fileName, clazz);
-	}
-
-	public static File addWikiAttachment(
-			long userId, long nodeId, String title, String fileName,
-			Class<?> clazz)
-		throws Exception {
-
-		byte[] fileBytes = FileUtil.getBytes(
-			clazz, "dependencies/OSX_Test.docx");
-
-		File file = null;
-
-		if (ArrayUtil.isNotEmpty(fileBytes)) {
-			file = FileUtil.createTempFile(fileBytes);
-		}
-
-		String mimeType = MimeTypesUtil.getExtensionContentType("docx");
-
-		WikiPageLocalServiceUtil.addPageAttachment(
-			userId, nodeId, title, fileName, file, mimeType);
-
-		return file;
-	}
-
 	public static WikiPage copyPage(
 			WikiPage page, boolean approved, ServiceContext serviceContext)
 		throws Exception {
@@ -513,16 +521,12 @@ public class WikiTestUtil {
 			WikiPage page, ServiceContext serviceContext)
 		throws Exception {
 
-		Map<String, Serializable> workflowContext =
+		return WikiPageLocalServiceUtil.updateStatus(
+			page.getUserId(), page, WorkflowConstants.STATUS_APPROVED,
+			serviceContext,
 			HashMapBuilder.<String, Serializable>put(
 				WorkflowConstants.CONTEXT_URL, "http://localhost"
-			).build();
-
-		page = WikiPageLocalServiceUtil.updateStatus(
-			page.getUserId(), page, WorkflowConstants.STATUS_APPROVED,
-			serviceContext, workflowContext);
-
-		return page;
+			).build());
 	}
 
 }

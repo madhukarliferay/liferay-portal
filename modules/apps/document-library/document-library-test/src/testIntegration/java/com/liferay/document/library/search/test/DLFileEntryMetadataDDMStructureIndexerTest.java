@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.search.test;
@@ -19,9 +10,10 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
-import com.liferay.dynamic.data.mapping.test.util.background.task.DDMStructureBackgroundTask;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.messaging.MessageBus;
+import com.liferay.portal.kernel.search.DDMStructureIndexer;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -97,18 +89,14 @@ public class DLFileEntryMetadataDDMStructureIndexerTest
 
 		indexerFixture.deleteDocument(document);
 
-		runBackgroundTaskReindex(ddmStructure);
+		Message message = new Message();
+
+		message.put("ddmStructureIndexer", _ddmStructureIndexer);
+		message.put("structureId", ddmStructure.getStructureId());
+
+		_messageBus.sendMessage("liferay/ddm_structure_reindex", message);
 
 		dlSearchFixture.searchOnlyOne(searchTerm, LocaleUtil.JAPAN);
-	}
-
-	protected void runBackgroundTaskReindex(DDMStructure structure)
-		throws Exception {
-
-		DDMStructureBackgroundTask backgroundTask =
-			new DDMStructureBackgroundTask(structure.getStructureId());
-
-		backgroundTaskExecutor.execute(backgroundTask);
 	}
 
 	protected void setIndexerEnable(boolean indexerEnabled) {
@@ -127,11 +115,6 @@ public class DLFileEntryMetadataDDMStructureIndexerTest
 			dlFileEntryTypeLocalService);
 	}
 
-	@Inject(
-		filter = "background.task.executor.class.name=com.liferay.dynamic.data.mapping.internal.background.task.DDMStructureIndexerBackgroundTaskExecutor"
-	)
-	protected BackgroundTaskExecutor backgroundTaskExecutor;
-
 	@Inject
 	protected DDMStructureLocalService ddmStructureLocalService;
 
@@ -140,5 +123,13 @@ public class DLFileEntryMetadataDDMStructureIndexerTest
 
 	protected DLFileEntryMetadataDDMStructureFixture fileEntryMetadataFixture;
 	protected IndexerFixture<DLFileEntry> indexerFixture;
+
+	@Inject
+	private static MessageBus _messageBus;
+
+	@Inject(
+		filter = "ddm.structure.indexer.class.name=com.liferay.document.library.kernel.model.DLFileEntryMetadata"
+	)
+	private DDMStructureIndexer _ddmStructureIndexer;
 
 }

@@ -1,52 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import addFragmentEntryLink from '../actions/addFragmentEntryLink';
+import addFragmentEntryLinks from '../actions/addFragmentEntryLinks';
 import WidgetService from '../services/WidgetService';
 
 export default function addWidget({
-	config,
-	parentId,
+	parentItemId,
 	portletId,
+	portletItemId,
 	position,
-	store
+	selectItems = () => {},
 }) {
-	return dispatch => {
-		const {segmentsExperienceId} = store;
-
-		WidgetService.addPortlet({
-			config,
-			parentId,
+	return (dispatch, getState) => {
+		return WidgetService.addPortlet({
+			onNetworkStatus: dispatch,
+			parentItemId,
 			portletId,
+			portletItemId,
 			position,
-			segmentsExperienceId
-		}).then(({fragmentEntryLink, layoutData}) => {
-			// TODO: This is a temporary "hack"
-			//       until the backend is consitent
-			//       between both "metal+soy" and "react" versions
-			fragmentEntryLink.content = {
-				value: {
-					content: fragmentEntryLink.content
-				}
-			};
-
+			segmentsExperienceId: getState().segmentsExperienceId,
+		}).then(({addedItemId, fragmentEntryLink, layoutData}) => {
 			dispatch(
-				addFragmentEntryLink({
-					fragmentEntryLink,
-					layoutData
+				addFragmentEntryLinks({
+					addedItemId,
+					fragmentEntryLinks: [fragmentEntryLink],
+					layoutData,
 				})
 			);
+
+			if (addedItemId) {
+				selectItems([addedItemId]);
+			}
 		});
 	};
 }

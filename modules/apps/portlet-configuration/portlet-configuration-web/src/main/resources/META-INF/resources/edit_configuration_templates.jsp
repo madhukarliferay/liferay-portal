@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,11 +9,9 @@
 
 <%
 PortletConfigurationTemplatesDisplayContext portletConfigurationTemplatesDisplayContext = new PortletConfigurationTemplatesDisplayContext(request, renderRequest, renderResponse);
-
-PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfigurationTemplatesManagementToolbarDisplayContext = new PortletConfigurationTemplatesManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, portletConfigurationTemplatesDisplayContext);
 %>
 
-<div class="portlet-configuration-edit-templates">
+<div class="cadmin portlet-configuration-edit-templates">
 	<portlet:actionURL name="deleteArchivedSetups" var="deleteArchivedSetupsURL">
 		<portlet:param name="mvcPath" value="/edit_configuration_templates.jsp" />
 		<portlet:param name="redirect" value="<%= currentURL %>" />
@@ -33,10 +22,13 @@ PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfiguratio
 	<aui:form action="<%= deleteArchivedSetupsURL %>" name="fm">
 		<div class="portlet-configuration-body-content">
 			<clay:management-toolbar
-				displayContext="<%= portletConfigurationTemplatesManagementToolbarDisplayContext %>"
+				managementToolbarDisplayContext="<%= new PortletConfigurationTemplatesManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, portletConfigurationTemplatesDisplayContext) %>"
+				propsTransformer="{ManagementToolbarPropsTransformer} from portlet-configuration-web"
 			/>
 
-			<div class="container-fluid-1280">
+			<clay:container-fluid
+				size="xxxl"
+			>
 				<liferay-ui:error exception="<%= NoSuchPortletItemException.class %>" message="the-setup-could-not-be-found" />
 
 				<div class="button-holder text-center">
@@ -46,7 +38,12 @@ PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfiguratio
 						<portlet:param name="portletResource" value="<%= portletResource %>" />
 					</portlet:renderURL>
 
-					<aui:button href="<%= addConfigurationTemplateURL %>" value="save-current-configuration-as-template" />
+					<clay:link
+						displayType="secondary"
+						href="<%= addConfigurationTemplateURL %>"
+						label="save-current-configuration-as-template"
+						type="button"
+					/>
 				</div>
 
 				<liferay-ui:search-container
@@ -67,28 +64,24 @@ PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfiguratio
 								<liferay-ui:search-container-column-text
 									colspan="<%= 2 %>"
 								>
-									<h6 class="text-default">
+									<div class="h6 text-default">
 										<liferay-ui:message arguments="<%= new String[] {LanguageUtil.getTimeDescription(locale, System.currentTimeMillis() - archivedSettings.getModifiedDate().getTime(), true), HtmlUtil.escape(archivedSettings.getUserName())} %>" key="x-ago-by-x" translateArguments="<%= false %>" />
-									</h6>
+									</div>
 
-									<h5>
+									<div class="h5">
 										<%= HtmlUtil.escape(archivedSettings.getName()) %>
-									</h5>
+									</div>
 								</liferay-ui:search-container-column-text>
 
 								<liferay-ui:search-container-column-text>
 									<clay:dropdown-actions
-										defaultEventHandler="<%= PortletConfigurationWebKeys.ARCHIVED_SETUPS_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= portletConfigurationTemplatesDisplayContext.getActionDropdownItems(archivedSettings) %>"
+										propsTransformer="{ArchivedSetuptsDropdownDefaultPropsTransformer} from portlet-configuration-web"
 									/>
 								</liferay-ui:search-container-column-text>
 							</c:when>
 							<c:when test='<%= Objects.equals(portletConfigurationTemplatesDisplayContext.getDisplayStyle(), "icon") %>'>
-
-								<%
-								row.setCssClass("entry-card lfr-asset-item");
-								%>
-
 								<liferay-ui:search-container-column-text>
 									<clay:vertical-card
 										verticalCard="<%= new ArchivedSettingsVerticalCard(archivedSettings, renderRequest, renderResponse) %>"
@@ -117,8 +110,9 @@ PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfiguratio
 
 								<liferay-ui:search-container-column-text>
 									<clay:dropdown-actions
-										defaultEventHandler="<%= PortletConfigurationWebKeys.ARCHIVED_SETUPS_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= portletConfigurationTemplatesDisplayContext.getActionDropdownItems(archivedSettings) %>"
+										propsTransformer="{ArchivedSetuptsDropdownDefaultPropsTransformer} from portlet-configuration-web"
 									/>
 								</liferay-ui:search-container-column-text>
 							</c:when>
@@ -130,33 +124,7 @@ PortletConfigurationTemplatesManagementToolbarDisplayContext portletConfiguratio
 						markupView="lexicon"
 					/>
 				</liferay-ui:search-container>
-			</div>
+			</clay:container-fluid>
 		</div>
 	</aui:form>
 </div>
-
-<aui:script require='<%= portletConfigurationTemplatesDisplayContext.getModuleName() + "/js/ArchivedSetuptsDropdownDefaultEventHandler.es as ArchivedSetuptsDropdownDefaultEventHandler" %>'>
-	Liferay.component(
-		'<%= PortletConfigurationWebKeys.ARCHIVED_SETUPS_DROPDOWN_DEFAULT_EVENT_HANDLER %>',
-		new ArchivedSetuptsDropdownDefaultEventHandler.default({
-			namespace: '<portlet:namespace />'
-		}),
-		{
-			destroyOnNavigate: true,
-			portletId: '<%= HtmlUtil.escapeJS(portletDisplay.getId()) %>'
-		}
-	);
-</aui:script>
-
-<aui:script require='<%= portletConfigurationTemplatesDisplayContext.getModuleName() + "/js/ManagementToolbarDefaultEventHandler.es as ManagementToolbarDefaultEventHandler" %>'>
-	Liferay.component(
-		'<%= portletConfigurationTemplatesManagementToolbarDisplayContext.getDefaultEventHandler() %>',
-		new ManagementToolbarDefaultEventHandler.default({
-			namespace: '<portlet:namespace />'
-		}),
-		{
-			destroyOnNavigate: true,
-			portletId: '<%= HtmlUtil.escapeJS(portletDisplay.getId()) %>'
-		}
-	);
-</aui:script>

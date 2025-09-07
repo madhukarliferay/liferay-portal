@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class FragmentEntryLinkWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("fragmentEntryLinkId", getFragmentEntryLinkId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -55,16 +50,20 @@ public class FragmentEntryLinkWrapper
 		attributes.put(
 			"originalFragmentEntryLinkId", getOriginalFragmentEntryLinkId());
 		attributes.put("fragmentEntryId", getFragmentEntryId());
+		attributes.put("segmentsExperienceId", getSegmentsExperienceId());
 		attributes.put("classNameId", getClassNameId());
 		attributes.put("classPK", getClassPK());
+		attributes.put("plid", getPlid());
 		attributes.put("css", getCss());
 		attributes.put("html", getHtml());
 		attributes.put("js", getJs());
 		attributes.put("configuration", getConfiguration());
+		attributes.put("deleted", isDeleted());
 		attributes.put("editableValues", getEditableValues());
 		attributes.put("namespace", getNamespace());
 		attributes.put("position", getPosition());
 		attributes.put("rendererKey", getRendererKey());
+		attributes.put("type", getType());
 		attributes.put("lastPropagationDate", getLastPropagationDate());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
@@ -79,10 +78,23 @@ public class FragmentEntryLinkWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long fragmentEntryLinkId = (Long)attributes.get("fragmentEntryLinkId");
@@ -140,6 +152,13 @@ public class FragmentEntryLinkWrapper
 			setFragmentEntryId(fragmentEntryId);
 		}
 
+		Long segmentsExperienceId = (Long)attributes.get(
+			"segmentsExperienceId");
+
+		if (segmentsExperienceId != null) {
+			setSegmentsExperienceId(segmentsExperienceId);
+		}
+
 		Long classNameId = (Long)attributes.get("classNameId");
 
 		if (classNameId != null) {
@@ -150,6 +169,12 @@ public class FragmentEntryLinkWrapper
 
 		if (classPK != null) {
 			setClassPK(classPK);
+		}
+
+		Long plid = (Long)attributes.get("plid");
+
+		if (plid != null) {
+			setPlid(plid);
 		}
 
 		String css = (String)attributes.get("css");
@@ -176,6 +201,12 @@ public class FragmentEntryLinkWrapper
 			setConfiguration(configuration);
 		}
 
+		Boolean deleted = (Boolean)attributes.get("deleted");
+
+		if (deleted != null) {
+			setDeleted(deleted);
+		}
+
 		String editableValues = (String)attributes.get("editableValues");
 
 		if (editableValues != null) {
@@ -200,6 +231,12 @@ public class FragmentEntryLinkWrapper
 			setRendererKey(rendererKey);
 		}
 
+		Integer type = (Integer)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
 		Date lastPropagationDate = (Date)attributes.get("lastPropagationDate");
 
 		if (lastPropagationDate != null) {
@@ -211,6 +248,11 @@ public class FragmentEntryLinkWrapper
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+	}
+
+	@Override
+	public FragmentEntryLink cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -263,6 +305,20 @@ public class FragmentEntryLinkWrapper
 		return model.getConfiguration();
 	}
 
+	@Override
+	public com.liferay.portal.kernel.json.JSONObject
+		getConfigurationJSONObject() {
+
+		return model.getConfigurationJSONObject();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.json.JSONObject getConfigurationJSONObject(
+		boolean strict) {
+
+		return model.getConfigurationJSONObject(strict);
+	}
+
 	/**
 	 * Returns the create date of this fragment entry link.
 	 *
@@ -284,6 +340,26 @@ public class FragmentEntryLinkWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this fragment entry link.
+	 *
+	 * @return the ct collection ID of this fragment entry link
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the deleted of this fragment entry link.
+	 *
+	 * @return the deleted of this fragment entry link
+	 */
+	@Override
+	public boolean getDeleted() {
+		return model.getDeleted();
+	}
+
+	/**
 	 * Returns the editable values of this fragment entry link.
 	 *
 	 * @return the editable values of this fragment entry link
@@ -291,6 +367,30 @@ public class FragmentEntryLinkWrapper
 	@Override
 	public String getEditableValues() {
 		return model.getEditableValues();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.json.JSONObject
+		getEditableValuesJSONObject() {
+
+		return model.getEditableValuesJSONObject();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.json.JSONObject
+		getEditableValuesJSONObject(boolean strict) {
+
+		return model.getEditableValuesJSONObject(strict);
+	}
+
+	/**
+	 * Returns the external reference code of this fragment entry link.
+	 *
+	 * @return the external reference code of this fragment entry link
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -404,6 +504,16 @@ public class FragmentEntryLinkWrapper
 	}
 
 	/**
+	 * Returns the plid of this fragment entry link.
+	 *
+	 * @return the plid of this fragment entry link
+	 */
+	@Override
+	public long getPlid() {
+		return model.getPlid();
+	}
+
+	/**
 	 * Returns the position of this fragment entry link.
 	 *
 	 * @return the position of this fragment entry link
@@ -431,6 +541,26 @@ public class FragmentEntryLinkWrapper
 	@Override
 	public String getRendererKey() {
 		return model.getRendererKey();
+	}
+
+	/**
+	 * Returns the segments experience ID of this fragment entry link.
+	 *
+	 * @return the segments experience ID of this fragment entry link
+	 */
+	@Override
+	public long getSegmentsExperienceId() {
+		return model.getSegmentsExperienceId();
+	}
+
+	/**
+	 * Returns the type of this fragment entry link.
+	 *
+	 * @return the type of this fragment entry link
+	 */
+	@Override
+	public int getType() {
+		return model.getType();
 	}
 
 	/**
@@ -474,17 +604,59 @@ public class FragmentEntryLinkWrapper
 	}
 
 	@Override
+	public boolean isCacheable() {
+		return model.isCacheable();
+	}
+
+	/**
+	 * Returns <code>true</code> if this fragment entry link is deleted.
+	 *
+	 * @return <code>true</code> if this fragment entry link is deleted; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDeleted() {
+		return model.isDeleted();
+	}
+
+	@Override
 	public boolean isLatestVersion()
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.isLatestVersion();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a fragment entry link model instance should use the <code>FragmentEntryLink</code> interface instead.
-	 */
+	@Override
+	public boolean isSystem()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.isSystem();
+	}
+
+	@Override
+	public boolean isTypeComponent() {
+		return model.isTypeComponent();
+	}
+
+	@Override
+	public boolean isTypeInput() {
+		return model.isTypeInput();
+	}
+
+	@Override
+	public boolean isTypePortlet() {
+		return model.isTypePortlet();
+	}
+
+	@Override
+	public boolean isTypeReact() {
+		return model.isTypeReact();
+	}
+
+	@Override
+	public boolean isTypeSection() {
+		return model.isTypeSection();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -556,6 +728,26 @@ public class FragmentEntryLinkWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this fragment entry link.
+	 *
+	 * @param ctCollectionId the ct collection ID of this fragment entry link
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets whether this fragment entry link is deleted.
+	 *
+	 * @param deleted the deleted of this fragment entry link
+	 */
+	@Override
+	public void setDeleted(boolean deleted) {
+		model.setDeleted(deleted);
+	}
+
+	/**
 	 * Sets the editable values of this fragment entry link.
 	 *
 	 * @param editableValues the editable values of this fragment entry link
@@ -563,6 +755,16 @@ public class FragmentEntryLinkWrapper
 	@Override
 	public void setEditableValues(String editableValues) {
 		model.setEditableValues(editableValues);
+	}
+
+	/**
+	 * Sets the external reference code of this fragment entry link.
+	 *
+	 * @param externalReferenceCode the external reference code of this fragment entry link
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -678,6 +880,16 @@ public class FragmentEntryLinkWrapper
 	}
 
 	/**
+	 * Sets the plid of this fragment entry link.
+	 *
+	 * @param plid the plid of this fragment entry link
+	 */
+	@Override
+	public void setPlid(long plid) {
+		model.setPlid(plid);
+	}
+
+	/**
 	 * Sets the position of this fragment entry link.
 	 *
 	 * @param position the position of this fragment entry link
@@ -705,6 +917,26 @@ public class FragmentEntryLinkWrapper
 	@Override
 	public void setRendererKey(String rendererKey) {
 		model.setRendererKey(rendererKey);
+	}
+
+	/**
+	 * Sets the segments experience ID of this fragment entry link.
+	 *
+	 * @param segmentsExperienceId the segments experience ID of this fragment entry link
+	 */
+	@Override
+	public void setSegmentsExperienceId(long segmentsExperienceId) {
+		model.setSegmentsExperienceId(segmentsExperienceId);
+	}
+
+	/**
+	 * Sets the type of this fragment entry link.
+	 *
+	 * @param type the type of this fragment entry link
+	 */
+	@Override
+	public void setType(int type) {
+		model.setType(type);
 	}
 
 	/**
@@ -745,6 +977,25 @@ public class FragmentEntryLinkWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<FragmentEntryLink, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<FragmentEntryLink, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

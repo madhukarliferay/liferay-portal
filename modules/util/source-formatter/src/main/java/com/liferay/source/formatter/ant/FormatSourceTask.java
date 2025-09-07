@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter.ant;
@@ -63,8 +54,8 @@ public class FormatSourceTask extends Task {
 				SourceFormatterArgs.OUTPUT_KEY_MODIFIED_FILES,
 				modifiedFileNames);
 		}
-		catch (Exception e) {
-			throw new BuildException(e);
+		catch (Exception exception) {
+			throw new BuildException(exception);
 		}
 	}
 
@@ -74,6 +65,26 @@ public class FormatSourceTask extends Task {
 
 	public void setBaseDir(String baseDirName) {
 		_sourceFormatterArgs.setBaseDirName(baseDirName);
+	}
+
+	public void setCheckCategoryNames(List<String> checkCategoryNames) {
+		_sourceFormatterArgs.setCheckCategoryNames(checkCategoryNames);
+	}
+
+	public void setCheckNames(List<String> checkNames) {
+		_sourceFormatterArgs.setCheckNames(checkNames);
+	}
+
+	public void setFailOnAutoFix(boolean failOnAutoFix) {
+		_sourceFormatterArgs.setFailOnAutoFix(failOnAutoFix);
+	}
+
+	public void setFailOnHasWarning(boolean failOnHasWarning) {
+		_sourceFormatterArgs.setFailOnHasWarning(failOnHasWarning);
+	}
+
+	public void setFileExtensions(List<String> fileExtensions) {
+		_sourceFormatterArgs.setFileExtensions(fileExtensions);
 	}
 
 	public void setFileNames(String fileNames) {
@@ -101,8 +112,16 @@ public class FormatSourceTask extends Task {
 		_sourceFormatterArgs.setIncludeSubrepositories(includeSubrepositories);
 	}
 
+	public void setJavaParserEnabled(boolean javaParserEnabled) {
+		_sourceFormatterArgs.setJavaParserEnabled(javaParserEnabled);
+	}
+
 	public void setMaxLineLength(int maxLineLength) {
 		_sourceFormatterArgs.setMaxLineLength(maxLineLength);
+	}
+
+	public void setOutputFileName(String outputFileName) {
+		_sourceFormatterArgs.setOutputFileName(outputFileName);
 	}
 
 	public void setPrintErrors(boolean printErrors) {
@@ -117,16 +136,8 @@ public class FormatSourceTask extends Task {
 		_sourceFormatterArgs.setShowDebugInformation(showDebugInformation);
 	}
 
-	public void setShowDocumentation(boolean showDocumentation) {
-		_sourceFormatterArgs.setShowDocumentation(showDocumentation);
-	}
-
-	public void setShowStatusUpdates(boolean showStatusUpdates) {
-		_sourceFormatterArgs.setShowStatusUpdates(showStatusUpdates);
-	}
-
-	public void setThrowException(boolean throwException) {
-		_sourceFormatterArgs.setThrowException(throwException);
+	public void setValidateCommitMessages(boolean validateCommitMessages) {
+		_sourceFormatterArgs.setValidateCommitMessages(validateCommitMessages);
 	}
 
 	private void _collectFromFileSets() {
@@ -136,12 +147,12 @@ public class FormatSourceTask extends Task {
 			DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(
 				getProject());
 
-			File baseDir = directoryScanner.getBasedir();
+			File basedir = directoryScanner.getBasedir();
 
 			String[] includedFiles = directoryScanner.getIncludedFiles();
 
 			for (int i = 0; i < includedFiles.length; i++) {
-				File file = new File(baseDir, includedFiles[i]);
+				File file = new File(basedir, includedFiles[i]);
 
 				includedFiles[i] = file.getAbsolutePath();
 			}

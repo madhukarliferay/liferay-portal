@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -37,17 +28,17 @@ public class DDMDataProviderInstanceCacheModel
 	implements CacheModel<DDMDataProviderInstance>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMDataProviderInstanceCacheModel)) {
+		if (!(object instanceof DDMDataProviderInstanceCacheModel)) {
 			return false;
 		}
 
 		DDMDataProviderInstanceCacheModel ddmDataProviderInstanceCacheModel =
-			(DDMDataProviderInstanceCacheModel)obj;
+			(DDMDataProviderInstanceCacheModel)object;
 
 		if ((dataProviderInstanceId ==
 				ddmDataProviderInstanceCacheModel.dataProviderInstanceId) &&
@@ -78,10 +69,12 @@ public class DDMDataProviderInstanceCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(31);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", dataProviderInstanceId=");
@@ -106,6 +99,8 @@ public class DDMDataProviderInstanceCacheModel
 		sb.append(definition);
 		sb.append(", type=");
 		sb.append(type);
+		sb.append(", lastPublishDate=");
+		sb.append(lastPublishDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -117,6 +112,7 @@ public class DDMDataProviderInstanceCacheModel
 			new DDMDataProviderInstanceImpl();
 
 		ddmDataProviderInstanceImpl.setMvccVersion(mvccVersion);
+		ddmDataProviderInstanceImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			ddmDataProviderInstanceImpl.setUuid("");
@@ -180,14 +176,26 @@ public class DDMDataProviderInstanceCacheModel
 			ddmDataProviderInstanceImpl.setType(type);
 		}
 
+		if (lastPublishDate == Long.MIN_VALUE) {
+			ddmDataProviderInstanceImpl.setLastPublishDate(null);
+		}
+		else {
+			ddmDataProviderInstanceImpl.setLastPublishDate(
+				new Date(lastPublishDate));
+		}
+
 		ddmDataProviderInstanceImpl.resetOriginalValues();
 
 		return ddmDataProviderInstanceImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		dataProviderInstanceId = objectInput.readLong();
@@ -201,14 +209,17 @@ public class DDMDataProviderInstanceCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 		name = objectInput.readUTF();
-		description = objectInput.readUTF();
-		definition = objectInput.readUTF();
+		description = (String)objectInput.readObject();
+		definition = (String)objectInput.readObject();
 		type = objectInput.readUTF();
+		lastPublishDate = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -243,17 +254,17 @@ public class DDMDataProviderInstanceCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (definition == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(definition);
+			objectOutput.writeObject(definition);
 		}
 
 		if (type == null) {
@@ -262,9 +273,12 @@ public class DDMDataProviderInstanceCacheModel
 		else {
 			objectOutput.writeUTF(type);
 		}
+
+		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long dataProviderInstanceId;
 	public long groupId;
@@ -277,5 +291,6 @@ public class DDMDataProviderInstanceCacheModel
 	public String description;
 	public String definition;
 	public String type;
+	public long lastPublishDate;
 
 }

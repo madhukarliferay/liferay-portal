@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.impl;
@@ -19,6 +10,7 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.service.base.OAuth2AuthorizationServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
@@ -82,6 +74,30 @@ public class OAuth2AuthorizationServiceImpl
 
 		return oAuth2AuthorizationLocalService.getUserOAuth2AuthorizationsCount(
 			user.getUserId());
+	}
+
+	@Override
+	public void revokeAllOAuth2Authorizations(long oAuth2ApplicationId)
+		throws PortalException {
+
+		User user = getUser();
+
+		List<OAuth2Authorization> oAuth2Authorizations =
+			oAuth2AuthorizationLocalService.getOAuth2Authorizations(
+				oAuth2ApplicationId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				null);
+
+		for (OAuth2Authorization oAuth2Authorization : oAuth2Authorizations) {
+			if (user.getUserId() != oAuth2Authorization.getUserId()) {
+				_oAuth2ApplicationModelResourcePermission.check(
+					getPermissionChecker(),
+					oAuth2Authorization.getOAuth2ApplicationId(),
+					OAuth2ProviderActionKeys.ACTION_REVOKE_TOKEN);
+			}
+
+			oAuth2AuthorizationLocalService.deleteOAuth2Authorization(
+				oAuth2Authorization);
+		}
 	}
 
 	@Override

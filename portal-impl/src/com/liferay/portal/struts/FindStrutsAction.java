@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.struts;
@@ -22,28 +13,29 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.impl.VirtualLayout;
 import com.liferay.portal.kernel.portlet.PortletLayoutFinder;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.redirect.RedirectURLSettingsUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.sites.kernel.util.SitesUtil;
 
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @author Adolfo Pérez
@@ -75,9 +67,9 @@ public abstract class FindStrutsAction implements StrutsAction {
 						groupId = overrideGroupId;
 					}
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					if (_log.isDebugEnabled()) {
-						_log.debug(e, e);
+						_log.debug(exception);
 					}
 				}
 			}
@@ -90,9 +82,24 @@ public abstract class FindStrutsAction implements StrutsAction {
 			Layout layout = _setTargetLayout(
 				httpServletRequest, groupId, result.getPlid());
 
-			LayoutPermissionUtil.check(
-				themeDisplay.getPermissionChecker(), layout, true,
-				ActionKeys.VIEW);
+			if (!LayoutPermissionUtil.contains(
+					themeDisplay.getPermissionChecker(), layout, true,
+					ActionKeys.VIEW)) {
+
+				if (!themeDisplay.isSignedIn() && result.isSignInRequired()) {
+					String redirect = HttpComponentsUtil.addParameter(
+						PortalUtil.getPathMain() + "/portal/login", "redirect",
+						PortalUtil.getCurrentCompleteURL(httpServletRequest));
+
+					httpServletResponse.sendRedirect(redirect);
+
+					return null;
+				}
+
+				throw new PrincipalException.MustHavePermission(
+					themeDisplay.getPermissionChecker(), Layout.class.getName(),
+					layout.getLayoutId(), ActionKeys.VIEW);
+			}
 
 			String portletId = result.getPortletId();
 
@@ -108,13 +115,10 @@ public abstract class FindStrutsAction implements StrutsAction {
 			String redirect = null;
 
 			if (inheritRedirect) {
-				String noSuchEntryRedirect = ParamUtil.getString(
-					httpServletRequest, "noSuchEntryRedirect");
-
-				redirect = HttpUtil.getParameter(
-					noSuchEntryRedirect, "redirect", false);
-
-				redirect = HttpUtil.decodeURL(redirect);
+				redirect = HttpComponentsUtil.decodeURL(
+					HttpComponentsUtil.getParameter(
+						_getNoSuchEntryRedirect(httpServletRequest), "redirect",
+						false));
 			}
 			else {
 				redirect = ParamUtil.getString(httpServletRequest, "redirect");
@@ -133,22 +137,19 @@ public abstract class FindStrutsAction implements StrutsAction {
 
 			httpServletResponse.sendRedirect(portletURL.toString());
 		}
-		catch (Exception e) {
-			String noSuchEntryRedirect = ParamUtil.getString(
-				httpServletRequest, "noSuchEntryRedirect");
-
-			noSuchEntryRedirect = PortalUtil.escapeRedirect(
-				noSuchEntryRedirect);
+		catch (Exception exception) {
+			String noSuchEntryRedirect = PortalUtil.escapeRedirect(
+				_getNoSuchEntryRedirect(httpServletRequest));
 
 			if (Validator.isNotNull(noSuchEntryRedirect) &&
-				(e instanceof NoSuchLayoutException ||
-				 e instanceof PrincipalException)) {
+				(exception instanceof NoSuchLayoutException ||
+				 exception instanceof PrincipalException)) {
 
 				httpServletResponse.sendRedirect(noSuchEntryRedirect);
 			}
 			else {
 				PortalUtil.sendError(
-					e, httpServletRequest, httpServletResponse);
+					exception, httpServletRequest, httpServletResponse);
 			}
 		}
 
@@ -188,9 +189,6 @@ public abstract class FindStrutsAction implements StrutsAction {
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		PermissionChecker permissionChecker =
-			themeDisplay.getPermissionChecker();
-
 		Group group = GroupLocalServiceUtil.getGroup(groupId);
 		Layout layout = LayoutLocalServiceUtil.getLayout(plid);
 
@@ -198,7 +196,7 @@ public abstract class FindStrutsAction implements StrutsAction {
 			(group.getParentGroupId() == layout.getGroupId()) ||
 			(layout.isPrivateLayout() &&
 			 !SitesUtil.isUserGroupLayoutSetViewable(
-				 permissionChecker, layout.getGroup()))) {
+				 themeDisplay.getPermissionChecker(), layout.getGroup()))) {
 
 			return layout;
 		}
@@ -208,6 +206,49 @@ public abstract class FindStrutsAction implements StrutsAction {
 		httpServletRequest.setAttribute(WebKeys.LAYOUT, layout);
 
 		return layout;
+	}
+
+	private String _getNoSuchEntryRedirect(
+		HttpServletRequest httpServletRequest) {
+
+		long companyId = PortalUtil.getCompanyId(httpServletRequest);
+
+		String securityMode = RedirectURLSettingsUtil.getSecurityMode(
+			companyId);
+
+		String noSuchEntryRedirect = ParamUtil.getString(
+			httpServletRequest, "noSuchEntryRedirect");
+
+		if (securityMode.equals("domain")) {
+			String[] allowedDomains = RedirectURLSettingsUtil.getAllowedDomains(
+				companyId);
+			String domain = HttpComponentsUtil.getDomain(noSuchEntryRedirect);
+
+			if (ArrayUtil.contains(allowedDomains, domain)) {
+				return noSuchEntryRedirect;
+			}
+
+			for (String allowedDomain : allowedDomains) {
+				if (allowedDomain.startsWith("*.") &&
+					(allowedDomain.regionMatches(
+						1, domain,
+						domain.length() - (allowedDomain.length() - 1),
+						allowedDomain.length() - 1) ||
+					 allowedDomain.regionMatches(
+						 2, domain, 0, domain.length()))) {
+
+					return noSuchEntryRedirect;
+				}
+			}
+		}
+		else if (ArrayUtil.contains(
+					RedirectURLSettingsUtil.getAllowedIPs(companyId),
+					HttpComponentsUtil.getIpAddress(noSuchEntryRedirect))) {
+
+			return noSuchEntryRedirect;
+		}
+
+		return null;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

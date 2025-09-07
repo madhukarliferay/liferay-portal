@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.persistence;
@@ -37,7 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface SamlIdpSsoSessionPersistence
 	extends BasePersistence<SamlIdpSsoSession> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link SamlIdpSsoSessionUtil} to access the saml idp sso session persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -49,7 +40,8 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param createDate the create date
 	 * @return the matching saml idp sso sessions
 	 */
-	public java.util.List<SamlIdpSsoSession> findByCreateDate(Date createDate);
+	public java.util.List<SamlIdpSsoSession> findByLtCreateDate(
+		Date createDate);
 
 	/**
 	 * Returns a range of all the saml idp sso sessions where createDate &lt; &#63;.
@@ -63,7 +55,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param end the upper bound of the range of saml idp sso sessions (not inclusive)
 	 * @return the range of matching saml idp sso sessions
 	 */
-	public java.util.List<SamlIdpSsoSession> findByCreateDate(
+	public java.util.List<SamlIdpSsoSession> findByLtCreateDate(
 		Date createDate, int start, int end);
 
 	/**
@@ -79,7 +71,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching saml idp sso sessions
 	 */
-	public java.util.List<SamlIdpSsoSession> findByCreateDate(
+	public java.util.List<SamlIdpSsoSession> findByLtCreateDate(
 		Date createDate, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 			orderByComparator);
@@ -98,7 +90,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching saml idp sso sessions
 	 */
-	public java.util.List<SamlIdpSsoSession> findByCreateDate(
+	public java.util.List<SamlIdpSsoSession> findByLtCreateDate(
 		Date createDate, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 			orderByComparator,
@@ -112,7 +104,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @return the first matching saml idp sso session
 	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
 	 */
-	public SamlIdpSsoSession findByCreateDate_First(
+	public SamlIdpSsoSession findByLtCreateDate_First(
 			Date createDate,
 			com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 				orderByComparator)
@@ -125,7 +117,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
 	 */
-	public SamlIdpSsoSession fetchByCreateDate_First(
+	public SamlIdpSsoSession fetchByLtCreateDate_First(
 		Date createDate,
 		com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 			orderByComparator);
@@ -138,7 +130,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @return the last matching saml idp sso session
 	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
 	 */
-	public SamlIdpSsoSession findByCreateDate_Last(
+	public SamlIdpSsoSession findByLtCreateDate_Last(
 			Date createDate,
 			com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 				orderByComparator)
@@ -151,7 +143,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
 	 */
-	public SamlIdpSsoSession fetchByCreateDate_Last(
+	public SamlIdpSsoSession fetchByLtCreateDate_Last(
 		Date createDate,
 		com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 			orderByComparator);
@@ -165,7 +157,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @return the previous, current, and next saml idp sso session
 	 * @throws NoSuchIdpSsoSessionException if a saml idp sso session with the primary key could not be found
 	 */
-	public SamlIdpSsoSession[] findByCreateDate_PrevAndNext(
+	public SamlIdpSsoSession[] findByLtCreateDate_PrevAndNext(
 			long samlIdpSsoSessionId, Date createDate,
 			com.liferay.portal.kernel.util.OrderByComparator<SamlIdpSsoSession>
 				orderByComparator)
@@ -176,7 +168,7 @@ public interface SamlIdpSsoSessionPersistence
 	 *
 	 * @param createDate the create date
 	 */
-	public void removeByCreateDate(Date createDate);
+	public void removeByLtCreateDate(Date createDate);
 
 	/**
 	 * Returns the number of saml idp sso sessions where createDate &lt; &#63;.
@@ -184,7 +176,7 @@ public interface SamlIdpSsoSessionPersistence
 	 * @param createDate the create date
 	 * @return the number of matching saml idp sso sessions
 	 */
-	public int countByCreateDate(Date createDate);
+	public int countByLtCreateDate(Date createDate);
 
 	/**
 	 * Returns the saml idp sso session where samlIdpSsoSessionKey = &#63; or throws a <code>NoSuchIdpSsoSessionException</code> if it could not be found.

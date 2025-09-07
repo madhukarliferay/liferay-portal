@@ -1,0 +1,52 @@
+{
+	"dependencies": {
+		"@clayui/alert": "3.144.1",
+		"@clayui/button": "3.144.1",
+		"@clayui/card": "3.145.0",
+		"@clayui/core": "3.145.0",
+		"@clayui/drop-down": "3.145.0",
+		"@clayui/empty-state": "3.144.1",
+		"@clayui/form": "3.145.0",
+		"@clayui/icon": "3.144.1",
+		"@clayui/label": "3.144.1",
+		"@clayui/link": "3.144.1",
+		"@clayui/list": "3.145.0",
+		"@clayui/loading-indicator": "3.144.1",
+		"@clayui/modal": "3.145.0",
+		"@clayui/panel": "3.145.0",
+		"@clayui/popover": "3.145.0",
+		"@clayui/tabs": "3.145.0",
+		"@clayui/tooltip": "3.145.0",
+		"@liferay/friendly-url-web": "*",
+		"@liferay/frontend-data-set-web": "*",
+		"@liferay/frontend-js-codemirror-web": "*",
+		"@liferay/object-js-components-web": "*",
+		"classnames": "2.3.1",
+		"fetch-mock": "5.13.1",
+		"frontend-js-components-web": "*",
+		"frontend-js-web": "*",
+		"moment": "2.29.4",
+		"react": "18.2.0",
+		"react-flow-renderer": "9.7.0",
+		"text-mask-core": "^5.1.2"
+	},
+	"jest": {
+		"setupFiles": [
+			"<rootDir>/jest-setup.config.js"
+		],
+		"testMatch": [
+			"<rootDir>/src/main/resources/META-INF/resources/js/tests/**/*.spec.ts",
+			"<rootDir>/src/main/resources/META-INF/resources/js/tests/**/*.spec.tsx"
+		]
+	},
+	"main": "js/index.ts",
+	"name": "@liferay/object-web",
+	"private": true,
+	"scripts": {
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format",
+		"test": "USE_REACT_16=true node-scripts test"
+	},
+	"version": "1.0.231"
+}

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.test;
@@ -64,8 +55,8 @@ public class SQLEqualsTest {
 				"typeString STRING null, typeText TEXT null, typeVarchar ",
 				"VARCHAR(75) null);"));
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(
 					StringBundler.concat(
 						"insert into SQLEqualsTest (pk, typeBlob, ",
@@ -73,30 +64,30 @@ public class SQLEqualsTest {
 						"typeLong, typeString, typeText, typeVarchar) values (",
 						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")))) {
 
-			boolean autoCommit = con.getAutoCommit();
+			boolean autoCommit = connection.getAutoCommit();
 
 			try {
-				con.setAutoCommit(false);
+				connection.setAutoCommit(false);
 
 				_insert(
-					ps, 1, "test", false, 5 * Time.DAY, 6.0D, 7, 8L, "String",
-					"Text", "VarChar");
+					preparedStatement, 1, "test", false, 5 * Time.DAY, 6.0D, 7,
+					8L, "String", "Text", "VarChar");
 
 				_insert(
-					ps, 2, "test", false, 5 * Time.DAY, 6.0D, 7, 8L, "String",
-					"Text", "VarChar");
+					preparedStatement, 2, "test", false, 5 * Time.DAY, 6.0D, 7,
+					8L, "String", "Text", "VarChar");
 
 				_insert(
-					ps, 3, "test 2", true, 6 * Time.DAY, 7.0D, 8, 9L,
-					"String 2", "Text 2", "VarChar 2");
+					preparedStatement, 3, "test 2", true, 6 * Time.DAY, 7.0D, 8,
+					9L, "String 2", "Text 2", "VarChar 2");
 
-				con.commit();
+				connection.commit();
 			}
-			catch (Exception e) {
-				con.rollback();
+			catch (Exception exception) {
+				connection.rollback();
 			}
 			finally {
-				con.setAutoCommit(autoCommit);
+				connection.setAutoCommit(autoCommit);
 			}
 		}
 	}
@@ -132,15 +123,36 @@ public class SQLEqualsTest {
 		_assert("typeVarchar", 3, " != ");
 	}
 
-	private static void _assert(
-			String columnName, long expectedPK, String compare)
+	private static void _insert(
+			PreparedStatement preparedStatement, int pk, String typeBlob,
+			boolean typeBoolean, long typeDate, double typeDouble,
+			int typeInteger, long typeLong, String typeString, String typeText,
+			String typeVarchar)
 		throws Exception {
 
-		DB db = DBManagerUtil.getDB();
+		preparedStatement.setLong(1, pk);
+		preparedStatement.setBlob(
+			2,
+			new UnsyncByteArrayInputStream(
+				typeBlob.getBytes(StandardCharsets.US_ASCII)));
+		preparedStatement.setBoolean(3, typeBoolean);
+		preparedStatement.setDate(4, new Date(typeDate));
+		preparedStatement.setDouble(5, typeDouble);
+		preparedStatement.setInt(6, typeInteger);
+		preparedStatement.setLong(7, typeLong);
+		preparedStatement.setString(8, typeString);
+		preparedStatement.setString(9, typeText);
+		preparedStatement.setString(10, typeVarchar);
+
+		preparedStatement.executeUpdate();
+	}
+
+	private void _assert(String columnName, long expectedPK, String compare)
+		throws Exception {
 
 		if (columnName.equals("typeBlob") &&
-			((db.getDBType() == DBType.ORACLE) ||
-			 (db.getDBType() == DBType.POSTGRESQL))) {
+			((DBManagerUtil.getDBType() == DBType.ORACLE) ||
+			 (DBManagerUtil.getDBType() == DBType.POSTGRESQL))) {
 
 			return;
 		}
@@ -150,7 +162,18 @@ public class SQLEqualsTest {
 		sb.append("select t1.pk from SQLEqualsTest t1 inner join ");
 		sb.append("SQLEqualsTest t2 on t1.pk != 1 and t2.pk = 1 and ");
 
-		if (columnName.equals("typeText")) {
+		if (columnName.equals("typeBlob") &&
+			(DBManagerUtil.getDBType() == DBType.SQLSERVER)) {
+
+			sb.append("CAST(t1.");
+			sb.append(columnName);
+			sb.append(" as varbinary)");
+			sb.append(compare);
+			sb.append("CAST(t2.");
+			sb.append(columnName);
+			sb.append(" as varbinary)");
+		}
+		else if (columnName.equals("typeText")) {
 			sb.append("CAST_CLOB_TEXT(t1.");
 			sb.append(columnName);
 			sb.append(")");
@@ -169,37 +192,15 @@ public class SQLEqualsTest {
 
 		String sql = SQLTransformer.transform(sb.toString());
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(sql);
-			ResultSet rs = ps.executeQuery()) {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			Assert.assertTrue(sql, rs.next());
-			Assert.assertEquals(sql, expectedPK, rs.getLong(1));
-			Assert.assertFalse(sql, rs.next());
+			Assert.assertTrue(sql, resultSet.next());
+			Assert.assertEquals(sql, expectedPK, resultSet.getLong(1));
+			Assert.assertFalse(sql, resultSet.next());
 		}
-	}
-
-	private static void _insert(
-			PreparedStatement ps, int pk, String typeBlob, boolean typeBoolean,
-			long typeDate, double typeDouble, int typeInteger, long typeLong,
-			String typeString, String typeText, String typeVarchar)
-		throws Exception {
-
-		ps.setLong(1, pk);
-		ps.setBlob(
-			2,
-			new UnsyncByteArrayInputStream(
-				typeBlob.getBytes(StandardCharsets.US_ASCII)));
-		ps.setBoolean(3, typeBoolean);
-		ps.setDate(4, new Date(typeDate));
-		ps.setDouble(5, typeDouble);
-		ps.setInt(6, typeInteger);
-		ps.setLong(7, typeLong);
-		ps.setString(8, typeString);
-		ps.setString(9, typeText);
-		ps.setString(10, typeVarchar);
-
-		ps.executeUpdate();
 	}
 
 	private static DB _db;

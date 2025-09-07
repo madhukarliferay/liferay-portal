@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.cluster;
@@ -17,19 +8,25 @@ package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchFixture;
 import com.liferay.portal.search.engine.adapter.cluster.ClusterHealthStatus;
 import com.liferay.portal.search.engine.adapter.cluster.HealthClusterRequest;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * @author Dylan Rebelak
  */
 public class HealthClusterRequestExecutorTest {
+
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() throws Exception {
@@ -53,29 +50,20 @@ public class HealthClusterRequestExecutorTest {
 		healthClusterRequest.setWaitForClusterHealthStatus(
 			ClusterHealthStatus.GREEN);
 
-		HealthClusterRequestExecutorImpl healthClusterRequestExecutorImpl =
-			new HealthClusterRequestExecutorImpl() {
-				{
-					setClusterHealthStatusTranslator(
-						new ClusterHealthStatusTranslatorImpl());
-					setElasticsearchClientResolver(_elasticsearchFixture);
-				}
-			};
+		HealthClusterRequestExecutor healthClusterRequestExecutor =
+			new HealthClusterRequestExecutor(_elasticsearchFixture);
 
 		ClusterHealthRequest clusterHealthRequest =
-			healthClusterRequestExecutorImpl.createClusterHealthRequest(
+			healthClusterRequestExecutor.createClusterHealthRequest(
 				healthClusterRequest);
 
 		String[] indices = clusterHealthRequest.indices();
 
 		Assert.assertArrayEquals(new String[] {_INDEX_NAME}, indices);
 
-		ClusterHealthStatusTranslator clusterHealthStatusTranslator =
-			new ClusterHealthStatusTranslatorImpl();
-
 		Assert.assertEquals(
 			healthClusterRequest.getWaitForClusterHealthStatus(),
-			clusterHealthStatusTranslator.translate(
+			ClusterHealthStatusTranslatorUtil.translate(
 				clusterHealthRequest.waitForStatus()));
 
 		Assert.assertEquals(

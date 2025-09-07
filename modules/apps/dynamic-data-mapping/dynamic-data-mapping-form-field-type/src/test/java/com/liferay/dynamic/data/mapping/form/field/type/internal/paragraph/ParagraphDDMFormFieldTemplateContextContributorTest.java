@@ -1,53 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.paragraph;
 
-import com.google.template.soy.data.SanitizedContent;
-
-import com.liferay.dynamic.data.mapping.form.field.type.BaseDDMFormFieldTypeSettingsTestCase;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.template.soy.internal.data.SoyDataFactoryImpl;
-import com.liferay.portal.util.HtmlImpl;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Pedro Queiroz
  */
-public class ParagraphDDMFormFieldTemplateContextContributorTest
-	extends BaseDDMFormFieldTypeSettingsTestCase {
+public class ParagraphDDMFormFieldTemplateContextContributorTest {
 
-	@Before
-	@Override
-	public void setUp() {
-		HtmlUtil htmlUtil = new HtmlUtil();
-
-		htmlUtil.setHtml(new HtmlImpl());
-
-		ReflectionTestUtil.setFieldValue(
-			_paragraphDDMFormFieldTemplateContextContributor, "_soyDataFactory",
-			new SoyDataFactoryImpl());
-	}
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testGetParameters() {
@@ -63,12 +41,8 @@ public class ParagraphDDMFormFieldTemplateContextContributorTest
 			_paragraphDDMFormFieldTemplateContextContributor.getParameters(
 				ddmFormField, new DDMFormFieldRenderingContext());
 
-		SanitizedContent sanitizedContent = (SanitizedContent)parameters.get(
-			"text");
-
 		Assert.assertEquals(
-			text.getString(text.getDefaultLocale()),
-			sanitizedContent.getContent());
+			text.getString(text.getDefaultLocale()), parameters.get("text"));
 	}
 
 	@Test
@@ -90,12 +64,8 @@ public class ParagraphDDMFormFieldTemplateContextContributorTest
 			_paragraphDDMFormFieldTemplateContextContributor.getParameters(
 				ddmFormField, ddmFormFieldRenderingContext);
 
-		SanitizedContent sanitizedContent = (SanitizedContent)parameters.get(
-			"text");
-
 		Assert.assertEquals(
-			text.getString(text.getDefaultLocale()),
-			sanitizedContent.getContent());
+			text.getString(text.getDefaultLocale()), parameters.get("text"));
 	}
 
 	private final ParagraphDDMFormFieldTemplateContextContributor

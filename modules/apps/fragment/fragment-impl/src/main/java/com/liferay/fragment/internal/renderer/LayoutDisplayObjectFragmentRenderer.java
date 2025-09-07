@@ -1,38 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.internal.renderer;
 
-import com.liferay.asset.display.page.constants.AssetDisplayPageWebKeys;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
-import com.liferay.info.display.contributor.InfoDisplayObjectProvider;
+import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.item.InfoItemDetails;
 import com.liferay.info.item.renderer.InfoItemRenderer;
-import com.liferay.info.item.renderer.InfoItemRendererTracker;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.ResourceBundle;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,24 +36,20 @@ public class LayoutDisplayObjectFragmentRenderer implements FragmentRenderer {
 	}
 
 	@Override
-	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
+	public String getIcon() {
+		return "web-content";
+	}
 
-		return LanguageUtil.get(resourceBundle, "display-page-content");
+	@Override
+	public String getLabel(Locale locale) {
+		return _language.get(locale, "display-page-content");
 	}
 
 	@Override
 	public boolean isSelectable(HttpServletRequest httpServletRequest) {
 		Layout layout = (Layout)httpServletRequest.getAttribute(WebKeys.LAYOUT);
 
-		if (Objects.equals(
-				layout.getType(), LayoutConstants.TYPE_ASSET_DISPLAY)) {
-
-			return true;
-		}
-
-		return false;
+		return layout.isTypeAssetDisplay();
 	}
 
 	@Override
@@ -75,10 +58,11 @@ public class LayoutDisplayObjectFragmentRenderer implements FragmentRenderer {
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
 
-		Object displayObject = _getDisplayObject(httpServletRequest);
+		Object infoItem = httpServletRequest.getAttribute(
+			InfoDisplayWebKeys.INFO_ITEM);
 
-		if (displayObject == null) {
-			if (FragmentRendererUtil.isEditMode(httpServletRequest)) {
+		if (infoItem == null) {
+			if (fragmentRendererContext.isEditMode()) {
 				FragmentRendererUtil.printPortletMessageInfo(
 					httpServletRequest, httpServletResponse,
 					"the-display-page-content-will-be-shown-here");
@@ -87,11 +71,15 @@ public class LayoutDisplayObjectFragmentRenderer implements FragmentRenderer {
 			return;
 		}
 
-		InfoItemRenderer infoItemRenderer = _getInfoItemRenderer(
-			displayObject.getClass());
+		InfoItemDetails infoItemDetails =
+			(InfoItemDetails)httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_DETAILS);
+
+		InfoItemRenderer<Object> infoItemRenderer = _getInfoItemRenderer(
+			infoItemDetails.getClassName());
 
 		if (infoItemRenderer == null) {
-			if (FragmentRendererUtil.isEditMode(httpServletRequest)) {
+			if (fragmentRendererContext.isEditMode()) {
 				FragmentRendererUtil.printPortletMessageInfo(
 					httpServletRequest, httpServletResponse,
 					"there-are-no-available-renderers-for-the-display-page-" +
@@ -102,34 +90,27 @@ public class LayoutDisplayObjectFragmentRenderer implements FragmentRenderer {
 		}
 
 		infoItemRenderer.render(
-			displayObject, httpServletRequest, httpServletResponse);
+			infoItem, httpServletRequest, httpServletResponse);
 	}
 
-	private Object _getDisplayObject(HttpServletRequest httpServletRequest) {
-		InfoDisplayObjectProvider infoDisplayObjectProvider =
-			(InfoDisplayObjectProvider)httpServletRequest.getAttribute(
-				AssetDisplayPageWebKeys.INFO_DISPLAY_OBJECT_PROVIDER);
+	private InfoItemRenderer<Object> _getInfoItemRenderer(
+		String displayObjectClassName) {
 
-		if (infoDisplayObjectProvider == null) {
-			return null;
-		}
-
-		return infoDisplayObjectProvider.getDisplayObject();
-	}
-
-	private InfoItemRenderer _getInfoItemRenderer(Class<?> displayObjectClass) {
-		List<InfoItemRenderer> infoItemRenderers =
-			FragmentRendererUtil.getInfoItemRenderers(
-				displayObjectClass, _infoItemRendererTracker);
+		List<InfoItemRenderer<?>> infoItemRenderers =
+			_infoItemRendererRegistry.getInfoItemRenderers(
+				displayObjectClassName);
 
 		if (infoItemRenderers == null) {
 			return null;
 		}
 
-		return infoItemRenderers.get(0);
+		return (InfoItemRenderer<Object>)infoItemRenderers.get(0);
 	}
 
 	@Reference
-	private InfoItemRendererTracker _infoItemRendererTracker;
+	private InfoItemRendererRegistry _infoItemRendererRegistry;
+
+	@Reference
+	private Language _language;
 
 }

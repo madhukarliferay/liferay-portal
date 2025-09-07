@@ -1,31 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayIcon from '@clayui/icon';
 import pathToRegexp from 'path-to-regexp';
 import React from 'react';
 import {Link, withRouter} from 'react-router-dom';
 
-import Icon from '../Icon.es';
-
-/**
- * @class
- * @memberof shared/components/list
- */
 const ListHeadItem = ({
 	iconColor,
 	iconName,
 	location: {search},
 	match: {params, path},
 	name,
-	title
+	title,
 }) => {
 	const sort = params && params.sort ? params.sort : `${name}:asc`;
 
@@ -34,12 +23,11 @@ const ListHeadItem = ({
 	const sorted = field === name;
 
 	const nextSort = `${name}:${sorted && order === 'desc' ? 'asc' : 'desc'}`;
-
 	const sortIcon = order === 'asc' ? 'order-arrow-up' : 'order-arrow-down';
 
 	const pathname = pathToRegexp.compile(path)({
 		...params,
-		sort: nextSort
+		sort: nextSort,
 	});
 
 	return (
@@ -51,9 +39,9 @@ const ListHeadItem = ({
 				<span className="inline-item inline-item-before mr-2">
 					<span className="sticker sticker-sm">
 						<span className="inline-item">
-							<Icon
-								elementClasses={`text-${iconColor}`}
-								iconName={iconName}
+							<ClayIcon
+								className={`text-${iconColor}`}
+								symbol={iconName}
 							/>
 						</span>
 					</span>
@@ -70,10 +58,7 @@ const ListHeadItem = ({
 
 			{sorted && (
 				<span className="inline-item inline-item-after">
-					<Icon
-						iconName={sortIcon}
-						key={`${name}_icon_${sortIcon}`}
-					/>
+					<ClayIcon symbol={sortIcon} />
 				</span>
 			)}
 		</Link>

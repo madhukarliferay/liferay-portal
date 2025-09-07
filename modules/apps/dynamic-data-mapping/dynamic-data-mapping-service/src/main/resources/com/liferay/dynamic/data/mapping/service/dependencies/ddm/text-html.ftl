@@ -21,7 +21,7 @@
 </#if>
 
 <@liferay_aui["field-wrapper"]
-	cssClass="field-wrapper-html form-builder-field"
+	cssClass="field-wrapper-html form-builder-field position-relative"
 	data=data
 	helpMessage=escape(fieldStructure.tip)
 	label=escape(label)
@@ -32,13 +32,14 @@
 
 	<div class="form-group">
 		<@liferay_ui["input-editor"]
+			configKey="rich_text"
 			contents="${fieldValue}"
 			contentsLanguageId="${requestedLocale}"
 			cssClass="${cssClass}"
 			editorName="${editorName}"
 			initMethod=""
 			name="${namespacedFieldName}Editor"
-			onChangeMethod="${namespacedFieldName}OnChangeEditor"
+			onChangeMethod="${namespacedFieldName}onChangeEditor"
 			skipEditorLoading=skipEditorLoading
 			toolbarSet="${toolbarSet}"
 		>
@@ -56,7 +57,7 @@
 		<@liferay_aui.script>
 			Liferay.provide(
 				window,
-				'${portletNamespace}${namespacedFieldName}OnChangeEditor',
+				'${portletNamespace}${namespacedFieldName}onChangeEditor',
 				function() {
 					var A = AUI();
 

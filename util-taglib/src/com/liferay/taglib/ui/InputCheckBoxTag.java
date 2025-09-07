@@ -1,25 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.ui;
 
 import com.liferay.taglib.util.IncludeTag;
 
-import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
+import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
@@ -28,9 +19,13 @@ public class InputCheckBoxTag extends IncludeTag {
 
 	@Override
 	public int doEndTag() throws JspException {
-		updateFormCheckboxNames();
+		_updateFormCheckboxNames();
 
 		return super.doEndTag();
+	}
+
+	public String getAutoComplete() {
+		return _autoComplete;
 	}
 
 	public String getCssClass() {
@@ -59,6 +54,10 @@ public class InputCheckBoxTag extends IncludeTag {
 
 	public boolean isDisabled() {
 		return _disabled;
+	}
+
+	public void setAutoComplete(String autoComplete) {
+		_autoComplete = autoComplete;
 	}
 
 	public void setCssClass(String cssClass) {
@@ -93,6 +92,7 @@ public class InputCheckBoxTag extends IncludeTag {
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_autoComplete = null;
 		_cssClass = null;
 		_defaultValue = false;
 		_disabled = false;
@@ -110,6 +110,8 @@ public class InputCheckBoxTag extends IncludeTag {
 	@Override
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
 		httpServletRequest.setAttribute(
+			"liferay-ui:input-checkbox:autoComplete", _autoComplete);
+		httpServletRequest.setAttribute(
 			"liferay-ui:input-checkbox:cssClass", _cssClass);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-checkbox:defaultValue", _defaultValue);
@@ -124,7 +126,7 @@ public class InputCheckBoxTag extends IncludeTag {
 			"liferay-ui:input-checkbox:param", _param);
 	}
 
-	protected void updateFormCheckboxNames() {
+	private void _updateFormCheckboxNames() {
 		HttpServletRequest httpServletRequest = getRequest();
 
 		List<String> checkboxNames =
@@ -139,6 +141,7 @@ public class InputCheckBoxTag extends IncludeTag {
 	private static final String _PAGE =
 		"/html/taglib/ui/input_checkbox/page.jsp";
 
+	private String _autoComplete;
 	private String _cssClass;
 	private boolean _defaultValue;
 	private boolean _disabled;

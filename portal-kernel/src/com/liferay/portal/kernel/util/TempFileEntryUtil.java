@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.util.DLAppHelperThreadLocal;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
@@ -60,8 +52,8 @@ public class TempFileEntryUtil {
 			return addTempFileEntry(
 				groupId, userId, folderName, fileName, inputStream, mimeType);
 		}
-		catch (IOException ioe) {
-			throw new PortalException(ioe);
+		catch (IOException ioException) {
+			throw new PortalException(ioException);
 		}
 	}
 
@@ -81,6 +73,29 @@ public class TempFileEntryUtil {
 			return temporaryFileEntriesCapability.addTemporaryFileEntry(
 				new TemporaryFileEntriesScope(_UUID, userId, folderName),
 				fileName, mimeType, inputStream);
+		}
+		finally {
+			DLAppHelperThreadLocal.setEnabled(dlAppHelperEnabled);
+		}
+	}
+
+	public static FileEntry addTempFileEntry(
+			String externalReferenceCode, long groupId, long userId,
+			String folderName, String fileName, InputStream inputStream,
+			String mimeType)
+		throws PortalException {
+
+		boolean dlAppHelperEnabled = DLAppHelperThreadLocal.isEnabled();
+
+		try {
+			DLAppHelperThreadLocal.setEnabled(false);
+
+			TemporaryFileEntriesCapability temporaryFileEntriesCapability =
+				_getTemporaryFileEntriesCapability(groupId);
+
+			return temporaryFileEntriesCapability.addTemporaryFileEntry(
+				new TemporaryFileEntriesScope(_UUID, userId, folderName),
+				externalReferenceCode, fileName, mimeType, inputStream);
 		}
 		finally {
 			DLAppHelperThreadLocal.setEnabled(dlAppHelperEnabled);
@@ -192,7 +207,8 @@ public class TempFileEntryUtil {
 		throws PortalException {
 
 		Repository repository = RepositoryLocalServiceUtil.fetchRepository(
-			groupId, TempFileEntryUtil.class.getName(), StringPool.BLANK);
+			groupId, TempFileEntryUtil.class.getName(),
+			TempFileEntryUtil.class.getName());
 
 		if (repository != null) {
 			return RepositoryProviderUtil.getLocalRepository(
@@ -201,13 +217,14 @@ public class TempFileEntryUtil {
 
 		Group group = GroupLocalServiceUtil.getGroup(groupId);
 
-		User user = UserLocalServiceUtil.getDefaultUser(group.getCompanyId());
+		User user = UserLocalServiceUtil.getGuestUser(group.getCompanyId());
 
 		long classNameId = PortalUtil.getClassNameId(
 			"com.liferay.portal.repository.temporaryrepository." +
 				"TemporaryFileEntryRepository");
 
-		UnicodeProperties typeSettingsProperties = new UnicodeProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			new UnicodeProperties();
 
 		boolean dlAppHelperEnabled = DLAppHelperThreadLocal.isEnabled();
 
@@ -215,10 +232,11 @@ public class TempFileEntryUtil {
 			DLAppHelperThreadLocal.setEnabled(false);
 
 			repository = RepositoryLocalServiceUtil.addRepository(
-				user.getUserId(), groupId, classNameId,
+				null, user.getUserId(), groupId, classNameId,
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				TempFileEntryUtil.class.getName(), StringPool.BLANK,
-				StringPool.BLANK, typeSettingsProperties, true, serviceContext);
+				TempFileEntryUtil.class.getName(),
+				typeSettingsUnicodeProperties, true, serviceContext);
 
 			return RepositoryProviderUtil.getLocalRepository(
 				repository.getRepositoryId());

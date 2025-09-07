@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.internal.staging;
@@ -22,7 +13,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutSetBranch;
@@ -31,12 +21,14 @@ import com.liferay.portal.kernel.model.LayoutStagingHandler;
 import com.liferay.portal.kernel.service.LayoutRevisionLocalService;
 import com.liferay.portal.kernel.service.LayoutSetBranchLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 
 import java.lang.reflect.InvocationHandler;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
@@ -45,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Raymond Augé
  */
-@Component(immediate = true, service = LayoutStaging.class)
+@Component(service = LayoutStaging.class)
 public class LayoutStagingImpl implements LayoutStaging {
 
 	@Override
@@ -92,11 +84,7 @@ public class LayoutStagingImpl implements LayoutStaging {
 
 	@Override
 	public LayoutStagingHandler getLayoutStagingHandler(Layout layout) {
-		if (layout == null) {
-			return null;
-		}
-
-		if (!ProxyUtil.isProxyClass(layout.getClass())) {
+		if ((layout == null) || !ProxyUtil.isProxyClass(layout.getClass())) {
 			return null;
 		}
 
@@ -112,11 +100,7 @@ public class LayoutStagingImpl implements LayoutStaging {
 
 	@Override
 	public boolean isBranchingLayout(Layout layout) {
-		String layoutType = layout.getType();
-
-		if ((layout == null) || layout.isSystem() ||
-			LayoutConstants.TYPE_CONTENT.equals(layoutType)) {
-
+		if ((layout == null) || layout.isSystem()) {
 			return false;
 		}
 
@@ -134,10 +118,10 @@ public class LayoutStagingImpl implements LayoutStaging {
 			group = group.getLiveGroup();
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			group.getTypeSettingsProperties();
 
-		if (typeSettingsProperties.isEmpty()) {
+		if (typeSettingsUnicodeProperties.isEmpty()) {
 			return false;
 		}
 
@@ -145,11 +129,11 @@ public class LayoutStagingImpl implements LayoutStaging {
 
 		if (privateLayout) {
 			branchingEnabled = GetterUtil.getBoolean(
-				typeSettingsProperties.getProperty("branchingPrivate"));
+				typeSettingsUnicodeProperties.getProperty("branchingPrivate"));
 		}
 		else {
 			branchingEnabled = GetterUtil.getBoolean(
-				typeSettingsProperties.getProperty("branchingPublic"));
+				typeSettingsUnicodeProperties.getProperty("branchingPublic"));
 		}
 
 		if (!branchingEnabled || !group.isStaged() ||
@@ -170,12 +154,12 @@ public class LayoutStagingImpl implements LayoutStaging {
 
 			return true;
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(portalException);
 			}
 
 			return false;
@@ -257,35 +241,41 @@ public class LayoutStagingImpl implements LayoutStaging {
 			return false;
 		}
 
-		LayoutRevision layoutRevision = null;
-
 		List<LayoutRevision> layoutRevisions =
 			_layoutRevisionLocalService.getLayoutRevisions(
 				layoutSetBranchId, layout.getPlid(), true);
 
-		if (!layoutRevisions.isEmpty()) {
-			if (layoutRevisions.size() > 1) {
-				layoutRevision = getLayoutRevision(layout);
+		if (layoutRevisions.isEmpty()) {
+			return false;
+		}
 
-				long layoutBranchId = GetterUtil.DEFAULT_LONG;
+		LayoutRevision layoutRevision = null;
 
-				if (layoutRevision != null) {
-					layoutBranchId = layoutRevision.getLayoutBranchId();
-				}
+		if (layoutRevisions.size() > 1) {
+			layoutRevision = getLayoutRevision(layout);
 
-				layoutRevision =
-					_layoutRevisionLocalService.fetchLayoutRevision(
-						layoutSetBranchId, layoutBranchId, true,
-						layout.getPlid());
+			long layoutBranchId = GetterUtil.DEFAULT_LONG;
+
+			if (layoutRevision != null) {
+				layoutBranchId = layoutRevision.getLayoutBranchId();
 			}
 
-			if ((layoutRevision == null) && !layoutRevisions.isEmpty()) {
-				layoutRevision = layoutRevisions.get(0);
+			Iterator<LayoutRevision> iterator = ListUtil.reverseIterator(
+				layoutRevisions);
+
+			while (iterator.hasNext()) {
+				LayoutRevision curLayoutRevision = iterator.next();
+
+				if (curLayoutRevision.getLayoutBranchId() == layoutBranchId) {
+					layoutRevision = curLayoutRevision;
+
+					break;
+				}
 			}
 		}
 
 		if (layoutRevision == null) {
-			return false;
+			layoutRevision = layoutRevisions.get(0);
 		}
 
 		LayoutStagingHandler layoutStagingHandler =
@@ -296,19 +286,13 @@ public class LayoutStagingImpl implements LayoutStaging {
 		return true;
 	}
 
-	@Reference(unbind = "-")
-	protected void setLayoutSetBranchLocalService(
-		LayoutSetBranchLocalService layoutSetBranchLocalService) {
-
-		_layoutSetBranchLocalService = layoutSetBranchLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutStagingImpl.class);
 
 	@Reference
 	private LayoutRevisionLocalService _layoutRevisionLocalService;
 
+	@Reference
 	private LayoutSetBranchLocalService _layoutSetBranchLocalService;
 
 }

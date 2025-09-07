@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.exception.DuplicateRepositoryExternalReferenceCodeException;
 import com.liferay.portal.kernel.exception.NoSuchRepositoryException;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.service.RepositoryLocalServiceUtil;
@@ -45,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,7 +117,11 @@ public class RepositoryPersistenceTest {
 
 		newRepository.setMvccVersion(RandomTestUtil.nextLong());
 
+		newRepository.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newRepository.setUuid(RandomTestUtil.randomString());
+
+		newRepository.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		newRepository.setGroupId(RandomTestUtil.nextLong());
 
@@ -162,7 +158,13 @@ public class RepositoryPersistenceTest {
 			existingRepository.getMvccVersion(),
 			newRepository.getMvccVersion());
 		Assert.assertEquals(
+			existingRepository.getCtCollectionId(),
+			newRepository.getCtCollectionId());
+		Assert.assertEquals(
 			existingRepository.getUuid(), newRepository.getUuid());
+		Assert.assertEquals(
+			existingRepository.getExternalReferenceCode(),
+			newRepository.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingRepository.getRepositoryId(),
 			newRepository.getRepositoryId());
@@ -200,6 +202,26 @@ public class RepositoryPersistenceTest {
 			Time.getShortTimestamp(newRepository.getLastPublishDate()));
 	}
 
+	@Test(expected = DuplicateRepositoryExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		Repository repository = addRepository();
+
+		Repository newRepository = addRepository();
+
+		newRepository.setGroupId(repository.getGroupId());
+
+		newRepository = _persistence.update(newRepository);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newRepository);
+
+		newRepository.setExternalReferenceCode(
+			repository.getExternalReferenceCode());
+
+		_persistence.update(newRepository);
+	}
+
 	@Test
 	public void testCountByUuid() throws Exception {
 		_persistence.countByUuid("");
@@ -235,12 +257,30 @@ public class RepositoryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByPortletId() throws Exception {
+		_persistence.countByPortletId("");
+
+		_persistence.countByPortletId("null");
+
+		_persistence.countByPortletId((String)null);
+	}
+
+	@Test
 	public void testCountByG_N_P() throws Exception {
 		_persistence.countByG_N_P(RandomTestUtil.nextLong(), "", "");
 
 		_persistence.countByG_N_P(0L, "null", "null");
 
 		_persistence.countByG_N_P(0L, (String)null, (String)null);
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
 	}
 
 	@Test
@@ -268,11 +308,12 @@ public class RepositoryPersistenceTest {
 
 	protected OrderByComparator<Repository> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"Repository", "mvccVersion", true, "uuid", true, "repositoryId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"classNameId", true, "name", true, "description", true, "portletId",
-			true, "dlFolderId", true, "lastPublishDate", true);
+			"Repository", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "repositoryId", true,
+			"groupId", true, "companyId", true, "userId", true, "userName",
+			true, "createDate", true, "modifiedDate", true, "classNameId", true,
+			"name", true, "description", true, "portletId", true, "dlFolderId",
+			true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -490,34 +531,88 @@ public class RepositoryPersistenceTest {
 
 		_persistence.clearCache();
 
-		Repository existingRepository = _persistence.findByPrimaryKey(
-			newRepository.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newRepository.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingRepository.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingRepository, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		Repository newRepository = addRepository();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Repository.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"repositoryId", newRepository.getRepositoryId()));
+
+		List<Repository> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(Repository repository) {
 		Assert.assertEquals(
-			Long.valueOf(existingRepository.getGroupId()),
+			repository.getUuid(),
+			ReflectionTestUtil.invoke(
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(repository.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingRepository, "getOriginalGroupId", new Class<?>[0]));
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingRepository.getGroupId()),
+			Long.valueOf(repository.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingRepository, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingRepository.getName(),
-				ReflectionTestUtil.invoke(
-					existingRepository, "getOriginalName", new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingRepository.getPortletId(),
-				ReflectionTestUtil.invoke(
-					existingRepository, "getOriginalPortletId",
-					new Class<?>[0])));
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			repository.getName(),
+			ReflectionTestUtil.invoke(
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+		Assert.assertEquals(
+			repository.getPortletId(),
+			ReflectionTestUtil.invoke(
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "portletId"));
+
+		Assert.assertEquals(
+			repository.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(repository.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				repository, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected Repository addRepository() throws Exception {
@@ -527,7 +622,11 @@ public class RepositoryPersistenceTest {
 
 		repository.setMvccVersion(RandomTestUtil.nextLong());
 
+		repository.setCtCollectionId(RandomTestUtil.nextLong());
+
 		repository.setUuid(RandomTestUtil.randomString());
+
+		repository.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		repository.setGroupId(RandomTestUtil.nextLong());
 

@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.source.formatter;
 
-import com.liferay.gradle.util.FileUtil;
 import com.liferay.gradle.util.GradleUtil;
 import com.liferay.source.formatter.SourceFormatterArgs;
 
@@ -27,7 +17,14 @@ import java.util.List;
 
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.JavaExec;
+import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.util.CollectionUtils;
 
 /**
@@ -37,7 +34,9 @@ import org.gradle.util.CollectionUtils;
 public class FormatSourceTask extends JavaExec {
 
 	public FormatSourceTask() {
-		setMain("com.liferay.source.formatter.SourceFormatter");
+		Property<String> mainClass = getMainClass();
+
+		mainClass.set("com.liferay.source.formatter.SourceFormatter");
 	}
 
 	@Override
@@ -47,23 +46,45 @@ public class FormatSourceTask extends JavaExec {
 		super.exec();
 	}
 
+	@Internal
 	public File getBaseDir() {
 		return GradleUtil.toFile(
 			getProject(), _sourceFormatterArgs.getBaseDirName());
 	}
 
+	@Input
+	@Optional
 	public String getBaseDirName() {
 		return _sourceFormatterArgs.getBaseDirName();
 	}
 
+	@Input
+	@Optional
+	public List<String> getCheckCategoryNames() {
+		return _sourceFormatterArgs.getCheckCategoryNames();
+	}
+
+	@Input
+	@Optional
+	public List<String> getCheckNames() {
+		return _sourceFormatterArgs.getCheckNames();
+	}
+
+	@Input
+	@Optional
 	public List<String> getFileExtensions() {
 		return _sourceFormatterArgs.getFileExtensions();
 	}
 
+	@Input
+	@Optional
 	public List<String> getFileNames() {
 		return _sourceFormatterArgs.getFileNames();
 	}
 
+	@InputFiles
+	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public FileCollection getFiles() {
 		Project project = getProject();
 
@@ -76,56 +97,75 @@ public class FormatSourceTask extends JavaExec {
 		return project.files(fileNames);
 	}
 
+	@Input
+	@Optional
 	public String getGitWorkingBranchName() {
 		return _sourceFormatterArgs.getGitWorkingBranchName();
 	}
 
+	@Input
 	public int getMaxLineLength() {
 		return _sourceFormatterArgs.getMaxLineLength();
 	}
 
+	@Input
 	public int getProcessorThreadCount() {
 		return _sourceFormatterArgs.getProcessorThreadCount();
 	}
 
+	@Input
 	public boolean isAutoFix() {
 		return _sourceFormatterArgs.isAutoFix();
 	}
 
+	@Input
+	public boolean isFailOnAutoFix() {
+		return _sourceFormatterArgs.isFailOnAutoFix();
+	}
+
+	@Input
+	public boolean isFailOnHasWarning() {
+		return _sourceFormatterArgs.isFailOnHasWarning();
+	}
+
+	@Input
 	public boolean isFormatCurrentBranch() {
 		return _sourceFormatterArgs.isFormatCurrentBranch();
 	}
 
+	@Input
 	public boolean isFormatLatestAuthor() {
 		return _sourceFormatterArgs.isFormatLatestAuthor();
 	}
 
+	@Input
 	public boolean isFormatLocalChanges() {
 		return _sourceFormatterArgs.isFormatLocalChanges();
 	}
 
+	@Input
 	public boolean isIncludeSubrepositories() {
 		return _sourceFormatterArgs.isIncludeSubrepositories();
 	}
 
+	@Input
+	public boolean isJavaParserEnabled() {
+		return _sourceFormatterArgs.isJavaParserEnabled();
+	}
+
+	@Input
 	public boolean isPrintErrors() {
 		return _sourceFormatterArgs.isPrintErrors();
 	}
 
+	@Input
 	public boolean isShowDebugInformation() {
 		return _sourceFormatterArgs.isShowDebugInformation();
 	}
 
-	public boolean isShowDocumentation() {
-		return _sourceFormatterArgs.isShowDocumentation();
-	}
-
-	public boolean isShowStatusUpdates() {
-		return _sourceFormatterArgs.isShowStatusUpdates();
-	}
-
-	public boolean isThrowException() {
-		return _sourceFormatterArgs.isThrowException();
+	@Input
+	public boolean isValidateCommitMessages() {
+		return _sourceFormatterArgs.isValidateCommitMessages();
 	}
 
 	public void setAutoFix(boolean autoFix) {
@@ -134,6 +174,32 @@ public class FormatSourceTask extends JavaExec {
 
 	public void setBaseDirName(String baseDirName) {
 		_sourceFormatterArgs.setBaseDirName(baseDirName);
+	}
+
+	public void setCheckCategoryNames(Iterable<String> checkCategoryNames) {
+		_sourceFormatterArgs.setCheckCategoryNames(
+			CollectionUtils.toList(checkCategoryNames));
+	}
+
+	public void setCheckCategoryNames(String... checkCategoryNames) {
+		_sourceFormatterArgs.setCheckCategoryNames(
+			CollectionUtils.toList(checkCategoryNames));
+	}
+
+	public void setCheckNames(Iterable<String> checkNames) {
+		_sourceFormatterArgs.setCheckNames(CollectionUtils.toList(checkNames));
+	}
+
+	public void setCheckNames(String... checkNames) {
+		_sourceFormatterArgs.setCheckNames(CollectionUtils.toList(checkNames));
+	}
+
+	public void setFailOnAutoFix(boolean failOnAutoFix) {
+		_sourceFormatterArgs.setFailOnAutoFix(failOnAutoFix);
+	}
+
+	public void setFailOnHasWarning(boolean failOnHasWarning) {
+		_sourceFormatterArgs.setFailOnHasWarning(failOnHasWarning);
 	}
 
 	public void setFileExtensions(Iterable<String> fileExtensions) {
@@ -175,6 +241,10 @@ public class FormatSourceTask extends JavaExec {
 		_sourceFormatterArgs.setIncludeSubrepositories(includeSubrepositories);
 	}
 
+	public void setJavaParserEnabled(boolean javaParserEnabled) {
+		_sourceFormatterArgs.setJavaParserEnabled(javaParserEnabled);
+	}
+
 	public void setMaxLineLength(int maxLineLength) {
 		_sourceFormatterArgs.setMaxLineLength(maxLineLength);
 	}
@@ -191,16 +261,8 @@ public class FormatSourceTask extends JavaExec {
 		_sourceFormatterArgs.setShowDebugInformation(showDebugInformation);
 	}
 
-	public void setShowDocumentation(boolean showDocumentation) {
-		_sourceFormatterArgs.setShowDocumentation(showDocumentation);
-	}
-
-	public void setShowStatusUpdates(boolean showStatusUpdates) {
-		_sourceFormatterArgs.setShowStatusUpdates(showStatusUpdates);
-	}
-
-	public void setThrowException(boolean throwException) {
-		_sourceFormatterArgs.setThrowException(throwException);
+	public void setValidateCommitMessages(boolean validateCommitMessages) {
+		_sourceFormatterArgs.setValidateCommitMessages(validateCommitMessages);
 	}
 
 	private List<String> _getCompleteArgs() {
@@ -211,33 +273,37 @@ public class FormatSourceTask extends JavaExec {
 		args.add("format.local.changes=" + isFormatLocalChanges());
 		args.add("git.working.branch.name=" + getGitWorkingBranchName());
 		args.add("include.subrepositories=" + isIncludeSubrepositories());
+		args.add("java.parser.enabled=" + isJavaParserEnabled());
 		args.add("max.line.length=" + getMaxLineLength());
 		args.add("processor.thread.count=" + getProcessorThreadCount());
 		args.add("show.debug.information=" + isShowDebugInformation());
-		args.add("show.documentation=" + isShowDocumentation());
-		args.add("show.status.updates=" + isShowStatusUpdates());
 		args.add("source.auto.fix=" + isAutoFix());
+		args.add(
+			"source.check.category.names=" +
+				CollectionUtils.join(",", getCheckCategoryNames()));
+		args.add(
+			"source.check.names=" + CollectionUtils.join(",", getCheckNames()));
+		args.add("source.fail.on.auto.fix=" + isFailOnAutoFix());
+		args.add("source.fail.on.has.warning=" + isFailOnHasWarning());
 		args.add(
 			"source.file.extensions=" +
 				CollectionUtils.join(",", getFileExtensions()));
 		args.add("source.print.errors=" + isPrintErrors());
-		args.add("source.throw.exception=" + isThrowException());
+		args.add("validate.commit.messages=" + isValidateCommitMessages());
 
 		FileCollection fileCollection = getFiles();
 
 		if (fileCollection.isEmpty()) {
-			args.add(
-				"source.base.dir=" +
-					_relativizeDir(getBaseDir(), getWorkingDir()));
+			args.add("source.base.dir=" + _normalize(getBaseDir()));
 		}
 		else {
-			args.add("source.files=" + _merge(fileCollection, getWorkingDir()));
+			args.add("source.files=" + _merge(fileCollection));
 		}
 
 		return args;
 	}
 
-	private String _merge(Iterable<File> files, File startFile) {
+	private String _merge(Iterable<File> files) {
 		StringBuilder sb = new StringBuilder();
 
 		int i = 0;
@@ -247,7 +313,7 @@ public class FormatSourceTask extends JavaExec {
 				sb.append(',');
 			}
 
-			sb.append(FileUtil.relativize(file, startFile));
+			sb.append(_normalize(file));
 
 			i++;
 		}
@@ -255,20 +321,18 @@ public class FormatSourceTask extends JavaExec {
 		return sb.toString();
 	}
 
-	private String _relativizeDir(File dir, File startDir) {
-		String relativePath = FileUtil.relativize(dir, startDir);
+	private String _normalize(File file) {
+		String pathString = String.valueOf(file.toPath());
 
-		if (!relativePath.isEmpty()) {
-			if (File.separatorChar != '/') {
-				relativePath = relativePath.replace(File.separatorChar, '/');
-			}
-
-			if (relativePath.charAt(relativePath.length() - 1) != '/') {
-				relativePath += '/';
-			}
+		if (File.separatorChar != '/') {
+			pathString = pathString.replace(File.separatorChar, '/');
 		}
 
-		return relativePath;
+		if (pathString.charAt(pathString.length() - 1) != '/') {
+			pathString += '/';
+		}
+
+		return pathString;
 	}
 
 	private final SourceFormatterArgs _sourceFormatterArgs =

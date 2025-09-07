@@ -1,25 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.user.client.serdes.v1_0;
 
-import com.liferay.headless.admin.user.client.dto.v1_0.CustomField;
+import com.liferay.headless.admin.user.client.dto.v1_0.AccountBrief;
+import com.liferay.headless.admin.user.client.dto.v1_0.AssetLibraryBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.OrganizationBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.RoleBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.SiteBrief;
+import com.liferay.headless.admin.user.client.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.UserAccount;
+import com.liferay.headless.admin.user.client.dto.v1_0.UserGroupBrief;
 import com.liferay.headless.admin.user.client.json.BaseJSONParser;
+
+import jakarta.annotation.Generated;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,9 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
 
 /**
  * @author Javier Gamarra
@@ -64,7 +57,37 @@ public class UserAccountSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (userAccount.getAccountBriefs() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getAccountBriefs().length; i++) {
+				sb.append(String.valueOf(userAccount.getAccountBriefs()[i]));
+
+				if ((i + 1) < userAccount.getAccountBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		if (userAccount.getActions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(userAccount.getActions()));
+		}
 
 		if (userAccount.getAdditionalName() != null) {
 			if (sb.length() > 1) {
@@ -94,6 +117,29 @@ public class UserAccountSerDes {
 			sb.append("\"");
 		}
 
+		if (userAccount.getAssetLibraryBriefs() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"assetLibraryBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getAssetLibraryBriefs().length;
+				 i++) {
+
+				sb.append(
+					String.valueOf(userAccount.getAssetLibraryBriefs()[i]));
+
+				if ((i + 1) < userAccount.getAssetLibraryBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (userAccount.getBirthDate() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -109,6 +155,30 @@ public class UserAccountSerDes {
 			sb.append("\"");
 		}
 
+		if (userAccount.getCreator() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"creator\": ");
+
+			sb.append(String.valueOf(userAccount.getCreator()));
+		}
+
+		if (userAccount.getCurrentPassword() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"currentPassword\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getCurrentPassword()));
+
+			sb.append("\"");
+		}
+
 		if (userAccount.getCustomFields() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -119,7 +189,7 @@ public class UserAccountSerDes {
 			sb.append("[");
 
 			for (int i = 0; i < userAccount.getCustomFields().length; i++) {
-				sb.append(String.valueOf(userAccount.getCustomFields()[i]));
+				sb.append(userAccount.getCustomFields()[i]);
 
 				if ((i + 1) < userAccount.getCustomFields().length) {
 					sb.append(", ");
@@ -187,6 +257,20 @@ public class UserAccountSerDes {
 			sb.append("\"");
 		}
 
+		if (userAccount.getExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getExternalReferenceCode()));
+
+			sb.append("\"");
+		}
+
 		if (userAccount.getFamilyName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -197,6 +281,20 @@ public class UserAccountSerDes {
 			sb.append("\"");
 
 			sb.append(_escape(userAccount.getFamilyName()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getGender() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"gender\": ");
+
+			sb.append("\"");
+
+			sb.append(userAccount.getGender());
 
 			sb.append("\"");
 		}
@@ -213,6 +311,16 @@ public class UserAccountSerDes {
 			sb.append(_escape(userAccount.getGivenName()));
 
 			sb.append("\"");
+		}
+
+		if (userAccount.getHasLoginDate() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"hasLoginDate\": ");
+
+			sb.append(userAccount.getHasLoginDate());
 		}
 
 		if (userAccount.getHonorificPrefix() != null) {
@@ -267,6 +375,30 @@ public class UserAccountSerDes {
 			sb.append("\"");
 		}
 
+		if (userAccount.getImageExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"imageExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getImageExternalReferenceCode()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getImageId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"imageId\": ");
+
+			sb.append(userAccount.getImageId());
+		}
+
 		if (userAccount.getJobTitle() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -291,11 +423,7 @@ public class UserAccountSerDes {
 			sb.append("[");
 
 			for (int i = 0; i < userAccount.getKeywords().length; i++) {
-				sb.append("\"");
-
-				sb.append(_escape(userAccount.getKeywords()[i]));
-
-				sb.append("\"");
+				sb.append(_toJSON(userAccount.getKeywords()[i]));
 
 				if ((i + 1) < userAccount.getKeywords().length) {
 					sb.append(", ");
@@ -303,6 +431,49 @@ public class UserAccountSerDes {
 			}
 
 			sb.append("]");
+		}
+
+		if (userAccount.getLanguageDisplayName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"languageDisplayName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getLanguageDisplayName()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getLanguageId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"languageId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getLanguageId()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getLastLoginDate() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"lastLoginDate\": ");
+
+			sb.append("\"");
+
+			sb.append(
+				liferayToJSONDateFormat.format(userAccount.getLastLoginDate()));
+
+			sb.append("\"");
 		}
 
 		if (userAccount.getName() != null) {
@@ -335,6 +506,40 @@ public class UserAccountSerDes {
 					String.valueOf(userAccount.getOrganizationBriefs()[i]));
 
 				if ((i + 1) < userAccount.getOrganizationBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		if (userAccount.getPassword() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"password\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getPassword()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getPermissions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"permissions\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getPermissions().length; i++) {
+				sb.append(userAccount.getPermissions()[i]);
+
+				if ((i + 1) < userAccount.getPermissions().length) {
 					sb.append(", ");
 				}
 			}
@@ -396,6 +601,43 @@ public class UserAccountSerDes {
 			sb.append("]");
 		}
 
+		if (userAccount.getStatus() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"status\": ");
+
+			sb.append("\"");
+
+			sb.append(userAccount.getStatus());
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getTaxonomyCategoryBriefs() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"taxonomyCategoryBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getTaxonomyCategoryBriefs().length;
+				 i++) {
+
+				sb.append(
+					String.valueOf(userAccount.getTaxonomyCategoryBriefs()[i]));
+
+				if ((i + 1) < userAccount.getTaxonomyCategoryBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (userAccount.getUserAccountContactInformation() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -405,6 +647,26 @@ public class UserAccountSerDes {
 
 			sb.append(
 				String.valueOf(userAccount.getUserAccountContactInformation()));
+		}
+
+		if (userAccount.getUserGroupBriefs() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"userGroupBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getUserGroupBriefs().length; i++) {
+				sb.append(String.valueOf(userAccount.getUserGroupBriefs()[i]));
+
+				if ((i + 1) < userAccount.getUserGroupBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		sb.append("}");
@@ -427,7 +689,23 @@ public class UserAccountSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (userAccount.getAccountBriefs() == null) {
+			map.put("accountBriefs", null);
+		}
+		else {
+			map.put(
+				"accountBriefs",
+				String.valueOf(userAccount.getAccountBriefs()));
+		}
+
+		if (userAccount.getActions() == null) {
+			map.put("actions", null);
+		}
+		else {
+			map.put("actions", String.valueOf(userAccount.getActions()));
+		}
 
 		if (userAccount.getAdditionalName() == null) {
 			map.put("additionalName", null);
@@ -447,9 +725,39 @@ public class UserAccountSerDes {
 				String.valueOf(userAccount.getAlternateName()));
 		}
 
-		map.put(
-			"birthDate",
-			liferayToJSONDateFormat.format(userAccount.getBirthDate()));
+		if (userAccount.getAssetLibraryBriefs() == null) {
+			map.put("assetLibraryBriefs", null);
+		}
+		else {
+			map.put(
+				"assetLibraryBriefs",
+				String.valueOf(userAccount.getAssetLibraryBriefs()));
+		}
+
+		if (userAccount.getBirthDate() == null) {
+			map.put("birthDate", null);
+		}
+		else {
+			map.put(
+				"birthDate",
+				liferayToJSONDateFormat.format(userAccount.getBirthDate()));
+		}
+
+		if (userAccount.getCreator() == null) {
+			map.put("creator", null);
+		}
+		else {
+			map.put("creator", String.valueOf(userAccount.getCreator()));
+		}
+
+		if (userAccount.getCurrentPassword() == null) {
+			map.put("currentPassword", null);
+		}
+		else {
+			map.put(
+				"currentPassword",
+				String.valueOf(userAccount.getCurrentPassword()));
+		}
 
 		if (userAccount.getCustomFields() == null) {
 			map.put("customFields", null);
@@ -467,13 +775,23 @@ public class UserAccountSerDes {
 				"dashboardURL", String.valueOf(userAccount.getDashboardURL()));
 		}
 
-		map.put(
-			"dateCreated",
-			liferayToJSONDateFormat.format(userAccount.getDateCreated()));
+		if (userAccount.getDateCreated() == null) {
+			map.put("dateCreated", null);
+		}
+		else {
+			map.put(
+				"dateCreated",
+				liferayToJSONDateFormat.format(userAccount.getDateCreated()));
+		}
 
-		map.put(
-			"dateModified",
-			liferayToJSONDateFormat.format(userAccount.getDateModified()));
+		if (userAccount.getDateModified() == null) {
+			map.put("dateModified", null);
+		}
+		else {
+			map.put(
+				"dateModified",
+				liferayToJSONDateFormat.format(userAccount.getDateModified()));
+		}
 
 		if (userAccount.getEmailAddress() == null) {
 			map.put("emailAddress", null);
@@ -483,6 +801,15 @@ public class UserAccountSerDes {
 				"emailAddress", String.valueOf(userAccount.getEmailAddress()));
 		}
 
+		if (userAccount.getExternalReferenceCode() == null) {
+			map.put("externalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"externalReferenceCode",
+				String.valueOf(userAccount.getExternalReferenceCode()));
+		}
+
 		if (userAccount.getFamilyName() == null) {
 			map.put("familyName", null);
 		}
@@ -490,11 +817,26 @@ public class UserAccountSerDes {
 			map.put("familyName", String.valueOf(userAccount.getFamilyName()));
 		}
 
+		if (userAccount.getGender() == null) {
+			map.put("gender", null);
+		}
+		else {
+			map.put("gender", String.valueOf(userAccount.getGender()));
+		}
+
 		if (userAccount.getGivenName() == null) {
 			map.put("givenName", null);
 		}
 		else {
 			map.put("givenName", String.valueOf(userAccount.getGivenName()));
+		}
+
+		if (userAccount.getHasLoginDate() == null) {
+			map.put("hasLoginDate", null);
+		}
+		else {
+			map.put(
+				"hasLoginDate", String.valueOf(userAccount.getHasLoginDate()));
 		}
 
 		if (userAccount.getHonorificPrefix() == null) {
@@ -529,6 +871,22 @@ public class UserAccountSerDes {
 			map.put("image", String.valueOf(userAccount.getImage()));
 		}
 
+		if (userAccount.getImageExternalReferenceCode() == null) {
+			map.put("imageExternalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"imageExternalReferenceCode",
+				String.valueOf(userAccount.getImageExternalReferenceCode()));
+		}
+
+		if (userAccount.getImageId() == null) {
+			map.put("imageId", null);
+		}
+		else {
+			map.put("imageId", String.valueOf(userAccount.getImageId()));
+		}
+
 		if (userAccount.getJobTitle() == null) {
 			map.put("jobTitle", null);
 		}
@@ -541,6 +899,31 @@ public class UserAccountSerDes {
 		}
 		else {
 			map.put("keywords", String.valueOf(userAccount.getKeywords()));
+		}
+
+		if (userAccount.getLanguageDisplayName() == null) {
+			map.put("languageDisplayName", null);
+		}
+		else {
+			map.put(
+				"languageDisplayName",
+				String.valueOf(userAccount.getLanguageDisplayName()));
+		}
+
+		if (userAccount.getLanguageId() == null) {
+			map.put("languageId", null);
+		}
+		else {
+			map.put("languageId", String.valueOf(userAccount.getLanguageId()));
+		}
+
+		if (userAccount.getLastLoginDate() == null) {
+			map.put("lastLoginDate", null);
+		}
+		else {
+			map.put(
+				"lastLoginDate",
+				liferayToJSONDateFormat.format(userAccount.getLastLoginDate()));
 		}
 
 		if (userAccount.getName() == null) {
@@ -557,6 +940,21 @@ public class UserAccountSerDes {
 			map.put(
 				"organizationBriefs",
 				String.valueOf(userAccount.getOrganizationBriefs()));
+		}
+
+		if (userAccount.getPassword() == null) {
+			map.put("password", null);
+		}
+		else {
+			map.put("password", String.valueOf(userAccount.getPassword()));
+		}
+
+		if (userAccount.getPermissions() == null) {
+			map.put("permissions", null);
+		}
+		else {
+			map.put(
+				"permissions", String.valueOf(userAccount.getPermissions()));
 		}
 
 		if (userAccount.getProfileURL() == null) {
@@ -580,6 +978,22 @@ public class UserAccountSerDes {
 			map.put("siteBriefs", String.valueOf(userAccount.getSiteBriefs()));
 		}
 
+		if (userAccount.getStatus() == null) {
+			map.put("status", null);
+		}
+		else {
+			map.put("status", String.valueOf(userAccount.getStatus()));
+		}
+
+		if (userAccount.getTaxonomyCategoryBriefs() == null) {
+			map.put("taxonomyCategoryBriefs", null);
+		}
+		else {
+			map.put(
+				"taxonomyCategoryBriefs",
+				String.valueOf(userAccount.getTaxonomyCategoryBriefs()));
+		}
+
 		if (userAccount.getUserAccountContactInformation() == null) {
 			map.put("userAccountContactInformation", null);
 		}
@@ -587,6 +1001,15 @@ public class UserAccountSerDes {
 			map.put(
 				"userAccountContactInformation",
 				String.valueOf(userAccount.getUserAccountContactInformation()));
+		}
+
+		if (userAccount.getUserGroupBriefs() == null) {
+			map.put("userGroupBriefs", null);
+		}
+		else {
+			map.put(
+				"userGroupBriefs",
+				String.valueOf(userAccount.getUserGroupBriefs()));
 		}
 
 		return map;
@@ -606,11 +1029,173 @@ public class UserAccountSerDes {
 		}
 
 		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "accountBriefs")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "actions")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "additionalName")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "alternateName")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "assetLibraryBriefs")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "birthDate")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "currentPassword")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "customFields")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dashboardURL")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateModified")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "emailAddress")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "familyName")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "gender")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "givenName")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "hasLoginDate")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "honorificPrefix")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "honorificSuffix")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "id")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "image")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "imageExternalReferenceCode")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "imageId")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "jobTitle")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "keywords")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "languageDisplayName")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "languageId")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "lastLoginDate")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "name")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "organizationBriefs")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "password")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "profileURL")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "roleBriefs")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "siteBriefs")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "status")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
+
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "userAccountContactInformation")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "userGroupBriefs")) {
+				return false;
+			}
+
+			return false;
+		}
+
+		@Override
 		protected void setField(
 			UserAccount userAccount, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "additionalName")) {
+			if (Objects.equals(jsonParserFieldName, "accountBriefs")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					AccountBrief[] accountBriefsArray =
+						new AccountBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < accountBriefsArray.length; i++) {
+						accountBriefsArray[i] = AccountBriefSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setAccountBriefs(accountBriefsArray);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "actions")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setActions(
+						(Map<String, Map<String, String>>)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "additionalName")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setAdditionalName((String)jsonParserFieldValue);
 				}
@@ -620,22 +1205,61 @@ public class UserAccountSerDes {
 					userAccount.setAlternateName((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "assetLibraryBriefs")) {
+
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					AssetLibraryBrief[] assetLibraryBriefsArray =
+						new AssetLibraryBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < assetLibraryBriefsArray.length; i++) {
+						assetLibraryBriefsArray[i] =
+							AssetLibraryBriefSerDes.toDTO(
+								(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setAssetLibraryBriefs(assetLibraryBriefsArray);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "birthDate")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setBirthDate(
 						toDate((String)jsonParserFieldValue));
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setCreator(
+						CreatorSerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "currentPassword")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setCurrentPassword(
+						(String)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
 				if (jsonParserFieldValue != null) {
-					userAccount.setCustomFields(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> CustomFieldSerDes.toDTO((String)object)
-						).toArray(
-							size -> new CustomField[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					com.liferay.headless.admin.user.client.custom.field.
+						CustomField[] customFieldsArray = new
+						com.liferay.headless.admin.user.client.custom.field.
+							CustomField[jsonParserFieldValues.length];
+
+					for (int i = 0; i < customFieldsArray.length; i++) {
+						customFieldsArray[i] =
+							com.liferay.headless.admin.user.client.custom.field.
+								CustomField.toDTO(
+									(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setCustomFields(customFieldsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "dashboardURL")) {
@@ -660,14 +1284,34 @@ public class UserAccountSerDes {
 					userAccount.setEmailAddress((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					userAccount.setExternalReferenceCode(
+						(String)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "familyName")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setFamilyName((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "gender")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setGender(
+						UserAccount.Gender.create(
+							(String)jsonParserFieldValue));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "givenName")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setGivenName((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "hasLoginDate")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setHasLoginDate((Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "honorificPrefix")) {
@@ -693,6 +1337,20 @@ public class UserAccountSerDes {
 					userAccount.setImage((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "imageExternalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					userAccount.setImageExternalReferenceCode(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "imageId")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setImageId(
+						Long.valueOf((String)jsonParserFieldValue));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "jobTitle")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setJobTitle((String)jsonParserFieldValue);
@@ -704,6 +1362,25 @@ public class UserAccountSerDes {
 						toStrings((Object[])jsonParserFieldValue));
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "languageDisplayName")) {
+
+				if (jsonParserFieldValue != null) {
+					userAccount.setLanguageDisplayName(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "languageId")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setLanguageId((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "lastLoginDate")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setLastLoginDate(
+						toDate((String)jsonParserFieldValue));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "name")) {
 				if (jsonParserFieldValue != null) {
 					userAccount.setName((String)jsonParserFieldValue);
@@ -713,15 +1390,44 @@ public class UserAccountSerDes {
 						jsonParserFieldName, "organizationBriefs")) {
 
 				if (jsonParserFieldValue != null) {
-					userAccount.setOrganizationBriefs(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> OrganizationBriefSerDes.toDTO(
-								(String)object)
-						).toArray(
-							size -> new OrganizationBrief[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					OrganizationBrief[] organizationBriefsArray =
+						new OrganizationBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < organizationBriefsArray.length; i++) {
+						organizationBriefsArray[i] =
+							OrganizationBriefSerDes.toDTO(
+								(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setOrganizationBriefs(organizationBriefsArray);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "password")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setPassword((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					com.liferay.headless.admin.user.client.permission.
+						Permission[] permissionsArray = new
+						com.liferay.headless.admin.user.client.permission.
+							Permission[jsonParserFieldValues.length];
+
+					for (int i = 0; i < permissionsArray.length; i++) {
+						permissionsArray[i] =
+							com.liferay.headless.admin.user.client.permission.
+								Permission.toDTO(
+									(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setPermissions(permissionsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "profileURL")) {
@@ -731,26 +1437,63 @@ public class UserAccountSerDes {
 			}
 			else if (Objects.equals(jsonParserFieldName, "roleBriefs")) {
 				if (jsonParserFieldValue != null) {
-					userAccount.setRoleBriefs(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> RoleBriefSerDes.toDTO((String)object)
-						).toArray(
-							size -> new RoleBrief[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					RoleBrief[] roleBriefsArray =
+						new RoleBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < roleBriefsArray.length; i++) {
+						roleBriefsArray[i] = RoleBriefSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setRoleBriefs(roleBriefsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "siteBriefs")) {
 				if (jsonParserFieldValue != null) {
-					userAccount.setSiteBriefs(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> SiteBriefSerDes.toDTO((String)object)
-						).toArray(
-							size -> new SiteBrief[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					SiteBrief[] siteBriefsArray =
+						new SiteBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < siteBriefsArray.length; i++) {
+						siteBriefsArray[i] = SiteBriefSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setSiteBriefs(siteBriefsArray);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "status")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setStatus(
+						UserAccount.Status.create(
+							(String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
+
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					TaxonomyCategoryBrief[] taxonomyCategoryBriefsArray =
+						new TaxonomyCategoryBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < taxonomyCategoryBriefsArray.length;
+						 i++) {
+
+						taxonomyCategoryBriefsArray[i] =
+							TaxonomyCategoryBriefSerDes.toDTO(
+								(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setTaxonomyCategoryBriefs(
+						taxonomyCategoryBriefsArray);
 				}
 			}
 			else if (Objects.equals(
@@ -762,9 +1505,21 @@ public class UserAccountSerDes {
 							(String)jsonParserFieldValue));
 				}
 			}
-			else {
-				throw new IllegalArgumentException(
-					"Unsupported field name " + jsonParserFieldName);
+			else if (Objects.equals(jsonParserFieldName, "userGroupBriefs")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					UserGroupBrief[] userGroupBriefsArray =
+						new UserGroupBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < userGroupBriefsArray.length; i++) {
+						userGroupBriefsArray[i] = UserGroupBriefSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					userAccount.setUserGroupBriefs(userGroupBriefsArray);
+				}
 			}
 		}
 
@@ -794,46 +1549,56 @@ public class UserAccountSerDes {
 
 			sb.append("\"");
 			sb.append(entry.getKey());
-			sb.append("\":");
+			sb.append("\": ");
 
 			Object value = entry.getValue();
 
-			Class<?> valueClass = value.getClass();
-
-			if (value instanceof Map) {
-				sb.append(_toJSON((Map)value));
-			}
-			else if (valueClass.isArray()) {
-				Object[] values = (Object[])value;
-
-				sb.append("[");
-
-				for (int i = 0; i < values.length; i++) {
-					sb.append("\"");
-					sb.append(_escape(values[i]));
-					sb.append("\"");
-
-					if ((i + 1) < values.length) {
-						sb.append(", ");
-					}
-				}
-
-				sb.append("]");
-			}
-			else {
-				sb.append("\"");
-				sb.append(_escape(entry.getValue()));
-				sb.append("\"");
-			}
+			sb.append(_toJSON(value));
 
 			if (iterator.hasNext()) {
-				sb.append(",");
+				sb.append(", ");
 			}
 		}
 
 		sb.append("}");
 
 		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
 	}
 
 }

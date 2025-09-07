@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.internal.exportimport.staged.model.repository;
 
+import com.liferay.bookmarks.constants.BookmarksFolderConstants;
 import com.liferay.bookmarks.model.BookmarksEntry;
-import com.liferay.bookmarks.model.BookmarksFolderConstants;
 import com.liferay.bookmarks.service.BookmarksEntryLocalService;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.PortletDataException;
@@ -39,11 +30,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.bookmarks.model.BookmarksEntry",
-	service = {
-		BookmarksEntryStagedModelRepository.class, StagedModelRepository.class
-	}
+	service = StagedModelRepository.class
 )
 public class BookmarksEntryStagedModelRepository
 	implements StagedModelRepository<BookmarksEntry> {
@@ -160,15 +148,13 @@ public class BookmarksEntryStagedModelRepository
 			if (trashHandler.isRestorable(
 					existingBookmarksEntry.getEntryId())) {
 
-				long userId = portletDataContext.getUserId(
-					bookmarksEntry.getUserUuid());
-
 				trashHandler.restoreTrashEntry(
-					userId, existingBookmarksEntry.getEntryId());
+					portletDataContext.getUserId(bookmarksEntry.getUserUuid()),
+					existingBookmarksEntry.getEntryId());
 			}
 		}
-		catch (PortalException pe) {
-			throw new PortletDataException(pe);
+		catch (PortalException portalException) {
+			throw new PortletDataException(portalException);
 		}
 	}
 
@@ -182,24 +168,6 @@ public class BookmarksEntryStagedModelRepository
 		PortletDataContext portletDataContext, BookmarksEntry bookmarksEntry) {
 
 		throw new UnsupportedOperationException();
-	}
-
-	public BookmarksEntry updateStagedModel(
-			PortletDataContext portletDataContext,
-			BookmarksEntry bookmarksEntry, long existingEntryId)
-		throws PortalException {
-
-		long userId = portletDataContext.getUserId(
-			bookmarksEntry.getUserUuid());
-
-		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			bookmarksEntry);
-
-		return _bookmarksEntryLocalService.updateEntry(
-			userId, existingEntryId, bookmarksEntry.getGroupId(),
-			bookmarksEntry.getFolderId(), bookmarksEntry.getName(),
-			bookmarksEntry.getUrl(), bookmarksEntry.getDescription(),
-			serviceContext);
 	}
 
 	@Reference

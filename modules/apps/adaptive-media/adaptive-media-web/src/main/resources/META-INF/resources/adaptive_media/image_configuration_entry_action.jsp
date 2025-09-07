@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -110,17 +101,15 @@ String entryUuid = String.valueOf(amImageConfigurationEntry.getUUID());
 	<%
 	String onClick = liferayPortletResponse.getNamespace() + "adaptRemaining('" + entryUuid + "', '" + optimizeImagesURL.toString() + "');";
 
-	int percentage = AMImageEntryLocalServiceUtil.getPercentage(themeDisplay.getCompanyId(), entryUuid);
-
-	String cssClass = (!amImageConfigurationEntry.isEnabled() || percentage == 100 || !optimizeImagesEnabled) ? "disabled" : StringPool.BLANK;
+	int percentage = AMImageEntryLocalServiceUtil.getPercentage(themeDisplay.getCompanyId(), entryUuid, GetterUtil.getInteger(request.getAttribute(AMWebKeys.TOTAL_IMAGES)));
 	%>
 
 	<liferay-ui:icon
-		cssClass="<%= cssClass %>"
+		cssClass='<%= (!amImageConfigurationEntry.isEnabled() || (percentage == 100) || !optimizeImagesEnabled) ? "disabled" : StringPool.BLANK %>'
 		id='<%= "icon-adapt-remaining" + entryUuid %>'
 		message="adapt-remaining"
 		onClick="<%= onClick %>"
-		url="javascript:;"
+		url="javascript:void(0);"
 	/>
 
 	<portlet:actionURL name="/adaptive_media/delete_image_configuration_entry" var="deleteImageConfigurationEntryURL">
@@ -133,7 +122,7 @@ String entryUuid = String.valueOf(amImageConfigurationEntry.getUUID());
 			<liferay-ui:icon
 				cssClass="disabled"
 				message="delete"
-				url="javascript:;"
+				url="javascript:void(0);"
 			/>
 		</c:when>
 		<c:otherwise>

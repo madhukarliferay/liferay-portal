@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.web.internal.portlet.action;
@@ -36,12 +27,11 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.trash.service.TrashEntryService;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -50,17 +40,82 @@ import org.osgi.service.component.annotations.Reference;
  * @author Brian Wing Shun Chan
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + BookmarksPortletKeys.BOOKMARKS,
-		"javax.portlet.name=" + BookmarksPortletKeys.BOOKMARKS_ADMIN,
+		"jakarta.portlet.name=" + BookmarksPortletKeys.BOOKMARKS,
+		"jakarta.portlet.name=" + BookmarksPortletKeys.BOOKMARKS_ADMIN,
 		"mvc.command.name=/bookmarks/edit_folder"
 	},
 	service = MVCActionCommand.class
 )
 public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 
-	protected void deleteFolders(
+	@Override
+	protected void doProcessAction(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws Exception {
+
+		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+
+		try {
+			if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
+				_updateFolder(actionRequest);
+			}
+			else if (cmd.equals(Constants.DELETE)) {
+				_deleteFolders(actionRequest, false);
+			}
+			else if (cmd.equals(Constants.MOVE_TO_TRASH)) {
+				_deleteFolders(actionRequest, true);
+			}
+			else if (cmd.equals(Constants.RESTORE)) {
+				restoreTrashEntries(actionRequest);
+			}
+			else if (cmd.equals(Constants.SUBSCRIBE)) {
+				_subscribeFolder(actionRequest);
+			}
+			else if (cmd.equals(Constants.UNSUBSCRIBE)) {
+				_unsubscribeFolder(actionRequest);
+			}
+
+			String portletResource = ParamUtil.getString(
+				actionRequest, "portletResource");
+
+			if (Validator.isNotNull(portletResource)) {
+				hideDefaultSuccessMessage(actionRequest);
+
+				MultiSessionMessages.add(
+					actionRequest, portletResource + "requestProcessed");
+			}
+		}
+		catch (Exception exception) {
+			if (exception instanceof NoSuchFolderException ||
+				exception instanceof PrincipalException) {
+
+				SessionErrors.add(actionRequest, exception.getClass());
+
+				actionResponse.setRenderParameter(
+					"mvcPath", "/bookmarks/error.jsp");
+			}
+			else if (exception instanceof FolderNameException) {
+				SessionErrors.add(actionRequest, exception.getClass());
+			}
+			else {
+				throw exception;
+			}
+		}
+	}
+
+	protected void restoreTrashEntries(ActionRequest actionRequest)
+		throws Exception {
+
+		long[] restoreTrashEntryIds = StringUtil.split(
+			ParamUtil.getString(actionRequest, "restoreTrashEntryIds"), 0L);
+
+		for (long restoreTrashEntryId : restoreTrashEntryIds) {
+			_trashEntryService.restoreEntry(restoreTrashEntryId);
+		}
+	}
+
+	private void _deleteFolders(
 			ActionRequest actionRequest, boolean moveToTrash)
 		throws Exception {
 
@@ -91,81 +146,15 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		if (moveToTrash && !trashedModels.isEmpty()) {
-			Map<String, Object> data = HashMapBuilder.<String, Object>put(
-				"trashedModels", trashedModels
-			).build();
-
-			addDeleteSuccessData(actionRequest, data);
+			addDeleteSuccessData(
+				actionRequest,
+				HashMapBuilder.<String, Object>put(
+					"trashedModels", trashedModels
+				).build());
 		}
 	}
 
-	@Override
-	protected void doProcessAction(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
-
-		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
-
-		try {
-			if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
-				updateFolder(actionRequest);
-			}
-			else if (cmd.equals(Constants.DELETE)) {
-				deleteFolders(actionRequest, false);
-			}
-			else if (cmd.equals(Constants.MOVE_TO_TRASH)) {
-				deleteFolders(actionRequest, true);
-			}
-			else if (cmd.equals(Constants.RESTORE)) {
-				restoreTrashEntries(actionRequest);
-			}
-			else if (cmd.equals(Constants.SUBSCRIBE)) {
-				subscribeFolder(actionRequest);
-			}
-			else if (cmd.equals(Constants.UNSUBSCRIBE)) {
-				unsubscribeFolder(actionRequest);
-			}
-
-			String portletResource = ParamUtil.getString(
-				actionRequest, "portletResource");
-
-			if (Validator.isNotNull(portletResource)) {
-				hideDefaultSuccessMessage(actionRequest);
-
-				MultiSessionMessages.add(
-					actionRequest, portletResource + "requestProcessed");
-			}
-		}
-		catch (Exception e) {
-			if (e instanceof NoSuchFolderException ||
-				e instanceof PrincipalException) {
-
-				SessionErrors.add(actionRequest, e.getClass());
-
-				actionResponse.setRenderParameter(
-					"mvcPath", "/bookmarks/error.jsp");
-			}
-			else if (e instanceof FolderNameException) {
-				SessionErrors.add(actionRequest, e.getClass());
-			}
-			else {
-				throw e;
-			}
-		}
-	}
-
-	protected void restoreTrashEntries(ActionRequest actionRequest)
-		throws Exception {
-
-		long[] restoreTrashEntryIds = StringUtil.split(
-			ParamUtil.getString(actionRequest, "restoreTrashEntryIds"), 0L);
-
-		for (long restoreTrashEntryId : restoreTrashEntryIds) {
-			_trashEntryService.restoreEntry(restoreTrashEntryId);
-		}
-	}
-
-	protected void subscribeFolder(ActionRequest actionRequest)
+	private void _subscribeFolder(ActionRequest actionRequest)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -177,7 +166,7 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 			themeDisplay.getScopeGroupId(), folderId);
 	}
 
-	protected void unsubscribeFolder(ActionRequest actionRequest)
+	private void _unsubscribeFolder(ActionRequest actionRequest)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -189,11 +178,10 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 			themeDisplay.getScopeGroupId(), folderId);
 	}
 
-	protected void updateFolder(ActionRequest actionRequest) throws Exception {
+	private void _updateFolder(ActionRequest actionRequest) throws Exception {
 		long folderId = ParamUtil.getLong(actionRequest, "folderId");
 
-		long parentFolderId = ParamUtil.getLong(
-			actionRequest, "parentFolderId");
+		long newFolderId = ParamUtil.getLong(actionRequest, "newFolderId");
 		String name = ParamUtil.getString(actionRequest, "name");
 		String description = ParamUtil.getString(actionRequest, "description");
 
@@ -205,14 +193,15 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 
 		if (folderId <= 0) {
 			_bookmarksFolderService.addFolder(
-				parentFolderId, name, description, serviceContext);
+				ParamUtil.getLong(actionRequest, "parentFolderId"), name,
+				description, serviceContext);
 		}
 		else if (mergeWithParentFolder) {
-			_bookmarksFolderService.mergeFolders(folderId, parentFolderId);
+			_bookmarksFolderService.mergeFolders(folderId, newFolderId);
 		}
 		else {
 			_bookmarksFolderService.updateFolder(
-				folderId, parentFolderId, name, description, serviceContext);
+				folderId, newFolderId, name, description, serviceContext);
 		}
 	}
 

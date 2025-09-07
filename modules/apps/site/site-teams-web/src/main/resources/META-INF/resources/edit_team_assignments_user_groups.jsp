@@ -1,25 +1,14 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-EditSiteTeamAssignmentsUserGroupsDisplayContext editSiteTeamAssignmentsUserGroupsDisplayContext = new EditSiteTeamAssignmentsUserGroupsDisplayContext(renderRequest, renderResponse, request);
-
-EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext = new EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, editSiteTeamAssignmentsUserGroupsDisplayContext);
+EditSiteTeamAssignmentsUserGroupsDisplayContext editSiteTeamAssignmentsUserGroupsDisplayContext = new EditSiteTeamAssignmentsUserGroupsDisplayContext(request, renderRequest, renderResponse);
 %>
 
 <clay:navigation-bar
@@ -28,12 +17,13 @@ EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAss
 />
 
 <clay:management-toolbar
-	displayContext="<%= editSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= new EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, editSiteTeamAssignmentsUserGroupsDisplayContext) %>"
+	propsTransformer="{EditSiteTeamAssignmentsUserGroupsManagementToolbarPropsTransformer} from site-teams-web"
 />
 
 <portlet:actionURL name="deleteTeamUserGroups" var="deleteTeamUserGroupsURL" />
 
-<aui:form action="<%= deleteTeamUserGroupsURL %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= deleteTeamUserGroupsURL %>" cssClass="container-fluid" method="post" name="fm">
 	<aui:input name="tabs1" type="hidden" value="<%= editSiteTeamAssignmentsUserGroupsDisplayContext.getTabs1() %>" />
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 	<aui:input name="teamId" type="hidden" value="<%= String.valueOf(editSiteTeamAssignmentsUserGroupsDisplayContext.getTeamId()) %>" />
@@ -44,18 +34,17 @@ EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAss
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.model.UserGroup"
-			cssClass="selectable"
 			escapedModel="<%= true %>"
 			keyProperty="userGroupId"
 			modelVar="userGroup"
 		>
 
 			<%
-			LinkedHashMap<String, Object> userParams = new LinkedHashMap<>();
-
-			userParams.put("usersUserGroups", Long.valueOf(userGroup.getUserGroupId()));
-
-			int usersCount = UserLocalServiceUtil.searchCount(company.getCompanyId(), StringPool.BLANK, WorkflowConstants.STATUS_ANY, userParams);
+			int usersCount = UserLocalServiceUtil.searchCount(
+				company.getCompanyId(), StringPool.BLANK, WorkflowConstants.STATUS_APPROVED,
+				LinkedHashMapBuilder.<String, Object>put(
+					"usersUserGroups", Long.valueOf(userGroup.getUserGroupId())
+				).build());
 			%>
 
 			<c:choose>
@@ -68,15 +57,15 @@ EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAss
 					<liferay-ui:search-container-column-text
 						colspan="<%= 2 %>"
 					>
-						<h5><%= userGroup.getName() %></h5>
+						<div class="h5"><%= userGroup.getName() %></div>
 
-						<h6 class="text-default">
+						<div class="h6 text-default">
 							<span><%= userGroup.getDescription() %></span>
-						</h6>
+						</div>
 
-						<h6 class="text-default">
+						<div class="h6 text-default">
 							<span><liferay-ui:message arguments="<%= usersCount %>" key="x-users" /></span>
-						</h6>
+						</div>
 					</liferay-ui:search-container-column-text>
 
 					<liferay-ui:search-container-column-jsp
@@ -85,14 +74,14 @@ EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAss
 				</c:when>
 				<c:otherwise>
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-content"
+						cssClass="table-cell-expand"
 						name="name"
 						orderable="<%= true %>"
 						property="name"
 					/>
 
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-content"
+						cssClass="table-cell-expand"
 						name="description"
 						orderable="<%= true %>"
 						property="description"
@@ -124,8 +113,3 @@ EditSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext editSiteTeamAss
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 	<aui:input name="teamId" type="hidden" value="<%= String.valueOf(editSiteTeamAssignmentsUserGroupsDisplayContext.getTeamId()) %>" />
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= editSiteTeamAssignmentsUserGroupsManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/EditTeamAssignmentsUserGroupsManagementToolbarDefaultEventHandler.es"
-/>

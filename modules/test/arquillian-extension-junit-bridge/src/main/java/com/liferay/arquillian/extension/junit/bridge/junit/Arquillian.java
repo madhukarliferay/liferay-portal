@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.arquillian.extension.junit.bridge.junit;
@@ -110,8 +101,9 @@ public class Arquillian extends Runner implements Filterable {
 		try {
 			Class.forName(_clazz.getName(), true, _clazz.getClassLoader());
 		}
-		catch (ClassNotFoundException cnfe) {
-			runNotifier.fireTestFailure(new Failure(getDescription(), cnfe));
+		catch (ClassNotFoundException classNotFoundException) {
+			runNotifier.fireTestFailure(
+				new Failure(getDescription(), classNotFoundException));
 
 			return;
 		}
@@ -123,12 +115,13 @@ public class Arquillian extends Runner implements Filterable {
 				_clazz.getName(),
 				runNotifierCommand -> runNotifierCommand.execute(runNotifier));
 		}
-		catch (Throwable t) {
-			runNotifier.fireTestFailure(new Failure(getDescription(), t));
+		catch (Throwable throwable) {
+			runNotifier.fireTestFailure(
+				new Failure(getDescription(), throwable));
 		}
 	}
 
-	private static List<String> _filter(
+	private List<String> _filter(
 		Class<?> clazz, List<Method> testMethods, Filter filter) {
 
 		List<String> filteredMethodNames = new ArrayList<>();
@@ -152,7 +145,7 @@ public class Arquillian extends Runner implements Filterable {
 		return filteredMethodNames;
 	}
 
-	private static List<Method> _scanTestMethods(Class<?> clazz) {
+	private List<Method> _scanTestMethods(Class<?> clazz) {
 		List<Method> testMethods = new ArrayList<>();
 
 		while (clazz != Object.class) {

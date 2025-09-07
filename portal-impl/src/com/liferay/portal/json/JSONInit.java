@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.json;
@@ -34,17 +25,18 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletDisplayModel;
 import com.liferay.portal.kernel.repository.model.RepositoryModel;
 
+import jakarta.portlet.PortletURL;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.portlet.PortletURL;
-
 import jodd.introspector.CachingIntrospector;
-import jodd.introspector.JoddIntrospector;
+import jodd.introspector.ClassIntrospector;
 
-import jodd.json.JoddJson;
+import jodd.json.JsonSerializer;
 import jodd.json.TypeJsonSerializerMap;
+import jodd.json.meta.JsonAnnotationManager;
 
 /**
  * @author Igor Spasic
@@ -61,26 +53,30 @@ public class JSONInit {
 
 			_initalized = true;
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 
 	private static void _registerDefaultTransformers() throws Exception {
-		JoddIntrospector.introspector = new CachingIntrospector(
-			true, true, true, new String[] {"_"});
+		ClassIntrospector.Implementation.set(
+			new CachingIntrospector(true, true, true, new String[] {"_"}));
 
-		JoddJson.jsonAnnotation = JSON.class;
+		JsonAnnotationManager jsonAnnotationManager =
+			JsonAnnotationManager.get();
 
-		JoddJson.excludedTypes = new Class<?>[] {
+		jsonAnnotationManager.setJsonAnnotation(JSON.class);
+
+		JsonSerializer.Defaults.excludedTypes = new Class<?>[] {
 			ExpandoBridge.class, InputStream.class, LiferayPortletRequest.class,
 			LiferayPortletResponse.class, OutputStream.class,
 			PortletDisplayModel.class, PortletURL.class
 		};
 
-		JoddJson.excludedTypeNames = new String[] {"javax.*"};
+		JsonSerializer.Defaults.excludedTypeNames = new String[] {"javax.*"};
 
-		TypeJsonSerializerMap typeSerializerMap = JoddJson.defaultSerializers;
+		TypeJsonSerializerMap typeJsonSerializerMap =
+			TypeJsonSerializerMap.get();
 
 		Class<?>[][] classesArray = new Class<?>[][] {
 			new Class<?>[] {Company.class, CompanyJSONTransformer.class},
@@ -97,7 +93,7 @@ public class JSONInit {
 		};
 
 		for (Class<?>[] classes : classesArray) {
-			typeSerializerMap.register(
+			typeJsonSerializerMap.register(
 				classes[0],
 				new JoddJsonTransformer(
 					(JSONTransformer)classes[1].newInstance()));

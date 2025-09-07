@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.engine.creole.internal.parser.visitor;
@@ -17,6 +8,7 @@ package com.liferay.wiki.engine.creole.internal.parser.visitor;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.wiki.engine.creole.internal.parser.ast.ASTNode;
 import com.liferay.wiki.engine.creole.internal.parser.ast.BoldTextNode;
 import com.liferay.wiki.engine.creole.internal.parser.ast.CollectionNode;
@@ -93,7 +85,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(C2InterwikiLinkNode c2InterwikiLinkNode) {
-		appendInterwikiLinkNode(c2InterwikiLinkNode);
+		_appendInterwikiLinkNode(c2InterwikiLinkNode);
 	}
 
 	@Override
@@ -105,12 +97,12 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(DokuWikiInterwikiLinkNode dokuWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(dokuWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(dokuWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(FlickrInterwikiLinkNode flickrInterwikiLinkNode) {
-		appendInterwikiLinkNode(flickrInterwikiLinkNode);
+		_appendInterwikiLinkNode(flickrInterwikiLinkNode);
 	}
 
 	@Override
@@ -130,7 +122,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(GoogleInterwikiLinkNode googleInterwikiLinkNode) {
-		appendInterwikiLinkNode(googleInterwikiLinkNode);
+		_appendInterwikiLinkNode(googleInterwikiLinkNode);
 	}
 
 	@Override
@@ -155,12 +147,10 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(ImageNode imageNode) {
-		append("<img src=\"");
-		append(HtmlUtil.escape(imageNode.getLink()));
-		append("\" ");
+		append("<img");
 
 		if (imageNode.hasAltCollectionNode()) {
-			append("alt=\"");
+			append(" alt=\"");
 
 			CollectionNode altCollectionNode = imageNode.getAltNode();
 
@@ -169,7 +159,9 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 			append("\"");
 		}
 
-		append("/>");
+		append(" src=\"");
+		append(HtmlUtil.escape(imageNode.getLink()));
+		append("\" />");
 	}
 
 	@Override
@@ -185,7 +177,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(JSPWikiInterwikiLinkNode jspWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(jspWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(jspWikiInterwikiLinkNode);
 	}
 
 	@Override
@@ -218,17 +210,17 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(MeatballInterwikiLinkNode meatballInterwikiLinkNode) {
-		appendInterwikiLinkNode(meatballInterwikiLinkNode);
+		_appendInterwikiLinkNode(meatballInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(MediaWikiInterwikiLinkNode mediaWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(mediaWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(mediaWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(MoinMoinInterwikiLinkNode moinMoinInterwikiLinkNode) {
-		appendInterwikiLinkNode(moinMoinInterwikiLinkNode);
+		_appendInterwikiLinkNode(moinMoinInterwikiLinkNode);
 	}
 
 	@Override
@@ -247,12 +239,12 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(OddmuseInterwikiLinkNode oddmuseInterwikiLinkNode) {
-		appendInterwikiLinkNode(oddmuseInterwikiLinkNode);
+		_appendInterwikiLinkNode(oddmuseInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(OhanaInterwikiLinkNode ohanaInterwikiLinkNode) {
-		appendInterwikiLinkNode(ohanaInterwikiLinkNode);
+		_appendInterwikiLinkNode(ohanaInterwikiLinkNode);
 	}
 
 	@Override
@@ -276,22 +268,22 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(PmWikiInterwikiLinkNode pmWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(pmWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(pmWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(PukiWikiInterwikiLinkNode pukiWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(pukiWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(pukiWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(PurpleWikiInterwikiLinkNode purpleWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(purpleWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(purpleWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(RadeoxInterwikiLinkNode radeoxInterwikiLinkNode) {
-		appendInterwikiLinkNode(radeoxInterwikiLinkNode);
+		_appendInterwikiLinkNode(radeoxInterwikiLinkNode);
 	}
 
 	@Override
@@ -301,7 +293,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(SnipSnapInterwikiLinkNode snipSnapInterwikiLinkNode) {
-		appendInterwikiLinkNode(snipSnapInterwikiLinkNode);
+		_appendInterwikiLinkNode(snipSnapInterwikiLinkNode);
 	}
 
 	@Override
@@ -318,7 +310,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 	public void visit(TableNode tableNode) {
 		append("<table>");
 
-		traverseAndWriteForEach(tableNode.getChildASTNodes(), "<tr>", "</tr>");
+		_traverseAndWriteForEach(tableNode.getChildASTNodes(), "<tr>", "</tr>");
 
 		append("</table>");
 	}
@@ -329,12 +321,12 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(TiddlyWikiInterwikiLinkNode tiddlyWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(tiddlyWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(tiddlyWikiInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(TWikiInterwikiLinkNode tWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(tWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(tWikiInterwikiLinkNode);
 	}
 
 	@Override
@@ -363,7 +355,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(UsemodInterwikiLinkNode usemodInterwikiLinkNode) {
-		appendInterwikiLinkNode(usemodInterwikiLinkNode);
+		_appendInterwikiLinkNode(usemodInterwikiLinkNode);
 	}
 
 	@Override
@@ -373,28 +365,18 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 
 	@Override
 	public void visit(WikipediaInterwikiLinkNode wikipediaInterwikiLinkNode) {
-		appendInterwikiLinkNode(wikipediaInterwikiLinkNode);
+		_appendInterwikiLinkNode(wikipediaInterwikiLinkNode);
 	}
 
 	@Override
 	public void visit(XWikiInterwikiLinkNode xWikiInterwikiLinkNode) {
-		appendInterwikiLinkNode(xWikiInterwikiLinkNode);
+		_appendInterwikiLinkNode(xWikiInterwikiLinkNode);
 	}
 
 	protected void append(Object object) {
 		if (object != null) {
 			_sb.append(object);
 		}
-	}
-
-	protected void appendInterwikiLinkNode(
-		InterwikiLinkNode interwikiLinkNode) {
-
-		append("<a href=\"");
-		append(HtmlUtil.escape(interwikiLinkNode.getURL()));
-		append("\">");
-		append(HtmlUtil.escape(interwikiLinkNode.getTitle()));
-		append("</a>");
 	}
 
 	protected void traverse(List<ASTNode> astNodes) {
@@ -408,7 +390,7 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 	}
 
 	protected void traverse(List<ASTNode> astNodes, String open, String close) {
-		if ((astNodes == null) || astNodes.isEmpty()) {
+		if (ListUtil.isEmpty(astNodes)) {
 			return;
 		}
 
@@ -419,7 +401,15 @@ public class XhtmlTranslationVisitor implements ASTVisitor {
 		append(close);
 	}
 
-	protected void traverseAndWriteForEach(
+	private void _appendInterwikiLinkNode(InterwikiLinkNode interwikiLinkNode) {
+		append("<a href=\"");
+		append(HtmlUtil.escape(interwikiLinkNode.getURL()));
+		append("\">");
+		append(HtmlUtil.escape(interwikiLinkNode.getTitle()));
+		append("</a>");
+	}
+
+	private void _traverseAndWriteForEach(
 		List<ASTNode> astNodes, String open, String close) {
 
 		for (ASTNode curNode : astNodes) {

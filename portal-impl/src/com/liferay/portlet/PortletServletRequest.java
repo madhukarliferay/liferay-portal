@@ -1,51 +1,43 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.ServletInputStreamAdapter;
+import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portlet.internal.PortletRequestDispatcherImpl;
+
+import jakarta.portlet.ClientDataRequest;
+import jakarta.portlet.EventRequest;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import java.lang.reflect.Constructor;
-
 import java.security.Principal;
 
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.ClientDataRequest;
-import javax.portlet.EventRequest;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Brian Wing Shun Chan
@@ -61,11 +53,10 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 		super(httpServletRequest);
 
 		_httpServletRequest = httpServletRequest;
-
 		_portletRequest = portletRequest;
 
 		_liferayPortletRequest = LiferayPortletUtil.getLiferayPortletRequest(
-			_portletRequest);
+			portletRequest);
 
 		_pathInfo = pathInfo;
 		_queryString = queryString;
@@ -76,7 +67,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 
 		_lifecycle = _liferayPortletRequest.getLifecycle();
 
-		if (Validator.isNotNull(_queryString)) {
+		if (Validator.isNotNull(queryString)) {
 			_liferayPortletRequest.setPortletRequestDispatcherRequest(
 				httpServletRequest);
 		}
@@ -88,7 +79,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return _httpServletRequest.getAttribute(name);
 		}
 
-		if (name.equals(JavaConstants.JAVAX_SERVLET_FORWARD_CONTEXT_PATH)) {
+		if (name.equals(JavaConstants.JAKARTA_SERVLET_FORWARD_CONTEXT_PATH)) {
 			if (_named) {
 				return null;
 			}
@@ -96,7 +87,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return _portletRequest.getContextPath();
 		}
 
-		if (name.equals(JavaConstants.JAVAX_SERVLET_FORWARD_PATH_INFO)) {
+		if (name.equals(JavaConstants.JAKARTA_SERVLET_FORWARD_PATH_INFO)) {
 			if (_named) {
 				return null;
 			}
@@ -104,7 +95,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return _pathInfo;
 		}
 
-		if (name.equals(JavaConstants.JAVAX_SERVLET_FORWARD_QUERY_STRING)) {
+		if (name.equals(JavaConstants.JAKARTA_SERVLET_FORWARD_QUERY_STRING)) {
 			if (_named) {
 				return null;
 			}
@@ -112,7 +103,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return _queryString;
 		}
 
-		if (name.equals(JavaConstants.JAVAX_SERVLET_FORWARD_REQUEST_URI)) {
+		if (name.equals(JavaConstants.JAKARTA_SERVLET_FORWARD_REQUEST_URI)) {
 			if (_named) {
 				return null;
 			}
@@ -120,7 +111,7 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return _requestURI;
 		}
 
-		if (name.equals(JavaConstants.JAVAX_SERVLET_FORWARD_SERVLET_PATH)) {
+		if (name.equals(JavaConstants.JAKARTA_SERVLET_FORWARD_SERVLET_PATH)) {
 			if (_named) {
 				return null;
 			}
@@ -192,7 +183,25 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 			return -1;
 		}
 
-		return GetterUtil.getLongStrict(getHeader(name));
+		long result = GetterUtil.getLong(header, -1);
+
+		if (result > 0) {
+			return result;
+		}
+
+		Date date = GetterUtil.getDate(
+			header,
+			DateFormatFactoryUtil.getSimpleDateFormat(Time.RFC822_FORMAT),
+			null);
+
+		if (date == null) {
+			throw new IllegalArgumentException(
+				StringBundler.concat(
+					"Unable to convert \"", name, "\" header value \"", header,
+					"\" to a date"));
+		}
+
+		return date.getTime();
 	}
 
 	@Override
@@ -344,7 +353,6 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 	 * @deprecated As of Wilberforce (7.0.x)
 	 */
 	@Deprecated
-	@Override
 	public String getRealPath(String path) {
 		return null;
 	}
@@ -424,15 +432,13 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 
 	@Override
 	public HttpSession getSession(boolean create) {
-		HttpSession session = _httpServletRequest.getSession(create);
+		HttpSession httpSession = _httpServletRequest.getSession(create);
 
-		if (session == null) {
+		if (httpSession == null) {
 			return null;
 		}
 
-		session = new PortletServletSession(session, _liferayPortletRequest);
-
-		return session;
+		return new PortletServletSession(httpSession, _liferayPortletRequest);
 	}
 
 	@Override
@@ -471,8 +477,8 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 	}
 
 	@Override
-	public void setAttribute(String name, Object obj) {
-		_portletRequest.setAttribute(name, obj);
+	public void setAttribute(String name, Object object) {
+		_portletRequest.setAttribute(name, object);
 	}
 
 	@Override
@@ -486,28 +492,6 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 
 			clientDataRequest.setCharacterEncoding(encoding);
 		}
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), with no direct replacement
-	 */
-	@Deprecated
-	protected HttpSession wrapJettySession(HttpSession session)
-		throws Exception {
-
-		// This must be called through reflection because Resin tries to load
-		// org/mortbay/jetty/servlet/AbstractSessionManager$SessionIf
-
-		ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
-
-		Class<?> jettyHttpSessionWrapperClass = classLoader.loadClass(
-			"com.liferay.portal.servlet.JettyHttpSessionWrapper");
-
-		Constructor<?> constructor =
-			jettyHttpSessionWrapperClass.getConstructor(
-				new Class<?>[] {HttpSession.class});
-
-		return (HttpSession)constructor.newInstance(new Object[] {session});
 	}
 
 	private ClientDataRequest _getClientDataRequest() {

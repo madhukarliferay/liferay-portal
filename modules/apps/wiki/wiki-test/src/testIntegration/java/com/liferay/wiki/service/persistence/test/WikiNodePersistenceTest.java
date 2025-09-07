@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.persistence.test;
@@ -21,17 +12,23 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
+import com.liferay.wiki.exception.DuplicateWikiNodeExternalReferenceCodeException;
 import com.liferay.wiki.exception.NoSuchNodeException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.service.WikiNodeLocalServiceUtil;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,7 +122,11 @@ public class WikiNodePersistenceTest {
 
 		newWikiNode.setMvccVersion(RandomTestUtil.nextLong());
 
+		newWikiNode.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newWikiNode.setUuid(RandomTestUtil.randomString());
+
+		newWikiNode.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		newWikiNode.setGroupId(RandomTestUtil.nextLong());
 
@@ -163,7 +163,13 @@ public class WikiNodePersistenceTest {
 
 		Assert.assertEquals(
 			existingWikiNode.getMvccVersion(), newWikiNode.getMvccVersion());
+		Assert.assertEquals(
+			existingWikiNode.getCtCollectionId(),
+			newWikiNode.getCtCollectionId());
 		Assert.assertEquals(existingWikiNode.getUuid(), newWikiNode.getUuid());
+		Assert.assertEquals(
+			existingWikiNode.getExternalReferenceCode(),
+			newWikiNode.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingWikiNode.getNodeId(), newWikiNode.getNodeId());
 		Assert.assertEquals(
@@ -200,6 +206,26 @@ public class WikiNodePersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingWikiNode.getStatusDate()),
 			Time.getShortTimestamp(newWikiNode.getStatusDate()));
+	}
+
+	@Test(expected = DuplicateWikiNodeExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		WikiNode wikiNode = addWikiNode();
+
+		WikiNode newWikiNode = addWikiNode();
+
+		newWikiNode.setGroupId(wikiNode.getGroupId());
+
+		newWikiNode = _persistence.update(newWikiNode);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newWikiNode);
+
+		newWikiNode.setExternalReferenceCode(
+			wikiNode.getExternalReferenceCode());
+
+		_persistence.update(newWikiNode);
 	}
 
 	@Test
@@ -269,6 +295,15 @@ public class WikiNodePersistenceTest {
 	}
 
 	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		WikiNode newWikiNode = addWikiNode();
 
@@ -293,15 +328,34 @@ public class WikiNodePersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<WikiNode> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"WikiNode", "mvccVersion", true, "uuid", true, "nodeId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "name", true,
+			"WikiNode", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "nodeId", true, "groupId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "name", true,
 			"description", true, "lastPostDate", true, "lastPublishDate", true,
 			"status", true, "statusByUserId", true, "statusByUserName", true,
 			"statusDate", true);
@@ -515,28 +569,81 @@ public class WikiNodePersistenceTest {
 
 		_persistence.clearCache();
 
-		WikiNode existingWikiNode = _persistence.findByPrimaryKey(
-			newWikiNode.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newWikiNode.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingWikiNode.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingWikiNode, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		WikiNode newWikiNode = addWikiNode();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			WikiNode.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("nodeId", newWikiNode.getNodeId()));
+
+		List<WikiNode> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(WikiNode wikiNode) {
 		Assert.assertEquals(
-			Long.valueOf(existingWikiNode.getGroupId()),
+			wikiNode.getUuid(),
+			ReflectionTestUtil.invoke(
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(wikiNode.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWikiNode, "getOriginalGroupId", new Class<?>[0]));
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingWikiNode.getGroupId()),
+			Long.valueOf(wikiNode.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWikiNode, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingWikiNode.getName(),
-				ReflectionTestUtil.invoke(
-					existingWikiNode, "getOriginalName", new Class<?>[0])));
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			wikiNode.getName(),
+			ReflectionTestUtil.invoke(
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+
+		Assert.assertEquals(
+			wikiNode.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(wikiNode.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				wikiNode, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected WikiNode addWikiNode() throws Exception {
@@ -546,7 +653,11 @@ public class WikiNodePersistenceTest {
 
 		wikiNode.setMvccVersion(RandomTestUtil.nextLong());
 
+		wikiNode.setCtCollectionId(RandomTestUtil.nextLong());
+
 		wikiNode.setUuid(RandomTestUtil.randomString());
+
+		wikiNode.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		wikiNode.setGroupId(RandomTestUtil.nextLong());
 

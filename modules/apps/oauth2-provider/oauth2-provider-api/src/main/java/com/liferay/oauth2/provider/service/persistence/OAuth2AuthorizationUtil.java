@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the o auth2 authorization service. This utility wraps <code>com.liferay.oauth2.provider.service.persistence.impl.OAuth2AuthorizationPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class OAuth2AuthorizationUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -476,65 +463,68 @@ public class OAuth2AuthorizationUtil {
 	}
 
 	/**
-	 * Returns all the o auth2 authorizations where accessTokenContentHash = &#63;.
+	 * Returns all the o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @return the matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByAccessTokenContentHash(
-		long accessTokenContentHash) {
+	public static List<OAuth2Authorization> findByC_ATCH(
+		long companyId, long accessTokenContentHash) {
 
-		return getPersistence().findByAccessTokenContentHash(
-			accessTokenContentHash);
+		return getPersistence().findByC_ATCH(companyId, accessTokenContentHash);
 	}
 
 	/**
-	 * Returns a range of all the o auth2 authorizations where accessTokenContentHash = &#63;.
+	 * Returns a range of all the o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
 	 * @return the range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByAccessTokenContentHash(
-		long accessTokenContentHash, int start, int end) {
+	public static List<OAuth2Authorization> findByC_ATCH(
+		long companyId, long accessTokenContentHash, int start, int end) {
 
-		return getPersistence().findByAccessTokenContentHash(
-			accessTokenContentHash, start, end);
+		return getPersistence().findByC_ATCH(
+			companyId, accessTokenContentHash, start, end);
 	}
 
 	/**
-	 * Returns an ordered range of all the o auth2 authorizations where accessTokenContentHash = &#63;.
+	 * Returns an ordered range of all the o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByAccessTokenContentHash(
-		long accessTokenContentHash, int start, int end,
+	public static List<OAuth2Authorization> findByC_ATCH(
+		long companyId, long accessTokenContentHash, int start, int end,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().findByAccessTokenContentHash(
-			accessTokenContentHash, start, end, orderByComparator);
+		return getPersistence().findByC_ATCH(
+			companyId, accessTokenContentHash, start, end, orderByComparator);
 	}
 
 	/**
-	 * Returns an ordered range of all the o auth2 authorizations where accessTokenContentHash = &#63;.
+	 * Returns an ordered range of all the o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
@@ -542,186 +532,198 @@ public class OAuth2AuthorizationUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByAccessTokenContentHash(
-		long accessTokenContentHash, int start, int end,
+	public static List<OAuth2Authorization> findByC_ATCH(
+		long companyId, long accessTokenContentHash, int start, int end,
 		OrderByComparator<OAuth2Authorization> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByAccessTokenContentHash(
-			accessTokenContentHash, start, end, orderByComparator,
+		return getPersistence().findByC_ATCH(
+			companyId, accessTokenContentHash, start, end, orderByComparator,
 			useFinderCache);
 	}
 
 	/**
-	 * Returns the first o auth2 authorization in the ordered set where accessTokenContentHash = &#63;.
+	 * Returns the first o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization findByAccessTokenContentHash_First(
-			long accessTokenContentHash,
+	public static OAuth2Authorization findByC_ATCH_First(
+			long companyId, long accessTokenContentHash,
 			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByAccessTokenContentHash_First(
-			accessTokenContentHash, orderByComparator);
+		return getPersistence().findByC_ATCH_First(
+			companyId, accessTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the first o auth2 authorization in the ordered set where accessTokenContentHash = &#63;.
+	 * Returns the first o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization fetchByAccessTokenContentHash_First(
-		long accessTokenContentHash,
+	public static OAuth2Authorization fetchByC_ATCH_First(
+		long companyId, long accessTokenContentHash,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().fetchByAccessTokenContentHash_First(
-			accessTokenContentHash, orderByComparator);
+		return getPersistence().fetchByC_ATCH_First(
+			companyId, accessTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the last o auth2 authorization in the ordered set where accessTokenContentHash = &#63;.
+	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization findByAccessTokenContentHash_Last(
-			long accessTokenContentHash,
+	public static OAuth2Authorization findByC_ATCH_Last(
+			long companyId, long accessTokenContentHash,
 			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByAccessTokenContentHash_Last(
-			accessTokenContentHash, orderByComparator);
+		return getPersistence().findByC_ATCH_Last(
+			companyId, accessTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the last o auth2 authorization in the ordered set where accessTokenContentHash = &#63;.
+	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization fetchByAccessTokenContentHash_Last(
-		long accessTokenContentHash,
+	public static OAuth2Authorization fetchByC_ATCH_Last(
+		long companyId, long accessTokenContentHash,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().fetchByAccessTokenContentHash_Last(
-			accessTokenContentHash, orderByComparator);
+		return getPersistence().fetchByC_ATCH_Last(
+			companyId, accessTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where accessTokenContentHash = &#63;.
+	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
 	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the previous, current, and next o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
 	 */
-	public static OAuth2Authorization[]
-			findByAccessTokenContentHash_PrevAndNext(
-				long oAuth2AuthorizationId, long accessTokenContentHash,
-				OrderByComparator<OAuth2Authorization> orderByComparator)
+	public static OAuth2Authorization[] findByC_ATCH_PrevAndNext(
+			long oAuth2AuthorizationId, long companyId,
+			long accessTokenContentHash,
+			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByAccessTokenContentHash_PrevAndNext(
-			oAuth2AuthorizationId, accessTokenContentHash, orderByComparator);
+		return getPersistence().findByC_ATCH_PrevAndNext(
+			oAuth2AuthorizationId, companyId, accessTokenContentHash,
+			orderByComparator);
 	}
 
 	/**
-	 * Removes all the o auth2 authorizations where accessTokenContentHash = &#63; from the database.
+	 * Removes all the o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63; from the database.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 */
-	public static void removeByAccessTokenContentHash(
-		long accessTokenContentHash) {
+	public static void removeByC_ATCH(
+		long companyId, long accessTokenContentHash) {
 
-		getPersistence().removeByAccessTokenContentHash(accessTokenContentHash);
+		getPersistence().removeByC_ATCH(companyId, accessTokenContentHash);
 	}
 
 	/**
-	 * Returns the number of o auth2 authorizations where accessTokenContentHash = &#63;.
+	 * Returns the number of o auth2 authorizations where companyId = &#63; and accessTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param accessTokenContentHash the access token content hash
 	 * @return the number of matching o auth2 authorizations
 	 */
-	public static int countByAccessTokenContentHash(
-		long accessTokenContentHash) {
+	public static int countByC_ATCH(
+		long companyId, long accessTokenContentHash) {
 
-		return getPersistence().countByAccessTokenContentHash(
-			accessTokenContentHash);
+		return getPersistence().countByC_ATCH(
+			companyId, accessTokenContentHash);
 	}
 
 	/**
-	 * Returns all the o auth2 authorizations where refreshTokenContentHash = &#63;.
+	 * Returns all the o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @return the matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByRefreshTokenContentHash(
-		long refreshTokenContentHash) {
+	public static List<OAuth2Authorization> findByC_RTCH(
+		long companyId, long refreshTokenContentHash) {
 
-		return getPersistence().findByRefreshTokenContentHash(
-			refreshTokenContentHash);
+		return getPersistence().findByC_RTCH(
+			companyId, refreshTokenContentHash);
 	}
 
 	/**
-	 * Returns a range of all the o auth2 authorizations where refreshTokenContentHash = &#63;.
+	 * Returns a range of all the o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
 	 * @return the range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByRefreshTokenContentHash(
-		long refreshTokenContentHash, int start, int end) {
+	public static List<OAuth2Authorization> findByC_RTCH(
+		long companyId, long refreshTokenContentHash, int start, int end) {
 
-		return getPersistence().findByRefreshTokenContentHash(
-			refreshTokenContentHash, start, end);
+		return getPersistence().findByC_RTCH(
+			companyId, refreshTokenContentHash, start, end);
 	}
 
 	/**
-	 * Returns an ordered range of all the o auth2 authorizations where refreshTokenContentHash = &#63;.
+	 * Returns an ordered range of all the o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByRefreshTokenContentHash(
-		long refreshTokenContentHash, int start, int end,
+	public static List<OAuth2Authorization> findByC_RTCH(
+		long companyId, long refreshTokenContentHash, int start, int end,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().findByRefreshTokenContentHash(
-			refreshTokenContentHash, start, end, orderByComparator);
+		return getPersistence().findByC_RTCH(
+			companyId, refreshTokenContentHash, start, end, orderByComparator);
 	}
 
 	/**
-	 * Returns an ordered range of all the o auth2 authorizations where refreshTokenContentHash = &#63;.
+	 * Returns an ordered range of all the o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
 	 * </p>
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param start the lower bound of the range of o auth2 authorizations
 	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
@@ -729,125 +731,351 @@ public class OAuth2AuthorizationUtil {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching o auth2 authorizations
 	 */
-	public static List<OAuth2Authorization> findByRefreshTokenContentHash(
-		long refreshTokenContentHash, int start, int end,
+	public static List<OAuth2Authorization> findByC_RTCH(
+		long companyId, long refreshTokenContentHash, int start, int end,
 		OrderByComparator<OAuth2Authorization> orderByComparator,
 		boolean useFinderCache) {
 
-		return getPersistence().findByRefreshTokenContentHash(
-			refreshTokenContentHash, start, end, orderByComparator,
+		return getPersistence().findByC_RTCH(
+			companyId, refreshTokenContentHash, start, end, orderByComparator,
 			useFinderCache);
 	}
 
 	/**
-	 * Returns the first o auth2 authorization in the ordered set where refreshTokenContentHash = &#63;.
+	 * Returns the first o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization findByRefreshTokenContentHash_First(
-			long refreshTokenContentHash,
+	public static OAuth2Authorization findByC_RTCH_First(
+			long companyId, long refreshTokenContentHash,
 			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByRefreshTokenContentHash_First(
-			refreshTokenContentHash, orderByComparator);
+		return getPersistence().findByC_RTCH_First(
+			companyId, refreshTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the first o auth2 authorization in the ordered set where refreshTokenContentHash = &#63;.
+	 * Returns the first o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization fetchByRefreshTokenContentHash_First(
-		long refreshTokenContentHash,
+	public static OAuth2Authorization fetchByC_RTCH_First(
+		long companyId, long refreshTokenContentHash,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().fetchByRefreshTokenContentHash_First(
-			refreshTokenContentHash, orderByComparator);
+		return getPersistence().fetchByC_RTCH_First(
+			companyId, refreshTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the last o auth2 authorization in the ordered set where refreshTokenContentHash = &#63;.
+	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization findByRefreshTokenContentHash_Last(
-			long refreshTokenContentHash,
+	public static OAuth2Authorization findByC_RTCH_Last(
+			long companyId, long refreshTokenContentHash,
 			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByRefreshTokenContentHash_Last(
-			refreshTokenContentHash, orderByComparator);
+		return getPersistence().findByC_RTCH_Last(
+			companyId, refreshTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the last o auth2 authorization in the ordered set where refreshTokenContentHash = &#63;.
+	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
 	 */
-	public static OAuth2Authorization fetchByRefreshTokenContentHash_Last(
-		long refreshTokenContentHash,
+	public static OAuth2Authorization fetchByC_RTCH_Last(
+		long companyId, long refreshTokenContentHash,
 		OrderByComparator<OAuth2Authorization> orderByComparator) {
 
-		return getPersistence().fetchByRefreshTokenContentHash_Last(
-			refreshTokenContentHash, orderByComparator);
+		return getPersistence().fetchByC_RTCH_Last(
+			companyId, refreshTokenContentHash, orderByComparator);
 	}
 
 	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where refreshTokenContentHash = &#63;.
+	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
 	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the previous, current, and next o auth2 authorization
 	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
 	 */
-	public static OAuth2Authorization[]
-			findByRefreshTokenContentHash_PrevAndNext(
-				long oAuth2AuthorizationId, long refreshTokenContentHash,
-				OrderByComparator<OAuth2Authorization> orderByComparator)
+	public static OAuth2Authorization[] findByC_RTCH_PrevAndNext(
+			long oAuth2AuthorizationId, long companyId,
+			long refreshTokenContentHash,
+			OrderByComparator<OAuth2Authorization> orderByComparator)
 		throws com.liferay.oauth2.provider.exception.
 			NoSuchOAuth2AuthorizationException {
 
-		return getPersistence().findByRefreshTokenContentHash_PrevAndNext(
-			oAuth2AuthorizationId, refreshTokenContentHash, orderByComparator);
+		return getPersistence().findByC_RTCH_PrevAndNext(
+			oAuth2AuthorizationId, companyId, refreshTokenContentHash,
+			orderByComparator);
 	}
 
 	/**
-	 * Removes all the o auth2 authorizations where refreshTokenContentHash = &#63; from the database.
+	 * Removes all the o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63; from the database.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 */
-	public static void removeByRefreshTokenContentHash(
-		long refreshTokenContentHash) {
+	public static void removeByC_RTCH(
+		long companyId, long refreshTokenContentHash) {
 
-		getPersistence().removeByRefreshTokenContentHash(
-			refreshTokenContentHash);
+		getPersistence().removeByC_RTCH(companyId, refreshTokenContentHash);
 	}
 
 	/**
-	 * Returns the number of o auth2 authorizations where refreshTokenContentHash = &#63;.
+	 * Returns the number of o auth2 authorizations where companyId = &#63; and refreshTokenContentHash = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param refreshTokenContentHash the refresh token content hash
 	 * @return the number of matching o auth2 authorizations
 	 */
-	public static int countByRefreshTokenContentHash(
-		long refreshTokenContentHash) {
+	public static int countByC_RTCH(
+		long companyId, long refreshTokenContentHash) {
 
-		return getPersistence().countByRefreshTokenContentHash(
-			refreshTokenContentHash);
+		return getPersistence().countByC_RTCH(
+			companyId, refreshTokenContentHash);
+	}
+
+	/**
+	 * Returns all the o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @return the matching o auth2 authorizations
+	 */
+	public static List<OAuth2Authorization> findByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent) {
+
+		return getPersistence().findByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent);
+	}
+
+	/**
+	 * Returns a range of all the o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param start the lower bound of the range of o auth2 authorizations
+	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
+	 * @return the range of matching o auth2 authorizations
+	 */
+	public static List<OAuth2Authorization> findByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+		int start, int end) {
+
+		return getPersistence().findByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param start the lower bound of the range of o auth2 authorizations
+	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching o auth2 authorizations
+	 */
+	public static List<OAuth2Authorization> findByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+		int start, int end,
+		OrderByComparator<OAuth2Authorization> orderByComparator) {
+
+		return getPersistence().findByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent, start, end,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuth2AuthorizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param start the lower bound of the range of o auth2 authorizations
+	 * @param end the upper bound of the range of o auth2 authorizations (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching o auth2 authorizations
+	 */
+	public static List<OAuth2Authorization> findByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+		int start, int end,
+		OrderByComparator<OAuth2Authorization> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent, start, end,
+			orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching o auth2 authorization
+	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
+	 */
+	public static OAuth2Authorization findByU_O_R_First(
+			long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+			OrderByComparator<OAuth2Authorization> orderByComparator)
+		throws com.liferay.oauth2.provider.exception.
+			NoSuchOAuth2AuthorizationException {
+
+		return getPersistence().findByU_O_R_First(
+			userId, oAuth2ApplicationId, rememberDeviceContent,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns the first o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
+	 */
+	public static OAuth2Authorization fetchByU_O_R_First(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+		OrderByComparator<OAuth2Authorization> orderByComparator) {
+
+		return getPersistence().fetchByU_O_R_First(
+			userId, oAuth2ApplicationId, rememberDeviceContent,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns the last o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching o auth2 authorization
+	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
+	 */
+	public static OAuth2Authorization findByU_O_R_Last(
+			long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+			OrderByComparator<OAuth2Authorization> orderByComparator)
+		throws com.liferay.oauth2.provider.exception.
+			NoSuchOAuth2AuthorizationException {
+
+		return getPersistence().findByU_O_R_Last(
+			userId, oAuth2ApplicationId, rememberDeviceContent,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns the last o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
+	 */
+	public static OAuth2Authorization fetchByU_O_R_Last(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
+		OrderByComparator<OAuth2Authorization> orderByComparator) {
+
+		return getPersistence().fetchByU_O_R_Last(
+			userId, oAuth2ApplicationId, rememberDeviceContent,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next o auth2 authorization
+	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
+	 */
+	public static OAuth2Authorization[] findByU_O_R_PrevAndNext(
+			long oAuth2AuthorizationId, long userId, long oAuth2ApplicationId,
+			String rememberDeviceContent,
+			OrderByComparator<OAuth2Authorization> orderByComparator)
+		throws com.liferay.oauth2.provider.exception.
+			NoSuchOAuth2AuthorizationException {
+
+		return getPersistence().findByU_O_R_PrevAndNext(
+			oAuth2AuthorizationId, userId, oAuth2ApplicationId,
+			rememberDeviceContent, orderByComparator);
+	}
+
+	/**
+	 * Removes all the o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 */
+	public static void removeByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent) {
+
+		getPersistence().removeByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent);
+	}
+
+	/**
+	 * Returns the number of o auth2 authorizations where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param oAuth2ApplicationId the o auth2 application ID
+	 * @param rememberDeviceContent the remember device content
+	 * @return the number of matching o auth2 authorizations
+	 */
+	public static int countByU_O_R(
+		long userId, long oAuth2ApplicationId, String rememberDeviceContent) {
+
+		return getPersistence().countByU_O_R(
+			userId, oAuth2ApplicationId, rememberDeviceContent);
 	}
 
 	/**
@@ -1110,9 +1338,12 @@ public class OAuth2AuthorizationUtil {
 	 *
 	 * @param pk the primary key of the o auth2 authorization
 	 * @param oAuth2ScopeGrantPK the primary key of the o auth2 scope grant
+	 * @return <code>true</code> if an association between the o auth2 authorization and the o auth2 scope grant was added; <code>false</code> if they were already associated
 	 */
-	public static void addOAuth2ScopeGrant(long pk, long oAuth2ScopeGrantPK) {
-		getPersistence().addOAuth2ScopeGrant(pk, oAuth2ScopeGrantPK);
+	public static boolean addOAuth2ScopeGrant(
+		long pk, long oAuth2ScopeGrantPK) {
+
+		return getPersistence().addOAuth2ScopeGrant(pk, oAuth2ScopeGrantPK);
 	}
 
 	/**
@@ -1120,12 +1351,13 @@ public class OAuth2AuthorizationUtil {
 	 *
 	 * @param pk the primary key of the o auth2 authorization
 	 * @param oAuth2ScopeGrant the o auth2 scope grant
+	 * @return <code>true</code> if an association between the o auth2 authorization and the o auth2 scope grant was added; <code>false</code> if they were already associated
 	 */
-	public static void addOAuth2ScopeGrant(
+	public static boolean addOAuth2ScopeGrant(
 		long pk,
 		com.liferay.oauth2.provider.model.OAuth2ScopeGrant oAuth2ScopeGrant) {
 
-		getPersistence().addOAuth2ScopeGrant(pk, oAuth2ScopeGrant);
+		return getPersistence().addOAuth2ScopeGrant(pk, oAuth2ScopeGrant);
 	}
 
 	/**
@@ -1133,11 +1365,12 @@ public class OAuth2AuthorizationUtil {
 	 *
 	 * @param pk the primary key of the o auth2 authorization
 	 * @param oAuth2ScopeGrantPKs the primary keys of the o auth2 scope grants
+	 * @return <code>true</code> if at least one association between the o auth2 authorization and the o auth2 scope grants was added; <code>false</code> if they were all already associated
 	 */
-	public static void addOAuth2ScopeGrants(
+	public static boolean addOAuth2ScopeGrants(
 		long pk, long[] oAuth2ScopeGrantPKs) {
 
-		getPersistence().addOAuth2ScopeGrants(pk, oAuth2ScopeGrantPKs);
+		return getPersistence().addOAuth2ScopeGrants(pk, oAuth2ScopeGrantPKs);
 	}
 
 	/**
@@ -1145,13 +1378,14 @@ public class OAuth2AuthorizationUtil {
 	 *
 	 * @param pk the primary key of the o auth2 authorization
 	 * @param oAuth2ScopeGrants the o auth2 scope grants
+	 * @return <code>true</code> if at least one association between the o auth2 authorization and the o auth2 scope grants was added; <code>false</code> if they were all already associated
 	 */
-	public static void addOAuth2ScopeGrants(
+	public static boolean addOAuth2ScopeGrants(
 		long pk,
 		List<com.liferay.oauth2.provider.model.OAuth2ScopeGrant>
 			oAuth2ScopeGrants) {
 
-		getPersistence().addOAuth2ScopeGrants(pk, oAuth2ScopeGrants);
+		return getPersistence().addOAuth2ScopeGrants(pk, oAuth2ScopeGrants);
 	}
 
 	/**
@@ -1241,29 +1475,15 @@ public class OAuth2AuthorizationUtil {
 	}
 
 	public static OAuth2AuthorizationPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<OAuth2AuthorizationPersistence, OAuth2AuthorizationPersistence>
-			_serviceTracker;
+	public static void setPersistence(
+		OAuth2AuthorizationPersistence persistence) {
 
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			OAuth2AuthorizationPersistence.class);
-
-		ServiceTracker
-			<OAuth2AuthorizationPersistence, OAuth2AuthorizationPersistence>
-				serviceTracker =
-					new ServiceTracker
-						<OAuth2AuthorizationPersistence,
-						 OAuth2AuthorizationPersistence>(
-							 bundle.getBundleContext(),
-							 OAuth2AuthorizationPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+		_persistence = persistence;
 	}
+
+	private static volatile OAuth2AuthorizationPersistence _persistence;
 
 }

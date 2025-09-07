@@ -1,26 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.internal.search.index;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
-import com.liferay.portal.kernel.search.Document;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalRunMode;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
+import com.liferay.portal.search.document.Document;
+import com.liferay.portal.search.document.DocumentBuilder;
+import com.liferay.portal.search.document.DocumentBuilderFactory;
 import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.engine.adapter.document.BulkDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.IndexDocumentRequest;
@@ -29,119 +24,138 @@ import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
+import com.liferay.portal.search.query.BooleanQuery;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.query.Query;
-import com.liferay.portal.workflow.kaleo.model.KaleoDefinition;
-import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
-import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionLocalService;
-import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionVersionLocalService;
+import com.liferay.portal.search.script.Scripts;
 import com.liferay.portal.workflow.metrics.internal.petra.executor.WorkflowMetricsPortalExecutor;
+import com.liferay.portal.workflow.metrics.internal.search.index.util.WorkflowMetricsIndexerUtil;
 
 import java.io.Serializable;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Inácio Nery
  */
 public abstract class BaseWorkflowMetricsIndexer {
 
-	public void addDocument(Document document) {
-		if (searchEngineAdapter == null) {
+	public void addDocuments(List<Document> documents) {
+		if (!searchCapabilities.isWorkflowMetricsSupported()) {
 			return;
 		}
 
-		IndexDocumentRequest indexDocumentRequest = new IndexDocumentRequest(
-			getIndexName(), document);
+		BulkDocumentRequest bulkDocumentRequest = new BulkDocumentRequest();
 
-		if (PortalRunMode.isTestMode()) {
-			indexDocumentRequest.setRefresh(true);
+		documents.forEach(
+			document -> bulkDocumentRequest.addBulkableDocumentRequest(
+				new IndexDocumentRequest(
+					getIndexName(document.getLong("companyId")),
+					document.getString("uid"), document)));
+
+		if (ListUtil.isNotEmpty(
+				bulkDocumentRequest.getBulkableDocumentRequests())) {
+
+			if (PortalRunMode.isTestMode()) {
+				bulkDocumentRequest.setRefresh(true);
+			}
+
+			searchEngineAdapter.execute(bulkDocumentRequest);
 		}
-
-		indexDocumentRequest.setType(getIndexType());
-
-		searchEngineAdapter.execute(indexDocumentRequest);
 	}
 
-	public void deleteDocument(Document document) {
-		document.addKeyword("deleted", true);
+	public void deleteDocument(DocumentBuilder documentBuilder) {
+		documentBuilder.setValue("deleted", true);
 
-		_updateDocument(document);
+		_updateDocument(documentBuilder.build());
 	}
+
+	public abstract String getIndexName(long companyId);
+
+	public abstract String getIndexType();
 
 	public void updateDocument(Document document) {
 		_updateDocument(document);
 	}
 
+	protected void addDocument(Document document) {
+		if (!searchCapabilities.isWorkflowMetricsSupported()) {
+			return;
+		}
+
+		IndexDocumentRequest indexDocumentRequest = new IndexDocumentRequest(
+			getIndexName(document.getLong("companyId")), document);
+
+		if (PortalRunMode.isTestMode()) {
+			indexDocumentRequest.setRefresh(true);
+		}
+
+		searchEngineAdapter.execute(indexDocumentRequest);
+	}
+
 	protected String digest(Serializable... parts) {
-		StringBuilder sb = new StringBuilder();
+		return WorkflowMetricsIndexerUtil.digest(getIndexType(), parts);
+	}
 
-		for (Serializable part : parts) {
-			sb.append(part);
+	protected String formatLocalDateTime(LocalDateTime localDateTime) {
+		return _dateTimeFormatter.format(localDateTime);
+	}
+
+	protected String getDate(Date date) {
+		try {
+			return DateUtil.getDate(
+				date, "yyyyMMddHHmmss", LocaleUtil.getDefault());
 		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
 
-		return DigestUtils.sha256Hex(sb.toString());
-	}
-
-	protected abstract String getIndexName();
-
-	protected abstract String getIndexType();
-
-	protected KaleoDefinition getKaleoDefinition(
-		long kaleoDefinitionVersionId) {
-
-		KaleoDefinitionVersion kaleoDefinitionVersion =
-			getKaleoDefinitionVersion(kaleoDefinitionVersionId);
-
-		if (kaleoDefinitionVersion != null) {
-			ServiceContext serviceContext = new ServiceContext();
-
-			serviceContext.setCompanyId(kaleoDefinitionVersion.getCompanyId());
-
-			return kaleoDefinitionLocalService.fetchKaleoDefinition(
-				kaleoDefinitionVersion.getName(), serviceContext);
+			return null;
 		}
-
-		return null;
 	}
 
-	protected KaleoDefinitionVersion getKaleoDefinitionVersion(
-		long kaleoDefinitionVersionId) {
+	protected void setLocalizedField(
+		DocumentBuilder documentBuilder, String fieldName,
+		Map<Locale, String> localizedMap) {
 
-		return kaleoDefinitionVersionLocalService.fetchKaleoDefinitionVersion(
-			kaleoDefinitionVersionId);
-	}
+		for (Map.Entry<Locale, String> entry : localizedMap.entrySet()) {
+			String localizedName = Field.getLocalizedName(
+				entry.getKey(), fieldName);
 
-	protected abstract void reindex(long companyId) throws PortalException;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
+			documentBuilder.setValue(
+				localizedName, entry.getValue()
+			).setValue(
+				Field.getSortableFieldName(localizedName), entry.getValue()
+			);
+		}
 	}
 
 	protected void updateDocuments(
-		Function<com.liferay.portal.search.document.Document, Document>
-			transformDocumentFunction,
-		Query query) {
+		long companyId, Map<String, Object> fieldsMap, Query filterQuery) {
 
-		if (searchEngineAdapter == null) {
+		if (!searchCapabilities.isWorkflowMetricsSupported()) {
 			return;
 		}
 
 		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
 
-		searchSearchRequest.setIndexNames(getIndexName());
-		searchSearchRequest.setQuery(query);
-		searchSearchRequest.setSelectedFieldNames(Field.UID);
+		searchSearchRequest.setIndexNames(getIndexName(companyId));
+
+		BooleanQuery booleanQuery = queries.booleanQuery();
+
+		searchSearchRequest.setQuery(
+			booleanQuery.addFilterQueryClauses(filterQuery));
+
+		searchSearchRequest.setSelectedFieldNames("uid");
 		searchSearchRequest.setSize(10000);
 
 		SearchSearchResponse searchSearchResponse = searchEngineAdapter.execute(
@@ -155,24 +169,24 @@ public abstract class BaseWorkflowMetricsIndexer {
 
 		BulkDocumentRequest bulkDocumentRequest = new BulkDocumentRequest();
 
-		Stream.of(
-			searchHits.getSearchHits()
-		).flatMap(
-			List::stream
-		).map(
-			SearchHit::getDocument
-		).map(
-			document -> new UpdateDocumentRequest(
-				getIndexName(), document.getString(Field.UID),
-				transformDocumentFunction.apply(document)) {
+		for (SearchHit searchHit : searchHits.getSearchHits()) {
+			Document document = searchHit.getDocument();
+			DocumentBuilder documentBuilder = documentBuilderFactory.builder();
 
-				{
-					setType(getIndexType());
-				}
-			}
-		).forEach(
-			bulkDocumentRequest::addBulkableDocumentRequest
-		);
+			documentBuilder.setString("uid", document.getString("uid"));
+
+			fieldsMap.forEach(documentBuilder::setValue);
+
+			UpdateDocumentRequest updateDocumentRequest =
+				new UpdateDocumentRequest(
+					getIndexName(companyId), document.getString("uid"),
+					documentBuilder.build());
+
+			updateDocumentRequest.setUpsert(true);
+
+			bulkDocumentRequest.addBulkableDocumentRequest(
+				updateDocumentRequest);
+		}
 
 		if (ListUtil.isNotEmpty(
 				bulkDocumentRequest.getBulkableDocumentRequests())) {
@@ -186,41 +200,45 @@ public abstract class BaseWorkflowMetricsIndexer {
 	}
 
 	@Reference
-	protected KaleoDefinitionLocalService kaleoDefinitionLocalService;
-
-	@Reference
-	protected KaleoDefinitionVersionLocalService
-		kaleoDefinitionVersionLocalService;
+	protected DocumentBuilderFactory documentBuilderFactory;
 
 	@Reference
 	protected Queries queries;
 
-	@Reference(
-		cardinality = ReferenceCardinality.OPTIONAL,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(search.engine.impl=Elasticsearch)"
-	)
-	protected volatile SearchEngineAdapter searchEngineAdapter;
+	@Reference
+	protected Scripts scripts;
+
+	@Reference
+	protected SearchCapabilities searchCapabilities;
+
+	@Reference
+	protected SearchEngineAdapter searchEngineAdapter;
 
 	@Reference
 	protected WorkflowMetricsPortalExecutor workflowMetricsPortalExecutor;
 
 	private void _updateDocument(Document document) {
-		if (searchEngineAdapter == null) {
+		if (!searchCapabilities.isWorkflowMetricsSupported()) {
 			return;
 		}
 
 		UpdateDocumentRequest updateDocumentRequest = new UpdateDocumentRequest(
-			getIndexName(), document.getUID(), document);
+			getIndexName(document.getLong("companyId")),
+			document.getString("uid"), document);
 
 		if (PortalRunMode.isTestMode()) {
 			updateDocumentRequest.setRefresh(true);
 		}
 
-		updateDocumentRequest.setType(getIndexType());
+		updateDocumentRequest.setUpsert(true);
 
 		searchEngineAdapter.execute(updateDocumentRequest);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BaseWorkflowMetricsIndexer.class);
+
+	private final DateTimeFormatter _dateTimeFormatter =
+		DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
 }

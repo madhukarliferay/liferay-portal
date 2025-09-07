@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.concurrent;
@@ -39,14 +30,14 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
 			new TaskQueue<Object>(-1);
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		TaskQueue<Object> taskQueue = new TaskQueue<>(10);
@@ -67,7 +58,7 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		Object object1 = new Object();
@@ -122,7 +113,7 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 
 		Assert.assertEquals(list.toString(), 2, list.size());
@@ -153,7 +144,7 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		taskQueue = new TaskQueue<>(10);
@@ -163,7 +154,7 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		taskQueue = new TaskQueue<>(10);
@@ -173,7 +164,7 @@ public class TaskQueueTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		taskQueue = new TaskQueue<>(10);
@@ -203,10 +194,11 @@ public class TaskQueueTest {
 		taskQueue = new TaskQueue<>();
 
 		object1 = new Object();
-		Object object2 = new Object();
 
 		Assert.assertTrue(taskQueue.offer(object1, new boolean[1]));
-		Assert.assertTrue(taskQueue.offer(object2, new boolean[1]));
+
+		Assert.assertTrue(taskQueue.offer(new Object(), new boolean[1]));
+
 		Assert.assertSame(object1, taskQueue.poll());
 
 		taskQueue = new TaskQueue<>();
@@ -231,10 +223,11 @@ public class TaskQueueTest {
 		taskQueue = new TaskQueue<>();
 
 		object1 = new Object();
-		object2 = new Object();
 
 		Assert.assertTrue(taskQueue.offer(object1, new boolean[1]));
-		Assert.assertTrue(taskQueue.offer(object2, new boolean[1]));
+
+		Assert.assertTrue(taskQueue.offer(new Object(), new boolean[1]));
+
 		Assert.assertSame(object1, taskQueue.poll(100, TimeUnit.MILLISECONDS));
 	}
 
@@ -288,7 +281,7 @@ public class TaskQueueTest {
 	@Test
 	public void testTake() throws InterruptedException {
 		final TaskQueue<Object> taskQueue = new TaskQueue<>();
-		final Object object = new Object();
+		Object object = new Object();
 
 		Assert.assertTrue(taskQueue.offer(object, new boolean[1]));
 		Assert.assertSame(object, taskQueue.take());
@@ -308,7 +301,7 @@ public class TaskQueueTest {
 
 							Assert.fail();
 						}
-						catch (InterruptedException ie) {
+						catch (InterruptedException interruptedException) {
 						}
 
 						return null;

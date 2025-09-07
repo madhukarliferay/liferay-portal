@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.app.license.test;
@@ -17,11 +8,10 @@ package com.liferay.portal.app.license.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.app.license.AppLicenseVerifier;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Collection;
-import java.util.Dictionary;
 import java.util.Iterator;
 
 import org.junit.AfterClass;
@@ -55,19 +45,17 @@ public class AppLicenseVerifierTest {
 
 		_bundleContext = bundle.getBundleContext();
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("version", "1.0.0");
-
 		_failServiceRegistration = _bundleContext.registerService(
-			AppLicenseVerifier.class, new FailAppLicenseVerifier(), properties);
-
-		properties = new HashMapDictionary<>();
-
-		properties.put("version", "1.0.1");
+			AppLicenseVerifier.class, new FailAppLicenseVerifier(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"version", "1.0.0"
+			).build());
 
 		_passServiceRegistration = _bundleContext.registerService(
-			AppLicenseVerifier.class, new PassAppLicenseVerifier(), properties);
+			AppLicenseVerifier.class, new PassAppLicenseVerifier(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"version", "1.0.1"
+			).build());
 	}
 
 	@AfterClass
@@ -93,13 +81,15 @@ public class AppLicenseVerifierTest {
 		AppLicenseVerifier appLicenseVerifier = _bundleContext.getService(
 			serviceReference);
 
+		Bundle bundle = _bundleContext.getBundle();
+
 		try {
-			appLicenseVerifier.verify(_bundleContext.getBundle(), "", "", "");
+			appLicenseVerifier.verify("", "", "", bundle.getSymbolicName());
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Assert.assertSame(FailAppLicenseVerifier.EXCEPTION, e);
+		catch (Exception exception) {
+			Assert.assertSame(FailAppLicenseVerifier.EXCEPTION, exception);
 		}
 		finally {
 			_bundleContext.ungetService(serviceReference);
@@ -123,8 +113,10 @@ public class AppLicenseVerifierTest {
 		AppLicenseVerifier appLicenseVerifier = _bundleContext.getService(
 			serviceReference);
 
+		Bundle bundle = _bundleContext.getBundle();
+
 		try {
-			appLicenseVerifier.verify(_bundleContext.getBundle(), "", "", "");
+			appLicenseVerifier.verify("", "", "", bundle.getSymbolicName());
 		}
 		finally {
 			_bundleContext.ungetService(serviceReference);

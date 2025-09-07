@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.store.file.system.test;
@@ -20,14 +11,12 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.util.Props;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.store.test.util.BaseStoreTestCase;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-
-import java.util.Dictionary;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -52,7 +41,7 @@ public class AdvancedFileSystemStoreTest extends BaseStoreTestCase {
 	@BeforeClass
 	public static void setUpClass() throws Exception {
 		_rootDir =
-			_props.get(PropsKeys.LIFERAY_HOME) +
+			PropsUtil.get(PropsKeys.LIFERAY_HOME) +
 				"/test/store/advanced_file_system";
 
 		_configuration = _configurationAdmin.getConfiguration(
@@ -60,11 +49,11 @@ public class AdvancedFileSystemStoreTest extends BaseStoreTestCase {
 				"AdvancedFileSystemStoreConfiguration",
 			StringPool.QUESTION);
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("rootDir", _rootDir);
-
-		ConfigurationTestUtil.saveConfiguration(_configuration, properties);
+		ConfigurationTestUtil.saveConfiguration(
+			_configuration,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"rootDir", _rootDir
+			).build());
 	}
 
 	@AfterClass
@@ -83,9 +72,6 @@ public class AdvancedFileSystemStoreTest extends BaseStoreTestCase {
 
 	@Inject
 	private static ConfigurationAdmin _configurationAdmin;
-
-	@Inject
-	private static Props _props;
 
 	private static String _rootDir;
 

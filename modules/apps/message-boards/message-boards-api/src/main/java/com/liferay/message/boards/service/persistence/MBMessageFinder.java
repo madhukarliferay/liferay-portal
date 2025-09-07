@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence;
@@ -22,6 +13,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface MBMessageFinder {
+
+	public int countByParentMessageId(
+		long parentMessageId, boolean flatten,
+		com.liferay.portal.kernel.dao.orm.QueryDefinition
+			<com.liferay.message.boards.model.MBMessage> queryDefinition);
 
 	public int countByC_T(java.util.Date createDate, long threadId);
 
@@ -62,6 +58,12 @@ public interface MBMessageFinder {
 	public java.util.List<Long> filterFindByG_U_MD_C_A_S(
 		long groupId, long userId, java.util.Date modifiedDate,
 		long[] categoryIds, boolean anonymous, int status, int start, int end);
+
+	public java.util.List<com.liferay.message.boards.model.MBMessage>
+		findByParentMessageId(
+			long parentMessageId, boolean flatten,
+			com.liferay.portal.kernel.dao.orm.QueryDefinition
+				<com.liferay.message.boards.model.MBMessage> queryDefinition);
 
 	public java.util.List<com.liferay.message.boards.model.MBMessage>
 		findByThreadId(

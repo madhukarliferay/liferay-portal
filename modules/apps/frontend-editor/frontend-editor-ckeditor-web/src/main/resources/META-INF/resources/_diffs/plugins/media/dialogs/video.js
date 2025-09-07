@@ -1,19 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-CKEDITOR.dialog.add('video', editor => {
-	var TPL_SCRIPT =
+/* eslint-disable @liferay/no-get-data-attribute */
+
+import {addParams} from 'frontend-js-web';
+
+CKEDITOR.dialog.add('video', (editor) => {
+	const TPL_SCRIPT =
 		'boundingBox: "#" + mediaId,' +
 		'height: {height},' +
 		'ogvUrl: "{ogvUrl}",' +
@@ -22,35 +17,32 @@ CKEDITOR.dialog.add('video', editor => {
 		'width: {width}';
 
 	function commitValue(videoNode, extraStyles) {
-		var instance = this;
+		const instance = this;
 
-		var id = instance.id;
-		var value = instance.getValue();
+		const id = instance.id;
+		let value = instance.getValue();
 
-		var scriptTPL = null;
-		var textScript = null;
+		let scriptTPL = null;
+		let textScript = null;
 
-		var videoHeight = videoNode.getAttribute('data-height');
-		var videoOgvUrl = videoNode.getAttribute('data-video-ogv-url');
-		var videoPoster = videoNode.getAttribute('data-poster');
-		var videoUrl = videoNode.getAttribute('data-video-url');
-		var videoWidth = videoNode.getAttribute('data-width');
+		const videoHeight = videoNode.getAttribute('data-height');
+		let videoOgvUrl = videoNode.getAttribute('data-video-ogv-url');
+		const videoPoster = videoNode.getAttribute('data-poster');
+		let videoUrl = videoNode.getAttribute('data-video-url');
+		const videoWidth = videoNode.getAttribute('data-width');
 
 		if (id === 'poster') {
 			videoNode.setAttribute('data-document-url', value);
 
-			videoUrl = Liferay.Util.addParams('videoPreview=1&type=mp4', value);
+			videoUrl = addParams('videoPreview=1&type=mp4', value);
 
 			videoNode.setAttribute('data-video-url', videoUrl);
 
-			videoOgvUrl = Liferay.Util.addParams(
-				'videoPreview=1&type=ogv',
-				value
-			);
+			videoOgvUrl = addParams('videoPreview=1&type=ogv', value);
 
 			videoNode.setAttribute('data-video-ogv-url', videoOgvUrl);
 
-			value = Liferay.Util.addParams('videoThumbnail=1', value);
+			value = addParams('videoThumbnail=1', value);
 
 			videoNode.setAttribute('data-poster', value);
 
@@ -61,7 +53,7 @@ CKEDITOR.dialog.add('video', editor => {
 				ogvUrl: videoOgvUrl,
 				poster: value,
 				url: videoUrl,
-				width: videoWidth
+				width: videoWidth,
 			});
 
 			editor.plugins.media.applyMediaScript(
@@ -74,13 +66,15 @@ CKEDITOR.dialog.add('video', editor => {
 		if (value) {
 			if (id === 'poster') {
 				extraStyles.backgroundImage = 'url(' + value + ')';
-			} else if (id === 'height' || id === 'width') {
-				var height = videoHeight;
-				var width = videoWidth;
+			}
+			else if (id === 'height' || id === 'width') {
+				let height = videoHeight;
+				let width = videoWidth;
 
 				if (id === 'height') {
 					height = value;
-				} else {
+				}
+				else {
 					width = value;
 				}
 
@@ -95,7 +89,7 @@ CKEDITOR.dialog.add('video', editor => {
 					ogvUrl: videoOgvUrl,
 					poster: videoPoster,
 					url: videoUrl,
-					width
+					width,
 				});
 
 				editor.plugins.media.applyMediaScript(
@@ -108,18 +102,20 @@ CKEDITOR.dialog.add('video', editor => {
 	}
 
 	function loadValue(videoNode) {
-		var instance = this;
+		const instance = this;
 
-		var id = instance.id;
+		const id = instance.id;
 
 		if (videoNode) {
-			var value = null;
+			let value = null;
 
 			if (id === 'poster') {
 				value = videoNode.getAttribute('data-document-url');
-			} else if (id === 'height') {
+			}
+			else if (id === 'height') {
 				value = videoNode.getAttribute('data-height');
-			} else if (id === 'width') {
+			}
+			else if (id === 'width') {
 				value = videoNode.getAttribute('data-width');
 			}
 
@@ -140,23 +136,24 @@ CKEDITOR.dialog.add('video', editor => {
 								id: 'poster',
 								label: Liferay.Language.get('video'),
 								setup: loadValue,
-								type: 'text'
+								type: 'text',
 							},
 							{
 								filebrowser: {
 									action: 'Browse',
 									target: 'info:poster',
-									url: editor.config.filebrowserVideoBrowseUrl
+									url: editor.config
+										.filebrowserVideoBrowseUrl,
 								},
 								hidden: 'true',
 								id: 'browse',
 								label: editor.lang.common.browseServer,
 								style: 'display:inline-block;margin-top:10px;',
-								type: 'button'
-							}
+								type: 'button',
+							},
 						],
 						type: 'hbox',
-						widths: ['', '100px']
+						widths: ['', '100px'],
 					},
 					{
 						children: [
@@ -171,7 +168,7 @@ CKEDITOR.dialog.add('video', editor => {
 									Liferay.Language.get(
 										'width-field-cannot-be-empty'
 									)
-								)
+								),
 							},
 							{
 								commit: commitValue,
@@ -184,32 +181,32 @@ CKEDITOR.dialog.add('video', editor => {
 									Liferay.Language.get(
 										'height-field-cannot-be-empty'
 									)
-								)
-							}
+								),
+							},
 						],
 						type: 'hbox',
-						widths: ['50%', '50%']
-					}
+						widths: ['50%', '50%'],
+					},
 				],
-				id: 'info'
-			}
+				id: 'info',
+			},
 		],
 
 		minHeight: 200,
 		minWidth: 400,
 
 		onOk() {
-			var instance = this;
+			const instance = this;
 
 			editor.plugins.media.onOkCallback(instance, editor, 'video');
 		},
 
 		onShow() {
-			var instance = this;
+			const instance = this;
 
 			editor.plugins.media.onShowCallback(instance, editor, 'video');
 		},
 
-		title: Liferay.Language.get('video-properties')
+		title: Liferay.Language.get('video-properties'),
 	};
 });

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.internal.util;
@@ -19,6 +10,7 @@ import com.liferay.gradle.util.ArrayUtil;
 import groovy.lang.Closure;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +34,24 @@ import org.gradle.api.logging.Logging;
  * @author Andrea Di Giorgi
  */
 public class FileUtil extends com.liferay.gradle.util.FileUtil {
+
+	public static File[] getDirectories(File dir) {
+		File[] dirs = dir.listFiles(
+			new FileFilter() {
+
+				@Override
+				public boolean accept(File file) {
+					return file.isDirectory();
+				}
+
+			});
+
+		if (dirs != null) {
+			return dirs;
+		}
+
+		return new File[0];
+	}
 
 	public static String getExtension(File file) {
 		String name = file.getName();

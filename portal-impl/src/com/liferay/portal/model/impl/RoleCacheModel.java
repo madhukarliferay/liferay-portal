@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,16 +28,16 @@ public class RoleCacheModel
 	implements CacheModel<Role>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof RoleCacheModel)) {
+		if (!(object instanceof RoleCacheModel)) {
 			return false;
 		}
 
-		RoleCacheModel roleCacheModel = (RoleCacheModel)obj;
+		RoleCacheModel roleCacheModel = (RoleCacheModel)object;
 
 		if ((roleId == roleCacheModel.roleId) &&
 			(mvccVersion == roleCacheModel.mvccVersion)) {
@@ -76,12 +67,16 @@ public class RoleCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", roleId=");
 		sb.append(roleId);
 		sb.append(", companyId=");
@@ -108,6 +103,8 @@ public class RoleCacheModel
 		sb.append(type);
 		sb.append(", subtype=");
 		sb.append(subtype);
+		sb.append(", status=");
+		sb.append(status);
 		sb.append("}");
 
 		return sb.toString();
@@ -118,12 +115,20 @@ public class RoleCacheModel
 		RoleImpl roleImpl = new RoleImpl();
 
 		roleImpl.setMvccVersion(mvccVersion);
+		roleImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			roleImpl.setUuid("");
 		}
 		else {
 			roleImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			roleImpl.setExternalReferenceCode("");
+		}
+		else {
+			roleImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		roleImpl.setRoleId(roleId);
@@ -184,15 +189,22 @@ public class RoleCacheModel
 			roleImpl.setSubtype(subtype);
 		}
 
+		roleImpl.setStatus(status);
+
 		roleImpl.resetOriginalValues();
 
 		return roleImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		roleId = objectInput.readLong();
 
@@ -208,21 +220,32 @@ public class RoleCacheModel
 		classPK = objectInput.readLong();
 		name = objectInput.readUTF();
 		title = objectInput.readUTF();
-		description = objectInput.readUTF();
+		description = (String)objectInput.readObject();
 
 		type = objectInput.readInt();
 		subtype = objectInput.readUTF();
+
+		status = objectInput.readInt();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(roleId);
@@ -260,10 +283,10 @@ public class RoleCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		objectOutput.writeInt(type);
@@ -274,10 +297,14 @@ public class RoleCacheModel
 		else {
 			objectOutput.writeUTF(subtype);
 		}
+
+		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long roleId;
 	public long companyId;
 	public long userId;
@@ -291,5 +318,6 @@ public class RoleCacheModel
 	public String description;
 	public int type;
 	public String subtype;
+	public int status;
 
 }

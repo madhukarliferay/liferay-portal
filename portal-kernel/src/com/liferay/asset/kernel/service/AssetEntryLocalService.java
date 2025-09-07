@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
@@ -17,6 +8,8 @@ package com.liferay.asset.kernel.service;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
@@ -24,14 +17,18 @@ import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.change.tracking.CTService;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -54,6 +51,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see AssetEntryLocalServiceUtil
  * @generated
  */
+@CTAware
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.asset.kernel.model.AssetEntry"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -63,23 +64,18 @@ public interface AssetEntryLocalService
 	extends BaseLocalService, CTService<AssetEntry>,
 			PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetEntryLocalServiceUtil} to access the asset entry local service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetEntryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetEntryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the asset entry local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link AssetEntryLocalServiceUtil} if injection and service tracking are not available.
 	 */
-	public void addAssetCategoryAssetEntries(
-		long categoryId, List<AssetEntry> assetEntries);
-
-	public void addAssetCategoryAssetEntries(long categoryId, long[] entryIds);
-
-	public void addAssetCategoryAssetEntry(
-		long categoryId, AssetEntry assetEntry);
-
-	public void addAssetCategoryAssetEntry(long categoryId, long entryId);
 
 	/**
 	 * Adds the asset entry to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetEntry the asset entry
 	 * @return the asset entry that was added
@@ -87,16 +83,14 @@ public interface AssetEntryLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public AssetEntry addAssetEntry(AssetEntry assetEntry);
 
-	public void addAssetTagAssetEntries(
+	public boolean addAssetTagAssetEntries(
 		long tagId, List<AssetEntry> assetEntries);
 
-	public void addAssetTagAssetEntries(long tagId, long[] entryIds);
+	public boolean addAssetTagAssetEntries(long tagId, long[] entryIds);
 
-	public void addAssetTagAssetEntry(long tagId, AssetEntry assetEntry);
+	public boolean addAssetTagAssetEntry(long tagId, AssetEntry assetEntry);
 
-	public void addAssetTagAssetEntry(long tagId, long entryId);
-
-	public void clearAssetCategoryAssetEntries(long categoryId);
+	public boolean addAssetTagAssetEntry(long tagId, long entryId);
 
 	public void clearAssetTagAssetEntries(long tagId);
 
@@ -109,19 +103,18 @@ public interface AssetEntryLocalService
 	@Transactional(enabled = false)
 	public AssetEntry createAssetEntry(long entryId);
 
-	public void deleteAssetCategoryAssetEntries(
-		long categoryId, List<AssetEntry> assetEntries);
-
-	public void deleteAssetCategoryAssetEntries(
-		long categoryId, long[] entryIds);
-
-	public void deleteAssetCategoryAssetEntry(
-		long categoryId, AssetEntry assetEntry);
-
-	public void deleteAssetCategoryAssetEntry(long categoryId, long entryId);
+	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
 
 	/**
 	 * Deletes the asset entry from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetEntry the asset entry
 	 * @return the asset entry that was removed
@@ -131,6 +124,10 @@ public interface AssetEntryLocalService
 
 	/**
 	 * Deletes the asset entry with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param entryId the primary key of the asset entry
 	 * @return the asset entry that was removed
@@ -148,11 +145,15 @@ public interface AssetEntryLocalService
 
 	public void deleteAssetTagAssetEntry(long tagId, long entryId);
 
-	public void deleteEntry(AssetEntry entry) throws PortalException;
+	public void deleteEntries(long companyId, String className)
+		throws PortalException;
 
-	public void deleteEntry(long entryId) throws PortalException;
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
+	public AssetEntry deleteEntry(AssetEntry entry) throws PortalException;
 
-	public void deleteEntry(String className, long classPK)
+	public AssetEntry deleteEntry(long entryId) throws PortalException;
+
+	public AssetEntry deleteEntry(String className, long classPK)
 		throws PortalException;
 
 	public void deleteGroupEntries(long groupId) throws PortalException;
@@ -163,6 +164,12 @@ public interface AssetEntryLocalService
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -248,34 +255,6 @@ public interface AssetEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetEntry> getAncestorEntries(long entryId)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetEntry> getAssetCategoryAssetEntries(long categoryId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetEntry> getAssetCategoryAssetEntries(
-		long categoryId, int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetEntry> getAssetCategoryAssetEntries(
-		long categoryId, int start, int end,
-		OrderByComparator<AssetEntry> orderByComparator);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getAssetCategoryAssetEntriesCount(long categoryId);
-
-	/**
-	 * Returns the categoryIds of the asset categories associated with the asset entry.
-	 *
-	 * @param entryId the entryId of the asset entry
-	 * @return long[] the categoryIds of asset categories associated with the asset entry
-	 */
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public long[] getAssetCategoryPrimaryKeys(long entryId);
-
 	/**
 	 * Returns a range of all the asset entries.
 	 *
@@ -331,10 +310,6 @@ public interface AssetEntryLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public long[] getAssetTagPrimaryKeys(long entryId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AssetEntry> getChildEntries(long entryId)
-		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetEntry> getCompanyEntries(
@@ -400,9 +375,6 @@ public interface AssetEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
 
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public AssetEntry getNextEntry(long entryId) throws PortalException;
-
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -410,16 +382,13 @@ public interface AssetEntryLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public AssetEntry getParentEntry(long entryId) throws PortalException;
-
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public AssetEntry getPreviousEntry(long entryId) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetEntry> getTopViewedEntries(
@@ -428,12 +397,6 @@ public interface AssetEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetEntry> getTopViewedEntries(
 		String[] className, boolean asc, int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public boolean hasAssetCategoryAssetEntries(long categoryId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public boolean hasAssetCategoryAssetEntry(long categoryId, long entryId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public boolean hasAssetTagAssetEntries(long tagId);
@@ -552,12 +515,14 @@ public interface AssetEntryLocalService
 		String assetCategoryIds, String assetTagNames, boolean showNonindexable,
 		int[] statuses, boolean andSearch);
 
-	public void setAssetCategoryAssetEntries(long categoryId, long[] entryIds);
-
 	public void setAssetTagAssetEntries(long tagId, long[] entryIds);
 
 	/**
 	 * Updates the asset entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AssetEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param assetEntry the asset entry
 	 * @return the asset entry that was updated
@@ -575,21 +540,15 @@ public interface AssetEntryLocalService
 			int height, int width, Double priority)
 		throws PortalException;
 
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link #updateEntry(long,
-	 long, Date, Date, String, long, String, long, long[],
-	 String[], boolean, boolean, Date, Date, Date, Date, String,
-	 String, String, String, String, String, int, int, Double)}
-	 */
-	@Deprecated
 	public AssetEntry updateEntry(
 			long userId, long groupId, Date createDate, Date modifiedDate,
 			String className, long classPK, String classUuid, long classTypeId,
 			long[] categoryIds, String[] tagNames, boolean listable,
-			boolean visible, Date startDate, Date endDate, Date expirationDate,
-			String mimeType, String title, String description, String summary,
-			String url, String layoutUuid, int height, int width,
-			Double priority)
+			boolean visible, Date startDate, Date endDate, Date publishDate,
+			Date expirationDate, String mimeType, String title,
+			String description, String summary, String url, String layoutUuid,
+			int height, int width, Double priority,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	public AssetEntry updateEntry(

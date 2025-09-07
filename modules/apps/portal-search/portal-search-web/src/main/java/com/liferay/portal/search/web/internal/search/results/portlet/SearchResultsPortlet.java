@@ -1,80 +1,68 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.web.internal.search.results.portlet;
 
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
-import com.liferay.petra.string.StringPool;
+import com.liferay.asset.util.AssetRendererFactoryLookup;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FastDateFormatFactory;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.search.legacy.document.DocumentBuilderFactory;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.summary.SummaryBuilderFactory;
+import com.liferay.portal.search.web.constants.SearchResultsPortletKeys;
 import com.liferay.portal.search.web.internal.display.context.PortletURLFactory;
 import com.liferay.portal.search.web.internal.display.context.PortletURLFactoryImpl;
 import com.liferay.portal.search.web.internal.display.context.SearchResultPreferences;
-import com.liferay.portal.search.web.internal.document.DocumentFormPermissionChecker;
 import com.liferay.portal.search.web.internal.document.DocumentFormPermissionCheckerImpl;
 import com.liferay.portal.search.web.internal.portlet.shared.search.NullPortletURL;
-import com.liferay.portal.search.web.internal.portlet.shared.task.PortletSharedRequestHelper;
-import com.liferay.portal.search.web.internal.result.display.builder.AssetRendererFactoryLookup;
-import com.liferay.portal.search.web.internal.result.display.builder.SearchResultSummaryDisplayBuilder;
 import com.liferay.portal.search.web.internal.result.display.context.SearchResultSummaryDisplayContext;
-import com.liferay.portal.search.web.internal.search.results.constants.SearchResultsPortletKeys;
+import com.liferay.portal.search.web.internal.result.display.context.builder.SearchResultSummaryDisplayContextBuilder;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchRequest;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchResponse;
-import com.liferay.portal.search.web.search.result.SearchResultImageContributor;
+
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 
 /**
  * @author André de Oliveira
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-search-results",
@@ -87,13 +75,14 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 		"com.liferay.portlet.private-session-attributes=false",
 		"com.liferay.portlet.restore-current-view=false",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Search Results",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/search/results/view.jsp",
-		"javax.portlet.name=" + SearchResultsPortletKeys.SEARCH_RESULTS,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user"
+		"jakarta.portlet.display-name=Search Results",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/search/results/view.jsp",
+		"jakarta.portlet.name=" + SearchResultsPortletKeys.SEARCH_RESULTS,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=guest,power-user,user",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
@@ -108,8 +97,13 @@ public class SearchResultsPortlet extends MVCPortlet {
 			portletSharedSearchRequest.search(renderRequest);
 
 		SearchResultsPortletDisplayContext searchResultsPortletDisplayContext =
-			buildDisplayContext(
+			_buildDisplayContext(
 				portletSharedSearchResponse, renderRequest, renderResponse);
+
+		if (searchResultsPortletDisplayContext.isRenderNothing()) {
+			renderRequest.setAttribute(
+				WebKeys.PORTLET_CONFIGURATOR_VISIBILITY, Boolean.TRUE);
+		}
 
 		renderRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT,
@@ -118,26 +112,104 @@ public class SearchResultsPortlet extends MVCPortlet {
 		super.render(renderRequest, renderResponse);
 	}
 
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC
-	)
-	protected void addSearchResultImageContributor(
-		SearchResultImageContributor searchResultImageContributor) {
-
-		_searchResultImageContributors.add(searchResultImageContributor);
+	protected String getCurrentURL(RenderRequest renderRequest) {
+		return _portal.getCurrentURL(renderRequest);
 	}
 
-	protected SearchResultsPortletDisplayContext buildDisplayContext(
+	protected HttpServletRequest getHttpServletRequest(
+		RenderRequest renderRequest) {
+
+		LiferayPortletRequest liferayPortletRequest =
+			_portal.getLiferayPortletRequest(renderRequest);
+
+		return liferayPortletRequest.getHttpServletRequest();
+	}
+
+	protected PortletURL getPortletURL(
+		RenderRequest renderRequest, String paginationStartParameterName) {
+
+		final String urlString = _getURLString(
+			renderRequest, paginationStartParameterName);
+
+		return new NullPortletURL() {
+
+			@Override
+			public String toString() {
+				return urlString;
+			}
+
+		};
+	}
+
+	protected PortletURLFactory getPortletURLFactory(
+		RenderRequest renderRequest, RenderResponse renderResponse) {
+
+		return new PortletURLFactoryImpl(renderRequest, renderResponse);
+	}
+
+	protected boolean isRenderNothing(
+		RenderRequest renderRequest, SearchRequest searchRequest) {
+
+		long assetEntryId = ParamUtil.getLong(renderRequest, "assetEntryId");
+
+		if (assetEntryId != 0) {
+			return false;
+		}
+
+		if ((searchRequest.getQueryString() == null) &&
+			!searchRequest.isEmptySearchEnabled()) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Reference
+	protected AssetEntryLocalService assetEntryLocalService;
+
+	protected AssetRendererFactoryLookup assetRendererFactoryLookup;
+
+	@Reference
+	protected DocumentBuilderFactory documentBuilderFactory;
+
+	@Reference
+	protected FastDateFormatFactory fastDateFormatFactory;
+
+	@Reference
+	protected GroupLocalService groupLocalService;
+
+	@Reference
+	protected IndexerRegistry indexerRegistry;
+
+	@Reference
+	protected Language language;
+
+	@Reference
+	protected ObjectDefinitionLocalService objectDefinitionLocalService;
+
+	@Reference
+	protected PortletSharedSearchRequest portletSharedSearchRequest;
+
+	@Reference
+	protected ResourceActions resourceActions;
+
+	@Reference
+	protected SummaryBuilderFactory summaryBuilderFactory;
+
+	@Reference
+	protected UserLocalService userLocalService;
+
+	private SearchResultsPortletDisplayContext _buildDisplayContext(
 			PortletSharedSearchResponse portletSharedSearchResponse,
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortletException {
 
 		SearchResultsPortletDisplayContext searchResultsPortletDisplayContext =
-			new SearchResultsPortletDisplayContext();
+			_createSearchResultsPortletDisplayContext(renderRequest);
 
 		SearchResultsSummariesHolder searchResultsSummariesHolder =
-			buildSummaries(
+			_buildSummaries(
 				portletSharedSearchResponse, renderRequest, renderResponse);
 
 		List<Document> documents = new ArrayList<>(
@@ -145,44 +217,57 @@ public class SearchResultsPortlet extends MVCPortlet {
 
 		searchResultsPortletDisplayContext.setDocuments(documents);
 
-		Optional<String> keywordsOptional =
-			portletSharedSearchResponse.getKeywordsOptional();
-
-		searchResultsPortletDisplayContext.setKeywords(
-			keywordsOptional.orElse(StringPool.BLANK));
-
 		SearchResultsPortletPreferences searchResultsPortletPreferences =
 			new SearchResultsPortletPreferencesImpl(
 				portletSharedSearchResponse.getPortletPreferences(
 					renderRequest));
 
-		SearchResponse searchResponse = getSearchResponse(
+		SearchResponse searchResponse = _getSearchResponse(
 			portletSharedSearchResponse, searchResultsPortletPreferences);
 
+		SearchRequest searchRequest = searchResponse.getRequest();
+
+		searchResultsPortletDisplayContext.setKeywords(
+			GetterUtil.getString(searchRequest.getQueryString()));
 		searchResultsPortletDisplayContext.setRenderNothing(
-			isRenderNothing(portletSharedSearchResponse, searchResponse));
+			isRenderNothing(renderRequest, searchRequest));
 
 		searchResultsPortletDisplayContext.setSearchContainer(
-			buildSearchContainer(
+			_buildSearchContainer(
 				documents, searchResponse.getTotalHits(),
-				portletSharedSearchResponse.getPaginationStart(),
+				GetterUtil.getInteger(
+					portletSharedSearchResponse.getParameter(
+						searchResultsPortletPreferences.
+							getPaginationStartParameterName(),
+						renderRequest)),
 				searchResultsPortletPreferences.
 					getPaginationStartParameterName(),
-				portletSharedSearchResponse.getPaginationDelta(),
+				GetterUtil.getInteger(
+					portletSharedSearchResponse.getParameter(
+						searchResultsPortletPreferences.
+							getPaginationDeltaParameterName(),
+						renderRequest),
+					searchResultsPortletPreferences.getPaginationDelta()),
 				searchResultsPortletPreferences.
 					getPaginationDeltaParameterName(),
 				renderRequest));
-
 		searchResultsPortletDisplayContext.setSearchResultsSummariesHolder(
 			searchResultsSummariesHolder);
-
+		searchResultsPortletDisplayContext.
+			setSearchResultSummaryDisplayContexts(
+				searchResultsPortletDisplayContext.
+					translateSearchResultSummaryDisplayContexts(documents));
+		searchResultsPortletDisplayContext.setShowEmptyResultMessage(
+			searchResultsPortletPreferences.isShowEmptyResultMessage());
+		searchResultsPortletDisplayContext.setShowPagination(
+			searchResultsPortletPreferences.isShowPagination());
 		searchResultsPortletDisplayContext.setTotalHits(
 			searchResponse.getTotalHits());
 
 		return searchResultsPortletDisplayContext;
 	}
 
-	protected SearchContainer<Document> buildSearchContainer(
+	private SearchContainer<Document> _buildSearchContainer(
 			List<Document> documents, int totalHits, int paginationStart,
 			String paginationStartParameterName, int paginationDelta,
 			String paginationDeltaParameterName, RenderRequest renderRequest)
@@ -205,33 +290,107 @@ public class SearchResultsPortlet extends MVCPortlet {
 			portletURL, headerNames, emptyResultsMessage, cssClass);
 
 		searchContainer.setDeltaParam(paginationDeltaParameterName);
-		searchContainer.setResults(documents);
-		searchContainer.setTotal(totalHits);
+		searchContainer.setResultsAndTotal(() -> documents, totalHits);
 
 		return searchContainer;
 	}
 
-	protected SearchResultsSummariesHolder buildSummaries(
+	private SearchResultsSummariesHolder _buildSummaries(
 			PortletSharedSearchResponse portletSharedSearchResponse,
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortletException {
 
 		try {
-			return doBuildSummaries(
+			return _doBuildSummaries(
 				portletSharedSearchResponse, renderRequest, renderResponse);
 		}
-		catch (PortletException pe) {
-			throw pe;
+		catch (PortletException portletException) {
+			throw portletException;
 		}
-		catch (RuntimeException re) {
-			throw re;
+		catch (RuntimeException runtimeException) {
+			throw runtimeException;
 		}
-		catch (Exception e) {
-			throw new PortletException(e);
+		catch (Exception exception) {
+			throw new PortletException(exception);
 		}
 	}
 
-	protected SearchResultsSummariesHolder doBuildSummaries(
+	private SearchResultSummaryDisplayContext _buildSummary(
+			Document document, RenderRequest renderRequest,
+			RenderResponse renderResponse, ThemeDisplay themeDisplay,
+			PortletURLFactory portletURLFactory,
+			SearchResultsPortletPreferences searchResultsPortletPreferences,
+			SearchResultPreferences searchResultPreferences)
+		throws Exception {
+
+		SearchResultSummaryDisplayContextBuilder
+			searchResultSummaryDisplayContextBuilder =
+				new SearchResultSummaryDisplayContextBuilder();
+
+		searchResultSummaryDisplayContextBuilder.setAssetEntryLocalService(
+			assetEntryLocalService
+		).setAssetRendererFactoryLookup(
+			assetRendererFactoryLookup
+		).setClassNameLocalService(
+			_classNameLocalService
+		).setCurrentURL(
+			getCurrentURL(renderRequest)
+		).setDocument(
+			document
+		).setDocumentBuilderFactory(
+			documentBuilderFactory
+		).setFastDateFormatFactory(
+			fastDateFormatFactory
+		).setGroupLocalService(
+			groupLocalService
+		).setHighlightEnabled(
+			searchResultsPortletPreferences.isHighlightEnabled()
+		).setImageRequested(
+			true
+		).setIndexerRegistry(
+			indexerRegistry
+		).setLanguage(
+			language
+		).setLocale(
+			themeDisplay.getLocale()
+		).setObjectDefinitionLocalService(
+			objectDefinitionLocalService
+		).setPortletURLFactory(
+			portletURLFactory
+		).setRenderRequest(
+			renderRequest
+		).setRenderResponse(
+			renderResponse
+		).setRequest(
+			getHttpServletRequest(renderRequest)
+		).setResourceActions(
+			resourceActions
+		).setSearchResultPreferences(
+			searchResultPreferences
+		).setSummaryBuilderFactory(
+			summaryBuilderFactory
+		).setThemeDisplay(
+			themeDisplay
+		).setUserLocalService(
+			userLocalService
+		);
+
+		return searchResultSummaryDisplayContextBuilder.build();
+	}
+
+	private SearchResultsPortletDisplayContext
+		_createSearchResultsPortletDisplayContext(RenderRequest renderRequest) {
+
+		try {
+			return new SearchResultsPortletDisplayContext(
+				getHttpServletRequest(renderRequest));
+		}
+		catch (ConfigurationException configurationException) {
+			throw new RuntimeException(configurationException);
+		}
+	}
+
+	private SearchResultsSummariesHolder _doBuildSummaries(
 			PortletSharedSearchResponse portletSharedSearchResponse,
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws Exception {
@@ -244,10 +403,7 @@ public class SearchResultsPortlet extends MVCPortlet {
 		ThemeDisplay themeDisplay = portletSharedSearchResponse.getThemeDisplay(
 			renderRequest);
 
-		DocumentFormPermissionChecker documentFormPermissionChecker =
-			new DocumentFormPermissionCheckerImpl(themeDisplay);
-
-		SearchResponse searchResponse = getSearchResponse(
+		SearchResponse searchResponse = _getSearchResponse(
 			portletSharedSearchResponse, searchResultsPortletPreferences);
 
 		List<Document> documents = searchResponse.getDocuments71();
@@ -260,16 +416,19 @@ public class SearchResultsPortlet extends MVCPortlet {
 
 		SearchResultPreferences searchResultPreferences =
 			new SearchResultPreferencesImpl(
-				searchResultsPortletPreferences, documentFormPermissionChecker);
+				searchResultsPortletPreferences,
+				new DocumentFormPermissionCheckerImpl(themeDisplay));
 
 		for (Document document : documents) {
 			SearchResultSummaryDisplayContext
-				searchResultSummaryDisplayContext = doBuildSummary(
+				searchResultSummaryDisplayContext = _buildSummary(
 					document, renderRequest, renderResponse, themeDisplay,
 					portletURLFactory, searchResultsPortletPreferences,
 					searchResultPreferences);
 
-			if (searchResultSummaryDisplayContext != null) {
+			if ((searchResultSummaryDisplayContext != null) &&
+				!searchResultSummaryDisplayContext.isTemporarilyUnavailable()) {
+
 				searchResultsSummariesHolder.put(
 					document, searchResultSummaryDisplayContext);
 			}
@@ -278,179 +437,25 @@ public class SearchResultsPortlet extends MVCPortlet {
 		return searchResultsSummariesHolder;
 	}
 
-	protected SearchResultSummaryDisplayContext doBuildSummary(
-			Document document, RenderRequest renderRequest,
-			RenderResponse renderResponse, ThemeDisplay themeDisplay,
-			PortletURLFactory portletURLFactory,
-			SearchResultsPortletPreferences searchResultsPortletPreferences,
-			SearchResultPreferences searchResultPreferences)
-		throws Exception {
-
-		SearchResultSummaryDisplayBuilder searchResultSummaryDisplayBuilder =
-			new SearchResultSummaryDisplayBuilder();
-
-		searchResultSummaryDisplayBuilder.setAssetEntryLocalService(
-			assetEntryLocalService
-		).setAssetRendererFactoryLookup(
-			assetRendererFactoryLookup
-		).setCurrentURL(
-			getCurrentURL(renderRequest)
-		).setDocument(
-			document
-		).setDocumentBuilderFactory(
-			documentBuilderFactory
-		).setFastDateFormatFactory(
-			fastDateFormatFactory
-		).setHighlightEnabled(
-			searchResultsPortletPreferences.isHighlightEnabled()
-		).setImageRequested(
-			true
-		).setIndexerRegistry(
-			indexerRegistry
-		).setLanguage(
-			language
-		).setLocale(
-			themeDisplay.getLocale()
-		).setPortletURLFactory(
-			portletURLFactory
-		).setRenderRequest(
-			renderRequest
-		).setRenderResponse(
-			renderResponse
-		).setRequest(
-			getHttpServletRequest(renderRequest)
-		).setResourceActions(
-			resourceActions
-		).setSearchResultImageContributorsStream(
-			_searchResultImageContributors.stream()
-		).setSearchResultPreferences(
-			searchResultPreferences
-		).setSummaryBuilderFactory(
-			summaryBuilderFactory
-		).setThemeDisplay(
-			themeDisplay
-		);
-
-		return searchResultSummaryDisplayBuilder.build();
-	}
-
-	protected String getCurrentURL(RenderRequest renderRequest) {
-		return _portal.getCurrentURL(renderRequest);
-	}
-
-	protected HttpServletRequest getHttpServletRequest(
-		RenderRequest renderRequest) {
-
-		LiferayPortletRequest liferayPortletRequest =
-			_portal.getLiferayPortletRequest(renderRequest);
-
-		return liferayPortletRequest.getHttpServletRequest();
-	}
-
-	protected PortletURL getPortletURL(
-		RenderRequest renderRequest, String paginationStartParameterName) {
-
-		final String urlString = getURLString(
-			renderRequest, paginationStartParameterName);
-
-		return new NullPortletURL() {
-
-			@Override
-			public String toString() {
-				return urlString;
-			}
-
-		};
-	}
-
-	protected PortletURLFactory getPortletURLFactory(
-		RenderRequest renderRequest, RenderResponse renderResponse) {
-
-		return new PortletURLFactoryImpl(renderRequest, renderResponse);
-	}
-
-	protected SearchResponse getSearchResponse(
+	private SearchResponse _getSearchResponse(
 		PortletSharedSearchResponse portletSharedSearchResponse,
 		SearchResultsPortletPreferences searchResultsPortletPreferences) {
 
 		return portletSharedSearchResponse.getFederatedSearchResponse(
-			searchResultsPortletPreferences.getFederatedSearchKeyOptional());
+			searchResultsPortletPreferences.getFederatedSearchKey());
 	}
 
-	protected String getURLString(
+	private String _getURLString(
 		RenderRequest renderRequest, String paginationStartParameterName) {
 
-		String urlString = portletSharedRequestHelper.getCompleteURL(
-			renderRequest);
-
-		urlString = http.removeParameter(
-			urlString, paginationStartParameterName);
-
-		return urlString;
-	}
-
-	protected boolean isRenderNothing(
-		PortletSharedSearchResponse portletSharedSearchResponse,
-		SearchResponse searchResponse) {
-
-		Optional<String> keywordsOptional =
-			portletSharedSearchResponse.getKeywordsOptional();
-
-		if (keywordsOptional.isPresent()) {
-			return false;
-		}
-
-		SearchRequest searchRequest = searchResponse.getRequest();
-
-		if (searchRequest.isEmptySearchEnabled()) {
-			return false;
-		}
-
-		return true;
-	}
-
-	protected void removeSearchResultImageContributor(
-		SearchResultImageContributor searchResultImageContributor) {
-
-		_searchResultImageContributors.remove(searchResultImageContributor);
+		return HttpComponentsUtil.removeParameter(
+			_portal.getCurrentURL(renderRequest), paginationStartParameterName);
 	}
 
 	@Reference
-	protected AssetEntryLocalService assetEntryLocalService;
-
-	protected AssetRendererFactoryLookup assetRendererFactoryLookup;
-
-	@Reference
-	protected DocumentBuilderFactory documentBuilderFactory;
-
-	@Reference
-	protected FastDateFormatFactory fastDateFormatFactory;
-
-	@Reference
-	protected Http http;
-
-	@Reference
-	protected IndexerRegistry indexerRegistry;
-
-	@Reference
-	protected Language language;
-
-	@Reference
-	protected PortletSharedRequestHelper portletSharedRequestHelper;
-
-	@Reference
-	protected PortletSharedSearchRequest portletSharedSearchRequest;
-
-	@Reference
-	protected ResourceActions resourceActions;
-
-	@Reference
-	protected SummaryBuilderFactory summaryBuilderFactory;
+	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private Portal _portal;
-
-	private final Set<SearchResultImageContributor>
-		_searchResultImageContributors = new HashSet<>();
 
 }

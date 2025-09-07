@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -54,8 +45,8 @@ public class ListWrapper<E> implements List<E> {
 	}
 
 	@Override
-	public boolean contains(Object o) {
-		return _list.contains(o);
+	public boolean contains(Object object) {
+		return _list.contains(object);
 	}
 
 	@Override
@@ -69,8 +60,8 @@ public class ListWrapper<E> implements List<E> {
 	}
 
 	@Override
-	public int indexOf(Object o) {
-		return _list.indexOf(o);
+	public int indexOf(Object object) {
+		return _list.indexOf(object);
 	}
 
 	@Override
@@ -84,8 +75,8 @@ public class ListWrapper<E> implements List<E> {
 	}
 
 	@Override
-	public int lastIndexOf(Object o) {
-		return _list.lastIndexOf(o);
+	public int lastIndexOf(Object object) {
+		return _list.lastIndexOf(object);
 	}
 
 	@Override
@@ -104,8 +95,8 @@ public class ListWrapper<E> implements List<E> {
 	}
 
 	@Override
-	public boolean remove(Object o) {
-		return _list.remove(o);
+	public boolean remove(Object object) {
+		return _list.remove(object);
 	}
 
 	@Override

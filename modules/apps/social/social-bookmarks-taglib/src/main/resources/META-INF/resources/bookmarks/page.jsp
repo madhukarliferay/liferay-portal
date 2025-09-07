@@ -1,43 +1,29 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/bookmarks/init.jsp" %>
 
-<%
-String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_social_bookmarks_page") + StringPool.UNDERLINE;
-
-String dropdownMenuComponentId = randomNamespace + "socialBookmarksDropdownMenu";
-%>
-
 <liferay-util:html-top
-	outputKey="social_bookmarks_css"
+	outputKey="com.liferay.social.bookmarks.taglib#/bookmarks/page.jsp"
 >
-	<link href="<%= PortalUtil.getStaticResourceURL(request, application.getContextPath() + "/css/main.css") %>" rel="stylesheet" type="text/css" />
+	<aui:link href='<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathProxy() + application.getContextPath() + "/css/main.css") %>' rel="stylesheet" type="text/css" />
 </liferay-util:html-top>
 
-<div class="taglib-social-bookmarks" id="<%= randomNamespace %>socialBookmarks">
+<div class="taglib-social-bookmarks" id="<%= PortalUtil.generateRandomKey(request, "taglib_ui_social_bookmarks_page") + StringPool.UNDERLINE %>socialBookmarks">
 	<c:choose>
 		<c:when test='<%= displayStyle.equals("menu") || BrowserSnifferUtil.isMobile(request) %>'>
 			<clay:dropdown-menu
-				componentId="<%= dropdownMenuComponentId %>"
+				borderless="<%= true %>"
+				displayType="secondary"
 				dropdownItems="<%= SocialBookmarksTagUtil.getDropdownItems(request.getLocale(), types, className, classPK, title, url) %>"
 				icon="share"
-				label='<%= BrowserSnifferUtil.isMobile(request) ? null : LanguageUtil.get(request, "share") %>'
-				style="secondary"
-				triggerCssClasses="btn-outline-borderless btn-outline-secondary btn-sm"
+				label='<%= BrowserSnifferUtil.isMobile(request) ? null : "share" %>'
+				propsTransformer="{SocialBookmarksDropdownPropsTransformer} from social-bookmarks-taglib"
+				small="<%= true %>"
 			/>
 		</c:when>
 		<c:otherwise>
@@ -46,11 +32,23 @@ String dropdownMenuComponentId = randomNamespace + "socialBookmarksDropdownMenu"
 				<%
 				for (int i = 0; i < Math.min(types.length, maxInlineItems); i++) {
 					SocialBookmark socialBookmark = SocialBookmarksRegistryUtil.getSocialBookmark(types[i]);
-					String styleClass = "taglib-social-bookmark-" + types[i];
 				%>
 
-					<li class="taglib-social-bookmark <%= styleClass %>" onClick="<%= "return " + SocialBookmarksTagUtil.getClickJSCall(className, classPK, types[i], socialBookmark.getPostURL(title, url), url) %>">
+					<li class="taglib-social-bookmark taglib-social-bookmark-<%= types[i] %>">
 						<liferay-social-bookmarks:bookmark
+							additionalProps='<%=
+								HashMapBuilder.<String, Object>put(
+									"className", HtmlUtil.escapeJS(className)
+								).put(
+									"classPK", String.valueOf(classPK)
+								).put(
+									"postURL", socialBookmark.getPostURL(title, url)
+								).put(
+									"type", types[i]
+								).put(
+									"url", HtmlUtil.escapeJS(url)
+								).build()
+							%>'
 							displayStyle="<%= displayStyle %>"
 							target="<%= target %>"
 							title="<%= title %>"
@@ -65,89 +63,23 @@ String dropdownMenuComponentId = randomNamespace + "socialBookmarksDropdownMenu"
 
 			</ul>
 
-			<%
-			if (types.length > maxInlineItems) {
-			%>
+			<c:if test="<%= types.length > maxInlineItems %>">
 
 				<%
 				String[] remainingTypes = ArrayUtil.subset(types, maxInlineItems, types.length);
 				%>
 
 				<clay:dropdown-menu
-					componentId="<%= dropdownMenuComponentId %>"
+					borderless="<%= true %>"
+					displayType="secondary"
 					dropdownItems="<%= SocialBookmarksTagUtil.getDropdownItems(request.getLocale(), remainingTypes, className, classPK, title, url) %>"
 					icon="share"
-					style="secondary"
-					triggerCssClasses="btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-					triggerTitle='<%= LanguageUtil.get(request, "share") %>'
+					monospaced="<%= true %>"
+					propsTransformer="{SocialBookmarksDropdownPropsTransformer} from social-bookmarks-taglib"
+					small="<%= true %>"
+					title="share"
 				/>
-
-			<%
-			}
-			%>
-
+			</c:if>
 		</c:otherwise>
 	</c:choose>
-
-	<liferay-util:html-bottom
-		outputKey="social_bookmarks"
-	>
-		<aui:script>
-			function socialBookmarks_handleItemClick(
-				event,
-				className,
-				classPK,
-				type,
-				postURL,
-				url
-			) {
-				var SHARE_WINDOW_HEIGHT = 436;
-				var SHARE_WINDOW_WIDTH = 626;
-
-				var shareWindowFeatures = [
-					'left=' + (window.innerWidth / 2 - SHARE_WINDOW_WIDTH / 2),
-					'height=' + SHARE_WINDOW_HEIGHT,
-					'toolbar=0',
-					'top=' + (window.innerHeight / 2 - SHARE_WINDOW_HEIGHT / 2),
-					'status=0',
-					'width=' + SHARE_WINDOW_WIDTH
-				];
-
-				event.preventDefault();
-				event.stopPropagation();
-
-				window.open(postURL, null, shareWindowFeatures.join()).focus();
-
-				Liferay.fire('socialBookmarks:share', {
-					className: className,
-					classPK: classPK,
-					type: type,
-					url: url
-				});
-
-				return false;
-			}
-		</aui:script>
-	</liferay-util:html-bottom>
-
-	<aui:script sandbox="<%= true %>">
-		Liferay.componentReady('<%= dropdownMenuComponentId %>').then(function(
-			dropdownMenu
-		) {
-			dropdownMenu.on(['itemClicked'], function(event) {
-				event.preventDefault();
-
-				var data = event.data.item.data;
-
-				socialBookmarks_handleItemClick(
-					event,
-					data.className,
-					parseInt(data.classPK),
-					data.type,
-					data.postURL,
-					data.url
-				);
-			});
-		});
-	</aui:script>
 </div>

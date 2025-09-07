@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults.internal;
 
-import com.liferay.gradle.plugins.BasePortalToolDefaultsPlugin;
+import com.liferay.gradle.plugins.BaseDefaultsPlugin;
 import com.liferay.gradle.plugins.defaults.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.util.PortalTools;
 import com.liferay.gradle.plugins.whip.WhipExtension;
@@ -31,49 +22,22 @@ import org.gradle.api.tasks.testing.Test;
 /**
  * @author Andrea Di Giorgi
  */
-public class WhipDefaultsPlugin
-	extends BasePortalToolDefaultsPlugin<WhipPlugin> {
+public class WhipDefaultsPlugin extends BaseDefaultsPlugin<WhipPlugin> {
 
 	public static final Plugin<Project> INSTANCE = new WhipDefaultsPlugin();
 
 	@Override
-	protected void addPortalToolDependencies(Project project) {
+	protected void applyPluginDefaults(Project project, WhipPlugin whipPlugin) {
+
+		// Extensions
+
 		WhipExtension whipExtension = GradleUtil.getExtension(
 			project, WhipExtension.class);
 
-		String version = PortalTools.getVersion(project, getPortalToolName());
+		_configureExtensionWhip(project, whipExtension);
 
-		if (Validator.isNotNull(version)) {
-			whipExtension.setVersion(version);
-		}
-	}
+		// Other
 
-	@Override
-	protected void configureDefaults(Project project, WhipPlugin whipPlugin) {
-		super.configureDefaults(project, whipPlugin);
-
-		_configureTasksTest(project);
-	}
-
-	@Override
-	protected Class<WhipPlugin> getPluginClass() {
-		return WhipPlugin.class;
-	}
-
-	@Override
-	protected String getPortalToolConfigurationName() {
-		return WhipPlugin.CONFIGURATION_NAME;
-	}
-
-	@Override
-	protected String getPortalToolName() {
-		return _PORTAL_TOOL_NAME;
-	}
-
-	private WhipDefaultsPlugin() {
-	}
-
-	private void _configureTasksTest(Project project) {
 		TaskContainer taskContainer = project.getTasks();
 
 		taskContainer.withType(
@@ -86,6 +50,24 @@ public class WhipDefaultsPlugin
 				}
 
 			});
+	}
+
+	@Override
+	protected Class<WhipPlugin> getPluginClass() {
+		return WhipPlugin.class;
+	}
+
+	private WhipDefaultsPlugin() {
+	}
+
+	private void _configureExtensionWhip(
+		Project project, WhipExtension whipExtension) {
+
+		String version = PortalTools.getVersion(project, _PORTAL_TOOL_NAME);
+
+		if (Validator.isNotNull(version)) {
+			whipExtension.setVersion(version);
+		}
 	}
 
 	private void _configureTaskTest(Test test) {

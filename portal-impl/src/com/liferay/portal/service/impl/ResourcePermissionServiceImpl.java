@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.service.base.ResourcePermissionServiceBaseImpl;
 
 import java.util.Map;
@@ -78,7 +71,7 @@ public class ResourcePermissionServiceImpl
 			String primKey, long roleId, String actionId)
 		throws PortalException {
 
-		permissionService.checkPermission(
+		_permissionService.checkPermission(
 			groupId, Role.class.getName(), roleId);
 
 		resourcePermissionLocalService.addResourcePermission(
@@ -111,7 +104,7 @@ public class ResourcePermissionServiceImpl
 			String primKey, long roleId, String actionId)
 		throws PortalException {
 
-		permissionService.checkPermission(
+		_permissionService.checkPermission(
 			groupId, Role.class.getName(), roleId);
 
 		resourcePermissionLocalService.removeResourcePermission(
@@ -138,7 +131,7 @@ public class ResourcePermissionServiceImpl
 			String actionId)
 		throws PortalException {
 
-		permissionService.checkPermission(
+		_permissionService.checkPermission(
 			groupId, Role.class.getName(), roleId);
 
 		resourcePermissionLocalService.removeResourcePermissions(
@@ -175,7 +168,7 @@ public class ResourcePermissionServiceImpl
 			long roleId, String[] actionIds)
 		throws PortalException {
 
-		permissionService.checkPermission(groupId, name, primKey);
+		_permissionService.checkPermission(groupId, name, primKey);
 
 		resourcePermissionLocalService.setResourcePermissions(
 			companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
@@ -211,11 +204,14 @@ public class ResourcePermissionServiceImpl
 			Map<Long, String[]> roleIdsToActionIds)
 		throws PortalException {
 
-		permissionService.checkPermission(groupId, name, primKey);
+		_permissionService.checkPermission(groupId, name, primKey);
 
 		resourcePermissionLocalService.setResourcePermissions(
 			companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
 			roleIdsToActionIds);
 	}
+
+	@BeanReference(type = PermissionService.class)
+	private PermissionService _permissionService;
 
 }

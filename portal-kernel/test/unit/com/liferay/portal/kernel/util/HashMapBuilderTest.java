@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -34,15 +28,15 @@ public class HashMapBuilderTest {
 		map1.put("Three", 3);
 		map1.put("Two", 2);
 
-		Map<String, Integer> map2 = HashMapBuilder.put(
-			"One", 1
-		).put(
-			"Three", 3
-		).put(
-			"Two", 2
-		).build();
-
-		Assert.assertEquals(map1, map2);
+		Assert.assertEquals(
+			map1,
+			HashMapBuilder.put(
+				"One", 1
+			).put(
+				"Three", 3
+			).put(
+				"Two", 2
+			).build());
 	}
 
 	@Test
@@ -61,20 +55,90 @@ public class HashMapBuilderTest {
 	}
 
 	@Test
+	public void testPutAll() {
+		Map<String, Integer> map = new HashMap<>();
+
+		map.put("One", 1);
+		map.put("Three", 3);
+		map.put("Two", 2);
+
+		Assert.assertEquals(
+			map,
+			HashMapBuilder.putAll(
+				map
+			).build());
+	}
+
+	@Test
+	public void testPutAllAfterPut() {
+		Map<String, Integer> map1 = new HashMap<>();
+
+		map1.put("One", 1);
+		map1.put("Three", 3);
+		map1.put("Two", 2);
+
+		HashMap<String, Integer> map2 = HashMapBuilder.put(
+			"Four", 4
+		).putAll(
+			map1
+		).build();
+
+		Assert.assertEquals(Integer.valueOf(4), map2.get("Four"));
+
+		_assertContainsAll(map1, map2);
+	}
+
+	@Test
+	public void testPutAllDictionary() {
+		Dictionary<String, Integer> dictionary = new Hashtable<>();
+
+		dictionary.put("One", 1);
+		dictionary.put("Three", 3);
+		dictionary.put("Two", 2);
+
+		Map<String, Integer> map = HashMapBuilder.putAll(
+			dictionary
+		).build();
+
+		Assert.assertEquals(map.size(), dictionary.size());
+
+		_assertContainsAll(map, dictionary);
+	}
+
+	@Test
+	public void testPutAllDictionaryAfterPut() {
+		Dictionary<String, Integer> dictionary = new Hashtable<>();
+
+		dictionary.put("One", 1);
+		dictionary.put("Three", 3);
+		dictionary.put("Two", 2);
+
+		HashMap<String, Integer> map = HashMapBuilder.put(
+			"Four", 4
+		).putAll(
+			dictionary
+		).build();
+
+		Assert.assertEquals(Integer.valueOf(4), map.get("Four"));
+
+		_assertContainsAll(map, dictionary);
+	}
+
+	@Test
 	public void testUnsafeFunction() {
 		List<String> list = ListUtil.fromArray("hello  ", "  world");
 
 		Map<String, String> map1 = new HashMap<>();
 
 		for (String s : list) {
-			map1.put(s, StringUtil.trim(s.toLowerCase()));
+			map1.put(s, StringUtil.trim(StringUtil.toLowerCase(s)));
 		}
 
-		HashMap<String, String> map2 = HashMapBuilder.put(
-			list, s -> StringUtil.trim(s.toLowerCase())
-		).build();
-
-		Assert.assertEquals(map1, map2);
+		Assert.assertEquals(
+			map1,
+			HashMapBuilder.put(
+				list, s -> StringUtil.trim(StringUtil.toLowerCase(s))
+			).build());
 	}
 
 	@Test
@@ -85,37 +149,56 @@ public class HashMapBuilderTest {
 		_testUnsafeSupplierValue(false, 2);
 		_testUnsafeSupplierValue(true, 3);
 
-		Map<String, Integer> map1 = new HashMap<>();
+		Map<String, Integer> map = new HashMap<>();
 
 		String s1 = "Hello World";
 
 		String[] array1 = StringUtil.split(s1, ' ');
 
-		map1.put(s1, array1.length);
+		map.put(s1, array1.length);
 
 		String s2 = "Hello World Hello World";
 
 		String[] array2 = StringUtil.split(s2, ' ');
 
-		map1.put(s2, array2.length);
+		map.put(s2, array2.length);
 
-		Map<String, Integer> map2 = HashMapBuilder.put(
-			s1,
-			() -> {
-				String[] array = StringUtil.split(s1, ' ');
+		Assert.assertEquals(
+			map,
+			HashMapBuilder.put(
+				s1,
+				() -> {
+					String[] array = StringUtil.split(s1, ' ');
 
-				return array.length;
-			}
-		).put(
-			s2,
-			() -> {
-				String[] array = StringUtil.split(s2, ' ');
+					return array.length;
+				}
+			).put(
+				s2,
+				() -> {
+					String[] array = StringUtil.split(s2, ' ');
 
-				return array.length;
-			}
-		).build();
+					return array.length;
+				}
+			).build());
+	}
 
-		Assert.assertEquals(map1, map2);
+	private <K, V> void _assertContainsAll(
+		Map<K, V> map, Dictionary<K, V> dictionary) {
+
+		for (Enumeration<? extends K> enumeration = dictionary.keys();
+			 enumeration.hasMoreElements();) {
+
+			K key = enumeration.nextElement();
+
+			Assert.assertEquals(map.get(key), dictionary.get(key));
+		}
+	}
+
+	private <K, V> void _assertContainsAll(Map<K, V> map1, Map<K, V> map2) {
+		for (Map.Entry<K, V> entry : map1.entrySet()) {
+			Assert.assertEquals(
+				map2.toString(), entry.getValue(), map2.get(entry.getKey()));
+		}
 	}
 
 	private void _testUnsafeSupplierKey(

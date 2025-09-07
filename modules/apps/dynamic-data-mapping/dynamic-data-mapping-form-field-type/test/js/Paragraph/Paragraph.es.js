@@ -1,110 +1,159 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import Paragraph from '../../../src/main/resources/META-INF/resources/Paragraph/Paragraph.es';
+import {act, cleanup, render} from '@testing-library/react';
+import {PageProvider} from 'data-engine-js-components-web';
+import React from 'react';
 
-let component;
+import Paragraph from '../../../src/main/resources/META-INF/resources/js/Paragraph/Paragraph.es';
+
 const spritemap = 'icons.svg';
 
 const defaultParagraphConfig = {
 	name: 'textField',
-	spritemap
+	spritemap,
 };
 
+const ParagraphWithProvider = (props) => (
+	<PageProvider value={{editingLanguageId: 'en_US'}}>
+		<Paragraph {...props} />
+	</PageProvider>
+);
+
 describe('Field Paragraph', () => {
-	afterEach(() => {
-		if (component) {
-			component.dispose();
-		}
+
+	// eslint-disable-next-line no-console
+	const originalWarn = console.warn;
+
+	beforeAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = (...args) => {
+			if (/DataProvider: Trying/.test(args[0])) {
+				return;
+			}
+			originalWarn.call(console, ...args);
+		};
+	});
+
+	afterAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = originalWarn;
+	});
+
+	afterEach(cleanup);
+
+	beforeEach(() => {
+		jest.useFakeTimers();
+		fetch.mockResponseOnce(JSON.stringify({}));
 	});
 
 	it('is readOnly', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			readOnly: true
+		const {container} = render(
+			<ParagraphWithProvider {...defaultParagraphConfig} readOnly />
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('has an id', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			id: 'ID'
+		const {container} = render(
+			<ParagraphWithProvider {...defaultParagraphConfig} id="Id" />
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('has a label', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			label: 'label'
+		const {container} = render(
+			<ParagraphWithProvider {...defaultParagraphConfig} label="label" />
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('has a placeholder', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			placeholder: 'Placeholder'
+		const {container} = render(
+			<ParagraphWithProvider
+				{...defaultParagraphConfig}
+				placeholder="Placeholder"
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('is not required', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			required: false
+		const {container} = render(
+			<ParagraphWithProvider
+				{...defaultParagraphConfig}
+				required={false}
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('renders Label if showLabel is true', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			label: 'text',
-			showLabel: true
+		const {container} = render(
+			<ParagraphWithProvider
+				{...defaultParagraphConfig}
+				label="text"
+				showLabel
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
-	});
-
-	it('has a spritemap', () => {
-		component = new Paragraph(defaultParagraphConfig);
-
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('has a value', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			value: 'value'
+		const {container} = render(
+			<ParagraphWithProvider {...defaultParagraphConfig} value="value" />
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 
 	it('has a key', () => {
-		component = new Paragraph({
-			...defaultParagraphConfig,
-			key: 'key'
+		const {container} = render(
+			<ParagraphWithProvider {...defaultParagraphConfig} key="key" />
+		);
+
+		act(() => {
+			jest.runAllTimers();
 		});
 
-		expect(component).toMatchSnapshot();
+		expect(container).toMatchSnapshot();
 	});
 });

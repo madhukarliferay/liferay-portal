@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link UserTrackerLocalService}.
@@ -25,22 +18,21 @@ public class UserTrackerLocalServiceWrapper
 	implements ServiceWrapper<UserTrackerLocalService>,
 			   UserTrackerLocalService {
 
+	public UserTrackerLocalServiceWrapper() {
+		this(null);
+	}
+
 	public UserTrackerLocalServiceWrapper(
 		UserTrackerLocalService userTrackerLocalService) {
 
 		_userTrackerLocalService = userTrackerLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link UserTrackerLocalServiceUtil} to access the user tracker local service. Add custom service methods to <code>com.liferay.portal.service.impl.UserTrackerLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.UserTracker addUserTracker(
 		long companyId, long userId, java.util.Date modifiedDate,
-		java.lang.String sessionId, java.lang.String remoteAddr,
-		java.lang.String remoteHost, java.lang.String userAgent,
+		String sessionId, String remoteAddr, String remoteHost,
+		String userAgent,
 		java.util.List<com.liferay.portal.kernel.model.UserTrackerPath>
 			userTrackerPaths) {
 
@@ -52,6 +44,10 @@ public class UserTrackerLocalServiceWrapper
 	/**
 	 * Adds the user tracker to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTracker the user tracker
 	 * @return the user tracker that was added
 	 */
@@ -60,6 +56,17 @@ public class UserTrackerLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserTracker userTracker) {
 
 		return _userTrackerLocalService.addUserTracker(userTracker);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _userTrackerLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -89,6 +96,10 @@ public class UserTrackerLocalServiceWrapper
 	/**
 	 * Deletes the user tracker with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTrackerId the primary key of the user tracker
 	 * @return the user tracker that was removed
 	 * @throws PortalException if a user tracker with the primary key could not be found
@@ -104,6 +115,10 @@ public class UserTrackerLocalServiceWrapper
 	/**
 	 * Deletes the user tracker from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTracker the user tracker
 	 * @return the user tracker that was removed
 	 */
@@ -112,6 +127,18 @@ public class UserTrackerLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserTracker userTracker) {
 
 		return _userTrackerLocalService.deleteUserTracker(userTracker);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _userTrackerLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _userTrackerLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -231,10 +258,13 @@ public class UserTrackerLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _userTrackerLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -296,6 +326,10 @@ public class UserTrackerLocalServiceWrapper
 	/**
 	 * Updates the user tracker in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTracker the user tracker
 	 * @return the user tracker that was updated
 	 */
@@ -304,6 +338,11 @@ public class UserTrackerLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserTracker userTracker) {
 
 		return _userTrackerLocalService.updateUserTracker(userTracker);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _userTrackerLocalService.getBasePersistence();
 	}
 
 	@Override

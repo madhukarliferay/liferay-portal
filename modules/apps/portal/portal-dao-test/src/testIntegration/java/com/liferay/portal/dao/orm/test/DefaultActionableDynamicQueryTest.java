@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.test;
@@ -56,7 +47,7 @@ public class DefaultActionableDynamicQueryTest {
 		Assert.assertTrue(
 			expectedClassNames.toString(), expectedClassNames.size() > 1);
 
-		expectedClassNames.sort(_descClassNameIdComparator);
+		expectedClassNames.sort(_descClassNameIdOrderByComparator);
 
 		List<ClassName> actualClassNames = new ArrayList<>(
 			expectedClassNames.size());
@@ -72,13 +63,10 @@ public class DefaultActionableDynamicQueryTest {
 
 				dynamicQuery.add(property.le(className.getClassNameId()));
 			});
-
 		actionableDynamicQuery.setAddOrderCriteriaMethod(
 			dynamicQuery -> OrderFactoryUtil.addOrderByComparator(
-				dynamicQuery, _descClassNameIdComparator));
-
+				dynamicQuery, _descClassNameIdOrderByComparator));
 		actionableDynamicQuery.setInterval(1);
-
 		actionableDynamicQuery.setPerformActionMethod(
 			(ActionableDynamicQuery.PerformActionMethod<ClassName>)
 				actualClassNames::add);
@@ -89,13 +77,13 @@ public class DefaultActionableDynamicQueryTest {
 
 		List<ClassName> sortedClassNames = new ArrayList<>(actualClassNames);
 
-		sortedClassNames.sort(_descClassNameIdComparator);
+		sortedClassNames.sort(_descClassNameIdOrderByComparator);
 
 		Assert.assertEquals(sortedClassNames, actualClassNames);
 	}
 
 	private static final OrderByComparator<ClassName>
-		_descClassNameIdComparator = new OrderByComparator<ClassName>() {
+		_descClassNameIdOrderByComparator = new OrderByComparator<ClassName>() {
 
 			@Override
 			public int compare(ClassName className1, ClassName className2) {

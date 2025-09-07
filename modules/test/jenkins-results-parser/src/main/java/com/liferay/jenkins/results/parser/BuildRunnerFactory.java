@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -24,22 +15,34 @@ import java.util.regex.Pattern;
  */
 public class BuildRunnerFactory {
 
-	public static BuildRunner<?, ?> newBuildRunner(BuildData buildData) {
+	public static BuildRunner<?> newBuildRunner(BuildData buildData) {
 		String jobName = buildData.getJobName();
 
-		BuildRunner<?, ?> buildRunner = null;
+		BuildRunner<?> buildRunner = null;
+
+		if (jobName.equals("generate-reports")) {
+			buildRunner = new GenerateReportsBuildRunner(buildData);
+		}
+
+		if (jobName.equals("generate-reports-controller")) {
+			buildRunner = new GenerateReportsControllerBuildRunner(buildData);
+		}
 
 		if (jobName.equals("root-cause-analysis-tool")) {
 			buildRunner = new RootCauseAnalysisToolTopLevelBuildRunner(
 				(PortalTopLevelBuildData)buildData);
 		}
 
-		if (jobName.contains("-batch")) {
-			buildRunner = new DefaultPortalBatchBuildRunner(
+		if ((buildRunner == null) &&
+			jobName.equals("root-cause-analysis-tool-batch")) {
+
+			buildRunner = new RootCauseAnalysisBatchBuildRunner(
 				(PortalBatchBuildData)buildData);
 		}
 
-		if (jobName.startsWith("test-portal-testsuite-upstream-controller(")) {
+		if ((buildRunner == null) &&
+			jobName.startsWith("test-portal-testsuite-upstream-controller(")) {
+
 			Matcher matcher = _jobNamePattern.matcher(jobName);
 
 			if (matcher.find() && (matcher.group("testSuiteName") != null)) {
@@ -53,11 +56,44 @@ public class BuildRunnerFactory {
 			}
 		}
 
+		if ((buildRunner == null) &&
+			jobName.startsWith("test-portal-upstream-controller(")) {
+
+			buildRunner = new PortalUpstreamControllerSingleSuiteBuildRunner(
+				(PortalTestSuiteUpstreamControllerBuildData)buildData);
+		}
+
+		if ((buildRunner == null) && jobName.equals("test-poshi-release")) {
+			buildRunner = new PoshiReleasePortalTopLevelBuildRunner(
+				(PortalTopLevelBuildData)buildData);
+		}
+
+		if ((buildRunner == null) &&
+			(jobName.startsWith(
+				"test-qa-websites-functional-daily-controller") ||
+			 jobName.startsWith(
+				 "test-qa-websites-functional-weekly-controller"))) {
+
+			buildRunner = new QAWebsitesControllerBuildRunner(buildData);
+		}
+
+		if ((buildRunner == null) &&
+			jobName.startsWith("test-results-consistency-report-controller")) {
+
+			buildRunner = new TestResultsConsistencyReportControllerBuildRunner(
+				(BaseBuildData)buildData);
+		}
+
+		if ((buildRunner == null) && jobName.contains("-batch")) {
+			buildRunner = new DefaultPortalBatchBuildRunner(
+				(PortalBatchBuildData)buildData);
+		}
+
 		if (buildRunner == null) {
 			throw new RuntimeException("Invalid build data " + buildData);
 		}
 
-		return (BuildRunner<?, ?>)Proxy.newProxyInstance(
+		return (BuildRunner<?>)Proxy.newProxyInstance(
 			BuildRunner.class.getClassLoader(),
 			new Class<?>[] {BuildRunner.class}, new MethodLogger(buildRunner));
 	}

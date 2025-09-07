@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.exportimport.data.handler.test;
@@ -31,7 +22,6 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -71,35 +61,29 @@ public class JournalPortletDataHandlerTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		CompanyThreadLocal.setCompanyId(TestPropsValues.getCompanyId());
-
-		PortalPreferences portalPreferenceces =
+		PortalPreferences portalPreferences =
 			PortletPreferencesFactoryUtil.getPortalPreferences(
 				TestPropsValues.getUserId(), true);
 
 		_originalPortalPreferencesXML = PortletPreferencesFactoryUtil.toXML(
-			portalPreferenceces);
+			portalPreferences);
 
-		portalPreferenceces.setValue(
-			"", "publishToLiveByDefaultEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "publishToLiveByDefaultEnabled", "true");
+		portalPreferences.setValue(
 			"", "versionHistoryByDefaultEnabled", "true");
-		portalPreferenceces.setValue("", "articleCommentsEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "articleCommentsEnabled", "true");
+		portalPreferences.setValue(
 			"", "expireAllArticleVersionsEnabled", "true");
-		portalPreferenceces.setValue("", "folderIconCheckCountEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "folderIconCheckCountEnabled", "true");
+		portalPreferences.setValue(
 			"", "indexAllArticleVersionsEnabled", "true");
-		portalPreferenceces.setValue(
-			"", "databaseContentKeywordSearchEnabled", "true");
-		portalPreferenceces.setValue("", "journalArticleStorageType", "json");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue(
 			"", "journalArticlePageBreakToken", "@page_break@");
 
 		PortalPreferencesLocalServiceUtil.updatePreferences(
 			TestPropsValues.getCompanyId(),
 			PortletKeys.PREFS_OWNER_TYPE_COMPANY,
-			PortletPreferencesFactoryUtil.toXML(portalPreferenceces));
+			PortletPreferencesFactoryUtil.toXML(portalPreferences));
 	}
 
 	@After
@@ -148,7 +132,7 @@ public class JournalPortletDataHandlerTest
 
 	@Override
 	protected void addStagedModels() throws Exception {
-		Layout layout = LayoutTestUtil.addLayout(stagingGroup);
+		Layout layout = LayoutTestUtil.addTypePortletLayout(stagingGroup);
 
 		JournalFolder folder = JournalTestUtil.addFolder(
 			stagingGroup.getGroupId(), RandomTestUtil.randomString());
@@ -175,7 +159,7 @@ public class JournalPortletDataHandlerTest
 
 		JournalTestUtil.addFeed(
 			stagingGroup.getGroupId(), layout.getPlid(),
-			RandomTestUtil.randomString(), ddmStructure.getStructureKey(),
+			RandomTestUtil.randomString(), ddmStructure.getStructureId(),
 			ddmTemplate.getTemplateKey(), rendererDDMTemplate.getTemplateKey());
 	}
 
@@ -184,7 +168,7 @@ public class JournalPortletDataHandlerTest
 		return JournalPortletKeys.JOURNAL;
 	}
 
-	@Inject(filter = "javax.portlet.name=" + JournalPortletKeys.JOURNAL)
+	@Inject(filter = "jakarta.portlet.name=" + JournalPortletKeys.JOURNAL)
 	private PortletDataHandler _journalPortletDataHandler;
 
 	private String _originalPortalPreferencesXML;

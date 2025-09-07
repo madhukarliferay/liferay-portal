@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter;
 
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchClientResolver;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchFixture;
 import com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.snapshot.SnapshotRequestExecutorFixture;
@@ -33,6 +25,7 @@ import com.liferay.portal.search.engine.adapter.snapshot.SnapshotRepositoryDetai
 import com.liferay.portal.search.engine.adapter.snapshot.SnapshotRequestExecutor;
 import com.liferay.portal.search.engine.adapter.snapshot.SnapshotState;
 import com.liferay.portal.search.test.util.IdempotentRetryAssert;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.IOException;
 
@@ -44,14 +37,14 @@ import org.elasticsearch.action.admin.cluster.repositories.get.GetRepositoriesRe
 import org.elasticsearch.action.admin.cluster.repositories.get.GetRepositoriesResponse;
 import org.elasticsearch.action.admin.cluster.repositories.put.PutRepositoryRequest;
 import org.elasticsearch.action.admin.cluster.snapshots.get.GetSnapshotsResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.SnapshotClient;
-import org.elasticsearch.cluster.metadata.RepositoryMetaData;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.cluster.metadata.RepositoryMetadata;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.repositories.fs.FsRepository;
 import org.elasticsearch.snapshots.SnapshotInfo;
@@ -61,12 +54,17 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * @author Michael C. Han
  */
 public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
+
+	@ClassRule
+	public static LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -159,19 +157,19 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			_getGetRepositoriesResponse(
 				new String[] {"testCreateSnapshotRepository"});
 
-		List<RepositoryMetaData> repositoryMetaDatas =
+		List<RepositoryMetadata> repositoryMetadatas =
 			getRepositoriesResponse.repositories();
 
 		Assert.assertEquals(
-			"Expected 1 RepositoryMetaData", 1, repositoryMetaDatas.size());
+			"Expected 1 RepositoryMetadata", 1, repositoryMetadatas.size());
 
-		RepositoryMetaData repositoryMetaData = repositoryMetaDatas.get(0);
+		RepositoryMetadata repositoryMetadata = repositoryMetadatas.get(0);
 
 		Assert.assertEquals(
-			"testCreateSnapshotRepository", repositoryMetaData.name());
+			"testCreateSnapshotRepository", repositoryMetadata.name());
 		Assert.assertEquals(
 			SnapshotRepositoryDetails.FS_REPOSITORY_TYPE,
-			repositoryMetaData.type());
+			repositoryMetadata.type());
 
 		_deleteRepository("testCreateSnapshotRepository");
 	}
@@ -285,15 +283,17 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 	protected static SearchEngineAdapter createSearchEngineAdapter(
 		ElasticsearchClientResolver elasticsearchClientResolver) {
 
-		return new ElasticsearchSearchEngineAdapterImpl() {
-			{
-				setSnapshotRequestExecutor(
-					createSnapshotRequestExecutor(elasticsearchClientResolver));
-			}
-		};
+		SearchEngineAdapter searchEngineAdapter =
+			new ElasticsearchSearchEngineAdapterImpl();
+
+		ReflectionTestUtil.setFieldValue(
+			searchEngineAdapter, "_snapshotRequestExecutor",
+			_createSnapshotRequestExecutor(elasticsearchClientResolver));
+
+		return searchEngineAdapter;
 	}
 
-	protected static SnapshotRequestExecutor createSnapshotRequestExecutor(
+	private static SnapshotRequestExecutor _createSnapshotRequestExecutor(
 		ElasticsearchClientResolver elasticsearchClientResolver) {
 
 		SnapshotRequestExecutorFixture snapshotRequestExecutorFixture =
@@ -315,8 +315,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 		try {
 			_indicesClient.create(createIndexRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -337,8 +337,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			_snapshotClient.createRepository(
 				putRepositoryRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -358,8 +358,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			_snapshotClient.create(
 				createSnapshotRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -370,8 +370,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 		try {
 			_indicesClient.delete(deleteIndexRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -383,8 +383,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			_snapshotClient.deleteRepository(
 				deleteRepositoryRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -398,8 +398,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			_snapshotClient.delete(
 				deleteSnapshotRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -413,8 +413,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			return _snapshotClient.getRepository(
 				getRepositoriesRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -433,8 +433,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			getSnapshotsResponse = _snapshotClient.get(
 				getSnapshotsRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 
 		return getSnapshotsResponse.getSnapshots();
@@ -449,8 +449,8 @@ public class ElasticsearchSearchEngineAdapterSnapshotRequestTest {
 			return _indicesClient.exists(
 				getIndexRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 

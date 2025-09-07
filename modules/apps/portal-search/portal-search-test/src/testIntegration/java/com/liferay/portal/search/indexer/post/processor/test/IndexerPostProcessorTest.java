@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.indexer.post.processor.test;
@@ -31,7 +22,9 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.SearchContextTestUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.DocumentsAssert;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -47,6 +40,11 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Wade Cao
@@ -112,11 +110,14 @@ public class IndexerPostProcessorTest {
 			Arrays.asList(StringPool.BLANK, _TEST_VALUE, StringPool.BLANK));
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected static IndexerPostProcessor createIndexerPostProcessor() {
 		return new BaseIndexerPostProcessor() {
 
 			@Override
-			public void postProcessDocument(Document document, Object obj)
+			public void postProcessDocument(Document document, Object object)
 				throws Exception {
 
 				document.addText(_TEST_FIELD, _TEST_VALUE);
@@ -161,11 +162,22 @@ public class IndexerPostProcessorTest {
 	}
 
 	protected void registerIndexerPostProcessor() {
-		_indexer.registerIndexerPostProcessor(_indexerPostProcessor);
+		Bundle bundle = FrameworkUtil.getBundle(IndexerPostProcessorTest.class);
+
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		_serviceRegistration = bundleContext.registerService(
+			IndexerPostProcessor.class, _indexerPostProcessor,
+			MapUtil.singletonDictionary(
+				"indexer.class.name", _indexer.getClassName()));
 	}
 
 	protected void unregisterIndexerPostProcessor() {
-		_indexer.unregisterIndexerPostProcessor(_indexerPostProcessor);
+		if (_serviceRegistration != null) {
+			_serviceRegistration.unregister();
+
+			_serviceRegistration = null;
+		}
 	}
 
 	@Inject
@@ -181,6 +193,7 @@ public class IndexerPostProcessorTest {
 	private Indexer<User> _indexer;
 	private final IndexerPostProcessor _indexerPostProcessor =
 		createIndexerPostProcessor();
+	private ServiceRegistration<?> _serviceRegistration;
 
 	@DeleteAfterTestRun
 	private List<User> _users;

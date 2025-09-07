@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.lar;
@@ -18,8 +9,9 @@ import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
-import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleConstants;
 import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleManagerUtil;
+import com.liferay.exportimport.kernel.lifecycle.constants.ExportImportLifecycleConstants;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.comment.CommentManagerUtil;
 import com.liferay.portal.kernel.comment.DiscussionStagingHandler;
 import com.liferay.portal.kernel.exception.NoSuchModelException;
@@ -35,6 +27,8 @@ import com.liferay.portal.kernel.model.StagedGroupedModel;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.model.WorkflowedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -75,6 +69,10 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 	public void exportStagedModel(
 			PortletDataContext portletDataContext, T stagedModel)
 		throws PortletDataException {
+
+		if (!isEnabled(_getCompanyId(stagedModel))) {
+			return;
+		}
 
 		validateExport(portletDataContext, stagedModel);
 
@@ -121,46 +119,50 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 					portletDataContext),
 				new TransientValue<T>(stagedModel));
 		}
-		catch (PortletDataException pde) {
+		catch (PortletDataException portletDataException) {
 			ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
 				ExportImportLifecycleConstants.EVENT_STAGED_MODEL_EXPORT_FAILED,
 				getProcessFlag(), portletDataContext.getExportImportProcessId(),
 				PortletDataContextFactoryUtil.clonePortletDataContext(
 					portletDataContext),
-				new TransientValue<T>(stagedModel), pde);
+				new TransientValue<T>(stagedModel), portletDataException);
 
-			throw pde;
+			throw portletDataException;
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
 				ExportImportLifecycleConstants.EVENT_STAGED_MODEL_EXPORT_FAILED,
 				getProcessFlag(), portletDataContext.getExportImportProcessId(),
 				PortletDataContextFactoryUtil.clonePortletDataContext(
 					portletDataContext),
-				new TransientValue<T>(stagedModel), t);
+				new TransientValue<T>(stagedModel), throwable);
 
-			if ((t instanceof SystemException) &&
-				(t.getCause() instanceof PortletDataException)) {
+			if ((throwable instanceof SystemException) &&
+				(throwable.getCause() instanceof PortletDataException)) {
 
-				throw (PortletDataException)t.getCause();
+				throw (PortletDataException)throwable.getCause();
 			}
 
-			PortletDataException pde = new PortletDataException(
-				t.getMessage(), t);
+			PortletDataException portletDataException =
+				new PortletDataException(throwable.getMessage(), throwable);
 
-			pde.setStagedModelDisplayName(getDisplayName(stagedModel));
-			pde.setStagedModelClassName(stagedModel.getModelClassName());
-			pde.setStagedModelClassPK(
+			portletDataException.setStagedModelDisplayName(
+				getDisplayName(stagedModel));
+			portletDataException.setStagedModelClassName(
+				stagedModel.getModelClassName());
+			portletDataException.setStagedModelClassPK(
 				GetterUtil.getString(stagedModel.getPrimaryKeyObj()));
 
-			if (t instanceof NoSuchModelException) {
-				pde.setType(PortletDataException.MISSING_DEPENDENCY);
+			if (throwable instanceof NoSuchModelException) {
+				portletDataException.setType(
+					PortletDataException.MISSING_DEPENDENCY);
 			}
 			else {
-				pde.setType(PortletDataException.EXPORT_STAGED_MODEL);
+				portletDataException.setType(
+					PortletDataException.EXPORT_STAGED_MODEL);
 			}
 
-			throw pde;
+			throw portletDataException;
 		}
 	}
 
@@ -220,16 +222,16 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 						return stagedModel;
 					}
 				}
-				catch (PortalException pe) {
+				catch (PortalException portalException) {
 					if (_log.isDebugEnabled()) {
-						_log.debug(pe, pe);
+						_log.debug(portalException);
 					}
 				}
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 			else if (_log.isWarnEnabled()) {
 				_log.warn(
@@ -275,15 +277,19 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			PortletDataContext portletDataContext, Element referenceElement)
 		throws PortletDataException {
 
+		if (!isEnabled(_getCompanyId(portletDataContext))) {
+			return;
+		}
+
 		try {
 			doImportMissingReference(portletDataContext, referenceElement);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (!StringUtil.equalsIgnoreCase(
 					referenceElement.attributeValue("type"),
 					PortletDataContext.REFERENCE_TYPE_DEPENDENCY_DISPOSABLE)) {
 
-				throw e;
+				throw exception;
 			}
 		}
 	}
@@ -294,15 +300,19 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			long classPK)
 		throws PortletDataException {
 
+		if (!isEnabled(_getCompanyId(portletDataContext))) {
+			return;
+		}
+
 		try {
 			doImportMissingReference(
 				portletDataContext, uuid, groupId, classPK);
 		}
-		catch (PortletDataException pde) {
-			throw pde;
+		catch (PortletDataException portletDataException) {
+			throw portletDataException;
 		}
-		catch (Exception e) {
-			throw new PortletDataException(e);
+		catch (Exception exception) {
+			throw new PortletDataException(exception);
 		}
 	}
 
@@ -311,10 +321,26 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			PortletDataContext portletDataContext, T stagedModel)
 		throws PortletDataException {
 
+		if (!isEnabled(stagedModel.getCompanyId())) {
+			return;
+		}
+
 		String path = ExportImportPathUtil.getModelPath(stagedModel);
 
 		if (portletDataContext.isPathProcessed(path)) {
 			return;
+		}
+
+		if (stagedModel instanceof CTModel) {
+			CTModel<?> ctModel = (CTModel)stagedModel;
+
+			if ((ctModel.getCtCollectionId() !=
+					CTCollectionThreadLocal.CT_COLLECTION_ID_PRODUCTION) &&
+				(ctModel.getCtCollectionId() !=
+					CTCollectionThreadLocal.getCTCollectionId())) {
+
+				return;
+			}
 		}
 
 		try {
@@ -376,46 +402,50 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 					portletDataContext),
 				new TransientValue<T>(stagedModel));
 		}
-		catch (PortletDataException pde) {
+		catch (PortletDataException portletDataException) {
 			ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
 				ExportImportLifecycleConstants.EVENT_STAGED_MODEL_IMPORT_FAILED,
 				getProcessFlag(), portletDataContext.getExportImportProcessId(),
 				PortletDataContextFactoryUtil.clonePortletDataContext(
 					portletDataContext),
-				new TransientValue<T>(stagedModel), pde);
+				new TransientValue<T>(stagedModel), portletDataException);
 
-			throw pde;
+			throw portletDataException;
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
 				ExportImportLifecycleConstants.EVENT_STAGED_MODEL_IMPORT_FAILED,
 				getProcessFlag(), portletDataContext.getExportImportProcessId(),
 				PortletDataContextFactoryUtil.clonePortletDataContext(
 					portletDataContext),
-				new TransientValue<T>(stagedModel), t);
+				new TransientValue<T>(stagedModel), throwable);
 
-			if ((t instanceof SystemException) &&
-				(t.getCause() instanceof PortletDataException)) {
+			if ((throwable instanceof SystemException) &&
+				(throwable.getCause() instanceof PortletDataException)) {
 
-				throw (PortletDataException)t.getCause();
+				throw (PortletDataException)throwable.getCause();
 			}
 
-			PortletDataException pde = new PortletDataException(
-				t.getMessage(), t);
+			PortletDataException portletDataException =
+				new PortletDataException(throwable.getMessage(), throwable);
 
-			pde.setStagedModelDisplayName(getDisplayName(stagedModel));
-			pde.setStagedModelClassName(stagedModel.getModelClassName());
-			pde.setStagedModelClassPK(
+			portletDataException.setStagedModelDisplayName(
+				getDisplayName(stagedModel));
+			portletDataException.setStagedModelClassName(
+				stagedModel.getModelClassName());
+			portletDataException.setStagedModelClassPK(
 				GetterUtil.getString(stagedModel.getPrimaryKeyObj()));
 
-			if (t instanceof NoSuchModelException) {
-				pde.setType(PortletDataException.MISSING_DEPENDENCY);
+			if (throwable instanceof NoSuchModelException) {
+				portletDataException.setType(
+					PortletDataException.MISSING_DEPENDENCY);
 			}
 			else {
-				pde.setType(PortletDataException.IMPORT_STAGED_MODEL);
+				portletDataException.setType(
+					PortletDataException.IMPORT_STAGED_MODEL);
 			}
 
-			throw pde;
+			throw portletDataException;
 		}
 	}
 
@@ -424,23 +454,30 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			PortletDataContext portletDataContext, T stagedModel)
 		throws PortletDataException {
 
+		if (!isEnabled(_getCompanyId(stagedModel))) {
+			return;
+		}
+
 		try {
 			if (stagedModel instanceof TrashedModel) {
 				doRestoreStagedModel(portletDataContext, stagedModel);
 			}
 		}
-		catch (PortletDataException pde) {
-			throw pde;
+		catch (PortletDataException portletDataException) {
+			throw portletDataException;
 		}
-		catch (Exception e) {
-			PortletDataException pde = new PortletDataException(e);
+		catch (Exception exception) {
+			PortletDataException portletDataException =
+				new PortletDataException(exception);
 
-			pde.setStagedModelDisplayName(getDisplayName(stagedModel));
-			pde.setStagedModelClassName(stagedModel.getModelClassName());
-			pde.setStagedModelClassPK(
+			portletDataException.setStagedModelDisplayName(
+				getDisplayName(stagedModel));
+			portletDataException.setStagedModelClassName(
+				stagedModel.getModelClassName());
+			portletDataException.setStagedModelClassPK(
 				GetterUtil.getString(stagedModel.getPrimaryKeyObj()));
 
-			throw pde;
+			throw portletDataException;
 		}
 	}
 
@@ -464,7 +501,11 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 		try {
 			return validateMissingReference(uuid, groupId);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return false;
 		}
 	}
@@ -872,15 +913,18 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			TrashedModel trashedModel = (TrashedModel)stagedModel;
 
 			if (trashedModel.isInTrash()) {
-				PortletDataException pde = new PortletDataException(
-					PortletDataException.STATUS_IN_TRASH);
+				PortletDataException portletDataException =
+					new PortletDataException(
+						PortletDataException.STATUS_IN_TRASH);
 
-				pde.setStagedModelDisplayName(getDisplayName(stagedModel));
-				pde.setStagedModelClassName(stagedModel.getModelClassName());
-				pde.setStagedModelClassPK(
+				portletDataException.setStagedModelDisplayName(
+					getDisplayName(stagedModel));
+				portletDataException.setStagedModelClassName(
+					stagedModel.getModelClassName());
+				portletDataException.setStagedModelClassPK(
 					GetterUtil.getString(stagedModel.getPrimaryKeyObj()));
 
-				throw pde;
+				throw portletDataException;
 			}
 		}
 
@@ -892,15 +936,18 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			if (!ArrayUtil.contains(
 					getExportableStatuses(), workflowedModel.getStatus())) {
 
-				PortletDataException pde = new PortletDataException(
-					PortletDataException.STATUS_UNAVAILABLE);
+				PortletDataException portletDataException =
+					new PortletDataException(
+						PortletDataException.STATUS_UNAVAILABLE);
 
-				pde.setStagedModelDisplayName(getDisplayName(stagedModel));
-				pde.setStagedModelClassName(stagedModel.getModelClassName());
-				pde.setStagedModelClassPK(
+				portletDataException.setStagedModelDisplayName(
+					getDisplayName(stagedModel));
+				portletDataException.setStagedModelClassName(
+					stagedModel.getModelClassName());
+				portletDataException.setStagedModelClassPK(
 					GetterUtil.getString(stagedModel.getPrimaryKeyObj()));
 
-				throw pde;
+				throw portletDataException;
 			}
 		}
 	}
@@ -924,6 +971,22 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 		}
 
 		return true;
+	}
+
+	private long _getCompanyId(PortletDataContext portletDataContext) {
+		if (portletDataContext != null) {
+			return portletDataContext.getCompanyId();
+		}
+
+		return CompanyThreadLocal.getCompanyId();
+	}
+
+	private long _getCompanyId(T stagedModel) {
+		if (stagedModel != null) {
+			return stagedModel.getCompanyId();
+		}
+
+		return CompanyThreadLocal.getCompanyId();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

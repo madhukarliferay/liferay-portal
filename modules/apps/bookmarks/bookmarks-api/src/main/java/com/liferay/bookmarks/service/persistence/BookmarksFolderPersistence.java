@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.service.persistence;
@@ -17,6 +8,7 @@ package com.liferay.bookmarks.service.persistence;
 import com.liferay.bookmarks.exception.NoSuchFolderException;
 import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +25,9 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface BookmarksFolderPersistence
-	extends BasePersistence<BookmarksFolder> {
+	extends BasePersistence<BookmarksFolder>, CTPersistence<BookmarksFolder> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link BookmarksFolderUtil} to access the bookmarks folder persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -1612,7 +1604,7 @@ public interface BookmarksFolderPersistence
 	 * @param status the status
 	 * @return the matching bookmarks folders
 	 */
-	public java.util.List<BookmarksFolder> findByF_C_P_NotS(
+	public java.util.List<BookmarksFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status);
 
 	/**
@@ -1630,7 +1622,7 @@ public interface BookmarksFolderPersistence
 	 * @param end the upper bound of the range of bookmarks folders (not inclusive)
 	 * @return the range of matching bookmarks folders
 	 */
-	public java.util.List<BookmarksFolder> findByF_C_P_NotS(
+	public java.util.List<BookmarksFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end);
 
@@ -1650,7 +1642,7 @@ public interface BookmarksFolderPersistence
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching bookmarks folders
 	 */
-	public java.util.List<BookmarksFolder> findByF_C_P_NotS(
+	public java.util.List<BookmarksFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
@@ -1673,7 +1665,7 @@ public interface BookmarksFolderPersistence
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching bookmarks folders
 	 */
-	public java.util.List<BookmarksFolder> findByF_C_P_NotS(
+	public java.util.List<BookmarksFolder> findByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status,
 		int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
@@ -1691,7 +1683,7 @@ public interface BookmarksFolderPersistence
 	 * @return the first matching bookmarks folder
 	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
 	 */
-	public BookmarksFolder findByF_C_P_NotS_First(
+	public BookmarksFolder findByGtF_C_P_NotS_First(
 			long folderId, long companyId, long parentFolderId, int status,
 			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 				orderByComparator)
@@ -1707,7 +1699,7 @@ public interface BookmarksFolderPersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
 	 */
-	public BookmarksFolder fetchByF_C_P_NotS_First(
+	public BookmarksFolder fetchByGtF_C_P_NotS_First(
 		long folderId, long companyId, long parentFolderId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
@@ -1723,7 +1715,7 @@ public interface BookmarksFolderPersistence
 	 * @return the last matching bookmarks folder
 	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
 	 */
-	public BookmarksFolder findByF_C_P_NotS_Last(
+	public BookmarksFolder findByGtF_C_P_NotS_Last(
 			long folderId, long companyId, long parentFolderId, int status,
 			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 				orderByComparator)
@@ -1739,7 +1731,7 @@ public interface BookmarksFolderPersistence
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
 	 */
-	public BookmarksFolder fetchByF_C_P_NotS_Last(
+	public BookmarksFolder fetchByGtF_C_P_NotS_Last(
 		long folderId, long companyId, long parentFolderId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
@@ -1752,7 +1744,7 @@ public interface BookmarksFolderPersistence
 	 * @param parentFolderId the parent folder ID
 	 * @param status the status
 	 */
-	public void removeByF_C_P_NotS(
+	public void removeByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status);
 
 	/**
@@ -1764,7 +1756,7 @@ public interface BookmarksFolderPersistence
 	 * @param status the status
 	 * @return the number of matching bookmarks folders
 	 */
-	public int countByF_C_P_NotS(
+	public int countByGtF_C_P_NotS(
 		long folderId, long companyId, long parentFolderId, int status);
 
 	/**

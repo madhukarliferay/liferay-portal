@@ -1,24 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.groups.admin.web.internal.search.test;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.test.randomizerbumpers.NumericStringRandomizerBumper;
 import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -39,17 +31,18 @@ import java.util.Map;
  */
 public class UserGroupFixture {
 
-	public UserGroupFixture(Group group) {
+	public UserGroupFixture(
+		Group group, UserGroupLocalService userGroupLocalService) {
+
 		_group = group;
+		_userGroupLocalService = userGroupLocalService;
 	}
 
-	public UserGroup createUserGroup() throws Exception {
+	public UserGroup createUserGroup() {
 		return createUserGroup(Collections.emptyMap());
 	}
 
-	public UserGroup createUserGroup(Map<String, Serializable> expandoValues)
-		throws Exception {
-
+	public UserGroup createUserGroup(Map<String, Serializable> expandoValues) {
 		return createUserGroup(
 			RandomTestUtil.randomString(
 				NumericStringRandomizerBumper.INSTANCE,
@@ -57,22 +50,20 @@ public class UserGroupFixture {
 			RandomTestUtil.randomString(50), expandoValues);
 	}
 
-	public UserGroup createUserGroup(String name) throws Exception {
+	public UserGroup createUserGroup(String name) {
 		return createUserGroup(
 			name, RandomTestUtil.randomString(50), Collections.emptyMap());
 	}
 
 	public UserGroup createUserGroup(
-			String name, String description,
-			Map<String, Serializable> expandoValues)
-		throws PortalException {
+		String name, String description,
+		Map<String, Serializable> expandoValues) {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+		ServiceContext serviceContext = _getServiceContext();
 
 		serviceContext.setExpandoBridgeAttributes(expandoValues);
 
-		UserGroup userGroup = UserGroupLocalServiceUtil.addUserGroup(
+		UserGroup userGroup = addUserGroup(
 			serviceContext.getUserId(), serviceContext.getCompanyId(), name,
 			description, serviceContext);
 
@@ -92,7 +83,32 @@ public class UserGroupFixture {
 		_group.setModelAttributes(group.getModelAttributes());
 	}
 
+	protected UserGroup addUserGroup(
+		long userId, long companyId, String name, String description,
+		ServiceContext serviceContext) {
+
+		try {
+			return _userGroupLocalService.addUserGroup(
+				StringPool.BLANK, userId, companyId, name, description,
+				serviceContext);
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
+	private ServiceContext _getServiceContext() {
+		try {
+			return ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId());
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
 	private final Group _group;
+	private final UserGroupLocalService _userGroupLocalService;
 	private final List<UserGroup> _userGroups = new ArrayList<>();
 
 }

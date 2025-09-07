@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.editor.alloyeditor.web.internal.editor.configuration;
@@ -18,27 +9,20 @@ import com.liferay.message.boards.constants.MBThreadConstants;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Ambrín Chaudhary
@@ -63,7 +47,7 @@ public class AlloyEditorBBCodeConfigContributor
 		jsonObject.put(
 			"allowedContent", Boolean.TRUE
 		).put(
-			"enterMode", 1
+			"enterMode", 2
 		);
 
 		String extraPlugins = jsonObject.getString("extraPlugins");
@@ -73,30 +57,23 @@ public class AlloyEditorBBCodeConfigContributor
 		jsonObject.put(
 			"extraPlugins", extraPlugins
 		).put(
-			"forceEnterMode", Boolean.TRUE
-		).put(
 			"format_tags", "p;pre"
 		).put(
-			"lang", getLangJSONObject(inputEditorTaglibAttributes)
+			"lang", _getLangJSONObject(inputEditorTaglibAttributes)
 		).put(
 			"newThreadURL", MBThreadConstants.NEW_THREAD_URL
 		);
 
 		String removePlugins = jsonObject.getString("removePlugins");
 
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("bidi,div,flash,font,forms,indentblock,keystrokes,maximize,");
-		sb.append("newpage,pagebreak,preview,print,save,showblocks,smiley,");
-		sb.append("stylescombo,templates,video");
-
 		jsonObject.put(
 			"removePlugins",
-			removePlugins.concat(
-				","
-			).concat(
-				sb.toString()
-			)
+			StringBundler.concat(
+				removePlugins, ",",
+				StringBundler.concat(
+					"bidi,div,font,forms,indentblock,keystrokes,maximize,",
+					"newpage,pagebreak,preview,print,save,showblocks,smiley,",
+					"stylescombo,templates,video"))
 		).put(
 			"smiley_images",
 			toJSONArray(BBCodeTranslatorUtil.getEmoticonFiles())
@@ -111,15 +88,6 @@ public class AlloyEditorBBCodeConfigContributor
 		);
 	}
 
-	protected JSONObject getLangJSONObject(
-		Map<String, Object> inputEditorTaglibAttributes) {
-
-		return JSONUtil.put(
-			"code",
-			LanguageUtil.get(
-				getContentsLocale(inputEditorTaglibAttributes), "code"));
-	}
-
 	protected JSONObject getStyleFormatJSONObject(
 		String styleFormatName, String element, String cssClass, int type) {
 
@@ -131,33 +99,21 @@ public class AlloyEditorBBCodeConfigContributor
 	}
 
 	protected JSONArray getStyleFormatsJSONArray(Locale locale) {
-		ResourceBundle resourceBundle = null;
-
-		try {
-			resourceBundle = _resourceBundleLoader.loadResourceBundle(locale);
-		}
-		catch (MissingResourceException mre) {
-			resourceBundle = ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE;
-		}
-
 		return JSONUtil.putAll(
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "normal"), "p", null,
+				_language.get(locale, "normal"), "p", null,
 				_CKEDITOR_STYLE_BLOCK),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "cited-work"), "cite", null,
+				_language.get(locale, "cited-work"), "cite", null,
 				_CKEDITOR_STYLE_INLINE),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "computer-code"), "code", null,
+				_language.get(locale, "computer-code"), "code", null,
 				_CKEDITOR_STYLE_INLINE));
 	}
 
 	protected JSONObject getStyleFormatsJSONObject(Locale locale) {
-		JSONObject stylesJSONObject = JSONUtil.put(
-			"styles", getStyleFormatsJSONArray(locale));
-
 		return JSONUtil.put(
-			"cfg", stylesJSONObject
+			"cfg", JSONUtil.put("styles", getStyleFormatsJSONArray(locale))
 		).put(
 			"name", "styles"
 		);
@@ -166,21 +122,20 @@ public class AlloyEditorBBCodeConfigContributor
 	protected JSONObject getStyleJSONObject(
 		String element, String cssClass, int type) {
 
-		JSONObject styleJSONObject = JSONFactoryUtil.createJSONObject();
+		return JSONUtil.put(
+			"attributes",
+			() -> {
+				if (Validator.isNotNull(cssClass)) {
+					return JSONUtil.put("class", cssClass);
+				}
 
-		if (Validator.isNotNull(cssClass)) {
-			JSONObject attributesJSONObject = JSONUtil.put("class", cssClass);
-
-			styleJSONObject.put("attributes", attributesJSONObject);
-		}
-
-		styleJSONObject.put(
+				return null;
+			}
+		).put(
 			"element", element
 		).put(
 			"type", type
 		);
-
-		return styleJSONObject;
 	}
 
 	protected JSONObject getToolbarsAddJSONObject() {
@@ -238,15 +193,20 @@ public class AlloyEditorBBCodeConfigContributor
 		);
 	}
 
+	private JSONObject _getLangJSONObject(
+		Map<String, Object> inputEditorTaglibAttributes) {
+
+		return JSONUtil.put(
+			"code",
+			_language.get(
+				getContentsLocale(inputEditorTaglibAttributes), "code"));
+	}
+
 	private static final int _CKEDITOR_STYLE_BLOCK = 1;
 
 	private static final int _CKEDITOR_STYLE_INLINE = 2;
 
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.frontend.editor.lang)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
+	@Reference
+	private Language _language;
 
 }

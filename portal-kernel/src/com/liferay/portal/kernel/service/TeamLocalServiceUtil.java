@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.Team;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for Team. This utility wraps
@@ -30,21 +30,15 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class TeamLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.TeamLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link TeamLocalServiceUtil} to access the team local service. Add custom service methods to <code>com.liferay.portal.service.impl.TeamLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.portal.kernel.model.Team addTeam(
+	public static Team addTeam(
 			long userId, long groupId, String name, String description,
 			ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addTeam(
 			userId, groupId, name, description, serviceContext);
@@ -53,55 +47,49 @@ public class TeamLocalServiceUtil {
 	/**
 	 * Adds the team to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TeamLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param team the team
 	 * @return the team that was added
 	 */
-	public static com.liferay.portal.kernel.model.Team addTeam(
-		com.liferay.portal.kernel.model.Team team) {
-
+	public static Team addTeam(Team team) {
 		return getService().addTeam(team);
 	}
 
-	public static void addUserGroupTeam(long userGroupId, long teamId) {
-		getService().addUserGroupTeam(userGroupId, teamId);
+	public static boolean addUserGroupTeam(long userGroupId, long teamId) {
+		return getService().addUserGroupTeam(userGroupId, teamId);
 	}
 
-	public static void addUserGroupTeam(
-		long userGroupId, com.liferay.portal.kernel.model.Team team) {
-
-		getService().addUserGroupTeam(userGroupId, team);
+	public static boolean addUserGroupTeam(long userGroupId, Team team) {
+		return getService().addUserGroupTeam(userGroupId, team);
 	}
 
-	public static void addUserGroupTeams(
-		long userGroupId,
-		java.util.List<com.liferay.portal.kernel.model.Team> teams) {
+	public static boolean addUserGroupTeams(
+		long userGroupId, List<Team> teams) {
 
-		getService().addUserGroupTeams(userGroupId, teams);
+		return getService().addUserGroupTeams(userGroupId, teams);
 	}
 
-	public static void addUserGroupTeams(long userGroupId, long[] teamIds) {
-		getService().addUserGroupTeams(userGroupId, teamIds);
+	public static boolean addUserGroupTeams(long userGroupId, long[] teamIds) {
+		return getService().addUserGroupTeams(userGroupId, teamIds);
 	}
 
-	public static void addUserTeam(long userId, long teamId) {
-		getService().addUserTeam(userId, teamId);
+	public static boolean addUserTeam(long userId, long teamId) {
+		return getService().addUserTeam(userId, teamId);
 	}
 
-	public static void addUserTeam(
-		long userId, com.liferay.portal.kernel.model.Team team) {
-
-		getService().addUserTeam(userId, team);
+	public static boolean addUserTeam(long userId, Team team) {
+		return getService().addUserTeam(userId, team);
 	}
 
-	public static void addUserTeams(
-		long userId,
-		java.util.List<com.liferay.portal.kernel.model.Team> teams) {
-
-		getService().addUserTeams(userId, teams);
+	public static boolean addUserTeams(long userId, List<Team> teams) {
+		return getService().addUserTeams(userId, teams);
 	}
 
-	public static void addUserTeams(long userId, long[] teamIds) {
-		getService().addUserTeams(userId, teamIds);
+	public static boolean addUserTeams(long userId, long[] teamIds) {
+		return getService().addUserTeams(userId, teamIds);
 	}
 
 	public static void clearUserGroupTeams(long userGroupId) {
@@ -113,22 +101,31 @@ public class TeamLocalServiceUtil {
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Creates a new team with the primary key. Does not add the team to the database.
 	 *
 	 * @param teamId the primary key for the new team
 	 * @return the new team
 	 */
-	public static com.liferay.portal.kernel.model.Team createTeam(long teamId) {
+	public static Team createTeam(long teamId) {
 		return getService().createTeam(teamId);
 	}
 
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -136,33 +133,34 @@ public class TeamLocalServiceUtil {
 	/**
 	 * Deletes the team with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TeamLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param teamId the primary key of the team
 	 * @return the team that was removed
 	 * @throws PortalException if a team with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Team deleteTeam(long teamId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Team deleteTeam(long teamId) throws PortalException {
 		return getService().deleteTeam(teamId);
 	}
 
 	/**
 	 * Deletes the team from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TeamLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param team the team
 	 * @return the team that was removed
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.Team deleteTeam(
-			com.liferay.portal.kernel.model.Team team)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Team deleteTeam(Team team) throws PortalException {
 		return getService().deleteTeam(team);
 	}
 
-	public static void deleteTeams(long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void deleteTeams(long groupId) throws PortalException {
 		getService().deleteTeams(groupId);
 	}
 
@@ -170,15 +168,12 @@ public class TeamLocalServiceUtil {
 		getService().deleteUserGroupTeam(userGroupId, teamId);
 	}
 
-	public static void deleteUserGroupTeam(
-		long userGroupId, com.liferay.portal.kernel.model.Team team) {
-
+	public static void deleteUserGroupTeam(long userGroupId, Team team) {
 		getService().deleteUserGroupTeam(userGroupId, team);
 	}
 
 	public static void deleteUserGroupTeams(
-		long userGroupId,
-		java.util.List<com.liferay.portal.kernel.model.Team> teams) {
+		long userGroupId, List<Team> teams) {
 
 		getService().deleteUserGroupTeams(userGroupId, teams);
 	}
@@ -191,16 +186,11 @@ public class TeamLocalServiceUtil {
 		getService().deleteUserTeam(userId, teamId);
 	}
 
-	public static void deleteUserTeam(
-		long userId, com.liferay.portal.kernel.model.Team team) {
-
+	public static void deleteUserTeam(long userId, Team team) {
 		getService().deleteUserTeam(userId, team);
 	}
 
-	public static void deleteUserTeams(
-		long userId,
-		java.util.List<com.liferay.portal.kernel.model.Team> teams) {
-
+	public static void deleteUserTeams(long userId, List<Team> teams) {
 		getService().deleteUserTeams(userId, teams);
 	}
 
@@ -208,9 +198,15 @@ public class TeamLocalServiceUtil {
 		getService().deleteUserTeams(userId, teamIds);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -220,9 +216,7 @@ public class TeamLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -238,9 +232,8 @@ public class TeamLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -258,10 +251,9 @@ public class TeamLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -273,9 +265,7 @@ public class TeamLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -287,19 +277,17 @@ public class TeamLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.portal.kernel.model.Team fetchTeam(long teamId) {
+	public static Team fetchTeam(long teamId) {
 		return getService().fetchTeam(teamId);
 	}
 
-	public static com.liferay.portal.kernel.model.Team fetchTeam(
-		long groupId, String name) {
-
+	public static Team fetchTeam(long groupId, String name) {
 		return getService().fetchTeam(groupId, name);
 	}
 
@@ -310,9 +298,7 @@ public class TeamLocalServiceUtil {
 	 * @param groupId the primary key of the group
 	 * @return the matching team, or <code>null</code> if a matching team could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Team
-		fetchTeamByUuidAndGroupId(String uuid, long groupId) {
-
+	public static Team fetchTeamByUuidAndGroupId(String uuid, long groupId) {
 		return getService().fetchTeamByUuidAndGroupId(uuid, groupId);
 	}
 
@@ -330,9 +316,7 @@ public class TeamLocalServiceUtil {
 		return getService().getExportActionableDynamicQuery(portletDataContext);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getGroupTeams(long groupId) {
-
+	public static List<Team> getGroupTeams(long groupId) {
 		return getService().getGroupTeams(groupId);
 	}
 
@@ -356,9 +340,11 @@ public class TeamLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
@@ -370,15 +356,12 @@ public class TeamLocalServiceUtil {
 	 * @return the team
 	 * @throws PortalException if a team with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Team getTeam(long teamId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Team getTeam(long teamId) throws PortalException {
 		return getService().getTeam(teamId);
 	}
 
-	public static com.liferay.portal.kernel.model.Team getTeam(
-			long groupId, String name)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Team getTeam(long groupId, String name)
+		throws PortalException {
 
 		return getService().getTeam(groupId, name);
 	}
@@ -391,9 +374,8 @@ public class TeamLocalServiceUtil {
 	 * @return the matching team
 	 * @throws PortalException if a matching team could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Team getTeamByUuidAndGroupId(
-			String uuid, long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Team getTeamByUuidAndGroupId(String uuid, long groupId)
+		throws PortalException {
 
 		return getService().getTeamByUuidAndGroupId(uuid, groupId);
 	}
@@ -409,9 +391,7 @@ public class TeamLocalServiceUtil {
 	 * @param end the upper bound of the range of teams (not inclusive)
 	 * @return the range of teams
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Team> getTeams(
-		int start, int end) {
-
+	public static List<Team> getTeams(int start, int end) {
 		return getService().getTeams(start, end);
 	}
 
@@ -422,8 +402,8 @@ public class TeamLocalServiceUtil {
 	 * @param companyId the primary key of the company
 	 * @return the matching teams, or an empty list if no matches were found
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getTeamsByUuidAndCompanyId(String uuid, long companyId) {
+	public static List<Team> getTeamsByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return getService().getTeamsByUuidAndCompanyId(uuid, companyId);
 	}
@@ -438,11 +418,9 @@ public class TeamLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the range of matching teams, or an empty list if no matches were found
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getTeamsByUuidAndCompanyId(
-			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Team> orderByComparator) {
+	public static List<Team> getTeamsByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		OrderByComparator<Team> orderByComparator) {
 
 		return getService().getTeamsByUuidAndCompanyId(
 			uuid, companyId, start, end, orderByComparator);
@@ -467,23 +445,19 @@ public class TeamLocalServiceUtil {
 		return getService().getUserGroupPrimaryKeys(teamId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserGroupTeams(long userGroupId) {
-
+	public static List<Team> getUserGroupTeams(long userGroupId) {
 		return getService().getUserGroupTeams(userGroupId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserGroupTeams(long userGroupId, int start, int end) {
+	public static List<Team> getUserGroupTeams(
+		long userGroupId, int start, int end) {
 
 		return getService().getUserGroupTeams(userGroupId, start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserGroupTeams(
-			long userGroupId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Team> orderByComparator) {
+	public static List<Team> getUserGroupTeams(
+		long userGroupId, int start, int end,
+		OrderByComparator<Team> orderByComparator) {
 
 		return getService().getUserGroupTeams(
 			userGroupId, start, end, orderByComparator);
@@ -493,8 +467,8 @@ public class TeamLocalServiceUtil {
 		return getService().getUserGroupTeamsCount(userGroupId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserOrUserGroupTeams(long groupId, long userId) {
+	public static List<Team> getUserOrUserGroupTeams(
+		long groupId, long userId) {
 
 		return getService().getUserOrUserGroupTeams(groupId, userId);
 	}
@@ -509,30 +483,22 @@ public class TeamLocalServiceUtil {
 		return getService().getUserPrimaryKeys(teamId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserTeams(long userId) {
-
+	public static List<Team> getUserTeams(long userId) {
 		return getService().getUserTeams(userId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserTeams(long userId, int start, int end) {
-
+	public static List<Team> getUserTeams(long userId, int start, int end) {
 		return getService().getUserTeams(userId, start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserTeams(
-			long userId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Team> orderByComparator) {
+	public static List<Team> getUserTeams(
+		long userId, int start, int end,
+		OrderByComparator<Team> orderByComparator) {
 
 		return getService().getUserTeams(userId, start, end, orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team>
-		getUserTeams(long userId, long groupId) {
-
+	public static List<Team> getUserTeams(long userId, long groupId) {
 		return getService().getUserTeams(userId, groupId);
 	}
 
@@ -556,14 +522,13 @@ public class TeamLocalServiceUtil {
 		return getService().hasUserTeams(userId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Team> search(
+	public static List<Team> search(
 		long groupId, String name, String description,
 		java.util.LinkedHashMap<String, Object> params, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.portal.kernel.model.Team> obc) {
+		OrderByComparator<Team> orderByComparator) {
 
 		return getService().search(
-			groupId, name, description, params, start, end, obc);
+			groupId, name, description, params, start, end, orderByComparator);
 	}
 
 	public static int searchCount(
@@ -581,9 +546,8 @@ public class TeamLocalServiceUtil {
 		getService().setUserTeams(userId, teamIds);
 	}
 
-	public static com.liferay.portal.kernel.model.Team updateTeam(
-			long teamId, String name, String description)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Team updateTeam(long teamId, String name, String description)
+		throws PortalException {
 
 		return getService().updateTeam(teamId, name, description);
 	}
@@ -591,24 +555,25 @@ public class TeamLocalServiceUtil {
 	/**
 	 * Updates the team in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TeamLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param team the team
 	 * @return the team that was updated
 	 */
-	public static com.liferay.portal.kernel.model.Team updateTeam(
-		com.liferay.portal.kernel.model.Team team) {
-
+	public static Team updateTeam(Team team) {
 		return getService().updateTeam(team);
 	}
 
 	public static TeamLocalService getService() {
-		if (_service == null) {
-			_service = (TeamLocalService)PortalBeanLocatorUtil.locate(
-				TeamLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static TeamLocalService _service;
+	public static void setService(TeamLocalService service) {
+		_service = service;
+	}
+
+	private static volatile TeamLocalService _service;
 
 }

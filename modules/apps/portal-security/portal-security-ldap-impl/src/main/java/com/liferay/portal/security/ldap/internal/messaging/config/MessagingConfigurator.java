@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.internal.messaging.config;
@@ -17,7 +8,7 @@ package com.liferay.portal.security.ldap.internal.messaging.config;
 import com.liferay.portal.kernel.messaging.Destination;
 import com.liferay.portal.kernel.messaging.DestinationConfiguration;
 import com.liferay.portal.kernel.messaging.DestinationFactory;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.ldap.internal.constants.LDAPDestinationNames;
 
 import java.util.Dictionary;
@@ -32,13 +23,11 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class MessagingConfigurator {
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		_bundleContext = bundleContext;
-
 		DestinationConfiguration destinationConfiguration =
 			new DestinationConfiguration(
 				DestinationConfiguration.DESTINATION_TYPE_SERIAL,
@@ -47,9 +36,10 @@ public class MessagingConfigurator {
 		Destination destination = _destinationFactory.createDestination(
 			destinationConfiguration);
 
-		Dictionary<String, Object> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("destination.name", destination.getName());
+		Dictionary<String, Object> dictionary =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"destination.name", destination.getName()
+			).build();
 
 		_serviceRegistration = bundleContext.registerService(
 			Destination.class, destination, dictionary);
@@ -57,27 +47,12 @@ public class MessagingConfigurator {
 
 	@Deactivate
 	protected void deactivate() {
-		if (_serviceRegistration != null) {
-			Destination destination = _bundleContext.getService(
-				_serviceRegistration.getReference());
-
-			_serviceRegistration.unregister();
-
-			destination.destroy();
-		}
-
-		_bundleContext = null;
+		_serviceRegistration.unregister();
 	}
 
-	@Reference(unbind = "-")
-	protected void setDestinationFactory(
-		DestinationFactory destinationFactory) {
-
-		_destinationFactory = destinationFactory;
-	}
-
-	private volatile BundleContext _bundleContext;
+	@Reference
 	private DestinationFactory _destinationFactory;
+
 	private ServiceRegistration<Destination> _serviceRegistration;
 
 }

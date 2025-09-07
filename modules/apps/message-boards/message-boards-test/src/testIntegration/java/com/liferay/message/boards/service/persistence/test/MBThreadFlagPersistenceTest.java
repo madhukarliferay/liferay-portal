@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -124,6 +115,10 @@ public class MBThreadFlagPersistenceTest {
 
 		MBThreadFlag newMBThreadFlag = _persistence.create(pk);
 
+		newMBThreadFlag.setMvccVersion(RandomTestUtil.nextLong());
+
+		newMBThreadFlag.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newMBThreadFlag.setUuid(RandomTestUtil.randomString());
 
 		newMBThreadFlag.setGroupId(RandomTestUtil.nextLong());
@@ -147,6 +142,12 @@ public class MBThreadFlagPersistenceTest {
 		MBThreadFlag existingMBThreadFlag = _persistence.findByPrimaryKey(
 			newMBThreadFlag.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingMBThreadFlag.getMvccVersion(),
+			newMBThreadFlag.getMvccVersion());
+		Assert.assertEquals(
+			existingMBThreadFlag.getCtCollectionId(),
+			newMBThreadFlag.getCtCollectionId());
 		Assert.assertEquals(
 			existingMBThreadFlag.getUuid(), newMBThreadFlag.getUuid());
 		Assert.assertEquals(
@@ -248,10 +249,10 @@ public class MBThreadFlagPersistenceTest {
 
 	protected OrderByComparator<MBThreadFlag> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"MBThreadFlag", "uuid", true, "threadFlagId", true, "groupId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "threadId", true, "lastPublishDate",
-			true);
+			"MBThreadFlag", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "threadFlagId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "threadId", true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -473,33 +474,82 @@ public class MBThreadFlagPersistenceTest {
 
 		_persistence.clearCache();
 
-		MBThreadFlag existingMBThreadFlag = _persistence.findByPrimaryKey(
-			newMBThreadFlag.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newMBThreadFlag.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingMBThreadFlag.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingMBThreadFlag, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		MBThreadFlag newMBThreadFlag = addMBThreadFlag();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			MBThreadFlag.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"threadFlagId", newMBThreadFlag.getThreadFlagId()));
+
+		List<MBThreadFlag> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(MBThreadFlag mbThreadFlag) {
 		Assert.assertEquals(
-			Long.valueOf(existingMBThreadFlag.getGroupId()),
+			mbThreadFlag.getUuid(),
+			ReflectionTestUtil.invoke(
+				mbThreadFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(mbThreadFlag.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBThreadFlag, "getOriginalGroupId", new Class<?>[0]));
+				mbThreadFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingMBThreadFlag.getUserId()),
+			Long.valueOf(mbThreadFlag.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBThreadFlag, "getOriginalUserId", new Class<?>[0]));
+				mbThreadFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
 		Assert.assertEquals(
-			Long.valueOf(existingMBThreadFlag.getThreadId()),
+			Long.valueOf(mbThreadFlag.getThreadId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBThreadFlag, "getOriginalThreadId", new Class<?>[0]));
+				mbThreadFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "threadId"));
 	}
 
 	protected MBThreadFlag addMBThreadFlag() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		MBThreadFlag mbThreadFlag = _persistence.create(pk);
+
+		mbThreadFlag.setMvccVersion(RandomTestUtil.nextLong());
+
+		mbThreadFlag.setCtCollectionId(RandomTestUtil.nextLong());
 
 		mbThreadFlag.setUuid(RandomTestUtil.randomString());
 

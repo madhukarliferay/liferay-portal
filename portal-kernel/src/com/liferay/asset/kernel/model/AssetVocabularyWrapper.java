@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.model;
@@ -60,7 +51,9 @@ public class AssetVocabularyWrapper
 		attributes.put("title", getTitle());
 		attributes.put("description", getDescription());
 		attributes.put("settings", getSettings());
+		attributes.put("visibilityType", getVisibilityType());
 		attributes.put("lastPublishDate", getLastPublishDate());
+		attributes.put("status", getStatus());
 
 		return attributes;
 	}
@@ -158,11 +151,28 @@ public class AssetVocabularyWrapper
 			setSettings(settings);
 		}
 
+		Integer visibilityType = (Integer)attributes.get("visibilityType");
+
+		if (visibilityType != null) {
+			setVisibilityType(visibilityType);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
+	}
+
+	@Override
+	public AssetVocabulary cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -387,14 +397,13 @@ public class AssetVocabularyWrapper
 	}
 
 	/**
-	 * @deprecated As of Wilberforce (7.0.x), with no direct replacement
+	 * Returns the status of this asset vocabulary.
+	 *
+	 * @return the status of this asset vocabulary
 	 */
-	@Deprecated
 	@Override
-	public com.liferay.portal.kernel.util.UnicodeProperties
-		getSettingsProperties() {
-
-		return model.getSettingsProperties();
+	public int getStatus() {
+		return model.getStatus();
 	}
 
 	/**
@@ -523,6 +532,16 @@ public class AssetVocabularyWrapper
 	}
 
 	/**
+	 * Returns the visibility type of this asset vocabulary.
+	 *
+	 * @return the visibility type of this asset vocabulary
+	 */
+	@Override
+	public int getVisibilityType() {
+		return model.getVisibilityType();
+	}
+
+	/**
 	 * Returns the vocabulary ID of this asset vocabulary.
 	 *
 	 * @return the vocabulary ID of this asset vocabulary
@@ -550,6 +569,10 @@ public class AssetVocabularyWrapper
 			classNameId, classTypePK);
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #isMissingRequiredCategory(long, long, long[], long)}
+	 */
+	@Deprecated
 	@Override
 	public boolean isMissingRequiredCategory(
 		long classNameId, long classTypePK, long[] categoryIds) {
@@ -559,30 +582,34 @@ public class AssetVocabularyWrapper
 	}
 
 	@Override
+	public boolean isMissingRequiredCategory(
+		long classNameId, long classTypePK, long[] categoryIds, long groupId) {
+
+		return model.isMissingRequiredCategory(
+			classNameId, classTypePK, categoryIds, groupId);
+	}
+
+	@Override
 	public boolean isMultiValued() {
 		return model.isMultiValued();
 	}
 
 	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #isRequired(long, long)}
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #isRequired(long, long, long)}
 	 */
 	@Deprecated
-	@Override
-	public boolean isRequired(long classNameId) {
-		return model.isRequired(classNameId);
-	}
-
 	@Override
 	public boolean isRequired(long classNameId, long classTypePK) {
 		return model.isRequired(classNameId, classTypePK);
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a asset vocabulary model instance should use the <code>AssetVocabulary</code> interface instead.
-	 */
+	@Override
+	public boolean isRequired(
+		long classNameId, long classTypePK, long groupId) {
+
+		return model.isRequired(classNameId, classTypePK, groupId);
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -781,14 +808,13 @@ public class AssetVocabularyWrapper
 	}
 
 	/**
-	 * @deprecated As of Wilberforce (7.0.x), with no direct replacement
+	 * Sets the status of this asset vocabulary.
+	 *
+	 * @param status the status of this asset vocabulary
 	 */
-	@Deprecated
 	@Override
-	public void setSettingsProperties(
-		com.liferay.portal.kernel.util.UnicodeProperties settingsProperties) {
-
-		model.setSettingsProperties(settingsProperties);
+	public void setStatus(int status) {
+		model.setStatus(status);
 	}
 
 	/**
@@ -896,6 +922,16 @@ public class AssetVocabularyWrapper
 	}
 
 	/**
+	 * Sets the visibility type of this asset vocabulary.
+	 *
+	 * @param visibilityType the visibility type of this asset vocabulary
+	 */
+	@Override
+	public void setVisibilityType(int visibilityType) {
+		model.setVisibilityType(visibilityType);
+	}
+
+	/**
 	 * Sets the vocabulary ID of this asset vocabulary.
 	 *
 	 * @param vocabularyId the vocabulary ID of this asset vocabulary
@@ -903,6 +939,11 @@ public class AssetVocabularyWrapper
 	@Override
 	public void setVocabularyId(long vocabularyId) {
 		model.setVocabularyId(vocabularyId);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.security.membershippolicy;
@@ -18,6 +9,8 @@ import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.UserGroupRole;
@@ -26,7 +19,6 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalServiceUtil;
-import com.liferay.portal.kernel.service.persistence.UserGroupRolePK;
 
 import java.io.Serializable;
 
@@ -54,7 +46,11 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 		try {
 			checkMembership(new long[] {userId}, new long[] {groupId}, null);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return false;
 		}
 
@@ -82,13 +78,8 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 		Role siteOwnerRole = RoleLocalServiceUtil.getRole(
 			permissionChecker.getCompanyId(), RoleConstants.SITE_OWNER);
 
-		if (UserGroupRoleLocalServiceUtil.hasUserGroupRole(
-				userId, groupId, siteOwnerRole.getRoleId())) {
-
-			return true;
-		}
-
-		return false;
+		return UserGroupRoleLocalServiceUtil.hasUserGroupRole(
+			userId, groupId, siteOwnerRole.getRoleId());
 	}
 
 	@Override
@@ -98,7 +89,11 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 		try {
 			checkMembership(new long[] {userId}, null, new long[] {groupId});
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return true;
 		}
 
@@ -111,18 +106,23 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 
 		List<UserGroupRole> userGroupRoles = new ArrayList<>();
 
-		UserGroupRolePK userGroupRolePK = new UserGroupRolePK(
-			userId, groupId, roleId);
-
 		UserGroupRole userGroupRole =
-			UserGroupRoleLocalServiceUtil.createUserGroupRole(userGroupRolePK);
+			UserGroupRoleLocalServiceUtil.createUserGroupRole(0);
+
+		userGroupRole.setUserId(userId);
+		userGroupRole.setGroupId(groupId);
+		userGroupRole.setRoleId(roleId);
 
 		userGroupRoles.add(userGroupRole);
 
 		try {
 			checkRoles(userGroupRoles, null);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return false;
 		}
 
@@ -149,31 +149,31 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 			return false;
 		}
 
-		if (UserGroupRoleLocalServiceUtil.hasUserGroupRole(
-				userId, groupId, roleId)) {
-
-			return true;
-		}
-
-		return false;
+		return UserGroupRoleLocalServiceUtil.hasUserGroupRole(
+			userId, groupId, roleId);
 	}
 
 	@Override
 	public boolean isRoleRequired(long userId, long groupId, long roleId) {
 		List<UserGroupRole> userGroupRoles = new ArrayList<>();
 
-		UserGroupRolePK userGroupRolePK = new UserGroupRolePK(
-			userId, groupId, roleId);
-
 		UserGroupRole userGroupRole =
-			UserGroupRoleLocalServiceUtil.createUserGroupRole(userGroupRolePK);
+			UserGroupRoleLocalServiceUtil.createUserGroupRole(0);
+
+		userGroupRole.setUserId(userId);
+		userGroupRole.setGroupId(groupId);
+		userGroupRole.setRoleId(roleId);
 
 		userGroupRoles.add(userGroupRole);
 
 		try {
 			checkRoles(null, userGroupRoles);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return true;
 		}
 
@@ -231,5 +231,8 @@ public abstract class BaseSiteMembershipPolicy implements SiteMembershipPolicy {
 		Role role, Role oldRole,
 		Map<String, Serializable> oldExpandoAttributes) {
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BaseSiteMembershipPolicy.class);
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
@@ -17,6 +8,7 @@ package com.liferay.dynamic.data.mapping.service;
 import com.liferay.dynamic.data.mapping.model.DDMTemplateVersion;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,6 +22,10 @@ public class DDMTemplateVersionLocalServiceWrapper
 	implements DDMTemplateVersionLocalService,
 			   ServiceWrapper<DDMTemplateVersionLocalService> {
 
+	public DDMTemplateVersionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DDMTemplateVersionLocalServiceWrapper(
 		DDMTemplateVersionLocalService ddmTemplateVersionLocalService) {
 
@@ -38,6 +34,10 @@ public class DDMTemplateVersionLocalServiceWrapper
 
 	/**
 	 * Adds the ddm template version to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was added
@@ -63,7 +63,23 @@ public class DDMTemplateVersionLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmTemplateVersionLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ddm template version from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was removed
@@ -78,6 +94,10 @@ public class DDMTemplateVersionLocalServiceWrapper
 
 	/**
 	 * Deletes the ddm template version with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param templateVersionId the primary key of the ddm template version
 	 * @return the ddm template version that was removed
@@ -106,6 +126,18 @@ public class DDMTemplateVersionLocalServiceWrapper
 	@Override
 	public void deleteTemplateVersions(long templateId) {
 		_ddmTemplateVersionLocalService.deleteTemplateVersions(templateId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ddmTemplateVersionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ddmTemplateVersionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -282,6 +314,9 @@ public class DDMTemplateVersionLocalServiceWrapper
 		return _ddmTemplateVersionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -333,6 +368,10 @@ public class DDMTemplateVersionLocalServiceWrapper
 	/**
 	 * Updates the ddm template version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was updated
 	 */
@@ -342,6 +381,11 @@ public class DDMTemplateVersionLocalServiceWrapper
 
 		return _ddmTemplateVersionLocalService.updateDDMTemplateVersion(
 			ddmTemplateVersion);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ddmTemplateVersionLocalService.getBasePersistence();
 	}
 
 	@Override

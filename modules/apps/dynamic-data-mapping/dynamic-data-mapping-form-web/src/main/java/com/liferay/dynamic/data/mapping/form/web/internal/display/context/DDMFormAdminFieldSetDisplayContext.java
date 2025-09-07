@@ -1,44 +1,37 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.display.context;
 
+import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.form.builder.context.DDMFormBuilderContextFactory;
+import com.liferay.dynamic.data.mapping.form.builder.context.DDMFormContextDeserializer;
 import com.liferay.dynamic.data.mapping.form.builder.settings.DDMFormBuilderSettingsRetriever;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderer;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
 import com.liferay.dynamic.data.mapping.form.web.internal.configuration.DDMFormWebConfiguration;
-import com.liferay.dynamic.data.mapping.form.web.internal.display.context.util.FieldSetPermissionCheckerHelper;
-import com.liferay.dynamic.data.mapping.form.web.internal.instance.lifecycle.AddDefaultSharedFormLayoutPortalInstanceLifecycleListener;
+import com.liferay.dynamic.data.mapping.form.web.internal.display.context.helper.FieldSetPermissionCheckerHelper;
 import com.liferay.dynamic.data.mapping.form.web.internal.search.FieldSetRowChecker;
 import com.liferay.dynamic.data.mapping.form.web.internal.search.FieldSetSearch;
 import com.liferay.dynamic.data.mapping.form.web.internal.search.FieldSetSearchTerms;
 import com.liferay.dynamic.data.mapping.io.DDMFormFieldTypesSerializer;
-import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterTracker;
+import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterRegistry;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceSettings;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.model.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceVersionLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
+import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterRegistry;
 import com.liferay.dynamic.data.mapping.util.DDMFormLayoutFactory;
 import com.liferay.dynamic.data.mapping.util.DDMFormValuesMerger;
 import com.liferay.dynamic.data.mapping.util.comparator.StructureCreateDateComparator;
@@ -46,8 +39,12 @@ import com.liferay.dynamic.data.mapping.util.comparator.StructureModifiedDateCom
 import com.liferay.dynamic.data.mapping.util.comparator.StructureNameComparator;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -55,6 +52,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
@@ -66,15 +64,16 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Leonardo Barros
@@ -84,15 +83,14 @@ public class DDMFormAdminFieldSetDisplayContext
 
 	public DDMFormAdminFieldSetDisplayContext(
 		RenderRequest renderRequest, RenderResponse renderResponse,
-		AddDefaultSharedFormLayoutPortalInstanceLifecycleListener
-			addDefaultSharedFormLayoutPortalInstanceLifecycleListener,
 		DDMFormBuilderContextFactory ddmFormBuilderContextFactory,
 		DDMFormBuilderSettingsRetriever ddmFormBuilderSettingsRetriever,
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker,
+		DDMFormContextDeserializer<DDMFormValues> ddmFormContextToDDMFormValues,
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry,
 		DDMFormFieldTypesSerializer ddmFormFieldTypesSerializer,
 		DDMFormInstanceLocalService ddmFormInstanceLocalService,
 		DDMFormInstanceRecordLocalService ddmFormInstanceRecordLocalService,
-		DDMFormInstanceRecordWriterTracker ddmFormInstanceRecordWriterTracker,
+		DDMFormInstanceRecordWriterRegistry ddmFormInstanceRecordWriterRegistry,
 		DDMFormInstanceService ddmFormInstanceService,
 		DDMFormInstanceVersionLocalService ddmFormInstanceVersionLocalService,
 		DDMFormRenderer ddmFormRenderer,
@@ -100,42 +98,42 @@ public class DDMFormAdminFieldSetDisplayContext
 		DDMFormValuesFactory ddmFormValuesFactory,
 		DDMFormValuesMerger ddmFormValuesMerger,
 		DDMFormWebConfiguration ddmFormWebConfiguration,
+		DDMStorageAdapterRegistry ddmStorageAdapterRegistry,
 		DDMStructureLocalService ddmStructureLocalService,
 		DDMStructureService ddmStructureService, JSONFactory jsonFactory,
-		NPMResolver npmResolver, Portal portal) {
+		NPMResolver npmResolver,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		Portal portal) {
 
 		super(
-			renderRequest, renderResponse,
-			addDefaultSharedFormLayoutPortalInstanceLifecycleListener,
-			ddmFormBuilderContextFactory, ddmFormBuilderSettingsRetriever,
-			ddmFormFieldTypeServicesTracker, ddmFormFieldTypesSerializer,
+			renderRequest, renderResponse, ddmFormBuilderContextFactory,
+			ddmFormBuilderSettingsRetriever, ddmFormContextToDDMFormValues,
+			ddmFormFieldTypeServicesRegistry, ddmFormFieldTypesSerializer,
 			ddmFormInstanceLocalService, ddmFormInstanceRecordLocalService,
-			ddmFormInstanceRecordWriterTracker, ddmFormInstanceService,
+			ddmFormInstanceRecordWriterRegistry, ddmFormInstanceService,
 			ddmFormInstanceVersionLocalService, ddmFormRenderer,
 			ddmFormTemplateContextFactory, ddmFormValuesFactory,
 			ddmFormValuesMerger, ddmFormWebConfiguration,
-			ddmStructureLocalService, ddmStructureService, jsonFactory,
-			npmResolver, portal);
+			ddmStorageAdapterRegistry, ddmStructureLocalService,
+			ddmStructureService, jsonFactory, npmResolver,
+			objectDefinitionLocalService, portal);
 
 		_fieldSetPermissionCheckerHelper = new FieldSetPermissionCheckerHelper(
-			formAdminRequestHelper);
+			ddmFormAdminRequestHelper);
 	}
 
 	@Override
 	public List<DropdownItem> getActionItemsDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.putData("action", "deleteStructures");
-						dropdownItem.setIcon("times-circle");
-						dropdownItem.setLabel(
-							LanguageUtil.get(
-								formAdminRequestHelper.getRequest(), "delete"));
-						dropdownItem.setQuickAction(true);
-					});
+		return DropdownItemListBuilder.add(
+			dropdownItem -> {
+				dropdownItem.putData("action", "deleteStructures");
+				dropdownItem.setIcon("times-circle");
+				dropdownItem.setLabel(
+					LanguageUtil.get(
+						ddmFormAdminRequestHelper.getRequest(), "delete"));
+				dropdownItem.setQuickAction(true);
 			}
-		};
+		).build();
 	}
 
 	@Override
@@ -144,31 +142,27 @@ public class DDMFormAdminFieldSetDisplayContext
 			return null;
 		}
 
-		return new CreationMenu() {
-			{
-				HttpServletRequest httpServletRequest =
-					PortalUtil.getHttpServletRequest(renderRequest);
+		return CreationMenuBuilder.addPrimaryDropdownItem(
+			_getAddElementSetDropdownItem()
+		).build();
+	}
 
-				ThemeDisplay themeDisplay =
-					(ThemeDisplay)httpServletRequest.getAttribute(
-						WebKeys.THEME_DISPLAY);
+	@Override
+	public Map<String, Object> getDDMFormSettingsContext(
+			PageContext pageContext)
+		throws Exception {
 
-				addPrimaryDropdownItem(
-					dropdownItem -> {
-						dropdownItem.setHref(
-							renderResponse.createRenderURL(),
-							"mvcRenderCommandName", "/admin/edit_element_set",
-							"redirect",
-							PortalUtil.getCurrentURL(httpServletRequest),
-							"groupId",
-							String.valueOf(themeDisplay.getScopeGroupId()));
+		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
-						dropdownItem.setLabel(
-							LanguageUtil.get(
-								httpServletRequest, "new-element-set"));
-					});
-			}
-		};
+		DDMFormLayout ddmFormLayout = DDMFormLayoutFactory.create(
+			DDMFormInstanceSettings.class);
+
+		ddmFormLayout.setPaginationMode(DDMFormLayout.TABBED_MODE);
+
+		return ddmFormRenderer.getDDMFormTemplateContext(
+			createSettingsDDMForm(0L, themeDisplay), ddmFormLayout,
+			createDDMFormRenderingContext(pageContext, renderRequest));
 	}
 
 	@Override
@@ -185,14 +179,36 @@ public class DDMFormAdminFieldSetDisplayContext
 
 				_structure = ddmStructureService.getStructure(structureId);
 			}
-			catch (PortalException pe) {
+			catch (PortalException portalException) {
 				if (_log.isDebugEnabled()) {
-					_log.debug(pe, pe);
+					_log.debug(portalException);
 				}
 			}
 		}
 
 		return _structure;
+	}
+
+	@Override
+	public List<DropdownItem> getEmptyResultMessageActionItemsDropdownItems() {
+		if (!_fieldSetPermissionCheckerHelper.isShowAddButton() || isSearch()) {
+			return null;
+		}
+
+		return DropdownItemListBuilder.add(
+			_getAddElementSetDropdownItem()
+		).build();
+	}
+
+	@Override
+	public String getEmptyResultMessageDescription() {
+		if (isSearch()) {
+			return StringPool.BLANK;
+		}
+
+		return LanguageUtil.get(
+			ddmFormAdminRequestHelper.getRequest(),
+			"accelerate-form-creation-with-reusable-field-groupings");
 	}
 
 	@Override
@@ -208,7 +224,7 @@ public class DDMFormAdminFieldSetDisplayContext
 	}
 
 	@Override
-	public String getFormLocalizedDescription() {
+	public JSONObject getFormLocalizedDescriptionJSONObject() {
 		DDMStructure structure = getDDMStructure();
 
 		JSONObject jsonObject = jsonFactory.createJSONObject();
@@ -225,12 +241,12 @@ public class DDMFormAdminFieldSetDisplayContext
 			}
 		}
 
-		return jsonObject.toString();
+		return jsonObject;
 	}
 
 	@Override
-	public String getFormLocalizedName() {
-		DDMStructure structure = getDDMStructure();
+	public <T> JSONObject getFormLocalizedNameJSONObject(T object) {
+		DDMStructure structure = (DDMStructure)object;
 
 		JSONObject jsonObject = jsonFactory.createJSONObject();
 
@@ -246,7 +262,7 @@ public class DDMFormAdminFieldSetDisplayContext
 			}
 		}
 
-		return jsonObject.toString();
+		return jsonObject;
 	}
 
 	@Override
@@ -268,11 +284,15 @@ public class DDMFormAdminFieldSetDisplayContext
 
 	@Override
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = renderResponse.createRenderURL();
-
-		portletURL.setParameter("mvcPath", "/admin/view.jsp");
-		portletURL.setParameter("groupId", String.valueOf(getScopeGroupId()));
-		portletURL.setParameter("currentTab", "element-set");
+		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCPath(
+			"/admin/view.jsp"
+		).setParameter(
+			"currentTab", "element-set"
+		).setParameter(
+			"groupId", getScopeGroupId()
+		).buildPortletURL();
 
 		String delta = ParamUtil.getString(renderRequest, "delta");
 
@@ -308,23 +328,28 @@ public class DDMFormAdminFieldSetDisplayContext
 	}
 
 	@Override
-	public SearchContainer<?> getSearch() {
-		PortletURL portletURL = getPortletURL();
+	public String getSearchActionURL() {
+		return PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCPath(
+			"/admin/view.jsp"
+		).setParameter(
+			"currentTab", "element-set"
+		).setParameter(
+			"groupId", getScopeGroupId()
+		).buildString();
+	}
 
-		portletURL.setParameter("displayStyle", getDisplayStyle());
+	@Override
+	public SearchContainer<?> getSearchContainer() {
+		PortletURL portletURL = PortletURLBuilder.create(
+			getPortletURL()
+		).setParameter(
+			"displayStyle", getDisplayStyle()
+		).buildPortletURL();
 
 		FieldSetSearch fieldSetSearch = new FieldSetSearch(
 			renderRequest, portletURL);
-
-		String orderByCol = getOrderByCol();
-		String orderByType = getOrderByType();
-
-		OrderByComparator<DDMStructure> orderByComparator =
-			getDDMStructureOrderByComparator(orderByCol, orderByType);
-
-		fieldSetSearch.setOrderByCol(orderByCol);
-		fieldSetSearch.setOrderByComparator(orderByComparator);
-		fieldSetSearch.setOrderByType(orderByType);
 
 		if (fieldSetSearch.isSearch()) {
 			fieldSetSearch.setEmptyResultsMessage("no-element-sets-were-found");
@@ -333,23 +358,35 @@ public class DDMFormAdminFieldSetDisplayContext
 			fieldSetSearch.setEmptyResultsMessage("there-are-no-element-sets");
 		}
 
+		fieldSetSearch.setOrderByCol(getOrderByCol());
+		fieldSetSearch.setOrderByComparator(
+			_getDDMStructureOrderByComparator(
+				getOrderByCol(), getOrderByType()));
+		fieldSetSearch.setOrderByType(getOrderByType());
+
+		FieldSetSearchTerms fieldSetSearchTerms =
+			(FieldSetSearchTerms)fieldSetSearch.getSearchTerms();
+
+		DDMStructureService ddmStructureService = getStructureService();
+
+		fieldSetSearch.setResultsAndTotal(
+			() -> ddmStructureService.search(
+				getCompanyId(), new long[] {getScopeGroupId()},
+				PortalUtil.getClassNameId(DDMFormInstance.class),
+				fieldSetSearchTerms.getKeywords(),
+				DDMStructureConstants.TYPE_FRAGMENT,
+				WorkflowConstants.STATUS_ANY, fieldSetSearch.getStart(),
+				fieldSetSearch.getEnd(), fieldSetSearch.getOrderByComparator()),
+			ddmStructureService.searchCount(
+				getCompanyId(), new long[] {getScopeGroupId()},
+				PortalUtil.getClassNameId(DDMFormInstance.class),
+				fieldSetSearchTerms.getKeywords(),
+				DDMStructureConstants.TYPE_FRAGMENT,
+				WorkflowConstants.STATUS_ANY));
+
 		fieldSetSearch.setRowChecker(new FieldSetRowChecker(renderResponse));
 
-		setFieldSetsSearchResults(fieldSetSearch);
-		setFieldSetsSearchTotal(fieldSetSearch);
-
 		return fieldSetSearch;
-	}
-
-	@Override
-	public String getSearchActionURL() {
-		PortletURL portletURL = renderResponse.createRenderURL();
-
-		portletURL.setParameter("mvcPath", "/admin/view.jsp");
-		portletURL.setParameter("groupId", String.valueOf(getScopeGroupId()));
-		portletURL.setParameter("currentTab", "element-set");
-
-		return portletURL.toString();
 	}
 
 	@Override
@@ -357,22 +394,29 @@ public class DDMFormAdminFieldSetDisplayContext
 		return "structure";
 	}
 
-	@Override
-	public String serializeSettingsForm() throws PortalException {
-		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
+	private UnsafeConsumer<DropdownItem, Exception>
+		_getAddElementSetDropdownItem() {
 
-		DDMFormLayout ddmFormLayout = DDMFormLayoutFactory.create(
-			DDMFormInstanceSettings.class);
+		return dropdownItem -> {
+			HttpServletRequest httpServletRequest =
+				PortalUtil.getHttpServletRequest(renderRequest);
 
-		ddmFormLayout.setPaginationMode(DDMFormLayout.TABBED_MODE);
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)httpServletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
 
-		return ddmFormRenderer.render(
-			createSettingsDDMForm(0L, themeDisplay), ddmFormLayout,
-			createDDMFormRenderingContext(renderRequest, renderResponse));
+			dropdownItem.setHref(
+				renderResponse.createRenderURL(), "mvcRenderCommandName",
+				"/admin/edit_element_set", "redirect",
+				PortalUtil.getCurrentURL(httpServletRequest), "groupId",
+				String.valueOf(themeDisplay.getScopeGroupId()));
+
+			dropdownItem.setLabel(
+				LanguageUtil.get(httpServletRequest, "new-element-set"));
+		};
 	}
 
-	protected OrderByComparator<DDMStructure> getDDMStructureOrderByComparator(
+	private OrderByComparator<DDMStructure> _getDDMStructureOrderByComparator(
 		String orderByCol, String orderByType) {
 
 		boolean orderByAsc = false;
@@ -384,7 +428,8 @@ public class DDMFormAdminFieldSetDisplayContext
 		OrderByComparator<DDMStructure> orderByComparator = null;
 
 		if (orderByCol.equals("create-date")) {
-			orderByComparator = new StructureCreateDateComparator(orderByAsc);
+			orderByComparator = StructureCreateDateComparator.getInstance(
+				orderByAsc);
 		}
 		else if (orderByCol.equals("modified-date")) {
 			orderByComparator = new StructureModifiedDateComparator(orderByAsc);
@@ -394,38 +439,6 @@ public class DDMFormAdminFieldSetDisplayContext
 		}
 
 		return orderByComparator;
-	}
-
-	protected void setFieldSetsSearchResults(FieldSetSearch fieldSetSearch) {
-		FieldSetSearchTerms fieldSetSearchTerms =
-			(FieldSetSearchTerms)fieldSetSearch.getSearchTerms();
-
-		DDMStructureService ddmStructureService = getStructureService();
-
-		List<DDMStructure> results = ddmStructureService.search(
-			getCompanyId(), new long[] {getScopeGroupId()},
-			PortalUtil.getClassNameId(DDMFormInstance.class),
-			fieldSetSearchTerms.getKeywords(),
-			DDMStructureConstants.TYPE_FRAGMENT, WorkflowConstants.STATUS_ANY,
-			fieldSetSearch.getStart(), fieldSetSearch.getEnd(),
-			fieldSetSearch.getOrderByComparator());
-
-		fieldSetSearch.setResults(results);
-	}
-
-	protected void setFieldSetsSearchTotal(FieldSetSearch fieldSetSearch) {
-		FieldSetSearchTerms fieldSetSearchTerms =
-			(FieldSetSearchTerms)fieldSetSearch.getSearchTerms();
-
-		DDMStructureService ddmStructureService = getStructureService();
-
-		int total = ddmStructureService.searchCount(
-			getCompanyId(), new long[] {getScopeGroupId()},
-			PortalUtil.getClassNameId(DDMFormInstance.class),
-			fieldSetSearchTerms.getKeywords(),
-			DDMStructureConstants.TYPE_FRAGMENT, WorkflowConstants.STATUS_ANY);
-
-		fieldSetSearch.setTotal(total);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

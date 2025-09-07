@@ -1,87 +1,107 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React, {useContext, useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 
-import {ConfigContext} from '../../../app/config/index';
-import {StoreContext} from '../../../app/store/index';
-import API, {APIContext} from '../API';
+import {loadReducer} from '../../../app/actions';
+import togglePermissions from '../../../app/actions/togglePermission';
+import {config} from '../../../app/config/index';
+import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
+import selectSegmentsExperienceId from '../../../app/selectors/selectSegmentsExperienceId';
+import ExperienceReducer from '../reducers/index';
 import ExperienceSelector from './ExperienceSelector';
 
-// TODO: show how to colocate CSS with plugins (may use loaders)
-export default function ExperienceToolbarSection({selectId}) {
-	const {availableSegmentsExperiences, segmentsExperienceId} = useContext(
-		StoreContext
+function ExperienceToolbarSection() {
+	const availableSegmentsExperiences = useSelector(
+		(state) => state.availableSegmentsExperiences
 	);
-	const {
-		availableSegmentsEntries,
-		classNameId,
-		classPK,
-		defaultSegmentsEntryId,
-		editSegmentsEntryURL
-	} = useContext(ConfigContext);
+	const dispatch = useDispatch();
+	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 
 	const experiences = useMemo(
 		() =>
 			Object.values(availableSegmentsExperiences)
 				.sort((a, b) => b.priority - a.priority)
-				.map(experience => {
+				.map((experience, _, experiences) => {
 					const segmentsEntryName =
-						availableSegmentsEntries[experience.segmentsEntryId]
-							.name;
+						config.availableSegmentsEntries[
+							experience.segmentsEntryId
+						].name;
+
+					const firstExperience = experiences.find(
+						(exp) =>
+							exp.segmentsEntryId ===
+								experience.segmentsEntryId ||
+							exp.segmentsEntryId ===
+								config.defaultSegmentsEntryId
+					);
 
 					return {
 						...experience,
-						segmentsEntryName
+						active:
+							firstExperience.segmentsExperienceId ===
+							experience.segmentsExperienceId,
+						segmentsEntryName,
 					};
 				}),
-		[availableSegmentsExperiences, availableSegmentsEntries]
+		[availableSegmentsExperiences]
 	);
-	const segments = useMemo(() => Object.values(availableSegmentsEntries), [
-		availableSegmentsEntries
-	]).filter(segment => segment.segmentsEntryId !== defaultSegmentsEntryId);
-
-	// TODO get endpoints URL from the display context
-	const APIService = useMemo(() => {
-		return API({
-			addSegmentsExperience: '/',
-			classNameId,
-			classPK,
-			editSegmentsExperiencePriorityURL: '/',
-			editSegmentsExperienceURL: '/',
-			removeSegmentsExperienceURL: '/'
-		});
-	}, [classNameId, classPK]);
+	const segments = useMemo(
+		() => Object.values(config.availableSegmentsEntries),
+		[]
+	);
 
 	const selectedExperience =
 		availableSegmentsExperiences[segmentsExperienceId];
 
-	return (
-		<APIContext.Provider value={APIService}>
-			<div className="mr-2 page-editor-toolbar-experience">
-				<label className="mr-2" htmlFor={selectId}>
-					{Liferay.Language.get('experience')}
-				</label>
+	useEffect(() => {
+		dispatch(
+			togglePermissions(
+				'LOCKED_SEGMENTS_EXPERIMENT',
+				selectedExperience.hasLockedSegmentsExperiment
+			)
+		);
+	}, [dispatch, selectedExperience.hasLockedSegmentsExperiment]);
 
-				<ExperienceSelector
-					editSegmentsEntryURL={editSegmentsEntryURL}
-					experiences={experiences}
-					segments={segments}
-					selectedExperience={selectedExperience}
-					selectId={selectId}
-				/>
-			</div>
-		</APIContext.Provider>
+	return (
+		<div className="page-editor__toolbar-experience">
+			<span
+				aria-hidden
+				className="d-none d-xl-block font-weight-bold mr-2"
+			>
+				{Liferay.Language.get('experience')}
+			</span>
+
+			<ExperienceSelector
+				editSegmentsEntryURL={config.editSegmentsEntryURL}
+				experiences={experiences}
+				segments={segments}
+				selectedExperience={selectedExperience}
+			/>
+		</div>
 	);
+}
+
+export default function ExperienceToolbarSectionWrapper() {
+	const dispatch = useDispatch();
+
+	const availableSegmentsExperiences = useSelector(
+		(state) => state.availableSegmentsExperiences
+	);
+
+	useEffect(() => {
+		dispatch(loadReducer(ExperienceReducer, 'ExperienceReducer'));
+	}, [dispatch]);
+
+	if (
+		!availableSegmentsExperiences ||
+		!Object.keys(availableSegmentsExperiences).length ||
+		config.singleSegmentsExperienceMode
+	) {
+		return null;
+	}
+
+	return <ExperienceToolbarSection />;
 }

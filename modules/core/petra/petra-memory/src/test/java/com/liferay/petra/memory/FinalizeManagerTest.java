@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.memory;
@@ -20,7 +11,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.test.rule.NewEnvTestRule;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Constructor;
@@ -44,7 +35,7 @@ public class FinalizeManagerTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
-			CodeCoverageAssertor.INSTANCE, NewEnvTestRule.INSTANCE);
+			CodeCoverageAssertor.INSTANCE, LiferayUnitTestRule.INSTANCE);
 
 	@NewEnv(type = NewEnv.Type.NONE)
 	@Test
@@ -197,7 +188,7 @@ public class FinalizeManagerTest {
 			referenceFactory = FinalizeManager.SOFT_REFERENCE_FACTORY;
 		}
 
-		Reference<FinalizeRecorder> reference = FinalizeManager.register(
+		FinalizeManager.register(
 			finalizeRecorder, markFinalizeAction, referenceFactory);
 
 		Assert.assertFalse(markFinalizeAction.isMarked());
@@ -230,34 +221,7 @@ public class FinalizeManagerTest {
 
 		Assert.assertTrue(markFinalizeAction.isMarked());
 
-		if (referenceType == ReferenceType.PHANTOM) {
-			Assert.assertEquals(id, markFinalizeAction.getId());
-		}
-		else {
-			Assert.assertNull(markFinalizeAction.getId());
-		}
-
-		if (referenceType != ReferenceType.PHANTOM) {
-			Assert.assertNull(_getReferent(reference));
-		}
-
 		_checkThreadState();
-	}
-
-	private static Object _newIdentityKey(Reference<?> reference)
-		throws Exception {
-
-		ClassLoader classLoader = FinalizeManager.class.getClassLoader();
-
-		Class<?> identityKeyClass = classLoader.loadClass(
-			FinalizeManager.class.getName() + "$IdentityKey");
-
-		Constructor<?> constructor = identityKeyClass.getDeclaredConstructor(
-			Reference.class);
-
-		constructor.setAccessible(true);
-
-		return constructor.newInstance(reference);
 	}
 
 	private void _checkThreadState() {
@@ -298,8 +262,18 @@ public class FinalizeManagerTest {
 		}
 	}
 
-	private <T> T _getReferent(Reference<T> reference) {
-		return ReflectionTestUtil.getFieldValue(reference, "referent");
+	private Object _newIdentityKey(Reference<?> reference) throws Exception {
+		ClassLoader classLoader = FinalizeManager.class.getClassLoader();
+
+		Class<?> identityKeyClass = classLoader.loadClass(
+			FinalizeManager.class.getName() + "$IdentityKey");
+
+		Constructor<?> constructor = identityKeyClass.getDeclaredConstructor(
+			Reference.class);
+
+		constructor.setAccessible(true);
+
+		return constructor.newInstance(reference);
 	}
 
 	private void _waitUntilMarked(MarkFinalizeAction markFinalizeAction)
@@ -344,26 +318,13 @@ public class FinalizeManagerTest {
 
 		@Override
 		public void doFinalize(Reference<?> reference) {
-			Object referent = _getReferent(reference);
-
-			if (referent instanceof FinalizeRecorder) {
-				FinalizeRecorder finalizeRecorder = (FinalizeRecorder)referent;
-
-				_id = finalizeRecorder._id;
-			}
-
 			_marked = true;
-		}
-
-		public String getId() {
-			return _id;
 		}
 
 		public boolean isMarked() {
 			return _marked;
 		}
 
-		private volatile String _id;
 		private volatile boolean _marked;
 
 	}

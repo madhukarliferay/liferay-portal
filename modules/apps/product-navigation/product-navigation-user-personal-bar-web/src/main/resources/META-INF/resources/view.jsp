@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -36,24 +27,32 @@
 				String notificationsURL = PersonalApplicationURLUtil.getPersonalApplicationURL(request, notificaitonsPortletId);
 				%>
 
-				<aui:a href="<%= (notificationsURL != null) ? notificationsURL : null %>">
-					<span class="badge badge-danger panel-notifications-count">
-						<span class="badge-item badge-item-expand"><%= notificationsCount %></span>
-					</span>
-				</aui:a>
+				<a aria-label="<%= notificationsCount + StringPool.SPACE + LanguageUtil.get(request, "new-notification") %>" class="panel-notifications-count" data-qa-id="notificationsCount" href="<%= (notificationsURL != null) ? notificationsURL : null %>" title="<%= notificationsCount + StringPool.SPACE + LanguageUtil.get(request, "new-notification") %>">
+					<clay:badge
+						displayType="danger"
+						label="<%= String.valueOf(notificationsCount) %>"
+					/>
+				</a>
 			</c:if>
 		</span>
 	</c:when>
-	<c:otherwise>
-
-		<%
-		Map<String, Object> anchorData = new HashMap<String, Object>();
-
-		anchorData.put("redirect", String.valueOf(PortalUtil.isLoginRedirectRequired(request)));
-		%>
-
+	<c:when test="<%= themeDisplay.isShowSignInIcon() %>">
 		<span class="sign-in text-default" role="presentation">
-			<aui:icon cssClass="sign-in text-default" data="<%= anchorData %>" image="user" label="sign-in" markupView="lexicon" url="<%= themeDisplay.getURLSignIn() %>" />
+			<clay:button
+				additionalProps='<%=
+					HashMapBuilder.<String, Object>put(
+						"redirect", PortalUtil.isLoginRedirectRequired(request)
+					).put(
+						"signInURL", themeDisplay.getURLSignIn()
+					).build()
+				%>'
+				cssClass="sign-in text-default"
+				displayType="unstyled"
+				icon="user"
+				label="sign-in"
+				propsTransformer="{signInButtonPropsTransformer} from product-navigation-user-personal-bar-web"
+				small="<%= true %>"
+			/>
 		</span>
-	</c:otherwise>
+	</c:when>
 </c:choose>

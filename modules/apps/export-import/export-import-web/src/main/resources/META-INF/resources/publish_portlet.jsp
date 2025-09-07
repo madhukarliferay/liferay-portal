@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,7 +10,7 @@
 <liferay-staging:defineObjects />
 
 <%
-String tabs3 = ParamUtil.getString(request, "tabs3", "new-publication-process");
+String tabs3 = ParamUtil.getString(request, "tabs3", "new-publish-process");
 
 String errorMessageKey = StringPool.BLANK;
 
@@ -43,14 +34,16 @@ if (!layout.isTypeControlPanel()) {
 				targetLayout = LayoutLocalServiceUtil.getLayoutByUuidAndGroupId(layout.getUuid(), liveGroup.getGroupId(), layout.isPrivateLayout());
 			}
 		}
-		catch (NoSuchLayoutException nsle) {
+		catch (PortalException portalException) {
 			errorMessageKey = "this-widget-is-placed-in-a-page-that-does-not-exist-in-the-live-site-publish-the-page-first";
 		}
 
 		if (targetLayout != null) {
 			LayoutType layoutType = targetLayout.getLayoutType();
 
-			if (!(layoutType instanceof LayoutTypePortlet) || !((LayoutTypePortlet)layoutType).hasPortletId(selPortlet.getPortletId())) {
+			LayoutTypePortlet targetLayoutTypePortlet = (LayoutTypePortlet)layoutType;
+
+			if (!(layoutType instanceof LayoutTypePortlet) || !targetLayoutTypePortlet.hasPortletId(selPortlet.getPortletId())) {
 				errorMessageKey = "this-widget-has-not-been-added-to-the-live-page-publish-the-page-first";
 			}
 		}
@@ -60,6 +53,9 @@ if (!layout.isTypeControlPanel()) {
 			if (!remoteLayoutHasPortletId) {
 				errorMessageKey = "this-widget-has-not-been-added-to-the-live-page-publish-the-page-first";
 			}
+		}
+		else if (stagingGroup.isStagedRemotely() && (remoteLayoutPlid == 0)) {
+			errorMessageKey = "this-widget-is-placed-in-a-page-that-does-not-exist-in-the-live-site-publish-the-page-first";
 		}
 	}
 }
@@ -89,11 +85,14 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 
 	<c:choose>
 		<c:when test="<%= Validator.isNotNull(errorMessageKey) %>">
-			<liferay-ui:message key="<%= errorMessageKey %>" />
+			<clay:stripe
+				displayType="warning"
+				message="<%= errorMessageKey %>"
+			/>
 		</c:when>
 		<c:when test="<%= (themeDisplay.getURLPublishToLive() != null) || layout.isTypeControlPanel() %>">
 			<c:choose>
-				<c:when test='<%= tabs3.equals("copy-from-live") || tabs3.equals("new-publication-process") %>'>
+				<c:when test='<%= tabs3.equals("copy-from-live") || tabs3.equals("new-publish-process") %>'>
 					<liferay-util:include page="/publish_portlet_publish_or_copy.jsp" servletContext="<%= application %>" />
 				</c:when>
 				<c:when test='<%= tabs3.equals("current-and-previous") %>'>
@@ -104,7 +103,7 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 			</c:choose>
 
 			<aui:script use="liferay-export-import-export-import">
-				<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="publishPortlet" var="publishProcessesURL">
+				<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/export_import/publish_portlet" var="publishProcessesURL">
 					<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.PUBLISH %>" />
 					<portlet:param name="<%= SearchContainer.DEFAULT_CUR_PARAM %>" value="<%= ParamUtil.getString(request, SearchContainer.DEFAULT_CUR_PARAM) %>" />
 					<portlet:param name="<%= SearchContainer.DEFAULT_DELTA_PARAM %>" value="<%= ParamUtil.getString(request, SearchContainer.DEFAULT_DELTA_PARAM) %>" />
@@ -128,7 +127,7 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 					rangeLastNode: '#rangeLast',
 					rangeLastPublishNode: '#rangeLastPublish',
 					ratingsNode: '#<%= PortletDataHandlerKeys.RATINGS %>',
-					timeZoneOffset: <%= timeZoneOffset %>
+					timeZoneOffset: <%= timeZoneOffset %>,
 				});
 
 				Liferay.component('<portlet:namespace />ExportImportComponent', exportImport);
@@ -142,17 +141,21 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 
 					var dateChecker = exportImport.getDateRangeChecker();
 
-					if (
-						dateChecker.validRange &&
-						confirm(
-							'<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-copy-from-live-and-update-the-existing-staging-widget-information") %>'
-						)
-					) {
-						document.<portlet:namespace />fm1.<portlet:namespace /><%= Constants.CMD %>.value =
-							'copy_from_live';
+					if (dateChecker.validRange) {
+						Liferay.Util.openConfirmModal({
+							message:
+								'<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-copy-from-live-and-update-the-existing-staging-widget-information") %>',
+							onConfirm: (isConfirmed) => {
+								if (isConfirmed) {
+									document.<portlet:namespace />fm1.<portlet:namespace /><%= Constants.CMD %>.value =
+										'copy_from_live';
 
-						submitForm(document.<portlet:namespace />fm1);
-					} else if (!dateChecker.validRange) {
+									submitForm(document.<portlet:namespace />fm1);
+								}
+							},
+						});
+					}
+					else {
 						exportImport.showNotification(dateChecker);
 					}
 				}
@@ -164,14 +167,18 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 
 					var dateChecker = exportImport.getDateRangeChecker();
 
-					if (
-						dateChecker.validRange &&
-						confirm(
-							'<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-publish-to-live-and-update-the-existing-application-data") %>'
-						)
-					) {
-						submitForm(document.<portlet:namespace />fm1);
-					} else if (!dateChecker.validRange) {
+					if (dateChecker.validRange) {
+						Liferay.Util.openConfirmModal({
+							message:
+								'<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-publish-to-live-and-update-the-existing-application-data") %>',
+							onConfirm: (isConfirmed) => {
+								if (isConfirmed) {
+									submitForm(document.<portlet:namespace />fm1);
+								}
+							},
+						});
+					}
+					else {
 						exportImport.showNotification(dateChecker);
 					}
 				}
@@ -181,12 +188,12 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 					'<portlet:namespace />portletMetaDataList'
 				);
 				Liferay.Util.toggleRadio('<portlet:namespace />portletMetaDataAll', '', [
-					'<portlet:namespace />portletMetaDataList'
+					'<portlet:namespace />portletMetaDataList',
 				]);
 
 				Liferay.Util.toggleRadio('<portlet:namespace />rangeAll', '', [
 					'<portlet:namespace />startEndDate',
-					'<portlet:namespace />rangeLastInputs'
+					'<portlet:namespace />rangeLastInputs',
 				]);
 				Liferay.Util.toggleRadio(
 					'<portlet:namespace />rangeDateRange',
@@ -195,7 +202,7 @@ if (!GroupPermissionUtil.contains(permissionChecker, themeDisplay.getScopeGroup(
 				);
 				Liferay.Util.toggleRadio('<portlet:namespace />rangeLastPublish', '', [
 					'<portlet:namespace />startEndDate',
-					'<portlet:namespace />rangeLastInputs'
+					'<portlet:namespace />rangeLastInputs',
 				]);
 				Liferay.Util.toggleRadio(
 					'<portlet:namespace />rangeLast',

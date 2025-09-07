@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.service;
 
+import com.liferay.data.engine.model.DEDataDefinitionFieldLink;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link DEDataDefinitionFieldLinkLocalService}.
@@ -27,6 +22,10 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	implements DEDataDefinitionFieldLinkLocalService,
 			   ServiceWrapper<DEDataDefinitionFieldLinkLocalService> {
 
+	public DEDataDefinitionFieldLinkLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DEDataDefinitionFieldLinkLocalServiceWrapper(
 		DEDataDefinitionFieldLinkLocalService
 			deDataDefinitionFieldLinkLocalService) {
@@ -38,28 +37,43 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	/**
 	 * Adds the de data definition field link to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DEDataDefinitionFieldLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param deDataDefinitionFieldLink the de data definition field link
 	 * @return the de data definition field link that was added
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		addDEDataDefinitionFieldLink(
-			com.liferay.data.engine.model.DEDataDefinitionFieldLink
-				deDataDefinitionFieldLink) {
+	public DEDataDefinitionFieldLink addDEDataDefinitionFieldLink(
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			addDEDataDefinitionFieldLink(deDataDefinitionFieldLink);
 	}
 
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		addDEDataDefinitionFieldLink(
+	public DEDataDefinitionFieldLink addDEDataDefinitionFieldLink(
 			long groupId, long classNameId, long classPK, long ddmStructureId,
-			String fieldName) {
+			String fieldName)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			addDEDataDefinitionFieldLink(
 				groupId, classNameId, classPK, ddmStructureId, fieldName);
+	}
+
+	@Override
+	public DEDataDefinitionFieldLink addDEDataDefinitionFieldLink(
+			long groupId, long classNameId, long classPK, long ddmStructureId,
+			String fieldName,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			addDEDataDefinitionFieldLink(
+				groupId, classNameId, classPK, ddmStructureId, fieldName,
+				serviceContext);
 	}
 
 	/**
@@ -69,24 +83,38 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @return the new de data definition field link
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		createDEDataDefinitionFieldLink(long deDataDefinitionFieldLinkId) {
+	public DEDataDefinitionFieldLink createDEDataDefinitionFieldLink(
+		long deDataDefinitionFieldLinkId) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			createDEDataDefinitionFieldLink(deDataDefinitionFieldLinkId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _deDataDefinitionFieldLinkLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the de data definition field link from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DEDataDefinitionFieldLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param deDataDefinitionFieldLink the de data definition field link
 	 * @return the de data definition field link that was removed
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		deleteDEDataDefinitionFieldLink(
-			com.liferay.data.engine.model.DEDataDefinitionFieldLink
-				deDataDefinitionFieldLink) {
+	public DEDataDefinitionFieldLink deleteDEDataDefinitionFieldLink(
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			deleteDEDataDefinitionFieldLink(deDataDefinitionFieldLink);
@@ -95,13 +123,17 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	/**
 	 * Deletes the de data definition field link with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DEDataDefinitionFieldLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param deDataDefinitionFieldLinkId the primary key of the de data definition field link
 	 * @return the de data definition field link that was removed
 	 * @throws PortalException if a de data definition field link with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-			deleteDEDataDefinitionFieldLink(long deDataDefinitionFieldLinkId)
+	public DEDataDefinitionFieldLink deleteDEDataDefinitionFieldLink(
+			long deDataDefinitionFieldLinkId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _deDataDefinitionFieldLinkLocalService.
@@ -122,12 +154,26 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 			classNameId, classPK);
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 DEDataDefinitionFieldLinkLocalServiceImpl#deleteDEDataDefinitionFieldLinks(
+	 long, long, String[])}
+	 */
+	@Deprecated
 	@Override
 	public void deleteDEDataDefinitionFieldLinks(
 		long classNameId, long ddmStructureId, String fieldName) {
 
 		_deDataDefinitionFieldLinkLocalService.deleteDEDataDefinitionFieldLinks(
 			classNameId, ddmStructureId, fieldName);
+	}
+
+	@Override
+	public void deleteDEDataDefinitionFieldLinks(
+		long classNameId, long ddmStructureId, String[] fieldNames) {
+
+		_deDataDefinitionFieldLinkLocalService.deleteDEDataDefinitionFieldLinks(
+			classNameId, ddmStructureId, fieldNames);
 	}
 
 	/**
@@ -140,6 +186,18 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 
 		return _deDataDefinitionFieldLinkLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _deDataDefinitionFieldLinkLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _deDataDefinitionFieldLinkLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -236,8 +294,8 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		fetchDEDataDefinitionFieldLink(long deDataDefinitionFieldLinkId) {
+	public DEDataDefinitionFieldLink fetchDEDataDefinitionFieldLink(
+		long deDataDefinitionFieldLinkId) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			fetchDEDataDefinitionFieldLink(deDataDefinitionFieldLinkId);
@@ -251,12 +309,21 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @return the matching de data definition field link, or <code>null</code> if a matching de data definition field link could not be found
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
+	public DEDataDefinitionFieldLink
 		fetchDEDataDefinitionFieldLinkByUuidAndGroupId(
 			String uuid, long groupId) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			fetchDEDataDefinitionFieldLinkByUuidAndGroupId(uuid, groupId);
+	}
+
+	@Override
+	public DEDataDefinitionFieldLink fetchDEDataDefinitionFieldLinks(
+		long classNameId, long classPK, long ddmStructureId, String fieldName) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			fetchDEDataDefinitionFieldLinks(
+				classNameId, classPK, ddmStructureId, fieldName);
 	}
 
 	@Override
@@ -267,6 +334,14 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 			getActionableDynamicQuery();
 	}
 
+	@Override
+	public java.util.List<Long> getClassPKS(
+		long classNameId, long ddmStructureId) {
+
+		return _deDataDefinitionFieldLinkLocalService.getClassPKS(
+			classNameId, ddmStructureId);
+	}
+
 	/**
 	 * Returns the de data definition field link with the primary key.
 	 *
@@ -275,8 +350,8 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @throws PortalException if a de data definition field link with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-			getDEDataDefinitionFieldLink(long deDataDefinitionFieldLinkId)
+	public DEDataDefinitionFieldLink getDEDataDefinitionFieldLink(
+			long deDataDefinitionFieldLinkId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _deDataDefinitionFieldLinkLocalService.
@@ -292,7 +367,7 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @throws PortalException if a matching de data definition field link could not be found
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
+	public DEDataDefinitionFieldLink
 			getDEDataDefinitionFieldLinkByUuidAndGroupId(
 				String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -313,23 +388,72 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @return the range of de data definition field links
 	 */
 	@Override
-	public java.util.List
-		<com.liferay.data.engine.model.DEDataDefinitionFieldLink>
-			getDEDataDefinitionFieldLinks(int start, int end) {
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(int start, int end) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			getDEDataDefinitionFieldLinks(start, end);
 	}
 
 	@Override
-	public java.util.List
-		<com.liferay.data.engine.model.DEDataDefinitionFieldLink>
-			getDEDataDefinitionFieldLinks(
-				long classNameId, long ddmStructureId, String fieldName) {
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(long ddmStructureId) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getDEDataDefinitionFieldLinks(ddmStructureId);
+	}
+
+	@Override
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(long classNameId, long ddmStructureId) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getDEDataDefinitionFieldLinks(classNameId, ddmStructureId);
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 DEDataDefinitionFieldLinkLocalServiceImpl#getDEDataDefinitionFieldLinks(
+	 long, long, String[])}
+	 */
+	@Deprecated
+	@Override
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(
+			long classNameId, long ddmStructureId, String fieldName) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			getDEDataDefinitionFieldLinks(
 				classNameId, ddmStructureId, fieldName);
+	}
+
+	@Override
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(
+			long classNameId, long ddmStructureId, String[] fieldNames) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getDEDataDefinitionFieldLinks(
+				classNameId, ddmStructureId, fieldNames);
+	}
+
+	@Override
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinks(
+			long ddmStructureId, String[] fieldNames) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getDEDataDefinitionFieldLinks(ddmStructureId, fieldNames);
+	}
+
+	@Override
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinksByClassNameIdAndClassPK(
+			long classNameId, long classPK) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getDEDataDefinitionFieldLinksByClassNameIdAndClassPK(
+				classNameId, classPK);
 	}
 
 	/**
@@ -340,10 +464,9 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @return the matching de data definition field links, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List
-		<com.liferay.data.engine.model.DEDataDefinitionFieldLink>
-			getDEDataDefinitionFieldLinksByUuidAndCompanyId(
-				String uuid, long companyId) {
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinksByUuidAndCompanyId(
+			String uuid, long companyId) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			getDEDataDefinitionFieldLinksByUuidAndCompanyId(uuid, companyId);
@@ -360,13 +483,11 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	 * @return the range of matching de data definition field links, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List
-		<com.liferay.data.engine.model.DEDataDefinitionFieldLink>
-			getDEDataDefinitionFieldLinksByUuidAndCompanyId(
-				String uuid, long companyId, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.data.engine.model.DEDataDefinitionFieldLink>
-						orderByComparator) {
+	public java.util.List<DEDataDefinitionFieldLink>
+		getDEDataDefinitionFieldLinksByUuidAndCompanyId(
+			String uuid, long companyId, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<DEDataDefinitionFieldLink> orderByComparator) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			getDEDataDefinitionFieldLinksByUuidAndCompanyId(
@@ -382,6 +503,16 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	public int getDEDataDefinitionFieldLinksCount() {
 		return _deDataDefinitionFieldLinkLocalService.
 			getDEDataDefinitionFieldLinksCount();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return _deDataDefinitionFieldLinkLocalService.
+			getExportActionableDynamicQuery(portletDataContext);
 	}
 
 	@Override
@@ -403,6 +534,9 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 			getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -415,17 +549,44 @@ public class DEDataDefinitionFieldLinkLocalServiceWrapper
 	/**
 	 * Updates the de data definition field link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DEDataDefinitionFieldLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param deDataDefinitionFieldLink the de data definition field link
 	 * @return the de data definition field link that was updated
 	 */
 	@Override
-	public com.liferay.data.engine.model.DEDataDefinitionFieldLink
-		updateDEDataDefinitionFieldLink(
-			com.liferay.data.engine.model.DEDataDefinitionFieldLink
-				deDataDefinitionFieldLink) {
+	public DEDataDefinitionFieldLink updateDEDataDefinitionFieldLink(
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink) {
 
 		return _deDataDefinitionFieldLinkLocalService.
 			updateDEDataDefinitionFieldLink(deDataDefinitionFieldLink);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _deDataDefinitionFieldLinkLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<DEDataDefinitionFieldLink> getCTPersistence() {
+		return _deDataDefinitionFieldLinkLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<DEDataDefinitionFieldLink> getModelClass() {
+		return _deDataDefinitionFieldLinkLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<DEDataDefinitionFieldLink>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _deDataDefinitionFieldLinkLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

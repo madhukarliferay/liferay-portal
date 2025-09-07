@@ -1,29 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.test.integration;
 
 import com.liferay.gradle.plugins.test.integration.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.test.integration.internal.util.StringUtil;
-import com.liferay.gradle.plugins.test.integration.tasks.BaseAppServerTask;
-import com.liferay.gradle.plugins.test.integration.tasks.JmxRemotePortSpec;
-import com.liferay.gradle.plugins.test.integration.tasks.ManagerSpec;
-import com.liferay.gradle.plugins.test.integration.tasks.ModuleFrameworkBaseDirSpec;
-import com.liferay.gradle.plugins.test.integration.tasks.SetUpArquillianTask;
-import com.liferay.gradle.plugins.test.integration.tasks.SetUpTestableTomcatTask;
-import com.liferay.gradle.plugins.test.integration.tasks.StartTestableTomcatTask;
-import com.liferay.gradle.plugins.test.integration.tasks.StopTestableTomcatTask;
+import com.liferay.gradle.plugins.test.integration.task.BaseAppServerTask;
+import com.liferay.gradle.plugins.test.integration.task.JmxRemotePortSpec;
+import com.liferay.gradle.plugins.test.integration.task.ManagerSpec;
+import com.liferay.gradle.plugins.test.integration.task.ModuleFrameworkBaseDirSpec;
+import com.liferay.gradle.plugins.test.integration.task.SetUpArquillianTask;
+import com.liferay.gradle.plugins.test.integration.task.SetUpTestableTomcatTask;
+import com.liferay.gradle.plugins.test.integration.task.StartTestableTomcatTask;
+import com.liferay.gradle.plugins.test.integration.task.StopTestableTomcatTask;
 import com.liferay.gradle.util.FileUtil;
 import com.liferay.gradle.util.OSDetector;
 import com.liferay.gradle.util.copy.RenameDependencyClosure;
@@ -44,6 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.gradle.StartParameter;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -145,29 +137,6 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 			testIntegrationTomcatExtension, startTestableTomcatTask);
 	}
 
-	private static int _updateStartedAppServerStopCounters(
-		File binDir, boolean increment) {
-
-		int originalCounter = 0;
-
-		if (_startedAppServerStopCounters.containsKey(binDir)) {
-			originalCounter = _startedAppServerStopCounters.get(binDir);
-		}
-
-		int counter = originalCounter;
-
-		if (increment) {
-			counter++;
-		}
-		else {
-			counter--;
-		}
-
-		_startedAppServerStopCounters.put(binDir, counter);
-
-		return originalCounter;
-	}
-
 	private Configuration _addConfigurationTestModules(final Project project) {
 		Configuration configuration = GradleUtil.addConfiguration(
 			project, TEST_MODULES_CONFIGURATION_NAME);
@@ -197,9 +166,6 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 		GradleUtil.addDependency(
 			project, TEST_MODULES_CONFIGURATION_NAME, "com.liferay.portal",
 			"com.liferay.portal.test", "3.0.0");
-		GradleUtil.addDependency(
-			project, TEST_MODULES_CONFIGURATION_NAME, "com.liferay.portal",
-			"com.liferay.portal.test.integration", "3.0.0");
 		GradleUtil.addDependency(
 			project, TEST_MODULES_CONFIGURATION_NAME, "org.apache.aries.jmx",
 			"org.apache.aries.jmx.core", "1.1.7");
@@ -276,7 +242,7 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 	}
 
 	private SetUpArquillianTask _addTaskSetUpArquillian(
-		final Project project, final SourceSet testIntegrationSourceSet,
+		Project project, final SourceSet testIntegrationSourceSet,
 		TestIntegrationTomcatExtension testIntegrationTomcatExtension) {
 
 		SetUpArquillianTask setUpArquillianTask = GradleUtil.addTask(
@@ -323,13 +289,8 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 					_startedAppServersReentrantLock.lock();
 
 					try {
-						if (_startedAppServerBinDirs.contains(
-								setUpTestableTomcatTask.getBinDir())) {
-
-							return false;
-						}
-
-						return true;
+						return !_startedAppServerBinDirs.contains(
+							setUpTestableTomcatTask.getBinDir());
 					}
 					finally {
 						_startedAppServersReentrantLock.unlock();
@@ -396,33 +357,34 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 					_startedAppServersReentrantLock.unlock();
 				}
 
-				if (started) {
-					Logger logger = startTestableTomcatTask.getLogger();
+				if (!started) {
+					return;
+				}
 
+				Logger logger = startTestableTomcatTask.getLogger();
+
+				if (logger.isDebugEnabled()) {
+					logger.debug(
+						"Application server {} is already started", binDir);
+				}
+
+				Project project = startTestableTomcatTask.getProject();
+
+				Gradle gradle = project.getGradle();
+
+				StartParameter startParameter = gradle.getStartParameter();
+
+				if (startParameter.isParallelProjectExecutionEnabled()) {
 					if (logger.isDebugEnabled()) {
 						logger.debug(
-							"Application server {} is already started", binDir);
+							"Waiting for application server {} to be reachable",
+							binDir);
 					}
 
-					Project project = startTestableTomcatTask.getProject();
-
-					Gradle gradle = project.getGradle();
-
-					StartParameter startParameter = gradle.getStartParameter();
-
-					if (startParameter.isParallelProjectExecutionEnabled()) {
-						if (logger.isDebugEnabled()) {
-							logger.debug(
-								"Waiting for application server {} to be " +
-									"reachable",
-								binDir);
-						}
-
-						startTestableTomcatTask.waitForReachable();
-					}
-
-					throw new StopExecutionException();
+					startTestableTomcatTask.waitForReachable();
 				}
+
+				throw new StopExecutionException();
 			}
 
 		};
@@ -439,11 +401,7 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 					StartTestableTomcatTask startTestableTomcatTask =
 						(StartTestableTomcatTask)task;
 
-					if (startTestableTomcatTask.isReachable()) {
-						return false;
-					}
-
-					return true;
+					return !startTestableTomcatTask.isReachable();
 				}
 
 			});
@@ -731,9 +689,24 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 
 		test.dependsOn(closure);
 
-		test.jvmArgs(
-			"-Djava.net.preferIPv4Stack=true", "-Dliferay.mode=test",
-			"-Duser.timezone=GMT");
+		test.jvmArgs("-Djava.net.preferIPv4Stack=true", "-Duser.timezone=GMT");
+
+		JavaVersion javaVersion = test.getJavaVersion();
+
+		if (javaVersion.isJava11Compatible()) {
+			test.jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED");
+			test.jvmArgs(
+				"--add-opens", "java.base/java.lang.invoke=ALL-UNNAMED");
+			test.jvmArgs(
+				"--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED");
+			test.jvmArgs("--add-opens", "java.base/java.net=ALL-UNNAMED");
+			test.jvmArgs(
+				"--add-opens",
+				"java.base/sun.net.www.protocol.http=ALL-UNNAMED");
+			test.jvmArgs(
+				"--add-opens", "java.base/sun.util.calendar=ALL-UNNAMED");
+			test.jvmArgs("--add-opens", "jdk.zipfs/jdk.nio.zipfs=ALL-UNNAMED");
+		}
 
 		Properties systemProperties = System.getProperties();
 
@@ -815,6 +788,29 @@ public class TestIntegrationPlugin implements Plugin<Project> {
 		}
 
 		return fileName;
+	}
+
+	private int _updateStartedAppServerStopCounters(
+		File binDir, boolean increment) {
+
+		int originalCounter = 0;
+
+		if (_startedAppServerStopCounters.containsKey(binDir)) {
+			originalCounter = _startedAppServerStopCounters.get(binDir);
+		}
+
+		int counter = originalCounter;
+
+		if (increment) {
+			counter++;
+		}
+		else {
+			counter--;
+		}
+
+		_startedAppServerStopCounters.put(binDir, counter);
+
+		return originalCounter;
 	}
 
 	private static final String _SKIP_MANAGED_APP_SERVER_FILE_NAME =

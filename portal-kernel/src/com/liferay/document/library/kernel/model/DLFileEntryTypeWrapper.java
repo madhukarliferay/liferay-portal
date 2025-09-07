@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class DLFileEntryTypeWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("fileEntryTypeId", getFileEntryTypeId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -52,9 +47,11 @@ public class DLFileEntryTypeWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("dataDefinitionId", getDataDefinitionId());
 		attributes.put("fileEntryTypeKey", getFileEntryTypeKey());
 		attributes.put("name", getName());
 		attributes.put("description", getDescription());
+		attributes.put("scope", getScope());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -68,10 +65,23 @@ public class DLFileEntryTypeWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long fileEntryTypeId = (Long)attributes.get("fileEntryTypeId");
@@ -116,6 +126,12 @@ public class DLFileEntryTypeWrapper
 			setModifiedDate(modifiedDate);
 		}
 
+		Long dataDefinitionId = (Long)attributes.get("dataDefinitionId");
+
+		if (dataDefinitionId != null) {
+			setDataDefinitionId(dataDefinitionId);
+		}
+
 		String fileEntryTypeKey = (String)attributes.get("fileEntryTypeKey");
 
 		if (fileEntryTypeKey != null) {
@@ -134,11 +150,22 @@ public class DLFileEntryTypeWrapper
 			setDescription(description);
 		}
 
+		Integer scope = (Integer)attributes.get("scope");
+
+		if (scope != null) {
+			setScope(scope);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+	}
+
+	@Override
+	public DLFileEntryType cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -166,6 +193,31 @@ public class DLFileEntryTypeWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this document library file entry type.
+	 *
+	 * @return the ct collection ID of this document library file entry type
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the data definition ID of this document library file entry type.
+	 *
+	 * @return the data definition ID of this document library file entry type
+	 */
+	@Override
+	public long getDataDefinitionId() {
+		return model.getDataDefinitionId();
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 DLFileEntryTypeUtil#getDDMStructures(DLFileEntryType)}
+	 */
+	@Deprecated
 	@Override
 	public java.util.List<com.liferay.dynamic.data.mapping.kernel.DDMStructure>
 		getDDMStructures() {
@@ -252,6 +304,16 @@ public class DLFileEntryTypeWrapper
 	@Override
 	public Map<java.util.Locale, String> getDescriptionMap() {
 		return model.getDescriptionMap();
+	}
+
+	/**
+	 * Returns the external reference code of this document library file entry type.
+	 *
+	 * @return the external reference code of this document library file entry type
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -400,6 +462,16 @@ public class DLFileEntryTypeWrapper
 		return model.getPrimaryKey();
 	}
 
+	/**
+	 * Returns the scope of this document library file entry type.
+	 *
+	 * @return the scope of this document library file entry type
+	 */
+	@Override
+	public int getScope() {
+		return model.getScope();
+	}
+
 	@Override
 	public String getUnambiguousName(
 			java.util.List<DLFileEntryType> dlFileEntryTypes, long groupId,
@@ -454,11 +526,6 @@ public class DLFileEntryTypeWrapper
 		return model.isExportable();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a document library file entry type model instance should use the <code>DLFileEntryType</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -497,6 +564,26 @@ public class DLFileEntryTypeWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this document library file entry type.
+	 *
+	 * @param ctCollectionId the ct collection ID of this document library file entry type
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the data definition ID of this document library file entry type.
+	 *
+	 * @param dataDefinitionId the data definition ID of this document library file entry type
+	 */
+	@Override
+	public void setDataDefinitionId(long dataDefinitionId) {
+		model.setDataDefinitionId(dataDefinitionId);
 	}
 
 	/**
@@ -564,6 +651,16 @@ public class DLFileEntryTypeWrapper
 		java.util.Locale defaultLocale) {
 
 		model.setDescriptionMap(descriptionMap, defaultLocale);
+	}
+
+	/**
+	 * Sets the external reference code of this document library file entry type.
+	 *
+	 * @param externalReferenceCode the external reference code of this document library file entry type
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -700,6 +797,16 @@ public class DLFileEntryTypeWrapper
 	}
 
 	/**
+	 * Sets the scope of this document library file entry type.
+	 *
+	 * @param scope the scope of this document library file entry type
+	 */
+	@Override
+	public void setScope(int scope) {
+		model.setScope(scope);
+	}
+
+	/**
 	 * Sets the user ID of this document library file entry type.
 	 *
 	 * @param userId the user ID of this document library file entry type
@@ -737,6 +844,25 @@ public class DLFileEntryTypeWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<DLFileEntryType, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<DLFileEntryType, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

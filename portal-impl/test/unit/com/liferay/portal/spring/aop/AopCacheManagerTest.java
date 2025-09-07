@@ -1,33 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.spring.aop;
 
 import com.liferay.portal.kernel.aop.AopMethodInvocation;
 import com.liferay.portal.kernel.aop.ChainableMethodAdvice;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -38,20 +26,27 @@ import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Preston Crary
  */
 public class AopCacheManagerTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() {
-		RegistryUtil.setRegistry(new BasicRegistryImpl());
-
-		TestInterfaceImpl testInterfaceImpl = new TestInterfaceImpl();
-
-		_aopInvocationHandler = AopCacheManager.create(testInterfaceImpl, null);
+		_aopInvocationHandler = AopCacheManager.create(
+			new TestInterfaceImpl(), null);
 
 		_testInterfaceProxy = (TestInterface)ProxyUtil.newProxyInstance(
 			AopCacheManagerTest.class.getClassLoader(),
@@ -86,16 +81,19 @@ public class AopCacheManagerTest {
 
 			callables.add(
 				() -> {
-					Registry registry = RegistryUtil.getRegistry();
+					BundleContext bundleContext =
+						SystemBundleUtil.getBundleContext();
 
 					ServiceRegistration<?> serviceRegistration =
-						registry.registerService(
+						bundleContext.registerService(
 							ChainableMethodAdvice.class,
-							testChainableMethodAdvice, new HashMap<>());
+							testChainableMethodAdvice, null);
 
 					List<Object> advices = new ArrayList<>();
 
-					_testInterfaceProxy.assertAop(advices, null);
+					synchronized (_aopInvocationHandler) {
+						_testInterfaceProxy.assertAop(advices, null);
+					}
 
 					Assert.assertTrue(
 						advices.toString(),
@@ -105,7 +103,9 @@ public class AopCacheManagerTest {
 
 					advices.clear();
 
-					_testInterfaceProxy.assertAop(advices, null);
+					synchronized (_aopInvocationHandler) {
+						_testInterfaceProxy.assertAop(advices, null);
+					}
 
 					Assert.assertFalse(
 						advices.toString(),

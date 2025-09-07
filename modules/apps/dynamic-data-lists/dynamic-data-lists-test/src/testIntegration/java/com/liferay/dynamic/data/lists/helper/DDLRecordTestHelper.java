@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.helper;
 
+import com.liferay.dynamic.data.lists.constants.DDLRecordConstants;
+import com.liferay.dynamic.data.lists.helper.test.util.DDLRecordTestUtil;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
-import com.liferay.dynamic.data.lists.model.DDLRecordConstants;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
@@ -42,6 +34,16 @@ public class DDLRecordTestHelper {
 
 		_group = group;
 		_recordSet = recordSet;
+
+		_userId = TestPropsValues.getUserId();
+	}
+
+	public DDLRecordTestHelper(Group group, DDLRecordSet recordSet, long userId)
+		throws Exception {
+
+		_group = group;
+		_recordSet = recordSet;
+		_userId = userId;
 	}
 
 	public DDLRecord addRecord() throws Exception {
@@ -72,8 +74,7 @@ public class DDLRecordTestHelper {
 		throws Exception {
 
 		return DDLRecordLocalServiceUtil.addRecord(
-			TestPropsValues.getUserId(), _group.getGroupId(),
-			_recordSet.getRecordSetId(),
+			_userId, _group.getGroupId(), _recordSet.getRecordSetId(),
 			DDLRecordConstants.DISPLAY_INDEX_DEFAULT, ddmFormValues,
 			DDLRecordTestUtil.getServiceContext(workflowAction));
 	}
@@ -92,8 +93,8 @@ public class DDLRecordTestHelper {
 		throws Exception {
 
 		return DDLRecordLocalServiceUtil.updateRecord(
-			TestPropsValues.getUserId(), recordId, majorVersion, displayIndex,
-			ddmFormValues, DDLRecordTestUtil.getServiceContext(workflowAction));
+			_userId, recordId, majorVersion, displayIndex, ddmFormValues,
+			DDLRecordTestUtil.getServiceContext(workflowAction));
 	}
 
 	protected DDMFormFieldValue createLocalizedDDMFormFieldValue(
@@ -118,5 +119,6 @@ public class DDLRecordTestHelper {
 
 	private final Group _group;
 	private final DDLRecordSet _recordSet;
+	private final long _userId;
 
 }

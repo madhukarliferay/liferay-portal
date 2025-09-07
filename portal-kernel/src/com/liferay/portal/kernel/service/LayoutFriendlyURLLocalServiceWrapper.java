@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.model.LayoutFriendlyURL;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -29,6 +21,10 @@ public class LayoutFriendlyURLLocalServiceWrapper
 	implements LayoutFriendlyURLLocalService,
 			   ServiceWrapper<LayoutFriendlyURLLocalService> {
 
+	public LayoutFriendlyURLLocalServiceWrapper() {
+		this(null);
+	}
+
 	public LayoutFriendlyURLLocalServiceWrapper(
 		LayoutFriendlyURLLocalService layoutFriendlyURLLocalService) {
 
@@ -37,6 +33,10 @@ public class LayoutFriendlyURLLocalServiceWrapper
 
 	/**
 	 * Adds the layout friendly url to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutFriendlyURL the layout friendly url
 	 * @return the layout friendly url that was added
@@ -87,7 +87,23 @@ public class LayoutFriendlyURLLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutFriendlyURLLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the layout friendly url from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutFriendlyURL the layout friendly url
 	 * @return the layout friendly url that was removed
@@ -102,6 +118,10 @@ public class LayoutFriendlyURLLocalServiceWrapper
 
 	/**
 	 * Deletes the layout friendly url with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutFriendlyURLId the primary key of the layout friendly url
 	 * @return the layout friendly url that was removed
@@ -136,6 +156,18 @@ public class LayoutFriendlyURLLocalServiceWrapper
 
 		return _layoutFriendlyURLLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _layoutFriendlyURLLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _layoutFriendlyURLLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -324,6 +356,17 @@ public class LayoutFriendlyURLLocalServiceWrapper
 	}
 
 	@Override
+	public LayoutFriendlyURL getLayoutFriendlyURL(
+			long groupId, boolean privateLayout, String friendlyURL,
+			String languageId)
+		throws com.liferay.portal.kernel.exception.
+			NoSuchLayoutFriendlyURLException {
+
+		return _layoutFriendlyURLLocalService.getLayoutFriendlyURL(
+			groupId, privateLayout, friendlyURL, languageId);
+	}
+
+	@Override
 	public LayoutFriendlyURL getLayoutFriendlyURL(long plid, String languageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -445,6 +488,12 @@ public class LayoutFriendlyURLLocalServiceWrapper
 		return _layoutFriendlyURLLocalService.getLayoutFriendlyURLsCount();
 	}
 
+	@Override
+	public int getLayoutFriendlyURLsCount(long companyId, String friendlyURL) {
+		return _layoutFriendlyURLLocalService.getLayoutFriendlyURLsCount(
+			companyId, friendlyURL);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -455,6 +504,9 @@ public class LayoutFriendlyURLLocalServiceWrapper
 		return _layoutFriendlyURLLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -465,6 +517,10 @@ public class LayoutFriendlyURLLocalServiceWrapper
 
 	/**
 	 * Updates the layout friendly url in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutFriendlyURL the layout friendly url
 	 * @return the layout friendly url that was updated
@@ -500,6 +556,11 @@ public class LayoutFriendlyURLLocalServiceWrapper
 		return _layoutFriendlyURLLocalService.updateLayoutFriendlyURLs(
 			userId, companyId, groupId, plid, privateLayout, friendlyURLMap,
 			serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _layoutFriendlyURLLocalService.getBasePersistence();
 	}
 
 	@Override

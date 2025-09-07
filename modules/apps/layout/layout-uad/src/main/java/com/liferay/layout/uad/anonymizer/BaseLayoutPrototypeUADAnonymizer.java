@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.uad.anonymizer;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.layout.uad.constants.LayoutUADConstants;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -47,6 +40,8 @@ public abstract class BaseLayoutPrototypeUADAnonymizer
 		if (layoutPrototype.getUserId() == userId) {
 			layoutPrototype.setUserId(anonymousUser.getUserId());
 			layoutPrototype.setUserName(anonymousUser.getFullName());
+
+			autoAnonymizeAssetEntry(layoutPrototype, anonymousUser);
 		}
 
 		layoutPrototypeLocalService.updateLayoutPrototype(layoutPrototype);
@@ -62,6 +57,19 @@ public abstract class BaseLayoutPrototypeUADAnonymizer
 		return LayoutPrototype.class;
 	}
 
+	protected void autoAnonymizeAssetEntry(
+		LayoutPrototype layoutPrototype, User anonymousUser) {
+
+		AssetEntry assetEntry = fetchAssetEntry(layoutPrototype);
+
+		if (assetEntry != null) {
+			assetEntry.setUserId(anonymousUser.getUserId());
+			assetEntry.setUserName(anonymousUser.getFullName());
+
+			assetEntryLocalService.updateAssetEntry(assetEntry);
+		}
+	}
+
 	@Override
 	protected ActionableDynamicQuery doGetActionableDynamicQuery() {
 		return layoutPrototypeLocalService.getActionableDynamicQuery();
@@ -71,6 +79,15 @@ public abstract class BaseLayoutPrototypeUADAnonymizer
 	protected String[] doGetUserIdFieldNames() {
 		return LayoutUADConstants.USER_ID_FIELD_NAMES_LAYOUT_PROTOTYPE;
 	}
+
+	protected AssetEntry fetchAssetEntry(LayoutPrototype layoutPrototype) {
+		return assetEntryLocalService.fetchEntry(
+			LayoutPrototype.class.getName(),
+			layoutPrototype.getLayoutPrototypeId());
+	}
+
+	@Reference
+	protected AssetEntryLocalService assetEntryLocalService;
 
 	@Reference
 	protected LayoutPrototypeLocalService layoutPrototypeLocalService;

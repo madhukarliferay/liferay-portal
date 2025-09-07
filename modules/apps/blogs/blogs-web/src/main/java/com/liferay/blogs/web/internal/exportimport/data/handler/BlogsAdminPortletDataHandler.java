@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.web.internal.exportimport.data.handler;
@@ -18,7 +9,6 @@ import com.liferay.blogs.constants.BlogsConstants;
 import com.liferay.blogs.constants.BlogsPortletKeys;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
-import com.liferay.blogs.service.BlogsStatsUserLocalService;
 import com.liferay.exportimport.kernel.lar.BasePortletDataHandler;
 import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
@@ -33,9 +23,9 @@ import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.util.PropsValues;
 
-import java.util.List;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -49,7 +39,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gergely Mathe
  */
 @Component(
-	property = "javax.portlet.name=" + BlogsPortletKeys.BLOGS_ADMIN,
+	property = "jakarta.portlet.name=" + BlogsPortletKeys.BLOGS_ADMIN,
 	service = PortletDataHandler.class
 )
 public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
@@ -58,7 +48,7 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 
 	public static final String NAMESPACE = "blogs";
 
-	public static final String SCHEMA_VERSION = "1.0.0";
+	public static final String SCHEMA_VERSION = "4.0.0";
 
 	@Override
 	public String[] getClassNames() {
@@ -68,6 +58,11 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 	@Override
 	public String getNamespace() {
 		return NAMESPACE;
+	}
+
+	@Override
+	public String getResourceName() {
+		return BlogsConstants.RESOURCE_NAME;
 	}
 
 	@Override
@@ -111,15 +106,12 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 		_blogsEntryLocalService.deleteEntries(
 			portletDataContext.getScopeGroupId());
 
-		_blogsStatsUserLocalService.deleteStatsUserByGroupId(
-			portletDataContext.getScopeGroupId());
-
 		return portletPreferences;
 	}
 
 	@Override
 	protected String doExportData(
-			final PortletDataContext portletDataContext, String portletId,
+			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
@@ -156,18 +148,6 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 		portletDataContext.importPortletPermissions(
 			BlogsConstants.RESOURCE_NAME);
 
-		Element entriesElement = portletDataContext.getImportDataGroupElement(
-			BlogsEntry.class);
-
-		List<Element> entryElements = entriesElement.elements();
-
-		for (Element entryElement : entryElements) {
-			StagedModelDataHandlerUtil.importStagedModel(
-				portletDataContext, entryElement);
-		}
-
-		// Friendly URLs
-
 		Element friendlyURLEntriesElement =
 			portletDataContext.getImportDataGroupElement(
 				FriendlyURLEntry.class);
@@ -178,6 +158,16 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 		for (Element friendlyURLEntryElement : friendlyURLEntryElements) {
 			StagedModelDataHandlerUtil.importStagedModel(
 				portletDataContext, friendlyURLEntryElement);
+		}
+
+		Element entriesElement = portletDataContext.getImportDataGroupElement(
+			BlogsEntry.class);
+
+		List<Element> entryElements = entriesElement.elements();
+
+		for (Element entryElement : entryElements) {
+			StagedModelDataHandlerUtil.importStagedModel(
+				portletDataContext, entryElement);
 		}
 
 		return null;
@@ -210,9 +200,6 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 
 	@Reference
 	private BlogsEntryLocalService _blogsEntryLocalService;
-
-	@Reference
-	private BlogsStatsUserLocalService _blogsStatsUserLocalService;
 
 	@Reference
 	private Staging _staging;

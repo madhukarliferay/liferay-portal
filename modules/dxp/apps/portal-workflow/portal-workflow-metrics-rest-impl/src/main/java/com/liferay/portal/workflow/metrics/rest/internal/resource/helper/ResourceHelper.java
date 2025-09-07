@@ -1,28 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.internal.resource.helper;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.AggregateResourceBundle;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.aggregation.Aggregations;
 import com.liferay.portal.search.aggregation.bucket.Bucket;
@@ -33,11 +25,13 @@ import com.liferay.portal.search.aggregation.pipeline.BucketScriptPipelineAggreg
 import com.liferay.portal.search.aggregation.pipeline.BucketScriptPipelineAggregationResult;
 import com.liferay.portal.search.aggregation.pipeline.BucketSortPipelineAggregation;
 import com.liferay.portal.search.aggregation.pipeline.GapPolicy;
+import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.engine.adapter.search.SearchRequestExecutor;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
+import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.search.query.BooleanQuery;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.script.Script;
@@ -46,18 +40,13 @@ import com.liferay.portal.search.sort.FieldSort;
 import com.liferay.portal.search.sort.SortOrder;
 import com.liferay.portal.search.sort.Sorts;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.workflow.metrics.search.index.constants.WorkflowMetricsIndexNameConstants;
 import com.liferay.portal.workflow.metrics.sla.processor.WorkflowMetricsSLAStatus;
 
 import java.io.IOException;
 
-import java.text.DateFormat;
-
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -66,7 +55,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Inácio Nery
  */
-@Component(immediate = true, service = ResourceHelper.class)
+@Component(service = ResourceHelper.class)
 public class ResourceHelper {
 
 	public ScriptedMetricAggregation createBreachedScriptedMetricAggregation() {
@@ -206,11 +195,16 @@ public class ResourceHelper {
 				clazz.getResourceAsStream("dependencies/" + resourceName)));
 	}
 
-	public BooleanQuery createTokensBooleanQuery(boolean instanceCompleted) {
+	public BooleanQuery createTasksBooleanQuery(
+		long companyId, boolean instanceCompleted) {
+
 		BooleanQuery booleanQuery = _queries.booleanQuery();
 
 		booleanQuery.addFilterQueryClauses(
-			_queries.term("_index", "workflow-metrics-tokens"));
+			_queries.term(
+				"_index",
+				_indexNameBuilder.getIndexName(companyId) +
+					WorkflowMetricsIndexNameConstants.SUFFIX_TASK));
 
 		booleanQuery.addMustQueryClauses(
 			_queries.term("instanceCompleted", instanceCompleted));
@@ -221,9 +215,8 @@ public class ResourceHelper {
 
 	public ScriptedMetricAggregation
 		creatInstanceCountScriptedMetricAggregation(
-			List<Long> assigneeUserIds, Date dateEnd, Date dateStart,
-			List<String> slaStatuses, List<String> statuses,
-			List<String> taskNames) {
+			List<Long> assigneeIds, Boolean completed, Date dateEnd,
+			Date dateStart, List<String> taskNames) {
 
 		ScriptedMetricAggregation scriptedMetricAggregation =
 			_aggregations.scriptedMetric("instanceCount");
@@ -236,66 +229,45 @@ public class ResourceHelper {
 			_workflowMetricsInstanceCountMapScript);
 		scriptedMetricAggregation.setParameters(
 			HashMapBuilder.<String, Object>put(
-				"assigneeUserIds",
+				"assigneeIds",
 				() -> {
-					if (!assigneeUserIds.isEmpty()) {
-						return Stream.of(
-							assigneeUserIds
-						).flatMap(
-							List::parallelStream
-						).map(
-							String::valueOf
-						).collect(
-							Collectors.toList()
-						);
+					if (ListUtil.isEmpty(assigneeIds)) {
+						return null;
 					}
 
-					return null;
+					return TransformUtil.transform(
+						assigneeIds, String::valueOf);
 				}
+			).put(
+				"assigneeType", Role.class.getName()
+			).put(
+				"completed", () -> completed
 			).put(
 				"endDate",
 				() -> {
-					if (dateEnd != null) {
-						return dateEnd.getTime();
+					if (dateEnd == null) {
+						return null;
 					}
 
-					return null;
-				}
-			).put(
-				"slaStatuses",
-				() -> {
-					if (!slaStatuses.isEmpty()) {
-						return slaStatuses;
-					}
-
-					return null;
+					return dateEnd.getTime();
 				}
 			).put(
 				"startDate",
 				() -> {
-					if (dateStart != null) {
-						return dateStart.getTime();
+					if (dateStart == null) {
+						return null;
 					}
 
-					return null;
-				}
-			).put(
-				"statuses",
-				() -> {
-					if (!statuses.isEmpty()) {
-						return statuses;
-					}
-
-					return null;
+					return dateStart.getTime();
 				}
 			).put(
 				"taskNames",
 				() -> {
-					if (!taskNames.isEmpty()) {
-						return taskNames;
+					if (taskNames.isEmpty()) {
+						return null;
 					}
 
-					return null;
+					return taskNames;
 				}
 			).build());
 		scriptedMetricAggregation.setReduceScript(
@@ -304,20 +276,55 @@ public class ResourceHelper {
 		return scriptedMetricAggregation;
 	}
 
-	public String formatDate(Date date) {
-		DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
-			"yyyyMMddHHmmss");
+	public ScriptedMetricAggregation creatTaskCountScriptedMetricAggregation(
+		List<Long> assigneeIds, List<String> slaStatuses,
+		List<String> taskNames) {
 
-		try {
-			return dateFormat.format(date);
-		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
-			}
+		ScriptedMetricAggregation scriptedMetricAggregation =
+			_aggregations.scriptedMetric("taskCount");
 
-			return null;
-		}
+		scriptedMetricAggregation.setCombineScript(
+			_workflowMetricsTaskCountCombineScript);
+		scriptedMetricAggregation.setInitScript(
+			_workflowMetricsTaskCountInitScript);
+		scriptedMetricAggregation.setMapScript(
+			_workflowMetricsTaskCountMapScript);
+		scriptedMetricAggregation.setParameters(
+			HashMapBuilder.<String, Object>put(
+				"assigneeIds",
+				() -> {
+					if (assigneeIds.isEmpty()) {
+						return null;
+					}
+
+					return TransformUtil.transform(
+						assigneeIds, String::valueOf);
+				}
+			).put(
+				"assigneeType", Role.class.getName()
+			).put(
+				"slaStatuses",
+				() -> {
+					if (ListUtil.isEmpty(slaStatuses)) {
+						return null;
+					}
+
+					return slaStatuses;
+				}
+			).put(
+				"taskNames",
+				() -> {
+					if (ListUtil.isEmpty(taskNames)) {
+						return null;
+					}
+
+					return taskNames;
+				}
+			).build());
+		scriptedMetricAggregation.setReduceScript(
+			_workflowMetricsTaskCountReduceScript);
+
+		return scriptedMetricAggregation;
 	}
 
 	public long getBreachedInstanceCount(Bucket bucket) {
@@ -343,10 +350,26 @@ public class ResourceHelper {
 		return bucketScriptPipelineAggregationResult.getValue();
 	}
 
+	public String getDate(Date date) {
+		try {
+			return DateUtil.getDate(
+				date, "yyyyMMddHHmmss", LocaleUtil.getDefault());
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+
+			return null;
+		}
+	}
+
 	public String getLatestProcessVersion(long companyId, long processId) {
 		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
 
-		searchSearchRequest.setIndexNames("workflow-metrics-processes");
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(companyId) +
+				WorkflowMetricsIndexNameConstants.SUFFIX_PROCESS);
 
 		BooleanQuery booleanQuery = _queries.booleanQuery();
 
@@ -357,22 +380,28 @@ public class ResourceHelper {
 
 		searchSearchRequest.setSelectedFieldNames("version");
 
-		return Stream.of(
-			_searchRequestExecutor.executeSearchRequest(searchSearchRequest)
-		).map(
-			SearchSearchResponse::getSearchHits
-		).map(
-			SearchHits::getSearchHits
-		).flatMap(
-			List::parallelStream
-		).map(
-			SearchHit::getDocument
-		).findFirst(
-		).map(
-			document -> document.getString("version")
-		).orElseGet(
-			() -> StringPool.BLANK
-		);
+		SearchSearchResponse searchSearchResponse =
+			_searchRequestExecutor.executeSearchRequest(searchSearchRequest);
+
+		SearchHits searchHits = searchSearchResponse.getSearchHits();
+
+		List<SearchHit> searchHitsList = searchHits.getSearchHits();
+
+		if (searchHitsList.isEmpty()) {
+			return StringPool.BLANK;
+		}
+
+		SearchHit searchHit = searchHitsList.get(0);
+
+		Document document = searchHit.getDocument();
+
+		String string = document.getString("version");
+
+		if (string == null) {
+			return StringPool.BLANK;
+		}
+
+		return string;
 	}
 
 	public long getOnTimeInstanceCount(Bucket bucket) {
@@ -390,6 +419,10 @@ public class ResourceHelper {
 	public long getOnTimeTaskCount(Bucket bucket) {
 		FilterAggregationResult filterAggregationResult =
 			(FilterAggregationResult)bucket.getChildAggregationResult("onTime");
+
+		if (filterAggregationResult == null) {
+			return 0L;
+		}
 
 		ScriptedMetricAggregationResult scriptedMetricAggregationResult =
 			(ScriptedMetricAggregationResult)
@@ -416,21 +449,15 @@ public class ResourceHelper {
 			(FilterAggregationResult)bucket.getChildAggregationResult(
 				"overdue");
 
+		if (filterAggregationResult == null) {
+			return 0L;
+		}
+
 		ScriptedMetricAggregationResult scriptedMetricAggregationResult =
 			(ScriptedMetricAggregationResult)
 				filterAggregationResult.getChildAggregationResult("taskCount");
 
 		return GetterUtil.getLong(scriptedMetricAggregationResult.getValue());
-	}
-
-	public ResourceBundle getResourceBundle(Locale locale) {
-		ResourceBundle moduleResourceBundle = ResourceBundleUtil.getBundle(
-			locale, ResourceHelper.class);
-
-		ResourceBundle portalResourceBundle = _portal.getResourceBundle(locale);
-
-		return new AggregateResourceBundle(
-			moduleResourceBundle, portalResourceBundle);
 	}
 
 	@Activate
@@ -474,6 +501,14 @@ public class ResourceHelper {
 		_workflowMetricsSlaTaskAssigneeOverdueReduceScript = createScript(
 			getClass(),
 			"workflow-metrics-sla-assignee-overdue-reduce-script.painless");
+		_workflowMetricsTaskCountCombineScript = createScript(
+			getClass(), "workflow-metrics-task-count-combine-script.painless");
+		_workflowMetricsTaskCountInitScript = createScript(
+			getClass(), "workflow-metrics-task-count-init-script.painless");
+		_workflowMetricsTaskCountMapScript = createScript(
+			getClass(), "workflow-metrics-task-count-map-script.painless");
+		_workflowMetricsTaskCountReduceScript = createScript(
+			getClass(), "workflow-metrics-task-count-reduce-script.painless");
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(ResourceHelper.class);
@@ -482,7 +517,7 @@ public class ResourceHelper {
 	private Aggregations _aggregations;
 
 	@Reference
-	private Portal _portal;
+	private IndexNameBuilder _indexNameBuilder;
 
 	@Reference
 	private Queries _queries;
@@ -512,5 +547,9 @@ public class ResourceHelper {
 	private Script _workflowMetricsSlaTaskAssigneeMapScript;
 	private Script _workflowMetricsSlaTaskAssigneeOnTimeReduceScript;
 	private Script _workflowMetricsSlaTaskAssigneeOverdueReduceScript;
+	private Script _workflowMetricsTaskCountCombineScript;
+	private Script _workflowMetricsTaskCountInitScript;
+	private Script _workflowMetricsTaskCountMapScript;
+	private Script _workflowMetricsTaskCountReduceScript;
 
 }

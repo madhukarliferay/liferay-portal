@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence;
@@ -38,6 +29,10 @@ public interface DDMTemplateFinder {
 
 	public int countByC_G_C_C_R_T_M_S(
 		long companyId, long[] groupIds, long classNameId, long classPK,
+		long resourceClassNameId, String type, String mode, int status);
+
+	public int countByC_G_C_C_R_T_M_S(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
 		long resourceClassNameId, String type, String mode, int status);
 
 	public int countByC_G_C_C_R_N_D_T_M_L_S(
@@ -80,6 +75,10 @@ public interface DDMTemplateFinder {
 
 	public int filterCountByC_G_C_C_R_T_M_S(
 		long companyId, long[] groupIds, long classNameId, long classPK,
+		long resourceClassNameId, String type, String mode, int status);
+
+	public int filterCountByC_G_C_C_R_T_M_S(
+		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
 		long resourceClassNameId, String type, String mode, int status);
 
 	public int filterCountByC_G_C_C_R_N_D_T_M_L_S(
@@ -143,6 +142,15 @@ public interface DDMTemplateFinder {
 			long companyId, long[] groupIds, long classNameId, long classPK,
 			long resourceClassNameId, String type, String mode, int status,
 			int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.dynamic.data.mapping.model.DDMTemplate>
+					orderByComparator);
+
+	public java.util.List<com.liferay.dynamic.data.mapping.model.DDMTemplate>
+		filterFindByC_G_C_C_R_T_M_S(
+			long companyId, long[] groupIds, long[] classNameIds,
+			long[] classPKs, long resourceClassNameId, String type, String mode,
+			int status, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<com.liferay.dynamic.data.mapping.model.DDMTemplate>
 					orderByComparator);
@@ -227,6 +235,15 @@ public interface DDMTemplateFinder {
 			long companyId, long[] groupIds, long classNameId, long classPK,
 			long resourceClassNameId, String type, String mode, int status,
 			int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.dynamic.data.mapping.model.DDMTemplate>
+					orderByComparator);
+
+	public java.util.List<com.liferay.dynamic.data.mapping.model.DDMTemplate>
+		findByC_G_C_C_R_T_M_S(
+			long companyId, long[] groupIds, long[] classNameIds,
+			long[] classPKs, long resourceClassNameId, String type, String mode,
+			int status, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<com.liferay.dynamic.data.mapping.model.DDMTemplate>
 					orderByComparator);

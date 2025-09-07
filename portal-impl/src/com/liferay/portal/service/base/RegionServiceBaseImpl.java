@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.base;
@@ -17,16 +8,19 @@ package com.liferay.portal.service.base;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.service.BaseServiceImpl;
 import com.liferay.portal.kernel.service.RegionService;
-import com.liferay.portal.kernel.service.persistence.CountryPersistence;
+import com.liferay.portal.kernel.service.RegionServiceUtil;
+import com.liferay.portal.kernel.service.persistence.RegionLocalizationPersistence;
 import com.liferay.portal.kernel.service.persistence.RegionPersistence;
-import com.liferay.portal.kernel.util.PortalUtil;
+
+import java.sql.Connection;
 
 import javax.sql.DataSource;
 
@@ -44,11 +38,34 @@ import javax.sql.DataSource;
 public abstract class RegionServiceBaseImpl
 	extends BaseServiceImpl implements IdentifiableOSGiService, RegionService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Use <code>RegionService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>com.liferay.portal.kernel.service.RegionServiceUtil</code>.
+	 * Never modify or reference this class directly. Use <code>RegionService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>RegionServiceUtil</code>.
 	 */
+
+	/**
+	 * Returns the region local service.
+	 *
+	 * @return the region local service
+	 */
+	public com.liferay.portal.kernel.service.RegionLocalService
+		getRegionLocalService() {
+
+		return regionLocalService;
+	}
+
+	/**
+	 * Sets the region local service.
+	 *
+	 * @param regionLocalService the region local service
+	 */
+	public void setRegionLocalService(
+		com.liferay.portal.kernel.service.RegionLocalService
+			regionLocalService) {
+
+		this.regionLocalService = regionLocalService;
+	}
 
 	/**
 	 * Returns the region remote service.
@@ -110,49 +127,31 @@ public abstract class RegionServiceBaseImpl
 	}
 
 	/**
-	 * Returns the country remote service.
+	 * Returns the region localization persistence.
 	 *
-	 * @return the country remote service
+	 * @return the region localization persistence
 	 */
-	public com.liferay.portal.kernel.service.CountryService
-		getCountryService() {
-
-		return countryService;
+	public RegionLocalizationPersistence getRegionLocalizationPersistence() {
+		return regionLocalizationPersistence;
 	}
 
 	/**
-	 * Sets the country remote service.
+	 * Sets the region localization persistence.
 	 *
-	 * @param countryService the country remote service
+	 * @param regionLocalizationPersistence the region localization persistence
 	 */
-	public void setCountryService(
-		com.liferay.portal.kernel.service.CountryService countryService) {
+	public void setRegionLocalizationPersistence(
+		RegionLocalizationPersistence regionLocalizationPersistence) {
 
-		this.countryService = countryService;
-	}
-
-	/**
-	 * Returns the country persistence.
-	 *
-	 * @return the country persistence
-	 */
-	public CountryPersistence getCountryPersistence() {
-		return countryPersistence;
-	}
-
-	/**
-	 * Sets the country persistence.
-	 *
-	 * @param countryPersistence the country persistence
-	 */
-	public void setCountryPersistence(CountryPersistence countryPersistence) {
-		this.countryPersistence = countryPersistence;
+		this.regionLocalizationPersistence = regionLocalizationPersistence;
 	}
 
 	public void afterPropertiesSet() {
+		RegionServiceUtil.setService(regionService);
 	}
 
 	public void destroy() {
+		RegionServiceUtil.setService(null);
 	}
 
 	/**
@@ -179,23 +178,34 @@ public abstract class RegionServiceBaseImpl
 	 * @param sql the sql query
 	 */
 	protected void runSQL(String sql) {
+		DataSource dataSource = regionPersistence.getDataSource();
+
+		DB db = DBManagerUtil.getDB();
+
+		Connection currentConnection = CurrentConnectionUtil.getConnection(
+			dataSource);
+
 		try {
-			DataSource dataSource = regionPersistence.getDataSource();
+			if (currentConnection != null) {
+				db.runSQL(currentConnection, new String[] {sql});
 
-			DB db = DBManagerUtil.getDB();
+				return;
+			}
 
-			sql = db.buildSQL(sql);
-			sql = PortalUtil.transformSQL(sql);
-
-			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(
-				dataSource, sql);
-
-			sqlUpdate.update();
+			try (Connection connection = dataSource.getConnection()) {
+				db.runSQL(connection, new String[] {sql});
+			}
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
+
+	@BeanReference(
+		type = com.liferay.portal.kernel.service.RegionLocalService.class
+	)
+	protected com.liferay.portal.kernel.service.RegionLocalService
+		regionLocalService;
 
 	@BeanReference(type = RegionService.class)
 	protected RegionService regionService;
@@ -209,12 +219,10 @@ public abstract class RegionServiceBaseImpl
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@BeanReference(
-		type = com.liferay.portal.kernel.service.CountryService.class
-	)
-	protected com.liferay.portal.kernel.service.CountryService countryService;
+	@BeanReference(type = RegionLocalizationPersistence.class)
+	protected RegionLocalizationPersistence regionLocalizationPersistence;
 
-	@BeanReference(type = CountryPersistence.class)
-	protected CountryPersistence countryPersistence;
+	private static final Log _log = LogFactoryUtil.getLog(
+		RegionServiceBaseImpl.class);
 
 }

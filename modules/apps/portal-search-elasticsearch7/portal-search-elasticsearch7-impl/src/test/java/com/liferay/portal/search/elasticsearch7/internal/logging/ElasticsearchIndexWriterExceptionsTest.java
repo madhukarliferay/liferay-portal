@@ -1,35 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.logging;
 
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.IndexWriter;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
-import com.liferay.portal.search.elasticsearch7.internal.LiferayElasticsearchIndexingFixtureFactory;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.search.elasticsearch7.internal.ElasticsearchIndexWriter;
+import com.liferay.portal.search.elasticsearch7.internal.indexing.LiferayElasticsearchIndexingFixtureFactory;
+import com.liferay.portal.search.test.rule.logging.ExpectedLogMethodTestRule;
 import com.liferay.portal.search.test.util.indexing.BaseIndexingTestCase;
 import com.liferay.portal.search.test.util.indexing.DocumentCreationHelpers;
 import com.liferay.portal.search.test.util.indexing.IndexingFixture;
+import com.liferay.portal.search.test.util.logging.ExpectedLog;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.elasticsearch.ElasticsearchStatusException;
 
+import org.hamcrest.CustomMatcher;
+
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -40,12 +43,33 @@ import org.junit.rules.ExpectedException;
 public class ElasticsearchIndexWriterExceptionsTest
 	extends BaseIndexingTestCase {
 
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			ExpectedLogMethodTestRule.INSTANCE, LiferayUnitTestRule.INSTANCE);
+
 	@Test
 	public void testAddDocument() {
+		String regex = StringBundler.concat(
+			"Elasticsearch exception \\[type=document_parsing_exception, ",
+			"reason=\\[.+\\] failed to parse field \\[expirationDate\\] of ",
+			"type \\[date\\] in document with id ",
+			"'elasticsearchindexwriterexceptionstest.testadddocument_PORTLET_",
+			"\\d+'\\. Preview of field's value: 'text'\\]");
+
 		expectedException.expect(ElasticsearchStatusException.class);
 		expectedException.expectMessage(
-			"type=mapper_parsing_exception, reason=failed to parse field " +
-				"[expirationDate] of type [date]");
+			new CustomMatcher<>("Add document") {
+
+				@Override
+				public boolean matches(Object object) {
+					String s = GetterUtil.getString(object);
+
+					return s.matches(regex);
+				}
+
+			});
 
 		addDocument(
 			DocumentCreationHelpers.singleKeyword(
@@ -70,7 +94,10 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.addDocuments(createSearchContext(), documents);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
@@ -89,16 +116,19 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.commit(searchContext);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
+	@ExpectedLog(
+		expectedClass = ElasticsearchIndexWriter.class,
+		expectedLevel = ExpectedLog.Level.INFO, expectedLog = "no such index"
+	)
 	@Test
 	public void testDeleteDocument() {
-		expectedException.expect(ElasticsearchStatusException.class);
-		expectedException.expectMessage(
-			"type=index_not_found_exception, reason=no such index");
-
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setCompanyId(1);
@@ -108,7 +138,10 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.deleteDocument(searchContext, "1");
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
@@ -130,7 +163,10 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.deleteDocuments(searchContext, uids);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
@@ -149,35 +185,26 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.deleteEntityDocuments(searchContext, "test");
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
 	@Test
-	public void testPartiallyUpdateDocument() {
-		expectedException.expect(ElasticsearchStatusException.class);
-		expectedException.expectMessage(
-			"type=document_missing_exception, reason=[LiferayDocumentType]");
-
+	public void testPartiallyUpdateDocument() throws SearchException {
 		Document document = new DocumentImpl();
 
 		document.addKeyword(Field.UID, "1");
 
 		IndexWriter indexWriter = getIndexWriter();
 
-		try {
-			indexWriter.partiallyUpdateDocument(
-				createSearchContext(), document);
-		}
-		catch (SearchException se) {
-		}
+		indexWriter.partiallyUpdateDocument(createSearchContext(), document);
 	}
 
 	@Test
-	public void testPartiallyUpdateDocuments() {
-		expectedException.expect(RuntimeException.class);
-		expectedException.expectMessage("Bulk partial update failed");
-
+	public void testPartiallyUpdateDocuments() throws SearchException {
 		Document document = new DocumentImpl();
 
 		List<Document> documents = new ArrayList<>();
@@ -188,12 +215,7 @@ public class ElasticsearchIndexWriterExceptionsTest
 
 		IndexWriter indexWriter = getIndexWriter();
 
-		try {
-			indexWriter.partiallyUpdateDocuments(
-				createSearchContext(), documents);
-		}
-		catch (SearchException se) {
-		}
+		indexWriter.partiallyUpdateDocuments(createSearchContext(), documents);
 	}
 
 	@Test
@@ -211,7 +233,10 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.updateDocument(createSearchContext(), document);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
@@ -234,7 +259,10 @@ public class ElasticsearchIndexWriterExceptionsTest
 		try {
 			indexWriter.updateDocuments(createSearchContext(), documents);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(searchException);
+			}
 		}
 	}
 
@@ -245,5 +273,8 @@ public class ElasticsearchIndexWriterExceptionsTest
 	protected IndexingFixture createIndexingFixture() {
 		return LiferayElasticsearchIndexingFixtureFactory.getInstance();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ElasticsearchIndexWriterExceptionsTest.class);
 
 }

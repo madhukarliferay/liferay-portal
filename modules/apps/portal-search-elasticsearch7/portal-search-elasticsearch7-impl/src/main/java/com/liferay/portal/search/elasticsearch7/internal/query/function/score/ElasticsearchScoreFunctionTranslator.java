@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.query.function.score;
@@ -24,6 +15,7 @@ import com.liferay.portal.search.query.function.score.ScoreFunctionTranslator;
 import com.liferay.portal.search.query.function.score.ScriptScoreFunction;
 import com.liferay.portal.search.query.function.score.WeightScoreFunction;
 
+import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.index.query.functionscore.ExponentialDecayFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.GaussDecayFunctionBuilder;
@@ -63,8 +55,29 @@ public class ElasticsearchScoreFunctionTranslator
 	public ScoreFunctionBuilder<?> translate(
 		FieldValueFactorScoreFunction fieldValueFactorScoreFunction) {
 
-		return new FieldValueFactorFunctionBuilder(
-			fieldValueFactorScoreFunction.getField());
+		FieldValueFactorFunctionBuilder fieldValueFactorFunctionBuilder =
+			new FieldValueFactorFunctionBuilder(
+				fieldValueFactorScoreFunction.getField());
+
+		if (fieldValueFactorScoreFunction.getFactor() != null) {
+			fieldValueFactorFunctionBuilder.factor(
+				fieldValueFactorScoreFunction.getFactor());
+		}
+
+		if (fieldValueFactorScoreFunction.getMissing() != null) {
+			fieldValueFactorFunctionBuilder.missing(
+				fieldValueFactorScoreFunction.getMissing());
+		}
+
+		if (fieldValueFactorScoreFunction.getModifier() != null) {
+			String modifier = fieldValueFactorScoreFunction.getModifier(
+			).toString();
+
+			fieldValueFactorFunctionBuilder.modifier(
+				FieldValueFactorFunction.Modifier.fromString(modifier));
+		}
+
+		return fieldValueFactorFunctionBuilder;
 	}
 
 	@Override

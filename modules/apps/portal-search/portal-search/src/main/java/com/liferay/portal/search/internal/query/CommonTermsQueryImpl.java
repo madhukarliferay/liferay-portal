@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -34,60 +25,74 @@ public class CommonTermsQueryImpl
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public String getAnalyzer() {
 		return _analyzer;
 	}
 
+	@Override
 	public Float getCutoffFrequency() {
 		return _cutoffFrequency;
 	}
 
+	@Override
 	public String getField() {
 		return _field;
 	}
 
+	@Override
 	public String getHighFreqMinimumShouldMatch() {
 		return _highFreqMinimumShouldMatch;
 	}
 
+	@Override
 	public Operator getHighFreqOperator() {
 		return _highFreqOperator;
 	}
 
+	@Override
 	public String getLowFreqMinimumShouldMatch() {
 		return _lowFreqMinimumShouldMatch;
 	}
 
+	@Override
 	public Operator getLowFreqOperator() {
 		return _lowFreqOperator;
 	}
 
+	@Override
 	public String getText() {
 		return _text;
 	}
 
+	@Override
 	public void setAnalyzer(String analyzer) {
 		_analyzer = analyzer;
 	}
 
+	@Override
 	public void setCutoffFrequency(Float cutoffFrequency) {
 		_cutoffFrequency = cutoffFrequency;
 	}
 
+	@Override
 	public void setHighFreqMinimumShouldMatch(
 		String highFreqMinimumShouldMatch) {
 
 		_highFreqMinimumShouldMatch = highFreqMinimumShouldMatch;
 	}
 
+	@Override
 	public void setHighFreqOperator(Operator highFreqOperator) {
 		_highFreqOperator = highFreqOperator;
 	}
 
+	@Override
 	public void setLowFreqMinimumShouldMatch(String lowFreqMinimumShouldMatch) {
 		_lowFreqMinimumShouldMatch = lowFreqMinimumShouldMatch;
 	}
 
+	@Override
 	public void setLowFreqOperator(Operator lowFreqOperator) {
 		_lowFreqOperator = lowFreqOperator;
 	}

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -53,7 +44,7 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 	<portlet:param name="mvcPath" value="/edit_entry.jsp" />
 </portlet:actionURL>
 
-<aui:form action="<%= updateSAPEntryURL %>" cssClass="container-fluid-1280">
+<aui:form action="<%= updateSAPEntryURL %>" cssClass="container-fluid container-fluid-max-xl">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="sapEntryId" type="hidden" value="<%= sapEntryId %>" />
 
@@ -64,67 +55,73 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 
 	<aui:model-context bean="<%= sapEntry %>" model="<%= SAPEntry.class %>" />
 
-	<aui:fieldset-group markupView="lexicon">
-		<aui:fieldset>
-			<aui:input disabled="<%= systemSAPEntry %>" name="name" required="<%= true %>">
-				<aui:validator errorMessage="this-field-is-required-and-must-contain-only-following-characters" name="custom">
-					function(val, fieldNode, ruleValue) {
-						var allowedCharacters = '<%= HtmlUtil.escapeJS(SAPEntryConstants.NAME_ALLOWED_CHARACTERS) %>';
+	<div class="sheet">
+		<div class="panel-group panel-group-flush">
+			<aui:fieldset>
+				<aui:input disabled="<%= systemSAPEntry %>" name="name" required="<%= true %>">
+					<aui:validator errorMessage="this-field-is-required-and-must-contain-only-following-characters" name="custom">
+						function(val, fieldNode, ruleValue) {
+							var allowedCharacters = '<%= HtmlUtil.escapeJS(SAPEntryConstants.NAME_ALLOWED_CHARACTERS) %>';
 
-						val = val.trim();
+							val = val.trim();
 
-						var regex = new RegExp('[^' + allowedCharacters + ']');
+							var regex = new RegExp('[^' + allowedCharacters + ']');
 
-						return !regex.test(val);
-					}
-				</aui:validator>
-			</aui:input>
-
-			<aui:input name="enabled" type="toggle-switch" value="<%= (sapEntry != null) ? sapEntry.isEnabled() : false %>" />
-
-			<aui:input disabled="<%= systemSAPEntry %>" helpMessage="default-sap-entry-help" label="default" name="defaultSAPEntry" type="toggle-switch" value="<%= (sapEntry != null) ? sapEntry.isDefaultSAPEntry() : false %>" />
-
-			<aui:input name="title" required="<%= true %>" />
-
-			<aui:input cssClass="hide" helpMessage="allowed-service-signatures-help" name="allowedServiceSignatures" />
-
-			<div id="<portlet:namespace />allowedServiceSignaturesFriendlyContentBox">
-
-				<%
-				for (int i = 0; i < allowedServiceSignaturesArray.length; i++) {
-					String serviceClassName = StringPool.BLANK;
-					String actionMethodName = StringPool.BLANK;
-
-					String[] allowedServiceSignatureArray = StringUtil.split(allowedServiceSignaturesArray[i], CharPool.POUND);
-
-					if (allowedServiceSignatureArray.length > 0) {
-						serviceClassName = GetterUtil.getString(allowedServiceSignatureArray[0]);
-
-						if (allowedServiceSignatureArray.length > 1) {
-							actionMethodName = GetterUtil.getString(allowedServiceSignatureArray[1]);
+							return !regex.test(val);
 						}
-					}
-				%>
+					</aui:validator>
+				</aui:input>
 
-					<div class="lfr-form-row">
-						<div class="row-fields">
-							<aui:col md="6">
-								<aui:input cssClass="service-class-name" data-service-class-name="<%= serviceClassName %>" id='<%= "serviceClassName" + i %>' label="service-class" name="serviceClassName" type="text" value="<%= serviceClassName %>" />
-							</aui:col>
+				<aui:input inlineLabel="right" labelCssClass="simple-toggle-switch" name="enabled" type="toggle-switch" value="<%= (sapEntry != null) ? sapEntry.isEnabled() : false %>" />
 
-							<aui:col md="6">
-								<aui:input cssClass="action-method-name" id='<%= "actionMethodName" + i %>' label="method-name" name="actionMethodName" type="text" value="<%= actionMethodName %>" />
-							</aui:col>
+				<aui:input disabled="<%= systemSAPEntry %>" helpMessage="default-sap-entry-help" inlineLabel="right" label="default" labelCssClass="simple-toggle-switch" name="defaultSAPEntry" type="toggle-switch" value="<%= (sapEntry != null) ? sapEntry.isDefaultSAPEntry() : false %>" />
+
+				<aui:input name="title" required="<%= true %>" />
+
+				<aui:input cssClass="hide" helpMessage="allowed-service-signatures-help" name="allowedServiceSignatures" />
+
+				<div id="<portlet:namespace />allowedServiceSignaturesFriendlyContentBox">
+
+					<%
+					for (int i = 0; i < allowedServiceSignaturesArray.length; i++) {
+						String serviceClassName = StringPool.BLANK;
+						String actionMethodName = StringPool.BLANK;
+
+						String[] allowedServiceSignatureArray = StringUtil.split(allowedServiceSignaturesArray[i], CharPool.POUND);
+
+						if (allowedServiceSignatureArray.length > 0) {
+							serviceClassName = GetterUtil.getString(allowedServiceSignatureArray[0]);
+
+							if (allowedServiceSignatureArray.length > 1) {
+								actionMethodName = GetterUtil.getString(allowedServiceSignatureArray[1]);
+							}
+						}
+					%>
+
+						<div class="lfr-form-row">
+							<div class="row-fields">
+								<clay:col
+									md="6"
+								>
+									<aui:input cssClass="service-class-name" data-service-class-name="<%= HtmlUtil.escapeAttribute(serviceClassName) %>" id='<%= "serviceClassName" + i %>' label="service-class" name="serviceClassName" type="text" value="<%= serviceClassName %>" />
+								</clay:col>
+
+								<clay:col
+									md="6"
+								>
+									<aui:input cssClass="action-method-name" id='<%= "actionMethodName" + i %>' label="method-name" name="actionMethodName" type="text" value="<%= actionMethodName %>" />
+								</clay:col>
+							</div>
 						</div>
-					</div>
 
-				<%
-				}
-				%>
+					<%
+					}
+					%>
 
-			</div>
-		</aui:fieldset>
-	</aui:fieldset-group>
+				</div>
+			</aui:fieldset>
+		</div>
+	</div>
 
 	<aui:button-row>
 		<aui:button type="submit" value="save" />
@@ -135,24 +132,24 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 	</aui:button-row>
 </aui:form>
 
-<aui:script require="metal-dom/src/dom as dom">
+<aui:script sandbox="<%= true %>">
 	var alternatingElements = document.querySelectorAll(
 		'#<portlet:namespace />advancedMode, #<portlet:namespace />friendlyMode, #<portlet:namespace />allowedServiceSignatures, #<portlet:namespace />allowedServiceSignaturesFriendlyContentBox'
 	);
 
-	dom.delegate(
+	Liferay.Util.delegate(
 		document.<portlet:namespace />fm,
 		'click',
 		'#<portlet:namespace />advancedMode, #<portlet:namespace />friendlyMode',
-		function(event) {
-			Array.prototype.forEach.call(alternatingElements, function(element) {
-				dom.toggleClasses(element, 'hide');
+		(event) => {
+			Array.prototype.forEach.call(alternatingElements, (element) => {
+				element.classList.toggle('hide');
 			});
 		}
 	);
 </aui:script>
 
-<aui:script use="autocomplete,autocomplete-filters,io-base,liferay-auto-fields,liferay-portlet-url">
+<aui:script use="autocomplete,autocomplete-filters,io-base,liferay-auto-fields">
 	var REGEX_DOT = /\./g;
 
 	var actionMethodNamesCache = {};
@@ -161,13 +158,10 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 		<portlet:param name="<%= ActionRequest.ACTION_NAME %>" value="getActionMethodNames" />
 	</liferay-portlet:resourceURL>
 
-	var getActionMethodNamesURL = Liferay.PortletURL.createURL(
-		'<%= getActionMethodNamesURL %>'
-	);
+	var serviceClassNamesToContextNames =
+		<%= request.getAttribute(SAPWebKeys.SERVICE_CLASS_NAMES_TO_CONTEXT_NAMES) %>;
 
-	var serviceClassNamesToContextNames = <%= request.getAttribute(SAPWebKeys.SERVICE_CLASS_NAMES_TO_CONTEXT_NAMES) %>;
-
-	var getActionMethodNames = function(contextName, serviceClassName, callback) {
+	var getActionMethodNames = function (contextName, serviceClassName, callback) {
 		if (contextName && serviceClassName && callback) {
 			var namespace =
 				contextName.replace(REGEX_DOT, '_') +
@@ -183,30 +177,34 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 					contextName = '';
 				}
 
-				getActionMethodNamesURL.setParameter('contextName', contextName);
-				getActionMethodNamesURL.setParameter(
-					'serviceClassName',
-					serviceClassName
-				);
+				const getActionMethodNamesURL =
+					Liferay.Util.PortletURL.createPortletURL(
+						'<%= getActionMethodNamesURL %>',
+						{
+							contextName,
+							serviceClassName,
+						}
+					);
 
 				Liferay.Util.fetch(getActionMethodNamesURL.toString())
-					.then(function(response) {
+					.then((response) => {
 						return response.json();
 					})
-					.then(function(data) {
+					.then((data) => {
 						methodObj.actionMethodNames = data;
 						callback(actionMethodNames);
 					});
-			} else {
+			}
+			else {
 				callback(actionMethodNames);
 			}
 		}
 	};
 
-	var getContextName = function(serviceClassName) {
+	var getContextName = function (serviceClassName) {
 		var serviceClassNameToContextName = A.Array.find(
 			serviceClassNamesToContextNames,
-			function(item, index) {
+			(item, index) => {
 				return item.serviceClassName === serviceClassName;
 			}
 		);
@@ -218,14 +216,14 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 		);
 	};
 
-	var initAutoCompleteRow = function(rowNode) {
+	var initAutoCompleteRow = function (rowNode) {
 		var actionMethodNameInput = rowNode.one('.action-method-name');
 		var serviceClassNameInput = rowNode.one('.service-class-name');
 
 		new A.AutoComplete({
 			inputNode: serviceClassNameInput,
 			on: {
-				select: function(event) {
+				select: function (event) {
 					var result = event.result.raw;
 
 					serviceClassNameInput.attr(
@@ -238,18 +236,18 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 					);
 
 					actionMethodNameInput.attr('disabled', false);
-				}
+				},
 			},
 			resultFilters: 'phraseMatch',
 			resultTextLocator: 'serviceClassName',
-			source: serviceClassNamesToContextNames
+			source: serviceClassNamesToContextNames,
 		}).render();
 
 		new A.AutoComplete({
 			inputNode: actionMethodNameInput,
 			resultFilters: 'phraseMatch',
 			resultTextLocator: 'actionMethodName',
-			source: function(query, callback) {
+			source: function (query, callback) {
 				var contextName = serviceClassNameInput.attr('data-context-name');
 				var serviceClassName = serviceClassNameInput.attr(
 					'data-service-class-name'
@@ -262,16 +260,16 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 				}
 
 				getActionMethodNames(contextName, serviceClassName, callback);
-			}
+			},
 		}).render();
 	};
 
-	var updateAdvancedModeTextarea = function() {
+	var updateAdvancedModeTextarea = function () {
 		var updatedInput = '';
 
 		A.all(
 			'#<portlet:namespace />allowedServiceSignaturesFriendlyContentBox .lfr-form-row:not(.hide)'
-		).each(function(item, index) {
+		).each((item, index) => {
 			var actionMethodName = item.one('.action-method-name').val();
 			var serviceClassName = item.one('.service-class-name').val();
 
@@ -287,7 +285,7 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 		A.one('#<portlet:namespace />allowedServiceSignatures').val(updatedInput);
 	};
 
-	var updateFriendlyModeInputs = function() {
+	var updateFriendlyModeInputs = function () {
 		var contentBox = A.one(
 			'#<portlet:namespace />allowedServiceSignaturesFriendlyContentBox'
 		);
@@ -302,7 +300,7 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 
 		entries = A.Array.dedupe(entries);
 
-		entries.forEach(function(item, index) {
+		entries.forEach((item, index) => {
 			var row = rowTemplate.clone();
 
 			var actionMethodNameInput = row.one('.action-method-name');
@@ -333,7 +331,7 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 			'#<portlet:namespace />allowedServiceSignaturesFriendlyContentBox',
 		namespace: '<portlet:namespace />',
 		on: {
-			clone: function(event) {
+			clone: function (event) {
 				var rowNode = event.row;
 
 				var actionMethodNameInput = rowNode.one('.action-method-name');
@@ -343,13 +341,13 @@ renderResponse.setTitle((sapEntry == null) ? LanguageUtil.get(request, "new-serv
 
 				serviceClassNameInput.attr({
 					'data-context-name': '',
-					'data-service-class-name': ''
+					'data-service-class-name': '',
 				});
 
 				initAutoCompleteRow(rowNode);
 			},
-			delete: updateAdvancedModeTextarea
-		}
+			delete: updateAdvancedModeTextarea,
+		},
 	}).render();
 
 	var rows = A.all(

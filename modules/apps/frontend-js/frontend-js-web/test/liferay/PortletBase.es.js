@@ -1,18 +1,7 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import PortletBase from '../../src/main/resources/META-INF/resources/liferay/PortletBase.es';
 
@@ -35,14 +24,8 @@ describe('PortletBase', () => {
 	});
 
 	beforeEach(() => {
-		Liferay = {
-			Util: {
-				ns: jest.fn()
-			}
-		};
-
 		portletBase = new PortletBase({
-			namespace
+			namespace,
 		});
 	});
 
@@ -66,7 +49,7 @@ describe('PortletBase', () => {
 
 		it('uses the document as root node if one has not been specified or the default has not been found', () => {
 			portletBase = new PortletBase({
-				namespace: '_com_liferay_unknown_portlet'
+				namespace: '_com_liferay_unknown_portlet',
 			});
 
 			expect(portletBase.all('.foo').length).toEqual(4);
@@ -80,15 +63,15 @@ describe('PortletBase', () => {
 
 		beforeEach(() => {
 			globalFetch = global.fetch;
-			portletBase.ns = obj => obj;
+			portletBase.ns = (object) => object;
 		});
 
 		afterEach(() => {
 			global.fetch = globalFetch;
 		});
 
-		it('makes the request to the given url', done => {
-			global.fetch = jest.fn(url => {
+		it('makes the request to the given url', (done) => {
+			global.fetch = jest.fn((url) => {
 				expect(url).toBe(sampleUrl);
 				done();
 			});
@@ -96,7 +79,7 @@ describe('PortletBase', () => {
 			portletBase.fetch(sampleUrl, sampleBody);
 		});
 
-		it('adds credentials option to the request', done => {
+		it('adds credentials option to the request', (done) => {
 			global.fetch = jest.fn((url, options) => {
 				expect(options.credentials).toBe('include');
 				done();
@@ -105,7 +88,7 @@ describe('PortletBase', () => {
 			portletBase.fetch(sampleUrl, sampleBody);
 		});
 
-		it('adds the POST method option to the request', done => {
+		it('adds the POST method option to the request', (done) => {
 			global.fetch = jest.fn((url, options) => {
 				expect(options.method).toBe('POST');
 				done();
@@ -114,7 +97,7 @@ describe('PortletBase', () => {
 			portletBase.fetch(sampleUrl, sampleBody);
 		});
 
-		it('adds the given body to the request', done => {
+		it('adds the given body to the request', (done) => {
 			global.fetch = jest.fn((url, options) => {
 				expect(options.body).toBe(sampleBody);
 				done();
@@ -124,12 +107,12 @@ describe('PortletBase', () => {
 			portletBase.fetch(sampleUrl, sampleBody);
 		});
 
-		it('transforms the given body using getRequestBody_', done => {
+		it('transforms the given body using getRequestBody_', (done) => {
 			portletBase.getRequestBody_ = jest.fn();
 
 			global.fetch = jest.fn(() => {
 				expect(portletBase.getRequestBody_.mock.calls).toEqual([
-					[sampleBody]
+					[sampleBody],
 				]);
 				done();
 			});
@@ -159,9 +142,8 @@ describe('PortletBase', () => {
 
 			const sampleFormData = new FormData(sampleFormElement);
 
-			const resultFormData = portletBase.getRequestBody_(
-				sampleFormElement
-			);
+			const resultFormData =
+				portletBase.getRequestBody_(sampleFormElement);
 
 			expect(resultFormData.get('field1')).toBe(
 				sampleFormData.get('field1')
@@ -172,11 +154,11 @@ describe('PortletBase', () => {
 		});
 
 		it('appends all object keys inside a new FormData element', () => {
-			portletBase.ns = obj => obj;
+			portletBase.ns = (object) => object;
 
 			const sampleBody = {
 				fieldA: 'valueA',
-				fieldB: 'valueB'
+				fieldB: 'valueB',
 			};
 
 			const resultFormData = portletBase.getRequestBody_(sampleBody);
@@ -220,7 +202,7 @@ describe('PortletBase', () => {
 
 		it('uses the document as root node if one has not been specified or the default has not been found', () => {
 			portletBase = new PortletBase({
-				namespace: '_com_liferay_unknown_portlet'
+				namespace: '_com_liferay_unknown_portlet',
 			});
 
 			expect(portletBase.one('.foo')).toEqual(
@@ -247,7 +229,7 @@ describe('PortletBase', () => {
 		it('overrides the default root node if specified', () => {
 			portletBase = new PortletBase({
 				namespace,
-				rootNode: '#' + namespace + 'child_container'
+				rootNode: '#' + namespace + 'child_container',
 			});
 
 			expect(portletBase.rootNode).toEqual(

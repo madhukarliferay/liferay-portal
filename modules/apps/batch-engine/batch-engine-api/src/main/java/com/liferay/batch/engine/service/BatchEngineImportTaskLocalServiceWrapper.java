@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link BatchEngineImportTaskLocalService}.
@@ -27,6 +19,10 @@ public class BatchEngineImportTaskLocalServiceWrapper
 	implements BatchEngineImportTaskLocalService,
 			   ServiceWrapper<BatchEngineImportTaskLocalService> {
 
+	public BatchEngineImportTaskLocalServiceWrapper() {
+		this(null);
+	}
+
 	public BatchEngineImportTaskLocalServiceWrapper(
 		BatchEngineImportTaskLocalService batchEngineImportTaskLocalService) {
 
@@ -35,6 +31,10 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 	/**
 	 * Adds the batch engine import task to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineImportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param batchEngineImportTask the batch engine import task
 	 * @return the batch engine import task that was added
@@ -51,18 +51,41 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 	@Override
 	public com.liferay.batch.engine.model.BatchEngineImportTask
-		addBatchEngineImportTask(
-			long companyId, long userId, long batchSize, String callbackURL,
-			String className, byte[] content, String contentType,
-			String executeStatus,
-			java.util.Map<String, String> fieldNameMappingMap, String operation,
-			java.util.Map<String, java.io.Serializable> parameters,
-			String version) {
+			addBatchEngineImportTask(
+				String externalReferenceCode, long companyId, long userId,
+				long batchSize, String callbackURL, String className,
+				byte[] content, String contentType, String executeStatus,
+				java.util.Map<String, String> fieldNameMappingMap,
+				int importStrategy, String operation,
+				java.util.Map<String, java.io.Serializable> parameters,
+				String taskItemDelegateName)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _batchEngineImportTaskLocalService.addBatchEngineImportTask(
-			companyId, userId, batchSize, callbackURL, className, content,
-			contentType, executeStatus, fieldNameMappingMap, operation,
-			parameters, version);
+			externalReferenceCode, companyId, userId, batchSize, callbackURL,
+			className, content, contentType, executeStatus, fieldNameMappingMap,
+			importStrategy, operation, parameters, taskItemDelegateName);
+	}
+
+	@Override
+	public com.liferay.batch.engine.model.BatchEngineImportTask
+			addBatchEngineImportTask(
+				String externalReferenceCode, long companyId, long userId,
+				long batchSize, String callbackURL, String className,
+				byte[] content, String contentType, String executeStatus,
+				java.util.Map<String, String> fieldNameMappingMap,
+				int importStrategy, String operation,
+				java.util.Map<String, java.io.Serializable> parameters,
+				String taskItemDelegateName,
+				com.liferay.batch.engine.BatchEngineTaskItemDelegate<?>
+					batchEngineTaskItemDelegate)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _batchEngineImportTaskLocalService.addBatchEngineImportTask(
+			externalReferenceCode, companyId, userId, batchSize, callbackURL,
+			className, content, contentType, executeStatus, fieldNameMappingMap,
+			importStrategy, operation, parameters, taskItemDelegateName,
+			batchEngineTaskItemDelegate);
 	}
 
 	/**
@@ -80,7 +103,23 @@ public class BatchEngineImportTaskLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _batchEngineImportTaskLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the batch engine import task from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineImportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param batchEngineImportTask the batch engine import task
 	 * @return the batch engine import task that was removed
@@ -97,6 +136,10 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 	/**
 	 * Deletes the batch engine import task with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineImportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param batchEngineImportTaskId the primary key of the batch engine import task
 	 * @return the batch engine import task that was removed
@@ -121,6 +164,18 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 		return _batchEngineImportTaskLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _batchEngineImportTaskLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _batchEngineImportTaskLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -223,6 +278,16 @@ public class BatchEngineImportTaskLocalServiceWrapper
 			batchEngineImportTaskId);
 	}
 
+	@Override
+	public com.liferay.batch.engine.model.BatchEngineImportTask
+		fetchBatchEngineImportTaskByExternalReferenceCode(
+			String externalReferenceCode, long companyId) {
+
+		return _batchEngineImportTaskLocalService.
+			fetchBatchEngineImportTaskByExternalReferenceCode(
+				externalReferenceCode, companyId);
+	}
+
 	/**
 	 * Returns the batch engine import task with the matching UUID and company.
 	 *
@@ -260,6 +325,17 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 		return _batchEngineImportTaskLocalService.getBatchEngineImportTask(
 			batchEngineImportTaskId);
+	}
+
+	@Override
+	public com.liferay.batch.engine.model.BatchEngineImportTask
+			getBatchEngineImportTaskByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _batchEngineImportTaskLocalService.
+			getBatchEngineImportTaskByExternalReferenceCode(
+				externalReferenceCode, companyId);
 	}
 
 	/**
@@ -301,6 +377,26 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.batch.engine.model.BatchEngineImportTask>
+		getBatchEngineImportTasks(long companyId, int start, int end) {
+
+		return _batchEngineImportTaskLocalService.getBatchEngineImportTasks(
+			companyId, start, end);
+	}
+
+	@Override
+	public java.util.List<com.liferay.batch.engine.model.BatchEngineImportTask>
+		getBatchEngineImportTasks(
+			long companyId, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.batch.engine.model.BatchEngineImportTask>
+					orderByComparator) {
+
+		return _batchEngineImportTaskLocalService.getBatchEngineImportTasks(
+			companyId, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<com.liferay.batch.engine.model.BatchEngineImportTask>
 		getBatchEngineImportTasks(String executeStatus) {
 
 		return _batchEngineImportTaskLocalService.getBatchEngineImportTasks(
@@ -316,6 +412,12 @@ public class BatchEngineImportTaskLocalServiceWrapper
 	public int getBatchEngineImportTasksCount() {
 		return _batchEngineImportTaskLocalService.
 			getBatchEngineImportTasksCount();
+	}
+
+	@Override
+	public int getBatchEngineImportTasksCount(long companyId) {
+		return _batchEngineImportTaskLocalService.
+			getBatchEngineImportTasksCount(companyId);
 	}
 
 	@Override
@@ -354,6 +456,9 @@ public class BatchEngineImportTaskLocalServiceWrapper
 		return _batchEngineImportTaskLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -374,6 +479,10 @@ public class BatchEngineImportTaskLocalServiceWrapper
 	/**
 	 * Updates the batch engine import task in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineImportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param batchEngineImportTask the batch engine import task
 	 * @return the batch engine import task that was updated
 	 */
@@ -385,6 +494,11 @@ public class BatchEngineImportTaskLocalServiceWrapper
 
 		return _batchEngineImportTaskLocalService.updateBatchEngineImportTask(
 			batchEngineImportTask);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _batchEngineImportTaskLocalService.getBasePersistence();
 	}
 
 	@Override

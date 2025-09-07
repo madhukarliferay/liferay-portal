@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service;
 
+import com.liferay.dynamic.data.lists.model.DDLRecordVersion;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,6 +18,10 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class DDLRecordVersionServiceWrapper
 	implements DDLRecordVersionService,
 			   ServiceWrapper<DDLRecordVersionService> {
+
+	public DDLRecordVersionServiceWrapper() {
+		this(null);
+	}
 
 	public DDLRecordVersionServiceWrapper(
 		DDLRecordVersionService ddlRecordVersionService) {
@@ -53,8 +49,7 @@ public class DDLRecordVersionServiceWrapper
 	 record set
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordVersion
-			getRecordVersion(long recordVersionId)
+	public DDLRecordVersion getRecordVersion(long recordVersionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordVersionService.getRecordVersion(recordVersionId);
@@ -70,8 +65,7 @@ public class DDLRecordVersionServiceWrapper
 	 user do not have the required permission to access the record set
 	 */
 	@Override
-	public com.liferay.dynamic.data.lists.model.DDLRecordVersion
-			getRecordVersion(long recordId, String version)
+	public DDLRecordVersion getRecordVersion(long recordId, String version)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordVersionService.getRecordVersion(recordId, version);
@@ -85,8 +79,7 @@ public class DDLRecordVersionServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordVersion>
-			getRecordVersions(long recordId)
+	public java.util.List<DDLRecordVersion> getRecordVersions(long recordId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordVersionService.getRecordVersions(recordId);
@@ -114,12 +107,10 @@ public class DDLRecordVersionServiceWrapper
 	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
-	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordVersion>
-			getRecordVersions(
-				long recordId, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.dynamic.data.lists.model.DDLRecordVersion>
-						orderByComparator)
+	public java.util.List<DDLRecordVersion> getRecordVersions(
+			long recordId, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordVersion>
+				orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordVersionService.getRecordVersions(

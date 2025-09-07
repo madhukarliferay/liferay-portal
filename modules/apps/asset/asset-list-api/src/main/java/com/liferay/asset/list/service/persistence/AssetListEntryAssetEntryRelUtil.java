@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the asset list entry asset entry rel service. This utility wraps <code>com.liferay.asset.list.service.persistence.impl.AssetListEntryAssetEntryRelPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class AssetListEntryAssetEntryRelUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -740,6 +727,184 @@ public class AssetListEntryAssetEntryRelUtil {
 	}
 
 	/**
+	 * Returns all the asset list entry asset entry rels where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @return the matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByAssetEntryId(
+		long assetEntryId) {
+
+		return getPersistence().findByAssetEntryId(assetEntryId);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry asset entry rels where assetEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @return the range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByAssetEntryId(
+		long assetEntryId, int start, int end) {
+
+		return getPersistence().findByAssetEntryId(assetEntryId, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry asset entry rels where assetEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByAssetEntryId(
+		long assetEntryId, int start, int end,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator) {
+
+		return getPersistence().findByAssetEntryId(
+			assetEntryId, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry asset entry rels where assetEntryId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByAssetEntryId(
+		long assetEntryId, int start, int end,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByAssetEntryId(
+			assetEntryId, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first asset list entry asset entry rel in the ordered set where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry asset entry rel
+	 * @throws NoSuchEntryAssetEntryRelException if a matching asset list entry asset entry rel could not be found
+	 */
+	public static AssetListEntryAssetEntryRel findByAssetEntryId_First(
+			long assetEntryId,
+			OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator)
+		throws com.liferay.asset.list.exception.
+			NoSuchEntryAssetEntryRelException {
+
+		return getPersistence().findByAssetEntryId_First(
+			assetEntryId, orderByComparator);
+	}
+
+	/**
+	 * Returns the first asset list entry asset entry rel in the ordered set where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry asset entry rel, or <code>null</code> if a matching asset list entry asset entry rel could not be found
+	 */
+	public static AssetListEntryAssetEntryRel fetchByAssetEntryId_First(
+		long assetEntryId,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator) {
+
+		return getPersistence().fetchByAssetEntryId_First(
+			assetEntryId, orderByComparator);
+	}
+
+	/**
+	 * Returns the last asset list entry asset entry rel in the ordered set where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry asset entry rel
+	 * @throws NoSuchEntryAssetEntryRelException if a matching asset list entry asset entry rel could not be found
+	 */
+	public static AssetListEntryAssetEntryRel findByAssetEntryId_Last(
+			long assetEntryId,
+			OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator)
+		throws com.liferay.asset.list.exception.
+			NoSuchEntryAssetEntryRelException {
+
+		return getPersistence().findByAssetEntryId_Last(
+			assetEntryId, orderByComparator);
+	}
+
+	/**
+	 * Returns the last asset list entry asset entry rel in the ordered set where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry asset entry rel, or <code>null</code> if a matching asset list entry asset entry rel could not be found
+	 */
+	public static AssetListEntryAssetEntryRel fetchByAssetEntryId_Last(
+		long assetEntryId,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator) {
+
+		return getPersistence().fetchByAssetEntryId_Last(
+			assetEntryId, orderByComparator);
+	}
+
+	/**
+	 * Returns the asset list entry asset entry rels before and after the current asset list entry asset entry rel in the ordered set where assetEntryId = &#63;.
+	 *
+	 * @param assetListEntryAssetEntryRelId the primary key of the current asset list entry asset entry rel
+	 * @param assetEntryId the asset entry ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset list entry asset entry rel
+	 * @throws NoSuchEntryAssetEntryRelException if a asset list entry asset entry rel with the primary key could not be found
+	 */
+	public static AssetListEntryAssetEntryRel[] findByAssetEntryId_PrevAndNext(
+			long assetListEntryAssetEntryRelId, long assetEntryId,
+			OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator)
+		throws com.liferay.asset.list.exception.
+			NoSuchEntryAssetEntryRelException {
+
+		return getPersistence().findByAssetEntryId_PrevAndNext(
+			assetListEntryAssetEntryRelId, assetEntryId, orderByComparator);
+	}
+
+	/**
+	 * Removes all the asset list entry asset entry rels where assetEntryId = &#63; from the database.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 */
+	public static void removeByAssetEntryId(long assetEntryId) {
+		getPersistence().removeByAssetEntryId(assetEntryId);
+	}
+
+	/**
+	 * Returns the number of asset list entry asset entry rels where assetEntryId = &#63;.
+	 *
+	 * @param assetEntryId the asset entry ID
+	 * @return the number of matching asset list entry asset entry rels
+	 */
+	public static int countByAssetEntryId(long assetEntryId) {
+		return getPersistence().countByAssetEntryId(assetEntryId);
+	}
+
+	/**
 	 * Returns all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = &#63;.
 	 *
 	 * @param assetListEntryId the asset list entry ID
@@ -912,6 +1077,90 @@ public class AssetListEntryAssetEntryRelUtil {
 	}
 
 	/**
+	 * Returns all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetListEntryId the asset list entry ID
+	 * @param segmentsEntryIds the segments entry IDs
+	 * @return the matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByA_S(
+		long assetListEntryId, long[] segmentsEntryIds) {
+
+		return getPersistence().findByA_S(assetListEntryId, segmentsEntryIds);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetListEntryId the asset list entry ID
+	 * @param segmentsEntryIds the segments entry IDs
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @return the range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByA_S(
+		long assetListEntryId, long[] segmentsEntryIds, int start, int end) {
+
+		return getPersistence().findByA_S(
+			assetListEntryId, segmentsEntryIds, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetListEntryId the asset list entry ID
+	 * @param segmentsEntryIds the segments entry IDs
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByA_S(
+		long assetListEntryId, long[] segmentsEntryIds, int start, int end,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator) {
+
+		return getPersistence().findByA_S(
+			assetListEntryId, segmentsEntryIds, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryAssetEntryRelModelImpl</code>.
+	 * </p>
+	 *
+	 * @param assetListEntryId the asset list entry ID
+	 * @param segmentsEntryIds the segments entry IDs
+	 * @param start the lower bound of the range of asset list entry asset entry rels
+	 * @param end the upper bound of the range of asset list entry asset entry rels (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry asset entry rels
+	 */
+	public static List<AssetListEntryAssetEntryRel> findByA_S(
+		long assetListEntryId, long[] segmentsEntryIds, int start, int end,
+		OrderByComparator<AssetListEntryAssetEntryRel> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByA_S(
+			assetListEntryId, segmentsEntryIds, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
 	 * Removes all the asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = &#63; from the database.
 	 *
 	 * @param assetListEntryId the asset list entry ID
@@ -932,6 +1181,19 @@ public class AssetListEntryAssetEntryRelUtil {
 	 */
 	public static int countByA_S(long assetListEntryId, long segmentsEntryId) {
 		return getPersistence().countByA_S(assetListEntryId, segmentsEntryId);
+	}
+
+	/**
+	 * Returns the number of asset list entry asset entry rels where assetListEntryId = &#63; and segmentsEntryId = any &#63;.
+	 *
+	 * @param assetListEntryId the asset list entry ID
+	 * @param segmentsEntryIds the segments entry IDs
+	 * @return the number of matching asset list entry asset entry rels
+	 */
+	public static int countByA_S(
+		long assetListEntryId, long[] segmentsEntryIds) {
+
+		return getPersistence().countByA_S(assetListEntryId, segmentsEntryIds);
 	}
 
 	/**
@@ -1398,29 +1660,15 @@ public class AssetListEntryAssetEntryRelUtil {
 	}
 
 	public static AssetListEntryAssetEntryRelPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<AssetListEntryAssetEntryRelPersistence,
-		 AssetListEntryAssetEntryRelPersistence> _serviceTracker;
+	public static void setPersistence(
+		AssetListEntryAssetEntryRelPersistence persistence) {
 
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			AssetListEntryAssetEntryRelPersistence.class);
-
-		ServiceTracker
-			<AssetListEntryAssetEntryRelPersistence,
-			 AssetListEntryAssetEntryRelPersistence> serviceTracker =
-				new ServiceTracker
-					<AssetListEntryAssetEntryRelPersistence,
-					 AssetListEntryAssetEntryRelPersistence>(
-						 bundle.getBundleContext(),
-						 AssetListEntryAssetEntryRelPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+		_persistence = persistence;
 	}
+
+	private static volatile AssetListEntryAssetEntryRelPersistence _persistence;
 
 }

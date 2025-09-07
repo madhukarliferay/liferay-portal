@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.snapshot;
@@ -30,88 +21,22 @@ public class SnapshotRequestExecutorFixture {
 		_snapshotRequestExecutor = new ElasticsearchSnapshotRequestExecutor() {
 			{
 				createSnapshotRepositoryRequestExecutor =
-					createCreateSnapshotRepositoryRequestExecutor(
+					new CreateSnapshotRepositoryRequestExecutor(
 						_elasticsearchClientResolver);
 				createSnapshotRequestExecutor =
-					createCreateSnapshotRequestExecutor(
+					new CreateSnapshotRequestExecutor(
 						_elasticsearchClientResolver);
 				deleteSnapshotRequestExecutor =
-					createDeleteSnapshotRequestExecutor(
+					new DeleteSnapshotRequestExecutor(
 						_elasticsearchClientResolver);
 				getSnapshotRepositoriesRequestExecutor =
-					createGetSnapshotRepositoriesRequestExecutor(
+					new GetSnapshotRepositoriesRequestExecutor(
 						_elasticsearchClientResolver);
-				getSnapshotsRequestExecutor = createGetSnapshotsRequestExecutor(
+				getSnapshotsRequestExecutor = new GetSnapshotsRequestExecutor(
 					_elasticsearchClientResolver);
 				restoreSnapshotRequestExecutor =
-					createRestoreSnapshotRequestExecutor(
+					new RestoreSnapshotRequestExecutor(
 						_elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static CreateSnapshotRepositoryRequestExecutor
-		createCreateSnapshotRepositoryRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new CreateSnapshotRepositoryRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static CreateSnapshotRequestExecutor
-		createCreateSnapshotRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new CreateSnapshotRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static DeleteSnapshotRequestExecutor
-		createDeleteSnapshotRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new DeleteSnapshotRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static GetSnapshotRepositoriesRequestExecutor
-		createGetSnapshotRepositoriesRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new GetSnapshotRepositoriesRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static GetSnapshotsRequestExecutor
-		createGetSnapshotsRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new GetSnapshotsRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-			}
-		};
-	}
-
-	protected static RestoreSnapshotRequestExecutor
-		createRestoreSnapshotRequestExecutor(
-			ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		return new RestoreSnapshotRequestExecutorImpl() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
 			}
 		};
 	}

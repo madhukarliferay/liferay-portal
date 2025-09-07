@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.error.code.internal.servlet.taglib;
 
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.util.StackTraceUtil;
@@ -49,20 +39,23 @@ public class ApplicationJSONPortalErrorCodeDynamicInclude
 		String message, PrintWriter printWriter, String requestURI,
 		int statusCode, Throwable throwable) {
 
-		JSONObject jsonObject = JSONUtil.put(
-			"message", message
-		).put(
-			"requestURI", requestURI
-		).put(
-			"statusCode", statusCode
-		);
+		printWriter.write(
+			JSONUtil.put(
+				"message", message
+			).put(
+				"requestURI", requestURI
+			).put(
+				"statusCode", statusCode
+			).put(
+				"throwable",
+				() -> {
+					if (throwable != null) {
+						return StackTraceUtil.getStackTrace(throwable);
+					}
 
-		if (throwable != null) {
-			jsonObject.put(
-				"throwable", StackTraceUtil.getStackTrace(throwable));
-		}
-
-		printWriter.write(jsonObject.toString());
+					return null;
+				}
+			).toString());
 	}
 
 }

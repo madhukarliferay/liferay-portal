@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -45,25 +36,27 @@
 		<%
 		PortletURL portletURL = (PortletURL)request.getAttribute("liferay-item-selector:repository-entry-browser:portletURL");
 
-		PortletURL searchEverywhereURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
-
-		searchEverywhereURL.setParameter("folderId", String.valueOf(DLFolderConstants.DEFAULT_PARENT_FOLDER_ID));
-		searchEverywhereURL.setParameter("searchFolderId", String.valueOf(folderId));
-		searchEverywhereURL.setParameter("keywords", keywords);
-
-		PortletURL searchFolderURL = PortletURLUtil.clone(searchEverywhereURL, liferayPortletResponse);
-
-		searchFolderURL.setParameter("folderId", String.valueOf(folderId));
+		PortletURL searchEverywhereURL = PortletURLBuilder.create(
+			PortletURLUtil.clone(portletURL, liferayPortletResponse)
+		).setKeywords(
+			keywords
+		).setParameter(
+			"folderId", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID
+		).setParameter(
+			"searchFolderId", folderId
+		).buildPortletURL();
 		%>
 
 		<liferay-util:whitespace-remover>
 			<liferay-ui:message key="search" />
 
 			<clay:link
-				buttonStyle="secondary"
-				elementClasses='<%= "btn-sm" + (searchEverywhere ? " active" : "") %>'
+				cssClass='<%= searchEverywhere ? "active" : "" %>'
+				displayType="secondary"
 				href="<%= searchEverywhereURL.toString() %>"
-				label='<%= LanguageUtil.get(resourceBundle, "everywhere") %>'
+				label="everywhere"
+				small="<%= true %>"
+				type="button"
 			/>
 
 			<%
@@ -71,11 +64,18 @@
 			%>
 
 			<clay:link
-				buttonStyle="secondary"
-				elementClasses='<%= "btn-sm" + (!searchEverywhere ? " active" : "") %>'
-				href="<%= searchFolderURL.toString() %>"
+				cssClass='<%= !searchEverywhere ? "active" : "" %>'
+				displayType="secondary"
+				href='<%=
+					PortletURLBuilder.create(
+						PortletURLUtil.clone(searchEverywhereURL, liferayPortletResponse)
+					).setParameter(
+						"folderId", folderId
+					).buildString()
+				%>'
 				icon="folder"
 				label="<%= folder.getName() %>"
+				type="button"
 			/>
 		</liferay-util:whitespace-remover>
 	</c:if>

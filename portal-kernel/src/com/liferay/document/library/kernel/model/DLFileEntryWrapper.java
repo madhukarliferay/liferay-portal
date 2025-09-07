@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.model;
@@ -22,6 +13,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -45,7 +38,9 @@ public class DLFileEntryWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("fileEntryId", getFileEntryId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -73,6 +68,9 @@ public class DLFileEntryWrapper
 		attributes.put("custom1ImageId", getCustom1ImageId());
 		attributes.put("custom2ImageId", getCustom2ImageId());
 		attributes.put("manualCheckInRequired", isManualCheckInRequired());
+		attributes.put("displayDate", getDisplayDate());
+		attributes.put("expirationDate", getExpirationDate());
+		attributes.put("reviewDate", getReviewDate());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -86,10 +84,23 @@ public class DLFileEntryWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long fileEntryId = (Long)attributes.get("fileEntryId");
@@ -255,6 +266,24 @@ public class DLFileEntryWrapper
 			setManualCheckInRequired(manualCheckInRequired);
 		}
 
+		Date displayDate = (Date)attributes.get("displayDate");
+
+		if (displayDate != null) {
+			setDisplayDate(displayDate);
+		}
+
+		Date expirationDate = (Date)attributes.get("expirationDate");
+
+		if (expirationDate != null) {
+			setExpirationDate(expirationDate);
+		}
+
+		Date reviewDate = (Date)attributes.get("reviewDate");
+
+		if (reviewDate != null) {
+			setReviewDate(reviewDate);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
@@ -267,6 +296,11 @@ public class DLFileEntryWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.buildTreePath();
+	}
+
+	@Override
+	public DLFileEntry cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -334,6 +368,16 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this document library file entry.
+	 *
+	 * @return the ct collection ID of this document library file entry
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the custom1 image ID of this document library file entry.
 	 *
 	 * @return the custom1 image ID of this document library file entry
@@ -376,6 +420,16 @@ public class DLFileEntryWrapper
 		return model.getDescription();
 	}
 
+	/**
+	 * Returns the display date of this document library file entry.
+	 *
+	 * @return the display date of this document library file entry
+	 */
+	@Override
+	public Date getDisplayDate() {
+		return model.getDisplayDate();
+	}
+
 	@Override
 	public DLFileEntryType getDLFileEntryType()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -389,6 +443,16 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Returns the expiration date of this document library file entry.
+	 *
+	 * @return the expiration date of this document library file entry
+	 */
+	@Override
+	public Date getExpirationDate() {
+		return model.getExpirationDate();
+	}
+
+	/**
 	 * Returns the extension of this document library file entry.
 	 *
 	 * @return the extension of this document library file entry
@@ -396,6 +460,16 @@ public class DLFileEntryWrapper
 	@Override
 	public String getExtension() {
 		return model.getExtension();
+	}
+
+	/**
+	 * Returns the external reference code of this document library file entry.
+	 *
+	 * @return the external reference code of this document library file entry
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -467,6 +541,13 @@ public class DLFileEntryWrapper
 	@Override
 	public java.util.List<DLFileVersion> getFileVersions(int status) {
 		return model.getFileVersions(status);
+	}
+
+	@Override
+	public java.util.List<DLFileVersion> getFileVersions(
+		int status, int start, int end) {
+
+		return model.getFileVersions(status, start, end);
 	}
 
 	@Override
@@ -543,6 +624,10 @@ public class DLFileEntryWrapper
 		return model.getLock();
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x)
+	 */
+	@Deprecated
 	@Override
 	public String getLuceneProperties() {
 		return model.getLuceneProperties();
@@ -624,6 +709,16 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Returns the review date of this document library file entry.
+	 *
+	 * @return the review date of this document library file entry
+	 */
+	@Override
+	public Date getReviewDate() {
+		return model.getReviewDate();
+	}
+
+	/**
 	 * Returns the size of this document library file entry.
 	 *
 	 * @return the size of this document library file entry
@@ -664,18 +759,6 @@ public class DLFileEntryWrapper
 	}
 
 	/**
-	 * Returns the trash entry created when this document library file entry was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this document library file entry.
-	 *
-	 * @return the trash entry created when this document library file entry was moved to the Recycle Bin
-	 */
-	@Override
-	public com.liferay.trash.kernel.model.TrashEntry getTrashEntry()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return model.getTrashEntry();
-	}
-
-	/**
 	 * Returns the class primary key of the trash entry for this document library file entry.
 	 *
 	 * @return the class primary key of the trash entry for this document library file entry
@@ -683,18 +766,6 @@ public class DLFileEntryWrapper
 	@Override
 	public long getTrashEntryClassPK() {
 		return model.getTrashEntryClassPK();
-	}
-
-	/**
-	 * Returns the trash handler for this document library file entry.
-	 *
-	 * @return the trash handler for this document library file entry
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.trash.TrashHandler getTrashHandler() {
-		return model.getTrashHandler();
 	}
 
 	/**
@@ -783,26 +854,6 @@ public class DLFileEntryWrapper
 	}
 
 	/**
-	 * Returns <code>true</code> if the parent of this document library file entry is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if the parent of this document library file entry is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isInTrashContainer() {
-		return model.isInTrashContainer();
-	}
-
-	@Override
-	public boolean isInTrashExplicitly() {
-		return model.isInTrashExplicitly();
-	}
-
-	@Override
-	public boolean isInTrashImplicitly() {
-		return model.isInTrashImplicitly();
-	}
-
-	/**
 	 * Returns <code>true</code> if this document library file entry is manual check in required.
 	 *
 	 * @return <code>true</code> if this document library file entry is manual check in required; <code>false</code> otherwise
@@ -812,11 +863,6 @@ public class DLFileEntryWrapper
 		return model.isManualCheckInRequired();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a document library file entry model instance should use the <code>DLFileEntry</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -868,6 +914,16 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this document library file entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this document library file entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the custom1 image ID of this document library file entry.
 	 *
 	 * @param custom1ImageId the custom1 image ID of this document library file entry
@@ -898,6 +954,26 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Sets the display date of this document library file entry.
+	 *
+	 * @param displayDate the display date of this document library file entry
+	 */
+	@Override
+	public void setDisplayDate(Date displayDate) {
+		model.setDisplayDate(displayDate);
+	}
+
+	/**
+	 * Sets the expiration date of this document library file entry.
+	 *
+	 * @param expirationDate the expiration date of this document library file entry
+	 */
+	@Override
+	public void setExpirationDate(Date expirationDate) {
+		model.setExpirationDate(expirationDate);
+	}
+
+	/**
 	 * Sets the extension of this document library file entry.
 	 *
 	 * @param extension the extension of this document library file entry
@@ -905,6 +981,16 @@ public class DLFileEntryWrapper
 	@Override
 	public void setExtension(String extension) {
 		model.setExtension(extension);
+	}
+
+	/**
+	 * Sets the external reference code of this document library file entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this document library file entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -920,9 +1006,9 @@ public class DLFileEntryWrapper
 	@Override
 	public void setExtraSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties
-			extraSettingsProperties) {
+			extraSettingsUnicodeProperties) {
 
-		model.setExtraSettingsProperties(extraSettingsProperties);
+		model.setExtraSettingsProperties(extraSettingsUnicodeProperties);
 	}
 
 	/**
@@ -1066,6 +1152,16 @@ public class DLFileEntryWrapper
 	}
 
 	/**
+	 * Sets the review date of this document library file entry.
+	 *
+	 * @param reviewDate the review date of this document library file entry
+	 */
+	@Override
+	public void setReviewDate(Date reviewDate) {
+		model.setReviewDate(reviewDate);
+	}
+
+	/**
 	 * Sets the size of this document library file entry.
 	 *
 	 * @param size the size of this document library file entry
@@ -1156,8 +1252,27 @@ public class DLFileEntryWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
 	public void updateTreePath(String treePath) {
 		model.updateTreePath(treePath);
+	}
+
+	@Override
+	public Map<String, Function<DLFileEntry, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<DLFileEntry, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

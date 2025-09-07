@@ -1,22 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMTemplateVersion;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for DDMTemplateVersion. This utility wraps
@@ -32,7 +31,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMTemplateVersionLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateVersionLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -41,13 +40,15 @@ public class DDMTemplateVersionLocalServiceUtil {
 	/**
 	 * Adds the ddm template version to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was added
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-		addDDMTemplateVersion(
-			com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-				ddmTemplateVersion) {
+	public static DDMTemplateVersion addDDMTemplateVersion(
+		DDMTemplateVersion ddmTemplateVersion) {
 
 		return getService().addDDMTemplateVersion(ddmTemplateVersion);
 	}
@@ -58,22 +59,34 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param templateVersionId the primary key for the new ddm template version
 	 * @return the new ddm template version
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-		createDDMTemplateVersion(long templateVersionId) {
+	public static DDMTemplateVersion createDDMTemplateVersion(
+		long templateVersionId) {
 
 		return getService().createDDMTemplateVersion(templateVersionId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ddm template version from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was removed
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-		deleteDDMTemplateVersion(
-			com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-				ddmTemplateVersion) {
+	public static DDMTemplateVersion deleteDDMTemplateVersion(
+		DDMTemplateVersion ddmTemplateVersion) {
 
 		return getService().deleteDDMTemplateVersion(ddmTemplateVersion);
 	}
@@ -81,13 +94,17 @@ public class DDMTemplateVersionLocalServiceUtil {
 	/**
 	 * Deletes the ddm template version with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param templateVersionId the primary key of the ddm template version
 	 * @return the ddm template version that was removed
 	 * @throws PortalException if a ddm template version with the primary key could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			deleteDDMTemplateVersion(long templateVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion deleteDDMTemplateVersion(
+			long templateVersionId)
+		throws PortalException {
 
 		return getService().deleteDDMTemplateVersion(templateVersionId);
 	}
@@ -95,10 +112,9 @@ public class DDMTemplateVersionLocalServiceUtil {
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -107,9 +123,15 @@ public class DDMTemplateVersionLocalServiceUtil {
 		getService().deleteTemplateVersions(templateId);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -119,9 +141,7 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -137,9 +157,8 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -157,10 +176,9 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -172,9 +190,7 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -186,14 +202,14 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-		fetchDDMTemplateVersion(long templateVersionId) {
+	public static DDMTemplateVersion fetchDDMTemplateVersion(
+		long templateVersionId) {
 
 		return getService().fetchDDMTemplateVersion(templateVersionId);
 	}
@@ -211,9 +227,9 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @return the ddm template version
 	 * @throws PortalException if a ddm template version with the primary key could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getDDMTemplateVersion(long templateVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getDDMTemplateVersion(
+			long templateVersionId)
+		throws PortalException {
 
 		return getService().getDDMTemplateVersion(templateVersionId);
 	}
@@ -229,9 +245,8 @@ public class DDMTemplateVersionLocalServiceUtil {
 	 * @param end the upper bound of the range of ddm template versions (not inclusive)
 	 * @return the range of ddm template versions
 	 */
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMTemplateVersion>
-			getDDMTemplateVersions(int start, int end) {
+	public static List<DDMTemplateVersion> getDDMTemplateVersions(
+		int start, int end) {
 
 		return getService().getDDMTemplateVersions(start, end);
 	}
@@ -252,9 +267,8 @@ public class DDMTemplateVersionLocalServiceUtil {
 		return getService().getIndexableActionableDynamicQuery();
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getLatestTemplateVersion(long templateId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getLatestTemplateVersion(long templateId)
+		throws PortalException {
 
 		return getService().getLatestTemplateVersion(templateId);
 	}
@@ -268,41 +282,37 @@ public class DDMTemplateVersionLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getTemplateVersion(long templateVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getTemplateVersion(long templateVersionId)
+		throws PortalException {
 
 		return getService().getTemplateVersion(templateVersionId);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getTemplateVersion(long templateId, String version)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getTemplateVersion(
+			long templateId, String version)
+		throws PortalException {
 
 		return getService().getTemplateVersion(templateId, version);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMTemplateVersion>
-			getTemplateVersions(long templateId) {
+	public static List<DDMTemplateVersion> getTemplateVersions(
+		long templateId) {
 
 		return getService().getTemplateVersions(templateId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMTemplateVersion>
-			getTemplateVersions(
-				long templateId, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.dynamic.data.mapping.model.DDMTemplateVersion>
-						orderByComparator) {
+	public static List<DDMTemplateVersion> getTemplateVersions(
+		long templateId, int start, int end,
+		OrderByComparator<DDMTemplateVersion> orderByComparator) {
 
 		return getService().getTemplateVersions(
 			templateId, start, end, orderByComparator);
@@ -315,41 +325,26 @@ public class DDMTemplateVersionLocalServiceUtil {
 	/**
 	 * Updates the ddm template version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMTemplateVersionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmTemplateVersion the ddm template version
 	 * @return the ddm template version that was updated
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-		updateDDMTemplateVersion(
-			com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-				ddmTemplateVersion) {
+	public static DDMTemplateVersion updateDDMTemplateVersion(
+		DDMTemplateVersion ddmTemplateVersion) {
 
 		return getService().updateDDMTemplateVersion(ddmTemplateVersion);
 	}
 
 	public static DDMTemplateVersionLocalService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMTemplateVersionLocalService, DDMTemplateVersionLocalService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMTemplateVersionLocalService>
+		_serviceSnapshot = new Snapshot<>(
+			DDMTemplateVersionLocalServiceUtil.class,
 			DDMTemplateVersionLocalService.class);
-
-		ServiceTracker
-			<DDMTemplateVersionLocalService, DDMTemplateVersionLocalService>
-				serviceTracker =
-					new ServiceTracker
-						<DDMTemplateVersionLocalService,
-						 DDMTemplateVersionLocalService>(
-							 bundle.getBundleContext(),
-							 DDMTemplateVersionLocalService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

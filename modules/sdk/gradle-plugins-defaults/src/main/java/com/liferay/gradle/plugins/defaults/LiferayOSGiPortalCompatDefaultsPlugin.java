@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults;
@@ -19,7 +10,7 @@ import aQute.bnd.version.Version;
 import com.liferay.gradle.plugins.BaseDefaultsPlugin;
 import com.liferay.gradle.plugins.defaults.internal.util.FileUtil;
 import com.liferay.gradle.plugins.defaults.internal.util.GradleUtil;
-import com.liferay.gradle.plugins.defaults.tasks.ReplaceRegexTask;
+import com.liferay.gradle.plugins.defaults.task.ReplaceRegexTask;
 import com.liferay.gradle.plugins.extensions.LiferayExtension;
 
 import groovy.lang.Closure;
@@ -43,6 +34,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -64,7 +56,7 @@ public class LiferayOSGiPortalCompatDefaultsPlugin
 		"transformImportedFiles";
 
 	@Override
-	protected void configureDefaults(
+	protected void applyPluginDefaults(
 		Project project, LiferayOSGiDefaultsPlugin liferayOSGiDefaultsPlugin) {
 
 		File portalRootDir = GradleUtil.getRootDir(
@@ -117,7 +109,7 @@ public class LiferayOSGiPortalCompatDefaultsPlugin
 		GradleUtil.addDependency(
 			project, BYTECODE_TRANSFORMER_CONFIGURATION_NAME, "com.liferay",
 			"com.liferay.portal.tools.portal.compat.bytecode.transformer",
-			"1.0.2");
+			"1.0.3");
 	}
 
 	@SuppressWarnings("serial")
@@ -188,13 +180,17 @@ public class LiferayOSGiPortalCompatDefaultsPlugin
 			JavaExec.class);
 
 		javaExec.dependsOn(importFilesTask);
+
+		Property<String> mainClass = javaExec.getMainClass();
+
+		mainClass.set(
+			"com.liferay.portal.tools.portal.compat.bytecode.transformer." +
+				"PortalCompatBytecodeTransformer");
+
 		javaExec.setClasspath(bytecodeTransformerConfiguration);
 		javaExec.setDescription(
 			"Processes imported classes using the Liferay Portal Tools " +
 				"Portal Compat Bytecode Transformer.");
-		javaExec.setMain(
-			"com.liferay.portal.tools.portal.compat.bytecode.transformer." +
-				"PortalCompactBytecodeTransformer");
 
 		javaExec.systemProperty(
 			"classes.dir",
@@ -249,8 +245,12 @@ public class LiferayOSGiPortalCompatDefaultsPlugin
 						try {
 							version = Version.parseVersion(dependencyVersion);
 						}
-						catch (IllegalArgumentException iae) {
-							throw new GradleException(iae.getMessage(), iae);
+						catch (IllegalArgumentException
+									illegalArgumentException) {
+
+							throw new GradleException(
+								illegalArgumentException.getMessage(),
+								illegalArgumentException);
 						}
 
 						if (version.isSnapshot()) {

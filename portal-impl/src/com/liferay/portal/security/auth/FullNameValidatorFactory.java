@@ -1,23 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth;
 
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.auth.FullNameValidator;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
 
 /**
  * @author Amos Fong
@@ -27,21 +16,15 @@ import com.liferay.registry.ServiceTracker;
 public class FullNameValidatorFactory {
 
 	public static FullNameValidator getInstance() {
-		return _fullNameValidatorFactory._serviceTracker.getService();
+		return _fullNameValidatorSnapshot.get();
 	}
 
 	private FullNameValidatorFactory() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(FullNameValidator.class);
-
-		_serviceTracker.open();
 	}
 
-	private static final FullNameValidatorFactory _fullNameValidatorFactory =
-		new FullNameValidatorFactory();
-
-	private final ServiceTracker<FullNameValidator, FullNameValidator>
-		_serviceTracker;
+	private static final Snapshot<FullNameValidator>
+		_fullNameValidatorSnapshot = new Snapshot<>(
+			FullNameValidatorFactory.class, FullNameValidator.class, null,
+			true);
 
 }

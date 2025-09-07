@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model;
@@ -19,6 +10,7 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -37,10 +29,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface KaleoInstanceTokenModel
-	extends BaseModel<KaleoInstanceToken>, GroupedModel, MVCCModel,
-			ShardedModel {
+	extends BaseModel<KaleoInstanceToken>, CTModel<KaleoInstanceToken>,
+			GroupedModel, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a kaleo instance token model instance should use the {@link KaleoInstanceToken} interface instead.
@@ -51,6 +43,7 @@ public interface KaleoInstanceTokenModel
 	 *
 	 * @return the primary key of this kaleo instance token
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -58,6 +51,7 @@ public interface KaleoInstanceTokenModel
 	 *
 	 * @param primaryKey the primary key of this kaleo instance token
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -75,6 +69,22 @@ public interface KaleoInstanceTokenModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this kaleo instance token.
+	 *
+	 * @return the ct collection ID of this kaleo instance token
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this kaleo instance token.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kaleo instance token
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the kaleo instance token ID of this kaleo instance token.
@@ -202,6 +212,20 @@ public interface KaleoInstanceTokenModel
 	 */
 	@Override
 	public void setModifiedDate(Date modifiedDate);
+
+	/**
+	 * Returns the kaleo definition ID of this kaleo instance token.
+	 *
+	 * @return the kaleo definition ID of this kaleo instance token
+	 */
+	public long getKaleoDefinitionId();
+
+	/**
+	 * Sets the kaleo definition ID of this kaleo instance token.
+	 *
+	 * @param kaleoDefinitionId the kaleo definition ID of this kaleo instance token
+	 */
+	public void setKaleoDefinitionId(long kaleoDefinitionId);
 
 	/**
 	 * Returns the kaleo definition version ID of this kaleo instance token.
@@ -337,5 +361,12 @@ public interface KaleoInstanceTokenModel
 	 * @param completionDate the completion date of this kaleo instance token
 	 */
 	public void setCompletionDate(Date completionDate);
+
+	@Override
+	public KaleoInstanceToken cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

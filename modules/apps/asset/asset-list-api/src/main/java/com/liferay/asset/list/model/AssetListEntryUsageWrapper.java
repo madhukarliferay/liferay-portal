@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,6 +37,7 @@ public class AssetListEntryUsageWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("assetListEntryUsageId", getAssetListEntryUsageId());
 		attributes.put("groupId", getGroupId());
@@ -52,10 +46,12 @@ public class AssetListEntryUsageWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
-		attributes.put("assetListEntryId", getAssetListEntryId());
 		attributes.put("classNameId", getClassNameId());
-		attributes.put("classPK", getClassPK());
-		attributes.put("portletId", getPortletId());
+		attributes.put("containerKey", getContainerKey());
+		attributes.put("containerType", getContainerType());
+		attributes.put("key", getKey());
+		attributes.put("plid", getPlid());
+		attributes.put("type", getType());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -67,6 +63,12 @@ public class AssetListEntryUsageWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -118,28 +120,40 @@ public class AssetListEntryUsageWrapper
 			setModifiedDate(modifiedDate);
 		}
 
-		Long assetListEntryId = (Long)attributes.get("assetListEntryId");
-
-		if (assetListEntryId != null) {
-			setAssetListEntryId(assetListEntryId);
-		}
-
 		Long classNameId = (Long)attributes.get("classNameId");
 
 		if (classNameId != null) {
 			setClassNameId(classNameId);
 		}
 
-		Long classPK = (Long)attributes.get("classPK");
+		String containerKey = (String)attributes.get("containerKey");
 
-		if (classPK != null) {
-			setClassPK(classPK);
+		if (containerKey != null) {
+			setContainerKey(containerKey);
 		}
 
-		String portletId = (String)attributes.get("portletId");
+		Long containerType = (Long)attributes.get("containerType");
 
-		if (portletId != null) {
-			setPortletId(portletId);
+		if (containerType != null) {
+			setContainerType(containerType);
+		}
+
+		String key = (String)attributes.get("key");
+
+		if (key != null) {
+			setKey(key);
+		}
+
+		Long plid = (Long)attributes.get("plid");
+
+		if (plid != null) {
+			setPlid(plid);
+		}
+
+		Integer type = (Integer)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
 		}
 
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
@@ -149,14 +163,9 @@ public class AssetListEntryUsageWrapper
 		}
 	}
 
-	/**
-	 * Returns the asset list entry ID of this asset list entry usage.
-	 *
-	 * @return the asset list entry ID of this asset list entry usage
-	 */
 	@Override
-	public long getAssetListEntryId() {
-		return model.getAssetListEntryId();
+	public AssetListEntryUsage cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -190,16 +199,6 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
-	 * Returns the class pk of this asset list entry usage.
-	 *
-	 * @return the class pk of this asset list entry usage
-	 */
-	@Override
-	public long getClassPK() {
-		return model.getClassPK();
-	}
-
-	/**
 	 * Returns the company ID of this asset list entry usage.
 	 *
 	 * @return the company ID of this asset list entry usage
@@ -207,6 +206,26 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public long getCompanyId() {
 		return model.getCompanyId();
+	}
+
+	/**
+	 * Returns the container key of this asset list entry usage.
+	 *
+	 * @return the container key of this asset list entry usage
+	 */
+	@Override
+	public String getContainerKey() {
+		return model.getContainerKey();
+	}
+
+	/**
+	 * Returns the container type of this asset list entry usage.
+	 *
+	 * @return the container type of this asset list entry usage
+	 */
+	@Override
+	public long getContainerType() {
+		return model.getContainerType();
 	}
 
 	/**
@@ -220,6 +239,16 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this asset list entry usage.
+	 *
+	 * @return the ct collection ID of this asset list entry usage
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the group ID of this asset list entry usage.
 	 *
 	 * @return the group ID of this asset list entry usage
@@ -227,6 +256,16 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public long getGroupId() {
 		return model.getGroupId();
+	}
+
+	/**
+	 * Returns the key of this asset list entry usage.
+	 *
+	 * @return the key of this asset list entry usage
+	 */
+	@Override
+	public String getKey() {
+		return model.getKey();
 	}
 
 	/**
@@ -260,13 +299,13 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
-	 * Returns the portlet ID of this asset list entry usage.
+	 * Returns the plid of this asset list entry usage.
 	 *
-	 * @return the portlet ID of this asset list entry usage
+	 * @return the plid of this asset list entry usage
 	 */
 	@Override
-	public String getPortletId() {
-		return model.getPortletId();
+	public long getPlid() {
+		return model.getPlid();
 	}
 
 	/**
@@ -277,6 +316,16 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public long getPrimaryKey() {
 		return model.getPrimaryKey();
+	}
+
+	/**
+	 * Returns the type of this asset list entry usage.
+	 *
+	 * @return the type of this asset list entry usage
+	 */
+	@Override
+	public int getType() {
+		return model.getType();
 	}
 
 	/**
@@ -319,24 +368,9 @@ public class AssetListEntryUsageWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a asset list entry usage model instance should use the <code>AssetListEntryUsage</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
-	}
-
-	/**
-	 * Sets the asset list entry ID of this asset list entry usage.
-	 *
-	 * @param assetListEntryId the asset list entry ID of this asset list entry usage
-	 */
-	@Override
-	public void setAssetListEntryId(long assetListEntryId) {
-		model.setAssetListEntryId(assetListEntryId);
 	}
 
 	/**
@@ -365,16 +399,6 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
-	 * Sets the class pk of this asset list entry usage.
-	 *
-	 * @param classPK the class pk of this asset list entry usage
-	 */
-	@Override
-	public void setClassPK(long classPK) {
-		model.setClassPK(classPK);
-	}
-
-	/**
 	 * Sets the company ID of this asset list entry usage.
 	 *
 	 * @param companyId the company ID of this asset list entry usage
@@ -382,6 +406,26 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public void setCompanyId(long companyId) {
 		model.setCompanyId(companyId);
+	}
+
+	/**
+	 * Sets the container key of this asset list entry usage.
+	 *
+	 * @param containerKey the container key of this asset list entry usage
+	 */
+	@Override
+	public void setContainerKey(String containerKey) {
+		model.setContainerKey(containerKey);
+	}
+
+	/**
+	 * Sets the container type of this asset list entry usage.
+	 *
+	 * @param containerType the container type of this asset list entry usage
+	 */
+	@Override
+	public void setContainerType(long containerType) {
+		model.setContainerType(containerType);
 	}
 
 	/**
@@ -395,6 +439,16 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this asset list entry usage.
+	 *
+	 * @param ctCollectionId the ct collection ID of this asset list entry usage
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the group ID of this asset list entry usage.
 	 *
 	 * @param groupId the group ID of this asset list entry usage
@@ -402,6 +456,16 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public void setGroupId(long groupId) {
 		model.setGroupId(groupId);
+	}
+
+	/**
+	 * Sets the key of this asset list entry usage.
+	 *
+	 * @param key the key of this asset list entry usage
+	 */
+	@Override
+	public void setKey(String key) {
+		model.setKey(key);
 	}
 
 	/**
@@ -435,13 +499,13 @@ public class AssetListEntryUsageWrapper
 	}
 
 	/**
-	 * Sets the portlet ID of this asset list entry usage.
+	 * Sets the plid of this asset list entry usage.
 	 *
-	 * @param portletId the portlet ID of this asset list entry usage
+	 * @param plid the plid of this asset list entry usage
 	 */
 	@Override
-	public void setPortletId(String portletId) {
-		model.setPortletId(portletId);
+	public void setPlid(long plid) {
+		model.setPlid(plid);
 	}
 
 	/**
@@ -452,6 +516,16 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
+	}
+
+	/**
+	 * Sets the type of this asset list entry usage.
+	 *
+	 * @param type the type of this asset list entry usage
+	 */
+	@Override
+	public void setType(int type) {
+		model.setType(type);
 	}
 
 	/**
@@ -492,6 +566,25 @@ public class AssetListEntryUsageWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<AssetListEntryUsage, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<AssetListEntryUsage, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

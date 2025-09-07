@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.impl;
@@ -18,7 +9,9 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.workflow.kaleo.definition.AddressRecipient;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
@@ -28,14 +21,15 @@ import com.liferay.portal.workflow.kaleo.definition.RoleRecipient;
 import com.liferay.portal.workflow.kaleo.definition.ScriptLanguage;
 import com.liferay.portal.workflow.kaleo.definition.ScriptRecipient;
 import com.liferay.portal.workflow.kaleo.definition.UserRecipient;
+import com.liferay.portal.workflow.kaleo.internal.util.RoleUtil;
 import com.liferay.portal.workflow.kaleo.model.KaleoNotificationRecipient;
-import com.liferay.portal.workflow.kaleo.runtime.util.RoleUtil;
 import com.liferay.portal.workflow.kaleo.service.base.KaleoNotificationRecipientLocalServiceBaseImpl;
 
 import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -49,12 +43,14 @@ public class KaleoNotificationRecipientLocalServiceImpl
 
 	@Override
 	public KaleoNotificationRecipient addKaleoNotificationRecipient(
-			long kaleoDefinitionVersionId, long kaleoNotificationId,
-			Recipient recipient, ServiceContext serviceContext)
+			long kaleoDefinitionId, long kaleoDefinitionVersionId,
+			long kaleoNotificationId, Recipient recipient,
+			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
-		Date now = new Date();
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
+		Date date = new Date();
 
 		long kaleoNotificationRecipientId = counterLocalService.increment();
 
@@ -65,8 +61,9 @@ public class KaleoNotificationRecipientLocalServiceImpl
 		kaleoNotificationRecipient.setCompanyId(user.getCompanyId());
 		kaleoNotificationRecipient.setUserId(user.getUserId());
 		kaleoNotificationRecipient.setUserName(user.getFullName());
-		kaleoNotificationRecipient.setCreateDate(now);
-		kaleoNotificationRecipient.setModifiedDate(now);
+		kaleoNotificationRecipient.setCreateDate(date);
+		kaleoNotificationRecipient.setModifiedDate(date);
+		kaleoNotificationRecipient.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoNotificationRecipient.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 		kaleoNotificationRecipient.setKaleoNotificationId(kaleoNotificationId);
@@ -77,12 +74,10 @@ public class KaleoNotificationRecipientLocalServiceImpl
 		kaleoNotificationRecipient.setNotificationReceptionType(
 			notificationReceptionType.getValue());
 
-		setRecipient(kaleoNotificationRecipient, recipient, serviceContext);
+		_setRecipient(kaleoNotificationRecipient, recipient, serviceContext);
 
-		kaleoNotificationRecipientPersistence.update(
+		return kaleoNotificationRecipientPersistence.update(
 			kaleoNotificationRecipient);
-
-		return kaleoNotificationRecipient;
 	}
 
 	@Override
@@ -106,7 +101,7 @@ public class KaleoNotificationRecipientLocalServiceImpl
 			kaleoNotificationId);
 	}
 
-	protected void setRecipient(
+	private void _setRecipient(
 			KaleoNotificationRecipient kaleoNotificationRecipient,
 			Recipient recipient, ServiceContext serviceContext)
 		throws PortalException {
@@ -137,7 +132,7 @@ public class KaleoNotificationRecipientLocalServiceImpl
 					roleRecipient.isAutoCreate(), serviceContext);
 			}
 			else {
-				role = roleLocalService.getRole(roleRecipient.getRoleId());
+				role = _roleLocalService.getRole(roleRecipient.getRoleId());
 
 				roleType = role.getType();
 			}
@@ -165,15 +160,15 @@ public class KaleoNotificationRecipientLocalServiceImpl
 			User user = null;
 
 			if (userRecipient.getUserId() > 0) {
-				user = userLocalService.getUser(userRecipient.getUserId());
+				user = _userLocalService.getUser(userRecipient.getUserId());
 			}
 			else if (Validator.isNotNull(userRecipient.getScreenName())) {
-				user = userLocalService.getUserByScreenName(
+				user = _userLocalService.getUserByScreenName(
 					serviceContext.getCompanyId(),
 					userRecipient.getScreenName());
 			}
 			else if (Validator.isNotNull(userRecipient.getEmailAddress())) {
-				user = userLocalService.getUserByEmailAddress(
+				user = _userLocalService.getUserByEmailAddress(
 					serviceContext.getCompanyId(),
 					userRecipient.getEmailAddress());
 			}
@@ -184,5 +179,11 @@ public class KaleoNotificationRecipientLocalServiceImpl
 			}
 		}
 	}
+
+	@Reference
+	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

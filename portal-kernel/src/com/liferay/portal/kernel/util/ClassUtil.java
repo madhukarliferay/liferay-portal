@@ -1,35 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
-import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StreamTokenizer;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -106,7 +89,7 @@ public class ClassUtil {
 					classes.add(st.sval.substring(lastIndex + 1));
 				}
 
-				if ((firstIndex < 0) && (lastIndex < 0)) {
+				if (firstIndex < 0) {
 					classes.add(st.sval);
 				}
 			}
@@ -132,85 +115,6 @@ public class ClassUtil {
 		Class<?> clazz = object.getClass();
 
 		return clazz.getName();
-	}
-
-	public static String getParentPath(
-		ClassLoader classLoader, String className) {
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("Class name " + className);
-		}
-
-		if (!className.endsWith(_CLASS_EXTENSION)) {
-			className += _CLASS_EXTENSION;
-		}
-
-		className = StringUtil.replace(
-			className, CharPool.PERIOD, CharPool.SLASH);
-
-		className = StringUtil.replace(className, "/class", _CLASS_EXTENSION);
-
-		URL url = classLoader.getResource(className);
-
-		String path = null;
-
-		try {
-			path = url.getPath();
-
-			URI uri = new URI(path);
-
-			String scheme = uri.getScheme();
-
-			if (path.contains(StringPool.EXCLAMATION) &&
-				((scheme == null) || (scheme.length() <= 1))) {
-
-				if (!path.startsWith(StringPool.SLASH)) {
-					path = StringPool.SLASH + path;
-				}
-			}
-			else {
-				path = uri.getPath();
-
-				if (path == null) {
-					path = url.getFile();
-				}
-			}
-		}
-		catch (URISyntaxException urise) {
-			path = url.getFile();
-		}
-
-		if ((ServerDetector.isJBoss() || ServerDetector.isWildfly()) &&
-			path.startsWith("file:") && !path.startsWith("file:/")) {
-
-			path = path.substring(5);
-
-			path = "file:/".concat(path);
-
-			path = StringUtil.replace(path, "%5C", StringPool.SLASH);
-		}
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("Path " + path);
-		}
-
-		int pos = path.indexOf(className);
-
-		String parentPath = path.substring(0, pos);
-
-		if (parentPath.startsWith("jar:")) {
-			parentPath = parentPath.substring(4);
-		}
-
-		if (parentPath.startsWith("file:/")) {
-			parentPath = parentPath.substring(6);
-		}
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("Parent path " + parentPath);
-		}
-
-		return parentPath;
 	}
 
 	public static boolean isSubclass(Class<?> a, Class<?> b) {
@@ -345,13 +249,6 @@ public class ClassUtil {
 					tokens.add(st.sval);
 				}
 			}
-			else if ((st.ttype != StreamTokenizer.TT_NUMBER) &&
-					 (st.ttype != StreamTokenizer.TT_EOL)) {
-
-				if (Character.isUpperCase((char)st.ttype)) {
-					tokens.add(String.valueOf((char)st.ttype));
-				}
-			}
 		}
 
 		return tokens;
@@ -385,10 +282,6 @@ public class ClassUtil {
 		st.wordChars('}', '}');
 		st.wordChars(',', ',');
 	}
-
-	private static final String _CLASS_EXTENSION = ".class";
-
-	private static final Log _log = LogFactoryUtil.getLog(ClassUtil.class);
 
 	private static final Pattern _annotationNamePattern = Pattern.compile(
 		"@(\\w+)\\.?(\\w*)$");

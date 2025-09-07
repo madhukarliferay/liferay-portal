@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.uad.anonymizer;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
@@ -47,6 +40,8 @@ public abstract class BaseWikiNodeUADAnonymizer
 		if (wikiNode.getUserId() == userId) {
 			wikiNode.setUserId(anonymousUser.getUserId());
 			wikiNode.setUserName(anonymousUser.getFullName());
+
+			autoAnonymizeAssetEntry(wikiNode, anonymousUser);
 		}
 
 		if (wikiNode.getStatusByUserId() == userId) {
@@ -67,6 +62,19 @@ public abstract class BaseWikiNodeUADAnonymizer
 		return WikiNode.class;
 	}
 
+	protected void autoAnonymizeAssetEntry(
+		WikiNode wikiNode, User anonymousUser) {
+
+		AssetEntry assetEntry = fetchAssetEntry(wikiNode);
+
+		if (assetEntry != null) {
+			assetEntry.setUserId(anonymousUser.getUserId());
+			assetEntry.setUserName(anonymousUser.getFullName());
+
+			assetEntryLocalService.updateAssetEntry(assetEntry);
+		}
+	}
+
 	@Override
 	protected ActionableDynamicQuery doGetActionableDynamicQuery() {
 		return wikiNodeLocalService.getActionableDynamicQuery();
@@ -76,6 +84,14 @@ public abstract class BaseWikiNodeUADAnonymizer
 	protected String[] doGetUserIdFieldNames() {
 		return WikiUADConstants.USER_ID_FIELD_NAMES_WIKI_NODE;
 	}
+
+	protected AssetEntry fetchAssetEntry(WikiNode wikiNode) {
+		return assetEntryLocalService.fetchEntry(
+			WikiNode.class.getName(), wikiNode.getNodeId());
+	}
+
+	@Reference
+	protected AssetEntryLocalService assetEntryLocalService;
 
 	@Reference
 	protected WikiNodeLocalService wikiNodeLocalService;

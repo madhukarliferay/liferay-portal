@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.social.kernel.model.SocialActivityInterpreter;
 
 /**
  * Provides a wrapper for {@link SocialActivityInterpreterLocalService}.
@@ -27,6 +19,10 @@ public class SocialActivityInterpreterLocalServiceWrapper
 	implements ServiceWrapper<SocialActivityInterpreterLocalService>,
 			   SocialActivityInterpreterLocalService {
 
+	public SocialActivityInterpreterLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SocialActivityInterpreterLocalServiceWrapper(
 		SocialActivityInterpreterLocalService
 			socialActivityInterpreterLocalService) {
@@ -35,48 +31,16 @@ public class SocialActivityInterpreterLocalServiceWrapper
 			socialActivityInterpreterLocalService;
 	}
 
-	/**
-	 * Adds the activity interpreter to the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
 	@Override
-	public void addActivityInterpreter(
-		com.liferay.social.kernel.model.SocialActivityInterpreter
-			activityInterpreter) {
-
-		_socialActivityInterpreterLocalService.addActivityInterpreter(
-			activityInterpreter);
-	}
-
-	/**
-	 * Removes the activity interpreter from the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
-	@Override
-	public void deleteActivityInterpreter(
-		com.liferay.social.kernel.model.SocialActivityInterpreter
-			activityInterpreter) {
-
-		_socialActivityInterpreterLocalService.deleteActivityInterpreter(
-			activityInterpreter);
-	}
-
-	@Override
-	public java.util.Map
-		<String,
-		 java.util.List
-			 <com.liferay.social.kernel.model.SocialActivityInterpreter>>
-				getActivityInterpreters() {
+	public java.util.Map<String, java.util.List<SocialActivityInterpreter>>
+		getActivityInterpreters() {
 
 		return _socialActivityInterpreterLocalService.getActivityInterpreters();
 	}
 
 	@Override
-	public java.util.List
-		<com.liferay.social.kernel.model.SocialActivityInterpreter>
-			getActivityInterpreters(String selector) {
+	public java.util.List<SocialActivityInterpreter> getActivityInterpreters(
+		String selector) {
 
 		return _socialActivityInterpreterLocalService.getActivityInterpreters(
 			selector);

@@ -1,32 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.lpkg.deployer.internal;
 
 import com.liferay.osgi.util.bundle.BundleStartLevelUtil;
+import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.concurrent.DefaultNoticeableFuture;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.license.util.LicenseManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.framework.ThrowableCollector;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.util.StreamUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.ModuleFrameworkPropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.xml.Element;
+import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.lpkg.deployer.LPKGDeployer;
 import com.liferay.portal.lpkg.deployer.LPKGVerifier;
 import com.liferay.portal.lpkg.deployer.LPKGVerifyException;
@@ -50,7 +47,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -84,7 +81,7 @@ import org.osgi.util.tracker.BundleTracker;
 /**
  * @author Shuyang Zhou
  */
-@Component(immediate = true, service = LPKGDeployer.class)
+@Component(service = LPKGDeployer.class)
 public class DefaultLPKGDeployer implements LPKGDeployer {
 
 	@Override
@@ -126,12 +123,12 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 						"Removed old LPKG bundle " + bundle.getLocation());
 				}
 			}
-			catch (BundleException be) {
+			catch (BundleException bundleException) {
 				_log.error(
 					StringBundler.concat(
 						"Unable to uninstall ", bundle, " in order to install ",
 						lpkgFile),
-					be);
+					bundleException);
 			}
 		}
 
@@ -143,6 +140,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 			if (lpkgBundle != null) {
 				return Collections.emptyList();
 			}
+
+			_deployLicense(lpkgFile);
 
 			List<Bundle> bundles = new ArrayList<>();
 
@@ -162,7 +161,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 				BundleStartLevel.class);
 
 			bundleStartLevel.setStartLevel(
-				PropsValues.MODULE_FRAMEWORK_DYNAMIC_INSTALL_START_LEVEL);
+				ModuleFrameworkPropsValues.
+					MODULE_FRAMEWORK_DYNAMIC_INSTALL_START_LEVEL);
 
 			bundles.add(lpkgBundle);
 
@@ -203,8 +203,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 			return bundles;
 		}
-		catch (Exception e) {
-			throw new IOException(e);
+		catch (Exception exception) {
+			throw new IOException(exception);
 		}
 	}
 
@@ -251,8 +251,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 		try {
 			_activate(bundleContext);
 		}
-		catch (Throwable t) {
-			_throwableCollector.collect(t);
+		catch (Throwable throwable) {
+			_throwableCollector.collect(throwable);
 		}
 	}
 
@@ -263,15 +263,13 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 		_wabBundleTracker.close();
 	}
 
-	private void _activate(final BundleContext bundleContext) throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			URLConstants.URL_HANDLER_PROTOCOL, new String[] {"lpkg"});
-
+	private void _activate(BundleContext bundleContext) throws Exception {
 		bundleContext.registerService(
 			URLStreamHandlerService.class.getName(),
-			new LPKGURLStreamHandlerService(_urls), properties);
+			new LPKGURLStreamHandlerService(_urls),
+			HashMapDictionaryBuilder.<String, Object>put(
+				URLConstants.URL_HANDLER_PROTOCOL, new String[] {"lpkg"}
+			).build());
 
 		_wabBundleTracker = new BundleTracker<>(
 			bundleContext, ~Bundle.UNINSTALLED,
@@ -281,7 +279,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 		Set<Bundle> removalPendingBundles = new HashSet<>();
 
-		_deploymentDirPath = _getDeploymentDirPath(bundleContext);
+		_deploymentDirPath = _getDeploymentDirPath();
 
 		Path overrideDirPath = _deploymentDirPath.resolve("override");
 
@@ -342,7 +340,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 			File lpkgFile = iterator.next();
 
 			List<File> innerLPKGFiles = ContainerLPKGUtil.deploy(
-				lpkgFile, bundleContext, null);
+				lpkgFile, null);
 
 			if (innerLPKGFiles != null) {
 				iterator.remove();
@@ -360,21 +358,61 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 		_installOverrideWars(bundleContext, warFiles);
 	}
 
-	private Path _getDeploymentDirPath(BundleContext bundleContext)
-		throws IOException {
+	private void _deployLicense(File file) {
+		try (ZipFile zipFile = new ZipFile(file)) {
+			Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
+			while (enumeration.hasMoreElements()) {
+				ZipEntry zipEntry = enumeration.nextElement();
+
+				String zipEntryName = zipEntry.getName();
+
+				if (!zipEntryName.endsWith(".xml")) {
+					continue;
+				}
+
+				try (InputStream inputStream = zipFile.getInputStream(
+						zipEntry)) {
+
+					String content = StreamUtil.toString(inputStream);
+
+					Document document = SAXReaderUtil.read(content);
+
+					Element rootElement = document.getRootElement();
+
+					String rootElementName = rootElement.getName();
+
+					if (!rootElementName.equals("license") &&
+						!rootElementName.equals("licenses")) {
+
+						continue;
+					}
+
+					JSONObject jsonObject = JSONUtil.put("licenseXML", content);
+
+					LicenseManagerUtil.registerLicense(jsonObject);
+				}
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
+				}
+			}
+		}
+		catch (Exception exception) {
+			_log.error("Unable to register license", exception);
+		}
+	}
+
+	private Path _getDeploymentDirPath() throws Exception {
 		File deploymentDir = new File(
-			GetterUtil.getString(
-				bundleContext.getProperty("lpkg.deployer.dir"),
-				PropsValues.MODULE_FRAMEWORK_MARKETPLACE_DIR));
+			PropsValues.MODULE_FRAMEWORK_MARKETPLACE_DIR);
 
 		deploymentDir = deploymentDir.getCanonicalFile();
 
-		Path deploymentDirPath = deploymentDir.toPath();
+		deploymentDir.mkdirs();
 
-		Files.createDirectories(deploymentDirPath);
-
-		return deploymentDirPath;
+		return deploymentDir.toPath();
 	}
 
 	private void _installLPKGs(
@@ -390,8 +428,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 					lpkgBundle.start();
 				}
 			}
-			catch (Exception e) {
-				_log.error("Unable to deploy LPKG file " + lpkgFile, e);
+			catch (Exception exception) {
+				_log.error("Unable to deploy LPKG file " + lpkgFile, exception);
 			}
 		}
 	}
@@ -419,7 +457,8 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 			BundleStartLevelUtil.setStartLevelAndStart(
 				jarBundle,
-				PropsValues.MODULE_FRAMEWORK_DYNAMIC_INSTALL_START_LEVEL,
+				ModuleFrameworkPropsValues.
+					MODULE_FRAMEWORK_DYNAMIC_INSTALL_START_LEVEL,
 				bundleContext);
 
 			if (_log.isInfoEnabled()) {
@@ -495,7 +534,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 	}
 
 	private Properties _loadOverrideWarsProperties(BundleContext bundleContext)
-		throws IOException {
+		throws Exception {
 
 		Bundle bundle = bundleContext.getBundle(0);
 
@@ -548,7 +587,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 	private void _saveOverrideWarsProperties(
 			BundleContext bundleContext, Properties properties)
-		throws IOException {
+		throws Exception {
 
 		Bundle bundle = bundleContext.getBundle(0);
 
@@ -625,7 +664,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 	private Set<Bundle> _uninstallOrphanOverridingJars(
 			BundleContext bundleContext, List<File> jarFiles)
-		throws BundleException {
+		throws Exception {
 
 		Set<Bundle> removedBundles = new HashSet<>();
 
@@ -658,7 +697,7 @@ public class DefaultLPKGDeployer implements LPKGDeployer {
 
 	private void _uninstallOrphanOverridingWars(
 			BundleContext bundleContext, List<File> warFiles)
-		throws IOException {
+		throws Exception {
 
 		Properties properties = _loadOverrideWarsProperties(bundleContext);
 

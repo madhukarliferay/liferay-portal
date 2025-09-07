@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ReleaseLocalService}.
@@ -24,12 +17,20 @@ package com.liferay.portal.kernel.service;
 public class ReleaseLocalServiceWrapper
 	implements ReleaseLocalService, ServiceWrapper<ReleaseLocalService> {
 
+	public ReleaseLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ReleaseLocalServiceWrapper(ReleaseLocalService releaseLocalService) {
 		_releaseLocalService = releaseLocalService;
 	}
 
 	/**
 	 * Adds the release to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param release the release
 	 * @return the release that was added
@@ -43,17 +44,28 @@ public class ReleaseLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Release addRelease(
-		java.lang.String servletContextName, int buildNumber) {
+		String servletContextName, int buildNumber) {
 
 		return _releaseLocalService.addRelease(servletContextName, buildNumber);
 	}
 
 	@Override
 	public com.liferay.portal.kernel.model.Release addRelease(
-		java.lang.String servletContextName, java.lang.String schemaVersion) {
+		String servletContextName, String schemaVersion) {
 
 		return _releaseLocalService.addRelease(
 			servletContextName, schemaVersion);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _releaseLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -70,15 +82,6 @@ public class ReleaseLocalServiceWrapper
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public void createTablesAndPopulate() {
-		_releaseLocalService.createTablesAndPopulate();
-	}
-
-	/**
 	 * @throws PortalException
 	 */
 	@Override
@@ -91,6 +94,10 @@ public class ReleaseLocalServiceWrapper
 
 	/**
 	 * Deletes the release with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param releaseId the primary key of the release
 	 * @return the release that was removed
@@ -106,6 +113,10 @@ public class ReleaseLocalServiceWrapper
 	/**
 	 * Deletes the release from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param release the release
 	 * @return the release that was removed
 	 */
@@ -114,6 +125,18 @@ public class ReleaseLocalServiceWrapper
 		com.liferay.portal.kernel.model.Release release) {
 
 		return _releaseLocalService.deleteRelease(release);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _releaseLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _releaseLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -214,7 +237,7 @@ public class ReleaseLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Release fetchRelease(
-		java.lang.String servletContextName) {
+		String servletContextName) {
 
 		return _releaseLocalService.fetchRelease(servletContextName);
 	}
@@ -224,17 +247,6 @@ public class ReleaseLocalServiceWrapper
 		getActionableDynamicQuery() {
 
 		return _releaseLocalService.getActionableDynamicQuery();
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public int getBuildNumberOrCreate()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _releaseLocalService.getBuildNumberOrCreate();
 	}
 
 	@Override
@@ -250,10 +262,13 @@ public class ReleaseLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _releaseLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -306,7 +321,7 @@ public class ReleaseLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Release updateRelease(
-			long releaseId, java.lang.String schemaVersion, int buildNumber,
+			long releaseId, String schemaVersion, int buildNumber,
 			java.util.Date buildDate, boolean verified)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -316,6 +331,10 @@ public class ReleaseLocalServiceWrapper
 
 	/**
 	 * Updates the release in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ReleaseLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param release the release
 	 * @return the release that was updated
@@ -328,37 +347,17 @@ public class ReleaseLocalServiceWrapper
 	}
 
 	@Override
-	public void updateRelease(
-			java.lang.String servletContextName,
-			java.util.List<com.liferay.portal.kernel.upgrade.UpgradeProcess>
-				upgradeProcesses,
-			int buildNumber, int previousBuildNumber, boolean indexOnUpgrade)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public com.liferay.portal.kernel.model.Release updateRelease(
+		String servletContextName, String schemaVersion,
+		String previousSchemaVersion) {
 
-		_releaseLocalService.updateRelease(
-			servletContextName, upgradeProcesses, buildNumber,
-			previousBuildNumber, indexOnUpgrade);
-	}
-
-	@Override
-	public void updateRelease(
-			java.lang.String servletContextName,
-			java.util.List<com.liferay.portal.kernel.upgrade.UpgradeProcess>
-				upgradeProcesses,
-			java.util.Properties unfilteredPortalProperties)
-		throws java.lang.Exception {
-
-		_releaseLocalService.updateRelease(
-			servletContextName, upgradeProcesses, unfilteredPortalProperties);
-	}
-
-	@Override
-	public void updateRelease(
-		java.lang.String servletContextName, java.lang.String schemaVersion,
-		java.lang.String previousSchemaVersion) {
-
-		_releaseLocalService.updateRelease(
+		return _releaseLocalService.updateRelease(
 			servletContextName, schemaVersion, previousSchemaVersion);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _releaseLocalService.getBasePersistence();
 	}
 
 	@Override

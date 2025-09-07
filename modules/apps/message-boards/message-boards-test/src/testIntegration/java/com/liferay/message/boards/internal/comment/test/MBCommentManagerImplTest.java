@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.internal.comment.test;
@@ -41,12 +32,8 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
 import com.liferay.subscription.service.SubscriptionLocalService;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
@@ -73,16 +60,13 @@ public class MBCommentManagerImplTest {
 		_group = GroupTestUtil.addGroup();
 		_user = TestPropsValues.getUser();
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group, _user.getUserId());
-
 		_fileEntry = DLAppLocalServiceUtil.addFileEntry(
-			_user.getUserId(), _group.getGroupId(),
+			null, _user.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			StringUtil.randomString(), ContentTypes.APPLICATION_OCTET_STREAM,
-			null, serviceContext);
-
-		_initializeCommentManager();
+			null, null, null, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group, _user.getUserId()));
 
 		_createDiscussion();
 	}
@@ -107,10 +91,10 @@ public class MBCommentManagerImplTest {
 
 	@Test
 	public void testGetChildCommentsCount() {
-		int childCommentsCount = _commentManager.getChildCommentsCount(
-			_parentCommentId, WorkflowConstants.STATUS_APPROVED);
-
-		Assert.assertEquals(3, childCommentsCount);
+		Assert.assertEquals(
+			3,
+			_commentManager.getChildCommentsCount(
+				_parentCommentId, WorkflowConstants.STATUS_APPROVED));
 	}
 
 	@Test
@@ -125,11 +109,12 @@ public class MBCommentManagerImplTest {
 
 	@Test
 	public void testGetRootCommentsCount() {
-		int rootCommentsCount = _commentManager.getRootCommentsCount(
-			DLFileEntryConstants.getClassName(), _fileEntry.getFileEntryId(),
-			WorkflowConstants.STATUS_APPROVED);
-
-		Assert.assertEquals(2, rootCommentsCount);
+		Assert.assertEquals(
+			2,
+			_commentManager.getRootCommentsCount(
+				DLFileEntryConstants.getClassName(),
+				_fileEntry.getFileEntryId(),
+				WorkflowConstants.STATUS_APPROVED));
 	}
 
 	@Test
@@ -148,10 +133,7 @@ public class MBCommentManagerImplTest {
 		DiscussionComment discussionComment =
 			threadDiscussionCommentIterator.next();
 
-		int descendantCommentsCount =
-			discussionComment.getDescendantCommentsCount();
-
-		Assert.assertEquals(3, descendantCommentsCount);
+		Assert.assertEquals(3, discussionComment.getDescendantCommentsCount());
 	}
 
 	@Test
@@ -178,10 +160,8 @@ public class MBCommentManagerImplTest {
 		DiscussionComment rootDiscussionComment =
 			discussion.getRootDiscussionComment();
 
-		int descendantCommentsCount =
-			rootDiscussionComment.getDescendantCommentsCount();
-
-		Assert.assertEquals(2, descendantCommentsCount);
+		Assert.assertEquals(
+			2, rootDiscussionComment.getDescendantCommentsCount());
 	}
 
 	@Test
@@ -204,11 +184,10 @@ public class MBCommentManagerImplTest {
 	private long _addComment() throws Exception {
 		User user = TestPropsValues.getUser();
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group, user.getUserId());
-
 		IdentityServiceContextFunction serviceContextFunction =
-			new IdentityServiceContextFunction(serviceContext);
+			new IdentityServiceContextFunction(
+				ServiceContextTestUtil.getServiceContext(
+					_group, user.getUserId()));
 
 		return _commentManager.addComment(
 			user.getUserId(), _group.getGroupId(),
@@ -219,14 +198,13 @@ public class MBCommentManagerImplTest {
 	private long _addComment(long parentCommentId) throws Exception {
 		User user = TestPropsValues.getUser();
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group, user.getUserId());
-
 		IdentityServiceContextFunction serviceContextFunction =
-			new IdentityServiceContextFunction(serviceContext);
+			new IdentityServiceContextFunction(
+				ServiceContextTestUtil.getServiceContext(
+					_group, user.getUserId()));
 
 		return _commentManager.addComment(
-			user.getUserId(), User.class.getName(), user.getUserId(),
+			null, user.getUserId(), User.class.getName(), user.getUserId(),
 			user.getFullName(), parentCommentId, StringUtil.randomString(),
 			StringUtil.randomString(), serviceContextFunction);
 	}
@@ -240,32 +218,19 @@ public class MBCommentManagerImplTest {
 		_addComment(_parentCommentId);
 	}
 
-	private Function<String, ServiceContext> _createServiceContextFunction() {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group, _user.getUserId());
+	private Function<String, ServiceContext> _createServiceContextFunction()
+		throws Exception {
 
-		return new IdentityServiceContextFunction(serviceContext);
+		return new IdentityServiceContextFunction(
+			ServiceContextTestUtil.getServiceContext(
+				_group, _user.getUserId()));
 	}
 
-	private void _initializeCommentManager() throws Exception {
-		Registry registry = RegistryUtil.getRegistry();
-
-		Collection<CommentManager> services = registry.getServices(
-			CommentManager.class,
-			"(component.name=com.liferay.message.boards.comment.internal." +
-				"MBCommentManagerImpl)");
-
-		if (services.isEmpty()) {
-			throw new IllegalStateException(
-				"MBMessage Comment API implementation was not found");
-		}
-
-		Iterator<CommentManager> iterator = services.iterator();
-
-		_commentManager = iterator.next();
-	}
-
+	@Inject(
+		filter = "component.name=com.liferay.message.boards.comment.internal.MBCommentManagerImpl"
+	)
 	private CommentManager _commentManager;
+
 	private FileEntry _fileEntry;
 
 	@DeleteAfterTestRun

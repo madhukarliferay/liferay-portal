@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SamlIdpSpConnectionLocalService}.
@@ -27,14 +19,41 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 	implements SamlIdpSpConnectionLocalService,
 			   ServiceWrapper<SamlIdpSpConnectionLocalService> {
 
+	public SamlIdpSpConnectionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SamlIdpSpConnectionLocalServiceWrapper(
 		SamlIdpSpConnectionLocalService samlIdpSpConnectionLocalService) {
 
 		_samlIdpSpConnectionLocalService = samlIdpSpConnectionLocalService;
 	}
 
+	@Override
+	public com.liferay.saml.persistence.model.SamlIdpSpConnection
+			addSamlIdpSpConnection(
+				int assertionLifetime, String attributeNames,
+				boolean attributesEnabled, boolean attributesNamespaceEnabled,
+				boolean enabled, boolean encryptionForced, String metadataUrl,
+				java.io.InputStream metadataXmlInputStream, String name,
+				String nameIdAttribute, String nameIdFormat,
+				String samlSpEntityId,
+				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _samlIdpSpConnectionLocalService.addSamlIdpSpConnection(
+			assertionLifetime, attributeNames, attributesEnabled,
+			attributesNamespaceEnabled, enabled, encryptionForced, metadataUrl,
+			metadataXmlInputStream, name, nameIdAttribute, nameIdFormat,
+			samlSpEntityId, serviceContext);
+	}
+
 	/**
 	 * Adds the saml idp sp connection to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlIdpSpConnection the saml idp sp connection
 	 * @return the saml idp sp connection that was added
@@ -49,23 +68,16 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 			samlIdpSpConnection);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
-	public com.liferay.saml.persistence.model.SamlIdpSpConnection
-			addSamlIdpSpConnection(
-				String samlSpEntityId, int assertionLifetime,
-				String attributeNames, boolean attributesEnabled,
-				boolean attributesNamespaceEnabled, boolean enabled,
-				boolean encryptionForced, String metadataUrl,
-				java.io.InputStream metadataXmlInputStream, String name,
-				String nameIdAttribute, String nameIdFormat,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _samlIdpSpConnectionLocalService.addSamlIdpSpConnection(
-			samlSpEntityId, assertionLifetime, attributeNames,
-			attributesEnabled, attributesNamespaceEnabled, enabled,
-			encryptionForced, metadataUrl, metadataXmlInputStream, name,
-			nameIdAttribute, nameIdFormat, serviceContext);
+		return _samlIdpSpConnectionLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -97,6 +109,10 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 	/**
 	 * Deletes the saml idp sp connection with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlIdpSpConnectionId the primary key of the saml idp sp connection
 	 * @return the saml idp sp connection that was removed
 	 * @throws PortalException if a saml idp sp connection with the primary key could not be found
@@ -113,6 +129,10 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 	/**
 	 * Deletes the saml idp sp connection from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlIdpSpConnection the saml idp sp connection
 	 * @return the saml idp sp connection that was removed
 	 */
@@ -124,6 +144,18 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 
 		return _samlIdpSpConnectionLocalService.deleteSamlIdpSpConnection(
 			samlIdpSpConnection);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _samlIdpSpConnectionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _samlIdpSpConnectionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -250,6 +282,9 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 		return _samlIdpSpConnectionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -328,7 +363,8 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 			getSamlIdpSpConnections(
 				long companyId, int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.saml.persistence.model.SamlIdpSpConnection>
+						orderByComparator) {
 
 		return _samlIdpSpConnectionLocalService.getSamlIdpSpConnections(
 			companyId, start, end, orderByComparator);
@@ -360,24 +396,29 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 	@Override
 	public com.liferay.saml.persistence.model.SamlIdpSpConnection
 			updateSamlIdpSpConnection(
-				long samlIdpSpConnectionId, String samlSpEntityId,
-				int assertionLifetime, String attributeNames,
-				boolean attributesEnabled, boolean attributesNamespaceEnabled,
-				boolean enabled, boolean encryptionForced, String metadataUrl,
+				long samlIdpSpConnectionId, int assertionLifetime,
+				String attributeNames, boolean attributesEnabled,
+				boolean attributesNamespaceEnabled, boolean enabled,
+				boolean encryptionForced, String metadataUrl,
 				java.io.InputStream metadataXmlInputStream, String name,
 				String nameIdAttribute, String nameIdFormat,
+				String samlSpEntityId,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _samlIdpSpConnectionLocalService.updateSamlIdpSpConnection(
-			samlIdpSpConnectionId, samlSpEntityId, assertionLifetime,
-			attributeNames, attributesEnabled, attributesNamespaceEnabled,
-			enabled, encryptionForced, metadataUrl, metadataXmlInputStream,
-			name, nameIdAttribute, nameIdFormat, serviceContext);
+			samlIdpSpConnectionId, assertionLifetime, attributeNames,
+			attributesEnabled, attributesNamespaceEnabled, enabled,
+			encryptionForced, metadataUrl, metadataXmlInputStream, name,
+			nameIdAttribute, nameIdFormat, samlSpEntityId, serviceContext);
 	}
 
 	/**
 	 * Updates the saml idp sp connection in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlIdpSpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlIdpSpConnection the saml idp sp connection
 	 * @return the saml idp sp connection that was updated
@@ -390,6 +431,11 @@ public class SamlIdpSpConnectionLocalServiceWrapper
 
 		return _samlIdpSpConnectionLocalService.updateSamlIdpSpConnection(
 			samlIdpSpConnection);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _samlIdpSpConnectionLocalService.getBasePersistence();
 	}
 
 	@Override

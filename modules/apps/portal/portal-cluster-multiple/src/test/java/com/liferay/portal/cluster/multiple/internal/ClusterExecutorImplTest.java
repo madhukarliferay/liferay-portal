@@ -1,48 +1,39 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cluster.multiple.internal;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.cluster.multiple.configuration.ClusterExecutorConfiguration;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.cluster.Address;
-import com.liferay.portal.kernel.cluster.ClusterEvent;
-import com.liferay.portal.kernel.cluster.ClusterEventListener;
 import com.liferay.portal.kernel.cluster.ClusterInvokeThreadLocal;
 import com.liferay.portal.kernel.cluster.ClusterNode;
 import com.liferay.portal.kernel.cluster.ClusterNodeResponse;
 import com.liferay.portal.kernel.cluster.ClusterNodeResponses;
 import com.liferay.portal.kernel.cluster.ClusterRequest;
 import com.liferay.portal.kernel.cluster.FutureClusterResponses;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.test.rule.NewEnvTestRule;
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.Serializable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -52,60 +43,14 @@ import org.junit.Test;
 @NewEnv(type = NewEnv.Type.CLASSLOADER)
 public class ClusterExecutorImplTest extends BaseClusterTestCase {
 
-	@Test
-	public void testClusterEventListener() {
-
-		// Test 1, add cluster event listener
-
-		ClusterExecutorImpl clusterExecutorImpl = getClusterExecutorImpl();
-
-		List<ClusterEventListener> clusterEventListeners =
-			clusterExecutorImpl.getClusterEventListeners();
-
-		Assert.assertEquals(
-			clusterEventListeners.toString(), 0, clusterEventListeners.size());
-
-		ClusterEventListener clusterEventListener = new ClusterEventListener() {
-
-			@Override
-			public void processClusterEvent(ClusterEvent clusterEvent) {
-			}
-
-		};
-
-		clusterExecutorImpl.addClusterEventListener(clusterEventListener);
-
-		clusterEventListeners = clusterExecutorImpl.getClusterEventListeners();
-
-		Assert.assertEquals(
-			clusterEventListeners.toString(), 1, clusterEventListeners.size());
-
-		// Test 2, remove cluster event listener
-
-		clusterExecutorImpl.removeClusterEventListener(clusterEventListener);
-
-		clusterEventListeners = clusterExecutorImpl.getClusterEventListeners();
-
-		Assert.assertEquals(
-			clusterEventListeners.toString(), 0, clusterEventListeners.size());
-
-		// Test 3, set cluster event listener
-
-		clusterEventListeners = new ArrayList<>();
-
-		clusterEventListeners.add(clusterEventListener);
-
-		clusterExecutorImpl.setClusterEventListeners(clusterEventListeners);
-
-		clusterEventListeners = clusterExecutorImpl.getClusterEventListeners();
-
-		Assert.assertEquals(
-			clusterEventListeners.toString(), 1, clusterEventListeners.size());
-	}
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testDeactivate() {
-		ClusterExecutorImpl clusterExecutorImpl = getClusterExecutorImpl();
+		ClusterExecutorImpl clusterExecutorImpl = _getClusterExecutorImpl();
 
 		List<TestClusterChannel> clusterChannels =
 			TestClusterChannel.getClusterChannels();
@@ -129,56 +74,11 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 	}
 
 	@Test
-	public void testDebugClusterEventListener() {
-		ClusterExecutorImpl clusterExecutorImpl = getClusterExecutorImpl();
-
-		clusterExecutorImpl.clusterExecutorConfiguration =
-			new ClusterExecutorConfiguration() {
-
-				@Override
-				public long clusterNodeAddressTimeout() {
-					return 100;
-				}
-
-				@Override
-				public boolean debugEnabled() {
-					return true;
-				}
-
-				@Override
-				public String[] excludedPropertyKeys() {
-					return new String[] {
-						"access_key", "connection_password",
-						"connection_username", "secret_access_key"
-					};
-				}
-
-			};
-
-		clusterExecutorImpl.manageDebugClusterEventListener();
-
-		List<ClusterEventListener> clusterEventListeners =
-			clusterExecutorImpl.getClusterEventListeners();
-
-		Assert.assertEquals(
-			clusterEventListeners.toString(), 1, clusterEventListeners.size());
-
-		ClusterEventListener clusterEventListener = clusterEventListeners.get(
-			0);
-
-		Class<?> clusterEventListenerClass = clusterEventListener.getClass();
-
-		Assert.assertEquals(
-			DebuggingClusterEventListenerImpl.class.getName(),
-			clusterEventListenerClass.getName());
-	}
-
-	@Test
 	public void testExecute() throws Exception {
 
 		// Test 1, execute multicast request and not skip local
 
-		ClusterExecutorImpl clusterExecutorImpl = getClusterExecutorImpl();
+		ClusterExecutorImpl clusterExecutorImpl = _getClusterExecutorImpl();
 
 		TestClusterChannel.clearAllMessages();
 
@@ -272,7 +172,7 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 		Assert.assertTrue(
 			unicastMessages.toString(), unicastMessages.isEmpty());
 
-		ClusterExecutorImpl newClusterExecutorImpl = getClusterExecutorImpl();
+		ClusterExecutorImpl newClusterExecutorImpl = _getClusterExecutorImpl();
 
 		Assert.assertEquals(
 			multicastMessages.toString(), 1, multicastMessages.size());
@@ -307,7 +207,7 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 
 	@Test
 	public void testExecuteClusterRequest() throws Exception {
-		ClusterExecutorImpl clusterExecutorImpl = getClusterExecutorImpl();
+		ClusterExecutorImpl clusterExecutorImpl = _getClusterExecutorImpl();
 
 		// Test 1, payload is not method handler
 
@@ -315,13 +215,13 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 			clusterExecutorImpl.executeClusterRequest(
 				ClusterRequest.createMulticastRequest(StringPool.BLANK));
 
-		Exception exception = clusterNodeResponse.getException();
+		Exception exception1 = clusterNodeResponse.getException();
 
 		Assert.assertEquals(
 			"Payload is not of type " + MethodHandler.class.getName(),
-			exception.getMessage());
+			exception1.getMessage());
 
-		// Test 2, invoke with exception
+		// Test 2, invoke with exception1
 
 		String timestamp = String.valueOf(System.currentTimeMillis());
 
@@ -336,13 +236,13 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 
 			Assert.fail();
 		}
-		catch (Exception e) {
-			Throwable throwable = e.getCause();
+		catch (Exception exception2) {
+			Throwable throwable = exception2.getCause();
 
 			Assert.assertEquals(timestamp, throwable.getMessage());
 		}
 
-		// Test 3, invoke without exception
+		// Test 3, invoke without exception1
 
 		timestamp = String.valueOf(System.currentTimeMillis());
 
@@ -368,30 +268,35 @@ public class ClusterExecutorImplTest extends BaseClusterTestCase {
 		Assert.assertTrue(ClusterInvokeThreadLocal.isEnabled());
 	}
 
-	@Rule
-	public final NewEnvTestRule newEnvTestRule = NewEnvTestRule.INSTANCE;
+	private ClusterExecutorImpl _getClusterExecutorImpl() {
+		ClusterExecutorImpl clusterExecutorImpl = new ClusterExecutorImpl() {
 
-	protected ClusterExecutorImpl getClusterExecutorImpl() {
-		ClusterExecutorImpl clusterExecutorImpl = new ClusterExecutorImpl();
+			@Override
+			protected void modified(Map<String, Object> properies) {
+				clusterExecutorConfiguration =
+					ConfigurableUtil.createConfigurable(
+						ClusterExecutorConfiguration.class, properies);
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			PropsKeys.CLUSTER_LINK_CHANNEL_NAME_CONTROL,
-			"test-channel-name-control"
-		).put(
-			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL,
-			"test-channel-properties-control"
-		).build();
+				ReflectionTestUtil.setFieldValue(
+					this, "_clusterChannelFactory",
+					new TestClusterChannelFactory());
+			}
 
-		clusterExecutorImpl.setProps(PropsTestUtil.setProps(properties));
+		};
 
-		clusterExecutorImpl.setClusterChannelFactory(
-			new TestClusterChannelFactory());
-
-		clusterExecutorImpl.setPortalExecutorManager(
+		ReflectionTestUtil.setFieldValue(
+			clusterExecutorImpl, "_portalExecutorManager",
 			new MockPortalExecutorManager());
 
+		PropsUtil.set(
+			PropsKeys.CLUSTER_LINK_CHANNEL_NAME_CONTROL,
+			"test-channel-name-control");
+		PropsUtil.set(
+			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL,
+			"test-channel-properties-control");
+
 		clusterExecutorImpl.activate(
-			new MockComponentContext(new HashMapDictionary<>()));
+			SystemBundleUtil.getBundleContext(), Collections.emptyMap());
 
 		return clusterExecutorImpl;
 	}

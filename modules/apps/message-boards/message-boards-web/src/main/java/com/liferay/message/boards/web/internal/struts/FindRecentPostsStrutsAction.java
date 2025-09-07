@@ -1,32 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.web.internal.struts;
 
 import com.liferay.message.boards.constants.MBPortletKeys;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.WindowState;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -36,8 +27,8 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = {
-		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS,
-		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN,
+		"jakarta.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS,
+		"jakarta.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN,
 		"path=/message_boards/find_recent_posts"
 	},
 	service = StrutsAction.class
@@ -53,21 +44,24 @@ public class FindRecentPostsStrutsAction implements StrutsAction {
 		try {
 			long plid = ParamUtil.getLong(httpServletRequest, "p_l_id");
 
-			PortletURL portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest, MBPortletKeys.MESSAGE_BOARDS, plid,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"mvcRenderCommandName", "/message_boards/view_recent_posts");
-			portletURL.setPortletMode(PortletMode.VIEW);
-			portletURL.setWindowState(WindowState.NORMAL);
-
-			httpServletResponse.sendRedirect(portletURL.toString());
+			httpServletResponse.sendRedirect(
+				PortletURLBuilder.create(
+					PortletURLFactoryUtil.create(
+						httpServletRequest, MBPortletKeys.MESSAGE_BOARDS, plid,
+						PortletRequest.RENDER_PHASE)
+				).setMVCRenderCommandName(
+					"/message_boards/view_recent_posts"
+				).setPortletMode(
+					PortletMode.VIEW
+				).setWindowState(
+					WindowState.NORMAL
+				).buildString());
 
 			return null;
 		}
-		catch (Exception e) {
-			_portal.sendError(e, httpServletRequest, httpServletResponse);
+		catch (Exception exception) {
+			_portal.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}

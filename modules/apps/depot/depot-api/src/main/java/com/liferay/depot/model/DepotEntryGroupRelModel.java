@@ -1,22 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.model;
 
+import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.StagedGroupedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
+
+import java.util.Date;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +29,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface DepotEntryGroupRelModel
-	extends BaseModel<DepotEntryGroupRel>, MVCCModel, ShardedModel {
+	extends BaseModel<DepotEntryGroupRel>, CTModel<DepotEntryGroupRel>,
+			MVCCModel, ShardedModel, StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a depot entry group rel model instance should use the {@link DepotEntryGroupRel} interface instead.
@@ -46,6 +43,7 @@ public interface DepotEntryGroupRelModel
 	 *
 	 * @return the primary key of this depot entry group rel
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -53,6 +51,7 @@ public interface DepotEntryGroupRelModel
 	 *
 	 * @param primaryKey the primary key of this depot entry group rel
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -72,6 +71,39 @@ public interface DepotEntryGroupRelModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this depot entry group rel.
+	 *
+	 * @return the ct collection ID of this depot entry group rel
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this depot entry group rel.
+	 *
+	 * @param ctCollectionId the ct collection ID of this depot entry group rel
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
+	 * Returns the uuid of this depot entry group rel.
+	 *
+	 * @return the uuid of this depot entry group rel
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this depot entry group rel.
+	 *
+	 * @param uuid the uuid of this depot entry group rel
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
 	 * Returns the depot entry group rel ID of this depot entry group rel.
 	 *
 	 * @return the depot entry group rel ID of this depot entry group rel
@@ -84,6 +116,22 @@ public interface DepotEntryGroupRelModel
 	 * @param depotEntryGroupRelId the depot entry group rel ID of this depot entry group rel
 	 */
 	public void setDepotEntryGroupRelId(long depotEntryGroupRelId);
+
+	/**
+	 * Returns the group ID of this depot entry group rel.
+	 *
+	 * @return the group ID of this depot entry group rel
+	 */
+	@Override
+	public long getGroupId();
+
+	/**
+	 * Sets the group ID of this depot entry group rel.
+	 *
+	 * @param groupId the group ID of this depot entry group rel
+	 */
+	@Override
+	public void setGroupId(long groupId);
 
 	/**
 	 * Returns the company ID of this depot entry group rel.
@@ -100,6 +148,108 @@ public interface DepotEntryGroupRelModel
 	 */
 	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the user ID of this depot entry group rel.
+	 *
+	 * @return the user ID of this depot entry group rel
+	 */
+	@Override
+	public long getUserId();
+
+	/**
+	 * Sets the user ID of this depot entry group rel.
+	 *
+	 * @param userId the user ID of this depot entry group rel
+	 */
+	@Override
+	public void setUserId(long userId);
+
+	/**
+	 * Returns the user uuid of this depot entry group rel.
+	 *
+	 * @return the user uuid of this depot entry group rel
+	 */
+	@Override
+	public String getUserUuid();
+
+	/**
+	 * Sets the user uuid of this depot entry group rel.
+	 *
+	 * @param userUuid the user uuid of this depot entry group rel
+	 */
+	@Override
+	public void setUserUuid(String userUuid);
+
+	/**
+	 * Returns the user name of this depot entry group rel.
+	 *
+	 * @return the user name of this depot entry group rel
+	 */
+	@AutoEscape
+	@Override
+	public String getUserName();
+
+	/**
+	 * Sets the user name of this depot entry group rel.
+	 *
+	 * @param userName the user name of this depot entry group rel
+	 */
+	@Override
+	public void setUserName(String userName);
+
+	/**
+	 * Returns the create date of this depot entry group rel.
+	 *
+	 * @return the create date of this depot entry group rel
+	 */
+	@Override
+	public Date getCreateDate();
+
+	/**
+	 * Sets the create date of this depot entry group rel.
+	 *
+	 * @param createDate the create date of this depot entry group rel
+	 */
+	@Override
+	public void setCreateDate(Date createDate);
+
+	/**
+	 * Returns the modified date of this depot entry group rel.
+	 *
+	 * @return the modified date of this depot entry group rel
+	 */
+	@Override
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this depot entry group rel.
+	 *
+	 * @param modifiedDate the modified date of this depot entry group rel
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate);
+
+	/**
+	 * Returns the ddm structures available of this depot entry group rel.
+	 *
+	 * @return the ddm structures available of this depot entry group rel
+	 */
+	public boolean getDdmStructuresAvailable();
+
+	/**
+	 * Returns <code>true</code> if this depot entry group rel is ddm structures available.
+	 *
+	 * @return <code>true</code> if this depot entry group rel is ddm structures available; <code>false</code> otherwise
+	 */
+	public boolean isDdmStructuresAvailable();
+
+	/**
+	 * Sets whether this depot entry group rel is ddm structures available.
+	 *
+	 * @param ddmStructuresAvailable the ddm structures available of this depot entry group rel
+	 */
+	public void setDdmStructuresAvailable(boolean ddmStructuresAvailable);
 
 	/**
 	 * Returns the depot entry ID of this depot entry group rel.
@@ -149,5 +299,42 @@ public interface DepotEntryGroupRelModel
 	 * @param toGroupId the to group ID of this depot entry group rel
 	 */
 	public void setToGroupId(long toGroupId);
+
+	/**
+	 * Returns the type of this depot entry group rel.
+	 *
+	 * @return the type of this depot entry group rel
+	 */
+	public int getType();
+
+	/**
+	 * Sets the type of this depot entry group rel.
+	 *
+	 * @param type the type of this depot entry group rel
+	 */
+	public void setType(int type);
+
+	/**
+	 * Returns the last publish date of this depot entry group rel.
+	 *
+	 * @return the last publish date of this depot entry group rel
+	 */
+	@Override
+	public Date getLastPublishDate();
+
+	/**
+	 * Sets the last publish date of this depot entry group rel.
+	 *
+	 * @param lastPublishDate the last publish date of this depot entry group rel
+	 */
+	@Override
+	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public DepotEntryGroupRel cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

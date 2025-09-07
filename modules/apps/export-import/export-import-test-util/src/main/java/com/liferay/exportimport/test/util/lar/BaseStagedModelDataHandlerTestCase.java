@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test.util.lar;
@@ -53,6 +44,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -61,10 +53,10 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.zip.ZipReader;
-import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.ratings.kernel.model.RatingsEntry;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalServiceUtil;
 import com.liferay.ratings.test.util.RatingsTestUtil;
@@ -92,18 +84,25 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 	@Before
 	public void setUp() throws Exception {
 		liveGroup = GroupTestUtil.addGroup();
+
 		stagingGroup = GroupTestUtil.addGroup();
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		stagingGroup.setLiveGroupId(liveGroup.getGroupId());
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(stagingGroup.getGroupId());
+		stagingGroup = GroupLocalServiceUtil.updateGroup(stagingGroup);
 
-		ServiceContextThreadLocal.pushServiceContext(serviceContext);
+		UserTestUtil.setUser(TestPropsValues.getUser());
+
+		ServiceContextThreadLocal.pushServiceContext(
+			ServiceContextTestUtil.getServiceContext(
+				stagingGroup.getGroupId()));
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		GroupLocalServiceUtil.deleteGroup(stagingGroup);
+		GroupLocalServiceUtil.deleteGroup(liveGroup);
+
 		ServiceContextThreadLocal.popServiceContext();
 	}
 
@@ -129,7 +128,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 
 		AssetTag assetTag = AssetTestUtil.addTag(stagingGroup.getGroupId());
 
-		assetEntry = AssetEntryLocalServiceUtil.updateEntry(
+		AssetEntryLocalServiceUtil.updateEntry(
 			TestPropsValues.getUserId(), stagingGroup.getGroupId(),
 			assetEntry.getCreateDate(), assetEntry.getModifiedDate(),
 			assetEntry.getClassName(), assetEntry.getClassPK(),
@@ -168,7 +167,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 
 		assetEntry = fetchAssetEntry(stagedModel, stagingGroup);
 
-		assetEntry = AssetEntryLocalServiceUtil.updateEntry(
+		AssetEntryLocalServiceUtil.updateEntry(
 			TestPropsValues.getUserId(), stagingGroup.getGroupId(),
 			assetEntry.getCreateDate(), assetEntry.getModifiedDate(),
 			assetEntry.getClassName(), assetEntry.getClassPK(),
@@ -697,7 +696,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 	}
 
 	protected void initExport(Group exportGroup) throws Exception {
-		zipWriter = ZipWriterFactoryUtil.getZipWriter();
+		zipWriter = _zipWriterFactory.getZipWriter();
 
 		portletDataContext =
 			PortletDataContextFactoryUtil.createExportPortletDataContext(
@@ -726,7 +725,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 
 		userIdStrategy = new TestUserIdStrategy();
 
-		zipReader = ZipReaderFactoryUtil.getZipReader(zipWriter.getFile());
+		zipReader = _zipReaderFactory.getZipReader(zipWriter.getFile());
 
 		String xml = zipReader.getEntryAsString("/manifest.xml");
 
@@ -739,7 +738,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 
 			zipWriter.addEntry("/manifest.xml", document.asXML());
 
-			zipReader = ZipReaderFactoryUtil.getZipReader(zipWriter.getFile());
+			zipReader = _zipReaderFactory.getZipReader(zipWriter.getFile());
 		}
 
 		portletDataContext =
@@ -1127,10 +1126,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 	protected Element missingReferencesElement;
 	protected PortletDataContext portletDataContext;
 	protected Element rootElement;
-
-	@DeleteAfterTestRun
 	protected Group stagingGroup;
-
 	protected UserIdStrategy userIdStrategy;
 	protected ZipReader zipReader;
 	protected ZipWriter zipWriter;
@@ -1205,7 +1201,7 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 			try {
 				return TestPropsValues.getUserId();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				return 0;
 			}
 		}
@@ -1213,5 +1209,11 @@ public abstract class BaseStagedModelDataHandlerTestCase {
 		private final long _userId;
 
 	}
+
+	@Inject
+	private ZipReaderFactory _zipReaderFactory;
+
+	@Inject
+	private ZipWriterFactory _zipWriterFactory;
 
 }

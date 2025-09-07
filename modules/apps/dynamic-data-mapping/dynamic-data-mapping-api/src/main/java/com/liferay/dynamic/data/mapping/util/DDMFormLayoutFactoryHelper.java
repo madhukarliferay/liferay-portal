@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.util;
@@ -104,10 +95,8 @@ public class DDMFormLayoutFactoryHelper {
 			ddmFormLayoutPage =
 				new com.liferay.dynamic.data.mapping.model.DDMFormLayoutPage();
 
-		LocalizedValue title = createDDMFormLayoutPageTitle(
-			ddmFormLayoutPageAnnotation.title());
-
-		ddmFormLayoutPage.setTitle(title);
+		ddmFormLayoutPage.setTitle(
+			createDDMFormLayoutPageTitle(ddmFormLayoutPageAnnotation.title()));
 
 		for (DDMFormLayoutRow ddmFormLayoutRow :
 				ddmFormLayoutPageAnnotation.value()) {
@@ -203,21 +192,25 @@ public class DDMFormLayoutFactoryHelper {
 	}
 
 	protected boolean isLocalizableValue(String value) {
-		if (StringUtil.startsWith(value, StringPool.PERCENT)) {
-			return true;
-		}
-
-		return false;
+		return StringUtil.startsWith(value, StringPool.PERCENT);
 	}
 
 	protected void setDefaultLocale() {
 		Locale defaultLocale = LocaleThreadLocal.getThemeDisplayLocale();
 
 		if (defaultLocale == null) {
-			defaultLocale = LocaleUtil.getDefault();
-		}
+			Locale siteDefaultLocale = LocaleThreadLocal.getSiteDefaultLocale();
 
-		_defaultLocale = defaultLocale;
+			if (siteDefaultLocale == null) {
+				_defaultLocale = LocaleUtil.getDefault();
+			}
+			else {
+				_defaultLocale = siteDefaultLocale;
+			}
+		}
+		else {
+			_defaultLocale = defaultLocale;
+		}
 	}
 
 	private final Class<?> _clazz;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.exportimport.model.impl;
@@ -38,18 +29,18 @@ public class ExportImportConfigurationCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof ExportImportConfigurationCacheModel)) {
+		if (!(object instanceof ExportImportConfigurationCacheModel)) {
 			return false;
 		}
 
 		ExportImportConfigurationCacheModel
 			exportImportConfigurationCacheModel =
-				(ExportImportConfigurationCacheModel)obj;
+				(ExportImportConfigurationCacheModel)object;
 
 		if ((exportImportConfigurationId ==
 				exportImportConfigurationCacheModel.
@@ -200,7 +191,9 @@ public class ExportImportConfigurationCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		exportImportConfigurationId = objectInput.readLong();
@@ -217,7 +210,7 @@ public class ExportImportConfigurationCacheModel
 		description = objectInput.readUTF();
 
 		type = objectInput.readInt();
-		settings = objectInput.readUTF();
+		settings = (String)objectInput.readObject();
 
 		status = objectInput.readInt();
 
@@ -265,10 +258,10 @@ public class ExportImportConfigurationCacheModel
 		objectOutput.writeInt(type);
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		objectOutput.writeInt(status);

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.process.local;
@@ -28,8 +19,11 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.test.util.ThreadTestUtil;
+import com.liferay.portal.kernel.test.ConsoleTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.EOFException;
 import java.io.File;
@@ -58,6 +52,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +69,7 @@ import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -82,24 +78,28 @@ import org.junit.Test;
 public class LocalProcessExecutorTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor() {
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new CodeCoverageAssertor() {
 
-			@Override
-			public void appendAssertClasses(List<Class<?>> assertClasses) {
-				assertClasses.add(ProcessConfig.class);
+				@Override
+				public void appendAssertClasses(List<Class<?>> assertClasses) {
+					assertClasses.add(ProcessConfig.class);
 
-				Collections.addAll(
-					assertClasses, ProcessConfig.class.getDeclaredClasses());
+					Collections.addAll(
+						assertClasses,
+						ProcessConfig.class.getDeclaredClasses());
 
-				assertClasses.add(LocalProcessLauncher.class);
+					assertClasses.add(LocalProcessLauncher.class);
 
-				Collections.addAll(
-					assertClasses,
-					LocalProcessLauncher.class.getDeclaredClasses());
-			}
+					Collections.addAll(
+						assertClasses,
+						LocalProcessLauncher.class.getDeclaredClasses());
+				}
 
-		};
+			},
+			LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testHeartBeatThreadDetachOnBrokenPipe() throws Exception {
@@ -147,8 +147,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable throwable = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
 			Assert.assertSame(ProcessException.class, throwable.getClass());
 			Assert.assertEquals(
@@ -170,8 +170,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable throwable = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
 			Assert.assertSame(ProcessException.class, throwable.getClass());
 
@@ -235,8 +235,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ProcessException pe) {
-			Throwable throwable = pe.getCause();
+		catch (ProcessException processException) {
+			Throwable throwable = processException.getCause();
 
 			Assert.assertTrue(throwable instanceof IOException);
 		}
@@ -247,6 +247,7 @@ public class LocalProcessExecutorTest {
 		ProcessConfig.Builder builder = new ProcessConfig.Builder();
 
 		builder.setArguments(_createArguments(_JPDA_OPTIONS1));
+		builder.setEnvironment(_environment);
 
 		char[] largeFileNameChars = new char[10 * 1024 * 1024];
 
@@ -266,6 +267,91 @@ public class LocalProcessExecutorTest {
 		Future<String> future = processChannel.getProcessNoticeableFuture();
 
 		Assert.assertEquals(largeFileName, future.get());
+	}
+
+	@Test
+	public void testProcessConfigCopyContructor() {
+		String bootstrapClassPath = "bootstrapClassPath";
+
+		String javaExecutable = "someJava";
+
+		Consumer<ProcessLog> consumer = processLog -> {
+		};
+
+		ClassLoader reactClassLoader = new URLClassLoader(new URL[0]);
+
+		String runtimeClassPath = "runtimeClassPath";
+
+		ProcessConfig.Builder originalBuilder = new ProcessConfig.Builder();
+
+		originalBuilder.setBootstrapClassPath(bootstrapClassPath);
+		originalBuilder.setJavaExecutable(javaExecutable);
+		originalBuilder.setProcessLogConsumer(consumer);
+		originalBuilder.setReactClassLoader(reactClassLoader);
+		originalBuilder.setRuntimeClassPath(runtimeClassPath);
+
+		ProcessConfig originalProcessConfig = originalBuilder.build();
+
+		// No arguments, no environment
+
+		ProcessConfig.Builder copyBuilder1 = new ProcessConfig.Builder(
+			originalProcessConfig);
+
+		Assert.assertSame(Collections.emptyList(), copyBuilder1.getArguments());
+		Assert.assertNull(copyBuilder1.getEnvironment());
+
+		ProcessConfig copyProcessConfig1 = copyBuilder1.build();
+
+		Assert.assertSame(
+			Collections.emptyList(), copyProcessConfig1.getArguments());
+		Assert.assertSame(
+			bootstrapClassPath, copyProcessConfig1.getBootstrapClassPath());
+		Assert.assertNull(copyProcessConfig1.getEnvironment());
+		Assert.assertSame(
+			javaExecutable, copyProcessConfig1.getJavaExecutable());
+		Assert.assertSame(consumer, copyProcessConfig1.getProcessLogConsumer());
+		Assert.assertSame(
+			reactClassLoader, copyProcessConfig1.getReactClassLoader());
+		Assert.assertSame(
+			runtimeClassPath, copyProcessConfig1.getRuntimeClassPath());
+
+		// With arguments and environment
+
+		List<String> arguments = Arrays.asList("a", "b");
+
+		Map<String, String> environment = new HashMap<>();
+
+		environment.put("m", "n");
+		environment.put("x", "y");
+
+		originalBuilder.setArguments(arguments);
+		originalBuilder.setEnvironment(environment);
+
+		originalProcessConfig = originalBuilder.build();
+
+		ProcessConfig.Builder copyBuilder2 = new ProcessConfig.Builder(
+			originalProcessConfig);
+
+		Assert.assertNotSame(arguments, copyBuilder2.getArguments());
+		Assert.assertEquals(arguments, copyBuilder2.getArguments());
+		Assert.assertNotSame(environment, copyBuilder2.getEnvironment());
+		Assert.assertEquals(environment, copyBuilder2.getEnvironment());
+
+		ProcessConfig copyProcessConfig2 = copyBuilder2.build();
+
+		Assert.assertNotSame(arguments, copyProcessConfig2.getArguments());
+		Assert.assertEquals(arguments, copyProcessConfig2.getArguments());
+		Assert.assertSame(
+			bootstrapClassPath, copyProcessConfig2.getBootstrapClassPath());
+		Assert.assertNotSame(environment, copyProcessConfig2.getEnvironment());
+		Assert.assertEquals(environment, copyProcessConfig2.getEnvironment());
+		Assert.assertSame(
+			javaExecutable, copyProcessConfig2.getJavaExecutable());
+		Assert.assertSame(consumer, copyProcessConfig2.getProcessLogConsumer());
+		Assert.assertSame(
+			reactClassLoader, copyProcessConfig2.getReactClassLoader());
+		Assert.assertSame(
+			runtimeClassPath, copyProcessConfig2.getRuntimeClassPath());
 	}
 
 	@Test
@@ -374,11 +460,12 @@ public class LocalProcessExecutorTest {
 
 						return "NULL_SHUTDOWN_HOOK_ACCEPTED";
 					}
-					catch (IllegalArgumentException iae) {
+					catch (IllegalArgumentException illegalArgumentException) {
 						if (!Objects.equals(
-								iae.getMessage(), "Shutdown hook is null")) {
+								illegalArgumentException.getMessage(),
+								"Shutdown hook is null")) {
 
-							return iae.getMessage();
+							return illegalArgumentException.getMessage();
 						}
 					}
 
@@ -465,6 +552,7 @@ public class LocalProcessExecutorTest {
 
 		builder.setArguments(_createArguments(_JPDA_OPTIONS1));
 		builder.setBootstrapClassPath(System.getProperty("java.class.path"));
+		builder.setEnvironment(_environment);
 		builder.setProcessLogConsumer(
 			processLog -> {
 				if (processLog.getLevel() == ProcessLog.Level.ERROR) {
@@ -483,10 +571,11 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable cause = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
-			Assert.assertSame(ClassNotFoundException.class, cause.getClass());
+			Assert.assertSame(
+				ClassNotFoundException.class, throwable.getClass());
 		}
 
 		Assert.assertEquals(processLogs.toString(), 1, processLogs.size());
@@ -523,17 +612,18 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable cause = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
-			Assert.assertTrue(cause instanceof ProcessException);
+			Assert.assertTrue(throwable instanceof ProcessException);
 
 			Assert.assertEquals(
-				"Corrupted object input stream", cause.getMessage());
+				"Corrupted object input stream", throwable.getMessage());
 
-			cause = cause.getCause();
+			throwable = throwable.getCause();
 
-			Assert.assertSame(StreamCorruptedException.class, cause.getClass());
+			Assert.assertSame(
+				StreamCorruptedException.class, throwable.getClass());
 		}
 
 		Assert.assertFalse(future.isCancelled());
@@ -581,8 +671,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable throwable = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
 			Assert.assertSame(
 				TerminationProcessException.class, throwable.getClass());
@@ -608,8 +698,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable throwable = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
 			Assert.assertSame(ProcessException.class, throwable.getClass());
 
@@ -672,15 +762,16 @@ public class LocalProcessExecutorTest {
 								localReactorThreadBlockingQueue.put(
 									Thread.currentThread());
 							}
-							catch (InterruptedException ie) {
-								throw new ProcessException(ie);
+							catch (InterruptedException interruptedException) {
+								throw new ProcessException(
+									interruptedException);
 							}
 
 							return null;
 						});
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				return null;
@@ -747,8 +838,9 @@ public class LocalProcessExecutorTest {
 								localReactorThreadBlockingQueue.put(
 									Thread.currentThread());
 							}
-							catch (InterruptedException ie) {
-								throw new ProcessException(ie);
+							catch (InterruptedException interruptedException) {
+								throw new ProcessException(
+									interruptedException);
 							}
 
 							return null;
@@ -762,8 +854,8 @@ public class LocalProcessExecutorTest {
 					ReflectionTestUtil.invoke(
 						processOutputStream, "close", new Class<?>[0]);
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				return null;
@@ -781,8 +873,8 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable throwable = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
 			Assert.assertSame(ProcessException.class, throwable.getClass());
 
@@ -811,69 +903,133 @@ public class LocalProcessExecutorTest {
 			}
 		};
 
+		String logPrefixString = StringPool.OPEN_BRACKET.concat(
+			Operations.LEADING_LOG.toString()
+		).concat(
+			StringPool.CLOSE_BRACKET
+		);
+
+		String stdErrMessage = logPrefixString.concat("Body STDERR log");
+		String stdOutMessage = logPrefixString.concat("Body STDOUT log");
+
 		// Warn level
 
-		ProcessChannel<String> processChannel = _localProcessExecutor.execute(
-			_createJPDAProcessConfig(_JPDA_OPTIONS1, processLogConsumer),
-			Operations.LEADING_LOG);
+		UnsyncByteArrayOutputStream stdErrUnsyncByteArrayOutputStream =
+			ConsoleTestUtil.hijackStdErr();
+		UnsyncByteArrayOutputStream stdOutUnsyncByteArrayOutputStream =
+			ConsoleTestUtil.hijackStdOut();
 
-		Future<String> future = processChannel.getProcessNoticeableFuture();
+		try {
+			ProcessChannel<String> processChannel =
+				_localProcessExecutor.execute(
+					_createJPDAProcessConfig(
+						_JPDA_OPTIONS1, processLogConsumer),
+					Operations.LEADING_LOG);
 
-		Assert.assertEquals("DONE", future.get());
+			Future<String> future = processChannel.getProcessNoticeableFuture();
 
-		Assert.assertEquals(processLogs.toString(), 1, processLogs.size());
+			Assert.assertEquals("DONE", future.get());
 
-		ProcessLog processLog = processLogs.remove(0);
+			Assert.assertEquals(processLogs.toString(), 1, processLogs.size());
 
-		Assert.assertEquals(
-			"Found corrupt leading log Leading log", processLog.getMessage());
+			ProcessLog processLog = processLogs.remove(0);
+
+			Assert.assertEquals(
+				"Found corrupt leading log Leading log",
+				processLog.getMessage());
+		}
+		finally {
+			Assert.assertEquals(
+				stdErrMessage,
+				ConsoleTestUtil.restoreStdErr(
+					stdErrUnsyncByteArrayOutputStream));
+			Assert.assertEquals(
+				stdOutMessage,
+				ConsoleTestUtil.restoreStdOut(
+					stdOutUnsyncByteArrayOutputStream));
+		}
 
 		// Fine level
 
-		levelReference.set(ProcessLog.Level.DEBUG);
+		stdErrUnsyncByteArrayOutputStream = ConsoleTestUtil.hijackStdErr();
+		stdOutUnsyncByteArrayOutputStream = ConsoleTestUtil.hijackStdOut();
 
-		processChannel = _localProcessExecutor.execute(
-			_createJPDAProcessConfig(_JPDA_OPTIONS1, processLogConsumer),
-			Operations.LEADING_LOG);
+		try {
+			levelReference.set(ProcessLog.Level.DEBUG);
 
-		future = processChannel.getProcessNoticeableFuture();
+			ProcessChannel<String> processChannel =
+				_localProcessExecutor.execute(
+					_createJPDAProcessConfig(
+						_JPDA_OPTIONS1, processLogConsumer),
+					Operations.LEADING_LOG);
 
-		Assert.assertEquals("DONE", future.get());
+			Future<String> future = processChannel.getProcessNoticeableFuture();
 
-		Assert.assertEquals(processLogs.toString(), 3, processLogs.size());
+			Assert.assertEquals("DONE", future.get());
 
-		processLog = processLogs.remove(0);
+			Assert.assertEquals(processLogs.toString(), 3, processLogs.size());
 
-		Assert.assertEquals(
-			"Found corrupt leading log Leading log", processLog.getMessage());
+			ProcessLog processLog = processLogs.remove(0);
 
-		processLog = processLogs.remove(0);
+			Assert.assertEquals(
+				"Found corrupt leading log Leading log",
+				processLog.getMessage());
 
-		String message = processLog.getMessage();
+			processLog = processLogs.remove(0);
 
-		Assert.assertTrue(
-			message, message.contains("Invoked generic process callable"));
+			String message = processLog.getMessage();
 
-		processLog = processLogs.remove(0);
+			Assert.assertTrue(
+				message, message.contains("Invoked generic process callable"));
 
-		message = processLog.getMessage();
+			processLog = processLogs.remove(0);
 
-		Assert.assertTrue(
-			message, message.contains("Invoked generic process callable"));
+			message = processLog.getMessage();
+
+			Assert.assertTrue(
+				message, message.contains("Invoked generic process callable"));
+		}
+		finally {
+			Assert.assertEquals(
+				stdErrMessage,
+				ConsoleTestUtil.restoreStdErr(
+					stdErrUnsyncByteArrayOutputStream));
+			Assert.assertEquals(
+				stdOutMessage,
+				ConsoleTestUtil.restoreStdOut(
+					stdOutUnsyncByteArrayOutputStream));
+		}
 
 		// Severe level
 
-		levelReference.set(ProcessLog.Level.ERROR);
+		stdErrUnsyncByteArrayOutputStream = ConsoleTestUtil.hijackStdErr();
+		stdOutUnsyncByteArrayOutputStream = ConsoleTestUtil.hijackStdOut();
 
-		processChannel = _localProcessExecutor.execute(
-			_createJPDAProcessConfig(_JPDA_OPTIONS1, processLogConsumer),
-			Operations.LEADING_LOG);
+		try {
+			levelReference.set(ProcessLog.Level.ERROR);
 
-		future = processChannel.getProcessNoticeableFuture();
+			ProcessChannel<String> processChannel =
+				_localProcessExecutor.execute(
+					_createJPDAProcessConfig(
+						_JPDA_OPTIONS1, processLogConsumer),
+					Operations.LEADING_LOG);
 
-		Assert.assertEquals("DONE", future.get());
+			Future<String> future = processChannel.getProcessNoticeableFuture();
 
-		Assert.assertTrue(processLogs.toString(), processLogs.isEmpty());
+			Assert.assertEquals("DONE", future.get());
+
+			Assert.assertTrue(processLogs.toString(), processLogs.isEmpty());
+		}
+		finally {
+			Assert.assertEquals(
+				stdErrMessage,
+				ConsoleTestUtil.restoreStdErr(
+					stdErrUnsyncByteArrayOutputStream));
+			Assert.assertEquals(
+				stdOutMessage,
+				ConsoleTestUtil.restoreStdOut(
+					stdOutUnsyncByteArrayOutputStream));
+		}
 	}
 
 	@Test
@@ -928,7 +1084,7 @@ public class LocalProcessExecutorTest {
 							processLogs.add(processLog);
 						}
 					}),
-				Operations.PIPING_BACK_NON_PROCESS_CALLABLE);
+				Operations.PIPING_BACK_NONPROCESS_CALLABLE);
 
 		NoticeableFuture<Serializable> noticeableFuture =
 			processChannel.getProcessNoticeableFuture();
@@ -968,14 +1124,15 @@ public class LocalProcessExecutorTest {
 
 			Assert.fail();
 		}
-		catch (ExecutionException ee) {
-			Throwable cause = ee.getCause();
+		catch (ExecutionException executionException) {
+			Throwable throwable = executionException.getCause();
 
-			Assert.assertSame(ProcessException.class, cause.getClass());
+			Assert.assertSame(ProcessException.class, throwable.getClass());
 
-			cause = cause.getCause();
+			throwable = throwable.getCause();
 
-			Assert.assertSame(NotSerializableException.class, cause.getClass());
+			Assert.assertSame(
+				NotSerializableException.class, throwable.getClass());
 
 			Assert.assertEquals(processLogs.toString(), 1, processLogs.size());
 
@@ -984,13 +1141,15 @@ public class LocalProcessExecutorTest {
 			Assert.assertEquals(
 				"Caught a write aborted exception", processLog.getMessage());
 
-			cause = processLog.getThrowable();
+			throwable = processLog.getThrowable();
 
-			Assert.assertSame(WriteAbortedException.class, cause.getClass());
+			Assert.assertSame(
+				WriteAbortedException.class, throwable.getClass());
 
-			cause = cause.getCause();
+			throwable = throwable.getCause();
 
-			Assert.assertSame(NotSerializableException.class, cause.getClass());
+			Assert.assertSame(
+				NotSerializableException.class, throwable.getClass());
 		}
 	}
 
@@ -1004,7 +1163,6 @@ public class LocalProcessExecutorTest {
 			arguments.add("-Djvm.debug=true");
 		}
 
-		arguments.add("-Dliferay.mode=test");
 		arguments.add("-Dsun.zip.disableMemoryMapping=true");
 
 		String whipAgentLine = System.getProperty("whip.agent");
@@ -1041,6 +1199,7 @@ public class LocalProcessExecutorTest {
 
 		builder.setArguments(_createArguments(jpdaOption));
 		builder.setBootstrapClassPath(System.getProperty("java.class.path"));
+		builder.setEnvironment(_environment);
 
 		if (processLogConsumer != null) {
 			builder.setProcessLogConsumer(processLogConsumer);
@@ -1071,7 +1230,7 @@ public class LocalProcessExecutorTest {
 
 				return serverSocketChannel;
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				port++;
 			}
 		}
@@ -1085,8 +1244,8 @@ public class LocalProcessExecutorTest {
 				try {
 					thread.join();
 				}
-				catch (InterruptedException ie) {
-					ReflectionUtil.throwException(ie);
+				catch (InterruptedException interruptedException) {
+					ReflectionUtil.throwException(interruptedException);
 				}
 
 				break;
@@ -1101,8 +1260,8 @@ public class LocalProcessExecutorTest {
 				Class.forName("java.lang.ApplicationShutdownHooks"), "runHooks",
 				new Class<?>[0]);
 		}
-		catch (ClassNotFoundException cnfe) {
-			ReflectionUtil.throwException(cnfe);
+		catch (ClassNotFoundException classNotFoundException) {
+			ReflectionUtil.throwException(classNotFoundException);
 		}
 
 		Map<String, Object> attributes =
@@ -1119,8 +1278,8 @@ public class LocalProcessExecutorTest {
 			try {
 				serverSocket.close();
 			}
-			catch (IOException ioe) {
-				ReflectionUtil.throwException(ioe);
+			catch (IOException ioException) {
+				ReflectionUtil.throwException(ioException);
 			}
 
 			break;
@@ -1226,6 +1385,16 @@ public class LocalProcessExecutorTest {
 	private static final String _SYSTEM_PROPERTIES_QUIET =
 		"system.properties.quiet";
 
+	private static final Map<String, String> _environment =
+		new HashMap<String, String>(System.getenv()) {
+			{
+				put(
+					"JDK_JAVA_OPTIONS",
+					"--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens" +
+						"=java.base/java.lang.invoke=ALL-UNNAMED");
+			}
+		};
+
 	private final LocalProcessExecutor _localProcessExecutor =
 		new LocalProcessExecutor();
 
@@ -1247,8 +1416,8 @@ public class LocalProcessExecutorTest {
 
 				return (T)objectInputStream.readObject();
 			}
-			catch (Exception e) {
-				return ReflectionUtil.throwException(e);
+			catch (Exception exception) {
+				return ReflectionUtil.throwException(exception);
 			}
 		}
 
@@ -1256,7 +1425,7 @@ public class LocalProcessExecutorTest {
 			try {
 				return invoke(() -> true);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				return false;
 			}
 		}
@@ -1284,8 +1453,8 @@ public class LocalProcessExecutorTest {
 					objectOutputStream.writeObject(
 						(ProcessCallable<String>)() -> "DONE");
 				}
-				catch (Exception e) {
-					throw new ProcessException(e);
+				catch (Exception exception) {
+					throw new ProcessException(exception);
 				}
 
 				byte[] serializedData =
@@ -1301,8 +1470,8 @@ public class LocalProcessExecutorTest {
 
 					fileOutputStream.flush();
 				}
-				catch (Exception e) {
-					throw new ProcessException(e);
+				catch (Exception exception) {
+					throw new ProcessException(exception);
 				}
 
 				return null;
@@ -1312,8 +1481,8 @@ public class LocalProcessExecutorTest {
 			try {
 				LocalProcessLauncher.ProcessContext.detach();
 			}
-			catch (InterruptedException ie) {
-				throw new ProcessException(ie);
+			catch (InterruptedException interruptedException) {
+				throw new ProcessException(interruptedException);
 			}
 
 			return "DONE";
@@ -1401,8 +1570,8 @@ public class LocalProcessExecutorTest {
 
 				System.setOut(new PrintStream(fileOutputStream));
 			}
-			catch (Exception e) {
-				throw new ProcessException(e);
+			catch (Exception exception) {
+				throw new ProcessException(exception);
 			}
 
 			return "DONE";
@@ -1417,15 +1586,15 @@ public class LocalProcessExecutorTest {
 								"Exception ProcessCallable");
 						});
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				return null;
 			};
 
 		public static final ProcessCallable<Serializable>
-			PIPING_BACK_NON_PROCESS_CALLABLE = () -> {
+			PIPING_BACK_NONPROCESS_CALLABLE = () -> {
 				try {
 					UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 						new UnsyncByteArrayOutputStream();
@@ -1456,8 +1625,8 @@ public class LocalProcessExecutorTest {
 							unsyncByteArrayOutputStream.toByteArray());
 					}
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				return null;
@@ -1466,13 +1635,13 @@ public class LocalProcessExecutorTest {
 		public static final ProcessCallable<Serializable>
 			PIPING_BACK_WRITE_ABORTED = () -> {
 				try {
-					Object obj = new Object();
+					Object object = new Object();
 
 					LocalProcessLauncher.ProcessContext.writeProcessCallable(
-						() -> (Serializable)obj);
+						() -> (Serializable)object);
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				return null;
@@ -1512,15 +1681,15 @@ public class LocalProcessExecutorTest {
 
 						});
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				try {
 					heartBeatThread.join();
 				}
-				catch (InterruptedException ie) {
-					throw new ProcessException(ie);
+				catch (InterruptedException interruptedException) {
+					throw new ProcessException(interruptedException);
 				}
 
 				return null;
@@ -1540,8 +1709,8 @@ public class LocalProcessExecutorTest {
 				try {
 					heartBeatThread.join();
 				}
-				catch (InterruptedException ie) {
-					throw new ProcessException(ie);
+				catch (InterruptedException interruptedException) {
+					throw new ProcessException(interruptedException);
 				}
 
 				return null;
@@ -1581,15 +1750,15 @@ public class LocalProcessExecutorTest {
 
 						});
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 
 				try {
 					heartBeatThread.join();
 				}
-				catch (InterruptedException ie) {
-					throw new ProcessException(ie);
+				catch (InterruptedException interruptedException) {
+					throw new ProcessException(interruptedException);
 				}
 
 				return null;
@@ -1599,7 +1768,7 @@ public class LocalProcessExecutorTest {
 			try {
 				Thread.sleep(Long.MAX_VALUE);
 			}
-			catch (InterruptedException ie) {
+			catch (InterruptedException interruptedException) {
 			}
 
 			return "DONE";
@@ -1643,11 +1812,13 @@ public class LocalProcessExecutorTest {
 									objectOutputStream.writeObject(
 										requestProcessCallable.call());
 								}
-								catch (ClosedChannelException cce) {
+								catch (ClosedChannelException
+											closedChannelException) {
+
 									return;
 								}
-								catch (Exception e) {
-									e.printStackTrace();
+								catch (Exception exception) {
+									exception.printStackTrace();
 
 									System.exit(10);
 								}
@@ -1659,8 +1830,8 @@ public class LocalProcessExecutorTest {
 
 					return processCallable.call();
 				}
-				catch (IOException ioe) {
-					throw new ProcessException(ioe);
+				catch (IOException ioException) {
+					throw new ProcessException(ioException);
 				}
 			};
 		}
@@ -1681,8 +1852,8 @@ public class LocalProcessExecutorTest {
 
 					return childControllerFuture.get();
 				}
-				catch (Exception e) {
-					throw new ProcessException(e);
+				catch (Exception exception) {
+					throw new ProcessException(exception);
 				}
 			};
 		}
@@ -1772,7 +1943,7 @@ public class LocalProcessExecutorTest {
 		}
 
 		private interface SerializableShutdownHook
-			extends Serializable, LocalProcessLauncher.ShutdownHook {
+			extends LocalProcessLauncher.ShutdownHook, Serializable {
 		}
 
 	}

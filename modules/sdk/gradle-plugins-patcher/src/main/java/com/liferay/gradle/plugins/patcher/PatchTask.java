@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.patcher;
 
 import com.liferay.gradle.util.FileUtil;
+import com.liferay.gradle.util.GUtil;
 import com.liferay.gradle.util.GradleUtil;
 import com.liferay.gradle.util.OSDetector;
 import com.liferay.gradle.util.Validator;
@@ -22,6 +14,7 @@ import com.liferay.gradle.util.copy.ReplaceLeadingPathAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +35,7 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.UncheckedIOException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
@@ -55,19 +49,25 @@ import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFiles;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.process.ExecResult;
 import org.gradle.process.ExecSpec;
-import org.gradle.util.GUtil;
 
 /**
  * @author Andrea Di Giorgi
  */
+@CacheableTask
 public class PatchTask extends DefaultTask {
 
 	public static final String PATCHED_SRC_DIR_MAPPING_DEFAULT_EXTENSION = "*";
@@ -89,7 +89,7 @@ public class PatchTask extends DefaultTask {
 					return configuration.getName();
 				}
 
-				return JavaPlugin.COMPILE_CONFIGURATION_NAME;
+				return JavaPlugin.API_CONFIGURATION_NAME;
 			}
 
 		};
@@ -135,6 +135,8 @@ public class PatchTask extends DefaultTask {
 		return fileNames(Arrays.asList(fileNames));
 	}
 
+	@Input
+	@Optional
 	public List<String> getArgs() {
 		return GradleUtil.toStringList(_args);
 	}
@@ -144,31 +146,38 @@ public class PatchTask extends DefaultTask {
 		return GradleUtil.toStringList(_fileNames);
 	}
 
+	@Input
 	public String getOriginalLibConfigurationName() {
 		return GradleUtil.toString(_originalLibConfigurationName);
 	}
 
 	@InputFile
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getOriginalLibFile() {
 		return GradleUtil.toFile(getProject(), _originalLibFile);
 	}
 
+	@Input
 	public String getOriginalLibModuleGroup() {
 		Dependency dependency = getOriginalLibDependency();
 
 		return dependency.getGroup();
 	}
 
+	@Input
 	public String getOriginalLibModuleName() {
 		return GradleUtil.toString(_originalLibModuleName);
 	}
 
+	@Input
 	public String getOriginalLibModuleVersion() {
 		Dependency dependency = getOriginalLibDependency();
 
 		return dependency.getVersion();
 	}
 
+	@Input
+	@Optional
 	public String getOriginalLibSrcBaseUrl() {
 		return GradleUtil.toString(_originalLibSrcBaseUrl);
 	}
@@ -179,10 +188,13 @@ public class PatchTask extends DefaultTask {
 	}
 
 	@InputFile
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getOriginalLibSrcFile() {
 		return GradleUtil.toFile(getProject(), _originalLibSrcFile);
 	}
 
+	@Input
+	@Optional
 	public Map<String, File> getPatchedSrcDirMappings() {
 		Map<String, File> patchedSrcDirMappings = new HashMap<>();
 
@@ -225,11 +237,14 @@ public class PatchTask extends DefaultTask {
 		return project.files(patchedSrcFileTrees.toArray());
 	}
 
+	@InputDirectory
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getPatchesDir() {
 		return GradleUtil.toFile(getProject(), _patchesDir);
 	}
 
 	@InputFiles
+	@PathSensitive(PathSensitivity.RELATIVE)
 	@SkipWhenEmpty
 	public FileCollection getPatchFiles() {
 		Project project = getProject();
@@ -241,13 +256,14 @@ public class PatchTask extends DefaultTask {
 		return project.fileTree(_patchesDir);
 	}
 
+	@Input
 	public boolean isCopyOriginalLibClasses() {
 		return _copyOriginalLibClasses;
 	}
 
 	@TaskAction
 	public void patch() throws Exception {
-		final Project project = getProject();
+		Project project = getProject();
 
 		File patchesTemporaryDir = fixPatchFiles();
 		final File srcTemporaryDir = fixSrcFiles();
@@ -391,7 +407,7 @@ public class PatchTask extends DefaultTask {
 	}
 
 	protected File fixPatchFiles() {
-		final Project project = getProject();
+		Project project = getProject();
 
 		final File temporaryDir = new File(getTemporaryDir(), "patches");
 
@@ -418,7 +434,12 @@ public class PatchTask extends DefaultTask {
 
 		final File temporaryDir = new File(getTemporaryDir(), "src");
 
-		project.delete(temporaryDir);
+		Map<String, Object> args = new HashMap<>();
+
+		args.put("dir", temporaryDir);
+		args.put("excludes", getFileNames());
+
+		project.delete(project.fileTree(args));
 
 		project.copy(
 			new Action<CopySpec>() {
@@ -448,9 +469,19 @@ public class PatchTask extends DefaultTask {
 
 			});
 
+		if (!temporaryDir.exists()) {
+			try {
+				Files.createDirectories(temporaryDir.toPath());
+			}
+			catch (IOException ioException) {
+				throw new UncheckedIOException(ioException);
+			}
+		}
+
 		return temporaryDir;
 	}
 
+	@Internal
 	protected Dependency getOriginalLibDependency() {
 		Configuration configuration = GradleUtil.getConfiguration(
 			getProject(), getOriginalLibConfigurationName());
@@ -469,6 +500,9 @@ public class PatchTask extends DefaultTask {
 		throw new GradleException("Unable to find original lib " + moduleName);
 	}
 
+	@InputFile
+	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	protected File getOriginalLibModuleFile() {
 		String configurationName = getOriginalLibConfigurationName();
 		String moduleGroup = getOriginalLibModuleGroup();
@@ -508,6 +542,7 @@ public class PatchTask extends DefaultTask {
 		return null;
 	}
 
+	@Input
 	protected String getOriginalLibSrcUrl() {
 		StringBuilder sb = new StringBuilder();
 
@@ -576,7 +611,7 @@ public class PatchTask extends DefaultTask {
 	}
 
 	private static final String _BASE_URL =
-		"http://repo.maven.apache.org/maven2/";
+		"https://repo.maven.apache.org/maven2/";
 
 	private static final Map<String, Object> _fixCrLfArgs =
 		new HashMap<String, Object>() {

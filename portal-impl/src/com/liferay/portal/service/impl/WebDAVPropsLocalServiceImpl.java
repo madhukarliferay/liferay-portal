@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.WebDAVProps;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.webdav.WebDAVException;
 import com.liferay.portal.service.base.WebDAVPropsLocalServiceBaseImpl;
 
@@ -30,7 +23,7 @@ public class WebDAVPropsLocalServiceImpl
 	@Override
 	public void deleteWebDAVProps(String className, long classPK) {
 		WebDAVProps webDAVProps = webDAVPropsPersistence.fetchByC_C(
-			classNameLocalService.getClassNameId(className), classPK);
+			_classNameLocalService.getClassNameId(className), classPK);
 
 		if (webDAVProps != null) {
 			webDAVPropsPersistence.remove(webDAVProps);
@@ -41,7 +34,7 @@ public class WebDAVPropsLocalServiceImpl
 	public WebDAVProps getWebDAVProps(
 		long companyId, String className, long classPK) {
 
-		long classNameId = classNameLocalService.getClassNameId(className);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		WebDAVProps webDAVProps = webDAVPropsPersistence.fetchByC_C(
 			classNameId, classPK);
@@ -50,15 +43,16 @@ public class WebDAVPropsLocalServiceImpl
 			webDAVProps = webDAVPropsPersistence.create(
 				counterLocalService.increment());
 
-			Date now = new Date();
+			Date date = new Date();
 
 			webDAVProps.setCompanyId(companyId);
-			webDAVProps.setCreateDate(now);
-			webDAVProps.setModifiedDate(now);
+			webDAVProps.setCreateDate(date);
+			webDAVProps.setModifiedDate(date);
 			webDAVProps.setClassNameId(classNameId);
 			webDAVProps.setClassPK(classPK);
 
-			webDAVPropsLocalService.updateWebDAVProps(webDAVProps);
+			webDAVProps = webDAVPropsLocalService.updateWebDAVProps(
+				webDAVProps);
 		}
 
 		return webDAVProps;
@@ -71,11 +65,15 @@ public class WebDAVPropsLocalServiceImpl
 		try {
 			webDAVProps.store();
 		}
-		catch (Exception e) {
-			throw new WebDAVException("Problem trying to store WebDAVProps", e);
+		catch (Exception exception) {
+			throw new WebDAVException(
+				"Problem trying to store WebDAVProps", exception);
 		}
 
 		webDAVPropsPersistence.update(webDAVProps);
 	}
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
 
 }

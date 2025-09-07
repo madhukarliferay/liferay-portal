@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.model.impl;
@@ -37,17 +28,17 @@ public class CalendarBookingCacheModel
 	implements CacheModel<CalendarBooking>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof CalendarBookingCacheModel)) {
+		if (!(object instanceof CalendarBookingCacheModel)) {
 			return false;
 		}
 
 		CalendarBookingCacheModel calendarBookingCacheModel =
-			(CalendarBookingCacheModel)obj;
+			(CalendarBookingCacheModel)object;
 
 		if ((calendarBookingId ==
 				calendarBookingCacheModel.calendarBookingId) &&
@@ -78,10 +69,12 @@ public class CalendarBookingCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(61);
+		StringBundler sb = new StringBundler(63);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", calendarBookingId=");
@@ -150,6 +143,7 @@ public class CalendarBookingCacheModel
 		CalendarBookingImpl calendarBookingImpl = new CalendarBookingImpl();
 
 		calendarBookingImpl.setMvccVersion(mvccVersion);
+		calendarBookingImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			calendarBookingImpl.setUuid("");
@@ -277,8 +271,12 @@ public class CalendarBookingCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		calendarBookingId = objectInput.readLong();
@@ -301,7 +299,7 @@ public class CalendarBookingCacheModel
 		recurringCalendarBookingId = objectInput.readLong();
 		vEventUid = objectInput.readUTF();
 		title = objectInput.readUTF();
-		description = objectInput.readUTF();
+		description = (String)objectInput.readObject();
 		location = objectInput.readUTF();
 
 		startTime = objectInput.readLong();
@@ -328,6 +326,8 @@ public class CalendarBookingCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -377,10 +377,10 @@ public class CalendarBookingCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (location == null) {
@@ -438,6 +438,7 @@ public class CalendarBookingCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long calendarBookingId;
 	public long groupId;

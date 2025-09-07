@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.bookmarks.taglib.servlet.taglib;
@@ -17,6 +8,7 @@ package com.liferay.social.bookmarks.taglib.servlet.taglib;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -26,13 +18,13 @@ import com.liferay.social.bookmarks.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.social.bookmarks.taglib.internal.util.SocialBookmarksRegistryUtil;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.List;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -119,7 +111,7 @@ public class SocialBookmarksTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setTarget(String target) {
@@ -198,12 +190,26 @@ public class SocialBookmarksTag extends IncludeTag {
 					WebKeys.THEME_DISPLAY);
 
 			try {
+				Layout layout = themeDisplay.getLayout();
+
 				_url = PortalUtil.getCanonicalURL(
-					_urlImpl.toString(), themeDisplay,
-					themeDisplay.getLayout());
+					_urlImpl.toString(), themeDisplay, layout, true, false);
+
+				try {
+					_url = PortalUtil.getAlternateURL(
+						_url, themeDisplay, themeDisplay.getLocale(), layout);
+				}
+				catch (PortalException portalException) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"Unable to get alternate URL " + _urlImpl,
+							portalException);
+					}
+				}
 			}
-			catch (PortalException pe) {
-				_log.error("Unable to get canonical URL " + _urlImpl, pe);
+			catch (PortalException portalException) {
+				_log.error(
+					"Unable to get canonical URL " + _urlImpl, portalException);
 			}
 		}
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.display;
@@ -17,20 +8,32 @@ package com.liferay.user.associated.data.web.internal.display;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.user.associated.data.display.UADDisplay;
 import com.liferay.user.associated.data.display.UADHierarchyDeclaration;
+import com.liferay.user.associated.data.web.internal.registry.UADRegistry;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Drew Brokke
  */
 public class UADHierarchyDisplayTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() {
@@ -43,7 +46,9 @@ public class UADHierarchyDisplayTest {
 			new DummyUADHierarchyDeclaration(
 				dummyEntryUADDisplay, dummyContainerUADDisplay);
 
-		_uadHierarchyDisplay = new UADHierarchyDisplay(uadHierarchyDeclaration);
+		_uadHierarchyDisplay = new UADHierarchyDisplay(
+			uadHierarchyDeclaration,
+			new DummyUADRegistry(dummyEntryUADDisplay));
 
 		_folderA = _dummyContainerService.create("dummyContainerA", _USER_ID);
 
@@ -108,9 +113,10 @@ public class UADHierarchyDisplayTest {
 
 	@Test
 	public void testFieldValueCount() throws Exception {
-		List items = _uadHierarchyDisplay.search(
-			DummyContainer.class, DummyService.DEFAULT_CONTAINER_ID, _USER_ID,
-			null, "", null, null, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+		List<Object> items = _uadHierarchyDisplay.search(
+			DummyContainer.class.getName(), DummyService.DEFAULT_CONTAINER_ID,
+			_USER_ID, null, "", null, null, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
 
 		for (Object item : items) {
 			Map<String, Object> fieldValues =
@@ -134,11 +140,13 @@ public class UADHierarchyDisplayTest {
 		for (DummyContainer dummyContainer :
 				_dummyContainerService.getEntities()) {
 
-			List items = _uadHierarchyDisplay.search(
-				DummyContainer.class, dummyContainer.getId(), _USER_ID, null,
-				"", "name", "asc", QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+			List<Object> items = _uadHierarchyDisplay.search(
+				DummyContainer.class.getName(), dummyContainer.getId(),
+				_USER_ID, null, "", "name", "asc", QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS);
 
 			Assert.assertEquals(
+				items.toString(),
 				(int)_userFolderAndItemCountMap.get(dummyContainer.getId()),
 				items.size());
 		}
@@ -156,5 +164,30 @@ public class UADHierarchyDisplayTest {
 	private UADHierarchyDisplay _uadHierarchyDisplay;
 	private final Map<Long, Integer> _userFolderAndItemCountMap =
 		new HashMap<>();
+
+	private class DummyUADRegistry extends UADRegistry {
+
+		public DummyUADRegistry(UADDisplay<?> uadDisplay) {
+			_uadDisplay = uadDisplay;
+		}
+
+		@Override
+		public UADDisplay<?> getUADDisplay(String key) {
+			return _uadDisplay;
+		}
+
+		@Override
+		public UADDisplay<?> getUADDisplayByObject(Object object) {
+			return _uadDisplay;
+		}
+
+		@Override
+		public Collection<UADDisplay<?>> getUADDisplays() {
+			return Collections.singletonList(_uadDisplay);
+		}
+
+		private final UADDisplay<?> _uadDisplay;
+
+	}
 
 }

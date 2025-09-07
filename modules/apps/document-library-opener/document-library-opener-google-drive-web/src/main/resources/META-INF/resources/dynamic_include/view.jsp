@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,7 +19,7 @@ DLOpenerGoogleDriveFileReference dlOpenerGoogleDriveFileReference = (DLOpenerGoo
 	</portlet:resourceURL>
 
 	<aui:script>
-		(function() {
+		(function () {
 			var TIME_POLLING = 500;
 			var TIME_SHOW_MSG = 2000;
 
@@ -41,9 +32,9 @@ DLOpenerGoogleDriveFileReference dlOpenerGoogleDriveFileReference = (DLOpenerGoo
 			var url;
 
 			showStatusMessage = Liferay.lazyLoad(
-				'frontend-js-web/liferay/toast/commands/OpenToast.es',
-				function(toastCommands, data) {
-					toastCommands.openToast(data);
+				'frontend-js-web',
+				({openToast}, data) => {
+					openToast(data);
 				}
 			);
 
@@ -55,27 +46,29 @@ DLOpenerGoogleDriveFileReference dlOpenerGoogleDriveFileReference = (DLOpenerGoo
 
 			function polling() {
 				Liferay.Util.fetch('<%= googleDriveBackgroundTaskStatusURL %>', {
-					method: 'POST'
+					method: 'POST',
 				})
-					.then(function(response) {
+					.then((response) => {
 						if (!response.ok) {
 							throw defaultError;
 						}
 
 						return response.json();
 					})
-					.then(function(response) {
+					.then((response) => {
 						if (response.complete) {
 							url = response.googleDocsEditURL;
 
 							navigate();
-						} else if (response.error) {
+						}
+						else if (response.error) {
 							throw defaultError;
-						} else {
+						}
+						else {
 							setTimeout(polling, TIME_POLLING);
 						}
 					})
-					.catch(function(error) {
+					.catch((error) => {
 						showError(error);
 
 						Liferay.Util.getWindow(dialogId).hide();
@@ -85,8 +78,7 @@ DLOpenerGoogleDriveFileReference dlOpenerGoogleDriveFileReference = (DLOpenerGoo
 			function showError(message) {
 				showStatusMessage({
 					message: message,
-					title: '<liferay-ui:message key="error" />:',
-					type: 'danger'
+					type: 'danger',
 				});
 			}
 
@@ -100,34 +92,26 @@ DLOpenerGoogleDriveFileReference dlOpenerGoogleDriveFileReference = (DLOpenerGoo
 			}
 			%>
 
-			Liferay.Util.openWindow(
-				{
-					id: dialogId,
-					dialog: {
-						bodyContent:
-							'<p><liferay-ui:message key="<%= messageKey %>" /></p><div aria-hidden="true" class="loading-animation"></div>',
-						cssClass: 'google-docs-redirect-modal',
-						height: 172,
-						modal: true,
-						resizable: false,
-						title: '',
-						width: 320
-					}
-				},
-				function() {
+			Liferay.Util.openModal({
+				bodyHTML:
+					'<p><liferay-ui:message key="<%= messageKey %>" /></p><div aria-hidden="true" class="loading-animation"></div>',
+				className: 'google-docs-redirect-modal',
+				containerProps: {},
+				id: dialogId,
+				onOpen: () => {
 					setTimeout(polling, TIME_POLLING);
 
-					setTimeout(function() {
+					setTimeout(() => {
 						isTimeConsumed = true;
 
 						navigate();
 					}, TIME_SHOW_MSG);
-				}
-			);
+				},
+			});
 		})();
 	</aui:script>
 </c:if>
 
 <liferay-util:html-top>
-	<link href="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, StringBundler.concat(themeDisplay.getCDNBaseURL(), PortalUtil.getPathProxy(), application.getContextPath(), "/css/document_library.css"))) %>" rel="stylesheet" type="text/css" />
+	<aui:link href='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, StringBundler.concat(themeDisplay.getCDNBaseURL(), PortalUtil.getPathProxy(), application.getContextPath(), "/css/document_library.css"))) %>' rel="stylesheet" type="text/css" />
 </liferay-util:html-top>

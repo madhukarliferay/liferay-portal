@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.model.Role;
 
 /**
  * Provides a wrapper for {@link RoleService}.
@@ -24,39 +17,25 @@ package com.liferay.portal.kernel.service;
 public class RoleServiceWrapper
 	implements RoleService, ServiceWrapper<RoleService> {
 
+	public RoleServiceWrapper() {
+		this(null);
+	}
+
 	public RoleServiceWrapper(RoleService roleService) {
 		_roleService = roleService;
 	}
 
-	/**
-	 * Adds a role. The user is reindexed after role is added.
-	 *
-	 * @param className the name of the class for which the role is created
-	 * @param classPK the primary key of the class for which the role is
-	 created (optionally <code>0</code>)
-	 * @param name the role's name
-	 * @param titleMap the role's localized titles (optionally
-	 <code>null</code>)
-	 * @param descriptionMap the role's localized descriptions (optionally
-	 <code>null</code>)
-	 * @param type the role's type (optionally <code>0</code>)
-	 * @param subtype the role's subtype (optionally <code>null</code>)
-	 * @param serviceContext the service context to be applied (optionally
-	 <code>null</code>). Can set the expando bridge attributes for the
-	 role.
-	 * @return the role
-	 */
 	@Override
-	public com.liferay.portal.kernel.model.Role addRole(
-			java.lang.String className, long classPK, java.lang.String name,
-			java.util.Map<java.util.Locale, java.lang.String> titleMap,
-			java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
-			int type, java.lang.String subtype, ServiceContext serviceContext)
+	public Role addRole(
+			String externalReferenceCode, String className, long classPK,
+			String name, java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap, int type,
+			String subtype, ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.addRole(
-			className, classPK, name, titleMap, descriptionMap, type, subtype,
-			serviceContext);
+			externalReferenceCode, className, classPK, name, titleMap,
+			descriptionMap, type, subtype, serviceContext);
 	}
 
 	/**
@@ -73,6 +52,16 @@ public class RoleServiceWrapper
 		_roleService.addUserRoles(userId, roleIds);
 	}
 
+	@Override
+	public Role copyRole(
+			long userId, String name, long sourceRoleId,
+			ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.copyRole(
+			userId, name, sourceRoleId, serviceContext);
+	}
+
 	/**
 	 * Deletes the role with the primary key and its associated permissions.
 	 *
@@ -86,10 +75,26 @@ public class RoleServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Role fetchRole(long roleId)
+	public Role fetchRole(long roleId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.fetchRole(roleId);
+	}
+
+	@Override
+	public Role fetchRole(long companyId, String name)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.fetchRole(companyId, name);
+	}
+
+	@Override
+	public Role fetchRoleByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.fetchRoleByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -99,34 +104,42 @@ public class RoleServiceWrapper
 	 * @return the roles associated with the group
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role> getGroupRoles(
-			long groupId)
+	public java.util.List<Role> getGroupRoles(long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getGroupRoles(groupId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role>
-		getGroupRolesAndTeamRoles(
-			long companyId, java.lang.String keywords,
-			java.util.List<java.lang.String> excludedNames, int[] types,
-			long excludedTeamRoleId, long teamGroupId, int start, int end) {
+	public java.util.List<Role> getGroupRolesAndTeamRoles(
+		long companyId, String name, java.util.List<String> excludedNames,
+		String title, String description, int[] types, long excludedTeamRoleId,
+		long teamGroupId, int start, int end) {
 
 		return _roleService.getGroupRolesAndTeamRoles(
-			companyId, keywords, excludedNames, types, excludedTeamRoleId,
-			teamGroupId, start, end);
+			companyId, name, excludedNames, title, description, types,
+			excludedTeamRoleId, teamGroupId, start, end);
 	}
 
 	@Override
 	public int getGroupRolesAndTeamRolesCount(
-		long companyId, java.lang.String keywords,
-		java.util.List<java.lang.String> excludedNames, int[] types,
-		long excludedTeamRoleId, long teamGroupId) {
+		long companyId, String name, java.util.List<String> excludedNames,
+		String title, String description, int[] types, long excludedTeamRoleId,
+		long teamGroupId) {
 
 		return _roleService.getGroupRolesAndTeamRolesCount(
-			companyId, keywords, excludedNames, types, excludedTeamRoleId,
-			teamGroupId);
+			companyId, name, excludedNames, title, description, types,
+			excludedTeamRoleId, teamGroupId);
+	}
+
+	@Override
+	public Role getOrAddEmptyRole(
+			String externalReferenceCode, String className, long classPK,
+			String name, int type)
+		throws Exception {
+
+		return _roleService.getOrAddEmptyRole(
+			externalReferenceCode, className, classPK, name, type);
 	}
 
 	/**
@@ -135,7 +148,7 @@ public class RoleServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _roleService.getOSGiServiceIdentifier();
 	}
 
@@ -146,7 +159,7 @@ public class RoleServiceWrapper
 	 * @return the role with the primary key
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Role getRole(long roleId)
+	public Role getRole(long roleId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getRole(roleId);
@@ -165,24 +178,30 @@ public class RoleServiceWrapper
 	 * @return the role with the name
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Role getRole(
-			long companyId, java.lang.String name)
+	public Role getRole(long companyId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getRole(companyId, name);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role> getRoles(
-			int type, java.lang.String subtype)
+	public Role getRoleByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.getRoleByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
+	@Override
+	public java.util.List<Role> getRoles(int type, String subtype)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getRoles(type, subtype);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role> getRoles(
-			long companyId, int[] types)
+	public java.util.List<Role> getRoles(long companyId, int[] types)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getRoles(companyId, types);
@@ -196,8 +215,8 @@ public class RoleServiceWrapper
 	 * @return the user's roles within the user group
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role>
-			getUserGroupGroupRoles(long userId, long groupId)
+	public java.util.List<Role> getUserGroupGroupRoles(
+			long userId, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getUserGroupGroupRoles(userId, groupId);
@@ -211,25 +230,25 @@ public class RoleServiceWrapper
 	 * @return the user's roles within the user group
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role>
-			getUserGroupRoles(long userId, long groupId)
+	public java.util.List<Role> getUserGroupRoles(long userId, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getUserGroupRoles(userId, groupId);
 	}
 
 	/**
-	 * Returns the union of all the user's roles within the groups.
+	 * Returns the union of all the user's roles within the groups. If no
+	 * groups are provided, only the user's directly assigned roles are
+	 * returned.
 	 *
 	 * @param userId the primary key of the user
 	 * @param groups the groups (optionally <code>null</code>)
 	 * @return the union of all the user's roles within the groups
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role>
-			getUserRelatedRoles(
-				long userId,
-				java.util.List<com.liferay.portal.kernel.model.Group> groups)
+	public java.util.List<Role> getUserRelatedRoles(
+			long userId,
+			java.util.List<com.liferay.portal.kernel.model.Group> groups)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getUserRelatedRoles(userId, groups);
@@ -242,8 +261,7 @@ public class RoleServiceWrapper
 	 * @return the roles associated with the user
 	 */
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role> getUserRoles(
-			long userId)
+	public java.util.List<Role> getUserRoles(long userId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.getUserRoles(userId);
@@ -263,8 +281,7 @@ public class RoleServiceWrapper
 	 */
 	@Override
 	public boolean hasUserRole(
-			long userId, long companyId, java.lang.String name,
-			boolean inherited)
+			long userId, long companyId, String name, boolean inherited)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.hasUserRole(userId, companyId, name, inherited);
@@ -284,29 +301,27 @@ public class RoleServiceWrapper
 	 */
 	@Override
 	public boolean hasUserRoles(
-			long userId, long companyId, java.lang.String[] names,
-			boolean inherited)
+			long userId, long companyId, String[] names, boolean inherited)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.hasUserRoles(userId, companyId, names, inherited);
 	}
 
 	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Role> search(
-		long companyId, java.lang.String keywords, java.lang.Integer[] types,
-		java.util.LinkedHashMap<java.lang.String, java.lang.Object> params,
-		int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.portal.kernel.model.Role> obc) {
+	public java.util.List<Role> search(
+		long companyId, String keywords, Integer[] types,
+		java.util.LinkedHashMap<String, Object> params, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<Role>
+			orderByComparator) {
 
 		return _roleService.search(
-			companyId, keywords, types, params, start, end, obc);
+			companyId, keywords, types, params, start, end, orderByComparator);
 	}
 
 	@Override
 	public int searchCount(
-		long companyId, java.lang.String keywords, java.lang.Integer[] types,
-		java.util.LinkedHashMap<java.lang.String, java.lang.Object> params) {
+		long companyId, String keywords, Integer[] types,
+		java.util.LinkedHashMap<String, Object> params) {
 
 		return _roleService.searchCount(companyId, keywords, types, params);
 	}
@@ -325,6 +340,24 @@ public class RoleServiceWrapper
 		_roleService.unsetUserRoles(userId, roleIds);
 	}
 
+	@Override
+	public Role updateExternalReferenceCode(
+			long roleId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.updateExternalReferenceCode(
+			roleId, externalReferenceCode);
+	}
+
+	@Override
+	public Role updateExternalReferenceCode(
+			Role role, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _roleService.updateExternalReferenceCode(
+			role, externalReferenceCode);
+	}
+
 	/**
 	 * Updates the role with the primary key.
 	 *
@@ -341,15 +374,16 @@ public class RoleServiceWrapper
 	 * @return the role with the primary key
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Role updateRole(
-			long roleId, java.lang.String name,
-			java.util.Map<java.util.Locale, java.lang.String> titleMap,
-			java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
-			java.lang.String subtype, ServiceContext serviceContext)
+	public Role updateRole(
+			String externalReferenceCode, long roleId, String name,
+			java.util.Map<java.util.Locale, String> titleMap,
+			java.util.Map<java.util.Locale, String> descriptionMap,
+			String subtype, ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleService.updateRole(
-			roleId, name, titleMap, descriptionMap, subtype, serviceContext);
+			externalReferenceCode, roleId, name, titleMap, descriptionMap,
+			subtype, serviceContext);
 	}
 
 	@Override

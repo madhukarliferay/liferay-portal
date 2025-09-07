@@ -10,6 +10,7 @@ create table JournalArticle (
 	userName VARCHAR(75) null,
 	createDate DATE null,
 	modifiedDate DATE null,
+	externalReferenceCode VARCHAR(75) null,
 	folderId LONG,
 	classNameId LONG,
 	classPK LONG,
@@ -17,8 +18,7 @@ create table JournalArticle (
 	articleId VARCHAR(75) null,
 	version DOUBLE,
 	urlTitle VARCHAR(255) null,
-	content TEXT null,
-	DDMStructureKey VARCHAR(75) null,
+	DDMStructureId LONG,
 	DDMTemplateKey VARCHAR(75) null,
 	defaultLanguageId VARCHAR(75) null,
 	layoutUuid VARCHAR(75) null,
@@ -28,6 +28,7 @@ create table JournalArticle (
 	indexable BOOLEAN,
 	smallImage BOOLEAN,
 	smallImageId LONG,
+	smallImageSource INTEGER,
 	smallImageURL STRING null,
 	lastPublishDate DATE null,
 	status INTEGER,
@@ -43,7 +44,7 @@ create table JournalArticleLocalization (
 	articleLocalizationId LONG not null,
 	companyId LONG,
 	articlePK LONG,
-	title VARCHAR(400) null,
+	title VARCHAR(800) null,
 	description STRING null,
 	languageId VARCHAR(75) null,
 	primary key (articleLocalizationId, ctCollectionId)
@@ -62,19 +63,22 @@ create table JournalArticleResource (
 
 create table JournalContentSearch (
 	mvccVersion LONG default 0 not null,
-	contentSearchId LONG not null primary key,
+	ctCollectionId LONG default 0 not null,
+	contentSearchId LONG not null,
 	groupId LONG,
 	companyId LONG,
 	privateLayout BOOLEAN,
 	layoutId LONG,
 	portletId VARCHAR(200) null,
-	articleId VARCHAR(75) null
+	articleId VARCHAR(75) null,
+	primary key (contentSearchId, ctCollectionId)
 );
 
 create table JournalFeed (
 	mvccVersion LONG default 0 not null,
+	ctCollectionId LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
-	id_ LONG not null primary key,
+	id_ LONG not null,
 	groupId LONG,
 	companyId LONG,
 	userId LONG,
@@ -84,7 +88,7 @@ create table JournalFeed (
 	feedId VARCHAR(75) null,
 	name VARCHAR(75) null,
 	description STRING null,
-	DDMStructureKey VARCHAR(75) null,
+	DDMStructureId LONG,
 	DDMTemplateKey VARCHAR(75) null,
 	DDMRendererTemplateKey VARCHAR(75) null,
 	delta INTEGER,
@@ -95,13 +99,15 @@ create table JournalFeed (
 	contentField VARCHAR(75) null,
 	feedFormat VARCHAR(75) null,
 	feedVersion DOUBLE,
-	lastPublishDate DATE null
+	lastPublishDate DATE null,
+	primary key (id_, ctCollectionId)
 );
 
 create table JournalFolder (
 	mvccVersion LONG default 0 not null,
 	ctCollectionId LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
+	externalReferenceCode VARCHAR(75) null,
 	folderId LONG not null,
 	groupId LONG,
 	companyId LONG,

@@ -1,31 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector;
 
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+
 import java.io.IOException;
 
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 /**
  * Provides an interface to render an item selector view for a particular item
@@ -74,10 +65,36 @@ public interface ItemSelectorView<T extends ItemSelectorCriterion> {
 	 * configuration, etc.
 	 * </p>
 	 *
+	 * @param  itemSelectorCriterion the item selector criterion that was used
+	 *         to render this view
 	 * @param  themeDisplay the current page {@link ThemeDisplay}
 	 * @return <code>true</code> if the view is visible
+	 * @review
 	 */
-	public boolean isVisible(ThemeDisplay themeDisplay);
+	public default boolean isVisible(
+		T itemSelectorCriterion, ThemeDisplay themeDisplay) {
+
+		return isVisible(themeDisplay);
+	}
+
+	/**
+	 * Returns whether the item selector view is visible.
+	 *
+	 * <p>
+	 * Most of the implementations of this method will return <code>true</code>.
+	 * However, there are certain cases where the view should not be displayed:
+	 * the view isn't ready, the view needs some additional third-party
+	 * configuration, etc.
+	 * </p>
+	 *
+	 * @param      themeDisplay the current page {@link ThemeDisplay}
+	 * @return     <code>true</code> if the view is visible
+	 * @deprecated As of Athanasius (7.3.x)
+	 */
+	@Deprecated
+	public default boolean isVisible(ThemeDisplay themeDisplay) {
+		return true;
+	}
 
 	/**
 	 * Renders the HTML code for the item selector view.

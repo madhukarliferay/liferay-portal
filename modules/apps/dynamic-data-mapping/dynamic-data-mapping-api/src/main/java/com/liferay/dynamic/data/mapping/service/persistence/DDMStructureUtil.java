@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the ddm structure service. This utility wraps <code>com.liferay.dynamic.data.mapping.service.persistence.impl.DDMStructurePersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMStructureUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -869,7 +856,7 @@ public class DDMStructureUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param start the lower bound of the range of ddm structures
 	 * @param end the upper bound of the range of ddm structures (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -1111,178 +1098,6 @@ public class DDMStructureUtil {
 	 */
 	public static int countByParentStructureId(long parentStructureId) {
 		return getPersistence().countByParentStructureId(parentStructureId);
-	}
-
-	/**
-	 * Returns all the ddm structures where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @return the matching ddm structures
-	 */
-	public static List<DDMStructure> findByClassNameId(long classNameId) {
-		return getPersistence().findByClassNameId(classNameId);
-	}
-
-	/**
-	 * Returns a range of all the ddm structures where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of ddm structures
-	 * @param end the upper bound of the range of ddm structures (not inclusive)
-	 * @return the range of matching ddm structures
-	 */
-	public static List<DDMStructure> findByClassNameId(
-		long classNameId, int start, int end) {
-
-		return getPersistence().findByClassNameId(classNameId, start, end);
-	}
-
-	/**
-	 * Returns an ordered range of all the ddm structures where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of ddm structures
-	 * @param end the upper bound of the range of ddm structures (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching ddm structures
-	 */
-	public static List<DDMStructure> findByClassNameId(
-		long classNameId, int start, int end,
-		OrderByComparator<DDMStructure> orderByComparator) {
-
-		return getPersistence().findByClassNameId(
-			classNameId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the ddm structures where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of ddm structures
-	 * @param end the upper bound of the range of ddm structures (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching ddm structures
-	 */
-	public static List<DDMStructure> findByClassNameId(
-		long classNameId, int start, int end,
-		OrderByComparator<DDMStructure> orderByComparator,
-		boolean useFinderCache) {
-
-		return getPersistence().findByClassNameId(
-			classNameId, start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first ddm structure in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching ddm structure
-	 * @throws NoSuchStructureException if a matching ddm structure could not be found
-	 */
-	public static DDMStructure findByClassNameId_First(
-			long classNameId, OrderByComparator<DDMStructure> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchStructureException {
-
-		return getPersistence().findByClassNameId_First(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the first ddm structure in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching ddm structure, or <code>null</code> if a matching ddm structure could not be found
-	 */
-	public static DDMStructure fetchByClassNameId_First(
-		long classNameId, OrderByComparator<DDMStructure> orderByComparator) {
-
-		return getPersistence().fetchByClassNameId_First(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm structure in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure
-	 * @throws NoSuchStructureException if a matching ddm structure could not be found
-	 */
-	public static DDMStructure findByClassNameId_Last(
-			long classNameId, OrderByComparator<DDMStructure> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchStructureException {
-
-		return getPersistence().findByClassNameId_Last(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm structure in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure, or <code>null</code> if a matching ddm structure could not be found
-	 */
-	public static DDMStructure fetchByClassNameId_Last(
-		long classNameId, OrderByComparator<DDMStructure> orderByComparator) {
-
-		return getPersistence().fetchByClassNameId_Last(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm structures before and after the current ddm structure in the ordered set where classNameId = &#63;.
-	 *
-	 * @param structureId the primary key of the current ddm structure
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm structure
-	 * @throws NoSuchStructureException if a ddm structure with the primary key could not be found
-	 */
-	public static DDMStructure[] findByClassNameId_PrevAndNext(
-			long structureId, long classNameId,
-			OrderByComparator<DDMStructure> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchStructureException {
-
-		return getPersistence().findByClassNameId_PrevAndNext(
-			structureId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Removes all the ddm structures where classNameId = &#63; from the database.
-	 *
-	 * @param classNameId the class name ID
-	 */
-	public static void removeByClassNameId(long classNameId) {
-		getPersistence().removeByClassNameId(classNameId);
-	}
-
-	/**
-	 * Returns the number of ddm structures where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @return the number of matching ddm structures
-	 */
-	public static int countByClassNameId(long classNameId) {
-		return getPersistence().countByClassNameId(classNameId);
 	}
 
 	/**
@@ -2100,7 +1915,7 @@ public class DDMStructureUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param classNameId the class name ID
 	 * @param start the lower bound of the range of ddm structures
 	 * @param end the upper bound of the range of ddm structures (not inclusive)
@@ -2360,6 +2175,88 @@ public class DDMStructureUtil {
 	 */
 	public static int countByC_C(long companyId, long classNameId) {
 		return getPersistence().countByC_C(companyId, classNameId);
+	}
+
+	/**
+	 * Returns the ddm structure where externalReferenceCode = &#63; and groupId = &#63; and classNameId = &#63; or throws a <code>NoSuchStructureException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @return the matching ddm structure
+	 * @throws NoSuchStructureException if a matching ddm structure could not be found
+	 */
+	public static DDMStructure findByERC_G_C(
+			String externalReferenceCode, long groupId, long classNameId)
+		throws com.liferay.dynamic.data.mapping.exception.
+			NoSuchStructureException {
+
+		return getPersistence().findByERC_G_C(
+			externalReferenceCode, groupId, classNameId);
+	}
+
+	/**
+	 * Returns the ddm structure where externalReferenceCode = &#63; and groupId = &#63; and classNameId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @return the matching ddm structure, or <code>null</code> if a matching ddm structure could not be found
+	 */
+	public static DDMStructure fetchByERC_G_C(
+		String externalReferenceCode, long groupId, long classNameId) {
+
+		return getPersistence().fetchByERC_G_C(
+			externalReferenceCode, groupId, classNameId);
+	}
+
+	/**
+	 * Returns the ddm structure where externalReferenceCode = &#63; and groupId = &#63; and classNameId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching ddm structure, or <code>null</code> if a matching ddm structure could not be found
+	 */
+	public static DDMStructure fetchByERC_G_C(
+		String externalReferenceCode, long groupId, long classNameId,
+		boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G_C(
+			externalReferenceCode, groupId, classNameId, useFinderCache);
+	}
+
+	/**
+	 * Removes the ddm structure where externalReferenceCode = &#63; and groupId = &#63; and classNameId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @return the ddm structure that was removed
+	 */
+	public static DDMStructure removeByERC_G_C(
+			String externalReferenceCode, long groupId, long classNameId)
+		throws com.liferay.dynamic.data.mapping.exception.
+			NoSuchStructureException {
+
+		return getPersistence().removeByERC_G_C(
+			externalReferenceCode, groupId, classNameId);
+	}
+
+	/**
+	 * Returns the number of ddm structures where externalReferenceCode = &#63; and groupId = &#63; and classNameId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @return the number of matching ddm structures
+	 */
+	public static int countByERC_G_C(
+		String externalReferenceCode, long groupId, long classNameId) {
+
+		return getPersistence().countByERC_G_C(
+			externalReferenceCode, groupId, classNameId);
 	}
 
 	/**
@@ -3162,7 +3059,7 @@ public class DDMStructureUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DDMStructureModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param classNameId the class name ID
 	 * @param name the name
 	 * @param description the description
@@ -3411,25 +3308,13 @@ public class DDMStructureUtil {
 	}
 
 	public static DDMStructurePersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<DDMStructurePersistence, DDMStructurePersistence> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(DDMStructurePersistence.class);
-
-		ServiceTracker<DDMStructurePersistence, DDMStructurePersistence>
-			serviceTracker =
-				new ServiceTracker
-					<DDMStructurePersistence, DDMStructurePersistence>(
-						bundle.getBundleContext(),
-						DDMStructurePersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(DDMStructurePersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile DDMStructurePersistence _persistence;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.spring.mvc.portlet.internal;
@@ -17,6 +8,7 @@ package com.liferay.project.templates.spring.mvc.portlet.internal;
 import com.liferay.project.templates.extensions.ProjectTemplateCustomizer;
 import com.liferay.project.templates.extensions.ProjectTemplatesArgs;
 import com.liferay.project.templates.extensions.util.FileUtil;
+import com.liferay.project.templates.extensions.util.VersionUtil;
 
 import java.io.File;
 
@@ -57,7 +49,9 @@ public class SpringMVCPortletProjectTemplateCustomizer
 
 		File buildDir = projectPath.toFile();
 
-		File viewsDir = new File(buildDir, "src/main/webapp/WEB-INF/views");
+		File webappDir = new File(buildDir, "src/main/webapp");
+
+		File viewsDir = new File(webappDir, "WEB-INF/views");
 
 		String packageName = projectTemplatesArgs.getPackageName();
 
@@ -79,6 +73,31 @@ public class SpringMVCPortletProjectTemplateCustomizer
 		if (viewType.equals("jsp") || framework.equals("portletmvc4spring")) {
 			FileUtil.deleteDir(spring4JavaPkgDir.toPath());
 		}
+
+		String liferayVersion = projectTemplatesArgs.getLiferayVersion();
+
+		String minorVersionString = String.valueOf(
+			VersionUtil.getMinorVersion(liferayVersion));
+
+		if (VersionUtil.isLiferayQuarterlyVersion(liferayVersion)) {
+			minorVersionString = "4";
+		}
+
+		File liferayPortletXML = new File(
+			webappDir, "WEB-INF/liferay-display.xml");
+
+		File liferayDisplayXML = new File(
+			webappDir, "WEB-INF/liferay-portlet.xml");
+
+		FileUtil.replaceString(
+			liferayDisplayXML, "7.0", "7." + minorVersionString);
+		FileUtil.replaceString(
+			liferayDisplayXML, "7_0", "7_" + minorVersionString);
+
+		FileUtil.replaceString(
+			liferayPortletXML, "7.0", "7." + minorVersionString);
+		FileUtil.replaceString(
+			liferayPortletXML, "7_0", "7_" + minorVersionString);
 	}
 
 	@Override
@@ -103,6 +122,12 @@ public class SpringMVCPortletProjectTemplateCustomizer
 		setProperty(
 			properties, "viewType",
 			springMVCPortletProjectTemplatesArgsExt.getViewType());
+
+		boolean jakartaCompatible = VersionUtil.isJakartaCompatibleVersion(
+			projectTemplatesArgs.getLiferayVersion());
+
+		setProperty(
+			properties, "jakartaCompatible", String.valueOf(jakartaCompatible));
 	}
 
 	private static final Pattern _jspPattern = Pattern.compile(".*.html");

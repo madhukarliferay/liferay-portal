@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.util.dao.orm;
@@ -66,10 +57,6 @@ public class CustomSQLUtil {
 
 	public static boolean isVendorOracle() {
 		return _customSQLUtil._customSQL.isVendorOracle();
-	}
-
-	public static boolean isVendorSybase() {
-		return _customSQLUtil._customSQL.isVendorSybase();
 	}
 
 	public static String[] keywords(String keywords) {
@@ -147,8 +134,10 @@ public class CustomSQLUtil {
 			sql, field, operator, last, values);
 	}
 
-	public static String replaceOrderBy(String sql, OrderByComparator<?> obc) {
-		return _customSQLUtil._customSQL.replaceOrderBy(sql, obc);
+	public static String replaceOrderBy(
+		String sql, OrderByComparator<?> orderByComparator) {
+
+		return _customSQLUtil._customSQL.replaceOrderBy(sql, orderByComparator);
 	}
 
 	private CustomSQLUtil() {
@@ -157,8 +146,8 @@ public class CustomSQLUtil {
 		try {
 			customSQL = new CustomSQL();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		_customSQL = customSQL;

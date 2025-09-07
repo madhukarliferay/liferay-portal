@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -126,6 +118,8 @@ public class KaleoTaskPersistenceTest {
 
 		newKaleoTask.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKaleoTask.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKaleoTask.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoTask.setCompanyId(RandomTestUtil.nextLong());
@@ -137,6 +131,8 @@ public class KaleoTaskPersistenceTest {
 		newKaleoTask.setCreateDate(RandomTestUtil.nextDate());
 
 		newKaleoTask.setModifiedDate(RandomTestUtil.nextDate());
+
+		newKaleoTask.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		newKaleoTask.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 
@@ -154,6 +150,9 @@ public class KaleoTaskPersistenceTest {
 		Assert.assertEquals(
 			existingKaleoTask.getMvccVersion(), newKaleoTask.getMvccVersion());
 		Assert.assertEquals(
+			existingKaleoTask.getCtCollectionId(),
+			newKaleoTask.getCtCollectionId());
+		Assert.assertEquals(
 			existingKaleoTask.getKaleoTaskId(), newKaleoTask.getKaleoTaskId());
 		Assert.assertEquals(
 			existingKaleoTask.getGroupId(), newKaleoTask.getGroupId());
@@ -169,6 +168,9 @@ public class KaleoTaskPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingKaleoTask.getModifiedDate()),
 			Time.getShortTimestamp(newKaleoTask.getModifiedDate()));
+		Assert.assertEquals(
+			existingKaleoTask.getKaleoDefinitionId(),
+			newKaleoTask.getKaleoDefinitionId());
 		Assert.assertEquals(
 			existingKaleoTask.getKaleoDefinitionVersionId(),
 			newKaleoTask.getKaleoDefinitionVersionId());
@@ -226,11 +228,11 @@ public class KaleoTaskPersistenceTest {
 
 	protected OrderByComparator<KaleoTask> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KaleoTask", "mvccVersion", true, "kaleoTaskId", true, "groupId",
-			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true,
-			"kaleoDefinitionVersionId", true, "kaleoNodeId", true, "name", true,
-			"description", true);
+			"KaleoTask", "mvccVersion", true, "ctCollectionId", true,
+			"kaleoTaskId", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true, "modifiedDate", true,
+			"kaleoDefinitionId", true, "kaleoDefinitionVersionId", true,
+			"kaleoNodeId", true, "name", true, "description", true);
 	}
 
 	@Test
@@ -448,13 +450,56 @@ public class KaleoTaskPersistenceTest {
 
 		_persistence.clearCache();
 
-		KaleoTask existingKaleoTask = _persistence.findByPrimaryKey(
-			newKaleoTask.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newKaleoTask.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		KaleoTask newKaleoTask = addKaleoTask();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			KaleoTask.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"kaleoTaskId", newKaleoTask.getKaleoTaskId()));
+
+		List<KaleoTask> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(KaleoTask kaleoTask) {
 		Assert.assertEquals(
-			Long.valueOf(existingKaleoTask.getKaleoNodeId()),
+			Long.valueOf(kaleoTask.getKaleoNodeId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKaleoTask, "getOriginalKaleoNodeId", new Class<?>[0]));
+				kaleoTask, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "kaleoNodeId"));
 	}
 
 	protected KaleoTask addKaleoTask() throws Exception {
@@ -463,6 +508,8 @@ public class KaleoTaskPersistenceTest {
 		KaleoTask kaleoTask = _persistence.create(pk);
 
 		kaleoTask.setMvccVersion(RandomTestUtil.nextLong());
+
+		kaleoTask.setCtCollectionId(RandomTestUtil.nextLong());
 
 		kaleoTask.setGroupId(RandomTestUtil.nextLong());
 
@@ -475,6 +522,8 @@ public class KaleoTaskPersistenceTest {
 		kaleoTask.setCreateDate(RandomTestUtil.nextDate());
 
 		kaleoTask.setModifiedDate(RandomTestUtil.nextDate());
+
+		kaleoTask.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		kaleoTask.setKaleoDefinitionVersionId(RandomTestUtil.nextLong());
 

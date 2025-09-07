@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.scr.reference.dynamic.greedy.test.test;
@@ -17,7 +8,7 @@ package com.liferay.scr.reference.dynamic.greedy.test.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.scr.reference.dynamic.greedy.test.ComponentController;
@@ -132,13 +123,14 @@ public class SCRReferenceDynamicGreedyTest {
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("reference.cardinality", referenceCardinality);
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"reference.cardinality", referenceCardinality
+			).build();
 
 		_componentController.enabledComponent(name);
 
-		ServiceRegistration<?> serviceRegistration =
+		ServiceRegistration<?> serviceRegistration1 =
 			bundleContext.registerService(Object.class, _SERVICE_1, properties);
 
 		ServiceTracker<DynamicGreedyComponent, DynamicGreedyComponent>
@@ -171,7 +163,7 @@ public class SCRReferenceDynamicGreedyTest {
 
 			bindingCalls.add("step2");
 
-			serviceRegistration.unregister();
+			serviceRegistration1.unregister();
 
 			bindingCalls.add("step3");
 
@@ -210,13 +202,14 @@ public class SCRReferenceDynamicGreedyTest {
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("field.option", fieldOption);
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"field.option", fieldOption
+			).build();
 
 		_componentController.enabledComponent(name);
 
-		ServiceRegistration<?> serviceRegistration =
+		ServiceRegistration<?> serviceRegistration1 =
 			bundleContext.registerService(String.class, _SERVICE_1, properties);
 
 		ServiceTracker<DynamicGreedyComponent, DynamicGreedyComponent>
@@ -224,9 +217,8 @@ public class SCRReferenceDynamicGreedyTest {
 				bundleContext,
 				bundleContext.createFilter(
 					StringBundler.concat(
-						"(&(objectClass=",
-						DynamicGreedyComponent.class.getName(),
-						")(field.option=", fieldOption, "))")),
+						"(&(field.option=", fieldOption, ")(objectClass=",
+						DynamicGreedyComponent.class.getName(), "))")),
 				null);
 
 		serviceTracker.open();
@@ -261,7 +253,7 @@ public class SCRReferenceDynamicGreedyTest {
 			Assert.assertEquals(
 				Arrays.asList(_SERVICE_1, _SERVICE_2), bindingCalls);
 
-			serviceRegistration.unregister();
+			serviceRegistration1.unregister();
 
 			if (update) {
 				Assert.assertSame(
@@ -279,7 +271,7 @@ public class SCRReferenceDynamicGreedyTest {
 
 			properties.remove("service.ranking");
 
-			serviceRegistration = bundleContext.registerService(
+			serviceRegistration1 = bundleContext.registerService(
 				String.class, _SERVICE_1, properties);
 
 			if (update) {
@@ -302,7 +294,7 @@ public class SCRReferenceDynamicGreedyTest {
 					Arrays.asList(_SERVICE_1, _SERVICE_2), bindingCalls);
 			}
 
-			serviceRegistration.unregister();
+			serviceRegistration1.unregister();
 
 			serviceRegistration2.unregister();
 

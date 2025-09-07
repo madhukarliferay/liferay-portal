@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.exportimport.configuration;
@@ -23,11 +14,10 @@ import com.liferay.portal.security.ldap.configuration.CompanyScopedConfiguration
  * @author Michael C. Han
  */
 @ExtendedObjectClassDefinition(
-	category = "ldap", factoryInstanceLabelAttribute = "companyId",
-	scope = ExtendedObjectClassDefinition.Scope.COMPANY
+	category = "ldap", scope = ExtendedObjectClassDefinition.Scope.COMPANY,
+	visibilityControllerKey = "ldap-import"
 )
 @Meta.OCD(
-	factory = true,
 	id = "com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration",
 	localization = "content/Language", name = "ldap-import-configuration-name"
 )
@@ -45,13 +35,15 @@ public interface LDAPImportConfiguration extends CompanyScopedConfiguration {
 	)
 	public boolean importOnStartup();
 
-	@Meta.AD(deflt = "10", name = "import-interval", required = false)
+	@Meta.AD(
+		deflt = "10", min = "1", name = "import-interval", required = false
+	)
 	public int importInterval();
 
 	@Meta.AD(
 		deflt = "user", description = "import-method-help",
-		name = "import-method", optionValues = {"group", "user"},
-		required = false
+		name = "import-method", optionLabels = {"group", "user"},
+		optionValues = {"group", "user"}, required = false
 	)
 	public String importMethod();
 
@@ -62,7 +54,7 @@ public interface LDAPImportConfiguration extends CompanyScopedConfiguration {
 	public long importLockExpirationTime();
 
 	@Meta.AD(
-		deflt = "auth-type", name = "import-user-sync-strategy",
+		deflt = "auth-type", name = "import-user-synchronization-strategy",
 		optionValues = {"auth-type", "uuid"}, required = false
 	)
 	public String importUserSyncStrategy();

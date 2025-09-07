@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.jdbc.postgresql;
@@ -33,19 +24,27 @@ public class PostgreSQLJDBCUtil {
 	public static byte[] getLargeObject(ResultSet resultSet, String name)
 		throws SQLException {
 
+		long id = resultSet.getLong(name);
+
+		if (id == 0) {
+			return null;
+		}
+
 		Statement statement = resultSet.getStatement();
 
 		Connection connection = statement.getConnection();
 
-		connection.setAutoCommit(false);
+		boolean autoCommit = connection.getAutoCommit();
+
+		if (autoCommit) {
+			connection.setAutoCommit(false);
+		}
 
 		try {
 			PGConnection pgConnection = connection.unwrap(PGConnection.class);
 
 			LargeObjectManager largeObjectManager =
 				pgConnection.getLargeObjectAPI();
-
-			long id = resultSet.getLong(name);
 
 			LargeObject largeObject = largeObjectManager.open(
 				id, LargeObjectManager.READ);
@@ -59,18 +58,16 @@ public class PostgreSQLJDBCUtil {
 			return bytes;
 		}
 		finally {
-			connection.setAutoCommit(true);
+			if (autoCommit) {
+				connection.setAutoCommit(true);
+			}
 		}
 	}
 
 	public static boolean isPGStatement(Statement statement)
 		throws SQLException {
 
-		if (statement.isWrapperFor(PGStatement.class)) {
-			return true;
-		}
-
-		return false;
+		return statement.isWrapperFor(PGStatement.class);
 	}
 
 	public static void setLargeObject(
@@ -79,7 +76,11 @@ public class PostgreSQLJDBCUtil {
 
 		Connection connection = preparedStatement.getConnection();
 
-		connection.setAutoCommit(false);
+		boolean autoCommit = connection.getAutoCommit();
+
+		if (autoCommit) {
+			connection.setAutoCommit(false);
+		}
 
 		try {
 			PGConnection pgConnection = connection.unwrap(PGConnection.class);
@@ -100,7 +101,9 @@ public class PostgreSQLJDBCUtil {
 			preparedStatement.setLong(index, id);
 		}
 		finally {
-			connection.setAutoCommit(true);
+			if (autoCommit) {
+				connection.setAutoCommit(true);
+			}
 		}
 	}
 

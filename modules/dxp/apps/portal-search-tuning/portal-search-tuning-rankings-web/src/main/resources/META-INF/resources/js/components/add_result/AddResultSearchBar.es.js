@@ -1,16 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
+import ClayLayout from '@clayui/layout';
 import {PropTypes} from 'prop-types';
 import React from 'react';
 
@@ -22,9 +17,9 @@ const AddResultSearchBar = ({
 	onSearchKeyDown,
 	onSearchQueryChange,
 	onSearchSubmit,
-	searchQuery
+	searchQuery,
 }) => (
-	<div className="add-result-container container-fluid">
+	<ClayLayout.ContainerFluid className="add-result-container">
 		<div className="management-bar navbar-expand-md">
 			<div className="navbar-form navbar-form-autofit">
 				<div className="input-group">
@@ -46,6 +41,7 @@ const AddResultSearchBar = ({
 
 						<div className="input-group-inset-item input-group-inset-item-after">
 							<ClayButton
+								aria-label={Liferay.Language.get('search')}
 								displayType="unstyled"
 								onClick={onSearchSubmit}
 							>
@@ -56,18 +52,18 @@ const AddResultSearchBar = ({
 				</div>
 			</div>
 		</div>
-	</div>
+	</ClayLayout.ContainerFluid>
 );
 
 AddResultSearchBar.propTypes = {
 	onSearchKeyDown: PropTypes.func.isRequired,
 	onSearchQueryChange: PropTypes.func.isRequired,
 	onSearchSubmit: PropTypes.func.isRequired,
-	searchQuery: PropTypes.string
+	searchQuery: PropTypes.string,
 };
 
 AddResultSearchBar.defaultProps = {
-	searchQuery: ''
+	searchQuery: '',
 };
 
 export default AddResultSearchBar;

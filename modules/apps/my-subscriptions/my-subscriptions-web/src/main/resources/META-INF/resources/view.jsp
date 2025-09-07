@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,23 +10,32 @@
 <portlet:actionURL name="unsubscribe" var="unsubscribeURL" />
 
 <%
+String redirect = ParamUtil.getString(request, "redirect");
+
+String backURL = ParamUtil.getString(request, "backURL", redirect);
+
 MySubscriptionsManagementToolbarDisplayContext mySubscriptionsManagementToolbarDisplayContext = new MySubscriptionsManagementToolbarDisplayContext(request, liferayPortletResponse, user);
 
 int subscriptionsCount = mySubscriptionsManagementToolbarDisplayContext.getTotalItems();
+
+if (Validator.isNotNull(backURL)) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(backURL);
+}
 %>
 
 <clay:management-toolbar
 	actionDropdownItems="<%= mySubscriptionsManagementToolbarDisplayContext.getActionDropdownItems() %>"
-	componentId="mySubscriptionsManagementToolbar"
 	disabled="<%= mySubscriptionsManagementToolbarDisplayContext.isDisabled() %>"
 	itemsTotal="<%= subscriptionsCount %>"
+	propsTransformer="{MySubscriptionsManagementToolbarPropsTransformer} from my-subscriptions-web"
 	searchContainerId="subscriptions"
 	selectable="<%= mySubscriptionsManagementToolbarDisplayContext.isSelectable() %>"
 	showSearch="<%= mySubscriptionsManagementToolbarDisplayContext.isShowSearch() %>"
 />
 
-<div class="container-fluid-1280">
-	<aui:form action="<%= unsubscribeURL %>" method="get" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "unsubscribe();" %>'>
+<clay:container-fluid>
+	<aui:form action="<%= unsubscribeURL %>" method="get" name="fm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "unsubscribe();" %>'>
 		<liferay-portlet:renderURLParams varImpl="portletURL" />
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 		<aui:input name="subscriptionIds" type="hidden" />
@@ -56,7 +56,7 @@ int subscriptionsCount = mySubscriptionsManagementToolbarDisplayContext.getTotal
 				total="<%= subscriptionsCount %>"
 			>
 				<liferay-ui:search-container-results
-					results="<%= SubscriptionLocalServiceUtil.getUserSubscriptions(user.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), new SubscriptionClassNameIdComparator(true)) %>"
+					results="<%= SubscriptionLocalServiceUtil.getUserSubscriptions(user.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), SubscriptionClassNameIdComparator.getInstance(true)) %>"
 				/>
 
 				<liferay-ui:search-container-row
@@ -67,7 +67,7 @@ int subscriptionsCount = mySubscriptionsManagementToolbarDisplayContext.getTotal
 				>
 
 					<%
-					AssetRenderer assetRenderer = MySubscriptionsUtil.getAssetRenderer(subscription.getClassName(), subscription.getClassPK());
+					AssetRenderer<?> assetRenderer = MySubscriptionsUtil.getAssetRenderer(subscription.getClassName(), subscription.getClassPK());
 
 					String rowURL = null;
 
@@ -88,7 +88,7 @@ int subscriptionsCount = mySubscriptionsManagementToolbarDisplayContext.getTotal
 					<liferay-ui:search-container-column-text
 						href="<%= rowURL %>"
 						name="asset-type"
-						value="<%= ResourceActionsUtil.getModelResource(locale, subscription.getClassName()) %>"
+						value="<%= MySubscriptionsUtil.getAssetTypeDescription(locale, subscription.getClassName()) %>"
 					/>
 
 					<liferay-ui:search-container-column-date
@@ -111,71 +111,15 @@ int subscriptionsCount = mySubscriptionsManagementToolbarDisplayContext.getTotal
 			</liferay-ui:search-container>
 		</aui:fieldset>
 	</aui:form>
-</div>
+</clay:container-fluid>
 
 <aui:script>
-	Liferay.provide(
-		window,
-		'<portlet:namespace />displayPopup',
-		function(url, title) {
-			Liferay.Util.Window.getWindow({
-				dialog: {
-					align: {
-						node: null,
-						points: ['tc', 'tc']
-					},
-					constrain2view: true,
-					cssClass: 'portlet-my-subscription',
-					modal: true,
-					resizable: true,
-					width: 950
-				},
-				title: title,
-				uri: url
-			});
-		},
-		['liferay-util-window']
-	);
-</aui:script>
-
-<aui:script sandbox="<%= true %>">
-	var unsubscribe = function() {
-		var form = document.getElementById('<portlet:namespace />fm');
-
-		if (form) {
-			form.setAttribute('method', 'post');
-
-			var subscriptionIds = form.querySelector(
-				'#<portlet:namespace />subscriptionIds'
-			);
-
-			if (subscriptionIds) {
-				subscriptionIds.setAttribute(
-					'value',
-					Liferay.Util.listCheckedExcept(
-						form,
-						'<portlet:namespace />allRowIds'
-					)
-				);
-
-				submitForm(form);
-			}
-		}
-	};
-
-	var ACTIONS = {
-		unsubscribe: unsubscribe
-	};
-
-	Liferay.componentReady('mySubscriptionsManagementToolbar').then(function(
-		managementToolbar
-	) {
-		managementToolbar.on('actionItemClicked', function(event) {
-			var itemData = event.data.item.data;
-
-			if (itemData && itemData.action && ACTIONS[itemData.action]) {
-				ACTIONS[itemData.action]();
-			}
+	window['<portlet:namespace />displayPopup'] = function (url, title) {
+		Liferay.Util.openModal({
+			iframeBodyCssClass: 'portlet-my-subscription',
+			size: 'full-screen',
+			title: title,
+			url: url,
 		});
-	});
+	};
 </aui:script>

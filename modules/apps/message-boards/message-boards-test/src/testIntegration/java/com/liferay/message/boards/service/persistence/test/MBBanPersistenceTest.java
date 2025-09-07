@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -124,6 +115,10 @@ public class MBBanPersistenceTest {
 
 		MBBan newMBBan = _persistence.create(pk);
 
+		newMBBan.setMvccVersion(RandomTestUtil.nextLong());
+
+		newMBBan.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newMBBan.setUuid(RandomTestUtil.randomString());
 
 		newMBBan.setGroupId(RandomTestUtil.nextLong());
@@ -147,6 +142,10 @@ public class MBBanPersistenceTest {
 		MBBan existingMBBan = _persistence.findByPrimaryKey(
 			newMBBan.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingMBBan.getMvccVersion(), newMBBan.getMvccVersion());
+		Assert.assertEquals(
+			existingMBBan.getCtCollectionId(), newMBBan.getCtCollectionId());
 		Assert.assertEquals(existingMBBan.getUuid(), newMBBan.getUuid());
 		Assert.assertEquals(existingMBBan.getBanId(), newMBBan.getBanId());
 		Assert.assertEquals(existingMBBan.getGroupId(), newMBBan.getGroupId());
@@ -249,9 +248,10 @@ public class MBBanPersistenceTest {
 
 	protected OrderByComparator<MBBan> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"MBBan", "uuid", true, "banId", true, "groupId", true, "companyId",
-			true, "userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "banUserId", true, "lastPublishDate", true);
+			"MBBan", "mvccVersion", true, "ctCollectionId", true, "uuid", true,
+			"banId", true, "groupId", true, "companyId", true, "userId", true,
+			"userName", true, "createDate", true, "modifiedDate", true,
+			"banUserId", true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -458,33 +458,80 @@ public class MBBanPersistenceTest {
 
 		_persistence.clearCache();
 
-		MBBan existingMBBan = _persistence.findByPrimaryKey(
-			newMBBan.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newMBBan.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingMBBan.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingMBBan, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		MBBan newMBBan = addMBBan();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			MBBan.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("banId", newMBBan.getBanId()));
+
+		List<MBBan> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(MBBan mbBan) {
 		Assert.assertEquals(
-			Long.valueOf(existingMBBan.getGroupId()),
+			mbBan.getUuid(),
+			ReflectionTestUtil.invoke(
+				mbBan, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(mbBan.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBBan, "getOriginalGroupId", new Class<?>[0]));
+				mbBan, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingMBBan.getGroupId()),
+			Long.valueOf(mbBan.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBBan, "getOriginalGroupId", new Class<?>[0]));
+				mbBan, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingMBBan.getBanUserId()),
+			Long.valueOf(mbBan.getBanUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBBan, "getOriginalBanUserId", new Class<?>[0]));
+				mbBan, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"banUserId"));
 	}
 
 	protected MBBan addMBBan() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		MBBan mbBan = _persistence.create(pk);
+
+		mbBan.setMvccVersion(RandomTestUtil.nextLong());
+
+		mbBan.setCtCollectionId(RandomTestUtil.nextLong());
 
 		mbBan.setUuid(RandomTestUtil.randomString());
 

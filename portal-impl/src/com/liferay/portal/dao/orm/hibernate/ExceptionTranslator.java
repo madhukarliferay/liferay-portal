@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.hibernate;
@@ -31,18 +22,18 @@ import org.hibernate.StaleObjectStateException;
  */
 public class ExceptionTranslator {
 
-	public static ORMException translate(Exception e) {
-		if (e instanceof org.hibernate.ObjectNotFoundException) {
-			return new ObjectNotFoundException(e);
+	public static ORMException translate(Exception exception) {
+		if (exception instanceof org.hibernate.ObjectNotFoundException) {
+			return new ObjectNotFoundException(exception);
 		}
 
-		return new ORMException(e);
+		return new ORMException(exception);
 	}
 
 	public static ORMException translate(
-		Exception e, Session session, Object object) {
+		Exception exception, Session session, Object object) {
 
-		if (e instanceof StaleObjectStateException) {
+		if (exception instanceof StaleObjectStateException) {
 			BaseModel<?> baseModel = (BaseModel<?>)object;
 
 			Object currentObject = session.get(
@@ -68,14 +59,14 @@ public class ExceptionTranslator {
 						jsonSerializer.serialize(object),
 						" is stale in comparison to ",
 						jsonSerializer.serialize(currentObject)),
-					e);
+					exception);
 			}
 			finally {
 				PermissionThreadLocal.setPermissionChecker(permissionChecker);
 			}
 		}
 
-		return new ORMException(e);
+		return new ORMException(exception);
 	}
 
 }

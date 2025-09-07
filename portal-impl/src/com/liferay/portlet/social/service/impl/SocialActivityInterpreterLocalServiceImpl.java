@@ -1,51 +1,43 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapperFactory;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.social.service.base.SocialActivityInterpreterLocalServiceBaseImpl;
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceRegistration;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
-import com.liferay.registry.collections.ServiceRegistrationMap;
-import com.liferay.registry.collections.ServiceRegistrationMapImpl;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivityFeedEntry;
 import com.liferay.social.kernel.model.SocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialActivitySet;
 import com.liferay.social.kernel.model.impl.SocialActivityInterpreterImpl;
 import com.liferay.social.kernel.model.impl.SocialRequestInterpreterImpl;
+import com.liferay.social.kernel.service.SocialActivityLocalService;
+import com.liferay.social.kernel.service.SocialActivitySetLocalService;
+import com.liferay.social.kernel.service.persistence.SocialActivityPersistence;
 
-import java.util.ArrayList;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * The social activity interpreter local service. Activity interpreters are
@@ -67,80 +59,83 @@ import javax.servlet.http.HttpServletRequest;
 public class SocialActivityInterpreterLocalServiceImpl
 	extends SocialActivityInterpreterLocalServiceBaseImpl {
 
-	/**
-	 * Adds the activity interpreter to the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
-	@Override
-	public void addActivityInterpreter(
-		SocialActivityInterpreter activityInterpreter) {
-
-		Registry registry = RegistryUtil.getRegistry();
-
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			"javax.portlet.name",
-			() -> {
-				SocialActivityInterpreterImpl socialActivityInterpreterImpl =
-					(SocialActivityInterpreterImpl)activityInterpreter;
-
-				return socialActivityInterpreterImpl.getPortletId();
-			}
-		).build();
-
-		ServiceRegistration<SocialActivityInterpreter> serviceRegistration =
-			registry.registerService(
-				SocialActivityInterpreter.class, activityInterpreter,
-				properties);
-
-		_serviceRegistrations.put(activityInterpreter, serviceRegistration);
-	}
-
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
 
-		Registry registry = RegistryUtil.getRegistry();
+		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
+			_bundleContext, SocialActivityInterpreter.class,
+			"(jakarta.portlet.name=*)",
+			ServiceReferenceMapperFactory.createFromFunction(
+				_bundleContext, SocialActivityInterpreter::getSelector),
+			new ServiceTrackerCustomizer
+				<SocialActivityInterpreter, SocialActivityInterpreter>() {
 
-		Filter filter = registry.getFilter(
-			"(&(javax.portlet.name=*)(objectClass=" +
-				SocialActivityInterpreter.class.getName() + "))");
+				@Override
+				public SocialActivityInterpreter addingService(
+					ServiceReference<SocialActivityInterpreter>
+						serviceReference) {
 
-		_serviceTracker = registry.trackServices(
-			filter, new SocialActivityInterpreterServiceTrackerCustomizer());
+					SocialActivityInterpreter activityInterpreter =
+						_bundleContext.getService(serviceReference);
 
-		_serviceTracker.open();
+					if (!(activityInterpreter instanceof
+							SocialRequestInterpreterImpl)) {
+
+						String portletId = (String)serviceReference.getProperty(
+							"jakarta.portlet.name");
+
+						activityInterpreter = new SocialActivityInterpreterImpl(
+							portletId, activityInterpreter);
+					}
+
+					return activityInterpreter;
+				}
+
+				@Override
+				public void modifiedService(
+					ServiceReference<SocialActivityInterpreter>
+						serviceReference,
+					SocialActivityInterpreter socialActivityInterpreter) {
+				}
+
+				@Override
+				public void removedService(
+					ServiceReference<SocialActivityInterpreter>
+						serviceReference,
+					SocialActivityInterpreter socialActivityInterpreter) {
+
+					_bundleContext.ungetService(serviceReference);
+				}
+
+			});
 	}
 
-	/**
-	 * Removes the activity interpreter from the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
 	@Override
-	public void deleteActivityInterpreter(
-		SocialActivityInterpreter activityInterpreter) {
+	public void destroy() {
+		super.destroy();
 
-		ServiceRegistration<SocialActivityInterpreter> serviceRegistration =
-			_serviceRegistrations.remove(activityInterpreter);
-
-		if (serviceRegistration != null) {
-			serviceRegistration.unregister();
-		}
+		_serviceTrackerMap.close();
 	}
 
 	@Override
 	public Map<String, List<SocialActivityInterpreter>>
 		getActivityInterpreters() {
 
-		return _activityInterpreters;
+		Map<String, List<SocialActivityInterpreter>> map = new HashMap<>();
+
+		for (String selector : _serviceTrackerMap.keySet()) {
+			map.put(selector, _serviceTrackerMap.getService(selector));
+		}
+
+		return map;
 	}
 
 	@Override
 	public List<SocialActivityInterpreter> getActivityInterpreters(
 		String selector) {
 
-		return _activityInterpreters.get(selector);
+		return _serviceTrackerMap.getService(selector);
 	}
 
 	/**
@@ -176,22 +171,25 @@ public class SocialActivityInterpreterLocalServiceImpl
 				WebKeys.THEME_DISPLAY);
 
 		try {
-			if (activity.getUserId() == themeDisplay.getDefaultUserId()) {
+			if (activity.getUserId() == themeDisplay.getGuestUserId()) {
 				return null;
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		if (activity.getMirrorActivityId() > 0) {
 			SocialActivity mirrorActivity = null;
 
 			try {
-				mirrorActivity = socialActivityLocalService.getActivity(
+				mirrorActivity = _socialActivityLocalService.getActivity(
 					activity.getMirrorActivityId());
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 
 			if (mirrorActivity != null) {
@@ -200,7 +198,7 @@ public class SocialActivityInterpreterLocalServiceImpl
 		}
 
 		List<SocialActivityInterpreter> activityInterpreters =
-			_activityInterpreters.get(selector);
+			_serviceTrackerMap.getService(selector);
 
 		if (activityInterpreters == null) {
 			return null;
@@ -247,16 +245,16 @@ public class SocialActivityInterpreterLocalServiceImpl
 				WebKeys.THEME_DISPLAY);
 
 		try {
-			if (activitySet.getUserId() == themeDisplay.getDefaultUserId()) {
+			if (activitySet.getUserId() == themeDisplay.getGuestUserId()) {
 				return null;
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		List<SocialActivityInterpreter> activityInterpreters =
-			_activityInterpreters.get(selector);
+			_serviceTrackerMap.getService(selector);
 
 		if (activityInterpreters == null) {
 			return null;
@@ -291,18 +289,18 @@ public class SocialActivityInterpreterLocalServiceImpl
 	@Override
 	public void updateActivitySet(long activityId) throws PortalException {
 		if (!PropsValues.SOCIAL_ACTIVITY_SETS_BUNDLING_ENABLED) {
-			socialActivitySetLocalService.addActivitySet(activityId);
+			_socialActivitySetLocalService.addActivitySet(activityId);
 
 			return;
 		}
 
 		List<SocialActivityInterpreter> activityInterpreters =
-			_activityInterpreters.get(
+			_serviceTrackerMap.getService(
 				PropsValues.SOCIAL_ACTIVITY_SETS_SELECTOR);
 
 		if (activityInterpreters != null) {
 			SocialActivity activity =
-				socialActivityPersistence.findByPrimaryKey(activityId);
+				_socialActivityPersistence.findByPrimaryKey(activityId);
 
 			String className = PortalUtil.getClassName(
 				activity.getClassNameId());
@@ -325,76 +323,18 @@ public class SocialActivityInterpreterLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		SocialActivityInterpreterLocalServiceImpl.class);
 
-	private final Map<String, List<SocialActivityInterpreter>>
-		_activityInterpreters = new HashMap<>();
-	private final ServiceRegistrationMap<SocialActivityInterpreter>
-		_serviceRegistrations = new ServiceRegistrationMapImpl<>();
-	private ServiceTracker<SocialActivityInterpreter, SocialActivityInterpreter>
-		_serviceTracker;
+	private final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
+	private ServiceTrackerMap<String, List<SocialActivityInterpreter>>
+		_serviceTrackerMap;
 
-	private class SocialActivityInterpreterServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<SocialActivityInterpreter, SocialActivityInterpreter> {
+	@BeanReference(type = SocialActivityLocalService.class)
+	private SocialActivityLocalService _socialActivityLocalService;
 
-		@Override
-		public SocialActivityInterpreter addingService(
-			ServiceReference<SocialActivityInterpreter> serviceReference) {
+	@BeanReference(type = SocialActivityPersistence.class)
+	private SocialActivityPersistence _socialActivityPersistence;
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			SocialActivityInterpreter activityInterpreter = registry.getService(
-				serviceReference);
-
-			if (!(activityInterpreter instanceof
-					SocialRequestInterpreterImpl)) {
-
-				String portletId = (String)serviceReference.getProperty(
-					"javax.portlet.name");
-
-				activityInterpreter = new SocialActivityInterpreterImpl(
-					portletId, activityInterpreter);
-			}
-
-			List<SocialActivityInterpreter> activityInterpreters =
-				_activityInterpreters.get(activityInterpreter.getSelector());
-
-			if (activityInterpreters == null) {
-				activityInterpreters = new ArrayList<>();
-			}
-
-			activityInterpreters.add(activityInterpreter);
-
-			_activityInterpreters.put(
-				activityInterpreter.getSelector(), activityInterpreters);
-
-			return activityInterpreter;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<SocialActivityInterpreter> serviceReference,
-			SocialActivityInterpreter activityInterpreter) {
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<SocialActivityInterpreter> serviceReference,
-			SocialActivityInterpreter activityInterpreter) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-
-			List<SocialActivityInterpreter> activityInterpreters =
-				_activityInterpreters.get(activityInterpreter.getSelector());
-
-			if (activityInterpreters == null) {
-				return;
-			}
-
-			activityInterpreters.remove(activityInterpreter);
-		}
-
-	}
+	@BeanReference(type = SocialActivitySetLocalService.class)
+	private SocialActivitySetLocalService _socialActivitySetLocalService;
 
 }

@@ -1,3 +1,0 @@
-dependencies {
-	compileOnly project(":util:portal-tools-data-partitioning-sql-builder")
-}

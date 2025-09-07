@@ -1,24 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.jaxrs.whiteboard.client.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.URLUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Application;
 
 import java.net.URL;
 
@@ -27,11 +25,6 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Set;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Application;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -64,37 +57,40 @@ public class JaxRsComponentRegistrationTest {
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("liferay.auth.verifier", false);
-		properties.put("liferay.oauth2", false);
-		properties.put("osgi.jaxrs.application.base", "/test-rest/greeter1");
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"liferay.auth.verifier", false
+			).put(
+				"liferay.oauth2", false
+			).put(
+				"osgi.jaxrs.application.base", "/rest-test/greeter1"
+			).build();
 
 		_serviceRegistrations.add(
 			bundleContext.registerService(
 				Application.class, new Greeter(), properties));
 
-		properties.put("osgi.jaxrs.application.base", "/test-rest/greeter2");
+		properties.put("osgi.jaxrs.application.base", "/rest-test/greeter2");
 
 		_serviceRegistrations.add(
 			bundleContext.registerService(
 				Application.class, new Greeter(), properties));
 
 		properties.put("addonable", Boolean.TRUE);
-		properties.put("osgi.jaxrs.application.base", "/test-rest/greeter3");
+		properties.put("osgi.jaxrs.application.base", "/rest-test/greeter3");
 
 		_serviceRegistrations.add(
 			bundleContext.registerService(
 				Application.class, new Greeter(), properties));
 
-		properties = new HashMapDictionary<>();
-
-		properties.put("osgi.jaxrs.application.select", "(addonable=true)");
-		properties.put("osgi.jaxrs.resource", Boolean.TRUE);
-
 		_serviceRegistrations.add(
 			bundleContext.registerService(
-				Object.class, new Addon(), properties));
+				Object.class, new Addon(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"osgi.jaxrs.application.select", "(addonable=true)"
+				).put(
+					"osgi.jaxrs.resource", Boolean.TRUE
+				).build()));
 	}
 
 	@AfterClass
@@ -109,21 +105,32 @@ public class JaxRsComponentRegistrationTest {
 	@Test
 	public void testIsRegistered() throws Exception {
 		URL url = new URL(
-			"http://localhost:8080/o/test-rest/greeter1/sayHello");
+			"http://localhost:8080/o/rest-test/greeter1/sayHello");
 
-		Assert.assertEquals("Hello.", StringUtil.read(url.openStream()));
+		Assert.assertEquals("Hello.", URLUtil.toString(url));
 
-		url = new URL("http://localhost:8080/o/test-rest/greeter2/sayHello");
+		url = new URL("http://localhost:8080/o/rest-test/greeter2/sayHello");
 
-		Assert.assertEquals("Hello.", StringUtil.read(url.openStream()));
+		Assert.assertEquals("Hello.", URLUtil.toString(url));
 
-		url = new URL("http://localhost:8080/o/test-rest/greeter3/sayHello");
+		url = new URL("http://localhost:8080/o/rest-test/greeter3/sayHello");
 
-		Assert.assertEquals("Hello.", StringUtil.read(url.openStream()));
+		Assert.assertEquals("Hello.", URLUtil.toString(url));
 
-		url = new URL("http://localhost:8080/o/test-rest/greeter3/addon");
+		url = new URL("http://localhost:8080/o/rest-test/greeter3/addon");
 
-		Assert.assertEquals("addon", StringUtil.read(url.openStream()));
+		Assert.assertEquals("addon", URLUtil.toString(url));
+	}
+
+	@Test(expected = Exception.class)
+	public void testServiceListIsUnavailable() throws Exception {
+		URL url = new URL("http://localhost:8080/o/soap-test/services");
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.OFF)) {
+
+			URLUtil.toString(url);
+		}
 	}
 
 	public static class Addon {

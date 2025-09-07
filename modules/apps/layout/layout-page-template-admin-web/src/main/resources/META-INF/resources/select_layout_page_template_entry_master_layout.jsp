@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,15 +19,18 @@ layoutPageTemplateEntry.setStatus(WorkflowConstants.STATUS_APPROVED);
 
 masterLayoutPageTemplateEntries.add(layoutPageTemplateEntry);
 
-masterLayoutPageTemplateEntries.addAll(LayoutPageTemplateEntryServiceUtil.getLayoutPageTemplateEntries(scopeGroupId, LayoutPageTemplateEntryTypeConstants.TYPE_MASTER_LAYOUT, WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null));
+masterLayoutPageTemplateEntries.addAll(LayoutPageTemplateEntryServiceUtil.getLayoutPageTemplateEntries(scopeGroupId, LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null));
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
+portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 renderResponse.setTitle(LanguageUtil.get(request, "select-master-page"));
 %>
 
-<div class="container-fluid-1280 mt-4">
+<clay:container-fluid
+	cssClass="container-view"
+>
 	<div class="lfr-search-container-wrapper">
 		<ul class="card-page card-page-equal-height">
 
@@ -44,9 +38,28 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-master-page"));
 			for (LayoutPageTemplateEntry masterLayoutPageTemplateEntry : masterLayoutPageTemplateEntries) {
 			%>
 
-				<li class="card-page-item col-md-4 col-sm-6">
+				<li class="card-page-item card-page-item-asset">
+
+					<%
+					SelectLayoutPageTemplateEntryMasterLayoutVerticalCard selectLayoutPageTemplateEntryMasterLayoutVerticalCard = new SelectLayoutPageTemplateEntryMasterLayoutVerticalCard(masterLayoutPageTemplateEntry, renderRequest, renderResponse);
+					%>
+
 					<clay:vertical-card
-						verticalCard="<%= new SelectLayoutPageTemplateEntryMasterLayoutVerticalCard(masterLayoutPageTemplateEntry, renderRequest, renderResponse) %>"
+						additionalProps='<%=
+							HashMapBuilder.<String, Object>put(
+								"addLayoutPageTemplateEntryUrl", selectLayoutPageTemplateEntryMasterLayoutVerticalCard.getAddLayoutPageTemplateEntryURL()
+							).put(
+								"dialogTitle", LanguageUtil.get(request, "add-page-template")
+							).put(
+								"mainFieldLabel", LanguageUtil.get(request, "name")
+							).put(
+								"mainFieldName", "name"
+							).put(
+								"mainFieldPlaceholder", LanguageUtil.get(request, "name")
+							).build()
+						%>'
+						propsTransformer="{SelectLayoutPageTemplateEntryMasterLayoutVerticalCardPropsTransformer} from layout-page-template-admin-web"
+						verticalCard="<%= selectLayoutPageTemplateEntryMasterLayoutVerticalCard %>"
 					/>
 				</li>
 
@@ -56,36 +69,4 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-master-page"));
 
 		</ul>
 	</div>
-</div>
-
-<aui:script require="metal-dom/src/all/dom as dom,frontend-js-web/liferay/modal/commands/OpenSimpleInputModal.es as openSimpleInputModal" sandbox="<%= true %>">
-	var addPageTemplateClickHandler = dom.delegate(
-		document.body,
-		'click',
-		'.add-master-page-action-option',
-		function(event) {
-			var data = event.delegateTarget.dataset;
-
-			event.preventDefault();
-
-			openSimpleInputModal.default({
-				dialogTitle: '<liferay-ui:message key="add-page-template" />',
-				formSubmitURL: data.addLayoutPageTemplateEntryUrl,
-				mainFieldLabel: '<liferay-ui:message key="name" />',
-				mainFieldName: 'name',
-				mainFieldPlaceholder: '<liferay-ui:message key="name" />',
-				namespace: '<portlet:namespace />',
-				spritemap:
-					'<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg'
-			});
-		}
-	);
-
-	function handleDestroyPortlet() {
-		addPageTemplateClickHandler.removeListener();
-
-		Liferay.detach('destroyPortlet', handleDestroyPortlet);
-	}
-
-	Liferay.on('destroyPortlet', handleDestroyPortlet);
-</aui:script>
+</clay:container-fluid>

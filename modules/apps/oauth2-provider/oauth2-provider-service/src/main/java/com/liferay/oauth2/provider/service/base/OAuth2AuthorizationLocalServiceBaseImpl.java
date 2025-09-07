@@ -1,29 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.base;
 
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
+import com.liferay.oauth2.provider.service.persistence.OAuth2AuthorizationFinder;
 import com.liferay.oauth2.provider.service.persistence.OAuth2AuthorizationPersistence;
-import com.liferay.oauth2.provider.service.persistence.OAuth2ScopeGrantFinder;
 import com.liferay.oauth2.provider.service.persistence.OAuth2ScopeGrantPersistence;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -32,22 +23,27 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
+
+import java.sql.Connection;
 
 import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -66,7 +62,7 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	implements AopService, IdentifiableOSGiService,
 			   OAuth2AuthorizationLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Use <code>OAuth2AuthorizationLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalServiceUtil</code>.
@@ -74,6 +70,10 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 
 	/**
 	 * Adds the o auth2 authorization to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was added
@@ -105,6 +105,10 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	/**
 	 * Deletes the o auth2 authorization with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2AuthorizationId the primary key of the o auth2 authorization
 	 * @return the o auth2 authorization that was removed
 	 * @throws PortalException if a o auth2 authorization with the primary key could not be found
@@ -121,6 +125,10 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	/**
 	 * Deletes the o auth2 authorization from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was removed
 	 */
@@ -130,6 +138,18 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 		OAuth2Authorization oAuth2Authorization) {
 
 		return oAuth2AuthorizationPersistence.remove(oAuth2Authorization);
+	}
+
+	@Override
+	public <T> T dslQuery(DSLQuery dslQuery) {
+		return oAuth2AuthorizationPersistence.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(DSLQuery dslQuery) {
+		Long count = dslQuery(dslQuery);
+
+		return count.intValue();
 	}
 
 	@Override
@@ -296,13 +316,37 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	 * @throws PortalException
 	 */
 	@Override
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
+
+		return oAuth2AuthorizationPersistence.create(
+			((Long)primaryKeyObj).longValue());
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement OAuth2AuthorizationLocalServiceImpl#deleteOAuth2Authorization(OAuth2Authorization) to avoid orphaned data");
+		}
 
 		return oAuth2AuthorizationLocalService.deleteOAuth2Authorization(
 			(OAuth2Authorization)persistedModel);
 	}
 
+	@Override
+	public BasePersistence<OAuth2Authorization> getBasePersistence() {
+		return oAuth2AuthorizationPersistence;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException {
@@ -341,6 +385,10 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	/**
 	 * Updates the o auth2 authorization in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was updated
 	 */
@@ -355,41 +403,41 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	/**
 	 */
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorization(
+	public boolean addOAuth2ScopeGrantOAuth2Authorization(
 		long oAuth2ScopeGrantId, long oAuth2AuthorizationId) {
 
-		oAuth2ScopeGrantPersistence.addOAuth2Authorization(
+		return oAuth2ScopeGrantPersistence.addOAuth2Authorization(
 			oAuth2ScopeGrantId, oAuth2AuthorizationId);
 	}
 
 	/**
 	 */
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorization(
+	public boolean addOAuth2ScopeGrantOAuth2Authorization(
 		long oAuth2ScopeGrantId, OAuth2Authorization oAuth2Authorization) {
 
-		oAuth2ScopeGrantPersistence.addOAuth2Authorization(
+		return oAuth2ScopeGrantPersistence.addOAuth2Authorization(
 			oAuth2ScopeGrantId, oAuth2Authorization);
 	}
 
 	/**
 	 */
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorizations(
+	public boolean addOAuth2ScopeGrantOAuth2Authorizations(
 		long oAuth2ScopeGrantId, long[] oAuth2AuthorizationIds) {
 
-		oAuth2ScopeGrantPersistence.addOAuth2Authorizations(
+		return oAuth2ScopeGrantPersistence.addOAuth2Authorizations(
 			oAuth2ScopeGrantId, oAuth2AuthorizationIds);
 	}
 
 	/**
 	 */
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorizations(
+	public boolean addOAuth2ScopeGrantOAuth2Authorizations(
 		long oAuth2ScopeGrantId,
 		List<OAuth2Authorization> oAuth2Authorizations) {
 
-		oAuth2ScopeGrantPersistence.addOAuth2Authorizations(
+		return oAuth2ScopeGrantPersistence.addOAuth2Authorizations(
 			oAuth2ScopeGrantId, oAuth2Authorizations);
 	}
 
@@ -529,6 +577,10 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 			oAuth2ScopeGrantId, oAuth2AuthorizationIds);
 	}
 
+	@Deactivate
+	protected void deactivate() {
+	}
+
 	@Override
 	public Class<?>[] getAopInterfaces() {
 		return new Class<?>[] {
@@ -567,22 +619,26 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	 * @param sql the sql query
 	 */
 	protected void runSQL(String sql) {
+		DataSource dataSource = oAuth2AuthorizationPersistence.getDataSource();
+
+		DB db = DBManagerUtil.getDB();
+
+		Connection currentConnection = CurrentConnectionUtil.getConnection(
+			dataSource);
+
 		try {
-			DataSource dataSource =
-				oAuth2AuthorizationPersistence.getDataSource();
+			if (currentConnection != null) {
+				db.runSQL(currentConnection, new String[] {sql});
 
-			DB db = DBManagerUtil.getDB();
+				return;
+			}
 
-			sql = db.buildSQL(sql);
-			sql = PortalUtil.transformSQL(sql);
-
-			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(
-				dataSource, sql);
-
-			sqlUpdate.update();
+			try (Connection connection = dataSource.getConnection()) {
+				db.runSQL(connection, new String[] {sql});
+			}
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
@@ -592,13 +648,16 @@ public abstract class OAuth2AuthorizationLocalServiceBaseImpl
 	protected OAuth2AuthorizationPersistence oAuth2AuthorizationPersistence;
 
 	@Reference
+	protected OAuth2AuthorizationFinder oAuth2AuthorizationFinder;
+
+	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
 	@Reference
 	protected OAuth2ScopeGrantPersistence oAuth2ScopeGrantPersistence;
 
-	@Reference
-	protected OAuth2ScopeGrantFinder oAuth2ScopeGrantFinder;
+	private static final Log _log = LogFactoryUtil.getLog(
+		OAuth2AuthorizationLocalServiceBaseImpl.class);
 
 }

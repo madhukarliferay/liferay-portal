@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder;
@@ -33,7 +24,8 @@ public class ServiceBuilderArgs {
 		"service.builder.modified.files";
 
 	public static final String[] READ_ONLY_PREFIXES = {
-		"dynamicQuery", "fetch", "get", "has", "is", "load", "reindex", "search"
+		"dslQuery", "dynamicQuery", "fetch", "get", "has", "is", "load",
+		"reindex", "search"
 	};
 
 	public static final String[] RESOURCE_ACTION_CONFIGS = {
@@ -62,6 +54,10 @@ public class ServiceBuilderArgs {
 
 	public String getImplDirName() {
 		return _implDirName;
+	}
+
+	public String[] getIncubationFeatures() {
+		return _incubationFeatures;
 	}
 
 	public String getInputFileName() {
@@ -188,6 +184,14 @@ public class ServiceBuilderArgs {
 
 	public void setImplDirName(String implDirName) {
 		_implDirName = implDirName;
+	}
+
+	public void setIncubationFeatures(String incubationFeatures) {
+		setIncubationFeatures(_split(incubationFeatures));
+	}
+
+	public void setIncubationFeatures(String[] incubationFeatures) {
+		_incubationFeatures = incubationFeatures;
 	}
 
 	public void setInputFileName(String inputFileName) {
@@ -372,13 +376,14 @@ public class ServiceBuilderArgs {
 	private int _databaseNameMaxLength = 30;
 	private String _hbmFileName = "src/META-INF/portal-hbm.xml";
 	private String _implDirName = "src";
+	private String[] _incubationFeatures = {};
 	private String _inputFileName = "service.xml";
 	private String[] _modelHintsConfigs = MODEL_HINTS_CONFIGS;
 	private boolean _modelHintsConfigsSet;
 	private String _modelHintsFileName = "src/META-INF/portal-model-hints.xml";
 	private boolean _osgiModule;
 	private String _pluginName;
-	private String _propsUtil = "com.liferay.portal.util.PropsUtil";
+	private String _propsUtil = "com.liferay.portal.kernel.util.PropsUtil";
 	private String[] _readOnlyPrefixes = READ_ONLY_PREFIXES;
 	private boolean _readOnlyPrefixesSet;
 	private String[] _resourceActionsConfigs = RESOURCE_ACTION_CONFIGS;

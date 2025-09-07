@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link UserIdMapperLocalService}.
@@ -25,6 +18,10 @@ public class UserIdMapperLocalServiceWrapper
 	implements ServiceWrapper<UserIdMapperLocalService>,
 			   UserIdMapperLocalService {
 
+	public UserIdMapperLocalServiceWrapper() {
+		this(null);
+	}
+
 	public UserIdMapperLocalServiceWrapper(
 		UserIdMapperLocalService userIdMapperLocalService) {
 
@@ -34,6 +31,10 @@ public class UserIdMapperLocalServiceWrapper
 	/**
 	 * Adds the user ID mapper to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserIdMapperLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userIdMapper the user ID mapper
 	 * @return the user ID mapper that was added
 	 */
@@ -42,6 +43,17 @@ public class UserIdMapperLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserIdMapper userIdMapper) {
 
 		return _userIdMapperLocalService.addUserIdMapper(userIdMapper);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _userIdMapperLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -71,6 +83,10 @@ public class UserIdMapperLocalServiceWrapper
 	/**
 	 * Deletes the user ID mapper with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserIdMapperLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userIdMapperId the primary key of the user ID mapper
 	 * @return the user ID mapper that was removed
 	 * @throws PortalException if a user ID mapper with the primary key could not be found
@@ -86,6 +102,10 @@ public class UserIdMapperLocalServiceWrapper
 	/**
 	 * Deletes the user ID mapper from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserIdMapperLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userIdMapper the user ID mapper
 	 * @return the user ID mapper that was removed
 	 */
@@ -99,6 +119,18 @@ public class UserIdMapperLocalServiceWrapper
 	@Override
 	public void deleteUserIdMappers(long userId) {
 		_userIdMapperLocalService.deleteUserIdMappers(userId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _userIdMapperLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _userIdMapperLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -218,10 +250,13 @@ public class UserIdMapperLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _userIdMapperLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -247,7 +282,7 @@ public class UserIdMapperLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.UserIdMapper getUserIdMapper(
-			long userId, java.lang.String type)
+			long userId, String type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _userIdMapperLocalService.getUserIdMapper(userId, type);
@@ -255,8 +290,7 @@ public class UserIdMapperLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.UserIdMapper
-			getUserIdMapperByExternalUserId(
-				java.lang.String type, java.lang.String externalUserId)
+			getUserIdMapperByExternalUserId(String type, String externalUserId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _userIdMapperLocalService.getUserIdMapperByExternalUserId(
@@ -300,8 +334,7 @@ public class UserIdMapperLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.UserIdMapper updateUserIdMapper(
-		long userId, java.lang.String type, java.lang.String description,
-		java.lang.String externalUserId) {
+		long userId, String type, String description, String externalUserId) {
 
 		return _userIdMapperLocalService.updateUserIdMapper(
 			userId, type, description, externalUserId);
@@ -309,6 +342,10 @@ public class UserIdMapperLocalServiceWrapper
 
 	/**
 	 * Updates the user ID mapper in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserIdMapperLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param userIdMapper the user ID mapper
 	 * @return the user ID mapper that was updated
@@ -318,6 +355,11 @@ public class UserIdMapperLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserIdMapper userIdMapper) {
 
 		return _userIdMapperLocalService.updateUserIdMapper(userIdMapper);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _userIdMapperLocalService.getBasePersistence();
 	}
 
 	@Override

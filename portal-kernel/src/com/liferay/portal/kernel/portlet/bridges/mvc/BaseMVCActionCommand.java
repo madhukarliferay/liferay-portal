@@ -1,21 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet.bridges.mvc;
 
-import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.Portlet;
@@ -23,28 +12,26 @@ import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
-import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
@@ -62,11 +49,11 @@ public abstract class BaseMVCActionCommand implements MVCActionCommand {
 
 			return SessionErrors.isEmpty(actionRequest);
 		}
-		catch (PortletException pe) {
-			throw pe;
+		catch (PortletException portletException) {
+			throw portletException;
 		}
-		catch (Exception e) {
-			throw new PortletException(e);
+		catch (Exception exception) {
+			throw new PortletException(exception);
 		}
 	}
 
@@ -86,7 +73,7 @@ public abstract class BaseMVCActionCommand implements MVCActionCommand {
 		ActionRequest actionRequest, ActionResponse actionResponse) {
 
 		PortletConfig portletConfig = (PortletConfig)actionRequest.getAttribute(
-			JavaConstants.JAVAX_PORTLET_CONFIG);
+			JavaConstants.JAKARTA_PORTLET_CONFIG);
 
 		boolean addProcessActionSuccessMessage = GetterUtil.getBoolean(
 			portletConfig.getInitParameter("add-process-action-success-action"),
@@ -153,11 +140,7 @@ public abstract class BaseMVCActionCommand implements MVCActionCommand {
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
 			themeDisplay.getCompanyId(), portletId);
 
-		if (portlet.isAddDefaultResource()) {
-			return true;
-		}
-
-		return false;
+		return portlet.isAddDefaultResource();
 	}
 
 	protected boolean redirectToLogin(
@@ -220,7 +203,7 @@ public abstract class BaseMVCActionCommand implements MVCActionCommand {
 		if ((portletConfig != null) && Validator.isNotNull(redirect) &&
 			Validator.isNotNull(closeRedirect)) {
 
-			redirect = HttpUtil.setParameter(
+			redirect = HttpComponentsUtil.setParameter(
 				redirect, "closeRedirect", closeRedirect);
 
 			SessionMessages.add(
@@ -232,25 +215,6 @@ public abstract class BaseMVCActionCommand implements MVCActionCommand {
 
 		if (Validator.isNull(redirect)) {
 			return;
-		}
-
-		// LPS-1928
-
-		HttpServletRequest httpServletRequest =
-			PortalUtil.getHttpServletRequest(actionRequest);
-
-		if (BrowserSnifferUtil.isIe(httpServletRequest) &&
-			(BrowserSnifferUtil.getMajorVersion(httpServletRequest) == 6.0) &&
-			redirect.contains(StringPool.POUND)) {
-
-			String redirectToken = "&#";
-
-			if (!redirect.contains(StringPool.QUESTION)) {
-				redirectToken = StringPool.QUESTION + redirectToken;
-			}
-
-			redirect = StringUtil.replace(
-				redirect, CharPool.POUND, redirectToken);
 		}
 
 		redirect = PortalUtil.escapeRedirect(redirect);

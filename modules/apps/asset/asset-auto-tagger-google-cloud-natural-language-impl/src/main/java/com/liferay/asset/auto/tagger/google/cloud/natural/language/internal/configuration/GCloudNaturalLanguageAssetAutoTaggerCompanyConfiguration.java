@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.auto.tagger.google.cloud.natural.language.internal.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
-import com.liferay.asset.auto.tagger.google.cloud.natural.language.internal.contants.GCloudNaturalLanguageDocumentAssetAutoTaggerConstants;
+import com.liferay.asset.auto.tagger.google.cloud.natural.language.internal.constants.GCloudNaturalLanguageDocumentAssetAutoTaggerConstants;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedAttributeDefinition;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
@@ -47,7 +38,8 @@ public interface GCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration {
 		requiredInput = true
 	)
 	@Meta.AD(
-		description = "api-key-description", name = "api-key", required = false
+		description = "set-the-api-key-for-the-google-cloud-natural-language-api",
+		name = "api-key", required = false
 	)
 	public String apiKey();
 
@@ -100,7 +92,10 @@ public interface GCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration {
 	 *
 	 * @review
 	 */
-	@Meta.AD(deflt = "", name = "enabled-class-names", required = false)
+	@Meta.AD(
+		deflt = "", name = "enabled-class-names[google-cloud-natural-language]",
+		required = false
+	)
 	public String[] enabledClassNames();
 
 }

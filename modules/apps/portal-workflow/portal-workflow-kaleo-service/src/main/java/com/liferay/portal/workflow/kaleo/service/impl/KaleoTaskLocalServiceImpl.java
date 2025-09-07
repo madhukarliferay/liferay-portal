@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.impl;
@@ -18,6 +9,7 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.workflow.kaleo.definition.Assignment;
 import com.liferay.portal.workflow.kaleo.definition.Task;
 import com.liferay.portal.workflow.kaleo.definition.TaskForm;
@@ -43,14 +35,15 @@ public class KaleoTaskLocalServiceImpl extends KaleoTaskLocalServiceBaseImpl {
 
 	@Override
 	public KaleoTask addKaleoTask(
-			long kaleoDefinitionVersionId, long kaleoNodeId, Task task,
-			ServiceContext serviceContext)
+			long kaleoDefinitionId, long kaleoDefinitionVersionId,
+			long kaleoNodeId, Task task, ServiceContext serviceContext)
 		throws PortalException {
 
 		// Kaleo task
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
-		Date now = new Date();
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
+		Date date = new Date();
 
 		long kaleoTaskId = counterLocalService.increment();
 
@@ -59,14 +52,15 @@ public class KaleoTaskLocalServiceImpl extends KaleoTaskLocalServiceBaseImpl {
 		kaleoTask.setCompanyId(user.getCompanyId());
 		kaleoTask.setUserId(user.getUserId());
 		kaleoTask.setUserName(user.getFullName());
-		kaleoTask.setCreateDate(now);
-		kaleoTask.setModifiedDate(now);
+		kaleoTask.setCreateDate(date);
+		kaleoTask.setModifiedDate(date);
+		kaleoTask.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoTask.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 		kaleoTask.setKaleoNodeId(kaleoNodeId);
 		kaleoTask.setName(task.getName());
 		kaleoTask.setDescription(task.getDescription());
 
-		kaleoTaskPersistence.update(kaleoTask);
+		kaleoTask = kaleoTaskPersistence.update(kaleoTask);
 
 		// Kaleo assignments
 
@@ -74,7 +68,7 @@ public class KaleoTaskLocalServiceImpl extends KaleoTaskLocalServiceBaseImpl {
 
 		for (Assignment assignment : assignments) {
 			_kaleoTaskAssignmentLocalService.addKaleoTaskAssignment(
-				KaleoTask.class.getName(), kaleoTaskId,
+				KaleoTask.class.getName(), kaleoTaskId, kaleoDefinitionId,
 				kaleoDefinitionVersionId, assignment, serviceContext);
 		}
 
@@ -84,8 +78,8 @@ public class KaleoTaskLocalServiceImpl extends KaleoTaskLocalServiceBaseImpl {
 
 		for (TaskForm taskForm : taskForms) {
 			_kaleoTaskFormLocalService.addKaleoTaskForm(
-				kaleoDefinitionVersionId, kaleoNodeId, kaleoTask, taskForm,
-				serviceContext);
+				kaleoDefinitionId, kaleoDefinitionVersionId, kaleoNodeId,
+				kaleoTask, taskForm, serviceContext);
 		}
 
 		return kaleoTask;
@@ -141,5 +135,8 @@ public class KaleoTaskLocalServiceImpl extends KaleoTaskLocalServiceBaseImpl {
 
 	@Reference
 	private KaleoTaskFormLocalService _kaleoTaskFormLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

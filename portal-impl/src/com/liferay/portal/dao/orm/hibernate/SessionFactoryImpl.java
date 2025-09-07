@@ -1,25 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.hibernate;
 
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.kernel.dao.orm.Dialect;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.dao.orm.SessionCustomizer;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PreloadClassLoader;
 import com.liferay.portal.util.PropsValues;
@@ -28,8 +23,14 @@ import java.sql.Connection;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.SessionBuilder;
+import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
+import org.hibernate.engine.jdbc.spi.JdbcServices;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.resource.jdbc.spi.LogicalConnectionImplementor;
+import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 
 /**
  * @author Brian Wing Shun Chan
@@ -47,43 +48,74 @@ public class SessionFactoryImpl implements SessionFactory {
 		}
 	}
 
+	public void destroy() {
+		_sessionCustomizers.close();
+	}
+
 	@Override
 	public Session getCurrentSession() throws ORMException {
-		return wrapSession(_sessionFactoryImplementor.getCurrentSession());
+		SessionFactoryImplementor sessionFactoryImplementor =
+			getSessionFactoryImplementor();
+
+		return wrapSession(sessionFactoryImplementor.getCurrentSession());
 	}
 
 	@Override
 	public Dialect getDialect() throws ORMException {
-		return new DialectImpl(_sessionFactoryImplementor.getDialect());
+		SessionFactoryImplementor sessionFactoryImplementor =
+			getSessionFactoryImplementor();
+
+		JdbcServices jdbcServices = sessionFactoryImplementor.getJdbcServices();
+
+		return new DialectImpl(jdbcServices.getDialect());
 	}
 
 	public SessionFactoryImplementor getSessionFactoryImplementor() {
-		return _sessionFactoryImplementor;
+		return _sessionFactoryImplementorSupplier.get();
 	}
 
 	@Override
 	public Session openNewSession(Connection connection) throws ORMException {
-		return wrapSession(_sessionFactoryImplementor.openSession(connection));
+		SessionFactoryImplementor sessionFactoryImplementor =
+			getSessionFactoryImplementor();
+
+		SessionBuilder sessionBuilder = sessionFactoryImplementor.withOptions();
+
+		return wrapSession(
+			sessionBuilder.connection(
+				connection
+			).openSession());
 	}
 
 	@Override
 	public Session openSession() throws ORMException {
 		org.hibernate.Session session = null;
 
+		SessionFactoryImplementor sessionFactoryImplementor =
+			getSessionFactoryImplementor();
+
 		if (PropsValues.SPRING_HIBERNATE_SESSION_DELEGATED) {
-			session = _sessionFactoryImplementor.getCurrentSession();
+			session = sessionFactoryImplementor.getCurrentSession();
 		}
 		else {
-			session = _sessionFactoryImplementor.openSession();
+			session = sessionFactoryImplementor.openSession();
 		}
 
 		if (_log.isDebugEnabled()) {
-			org.hibernate.impl.SessionImpl sessionImpl =
-				(org.hibernate.impl.SessionImpl)session;
+			org.hibernate.internal.SessionImpl sessionImpl =
+				(org.hibernate.internal.SessionImpl)session;
+
+			JdbcCoordinator jdbcCoordinator = sessionImpl.getJdbcCoordinator();
+
+			LogicalConnectionImplementor logicalConnectionImplementor =
+				jdbcCoordinator.getLogicalConnection();
+
+			PhysicalConnectionHandlingMode physicalConnectionHandlingMode =
+				logicalConnectionImplementor.getConnectionHandlingMode();
 
 			_log.debug(
 				"Session is using connection release mode " +
-					sessionImpl.getConnectionReleaseMode());
+					physicalConnectionHandlingMode.getReleaseMode());
 		}
 
 		return wrapSession(session);
@@ -103,7 +135,13 @@ public class SessionFactoryImpl implements SessionFactory {
 	public void setSessionFactoryImplementor(
 		SessionFactoryImplementor sessionFactoryImplementor) {
 
-		_sessionFactoryImplementor = sessionFactoryImplementor;
+		setSessionFactoryImplementorSupplier(() -> sessionFactoryImplementor);
+	}
+
+	public void setSessionFactoryImplementorSupplier(
+		Supplier<SessionFactoryImplementor> sessionFactoryImplementorSupplier) {
+
+		_sessionFactoryImplementorSupplier = sessionFactoryImplementorSupplier;
 	}
 
 	protected Map<String, Class<?>> getPreloadClassLoaderClasses() {
@@ -121,13 +159,20 @@ public class SessionFactoryImpl implements SessionFactory {
 
 			return classes;
 		}
-		catch (ClassNotFoundException cnfe) {
-			throw new RuntimeException(cnfe);
+		catch (ClassNotFoundException classNotFoundException) {
+			throw new RuntimeException(classNotFoundException);
 		}
 	}
 
 	protected Session wrapSession(org.hibernate.Session session) {
-		return new SessionImpl(session, _sessionFactoryClassLoader);
+		Session liferaySession = new SessionImpl(
+			session, _sessionFactoryClassLoader);
+
+		for (SessionCustomizer sessionCustomizer : _sessionCustomizers) {
+			liferaySession = sessionCustomizer.customize(liferaySession);
+		}
+
+		return liferaySession;
 	}
 
 	private static final String[] _PRELOAD_CLASS_NAMES =
@@ -137,7 +182,11 @@ public class SessionFactoryImpl implements SessionFactory {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SessionFactoryImpl.class);
 
+	private final ServiceTrackerList<SessionCustomizer> _sessionCustomizers =
+		ServiceTrackerListFactory.open(
+			SystemBundleUtil.getBundleContext(), SessionCustomizer.class);
 	private ClassLoader _sessionFactoryClassLoader;
-	private SessionFactoryImplementor _sessionFactoryImplementor;
+	private Supplier<SessionFactoryImplementor>
+		_sessionFactoryImplementorSupplier;
 
 }

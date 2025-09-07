@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoNotificationCacheModel
 	implements CacheModel<KaleoNotification>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoNotificationCacheModel)) {
+		if (!(object instanceof KaleoNotificationCacheModel)) {
 			return false;
 		}
 
 		KaleoNotificationCacheModel kaleoNotificationCacheModel =
-			(KaleoNotificationCacheModel)obj;
+			(KaleoNotificationCacheModel)object;
 
 		if ((kaleoNotificationId ==
 				kaleoNotificationCacheModel.kaleoNotificationId) &&
@@ -78,10 +69,12 @@ public class KaleoNotificationCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(37);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoNotificationId=");
 		sb.append(kaleoNotificationId);
 		sb.append(", groupId=");
@@ -100,6 +93,8 @@ public class KaleoNotificationCacheModel
 		sb.append(kaleoClassName);
 		sb.append(", kaleoClassPK=");
 		sb.append(kaleoClassPK);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoNodeName=");
@@ -127,6 +122,7 @@ public class KaleoNotificationCacheModel
 			new KaleoNotificationImpl();
 
 		kaleoNotificationImpl.setMvccVersion(mvccVersion);
+		kaleoNotificationImpl.setCtCollectionId(ctCollectionId);
 		kaleoNotificationImpl.setKaleoNotificationId(kaleoNotificationId);
 		kaleoNotificationImpl.setGroupId(groupId);
 		kaleoNotificationImpl.setCompanyId(companyId);
@@ -161,6 +157,7 @@ public class KaleoNotificationCacheModel
 		}
 
 		kaleoNotificationImpl.setKaleoClassPK(kaleoClassPK);
+		kaleoNotificationImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoNotificationImpl.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 
@@ -219,8 +216,12 @@ public class KaleoNotificationCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoNotificationId = objectInput.readLong();
 
@@ -236,12 +237,14 @@ public class KaleoNotificationCacheModel
 
 		kaleoClassPK = objectInput.readLong();
 
+		kaleoDefinitionId = objectInput.readLong();
+
 		kaleoDefinitionVersionId = objectInput.readLong();
 		kaleoNodeName = objectInput.readUTF();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
 		executionType = objectInput.readUTF();
-		template = objectInput.readUTF();
+		template = (String)objectInput.readObject();
 		templateLanguage = objectInput.readUTF();
 		notificationTypes = objectInput.readUTF();
 	}
@@ -249,6 +252,8 @@ public class KaleoNotificationCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoNotificationId);
 
@@ -276,6 +281,8 @@ public class KaleoNotificationCacheModel
 		}
 
 		objectOutput.writeLong(kaleoClassPK);
+
+		objectOutput.writeLong(kaleoDefinitionId);
 
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
@@ -308,10 +315,10 @@ public class KaleoNotificationCacheModel
 		}
 
 		if (template == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(template);
+			objectOutput.writeObject(template);
 		}
 
 		if (templateLanguage == null) {
@@ -330,6 +337,7 @@ public class KaleoNotificationCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoNotificationId;
 	public long groupId;
 	public long companyId;
@@ -339,6 +347,7 @@ public class KaleoNotificationCacheModel
 	public long modifiedDate;
 	public String kaleoClassName;
 	public long kaleoClassPK;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public String kaleoNodeName;
 	public String name;

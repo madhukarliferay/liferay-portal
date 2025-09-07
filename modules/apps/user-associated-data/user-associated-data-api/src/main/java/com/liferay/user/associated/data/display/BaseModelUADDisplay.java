@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.display;
@@ -109,18 +100,18 @@ public abstract class BaseModelUADDisplay<T extends BaseModel>
 
 			return (boolean)method.invoke(t);
 		}
-		catch (NoSuchMethodException nsme) {
+		catch (NoSuchMethodException noSuchMethodException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchMethodException);
+			}
+
 			return false;
 		}
 	}
 
 	@Override
 	public boolean isSiteScoped() {
-		if (GroupedModel.class.isAssignableFrom(getTypeClass())) {
-			return true;
-		}
-
-		return false;
+		return GroupedModel.class.isAssignableFrom(getTypeClass());
 	}
 
 	@Override
@@ -264,9 +255,9 @@ public abstract class BaseModelUADDisplay<T extends BaseModel>
 								searchableField, quotedKeywords));
 					}
 				}
-				catch (NoSuchMethodException | SecurityException e) {
+				catch (NoSuchMethodException | SecurityException exception) {
 					if (_log.isDebugEnabled()) {
-						_log.debug(e, e);
+						_log.debug(exception);
 					}
 				}
 			}
@@ -275,11 +266,12 @@ public abstract class BaseModelUADDisplay<T extends BaseModel>
 		}
 
 		if (orderByField != null) {
-			OrderByComparator<T> obc = getOrderByComparator(
+			OrderByComparator<T> orderByComparator = getOrderByComparator(
 				orderByField, orderByType);
 
-			if (obc != null) {
-				OrderFactoryUtil.addOrderByComparator(dynamicQuery, obc);
+			if (orderByComparator != null) {
+				OrderFactoryUtil.addOrderByComparator(
+					dynamicQuery, orderByComparator);
 			}
 			else {
 				Order order = null;

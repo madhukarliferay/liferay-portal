@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.lar;
@@ -80,6 +71,14 @@ public class StagedModelDataHandlerUtil {
 		Portlet referrerPortlet = PortletLocalServiceUtil.getPortletById(
 			referrerPortletId);
 
+		if (!ExportImportHelperUtil.isPublishDisplayedContent(
+				portletDataContext, referrerPortlet)) {
+
+			return portletDataContext.addReferenceElement(
+				referrerPortlet, portletDataContext.getExportDataRootElement(),
+				stagedModel, PortletDataContext.REFERENCE_TYPE_WEAK, true);
+		}
+
 		if (!ExportImportHelperUtil.isAlwaysIncludeReference(
 				portletDataContext, stagedModel) ||
 			!ExportImportHelperUtil.isReferenceWithinExportScope(
@@ -109,6 +108,32 @@ public class StagedModelDataHandlerUtil {
 
 		if (!ExportImportHelperUtil.isAlwaysIncludeReference(
 				portletDataContext, stagedModel) ||
+			!ExportImportHelperUtil.isReferenceWithinExportScope(
+				portletDataContext, stagedModel)) {
+
+			return portletDataContext.addReferenceElement(
+				referrerStagedModel, referrerStagedModelElement, stagedModel,
+				PortletDataContext.REFERENCE_TYPE_DEPENDENCY, true);
+		}
+
+		exportStagedModel(portletDataContext, stagedModel);
+
+		return portletDataContext.addReferenceElement(
+			referrerStagedModel, referrerStagedModelElement, stagedModel,
+			referenceType, false);
+	}
+
+	public static <T extends StagedModel, U extends StagedModel> Element
+			exportReferenceStagedModel(
+				PortletDataContext portletDataContext, T referrerStagedModel,
+				U stagedModel, String referenceType, String portletId)
+		throws PortletDataException {
+
+		Element referrerStagedModelElement =
+			portletDataContext.getExportDataElement(referrerStagedModel);
+
+		if (!ExportImportHelperUtil.isAlwaysIncludeReference(
+				portletDataContext, stagedModel, portletId) ||
 			!ExportImportHelperUtil.isReferenceWithinExportScope(
 				portletDataContext, stagedModel)) {
 
@@ -411,8 +436,8 @@ public class StagedModelDataHandlerUtil {
 
 						importStagedModel(portletDataContext, referenceElement);
 					}
-					catch (DocumentException de) {
-						throw new RuntimeException(de);
+					catch (DocumentException documentException) {
+						throw new RuntimeException(documentException);
 					}
 					finally {
 						portletDataContext.setImportDataRootElement(
@@ -424,19 +449,17 @@ public class StagedModelDataHandlerUtil {
 			}
 		}
 
-		boolean findReference = false;
-
 		try {
 			importStagedModel(portletDataContext, referenceElement);
-		}
-		catch (PortletDataException pde) {
-			if (pde.getCause() instanceof NullPointerException) {
-				findReference = true;
-			}
-		}
 
-		if (!findReference) {
 			return;
+		}
+		catch (PortletDataException portletDataException) {
+			if (!(portletDataException.getCause() instanceof
+					NullPointerException)) {
+
+				throw portletDataException;
+			}
 		}
 
 		Element importDataRootElement =
@@ -475,20 +498,22 @@ public class StagedModelDataHandlerUtil {
 
 						return;
 					}
-					catch (Exception e) {
+					catch (Exception exception) {
 						if (_log.isDebugEnabled()) {
-							_log.debug(e, e);
+							_log.debug(exception);
 						}
 					}
 				}
 			}
 
-			PortletDataException pde = new PortletDataException();
+			PortletDataException portletDataException =
+				new PortletDataException();
 
-			pde.setStagedModel(stagedModel);
-			pde.setType(PortletDataException.MISSING_REFERENCE);
+			portletDataException.setStagedModel(stagedModel);
+			portletDataException.setType(
+				PortletDataException.MISSING_REFERENCE);
 
-			throw pde;
+			throw portletDataException;
 		}
 		finally {
 			portletDataContext.setImportDataRootElement(importDataRootElement);
@@ -523,9 +548,9 @@ public class StagedModelDataHandlerUtil {
 				}
 			}
 		}
-		catch (XMLStreamException xmlse) {
+		catch (XMLStreamException xmlStreamException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(xmlse, xmlse);
+				_log.debug(xmlStreamException);
 			}
 		}
 

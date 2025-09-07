@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.internal.exportimport.data.handler.test;
@@ -196,14 +187,12 @@ public class WikiPageStagedModelDataHandlerTest
 
 		WikiNode node = (WikiNode)dependentStagedModels.get(0);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(group.getGroupId());
-
 		WikiPage page = WikiTestUtil.addPage(
 			TestPropsValues.getUserId(), node.getNodeId(), name,
-			RandomTestUtil.randomString(), true, serviceContext);
+			RandomTestUtil.randomString(), true,
+			ServiceContextTestUtil.getServiceContext(group.getGroupId()));
 
-		WikiTestUtil.addWikiAttachment(
+		WikiTestUtil.addPageAttachment(
 			TestPropsValues.getUserId(), node.getNodeId(), page.getTitle(),
 			WikiAttachmentsTest.class);
 
@@ -224,12 +213,10 @@ public class WikiPageStagedModelDataHandlerTest
 		addDependentStagedModel(
 			dependentStagedModelsMap, DLFileEntry.class,
 			attachmentsFileEntries.get(0));
-
-		Repository repository = RepositoryLocalServiceUtil.getRepository(
-			fileEntry.getRepositoryId());
-
 		addDependentStagedModel(
-			dependentStagedModelsMap, Repository.class, repository);
+			dependentStagedModelsMap, Repository.class,
+			RepositoryLocalServiceUtil.getRepository(
+				fileEntry.getRepositoryId()));
 
 		return page;
 	}
@@ -262,9 +249,10 @@ public class WikiPageStagedModelDataHandlerTest
 			Group group)
 		throws Exception {
 
-		StagedModelDataHandler stagedModelDataHandler =
-			StagedModelDataHandlerRegistryUtil.getStagedModelDataHandler(
-				ExportImportClassedModelUtil.getClassName(stagedModel));
+		StagedModelDataHandler<StagedModel> stagedModelDataHandler =
+			(StagedModelDataHandler<StagedModel>)
+				StagedModelDataHandlerRegistryUtil.getStagedModelDataHandler(
+					ExportImportClassedModelUtil.getClassName(stagedModel));
 
 		stagedModelDataHandler.deleteStagedModel(stagedModel);
 
@@ -274,19 +262,22 @@ public class WikiPageStagedModelDataHandlerTest
 			for (StagedModel dependentStagedModel : dependentStagedModels) {
 				try {
 					stagedModelDataHandler =
-						StagedModelDataHandlerRegistryUtil.
-							getStagedModelDataHandler(
-								ExportImportClassedModelUtil.getClassName(
-									dependentStagedModel));
+						(StagedModelDataHandler<StagedModel>)
+							StagedModelDataHandlerRegistryUtil.
+								getStagedModelDataHandler(
+									ExportImportClassedModelUtil.getClassName(
+										dependentStagedModel));
 
 					stagedModelDataHandler.deleteStagedModel(
 						dependentStagedModel);
 				}
-				catch (NoSuchModelException nsme) {
-					if (!(nsme instanceof NoSuchFileEntryException) &&
-						!(nsme instanceof NoSuchFolderException)) {
+				catch (NoSuchModelException noSuchModelException) {
+					if (!(noSuchModelException instanceof
+							NoSuchFileEntryException) &&
+						!(noSuchModelException instanceof
+							NoSuchFolderException)) {
 
-						throw nsme;
+						throw noSuchModelException;
 					}
 				}
 			}
@@ -341,11 +332,12 @@ public class WikiPageStagedModelDataHandlerTest
 
 		WikiPage page = (WikiPage)stagedModel;
 
-		List<FileEntry> attachmentFileEntries =
+		List<FileEntry> attachmentsFileEntries =
 			page.getAttachmentsFileEntries();
 
 		Assert.assertEquals(
-			attachmentFileEntries.toString(), 1, attachmentFileEntries.size());
+			attachmentsFileEntries.toString(), 1,
+			attachmentsFileEntries.size());
 
 		validateImport(dependentStagedModelsMap, group);
 	}
@@ -360,6 +352,9 @@ public class WikiPageStagedModelDataHandlerTest
 		WikiPage page = (WikiPage)stagedModel;
 		WikiPage importedPage = (WikiPage)importedStagedModel;
 
+		Assert.assertEquals(
+			page.getExternalReferenceCode(),
+			importedPage.getExternalReferenceCode());
 		Assert.assertEquals(page.getTitle(), importedPage.getTitle());
 		Assert.assertEquals(page.getVersion(), importedPage.getVersion(), 0L);
 		Assert.assertEquals(page.isMinorEdit(), importedPage.isMinorEdit());

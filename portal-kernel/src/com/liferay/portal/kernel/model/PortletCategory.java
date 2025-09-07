@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 
 import java.io.Serializable;
@@ -61,6 +53,7 @@ public class PortletCategory implements Serializable {
 		}
 		else {
 			_name = name;
+
 			_parentPortletCategory = null;
 			_path = name;
 		}
@@ -69,11 +62,8 @@ public class PortletCategory implements Serializable {
 	public void addCategory(PortletCategory portletCategory) {
 		portletCategory.setParentCategory(this);
 
-		String path = _path.concat(
-			_DELIMITER
-		).concat(
-			portletCategory.getName()
-		);
+		String path = StringBundler.concat(
+			_path, _DELIMITER, portletCategory.getName());
 
 		portletCategory.setPath(path);
 
@@ -113,11 +103,7 @@ public class PortletCategory implements Serializable {
 	}
 
 	public boolean isHidden() {
-		if (_name.equals(PortletCategoryConstants.NAME_HIDDEN)) {
-			return true;
-		}
-
-		return false;
+		return _name.equals(PortletCategoryConstants.NAME_HIDDEN);
 	}
 
 	public void merge(PortletCategory newPortletCategory) {
@@ -129,13 +115,13 @@ public class PortletCategory implements Serializable {
 			portletCategory.separate(portletIds);
 		}
 
-		Iterator<String> itr = _portletIds.iterator();
+		Iterator<String> iterator = _portletIds.iterator();
 
-		while (itr.hasNext()) {
-			String portletId = itr.next();
+		while (iterator.hasNext()) {
+			String portletId = iterator.next();
 
 			if (portletIds.contains(portletId)) {
-				itr.remove();
+				iterator.remove();
 			}
 		}
 	}

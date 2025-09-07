@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -37,15 +28,15 @@ String format = ParamUtil.getString(request, SearchPortletParameterNames.FORMAT)
 	<aui:input name="<%= SearchContainer.DEFAULT_CUR_PARAM %>" type="hidden" value="<%= ParamUtil.getInteger(request, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_CUR) %>" />
 	<aui:input name="format" type="hidden" value="<%= format %>" />
 
-	<aui:fieldset id='<%= renderResponse.getNamespace() + "searchContainer" %>'>
-		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" inlineField="<%= true %>" label="" name="keywords" size="30" title="search" value="<%= HtmlUtil.escape(searchDisplayContext.getKeywords()) %>" />
+	<div id="<portlet:namespace />searchContainer">
+		<aui:input inlineField="<%= true %>" label="" name="keywords" size="30" title="search" value="<%= HtmlUtil.escape(searchDisplayContext.getKeywords()) %>" />
 		<aui:input name="scope" type="hidden" value="<%= searchDisplayContext.getSearchScopeParameterString() %>" />
 		<aui:input name="useAdvancedSearchSyntax" type="hidden" value="<%= searchDisplayContext.isUseAdvancedSearchSyntax() %>" />
 
-		<aui:field-wrapper inlineField="<%= true %>">
-			<aui:button icon="icon-search" onClick='<%= renderResponse.getNamespace() + "search();" %>' type="submit" value="search" />
+		<aui:field-wrapper cssClass="search-button-field-wrapper" inlineField="<%= true %>">
+			<aui:button icon="icon-search" onClick='<%= liferayPortletResponse.getNamespace() + "search();" %>' type="submit" value="search" />
 		</aui:field-wrapper>
-	</aui:fieldset>
+	</div>
 
 	<%@ include file="/main_search.jspf" %>
 
@@ -65,13 +56,14 @@ String format = ParamUtil.getString(request, SearchPortletParameterNames.FORMAT)
 
 <%
 String pageSubtitle = LanguageUtil.get(request, "search-results");
+
 String pageKeywords = LanguageUtil.get(request, "search");
 
 if (Validator.isNotNull(searchDisplayContext.getKeywords())) {
 	pageKeywords = searchDisplayContext.getKeywords();
 
 	if (StringUtil.startsWith(pageKeywords, Field.ASSET_TAG_NAMES + StringPool.COLON)) {
-		pageKeywords = StringUtil.replace(pageKeywords, Field.ASSET_TAG_NAMES + StringPool.COLON, StringPool.BLANK);
+		pageKeywords = StringUtil.removeSubstring(pageKeywords, Field.ASSET_TAG_NAMES + StringPool.COLON);
 	}
 }
 
@@ -79,11 +71,11 @@ PortalUtil.setPageSubtitle(pageSubtitle, request);
 PortalUtil.setPageKeywords(pageKeywords, request);
 %>
 
-<script>
+<aui:script>
 	var keywordsInput = document.getElementById('<portlet:namespace />keywords');
 
 	if (keywordsInput) {
-		keywordsInput.addEventListener('keydown', function(event) {
+		keywordsInput.addEventListener('keydown', (event) => {
 			if (event.keyCode === 13) {
 				<portlet:namespace />search();
 			}
@@ -105,7 +97,7 @@ PortalUtil.setPageKeywords(pageKeywords, request);
 		var form = document.<portlet:namespace />fm;
 
 		Liferay.Util.setFormValues(form, {
-			<%= SearchContainer.DEFAULT_CUR_PARAM %>: 1
+			<%= SearchContainer.DEFAULT_CUR_PARAM %>: 1,
 		});
 
 		var keywordsInput = Liferay.Util.getFormElement(form, 'keywords');
@@ -120,4 +112,4 @@ PortalUtil.setPageKeywords(pageKeywords, request);
 			}
 		}
 	}
-</script>
+</aui:script>

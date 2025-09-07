@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence.impl;
@@ -245,8 +236,8 @@ public class NestedSetsTreeManagerTest {
 			_simpleNestedSetsTreeNodes[8], _simpleNestedSetsTreeNodes[4]);
 
 		Assert.assertEquals(
-			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)" +
-				"(11#1(12#6(13#7, 14), 15), 16)(17#2, 18)",
+			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)(11#1(12#6(13#7, 14), " +
+				"15), 16)(17#2, 18)",
 			_nestedSetsTreeManager.toString());
 	}
 
@@ -257,8 +248,8 @@ public class NestedSetsTreeManagerTest {
 		_nestedSetsTreeManager.move(_simpleNestedSetsTreeNodes[4], null, null);
 
 		Assert.assertEquals(
-			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)" +
-				"(11#1(12#6(13#7, 14), 15), 16)(17#2, 18)",
+			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)(11#1(12#6(13#7, 14), " +
+				"15), 16)(17#2, 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
@@ -266,8 +257,8 @@ public class NestedSetsTreeManagerTest {
 			_simpleNestedSetsTreeNodes[0]);
 
 		Assert.assertEquals(
-			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)" +
-				"(11#1(12#6(13#7, 14), 15), 16)(17#2, 18)",
+			"(1#0(2#3(3#5, 4), 5)(6#4(7#8, 8), 9), 10)(11#1(12#6(13#7, 14), " +
+				"15), 16)(17#2, 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
@@ -275,40 +266,40 @@ public class NestedSetsTreeManagerTest {
 			_simpleNestedSetsTreeNodes[2]);
 
 		Assert.assertEquals(
-			"(1#0(2#3(3#5, 4), 5), 6)(7#1(8#6(9#7, 10), 11), 12)" +
-				"(13#2(14#4(15#8, 16), 17), 18)",
+			"(1#0(2#3(3#5, 4), 5), 6)(7#1(8#6(9#7, 10), 11), 12)(13#2(14#4(15" +
+				"#8, 16), 17), 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
 			_simpleNestedSetsTreeNodes[2], null, _simpleNestedSetsTreeNodes[0]);
 
 		Assert.assertEquals(
-			"(1#0(2#3(3#5, 4), 5)(6#2(7#4(8#8, 9), 10), 11), 12)" +
-				"(13#1(14#6(15#7, 16), 17), 18)",
+			"(1#0(2#3(3#5, 4), 5)(6#2(7#4(8#8, 9), 10), 11), 12)(13#1(14#6(15" +
+				"#7, 16), 17), 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
 			_simpleNestedSetsTreeNodes[3], _simpleNestedSetsTreeNodes[0], null);
 
 		Assert.assertEquals(
-			"(1#0(2#2(3#4(4#8, 5), 6), 7), 8)(9#1(10#6(11#7, 12), 13), 14)" +
-				"(15#3(16#5, 17), 18)",
+			"(1#0(2#2(3#4(4#8, 5), 6), 7), 8)(9#1(10#6(11#7, 12), 13), 14)(15" +
+				"#3(16#5, 17), 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
 			_simpleNestedSetsTreeNodes[1], null, _simpleNestedSetsTreeNodes[0]);
 
 		Assert.assertEquals(
-			"(1#0(2#2(3#4(4#8, 5), 6), 7)(8#1(9#6(10#7, 11), 12), 13), 14)" +
-				"(15#3(16#5, 17), 18)",
+			"(1#0(2#2(3#4(4#8, 5), 6), 7)(8#1(9#6(10#7, 11), 12), 13), 14)(15" +
+				"#3(16#5, 17), 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
 			_simpleNestedSetsTreeNodes[3], null, _simpleNestedSetsTreeNodes[1]);
 
 		Assert.assertEquals(
-			"(1#0(2#2(3#4(4#8, 5), 6), 7)(8#1(9#6(10#7, 11), 12)" +
-				"(13#3(14#5, 15), 16), 17), 18)",
+			"(1#0(2#2(3#4(4#8, 5), 6), 7)(8#1(9#6(10#7, 11), 12)(13#3(14#5, " +
+				"15), 16), 17), 18)",
 			_nestedSetsTreeManager.toString());
 
 		_nestedSetsTreeManager.move(
@@ -393,8 +384,8 @@ public class NestedSetsTreeManagerTest {
 			try {
 				return (SimpleNestedSetsTreeNode)super.clone();
 			}
-			catch (CloneNotSupportedException cnse) {
-				throw new RuntimeException(cnse);
+			catch (CloneNotSupportedException cloneNotSupportedException) {
+				throw new RuntimeException(cloneNotSupportedException);
 			}
 		}
 
@@ -416,17 +407,17 @@ public class NestedSetsTreeManagerTest {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
+		public boolean equals(Object object) {
+			if (this == object) {
 				return true;
 			}
 
-			if (!(obj instanceof SimpleNestedSetsTreeNode)) {
+			if (!(object instanceof SimpleNestedSetsTreeNode)) {
 				return false;
 			}
 
 			SimpleNestedSetsTreeNode simpleNestedSetsTreeNode =
-				(SimpleNestedSetsTreeNode)obj;
+				(SimpleNestedSetsTreeNode)object;
 
 			if (_primaryKey == simpleNestedSetsTreeNode._primaryKey) {
 				return true;
@@ -456,6 +447,13 @@ public class NestedSetsTreeManagerTest {
 		}
 
 		@Override
+		public int hashCode() {
+			String string = toString();
+
+			return string.hashCode();
+		}
+
+		@Override
 		public void setNestedSetsTreeNodeLeft(long nestedSetsTreeNodeLeft) {
 			_nestedSetsTreeNodeLeft = nestedSetsTreeNodeLeft;
 		}
@@ -467,17 +465,10 @@ public class NestedSetsTreeManagerTest {
 
 		@Override
 		public String toString() {
-			StringBundler sb = new StringBundler(7);
-
-			sb.append(StringPool.OPEN_PARENTHESIS);
-			sb.append(_nestedSetsTreeNodeLeft);
-			sb.append(StringPool.POUND);
-			sb.append(_primaryKey);
-			sb.append(StringPool.COMMA_AND_SPACE);
-			sb.append(_nestedSetsTreeNodeRight);
-			sb.append(StringPool.CLOSE_PARENTHESIS);
-
-			return sb.toString();
+			return StringBundler.concat(
+				StringPool.OPEN_PARENTHESIS, _nestedSetsTreeNodeLeft,
+				StringPool.POUND, _primaryKey, StringPool.COMMA_AND_SPACE,
+				_nestedSetsTreeNodeRight, StringPool.CLOSE_PARENTHESIS);
 		}
 
 		private long _nestedSetsTreeNodeLeft;

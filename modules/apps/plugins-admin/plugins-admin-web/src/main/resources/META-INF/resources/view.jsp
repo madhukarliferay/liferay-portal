@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,10 +10,13 @@
 <%
 String tabs2 = ParamUtil.getString(request, "tabs2", "portlets");
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("struts_action", "/plugins_admin/view");
-portletURL.setParameter("tabs2", tabs2);
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setTabs2(
+	tabs2
+).setParameter(
+	"struts_action", "/plugins_admin/view"
+).buildPortletURL();
 
 PortletURL marketplaceURL = null;
 
@@ -30,7 +24,6 @@ boolean showEditPluginHREF = true;
 %>
 
 <clay:navigation-bar
-	inverted="<%= true %>"
 	navigationItems='<%=
 		new JSPNavigationItemList(pageContext) {
 			{
@@ -38,28 +31,28 @@ boolean showEditPluginHREF = true;
 					navigationItem -> {
 						navigationItem.setActive(tabs2.equals("portlets"));
 						navigationItem.setHref(renderResponse.createRenderURL(), "tabs2", "portlets");
-						navigationItem.setLabel(LanguageUtil.get(request, "portlets"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "portlets"));
 					});
 
 				add(
 					navigationItem -> {
 						navigationItem.setActive(tabs2.equals("themes"));
 						navigationItem.setHref(renderResponse.createRenderURL(), "tabs2", "themes");
-						navigationItem.setLabel(LanguageUtil.get(request, "themes"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "themes"));
 					});
 
 				add(
 					navigationItem -> {
 						navigationItem.setActive(tabs2.equals("layout-templates"));
 						navigationItem.setHref(renderResponse.createRenderURL(), "tabs2", "layout-templates");
-						navigationItem.setLabel(LanguageUtil.get(request, "layout-templates"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "layout-templates"));
 					});
 			}
 		}
 	%>'
 />
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<c:choose>
 		<c:when test='<%= tabs2.equals("themes") %>'>
 			<%@ include file="/themes.jspf" %>
@@ -75,4 +68,4 @@ boolean showEditPluginHREF = true;
 			<%@ include file="/portlets.jspf" %>
 		</c:otherwise>
 	</c:choose>
-</div>
+</clay:container-fluid>

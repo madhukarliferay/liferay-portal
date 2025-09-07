@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.dao.search;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.content.security.policy.ContentSecurityPolicyHTMLRewriterUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
@@ -25,12 +17,12 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
@@ -54,9 +46,9 @@ public class RowChecker {
 	public RowChecker(PortletResponse portletResponse) {
 		_portletResponse = portletResponse;
 
-		_allRowIds = _portletResponse.getNamespace() + ALL_ROW_IDS;
-		_formName = _portletResponse.getNamespace() + FORM_NAME;
-		_rowIds = _portletResponse.getNamespace() + ROW_IDS;
+		_allRowIds = portletResponse.getNamespace() + ALL_ROW_IDS;
+		_formName = portletResponse.getNamespace() + FORM_NAME;
+		_rowIds = portletResponse.getNamespace() + ROW_IDS;
 	}
 
 	public String getAlign() {
@@ -88,7 +80,7 @@ public class RowChecker {
 		return _cssClass;
 	}
 
-	public Map<String, Object> getData(Object obj) {
+	public Map<String, Object> getData(Object object) {
 		return _data;
 	}
 
@@ -134,11 +126,11 @@ public class RowChecker {
 		return _valign;
 	}
 
-	public boolean isChecked(Object obj) {
+	public boolean isChecked(Object object) {
 		return false;
 	}
 
-	public boolean isDisabled(Object obj) {
+	public boolean isDisabled(Object object) {
 		return false;
 	}
 
@@ -200,21 +192,19 @@ public class RowChecker {
 			return StringPool.BLANK;
 		}
 
-		StringBuilder sb = new StringBuilder(10);
-
-		sb.append("<label><input name=\"");
-		sb.append(name);
-		sb.append("\" title=\"");
-		sb.append(
-			LanguageUtil.get(getLocale(httpServletRequest), "select-all"));
-		sb.append("\" type=\"checkbox\" ");
-		sb.append(HtmlUtil.buildData(_data));
-		sb.append("onClick=\"Liferay.Util.checkAll(AUI().one(this).ancestor(");
-		sb.append("'.table'), ");
-		sb.append(checkBoxRowIds);
-		sb.append(", this, 'tr:not(.lfr-template)');\"></label>");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"<label>",
+			ContentSecurityPolicyHTMLRewriterUtil.rewriteInlineAttributes(
+				StringBundler.concat(
+					"<input name=\"", name, "\" title=\"",
+					LanguageUtil.get(
+						getLocale(httpServletRequest), "select-all"),
+					"\" type=\"checkbox\" ", HtmlUtil.buildData(_data),
+					"onClick=\"Liferay.Util.checkAll(AUI().one(this).ancestor(",
+					"'.table'), ", checkBoxRowIds,
+					", this, 'tr:not(.d-none)');\">"),
+				httpServletRequest, false),
+			"</label>");
 	}
 
 	protected Locale getLocale(HttpServletRequest httpServletRequest) {
@@ -256,13 +246,13 @@ public class RowChecker {
 
 		StringBundler sb = new StringBundler(9);
 
-		sb.append("onClick=\"Liferay.Util.rowCheckerCheckAllBox(AUI().");
-		sb.append("one(this).ancestor('.table'), AUI().one(this).");
-		sb.append("ancestor('tr:not(.lfr-template)'), ");
+		sb.append("onClick=\"Liferay.Util.checkAllBox(");
+		sb.append("AUI().one(this).ancestor('.table'),");
 		sb.append(checkBoxRowIds);
-		sb.append(", ");
+		sb.append(",");
 		sb.append(checkBoxAllRowIds);
-		sb.append(", 'info');");
+		sb.append("); AUI().one(this).ancestor('tr:not(.d-none)')?.");
+		sb.append("toggleClass('info');");
 
 		if (Validator.isNotNull(checkBoxPostOnClick)) {
 			sb.append(checkBoxPostOnClick);
@@ -278,20 +268,43 @@ public class RowChecker {
 		boolean disabled, String name, String value, String checkBoxRowIds,
 		String checkBoxAllRowIds, String checkBoxPostOnClick) {
 
-		StringBundler sb = new StringBundler(14);
+		return StringBundler.concat(
+			"<label>",
+			_getInput(
+				httpServletRequest, checked, disabled, name, value,
+				checkBoxRowIds, checkBoxAllRowIds, checkBoxPostOnClick),
+			"</label>");
+	}
 
-		sb.append("<label><input ");
+	private String _getInput(
+		HttpServletRequest httpServletRequest, boolean checked,
+		boolean disabled, String name, String value, String checkBoxRowIds,
+		String checkBoxAllRowIds, String checkBoxPostOnClick) {
+
+		StringBundler sb = new StringBundler(17);
+
+		sb.append("<input ");
+
+		String rowElementId = (String)httpServletRequest.getAttribute(
+			"liferay-ui:search-container-row:rowElementId");
+
+		if (rowElementId != null) {
+			sb.append("aria-labelledby=\"");
+			sb.append(rowElementId);
+			sb.append("\" ");
+		}
 
 		if (checked) {
 			sb.append("checked ");
 		}
 
+		sb.append("class=\"");
+		sb.append(_cssClass);
+
 		if (disabled) {
 			sb.append("disabled ");
 		}
 
-		sb.append("class=\"");
-		sb.append(_cssClass);
 		sb.append("\" name=\"");
 		sb.append(name);
 		sb.append("\" title=\"");
@@ -306,9 +319,10 @@ public class RowChecker {
 					checkBoxRowIds, checkBoxAllRowIds, checkBoxPostOnClick));
 		}
 
-		sb.append("></label>");
+		sb.append(">");
 
-		return sb.toString();
+		return ContentSecurityPolicyHTMLRewriterUtil.rewriteInlineAttributes(
+			sb.toString(), httpServletRequest, false);
 	}
 
 	private String _align = ALIGN;

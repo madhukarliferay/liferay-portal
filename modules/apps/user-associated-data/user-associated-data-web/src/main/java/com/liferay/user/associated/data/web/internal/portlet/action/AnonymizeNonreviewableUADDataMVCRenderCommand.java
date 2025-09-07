@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.portlet.action;
@@ -17,12 +8,12 @@ package com.liferay.user.associated.data.web.internal.portlet.action;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.user.associated.data.anonymizer.UADAnonymizer;
@@ -32,6 +23,12 @@ import com.liferay.user.associated.data.web.internal.display.UADApplicationSumma
 import com.liferay.user.associated.data.web.internal.registry.UADRegistry;
 import com.liferay.user.associated.data.web.internal.util.UADLanguageUtil;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -39,16 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,10 +44,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
-		"mvc.command.name=/anonymize_nonreviewable_uad_data"
+		"jakarta.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+		"mvc.command.name=/user_associated_data/anonymize_nonreviewable_uad_data"
 	},
 	service = MVCRenderCommand.class
 )
@@ -94,8 +80,8 @@ public class AnonymizeNonreviewableUADDataMVCRenderCommand
 			renderRequest.setAttribute(
 				WebKeys.SEARCH_CONTAINER, searchContainer);
 		}
-		catch (PortalException pe) {
-			throw new PortletException(pe);
+		catch (PortalException portalException) {
+			throw new PortletException(portalException);
 		}
 
 		return "/anonymize_nonreviewable_uad_data.jsp";
@@ -108,60 +94,39 @@ public class AnonymizeNonreviewableUADDataMVCRenderCommand
 
 		PortletRequest portletRequest =
 			(PortletRequest)renderRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
-		LiferayPortletResponse liferayPortletResponse =
-			_portal.getLiferayPortletResponse(
-				(PortletResponse)renderRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE));
-
-		PortletURL currentURL = PortletURLUtil.getCurrent(
-			_portal.getLiferayPortletRequest(portletRequest),
-			liferayPortletResponse);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		SearchContainer<UADApplicationSummaryDisplay> searchContainer =
-			new SearchContainer<>(portletRequest, currentURL, null, null);
+			new SearchContainer<>(
+				portletRequest,
+				PortletURLUtil.getCurrent(
+					_portal.getLiferayPortletRequest(portletRequest),
+					_portal.getLiferayPortletResponse(
+						(PortletResponse)renderRequest.getAttribute(
+							JavaConstants.JAKARTA_PORTLET_RESPONSE))),
+				null, null);
 
 		searchContainer.setEmptyResultsMessage(
 			"there-are-no-remaining-applications-to-anonymize");
-
 		searchContainer.setId("uadApplicationSummaryDisplays");
-
 		searchContainer.setOrderByCol(
-			ParamUtil.getString(renderRequest, "orderByCol", "name"));
+			SearchOrderByUtil.getOrderByCol(
+				portletRequest,
+				UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+				"anonymize-order-by-col", "name"));
 		searchContainer.setOrderByType(
-			ParamUtil.getString(renderRequest, "orderByType", "asc"));
-
-		List<UADApplicationSummaryDisplay> uadApplicationSummaryDisplays =
-			_getUADApplicationSummaryDisplays(userId);
-
-		Supplier<Stream<UADApplicationSummaryDisplay>> streamSupplier = () -> {
-			Stream<UADApplicationSummaryDisplay> stream =
-				uadApplicationSummaryDisplays.stream();
-
-			return stream.filter(display -> display.getCount() > 0);
-		};
-
-		Stream<UADApplicationSummaryDisplay> summaryDisplayStream =
-			streamSupplier.get();
-
-		List<UADApplicationSummaryDisplay> results =
-			summaryDisplayStream.sorted(
+			SearchOrderByUtil.getOrderByType(
+				portletRequest,
+				UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+				"anonymize-order-by-type", "asc"));
+		searchContainer.setResultsAndTotal(
+			ListUtil.sort(
+				ListUtil.filter(
+					_getUADApplicationSummaryDisplays(userId),
+					display -> display.getCount() > 0),
 				_getComparator(
 					locale, searchContainer.getOrderByCol(),
-					searchContainer.getOrderByType())
-			).skip(
-				searchContainer.getStart()
-			).limit(
-				searchContainer.getDelta()
-			).collect(
-				Collectors.toList()
-			);
-
-		searchContainer.setResults(results);
-
-		summaryDisplayStream = streamSupplier.get();
-
-		searchContainer.setTotal((int)summaryDisplayStream.count());
+					searchContainer.getOrderByType())));
 
 		return searchContainer;
 	}
@@ -195,21 +160,21 @@ public class AnonymizeNonreviewableUADDataMVCRenderCommand
 		UADApplicationSummaryDisplay uadApplicationSummaryDisplay =
 			new UADApplicationSummaryDisplay();
 
-		Collection<UADAnonymizer> nonreviewableApplicationUADAnonymizers =
+		Collection<UADAnonymizer<?>> nonreviewableApplicationUADAnonymizers =
 			_uadRegistry.getNonreviewableApplicationUADAnonymizers(
 				applicationKey);
 
+		uadApplicationSummaryDisplay.setApplicationKey(applicationKey);
+
 		int count = 0;
 
-		for (UADAnonymizer uadAnonymizer :
+		for (UADAnonymizer<?> uadAnonymizer :
 				nonreviewableApplicationUADAnonymizers) {
 
 			count += uadAnonymizer.count(userId);
 		}
 
 		uadApplicationSummaryDisplay.setCount(count);
-
-		uadApplicationSummaryDisplay.setApplicationKey(applicationKey);
 
 		return uadApplicationSummaryDisplay;
 	}
@@ -221,10 +186,10 @@ public class AnonymizeNonreviewableUADDataMVCRenderCommand
 		List<UADApplicationSummaryDisplay> uadApplicationSummaryDisplays =
 			new ArrayList<>();
 
-		Set<String> applicationUADAnonymizerKeySet =
+		Set<String> applicationUADAnonymizersKeySet =
 			_uadRegistry.getApplicationUADAnonymizersKeySet();
 
-		Iterator<String> iterator = applicationUADAnonymizerKeySet.iterator();
+		Iterator<String> iterator = applicationUADAnonymizersKeySet.iterator();
 
 		while (iterator.hasNext()) {
 			String applicationKey = iterator.next();

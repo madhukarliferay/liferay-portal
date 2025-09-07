@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.admin.web.internal.portlet;
@@ -24,8 +15,6 @@ import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.site.admin.web.internal.constants.SiteAdminPortletKeys;
 
-import java.util.LinkedHashMap;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -35,8 +24,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Miguel Pastor
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + SiteAdminPortletKeys.SITE_ADMIN,
+	property = "jakarta.portlet.name=" + SiteAdminPortletKeys.SITE_ADMIN,
 	service = ControlPanelEntry.class
 )
 public class SiteAdminControlPanelEntry extends BaseControlPanelEntry {
@@ -47,15 +35,13 @@ public class SiteAdminControlPanelEntry extends BaseControlPanelEntry {
 		throws Exception {
 
 		if (PropsValues.SITES_CONTROL_PANEL_MEMBERS_VISIBLE) {
-			LinkedHashMap<String, Object> groupParams =
+			int count = _groupLocalService.searchCount(
+				permissionChecker.getCompanyId(), null, null,
 				LinkedHashMapBuilder.<String, Object>put(
 					"site", Boolean.TRUE
 				).put(
 					"usersGroups", permissionChecker.getUserId()
-				).build();
-
-			int count = _groupLocalService.searchCount(
-				permissionChecker.getCompanyId(), null, null, groupParams);
+				).build());
 
 			if (count > 0) {
 				return true;
@@ -66,11 +52,7 @@ public class SiteAdminControlPanelEntry extends BaseControlPanelEntry {
 			permissionChecker, group, portlet);
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 }

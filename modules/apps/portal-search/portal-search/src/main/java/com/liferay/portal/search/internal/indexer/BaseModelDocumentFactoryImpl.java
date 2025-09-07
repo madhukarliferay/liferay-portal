@@ -1,65 +1,76 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.indexer;
 
+import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.model.AssetRendererFactory;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.ResourcedModel;
-import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentHelper;
 import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.util.Tuple;
+import com.liferay.portal.search.document.Document;
+import com.liferay.portal.search.document.DocumentBuilder;
+import com.liferay.portal.search.document.DocumentBuilderFactory;
 import com.liferay.portal.search.indexer.BaseModelDocumentFactory;
+import com.liferay.portal.search.model.uid.UIDFactory;
+
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = BaseModelDocumentFactory.class)
+@Component(service = BaseModelDocumentFactory.class)
 public class BaseModelDocumentFactoryImpl implements BaseModelDocumentFactory {
 
 	@Override
-	public Document createDocument(BaseModel<?> baseModel) {
-		Document document = (Document)_document.clone();
+	public com.liferay.portal.kernel.search.Document createDocument(
+		BaseModel<?> baseModel) {
 
-		String className = baseModel.getModelClassName();
+		DocumentBuilder documentBuilder = documentBuilderFactory.builder();
 
-		Tuple classPKResourcePrimKeyTuple = getClassPKResourcePrimKey(
+		Tuple classPKResourcePrimKeyTuple = _getClassPKResourcePrimKey(
 			baseModel);
 
-		long classPK = (Long)classPKResourcePrimKeyTuple.getObject(0);
+		documentBuilder.setString(
+			Field.ENTRY_CLASS_NAME, baseModel.getModelClassName()
+		).setLong(
+			Field.ENTRY_CLASS_PK, (Long)classPKResourcePrimKeyTuple.getObject(0)
+		).setLong(
+			Field.ROOT_ENTRY_CLASS_PK,
+			_getRootEntryClassPK(classPKResourcePrimKeyTuple)
+		);
 
-		String uid = getDocumentUID(className, classPK);
+		uidFactory.setUID(baseModel, documentBuilder);
 
-		document.addKeyword(Field.UID, uid);
+		Document document = documentBuilder.build();
 
-		DocumentHelper documentHelper = new DocumentHelper(document);
+		_enforceStandardUID(document);
 
-		long resourcePrimKey = (Long)classPKResourcePrimKeyTuple.getObject(1);
-
-		documentHelper.setEntryKey(className, classPK);
-
-		if (resourcePrimKey > 0) {
-			document.addKeyword(Field.ROOT_ENTRY_CLASS_PK, resourcePrimKey);
-		}
-
-		return document;
+		return _toLegacyDocument(document);
 	}
 
-	protected Tuple getClassPKResourcePrimKey(BaseModel<?> baseModel) {
+	@Reference
+	protected DocumentBuilderFactory documentBuilderFactory;
+
+	@Reference
+	protected UIDFactory uidFactory;
+
+	private void _enforceStandardUID(Document document) {
+		uidFactory.getUID(document);
+	}
+
+	private Tuple _getClassPKResourcePrimKey(BaseModel<?> baseModel) {
 		long classPK = 0;
 		long resourcePrimKey = 0;
 
@@ -73,13 +84,64 @@ public class BaseModelDocumentFactoryImpl implements BaseModelDocumentFactory {
 			classPK = (Long)baseModel.getPrimaryKeyObj();
 		}
 
-		return new Tuple(classPK, resourcePrimKey);
+		return new Tuple(
+			_getEntryClassPK(baseModel, baseModel.getModelClassName(), classPK),
+			resourcePrimKey);
 	}
 
-	protected String getDocumentUID(String className, long classPK) {
-		return Field.getUID(className, String.valueOf(classPK));
+	private <T> long _getEntryClassPK(T entry, String className, long classPK) {
+		AssetRendererFactory<T> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				className);
+
+		if (assetRendererFactory == null) {
+			return classPK;
+		}
+
+		try {
+			AssetEntry assetEntry = assetRendererFactory.getAssetEntry(entry);
+
+			if (assetEntry != null) {
+				return assetEntry.getClassPK();
+			}
+
+			return 0;
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+		}
+
+		return classPK;
 	}
 
-	private final Document _document = new DocumentImpl();
+	private Long _getRootEntryClassPK(Tuple classPKResourcePrimKeyTuple) {
+		long resourcePrimKey = (Long)classPKResourcePrimKeyTuple.getObject(1);
+
+		if (resourcePrimKey > 0) {
+			return resourcePrimKey;
+		}
+
+		return null;
+	}
+
+	private com.liferay.portal.kernel.search.Document _toLegacyDocument(
+		Document document) {
+
+		DocumentImpl documentImpl = new DocumentImpl();
+
+		Map<String, com.liferay.portal.search.document.Field> fields =
+			document.getFields();
+
+		fields.forEach(
+			(key, field) -> documentImpl.add(
+				new Field(key, String.valueOf(field.getValue()))));
+
+		return documentImpl;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BaseModelDocumentFactoryImpl.class);
 
 }

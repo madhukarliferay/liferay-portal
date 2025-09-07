@@ -1,31 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.taglib.servlet.taglib;
 
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.dynamic.data.mapping.taglib.internal.util.PortletDisplayTemplateUtil;
 import com.liferay.dynamic.data.mapping.taglib.servlet.taglib.base.BaseTemplateRendererTag;
+import com.liferay.portal.kernel.servlet.FileAvailabilityUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.FileAvailabilityUtil;
+import com.liferay.portlet.display.template.util.PortletDisplayTemplateUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Eduardo García
@@ -37,7 +28,7 @@ public class TemplateRendererTag extends BaseTemplateRendererTag {
 		try {
 			String page = getStartPage();
 
-			setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
+			setAttributeNamespace(ATTRIBUTE_NAMESPACE);
 
 			callSetAttributes();
 
@@ -47,7 +38,7 @@ public class TemplateRendererTag extends BaseTemplateRendererTag {
 				return EVAL_BODY_INCLUDE;
 			}
 
-			if (!FileAvailabilityUtil.isAvailable(servletContext, page)) {
+			if (!FileAvailabilityUtil.isAvailable(getServletContext(), page)) {
 				logUnavailablePage(page);
 			}
 
@@ -59,8 +50,8 @@ public class TemplateRendererTag extends BaseTemplateRendererTag {
 
 			return EVAL_BODY_INCLUDE;
 		}
-		catch (Exception e) {
-			throw new JspException(e);
+		catch (Exception exception) {
+			throw new JspException(exception);
 		}
 	}
 
@@ -82,22 +73,22 @@ public class TemplateRendererTag extends BaseTemplateRendererTag {
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
 		super.setAttributes(httpServletRequest);
 
-		long displaStyleGroupId = getDisplayStyleGroupId();
+		long displayStyleGroupId = getDisplayStyleGroupId();
 
-		if (displaStyleGroupId == 0) {
+		if (displayStyleGroupId == 0) {
 			ThemeDisplay themeDisplay =
 				(ThemeDisplay)httpServletRequest.getAttribute(
 					WebKeys.THEME_DISPLAY);
 
-			displaStyleGroupId = themeDisplay.getScopeGroupId();
+			displayStyleGroupId = themeDisplay.getScopeGroupId();
 
 			setNamespacedAttribute(
-				httpServletRequest, "displayStyleGroupId", displaStyleGroupId);
+				httpServletRequest, "displayStyleGroupId", displayStyleGroupId);
 		}
 
 		_portletDisplayDDMTemplate =
 			PortletDisplayTemplateUtil.getPortletDisplayTemplateDDMTemplate(
-				displaStyleGroupId, PortalUtil.getClassNameId(getClassName()),
+				displayStyleGroupId, PortalUtil.getClassNameId(getClassName()),
 				getDisplayStyle(), true);
 
 		setNamespacedAttribute(

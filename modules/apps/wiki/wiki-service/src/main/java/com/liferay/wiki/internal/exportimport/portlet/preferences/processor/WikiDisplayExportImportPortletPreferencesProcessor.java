@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.internal.exportimport.portlet.preferences.processor;
@@ -36,11 +27,11 @@ import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.service.WikiPageLocalService;
 import com.liferay.wiki.service.persistence.WikiNodeUtil;
 
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.ReadOnlyException;
+
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletPreferences;
-import javax.portlet.ReadOnlyException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,8 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
+	property = "jakarta.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
 	service = ExportImportPortletPreferencesProcessor.class
 )
 public class WikiDisplayExportImportPortletPreferencesProcessor
@@ -64,6 +54,11 @@ public class WikiDisplayExportImportPortletPreferencesProcessor
 	@Override
 	public List<Capability> getImportCapabilities() {
 		return ListUtil.fromArray(_capability);
+	}
+
+	@Override
+	public boolean isPublishDisplayedContent() {
+		return false;
 	}
 
 	@Override
@@ -112,24 +107,24 @@ public class WikiDisplayExportImportPortletPreferencesProcessor
 			portletDataContext.addPortletPermissions(
 				WikiConstants.RESOURCE_NAME);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			throw new PortletDataException(
-				"Unable to export portlet permissions", pe);
+				"Unable to export portlet permissions", portalException);
 		}
 
 		StagedModelDataHandlerUtil.exportReferenceStagedModel(
 			portletDataContext, portletId, node);
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			getPageActionableDynamicQuery(
+			_getPageActionableDynamicQuery(
 				portletDataContext, node.getNodeId(), portletId);
 
 		try {
 			actionableDynamicQuery.performActions();
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			throw new PortletDataException(
-				"Unable to export referenced pages", pe);
+				"Unable to export referenced pages", portalException);
 		}
 
 		return portletPreferences;
@@ -145,9 +140,9 @@ public class WikiDisplayExportImportPortletPreferencesProcessor
 			portletDataContext.importPortletPermissions(
 				WikiConstants.RESOURCE_NAME);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			throw new PortletDataException(
-				"Unable to import portlet permissions", pe);
+				"Unable to import portlet permissions", portalException);
 		}
 
 		long nodeId = GetterUtil.getLong(
@@ -163,24 +158,24 @@ public class WikiDisplayExportImportPortletPreferencesProcessor
 			try {
 				portletPreferences.setValue("nodeId", String.valueOf(nodeId));
 			}
-			catch (ReadOnlyException roe) {
+			catch (ReadOnlyException readOnlyException) {
 				throw new PortletDataException(
-					"Unable to update portlet preferences during import", roe);
+					"Unable to update portlet preferences during import",
+					readOnlyException);
 			}
 		}
 
 		return portletPreferences;
 	}
 
-	protected ActionableDynamicQuery getPageActionableDynamicQuery(
-		final PortletDataContext portletDataContext, final long nodeId,
-		final String portletId) {
+	private ActionableDynamicQuery _getPageActionableDynamicQuery(
+		PortletDataContext portletDataContext, long nodeId, String portletId) {
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_wikiPageLocalService.getExportActionableDynamicQuery(
 				portletDataContext);
 
-		final ActionableDynamicQuery.AddCriteriaMethod addCriteriaMethod =
+		ActionableDynamicQuery.AddCriteriaMethod addCriteriaMethod =
 			actionableDynamicQuery.getAddCriteriaMethod();
 
 		actionableDynamicQuery.setAddCriteriaMethod(
@@ -200,19 +195,13 @@ public class WikiDisplayExportImportPortletPreferencesProcessor
 		return actionableDynamicQuery;
 	}
 
-	@Reference(unbind = "-")
-	protected void setWikiPageLocalService(
-		WikiPageLocalService wikiPageLocalService) {
-
-		_wikiPageLocalService = wikiPageLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		WikiDisplayExportImportPortletPreferencesProcessor.class);
 
 	@Reference(target = "(name=ReferencedStagedModelImporter)")
 	private Capability _capability;
 
+	@Reference
 	private WikiPageLocalService _wikiPageLocalService;
 
 }

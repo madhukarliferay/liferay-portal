@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 7.3.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_7_3_0.dtd">
+<!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 7.4.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_7_4_0.dtd">
 
-<service-builder auto-import-default-references="false" auto-namespace-tables="false" dependency-injector="ds" package-path="com.liferay.message.boards">
+<service-builder auto-import-default-references="false" auto-namespace-tables="false" change-tracking-enabled="true" dependency-injector="ds" mvcc-enabled="true" package-path="com.liferay.message.boards">
 	<namespace>MB</namespace>
 	<entity human-name="message boards ban" local-service="true" name="MBBan" remote-service="true" uuid="true">
 
@@ -42,7 +42,7 @@
 			<finder-column name="banUserId" />
 		</finder>
 	</entity>
-	<entity human-name="message boards category" local-service="true" name="MBCategory" remote-service="true" trash-enabled="true" uuid="true">
+	<entity external-reference-code="group" human-name="message boards category" local-service="true" name="MBCategory" remote-service="true" trash-enabled="true" uuid="true">
 
 		<!-- PK fields -->
 
@@ -66,9 +66,7 @@
 		<column name="name" type="String" uad-nonanonymizable="true" />
 		<column name="description" type="String" uad-nonanonymizable="true" />
 		<column name="displayStyle" type="String" />
-		<column name="threadCount" type="int" />
-		<column name="messageCount" type="int" />
-		<column name="lastPostDate" type="Date" />
+		<column name="friendlyURL" type="String" />
 		<column name="lastPublishDate" type="Date" />
 		<column name="status" type="int" />
 		<column name="statusByUserId" type="long" />
@@ -93,6 +91,10 @@
 		<finder name="G_P" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column arrayable-operator="OR" name="parentCategoryId" />
+		</finder>
+		<finder name="G_F" return-type="MBCategory" unique="true">
+			<finder-column name="groupId" />
+			<finder-column name="friendlyURL" />
 		</finder>
 		<finder name="G_S" return-type="Collection">
 			<finder-column name="groupId" />
@@ -123,15 +125,6 @@
 			<finder-column arrayable-operator="OR" name="parentCategoryId" />
 			<finder-column name="status" />
 		</finder>
-
-		<!-- References -->
-
-		<reference entity="Resource" package-path="com.liferay.portal" />
-		<reference entity="User" package-path="com.liferay.portal" />
-		<reference entity="ExpandoRow" package-path="com.liferay.portlet.expando" />
-		<reference entity="RatingsStats" package-path="com.liferay.portlet.ratings" />
-		<reference entity="TrashEntry" package-path="com.liferay.portlet.trash" />
-		<reference entity="TrashVersion" package-path="com.liferay.portlet.trash" />
 	</entity>
 	<entity human-name="message boards discussion" local-service="true" name="MBDiscussion" remote-service="false" uuid="true">
 
@@ -160,9 +153,6 @@
 
 		<!-- Finder methods -->
 
-		<finder name="ClassNameId" return-type="Collection">
-			<finder-column name="classNameId" />
-		</finder>
 		<finder name="ThreadId" return-type="MBDiscussion" unique="true">
 			<finder-column name="threadId" />
 		</finder>
@@ -170,12 +160,6 @@
 			<finder-column name="classNameId" />
 			<finder-column name="classPK" />
 		</finder>
-
-		<!-- References -->
-
-		<reference entity="ClassName" package-path="com.liferay.portal" />
-		<reference entity="Group" package-path="com.liferay.portal" />
-		<reference entity="User" package-path="com.liferay.portal" />
 	</entity>
 	<entity human-name="message boards mailing list" local-service="true" name="MBMailingList" remote-service="false" uuid="true">
 
@@ -226,7 +210,7 @@
 			<finder-column name="categoryId" />
 		</finder>
 	</entity>
-	<entity human-name="message-boards message" local-service="true" name="MBMessage" remote-service="true" trash-enabled="true" uuid="true">
+	<entity external-reference-code="group" human-name="message-boards message" local-service="true" name="MBMessage" remote-service="true" trash-enabled="true" uuid="true">
 
 		<!-- PK fields -->
 
@@ -254,6 +238,7 @@
 		<column name="parentMessageId" type="long" />
 		<column name="treePath" type="String" />
 		<column name="subject" type="String" uad-nonanonymizable="true" />
+		<column name="urlSubject" type="String" uad-nonanonymizable="true" />
 		<column name="body" type="String" uad-nonanonymizable="true" />
 		<column name="format" type="String" />
 		<column name="anonymous" type="boolean" />
@@ -287,7 +272,7 @@
 		<finder name="ThreadId" return-type="Collection">
 			<finder-column name="threadId" />
 		</finder>
-		<finder db-index="false" name="ThreadReplies" return-type="Collection" where="parentMessageId != 0">
+		<finder db-index="false" name="ThreadIdReplies" return-type="Collection" where="parentMessageId != 0">
 			<finder-column name="threadId" />
 		</finder>
 		<finder name="ParentMessageId" return-type="Collection">
@@ -300,6 +285,10 @@
 		<finder name="G_C" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="categoryId" />
+		</finder>
+		<finder name="G_US" return-type="MBMessage" unique="true">
+			<finder-column name="groupId" />
+			<finder-column name="urlSubject" />
 		</finder>
 		<finder name="G_S" return-type="Collection" where="categoryId != -1">
 			<finder-column name="groupId" />
@@ -329,7 +318,7 @@
 			<finder-column name="threadId" />
 			<finder-column name="status" />
 		</finder>
-		<finder name="T_notS" return-type="Collection">
+		<finder name="T_NotS" return-type="Collection">
 			<finder-column name="threadId" />
 			<finder-column comparator="!=" name="status" />
 		</finder>
@@ -389,26 +378,14 @@
 			<finder-column name="classPK" />
 			<finder-column name="status" />
 		</finder>
-
-		<!-- References -->
-
-		<reference entity="MBThread" package-path="com.liferay.message.boards" />
-		<reference entity="ClassName" package-path="com.liferay.portal" />
-		<reference entity="Company" package-path="com.liferay.portal" />
-		<reference entity="Group" package-path="com.liferay.portal" />
-		<reference entity="Resource" package-path="com.liferay.portal" />
-		<reference entity="User" package-path="com.liferay.portal" />
-		<reference entity="WorkflowInstanceLink" package-path="com.liferay.portal" />
-		<reference entity="AssetEntry" package-path="com.liferay.portlet.asset" />
-		<reference entity="AssetLink" package-path="com.liferay.portlet.asset" />
-		<reference entity="ExpandoRow" package-path="com.liferay.portlet.expando" />
-		<reference entity="RatingsStats" package-path="com.liferay.portlet.ratings" />
 	</entity>
 	<entity human-name="message boards stats user" local-service="true" name="MBStatsUser" remote-service="false">
+	</entity>
+	<entity human-name="message boards suspicious activity" local-service="true" name="MBSuspiciousActivity" remote-service="true" uuid="true">
 
 		<!-- PK fields -->
 
-		<column name="statsUserId" primary="true" type="long" />
+		<column container-model="true" name="suspiciousActivityId" primary="true" type="long" />
 
 		<!-- Group instance -->
 
@@ -418,40 +395,33 @@
 
 		<column name="companyId" type="long" />
 		<column name="userId" type="long" />
+		<column name="userName" type="String" uad-anonymize-field-name="fullName" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
 
 		<!-- Other fields -->
 
-		<column name="messageCount" type="int" />
-		<column name="lastPostDate" type="Date" />
-
-		<!-- Order -->
-
-		<order by="desc">
-			<order-column name="messageCount" />
-		</order>
+		<column name="messageId" type="long" />
+		<column name="threadId" type="long" />
+		<column name="reason" type="String" />
+		<column name="validated" type="boolean" />
 
 		<!-- Finder methods -->
 
-		<finder name="GroupId" return-type="Collection">
-			<finder-column name="groupId" />
+		<finder name="MessageId" return-type="Collection">
+			<finder-column name="messageId" />
 		</finder>
-		<finder name="UserId" return-type="Collection">
+		<finder name="ThreadId" return-type="Collection">
+			<finder-column name="threadId" />
+		</finder>
+		<finder name="U_M" return-type="MBSuspiciousActivity">
 			<finder-column name="userId" />
+			<finder-column name="messageId" />
 		</finder>
-		<finder name="G_U" return-type="MBStatsUser" unique="true">
-			<finder-column name="groupId" />
+		<finder name="U_T" return-type="MBSuspiciousActivity">
 			<finder-column name="userId" />
+			<finder-column name="threadId" />
 		</finder>
-		<finder name="G_NotU_NotM" return-type="Collection">
-			<finder-column name="groupId" />
-			<finder-column comparator="!=" name="userId" />
-			<finder-column comparator="!=" name="messageCount" />
-		</finder>
-
-		<!-- References -->
-
-		<reference entity="Group" package-path="com.liferay.portal" />
-		<reference entity="User" package-path="com.liferay.portal" />
 	</entity>
 	<entity human-name="message boards thread" local-service="true" name="MBThread" remote-service="true" trash-enabled="true" uuid="true">
 
@@ -477,7 +447,6 @@
 		<column name="rootMessageId" type="long" />
 		<column name="rootMessageUserId" type="long" />
 		<column name="title" type="String" uad-nonanonymizable="true" />
-		<column name="messageCount" type="int" />
 		<column name="lastPostByUserId" type="long" />
 		<column name="lastPostDate" type="Date" />
 		<column name="priority" type="double" />
@@ -548,18 +517,6 @@
 			<finder-column comparator="!=" name="categoryId" />
 			<finder-column comparator="!=" name="status" />
 		</finder>
-
-		<!-- References -->
-
-		<reference entity="MBMessage" package-path="com.liferay.message.boards" />
-		<reference entity="Group" package-path="com.liferay.portal" />
-		<reference entity="Resource" package-path="com.liferay.portal" />
-		<reference entity="User" package-path="com.liferay.portal" />
-		<reference entity="WorkflowInstanceLink" package-path="com.liferay.portal" />
-		<reference entity="AssetEntry" package-path="com.liferay.portlet.asset" />
-		<reference entity="RatingsStats" package-path="com.liferay.portlet.ratings" />
-		<reference entity="TrashEntry" package-path="com.liferay.portlet.trash" />
-		<reference entity="TrashVersion" package-path="com.liferay.portlet.trash" />
 	</entity>
 	<entity human-name="message boards thread flag" local-service="true" name="MBThreadFlag" remote-service="false" uuid="true">
 
@@ -611,6 +568,7 @@
 		<exception>MessageBody</exception>
 		<exception>MessageSubject</exception>
 		<exception>RequiredMessage</exception>
+		<exception>RequiredThread</exception>
 		<exception>SplitThread</exception>
 	</exceptions>
 </service-builder>

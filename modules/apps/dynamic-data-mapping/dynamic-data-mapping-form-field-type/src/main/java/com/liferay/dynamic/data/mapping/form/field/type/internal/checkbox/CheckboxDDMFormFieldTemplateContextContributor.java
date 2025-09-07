@@ -1,25 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox;
 
+import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
-import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.dynamic.data.mapping.util.DDMFormFieldTemplateContextContributorUtil;
+import com.liferay.dynamic.data.mapping.util.DDMFormFieldValueUtil;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
 
@@ -29,11 +31,8 @@ import org.osgi.service.component.annotations.Component;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=checkbox",
-	service = {
-		CheckboxDDMFormFieldTemplateContextContributor.class,
-		DDMFormFieldTemplateContextContributor.class
-	}
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.CHECKBOX,
+	service = DDMFormFieldTemplateContextContributor.class
 )
 public class CheckboxDDMFormFieldTemplateContextContributor
 	implements DDMFormFieldTemplateContextContributor {
@@ -43,31 +42,80 @@ public class CheckboxDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
+		DDMForm ddmForm = ddmFormField.getDDMForm();
+
+		boolean localizedObjectField = GetterUtil.getBoolean(
+			ddmFormField.getProperty("localizedObjectField"));
+
 		return HashMapBuilder.<String, Object>put(
+			"localizedObjectField", localizedObjectField
+		).put(
 			"predefinedValue",
 			GetterUtil.getBoolean(
-				getPredefinedValue(ddmFormField, ddmFormFieldRenderingContext))
+				DDMFormFieldTypeUtil.getValue(
+					DDMFormFieldTypeUtil.getPropertyValue(
+						ddmFormField, ddmFormFieldRenderingContext.getLocale(),
+						"predefinedValue")))
 		).put(
 			"showAsSwitcher",
 			GetterUtil.getBoolean(ddmFormField.getProperty("showAsSwitcher"))
 		).put(
+			"showMaximumRepetitionsInfo",
+			GetterUtil.getBoolean(
+				ddmFormField.getProperty("showMaximumRepetitionsInfo"))
+		).put(
+			"systemSettingsURL",
+			() -> {
+				if (!GetterUtil.getBoolean(
+						ddmFormField.getProperty(
+							"showMaximumRepetitionsInfo"))) {
+
+					return StringPool.BLANK;
+				}
+
+				return _getSystemSettingsURL(
+					ddmFormFieldRenderingContext.getHttpServletRequest());
+			}
+		).put(
+			"tooltip",
+			DDMFormFieldTypeUtil.getPropertyValue(
+				ddmFormField, ddmFormFieldRenderingContext.getLocale(),
+				"tooltip")
+		).put(
 			"value",
-			GetterUtil.getBoolean(ddmFormFieldRenderingContext.getValue())
+			() -> {
+				if (localizedObjectField) {
+					return DDMFormFieldValueUtil.getValueJSONObject(
+						ddmFormFieldRenderingContext);
+				}
+
+				return GetterUtil.getBoolean(
+					DDMFormFieldTypeUtil.getValue(
+						ddmFormFieldRenderingContext.getValue()));
+			}
+		).putAll(
+			DDMFormFieldTemplateContextContributorUtil.
+				getLocalizationParameters(
+					ddmFormField, ddmForm.getDefaultLocale())
 		).build();
 	}
 
-	protected String getPredefinedValue(
-		DDMFormField ddmFormField,
-		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+	private String _getSystemSettingsURL(
+		HttpServletRequest httpServletRequest) {
 
-		LocalizedValue predefinedValue = ddmFormField.getPredefinedValue();
+		RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+			RequestBackedPortletURLFactoryUtil.create(httpServletRequest);
 
-		if (predefinedValue == null) {
-			return null;
-		}
-
-		return predefinedValue.getString(
-			ddmFormFieldRenderingContext.getLocale());
+		return PortletURLBuilder.create(
+			requestBackedPortletURLFactory.createActionURL(
+				ConfigurationAdminPortletKeys.SYSTEM_SETTINGS)
+		).setMVCRenderCommandName(
+			"/configuration_admin/edit_configuration"
+		).setParameter(
+			"factoryPid",
+			"com.liferay.dynamic.data.mapping.form.web.internal." +
+				"configuration.DDMFormWebConfiguration"
+		).buildString();
 	}
 
 }

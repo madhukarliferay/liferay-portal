@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.processes.web.internal.portlet.action;
@@ -32,14 +23,14 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.SessionTreeJSClicks;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.staging.constants.StagingProcessesPortletKeys;
-import com.liferay.taglib.ui.util.SessionTreeJSClicks;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -48,10 +39,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Levente Hudák
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + StagingProcessesPortletKeys.STAGING_PROCESSES,
-		"mvc.command.name=publishLayouts"
+		"jakarta.portlet.name=" + StagingProcessesPortletKeys.STAGING_PROCESSES,
+		"mvc.command.name=/staging_processes/publish_layouts"
 	},
 	service = MVCActionCommand.class
 )
@@ -120,36 +110,39 @@ public class PublishLayoutsMVCActionCommand extends BaseMVCActionCommand {
 
 			sendRedirect(actionRequest, actionResponse, redirect);
 		}
-		catch (Exception e) {
-			if (e instanceof PrincipalException) {
-				SessionErrors.add(actionRequest, e.getClass());
+		catch (Exception exception) {
+			if (exception instanceof PrincipalException) {
+				SessionErrors.add(actionRequest, exception.getClass());
 
 				actionResponse.setRenderParameter(
 					"mvcPath", "/error/error.jsp");
 			}
-			else if (e instanceof AuthException ||
-					 e instanceof DuplicateLockException ||
-					 e instanceof LayoutPrototypeException ||
-					 e instanceof RemoteAuthException ||
-					 e instanceof RemoteExportException ||
-					 e instanceof RemoteOptionsException ||
-					 e instanceof SchedulerException ||
-					 e instanceof SystemException) {
+			else if (exception instanceof AuthException ||
+					 exception instanceof DuplicateLockException ||
+					 exception instanceof LayoutPrototypeException ||
+					 exception instanceof RemoteAuthException ||
+					 exception instanceof RemoteExportException ||
+					 exception instanceof RemoteOptionsException ||
+					 exception instanceof SchedulerException ||
+					 exception instanceof SystemException) {
 
-				if (e instanceof RemoteAuthException) {
-					SessionErrors.add(actionRequest, AuthException.class, e);
+				if (exception instanceof RemoteAuthException) {
+					SessionErrors.add(
+						actionRequest, AuthException.class, exception);
 
 					sendRedirect(actionRequest, actionResponse, redirect);
 				}
 				else {
-					SessionErrors.add(actionRequest, e.getClass(), e);
+					SessionErrors.add(
+						actionRequest, exception.getClass(), exception);
 				}
 			}
-			else if (e instanceof IllegalArgumentException) {
-				SessionErrors.add(actionRequest, e.getClass(), e);
+			else if (exception instanceof IllegalArgumentException) {
+				SessionErrors.add(
+					actionRequest, exception.getClass(), exception);
 			}
 			else {
-				throw e;
+				throw exception;
 			}
 		}
 	}
@@ -164,13 +157,12 @@ public class PublishLayoutsMVCActionCommand extends BaseMVCActionCommand {
 
 		String treeId = ParamUtil.getString(actionRequest, "treeId");
 
-		String openNodes = SessionTreeJSClicks.getOpenNodes(
-			httpServletRequest, treeId + "SelectedNode");
-
-		String selectedLayoutsJSON = _exportImportHelper.getSelectedLayoutsJSON(
-			groupId, privateLayout, openNodes);
-
-		actionRequest.setAttribute("layoutIdMap", selectedLayoutsJSON);
+		actionRequest.setAttribute(
+			"layoutIdMap",
+			_exportImportHelper.getSelectedLayoutsJSON(
+				groupId, privateLayout,
+				SessionTreeJSClicks.getOpenNodes(
+					httpServletRequest, treeId + "SelectedNode")));
 	}
 
 	@Reference

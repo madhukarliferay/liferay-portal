@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.trash.service.webserver.test;
@@ -28,16 +19,14 @@ import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
-import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -46,10 +35,12 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.trash.model.TrashEntry;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,17 +59,16 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
+	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
 		_user = UserTestUtil.addUser(null, group.getGroupId());
-
-		String portletId = PortletProviderUtil.getPortletId(
-			TrashEntry.class.getName(), PortletProvider.Action.VIEW);
-
 		_role = RoleTestUtil.addRole(
-			"Trash Admin", RoleConstants.TYPE_REGULAR, portletId,
+			"Trash Admin", RoleConstants.TYPE_REGULAR,
+			PortletProviderUtil.getPortletId(
+				TrashEntry.class.getName(), PortletProvider.Action.VIEW),
 			ResourceConstants.SCOPE_COMPANY,
 			String.valueOf(TestPropsValues.getCompanyId()),
 			ActionKeys.ACCESS_IN_CONTROL_PANEL);
@@ -86,15 +76,13 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 
 	@Test
 	public void testRequestFileInTrash() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				group.getGroupId(), TestPropsValues.getUserId());
-
 		FileEntry fileEntry = DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), group.getGroupId(),
+			null, TestPropsValues.getUserId(), group.getGroupId(),
 			parentFolder.getFolderId(), "Test Trash.txt",
-			ContentTypes.TEXT_PLAIN, TestDataConstants.TEST_BYTE_ARRAY,
-			serviceContext);
+			ContentTypes.TEXT_PLAIN, TestDataConstants.TEST_BYTE_ARRAY, null,
+			null, null,
+			ServiceContextTestUtil.getServiceContext(
+				group.getGroupId(), TestPropsValues.getUserId()));
 
 		MockHttpServletResponse mockHttpServletResponse = testRequestFile(
 			fileEntry, _user, false);
@@ -126,24 +114,19 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 	}
 
 	protected void resetPermissionThreadLocal() throws Exception {
-		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
-
-		PermissionThreadLocal.setPermissionChecker(permissionChecker);
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()));
 	}
 
 	protected MockHttpServletResponse testRequestFile(
 			FileEntry fileEntry, User user, boolean statusInTrash)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getGroupId());
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getUuid());
-
-		String path = sb.toString();
+		String path = StringBundler.concat(
+			StringPool.SLASH, fileEntry.getGroupId(), StringPool.SLASH,
+			fileEntry.getUuid());
+		Map<String, String> headers = Collections.singletonMap(
+			"Host", "localhost");
 
 		Map<String, String> params = new HashMap<>();
 
@@ -153,7 +136,7 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 		}
 
 		MockHttpServletResponse mockHttpServletResponse = service(
-			Method.GET, path, null, params, user, null);
+			Method.GET, path, headers, params, user, null);
 
 		resetPermissionThreadLocal();
 

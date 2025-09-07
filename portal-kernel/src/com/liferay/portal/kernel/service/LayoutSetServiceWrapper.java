@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.model.LayoutSet;
 
 /**
  * Provides a wrapper for {@link LayoutSetService}.
@@ -24,6 +17,10 @@ package com.liferay.portal.kernel.service;
 public class LayoutSetServiceWrapper
 	implements LayoutSetService, ServiceWrapper<LayoutSetService> {
 
+	public LayoutSetServiceWrapper() {
+		this(null);
+	}
+
 	public LayoutSetServiceWrapper(LayoutSetService layoutSetService) {
 		_layoutSetService = layoutSetService;
 	}
@@ -34,8 +31,17 @@ public class LayoutSetServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _layoutSetService.getOSGiServiceIdentifier();
+	}
+
+	@Override
+	public void updateFaviconFileEntryId(
+			long groupId, boolean privateLayout, long faviconFileEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_layoutSetService.updateFaviconFileEntryId(
+			groupId, privateLayout, faviconFileEntryId);
 	}
 
 	/**
@@ -60,7 +66,7 @@ public class LayoutSetServiceWrapper
 	public void updateLayoutSetPrototypeLinkEnabled(
 			long groupId, boolean privateLayout,
 			boolean layoutSetPrototypeLinkEnabled,
-			java.lang.String layoutSetPrototypeUuid)
+			String layoutSetPrototypeUuid)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_layoutSetService.updateLayoutSetPrototypeLinkEnabled(
@@ -106,9 +112,9 @@ public class LayoutSetServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.LayoutSet updateLookAndFeel(
-			long groupId, boolean privateLayout, java.lang.String themeId,
-			java.lang.String colorSchemeId, java.lang.String css)
+	public LayoutSet updateLookAndFeel(
+			long groupId, boolean privateLayout, String themeId,
+			String colorSchemeId, String css)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetService.updateLookAndFeel(
@@ -116,34 +122,18 @@ public class LayoutSetServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.LayoutSet updateSettings(
-			long groupId, boolean privateLayout, java.lang.String settings)
+	public LayoutSet updateSettings(
+			long groupId, boolean privateLayout, String settings)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetService.updateSettings(
 			groupId, privateLayout, settings);
 	}
 
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 #updateVirtualHosts(long, boolean, TreeMap)}
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.portal.kernel.model.LayoutSet updateVirtualHost(
+	public LayoutSet updateVirtualHosts(
 			long groupId, boolean privateLayout,
-			java.lang.String virtualHostname)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _layoutSetService.updateVirtualHost(
-			groupId, privateLayout, virtualHostname);
-	}
-
-	@Override
-	public com.liferay.portal.kernel.model.LayoutSet updateVirtualHosts(
-			long groupId, boolean privateLayout,
-			java.util.TreeMap<java.lang.String, java.lang.String>
-				virtualHostnames)
+			java.util.TreeMap<String, String> virtualHostnames)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetService.updateVirtualHosts(

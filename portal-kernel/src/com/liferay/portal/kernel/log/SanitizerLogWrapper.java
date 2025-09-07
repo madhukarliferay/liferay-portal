@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.log;
@@ -95,13 +86,13 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void debug(Object msg, Throwable t) {
-		super.debug(sanitize(msg), sanitize(t));
+	public void debug(Object msg, Throwable throwable) {
+		super.debug(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void debug(Throwable t) {
-		super.debug(sanitize(t));
+	public void debug(Throwable throwable) {
+		super.debug(sanitize(throwable));
 	}
 
 	@Override
@@ -110,13 +101,13 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void error(Object msg, Throwable t) {
-		super.error(sanitize(msg), sanitize(t));
+	public void error(Object msg, Throwable throwable) {
+		super.error(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void error(Throwable t) {
-		super.error(sanitize(t));
+	public void error(Throwable throwable) {
+		super.error(sanitize(throwable));
 	}
 
 	@Override
@@ -125,13 +116,13 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void fatal(Object msg, Throwable t) {
-		super.fatal(sanitize(msg), sanitize(t));
+	public void fatal(Object msg, Throwable throwable) {
+		super.fatal(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void fatal(Throwable t) {
-		super.fatal(sanitize(t));
+	public void fatal(Throwable throwable) {
+		super.fatal(sanitize(throwable));
 	}
 
 	@Override
@@ -140,13 +131,13 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void info(Object msg, Throwable t) {
-		super.info(sanitize(msg), sanitize(t));
+	public void info(Object msg, Throwable throwable) {
+		super.info(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void info(Throwable t) {
-		super.info(sanitize(t));
+	public void info(Throwable throwable) {
+		super.info(sanitize(throwable));
 	}
 
 	@Override
@@ -155,13 +146,13 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void trace(Object msg, Throwable t) {
-		super.trace(sanitize(msg), sanitize(t));
+	public void trace(Object msg, Throwable throwable) {
+		super.trace(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void trace(Throwable t) {
-		super.trace(sanitize(t));
+	public void trace(Throwable throwable) {
+		super.trace(sanitize(throwable));
 	}
 
 	@Override
@@ -170,21 +161,21 @@ public class SanitizerLogWrapper extends LogWrapper {
 	}
 
 	@Override
-	public void warn(Object msg, Throwable t) {
-		super.warn(sanitize(msg), sanitize(t));
+	public void warn(Object msg, Throwable throwable) {
+		super.warn(sanitize(msg), sanitize(throwable));
 	}
 
 	@Override
-	public void warn(Throwable t) {
-		super.warn(sanitize(t));
+	public void warn(Throwable throwable) {
+		super.warn(sanitize(throwable));
 	}
 
-	protected String sanitize(Object obj) {
-		if (obj == null) {
+	protected String sanitize(Object object) {
+		if (object == null) {
 			return null;
 		}
 
-		String message = obj.toString();
+		String message = object.toString();
 
 		return sanitize(message, message);
 	}

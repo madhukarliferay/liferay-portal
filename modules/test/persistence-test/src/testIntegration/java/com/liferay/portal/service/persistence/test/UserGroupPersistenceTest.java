@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.exception.DuplicateUserGroupExternalReferenceCodeException;
 import com.liferay.portal.kernel.exception.NoSuchUserGroupException;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
@@ -45,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +117,8 @@ public class UserGroupPersistenceTest {
 
 		newUserGroup.setMvccVersion(RandomTestUtil.nextLong());
 
+		newUserGroup.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newUserGroup.setUuid(RandomTestUtil.randomString());
 
 		newUserGroup.setExternalReferenceCode(RandomTestUtil.randomString());
@@ -155,6 +149,9 @@ public class UserGroupPersistenceTest {
 		Assert.assertEquals(
 			existingUserGroup.getMvccVersion(), newUserGroup.getMvccVersion());
 		Assert.assertEquals(
+			existingUserGroup.getCtCollectionId(),
+			newUserGroup.getCtCollectionId());
+		Assert.assertEquals(
 			existingUserGroup.getUuid(), newUserGroup.getUuid());
 		Assert.assertEquals(
 			existingUserGroup.getExternalReferenceCode(),
@@ -183,6 +180,26 @@ public class UserGroupPersistenceTest {
 		Assert.assertEquals(
 			existingUserGroup.isAddedByLDAPImport(),
 			newUserGroup.isAddedByLDAPImport());
+	}
+
+	@Test(expected = DuplicateUserGroupExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		UserGroup userGroup = addUserGroup();
+
+		UserGroup newUserGroup = addUserGroup();
+
+		newUserGroup.setCompanyId(userGroup.getCompanyId());
+
+		newUserGroup = _persistence.update(newUserGroup);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newUserGroup);
+
+		newUserGroup.setExternalReferenceCode(
+			userGroup.getExternalReferenceCode());
+
+		_persistence.update(newUserGroup);
 	}
 
 	@Test
@@ -237,21 +254,21 @@ public class UserGroupPersistenceTest {
 	}
 
 	@Test
-	public void testCountByU_C_P() throws Exception {
-		_persistence.countByU_C_P(
+	public void testCountByGtU_C_P() throws Exception {
+		_persistence.countByGtU_C_P(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextLong());
 
-		_persistence.countByU_C_P(0L, 0L, 0L);
+		_persistence.countByGtU_C_P(0L, 0L, 0L);
 	}
 
 	@Test
-	public void testCountByC_ERC() throws Exception {
-		_persistence.countByC_ERC(RandomTestUtil.nextLong(), "");
+	public void testCountByERC_C() throws Exception {
+		_persistence.countByERC_C("", RandomTestUtil.nextLong());
 
-		_persistence.countByC_ERC(0L, "null");
+		_persistence.countByERC_C("null", 0L);
 
-		_persistence.countByC_ERC(0L, (String)null);
+		_persistence.countByERC_C((String)null, 0L);
 	}
 
 	@Test
@@ -279,10 +296,10 @@ public class UserGroupPersistenceTest {
 
 	protected OrderByComparator<UserGroup> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"UserGroup", "mvccVersion", true, "uuid", true,
-			"externalReferenceCode", true, "userGroupId", true, "companyId",
-			true, "userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "parentUserGroupId", true, "name", true,
+			"UserGroup", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "userGroupId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "parentUserGroupId", true, "name", true,
 			"description", true, "addedByLDAPImport", true);
 	}
 
@@ -501,29 +518,72 @@ public class UserGroupPersistenceTest {
 
 		_persistence.clearCache();
 
-		UserGroup existingUserGroup = _persistence.findByPrimaryKey(
-			newUserGroup.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newUserGroup.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		UserGroup newUserGroup = addUserGroup();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			UserGroup.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"userGroupId", newUserGroup.getUserGroupId()));
+
+		List<UserGroup> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(UserGroup userGroup) {
+		Assert.assertEquals(
+			Long.valueOf(userGroup.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				userGroup, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
+		Assert.assertEquals(
+			userGroup.getName(),
+			ReflectionTestUtil.invoke(
+				userGroup, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingUserGroup.getCompanyId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingUserGroup, "getOriginalCompanyId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingUserGroup.getName(),
-				ReflectionTestUtil.invoke(
-					existingUserGroup, "getOriginalName", new Class<?>[0])));
-
+			userGroup.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				userGroup, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
 		Assert.assertEquals(
-			Long.valueOf(existingUserGroup.getCompanyId()),
+			Long.valueOf(userGroup.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingUserGroup, "getOriginalCompanyId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingUserGroup.getExternalReferenceCode(),
-				ReflectionTestUtil.invoke(
-					existingUserGroup, "getOriginalExternalReferenceCode",
-					new Class<?>[0])));
+				userGroup, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 	}
 
 	protected UserGroup addUserGroup() throws Exception {
@@ -532,6 +592,8 @@ public class UserGroupPersistenceTest {
 		UserGroup userGroup = _persistence.create(pk);
 
 		userGroup.setMvccVersion(RandomTestUtil.nextLong());
+
+		userGroup.setCtCollectionId(RandomTestUtil.nextLong());
 
 		userGroup.setUuid(RandomTestUtil.randomString());
 

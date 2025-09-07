@@ -1,59 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
-import java.io.File;
-
-import java.util.Set;
+import org.json.JSONObject;
 
 /**
- * @author Leslie Wong
+ * @author Michael Hashimoto
  */
-public class PortalUpstreamJob
-	extends PortalGitRepositoryJob implements BatchDependentJob {
+public class PortalUpstreamJob extends PortalAcceptancePullRequestJob {
 
-	public PortalUpstreamJob(String jobName) {
-		super(jobName);
+	protected PortalUpstreamJob(
+		BuildProfile buildProfile, String jobName,
+		PortalGitWorkingDirectory portalGitWorkingDirectory,
+		String testSuiteName, String upstreamBranchName) {
 
-		GitWorkingDirectory jenkinsGitWorkingDirectory =
-			GitWorkingDirectoryFactory.newJenkinsGitWorkingDirectory();
-
-		jobPropertiesFiles.add(
-			new File(
-				jenkinsGitWorkingDirectory.getWorkingDirectory(),
-				"commands/dependencies/test-upstream-batch.properties"));
-
-		readJobProperties();
+		super(
+			buildProfile, jobName, portalGitWorkingDirectory, testSuiteName,
+			upstreamBranchName);
 	}
 
-	@Override
-	public Set<String> getBatchNames() {
-		String testBatchNames = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(),
-			"test.batch.names[portal-upstream(" + getBranchName() + ")]");
-
-		return getSetFromString(testBatchNames);
-	}
-
-	@Override
-	public Set<String> getDependentBatchNames() {
-		String testBatchNames = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(),
-			"test.batch.names.smoke[" + getBranchName() + "]");
-
-		return getSetFromString(testBatchNames);
+	protected PortalUpstreamJob(JSONObject jsonObject) {
+		super(jsonObject);
 	}
 
 }

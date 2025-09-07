@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -33,10 +25,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface WorkflowDefinitionLinkModel
-	extends AttachedModel, BaseModel<WorkflowDefinitionLink>, GroupedModel,
-			MVCCModel, ShardedModel {
+	extends AttachedModel, BaseModel<WorkflowDefinitionLink>,
+			CTModel<WorkflowDefinitionLink>, ExternalReferenceCodeModel,
+			GroupedModel, MVCCModel, ShardedModel, StagedAuditedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a workflow definition link model instance should use the {@link WorkflowDefinitionLink} interface instead.
@@ -47,6 +40,7 @@ public interface WorkflowDefinitionLinkModel
 	 *
 	 * @return the primary key of this workflow definition link
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,6 +48,7 @@ public interface WorkflowDefinitionLinkModel
 	 *
 	 * @param primaryKey the primary key of this workflow definition link
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -71,6 +66,56 @@ public interface WorkflowDefinitionLinkModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this workflow definition link.
+	 *
+	 * @return the ct collection ID of this workflow definition link
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this workflow definition link.
+	 *
+	 * @param ctCollectionId the ct collection ID of this workflow definition link
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
+	 * Returns the uuid of this workflow definition link.
+	 *
+	 * @return the uuid of this workflow definition link
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this workflow definition link.
+	 *
+	 * @param uuid the uuid of this workflow definition link
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this workflow definition link.
+	 *
+	 * @return the external reference code of this workflow definition link
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this workflow definition link.
+	 *
+	 * @param externalReferenceCode the external reference code of this workflow definition link
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the workflow definition link ID of this workflow definition link.
@@ -283,5 +328,12 @@ public interface WorkflowDefinitionLinkModel
 	 * @param workflowDefinitionVersion the workflow definition version of this workflow definition link
 	 */
 	public void setWorkflowDefinitionVersion(int workflowDefinitionVersion);
+
+	@Override
+	public WorkflowDefinitionLink cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

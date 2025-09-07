@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.audit.event.generators.internal.events;
@@ -28,9 +19,9 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -40,8 +31,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Brian Wing Shun Chan
  */
 @Component(
-	immediate = true, property = "key=servlet.service.events.pre",
-	service = LifecycleAction.class
+	property = "key=servlet.service.events.pre", service = LifecycleAction.class
 )
 public class ImpersonationAction extends Action {
 
@@ -54,8 +44,8 @@ public class ImpersonationAction extends Action {
 		try {
 			doRun(httpServletRequest, httpServletResponse);
 		}
-		catch (Exception e) {
-			throw new ActionException(e);
+		catch (Exception exception) {
+			throw new ActionException(exception);
 		}
 	}
 
@@ -76,23 +66,24 @@ public class ImpersonationAction extends Action {
 
 		User user = themeDisplay.getUser();
 		User realUser = themeDisplay.getRealUser();
-		String doAsUserId = themeDisplay.getDoAsUserId();
 
-		HttpSession session = httpServletRequest.getSession();
+		HttpSession httpSession = httpServletRequest.getSession();
 
-		Boolean impersonatingUser = (Boolean)session.getAttribute(
+		Boolean impersonatingUser = (Boolean)httpSession.getAttribute(
 			_IMPERSONATING_USER);
 
-		if (Validator.isNotNull(doAsUserId) &&
+		if (Validator.isNotNull(themeDisplay.getDoAsUserId()) &&
 			(user.getUserId() != realUser.getUserId())) {
 
 			if (impersonatingUser == null) {
-				session.setAttribute(_IMPERSONATING_USER, Boolean.TRUE);
+				httpSession.setAttribute(_IMPERSONATING_USER, Boolean.TRUE);
 
 				JSONObject additionalInfoJSONObject =
 					_jsonFactory.createJSONObject();
 
 				additionalInfoJSONObject.put(
+					"userEmailAddress", user.getEmailAddress()
+				).put(
 					"userId", user.getUserId()
 				).put(
 					"userName", user.getFullName()
@@ -108,7 +99,7 @@ public class ImpersonationAction extends Action {
 			}
 		}
 		else if (impersonatingUser != null) {
-			session.removeAttribute(_IMPERSONATING_USER);
+			httpSession.removeAttribute(_IMPERSONATING_USER);
 		}
 	}
 

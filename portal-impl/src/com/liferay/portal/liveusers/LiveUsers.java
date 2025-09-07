@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.liveusers;
@@ -30,17 +21,16 @@ import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.servlet.http.HttpSession;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Charles May
@@ -128,17 +118,16 @@ public class LiveUsers {
 	public static void joinGroup(long companyId, long groupId, long userId) {
 		Map<Long, Set<Long>> liveUsers = _getLiveUsers(companyId);
 
-		Set<Long> groupUsers = _getGroupUsers(liveUsers, groupId);
-
 		if (_getUserTrackers(companyId, userId) != null) {
+			Set<Long> groupUsers = _getGroupUsers(liveUsers, groupId);
+
 			groupUsers.add(userId);
 		}
 	}
 
 	public static void joinGroup(long companyId, long groupId, long[] userIds) {
-		Map<Long, Set<Long>> liveUsers = _getLiveUsers(companyId);
-
-		Set<Long> groupUsers = _getGroupUsers(liveUsers, groupId);
+		Set<Long> groupUsers = _getGroupUsers(
+			_getLiveUsers(companyId), groupId);
 
 		for (long userId : userIds) {
 			if (_getUserTrackers(companyId, userId) != null) {
@@ -148,9 +137,8 @@ public class LiveUsers {
 	}
 
 	public static void leaveGroup(long companyId, long groupId, long userId) {
-		Map<Long, Set<Long>> liveUsers = _getLiveUsers(companyId);
-
-		Set<Long> groupUsers = _getGroupUsers(liveUsers, groupId);
+		Set<Long> groupUsers = _getGroupUsers(
+			_getLiveUsers(companyId), groupId);
 
 		groupUsers.remove(userId);
 	}
@@ -158,9 +146,8 @@ public class LiveUsers {
 	public static void leaveGroup(
 		long companyId, long groupId, long[] userIds) {
 
-		Map<Long, Set<Long>> liveUsers = _getLiveUsers(companyId);
-
-		Set<Long> groupUsers = _getGroupUsers(liveUsers, groupId);
+		Set<Long> groupUsers = _getGroupUsers(
+			_getLiveUsers(companyId), groupId);
 
 		for (long userId : userIds) {
 			groupUsers.remove(userId);
@@ -256,20 +243,23 @@ public class LiveUsers {
 					userTracker.getUserAgent(), userTracker.getPaths());
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e.getMessage());
+				_log.warn(exception);
 			}
 		}
 
 		try {
-			HttpSession session = PortalSessionContext.get(sessionId);
+			HttpSession httpSession = PortalSessionContext.get(sessionId);
 
-			if (session != null) {
-				session.invalidate();
+			if (httpSession != null) {
+				httpSession.invalidate();
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		_removeUserTracker(companyId, userId, userTracker);
@@ -420,13 +410,13 @@ public class LiveUsers {
 
 		String sessionId = userTracker.getSessionId();
 
-		Iterator<UserTracker> itr = userTrackers.iterator();
+		Iterator<UserTracker> iterator = userTrackers.iterator();
 
-		while (itr.hasNext()) {
-			UserTracker curUserTracker = itr.next();
+		while (iterator.hasNext()) {
+			UserTracker curUserTracker = iterator.next();
 
 			if (sessionId.equals(curUserTracker.getSessionId())) {
-				itr.remove();
+				iterator.remove();
 			}
 		}
 
@@ -443,14 +433,12 @@ public class LiveUsers {
 
 		Map<Long, Set<Long>> liveUsers = _getLiveUsers(companyId);
 
-		LinkedHashMap<String, Object> groupParams =
+		List<Group> groups = GroupLocalServiceUtil.search(
+			companyId, null, null,
 			LinkedHashMapBuilder.<String, Object>put(
 				"usersGroups", userId
-			).build();
-
-		List<Group> groups = GroupLocalServiceUtil.search(
-			companyId, null, null, groupParams, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS);
+			).build(),
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		for (Group group : groups) {
 			Set<Long> groupUsers = _getGroupUsers(

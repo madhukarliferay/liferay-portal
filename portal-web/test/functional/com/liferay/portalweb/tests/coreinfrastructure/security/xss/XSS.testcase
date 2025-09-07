@@ -1,515 +1,582 @@
-@component-name = "portal-security"
+@component-name = "portal-application-security"
 definition {
 
+	property ci.retries.disabled = "true";
+	property portal.acceptance = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property test.assert.warning.exceptions = "true";
+	property test.assert.warning.exceptions = "false";
 	property testray.main.component.name = "XSS";
 
 	setUp {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
+
+		task ("Enable dynamic and manual selection") {
+			AssetPublisherPortlet.enableDynamicAndManualSelection();
+		}
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
 			PortalSettings.tearDownAuthenticationCP();
 
-			Page.tearDownCP();
+			PagesAdmin.tearDownCP();
 		}
 	}
 
-	@priority = "4"
-	test ValidateXSSVulnerabilities {
-		var portalURL = PropsUtil.get("portal.url");
+	@description = "This is a use case for LPS-45254. View URL validate."
+	@priority = 4
+	test MaliciousURLScriptsAreNotValidated {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		var maliciousURL1 = '''
-				${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script>
-			''';
+		task ("Access malicious url and assert script was not validated") {
+			var maliciousUrl1 = '''
+					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E
+				''';
+			var maliciousUrl2 = '''
+					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=%22%3E%3Cscript%3Ealert%28%27xss%27%29;%3C/script%3E
+				''';
+			var maliciousUrl3 = '''
+					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=alert%28%27xss%27%29
+				''';
 
-		var maliciousURL2 = '''
-				${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script&gt;
-			''';
+			Navigator.openSpecificURL(url = ${maliciousUrl1});
 
-		var maliciousURL3 = '''
-				${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=%3C/script%3E%3Cscript%3Ealert(document.domain)%3C/script%3E
-			''';
+			AssertAlertNotPresent();
 
-		var maliciousURL4 = '''
-				${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=</script><script>alert(document.domain)</script>
-			''';
+			Navigator.openURL();
 
-		var maliciousURL5 = '''
-				${portalURL}/web/guest/home?p_p_id=113&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_113_tabs1=background-styles
-			''';
+			UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
 
-		Navigator.openSpecificURL(url = "${maliciousURL1}");
+			for (var maliciousURL : list "${maliciousUrl2},${maliciousUrl3}") {
+				Navigator.openSpecificURL(url = ${maliciousURL});
 
-		AssertTextEquals(
-			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-			value1 = "Not Found");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "Home#ERROR_MESSAGE_RESOURCE_NOT_FOUND",
-			value1 = "The requested resource could not be found.");
-
-		AssertElementPresent(locator1 = "Home#URL_ERROR_MESSAGE");
-
-		Navigator.openSpecificURL(url = "${maliciousURL2}");
-
-		AssertTextEquals(
-			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-			value1 = "Not Found");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "Home#ERROR_MESSAGE_RESOURCE_NOT_FOUND",
-			value1 = "The requested resource could not be found.");
-
-		AssertElementPresent(locator1 = "Home#URL_ERROR_MESSAGE");
-
-		Navigator.openSpecificURL(url = "${maliciousURL3}");
-
-		AssertTextEquals(
-			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-			value1 = "Not Found");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "Home#ERROR_MESSAGE_RESOURCE_NOT_FOUND",
-			value1 = "The requested resource could not be found.");
-
-		AssertElementPresent(locator1 = "Home#URL_ERROR_MESSAGE");
-
-		Navigator.openSpecificURL(url = "${maliciousURL4}");
-
-		AssertTextEquals(
-			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-			value1 = "Not Found");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "Home#ERROR_MESSAGE_RESOURCE_NOT_FOUND",
-			value1 = "The requested resource could not be found.");
-
-		AssertElementPresent(locator1 = "Home#URL_ERROR_MESSAGE");
-
-		Navigator.openSpecificURL(url = "${maliciousURL5}");
-
-		AssertTextEquals(
-			locator1 = "Message#INFO",
-			value1 = "This portlet could not be found. Please redeploy it or remove it from the page.");
+				AssertAlertNotPresent();
+			}
+		}
 	}
 
-	@priority = "3"
-	test ViewGoogleAnalyticsID {
-		Navigator.openURL();
+	@description = "This is a use case for LRQA-7595. Validate XSS vulnerabilities."
+	@priority = 4
+	test MaliciousURLScriptsDoNotExecute {
+		task ("Visit malicious urls and request error message") {
+			var portalURL = PropsUtil.get("portal.url");
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Settings");
+			var maliciousUrl1 = '''
+					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script>
+				''';
+			var maliciousUrl2 = '''
+					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script&gt;
+				''';
+			var maliciousUrl3 = '''
+					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=%3C/script%3E%3Cscript%3Ealert(document.domain)%3C/script%3E
+				''';
+			var maliciousUrl4 = '''
+					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=</script><script>alert(document.domain)</script>
+				''';
+			var maliciousUrl5 = '''
+					${portalURL}/web/guest/search?p_p_id=113&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_113_tabs1=background-styles
+				''';
+			var maliciousUrLsList = "${maliciousUrl1},${maliciousUrl2},${maliciousUrl3},${maliciousUrl4}";
 
-		Site.editGoogleAnalyticsIDCP(googleAnalyticsID = '''']);alert(/googleAnalyticsId/);//''');
+			for (var maliciousURL : list ${maliciousUrLsList}) {
+				Navigator.openSpecificURL(url = ${maliciousURL});
 
-		Navigator.openURL();
+				ContentPages.viewFragmentText(
+					fragmentName = "paragraph",
+					id = "element-text",
+					text = "Page Not Found");
+			}
+
+			Navigator.openSpecificURL(url = ${maliciousUrl5});
+
+			AssertTextEquals(
+				locator1 = "Message#INFO",
+				value1 = "This portlet could not be found. Please redeploy it or remove it from the page.");
+		}
+	}
+
+	@description = "This is a use case for LPS-92264. Assert no XSS pop up in asset publisher content."
+	@priority = 4
+	test NoXSSVulnerabilityInAssetPublisherContent {
+		task ("Add web content") {
+			JSONWebcontent.addWebContent(
+				content = "WC Content",
+				groupName = "Guest",
+				title = '''<script>alert(123);</script>''');
+		}
+
+		task ("Add public layout") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Asset Publisher Page");
+		}
+
+		task ("Add widget to public layout") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Asset Publisher Page",
+				widgetName = "Asset Publisher");
+		}
+
+		task ("Visit web content as guest") {
+			User.logoutPG();
+
+			Navigator.gotoPage(pageName = "Asset Publisher Page");
+
+			AssetPublisherPortlet.viewAssetDetailsPG(
+				assetContent = "WC Content",
+				assetTitle = '''<script>alert(123);</script>''');
+
+			AssertAlertNotPresent();
+		}
+
+		task ("Visit web content as Admin") {
+			User.loginPG();
+
+			Navigator.gotoPage(pageName = "Asset Publisher Page");
+
+			AssetPublisherPortlet.viewAssetDetailsPG(
+				assetContent = "WC Content",
+				assetTitle = '''<script>alert(123);</script>''');
+
+			AssertAlertNotPresent();
+		}
+	}
+
+	@description = "This is a use case for LPS-90727. Assert no XSS vulnerability when modifying a specific URL from the control panel."
+	@priority = 4
+	test NoXSSVulnerabilityInControlPanel {
+		task ("Go to Account Settings and save p_p_auth param from the URL") {
+			var portalURL = PropsUtil.get("portal.url");
+
+			UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
+
+			AssertElementPresent.assertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+
+			var currentURL = Navigator.getCurrentURL();
+
+			var p_p_authParam = StringUtil.extractLast(${currentURL}, "=");
+		}
+
+		task ("Go to url with p_p_authParam and assert no dialog box appears") {
+			Navigator.openSpecificURL(url = "${portalURL}/en/group/control_panel/manage;'*prompt()*'?p_p_id=com_liferay_my_account_web_portlet_MyAccountPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_auth=${p_p_authParam}");
+
+			AssertAlertNotPresent();
+		}
+	}
+
+	@description = "This is a use case for LPS-83273. View forms entry with XSS."
+	@priority = 4
+	test NoXSSVulnerabilityInForms {
+		var formDescription = '''<script>alert(222)</script>''';
+		var formName = '''<script>alert(111)</script>''';
+
+		task ("Add a form") {
+			FormsAdmin.addForm();
+
+			Form.editName(formName = ${formName});
+
+			Form.editDescription(formDescription = ${formDescription});
+
+			Form.addTextField(fieldPositionNumber = 0);
+
+			Form.publishForm();
+		}
+
+		task ("Add Form page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Form Page");
+		}
+
+		task ("Add a Form widget to a page") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Form Page",
+				widgetName = "Form");
+		}
+
+		task ("Configure the Form to display the form created above") {
+			Navigator.gotoPage(pageName = "Form Page");
+
+			FormPortletNavigator.gotoSelectForm();
+
+			FormPortletConfiguration.selectForm(formName = ${formName});
+
+			PortletEntry.save();
+		}
+
+		task ("Assert the popup not shown") {
+			Navigator.gotoPage(pageName = "Form Page");
+
+			AssertAlertNotPresent();
+		}
+
+		task ("Assert correct HTML source text") {
+			var actualDescriptionScript = '''<script>alert(222)</script>''';
+			var escapedDescriptionScript = '''&lt;script&gt;alert(222)&lt;/script&gt;''';
+
+			AssertHTMLSourceTextNotPresent(value1 = ${actualDescriptionScript});
+
+			AssertHTMLSourceTextPresent(value1 = ${escapedDescriptionScript});
+
+			var actualNameScript = '''<script>alert(111)</script>''';
+			var escapedNameScript = '''&lt;script&gt;alert(111)&lt;/script&gt;''';
+
+			AssertHTMLSourceTextNotPresent(value1 = ${actualNameScript});
+
+			AssertHTMLSourceTextPresent(value1 = ${escapedNameScript});
+		}
+	}
+
+	@description = "This is a use case for LPS-72807. View google analytics ID."
+	@priority = 4
+	test NoXSSVulnerabilityInGoogleAnalyticsID {
+		task ("Edit google analytics Id successfully") {
+			Site.openSiteSettingsAdmin(siteURLKey = "guest");
+
+			Site.editGoogleAnalyticsIDCP(googleAnalyticsId = '''']);alert(/googleAnalyticsId/);//''');
+
+			Navigator.openURL();
+
+			AssertAlertNotPresent();
+		}
+	}
+
+	@description = "This is a use case for LPS-113685"
+	@priority = 4
+	test NoXSSVulnerabilityInGroovyScript {
+		property test.liferay.virtual.instance = "false";
+
+		ServerAdministration.openServerAdmin();
+
+		var script = '''
+			<script>alert(123)</script>
+		''';
+
+		ServerAdministration.executeScript(
+			language = "Groovy",
+			script = ${script});
+
+		AssertElementPresent(
+			locator1 = "Message#ERROR",
+			value1 = "Your request failed to complete.");
 
 		AssertAlertNotPresent();
 	}
 
-	@priority = "3"
-	test ViewJSONWS {
-		var portalURL = PropsUtil.get("portal.url");
+	@description = "This is a use case for LRQA-10563. View JSONWS."
+	@priority = 4
+	test NoXSSVulnerabilityInJSONWS {
+		task ("Access JSONWS successfully") {
+			var portalURL = PropsUtil.get("portal.url");
 
-		Navigator.openSpecificURL(url = "${portalURL}/api/jsonws?contextPath=%22%3E%3Cimg%20src=x%20onerror=alert%28/contextPath/%29%3E");
+			Navigator.openSpecificURL(url = "${portalURL}/api/jsonws?contextPath=%22%3E%3Cimg%20src=x%20onerror=alert%28/contextPath/%29%3E");
 
-		AssertAlertNotPresent();
+			AssertAlertNotPresent();
+		}
 	}
 
-	@description = "This is a use case for LPS-59198."
-	@priority = "3"
-	test ViewLDAP {
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "LDAP",
-			configurationName = "Servers",
-			configurationScope = "Virtual Instance Scope");
+	@description = "This is a use case for LPS-59198. View LDAP."
+	@priority = 4
+	test NoXSSVulnerabilityInLDAP {
+		task ("Add LDAP server successfully") {
+			PortalSettings.gotoConfiguration(
+				configurationCategory = "LDAP",
+				configurationName = "Servers",
+				configurationScope = "Virtual Instance Scope");
 
-		PortalSettings.addLDAPServer(LDAPServerName = '''<script>alert(123);</script>''');
+			PortalSettings.addLDAPServer(ldapServerName = '''<script>alert(123);</script>''');
 
-		AssertAlertNotPresent();
+			AssertAlertNotPresent();
+		}
 
-		var actualScript = '''<script>alert(123);</script>''';
+		task ("Assert right script present in HTML source text") {
+			var actualScript = '''<script>alert(123);</script>''';
+			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
+			AssertHTMLSourceTextNotPresent(value1 = ${actualScript});
 
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertHTMLSourceTextPresent(value1 = ${escapedScript});
+		}
 	}
 
-	@priority = "4"
-	test ViewLiferayPortletList {
-		var portalURL = PropsUtil.get("portal.url");
+	@description = "This is a use case for LRQA-10563. View liferay portlet list."
+	@priority = 4
+	test NoXSSVulnerabilityInLiferayPortletList {
+		task ("Add public page") {
+			var portalURL = PropsUtil.get("portal.url");
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Asset Publisher Page");
+		}
 
-		SitePages.addPublicPage(pageName = "Asset Publisher Page");
+		task ("Add PG") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Asset Publisher Page",
+				widgetName = "Asset Publisher");
+		}
 
-		Navigator.gotoPage(pageName = "Asset Publisher Page");
+		task ("Send alert inside url") {
+			Navigator.openSpecificURL(url = "${portalURL}/web/guest/home?p_p_id=com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet&p_p_state=pop_up&_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_mvcPath=%2Fedit_configuration.jsp&_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_portletResource=com_liferay_asset_publisher_web_portlet_AssetPublisherPortlet_INSTANCE_7awylRgVDERT;alert(1)//%22;alert(2)//%22;alert(3)//%E2%80%93%3E%3C/script%3E%22%3E%27%3E%3Cscript%3Ealert(4)%3C/script%3E&_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_resourcePrimKey=asdfxxx");
+		}
 
-		Portlet.addPG(portletName = "Asset Publisher");
+		task ("Assert alert not present on page") {
+			AssertAlertNotPresent();
 
-		Navigator.openSpecificURL(url = "${portalURL}/web/guest/home?p_p_id=com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet&amp;p_p_state=pop_up&amp;_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_mvcPath=%2Fedit_configuration.jsp&amp;_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_portletResource=com_liferay_asset_publisher_web_portlet_AssetPublisherPortlet_INSTANCE_7awylRgVDERT;alert(1)//%22;alert(2)//%22;alert(3)//%E2%80%93%3E%3C/script%3E%22%3E%27%3E%3Cscript%3Ealert(4)%3C/script%3E&amp;_com_liferay_portlet_configuration_web_portlet_PortletConfigurationPortlet_resourcePrimKey=asdfxxx");
+			Refresh();
 
-		AssertAlertNotPresent();
+			AssertAlertNotPresent();
 
-		Refresh();
+			Navigator.openURL();
 
-		AssertAlertNotPresent();
-
-		Navigator.openURL();
-
-		AssertAlertNotPresent();
+			AssertAlertNotPresent();
+		}
 	}
 
-	@priority = "4"
-	test ViewLookAndFeel {
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+	@description = "This is a use case for LRQA-10472. View, look and feel."
+	@priority = 4
+	test NoXSSVulnerabilityInLookAndFeel {
+		task ("Add public page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = '''<script>alert(123);</script>''');
+		}
 
-		SitePages.addPublicPage(pageName = '''<script>alert(123);</script>''');
+		task ("Add PG") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = '''<script>alert(123);</script>''',
+				widgetName = "Blogs");
+		}
 
-		Navigator.gotoPage(pageName = '''<script>alert(123);</script>''');
+		task ("Assert name was interpreted correctly") {
+			Navigator.gotoPage(pageName = '''<script>alert(123);</script>''');
 
-		Portlet.addPG(portletName = "Blogs");
+			Portlet.gotoPortletOptions(
+				portletName = "Blogs",
+				portletOption = "Look and Feel Configuration");
 
-		Portlet.gotoPortletOptions(
-			portletName = "Blogs",
-			portletOption = "Look and Feel Configuration");
+			AssertElementNotPresent(locator1 = "//body[.='123']");
+		}
 
-		AssertElementNotPresent(locator1 = "//body[.='123']");
+		task ("Assert correct HTML source text") {
+			var actualScript = '''<script>alert(123);</script>''';
+			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
-		var actualScript = '''<script>alert(123);</script>''';
+			AssertHTMLSourceTextPresent(value1 = ${actualScript});
 
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
-
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertHTMLSourceTextPresent(value1 = ${escapedScript});
+		}
 	}
 
-	@description = "This is a use case for LPS-42750."
-	@priority = "3"
-	test ViewMobileDeviceFamilies {
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Site Administration",
-			portlet = "Mobile Device Families");
+	@description = "This is a use case for LPS-123822, LPS-127611 and LPS-133261. View Matomo."
+	@priority = 4
+	test NoXSSVulnerabilityInMatomo {
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		MobileDevice.addDeviceFamilyCP(deviceFamilyName = '''<script>alert(123);</script>''');
+		task ("Edit matomo CP") {
+			var portalURL = PropsUtil.get("portal.url");
 
-		Navigator.openURL();
+			Site.openSiteSettingsAdmin(siteURLKey = "guest");
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			panel = "Site Administration",
-			portlet = "Pages");
+			Site.editMatomoCP(
+				confirmationText = 123,
+				matomo = '''<script>alert(123);</script>''');
+		}
 
-		SitePages.gotoPageMenuItem(
-			menuItem = "Configure",
-			pageName = "Home");
+		task ("Assert confirm 123") {
+			Open.openNoError(value1 = ${portalURL});
 
-		Navigator.gotoNavTab(navTab = "Advanced");
-
-		Panel.expandPanel(panel = "Mobile Device Rules");
-
-		Page.disableMobileDeviceRulesAreInheritedFromPublicPages();
-
-		Page.selectMobileDeviceFamily(deviceFamilyName = '''<script>alert(123);</script>''');
-
-		AssertElementNotPresent(locator1 = "//body[.='123']");
-
-		var actualScript = '''<script>alert(123);</script>''';
-
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
-
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertConfirm(value1 = 123);
+		}
 	}
 
-	@priority = "4"
-	test ViewRecycleBin {
-
+	@description = "This is a use case for LRQA-10472. View Recycle bin."
+	@priority = 4
+	test NoXSSVulnerabilityInRecycleBin {
 		var entryTitle = '''<script>alert(123);</script>''';
 
-		Navigator.openURL();
+		task ("Add Blog entry") {
+			JSONBlog.addEntry(
+				entryContent = "Blogs Entry Content",
+				entryTitle = ${entryTitle});
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
+		task ("Move entry to recycle bin") {
+			BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
 
-		BlogsNavigator.gotoAddEntry();
+			BlogsNavigator.moveToRecycleBinCP(entryTitle = ${entryTitle});
+		}
 
-		Type(
-			key_editor = "title",
-			locator1 = "AlloyEditor#EDITOR",
-			value1 = "${entryTitle}");
+		task ("Restore blogs entry from recycle bin") {
+			RecycleBin.openRecycleBinAdmin(siteURLKey = "guest");
 
-		BlogsEntry.addContent(entryContent = "Blogs Entry Content");
+			RecycleBin.restoreCP(
+				assetName = ${entryTitle},
+				assetRestoreLocation = "Blogs",
+				assetType = "Blogs Entry");
+		}
 
-		PortletEntry.publish();
+		task ("Assert entry has the right name") {
+			AssertElementNotPresent(locator1 = "//body[.='123']");
+		}
 
-		Navigator.openURL();
+		task ("Assert correct HTML source text") {
+			var actualScript = '''<script>alert(123);</script>''';
+			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
+			BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
 
-		BlogsNavigator.moveToRecycleBinCP(entryTitle = "${entryTitle}");
+			AssertHTMLSourceTextNotPresent(value1 = ${actualScript});
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Recycle Bin",
-			panel = "Site Administration",
-			portlet = "Recycle Bin");
-
-		RecycleBin.restoreCP(
-			assetName = "${entryTitle}",
-			assetRestoreLocation = "Blogs",
-			assetType = "Blogs Entry");
-
-		AssertElementNotPresent(locator1 = "//body[.='123']");
-
-		var actualScript = '''<script>alert(123);</script>''';
-
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
-
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertHTMLSourceTextPresent(value1 = ${escapedScript});
+		}
 	}
 
-	@priority = "4"
-	test ViewRoles {
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+	@description = "This is a use case for LPS-48990. View roles."
+	@priority = 4
+	test NoXSSVulnerabilityInRoles {
+		task ("Add role") {
+			Role.openRolesAdmin();
 
-		Role.add(roleTitle = '''<script>alert(123);</script>''');
+			Role.add(roleTitle = '''<script>alert(123);</script>''');
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		task ("Assert role has the correct values") {
+			Role.openRolesAdmin();
 
-		Role.viewCP(
-			roleKey = '''<script>alert(123);</script>''',
-			roleTitle = '''<script>alert(123);</script>''',
-			roleType = "Regular");
+			Role.viewCP(
+				roleKey = '''<script>alert(123);</script>''',
+				roleTitle = '''<script>alert(123);</script>''',
+				roleType = "Regular");
+		}
 
-		Navigator.openURL();
+		task ("Add Sign in widget") {
+			Navigator.openURL();
 
-		Portlet.addPG(portletName = "Sign In");
+			Click(locator1 = "Icon#EDIT_PENCIL");
 
-		PermissionsInline.gotoConfigurationPG(portletName = "Sign In");
+			PageEditor.addWidget(
+				portletName = "Sign In",
+				targetFragmentName = "Container");
+		}
 
-		AssertElementNotPresent(locator1 = "//body[.='123']");
+		task ("Assert role has the right name") {
+			PageEditor.viewNotPresentInPermissionsIframeBody(elementValue = 123);
+		}
 
-		var actualScript = '''<script>alert(123);</script>''';
+		task ("Assert correct HTML source text") {
+			var actualScript = ''' <script>alert(123);</script>''';
+			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
+			AssertHTMLSourceTextNotPresent(value1 = ${actualScript});
 
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertHTMLSourceTextPresent(value1 = ${escapedScript});
+		}
 	}
 
-	@priority = "5"
-	test ViewSearchResults {
-
+	@description = "This is a use case for LRQA-30154. View search results."
+	@priority = 4
+	test NoXSSVulnerabilityInSearchResults {
 		var siteName = '''<script>alert(123);</script>''';
 
-		ProductMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
+		task ("Add blank CP") {
+			Site.openSitesAdmin();
 
-		Site.addBlankCP(siteName = "${siteName}");
+			Site.addBlankCP(siteName = ${siteName});
+		}
 
-		ProductMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
+		task ("Search for CP and assert name didnt corrupt") {
+			Site.openSitesAdmin();
 
-		Search.searchCP(searchTerm = "${siteName}");
+			Search.searchCP(searchTerm = ${siteName});
 
-		AssertClick(
-			key_rowEntry = "${siteName}",
-			locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_NAME_LINK",
-			value1 = "${siteName}");
+			Search.viewNotPresentInContentBody(
+				elementValue = "XSS",
+				siteName = ${siteName});
+		}
 
-		AssertElementNotPresent(locator1 = "//body[.='XSS']");
+		task ("Assert correct HTML source text") {
+			var actualScript = '''<script>alert(123);</script>''';
+			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
-		var actualScript = '''<script>alert(123);</script>''';
+			AssertHTMLSourceTextNotPresent(value1 = ${actualScript});
 
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
-
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertHTMLSourceTextPresent(value1 = ${escapedScript});
+		}
 	}
 
-	@priority = "4"
-	test ViewURLValidate {
-		property test.name.skip.portal.instance = "XSSUsecase#ViewURLValidate";
+	@description = "This is a use case for LPS-71236 and LPS-71307. View web content."
+	@priority = 4
+	test NoXSSVulnerabilityInWebContent {
+		task ("Given: A Web Content is created with a script in the title") {
+			JSONWebcontent.addWebContent(
+				content = "WC WebContent Content",
+				groupName = "Guest",
+				title = '''<script>alert(123);</script>''');
 
-		var maliciousURL1 = '''
-				http://localhost:8080/c/portal/flash?title=abc</title><script%0d%0a>alert(3.1415926)</script%0d%0a><title>aaa
-			''';
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
-		var maliciousURL2 = '''
-				http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E
-			''';
+			WebContent.viewTitle(
+				webContentTitle = '''<script>alert(123);</script>''',
+				webContentTitleEscapeCharacter = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
+		}
 
-		var maliciousURL3 = '''
-				http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=%22%3E%3Cscript%3Ealert%28%27xss%27%29;%3C/script%3E
-			''';
+		task ("And: The created Web Content is added to the Display Page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Web Content Display Page");
 
-		var maliciousURL4 = '''
-				http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=alert%28%27xss%27%29
-			''';
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Web Content Display Page",
+				widgetName = "Web Content Display");
 
-		var maliciousURL5 = '''
-				http://localhost:8080/html/portal/progress_poller.jsp?ProgressId=a%3D1%3Balert(document.cookie)%3B%2F%2F
-			''';
+			Navigator.openURL();
 
-		Navigator.openSpecificURL(url = "${maliciousURL1}");
+			Navigator.gotoPage(pageName = "Web Content Display Page");
 
-		AssertAlertNotPresent();
+			WebContentDisplayPortlet.selectWebContent(webContentTitle = '''<script>alert(123);</script>''');
+		}
 
-		Navigator.openSpecificURL(url = "${maliciousURL2}");
+		task ("When: The WC name is changed") {
+			WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
-		AssertAlertNotPresent();
+			WebContentNavigator.gotoEditCP(
+				webContentTitle = '''<script>alert(123);</script>''',
+				webContentTitleEscapeCharacter = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
 
-		Navigator.openURL();
+			WebContent.editCP(
+				webContentTitle = '''<script>alert(123);</script>''',
+				webContentTitleEdit = "WC WebContent Title");
+		}
 
-		UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
+		task ("And: The WC is published with a non-existing image URL") {
+			WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
-		Navigator.openSpecificURL(url = "${maliciousURL3}");
+			WebContent.addFeaturedImageFromURL(imageSourceURL = '''<img src="http://url.to.file.which/not.exist" onerror=alert(123);>''');
 
-		AssertAlertNotPresent();
+			WebContent.publishExistingWCArticleWithPermissions();
+		}
 
-		Navigator.openSpecificURL(url = "${maliciousURL4}");
+		task ("Then: It should be possible to change the display style without seeing any alert") {
+			LexiconEntry.changeDisplayStyle(displayStyle = "cards");
 
-		AssertAlertNotPresent();
-
-		Navigator.openSpecificURL(url = "${maliciousURL5}");
-
-		AssertAlertNotPresent();
-	}
-
-	@description = "This is a use case for LPS-71236 and LPS-71307."
-	@priority = "5"
-	test ViewWebContent {
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addCP(
-			webContentContent = "WC WebContent Content",
-			webContentTitle = '''<script>alert(123);</script>''');
-
-		PortletEntry.publish();
-
-		WebContent.viewTitle(
-			webContentTitle = '''<script>alert(123);</script>''',
-			webContentTitleEscapeCharacter = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
-
-		Navigator.openURL();
-
-		Portlet.addPG(portletName = "Web Content Display");
-
-		WebContentDisplayPortlet.selectWebContent(webContentTitle = '''<script>alert(123);</script>''');
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Web Content");
-
-		WebContentNavigator.gotoEditCP(
-			webContentTitle = '''<script>alert(123);</script>''',
-			webContentTitleEscapeCharacter = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
-
-		WebContent.editCP(
-			webContentTitle = '''<script>alert(123);</script>''',
-			webContentTitleEdit = "WC WebContent Title");
-
-		WebContentNavigator.gotoEditCP(webContentTitle = "WebContent Title");
-
-		WebContent.addFeaturedImageFromURL(imageSourceURL = '''<img src="http://url.to.file.which/not.exist" onerror=alert(123);>''');
-
-		PortletEntry.publish();
-
-		LexiconEntry.changeDisplayStyle(displayStyle = "cards");
-
-		AssertAlertNotPresent();
-	}
-
-	@priority = "5"
-	test ViewWiki {
-		Navigator.openURL();
-
-		UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
-
-		User.editDetailsViaMyAccount(
-			userFirstNameEdit = '''<script>alert(123);</script>''',
-			userLastNameEdit = '''<script>alert(123);</script>''',
-			userMiddleNameEdit = '''<script>alert(123);</script>''');
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Wiki");
-
-		WikiNavigator.gotoNode(wikiNodeName = "Main");
-
-		WikiPage.addCP(
-			wikiPageContent = "Wiki Page Content",
-			wikiPageTitle = "Wiki Page Title");
-
-		WikiNavigator.gotoCP(wikiPageTitle = "Wiki Page Title");
-
-		AssertElementNotPresent(locator1 = "//body[.='XSS']");
-
-		var actualScript = '''<script>alert(123);</script>''';
-
-		var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
-
-		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
-
-		AssertHTMLSourceTextPresent(value1 = "${escapedScript}");
+			AssertAlertNotPresent();
+		}
 	}
 
 }

@@ -1,70 +1,71 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.odata.internal.filter;
 
 import com.liferay.portal.kernel.search.BooleanClause;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
+import com.liferay.portal.kernel.search.QueryTerm;
+import com.liferay.portal.kernel.search.TermQuery;
+import com.liferay.portal.kernel.search.TermRangeQuery;
+import com.liferay.portal.kernel.search.WildcardQuery;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.ExistsFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
-import com.liferay.portal.kernel.search.filter.PrefixFilter;
-import com.liferay.portal.kernel.search.filter.RangeTermFilter;
+import com.liferay.portal.kernel.search.filter.QueryFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.odata.entity.CollectionEntityField;
 import com.liferay.portal.odata.entity.ComplexEntityField;
+import com.liferay.portal.odata.entity.DateEntityField;
+import com.liferay.portal.odata.entity.DateTimeEntityField;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.entity.StringEntityField;
 import com.liferay.portal.odata.filter.expression.BinaryExpression;
 import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
-import com.liferay.portal.odata.filter.expression.ExpressionVisitor;
 import com.liferay.portal.odata.filter.expression.LambdaFunctionExpression;
 import com.liferay.portal.odata.filter.expression.LiteralExpression;
 import com.liferay.portal.odata.filter.expression.MemberExpression;
 import com.liferay.portal.odata.filter.expression.MethodExpression;
 import com.liferay.portal.odata.filter.expression.UnaryExpression;
-import com.liferay.portal.odata.internal.filter.expression.BinaryExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.CollectionPropertyExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.ComplexPropertyExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.LambdaFunctionExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.LambdaVariableExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.LiteralExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.MemberExpressionImpl;
-import com.liferay.portal.odata.internal.filter.expression.PrimitivePropertyExpressionImpl;
+import com.liferay.portal.odata.filter.expression.factory.ExpressionFactory;
+import com.liferay.portal.odata.internal.filter.expression.factory.ExpressionFactoryImpl;
+import com.liferay.portal.search.internal.query.NestedFieldQueryHelperImpl;
+import com.liferay.portal.search.query.NestedFieldQueryHelper;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import java.time.Instant;
+
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Arrays;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Rubén Pulido
  */
 public class ExpressionVisitorImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testVisitBinaryExpressionOperationWithAndOperation() {
@@ -111,12 +112,16 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		TermFilter termFilter =
-			(TermFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
 				BinaryExpression.Operation.EQ, entityField, value);
 
-		Assert.assertEquals(entityField.getName(), termFilter.getField());
-		Assert.assertEquals(value, termFilter.getValue());
+		TermQuery termQuery = (TermQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = termQuery.getQueryTerm();
+
+		Assert.assertEquals(entityField.getName(), queryTerm.getField());
+		Assert.assertEquals(value, queryTerm.getValue());
 	}
 
 	@Test
@@ -125,6 +130,66 @@ public class ExpressionVisitorImplTest {
 			_entityModel.getEntityFieldsMap();
 
 		EntityField entityField = entityFieldsMap.get("title");
+
+		BooleanFilter booleanFilter =
+			(BooleanFilter)
+				_expressionVisitorImpl.visitBinaryExpressionOperation(
+					BinaryExpression.Operation.EQ, entityField, null);
+
+		Assert.assertTrue(booleanFilter.hasClauses());
+
+		List<BooleanClause<Filter>> booleanClauses =
+			booleanFilter.getMustNotBooleanClauses();
+
+		Assert.assertEquals(
+			booleanClauses.toString(), 1, booleanClauses.size());
+
+		BooleanClause<Filter> queryBooleanClause = booleanClauses.get(0);
+
+		QueryFilter queryFilter = (QueryFilter)queryBooleanClause.getClause();
+
+		WildcardQuery wildcardQuery = (WildcardQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = wildcardQuery.getQueryTerm();
+
+		Assert.assertEquals(entityField.getName(), queryTerm.getField());
+		Assert.assertEquals("*", queryTerm.getValue());
+	}
+
+	@Test
+	public void testVisitBinaryExpressionOperationWithEqualOperationAndNullValueForDateField() {
+		Map<String, EntityField> entityFieldsMap =
+			_entityModel.getEntityFieldsMap();
+
+		EntityField entityField = entityFieldsMap.get("date");
+
+		BooleanFilter booleanFilter =
+			(BooleanFilter)
+				_expressionVisitorImpl.visitBinaryExpressionOperation(
+					BinaryExpression.Operation.EQ, entityField, null);
+
+		Assert.assertTrue(booleanFilter.hasClauses());
+
+		List<BooleanClause<Filter>> booleanClauses =
+			booleanFilter.getMustNotBooleanClauses();
+
+		Assert.assertEquals(
+			booleanClauses.toString(), 1, booleanClauses.size());
+
+		BooleanClause<Filter> queryBooleanClause = booleanClauses.get(0);
+
+		ExistsFilter existsFilter =
+			(ExistsFilter)queryBooleanClause.getClause();
+
+		Assert.assertEquals(entityField.getName(), existsFilter.getField());
+	}
+
+	@Test
+	public void testVisitBinaryExpressionOperationWithEqualOperationAndNullValueForDateTimeField() {
+		Map<String, EntityField> entityFieldsMap =
+			_entityModel.getEntityFieldsMap();
+
+		EntityField entityField = entityFieldsMap.get("dateTime");
 
 		BooleanFilter booleanFilter =
 			(BooleanFilter)
@@ -157,16 +222,17 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		RangeTermFilter rangeTermFilter =
-			(RangeTermFilter)
-				_expressionVisitorImpl.visitBinaryExpressionOperation(
-					BinaryExpression.Operation.GE, entityField, value);
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.GE, entityField, value);
 
-		Assert.assertEquals(entityField.getName(), rangeTermFilter.getField());
-		Assert.assertEquals(value, rangeTermFilter.getLowerBound());
-		Assert.assertTrue(rangeTermFilter.isIncludesLower());
-		Assert.assertNull(rangeTermFilter.getUpperBound());
-		Assert.assertTrue(rangeTermFilter.isIncludesUpper());
+		TermRangeQuery termRangeQuery = (TermRangeQuery)queryFilter.getQuery();
+
+		Assert.assertEquals(entityField.getName(), termRangeQuery.getField());
+		Assert.assertEquals(value, termRangeQuery.getLowerTerm());
+		Assert.assertTrue(termRangeQuery.includesLower());
+		Assert.assertNull(termRangeQuery.getUpperTerm());
+		Assert.assertTrue(termRangeQuery.includesUpper());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -179,16 +245,17 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		RangeTermFilter rangeTermFilter =
-			(RangeTermFilter)
-				_expressionVisitorImpl.visitBinaryExpressionOperation(
-					BinaryExpression.Operation.GT, entityField, value);
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.GT, entityField, value);
 
-		Assert.assertEquals(entityField.getName(), rangeTermFilter.getField());
-		Assert.assertEquals(value, rangeTermFilter.getLowerBound());
-		Assert.assertFalse(rangeTermFilter.isIncludesLower());
-		Assert.assertNull(rangeTermFilter.getUpperBound());
-		Assert.assertTrue(rangeTermFilter.isIncludesUpper());
+		TermRangeQuery termRangeQuery = (TermRangeQuery)queryFilter.getQuery();
+
+		Assert.assertEquals(entityField.getName(), termRangeQuery.getField());
+		Assert.assertEquals(value, termRangeQuery.getLowerTerm());
+		Assert.assertFalse(termRangeQuery.includesLower());
+		Assert.assertNull(termRangeQuery.getUpperTerm());
+		Assert.assertTrue(termRangeQuery.includesUpper());
 	}
 
 	@Test
@@ -235,16 +302,17 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		RangeTermFilter rangeTermFilter =
-			(RangeTermFilter)
-				_expressionVisitorImpl.visitBinaryExpressionOperation(
-					BinaryExpression.Operation.LE, entityField, value);
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.LE, entityField, value);
 
-		Assert.assertEquals(entityField.getName(), rangeTermFilter.getField());
-		Assert.assertNull(rangeTermFilter.getLowerBound());
-		Assert.assertFalse(rangeTermFilter.isIncludesLower());
-		Assert.assertEquals(value, rangeTermFilter.getUpperBound());
-		Assert.assertTrue(rangeTermFilter.isIncludesUpper());
+		TermRangeQuery termRangeQuery = (TermRangeQuery)queryFilter.getQuery();
+
+		Assert.assertEquals(entityField.getName(), termRangeQuery.getField());
+		Assert.assertNull(value, termRangeQuery.getLowerTerm());
+		Assert.assertFalse(termRangeQuery.includesLower());
+		Assert.assertEquals(value, termRangeQuery.getUpperTerm());
+		Assert.assertTrue(termRangeQuery.includesUpper());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -257,14 +325,15 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		RangeTermFilter rangeTermFilter =
-			(RangeTermFilter)
-				_expressionVisitorImpl.visitBinaryExpressionOperation(
-					BinaryExpression.Operation.LT, entityField, value);
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.LT, entityField, value);
 
-		Assert.assertEquals(entityField.getName(), rangeTermFilter.getField());
-		Assert.assertEquals(value, rangeTermFilter.getUpperBound());
-		Assert.assertNull(rangeTermFilter.getLowerBound());
+		TermRangeQuery termRangeQuery = (TermRangeQuery)queryFilter.getQuery();
+
+		Assert.assertEquals(entityField.getName(), termRangeQuery.getField());
+		Assert.assertEquals(value, termRangeQuery.getUpperTerm());
+		Assert.assertNull(termRangeQuery.getLowerTerm());
 	}
 
 	@Test
@@ -329,10 +398,14 @@ public class ExpressionVisitorImplTest {
 			BooleanClauseOccur.MUST_NOT,
 			queryBooleanClause.getBooleanClauseOccur());
 
-		TermFilter termFilter = (TermFilter)queryBooleanClause.getClause();
+		QueryFilter queryFilter = (QueryFilter)queryBooleanClause.getClause();
 
-		Assert.assertEquals(entityField.getName(), termFilter.getField());
-		Assert.assertEquals(value, termFilter.getValue());
+		TermQuery termQuery = (TermQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = termQuery.getQueryTerm();
+
+		Assert.assertEquals(entityField.getName(), queryTerm.getField());
+		Assert.assertEquals(value, queryTerm.getValue());
 	}
 
 	@Test
@@ -341,6 +414,39 @@ public class ExpressionVisitorImplTest {
 			_entityModel.getEntityFieldsMap();
 
 		EntityField entityField = entityFieldsMap.get("title");
+
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.NE, entityField, null);
+
+		WildcardQuery wildcardQuery = (WildcardQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = wildcardQuery.getQueryTerm();
+
+		Assert.assertEquals(entityField.getName(), queryTerm.getField());
+		Assert.assertEquals("*", queryTerm.getValue());
+	}
+
+	@Test
+	public void testVisitBinaryExpressionOperationWithNotEqualOperationAndNullValueForDateField() {
+		Map<String, EntityField> entityFieldsMap =
+			_entityModel.getEntityFieldsMap();
+
+		EntityField entityField = entityFieldsMap.get("date");
+
+		ExistsFilter existsFilter =
+			(ExistsFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.NE, entityField, null);
+
+		Assert.assertEquals(entityField.getName(), existsFilter.getField());
+	}
+
+	@Test
+	public void testVisitBinaryExpressionOperationWithNotEqualOperationAndNullValueForDateTimeField() {
+		Map<String, EntityField> entityFieldsMap =
+			_entityModel.getEntityFieldsMap();
+
+		EntityField entityField = entityFieldsMap.get("dateTime");
 
 		ExistsFilter existsFilter =
 			(ExistsFilter)_expressionVisitorImpl.visitBinaryExpressionOperation(
@@ -386,8 +492,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitDateISO8601LiteralExpression() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"2012-05-29T09:13:28Z", LiteralExpression.Type.DATE_TIME);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"2012-05-29T09:13:28Z", LiteralExpression.Type.DATE_TIME);
 
 		Assert.assertEquals(
 			"20120529091328",
@@ -396,8 +503,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitDateISOLiteralExpression() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"2012-05-29T11:58:16+00:00", LiteralExpression.Type.DATE_TIME);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"2012-05-29T11:58:16+00:00", LiteralExpression.Type.DATE_TIME);
 
 		Assert.assertEquals(
 			"20120529115816",
@@ -406,8 +514,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitDateUTCLiteralExpression() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"2012-05-29", LiteralExpression.Type.DATE);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"2012-05-29", LiteralExpression.Type.DATE);
 
 		Assert.assertEquals(
 			"20120529000000",
@@ -419,13 +528,13 @@ public class ExpressionVisitorImplTest {
 		throws ExpressionVisitException {
 
 		LambdaFunctionExpression lambdaFunctionExpression =
-			new LambdaFunctionExpressionImpl(
+			_expressionFactory.createLambdaFunctionExpression(
 				LambdaFunctionExpression.Type.ANY, "k",
-				new BinaryExpressionImpl(
-					new MemberExpressionImpl(
-						new LambdaVariableExpressionImpl("k")),
+				_expressionFactory.createBinaryExpression(
+					_expressionFactory.createMemberExpression(
+						_expressionFactory.createLambdaVariableExpression("k")),
 					BinaryExpression.Operation.EQ,
-					new LiteralExpressionImpl(
+					_expressionFactory.createLiteralExpression(
 						"keyword1", LiteralExpression.Type.STRING)));
 
 		Map<String, EntityField> entityFieldsMap =
@@ -434,7 +543,7 @@ public class ExpressionVisitorImplTest {
 		CollectionEntityField collectionEntityField =
 			(CollectionEntityField)entityFieldsMap.get("keywords");
 
-		ExpressionVisitor expressionVisitor = new ExpressionVisitorImpl(
+		ExpressionVisitorImpl expressionVisitorImpl = new ExpressionVisitorImpl(
 			new SimpleDateFormat("yyyyMMddHHmmss"), LocaleUtil.getDefault(),
 			new EntityModel() {
 
@@ -449,26 +558,34 @@ public class ExpressionVisitorImplTest {
 					return collectionEntityField.getName();
 				}
 
-			});
+			},
+			nestedFieldQueryHelper);
 
-		TermFilter termFilter =
-			(TermFilter)expressionVisitor.visitLambdaFunctionExpression(
+		QueryFilter queryFilter =
+			(QueryFilter)expressionVisitorImpl.visitLambdaFunctionExpression(
 				lambdaFunctionExpression.getType(),
 				lambdaFunctionExpression.getVariableName(),
 				lambdaFunctionExpression.getExpression());
 
-		Assert.assertNotNull(termFilter);
-		Assert.assertEquals("keywords.raw", termFilter.getField());
-		Assert.assertEquals("keyword1", termFilter.getValue());
+		TermQuery termQuery = (TermQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = termQuery.getQueryTerm();
+
+		Assert.assertNotNull(queryTerm);
+		Assert.assertEquals("keywords.raw", queryTerm.getField());
+		Assert.assertEquals("keyword1", queryTerm.getValue());
 	}
 
 	@Test
 	public void testVisitMemberExpressionComplexField()
 		throws ExpressionVisitException {
 
-		MemberExpression memberExpression = new MemberExpressionImpl(
-			new ComplexPropertyExpressionImpl(
-				"values", new PrimitivePropertyExpressionImpl("value1")));
+		MemberExpression memberExpression =
+			_expressionFactory.createMemberExpression(
+				_expressionFactory.createComplexPropertyExpression(
+					"values",
+					_expressionFactory.createPrimitivePropertyExpression(
+						"value1")));
 
 		EntityField entityField =
 			(EntityField)_expressionVisitorImpl.visitMemberExpression(
@@ -483,33 +600,41 @@ public class ExpressionVisitorImplTest {
 	public void testVisitMemberExpressionLambdaAnyOnCollectionField()
 		throws ExpressionVisitException {
 
-		MemberExpression memberExpression = new MemberExpressionImpl(
-			new CollectionPropertyExpressionImpl(
-				new PrimitivePropertyExpressionImpl("keywords"),
-				new LambdaFunctionExpressionImpl(
-					LambdaFunctionExpression.Type.ANY, "k",
-					new BinaryExpressionImpl(
-						new MemberExpressionImpl(
-							new LambdaVariableExpressionImpl("k")),
-						BinaryExpression.Operation.EQ,
-						new LiteralExpressionImpl(
-							"'keyword1'", LiteralExpression.Type.STRING)))));
+		MemberExpression memberExpression =
+			_expressionFactory.createMemberExpression(
+				_expressionFactory.createCollectionPropertyExpression(
+					_expressionFactory.createLambdaFunctionExpression(
+						LambdaFunctionExpression.Type.ANY, "k",
+						_expressionFactory.createBinaryExpression(
+							_expressionFactory.createMemberExpression(
+								_expressionFactory.
+									createLambdaVariableExpression("k")),
+							BinaryExpression.Operation.EQ,
+							_expressionFactory.createLiteralExpression(
+								"'keyword1'", LiteralExpression.Type.STRING))),
+					_expressionFactory.createPrimitivePropertyExpression(
+						"keywords")));
 
-		TermFilter termFilter =
-			(TermFilter)_expressionVisitorImpl.visitMemberExpression(
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitMemberExpression(
 				memberExpression);
 
-		Assert.assertNotNull(termFilter);
-		Assert.assertEquals("keywords.raw", termFilter.getField());
-		Assert.assertEquals("keyword1", termFilter.getValue());
+		TermQuery termQuery = (TermQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = termQuery.getQueryTerm();
+
+		Assert.assertNotNull(queryTerm);
+		Assert.assertEquals("keywords.raw", queryTerm.getField());
+		Assert.assertEquals("keyword1", queryTerm.getValue());
 	}
 
 	@Test
 	public void testVisitMemberExpressionStringEntityField()
 		throws ExpressionVisitException {
 
-		MemberExpression memberExpression = new MemberExpressionImpl(
-			new PrimitivePropertyExpressionImpl("title"));
+		MemberExpression memberExpression =
+			_expressionFactory.createMemberExpression(
+				_expressionFactory.createPrimitivePropertyExpression("title"));
 
 		EntityField entityField =
 			(EntityField)_expressionVisitorImpl.visitMemberExpression(
@@ -529,7 +654,7 @@ public class ExpressionVisitorImplTest {
 
 		EntityField entityField1 = entityFieldsMap.get("keywords");
 
-		ExpressionVisitor expressionVisitor = new ExpressionVisitorImpl(
+		ExpressionVisitorImpl expressionVisitorImpl = new ExpressionVisitorImpl(
 			new SimpleDateFormat("yyyyMMddHHmmss"), LocaleUtil.getDefault(),
 			new EntityModel() {
 
@@ -543,19 +668,50 @@ public class ExpressionVisitorImplTest {
 					return entityField1.getName();
 				}
 
-			});
+			},
+			nestedFieldQueryHelper);
 
-		MemberExpression memberExpression = new MemberExpressionImpl(
-			new LambdaVariableExpressionImpl("k"));
+		MemberExpression memberExpression =
+			_expressionFactory.createMemberExpression(
+				_expressionFactory.createLambdaVariableExpression("k"));
 
 		EntityField entityField2 =
-			(EntityField)expressionVisitor.visitMemberExpression(
+			(EntityField)expressionVisitorImpl.visitMemberExpression(
 				memberExpression);
 
 		Assert.assertNotNull(entityField2);
 		Assert.assertEquals("keywords", entityField2.getName());
 		Assert.assertEquals(
 			EntityField.Type.COLLECTION, entityField2.getType());
+	}
+
+	@Test
+	public void testVisitMethodExpressionWithNow() throws ParseException {
+		Date initialDate = new Date();
+
+		Instant initialInstant = initialDate.toInstant();
+
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
+			"yyyyMMddHHmmss");
+
+		ExpressionVisitorImpl expressionVisitorImpl = new ExpressionVisitorImpl(
+			simpleDateFormat, LocaleUtil.getDefault(), _entityModel,
+			nestedFieldQueryHelper);
+
+		Date actualDate = simpleDateFormat.parse(
+			(String)expressionVisitorImpl.visitMethodExpression(
+				Collections.emptyList(), MethodExpression.Type.NOW));
+
+		Instant actualInstant = Instant.ofEpochMilli(actualDate.getTime());
+
+		Date finalDate = new Date();
+
+		Instant finalInstant = finalDate.toInstant();
+
+		Assert.assertTrue(
+			actualInstant.getEpochSecond() >= initialInstant.getEpochSecond());
+		Assert.assertTrue(
+			actualInstant.getEpochSecond() <= finalInstant.getEpochSecond());
 	}
 
 	@Test
@@ -567,19 +723,24 @@ public class ExpressionVisitorImplTest {
 
 		String value = "title1";
 
-		PrefixFilter prefixFilter =
-			(PrefixFilter)_expressionVisitorImpl.visitMethodExpression(
+		QueryFilter queryFilter =
+			(QueryFilter)_expressionVisitorImpl.visitMethodExpression(
 				Arrays.asList(Arrays.array(entityField, value)),
 				MethodExpression.Type.STARTS_WITH);
 
-		Assert.assertEquals(entityField.getName(), prefixFilter.getField());
-		Assert.assertEquals(value, prefixFilter.getPrefix());
+		WildcardQuery wildcardQuery = (WildcardQuery)queryFilter.getQuery();
+
+		QueryTerm queryTerm = wildcardQuery.getQueryTerm();
+
+		Assert.assertEquals(entityField.getName(), queryTerm.getField());
+		Assert.assertEquals(value + "*", queryTerm.getValue());
 	}
 
 	@Test
 	public void testVisitStringLiteralExpressionWithDoubleSingleQuotes() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"'L''Oreal'", LiteralExpression.Type.STRING);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"'L''Oreal'", LiteralExpression.Type.STRING);
 
 		Assert.assertEquals(
 			"l'oreal",
@@ -588,8 +749,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitStringLiteralExpressionWithMultipleDoubleSingleQuotes() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"'L''Oreal and L''Oreal'", LiteralExpression.Type.STRING);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"'L''Oreal and L''Oreal'", LiteralExpression.Type.STRING);
 
 		Assert.assertEquals(
 			"l'oreal and l'oreal",
@@ -598,8 +760,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitStringLiteralExpressionWithOneSingleQuote() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"'L'Oreal'", LiteralExpression.Type.STRING);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"'L'Oreal'", LiteralExpression.Type.STRING);
 
 		Assert.assertEquals(
 			"l'oreal",
@@ -608,8 +771,9 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitStringLiteralExpressionWithSurroundingSingleQuotes() {
-		LiteralExpression literalExpression = new LiteralExpressionImpl(
-			"'LOreal'", LiteralExpression.Type.STRING);
+		LiteralExpression literalExpression =
+			_expressionFactory.createLiteralExpression(
+				"'LOreal'", LiteralExpression.Type.STRING);
 
 		Assert.assertEquals(
 			"loreal",
@@ -618,11 +782,11 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitUnaryExpressionOperation() {
-		TermFilter termFilter = new TermFilter("title", "title1");
+		Filter filter = new TermFilter("title", "title1");
 
 		BooleanFilter booleanFilter =
 			(BooleanFilter)_expressionVisitorImpl.visitUnaryExpressionOperation(
-				UnaryExpression.Operation.NOT, termFilter);
+				UnaryExpression.Operation.NOT, filter);
 
 		Assert.assertTrue(booleanFilter.hasClauses());
 
@@ -634,31 +798,40 @@ public class ExpressionVisitorImplTest {
 
 		BooleanClause<Filter> queryBooleanClause = booleanClauses.get(0);
 
-		Assert.assertEquals(termFilter, queryBooleanClause.getClause());
+		Assert.assertEquals(filter, queryBooleanClause.getClause());
 		Assert.assertEquals(
 			BooleanClauseOccur.MUST_NOT,
 			queryBooleanClause.getBooleanClauseOccur());
 	}
 
+	protected static final NestedFieldQueryHelper nestedFieldQueryHelper =
+		new NestedFieldQueryHelperImpl();
+
 	private static final EntityModel _entityModel = new EntityModel() {
 
 		@Override
 		public Map<String, EntityField> getEntityFieldsMap() {
-			return Stream.of(
+			return HashMapBuilder.put(
+				"date",
+				(EntityField)new DateEntityField(
+					"date", locale -> "date", locale -> "date")
+			).put(
+				"dateTime",
+				new DateTimeEntityField(
+					"dateTime", locale -> "dateTime", locale -> "dateTime")
+			).put(
+				"keywords",
 				new CollectionEntityField(
-					new StringEntityField(
-						"keywords", locale -> "keywords.raw")),
+					new StringEntityField("keywords", locale -> "keywords.raw"))
+			).put(
+				"title", new StringEntityField("title", locale -> "title")
+			).put(
+				"values",
 				new ComplexEntityField(
 					"values",
-					Stream.of(
-						new StringEntityField("value1", locale -> "value1")
-					).collect(
-						Collectors.toList()
-					)),
-				new StringEntityField("title", locale -> "title")
-			).collect(
-				Collectors.toMap(EntityField::getName, Function.identity())
-			);
+					Collections.singletonList(
+						new StringEntityField("value1", locale -> "value1")))
+			).build();
 		}
 
 		@Override
@@ -668,9 +841,11 @@ public class ExpressionVisitorImplTest {
 
 	};
 
+	private static final ExpressionFactory _expressionFactory =
+		new ExpressionFactoryImpl();
 	private static final ExpressionVisitorImpl _expressionVisitorImpl =
 		new ExpressionVisitorImpl(
 			new SimpleDateFormat("yyyyMMddHHmmss"), LocaleUtil.getDefault(),
-			_entityModel);
+			_entityModel, nestedFieldQueryHelper);
 
 }

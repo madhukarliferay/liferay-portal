@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.site.navigation.model.SiteNavigationMenuItem;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for SiteNavigationMenuItem. This utility wraps
@@ -32,40 +26,49 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class SiteNavigationMenuItemServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.site.navigation.service.impl.SiteNavigationMenuItemServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SiteNavigationMenuItemServiceUtil} to access the site navigation menu item remote service. Add custom service methods to <code>com.liferay.site.navigation.service.impl.SiteNavigationMenuItemServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.site.navigation.model.SiteNavigationMenuItem
-			addSiteNavigationMenuItem(
-				long groupId, long siteNavigationMenuId,
-				long parentSiteNavigationMenuItemId, String type,
-				String typeSettings,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SiteNavigationMenuItem addSiteNavigationMenuItem(
+			String externalReferenceCode, long groupId,
+			long siteNavigationMenuId, long parentSiteNavigationMenuItemId,
+			String type, String typeSettings,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addSiteNavigationMenuItem(
-			groupId, siteNavigationMenuId, parentSiteNavigationMenuItemId, type,
-			typeSettings, serviceContext);
+			externalReferenceCode, groupId, siteNavigationMenuId,
+			parentSiteNavigationMenuItemId, type, typeSettings, serviceContext);
 	}
 
-	public static com.liferay.site.navigation.model.SiteNavigationMenuItem
-			deleteSiteNavigationMenuItem(long siteNavigationMenuItemId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SiteNavigationMenuItem deleteSiteNavigationMenuItem(
+			long siteNavigationMenuItemId)
+		throws PortalException {
 
 		return getService().deleteSiteNavigationMenuItem(
 			siteNavigationMenuItemId);
 	}
 
+	public static SiteNavigationMenuItem deleteSiteNavigationMenuItem(
+			long siteNavigationMenuItemId, boolean deleteChildren)
+		throws PortalException {
+
+		return getService().deleteSiteNavigationMenuItem(
+			siteNavigationMenuItemId, deleteChildren);
+	}
+
+	public static SiteNavigationMenuItem deleteSiteNavigationMenuItem(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().deleteSiteNavigationMenuItem(
+			externalReferenceCode, groupId);
+	}
+
 	public static void deleteSiteNavigationMenuItems(long siteNavigationMenuId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteSiteNavigationMenuItems(siteNavigationMenuId);
 	}
@@ -79,57 +82,69 @@ public class SiteNavigationMenuItemServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static java.util.List
-		<com.liferay.site.navigation.model.SiteNavigationMenuItem>
-			getSiteNavigationMenuItems(long siteNavigationMenuId) {
+	public static List<Long> getParentSiteNavigationMenuItemIds(
+		long siteNavigationMenuId, String typeSettingsKeyword) {
+
+		return getService().getParentSiteNavigationMenuItemIds(
+			siteNavigationMenuId, typeSettingsKeyword);
+	}
+
+	public static SiteNavigationMenuItem
+			getSiteNavigationMenuItemByExternalReferenceCode(
+				String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getSiteNavigationMenuItemByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	public static List<SiteNavigationMenuItem> getSiteNavigationMenuItems(
+		long siteNavigationMenuId) {
 
 		return getService().getSiteNavigationMenuItems(siteNavigationMenuId);
 	}
 
-	public static com.liferay.site.navigation.model.SiteNavigationMenuItem
-			updateSiteNavigationMenuItem(
-				long siteNavigationMenuId, long parentSiteNavigationMenuItemId,
-				int order)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<SiteNavigationMenuItem> getSiteNavigationMenuItems(
+			long siteNavigationMenuId, long parentSiteNavigationMenuItemId)
+		throws PortalException {
+
+		return getService().getSiteNavigationMenuItems(
+			siteNavigationMenuId, parentSiteNavigationMenuItemId);
+	}
+
+	public static List<SiteNavigationMenuItem> getSiteNavigationMenuItems(
+		long siteNavigationMenuId,
+		OrderByComparator<SiteNavigationMenuItem> orderByComparator) {
+
+		return getService().getSiteNavigationMenuItems(
+			siteNavigationMenuId, orderByComparator);
+	}
+
+	public static SiteNavigationMenuItem updateSiteNavigationMenuItem(
+			long siteNavigationMenuId, long parentSiteNavigationMenuItemId,
+			int order)
+		throws PortalException {
 
 		return getService().updateSiteNavigationMenuItem(
 			siteNavigationMenuId, parentSiteNavigationMenuItemId, order);
 	}
 
-	public static com.liferay.site.navigation.model.SiteNavigationMenuItem
-			updateSiteNavigationMenuItem(
-				long siteNavigationMenuId, String typeSettings,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SiteNavigationMenuItem updateSiteNavigationMenuItem(
+			long siteNavigationMenuId, String typeSettings,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().updateSiteNavigationMenuItem(
 			siteNavigationMenuId, typeSettings, serviceContext);
 	}
 
 	public static SiteNavigationMenuItemService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<SiteNavigationMenuItemService, SiteNavigationMenuItemService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<SiteNavigationMenuItemService>
+		_serviceSnapshot = new Snapshot<>(
+			SiteNavigationMenuItemServiceUtil.class,
 			SiteNavigationMenuItemService.class);
-
-		ServiceTracker
-			<SiteNavigationMenuItemService, SiteNavigationMenuItemService>
-				serviceTracker =
-					new ServiceTracker
-						<SiteNavigationMenuItemService,
-						 SiteNavigationMenuItemService>(
-							 bundle.getBundleContext(),
-							 SiteNavigationMenuItemService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.opener.internal.upload;
@@ -17,16 +8,16 @@ package com.liferay.document.library.opener.internal.upload;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.opener.upload.UniqueFileEntryTitleProvider;
+import com.liferay.petra.function.UnsafeRunnable;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.upload.UniqueFileNameProvider;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -42,44 +33,85 @@ public class UniqueFileEntryTitleProviderImpl
 	public String provide(long groupId, long folderId, Locale locale)
 		throws PortalException {
 
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			locale, UniqueFileEntryTitleProviderImpl.class);
-
 		return _provide(
-			groupId, folderId, _language.get(resourceBundle, "untitled"));
+			groupId, folderId, StringPool.BLANK, _getDefaultTitle(locale));
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #provide(long
+	 *             groupId, long folderId, String extension, String title)}
+	 */
+	@Deprecated
+	@Override
+	public String provide(long groupId, long folderId, String title)
+		throws PortalException {
+
+		return _uniqueFileNameProvider.provide(
+			title,
+			generatedTitle -> _titleExists(groupId, folderId, generatedTitle));
 	}
 
 	@Override
-	public String provide(long groupId, long folderId, String fileName)
+	public String provide(
+			long groupId, long folderId, String extension, Locale locale)
 		throws PortalException {
 
-		return _provide(groupId, folderId, fileName);
+		return _provide(groupId, folderId, extension, _getDefaultTitle(locale));
 	}
 
-	private boolean _exists(long groupId, long folderId, String fileName) {
+	@Override
+	public String provide(
+			long groupId, long folderId, String extension, String title)
+		throws PortalException {
+
+		return _provide(groupId, folderId, extension, title);
+	}
+
+	private boolean _exists(UnsafeRunnable<PortalException> unsafeRunnable) {
 		try {
-			_dlAppLocalService.getFileEntry(groupId, folderId, fileName);
+			unsafeRunnable.run();
 
 			return true;
 		}
-		catch (NoSuchFileEntryException nsfee) {
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfee, nsfee);
+				_log.debug(noSuchFileEntryException);
 			}
 		}
-		catch (PortalException pe) {
-			throw new SystemException(pe);
+		catch (PortalException portalException) {
+			throw new SystemException(portalException);
 		}
 
 		return false;
 	}
 
-	private String _provide(long groupId, long folderId, String fileName)
+	private boolean _fileNameExists(
+		long groupId, long folderId, String fileName) {
+
+		return _exists(
+			() -> _dlAppLocalService.getFileEntryByFileName(
+				groupId, folderId, fileName));
+	}
+
+	private String _getDefaultTitle(Locale locale) {
+		return _language.get(locale, "untitled");
+	}
+
+	private String _provide(
+			long groupId, long folderId, String extension, String title)
 		throws PortalException {
 
 		return _uniqueFileNameProvider.provide(
-			fileName,
-			generatedFileName -> _exists(groupId, folderId, generatedFileName));
+			title,
+			generatedTitle ->
+				_fileNameExists(
+					groupId, folderId, generatedTitle.concat(extension)) ||
+				_titleExists(groupId, folderId, generatedTitle));
+	}
+
+	private boolean _titleExists(long groupId, long folderId, String title) {
+		return _exists(
+			() -> _dlAppLocalService.getFileEntry(groupId, folderId, title));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

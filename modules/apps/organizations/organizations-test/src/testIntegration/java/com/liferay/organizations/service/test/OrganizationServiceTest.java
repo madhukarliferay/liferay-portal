@@ -1,30 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.organizations.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.OrganizationService;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -92,9 +97,58 @@ public class OrganizationServiceTest {
 	}
 
 	@Test
+	public void testGetOrAddEmptyOrganization() throws Exception {
+		try (SafeCloseable safeCloseable =
+				LazyReferencingThreadLocal.setEnabledWithSafeCloseable(true)) {
+
+			// With permissions
+
+			Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+			RoleTestUtil.addResourcePermission(
+				role, PortletKeys.PORTAL, ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(TestPropsValues.getCompanyId()),
+				ActionKeys.ADD_ORGANIZATION);
+
+			User user = UserTestUtil.addUser();
+
+			UserLocalServiceUtil.addRoleUser(
+				role.getRoleId(), user.getUserId());
+
+			try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+					user, PermissionCheckerFactoryUtil.create(user))) {
+
+				Organization organization =
+					_organizationService.getOrAddEmptyOrganization(
+						RandomTestUtil.randomString(),
+						RandomTestUtil.randomString());
+
+				Assert.assertNotNull(organization);
+			}
+
+			// Without permissions
+
+			user = UserTestUtil.addUser();
+
+			try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+					user, PermissionCheckerFactoryUtil.create(user))) {
+
+				_organizationService.getOrAddEmptyOrganization(
+					RandomTestUtil.randomString(),
+					RandomTestUtil.randomString());
+
+				Assert.fail();
+			}
+			catch (PrincipalException.MustHavePermission principalException) {
+				Assert.assertNotNull(principalException);
+			}
+		}
+	}
+
+	@Test
 	public void testGetOrganizationsLikeName() throws Exception {
 		List<Organization> allChildOrganizations = new ArrayList<>();
-		Organization parentOrganziation =
+		Organization parentOrganization =
 			OrganizationTestUtil.addOrganization();
 
 		List<Organization> allOrganizations = new ArrayList<>(
@@ -105,7 +159,7 @@ public class OrganizationServiceTest {
 		try {
 			String name = RandomTestUtil.randomString(10);
 
-			long parentOrganizationId = parentOrganziation.getOrganizationId();
+			long parentOrganizationId = parentOrganization.getOrganizationId();
 
 			List<Organization> likeNameChildOrganizations = new ArrayList<>();
 
@@ -158,7 +212,7 @@ public class OrganizationServiceTest {
 				_organizationLocalService.deleteOrganization(childOrganization);
 			}
 
-			_organizationLocalService.deleteOrganization(parentOrganziation);
+			_organizationLocalService.deleteOrganization(parentOrganization);
 		}
 	}
 

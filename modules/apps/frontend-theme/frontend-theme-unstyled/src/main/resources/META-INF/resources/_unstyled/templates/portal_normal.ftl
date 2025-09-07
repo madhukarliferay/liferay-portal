@@ -5,7 +5,7 @@
 <html class="${root_css_class}" dir="<@liferay.language key="lang.dir" />" lang="${w3c_language_id}">
 
 <head>
-	<title>${the_title} - ${company_name}</title>
+	<title>${html_title}</title>
 
 	<meta content="initial-scale=1.0, width=device-width" name="viewport" />
 
@@ -18,9 +18,10 @@
 
 <@liferay_util["include"] page=body_top_include />
 
-<@liferay.control_menu />
+<div class="d-flex flex-column min-vh-100">
+	<@liferay.control_menu />
 
-<div class="container-fluid" id="wrapper">
+	<div class="d-flex flex-column flex-fill position-relative" id="wrapper">
 	<header id="banner" role="banner">
 		<div id="heading">
 			<div aria-level="1" class="site-title" role="heading">
@@ -36,7 +37,7 @@
 			</div>
 		</div>
 
-		<#if !is_signed_in>
+		<#if !is_signed_in && show_sign_in>
 			<a data-redirect="${is_login_redirect_required?string}" href="${sign_in_url}" id="sign-in" rel="nofollow">${sign_in_text}</a>
 		</#if>
 
@@ -45,9 +46,7 @@
 		</#if>
 	</header>
 
-	<section id="content">
-		<h2 class="hide-accessible" role="heading" aria-level="1">${the_title}</h2>
-
+	<div id="content">
 		<#if selectable>
 			<@liferay_util["include"] page=content_include />
 		<#else>
@@ -59,13 +58,17 @@
 				<@liferay_util["include"] page=content_include />
 			</@>
 		</#if>
-	</section>
+	</div>
 
-	<footer id="footer" role="contentinfo">
+	<footer id="footer">
 		<p class="powered-by">
-			<@liferay.language key="powered-by" /> <a href="http://www.liferay.com" rel="external">Liferay</a>
+			<@liferay.language_format
+				arguments='<a href="http://www.liferay.com" rel="external">Liferay</a>'
+				key="powered-by-x"
+			/>
 		</p>
 	</footer>
+	</div>
 </div>
 
 <@liferay_util["include"] page=body_bottom_include />

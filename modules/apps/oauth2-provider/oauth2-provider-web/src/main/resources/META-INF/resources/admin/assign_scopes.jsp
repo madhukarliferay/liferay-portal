@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,11 +15,13 @@ OAuth2Application oAuth2Application = oAuth2AdminPortletDisplayContext.getOAuth2
 AssignScopesDisplayContext assignScopesDisplayContext = (AssignScopesDisplayContext)oAuth2AdminPortletDisplayContext;
 %>
 
-<div class="container-fluid container-fluid-max-xl container-view">
+<clay:container-fluid
+	cssClass="container-view"
+>
 	<liferay-ui:error exception="<%= OAuth2ApplicationClientCredentialUserIdException.class %>">
 
 		<%
-		OAuth2ApplicationClientCredentialUserIdException oAuth2ApplicationClientCredentialUserIdException = ((OAuth2ApplicationClientCredentialUserIdException)errorException);
+		OAuth2ApplicationClientCredentialUserIdException oAuth2ApplicationClientCredentialUserIdException = (OAuth2ApplicationClientCredentialUserIdException)errorException;
 		%>
 
 		<c:choose>
@@ -41,31 +34,33 @@ AssignScopesDisplayContext assignScopesDisplayContext = (AssignScopesDisplayCont
 		</c:choose>
 	</liferay-ui:error>
 
-	<div class="row">
-		<div class="col-lg-12">
-			<portlet:actionURL name="/admin/assign_scopes" var="assignScopesURL">
-				<portlet:param name="mvcRenderCommandName" value="/admin/assign_scopes" />
-				<portlet:param name="appTab" value="assign_scopes" />
+	<clay:row>
+		<clay:col
+			lg="12"
+		>
+			<portlet:actionURL name="/oauth2_provider/assign_scopes" var="assignScopesURL">
+				<portlet:param name="mvcRenderCommandName" value="/oauth2_provider/assign_scopes" />
+				<portlet:param name="navigation" value="assign_scopes" />
 				<portlet:param name="backURL" value="<%= redirect %>" />
 				<portlet:param name="oAuth2ApplicationId" value="<%= String.valueOf(oAuth2Application.getOAuth2ApplicationId()) %>" />
 			</portlet:actionURL>
 
 			<aui:form action="<%= assignScopesURL %>" name="fm">
 				<div class="sheet">
-					<ul class="hidden nav nav-underline" id="<portlet:namespace />navScopeTypes" role="tablist">
+					<ul class="hidden nav nav-tabs" id="<portlet:namespace />navScopeTypes" role="tablist">
 						<li class="nav-item">
-							<a aria-controls="<portlet:namespace />navResourceScopes" aria-expanded="true" class="active nav-link" data-toggle="tab" href="#<portlet:namespace />navResourceScopes" id="<portlet:namespace />navResourceScopesTab" role="tab">
+							<a aria-controls="<portlet:namespace />navResourceScopes" aria-expanded="true" class="active nav-link" href="#<portlet:namespace />navResourceScopes" id="<portlet:namespace />navResourceScopesTab" role="tab">
 								<liferay-ui:message key="resource-scopes" />
 							</a>
 						</li>
 						<li class="nav-item">
-							<a aria-controls="<portlet:namespace />navGlobalScopes" class="nav-link" data-toggle="tab" href="#<portlet:namespace />navGlobalScopes" id="<portlet:namespace />navGlobalScopesTab" role="tab">
+							<a aria-controls="<portlet:namespace />navGlobalScopes" class="nav-link" href="#<portlet:namespace />navGlobalScopes" id="<portlet:namespace />navGlobalScopesTab" role="tab">
 								<liferay-ui:message key="global-scopes" />
 							</a>
 						</li>
 					</ul>
 
-					<div class="hidden tab-content" id="<portlet:namespace />navScopeTypesTabContents">
+					<div class="tab-content" id="<portlet:namespace />navScopeTypesTabContents">
 						<div aria-labelledby="navResourceScopesTab" class="active fade show tab-pane" id="<portlet:namespace />navResourceScopes" role="tabpanel">
 							<%@ include file="/admin/assign_scopes_tab1.jspf" %>
 						</div>
@@ -84,289 +79,322 @@ AssignScopesDisplayContext assignScopesDisplayContext = (AssignScopesDisplayCont
 
 				<aui:input id="impliedScopeAliases" name="scopeAliases" type="hidden" />
 			</aui:form>
-		</div>
-	</div>
-</div>
+		</clay:col>
+	</clay:row>
+</clay:container-fluid>
 
-<aui:script require="metal-dom/src/dom as dom">
-	AUI().use('node', 'aui-modal', function(A) {
-		if (A.all('#<portlet:namespace />navGlobalScopes .panel').size() > 0) {
-			A.one('#<portlet:namespace />navScopeTypes').toggleClass(
-				'hidden',
-				false
-			);
+<aui:script use="aui-base,aui-io-request,aui-modal,aui-node-base,liferay-util">
+	const globalScopesTab = document.getElementById(
+		'<portlet:namespace />navGlobalScopesTab'
+	);
+	const globalScopesTabContents = document.getElementById(
+		'<portlet:namespace />navGlobalScopes'
+	);
+	const resourceScopesTab = document.getElementById(
+		'<portlet:namespace />navResourceScopesTab'
+	);
+	const resourceScopesTabContents = document.getElementById(
+		'<portlet:namespace />navResourceScopes'
+	);
+
+	resourceScopesTab.addEventListener('click', (event) => {
+		event.preventDefault();
+
+		if (!resourceScopesTab.classList.contains('active')) {
+			resourceScopesTab.classList.add('active');
+			resourceScopesTab.setAttribute('aria-selected', true);
+
+			globalScopesTab.classList.remove('active');
+			globalScopesTab.setAttribute('aria-selected', false);
+
+			resourceScopesTabContents.classList.add('active');
+			resourceScopesTabContents.classList.add('show');
+
+			globalScopesTabContents.classList.remove('active');
+			globalScopesTabContents.classList.remove('show');
 		}
+	});
 
-		A.one('#<portlet:namespace />navScopeTypesTabContents').toggleClass(
-			'hidden',
-			false
-		);
+	globalScopesTab.addEventListener('click', (event) => {
+		event.preventDefault();
 
-		var handle;
+		if (!globalScopesTab.classList.contains('active')) {
+			globalScopesTab.classList.add('active');
+			globalScopesTab.setAttribute('aria-selected', true);
 
-		var appsAccordion = A.one('#<portlet:namespace />appsAccordion');
+			resourceScopesTab.classList.remove('active');
+			resourceScopesTab.setAttribute('aria-selected', false);
 
-		appsAccordion.delegate(
-			'click',
-			function(event) {
-				event.stopPropagation();
+			globalScopesTabContents.classList.add('active');
+			globalScopesTabContents.classList.add('show');
 
-				if (handle) {
-					handle.detach();
-					handle = null;
+			resourceScopesTabContents.classList.remove('active');
+			resourceScopesTabContents.classList.remove('show');
+		}
+	});
+
+	if (A.all('#<portlet:namespace />navGlobalScopes .panel').size() > 0) {
+		A.one('#<portlet:namespace />navScopeTypes').toggleClass('hidden', false);
+	}
+
+	A.one('#<portlet:namespace />navScopeTypesTabContents').toggleClass(
+		'hidden',
+		false
+	);
+
+	var handle;
+
+	var appsAccordion = A.one('#<portlet:namespace />appsAccordion');
+
+	appsAccordion.delegate(
+		'click',
+		(event) => {
+			event.stopPropagation();
+
+			if (handle) {
+				handle.detach();
+				handle = null;
+			}
+
+			var currentTarget = event.currentTarget;
+
+			if (currentTarget.attr('name')) {
+				return true;
+			}
+
+			var modal = new A.Modal({
+				centered: true,
+				cssClass: 'assign-scopes-modal modal-full-screen',
+				destroyOnHide: true,
+				visible: true,
+				zIndex: Liferay.zIndex.OVERLAY,
+				modal: true,
+				bodyContent: '<div id="<portlet:namespace />modalBody"/>',
+				headerContent:
+					'<%= UnicodeLanguageUtil.get(request, "choose-one-of-the-following-global-scopes-that-include-this-resource-scope") %>',
+			}).render();
+
+			modal.on('visibleChange', (event) => {
+				if (event.newVal) {
+					return;
 				}
-
-				var currentTarget = event.currentTarget;
-
-				if (currentTarget.attr('name')) {
-					return true;
-				}
-
-				var modal = new A.Modal({
-					centered: true,
-					cssClass: 'assign-scopes-modal modal-full-screen',
-					destroyOnHide: true,
-					visible: true,
-					zIndex: Liferay.zIndex.OVERLAY,
-					modal: true,
-					bodyContent: '<div id="<portlet:namespace />modalBody"/>',
-					headerContent:
-						'<%= UnicodeLanguageUtil.get(request, "choose-one-of-the-following-global-scopes-that-include-this-resource-scope") %>'
-				}).render();
-
-				modal.on('visibleChange', function(event) {
-					if (event.newVal) {
-						return;
-					}
-
-					document
-						.querySelectorAll(
-							'#<portlet:namespace />globalAccordion .panel'
-						)
-						.forEach(function(globalAccordionPanel) {
-							globalAccordionPanel.classList.remove('hide');
-						});
-
-					var globalAccordion = document.getElementById(
-						'<portlet:namespace />globalAccordion'
-					);
-					var navGlobalScopes = document.getElementById(
-						'<portlet:namespace />navGlobalScopes'
-					);
-
-					if (navGlobalScopes && globalAccordion) {
-						dom.append(navGlobalScopes, globalAccordion);
-					}
-				});
-
-				modal.addToolbar([
-					{
-						cssClass: 'btn-primary',
-						label: '<liferay-ui:message key="close" />',
-						on: {
-							click: function() {
-								modal.hide();
-							}
-						}
-					}
-				]);
-
-				var scopeAliases = currentTarget.attr('data-slave').split(' ');
 
 				document
 					.querySelectorAll(
 						'#<portlet:namespace />globalAccordion .panel'
 					)
-					.forEach(function(globalAccordionPanel) {
-						globalAccordionPanel.classList.add('hide');
+					.forEach((globalAccordionPanel) => {
+						globalAccordionPanel.classList.remove('hide');
 					});
-
-				for (var i = 0; i < scopeAliases.length; i++) {
-					document
-						.querySelectorAll(
-							'#<portlet:namespace />globalAccordion .panel[data-master]'
-						)
-						.forEach(function(globalAccordionPanel) {
-							var masterScopeAliases = globalAccordionPanel.getAttribute(
-								'data-master'
-							);
-
-							var array = masterScopeAliases.split(' ');
-
-							if (array.indexOf(scopeAliases[i]) >= 0) {
-								globalAccordionPanel.classList.remove('hide');
-							}
-						});
-				}
 
 				var globalAccordion = document.getElementById(
 					'<portlet:namespace />globalAccordion'
 				);
-				var modalBody = document.getElementById(
-					'<portlet:namespace />modalBody'
+				var navGlobalScopes = document.getElementById(
+					'<portlet:namespace />navGlobalScopes'
 				);
 
-				if (globalAccordion && modalBody) {
-					dom.append(modalBody, globalAccordion);
+				if (navGlobalScopes && globalAccordion) {
+					navGlobalScopes.append(globalAccordion);
 				}
+			});
 
-				event.preventDefault();
+			modal.addToolbar([
+				{
+					cssClass: 'btn-primary',
+					label: '<liferay-ui:message key="close" />',
+					on: {
+						click: function () {
+							modal.hide();
+						},
+					},
+				},
+			]);
 
-				return false;
-			},
-			'input[data-slave], a[data-slave]'
-		);
+			var scopeAliases = currentTarget.attr('data-slave').split(' ');
 
-		<portlet:namespace />recalculateDependants = function(checkboxElement) {
-			var checkbox = A.one(checkboxElement);
-
-			var value = checkbox.val();
-			if (!value) {
-				return;
-			}
-
-			var processedScopeAliases = value.split(' ');
-
-			var scopeAlias = processedScopeAliases[0];
-
-			<portlet:namespace />changeScopeAliasStickyStatus(
-				value,
-				checkbox.attr('checked')
-			);
-
-			return A.all('input[data-slave]')
-				.filter(function() {
-					var array = this.attr('data-slave').split(' ');
-
-					return array.indexOf(scopeAlias) >= 0;
-				})
-				.each(function() {
-					var slave = this;
-
-					var scopeAliases = slave.attr('data-slave').split(' ');
-
-					var logicalOR = checkbox.attr('checked');
-
-					for (var i = 0; i < scopeAliases.length && !logicalOR; i++) {
-						if (processedScopeAliases.indexOf(scopeAliases[i]) >= 0) {
-							continue;
-						}
-
-						A.all(
-							'#<portlet:namespace />globalAccordion .panel[data-master]'
-						)
-							.filter(function() {
-								return this.one('input:checked');
-							})
-							.each(function() {
-								var array = this.attr('data-master').split(' ');
-
-								if (array.indexOf(scopeAliases[i]) >= 0) {
-									logicalOR = true;
-									processedScopeAliases.concat(array);
-								}
-							});
-					}
-
-					if (logicalOR) {
-						slave.attr('checked', true);
-						slave.attr('disabled', true);
-						return;
-					}
-
-					var index = <portlet:namespace />getArrayIndexOfStickyScopeAlias(
-						slave.val()
-					);
-					if (index == -1) {
-						slave.attr('checked', false);
-					}
-
-					if (slave.attr('name') == '<portlet:namespace />scopeAliases') {
-						slave.attr('disabled', false);
-					}
+			document
+				.querySelectorAll('#<portlet:namespace />globalAccordion .panel')
+				.forEach((globalAccordionPanel) => {
+					globalAccordionPanel.classList.add('hide');
 				});
-		};
 
-		<portlet:namespace />recalculateAll = function() {
-			A.all('input[name="<portlet:namespace />scopeAliases"]').each(
-				function() {
-					<portlet:namespace />recalculateDependants(this);
-				}
+			for (var i = 0; i < scopeAliases.length; i++) {
+				document
+					.querySelectorAll(
+						'#<portlet:namespace />globalAccordion .panel[data-master]'
+					)
+					.forEach((globalAccordionPanel) => {
+						var masterScopeAliases =
+							globalAccordionPanel.getAttribute('data-master');
+
+						var array = masterScopeAliases.split(' ');
+
+						if (array.indexOf(scopeAliases[i]) >= 0) {
+							globalAccordionPanel.classList.remove('hide');
+						}
+					});
+			}
+
+			var globalAccordion = document.getElementById(
+				'<portlet:namespace />globalAccordion'
 			);
-		};
+			var modalBody = document.getElementById(
+				'<portlet:namespace />modalBody'
+			);
 
-		var <portlet:namespace />stickyScopeAliases = [];
-
-		<portlet:namespace />changeScopeAliasStickyStatus = function(
-			scopeAlias,
-			sticky
-		) {
-			if (sticky) {
-				if (
-					<portlet:namespace />stickyScopeAliases.indexOf(scopeAlias) < 0
-				) {
-					<portlet:namespace />stickyScopeAliases.push(scopeAlias);
-				}
-			} else {
-				var index = <portlet:namespace />getArrayIndexOfStickyScopeAlias(
-					scopeAlias
-				);
-
-				if (index > -1) {
-					<portlet:namespace />stickyScopeAliases.splice(index, 1);
-				}
+			if (globalAccordion && modalBody) {
+				modalBody.append(globalAccordion);
 			}
-		};
 
-		<portlet:namespace />getArrayIndexOfStickyScopeAlias = function(
-			scopeAlias
-		) {
-			for (
-				var i = 0;
-				i < <portlet:namespace />stickyScopeAliases.length;
-				i++
-			) {
-				if (<portlet:namespace />stickyScopeAliases[i] == scopeAlias) {
-					return i;
-				}
-			}
-			return -1;
-		};
-
-		<portlet:namespace />recalculateAll();
-
-		A.one('#<portlet:namespace />save').on('click', function(event) {
 			event.preventDefault();
 
-			var scopeAliases = [];
+			return false;
+		},
+		'input[data-slave], a[data-slave]'
+	);
 
-			A.all(
-				'input[name="<portlet:namespace />scopeAliases"]:checked:disabled'
-			).each(function() {
-				scopeAliases.push(this.val());
+	window.<portlet:namespace />recalculateDependants = function (checkboxElement) {
+		var checkbox = A.one(checkboxElement);
+
+		var value = checkbox.val();
+		if (!value) {
+			return;
+		}
+
+		var processedScopeAliases = value.split(' ');
+
+		var scopeAlias = processedScopeAliases[0];
+
+		<portlet:namespace />changeScopeAliasStickyStatus(
+			value,
+			checkbox.attr('checked')
+		);
+
+		return A.all('input[data-slave]')
+			.filter(function () {
+				var array = this.attr('data-slave').split(' ');
+
+				return array.indexOf(scopeAlias) >= 0;
+			})
+			.each(function () {
+				var slave = this;
+
+				var scopeAliases = slave.attr('data-slave').split(' ');
+
+				var logicalOR = checkbox.attr('checked');
+
+				for (var i = 0; i < scopeAliases.length && !logicalOR; i++) {
+					if (processedScopeAliases.indexOf(scopeAliases[i]) >= 0) {
+						continue;
+					}
+
+					A.all(
+						'#<portlet:namespace />globalAccordion .panel[data-master]'
+					)
+						.filter(function () {
+							return this.one('input:checked');
+						})
+						.each(function () {
+							var array = this.attr('data-master').split(' ');
+
+							if (array.indexOf(scopeAliases[i]) >= 0) {
+								logicalOR = true;
+								processedScopeAliases.concat(array);
+							}
+						});
+				}
+
+				if (logicalOR) {
+					slave.attr('checked', true);
+					slave.attr('disabled', true);
+					return;
+				}
+
+				var index = <portlet:namespace />getArrayIndexOfStickyScopeAlias(
+					slave.val()
+				);
+				if (index == -1) {
+					slave.attr('checked', false);
+				}
+
+				if (slave.attr('name') == '<portlet:namespace />scopeAliases') {
+					slave.attr('disabled', false);
+				}
 			});
+	};
 
-			A.one('#<portlet:namespace />impliedScopeAliases').attr(
-				'value',
-				scopeAliases.join(' ')
-			);
+	window.<portlet:namespace />recalculateAll = function () {
+		A.all('input[name="<portlet:namespace />scopeAliases"]').each(function () {
+			<portlet:namespace />recalculateDependants(this);
+		});
+	};
 
-			document.<portlet:namespace/>fm.submit();
+	var <portlet:namespace />stickyScopeAliases = [];
+
+	window.<portlet:namespace />changeScopeAliasStickyStatus = function (
+		scopeAlias,
+		sticky
+	) {
+		if (sticky) {
+			if (<portlet:namespace />stickyScopeAliases.indexOf(scopeAlias) < 0) {
+				<portlet:namespace />stickyScopeAliases.push(scopeAlias);
+			}
+		}
+		else {
+			var index =
+				<portlet:namespace />getArrayIndexOfStickyScopeAlias(scopeAlias);
+
+			if (index > -1) {
+				<portlet:namespace />stickyScopeAliases.splice(index, 1);
+			}
+		}
+	};
+
+	window.<portlet:namespace />getArrayIndexOfStickyScopeAlias = function (
+		scopeAlias
+	) {
+		for (var i = 0; i < <portlet:namespace />stickyScopeAliases.length; i++) {
+			if (<portlet:namespace />stickyScopeAliases[i] == scopeAlias) {
+				return i;
+			}
+		}
+		return -1;
+	};
+
+	<portlet:namespace />recalculateAll();
+
+	A.one('#<portlet:namespace />save').on('click', (event) => {
+		event.preventDefault();
+
+		var scopeAliases = [];
+
+		A.all(
+			'input[name="<portlet:namespace />scopeAliases"]:checked:disabled'
+		).each(function () {
+			scopeAliases.push(this.val());
 		});
 
-		A.all('#<portlet:namespace />appsAccordion .panel')
-			.filter(function() {
-				return this.one('input:checked');
-			})
-			.each(function() {
-				var panelHeaderElement = this.one('*[data-toggle="collapse"]');
+		A.one('#<portlet:namespace />impliedScopeAliases').attr(
+			'value',
+			scopeAliases.join(' ')
+		);
 
-				panelHeaderElement.attr('aria-expanded', 'true');
-				panelHeaderElement.removeClass('collapsed');
-
-				var panelBodyElement = this.one('.collapse');
-
-				panelBodyElement.addClass('show');
-			});
+		document.<portlet:namespace />fm.submit();
 	});
+
+	A.all('#<portlet:namespace />appsAccordion .panel')
+		.filter(function () {
+			return this.one('input:checked');
+		})
+		.each(function () {
+			var panelHeaderElement = this.one('*[data-toggle="liferay-collapse"]');
+
+			panelHeaderElement.attr('aria-expanded', 'true');
+			panelHeaderElement.removeClass('collapsed');
+
+			var panelBodyElement = this.one('.collapse');
+
+			panelBodyElement.addClass('show');
+		});
 </aui:script>

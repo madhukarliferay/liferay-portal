@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.portlet.test;
@@ -20,10 +11,8 @@ import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.impl.VirtualLayout;
 import com.liferay.portal.kernel.portlet.BasePortletLayoutFinder;
-import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.PortletLayoutFinder;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
@@ -36,14 +25,11 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.struts.FindStrutsAction;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -86,10 +72,8 @@ public class PortletLayoutFinderTest {
 
 		};
 
-		User user = TestPropsValues.getUser();
-
 		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(user);
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
 
 		_originalPermissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
@@ -111,10 +95,10 @@ public class PortletLayoutFinderTest {
 
 		Assert.assertEquals(_blogLayout.getPlid(), result.getPlid());
 
-		String portletId = PortletProviderUtil.getPortletId(
-			BlogsEntry.class.getName(), PortletProvider.Action.VIEW);
-
-		Assert.assertEquals(portletId, result.getPortletId());
+		Assert.assertEquals(
+			PortletProviderUtil.getPortletId(
+				BlogsEntry.class.getName(), PortletProvider.Action.VIEW),
+			result.getPortletId());
 	}
 
 	@Test(expected = NoSuchLayoutException.class)
@@ -165,26 +149,15 @@ public class PortletLayoutFinderTest {
 
 		_group = GroupTestUtil.addGroup();
 
-		_blogLayout = LayoutTestUtil.addLayout(_group);
-		_assetLayout = LayoutTestUtil.addLayout(_group);
+		_blogLayout = LayoutTestUtil.addTypePortletLayout(_group);
+		_assetLayout = LayoutTestUtil.addTypePortletLayout(_group);
 
 		if (portletExists) {
-			String portletId = PortletProviderUtil.getPortletId(
-				BlogsEntry.class.getName(), PortletProvider.Action.VIEW);
-
-			LayoutTestUtil.addPortletToLayout(_blogLayout, portletId);
+			LayoutTestUtil.addPortletToLayout(
+				_blogLayout,
+				PortletProviderUtil.getPortletId(
+					BlogsEntry.class.getName(), PortletProvider.Action.VIEW));
 		}
-
-		Map<String, String[]> preferenceMap = HashMapBuilder.put(
-			"assetLinkBehavior", new String[] {"viewInPortlet"}
-		).build();
-
-		_testPortletId = PortletIdCodec.encode(
-			"com_liferay_hello_world_web_portlet_HelloWorldPortlet");
-
-		LayoutTestUtil.addPortletToLayout(
-			TestPropsValues.getUserId(), _assetLayout, _testPortletId,
-			"column-1", preferenceMap);
 
 		Group group = _group;
 
@@ -198,9 +171,8 @@ public class PortletLayoutFinderTest {
 	protected HttpServletRequest getHttpServletRequest() throws Exception {
 		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
-		ThemeDisplay themeDisplay = getThemeDisplay();
-
-		httpServletRequest.setAttribute(WebKeys.THEME_DISPLAY, themeDisplay);
+		httpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, getThemeDisplay());
 
 		return httpServletRequest;
 	}
@@ -208,14 +180,10 @@ public class PortletLayoutFinderTest {
 	protected ThemeDisplay getThemeDisplay() throws Exception {
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
-		themeDisplay.setScopeGroupId(_group.getGroupId());
-
-		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
-
-		themeDisplay.setPermissionChecker(permissionChecker);
-
+		themeDisplay.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()));
 		themeDisplay.setPlid(_assetLayout.getPlid());
+		themeDisplay.setScopeGroupId(_group.getGroupId());
 
 		return themeDisplay;
 	}
@@ -231,6 +199,5 @@ public class PortletLayoutFinderTest {
 
 	private PermissionChecker _originalPermissionChecker;
 	private PortletLayoutFinder _portletLayoutFinder;
-	private String _testPortletId;
 
 }

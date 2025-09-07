@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.map.taglib.servlet.taglib;
@@ -22,11 +13,11 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.Collection;
 import java.util.Iterator;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Chema Balsas
@@ -81,7 +72,7 @@ public class MapDisplayTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setPoints(String points) {
@@ -119,9 +110,9 @@ public class MapDisplayTag extends IncludeTag {
 	}
 
 	private MapProvider _getMapProvider() {
-		String mapProviderKey = _getMapProviderKey();
-
 		MapProvider mapProvider = null;
+
+		String mapProviderKey = _getMapProviderKey();
 
 		if (Validator.isNotNull(mapProviderKey)) {
 			mapProvider = ServletContextUtil.getMapProvider(mapProviderKey);
@@ -142,18 +133,21 @@ public class MapDisplayTag extends IncludeTag {
 	}
 
 	private String _getMapProviderKey() {
-		String mapProdiverKey = _mapProviderKey;
+		String mapProviderKey = _mapProviderKey;
 
-		if (Validator.isNull(mapProdiverKey)) {
-			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		if (Validator.isNull(mapProviderKey)) {
+			HttpServletRequest httpServletRequest = getRequest();
 
-			mapProdiverKey = MapProviderHelperUtil.getMapProviderKey(
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)httpServletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+			mapProviderKey = MapProviderHelperUtil.getMapProviderKey(
 				ServletContextUtil.getGroupLocalService(),
 				themeDisplay.getCompanyId(), themeDisplay.getSiteGroupId());
 		}
 
-		return mapProdiverKey;
+		return mapProviderKey;
 	}
 
 	private static final String _PAGE = "/map_display/page.jsp";

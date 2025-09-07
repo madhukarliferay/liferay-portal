@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -26,11 +17,13 @@ CalendarResourceDisplayTerms displayTerms = new CalendarResourceDisplayTerms(ren
 	disabled="<%= calendarDisplayContext.isDisabledManagementBar() %>"
 	filterDropdownItems="<%= calendarDisplayContext.getFilterItemsDropdownItems() %>"
 	itemsTotal="<%= calendarDisplayContext.getTotalItems() %>"
-	namespace="<%= renderResponse.getNamespace() %>"
+	orderDropdownItems="<%= calendarDisplayContext.getOrderItemsDropdownItems() %>"
 	searchActionURL="<%= calendarDisplayContext.getSearchActionURL() %>"
 	searchContainerId="<%= calendarDisplayContext.getSearchContainerId() %>"
 	searchFormName="fm"
-	selectable="false"
+	selectable="<%= false %>"
+	sortingOrder="<%= calendarDisplayContext.getOrderByType() %>"
+	sortingURL="<%= calendarDisplayContext.getSortingURL() %>"
 />
 
 <liferay-portlet:renderURL varImpl="iteratorURL">
@@ -38,7 +31,7 @@ CalendarResourceDisplayTerms displayTerms = new CalendarResourceDisplayTerms(ren
 	<portlet:param name="tabs1" value="resources" />
 </liferay-portlet:renderURL>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<c:choose>
 		<c:when test="<%= displayTerms.getScope() == themeDisplay.getCompanyGroupId() %>">
 			<h3><liferay-ui:message key="users" /></h3>
@@ -53,4 +46,4 @@ CalendarResourceDisplayTerms displayTerms = new CalendarResourceDisplayTerms(ren
 			<%@ include file="/calendar_resource_search_container.jspf" %>
 		</c:otherwise>
 	</c:choose>
-</div>
+</clay:container-fluid>

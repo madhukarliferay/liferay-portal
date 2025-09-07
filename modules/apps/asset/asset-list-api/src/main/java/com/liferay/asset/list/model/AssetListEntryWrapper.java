@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class AssetListEntryWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("assetListEntryId", getAssetListEntryId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -55,6 +50,8 @@ public class AssetListEntryWrapper
 		attributes.put("assetListEntryKey", getAssetListEntryKey());
 		attributes.put("title", getTitle());
 		attributes.put("type", getType());
+		attributes.put("assetEntrySubtype", getAssetEntrySubtype());
+		attributes.put("assetEntryType", getAssetEntryType());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -68,10 +65,23 @@ public class AssetListEntryWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long assetListEntryId = (Long)attributes.get("assetListEntryId");
@@ -134,6 +144,18 @@ public class AssetListEntryWrapper
 			setType(type);
 		}
 
+		String assetEntrySubtype = (String)attributes.get("assetEntrySubtype");
+
+		if (assetEntrySubtype != null) {
+			setAssetEntrySubtype(assetEntrySubtype);
+		}
+
+		String assetEntryType = (String)attributes.get("assetEntryType");
+
+		if (assetEntryType != null) {
+			setAssetEntryType(assetEntryType);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
@@ -141,104 +163,29 @@ public class AssetListEntryWrapper
 		}
 	}
 
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntries(AssetListEntry,
-	 long)}
-	 */
-	@Deprecated
 	@Override
-	public java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-		getAssetEntries(long segmentsEntryId) {
-
-		return model.getAssetEntries(segmentsEntryId);
+	public AssetListEntry cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntries(AssetListEntry,
-	 long, int, int)}
+	 * Returns the asset entry subtype of this asset list entry.
+	 *
+	 * @return the asset entry subtype of this asset list entry
 	 */
-	@Deprecated
 	@Override
-	public java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-		getAssetEntries(long segmentsEntryId, int start, int end) {
-
-		return model.getAssetEntries(segmentsEntryId, start, end);
+	public String getAssetEntrySubtype() {
+		return model.getAssetEntrySubtype();
 	}
 
 	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntries(AssetListEntry,
-	 long[])}
+	 * Returns the asset entry type of this asset list entry.
+	 *
+	 * @return the asset entry type of this asset list entry
 	 */
-	@Deprecated
 	@Override
-	public java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-		getAssetEntries(long[] segmentsEntryIds) {
-
-		return model.getAssetEntries(segmentsEntryIds);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntries(AssetListEntry,
-	 long[], int, int)}
-	 */
-	@Deprecated
-	@Override
-	public java.util.List<com.liferay.asset.kernel.model.AssetEntry>
-		getAssetEntries(long[] segmentsEntryIds, int start, int end) {
-
-		return model.getAssetEntries(segmentsEntryIds, start, end);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntriesCount(
-	 AssetListEntry, long)}
-	 */
-	@Deprecated
-	@Override
-	public int getAssetEntriesCount(long segmentsEntryId) {
-		return model.getAssetEntriesCount(segmentsEntryId);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntriesCount(
-	 AssetListEntry, long[])}
-	 */
-	@Deprecated
-	@Override
-	public int getAssetEntriesCount(long[] segmentsEntryIds) {
-		return model.getAssetEntriesCount(segmentsEntryIds);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntryQuery(
-	 AssetListEntry, long)}
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.asset.kernel.service.persistence.AssetEntryQuery
-		getAssetEntryQuery(long segmentsEntryId) {
-
-		return model.getAssetEntryQuery(segmentsEntryId);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 AssetListAssetEntryProvider#getAssetEntryQuery(
-	 AssetListEntry, long[])}
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.asset.kernel.service.persistence.AssetEntryQuery
-		getAssetEntryQuery(long[] segmentsEntryIds) {
-
-		return model.getAssetEntryQuery(segmentsEntryIds);
+	public String getAssetEntryType() {
+		return model.getAssetEntryType();
 	}
 
 	/**
@@ -279,6 +226,26 @@ public class AssetListEntryWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the ct collection ID of this asset list entry.
+	 *
+	 * @return the ct collection ID of this asset list entry
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the external reference code of this asset list entry.
+	 *
+	 * @return the external reference code of this asset list entry
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -408,14 +375,29 @@ public class AssetListEntryWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a asset list entry model instance should use the <code>AssetListEntry</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets the asset entry subtype of this asset list entry.
+	 *
+	 * @param assetEntrySubtype the asset entry subtype of this asset list entry
+	 */
+	@Override
+	public void setAssetEntrySubtype(String assetEntrySubtype) {
+		model.setAssetEntrySubtype(assetEntrySubtype);
+	}
+
+	/**
+	 * Sets the asset entry type of this asset list entry.
+	 *
+	 * @param assetEntryType the asset entry type of this asset list entry
+	 */
+	@Override
+	public void setAssetEntryType(String assetEntryType) {
+		model.setAssetEntryType(assetEntryType);
 	}
 
 	/**
@@ -456,6 +438,26 @@ public class AssetListEntryWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this asset list entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this asset list entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the external reference code of this asset list entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this asset list entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -566,6 +568,25 @@ public class AssetListEntryWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<AssetListEntry, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<AssetListEntry, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,28 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.workspace;
 
-import com.liferay.gradle.plugins.workspace.configurators.ExtProjectConfigurator;
-import com.liferay.gradle.plugins.workspace.configurators.ModulesProjectConfigurator;
-import com.liferay.gradle.plugins.workspace.configurators.PluginsProjectConfigurator;
-import com.liferay.gradle.plugins.workspace.configurators.RootProjectConfigurator;
-import com.liferay.gradle.plugins.workspace.configurators.ThemesProjectConfigurator;
-import com.liferay.gradle.plugins.workspace.configurators.WarsProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.ClientExtensionProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.ExtProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.ModulesProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.PluginsProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.RootProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.ThemesProjectConfigurator;
+import com.liferay.gradle.plugins.workspace.configurator.WarsProjectConfigurator;
 import com.liferay.gradle.plugins.workspace.internal.util.GradleUtil;
+import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
 import com.liferay.gradle.util.Validator;
 import com.liferay.portal.tools.bundle.support.constants.BundleSupportConstants;
+import com.liferay.release.util.ReleaseEntry;
+import com.liferay.release.util.ReleaseUtil;
 
 import groovy.lang.Closure;
 import groovy.lang.MissingPropertyException;
@@ -30,7 +25,8 @@ import groovy.lang.MissingPropertyException;
 import java.io.File;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -38,120 +34,207 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.logging.Logger;
 
 /**
  * @author David Truong
  * @author Andrea Di Giorgi
+ * @author Simon Jiang
+ * @author Gregory Amerson
+ * @author Drew Brokke
  */
 public class WorkspaceExtension {
 
-	@SuppressWarnings("serial")
 	public WorkspaceExtension(Settings settings) {
 		_gradle = settings.getGradle();
 
+		_product = _getProperty(settings, "product", (String)null);
+
+		_projectConfigurators.add(
+			new ClientExtensionProjectConfigurator(settings));
 		_projectConfigurators.add(new ExtProjectConfigurator(settings));
 		_projectConfigurators.add(new ModulesProjectConfigurator(settings));
 		_projectConfigurators.add(new PluginsProjectConfigurator(settings));
 		_projectConfigurators.add(new ThemesProjectConfigurator(settings));
 		_projectConfigurators.add(new WarsProjectConfigurator(settings));
 
+		_appServerTomcatVersion = GradleUtil.getProperty(
+			settings, "app.server.tomcat.version");
 		_bundleCacheDir = _getProperty(
 			settings, "bundle.cache.dir", _BUNDLE_CACHE_DIR);
+		_bundleChecksumSHA512 = _getProperty(
+			settings, "bundle.checksum.sha512");
+		_bundleDistIncludeMetadata = _getProperty(
+			settings, "bundle.dist.include.metadata",
+			_BUNDLE_DIST_INCLUDE_METADATA);
 		_bundleDistRootDirName = _getProperty(
 			settings, "bundle.dist.root.dir", _BUNDLE_DIST_ROOT_DIR_NAME);
-		_bundleTokenDownload = _getProperty(
-			settings, "bundle.token.download", _BUNDLE_TOKEN_DOWNLOAD);
-		_bundleTokenEmailAddress = _getProperty(
-			settings, "bundle.token.email.address",
-			_BUNDLE_TOKEN_EMAIL_ADDRESS);
-		_bundleTokenForce = _getProperty(
-			settings, "bundle.token.force", _BUNDLE_TOKEN_FORCE);
-		_bundleTokenPassword = _getProperty(
-			settings, "bundle.token.password", _BUNDLE_TOKEN_PASSWORD);
-		_bundleTokenPasswordFile = _getProperty(
-			settings, "bundle.token.password.file",
-			_BUNDLE_TOKEN_PASSWORD_FILE);
-		_bundleUrl = _getProperty(
-			settings, "bundle.url", BundleSupportConstants.DEFAULT_BUNDLE_URL);
+		_bundleUrl = _getProperty(settings, "bundle.url");
 		_configsDir = _getProperty(
 			settings, "configs.dir",
 			BundleSupportConstants.DEFAULT_CONFIGS_DIR_NAME);
-		_dockerContainerId = new Closure<Void>(_gradle) {
-
-			@SuppressWarnings("unused")
-			public String doCall() {
-				Project rootProject = _gradle.getRootProject();
-
-				return rootProject.getName() + "-liferay";
-			}
-
-		};
+		_dirExcludesGlobs = StringUtil.split(
+			GradleUtil.toString(_getProperty(settings, "dir.excludes.globs")));
 		_dockerDir = _getProperty(settings, "docker.dir", _DOCKER_DIR);
-		_dockerImageId = new Closure<Void>(_gradle) {
-
-			@SuppressWarnings("unused")
-			public String doCall() {
-				Project rootProject = _gradle.getRootProject();
-
-				Object version = rootProject.getVersion();
-
-				if (Objects.equals(version, "unspecified")) {
-					String dockerImageLiferay = getDockerImageLiferay();
-
-					int index = dockerImageLiferay.indexOf(":");
-
-					version = dockerImageLiferay.substring(index + 1);
-				}
-				else {
-					version = rootProject.getVersion();
-				}
-
-				return String.format(
-					"%s-liferay:%s", rootProject.getName(), version);
-			}
-
-		};
-		_dockerImageLiferay = _getProperty(
-			settings, "docker.image.liferay", _DOCKER_IMAGE_LIFERAY);
+		_dockerImageLiferay = _getProperty(settings, "docker.image.liferay");
+		_dockerLocalRegistryAddress = _getProperty(
+			settings, "docker.local.registry.address");
+		_dockerPullPolicy = _getProperty(
+			settings, "docker.pull.policy", _DOCKER_PULL_POLICY);
+		_dockerUserAccessToken = _getProperty(
+			settings, "docker.user.access.token");
+		_dockerUserName = _getProperty(settings, "docker.username");
 		_environment = _getProperty(
 			settings, "environment",
 			BundleSupportConstants.DEFAULT_ENVIRONMENT);
 		_homeDir = _getProperty(
 			settings, "home.dir",
 			BundleSupportConstants.DEFAULT_LIFERAY_HOME_DIR_NAME);
+		_javaEEUseJakarta = _getProperty(
+			settings, "java.ee.use.jakarta", false);
+		_nodePackageManager = _getProperty(
+			settings, "node.package.manager", _NODE_PACKAGE_MANAGER);
 		_targetPlatformVersion = _getProperty(
-			settings, "target.platform.version", (String)null);
+			settings, "target.platform.version");
+		_virtualInstanceId = GradleUtil.getProperty(
+			settings, "liferay.virtual.instance.id");
+
+		_gradle.projectsEvaluated(
+			new Closure<Void>(_gradle) {
+
+				@SuppressWarnings("unused")
+				public void doCall() {
+					Project rootProject = _gradle.getRootProject();
+
+					Logger logger = rootProject.getLogger();
+
+					if (!logger.isLifecycleEnabled()) {
+						return;
+					}
+
+					String product = getProduct();
+
+					if (product == null) {
+						logger.lifecycle(
+							"The property `liferay.workspace.product` has " +
+								"not been set. It is recommended to set this " +
+									"property in gradle.properties in the " +
+										"workspace directory. See LPS-111700.");
+
+						return;
+					}
+
+					String overridePropertyInfo =
+						"The %s property is currently overriding the default " +
+							"value managed by the liferay.workspace.product " +
+								"setting.";
+
+					if (!Objects.equals(
+							getAppServerTomcatVersion(),
+							ReleaseUtil.getFromReleaseEntry(
+								product,
+								ReleaseEntry::getAppServerTomcatVersion))) {
+
+						logger.lifecycle(
+							String.format(
+								overridePropertyInfo,
+								"app.server.tomcat.version"));
+					}
+
+					if (!Objects.equals(
+							getBundleChecksumSHA512(),
+							ReleaseUtil.getFromReleaseEntry(
+								product,
+								ReleaseEntry::getBundleChecksumSHA512))) {
+
+						logger.lifecycle(
+							String.format(
+								overridePropertyInfo,
+								"liferay.workspace.bundle.checksum.sha512"));
+					}
+
+					if (!Objects.equals(
+							getBundleUrl(),
+							ReleaseUtil.getFromReleaseEntry(
+								product, ReleaseEntry::getBundleURL))) {
+
+						logger.lifecycle(
+							String.format(
+								overridePropertyInfo,
+								"liferay.workspace.bundle.url"));
+					}
+
+					if (!Objects.equals(
+							getDockerImageLiferay(),
+							ReleaseUtil.getFromReleaseEntry(
+								product,
+								ReleaseEntry::getLiferayDockerImage))) {
+
+						logger.lifecycle(
+							String.format(
+								overridePropertyInfo,
+								"liferay.workspace.docker.image.liferay"));
+					}
+
+					if (!Objects.equals(
+							getTargetPlatformVersion(),
+							ReleaseUtil.getFromReleaseEntry(
+								product,
+								ReleaseEntry::getTargetPlatformVersion))) {
+
+						logger.lifecycle(
+							String.format(
+								overridePropertyInfo,
+								"liferay.workspace.target.platform.version"));
+					}
+				}
+
+			});
 
 		_rootProjectConfigurator = new RootProjectConfigurator(settings);
+	}
+
+	public String getAppServerTomcatVersion() {
+		if (Objects.isNull(_appServerTomcatVersion)) {
+			return ReleaseUtil.getFromReleaseEntry(
+				getProduct(), ReleaseEntry::getAppServerTomcatVersion);
+		}
+
+		return GradleUtil.toString(_appServerTomcatVersion);
 	}
 
 	public File getBundleCacheDir() {
 		return GradleUtil.toFile(_gradle.getRootProject(), _bundleCacheDir);
 	}
 
+	public String getBundleChecksumSHA512() {
+		if (Objects.isNull(_bundleChecksumSHA512)) {
+			return ReleaseUtil.getFromReleaseEntry(
+				getProduct(), ReleaseEntry::getBundleChecksumSHA512);
+		}
+
+		return GradleUtil.toString(_bundleChecksumSHA512);
+	}
+
 	public String getBundleDistRootDirName() {
 		return GradleUtil.toString(_bundleDistRootDirName);
 	}
 
-	public String getBundleTokenEmailAddress() {
-		return GradleUtil.toString(_bundleTokenEmailAddress);
-	}
-
-	public String getBundleTokenPassword() {
-		return GradleUtil.toString(_bundleTokenPassword);
-	}
-
-	public File getBundleTokenPasswordFile() {
-		return GradleUtil.toFile(
-			_gradle.getRootProject(), _bundleTokenPasswordFile);
-	}
-
 	public String getBundleUrl() {
+		if (Objects.isNull(_bundleUrl)) {
+			return ReleaseUtil.getFromReleaseEntry(
+				getProduct(), ReleaseEntry::getBundleURL);
+		}
+
 		return GradleUtil.toString(_bundleUrl);
 	}
 
 	public File getConfigsDir() {
 		return GradleUtil.toFile(_gradle.getRootProject(), _configsDir);
+	}
+
+	public List<String> getDirExcludesGlobs() {
+		return GradleUtil.toStringList(_dirExcludesGlobs);
 	}
 
 	public String getDockerContainerId() {
@@ -167,7 +250,28 @@ public class WorkspaceExtension {
 	}
 
 	public String getDockerImageLiferay() {
+		if (Objects.isNull(_dockerImageLiferay)) {
+			return ReleaseUtil.getFromReleaseEntry(
+				getProduct(), ReleaseEntry::getLiferayDockerImage);
+		}
+
 		return GradleUtil.toString(_dockerImageLiferay);
+	}
+
+	public String getDockerLocalRegistryAddress() {
+		return GradleUtil.toString(_dockerLocalRegistryAddress);
+	}
+
+	public boolean getDockerPullPolicy() {
+		return GradleUtil.toBoolean(_dockerPullPolicy);
+	}
+
+	public String getDockerUserAccessToken() {
+		return GradleUtil.toString(_dockerUserAccessToken);
+	}
+
+	public String getDockerUserName() {
+		return GradleUtil.toString(_dockerUserName);
 	}
 
 	public String getEnvironment() {
@@ -176,6 +280,18 @@ public class WorkspaceExtension {
 
 	public File getHomeDir() {
 		return GradleUtil.toFile(_gradle.getRootProject(), _homeDir);
+	}
+
+	public boolean getJavaEEUseJakarta() {
+		return GradleUtil.toBoolean(_javaEEUseJakarta);
+	}
+
+	public String getNodePackageManager() {
+		return GradleUtil.toString(_nodePackageManager);
+	}
+
+	public String getProduct() {
+		return GradleUtil.toString(_product);
 	}
 
 	public Iterable<ProjectConfigurator> getProjectConfigurators() {
@@ -187,15 +303,20 @@ public class WorkspaceExtension {
 	}
 
 	public String getTargetPlatformVersion() {
+		if (Objects.isNull(_targetPlatformVersion)) {
+			return ReleaseUtil.getFromReleaseEntry(
+				getProduct(), ReleaseEntry::getTargetPlatformVersion);
+		}
+
 		return GradleUtil.toString(_targetPlatformVersion);
 	}
 
-	public boolean isBundleTokenDownload() {
-		return GradleUtil.toBoolean(_bundleTokenDownload);
+	public String getVirtualInstanceId() {
+		return GradleUtil.toString(_virtualInstanceId);
 	}
 
-	public boolean isBundleTokenForce() {
-		return GradleUtil.toBoolean(_bundleTokenForce);
+	public boolean isBundleDistIncludeMetadata() {
+		return GradleUtil.toBoolean(_bundleDistIncludeMetadata);
 	}
 
 	public ProjectConfigurator propertyMissing(String name) {
@@ -212,28 +333,16 @@ public class WorkspaceExtension {
 		_bundleCacheDir = bundleCacheDir;
 	}
 
+	public void setBundleChecksumSHA512(Object bundleChecksumSHA512) {
+		_bundleChecksumSHA512 = bundleChecksumSHA512;
+	}
+
+	public void setBundleDistIncludeMetadata(Object bundleDistIncludeMetadata) {
+		_bundleDistIncludeMetadata = bundleDistIncludeMetadata;
+	}
+
 	public void setBundleDistRootDirName(Object bundleDistRootDirName) {
 		_bundleDistRootDirName = bundleDistRootDirName;
-	}
-
-	public void setBundleTokenDownload(Object bundleTokenDownload) {
-		_bundleTokenDownload = bundleTokenDownload;
-	}
-
-	public void setBundleTokenEmailAddress(Object bundleTokenEmailAddress) {
-		_bundleTokenEmailAddress = bundleTokenEmailAddress;
-	}
-
-	public void setBundleTokenForce(Object bundleTokenForce) {
-		_bundleTokenForce = bundleTokenForce;
-	}
-
-	public void setBundleTokenPassword(Object bundleTokenPassword) {
-		_bundleTokenPassword = bundleTokenPassword;
-	}
-
-	public void setBundleTokenPasswordFile(Object bundleTokenPasswordFile) {
-		_bundleTokenPasswordFile = bundleTokenPasswordFile;
 	}
 
 	public void setBundleUrl(Object bundleUrl) {
@@ -242,6 +351,10 @@ public class WorkspaceExtension {
 
 	public void setConfigsDir(Object configsDir) {
 		_configsDir = configsDir;
+	}
+
+	public void setDirExcludesGlobs(Iterable<String> dirExcludesGlobs) {
+		_dirExcludesGlobs = dirExcludesGlobs;
 	}
 
 	public void setDockerContainerId(Object dockerContainerId) {
@@ -260,6 +373,24 @@ public class WorkspaceExtension {
 		_dockerImageLiferay = dockerImageLiferay;
 	}
 
+	public void setDockerLocalRegistryAddress(
+		Object dockerLocalRegistryAddress) {
+
+		_dockerLocalRegistryAddress = dockerLocalRegistryAddress;
+	}
+
+	public void setDockerPullPolicy(Object dockerPullPolicy) {
+		_dockerPullPolicy = dockerPullPolicy;
+	}
+
+	public void setDockerUserAccessToken(Object dockerUserAccessToken) {
+		_dockerUserAccessToken = dockerUserAccessToken;
+	}
+
+	public void setDockerUserName(Object dockerUserName) {
+		_dockerUserName = dockerUserName;
+	}
+
 	public void setEnvironment(Object environment) {
 		_environment = environment;
 	}
@@ -268,8 +399,29 @@ public class WorkspaceExtension {
 		_homeDir = homeDir;
 	}
 
+	public void setJavaEEUseJakarta(Object javaEEUseJakarta) {
+		_javaEEUseJakarta = javaEEUseJakarta;
+	}
+
+	public void setNodePackageManager(Object nodePackageManager) {
+		_nodePackageManager = nodePackageManager;
+	}
+
+	public void setProduct(Object product) {
+		_product = product;
+	}
+
 	public void setTargetPlatformVersion(Object targetPlatformVersion) {
 		_targetPlatformVersion = targetPlatformVersion;
+	}
+
+	public void setVirtualInstanceId(Object virtualInstanceId) {
+		_virtualInstanceId = virtualInstanceId;
+	}
+
+	private Object _getProperty(Object object, String keySuffix) {
+		return GradleUtil.getProperty(
+			object, WorkspacePlugin.PROPERTY_PREFIX + keySuffix);
 	}
 
 	private boolean _getProperty(
@@ -307,43 +459,43 @@ public class WorkspaceExtension {
 		System.getProperty("user.home"),
 		BundleSupportConstants.DEFAULT_BUNDLE_CACHE_DIR_NAME);
 
+	private static final boolean _BUNDLE_DIST_INCLUDE_METADATA = false;
+
 	private static final String _BUNDLE_DIST_ROOT_DIR_NAME = null;
-
-	private static final boolean _BUNDLE_TOKEN_DOWNLOAD = false;
-
-	private static final String _BUNDLE_TOKEN_EMAIL_ADDRESS = null;
-
-	private static final boolean _BUNDLE_TOKEN_FORCE = false;
-
-	private static final String _BUNDLE_TOKEN_PASSWORD = null;
-
-	private static final String _BUNDLE_TOKEN_PASSWORD_FILE = null;
 
 	private static final File _DOCKER_DIR = new File(
 		Project.DEFAULT_BUILD_DIR_NAME + File.separator + "docker");
 
-	private static final String _DOCKER_IMAGE_LIFERAY =
-		"liferay/portal:7.2.0-ga1";
+	private static final boolean _DOCKER_PULL_POLICY = true;
 
+	private static final String _NODE_PACKAGE_MANAGER = "yarn";
+
+	private final Object _appServerTomcatVersion;
 	private Object _bundleCacheDir;
+	private Object _bundleChecksumSHA512;
+	private Object _bundleDistIncludeMetadata;
 	private Object _bundleDistRootDirName;
-	private Object _bundleTokenDownload;
-	private Object _bundleTokenEmailAddress;
-	private Object _bundleTokenForce;
-	private Object _bundleTokenPassword;
-	private Object _bundleTokenPasswordFile;
 	private Object _bundleUrl;
 	private Object _configsDir;
+	private Iterable<String> _dirExcludesGlobs;
 	private Object _dockerContainerId;
 	private Object _dockerDir;
 	private Object _dockerImageId;
 	private Object _dockerImageLiferay;
+	private Object _dockerLocalRegistryAddress;
+	private Object _dockerPullPolicy;
+	private Object _dockerUserAccessToken;
+	private Object _dockerUserName;
 	private Object _environment;
 	private final Gradle _gradle;
 	private Object _homeDir;
+	private Object _javaEEUseJakarta;
+	private Object _nodePackageManager;
+	private Object _product;
 	private final Set<ProjectConfigurator> _projectConfigurators =
-		new HashSet<>();
+		new LinkedHashSet<>();
 	private final Plugin<Project> _rootProjectConfigurator;
 	private Object _targetPlatformVersion;
+	private Object _virtualInstanceId;
 
 }

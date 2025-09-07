@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -20,6 +11,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.RuntimeConfigurable;
@@ -80,6 +77,16 @@ public class AntUtil {
 			Map<String, String> parameters, Map<String, String> envVariables)
 		throws AntException {
 
+		callTarget(
+			baseDir, buildFileName, targetName, parameters, envVariables, null);
+	}
+
+	public static void callTarget(
+			File baseDir, String buildFileName, String targetName,
+			Map<String, String> parameters, Map<String, String> envVariables,
+			File antLibDir)
+		throws AntException {
+
 		String[] bashCommands = new String[3];
 
 		if (JenkinsResultsParserUtil.isWindows()) {
@@ -109,23 +116,11 @@ public class AntUtil {
 
 				sb.append("\"");
 				sb.append(value);
-				sb.append("\"");
-
-				sb.append(" ; ");
+				sb.append("\" ; ");
 			}
 		}
 
 		sb.append("ant");
-
-		if (buildFileName != null) {
-			sb.append(" -f ");
-			sb.append(buildFileName);
-		}
-
-		if (targetName != null) {
-			sb.append(" ");
-			sb.append(targetName);
-		}
 
 		if (parameters != null) {
 			for (Map.Entry<String, String> parameter : parameters.entrySet()) {
@@ -143,6 +138,21 @@ public class AntUtil {
 				sb.append(value);
 				sb.append("\"");
 			}
+		}
+
+		if (buildFileName != null) {
+			sb.append(" -f ");
+			sb.append(buildFileName);
+		}
+
+		if ((antLibDir != null) && antLibDir.exists()) {
+			sb.append(" -lib ");
+			sb.append(JenkinsResultsParserUtil.getCanonicalPath(antLibDir));
+		}
+
+		if (targetName != null) {
+			sb.append(" ");
+			sb.append(targetName);
 		}
 
 		System.out.println(sb.toString());
@@ -175,8 +185,8 @@ public class AntUtil {
 							line = bufferedReader.readLine();
 						}
 					}
-					catch (IOException ioe) {
-						ioe.printStackTrace();
+					catch (IOException ioException) {
+						ioException.printStackTrace();
 					}
 				}
 
@@ -196,10 +206,58 @@ public class AntUtil {
 				throw new AntException();
 			}
 		}
-		catch (InterruptedException | IOException e) {
-			e.printStackTrace();
+		catch (InterruptedException | IOException exception) {
+			exception.printStackTrace();
 
-			throw new AntException(e);
+			throw new AntException(exception);
+		}
+	}
+
+	public static void callTargetWithTimeout(
+			final File baseDir, final String buildFileName,
+			final String targetName, final Map<String, String> parameters,
+			int timeoutMinutes, boolean runningModulesTests)
+		throws AntException, IOException {
+
+		ExecutorService executorService =
+			JenkinsResultsParserUtil.getNewThreadPoolExecutor(1, true);
+
+		Future<String> future = executorService.submit(
+			new Callable<String>() {
+
+				public String call() throws Exception {
+					callTarget(baseDir, buildFileName, targetName, parameters);
+
+					return "";
+				}
+
+			});
+
+		try {
+			future.get(timeoutMinutes, TimeUnit.MINUTES);
+		}
+		catch (TimeoutException timeoutException) {
+			System.err.println(
+				"FAILURE: Unable to run " + targetName + " with " + parameters +
+					" in " + timeoutMinutes + " minutes.");
+		}
+		catch (ExecutionException executionException) {
+			executionException.printStackTrace();
+		}
+		catch (InterruptedException interruptedException) {
+			interruptedException.printStackTrace();
+		}
+		finally {
+			if (runningModulesTests) {
+				String projectName = parameters.get("test.task");
+
+				TestClassResultsUtil.moveTestClassResultsFiles(
+					TestClassResultsUtil.getProjectTestClassResultsDir(
+						projectName, baseDir),
+					baseDir);
+			}
+
+			executorService.shutdownNow();
 		}
 	}
 

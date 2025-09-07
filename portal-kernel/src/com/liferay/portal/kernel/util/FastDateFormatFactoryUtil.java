@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -25,38 +16,38 @@ import java.util.TimeZone;
 public class FastDateFormatFactoryUtil {
 
 	public static Format getDate(int style, Locale locale, TimeZone timeZone) {
-		return getFastDateFormatFactory().getDate(style, locale, timeZone);
+		return _fastDateFormatFactory.getDate(style, locale, timeZone);
 	}
 
 	public static Format getDate(Locale locale) {
-		return getFastDateFormatFactory().getDate(locale);
+		return _fastDateFormatFactory.getDate(locale);
 	}
 
 	public static Format getDate(Locale locale, TimeZone timeZone) {
-		return getFastDateFormatFactory().getDate(locale, timeZone);
+		return _fastDateFormatFactory.getDate(locale, timeZone);
 	}
 
 	public static Format getDate(TimeZone timeZone) {
-		return getFastDateFormatFactory().getDate(timeZone);
+		return _fastDateFormatFactory.getDate(timeZone);
 	}
 
 	public static Format getDateTime(
 		int dateStyle, int timeStyle, Locale locale, TimeZone timeZone) {
 
-		return getFastDateFormatFactory().getDateTime(
+		return _fastDateFormatFactory.getDateTime(
 			dateStyle, timeStyle, locale, timeZone);
 	}
 
 	public static Format getDateTime(Locale locale) {
-		return getFastDateFormatFactory().getDateTime(locale);
+		return _fastDateFormatFactory.getDateTime(locale);
 	}
 
 	public static Format getDateTime(Locale locale, TimeZone timeZone) {
-		return getFastDateFormatFactory().getDateTime(locale, timeZone);
+		return _fastDateFormatFactory.getDateTime(locale, timeZone);
 	}
 
 	public static Format getDateTime(TimeZone timeZone) {
-		return getFastDateFormatFactory().getDateTime(timeZone);
+		return _fastDateFormatFactory.getDateTime(timeZone);
 	}
 
 	public static FastDateFormatFactory getFastDateFormatFactory() {
@@ -64,41 +55,40 @@ public class FastDateFormatFactoryUtil {
 	}
 
 	public static Format getSimpleDateFormat(String pattern) {
-		return getFastDateFormatFactory().getSimpleDateFormat(pattern);
+		return _fastDateFormatFactory.getSimpleDateFormat(pattern);
 	}
 
 	public static Format getSimpleDateFormat(String pattern, Locale locale) {
-		return getFastDateFormatFactory().getSimpleDateFormat(pattern, locale);
+		return _fastDateFormatFactory.getSimpleDateFormat(pattern, locale);
 	}
 
 	public static Format getSimpleDateFormat(
 		String pattern, Locale locale, TimeZone timeZone) {
 
-		return getFastDateFormatFactory().getSimpleDateFormat(
+		return _fastDateFormatFactory.getSimpleDateFormat(
 			pattern, locale, timeZone);
 	}
 
 	public static Format getSimpleDateFormat(
 		String pattern, TimeZone timeZone) {
 
-		return getFastDateFormatFactory().getSimpleDateFormat(
-			pattern, timeZone);
+		return _fastDateFormatFactory.getSimpleDateFormat(pattern, timeZone);
 	}
 
 	public static Format getTime(int style, Locale locale, TimeZone timeZone) {
-		return getFastDateFormatFactory().getTime(style, locale, timeZone);
+		return _fastDateFormatFactory.getTime(style, locale, timeZone);
 	}
 
 	public static Format getTime(Locale locale) {
-		return getFastDateFormatFactory().getTime(locale);
+		return _fastDateFormatFactory.getTime(locale);
 	}
 
 	public static Format getTime(Locale locale, TimeZone timeZone) {
-		return getFastDateFormatFactory().getTime(locale, timeZone);
+		return _fastDateFormatFactory.getTime(locale, timeZone);
 	}
 
 	public static Format getTime(TimeZone timeZone) {
-		return getFastDateFormatFactory().getTime(timeZone);
+		return _fastDateFormatFactory.getTime(timeZone);
 	}
 
 	public void setFastDateFormatFactory(

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.web.internal.util.comparator;
@@ -17,6 +8,7 @@ package com.liferay.portal.workflow.web.internal.util.comparator;
 import com.liferay.portal.kernel.util.CollatorUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 
 import java.text.Collator;
@@ -41,11 +33,9 @@ public class WorkflowDefinitionTitleComparator
 
 	public WorkflowDefinitionTitleComparator(boolean ascending, Locale locale) {
 		_ascending = ascending;
-
 		_locale = locale;
 
-		_collator = CollatorUtil.getInstance(_locale);
-
+		_collator = CollatorUtil.getInstance(locale);
 		_languageId = LocaleUtil.toLanguageId(locale);
 	}
 
@@ -58,10 +48,10 @@ public class WorkflowDefinitionTitleComparator
 			workflowDefinition1.isActive(), workflowDefinition2.isActive());
 
 		if (value == 0) {
-			String workflowDefinitionTitle1 = workflowDefinition1.getTitle(
-				_languageId);
-			String workflowDefinitionTitle2 = workflowDefinition2.getTitle(
-				_languageId);
+			String workflowDefinitionTitle1 = StringUtil.toLowerCase(
+				workflowDefinition1.getTitle(_languageId));
+			String workflowDefinitionTitle2 = StringUtil.toLowerCase(
+				workflowDefinition2.getTitle(_languageId));
 
 			value = _collator.compare(
 				workflowDefinitionTitle1, workflowDefinitionTitle2);

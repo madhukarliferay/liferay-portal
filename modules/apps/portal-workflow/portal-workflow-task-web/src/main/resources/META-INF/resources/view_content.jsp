@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -21,9 +12,9 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 AssetEntry assetEntry = workflowTaskDisplayContext.getAssetEntry();
 
-AssetRenderer assetRenderer = workflowTaskDisplayContext.getAssetRenderer(workflowTaskDisplayContext.getWorkflowTask());
+AssetRenderer<?> assetRenderer = workflowTaskDisplayContext.getAssetRenderer(workflowTaskDisplayContext.getWorkflowTask());
 
-AssetRendererFactory assetRendererFactory = workflowTaskDisplayContext.getAssetRendererFactory();
+AssetRendererFactory<?> assetRendererFactory = workflowTaskDisplayContext.getAssetRendererFactory();
 
 String languageId = LanguageUtil.getLanguageId(request);
 
@@ -33,38 +24,46 @@ if (ArrayUtil.isNotEmpty(availableLanguageIds) && !ArrayUtil.contains(availableL
 	languageId = assetRenderer.getDefaultLanguageId();
 }
 
-String title = assetRenderer.getTitle(workflowTaskDisplayContext.getTaskContentLocale());
-
 request.setAttribute(WebKeys.WORKFLOW_ASSET_PREVIEW, Boolean.TRUE);
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
 
-renderResponse.setTitle(title);
+renderResponse.setTitle(assetRenderer.getTitle(workflowTaskDisplayContext.getTaskContentLocale()));
 %>
 
-<div class="container-fluid-1280 main-content-body">
-	<div class="col-md-12 lfr-asset-column lfr-asset-column-details">
-		<div class="card-horizontal main-content-card">
+<clay:container-fluid
+	cssClass="container-view"
+>
+	<clay:col
+		cssClass="lfr-asset-column lfr-asset-column-details"
+		md="12"
+	>
+		<div class="card">
 			<div class="panel-body">
 				<c:if test="<%= assetEntry != null %>">
-					<div class="locale-actions">
-						<liferay-ui:language
-							formAction="<%= currentURL %>"
-							languageId="<%= languageId %>"
-							languageIds="<%= availableLanguageIds %>"
-						/>
-					</div>
+					<c:if test="<%= assetRenderer.isLocalizable() %>">
+						<div class="locale-actions">
+							<liferay-site-navigation:language
+								formAction="<%= currentURL %>"
+								languageId="<%= languageId %>"
+								languageIds="<%= availableLanguageIds %>"
+							/>
+						</div>
+					</c:if>
 
 					<liferay-asset:asset-display
 						assetEntry="<%= assetEntry %>"
 						assetRenderer="<%= assetRenderer %>"
 						assetRendererFactory="<%= assetRendererFactory %>"
+						showExtraInfo="<%= workflowTaskDisplayContext.isShowExtraInfo() %>"
 					/>
 				</c:if>
 
 				<%
-				String viewInContextURL = assetRenderer.getURLViewInContext(liferayPortletRequest, liferayPortletResponse, null);
+				WorkflowHandler<?> workflowHandler = workflowTaskDisplayContext.getWorkflowHandler(workflowTaskDisplayContext.getWorkflowTask());
+
+				String viewInContextURL = workflowHandler.getURLViewInContext(assetRenderer.getClassPK(), liferayPortletRequest, liferayPortletResponse, null);
 				%>
 
 				<c:if test="<%= viewInContextURL != null %>">
@@ -74,5 +73,5 @@ renderResponse.setTitle(title);
 				</c:if>
 			</div>
 		</div>
-	</div>
-</div>
+	</clay:col>
+</clay:container-fluid>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -27,17 +18,12 @@ import org.json.JSONObject;
 /**
  * @author Michael Hashimoto
  */
-public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
-	implements BuildRunner<T, S> {
+public abstract class BaseBuildRunner<T extends BuildData>
+	implements BuildRunner<T> {
 
 	@Override
 	public T getBuildData() {
 		return _buildData;
-	}
-
-	@Override
-	public S getWorkspace() {
-		return _workspace;
 	}
 
 	@Override
@@ -62,8 +48,6 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 		_buildData = buildData;
 
 		_job = JobFactory.newJob(_buildData);
-
-		_job.readJobProperties();
 	}
 
 	protected void cleanUpHostServices() {
@@ -74,6 +58,36 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 
 	protected Job getJob() {
 		return _job;
+	}
+
+	protected String getLabelExpression(String jobName) {
+		String labelExpression = null;
+
+		try {
+			labelExpression = JenkinsResultsParserUtil.getBuildProperty(
+				"jenkins.osb.jenkins.web.slave.label", jobName);
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(labelExpression)) {
+				labelExpression = JenkinsResultsParserUtil.getBuildProperty(
+					"jenkins.osb.jenkins.web.slave.label.minimum.ram",
+					String.valueOf(getSlaveRAMMinimum()));
+			}
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(labelExpression)) {
+				labelExpression = JenkinsResultsParserUtil.getBuildProperty(
+					"cloud.fleet.primary.label");
+			}
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(labelExpression)) {
+				labelExpression = JenkinsResultsParserUtil.getBuildProperty(
+					"master.auto.scaling.group.name");
+			}
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		return labelExpression;
 	}
 
 	protected List<JSONObject> getPreviousBuildJSONObjects() {
@@ -101,14 +115,16 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 							buildJSONObject.getString("url") + "api/json")));
 			}
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 
 		return _previousBuildJSONObjects;
 	}
 
-	protected abstract void initWorkspace();
+	protected int getSlaveRAMMinimum() {
+		return JenkinsMaster.getSlaveRAMMinimumDefault();
+	}
 
 	protected void keepJenkinsBuild(boolean keepLogs) {
 		JenkinsResultsParserUtil.keepJenkinsBuild(
@@ -148,25 +164,25 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 				retries++;
 
 				String command = JenkinsResultsParserUtil.combine(
-					"time rsync -Ipqrs --chmod=go=rx --timeout=1200 ",
+					"time timeout 1200 rsync -Ipqrs --chmod=go=rx ",
 					JenkinsResultsParserUtil.getCanonicalPath(file), " ",
-					_buildData.getTopLevelMasterHostname(), "::usercontent/",
-					userContentRelativePath);
+					_buildData.getTopLevelMasterHostname(),
+					":/opt/java/jenkins/userContent/", userContentRelativePath);
 
 				JenkinsResultsParserUtil.executeBashCommands(command);
 
 				break;
 			}
-			catch (IOException | TimeoutException e) {
+			catch (IOException | TimeoutException exception) {
 				if (retries == maxRetries) {
 					throw new RuntimeException(
-						"Unable to send " + file.getName(), e);
+						"Unable to send " + file.getName(), exception);
 				}
 
 				System.out.println(
 					"Unable to execute bash commands, retrying... ");
 
-				e.printStackTrace();
+				exception.printStackTrace();
 
 				JenkinsResultsParserUtil.sleep(3000);
 			}
@@ -187,7 +203,7 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 		}
 
 		long allowedBuildStartTime =
-			System.currentTimeMillis() - allowedBuildAge;
+			JenkinsResultsParserUtil.getCurrentTimeMillis() - allowedBuildAge;
 
 		for (JSONObject previousBuildJSONObject :
 				getPreviousBuildJSONObjects()) {
@@ -209,40 +225,32 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 				JSONObject envMapJSONObject =
 					injectedEnvVarsJSONObject.getJSONObject("envMap");
 
+				if (envMapJSONObject.isEmpty()) {
+					return;
+				}
+
 				JenkinsResultsParserUtil.keepJenkinsBuild(
 					false,
 					Integer.valueOf(envMapJSONObject.getString("BUILD_NUMBER")),
 					envMapJSONObject.getString("JOB_NAME"),
 					envMapJSONObject.getString("HOSTNAME"));
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
 		}
 	}
 
 	protected void setUpWorkspace() {
-		if (_workspace == null) {
-			initWorkspace();
-		}
+		Workspace workspace = getWorkspace();
 
-		_workspace.setBuildData(getBuildData());
-
-		_workspace.setJob(getJob());
-
-		_workspace.setUp();
-	}
-
-	protected void setWorkspace(S workspace) {
-		_workspace = workspace;
+		workspace.setUp();
 	}
 
 	protected void tearDownWorkspace() {
-		if (_workspace == null) {
-			initWorkspace();
-		}
+		Workspace workspace = getWorkspace();
 
-		_workspace.tearDown();
+		workspace.tearDown();
 	}
 
 	protected void updateBuildDescription() {
@@ -256,6 +264,5 @@ public abstract class BaseBuildRunner<T extends BuildData, S extends Workspace>
 	private final T _buildData;
 	private final Job _job;
 	private List<JSONObject> _previousBuildJSONObjects;
-	private S _workspace;
 
 }

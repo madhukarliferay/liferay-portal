@@ -3,30 +3,10 @@
 <project basedir="." default="compile" name="util-taglib">
 	<import file="../build-common-java.xml" />
 
-	<property name="deploy.dir" value="${app.server.lib.portal.dir}" />
+	<property name="deploy.dir" value="${app.server.shielded-container-lib.portal.dir}" />
 	<property name="jar.file" value="${ant.project.name}" />
 	<property name="manifest.bundle.name" value="Liferay Util Taglib" />
 	<property name="manifest.bundle.symbolic.name" value="com.liferay.util.taglib" />
-
-	<target name="build-taglibs">
-		<java
-			classname="com.liferay.alloy.tools.tagbuilder.TagBuilder"
-			classpathref="project.classpath"
-			fork="true"
-			maxmemory="256m"
-			newenvironment="true"
-		>
-			<jvmarg value="-Dtagbuilder.components.xml=${project.dir}/util-taglib/src/com/liferay/taglib/aui.xml,${project.dir}/util-taglib/src/com/liferay/taglib/liferay-aui.xml" />
-			<jvmarg value="-Dtagbuilder.copyright.year=present" />
-			<jvmarg value="-Dtagbuilder.java.dir=${project.dir}/util-taglib/src/com/liferay/taglib/" />
-			<jvmarg value="-Dtagbuilder.java.package=com.liferay.taglib" />
-			<jvmarg value="-Dtagbuilder.jsp.common.init.path=/html/taglib/taglib-init.jsp" />
-			<jvmarg value="-Dtagbuilder.jsp.dir=/html/taglib/" />
-			<jvmarg value="-Dtagbuilder.jsp.parent.dir=${project.dir}/portal-web/docroot/" />
-			<jvmarg value="-Dtagbuilder.templates.dir=com/liferay/alloy/tools/tagbuilder/templates/" />
-			<jvmarg value="-Dtagbuilder.tld.dir=${project.dir}/util-taglib/src/META-INF/" />
-		</java>
-	</target>
 
 	<target depends="build-common-java.clean" name="clean">
 		<delete failonerror="false" file="${liferay.home}/osgi/portal/${jar.file}.jar" />
@@ -78,6 +58,17 @@
 	</target>
 
 	<target depends="build-common-java.init-jar" name="init-jar">
+
+		<!-- LPS-119991 -->
+
+		<replaceregexp
+			file="classes/META-INF/liferay-ui.tld"
+			flags="gs"
+		>
+			<regexp pattern="&lt;tag-extension.*&lt;/tag-extension>" />
+			<substitution expression="" />
+		</replaceregexp>
+
 		<for param="file">
 			<path>
 				<fileset
@@ -130,12 +121,6 @@
 				dir="classes/META-INF"
 			/>
 		</copy>
-
-		<copy
-			file="${jar.file}.jar"
-			preservelastmodified="true"
-			todir="${project.dir}/portal-web/docroot/WEB-INF/lib"
-		/>
 
 		<copy
 			overwrite="true"

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.definition.exception;
@@ -28,12 +19,29 @@ public class KaleoDefinitionValidationException extends WorkflowException {
 		super(msg);
 	}
 
-	public KaleoDefinitionValidationException(String msg, Throwable cause) {
-		super(msg, cause);
+	public KaleoDefinitionValidationException(String msg, Throwable throwable) {
+		super(msg, throwable);
 	}
 
-	public KaleoDefinitionValidationException(Throwable cause) {
-		super(cause);
+	public KaleoDefinitionValidationException(Throwable throwable) {
+		super(throwable);
+	}
+
+	public static class DuplicateNode
+		extends KaleoDefinitionValidationException {
+
+		public DuplicateNode(String node) {
+			super(String.format("Duplicate node %s", node));
+
+			_node = node;
+		}
+
+		public String getNode() {
+			return _node;
+		}
+
+		private final String _node;
+
 	}
 
 	public static class EmptyNotificationTemplate
@@ -52,6 +60,129 @@ public class KaleoDefinitionValidationException extends WorkflowException {
 		}
 
 		private final String _node;
+
+	}
+
+	public static class InvalidDurationScale
+		extends KaleoDefinitionValidationException {
+
+		public InvalidDurationScale(String durationScale) {
+			super(String.format("Invalid duration scale %s", durationScale));
+
+			_durationScale = durationScale;
+		}
+
+		public String getDurationScale() {
+			return _durationScale;
+		}
+
+		private final String _durationScale;
+
+	}
+
+	public static class InvalidExecutionType
+		extends KaleoDefinitionValidationException {
+
+		public InvalidExecutionType(String executionType) {
+			super(String.format("Invalid execution type %s", executionType));
+
+			_executionType = executionType;
+		}
+
+		public String getExecutionType() {
+			return _executionType;
+		}
+
+		private final String _executionType;
+
+	}
+
+	public static class InvalidNodeType
+		extends KaleoDefinitionValidationException {
+
+		public InvalidNodeType(String nodeType) {
+			super(String.format("Invalid node type %s", nodeType));
+
+			_nodeType = nodeType;
+		}
+
+		public String getNodeType() {
+			return _nodeType;
+		}
+
+		private final String _nodeType;
+
+	}
+
+	public static class InvalidNotificationType
+		extends KaleoDefinitionValidationException {
+
+		public InvalidNotificationType(String notificationType) {
+			super(
+				String.format(
+					"Invalid notification type %s", notificationType));
+
+			_notificationType = notificationType;
+		}
+
+		public String getNotificationType() {
+			return _notificationType;
+		}
+
+		private final String _notificationType;
+
+	}
+
+	public static class InvalidRecipientType
+		extends KaleoDefinitionValidationException {
+
+		public InvalidRecipientType(String recipientType) {
+			super(String.format("Invalid recipient type %s", recipientType));
+
+			_recipientType = recipientType;
+		}
+
+		public String getRecipientType() {
+			return _recipientType;
+		}
+
+		private final String _recipientType;
+
+	}
+
+	public static class InvalidScriptLanguage
+		extends KaleoDefinitionValidationException {
+
+		public InvalidScriptLanguage(String scriptLanguage) {
+			super(String.format("Invalid script language %s", scriptLanguage));
+
+			_scriptLanguage = scriptLanguage;
+		}
+
+		public String getScriptLanguage() {
+			return _scriptLanguage;
+		}
+
+		private final String _scriptLanguage;
+
+	}
+
+	public static class InvalidTemplateLanguage
+		extends KaleoDefinitionValidationException {
+
+		public InvalidTemplateLanguage(String templateLanguage) {
+			super(
+				String.format(
+					"Invalid template language %s", templateLanguage));
+
+			_templateLanguage = templateLanguage;
+		}
+
+		public String getTemplateLanguage() {
+			return _templateLanguage;
+		}
+
+		private final String _templateLanguage;
 
 	}
 
@@ -89,6 +220,26 @@ public class KaleoDefinitionValidationException extends WorkflowException {
 			super(
 				String.format(
 					"The %s node cannot have an incoming transition", node));
+
+			_node = node;
+		}
+
+		public String getNode() {
+			return _node;
+		}
+
+		private final String _node;
+
+	}
+
+	public static class MustNotSetMoreThanOneDefaultTransition
+		extends KaleoDefinitionValidationException {
+
+		public MustNotSetMoreThanOneDefaultTransition(String node) {
+			super(
+				String.format(
+					"The %s node cannot have more than one default transition",
+					node));
 
 			_node = node;
 		}
@@ -306,6 +457,42 @@ public class KaleoDefinitionValidationException extends WorkflowException {
 
 	}
 
+	public static class MustSetValidNodeNameLength
+		extends KaleoDefinitionValidationException {
+
+		public MustSetValidNodeNameLength(int length, String node) {
+			super(
+				String.format(
+					"The %s node name exceeds the length limit of %s " +
+						"characters",
+					node, length));
+
+			_length = length;
+			_node = node;
+		}
+
+		public int getLength() {
+			return _length;
+		}
+
+		public String getNode() {
+			return _node;
+		}
+
+		private final int _length;
+		private final String _node;
+
+	}
+
+	public static class NotAllowedScriptLanguage
+		extends KaleoDefinitionValidationException {
+
+		public NotAllowedScriptLanguage(String msg) {
+			super(msg);
+		}
+
+	}
+
 	public static class UnbalancedForkAndJoinNode
 		extends KaleoDefinitionValidationException {
 
@@ -337,8 +524,8 @@ public class KaleoDefinitionValidationException extends WorkflowException {
 
 		public UnbalancedForkAndJoinNodes() {
 			super(
-				"Each fork node requires a join node. Make sure all forks and" +
-					"joins are properly paired");
+				"Each fork node requires a join node. Make sure all forks " +
+					"and joins are properly paired");
 		}
 
 	}

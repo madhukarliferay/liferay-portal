@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.cors.client.test;
 
+import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.io.ClassLoaderObjectInputStream;
 import com.liferay.petra.lang.ClassResolverUtil;
 import com.liferay.petra.process.ClassPathUtil;
@@ -24,8 +16,11 @@ import com.liferay.petra.process.local.LocalProcessExecutor;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.remote.cors.configuration.WebContextCORSConfiguration;
+
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.Application;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +41,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.Application;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -83,76 +79,100 @@ public abstract class BaseCORSClientTestCase {
 		_autoCloseables.clear();
 	}
 
-	protected void assertURL(String urlString, boolean allowOrigin)
+	protected void assertJaxRSUrl(
+			String urlString, String method, boolean authenticate,
+			boolean allowOrigin)
 		throws Exception {
 
-		ProcessConfig.Builder builder = new ProcessConfig.Builder();
+		assertJaxRSUrl(urlString, method, authenticate, allowOrigin, null);
+	}
 
-		List<String> arguments = new ArrayList<>();
+	protected void assertJaxRSUrl(
+			String urlString, String method, boolean authenticate,
+			boolean allowOrigin, String allowedOrigin)
+		throws Exception {
 
-		arguments.add("-Djava.net.preferIPv4Stack=true");
-
-		if (Boolean.getBoolean("jvm.debug")) {
-			arguments.add(
-				"-agentlib:jdwp=transport=dt_socket,address=8001,server=y," +
-					"suspend=y");
-			arguments.add("-Djvm.debug=true");
+		if (allowedOrigin == null) {
+			allowedOrigin = _TEST_CORS_URI;
 		}
 
-		arguments.add("-Dliferay.mode=test");
-		arguments.add("-Dsun.zip.disableMemoryMapping=true");
-		arguments.add("-Dsun.net.http.allowRestrictedHeaders=true");
-
-		builder.setArguments(arguments);
-
-		StringBundler sb = new StringBundler();
-
-		sb.append(ClassPathUtil.getJVMClassPath(true));
-
-		_addToClassPath(sb, AllowRestrictedHeadersCallable.class);
-		_addToClassPath(sb, ClassPathUtil.class);
-		_addToClassPath(sb, ClassResolverUtil.class);
-		_addToClassPath(sb, ClassLoaderObjectInputStream.class);
-		_addToClassPath(sb, StringBundler.class);
-		_addToClassPath(sb, StringUtil.class);
-
-		String classPath = sb.toString();
-
-		builder.setBootstrapClassPath(classPath);
-		builder.setRuntimeClassPath(classPath);
+		ProcessConfig.Builder builder = _generateTestBuilder();
 
 		ProcessExecutor processExecutor = new LocalProcessExecutor();
 
 		ProcessChannel<String[]> processChannel = processExecutor.execute(
 			builder.build(),
 			new AllowRestrictedHeadersCallable(
-				"http://localhost:8080/o" + urlString, _TEST_CORS_URI));
+				"http://localhost:8080/o" + urlString, allowedOrigin, method,
+				authenticate));
 
 		Future<String[]> future = processChannel.getProcessNoticeableFuture();
 
 		String[] results = future.get();
 
 		if (allowOrigin) {
-			Assert.assertEquals(_TEST_CORS_URI, results[0]);
+			Assert.assertEquals(allowedOrigin, results[0]);
 		}
 		else {
 			Assert.assertNull(results[0]);
 		}
 
-		Assert.assertEquals("get", results[1]);
+		if (!HttpMethod.OPTIONS.equals(method)) {
+			Assert.assertNotEquals(StringPool.BLANK, results[1]);
+		}
+
+		Assert.assertEquals("200", results[2]);
+	}
+
+	protected void assertJsonWSUrl(
+			String urlString, String method, boolean allowOrigin)
+		throws Exception {
+
+		assertJsonWSUrl(urlString, method, allowOrigin, _TEST_CORS_URI);
+	}
+
+	protected void assertJsonWSUrl(
+			String urlString, String method, boolean allowOrigin,
+			String allowedOrigin)
+		throws Exception {
+
+		ProcessConfig.Builder builder = _generateTestBuilder();
+
+		ProcessExecutor processExecutor = new LocalProcessExecutor();
+
+		ProcessChannel<String[]> processChannel = processExecutor.execute(
+			builder.build(),
+			new AllowRestrictedHeadersCallable(
+				"http://localhost:8080/api/jsonws" + urlString, allowedOrigin,
+				method, true));
+
+		Future<String[]> future = processChannel.getProcessNoticeableFuture();
+
+		String[] results = future.get();
+
+		if (allowOrigin) {
+			Assert.assertEquals(allowedOrigin, results[0]);
+		}
+		else {
+			Assert.assertNull(results[0]);
+		}
+
+		if (!HttpMethod.OPTIONS.equals(method)) {
+			Assert.assertNotEquals(StringPool.BLANK, results[1]);
+		}
+
 		Assert.assertEquals("200", results[2]);
 	}
 
 	protected void createFactoryConfiguration(
-		Dictionary<String, Object> properties) {
+		String configurationClassName, Dictionary<String, Object> properties) {
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		Dictionary<String, Object> registrationProperties =
-			new HashMapDictionary<>();
-
-		registrationProperties.put(
-			Constants.SERVICE_PID, WebContextCORSConfiguration.class.getName());
+			HashMapDictionaryBuilder.<String, Object>put(
+				Constants.SERVICE_PID, configurationClassName
+			).build();
 
 		ServiceRegistration<ManagedServiceFactory> serviceRegistration =
 			_bundleContext.registerService(
@@ -166,25 +186,23 @@ public abstract class BaseCORSClientTestCase {
 					@Override
 					public String getName() {
 						return "Test managed service factory for PID " +
-							WebContextCORSConfiguration.class.getName();
+							configurationClassName;
 					}
 
 					@Override
 					public void updated(
 						String pid, Dictionary<String, ?> updatedProperties) {
 
-						if (updatedProperties == null) {
+						if ((updatedProperties == null) ||
+							(properties.size() > updatedProperties.size())) {
+
 							return;
 						}
 
-						if (properties.size() > updatedProperties.size()) {
-							return;
-						}
+						Enumeration<String> enumeration = properties.keys();
 
-						Enumeration<String> keys = properties.keys();
-
-						while (keys.hasMoreElements()) {
-							String key = keys.nextElement();
+						while (enumeration.hasMoreElements()) {
+							String key = enumeration.nextElement();
 
 							if (!Objects.deepEquals(
 									properties.get(key),
@@ -211,8 +229,7 @@ public abstract class BaseCORSClientTestCase {
 
 			try {
 				configuration = configurationAdmin.createFactoryConfiguration(
-					WebContextCORSConfiguration.class.getName(),
-					StringPool.QUESTION);
+					configurationClassName, StringPool.QUESTION);
 
 				configuration.update(properties);
 
@@ -220,18 +237,18 @@ public abstract class BaseCORSClientTestCase {
 
 				_autoCloseables.add(configuration::delete);
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
-			catch (InterruptedException ie) {
+			catch (InterruptedException interruptedException) {
 				try {
 					configuration.delete();
 				}
-				catch (IOException ioe) {
-					throw new RuntimeException(ioe);
+				catch (IOException ioException) {
+					throw new RuntimeException(ioException);
 				}
 
-				throw new RuntimeException(ie);
+				throw new RuntimeException(interruptedException);
 			}
 			finally {
 				_bundleContext.ungetService(serviceReference);
@@ -270,6 +287,47 @@ public abstract class BaseCORSClientTestCase {
 
 		sb.append(File.pathSeparator);
 		sb.append(location.getPath());
+	}
+
+	private ProcessConfig.Builder _generateTestBuilder() {
+		ProcessConfig.Builder builder = new ProcessConfig.Builder();
+
+		List<String> arguments = new ArrayList<>();
+
+		arguments.add("-Djava.net.preferIPv4Stack=true");
+
+		if (Boolean.getBoolean("jvm.debug")) {
+			arguments.add(
+				"-agentlib:jdwp=transport=dt_socket,address=8001,server=y," +
+					"suspend=y");
+			arguments.add("-Djvm.debug=true");
+		}
+
+		arguments.add("-Dsun.net.http.allowRestrictedHeaders=true");
+		arguments.add("-Dsun.zip.disableMemoryMapping=true");
+
+		builder.setArguments(arguments);
+
+		StringBundler sb = new StringBundler();
+
+		sb.append(ClassPathUtil.getJVMClassPath(true));
+
+		_addToClassPath(sb, AllowRestrictedHeadersCallable.class);
+		_addToClassPath(sb, ClassPathUtil.class);
+		_addToClassPath(sb, ClassResolverUtil.class);
+		_addToClassPath(sb, ClassLoaderObjectInputStream.class);
+		_addToClassPath(sb, DCLSingleton.class);
+		_addToClassPath(sb, Logger.class);
+		_addToClassPath(sb, LogManager.class);
+		_addToClassPath(sb, StringBundler.class);
+		_addToClassPath(sb, StringUtil.class);
+
+		String classPath = sb.toString();
+
+		builder.setBootstrapClassPath(classPath);
+		builder.setRuntimeClassPath(classPath);
+
+		return builder;
 	}
 
 	private static final String _TEST_CORS_URI = "http://test-cors.com";

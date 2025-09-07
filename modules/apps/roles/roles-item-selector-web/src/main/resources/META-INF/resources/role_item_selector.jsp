@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,103 +9,133 @@
 
 <%
 RoleItemSelectorViewDisplayContext roleItemSelectorViewDisplayContext = (RoleItemSelectorViewDisplayContext)request.getAttribute(RoleItemSelectorViewConstants.ROLE_ITEM_SELECTOR_VIEW_DISPLAY_CONTEXT);
-
-String itemSelectedEventName = roleItemSelectorViewDisplayContext.getItemSelectedEventName();
-
-PortletURL portletURL = roleItemSelectorViewDisplayContext.getPortletURL();
 %>
 
-<liferay-frontend:management-bar
-	includeCheckBox="<%= true %>"
-	searchContainerId="roles"
+<clay:management-toolbar
+	managementToolbarDisplayContext="<%= roleItemSelectorViewDisplayContext %>"
+/>
+
+<clay:container-fluid
+	cssClass="container-form-lg container-view"
+	id='<%= liferayPortletResponse.getNamespace() + "roleSelectorWrapper" %>'
 >
-	<liferay-frontend:management-bar-buttons>
-		<liferay-frontend:management-bar-display-buttons
-			displayViews='<%= new String[] {"list"} %>'
-			portletURL="<%= portletURL %>"
-			selectedDisplayStyle="list"
-		/>
-	</liferay-frontend:management-bar-buttons>
-
-	<liferay-frontend:management-bar-filters>
-		<liferay-frontend:management-bar-navigation
-			navigationKeys='<%= new String[] {"all"} %>'
-			portletURL="<%= portletURL %>"
-		/>
-
-		<liferay-frontend:management-bar-sort
-			orderByCol="<%= roleItemSelectorViewDisplayContext.getOrderByCol() %>"
-			orderByType="<%= roleItemSelectorViewDisplayContext.getOrderByType() %>"
-			orderColumns='<%= new String[] {"title", "description"} %>'
-			portletURL="<%= portletURL %>"
-		/>
-
-		<li>
-			<liferay-item-selector:search />
-		</li>
-	</liferay-frontend:management-bar-filters>
-</liferay-frontend:management-bar>
-
-<div class="container-fluid-1280" id="<portlet:namespace />roleSelectorWrapper">
 	<liferay-ui:search-container
-		id="roles"
 		searchContainer="<%= roleItemSelectorViewDisplayContext.getSearchContainer() %>"
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.model.Role"
-			cssClass="role-row"
+			cssClass="entry"
 			keyProperty="roleId"
 			modelVar="role"
 		>
 
 			<%
-			Map<String, Object> data = new HashMap<>();
+			String cssClass = "table-cell-expand";
 
-			data.put("id", role.getRoleId());
-			data.put("name", role.getName());
+			RowChecker rowChecker = searchContainer.getRowChecker();
 
-			row.setData(data);
+			if ((rowChecker != null) && rowChecker.isDisabled(role)) {
+				cssClass += " text-muted";
+			}
+
+			row.setData(
+				HashMapBuilder.<String, Object>put(
+					"id", role.getRoleId()
+				).put(
+					"name", role.getTitle(locale)
+				).build());
 			%>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
-				property="name"
+				cssClass="<%= cssClass %>"
+				name="title"
+				value="<%= role.getTitle(locale) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
-				property="description"
+				cssClass="<%= cssClass %>"
+				name="description"
+				value="<%= role.getDescription(locale) %>"
 			/>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			displayStyle="list"
 			markupView="lexicon"
-			searchContainer="<%= roleItemSelectorViewDisplayContext.getSearchContainer() %>"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>
 
-<aui:script use="aui-parse-content,liferay-search-container">
-	var searchContainer = Liferay.SearchContainer.get('<portlet:namespace />roles');
+<c:choose>
+	<c:when test="<%= roleItemSelectorViewDisplayContext.getItemSelectorCriterion() instanceof RoleItemSelectorCriterion %>">
+		<aui:script sandbox="<%= true %>">
+			var selectItemHandler = Liferay.Util.delegate(
+				document.getElementById('<portlet:namespace />roleSelectorWrapper'),
+				'change',
+				'.entry input',
+				(event) => {
+					var checked = Liferay.Util.getCheckedCheckboxes(
+						document.getElementById(
+							'<portlet:namespace /><%= roleItemSelectorViewDisplayContext.getSearchContainerId() %>'
+						),
+						'<portlet:namespace />allRowIds'
+					);
 
-	searchContainer.on('rowToggled', function(event) {
-		var allSelectedElements = event.elements.allSelectedElements;
-		var arr = [];
+					Liferay.Util.getOpener().Liferay.fire(
+						'<%= HtmlUtil.escapeJS(roleItemSelectorViewDisplayContext.getItemSelectedEventName()) %>',
+						{
+							data: {
+								value: checked,
+							},
+						}
+					);
+				}
+			);
 
-		allSelectedElements.each(function() {
-			var row = this.ancestor('tr');
+			Liferay.on('destroyPortlet', function removeListener() {
+				selectItemHandler.dispose();
 
-			var data = row.getDOM().dataset;
+				Liferay.detach('destroyPortlet', removeListener);
+			});
+		</aui:script>
+	</c:when>
+	<c:otherwise>
+		<aui:script use="liferay-search-container">
+			var searchContainer = Liferay.SearchContainer.get(
+				'<portlet:namespace /><%= HtmlUtil.escape(roleItemSelectorViewDisplayContext.getSearchContainerId()) %>'
+			);
 
-			arr.push({id: data.id, name: data.name});
-		});
+			searchContainer.on('rowToggled', (event) => {
+				var allSelectedElements = event.elements.allSelectedElements;
+				var selectedData = [];
 
-		Liferay.Util.getOpener().Liferay.fire(
-			'<%= HtmlUtil.escapeJS(itemSelectedEventName) %>',
-			{
-				data: arr
-			}
-		);
-	});
-</aui:script>
+				allSelectedElements.each(function () {
+					var data;
+
+					if (Object.keys(this.getDOM().dataset).length) {
+						data = this.getDOM().dataset;
+					}
+					else {
+						const row = this.ancestor('tr');
+
+						if (row && Object.keys(row.getDOM().dataset).length) {
+							data = row.getDOM().dataset;
+						}
+					}
+
+					selectedData.push({
+						id: data.id,
+						name: data.name,
+					});
+				});
+
+				Liferay.Util.getOpener().Liferay.fire(
+					'<%= HtmlUtil.escapeJS(roleItemSelectorViewDisplayContext.getItemSelectedEventName()) %>',
+					{
+						data: selectedData,
+					}
+				);
+			});
+		</aui:script>
+	</c:otherwise>
+</c:choose>

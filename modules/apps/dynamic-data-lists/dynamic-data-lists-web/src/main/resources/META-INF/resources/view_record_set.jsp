@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,11 +11,11 @@
 String redirect = ParamUtil.getString(request, "redirect");
 
 if (Validator.isNull(redirect)) {
-	PortletURL redirectURL = renderResponse.createRenderURL();
-
-	redirectURL.setParameter("mvcPath", "/view.jsp");
-
-	redirect = redirectURL.toString();
+	redirect = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCPath(
+		"/view.jsp"
+	).buildString();
 }
 
 DDLRecordSet recordSet = (DDLRecordSet)request.getAttribute(DDLWebKeys.DYNAMIC_DATA_LISTS_RECORD_SET);
@@ -32,8 +23,6 @@ DDLRecordSet recordSet = (DDLRecordSet)request.getAttribute(DDLWebKeys.DYNAMIC_D
 long displayDDMTemplateId = ParamUtil.getLong(request, "displayDDMTemplateId");
 
 DDMTemplate displayDDMTemplate = DDMTemplateLocalServiceUtil.fetchDDMTemplate(displayDDMTemplateId);
-
-boolean spreadsheet = ParamUtil.getBoolean(request, "spreadsheet");
 %>
 
 <c:choose>
@@ -42,7 +31,7 @@ boolean spreadsheet = ParamUtil.getBoolean(request, "spreadsheet");
 	</c:when>
 	<c:otherwise>
 		<c:choose>
-			<c:when test="<%= spreadsheet %>">
+			<c:when test='<%= ParamUtil.getBoolean(request, "spreadsheet") %>'>
 				<liferay-util:include page="/view_spreadsheet_records.jsp" servletContext="<%= application %>" />
 			</c:when>
 			<c:otherwise>

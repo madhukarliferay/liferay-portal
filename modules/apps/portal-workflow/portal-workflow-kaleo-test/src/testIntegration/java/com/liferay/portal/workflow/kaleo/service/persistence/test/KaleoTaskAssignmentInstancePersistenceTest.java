@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -131,6 +122,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 		newKaleoTaskAssignmentInstance.setMvccVersion(
 			RandomTestUtil.nextLong());
 
+		newKaleoTaskAssignmentInstance.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newKaleoTaskAssignmentInstance.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoTaskAssignmentInstance.setCompanyId(RandomTestUtil.nextLong());
@@ -144,6 +138,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 
 		newKaleoTaskAssignmentInstance.setModifiedDate(
 			RandomTestUtil.nextDate());
+
+		newKaleoTaskAssignmentInstance.setKaleoDefinitionId(
+			RandomTestUtil.nextLong());
 
 		newKaleoTaskAssignmentInstance.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());
@@ -186,6 +183,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 			existingKaleoTaskAssignmentInstance.getMvccVersion(),
 			newKaleoTaskAssignmentInstance.getMvccVersion());
 		Assert.assertEquals(
+			existingKaleoTaskAssignmentInstance.getCtCollectionId(),
+			newKaleoTaskAssignmentInstance.getCtCollectionId());
+		Assert.assertEquals(
 			existingKaleoTaskAssignmentInstance.
 				getKaleoTaskAssignmentInstanceId(),
 			newKaleoTaskAssignmentInstance.getKaleoTaskAssignmentInstanceId());
@@ -211,6 +211,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 				existingKaleoTaskAssignmentInstance.getModifiedDate()),
 			Time.getShortTimestamp(
 				newKaleoTaskAssignmentInstance.getModifiedDate()));
+		Assert.assertEquals(
+			existingKaleoTaskAssignmentInstance.getKaleoDefinitionId(),
+			newKaleoTaskAssignmentInstance.getKaleoDefinitionId());
 		Assert.assertEquals(
 			existingKaleoTaskAssignmentInstance.getKaleoDefinitionVersionId(),
 			newKaleoTaskAssignmentInstance.getKaleoDefinitionVersionId());
@@ -267,19 +270,19 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 	}
 
 	@Test
-	public void testCountBykaleoTaskInstanceTokenId() throws Exception {
-		_persistence.countBykaleoTaskInstanceTokenId(RandomTestUtil.nextLong());
+	public void testCountByKaleoTaskInstanceTokenId() throws Exception {
+		_persistence.countByKaleoTaskInstanceTokenId(RandomTestUtil.nextLong());
 
-		_persistence.countBykaleoTaskInstanceTokenId(0L);
+		_persistence.countByKaleoTaskInstanceTokenId(0L);
 	}
 
 	@Test
-	public void testCountByassigneeClassName() throws Exception {
-		_persistence.countByassigneeClassName("");
+	public void testCountByAssigneeClassName() throws Exception {
+		_persistence.countByAssigneeClassName("");
 
-		_persistence.countByassigneeClassName("null");
+		_persistence.countByAssigneeClassName("null");
 
-		_persistence.countByassigneeClassName((String)null);
+		_persistence.countByAssigneeClassName((String)null);
 	}
 
 	@Test
@@ -340,13 +343,14 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 
 		return OrderByComparatorFactoryUtil.create(
 			"KaleoTaskAssignmentInstance", "mvccVersion", true,
-			"kaleoTaskAssignmentInstanceId", true, "groupId", true, "companyId",
-			true, "userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "kaleoDefinitionVersionId", true,
-			"kaleoInstanceId", true, "kaleoInstanceTokenId", true,
-			"kaleoTaskInstanceTokenId", true, "kaleoTaskId", true,
-			"kaleoTaskName", true, "assigneeClassName", true, "assigneeClassPK",
-			true, "completed", true, "completionDate", true);
+			"ctCollectionId", true, "kaleoTaskAssignmentInstanceId", true,
+			"groupId", true, "companyId", true, "userId", true, "userName",
+			true, "createDate", true, "modifiedDate", true, "kaleoDefinitionId",
+			true, "kaleoDefinitionVersionId", true, "kaleoInstanceId", true,
+			"kaleoInstanceTokenId", true, "kaleoTaskInstanceTokenId", true,
+			"kaleoTaskId", true, "kaleoTaskName", true, "assigneeClassName",
+			true, "assigneeClassPK", true, "completed", true, "completionDate",
+			true);
 	}
 
 	@Test
@@ -606,6 +610,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 
 		kaleoTaskAssignmentInstance.setMvccVersion(RandomTestUtil.nextLong());
 
+		kaleoTaskAssignmentInstance.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		kaleoTaskAssignmentInstance.setGroupId(RandomTestUtil.nextLong());
 
 		kaleoTaskAssignmentInstance.setCompanyId(RandomTestUtil.nextLong());
@@ -617,6 +624,9 @@ public class KaleoTaskAssignmentInstancePersistenceTest {
 		kaleoTaskAssignmentInstance.setCreateDate(RandomTestUtil.nextDate());
 
 		kaleoTaskAssignmentInstance.setModifiedDate(RandomTestUtil.nextDate());
+
+		kaleoTaskAssignmentInstance.setKaleoDefinitionId(
+			RandomTestUtil.nextLong());
 
 		kaleoTaskAssignmentInstance.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());

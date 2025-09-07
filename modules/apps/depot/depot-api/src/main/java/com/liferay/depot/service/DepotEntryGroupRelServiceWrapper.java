@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service;
 
+import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -27,27 +19,27 @@ public class DepotEntryGroupRelServiceWrapper
 	implements DepotEntryGroupRelService,
 			   ServiceWrapper<DepotEntryGroupRelService> {
 
+	public DepotEntryGroupRelServiceWrapper() {
+		this(null);
+	}
+
 	public DepotEntryGroupRelServiceWrapper(
 		DepotEntryGroupRelService depotEntryGroupRelService) {
 
 		_depotEntryGroupRelService = depotEntryGroupRelService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DepotEntryGroupRelServiceUtil} to access the depot entry group rel remote service. Add custom service methods to <code>com.liferay.depot.service.impl.DepotEntryGroupRelServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.depot.model.DepotEntryGroupRel addDepotEntryGroupRel(
-		long depotEntryId, long toGroupId) {
+	public DepotEntryGroupRel addDepotEntryGroupRel(
+			long depotEntryId, long toGroupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _depotEntryGroupRelService.addDepotEntryGroupRel(
 			depotEntryId, toGroupId);
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntryGroupRel deleteDepotEntryGroupRel(
+	public DepotEntryGroupRel deleteDepotEntryGroupRel(
 			long depotEntryGroupRelId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -56,19 +48,48 @@ public class DepotEntryGroupRelServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.depot.model.DepotEntryGroupRel>
-			getDepotEntryGroupRels(long groupId, int start, int end)
+	public DepotEntryGroupRel getDepotEntryGroupRelByDepotEntryIdToGroupId(
+			long depotEntryId, long toGroupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _depotEntryGroupRelService.getDepotEntryGroupRels(
-			groupId, start, end);
+		return _depotEntryGroupRelService.
+			getDepotEntryGroupRelByDepotEntryIdToGroupId(
+				depotEntryId, toGroupId);
 	}
 
 	@Override
-	public int getDepotEntryGroupRelsCount(long groupId)
+	public java.util.List<DepotEntryGroupRel> getDepotEntryGroupRels(
+			com.liferay.depot.model.DepotEntry depotEntry, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _depotEntryGroupRelService.getDepotEntryGroupRelsCount(groupId);
+		return _depotEntryGroupRelService.getDepotEntryGroupRels(
+			depotEntry, start, end);
+	}
+
+	@Override
+	public java.util.List<DepotEntryGroupRel> getDepotEntryGroupRels(
+			long groupId, int type, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryGroupRelService.getDepotEntryGroupRels(
+			groupId, type, start, end);
+	}
+
+	@Override
+	public int getDepotEntryGroupRelsCount(
+			com.liferay.depot.model.DepotEntry depotEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryGroupRelService.getDepotEntryGroupRelsCount(
+			depotEntry);
+	}
+
+	@Override
+	public int getDepotEntryGroupRelsCount(long groupId, int type)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryGroupRelService.getDepotEntryGroupRelsCount(
+			groupId, type);
 	}
 
 	/**
@@ -82,7 +103,16 @@ public class DepotEntryGroupRelServiceWrapper
 	}
 
 	@Override
-	public com.liferay.depot.model.DepotEntryGroupRel updateSearchable(
+	public DepotEntryGroupRel updateDDMStructuresAvailable(
+			long depotEntryGroupRelId, boolean ddmStructuresAvailable)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _depotEntryGroupRelService.updateDDMStructuresAvailable(
+			depotEntryGroupRelId, ddmStructuresAvailable);
+	}
+
+	@Override
+	public DepotEntryGroupRel updateSearchable(
 			long depotEntryGroupRelId, boolean searchable)
 		throws com.liferay.portal.kernel.exception.PortalException {
 

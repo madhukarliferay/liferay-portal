@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.persistence.test;
@@ -126,6 +117,8 @@ public class KaleoInstanceTokenPersistenceTest {
 
 		newKaleoInstanceToken.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKaleoInstanceToken.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKaleoInstanceToken.setGroupId(RandomTestUtil.nextLong());
 
 		newKaleoInstanceToken.setCompanyId(RandomTestUtil.nextLong());
@@ -137,6 +130,8 @@ public class KaleoInstanceTokenPersistenceTest {
 		newKaleoInstanceToken.setCreateDate(RandomTestUtil.nextDate());
 
 		newKaleoInstanceToken.setModifiedDate(RandomTestUtil.nextDate());
+
+		newKaleoInstanceToken.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		newKaleoInstanceToken.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());
@@ -169,6 +164,9 @@ public class KaleoInstanceTokenPersistenceTest {
 			existingKaleoInstanceToken.getMvccVersion(),
 			newKaleoInstanceToken.getMvccVersion());
 		Assert.assertEquals(
+			existingKaleoInstanceToken.getCtCollectionId(),
+			newKaleoInstanceToken.getCtCollectionId());
+		Assert.assertEquals(
 			existingKaleoInstanceToken.getKaleoInstanceTokenId(),
 			newKaleoInstanceToken.getKaleoInstanceTokenId());
 		Assert.assertEquals(
@@ -190,6 +188,9 @@ public class KaleoInstanceTokenPersistenceTest {
 			Time.getShortTimestamp(
 				existingKaleoInstanceToken.getModifiedDate()),
 			Time.getShortTimestamp(newKaleoInstanceToken.getModifiedDate()));
+		Assert.assertEquals(
+			existingKaleoInstanceToken.getKaleoDefinitionId(),
+			newKaleoInstanceToken.getKaleoDefinitionId());
 		Assert.assertEquals(
 			existingKaleoInstanceToken.getKaleoDefinitionVersionId(),
 			newKaleoInstanceToken.getKaleoDefinitionVersionId());
@@ -284,9 +285,10 @@ public class KaleoInstanceTokenPersistenceTest {
 
 	protected OrderByComparator<KaleoInstanceToken> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KaleoInstanceToken", "mvccVersion", true, "kaleoInstanceTokenId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
+			"KaleoInstanceToken", "mvccVersion", true, "ctCollectionId", true,
+			"kaleoInstanceTokenId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "kaleoDefinitionId", true,
 			"kaleoDefinitionVersionId", true, "kaleoInstanceId", true,
 			"parentKaleoInstanceTokenId", true, "currentKaleoNodeId", true,
 			"currentKaleoNodeName", true, "className", true, "classPK", true,
@@ -523,6 +525,8 @@ public class KaleoInstanceTokenPersistenceTest {
 
 		kaleoInstanceToken.setMvccVersion(RandomTestUtil.nextLong());
 
+		kaleoInstanceToken.setCtCollectionId(RandomTestUtil.nextLong());
+
 		kaleoInstanceToken.setGroupId(RandomTestUtil.nextLong());
 
 		kaleoInstanceToken.setCompanyId(RandomTestUtil.nextLong());
@@ -534,6 +538,8 @@ public class KaleoInstanceTokenPersistenceTest {
 		kaleoInstanceToken.setCreateDate(RandomTestUtil.nextDate());
 
 		kaleoInstanceToken.setModifiedDate(RandomTestUtil.nextDate());
+
+		kaleoInstanceToken.setKaleoDefinitionId(RandomTestUtil.nextLong());
 
 		kaleoInstanceToken.setKaleoDefinitionVersionId(
 			RandomTestUtil.nextLong());

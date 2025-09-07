@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -311,11 +302,7 @@ public abstract class BaseBuildData implements BuildData {
 	protected static boolean isValidJSONObject(
 		JSONObject jsonObject, String type) {
 
-		if (jsonObject == null) {
-			return false;
-		}
-
-		if (type == null) {
+		if ((jsonObject == null) || (type == null)) {
 			return false;
 		}
 
@@ -342,8 +329,8 @@ public abstract class BaseBuildData implements BuildData {
 					runID = jsonObject.getString("run_id");
 				}
 			}
-			catch (MalformedURLException murle) {
-				throw new RuntimeException(murle);
+			catch (MalformedURLException malformedURLException) {
+				throw new RuntimeException(malformedURLException);
 			}
 		}
 
@@ -367,7 +354,7 @@ public abstract class BaseBuildData implements BuildData {
 			setBuildDescription(_getDefaultBuildDescription());
 		}
 
-		setJenkinsGitHubURL(URL_JENKINS_GITHUB_DEFAULT);
+		setJenkinsGitHubURL(JenkinsResultsParserUtil.getJenkinsGitHubURL());
 		setWorkspaceDir(DIR_WORKSPACE_DEFAULT);
 
 		validateKeys(_KEYS_REQUIRED);
@@ -495,8 +482,8 @@ public abstract class BaseBuildData implements BuildData {
 			return JenkinsResultsParserUtil.toJSONObject(
 				JenkinsResultsParserUtil.getLocalURL(buildURL + "/api/json"));
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
@@ -536,7 +523,7 @@ public abstract class BaseBuildData implements BuildData {
 	private static final Pattern _buildURLPattern = Pattern.compile(
 		JenkinsResultsParserUtil.combine(
 			"(?<jobURL>https?://(?<masterHostname>",
-			"(?<cohortName>test-\\d+)-\\d+)(\\.liferay\\.com)?/job/",
+			"(?<cohortName>test-\\d+)-\\d+)(-aws)?(\\.liferay\\.com)?/job/",
 			"(?<jobName>[^/]+)/(.*/)?)(?<buildNumber>\\d+)/?"));
 	private static final Pattern _gitHubBranchURLPattern = Pattern.compile(
 		"https://github.com/(?<username>[^/]+)/(?<repositoryName>[^/]+)/tree/" +

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -29,12 +20,11 @@ else {
 	backURL.setParameter("app", app);
 }
 
-ViewModuleManagementToolbarDisplayContext viewModuleManagementToolbarDisplayContext = new ViewModuleManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request);
+ViewModuleManagementToolbarDisplayContext viewModuleManagementToolbarDisplayContext = new ViewModuleManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse);
 
-AppDisplay appDisplay = viewModuleManagementToolbarDisplayContext.getAppDisplay();
 Bundle bundle = viewModuleManagementToolbarDisplayContext.getBundle();
 String pluginType = viewModuleManagementToolbarDisplayContext.getPluginType();
-SearchContainer searchContainer = viewModuleManagementToolbarDisplayContext.getSearchContainer();
+SearchContainer<Object> searchContainer = viewModuleManagementToolbarDisplayContext.getSearchContainer();
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(backURL.toString());
@@ -46,21 +36,22 @@ String bundleName = GetterUtil.getString(headers.get(Constants.BUNDLE_NAME));
 renderResponse.setTitle(bundleName);
 
 if (Validator.isNull(app)) {
-	PortletURL viewURL = renderResponse.createRenderURL();
-
-	viewURL.setParameter("mvcPath", "/view.jsp");
-
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "app-manager"), viewURL.toString());
+	PortalUtil.addPortletBreadcrumbEntry(
+		request, LanguageUtil.get(request, "app-manager"),
+		PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCPath(
+			"/view.jsp"
+		).buildString());
 
 	PortalUtil.addPortletBreadcrumbEntry(request, bundleName, null);
 }
 else {
-	MarketplaceAppManagerUtil.addPortletBreadcrumbEntry(appDisplay, bundle, request, renderResponse);
+	MarketplaceAppManagerUtil.addPortletBreadcrumbEntry(viewModuleManagementToolbarDisplayContext.getAppDisplay(), bundle, request, renderResponse);
 }
 %>
 
 <clay:navigation-bar
-	inverted="<%= true %>"
 	navigationItems="<%= appManagerDisplayContext.getModuleNavigationItems() %>"
 />
 
@@ -74,12 +65,9 @@ else {
 	sortingURL="<%= viewModuleManagementToolbarDisplayContext.getSortingURL() %>"
 />
 
-<div class="container-fluid container-fluid-max-xl">
-	<liferay-ui:breadcrumb
-		showCurrentGroup="<%= false %>"
-		showGuestGroup="<%= false %>"
-		showLayout="<%= false %>"
-		showParentGroups="<%= false %>"
+<clay:container-fluid>
+	<liferay-site-navigation:breadcrumb
+		breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 	/>
 
 	<liferay-ui:search-container
@@ -95,12 +83,12 @@ else {
 				<c:choose>
 					<c:when test='<%= pluginType.equals("portlets") %>'>
 						<liferay-util:include page="/icon.jsp" servletContext="<%= application %>">
-							<liferay-util:param name="iconURL" value='<%= PortalUtil.getPathContext(request) + "/images/icons.svg#portlets" %>' />
+							<liferay-util:param name="iconURL" value='<%= themeDisplay.getPathThemeSpritemap() + "#portlets" %>' />
 						</liferay-util:include>
 					</c:when>
 					<c:otherwise>
 						<liferay-util:include page="/icon.jsp" servletContext="<%= application %>">
-							<liferay-util:param name="iconURL" value='<%= PortalUtil.getPathContext(request) + "/images/icons.svg#components" %>' />
+							<liferay-util:param name="iconURL" value='<%= themeDisplay.getPathThemeSpritemap() + "#components" %>' />
 						</liferay-util:include>
 					</c:otherwise>
 				</c:choose>
@@ -115,10 +103,10 @@ else {
 				String name = StringPool.BLANK;
 
 				if (pluginType.equals("portlets")) {
-					name = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("javax.portlet.display-name"));
+					name = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("jakarta.portlet.display-name"));
 
-					String modulePortletDescription = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("javax.portlet.description"));
-					String modulePortletName = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("javax.portlet.name"));
+					String modulePortletDescription = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("jakarta.portlet.description"));
+					String modulePortletName = MarketplaceAppManagerUtil.getSearchContainerFieldText(serviceReference.getProperty("jakarta.portlet.name"));
 
 					if (Validator.isNotNull(modulePortletDescription)) {
 						description = modulePortletName + " - " + modulePortletDescription;
@@ -147,4 +135,4 @@ else {
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>

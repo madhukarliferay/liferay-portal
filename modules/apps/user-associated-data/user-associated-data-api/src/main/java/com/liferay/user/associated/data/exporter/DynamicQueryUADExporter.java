@@ -1,29 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.exporter;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.xml.XMLUtil;
+import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.user.associated.data.util.UADDynamicQueryUtil;
 
 import java.io.File;
@@ -57,27 +53,28 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 		try {
 			return xml.getBytes(StringPool.UTF8);
 		}
-		catch (UnsupportedEncodingException uee) {
-			throw new PortalException(uee);
+		catch (UnsupportedEncodingException unsupportedEncodingException) {
+			throw new PortalException(unsupportedEncodingException);
 		}
 	}
 
 	@Override
-	public File exportAll(long userId) throws PortalException {
+	public File exportAll(long userId, ZipWriterFactory zipWriterFactory)
+		throws PortalException {
+
 		ActionableDynamicQuery actionableDynamicQuery =
 			getActionableDynamicQuery(userId);
 
-		Class<T> clazz = getTypeClass();
-
-		ZipWriter zipWriter = getZipWriter(userId, clazz.getName());
+		ZipWriter zipWriter = getZipWriter(
+			userId, getTypeKey(), zipWriterFactory);
 
 		actionableDynamicQuery.setPerformActionMethod(
 			(T baseModel) -> {
 				try {
 					writeToZip(baseModel, zipWriter);
 				}
-				catch (Exception e) {
-					throw new PortalException(e);
+				catch (Exception exception) {
+					_log.error(exception);
 				}
 			});
 
@@ -87,13 +84,10 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 	}
 
 	protected File createFolder(long userId) {
-		StringBundler sb = new StringBundler(3);
-
-		sb.append(SystemProperties.get(SystemProperties.TMP_DIR));
-		sb.append("/liferay/uad/");
-		sb.append(userId);
-
-		File file = new File(sb.toString());
+		File file = new File(
+			StringBundler.concat(
+				SystemProperties.get(SystemProperties.TMP_DIR), "/liferay/uad/",
+				userId));
 
 		file.mkdirs();
 
@@ -117,7 +111,15 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 	protected abstract String[] doGetUserIdFieldNames();
 
 	protected String formatXML(String xml) {
-		return XMLUtil.formatXML(xml);
+		try {
+			Document document = SAXReaderUtil.read(
+				_escapeCDATAClosingCharacters(xml));
+
+			return document.formattedString();
+		}
+		catch (Exception exception) {
+			throw new SystemException(exception);
+		}
 	}
 
 	/**
@@ -141,19 +143,16 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 	 * @param  modelClassName the string representation of the model class name
 	 * @return a {@code ZipWriter} where each piece of data is written
 	 */
-	protected ZipWriter getZipWriter(long userId, String modelClassName) {
+	protected ZipWriter getZipWriter(
+		long userId, String modelClassName, ZipWriterFactory zipWriterFactory) {
+
 		File file = createFolder(userId);
 
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(file.getAbsolutePath());
-		sb.append(StringPool.SLASH);
-		sb.append(modelClassName);
-		sb.append(StringPool.UNDERLINE);
-		sb.append(Time.getShortTimestamp());
-		sb.append(".zip");
-
-		return ZipWriterFactoryUtil.getZipWriter(new File(sb.toString()));
+		return zipWriterFactory.getZipWriter(
+			new File(
+				StringBundler.concat(
+					file.getAbsolutePath(), StringPool.SLASH, modelClassName,
+					StringPool.UNDERLINE, Time.getShortTimestamp(), ".zip")));
 	}
 
 	/**
@@ -163,9 +162,7 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 	 * @param  baseModel the base model to be converted into an XML string
 	 * @return an XML string representation of the base model
 	 */
-	protected String toXmlString(T baseModel) {
-		return baseModel.toXmlString();
-	}
+	protected abstract String toXmlString(T baseModel);
 
 	/**
 	 * Converts the type {@code T} base model to a byte array and writes it to
@@ -182,5 +179,22 @@ public abstract class DynamicQueryUADExporter<T extends BaseModel>
 
 		zipWriter.addEntry(baseModel.getPrimaryKeyObj() + ".xml", data);
 	}
+
+	private String _escapeCDATAClosingCharacters(String xml) {
+
+		// If the closing token of a CDATA container is found inside the CDATA
+		// container, split the CDATA container into two separate CDATA
+		// containers. This is generally accepted method of "escaping" for this
+		// case since there is no real way to escape those characters. See
+		// LPS-85393 for more information.
+
+		xml = StringUtil.replace(xml, "]]><", "[$SPECIAL_CHARACTER$]");
+		xml = StringUtil.replace(xml, "]]>", "]]]]><![CDATA[>");
+
+		return StringUtil.replace(xml, "[$SPECIAL_CHARACTER$]", "]]><");
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DynamicQueryUADExporter.class);
 
 }

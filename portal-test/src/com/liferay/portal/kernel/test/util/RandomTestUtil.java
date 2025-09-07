@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.test.util;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PwdGenerator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+
+import java.sql.Timestamp;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -49,8 +42,18 @@ public class RandomTestUtil {
 		return CounterLocalServiceUtil.increment();
 	}
 
+	public static Timestamp nextTimestamp() {
+		return new Timestamp(nextDate().getTime());
+	}
+
 	public static boolean randomBoolean() {
 		return _random.nextBoolean();
+	}
+
+	public static byte[] randomBytes() {
+		String string = randomString();
+
+		return string.getBytes();
 	}
 
 	public static double randomDouble() {
@@ -72,6 +75,19 @@ public class RandomTestUtil {
 		return enumConstants[_random.nextInt(enumConstants.length)];
 	}
 
+	public static float randomFloat() {
+		float value = _random.nextFloat();
+
+		if (value > 0) {
+			return value;
+		}
+		else if (value == 0) {
+			return randomFloat();
+		}
+
+		return -value;
+	}
+
 	public static int randomInt() {
 		return randomInt(1, Integer.MAX_VALUE);
 	}
@@ -90,7 +106,7 @@ public class RandomTestUtil {
 			return value;
 		}
 
-		return (int)(Math.abs(value) % range + min);
+		return (int)((Math.abs(value) % range) + min);
 	}
 
 	public static Map<Locale, String> randomLocaleStringMap() {
@@ -99,21 +115,29 @@ public class RandomTestUtil {
 
 	public static Map<Locale, String> randomLocaleStringMap(Locale locale) {
 		return HashMapBuilder.put(
-			LocaleUtil.getDefault(), randomString()
+			locale, randomString()
 		).build();
 	}
 
 	public static long randomLong() {
+		return randomLong(1, Long.MAX_VALUE);
+	}
+
+	public static long randomLong(long min, long max) {
+		if (max < min) {
+			throw new IllegalArgumentException(
+				"Max value must be greater than or equal to the min value");
+		}
+
 		long value = _random.nextLong();
 
-		if (value > 0) {
+		long range = max + 1 - min;
+
+		if (range == 0) {
 			return value;
 		}
-		else if (value == 0) {
-			return randomLong();
-		}
 
-		return -value;
+		return (Math.abs(value) % range) + min;
 	}
 
 	@SafeVarargs

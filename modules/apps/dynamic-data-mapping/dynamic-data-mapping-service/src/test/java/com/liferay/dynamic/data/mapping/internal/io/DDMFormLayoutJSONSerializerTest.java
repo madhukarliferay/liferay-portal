@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.io;
@@ -22,10 +13,13 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.lang.reflect.Field;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -35,12 +29,17 @@ import org.skyscreamer.jsonassert.JSONAssert;
  */
 public class DDMFormLayoutJSONSerializerTest extends BaseDDMTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
-		setUpDDMFormLayoutJSONSerializer();
+		_setUpDDMFormLayoutJSONSerializer();
 	}
 
 	@Test
@@ -48,19 +47,48 @@ public class DDMFormLayoutJSONSerializerTest extends BaseDDMTestCase {
 		String expectedJSON = read(
 			"ddm-form-layout-json-serializer-test-data.json");
 
-		DDMFormLayout ddmFormLayout = createDDMFormLayout();
+		DDMFormLayout ddmFormLayout = _createDDMFormLayout();
 
 		String actualJSON = serialize(ddmFormLayout);
 
 		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
 	}
 
-	protected DDMFormLayout createDDMFormLayout() {
+	@Test
+	public void testDDMFormLayoutSerializationWithSchemaVersion()
+		throws Exception {
+
+		String expectedJSON = read(
+			"ddm-form-layout-json-serializer-with-definition-schema-" +
+				"version.json");
+
+		DDMFormLayout ddmFormLayout = _createDDMFormLayout();
+
+		ddmFormLayout.setDefinitionSchemaVersion("2.0");
+
+		String actualJSON = serialize(ddmFormLayout);
+
+		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
+	}
+
+	protected String serialize(DDMFormLayout ddmFormLayout) {
+		DDMFormLayoutSerializerSerializeRequest.Builder builder =
+			DDMFormLayoutSerializerSerializeRequest.Builder.newBuilder(
+				ddmFormLayout);
+
+		DDMFormLayoutSerializerSerializeResponse
+			ddmFormLayoutSerializerSerializeResponse =
+				_ddmFormLayoutJSONSerializer.serialize(builder.build());
+
+		return ddmFormLayoutSerializerSerializeResponse.getContent();
+	}
+
+	private DDMFormLayout _createDDMFormLayout() {
 		DDMFormLayout ddmFormLayout = new DDMFormLayout();
 
 		ddmFormLayout.setDefaultLocale(LocaleUtil.US);
 
-		DDMFormLayoutPage ddmFormLayoutPage = createDDMFormLayoutPage(
+		DDMFormLayoutPage ddmFormLayoutPage = _createDDMFormLayoutPage(
 			"Page 1", "Pagina 1");
 
 		ddmFormLayoutPage.addDDMFormLayoutRow(
@@ -78,7 +106,7 @@ public class DDMFormLayoutJSONSerializerTest extends BaseDDMTestCase {
 		return ddmFormLayout;
 	}
 
-	protected DDMFormLayoutPage createDDMFormLayoutPage(
+	private DDMFormLayoutPage _createDDMFormLayoutPage(
 		String enTitle, String ptTitle) {
 
 		DDMFormLayoutPage ddmFormLayoutPage = new DDMFormLayoutPage();
@@ -91,19 +119,7 @@ public class DDMFormLayoutJSONSerializerTest extends BaseDDMTestCase {
 		return ddmFormLayoutPage;
 	}
 
-	protected String serialize(DDMFormLayout ddmFormLayout) {
-		DDMFormLayoutSerializerSerializeRequest.Builder builder =
-			DDMFormLayoutSerializerSerializeRequest.Builder.newBuilder(
-				ddmFormLayout);
-
-		DDMFormLayoutSerializerSerializeResponse
-			ddmFormLayoutSerializerSerializeResponse =
-				_ddmFormLayoutJSONSerializer.serialize(builder.build());
-
-		return ddmFormLayoutSerializerSerializeResponse.getContent();
-	}
-
-	protected void setUpDDMFormLayoutJSONSerializer() throws Exception {
+	private void _setUpDDMFormLayoutJSONSerializer() throws Exception {
 		Field field = ReflectionUtil.getDeclaredField(
 			DDMFormLayoutJSONSerializer.class, "_jsonFactory");
 

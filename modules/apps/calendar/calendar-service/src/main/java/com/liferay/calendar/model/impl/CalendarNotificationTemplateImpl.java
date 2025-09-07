@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.model.impl;
@@ -28,51 +19,52 @@ public class CalendarNotificationTemplateImpl
 
 	@Override
 	public String getNotificationTypeSettings() {
-		if (_notificationTypeSettingsProperties == null) {
+		if (_notificationTypeSettingsUnicodeProperties == null) {
 			return super.getNotificationTypeSettings();
 		}
 
-		return _notificationTypeSettingsProperties.toString();
+		return _notificationTypeSettingsUnicodeProperties.toString();
 	}
 
 	@Override
 	public UnicodeProperties getNotificationTypeSettingsProperties() {
-		if (_notificationTypeSettingsProperties == null) {
-			_notificationTypeSettingsProperties = new UnicodeProperties(true);
+		if (_notificationTypeSettingsUnicodeProperties == null) {
+			_notificationTypeSettingsUnicodeProperties = new UnicodeProperties(
+				true);
 
 			try {
-				_notificationTypeSettingsProperties.load(
+				_notificationTypeSettingsUnicodeProperties.load(
 					super.getNotificationTypeSettings());
 			}
-			catch (IOException ioe) {
-				_log.error(ioe, ioe);
+			catch (IOException ioException) {
+				_log.error(ioException);
 			}
 		}
 
-		return _notificationTypeSettingsProperties;
+		return _notificationTypeSettingsUnicodeProperties;
 	}
 
 	@Override
 	public void setNotificationTypeSettings(String notificationTypeSettings) {
-		_notificationTypeSettingsProperties = null;
+		_notificationTypeSettingsUnicodeProperties = null;
 
 		super.setNotificationTypeSettings(notificationTypeSettings);
 	}
 
 	@Override
 	public void setTypeSettingsProperties(
-		UnicodeProperties notificationTypeSettingsProperties) {
+		UnicodeProperties notificationTypeSettingsUnicodeProperties) {
 
-		_notificationTypeSettingsProperties =
-			notificationTypeSettingsProperties;
+		_notificationTypeSettingsUnicodeProperties =
+			notificationTypeSettingsUnicodeProperties;
 
 		super.setNotificationTypeSettings(
-			_notificationTypeSettingsProperties.toString());
+			_notificationTypeSettingsUnicodeProperties.toString());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CalendarNotificationTemplateImpl.class);
 
-	private UnicodeProperties _notificationTypeSettingsProperties;
+	private UnicodeProperties _notificationTypeSettingsUnicodeProperties;
 
 }

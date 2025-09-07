@@ -1,38 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.admin.web.internal.asset.model;
 
 import com.liferay.asset.kernel.model.BaseJSPAssetRenderer;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
-import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Eduardo García
@@ -55,7 +45,7 @@ public class LayoutAssetRenderer extends BaseJSPAssetRenderer<Layout> {
 
 	@Override
 	public long getClassPK() {
-		return _layout.getLayoutId();
+		return _layout.getPlid();
 	}
 
 	@Override
@@ -80,14 +70,17 @@ public class LayoutAssetRenderer extends BaseJSPAssetRenderer<Layout> {
 
 		Locale locale = getLocale(portletRequest);
 
-		StringBundler sb = new StringBundler(4);
+		String summary = StringBundler.concat(
+			LanguageUtil.get(locale, "page"), ": ",
+			_layout.getHTMLTitle(locale));
 
-		sb.append("<strong>");
-		sb.append(LanguageUtil.get(locale, "page"));
-		sb.append(":</strong> ");
-		sb.append(_layout.getHTMLTitle(locale));
+		if (_layout.isTypeContent() &&
+			(_layout.isDenied() || _layout.isPending())) {
 
-		return sb.toString();
+			return HtmlUtil.stripHtml(summary);
+		}
+
+		return summary;
 	}
 
 	@Override
@@ -97,22 +90,24 @@ public class LayoutAssetRenderer extends BaseJSPAssetRenderer<Layout> {
 
 	@Override
 	public String getURLViewInContext(
-		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse,
-		String noSuchEntryRedirect) {
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse,
+			String noSuchEntryRedirect)
+		throws Exception {
 
-		try {
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)liferayPortletRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)liferayPortletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-			Layout layout = LayoutLocalServiceUtil.getLayout(_layout.getPlid());
+		return getURLViewInContext(themeDisplay, noSuchEntryRedirect);
+	}
 
-			return PortalUtil.getLayoutFriendlyURL(layout, themeDisplay);
-		}
-		catch (Exception e) {
-			return StringPool.BLANK;
-		}
+	@Override
+	public String getURLViewInContext(
+			ThemeDisplay themeDisplay, String noSuchEntryRedirect)
+		throws Exception {
+
+		return PortalUtil.getLayoutFriendlyURL(_layout, themeDisplay);
 	}
 
 	@Override
@@ -139,6 +134,15 @@ public class LayoutAssetRenderer extends BaseJSPAssetRenderer<Layout> {
 		httpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
 
 		return super.include(httpServletRequest, httpServletResponse, template);
+	}
+
+	@Override
+	public boolean isPreviewInContext() {
+		if (_layout.isTypeContent()) {
+			return true;
+		}
+
+		return super.isPreviewInContext();
 	}
 
 	private final Layout _layout;

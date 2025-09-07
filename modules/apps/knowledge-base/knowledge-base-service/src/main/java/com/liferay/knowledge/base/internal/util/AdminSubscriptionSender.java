@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.internal.util;
@@ -20,7 +11,6 @@ import com.liferay.knowledge.base.service.KBArticleLocalServiceUtil;
 import com.liferay.knowledge.base.util.KnowledgeBaseUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Subscription;
 import com.liferay.portal.kernel.model.User;
@@ -32,7 +22,6 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.SubscriptionSender;
-import com.liferay.portal.kernel.util.TextFormatter;
 
 import java.util.List;
 import java.util.Locale;
@@ -46,24 +35,25 @@ public class AdminSubscriptionSender extends SubscriptionSender {
 
 	public AdminSubscriptionSender(
 		KBArticle kbArticle,
-		ModelResourcePermission<KBArticle> modelResourcePermission,
+		ModelResourcePermission<KBArticle> kbArticleModelResourcePermission,
 		ServiceContext serviceContext) {
 
 		_kbArticle = kbArticle;
-		_kbArticleModelResourcePermission = modelResourcePermission;
-		_serviceContext = serviceContext;
+		_kbArticleModelResourcePermission = kbArticleModelResourcePermission;
+
+		setServiceContext(serviceContext);
 	}
 
 	@Override
 	public void initialize() throws Exception {
 		super.initialize();
 
-		String kbArticleURL = KnowledgeBaseUtil.getKBArticleURL(
-			_serviceContext.getPlid(), _kbArticle.getResourcePrimKey(),
-			_kbArticle.getStatus(), _serviceContext.getPortalURL(), false);
-
 		setContextAttribute("[$ARTICLE_TITLE$]", _kbArticle.getTitle());
-		setContextAttribute("[$ARTICLE_URL$]", kbArticleURL);
+		setContextAttribute(
+			"[$ARTICLE_URL$]",
+			KnowledgeBaseUtil.getKBArticleURL(
+				serviceContext.getPlid(), _kbArticle.getResourcePrimKey(),
+				_kbArticle.getStatus(), serviceContext.getPortalURL(), false));
 		setLocalizedContextAttributeWithFunction(
 			"[$ARTICLE_ATTACHMENTS$]", _getEmailKBArticleAttachmentsFunction());
 		setLocalizedContextAttributeWithFunction(
@@ -126,7 +116,7 @@ public class AdminSubscriptionSender extends SubscriptionSender {
 	}
 
 	private Function<Locale, String> _getEmailKBArticleAttachmentsFunction()
-		throws PortalException {
+		throws Exception {
 
 		List<FileEntry> attachmentsFileEntries =
 			_kbArticle.getAttachmentsFileEntries();
@@ -143,7 +133,7 @@ public class AdminSubscriptionSender extends SubscriptionSender {
 				sb.append(fileEntry.getTitle());
 				sb.append(" (");
 				sb.append(
-					TextFormatter.formatStorageSize(
+					LanguageUtil.formatStorageSize(
 						fileEntry.getSize(), locale));
 				sb.append(")");
 				sb.append("<br />");
@@ -156,6 +146,5 @@ public class AdminSubscriptionSender extends SubscriptionSender {
 	private final KBArticle _kbArticle;
 	private final ModelResourcePermission<KBArticle>
 		_kbArticleModelResourcePermission;
-	private final ServiceContext _serviceContext;
 
 }

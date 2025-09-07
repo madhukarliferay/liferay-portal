@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder.test.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link LVEntryLocalService}.
@@ -26,53 +18,56 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class LVEntryLocalServiceWrapper
 	implements LVEntryLocalService, ServiceWrapper<LVEntryLocalService> {
 
+	public LVEntryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public LVEntryLocalServiceWrapper(LVEntryLocalService lvEntryLocalService) {
 		_lvEntryLocalService = lvEntryLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link LVEntryLocalServiceUtil} to access the lv entry local service. Add custom service methods to <code>com.liferay.portal.tools.service.builder.test.service.impl.LVEntryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public void addBigDecimalEntryLVEntries(
+	public boolean addBigDecimalEntryLVEntries(
 		long bigDecimalEntryId,
 		java.util.List
 			<com.liferay.portal.tools.service.builder.test.model.LVEntry>
 				lvEntries) {
 
-		_lvEntryLocalService.addBigDecimalEntryLVEntries(
+		return _lvEntryLocalService.addBigDecimalEntryLVEntries(
 			bigDecimalEntryId, lvEntries);
 	}
 
 	@Override
-	public void addBigDecimalEntryLVEntries(
+	public boolean addBigDecimalEntryLVEntries(
 		long bigDecimalEntryId, long[] lvEntryIds) {
 
-		_lvEntryLocalService.addBigDecimalEntryLVEntries(
+		return _lvEntryLocalService.addBigDecimalEntryLVEntries(
 			bigDecimalEntryId, lvEntryIds);
 	}
 
 	@Override
-	public void addBigDecimalEntryLVEntry(
+	public boolean addBigDecimalEntryLVEntry(
 		long bigDecimalEntryId, long lvEntryId) {
 
-		_lvEntryLocalService.addBigDecimalEntryLVEntry(
+		return _lvEntryLocalService.addBigDecimalEntryLVEntry(
 			bigDecimalEntryId, lvEntryId);
 	}
 
 	@Override
-	public void addBigDecimalEntryLVEntry(
+	public boolean addBigDecimalEntryLVEntry(
 		long bigDecimalEntryId,
 		com.liferay.portal.tools.service.builder.test.model.LVEntry lvEntry) {
 
-		_lvEntryLocalService.addBigDecimalEntryLVEntry(
+		return _lvEntryLocalService.addBigDecimalEntryLVEntry(
 			bigDecimalEntryId, lvEntry);
 	}
 
 	/**
 	 * Adds the lv entry to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LVEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param lvEntry the lv entry
 	 * @return the lv entry that was added
@@ -111,6 +106,17 @@ public class LVEntryLocalServiceWrapper
 		create() {
 
 		return _lvEntryLocalService.create();
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _lvEntryLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	@Override
@@ -171,6 +177,10 @@ public class LVEntryLocalServiceWrapper
 	/**
 	 * Deletes the lv entry with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LVEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param lvEntryId the primary key of the lv entry
 	 * @return the lv entry that was removed
 	 * @throws PortalException if a lv entry with the primary key could not be found
@@ -185,6 +195,10 @@ public class LVEntryLocalServiceWrapper
 
 	/**
 	 * Deletes the lv entry from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LVEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param lvEntry the lv entry
 	 * @return the lv entry that was removed
@@ -217,6 +231,18 @@ public class LVEntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _lvEntryLocalService.deleteVersion(lvEntryVersion);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _lvEntryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _lvEntryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -545,6 +571,9 @@ public class LVEntryLocalServiceWrapper
 		return _lvEntryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -639,7 +668,11 @@ public class LVEntryLocalServiceWrapper
 	/**
 	 * Updates the lv entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
-	 * @param lvEntry the lv entry
+	 * <p>
+	 * <strong>Important:</strong> Inspect LVEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
+	 * @param draftLVEntry the lv entry
 	 * @return the lv entry that was updated
 	 */
 	@Override
@@ -677,6 +710,11 @@ public class LVEntryLocalServiceWrapper
 
 		return _lvEntryLocalService.updateLVEntryLocalizations(
 			draftLVEntry, titleMap, contentMap);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _lvEntryLocalService.getBasePersistence();
 	}
 
 	@Override

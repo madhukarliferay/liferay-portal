@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.taglib.servlet.taglib;
@@ -19,8 +10,8 @@ import com.liferay.portal.kernel.dao.search.ResultRowSplitter;
 import com.liferay.staging.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Péter Borkuti
@@ -51,6 +42,10 @@ public class ProcessListTag extends IncludeTag {
 		return _deleteMenu;
 	}
 
+	public boolean isDetailsMenu() {
+		return _detailsMenu;
+	}
+
 	public boolean isRelaunchMenu() {
 		return _relaunchMenu;
 	}
@@ -61,6 +56,10 @@ public class ProcessListTag extends IncludeTag {
 
 	public void setDeleteMenu(boolean deleteMenu) {
 		_deleteMenu = deleteMenu;
+	}
+
+	public void setDetailsMenu(boolean detailsMenu) {
+		_detailsMenu = detailsMenu;
 	}
 
 	public void setEmptyResultsMessage(String emptyResultsMessage) {
@@ -81,7 +80,7 @@ public class ProcessListTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setRelaunchMenu(boolean relaunchMenu) {
@@ -107,6 +106,7 @@ public class ProcessListTag extends IncludeTag {
 		super.cleanUp();
 
 		_deleteMenu = true;
+		_detailsMenu = false;
 		_emptyResultsMessage = StringPool.BLANK;
 		_localTaskExecutorClassName = StringPool.BLANK;
 		_mvcRenderCommandName = StringPool.BLANK;
@@ -125,6 +125,8 @@ public class ProcessListTag extends IncludeTag {
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
 		httpServletRequest.setAttribute(
 			"liferay-staging:process-list:deleteMenu", _deleteMenu);
+		httpServletRequest.setAttribute(
+			"liferay-staging:process-list:detailsMenu", _detailsMenu);
 		httpServletRequest.setAttribute(
 			"liferay-staging:process-list:emptyResultsMessage",
 			_emptyResultsMessage);
@@ -149,6 +151,7 @@ public class ProcessListTag extends IncludeTag {
 	private static final String _PAGE = "/process_list/page.jsp";
 
 	private boolean _deleteMenu = true;
+	private boolean _detailsMenu;
 	private String _emptyResultsMessage = StringPool.BLANK;
 	private String _localTaskExecutorClassName = StringPool.BLANK;
 	private String _mvcRenderCommandName = StringPool.BLANK;

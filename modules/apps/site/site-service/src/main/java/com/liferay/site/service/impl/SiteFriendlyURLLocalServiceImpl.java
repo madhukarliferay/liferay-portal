@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.service.impl;
 
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.site.model.SiteFriendlyURL;
@@ -30,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pavel Savinov
@@ -47,7 +42,7 @@ public class SiteFriendlyURLLocalServiceImpl
 			String languageId, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long siteFriendlyURLId = counterLocalService.increment();
 
@@ -58,10 +53,10 @@ public class SiteFriendlyURLLocalServiceImpl
 			siteFriendlyURL.setUuid(serviceContext.getUuid());
 		}
 
+		siteFriendlyURL.setGroupId(groupId);
 		siteFriendlyURL.setCompanyId(companyId);
 		siteFriendlyURL.setUserId(user.getUserId());
 		siteFriendlyURL.setUserName(user.getFullName());
-		siteFriendlyURL.setGroupId(groupId);
 		siteFriendlyURL.setFriendlyURL(friendlyURL);
 		siteFriendlyURL.setLanguageId(languageId);
 
@@ -76,7 +71,7 @@ public class SiteFriendlyURLLocalServiceImpl
 
 		List<SiteFriendlyURL> siteFriendlyURLs = new ArrayList<>();
 
-		for (Locale locale : LanguageUtil.getAvailableLocales(groupId)) {
+		for (Locale locale : _language.getAvailableLocales(groupId)) {
 			String friendlyURL = friendlyURLMap.get(locale);
 
 			if (Validator.isNull(friendlyURL)) {
@@ -98,11 +93,12 @@ public class SiteFriendlyURLLocalServiceImpl
 			long companyId, long groupId, String languageId)
 		throws PortalException {
 
-		return siteFriendlyURLPersistence.removeByC_G_L(
-			companyId, groupId, languageId);
+		return siteFriendlyURLPersistence.removeByG_C_L(
+			groupId, companyId, languageId);
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public SiteFriendlyURL deleteSiteFriendlyURL(
 		SiteFriendlyURL siteFriendlyURL) {
 
@@ -111,15 +107,15 @@ public class SiteFriendlyURLLocalServiceImpl
 
 	@Override
 	public void deleteSiteFriendlyURLs(long companyId, long groupId) {
-		siteFriendlyURLPersistence.removeByC_G(companyId, groupId);
+		siteFriendlyURLPersistence.removeByG_C(groupId, companyId);
 	}
 
 	@Override
 	public SiteFriendlyURL fetchSiteFriendlyURL(
 		long companyId, long groupId, String languageId) {
 
-		return siteFriendlyURLPersistence.fetchByC_G_L(
-			companyId, groupId, languageId);
+		return siteFriendlyURLPersistence.fetchByG_C_L(
+			groupId, companyId, languageId);
 	}
 
 	@Override
@@ -133,7 +129,7 @@ public class SiteFriendlyURLLocalServiceImpl
 	public List<SiteFriendlyURL> getSiteFriendlyURLs(
 		long companyId, long groupId) {
 
-		return siteFriendlyURLPersistence.findByC_G(companyId, groupId);
+		return siteFriendlyURLPersistence.findByG_C(groupId, companyId);
 	}
 
 	@Override
@@ -143,8 +139,8 @@ public class SiteFriendlyURLLocalServiceImpl
 		throws PortalException {
 
 		SiteFriendlyURL siteFriendlyURL =
-			siteFriendlyURLPersistence.fetchByC_G_L(
-				companyId, groupId, languageId);
+			siteFriendlyURLPersistence.fetchByG_C_L(
+				groupId, companyId, languageId);
 
 		if (siteFriendlyURL == null) {
 			siteFriendlyURL = addSiteFriendlyURL(
@@ -165,14 +161,14 @@ public class SiteFriendlyURLLocalServiceImpl
 
 		List<SiteFriendlyURL> siteFriendlyURLs = new ArrayList<>();
 
-		for (Locale locale : LanguageUtil.getAvailableLocales(groupId)) {
+		for (Locale locale : _language.getAvailableLocales(groupId)) {
 			String friendlyURL = friendlyURLMap.get(locale);
 
 			String languageId = LocaleUtil.toLanguageId(locale);
 
 			SiteFriendlyURL siteFriendlyURL =
-				siteFriendlyURLPersistence.fetchByC_G_L(
-					companyId, groupId, languageId);
+				siteFriendlyURLPersistence.fetchByG_C_L(
+					groupId, companyId, languageId);
 
 			if (Validator.isNull(friendlyURL) && (siteFriendlyURL != null)) {
 				deleteSiteFriendlyURL(companyId, groupId, languageId);
@@ -187,5 +183,11 @@ public class SiteFriendlyURLLocalServiceImpl
 
 		return siteFriendlyURLs;
 	}
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

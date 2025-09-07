@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.npm;
@@ -17,6 +8,8 @@ package com.liferay.frontend.js.loader.modules.extender.npm;
 import java.net.URL;
 
 import java.util.Collection;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * Represents an NPM package inside a {@link JSBundle}.
@@ -28,6 +21,7 @@ import java.util.Collection;
  *
  * @author Iván Zaera
  */
+@ProviderType
 public interface JSPackage extends JSBundleObject {
 
 	/**
@@ -36,6 +30,8 @@ public interface JSPackage extends JSBundleObject {
 	 * @return the NPM package's bundle
 	 */
 	public JSBundle getJSBundle();
+
+	public JSModule getJSModule(String packagePath);
 
 	public Collection<JSModuleAlias> getJSModuleAliases();
 
@@ -76,9 +72,11 @@ public interface JSPackage extends JSBundleObject {
 	/**
 	 * Returns the resource's URL residing in the NPM package.
 	 *
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
 	 * @param  location the resource's path
 	 * @return the resource's URL
 	 */
+	@Deprecated
 	public URL getResourceURL(String location);
 
 	/**

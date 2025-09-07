@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet;
 
-import com.liferay.portal.kernel.model.MVCCModel;
+import jakarta.portlet.PortletPreferences;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -22,15 +13,11 @@ import java.io.Serializable;
 import java.util.Enumeration;
 import java.util.Map;
 
-import javax.portlet.PortletPreferences;
-import javax.portlet.ReadOnlyException;
-import javax.portlet.ValidatorException;
-
 /**
  * @author Alexander Chow
  */
 public class PortalPreferencesWrapper
-	implements Cloneable, MVCCModel, PortletPreferences, Serializable {
+	implements Cloneable, PortletPreferences, Serializable {
 
 	public PortalPreferencesWrapper(
 		PortalPreferencesImpl portalPreferencesImpl) {
@@ -45,17 +32,12 @@ public class PortalPreferencesWrapper
 
 	@Override
 	public Map<String, String[]> getMap() {
-		return _portalPreferencesImpl.getMap();
-	}
-
-	@Override
-	public long getMvccVersion() {
-		return _portalPreferencesImpl.getMvccVersion();
+		return _portalPreferencesImpl.getMap(null);
 	}
 
 	@Override
 	public Enumeration<String> getNames() {
-		return _portalPreferencesImpl.getNames();
+		return _portalPreferencesImpl.getNames(null);
 	}
 
 	public PortalPreferencesImpl getPortalPreferencesImpl() {
@@ -74,33 +56,26 @@ public class PortalPreferencesWrapper
 
 	@Override
 	public boolean isReadOnly(String key) {
-		return _portalPreferencesImpl.isReadOnly(key);
+		return false;
 	}
 
 	@Override
-	public void reset(String key) throws ReadOnlyException {
-		_portalPreferencesImpl.reset(key);
+	public void reset(String key) {
+		_portalPreferencesImpl.reset(null, key);
 	}
 
 	@Override
-	public void setMvccVersion(long mvccVersion) {
-		throw new UnsupportedOperationException();
+	public void setValue(String key, String value) {
+		_portalPreferencesImpl.setValue(null, key, value);
 	}
 
 	@Override
-	public void setValue(String key, String value) throws ReadOnlyException {
-		_portalPreferencesImpl.setValue(key, value);
+	public void setValues(String key, String... values) {
+		_portalPreferencesImpl.setValues(null, key, values);
 	}
 
 	@Override
-	public void setValues(String key, String[] values)
-		throws ReadOnlyException {
-
-		_portalPreferencesImpl.setValues(key, values);
-	}
-
-	@Override
-	public void store() throws IOException, ValidatorException {
+	public void store() throws IOException {
 		_portalPreferencesImpl.store();
 	}
 

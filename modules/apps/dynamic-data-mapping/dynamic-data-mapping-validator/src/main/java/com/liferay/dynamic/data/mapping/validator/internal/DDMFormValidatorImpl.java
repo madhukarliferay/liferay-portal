@@ -1,32 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.validator.internal;
 
+import com.liferay.dynamic.data.mapping.constants.DDMConstants;
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidationException;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
-import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldName;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldReference;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetAvailableLocales;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocale;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocaleAsAvailableLocale;
@@ -37,17 +31,19 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.Mus
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldName;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldType;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidDefaultLocaleForProperty;
-import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidFormRuleExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidIndexType;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidType;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidValidationExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidVisibilityExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidator;
+import com.liferay.dynamic.data.mapping.validator.internal.util.DDMFormRuleValidatorUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
-import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.bean.BeanProperties;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -66,12 +62,18 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormValidator.class)
+@Component(service = DDMFormValidator.class)
 public class DDMFormValidatorImpl implements DDMFormValidator {
 
 	@Override
-	public void validate(DDMForm ddmForm) throws DDMFormValidationException {
-		validateDDMFormLocales(ddmForm);
+	public void validate(DDMForm ddmForm)
+		throws DDMFormFieldValueValidationException,
+			   DDMFormValidationException {
+
+		DDMFormRuleValidatorUtil.validateDDMFormRules(
+			_ddmExpressionFactory, ddmForm.getDDMFormRules());
+
+		_validateDDMFormLocales(ddmForm);
 
 		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
 
@@ -79,192 +81,22 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 			throw new MustSetFieldsForForm();
 		}
 
-		validateDDMFormFields(
-			ddmFormFields, new HashSet<String>(), ddmForm.getAvailableLocales(),
-			ddmForm.getDefaultLocale());
+		_validateDDMFormFieldNames(ddmFormFields);
 
-		validateDDMFormRules(ddmForm.getDDMFormRules());
-	}
+		Set<String> duplicatedDDMFormFieldReferences = new HashSet<>();
 
-	@Reference(unbind = "-")
-	protected void setDDMExpressionFactory(
-		DDMExpressionFactory ddmExpressionFactory) {
+		_addDuplicatedDDMFormFieldReferences(
+			ddmFormFields, new HashSet<>(), duplicatedDDMFormFieldReferences);
 
-		_ddmExpressionFactory = ddmExpressionFactory;
-	}
-
-	protected void validateDDMExpression(
-			String expressionType, String ddmExpressionString)
-		throws DDMFormValidationException {
-
-		if (Validator.isNull(ddmExpressionString)) {
-			return;
+		if (SetUtil.isNotEmpty(duplicatedDDMFormFieldReferences)) {
+			throw new MustNotDuplicateFieldReference(
+				duplicatedDDMFormFieldReferences);
 		}
 
-		try {
-			_ddmExpressionFactory.createExpression(
-				CreateExpressionRequest.Builder.newBuilder(
-					ddmExpressionString
-				).build());
-		}
-		catch (DDMExpressionException ddmee) {
-			throw new MustSetValidFormRuleExpression(
-				expressionType, ddmExpressionString, ddmee);
-		}
-	}
-
-	protected void validateDDMFormAvailableLocales(
-			Set<Locale> availableLocales, Locale defaultLocale)
-		throws DDMFormValidationException {
-
-		if ((availableLocales == null) || availableLocales.isEmpty()) {
-			throw new MustSetAvailableLocales();
-		}
-
-		if (!availableLocales.contains(defaultLocale)) {
-			throw new MustSetDefaultLocaleAsAvailableLocale(defaultLocale);
-		}
-	}
-
-	protected void validateDDMFormFieldIndexType(DDMFormField ddmFormField)
-		throws DDMFormValidationException {
-
-		if (!ArrayUtil.contains(
-				_DDM_FORM_FIELD_INDEX_TYPES, ddmFormField.getIndexType())) {
-
-			throw new MustSetValidIndexType(ddmFormField.getName());
-		}
-	}
-
-	protected void validateDDMFormFieldName(
-			DDMFormField ddmFormField, Set<String> ddmFormFieldNames)
-		throws DDMFormValidationException {
-
-		Matcher matcher = _ddmFormFieldNamePattern.matcher(
-			ddmFormField.getName());
-
-		if (!matcher.matches()) {
-			throw new MustSetValidCharactersForFieldName(
-				ddmFormField.getName());
-		}
-
-		if (ddmFormFieldNames.contains(
-				StringUtil.toLowerCase(ddmFormField.getName()))) {
-
-			throw new MustNotDuplicateFieldName(ddmFormField.getName());
-		}
-
-		ddmFormFieldNames.add(StringUtil.toLowerCase(ddmFormField.getName()));
-	}
-
-	protected void validateDDMFormFieldOptions(
-			DDMFormField ddmFormField, Set<Locale> ddmFormAvailableLocales,
-			Locale ddmFormDefaultLocale)
-		throws DDMFormValidationException {
-
-		String fieldType = ddmFormField.getType();
-
-		if (!fieldType.equals(DDMFormFieldType.CHECKBOX_MULTIPLE) &&
-			!fieldType.equals(DDMFormFieldType.RADIO) &&
-			!fieldType.equals(DDMFormFieldType.SELECT)) {
-
-			return;
-		}
-
-		String dataSourceType = _getDataSourceType(ddmFormField);
-
-		if (!Objects.equals(dataSourceType, "manual")) {
-			return;
-		}
-
-		DDMFormFieldOptions ddmFormFieldOptions =
-			ddmFormField.getDDMFormFieldOptions();
-
-		Set<String> optionValues = Collections.emptySet();
-
-		if (ddmFormFieldOptions != null) {
-			optionValues = ddmFormFieldOptions.getOptionsValues();
-		}
-
-		if (optionValues.isEmpty()) {
-			throw new MustSetOptionsForField(ddmFormField.getName());
-		}
-
-		for (String optionValue : ddmFormFieldOptions.getOptionsValues()) {
-			LocalizedValue localizedValue = ddmFormFieldOptions.getOptionLabels(
-				optionValue);
-
-			validateDDMFormFieldPropertyValue(
-				ddmFormField.getName(), "options", localizedValue,
-				ddmFormAvailableLocales, ddmFormDefaultLocale);
-		}
-	}
-
-	protected void validateDDMFormFieldPropertyValue(
-			String fieldName, String propertyName, LocalizedValue propertyValue,
-			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
-		throws DDMFormValidationException {
-
-		if (!ddmFormDefaultLocale.equals(propertyValue.getDefaultLocale())) {
-			throw new MustSetValidDefaultLocaleForProperty(
-				fieldName, propertyName);
-		}
-
-		if (!ddmFormAvailableLocales.equals(
-				propertyValue.getAvailableLocales())) {
-
-			throw new MustSetValidAvailableLocalesForProperty(
-				fieldName, propertyName);
-		}
-	}
-
-	protected void validateDDMFormFields(
-			List<DDMFormField> ddmFormFields, Set<String> ddmFormFieldNames,
-			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
-		throws DDMFormValidationException {
-
-		for (DDMFormField ddmFormField : ddmFormFields) {
-			validateDDMFormFieldName(ddmFormField, ddmFormFieldNames);
-
-			validateDDMFormFieldType(ddmFormField);
-
-			validateDDMFormFieldIndexType(ddmFormField);
-
-			validateDDMFormFieldOptions(
-				ddmFormField, ddmFormAvailableLocales, ddmFormDefaultLocale);
-
-			validateOptionalDDMFormFieldLocalizedProperty(
-				ddmFormField, "label", ddmFormAvailableLocales,
-				ddmFormDefaultLocale);
-
-			validateOptionalDDMFormFieldLocalizedProperty(
-				ddmFormField, "tip", ddmFormAvailableLocales,
-				ddmFormDefaultLocale);
-
-			validateDDMFormFieldValidationExpression(
-				ddmFormField, ddmFormAvailableLocales);
-			validateDDMFormFieldVisibilityExpression(ddmFormField);
-
-			validateDDMFormFields(
-				ddmFormField.getNestedDDMFormFields(), ddmFormFieldNames,
-				ddmFormAvailableLocales, ddmFormDefaultLocale);
-		}
-	}
-
-	protected void validateDDMFormFieldType(DDMFormField ddmFormField)
-		throws DDMFormValidationException {
-
-		if (Validator.isNull(ddmFormField.getType())) {
-			throw new MustSetFieldType(ddmFormField.getName());
-		}
-
-		Matcher matcher = _ddmFormFieldTypePattern.matcher(
-			ddmFormField.getType());
-
-		if (!matcher.matches()) {
-			throw new MustSetValidCharactersForFieldType(
-				ddmFormField.getType());
-		}
+		_validateDDMFormFields(
+			ddmFormFields, new HashSet<String>(),
+			ddmForm.allowInvalidAvailableLocalesForProperty(),
+			ddmForm.getAvailableLocales(), ddmForm.getDefaultLocale());
 	}
 
 	protected void validateDDMFormFieldValidationExpression(
@@ -295,29 +127,284 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 					).build());
 			}
 			else {
-				String value = ddmFormFieldValidationExpression.getValue();
-
 				LocalizedValue parameterLocalizedValue =
 					ddmFormFieldValidation.getParameterLocalizedValue();
 
 				for (Locale locale : locales) {
 					_ddmExpressionFactory.createExpression(
 						CreateExpressionRequest.Builder.newBuilder(
-							StringUtil.replace(
-								value, "{parameter}",
-								parameterLocalizedValue.getString(locale))
+							ddmFormFieldValidationExpression.getExpression(
+								null, parameterLocalizedValue.getString(locale),
+								null)
 						).build());
 				}
 			}
 		}
-		catch (DDMExpressionException ddmee) {
+		catch (DDMExpressionException ddmExpressionException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ddmExpressionException);
+			}
+
 			throw new MustSetValidValidationExpression(
 				ddmFormField.getName(),
 				ddmFormFieldValidationExpression.getValue());
 		}
 	}
 
-	protected void validateDDMFormFieldVisibilityExpression(
+	private void _addDuplicatedDDMFormFieldReferences(
+		List<DDMFormField> ddmFormFields, Set<String> ddmFormFieldReferences,
+		Set<String> duplicatedDDMFormFieldReferences) {
+
+		for (DDMFormField ddmFormField : ddmFormFields) {
+			if (!ddmFormFieldReferences.add(
+					StringUtil.toLowerCase(ddmFormField.getFieldReference()))) {
+
+				duplicatedDDMFormFieldReferences.add(
+					ddmFormField.getFieldReference());
+			}
+
+			_addDuplicatedDDMFormFieldReferences(
+				ddmFormField.getNestedDDMFormFields(), ddmFormFieldReferences,
+				duplicatedDDMFormFieldReferences);
+		}
+	}
+
+	private void _validateDDMFormAvailableLocales(
+			Set<Locale> availableLocales, Locale defaultLocale)
+		throws DDMFormValidationException {
+
+		if ((availableLocales == null) || availableLocales.isEmpty()) {
+			throw new MustSetAvailableLocales();
+		}
+
+		if (!availableLocales.contains(defaultLocale)) {
+			throw new MustSetDefaultLocaleAsAvailableLocale(defaultLocale);
+		}
+	}
+
+	private void _validateDDMFormFieldIndexType(DDMFormField ddmFormField)
+		throws DDMFormValidationException {
+
+		if (!ArrayUtil.contains(
+				_DDM_FORM_FIELD_INDEX_TYPES, ddmFormField.getIndexType())) {
+
+			throw new MustSetValidIndexType(ddmFormField.getName());
+		}
+	}
+
+	private void _validateDDMFormFieldName(
+			DDMFormField ddmFormField, Set<String> ddmFormFieldNames)
+		throws DDMFormValidationException {
+
+		Matcher matcher = _ddmFormFieldNamePattern.matcher(
+			ddmFormField.getName());
+
+		if (!matcher.matches()) {
+			throw new MustSetValidCharactersForFieldName(
+				ddmFormField.getName());
+		}
+
+		if (ddmFormFieldNames.contains(
+				StringUtil.toLowerCase(ddmFormField.getName()))) {
+
+			throw new MustNotDuplicateFieldName(ddmFormField.getName());
+		}
+
+		ddmFormFieldNames.add(StringUtil.toLowerCase(ddmFormField.getName()));
+	}
+
+	private void _validateDDMFormFieldNames(List<DDMFormField> ddmFormFields)
+		throws DDMFormValidationException {
+
+		Set<String> duplicatedDDMFieldNames = new HashSet<>();
+
+		Set<String> ddmFormFieldNames = new HashSet<>();
+
+		for (DDMFormField ddmFormField : ddmFormFields) {
+			if (!ddmFormFieldNames.add(ddmFormField.getName())) {
+				duplicatedDDMFieldNames.add(ddmFormField.getName());
+			}
+		}
+
+		if (SetUtil.isNotEmpty(duplicatedDDMFieldNames)) {
+			throw new MustNotDuplicateFieldName(duplicatedDDMFieldNames);
+		}
+	}
+
+	private void _validateDDMFormFieldOptions(
+			boolean allowInvalidAvailableLocalesForProperty,
+			DDMFormField ddmFormField, Set<Locale> ddmFormAvailableLocales,
+			Locale ddmFormDefaultLocale)
+		throws DDMFormValidationException {
+
+		try {
+			_validateDDMFormFieldOptions(
+				ddmFormField, ddmFormAvailableLocales, ddmFormDefaultLocale);
+		}
+		catch (DDMFormValidationException ddmFormValidationException) {
+			if ((ddmFormValidationException instanceof
+					MustSetValidAvailableLocalesForProperty) &&
+				allowInvalidAvailableLocalesForProperty) {
+
+				return;
+			}
+
+			throw ddmFormValidationException;
+		}
+	}
+
+	private void _validateDDMFormFieldOptions(
+			DDMFormField ddmFormField, Set<Locale> ddmFormAvailableLocales,
+			Locale ddmFormDefaultLocale)
+		throws DDMFormValidationException {
+
+		String fieldType = ddmFormField.getType();
+
+		if (fieldType.equals(DDMFormFieldType.GRID)) {
+			_validateDDMFormFieldOptionsProperties(
+				ddmFormField, "columns", ddmFormAvailableLocales,
+				ddmFormDefaultLocale);
+			_validateDDMFormFieldOptionsProperties(
+				ddmFormField, "rows", ddmFormAvailableLocales,
+				ddmFormDefaultLocale);
+		}
+
+		if (!fieldType.equals(DDMFormFieldType.CHECKBOX_MULTIPLE) &&
+			!fieldType.equals(DDMFormFieldType.RADIO) &&
+			!fieldType.equals(DDMFormFieldType.SELECT)) {
+
+			return;
+		}
+
+		if (!Validator.isBlank(ddmFormField.getDataSourceType()) &&
+			!Objects.equals(ddmFormField.getDataSourceType(), "manual")) {
+
+			return;
+		}
+
+		_validateDDMFormFieldOptionsProperties(
+			ddmFormField, "options", ddmFormAvailableLocales,
+			ddmFormDefaultLocale);
+	}
+
+	private void _validateDDMFormFieldOptionsProperties(
+			DDMFormField ddmFormField, String propertyName,
+			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
+		throws DDMFormValidationException {
+
+		DDMFormFieldOptions ddmFormFieldOptions =
+			ddmFormField.getDDMFormFieldOptions();
+
+		if (!propertyName.equals("options")) {
+			ddmFormFieldOptions = (DDMFormFieldOptions)ddmFormField.getProperty(
+				propertyName);
+		}
+
+		Set<String> optionsValues = Collections.emptySet();
+
+		if (ddmFormFieldOptions != null) {
+			optionsValues = ddmFormFieldOptions.getOptionsValues();
+		}
+
+		if (optionsValues.isEmpty()) {
+			LocalizedValue localizedValue = ddmFormField.getLabel();
+
+			throw new MustSetOptionsForField(
+				localizedValue.getString(ddmFormDefaultLocale),
+				ddmFormField.getName());
+		}
+
+		for (String optionValue : ddmFormFieldOptions.getOptionsValues()) {
+			LocalizedValue localizedValue = ddmFormFieldOptions.getOptionLabels(
+				optionValue);
+
+			_validateDDMFormFieldPropertyValue(
+				ddmFormField.getName(), propertyName, localizedValue,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
+		}
+	}
+
+	private void _validateDDMFormFieldPropertyValue(
+			String fieldName, String propertyName, LocalizedValue propertyValue,
+			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
+		throws DDMFormValidationException {
+
+		if (!ddmFormDefaultLocale.equals(propertyValue.getDefaultLocale())) {
+			throw new MustSetValidDefaultLocaleForProperty(
+				fieldName, propertyName);
+		}
+
+		if (!ddmFormAvailableLocales.equals(
+				propertyValue.getAvailableLocales())) {
+
+			throw new MustSetValidAvailableLocalesForProperty(
+				fieldName, propertyName);
+		}
+	}
+
+	private void _validateDDMFormFields(
+			List<DDMFormField> ddmFormFields, Set<String> ddmFormFieldNames,
+			boolean allowInvalidAvailableLocalesForProperty,
+			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
+		throws DDMFormValidationException {
+
+		for (DDMFormField ddmFormField : ddmFormFields) {
+			_validateDDMFormFieldName(ddmFormField, ddmFormFieldNames);
+
+			_validateDDMFormFieldType(ddmFormField);
+
+			_validateDDMFormFieldIndexType(ddmFormField);
+
+			_validateDDMFormFieldOptions(
+				allowInvalidAvailableLocalesForProperty, ddmFormField,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
+
+			_validateOptionalDDMFormFieldLocalizedProperty(
+				ddmFormField, "label", allowInvalidAvailableLocalesForProperty,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
+
+			_validateOptionalDDMFormFieldLocalizedProperty(
+				ddmFormField, "tip", allowInvalidAvailableLocalesForProperty,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
+
+			validateDDMFormFieldValidationExpression(
+				ddmFormField, ddmFormAvailableLocales);
+			_validateDDMFormFieldVisibilityExpression(ddmFormField);
+
+			_validateDDMFormFields(
+				ddmFormField.getNestedDDMFormFields(), ddmFormFieldNames,
+				allowInvalidAvailableLocalesForProperty,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
+		}
+	}
+
+	private void _validateDDMFormFieldType(DDMFormField ddmFormField)
+		throws DDMFormValidationException {
+
+		if (Validator.isNull(ddmFormField.getType())) {
+			throw new MustSetFieldType(ddmFormField.getName());
+		}
+
+		Matcher matcher = _ddmFormFieldTypePattern.matcher(
+			ddmFormField.getType());
+
+		if (!matcher.matches()) {
+			throw new MustSetValidCharactersForFieldType(
+				ddmFormField.getType());
+		}
+
+		Set<String> ddmFormFieldTypeNames = new HashSet<>(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeNames());
+
+		ddmFormFieldTypeNames.addAll(
+			SetUtil.fromArray(DDMConstants.SUPPORTED_DDM_FORM_FIELD_TYPES));
+
+		if (!ddmFormFieldTypeNames.contains(ddmFormField.getType())) {
+			throw new MustSetValidType(ddmFormField.getType());
+		}
+	}
+
+	private void _validateDDMFormFieldVisibilityExpression(
 			DDMFormField ddmFormField)
 		throws DDMFormValidationException {
 
@@ -333,13 +420,17 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 					visibilityExpression
 				).build());
 		}
-		catch (DDMExpressionException ddmee) {
+		catch (DDMExpressionException ddmExpressionException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ddmExpressionException);
+			}
+
 			throw new MustSetValidVisibilityExpression(
 				ddmFormField.getName(), visibilityExpression);
 		}
 	}
 
-	protected void validateDDMFormLocales(DDMForm ddmForm)
+	private void _validateDDMFormLocales(DDMForm ddmForm)
 		throws DDMFormValidationException {
 
 		Locale defaultLocale = ddmForm.getDefaultLocale();
@@ -348,79 +439,62 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 			throw new MustSetDefaultLocale();
 		}
 
-		validateDDMFormAvailableLocales(
+		_validateDDMFormAvailableLocales(
 			ddmForm.getAvailableLocales(), defaultLocale);
 	}
 
-	protected void validateDDMFormRule(DDMFormRule ddmFormRule)
-		throws DDMFormValidationException {
-
-		for (String action : ddmFormRule.getActions()) {
-			validateDDMExpression("action", action);
-		}
-
-		validateDDMExpression("condition", ddmFormRule.getCondition());
-	}
-
-	protected void validateDDMFormRules(List<DDMFormRule> ddmFormRules)
-		throws DDMFormValidationException {
-
-		for (DDMFormRule ddmFormRule : ddmFormRules) {
-			validateDDMFormRule(ddmFormRule);
-		}
-	}
-
-	protected void validateOptionalDDMFormFieldLocalizedProperty(
+	private void _validateOptionalDDMFormFieldLocalizedProperty(
 			DDMFormField ddmFormField, String propertyName,
+			boolean allowInvalidAvailableLocalesForProperty,
 			Set<Locale> ddmFormAvailableLocales, Locale ddmFormDefaultLocale)
 		throws DDMFormValidationException {
 
 		LocalizedValue propertyValue =
-			(LocalizedValue)BeanPropertiesUtil.getObject(
+			(LocalizedValue)_beanProperties.getObject(
 				ddmFormField, propertyName);
 
-		if (MapUtil.isEmpty(propertyValue.getValues())) {
+		if ((propertyValue == null) ||
+			MapUtil.isEmpty(propertyValue.getValues())) {
+
 			return;
 		}
 
-		validateDDMFormFieldPropertyValue(
-			ddmFormField.getName(), propertyName, propertyValue,
-			ddmFormAvailableLocales, ddmFormDefaultLocale);
-	}
-
-	private String _getDataSourceType(DDMFormField ddmFormField) {
-		String dataSourceType = StringPool.BLANK;
-		Object propertyDataSourceType = ddmFormField.getProperty(
-			"dataSourceType");
-
-		if (propertyDataSourceType instanceof JSONArray) {
-			JSONArray jsonArray = (JSONArray)propertyDataSourceType;
-
-			if (jsonArray.length() > 0) {
-				dataSourceType = GetterUtil.getString(
-					jsonArray.get(0), "manual");
-			}
-			else {
-				dataSourceType = "manual";
-			}
+		try {
+			_validateDDMFormFieldPropertyValue(
+				ddmFormField.getName(), propertyName, propertyValue,
+				ddmFormAvailableLocales, ddmFormDefaultLocale);
 		}
-		else {
-			dataSourceType = GetterUtil.getString(
-				propertyDataSourceType, "manual");
-		}
+		catch (DDMFormValidationException ddmFormValidationException) {
+			if ((ddmFormValidationException instanceof
+					MustSetValidAvailableLocalesForProperty) &&
+				allowInvalidAvailableLocalesForProperty) {
 
-		return dataSourceType;
+				return;
+			}
+
+			throw ddmFormValidationException;
+		}
 	}
 
 	private static final String[] _DDM_FORM_FIELD_INDEX_TYPES = {
 		StringPool.BLANK, "keyword", "none", "text"
 	};
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMFormValidatorImpl.class);
+
 	private static final Pattern _ddmFormFieldNamePattern = Pattern.compile(
 		"([^\\p{Punct}|\\p{Space}$]|_)+");
 	private static final Pattern _ddmFormFieldTypePattern = Pattern.compile(
 		"([^\\p{Punct}|\\p{Space}$]|[-_])+");
 
+	@Reference
+	private BeanProperties _beanProperties;
+
+	@Reference
 	private DDMExpressionFactory _ddmExpressionFactory;
+
+	@Reference
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.type.controller.test;
@@ -23,7 +14,6 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -63,27 +53,25 @@ public class LayoutTypeURLTest {
 
 		_group = GroupTestUtil.addGroup();
 
-		_publicLayout = LayoutTestUtil.addLayout(_group);
+		_publicLayout = LayoutTestUtil.addTypePortletLayout(_group);
 
-		setUpVirtualHostName();
+		setUpVirtualHostname();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_company.setVirtualHostname(_originalVirtualHostName);
+		_company.setVirtualHostname(_originalVirtualHostname);
 	}
 
 	@Test
 	public void testGetRegularURLLayoutTypeURL() throws Exception {
 		ThemeDisplay themeDisplay = _initThemeDisplay();
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext();
-
 		Layout layoutURLType = LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), TestPropsValues.getGroupId(), false,
-			_publicLayout.getLayoutId(), "Link", "Link", "Test invalid URL",
-			LayoutConstants.TYPE_URL, false, null, serviceContext);
+			null, TestPropsValues.getUserId(), TestPropsValues.getGroupId(),
+			false, _publicLayout.getLayoutId(), "Link", "Link",
+			"Test invalid URL", LayoutConstants.TYPE_URL, false, null,
+			ServiceContextTestUtil.getServiceContext());
 
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
@@ -91,18 +79,18 @@ public class LayoutTypeURLTest {
 		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
-		UnicodeProperties properties =
+		UnicodeProperties unicodeProperties =
 			layoutURLType.getTypeSettingsProperties();
 
-		properties.setProperty("url", "javascript:alert(1)");
+		unicodeProperties.setProperty("url", "javascript:alert(1)");
 
 		Assert.assertTrue(
 			Validator.isUrl(
 				layoutURLType.getRegularURL(mockHttpServletRequest), true));
 	}
 
-	protected void setUpVirtualHostName() {
-		_originalVirtualHostName = _company.getVirtualHostname();
+	protected void setUpVirtualHostname() {
+		_originalVirtualHostname = _company.getVirtualHostname();
 
 		_company.setVirtualHostname(_VIRTUAL_HOSTNAME);
 	}
@@ -133,7 +121,7 @@ public class LayoutTypeURLTest {
 	@DeleteAfterTestRun
 	private Group _group;
 
-	private String _originalVirtualHostName;
+	private String _originalVirtualHostname;
 	private Layout _publicLayout;
 
 }

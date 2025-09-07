@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.auto.tagger.opennlp.test;
@@ -24,25 +15,27 @@ import com.liferay.asset.kernel.model.BaseAssetRendererFactory;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Cristina González
@@ -134,28 +127,34 @@ public class OpenNLPDocumentAssetAutoTaggerTest
 	}
 
 	private void _registerAssetRendererFactory(
-		AssetRendererFactory assetRendererFactory) {
+		AssetRendererFactory<?> assetRendererFactory) {
 
-		Registry registry = RegistryUtil.getRegistry();
+		Bundle bundle = FrameworkUtil.getBundle(
+			OpenNLPDocumentAssetAutoTaggerTest.class);
 
-		_assetRendererFactoryServiceRegistration = registry.registerService(
-			AssetRendererFactory.class, assetRendererFactory);
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		_assetRendererFactoryServiceRegistration =
+			bundleContext.registerService(
+				AssetRendererFactory.class, assetRendererFactory, null);
 	}
 
-	private void _registerTextExtractor(TextExtractor textExtractor) {
-		Registry registry = RegistryUtil.getRegistry();
+	private void _registerTextExtractor(TextExtractor<?> textExtractor) {
+		Bundle bundle = FrameworkUtil.getBundle(
+			OpenNLPDocumentAssetAutoTaggerTest.class);
 
-		_textExtractorServiceRegistration = registry.registerService(
-			TextExtractor.class, textExtractor);
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		_textExtractorServiceRegistration = bundleContext.registerService(
+			TextExtractor.class, textExtractor, null);
 	}
 
-	private ServiceRegistration<AssetRendererFactory>
-		_assetRendererFactoryServiceRegistration;
+	private ServiceRegistration<?> _assetRendererFactoryServiceRegistration;
 	private String _className = RandomTestUtil.randomString();
-	private ServiceRegistration<TextExtractor>
-		_textExtractorServiceRegistration;
+	private ServiceRegistration<?> _textExtractorServiceRegistration;
 
-	private class TestAssetRendererFactory extends BaseAssetRendererFactory {
+	private class TestAssetRendererFactory
+		extends BaseAssetRendererFactory<Object> {
 
 		public TestAssetRendererFactory(
 			long groupId, String className, Object assetObject) {
@@ -166,7 +165,7 @@ public class OpenNLPDocumentAssetAutoTaggerTest
 		}
 
 		@Override
-		public AssetRenderer getAssetRenderer(long classPK, int type) {
+		public AssetRenderer<Object> getAssetRenderer(long classPK, int type) {
 			return new BaseAssetRenderer() {
 
 				@Override

@@ -1,29 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_0;
 
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portal.kernel.upgrade.BaseUpgradePortletPreferences;
+import com.liferay.portal.kernel.upgrade.BasePortletPreferencesUpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portlet.PortletPreferencesFactoryImpl;
+import com.liferay.portlet.PortletPreferencesImpl;
+import com.liferay.portlet.Preference;
 
-import javax.portlet.PortletPreferences;
+import jakarta.portlet.PortletPreferences;
+
+import java.util.Map;
 
 /**
  * @author Eduardo García
  */
-public class UpgradeLookAndFeel extends BaseUpgradePortletPreferences {
+public class UpgradeLookAndFeel extends BasePortletPreferencesUpgradeProcess {
 
 	@Override
 	protected String getUpdatePortletPreferencesWhereClause() {
@@ -36,19 +32,28 @@ public class UpgradeLookAndFeel extends BaseUpgradePortletPreferences {
 			String portletId, String xml)
 		throws Exception {
 
-		PortletPreferences portletPreferences =
-			PortletPreferencesFactoryUtil.fromXML(
-				companyId, ownerId, ownerType, plid, portletId, xml);
+		PortletPreferences portletPreferences = new PortletPreferencesImpl();
 
-		boolean showBorders = GetterUtil.getBoolean(
-			portletPreferences.getValue("portletSetupShowBorders", null), true);
+		Map<String, Preference> preferencesMap =
+			PortletPreferencesFactoryImpl.createPreferencesMap(xml);
 
-		if (!showBorders) {
-			portletPreferences.setValue(
-				"portletSetupPortletDecoratorId", "borderless");
+		for (Map.Entry<String, Preference> entry : preferencesMap.entrySet()) {
+			String key = entry.getKey();
+			Preference preference = entry.getValue();
+
+			if (key.equals("portletSetupShowBorders")) {
+				boolean showBorders = GetterUtil.getBoolean(
+					preference.getValues()[0], true);
+
+				if (!showBorders) {
+					portletPreferences.setValue(
+						"portletSetupPortletDecoratorId", "borderless");
+				}
+			}
+			else {
+				portletPreferences.setValues(key, preference.getValues());
+			}
 		}
-
-		portletPreferences.reset("portletSetupShowBorders");
 
 		return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 	}

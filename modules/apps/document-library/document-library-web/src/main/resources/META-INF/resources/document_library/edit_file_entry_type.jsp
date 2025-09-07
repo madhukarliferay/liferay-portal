@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -23,21 +14,17 @@ DLFileEntryType fileEntryType = (DLFileEntryType)request.getAttribute(WebKeys.DO
 
 long fileEntryTypeId = BeanParamUtil.getLong(fileEntryType, request, "fileEntryTypeId");
 
-DDMStructure ddmStructure = (DDMStructure)request.getAttribute(WebKeys.DOCUMENT_LIBRARY_DYNAMIC_DATA_MAPPING_STRUCTURE);
+long dataDefinitionId = BeanParamUtil.getLong(fileEntryType, request, "dataDefinitionId");
 
-long ddmStructureId = BeanParamUtil.getLong(ddmStructure, request, "structureId");
+String defaultLanguageId = LocaleUtil.toLanguageId(LocaleUtil.getSiteDefault());
 
-List<DDMStructure> ddmStructures = null;
+if (dataDefinitionId != 0) {
+	com.liferay.dynamic.data.mapping.model.DDMStructure ddmStructure = DDMStructureLocalServiceUtil.getStructure(dataDefinitionId);
 
-if (fileEntryType != null) {
-	ddmStructures = fileEntryType.getDDMStructures();
-
-	if (ddmStructure != null) {
-		ddmStructures = new ArrayList<DDMStructure>(ddmStructures);
-
-		ddmStructures.remove(ddmStructure);
-	}
+	defaultLanguageId = ddmStructure.getDefaultLanguageId();
 }
+
+String languageId = ParamUtil.getString(request, "languageId", defaultLanguageId);
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
@@ -45,182 +32,95 @@ portletDisplay.setURLBack(redirect);
 renderResponse.setTitle((fileEntryType == null) ? LanguageUtil.get(request, "new-document-type") : fileEntryType.getName(locale));
 %>
 
-<div class="container-fluid-1280">
-	<liferay-util:buffer
-		var="removeStructureIcon"
-	>
-		<clay:icon
-			symbol="times-circle"
-		/>
-	</liferay-util:buffer>
+<portlet:actionURL name="/document_library/edit_file_entry_type" var="editFileEntryTypeURL">
+	<portlet:param name="mvcRenderCommandName" value="/document_library/edit_file_entry_type" />
+</portlet:actionURL>
 
-	<portlet:actionURL name="/document_library/edit_file_entry_type" var="editFileEntryTypeURL">
-		<portlet:param name="mvcRenderCommandName" value="/document_library/edit_file_entry_type" />
-	</portlet:actionURL>
+<aui:form action="<%= editFileEntryTypeURL %>" cssClass="edit-metadata-type-form" method="post" name="fm" onSubmit="event.preventDefault(); ">
+	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= (fileEntryType == null) ? Constants.ADD : Constants.UPDATE %>" />
+	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
+	<aui:input name="fileEntryTypeId" type="hidden" value="<%= fileEntryTypeId %>" />
+	<aui:input name="dataDefinitionId" type="hidden" value="<%= dataDefinitionId %>" />
+	<aui:input name="dataDefinition" type="hidden" />
+	<aui:input name="dataLayout" type="hidden" />
+	<aui:input name="languageId" type="hidden" value="<%= languageId %>" />
 
-	<aui:form action="<%= editFileEntryTypeURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveStructure();" %>'>
-		<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= (fileEntryType == null) ? Constants.ADD : Constants.UPDATE %>" />
-		<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
-		<aui:input name="fileEntryTypeId" type="hidden" value="<%= fileEntryTypeId %>" />
-		<aui:input name="ddmStructureId" type="hidden" value="<%= ddmStructureId %>" />
-		<aui:input name="definition" type="hidden" />
+	<liferay-ui:error exception="<%= DuplicateFileEntryTypeException.class %>" message="please-enter-a-unique-document-type-name" />
+	<liferay-ui:error exception="<%= NoSuchMetadataSetException.class %>" message="please-enter-a-valid-metadata-set-or-enter-a-metadata-field" />
+	<liferay-ui:error exception="<%= StorageFieldRequiredException.class %>" message="please-fill-out-all-required-fields" />
+	<liferay-ui:error exception="<%= StructureDefinitionException.class %>" message="please-enter-a-valid-definition" />
+	<liferay-ui:error exception="<%= StructureDuplicateElementException.class %>" message="please-enter-unique-metadata-field-names-(including-field-names-inherited-from-the-parent)" />
+	<liferay-ui:error exception="<%= StructureNameException.class %>" message="please-enter-a-valid-name" />
 
-		<liferay-ui:error exception="<%= DuplicateFileEntryTypeException.class %>" message="please-enter-a-unique-document-type-name" />
-		<liferay-ui:error exception="<%= NoSuchMetadataSetException.class %>" message="please-enter-a-valid-metadata-set-or-enter-a-metadata-field" />
-		<liferay-ui:error exception="<%= StorageFieldRequiredException.class %>" message="please-fill-out-all-required-fields" />
-		<liferay-ui:error exception="<%= StructureDefinitionException.class %>" message="please-enter-a-valid-definition" />
-		<liferay-ui:error exception="<%= StructureDuplicateElementException.class %>" message="please-enter-unique-metadata-field-names-(including-field-names-inherited-from-the-parent)" />
-		<liferay-ui:error exception="<%= StructureNameException.class %>" message="please-enter-a-valid-name" />
+	<aui:model-context bean="<%= fileEntryType %>" model="<%= DLFileEntryType.class %>" />
 
-		<aui:model-context bean="<%= fileEntryType %>" model="<%= DLFileEntryType.class %>" />
+	<nav class="component-tbar subnav-tbar-light tbar tbar-metadata-type">
+		<clay:container-fluid
+			size="xxxl"
+		>
+			<ul class="tbar-nav">
+				<li class="tbar-item tbar-item-expand">
+					<aui:input cssClass="form-control-inline" defaultLanguageId="<%= LocaleUtil.toLanguageId(LocaleUtil.getSiteDefault()) %>" label='<%= LanguageUtil.get(request, "name") %>' labelCssClass="sr-only" name="name" placeholder='<%= LanguageUtil.format(request, "untitled", "structure") %>' wrapperCssClass="article-content-title mb-0" />
+				</li>
+				<li class="tbar-item">
+					<div class="metadata-type-button-row tbar-section text-right">
+						<aui:button cssClass="btn-sm mr-3" href="<%= redirect %>" type="cancel" />
 
-		<aui:fieldset-group cssClass="edit-file-entry-type" markupView="lexicon">
-			<aui:fieldset collapsible="<%= true %>" extended="<%= false %>" id="detailsMetadataFields" persistState="<%= true %>" title="details">
-				<aui:field-wrapper>
-					<c:if test="<%= (ddmStructure != null) && (ddmStructure.getGroupId() != scopeGroupId) %>">
-						<div class="alert alert-warning">
-							<liferay-ui:message key="this-document-type-does-not-belong-to-this-site.-you-may-affect-other-sites-if-you-edit-this-document-type" />
-						</div>
-					</c:if>
-				</aui:field-wrapper>
+						<aui:button cssClass="btn-sm mr-3" id="submitButton" type="submit" />
+					</div>
+				</li>
+			</ul>
+		</clay:container-fluid>
+	</nav>
 
-				<aui:input name="name" />
+	<div class="contextual-sidebar-content">
+		<clay:container-fluid
+			cssClass="container-view"
+		>
 
-				<aui:input name="description" />
-			</aui:fieldset>
+			<%
+			DLEditFileEntryTypeDataEngineDisplayContext dlEditFileEntryTypeDataEngineDisplayContext = (DLEditFileEntryTypeDataEngineDisplayContext)request.getAttribute(DLWebKeys.DOCUMENT_LIBRARY_EDIT_FILE_ENTRY_TYPE_DATA_ENGINE_DISPLAY_CONTEXT);
+			%>
 
-			<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" id="mainMetadataFields" label="main-metadata-fields">
-				<liferay-util:include page="/document_library/ddm/ddm_form_builder.jsp" servletContext="<%= application %>" />
-			</aui:fieldset>
+			<liferay-data-engine:data-layout-builder
+				additionalPanels="<%= dlEditFileEntryTypeDataEngineDisplayContext.getAdditionalPanels(npmResolvedPackageName) %>"
+				componentId='<%= liferayPortletResponse.getNamespace() + "dataLayoutBuilder" %>'
+				contentType="document-library"
+				dataDefinitionId="<%= dataDefinitionId %>"
+				dataLayoutInputId="dataLayout"
+				groupId="<%= scopeGroupId %>"
+				namespace="<%= liferayPortletResponse.getNamespace() %>"
+				scopes='<%= SetUtil.fromCollection(Arrays.asList("document-library")) %>'
+				submitButtonId='<%= liferayPortletResponse.getNamespace() + "submitButton" %>'
+			/>
+		</clay:container-fluid>
+	</div>
+</aui:form>
 
-			<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" id="additionalMetadataFields" label="additional-metadata-fields">
-				<liferay-ui:search-container
-					headerNames="name,null"
-					total="<%= (ddmStructures != null) ? ddmStructures.size() : 0 %>"
-				>
-					<liferay-ui:search-container-results
-						results="<%= ddmStructures %>"
-					/>
+<liferay-frontend:component
+	componentId='<%= liferayPortletResponse.getNamespace() + "LocaleChangedHandlerComponent" %>'
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"contentTitle", "name"
+		).put(
+			"defaultLanguageId", defaultLanguageId
+		).build()
+	%>'
+	module="{LocaleChangedHandler} from document-library-web"
+	servletContext="<%= application %>"
+/>
 
-					<liferay-ui:search-container-row
-						className="com.liferay.dynamic.data.mapping.kernel.DDMStructure"
-						escapedModel="<%= true %>"
-						keyProperty="structureId"
-						modelVar="curDDMStructure"
-					>
-						<liferay-ui:search-container-column-text
-							name="name"
-							value="<%= HtmlUtil.escape(curDDMStructure.getName(locale)) %>"
-						/>
-
-						<liferay-ui:search-container-column-text>
-							<a class="modify-link" data-rowId="<%= curDDMStructure.getStructureId() %>" href="javascript:;" title="<%= LanguageUtil.get(request, "remove") %>"><%= removeStructureIcon %></a>
-						</liferay-ui:search-container-column-text>
-					</liferay-ui:search-container-row>
-
-					<liferay-ui:search-iterator
-						markupView="lexicon"
-						paginate="<%= false %>"
-					/>
-				</liferay-ui:search-container>
-
-				<liferay-ui:icon
-					cssClass="modify-link select-metadata"
-					label="<%= true %>"
-					linkCssClass="btn btn-secondary"
-					message="select"
-					url='<%= "javascript:" + renderResponse.getNamespace() + "openDDMStructureSelector();" %>'
-				/>
-			</aui:fieldset>
-
-			<c:if test="<%= fileEntryType == null %>">
-				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="permissions" markupView="lexicon">
-					<liferay-ui:input-permissions
-						modelName="<%= DLFileEntryType.class.getName() %>"
-					/>
-				</aui:fieldset>
-			</c:if>
-		</aui:fieldset-group>
-
-		<aui:button-row>
-			<aui:button type="submit" />
-
-			<aui:button href="<%= redirect %>" type="cancel" />
-		</aui:button-row>
-	</aui:form>
-</div>
-
-<aui:script>
-	function <portlet:namespace />openDDMStructureSelector() {
-		Liferay.Util.openDDMPortlet(
-			{
-				basePortletURL:
-					'<%= PortletURLFactoryUtil.create(request, PortletProviderUtil.getPortletId(com.liferay.dynamic.data.mapping.model.DDMStructure.class.getName(), PortletProvider.Action.VIEW), PortletRequest.RENDER_PHASE) %>',
-				classPK: '<%= ddmStructureId %>',
-				dialog: {
-					destroyOnHide: true
-				},
-				eventName: '<portlet:namespace />selectDDMStructure',
-				mvcPath: '/select_structure.jsp',
-				navigationStartsOn: '<%= DDMNavigationHelper.SELECT_STRUCTURE %>',
-				refererPortletName: '<%= DLPortletKeys.DOCUMENT_LIBRARY %>',
-				showAncestorScopes: true,
-				showManageTemplates: false,
-				title: '<%= UnicodeLanguageUtil.get(request, "metadata-sets") %>'
-			},
-			function(event) {
-				var searchContainer = Liferay.SearchContainer.get(
-					'<portlet:namespace />ddmStructuresSearchContainer'
-				);
-
-				var data = searchContainer.getData(false);
-
-				if (!data.includes(event.ddmstructureid)) {
-					var ddmStructureLink =
-						'<a class="modify-link" data-rowId="' +
-						event.ddmstructureid +
-						'" href="javascript:;" title="<%= LanguageUtil.get(request, "remove") %>"><%= UnicodeFormatter.toString(removeStructureIcon) %></a>';
-
-					searchContainer.addRow(
-						[event.name, ddmStructureLink],
-						event.ddmstructureid
-					);
-
-					searchContainer.updateDataStore();
-				}
-			}
-		);
-	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />saveStructure',
-		function() {
-			document.<portlet:namespace />fm.<portlet:namespace />definition.value = window.<portlet:namespace />formBuilder.getContentValue();
-
-			submitForm(document.<portlet:namespace />fm);
-		},
-		['liferay-portlet-dynamic-data-mapping']
-	);
-</aui:script>
-
-<aui:script use="liferay-search-container">
-	var searchContainer = Liferay.SearchContainer.get(
-		'<portlet:namespace />ddmStructuresSearchContainer'
-	);
-
-	searchContainer.get('contentBox').delegate(
-		'click',
-		function(event) {
-			var link = event.currentTarget;
-
-			var tr = link.ancestor('tr');
-
-			searchContainer.deleteRow(tr, link.getAttribute('data-rowId'));
-		},
-		'.modify-link'
-	);
-</aui:script>
+<liferay-frontend:component
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"contentTitle", "name"
+		).put(
+			"defaultLanguageId", defaultLanguageId
+		).build()
+	%>'
+	module="{DataEngineLayoutBuilderHandler} from document-library-web"
+	servletContext="<%= application %>"
+/>
 
 <%
 if (fileEntryType == null) {

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.search;
@@ -27,13 +18,13 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.ratings.kernel.model.RatingsStats;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalServiceUtil;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Charles May
@@ -111,13 +102,12 @@ public abstract class HitsOpenSearchImpl extends BaseOpenSearchImpl {
 
 			Hits results = indexer.search(searchContext);
 
-			String[] queryTerms = results.getQueryTerms();
-
 			int total = results.getLength();
 
 			Object[] values = addSearchResults(
-				queryTerms, keywords, startPage, itemsPerPage, total, start,
-				getTitle(keywords), getSearchPath(), format, themeDisplay);
+				results.getQueryTerms(), keywords, startPage, itemsPerPage,
+				total, start, getTitle(keywords), getSearchPath(), format,
+				themeDisplay);
 
 			com.liferay.portal.kernel.xml.Document doc =
 				(com.liferay.portal.kernel.xml.Document)values[0];
@@ -157,12 +147,9 @@ public abstract class HitsOpenSearchImpl extends BaseOpenSearchImpl {
 				Summary summary = getSummary(
 					indexer, result, themeDisplay.getLocale(), snippet);
 
-				String title = summary.getTitle();
-
 				String url = getURL(
 					themeDisplay, resultScopeGroupId, result, portletURL);
 				Date modifiedDate = result.getDate(Field.MODIFIED_DATE);
-				String content = summary.getContent();
 
 				String[] tags = new String[0];
 
@@ -194,8 +181,8 @@ public abstract class HitsOpenSearchImpl extends BaseOpenSearchImpl {
 
 				addSearchResult(
 					root, resultGroupId, resultScopeGroupId, entryClassName,
-					entryClassPK, title, url, modifiedDate, content, tags,
-					ratings, score, format);
+					entryClassPK, summary.getTitle(), url, modifiedDate,
+					summary.getContent(), tags, ratings, score, format);
 			}
 
 			if (_log.isDebugEnabled()) {
@@ -204,8 +191,8 @@ public abstract class HitsOpenSearchImpl extends BaseOpenSearchImpl {
 
 			return doc.asXML();
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 

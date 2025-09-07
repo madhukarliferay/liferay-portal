@@ -1,24 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.sql.transformer;
 
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.dao.db.TestDB;
 import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -27,28 +22,19 @@ import org.junit.Test;
 public class DB2SQLTransformerLogicTest
 	extends BaseSQLTransformerLogicTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	public DB2SQLTransformerLogicTest() {
 		super(new TestDB(DBType.DB2, 1, 0));
 	}
 
 	@Override
 	public String getDropTableIfExistsTextTransformedSQL() {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("BEGIN\n");
-		sb.append("DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n");
-		sb.append("BEGIN END;\n");
-		sb.append("EXECUTE IMMEDIATE 'DROP TABLE Foo';\n");
-		sb.append("END");
-
-		return sb.toString();
-	}
-
-	@Test
-	public void testReplaceAlterColumnType() {
-		Assert.assertEquals(
-			"ALTER TABLE T ALTER COLUMN C SET DATA TYPE VARCHAR(256)",
-			sqlTransformer.transform("ALTER_COLUMN_TYPE T C VARCHAR(256)"));
+		return "BEGIN\nDECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\nBEGIN " +
+			"END;\nEXECUTE IMMEDIATE 'DROP TABLE Foo';\nEND";
 	}
 
 	@Override
@@ -60,11 +46,12 @@ public class DB2SQLTransformerLogicTest
 	}
 
 	@Test
-	public void testReplaceLike() {
+	public void testReplaceConcat() {
 		Assert.assertEquals(
-			"select foo from Foo where foo LIKE COALESCE(" +
-				"CAST(? AS VARCHAR(32672)),'')",
-			sqlTransformer.transform("select foo from Foo where foo LIKE ?"));
+			"select * from Foo where foo LIKE CAST(bar AS VARCHAR(2000)) " +
+				"CONCAT ?",
+			sqlTransformer.transform(
+				"select * from Foo where foo LIKE CONCAT(CAST_TEXT(bar),?)"));
 	}
 
 	@Override
@@ -75,6 +62,28 @@ public class DB2SQLTransformerLogicTest
 			sqlTransformer.transform(getModOriginalSQL()));
 	}
 
+	@Test
+	public void testReplaceQuestionMark() {
+		_testReplaceQuestionMark("select foo from Foo where foo LIKE ?");
+		_testReplaceQuestionMark("select foo, ?, bar, ? from Foo");
+		_testReplaceQuestionMark(
+			"select * from Foo where case when foo = ? then ? else ? end");
+		_testReplaceQuestionMark(
+			"select bar, ?, case when foo = ? then ? else ? end as columnA " +
+				"from Foo");
+
+		Assert.assertEquals(
+			"select * from Foo where foo = ? And bar = ?",
+			sqlTransformer.transform(
+				"select * from Foo where foo = ? And bar = ?"));
+		Assert.assertEquals(
+			"select * from Foo where foo = \" ?\"",
+			sqlTransformer.transform("select * from Foo where foo = \" ?\""));
+		Assert.assertEquals(
+			"select * from Foo where foo = \' ?\'",
+			sqlTransformer.transform("select * from Foo where foo = \' ?\'"));
+	}
+
 	@Override
 	protected String getBooleanTransformedSQL() {
 		return "select * from Foo where foo = FALSE and bar = TRUE";
@@ -82,7 +91,18 @@ public class DB2SQLTransformerLogicTest
 
 	@Override
 	protected String getCastClobTextTransformedSQL() {
-		return "select CAST(foo AS VARCHAR(254)) from Foo";
+		return StringBundler.concat(
+			"select CAST(foo || (CAST(foo AS VARCHAR(2000)) || (bar || foo)) ",
+			"AS VARCHAR(2000)), CAST(foo || (bar || foo) AS VARCHAR(2000)) ",
+			"from Foo");
+	}
+
+	@Override
+	protected String getCastTextTransformedSQL() {
+		return StringBundler.concat(
+			"select CAST(foo || (CAST(foo AS VARCHAR(2000)) || (bar || foo)) ",
+			"AS VARCHAR(2000)), CAST(foo || (bar || foo) AS VARCHAR(2000)) ",
+			"from Foo");
 	}
 
 	@Override
@@ -93,6 +113,19 @@ public class DB2SQLTransformerLogicTest
 	@Override
 	protected String getNullDateTransformedSQL() {
 		return "select NULL from Foo";
+	}
+
+	@Override
+	protected String getTruncateTableTransformedSQL() {
+		return super.getTruncateTableTransformedSQL() + " IMMEDIATE";
+	}
+
+	private void _testReplaceQuestionMark(String sql) {
+		Assert.assertEquals(
+			StringUtil.replace(
+				sql, CharPool.QUESTION,
+				"COALESCE(CAST(? AS VARCHAR(2000)),'')"),
+			sqlTransformer.transform(sql));
 	}
 
 }

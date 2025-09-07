@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.test;
@@ -97,9 +88,9 @@ public class PortletDataContextZipWriterTest {
 	public void testMultipleInputStreamsAddition() throws Exception {
 		byte[] bytes = {Byte.MIN_VALUE, Byte.MAX_VALUE};
 
-		InputStream is = new ByteArrayInputStream(bytes);
+		InputStream inputStream = new ByteArrayInputStream(bytes);
 
-		_portletDataContext.addZipEntry(_PATH, is);
+		_portletDataContext.addZipEntry(_PATH, inputStream);
 
 		List<MethodHandler> methodHandlers =
 			_recorderZipWriter.getMethodHandlers();
@@ -121,9 +112,9 @@ public class PortletDataContextZipWriterTest {
 
 		Assert.assertEquals(Arrays.toString(arguments), 2, arguments.length);
 		Assert.assertSame(_PATH, arguments[0]);
-		Assert.assertSame(is, arguments[1]);
+		Assert.assertSame(inputStream, arguments[1]);
 
-		_portletDataContext.addZipEntry(_PATH, is);
+		_portletDataContext.addZipEntry(_PATH, inputStream);
 
 		Assert.assertTrue(methodHandlers.toString(), methodHandlers.isEmpty());
 	}

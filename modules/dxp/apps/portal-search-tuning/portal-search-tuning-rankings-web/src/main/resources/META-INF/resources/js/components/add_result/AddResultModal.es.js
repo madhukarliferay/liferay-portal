@@ -1,34 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import {useResource} from '@clayui/data-provider';
 import {ClayCheckbox} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
+import ClayLayout from '@clayui/layout';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
-import ClayModal, {useModal} from '@clayui/modal';
+import ClayModal from '@clayui/modal';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
-import {ClayTooltipProvider} from '@clayui/tooltip';
+import {usePrevious} from '@liferay/frontend-js-react-web';
 import getCN from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 
 import ThemeContext from '../../ThemeContext.es';
 import {
-	DELTAS,
 	DEFAULT_DELTA,
+	DELTAS,
 	FETCH_OPTIONS,
-	KEY_CODES
+	KEY_CODES,
+	PORTAL_TOOLTIP_TRIGGER_CLASS,
 } from '../../utils/constants.es';
-import {usePrevious} from '../../utils/hooks.es';
 import {getPluralMessage} from '../../utils/language.es';
 import {buildUrl, resultsDataToMap, toggleListItem} from '../../utils/util.es';
 import Item from '../list/Item.es';
@@ -39,9 +34,10 @@ import AddResultSearchBar from './AddResultSearchBar.es';
  * A button that opens a modal to be able to search, select, and add results.
  */
 function AddResultModal({
-	fetchDocumentsSearchUrl,
+	fetchDocumentsSearchURL,
+	observer,
 	onAddResultSubmit,
-	onCloseModal
+	onClose,
 }) {
 	const {companyId, namespace, spritemap} = useContext(ThemeContext);
 
@@ -51,7 +47,7 @@ function AddResultModal({
 	 */
 	const [resourceState, setResourceState] = useState(() => ({
 		error: false,
-		loading: false
+		loading: false,
 	}));
 
 	const {error, loading} = resourceState;
@@ -72,23 +68,19 @@ function AddResultModal({
 	 */
 	const [dataMap, setDataMap] = useState(false);
 
-	const {observer, onClose} = useModal({
-		onClose: _handleCloseModal
-	});
-
 	const {refetch, resource} = useResource({
 		fetchOptions: FETCH_OPTIONS,
-		link: buildUrl(fetchDocumentsSearchUrl, {
+		link: buildUrl(fetchDocumentsSearchURL, {
 			[`${namespace}companyId`]: companyId,
 			[`${namespace}from`]: page * delta - delta,
 			[`${namespace}keywords`]: searchQuery,
-			[`${namespace}size`]: delta
+			[`${namespace}size`]: delta,
 		}),
-		onNetworkStatusChange: status =>
+		onNetworkStatusChange: (status) =>
 			setResourceState({
 				error: status === 5,
-				loading: status < 4
-			})
+				loading: status < 4,
+			}),
 	});
 
 	/**
@@ -106,7 +98,7 @@ function AddResultModal({
 	function _deselectAll() {
 		setSelectedIds(
 			selectedIds.filter(
-				resultId => !_getCurrentResultIds().includes(resultId)
+				(resultId) => !_getCurrentResultIds().includes(resultId)
 			)
 		);
 	}
@@ -116,7 +108,7 @@ function AddResultModal({
 	 * @returns {Array} List of ids
 	 */
 	function _getCurrentResultIds() {
-		return resource.documents.map(result => result.id);
+		return resource.documents.map((result) => result.id);
 	}
 
 	/**
@@ -126,7 +118,7 @@ function AddResultModal({
 	 * @returns {Array} List of ids
 	 */
 	function _getCurrentResultSelectedIds() {
-		return selectedIds.filter(resultId =>
+		return selectedIds.filter((resultId) =>
 			_getCurrentResultIds().includes(resultId)
 		);
 	}
@@ -146,9 +138,10 @@ function AddResultModal({
 	 * deselected. Otherwise, select all items.
 	 */
 	function _handleAllCheckbox() {
-		if (_getCurrentResultSelectedIds().length > 0) {
+		if (_getCurrentResultSelectedIds().length) {
 			_deselectAll();
-		} else {
+		}
+		else {
 			_selectAll();
 		}
 	}
@@ -158,14 +151,6 @@ function AddResultModal({
 	 */
 	function _handleClearAllSelected() {
 		setSelectedIds([]);
-	}
-
-	/**
-	 * Closes the modal and reverts back to initial state for the next time the
-	 * modal is opened.
-	 */
-	function _handleCloseModal() {
-		onCloseModal();
 	}
 
 	/**
@@ -244,7 +229,7 @@ function AddResultModal({
 	function _handleSubmit(event) {
 		event.preventDefault();
 
-		onAddResultSubmit(selectedIds.map(id => dataMap[id]));
+		onAddResultSubmit(selectedIds.map((id) => dataMap[id]));
 
 		onClose();
 	}
@@ -289,7 +274,8 @@ function AddResultModal({
 					title={Liferay.Language.get('search-the-engine')}
 				/>
 			);
-		} else if (error) {
+		}
+		else if (error) {
 			emptyState = (
 				<ClayEmptyState
 					actionLabel={Liferay.Language.get('try-again')}
@@ -303,7 +289,11 @@ function AddResultModal({
 			);
 		}
 
-		return <div className="add-result-sheet sheet">{emptyState}</div>;
+		return (
+			<ClayLayout.Sheet className="add-result-sheet">
+				{emptyState}
+			</ClayLayout.Sheet>
+		);
 	}
 
 	/**
@@ -312,34 +302,33 @@ function AddResultModal({
 	function _renderSearchResults() {
 		const classManagementBar = getCN(
 			'management-bar',
-			selectedIds.length > 0
+			selectedIds.length
 				? 'management-bar-primary'
 				: 'management-bar-light',
 			'navbar',
 			'navbar-expand-md'
 		);
 
-		const selectItemsLabel =
-			selectedIds.length > 0
-				? getPluralMessage(
-						Liferay.Language.get('x-item-selected'),
-						Liferay.Language.get('x-items-selected'),
-						selectedIds.length
-				  )
-				: Liferay.Language.get('select-items');
+		const selectItemsLabel = selectedIds.length
+			? getPluralMessage(
+					Liferay.Language.get('x-item-selected'),
+					Liferay.Language.get('x-items-selected'),
+					selectedIds.length
+				)
+			: Liferay.Language.get('select-items');
 
 		const checked =
 			_getCurrentResultSelectedIds().length === resource.documents.length;
 
 		const indeterminate =
-			selectedIds.length > 0 &&
+			!!selectedIds.length &&
 			_getCurrentResultSelectedIds().length !== resource.documents.length;
 
 		return (
 			<>
-				<div className="add-result-sheet sheet">
+				<ClayLayout.Sheet className="add-result-sheet">
 					<div className={classManagementBar}>
-						<div className="container-fluid container-fluid-max-xl">
+						<ClayLayout.ContainerFluid>
 							<ul className="navbar-nav navbar-nav-expand">
 								<li className="nav-item">
 									<ClayCheckbox
@@ -358,9 +347,12 @@ function AddResultModal({
 									</span>
 								</li>
 
-								{selectedIds.length > 0 && (
+								{!!selectedIds.length && (
 									<li className="nav-item nav-item-shrink">
 										<ClayButton
+											aria-label={Liferay.Language.get(
+												'clear-all-selected'
+											)}
 											className="btn-outline-borderless"
 											displayType="secondary"
 											onClick={_handleClearAllSelected}
@@ -373,7 +365,7 @@ function AddResultModal({
 									</li>
 								)}
 							</ul>
-						</div>
+						</ClayLayout.ContainerFluid>
 					</div>
 
 					<ul className="list-group" data-testid="add-result-items">
@@ -382,6 +374,7 @@ function AddResultModal({
 								author={result.author}
 								clicks={result.clicks}
 								date={result.date}
+								description={result.description}
 								hidden={result.hidden}
 								icon={result.icon}
 								id={result.id}
@@ -391,10 +384,11 @@ function AddResultModal({
 								selected={selectedIds.includes(result.id)}
 								title={result.title}
 								type={result.type}
+								viewURL={result.viewURL}
 							/>
 						))}
 					</ul>
-				</div>
+				</ClayLayout.Sheet>
 
 				<div className="add-result-container">
 					<ClayPaginationBarWithBasicItems
@@ -407,7 +401,7 @@ function AddResultModal({
 								'showing-x-to-x-of-x-entries'
 							),
 							perPageItems: Liferay.Language.get('x-items'),
-							selectPerPageItems: Liferay.Language.get('x-items')
+							selectPerPageItems: Liferay.Language.get('x-items'),
 						}}
 						onDeltaChange={_handleDeltaChange}
 						onPageChange={_handlePageChange}
@@ -421,7 +415,7 @@ function AddResultModal({
 
 	return (
 		<ClayModal
-			className="modal-full-screen-sm-down result-ranking-modal-root"
+			className="result-ranking-modal-root"
 			observer={observer}
 			size="lg"
 		>
@@ -436,15 +430,12 @@ function AddResultModal({
 						className={getCN(
 							'inline-item',
 							'inline-item-after',
-							'modal-title-help-icon'
+							'modal-title-help-icon',
+							PORTAL_TOOLTIP_TRIGGER_CLASS
 						)}
+						data-title={Liferay.Language.get('add-results-help')}
 					>
-						<ClayTooltipProvider>
-							<ClayIcon
-								symbol="question-circle-full"
-								title={Liferay.Language.get('add-results-help')}
-							/>
-						</ClayTooltipProvider>
+						<ClayIcon symbol="question-circle-full" />
 					</span>
 				</ClayModal.Header>
 
@@ -456,15 +447,15 @@ function AddResultModal({
 						searchQuery={searchQuery}
 					/>
 
-					<div className="add-result-scroller inline-scroller">
+					<div className="add-result-scroller">
 						{loading && (
-							<div className="add-result-sheet sheet">
+							<ClayLayout.Sheet className="add-result-sheet">
 								<div className="sheet-title">
 									<div className="load-more-container">
 										<ClayLoadingIndicator />
 									</div>
 								</div>
-							</div>
+							</ClayLayout.Sheet>
 						)}
 
 						{!loading &&
@@ -486,7 +477,7 @@ function AddResultModal({
 							</ClayButton>
 
 							<ClayButton
-								disabled={selectedIds.length === 0}
+								disabled={!selectedIds.length}
 								onClick={_handleSubmit}
 							>
 								{Liferay.Language.get('add')}
@@ -500,9 +491,9 @@ function AddResultModal({
 }
 
 AddResultModal.propTypes = {
-	fetchDocumentsSearchUrl: PropTypes.string.isRequired,
+	fetchDocumentsSearchURL: PropTypes.string.isRequired,
 	onAddResultSubmit: PropTypes.func.isRequired,
-	onCloseModal: PropTypes.func.isRequired
+	onClose: PropTypes.func.isRequired,
 };
 
 export default AddResultModal;

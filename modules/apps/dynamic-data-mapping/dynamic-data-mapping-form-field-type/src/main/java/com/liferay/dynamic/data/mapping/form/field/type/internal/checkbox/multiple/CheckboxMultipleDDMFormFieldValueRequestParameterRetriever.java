@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox.multiple;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRequestParameterRetriever;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -25,9 +17,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.Objects;
+import jakarta.servlet.http.HttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -36,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Dylan Rebelak
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=checkbox_multiple",
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.CHECKBOX_MULTIPLE,
 	service = DDMFormFieldValueRequestParameterRetriever.class
 )
 public class CheckboxMultipleDDMFormFieldValueRequestParameterRetriever
@@ -47,15 +39,17 @@ public class CheckboxMultipleDDMFormFieldValueRequestParameterRetriever
 		HttpServletRequest httpServletRequest, String ddmFormFieldParameterName,
 		String defaultDDMFormFieldParameterValue) {
 
-		String[] parameterValues = getParameterValues(
-			httpServletRequest, ddmFormFieldParameterName,
-			getDefaultDDMFormFieldParameterValues(
-				defaultDDMFormFieldParameterValue));
-
-		return jsonFactory.serialize(parameterValues);
+		return jsonFactory.serialize(
+			_getParameterValues(
+				httpServletRequest, ddmFormFieldParameterName,
+				_getDefaultDDMFormFieldParameterValues(
+					defaultDDMFormFieldParameterValue)));
 	}
 
-	protected String[] getDefaultDDMFormFieldParameterValues(
+	@Reference
+	protected JSONFactory jsonFactory;
+
+	private String[] _getDefaultDDMFormFieldParameterValues(
 		String defaultDDMFormFieldParameterValue) {
 
 		if (Validator.isNull(defaultDDMFormFieldParameterValue) ||
@@ -68,16 +62,16 @@ public class CheckboxMultipleDDMFormFieldValueRequestParameterRetriever
 			return jsonFactory.looseDeserialize(
 				defaultDDMFormFieldParameterValue, String[].class);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 
 			return StringUtil.split(defaultDDMFormFieldParameterValue);
 		}
 	}
 
-	protected String[] getParameterValues(
+	private String[] _getParameterValues(
 		HttpServletRequest httpServletRequest, String ddmFormFieldParameterName,
 		String[] defaultDDMFormFieldParameterValues) {
 
@@ -94,9 +88,6 @@ public class CheckboxMultipleDDMFormFieldValueRequestParameterRetriever
 			httpServletRequest, ddmFormFieldParameterName,
 			defaultDDMFormFieldParameterValues);
 	}
-
-	@Reference
-	protected JSONFactory jsonFactory;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CheckboxMultipleDDMFormFieldValueRequestParameterRetriever.class);

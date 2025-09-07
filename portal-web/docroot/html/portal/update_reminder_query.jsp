@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -26,12 +17,12 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 }
 %>
 
-<div class="sheet sheet-lg">
+<div class="mt-4 sheet sheet-lg">
 	<div class="sheet-header">
 		<div class="autofit-padded-no-gutters-x autofit-row">
 			<div class="autofit-col autofit-col-expand">
 				<h2 class="sheet-title">
-					<liferay-ui:message key="password-reminder" />
+					<liferay-ui:message key="password-recovery-question-and-answer" />
 				</h2>
 			</div>
 
@@ -55,17 +46,38 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 			</c:if>
 
 			<aui:fieldset>
-				<%@ include file="/html/portal/update_reminder_query_question.jspf" %>
+				<aui:select cssClass="reminder-query-question" label="question" name="reminderQueryQuestion">
 
-				<c:if test="<%= PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED %>">
+					<%
+					for (String question : user.getReminderQueryQuestions()) {
+					%>
+
+						<aui:option label="<%= question %>" />
+
+					<%
+					}
+					%>
+
+					<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED, PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED) %>">
+						<aui:option label="<%= UsersAdminUtil.CUSTOM_QUESTION %>" />
+					</c:if>
+				</aui:select>
+
+				<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED, PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED) %>">
 					<div class="hide" id="customQuestionContainer">
-						<aui:input autoFocus="<%= true %>" bean="<%= user %>" cssClass="reminder-query-custom" fieldParam="reminderQueryCustomQuestion" label="" model="<%= User.class %>" name="reminderQueryQuestion" />
+						<aui:input bean="<%= user %>" cssClass="reminder-query-custom" fieldParam="reminderQueryCustomQuestion" label="" model="<%= User.class %>" name="reminderQueryQuestion" />
 					</div>
 				</c:if>
 
-				<aui:input autocomplete="off" cssClass="reminder-query-answer" label="answer" maxlength="<%= ModelHintsConstants.TEXT_MAX_LENGTH %>" name="reminderQueryAnswer" showRequiredLabel="<%= false %>" size="50" type="text" value="<%= user.getReminderQueryAnswer() %>">
-					<aui:validator name="required" />
-				</aui:input>
+				<%
+				String answer = user.getReminderQueryAnswer();
+
+				if (!PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_DISPLAY_IN_PLAIN_TEXT, PropsValues.USERS_REMINDER_QUERIES_DISPLAY_IN_PLAIN_TEXT) && Validator.isNotNull(answer)) {
+					answer = Portal.TEMP_OBFUSCATION_VALUE;
+				}
+				%>
+
+				<aui:input autocomplete="off" cssClass="reminder-query-answer" label="answer[noun]" maxlength="<%= ModelHintsConstants.TEXT_MAX_LENGTH %>" name="reminderQueryAnswer" required="<%= true %>" showRequiredLabel="<%= false %>" size="50" type='<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_DISPLAY_IN_PLAIN_TEXT, PropsValues.USERS_REMINDER_QUERIES_DISPLAY_IN_PLAIN_TEXT) ? "text" : "password" %>' value="<%= answer %>" />
 			</aui:fieldset>
 
 			<aui:button-row>
@@ -75,13 +87,13 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 	</div>
 </div>
 
-<script>
-	(function() {
+<aui:script>
+	(function () {
 		var customQuestionContainer = document.getElementById('customQuestionContainer');
 		var reminderQueryQuestion = document.getElementById('reminderQueryQuestion');
 
 		if (customQuestionContainer && reminderQueryQuestion) {
-			if (reminderQueryQuestion.value === '<%= UsersAdmin.CUSTOM_QUESTION %>') {
+			if (reminderQueryQuestion.value === '<%= UsersAdminUtil.CUSTOM_QUESTION %>') {
 				customQuestionContainer.classList.remove('hide');
 			}
 			else {
@@ -91,8 +103,8 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 			reminderQueryQuestion.addEventListener(
 				'change',
 				function(event) {
-					if (reminderQueryQuestion.value === '<%= UsersAdmin.CUSTOM_QUESTION %>') {
-						<c:if test="<%= PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED %>">
+					if (reminderQueryQuestion.value === '<%= UsersAdminUtil.CUSTOM_QUESTION %>') {
+						<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED, PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED) %>">
 							customQuestionContainer.classList.remove('hide');
 
 							Liferay.Util.focusFormField('#reminderQueryCustomQuestion');
@@ -107,4 +119,4 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 			);
 		}
 	})();
-</script>
+</aui:script>

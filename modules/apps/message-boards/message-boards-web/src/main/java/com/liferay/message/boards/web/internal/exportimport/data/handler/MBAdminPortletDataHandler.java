@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.web.internal.exportimport.data.handler;
@@ -34,17 +25,15 @@ import com.liferay.message.boards.model.MBThread;
 import com.liferay.message.boards.model.MBThreadFlag;
 import com.liferay.message.boards.service.MBBanLocalService;
 import com.liferay.message.boards.service.MBCategoryLocalService;
-import com.liferay.message.boards.service.MBMessageLocalService;
-import com.liferay.message.boards.service.MBStatsUserLocalService;
 import com.liferay.message.boards.service.MBThreadFlagLocalService;
 import com.liferay.message.boards.service.MBThreadLocalService;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.util.PropsValues;
 
-import java.util.List;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -57,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gergely Mathe
  */
 @Component(
-	property = "javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN,
+	property = "jakarta.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN,
 	service = PortletDataHandler.class
 )
 public class MBAdminPortletDataHandler extends BasePortletDataHandler {
@@ -70,7 +59,7 @@ public class MBAdminPortletDataHandler extends BasePortletDataHandler {
 
 	public static final String NAMESPACE = "message_boards";
 
-	public static final String SCHEMA_VERSION = "1.0.0";
+	public static final String SCHEMA_VERSION = "4.0.0";
 
 	@Override
 	public String[] getClassNames() {
@@ -80,6 +69,11 @@ public class MBAdminPortletDataHandler extends BasePortletDataHandler {
 	@Override
 	public String getNamespace() {
 		return NAMESPACE;
+	}
+
+	@Override
+	public String getResourceName() {
+		return MBConstants.RESOURCE_NAME;
 	}
 
 	@Override
@@ -137,9 +131,6 @@ public class MBAdminPortletDataHandler extends BasePortletDataHandler {
 		_mbCategoryLocalService.deleteCategories(
 			portletDataContext.getScopeGroupId());
 
-		_mbStatsUserLocalService.deleteStatsUsersByGroupId(
-			portletDataContext.getScopeGroupId());
-
 		_mbThreadLocalService.deleteThreads(
 			portletDataContext.getScopeGroupId(),
 			MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
@@ -149,7 +140,7 @@ public class MBAdminPortletDataHandler extends BasePortletDataHandler {
 
 	@Override
 	protected String doExportData(
-			final PortletDataContext portletDataContext, String portletId,
+			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
@@ -320,51 +311,16 @@ public class MBAdminPortletDataHandler extends BasePortletDataHandler {
 		threadFlagActionableDynamicQuery.performCount();
 	}
 
-	@Reference(unbind = "-")
-	protected void setMBBanLocalService(MBBanLocalService mbBanLocalService) {
-		_mbBanLocalService = mbBanLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBCategoryLocalService(
-		MBCategoryLocalService mbCategoryLocalService) {
-
-		_mbCategoryLocalService = mbCategoryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBMessageLocalService(
-		MBMessageLocalService mbMessageLocalService) {
-
-		_mbMessageLocalService = mbMessageLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBStatsUserLocalService(
-		MBStatsUserLocalService mbStatsUserLocalService) {
-
-		_mbStatsUserLocalService = mbStatsUserLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBThreadFlagLocalService(
-		MBThreadFlagLocalService mbThreadFlagLocalService) {
-
-		_mbThreadFlagLocalService = mbThreadFlagLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBThreadLocalService(
-		MBThreadLocalService mbThreadLocalService) {
-
-		_mbThreadLocalService = mbThreadLocalService;
-	}
-
+	@Reference
 	private MBBanLocalService _mbBanLocalService;
+
+	@Reference
 	private MBCategoryLocalService _mbCategoryLocalService;
-	private MBMessageLocalService _mbMessageLocalService;
-	private MBStatsUserLocalService _mbStatsUserLocalService;
+
+	@Reference
 	private MBThreadFlagLocalService _mbThreadFlagLocalService;
+
+	@Reference
 	private MBThreadLocalService _mbThreadLocalService;
 
 	@Reference

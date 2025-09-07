@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.service.impl;
@@ -20,14 +11,21 @@ import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.service.base.LayoutClassedModelUsageLocalServiceBaseImpl;
 import com.liferay.layout.util.constants.LayoutClassedModelUsageConstants;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,19 +41,10 @@ public class LayoutClassedModelUsageLocalServiceImpl
 	extends LayoutClassedModelUsageLocalServiceBaseImpl {
 
 	@Override
-	public LayoutClassedModelUsage addDefaultLayoutClassedModelUsage(
-		long groupId, long classNameId, long classPK,
-		ServiceContext serviceContext) {
-
-		return addLayoutClassedModelUsage(
-			groupId, classNameId, classPK, StringPool.BLANK, 0, 0,
-			serviceContext);
-	}
-
-	@Override
 	public LayoutClassedModelUsage addLayoutClassedModelUsage(
-		long groupId, long classNameId, long classPK, String containerKey,
-		long containerType, long plid, ServiceContext serviceContext) {
+		long groupId, String classExternalReferenceCode, long classNameId,
+		long classPK, String containerKey, long containerType, long plid,
+		ServiceContext serviceContext) {
 
 		long layoutClassedModelUsageId = counterLocalService.increment();
 
@@ -65,8 +54,19 @@ public class LayoutClassedModelUsageLocalServiceImpl
 
 		layoutClassedModelUsage.setUuid(serviceContext.getUuid());
 		layoutClassedModelUsage.setGroupId(groupId);
-		layoutClassedModelUsage.setCreateDate(new Date());
-		layoutClassedModelUsage.setModifiedDate(new Date());
+
+		long companyId = serviceContext.getCompanyId();
+
+		Group group = _groupLocalService.fetchGroup(groupId);
+
+		if (group != null) {
+			companyId = group.getCompanyId();
+		}
+
+		layoutClassedModelUsage.setCompanyId(companyId);
+
+		layoutClassedModelUsage.setClassExternalReferenceCode(
+			classExternalReferenceCode);
 		layoutClassedModelUsage.setClassNameId(classNameId);
 		layoutClassedModelUsage.setClassPK(classPK);
 		layoutClassedModelUsage.setContainerKey(containerKey);
@@ -80,7 +80,31 @@ public class LayoutClassedModelUsageLocalServiceImpl
 
 	@Override
 	public void deleteLayoutClassedModelUsages(long classNameId, long classPK) {
-		layoutClassedModelUsagePersistence.removeByC_C(classNameId, classPK);
+		Map<Long, List<LayoutClassedModelUsage>>
+			partitionLayoutClassedModelUsages =
+				MassDeleteCacheThreadLocal.getMassDeleteCache(
+					LayoutClassedModelUsageLocalServiceImpl.class.getName() +
+						".deleteLayoutClassedModelUsages#" + classNameId,
+					() -> MapUtil.toPartitionMap(
+						layoutClassedModelUsagePersistence.findByC_CN(
+							CompanyThreadLocal.getCompanyId(), classNameId),
+						LayoutClassedModelUsage::getClassPK));
+
+		if (partitionLayoutClassedModelUsages == null) {
+			layoutClassedModelUsagePersistence.removeByCN_CPK(
+				classNameId, classPK);
+
+			return;
+		}
+
+		List<LayoutClassedModelUsage> layoutClassedModelUsages =
+			partitionLayoutClassedModelUsages.remove(classPK);
+
+		ListUtil.isNotEmptyForEach(
+			layoutClassedModelUsages,
+			layoutClassedModelUsage ->
+				layoutClassedModelUsagePersistence.remove(
+					layoutClassedModelUsage));
 	}
 
 	@Override
@@ -98,18 +122,19 @@ public class LayoutClassedModelUsageLocalServiceImpl
 
 	@Override
 	public LayoutClassedModelUsage fetchLayoutClassedModelUsage(
-		long classNameId, long classPK, String containerKey, long containerType,
-		long plid) {
+		long groupId, String classExternalReferenceCode, long classNameId,
+		long classPK, String containerKey, long containerType, long plid) {
 
-		return layoutClassedModelUsagePersistence.fetchByC_C_CK_CT_P(
-			classNameId, classPK, containerKey, containerType, plid);
+		return layoutClassedModelUsagePersistence.fetchByG_CERC_CN_CPK_CK_CT_P(
+			groupId, classExternalReferenceCode, classNameId, classPK,
+			containerKey, containerType, plid);
 	}
 
 	@Override
 	public List<LayoutClassedModelUsage> getLayoutClassedModelUsages(
 		long classNameId, long classPK) {
 
-		return layoutClassedModelUsagePersistence.findByC_C(
+		return layoutClassedModelUsagePersistence.findByCN_CPK(
 			classNameId, classPK);
 	}
 
@@ -118,7 +143,7 @@ public class LayoutClassedModelUsageLocalServiceImpl
 		long classNameId, long classPK, int type, int start, int end,
 		OrderByComparator<LayoutClassedModelUsage> orderByComparator) {
 
-		return layoutClassedModelUsagePersistence.findByC_C_T(
+		return layoutClassedModelUsagePersistence.findByCN_CPK_T(
 			classNameId, classPK, type, start, end, orderByComparator);
 	}
 
@@ -127,8 +152,16 @@ public class LayoutClassedModelUsageLocalServiceImpl
 		long classNameId, long classPK, int start, int end,
 		OrderByComparator<LayoutClassedModelUsage> orderByComparator) {
 
-		return layoutClassedModelUsagePersistence.findByC_C(
+		return layoutClassedModelUsagePersistence.findByCN_CPK(
 			classNameId, classPK, start, end, orderByComparator);
+	}
+
+	@Override
+	public List<LayoutClassedModelUsage> getLayoutClassedModelUsages(
+		long companyId, long classNameId, long containerType) {
+
+		return layoutClassedModelUsagePersistence.findByC_CN_CT(
+			companyId, classNameId, containerType);
 	}
 
 	@Override
@@ -142,7 +175,7 @@ public class LayoutClassedModelUsageLocalServiceImpl
 	public int getLayoutClassedModelUsagesCount(
 		long classNameId, long classPK) {
 
-		return layoutClassedModelUsagePersistence.countByC_C(
+		return layoutClassedModelUsagePersistence.countByCN_CPK(
 			classNameId, classPK);
 	}
 
@@ -150,30 +183,28 @@ public class LayoutClassedModelUsageLocalServiceImpl
 	public int getLayoutClassedModelUsagesCount(
 		long classNameId, long classPK, int type) {
 
-		return layoutClassedModelUsagePersistence.countByC_C_T(
+		return layoutClassedModelUsagePersistence.countByCN_CPK_T(
 			classNameId, classPK, type);
 	}
 
 	@Override
-	public int getUniqueLayoutClassedModelUsagesCount(
-		long classNameId, long classPK) {
-
-		return layoutClassedModelUsageFinder.countByC_C(classNameId, classPK);
-	}
-
-	@Override
-	public boolean hasDefaultLayoutClassedModelUsage(
-		long classNameId, long classPK) {
+	public LayoutClassedModelUsage updateLayoutClassedModelUsage(
+			long classNameId, long classPK, String containerKey,
+			long containerType, long layoutClassedModelUsageId, long plid)
+		throws PortalException {
 
 		LayoutClassedModelUsage layoutClassedModelUsage =
-			layoutClassedModelUsageLocalService.fetchLayoutClassedModelUsage(
-				classNameId, classPK, StringPool.BLANK, 0, 0);
+			layoutClassedModelUsagePersistence.findByPrimaryKey(
+				layoutClassedModelUsageId);
 
-		if (layoutClassedModelUsage != null) {
-			return true;
-		}
+		layoutClassedModelUsage.setClassNameId(classNameId);
+		layoutClassedModelUsage.setClassPK(classPK);
+		layoutClassedModelUsage.setContainerKey(containerKey);
+		layoutClassedModelUsage.setContainerType(containerType);
+		layoutClassedModelUsage.setPlid(plid);
 
-		return false;
+		return layoutClassedModelUsagePersistence.update(
+			layoutClassedModelUsage);
 	}
 
 	private int _getType(long plid) {
@@ -181,13 +212,13 @@ public class LayoutClassedModelUsageLocalServiceImpl
 			return LayoutClassedModelUsageConstants.TYPE_DEFAULT;
 		}
 
-		Layout layout = layoutLocalService.fetchLayout(plid);
+		Layout layout = _layoutLocalService.fetchLayout(plid);
 
 		if (layout == null) {
 			return LayoutClassedModelUsageConstants.TYPE_DEFAULT;
 		}
 
-		if ((layout.getClassNameId() > 0) && (layout.getClassPK() > 0)) {
+		if (layout.isDraftLayout()) {
 			plid = layout.getClassPK();
 		}
 
@@ -200,13 +231,19 @@ public class LayoutClassedModelUsageLocalServiceImpl
 		}
 
 		if (layoutPageTemplateEntry.getType() ==
-				LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE) {
+				LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE) {
 
 			return LayoutClassedModelUsageConstants.TYPE_DISPLAY_PAGE_TEMPLATE;
 		}
 
 		return LayoutClassedModelUsageConstants.TYPE_PAGE_TEMPLATE;
 	}
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private LayoutPageTemplateEntryLocalService

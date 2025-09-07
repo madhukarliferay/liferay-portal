@@ -1,26 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.service.persistence.impl;
 
 import com.liferay.data.engine.exception.NoSuchDataDefinitionFieldLinkException;
 import com.liferay.data.engine.model.DEDataDefinitionFieldLink;
+import com.liferay.data.engine.model.DEDataDefinitionFieldLinkTable;
 import com.liferay.data.engine.model.impl.DEDataDefinitionFieldLinkImpl;
 import com.liferay.data.engine.model.impl.DEDataDefinitionFieldLinkModelImpl;
 import com.liferay.data.engine.service.persistence.DEDataDefinitionFieldLinkPersistence;
+import com.liferay.data.engine.service.persistence.DEDataDefinitionFieldLinkUtil;
 import com.liferay.data.engine.service.persistence.impl.constants.DEPersistenceConstants;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.change.tracking.CTColumnResolutionType;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
@@ -33,11 +29,18 @@ import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 
@@ -45,7 +48,13 @@ import java.io.Serializable;
 
 import java.lang.reflect.InvocationHandler;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -73,7 +82,7 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	extends BasePersistenceImpl<DEDataDefinitionFieldLink>
 	implements DEDataDefinitionFieldLinkPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>DEDataDefinitionFieldLinkUtil</code> to access the de data definition field link persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -165,112 +174,113 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByUuid;
+					finderArgs = new Object[] {uuid};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByUuid;
+				finderArgs = new Object[] {uuid, start, end, orderByComparator};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByUuid;
-				finderArgs = new Object[] {uuid};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByUuid;
-			finderArgs = new Object[] {uuid, start, end, orderByComparator};
-		}
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<DEDataDefinitionFieldLink> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if (!uuid.equals(deDataDefinitionFieldLink.getUuid())) {
+							list = null;
 
-			if ((list != null) && !list.isEmpty()) {
-				for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
-						list) {
-
-					if (!uuid.equals(deDataDefinitionFieldLink.getUuid())) {
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(3);
+				}
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_UUID_3);
+				}
+				else {
+					bindUuid = true;
+
+					sb.append(_FINDER_COLUMN_UUID_UUID_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
-
-		if (list == null) {
-			StringBundler query = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
-			}
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
 	}
 
 	/**
@@ -294,16 +304,16 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -349,16 +359,16 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -429,8 +439,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -443,28 +453,28 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_UUID_2);
 		}
 
 		if (orderByComparator != null) {
@@ -472,72 +482,72 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
 		if (orderByComparator != null) {
@@ -545,11 +555,11 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						deDataDefinitionFieldLink)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<DEDataDefinitionFieldLink> list = q.list();
+		List<DEDataDefinitionFieldLink> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -581,60 +591,64 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countByUuid(String uuid) {
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = _finderPathCountByUuid;
+			uuid = Objects.toString(uuid, "");
 
-		Object[] finderArgs = new Object[] {uuid};
+			FinderPath finderPath = _finderPathCountByUuid;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {uuid};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
 
-			boolean bindUuid = false;
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
-			}
-			else {
-				bindUuid = true;
+				boolean bindUuid = false;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
-			}
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_UUID_3);
+				}
+				else {
+					bindUuid = true;
 
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					sb.append(_FINDER_COLUMN_UUID_UUID_2);
 				}
 
-				count = (Long)q.uniqueResult();
+				String sql = sb.toString();
 
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
+				Session session = null;
 
-				throw processException(e);
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			finally {
-				closeSession(session);
-			}
+
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_UUID_UUID_2 =
@@ -644,7 +658,6 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		"(deDataDefinitionFieldLink.uuid IS NULL OR deDataDefinitionFieldLink.uuid = '')";
 
 	private FinderPath _finderPathFetchByUUID_G;
-	private FinderPath _finderPathCountByUUID_G;
 
 	/**
 	 * Returns the de data definition field link where uuid = &#63; and groupId = &#63; or throws a <code>NoSuchDataDefinitionFieldLinkException</code> if it could not be found.
@@ -662,23 +675,23 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			uuid, groupId);
 
 		if (deDataDefinitionFieldLink == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("uuid=");
-			msg.append(uuid);
+			sb.append("uuid=");
+			sb.append(uuid);
 
-			msg.append(", groupId=");
-			msg.append(groupId);
+			sb.append(", groupId=");
+			sb.append(groupId);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+			throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 		}
 
 		return deDataDefinitionFieldLink;
@@ -708,102 +721,103 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public DEDataDefinitionFieldLink fetchByUUID_G(
 		String uuid, long groupId, boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if (useFinderCache) {
-			finderArgs = new Object[] {uuid, groupId};
-		}
+			Object[] finderArgs = null;
 
-		Object result = null;
-
-		if (useFinderCache) {
-			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs, this);
-		}
-
-		if (result instanceof DEDataDefinitionFieldLink) {
-			DEDataDefinitionFieldLink deDataDefinitionFieldLink =
-				(DEDataDefinitionFieldLink)result;
-
-			if (!Objects.equals(uuid, deDataDefinitionFieldLink.getUuid()) ||
-				(groupId != deDataDefinitionFieldLink.getGroupId())) {
-
-				result = null;
-			}
-		}
-
-		if (result == null) {
-			StringBundler query = new StringBundler(4);
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
+			if (useFinderCache) {
+				finderArgs = new Object[] {uuid, groupId};
 			}
 
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
+			Object result = null;
 
-			String sql = query.toString();
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByUUID_G, finderArgs, this);
+			}
 
-			Session session = null;
+			if (result instanceof DEDataDefinitionFieldLink) {
+				DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+					(DEDataDefinitionFieldLink)result;
 
-			try {
-				session = openSession();
+				if (!Objects.equals(
+						uuid, deDataDefinitionFieldLink.getUuid()) ||
+					(groupId != deDataDefinitionFieldLink.getGroupId())) {
 
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					result = null;
 				}
+			}
 
-				qPos.add(groupId);
+			if (result == null) {
+				StringBundler sb = new StringBundler(4);
 
-				List<DEDataDefinitionFieldLink> list = q.list();
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-				if (list.isEmpty()) {
-					if (useFinderCache) {
-						finderCache.putResult(
-							_finderPathFetchByUUID_G, finderArgs, list);
-					}
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_G_UUID_3);
 				}
 				else {
-					DEDataDefinitionFieldLink deDataDefinitionFieldLink =
-						list.get(0);
+					bindUuid = true;
 
-					result = deDataDefinitionFieldLink;
-
-					cacheResult(deDataDefinitionFieldLink);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByUUID_G, finderArgs);
+					sb.append(_FINDER_COLUMN_UUID_G_UUID_2);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
 
-		if (result instanceof List<?>) {
-			return null;
-		}
-		else {
-			return (DEDataDefinitionFieldLink)result;
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(groupId);
+
+					List<DEDataDefinitionFieldLink> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByUUID_G, finderArgs, list);
+						}
+					}
+					else {
+						DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+							list.get(0);
+
+						result = deDataDefinitionFieldLink;
+
+						cacheResult(deDataDefinitionFieldLink);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (DEDataDefinitionFieldLink)result;
+			}
 		}
 	}
 
@@ -833,64 +847,14 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countByUUID_G(String uuid, long groupId) {
-		uuid = Objects.toString(uuid, "");
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink = fetchByUUID_G(
+			uuid, groupId);
 
-		FinderPath finderPath = _finderPathCountByUUID_G;
-
-		Object[] finderArgs = new Object[] {uuid, groupId};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
-			}
-
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				qPos.add(groupId);
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (deDataDefinitionFieldLink == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String _FINDER_COLUMN_UUID_G_UUID_2 =
@@ -985,121 +949,122 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByUuid_C;
+					finderArgs = new Object[] {uuid, companyId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByUuid_C;
+				finderArgs = new Object[] {
+					uuid, companyId, start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByUuid_C;
-				finderArgs = new Object[] {uuid, companyId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByUuid_C;
-			finderArgs = new Object[] {
-				uuid, companyId, start, end, orderByComparator
-			};
-		}
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<DEDataDefinitionFieldLink> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if (!uuid.equals(deDataDefinitionFieldLink.getUuid()) ||
+							(companyId !=
+								deDataDefinitionFieldLink.getCompanyId())) {
 
-			if ((list != null) && !list.isEmpty()) {
-				for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
-						list) {
+							list = null;
 
-					if (!uuid.equals(deDataDefinitionFieldLink.getUuid()) ||
-						(companyId !=
-							deDataDefinitionFieldLink.getCompanyId())) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(4);
+				}
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				}
+				else {
+					bindUuid = true;
+
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				}
+
+				sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(companyId);
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
-
-		if (list == null) {
-			StringBundler query = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					4 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(4);
-			}
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
-			}
-
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				qPos.add(companyId);
-
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
 	}
 
 	/**
@@ -1124,19 +1089,19 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -1184,19 +1149,19 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -1269,8 +1234,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1283,117 +1248,117 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 		}
 
-		query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						deDataDefinitionFieldLink)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<DEDataDefinitionFieldLink> list = q.list();
+		List<DEDataDefinitionFieldLink> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1429,64 +1394,68 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countByUuid_C(String uuid, long companyId) {
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = _finderPathCountByUuid_C;
+			uuid = Objects.toString(uuid, "");
 
-		Object[] finderArgs = new Object[] {uuid, companyId};
+			FinderPath finderPath = _finderPathCountByUuid_C;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {uuid, companyId};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
 
-			boolean bindUuid = false;
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
-			}
-			else {
-				bindUuid = true;
+				boolean bindUuid = false;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
-			}
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				}
+				else {
+					bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 				}
 
-				qPos.add(companyId);
+				sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
-				count = (Long)q.uniqueResult();
+				String sql = sb.toString();
 
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
+				Session session = null;
 
-				throw processException(e);
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(companyId);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			finally {
-				closeSession(session);
-			}
+
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_UUID_C_UUID_2 =
@@ -1577,103 +1546,105 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath =
+						_finderPathWithoutPaginationFindByDDMStructureId;
+					finderArgs = new Object[] {ddmStructureId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByDDMStructureId;
+				finderArgs = new Object[] {
+					ddmStructureId, start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByDDMStructureId;
-				finderArgs = new Object[] {ddmStructureId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByDDMStructureId;
-			finderArgs = new Object[] {
-				ddmStructureId, start, end, orderByComparator
-			};
-		}
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<DEDataDefinitionFieldLink> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if (ddmStructureId !=
+								deDataDefinitionFieldLink.getDdmStructureId()) {
 
-			if ((list != null) && !list.isEmpty()) {
-				for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
-						list) {
+							list = null;
 
-					if (ddmStructureId !=
-							deDataDefinitionFieldLink.getDdmStructureId()) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			query.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(ddmStructureId);
-
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(3);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(ddmStructureId);
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -1697,16 +1668,16 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("ddmStructureId=");
-		msg.append(ddmStructureId);
+		sb.append("ddmStructureId=");
+		sb.append(ddmStructureId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -1752,16 +1723,16 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("ddmStructureId=");
-		msg.append(ddmStructureId);
+		sb.append("ddmStructureId=");
+		sb.append(ddmStructureId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -1830,8 +1801,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1844,102 +1815,102 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-		query.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
+		sb.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(ddmStructureId);
+		queryPos.add(ddmStructureId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						deDataDefinitionFieldLink)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<DEDataDefinitionFieldLink> list = q.list();
+		List<DEDataDefinitionFieldLink> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1973,47 +1944,51 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countByDDMStructureId(long ddmStructureId) {
-		FinderPath finderPath = _finderPathCountByDDMStructureId;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		Object[] finderArgs = new Object[] {ddmStructureId};
+			FinderPath finderPath = _finderPathCountByDDMStructureId;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {ddmStructureId};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
 
-			query.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2);
 
-			Session session = null;
+				String sql = sb.toString();
 
-			try {
-				session = openSession();
+				Session session = null;
 
-				Query q = session.createQuery(sql);
+				try {
+					session = openSession();
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					Query query = session.createQuery(sql);
 
-				qPos.add(ddmStructureId);
+					QueryPos queryPos = QueryPos.getInstance(query);
 
-				count = (Long)q.uniqueResult();
+					queryPos.add(ddmStructureId);
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_DDMSTRUCTUREID_DDMSTRUCTUREID_2 =
@@ -2102,108 +2077,110 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_C;
+					finderArgs = new Object[] {classNameId, classPK};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_C;
+				finderArgs = new Object[] {
+					classNameId, classPK, start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByC_C;
-				finderArgs = new Object[] {classNameId, classPK};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByC_C;
-			finderArgs = new Object[] {
-				classNameId, classPK, start, end, orderByComparator
-			};
-		}
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<DEDataDefinitionFieldLink> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if ((classNameId !=
+								deDataDefinitionFieldLink.getClassNameId()) ||
+							(classPK !=
+								deDataDefinitionFieldLink.getClassPK())) {
 
-			if ((list != null) && !list.isEmpty()) {
-				for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
-						list) {
+							list = null;
 
-					if ((classNameId !=
-							deDataDefinitionFieldLink.getClassNameId()) ||
-						(classPK != deDataDefinitionFieldLink.getClassPK())) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					4 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(4);
-			}
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			query.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_C_CLASSPK_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(classPK);
-
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(4);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_C_CLASSPK_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(classPK);
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -2228,19 +2205,19 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("classNameId=");
-		msg.append(classNameId);
+		sb.append("classNameId=");
+		sb.append(classNameId);
 
-		msg.append(", classPK=");
-		msg.append(classPK);
+		sb.append(", classPK=");
+		sb.append(classPK);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -2288,19 +2265,19 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("classNameId=");
-		msg.append(classNameId);
+		sb.append("classNameId=");
+		sb.append(classNameId);
 
-		msg.append(", classPK=");
-		msg.append(classPK);
+		sb.append(", classPK=");
+		sb.append(classPK);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -2371,8 +2348,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2385,106 +2362,106 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-		query.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
+		sb.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
 
-		query.append(_FINDER_COLUMN_C_C_CLASSPK_2);
+		sb.append(_FINDER_COLUMN_C_C_CLASSPK_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(classNameId);
+		queryPos.add(classNameId);
 
-		qPos.add(classPK);
+		queryPos.add(classPK);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						deDataDefinitionFieldLink)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<DEDataDefinitionFieldLink> list = q.list();
+		List<DEDataDefinitionFieldLink> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2520,51 +2497,55 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countByC_C(long classNameId, long classPK) {
-		FinderPath finderPath = _finderPathCountByC_C;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		Object[] finderArgs = new Object[] {classNameId, classPK};
+			FinderPath finderPath = _finderPathCountByC_C;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {classNameId, classPK};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
 
-			query.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-			query.append(_FINDER_COLUMN_C_C_CLASSPK_2);
+				sb.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_C_C_CLASSPK_2);
 
-			Session session = null;
+				String sql = sb.toString();
 
-			try {
-				session = openSession();
+				Session session = null;
 
-				Query q = session.createQuery(sql);
+				try {
+					session = openSession();
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					Query query = session.createQuery(sql);
 
-				qPos.add(classNameId);
+					QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(classPK);
+					queryPos.add(classNameId);
 
-				count = (Long)q.uniqueResult();
+					queryPos.add(classPK);
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_C_C_CLASSNAMEID_2 =
@@ -2573,9 +2554,1509 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	private static final String _FINDER_COLUMN_C_C_CLASSPK_2 =
 		"deDataDefinitionFieldLink.classPK = ?";
 
+	private FinderPath _finderPathWithPaginationFindByC_DDMSI;
+	private FinderPath _finderPathWithoutPaginationFindByC_DDMSI;
+	private FinderPath _finderPathCountByC_DDMSI;
+
+	/**
+	 * Returns all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @return the matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI(
+		long classNameId, long ddmStructureId) {
+
+		return findByC_DDMSI(
+			classNameId, ddmStructureId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			null);
+	}
+
+	/**
+	 * Returns a range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @return the range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI(
+		long classNameId, long ddmStructureId, int start, int end) {
+
+		return findByC_DDMSI(classNameId, ddmStructureId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI(
+		long classNameId, long ddmStructureId, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		return findByC_DDMSI(
+			classNameId, ddmStructureId, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI(
+		long classNameId, long ddmStructureId, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_DDMSI;
+					finderArgs = new Object[] {classNameId, ddmStructureId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_DDMSI;
+				finderArgs = new Object[] {
+					classNameId, ddmStructureId, start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
+
+			if (useFinderCache) {
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
+
+						if ((classNameId !=
+								deDataDefinitionFieldLink.getClassNameId()) ||
+							(ddmStructureId !=
+								deDataDefinitionFieldLink.
+									getDdmStructureId())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(4);
+				}
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_DDMSTRUCTUREID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first de data definition field link in the ordered set where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink findByC_DDMSI_First(
+			long classNameId, long ddmStructureId,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			fetchByC_DDMSI_First(
+				classNameId, ddmStructureId, orderByComparator);
+
+		if (deDataDefinitionFieldLink != null) {
+			return deDataDefinitionFieldLink;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", ddmStructureId=");
+		sb.append(ddmStructureId);
+
+		sb.append("}");
+
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
+	}
+
+	/**
+	 * Returns the first de data definition field link in the ordered set where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching de data definition field link, or <code>null</code> if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink fetchByC_DDMSI_First(
+		long classNameId, long ddmStructureId,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		List<DEDataDefinitionFieldLink> list = findByC_DDMSI(
+			classNameId, ddmStructureId, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last de data definition field link in the ordered set where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink findByC_DDMSI_Last(
+			long classNameId, long ddmStructureId,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			fetchByC_DDMSI_Last(classNameId, ddmStructureId, orderByComparator);
+
+		if (deDataDefinitionFieldLink != null) {
+			return deDataDefinitionFieldLink;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", ddmStructureId=");
+		sb.append(ddmStructureId);
+
+		sb.append("}");
+
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
+	}
+
+	/**
+	 * Returns the last de data definition field link in the ordered set where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching de data definition field link, or <code>null</code> if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink fetchByC_DDMSI_Last(
+		long classNameId, long ddmStructureId,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		int count = countByC_DDMSI(classNameId, ddmStructureId);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<DEDataDefinitionFieldLink> list = findByC_DDMSI(
+			classNameId, ddmStructureId, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the de data definition field links before and after the current de data definition field link in the ordered set where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param deDataDefinitionFieldLinkId the primary key of the current de data definition field link
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a de data definition field link with the primary key could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink[] findByC_DDMSI_PrevAndNext(
+			long deDataDefinitionFieldLinkId, long classNameId,
+			long ddmStructureId,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink = findByPrimaryKey(
+			deDataDefinitionFieldLinkId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			DEDataDefinitionFieldLink[] array =
+				new DEDataDefinitionFieldLinkImpl[3];
+
+			array[0] = getByC_DDMSI_PrevAndNext(
+				session, deDataDefinitionFieldLink, classNameId, ddmStructureId,
+				orderByComparator, true);
+
+			array[1] = deDataDefinitionFieldLink;
+
+			array[2] = getByC_DDMSI_PrevAndNext(
+				session, deDataDefinitionFieldLink, classNameId, ddmStructureId,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected DEDataDefinitionFieldLink getByC_DDMSI_PrevAndNext(
+		Session session, DEDataDefinitionFieldLink deDataDefinitionFieldLink,
+		long classNameId, long ddmStructureId,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_DDMSI_CLASSNAMEID_2);
+
+		sb.append(_FINDER_COLUMN_C_DDMSI_DDMSTRUCTUREID_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(classNameId);
+
+		queryPos.add(ddmStructureId);
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						deDataDefinitionFieldLink)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<DEDataDefinitionFieldLink> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; from the database.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 */
+	@Override
+	public void removeByC_DDMSI(long classNameId, long ddmStructureId) {
+		for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+				findByC_DDMSI(
+					classNameId, ddmStructureId, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(deDataDefinitionFieldLink);
+		}
+	}
+
+	/**
+	 * Returns the number of de data definition field links where classNameId = &#63; and ddmStructureId = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @return the number of matching de data definition field links
+	 */
+	@Override
+	public int countByC_DDMSI(long classNameId, long ddmStructureId) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			FinderPath finderPath = _finderPathCountByC_DDMSI;
+
+			Object[] finderArgs = new Object[] {classNameId, ddmStructureId};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
+
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_DDMSTRUCTUREID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_C_DDMSI_CLASSNAMEID_2 =
+		"deDataDefinitionFieldLink.classNameId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_DDMSI_DDMSTRUCTUREID_2 =
+		"deDataDefinitionFieldLink.ddmStructureId = ?";
+
+	private FinderPath _finderPathWithPaginationFindByDDMSI_F;
+	private FinderPath _finderPathWithoutPaginationFindByDDMSI_F;
+	private FinderPath _finderPathCountByDDMSI_F;
+	private FinderPath _finderPathWithPaginationCountByDDMSI_F;
+
+	/**
+	 * Returns all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @return the matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String fieldName) {
+
+		return findByDDMSI_F(
+			ddmStructureId, fieldName, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			null);
+	}
+
+	/**
+	 * Returns a range of all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @return the range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String fieldName, int start, int end) {
+
+		return findByDDMSI_F(ddmStructureId, fieldName, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String fieldName, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		return findByDDMSI_F(
+			ddmStructureId, fieldName, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String fieldName, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			fieldName = Objects.toString(fieldName, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByDDMSI_F;
+					finderArgs = new Object[] {ddmStructureId, fieldName};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByDDMSI_F;
+				finderArgs = new Object[] {
+					ddmStructureId, fieldName, start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
+
+			if (useFinderCache) {
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
+
+						if ((ddmStructureId !=
+								deDataDefinitionFieldLink.
+									getDdmStructureId()) ||
+							!fieldName.equals(
+								deDataDefinitionFieldLink.getFieldName())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(4);
+				}
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2);
+
+				boolean bindFieldName = false;
+
+				if (fieldName.isEmpty()) {
+					sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_3);
+				}
+				else {
+					bindFieldName = true;
+
+					sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(ddmStructureId);
+
+					if (bindFieldName) {
+						queryPos.add(fieldName);
+					}
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first de data definition field link in the ordered set where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink findByDDMSI_F_First(
+			long ddmStructureId, String fieldName,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			fetchByDDMSI_F_First(ddmStructureId, fieldName, orderByComparator);
+
+		if (deDataDefinitionFieldLink != null) {
+			return deDataDefinitionFieldLink;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("ddmStructureId=");
+		sb.append(ddmStructureId);
+
+		sb.append(", fieldName=");
+		sb.append(fieldName);
+
+		sb.append("}");
+
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
+	}
+
+	/**
+	 * Returns the first de data definition field link in the ordered set where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching de data definition field link, or <code>null</code> if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink fetchByDDMSI_F_First(
+		long ddmStructureId, String fieldName,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		List<DEDataDefinitionFieldLink> list = findByDDMSI_F(
+			ddmStructureId, fieldName, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last de data definition field link in the ordered set where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink findByDDMSI_F_Last(
+			long ddmStructureId, String fieldName,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			fetchByDDMSI_F_Last(ddmStructureId, fieldName, orderByComparator);
+
+		if (deDataDefinitionFieldLink != null) {
+			return deDataDefinitionFieldLink;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("ddmStructureId=");
+		sb.append(ddmStructureId);
+
+		sb.append(", fieldName=");
+		sb.append(fieldName);
+
+		sb.append("}");
+
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
+	}
+
+	/**
+	 * Returns the last de data definition field link in the ordered set where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching de data definition field link, or <code>null</code> if a matching de data definition field link could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink fetchByDDMSI_F_Last(
+		long ddmStructureId, String fieldName,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		int count = countByDDMSI_F(ddmStructureId, fieldName);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<DEDataDefinitionFieldLink> list = findByDDMSI_F(
+			ddmStructureId, fieldName, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the de data definition field links before and after the current de data definition field link in the ordered set where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param deDataDefinitionFieldLinkId the primary key of the current de data definition field link
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next de data definition field link
+	 * @throws NoSuchDataDefinitionFieldLinkException if a de data definition field link with the primary key could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink[] findByDDMSI_F_PrevAndNext(
+			long deDataDefinitionFieldLinkId, long ddmStructureId,
+			String fieldName,
+			OrderByComparator<DEDataDefinitionFieldLink> orderByComparator)
+		throws NoSuchDataDefinitionFieldLinkException {
+
+		fieldName = Objects.toString(fieldName, "");
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink = findByPrimaryKey(
+			deDataDefinitionFieldLinkId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			DEDataDefinitionFieldLink[] array =
+				new DEDataDefinitionFieldLinkImpl[3];
+
+			array[0] = getByDDMSI_F_PrevAndNext(
+				session, deDataDefinitionFieldLink, ddmStructureId, fieldName,
+				orderByComparator, true);
+
+			array[1] = deDataDefinitionFieldLink;
+
+			array[2] = getByDDMSI_F_PrevAndNext(
+				session, deDataDefinitionFieldLink, ddmStructureId, fieldName,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected DEDataDefinitionFieldLink getByDDMSI_F_PrevAndNext(
+		Session session, DEDataDefinitionFieldLink deDataDefinitionFieldLink,
+		long ddmStructureId, String fieldName,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+		sb.append(_FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2);
+
+		boolean bindFieldName = false;
+
+		if (fieldName.isEmpty()) {
+			sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_3);
+		}
+		else {
+			bindFieldName = true;
+
+			sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_2);
+		}
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(ddmStructureId);
+
+		if (bindFieldName) {
+			queryPos.add(fieldName);
+		}
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						deDataDefinitionFieldLink)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<DEDataDefinitionFieldLink> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Returns all the de data definition field links where ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @return the matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String[] fieldNames) {
+
+		return findByDDMSI_F(
+			ddmStructureId, fieldNames, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			null);
+	}
+
+	/**
+	 * Returns a range of all the de data definition field links where ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @return the range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String[] fieldNames, int start, int end) {
+
+		return findByDDMSI_F(ddmStructureId, fieldNames, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String[] fieldNames, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		return findByDDMSI_F(
+			ddmStructureId, fieldNames, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByDDMSI_F(
+		long ddmStructureId, String[] fieldNames, int start, int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean useFinderCache) {
+
+		if (fieldNames == null) {
+			fieldNames = new String[0];
+		}
+		else if (fieldNames.length > 1) {
+			for (int i = 0; i < fieldNames.length; i++) {
+				fieldNames[i] = Objects.toString(fieldNames[i], "");
+			}
+
+			fieldNames = ArrayUtil.sortedUnique(fieldNames);
+		}
+
+		if (fieldNames.length == 1) {
+			return findByDDMSI_F(
+				ddmStructureId, fieldNames[0], start, end, orderByComparator);
+		}
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderArgs = new Object[] {
+						ddmStructureId, StringUtil.merge(fieldNames)
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderArgs = new Object[] {
+					ddmStructureId, StringUtil.merge(fieldNames), start, end,
+					orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
+
+			if (useFinderCache) {
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					_finderPathWithPaginationFindByDDMSI_F, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
+
+						if ((ddmStructureId !=
+								deDataDefinitionFieldLink.
+									getDdmStructureId()) ||
+							!ArrayUtil.contains(
+								fieldNames,
+								deDataDefinitionFieldLink.getFieldName())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = new StringBundler();
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2);
+
+				if (fieldNames.length > 0) {
+					sb.append("(");
+
+					for (int i = 0; i < fieldNames.length; i++) {
+						String fieldName = fieldNames[i];
+
+						if (fieldName.isEmpty()) {
+							sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_3);
+						}
+						else {
+							sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_2);
+						}
+
+						if ((i + 1) < fieldNames.length) {
+							sb.append(WHERE_OR);
+						}
+					}
+
+					sb.append(")");
+				}
+
+				sb.setStringAt(
+					removeConjunction(sb.stringAt(sb.index() - 1)),
+					sb.index() - 1);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(ddmStructureId);
+
+					for (String fieldName : fieldNames) {
+						if ((fieldName != null) && !fieldName.isEmpty()) {
+							queryPos.add(fieldName);
+						}
+					}
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathWithPaginationFindByDDMSI_F, finderArgs,
+							list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Removes all the de data definition field links where ddmStructureId = &#63; and fieldName = &#63; from the database.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 */
+	@Override
+	public void removeByDDMSI_F(long ddmStructureId, String fieldName) {
+		for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+				findByDDMSI_F(
+					ddmStructureId, fieldName, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(deDataDefinitionFieldLink);
+		}
+	}
+
+	/**
+	 * Returns the number of de data definition field links where ddmStructureId = &#63; and fieldName = &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldName the field name
+	 * @return the number of matching de data definition field links
+	 */
+	@Override
+	public int countByDDMSI_F(long ddmStructureId, String fieldName) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			fieldName = Objects.toString(fieldName, "");
+
+			FinderPath finderPath = _finderPathCountByDDMSI_F;
+
+			Object[] finderArgs = new Object[] {ddmStructureId, fieldName};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
+
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2);
+
+				boolean bindFieldName = false;
+
+				if (fieldName.isEmpty()) {
+					sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_3);
+				}
+				else {
+					bindFieldName = true;
+
+					sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_2);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(ddmStructureId);
+
+					if (bindFieldName) {
+						queryPos.add(fieldName);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of de data definition field links where ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @return the number of matching de data definition field links
+	 */
+	@Override
+	public int countByDDMSI_F(long ddmStructureId, String[] fieldNames) {
+		if (fieldNames == null) {
+			fieldNames = new String[0];
+		}
+		else if (fieldNames.length > 1) {
+			for (int i = 0; i < fieldNames.length; i++) {
+				fieldNames[i] = Objects.toString(fieldNames[i], "");
+			}
+
+			fieldNames = ArrayUtil.sortedUnique(fieldNames);
+		}
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			Object[] finderArgs = new Object[] {
+				ddmStructureId, StringUtil.merge(fieldNames)
+			};
+
+			Long count = (Long)finderCache.getResult(
+				_finderPathWithPaginationCountByDDMSI_F, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler();
+
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2);
+
+				if (fieldNames.length > 0) {
+					sb.append("(");
+
+					for (int i = 0; i < fieldNames.length; i++) {
+						String fieldName = fieldNames[i];
+
+						if (fieldName.isEmpty()) {
+							sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_3);
+						}
+						else {
+							sb.append(_FINDER_COLUMN_DDMSI_F_FIELDNAME_2);
+						}
+
+						if ((i + 1) < fieldNames.length) {
+							sb.append(WHERE_OR);
+						}
+					}
+
+					sb.append(")");
+				}
+
+				sb.setStringAt(
+					removeConjunction(sb.stringAt(sb.index() - 1)),
+					sb.index() - 1);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(ddmStructureId);
+
+					for (String fieldName : fieldNames) {
+						if ((fieldName != null) && !fieldName.isEmpty()) {
+							queryPos.add(fieldName);
+						}
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathWithPaginationCountByDDMSI_F, finderArgs,
+						count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_DDMSI_F_DDMSTRUCTUREID_2 =
+		"deDataDefinitionFieldLink.ddmStructureId = ? AND ";
+
+	private static final String _FINDER_COLUMN_DDMSI_F_FIELDNAME_2 =
+		"deDataDefinitionFieldLink.fieldName = ?";
+
+	private static final String _FINDER_COLUMN_DDMSI_F_FIELDNAME_3 =
+		"(deDataDefinitionFieldLink.fieldName IS NULL OR deDataDefinitionFieldLink.fieldName = '')";
+
 	private FinderPath _finderPathWithPaginationFindByC_DDMSI_F;
 	private FinderPath _finderPathWithoutPaginationFindByC_DDMSI_F;
 	private FinderPath _finderPathCountByC_DDMSI_F;
+	private FinderPath _finderPathWithPaginationCountByC_DDMSI_F;
 
 	/**
 	 * Returns all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = &#63;.
@@ -2665,131 +4146,133 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		int end, OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		fieldName = Objects.toString(fieldName, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+			fieldName = Objects.toString(fieldName, "");
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
 
-			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByC_DDMSI_F;
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_DDMSI_F;
+					finderArgs = new Object[] {
+						classNameId, ddmStructureId, fieldName
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_DDMSI_F;
 				finderArgs = new Object[] {
-					classNameId, ddmStructureId, fieldName
+					classNameId, ddmStructureId, fieldName, start, end,
+					orderByComparator
 				};
 			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByC_DDMSI_F;
-			finderArgs = new Object[] {
-				classNameId, ddmStructureId, fieldName, start, end,
-				orderByComparator
-			};
-		}
 
-		List<DEDataDefinitionFieldLink> list = null;
+			List<DEDataDefinitionFieldLink> list = null;
 
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
+			if (useFinderCache) {
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-			if ((list != null) && !list.isEmpty()) {
-				for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
-						list) {
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
 
-					if ((classNameId !=
-							deDataDefinitionFieldLink.getClassNameId()) ||
-						(ddmStructureId !=
-							deDataDefinitionFieldLink.getDdmStructureId()) ||
-						!fieldName.equals(
-							deDataDefinitionFieldLink.getFieldName())) {
+						if ((classNameId !=
+								deDataDefinitionFieldLink.getClassNameId()) ||
+							(ddmStructureId !=
+								deDataDefinitionFieldLink.
+									getDdmStructureId()) ||
+							!fieldName.equals(
+								deDataDefinitionFieldLink.getFieldName())) {
 
-						list = null;
+							list = null;
 
-						break;
+							break;
+						}
 					}
 				}
 			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						5 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(5);
+				}
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
+
+				boolean bindFieldName = false;
+
+				if (fieldName.isEmpty()) {
+					sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
+				}
+				else {
+					bindFieldName = true;
+
+					sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					if (bindFieldName) {
+						queryPos.add(fieldName);
+					}
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
-
-		if (list == null) {
-			StringBundler query = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					5 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(5);
-			}
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			query.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
-
-			boolean bindFieldName = false;
-
-			if (fieldName.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
-			}
-			else {
-				bindFieldName = true;
-
-				query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
-			}
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(ddmStructureId);
-
-				if (bindFieldName) {
-					qPos.add(fieldName);
-				}
-
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
 	}
 
 	/**
@@ -2816,22 +4299,22 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("classNameId=");
-		msg.append(classNameId);
+		sb.append("classNameId=");
+		sb.append(classNameId);
 
-		msg.append(", ddmStructureId=");
-		msg.append(ddmStructureId);
+		sb.append(", ddmStructureId=");
+		sb.append(ddmStructureId);
 
-		msg.append(", fieldName=");
-		msg.append(fieldName);
+		sb.append(", fieldName=");
+		sb.append(fieldName);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -2882,22 +4365,22 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			return deDataDefinitionFieldLink;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("classNameId=");
-		msg.append(classNameId);
+		sb.append("classNameId=");
+		sb.append(classNameId);
 
-		msg.append(", ddmStructureId=");
-		msg.append(ddmStructureId);
+		sb.append(", ddmStructureId=");
+		sb.append(ddmStructureId);
 
-		msg.append(", fieldName=");
-		msg.append(fieldName);
+		sb.append(", fieldName=");
+		sb.append(fieldName);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+		throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 	}
 
 	/**
@@ -2974,8 +4457,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2988,32 +4471,32 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+		sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-		query.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
+		sb.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
 
-		query.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
+		sb.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
 
 		boolean bindFieldName = false;
 
 		if (fieldName.isEmpty()) {
-			query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
+			sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
 		}
 		else {
 			bindFieldName = true;
 
-			query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
+			sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
 		}
 
 		if (orderByComparator != null) {
@@ -3021,76 +4504,76 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+			sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(classNameId);
+		queryPos.add(classNameId);
 
-		qPos.add(ddmStructureId);
+		queryPos.add(ddmStructureId);
 
 		if (bindFieldName) {
-			qPos.add(fieldName);
+			queryPos.add(fieldName);
 		}
 
 		if (orderByComparator != null) {
@@ -3098,17 +4581,262 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						deDataDefinitionFieldLink)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<DEDataDefinitionFieldLink> list = q.list();
+		List<DEDataDefinitionFieldLink> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
 		}
 		else {
 			return null;
+		}
+	}
+
+	/**
+	 * Returns all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @return the matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI_F(
+		long classNameId, long ddmStructureId, String[] fieldNames) {
+
+		return findByC_DDMSI_F(
+			classNameId, ddmStructureId, fieldNames, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @return the range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI_F(
+		long classNameId, long ddmStructureId, String[] fieldNames, int start,
+		int end) {
+
+		return findByC_DDMSI_F(
+			classNameId, ddmStructureId, fieldNames, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI_F(
+		long classNameId, long ddmStructureId, String[] fieldNames, int start,
+		int end,
+		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator) {
+
+		return findByC_DDMSI_F(
+			classNameId, ddmStructureId, fieldNames, start, end,
+			orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DEDataDefinitionFieldLinkModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @param start the lower bound of the range of de data definition field links
+	 * @param end the upper bound of the range of de data definition field links (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching de data definition field links
+	 */
+	@Override
+	public List<DEDataDefinitionFieldLink> findByC_DDMSI_F(
+		long classNameId, long ddmStructureId, String[] fieldNames, int start,
+		int end, OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
+		boolean useFinderCache) {
+
+		if (fieldNames == null) {
+			fieldNames = new String[0];
+		}
+		else if (fieldNames.length > 1) {
+			for (int i = 0; i < fieldNames.length; i++) {
+				fieldNames[i] = Objects.toString(fieldNames[i], "");
+			}
+
+			fieldNames = ArrayUtil.sortedUnique(fieldNames);
+		}
+
+		if (fieldNames.length == 1) {
+			return findByC_DDMSI_F(
+				classNameId, ddmStructureId, fieldNames[0], start, end,
+				orderByComparator);
+		}
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderArgs = new Object[] {
+						classNameId, ddmStructureId,
+						StringUtil.merge(fieldNames)
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderArgs = new Object[] {
+					classNameId, ddmStructureId, StringUtil.merge(fieldNames),
+					start, end, orderByComparator
+				};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
+
+			if (useFinderCache) {
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					_finderPathWithPaginationFindByC_DDMSI_F, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+							list) {
+
+						if ((classNameId !=
+								deDataDefinitionFieldLink.getClassNameId()) ||
+							(ddmStructureId !=
+								deDataDefinitionFieldLink.
+									getDdmStructureId()) ||
+							!ArrayUtil.contains(
+								fieldNames,
+								deDataDefinitionFieldLink.getFieldName())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = new StringBundler();
+
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
+
+				if (fieldNames.length > 0) {
+					sb.append("(");
+
+					for (int i = 0; i < fieldNames.length; i++) {
+						String fieldName = fieldNames[i];
+
+						if (fieldName.isEmpty()) {
+							sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
+						}
+						else {
+							sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
+						}
+
+						if ((i + 1) < fieldNames.length) {
+							sb.append(WHERE_OR);
+						}
+					}
+
+					sb.append(")");
+				}
+
+				sb.setStringAt(
+					removeConjunction(sb.stringAt(sb.index() - 1)),
+					sb.index() - 1);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					for (String fieldName : fieldNames) {
+						if ((fieldName != null) && !fieldName.isEmpty()) {
+							queryPos.add(fieldName);
+						}
+					}
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathWithPaginationFindByC_DDMSI_F,
+							finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
 	}
 
@@ -3144,70 +4872,181 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public int countByC_DDMSI_F(
 		long classNameId, long ddmStructureId, String fieldName) {
 
-		fieldName = Objects.toString(fieldName, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		FinderPath finderPath = _finderPathCountByC_DDMSI_F;
+			fieldName = Objects.toString(fieldName, "");
 
-		Object[] finderArgs = new Object[] {
-			classNameId, ddmStructureId, fieldName
-		};
+			FinderPath finderPath = _finderPathCountByC_DDMSI_F;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {
+				classNameId, ddmStructureId, fieldName
+			};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(4);
 
-			query.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
 
-			query.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
 
-			boolean bindFieldName = false;
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
 
-			if (fieldName.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
-			}
-			else {
-				bindFieldName = true;
+				boolean bindFieldName = false;
 
-				query.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
-			}
+				if (fieldName.isEmpty()) {
+					sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
+				}
+				else {
+					bindFieldName = true;
 
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(ddmStructureId);
-
-				if (bindFieldName) {
-					qPos.add(fieldName);
+					sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
 				}
 
-				count = (Long)q.uniqueResult();
+				String sql = sb.toString();
 
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
+				Session session = null;
 
-				throw processException(e);
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					if (bindFieldName) {
+						queryPos.add(fieldName);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			finally {
-				closeSession(session);
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of de data definition field links where classNameId = &#63; and ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @return the number of matching de data definition field links
+	 */
+	@Override
+	public int countByC_DDMSI_F(
+		long classNameId, long ddmStructureId, String[] fieldNames) {
+
+		if (fieldNames == null) {
+			fieldNames = new String[0];
+		}
+		else if (fieldNames.length > 1) {
+			for (int i = 0; i < fieldNames.length; i++) {
+				fieldNames[i] = Objects.toString(fieldNames[i], "");
 			}
+
+			fieldNames = ArrayUtil.sortedUnique(fieldNames);
 		}
 
-		return count.intValue();
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			Object[] finderArgs = new Object[] {
+				classNameId, ddmStructureId, StringUtil.merge(fieldNames)
+			};
+
+			Long count = (Long)finderCache.getResult(
+				_finderPathWithPaginationCountByC_DDMSI_F, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler();
+
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_DDMSI_F_DDMSTRUCTUREID_2);
+
+				if (fieldNames.length > 0) {
+					sb.append("(");
+
+					for (int i = 0; i < fieldNames.length; i++) {
+						String fieldName = fieldNames[i];
+
+						if (fieldName.isEmpty()) {
+							sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_3);
+						}
+						else {
+							sb.append(_FINDER_COLUMN_C_DDMSI_F_FIELDNAME_2);
+						}
+
+						if ((i + 1) < fieldNames.length) {
+							sb.append(WHERE_OR);
+						}
+					}
+
+					sb.append(")");
+				}
+
+				sb.setStringAt(
+					removeConjunction(sb.stringAt(sb.index() - 1)),
+					sb.index() - 1);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(ddmStructureId);
+
+					for (String fieldName : fieldNames) {
+						if ((fieldName != null) && !fieldName.isEmpty()) {
+							queryPos.add(fieldName);
+						}
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathWithPaginationCountByC_DDMSI_F, finderArgs,
+						count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
 	}
 
 	private static final String _FINDER_COLUMN_C_DDMSI_F_CLASSNAMEID_2 =
@@ -3223,7 +5062,7 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		"(deDataDefinitionFieldLink.fieldName IS NULL OR deDataDefinitionFieldLink.fieldName = '')";
 
 	private FinderPath _finderPathFetchByC_C_DDMSI_F;
-	private FinderPath _finderPathCountByC_C_DDMSI_F;
+	private FinderPath _finderPathWithPaginationCountByC_C_DDMSI_F;
 
 	/**
 	 * Returns the de data definition field link where classNameId = &#63; and classPK = &#63; and ddmStructureId = &#63; and fieldName = &#63; or throws a <code>NoSuchDataDefinitionFieldLinkException</code> if it could not be found.
@@ -3245,29 +5084,29 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			fetchByC_C_DDMSI_F(classNameId, classPK, ddmStructureId, fieldName);
 
 		if (deDataDefinitionFieldLink == null) {
-			StringBundler msg = new StringBundler(10);
+			StringBundler sb = new StringBundler(10);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("classNameId=");
-			msg.append(classNameId);
+			sb.append("classNameId=");
+			sb.append(classNameId);
 
-			msg.append(", classPK=");
-			msg.append(classPK);
+			sb.append(", classPK=");
+			sb.append(classPK);
 
-			msg.append(", ddmStructureId=");
-			msg.append(ddmStructureId);
+			sb.append(", ddmStructureId=");
+			sb.append(ddmStructureId);
 
-			msg.append(", fieldName=");
-			msg.append(fieldName);
+			sb.append(", fieldName=");
+			sb.append(fieldName);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchDataDefinitionFieldLinkException(msg.toString());
+			throw new NoSuchDataDefinitionFieldLinkException(sb.toString());
 		}
 
 		return deDataDefinitionFieldLink;
@@ -3305,116 +5144,118 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		long classNameId, long classPK, long ddmStructureId, String fieldName,
 		boolean useFinderCache) {
 
-		fieldName = Objects.toString(fieldName, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		Object[] finderArgs = null;
+			fieldName = Objects.toString(fieldName, "");
 
-		if (useFinderCache) {
-			finderArgs = new Object[] {
-				classNameId, classPK, ddmStructureId, fieldName
-			};
-		}
+			Object[] finderArgs = null;
 
-		Object result = null;
-
-		if (useFinderCache) {
-			result = finderCache.getResult(
-				_finderPathFetchByC_C_DDMSI_F, finderArgs, this);
-		}
-
-		if (result instanceof DEDataDefinitionFieldLink) {
-			DEDataDefinitionFieldLink deDataDefinitionFieldLink =
-				(DEDataDefinitionFieldLink)result;
-
-			if ((classNameId != deDataDefinitionFieldLink.getClassNameId()) ||
-				(classPK != deDataDefinitionFieldLink.getClassPK()) ||
-				(ddmStructureId !=
-					deDataDefinitionFieldLink.getDdmStructureId()) ||
-				!Objects.equals(
-					fieldName, deDataDefinitionFieldLink.getFieldName())) {
-
-				result = null;
-			}
-		}
-
-		if (result == null) {
-			StringBundler query = new StringBundler(6);
-
-			query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSPK_2);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_DDMSTRUCTUREID_2);
-
-			boolean bindFieldName = false;
-
-			if (fieldName.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_3);
-			}
-			else {
-				bindFieldName = true;
-
-				query.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_2);
+			if (useFinderCache) {
+				finderArgs = new Object[] {
+					classNameId, classPK, ddmStructureId, fieldName
+				};
 			}
 
-			String sql = query.toString();
+			Object result = null;
 
-			Session session = null;
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByC_C_DDMSI_F, finderArgs, this);
+			}
 
-			try {
-				session = openSession();
+			if (result instanceof DEDataDefinitionFieldLink) {
+				DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+					(DEDataDefinitionFieldLink)result;
 
-				Query q = session.createQuery(sql);
+				if ((classNameId !=
+						deDataDefinitionFieldLink.getClassNameId()) ||
+					(classPK != deDataDefinitionFieldLink.getClassPK()) ||
+					(ddmStructureId !=
+						deDataDefinitionFieldLink.getDdmStructureId()) ||
+					!Objects.equals(
+						fieldName, deDataDefinitionFieldLink.getFieldName())) {
 
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(classPK);
-
-				qPos.add(ddmStructureId);
-
-				if (bindFieldName) {
-					qPos.add(fieldName);
+					result = null;
 				}
+			}
 
-				List<DEDataDefinitionFieldLink> list = q.list();
+			if (result == null) {
+				StringBundler sb = new StringBundler(6);
 
-				if (list.isEmpty()) {
-					if (useFinderCache) {
-						finderCache.putResult(
-							_finderPathFetchByC_C_DDMSI_F, finderArgs, list);
-					}
+				sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSPK_2);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_DDMSTRUCTUREID_2);
+
+				boolean bindFieldName = false;
+
+				if (fieldName.isEmpty()) {
+					sb.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_3);
 				}
 				else {
-					DEDataDefinitionFieldLink deDataDefinitionFieldLink =
-						list.get(0);
+					bindFieldName = true;
 
-					result = deDataDefinitionFieldLink;
-
-					cacheResult(deDataDefinitionFieldLink);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByC_C_DDMSI_F, finderArgs);
+					sb.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_2);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				String sql = sb.toString();
 
-		if (result instanceof List<?>) {
-			return null;
-		}
-		else {
-			return (DEDataDefinitionFieldLink)result;
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(classPK);
+
+					queryPos.add(ddmStructureId);
+
+					if (bindFieldName) {
+						queryPos.add(fieldName);
+					}
+
+					List<DEDataDefinitionFieldLink> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByC_C_DDMSI_F, finderArgs,
+								list);
+						}
+					}
+					else {
+						DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+							list.get(0);
+
+						result = deDataDefinitionFieldLink;
+
+						cacheResult(deDataDefinitionFieldLink);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (DEDataDefinitionFieldLink)result;
+			}
 		}
 	}
 
@@ -3452,74 +5293,128 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public int countByC_C_DDMSI_F(
 		long classNameId, long classPK, long ddmStructureId, String fieldName) {
 
-		fieldName = Objects.toString(fieldName, "");
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			fetchByC_C_DDMSI_F(classNameId, classPK, ddmStructureId, fieldName);
 
-		FinderPath finderPath = _finderPathCountByC_C_DDMSI_F;
-
-		Object[] finderArgs = new Object[] {
-			classNameId, classPK, ddmStructureId, fieldName
-		};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(5);
-
-			query.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSPK_2);
-
-			query.append(_FINDER_COLUMN_C_C_DDMSI_F_DDMSTRUCTUREID_2);
-
-			boolean bindFieldName = false;
-
-			if (fieldName.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_3);
-			}
-			else {
-				bindFieldName = true;
-
-				query.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_2);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(classPK);
-
-				qPos.add(ddmStructureId);
-
-				if (bindFieldName) {
-					qPos.add(fieldName);
-				}
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (deDataDefinitionFieldLink == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
+	}
+
+	/**
+	 * Returns the number of de data definition field links where classNameId = &#63; and classPK = &#63; and ddmStructureId = &#63; and fieldName = any &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param ddmStructureId the ddm structure ID
+	 * @param fieldNames the field names
+	 * @return the number of matching de data definition field links
+	 */
+	@Override
+	public int countByC_C_DDMSI_F(
+		long classNameId, long classPK, long ddmStructureId,
+		String[] fieldNames) {
+
+		if (fieldNames == null) {
+			fieldNames = new String[0];
+		}
+		else if (fieldNames.length > 1) {
+			for (int i = 0; i < fieldNames.length; i++) {
+				fieldNames[i] = Objects.toString(fieldNames[i], "");
+			}
+
+			fieldNames = ArrayUtil.sortedUnique(fieldNames);
+		}
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
+
+			Object[] finderArgs = new Object[] {
+				classNameId, classPK, ddmStructureId,
+				StringUtil.merge(fieldNames)
+			};
+
+			Long count = (Long)finderCache.getResult(
+				_finderPathWithPaginationCountByC_C_DDMSI_F, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler();
+
+				sb.append(_SQL_COUNT_DEDATADEFINITIONFIELDLINK_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSNAMEID_2);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_CLASSPK_2);
+
+				sb.append(_FINDER_COLUMN_C_C_DDMSI_F_DDMSTRUCTUREID_2);
+
+				if (fieldNames.length > 0) {
+					sb.append("(");
+
+					for (int i = 0; i < fieldNames.length; i++) {
+						String fieldName = fieldNames[i];
+
+						if (fieldName.isEmpty()) {
+							sb.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_3);
+						}
+						else {
+							sb.append(_FINDER_COLUMN_C_C_DDMSI_F_FIELDNAME_2);
+						}
+
+						if ((i + 1) < fieldNames.length) {
+							sb.append(WHERE_OR);
+						}
+					}
+
+					sb.append(")");
+				}
+
+				sb.setStringAt(
+					removeConjunction(sb.stringAt(sb.index() - 1)),
+					sb.index() - 1);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(classNameId);
+
+					queryPos.add(classPK);
+
+					queryPos.add(ddmStructureId);
+
+					for (String fieldName : fieldNames) {
+						if ((fieldName != null) && !fieldName.isEmpty()) {
+							queryPos.add(fieldName);
+						}
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathWithPaginationCountByC_C_DDMSI_F, finderArgs,
+						count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
 	}
 
 	private static final String _FINDER_COLUMN_C_C_DDMSI_F_CLASSNAMEID_2 =
@@ -3538,16 +5433,18 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		"(deDataDefinitionFieldLink.fieldName IS NULL OR deDataDefinitionFieldLink.fieldName = '')";
 
 	public DEDataDefinitionFieldLinkPersistenceImpl() {
-		setModelClass(DEDataDefinitionFieldLink.class);
-
-		setModelImplClass(DEDataDefinitionFieldLinkImpl.class);
-		setModelPKClass(long.class);
-
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
 
 		dbColumnNames.put("uuid", "uuid_");
 
 		setDBColumnNames(dbColumnNames);
+
+		setModelClass(DEDataDefinitionFieldLink.class);
+
+		setModelImplClass(DEDataDefinitionFieldLinkImpl.class);
+		setModelPKClass(long.class);
+
+		setTable(DEDataDefinitionFieldLinkTable.INSTANCE);
 	}
 
 	/**
@@ -3559,31 +5456,36 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public void cacheResult(
 		DEDataDefinitionFieldLink deDataDefinitionFieldLink) {
 
-		entityCache.putResult(
-			entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-			deDataDefinitionFieldLink.getPrimaryKey(),
-			deDataDefinitionFieldLink);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					deDataDefinitionFieldLink.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathFetchByUUID_G,
-			new Object[] {
-				deDataDefinitionFieldLink.getUuid(),
-				deDataDefinitionFieldLink.getGroupId()
-			},
-			deDataDefinitionFieldLink);
+			entityCache.putResult(
+				DEDataDefinitionFieldLinkImpl.class,
+				deDataDefinitionFieldLink.getPrimaryKey(),
+				deDataDefinitionFieldLink);
 
-		finderCache.putResult(
-			_finderPathFetchByC_C_DDMSI_F,
-			new Object[] {
-				deDataDefinitionFieldLink.getClassNameId(),
-				deDataDefinitionFieldLink.getClassPK(),
-				deDataDefinitionFieldLink.getDdmStructureId(),
-				deDataDefinitionFieldLink.getFieldName()
-			},
-			deDataDefinitionFieldLink);
+			finderCache.putResult(
+				_finderPathFetchByUUID_G,
+				new Object[] {
+					deDataDefinitionFieldLink.getUuid(),
+					deDataDefinitionFieldLink.getGroupId()
+				},
+				deDataDefinitionFieldLink);
 
-		deDataDefinitionFieldLink.resetOriginalValues();
+			finderCache.putResult(
+				_finderPathFetchByC_C_DDMSI_F,
+				new Object[] {
+					deDataDefinitionFieldLink.getClassNameId(),
+					deDataDefinitionFieldLink.getClassPK(),
+					deDataDefinitionFieldLink.getDdmStructureId(),
+					deDataDefinitionFieldLink.getFieldName()
+				},
+				deDataDefinitionFieldLink);
+		}
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the de data definition field links in the entity cache if it is enabled.
@@ -3594,17 +5496,27 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public void cacheResult(
 		List<DEDataDefinitionFieldLink> deDataDefinitionFieldLinks) {
 
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (deDataDefinitionFieldLinks.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
 				deDataDefinitionFieldLinks) {
 
-			if (entityCache.getResult(
-					entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-					deDataDefinitionFieldLink.getPrimaryKey()) == null) {
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						deDataDefinitionFieldLink.getCtCollectionId())) {
 
-				cacheResult(deDataDefinitionFieldLink);
-			}
-			else {
-				deDataDefinitionFieldLink.resetOriginalValues();
+				if (entityCache.getResult(
+						DEDataDefinitionFieldLinkImpl.class,
+						deDataDefinitionFieldLink.getPrimaryKey()) == null) {
+
+					cacheResult(deDataDefinitionFieldLink);
+				}
 			}
 		}
 	}
@@ -3620,9 +5532,7 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(DEDataDefinitionFieldLinkImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(DEDataDefinitionFieldLinkImpl.class);
 	}
 
 	/**
@@ -3637,128 +5547,57 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		DEDataDefinitionFieldLink deDataDefinitionFieldLink) {
 
 		entityCache.removeResult(
-			entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-			deDataDefinitionFieldLink.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
-		clearUniqueFindersCache(
-			(DEDataDefinitionFieldLinkModelImpl)deDataDefinitionFieldLink,
-			true);
+			DEDataDefinitionFieldLinkImpl.class, deDataDefinitionFieldLink);
 	}
 
 	@Override
 	public void clearCache(
 		List<DEDataDefinitionFieldLink> deDataDefinitionFieldLinks) {
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
 				deDataDefinitionFieldLinks) {
 
 			entityCache.removeResult(
-				entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-				deDataDefinitionFieldLink.getPrimaryKey());
-
-			clearUniqueFindersCache(
-				(DEDataDefinitionFieldLinkModelImpl)deDataDefinitionFieldLink,
-				true);
+				DEDataDefinitionFieldLinkImpl.class, deDataDefinitionFieldLink);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(DEDataDefinitionFieldLinkImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
 			entityCache.removeResult(
-				entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-				primaryKey);
+				DEDataDefinitionFieldLinkImpl.class, primaryKey);
 		}
 	}
 
 	protected void cacheUniqueFindersCache(
 		DEDataDefinitionFieldLinkModelImpl deDataDefinitionFieldLinkModelImpl) {
 
-		Object[] args = new Object[] {
-			deDataDefinitionFieldLinkModelImpl.getUuid(),
-			deDataDefinitionFieldLinkModelImpl.getGroupId()
-		};
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					deDataDefinitionFieldLinkModelImpl.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathCountByUUID_G, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByUUID_G, args, deDataDefinitionFieldLinkModelImpl,
-			false);
-
-		args = new Object[] {
-			deDataDefinitionFieldLinkModelImpl.getClassNameId(),
-			deDataDefinitionFieldLinkModelImpl.getClassPK(),
-			deDataDefinitionFieldLinkModelImpl.getDdmStructureId(),
-			deDataDefinitionFieldLinkModelImpl.getFieldName()
-		};
-
-		finderCache.putResult(
-			_finderPathCountByC_C_DDMSI_F, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByC_C_DDMSI_F, args,
-			deDataDefinitionFieldLinkModelImpl, false);
-	}
-
-	protected void clearUniqueFindersCache(
-		DEDataDefinitionFieldLinkModelImpl deDataDefinitionFieldLinkModelImpl,
-		boolean clearCurrent) {
-
-		if (clearCurrent) {
 			Object[] args = new Object[] {
 				deDataDefinitionFieldLinkModelImpl.getUuid(),
 				deDataDefinitionFieldLinkModelImpl.getGroupId()
 			};
 
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
+			finderCache.putResult(
+				_finderPathFetchByUUID_G, args,
+				deDataDefinitionFieldLinkModelImpl);
 
-		if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-			 _finderPathFetchByUUID_G.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getOriginalUuid(),
-				deDataDefinitionFieldLinkModelImpl.getOriginalGroupId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
-
-		if (clearCurrent) {
-			Object[] args = new Object[] {
+			args = new Object[] {
 				deDataDefinitionFieldLinkModelImpl.getClassNameId(),
 				deDataDefinitionFieldLinkModelImpl.getClassPK(),
 				deDataDefinitionFieldLinkModelImpl.getDdmStructureId(),
 				deDataDefinitionFieldLinkModelImpl.getFieldName()
 			};
 
-			finderCache.removeResult(_finderPathCountByC_C_DDMSI_F, args);
-			finderCache.removeResult(_finderPathFetchByC_C_DDMSI_F, args);
-		}
-
-		if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-			 _finderPathFetchByC_C_DDMSI_F.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getOriginalClassNameId(),
-				deDataDefinitionFieldLinkModelImpl.getOriginalClassPK(),
-				deDataDefinitionFieldLinkModelImpl.getOriginalDdmStructureId(),
-				deDataDefinitionFieldLinkModelImpl.getOriginalFieldName()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_C_DDMSI_F, args);
-			finderCache.removeResult(_finderPathFetchByC_C_DDMSI_F, args);
+			finderCache.putResult(
+				_finderPathFetchByC_C_DDMSI_F, args,
+				deDataDefinitionFieldLinkModelImpl);
 		}
 	}
 
@@ -3831,11 +5670,11 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 
 			return remove(deDataDefinitionFieldLink);
 		}
-		catch (NoSuchDataDefinitionFieldLinkException nsee) {
-			throw nsee;
+		catch (NoSuchDataDefinitionFieldLinkException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3858,12 +5697,14 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 						deDataDefinitionFieldLink.getPrimaryKeyObj());
 			}
 
-			if (deDataDefinitionFieldLink != null) {
+			if ((deDataDefinitionFieldLink != null) &&
+				ctPersistenceHelper.isRemove(deDataDefinitionFieldLink)) {
+
 				session.delete(deDataDefinitionFieldLink);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3910,15 +5751,44 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 			deDataDefinitionFieldLink.setUuid(uuid);
 		}
 
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		Date date = new Date();
+
+		if (isNew && (deDataDefinitionFieldLink.getCreateDate() == null)) {
+			if (serviceContext == null) {
+				deDataDefinitionFieldLink.setCreateDate(date);
+			}
+			else {
+				deDataDefinitionFieldLink.setCreateDate(
+					serviceContext.getCreateDate(date));
+			}
+		}
+
+		if (!deDataDefinitionFieldLinkModelImpl.hasSetModifiedDate()) {
+			if (serviceContext == null) {
+				deDataDefinitionFieldLink.setModifiedDate(date);
+			}
+			else {
+				deDataDefinitionFieldLink.setModifiedDate(
+					serviceContext.getModifiedDate(date));
+			}
+		}
+
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			if (deDataDefinitionFieldLink.isNew()) {
-				session.save(deDataDefinitionFieldLink);
+			if (ctPersistenceHelper.isInsert(deDataDefinitionFieldLink)) {
+				if (!isNew) {
+					session.evict(
+						DEDataDefinitionFieldLinkImpl.class,
+						deDataDefinitionFieldLink.getPrimaryKeyObj());
+				}
 
-				deDataDefinitionFieldLink.setNew(false);
+				session.save(deDataDefinitionFieldLink);
 			}
 			else {
 				deDataDefinitionFieldLink =
@@ -3926,193 +5796,22 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 						deDataDefinitionFieldLink);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getUuid()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid, args);
-
-			args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getUuid(),
-				deDataDefinitionFieldLinkModelImpl.getCompanyId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid_C, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid_C, args);
-
-			args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getDdmStructureId()
-			};
-
-			finderCache.removeResult(_finderPathCountByDDMStructureId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByDDMStructureId, args);
-
-			args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getClassNameId(),
-				deDataDefinitionFieldLinkModelImpl.getClassPK()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_C, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_C, args);
-
-			args = new Object[] {
-				deDataDefinitionFieldLinkModelImpl.getClassNameId(),
-				deDataDefinitionFieldLinkModelImpl.getDdmStructureId(),
-				deDataDefinitionFieldLinkModelImpl.getFieldName()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_DDMSI_F, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_DDMSI_F, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getOriginalUuid()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-
-				args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getUuid()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-			}
-
-			if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getOriginalUuid(),
-					deDataDefinitionFieldLinkModelImpl.getOriginalCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-
-				args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getUuid(),
-					deDataDefinitionFieldLinkModelImpl.getCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-			}
-
-			if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByDDMStructureId.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.
-						getOriginalDdmStructureId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByDDMStructureId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByDDMStructureId, args);
-
-				args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getDdmStructureId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByDDMStructureId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByDDMStructureId, args);
-			}
-
-			if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getOriginalClassNameId(),
-					deDataDefinitionFieldLinkModelImpl.getOriginalClassPK()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_C, args);
-
-				args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getClassNameId(),
-					deDataDefinitionFieldLinkModelImpl.getClassPK()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_C, args);
-			}
-
-			if ((deDataDefinitionFieldLinkModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_DDMSI_F.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getOriginalClassNameId(),
-					deDataDefinitionFieldLinkModelImpl.
-						getOriginalDdmStructureId(),
-					deDataDefinitionFieldLinkModelImpl.getOriginalFieldName()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_DDMSI_F, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_DDMSI_F, args);
-
-				args = new Object[] {
-					deDataDefinitionFieldLinkModelImpl.getClassNameId(),
-					deDataDefinitionFieldLinkModelImpl.getDdmStructureId(),
-					deDataDefinitionFieldLinkModelImpl.getFieldName()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_DDMSI_F, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_DDMSI_F, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, DEDataDefinitionFieldLinkImpl.class,
-			deDataDefinitionFieldLink.getPrimaryKey(),
-			deDataDefinitionFieldLink, false);
+			DEDataDefinitionFieldLinkImpl.class,
+			deDataDefinitionFieldLinkModelImpl, false, true);
 
-		clearUniqueFindersCache(deDataDefinitionFieldLinkModelImpl, false);
 		cacheUniqueFindersCache(deDataDefinitionFieldLinkModelImpl);
+
+		if (isNew) {
+			deDataDefinitionFieldLink.setNew(false);
+		}
 
 		deDataDefinitionFieldLink.resetOriginalValues();
 
@@ -4163,6 +5862,57 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	/**
 	 * Returns the de data definition field link with the primary key or returns <code>null</code> if it could not be found.
 	 *
+	 * @param primaryKey the primary key of the de data definition field link
+	 * @return the de data definition field link, or <code>null</code> if a de data definition field link with the primary key could not be found
+	 */
+	@Override
+	public DEDataDefinitionFieldLink fetchByPrimaryKey(
+		Serializable primaryKey) {
+
+		if (ctPersistenceHelper.isProductionMode(
+				DEDataDefinitionFieldLink.class, primaryKey)) {
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKey(primaryKey);
+			}
+		}
+
+		DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+			(DEDataDefinitionFieldLink)entityCache.getResult(
+				DEDataDefinitionFieldLinkImpl.class, primaryKey);
+
+		if (deDataDefinitionFieldLink != null) {
+			return deDataDefinitionFieldLink;
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			deDataDefinitionFieldLink = (DEDataDefinitionFieldLink)session.get(
+				DEDataDefinitionFieldLinkImpl.class, primaryKey);
+
+			if (deDataDefinitionFieldLink != null) {
+				cacheResult(deDataDefinitionFieldLink);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return deDataDefinitionFieldLink;
+	}
+
+	/**
+	 * Returns the de data definition field link with the primary key or returns <code>null</code> if it could not be found.
+	 *
 	 * @param deDataDefinitionFieldLinkId the primary key of the de data definition field link
 	 * @return the de data definition field link, or <code>null</code> if a de data definition field link with the primary key could not be found
 	 */
@@ -4171,6 +5921,137 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		long deDataDefinitionFieldLinkId) {
 
 		return fetchByPrimaryKey((Serializable)deDataDefinitionFieldLinkId);
+	}
+
+	@Override
+	public Map<Serializable, DEDataDefinitionFieldLink> fetchByPrimaryKeys(
+		Set<Serializable> primaryKeys) {
+
+		if (ctPersistenceHelper.isProductionMode(
+				DEDataDefinitionFieldLink.class)) {
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKeys(primaryKeys);
+			}
+		}
+
+		if (primaryKeys.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		Map<Serializable, DEDataDefinitionFieldLink> map =
+			new HashMap<Serializable, DEDataDefinitionFieldLink>();
+
+		if (primaryKeys.size() == 1) {
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			Serializable primaryKey = iterator.next();
+
+			DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+				fetchByPrimaryKey(primaryKey);
+
+			if (deDataDefinitionFieldLink != null) {
+				map.put(primaryKey, deDataDefinitionFieldLink);
+			}
+
+			return map;
+		}
+
+		Set<Serializable> uncachedPrimaryKeys = null;
+
+		for (Serializable primaryKey : primaryKeys) {
+			try (SafeCloseable safeCloseable =
+					ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+						DEDataDefinitionFieldLink.class, primaryKey)) {
+
+				DEDataDefinitionFieldLink deDataDefinitionFieldLink =
+					(DEDataDefinitionFieldLink)entityCache.getResult(
+						DEDataDefinitionFieldLinkImpl.class, primaryKey);
+
+				if (deDataDefinitionFieldLink == null) {
+					if (uncachedPrimaryKeys == null) {
+						uncachedPrimaryKeys = new HashSet<>();
+					}
+
+					uncachedPrimaryKeys.add(primaryKey);
+				}
+				else {
+					map.put(primaryKey, deDataDefinitionFieldLink);
+				}
+			}
+		}
+
+		if (uncachedPrimaryKeys == null) {
+			return map;
+		}
+
+		if ((databaseInMaxParameters > 0) &&
+			(primaryKeys.size() > databaseInMaxParameters)) {
+
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			while (iterator.hasNext()) {
+				Set<Serializable> page = new HashSet<>();
+
+				for (int i = 0;
+					 (i < databaseInMaxParameters) && iterator.hasNext(); i++) {
+
+					page.add(iterator.next());
+				}
+
+				map.putAll(fetchByPrimaryKeys(page));
+			}
+
+			return map;
+		}
+
+		StringBundler sb = new StringBundler((primaryKeys.size() * 2) + 1);
+
+		sb.append(getSelectSQL());
+		sb.append(" WHERE ");
+		sb.append(getPKDBName());
+		sb.append(" IN (");
+
+		for (Serializable primaryKey : primaryKeys) {
+			sb.append((long)primaryKey);
+
+			sb.append(",");
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		sb.append(")");
+
+		String sql = sb.toString();
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Query query = session.createQuery(sql);
+
+			for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
+					(List<DEDataDefinitionFieldLink>)query.list()) {
+
+				map.put(
+					deDataDefinitionFieldLink.getPrimaryKeyObj(),
+					deDataDefinitionFieldLink);
+
+				cacheResult(deDataDefinitionFieldLink);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return map;
 	}
 
 	/**
@@ -4238,80 +6119,81 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		OrderByComparator<DEDataDefinitionFieldLink> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindAll;
+					finderArgs = FINDER_ARGS_EMPTY;
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindAll;
+				finderArgs = new Object[] {start, end, orderByComparator};
+			}
+
+			List<DEDataDefinitionFieldLink> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindAll;
-				finderArgs = FINDER_ARGS_EMPTY;
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindAll;
-			finderArgs = new Object[] {start, end, orderByComparator};
-		}
-
-		List<DEDataDefinitionFieldLink> list = null;
-
-		if (useFinderCache) {
-			list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
-				finderPath, finderArgs, this);
-		}
-
-		if (list == null) {
-			StringBundler query = null;
-			String sql = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					2 + (orderByComparator.getOrderByFields().length * 2));
-
-				query.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK);
-
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-
-				sql = query.toString();
-			}
-			else {
-				sql = _SQL_SELECT_DEDATADEFINITIONFIELDLINK;
-
-				sql = sql.concat(
-					DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
+				list = (List<DEDataDefinitionFieldLink>)finderCache.getResult(
+					finderPath, finderArgs, this);
 			}
 
-			Session session = null;
+			if (list == null) {
+				StringBundler sb = null;
+				String sql = null;
 
-			try {
-				session = openSession();
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						2 + (orderByComparator.getOrderByFields().length * 2));
 
-				Query q = session.createQuery(sql);
+					sb.append(_SQL_SELECT_DEDATADEFINITIONFIELDLINK);
 
-				list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
-					q, getDialect(), start, end);
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+					sql = sb.toString();
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sql = _SQL_SELECT_DEDATADEFINITIONFIELDLINK;
+
+					sql = sql.concat(
+						DEDataDefinitionFieldLinkModelImpl.ORDER_BY_JPQL);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				Session session = null;
 
-		return list;
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					list = (List<DEDataDefinitionFieldLink>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -4332,35 +6214,37 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Override
 	public int countAll() {
-		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					DEDataDefinitionFieldLink.class)) {
 
-		if (count == null) {
-			Session session = null;
+			Long count = (Long)finderCache.getResult(
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
-			try {
-				session = openSession();
+			if (count == null) {
+				Session session = null;
 
-				Query q = session.createQuery(
-					_SQL_COUNT_DEDATADEFINITIONFIELDLINK);
+				try {
+					session = openSession();
 
-				count = (Long)q.uniqueResult();
+					Query query = session.createQuery(
+						_SQL_COUNT_DEDATADEFINITIONFIELDLINK);
 
-				finderCache.putResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	@Override
@@ -4384,8 +6268,77 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	}
 
 	@Override
-	protected Map<String, Integer> getTableColumnsMap() {
+	public Set<String> getCTColumnNames(
+		CTColumnResolutionType ctColumnResolutionType) {
+
+		return _ctColumnNamesMap.getOrDefault(
+			ctColumnResolutionType, Collections.emptySet());
+	}
+
+	@Override
+	public List<String> getMappingTableNames() {
+		return _mappingTableNames;
+	}
+
+	@Override
+	public Map<String, Integer> getTableColumnsMap() {
 		return DEDataDefinitionFieldLinkModelImpl.TABLE_COLUMNS_MAP;
+	}
+
+	@Override
+	public String getTableName() {
+		return "DEDataDefinitionFieldLink";
+	}
+
+	@Override
+	public List<String[]> getUniqueIndexColumnNames() {
+		return _uniqueIndexColumnNames;
+	}
+
+	private static final Map<CTColumnResolutionType, Set<String>>
+		_ctColumnNamesMap = new EnumMap<CTColumnResolutionType, Set<String>>(
+			CTColumnResolutionType.class);
+	private static final List<String> _mappingTableNames =
+		new ArrayList<String>();
+	private static final List<String[]> _uniqueIndexColumnNames =
+		new ArrayList<String[]>();
+
+	static {
+		Set<String> ctControlColumnNames = new HashSet<String>();
+		Set<String> ctIgnoreColumnNames = new HashSet<String>();
+		Set<String> ctMergeColumnNames = new HashSet<String>();
+		Set<String> ctStrictColumnNames = new HashSet<String>();
+
+		ctControlColumnNames.add("mvccVersion");
+		ctControlColumnNames.add("ctCollectionId");
+		ctStrictColumnNames.add("uuid_");
+		ctStrictColumnNames.add("groupId");
+		ctStrictColumnNames.add("companyId");
+		ctStrictColumnNames.add("createDate");
+		ctIgnoreColumnNames.add("modifiedDate");
+		ctStrictColumnNames.add("classNameId");
+		ctStrictColumnNames.add("classPK");
+		ctMergeColumnNames.add("ddmStructureId");
+		ctMergeColumnNames.add("fieldName");
+		ctMergeColumnNames.add("lastPublishDate");
+
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.CONTROL, ctControlColumnNames);
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.IGNORE, ctIgnoreColumnNames);
+		_ctColumnNamesMap.put(CTColumnResolutionType.MERGE, ctMergeColumnNames);
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.PK,
+			Collections.singleton("deDataDefinitionFieldLinkId"));
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.STRICT, ctStrictColumnNames);
+
+		_uniqueIndexColumnNames.add(new String[] {"uuid_", "groupId"});
+
+		_uniqueIndexColumnNames.add(
+			new String[] {
+				"classNameId", "classPK", "ddmStructureId", "fieldName"
+			});
 	}
 
 	/**
@@ -4393,186 +6346,206 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		DEDataDefinitionFieldLinkModelImpl.setEntityCacheEnabled(
-			entityCacheEnabled);
-		DEDataDefinitionFieldLinkModelImpl.setFinderCacheEnabled(
-			finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 			new String[] {
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_"}, true);
 
 		_finderPathWithoutPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
-			new String[] {String.class.getName()},
-			DEDataDefinitionFieldLinkModelImpl.UUID_COLUMN_BITMASK);
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			true);
 
 		_finderPathCountByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-			new String[] {String.class.getName()});
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			false);
 
 		_finderPathFetchByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByUUID_G",
+			FINDER_CLASS_NAME_ENTITY, "fetchByUUID_G",
 			new String[] {String.class.getName(), Long.class.getName()},
-			DEDataDefinitionFieldLinkModelImpl.UUID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.GROUPID_COLUMN_BITMASK);
-
-		_finderPathCountByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUUID_G",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {"uuid_", "groupId"}, true);
 
 		_finderPathWithPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 			new String[] {
 				String.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathWithoutPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 			new String[] {String.class.getName(), Long.class.getName()},
-			DEDataDefinitionFieldLinkModelImpl.UUID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.COMPANYID_COLUMN_BITMASK);
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathCountByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"uuid_", "companyId"}, false);
 
 		_finderPathWithPaginationFindByDDMStructureId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByDDMStructureId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"ddmStructureId"}, true);
 
 		_finderPathWithoutPaginationFindByDDMStructureId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByDDMStructureId",
 			new String[] {Long.class.getName()},
-			DEDataDefinitionFieldLinkModelImpl.DDMSTRUCTUREID_COLUMN_BITMASK);
+			new String[] {"ddmStructureId"}, true);
 
 		_finderPathCountByDDMStructureId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByDDMStructureId",
-			new String[] {Long.class.getName()});
+			new String[] {Long.class.getName()},
+			new String[] {"ddmStructureId"}, false);
 
 		_finderPathWithPaginationFindByC_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"classNameId", "classPK"}, true);
 
 		_finderPathWithoutPaginationFindByC_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_C",
 			new String[] {Long.class.getName(), Long.class.getName()},
-			DEDataDefinitionFieldLinkModelImpl.CLASSNAMEID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.CLASSPK_COLUMN_BITMASK);
+			new String[] {"classNameId", "classPK"}, true);
 
 		_finderPathCountByC_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C",
-			new String[] {Long.class.getName(), Long.class.getName()});
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"classNameId", "classPK"}, false);
+
+		_finderPathWithPaginationFindByC_DDMSI = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_DDMSI",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {"classNameId", "ddmStructureId"}, true);
+
+		_finderPathWithoutPaginationFindByC_DDMSI = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_DDMSI",
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"classNameId", "ddmStructureId"}, true);
+
+		_finderPathCountByC_DDMSI = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_DDMSI",
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"classNameId", "ddmStructureId"}, false);
+
+		_finderPathWithPaginationFindByDDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByDDMSI_F",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {"ddmStructureId", "fieldName"}, true);
+
+		_finderPathWithoutPaginationFindByDDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByDDMSI_F",
+			new String[] {Long.class.getName(), String.class.getName()},
+			new String[] {"ddmStructureId", "fieldName"}, true);
+
+		_finderPathCountByDDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByDDMSI_F",
+			new String[] {Long.class.getName(), String.class.getName()},
+			new String[] {"ddmStructureId", "fieldName"}, false);
+
+		_finderPathWithPaginationCountByDDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByDDMSI_F",
+			new String[] {Long.class.getName(), String.class.getName()},
+			new String[] {"ddmStructureId", "fieldName"}, false);
 
 		_finderPathWithPaginationFindByC_DDMSI_F = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_DDMSI_F",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"classNameId", "ddmStructureId", "fieldName"}, true);
 
 		_finderPathWithoutPaginationFindByC_DDMSI_F = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_DDMSI_F",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName()
 			},
-			DEDataDefinitionFieldLinkModelImpl.CLASSNAMEID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.DDMSTRUCTUREID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.FIELDNAME_COLUMN_BITMASK);
+			new String[] {"classNameId", "ddmStructureId", "fieldName"}, true);
 
 		_finderPathCountByC_DDMSI_F = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_DDMSI_F",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName()
-			});
+			},
+			new String[] {"classNameId", "ddmStructureId", "fieldName"}, false);
+
+		_finderPathWithPaginationCountByC_DDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_DDMSI_F",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName()
+			},
+			new String[] {"classNameId", "ddmStructureId", "fieldName"}, false);
 
 		_finderPathFetchByC_C_DDMSI_F = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			DEDataDefinitionFieldLinkImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByC_C_DDMSI_F",
+			FINDER_CLASS_NAME_ENTITY, "fetchByC_C_DDMSI_F",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				Long.class.getName(), String.class.getName()
 			},
-			DEDataDefinitionFieldLinkModelImpl.CLASSNAMEID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.CLASSPK_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.DDMSTRUCTUREID_COLUMN_BITMASK |
-			DEDataDefinitionFieldLinkModelImpl.FIELDNAME_COLUMN_BITMASK);
+			new String[] {
+				"classNameId", "classPK", "ddmStructureId", "fieldName"
+			},
+			true);
 
-		_finderPathCountByC_C_DDMSI_F = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_DDMSI_F",
+		_finderPathWithPaginationCountByC_C_DDMSI_F = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_C_DDMSI_F",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				Long.class.getName(), String.class.getName()
-			});
+			},
+			new String[] {
+				"classNameId", "classPK", "ddmStructureId", "fieldName"
+			},
+			false);
+
+		DEDataDefinitionFieldLinkUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		DEDataDefinitionFieldLinkUtil.setPersistence(null);
+
 		entityCache.removeCache(DEDataDefinitionFieldLinkImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -4581,12 +6554,6 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.data.engine.model.DEDataDefinitionFieldLink"),
-			true);
 	}
 
 	@Override
@@ -4607,7 +6574,8 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 		super.setSessionFactory(sessionFactory);
 	}
 
-	private boolean _columnBitmaskEnabled;
+	@Reference
+	protected CTPersistenceHelper ctPersistenceHelper;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -4642,13 +6610,9 @@ public class DEDataDefinitionFieldLinkPersistenceImpl
 	private static final Set<String> _badColumnNames = SetUtil.fromArray(
 		new String[] {"uuid"});
 
-	static {
-		try {
-			Class.forName(DEPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

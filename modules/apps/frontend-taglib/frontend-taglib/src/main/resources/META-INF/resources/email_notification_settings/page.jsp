@@ -1,41 +1,27 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String bodyLabel = (String)request.getAttribute("liferay-frontend:email-notification-settings:bodyLabel");
 String emailBody = (String)request.getAttribute("liferay-frontend:email-notification-settings:emailBody");
 Map<String, String> emailDefinitionTerms = (Map<String, String>)request.getAttribute("liferay-frontend:email-notification-settings:emailDefinitionTerms");
-boolean emailEnabled = GetterUtil.getBoolean((String)request.getAttribute("liferay-frontend:email-notification-settings:emailEnabled"));
 String emailParam = (String)request.getAttribute("liferay-frontend:email-notification-settings:emailParam");
 String emailSubject = (String)request.getAttribute("liferay-frontend:email-notification-settings:emailSubject");
 String fieldPrefix = (String)request.getAttribute("liferay-frontend:email-notification-settings:fieldPrefix");
 String fieldPrefixSeparator = (String)request.getAttribute("liferay-frontend:email-notification-settings:fieldPrefixSeparator");
-String helpMessage = (String)request.getAttribute("liferay-frontend:email-notification-settings:helpMessage");
-boolean showEmailEnabled = GetterUtil.getBoolean(request.getAttribute("liferay-frontend:email-notification-settings:showEmailEnabled"));
-boolean showSubject = GetterUtil.getBoolean(request.getAttribute("liferay-frontend:email-notification-settings:showSubject"));
 %>
 
 <aui:fieldset markupView="lexicon">
-	<c:if test="<%= showEmailEnabled %>">
-		<aui:input label="enabled" name='<%= fieldPrefix + fieldPrefixSeparator + emailParam + "Enabled" + fieldPrefixSeparator %>' type="checkbox" value="<%= emailEnabled %>" />
+	<c:if test='<%= GetterUtil.getBoolean(request.getAttribute("liferay-frontend:email-notification-settings:showEmailEnabled")) %>'>
+		<aui:input label="enabled" name='<%= fieldPrefix + fieldPrefixSeparator + emailParam + "Enabled" + fieldPrefixSeparator %>' type="checkbox" value='<%= GetterUtil.getBoolean((String)request.getAttribute("liferay-frontend:email-notification-settings:emailEnabled")) %>' />
 	</c:if>
 
-	<c:if test="<%= showSubject %>">
+	<c:if test='<%= GetterUtil.getBoolean(request.getAttribute("liferay-frontend:email-notification-settings:showSubject")) %>'>
 		<c:choose>
 			<c:when test="<%= Validator.isNotNull(emailSubject) && Validator.isXml(emailSubject) %>">
 				<aui:field-wrapper label="subject">
@@ -53,7 +39,7 @@ boolean showSubject = GetterUtil.getBoolean(request.getAttribute("liferay-fronte
 		</c:choose>
 	</c:if>
 
-	<aui:field-wrapper helpMessage="<%= helpMessage %>" label="<%= bodyLabel %>">
+	<aui:field-wrapper helpMessage='<%= (String)request.getAttribute("liferay-frontend:email-notification-settings:helpMessage") %>' label='<%= (String)request.getAttribute("liferay-frontend:email-notification-settings:bodyLabel") %>'>
 		<c:choose>
 			<c:when test="<%= Validator.isNotNull(emailBody) && Validator.isXml(emailBody) %>">
 				<liferay-ui:input-localized
@@ -67,7 +53,7 @@ boolean showSubject = GetterUtil.getBoolean(request.getAttribute("liferay-fronte
 				/>
 			</c:when>
 			<c:otherwise>
-				<liferay-ui:input-editor
+				<liferay-editor:editor
 					contents="<%= emailBody %>"
 					editorName='<%= PropsUtil.get("editor.wysiwyg.portal-web.docroot.html.taglib.ui.email_notification_settings.jsp") %>'
 					name="<%= emailParam %>"

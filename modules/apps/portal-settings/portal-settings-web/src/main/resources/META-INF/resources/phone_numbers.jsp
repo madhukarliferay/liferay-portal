@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -76,7 +67,7 @@
 		<liferay-ui:error exception="<%= PhoneNumberException.class %>" message="please-enter-a-valid-phone-number" />
 		<liferay-ui:error exception="<%= PhoneNumberExtensionException.class %>" message="please-enter-a-valid-phone-number-extension" />
 
-		<aui:fieldset id='<%= renderResponse.getNamespace() + "phoneNumbers" %>'>
+		<aui:fieldset id='<%= liferayPortletResponse.getNamespace() + "phoneNumbers" %>'>
 
 			<%
 			for (int i = 0; i < phonesIndexes.length; i++) {
@@ -91,15 +82,15 @@
 					<aui:input name='<%= "phoneId" + phonesIndex %>' type="hidden" value="<%= phone.getPhoneId() %>" />
 
 					<div class="form-group-item">
-						<aui:input fieldParam='<%= "phoneNumber" + phonesIndex %>' id='<%= "phoneNumber" + phonesIndex %>' inlineField="<%= true %>" name="number" />
+						<aui:input fieldParam='<%= "phoneNumber" + phonesIndex %>' id='<%= "phoneNumber" + phonesIndex %>' inlineField="<%= true %>" label="phone-number" name="number" />
 					</div>
 
 					<div class="form-group-item">
-						<aui:input fieldParam='<%= "phoneExtension" + phonesIndex %>' id='<%= "phoneExtension" + phonesIndex %>' inlineField="<%= true %>" name="extension" />
+						<aui:input fieldParam='<%= "phoneExtension" + phonesIndex %>' id='<%= "phoneExtension" + phonesIndex %>' inlineField="<%= true %>" label="phone-extension" name="extension" />
 					</div>
 
 					<div class="form-group-item">
-						<aui:select inlineField="<%= true %>" label="type" listType="<%= className + ListTypeConstants.PHONE %>" name='<%= "phoneTypeId" + phonesIndex %>' />
+						<aui:select inlineField="<%= true %>" label="type" listType="<%= className + ListTypeConstants.PHONE %>" listTypeFieldName="listTypeId" name='<%= "phoneListTypeId" + phonesIndex %>' />
 					</div>
 
 					<div class="form-group-item form-group-item-label-spacer">
@@ -118,7 +109,7 @@
 			new Liferay.AutoFields({
 				contentBox: '#<portlet:namespace />phoneNumbers',
 				fieldIndexes: '<portlet:namespace />phonesIndexes',
-				namespace: '<portlet:namespace />'
+				namespace: '<portlet:namespace />',
 			}).render();
 		</aui:script>
 	</c:when>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -18,6 +9,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -41,10 +34,12 @@ public class UserGroupGroupRoleWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
+		attributes.put("userGroupGroupRoleId", getUserGroupGroupRoleId());
+		attributes.put("companyId", getCompanyId());
 		attributes.put("userGroupId", getUserGroupId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("roleId", getRoleId());
-		attributes.put("companyId", getCompanyId());
 
 		return attributes;
 	}
@@ -55,6 +50,25 @@ public class UserGroupGroupRoleWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
+		Long userGroupGroupRoleId = (Long)attributes.get(
+			"userGroupGroupRoleId");
+
+		if (userGroupGroupRoleId != null) {
+			setUserGroupGroupRoleId(userGroupGroupRoleId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
 		}
 
 		Long userGroupId = (Long)attributes.get("userGroupId");
@@ -74,12 +88,16 @@ public class UserGroupGroupRoleWrapper
 		if (roleId != null) {
 			setRoleId(roleId);
 		}
+	}
 
-		Long companyId = (Long)attributes.get("companyId");
+	@Override
+	public UserGroupGroupRole cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
 
-		if (companyId != null) {
-			setCompanyId(companyId);
-		}
+	@Override
+	public boolean equals(Object object) {
+		return model.equals(object);
 	}
 
 	/**
@@ -90,6 +108,16 @@ public class UserGroupGroupRoleWrapper
 	@Override
 	public long getCompanyId() {
 		return model.getCompanyId();
+	}
+
+	/**
+	 * Returns the ct collection ID of this user group group role.
+	 *
+	 * @return the ct collection ID of this user group group role
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	@Override
@@ -125,9 +153,7 @@ public class UserGroupGroupRoleWrapper
 	 * @return the primary key of this user group group role
 	 */
 	@Override
-	public com.liferay.portal.kernel.service.persistence.UserGroupGroupRolePK
-		getPrimaryKey() {
-
+	public long getPrimaryKey() {
 		return model.getPrimaryKey();
 	}
 
@@ -156,6 +182,16 @@ public class UserGroupGroupRoleWrapper
 	}
 
 	/**
+	 * Returns the user group group role ID of this user group group role.
+	 *
+	 * @return the user group group role ID of this user group group role
+	 */
+	@Override
+	public long getUserGroupGroupRoleId() {
+		return model.getUserGroupGroupRoleId();
+	}
+
+	/**
 	 * Returns the user group ID of this user group group role.
 	 *
 	 * @return the user group ID of this user group group role
@@ -165,11 +201,11 @@ public class UserGroupGroupRoleWrapper
 		return model.getUserGroupId();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a user group group role model instance should use the <code>UserGroupGroupRole</code> interface instead.
-	 */
+	@Override
+	public int hashCode() {
+		return model.hashCode();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -183,6 +219,16 @@ public class UserGroupGroupRoleWrapper
 	@Override
 	public void setCompanyId(long companyId) {
 		model.setCompanyId(companyId);
+	}
+
+	/**
+	 * Sets the ct collection ID of this user group group role.
+	 *
+	 * @param ctCollectionId the ct collection ID of this user group group role
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -211,10 +257,7 @@ public class UserGroupGroupRoleWrapper
 	 * @param primaryKey the primary key of this user group group role
 	 */
 	@Override
-	public void setPrimaryKey(
-		com.liferay.portal.kernel.service.persistence.UserGroupGroupRolePK
-			primaryKey) {
-
+	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
 	}
 
@@ -229,6 +272,16 @@ public class UserGroupGroupRoleWrapper
 	}
 
 	/**
+	 * Sets the user group group role ID of this user group group role.
+	 *
+	 * @param userGroupGroupRoleId the user group group role ID of this user group group role
+	 */
+	@Override
+	public void setUserGroupGroupRoleId(long userGroupGroupRoleId) {
+		model.setUserGroupGroupRoleId(userGroupGroupRoleId);
+	}
+
+	/**
 	 * Sets the user group ID of this user group group role.
 	 *
 	 * @param userGroupId the user group ID of this user group group role
@@ -236,6 +289,25 @@ public class UserGroupGroupRoleWrapper
 	@Override
 	public void setUserGroupId(long userGroupId) {
 		model.setUserGroupId(userGroupId);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<UserGroupGroupRole, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<UserGroupGroupRole, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.search.test;
@@ -35,8 +26,6 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.search.SearchEngine;
-import com.liferay.portal.kernel.search.SearchEngineHelperUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -49,6 +38,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
@@ -58,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -86,15 +75,16 @@ public class DDLRecordSearchTest {
 
 		DDLRecordSet recordSet = addRecordSet();
 
-		_recordTestHelper = new DDLRecordTestHelper(_group, recordSet);
-		_searchContext = getSearchContext(_group, _user, recordSet);
+		_recordTestHelper = new DDLRecordTestHelper(
+			_group, recordSet, _user.getUserId());
+		_searchContext = getSearchContext(_group, recordSet, _user);
 	}
 
 	@Test
-	public void testBasicSearchWithDefaultUser() throws Exception {
+	public void testBasicSearchWithGuestUser() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
-		User user = UserLocalServiceUtil.getDefaultUser(companyId);
+		User user = UserLocalServiceUtil.getGuestUser(companyId);
 
 		Group group = GroupTestUtil.addGroup(
 			companyId, user.getUserId(),
@@ -108,32 +98,32 @@ public class DDLRecordSearchTest {
 				PortalUtil.getClassNameId(DDLRecordSet.class), group);
 
 		DDMStructure ddmStructure = ddmStructureTestHelper.addStructure(
-			createDDMForm(LocaleUtil.US), StorageType.JSON.toString());
+			createDDMForm(LocaleUtil.US), StorageType.DEFAULT.toString());
 
 		DDLRecordSet recordSet = recordSetTestHelper.addRecordSet(ddmStructure);
 
-		SearchContext searchContext = getSearchContext(group, user, recordSet);
+		SearchContext searchContext = getSearchContext(group, recordSet, user);
 
 		DDLRecordTestHelper recordTestHelper = new DDLRecordTestHelper(
 			group, recordSet);
 
 		DDMFormValues ddmFormValues = createDDMFormValues(LocaleUtil.US);
 
-		Map<Locale, String> values = HashMapBuilder.put(
-			LocaleUtil.US, "Joe Bloggs"
-		).build();
-
 		DDMFormFieldValue nameDDMFormFieldValue =
-			createLocalizedDDMFormFieldValue("name", values);
+			createLocalizedDDMFormFieldValue(
+				"name",
+				HashMapBuilder.put(
+					LocaleUtil.US, "Joe Bloggs"
+				).build());
 
 		ddmFormValues.addDDMFormFieldValue(nameDDMFormFieldValue);
 
-		values = HashMapBuilder.put(
-			LocaleUtil.US, "Simple description"
-		).build();
-
 		DDMFormFieldValue descriptionDDMFormFieldValue =
-			createLocalizedDDMFormFieldValue("description", values);
+			createLocalizedDDMFormFieldValue(
+				"description",
+				HashMapBuilder.put(
+					LocaleUtil.US, "Simple description"
+				).build());
 
 		ddmFormValues.addDDMFormFieldValue(descriptionDDMFormFieldValue);
 
@@ -144,7 +134,7 @@ public class DDLRecordSearchTest {
 
 		Hits hits = DDLRecordLocalServiceUtil.search(searchContext);
 
-		Assert.assertEquals(hits.toString(), 1, hits.getLength());
+		Assert.assertEquals(hits.toString(), 0, hits.getLength());
 	}
 
 	@Test
@@ -190,18 +180,19 @@ public class DDLRecordSearchTest {
 	public void testLocales() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
-		User user = UserLocalServiceUtil.getDefaultUser(companyId);
+		User user = UserLocalServiceUtil.getGuestUser(companyId);
 
 		Group group = GroupTestUtil.addGroup(
 			companyId, user.getUserId(),
 			GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 		DDLRecordSetTestHelper recordSetTestHelper = new DDLRecordSetTestHelper(
-			group);
+			group, user.getUserId());
 
 		DDMStructureTestHelper ddmStructureTestHelper =
 			new DDMStructureTestHelper(
-				PortalUtil.getClassNameId(DDLRecordSet.class), group);
+				PortalUtil.getClassNameId(DDLRecordSet.class), group,
+				user.getUserId());
 
 		Set<Locale> locales = DDMFormTestUtil.createAvailableLocales(
 			new Locale[] {LocaleUtil.US, LocaleUtil.JAPAN});
@@ -220,25 +211,25 @@ public class DDLRecordSearchTest {
 		ddmForm.addDDMFormField(nameDDMFormField);
 
 		DDMStructure ddmStructure = ddmStructureTestHelper.addStructure(
-			ddmForm, StorageType.JSON.toString());
+			ddmForm, StorageType.DEFAULT.toString());
 
 		DDLRecordSet recordSet = recordSetTestHelper.addRecordSet(ddmStructure);
 
-		SearchContext searchContext = getSearchContext(group, user, recordSet);
+		SearchContext searchContext = getSearchContext(group, recordSet, user);
 
 		searchContext.setLocale(LocaleUtil.JAPAN);
 
 		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
 			ddmForm);
 
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.JAPAN, "単純なテキスト"
-		).put(
-			LocaleUtil.US, "simple text"
-		).build();
-
 		DDMFormFieldValue nameDDMFormFieldValue =
-			createLocalizedDDMFormFieldValue("name", nameMap);
+			createLocalizedDDMFormFieldValue(
+				"name",
+				HashMapBuilder.put(
+					LocaleUtil.JAPAN, "単純なテキスト"
+				).put(
+					LocaleUtil.US, "simple text"
+				).build());
 
 		ddmFormValues.addDDMFormFieldValue(nameDDMFormFieldValue);
 
@@ -246,7 +237,7 @@ public class DDLRecordSearchTest {
 			ddmFormValues, WorkflowConstants.ACTION_PUBLISH);
 
 		DDLRecordTestHelper recordTestHelper = new DDLRecordTestHelper(
-			group, recordSet);
+			group, recordSet, user.getUserId());
 
 		recordTestHelper.addRecord(
 			ddmFormValues, WorkflowConstants.ACTION_PUBLISH);
@@ -281,8 +272,6 @@ public class DDLRecordSearchTest {
 
 	@Test
 	public void testQuestionMarksVersusStopwords2() throws Exception {
-		Assume.assumeTrue(isExactPhraseQueryImplementedForSearchEngine());
-
 		addRecord(RandomTestUtil.randomString());
 		addRecord("how with create the coupon");
 
@@ -293,8 +282,6 @@ public class DDLRecordSearchTest {
 
 	@Test
 	public void testQuestionMarksVersusStopwords3() throws Exception {
-		Assume.assumeTrue(isExactPhraseQueryImplementedForSearchEngine());
-
 		addRecord(RandomTestUtil.randomString());
 		addRecord("how to create a coupon");
 
@@ -323,8 +310,6 @@ public class DDLRecordSearchTest {
 
 	@Test
 	public void testStopwordsInExactPhrase() throws Exception {
-		Assume.assumeTrue(isExactPhraseQueryImplementedForSearchEngine());
-
 		addRecord("how to create a coupon");
 		addRecord("Joe Of Bloggs");
 		addRecord("Joe Bloggs");
@@ -341,8 +326,11 @@ public class DDLRecordSearchTest {
 		assertSearch("\"The Bloggs\"", 3);
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected static SearchContext getSearchContext(
-			Group group, User user, DDLRecordSet recordSet)
+			Group group, DDLRecordSet recordSet, User user)
 		throws Exception {
 
 		SearchContext searchContext = SearchContextTestUtil.getSearchContext(
@@ -392,35 +380,33 @@ public class DDLRecordSearchTest {
 	}
 
 	protected void addRecord(String name) throws Exception {
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.US, name
-		).build();
-
-		addRecord(nameMap);
+		addRecord(
+			HashMapBuilder.put(
+				LocaleUtil.US, name
+			).build());
 	}
 
 	protected void addRecord(String name, String description) throws Exception {
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.US, name
-		).build();
-
-		Map<Locale, String> descriptionMap = HashMapBuilder.put(
-			LocaleUtil.US, description
-		).build();
-
-		addRecord(nameMap, descriptionMap);
+		addRecord(
+			HashMapBuilder.put(
+				LocaleUtil.US, name
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.US, description
+			).build());
 	}
 
 	protected DDLRecordSet addRecordSet() throws Exception {
 		DDLRecordSetTestHelper recordSetTestHelper = new DDLRecordSetTestHelper(
-			_group);
+			_group, _user.getUserId());
 
 		DDMStructureTestHelper ddmStructureTestHelper =
 			new DDMStructureTestHelper(
-				PortalUtil.getClassNameId(DDLRecordSet.class), _group);
+				PortalUtil.getClassNameId(DDLRecordSet.class), _group,
+				_user.getUserId());
 
 		DDMStructure ddmStructure = ddmStructureTestHelper.addStructure(
-			createDDMForm(LocaleUtil.US), StorageType.JSON.toString());
+			createDDMForm(LocaleUtil.US), StorageType.DEFAULT.toString());
 
 		return recordSetTestHelper.addRecordSet(ddmStructure);
 	}
@@ -478,19 +464,6 @@ public class DDLRecordSearchTest {
 
 		return DDMFormValuesTestUtil.createDDMFormFieldValue(
 			name, localizedValue);
-	}
-
-	protected boolean isExactPhraseQueryImplementedForSearchEngine() {
-		SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine(
-			SearchEngineHelperUtil.getDefaultSearchEngineId());
-
-		String vendor = searchEngine.getVendor();
-
-		if (vendor.equals("Elasticsearch") || vendor.equals("Solr")) {
-			return false;
-		}
-
-		return true;
 	}
 
 	@DeleteAfterTestRun

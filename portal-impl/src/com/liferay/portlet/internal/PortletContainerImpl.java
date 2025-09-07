@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
@@ -21,7 +12,6 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutType;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.Portlet;
@@ -51,7 +41,6 @@ import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.WindowStateFactory;
 import com.liferay.portal.kernel.portlet.async.PortletAsyncScopeManager;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIconMenu;
-import com.liferay.portal.kernel.portlet.toolbar.PortletToolbar;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
@@ -67,6 +56,7 @@ import com.liferay.portal.kernel.servlet.TransferHeadersHelperUtil;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -87,6 +77,24 @@ import com.liferay.portlet.ResourceRequestFactory;
 import com.liferay.portlet.ResourceResponseFactory;
 import com.liferay.util.SerializableUtil;
 
+import jakarta.portlet.Event;
+import jakarta.portlet.MimeResponse;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletContext;
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.Serializable;
 import java.io.Writer;
 
@@ -94,25 +102,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-
-import javax.portlet.Event;
-import javax.portlet.MimeResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletContext;
-import javax.portlet.PortletMode;
-import javax.portlet.PortletPreferences;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-import javax.portlet.WindowState;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Shuyang Zhou
@@ -129,8 +118,8 @@ public class PortletContainerImpl implements PortletContainer {
 		try {
 			_preparePortlet(httpServletRequest, portlet);
 		}
-		catch (Exception e) {
-			throw new PortletContainerException(e);
+		catch (Exception exception) {
+			throw new PortletContainerException(exception);
 		}
 	}
 
@@ -273,16 +262,6 @@ public class PortletContainerImpl implements PortletContainer {
 			});
 	}
 
-	public void setPortletConfigurationIconMenu(
-		PortletConfigurationIconMenu portletConfigurationIconMenu) {
-
-		_portletConfigurationIconMenu = portletConfigurationIconMenu;
-	}
-
-	public void setPortletToolbar(PortletToolbar portletToolbar) {
-		_portletToolbar = portletToolbar;
-	}
-
 	protected long getScopeGroupId(
 			HttpServletRequest httpServletRequest, Layout layout,
 			String portletId)
@@ -331,8 +310,8 @@ public class PortletContainerImpl implements PortletContainer {
 				return event;
 			}
 		}
-		catch (ClassNotFoundException cnfe) {
-			throw new RuntimeException(cnfe);
+		catch (ClassNotFoundException classNotFoundException) {
+			throw new RuntimeException(classNotFoundException);
 		}
 
 		byte[] serializedValue = SerializableUtil.serialize(value);
@@ -344,9 +323,7 @@ public class PortletContainerImpl implements PortletContainer {
 	}
 
 	private boolean _isPublishedContentPage(Layout layout) {
-		if (Objects.equals(layout.getType(), LayoutConstants.TYPE_CONTENT) &&
-			(layout.getClassNameId() == 0)) {
-
+		if (!layout.isDraftLayout() && layout.isTypeContent()) {
 			return true;
 		}
 
@@ -424,8 +401,8 @@ public class PortletContainerImpl implements PortletContainer {
 		try {
 			return unsafeSupplier.get();
 		}
-		catch (Exception e) {
-			throw new PortletContainerException(e);
+		catch (Exception exception) {
+			throw new PortletContainerException(exception);
 		}
 		finally {
 			if (themeDisplay != null) {
@@ -472,13 +449,10 @@ public class PortletContainerImpl implements PortletContainer {
 		PortletMode portletMode = PortletModeFactory.getPortletMode(
 			ParamUtil.getString(httpServletRequest, "p_p_mode"));
 
-		PortletPreferencesIds portletPreferencesIds =
-			PortletPreferencesFactoryUtil.getPortletPreferencesIds(
-				httpServletRequest, portlet.getPortletId());
-
 		PortletPreferences portletPreferences =
 			PortletPreferencesLocalServiceUtil.getStrictPreferences(
-				portletPreferencesIds);
+				PortletPreferencesFactoryUtil.getPortletPreferencesIds(
+					httpServletRequest, portlet.getPortletId()));
 
 		ServletContext servletContext =
 			(ServletContext)httpServletRequest.getAttribute(WebKeys.CTX);
@@ -548,34 +522,45 @@ public class PortletContainerImpl implements PortletContainer {
 			String redirectLocation =
 				liferayActionResponse.getRedirectLocation();
 
-			if (Validator.isNull(redirectLocation) &&
-				portlet.isActionURLRedirect()) {
+			if (Validator.isNotNull(redirectLocation)) {
+				if (!GetterUtil.getBoolean(
+						liferayActionResponse.getProperty(
+							LiferayActionResponse.SKIP_ESCAPE_REDIRECT))) {
 
-				PortletURL portletURL = null;
-
-				if (portletApp.getSpecMajorVersion() < 3) {
-					portletURL = PortletURLFactoryUtil.create(
-						liferayActionRequest, portlet, layout,
-						PortletRequest.RENDER_PHASE);
-
-					Map<String, String[]> renderParameters =
-						liferayActionResponse.getRenderParameterMap();
-
-					for (Map.Entry<String, String[]> entry :
-							renderParameters.entrySet()) {
-
-						portletURL.setParameter(
-							entry.getKey(), entry.getValue());
-					}
-				}
-				else {
-					portletURL = PortletURLFactoryUtil.create(
-						liferayActionRequest, portlet, layout.getPlid(),
-						PortletRequest.RENDER_PHASE, MimeResponse.Copy.ALL);
+					redirectLocation = PortalUtil.escapeRedirect(
+						redirectLocation);
 				}
 
-				redirectLocation = portletURL.toString();
+				return new ActionResult(events, redirectLocation);
 			}
+
+			if (!portlet.isActionURLRedirect()) {
+				return new ActionResult(events, null);
+			}
+
+			PortletURL portletURL = null;
+
+			if (portletApp.getSpecMajorVersion() < 3) {
+				portletURL = PortletURLFactoryUtil.create(
+					liferayActionRequest, portlet, layout,
+					PortletRequest.RENDER_PHASE);
+
+				Map<String, String[]> renderParameters =
+					liferayActionResponse.getRenderParameterMap();
+
+				for (Map.Entry<String, String[]> entry :
+						renderParameters.entrySet()) {
+
+					portletURL.setParameter(entry.getKey(), entry.getValue());
+				}
+			}
+			else {
+				portletURL = PortletURLFactoryUtil.create(
+					liferayActionRequest, portlet, layout.getPlid(),
+					PortletRequest.RENDER_PHASE, MimeResponse.Copy.ALL);
+			}
+
+			redirectLocation = portletURL.toString();
 
 			return new ActionResult(events, redirectLocation);
 		}
@@ -598,8 +583,6 @@ public class PortletContainerImpl implements PortletContainer {
 
 		PortletConfig portletConfig = PortletConfigFactoryUtil.create(
 			portlet, servletContext);
-
-		PortletContext portletContext = portletConfig.getPortletContext();
 
 		LayoutTypePortlet layoutTypePortlet =
 			(LayoutTypePortlet)layout.getLayoutType();
@@ -662,16 +645,16 @@ public class PortletContainerImpl implements PortletContainer {
 			portletMode = PortletMode.VIEW;
 		}
 
-		long scopeGroupId = getScopeGroupId(
-			httpServletRequest, layout, portlet.getPortletId());
-
 		PortletPreferences portletPreferences =
 			PortletPreferencesFactoryUtil.getPortletSetup(
-				scopeGroupId, layout, portlet.getPortletId(), null);
+				getScopeGroupId(
+					httpServletRequest, layout, portlet.getPortletId()),
+				layout, portlet.getPortletId(), null);
 
 		LiferayEventRequest liferayEventRequest = EventRequestFactory.create(
-			httpServletRequest, portlet, invokerPortlet, portletContext,
-			windowState, portletMode, portletPreferences, layout.getPlid());
+			httpServletRequest, portlet, invokerPortlet,
+			portletConfig.getPortletContext(), windowState, portletMode,
+			portletPreferences, layout.getPlid());
 
 		liferayEventRequest.setEvent(
 			serializeEvent(event, invokerPortlet.getPortletClassLoader()));
@@ -837,13 +820,8 @@ public class PortletContainerImpl implements PortletContainer {
 
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
-		_portletConfigurationIconMenu.setComparator(
+		PortletConfigurationIconMenu.INSTANCE.setComparator(
 			PortletConfigurationIconComparator.INSTANCE);
-
-		portletDisplay.setPortletConfigurationIconMenu(
-			_portletConfigurationIconMenu);
-
-		portletDisplay.setPortletToolbar(_portletToolbar);
 
 		PortletDisplay portletDisplayClone = PortletDisplayFactory.create();
 
@@ -851,11 +829,11 @@ public class PortletContainerImpl implements PortletContainer {
 
 		PortletConfig portletConfig =
 			(PortletConfig)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_CONFIG);
+				JavaConstants.JAKARTA_PORTLET_CONFIG);
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (!(portletRequest instanceof RenderRequest)) {
 			portletRequest = null;
@@ -863,7 +841,7 @@ public class PortletContainerImpl implements PortletContainer {
 
 		PortletResponse portletResponse =
 			(PortletResponse)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_RESPONSE);
+				JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 		if (!(portletResponse instanceof RenderResponse)) {
 			portletResponse = null;
@@ -946,17 +924,17 @@ public class PortletContainerImpl implements PortletContainer {
 
 			if (portletConfig != null) {
 				httpServletRequest.setAttribute(
-					JavaConstants.JAVAX_PORTLET_CONFIG, portletConfig);
+					JavaConstants.JAKARTA_PORTLET_CONFIG, portletConfig);
 			}
 
 			if (portletRequest != null) {
 				httpServletRequest.setAttribute(
-					JavaConstants.JAVAX_PORTLET_REQUEST, portletRequest);
+					JavaConstants.JAKARTA_PORTLET_REQUEST, portletRequest);
 			}
 
 			if (portletResponse != null) {
 				httpServletRequest.setAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE, portletResponse);
+					JavaConstants.JAKARTA_PORTLET_RESPONSE, portletResponse);
 			}
 
 			if (lifecycle != null) {
@@ -988,10 +966,6 @@ public class PortletContainerImpl implements PortletContainer {
 				windowState = requestWindowState;
 			}
 		}
-
-		PortletMode portletMode = PortletModeFactory.getPortletMode(
-			ParamUtil.getString(httpServletRequest, "p_p_mode"),
-			portletSpecMajorVersion);
 
 		PortletPreferencesIds portletPreferencesIds =
 			PortletPreferencesFactoryUtil.getPortletPreferencesIds(
@@ -1038,7 +1012,7 @@ public class PortletContainerImpl implements PortletContainer {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (portletRequest instanceof LiferayResourceRequest) {
 			liferayResourceRequest = (LiferayResourceRequest)portletRequest;
@@ -1047,6 +1021,10 @@ public class PortletContainerImpl implements PortletContainer {
 		LiferayResourceResponse liferayResourceResponse = null;
 
 		if (liferayResourceRequest == null) {
+			PortletMode portletMode = PortletModeFactory.getPortletMode(
+				ParamUtil.getString(httpServletRequest, "p_p_mode"),
+				portletSpecMajorVersion);
+
 			PortletPreferences portletPreferences =
 				PortletPreferencesLocalServiceUtil.getStrictPreferences(
 					portletPreferencesIds);
@@ -1062,7 +1040,7 @@ public class PortletContainerImpl implements PortletContainer {
 		else {
 			liferayResourceResponse =
 				(LiferayResourceResponse)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE);
+					JavaConstants.JAKARTA_PORTLET_RESPONSE);
 		}
 
 		liferayResourceRequest.defineObjects(
@@ -1110,7 +1088,7 @@ public class PortletContainerImpl implements PortletContainer {
 			(MutableRenderParametersImpl)
 				liferayStateAwareResponse.getRenderParameters();
 
-		Map<String, String[]> mutableRenderParametersMap =
+		Map<String, String[]> mutableRenderParameterMap =
 			mutableRenderParametersImpl.getParameterMap();
 
 		Map<String, QName> supportedPublicRenderParameterMap = new HashMap<>();
@@ -1130,7 +1108,7 @@ public class PortletContainerImpl implements PortletContainer {
 		Map<String, String[]> privateRenderParameterMap = new HashMap<>();
 
 		for (Map.Entry<String, String[]> entry :
-				mutableRenderParametersMap.entrySet()) {
+				mutableRenderParameterMap.entrySet()) {
 
 			String key = entry.getKey();
 
@@ -1156,8 +1134,5 @@ public class PortletContainerImpl implements PortletContainer {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletContainerImpl.class);
-
-	private PortletConfigurationIconMenu _portletConfigurationIconMenu;
-	private PortletToolbar _portletToolbar;
 
 }

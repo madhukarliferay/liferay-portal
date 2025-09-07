@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -30,6 +24,9 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -53,34 +50,43 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see UserGroupLocalServiceUtil
  * @generated
  */
+@CTAware
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.portal.kernel.model.UserGroup"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface UserGroupLocalService
-	extends BaseLocalService, PersistedModelLocalService {
+	extends BaseLocalService, CTService<UserGroup>, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link UserGroupLocalServiceUtil} to access the user group local service. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the user group local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link UserGroupLocalServiceUtil} if injection and service tracking are not available.
 	 */
-	public void addGroupUserGroup(long groupId, long userGroupId);
+	public boolean addGroupUserGroup(long groupId, long userGroupId);
 
-	public void addGroupUserGroup(long groupId, UserGroup userGroup);
+	public boolean addGroupUserGroup(long groupId, UserGroup userGroup);
 
-	public void addGroupUserGroups(long groupId, List<UserGroup> userGroups);
+	public boolean addGroupUserGroups(long groupId, List<UserGroup> userGroups);
 
-	public void addGroupUserGroups(long groupId, long[] userGroupIds);
+	public boolean addGroupUserGroups(long groupId, long[] userGroupIds);
 
-	public void addTeamUserGroup(long teamId, long userGroupId);
+	public UserGroup addOrUpdateUserGroup(
+			String externalReferenceCode, long userId, long companyId,
+			String name, String description, ServiceContext serviceContext)
+		throws PortalException;
 
-	public void addTeamUserGroup(long teamId, UserGroup userGroup);
+	public boolean addTeamUserGroup(long teamId, long userGroupId);
 
-	public void addTeamUserGroups(long teamId, List<UserGroup> userGroups);
+	public boolean addTeamUserGroup(long teamId, UserGroup userGroup);
 
-	public void addTeamUserGroups(long teamId, long[] userGroupIds);
+	public boolean addTeamUserGroups(long teamId, List<UserGroup> userGroups);
+
+	public boolean addTeamUserGroups(long teamId, long[] userGroupIds);
 
 	/**
 	 * Adds a user group.
@@ -102,12 +108,16 @@ public interface UserGroupLocalService
 	 * @return the user group
 	 */
 	public UserGroup addUserGroup(
-			long userId, long companyId, String name, String description,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long companyId,
+			String name, String description, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Adds the user group to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserGroupLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param userGroup the user group
 	 * @return the user group that was added
@@ -115,13 +125,29 @@ public interface UserGroupLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public UserGroup addUserGroup(UserGroup userGroup);
 
-	public void addUserUserGroup(long userId, long userGroupId);
+	/**
+	 * @throws PortalException
+	 */
+	public boolean addUserUserGroup(long userId, long userGroupId)
+		throws PortalException;
 
-	public void addUserUserGroup(long userId, UserGroup userGroup);
+	/**
+	 * @throws PortalException
+	 */
+	public boolean addUserUserGroup(long userId, UserGroup userGroup)
+		throws PortalException;
 
-	public void addUserUserGroups(long userId, List<UserGroup> userGroups);
+	/**
+	 * @throws PortalException
+	 */
+	public boolean addUserUserGroups(long userId, List<UserGroup> userGroups)
+		throws PortalException;
 
-	public void addUserUserGroups(long userId, long[] userGroupIds);
+	/**
+	 * @throws PortalException
+	 */
+	public boolean addUserUserGroups(long userId, long[] userGroupIds)
+		throws PortalException;
 
 	public void clearGroupUserGroups(long groupId);
 
@@ -130,37 +156,9 @@ public interface UserGroupLocalService
 	public void clearUserUserGroups(long userId);
 
 	/**
-	 * Copies the user group's layout to the user.
-	 *
-	 * @param userGroupId the primary key of the user group
-	 * @param userId the primary key of the user
-	 * @deprecated As of Paton (6.1.x)
+	 * @throws PortalException
 	 */
-	@Deprecated
-	public void copyUserGroupLayouts(long userGroupId, long userId)
-		throws PortalException;
-
-	/**
-	 * Copies the user group's layouts to the users who are not already members
-	 * of the user group.
-	 *
-	 * @param userGroupId the primary key of the user group
-	 * @param userIds the primary keys of the users
-	 * @deprecated As of Newton (6.2.x)
-	 */
-	@Deprecated
-	public void copyUserGroupLayouts(long userGroupId, long[] userIds)
-		throws PortalException;
-
-	/**
-	 * Copies the user groups' layouts to the user.
-	 *
-	 * @param userGroupIds the primary keys of the user groups
-	 * @param userId the primary key of the user
-	 * @deprecated As of Newton (6.2.x)
-	 */
-	@Deprecated
-	public void copyUserGroupLayouts(long[] userGroupIds, long userId)
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
 	/**
@@ -198,6 +196,10 @@ public interface UserGroupLocalService
 	/**
 	 * Deletes the user group with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserGroupLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userGroupId the primary key of the user group
 	 * @return the user group that was removed
 	 * @throws PortalException if a user group with the primary key could not be found
@@ -207,6 +209,10 @@ public interface UserGroupLocalService
 
 	/**
 	 * Deletes the user group from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserGroupLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param userGroup the user group
 	 * @return the user group that was removed
@@ -229,6 +235,12 @@ public interface UserGroupLocalService
 	public void deleteUserUserGroups(long userId, List<UserGroup> userGroups);
 
 	public void deleteUserUserGroups(long userId, long[] userGroupIds);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -302,16 +314,9 @@ public interface UserGroupLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public UserGroup fetchUserGroup(long companyId, String name);
 
-	/**
-	 * Returns the user group with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the user group's external reference code
-	 * @return the matching user group, or <code>null</code> if a matching user group could not be found
-	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public UserGroup fetchUserGroupByReferenceCode(
-		long companyId, String externalReferenceCode);
+	public UserGroup fetchUserGroupByExternalReferenceCode(
+		String externalReferenceCode, long companyId);
 
 	/**
 	 * Returns the user group with the matching UUID and company.
@@ -368,6 +373,9 @@ public interface UserGroupLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -417,6 +425,11 @@ public interface UserGroupLocalService
 	public UserGroup getUserGroup(long companyId, String name)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public UserGroup getUserGroupByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
+
 	/**
 	 * Returns the user group with the matching UUID and company.
 	 *
@@ -455,6 +468,11 @@ public interface UserGroupLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> getUserGroups(
 		long companyId, String name, int start, int end);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<UserGroup> getUserGroups(
+		long companyId, String name, int start, int end,
+		OrderByComparator<UserGroup> orderByComparator);
 
 	/**
 	 * Returns all the user groups with the primary keys.
@@ -539,15 +557,16 @@ public interface UserGroupLocalService
 	 * @param start the lower bound of the range of user groups to return
 	 * @param end the upper bound of the range of user groups to return (not
 	 inclusive)
-	 * @param obc the comparator to order the user groups (optionally
-	 <code>null</code>)
-	 * @return the matching user groups ordered by comparator <code>obc</code>
+	 * @param orderByComparator the comparator to order the user groups
+	 (optionally <code>null</code>)
+	 * @return the matching user groups ordered by comparator
+	 <code>orderByComparator</code>
 	 * @see com.liferay.portal.kernel.service.persistence.UserGroupFinder
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> search(
 		long companyId, String keywords, LinkedHashMap<String, Object> params,
-		int start, int end, OrderByComparator<UserGroup> obc);
+		int start, int end, OrderByComparator<UserGroup> orderByComparator);
 
 	/**
 	 * Returns an ordered range of all the user groups that match the keywords,
@@ -607,16 +626,17 @@ public interface UserGroupLocalService
 	 * @param start the lower bound of the range of user groups to return
 	 * @param end the upper bound of the range of user groups to return (not
 	 inclusive)
-	 * @param obc the comparator to order the user groups (optionally
-	 <code>null</code>)
-	 * @return the matching user groups ordered by comparator <code>obc</code>
+	 * @param orderByComparator the comparator to order the user groups
+	 (optionally <code>null</code>)
+	 * @return the matching user groups ordered by comparator
+	 <code>orderByComparator</code>
 	 * @see com.liferay.portal.kernel.service.persistence.UserGroupFinder
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<UserGroup> search(
 		long companyId, String name, String description,
 		LinkedHashMap<String, Object> params, boolean andOperator, int start,
-		int end, OrderByComparator<UserGroup> obc);
+		int end, OrderByComparator<UserGroup> orderByComparator);
 
 	/**
 	 * Returns an ordered range of all the user groups that match the name and
@@ -730,9 +750,15 @@ public interface UserGroupLocalService
 	 */
 	public void unsetTeamUserGroups(long teamId, long[] userGroupIds);
 
+	@Indexable(type = IndexableType.REINDEX)
+	public UserGroup updateExternalReferenceCode(
+			UserGroup userGroup, String externalReferenceCode)
+		throws PortalException;
+
 	/**
 	 * Updates the user group.
 	 *
+	 * @param externalReferenceCode the user group's external reference code
 	 * @param companyId the primary key of the user group's company
 	 * @param userGroupId the primary key of the user group
 	 * @param name the user group's name
@@ -743,17 +769,35 @@ public interface UserGroupLocalService
 	 * @return the user group
 	 */
 	public UserGroup updateUserGroup(
-			long companyId, long userGroupId, String name, String description,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long companyId, long userGroupId,
+			String name, String description, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Updates the user group in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserGroupLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param userGroup the user group
 	 * @return the user group that was updated
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public UserGroup updateUserGroup(UserGroup userGroup);
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<UserGroup> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<UserGroup> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<UserGroup>, R, E> updateUnsafeFunction)
+		throws E;
 
 }

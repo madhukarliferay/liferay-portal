@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.client.dto.v1_0;
@@ -17,16 +8,23 @@ package com.liferay.headless.delivery.client.dto.v1_0;
 import com.liferay.headless.delivery.client.function.UnsafeSupplier;
 import com.liferay.headless.delivery.client.serdes.v1_0.ContentStructureFieldSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class ContentStructureField {
+public class ContentStructureField implements Cloneable, Serializable {
+
+	public static ContentStructureField toDTO(String json) {
+		return ContentStructureFieldSerDes.toDTO(json);
+	}
 
 	public String getDataType() {
 		return dataType;
@@ -90,6 +88,28 @@ public class ContentStructureField {
 	}
 
 	protected String label;
+
+	public Map<String, String> getLabel_i18n() {
+		return label_i18n;
+	}
+
+	public void setLabel_i18n(Map<String, String> label_i18n) {
+		this.label_i18n = label_i18n;
+	}
+
+	public void setLabel_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			label_i18nUnsafeSupplier) {
+
+		try {
+			label_i18n = label_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> label_i18n;
 
 	public Boolean getLocalizable() {
 		return localizable;
@@ -219,6 +239,30 @@ public class ContentStructureField {
 
 	protected String predefinedValue;
 
+	public Map<String, String> getPredefinedValue_i18n() {
+		return predefinedValue_i18n;
+	}
+
+	public void setPredefinedValue_i18n(
+		Map<String, String> predefinedValue_i18n) {
+
+		this.predefinedValue_i18n = predefinedValue_i18n;
+	}
+
+	public void setPredefinedValue_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			predefinedValue_i18nUnsafeSupplier) {
+
+		try {
+			predefinedValue_i18n = predefinedValue_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> predefinedValue_i18n;
+
 	public Boolean getRepeatable() {
 		return repeatable;
 	}
@@ -281,6 +325,11 @@ public class ContentStructureField {
 	}
 
 	protected Boolean showLabel;
+
+	@Override
+	public ContentStructureField clone() throws CloneNotSupportedException {
+		return (ContentStructureField)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

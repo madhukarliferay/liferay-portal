@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.sql.transformer;
@@ -19,6 +10,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.internal.dao.sql.transformer.SQLFunctionTransformer;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -33,11 +25,12 @@ public class DB2SQLTransformerLogic extends BaseSQLTransformerLogic {
 		super(db);
 
 		Function[] functions = {
-			getBooleanFunction(), getCastClobTextFunction(),
+			getAggregationFunction(), getBooleanFunction(),
+			getCastClobTextFunction(), getCastDecimalFunction(),
 			getCastLongFunction(), getCastTextFunction(), getConcatFunction(),
 			getDropTableIfExistsTextFunction(), getIntegerDivisionFunction(),
-			getNullDateFunction(), _getAlterColumnTypeFunction(),
-			_getLikeFunction()
+			getNullDateFunction(), getTruncateTableFunction(),
+			_getCaseWhenThenFunction(), _getLikeFunction(), _getSelectFunction()
 		};
 
 		if (!db.isSupportsStringCaseSensitiveQuery()) {
@@ -58,31 +51,24 @@ public class DB2SQLTransformerLogic extends BaseSQLTransformerLogic {
 
 	@Override
 	protected String replaceCastText(Matcher matcher) {
-		return matcher.replaceAll("CAST($1 AS VARCHAR(254))");
+		return matcher.replaceAll("CAST($1 AS VARCHAR(2000))");
 	}
 
 	@Override
 	protected String replaceDropTableIfExistsText(Matcher matcher) {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("BEGIN\n");
-		sb.append("DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n");
-		sb.append("BEGIN END;\n");
-		sb.append("EXECUTE IMMEDIATE 'DROP TABLE $1';\n");
-		sb.append("END");
-
-		String dropTableIfExists = sb.toString();
-
-		return matcher.replaceAll(dropTableIfExists);
+		return matcher.replaceAll(
+			"BEGIN\nDECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\nBEGIN " +
+				"END;\nEXECUTE IMMEDIATE 'DROP TABLE $1';\nEND");
 	}
 
-	private Function<String, String> _getAlterColumnTypeFunction() {
-		return (String sql) -> {
-			Matcher matcher = _alterColumnTypePattern.matcher(sql);
+	@Override
+	protected String replaceTruncateTable(Matcher matcher) {
+		return matcher.replaceAll("TRUNCATE TABLE $1 IMMEDIATE");
+	}
 
-			return matcher.replaceAll(
-				"ALTER TABLE $1 ALTER COLUMN $2 SET DATA TYPE $3");
-		};
+	private Function<String, String> _getCaseWhenThenFunction() {
+		return (String sql) -> _replaceQuestionParameterMarker(
+			_caseWhenThenPattern.matcher(sql), sql);
 	}
 
 	private Function<String, String> _getLikeFunction() {
@@ -90,14 +76,57 @@ public class DB2SQLTransformerLogic extends BaseSQLTransformerLogic {
 			Matcher matcher = _likePattern.matcher(sql);
 
 			return matcher.replaceAll(
-				"LIKE COALESCE(CAST(? AS VARCHAR(32672)),'')");
+				"LIKE COALESCE(CAST(? AS VARCHAR(2000)),'')");
 		};
 	}
 
-	private static final Pattern _alterColumnTypePattern = Pattern.compile(
-		"ALTER_COLUMN_TYPE\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)",
-		Pattern.CASE_INSENSITIVE);
+	private Function<String, String> _getSelectFunction() {
+		return (String sql) -> _replaceQuestionParameterMarker(
+			_selectPattern.matcher(sql), sql);
+	}
+
+	private String _replaceQuestionParameterMarker(
+		Matcher matcher, String sql) {
+
+		int index = 0;
+
+		StringBundler sb = new StringBundler();
+
+		while (matcher.find()) {
+			if (matcher.start() > index) {
+				sb.append(sql.substring(index, matcher.start()));
+			}
+
+			sb.append(
+				StringUtil.replace(
+					matcher.group(), new String[] {" ?,", " ? "},
+					new String[] {
+						StringPool.SPACE +
+							_QUESTION_PARAMETER_MARKER_REPLACEMENT +
+								StringPool.COMMA,
+						StringPool.SPACE +
+							_QUESTION_PARAMETER_MARKER_REPLACEMENT +
+								StringPool.SPACE
+					}));
+
+			index = matcher.end();
+		}
+
+		if (index < (sql.length() - 1)) {
+			sb.append(sql.substring(index));
+		}
+
+		return sb.toString();
+	}
+
+	private static final String _QUESTION_PARAMETER_MARKER_REPLACEMENT =
+		"COALESCE(CAST(? AS VARCHAR(2000)),'')";
+
+	private static final Pattern _caseWhenThenPattern = Pattern.compile(
+		"\\bcase when.+?end\\b", Pattern.CASE_INSENSITIVE);
 	private static final Pattern _likePattern = Pattern.compile(
 		"LIKE \\?", Pattern.CASE_INSENSITIVE);
+	private static final Pattern _selectPattern = Pattern.compile(
+		"select .+?from ", Pattern.CASE_INSENSITIVE);
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Portlet;
 
 /**
  * Provides the remote service utility for Portlet. This utility wraps
@@ -30,7 +22,7 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class PortletServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.PortletServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -49,22 +41,25 @@ public class PortletServiceUtil {
 		return getService().getWARPortlets();
 	}
 
-	public static com.liferay.portal.kernel.model.Portlet updatePortlet(
+	public static boolean hasPortlet(long companyId, String portletId) {
+		return getService().hasPortlet(companyId, portletId);
+	}
+
+	public static Portlet updatePortlet(
 			long companyId, String portletId, String roles, boolean active)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updatePortlet(companyId, portletId, roles, active);
 	}
 
 	public static PortletService getService() {
-		if (_service == null) {
-			_service = (PortletService)PortalBeanLocatorUtil.locate(
-				PortletService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static PortletService _service;
+	public static void setService(PortletService service) {
+		_service = service;
+	}
+
+	private static volatile PortletService _service;
 
 }

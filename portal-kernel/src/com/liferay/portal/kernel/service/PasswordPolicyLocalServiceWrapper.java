@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link PasswordPolicyLocalService}.
@@ -25,29 +18,27 @@ public class PasswordPolicyLocalServiceWrapper
 	implements PasswordPolicyLocalService,
 			   ServiceWrapper<PasswordPolicyLocalService> {
 
+	public PasswordPolicyLocalServiceWrapper() {
+		this(null);
+	}
+
 	public PasswordPolicyLocalServiceWrapper(
 		PasswordPolicyLocalService passwordPolicyLocalService) {
 
 		_passwordPolicyLocalService = passwordPolicyLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PasswordPolicyLocalServiceUtil} to access the password policy local service. Add custom service methods to <code>com.liferay.portal.service.impl.PasswordPolicyLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy addPasswordPolicy(
-			long userId, boolean defaultPolicy, java.lang.String name,
-			java.lang.String description, boolean changeable,
-			boolean changeRequired, long minAge, boolean checkSyntax,
-			boolean allowDictionaryWords, int minAlphanumeric, int minLength,
-			int minLowerCase, int minNumbers, int minSymbols, int minUpperCase,
-			java.lang.String regex, boolean history, int historyCount,
-			boolean expireable, long maxAge, long warningTime, int graceLimit,
-			boolean lockout, int maxFailure, long lockoutDuration,
-			long resetFailureCount, long resetTicketMaxAge,
-			ServiceContext serviceContext)
+			long userId, boolean defaultPolicy, String name, String description,
+			boolean changeable, boolean changeRequired, long minAge,
+			boolean checkSyntax, boolean allowDictionaryWords,
+			int minAlphanumeric, int minLength, int minLowerCase,
+			int minNumbers, int minSymbols, int minUpperCase, String regex,
+			boolean history, int historyCount, boolean expireable, long maxAge,
+			long warningTime, int graceLimit, boolean lockout, int maxFailure,
+			long lockoutDuration, long resetFailureCount,
+			long resetTicketMaxAge, ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyLocalService.addPasswordPolicy(
@@ -61,6 +52,10 @@ public class PasswordPolicyLocalServiceWrapper
 
 	/**
 	 * Adds the password policy to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicy the password policy
 	 * @return the password policy that was added
@@ -93,6 +88,17 @@ public class PasswordPolicyLocalServiceWrapper
 			passwordPolicyId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _passwordPolicyLocalService.createPersistedModel(primaryKeyObj);
+	}
+
 	@Override
 	public void deleteNondefaultPasswordPolicies(long companyId)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -102,6 +108,10 @@ public class PasswordPolicyLocalServiceWrapper
 
 	/**
 	 * Deletes the password policy with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicyId the primary key of the password policy
 	 * @return the password policy that was removed
@@ -118,6 +128,10 @@ public class PasswordPolicyLocalServiceWrapper
 
 	/**
 	 * Deletes the password policy from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicy the password policy
 	 * @return the password policy that was removed
@@ -140,6 +154,18 @@ public class PasswordPolicyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _passwordPolicyLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _passwordPolicyLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -243,7 +269,7 @@ public class PasswordPolicyLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy fetchPasswordPolicy(
-		long companyId, java.lang.String name) {
+		long companyId, String name) {
 
 		return _passwordPolicyLocalService.fetchPasswordPolicy(companyId, name);
 	}
@@ -257,8 +283,7 @@ public class PasswordPolicyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy
-		fetchPasswordPolicyByUuidAndCompanyId(
-			java.lang.String uuid, long companyId) {
+		fetchPasswordPolicyByUuidAndCompanyId(String uuid, long companyId) {
 
 		return _passwordPolicyLocalService.
 			fetchPasswordPolicyByUuidAndCompanyId(uuid, companyId);
@@ -302,7 +327,7 @@ public class PasswordPolicyLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _passwordPolicyLocalService.getOSGiServiceIdentifier();
 	}
 
@@ -351,15 +376,6 @@ public class PasswordPolicyLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy getPasswordPolicy(
-			long companyId, boolean defaultPolicy)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _passwordPolicyLocalService.getPasswordPolicy(
-			companyId, defaultPolicy);
-	}
-
-	@Override
-	public com.liferay.portal.kernel.model.PasswordPolicy getPasswordPolicy(
 			long companyId, long[] organizationIds)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -393,14 +409,16 @@ public class PasswordPolicyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy
-			getPasswordPolicyByUuidAndCompanyId(
-				java.lang.String uuid, long companyId)
+			getPasswordPolicyByUuidAndCompanyId(String uuid, long companyId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyLocalService.getPasswordPolicyByUuidAndCompanyId(
 			uuid, companyId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -412,31 +430,31 @@ public class PasswordPolicyLocalServiceWrapper
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.PasswordPolicy>
 		search(
-			long companyId, java.lang.String name, int start, int end,
+			long companyId, String name, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.PasswordPolicy> obc) {
+				<com.liferay.portal.kernel.model.PasswordPolicy>
+					orderByComparator) {
 
 		return _passwordPolicyLocalService.search(
-			companyId, name, start, end, obc);
+			companyId, name, start, end, orderByComparator);
 	}
 
 	@Override
-	public int searchCount(long companyId, java.lang.String name) {
+	public int searchCount(long companyId, String name) {
 		return _passwordPolicyLocalService.searchCount(companyId, name);
 	}
 
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicy updatePasswordPolicy(
-			long passwordPolicyId, java.lang.String name,
-			java.lang.String description, boolean changeable,
-			boolean changeRequired, long minAge, boolean checkSyntax,
-			boolean allowDictionaryWords, int minAlphanumeric, int minLength,
-			int minLowerCase, int minNumbers, int minSymbols, int minUpperCase,
-			java.lang.String regex, boolean history, int historyCount,
-			boolean expireable, long maxAge, long warningTime, int graceLimit,
-			boolean lockout, int maxFailure, long lockoutDuration,
-			long resetFailureCount, long resetTicketMaxAge,
-			ServiceContext serviceContext)
+			long passwordPolicyId, String name, String description,
+			boolean changeable, boolean changeRequired, long minAge,
+			boolean checkSyntax, boolean allowDictionaryWords,
+			int minAlphanumeric, int minLength, int minLowerCase,
+			int minNumbers, int minSymbols, int minUpperCase, String regex,
+			boolean history, int historyCount, boolean expireable, long maxAge,
+			long warningTime, int graceLimit, boolean lockout, int maxFailure,
+			long lockoutDuration, long resetFailureCount,
+			long resetTicketMaxAge, ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyLocalService.updatePasswordPolicy(
@@ -451,6 +469,10 @@ public class PasswordPolicyLocalServiceWrapper
 	/**
 	 * Updates the password policy in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param passwordPolicy the password policy
 	 * @return the password policy that was updated
 	 */
@@ -459,6 +481,11 @@ public class PasswordPolicyLocalServiceWrapper
 		com.liferay.portal.kernel.model.PasswordPolicy passwordPolicy) {
 
 		return _passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _passwordPolicyLocalService.getBasePersistence();
 	}
 
 	@Override

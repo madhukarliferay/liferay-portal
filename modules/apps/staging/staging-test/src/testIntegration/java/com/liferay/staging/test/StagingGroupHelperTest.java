@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.test;
@@ -17,33 +8,40 @@ package com.liferay.staging.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.exportimport.kernel.service.StagingLocalServiceUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
-import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
+import com.liferay.portal.kernel.instance.lifecycle.PortalInstanceLifecycleManager;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.persistence.GroupUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.staging.StagingGroupHelper;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-
-import java.util.Locale;
-import java.util.Map;
+import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -52,6 +50,14 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.runtime.ServiceComponentRuntime;
+import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.util.promise.Promise;
 
 /**
  * @author Akos Thurzo
@@ -65,10 +71,13 @@ public class StagingGroupHelperTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE,
 			SynchronousDestinationTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
+		UserTestUtil.setUser(TestPropsValues.getUser());
+
 		_addLocalStagingGroups();
 
 		_addRemoteStagingGroups();
@@ -86,32 +95,120 @@ public class StagingGroupHelperTest {
 		try {
 			GroupLocalServiceUtil.deleteGroup(_localLiveGroup.getGroupId());
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchGroupException);
+			}
 		}
 
 		try {
 			GroupLocalServiceUtil.deleteGroup(_localStagingGroup.getGroupId());
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchGroupException);
+			}
 		}
 
 		try {
 			GroupLocalServiceUtil.deleteGroup(_regularGroup.getGroupId());
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchGroupException);
+			}
 		}
 
 		try {
 			GroupLocalServiceUtil.deleteGroup(_remoteLiveGroup.getGroupId());
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchGroupException);
+			}
 		}
 
 		try {
 			GroupLocalServiceUtil.deleteGroup(_remoteStagingGroup.getGroupId());
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchGroupException);
+			}
 		}
+	}
+
+	@FeatureFlag("LPD-35914")
+	@Test
+	public void testFetchCompanyGroup() throws Exception {
+		FeatureFlagTestUtil.invokeFeatureFlagListeners(
+			CompanyConstants.SYSTEM, true, "LPD-35914");
+
+		Group group = _stagingGroupHelper.fetchCompanyGroup(
+			TestPropsValues.getCompanyId());
+
+		_groupLocalService.deleteGroup(group);
+
+		Bundle bundle = FrameworkUtil.getBundle(StagingGroupHelperTest.class);
+
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		ComponentDescriptionDTO componentDescriptionDTO1 =
+			_serviceComponentRuntime.getComponentDescriptionDTO(
+				FrameworkUtil.getBundle(
+					_addCompanyGroupPortalInstanceLifecycleListener.getClass()),
+				ClassUtil.getClassName(
+					_addCompanyGroupPortalInstanceLifecycleListener));
+
+		Promise<Void> promise = _serviceComponentRuntime.disableComponent(
+			componentDescriptionDTO1);
+
+		promise.getValue();
+
+		ServiceReference<PortalInstanceLifecycleManager> serviceReference =
+			bundleContext.getServiceReference(
+				PortalInstanceLifecycleManager.class);
+
+		ComponentDescriptionDTO componentDescriptionDTO2 =
+			_serviceComponentRuntime.getComponentDescriptionDTO(
+				serviceReference.getBundle(),
+				"com.liferay.portal.instance.lifecycle.internal." +
+					"PortalInstanceLifecycleListenerManagerImpl");
+
+		promise = _serviceComponentRuntime.disableComponent(
+			componentDescriptionDTO2);
+
+		promise.getValue();
+
+		Assert.assertNull(
+			_stagingGroupHelper.fetchCompanyGroup(
+				TestPropsValues.getCompanyId()));
+
+		promise = _serviceComponentRuntime.enableComponent(
+			componentDescriptionDTO1);
+
+		promise.getValue();
+
+		promise = _serviceComponentRuntime.enableComponent(
+			componentDescriptionDTO2);
+
+		promise.getValue();
+
+		serviceReference = bundleContext.getServiceReference(
+			PortalInstanceLifecycleManager.class);
+
+		PortalInstanceLifecycleManager portalInstanceLifecycleManager =
+			bundleContext.getService(serviceReference);
+
+		portalInstanceLifecycleManager.registerCompany(
+			_companyLocalService.getCompany(TestPropsValues.getCompanyId()));
+
+		FeatureFlagTestUtil.invokeFeatureFlagListeners(
+			CompanyConstants.SYSTEM, true, "LPD-35914");
+
+		Assert.assertNotNull(
+			_stagingGroupHelper.fetchCompanyGroup(
+				TestPropsValues.getCompanyId()));
 	}
 
 	@Test
@@ -129,14 +226,21 @@ public class StagingGroupHelperTest {
 
 		Assert.assertEquals(
 			_remoteLiveGroup,
-			_stagingGroupHelper.fetchLiveGroup(_remoteStagingGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchLiveGroup(_remoteStagingGroup)));
 		Assert.assertEquals(
 			_remoteLiveGroup,
-			_stagingGroupHelper.fetchLiveGroup(_remoteStagingScopeGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchLiveGroup(
+					_remoteStagingScopeGroup)));
 
-		Assert.assertNull(_stagingGroupHelper.fetchLiveGroup(_remoteLiveGroup));
 		Assert.assertNull(
-			_stagingGroupHelper.fetchLiveGroup(_remoteLiveScopeGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchLiveGroup(_remoteLiveGroup)));
+		Assert.assertNull(
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchLiveGroup(
+					_remoteLiveScopeGroup)));
 
 		Assert.assertNull(_stagingGroupHelper.fetchLiveGroup(_regularGroup));
 	}
@@ -213,15 +317,23 @@ public class StagingGroupHelperTest {
 
 		Assert.assertEquals(
 			_remoteLiveGroup,
-			_stagingGroupHelper.fetchRemoteLiveGroup(_remoteStagingGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchRemoteLiveGroup(
+					_remoteStagingGroup)));
 		Assert.assertEquals(
 			_remoteLiveGroup,
-			_stagingGroupHelper.fetchRemoteLiveGroup(_remoteStagingScopeGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchRemoteLiveGroup(
+					_remoteStagingScopeGroup)));
 
 		Assert.assertNull(
-			_stagingGroupHelper.fetchRemoteLiveGroup(_remoteLiveGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchRemoteLiveGroup(
+					_remoteLiveGroup)));
 		Assert.assertNull(
-			_stagingGroupHelper.fetchRemoteLiveGroup(_remoteLiveScopeGroup));
+			_executeWithRemoteCredentials(
+				() -> _stagingGroupHelper.fetchRemoteLiveGroup(
+					_remoteLiveScopeGroup)));
 
 		Assert.assertNull(
 			_stagingGroupHelper.fetchRemoteLiveGroup(_regularGroup));
@@ -876,79 +988,79 @@ public class StagingGroupHelperTest {
 			TestPropsValues.getUserId(), _localLiveGroup, false, false,
 			serviceContext);
 
-		_localStagingGroup = GroupLocalServiceUtil.getStagingGroup(
+		_localStagingGroup = GroupLocalServiceUtil.fetchStagingGroup(
 			_localLiveGroup.getGroupId());
 
-		Assert.assertTrue(_localStagingGroup != null);
+		Assert.assertNotNull(_localStagingGroup);
 	}
 
 	private void _addRemoteStagingGroups() throws Exception {
 		_remoteLiveGroup = GroupTestUtil.addGroup();
 		_remoteStagingGroup = GroupTestUtil.addGroup();
 
-		_setPortalProperty(
-			"TUNNELING_SERVLET_SHARED_SECRET",
-			"F0E1D2C3B4A5968778695A4B3C2D1E0F");
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"TUNNELING_SERVLET_SHARED_SECRET",
+					"F0E1D2C3B4A5968778695A4B3C2D1E0F");
+			SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"TUNNELING_SERVLET_SHARED_SECRET_HEX", true)) {
 
-		_setPortalProperty("TUNNELING_SERVLET_SHARED_SECRET_HEX", true);
+			int serverPort = PortalUtil.getPortalServerPort(false);
 
-		int serverPort = PortalUtil.getPortalServerPort(false);
+			Assert.assertFalse(
+				"Invalid server port: " + serverPort,
+				(serverPort < 1) || (serverPort > 65535));
 
-		Assert.assertFalse(
-			"Invalid server port: " + serverPort,
-			(serverPort < 1) || (serverPort > 65535));
+			String pathContext = PortalUtil.getPathContext();
 
-		String pathContext = PortalUtil.getPathContext();
+			UserTestUtil.setUser(TestPropsValues.getUser());
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+			ServiceContext serviceContext = new ServiceContext();
 
-		ServiceContext serviceContext = new ServiceContext();
+			serviceContext.setAttribute(
+				"staged--staged-portlet_" + _PORTLET_ID_BLOGS + "--", "false");
+			serviceContext.setAttribute(
+				"staged--staged-portlet_" + _PORTLET_ID_BOOKMARKS + "--",
+				"true");
 
-		serviceContext.setAttribute(
-			"staged--staged-portlet_" + _PORTLET_ID_BLOGS + "--", "false");
-		serviceContext.setAttribute(
-			"staged--staged-portlet_" + _PORTLET_ID_BOOKMARKS + "--", "true");
+			StagingLocalServiceUtil.enableRemoteStaging(
+				TestPropsValues.getUserId(), _remoteStagingGroup, false, false,
+				"localhost", serverPort, pathContext, false,
+				_remoteLiveGroup.getGroupId(), serviceContext);
 
-		StagingLocalServiceUtil.enableRemoteStaging(
-			TestPropsValues.getUserId(), _remoteStagingGroup, false, false,
-			"localhost", serverPort, pathContext, false,
-			_remoteLiveGroup.getGroupId(), serviceContext);
+			GroupUtil.clearCache();
 
-		GroupUtil.clearCache();
-
-		_remoteLiveGroup = GroupLocalServiceUtil.getGroup(
-			_remoteLiveGroup.getGroupId());
+			_remoteLiveGroup = GroupLocalServiceUtil.getGroup(
+				_remoteLiveGroup.getGroupId());
+		}
 	}
 
 	private Group _addScopeGroup(Group group) throws Exception {
-		Layout layout = LayoutTestUtil.addLayout(group);
-
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.getDefault(), String.valueOf(layout.getPlid())
-		).build();
+		Layout layout = LayoutTestUtil.addTypePortletLayout(group);
 
 		return GroupLocalServiceUtil.addGroup(
 			TestPropsValues.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
 			Layout.class.getName(), layout.getPlid(),
-			GroupConstants.DEFAULT_LIVE_GROUP_ID, nameMap, null, 0, true,
-			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, false, true,
-			null);
+			GroupConstants.DEFAULT_LIVE_GROUP_ID,
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), String.valueOf(layout.getPlid())
+			).build(),
+			null, 0, true, GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null,
+			false, true, null);
 	}
 
-	private void _setPortalProperty(String propertyName, Object value)
-		throws Exception {
+	private Group _executeWithRemoteCredentials(Supplier<Group> groupSupplier) {
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"TUNNELING_SERVLET_SHARED_SECRET",
+					"F0E1D2C3B4A5968778695A4B3C2D1E0F");
+			SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"TUNNELING_SERVLET_SHARED_SECRET_HEX", true)) {
 
-		Field field = ReflectionUtil.getDeclaredField(
-			PropsValues.class, propertyName);
-
-		field.setAccessible(true);
-
-		Field modifiersField = Field.class.getDeclaredField("modifiers");
-
-		modifiersField.setAccessible(true);
-		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-		field.set(null, value);
+			return groupSupplier.get();
+		}
 	}
 
 	private static final String _PORTLET_ID_BLOGS =
@@ -956,6 +1068,21 @@ public class StagingGroupHelperTest {
 
 	private static final String _PORTLET_ID_BOOKMARKS =
 		"com_liferay_bookmarks_web_portlet_BookmarksPortlet";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		StagingGroupHelperTest.class);
+
+	@Inject(
+		filter = "component.name=com.liferay.staging.internal.instance.lifecycle.AddCompanyGroupPortalInstanceLifecycleListener"
+	)
+	private PortalInstanceLifecycleListener
+		_addCompanyGroupPortalInstanceLifecycleListener;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 	private Group _localLiveGroup;
 	private Group _localLiveScopeGroup;
@@ -966,6 +1093,9 @@ public class StagingGroupHelperTest {
 	private Group _remoteLiveScopeGroup;
 	private Group _remoteStagingGroup;
 	private Group _remoteStagingScopeGroup;
+
+	@Inject
+	private ServiceComponentRuntime _serviceComponentRuntime;
 
 	@Inject
 	private StagingGroupHelper _stagingGroupHelper;

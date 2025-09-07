@@ -1,22 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
 
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.util.CookieUtil;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -24,9 +19,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import java.util.Objects;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Michael Young
@@ -41,43 +33,44 @@ public class Header implements Externalizable {
 	public Header() {
 	}
 
-	public Header(Cookie cookie) {
-		if (cookie == null) {
+	public Header(Cookie cookieValue) {
+		if (cookieValue == null) {
 			throw new IllegalArgumentException("Cookie is null");
 		}
 
 		_type = Type.COOKIE;
 
-		_cookieValue = cookie;
+		_cookieValue = cookieValue;
 	}
 
-	public Header(int integer) {
+	public Header(int intValue) {
 		_type = Type.INTEGER;
 
-		_intValue = integer;
+		_intValue = intValue;
 	}
 
-	public Header(long date) {
+	public Header(long dateValue) {
 		_type = Type.DATE;
 
-		_dateValue = date;
+		_dateValue = dateValue;
 	}
 
-	public Header(String string) {
-		if (string == null) {
+	public Header(String stringValue) {
+		if (stringValue == null) {
 			throw new IllegalArgumentException("String is null");
 		}
 
 		_type = Type.STRING;
 
-		_stringValue = string;
+		_stringValue = stringValue;
 	}
 
 	public void addToResponse(
 		String key, HttpServletResponse httpServletResponse) {
 
 		if (_type == Type.COOKIE) {
-			httpServletResponse.addCookie(_cookieValue);
+			CookiesManagerUtil.addCookie(
+				_cookieValue, null, httpServletResponse);
 		}
 		else if (_type == Type.DATE) {
 			httpServletResponse.addDateHeader(key, _dateValue);
@@ -94,16 +87,16 @@ public class Header implements Externalizable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof Header)) {
+		if (!(object instanceof Header)) {
 			return false;
 		}
 
-		Header header = (Header)obj;
+		Header header = (Header)object;
 
 		if (_type != header._type) {
 			return false;
@@ -129,9 +122,8 @@ public class Header implements Externalizable {
 		else if (_type == Type.STRING) {
 			return _stringValue.equals(header._stringValue);
 		}
-		else {
-			throw new IllegalStateException("Invalid type " + _type);
-		}
+
+		throw new IllegalStateException("Invalid type " + _type);
 	}
 
 	@Override
@@ -148,9 +140,8 @@ public class Header implements Externalizable {
 		else if (_type == Type.STRING) {
 			return _stringValue.hashCode();
 		}
-		else {
-			throw new IllegalStateException("Invalid type " + _type);
-		}
+
+		throw new IllegalStateException("Invalid type " + _type);
 	}
 
 	@Override
@@ -181,7 +172,8 @@ public class Header implements Externalizable {
 		String key, HttpServletResponse httpServletResponse) {
 
 		if (_type == Type.COOKIE) {
-			httpServletResponse.addCookie(_cookieValue);
+			CookiesManagerUtil.addCookie(
+				_cookieValue, null, httpServletResponse);
 		}
 		else if (_type == Type.DATE) {
 			httpServletResponse.setDateHeader(key, _dateValue);
@@ -211,9 +203,8 @@ public class Header implements Externalizable {
 		else if (_type == Type.STRING) {
 			return _stringValue;
 		}
-		else {
-			throw new IllegalStateException("Invalid type " + _type);
-		}
+
+		throw new IllegalStateException("Invalid type " + _type);
 	}
 
 	@Override

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,24 +23,6 @@
 	</c:choose>
 </liferay-ui:success>
 
-<liferay-ui:success key="configurationEntryAdded">
-
-	<%
-	AMImageConfigurationEntry amImageConfigurationEntry = (AMImageConfigurationEntry)SessionMessages.get(renderRequest, "configurationEntryAdded");
-	%>
-
-	<liferay-ui:message arguments="<%= HtmlUtil.escape(amImageConfigurationEntry.getName()) %>" key="x-was-saved-successfully" translateArguments="<%= false %>" />
-</liferay-ui:success>
-
-<liferay-ui:success key="configurationEntryAddedAndIDRenamed">
-
-	<%
-	AMImageConfigurationEntry amImageConfigurationEntry = (AMImageConfigurationEntry)SessionMessages.get(renderRequest, "configurationEntryAddedAndIDRenamed");
-	%>
-
-	<liferay-ui:message arguments="<%= new String[] {HtmlUtil.escape(amImageConfigurationEntry.getName()), amImageConfigurationEntry.getUUID()} %>" key="x-was-saved-successfully.-the-id-was-duplicated-and-renamed-to-x" translateArguments="<%= false %>" />
-</liferay-ui:success>
-
 <liferay-ui:success key="configurationEntryEnabled">
 
 	<%
@@ -68,15 +41,6 @@
 	<liferay-ui:message arguments="<%= HtmlUtil.escape(amImageConfigurationEntry.getName()) %>" key="x-was-disabled-successfully" translateArguments="<%= false %>" />
 </liferay-ui:success>
 
-<liferay-ui:success key="configurationEntryUpdated">
-
-	<%
-	AMImageConfigurationEntry amImageConfigurationEntry = (AMImageConfigurationEntry)SessionMessages.get(renderRequest, "configurationEntryUpdated");
-	%>
-
-	<liferay-ui:message arguments="<%= HtmlUtil.escape(amImageConfigurationEntry.getName()) %>" key="x-was-saved-successfully" translateArguments="<%= false %>" />
-</liferay-ui:success>
-
 <liferay-ui:success key="configurationEntryUpdatedAndIDRenamed">
 
 	<%
@@ -84,15 +48,6 @@
 	%>
 
 	<liferay-ui:message arguments="<%= new String[] {HtmlUtil.escape(amImageConfigurationEntry.getName()), amImageConfigurationEntry.getUUID()} %>" key="x-was-saved-successfully.-the-id-was-duplicated-and-renamed-to-x" translateArguments="<%= false %>" />
-</liferay-ui:success>
-
-<liferay-ui:success key="highResolutionConfigurationEntryAdded">
-
-	<%
-	AMImageConfigurationEntry[] addedConfigurationEntries = (AMImageConfigurationEntry[])SessionMessages.get(renderRequest, "highResolutionConfigurationEntryAdded");
-	%>
-
-	<liferay-ui:message arguments="<%= new String[] {HtmlUtil.escape(addedConfigurationEntries[0].getName()), HtmlUtil.escape(addedConfigurationEntries[1].getName())} %>" key="x-and-x-were-saved-successfully" translateArguments="<%= false %>" />
 </liferay-ui:success>
 
 <liferay-ui:success key="optimizeImages" message="processing-images.-this-could-take-a-while-depending-on-the-number-of-images" />

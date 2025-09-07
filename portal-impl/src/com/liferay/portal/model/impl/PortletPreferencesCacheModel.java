@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -35,17 +26,17 @@ public class PortletPreferencesCacheModel
 	implements CacheModel<PortletPreferences>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof PortletPreferencesCacheModel)) {
+		if (!(object instanceof PortletPreferencesCacheModel)) {
 			return false;
 		}
 
 		PortletPreferencesCacheModel portletPreferencesCacheModel =
-			(PortletPreferencesCacheModel)obj;
+			(PortletPreferencesCacheModel)object;
 
 		if ((portletPreferencesId ==
 				portletPreferencesCacheModel.portletPreferencesId) &&
@@ -76,7 +67,7 @@ public class PortletPreferencesCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(19);
+		StringBundler sb = new StringBundler(17);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -94,8 +85,6 @@ public class PortletPreferencesCacheModel
 		sb.append(plid);
 		sb.append(", portletId=");
 		sb.append(portletId);
-		sb.append(", preferences=");
-		sb.append(preferences);
 		sb.append("}");
 
 		return sb.toString();
@@ -121,13 +110,6 @@ public class PortletPreferencesCacheModel
 			portletPreferencesImpl.setPortletId(portletId);
 		}
 
-		if (preferences == null) {
-			portletPreferencesImpl.setPreferences("");
-		}
-		else {
-			portletPreferencesImpl.setPreferences(preferences);
-		}
-
 		portletPreferencesImpl.resetOriginalValues();
 
 		return portletPreferencesImpl;
@@ -149,7 +131,6 @@ public class PortletPreferencesCacheModel
 
 		plid = objectInput.readLong();
 		portletId = objectInput.readUTF();
-		preferences = objectInput.readUTF();
 	}
 
 	@Override
@@ -174,13 +155,6 @@ public class PortletPreferencesCacheModel
 		else {
 			objectOutput.writeUTF(portletId);
 		}
-
-		if (preferences == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(preferences);
-		}
 	}
 
 	public long mvccVersion;
@@ -191,6 +165,5 @@ public class PortletPreferencesCacheModel
 	public int ownerType;
 	public long plid;
 	public String portletId;
-	public String preferences;
 
 }

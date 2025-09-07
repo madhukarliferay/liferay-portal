@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.trash.service.impl;
@@ -36,18 +27,25 @@ import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.SystemEventLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.trash.kernel.util.TrashUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.trash.model.TrashEntry;
 import com.liferay.trash.model.TrashVersion;
 import com.liferay.trash.model.impl.TrashEntryImpl;
 import com.liferay.trash.service.base.TrashEntryLocalServiceBaseImpl;
+import com.liferay.trash.service.persistence.TrashVersionPersistence;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -83,7 +81,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 * @param  statusOVPs the primary keys and statuses of any of the entry's
 	 *         versions (e.g., {@link
 	 *         com.liferay.portlet.documentlibrary.model.DLFileVersion})
-	 * @param  typeSettingsProperties the type settings properties
+	 * @param  typeSettingsUnicodeProperties the type settings properties
 	 * @return the trashEntry
 	 */
 	@Override
@@ -91,12 +89,12 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			long userId, long groupId, String className, long classPK,
 			String classUuid, String referrerClassName, int status,
 			List<ObjectValuePair<Long, Integer>> statusOVPs,
-			UnicodeProperties typeSettingsProperties)
+			UnicodeProperties typeSettingsUnicodeProperties)
 		throws PortalException {
 
-		long classNameId = classNameLocalService.getClassNameId(className);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
-		TrashEntry trashEntry = trashEntryPersistence.fetchByC_C(
+		TrashEntry trashEntry = trashEntryPersistence.fetchByCN_CPK(
 			classNameId, classPK);
 
 		if (trashEntry != null) {
@@ -115,7 +113,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 		trashEntry.setGroupId(groupId);
 
-		User user = userLocalService.getUserById(userId);
+		User user = _userLocalService.getUserById(userId);
 
 		trashEntry.setCompanyId(user.getCompanyId());
 		trashEntry.setUserId(user.getUserId());
@@ -129,19 +127,19 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			trashEntry.setSystemEventSetKey(systemEvent.getSystemEventSetKey());
 		}
 
-		if (typeSettingsProperties != null) {
-			trashEntry.setTypeSettingsProperties(typeSettingsProperties);
+		if (typeSettingsUnicodeProperties != null) {
+			trashEntry.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 		}
 
 		trashEntry.setStatus(status);
 
-		trashEntryPersistence.update(trashEntry);
+		trashEntry = trashEntryPersistence.update(trashEntry);
 
 		if (statusOVPs != null) {
 			for (ObjectValuePair<Long, Integer> statusOVP : statusOVPs) {
 				long versionId = counterLocalService.increment();
 
-				TrashVersion trashVersion = trashVersionPersistence.create(
+				TrashVersion trashVersion = _trashVersionPersistence.create(
 					versionId);
 
 				trashVersion.setEntryId(entryId);
@@ -149,7 +147,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 				trashVersion.setClassPK(statusOVP.getKey());
 				trashVersion.setStatus(statusOVP.getValue());
 
-				trashVersionPersistence.update(trashVersion);
+				_trashVersionPersistence.update(trashVersion);
 			}
 		}
 
@@ -163,7 +161,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 		actionableDynamicQuery.setPerformActionMethod(
 			(TrashEntry trashEntry) -> {
-				Group group = groupLocalService.fetchGroup(
+				Group group = _groupLocalService.fetchGroup(
 					trashEntry.getGroupId());
 
 				if (group == null) {
@@ -172,11 +170,9 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 				Date createDate = trashEntry.getCreateDate();
 
-				Date date = getMaxAge(group);
+				Date date = _getMaxAge(group);
 
-				if (createDate.before(date) ||
-					!TrashUtil.isTrashEnabled(group)) {
-
+				if (createDate.before(date) || !_isTrashEnabled(group)) {
 					TrashHandler trashHandler =
 						TrashHandlerRegistryUtil.getTrashHandler(
 							trashEntry.getClassName());
@@ -186,8 +182,10 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 							trashHandler.deleteTrashEntry(
 								trashEntry.getClassPK());
 						}
-						catch (Exception e) {
-							_log.error(e, e);
+						catch (Exception exception) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(exception);
+							}
 						}
 					}
 				}
@@ -219,8 +217,8 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 					try {
 						trashHandler.deleteTrashEntry(entry.getClassPK());
 					}
-					catch (Exception e) {
-						_log.error(e, e);
+					catch (Exception exception) {
+						_log.error(exception);
 					}
 				}
 			}
@@ -249,8 +247,8 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 */
 	@Override
 	public TrashEntry deleteEntry(String className, long classPK) {
-		TrashEntry entry = trashEntryPersistence.fetchByC_C(
-			classNameLocalService.getClassNameId(className), classPK);
+		TrashEntry entry = trashEntryPersistence.fetchByCN_CPK(
+			_classNameLocalService.getClassNameId(className), classPK);
 
 		return deleteEntry(entry);
 	}
@@ -259,15 +257,25 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	@Override
 	public TrashEntry deleteEntry(TrashEntry trashEntry) {
 		if (trashEntry != null) {
-			trashVersionPersistence.removeByEntryId(trashEntry.getEntryId());
+			_trashVersionPersistence.removeByEntryId(trashEntry.getEntryId());
 
 			trashEntry = trashEntryPersistence.remove(trashEntry);
 
-			systemEventLocalService.deleteSystemEvents(
+			_systemEventLocalService.deleteSystemEvents(
 				trashEntry.getGroupId(), trashEntry.getSystemEventSetKey());
 		}
 
 		return trashEntry;
+	}
+
+	@Override
+	public void deleteTrashEntries(long companyId, String className) {
+		List<TrashEntry> trashEntries = trashEntryPersistence.findByC_CN(
+			companyId, _classNameLocalService.getClassNameId(className));
+
+		for (TrashEntry trashEntry : trashEntries) {
+			deleteEntry(trashEntry);
+		}
 	}
 
 	/**
@@ -290,8 +298,8 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 */
 	@Override
 	public TrashEntry fetchEntry(String className, long classPK) {
-		return trashEntryPersistence.fetchByC_C(
-			classNameLocalService.getClassNameId(className), classPK);
+		return trashEntryPersistence.fetchByCN_CPK(
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	/**
@@ -326,22 +334,24 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 * @param  start the lower bound of the range of trash entries to return
 	 * @param  end the upper bound of the range of trash entries to return (not
 	 *         inclusive)
-	 * @param  obc the comparator to order the trash entries (optionally
-	 *         <code>null</code>)
+	 * @param  orderByComparator the comparator to order the trash entries
+	 *         (optionally <code>null</code>)
 	 * @return the range of matching trash entries ordered by comparator
-	 *         <code>obc</code>
+	 *         <code>orderByComparator</code>
 	 */
 	@Override
 	public List<TrashEntry> getEntries(
-		long groupId, int start, int end, OrderByComparator<TrashEntry> obc) {
+		long groupId, int start, int end,
+		OrderByComparator<TrashEntry> orderByComparator) {
 
-		return trashEntryPersistence.findByGroupId(groupId, start, end, obc);
+		return trashEntryPersistence.findByGroupId(
+			groupId, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<TrashEntry> getEntries(long groupId, String className) {
-		return trashEntryPersistence.findByG_C(
-			groupId, classNameLocalService.getClassNameId(className));
+		return trashEntryPersistence.findByG_CN(
+			groupId, _classNameLocalService.getClassNameId(className));
 	}
 
 	/**
@@ -377,8 +387,8 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	public TrashEntry getEntry(String className, long classPK)
 		throws PortalException {
 
-		return trashEntryPersistence.findByC_C(
-			classNameLocalService.getClassNameId(className), classPK);
+		return trashEntryPersistence.findByCN_CPK(
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	@Override
@@ -390,13 +400,13 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			Indexer<TrashEntry> indexer = _indexerRegistry.nullSafeGetIndexer(
 				TrashEntry.class);
 
-			SearchContext searchContext = buildSearchContext(
+			SearchContext searchContext = _buildSearchContext(
 				companyId, groupId, userId, keywords, start, end, sort);
 
 			return indexer.search(searchContext);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
@@ -409,7 +419,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			Indexer<TrashEntry> indexer = _indexerRegistry.nullSafeGetIndexer(
 				TrashEntry.class);
 
-			SearchContext searchContext = buildSearchContext(
+			SearchContext searchContext = _buildSearchContext(
 				companyId, groupId, userId, keywords, start, end, sort);
 
 			Hits hits = indexer.search(searchContext);
@@ -418,12 +428,12 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 			return new BaseModelSearchResult<>(trashEntries, hits.getLength());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
-	protected SearchContext buildSearchContext(
+	private SearchContext _buildSearchContext(
 		long companyId, long groupId, long userId, String keywords, int start,
 		int end, Sort sort) {
 
@@ -431,8 +441,8 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 		searchContext.setCompanyId(companyId);
 		searchContext.setEnd(end);
-		searchContext.setKeywords(keywords);
 		searchContext.setGroupIds(new long[] {groupId});
+		searchContext.setKeywords(keywords);
 
 		if (sort != null) {
 			searchContext.setSorts(sort);
@@ -447,18 +457,6 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		queryConfig.setScoreEnabled(false);
 
 		return searchContext;
-	}
-
-	protected Date getMaxAge(Group group) throws PortalException {
-		Calendar calendar = Calendar.getInstance();
-
-		calendar.setTime(new Date());
-
-		int maxAge = TrashUtil.getMaxAge(group);
-
-		calendar.add(Calendar.MINUTE, -maxAge);
-
-		return calendar.getTime();
 	}
 
 	private List<TrashEntry> _getEntries(Hits hits) {
@@ -512,12 +510,13 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 				entries.add(entry);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
 							"Unable to find trash entry for ", entryClassName,
-							" with primary key ", classPK));
+							" with primary key ", classPK),
+						exception);
 				}
 			}
 		}
@@ -525,10 +524,61 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		return entries;
 	}
 
+	private Date _getMaxAge(Group group) throws PortalException {
+		Calendar calendar = Calendar.getInstance();
+
+		calendar.setTime(new Date());
+
+		int trashEntriesMaxAge = PrefsPropsUtil.getInteger(
+			group.getCompanyId(), PropsKeys.TRASH_ENTRIES_MAX_AGE,
+			PropsValues.TRASH_ENTRIES_MAX_AGE);
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			group.getParentLiveGroupTypeSettingsProperties();
+
+		calendar.add(
+			Calendar.MINUTE,
+			-GetterUtil.getInteger(
+				typeSettingsUnicodeProperties.getProperty("trashEntriesMaxAge"),
+				trashEntriesMaxAge));
+
+		return calendar.getTime();
+	}
+
+	private boolean _isTrashEnabled(Group group) {
+		boolean companyTrashEnabled = PrefsPropsUtil.getBoolean(
+			group.getCompanyId(), PropsKeys.TRASH_ENABLED);
+
+		if (!companyTrashEnabled) {
+			return false;
+		}
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			group.getParentLiveGroupTypeSettingsProperties();
+
+		return GetterUtil.getBoolean(
+			typeSettingsUnicodeProperties.getProperty("trashEnabled"), true);
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		TrashEntryLocalServiceImpl.class);
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private IndexerRegistry _indexerRegistry;
+
+	@Reference
+	private SystemEventLocalService _systemEventLocalService;
+
+	@Reference
+	private TrashVersionPersistence _trashVersionPersistence;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

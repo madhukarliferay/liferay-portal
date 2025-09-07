@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.store.file.system;
@@ -44,6 +35,26 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 			advancedFileSystemStoreConfiguration) {
 
 		super(advancedFileSystemStoreConfiguration);
+	}
+
+	@Override
+	public String[] getFileVersions(
+		long companyId, long repositoryId, String fileName) {
+
+		String[] versions = super.getFileVersions(
+			companyId, repositoryId, fileName);
+
+		for (int i = 0; i < versions.length; i++) {
+			int x = versions[i].lastIndexOf(CharPool.UNDERLINE);
+
+			if (x > -1) {
+				int y = versions[i].lastIndexOf(CharPool.PERIOD);
+
+				versions[i] = versions[i].substring(x + 1, y);
+			}
+		}
+
+		return versions;
 	}
 
 	protected void buildPath(StringBundler sb, String fileNameFragment) {
@@ -167,21 +178,11 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 
 			File repositoryDir = getRepositoryDir(companyId, repositoryId);
 
-			StringBundler pathSB = new StringBundler(11);
-
-			pathSB.append(repositoryDir);
-			pathSB.append(StringPool.SLASH);
-			pathSB.append(sb.toString());
-			pathSB.append(StringPool.SLASH);
-			pathSB.append(fileNameFragment);
-			pathSB.append(ext);
-			pathSB.append(StringPool.SLASH);
-			pathSB.append(fileNameFragment);
-			pathSB.append(StringPool.UNDERLINE);
-			pathSB.append(version);
-			pathSB.append(ext);
-
-			return new File(pathSB.toString());
+			return new File(
+				StringBundler.concat(
+					repositoryDir, StringPool.SLASH, sb, StringPool.SLASH,
+					fileNameFragment, ext, StringPool.SLASH, fileNameFragment,
+					StringPool.UNDERLINE, version, ext));
 		}
 
 		File fileNameDir = getDirNameDir(companyId, repositoryId, fileName);
@@ -189,16 +190,10 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 		String fileNameFragment = FileUtil.stripExtension(
 			fileName.substring(pos + 1));
 
-		StringBundler pathSB = new StringBundler(6);
-
-		pathSB.append(fileNameDir);
-		pathSB.append(StringPool.SLASH);
-		pathSB.append(fileNameFragment);
-		pathSB.append(StringPool.UNDERLINE);
-		pathSB.append(version);
-		pathSB.append(ext);
-
-		return new File(pathSB.toString());
+		return new File(
+			StringBundler.concat(
+				fileNameDir, StringPool.SLASH, fileNameFragment,
+				StringPool.UNDERLINE, version, ext));
 	}
 
 	@Override

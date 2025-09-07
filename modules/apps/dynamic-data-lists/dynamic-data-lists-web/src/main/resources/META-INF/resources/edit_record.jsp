@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -56,6 +47,21 @@ else if (Validator.isNull(defaultLanguageId)) {
 
 String languageId = ParamUtil.getString(request, "languageId", defaultLanguageId);
 
+Locale defaultEditLocale = LocaleUtil.fromLanguageId(ddmStructure.getDefaultLanguageId());
+
+if (ddmFormValues != null) {
+	defaultEditLocale = ddmFormValues.getDefaultLocale();
+
+	String[] ddmFormValuesAvailableLocales = LocaleUtil.toLanguageIds(ddmFormValues.getAvailableLocales());
+
+	if (ArrayUtil.contains(ddmFormValuesAvailableLocales, themeDisplay.getLanguageId())) {
+		defaultEditLocale = themeDisplay.getLocale();
+	}
+	else if (ArrayUtil.contains(ddmFormValuesAvailableLocales, user.getLanguageId())) {
+		defaultEditLocale = user.getLocale();
+	}
+}
+
 boolean translating = false;
 
 if (!defaultLanguageId.equals(languageId)) {
@@ -79,29 +85,37 @@ else {
 }
 %>
 
-<portlet:actionURL name="addRecord" var="addRecordURL">
+<portlet:actionURL name="/dynamic_data_lists/add_record" var="addRecordURL">
 	<portlet:param name="mvcPath" value="/edit_record.jsp" />
 </portlet:actionURL>
 
-<portlet:actionURL name="updateRecord" var="updateRecordURL">
+<portlet:actionURL name="/dynamic_data_lists/update_record" var="updateRecordURL">
 	<portlet:param name="mvcPath" value="/edit_record.jsp" />
 </portlet:actionURL>
 
 <c:if test="<%= record != null %>">
 	<clay:management-toolbar
 		infoPanelId="infoPanelId"
-		namespace="<%= renderResponse.getNamespace() %>"
-		selectable="false"
-		showSearch="false"
+		selectable="<%= false %>"
+		showSearch="<%= false %>"
 	/>
 </c:if>
 
-<div class="closed container-fluid-1280 sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+<%@ include file="/deprecated_warning.jspf" %>
+
+<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
 	<c:if test="<%= recordVersion != null %>">
 		<div class="sidenav-menu-slider">
-			<div class="sidebar sidebar-default sidenav-menu">
+			<div class="sidebar sidebar-light sidenav-menu">
 				<div class="sidebar-header">
-					<aui:icon cssClass="d-inline-block d-sm-none icon-monospaced sidenav-close text-default" image="times" markupView="lexicon" url="javascript:;" />
+					<clay:button
+						aria-label='<%= LanguageUtil.get(request, "close") %>'
+						cssClass="d-sm-none icon-monospaced lfr-portal-tooltip sidenav-close"
+						displayType="unstyled"
+						icon="times"
+						small="<%= true %>"
+						title="close"
+					/>
 				</div>
 
 				<liferay-ui:tabs
@@ -112,30 +126,30 @@ else {
 				>
 					<liferay-ui:section>
 						<div class="sidebar-body">
-							<h3 class="version">
-								<liferay-ui:message key="version" /> <%= HtmlUtil.escape(recordVersion.getVersion()) %>
-							</h3>
+							<ul class="list-unstyled sidebar-dl sidebar-section">
+								<li class="sidebar-dt">
+									<liferay-ui:message key="version" />
+								</li>
+								<li class="sidebar-dd">
+									<%= HtmlUtil.escape(recordVersion.getVersion()) %>
+								</li>
+								<li class="sidebar-dt">
+									<aui:model-context bean="<%= recordVersion %>" model="<%= DDLRecordVersion.class %>" />
 
-							<div>
-								<aui:model-context bean="<%= recordVersion %>" model="<%= DDLRecordVersion.class %>" />
-
-								<aui:workflow-status model="<%= DDLRecord.class %>" status="<%= recordVersion.getStatus() %>" />
-							</div>
-
-							<div>
-								<h5>
-									<strong><liferay-ui:message key="created" /></strong>
-								</h5>
-
-								<p>
+									<aui:workflow-status model="<%= DDLRecord.class %>" status="<%= recordVersion.getStatus() %>" />
+								</li>
+								<li class="sidebar-dt">
+									<liferay-ui:message key="created" />
+								</li>
+								<li class="sidebar-dd">
 
 									<%
-									Format dateFormatDateTime = FastDateFormatFactoryUtil.getDateTime(locale, timeZone);
+									Format dateTimeFormat = FastDateFormatFactoryUtil.getDateTime(locale, timeZone);
 									%>
 
-									<liferay-ui:message arguments="<%= new Object[] {HtmlUtil.escape(recordVersion.getUserName()), dateFormatDateTime.format(recordVersion.getCreateDate())} %>" key="by-x-on-x" translateArguments="<%= false %>" />
-								</p>
-							</div>
+									<liferay-ui:message arguments="<%= new Object[] {HtmlUtil.escape(recordVersion.getUserName()), dateTimeFormat.format(recordVersion.getCreateDate())} %>" key="by-x-on-x" translateArguments="<%= false %>" />
+								</li>
+							</ul>
 						</div>
 					</liferay-ui:section>
 
@@ -151,8 +165,10 @@ else {
 		</div>
 	</c:if>
 
-	<div class="sidenav-content">
-		<aui:form action="<%= (record == null) ? addRecordURL : updateRecordURL %>" cssClass="container-fluid-1280" enctype="multipart/form-data" method="post" name="fm">
+	<clay:container-fluid
+		cssClass="container-form-lg sidenav-content"
+	>
+		<aui:form action="<%= (record == null) ? addRecordURL : updateRecordURL %>" cssClass="container-fluid container-fluid-max-xl" enctype="multipart/form-data" method="post" name="fm">
 			<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 			<aui:input name="portletResource" type="hidden" value="<%= portletResource %>" />
 			<aui:input name="recordId" type="hidden" value="<%= recordId %>" />
@@ -167,7 +183,12 @@ else {
 				<liferay-ui:error exception="<%= DuplicateFileEntryException.class %>" message="a-file-with-that-name-already-exists" />
 
 				<liferay-ui:error exception="<%= FileSizeException.class %>">
-					<liferay-ui:message arguments="<%= TextFormatter.formatStorageSize(DLValidatorUtil.getMaxAllowableSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+
+					<%
+					FileSizeException fileSizeException = (FileSizeException)errorException;
+					%>
+
+					<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileSizeException.getMaxSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
 				</liferay-ui:error>
 
 				<liferay-ui:error exception="<%= StorageFieldRequiredException.class %>" message="please-fill-out-all-required-fields" />
@@ -190,26 +211,31 @@ else {
 							classNameId="<%= classNameId %>"
 							classPK="<%= classPK %>"
 							ddmFormValues="<%= ddmFormValues %>"
+							defaultEditLocale="<%= defaultEditLocale %>"
 							defaultLocale="<%= LocaleUtil.fromLanguageId(defaultLanguageId) %>"
 							groupId="<%= recordSet.getGroupId() %>"
 							repeatable="<%= translating ? false : true %>"
 							requestedLocale="<%= locale %>"
+							showLanguageSelector="<%= false %>"
 						/>
 					</c:when>
 					<c:otherwise>
-						<aui:fieldset-group markupView="lexicon">
-							<aui:fieldset>
-								<liferay-ddm:html
-									classNameId="<%= classNameId %>"
-									classPK="<%= classPK %>"
-									ddmFormValues="<%= ddmFormValues %>"
-									defaultLocale="<%= LocaleUtil.fromLanguageId(defaultLanguageId) %>"
-									groupId="<%= recordSet.getGroupId() %>"
-									repeatable="<%= translating ? false : true %>"
-									requestedLocale="<%= locale %>"
-								/>
-							</aui:fieldset>
-						</aui:fieldset-group>
+						<div class="sheet">
+							<div class="panel-group panel-group-flush">
+								<aui:fieldset>
+									<liferay-ddm:html
+										classNameId="<%= classNameId %>"
+										classPK="<%= classPK %>"
+										ddmFormValues="<%= ddmFormValues %>"
+										defaultEditLocale="<%= defaultEditLocale %>"
+										defaultLocale="<%= LocaleUtil.fromLanguageId(defaultLanguageId) %>"
+										groupId="<%= recordSet.getGroupId() %>"
+										repeatable="<%= translating ? false : true %>"
+										requestedLocale="<%= locale %>"
+									/>
+								</aui:fieldset>
+							</div>
+						</div>
 					</c:otherwise>
 				</c:choose>
 
@@ -240,7 +266,7 @@ else {
 				String publishButtonLabel = "publish";
 
 				if (WorkflowDefinitionLinkLocalServiceUtil.hasWorkflowDefinitionLink(themeDisplay.getCompanyId(), scopeGroupId, DDLRecordSet.class.getName(), recordSetId)) {
-					publishButtonLabel = "submit-for-publication";
+					publishButtonLabel = "submit-for-workflow";
 				}
 
 				if (ddlDisplayContext.isFormView()) {
@@ -249,11 +275,11 @@ else {
 				%>
 
 				<c:if test="<%= ddlDisplayContext.isShowSaveRecordButton() %>">
-					<aui:button name="saveButton" onClick='<%= renderResponse.getNamespace() + "setWorkflowAction(true);" %>' primary="<%= false %>" type="submit" value="<%= saveButtonLabel %>" />
+					<aui:button name="saveButton" onClick='<%= liferayPortletResponse.getNamespace() + "setWorkflowAction(true);" %>' primary="<%= false %>" type="submit" value="<%= saveButtonLabel %>" />
 				</c:if>
 
 				<c:if test="<%= ddlDisplayContext.isShowPublishRecordButton() %>">
-					<aui:button disabled="<%= pending %>" name="publishButton" onClick='<%= renderResponse.getNamespace() + "setWorkflowAction(false);" %>' type="submit" value="<%= publishButtonLabel %>" />
+					<aui:button disabled="<%= pending %>" name="publishButton" onClick='<%= liferayPortletResponse.getNamespace() + "setWorkflowAction(false);" %>' type="submit" value="<%= publishButtonLabel %>" />
 				</c:if>
 
 				<c:if test="<%= ddlDisplayContext.isShowCancelButton() %>">
@@ -261,26 +287,32 @@ else {
 				</c:if>
 			</aui:button-row>
 		</aui:form>
-	</div>
+	</clay:container-fluid>
 </div>
 
 <aui:script>
 	function <portlet:namespace />setWorkflowAction(draft) {
 		if (draft) {
-			document.<portlet:namespace />fm.<portlet:namespace />workflowAction.value = <%= WorkflowConstants.ACTION_SAVE_DRAFT %>;
-		} else {
-			document.<portlet:namespace />fm.<portlet:namespace />workflowAction.value = <%= WorkflowConstants.ACTION_PUBLISH %>;
+			document.<portlet:namespace />fm.<portlet:namespace />workflowAction.value =
+				<%= WorkflowConstants.ACTION_SAVE_DRAFT %>;
+		}
+		else {
+			document.<portlet:namespace />fm.<portlet:namespace />workflowAction.value =
+				<%= WorkflowConstants.ACTION_PUBLISH %>;
 		}
 	}
 </aui:script>
 
 <%
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("mvcPath", "/view_record_set.jsp");
-portletURL.setParameter("recordSetId", String.valueOf(recordSetId));
-
-PortalUtil.addPortletBreadcrumbEntry(request, recordSet.getName(locale), portletURL.toString());
+PortalUtil.addPortletBreadcrumbEntry(
+	request, recordSet.getName(locale),
+	PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCPath(
+		"/view_record_set.jsp"
+	).setParameter(
+		"recordSetId", recordSetId
+	).buildString());
 
 if (record != null) {
 	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.format(request, "edit-x", ddmStructure.getName(locale), false), currentURL);

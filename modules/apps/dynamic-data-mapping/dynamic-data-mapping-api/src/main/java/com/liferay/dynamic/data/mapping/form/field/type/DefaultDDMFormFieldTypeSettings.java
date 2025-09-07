@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type;
@@ -53,8 +44,10 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"dataType", "name", "showLabel", "repeatable",
-								"type", "validation", "visibilityExpression"
+								"dataType", "fieldReference", "name",
+								"showLabel", "repeatable", "type", "validation",
+								"visibilityExpression", "visualProperty",
+								"objectFieldName"
 							}
 						)
 					}
@@ -80,11 +73,17 @@ public interface DefaultDDMFormFieldTypeSettings
 		label = "%label",
 		properties = {
 			"autoFocus=true", "placeholder=%enter-a-field-label",
-			"tooltip=%enter-a-descriptive-field-label-that-guides-users-to-enter-the-information-you-want"
+			"tooltip=%enter-a-descriptive-field-label-that-guides-users-to-enter-the-information-you-want",
+			"visualProperty=true"
 		},
 		type = "text"
 	)
 	public LocalizedValue label();
+
+	@DDMFormField(predefinedValue = "true", visibilityExpression = "FALSE")
+	public default boolean labelAtStructureLevel() {
+		return true;
+	}
 
 	@DDMFormField(
 		label = "%localizable", predefinedValue = "true",
@@ -92,11 +91,20 @@ public interface DefaultDDMFormFieldTypeSettings
 	)
 	public boolean localizable();
 
+	@DDMFormField(visibilityExpression = "FALSE")
+	public default boolean nativeField() {
+		return false;
+	}
+
+	@DDMFormField(label = "%object-field", type = "object_field")
+	public String objectFieldName();
+
 	@DDMFormField(
 		label = "%predefined-value",
 		properties = {
 			"placeholder=%enter-a-default-value",
-			"tooltip=%enter-a-default-value-that-is-submitted-if-no-other-value-is-entered"
+			"tooltip=%enter-a-default-value-that-is-submitted-if-no-other-value-is-entered",
+			"visualProperty=true"
 		},
 		type = "text"
 	)
@@ -108,27 +116,52 @@ public interface DefaultDDMFormFieldTypeSettings
 	@DDMFormField(label = "%repeatable", properties = "showAsSwitcher=true")
 	public boolean repeatable();
 
-	@DDMFormField(label = "%required-field", properties = "showAsSwitcher=true")
+	@DDMFormField(
+		label = "%required-field",
+		properties = {"showAsSwitcher=true", "visualProperty=true"}
+	)
 	public boolean required();
 
 	@DDMFormField(
+		label = "%error-message",
+		properties = {
+			"placeholder=%this-field-is-required", "visualProperty=true"
+		},
+		type = "text"
+	)
+	public default LocalizedValue requiredErrorMessage() {
+		return new LocalizedValue();
+	}
+
+	@DDMFormField(predefinedValue = "true", visibilityExpression = "FALSE")
+	public default boolean rulesActionDisabled() {
+		return true;
+	}
+
+	@DDMFormField(predefinedValue = "true", visibilityExpression = "FALSE")
+	public default boolean rulesConditionDisabled() {
+		return true;
+	}
+
+	@DDMFormField(
 		label = "%show-label", predefinedValue = "true",
-		properties = "showAsSwitcher=true"
+		properties = {"showAsSwitcher=true", "visualProperty=true"}
 	)
 	public boolean showLabel();
 
 	@DDMFormField(
 		label = "%help-text",
 		properties = {
-			"placeholder=%enter-help-text",
-			"tooltip=%add-a-comment-to-help-users-understand-the-field-label"
+			"tooltip=%add-a-comment-to-help-users-understand-the-field-label",
+			"visualProperty=true"
 		},
 		type = "text"
 	)
 	public LocalizedValue tip();
 
 	@DDMFormField(
-		dataType = "string", label = "%validation", type = "validation"
+		dataType = "string", label = "%validation", type = "validation",
+		visibilityExpression = "FALSE"
 	)
 	public DDMFormFieldValidation validation();
 
@@ -141,5 +174,10 @@ public interface DefaultDDMFormFieldTypeSettings
 		visibilityExpression = "FALSE"
 	)
 	public String visibilityExpression();
+
+	@DDMFormField(visibilityExpression = "FALSE")
+	public default boolean visualProperty() {
+		return false;
+	}
 
 }

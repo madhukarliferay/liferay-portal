@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.documentlibrary.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +116,8 @@ public class DLFileVersionPersistenceTest {
 
 		newDLFileVersion.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDLFileVersion.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDLFileVersion.setUuid(RandomTestUtil.randomString());
 
 		newDLFileVersion.setGroupId(RandomTestUtil.nextLong());
@@ -169,6 +162,14 @@ public class DLFileVersionPersistenceTest {
 
 		newDLFileVersion.setChecksum(RandomTestUtil.randomString());
 
+		newDLFileVersion.setStoreUUID(RandomTestUtil.randomString());
+
+		newDLFileVersion.setDisplayDate(RandomTestUtil.nextDate());
+
+		newDLFileVersion.setExpirationDate(RandomTestUtil.nextDate());
+
+		newDLFileVersion.setReviewDate(RandomTestUtil.nextDate());
+
 		newDLFileVersion.setLastPublishDate(RandomTestUtil.nextDate());
 
 		newDLFileVersion.setStatus(RandomTestUtil.nextInt());
@@ -187,6 +188,9 @@ public class DLFileVersionPersistenceTest {
 		Assert.assertEquals(
 			existingDLFileVersion.getMvccVersion(),
 			newDLFileVersion.getMvccVersion());
+		Assert.assertEquals(
+			existingDLFileVersion.getCtCollectionId(),
+			newDLFileVersion.getCtCollectionId());
 		Assert.assertEquals(
 			existingDLFileVersion.getUuid(), newDLFileVersion.getUuid());
 		Assert.assertEquals(
@@ -250,6 +254,18 @@ public class DLFileVersionPersistenceTest {
 		Assert.assertEquals(
 			existingDLFileVersion.getChecksum(),
 			newDLFileVersion.getChecksum());
+		Assert.assertEquals(
+			existingDLFileVersion.getStoreUUID(),
+			newDLFileVersion.getStoreUUID());
+		Assert.assertEquals(
+			Time.getShortTimestamp(existingDLFileVersion.getDisplayDate()),
+			Time.getShortTimestamp(newDLFileVersion.getDisplayDate()));
+		Assert.assertEquals(
+			Time.getShortTimestamp(existingDLFileVersion.getExpirationDate()),
+			Time.getShortTimestamp(newDLFileVersion.getExpirationDate()));
+		Assert.assertEquals(
+			Time.getShortTimestamp(existingDLFileVersion.getReviewDate()),
+			Time.getShortTimestamp(newDLFileVersion.getReviewDate()));
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingDLFileVersion.getLastPublishDate()),
 			Time.getShortTimestamp(newDLFileVersion.getLastPublishDate()));
@@ -317,6 +333,15 @@ public class DLFileVersionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_SU() throws Exception {
+		_persistence.countByC_SU(RandomTestUtil.nextLong(), "");
+
+		_persistence.countByC_SU(0L, "null");
+
+		_persistence.countByC_SU(0L, (String)null);
+	}
+
+	@Test
 	public void testCountByC_NotS() throws Exception {
 		_persistence.countByC_NotS(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
@@ -342,12 +367,42 @@ public class DLFileVersionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByF_SArrayable() throws Exception {
+		_persistence.countByF_S(
+			RandomTestUtil.nextLong(), new int[] {RandomTestUtil.nextInt(), 0});
+	}
+
+	@Test
+	public void testCountByLtD_S() throws Exception {
+		_persistence.countByLtD_S(
+			RandomTestUtil.nextDate(), RandomTestUtil.nextInt());
+
+		_persistence.countByLtD_S(RandomTestUtil.nextDate(), 0);
+	}
+
+	@Test
 	public void testCountByG_F_S() throws Exception {
 		_persistence.countByG_F_S(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextInt());
 
 		_persistence.countByG_F_S(0L, 0L, 0);
+	}
+
+	@Test
+	public void testCountByC_E_S() throws Exception {
+		_persistence.countByC_E_S(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextDate(),
+			RandomTestUtil.nextInt());
+
+		_persistence.countByC_E_S(0L, RandomTestUtil.nextDate(), 0);
+	}
+
+	@Test
+	public void testCountByC_E_SArrayable() throws Exception {
+		_persistence.countByC_E_S(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextDate(),
+			new int[] {RandomTestUtil.nextInt(), 0});
 	}
 
 	@Test
@@ -385,15 +440,17 @@ public class DLFileVersionPersistenceTest {
 
 	protected OrderByComparator<DLFileVersion> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DLFileVersion", "mvccVersion", true, "uuid", true, "fileVersionId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"repositoryId", true, "folderId", true, "fileEntryId", true,
-			"treePath", true, "fileName", true, "extension", true, "mimeType",
-			true, "title", true, "description", true, "changeLog", true,
-			"fileEntryTypeId", true, "version", true, "size", true, "checksum",
-			true, "lastPublishDate", true, "status", true, "statusByUserId",
-			true, "statusByUserName", true, "statusDate", true);
+			"DLFileVersion", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "fileVersionId", true, "groupId", true, "companyId",
+			true, "userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "repositoryId", true, "folderId", true,
+			"fileEntryId", true, "treePath", true, "fileName", true,
+			"extension", true, "mimeType", true, "title", true, "description",
+			true, "changeLog", true, "fileEntryTypeId", true, "version", true,
+			"size", true, "checksum", true, "storeUUID", true, "displayDate",
+			true, "expirationDate", true, "reviewDate", true, "lastPublishDate",
+			true, "status", true, "statusByUserId", true, "statusByUserName",
+			true, "statusDate", true);
 	}
 
 	@Test
@@ -615,31 +672,72 @@ public class DLFileVersionPersistenceTest {
 
 		_persistence.clearCache();
 
-		DLFileVersion existingDLFileVersion = _persistence.findByPrimaryKey(
-			newDLFileVersion.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDLFileVersion.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDLFileVersion.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDLFileVersion, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DLFileVersion newDLFileVersion = addDLFileVersion();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DLFileVersion.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"fileVersionId", newDLFileVersion.getFileVersionId()));
+
+		List<DLFileVersion> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DLFileVersion dlFileVersion) {
 		Assert.assertEquals(
-			Long.valueOf(existingDLFileVersion.getGroupId()),
+			dlFileVersion.getUuid(),
+			ReflectionTestUtil.invoke(
+				dlFileVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(dlFileVersion.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDLFileVersion, "getOriginalGroupId", new Class<?>[0]));
+				dlFileVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingDLFileVersion.getFileEntryId()),
+			Long.valueOf(dlFileVersion.getFileEntryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDLFileVersion, "getOriginalFileEntryId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingDLFileVersion.getVersion(),
-				ReflectionTestUtil.invoke(
-					existingDLFileVersion, "getOriginalVersion",
-					new Class<?>[0])));
+				dlFileVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "fileEntryId"));
+		Assert.assertEquals(
+			dlFileVersion.getVersion(),
+			ReflectionTestUtil.invoke(
+				dlFileVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "version"));
 	}
 
 	protected DLFileVersion addDLFileVersion() throws Exception {
@@ -648,6 +746,8 @@ public class DLFileVersionPersistenceTest {
 		DLFileVersion dlFileVersion = _persistence.create(pk);
 
 		dlFileVersion.setMvccVersion(RandomTestUtil.nextLong());
+
+		dlFileVersion.setCtCollectionId(RandomTestUtil.nextLong());
 
 		dlFileVersion.setUuid(RandomTestUtil.randomString());
 
@@ -692,6 +792,14 @@ public class DLFileVersionPersistenceTest {
 		dlFileVersion.setSize(RandomTestUtil.nextLong());
 
 		dlFileVersion.setChecksum(RandomTestUtil.randomString());
+
+		dlFileVersion.setStoreUUID(RandomTestUtil.randomString());
+
+		dlFileVersion.setDisplayDate(RandomTestUtil.nextDate());
+
+		dlFileVersion.setExpirationDate(RandomTestUtil.nextDate());
+
+		dlFileVersion.setReviewDate(RandomTestUtil.nextDate());
 
 		dlFileVersion.setLastPublishDate(RandomTestUtil.nextDate());
 

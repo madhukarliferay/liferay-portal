@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,8 +10,6 @@
 <%
 FileEntry fileEntry = (FileEntry)request.getAttribute(WebKeys.DOCUMENT_LIBRARY_FILE_ENTRY);
 FileVersion fileVersion = (FileVersion)request.getAttribute(WebKeys.DOCUMENT_LIBRARY_FILE_VERSION);
-
-String eventName = ParamUtil.getString(request, "eventName", renderResponse.getNamespace() + "selectFileVersionFm");
 
 int status = WorkflowConstants.STATUS_APPROVED;
 
@@ -36,8 +25,8 @@ if ((user.getUserId() == fileEntry.getUserId()) || permissionChecker.isContentRe
 	<portlet:param name="version" value="<%= String.valueOf(fileVersion.getVersion()) %>" />
 </liferay-portlet:renderURL>
 
-<div class="container-fluid-1280">
-	<aui:form action="<%= portletURL.toString() %>" method="post" name="selectFileVersionFm">
+<clay:container-fluid>
+	<aui:form action="<%= portletURL %>" method="post" name="selectFileVersionFm">
 		<liferay-ui:search-container
 			id="fileVersionSearchContainer"
 			iteratorURL="<%= portletURL %>"
@@ -52,20 +41,22 @@ if ((user.getUserId() == fileEntry.getUserId()) || permissionChecker.isContentRe
 				modelVar="curFileVersion"
 			>
 				<liferay-ui:search-container-column-text
-					name="title"
+					name="name"
 					truncate="<%= true %>"
 				>
 					<c:choose>
 						<c:when test="<%= fileVersion.getFileVersionId() != curFileVersion.getFileVersionId() %>">
-
-							<%
-							Map<String, Object> data = new HashMap<String, Object>();
-
-							data.put("sourceversion", curFileVersion.getFileVersionId());
-							data.put("targetversion", fileVersion.getFileVersionId());
-							%>
-
-							<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+							<aui:a
+								cssClass="selector-button"
+								data='<%=
+									HashMapBuilder.<String, Object>put(
+										"sourceversion", curFileVersion.getFileVersionId()
+									).put(
+										"targetversion", fileVersion.getFileVersionId()
+									).build()
+								%>'
+								href="javascript:void(0);"
+							>
 								<%= HtmlUtil.escape(curFileVersion.getTitle()) %>
 							</aui:a>
 						</c:when>
@@ -91,11 +82,4 @@ if ((user.getUserId() == fileEntry.getUserId()) || permissionChecker.isContentRe
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectFileVersionFm',
-		'<%= HtmlUtil.escapeJS(eventName) %>'
-	);
-</aui:script>
+</clay:container-fluid>

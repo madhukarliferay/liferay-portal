@@ -1,21 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.knowledge.base.model.KBArticle;
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
@@ -23,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -32,7 +27,9 @@ import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PersistedResourcedModelLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -58,19 +55,20 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see KBArticleLocalServiceUtil
  * @generated
  */
+@CTAware
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface KBArticleLocalService
-	extends BaseLocalService, PersistedModelLocalService,
+	extends BaseLocalService, CTService<KBArticle>, PersistedModelLocalService,
 			PersistedResourcedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link KBArticleLocalServiceUtil} to access the kb article local service. Add custom service methods to <code>com.liferay.knowledge.base.service.impl.KBArticleLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.knowledge.base.service.impl.KBArticleLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the kb article local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link KBArticleLocalServiceUtil} if injection and service tracking are not available.
 	 */
 	public FileEntry addAttachment(
 			long userId, long resourcePrimKey, String fileName,
@@ -80,6 +78,10 @@ public interface KBArticleLocalService
 	/**
 	 * Adds the kb article to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KBArticleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kbArticle the kb article
 	 * @return the kb article that was added
 	 */
@@ -87,10 +89,11 @@ public interface KBArticleLocalService
 	public KBArticle addKBArticle(KBArticle kbArticle);
 
 	public KBArticle addKBArticle(
-			long userId, long parentResourceClassNameId,
-			long parentResourcePrimKey, String title, String urlTitle,
-			String content, String description, String sourceURL,
-			String[] sections, String[] selectedFileNames,
+			String externalReferenceCode, long userId,
+			long parentResourceClassNameId, long parentResourcePrimKey,
+			String title, String urlTitle, String content, String description,
+			String[] sections, String sourceURL, Date displayDate,
+			Date expirationDate, Date reviewDate, String[] selectedFileNames,
 			ServiceContext serviceContext)
 		throws PortalException;
 
@@ -119,6 +122,8 @@ public interface KBArticleLocalService
 			InputStream inputStream, String mimeType)
 		throws PortalException;
 
+	public void checkKBArticles(long companyId) throws PortalException;
+
 	/**
 	 * Creates a new kb article with the primary key. Does not add the kb article to the database.
 	 *
@@ -128,10 +133,20 @@ public interface KBArticleLocalService
 	@Transactional(enabled = false)
 	public KBArticle createKBArticle(long kbArticleId);
 
+	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
 	public void deleteGroupKBArticles(long groupId) throws PortalException;
 
 	/**
 	 * Deletes the kb article from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KBArticleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kbArticle the kb article
 	 * @return the kb article that was removed
@@ -148,14 +163,35 @@ public interface KBArticleLocalService
 	/**
 	 * Deletes the kb article with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KBArticleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kbArticleId the primary key of the kb article
 	 * @return the kb article that was removed
 	 * @throws PortalException if a kb article with the primary key could not be found
 	 */
 	@Indexable(type = IndexableType.DELETE)
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP,
+		type = SystemEventConstants.TYPE_DELETE
+	)
 	public KBArticle deleteKBArticle(long kbArticleId) throws PortalException;
 
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP,
+		type = SystemEventConstants.TYPE_DELETE
+	)
+	public KBArticle deleteKBArticle(
+			long userId, long resourcePrimKey, int version)
+		throws PortalException;
+
 	public void deleteKBArticles(long groupId, long parentResourcePrimKey)
+		throws PortalException;
+
+	public void deleteKBArticles(
+			long groupId, long parentResourcePrimKey,
+			boolean includeTrashedEntries)
 		throws PortalException;
 
 	public void deleteKBArticles(long[] resourcePrimKeys)
@@ -171,6 +207,12 @@ public interface KBArticleLocalService
 	public void deleteTempAttachment(
 			long groupId, long userId, String fileName, String tempFolderName)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -238,6 +280,10 @@ public interface KBArticleLocalService
 	public long dynamicQueryCount(
 		DynamicQuery dynamicQuery, Projection projection);
 
+	public KBArticle expireKBArticle(
+			long userId, long resourcePrimKey, ServiceContext serviceContext)
+		throws PortalException;
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle fetchFirstChildKBArticle(
 		long groupId, long parentResourcePrimKey);
@@ -274,8 +320,15 @@ public interface KBArticleLocalService
 	public KBArticle fetchLatestKBArticle(long resourcePrimKey, long groupId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle fetchLatestKBArticleByExternalReferenceCode(
+		long groupId, String externalReferenceCode);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle fetchLatestKBArticleByUrlTitle(
 		long groupId, long kbFolderId, String urlTitle, int status);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public PersistedModel fetchPersistedModel(Serializable primaryKeyObj);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
@@ -427,7 +480,20 @@ public interface KBArticleLocalService
 		long groupId, long kbFolderId, int status);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle getLatestKBArticle(long resourcePrimKey)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle getLatestKBArticle(long resourcePrimKey, int status)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle getLatestKBArticle(long resourcePrimKey, int[] statuses)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle getLatestKBArticleByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -448,6 +514,9 @@ public interface KBArticleLocalService
 			long resourcePrimKey)
 		throws PortalException;
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -472,13 +541,44 @@ public interface KBArticleLocalService
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasKBArticleLock(long userId, long resourcePrimKey);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public void incrementViewCount(
 			long userId, long resourcePrimKey, int increment)
+		throws PortalException;
+
+	public Lock lockKBArticle(long userId, long resourcePrimKey)
+		throws PortalException;
+
+	public void moveDependentKBArticlesToTrash(
+			long parentResourcePrimKey, long trashEntryId)
+		throws PortalException;
+
+	public void moveDependentKBArticleToTrash(
+			KBArticle kbArticle, long trashEntryId)
 		throws PortalException;
 
 	public void moveKBArticle(
 			long userId, long resourcePrimKey, long parentResourceClassNameId,
 			long parentResourcePrimKey, double priority)
+		throws PortalException;
+
+	public void moveKBArticleFromTrash(
+			long userId, long resourcePrimKey, long parentResourceClassNameId,
+			long parentResourcePrimKey)
+		throws PortalException;
+
+	public KBArticle moveKBArticleToTrash(long userId, long resourcePrimKey)
+		throws PortalException;
+
+	public void restoreDependentKBArticleFromTrash(KBArticle kbArticle)
+		throws PortalException;
+
+	public void restoreDependentKBArticlesFromTrash(long parentResourcePrimKey)
+		throws PortalException;
+
+	public void restoreKBArticleFromTrash(long userId, long resourcePrimKey)
 		throws PortalException;
 
 	public KBArticle revertKBArticle(
@@ -499,14 +599,31 @@ public interface KBArticleLocalService
 			long userId, long groupId, long resourcePrimKey)
 		throws PortalException;
 
+	public void unlockKBArticle(long userId, long resourcePrimKey);
+
+	public void unlockKBArticle(
+		long userId, long resourcePrimKey, boolean force);
+
 	public void unsubscribeGroupKBArticles(long userId, long groupId)
 		throws PortalException;
 
 	public void unsubscribeKBArticle(long userId, long resourcePrimKey)
 		throws PortalException;
 
+	public KBArticle updateAndUnlockKBArticle(
+			long userId, long resourcePrimKey, String title, String content,
+			String description, String[] sections, String sourceURL,
+			Date displayDate, Date expirationDate, Date reviewDate,
+			String[] selectedFileNames, long[] removeFileEntryIds,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	/**
 	 * Updates the kb article in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KBArticleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kbArticle the kb article
 	 * @return the kb article that was updated
@@ -516,7 +633,8 @@ public interface KBArticleLocalService
 
 	public KBArticle updateKBArticle(
 			long userId, long resourcePrimKey, String title, String content,
-			String description, String sourceURL, String[] sections,
+			String description, String[] sections, String sourceURL,
+			Date displayDate, Date expirationDate, Date reviewDate,
 			String[] selectedFileNames, long[] removeFileEntryIds,
 			ServiceContext serviceContext)
 		throws PortalException;
@@ -541,5 +659,19 @@ public interface KBArticleLocalService
 			long userId, long resourcePrimKey, int status,
 			ServiceContext serviceContext)
 		throws PortalException;
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<KBArticle> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<KBArticle> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<KBArticle>, R, E> updateUnsafeFunction)
+		throws E;
 
 }

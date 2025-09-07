@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cluster.multiple.internal;
@@ -18,27 +9,27 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cluster.Address;
 import com.liferay.portal.kernel.cluster.Priority;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.test.rule.NewEnvTestRule;
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.Serializable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -49,9 +40,14 @@ import org.junit.Test;
 @NewEnv(type = NewEnv.Type.CLASSLOADER)
 public class ClusterLinkImplTest extends BaseClusterTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testDeactivate() {
-		ClusterLinkImpl clusterLinkImpl = getClusterLinkImpl(1);
+		ClusterLinkImpl clusterLinkImpl = _getClusterLinkImpl(1);
 
 		List<TestClusterChannel> clusterChannels =
 			TestClusterChannel.getClusterChannels();
@@ -74,7 +70,7 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 
 	@Test
 	public void testGetChannel() {
-		ClusterLinkImpl clusterLinkImpl = getClusterLinkImpl(2);
+		ClusterLinkImpl clusterLinkImpl = _getClusterLinkImpl(2);
 
 		ClusterChannel clusterChannel1 = clusterLinkImpl.getChannel(
 			Priority.LEVEL1);
@@ -117,57 +113,56 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 
 	@Test
 	public void testInitChannels() {
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					ClusterLinkImpl.class.getName(), Level.OFF)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				ClusterLinkImpl.class.getName(), LoggerTestUtil.OFF)) {
 
 			// Test 1, create ClusterLinkImpl#MAX_CHANNEL_COUNT channels
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
 			try {
-				getClusterLinkImpl(ClusterLinkImpl.MAX_CHANNEL_COUNT + 1);
+				_getClusterLinkImpl(ClusterLinkImpl.MAX_CHANNEL_COUNT + 1);
 
 				Assert.fail();
 			}
-			catch (IllegalStateException ise) {
+			catch (IllegalStateException illegalStateException) {
 				Assert.assertEquals(
-					logRecords.toString(), 0, logRecords.size());
+					logEntries.toString(), 0, logEntries.size());
 				Assert.assertEquals(
 					"java.lang.IllegalArgumentException: Channel count must " +
 						"be between 1 and " + ClusterLinkImpl.MAX_CHANNEL_COUNT,
-					ise.getMessage());
+					illegalStateException.getMessage());
 			}
 
 			// Test 2, create 0 channels
 
-			logRecords = captureHandler.resetLogLevel(Level.SEVERE);
+			logEntries = logCapture.resetPriority(String.valueOf(Level.SEVERE));
 
 			try {
-				getClusterLinkImpl(0);
+				_getClusterLinkImpl(0);
 
 				Assert.fail();
 			}
-			catch (IllegalStateException ise) {
+			catch (IllegalStateException illegalStateException) {
 				Assert.assertEquals(
-					logRecords.toString(), 1, logRecords.size());
+					logEntries.toString(), 1, logEntries.size());
 
-				LogRecord logRecord = logRecords.get(0);
+				LogEntry logEntry = logEntries.get(0);
 
 				Assert.assertEquals(
-					"Unable to initialize channels", logRecord.getMessage());
+					"Unable to initialize channels", logEntry.getMessage());
 
 				Assert.assertEquals(
 					"java.lang.IllegalArgumentException: Channel count must " +
 						"be between 1 and " + ClusterLinkImpl.MAX_CHANNEL_COUNT,
-					ise.getMessage());
+					illegalStateException.getMessage());
 			}
 		}
 	}
 
 	@Test
 	public void testInitialize() {
-		ClusterLinkImpl clusterLinkImpl = getClusterLinkImpl(2);
+		ClusterLinkImpl clusterLinkImpl = _getClusterLinkImpl(2);
 
 		Assert.assertNotNull(clusterLinkImpl.getExecutorService());
 
@@ -180,11 +175,8 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 		for (TestClusterChannel clusterChannel : clusterChannels) {
 			Assert.assertFalse(clusterChannel.isClosed());
 
-			ClusterReceiver clusterReceiver =
-				clusterChannel.getClusterReceiver();
-
 			CountDownLatch countDownLatch = ReflectionTestUtil.getFieldValue(
-				clusterReceiver, "_countDownLatch");
+				clusterChannel.getClusterReceiver(), "_countDownLatch");
 
 			Assert.assertEquals(0, countDownLatch.getCount());
 		}
@@ -192,7 +184,7 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 
 	@Test
 	public void testSendMulticastMessage() {
-		ClusterLinkImpl clusterLinkImpl = getClusterLinkImpl(1);
+		ClusterLinkImpl clusterLinkImpl = _getClusterLinkImpl(1);
 
 		List<Serializable> multicastMessages =
 			TestClusterChannel.getMulticastMessages();
@@ -218,7 +210,7 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 
 	@Test
 	public void testSendUnicastMessage() {
-		ClusterLinkImpl clusterLinkImpl = getClusterLinkImpl(1);
+		ClusterLinkImpl clusterLinkImpl = _getClusterLinkImpl(1);
 
 		List<Serializable> multicastMessages =
 			TestClusterChannel.getMulticastMessages();
@@ -247,41 +239,34 @@ public class ClusterLinkImplTest extends BaseClusterTestCase {
 		Assert.assertSame(address, unicastMessage.getValue());
 	}
 
-	@Rule
-	public final NewEnvTestRule newEnvTestRule = NewEnvTestRule.INSTANCE;
+	private ClusterLinkImpl _getClusterLinkImpl(int channels) {
+		ClusterLinkImpl clusterLinkImpl = new ClusterLinkImpl() {
 
-	protected ClusterLinkImpl getClusterLinkImpl(final int channels) {
-		ClusterLinkImpl clusterLinkImpl = new ClusterLinkImpl();
+			@Override
+			protected void modified(Map<String, Object> properties) {
+				ReflectionTestUtil.setFieldValue(
+					this, "_clusterChannelFactory",
+					new TestClusterChannelFactory());
+			}
 
-		Properties channelNameProperties = new Properties();
-		Properties channelPropertiesProperties = new Properties();
+		};
+
+		ReflectionTestUtil.setFieldValue(
+			clusterLinkImpl, "_portalExecutorManager",
+			new MockPortalExecutorManager());
 
 		for (int i = 0; i < channels; i++) {
-			channelNameProperties.put(
-				StringPool.PERIOD + i, "test-channel-name-transport-" + i);
-			channelPropertiesProperties.put(
-				StringPool.PERIOD + i,
+			PropsUtil.set(
+				PropsKeys.CLUSTER_LINK_CHANNEL_NAME_TRANSPORT +
+					StringPool.PERIOD + i,
+				"test-channel-name-transport-" + i);
+			PropsUtil.set(
+				PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT +
+					StringPool.PERIOD + i,
 				"test-channel-properties-transport-" + i);
 		}
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			PropsKeys.CLUSTER_LINK_CHANNEL_LOGIC_NAME_TRANSPORT,
-			new Properties()
-		).put(
-			PropsKeys.CLUSTER_LINK_CHANNEL_NAME_TRANSPORT, channelNameProperties
-		).put(
-			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT,
-			channelPropertiesProperties
-		).build();
-
-		clusterLinkImpl.setProps(PropsTestUtil.setProps(properties));
-
-		clusterLinkImpl.setClusterChannelFactory(
-			new TestClusterChannelFactory());
-		clusterLinkImpl.setPortalExecutorManager(
-			new MockPortalExecutorManager());
-
-		clusterLinkImpl.activate();
+		clusterLinkImpl.activate(Collections.emptyMap());
 
 		return clusterLinkImpl;
 	}

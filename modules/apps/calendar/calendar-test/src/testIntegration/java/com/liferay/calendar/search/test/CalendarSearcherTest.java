@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.calendar.model.CalendarResource;
-import com.liferay.calendar.service.CalendarLocalServiceUtil;
+import com.liferay.calendar.service.CalendarLocalService;
 import com.liferay.calendar.util.CalendarResourceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -29,7 +20,7 @@ import com.liferay.portal.kernel.search.SearchEngine;
 import com.liferay.portal.kernel.search.SearchEngineHelperUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.SearchContextTestUtil;
@@ -37,12 +28,10 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-
-import java.util.Locale;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -55,6 +44,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Inácio Nery
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CalendarSearcherTest {
 
@@ -200,6 +190,9 @@ public class CalendarSearcherTest {
 		assertSearch("\"The Bloggs\"", 3);
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected static SearchContext getSearchContext(Group group)
 		throws Exception {
 
@@ -219,17 +212,15 @@ public class CalendarSearcherTest {
 			CalendarResourceUtil.getGroupCalendarResource(
 				_group.getGroupId(), serviceContext);
 
-		Map<Locale, String> nameMap = HashMapBuilder.put(
-			LocaleUtil.getSiteDefault(), name
-		).build();
-
-		Map<Locale, String> descriptionMap = HashMapBuilder.put(
-			LocaleUtil.getSiteDefault(), description
-		).build();
-
-		CalendarLocalServiceUtil.addCalendar(
+		_calendarLocalService.addCalendar(
 			_user.getUserId(), _group.getGroupId(),
-			calendarResource.getCalendarResourceId(), nameMap, descriptionMap,
+			calendarResource.getCalendarResourceId(),
+			HashMapBuilder.put(
+				LocaleUtil.getSiteDefault(), name
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getSiteDefault(), description
+			).build(),
 			StringPool.UTC, RandomTestUtil.randomInt(0, 255), false, false,
 			false, serviceContext);
 	}
@@ -243,8 +234,7 @@ public class CalendarSearcherTest {
 	}
 
 	protected boolean isExactPhraseQueryImplementedForSearchEngine() {
-		SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine(
-			SearchEngineHelperUtil.getDefaultSearchEngineId());
+		SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine();
 
 		String vendor = searchEngine.getVendor();
 
@@ -256,14 +246,13 @@ public class CalendarSearcherTest {
 	}
 
 	@Inject(filter = "model.class.name=com.liferay.calendar.model.Calendar")
-	private static BaseSearcher _baseSearcher;
+	private BaseSearcher _baseSearcher;
 
-	@DeleteAfterTestRun
+	@Inject
+	private CalendarLocalService _calendarLocalService;
+
 	private Group _group;
-
 	private SearchContext _searchContext;
-
-	@DeleteAfterTestRun
 	private User _user;
 
 }

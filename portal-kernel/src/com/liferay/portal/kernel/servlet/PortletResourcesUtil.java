@@ -1,26 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletApp;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+
+import jakarta.servlet.ServletContext;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,7 +19,10 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.ServletContext;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Michael Bradford
@@ -36,9 +30,7 @@ import javax.servlet.ServletContext;
 public class PortletResourcesUtil {
 
 	public static ServletContext getPathServletContext(String path) {
-		for (ServletContext servletContext :
-				_portletResourcesUtil._servletContexts.values()) {
-
+		for (ServletContext servletContext : _servletContexts.values()) {
 			if (path.startsWith(servletContext.getContextPath())) {
 				return servletContext;
 			}
@@ -61,7 +53,10 @@ public class PortletResourcesUtil {
 				return url;
 			}
 		}
-		catch (MalformedURLException murle) {
+		catch (MalformedURLException malformedURLException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(malformedURLException);
+			}
 		}
 
 		return null;
@@ -78,31 +73,25 @@ public class PortletResourcesUtil {
 	}
 
 	private PortletResourcesUtil() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			Portlet.class, new PortletResourcesServiceTrackerCustomizer());
-
-		_serviceTracker.open();
 	}
 
-	private static final PortletResourcesUtil _portletResourcesUtil =
-		new PortletResourcesUtil();
+	private static final Log _log = LogFactoryUtil.getLog(
+		PortletResourcesUtil.class);
 
-	private final ServiceTracker<Portlet, Portlet> _serviceTracker;
-	private final Map<ServiceReference<Portlet>, ServletContext>
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
+	private static final ServiceTracker<Portlet, Portlet> _serviceTracker;
+	private static final Map<ServiceReference<Portlet>, ServletContext>
 		_servletContexts = new ConcurrentHashMap<>();
 
-	private class PortletResourcesServiceTrackerCustomizer
+	private static class PortletResourcesServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer<Portlet, Portlet> {
 
 		@Override
 		public Portlet addingService(
 			ServiceReference<Portlet> serviceReference) {
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			Portlet portlet = registry.getService(serviceReference);
+			Portlet portlet = _bundleContext.getService(serviceReference);
 
 			PortletApp portletApp = portlet.getPortletApp();
 
@@ -123,13 +112,19 @@ public class PortletResourcesUtil {
 		public void removedService(
 			ServiceReference<Portlet> serviceReference, Portlet portlet) {
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
+			_bundleContext.ungetService(serviceReference);
 
 			_servletContexts.remove(serviceReference);
 		}
 
+	}
+
+	static {
+		_serviceTracker = new ServiceTracker<>(
+			_bundleContext, Portlet.class,
+			new PortletResourcesServiceTrackerCustomizer());
+
+		_serviceTracker.open();
 	}
 
 }

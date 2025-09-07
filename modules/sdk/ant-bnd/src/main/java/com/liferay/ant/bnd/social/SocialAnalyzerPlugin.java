@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.ant.bnd.social;
 
 import aQute.bnd.osgi.Analyzer;
-import aQute.bnd.osgi.Descriptors;
 import aQute.bnd.osgi.Jar;
 import aQute.bnd.osgi.Packages;
 import aQute.bnd.osgi.Resource;
@@ -28,6 +18,7 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -67,10 +58,7 @@ public class SocialAnalyzerPlugin implements AnalyzerPlugin {
 				continue;
 			}
 
-			Descriptors.PackageRef packageRef = analyzer.getPackageRef(
-				getPackageName(className));
-
-			packages.put(packageRef);
+			packages.put(analyzer.getPackageRef(getPackageName(className)));
 		}
 
 		return false;
@@ -97,9 +85,7 @@ public class SocialAnalyzerPlugin implements AnalyzerPlugin {
 	}
 
 	protected Document readXMLResource(Resource resource) throws Exception {
-		InputStream inputStream = resource.openInputStream();
-
-		try {
+		try (InputStream inputStream = resource.openInputStream()) {
 			DocumentBuilder documentBuilder =
 				_documentBuilderFactory.newDocumentBuilder();
 
@@ -133,13 +119,9 @@ public class SocialAnalyzerPlugin implements AnalyzerPlugin {
 
 			return documentBuilder.parse(inputStream);
 		}
-		finally {
-			inputStream.close();
-		}
 	}
 
-	private static final DocumentBuilderFactory _documentBuilderFactory =
-		DocumentBuilderFactory.newInstance();
+	private static final DocumentBuilderFactory _documentBuilderFactory;
 	private static final Map<String, String> _publicIds =
 		new HashMap<String, String>() {
 			{
@@ -155,7 +137,30 @@ public class SocialAnalyzerPlugin implements AnalyzerPlugin {
 				put(
 					"-//Liferay//DTD Social 7.1.0//EN",
 					"com/liferay/portal/definitions/liferay-social_7_1_0.dtd");
+				put(
+					"-//Liferay//DTD Social 7.2.0//EN",
+					"com/liferay/portal/definitions/liferay-social_7_2_0.dtd");
+				put(
+					"-//Liferay//DTD Social 7.3.0//EN",
+					"com/liferay/portal/definitions/liferay-social_7_3_0.dtd");
+				put(
+					"-//Liferay//DTD Social 7.4.0//EN",
+					"com/liferay/portal/definitions/liferay-social_7_4_0.dtd");
 			}
 		};
+
+	static {
+		_documentBuilderFactory = DocumentBuilderFactory.newInstance();
+
+		try {
+			_documentBuilderFactory.setFeature(
+				"http://apache.org/xml/features/nonvalidating" +
+					"/load-external-dtd",
+				false);
+		}
+		catch (ParserConfigurationException parserConfigurationException) {
+			throw new ExceptionInInitializerError(parserConfigurationException);
+		}
+	}
 
 }

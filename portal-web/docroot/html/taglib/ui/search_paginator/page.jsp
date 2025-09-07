@@ -1,23 +1,14 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/html/taglib/init.jsp" %>
 
 <%
-SearchContainer searchContainer = (SearchContainer)request.getAttribute("liferay-ui:search:searchContainer");
+SearchContainer<?> searchContainer = (SearchContainer<?>)request.getAttribute("liferay-ui:search:searchContainer");
 
 String id = (String)request.getAttribute("liferay-ui:search:id");
 
@@ -27,12 +18,12 @@ if (Validator.isNull(id) && (searchContainer != null)) {
 	id = id.concat("PageIterator");
 }
 
+String markupView = (String)request.getAttribute("liferay-ui:search:markupView");
 String type = (String)request.getAttribute("liferay-ui:search:type");
 
 PortletURL iteratorURL = searchContainer.getIteratorURL();
 
 if (iteratorURL != null) {
-	iteratorURL.setParameter(searchContainer.getCurParam(), (String)null);
 	iteratorURL.setParameter("resetCur", Boolean.FALSE.toString());
 }
 %>
@@ -46,6 +37,7 @@ if (iteratorURL != null) {
 		deltaParam="<%= searchContainer.getDeltaParam() %>"
 		forcePost="<%= searchContainer.isForcePost() %>"
 		id="<%= id %>"
+		markupView="<%= markupView %>"
 		maxPages="<%= PropsValues.SEARCH_CONTAINER_PAGE_ITERATOR_MAX_PAGES %>"
 		portletURL="<%= iteratorURL %>"
 		total="<%= searchContainer.getTotal() %>"

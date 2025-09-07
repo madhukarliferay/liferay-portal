@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.bundle.blacklist;
@@ -17,12 +8,16 @@ package com.liferay.portal.bundle.blacklist;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.StreamUtil;
+import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.lpkg.deployer.test.util.LPKGTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -30,21 +25,28 @@ import org.junit.Test;
  */
 public class BundleBlacklistSetUpBatchTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testCreateAndBlacklistTestBundles() throws Exception {
-		String liferayHome = System.getProperty("liferay.home");
+		String liferayHome = SystemProperties.get("liferay.home");
 
 		Assert.assertNotNull(
 			"Missing system property \"liferay.home\"", liferayHome);
 
-		String blacklistCfgName = System.getProperty("blacklist.cfg.name");
+		String blacklistConfigName = System.getProperty(
+			"blacklist.config.name");
 
 		Assert.assertNotNull(
-			"Missing system property \"cfg.name\"", blacklistCfgName);
+			"Missing system property \"blacklist.config.name\"",
+			blacklistConfigName);
 
 		try (OutputStream outputStream = new FileOutputStream(
 				StringBundler.concat(
-					liferayHome, "/osgi/portal/", _JAR_BUNDLE_SYMBOLIC_NAME,
+					liferayHome, "/deploy/", _JAR_BUNDLE_SYMBOLIC_NAME,
 					".jar"))) {
 
 			StreamUtil.transfer(
@@ -54,7 +56,7 @@ public class BundleBlacklistSetUpBatchTest {
 
 		try (OutputStream outputStream = new FileOutputStream(
 				StringBundler.concat(
-					liferayHome, "/osgi/war/", _WAR_BUNDLE_SYMBOLIC_NAME,
+					liferayHome, "/deploy/", _WAR_BUNDLE_SYMBOLIC_NAME,
 					".war"))) {
 
 			StreamUtil.transfer(
@@ -62,19 +64,14 @@ public class BundleBlacklistSetUpBatchTest {
 				outputStream);
 		}
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("blacklistBundleSymbolicNames=");
-		sb.append(_JAR_BUNDLE_SYMBOLIC_NAME);
-		sb.append(StringPool.COMMA);
-		sb.append(_WAR_BUNDLE_SYMBOLIC_NAME);
-
-		String cfgBody = sb.toString();
+		String configBody = StringBundler.concat(
+			"blacklistBundleSymbolicNames=\"", _JAR_BUNDLE_SYMBOLIC_NAME,
+			StringPool.COMMA, _WAR_BUNDLE_SYMBOLIC_NAME, StringPool.QUOTE);
 
 		try (OutputStream outputStream = new FileOutputStream(
-				liferayHome + "/osgi/configs/" + blacklistCfgName)) {
+				liferayHome + "/osgi/configs/" + blacklistConfigName)) {
 
-			outputStream.write(cfgBody.getBytes());
+			outputStream.write(configBody.getBytes());
 		}
 	}
 

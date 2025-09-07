@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.impl;
 
-import com.liferay.dynamic.data.mapping.internal.search.util.DDMSearchHelper;
+import com.liferay.dynamic.data.mapping.internal.search.util.DDMSearchUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeResponse;
@@ -36,6 +27,7 @@ import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -45,7 +37,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -60,15 +51,33 @@ import org.osgi.service.component.annotations.Reference;
 public class DDMStructureLayoutLocalServiceImpl
 	extends DDMStructureLayoutLocalServiceBaseImpl {
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #addStructureLayout(long, long, long, String, long,
+	 *             DDMFormLayout, ServiceContext)}
+	 */
+	@Deprecated
 	@Override
 	public DDMStructureLayout addStructureLayout(
 			long userId, long groupId, long structureVersionId,
 			DDMFormLayout ddmFormLayout, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		return addStructureLayout(
+			userId, groupId, 0, null, structureVersionId, ddmFormLayout,
+			serviceContext);
+	}
 
-		validate(ddmFormLayout);
+	@Override
+	public DDMStructureLayout addStructureLayout(
+			long userId, long groupId, long classNameId,
+			String structureLayoutKey, long structureVersionId,
+			DDMFormLayout ddmFormLayout, ServiceContext serviceContext)
+		throws PortalException {
+
+		User user = _userLocalService.getUser(userId);
+
+		_validate(ddmFormLayout);
 
 		long structureLayoutId = counterLocalService.increment();
 
@@ -80,10 +89,13 @@ public class DDMStructureLayoutLocalServiceImpl
 		structureLayout.setCompanyId(user.getCompanyId());
 		structureLayout.setUserId(user.getUserId());
 		structureLayout.setUserName(user.getFullName());
+		structureLayout.setClassNameId(classNameId);
 		structureLayout.setStructureLayoutKey(
-			String.valueOf(counterLocalService.increment()));
+			GetterUtil.getString(
+				structureLayoutKey,
+				String.valueOf(counterLocalService.increment())));
 		structureLayout.setStructureVersionId(structureVersionId);
-		structureLayout.setDefinition(serialize(ddmFormLayout));
+		structureLayout.setDefinition(_serialize(ddmFormLayout));
 
 		return ddmStructureLayoutPersistence.update(structureLayout);
 	}
@@ -97,7 +109,7 @@ public class DDMStructureLayoutLocalServiceImpl
 			String definition, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long structureLayoutId = counterLocalService.increment();
 
@@ -113,11 +125,9 @@ public class DDMStructureLayoutLocalServiceImpl
 		structureLayout.setModifiedDate(new Date());
 		structureLayout.setClassNameId(classNameId);
 		structureLayout.setStructureLayoutKey(
-			Optional.ofNullable(
-				structureLayoutKey
-			).orElseGet(
-				() -> String.valueOf(counterLocalService.increment())
-			));
+			GetterUtil.getString(
+				structureLayoutKey,
+				String.valueOf(counterLocalService.increment())));
 		structureLayout.setStructureVersionId(structureVersionId);
 		structureLayout.setNameMap(name);
 		structureLayout.setDescriptionMap(description);
@@ -131,12 +141,11 @@ public class DDMStructureLayoutLocalServiceImpl
 			long classNameId, DDMStructureVersion ddmStructureVersion)
 		throws PortalException {
 
-		List<DDMStructureLayout> ddmStructureLayouts =
-			ddmStructureLayoutPersistence.findByG_C_SV(
-				ddmStructureVersion.getGroupId(), classNameId,
-				ddmStructureVersion.getStructureVersionId());
+		for (DDMStructureLayout ddmStructureLayout :
+				ddmStructureLayoutPersistence.findByG_C_SV(
+					ddmStructureVersion.getGroupId(), classNameId,
+					ddmStructureVersion.getStructureVersionId())) {
 
-		for (DDMStructureLayout ddmStructureLayout : ddmStructureLayouts) {
 			deleteDDMStructureLayout(ddmStructureLayout);
 		}
 	}
@@ -262,6 +271,7 @@ public class DDMStructureLayoutLocalServiceImpl
 			groupId, classNameId, structureVersionId);
 	}
 
+	@Override
 	public List<DDMStructureLayout> search(
 			long companyId, long[] groupIds, long classNameId, String keywords,
 			int start, int end,
@@ -269,27 +279,28 @@ public class DDMStructureLayoutLocalServiceImpl
 		throws PortalException {
 
 		SearchContext searchContext =
-			_ddmSearchHelper.buildStructureLayoutSearchContext(
+			DDMSearchUtil.buildStructureLayoutSearchContext(
 				companyId, groupIds, classNameId, keywords, keywords,
 				StringPool.BLANK, null, WorkflowConstants.STATUS_ANY, start,
 				end, orderByComparator);
 
-		return _ddmSearchHelper.doSearch(
+		return DDMSearchUtil.doSearch(
 			searchContext, DDMStructureLayout.class,
 			ddmStructureLayoutPersistence::findByPrimaryKey);
 	}
 
+	@Override
 	public int searchCount(
 			long companyId, long[] groupIds, long classNameId, String keywords)
 		throws PortalException {
 
 		SearchContext searchContext =
-			_ddmSearchHelper.buildStructureLayoutSearchContext(
+			DDMSearchUtil.buildStructureLayoutSearchContext(
 				companyId, groupIds, classNameId, keywords, keywords,
 				StringPool.BLANK, null, WorkflowConstants.STATUS_ANY,
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
-		return _ddmSearchHelper.doSearchCount(
+		return DDMSearchUtil.doSearchCount(
 			searchContext, DDMStructureLayout.class);
 	}
 
@@ -302,9 +313,9 @@ public class DDMStructureLayoutLocalServiceImpl
 		DDMStructureLayout structureLayout =
 			ddmStructureLayoutPersistence.findByPrimaryKey(structureLayoutId);
 
-		validate(ddmFormLayout);
+		_validate(ddmFormLayout);
 
-		structureLayout.setDefinition(serialize(ddmFormLayout));
+		structureLayout.setDefinition(_serialize(ddmFormLayout));
 
 		return ddmStructureLayoutPersistence.update(structureLayout);
 	}
@@ -329,7 +340,7 @@ public class DDMStructureLayoutLocalServiceImpl
 		return ddmStructureLayoutPersistence.update(structureLayout);
 	}
 
-	protected String serialize(DDMFormLayout ddmFormLayout) {
+	private String _serialize(DDMFormLayout ddmFormLayout) {
 		DDMFormLayoutSerializerSerializeRequest.Builder builder =
 			DDMFormLayoutSerializerSerializeRequest.Builder.newBuilder(
 				ddmFormLayout);
@@ -341,22 +352,20 @@ public class DDMStructureLayoutLocalServiceImpl
 		return ddmFormLayoutSerializerSerializeResponse.getContent();
 	}
 
-	protected void validate(DDMFormLayout ddmFormLayout)
-		throws PortalException {
-
+	private void _validate(DDMFormLayout ddmFormLayout) throws PortalException {
 		_ddmFormLayoutValidator.validate(ddmFormLayout);
 	}
 
 	@Reference
 	private DDMFormLayoutValidator _ddmFormLayoutValidator;
 
-	@Reference
-	private DDMSearchHelper _ddmSearchHelper;
-
 	@Reference(target = "(ddm.form.layout.deserializer.type=json)")
 	private DDMFormLayoutDeserializer _jsonDDMFormLayoutDeserializer;
 
 	@Reference(target = "(ddm.form.layout.serializer.type=json)")
 	private DDMFormLayoutSerializer _jsonDDMFormLayoutSerializer;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.service.test;
@@ -26,7 +17,6 @@ import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserService;
-import com.liferay.portal.kernel.service.persistence.UserGroupRolePK;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -77,11 +67,12 @@ public class UserServiceWhenUpdatingUserWithSiteRoleTest {
 
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_SITE);
 
-		UserGroupRolePK userGroupRolePK = new UserGroupRolePK(
-			_user.getUserId(), _group.getGroupId(), _role.getRoleId());
-
 		UserGroupRole userGroupRole =
-			_userGroupRoleLocalService.createUserGroupRole(userGroupRolePK);
+			_userGroupRoleLocalService.createUserGroupRole(0);
+
+		userGroupRole.setUserId(_user.getUserId());
+		userGroupRole.setGroupId(_group.getGroupId());
+		userGroupRole.setRoleId(_role.getRoleId());
 
 		_user = _updateUser(_user, Collections.singletonList(userGroupRole));
 
@@ -106,10 +97,10 @@ public class UserServiceWhenUpdatingUserWithSiteRoleTest {
 		return _userService.updateUser(
 			user.getUserId(), user.getPassword(), null, null,
 			user.isPasswordReset(), null, null, user.getScreenName(),
-			user.getEmailAddress(), user.getFacebookId(), user.getOpenId(),
-			user.getLanguageId(), user.getTimeZoneId(), user.getGreeting(),
-			user.getComments(), user.getFirstName(), user.getMiddleName(),
-			user.getLastName(), contact.getPrefixId(), contact.getSuffixId(),
+			user.getEmailAddress(), user.getLanguageId(), user.getTimeZoneId(),
+			user.getGreeting(), user.getComments(), user.getFirstName(),
+			user.getMiddleName(), user.getLastName(),
+			contact.getPrefixListTypeId(), contact.getSuffixListTypeId(),
 			user.isMale(), birthdayMonth, birthdayDay, birthdayYear,
 			contact.getSmsSn(), contact.getFacebookSn(), contact.getJabberSn(),
 			contact.getSkypeSn(), contact.getTwitterSn(), user.getJobTitle(),

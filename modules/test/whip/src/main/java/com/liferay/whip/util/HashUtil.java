@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.whip.util;
@@ -20,19 +11,19 @@ package com.liferay.whip.util;
 public class HashUtil {
 
 	public static int hash(int seed, boolean value) {
-		return seed * 11 + (value ? 1 : 0);
+		return (seed * 11) + (value ? 1 : 0);
 	}
 
 	public static int hash(int seed, int value) {
-		return seed * 11 + value;
+		return (seed * 11) + value;
 	}
 
 	public static int hash(int seed, long value) {
-		return (int)(seed * 11 + value);
+		return (int)((seed * 11) + value);
 	}
 
 	public static int hash(int seed, Object value) {
-		return seed * 11 + ((value == null) ? 0 : value.hashCode());
+		return (seed * 11) + ((value == null) ? 0 : value.hashCode());
 	}
 
 }

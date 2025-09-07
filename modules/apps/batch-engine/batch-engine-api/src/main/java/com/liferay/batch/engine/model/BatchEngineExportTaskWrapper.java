@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.model;
@@ -51,6 +42,7 @@ public class BatchEngineExportTaskWrapper
 
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("batchEngineExportTaskId", getBatchEngineExportTaskId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
@@ -65,8 +57,10 @@ public class BatchEngineExportTaskWrapper
 		attributes.put("fieldNames", getFieldNames());
 		attributes.put("executeStatus", getExecuteStatus());
 		attributes.put("parameters", getParameters());
+		attributes.put("processedItemsCount", getProcessedItemsCount());
 		attributes.put("startTime", getStartTime());
-		attributes.put("version", getVersion());
+		attributes.put("taskItemDelegateName", getTaskItemDelegateName());
+		attributes.put("totalItemsCount", getTotalItemsCount());
 
 		return attributes;
 	}
@@ -83,6 +77,13 @@ public class BatchEngineExportTaskWrapper
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long batchEngineExportTaskId = (Long)attributes.get(
@@ -171,17 +172,36 @@ public class BatchEngineExportTaskWrapper
 			setParameters(parameters);
 		}
 
+		Integer processedItemsCount = (Integer)attributes.get(
+			"processedItemsCount");
+
+		if (processedItemsCount != null) {
+			setProcessedItemsCount(processedItemsCount);
+		}
+
 		Date startTime = (Date)attributes.get("startTime");
 
 		if (startTime != null) {
 			setStartTime(startTime);
 		}
 
-		String version = (String)attributes.get("version");
+		String taskItemDelegateName = (String)attributes.get(
+			"taskItemDelegateName");
 
-		if (version != null) {
-			setVersion(version);
+		if (taskItemDelegateName != null) {
+			setTaskItemDelegateName(taskItemDelegateName);
 		}
+
+		Integer totalItemsCount = (Integer)attributes.get("totalItemsCount");
+
+		if (totalItemsCount != null) {
+			setTotalItemsCount(totalItemsCount);
+		}
+	}
+
+	@Override
+	public BatchEngineExportTask cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -285,6 +305,16 @@ public class BatchEngineExportTaskWrapper
 	}
 
 	/**
+	 * Returns the external reference code of this batch engine export task.
+	 *
+	 * @return the external reference code of this batch engine export task
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
+	/**
 	 * Returns the field names of this batch engine export task.
 	 *
 	 * @return the field names of this batch engine export task
@@ -340,6 +370,16 @@ public class BatchEngineExportTaskWrapper
 	}
 
 	/**
+	 * Returns the processed items count of this batch engine export task.
+	 *
+	 * @return the processed items count of this batch engine export task
+	 */
+	@Override
+	public int getProcessedItemsCount() {
+		return model.getProcessedItemsCount();
+	}
+
+	/**
 	 * Returns the start time of this batch engine export task.
 	 *
 	 * @return the start time of this batch engine export task
@@ -347,6 +387,26 @@ public class BatchEngineExportTaskWrapper
 	@Override
 	public Date getStartTime() {
 		return model.getStartTime();
+	}
+
+	/**
+	 * Returns the task item delegate name of this batch engine export task.
+	 *
+	 * @return the task item delegate name of this batch engine export task
+	 */
+	@Override
+	public String getTaskItemDelegateName() {
+		return model.getTaskItemDelegateName();
+	}
+
+	/**
+	 * Returns the total items count of this batch engine export task.
+	 *
+	 * @return the total items count of this batch engine export task
+	 */
+	@Override
+	public int getTotalItemsCount() {
+		return model.getTotalItemsCount();
 	}
 
 	/**
@@ -379,21 +439,6 @@ public class BatchEngineExportTaskWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * Returns the version of this batch engine export task.
-	 *
-	 * @return the version of this batch engine export task
-	 */
-	@Override
-	public String getVersion() {
-		return model.getVersion();
-	}
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a batch engine export task model instance should use the <code>BatchEngineExportTask</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -500,6 +545,16 @@ public class BatchEngineExportTaskWrapper
 	}
 
 	/**
+	 * Sets the external reference code of this batch engine export task.
+	 *
+	 * @param externalReferenceCode the external reference code of this batch engine export task
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
 	 * Sets the field names of this batch engine export task.
 	 *
 	 * @param fieldNames the field names of this batch engine export task
@@ -510,8 +565,8 @@ public class BatchEngineExportTaskWrapper
 	}
 
 	@Override
-	public void setFieldNamesList(java.util.List<String> fieldNamesList) {
-		model.setFieldNamesList(fieldNamesList);
+	public void setFieldNamesList(java.util.List<String> fieldNames) {
+		model.setFieldNamesList(fieldNames);
 	}
 
 	/**
@@ -555,6 +610,16 @@ public class BatchEngineExportTaskWrapper
 	}
 
 	/**
+	 * Sets the processed items count of this batch engine export task.
+	 *
+	 * @param processedItemsCount the processed items count of this batch engine export task
+	 */
+	@Override
+	public void setProcessedItemsCount(int processedItemsCount) {
+		model.setProcessedItemsCount(processedItemsCount);
+	}
+
+	/**
 	 * Sets the start time of this batch engine export task.
 	 *
 	 * @param startTime the start time of this batch engine export task
@@ -562,6 +627,26 @@ public class BatchEngineExportTaskWrapper
 	@Override
 	public void setStartTime(Date startTime) {
 		model.setStartTime(startTime);
+	}
+
+	/**
+	 * Sets the task item delegate name of this batch engine export task.
+	 *
+	 * @param taskItemDelegateName the task item delegate name of this batch engine export task
+	 */
+	@Override
+	public void setTaskItemDelegateName(String taskItemDelegateName) {
+		model.setTaskItemDelegateName(taskItemDelegateName);
+	}
+
+	/**
+	 * Sets the total items count of this batch engine export task.
+	 *
+	 * @param totalItemsCount the total items count of this batch engine export task
+	 */
+	@Override
+	public void setTotalItemsCount(int totalItemsCount) {
+		model.setTotalItemsCount(totalItemsCount);
 	}
 
 	/**
@@ -594,14 +679,9 @@ public class BatchEngineExportTaskWrapper
 		model.setUuid(uuid);
 	}
 
-	/**
-	 * Sets the version of this batch engine export task.
-	 *
-	 * @param version the version of this batch engine export task
-	 */
 	@Override
-	public void setVersion(String version) {
-		model.setVersion(version);
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

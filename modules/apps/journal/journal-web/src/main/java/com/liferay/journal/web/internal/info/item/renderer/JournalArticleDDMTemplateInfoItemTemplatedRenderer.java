@@ -1,51 +1,45 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.web.internal.info.item.renderer;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.info.item.renderer.InfoItemRenderer;
 import com.liferay.info.item.renderer.InfoItemTemplatedRenderer;
 import com.liferay.info.item.renderer.template.InfoItemRendererTemplate;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.staging.StagingGroupHelper;
 
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Eudaldo Alonso
  */
 @Component(
-	property = "service.ranking:Integer=300", service = InfoItemRenderer.class
+	property = "service.ranking:Integer=100", service = InfoItemRenderer.class
 )
 public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 	implements InfoItemTemplatedRenderer<JournalArticle> {
@@ -73,6 +67,38 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 	}
 
 	@Override
+	public List<InfoItemRendererTemplate> getInfoItemRendererTemplates(
+		String className, String classTypeKey, Locale locale) {
+
+		List<InfoItemRendererTemplate> infoItemRendererTemplates =
+			new ArrayList<>();
+
+		List<DDMStructure> ddmStructures =
+			_ddmStructureLocalService.getClassStructures(
+				CompanyThreadLocal.getCompanyId(),
+				_portal.getClassNameId(className));
+
+		if (Validator.isNotNull(classTypeKey)) {
+			ddmStructures = ListUtil.filter(
+				ddmStructures,
+				ddmStructure -> Objects.equals(
+					ddmStructure.getStructureId(),
+					GetterUtil.getLong(classTypeKey)));
+		}
+
+		for (DDMStructure ddmStructure : ddmStructures) {
+			for (DDMTemplate ddmTemplate : ddmStructure.getTemplates()) {
+				infoItemRendererTemplates.add(
+					new InfoItemRendererTemplate(
+						ddmTemplate.getName(locale),
+						ddmTemplate.getTemplateKey()));
+			}
+		}
+
+		return infoItemRendererTemplates;
+	}
+
+	@Override
 	public String getInfoItemRendererTemplatesGroupLabel(
 		JournalArticle article, Locale locale) {
 
@@ -82,11 +108,32 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 	}
 
 	@Override
-	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle =
-			_resourceBundleLoader.loadResourceBundle(locale);
+	public String getInfoItemRendererTemplatesGroupLabel(
+		String className, String classTypeKey, Locale locale) {
 
-		return LanguageUtil.get(resourceBundle, "ddm-template");
+		List<DDMStructure> ddmStructures =
+			_ddmStructureLocalService.getClassStructures(
+				CompanyThreadLocal.getCompanyId(),
+				_portal.getClassNameId(className));
+
+		ddmStructures = ListUtil.filter(
+			ddmStructures,
+			ddmStructure -> Objects.equals(
+				ddmStructure.getStructureId(),
+				GetterUtil.getLong(classTypeKey)));
+
+		if (ddmStructures.size() != 1) {
+			return StringPool.BLANK;
+		}
+
+		DDMStructure ddmStructure = ddmStructures.get(0);
+
+		return ddmStructure.getName(locale);
+	}
+
+	@Override
+	public String getLabel(Locale locale) {
+		return _language.get(locale, "ddm-template");
 	}
 
 	@Override
@@ -94,6 +141,12 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 		JournalArticle article, String templateKey,
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
+
+		if (!JournalArticleRendererUtil.isShowArticle(
+				httpServletRequest, article)) {
+
+			return;
+		}
 
 		if (Validator.isNull(templateKey)) {
 			render(article, httpServletRequest, httpServletResponse);
@@ -112,25 +165,24 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 
 			requestDispatcher.include(httpServletRequest, httpServletResponse);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+		finally {
+			httpServletRequest.removeAttribute(WebKeys.JOURNAL_TEMPLATE_ID);
 		}
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.journal.web)", unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
 
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.journal.web)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
+	@Reference
+	private Language _language;
 
+	@Reference
+	private Portal _portal;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.journal.web)")
 	private ServletContext _servletContext;
 
 	@Reference

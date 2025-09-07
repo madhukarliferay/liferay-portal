@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.taglib.servlet.taglib;
@@ -17,8 +8,8 @@ package com.liferay.asset.taglib.servlet.taglib;
 import com.liferay.asset.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Pavel Savinov
@@ -43,6 +34,10 @@ public class SelectAssetDisplayPageTag extends IncludeTag {
 
 	public long getGroupId() {
 		return _groupId;
+	}
+
+	public long getParentClassPK() {
+		return _parentClassPK;
 	}
 
 	public boolean isShowPortletLayouts() {
@@ -77,7 +72,11 @@ public class SelectAssetDisplayPageTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
+	}
+
+	public void setParentClassPK(long parentClassPK) {
+		_parentClassPK = parentClassPK;
 	}
 
 	public void setShowPortletLayouts(boolean showPortletLayouts) {
@@ -97,6 +96,7 @@ public class SelectAssetDisplayPageTag extends IncludeTag {
 		_classTypeId = 0;
 		_eventName = null;
 		_groupId = 0;
+		_parentClassPK = 0;
 		_showPortletLayouts = false;
 		_showViewInContextLink = true;
 	}
@@ -123,6 +123,9 @@ public class SelectAssetDisplayPageTag extends IncludeTag {
 			"liferay-asset:select-asset-display-page:groupId",
 			String.valueOf(_groupId));
 		httpServletRequest.setAttribute(
+			"liferay-asset:select-asset-display-page:parentClassPK",
+			String.valueOf(_parentClassPK));
+		httpServletRequest.setAttribute(
 			"liferay-asset:select-asset-display-page:showPortletLayouts",
 			String.valueOf(_showPortletLayouts));
 		httpServletRequest.setAttribute(
@@ -137,6 +140,7 @@ public class SelectAssetDisplayPageTag extends IncludeTag {
 	private long _classTypeId;
 	private String _eventName;
 	private long _groupId;
+	private long _parentClassPK;
 	private boolean _showPortletLayouts;
 	private boolean _showViewInContextLink = true;
 

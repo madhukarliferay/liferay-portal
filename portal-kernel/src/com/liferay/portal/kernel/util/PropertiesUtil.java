@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
@@ -25,6 +17,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+
+import java.net.URL;
 
 import java.util.Collections;
 import java.util.Enumeration;
@@ -79,11 +73,11 @@ public class PropertiesUtil {
 
 		Properties newProperties = new Properties();
 
-		Enumeration<String> enu =
+		Enumeration<String> enumeration =
 			(Enumeration<String>)properties.propertyNames();
 
-		while (enu.hasMoreElements()) {
-			String key = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String key = enumeration.nextElement();
 
 			if (key.startsWith(prefix)) {
 				String value = properties.getProperty(key);
@@ -128,10 +122,10 @@ public class PropertiesUtil {
 		return unsyncByteArrayOutputStream.toString();
 	}
 
-	public static Properties load(InputStream is, String charsetName)
+	public static Properties load(InputStream inputStream, String charsetName)
 		throws IOException {
 
-		return load(new InputStreamReader(is, charsetName));
+		return load(new InputStreamReader(inputStream, charsetName));
 	}
 
 	public static void load(Properties properties, String s)
@@ -182,12 +176,22 @@ public class PropertiesUtil {
 		return load(new UnsyncStringReader(s));
 	}
 
+	public static Properties load(URL url) throws IOException {
+		Properties properties = new Properties();
+
+		try (InputStream inputStream = url.openStream()) {
+			properties.load(inputStream);
+		}
+
+		return properties;
+	}
+
 	public static void merge(Properties properties1, Properties properties2) {
-		Enumeration<String> enu =
+		Enumeration<String> enumeration =
 			(Enumeration<String>)properties2.propertyNames();
 
-		while (enu.hasMoreElements()) {
-			String key = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String key = enumeration.nextElement();
 
 			String value = properties2.getProperty(key);
 
@@ -228,11 +232,11 @@ public class PropertiesUtil {
 			sb = new StringBundler(properties.size() * 4);
 		}
 
-		Enumeration<String> enu =
+		Enumeration<String> enumeration =
 			(Enumeration<String>)properties.propertyNames();
 
-		while (enu.hasMoreElements()) {
-			String key = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String key = enumeration.nextElement();
 
 			sb.append(key);
 
@@ -252,11 +256,11 @@ public class PropertiesUtil {
 	}
 
 	public static void trimKeys(Properties properties) {
-		Enumeration<String> enu =
+		Enumeration<String> enumeration =
 			(Enumeration<String>)properties.propertyNames();
 
-		while (enu.hasMoreElements()) {
-			String key = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String key = enumeration.nextElement();
 
 			String trimmedKey = key.trim();
 

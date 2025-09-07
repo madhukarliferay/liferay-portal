@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox;
@@ -20,14 +11,30 @@ import com.liferay.dynamic.data.mapping.annotations.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.annotations.DDMFormLayoutColumn;
 import com.liferay.dynamic.data.mapping.annotations.DDMFormLayoutPage;
 import com.liferay.dynamic.data.mapping.annotations.DDMFormLayoutRow;
+import com.liferay.dynamic.data.mapping.annotations.DDMFormRule;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldTypeSettings;
-import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 
 /**
  * @author Marcellus Tavares
  */
-@DDMForm
+@DDMForm(
+	rules = {
+		@DDMFormRule(
+			actions = "setValue('required', isRequiredObjectField(getValue('objectFieldName')))",
+			condition = "hasObjectField(getValue('objectFieldName'))"
+		),
+		@DDMFormRule(
+			actions = {
+				"setEnabled('required', not(hasObjectField(getValue('objectFieldName'))))",
+				"setVisible('dataType', FALSE)",
+				"setVisible('requiredErrorMessage', getValue('required'))"
+			},
+			condition = "TRUE"
+		)
+	}
+)
 @DDMFormLayout(
 	paginationMode = com.liferay.dynamic.data.mapping.model.DDMFormLayout.TABBED_MODE,
 	value = {
@@ -39,7 +46,8 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"label", "tip", "required", "showAsSwitcher"
+								"label", "tip", "required",
+								"requiredErrorMessage", "showAsSwitcher"
 							}
 						)
 					}
@@ -54,10 +62,11 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"name", "visibilityExpression",
-								"predefinedValue", "validation",
-								"fieldNamespace", "indexType", "localizable",
-								"readOnly", "dataType", "type", "showLabel",
+								"fieldReference", "name",
+								"visibilityExpression", "predefinedValue",
+								"objectFieldName", "fieldNamespace",
+								"indexType", "labelAtStructureLevel",
+								"localizable", "readOnly", "dataType", "type",
 								"repeatable"
 							}
 						)
@@ -70,9 +79,24 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 public interface CheckboxDDMFormFieldTypeSettings
 	extends DefaultDDMFormFieldTypeSettings {
 
+	@DDMFormField(predefinedValue = "boolean")
+	@Override
+	public String dataType();
+
 	@DDMFormField(
-		dataType = "string", label = "%predefined-value",
-		properties = "showAsSwitcher=true", type = "checkbox"
+		dataType = "ddm-options", label = "%options", type = "options"
+	)
+	public DDMFormFieldOptions options();
+
+	@DDMFormField(
+		label = "%predefined-value", optionLabels = {"%false", "%true"},
+		optionValues = {"false", "true"}, predefinedValue = "[\"false\"]",
+		properties = {
+			"placeholder=%enter-a-default-value",
+			"tooltip=%enter-a-default-value-that-is-submitted-if-no-other-value-is-entered",
+			"showEmptyOption=false", "visualProperty=true"
+		},
+		type = "select"
 	)
 	@Override
 	public LocalizedValue predefinedValue();
@@ -82,13 +106,19 @@ public interface CheckboxDDMFormFieldTypeSettings
 	public boolean repeatable();
 
 	@DDMFormField(
-		dataType = "boolean", label = "%show-as-a-switcher",
+		label = "%required-field",
+		properties = {
+			"showAsSwitcher=true", "tooltip=%only-true-will-be-accepted",
+			"visualProperty=true"
+		}
+	)
+	@Override
+	public boolean required();
+
+	@DDMFormField(
+		dataType = "boolean", label = "%show-as-a-switch",
 		properties = "showAsSwitcher=true", type = "checkbox"
 	)
 	public boolean showAsSwitcher();
-
-	@DDMFormField(visibilityExpression = "FALSE")
-	@Override
-	public DDMFormFieldValidation validation();
 
 }

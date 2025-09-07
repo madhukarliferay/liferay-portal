@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
@@ -25,7 +16,7 @@ public class ExceptionRetryAcceptor implements RetryAcceptor {
 
 	@Override
 	public boolean acceptException(
-		Throwable t, Map<String, String> propertyMap) {
+		Throwable throwable, Map<String, String> propertyMap) {
 
 		String name = propertyMap.get(EXCEPTION_NAME);
 
@@ -35,7 +26,7 @@ public class ExceptionRetryAcceptor implements RetryAcceptor {
 		}
 
 		while (true) {
-			Class<?> clazz = t.getClass();
+			Class<?> clazz = throwable.getClass();
 
 			ClassLoader classLoader = clazz.getClassLoader();
 
@@ -46,20 +37,20 @@ public class ExceptionRetryAcceptor implements RetryAcceptor {
 			try {
 				Class<?> exceptionClass = classLoader.loadClass(name);
 
-				if (exceptionClass.isInstance(t)) {
+				if (exceptionClass.isInstance(throwable)) {
 					return true;
 				}
 			}
-			catch (ClassNotFoundException cnfe) {
+			catch (ClassNotFoundException classNotFoundException) {
 			}
 
-			Throwable cause = t.getCause();
+			Throwable causeThrowable = throwable.getCause();
 
-			if ((t == cause) || (cause == null)) {
+			if ((throwable == causeThrowable) || (causeThrowable == null)) {
 				break;
 			}
 
-			t = cause;
+			throwable = causeThrowable;
 		}
 
 		return false;

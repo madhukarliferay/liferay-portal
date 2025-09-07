@@ -1,43 +1,34 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchContainerManagementToolbarDisplayContext;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.user.associated.data.web.internal.constants.UADConstants;
 import com.liferay.user.associated.data.web.internal.display.ViewUADEntitiesDisplay;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Drew Brokke
@@ -46,13 +37,13 @@ public class ViewUADEntitiesManagementToolbarDisplayContext
 	extends SearchContainerManagementToolbarDisplayContext {
 
 	public ViewUADEntitiesManagementToolbarDisplayContext(
+		HttpServletRequest httpServletRequest,
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse,
-		HttpServletRequest httpServletRequest,
 		ViewUADEntitiesDisplay viewUADEntitiesDisplay) {
 
 		super(
-			liferayPortletRequest, liferayPortletResponse, httpServletRequest,
+			httpServletRequest, liferayPortletRequest, liferayPortletResponse,
 			viewUADEntitiesDisplay.getSearchContainer());
 
 		_viewUADEntitiesDisplay = viewUADEntitiesDisplay;
@@ -60,45 +51,38 @@ public class ViewUADEntitiesManagementToolbarDisplayContext
 
 	@Override
 	public List<DropdownItem> getActionDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.setHref(
-							StringBundler.concat(
-								"javascript:", getNamespace(),
-								"doAnonymizeMultiple();"));
-						dropdownItem.setLabel(
-							LanguageUtil.get(request, "anonymize"));
-					});
-
-				add(
-					dropdownItem -> {
-						dropdownItem.setHref(
-							StringBundler.concat(
-								"javascript:", getNamespace(),
-								"doDeleteMultiple();"));
-						dropdownItem.setLabel(
-							LanguageUtil.get(request, "delete"));
-					});
+		return DropdownItemListBuilder.add(
+			dropdownItem -> {
+				dropdownItem.setHref(
+					StringBundler.concat(
+						"javascript:", getNamespace(),
+						"doAnonymizeMultiple();"));
+				dropdownItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "anonymize"));
 			}
-		};
+		).add(
+			dropdownItem -> {
+				dropdownItem.setHref(
+					StringBundler.concat(
+						"javascript:", getNamespace(), "doDeleteMultiple();"));
+				dropdownItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "delete"));
+			}
+		).build();
 	}
 
 	@Override
 	public String getClearResultsURL() {
-		PortletURL portletURL = getPortletURL();
-
-		portletURL.setParameter("keywords", (String)null);
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			getPortletURL()
+		).setKeywords(
+			(String)null
+		).buildString();
 	}
 
 	@Override
 	public String getComponentId() {
-		return StringBundler.concat(
-			"viewUADEntitiesManagementToolbar", StringPool.UNDERLINE,
-			StringUtil.randomId());
+		return "viewUADEntitiesManagementToolbar_" + StringUtil.randomId();
 	}
 
 	@Override
@@ -108,20 +92,14 @@ public class ViewUADEntitiesManagementToolbarDisplayContext
 
 	@Override
 	public String getSearchActionURL() {
-		PortletURL portletURL = getPortletURL();
-
-		return portletURL.toString();
+		return String.valueOf(getPortletURL());
 	}
 
 	@Override
 	public Boolean isShowInfoButton() {
 		String applicationKey = _viewUADEntitiesDisplay.getApplicationKey();
 
-		if (applicationKey.equals(UADConstants.ALL_APPLICATIONS)) {
-			return false;
-		}
-
-		return true;
+		return !applicationKey.equals(UADConstants.ALL_APPLICATIONS);
 	}
 
 	@Override
@@ -142,14 +120,16 @@ public class ViewUADEntitiesManagementToolbarDisplayContext
 			portletURL = PortletURLUtil.clone(
 				portletURL, liferayPortletResponse);
 		}
-		catch (PortletException pe) {
+		catch (PortletException portletException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(pe, pe);
+				_log.warn(portletException);
 			}
 
-			portletURL = liferayPortletResponse.createRenderURL();
-
-			portletURL.setParameters(portletURL.getParameterMap());
+			portletURL = PortletURLBuilder.createRenderURL(
+				liferayPortletResponse
+			).setParameters(
+				portletURL.getParameterMap()
+			).buildPortletURL();
 		}
 
 		String[] parameterNames = {
@@ -157,7 +137,8 @@ public class ViewUADEntitiesManagementToolbarDisplayContext
 		};
 
 		for (String parameterName : parameterNames) {
-			String value = ParamUtil.getString(request, parameterName);
+			String value = ParamUtil.getString(
+				httpServletRequest, parameterName);
 
 			if (Validator.isNotNull(value)) {
 				portletURL.setParameter(parameterName, (String)null);

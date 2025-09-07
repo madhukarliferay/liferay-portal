@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.util;
@@ -54,12 +45,17 @@ public class JCalendarUtil {
 		Calendar startTimeJCalendar, Calendar endTimeJCalendar) {
 
 		startTimeJCalendar = toMidnightJCalendar(startTimeJCalendar);
-		endTimeJCalendar = toMidnightJCalendar(endTimeJCalendar);
+
+		if (isMidnight(endTimeJCalendar)) {
+			endTimeJCalendar.add(Calendar.DAY_OF_MONTH, -1);
+		}
+
+		endTimeJCalendar = toLastHourJCalendar(endTimeJCalendar);
 
 		long startTime = startTimeJCalendar.getTimeInMillis();
 		long endTime = endTimeJCalendar.getTimeInMillis();
 
-		return (endTime - startTime) / DAY;
+		return Math.round((float)(endTime - startTime) / DAY);
 	}
 
 	public static int getDSTShift(
@@ -123,7 +119,16 @@ public class JCalendarUtil {
 		Calendar adjustedJCalendar1 = toLastHourJCalendar(jCalendar1);
 		Calendar adjustedJCalendar2 = toLastHourJCalendar(jCalendar2);
 
-		if (adjustedJCalendar1.after(adjustedJCalendar2)) {
+		return adjustedJCalendar1.after(adjustedJCalendar2);
+	}
+
+	public static boolean isMidnight(Calendar jCalendar) {
+		Calendar midnightJCalendar = toMidnightJCalendar(
+			(Calendar)jCalendar.clone());
+
+		if (midnightJCalendar.getTimeInMillis() ==
+				jCalendar.getTimeInMillis()) {
+
 			return true;
 		}
 

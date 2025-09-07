@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.http;
@@ -30,7 +21,6 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProtectedClassLoaderObjectInputStream;
 
 import java.io.EOFException;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
@@ -51,6 +41,10 @@ public class TunnelUtil {
 			HttpPrincipal httpPrincipal, MethodHandler methodHandler)
 		throws Exception {
 
+		if (_log.isDebugEnabled()) {
+			_log.debug("Method handler " + methodHandler);
+		}
+
 		HttpURLConnection httpURLConnection = _getConnection(httpPrincipal);
 
 		TunnelAuthenticationManagerUtil.setCredentials(
@@ -63,12 +57,12 @@ public class TunnelUtil {
 				new ObjectValuePair<HttpPrincipal, MethodHandler>(
 					httpPrincipal, methodHandler));
 		}
-		catch (SocketTimeoutException ste) {
+		catch (SocketTimeoutException socketTimeoutException) {
 			_log.error(
 				"Tunnel connection time out may be configured with the " +
 					"portal property \"tunneling.servlet.timeout\"");
 
-			throw ste;
+			throw socketTimeoutException;
 		}
 
 		Object returnObject = null;
@@ -84,10 +78,14 @@ public class TunnelUtil {
 
 			returnObject = objectInputStream.readObject();
 		}
-		catch (EOFException eofe) {
+		catch (EOFException eofException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug("Unable to read object", eofe);
+				_log.debug("Unable to read object", eofException);
 			}
+		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Return object " + returnObject);
 		}
 
 		if ((returnObject != null) && (returnObject instanceof Exception)) {
@@ -98,7 +96,7 @@ public class TunnelUtil {
 	}
 
 	private static HttpURLConnection _getConnection(HttpPrincipal httpPrincipal)
-		throws IOException {
+		throws Exception {
 
 		if ((httpPrincipal == null) || (httpPrincipal.getUrl() == null)) {
 			return null;

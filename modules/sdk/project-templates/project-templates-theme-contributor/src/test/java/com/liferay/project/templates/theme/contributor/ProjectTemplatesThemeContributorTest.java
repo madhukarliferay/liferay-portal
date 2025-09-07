@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.theme.contributor;
@@ -23,6 +14,7 @@ import java.io.File;
 
 import java.net.URI;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.junit.Assert;
@@ -31,15 +23,27 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * @author Gregory Amerson
  */
+@RunWith(Parameterized.class)
 public class ProjectTemplatesThemeContributorTest
 	implements BaseProjectTemplatesTestCase {
 
 	@ClassRule
 	public static final MavenExecutor mavenExecutor = new MavenExecutor();
+
+	@Parameterized.Parameters(name = "Testcase-{index}: testing {0}")
+	public static Iterable<Object[]> data() {
+		return Arrays.asList(
+			new Object[][] {
+				{"7.0.10.17"}, {"7.1.10.7"}, {"7.2.10.7"}, {"7.3.7"},
+				{"7.4.3.56"}, {"2024.q1.1"}
+			});
+	}
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -57,11 +61,34 @@ public class ProjectTemplatesThemeContributorTest
 		_gradleDistribution = URI.create(gradleDistribution);
 	}
 
+	public ProjectTemplatesThemeContributorTest(String liferayVersion) {
+		_liferayVersion = liferayVersion;
+	}
+
 	@Test
-	public void testBuildTemplateThemeContributorCustom() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"theme-contributor", "my-contributor-custom", "--contributor-type",
-			"foo-bar");
+	public void testBuildTemplateThemeContributor() throws Exception {
+		String template = "theme-contributor";
+		String name = "my-contributor-custom";
+
+		File gradleWorkspaceDir = buildWorkspace(
+			temporaryFolder, "gradle", "gradleWS", _liferayVersion,
+			mavenExecutor);
+
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			_liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
+
+		File gradleWorkspaceModulesDir = new File(
+			gradleWorkspaceDir, "modules");
+
+		File gradleProjectDir = buildTemplateWithGradle(
+			gradleWorkspaceModulesDir, template, name, "--contributor-type",
+			"foo-bar", "--liferay-version", _liferayVersion);
 
 		testContains(
 			gradleProjectDir, "bnd.bnd",
@@ -78,111 +105,34 @@ public class ProjectTemplatesThemeContributorTest
 			gradleProjectDir,
 			"src/main/resources/META-INF/resources/js/foo-bar.js");
 
+		File mavenWorkspaceDir = buildWorkspace(
+			temporaryFolder, "maven", "mavenWS", _liferayVersion,
+			mavenExecutor);
+
+		File mavenModulesDir = new File(mavenWorkspaceDir, "modules");
+
 		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "theme-contributor", "my-contributor-custom",
-			"com.test", mavenExecutor, "-DcontributorType=foo-bar",
+			mavenModulesDir, mavenModulesDir, template, name, "com.test",
+			mavenExecutor, "-DcontributorType=foo-bar",
+			"-DliferayVersion=" + _liferayVersion,
 			"-Dpackage=my.contributor.custom");
 
-		testContains(
-			mavenProjectDir, "bnd.bnd",
-			"-plugin.sass: com.liferay.ant.bnd.sass.SassAnalyzerPlugin");
+		if (isBuildProjects()) {
+			File gradleOutputDir = new File(gradleProjectDir, "build/libs");
+			File mavenOutputDir = new File(mavenProjectDir, "target");
 
-		buildProjects(
-			_gradleDistribution, mavenExecutor, gradleProjectDir,
-			mavenProjectDir);
-	}
-
-	@Test
-	public void testBuildTemplateThemeContributorCustom71() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"theme-contributor", "my-contributor-custom", "--contributor-type",
-			"foo-bar", "--liferay-version", "7.1.3");
-
-		testContains(
-			gradleProjectDir, "bnd.bnd",
-			"Liferay-Theme-Contributor-Type: foo-bar",
-			"Web-ContextPath: /foo-bar-theme-contributor");
-		testNotContains(
-			gradleProjectDir, "bnd.bnd",
-			"-plugin.sass: com.liferay.ant.bnd.sass.SassAnalyzerPlugin");
-
-		testExists(
-			gradleProjectDir,
-			"src/main/resources/META-INF/resources/css/foo-bar.scss");
-		testExists(
-			gradleProjectDir,
-			"src/main/resources/META-INF/resources/js/foo-bar.js");
-
-		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "theme-contributor", "my-contributor-custom",
-			"com.test", mavenExecutor, "-DcontributorType=foo-bar",
-			"-Dpackage=my.contributor.custom", "-DliferayVersion=7.1.3");
-
-		testContains(
-			mavenProjectDir, "bnd.bnd",
-			"-plugin.sass: com.liferay.ant.bnd.sass.SassAnalyzerPlugin");
-
-		buildProjects(
-			_gradleDistribution, mavenExecutor, gradleProjectDir,
-			mavenProjectDir);
-	}
-
-	@Test
-	public void testBuildTemplateThemeContributorCustom72() throws Exception {
-		File gradleProjectDir = _buildTemplateWithGradle(
-			"theme-contributor", "my-contributor-custom", "--contributor-type",
-			"foo-bar", "--liferay-version", "7.2.1");
-
-		testContains(
-			gradleProjectDir, "bnd.bnd",
-			"Liferay-Theme-Contributor-Type: foo-bar",
-			"Web-ContextPath: /foo-bar-theme-contributor");
-		testNotContains(
-			gradleProjectDir, "bnd.bnd",
-			"-plugin.sass: com.liferay.ant.bnd.sass.SassAnalyzerPlugin");
-
-		testExists(
-			gradleProjectDir,
-			"src/main/resources/META-INF/resources/css/foo-bar.scss");
-		testExists(
-			gradleProjectDir,
-			"src/main/resources/META-INF/resources/js/foo-bar.js");
-
-		File mavenProjectDir = buildTemplateWithMaven(
-			temporaryFolder, "theme-contributor", "my-contributor-custom",
-			"com.test", mavenExecutor, "-DcontributorType=foo-bar",
-			"-Dpackage=my.contributor.custom", "-DliferayVersion=7.2.1");
-
-		testContains(
-			mavenProjectDir, "bnd.bnd",
-			"-plugin.sass: com.liferay.ant.bnd.sass.SassAnalyzerPlugin");
-
-		buildProjects(
-			_gradleDistribution, mavenExecutor, gradleProjectDir,
-			mavenProjectDir);
-	}
-
-	@Test
-	public void testBuildTemplateThemeContributorinWorkspace()
-		throws Exception {
-
-		testBuildTemplateWithWorkspace(
-			temporaryFolder, _gradleDistribution, "theme-contributor",
-			"my-contributor", "build/libs/my.contributor-1.0.0.jar",
-			"--contributor-type", "my-contributor",
-			"--dependency-management-enabled", "--liferay-version", "7.2.1");
+			buildProjects(
+				_gradleDistribution, mavenExecutor, gradleWorkspaceDir,
+				mavenProjectDir, gradleOutputDir, mavenOutputDir,
+				":modules:" + name + GRADLE_TASK_PATH_BUILD);
+		}
 	}
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-	private File _buildTemplateWithGradle(
-			String template, String name, String... args)
-		throws Exception {
-
-		return buildTemplateWithGradle(temporaryFolder, template, name, args);
-	}
-
 	private static URI _gradleDistribution;
+
+	private final String _liferayVersion;
 
 }

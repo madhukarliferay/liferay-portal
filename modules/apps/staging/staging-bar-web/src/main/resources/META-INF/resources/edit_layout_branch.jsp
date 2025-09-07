@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -65,11 +56,13 @@ if (layoutBranch != null) {
 	<liferay-util:param name="navigationName" value="<%= title %>" />
 </liferay-util:include>
 
-<div class="container-fluid-1280" data-namespace="<portlet:namespace />" id="<portlet:namespace /><%= (layoutBranch != null) ? "updateBranch" : "addBranch" %>">
+<clay:container-fluid
+	id='<%= liferayPortletResponse.getNamespace() + ((layoutBranch != null) ? "updateBranch" : "addBranch") %>'
+>
 	<aui:model-context bean="<%= layoutBranch %>" model="<%= LayoutBranch.class %>" />
 
-	<portlet:actionURL name="editLayoutBranch" var="editLayoutBranchURL">
-		<portlet:param name="mvcRenderCommandName" value="editLayoutBranch" />
+	<portlet:actionURL name="/staging_bar/edit_layout_branch" var="editLayoutBranchURL">
+		<portlet:param name="mvcRenderCommandName" value="/staging_bar/edit_layout_branch" />
 	</portlet:actionURL>
 
 	<aui:form action="<%= editLayoutBranchURL %>" method="post" name="fm3">
@@ -79,7 +72,7 @@ if (layoutBranch != null) {
 		<aui:input name="copyLayoutRevisionId" type="hidden" value="<%= String.valueOf(layoutRevisionId) %>" />
 		<aui:input name="workflowAction" type="hidden" value="<%= String.valueOf(WorkflowConstants.ACTION_SAVE_DRAFT) %>" />
 
-		<aui:input name="name" />
+		<aui:input ignoreRequestValue="<%= true %>" name="name" type="text" value="<%= (layoutBranch != null) ? HtmlUtil.escape(layoutBranchDisplayContext.getLayoutBranchDisplayName(layoutBranch)) : StringPool.BLANK %>" />
 
 		<aui:input name="description" />
 
@@ -89,4 +82,4 @@ if (layoutBranch != null) {
 			<aui:button href="<%= redirect %>" value="cancel" />
 		</aui:button-row>
 	</aui:form>
-</div>
+</clay:container-fluid>

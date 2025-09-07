@@ -1,21 +1,12 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <aui:button-row>
-	<aui:button onClick='<%= renderResponse.getNamespace() + "addSearchProvider();" %>' value='<%= LanguageUtil.format(request, "add-x-as-a-search-provider", HtmlUtil.escape(company.getName()), false) %>' />
+	<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "addSearchProvider();" %>' value='<%= LanguageUtil.format(request, "add-x-as-a-search-provider", HtmlUtil.escape(company.getName()), false) %>' />
 </aui:button-row>
 
 <%
@@ -60,15 +51,15 @@ for (int i = 0; i < openSearchInstances.size(); i++) {
 		delta = ParamUtil.getInteger(request, SearchContainer.DEFAULT_DELTA_PARAM + i, SearchContainer.DEFAULT_DELTA);
 	}
 
-	SearchContainer openSearchSearchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM + i, delta, searchDisplayContext.getPortletURL(), null, LanguageUtil.format(request, "no-results-were-found-that-matched-the-keywords-x", "<strong>" + HtmlUtil.escape(searchDisplayContext.getKeywords()) + "</strong>", false));
+	SearchContainer<?> openSearchSearchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM + i, delta, searchDisplayContext.getPortletURL(), null, LanguageUtil.format(request, "no-results-were-found-that-matched-the-keywords-x", "<strong>" + HtmlUtil.escape(searchDisplayContext.getKeywords()) + "</strong>", false));
 
 	String xml = openSearch.search(request, groupId, themeDisplay.getUserId(), searchDisplayContext.getKeywords(), openSearchSearchContainer.getCur(), openSearchSearchContainer.getDelta(), format);
 
-	LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
-
-	groupParams.put("active", Boolean.FALSE);
-
-	int inactiveGroupsCount = GroupLocalServiceUtil.searchCount(themeDisplay.getCompanyId(), null, null, groupParams);
+	int inactiveGroupsCount = GroupLocalServiceUtil.searchCount(
+		themeDisplay.getCompanyId(), null, null,
+		LinkedHashMapBuilder.<String, Object>put(
+			"active", Boolean.FALSE
+		).build());
 
 	Tuple tuple = com.liferay.portal.search.web.internal.util.SearchUtil.getElements(xml, openSearch.getClassName(), inactiveGroupsCount);
 
@@ -98,7 +89,7 @@ for (int i = 0; i < openSearchInstances.size(); i++) {
 				if (openSearch instanceof HitsOpenSearchImpl) {
 					HitsOpenSearchImpl hitsOpenSearchImpl = (HitsOpenSearchImpl)openSearch;
 
-					Indexer hitsOpenSearchImplIndexer = hitsOpenSearchImpl.getIndexer();
+					Indexer<?> hitsOpenSearchImplIndexer = hitsOpenSearchImpl.getIndexer();
 
 					filterSearch = hitsOpenSearchImplIndexer.isFilterSearch();
 				}
@@ -126,11 +117,11 @@ for (int i = 0; i < openSearchInstances.size(); i++) {
 				<liferay-ui:search-container-column-text>
 
 					<%
-					String entryTitle = element.elementText("title");
-					String summary = element.elementText("summary");
 					String entryClassName = element.elementText("entryClassName");
 					long entryClassPK = GetterUtil.getLong(element.elementText("entryClassPK"));
+					String entryTitle = element.elementText("title");
 					String[] queryTerms = StringUtil.split(element.elementText("queryTerms"), StringPool.COMMA_AND_SPACE);
+					String summary = element.elementText("summary");
 					%>
 
 					<a class="entry-title" href="<%= com.liferay.portal.search.web.internal.util.SearchUtil.getSearchResultViewURL(renderRequest, renderResponse, entryClassName, entryClassPK, searchDisplayContext.isViewInContext(), currentURL) %>">
@@ -155,6 +146,7 @@ for (int i = 0; i < openSearchInstances.size(); i++) {
 			</liferay-ui:search-container-row>
 
 			<liferay-ui:search-iterator
+				markupView="deprecated"
 				paginate="<%= false %>"
 			/>
 

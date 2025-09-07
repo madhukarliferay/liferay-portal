@@ -1,35 +1,30 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.configuration;
 
+import com.liferay.exportimport.kernel.configuration.constants.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.portlet.PortletRequest;
 
 import java.io.Serializable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
 
 /**
  * @author Levente Hudák
@@ -49,11 +44,9 @@ public class ExportImportConfigurationFactory {
 		boolean privateLayout = ParamUtil.getBoolean(
 			portletRequest, "privateLayout");
 
-		Map<String, String[]> parameterMap = _getParameterMap(portletRequest);
-
 		return buildDefaultLocalPublishingExportImportConfiguration(
 			themeDisplay.getUser(), sourceGroupId, targetGroupId, privateLayout,
-			parameterMap);
+			_getParameterMap(portletRequest));
 	}
 
 	public static ExportImportConfiguration
@@ -100,21 +93,23 @@ public class ExportImportConfigurationFactory {
 		long sourceGroupId = ParamUtil.getLong(portletRequest, "sourceGroupId");
 		boolean privateLayout = ParamUtil.getBoolean(
 			portletRequest, "privateLayout");
-		String remoteAddress = ParamUtil.getString(
-			portletRequest, "remoteAddress");
-		int remotePort = ParamUtil.getInteger(portletRequest, "remotePort");
+
+		Group group = GroupLocalServiceUtil.getGroup(sourceGroupId);
+
+		String remoteAddress = group.getTypeSettingsProperty("remoteAddress");
+		int remotePort = GetterUtil.getInteger(
+			group.getTypeSettingsProperty("remotePort"));
+
 		String remotePathContext = ParamUtil.getString(
 			portletRequest, "remotePathContext");
 		boolean secureConnection = ParamUtil.getBoolean(
 			portletRequest, "secureConnection");
 		long remoteGroupId = ParamUtil.getLong(portletRequest, "remoteGroupId");
 
-		Map<String, String[]> parameterMap = _getParameterMap(portletRequest);
-
 		return buildDefaultRemotePublishingExportImportConfiguration(
 			themeDisplay.getUser(), sourceGroupId, privateLayout, remoteAddress,
 			remotePort, remotePathContext, secureConnection, remoteGroupId,
-			parameterMap);
+			_getParameterMap(portletRequest));
 	}
 
 	public static ExportImportConfiguration

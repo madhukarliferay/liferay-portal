@@ -1,53 +1,47 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.web.internal.item.selector;
 
+import com.liferay.depot.web.internal.application.list.DepotPanelAppController;
 import com.liferay.depot.web.internal.util.DepotAdminGroupSearchProvider;
-import com.liferay.depot.web.internal.util.DepotSupportChecker;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.ItemSelectorView;
+import com.liferay.item.selector.criteria.GroupItemSelectorReturnType;
 import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
 import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
 import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portlet.usersadmin.search.GroupSearch;
 import com.liferay.site.item.selector.display.context.SitesItemSelectorViewDisplayContext;
 import com.liferay.site.item.selector.renderer.SiteItemSelectorViewRenderer;
+import com.liferay.site.search.GroupSearch;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -74,13 +68,28 @@ public class DepotItemSelectorView
 
 	@Override
 	public String getTitle(Locale locale) {
-		return ResourceBundleUtil.getString(
-			_portal.getResourceBundle(locale), "repositories");
+		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+			locale, getClass());
+
+		return ResourceBundleUtil.getString(resourceBundle, "asset-libraries");
 	}
 
 	@Override
-	public boolean isVisible(ThemeDisplay themeDisplay) {
-		return _depotSupportChecker.isEnabled();
+	public boolean isVisible(
+		GroupItemSelectorCriterion groupItemSelectorCriterion,
+		ThemeDisplay themeDisplay) {
+
+		if (groupItemSelectorCriterion == null) {
+			return true;
+		}
+
+		String portletId = groupItemSelectorCriterion.getPortletId();
+
+		if (Validator.isNull(portletId)) {
+			return true;
+		}
+
+		return _depotPanelAppController.isShow(portletId);
 	}
 
 	@Override
@@ -91,18 +100,19 @@ public class DepotItemSelectorView
 		throws IOException, ServletException {
 
 		SitesItemSelectorViewDisplayContext
-			depotSiteItemSelectorViewDisplayContext =
-				new DepotSiteItemSelectorViewDisplayContext(
+			depotSitesItemSelectorViewDisplayContext =
+				new DepotSitesItemSelectorViewDisplayContext(
 					(HttpServletRequest)servletRequest, itemSelectedEventName,
 					portletURL, groupItemSelectorCriterion);
 
 		_siteItemSelectorViewRenderer.renderHTML(
-			depotSiteItemSelectorViewDisplayContext);
+			depotSitesItemSelectorViewDisplayContext);
 	}
 
 	private static final List<ItemSelectorReturnType>
 		_supportedItemSelectorReturnTypes = Collections.unmodifiableList(
 			ListUtil.fromArray(
+				new GroupItemSelectorReturnType(),
 				new URLItemSelectorReturnType(),
 				new UUIDItemSelectorReturnType()));
 
@@ -110,18 +120,15 @@ public class DepotItemSelectorView
 	private DepotAdminGroupSearchProvider _depotAdminGroupSearchProvider;
 
 	@Reference
-	private DepotSupportChecker _depotSupportChecker;
-
-	@Reference
-	private Portal _portal;
+	private DepotPanelAppController _depotPanelAppController;
 
 	@Reference
 	private SiteItemSelectorViewRenderer _siteItemSelectorViewRenderer;
 
-	private class DepotSiteItemSelectorViewDisplayContext
+	private class DepotSitesItemSelectorViewDisplayContext
 		implements SitesItemSelectorViewDisplayContext {
 
-		public DepotSiteItemSelectorViewDisplayContext(
+		public DepotSitesItemSelectorViewDisplayContext(
 			HttpServletRequest httpServletRequest, String itemSelectedEventName,
 			PortletURL portletURL,
 			GroupItemSelectorCriterion groupItemSelectorCriterion) {
@@ -154,8 +161,14 @@ public class DepotItemSelectorView
 
 		@Override
 		public GroupSearch getGroupSearch() {
-			return _depotAdminGroupSearchProvider.getGroupSearch(
-				getPortletRequest(), getPortletURL());
+			try {
+				return _depotAdminGroupSearchProvider.getGroupSearch(
+					_groupItemSelectorCriterion, getPortletRequest(),
+					getPortletURL());
+			}
+			catch (PortalException portalException) {
+				return ReflectionUtil.throwException(portalException);
+			}
 		}
 
 		@Override
@@ -166,13 +179,13 @@ public class DepotItemSelectorView
 		@Override
 		public PortletRequest getPortletRequest() {
 			return (PortletRequest)_httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 		}
 
 		@Override
 		public PortletResponse getPortletResponse() {
 			return (PortletResponse)_httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_RESPONSE);
+				JavaConstants.JAKARTA_PORTLET_RESPONSE);
 		}
 
 		@Override

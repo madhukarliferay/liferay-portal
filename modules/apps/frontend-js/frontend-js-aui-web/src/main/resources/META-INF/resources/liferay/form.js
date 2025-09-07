@@ -1,35 +1,49 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 AUI.add(
 	'liferay-form',
-	A => {
-		var AArray = A.Array;
+	(A) => {
+		const AArray = A.Array;
 
-		var Lang = A.Lang;
+		const Lang = A.Lang;
 
-		var DEFAULTS_FORM_VALIDATOR = A.config.FormValidator;
+		const DEFAULTS_FORM_VALIDATOR = A.config.FormValidator;
 
-		var defaultAcceptFiles = DEFAULTS_FORM_VALIDATOR.RULES.acceptFiles;
+		const defaultAcceptFiles = DEFAULTS_FORM_VALIDATOR.RULES.acceptFiles;
 
-		var TABS_SECTION_STR = 'TabsSection';
+		const TABS_SECTION_STR = 'TabsSection';
 
-		var REGEX_NUMBER = /^[+-]?(\d+)([.|,]\d+)*([eE][+-]?\d+)?$/;
+		const REGEX_CUSTOM_ELEMENT_NAME =
+			/^[a-z]([a-z]|[0-9]|-|\.|_)*-([a-z]|[0-9]|-|\.|_)*/;
 
-		var REGEX_URL = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(https?:\/\/|www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))((.*):(\d*)\/?(.*))?)/;
+		const REGEX_EMAIL =
+			/^[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[^\W_](?:[0-9A-Za-z-]*[^\W_])?\.)+([^\W_](?:[0-9A-Za-z-]*[^\W_]))$/;
 
-		var acceptFiles = function(val, node, ruleValue) {
+		const REGEX_FRIENDLY_URL_MAPPING = /[A-Za-z0-9-_]*/;
+
+		const REGEX_NUMBER = /^[+-]?(\d+)([.|,]\d+)*([eE][+-]?\d+)?$/;
+
+		const REGEX_URL =
+			/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(https?:\/\/|www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))((.*):(\d*)\/?(.*))?)/;
+
+		const REGEX_URL_ALLOW_RELATIVE =
+			/((([A-Za-z]{3,9}:(?:\/\/)?)|\/(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(https?:\/\/|www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))((.*):(\d*)\/?(.*))?)/;
+
+		const RESERVED_CUSTOM_ELEMENT_NAMES = new Set([
+			'annotation-xml',
+			'color-profile',
+			'font-face',
+			'font-face-format',
+			'font-face-name',
+			'font-face-src',
+			'font-face-uri',
+			'missing-glyph',
+		]);
+
+		const acceptFiles = function (val, node, ruleValue) {
 			if (ruleValue && ruleValue.split(',').includes('*')) {
 				return true;
 			}
@@ -37,8 +51,23 @@ AUI.add(
 			return defaultAcceptFiles(val, node, ruleValue);
 		};
 
-		var maxFileSize = function(_val, node, ruleValue) {
-			var nodeType = node.get('type').toLowerCase();
+		const customElementName = function (val, _node, _ruleValue) {
+			return (
+				REGEX_CUSTOM_ELEMENT_NAME.test(val) &&
+				!RESERVED_CUSTOM_ELEMENT_NAMES.has(val)
+			);
+		};
+
+		const email = function (val) {
+			return REGEX_EMAIL.test(val);
+		};
+
+		const friendlyURLMapping = function (val, _node, _ruleValue) {
+			return REGEX_FRIENDLY_URL_MAPPING.test(val);
+		};
+
+		const maxFileSize = function (_val, node, ruleValue) {
+			const nodeType = node.get('type').toLowerCase();
 
 			if (nodeType === 'file') {
 				return ruleValue === 0 || node._node.files[0].size <= ruleValue;
@@ -47,21 +76,31 @@ AUI.add(
 			return true;
 		};
 
-		var number = function(val, _node, _ruleValue) {
+		const number = function (val, _node, _ruleValue) {
 			return REGEX_NUMBER && REGEX_NUMBER.test(val);
 		};
 
-		var url = function(val, _node, _ruleValue) {
+		const url = function (val, _node, _ruleValue) {
 			return REGEX_URL && REGEX_URL.test(val);
+		};
+
+		const urlAllowRelative = function (val) {
+			return (
+				REGEX_URL_ALLOW_RELATIVE && REGEX_URL_ALLOW_RELATIVE.test(val)
+			);
 		};
 
 		A.mix(
 			DEFAULTS_FORM_VALIDATOR.RULES,
 			{
 				acceptFiles,
+				customElementName,
+				email,
+				friendlyURLMapping,
 				maxFileSize,
 				number,
-				url
+				url,
+				urlAllowRelative,
 			},
 			true
 		);
@@ -79,6 +118,9 @@ AUI.add(
 				alphanum: Liferay.Language.get(
 					'please-enter-only-alphanumeric-characters'
 				),
+				customElementName: Liferay.Language.get(
+					'please-enter-a-valid-html-element-name'
+				),
 				date: Liferay.Language.get('please-enter-a-valid-date'),
 				digits: Liferay.Language.get('please-enter-only-digits'),
 				email: Liferay.Language.get(
@@ -86,6 +128,9 @@ AUI.add(
 				),
 				equalTo: Liferay.Language.get(
 					'please-enter-the-same-value-again'
+				),
+				friendlyURLMapping: Liferay.Language.get(
+					'please-enter-a-valid-friendly-url-mapping'
 				),
 				max: Liferay.Language.get(
 					'please-enter-a-value-less-than-or-equal-to-x'
@@ -110,58 +155,61 @@ AUI.add(
 					'please-enter-a-value-between-x-and-x-characters-long'
 				),
 				required: Liferay.Language.get('this-field-is-required'),
-				url: Liferay.Language.get('please-enter-a-valid-url')
+				url: Liferay.Language.get('please-enter-a-valid-url'),
+				urlAllowRelative: Liferay.Language.get(
+					'please-enter-a-valid-url'
+				),
 			},
 			true
 		);
 
-		var Form = A.Component.create({
+		const Form = A.Component.create({
 			_INSTANCES: {},
 
 			ATTRS: {
 				fieldRules: {
 					setter(val) {
-						var instance = this;
+						const instance = this;
 
 						instance._processFieldRules(val);
 
 						return val;
-					}
+					},
 				},
 				id: {},
 				namespace: {},
 				onSubmit: {
 					valueFn() {
-						var instance = this;
+						const instance = this;
 
 						return instance._onSubmit;
-					}
+					},
 				},
 				validateOnBlur: {
 					validator: Lang.isBoolean,
-					value: true
-				}
+					value: true,
+				},
 			},
 
 			EXTENDS: A.Base,
 
 			get(id) {
-				var instance = this;
+				const instance = this;
 
 				return instance._INSTANCES[id];
 			},
 
 			prototype: {
 				_afterGetFieldsByName(fieldName) {
-					var instance = this;
+					const instance = this;
 
-					var editorString = 'Editor';
+					const editorString = 'Editor';
 
 					if (
 						fieldName.lastIndexOf(editorString) ===
 						fieldName.length - editorString.length
 					) {
-						var formNode = instance.formNode;
+						const formNode = instance.formNode;
 
 						return new A.Do.AlterReturn(
 							'Return editor dom element',
@@ -171,10 +219,10 @@ AUI.add(
 				},
 
 				_bindForm() {
-					var instance = this;
+					const instance = this;
 
-					var formNode = instance.formNode;
-					var formValidator = instance.formValidator;
+					const formNode = instance.formNode;
+					const formValidator = instance.formValidator;
 
 					formValidator.on(
 						'submit',
@@ -205,7 +253,7 @@ AUI.add(
 				},
 
 				_defaultSubmitFn(event) {
-					var instance = this;
+					const instance = this;
 
 					if (!event.stopped) {
 						submitForm(instance.form);
@@ -213,7 +261,7 @@ AUI.add(
 				},
 
 				_findRuleIndex(fieldRules, fieldName, validatorName) {
-					var ruleIndex = -1;
+					let ruleIndex = -1;
 
 					AArray.some(fieldRules, (element, index) => {
 						if (
@@ -230,60 +278,67 @@ AUI.add(
 				},
 
 				_focusInvalidFieldTab() {
-					var instance = this;
+					const instance = this;
 
-					var formNode = instance.formNode;
+					const formNode = instance.formNode;
 
-					var field = formNode.one(
+					const field = formNode.one(
 						'.' + instance.formValidator.get('errorClass')
 					);
 
 					if (field) {
-						var fieldWrapper = field.ancestor('form > div');
+						const fieldWrapper = field.ancestor(
+							'form > fieldset > div, form > div'
+						);
 
-						var formTabs = formNode.one('.lfr-nav');
+						const formTabs = formNode.one('.lfr-nav');
 
 						if (fieldWrapper && formTabs) {
-							var tabs = formTabs.all('.tab');
-							var tabsNamespace = formTabs.getAttribute(
+							const tabs = formTabs.all('.nav-item');
+							const tabsNamespace = formTabs.getAttribute(
 								'data-tabs-namespace'
 							);
 
-							var tabNames = AArray.map(tabs._nodes, tab => {
+							const tabNames = AArray.map(tabs._nodes, (tab) => {
 								return tab.getAttribute('data-tab-name');
 							});
 
-							var fieldWrapperId = fieldWrapper
+							const fieldWrapperId = fieldWrapper
 								.getAttribute('id')
 								.slice(0, -TABS_SECTION_STR.length);
 
-							var fieldTabId = AArray.find(tabs._nodes, tab => {
-								return (
-									tab
-										.getAttribute('id')
-										.indexOf(fieldWrapperId) !== -1
-								);
-							});
-
-							Liferay.Portal.Tabs.show(
-								tabsNamespace,
-								tabNames,
-								fieldTabId.getAttribute('data-tab-name')
+							const fieldTabId = AArray.find(
+								tabs._nodes,
+								(tab) => {
+									return (
+										tab
+											.getAttribute('id')
+											.indexOf(fieldWrapperId) !== -1
+									);
+								}
 							);
+
+							if (tabsNamespace) {
+								Liferay.Portal.Tabs.show(
+									tabsNamespace,
+									tabNames,
+									fieldTabId.getAttribute('data-tab-name')
+								);
+							}
 						}
 					}
 				},
 
 				_onEditorBlur(event) {
-					var instance = this;
+					const instance = this;
 
-					var formValidator = instance.formValidator;
+					const formValidator = instance.formValidator;
 
 					formValidator.validateField(event.target);
 				},
 
 				_onFieldFocusChange(event) {
-					var row = event.currentTarget.ancestor('.field');
+					const row = event.currentTarget.ancestor('.field');
 
 					if (row) {
 						row.toggleClass(
@@ -294,7 +349,7 @@ AUI.add(
 				},
 
 				_onSubmit(event) {
-					var instance = this;
+					const instance = this;
 
 					event.preventDefault();
 
@@ -304,45 +359,44 @@ AUI.add(
 				},
 
 				_onSubmitError() {
-					var instance = this;
+					const instance = this;
 
-					var collapsiblePanels = instance.formNode.all(
-						'.panel-collapse'
-					);
+					const collapsiblePanels =
+						instance.formNode.all('.panel-collapse');
 
-					collapsiblePanels.each(panel => {
-						var errorFields = panel
+					collapsiblePanels.each((panel) => {
+						const errorFields = panel
 							.get('children')
 							.all('.has-error');
 
-						if (errorFields.size() > 0 && !panel.hasClass('in')) {
-							var panelNode = panel.getDOM();
+						if (errorFields.size() > 0 && !panel.hasClass('show')) {
+							const panelNode = panel.getDOM();
 
-							AUI.$(panelNode).collapse('show');
+							Liferay.CollapseProvider.show({panel: panelNode});
 						}
 					});
 				},
 
 				_onValidatorSubmit(event) {
-					var instance = this;
+					const instance = this;
 
-					var onSubmit = instance.get('onSubmit');
+					const onSubmit = instance.get('onSubmit');
 
 					onSubmit.call(instance, event.validator.formEvent);
 				},
 
 				_processFieldRule(rules, strings, rule) {
-					var instance = this;
+					const instance = this;
 
-					var value = true;
+					let value = true;
 
-					var fieldName = rule.fieldName;
-					var validatorName = rule.validatorName;
+					const fieldName = rule.fieldName;
+					const validatorName = rule.validatorName;
 
-					var field = this.formValidator.getField(fieldName);
+					const field = this.formValidator.getField(fieldName);
 
 					if (field) {
-						var fieldNode = field.getDOMNode();
+						const fieldNode = field.getDOMNode();
 
 						A.Do.after(
 							'_setFieldAttribute',
@@ -365,7 +419,7 @@ AUI.add(
 						value = rule.body;
 					}
 
-					var fieldRules = rules[fieldName];
+					let fieldRules = rules[fieldName];
 
 					if (!fieldRules) {
 						fieldRules = {};
@@ -380,10 +434,10 @@ AUI.add(
 							rule.body;
 					}
 
-					var errorMessage = rule.errorMessage;
+					const errorMessage = rule.errorMessage;
 
 					if (errorMessage) {
-						var fieldStrings = strings[fieldName];
+						let fieldStrings = strings[fieldName];
 
 						if (!fieldStrings) {
 							fieldStrings = {};
@@ -396,16 +450,16 @@ AUI.add(
 				},
 
 				_processFieldRules(fieldRules) {
-					var instance = this;
+					const instance = this;
 
 					if (!fieldRules) {
 						fieldRules = instance.get('fieldRules');
 					}
 
-					var fieldStrings = {};
-					var rules = {};
+					const fieldStrings = {};
+					const rules = {};
 
-					for (var rule in fieldRules) {
+					for (const rule in fieldRules) {
 						instance._processFieldRule(
 							rules,
 							fieldStrings,
@@ -413,7 +467,7 @@ AUI.add(
 						);
 					}
 
-					var formValidator = instance.formValidator;
+					const formValidator = instance.formValidator;
 
 					if (formValidator) {
 						formValidator.set('fieldStrings', fieldStrings);
@@ -434,7 +488,7 @@ AUI.add(
 				},
 
 				_validatable(field) {
-					var result;
+					let result;
 
 					if (field.test(':disabled')) {
 						result = new A.Do.Halt();
@@ -444,23 +498,23 @@ AUI.add(
 				},
 
 				addRule(fieldName, validatorName, errorMessage, body, custom) {
-					var instance = this;
+					const instance = this;
 
-					var fieldRules = instance.get('fieldRules');
+					const fieldRules = instance.get('fieldRules');
 
-					var ruleIndex = instance._findRuleIndex(
+					const ruleIndex = instance._findRuleIndex(
 						fieldRules,
 						fieldName,
 						validatorName
 					);
 
-					if (ruleIndex == -1) {
+					if (ruleIndex === -1) {
 						fieldRules.push({
 							body: body || '',
 							custom: custom || false,
 							errorMessage: errorMessage || '',
 							fieldName,
-							validatorName
+							validatorName,
 						});
 
 						instance._processFieldRules(fieldRules);
@@ -468,20 +522,22 @@ AUI.add(
 				},
 
 				initializer() {
-					var instance = this;
+					const instance = this;
 
-					var id = instance.get('id');
+					const id = instance.get('id');
 
-					var form = document[id];
-					var formNode = A.one(form);
+					const form = document[id];
+					const formNode = A.one(form);
 
 					instance.form = form;
 					instance.formNode = formNode;
 
 					if (formNode) {
-						var formValidator = new A.FormValidator({
+						const formValidator = new A.FormValidator({
 							boundingBox: formNode,
-							validateOnBlur: instance.get('validateOnBlur')
+							stackErrorContainer:
+								'<div class="form-feedback-item form-validator-stack help-block"></div>',
+							validateOnBlur: instance.get('validateOnBlur'),
 						});
 
 						A.Do.before(
@@ -507,18 +563,18 @@ AUI.add(
 				},
 
 				removeRule(fieldName, validatorName) {
-					var instance = this;
+					const instance = this;
 
-					var fieldRules = instance.get('fieldRules');
+					const fieldRules = instance.get('fieldRules');
 
-					var ruleIndex = instance._findRuleIndex(
+					const ruleIndex = instance._findRuleIndex(
 						fieldRules,
 						fieldName,
 						validatorName
 					);
 
-					if (ruleIndex != -1) {
-						var rule = fieldRules[ruleIndex];
+					if (ruleIndex !== -1) {
+						const rule = fieldRules[ruleIndex];
 
 						instance.formValidator.resetField(rule.fieldName);
 
@@ -526,34 +582,34 @@ AUI.add(
 
 						instance._processFieldRules(fieldRules);
 					}
-				}
+				},
 			},
 
 			/*
-			 * @deprecated since 7.2, unused
+			 * @deprecated As of Mueller (7.2.x), with no direct replacement
 			 */
 			register(config) {
-				var instance = this;
+				const instance = this;
 
-				var form = new Liferay.Form(config);
+				const form = new Liferay.Form(config);
 
-				var formName = config.id || config.namespace;
+				const formName = config.id || config.namespace;
 
 				instance._INSTANCES[formName] = form;
 
 				Liferay.fire('form:registered', {
 					form,
-					formName
+					formName,
 				});
 
 				return form;
-			}
+			},
 		});
 
 		Liferay.Form = Form;
 	},
 	'',
 	{
-		requires: ['aui-base', 'aui-form-validator']
+		requires: ['aui-base', 'aui-form-validator'],
 	}
 );

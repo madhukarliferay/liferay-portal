@@ -1,18 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharing.filter;
+
+import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
+import com.liferay.asset.kernel.model.AssetRendererFactory;
+import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 
 import java.util.Locale;
 
@@ -34,10 +29,29 @@ public interface SharedAssetsFilterItem {
 	public String getClassName();
 
 	/**
+	 * Returns the icon displayed in the user interface.
+	 *
+	 * @return the icon
+	 */
+	public default String getIcon() {
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				getClassName());
+
+		if (assetRendererFactory != null) {
+			return assetRendererFactory.getIconCssClass();
+		}
+
+		return null;
+	}
+
+	/**
 	 * Returns the label displayed in the user interface.
 	 *
 	 * @return the label
 	 */
-	public String getLabel(Locale locale);
+	public default String getLabel(Locale locale) {
+		return ResourceActionsUtil.getModelResource(locale, getClassName());
+	}
 
 }

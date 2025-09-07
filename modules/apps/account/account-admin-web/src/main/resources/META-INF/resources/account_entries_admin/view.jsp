@@ -1,32 +1,24 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-SearchContainer accountEntryDisplaySearchContainer = AccountEntryDisplaySearchContainerFactory.create(liferayPortletRequest, liferayPortletResponse);
+SearchContainer<AccountEntryDisplay> accountEntryDisplaySearchContainer = AccountEntryDisplaySearchContainerFactory.create(liferayPortletRequest, liferayPortletResponse);
 
 ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementToolbarDisplayContext = new ViewAccountEntriesManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, accountEntryDisplaySearchContainer);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= viewAccountEntriesManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= viewAccountEntriesManagementToolbarDisplayContext %>"
+	propsTransformer="{AccountEntriesManagementToolbarPropsTransformer} from account-admin-web"
 />
 
-<div class="container-fluid container-fluid-max-xl">
+<clay:container-fluid>
 	<aui:form method="post" name="fm">
 		<aui:input name="accountEntryIds" type="hidden" />
 
@@ -40,11 +32,10 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 			>
 
 				<%
-				Map<String, Object> rowData = HashMapBuilder.<String, Object>put(
-					"actions", StringUtil.merge(viewAccountEntriesManagementToolbarDisplayContext.getAvailableActions(accountEntryDisplay))
-				).build();
-
-				row.setData(rowData);
+				row.setData(
+					HashMapBuilder.<String, Object>put(
+						"actions", StringUtil.merge(viewAccountEntriesManagementToolbarDisplayContext.getAvailableActions(accountEntryDisplay))
+					).build());
 				%>
 
 				<portlet:renderURL var="rowURL">
@@ -60,35 +51,57 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 				%>
 
 				<liferay-ui:search-container-column-text
-					cssClass="table-cell-expand table-title"
+					cssClass="autofit-col-expand table-title"
 					href="<%= rowURL %>"
 					name="name"
-					property="name"
+					truncate="<%= true %>"
+					value="<%= accountEntryDisplay.getName() %>"
+				/>
+
+				<liferay-ui:search-container-column-text
+					cssClass="table-cell-expand-smallest"
+					href="<%= rowURL %>"
+					name="id"
+					property="accountEntryId"
 				/>
 
 				<liferay-ui:search-container-column-text
 					cssClass="table-cell-expand"
 					href="<%= rowURL %>"
-					name="parent-account"
-					property="parentAccountEntryName"
+					name="organizations"
+					value="<%= HtmlUtil.escape(accountEntryDisplay.getOrganizationNames()) %>"
 				/>
 
 				<liferay-ui:search-container-column-text
-					cssClass="table-cell-expand"
+					cssClass="table-cell-expand-smallest"
 					href="<%= rowURL %>"
-					name="account-owner"
-					value=""
+					name="type"
+					property="type"
+					translate="<%= true %>"
 				/>
 
 				<liferay-ui:search-container-column-text
-					cssClass="table-cell-expand"
+					cssClass="table-cell-expand-smallest"
 					name="status"
 				>
 					<clay:label
-						label="<%= StringUtil.toUpperCase(LanguageUtil.get(request, accountEntryDisplay.getStatusLabel()), locale) %>"
-						style="<%= accountEntryDisplay.getStatusLabelStyle() %>"
+						displayType="<%= accountEntryDisplay.getStatusLabelStyle() %>"
+						label="<%= accountEntryDisplay.getStatusLabel() %>"
 					/>
 				</liferay-ui:search-container-column-text>
+
+				<c:if test="<%= portletName.equals(AccountPortletKeys.ACCOUNT_ENTRIES_MANAGEMENT) %>">
+					<liferay-ui:search-container-column-text
+						cssClass="table-column-text-center"
+						name="selected"
+					>
+						<c:if test="<%= accountEntryDisplay.isSelectedAccountEntry(themeDisplay.getScopeGroupId(), user.getUserId()) %>">
+							<clay:icon
+								symbol="check"
+							/>
+						</c:if>
+					</liferay-ui:search-container-column-text>
+				</c:if>
 
 				<liferay-ui:search-container-column-jsp
 					path="/account_entries_admin/account_entry_action.jsp"
@@ -100,9 +113,4 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<liferay-frontend:component
-	componentId="<%= viewAccountEntriesManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="account_entries_admin/js/AccountEntriesManagementToolbarDefaultEventHandler.es"
-/>
+</clay:container-fluid>

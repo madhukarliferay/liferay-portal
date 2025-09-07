@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service.impl;
@@ -27,8 +18,9 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.io.InputStream;
@@ -48,17 +40,33 @@ public class OAuth2ApplicationServiceImpl
 
 	@Override
 	public OAuth2Application addOAuth2Application(
-			List<GrantType> allowedGrantTypesList, long clientCredentialUserId,
+			List<GrantType> allowedGrantTypesList,
+			String clientAuthenticationMethod, long clientCredentialUserId,
 			String clientId, int clientProfile, String clientSecret,
 			String description, List<String> featuresList, String homePageURL,
-			long iconFileEntryId, String name, String privacyPolicyURL,
-			List<String> redirectURIsList, List<String> scopeAliasesList,
-			ServiceContext serviceContext)
+			long iconFileEntryId, String jwks, String name,
+			String privacyPolicyURL, List<String> redirectURIsList,
+			boolean rememberDevice, List<String> scopeAliasesList,
+			boolean trustedApplication, ServiceContext serviceContext)
 		throws PortalException {
 
-		ModelResourcePermissionHelper.check(
+		ModelResourcePermissionUtil.check(
 			_oAuth2ApplicationModelResourcePermission, getPermissionChecker(),
 			0, 0, OAuth2ProviderActionKeys.ACTION_ADD_APPLICATION);
+
+		if (rememberDevice) {
+			ModelResourcePermissionUtil.check(
+				_oAuth2ApplicationModelResourcePermission,
+				getPermissionChecker(), 0, 0,
+				OAuth2ProviderActionKeys.ACTION_ADD_REMEMBER_DEVICE);
+		}
+
+		if (trustedApplication) {
+			ModelResourcePermissionUtil.check(
+				_oAuth2ApplicationModelResourcePermission,
+				getPermissionChecker(), 0, 0,
+				OAuth2ProviderActionKeys.ACTION_ADD_TRUSTED_APPLICATION);
+		}
 
 		User user = getUser();
 
@@ -70,37 +78,11 @@ public class OAuth2ApplicationServiceImpl
 
 		return oAuth2ApplicationLocalService.addOAuth2Application(
 			user.getCompanyId(), user.getUserId(), user.getFullName(),
-			allowedGrantTypesList, clientCredentialUserId, clientId,
-			clientProfile, clientSecret, description, featuresList, homePageURL,
-			iconFileEntryId, name, privacyPolicyURL, redirectURIsList,
-			scopeAliasesList, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x)
-	 */
-	@Deprecated
-	@Override
-	public OAuth2Application addOAuth2Application(
-			List<GrantType> allowedGrantTypesList, String clientId,
-			int clientProfile, String clientSecret, String description,
-			List<String> featuresList, String homePageURL, long iconFileEntryId,
-			String name, String privacyPolicyURL, List<String> redirectURIsList,
-			List<String> scopeAliasesList, ServiceContext serviceContext)
-		throws PortalException {
-
-		ModelResourcePermissionHelper.check(
-			_oAuth2ApplicationModelResourcePermission, getPermissionChecker(),
-			0, 0, OAuth2ProviderActionKeys.ACTION_ADD_APPLICATION);
-
-		User user = getUser();
-
-		return oAuth2ApplicationLocalService.addOAuth2Application(
-			user.getCompanyId(), user.getUserId(), user.getFullName(),
-			allowedGrantTypesList, clientId, clientProfile, clientSecret,
-			description, featuresList, homePageURL, iconFileEntryId, name,
-			privacyPolicyURL, redirectURIsList, scopeAliasesList,
-			serviceContext);
+			allowedGrantTypesList, clientAuthenticationMethod,
+			clientCredentialUserId, clientId, clientProfile, clientSecret,
+			description, featuresList, homePageURL, iconFileEntryId, jwks, name,
+			privacyPolicyURL, redirectURIsList, rememberDevice,
+			scopeAliasesList, trustedApplication, serviceContext);
 	}
 
 	@Override
@@ -168,13 +150,13 @@ public class OAuth2ApplicationServiceImpl
 		long companyId, int start, int end,
 		OrderByComparator<OAuth2Application> orderByComparator) {
 
-		return oAuth2ApplicationPersistence.filterFindByC(
+		return oAuth2ApplicationPersistence.filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
 	}
 
 	@Override
 	public int getOAuth2ApplicationsCount(long companyId) {
-		return oAuth2ApplicationPersistence.filterCountByC(companyId);
+		return oAuth2ApplicationPersistence.filterCountByCompanyId(companyId);
 	}
 
 	@Override
@@ -194,12 +176,14 @@ public class OAuth2ApplicationServiceImpl
 
 	@Override
 	public OAuth2Application updateOAuth2Application(
-			long oAuth2ApplicationId, List<GrantType> allowedGrantTypesList,
-			long clientCredentialUserId, String clientId, int clientProfile,
-			String clientSecret, String description, List<String> featuresList,
-			String homePageURL, long iconFileEntryId, String name,
+			long oAuth2ApplicationId, long oAuth2ApplicationScopeAliasesId,
+			List<GrantType> allowedGrantTypesList,
+			String clientAuthenticationMethod, long clientCredentialUserId,
+			String clientId, int clientProfile, String clientSecret,
+			String description, List<String> featuresList, String homePageURL,
+			long iconFileEntryId, String jwks, String name,
 			String privacyPolicyURL, List<String> redirectURIsList,
-			long auth2ApplicationScopeAliasesId, ServiceContext serviceContext)
+			boolean rememberDevice, boolean trustedApplication)
 		throws PortalException {
 
 		_oAuth2ApplicationModelResourcePermission.check(
@@ -208,44 +192,31 @@ public class OAuth2ApplicationServiceImpl
 				oAuth2ApplicationId),
 			ActionKeys.UPDATE);
 
+		if (rememberDevice) {
+			ModelResourcePermissionUtil.check(
+				_oAuth2ApplicationModelResourcePermission,
+				getPermissionChecker(), 0, 0,
+				OAuth2ProviderActionKeys.ACTION_ADD_REMEMBER_DEVICE);
+		}
+
+		if (trustedApplication) {
+			ModelResourcePermissionUtil.check(
+				_oAuth2ApplicationModelResourcePermission,
+				getPermissionChecker(), 0, 0,
+				OAuth2ProviderActionKeys.ACTION_ADD_TRUSTED_APPLICATION);
+		}
+
 		if (allowedGrantTypesList.contains(GrantType.CLIENT_CREDENTIALS)) {
 			_checkCanImpersonateClientCredentialUser(clientCredentialUserId);
 		}
 
 		return oAuth2ApplicationLocalService.updateOAuth2Application(
-			oAuth2ApplicationId, allowedGrantTypesList, clientCredentialUserId,
-			clientId, clientProfile, clientSecret, description, featuresList,
-			homePageURL, iconFileEntryId, name, privacyPolicyURL,
-			redirectURIsList, auth2ApplicationScopeAliasesId, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x)
-	 */
-	@Deprecated
-	@Override
-	public OAuth2Application updateOAuth2Application(
-			long oAuth2ApplicationId, List<GrantType> allowedGrantTypesList,
-			String clientId, int clientProfile, String clientSecret,
-			String description, List<String> featuresList, String homePageURL,
-			long iconFileEntryId, String name, String privacyPolicyURL,
-			List<String> redirectURIsList, long auth2ApplicationScopeAliasesId,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		OAuth2Application oAuth2Application =
-			oAuth2ApplicationLocalService.getOAuth2Application(
-				oAuth2ApplicationId);
-
-		_oAuth2ApplicationModelResourcePermission.check(
-			getPermissionChecker(), oAuth2Application, ActionKeys.UPDATE);
-
-		return oAuth2ApplicationLocalService.updateOAuth2Application(
-			oAuth2ApplicationId, allowedGrantTypesList,
-			oAuth2Application.getClientCredentialUserId(), clientId,
-			clientProfile, clientSecret, description, featuresList, homePageURL,
-			iconFileEntryId, name, privacyPolicyURL, redirectURIsList,
-			auth2ApplicationScopeAliasesId, serviceContext);
+			oAuth2ApplicationId, oAuth2ApplicationScopeAliasesId,
+			allowedGrantTypesList, clientAuthenticationMethod,
+			clientCredentialUserId, clientId, clientProfile, clientSecret,
+			description, featuresList, homePageURL, iconFileEntryId, jwks, name,
+			privacyPolicyURL, redirectURIsList, rememberDevice,
+			trustedApplication);
 	}
 
 	@Override
@@ -283,11 +254,11 @@ public class OAuth2ApplicationServiceImpl
 		User user = getUser();
 
 		if ((clientCredentialUserId != user.getUserId()) &&
-			!ModelResourcePermissionHelper.contains(
+			!ModelResourcePermissionUtil.contains(
 				_userModelResourcePermission, getPermissionChecker(), 0,
 				clientCredentialUserId, ActionKeys.IMPERSONATE)) {
 
-			User clientCredentialUser = userLocalService.fetchUser(
+			User clientCredentialUser = _userLocalService.fetchUser(
 				clientCredentialUserId);
 
 			String clientCredentialUserScreenName = null;
@@ -308,6 +279,9 @@ public class OAuth2ApplicationServiceImpl
 	)
 	private ModelResourcePermission<OAuth2Application>
 		_oAuth2ApplicationModelResourcePermission;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.portal.kernel.model.User)"

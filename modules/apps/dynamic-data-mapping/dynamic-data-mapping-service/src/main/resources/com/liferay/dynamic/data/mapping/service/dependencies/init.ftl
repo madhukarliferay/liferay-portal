@@ -165,7 +165,7 @@
 </#function>
 
 <#function getFileEntryURL fileEntry>
-	<#return themeDisplay.getPathContext() + "/documents/" + fileEntry.getRepositoryId()?c + "/" + fileEntry.getFolderId()?c + "/" +  urlCodec.encodeURL(htmlUtil.unescape(fileEntry.getTitle()), true) + "/" + fileEntry.getUuid()>
+	<#return themeDisplay.getPathContext() + "/documents/" + fileEntry.getRepositoryId()?c + "/" + fileEntry.getFolderId()?c + "/" + urlCodec.encodeURL(htmlUtil.unescape(fileEntry.getTitle()), true) + "/" + fileEntry.getUuid()>
 </#function>
 
 <#function getFileJSONObject fieldValue>
@@ -181,12 +181,6 @@
 </#function>
 
 <#-- Token -->
-
-<#assign
-	authTokenUtil = serviceLocator.findService("com.liferay.portal.kernel.security.auth.AuthTokenUtil")
-
-	ddmAuthToken = authTokenUtil.getToken(request, themeDisplay.getPlid(), ddmPortletId)
-/>
 
 <#assign data = data + {
 	"ddmAuthToken": ddmAuthToken

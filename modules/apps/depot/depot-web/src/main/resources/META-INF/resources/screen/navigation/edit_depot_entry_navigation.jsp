@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -31,12 +22,12 @@ if (Validator.isNotNull(backURL)) {
 
 DepotEntry depotEntry = (DepotEntry)request.getAttribute(DepotAdminWebKeys.DEPOT_ENTRY);
 
-Group group = GroupServiceUtil.getGroup(depotEntry.getGroupId());
+Group group = depotEntry.getGroup();
 
 renderResponse.setTitle(group.getDescriptiveName(locale));
 %>
 
-<liferay-ui:success key='<%= DepotPortletKeys.DEPOT_ADMIN + "requestProcessed" %>' message="repository-was-added" />
+<liferay-ui:success key='<%= DepotPortletKeys.DEPOT_ADMIN + "requestProcessed" %>' message="asset-library-was-added" />
 
 <portlet:actionURL name="<%= actionCommandName %>" var="actionCommandURL" />
 
@@ -44,25 +35,29 @@ renderResponse.setTitle(group.getDescriptiveName(locale));
 	<aui:input name="depotEntryId" type="hidden" value="<%= depotEntry.getDepotEntryId() %>" />
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 
-	<div class="sheet sheet-lg">
-		<div class="sheet-header">
+	<clay:sheet>
+		<clay:sheet-header>
+			<liferay-ui:error exception="<%= ConfigurationModelListenerException.class %>" message="mime-type-size-limit-error" />
+
 			<h2 class="sheet-title"><%= formLabel %></h2>
 
 			<c:if test="<%= Validator.isNotNull(formDescription) %>">
 				<p><%= formDescription %></p>
 			</c:if>
-		</div>
+		</clay:sheet-header>
 
-		<div class="sheet-section">
+		<clay:sheet-section
+			cssClass="lfr-depot-sheet-section"
+		>
 			<liferay-util:include page="<%= jspPath %>" servletContext="<%= application %>" />
-		</div>
+		</clay:sheet-section>
 
 		<c:if test="<%= (boolean)request.getAttribute(DepotAdminWebKeys.SHOW_CONTROLS) %>">
-			<div class="sheet-footer">
+			<clay:sheet-footer>
 				<aui:button primary="<%= true %>" type="submit" />
 
 				<aui:button href="<%= Validator.isNotNull(backURL) ? backURL : String.valueOf(renderResponse.createRenderURL()) %>" type="cancel" />
-			</div>
+			</clay:sheet-footer>
 		</c:if>
-	</div>
+	</clay:sheet>
 </aui:form>

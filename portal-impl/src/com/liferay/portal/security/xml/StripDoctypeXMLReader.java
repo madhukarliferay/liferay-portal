@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.xml;
@@ -19,6 +10,8 @@ import java.io.FilterReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+
+import java.util.Objects;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
@@ -165,7 +158,9 @@ public class StripDoctypeXMLReader implements XMLReader {
 	public void setFeature(String name, boolean value)
 		throws SAXNotRecognizedException, SAXNotSupportedException {
 
-		if (_FEATURES_DISALLOW_DOCTYPE_DECL.equals(name)) {
+		if (Objects.equals(
+				name, "http://apache.org/xml/features/disallow-doctype-decl")) {
+
 			_disallowDoctypeDecl = value;
 		}
 
@@ -176,11 +171,14 @@ public class StripDoctypeXMLReader implements XMLReader {
 	public void setProperty(String name, Object value)
 		throws SAXNotRecognizedException, SAXNotSupportedException {
 
+		if (Objects.equals(
+				name, "http://xml.org/sax/handlers/LexicalHandler")) {
+
+			return;
+		}
+
 		_xmlReader.setProperty(name, value);
 	}
-
-	private static final String _FEATURES_DISALLOW_DOCTYPE_DECL =
-		"http://apache.org/xml/features/disallow-doctype-decl";
 
 	private boolean _disallowDoctypeDecl;
 	private final XMLReader _xmlReader;

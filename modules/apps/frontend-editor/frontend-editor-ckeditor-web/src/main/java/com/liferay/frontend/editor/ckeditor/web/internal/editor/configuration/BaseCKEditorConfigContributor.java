@@ -1,29 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.editor.ckeditor.web.internal.editor.configuration;
 
 import com.liferay.frontend.editor.ckeditor.web.internal.constants.CKEditorConstants;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.editor.configuration.BaseEditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.ColorScheme;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Map;
 
@@ -40,23 +35,45 @@ public class BaseCKEditorConfigContributor extends BaseEditorConfigContributor {
 
 		jsonObject.put("allowedContent", Boolean.TRUE);
 
+		StringBundler sb = new StringBundler(5);
+
+		sb.append("cke_editable html-editor");
+
+		ColorScheme colorScheme = themeDisplay.getColorScheme();
+
+		if (Validator.isNotNull(colorScheme.getCssClass())) {
+			sb.append(StringPool.SPACE);
+			sb.append(HtmlUtil.escape(colorScheme.getCssClass()));
+		}
+
 		String cssClasses = GetterUtil.getString(
 			inputEditorTaglibAttributes.get(
 				CKEditorConstants.ATTRIBUTE_NAMESPACE + ":cssClasses"));
 
+		if (Validator.isNotNull(cssClasses)) {
+			sb.append(StringPool.SPACE);
+			sb.append(HtmlUtil.escape(cssClasses));
+		}
+
 		jsonObject.put(
-			"bodyClass", "html-editor " + HtmlUtil.escape(cssClasses)
+			"bodyClass", sb.toString()
 		).put(
 			"contentsCss",
 			JSONUtil.putAll(
+				HtmlUtil.escape(themeDisplay.getClayCSSURL()),
+				HtmlUtil.escape(themeDisplay.getMainCSSURL()),
 				HtmlUtil.escape(
 					PortalUtil.getStaticResourceURL(
 						themeDisplay.getRequest(),
-						themeDisplay.getPathThemeCss() + "/clay.css")),
+						PortalUtil.getPathContext() +
+							"/o/frontend-editor-ckeditor-web/ckeditor/skins" +
+								"/moono-lexicon/editor.css")),
 				HtmlUtil.escape(
 					PortalUtil.getStaticResourceURL(
 						themeDisplay.getRequest(),
-						themeDisplay.getPathThemeCss() + "/main.css")))
+						PortalUtil.getPathContext() +
+							"/o/frontend-editor-ckeditor-web/ckeditor/skins" +
+								"/moono-lexicon/dialog.css")))
 		).put(
 			"contentsLangDirection",
 			HtmlUtil.escapeJS(
@@ -87,7 +104,12 @@ public class BaseCKEditorConfigContributor extends BaseEditorConfigContributor {
 				CKEditorConstants.ATTRIBUTE_NAMESPACE + ":resizable"));
 
 		if (resizable) {
-			jsonObject.put("resize_dir", "vertical");
+			String resizeDirection = GetterUtil.getString(
+				inputEditorTaglibAttributes.get(
+					CKEditorConstants.ATTRIBUTE_NAMESPACE +
+						":resizeDirection"));
+
+			jsonObject.put("resize_dir", resizeDirection);
 		}
 
 		jsonObject.put("resize_enabled", resizable);
@@ -98,7 +120,8 @@ public class BaseCKEditorConfigContributor extends BaseEditorConfigContributor {
 
 		return GetterUtil.getBoolean(
 			inputEditorTaglibAttributes.get(
-				CKEditorConstants.ATTRIBUTE_NAMESPACE + ":showSource"));
+				CKEditorConstants.ATTRIBUTE_NAMESPACE + ":showSource"),
+			true);
 	}
 
 }

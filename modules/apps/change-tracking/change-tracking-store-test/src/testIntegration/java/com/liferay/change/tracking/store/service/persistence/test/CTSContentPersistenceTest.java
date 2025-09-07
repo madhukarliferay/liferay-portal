@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.store.service.persistence.test;
@@ -27,6 +18,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -49,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -474,35 +465,76 @@ public class CTSContentPersistenceTest {
 
 		_persistence.clearCache();
 
-		CTSContent existingCTSContent = _persistence.findByPrimaryKey(
-			newCTSContent.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newCTSContent.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		CTSContent newCTSContent = addCTSContent();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			CTSContent.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"ctsContentId", newCTSContent.getCtsContentId()));
+
+		List<CTSContent> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(CTSContent ctsContent) {
 		Assert.assertEquals(
-			Long.valueOf(existingCTSContent.getCompanyId()),
+			Long.valueOf(ctsContent.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCTSContent, "getOriginalCompanyId", new Class<?>[0]));
+				ctsContent, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 		Assert.assertEquals(
-			Long.valueOf(existingCTSContent.getRepositoryId()),
+			Long.valueOf(ctsContent.getRepositoryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCTSContent, "getOriginalRepositoryId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingCTSContent.getPath(),
-				ReflectionTestUtil.invoke(
-					existingCTSContent, "getOriginalPath", new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingCTSContent.getVersion(),
-				ReflectionTestUtil.invoke(
-					existingCTSContent, "getOriginalVersion",
-					new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingCTSContent.getStoreType(),
-				ReflectionTestUtil.invoke(
-					existingCTSContent, "getOriginalStoreType",
-					new Class<?>[0])));
+				ctsContent, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "repositoryId"));
+		Assert.assertEquals(
+			ctsContent.getPath(),
+			ReflectionTestUtil.invoke(
+				ctsContent, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "path_"));
+		Assert.assertEquals(
+			ctsContent.getVersion(),
+			ReflectionTestUtil.invoke(
+				ctsContent, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "version"));
+		Assert.assertEquals(
+			ctsContent.getStoreType(),
+			ReflectionTestUtil.invoke(
+				ctsContent, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "storeType"));
 	}
 
 	protected CTSContent addCTSContent() throws Exception {

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,8 +9,6 @@
 
 <%
 String cmd = (String)request.getAttribute("liferay-trash:undo:cmd");
-String portletURL = (String)request.getAttribute("liferay-trash:undo:portletURL");
-String redirectURL = GetterUtil.getString(request.getAttribute("liferay-trash:undo:redirect"), currentURL);
 List<Long> restoreTrashEntryIds = (List<Long>)request.getAttribute("liferay-trash:undo:restoreTrashEntryIds");
 List<String> titles = (List<String>)request.getAttribute("liferay-trash:undo:titles");
 int trashedEntriesCount = GetterUtil.getInteger(request.getAttribute("liferay-trash:undo:trashedEntriesCount"));
@@ -28,7 +17,7 @@ int trashedEntriesCount = GetterUtil.getInteger(request.getAttribute("liferay-tr
 <liferay-util:buffer
 	var="alertMessage"
 >
-	<aui:form action="<%= portletURL %>" cssClass="alert-trash-form" name="undoForm">
+	<aui:form action='<%= (String)request.getAttribute("liferay-trash:undo:portletURL") %>' cssClass="d-inline" name="undoForm">
 		<liferay-util:buffer
 			var="trashLink"
 		>
@@ -39,10 +28,10 @@ int trashedEntriesCount = GetterUtil.getInteger(request.getAttribute("liferay-tr
 
 			<c:choose>
 				<c:when test="<%= themeDisplay.isShowSiteAdministrationIcon() && (trashURL != null) %>">
-					<aui:a cssClass="alert-link" href="<%= trashURL.toString() %>" label="the-recycle-bin" />
+					<aui:a cssClass="alert-link" href="<%= trashURL.toString() %>" label="recycle-bin" />
 				</c:when>
 				<c:otherwise>
-					<liferay-ui:message key="the-recycle-bin" />
+					<liferay-ui:message key="recycle-bin" />
 				</c:otherwise>
 			</c:choose>
 		</liferay-util:buffer>
@@ -51,10 +40,10 @@ int trashedEntriesCount = GetterUtil.getInteger(request.getAttribute("liferay-tr
 			<c:when test="<%= trashedEntriesCount > 1 %>">
 				<c:choose>
 					<c:when test="<%= Objects.equals(cmd, Constants.REMOVE) %>">
-						<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount} %>" key="x-items-were-removed" translateArguments="<%= false %>" />
+						<liferay-ui:message arguments="<%= trashedEntriesCount %>" key="x-items-were-removed" translateArguments="<%= false %>" />
 					</c:when>
 					<c:otherwise>
-						<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount, trashLink.trim()} %>" key="x-items-were-moved-to-x" translateArguments="<%= false %>" />
+						<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount, trashLink.trim()} %>" key="x-items-were-moved-to-the-x" translateArguments="<%= false %>" />
 					</c:otherwise>
 				</c:choose>
 			</c:when>
@@ -81,17 +70,35 @@ int trashedEntriesCount = GetterUtil.getInteger(request.getAttribute("liferay-tr
 						<liferay-ui:message arguments="<%= trashEntityLink %>" key="the-element-x-was-removed" translateArguments="<%= false %>" />
 					</c:when>
 					<c:otherwise>
-						<liferay-ui:message arguments="<%= new Object[] {trashEntityLink, trashLink.trim()} %>" key="the-element-x-was-moved-to-x" translateArguments="<%= false %>" />
+						<liferay-ui:message arguments="<%= new Object[] {trashEntityLink, trashLink.trim()} %>" key="the-element-x-was-moved-to-the-x" translateArguments="<%= false %>" />
 					</c:otherwise>
 				</c:choose>
 			</c:otherwise>
 		</c:choose>
 
-		<aui:input name="redirect" type="hidden" value="<%= redirectURL %>" />
+		<aui:input name="redirect" type="hidden" value='<%= GetterUtil.getString(request.getAttribute("liferay-trash:undo:redirect"), currentURL) %>' />
 		<aui:input name="restoreTrashEntryIds" type="hidden" value="<%= StringUtil.merge(restoreTrashEntryIds) %>" />
 
-		<aui:button cssClass="alert-link btn-link btn-sm btn-unstyled trash-undo-button" type="submit" value="undo" />
+		<div class="alert-footer">
+			<div class="btn-group" role="group">
+				<clay:button
+					aria-label='<%= LanguageUtil.get(request, "undo-deletion") %>'
+					cssClass="alert-btn"
+					displayType="primary"
+					label="undo"
+					small="<%= true %>"
+					type="submit"
+				/>
+			</div>
+		</div>
 	</aui:form>
 </liferay-util:buffer>
 
-<liferay-ui:success key="<%= portletDisplay.getId() + SessionMessages.KEY_SUFFIX_DELETE_SUCCESS_DATA %>" message="<%= alertMessage %>" />
+<liferay-frontend:component
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"alertMessage", alertMessage
+		).build()
+	%>'
+	module="{undo} from trash-taglib"
+/>

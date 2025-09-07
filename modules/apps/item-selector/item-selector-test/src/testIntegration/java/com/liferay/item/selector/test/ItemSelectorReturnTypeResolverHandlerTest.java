@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector.test;
@@ -19,7 +10,10 @@ import com.liferay.item.selector.ItemSelectorReturnTypeResolver;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolverHandler;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.ItemSelectorViewReturnTypeProvider;
+import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -69,11 +63,11 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 	public void testItemSelectorCriterionHandlerReturnsViewsWithProvidedReturnTypes() {
 		TestItemSelectorView testItemSelectorView = new TestItemSelectorView();
 
-		ServiceRegistration<ItemSelectorView>
+		ServiceRegistration<ItemSelectorView<?>>
 			itemSelectorViewServiceRegistration = registerItemSelectorView(
 				testItemSelectorView, "test-view");
 
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver(), 50);
@@ -83,7 +77,7 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 				registerItemSelectorViewProvider(
 					new TestItemSelectorViewReturnTypeProvider(), "test-view");
 
-		List serviceRegistrations = new ArrayList<>();
+		List<ServiceRegistration<?>> serviceRegistrations = new ArrayList<>();
 
 		serviceRegistrations.add(itemSelectorViewServiceRegistration);
 		serviceRegistrations.add(
@@ -98,11 +92,12 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 			testItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 				new TestItemSelectorReturnType());
 
-			ItemSelectorReturnTypeResolver itemSelectorReturnTypeResolver =
-				_itemSelectorReturnTypeResolverHandler.
-					getItemSelectorReturnTypeResolver(
-						testItemSelectorCriterion, testItemSelectorView,
-						String.class);
+			ItemSelectorReturnTypeResolver<?, ?>
+				itemSelectorReturnTypeResolver =
+					_itemSelectorReturnTypeResolverHandler.
+						getItemSelectorReturnTypeResolver(
+							testItemSelectorCriterion, testItemSelectorView,
+							String.class);
 
 			Assert.assertTrue(
 				itemSelectorReturnTypeResolver instanceof
@@ -115,20 +110,20 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 
 	@Test
 	public void testItemSelectorReturnTypeResolverIsReplacedByServiceRanking() {
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration1 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver1(), 100);
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration2 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver2(), 200);
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration3 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver3(), 50);
 
-		List<ServiceRegistration> serviceRegistrations =
+		List<ServiceRegistration<?>> serviceRegistrations =
 			new CopyOnWriteArrayList<>();
 
 		serviceRegistrations.add(
@@ -139,10 +134,11 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 			itemSelectorReturnTypeResolverServiceRegistration3);
 
 		try {
-			ItemSelectorReturnTypeResolver itemSelectorReturnTypeResolver =
-				_itemSelectorReturnTypeResolverHandler.
-					getItemSelectorReturnTypeResolver(
-						TestItemSelectorReturnType.class, String.class);
+			ItemSelectorReturnTypeResolver<?, ?>
+				itemSelectorReturnTypeResolver =
+					_itemSelectorReturnTypeResolverHandler.
+						getItemSelectorReturnTypeResolver(
+							TestItemSelectorReturnType.class, String.class);
 
 			Assert.assertTrue(
 				itemSelectorReturnTypeResolver instanceof
@@ -183,20 +179,20 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 
 	@Test
 	public void testItemSelectorReturnTypeResolverIsReturnedByServiceRanking() {
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration1 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver1(), 100);
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration2 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver2(), 200);
-		ServiceRegistration<ItemSelectorReturnTypeResolver>
+		ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 			itemSelectorReturnTypeResolverServiceRegistration3 =
 				registerItemSelectorReturnTypeResolver(
 					new TestItemSelectorReturnTypeResolver3(), 50);
 
-		List<ServiceRegistration> serviceRegistrations =
+		List<ServiceRegistration<?>> serviceRegistrations =
 			new CopyOnWriteArrayList<>();
 
 		serviceRegistrations.add(
@@ -207,10 +203,11 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 			itemSelectorReturnTypeResolverServiceRegistration3);
 
 		try {
-			ItemSelectorReturnTypeResolver itemSelectorReturnTypeResolver =
-				_itemSelectorReturnTypeResolverHandler.
-					getItemSelectorReturnTypeResolver(
-						TestItemSelectorReturnType.class, String.class);
+			ItemSelectorReturnTypeResolver<?, ?>
+				itemSelectorReturnTypeResolver =
+					_itemSelectorReturnTypeResolverHandler.
+						getItemSelectorReturnTypeResolver(
+							TestItemSelectorReturnType.class, String.class);
 
 			Assert.assertTrue(
 				itemSelectorReturnTypeResolver instanceof
@@ -221,9 +218,31 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 		}
 	}
 
-	protected ServiceRegistration<ItemSelectorReturnTypeResolver>
+	@Test
+	public void testItemSelectorReturnTypeResolverIsReturnedWithDisabledReference()
+		throws Exception {
+
+		ConfigurationTestUtil.saveConfiguration(
+			_BUNDLE_BLACKLIST_CONFIGURATION_PID,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"blacklist-bundle-symbolic-names",
+				"com.liferay.document.library.video"
+			).build());
+
+		Assert.assertNotNull(
+			_itemSelectorReturnTypeResolverHandler.
+				getItemSelectorReturnTypeResolver(
+					"com.liferay.item.selector.criteria." +
+						"FileEntryItemSelectorReturnType",
+					FileEntry.class.getName()));
+
+		ConfigurationTestUtil.deleteConfiguration(
+			_BUNDLE_BLACKLIST_CONFIGURATION_PID);
+	}
+
+	protected ServiceRegistration<ItemSelectorReturnTypeResolver<?, ?>>
 		registerItemSelectorReturnTypeResolver(
-			ItemSelectorReturnTypeResolver itemSelectorReturnTypeResolver,
+			ItemSelectorReturnTypeResolver<?, ?> itemSelectorReturnTypeResolver,
 			int serviceRanking) {
 
 		Dictionary<String, Object> properties = new Hashtable<>();
@@ -231,19 +250,21 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 		properties.put("service.ranking", serviceRanking);
 
 		return _bundleContext.registerService(
-			ItemSelectorReturnTypeResolver.class,
+			(Class<ItemSelectorReturnTypeResolver<?, ?>>)
+				(Class<?>)ItemSelectorReturnTypeResolver.class,
 			itemSelectorReturnTypeResolver, properties);
 	}
 
-	protected ServiceRegistration<ItemSelectorView> registerItemSelectorView(
-		ItemSelectorView itemSelectorView, String itemSelectorViewKey) {
+	protected ServiceRegistration<ItemSelectorView<?>> registerItemSelectorView(
+		ItemSelectorView<?> itemSelectorView, String itemSelectorViewKey) {
 
 		Dictionary<String, Object> properties = new Hashtable<>();
 
 		properties.put("item.selector.view.key", itemSelectorViewKey);
 
 		return _bundleContext.registerService(
-			ItemSelectorView.class, itemSelectorView, properties);
+			(Class<ItemSelectorView<?>>)(Class<?>)ItemSelectorView.class,
+			itemSelectorView, properties);
 	}
 
 	protected ServiceRegistration<ItemSelectorViewReturnTypeProvider>
@@ -261,9 +282,15 @@ public class ItemSelectorReturnTypeResolverHandlerTest {
 			itemSelectorViewReturnTypeProvider, properties);
 	}
 
-	private void _unregister(List<ServiceRegistration> serviceRegistrations) {
+	private void _unregister(
+		List<ServiceRegistration<?>> serviceRegistrations) {
+
 		serviceRegistrations.forEach(ServiceRegistration::unregister);
 	}
+
+	private static final String _BUNDLE_BLACKLIST_CONFIGURATION_PID =
+		"com.liferay.portal.bundle.blacklist.internal.configuration." +
+			"BundleBlacklistConfiguration";
 
 	private Bundle _bundle;
 	private BundleContext _bundleContext;

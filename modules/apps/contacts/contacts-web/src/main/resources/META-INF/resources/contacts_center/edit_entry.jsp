@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,7 +15,7 @@ long entryId = ParamUtil.getLong(request, "entryId");
 Entry entry = null;
 
 if (entryId > 0) {
-	entry = EntryLocalServiceUtil.getEntry(entryId);
+	entry = EntryServiceUtil.getEntry(entryId);
 }
 %>
 
@@ -56,7 +47,7 @@ if (entryId > 0) {
 
 	var form = A.one('#<portlet:namespace />addEntry');
 
-	var failureCallback = function() {
+	var failureCallback = function () {
 		var errorMessage = A.one('#<portlet:namespace />errorMessage');
 
 		if (errorMessage) {
@@ -68,7 +59,7 @@ if (entryId > 0) {
 		}
 	};
 
-	form.on('submit', function(event) {
+	form.on('submit', (event) => {
 		var end = <%= ContactsConstants.MAX_RESULT_COUNT %>;
 
 		var lastNameAnchor = '';
@@ -101,12 +92,12 @@ if (entryId > 0) {
 
 		Liferay.Util.fetch(url, {
 			body: new FormData(form.getDOM()),
-			method: 'POST'
+			method: 'POST',
 		})
-			.then(function(response) {
+			.then((response) => {
 				return response.json();
 			})
-			.then(function(data) {
+			.then((data) => {
 				if (!data.success) {
 					var message = A.one('#<portlet:namespace />errorMessage');
 
@@ -115,13 +106,14 @@ if (entryId > 0) {
 
 						message.html(data.message);
 					}
-				} else {
+				}
+				else {
 					Liferay.component('contactsCenter').renderEntry(data);
 
 					Liferay.component('contactsCenter').closePopup();
 				}
 			})
-			.catch(function() {
+			.catch(() => {
 				failureCallback();
 			});
 	});

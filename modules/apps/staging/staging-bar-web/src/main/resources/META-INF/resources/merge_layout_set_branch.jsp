@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,7 +23,7 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 }
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<div class="site-pages-variation taglib-header">
 		<a class="icon-monospaced list-unstyled portlet-icon-back text-default" href="<%= HtmlUtil.escapeAttribute(redirect) %>" title="<%= HtmlUtil.escapeAttribute(LanguageUtil.get(resourceBundle, "back")) %>">
 			<liferay-ui:icon
@@ -49,8 +40,8 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 	</div>
 
 	<div id="<portlet:namespace />mergeLayoutSetBranch">
-		<portlet:actionURL name="mergeLayoutSetBranch" var="mergeLayoutSetBranchURL">
-			<portlet:param name="mvcRenderCommandName" value="viewLayoutSetBranches" />
+		<portlet:actionURL name="/staging_bar/merge_layout_set_branch" var="mergeLayoutSetBranchURL">
+			<portlet:param name="mvcRenderCommandName" value="/staging_bar/view_layout_set_branches" />
 		</portlet:actionURL>
 
 		<aui:form action="<%= mergeLayoutSetBranchURL %>" enctype="multipart/form-data" method="post" name="fm4">
@@ -86,9 +77,11 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 					/>
 
 					<liferay-ui:search-container-column-text>
-						<a class="layout-set-branch" data-layoutSetBranchId="<%= curLayoutSetBranchId %>" data-layoutSetBranchMessage="<%= LanguageUtil.format(request, "are-you-sure-you-want-to-merge-changes-from-x", layoutSetBranchDisplayName, false) %>" data-layoutSetBranchName="<%= HtmlUtil.escapeAttribute(curLayoutSetBranch.getName()) %>" href="#" id="<portlet:namespace /><%= curLayoutSetBranchId %>" onClick="<portlet:namespace />selectLayoutSetBranch('<%= curLayoutSetBranchId %>');">
-							<liferay-ui:message key="select" />
-						</a>
+						<liferay-ui:csp>
+							<a class="layout-set-branch" data-layoutSetBranchId="<%= curLayoutSetBranchId %>" data-layoutSetBranchMessage="<%= LanguageUtil.format(request, "are-you-sure-you-want-to-merge-changes-from-x", layoutSetBranchDisplayName, false) %>" data-layoutSetBranchName="<%= HtmlUtil.escapeAttribute(curLayoutSetBranch.getName()) %>" href="#" id="<portlet:namespace /><%= curLayoutSetBranchId %>" onClick="<portlet:namespace />selectLayoutSetBranch('<%= curLayoutSetBranchId %>');">
+								<liferay-ui:message key="select" />
+							</a>
+						</liferay-ui:csp>
 					</liferay-ui:search-container-column-text>
 				</liferay-ui:search-container-row>
 
@@ -100,25 +93,32 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 			</liferay-ui:search-container>
 		</aui:form>
 	</div>
-</div>
+</clay:container-fluid>
 
-<script>
+<aui:script>
 	function <portlet:namespace />selectLayoutSetBranch(layoutSetBranchId) {
 		var layoutSetBranch = document.getElementById(
 			'<portlet:namespace />' + layoutSetBranchId
 		);
 
-		if (
-			layoutSetBranch &&
-			confirm(layoutSetBranch.getAttribute('data-layoutSetBranchMessage'))
-		) {
-			Liferay.Util.postForm(document.<portlet:namespace />fm4, {
-				data: {
-					mergeLayoutSetBranchId: layoutSetBranch.getAttribute(
-						'data-layoutSetBranchId'
-					)
-				}
+		if (layoutSetBranch) {
+			Liferay.Util.openConfirmModal({
+				message: layoutSetBranch.getAttribute(
+					'data-layoutSetBranchMessage'
+				),
+				onConfirm: (isConfirmed) => {
+					if (isConfirmed) {
+						Liferay.Util.postForm(document.<portlet:namespace />fm4, {
+							data: {
+								mergeLayoutSetBranchId:
+									layoutSetBranch.getAttribute(
+										'data-layoutSetBranchId'
+									),
+							},
+						});
+					}
+				},
 			});
 		}
 	}
-</script>
+</aui:script>

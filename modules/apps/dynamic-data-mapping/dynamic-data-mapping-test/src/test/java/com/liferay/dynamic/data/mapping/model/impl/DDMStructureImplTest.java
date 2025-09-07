@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -20,9 +11,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,33 +19,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.mockito.Matchers;
-
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * @author Miguel Angelo Caldas Gallindo
  * @author Marcellus Tavares
  */
-@PrepareForTest(PropsValues.class)
-@RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor(
-	{
-		"com.liferay.portal.kernel.xml.SAXReaderUtil",
-		"com.liferay.portal.util.PropsValues"
-	}
-)
 public class DDMStructureImplTest extends BaseDDMTestCase {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	@Override
@@ -68,12 +48,8 @@ public class DDMStructureImplTest extends BaseDDMTestCase {
 		setUpDDMFormJSONSerializer();
 		setUpDDMStructureLocalServiceUtil();
 		setUpDDMTemplateLocalServiceUtil();
-		setUpHtmlUtil();
 		setUpJSONFactoryUtil();
 		setUpLanguageUtil();
-		setUpLocaleUtil();
-		setUpPortalUtil();
-		setUpPropsValues();
 		setUpSAXReaderUtil();
 	}
 
@@ -134,23 +110,23 @@ public class DDMStructureImplTest extends BaseDDMTestCase {
 
 	@Test
 	public void testGetDDMForm() throws Exception {
-		DDMForm ddmForm = createDDMForm(
+		DDMForm ddmForm1 = createDDMForm(
 			createAvailableLocales(LocaleUtil.US), LocaleUtil.US);
 
-		ddmForm.addDDMFormField(createTextDDMFormField("field1"));
+		ddmForm1.addDDMFormField(createTextDDMFormField("field1"));
 
-		DDMStructure structure = createStructure("Test Structure", ddmForm);
-
-		DDMForm ddmForm1 = structure.getDDMForm();
-
-		ddmForm1.addDDMFormField(createTextDDMFormField("field2"));
+		DDMStructure structure = createStructure("Test Structure", ddmForm1);
 
 		DDMForm ddmForm2 = structure.getDDMForm();
 
-		Map<String, DDMFormField> ddmForm2FieldsMap =
-			ddmForm2.getDDMFormFieldsMap(false);
+		ddmForm2.addDDMFormField(createTextDDMFormField("field2"));
 
-		Assert.assertFalse(ddmForm2FieldsMap.containsKey("field2"));
+		DDMForm ddmForm3 = structure.getDDMForm();
+
+		Map<String, DDMFormField> ddmFormFieldsMap =
+			ddmForm3.getDDMFormFieldsMap(false);
+
+		Assert.assertFalse(ddmFormFieldsMap.containsKey("field2"));
 	}
 
 	@Test
@@ -371,22 +347,6 @@ public class DDMStructureImplTest extends BaseDDMTestCase {
 		DDMStructure structure = createStructure("Test Structure", ddmForm);
 
 		Assert.assertTrue(structure.getFieldRequired("field1"));
-	}
-
-	protected void setUpPortalUtil() {
-		PortalUtil portalUtil = new PortalUtil();
-
-		Portal portal = mock(Portal.class);
-
-		ResourceBundle resourceBundle = mock(ResourceBundle.class);
-
-		when(
-			portal.getResourceBundle(Matchers.any(Locale.class))
-		).thenReturn(
-			resourceBundle
-		);
-
-		portalUtil.setPortal(portal);
 	}
 
 }

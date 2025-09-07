@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 
 /**
  * Provides the remote service utility for DLTrash. This utility wraps
@@ -30,7 +21,7 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class DLTrashServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portlet.documentlibrary.service.impl.DLTrashServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -57,7 +48,7 @@ public class DLTrashServiceUtil {
 			moveFileEntryFromTrash(
 				long fileEntryId, long newFolderId,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFileEntryFromTrash(
 			fileEntryId, newFolderId, serviceContext);
@@ -71,7 +62,7 @@ public class DLTrashServiceUtil {
 	 */
 	public static com.liferay.portal.kernel.repository.model.FileEntry
 			moveFileEntryToTrash(long fileEntryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFileEntryToTrash(fileEntryId);
 	}
@@ -88,7 +79,7 @@ public class DLTrashServiceUtil {
 			moveFileShortcutFromTrash(
 				long fileShortcutId, long newFolderId,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFileShortcutFromTrash(
 			fileShortcutId, newFolderId, serviceContext);
@@ -102,7 +93,7 @@ public class DLTrashServiceUtil {
 	 */
 	public static com.liferay.portal.kernel.repository.model.FileShortcut
 			moveFileShortcutToTrash(long fileShortcutId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFileShortcutToTrash(fileShortcutId);
 	}
@@ -120,7 +111,7 @@ public class DLTrashServiceUtil {
 			moveFolderFromTrash(
 				long folderId, long parentFolderId,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFolderFromTrash(
 			folderId, parentFolderId, serviceContext);
@@ -134,7 +125,7 @@ public class DLTrashServiceUtil {
 	 */
 	public static com.liferay.portal.kernel.repository.model.Folder
 			moveFolderToTrash(long folderId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().moveFolderToTrash(folderId);
 	}
@@ -145,7 +136,7 @@ public class DLTrashServiceUtil {
 	 * @param fileEntryId the primary key of the file entry
 	 */
 	public static void restoreFileEntryFromTrash(long fileEntryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().restoreFileEntryFromTrash(fileEntryId);
 	}
@@ -156,7 +147,7 @@ public class DLTrashServiceUtil {
 	 * @param fileShortcutId the primary key of the file shortcut
 	 */
 	public static void restoreFileShortcutFromTrash(long fileShortcutId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().restoreFileShortcutFromTrash(fileShortcutId);
 	}
@@ -167,20 +158,19 @@ public class DLTrashServiceUtil {
 	 * @param folderId the primary key of the folder
 	 */
 	public static void restoreFolderFromTrash(long folderId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().restoreFolderFromTrash(folderId);
 	}
 
 	public static DLTrashService getService() {
-		if (_service == null) {
-			_service = (DLTrashService)PortalBeanLocatorUtil.locate(
-				DLTrashService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static DLTrashService _service;
+	public static void setService(DLTrashService service) {
+		_service = service;
+	}
+
+	private static volatile DLTrashService _service;
 
 }

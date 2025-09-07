@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.jsonws.internal.service.access.policy.scope;
@@ -18,12 +9,16 @@ import com.liferay.oauth2.provider.jsonws.internal.configuration.OAuth2JSONWSCon
 import com.liferay.oauth2.provider.jsonws.internal.constants.OAuth2JSONWSConstants;
 import com.liferay.oauth2.provider.scope.spi.scope.descriptor.ScopeDescriptor;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
+import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
@@ -43,30 +38,36 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Tomas Polesovsky
  */
 @Component(
 	configurationPid = "com.liferay.oauth2.provider.jsonws.internal.configuration.OAuth2JSONWSConfiguration",
-	immediate = true, service = SAPEntryScopeDescriptorFinderRegistrator.class
+	service = SAPEntryScopeDescriptorFinderRegistrator.class
 )
 public class SAPEntryScopeDescriptorFinderRegistrator {
 
+	public boolean contains(String jaxRsApplicationName) {
+		return _jaxRsApplicationNames.contains(jaxRsApplicationName);
+	}
+
 	public List<SAPEntryScope> getRegisteredSAPEntryScopes(long companyId) {
-		return new ArrayList<>(_registeredSAPEntryScopes.get(companyId));
+		SAPEntryScopeDescriptorFinder sapEntryScopeDescriptorFinder =
+			_registeredSAPEntryScopeDescriptorFinders.get(companyId);
+
+		return new ArrayList<>(
+			sapEntryScopeDescriptorFinder.getSAPEntryScopes());
 	}
 
 	public void register(long companyId) {
 		try {
-			List<SAPEntryScope> sapEntryScopes = loadSAPEntryScopes(companyId);
-
 			SAPEntryScopeDescriptorFinder sapEntryScopeDescriptorFinder =
 				new SAPEntryScopeDescriptorFinder(
-					sapEntryScopes, _defaultScopeDescriptor);
+					() -> _loadSAPEntryScopes(companyId),
+					_defaultScopeDescriptor);
 
 			_scopeDescriptorServiceRegistrations.compute(
 				companyId,
@@ -75,19 +76,19 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 						serviceRegistration.unregister();
 					}
 
-					serviceRegistration = _bundleContext.registerService(
+					return _bundleContext.registerService(
 						ScopeDescriptor.class, sapEntryScopeDescriptorFinder,
 						_buildScopeDescriptorProperties(companyId));
-
-					return serviceRegistration;
 				});
 
-			Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-			properties.put("companyId", String.valueOf(companyId));
-			properties.put(
-				"osgi.jaxrs.name", OAuth2JSONWSConstants.APPLICATION_NAME);
-			properties.put("sap.scope.finder", Boolean.TRUE);
+			Dictionary<String, Object> properties =
+				HashMapDictionaryBuilder.<String, Object>put(
+					"companyId", String.valueOf(companyId)
+				).put(
+					"osgi.jaxrs.name", OAuth2JSONWSConstants.APPLICATION_NAME
+				).put(
+					"sap.scope.finder", Boolean.TRUE
+				).build();
 
 			_scopeFinderServiceRegistrations.compute(
 				companyId,
@@ -100,16 +101,17 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 						ScopeFinder.class, sapEntryScopeDescriptorFinder,
 						properties);
 
-					_registeredSAPEntryScopes.put(companyId, sapEntryScopes);
+					_registeredSAPEntryScopeDescriptorFinders.put(
+						companyId, sapEntryScopeDescriptorFinder);
 
 					return serviceRegistration;
 				});
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_log.error(
 				"Unable to register SAP entry scope descriptor finder for " +
 					"company " + companyId,
-				e);
+				exception);
 		}
 	}
 
@@ -118,6 +120,47 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 		BundleContext bundleContext, Map<String, Object> properties) {
 
 		_bundleContext = bundleContext;
+
+		_serviceTracker = ServiceTrackerFactory.open(
+			bundleContext,
+			"(&(objectClass=" + ScopeFinder.class.getName() +
+				")(osgi.jaxrs.name=*)(sap.scope.finder=true))",
+			new ServiceTrackerCustomizer<ScopeFinder, ScopeFinder>() {
+
+				@Override
+				public ScopeFinder addingService(
+					ServiceReference<ScopeFinder> serviceReference) {
+
+					_jaxRsApplicationNames.add(
+						GetterUtil.getString(
+							serviceReference.getProperty("osgi.jaxrs.name")));
+
+					_resetProperties();
+
+					return bundleContext.getService(serviceReference);
+				}
+
+				@Override
+				public void modifiedService(
+					ServiceReference<ScopeFinder> serviceReference,
+					ScopeFinder scopeFinder) {
+				}
+
+				@Override
+				public void removedService(
+					ServiceReference<ScopeFinder> serviceReference,
+					ScopeFinder scopeFinder) {
+
+					bundleContext.ungetService(serviceReference);
+
+					_jaxRsApplicationNames.remove(
+						GetterUtil.getString(
+							serviceReference.getProperty("osgi.jaxrs.name")));
+
+					_resetProperties();
+				}
+
+			});
 
 		OAuth2JSONWSConfiguration oAuth2JSONWSConfiguration =
 			ConfigurableUtil.createConfigurable(
@@ -129,44 +172,14 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 		_sapEntryOAuth2Prefix =
 			oAuth2JSONWSConfiguration.sapEntryOAuth2Prefix();
 
-		for (long companyId : _scopeFinderServiceRegistrations.keySet()) {
-			register(companyId);
-		}
-	}
-
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(&(osgi.jaxrs.name=*)(sap.scope.finder=true))"
-	)
-	protected void addJaxRsApplicationName(
-		ServiceReference<ScopeFinder> serviceReference) {
-
-		_jaxRsApplicationNames.add(
-			GetterUtil.getString(
-				serviceReference.getProperty("osgi.jaxrs.name")));
-
-		for (Map.Entry<Long, ServiceRegistration> entry :
-				_scopeDescriptorServiceRegistrations.entrySet()) {
-
-			ServiceRegistration serviceRegistration = entry.getValue();
-
-			try {
-				serviceRegistration.setProperties(
-					_buildScopeDescriptorProperties(entry.getKey()));
-			}
-			catch (IllegalStateException ise) {
-
-				// Concurrent unregistration from register(long)
-
-			}
-		}
+		_companyLocalService.forEachCompanyId(
+			companyId -> register(companyId),
+			ArrayUtil.toLongArray(_scopeFinderServiceRegistrations.keySet()));
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		for (ServiceRegistration serviceRegistration :
+		for (ServiceRegistration<ScopeFinder> serviceRegistration :
 				_scopeFinderServiceRegistrations.values()) {
 
 			serviceRegistration.unregister();
@@ -174,70 +187,47 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 
 		_scopeFinderServiceRegistrations.clear();
 
-		for (ServiceRegistration serviceRegistration :
+		for (ServiceRegistration<ScopeDescriptor> serviceRegistration :
 				_scopeDescriptorServiceRegistrations.values()) {
 
 			serviceRegistration.unregister();
 		}
 
 		_scopeDescriptorServiceRegistrations.clear();
+
+		_serviceTracker.close();
+
+		_jaxRsApplicationNames.clear();
 	}
 
-	protected boolean isOAuth2ExportedSAPEntry(SAPEntry sapEntry) {
+	private HashMapDictionary<String, Object> _buildScopeDescriptorProperties(
+		long companyId) {
+
+		return HashMapDictionaryBuilder.<String, Object>put(
+			"companyId", String.valueOf(companyId)
+		).put(
+			"osgi.jaxrs.name", _jaxRsApplicationNames.toArray(new String[0])
+		).build();
+	}
+
+	private boolean _isOAuth2ExportedSAPEntry(SAPEntry sapEntry) {
 		return StringUtil.startsWith(sapEntry.getName(), _sapEntryOAuth2Prefix);
 	}
 
-	protected List<SAPEntryScope> loadSAPEntryScopes(long companyId) {
+	private List<SAPEntryScope> _loadSAPEntryScopes(long companyId) {
 		List<SAPEntryScope> sapEntryScopes = new ArrayList<>();
 
 		for (SAPEntry sapEntry :
 				_sapEntryLocalService.getCompanySAPEntries(
 					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS)) {
 
-			if (isOAuth2ExportedSAPEntry(sapEntry)) {
+			if (_isOAuth2ExportedSAPEntry(sapEntry)) {
 				sapEntryScopes.add(
 					new SAPEntryScope(sapEntry, _parseScope(sapEntry)));
 			}
 		}
 
 		return sapEntryScopes;
-	}
-
-	protected void removeJaxRsApplicationName(
-		ServiceReference<ScopeFinder> serviceReference) {
-
-		_jaxRsApplicationNames.remove(
-			GetterUtil.getString(
-				serviceReference.getProperty("osgi.jaxrs.name")));
-
-		for (Map.Entry<Long, ServiceRegistration> entry :
-				_scopeDescriptorServiceRegistrations.entrySet()) {
-
-			ServiceRegistration serviceRegistration = entry.getValue();
-
-			try {
-				serviceRegistration.setProperties(
-					_buildScopeDescriptorProperties(entry.getKey()));
-			}
-			catch (IllegalStateException ise) {
-
-				// Concurrent unregistration from register(long)
-
-			}
-		}
-	}
-
-	private HashMapDictionary<String, Object> _buildScopeDescriptorProperties(
-		long companyId) {
-
-		HashMapDictionary<String, Object> properties =
-			new HashMapDictionary<>();
-
-		properties.put("companyId", String.valueOf(companyId));
-		properties.put(
-			"osgi.jaxrs.name", _jaxRsApplicationNames.toArray(new String[0]));
-
-		return properties;
 	}
 
 	private String _parseScope(SAPEntry sapEntry) {
@@ -250,27 +240,53 @@ public class SAPEntryScopeDescriptorFinderRegistrator {
 		return sapEntryName.substring(_sapEntryOAuth2Prefix.length());
 	}
 
+	private void _resetProperties() {
+		for (Map.Entry<Long, ServiceRegistration<ScopeDescriptor>> entry :
+				_scopeDescriptorServiceRegistrations.entrySet()) {
+
+			ServiceRegistration<ScopeDescriptor> serviceRegistration =
+				entry.getValue();
+
+			try {
+				serviceRegistration.setProperties(
+					_buildScopeDescriptorProperties(entry.getKey()));
+			}
+			catch (IllegalStateException illegalStateException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalStateException);
+				}
+
+				// Concurrent unregistration from register(long)
+
+			}
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		SAPEntryScopeDescriptorFinderRegistrator.class);
 
 	private BundleContext _bundleContext;
+
+	@Reference
+	private CompanyLocalService _companyLocalService;
 
 	@Reference(target = "(default=true)")
 	private ScopeDescriptor _defaultScopeDescriptor;
 
 	private final Set<String> _jaxRsApplicationNames =
 		Collections.newSetFromMap(new ConcurrentHashMap<>());
-	private final Map<Long, List<SAPEntryScope>> _registeredSAPEntryScopes =
-		new ConcurrentHashMap<>();
+	private final Map<Long, SAPEntryScopeDescriptorFinder>
+		_registeredSAPEntryScopeDescriptorFinders = new ConcurrentHashMap<>();
 	private boolean _removeSAPEntryOAuth2Prefix = true;
 
 	@Reference
 	private SAPEntryLocalService _sapEntryLocalService;
 
 	private String _sapEntryOAuth2Prefix = "OAUTH2_";
-	private final Map<Long, ServiceRegistration>
+	private final Map<Long, ServiceRegistration<ScopeDescriptor>>
 		_scopeDescriptorServiceRegistrations = new ConcurrentHashMap<>();
-	private final Map<Long, ServiceRegistration>
+	private final Map<Long, ServiceRegistration<ScopeFinder>>
 		_scopeFinderServiceRegistrations = new ConcurrentHashMap<>();
+	private ServiceTracker<ScopeFinder, ScopeFinder> _serviceTracker;
 
 }

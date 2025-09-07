@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.deployment.helper;
 
 import com.liferay.gradle.util.FileUtil;
+import com.liferay.gradle.util.GUtil;
 import com.liferay.gradle.util.GradleUtil;
 
 import java.io.File;
@@ -28,21 +20,29 @@ import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
-import org.gradle.util.GUtil;
 
 /**
  * @author Andrea Di Giorgi
  */
+@CacheableTask
 public class BuildDeploymentHelperTask extends JavaExec {
 
 	public BuildDeploymentHelperTask() {
-		setMain("com.liferay.deployment.helper.DeploymentHelper");
+		Property<String> mainClass = getMainClass();
+
+		mainClass.set("com.liferay.deployment.helper.DeploymentHelper");
 	}
 
 	public BuildDeploymentHelperTask deploymentFiles(
@@ -66,6 +66,9 @@ public class BuildDeploymentHelperTask extends JavaExec {
 		super.exec();
 	}
 
+	@InputFiles
+	@PathSensitive(PathSensitivity.RELATIVE)
+	@SkipWhenEmpty
 	public FileCollection getDeploymentFiles() {
 		Project project = getProject();
 
@@ -73,6 +76,7 @@ public class BuildDeploymentHelperTask extends JavaExec {
 	}
 
 	@InputFiles
+	@PathSensitive(PathSensitivity.RELATIVE)
 	@SkipWhenEmpty
 	public FileCollection getDeploymentInputFiles() {
 		Project project = getProject();
@@ -93,8 +97,9 @@ public class BuildDeploymentHelperTask extends JavaExec {
 		return project.files(inputFiles);
 	}
 
-	@Input
+	@InputFile
 	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getDeploymentPath() {
 		return GradleUtil.toFile(getProject(), _deploymentPath);
 	}
@@ -122,6 +127,7 @@ public class BuildDeploymentHelperTask extends JavaExec {
 		_outputFile = outputFile;
 	}
 
+	@Internal
 	protected List<String> getCompleteArgs() {
 		List<String> completeArgs = new ArrayList<>();
 
@@ -141,6 +147,7 @@ public class BuildDeploymentHelperTask extends JavaExec {
 		return completeArgs;
 	}
 
+	@Input
 	protected String getDeploymentFileNames() {
 		StringBuilder sb = new StringBuilder();
 

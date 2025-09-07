@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,17 +28,17 @@ public class SystemEventCacheModel
 	implements CacheModel<SystemEvent>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SystemEventCacheModel)) {
+		if (!(object instanceof SystemEventCacheModel)) {
 			return false;
 		}
 
 		SystemEventCacheModel systemEventCacheModel =
-			(SystemEventCacheModel)obj;
+			(SystemEventCacheModel)object;
 
 		if ((systemEventId == systemEventCacheModel.systemEventId) &&
 			(mvccVersion == systemEventCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class SystemEventCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", systemEventId=");
 		sb.append(systemEventId);
 		sb.append(", groupId=");
@@ -93,6 +86,8 @@ public class SystemEventCacheModel
 		sb.append(userName);
 		sb.append(", createDate=");
 		sb.append(createDate);
+		sb.append(", classExternalReferenceCode=");
+		sb.append(classExternalReferenceCode);
 		sb.append(", classNameId=");
 		sb.append(classNameId);
 		sb.append(", classPK=");
@@ -119,6 +114,7 @@ public class SystemEventCacheModel
 		SystemEventImpl systemEventImpl = new SystemEventImpl();
 
 		systemEventImpl.setMvccVersion(mvccVersion);
+		systemEventImpl.setCtCollectionId(ctCollectionId);
 		systemEventImpl.setSystemEventId(systemEventId);
 		systemEventImpl.setGroupId(groupId);
 		systemEventImpl.setCompanyId(companyId);
@@ -136,6 +132,14 @@ public class SystemEventCacheModel
 		}
 		else {
 			systemEventImpl.setCreateDate(new Date(createDate));
+		}
+
+		if (classExternalReferenceCode == null) {
+			systemEventImpl.setClassExternalReferenceCode("");
+		}
+		else {
+			systemEventImpl.setClassExternalReferenceCode(
+				classExternalReferenceCode);
 		}
 
 		systemEventImpl.setClassNameId(classNameId);
@@ -166,8 +170,12 @@ public class SystemEventCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		systemEventId = objectInput.readLong();
 
@@ -178,6 +186,7 @@ public class SystemEventCacheModel
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
+		classExternalReferenceCode = objectInput.readUTF();
 
 		classNameId = objectInput.readLong();
 
@@ -191,12 +200,14 @@ public class SystemEventCacheModel
 		systemEventSetKey = objectInput.readLong();
 
 		type = objectInput.readInt();
-		extraData = objectInput.readUTF();
+		extraData = (String)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(systemEventId);
 
@@ -214,6 +225,13 @@ public class SystemEventCacheModel
 		}
 
 		objectOutput.writeLong(createDate);
+
+		if (classExternalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(classExternalReferenceCode);
+		}
 
 		objectOutput.writeLong(classNameId);
 
@@ -235,20 +253,22 @@ public class SystemEventCacheModel
 		objectOutput.writeInt(type);
 
 		if (extraData == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(extraData);
+			objectOutput.writeObject(extraData);
 		}
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long systemEventId;
 	public long groupId;
 	public long companyId;
 	public long userId;
 	public String userName;
 	public long createDate;
+	public String classExternalReferenceCode;
 	public long classNameId;
 	public long classPK;
 	public String classUuid;

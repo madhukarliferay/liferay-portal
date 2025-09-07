@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model.impl;
@@ -18,6 +9,7 @@ import com.liferay.message.boards.model.MBCategory;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -33,21 +25,24 @@ import java.util.Date;
  * @generated
  */
 public class MBCategoryCacheModel
-	implements CacheModel<MBCategory>, Externalizable {
+	implements CacheModel<MBCategory>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof MBCategoryCacheModel)) {
+		if (!(object instanceof MBCategoryCacheModel)) {
 			return false;
 		}
 
-		MBCategoryCacheModel mbCategoryCacheModel = (MBCategoryCacheModel)obj;
+		MBCategoryCacheModel mbCategoryCacheModel =
+			(MBCategoryCacheModel)object;
 
-		if (categoryId == mbCategoryCacheModel.categoryId) {
+		if ((categoryId == mbCategoryCacheModel.categoryId) &&
+			(mvccVersion == mbCategoryCacheModel.mvccVersion)) {
+
 			return true;
 		}
 
@@ -56,15 +51,33 @@ public class MBCategoryCacheModel
 
 	@Override
 	public int hashCode() {
-		return HashUtil.hash(0, categoryId);
+		int hashCode = HashUtil.hash(0, categoryId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
+	@Override
+	public long getMvccVersion() {
+		return mvccVersion;
+	}
+
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		this.mvccVersion = mvccVersion;
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(41);
+		StringBundler sb = new StringBundler(43);
 
-		sb.append("{uuid=");
+		sb.append("{mvccVersion=");
+		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
+		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", categoryId=");
 		sb.append(categoryId);
 		sb.append(", groupId=");
@@ -87,12 +100,8 @@ public class MBCategoryCacheModel
 		sb.append(description);
 		sb.append(", displayStyle=");
 		sb.append(displayStyle);
-		sb.append(", threadCount=");
-		sb.append(threadCount);
-		sb.append(", messageCount=");
-		sb.append(messageCount);
-		sb.append(", lastPostDate=");
-		sb.append(lastPostDate);
+		sb.append(", friendlyURL=");
+		sb.append(friendlyURL);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append(", status=");
@@ -112,11 +121,21 @@ public class MBCategoryCacheModel
 	public MBCategory toEntityModel() {
 		MBCategoryImpl mbCategoryImpl = new MBCategoryImpl();
 
+		mbCategoryImpl.setMvccVersion(mvccVersion);
+		mbCategoryImpl.setCtCollectionId(ctCollectionId);
+
 		if (uuid == null) {
 			mbCategoryImpl.setUuid("");
 		}
 		else {
 			mbCategoryImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			mbCategoryImpl.setExternalReferenceCode("");
+		}
+		else {
+			mbCategoryImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		mbCategoryImpl.setCategoryId(categoryId);
@@ -168,14 +187,11 @@ public class MBCategoryCacheModel
 			mbCategoryImpl.setDisplayStyle(displayStyle);
 		}
 
-		mbCategoryImpl.setThreadCount(threadCount);
-		mbCategoryImpl.setMessageCount(messageCount);
-
-		if (lastPostDate == Long.MIN_VALUE) {
-			mbCategoryImpl.setLastPostDate(null);
+		if (friendlyURL == null) {
+			mbCategoryImpl.setFriendlyURL("");
 		}
 		else {
-			mbCategoryImpl.setLastPostDate(new Date(lastPostDate));
+			mbCategoryImpl.setFriendlyURL(friendlyURL);
 		}
 
 		if (lastPublishDate == Long.MIN_VALUE) {
@@ -209,7 +225,11 @@ public class MBCategoryCacheModel
 
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
+		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		categoryId = objectInput.readLong();
 
@@ -226,11 +246,7 @@ public class MBCategoryCacheModel
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
 		displayStyle = objectInput.readUTF();
-
-		threadCount = objectInput.readInt();
-
-		messageCount = objectInput.readInt();
-		lastPostDate = objectInput.readLong();
+		friendlyURL = objectInput.readUTF();
 		lastPublishDate = objectInput.readLong();
 
 		status = objectInput.readInt();
@@ -242,11 +258,22 @@ public class MBCategoryCacheModel
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(categoryId);
@@ -290,10 +317,13 @@ public class MBCategoryCacheModel
 			objectOutput.writeUTF(displayStyle);
 		}
 
-		objectOutput.writeInt(threadCount);
+		if (friendlyURL == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(friendlyURL);
+		}
 
-		objectOutput.writeInt(messageCount);
-		objectOutput.writeLong(lastPostDate);
 		objectOutput.writeLong(lastPublishDate);
 
 		objectOutput.writeInt(status);
@@ -310,7 +340,10 @@ public class MBCategoryCacheModel
 		objectOutput.writeLong(statusDate);
 	}
 
+	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long categoryId;
 	public long groupId;
 	public long companyId;
@@ -322,9 +355,7 @@ public class MBCategoryCacheModel
 	public String name;
 	public String description;
 	public String displayStyle;
-	public int threadCount;
-	public int messageCount;
-	public long lastPostDate;
+	public String friendlyURL;
 	public long lastPublishDate;
 	public int status;
 	public long statusByUserId;

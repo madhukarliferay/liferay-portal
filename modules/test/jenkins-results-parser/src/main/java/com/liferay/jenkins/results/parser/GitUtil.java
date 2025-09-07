@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -19,7 +10,9 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,8 +38,9 @@ public class GitUtil {
 		try {
 			process = JenkinsResultsParserUtil.executeBashCommands(command);
 		}
-		catch (IOException | TimeoutException e) {
-			throw new RuntimeException("Unable to clone " + remoteURL, e);
+		catch (IOException | TimeoutException exception) {
+			throw new RuntimeException(
+				"Unable to clone " + remoteURL, exception);
 		}
 
 		if ((process != null) && (process.exitValue() != 0)) {
@@ -56,8 +50,8 @@ public class GitUtil {
 				errorString = JenkinsResultsParserUtil.readInputStream(
 					process.getErrorStream());
 			}
-			catch (IOException ioe) {
-				ioe.printStackTrace();
+			catch (IOException ioException) {
+				ioException.printStackTrace();
 			}
 
 			throw new RuntimeException(
@@ -109,10 +103,22 @@ public class GitUtil {
 	public static RemoteGitBranch getRemoteGitBranch(
 		String remoteGitBranchName, File workingDirectory, String remoteURL) {
 
+		return getRemoteGitBranch(
+			remoteGitBranchName, workingDirectory, remoteURL, true);
+	}
+
+	public static RemoteGitBranch getRemoteGitBranch(
+		String remoteGitBranchName, File workingDirectory, String remoteURL,
+		boolean required) {
+
 		RemoteGitRef remoteGitRef = getRemoteGitRef(
-			remoteGitBranchName, workingDirectory, remoteURL);
+			remoteGitBranchName, workingDirectory, remoteURL, required);
 
 		if (!(remoteGitRef instanceof RemoteGitBranch)) {
+			if (!required) {
+				return null;
+			}
+
 			throw new RuntimeException(
 				JenkinsResultsParserUtil.combine(
 					"Unable to find remote Git branch ", remoteGitBranchName,
@@ -140,6 +146,12 @@ public class GitUtil {
 	}
 
 	public static RemoteGitRef getRemoteGitRef(String gitHubURL) {
+		return getRemoteGitRef(gitHubURL, true);
+	}
+
+	public static RemoteGitRef getRemoteGitRef(
+		String gitHubURL, boolean required) {
+
 		Matcher matcher = _gitHubRefURLPattern.matcher(gitHubURL);
 
 		if (!matcher.find()) {
@@ -151,61 +163,100 @@ public class GitUtil {
 			matcher.group("gitRepositoryName"), ".git");
 
 		return getRemoteGitRef(
-			matcher.group("refName"), new File("."), remoteGitRepositoryURL);
+			matcher.group("refName"), new File("."), remoteGitRepositoryURL,
+			required);
 	}
 
 	public static RemoteGitRef getRemoteGitRef(
 		String remoteGitBranchName, File workingDirectory, String remoteURL) {
 
-		List<RemoteGitRef> remoteGitRefs = null;
+		return getRemoteGitRef(
+			remoteGitBranchName, workingDirectory, remoteURL, true);
+	}
 
-		if (remoteURL.contains(_HOSTNAME_GITHUB_CACHE_PROXY)) {
-			List<String> usedGitHubDevNodeHostnames = new ArrayList<>(3);
+	public static RemoteGitRef getRemoteGitRef(
+		String remoteGitBranchName, File workingDirectory, String remoteURL,
+		boolean required) {
 
-			while ((usedGitHubDevNodeHostnames.size() < 3) &&
-				   ((remoteGitRefs == null) || remoteGitRefs.isEmpty())) {
+		String key = JenkinsResultsParserUtil.combine(
+			remoteURL, "#", remoteGitBranchName);
 
-				String gitHubDevNodeHostname =
-					JenkinsResultsParserUtil.getRandomGitHubDevNodeHostname(
-						usedGitHubDevNodeHostnames);
+		synchronized (_gitHubRemoteGitRefs) {
+			if (remoteURL.contains(_HOSTNAME_GITHUB)) {
+				RemoteGitRef gitHubRemoteGitRef = _gitHubRemoteGitRefs.get(key);
 
-				String gitHubDevNodeRemoteURL = remoteURL.replace(
-					_HOSTNAME_GITHUB_CACHE_PROXY, gitHubDevNodeHostname);
+				if (gitHubRemoteGitRef != null) {
+					System.out.println(
+						JenkinsResultsParserUtil.combine(
+							"Using cached Git ref from ", remoteURL, " for ",
+							remoteGitBranchName));
 
-				if (gitHubDevNodeHostname.startsWith("slave-")) {
-					gitHubDevNodeRemoteURL = toSlaveGitHubDevNodeRemoteURL(
-						remoteURL, gitHubDevNodeHostname.substring(6));
+					return gitHubRemoteGitRef;
 				}
-
-				try {
-					remoteGitRefs = getRemoteGitRefs(
-						remoteGitBranchName, workingDirectory,
-						gitHubDevNodeRemoteURL);
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-
-				usedGitHubDevNodeHostnames.add(gitHubDevNodeHostname);
 			}
-		}
-		else {
-			remoteGitRefs = getRemoteGitRefs(
-				remoteGitBranchName, workingDirectory, remoteURL);
-		}
 
-		if ((remoteGitRefs == null) || remoteGitRefs.isEmpty()) {
-			throw new RuntimeException(
-				JenkinsResultsParserUtil.combine(
-					"Unable to find remote Git ref ", remoteGitBranchName,
-					" on remote URL ", remoteURL));
-		}
+			List<RemoteGitRef> remoteGitRefs = null;
 
-		return remoteGitRefs.get(0);
+			if (remoteURL.contains(_HOSTNAME_GITHUB_CACHE_PROXY)) {
+				List<String> usedGitHubDevNodeHostnames = new ArrayList<>(3);
+
+				while ((usedGitHubDevNodeHostnames.size() < 3) &&
+					   ((remoteGitRefs == null) || remoteGitRefs.isEmpty())) {
+
+					String gitHubDevNodeHostname =
+						JenkinsResultsParserUtil.getRandomGitHubDevNodeHostname(
+							usedGitHubDevNodeHostnames);
+
+					String gitHubDevNodeRemoteURL = remoteURL.replace(
+						_HOSTNAME_GITHUB_CACHE_PROXY, gitHubDevNodeHostname);
+
+					if (gitHubDevNodeHostname.startsWith("slave-")) {
+						gitHubDevNodeRemoteURL = toSlaveGitHubDevNodeRemoteURL(
+							remoteURL, gitHubDevNodeHostname.substring(6));
+					}
+
+					try {
+						remoteGitRefs = getRemoteGitRefs(
+							remoteGitBranchName, workingDirectory,
+							gitHubDevNodeRemoteURL);
+					}
+					catch (Exception exception) {
+						exception.printStackTrace();
+					}
+
+					usedGitHubDevNodeHostnames.add(gitHubDevNodeHostname);
+				}
+			}
+			else {
+				remoteGitRefs = getRemoteGitRefs(
+					remoteGitBranchName, workingDirectory, remoteURL);
+			}
+
+			if ((remoteGitRefs == null) || remoteGitRefs.isEmpty()) {
+				if (!required) {
+					return null;
+				}
+
+				throw new RuntimeException(
+					JenkinsResultsParserUtil.combine(
+						"Unable to find remote Git ref ", remoteGitBranchName,
+						" on remote URL ", remoteURL));
+			}
+
+			RemoteGitRef remoteGitRef = remoteGitRefs.get(0);
+
+			if (remoteURL.contains(_HOSTNAME_GITHUB)) {
+				_gitHubRemoteGitRefs.put(key, remoteGitRef);
+			}
+
+			return remoteGitRef;
+		}
 	}
 
 	public static List<RemoteGitRef> getRemoteGitRefs(
 		String remoteGitBranchName, File workingDirectory, String remoteURL) {
+
+		long start = JenkinsResultsParserUtil.getCurrentTimeMillis();
 
 		if (!isValidRemoteURL(remoteURL)) {
 			throw new IllegalArgumentException(
@@ -216,25 +267,56 @@ public class GitUtil {
 
 		if (remoteGitBranchName != null) {
 			command = JenkinsResultsParserUtil.combine(
-				"git ls-remote -h ", remoteURL, " ", remoteGitBranchName);
+				"git ls-remote -h -t ", remoteURL, " ", remoteGitBranchName);
 		}
 		else {
 			command = JenkinsResultsParserUtil.combine(
 				"git ls-remote -h ", remoteURL);
 		}
 
-		ExecutionResult executionResult = executeBashCommands(
-			3, GitUtil.MILLIS_RETRY_DELAY, 1000 * 60 * 10, workingDirectory,
-			command);
+		ExecutionResult executionResult = null;
 
-		if (executionResult.getExitValue() != 0) {
-			throw new RuntimeException(
-				JenkinsResultsParserUtil.combine(
-					"Unable to get remote refs from ", remoteURL, "\n",
-					executionResult.getStandardError()));
+		try {
+			String timeoutSeconds = null;
+
+			try {
+				timeoutSeconds = JenkinsResultsParserUtil.getBuildProperty(
+					"git.lsremote.timeout.seconds");
+			}
+			catch (IOException ioException) {
+				System.out.println(
+					"Unable to get build property, " +
+						"\"git.lsremote.timeout.seconds\"");
+
+				ioException.printStackTrace();
+			}
+			finally {
+				if (JenkinsResultsParserUtil.isNullOrEmpty(timeoutSeconds)) {
+					timeoutSeconds = "120";
+				}
+			}
+
+			executionResult = executeBashCommands(
+				3, GitUtil.MILLIS_RETRY_DELAY,
+				1000 * Long.parseLong(timeoutSeconds), workingDirectory,
+				command);
+
+			if (executionResult.getExitValue() != 0) {
+				throw new RuntimeException(
+					JenkinsResultsParserUtil.combine(
+						"Unable to get remote refs from ", remoteURL, "\n",
+						executionResult.getStandardError()));
+			}
+		}
+		catch (Exception exception) {
+			return new ArrayList<>();
 		}
 
 		String input = executionResult.getStandardOut();
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(input)) {
+			return new ArrayList<>();
+		}
 
 		List<RemoteGitRef> remoteGitRefs = new ArrayList<>();
 
@@ -247,7 +329,7 @@ public class GitUtil {
 		try {
 			username = remoteURLMatcher.group("username");
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		RemoteGitRepository remoteGitRepository =
@@ -272,20 +354,27 @@ public class GitUtil {
 		}
 
 		System.out.println(
-			"getRemoteGitRefs found " + remoteGitRefs.size() + " refs at " +
-				remoteURL + ".");
+			JenkinsResultsParserUtil.combine(
+				"getRemoteGitRefs found ", String.valueOf(remoteGitRefs.size()),
+				" refs at ", remoteURL, " in ",
+				JenkinsResultsParserUtil.toDurationString(
+					JenkinsResultsParserUtil.getCurrentTimeMillis() - start),
+				"."));
 
 		return remoteGitRefs;
+	}
+
+	public static String getUserRemoteURL(
+		String repositoryName, String username) {
+
+		return JenkinsResultsParserUtil.combine(
+			"git@github.com:", username, "/", repositoryName, ".git");
 	}
 
 	public static boolean isValidGitHubRefURL(String gitHubURL) {
 		Matcher matcher = _gitHubRefURLPattern.matcher(gitHubURL);
 
-		if (!matcher.find()) {
-			return false;
-		}
-
-		return true;
+		return matcher.find();
 	}
 
 	public static boolean isValidRemoteURL(String remoteURL) {
@@ -296,6 +385,21 @@ public class GitUtil {
 		}
 
 		return false;
+	}
+
+	public static void main(String[] args) {
+		ExecutionResult executionResult = executeBashCommands(
+			3, 1000 * 10, 1000 * 60, new File("."), args[0]);
+
+		System.out.println(executionResult.getStandardOut());
+
+		if (executionResult.getExitValue() == 0) {
+			return;
+		}
+
+		System.err.println(executionResult.getStandardError());
+
+		throw new RuntimeException("Unable to run command:\n     " + args[0]);
 	}
 
 	public static String toSlaveGitHubDevNodeRemoteURL(
@@ -377,9 +481,6 @@ public class GitUtil {
 				gitHubDevNodeHostname = gitHubDevNodeHostname.substring(6);
 
 				for (int i = 0; i < modifiedCommands.length; i++) {
-					Matcher matcher = GitRemote.getRemoteURLMatcher(
-						modifiedCommands[i]);
-
 					String modifiedCommand = modifiedCommands[i];
 
 					if (!modifiedCommand.contains(
@@ -388,8 +489,13 @@ public class GitUtil {
 						continue;
 					}
 
+					Matcher matcher = GitRemote.getRemoteURLMatcher(
+						modifiedCommands[i]);
+
 					if (matcher != null) {
 						while (matcher.find()) {
+							retryDelay = 0;
+
 							modifiedCommand = modifiedCommand.replaceFirst(
 								matcher.group(0),
 								toSlaveGitHubDevNodeRemoteURL(
@@ -400,10 +506,17 @@ public class GitUtil {
 					modifiedCommands[i] = modifiedCommand;
 				}
 			}
-			else {
+			else if (!gitHubDevNodeHostname.isEmpty()) {
 				for (int i = 0; i < modifiedCommands.length; i++) {
 					modifiedCommands[i] = modifiedCommands[i].replace(
 						_HOSTNAME_GITHUB_CACHE_PROXY, gitHubDevNodeHostname);
+
+					if ((retryDelay != 0) &&
+						modifiedCommands[i].contains(
+							_HOSTNAME_GITHUB_CACHE_PROXY)) {
+
+						retryDelay = 0;
+					}
 				}
 			}
 
@@ -412,29 +525,36 @@ public class GitUtil {
 
 				process = JenkinsResultsParserUtil.executeBashCommands(
 					true, workingDirectory, timeout, modifiedCommands);
-
-				break;
 			}
-			catch (IOException | TimeoutException e) {
+			catch (IOException | TimeoutException exception) {
 				if (retries == maxRetries) {
 					throw new RuntimeException(
 						"Unable to execute bash commands: " +
 							Arrays.toString(commands),
-						e);
+						exception);
 				}
 
-				usedGitHubDevNodeHostnames.add(gitHubDevNodeHostname);
-
-				System.out.println(
-					"Unable to execute bash commands retrying... ");
-
-				e.printStackTrace();
-
-				JenkinsResultsParserUtil.sleep(retryDelay);
+				exception.printStackTrace();
 			}
 			finally {
-				if (process != null) {
-					_debugDNS(process);
+				try {
+					if ((process != null) && (process.exitValue() == 0)) {
+						break;
+					}
+
+					if (retries < maxRetries) {
+						usedGitHubDevNodeHostnames.add(gitHubDevNodeHostname);
+
+						System.out.println(
+							"Unable to execute bash commands retrying... ");
+
+						JenkinsResultsParserUtil.sleep(retryDelay);
+					}
+				}
+				finally {
+					if (process != null) {
+						_debugDNS(process);
+					}
 				}
 			}
 		}
@@ -445,7 +565,7 @@ public class GitUtil {
 			standardErr = JenkinsResultsParserUtil.readInputStream(
 				process.getErrorStream());
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			standardErr = "";
 		}
 
@@ -455,9 +575,9 @@ public class GitUtil {
 			standardOut = JenkinsResultsParserUtil.readInputStream(
 				process.getInputStream());
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new RuntimeException(
-				"Unable to read process input stream", ioe);
+				"Unable to read process input stream", ioException);
 		}
 
 		return new ExecutionResult(
@@ -471,7 +591,7 @@ public class GitUtil {
 			standardErr = JenkinsResultsParserUtil.readInputStream(
 				process.getErrorStream());
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			standardErr = "";
 		}
 
@@ -491,9 +611,9 @@ public class GitUtil {
 					JenkinsResultsParserUtil.readInputStream(
 						digProcess.getInputStream()));
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				System.out.println(
-					"Unable to execute debug DNS: " + e.getMessage());
+					"Unable to execute debug DNS: " + exception.getMessage());
 			}
 		}
 	}
@@ -526,6 +646,8 @@ public class GitUtil {
 		return defaultBranchName;
 	}
 
+	private static final String _HOSTNAME_GITHUB = "github.com";
+
 	private static final String _HOSTNAME_GITHUB_CACHE_PROXY =
 		"github-dev.liferay.com";
 
@@ -534,6 +656,8 @@ public class GitUtil {
 	private static final Pattern _gitHubRefURLPattern = Pattern.compile(
 		JenkinsResultsParserUtil.combine(
 			"https://github.com/(?<username>[^/]+)/",
-			"(?<gitRepositoryName>[^/]+)/tree/(?<refName>[^/]+)"));
+			"(?<gitRepositoryName>[^/]+)/tree/(?<refName>.+)"));
+	private static final Map<String, RemoteGitRef> _gitHubRemoteGitRefs =
+		new HashMap<>();
 
 }

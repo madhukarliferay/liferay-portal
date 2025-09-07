@@ -1,22 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMStorageLink;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for DDMStorageLink. This utility wraps
@@ -32,7 +31,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMStorageLinkLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMStorageLinkLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -41,21 +40,23 @@ public class DDMStorageLinkLocalServiceUtil {
 	/**
 	 * Adds the ddm storage link to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStorageLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStorageLink the ddm storage link
 	 * @return the ddm storage link that was added
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		addDDMStorageLink(
-			com.liferay.dynamic.data.mapping.model.DDMStorageLink
-				ddmStorageLink) {
+	public static DDMStorageLink addDDMStorageLink(
+		DDMStorageLink ddmStorageLink) {
 
 		return getService().addDDMStorageLink(ddmStorageLink);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		addStorageLink(
+	public static DDMStorageLink addStorageLink(
 			long classNameId, long classPK, long structureVersionId,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext) {
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addStorageLink(
 			classNameId, classPK, structureVersionId, serviceContext);
@@ -67,10 +68,18 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param storageLinkId the primary key for the new ddm storage link
 	 * @return the new ddm storage link
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		createDDMStorageLink(long storageLinkId) {
-
+	public static DDMStorageLink createDDMStorageLink(long storageLinkId) {
 		return getService().createDDMStorageLink(storageLinkId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	public static void deleteClassStorageLink(long classPK) {
@@ -80,13 +89,15 @@ public class DDMStorageLinkLocalServiceUtil {
 	/**
 	 * Deletes the ddm storage link from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStorageLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStorageLink the ddm storage link
 	 * @return the ddm storage link that was removed
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		deleteDDMStorageLink(
-			com.liferay.dynamic.data.mapping.model.DDMStorageLink
-				ddmStorageLink) {
+	public static DDMStorageLink deleteDDMStorageLink(
+		DDMStorageLink ddmStorageLink) {
 
 		return getService().deleteDDMStorageLink(ddmStorageLink);
 	}
@@ -94,13 +105,16 @@ public class DDMStorageLinkLocalServiceUtil {
 	/**
 	 * Deletes the ddm storage link with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStorageLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param storageLinkId the primary key of the ddm storage link
 	 * @return the ddm storage link that was removed
 	 * @throws PortalException if a ddm storage link with the primary key could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			deleteDDMStorageLink(long storageLinkId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink deleteDDMStorageLink(long storageLinkId)
+		throws PortalException {
 
 		return getService().deleteDDMStorageLink(storageLinkId);
 	}
@@ -108,17 +122,14 @@ public class DDMStorageLinkLocalServiceUtil {
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
 
-	public static void deleteStorageLink(
-		com.liferay.dynamic.data.mapping.model.DDMStorageLink storageLink) {
-
+	public static void deleteStorageLink(DDMStorageLink storageLink) {
 		getService().deleteStorageLink(storageLink);
 	}
 
@@ -130,9 +141,15 @@ public class DDMStorageLinkLocalServiceUtil {
 		getService().deleteStructureStorageLinks(structureId);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -142,9 +159,7 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -160,9 +175,8 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -180,10 +194,9 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -195,9 +208,7 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -209,15 +220,17 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		fetchDDMStorageLink(long storageLinkId) {
+	public static DDMStorageLink fetchClassStorageLink(long classPK) {
+		return getService().fetchClassStorageLink(classPK);
+	}
 
+	public static DDMStorageLink fetchDDMStorageLink(long storageLinkId) {
 		return getService().fetchDDMStorageLink(storageLinkId);
 	}
 
@@ -228,8 +241,8 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param companyId the primary key of the company
 	 * @return the matching ddm storage link, or <code>null</code> if a matching ddm storage link could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		fetchDDMStorageLinkByUuidAndCompanyId(String uuid, long companyId) {
+	public static DDMStorageLink fetchDDMStorageLinkByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return getService().fetchDDMStorageLinkByUuidAndCompanyId(
 			uuid, companyId);
@@ -241,9 +254,8 @@ public class DDMStorageLinkLocalServiceUtil {
 		return getService().getActionableDynamicQuery();
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			getClassStorageLink(long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink getClassStorageLink(long classPK)
+		throws PortalException {
 
 		return getService().getClassStorageLink(classPK);
 	}
@@ -255,9 +267,8 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @return the ddm storage link
 	 * @throws PortalException if a ddm storage link with the primary key could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			getDDMStorageLink(long storageLinkId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink getDDMStorageLink(long storageLinkId)
+		throws PortalException {
 
 		return getService().getDDMStorageLink(storageLinkId);
 	}
@@ -270,9 +281,9 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @return the matching ddm storage link
 	 * @throws PortalException if a matching ddm storage link could not be found
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			getDDMStorageLinkByUuidAndCompanyId(String uuid, long companyId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink getDDMStorageLinkByUuidAndCompanyId(
+			String uuid, long companyId)
+		throws PortalException {
 
 		return getService().getDDMStorageLinkByUuidAndCompanyId(
 			uuid, companyId);
@@ -289,10 +300,7 @@ public class DDMStorageLinkLocalServiceUtil {
 	 * @param end the upper bound of the range of ddm storage links (not inclusive)
 	 * @return the range of ddm storage links
 	 */
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStorageLink>
-			getDDMStorageLinks(int start, int end) {
-
+	public static List<DDMStorageLink> getDDMStorageLinks(int start, int end) {
 		return getService().getDDMStorageLinks(start, end);
 	}
 
@@ -321,23 +329,23 @@ public class DDMStorageLinkLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			getStorageLink(long storageLinkId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink getStorageLink(long storageLinkId)
+		throws PortalException {
 
 		return getService().getStorageLink(storageLinkId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStorageLink>
-			getStructureStorageLinks(long structureId) {
+	public static List<DDMStorageLink> getStructureStorageLinks(
+		long structureId) {
 
 		return getService().getStructureStorageLinks(structureId);
 	}
@@ -346,9 +354,8 @@ public class DDMStorageLinkLocalServiceUtil {
 		return getService().getStructureStorageLinksCount(structureId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStorageLink>
-			getStructureVersionStorageLinks(long structureVersionId) {
+	public static List<DDMStorageLink> getStructureVersionStorageLinks(
+		long structureVersionId) {
 
 		return getService().getStructureVersionStorageLinks(structureVersionId);
 	}
@@ -363,48 +370,34 @@ public class DDMStorageLinkLocalServiceUtil {
 	/**
 	 * Updates the ddm storage link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStorageLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStorageLink the ddm storage link
 	 * @return the ddm storage link that was updated
 	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-		updateDDMStorageLink(
-			com.liferay.dynamic.data.mapping.model.DDMStorageLink
-				ddmStorageLink) {
+	public static DDMStorageLink updateDDMStorageLink(
+		DDMStorageLink ddmStorageLink) {
 
 		return getService().updateDDMStorageLink(ddmStorageLink);
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStorageLink
-			updateStorageLink(
-				long storageLinkId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStorageLink updateStorageLink(
+			long storageLinkId, long classNameId, long classPK)
+		throws PortalException {
 
 		return getService().updateStorageLink(
 			storageLinkId, classNameId, classPK);
 	}
 
 	public static DDMStorageLinkLocalService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMStorageLinkLocalService, DDMStorageLinkLocalService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMStorageLinkLocalService> _serviceSnapshot =
+		new Snapshot<>(
+			DDMStorageLinkLocalServiceUtil.class,
 			DDMStorageLinkLocalService.class);
-
-		ServiceTracker<DDMStorageLinkLocalService, DDMStorageLinkLocalService>
-			serviceTracker =
-				new ServiceTracker
-					<DDMStorageLinkLocalService, DDMStorageLinkLocalService>(
-						bundle.getBundleContext(),
-						DDMStorageLinkLocalService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

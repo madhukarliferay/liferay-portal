@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model.impl;
@@ -36,17 +27,17 @@ public class SamlSpIdpConnectionCacheModel
 	implements CacheModel<SamlSpIdpConnection>, Externalizable {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SamlSpIdpConnectionCacheModel)) {
+		if (!(object instanceof SamlSpIdpConnectionCacheModel)) {
 			return false;
 		}
 
 		SamlSpIdpConnectionCacheModel samlSpIdpConnectionCacheModel =
-			(SamlSpIdpConnectionCacheModel)obj;
+			(SamlSpIdpConnectionCacheModel)object;
 
 		if (samlSpIdpConnectionId ==
 				samlSpIdpConnectionCacheModel.samlSpIdpConnectionId) {
@@ -64,7 +55,7 @@ public class SamlSpIdpConnectionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(39);
+		StringBundler sb = new StringBundler(43);
 
 		sb.append("{samlSpIdpConnectionId=");
 		sb.append(samlSpIdpConnectionId);
@@ -78,8 +69,6 @@ public class SamlSpIdpConnectionCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", samlIdpEntityId=");
-		sb.append(samlIdpEntityId);
 		sb.append(", assertionSignatureRequired=");
 		sb.append(assertionSignatureRequired);
 		sb.append(", clockSkew=");
@@ -90,20 +79,26 @@ public class SamlSpIdpConnectionCacheModel
 		sb.append(forceAuthn);
 		sb.append(", ldapImportEnabled=");
 		sb.append(ldapImportEnabled);
+		sb.append(", metadataUpdatedDate=");
+		sb.append(metadataUpdatedDate);
 		sb.append(", metadataUrl=");
 		sb.append(metadataUrl);
 		sb.append(", metadataXml=");
 		sb.append(metadataXml);
-		sb.append(", metadataUpdatedDate=");
-		sb.append(metadataUpdatedDate);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", nameIdFormat=");
 		sb.append(nameIdFormat);
+		sb.append(", samlIdpEntityId=");
+		sb.append(samlIdpEntityId);
 		sb.append(", signAuthnRequest=");
 		sb.append(signAuthnRequest);
+		sb.append(", unknownUsersAreStrangers=");
+		sb.append(unknownUsersAreStrangers);
 		sb.append(", userAttributeMappings=");
 		sb.append(userAttributeMappings);
+		sb.append(", userIdentifierExpression=");
+		sb.append(userIdentifierExpression);
 		sb.append("}");
 
 		return sb.toString();
@@ -139,19 +134,20 @@ public class SamlSpIdpConnectionCacheModel
 			samlSpIdpConnectionImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
-		if (samlIdpEntityId == null) {
-			samlSpIdpConnectionImpl.setSamlIdpEntityId("");
-		}
-		else {
-			samlSpIdpConnectionImpl.setSamlIdpEntityId(samlIdpEntityId);
-		}
-
 		samlSpIdpConnectionImpl.setAssertionSignatureRequired(
 			assertionSignatureRequired);
 		samlSpIdpConnectionImpl.setClockSkew(clockSkew);
 		samlSpIdpConnectionImpl.setEnabled(enabled);
 		samlSpIdpConnectionImpl.setForceAuthn(forceAuthn);
 		samlSpIdpConnectionImpl.setLdapImportEnabled(ldapImportEnabled);
+
+		if (metadataUpdatedDate == Long.MIN_VALUE) {
+			samlSpIdpConnectionImpl.setMetadataUpdatedDate(null);
+		}
+		else {
+			samlSpIdpConnectionImpl.setMetadataUpdatedDate(
+				new Date(metadataUpdatedDate));
+		}
 
 		if (metadataUrl == null) {
 			samlSpIdpConnectionImpl.setMetadataUrl("");
@@ -165,14 +161,6 @@ public class SamlSpIdpConnectionCacheModel
 		}
 		else {
 			samlSpIdpConnectionImpl.setMetadataXml(metadataXml);
-		}
-
-		if (metadataUpdatedDate == Long.MIN_VALUE) {
-			samlSpIdpConnectionImpl.setMetadataUpdatedDate(null);
-		}
-		else {
-			samlSpIdpConnectionImpl.setMetadataUpdatedDate(
-				new Date(metadataUpdatedDate));
 		}
 
 		if (name == null) {
@@ -189,7 +177,16 @@ public class SamlSpIdpConnectionCacheModel
 			samlSpIdpConnectionImpl.setNameIdFormat(nameIdFormat);
 		}
 
+		if (samlIdpEntityId == null) {
+			samlSpIdpConnectionImpl.setSamlIdpEntityId("");
+		}
+		else {
+			samlSpIdpConnectionImpl.setSamlIdpEntityId(samlIdpEntityId);
+		}
+
 		samlSpIdpConnectionImpl.setSignAuthnRequest(signAuthnRequest);
+		samlSpIdpConnectionImpl.setUnknownUsersAreStrangers(
+			unknownUsersAreStrangers);
 
 		if (userAttributeMappings == null) {
 			samlSpIdpConnectionImpl.setUserAttributeMappings("");
@@ -199,13 +196,23 @@ public class SamlSpIdpConnectionCacheModel
 				userAttributeMappings);
 		}
 
+		if (userIdentifierExpression == null) {
+			samlSpIdpConnectionImpl.setUserIdentifierExpression("");
+		}
+		else {
+			samlSpIdpConnectionImpl.setUserIdentifierExpression(
+				userIdentifierExpression);
+		}
+
 		samlSpIdpConnectionImpl.resetOriginalValues();
 
 		return samlSpIdpConnectionImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		samlSpIdpConnectionId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
@@ -214,7 +221,6 @@ public class SamlSpIdpConnectionCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-		samlIdpEntityId = objectInput.readUTF();
 
 		assertionSignatureRequired = objectInput.readBoolean();
 
@@ -225,14 +231,18 @@ public class SamlSpIdpConnectionCacheModel
 		forceAuthn = objectInput.readBoolean();
 
 		ldapImportEnabled = objectInput.readBoolean();
-		metadataUrl = objectInput.readUTF();
-		metadataXml = objectInput.readUTF();
 		metadataUpdatedDate = objectInput.readLong();
+		metadataUrl = objectInput.readUTF();
+		metadataXml = (String)objectInput.readObject();
 		name = objectInput.readUTF();
 		nameIdFormat = objectInput.readUTF();
+		samlIdpEntityId = objectInput.readUTF();
 
 		signAuthnRequest = objectInput.readBoolean();
+
+		unknownUsersAreStrangers = objectInput.readBoolean();
 		userAttributeMappings = objectInput.readUTF();
+		userIdentifierExpression = objectInput.readUTF();
 	}
 
 	@Override
@@ -253,13 +263,6 @@ public class SamlSpIdpConnectionCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
-		if (samlIdpEntityId == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(samlIdpEntityId);
-		}
-
 		objectOutput.writeBoolean(assertionSignatureRequired);
 
 		objectOutput.writeLong(clockSkew);
@@ -269,6 +272,7 @@ public class SamlSpIdpConnectionCacheModel
 		objectOutput.writeBoolean(forceAuthn);
 
 		objectOutput.writeBoolean(ldapImportEnabled);
+		objectOutput.writeLong(metadataUpdatedDate);
 
 		if (metadataUrl == null) {
 			objectOutput.writeUTF("");
@@ -278,13 +282,11 @@ public class SamlSpIdpConnectionCacheModel
 		}
 
 		if (metadataXml == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(metadataXml);
+			objectOutput.writeObject(metadataXml);
 		}
-
-		objectOutput.writeLong(metadataUpdatedDate);
 
 		if (name == null) {
 			objectOutput.writeUTF("");
@@ -300,13 +302,29 @@ public class SamlSpIdpConnectionCacheModel
 			objectOutput.writeUTF(nameIdFormat);
 		}
 
+		if (samlIdpEntityId == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(samlIdpEntityId);
+		}
+
 		objectOutput.writeBoolean(signAuthnRequest);
+
+		objectOutput.writeBoolean(unknownUsersAreStrangers);
 
 		if (userAttributeMappings == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(userAttributeMappings);
+		}
+
+		if (userIdentifierExpression == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(userIdentifierExpression);
 		}
 	}
 
@@ -316,18 +334,20 @@ public class SamlSpIdpConnectionCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
-	public String samlIdpEntityId;
 	public boolean assertionSignatureRequired;
 	public long clockSkew;
 	public boolean enabled;
 	public boolean forceAuthn;
 	public boolean ldapImportEnabled;
+	public long metadataUpdatedDate;
 	public String metadataUrl;
 	public String metadataXml;
-	public long metadataUpdatedDate;
 	public String name;
 	public String nameIdFormat;
+	public String samlIdpEntityId;
 	public boolean signAuthnRequest;
+	public boolean unknownUsersAreStrangers;
 	public String userAttributeMappings;
+	public String userIdentifierExpression;
 
 }

@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.delivery.client.serdes.v1_0;
 
 import com.liferay.headless.delivery.client.dto.v1_0.BlogPosting;
-import com.liferay.headless.delivery.client.dto.v1_0.CustomField;
 import com.liferay.headless.delivery.client.dto.v1_0.RelatedContent;
-import com.liferay.headless.delivery.client.dto.v1_0.TaxonomyCategory;
+import com.liferay.headless.delivery.client.dto.v1_0.RenderedContent;
+import com.liferay.headless.delivery.client.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.delivery.client.json.BaseJSONParser;
+
+import jakarta.annotation.Generated;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -28,9 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
 
 /**
  * @author Javier Gamarra
@@ -63,7 +53,17 @@ public class BlogPostingSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (blogPosting.getActions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(blogPosting.getActions()));
+		}
 
 		if (blogPosting.getAggregateRating() != null) {
 			if (sb.length() > 1) {
@@ -123,7 +123,7 @@ public class BlogPostingSerDes {
 			sb.append("[");
 
 			for (int i = 0; i < blogPosting.getCustomFields().length; i++) {
-				sb.append(String.valueOf(blogPosting.getCustomFields()[i]));
+				sb.append(blogPosting.getCustomFields()[i]);
 
 				if ((i + 1) < blogPosting.getCustomFields().length) {
 					sb.append(", ");
@@ -206,6 +206,20 @@ public class BlogPostingSerDes {
 			sb.append("\"");
 		}
 
+		if (blogPosting.getExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(blogPosting.getExternalReferenceCode()));
+
+			sb.append("\"");
+		}
+
 		if (blogPosting.getFriendlyUrlPath() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -264,11 +278,7 @@ public class BlogPostingSerDes {
 			sb.append("[");
 
 			for (int i = 0; i < blogPosting.getKeywords().length; i++) {
-				sb.append("\"");
-
-				sb.append(_escape(blogPosting.getKeywords()[i]));
-
-				sb.append("\"");
+				sb.append(_toJSON(blogPosting.getKeywords()[i]));
 
 				if ((i + 1) < blogPosting.getKeywords().length) {
 					sb.append(", ");
@@ -308,6 +318,26 @@ public class BlogPostingSerDes {
 			sb.append("]");
 		}
 
+		if (blogPosting.getRenderedContents() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"renderedContents\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < blogPosting.getRenderedContents().length; i++) {
+				sb.append(String.valueOf(blogPosting.getRenderedContents()[i]));
+
+				if ((i + 1) < blogPosting.getRenderedContents().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (blogPosting.getSiteId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -318,22 +348,22 @@ public class BlogPostingSerDes {
 			sb.append(blogPosting.getSiteId());
 		}
 
-		if (blogPosting.getTaxonomyCategories() != null) {
+		if (blogPosting.getTaxonomyCategoryBriefs() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"taxonomyCategories\": ");
+			sb.append("\"taxonomyCategoryBriefs\": ");
 
 			sb.append("[");
 
-			for (int i = 0; i < blogPosting.getTaxonomyCategories().length;
+			for (int i = 0; i < blogPosting.getTaxonomyCategoryBriefs().length;
 				 i++) {
 
 				sb.append(
-					String.valueOf(blogPosting.getTaxonomyCategories()[i]));
+					String.valueOf(blogPosting.getTaxonomyCategoryBriefs()[i]));
 
-				if ((i + 1) < blogPosting.getTaxonomyCategories().length) {
+				if ((i + 1) < blogPosting.getTaxonomyCategoryBriefs().length) {
 					sb.append(", ");
 				}
 			}
@@ -397,7 +427,14 @@ public class BlogPostingSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (blogPosting.getActions() == null) {
+			map.put("actions", null);
+		}
+		else {
+			map.put("actions", String.valueOf(blogPosting.getActions()));
+		}
 
 		if (blogPosting.getAggregateRating() == null) {
 			map.put("aggregateRating", null);
@@ -440,17 +477,32 @@ public class BlogPostingSerDes {
 				"customFields", String.valueOf(blogPosting.getCustomFields()));
 		}
 
-		map.put(
-			"dateCreated",
-			liferayToJSONDateFormat.format(blogPosting.getDateCreated()));
+		if (blogPosting.getDateCreated() == null) {
+			map.put("dateCreated", null);
+		}
+		else {
+			map.put(
+				"dateCreated",
+				liferayToJSONDateFormat.format(blogPosting.getDateCreated()));
+		}
 
-		map.put(
-			"dateModified",
-			liferayToJSONDateFormat.format(blogPosting.getDateModified()));
+		if (blogPosting.getDateModified() == null) {
+			map.put("dateModified", null);
+		}
+		else {
+			map.put(
+				"dateModified",
+				liferayToJSONDateFormat.format(blogPosting.getDateModified()));
+		}
 
-		map.put(
-			"datePublished",
-			liferayToJSONDateFormat.format(blogPosting.getDatePublished()));
+		if (blogPosting.getDatePublished() == null) {
+			map.put("datePublished", null);
+		}
+		else {
+			map.put(
+				"datePublished",
+				liferayToJSONDateFormat.format(blogPosting.getDatePublished()));
+		}
 
 		if (blogPosting.getDescription() == null) {
 			map.put("description", null);
@@ -467,6 +519,15 @@ public class BlogPostingSerDes {
 			map.put(
 				"encodingFormat",
 				String.valueOf(blogPosting.getEncodingFormat()));
+		}
+
+		if (blogPosting.getExternalReferenceCode() == null) {
+			map.put("externalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"externalReferenceCode",
+				String.valueOf(blogPosting.getExternalReferenceCode()));
 		}
 
 		if (blogPosting.getFriendlyUrlPath() == null) {
@@ -524,6 +585,15 @@ public class BlogPostingSerDes {
 				String.valueOf(blogPosting.getRelatedContents()));
 		}
 
+		if (blogPosting.getRenderedContents() == null) {
+			map.put("renderedContents", null);
+		}
+		else {
+			map.put(
+				"renderedContents",
+				String.valueOf(blogPosting.getRenderedContents()));
+		}
+
 		if (blogPosting.getSiteId() == null) {
 			map.put("siteId", null);
 		}
@@ -531,13 +601,13 @@ public class BlogPostingSerDes {
 			map.put("siteId", String.valueOf(blogPosting.getSiteId()));
 		}
 
-		if (blogPosting.getTaxonomyCategories() == null) {
-			map.put("taxonomyCategories", null);
+		if (blogPosting.getTaxonomyCategoryBriefs() == null) {
+			map.put("taxonomyCategoryBriefs", null);
 		}
 		else {
 			map.put(
-				"taxonomyCategories",
-				String.valueOf(blogPosting.getTaxonomyCategories()));
+				"taxonomyCategoryBriefs",
+				String.valueOf(blogPosting.getTaxonomyCategoryBriefs()));
 		}
 
 		if (blogPosting.getTaxonomyCategoryIds() == null) {
@@ -573,11 +643,103 @@ public class BlogPostingSerDes {
 		}
 
 		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "aggregateRating")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "alternativeHeadline")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "articleBody")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "customFields")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateModified")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "datePublished")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "description")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "encodingFormat")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "friendlyUrlPath")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "headline")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "id")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "image")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "keywords")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "numberOfComments")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "relatedContents")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "renderedContents")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "siteId")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
+
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "taxonomyCategoryIds")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "viewableBy")) {
+				return false;
+			}
+
+			return false;
+		}
+
+		@Override
 		protected void setField(
 			BlogPosting blogPosting, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "aggregateRating")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				if (jsonParserFieldValue != null) {
+					blogPosting.setActions(
+						(Map<String, Map<String, String>>)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "aggregateRating")) {
 				if (jsonParserFieldValue != null) {
 					blogPosting.setAggregateRating(
 						AggregateRatingSerDes.toDTO(
@@ -605,14 +767,22 @@ public class BlogPostingSerDes {
 			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
 				if (jsonParserFieldValue != null) {
-					blogPosting.setCustomFields(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> CustomFieldSerDes.toDTO((String)object)
-						).toArray(
-							size -> new CustomField[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					com.liferay.headless.delivery.client.custom.field.
+						CustomField[] customFieldsArray = new
+						com.liferay.headless.delivery.client.custom.field.
+							CustomField[jsonParserFieldValues.length];
+
+					for (int i = 0; i < customFieldsArray.length; i++) {
+						customFieldsArray[i] =
+							com.liferay.headless.delivery.client.custom.field.
+								CustomField.toDTO(
+									(String)jsonParserFieldValues[i]);
+					}
+
+					blogPosting.setCustomFields(customFieldsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
@@ -641,6 +811,14 @@ public class BlogPostingSerDes {
 			else if (Objects.equals(jsonParserFieldName, "encodingFormat")) {
 				if (jsonParserFieldValue != null) {
 					blogPosting.setEncodingFormat((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					blogPosting.setExternalReferenceCode(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "friendlyUrlPath")) {
@@ -680,14 +858,34 @@ public class BlogPostingSerDes {
 			}
 			else if (Objects.equals(jsonParserFieldName, "relatedContents")) {
 				if (jsonParserFieldValue != null) {
-					blogPosting.setRelatedContents(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> RelatedContentSerDes.toDTO((String)object)
-						).toArray(
-							size -> new RelatedContent[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					RelatedContent[] relatedContentsArray =
+						new RelatedContent[jsonParserFieldValues.length];
+
+					for (int i = 0; i < relatedContentsArray.length; i++) {
+						relatedContentsArray[i] = RelatedContentSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					blogPosting.setRelatedContents(relatedContentsArray);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "renderedContents")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					RenderedContent[] renderedContentsArray =
+						new RenderedContent[jsonParserFieldValues.length];
+
+					for (int i = 0; i < renderedContentsArray.length; i++) {
+						renderedContentsArray[i] = RenderedContentSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					blogPosting.setRenderedContents(renderedContentsArray);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "siteId")) {
@@ -697,18 +895,25 @@ public class BlogPostingSerDes {
 				}
 			}
 			else if (Objects.equals(
-						jsonParserFieldName, "taxonomyCategories")) {
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
 
 				if (jsonParserFieldValue != null) {
-					blogPosting.setTaxonomyCategories(
-						Stream.of(
-							toStrings((Object[])jsonParserFieldValue)
-						).map(
-							object -> TaxonomyCategorySerDes.toDTO(
-								(String)object)
-						).toArray(
-							size -> new TaxonomyCategory[size]
-						));
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					TaxonomyCategoryBrief[] taxonomyCategoryBriefsArray =
+						new TaxonomyCategoryBrief[jsonParserFieldValues.length];
+
+					for (int i = 0; i < taxonomyCategoryBriefsArray.length;
+						 i++) {
+
+						taxonomyCategoryBriefsArray[i] =
+							TaxonomyCategoryBriefSerDes.toDTO(
+								(String)jsonParserFieldValues[i]);
+					}
+
+					blogPosting.setTaxonomyCategoryBriefs(
+						taxonomyCategoryBriefsArray);
 				}
 			}
 			else if (Objects.equals(
@@ -725,10 +930,6 @@ public class BlogPostingSerDes {
 						BlogPosting.ViewableBy.create(
 							(String)jsonParserFieldValue));
 				}
-			}
-			else {
-				throw new IllegalArgumentException(
-					"Unsupported field name " + jsonParserFieldName);
 			}
 		}
 
@@ -758,46 +959,56 @@ public class BlogPostingSerDes {
 
 			sb.append("\"");
 			sb.append(entry.getKey());
-			sb.append("\":");
+			sb.append("\": ");
 
 			Object value = entry.getValue();
 
-			Class<?> valueClass = value.getClass();
-
-			if (value instanceof Map) {
-				sb.append(_toJSON((Map)value));
-			}
-			else if (valueClass.isArray()) {
-				Object[] values = (Object[])value;
-
-				sb.append("[");
-
-				for (int i = 0; i < values.length; i++) {
-					sb.append("\"");
-					sb.append(_escape(values[i]));
-					sb.append("\"");
-
-					if ((i + 1) < values.length) {
-						sb.append(", ");
-					}
-				}
-
-				sb.append("]");
-			}
-			else {
-				sb.append("\"");
-				sb.append(_escape(entry.getValue()));
-				sb.append("\"");
-			}
+			sb.append(_toJSON(value));
 
 			if (iterator.hasNext()) {
-				sb.append(",");
+				sb.append(", ");
 			}
 		}
 
 		sb.append("}");
 
 		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
 	}
 
 }

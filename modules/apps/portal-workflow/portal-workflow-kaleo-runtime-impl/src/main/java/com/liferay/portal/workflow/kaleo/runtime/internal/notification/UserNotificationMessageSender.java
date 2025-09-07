@@ -1,28 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.internal.notification;
 
+import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
-import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.util.PortletKeys;
-import com.liferay.portal.workflow.constants.MyWorkflowTasksConstants;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
 import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
-import com.liferay.portal.workflow.kaleo.runtime.internal.util.NotificationMessageHelper;
+import com.liferay.portal.workflow.kaleo.runtime.internal.helper.NotificationMessageHelper;
 import com.liferay.portal.workflow.kaleo.runtime.notification.BaseNotificationSender;
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationRecipient;
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationSender;
@@ -36,12 +33,14 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(
-	immediate = true, property = "notification.type=user-notification",
-	service = NotificationSender.class
-)
+@Component(service = NotificationSender.class)
 public class UserNotificationMessageSender
 	extends BaseNotificationSender implements NotificationSender {
+
+	@Override
+	public String getNotificationType() {
+		return "user-notification";
+	}
 
 	@Override
 	protected void doSendNotification(
@@ -59,32 +58,49 @@ public class UserNotificationMessageSender
 				entry : notificationRecipients.entrySet()) {
 
 			for (NotificationRecipient notificationRecipient :
-					entry.getValue()) {
-
-				if (notificationRecipient.getUserId() <= 0) {
-					continue;
-				}
-
-				if (UserNotificationManagerUtil.isDeliver(
-						notificationRecipient.getUserId(),
-						PortletKeys.MY_WORKFLOW_TASK, 0,
-						MyWorkflowTasksConstants.
-							NOTIFICATION_TYPE_MY_WORKFLOW_TASKS,
+					getDeliverableNotificationRecipients(
+						entry.getValue(),
 						UserNotificationDeliveryConstants.TYPE_WEBSITE)) {
 
-					_userNotificationEventLocalService.
-						sendUserNotificationEvents(
-							notificationRecipient.getUserId(),
-							PortletKeys.MY_WORKFLOW_TASK,
-							UserNotificationDeliveryConstants.TYPE_WEBSITE,
-							jsonObject);
+				long ctCollectionId =
+					CTCollectionThreadLocal.getCTCollectionId();
+
+				if (ctCollectionId > 0) {
+					User user = _userLocalService.fetchUser(
+						notificationRecipient.getUserId());
+
+					PermissionChecker permissionChecker =
+						_permissionCheckerFactory.create(user);
+
+					if (!_modelResourcePermission.contains(
+							permissionChecker, ctCollectionId,
+							ActionKeys.VIEW)) {
+
+						continue;
+					}
 				}
+
+				_userNotificationEventLocalService.sendUserNotificationEvents(
+					notificationRecipient.getUserId(),
+					PortletKeys.MY_WORKFLOW_TASK,
+					UserNotificationDeliveryConstants.TYPE_WEBSITE, jsonObject);
 			}
 		}
 	}
 
+	@Reference(
+		target = "(model.class.name=com.liferay.change.tracking.model.CTCollection)"
+	)
+	private ModelResourcePermission<CTCollection> _modelResourcePermission;
+
 	@Reference
 	private NotificationMessageHelper _notificationMessageHelper;
+
+	@Reference
+	private PermissionCheckerFactory _permissionCheckerFactory;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private UserNotificationEventLocalService

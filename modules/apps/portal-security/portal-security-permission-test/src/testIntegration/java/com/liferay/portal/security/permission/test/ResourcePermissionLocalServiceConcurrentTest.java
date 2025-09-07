@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.permission.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.portal.kernel.bean.ClassLoaderBeanHandler;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourcePermission;
@@ -23,16 +15,17 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.ServiceWrapper;
 import com.liferay.portal.kernel.service.persistence.ResourcePermissionPersistence;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.SynchronousInvocationHandler;
+import com.liferay.portal.kernel.test.constants.ServiceTestConstants;
 import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.service.impl.ResourcePermissionLocalServiceImpl;
-import com.liferay.portal.service.test.ServiceTestUtil;
-import com.liferay.portal.service.test.SynchronousInvocationHandler;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
 import com.liferay.portal.spring.transaction.DefaultTransactionExecutor;
 import com.liferay.portal.test.rule.ExpectedDBType;
@@ -52,7 +45,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import org.hibernate.util.JDBCExceptionReporter;
+import org.hibernate.engine.jdbc.batch.internal.BatchingBatch;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -79,8 +73,6 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 	public void setUp() throws NoSuchMethodException {
 		Assume.assumeTrue(PropsValues.RETRY_ADVICE_MAX_RETRIES != 0);
 
-		_threadCount = ServiceTestUtil.THREAD_COUNT;
-
 		if ((PropsValues.RETRY_ADVICE_MAX_RETRIES > 0) &&
 			(_threadCount > PropsValues.RETRY_ADVICE_MAX_RETRIES)) {
 
@@ -95,16 +87,23 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 		_resourceAction = _resourceActionLocalService.addResourceAction(
 			_name, _actionId, RandomTestUtil.randomLong());
 
-		_resourceActionLocalService.checkResourceActions();
-
 		AopInvocationHandler aopInvocationHandler =
 			ProxyUtil.fetchInvocationHandler(
 				_resourcePermissionLocalService, AopInvocationHandler.class);
 
+		ServiceWrapper<ResourcePermissionLocalService>
+			resourcePermissionLocalServiceWrapper =
+				(ServiceWrapper<ResourcePermissionLocalService>)
+					aopInvocationHandler.getTarget();
+
+		ClassLoaderBeanHandler classLoaderBeanHandler =
+			(ClassLoaderBeanHandler)ProxyUtil.getInvocationHandler(
+				resourcePermissionLocalServiceWrapper.getWrappedService());
+
 		final ResourcePermissionLocalServiceImpl
 			resourcePermissionLocalServiceImpl =
 				(ResourcePermissionLocalServiceImpl)
-					aopInvocationHandler.getTarget();
+					classLoaderBeanHandler.getBean();
 
 		final ResourcePermissionPersistence resourcePermissionPersistence =
 			resourcePermissionLocalServiceImpl.
@@ -164,7 +163,7 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 					@ExpectedLog(
 						expectedDBType = ExpectedDBType.MARIADB,
 						expectedLog = "Duplicate entry '",
-						expectedType = ExpectedType.PREFIX
+						expectedType = ExpectedType.CONTAINS
 					),
 					@ExpectedLog(
 						expectedDBType = ExpectedDBType.MYSQL,
@@ -187,12 +186,22 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 						expectedType = ExpectedType.CONTAINS
 					),
 					@ExpectedLog(
-						expectedDBType = ExpectedDBType.SYBASE,
-						expectedLog = "Attempt to insert duplicate key row",
-						expectedType = ExpectedType.CONTAINS
+						expectedDBType = ExpectedDBType.SQLSERVER,
+						expectedLog = "Cannot insert duplicate key row",
+						expectedType = ExpectedType.PREFIX
 					)
 				},
-				level = "ERROR", loggerClass = JDBCExceptionReporter.class
+				level = "ERROR", loggerClass = SqlExceptionHelper.class
+			),
+			@ExpectedLogs(
+				expectedLogs = {
+					@ExpectedLog(
+						expectedDBType = ExpectedDBType.NONE,
+						expectedLog = "HHH000315: Exception executing batch [java.sql.BatchUpdateException",
+						expectedType = ExpectedType.PREFIX
+					)
+				},
+				level = "ERROR", loggerClass = BatchingBatch.class
 			)
 		}
 	)
@@ -201,7 +210,7 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 		SynchronousInvocationHandler.enable();
 
 		try {
-			final String primKey = RandomTestUtil.randomString(
+			String primKey = RandomTestUtil.randomString(
 				UniqueStringRandomizerBumper.INSTANCE);
 
 			Callable<ResourcePermission> callable = () -> {
@@ -278,6 +287,6 @@ public class ResourcePermissionLocalServiceConcurrentTest {
 	@Inject
 	private RoleLocalService _roleLocalService;
 
-	private int _threadCount;
+	private int _threadCount = ServiceTestConstants.THREAD_COUNT;
 
 }

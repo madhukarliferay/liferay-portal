@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.concurrent;
@@ -452,16 +443,16 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
+		public boolean equals(Object object) {
+			if (this == object) {
 				return true;
 			}
 
-			if (!(obj instanceof Map.Entry)) {
+			if (!(object instanceof Map.Entry)) {
 				return false;
 			}
 
-			Map.Entry<K, V> entry = (Map.Entry<K, V>)obj;
+			Map.Entry<K, V> entry = (Map.Entry<K, V>)object;
 
 			if (Objects.equals(getKey(), entry.getKey()) &&
 				Objects.equals(getValue(), entry.getValue())) {
@@ -538,12 +529,12 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean contains(Object obj) {
-			if (!(obj instanceof Map.Entry<?, ?>)) {
+		public boolean contains(Object object) {
+			if (!(object instanceof Map.Entry<?, ?>)) {
 				return false;
 			}
 
-			Map.Entry<K, V> entry = (Map.Entry<K, V>)obj;
+			Map.Entry<K, V> entry = (Map.Entry<K, V>)object;
 
 			V value = ConcurrentMapperHashMap.this.get(entry.getKey());
 
@@ -565,12 +556,12 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean remove(Object obj) {
-			if (!(obj instanceof Map.Entry<?, ?>)) {
+		public boolean remove(Object object) {
+			if (!(object instanceof Map.Entry<?, ?>)) {
 				return false;
 			}
 
-			Map.Entry<K, V> entry = (Map.Entry<K, V>)obj;
+			Map.Entry<K, V> entry = (Map.Entry<K, V>)object;
 
 			return ConcurrentMapperHashMap.this.remove(
 				entry.getKey(), entry.getValue());
@@ -618,8 +609,8 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean contains(Object o) {
-			return ConcurrentMapperHashMap.this.containsKey(o);
+		public boolean contains(Object object) {
+			return ConcurrentMapperHashMap.this.containsKey(object);
 		}
 
 		@Override
@@ -633,8 +624,8 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean remove(Object o) {
-			if (ConcurrentMapperHashMap.this.remove(o) != null) {
+		public boolean remove(Object object) {
+			if (ConcurrentMapperHashMap.this.remove(object) != null) {
 				return true;
 			}
 
@@ -683,8 +674,8 @@ public abstract class ConcurrentMapperHashMap<K, IK, V, IV>
 		}
 
 		@Override
-		public boolean contains(Object obj) {
-			return ConcurrentMapperHashMap.this.containsValue(obj);
+		public boolean contains(Object object) {
+			return ConcurrentMapperHashMap.this.containsValue(object);
 		}
 
 		@Override

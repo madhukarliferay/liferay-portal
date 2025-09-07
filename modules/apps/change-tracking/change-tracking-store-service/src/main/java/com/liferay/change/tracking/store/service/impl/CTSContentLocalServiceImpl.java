@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.store.service.impl;
@@ -25,6 +16,7 @@ import com.liferay.portal.kernel.dao.jdbc.OutputBlob;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -117,7 +109,7 @@ public class CTSContentLocalServiceImpl extends CTSContentLocalServiceBaseImpl {
 			List<CTSContent> ctsContents = ctsContentPersistence.findByC_R_P_S(
 				companyId, repositoryId, path, storeType, 0, 1, null);
 
-			if ((ctsContents == null) || ctsContents.isEmpty()) {
+			if (ListUtil.isEmpty(ctsContents)) {
 				throw new NoSuchContentException(path);
 			}
 
@@ -160,8 +152,16 @@ public class CTSContentLocalServiceImpl extends CTSContentLocalServiceBaseImpl {
 		long companyId, long repositoryId, String path, String version,
 		String storeType) {
 
-		int count = ctsContentPersistence.countByC_R_P_V_S(
-			companyId, repositoryId, path, version, storeType);
+		int count = 0;
+
+		if (version.isEmpty()) {
+			count = ctsContentPersistence.countByC_R_P_S(
+				companyId, repositoryId, path, storeType);
+		}
+		else {
+			count = ctsContentPersistence.countByC_R_P_V_S(
+				companyId, repositoryId, path, version, storeType);
+		}
 
 		if (count > 0) {
 			return true;
@@ -209,10 +209,11 @@ public class CTSContentLocalServiceImpl extends CTSContentLocalServiceBaseImpl {
 			try {
 				return new OutputBlob(inputStream, fileChannel.size());
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
-						"Unable to detect file size from file channel", ioe);
+						"Unable to detect file size from file channel",
+						ioException);
 				}
 			}
 		}
@@ -225,8 +226,8 @@ public class CTSContentLocalServiceImpl extends CTSContentLocalServiceBaseImpl {
 
 			return new OutputBlob(unsyncByteArrayInputStream, bytes.length);
 		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
 		}
 	}
 

@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 
 /**
  * Provides the remote service utility for UserGroupRole. This utility wraps
@@ -30,41 +21,35 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class UserGroupRoleServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupRoleServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link UserGroupRoleServiceUtil} to access the user group role remote service. Add custom service methods to <code>com.liferay.portal.service.impl.UserGroupRoleServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	public static void addUserGroupRoles(
 			long userId, long groupId, long[] roleIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().addUserGroupRoles(userId, groupId, roleIds);
 	}
 
 	public static void addUserGroupRoles(
 			long[] userIds, long groupId, long roleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().addUserGroupRoles(userIds, groupId, roleId);
 	}
 
 	public static void deleteUserGroupRoles(
 			long userId, long groupId, long[] roleIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteUserGroupRoles(userId, groupId, roleIds);
 	}
 
 	public static void deleteUserGroupRoles(
 			long[] userIds, long groupId, long roleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteUserGroupRoles(userIds, groupId, roleId);
 	}
@@ -81,21 +66,20 @@ public class UserGroupRoleServiceUtil {
 	public static void updateUserGroupRoles(
 			long userId, long groupId, long[] addedRoleIds,
 			long[] deletedRoleIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().updateUserGroupRoles(
 			userId, groupId, addedRoleIds, deletedRoleIds);
 	}
 
 	public static UserGroupRoleService getService() {
-		if (_service == null) {
-			_service = (UserGroupRoleService)PortalBeanLocatorUtil.locate(
-				UserGroupRoleService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static UserGroupRoleService _service;
+	public static void setService(UserGroupRoleService service) {
+		_service = service;
+	}
+
+	private static volatile UserGroupRoleService _service;
 
 }

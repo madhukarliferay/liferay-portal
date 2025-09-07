@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upload;
 
-import java.io.IOException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import java.io.IOException;
 
 /**
  * @author Brian Myunghun Kim
@@ -33,15 +24,15 @@ public class LiferayServletRequest extends HttpServletRequestWrapper {
 	}
 
 	public void cleanUp() {
-		if (_lis != null) {
-			_lis.cleanUp();
+		if (_liferayInputStream != null) {
+			_liferayInputStream.cleanUp();
 		}
 	}
 
 	@Override
 	public ServletInputStream getInputStream() throws IOException {
-		if (_lis == null) {
-			_lis = new LiferayInputStream(_httpServletRequest);
+		if (_liferayInputStream == null) {
+			_liferayInputStream = new LiferayInputStream(_httpServletRequest);
 		}
 
 		if (_finishedReadingOriginalStream) {
@@ -50,14 +41,15 @@ public class LiferayServletRequest extends HttpServletRequestWrapper {
 			// the input stream, otherwise, it will return an empty input stream
 			// because it has already been parsed
 
-			if (_cachedInputStream == null) {
-				_cachedInputStream = _lis.getCachedInputStream();
+			if (_cachedServletInputStream == null) {
+				_cachedServletInputStream =
+					_liferayInputStream.getCachedInputStream();
 			}
 
-			return _cachedInputStream;
+			return _cachedServletInputStream;
 		}
 
-		return _lis;
+		return _liferayInputStream;
 	}
 
 	public void setFinishedReadingOriginalStream(
@@ -66,9 +58,9 @@ public class LiferayServletRequest extends HttpServletRequestWrapper {
 		_finishedReadingOriginalStream = finishedReadingOriginalStream;
 	}
 
-	private ServletInputStream _cachedInputStream;
+	private ServletInputStream _cachedServletInputStream;
 	private boolean _finishedReadingOriginalStream;
 	private final HttpServletRequest _httpServletRequest;
-	private LiferayInputStream _lis;
+	private LiferayInputStream _liferayInputStream;
 
 }

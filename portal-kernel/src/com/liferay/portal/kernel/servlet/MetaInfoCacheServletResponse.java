@@ -1,43 +1,32 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * @author Shuyang Zhou
@@ -102,8 +91,7 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 			}
 
 			if (metaInfoDataBag._status != SC_OK) {
-				httpServletResponse.setStatus(
-					metaInfoDataBag._status, metaInfoDataBag._statusMessage);
+				httpServletResponse.setStatus(metaInfoDataBag._status);
 			}
 		}
 	}
@@ -234,11 +222,8 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 		String contentType = _metaData._contentType;
 
 		if ((contentType != null) && (_metaData._charsetName != null)) {
-			contentType = contentType.concat(
-				"; charset="
-			).concat(
-				_metaData._charsetName
-			);
+			contentType = StringBundler.concat(
+				contentType, "; charset=", _metaData._charsetName);
 		}
 
 		return contentType;
@@ -282,19 +267,8 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 	 */
 	@Override
 	public Collection<String> getHeaders(String name) {
-		Set<Header> values = _metaData._headers.get(name);
-
-		if (values == null) {
-			return Collections.emptyList();
-		}
-
-		List<String> stringValues = new ArrayList<>();
-
-		for (Header header : values) {
-			stringValues.add(header.toString());
-		}
-
-		return stringValues;
+		return TransformUtil.transform(
+			_metaData._headers.get(name), header -> header.toString());
 	}
 
 	@Override
@@ -351,7 +325,6 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 		_metaData._headers.clear();
 		_metaData._locale = null;
 		_metaData._status = SC_OK;
-		_metaData._statusMessage = null;
 
 		// calledGetOutputStream and calledGetWriter should be cleared by
 		// resetBuffer() in subclass.
@@ -464,11 +437,7 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 
 	@Override
 	public void setContentType(String contentType) {
-		if (isCommitted()) {
-			return;
-		}
-
-		if (contentType == null) {
+		if (isCommitted() || (contentType == null)) {
 			return;
 		}
 
@@ -568,48 +537,21 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 		super.setStatus(status);
 	}
 
-	@Override
 	@SuppressWarnings("deprecation")
 	public void setStatus(int status, String statusMessage) {
-		if (isCommitted()) {
-			return;
-		}
-
-		_metaData._status = status;
-		_metaData._statusMessage = statusMessage;
-
-		super.setStatus(status, statusMessage);
+		setStatus(status);
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
-
-		sb.append("{bufferSize=");
-		sb.append(_metaData._bufferSize);
-		sb.append(", charsetName=");
-		sb.append(_metaData._charsetName);
-		sb.append(", committed=");
-		sb.append(_committed);
-		sb.append(", contentLength=");
-		sb.append(_metaData._contentLength);
-		sb.append(", contentType=");
-		sb.append(_metaData._contentType);
-		sb.append(", error=");
-		sb.append(_metaData._error);
-		sb.append(", errorMessage=");
-		sb.append(_metaData._errorMessage);
-		sb.append(", headers=");
-		sb.append(_metaData._headers);
-		sb.append(", location=");
-		sb.append(_metaData._location);
-		sb.append(", locale=");
-		sb.append(_metaData._locale);
-		sb.append(", status=");
-		sb.append(_metaData._status);
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{bufferSize=", _metaData._bufferSize, ", charsetName=",
+			_metaData._charsetName, ", committed=", _committed,
+			", contentLength=", _metaData._contentLength, ", contentType=",
+			_metaData._contentType, ", error=", _metaData._error,
+			", errorMessage=", _metaData._errorMessage, ", headers=",
+			_metaData._headers, ", location=", _metaData._location, ", locale=",
+			_metaData._locale, ", status=", _metaData._status, "}");
 	}
 
 	public static class MetaData implements Serializable {
@@ -624,7 +566,6 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 		private Locale _locale;
 		private String _location;
 		private int _status = SC_OK;
-		private String _statusMessage;
 
 	}
 
@@ -659,11 +600,7 @@ public class MetaInfoCacheServletResponse extends HttpServletResponseWrapper {
 	protected boolean calledGetWriter;
 
 	private void _setCharacterEncoding(String charsetName) {
-		if (calledGetWriter) {
-			return;
-		}
-
-		if (charsetName == null) {
+		if (calledGetWriter || (charsetName == null)) {
 			return;
 		}
 

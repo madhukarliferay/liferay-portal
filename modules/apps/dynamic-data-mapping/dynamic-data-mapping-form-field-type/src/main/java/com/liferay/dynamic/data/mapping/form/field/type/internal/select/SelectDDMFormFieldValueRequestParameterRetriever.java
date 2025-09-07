@@ -1,31 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.select;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRequestParameterRetriever;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.Objects;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -34,7 +25,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=select",
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.SELECT,
 	service = DDMFormFieldValueRequestParameterRetriever.class
 )
 public class SelectDDMFormFieldValueRequestParameterRetriever
@@ -45,40 +36,47 @@ public class SelectDDMFormFieldValueRequestParameterRetriever
 		HttpServletRequest httpServletRequest, String ddmFormFieldParameterName,
 		String defaultDDMFormFieldParameterValue) {
 
-		String[] parameterValues = ParamUtil.getParameterValues(
-			httpServletRequest, ddmFormFieldParameterName,
-			getDefaultDDMFormFieldParameterValues(
-				defaultDDMFormFieldParameterValue));
+		String ddmFormFieldParameterValue = httpServletRequest.getParameter(
+			ddmFormFieldParameterName);
 
-		return jsonFactory.serialize(parameterValues);
-	}
+		if (ddmFormFieldParameterValue != null) {
+			if (JSONUtil.isJSONArray(ddmFormFieldParameterValue)) {
+				return ddmFormFieldParameterValue;
+			}
 
-	protected String[] getDefaultDDMFormFieldParameterValues(
-		String defaultDDMFormFieldParameterValue) {
+			return "[]";
+		}
 
-		if (Validator.isNull(defaultDDMFormFieldParameterValue) ||
-			Objects.equals(defaultDDMFormFieldParameterValue, "[]")) {
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-			return GetterUtil.DEFAULT_STRING_VALUES;
+		if (themeDisplay.isLifecycleAction() ||
+			Validator.isNull(defaultDDMFormFieldParameterValue) ||
+			StringUtil.equals(defaultDDMFormFieldParameterValue, "[]")) {
+
+			return "[]";
 		}
 
 		try {
-			return jsonFactory.looseDeserialize(
-				defaultDDMFormFieldParameterValue, String[].class);
+			return _jsonFactory.serialize(
+				_jsonFactory.looseDeserialize(
+					defaultDDMFormFieldParameterValue, String[].class));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 
-			return StringUtil.split(defaultDDMFormFieldParameterValue);
+			return _jsonFactory.serialize(
+				StringUtil.split(defaultDDMFormFieldParameterValue));
 		}
 	}
 
-	@Reference
-	protected JSONFactory jsonFactory;
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		SelectDDMFormFieldValueRequestParameterRetriever.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

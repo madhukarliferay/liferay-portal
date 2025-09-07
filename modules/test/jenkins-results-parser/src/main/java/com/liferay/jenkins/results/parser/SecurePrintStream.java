@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -76,7 +67,7 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(new String(chars));
 
 		if (redactedString != null) {
-			_printStream.print(redactedString);
+			_print(redactedString, false);
 
 			return;
 		}
@@ -145,7 +136,7 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(object.toString());
 
 		if (redactedString != null) {
-			_printStream.print(redactedString);
+			_print(redactedString, false);
 
 			return;
 		}
@@ -158,12 +149,12 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(string);
 
 		if (redactedString != null) {
-			_printStream.print(redactedString);
+			_print(redactedString, false);
 
 			return;
 		}
 
-		_printStream.print(string);
+		_print(string, false);
 	}
 
 	@Override
@@ -186,7 +177,7 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(new String(chars));
 
 		if (redactedString != null) {
-			_printStream.println(redactedString);
+			_print(redactedString, true);
 
 			return;
 		}
@@ -250,12 +241,14 @@ public class SecurePrintStream extends PrintStream {
 	public void println(Object object) {
 		if (object == null) {
 			_printStream.println("null");
+
+			return;
 		}
 
 		String redactedString = _redact(object.toString());
 
 		if (redactedString != null) {
-			_printStream.println(redactedString);
+			println(redactedString);
 
 			return;
 		}
@@ -268,12 +261,11 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(string);
 
 		if (redactedString != null) {
-			_printStream.println(redactedString);
-
-			return;
+			_print(redactedString, true);
 		}
-
-		_printStream.println(string);
+		else {
+			_print(string, true);
+		}
 	}
 
 	@Override
@@ -281,7 +273,7 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(new String(bytes));
 
 		if (redactedString != null) {
-			_printStream.write(redactedString.getBytes());
+			_print(redactedString, false);
 
 			return;
 		}
@@ -295,7 +287,7 @@ public class SecurePrintStream extends PrintStream {
 			new String(Arrays.copyOfRange(buffer, offset, offset + length)));
 
 		if (redactedString != null) {
-			_printStream.print(redactedString);
+			_print(redactedString, false);
 
 			return;
 		}
@@ -308,12 +300,57 @@ public class SecurePrintStream extends PrintStream {
 		String redactedString = _redact(String.valueOf(b));
 
 		if (redactedString != null) {
-			_printStream.print(redactedString);
+			_print(redactedString, false);
 
 			return;
 		}
 
 		_printStream.write(b);
+	}
+
+	private void _print(String string, boolean appendNewLine) {
+		if ((string == null) && appendNewLine) {
+			_printStream.println();
+
+			return;
+		}
+
+		String[] lines = string.split("\n");
+
+		if (lines.length == 0) {
+			if (!string.isEmpty()) {
+				_printStream.print(string);
+			}
+
+			if (appendNewLine) {
+				_printStream.println();
+			}
+
+			return;
+		}
+
+		String lastLine = lines[lines.length - 1];
+
+		for (String line : lines) {
+			if (line.length() > _MAX_PRINT_LINE_LENGTH) {
+				_printStream.print(line.substring(0, _MAX_PRINT_LINE_LENGTH));
+
+				_printStream.print(
+					JenkinsResultsParserUtil.combine(
+						"[TRUNCATED ",
+						String.valueOf(line.length() - _MAX_PRINT_LINE_LENGTH),
+						" CHARACTERS]"));
+
+				_printStream.flush();
+			}
+			else {
+				_printStream.print(line);
+			}
+
+			if ((line != lastLine) || ((line == lastLine) && appendNewLine)) {
+				_printStream.println();
+			}
+		}
 	}
 
 	private String _redact(String string) {
@@ -329,6 +366,8 @@ public class SecurePrintStream extends PrintStream {
 
 		return redactedString;
 	}
+
+	private static final int _MAX_PRINT_LINE_LENGTH = 25000;
 
 	private final PrintStream _printStream;
 

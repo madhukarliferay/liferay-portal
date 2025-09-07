@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.client.serdes.v1_0;
@@ -17,13 +8,16 @@ package com.liferay.portal.workflow.metrics.rest.client.serdes.v1_0;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Process;
 import com.liferay.portal.workflow.metrics.rest.client.json.BaseJSONParser;
 
+import jakarta.annotation.Generated;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-
-import javax.annotation.Generated;
 
 /**
  * @author Rafael Praxedes
@@ -53,6 +47,62 @@ public class ProcessSerDes {
 
 		sb.append("{");
 
+		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (process.getActive() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"active\": ");
+
+			sb.append(process.getActive());
+		}
+
+		if (process.getDateCreated() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"dateCreated\": ");
+
+			sb.append("\"");
+
+			sb.append(liferayToJSONDateFormat.format(process.getDateCreated()));
+
+			sb.append("\"");
+		}
+
+		if (process.getDateModified() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"dateModified\": ");
+
+			sb.append("\"");
+
+			sb.append(
+				liferayToJSONDateFormat.format(process.getDateModified()));
+
+			sb.append("\"");
+		}
+
+		if (process.getDescription() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"description\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(process.getDescription()));
+
+			sb.append("\"");
+		}
+
 		if (process.getId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -63,34 +113,18 @@ public class ProcessSerDes {
 			sb.append(process.getId());
 		}
 
-		if (process.getInstanceCount() != null) {
+		if (process.getName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"instanceCount\": ");
+			sb.append("\"name\": ");
 
-			sb.append(process.getInstanceCount());
-		}
+			sb.append("\"");
 
-		if (process.getOnTimeInstanceCount() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
+			sb.append(_escape(process.getName()));
 
-			sb.append("\"onTimeInstanceCount\": ");
-
-			sb.append(process.getOnTimeInstanceCount());
-		}
-
-		if (process.getOverdueInstanceCount() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"overdueInstanceCount\": ");
-
-			sb.append(process.getOverdueInstanceCount());
+			sb.append("\"");
 		}
 
 		if (process.getTitle() != null) {
@@ -107,14 +141,28 @@ public class ProcessSerDes {
 			sb.append("\"");
 		}
 
-		if (process.getUntrackedInstanceCount() != null) {
+		if (process.getTitle_i18n() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"untrackedInstanceCount\": ");
+			sb.append("\"title_i18n\": ");
 
-			sb.append(process.getUntrackedInstanceCount());
+			sb.append(_toJSON(process.getTitle_i18n()));
+		}
+
+		if (process.getVersion() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"version\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(process.getVersion()));
+
+			sb.append("\"");
 		}
 
 		sb.append("}");
@@ -135,6 +183,41 @@ public class ProcessSerDes {
 
 		Map<String, String> map = new TreeMap<>();
 
+		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (process.getActive() == null) {
+			map.put("active", null);
+		}
+		else {
+			map.put("active", String.valueOf(process.getActive()));
+		}
+
+		if (process.getDateCreated() == null) {
+			map.put("dateCreated", null);
+		}
+		else {
+			map.put(
+				"dateCreated",
+				liferayToJSONDateFormat.format(process.getDateCreated()));
+		}
+
+		if (process.getDateModified() == null) {
+			map.put("dateModified", null);
+		}
+		else {
+			map.put(
+				"dateModified",
+				liferayToJSONDateFormat.format(process.getDateModified()));
+		}
+
+		if (process.getDescription() == null) {
+			map.put("description", null);
+		}
+		else {
+			map.put("description", String.valueOf(process.getDescription()));
+		}
+
 		if (process.getId() == null) {
 			map.put("id", null);
 		}
@@ -142,30 +225,11 @@ public class ProcessSerDes {
 			map.put("id", String.valueOf(process.getId()));
 		}
 
-		if (process.getInstanceCount() == null) {
-			map.put("instanceCount", null);
+		if (process.getName() == null) {
+			map.put("name", null);
 		}
 		else {
-			map.put(
-				"instanceCount", String.valueOf(process.getInstanceCount()));
-		}
-
-		if (process.getOnTimeInstanceCount() == null) {
-			map.put("onTimeInstanceCount", null);
-		}
-		else {
-			map.put(
-				"onTimeInstanceCount",
-				String.valueOf(process.getOnTimeInstanceCount()));
-		}
-
-		if (process.getOverdueInstanceCount() == null) {
-			map.put("overdueInstanceCount", null);
-		}
-		else {
-			map.put(
-				"overdueInstanceCount",
-				String.valueOf(process.getOverdueInstanceCount()));
+			map.put("name", String.valueOf(process.getName()));
 		}
 
 		if (process.getTitle() == null) {
@@ -175,13 +239,18 @@ public class ProcessSerDes {
 			map.put("title", String.valueOf(process.getTitle()));
 		}
 
-		if (process.getUntrackedInstanceCount() == null) {
-			map.put("untrackedInstanceCount", null);
+		if (process.getTitle_i18n() == null) {
+			map.put("title_i18n", null);
 		}
 		else {
-			map.put(
-				"untrackedInstanceCount",
-				String.valueOf(process.getUntrackedInstanceCount()));
+			map.put("title_i18n", String.valueOf(process.getTitle_i18n()));
+		}
+
+		if (process.getVersion() == null) {
+			map.put("version", null);
+		}
+		else {
+			map.put("version", String.valueOf(process.getVersion()));
 		}
 
 		return map;
@@ -200,35 +269,73 @@ public class ProcessSerDes {
 		}
 
 		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "active")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateModified")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "description")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "id")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "name")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "title")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "title_i18n")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "version")) {
+				return false;
+			}
+
+			return false;
+		}
+
+		@Override
 		protected void setField(
 			Process process, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "id")) {
+			if (Objects.equals(jsonParserFieldName, "active")) {
+				if (jsonParserFieldValue != null) {
+					process.setActive((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
+				if (jsonParserFieldValue != null) {
+					process.setDateCreated(
+						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "dateModified")) {
+				if (jsonParserFieldValue != null) {
+					process.setDateModified(
+						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "description")) {
+				if (jsonParserFieldValue != null) {
+					process.setDescription((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "id")) {
 				if (jsonParserFieldValue != null) {
 					process.setId(Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "instanceCount")) {
+			else if (Objects.equals(jsonParserFieldName, "name")) {
 				if (jsonParserFieldValue != null) {
-					process.setInstanceCount(
-						Long.valueOf((String)jsonParserFieldValue));
-				}
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "onTimeInstanceCount")) {
-
-				if (jsonParserFieldValue != null) {
-					process.setOnTimeInstanceCount(
-						Long.valueOf((String)jsonParserFieldValue));
-				}
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "overdueInstanceCount")) {
-
-				if (jsonParserFieldValue != null) {
-					process.setOverdueInstanceCount(
-						Long.valueOf((String)jsonParserFieldValue));
+					process.setName((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "title")) {
@@ -236,17 +343,16 @@ public class ProcessSerDes {
 					process.setTitle((String)jsonParserFieldValue);
 				}
 			}
-			else if (Objects.equals(
-						jsonParserFieldName, "untrackedInstanceCount")) {
-
+			else if (Objects.equals(jsonParserFieldName, "title_i18n")) {
 				if (jsonParserFieldValue != null) {
-					process.setUntrackedInstanceCount(
-						Long.valueOf((String)jsonParserFieldValue));
+					process.setTitle_i18n(
+						(Map<String, String>)jsonParserFieldValue);
 				}
 			}
-			else {
-				throw new IllegalArgumentException(
-					"Unsupported field name " + jsonParserFieldName);
+			else if (Objects.equals(jsonParserFieldName, "version")) {
+				if (jsonParserFieldValue != null) {
+					process.setVersion((String)jsonParserFieldValue);
+				}
 			}
 		}
 
@@ -276,46 +382,56 @@ public class ProcessSerDes {
 
 			sb.append("\"");
 			sb.append(entry.getKey());
-			sb.append("\":");
+			sb.append("\": ");
 
 			Object value = entry.getValue();
 
-			Class<?> valueClass = value.getClass();
-
-			if (value instanceof Map) {
-				sb.append(_toJSON((Map)value));
-			}
-			else if (valueClass.isArray()) {
-				Object[] values = (Object[])value;
-
-				sb.append("[");
-
-				for (int i = 0; i < values.length; i++) {
-					sb.append("\"");
-					sb.append(_escape(values[i]));
-					sb.append("\"");
-
-					if ((i + 1) < values.length) {
-						sb.append(", ");
-					}
-				}
-
-				sb.append("]");
-			}
-			else {
-				sb.append("\"");
-				sb.append(_escape(entry.getValue()));
-				sb.append("\"");
-			}
+			sb.append(_toJSON(value));
 
 			if (iterator.hasNext()) {
-				sb.append(",");
+				sb.append(", ");
 			}
 		}
 
 		sb.append("}");
 
 		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
 	}
 
 }

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
@@ -25,6 +17,7 @@ import com.liferay.portal.kernel.model.ServiceComponent;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.configuration.ServiceComponentConfiguration;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -46,6 +39,11 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see ServiceComponentLocalServiceUtil
  * @generated
  */
+@OSGiBeanProperties(
+	property = {
+		"model.class.name=com.liferay.portal.kernel.model.ServiceComponent"
+	}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -54,14 +52,18 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface ServiceComponentLocalService
 	extends BaseLocalService, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link ServiceComponentLocalServiceUtil} to access the service component local service. Add custom service methods to <code>com.liferay.portal.service.impl.ServiceComponentLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.ServiceComponentLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the service component local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ServiceComponentLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the service component to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was added
@@ -69,6 +71,12 @@ public interface ServiceComponentLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ServiceComponent addServiceComponent(
 		ServiceComponent serviceComponent);
+
+	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
 
 	/**
 	 * Creates a new service component with the primary key. Does not add the service component to the database.
@@ -89,6 +97,10 @@ public interface ServiceComponentLocalService
 	/**
 	 * Deletes the service component with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param serviceComponentId the primary key of the service component
 	 * @return the service component that was removed
 	 * @throws PortalException if a service component with the primary key could not be found
@@ -100,6 +112,10 @@ public interface ServiceComponentLocalService
 	/**
 	 * Deletes the service component from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was removed
 	 */
@@ -107,9 +123,11 @@ public interface ServiceComponentLocalService
 	public ServiceComponent deleteServiceComponent(
 		ServiceComponent serviceComponent);
 
-	public void destroyServiceComponent(
-		ServiceComponentConfiguration serviceComponentConfiguration,
-		ClassLoader classLoader);
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -196,6 +214,9 @@ public interface ServiceComponentLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -243,6 +264,10 @@ public interface ServiceComponentLocalService
 	/**
 	 * Updates the service component in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was updated
 	 */
@@ -255,7 +280,5 @@ public interface ServiceComponentLocalService
 			ServiceComponent previousServiceComponent, String tablesSQL,
 			String sequencesSQL, String indexesSQL)
 		throws Exception;
-
-	public void verifyDB();
 
 }

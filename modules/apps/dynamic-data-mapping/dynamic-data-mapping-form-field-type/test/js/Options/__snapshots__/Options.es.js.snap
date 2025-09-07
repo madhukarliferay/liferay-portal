@@ -1,18 +1,584 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Options shows the options 1`] = `
-<div class="form-group" data-field-name="options">
-  <div class="ddm-field-options-container">
-    <div class="ddm-options-target" data-index="0"></div>
-    <div class="ddm-field-options" data-index="0"><span class="ddm-options-drag "><svg aria-hidden="true" class="lexicon-icon lexicon-icon-drag">
-          <use xlink:href="icons.svg#drag"></use>
-        </svg></span>
-      <div class="ddm-option-entry">
-        <div class="form-group" data-field-name="option0">
-          <div class="form-group" data-field-name="keyValueLabeloption0"><input class="ddm-field-text form-control" name="keyValueLabeloption0" type="text" placeholder="enter-an-option" value=""></div>
-          <div class="active form-text key-value-editor"><label class="control-label key-value-label">field-name:</label><input class="key-value-input" type="text" value=""></div>
+<div>
+  <div
+    class="form-group hide"
+    data-field-name="options"
+  >
+    <div
+      class="ddm-field-options-container"
+    >
+      <div
+        class="ddm-options-target"
+      />
+      <div
+        class="ddm-field-options"
+      >
+        <span
+          class="ddm-options-drag"
+          draggable="true"
+        >
+          <svg
+            class="lexicon-icon lexicon-icon-drag"
+            role="presentation"
+          >
+            <use
+              href="#drag"
+            />
+          </svg>
+        </span>
+        <div
+          class="ddm-option-entry"
+        >
+          <div
+            class="panel panel-secondary"
+          >
+            <button
+              aria-controls="clay-id-1"
+              aria-expanded="true"
+              class="panel-header panel-header-link collapsable-option-header collapse-icon collapse-icon-middle show btn btn-unstyled"
+              type="button"
+            >
+              <span
+                class="panel-title"
+              >
+                Option 1
+              </span>
+              <span
+                class="collapse-icon-closed"
+              >
+                <svg
+                  class="lexicon-icon lexicon-icon-angle-right"
+                  role="presentation"
+                >
+                  <use
+                    href="#angle-right"
+                  />
+                </svg>
+              </span>
+              <span
+                class="collapse-icon-open"
+              >
+                <svg
+                  class="lexicon-icon lexicon-icon-angle-down"
+                  role="presentation"
+                >
+                  <use
+                    href="#angle-down"
+                  />
+                </svg>
+              </span>
+            </button>
+            <div
+              aria-labelledby="clay-id-1"
+              class="panel-collapse expanded"
+              id="clay-id-1"
+              role="region"
+            >
+              <div
+                class="panel-body collapsable-option-body"
+              >
+                <label
+                  for="keyValueDisplayNameoption0"
+                >
+                  display-name
+                </label>
+                <div
+                  class="form-group hide"
+                  data-field-name="option0"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueDisplayNameoption0"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option 1"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueDisplayNameoption0"
+                        name="keyValueDisplayNameoption0"
+                        placeholder="Option"
+                        type="text"
+                        value="Option 1"
+                      />
+                    </div>
+                    <input
+                      name="keyValueDisplayNameoption0_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueDisplayNameoption0_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    aria-label="remove-x-option"
+                    class="close close-modal"
+                    type="button"
+                  >
+                    <svg
+                      class="lexicon-icon lexicon-icon-times"
+                      role="presentation"
+                    >
+                      <use
+                        href="#times"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    name="option0_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="option0_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+                <label
+                  class="mt-3"
+                  for="keyValueReferenceOption1"
+                >
+                  option-reference
+                </label>
+                <div
+                  class="form-group hide"
+                  data-field-name="Option1"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueReferenceOption1"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option1"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueReferenceOption1"
+                        name="keyValueReferenceOption1"
+                        type="text"
+                        value="Option1"
+                      />
+                    </div>
+                    <input
+                      name="keyValueReferenceOption1_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueReferenceOption1_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    name="Option1_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="Option1_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+                <label
+                  class="mt-3"
+                  for="keyValueNameOption1"
+                >
+                  option-name
+                </label>
+                <span
+                  data-tooltip-align="top"
+                  title="modifying-the-option-name-may-result-in-data-loss"
+                >
+                   
+                  <svg
+                    class="lexicon-icon lexicon-icon-question-circle-full tooltip-icon"
+                    role="presentation"
+                  >
+                    <use
+                      href="#question-circle-full"
+                    />
+                  </svg>
+                </span>
+                <div
+                  class="form-group hide"
+                  data-field-name="Option1"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueNameOption1"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option1"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueNameOption1"
+                        name="keyValueNameOption1"
+                        type="text"
+                        value="Option1"
+                      />
+                    </div>
+                    <input
+                      name="keyValueNameOption1_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueNameOption1_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    name="Option1_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="Option1_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <div
+        class="ddm-options-target"
+      />
+      <div
+        class="ddm-field-options"
+      >
+        <span
+          class="ddm-options-drag"
+          draggable="true"
+        >
+          <svg
+            class="lexicon-icon lexicon-icon-drag"
+            role="presentation"
+          >
+            <use
+              href="#drag"
+            />
+          </svg>
+        </span>
+        <div
+          class="ddm-option-entry"
+        >
+          <div
+            class="panel panel-secondary"
+          >
+            <button
+              aria-controls="clay-id-2"
+              aria-expanded="true"
+              class="panel-header panel-header-link collapsable-option-header collapse-icon collapse-icon-middle show btn btn-unstyled"
+              type="button"
+            >
+              <span
+                class="panel-title"
+              >
+                Option 2
+              </span>
+              <span
+                class="collapse-icon-closed"
+              >
+                <svg
+                  class="lexicon-icon lexicon-icon-angle-right"
+                  role="presentation"
+                >
+                  <use
+                    href="#angle-right"
+                  />
+                </svg>
+              </span>
+              <span
+                class="collapse-icon-open"
+              >
+                <svg
+                  class="lexicon-icon lexicon-icon-angle-down"
+                  role="presentation"
+                >
+                  <use
+                    href="#angle-down"
+                  />
+                </svg>
+              </span>
+            </button>
+            <div
+              aria-labelledby="clay-id-2"
+              class="panel-collapse expanded"
+              id="clay-id-2"
+              role="region"
+            >
+              <div
+                class="panel-body collapsable-option-body"
+              >
+                <label
+                  for="keyValueDisplayNameoption1"
+                >
+                  display-name
+                </label>
+                <div
+                  class="form-group hide"
+                  data-field-name="option1"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueDisplayNameoption1"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option 2"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueDisplayNameoption1"
+                        name="keyValueDisplayNameoption1"
+                        placeholder="Option"
+                        type="text"
+                        value="Option 2"
+                      />
+                    </div>
+                    <input
+                      name="keyValueDisplayNameoption1_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueDisplayNameoption1_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    aria-label="remove-x-option"
+                    class="close close-modal"
+                    type="button"
+                  >
+                    <svg
+                      class="lexicon-icon lexicon-icon-times"
+                      role="presentation"
+                    >
+                      <use
+                        href="#times"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    name="option1_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="option1_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+                <label
+                  class="mt-3"
+                  for="keyValueReferenceOption2"
+                >
+                  option-reference
+                </label>
+                <div
+                  class="form-group hide"
+                  data-field-name="Option2"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueReferenceOption2"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option2"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueReferenceOption2"
+                        name="keyValueReferenceOption2"
+                        type="text"
+                        value="Any<String>"
+                      />
+                    </div>
+                    <input
+                      name="keyValueReferenceOption2_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueReferenceOption2_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    name="Option2_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="Option2_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+                <label
+                  class="mt-3"
+                  for="keyValueNameOption2"
+                >
+                  option-name
+                </label>
+                <span
+                  data-tooltip-align="top"
+                  title="modifying-the-option-name-may-result-in-data-loss"
+                >
+                   
+                  <svg
+                    class="lexicon-icon lexicon-icon-question-circle-full tooltip-icon"
+                    role="presentation"
+                  >
+                    <use
+                      href="#question-circle-full"
+                    />
+                  </svg>
+                </span>
+                <div
+                  class="form-group hide"
+                  data-field-name="Option2"
+                >
+                  <div
+                    class="form-group hide"
+                    data-field-name="keyValueNameOption2"
+                  >
+                    <div
+                      data-tooltip-align="top"
+                      title="Option2"
+                    >
+                      <input
+                        aria-invalid="true"
+                        class="form-control ddm-field-text"
+                        id="keyValueNameOption2"
+                        name="keyValueNameOption2"
+                        type="text"
+                        value="Any<String>"
+                      />
+                    </div>
+                    <input
+                      name="keyValueNameOption2_edited"
+                      type="hidden"
+                      value="false"
+                    />
+                    <div
+                      class="form-feedback-group field-feedback"
+                      id="keyValueNameOption2_fieldFeedback"
+                    >
+                      <div
+                        aria-live="assertive"
+                        class="form-feedback-item"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    name="Option2_edited"
+                    type="hidden"
+                    value="false"
+                  />
+                  <div
+                    class="form-feedback-group field-feedback"
+                    id="Option2_fieldFeedback"
+                  >
+                    <div
+                      aria-live="assertive"
+                      class="form-feedback-item"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        class="add-option-button btn btn-secondary"
+        type="button"
+      >
+        <span>
+          add-option
+        </span>
+      </button>
+    </div>
+    <input
+      name="options_edited"
+      type="hidden"
+      value="false"
+    />
+    <div
+      class="form-feedback-group field-feedback"
+      id="options_fieldFeedback"
+    >
+      <div
+        aria-live="assertive"
+        class="form-feedback-item"
+      />
     </div>
   </div>
 </div>

@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.jsdoc;
 
-import com.liferay.gradle.plugins.node.tasks.ExecuteNodeScriptTask;
+import com.liferay.gradle.plugins.node.task.ExecuteNodeScriptTask;
 import com.liferay.gradle.util.FileUtil;
+import com.liferay.gradle.util.GUtil;
 import com.liferay.gradle.util.GradleUtil;
 
 import java.io.File;
@@ -33,17 +25,21 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.resources.TextResource;
 import org.gradle.api.specs.Spec;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.util.GUtil;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 
 /**
  * @author Andrea Di Giorgi
  */
+@CacheableTask
 public class JSDocTask extends ExecuteNodeScriptTask {
 
 	public JSDocTask() {
@@ -85,17 +81,20 @@ public class JSDocTask extends ExecuteNodeScriptTask {
 
 	@InputFile
 	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getPackageJsonFile() {
 		return GradleUtil.toFile(getProject(), _packageJsonFile);
 	}
 
 	@InputFile
 	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getReadmeFile() {
 		return GradleUtil.toFile(getProject(), _readmeFile);
 	}
 
 	@InputFiles
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public FileCollection getSourceDirs() {
 		Project project = getProject();
 
@@ -104,6 +103,7 @@ public class JSDocTask extends ExecuteNodeScriptTask {
 
 	@InputDirectory
 	@Optional
+	@PathSensitive(PathSensitivity.RELATIVE)
 	public File getTutorialsDir() {
 		return GradleUtil.toFile(getProject(), _tutorialsDir);
 	}
@@ -148,6 +148,7 @@ public class JSDocTask extends ExecuteNodeScriptTask {
 		return sourceDirs(Arrays.asList(sourceDirs));
 	}
 
+	@Internal
 	@Override
 	protected List<String> getCompleteArgs() {
 		List<String> completeArgs = super.getCompleteArgs();

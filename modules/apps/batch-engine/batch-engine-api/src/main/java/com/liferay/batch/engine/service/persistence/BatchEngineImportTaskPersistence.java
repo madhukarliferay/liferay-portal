@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.service.persistence;
@@ -35,7 +26,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface BatchEngineImportTaskPersistence
 	extends BasePersistence<BatchEngineImportTask> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link BatchEngineImportTaskUtil} to access the batch engine import task persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -340,6 +331,150 @@ public interface BatchEngineImportTaskPersistence
 	public int countByUuid_C(String uuid, long companyId);
 
 	/**
+	 * Returns all the batch engine import tasks where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the matching batch engine import tasks
+	 */
+	public java.util.List<BatchEngineImportTask> findByCompanyId(
+		long companyId);
+
+	/**
+	 * Returns a range of all the batch engine import tasks where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BatchEngineImportTaskModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of batch engine import tasks
+	 * @param end the upper bound of the range of batch engine import tasks (not inclusive)
+	 * @return the range of matching batch engine import tasks
+	 */
+	public java.util.List<BatchEngineImportTask> findByCompanyId(
+		long companyId, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the batch engine import tasks where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BatchEngineImportTaskModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of batch engine import tasks
+	 * @param end the upper bound of the range of batch engine import tasks (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching batch engine import tasks
+	 */
+	public java.util.List<BatchEngineImportTask> findByCompanyId(
+		long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the batch engine import tasks where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BatchEngineImportTaskModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of batch engine import tasks
+	 * @param end the upper bound of the range of batch engine import tasks (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching batch engine import tasks
+	 */
+	public java.util.List<BatchEngineImportTask> findByCompanyId(
+		long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first batch engine import task in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching batch engine import task
+	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask findByCompanyId_First(
+			long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<BatchEngineImportTask> orderByComparator)
+		throws NoSuchImportTaskException;
+
+	/**
+	 * Returns the first batch engine import task in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask fetchByCompanyId_First(
+		long companyId,
+		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
+			orderByComparator);
+
+	/**
+	 * Returns the last batch engine import task in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching batch engine import task
+	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask findByCompanyId_Last(
+			long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<BatchEngineImportTask> orderByComparator)
+		throws NoSuchImportTaskException;
+
+	/**
+	 * Returns the last batch engine import task in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask fetchByCompanyId_Last(
+		long companyId,
+		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
+			orderByComparator);
+
+	/**
+	 * Returns the batch engine import tasks before and after the current batch engine import task in the ordered set where companyId = &#63;.
+	 *
+	 * @param batchEngineImportTaskId the primary key of the current batch engine import task
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next batch engine import task
+	 * @throws NoSuchImportTaskException if a batch engine import task with the primary key could not be found
+	 */
+	public BatchEngineImportTask[] findByCompanyId_PrevAndNext(
+			long batchEngineImportTaskId, long companyId,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<BatchEngineImportTask> orderByComparator)
+		throws NoSuchImportTaskException;
+
+	/**
+	 * Removes all the batch engine import tasks where companyId = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 */
+	public void removeByCompanyId(long companyId);
+
+	/**
+	 * Returns the number of batch engine import tasks where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching batch engine import tasks
+	 */
+	public int countByCompanyId(long companyId);
+
+	/**
 	 * Returns all the batch engine import tasks where executeStatus = &#63;.
 	 *
 	 * @param executeStatus the execute status
@@ -482,6 +617,59 @@ public interface BatchEngineImportTaskPersistence
 	 * @return the number of matching batch engine import tasks
 	 */
 	public int countByExecuteStatus(String executeStatus);
+
+	/**
+	 * Returns the batch engine import task where externalReferenceCode = &#63; and companyId = &#63; or throws a <code>NoSuchImportTaskException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching batch engine import task
+	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask findByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchImportTaskException;
+
+	/**
+	 * Returns the batch engine import task where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask fetchByERC_C(
+		String externalReferenceCode, long companyId);
+
+	/**
+	 * Returns the batch engine import task where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
+	 */
+	public BatchEngineImportTask fetchByERC_C(
+		String externalReferenceCode, long companyId, boolean useFinderCache);
+
+	/**
+	 * Removes the batch engine import task where externalReferenceCode = &#63; and companyId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the batch engine import task that was removed
+	 */
+	public BatchEngineImportTask removeByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchImportTaskException;
+
+	/**
+	 * Returns the number of batch engine import tasks where externalReferenceCode = &#63; and companyId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the number of matching batch engine import tasks
+	 */
+	public int countByERC_C(String externalReferenceCode, long companyId);
 
 	/**
 	 * Caches the batch engine import task in the entity cache if it is enabled.

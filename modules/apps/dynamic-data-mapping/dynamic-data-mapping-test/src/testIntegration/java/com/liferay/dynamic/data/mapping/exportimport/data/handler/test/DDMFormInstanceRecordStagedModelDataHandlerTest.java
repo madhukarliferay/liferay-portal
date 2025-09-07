@@ -1,22 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.exportimport.data.handler.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.dynamic.data.mapping.helper.DDMFormInstanceRecordTestHelper;
-import com.liferay.dynamic.data.mapping.helper.DDMFormInstanceTestHelper;
+import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializer;
+import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializerSerializeRequest;
+import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializerSerializeResponse;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
@@ -30,14 +22,19 @@ import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordVersionLoca
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.dynamic.data.mapping.test.util.DDMFormInstanceRecordTestUtil;
+import com.liferay.dynamic.data.mapping.test.util.DDMFormInstanceTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormValuesTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
+import com.liferay.exportimport.kernel.lar.ExportImportPathUtil;
 import com.liferay.exportimport.test.util.lar.BaseStagedModelDataHandlerTestCase;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.LinkedHashMap;
@@ -47,7 +44,6 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,23 +61,15 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-	@Ignore
-	@Override
-	@Test
-	public void testCleanStagedModelDataHandler() throws Exception {
-		super.testCleanStagedModelDataHandler();
-	}
-
 	@Test
 	public void testVersionMatchingAfterExportImport() throws Exception {
 		String fieldName = "Text";
 
-		DDMFormInstanceRecordTestHelper ddmFormInstanceRecordTestHelper =
-			new DDMFormInstanceRecordTestHelper(
-				stagingGroup, addFormInstanceWithTextField(fieldName));
+		DDMFormInstance ddmFormInstance = addFormInstanceWithTextField(
+			fieldName);
 
-		DDMFormValues ddmFormValues =
-			ddmFormInstanceRecordTestHelper.createEmptyDDMFormValues();
+		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
+			ddmFormInstance.getDDMForm());
 
 		DDMFormFieldValue ddmFormFieldValue = createTextDDMFormFieldValue(
 			ddmFormValues.getDefaultLocale(), fieldName, "text 1");
@@ -89,8 +77,9 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 		ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
 
 		DDMFormInstanceRecord ddmFormInstanceRecord =
-			ddmFormInstanceRecordTestHelper.addDDMFormInstanceRecord(
-				ddmFormValues);
+			DDMFormInstanceRecordTestUtil.addDDMFormInstanceRecord(
+				ddmFormInstance, ddmFormValues, stagingGroup,
+				TestPropsValues.getUserId());
 
 		String version = "2.0";
 
@@ -102,8 +91,10 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 
 		DDMFormInstanceRecordVersionLocalServiceUtil.
 			updateDDMFormInstanceRecordVersion(ddmFormInstanceRecordVersion);
-		DDMFormInstanceRecordLocalServiceUtil.updateDDMFormInstanceRecord(
-			ddmFormInstanceRecord);
+
+		ddmFormInstanceRecord =
+			DDMFormInstanceRecordLocalServiceUtil.updateDDMFormInstanceRecord(
+				ddmFormInstanceRecord);
 
 		exportImportStagedModel(ddmFormInstanceRecord);
 
@@ -125,20 +116,16 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 		Map<String, List<StagedModel>> dependentStagedModelsMap =
 			new LinkedHashMap<>();
 
-		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
-			group.getGroupId(), DDMFormInstance.class.getName());
-
-		DDMFormInstanceTestHelper ddmFormInstanceTestHelper =
-			new DDMFormInstanceTestHelper(group);
-
 		DDMFormInstance ddmFormInstance =
-			ddmFormInstanceTestHelper.addDDMFormInstance(ddmStructure);
+			DDMFormInstanceTestUtil.addDDMFormInstance(
+				group, TestPropsValues.getUserId());
 
 		addDependentStagedModel(
 			dependentStagedModelsMap, DDMFormInstance.class, ddmFormInstance);
 
 		addDependentStagedModel(
-			dependentStagedModelsMap, DDMStructure.class, ddmStructure);
+			dependentStagedModelsMap, DDMStructure.class,
+			ddmFormInstance.getStructure());
 
 		return dependentStagedModelsMap;
 	}
@@ -157,10 +144,10 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 			stagingGroup.getGroupId(), DDMFormInstance.class.getName(),
 			ddmForm);
 
-		DDMFormInstanceTestHelper ddmFormInstanceTestHelper =
-			new DDMFormInstanceTestHelper(stagingGroup);
-
-		return ddmFormInstanceTestHelper.addDDMFormInstance(ddmStructure);
+		return DDMFormInstanceTestUtil.addDDMFormInstance(
+			ddmStructure, stagingGroup,
+			DDMFormInstanceTestUtil.createSettingsDDMFormValues(),
+			TestPropsValues.getUserId());
 	}
 
 	@Override
@@ -175,10 +162,9 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 		DDMFormInstance ddmFormInstance =
 			(DDMFormInstance)dependentStagedModels.get(0);
 
-		DDMFormInstanceRecordTestHelper ddmFormInstanceRecordTestHelper =
-			new DDMFormInstanceRecordTestHelper(group, ddmFormInstance);
-
-		return ddmFormInstanceRecordTestHelper.addDDMFormInstanceRecord();
+		return DDMFormInstanceRecordTestUtil.
+			addDDMFormInstanceRecordWithRandomValues(
+				ddmFormInstance, group, TestPropsValues.getUserId());
 	}
 
 	protected DDMFormFieldValue createTextDDMFormFieldValue(
@@ -203,6 +189,18 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 	@Override
 	protected Class<? extends StagedModel> getStagedModelClass() {
 		return DDMFormInstanceRecord.class;
+	}
+
+	protected String serialize(DDMFormValues ddmFormValues) {
+		DDMFormValuesSerializerSerializeRequest.Builder builder =
+			DDMFormValuesSerializerSerializeRequest.Builder.newBuilder(
+				ddmFormValues);
+
+		DDMFormValuesSerializerSerializeResponse
+			ddmFormValuesSerializerSerializeResponse =
+				_ddmFormValuesSerializer.serialize(builder.build());
+
+		return ddmFormValuesSerializerSerializeResponse.getContent();
 	}
 
 	@Override
@@ -247,12 +245,24 @@ public class DDMFormInstanceRecordStagedModelDataHandlerTest
 
 		DDMFormInstanceRecord ddmFormInstanceRecord =
 			(DDMFormInstanceRecord)stagedModel;
+
+		String ddmFormValuesPath = ExportImportPathUtil.getModelPath(
+			ddmFormInstanceRecord, "ddm-form-values.json");
+
+		String serializedDDMFormValues = portletDataContext.getZipEntryAsString(
+			ddmFormValuesPath);
+
 		DDMFormInstanceRecord importedDDMFormInstanceRecord =
 			(DDMFormInstanceRecord)importedStagedModel;
 
-		Assert.assertEquals(
-			ddmFormInstanceRecord.getDDMFormValues(),
+		String serializedImportedDDMFormValues = serialize(
 			importedDDMFormInstanceRecord.getDDMFormValues());
+
+		Assert.assertEquals(
+			serializedDDMFormValues, serializedImportedDDMFormValues);
 	}
+
+	@Inject(filter = "ddm.form.values.serializer.type=json")
+	private DDMFormValuesSerializer _ddmFormValuesSerializer;
 
 }

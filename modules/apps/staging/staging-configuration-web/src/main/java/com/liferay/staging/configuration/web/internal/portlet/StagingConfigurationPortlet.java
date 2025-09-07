@@ -1,31 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.configuration.web.internal.portlet;
 
+import com.liferay.change.tracking.configuration.CTSettingsConfiguration;
 import com.liferay.exportimport.kernel.service.StagingLocalService;
 import com.liferay.exportimport.kernel.staging.Staging;
-import com.liferay.exportimport.kernel.staging.StagingConstants;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskConstants;
+import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
+import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
 import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.exception.NoSuchBackgroundTaskException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -39,23 +35,27 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.staging.constants.StagingConfigurationPortletKeys;
 import com.liferay.staging.constants.StagingProcessesPortletKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+
 import java.io.IOException;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
+import java.util.Map;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Levente Hudák
  */
 @Component(
-	immediate = true,
+	configurationPid = "com.liferay.change.tracking.configuration.CTSettingsConfiguration",
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-staging-configuration",
@@ -67,13 +67,14 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.show-portlet-inactive=false",
 		"com.liferay.portlet.system=true",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Staging Configuration",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/view.jsp",
-		"javax.portlet.name=" + StagingConfigurationPortletKeys.STAGING_CONFIGURATION,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"jakarta.portlet.display-name=Staging Configuration",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/view.jsp",
+		"jakarta.portlet.name=" + StagingConfigurationPortletKeys.STAGING_CONFIGURATION,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=power-user,user",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
@@ -85,24 +86,25 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 
 		try {
 			long backgroundTaskId = ParamUtil.getLong(
-				actionRequest, BackgroundTaskConstants.BACKGROUND_TASK_ID);
+				actionRequest,
+				BackgroundTaskConstants.MESSAGE_KEY_BACKGROUND_TASK_ID);
 
 			_backgroundTaskManager.deleteBackgroundTask(backgroundTaskId);
 
 			sendRedirect(actionRequest, actionResponse);
 		}
-		catch (Exception e) {
-			if (e instanceof NoSuchBackgroundTaskException ||
-				e instanceof PrincipalException) {
+		catch (Exception exception) {
+			if (exception instanceof NoSuchBackgroundTaskException ||
+				exception instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass());
+				SessionErrors.add(actionRequest, exception.getClass());
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(e, e);
+					_log.debug(exception);
 				}
 			}
 			else {
-				throw e;
+				throw exception;
 			}
 		}
 	}
@@ -116,11 +118,22 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		int stagingType = ParamUtil.getInteger(actionRequest, "stagingType");
+
+		if (stagingType != StagingConstants.TYPE_NOT_STAGED) {
+			CTSettingsConfiguration ctSettingsConfiguration =
+				_getCTSettingsConfiguration(themeDisplay.getCompanyId());
+
+			if (ctSettingsConfiguration.enabled()) {
+				SessionErrors.add(actionRequest, "publicationsEnabled");
+
+				return;
+			}
+		}
+
 		long liveGroupId = ParamUtil.getLong(actionRequest, "liveGroupId");
 
 		Group liveGroup = _groupLocalService.getGroup(liveGroupId);
-
-		int stagingType = ParamUtil.getInteger(actionRequest, "stagingType");
 
 		boolean branchingPublic = ParamUtil.getBoolean(
 			actionRequest, "branchingPublic");
@@ -140,8 +153,11 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 					themeDisplay.getUserId(), liveGroup, branchingPublic,
 					branchingPrivate, serviceContext);
 			}
-			catch (Exception e) {
-				SessionErrors.add(actionRequest, Exception.class, e);
+			catch (Exception exception) {
+				SessionErrors.add(
+					actionRequest, exception.getClass(), exception);
+
+				return;
 			}
 		}
 		else if (stagingType == StagingConstants.TYPE_REMOTE_STAGING) {
@@ -167,13 +183,24 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 					branchingPrivate, remoteAddress, remotePort,
 					remotePathContext, secureConnection, remoteGroupId,
 					serviceContext);
+
+				boolean overrideRemoteSiteURL = ParamUtil.getBoolean(
+					actionRequest, "overrideRemoteSiteURL");
+				String remoteSiteURL = ParamUtil.getString(
+					actionRequest, "remoteSiteURL");
+
+				_staging.setRemoteSiteURL(
+					liveGroup, overrideRemoteSiteURL, remoteSiteURL);
 			}
-			catch (Exception e) {
-				SessionErrors.add(actionRequest, Exception.class, e);
+			catch (Exception exception) {
+				SessionErrors.add(
+					actionRequest, exception.getClass(), exception);
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(e, e);
+					_log.debug(exception);
 				}
+
+				return;
 			}
 		}
 		else if (stagingType == StagingConstants.TYPE_NOT_STAGED) {
@@ -189,22 +216,24 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 			PortletURL portletURL = null;
 
 			if (stagingType == StagingConstants.TYPE_LOCAL_STAGING) {
-				portletURL = _portal.getControlPanelPortletURL(
-					actionRequest, liveGroup.getStagingGroup(),
-					StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
-					PortletRequest.RENDER_PHASE);
-
-				portletURL.setParameter(
-					"localStagingEnabled", Boolean.TRUE.toString());
+				portletURL = PortletURLBuilder.create(
+					_portal.getControlPanelPortletURL(
+						actionRequest, liveGroup.getStagingGroup(),
+						StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
+						PortletRequest.RENDER_PHASE)
+				).setParameter(
+					"localStagingEnabled", true
+				).buildPortletURL();
 			}
 			else if (stagingType == StagingConstants.TYPE_REMOTE_STAGING) {
-				portletURL = _portal.getControlPanelPortletURL(
-					actionRequest, liveGroup,
-					StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
-					PortletRequest.RENDER_PHASE);
-
-				portletURL.setParameter(
-					"remoteStagingEnabled", Boolean.TRUE.toString());
+				portletURL = PortletURLBuilder.create(
+					_portal.getControlPanelPortletURL(
+						actionRequest, liveGroup,
+						StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
+						PortletRequest.RENDER_PHASE)
+				).setParameter(
+					"remoteStagingEnabled", true
+				).buildPortletURL();
 			}
 
 			if (portletURL != null) {
@@ -217,13 +246,14 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 			// Staging was turned off or remote staging configuration was
 			// modified
 
-			PortletURL portletURL = _portal.getControlPanelPortletURL(
-				actionRequest, liveGroup,
-				StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"showStagingConfiguration", Boolean.TRUE.toString());
+			PortletURL portletURL = PortletURLBuilder.create(
+				_portal.getControlPanelPortletURL(
+					actionRequest, liveGroup,
+					StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
+					PortletRequest.RENDER_PHASE)
+			).setParameter(
+				"showStagingConfiguration", true
+			).buildPortletURL();
 
 			if (portletURL != null) {
 				redirect = portletURL.toString();
@@ -240,13 +270,14 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 
 			// Local staging configuration was modified
 
-			PortletURL portletURL = _portal.getControlPanelPortletURL(
-				actionRequest, liveGroup.getStagingGroup(),
-				StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"showStagingConfiguration", Boolean.TRUE.toString());
+			PortletURL portletURL = PortletURLBuilder.create(
+				_portal.getControlPanelPortletURL(
+					actionRequest, liveGroup.getStagingGroup(),
+					StagingProcessesPortletKeys.STAGING_PROCESSES, 0, 0,
+					PortletRequest.RENDER_PHASE)
+			).setParameter(
+				"showStagingConfiguration", true
+			).buildPortletURL();
 
 			if (portletURL != null) {
 				redirect = portletURL.toString();
@@ -260,40 +291,34 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 		sendRedirect(actionRequest, actionResponse);
 	}
 
+	@Activate
+	@Modified
+	protected void activate(Map<String, Object> properties) {
+		_defaultCTSettingsConfiguration = ConfigurableUtil.createConfigurable(
+			CTSettingsConfiguration.class, properties);
+	}
+
 	@Override
-	protected boolean isSessionErrorException(Throwable cause) {
-		if (cause instanceof LocaleException) {
+	protected boolean isSessionErrorException(Throwable throwable) {
+		if (throwable instanceof LocaleException) {
 			return true;
 		}
 
-		return super.isSessionErrorException(cause);
+		return super.isSessionErrorException(throwable);
 	}
 
-	@Reference
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
+	private CTSettingsConfiguration _getCTSettingsConfiguration(
+		long companyId) {
 
-	@Reference(unbind = "-")
-	protected void setStaging(Staging staging) {
-		_staging = staging;
-	}
+		try {
+			return _configurationProvider.getCompanyConfiguration(
+				CTSettingsConfiguration.class, companyId);
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(configurationException);
+		}
 
-	@Reference
-	protected void setStagingLocalService(
-		StagingLocalService stagingLocalService) {
-
-		_stagingLocalService = stagingLocalService;
-	}
-
-	protected void unsetGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = null;
-	}
-
-	protected void unsetStagingLocalService(
-		StagingLocalService stagingLocalService) {
-
-		_stagingLocalService = null;
+		return _defaultCTSettingsConfiguration;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -302,12 +327,21 @@ public class StagingConfigurationPortlet extends MVCPortlet {
 	@Reference
 	private BackgroundTaskManager _backgroundTaskManager;
 
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	private volatile CTSettingsConfiguration _defaultCTSettingsConfiguration;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private Staging _staging;
+
+	@Reference
 	private StagingLocalService _stagingLocalService;
 
 }

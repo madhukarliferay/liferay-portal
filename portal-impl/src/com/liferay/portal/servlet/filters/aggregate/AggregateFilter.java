@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.aggregate;
@@ -25,8 +16,7 @@ import com.liferay.portal.internal.minifier.MinifierThreadLocal;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.BrowserSniffer;
-import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.PortalWebResourceConstants;
@@ -42,18 +32,24 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.ServiceProxyFactory;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.minifier.MinifierUtil;
+import com.liferay.portal.servlet.BrowserSnifferUtil;
 import com.liferay.portal.servlet.filters.IgnoreModuleRequestFilter;
 import com.liferay.portal.servlet.filters.dynamiccss.DynamicCSSUtil;
 import com.liferay.portal.servlet.filters.util.CacheFileNameGenerator;
 import com.liferay.portal.util.AggregateUtil;
 import com.liferay.portal.util.JavaScriptBundleUtil;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Closeable;
 import java.io.File;
@@ -68,12 +64,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Brian Wing Shun Chan
@@ -143,13 +133,32 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 						importX + _CSS_IMPORT_BEGIN.length(), importY);
 				}
 
+				String normalizedImportFileName = importFileName;
+
+				if (!importFileName.isEmpty()) {
+					char firstCharacter = importFileName.charAt(0);
+
+					if ((firstCharacter == CharPool.APOSTROPHE) ||
+						(firstCharacter == CharPool.QUOTE)) {
+
+						normalizedImportFileName = importFileName.substring(
+							1, importFileName.length() - 1);
+					}
+				}
+
 				String importContent = null;
 
-				if (Validator.isUrl(importFileName)) {
+				if (Validator.isUrl(normalizedImportFileName)) {
 					ServletPaths downServletPaths = servletPaths.down(
-						importFileName);
+						normalizedImportFileName);
 
 					importContent = downServletPaths.getContent();
+
+					if (importContent == null) {
+						importContent =
+							_CSS_IMPORT_BEGIN + importFileName +
+								_CSS_IMPORT_END;
+					}
 				}
 				else {
 					int queryPos = importFileName.indexOf(CharPool.QUESTION);
@@ -241,8 +250,7 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 			sb.append(StringPool.NEW_LINE);
 		}
 
-		return getJavaScriptContent(
-			StringUtil.merge(fileNames, "+"), sb.toString());
+		return sb.toString();
 	}
 
 	@Override
@@ -252,17 +260,11 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 		_servletContext = filterConfig.getServletContext();
 
 		File tempDir = (File)_servletContext.getAttribute(
-			JavaConstants.JAVAX_SERVLET_CONTEXT_TEMPDIR);
+			JavaConstants.JAKARTA_SERVLET_CONTEXT_TEMPDIR);
 
 		_tempDir = new File(tempDir, _TEMP_DIR);
 
 		_tempDir.mkdirs();
-	}
-
-	protected static String getJavaScriptContent(
-		String resourceName, String content) {
-
-		return MinifierUtil.minifyJavaScript(resourceName, content);
 	}
 
 	protected Object getBundleContent(
@@ -402,7 +404,7 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 		File cacheDataFile = new File(
 			_tempDir, cacheCommonFileName + "_E_DATA");
 
-		if (cacheDataFile.exists() && !_isLegacyIe(httpServletRequest)) {
+		if (cacheDataFile.exists()) {
 			long fileLastModifiedTime = -1;
 
 			try (Reader reader = new FileReader(cacheDataFile);
@@ -423,12 +425,12 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 					fileLastModifiedTime) {
 
 				if (cacheContentTypeFile.exists()) {
-					String contentType = FileUtil.read(cacheContentTypeFile);
-
-					httpServletResponse.setContentType(contentType);
+					httpServletResponse.setContentType(
+						FileUtil.read(cacheContentTypeFile));
 				}
 				else if (resourcePath.endsWith(_CSS_EXTENSION)) {
-					httpServletResponse.setContentType(ContentTypes.TEXT_CSS);
+					httpServletResponse.setContentType(
+						ContentTypes.TEXT_CSS_UTF8);
 				}
 				else if (resourcePath.endsWith(_JAVASCRIPT_EXTENSION)) {
 					httpServletResponse.setContentType(
@@ -450,20 +452,22 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 				content = getCssContent(
 					httpServletRequest, httpServletResponse, resourcePath);
 
-				httpServletResponse.setContentType(ContentTypes.TEXT_CSS);
-
-				if (!_isLegacyIe(httpServletRequest)) {
-					FileUtil.write(cacheContentTypeFile, ContentTypes.TEXT_CSS);
+				if (content.startsWith(_BOM_CHAR)) {
+					content = content.substring(1);
 				}
+
+				httpServletResponse.setContentType(ContentTypes.TEXT_CSS_UTF8);
+
+				FileUtil.write(
+					cacheContentTypeFile, ContentTypes.TEXT_CSS_UTF8);
 			}
 			else if (resourcePath.endsWith(_JAVASCRIPT_EXTENSION)) {
 				if (_log.isInfoEnabled()) {
 					_log.info("Minifying JavaScript " + resourcePath);
 				}
 
-				content = getJavaScriptContent(
-					httpServletRequest, httpServletResponse, resourcePath,
-					resourceURL);
+				content = _readResource(
+					httpServletRequest, httpServletResponse, resourcePath);
 
 				httpServletResponse.setContentType(
 					ContentTypes.TEXT_JAVASCRIPT);
@@ -490,9 +494,6 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 						httpServletRequest, httpServletResponse, resourcePath,
 						content);
 				}
-				else if (minifierType.equals("js")) {
-					content = getJavaScriptContent(resourcePath, content);
-				}
 
 				FileUtil.write(
 					cacheContentTypeFile,
@@ -516,28 +517,25 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 				HttpHeaders.CACHE_CONTROL, HttpHeaders.PRAGMA_NO_CACHE_VALUE);
 
 			String finalContent = content;
-			String finalResourcePath = resourcePath;
 
 			NoticeableFuture<String> noticeableFuture =
 				_noticeableFutures.computeIfAbsent(
 					cacheCommonFileName,
 					key -> {
+						PortalExecutorManager portalExecutorManager =
+							_portalExecutorManagerSnapshot.get();
+
 						NoticeableExecutorService noticeableExecutorService =
-							_portalExecutorManager.getPortalExecutor(
+							portalExecutorManager.getPortalExecutor(
 								AggregateFilter.class.getName());
 
 						return noticeableExecutorService.submit(
 							() -> {
-								String minifiedContent = null;
+								String minifiedContent = finalContent;
 
 								if (minifierType.equals("css")) {
 									minifiedContent = MinifierUtil.minifyCss(
 										finalContent);
-								}
-								else {
-									minifiedContent =
-										MinifierUtil.minifyJavaScript(
-											finalResourcePath, finalContent);
 								}
 
 								minifiedContent = StringBundler.concat(
@@ -572,8 +570,9 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 			content = DynamicCSSUtil.replaceToken(
 				cssServletContext, httpServletRequest, content);
 		}
-		catch (Exception e) {
-			_log.error("Unable to replace tokens in CSS " + resourcePath, e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to replace tokens in CSS " + resourcePath, exception);
 
 			if (_log.isDebugEnabled()) {
 				_log.debug(content);
@@ -586,7 +585,7 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 
 		String browserId = ParamUtil.getString(httpServletRequest, "browserId");
 
-		if (!browserId.equals(BrowserSniffer.BROWSER_ID_IE)) {
+		if (!browserId.equals(BrowserSnifferUtil.BROWSER_ID_IE)) {
 			Matcher matcher = _pattern.matcher(content);
 
 			content = matcher.replaceAll(StringPool.BLANK);
@@ -624,12 +623,6 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 		String content = _readResource(
 			httpServletRequest, httpServletResponse, resourcePath);
 
-		if (_isLegacyIe(httpServletRequest)) {
-			return getCssContent(
-				httpServletRequest, httpServletResponse, cssServletContext,
-				resourcePath, content);
-		}
-
 		content = aggregateCss(
 			new ServletPaths(cssServletContext, resourcePathRoot), content);
 
@@ -653,8 +646,9 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 				httpServletRequest, httpServletResponse, cssServletContext,
 				resourcePath, content);
 		}
-		catch (Exception e) {
-			_log.error("Unable to detect servlet context " + resourcePath, e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to detect servlet context " + resourcePath, exception);
 
 			if (_log.isDebugEnabled()) {
 				_log.debug(content);
@@ -666,18 +660,6 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 
 			return content;
 		}
-	}
-
-	protected String getJavaScriptContent(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, String resourcePath,
-			URL resourceURL)
-		throws Exception {
-
-		String content = _readResource(
-			httpServletRequest, httpServletResponse, resourcePath);
-
-		return getJavaScriptContent(resourceURL.toString(), content);
 	}
 
 	@Override
@@ -722,16 +704,6 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 		}
 	}
 
-	private boolean _isLegacyIe(HttpServletRequest httpServletRequest) {
-		if (BrowserSnifferUtil.isIe(httpServletRequest) &&
-			(BrowserSnifferUtil.getMajorVersion(httpServletRequest) < 10)) {
-
-			return true;
-		}
-
-		return false;
-	}
-
 	private String _readResource(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse, String resourcePath)
@@ -741,9 +713,10 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 
 		if (url == null) {
 			ObjectValuePair<String, Long> objectValuePair =
-				RequestDispatcherUtil.getContentAndLastModifiedTime(
-					httpServletRequest.getRequestDispatcher(resourcePath),
-					httpServletRequest, httpServletResponse);
+				RequestDispatcherUtil.
+					getContentAndLastModifiedTimeObjectValuePair(
+						httpServletRequest.getRequestDispatcher(resourcePath),
+						httpServletRequest, httpServletResponse);
 
 			return objectValuePair.getKey();
 		}
@@ -754,6 +727,8 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 	}
 
 	private static final String _BASE_URL = "@base_url@";
+
+	private static final String _BOM_CHAR = "\uFEFF";
 
 	private static final String _CSS_COMMENT_BEGIN = "/*";
 
@@ -778,10 +753,9 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 
 	private static final Pattern _pattern = Pattern.compile(
 		"^(\\.ie|\\.js\\.ie)([^}]*)}", Pattern.MULTILINE);
-	private static volatile PortalExecutorManager _portalExecutorManager =
-		ServiceProxyFactory.newServiceTrackedInstance(
-			PortalExecutorManager.class, AggregateFilter.class,
-			"_portalExecutorManager", true);
+	private static final Snapshot<PortalExecutorManager>
+		_portalExecutorManagerSnapshot = new Snapshot<>(
+			AggregateFilter.class, PortalExecutorManager.class);
 
 	private final Map<String, NoticeableFuture<String>> _noticeableFutures =
 		new ConcurrentHashMap<>();

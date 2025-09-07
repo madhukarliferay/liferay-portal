@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import register from '../../../src/main/resources/META-INF/resources/liferay/portlet/register.es';
@@ -27,7 +18,7 @@ describe('PortletHub', () => {
 
 		beforeEach(() => {
 			return Promise.all([register(portletA), register(portletB)]).then(
-				values => {
+				(values) => {
 					hubA = values[0];
 
 					listenerA = hubA.addEventListener(
@@ -62,7 +53,7 @@ describe('PortletHub', () => {
 
 		it('throws a TypeError if resource parameters is invalid', () => {
 			const parameters = {
-				param1: 'paramValue1'
+				param1: 'paramValue1',
 			};
 
 			const testFn = () => {
@@ -74,7 +65,7 @@ describe('PortletHub', () => {
 
 		it('throws a TypeError if the cacheability argument is invalid', () => {
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			const testFn = () => {
@@ -94,7 +85,7 @@ describe('PortletHub', () => {
 
 		it('throws a TypeError if there are 2 res parameters arguments', () => {
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			const testFn = () => {
@@ -104,9 +95,9 @@ describe('PortletHub', () => {
 			expect(testFn).toThrow(TypeError);
 		});
 
-		it('does not throw if both arguments are valid', done => {
+		it('does not throw if both arguments are valid', (done) => {
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			return hubA
@@ -118,19 +109,19 @@ describe('PortletHub', () => {
 
 		it('returns a string if both arguments are valid', () => {
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			return hubA
 				.createResourceUrl(parameters, 'cacheLevelFull')
-				.then(url => {
+				.then((url) => {
 					expect(typeof url).toEqual('string');
 				});
 		});
 
 		it('Throws an exception if cacheability is specified first', () => {
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			const testFn = () => {
@@ -143,7 +134,7 @@ describe('PortletHub', () => {
 		it('returns a string if only cacheability present', () => {
 			return hubA
 				.createResourceUrl(null, 'cacheLevelPortlet')
-				.then(url => {
+				.then((url) => {
 					expect(typeof url).toEqual('string');
 				});
 		});
@@ -151,16 +142,16 @@ describe('PortletHub', () => {
 		it('returns a string if only resource parameters present', () => {
 			const parameters = {
 				param1: ['paramValue1'],
-				param2: ['paramValue2']
+				param2: ['paramValue2'],
 			};
 
-			return hubA.createResourceUrl(parameters).then(url => {
+			return hubA.createResourceUrl(parameters).then((url) => {
 				expect(typeof url).toEqual('string');
 			});
 		});
 
 		it('returns a string if no parameters present', () => {
-			return hubA.createResourceUrl().then(url => {
+			return hubA.createResourceUrl().then((url) => {
 				expect(typeof url).toEqual('string');
 			});
 		});
@@ -168,12 +159,12 @@ describe('PortletHub', () => {
 		it('returns a URL indicating the initiating portlet A', () => {
 			const parameters = {
 				param1: ['paramValue1'],
-				param2: ['paramValue2']
+				param2: ['paramValue2'],
 			};
 
 			return hubA
 				.createResourceUrl(parameters, 'cacheLevelPage')
-				.then(url => {
+				.then((url) => {
 					expect(typeof url).toEqual('string');
 				});
 		});
@@ -182,12 +173,12 @@ describe('PortletHub', () => {
 			const cache = 'cacheLevelPage';
 			const parameters = {
 				param1: ['paramValue1'],
-				param2: ['paramValue2']
+				param2: ['paramValue2'],
 			};
 
 			return hubB
 				.createResourceUrl(parameters, cache, 'myResourceId')
-				.then(url => {
+				.then((url) => {
 					expect(
 						global.portlet.resource.isResourceUrl(url)
 					).toBeTruthy();
@@ -198,10 +189,10 @@ describe('PortletHub', () => {
 			const cache = 'cacheLevelPage';
 			const parameters = {
 				param1: ['paramValue1'],
-				param2: ['paramValue2']
+				param2: ['paramValue2'],
 			};
 
-			return hubB.createResourceUrl(parameters, cache).then(url => {
+			return hubB.createResourceUrl(parameters, cache).then((url) => {
 				const str = global.portlet.resource.getCacheability(url);
 
 				expect(str).toEqual(cache);

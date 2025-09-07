@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchReleaseException;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -137,6 +128,8 @@ public class ReleasePersistenceTest {
 
 		newRelease.setBuildDate(RandomTestUtil.nextDate());
 
+		newRelease.setVersionDisplayName(RandomTestUtil.randomString());
+
 		newRelease.setVerified(RandomTestUtil.randomBoolean());
 
 		newRelease.setState(RandomTestUtil.nextInt());
@@ -168,6 +161,9 @@ public class ReleasePersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingRelease.getBuildDate()),
 			Time.getShortTimestamp(newRelease.getBuildDate()));
+		Assert.assertEquals(
+			existingRelease.getVersionDisplayName(),
+			newRelease.getVersionDisplayName());
 		Assert.assertEquals(
 			existingRelease.isVerified(), newRelease.isVerified());
 		Assert.assertEquals(existingRelease.getState(), newRelease.getState());
@@ -212,7 +208,8 @@ public class ReleasePersistenceTest {
 			"Release_", "mvccVersion", true, "releaseId", true, "createDate",
 			true, "modifiedDate", true, "servletContextName", true,
 			"schemaVersion", true, "buildNumber", true, "buildDate", true,
-			"verified", true, "state", true, "testString", true);
+			"versionDisplayName", true, "verified", true, "state", true,
+			"testString", true);
 	}
 
 	@Test
@@ -424,15 +421,54 @@ public class ReleasePersistenceTest {
 
 		_persistence.clearCache();
 
-		Release existingRelease = _persistence.findByPrimaryKey(
-			newRelease.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newRelease.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingRelease.getServletContextName(),
-				ReflectionTestUtil.invoke(
-					existingRelease, "getOriginalServletContextName",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		Release newRelease = addRelease();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Release.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("releaseId", newRelease.getReleaseId()));
+
+		List<Release> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(Release release) {
+		Assert.assertEquals(
+			release.getServletContextName(),
+			ReflectionTestUtil.invoke(
+				release, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "servletContextName"));
 	}
 
 	protected Release addRelease() throws Exception {
@@ -453,6 +489,8 @@ public class ReleasePersistenceTest {
 		release.setBuildNumber(RandomTestUtil.nextInt());
 
 		release.setBuildDate(RandomTestUtil.nextDate());
+
+		release.setVersionDisplayName(RandomTestUtil.randomString());
 
 		release.setVerified(RandomTestUtil.randomBoolean());
 

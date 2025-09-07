@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults;
@@ -33,7 +24,7 @@ import org.gradle.api.Project;
 public class LiferayRootDefaultsPlugin implements Plugin<Project> {
 
 	@Override
-	public void apply(final Project project) {
+	public void apply(Project project) {
 		if (FileUtil.exists(project, "app.bnd")) {
 			GradleUtil.applyPlugin(project, LiferayAppDefaultsPlugin.class);
 		}
@@ -53,22 +44,6 @@ public class LiferayRootDefaultsPlugin implements Plugin<Project> {
 				GradleUtil.applyPlugin(subproject, LiferayDefaultsPlugin.class);
 			}
 		}
-
-		if ((portalRootDir == null) && _hasYarnScriptFile(project)) {
-			GradleUtil.applyPlugin(project, LiferayYarnDefaultsPlugin.class);
-		}
-	}
-
-	private boolean _hasYarnScriptFile(Project project) {
-		File projectDir = project.getProjectDir();
-
-		File[] files = FileUtil.getFiles(projectDir, "yarn-", ".js");
-
-		if ((files != null) && (files.length > 0)) {
-			return true;
-		}
-
-		return false;
 	}
 
 }

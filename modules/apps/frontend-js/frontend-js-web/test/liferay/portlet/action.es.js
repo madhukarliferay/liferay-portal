@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import register from '../../../src/main/resources/META-INF/resources/liferay/portlet/register.es';
@@ -34,10 +25,10 @@ describe('PortletHub', () => {
 		let listenerA;
 
 		beforeEach(() => {
-			global.fetchMock([portletA]);
+			global.fetch.mockResponse(JSON.stringify([portletA]));
 
 			return Promise.all([register(portletA), register(portletB)]).then(
-				values => {
+				(values) => {
 					hubA = values[0];
 
 					listenerA = hubA.addEventListener(
@@ -99,7 +90,7 @@ describe('PortletHub', () => {
 
 		it('throws a TypeError if action parameters is invalid', () => {
 			const parameters = {
-				a: 'value'
+				a: 'value',
 			};
 
 			const testFn = () => {
@@ -138,7 +129,7 @@ describe('PortletHub', () => {
 		it('does not throw if both arguments are valid', () => {
 			const element = document.createElement('form');
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			return hubA.action(parameters, element).then(() => {
@@ -161,7 +152,7 @@ describe('PortletHub', () => {
 		it('throws an NotInitializedException if no onStateChange listener is registered.', () => {
 			const element = document.createElement('form');
 			const parameters = {
-				param1: ['paramValue1']
+				param1: ['paramValue1'],
 			};
 
 			const testFn = () => {
@@ -208,8 +199,8 @@ describe('PortletHub', () => {
 				register(portletA),
 				register(portletB),
 				register(portletC),
-				register(portletD)
-			]).then(values => {
+				register(portletD),
+			]).then((values) => {
 				hubA = values[0];
 
 				listenerA = hubA.addEventListener(
@@ -256,7 +247,7 @@ describe('PortletHub', () => {
 		});
 
 		it('throws an AccessDeniedException if called before previous action completes', () => {
-			global.fetchMock([portletA]);
+			global.fetch.mockResponse(JSON.stringify([portletA]));
 
 			const element = document.createElement('form');
 			const parameters = {};
@@ -272,7 +263,7 @@ describe('PortletHub', () => {
 		});
 
 		it('allows actions that update the state of 2 portlets. other portlets are not updated', () => {
-			global.fetchMock([portletB, portletC]);
+			global.fetch.mockResponse(JSON.stringify([portletB, portletC]));
 
 			const element = document.createElement('form');
 			const parameters = {};

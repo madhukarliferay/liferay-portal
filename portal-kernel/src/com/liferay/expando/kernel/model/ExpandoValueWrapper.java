@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.model;
@@ -22,6 +13,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,6 +37,8 @@ public class ExpandoValueWrapper
 	public Map<String, Object> getModelAttributes() {
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
+		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("valueId", getValueId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("tableId", getTableId());
@@ -58,6 +53,18 @@ public class ExpandoValueWrapper
 
 	@Override
 	public void setModelAttributes(Map<String, Object> attributes) {
+		Long mvccVersion = (Long)attributes.get("mvccVersion");
+
+		if (mvccVersion != null) {
+			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		Long valueId = (Long)attributes.get("valueId");
 
 		if (valueId != null) {
@@ -105,6 +112,11 @@ public class ExpandoValueWrapper
 		if (data != null) {
 			setData(data);
 		}
+	}
+
+	@Override
+	public ExpandoValue cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -183,6 +195,16 @@ public class ExpandoValueWrapper
 	@Override
 	public long getCompanyId() {
 		return model.getCompanyId();
+	}
+
+	/**
+	 * Returns the ct collection ID of this expando value.
+	 *
+	 * @return the ct collection ID of this expando value
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	/**
@@ -277,6 +299,16 @@ public class ExpandoValueWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getLongArray();
+	}
+
+	/**
+	 * Returns the mvcc version of this expando value.
+	 *
+	 * @return the mvcc version of this expando value
+	 */
+	@Override
+	public long getMvccVersion() {
+		return model.getMvccVersion();
 	}
 
 	@Override
@@ -396,11 +428,6 @@ public class ExpandoValueWrapper
 		return model.getValueId();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a expando value model instance should use the <code>ExpandoValue</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -471,6 +498,16 @@ public class ExpandoValueWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this expando value.
+	 *
+	 * @param ctCollectionId the ct collection ID of this expando value
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the data of this expando value.
 	 *
 	 * @param data the data of this expando value
@@ -524,10 +561,10 @@ public class ExpandoValueWrapper
 
 	@Override
 	public void setGeolocationJSONObject(
-			com.liferay.portal.kernel.json.JSONObject data)
+			com.liferay.portal.kernel.json.JSONObject dataJSONObject)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		model.setGeolocationJSONObject(data);
+		model.setGeolocationJSONObject(dataJSONObject);
 	}
 
 	@Override
@@ -556,6 +593,16 @@ public class ExpandoValueWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		model.setLongArray(data);
+	}
+
+	/**
+	 * Sets the mvcc version of this expando value.
+	 *
+	 * @param mvccVersion the mvcc version of this expando value
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		model.setMvccVersion(mvccVersion);
 	}
 
 	@Override
@@ -674,6 +721,25 @@ public class ExpandoValueWrapper
 	@Override
 	public void setValueId(long valueId) {
 		model.setValueId(valueId);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<ExpandoValue, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<ExpandoValue, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

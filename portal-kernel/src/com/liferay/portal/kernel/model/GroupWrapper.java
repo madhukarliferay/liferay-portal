@@ -1,23 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -40,10 +34,13 @@ public class GroupWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("creatorUserId", getCreatorUserId());
+		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("classNameId", getClassNameId());
 		attributes.put("classPK", getClassPK());
 		attributes.put("parentGroupId", getParentGroupId());
@@ -73,10 +70,23 @@ public class GroupWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long groupId = (Long)attributes.get("groupId");
@@ -95,6 +105,12 @@ public class GroupWrapper
 
 		if (creatorUserId != null) {
 			setCreatorUserId(creatorUserId);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
 		}
 
 		Long classNameId = (Long)attributes.get("classNameId");
@@ -214,6 +230,11 @@ public class GroupWrapper
 		model.clearStagingGroup();
 	}
 
+	@Override
+	public Group cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
 	/**
 	 * Returns the active of this group.
 	 *
@@ -242,9 +263,11 @@ public class GroupWrapper
 	@Override
 	public java.util.List<Group> getChildrenWithLayouts(
 		boolean site, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<Group> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<Group>
+			orderByComparator) {
 
-		return model.getChildrenWithLayouts(site, start, end, obc);
+		return model.getChildrenWithLayouts(
+			site, start, end, orderByComparator);
 	}
 
 	@Override
@@ -310,6 +333,16 @@ public class GroupWrapper
 	@Override
 	public String getCreatorUserUuid() {
 		return model.getCreatorUserUuid();
+	}
+
+	/**
+	 * Returns the ct collection ID of this group.
+	 *
+	 * @return the ct collection ID of this group
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	@Override
@@ -423,6 +456,13 @@ public class GroupWrapper
 	}
 
 	@Override
+	public Map<java.util.Locale, String> getDescriptiveNameMap()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getDescriptiveNameMap();
+	}
+
+	@Override
 	public String getDisplayURL(
 		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay) {
 
@@ -435,6 +475,24 @@ public class GroupWrapper
 		boolean privateLayout) {
 
 		return model.getDisplayURL(themeDisplay, privateLayout);
+	}
+
+	@Override
+	public String getDisplayURL(
+		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay,
+		boolean privateLayout, boolean controlPanel) {
+
+		return model.getDisplayURL(themeDisplay, privateLayout, controlPanel);
+	}
+
+	/**
+	 * Returns the external reference code of this group.
+	 *
+	 * @return the external reference code of this group
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -542,6 +600,16 @@ public class GroupWrapper
 	@Override
 	public int getMembershipRestriction() {
 		return model.getMembershipRestriction();
+	}
+
+	/**
+	 * Returns the modified date of this group.
+	 *
+	 * @return the modified date of this group
+	 */
+	@Override
+	public Date getModifiedDate() {
+		return model.getModifiedDate();
 	}
 
 	/**
@@ -725,6 +793,13 @@ public class GroupWrapper
 		return model.getScopeLabel(themeDisplay);
 	}
 
+	@Override
+	public String getScopeSimpleName(
+		com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay) {
+
+		return model.getScopeSimpleName(themeDisplay);
+	}
+
 	/**
 	 * Returns the site of this group.
 	 *
@@ -843,6 +918,11 @@ public class GroupWrapper
 	}
 
 	@Override
+	public boolean isCMS() {
+		return model.isCMS();
+	}
+
+	@Override
 	public boolean isCompany() {
 		return model.isCompany();
 	}
@@ -853,8 +933,18 @@ public class GroupWrapper
 	}
 
 	@Override
+	public boolean isContentSharingWithChildrenEnabled() {
+		return model.isContentSharingWithChildrenEnabled();
+	}
+
+	@Override
 	public boolean isControlPanel() {
 		return model.isControlPanel();
+	}
+
+	@Override
+	public boolean isDepot() {
+		return model.isDepot();
 	}
 
 	@Override
@@ -910,6 +1000,11 @@ public class GroupWrapper
 	@Override
 	public boolean isOrganization() {
 		return model.isOrganization();
+	}
+
+	@Override
+	public boolean isPrivateLayoutsEnabled() {
+		return model.isPrivateLayoutsEnabled();
 	}
 
 	@Override
@@ -977,11 +1072,6 @@ public class GroupWrapper
 		return model.isUserPersonalSite();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a group model instance should use the <code>Group</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -1068,6 +1158,16 @@ public class GroupWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this group.
+	 *
+	 * @param ctCollectionId the ct collection ID of this group
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the description of this group.
 	 *
 	 * @param description the description of this group
@@ -1132,6 +1232,16 @@ public class GroupWrapper
 		java.util.Locale defaultLocale) {
 
 		model.setDescriptionMap(descriptionMap, defaultLocale);
+	}
+
+	/**
+	 * Sets the external reference code of this group.
+	 *
+	 * @param externalReferenceCode the external reference code of this group
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -1202,6 +1312,16 @@ public class GroupWrapper
 	@Override
 	public void setMembershipRestriction(int membershipRestriction) {
 		model.setMembershipRestriction(membershipRestriction);
+	}
+
+	/**
+	 * Sets the modified date of this group.
+	 *
+	 * @param modifiedDate the modified date of this group
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate) {
+		model.setModifiedDate(modifiedDate);
 	}
 
 	/**
@@ -1350,9 +1470,9 @@ public class GroupWrapper
 	@Override
 	public void setTypeSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties
-			typeSettingsProperties) {
+			typeSettingsUnicodeProperties) {
 
-		model.setTypeSettingsProperties(typeSettingsProperties);
+		model.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 	}
 
 	/**
@@ -1366,8 +1486,25 @@ public class GroupWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
 	public void updateTreePath(String treePath) {
 		model.updateTreePath(treePath);
+	}
+
+	@Override
+	public Map<String, Function<Group, Object>> getAttributeGetterFunctions() {
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<Group, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.internal.importer.util;
@@ -20,11 +11,12 @@ import com.liferay.knowledge.base.constants.KBConstants;
 import com.liferay.knowledge.base.constants.KBPortletKeys;
 import com.liferay.knowledge.base.exception.KBArticleImportException;
 import com.liferay.knowledge.base.model.KBArticle;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
@@ -60,16 +52,17 @@ public class KBArticleImporterUtil {
 				kbGroupServiceConfiguration.
 					markdownImporterImageFileExtensions());
 		}
-		catch (KBArticleImportException kbaie) {
+		catch (KBArticleImportException kbArticleImportException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unsupported image file suffix used in ZIP file " +
-						imageFileName);
+						imageFileName,
+					kbArticleImportException);
 			}
 		}
 
 		try {
-			String zipReaderFileName = getZipReaderFileName(
+			String zipReaderFileName = _getZipReaderFileName(
 				kbGroupServiceConfiguration.markdownImporterImageFolder(),
 				imageFileName);
 
@@ -78,15 +71,11 @@ public class KBArticleImporterUtil {
 				zipReader.getEntryAsInputStream(zipReaderFileName),
 				fileEntriesMap);
 		}
-		catch (Exception e) {
-			StringBuilder sb = new StringBuilder(4);
-
-			sb.append("Unable to import image file ");
-			sb.append(imageFileName);
-			sb.append(": ");
-			sb.append(e.getLocalizedMessage());
-
-			throw new KBArticleImportException(sb.toString());
+		catch (Exception exception) {
+			throw new KBArticleImportException(
+				StringBundler.concat(
+					"Unable to import image file ", imageFileName, ": ",
+					exception.getLocalizedMessage()));
 		}
 	}
 
@@ -170,17 +159,17 @@ public class KBArticleImporterUtil {
 				kbArticle.getGroupId(), kbArticle.getAttachmentsFolderId(),
 				imageFileName);
 		}
-		catch (NoSuchFileEntryException nsfee) {
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfee, nsfee);
+				_log.debug(noSuchFileEntryException);
 			}
 		}
 
 		fileEntry = PortletFileRepositoryUtil.addPortletFileEntry(
-			kbArticle.getGroupId(), userId, KBArticle.class.getName(),
+			null, kbArticle.getGroupId(), userId, KBArticle.class.getName(),
 			kbArticle.getClassPK(), KBPortletKeys.KNOWLEDGE_BASE_ARTICLE,
 			kbArticle.getAttachmentsFolderId(), inputStream, imageFileName,
 			mimeType, false);
@@ -190,7 +179,7 @@ public class KBArticleImporterUtil {
 		return fileEntry;
 	}
 
-	protected static String getZipReaderFileName(
+	private static String _getZipReaderFileName(
 		String dirName, String fileName) {
 
 		if (dirName.endsWith(StringPool.SLASH)) {

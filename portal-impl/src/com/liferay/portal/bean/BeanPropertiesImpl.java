@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.bean;
@@ -28,6 +19,9 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.typeconverter.TypeConverterUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -36,12 +30,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 
-import javax.servlet.http.HttpServletRequest;
-
 import jodd.bean.BeanCopy;
 import jodd.bean.BeanUtil;
-
-import jodd.typeconverter.Convert;
 
 /**
  * @author Brian Wing Shun Chan
@@ -51,76 +41,34 @@ public class BeanPropertiesImpl implements BeanProperties {
 	@Override
 	public void copyProperties(Object source, Object target) {
 		try {
-			BeanCopy beanCopy = BeanCopy.beans(source, target);
+			BeanCopy beanCopy = new BeanCopy(source, target);
 
 			beanCopy.copy();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
-	}
-
-	@Override
-	public void copyProperties(
-		Object source, Object target, Class<?> editable) {
-
-		try {
-			BeanCopy beanCopy = BeanCopy.beans(source, target);
-
-			beanCopy.includeAs(editable);
-
-			beanCopy.copy();
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
-	}
-
-	@Override
-	public void copyProperties(
-		Object source, Object target, String[] ignoreProperties) {
-
-		try {
-			BeanCopy beanCopy = BeanCopy.beans(source, target);
-
-			beanCopy.exclude(ignoreProperties);
-
-			beanCopy.copy();
-		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
 	@Override
 	public <T> T deepCopyProperties(Object source) throws Exception {
-		ObjectInputStream objectInputStream = null;
-		ObjectOutputStream objectOutputStream = null;
-
-		try {
-			UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 				new UnsyncByteArrayOutputStream();
-
-			objectOutputStream = new ObjectOutputStream(
-				unsyncByteArrayOutputStream);
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+				unsyncByteArrayOutputStream)) {
 
 			objectOutputStream.writeObject(source);
 
 			objectOutputStream.flush();
 
-			UnsyncByteArrayInputStream unsyncByteArrayInputStream =
-				new UnsyncByteArrayInputStream(
-					unsyncByteArrayOutputStream.toByteArray());
+			try (UnsyncByteArrayInputStream unsyncByteArrayInputStream =
+					new UnsyncByteArrayInputStream(
+						unsyncByteArrayOutputStream.toByteArray());
+				ObjectInputStream objectInputStream = new ObjectInputStream(
+					unsyncByteArrayInputStream)) {
 
-			objectInputStream = new ObjectInputStream(
-				unsyncByteArrayInputStream);
-
-			return (T)objectInputStream.readObject();
-		}
-		finally {
-			objectInputStream.close();
-
-			objectOutputStream.close();
+				return (T)objectInputStream.readObject();
+			}
 		}
 	}
 
@@ -135,12 +83,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toBooleanValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Boolean.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -160,11 +109,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toBooleanValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Boolean.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -182,12 +135,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toByteValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Byte.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -205,11 +159,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toByteValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Byte.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -227,12 +185,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toDoubleValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Double.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -252,11 +211,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toDoubleValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Double.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -274,12 +237,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toFloatValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Float.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -297,11 +261,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toFloatValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Float.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -319,12 +287,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toIntValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Integer.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -342,11 +311,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toIntValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Integer.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -364,12 +337,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toLongValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Long.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -387,11 +361,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toLongValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Long.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -409,10 +387,10 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				beanValue = BeanUtil.getProperty(bean, param);
+				beanValue = BeanUtil.pojo.getProperty(bean, param);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -436,9 +414,12 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				beanValue = BeanUtil.getProperty(bean, param);
+				beanValue = BeanUtil.pojo.getProperty(bean, param);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -462,10 +443,10 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				beanType = BeanUtil.getPropertyType(bean, param);
+				beanType = BeanUtil.pojo.getPropertyType(bean, param);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -489,9 +470,12 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				beanType = BeanUtil.getPropertyType(bean, param);
+				beanType = BeanUtil.pojo.getPropertyType(bean, param);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -513,12 +497,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toShortValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Short.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -536,11 +521,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toShortValue(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, Short.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -558,12 +547,13 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toString(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, String.class, defaultValue);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 
@@ -583,11 +573,15 @@ public class BeanPropertiesImpl implements BeanProperties {
 
 		if (bean != null) {
 			try {
-				Object value = BeanUtil.getProperty(bean, param);
+				Object value = BeanUtil.pojo.getProperty(bean, param);
 
-				beanValue = Convert.toString(value, defaultValue);
+				beanValue = TypeConverterUtil.convertType(
+					value, String.class, defaultValue);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -606,10 +600,11 @@ public class BeanPropertiesImpl implements BeanProperties {
 		Object bean, HttpServletRequest httpServletRequest,
 		String[] ignoreProperties) {
 
-		Enumeration<String> enu = httpServletRequest.getParameterNames();
+		Enumeration<String> enumeration =
+			httpServletRequest.getParameterNames();
 
-		while (enu.hasMoreElements()) {
-			String name = enu.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String name = enumeration.nextElement();
 
 			if (ArrayUtil.contains(ignoreProperties, name)) {
 				continue;
@@ -623,7 +618,7 @@ public class BeanPropertiesImpl implements BeanProperties {
 				value = String.valueOf(0);
 			}
 
-			BeanUtil.setPropertyForcedSilent(bean, name, value);
+			BeanUtil.forcedSilent.setProperty(bean, name, value);
 
 			if (name.endsWith("Month")) {
 				String dateParam = name.substring(0, name.lastIndexOf("Month"));
@@ -632,7 +627,7 @@ public class BeanPropertiesImpl implements BeanProperties {
 					continue;
 				}
 
-				Class<?> propertyTypeClass = BeanUtil.getPropertyType(
+				Class<?> propertyTypeClass = BeanUtil.pojo.getPropertyType(
 					bean, dateParam);
 
 				if ((propertyTypeClass == null) ||
@@ -644,7 +639,7 @@ public class BeanPropertiesImpl implements BeanProperties {
 				Date date = getDate(dateParam, httpServletRequest);
 
 				if (date != null) {
-					BeanUtil.setPropertyForcedSilent(bean, dateParam, date);
+					BeanUtil.forcedSilent.setProperty(bean, dateParam, date);
 				}
 			}
 		}
@@ -653,16 +648,16 @@ public class BeanPropertiesImpl implements BeanProperties {
 	@Override
 	public void setProperty(Object bean, String param, Object value) {
 		try {
-			BeanUtil.setProperty(bean, param, value);
+			BeanUtil.pojo.setProperty(bean, param, value);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
 	@Override
 	public void setPropertySilent(Object bean, String param, Object value) {
-		BeanUtil.setPropertyForcedSilent(bean, param, value);
+		BeanUtil.forcedSilent.setProperty(bean, param, value);
 	}
 
 	protected Date getDate(
@@ -672,7 +667,6 @@ public class BeanPropertiesImpl implements BeanProperties {
 		int day = ParamUtil.getInteger(httpServletRequest, param + "Day");
 		int year = ParamUtil.getInteger(httpServletRequest, param + "Year");
 		int hour = ParamUtil.getInteger(httpServletRequest, param + "Hour", -1);
-		int minute = ParamUtil.getInteger(httpServletRequest, param + "Minute");
 
 		int amPm = ParamUtil.getInteger(httpServletRequest, param + "AmPm");
 
@@ -684,6 +678,8 @@ public class BeanPropertiesImpl implements BeanProperties {
 			return PortalUtil.getDate(month, day, year);
 		}
 
+		int minute = ParamUtil.getInteger(httpServletRequest, param + "Minute");
+
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
@@ -694,12 +690,12 @@ public class BeanPropertiesImpl implements BeanProperties {
 			return PortalUtil.getDate(
 				month, day, year, hour, minute, user.getTimeZone(), null);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(portalException);
 			}
 
 			return null;

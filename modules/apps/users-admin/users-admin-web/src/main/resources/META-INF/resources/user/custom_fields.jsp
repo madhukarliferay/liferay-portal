@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,42 +11,48 @@
 User selUser = (User)request.getAttribute(UsersAdminWebKeys.SELECTED_USER);
 %>
 
-<div class="autofit-padded-no-gutters autofit-row">
-	<span class="autofit-col autofit-col-expand">
-		<h4 class="sheet-tertiary-title">
+<clay:content-row>
+	<clay:content-col
+		expand="<%= true %>"
+	>
+		<span class="sheet-tertiary-title">
 			<liferay-ui:message key="custom-fields" />
-		</h4>
-	</span>
+		</span>
+	</clay:content-col>
 
 	<c:if test="<%= PortletPermissionUtil.contains(permissionChecker, PortletKeys.EXPANDO, ActionKeys.ACCESS_IN_CONTROL_PANEL) %>">
-		<span class="autofit-col">
+		<clay:content-col>
 
 			<%
-			boolean hasVisibleCustomFields = CustomFieldsUtil.hasVisibleCustomFields(company.getCompanyId(), User.class);
+			boolean hasVisibleAttributes = ExpandoAttributesUtil.hasVisibleAttributes(company.getCompanyId(), User.class);
 
 			PortletProvider.Action action = PortletProvider.Action.EDIT;
 
-			if (hasVisibleCustomFields) {
+			if (hasVisibleAttributes) {
 				action = PortletProvider.Action.MANAGE;
 			}
-
-			PortletURL customFieldsURL = PortletProviderUtil.getPortletURL(request, ExpandoColumn.class.getName(), action);
-
-			customFieldsURL.setParameter("redirect", currentURL);
-			customFieldsURL.setParameter("modelResource", User.class.getName());
 			%>
 
-			<liferay-ui:icon
-				cssClass="modify-link"
-				label="<%= true %>"
-				linkCssClass="btn btn-secondary btn-sm"
-				message='<%= hasVisibleCustomFields ? "manage" : "add" %>'
-				method="get"
-				url="<%= customFieldsURL.toString() %>"
+			<clay:link
+				aria-label='<%= hasVisibleAttributes ? LanguageUtil.format(request, "manage-x", "custom-fields") : LanguageUtil.format(request, "add-x", "custom-fields") %>'
+				cssClass="btn btn-secondary btn-sm modify-link"
+				displayType="null"
+				href='<%=
+					PortletURLBuilder.create(
+						PortletProviderUtil.getPortletURL(request, ExpandoColumn.class.getName(), action)
+					).setRedirect(
+						currentURL
+					).setParameter(
+						"backTitle", LanguageUtil.get(request, "add-user")
+					).setParameter(
+						"modelResource", User.class.getName()
+					).buildString()
+				%>'
+				label='<%= hasVisibleAttributes ? "manage" : "add" %>'
 			/>
-		</span>
+		</clay:content-col>
 	</c:if>
-</div>
+</clay:content-row>
 
 <liferay-expando:custom-attribute-list
 	className="com.liferay.portal.kernel.model.User"

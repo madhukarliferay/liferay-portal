@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.dao.jdbc;
@@ -32,10 +23,10 @@ import java.util.Map;
  */
 public class SmartResultSet {
 
-	public SmartResultSet(ResultSet rs) throws SQLException {
-		_rs = rs;
+	public SmartResultSet(ResultSet resultSet) throws SQLException {
+		_resultSet = resultSet;
 
-		_metaData = _rs.getMetaData();
+		_metaData = resultSet.getMetaData();
 
 		_columnCount = _metaData.getColumnCount();
 
@@ -81,7 +72,7 @@ public class SmartResultSet {
 
 		// Let the result set figure it out
 
-		columnIndex = _rs.findColumn(columnName);
+		columnIndex = _resultSet.findColumn(columnName);
 
 		_columnIndexCache.put(columnName, columnIndex);
 
@@ -89,104 +80,104 @@ public class SmartResultSet {
 	}
 
 	public boolean first() throws SQLException {
-		return _rs.first();
+		return _resultSet.first();
 	}
 
 	public Date getDate(int columnIndex) throws SQLException {
-		return _rs.getDate(columnIndex);
+		return _resultSet.getDate(columnIndex);
 	}
 
 	public Date getDate(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getDate(columnIndex);
+		return _resultSet.getDate(columnIndex);
 	}
 
 	public double getDouble(int columnIndex) throws SQLException {
-		return _rs.getDouble(columnIndex);
+		return _resultSet.getDouble(columnIndex);
 	}
 
 	public double getDouble(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getDouble(columnIndex);
+		return _resultSet.getDouble(columnIndex);
 	}
 
 	public float getFloat(int columnIndex) throws SQLException {
-		return _rs.getFloat(columnIndex);
+		return _resultSet.getFloat(columnIndex);
 	}
 
 	public float getFloat(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getFloat(columnIndex);
+		return _resultSet.getFloat(columnIndex);
 	}
 
 	public int getInt(int columnIndex) throws SQLException {
-		return _rs.getInt(columnIndex);
+		return _resultSet.getInt(columnIndex);
 	}
 
 	public int getInt(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getInt(columnIndex);
+		return _resultSet.getInt(columnIndex);
 	}
 
 	public long getLong(int columnIndex) throws SQLException {
-		return _rs.getLong(columnIndex);
+		return _resultSet.getLong(columnIndex);
 	}
 
 	public long getLong(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getLong(columnIndex);
+		return _resultSet.getLong(columnIndex);
 	}
 
 	public short getShort(int columnIndex) throws SQLException {
-		return _rs.getShort(columnIndex);
+		return _resultSet.getShort(columnIndex);
 	}
 
 	public short getShort(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getShort(columnIndex);
+		return _resultSet.getShort(columnIndex);
 	}
 
 	public String getString(int columnIndex) throws SQLException {
-		return _rs.getString(columnIndex);
+		return _resultSet.getString(columnIndex);
 	}
 
 	public String getString(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getString(columnIndex);
+		return _resultSet.getString(columnIndex);
 	}
 
 	public Timestamp getTimestamp(int columnIndex) throws SQLException {
-		return _rs.getTimestamp(columnIndex);
+		return _resultSet.getTimestamp(columnIndex);
 	}
 
 	public Timestamp getTimestamp(String columnName) throws SQLException {
 		int columnIndex = findColumn(columnName);
 
-		return _rs.getTimestamp(columnIndex);
+		return _resultSet.getTimestamp(columnIndex);
 	}
 
 	public boolean last() throws SQLException {
-		return _rs.last();
+		return _resultSet.last();
 	}
 
 	public boolean next() throws SQLException {
-		return _rs.next();
+		return _resultSet.next();
 	}
 
 	public boolean previous() throws SQLException {
-		return _rs.previous();
+		return _resultSet.previous();
 	}
 
 	private final int _columnCount;
 	private final Map<String, Integer> _columnIndexCache;
 	private final ResultSetMetaData _metaData;
-	private final ResultSet _rs;
+	private final ResultSet _resultSet;
 
 }

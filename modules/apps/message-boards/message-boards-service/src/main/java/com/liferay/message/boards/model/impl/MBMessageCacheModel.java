@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model.impl;
@@ -18,6 +9,7 @@ import com.liferay.message.boards.model.MBMessage;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -33,21 +25,23 @@ import java.util.Date;
  * @generated
  */
 public class MBMessageCacheModel
-	implements CacheModel<MBMessage>, Externalizable {
+	implements CacheModel<MBMessage>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof MBMessageCacheModel)) {
+		if (!(object instanceof MBMessageCacheModel)) {
 			return false;
 		}
 
-		MBMessageCacheModel mbMessageCacheModel = (MBMessageCacheModel)obj;
+		MBMessageCacheModel mbMessageCacheModel = (MBMessageCacheModel)object;
 
-		if (messageId == mbMessageCacheModel.messageId) {
+		if ((messageId == mbMessageCacheModel.messageId) &&
+			(mvccVersion == mbMessageCacheModel.mvccVersion)) {
+
 			return true;
 		}
 
@@ -56,15 +50,33 @@ public class MBMessageCacheModel
 
 	@Override
 	public int hashCode() {
-		return HashUtil.hash(0, messageId);
+		int hashCode = HashUtil.hash(0, messageId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
+	@Override
+	public long getMvccVersion() {
+		return mvccVersion;
+	}
+
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		this.mvccVersion = mvccVersion;
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(55);
+		StringBundler sb = new StringBundler(63);
 
-		sb.append("{uuid=");
+		sb.append("{mvccVersion=");
+		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
+		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", messageId=");
 		sb.append(messageId);
 		sb.append(", groupId=");
@@ -95,6 +107,8 @@ public class MBMessageCacheModel
 		sb.append(treePath);
 		sb.append(", subject=");
 		sb.append(subject);
+		sb.append(", urlSubject=");
+		sb.append(urlSubject);
 		sb.append(", body=");
 		sb.append(body);
 		sb.append(", format=");
@@ -126,11 +140,21 @@ public class MBMessageCacheModel
 	public MBMessage toEntityModel() {
 		MBMessageImpl mbMessageImpl = new MBMessageImpl();
 
+		mbMessageImpl.setMvccVersion(mvccVersion);
+		mbMessageImpl.setCtCollectionId(ctCollectionId);
+
 		if (uuid == null) {
 			mbMessageImpl.setUuid("");
 		}
 		else {
 			mbMessageImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			mbMessageImpl.setExternalReferenceCode("");
+		}
+		else {
+			mbMessageImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		mbMessageImpl.setMessageId(messageId);
@@ -178,6 +202,13 @@ public class MBMessageCacheModel
 		}
 		else {
 			mbMessageImpl.setSubject(subject);
+		}
+
+		if (urlSubject == null) {
+			mbMessageImpl.setUrlSubject("");
+		}
+		else {
+			mbMessageImpl.setUrlSubject(urlSubject);
 		}
 
 		if (body == null) {
@@ -229,8 +260,14 @@ public class MBMessageCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
+		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		messageId = objectInput.readLong();
 
@@ -256,7 +293,8 @@ public class MBMessageCacheModel
 		parentMessageId = objectInput.readLong();
 		treePath = objectInput.readUTF();
 		subject = objectInput.readUTF();
-		body = objectInput.readUTF();
+		urlSubject = objectInput.readUTF();
+		body = (String)objectInput.readObject();
 		format = objectInput.readUTF();
 
 		anonymous = objectInput.readBoolean();
@@ -277,11 +315,22 @@ public class MBMessageCacheModel
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(messageId);
@@ -328,11 +377,18 @@ public class MBMessageCacheModel
 			objectOutput.writeUTF(subject);
 		}
 
-		if (body == null) {
+		if (urlSubject == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(body);
+			objectOutput.writeUTF(urlSubject);
+		}
+
+		if (body == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(body);
 		}
 
 		if (format == null) {
@@ -365,7 +421,10 @@ public class MBMessageCacheModel
 		objectOutput.writeLong(statusDate);
 	}
 
+	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long messageId;
 	public long groupId;
 	public long companyId;
@@ -381,6 +440,7 @@ public class MBMessageCacheModel
 	public long parentMessageId;
 	public String treePath;
 	public String subject;
+	public String urlSubject;
 	public String body;
 	public String format;
 	public boolean anonymous;

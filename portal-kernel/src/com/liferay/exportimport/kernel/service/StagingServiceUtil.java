@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for Staging. This utility wraps
@@ -30,27 +25,43 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class StagingServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.StagingServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link StagingServiceUtil} to access the staging remote service. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.StagingServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	public static void cleanUpStagingRequest(long stagingRequestId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().cleanUpStagingRequest(stagingRequestId);
 	}
 
 	public static long createStagingRequest(long groupId, String checksum)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().createStagingRequest(groupId, checksum);
+	}
+
+	public static void enableLocalStaging(
+			long groupId, boolean branchingPublic, boolean branchingPrivate,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		getService().enableLocalStaging(
+			groupId, branchingPublic, branchingPrivate, serviceContext);
+	}
+
+	public static void enableRemoteStaging(
+			long groupId, boolean branchingPublic, boolean branchingPrivate,
+			String remoteAddress, int remotePort, String remotePathContext,
+			boolean secureConnection, long remoteGroupId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		getService().enableRemoteStaging(
+			groupId, branchingPublic, branchingPrivate, remoteAddress,
+			remotePort, remotePathContext, secureConnection, remoteGroupId,
+			serviceContext);
 	}
 
 	/**
@@ -64,15 +75,15 @@ public class StagingServiceUtil {
 
 	public static boolean hasRemoteLayout(
 			String uuid, long groupId, boolean privateLayout)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().hasRemoteLayout(uuid, groupId, privateLayout);
 	}
 
 	public static void propagateExportImportLifecycleEvent(
 			int code, int processFlag, String processId,
-			java.util.List<java.io.Serializable> arguments)
-		throws com.liferay.portal.kernel.exception.PortalException {
+			List<Serializable> arguments)
+		throws PortalException {
 
 		getService().propagateExportImportLifecycleEvent(
 			code, processFlag, processId, arguments);
@@ -83,7 +94,7 @@ public class StagingServiceUtil {
 				long stagingRequestId,
 				com.liferay.exportimport.kernel.model.ExportImportConfiguration
 					exportImportConfiguration)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().publishStagingRequest(
 			stagingRequestId, exportImportConfiguration);
@@ -91,20 +102,19 @@ public class StagingServiceUtil {
 
 	public static void updateStagingRequest(
 			long stagingRequestId, String fileName, byte[] bytes)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().updateStagingRequest(stagingRequestId, fileName, bytes);
 	}
 
 	public static StagingService getService() {
-		if (_service == null) {
-			_service = (StagingService)PortalBeanLocatorUtil.locate(
-				StagingService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static StagingService _service;
+	public static void setService(StagingService service) {
+		_service = service;
+	}
+
+	private static volatile StagingService _service;
 
 }

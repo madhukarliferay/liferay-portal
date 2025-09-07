@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
@@ -20,14 +11,14 @@ import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletPreferencesIds;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PreferencesValidator;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 import java.util.Map;
-
-import javax.portlet.PortletPreferences;
-import javax.portlet.PortletRequest;
-import javax.portlet.PreferencesValidator;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -71,7 +62,7 @@ public interface PortletPreferencesFactory {
 		HttpServletRequest httpServletRequest);
 
 	public PortalPreferences getPortalPreferences(
-		HttpSession session, long userId, boolean signedIn);
+		HttpSession httpSession, long userId, boolean signedIn);
 
 	public PortalPreferences getPortalPreferences(
 		long userId, boolean signedIn);
@@ -96,6 +87,11 @@ public interface PortletPreferencesFactory {
 			long scopeGroupId, long userId, Layout layout, String portletId,
 			boolean modeEditGuest)
 		throws PortalException;
+
+	public PortletPreferencesIds getPortletPreferencesIds(
+			long companyId, long siteGroupId, long layoutGroupId, long plid,
+			String portletId)
+		throws IllegalArgumentException;
 
 	public PortletPreferencesIds getPortletPreferencesIds(
 		long companyId, long siteGroupId, long plid, String portletId,

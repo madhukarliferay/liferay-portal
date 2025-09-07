@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
@@ -37,17 +28,17 @@ public class DDMFormInstanceVersionCacheModel
 	implements CacheModel<DDMFormInstanceVersion>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMFormInstanceVersionCacheModel)) {
+		if (!(object instanceof DDMFormInstanceVersionCacheModel)) {
 			return false;
 		}
 
 		DDMFormInstanceVersionCacheModel ddmFormInstanceVersionCacheModel =
-			(DDMFormInstanceVersionCacheModel)obj;
+			(DDMFormInstanceVersionCacheModel)object;
 
 		if ((formInstanceVersionId ==
 				ddmFormInstanceVersionCacheModel.formInstanceVersionId) &&
@@ -78,10 +69,12 @@ public class DDMFormInstanceVersionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", formInstanceVersionId=");
 		sb.append(formInstanceVersionId);
 		sb.append(", groupId=");
@@ -125,6 +118,7 @@ public class DDMFormInstanceVersionCacheModel
 			new DDMFormInstanceVersionImpl();
 
 		ddmFormInstanceVersionImpl.setMvccVersion(mvccVersion);
+		ddmFormInstanceVersionImpl.setCtCollectionId(ctCollectionId);
 		ddmFormInstanceVersionImpl.setFormInstanceVersionId(
 			formInstanceVersionId);
 		ddmFormInstanceVersionImpl.setGroupId(groupId);
@@ -199,8 +193,12 @@ public class DDMFormInstanceVersionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		formInstanceVersionId = objectInput.readLong();
 
@@ -216,8 +214,8 @@ public class DDMFormInstanceVersionCacheModel
 
 		structureVersionId = objectInput.readLong();
 		name = objectInput.readUTF();
-		description = objectInput.readUTF();
-		settings = objectInput.readUTF();
+		description = (String)objectInput.readObject();
+		settings = (String)objectInput.readObject();
 		version = objectInput.readUTF();
 
 		status = objectInput.readInt();
@@ -230,6 +228,8 @@ public class DDMFormInstanceVersionCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(formInstanceVersionId);
 
@@ -260,17 +260,17 @@ public class DDMFormInstanceVersionCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		if (version == null) {
@@ -295,6 +295,7 @@ public class DDMFormInstanceVersionCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long formInstanceVersionId;
 	public long groupId;
 	public long companyId;

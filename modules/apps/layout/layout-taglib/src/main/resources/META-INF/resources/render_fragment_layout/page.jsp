@@ -1,49 +1,46 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/render_fragment_layout/init.jsp" %>
 
 <%
-JSONArray structureJSONArray = (JSONArray)request.getAttribute("liferay-layout:render-fragment-layout:structureJSONArray");
+String mainItemId = (String)request.getAttribute("liferay-layout:render-fragment-layout:mainItemId");
+String mode = (String)request.getAttribute("liferay-layout:render-fragment-layout:mode");
+boolean showPreview = GetterUtil.getBoolean(request.getAttribute("liferay-layout:render-fragment-layout:showPreview"));
 %>
 
-<c:if test="<%= structureJSONArray != null %>">
-	<div class="layout-content portlet-layout" id="main-content" role="main">
+<liferay-util:dynamic-include key="com.liferay.layout,taglib#/render_fragment_layout/page.jsp#pre" />
 
-		<%
-		try {
-			request.setAttribute(WebKeys.SHOW_PORTLET_TOPPER, Boolean.TRUE);
+<%
+try {
+	request.setAttribute(WebKeys.SHOW_PORTLET_TOPPER, Boolean.FALSE);
+%>
 
-			RenderFragmentLayoutDisplayContext renderFragmentLayoutDisplayContext = new RenderFragmentLayoutDisplayContext(request, response);
+	<liferay-util:buffer
+		var="content"
+	>
+		<liferay-layout:render-layout-structure
+			mainItemId="<%= mainItemId %>"
+			mode="<%= mode %>"
+			showPreview="<%= showPreview %>"
+		/>
+	</liferay-util:buffer>
 
-			request.setAttribute("render_layout_data_structure.jsp-renderFragmentLayoutDisplayContext", renderFragmentLayoutDisplayContext);
+	<%
+	LayoutAdaptiveMediaProcessor layoutAdaptiveMediaProcessor = ServletContextUtil.getLayoutAdaptiveMediaProcessor();
+	%>
 
-			request.setAttribute("render_layout_data_structure.jsp-structureJSONArray", structureJSONArray);
-		%>
+	<%= layoutAdaptiveMediaProcessor.processAdaptiveMediaContent(content) %>
 
-			<%= renderFragmentLayoutDisplayContext.getPortletPaths() %>
+<%
+}
+finally {
+	request.removeAttribute(WebKeys.SHOW_PORTLET_TOPPER);
+}
+%>
 
-			<liferay-util:include page="/render_fragment_layout/render_layout_data_structure.jsp" servletContext="<%= application %>" />
-
-		<%
-		}
-		finally {
-			request.removeAttribute(WebKeys.SHOW_PORTLET_TOPPER);
-		}
-		%>
-
-	</div>
-</c:if>
+<liferay-util:dynamic-include key="com.liferay.layout,taglib#/render_fragment_layout/page.jsp#post" />

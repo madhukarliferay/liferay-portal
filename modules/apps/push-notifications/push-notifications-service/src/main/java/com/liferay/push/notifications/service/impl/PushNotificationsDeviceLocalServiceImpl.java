@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.push.notifications.service.impl;
@@ -23,6 +14,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.push.notifications.constants.PushNotificationsDestinationNames;
 import com.liferay.push.notifications.model.PushNotificationsDevice;
@@ -56,7 +48,7 @@ public class PushNotificationsDeviceLocalServiceImpl
 			long userId, String platform, String token)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long pushNotificationsDeviceId = counterLocalService.increment();
 
@@ -70,9 +62,8 @@ public class PushNotificationsDeviceLocalServiceImpl
 		pushNotificationsDevice.setPlatform(platform);
 		pushNotificationsDevice.setToken(token);
 
-		pushNotificationsDevicePersistence.update(pushNotificationsDevice);
-
-		return pushNotificationsDevice;
+		return pushNotificationsDevicePersistence.update(
+			pushNotificationsDevice);
 	}
 
 	@Override
@@ -134,26 +125,26 @@ public class PushNotificationsDeviceLocalServiceImpl
 			return;
 		}
 
-		Exception exception = null;
+		Exception exception1 = null;
 
 		try {
 			pushNotificationsSender.send(tokens, payloadJSONObject);
 		}
-		catch (PortalException pe) {
-			exception = pe;
+		catch (PortalException portalException) {
+			exception1 = portalException;
 
-			throw pe;
+			throw portalException;
 		}
-		catch (Exception e) {
-			exception = e;
+		catch (Exception exception2) {
+			exception1 = exception2;
 
-			throw new PortalException(e);
+			throw new PortalException(exception2);
 		}
 		finally {
-			if (exception != null) {
+			if (exception1 != null) {
 				Message message = new Message();
 
-				message.setPayload(new BaseResponse(platform, exception));
+				message.setPayload(new BaseResponse(platform, exception1));
 
 				_messageBus.sendMessage(
 					PushNotificationsDestinationNames.
@@ -187,7 +178,10 @@ public class PushNotificationsDeviceLocalServiceImpl
 	}
 
 	@Deactivate
+	@Override
 	protected void deactivate() {
+		super.deactivate();
+
 		_serviceTrackerMap.close();
 	}
 
@@ -196,5 +190,8 @@ public class PushNotificationsDeviceLocalServiceImpl
 
 	private ServiceTrackerMap<String, PushNotificationsSender>
 		_serviceTrackerMap;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

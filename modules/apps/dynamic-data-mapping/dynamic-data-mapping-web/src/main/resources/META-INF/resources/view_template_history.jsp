@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,17 +16,25 @@ DDMTemplate template = DDMTemplateServiceUtil.getTemplate(templateId);
 
 String title = LanguageUtil.format(request, "x-history", template.getName(locale), false);
 
-PortletURL portletURL = renderResponse.createRenderURL();
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/view_template_history.jsp"
+).setRedirect(
+	redirect
+).setParameter(
+	"templateId", templateId
+).buildPortletURL();
 
-portletURL.setParameter("mvcPath", "/view_template_history.jsp");
-portletURL.setParameter("redirect", redirect);
-portletURL.setParameter("templateId", String.valueOf(templateId));
-
-PortletURL backURL = renderResponse.createRenderURL();
-
-backURL.setParameter("mvcPath", "/edit_template.jsp");
-backURL.setParameter("redirect", redirect);
-backURL.setParameter("templateId", String.valueOf(templateId));
+PortletURL backURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/edit_template.jsp"
+).setRedirect(
+	redirect
+).setParameter(
+	"templateId", templateId
+).buildPortletURL();
 %>
 
 <c:choose>
@@ -52,13 +51,13 @@ backURL.setParameter("templateId", String.valueOf(templateId));
 	<c:otherwise>
 		<liferay-ui:header
 			backURL="<%= backURL.toString() %>"
-			cssClass="container-fluid-1280"
+			cssClass="container-fluid container-fluid-max-xl"
 			title="<%= title %>"
 		/>
 	</c:otherwise>
 </c:choose>
 
-<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= portletURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<liferay-ui:search-container
 		searchContainer="<%= new TemplateSearch(renderRequest, portletURL) %>"
 		total="<%= DDMTemplateVersionServiceUtil.getTemplateVersionsCount(templateId) %>"

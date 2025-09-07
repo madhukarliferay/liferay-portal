@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.preferences.test;
@@ -19,6 +10,8 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.persistence.PortletPreferencesPersistence;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.SynchronousInvocationHandler;
+import com.liferay.portal.kernel.test.constants.ServiceTestConstants;
 import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -26,8 +19,6 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.service.impl.PortletPreferencesLocalServiceImpl;
-import com.liferay.portal.service.test.ServiceTestUtil;
-import com.liferay.portal.service.test.SynchronousInvocationHandler;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
 import com.liferay.portal.spring.transaction.DefaultTransactionExecutor;
 import com.liferay.portal.test.rule.ExpectedDBType;
@@ -39,6 +30,8 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,9 +39,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import javax.portlet.PortletPreferences;
-
-import org.hibernate.util.JDBCExceptionReporter;
+import org.hibernate.engine.jdbc.batch.internal.BatchingBatch;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -74,8 +66,6 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 	public void setUp() throws NoSuchMethodException {
 		Assume.assumeTrue(PropsValues.RETRY_ADVICE_MAX_RETRIES != 0);
 
-		_threadCount = ServiceTestUtil.THREAD_COUNT;
-
 		if ((PropsValues.RETRY_ADVICE_MAX_RETRIES > 0) &&
 			(_threadCount > PropsValues.RETRY_ADVICE_MAX_RETRIES)) {
 
@@ -86,12 +76,11 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 			ProxyUtil.fetchInvocationHandler(
 				_portletPreferencesLocalService, AopInvocationHandler.class);
 
-		final PortletPreferencesLocalServiceImpl
-			portletPreferencesLocalServiceImpl =
-				(PortletPreferencesLocalServiceImpl)
-					aopInvocationHandler.getTarget();
+		PortletPreferencesLocalServiceImpl portletPreferencesLocalServiceImpl =
+			(PortletPreferencesLocalServiceImpl)
+				aopInvocationHandler.getTarget();
 
-		final PortletPreferencesPersistence portletPreferencesPersistence =
+		PortletPreferencesPersistence portletPreferencesPersistence =
 			portletPreferencesLocalServiceImpl.
 				getPortletPreferencesPersistence();
 
@@ -142,7 +131,7 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 					@ExpectedLog(
 						expectedDBType = ExpectedDBType.MARIADB,
 						expectedLog = "Duplicate entry '",
-						expectedType = ExpectedType.PREFIX
+						expectedType = ExpectedType.CONTAINS
 					),
 					@ExpectedLog(
 						expectedDBType = ExpectedDBType.MYSQL,
@@ -165,12 +154,22 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 						expectedType = ExpectedType.CONTAINS
 					),
 					@ExpectedLog(
-						expectedDBType = ExpectedDBType.SYBASE,
-						expectedLog = "Attempt to insert duplicate key row",
-						expectedType = ExpectedType.CONTAINS
+						expectedDBType = ExpectedDBType.SQLSERVER,
+						expectedLog = "Cannot insert duplicate key row",
+						expectedType = ExpectedType.PREFIX
 					)
 				},
-				level = "ERROR", loggerClass = JDBCExceptionReporter.class
+				level = "ERROR", loggerClass = SqlExceptionHelper.class
+			),
+			@ExpectedLogs(
+				expectedLogs = {
+					@ExpectedLog(
+						expectedDBType = ExpectedDBType.NONE,
+						expectedLog = "HHH000315: Exception executing batch [java.sql.BatchUpdateException",
+						expectedType = ExpectedType.PREFIX
+					)
+				},
+				level = "ERROR", loggerClass = BatchingBatch.class
 			)
 		}
 	)
@@ -179,10 +178,10 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 		SynchronousInvocationHandler.enable();
 
 		try {
-			final long ownerId = RandomTestUtil.randomLong();
-			final int ownerType = RandomTestUtil.randomInt();
-			final long plid = RandomTestUtil.randomLong();
-			final String portletId = RandomTestUtil.randomString(
+			long ownerId = RandomTestUtil.randomLong();
+			int ownerType = RandomTestUtil.randomInt();
+			long plid = RandomTestUtil.randomLong();
+			String portletId = RandomTestUtil.randomString(
 				UniqueStringRandomizerBumper.INSTANCE);
 
 			Callable<PortletPreferences> callable =
@@ -235,6 +234,6 @@ public class PortletPreferencesLocalServiceConcurrentTest {
 	@Inject
 	private PortletPreferencesLocalService _portletPreferencesLocalService;
 
-	private int _threadCount;
+	private int _threadCount = ServiceTestConstants.THREAD_COUNT;
 
 }

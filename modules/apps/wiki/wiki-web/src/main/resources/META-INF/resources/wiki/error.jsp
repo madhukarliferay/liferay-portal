@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -54,48 +45,54 @@ if (portletTitleBasedNavigation) {
 	<%
 	long nodeId = ParamUtil.getLong(request, "nodeId");
 
-	if (nodeId == 0) {
-		if (node != null) {
-			nodeId = node.getNodeId();
-		}
+	if ((nodeId == 0) && (node != null)) {
+		nodeId = node.getNodeId();
 	}
 
-	PortletURL editPageURL = renderResponse.createRenderURL();
+	PortletURL editPageURL = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCRenderCommandName(
+		"/wiki/edit_page"
+	).setRedirect(
+		currentURL
+	).setParameter(
+		"nodeId", nodeId
+	).setParameter(
+		"title", title
+	).buildPortletURL();
 
-	editPageURL.setParameter("mvcRenderCommandName", "/wiki/edit_page");
-	editPageURL.setParameter("redirect", currentURL);
-	editPageURL.setParameter("nodeId", String.valueOf(nodeId));
-	editPageURL.setParameter("title", title);
-
-	PortletURL searchURL = renderResponse.createRenderURL();
-
-	searchURL.setParameter("mvcRenderCommandName", "/wiki/search");
-	searchURL.setParameter("redirect", currentURL);
-	searchURL.setParameter("nodeId", String.valueOf(nodeId));
-	searchURL.setParameter("keywords", title);
+	PortletURL searchURL = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCRenderCommandName(
+		"/wiki/search"
+	).setRedirect(
+		currentURL
+	).setKeywords(
+		title
+	).setParameter(
+		"nodeId", nodeId
+	).buildPortletURL();
 	%>
 
-	<div <%= portletTitleBasedNavigation ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
-		<div class="main-content-card panel">
-			<div class="panel-body">
-				<div class="alert alert-info">
-					<liferay-ui:message key="this-page-is-empty.-use-the-buttons-below-to-create-it-or-to-search-for-the-words-in-the-title" />
-				</div>
+	<div <%= portletTitleBasedNavigation ? "class=\"container-fluid container-fluid-max-xl container-form-lg\"" : StringPool.BLANK %>>
+		<div class="sheet">
+			<div class="alert alert-info">
+				<liferay-ui:message key="this-page-is-empty.-use-the-buttons-below-to-create-it-or-to-search-for-the-words-in-the-title" />
+			</div>
 
-				<div class="btn-toolbar">
+			<div class="btn-toolbar">
 
-					<%
-					String taglibEditPage = "location.href = '" + editPageURL.toString() + "';";
-					%>
+				<%
+				String taglibEditPage = "location.href = '" + editPageURL.toString() + "';";
+				%>
 
-					<aui:button onClick="<%= taglibEditPage %>" primary="<%= true %>" value='<%= LanguageUtil.format(request, "create-page-x", HtmlUtil.escapeAttribute(title), false) %>' />
+				<aui:button onClick="<%= taglibEditPage %>" primary="<%= true %>" value='<%= LanguageUtil.format(request, "create-page-x", HtmlUtil.escapeAttribute(title), false) %>' />
 
-					<%
-					String taglibSearch = "location.href = '" + searchURL.toString() + "';";
-					%>
+				<%
+				String taglibSearch = "location.href = '" + searchURL.toString() + "';";
+				%>
 
-					<aui:button cssClass="btn-secondary" onClick="<%= taglibSearch %>" value='<%= LanguageUtil.format(request, "search-for-x", HtmlUtil.escapeAttribute(title), false) %>' />
-				</div>
+				<aui:button onClick="<%= taglibSearch %>" value='<%= LanguageUtil.format(request, "search-for-x", HtmlUtil.escapeAttribute(title), false) %>' />
 			</div>
 		</div>
 	</div>

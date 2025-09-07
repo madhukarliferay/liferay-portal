@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
@@ -21,79 +12,120 @@ import com.liferay.dynamic.data.mapping.model.UnlocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 
-import java.util.Locale;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author Marcellus Tavares
  */
 public class DefaultDDMFormValuesFactory {
 
-	public DefaultDDMFormValuesFactory(DDMForm ddmForm, Locale locale) {
+	public DefaultDDMFormValuesFactory(DDMForm ddmForm) {
 		_ddmForm = ddmForm;
-		_locale = locale;
 	}
 
 	public DDMFormValues create() {
 		DDMFormValues ddmFormValues = new DDMFormValues(_ddmForm);
 
-		ddmFormValues.addAvailableLocale(_locale);
-		ddmFormValues.setDefaultLocale(_locale);
+		ddmFormValues.setAvailableLocales(_ddmForm.getAvailableLocales());
+		ddmFormValues.setDefaultLocale(_ddmForm.getDefaultLocale());
 
-		for (DDMFormField ddmFormField : _ddmForm.getDDMFormFields()) {
-			DDMFormFieldValue ddmFormFieldValue =
-				createDefaultDDMFormFieldValue(ddmFormField);
-
-			ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
-		}
+		populate(ddmFormValues);
 
 		return ddmFormValues;
 	}
 
-	protected DDMFormFieldValue createDefaultDDMFormFieldValue(
+	public void populate(DDMFormValues ddmFormValues) {
+		_populate(
+			ddmFormValues::addDDMFormFieldValue, _ddmForm.getDDMFormFields(),
+			ddmFormValues.getDDMFormFieldValuesMap(false));
+	}
+
+	private DDMFormFieldValue _createDefaultDDMFormFieldValue(
 		DDMFormField ddmFormField) {
 
 		DDMFormFieldValue ddmFormFieldValue = new DDMFormFieldValue();
 
+		ddmFormFieldValue.setFieldReference(ddmFormField.getFieldReference());
 		ddmFormFieldValue.setName(ddmFormField.getName());
-
-		Value value = createDefaultValue(ddmFormField);
-
-		ddmFormFieldValue.setValue(value);
+		ddmFormFieldValue.setValue(_createDefaultValue(ddmFormField));
 
 		for (DDMFormField nestedDDMFormField :
 				ddmFormField.getNestedDDMFormFields()) {
 
 			ddmFormFieldValue.addNestedDDMFormFieldValue(
-				createDefaultDDMFormFieldValue(nestedDDMFormField));
+				_createDefaultDDMFormFieldValue(nestedDDMFormField));
 		}
 
 		return ddmFormFieldValue;
 	}
 
-	protected Value createDefaultLocalizedValue(String defaultValueString) {
-		Value value = new LocalizedValue(_locale);
+	private LocalizedValue _createDefaultLocalizedValue(
+		String defaultValueString) {
 
-		value.addString(_locale, defaultValueString);
+		LocalizedValue value = new LocalizedValue(_ddmForm.getDefaultLocale());
+
+		value.addString(_ddmForm.getDefaultLocale(), defaultValueString);
 
 		return value;
 	}
 
-	protected Value createDefaultValue(DDMFormField ddmFormField) {
-		LocalizedValue predefinedValue = ddmFormField.getPredefinedValue();
+	private Value _createDefaultValue(DDMFormField ddmFormField) {
+		LocalizedValue defaultValue = ddmFormField.getPredefinedValue();
 
-		String defaultValueString = GetterUtil.getString(
-			predefinedValue.getString(_locale));
+		if ((defaultValue == null) ||
+			MapUtil.isEmpty(defaultValue.getValues())) {
 
-		if (ddmFormField.isLocalizable()) {
-			return createDefaultLocalizedValue(defaultValueString);
+			defaultValue = (LocalizedValue)ddmFormField.getProperty(
+				"initialValue");
+
+			if (defaultValue == null) {
+				defaultValue = _createDefaultLocalizedValue(StringPool.BLANK);
+			}
 		}
 
-		return new UnlocalizedValue(defaultValueString);
+		if (ddmFormField.isLocalizable()) {
+			return defaultValue;
+		}
+
+		return new UnlocalizedValue(
+			GetterUtil.getString(
+				defaultValue.getString(_ddmForm.getDefaultLocale())));
+	}
+
+	private void _populate(
+		Consumer<DDMFormFieldValue> consumer, List<DDMFormField> ddmFormFields,
+		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap) {
+
+		if (ddmFormFields == null) {
+			return;
+		}
+
+		ddmFormFields.forEach(
+			ddmFormField -> {
+				List<DDMFormFieldValue> ddmFormFieldValues =
+					ddmFormFieldValuesMap.get(ddmFormField.getName());
+
+				if (ddmFormFieldValues != null) {
+					ddmFormFieldValues.forEach(
+						ddmFormFieldValue -> _populate(
+							ddmFormFieldValue::addNestedDDMFormFieldValue,
+							ddmFormField.getNestedDDMFormFields(),
+							ddmFormFieldValue.
+								getNestedDDMFormFieldValuesMap()));
+				}
+				else {
+					consumer.accept(
+						_createDefaultDDMFormFieldValue(ddmFormField));
+				}
+			});
 	}
 
 	private final DDMForm _ddmForm;
-	private final Locale _locale;
 
 }

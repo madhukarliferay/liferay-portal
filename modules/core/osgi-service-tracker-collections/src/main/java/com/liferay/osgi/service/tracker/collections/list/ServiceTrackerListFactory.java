@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.osgi.service.tracker.collections.list;
 
-import com.liferay.osgi.service.tracker.collections.internal.DefaultServiceTrackerCustomizer;
 import com.liferay.osgi.service.tracker.collections.internal.list.ServiceTrackerListImpl;
+import com.liferay.osgi.service.tracker.collections.internal.osgi.util.tracker.DefaultServiceTrackerCustomizer;
 
 import java.util.Comparator;
 
@@ -28,7 +19,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  */
 public class ServiceTrackerListFactory {
 
-	public static <S, T> ServiceTrackerList<S, T> open(
+	public static <S, T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<S> clazz, String filterString,
 		ServiceTrackerCustomizer<S, T> serviceTrackerCustomizer) {
 
@@ -36,7 +27,7 @@ public class ServiceTrackerListFactory {
 			bundleContext, clazz, filterString, serviceTrackerCustomizer, null);
 	}
 
-	public static <S, T> ServiceTrackerList<S, T> open(
+	public static <S, T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<S> clazz, String filterString,
 		ServiceTrackerCustomizer<S, T> serviceTrackerCustomizer,
 		Comparator<ServiceReference<S>> comparator) {
@@ -46,7 +37,7 @@ public class ServiceTrackerListFactory {
 			comparator);
 	}
 
-	public static <T> ServiceTrackerList<T, T> open(
+	public static <T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<T> clazz) {
 
 		ServiceTrackerCustomizer<T, T> serviceTrackerCustomizer =
@@ -56,7 +47,7 @@ public class ServiceTrackerListFactory {
 			bundleContext, clazz, null, serviceTrackerCustomizer, null);
 	}
 
-	public static <T> ServiceTrackerList<T, T> open(
+	public static <T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<T> clazz,
 		Comparator<ServiceReference<T>> comparator) {
 
@@ -67,7 +58,7 @@ public class ServiceTrackerListFactory {
 			bundleContext, clazz, null, serviceTrackerCustomizer, comparator);
 	}
 
-	public static <T> ServiceTrackerList<T, T> open(
+	public static <T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<T> clazz, String filterString) {
 
 		ServiceTrackerCustomizer<T, T> serviceTrackerCustomizer =
@@ -77,7 +68,7 @@ public class ServiceTrackerListFactory {
 			bundleContext, clazz, filterString, serviceTrackerCustomizer, null);
 	}
 
-	public static <T> ServiceTrackerList<T, T> open(
+	public static <T> ServiceTrackerList<T> open(
 		BundleContext bundleContext, Class<T> clazz, String filterString,
 		Comparator<ServiceReference<T>> comparator) {
 

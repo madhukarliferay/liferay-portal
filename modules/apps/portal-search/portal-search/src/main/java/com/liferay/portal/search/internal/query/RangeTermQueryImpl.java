@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.query;
@@ -31,7 +22,7 @@ public class RangeTermQueryImpl
 		_includesLower = includesLower;
 		_includesUpper = includesUpper;
 
-		setOperators(includesLower, includesUpper);
+		_setOperators(includesLower, includesUpper);
 	}
 
 	public RangeTermQueryImpl(
@@ -44,7 +35,7 @@ public class RangeTermQueryImpl
 		_lowerBound = lowerBound;
 		_upperBound = upperBound;
 
-		setOperators(includesLower, includesUpper);
+		_setOperators(includesLower, includesUpper);
 	}
 
 	@Override
@@ -52,64 +43,64 @@ public class RangeTermQueryImpl
 		return queryVisitor.visit(this);
 	}
 
+	@Override
 	public String getField() {
 		return _field;
 	}
 
+	@Override
 	public Object getLowerBound() {
 		return _lowerBound;
 	}
 
+	@Override
 	public RangeTermQuery.Operator getLowerBoundOperator() {
 		return _lowerBoundOperator;
 	}
 
+	@Override
 	public int getSortOrder() {
 		return 20;
 	}
 
+	@Override
 	public Object getUpperBound() {
 		return _upperBound;
 	}
 
+	@Override
 	public Operator getUpperBoundOperator() {
 		return _upperBoundOperator;
 	}
 
+	@Override
 	public boolean isIncludesLower() {
 		return _includesLower;
 	}
 
+	@Override
 	public boolean isIncludesUpper() {
 		return _includesUpper;
 	}
 
+	@Override
 	public void setLowerBound(Object lowerBound) {
 		_lowerBound = lowerBound;
 	}
 
+	@Override
 	public void setUpperBound(Object upperBound) {
 		_upperBound = upperBound;
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(9);
-
-		sb.append("{(");
-		sb.append(_lowerBound);
-		sb.append(_lowerBoundOperator);
-		sb.append(_field);
-		sb.append(_upperBoundOperator);
-		sb.append(_upperBound);
-		sb.append("), ");
-		sb.append(super.toString());
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{(", _lowerBound, _lowerBoundOperator, _field, _upperBoundOperator,
+			_upperBound, "), ", super.toString(), "}");
 	}
 
-	protected void setOperators(boolean includesLower, boolean includesUpper) {
+	private void _setOperators(boolean includesLower, boolean includesUpper) {
 		if (includesLower) {
 			_lowerBoundOperator = Operator.GTE;
 		}

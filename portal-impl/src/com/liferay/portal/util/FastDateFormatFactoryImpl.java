@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.util;
@@ -168,7 +159,7 @@ public class FastDateFormatFactoryImpl implements FastDateFormatFactory {
 	}
 
 	protected String getKey(Object... arguments) {
-		StringBundler sb = new StringBundler(arguments.length * 2 - 1);
+		StringBundler sb = new StringBundler((arguments.length * 2) - 1);
 
 		for (int i = 0; i < arguments.length; i++) {
 			sb.append(arguments[i]);
@@ -193,8 +184,9 @@ public class FastDateFormatFactoryImpl implements FastDateFormatFactory {
 	private static class DateAndTimeCacheKey {
 
 		@Override
-		public boolean equals(Object obj) {
-			DateAndTimeCacheKey dateAndTimeCacheKey = (DateAndTimeCacheKey)obj;
+		public boolean equals(Object object) {
+			DateAndTimeCacheKey dateAndTimeCacheKey =
+				(DateAndTimeCacheKey)object;
 
 			if ((dateAndTimeCacheKey._dateStyle == _dateStyle) &&
 				(dateAndTimeCacheKey._timeStyle == _timeStyle) &&
@@ -236,8 +228,8 @@ public class FastDateFormatFactoryImpl implements FastDateFormatFactory {
 	private static class DateOrTimeCacheKey {
 
 		@Override
-		public boolean equals(Object obj) {
-			DateOrTimeCacheKey dateOrTimeCacheKey = (DateOrTimeCacheKey)obj;
+		public boolean equals(Object object) {
+			DateOrTimeCacheKey dateOrTimeCacheKey = (DateOrTimeCacheKey)object;
 
 			if ((dateOrTimeCacheKey._style == _style) &&
 				Objects.equals(dateOrTimeCacheKey._locale, _locale) &&
@@ -275,8 +267,8 @@ public class FastDateFormatFactoryImpl implements FastDateFormatFactory {
 	private static class SimpleDateCacheKey {
 
 		@Override
-		public boolean equals(Object obj) {
-			SimpleDateCacheKey simpleDateCacheKey = (SimpleDateCacheKey)obj;
+		public boolean equals(Object object) {
+			SimpleDateCacheKey simpleDateCacheKey = (SimpleDateCacheKey)object;
 
 			if (Objects.equals(simpleDateCacheKey._pattern, _pattern) &&
 				Objects.equals(simpleDateCacheKey._locale, _locale) &&

@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.exportimport.internal.model.adapter;
 
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.model.ExpandoTable;
-import com.liferay.expando.kernel.model.adapter.StagedExpandoTable;
+import com.liferay.expando.model.adapter.StagedExpandoTable;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -39,13 +30,20 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	}
 
 	public StagedExpandoTableImpl(ExpandoTable expandoTable) {
-		_className = expandoTable.getClassName();
 		_expandoTable = expandoTable;
+
+		_className = expandoTable.getClassName();
 	}
 
 	@Override
 	public Object clone() {
 		return new StagedExpandoTableImpl(_expandoTable);
+	}
+
+	@Override
+	public ExpandoTable cloneWithOriginalValues() {
+		return new StagedExpandoTableImpl(
+			_expandoTable.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -80,6 +78,11 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	}
 
 	@Override
+	public long getCtCollectionId() {
+		return _expandoTable.getCtCollectionId();
+	}
+
+	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return null;
 	}
@@ -102,6 +105,11 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	@Override
 	public Date getModifiedDate() {
 		return new Date();
+	}
+
+	@Override
+	public long getMvccVersion() {
+		return _expandoTable.getMvccVersion();
 	}
 
 	@Override
@@ -144,6 +152,10 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 		return _expandoTable.isDefaultTable();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
 		return _expandoTable.isEntityCacheEnabled();
@@ -154,6 +166,10 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 		return _expandoTable.isEscapedModel();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
 		return _expandoTable.isFinderCacheEnabled();
@@ -200,6 +216,11 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	}
 
 	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(BaseModel<?> baseModel) {
 		_expandoTable.setExpandoBridgeAttributes(baseModel);
 	}
@@ -222,6 +243,11 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	@Override
 	public void setModifiedDate(Date date) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		_expandoTable.setMvccVersion(mvccVersion);
 	}
 
 	@Override
@@ -267,11 +293,6 @@ public class StagedExpandoTableImpl implements StagedExpandoTable {
 	@Override
 	public ExpandoTable toUnescapedModel() {
 		return _expandoTable.toUnescapedModel();
-	}
-
-	@Override
-	public String toXmlString() {
-		return _expandoTable.toXmlString();
 	}
 
 	private String _className;

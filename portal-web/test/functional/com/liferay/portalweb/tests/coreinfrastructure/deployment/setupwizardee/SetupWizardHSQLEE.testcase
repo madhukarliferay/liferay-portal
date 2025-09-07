@@ -1,19 +1,19 @@
-@component-name = "portal-deployment-hypersonic-ee"
+@component-name = "portal-core-infra"
 definition {
 
-	property portal.acceptance = "true";
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property setup.wizard.enabled = "true";
 	property test.prepare.bundle.properties = "false";
 	property test.run.environment = "EE";
-	property testray.component.names = "Training";
 	property testray.main.component.name = "Setup Wizard";
 
-	@priority = "4"
+	@priority = 4
 	test HSQLtoDB2 {
 		property database.types = "db2";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoDB2";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			administratorEmail = "test@liferay.com",
@@ -25,18 +25,17 @@ definition {
 			jdbcDriverClassName = PropsUtil.get("database.db2.driver"),
 			jdbcURL = PropsUtil.get("database.db2.url"));
 
-		Smoke.viewWelcomePage(
-			userFirstName = "Joe",
-			userLastName = "Bloggs");
+		Smoke.viewWelcomeContentPage();
 
 		Smoke.runSmoke();
 	}
 
-	@priority = "4"
+	@priority = 3
 	test HSQLtoDB2SampleDataEnabled {
-		property databases.size = "1";
 		property database.types = "db2";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoDB2SampleDataEnabled";
+		property databases.size = "1";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			addSampleData = "true",
@@ -50,7 +49,7 @@ definition {
 			jdbcDriverClassName = PropsUtil.get("database.db2.driver"),
 			jdbcURL = PropsUtil.get("database.db2.url"));
 
-		Smoke.viewWelcomePage();
+		Smoke.viewWelcomeContentPage();
 
 		SetupWizard.viewSampleDataEnabledInPropertiesFile();
 
@@ -59,10 +58,12 @@ definition {
 		Smoke.runSmoke();
 	}
 
-	@priority = "4"
+	@priority = 5
 	test HSQLtoOracle {
 		property database.types = "oracle";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoOracle";
+		property portal.acceptance = "true";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			administratorEmail = "test@liferay.com",
@@ -74,18 +75,17 @@ definition {
 			jdbcDriverClassName = PropsUtil.get("database.oracle.driver"),
 			jdbcURL = PropsUtil.get("database.oracle.url"));
 
-		Smoke.viewWelcomePage(
-			userFirstName = "Joe",
-			userLastName = "Bloggs");
+		Smoke.viewWelcomeContentPage();
 
 		Smoke.runSmoke();
 	}
 
-	@priority = "4"
+	@priority = 3
 	test HSQLtoOracleSampleDataEnabled {
-		property databases.size = "1";
 		property database.types = "oracle";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoOracleSampleDataEnabled";
+		property databases.size = "1";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			addSampleData = "true",
@@ -99,7 +99,7 @@ definition {
 			jdbcDriverClassName = PropsUtil.get("database.oracle.driver"),
 			jdbcURL = PropsUtil.get("database.oracle.url"));
 
-		Smoke.viewWelcomePage();
+		Smoke.viewWelcomeContentPage();
 
 		SetupWizard.viewSampleDataEnabledInPropertiesFile();
 
@@ -108,47 +108,48 @@ definition {
 		Smoke.runSmoke();
 	}
 
-	@priority = "4"
-	test HSQLtoSybase {
-		property database.types = "sybase";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoSybase";
+	@priority = 5
+	test HSQLtoSQLServer {
+		property database.types = "sqlserver";
+		property portal.acceptance = "true";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			administratorEmail = "test@liferay.com",
 			administratorFirstName = "Test",
 			administratorLastName = "Test",
-			databasePassword = PropsUtil.get("database.sybase.password"),
-			databaseType = "Sybase",
-			databaseUserName = PropsUtil.get("database.sybase.username"),
-			jdbcDriverClassName = PropsUtil.get("database.sybase.driver"),
-			jdbcURL = PropsUtil.get("database.sybase.url"));
+			databasePassword = PropsUtil.get("database.sqlserver.password"),
+			databaseType = "SQLServer",
+			databaseUserName = PropsUtil.get("database.sqlserver.username"),
+			jdbcDriverClassName = PropsUtil.get("database.sqlserver.driver"),
+			jdbcURL = PropsUtil.get("database.sqlserver.url"));
 
-		Smoke.viewWelcomePage(
-			userFirstName = "Joe",
-			userLastName = "Bloggs");
+		Smoke.viewWelcomeContentPage();
 
 		Smoke.runSmoke();
 	}
 
-	@priority = "4"
-	test HSQLtoSybaseSampleDataEnabled {
+	@priority = 3
+	test HSQLtoSQLServerSampleDataEnabled {
+		property database.types = "sqlserver";
 		property databases.size = "1";
-		property database.types = "sybase";
-		property test.name.skip.portal.instance = "SetupWizardHSQL#HSQLtoSybaseSampleDataEnabled";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
 		SetupWizard.configurePG(
 			addSampleData = "true",
 			administratorEmail = "test@liferay.com",
 			administratorFirstName = "Test",
 			administratorLastName = "Test",
-			databaseName = "lportal1",
-			databasePassword = PropsUtil.get("database.sybase.password"),
-			databaseType = "Sybase",
-			databaseUserName = PropsUtil.get("database.sybase.username"),
-			jdbcDriverClassName = PropsUtil.get("database.sybase.driver"),
-			jdbcURL = PropsUtil.get("database.sybase.url"));
+			databaseName = "lportal",
+			databasePassword = PropsUtil.get("database.sqlserver.password"),
+			databaseType = "SQLServer",
+			databaseUserName = PropsUtil.get("database.sqlserver.username"),
+			jdbcDriverClassName = PropsUtil.get("database.sqlserver.driver"),
+			jdbcURL = PropsUtil.get("database.sqlserver.url"));
 
-		Smoke.viewWelcomePage();
+		Smoke.viewWelcomeContentPage();
 
 		SetupWizard.viewSampleDataEnabledInPropertiesFile();
 

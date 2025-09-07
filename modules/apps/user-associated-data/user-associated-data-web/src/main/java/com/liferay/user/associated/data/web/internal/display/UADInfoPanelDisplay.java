@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.display;
@@ -29,12 +20,12 @@ import java.util.Map;
  */
 public class UADInfoPanelDisplay {
 
-	public void addUADEntities(List<UADEntity> uadEntities) {
+	public void addUADEntities(List<UADEntity<Object>> uadEntities) {
 		_uadEntities.addAll(uadEntities);
 	}
 
-	public UADEntity getFirstUADEntity() {
-		if (_uadEntities.size() > 0) {
+	public UADEntity<Object> getFirstUADEntity() {
+		if (!_uadEntities.isEmpty()) {
 			return _uadEntities.get(0);
 		}
 
@@ -42,7 +33,7 @@ public class UADInfoPanelDisplay {
 	}
 
 	public String getSubtitle(Locale locale) {
-		if (_uadEntities.size() == 0) {
+		if (_uadEntities.isEmpty()) {
 			if (_uadDisplay != null) {
 				return UADLanguageUtil.getApplicationName(_uadDisplay, locale);
 			}
@@ -52,14 +43,13 @@ public class UADInfoPanelDisplay {
 		else if (_uadEntities.size() == 1) {
 			return _uadDisplay.getTypeName(locale);
 		}
-		else {
-			return LanguageUtil.format(
-				locale, "x-items-are-selected", getUADEntitiesCount());
-		}
+
+		return LanguageUtil.format(
+			locale, "x-items-are-selected", getUADEntitiesCount());
 	}
 
 	public String getTitle(Locale locale) {
-		if (_uadEntities.size() == 0) {
+		if (_uadEntities.isEmpty()) {
 			if (!_hierarchyView || !_topLevelView) {
 				return _uadDisplay.getTypeName(locale);
 			}
@@ -67,7 +57,7 @@ public class UADInfoPanelDisplay {
 			return null;
 		}
 		else if (_uadEntities.size() == 1) {
-			UADEntity uadEntity = getFirstUADEntity();
+			UADEntity<Object> uadEntity = getFirstUADEntity();
 
 			Map<String, Object> displayValues = _uadDisplay.getFieldValues(
 				uadEntity.getEntity(), _uadDisplay.getDisplayFieldNames(),
@@ -76,16 +66,15 @@ public class UADInfoPanelDisplay {
 			return SafeDisplayValueUtil.get(
 				displayValues.get(_uadDisplay.getDisplayFieldNames()[0]));
 		}
-		else {
-			if (!_hierarchyView) {
-				return _uadDisplay.getTypeName(locale);
-			}
 
-			return null;
+		if (!_hierarchyView) {
+			return _uadDisplay.getTypeName(locale);
 		}
+
+		return null;
 	}
 
-	public UADDisplay getUADDisplay() {
+	public UADDisplay<Object> getUADDisplay() {
 		return _uadDisplay;
 	}
 
@@ -101,13 +90,13 @@ public class UADInfoPanelDisplay {
 		_topLevelView = topLevelView;
 	}
 
-	public void setUADDisplay(UADDisplay uadDisplay) {
+	public void setUADDisplay(UADDisplay<Object> uadDisplay) {
 		_uadDisplay = uadDisplay;
 	}
 
 	private boolean _hierarchyView;
 	private boolean _topLevelView = true;
-	private UADDisplay _uadDisplay;
-	private final List<UADEntity> _uadEntities = new ArrayList<>();
+	private UADDisplay<Object> _uadDisplay;
+	private final List<UADEntity<Object>> _uadEntities = new ArrayList<>();
 
 }

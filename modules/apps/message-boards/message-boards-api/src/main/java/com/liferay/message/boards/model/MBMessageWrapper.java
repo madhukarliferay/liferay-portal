@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -43,7 +36,10 @@ public class MBMessageWrapper
 	public Map<String, Object> getModelAttributes() {
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
+		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("messageId", getMessageId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -59,6 +55,7 @@ public class MBMessageWrapper
 		attributes.put("parentMessageId", getParentMessageId());
 		attributes.put("treePath", getTreePath());
 		attributes.put("subject", getSubject());
+		attributes.put("urlSubject", getUrlSubject());
 		attributes.put("body", getBody());
 		attributes.put("format", getFormat());
 		attributes.put("anonymous", isAnonymous());
@@ -76,10 +73,29 @@ public class MBMessageWrapper
 
 	@Override
 	public void setModelAttributes(Map<String, Object> attributes) {
+		Long mvccVersion = (Long)attributes.get("mvccVersion");
+
+		if (mvccVersion != null) {
+			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long messageId = (Long)attributes.get("messageId");
@@ -172,6 +188,12 @@ public class MBMessageWrapper
 			setSubject(subject);
 		}
 
+		String urlSubject = (String)attributes.get("urlSubject");
+
+		if (urlSubject != null) {
+			setUrlSubject(urlSubject);
+		}
+
 		String body = (String)attributes.get("body");
 
 		if (body != null) {
@@ -254,6 +276,11 @@ public class MBMessageWrapper
 		return model.buildTreePath();
 	}
 
+	@Override
+	public MBMessage cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
 	/**
 	 * Returns the allow pingbacks of this message-boards message.
 	 *
@@ -310,6 +337,16 @@ public class MBMessageWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getAttachmentsFileEntriesCount();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry
+			getAttachmentsFileEntryByExternalReferenceCode(
+				String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getAttachmentsFileEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	@Override
@@ -401,6 +438,16 @@ public class MBMessageWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this message-boards message.
+	 *
+	 * @return the ct collection ID of this message-boards message
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
 	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry>
 			getDeletedAttachmentsFileEntries()
@@ -422,6 +469,16 @@ public class MBMessageWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getDeletedAttachmentsFileEntriesCount();
+	}
+
+	/**
+	 * Returns the external reference code of this message-boards message.
+	 *
+	 * @return the external reference code of this message-boards message
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -472,6 +529,16 @@ public class MBMessageWrapper
 	@Override
 	public Date getModifiedDate() {
 		return model.getModifiedDate();
+	}
+
+	/**
+	 * Returns the mvcc version of this message-boards message.
+	 *
+	 * @return the mvcc version of this message-boards message
+	 */
+	@Override
+	public long getMvccVersion() {
+		return model.getMvccVersion();
 	}
 
 	/**
@@ -599,18 +666,6 @@ public class MBMessageWrapper
 	}
 
 	/**
-	 * Returns the trash entry created when this message-boards message was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this message-boards message.
-	 *
-	 * @return the trash entry created when this message-boards message was moved to the Recycle Bin
-	 */
-	@Override
-	public com.liferay.trash.kernel.model.TrashEntry getTrashEntry()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return model.getTrashEntry();
-	}
-
-	/**
 	 * Returns the class primary key of the trash entry for this message-boards message.
 	 *
 	 * @return the class primary key of the trash entry for this message-boards message
@@ -621,18 +676,6 @@ public class MBMessageWrapper
 	}
 
 	/**
-	 * Returns the trash handler for this message-boards message.
-	 *
-	 * @return the trash handler for this message-boards message
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.trash.TrashHandler getTrashHandler() {
-		return model.getTrashHandler();
-	}
-
-	/**
 	 * Returns the tree path of this message-boards message.
 	 *
 	 * @return the tree path of this message-boards message
@@ -640,6 +683,16 @@ public class MBMessageWrapper
 	@Override
 	public String getTreePath() {
 		return model.getTreePath();
+	}
+
+	/**
+	 * Returns the url subject of this message-boards message.
+	 *
+	 * @return the url subject of this message-boards message
+	 */
+	@Override
+	public String getUrlSubject() {
+		return model.getUrlSubject();
 	}
 
 	/**
@@ -798,26 +851,6 @@ public class MBMessageWrapper
 	}
 
 	/**
-	 * Returns <code>true</code> if the parent of this message-boards message is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if the parent of this message-boards message is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isInTrashContainer() {
-		return model.isInTrashContainer();
-	}
-
-	@Override
-	public boolean isInTrashExplicitly() {
-		return model.isInTrashExplicitly();
-	}
-
-	@Override
-	public boolean isInTrashImplicitly() {
-		return model.isInTrashImplicitly();
-	}
-
-	/**
 	 * Returns <code>true</code> if this message-boards message is pending.
 	 *
 	 * @return <code>true</code> if this message-boards message is pending; <code>false</code> otherwise
@@ -847,11 +880,6 @@ public class MBMessageWrapper
 		return model.isScheduled();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a message-boards message model instance should use the <code>MBMessage</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -958,6 +986,26 @@ public class MBMessageWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this message-boards message.
+	 *
+	 * @param ctCollectionId the ct collection ID of this message-boards message
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the external reference code of this message-boards message.
+	 *
+	 * @param externalReferenceCode the external reference code of this message-boards message
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
 	 * Sets the format of this message-boards message.
 	 *
 	 * @param format the format of this message-boards message
@@ -1005,6 +1053,16 @@ public class MBMessageWrapper
 	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		model.setModifiedDate(modifiedDate);
+	}
+
+	/**
+	 * Sets the mvcc version of this message-boards message.
+	 *
+	 * @param mvccVersion the mvcc version of this message-boards message
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		model.setMvccVersion(mvccVersion);
 	}
 
 	/**
@@ -1128,6 +1186,16 @@ public class MBMessageWrapper
 	}
 
 	/**
+	 * Sets the url subject of this message-boards message.
+	 *
+	 * @param urlSubject the url subject of this message-boards message
+	 */
+	@Override
+	public void setUrlSubject(String urlSubject) {
+		model.setUrlSubject(urlSubject);
+	}
+
+	/**
 	 * Sets the user ID of this message-boards message.
 	 *
 	 * @param userId the user ID of this message-boards message
@@ -1168,8 +1236,27 @@ public class MBMessageWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
 	public void updateTreePath(String treePath) {
 		model.updateTreePath(treePath);
+	}
+
+	@Override
+	public Map<String, Function<MBMessage, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<MBMessage, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

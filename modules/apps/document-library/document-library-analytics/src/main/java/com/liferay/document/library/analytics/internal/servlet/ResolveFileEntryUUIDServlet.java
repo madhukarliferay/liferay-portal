@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.analytics.internal.servlet;
@@ -23,15 +14,14 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
+
+import jakarta.servlet.Servlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
-import javax.servlet.Servlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -59,11 +49,11 @@ public class ResolveFileEntryUUIDServlet extends HttpServlet {
 				httpServletResponse,
 				_getFileEntryByUuidAndGroupId(httpServletRequest));
 		}
-		catch (PrincipalException pe) {
-			_sendError(httpServletResponse, 403, pe);
+		catch (PrincipalException principalException) {
+			_sendError(httpServletResponse, 403, principalException);
 		}
-		catch (Exception e) {
-			_sendError(httpServletResponse, 500, e);
+		catch (Exception exception) {
+			_sendError(httpServletResponse, 500, exception);
 		}
 	}
 
@@ -91,8 +81,8 @@ public class ResolveFileEntryUUIDServlet extends HttpServlet {
 
 			httpServletResponse.setStatus(status);
 		}
-		catch (IOException ioe) {
-			_log.error(ioe, ioe);
+		catch (IOException ioException) {
+			_log.error(ioException);
 
 			httpServletResponse.setStatus(500);
 		}
@@ -117,8 +107,5 @@ public class ResolveFileEntryUUIDServlet extends HttpServlet {
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
-
-	@Reference
-	private Portal _portal;
 
 }

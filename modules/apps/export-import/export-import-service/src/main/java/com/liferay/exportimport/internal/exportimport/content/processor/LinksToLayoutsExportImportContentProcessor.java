@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.internal.exportimport.content.processor;
@@ -22,12 +13,12 @@ import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.StagedModel;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -50,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gergely Mathe
  */
 @Component(
-	immediate = true, property = "content.processor.type=LinksToLayouts",
+	property = "content.processor.type=LinksToLayouts",
 	service = ExportImportContentProcessor.class
 )
 public class LinksToLayoutsExportImportContentProcessor
@@ -63,7 +54,7 @@ public class LinksToLayoutsExportImportContentProcessor
 			boolean escapeContent)
 		throws Exception {
 
-		return replaceExportLinksToLayouts(
+		return _replaceExportLinksToLayouts(
 			portletDataContext, stagedModel, content);
 	}
 
@@ -73,35 +64,35 @@ public class LinksToLayoutsExportImportContentProcessor
 			String content)
 		throws Exception {
 
-		return replaceImportLinksToLayouts(portletDataContext, content);
+		return _replaceImportLinksToLayouts(portletDataContext, content);
 	}
 
 	@Override
 	public void validateContentReferences(long groupId, String content)
 		throws PortalException {
 
-		if (isValidateLinksToLayoutsReferences()) {
-			validateLinksToLayoutsReferences(content);
+		if (_isValidateLinksToLayoutsReferences()) {
+			_validateLinksToLayoutsReferences(content);
 		}
 	}
 
-	protected boolean isValidateLinksToLayoutsReferences() {
+	private boolean _isValidateLinksToLayoutsReferences() {
 		try {
-			ExportImportServiceConfiguration configuration =
+			ExportImportServiceConfiguration exportImportServiceConfiguration =
 				_configurationProvider.getCompanyConfiguration(
 					ExportImportServiceConfiguration.class,
 					CompanyThreadLocal.getCompanyId());
 
-			return configuration.validateLayoutReferences();
+			return exportImportServiceConfiguration.validateLayoutReferences();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return true;
 	}
 
-	protected String replaceExportLinksToLayouts(
+	private String _replaceExportLinksToLayouts(
 			PortletDataContext portletDataContext, StagedModel stagedModel,
 			String content)
 		throws Exception {
@@ -125,16 +116,13 @@ public class LinksToLayoutsExportImportContentProcessor
 
 				String oldLinkToLayout = matcher.group(0);
 
-				StringBundler sb = new StringBundler(3);
-
-				sb.append(type);
-				sb.append(StringPool.AT);
-				sb.append(layout.getPlid());
-
 				String newLinkToLayout = StringUtil.replace(
-					oldLinkToLayout, type, sb.toString());
+					oldLinkToLayout, type,
+					StringBundler.concat(
+						type, StringPool.AT, layout.getPlid()));
 
 				oldLinksToLayout.add(oldLinkToLayout);
+
 				newLinksToLayout.add(newLinkToLayout);
 
 				Element entityElement = portletDataContext.getExportDataElement(
@@ -144,18 +132,20 @@ public class LinksToLayoutsExportImportContentProcessor
 					stagedModel, entityElement, layout,
 					PortletDataContext.REFERENCE_TYPE_DEPENDENCY, true);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isDebugEnabled() || _log.isWarnEnabled()) {
 					String message = StringBundler.concat(
 						"Unable to get layout with ID ", layoutId, " in group ",
 						portletDataContext.getScopeGroupId());
 
 					if (_log.isDebugEnabled()) {
-						ExportImportContentProcessorException eicpe =
-							new ExportImportContentProcessorException(
-								message, e);
+						ExportImportContentProcessorException
+							exportImportContentProcessorException =
+								new ExportImportContentProcessorException(
+									message, exception);
 
-						_log.debug(message, eicpe);
+						_log.debug(
+							message, exportImportContentProcessorException);
 					}
 					else {
 						_log.warn(message);
@@ -164,14 +154,12 @@ public class LinksToLayoutsExportImportContentProcessor
 			}
 		}
 
-		content = StringUtil.replace(
+		return StringUtil.replace(
 			content, ArrayUtil.toStringArray(oldLinksToLayout.toArray()),
 			ArrayUtil.toStringArray(newLinksToLayout.toArray()));
-
-		return content;
 	}
 
-	protected String replaceImportLinksToLayouts(
+	private String _replaceImportLinksToLayouts(
 			PortletDataContext portletDataContext, String content)
 		throws Exception {
 
@@ -248,7 +236,7 @@ public class LinksToLayoutsExportImportContentProcessor
 				newLayoutId = layout.getLayoutId();
 			}
 			else if (_log.isWarnEnabled()) {
-				_log.warn("Unable to get layout with plid " + oldPlid);
+				_log.warn("Unable to get layout with PLID " + oldPlid);
 			}
 
 			String oldLinkToLayout = matcher.group(0);
@@ -279,21 +267,12 @@ public class LinksToLayoutsExportImportContentProcessor
 			newLinksToLayout.add(newLinkToLayout);
 		}
 
-		content = StringUtil.replace(
+		return StringUtil.replace(
 			content, ArrayUtil.toStringArray(oldLinksToLayout.toArray()),
 			ArrayUtil.toStringArray(newLinksToLayout.toArray()));
-
-		return content;
 	}
 
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
-	protected void validateLinksToLayoutsReferences(String content)
+	private void _validateLinksToLayoutsReferences(String content)
 		throws PortalException {
 
 		Matcher matcher = _exportLinksToLayoutPattern.matcher(content);
@@ -311,26 +290,25 @@ public class LinksToLayoutsExportImportContentProcessor
 				groupId, privateLayout, layoutId);
 
 			if (layout == null) {
-				ExportImportContentValidationException eicve =
-					new ExportImportContentValidationException(
-						LinksToLayoutsExportImportContentProcessor.class.
-							getName());
+				ExportImportContentValidationException
+					exportImportContentValidationException =
+						new ExportImportContentValidationException(
+							LinksToLayoutsExportImportContentProcessor.class.
+								getName());
 
-				Map<String, String> layoutReferenceParameters =
-					HashMapBuilder.put(
-						"groupId", String.valueOf(groupId)
-					).put(
-						"layoutId", String.valueOf(layoutId)
-					).put(
-						"privateLayout", String.valueOf(privateLayout)
-					).build();
-
-				eicve.setLayoutReferenceParameters(layoutReferenceParameters);
-
-				eicve.setType(
+				exportImportContentValidationException.
+					setLayoutReferenceParameters(
+						HashMapBuilder.put(
+							"groupId", String.valueOf(groupId)
+						).put(
+							"layoutId", String.valueOf(layoutId)
+						).put(
+							"privateLayout", String.valueOf(privateLayout)
+						).build());
+				exportImportContentValidationException.setType(
 					ExportImportContentValidationException.LAYOUT_NOT_FOUND);
 
-				throw eicve;
+				throw exportImportContentValidationException;
 			}
 		}
 	}
@@ -343,6 +321,7 @@ public class LinksToLayoutsExportImportContentProcessor
 	private static final Pattern _importLinksToLayoutPattern = Pattern.compile(
 		"\\[([\\d]+)@(private(-group|-user)?|public)@([\\d]+)(@([\\d]+))?\\]");
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference

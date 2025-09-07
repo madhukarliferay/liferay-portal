@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the local service utility for SocialActivityInterpreter. This utility wraps
@@ -30,46 +24,20 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class SocialActivityInterpreterLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portlet.social.service.impl.SocialActivityInterpreterLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * Adds the activity interpreter to the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
-	public static void addActivityInterpreter(
-		com.liferay.social.kernel.model.SocialActivityInterpreter
-			activityInterpreter) {
-
-		getService().addActivityInterpreter(activityInterpreter);
-	}
-
-	/**
-	 * Removes the activity interpreter from the list of available interpreters.
-	 *
-	 * @param activityInterpreter the activity interpreter
-	 */
-	public static void deleteActivityInterpreter(
-		com.liferay.social.kernel.model.SocialActivityInterpreter
-			activityInterpreter) {
-
-		getService().deleteActivityInterpreter(activityInterpreter);
-	}
-
-	public static java.util.Map
+	public static Map
 		<String,
-		 java.util.List
-			 <com.liferay.social.kernel.model.SocialActivityInterpreter>>
-				getActivityInterpreters() {
+		 List<com.liferay.social.kernel.model.SocialActivityInterpreter>>
+			getActivityInterpreters() {
 
 		return getService().getActivityInterpreters();
 	}
 
-	public static java.util.List
+	public static List
 		<com.liferay.social.kernel.model.SocialActivityInterpreter>
 			getActivityInterpreters(String selector) {
 
@@ -121,22 +89,21 @@ public class SocialActivityInterpreterLocalServiceUtil {
 	}
 
 	public static void updateActivitySet(long activityId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().updateActivitySet(activityId);
 	}
 
 	public static SocialActivityInterpreterLocalService getService() {
-		if (_service == null) {
-			_service =
-				(SocialActivityInterpreterLocalService)
-					PortalBeanLocatorUtil.locate(
-						SocialActivityInterpreterLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static SocialActivityInterpreterLocalService _service;
+	public static void setService(
+		SocialActivityInterpreterLocalService service) {
+
+		_service = service;
+	}
+
+	private static volatile SocialActivityInterpreterLocalService _service;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.web.internal.asset.model;
@@ -19,6 +10,7 @@ import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.model.BaseAssetRendererFactory;
 import com.liferay.asset.kernel.model.ClassTypeReader;
+import com.liferay.document.library.asset.model.DLFileEntryClassTypeReader;
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.model.DLFileEntry;
@@ -33,9 +25,11 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -44,16 +38,15 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portlet.documentlibrary.asset.model.DLFileEntryClassTypeReader;
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.trash.TrashHelper;
 
-import java.util.Locale;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+import jakarta.portlet.WindowStateException;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-import javax.portlet.WindowStateException;
+import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -65,7 +58,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sergio González
  */
 @Component(
-	property = "javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
+	property = "jakarta.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
 	service = AssetRendererFactory.class
 )
 public class DLFileEntryAssetRendererFactory
@@ -101,12 +94,12 @@ public class DLFileEntryAssetRendererFactory
 					"Unknown asset renderer type " + type);
 			}
 		}
-		catch (NoSuchFileEntryException nsfee) {
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfee, nsfee);
+				_log.debug(noSuchFileEntryException);
 			}
 
 			fileVersion = _dlAppLocalService.getFileVersion(classPK);
@@ -159,7 +152,11 @@ public class DLFileEntryAssetRendererFactory
 
 			return dlFileEntryType.getName(locale);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return super.getTypeName(locale, subtypeId);
 		}
 	}
@@ -169,31 +166,37 @@ public class DLFileEntryAssetRendererFactory
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse, long classTypeId) {
 
-		PortletURL portletURL = _portal.getControlPanelPortletURL(
-			liferayPortletRequest, getGroup(liferayPortletRequest),
-			DLPortletKeys.DOCUMENT_LIBRARY, 0, 0, PortletRequest.RENDER_PHASE);
+		Group group = getGroup(liferayPortletRequest);
 
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/document_library/edit_file_entry");
-		portletURL.setParameter(Constants.CMD, Constants.ADD);
-		portletURL.setParameter(
-			"folderId",
-			String.valueOf(DLFolderConstants.DEFAULT_PARENT_FOLDER_ID));
+		return PortletURLBuilder.create(
+			_portal.getControlPanelPortletURL(
+				liferayPortletRequest, group, DLPortletKeys.DOCUMENT_LIBRARY, 0,
+				0, PortletRequest.RENDER_PHASE)
+		).setMVCRenderCommandName(
+			"/document_library/edit_file_entry"
+		).setCMD(
+			Constants.ADD
+		).setParameter(
+			"fileEntryTypeId",
+			() -> {
+				long fileEntryTypeId =
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT;
 
-		long fileEntryTypeId =
-			DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT;
+				if (classTypeId >= 0) {
+					fileEntryTypeId = classTypeId;
+				}
 
-		if (classTypeId >= 0) {
-			fileEntryTypeId = classTypeId;
-		}
-
-		portletURL.setParameter(
-			"fileEntryTypeId", String.valueOf(fileEntryTypeId));
-
-		portletURL.setParameter("showMountFolder", Boolean.FALSE.toString());
-		portletURL.setParameter("showSelectFolder", Boolean.TRUE.toString());
-
-		return portletURL;
+				return fileEntryTypeId;
+			}
+		).setParameter(
+			"folderId", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID
+		).setParameter(
+			"groupId", group.getGroupId()
+		).setParameter(
+			"showMountFolder", false
+		).setParameter(
+			"showSelectFolder", true
+		).buildPortletURL();
 	}
 
 	@Override
@@ -208,7 +211,10 @@ public class DLFileEntryAssetRendererFactory
 		try {
 			liferayPortletURL.setWindowState(windowState);
 		}
-		catch (WindowStateException wse) {
+		catch (WindowStateException windowStateException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(windowStateException);
+			}
 		}
 
 		return liferayPortletURL;

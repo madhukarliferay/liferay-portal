@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.impl;
@@ -21,6 +12,8 @@ import com.liferay.dynamic.data.mapping.service.base.DDMFormInstanceRecordServic
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.search.BaseModelSearchResult;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -88,7 +81,7 @@ public class DDMFormInstanceRecordServiceImpl
 			long ddmFormInstanceId)
 		throws PortalException {
 
-		_ddmFormInstanceModelResourcePermission.contains(
+		_ddmFormInstanceModelResourcePermission.check(
 			getPermissionChecker(), ddmFormInstanceId, ActionKeys.VIEW);
 
 		return ddmFormInstanceRecordLocalService.getFormInstanceRecords(
@@ -101,7 +94,7 @@ public class DDMFormInstanceRecordServiceImpl
 			OrderByComparator<DDMFormInstanceRecord> orderByComparator)
 		throws PortalException {
 
-		_ddmFormInstanceModelResourcePermission.contains(
+		_ddmFormInstanceModelResourcePermission.check(
 			getPermissionChecker(), ddmFormInstanceId, ActionKeys.VIEW);
 
 		return ddmFormInstanceRecordLocalService.getFormInstanceRecords(
@@ -112,7 +105,7 @@ public class DDMFormInstanceRecordServiceImpl
 	public int getFormInstanceRecordsCount(long ddmFormInstanceId)
 		throws PortalException {
 
-		_ddmFormInstanceModelResourcePermission.contains(
+		_ddmFormInstanceModelResourcePermission.check(
 			getPermissionChecker(), ddmFormInstanceId, ActionKeys.VIEW);
 
 		return ddmFormInstanceRecordLocalService.getFormInstanceRecordsCount(
@@ -138,17 +131,33 @@ public class DDMFormInstanceRecordServiceImpl
 	}
 
 	@Override
+	public BaseModelSearchResult<DDMFormInstanceRecord>
+			searchFormInstanceRecords(
+				long ddmFormInstanceId, String[] notEmptyFields, int status,
+				int start, int end, Sort sort)
+		throws PortalException {
+
+		_ddmFormInstanceModelResourcePermission.check(
+			getPermissionChecker(), ddmFormInstanceId, ActionKeys.VIEW);
+
+		return ddmFormInstanceRecordLocalService.searchFormInstanceRecords(
+			ddmFormInstanceId, notEmptyFields, status, start, end, sort);
+	}
+
+	@Override
 	public DDMFormInstanceRecord updateFormInstanceRecord(
 			long ddmFormInstanceRecordId, boolean majorVersion,
 			DDMFormValues ddmFormValues, ServiceContext serviceContext)
 		throws PortalException {
 
-		DDMFormInstanceRecord ddmFormInstanceRecord =
-			ddmFormInstanceRecordLocalService.getFormInstanceRecord(
-				ddmFormInstanceRecordId);
+		if (!_ddmFormInstanceRecordModelResourcePermission.contains(
+				getPermissionChecker(), ddmFormInstanceRecordId,
+				DDMActionKeys.ADD_FORM_INSTANCE_RECORD)) {
 
-		_ddmFormInstanceRecordModelResourcePermission.check(
-			getPermissionChecker(), ddmFormInstanceRecord, ActionKeys.UPDATE);
+			_ddmFormInstanceRecordModelResourcePermission.check(
+				getPermissionChecker(), ddmFormInstanceRecordId,
+				ActionKeys.UPDATE);
+		}
 
 		return ddmFormInstanceRecordLocalService.updateFormInstanceRecord(
 			getUserId(), ddmFormInstanceRecordId, majorVersion, ddmFormValues,

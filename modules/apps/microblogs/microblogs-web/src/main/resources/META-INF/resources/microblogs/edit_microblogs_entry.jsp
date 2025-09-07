@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -46,7 +37,7 @@ boolean repost = ParamUtil.getBoolean(request, "repost");
 User receiverUser = null;
 
 if ((microblogsEntry != null) && !edit) {
-	modifiedDate = dateFormatDateTime.format(microblogsEntry.getModifiedDate());
+	modifiedDate = dateTimeFormat.format(microblogsEntry.getModifiedDate());
 
 	receiverUserFullName = HtmlUtil.escape(PortalUtil.getUserName(microblogsEntry));
 
@@ -94,13 +85,13 @@ if (comment) {
 					<c:choose>
 						<c:when test="<%= (receiverUser != null) && receiverUser.isActive() %>">
 							<a href="<%= receiverUser.getDisplayURL(themeDisplay) %>">
-								<liferay-ui:user-portrait
+								<liferay-user:user-portrait
 									userId="<%= (microblogsEntry != null) ? microblogsEntry.getUserId() : 0 %>"
 								/>
 							</a>
 						</c:when>
 						<c:otherwise>
-							<liferay-ui:user-portrait
+							<liferay-user:user-portrait
 								userId="<%= (microblogsEntry != null) ? microblogsEntry.getUserId() : 0 %>"
 							/>
 						</c:otherwise>
@@ -153,7 +144,7 @@ if (comment) {
 	<c:if test="<%= !repost %>">
 		<c:if test="<%= comment %>">
 			<span class="thumbnail">
-				<liferay-ui:user-portrait
+				<liferay-user:user-portrait
 					user="<%= user %>"
 				/>
 			</span>
@@ -210,7 +201,7 @@ if (comment) {
 			}
 			%>
 
-			<aui:select inlineLabel="<%= Boolean.TRUE.toString() %>" label="viewable-by" name="socialRelationType" onChange='<%= renderResponse.getNamespace() + "relationTypeOnChange(event);" %>' value="<%= socialRelationType %>">
+			<aui:select inlineLabel="<%= Boolean.TRUE.toString() %>" label="viewable-by" name="socialRelationType" onChange='<%= liferayPortletResponse.getNamespace() + "relationTypeOnChange(event);" %>' value="<%= socialRelationType %>">
 				<aui:option label="everyone" value="<%= MicroblogsEntryConstants.TYPE_EVERYONE %>" />
 				<aui:option label="connections" value="<%= SocialRelationConstants.TYPE_BI_CONNECTION %>" />
 				<aui:option label="followers" value="<%= SocialRelationConstants.TYPE_UNI_FOLLOWER %>" />
@@ -243,12 +234,12 @@ if (comment) {
 
 <aui:script use="aui-base,aui-event-input,aui-form-textarea-deprecated,aui-template-deprecated,autocomplete,autocomplete-filters">
 	var MAP_MATCHED_USERS = {
-		screenName: function(str, match) {
+		screenName: function (str, match) {
 			return '[@' + MAP_USERS[str] + ']';
 		},
-		userName: function(str, match) {
+		userName: function (str, match) {
 			return '<span>' + str + '</span>';
-		}
+		},
 	};
 
 	var MAP_USERS = {};
@@ -274,7 +265,7 @@ if (comment) {
 	var form = A.one('#<portlet:namespace /><%= formName %>');
 
 	<c:if test="<%= !repost %>">
-		var countContent = function(event) {
+		var countContent = function (event) {
 			var content = event.currentTarget.val();
 
 			var countdown = form.one('.microblogs-countdown');
@@ -293,7 +284,7 @@ if (comment) {
 			countdown.toggleClass('microblogs-countdown-warned', disabled);
 		};
 
-		var createTextarea = function(divId) {
+		var createTextarea = function (divId) {
 			var autocomplete = A.one('#<portlet:namespace />autocomplete<%= formId %>');
 			var autocompleteContent = A.one(
 				'#<portlet:namespace />autocompleteContent<%= formId %>'
@@ -307,12 +298,12 @@ if (comment) {
 
 			var textarea = new A.Textarea({
 				autoSize: true,
-				id: '<portlet:namespace />contentInput<%= formId %>'
+				id: '<portlet:namespace />contentInput<%= formId %>',
 			}).render(autocompleteContent);
 
 			var contentTextarea = autocompleteContent.one('textarea');
 
-			contentTextarea.on('focus', function(contentTextarea) {
+			contentTextarea.on('focus', function (contentTextarea) {
 				autocomplete.removeClass('inactive');
 
 				var buttonContainer = form.one('.button-holder');
@@ -334,7 +325,7 @@ if (comment) {
 				contextCountEvent = ['input', 'keydown'];
 			}
 
-			contentTextarea.on(contextCountEvent, function(contentTextarea) {
+			contentTextarea.on(contextCountEvent, function (contentTextarea) {
 				updateHighlightDivSize(contentTextarea);
 
 				countContent(contentTextarea);
@@ -349,7 +340,7 @@ if (comment) {
 			return contentTextarea;
 		};
 
-		var replaceName = function(inputText, returnType) {
+		var replaceName = function (inputText, returnType) {
 			var matchedUsers = {};
 
 			var updatedText = inputText;
@@ -359,7 +350,7 @@ if (comment) {
 			var findNames = new RegExp('(' + users.join('|') + ')', 'g');
 
 			if (users.length > 0) {
-				updatedText = updatedText.replace(findNames, function(userName) {
+				updatedText = updatedText.replace(findNames, function (userName) {
 					if (userName !== '') {
 						matchedUsers[userName] = MAP_USERS[userName];
 
@@ -376,15 +367,15 @@ if (comment) {
 			return updatedText;
 		};
 
-		var resultFormatter = function(query, results) {
-			return results.map(function(result) {
+		var resultFormatter = function (query, results) {
+			return results.map(function (result) {
 				var userData = result.raw;
 
 				return A.Lang.sub(TPL_SEARCH_RESULTS, userData);
 			});
 		};
 
-		var updateHighlightDivContent = function(event) {
+		var updateHighlightDivContent = function (event) {
 			var inputValue = event.inputValue;
 
 			var highlighterContent = A.one(
@@ -395,7 +386,8 @@ if (comment) {
 
 			if (query) {
 				event.query = query[0].substr(1);
-			} else {
+			}
+			else {
 				event.preventDefault();
 			}
 
@@ -407,7 +399,7 @@ if (comment) {
 			highlighterContent.html('<div>' + updatedText + '</div>');
 		};
 
-		var updateHighlightDivSize = function(event) {
+		var updateHighlightDivSize = function (event) {
 			var contentInput = event.currentTarget;
 
 			var autocomplete = A.one('#<portlet:namespace />autocomplete<%= formId %>');
@@ -418,7 +410,7 @@ if (comment) {
 			var contentInputHeight = contentInput.height();
 		};
 
-		var updateContentTextbox = function(event) {
+		var updateContentTextbox = function (event) {
 			event.preventDefault();
 
 			var rawResult = event.result.raw;
@@ -441,19 +433,19 @@ if (comment) {
 
 		<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/microblogs/autocomplete_user_mentions" var="userIdURL" />
 
-		var createAutocomplete = function(contentTextarea) {
+		var createAutocomplete = function (contentTextarea) {
 			Liferay.Util.fetch(
 				'<%= userIdURL.toString() %>&userId=<%= user.getUserId() %>'
 			)
-				.then(function(response) {
+				.then(function (response) {
 					return response.json();
 				})
-				.then(function(response) {
+				.then(function (response) {
 					autocompleteDiv = new A.AutoComplete({
 						inputNode: contentTextarea,
 						maxResults: 5,
 						on: {
-							clear: function() {
+							clear: function () {
 								var highlighterContent = A.one(
 									'#<portlet:namespace />highlighterContent<%= formId %>'
 								);
@@ -461,12 +453,12 @@ if (comment) {
 								highlighterContent.html('');
 							},
 							query: updateHighlightDivContent,
-							select: updateContentTextbox
+							select: updateContentTextbox,
 						},
 						resultFilters: 'phraseMatch',
 						resultFormatter: resultFormatter,
 						resultTextLocator: 'fullName',
-						source: response
+						source: response,
 					}).render();
 				});
 		};
@@ -475,7 +467,7 @@ if (comment) {
 			<c:when test="<%= !edit %>">
 				var autocomplete = A.one('#<portlet:namespace />autocomplete<%= formId %>');
 
-				autocomplete.on('click', function(event) {
+				autocomplete.on('click', function (event) {
 					var contentInput = A.one(
 						'#<portlet:namespace />autocompleteContent<%= formId %> textarea'
 					);
@@ -487,7 +479,8 @@ if (comment) {
 						highlighterContent.removeClass('textbox');
 
 						createTextarea('#<portlet:namespace />autocompleteContent');
-					} else {
+					}
+					else {
 						contentInput.focus();
 					}
 				});
@@ -498,7 +491,7 @@ if (comment) {
 		</c:choose>
 	</c:if>
 
-	form.on('submit', function(event) {
+	form.on('submit', function (event) {
 		event.halt(true);
 
 		<c:if test="<%= !repost %>">

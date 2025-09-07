@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.cluster;
 
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchClientResolver;
 import com.liferay.portal.search.engine.adapter.cluster.ClusterRequest;
 import com.liferay.portal.search.engine.adapter.cluster.ClusterRequestExecutor;
 import com.liferay.portal.search.engine.adapter.cluster.ClusterResponse;
@@ -23,7 +16,10 @@ import com.liferay.portal.search.engine.adapter.cluster.StateClusterRequest;
 import com.liferay.portal.search.engine.adapter.cluster.StateClusterResponse;
 import com.liferay.portal.search.engine.adapter.cluster.StatsClusterRequest;
 import com.liferay.portal.search.engine.adapter.cluster.StatsClusterResponse;
+import com.liferay.portal.search.engine.adapter.cluster.UpdateSettingsClusterRequest;
+import com.liferay.portal.search.engine.adapter.cluster.UpdateSettingsClusterResponse;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -31,7 +27,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Dylan Rebelak
  */
 @Component(
-	immediate = true, property = "search.engine.impl=Elasticsearch",
+	property = "search.engine.impl=Elasticsearch",
 	service = ClusterRequestExecutor.class
 )
 public class ElasticsearchClusterRequestExecutor
@@ -65,29 +61,38 @@ public class ElasticsearchClusterRequestExecutor
 		return _statsClusterRequestExecutor.execute(statsClusterRequest);
 	}
 
-	@Reference(unbind = "-")
-	protected void setHealthClusterRequestExecutor(
-		HealthClusterRequestExecutor healthClusterRequestExecutor) {
+	@Override
+	public UpdateSettingsClusterResponse executeClusterRequest(
+		UpdateSettingsClusterRequest updateSettingsClusterRequest) {
 
-		_healthClusterRequestExecutor = healthClusterRequestExecutor;
+		return _updateSettingsClusterRequestExecutor.execute(
+			updateSettingsClusterRequest);
 	}
 
-	@Reference(unbind = "-")
-	protected void setStateClusterRequestExecutor(
-		StateClusterRequestExecutor stateClusterRequestExecutor) {
-
-		_stateClusterRequestExecutor = stateClusterRequestExecutor;
+	@Activate
+	protected void activate() {
+		_healthClusterRequestExecutor = new HealthClusterRequestExecutor(
+			_elasticsearchClientResolver);
+		_stateClusterRequestExecutor = new StateClusterRequestExecutor(
+			_elasticsearchClientResolver);
+		_statsClusterRequestExecutor = new StatsClusterRequestExecutor(
+			_elasticsearchClientResolver, _jsonFactory);
+		_updateSettingsClusterRequestExecutor =
+			new UpdateSettingsClusterRequestExecutor(
+				_elasticsearchClientResolver);
 	}
 
-	@Reference(unbind = "-")
-	protected void setStatsClusterRequestExecutor(
-		StatsClusterRequestExecutor statsClusterRequestExecutor) {
-
-		_statsClusterRequestExecutor = statsClusterRequestExecutor;
-	}
+	@Reference
+	private ElasticsearchClientResolver _elasticsearchClientResolver;
 
 	private HealthClusterRequestExecutor _healthClusterRequestExecutor;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
 	private StateClusterRequestExecutor _stateClusterRequestExecutor;
 	private StatsClusterRequestExecutor _statsClusterRequestExecutor;
+	private UpdateSettingsClusterRequestExecutor
+		_updateSettingsClusterRequestExecutor;
 
 }

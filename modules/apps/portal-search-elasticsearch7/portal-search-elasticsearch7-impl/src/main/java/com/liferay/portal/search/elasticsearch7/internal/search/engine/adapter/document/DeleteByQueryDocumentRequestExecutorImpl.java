@@ -1,42 +1,34 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.document;
 
-import com.liferay.portal.kernel.search.query.QueryTranslator;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchClientResolver;
+import com.liferay.portal.search.elasticsearch7.internal.legacy.query.ElasticsearchQueryTranslator;
 import com.liferay.portal.search.engine.adapter.document.DeleteByQueryDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.DeleteByQueryDocumentResponse;
+import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.search.query.QueryTranslator;
 
 import java.io.IOException;
 
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Dylan Rebelak
  */
-@Component(
-	immediate = true, service = DeleteByQueryDocumentRequestExecutor.class
-)
+@Component(service = DeleteByQueryDocumentRequestExecutor.class)
 public class DeleteByQueryDocumentRequestExecutorImpl
 	implements DeleteByQueryDocumentRequestExecutor {
 
@@ -48,12 +40,18 @@ public class DeleteByQueryDocumentRequestExecutorImpl
 			deleteByQueryDocumentRequest);
 
 		BulkByScrollResponse bulkByScrollResponse = getBulkByScrollResponse(
-			deleteByQueryRequest);
+			deleteByQueryRequest, deleteByQueryDocumentRequest);
 
 		TimeValue timeValue = bulkByScrollResponse.getTook();
 
 		return new DeleteByQueryDocumentResponse(
 			bulkByScrollResponse.getDeleted(), timeValue.getMillis());
+	}
+
+	@Activate
+	protected void activate() {
+		_legacyQueryTranslator = new ElasticsearchQueryTranslator(
+			_indexNameBuilder);
 	}
 
 	protected DeleteByQueryRequest createDeleteByQueryRequest(
@@ -64,10 +62,19 @@ public class DeleteByQueryDocumentRequestExecutorImpl
 		deleteByQueryRequest.indices(
 			deleteByQueryDocumentRequest.getIndexNames());
 
-		QueryBuilder queryBuilder = _queryTranslator.translate(
-			deleteByQueryDocumentRequest.getQuery(), null);
+		if (deleteByQueryDocumentRequest.getPortalSearchQuery() != null) {
+			QueryBuilder queryBuilder = _queryTranslator.translate(
+				deleteByQueryDocumentRequest.getPortalSearchQuery());
 
-		deleteByQueryRequest.setQuery(queryBuilder);
+			deleteByQueryRequest.setQuery(queryBuilder);
+		}
+		else {
+			@SuppressWarnings("deprecation")
+			QueryBuilder queryBuilder = _legacyQueryTranslator.translate(
+				deleteByQueryDocumentRequest.getQuery(), null);
+
+			deleteByQueryRequest.setQuery(queryBuilder);
+		}
 
 		deleteByQueryRequest.setRefresh(
 			deleteByQueryDocumentRequest.isRefresh());
@@ -76,35 +83,33 @@ public class DeleteByQueryDocumentRequestExecutorImpl
 	}
 
 	protected BulkByScrollResponse getBulkByScrollResponse(
-		DeleteByQueryRequest deleteByQueryRequest) {
+		DeleteByQueryRequest deleteByQueryRequest,
+		DeleteByQueryDocumentRequest deleteByQueryDocumentRequest) {
 
 		RestHighLevelClient restHighLevelClient =
-			_elasticsearchClientResolver.getRestHighLevelClient();
+			_elasticsearchClientResolver.getRestHighLevelClient(
+				deleteByQueryDocumentRequest.getConnectionId(),
+				deleteByQueryDocumentRequest.isPreferLocalCluster());
 
 		try {
 			return restHighLevelClient.deleteByQuery(
 				deleteByQueryRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setElasticsearchClientResolver(
-		ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		_elasticsearchClientResolver = elasticsearchClientResolver;
-	}
-
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	protected void setQueryTranslator(
-		QueryTranslator<QueryBuilder> queryTranslator) {
-
-		_queryTranslator = queryTranslator;
-	}
-
+	@Reference
 	private ElasticsearchClientResolver _elasticsearchClientResolver;
-	private QueryTranslator<QueryBuilder> _queryTranslator;
+
+	@Reference
+	private IndexNameBuilder _indexNameBuilder;
+
+	private com.liferay.portal.kernel.search.query.QueryTranslator<QueryBuilder>
+		_legacyQueryTranslator;
+	private final QueryTranslator<QueryBuilder> _queryTranslator =
+		new com.liferay.portal.search.elasticsearch7.internal.query.
+			ElasticsearchQueryTranslator();
 
 }

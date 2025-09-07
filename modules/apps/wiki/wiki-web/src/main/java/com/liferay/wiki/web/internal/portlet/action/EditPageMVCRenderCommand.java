@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.web.internal.portlet.action;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -26,6 +19,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.wiki.configuration.WikiGroupServiceConfiguration;
+import com.liferay.wiki.constants.WikiPageConstants;
 import com.liferay.wiki.constants.WikiPortletKeys;
 import com.liferay.wiki.constants.WikiWebKeys;
 import com.liferay.wiki.engine.WikiEngineRenderer;
@@ -35,14 +29,13 @@ import com.liferay.wiki.exception.NoSuchPageException;
 import com.liferay.wiki.exception.PageTitleException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
-import com.liferay.wiki.model.WikiPageConstants;
 import com.liferay.wiki.service.WikiPageService;
 import com.liferay.wiki.validator.WikiPageTitleValidator;
 import com.liferay.wiki.web.internal.util.WikiWebComponentProvider;
 
-import javax.portlet.PortletException;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -52,11 +45,10 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + WikiPortletKeys.WIKI,
-		"javax.portlet.name=" + WikiPortletKeys.WIKI_ADMIN,
-		"javax.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI_ADMIN,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
 		"mvc.command.name=/wiki/edit_page"
 	},
 	service = MVCRenderCommand.class
@@ -84,24 +76,24 @@ public class EditPageMVCRenderCommand implements MVCRenderCommand {
 				getPage(renderRequest);
 			}
 		}
-		catch (Exception e) {
-			if (e instanceof NoSuchNodeException ||
-				e instanceof PageTitleException ||
-				e instanceof PrincipalException) {
+		catch (Exception exception) {
+			if (exception instanceof NoSuchNodeException ||
+				exception instanceof PageTitleException ||
+				exception instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass());
+				SessionErrors.add(renderRequest, exception.getClass());
 
-				if (e instanceof PrincipalException) {
+				if (exception instanceof PrincipalException) {
 					return "/wiki/error.jsp";
 				}
 			}
-			else if (e instanceof NoSuchPageException) {
+			else if (exception instanceof NoSuchPageException) {
 
 				// Let edit_page.jsp handle this case
 
 			}
 			else {
-				throw new PortletException(e);
+				throw new PortletException(exception);
 			}
 		}
 
@@ -140,11 +132,19 @@ public class EditPageMVCRenderCommand implements MVCRenderCommand {
 				page = _wikiPageService.getPage(nodeId, title, version);
 			}
 		}
-		catch (NoSuchPageException nspe1) {
+		catch (NoSuchPageException noSuchPageException1) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchPageException1);
+			}
+
 			try {
 				page = _wikiPageService.getPage(nodeId, title, false);
 			}
-			catch (NoSuchPageException nspe2) {
+			catch (NoSuchPageException noSuchPageException2) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(noSuchPageException2);
+				}
+
 				WikiWebComponentProvider wikiWebComponentProvider =
 					WikiWebComponentProvider.getWikiWebComponentProvider();
 
@@ -155,14 +155,12 @@ public class EditPageMVCRenderCommand implements MVCRenderCommand {
 						wikiGroupServiceConfiguration.frontPageName()) &&
 					(version == 0)) {
 
-					ServiceContext serviceContext = new ServiceContext();
-
 					page = _wikiPageService.addPage(
 						nodeId, title, null, WikiPageConstants.NEW, true,
-						serviceContext);
+						new ServiceContext());
 				}
 				else {
-					throw nspe2;
+					throw noSuchPageException2;
 				}
 			}
 		}
@@ -181,36 +179,20 @@ public class EditPageMVCRenderCommand implements MVCRenderCommand {
 		renderRequest.setAttribute(WikiWebKeys.WIKI_PAGE, page);
 	}
 
-	@Reference(unbind = "-")
-	protected void setWikiEngineRenderer(
-		WikiEngineRenderer wikiEngineRenderer) {
+	private static final Log _log = LogFactoryUtil.getLog(
+		EditPageMVCRenderCommand.class);
 
-		_wikiEngineRenderer = wikiEngineRenderer;
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiPageService(WikiPageService wikiPageService) {
-		_wikiPageService = wikiPageService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiPageTitleValidator(
-		WikiPageTitleValidator wikiPageTitleValidator) {
-
-		_wikiPageTitleValidator = wikiPageTitleValidator;
-	}
-
+	@Reference
 	private WikiEngineRenderer _wikiEngineRenderer;
-
-	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiNode)")
-	private volatile ModelResourcePermission<WikiNode>
-		_wikiNodeModelResourcePermission;
 
 	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiPage)")
 	private volatile ModelResourcePermission<WikiPage>
 		_wikiPageModelResourcePermission;
 
+	@Reference
 	private WikiPageService _wikiPageService;
+
+	@Reference
 	private WikiPageTitleValidator _wikiPageTitleValidator;
 
 }

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
 
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,16 +32,16 @@ public class UserCacheModel
 	implements CacheModel<User>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof UserCacheModel)) {
+		if (!(object instanceof UserCacheModel)) {
 			return false;
 		}
 
-		UserCacheModel userCacheModel = (UserCacheModel)obj;
+		UserCacheModel userCacheModel = (UserCacheModel)object;
 
 		if ((userId == userCacheModel.userId) &&
 			(mvccVersion == userCacheModel.mvccVersion)) {
@@ -76,10 +71,12 @@ public class UserCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(87);
+		StringBundler sb = new StringBundler(89);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", externalReferenceCode=");
@@ -92,8 +89,6 @@ public class UserCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", defaultUser=");
-		sb.append(defaultUser);
 		sb.append(", contactId=");
 		sb.append(contactId);
 		sb.append(", password=");
@@ -162,6 +157,8 @@ public class UserCacheModel
 		sb.append(agreedToTermsOfUse);
 		sb.append(", emailAddressVerified=");
 		sb.append(emailAddressVerified);
+		sb.append(", type=");
+		sb.append(type);
 		sb.append(", status=");
 		sb.append(status);
 		sb.append("}");
@@ -174,6 +171,7 @@ public class UserCacheModel
 		UserImpl userImpl = new UserImpl();
 
 		userImpl.setMvccVersion(mvccVersion);
+		userImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			userImpl.setUuid("");
@@ -206,7 +204,6 @@ public class UserCacheModel
 			userImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
-		userImpl.setDefaultUser(defaultUser);
 		userImpl.setContactId(contactId);
 
 		if (password == null) {
@@ -386,16 +383,32 @@ public class UserCacheModel
 
 		userImpl.setAgreedToTermsOfUse(agreedToTermsOfUse);
 		userImpl.setEmailAddressVerified(emailAddressVerified);
+		userImpl.setType(type);
 		userImpl.setStatus(status);
 
 		userImpl.resetOriginalValues();
+
+		try {
+			_groupIdMethodHandle.invokeExact(userImpl, groupId);
+
+			_layoutsUpdatedMethodHandle.invokeExact(userImpl, layoutsUpdated);
+
+			_userGroupIdsMethodHandle.invokeExact(userImpl, userGroupIds);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return userImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 		externalReferenceCode = objectInput.readUTF();
 
@@ -404,8 +417,6 @@ public class UserCacheModel
 		companyId = objectInput.readLong();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-
-		defaultUser = objectInput.readBoolean();
 
 		contactId = objectInput.readLong();
 		password = objectInput.readUTF();
@@ -452,12 +463,22 @@ public class UserCacheModel
 
 		emailAddressVerified = objectInput.readBoolean();
 
+		type = objectInput.readInt();
+
 		status = objectInput.readInt();
+
+		groupId = (long)objectInput.readObject();
+
+		layoutsUpdated = (boolean)objectInput.readObject();
+
+		userGroupIds = (long[])objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -478,8 +499,6 @@ public class UserCacheModel
 		objectOutput.writeLong(companyId);
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
-
-		objectOutput.writeBoolean(defaultUser);
 
 		objectOutput.writeLong(contactId);
 
@@ -637,17 +656,25 @@ public class UserCacheModel
 
 		objectOutput.writeBoolean(emailAddressVerified);
 
+		objectOutput.writeInt(type);
+
 		objectOutput.writeInt(status);
+
+		objectOutput.writeObject(groupId);
+
+		objectOutput.writeObject(layoutsUpdated);
+
+		objectOutput.writeObject(userGroupIds);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public String externalReferenceCode;
 	public long userId;
 	public long companyId;
 	public long createDate;
 	public long modifiedDate;
-	public boolean defaultUser;
 	public long contactId;
 	public String password;
 	public boolean passwordEncrypted;
@@ -682,6 +709,32 @@ public class UserCacheModel
 	public long lockoutDate;
 	public boolean agreedToTermsOfUse;
 	public boolean emailAddressVerified;
+	public int type;
 	public int status;
+	public volatile long groupId;
+	public volatile boolean layoutsUpdated;
+	public volatile long[] userGroupIds;
+
+	private static final MethodHandle _groupIdMethodHandle;
+	private static final MethodHandle _layoutsUpdatedMethodHandle;
+	private static final MethodHandle _userGroupIdsMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_groupIdMethodHandle = lookup.findSetter(
+				UserImpl.class, "_groupId", long.class);
+
+			_layoutsUpdatedMethodHandle = lookup.findSetter(
+				UserImpl.class, "_layoutsUpdated", boolean.class);
+
+			_userGroupIdsMethodHandle = lookup.findSetter(
+				UserImpl.class, "_userGroupIds", long[].class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

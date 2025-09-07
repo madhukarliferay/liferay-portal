@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.persistence.AssetEntryPersistence;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
@@ -24,8 +17,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.LockProtectedAction;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.transaction.Propagation;
-import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.persistence.GroupPersistence;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Tuple;
@@ -41,7 +35,10 @@ import com.liferay.social.kernel.model.SocialActivityCounterDefinition;
 import com.liferay.social.kernel.model.SocialActivityDefinition;
 import com.liferay.social.kernel.model.SocialActivityLimit;
 import com.liferay.social.kernel.model.SocialActivityProcessor;
+import com.liferay.social.kernel.service.SocialActivityLimitLocalService;
+import com.liferay.social.kernel.service.SocialActivitySettingLocalService;
 import com.liferay.social.kernel.service.persistence.SocialActivityCounterFinder;
+import com.liferay.social.kernel.service.persistence.SocialActivityLimitPersistence;
 import com.liferay.social.kernel.util.SocialCounterPeriodUtil;
 
 import java.util.ArrayList;
@@ -100,7 +97,6 @@ public class SocialActivityCounterLocalServiceImpl
 	 * @return the added activity counter
 	 */
 	@Override
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public SocialActivityCounter addActivityCounter(
 			long groupId, long classNameId, long classPK, String name,
 			int ownerType, int totalValue, long previousActivityCounterId,
@@ -124,7 +120,8 @@ public class SocialActivityCounterLocalServiceImpl
 					activityCounter.getStartPeriod() + periodLength - 1);
 			}
 
-			socialActivityCounterPersistence.update(activityCounter);
+			activityCounter = socialActivityCounterPersistence.update(
+				activityCounter);
 		}
 
 		activityCounter = socialActivityCounterPersistence.fetchByG_C_C_N_O_E(
@@ -135,7 +132,7 @@ public class SocialActivityCounterLocalServiceImpl
 			return activityCounter;
 		}
 
-		Group group = groupPersistence.findByPrimaryKey(groupId);
+		Group group = _groupPersistence.findByPrimaryKey(groupId);
 
 		long activityCounterId = counterLocalService.increment();
 
@@ -165,9 +162,7 @@ public class SocialActivityCounterLocalServiceImpl
 			SocialActivityCounterConstants.END_PERIOD_UNDEFINED);
 		activityCounter.setActive(true);
 
-		socialActivityCounterPersistence.update(activityCounter);
-
-		return activityCounter;
+		return socialActivityCounterPersistence.update(activityCounter);
 	}
 
 	/**
@@ -194,13 +189,9 @@ public class SocialActivityCounterLocalServiceImpl
 	public void addActivityCounters(SocialActivity activity)
 		throws PortalException {
 
-		if (!socialActivitySettingLocalService.isEnabled(
-				activity.getGroupId(), activity.getClassNameId())) {
-
-			return;
-		}
-
-		if (!socialActivitySettingLocalService.isEnabled(
+		if (!_socialActivitySettingLocalService.isEnabled(
+				activity.getGroupId(), activity.getClassNameId()) ||
+			!_socialActivitySettingLocalService.isEnabled(
 				activity.getGroupId(), activity.getClassNameId(),
 				activity.getClassPK())) {
 
@@ -230,7 +221,7 @@ public class SocialActivityCounterLocalServiceImpl
 		}
 
 		SocialActivityDefinition activityDefinition =
-			socialActivitySettingLocalService.getActivityDefinition(
+			_socialActivitySettingLocalService.getActivityDefinition(
 				activity.getGroupId(), activity.getClassName(),
 				activity.getType());
 
@@ -247,11 +238,11 @@ public class SocialActivityCounterLocalServiceImpl
 			activityProcessor.processActivity(activity);
 		}
 
-		User user = userPersistence.findByPrimaryKey(activity.getUserId());
+		User user = _userPersistence.findByPrimaryKey(activity.getUserId());
 
 		AssetEntry assetEntry = activity.getAssetEntry();
 
-		User assetEntryUser = userPersistence.findByPrimaryKey(
+		User assetEntryUser = _userPersistence.findByPrimaryKey(
 			assetEntry.getUserId());
 
 		List<SocialActivityCounter> activityCounters = new ArrayList<>();
@@ -273,7 +264,7 @@ public class SocialActivityCounterLocalServiceImpl
 
 		SocialActivityCounter assetActivitiesCounter = null;
 
-		if (!assetEntryUser.isDefaultUser() && assetEntryUser.isActive() &&
+		if (!assetEntryUser.isGuestUser() && assetEntryUser.isActive() &&
 			assetEntry.isVisible()) {
 
 			assetActivitiesCounter = addAssetActivitiesCounter(activity);
@@ -281,7 +272,7 @@ public class SocialActivityCounterLocalServiceImpl
 
 		SocialActivityCounter userActivitiesCounter = null;
 
-		if (!user.isDefaultUser() && user.isActive()) {
+		if (!user.isGuestUser() && user.isActive()) {
 			userActivitiesCounter = addUserActivitiesCounter(activity);
 		}
 
@@ -339,10 +330,10 @@ public class SocialActivityCounterLocalServiceImpl
 		socialActivityCounterPersistence.removeByC_C(
 			assetEntry.getClassNameId(), assetEntry.getClassPK());
 
-		socialActivityLimitPersistence.removeByC_C(
+		_socialActivityLimitPersistence.removeByC_C(
 			assetEntry.getClassNameId(), assetEntry.getClassPK());
 
-		socialActivitySettingLocalService.deleteActivitySetting(
+		_socialActivitySettingLocalService.deleteActivitySetting(
 			assetEntry.getGroupId(), assetEntry.getClassName(),
 			assetEntry.getClassPK());
 
@@ -363,15 +354,15 @@ public class SocialActivityCounterLocalServiceImpl
 		String className = PortalUtil.getClassName(classNameId);
 
 		if (!className.equals(User.class.getName())) {
-			AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
-				className, classPK);
+			AssetEntry assetEntry = _assetEntryPersistence.fetchByC_C(
+				classNameId, classPK);
 
 			deleteActivityCounters(assetEntry);
 		}
 		else {
 			socialActivityCounterPersistence.removeByC_C(classNameId, classPK);
 
-			socialActivityLimitPersistence.removeByUserId(classPK);
+			_socialActivityLimitPersistence.removeByUserId(classPK);
 		}
 
 		clearFinderCache();
@@ -388,17 +379,18 @@ public class SocialActivityCounterLocalServiceImpl
 	public void deleteActivityCounters(String className, long classPK)
 		throws PortalException {
 
+		long classNameId = _classNameLocalService.getClassNameId(className);
+
 		if (!className.equals(User.class.getName())) {
-			AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
-				className, classPK);
+			AssetEntry assetEntry = _assetEntryPersistence.fetchByC_C(
+				classNameId, classPK);
 
 			deleteActivityCounters(assetEntry);
 		}
 		else {
-			socialActivityCounterPersistence.removeByC_C(
-				classNameLocalService.getClassNameId(className), classPK);
+			socialActivityCounterPersistence.removeByC_C(classNameId, classPK);
 
-			socialActivityLimitPersistence.removeByUserId(classPK);
+			_socialActivityLimitPersistence.removeByUserId(classPK);
 		}
 
 		clearFinderCache();
@@ -420,7 +412,31 @@ public class SocialActivityCounterLocalServiceImpl
 	public void disableActivityCounters(long classNameId, long classPK)
 		throws PortalException {
 
-		disableActivityCounters(PortalUtil.getClassName(classNameId), classPK);
+		List<SocialActivityCounter> activityCounters =
+			socialActivityCounterPersistence.findByC_C(classNameId, classPK);
+
+		if (activityCounters.isEmpty()) {
+			return;
+		}
+
+		AssetEntry assetEntry = _assetEntryPersistence.fetchByC_C(
+			classNameId, classPK);
+
+		if (assetEntry == null) {
+			return;
+		}
+
+		adjustUserContribution(assetEntry, false);
+
+		for (SocialActivityCounter activityCounter : activityCounters) {
+			if (activityCounter.isActive()) {
+				activityCounter.setActive(false);
+
+				socialActivityCounterPersistence.update(activityCounter);
+			}
+		}
+
+		clearFinderCache();
 	}
 
 	/**
@@ -439,28 +455,8 @@ public class SocialActivityCounterLocalServiceImpl
 	public void disableActivityCounters(String className, long classPK)
 		throws PortalException {
 
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
-			className, classPK);
-
-		if (assetEntry == null) {
-			return;
-		}
-
-		List<SocialActivityCounter> activityCounters =
-			socialActivityCounterPersistence.findByC_C(
-				assetEntry.getClassNameId(), classPK);
-
-		adjustUserContribution(assetEntry, false);
-
-		for (SocialActivityCounter activityCounter : activityCounters) {
-			if (activityCounter.isActive()) {
-				activityCounter.setActive(false);
-
-				socialActivityCounterPersistence.update(activityCounter);
-			}
-		}
-
-		clearFinderCache();
+		disableActivityCounters(
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	/**
@@ -479,7 +475,31 @@ public class SocialActivityCounterLocalServiceImpl
 	public void enableActivityCounters(long classNameId, long classPK)
 		throws PortalException {
 
-		enableActivityCounters(PortalUtil.getClassName(classNameId), classPK);
+		List<SocialActivityCounter> activityCounters =
+			socialActivityCounterPersistence.findByC_C(classNameId, classPK);
+
+		if (activityCounters.isEmpty()) {
+			return;
+		}
+
+		AssetEntry assetEntry = _assetEntryPersistence.fetchByC_C(
+			classNameId, classPK);
+
+		if (assetEntry == null) {
+			return;
+		}
+
+		adjustUserContribution(assetEntry, true);
+
+		for (SocialActivityCounter activityCounter : activityCounters) {
+			if (!activityCounter.isActive()) {
+				activityCounter.setActive(true);
+
+				socialActivityCounterPersistence.update(activityCounter);
+			}
+		}
+
+		clearFinderCache();
 	}
 
 	/**
@@ -498,28 +518,8 @@ public class SocialActivityCounterLocalServiceImpl
 	public void enableActivityCounters(String className, long classPK)
 		throws PortalException {
 
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
-			className, classPK);
-
-		if (assetEntry == null) {
-			return;
-		}
-
-		List<SocialActivityCounter> activityCounters =
-			socialActivityCounterPersistence.findByC_C(
-				assetEntry.getClassNameId(), classPK);
-
-		adjustUserContribution(assetEntry, true);
-
-		for (SocialActivityCounter activityCounter : activityCounters) {
-			if (!activityCounter.isActive()) {
-				activityCounter.setActive(true);
-
-				socialActivityCounterPersistence.update(activityCounter);
-			}
-		}
-
-		clearFinderCache();
+		enableActivityCounters(
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	/**
@@ -795,7 +795,7 @@ public class SocialActivityCounterLocalServiceImpl
 	public void incrementUserAchievementCounter(long userId, long groupId)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		SocialActivityCounter activityCounter = addActivityCounter(
 			groupId, user, new SocialActivityImpl(),
@@ -806,8 +806,8 @@ public class SocialActivityCounterLocalServiceImpl
 	}
 
 	protected SocialActivityCounter addActivityCounter(
-			final long groupId, final User user, final SocialActivity activity,
-			final SocialActivityCounterDefinition activityCounterDefinition)
+			long groupId, User user, SocialActivity activity,
+			SocialActivityCounterDefinition activityCounterDefinition)
 		throws PortalException {
 
 		int ownerType = activityCounterDefinition.getOwnerType();
@@ -838,7 +838,7 @@ public class SocialActivityCounterLocalServiceImpl
 
 		if (activityCounterDefinition.getLimitValue() > 0) {
 			SocialActivityLimit activityLimit =
-				socialActivityLimitPersistence.fetchByG_U_C_C_A_A(
+				_socialActivityLimitPersistence.fetchByG_U_C_C_A_A(
 					groupId, user.getUserId(), activity.getClassNameId(),
 					getLimitClassPK(activity, activityCounterDefinition),
 					activity.getType(), activityCounterDefinition.getName());
@@ -856,7 +856,7 @@ public class SocialActivityCounterLocalServiceImpl
 			SocialActivity activity)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(activity.getUserId());
+		User user = _userPersistence.findByPrimaryKey(activity.getUserId());
 
 		return addActivityCounter(
 			activity.getGroupId(), user, activity,
@@ -867,7 +867,7 @@ public class SocialActivityCounterLocalServiceImpl
 			SocialActivity activity)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(activity.getUserId());
+		User user = _userPersistence.findByPrimaryKey(activity.getUserId());
 
 		return addActivityCounter(
 			activity.getGroupId(), user, activity,
@@ -904,7 +904,7 @@ public class SocialActivityCounterLocalServiceImpl
 		SocialActivityCounter latestContributionActivityCounter =
 			fetchLatestActivityCounter(
 				assetEntry.getGroupId(),
-				classNameLocalService.getClassNameId(User.class.getName()),
+				_classNameLocalService.getClassNameId(User.class.getName()),
 				assetEntry.getUserId(),
 				SocialActivityCounterConstants.NAME_CONTRIBUTION,
 				SocialActivityCounterConstants.TYPE_CREATOR);
@@ -928,10 +928,12 @@ public class SocialActivityCounterLocalServiceImpl
 		}
 
 		if (latestPopularityActivityCounter.getStartPeriod() == startPeriod) {
+			int latestPopularityActivityCounterCurrentValue =
+				latestPopularityActivityCounter.getCurrentValue();
+
 			latestContributionActivityCounter.setCurrentValue(
 				latestContributionActivityCounter.getCurrentValue() +
-					(latestPopularityActivityCounter.getCurrentValue() *
-						factor));
+					(latestPopularityActivityCounterCurrentValue * factor));
 		}
 
 		latestContributionActivityCounter.setTotalValue(
@@ -960,7 +962,7 @@ public class SocialActivityCounterLocalServiceImpl
 		}
 
 		SocialActivityLimit activityLimit =
-			socialActivityLimitPersistence.findByG_U_C_C_A_A(
+			_socialActivityLimitPersistence.findByG_U_C_C_A_A(
 				activity.getGroupId(), user.getUserId(),
 				activity.getClassNameId(), classPK, activity.getType(), name);
 
@@ -971,7 +973,7 @@ public class SocialActivityCounterLocalServiceImpl
 			activityLimit.setCount(
 				activityCounterDefinition.getLimitPeriod(), count + 1);
 
-			socialActivityLimitPersistence.update(activityLimit);
+			_socialActivityLimitPersistence.update(activityLimit);
 
 			return true;
 		}
@@ -993,7 +995,7 @@ public class SocialActivityCounterLocalServiceImpl
 			return assetEntry.getClassNameId();
 		}
 
-		return classNameLocalService.getClassNameId(User.class.getName());
+		return _classNameLocalService.getClassNameId(User.class.getName());
 	}
 
 	protected long getClassPK(User user, AssetEntry assetEntry, int ownerType) {
@@ -1032,7 +1034,8 @@ public class SocialActivityCounterLocalServiceImpl
 			activityCounter.getTotalValue() +
 				activityCounterDefinition.getIncrement());
 
-		socialActivityCounterPersistence.update(activityCounter);
+		activityCounter = socialActivityCounterPersistence.update(
+			activityCounter);
 
 		socialActivityCounterPersistence.clearCache(activityCounter);
 	}
@@ -1041,14 +1044,14 @@ public class SocialActivityCounterLocalServiceImpl
 		User user, User assetEntryUser, AssetEntry assetEntry,
 		SocialActivityCounterDefinition activityCounterDefinition) {
 
-		if ((user.isDefaultUser() || !user.isActive()) &&
+		if ((user.isGuestUser() || !user.isActive()) &&
 			(activityCounterDefinition.getOwnerType() !=
 				SocialActivityCounterConstants.TYPE_ASSET)) {
 
 			return false;
 		}
 
-		if ((assetEntryUser.isDefaultUser() || !assetEntryUser.isActive()) &&
+		if ((assetEntryUser.isGuestUser() || !assetEntryUser.isActive()) &&
 			(activityCounterDefinition.getOwnerType() !=
 				SocialActivityCounterConstants.TYPE_ACTOR)) {
 
@@ -1138,7 +1141,7 @@ public class SocialActivityCounterLocalServiceImpl
 					throws PortalException {
 
 					SocialActivityLimit activityLimit =
-						socialActivityLimitPersistence.fetchByG_U_C_C_A_A(
+						_socialActivityLimitPersistence.fetchByG_U_C_C_A_A(
 							groupId, user.getUserId(),
 							activity.getClassNameId(), classPK,
 							activity.getType(),
@@ -1146,7 +1149,7 @@ public class SocialActivityCounterLocalServiceImpl
 
 					if (activityLimit == null) {
 						activityLimit =
-							socialActivityLimitLocalService.addActivityLimit(
+							_socialActivityLimitLocalService.addActivityLimit(
 								user.getUserId(), activity.getGroupId(),
 								activity.getClassNameId(), classPK,
 								activity.getType(),
@@ -1161,7 +1164,7 @@ public class SocialActivityCounterLocalServiceImpl
 
 		lockProtectedAction.performAction();
 
-		socialActivityLimitPersistence.cacheResult(
+		_socialActivityLimitPersistence.cacheResult(
 			lockProtectedAction.getReturnValue());
 	}
 
@@ -1170,6 +1173,26 @@ public class SocialActivityCounterLocalServiceImpl
 			new SocialActivityCounterDefinition(
 				SocialActivityCounterConstants.NAME_ASSET_ACTIVITIES,
 				SocialActivityCounterConstants.TYPE_ASSET);
+
+	@BeanReference(type = AssetEntryPersistence.class)
+	private AssetEntryPersistence _assetEntryPersistence;
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = GroupPersistence.class)
+	private GroupPersistence _groupPersistence;
+
+	@BeanReference(type = SocialActivityLimitLocalService.class)
+	private SocialActivityLimitLocalService _socialActivityLimitLocalService;
+
+	@BeanReference(type = SocialActivityLimitPersistence.class)
+	private SocialActivityLimitPersistence _socialActivityLimitPersistence;
+
+	@BeanReference(type = SocialActivitySettingLocalService.class)
+	private SocialActivitySettingLocalService
+		_socialActivitySettingLocalService;
+
 	private final SocialActivityCounterDefinition
 		_userAchievementsActivityCounterDefinition =
 			new SocialActivityCounterDefinition(
@@ -1180,5 +1203,8 @@ public class SocialActivityCounterLocalServiceImpl
 			new SocialActivityCounterDefinition(
 				SocialActivityCounterConstants.NAME_USER_ACTIVITIES,
 				SocialActivityCounterConstants.TYPE_ACTOR);
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

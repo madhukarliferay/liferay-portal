@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMTemplateVersion;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DDMTemplateVersion. This utility wraps
@@ -32,20 +26,13 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMTemplateVersionServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateVersionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DDMTemplateVersionServiceUtil} to access the ddm template version remote service. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMTemplateVersionServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getLatestTemplateVersion(long templateId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getLatestTemplateVersion(long templateId)
+		throws PortalException {
 
 		return getService().getLatestTemplateVersion(templateId);
 	}
@@ -59,53 +46,34 @@ public class DDMTemplateVersionServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMTemplateVersion
-			getTemplateVersion(long templateVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMTemplateVersion getTemplateVersion(long templateVersionId)
+		throws PortalException {
 
 		return getService().getTemplateVersion(templateVersionId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMTemplateVersion>
-				getTemplateVersions(
-					long templateId, int start, int end,
-					com.liferay.portal.kernel.util.OrderByComparator
-						<com.liferay.dynamic.data.mapping.model.
-							DDMTemplateVersion> orderByComparator)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMTemplateVersion> getTemplateVersions(
+			long templateId, int start, int end,
+			OrderByComparator<DDMTemplateVersion> orderByComparator)
+		throws PortalException {
 
 		return getService().getTemplateVersions(
 			templateId, start, end, orderByComparator);
 	}
 
 	public static int getTemplateVersionsCount(long templateId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getTemplateVersionsCount(templateId);
 	}
 
 	public static DDMTemplateVersionService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMTemplateVersionService, DDMTemplateVersionService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMTemplateVersionService> _serviceSnapshot =
+		new Snapshot<>(
+			DDMTemplateVersionServiceUtil.class,
 			DDMTemplateVersionService.class);
-
-		ServiceTracker<DDMTemplateVersionService, DDMTemplateVersionService>
-			serviceTracker =
-				new ServiceTracker
-					<DDMTemplateVersionService, DDMTemplateVersionService>(
-						bundle.getBundleContext(),
-						DDMTemplateVersionService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

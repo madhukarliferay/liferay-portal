@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.service;
@@ -27,17 +18,16 @@ public class ExportImportLocalServiceWrapper
 	implements ExportImportLocalService,
 			   ServiceWrapper<ExportImportLocalService> {
 
+	public ExportImportLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ExportImportLocalServiceWrapper(
 		ExportImportLocalService exportImportLocalService) {
 
 		_exportImportLocalService = exportImportLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ExportImportLocalServiceUtil} to access the export import local service. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.ExportImportLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public java.io.File exportLayoutsAsFile(
 			com.liferay.exportimport.kernel.model.ExportImportConfiguration
@@ -139,6 +129,18 @@ public class ExportImportLocalServiceWrapper
 
 		_exportImportLocalService.importLayoutsDataDeletions(
 			exportImportConfiguration, file);
+	}
+
+	@Override
+	public long importLayoutSetPrototypeInBackground(
+			long userId,
+			com.liferay.exportimport.kernel.model.ExportImportConfiguration
+				exportImportConfiguration,
+			java.io.File file)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _exportImportLocalService.importLayoutSetPrototypeInBackground(
+			userId, exportImportConfiguration, file);
 	}
 
 	@Override
@@ -258,6 +260,17 @@ public class ExportImportLocalServiceWrapper
 
 		return _exportImportLocalService.importPortletInfoInBackground(
 			userId, exportImportConfigurationId, inputStream);
+	}
+
+	@Override
+	public long mergeLayoutSetPrototypeInBackground(
+			long userId, long groupId,
+			com.liferay.exportimport.kernel.model.ExportImportConfiguration
+				exportImportConfiguration)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _exportImportLocalService.mergeLayoutSetPrototypeInBackground(
+			userId, groupId, exportImportConfiguration);
 	}
 
 	@Override

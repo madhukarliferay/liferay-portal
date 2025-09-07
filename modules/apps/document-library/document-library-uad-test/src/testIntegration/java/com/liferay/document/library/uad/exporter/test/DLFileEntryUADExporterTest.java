@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.uad.exporter.test;
@@ -19,15 +10,21 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFolderLocalService;
-import com.liferay.document.library.uad.test.DLFileEntryUADTestUtil;
+import com.liferay.document.library.kernel.store.DLStoreUtil;
+import com.liferay.document.library.uad.test.util.DLFileEntryUADTestUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.zip.ZipReader;
-import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
+import com.liferay.portal.test.rule.ExpectedLog;
+import com.liferay.portal.test.rule.ExpectedLogs;
+import com.liferay.portal.test.rule.ExpectedType;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.user.associated.data.exporter.DynamicQueryUADExporter;
 import com.liferay.user.associated.data.exporter.UADExporter;
 import com.liferay.user.associated.data.test.util.BaseUADExporterTestCase;
 
@@ -67,13 +64,39 @@ public class DLFileEntryUADExporterTest
 	public void testExportAll() throws Exception {
 		addBaseModel(user.getUserId());
 
-		File file = _uadExporter.exportAll(user.getUserId());
+		File file = _uadExporter.exportAll(user.getUserId(), _zipWriterFactory);
 
-		ZipReader zipReader = ZipReaderFactoryUtil.getZipReader(file);
+		ZipReader zipReader = _zipReaderFactory.getZipReader(file);
 
 		List<String> entries = zipReader.getEntries();
 
 		Assert.assertEquals(entries.toString(), 2, entries.size());
+	}
+
+	@ExpectedLogs(
+		expectedLogs = {
+			@ExpectedLog(
+				expectedLog = "No such file or directory",
+				expectedType = ExpectedType.CONTAINS
+			)
+		},
+		level = "ERROR", loggerClass = DynamicQueryUADExporter.class
+	)
+	@Test
+	public void testExportAllWithMissingBinary() throws Exception {
+		DLFileEntry dlFileEntry = addBaseModel(user.getUserId());
+
+		DLStoreUtil.deleteFile(
+			dlFileEntry.getCompanyId(), dlFileEntry.getDataRepositoryId(),
+			dlFileEntry.getName());
+
+		File file = _uadExporter.exportAll(user.getUserId(), _zipWriterFactory);
+
+		ZipReader zipReader = _zipReaderFactory.getZipReader(file);
+
+		List<String> entries = zipReader.getEntries();
+
+		Assert.assertEquals(entries.toString(), 1, entries.size());
 	}
 
 	@Override
@@ -84,12 +107,7 @@ public class DLFileEntryUADExporterTest
 	}
 
 	@Override
-	protected String getPrimaryKeyName() {
-		return "fileEntryId";
-	}
-
-	@Override
-	protected UADExporter getUADExporter() {
+	protected UADExporter<DLFileEntry> getUADExporter() {
 		return _uadExporter;
 	}
 
@@ -105,7 +123,15 @@ public class DLFileEntryUADExporterTest
 	@DeleteAfterTestRun
 	private Group _group;
 
-	@Inject(filter = "component.name=*.DLFileEntryUADExporter")
-	private UADExporter _uadExporter;
+	@Inject(
+		filter = "component.name=com.liferay.document.library.uad.exporter.DLFileEntryUADExporter"
+	)
+	private UADExporter<DLFileEntry> _uadExporter;
+
+	@Inject
+	private ZipReaderFactory _zipReaderFactory;
+
+	@Inject
+	private ZipWriterFactory _zipWriterFactory;
 
 }

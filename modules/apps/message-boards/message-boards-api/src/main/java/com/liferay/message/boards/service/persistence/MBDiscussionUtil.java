@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the message boards discussion service. This utility wraps <code>com.liferay.message.boards.service.persistence.impl.MBDiscussionPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class MBDiscussionUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -535,175 +522,6 @@ public class MBDiscussionUtil {
 	}
 
 	/**
-	 * Returns all the message boards discussions where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @return the matching message boards discussions
-	 */
-	public static List<MBDiscussion> findByClassNameId(long classNameId) {
-		return getPersistence().findByClassNameId(classNameId);
-	}
-
-	/**
-	 * Returns a range of all the message boards discussions where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>MBDiscussionModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of message boards discussions
-	 * @param end the upper bound of the range of message boards discussions (not inclusive)
-	 * @return the range of matching message boards discussions
-	 */
-	public static List<MBDiscussion> findByClassNameId(
-		long classNameId, int start, int end) {
-
-		return getPersistence().findByClassNameId(classNameId, start, end);
-	}
-
-	/**
-	 * Returns an ordered range of all the message boards discussions where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>MBDiscussionModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of message boards discussions
-	 * @param end the upper bound of the range of message boards discussions (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching message boards discussions
-	 */
-	public static List<MBDiscussion> findByClassNameId(
-		long classNameId, int start, int end,
-		OrderByComparator<MBDiscussion> orderByComparator) {
-
-		return getPersistence().findByClassNameId(
-			classNameId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the message boards discussions where classNameId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>MBDiscussionModelImpl</code>.
-	 * </p>
-	 *
-	 * @param classNameId the class name ID
-	 * @param start the lower bound of the range of message boards discussions
-	 * @param end the upper bound of the range of message boards discussions (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching message boards discussions
-	 */
-	public static List<MBDiscussion> findByClassNameId(
-		long classNameId, int start, int end,
-		OrderByComparator<MBDiscussion> orderByComparator,
-		boolean useFinderCache) {
-
-		return getPersistence().findByClassNameId(
-			classNameId, start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first message boards discussion in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching message boards discussion
-	 * @throws NoSuchDiscussionException if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion findByClassNameId_First(
-			long classNameId, OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByClassNameId_First(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the first message boards discussion in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching message boards discussion, or <code>null</code> if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion fetchByClassNameId_First(
-		long classNameId, OrderByComparator<MBDiscussion> orderByComparator) {
-
-		return getPersistence().fetchByClassNameId_First(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message boards discussion in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion
-	 * @throws NoSuchDiscussionException if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion findByClassNameId_Last(
-			long classNameId, OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByClassNameId_Last(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message boards discussion in the ordered set where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion, or <code>null</code> if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion fetchByClassNameId_Last(
-		long classNameId, OrderByComparator<MBDiscussion> orderByComparator) {
-
-		return getPersistence().fetchByClassNameId_Last(
-			classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message boards discussions before and after the current message boards discussion in the ordered set where classNameId = &#63;.
-	 *
-	 * @param discussionId the primary key of the current message boards discussion
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards discussion
-	 * @throws NoSuchDiscussionException if a message boards discussion with the primary key could not be found
-	 */
-	public static MBDiscussion[] findByClassNameId_PrevAndNext(
-			long discussionId, long classNameId,
-			OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByClassNameId_PrevAndNext(
-			discussionId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Removes all the message boards discussions where classNameId = &#63; from the database.
-	 *
-	 * @param classNameId the class name ID
-	 */
-	public static void removeByClassNameId(long classNameId) {
-		getPersistence().removeByClassNameId(classNameId);
-	}
-
-	/**
-	 * Returns the number of message boards discussions where classNameId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @return the number of matching message boards discussions
-	 */
-	public static int countByClassNameId(long classNameId) {
-		return getPersistence().countByClassNameId(classNameId);
-	}
-
-	/**
 	 * Returns the message boards discussion where threadId = &#63; or throws a <code>NoSuchDiscussionException</code> if it could not be found.
 	 *
 	 * @param threadId the thread ID
@@ -973,25 +791,13 @@ public class MBDiscussionUtil {
 	}
 
 	public static MBDiscussionPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<MBDiscussionPersistence, MBDiscussionPersistence> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(MBDiscussionPersistence.class);
-
-		ServiceTracker<MBDiscussionPersistence, MBDiscussionPersistence>
-			serviceTracker =
-				new ServiceTracker
-					<MBDiscussionPersistence, MBDiscussionPersistence>(
-						bundle.getBundleContext(),
-						MBDiscussionPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(MBDiscussionPersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile MBDiscussionPersistence _persistence;
 
 }

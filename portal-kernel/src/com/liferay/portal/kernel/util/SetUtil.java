@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
+import com.liferay.portal.kernel.security.RandomUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -33,6 +25,23 @@ import java.util.Set;
  * @author Brian Wing Shun Chan
  */
 public class SetUtil {
+
+	public static <T> Set<T> asymmetricDifference(
+		Collection<T> collection1, Collection<T> collection2) {
+
+		if (collection1.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		Set<T> set1 = new HashSet<>(collection1);
+		Set<T> set2 = new HashSet<>(collection2);
+
+		Set<T> symmetricDifferenceSet = symmetricDifference(set1, set2);
+
+		symmetricDifferenceSet.removeAll(set2);
+
+		return symmetricDifferenceSet;
+	}
 
 	public static Set<Boolean> fromArray(boolean[] array) {
 		if (ArrayUtil.isEmpty(array)) {
@@ -90,15 +99,15 @@ public class SetUtil {
 		return set;
 	}
 
-	public static <E> Set<E> fromArray(E[] array) {
+	public static <E> Set<E> fromArray(E... array) {
 		if (ArrayUtil.isEmpty(array)) {
 			return new HashSet<>();
 		}
 
 		Set<E> set = new HashSet<>();
 
-		for (E obj : array) {
-			set.add(obj);
+		for (E object : array) {
+			set.add(object);
 		}
 
 		return set;
@@ -172,11 +181,13 @@ public class SetUtil {
 		return new HashSet<>(c);
 	}
 
-	public static <E> Set<E> fromEnumeration(Enumeration<? extends E> enu) {
+	public static <E> Set<E> fromEnumeration(
+		Enumeration<? extends E> enumeration) {
+
 		Set<E> set = new HashSet<>();
 
-		while (enu.hasMoreElements()) {
-			set.add(enu.nextElement());
+		while (enumeration.hasMoreElements()) {
+			set.add(enumeration.nextElement());
 		}
 
 		return set;
@@ -202,11 +213,11 @@ public class SetUtil {
 		return fromFile(new File(fileName));
 	}
 
-	public static <E> Set<E> fromIterator(Iterator<E> itr) {
+	public static <E> Set<E> fromIterator(Iterator<E> iterator) {
 		Set<E> set = new HashSet<>();
 
-		while (itr.hasNext()) {
-			set.add(itr.next());
+		while (iterator.hasNext()) {
+			set.add(iterator.next());
 		}
 
 		return set;
@@ -231,8 +242,8 @@ public class SetUtil {
 			return Collections.emptySet();
 		}
 
-		Set<T> set1 = _toSet(collection1);
-		Set<T> set2 = _toSet(collection2);
+		Set<T> set1 = new HashSet<>(collection1);
+		Set<T> set2 = new HashSet<>(collection2);
 
 		if (set1.size() > set2.size()) {
 			set2.retainAll(set1);
@@ -261,21 +272,37 @@ public class SetUtil {
 		return !isEmpty(set);
 	}
 
+	public static <T> T randomElement(Set<T> set) {
+		if (isEmpty(set)) {
+			return null;
+		}
+
+		int index = RandomUtil.nextInt(set.size());
+
+		Iterator<T> iterator = set.iterator();
+
+		for (int i = 0; i < index; i++) {
+			iterator.next();
+		}
+
+		return iterator.next();
+	}
+
 	public static <T> Set<T> symmetricDifference(
 		Collection<T> collection1, Collection<T> collection2) {
 
 		if (collection1.isEmpty()) {
-			return _toSet(collection2);
+			return new HashSet<>(collection2);
 		}
 
 		if (collection2.isEmpty()) {
-			return _toSet(collection1);
+			return new HashSet<>(collection1);
 		}
 
-		Set<T> set1 = _toSet(collection1);
-		Set<T> set2 = _toSet(collection2);
+		Set<T> set1 = new HashSet<>(collection1);
+		Set<T> set2 = new HashSet<>(collection2);
 
-		Set<T> intersection = intersect(set1, set2);
+		Set<T> intersectionSet = intersect(set1, set2);
 
 		if (set1.size() > set2.size()) {
 			set1.addAll(set2);
@@ -286,21 +313,13 @@ public class SetUtil {
 			set1 = set2;
 		}
 
-		set1.removeAll(intersection);
+		set1.removeAll(intersectionSet);
 
 		return set1;
 	}
 
 	public static Set<Long> symmetricDifference(long[] array1, long[] array2) {
 		return symmetricDifference(fromArray(array1), fromArray(array2));
-	}
-
-	private static <T> Set<T> _toSet(Collection<T> collection) {
-		if (collection instanceof Set) {
-			return (Set<T>)collection;
-		}
-
-		return new HashSet<>(collection);
 	}
 
 }

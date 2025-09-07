@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -35,12 +26,14 @@
 <h3>language-properties</h3>
 
 <p>
-	javax.portlet.title.33=<%= _assertEquals("Blogger", LanguageUtil.get(request, "javax.portlet.title.33")) %>
+	jakarta.portlet.title.33=<%= _assertEquals("Blogger", LanguageUtil.get(request, "jakarta.portlet.title.33")) %>
 </p>
 
 <h3>custom-jsp-dir</h3>
 
-<liferay-util:buffer var="setupWizardJsp">
+<liferay-util:buffer
+	var="setupWizardJsp"
+>
 	<liferay-util:include page="/html/portal/setup_wizard.jsp" />
 </liferay-util:buffer>
 
@@ -53,7 +46,9 @@
 <p>
 
 	<%
-	Class<?> clazz = UserLocalServiceUtil.getUserByEmailAddress(themeDisplay.getCompanyId(), "test@liferay.com").getClass();
+	Class<?> clazz = UserLocalServiceUtil.getUserByEmailAddress(
+		themeDisplay.getCompanyId(), "test@liferay.com"
+	).getClass();
 	%>
 
 	com.liferay.portal.kernel.service.UserLocalService=<%= _assertEquals(TestHookUserImpl.class.getName(), clazz.getName()) %>

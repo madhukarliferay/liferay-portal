@@ -1,36 +1,27 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/process_summary_link/init.jsp" %>
 
 <liferay-portlet:renderURL portletName="<%= ExportImportPortletKeys.EXPORT_IMPORT %>" var="processSummaryURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-	<portlet:param name="mvcRenderCommandName" value="showProcessSummary" />
+	<portlet:param name="mvcRenderCommandName" value="/export_import/view_process_summary" />
 	<portlet:param name="backgroundTaskId" value="<%= String.valueOf(backgroundTask.getBackgroundTaskId()) %>" />
 </liferay-portlet:renderURL>
 
 <%
 BackgroundTaskDisplay backgroundTaskDisplay = BackgroundTaskDisplayFactoryUtil.getBackgroundTaskDisplay(backgroundTask);
 
-String taglibOnClick = liferayPortletResponse.getNamespace() + "showProcessSummary(" + String.valueOf(backgroundTask.getBackgroundTaskId()) + ", '" + HtmlUtil.escapeJS(backgroundTaskDisplay.getDisplayName(request)) + "', '" + HtmlUtil.escape(processSummaryURL) + "');";
+String taglibOnClick = liferayPortletResponse.getNamespace() + "showProcessSummary(" + String.valueOf(backgroundTask.getBackgroundTaskId()) + ", '" + HtmlUtil.escapeJS(backgroundTaskDisplay.getDisplayName(request)) + "', '" + HtmlUtil.escapeJS(processSummaryURL) + "');";
 %>
 
 <liferay-ui:icon
 	message="summary"
 	onClick="<%= taglibOnClick %>"
-	url="javascript:;"
+	url="javascript:void(0);"
 />
 
 <aui:script>
@@ -39,16 +30,15 @@ String taglibOnClick = liferayPortletResponse.getNamespace() + "showProcessSumma
 		backgroundTaskName,
 		processSummaryURL
 	) {
-		Liferay.Util.openWindow({
-			dialog: {
-				destroyOnHide: true
-			},
+		Liferay.Util.openModal({
+			containerProps: {},
 			id: '<portlet:namespace />showSummary_' + backgroundTaskId,
+			iframeBodyCssClass: '',
 			title: backgroundTaskName,
-			uri:
+			url:
 				processSummaryURL +
 				'&<portlet:namespace />backgroundTaskId=' +
-				backgroundTaskId
+				backgroundTaskId,
 		});
 	}
 </aui:script>

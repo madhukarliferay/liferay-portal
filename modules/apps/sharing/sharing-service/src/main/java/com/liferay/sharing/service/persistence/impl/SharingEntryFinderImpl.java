@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharing.service.persistence.impl;
 
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -58,22 +48,22 @@ public class SharingEntryFinderImpl
 
 			sql = _replaceClassNameIdWhere(sql, classNameId);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(userId);
+			queryPos.add(userId);
 
 			if (classNameId > 0) {
-				qPos.add(classNameId);
+				queryPos.add(classNameId);
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -82,8 +72,8 @@ public class SharingEntryFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -108,23 +98,23 @@ public class SharingEntryFinderImpl
 
 			sql = _replaceClassNameIdWhere(sql, classNameId);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("SharingEntry", SharingEntryImpl.class);
+			sqlQuery.addEntity("SharingEntry", SharingEntryImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(userId);
+			queryPos.add(userId);
 
 			if (classNameId > 0) {
-				qPos.add(classNameId);
+				queryPos.add(classNameId);
 			}
 
 			return (List<SharingEntry>)QueryUtil.list(
-				q, getDialect(), begin, end);
+				sqlQuery, getDialect(), begin, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -138,8 +128,7 @@ public class SharingEntryFinderImpl
 				"AND SharingEntry.classNameId = ?");
 		}
 		else {
-			sql = StringUtil.replace(
-				sql, "[$CLASS_NAME_ID_WHERE$]", StringPool.BLANK);
+			sql = StringUtil.removeSubstring(sql, "[$CLASS_NAME_ID_WHERE$]");
 		}
 
 		return sql;

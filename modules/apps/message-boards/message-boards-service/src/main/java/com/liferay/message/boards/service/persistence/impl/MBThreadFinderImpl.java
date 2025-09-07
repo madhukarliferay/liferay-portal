@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.impl;
@@ -110,23 +101,23 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -135,8 +126,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -164,8 +155,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), COUNT_BY_G_U_C);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -178,23 +169,23 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -203,8 +194,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -234,24 +225,24 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
-			qPos.add(anonymous);
+			queryPos.add(groupId);
+			queryPos.add(userId);
+			queryPos.add(anonymous);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -260,8 +251,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -288,8 +279,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), COUNT_BY_G_U_C);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -302,24 +293,24 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
-			qPos.add(anonymous);
+			queryPos.add(groupId);
+			queryPos.add(userId);
+			queryPos.add(anonymous);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -328,8 +319,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -351,9 +342,8 @@ public class MBThreadFinderImpl
 			if (userId <= 0) {
 				sql = StringUtil.replace(
 					sql, "DISTINCT MBThread.threadId", StringPool.STAR);
-				sql = StringUtil.replace(
-					sql, _INNER_JOIN_SQL, StringPool.BLANK);
-				sql = StringUtil.replace(sql, _USER_ID_SQL, StringPool.BLANK);
+				sql = StringUtil.removeSubstring(sql, _INNER_JOIN_SQL);
+				sql = StringUtil.removeSubstring(sql, _USER_ID_SQL);
 			}
 
 			sql = updateSQL(sql, queryDefinition);
@@ -363,27 +353,27 @@ public class MBThreadFinderImpl
 					sql, "AND (MBMessage.anonymous = [$FALSE$])");
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(lastPostDate);
+			queryPos.add(groupId);
+			queryPos.add(lastPostDate);
 
 			if (userId > 0) {
-				qPos.add(userId);
+				queryPos.add(userId);
 			}
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -392,8 +382,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -420,7 +410,7 @@ public class MBThreadFinderImpl
 		try {
 			session = openSession();
 
-			QueryDefinition queryDefinition = new QueryDefinition(
+			QueryDefinition<?> queryDefinition = new QueryDefinition(
 				WorkflowConstants.STATUS_ANY);
 
 			String sql = _customSQL.get(
@@ -431,20 +421,20 @@ public class MBThreadFinderImpl
 				sql, MBMessage.class.getName(), "MBThread.rootMessageId",
 				groupId);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(categoryId);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			queryPos.add(groupId);
+			queryPos.add(categoryId);
+			queryPos.add(WorkflowConstants.STATUS_ANY);
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -453,8 +443,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -491,7 +481,7 @@ public class MBThreadFinderImpl
 		try {
 			session = openSession();
 
-			QueryDefinition queryDefinition = new QueryDefinition(
+			QueryDefinition<?> queryDefinition = new QueryDefinition(
 				WorkflowConstants.STATUS_ANY);
 
 			String sql = _customSQL.get(
@@ -502,20 +492,21 @@ public class MBThreadFinderImpl
 				sql, MBMessage.class.getName(), "MBThread.rootMessageId",
 				groupId);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(categoryId);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			queryPos.add(groupId);
+			queryPos.add(categoryId);
+			queryPos.add(WorkflowConstants.STATUS_ANY);
 
-			return (List<MBThread>)QueryUtil.list(q, getDialect(), start, end);
+			return (List<MBThread>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -552,25 +543,25 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -598,8 +589,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), FIND_BY_G_U_C);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -612,25 +603,25 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -660,26 +651,26 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
-			qPos.add(anonymous);
+			queryPos.add(groupId);
+			queryPos.add(userId);
+			queryPos.add(anonymous);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -699,26 +690,26 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(_portal.getClassNameId(MBThread.class.getName()));
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(_portal.getClassNameId(MBThread.class.getName()));
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -738,8 +729,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), FIND_BY_G_U_C_A);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -752,26 +743,26 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(userId);
-			qPos.add(anonymous);
+			queryPos.add(groupId);
+			queryPos.add(userId);
+			queryPos.add(anonymous);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -791,10 +782,9 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), FIND_BY_G_U_LPD);
 
 			if (userId <= 0) {
-				sql = StringUtil.replace(sql, "DISTINCT ", StringPool.BLANK);
-				sql = StringUtil.replace(
-					sql, _INNER_JOIN_SQL, StringPool.BLANK);
-				sql = StringUtil.replace(sql, _USER_ID_SQL, StringPool.BLANK);
+				sql = StringUtil.removeSubstring(sql, "DISTINCT ");
+				sql = StringUtil.removeSubstring(sql, _INNER_JOIN_SQL);
+				sql = StringUtil.removeSubstring(sql, _USER_ID_SQL);
 			}
 
 			sql = updateSQL(sql, queryDefinition);
@@ -804,29 +794,29 @@ public class MBThreadFinderImpl
 					sql, "AND (MBMessage.anonymous = [$FALSE$])");
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(lastPostDate);
+			queryPos.add(groupId);
+			queryPos.add(lastPostDate);
 
 			if (userId > 0) {
-				qPos.add(userId);
+				queryPos.add(userId);
 			}
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -873,28 +863,28 @@ public class MBThreadFinderImpl
 				sql, MBMessage.class.getName(), "MBThread.rootMessageId",
 				groupId);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(categoryId);
-			qPos.add(queryDefinition.getStatus());
+			queryPos.add(groupId);
+			queryPos.add(categoryId);
+			queryPos.add(queryDefinition.getStatus());
 
 			if (queryDefinition.getOwnerUserId() > 0) {
-				qPos.add(queryDefinition.getOwnerUserId());
+				queryPos.add(queryDefinition.getOwnerUserId());
 
 				if (queryDefinition.isIncludeOwner()) {
-					qPos.add(WorkflowConstants.STATUS_IN_TRASH);
+					queryPos.add(WorkflowConstants.STATUS_IN_TRASH);
 				}
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -903,8 +893,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -923,24 +913,24 @@ public class MBThreadFinderImpl
 
 			sql = updateSQL(sql, queryDefinition);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(_portal.getClassNameId(MBThread.class.getName()));
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(_portal.getClassNameId(MBThread.class.getName()));
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -949,8 +939,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -969,8 +959,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), COUNT_BY_S_G_U_C);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -989,24 +979,24 @@ public class MBThreadFinderImpl
 					groupId);
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(_portal.getClassNameId(MBThread.class.getName()));
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(_portal.getClassNameId(MBThread.class.getName()));
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -1015,8 +1005,8 @@ public class MBThreadFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1064,30 +1054,30 @@ public class MBThreadFinderImpl
 			sql = _customSQL.replaceOrderBy(
 				sql, queryDefinition.getOrderByComparator());
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(groupId);
-			qPos.add(categoryId);
-			qPos.add(queryDefinition.getStatus());
+			queryPos.add(groupId);
+			queryPos.add(categoryId);
+			queryPos.add(queryDefinition.getStatus());
 
 			if (queryDefinition.getOwnerUserId() > 0) {
-				qPos.add(queryDefinition.getOwnerUserId());
+				queryPos.add(queryDefinition.getOwnerUserId());
 
 				if (queryDefinition.isIncludeOwner()) {
-					qPos.add(WorkflowConstants.STATUS_IN_TRASH);
+					queryPos.add(WorkflowConstants.STATUS_IN_TRASH);
 				}
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1106,8 +1096,8 @@ public class MBThreadFinderImpl
 			String sql = _customSQL.get(getClass(), FIND_BY_S_G_U_C);
 
 			if (ArrayUtil.isEmpty(categoryIds)) {
-				sql = StringUtil.replace(
-					sql, "(MBThread.categoryId = ?) AND", StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(MBThread.categoryId = ?) AND");
 			}
 			else {
 				String mergedCategoryIds = StringUtil.merge(
@@ -1126,26 +1116,26 @@ public class MBThreadFinderImpl
 					groupId);
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("MBThread", MBThreadImpl.class);
+			sqlQuery.addEntity("MBThread", MBThreadImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(_portal.getClassNameId(MBThread.class.getName()));
-			qPos.add(groupId);
-			qPos.add(userId);
+			queryPos.add(_portal.getClassNameId(MBThread.class.getName()));
+			queryPos.add(groupId);
+			queryPos.add(userId);
 
 			if (queryDefinition.getStatus() != WorkflowConstants.STATUS_ANY) {
-				qPos.add(queryDefinition.getStatus());
+				queryPos.add(queryDefinition.getStatus());
 			}
 
 			return (List<MBThread>)QueryUtil.list(
-				q, getDialect(), queryDefinition.getStart(),
+				sqlQuery, getDialect(), queryDefinition.getStart(),
 				queryDefinition.getEnd());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);

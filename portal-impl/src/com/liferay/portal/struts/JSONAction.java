@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.struts;
@@ -34,18 +25,19 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.servlet.SharedSessionServletRequest;
+import com.liferay.portal.struts.constants.ActionConstants;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.OutputStream;
 
 import java.util.Set;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Ming-Gih Lam
@@ -74,38 +66,41 @@ public abstract class JSONAction implements Action {
 			json = getJSON(httpServletRequest, httpServletResponse);
 
 			if (Validator.isNotNull(callback)) {
-				StringBundler sb = new StringBundler(5);
-
-				sb.append("/**/");
-				sb.append(callback);
-				sb.append(StringPool.OPEN_PARENTHESIS);
-				sb.append(json);
-				sb.append(StringPool.CLOSE_PARENTHESIS);
-
-				json = sb.toString();
+				json = StringBundler.concat(
+					"/**/", callback, StringPool.OPEN_PARENTHESIS, json,
+					StringPool.CLOSE_PARENTHESIS);
 			}
 		}
-		catch (PrincipalException pe) {
-			_log.error(pe.getMessage());
+		catch (PrincipalException principalException) {
+			_log.error(principalException);
 
 			PortalUtil.sendError(
-				HttpServletResponse.SC_FORBIDDEN, pe, httpServletRequest,
-				httpServletResponse);
+				HttpServletResponse.SC_FORBIDDEN, principalException,
+				httpServletRequest, httpServletResponse);
 
 			return null;
 		}
-		catch (SecurityException se) {
+		catch (SecurityException securityException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(se.getMessage());
+				_log.warn(securityException);
 			}
 
-			json = JSONFactoryUtil.serializeThrowable(se);
+			if (PropsValues.JSON_SERVICE_SERIALIZE_THROWABLE) {
+				json = JSONFactoryUtil.serializeThrowable(securityException);
+			}
+			else {
+				PortalUtil.sendError(
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					securityException, httpServletRequest, httpServletResponse);
+
+				return null;
+			}
 		}
-		catch (Exception e) {
-			_log.error(e.getMessage());
+		catch (Exception exception) {
+			_log.error(exception);
 
 			PortalUtil.sendError(
-				HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e,
+				HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception,
 				httpServletRequest, httpServletResponse);
 
 			return null;
@@ -127,9 +122,7 @@ public abstract class JSONAction implements Action {
 			try (OutputStream outputStream =
 					httpServletResponse.getOutputStream()) {
 
-				byte[] bytes = json.getBytes(StringPool.UTF8);
-
-				outputStream.write(bytes);
+				outputStream.write(json.getBytes(StringPool.UTF8));
 			}
 		}
 

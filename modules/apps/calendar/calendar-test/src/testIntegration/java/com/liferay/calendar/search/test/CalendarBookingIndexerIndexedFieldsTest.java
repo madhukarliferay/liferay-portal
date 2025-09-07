@@ -1,43 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.calendar.constants.CalendarActionKeys;
 import com.liferay.calendar.model.Calendar;
 import com.liferay.calendar.model.CalendarBooking;
 import com.liferay.calendar.model.CalendarResource;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.search.Document;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
-import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.rule.Sync;
-import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.util.Date;
 import java.util.Locale;
@@ -45,8 +40,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,25 +47,17 @@ import org.junit.runner.RunWith;
  * @author Wade Cao
  * @author André de Oliveira
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 @Sync
 public class CalendarBookingIndexerIndexedFieldsTest
 	extends BaseCalendarIndexerTestCase {
-
-	@ClassRule
-	@Rule
-	public static final AggregateTestRule aggregateTestRule =
-		new AggregateTestRule(
-			new LiferayIntegrationTestRule(),
-			PermissionCheckerMethodTestRule.INSTANCE,
-			SynchronousDestinationTestRule.INSTANCE);
 
 	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
-		setGroup(calendarFixture.addGroup());
 		setIndexerClass(CalendarBooking.class);
 	}
 
@@ -114,6 +99,24 @@ public class CalendarBookingIndexerIndexedFieldsTest
 		map.put(Field.RELATED_ENTRY, "true");
 		map.put(Field.STAGING_GROUP, "false");
 		map.put(Field.STATUS, "0");
+
+		Group group = _groupLocalService.getGroup(calendarBooking.getGroupId());
+
+		map.put("groupExternalReferenceCode", group.getExternalReferenceCode());
+		map.put(
+			"scopeGroupExternalReferenceCode",
+			group.getExternalReferenceCode());
+
+		User user = TestPropsValues.getUser();
+
+		map.put(
+			"statusByUserExternalReferenceCode",
+			user.getExternalReferenceCode());
+
+		map.put(
+			"statusByUserId",
+			String.valueOf(calendarBooking.getStatusByUserId()));
+		map.put("userExternalReferenceCode", user.getExternalReferenceCode());
 		map.put("viewActionId", CalendarActionKeys.VIEW_BOOKING_DETAILS);
 
 		populateTitle(originalTitle, map);
@@ -142,12 +145,15 @@ public class CalendarBookingIndexerIndexedFieldsTest
 
 		String keywords = "nev";
 
-		Document document = calendarSearchFixture.searchOnlyOne(
+		SearchResponse searchResponse = searchOnlyOneSearchResponse(
 			keywords, LocaleUtil.HUNGARY);
 
-		indexedFieldsFixture.postProcessDocument(document);
-
-		FieldValuesAssert.assertFieldValues(map, document, keywords);
+		FieldValuesAssert.assertFieldValues(
+			map,
+			name ->
+				!name.contains(StringPool.PERIOD) && !name.equals("score") &&
+				!name.equals("timestamp"),
+			searchResponse);
 	}
 
 	protected CalendarBooking addCalendarBooking(
@@ -156,13 +162,13 @@ public class CalendarBookingIndexerIndexedFieldsTest
 			LocalizedValuesMap descriptionLocalizedValuesMap)
 		throws PortalException {
 
-		ServiceContext serviceContext = calendarFixture.getServiceContext();
+		ServiceContext serviceContext = getServiceContext();
 
-		Calendar calendar = calendarFixture.addCalendar(
+		Calendar calendar = addCalendar(
 			nameLocalizedValuesMap, descriptionLocalizedValuesMap,
 			serviceContext);
 
-		return calendarFixture.addCalendarBooking(
+		return addCalendarBooking(
 			titleLocalizedValuesMap, calendar, serviceContext);
 	}
 
@@ -181,11 +187,17 @@ public class CalendarBookingIndexerIndexedFieldsTest
 		throws Exception {
 
 		map.put(
+			Field.ASSET_ENTRY_ID,
+			String.valueOf(_getAssetEntryId(calendarBooking)));
+		map.put(
 			Field.CLASS_PK, String.valueOf(calendarBooking.getCalendarId()));
 		map.put(Field.ENTRY_CLASS_NAME, calendarBooking.getModelClassName());
 		map.put(
 			Field.ENTRY_CLASS_PK,
 			String.valueOf(calendarBooking.getCalendarBookingId()));
+		map.put(
+			"assetEntryId_sortable",
+			String.valueOf(_getAssetEntryId(calendarBooking)));
 		map.put(
 			"calendarBookingId",
 			String.valueOf(calendarBooking.getCalendarBookingId()));
@@ -258,5 +270,23 @@ public class CalendarBookingIndexerIndexedFieldsTest
 
 	@Inject
 	protected Portal portal;
+
+	private long _getAssetEntryId(CalendarBooking calendarBooking) {
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
+			CalendarBooking.class.getName(),
+			calendarBooking.getCalendarBookingId());
+
+		if (assetEntry == null) {
+			return 0;
+		}
+
+		return assetEntry.getEntryId();
+	}
+
+	@Inject
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 }

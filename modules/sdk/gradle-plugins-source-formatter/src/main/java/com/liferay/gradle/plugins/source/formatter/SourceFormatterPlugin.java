@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.source.formatter;
@@ -17,16 +8,10 @@ package com.liferay.gradle.plugins.source.formatter;
 import com.liferay.gradle.util.GradleUtil;
 import com.liferay.gradle.util.Validator;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
-
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.UncheckedIOException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.execution.TaskExecutionGraph;
@@ -97,10 +82,10 @@ public class SourceFormatterPlugin implements Plugin<Project> {
 		formatSourceTask.setAutoFix(false);
 		formatSourceTask.setDescription(
 			"Checks the source formatting of this project.");
+		formatSourceTask.setFailOnAutoFix(true);
+		formatSourceTask.setFailOnHasWarning(true);
 		formatSourceTask.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
 		formatSourceTask.setPrintErrors(true);
-		formatSourceTask.setShowStatusUpdates(false);
-		formatSourceTask.setThrowException(true);
 
 		return formatSourceTask;
 	}
@@ -113,7 +98,6 @@ public class SourceFormatterPlugin implements Plugin<Project> {
 		formatSourceTask.setDescription(
 			"Runs Liferay Source Formatter to format the project files.");
 		formatSourceTask.setGroup("formatting");
-		formatSourceTask.setShowStatusUpdates(true);
 
 		return formatSourceTask;
 	}
@@ -122,6 +106,28 @@ public class SourceFormatterPlugin implements Plugin<Project> {
 		FormatSourceTask formatSourceTask, FileCollection classpath) {
 
 		formatSourceTask.setClasspath(classpath);
+
+		String baseDirName = GradleUtil.getTaskPrefixedProperty(
+			formatSourceTask, "source.base.dir");
+
+		if (Validator.isNotNull(baseDirName)) {
+			formatSourceTask.setBaseDirName(baseDirName);
+		}
+
+		String checkCategoryNames = GradleUtil.getTaskPrefixedProperty(
+			formatSourceTask, "source.check.category.names");
+
+		if (Validator.isNotNull(checkCategoryNames)) {
+			formatSourceTask.setCheckCategoryNames(
+				checkCategoryNames.split(","));
+		}
+
+		String checkNames = GradleUtil.getTaskPrefixedProperty(
+			formatSourceTask, "source.check.names");
+
+		if (Validator.isNotNull(checkNames)) {
+			formatSourceTask.setCheckNames(checkNames.split(","));
+		}
 
 		String fileExtensions = GradleUtil.getTaskPrefixedProperty(
 			formatSourceTask, "file.extensions");
@@ -161,25 +167,12 @@ public class SourceFormatterPlugin implements Plugin<Project> {
 				Boolean.parseBoolean(formatLocalChanges));
 		}
 
-		String prettyPrint = GradleUtil.getTaskPrefixedProperty(
-			formatSourceTask, "pretty.print");
+		String javaParserEnabled = GradleUtil.getTaskPrefixedProperty(
+			formatSourceTask, "java.parser.enabled");
 
-		if (Boolean.parseBoolean(prettyPrint)) {
-			final ByteArrayOutputStream byteArrayOutputStream =
-				new ByteArrayOutputStream();
-
-			formatSourceTask.setStandardOutput(byteArrayOutputStream);
-
-			Action<Task> taskAction = new Action<Task>() {
-
-				@Override
-				public void execute(Task task) {
-					_prettyPrint(byteArrayOutputStream);
-				}
-
-			};
-
-			formatSourceTask.doLast(taskAction);
+		if (Validator.isNotNull(javaParserEnabled)) {
+			formatSourceTask.setJavaParserEnabled(
+				Boolean.parseBoolean(javaParserEnabled));
 		}
 	}
 
@@ -198,27 +191,6 @@ public class SourceFormatterPlugin implements Plugin<Project> {
 				}
 
 			});
-	}
-
-	private void _prettyPrint(ByteArrayOutputStream byteArrayOutputStream) {
-		try {
-			String s = byteArrayOutputStream.toString();
-
-			try (BufferedReader bufferedReader = new BufferedReader(
-					new StringReader(s.trim()))) {
-
-				String line = null;
-
-				while ((line = bufferedReader.readLine()) != null) {
-					if (!line.matches("Processing checks: \\d*% completed")) {
-						System.out.println(line);
-					}
-				}
-			}
-		}
-		catch (IOException ioe) {
-			throw new UncheckedIOException(ioe);
-		}
 	}
 
 	private static final Spec<Task> _skipIfExecutingParentTaskSpec =

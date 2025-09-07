@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.portlet.action.util;
@@ -20,7 +11,8 @@ import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateR
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateResponse;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorFieldContextKey;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.web.internal.FormInstanceFieldSettingsException;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -31,13 +23,20 @@ import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.util.DDMFormFactory;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
+
+import jakarta.portlet.PortletRequest;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,9 +45,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-
-import javax.portlet.PortletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -56,15 +52,13 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(
-	immediate = true, service = DDMFormInstanceFieldSettingsValidator.class
-)
+@Component(service = DDMFormInstanceFieldSettingsValidator.class)
 public class DDMFormInstanceFieldSettingsValidator {
 
 	public void validate(PortletRequest portletRequest, DDMForm ddmForm)
 		throws PortalException {
 
-		Map<String, Set<String>> fieldNamePropertiesMap = evaluate(
+		Map<String, Set<String>> fieldNamePropertiesMap = _evaluate(
 			portletRequest, ddmForm);
 
 		if (!fieldNamePropertiesMap.isEmpty()) {
@@ -73,7 +67,7 @@ public class DDMFormInstanceFieldSettingsValidator {
 		}
 	}
 
-	protected DDMFormValues createDDMFormFieldFormValues(
+	private DDMFormValues _createDDMFormFieldFormValues(
 		JSONObject jsonObject, DDMForm fieldSettingsDDMForm,
 		Set<Locale> availableLocales, Locale defaultLocale) {
 
@@ -96,11 +90,12 @@ public class DDMFormInstanceFieldSettingsValidator {
 
 					ddmFormFieldValue.setDDMFormValues(
 						fieldSettingsDDMFormValues);
+					ddmFormFieldValue.setFieldReference(
+						jsonObject.getString("fieldReference"));
 					ddmFormFieldValue.setInstanceId(
 						jsonObject.getString("instanceId"));
 					ddmFormFieldValue.setName(
 						jsonObject.getString("fieldName"));
-
 					ddmFormFieldValue.setValue(getValue(jsonObject));
 
 					fieldSettingsDDMFormValues.addDDMFormFieldValue(
@@ -130,7 +125,10 @@ public class DDMFormInstanceFieldSettingsValidator {
 								availableLocale, valueString);
 						}
 					}
-					catch (Exception e) {
+					catch (Exception exception) {
+						if (_log.isDebugEnabled()) {
+							_log.debug(exception);
+						}
 					}
 
 					return localizedValue;
@@ -145,6 +143,43 @@ public class DDMFormInstanceFieldSettingsValidator {
 							jsonObject.getString("localizedValue"),
 							availableLocales, defaultLocale);
 					}
+					else if (StringUtil.equals(
+								jsonObject.getString("type"),
+								DDMFormFieldTypeConstants.OPTIONS)) {
+
+						try {
+							JSONObject optionsJSONObject =
+								_jsonFactory.createJSONObject(
+									jsonObject.getString("value"));
+
+							JSONArray defaultJSONArray =
+								optionsJSONObject.getJSONArray(
+									LocaleUtil.toLanguageId(defaultLocale));
+
+							for (Locale availableLocale : availableLocales) {
+								JSONArray jsonArray =
+									optionsJSONObject.getJSONArray(
+										LocaleUtil.toLanguageId(
+											availableLocale));
+
+								if (jsonArray != null) {
+									continue;
+								}
+
+								optionsJSONObject.put(
+									LocaleUtil.toLanguageId(availableLocale),
+									defaultJSONArray);
+							}
+
+							return new UnlocalizedValue(
+								optionsJSONObject.toString());
+						}
+						catch (JSONException jsonException) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(jsonException);
+							}
+						}
+					}
 
 					return new UnlocalizedValue(jsonObject.getString("value"));
 				}
@@ -156,33 +191,11 @@ public class DDMFormInstanceFieldSettingsValidator {
 		return fieldSettingsDDMFormValues;
 	}
 
-	protected DDMFormEvaluatorEvaluateResponse doEvaluate(
-		PortletRequest portletRequest, DDMForm ddmForm,
-		DDMFormValues ddmFormValues, Locale locale) {
-
-		DDMFormEvaluatorEvaluateRequest.Builder builder =
-			DDMFormEvaluatorEvaluateRequest.Builder.newBuilder(
-				ddmForm, ddmFormValues, locale);
-
-		builder.withCompanyId(
-			_portal.getCompanyId(portletRequest)
-		).withGroupId(
-			ParamUtil.getLong(portletRequest, "groupId")
-		).withUserId(
-			_portal.getUserId(portletRequest)
-		);
-
-		return _ddmFormEvaluator.evaluate(builder.build());
-	}
-
-	protected Map<String, Set<String>> evaluate(
+	private Map<String, Set<String>> _evaluate(
 			PortletRequest portletRequest, DDMForm ddmForm)
 		throws JSONException {
 
 		Map<String, Set<String>> fieldNamePropertiesMap = new HashMap<>();
-
-		Map<String, DDMFormField> ddmFormFieldsMap =
-			ddmForm.getDDMFormFieldsMap(true);
 
 		String serializedFormBuilderContext = ParamUtil.getString(
 			portletRequest, "serializedFormBuilderContext");
@@ -194,56 +207,42 @@ public class DDMFormInstanceFieldSettingsValidator {
 			jsonObject.getJSONArray("pages"));
 
 		ddmFormContextVisitor.onVisitField(
-			new Consumer<JSONObject>() {
-
-				@Override
-				public void accept(JSONObject jsonObject) {
-					DDMFormField field = ddmFormFieldsMap.get(
-						jsonObject.getString("fieldName"));
-
-					DDMFormFieldType ddmFormFieldType =
-						_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(
-							field.getType());
-
-					DDMForm fieldDDMForm = DDMFormFactory.create(
-						ddmFormFieldType.getDDMFormFieldTypeSettings());
-
-					DDMFormValues fieldDDMFormValues =
-						createDDMFormFieldFormValues(
-							jsonObject.getJSONObject("settingsContext"),
-							fieldDDMForm, ddmForm.getAvailableLocales(),
-							ddmForm.getDefaultLocale());
-
-					DDMFormEvaluatorEvaluateResponse
-						ddmFormEvaluatorEvaluateResponse = doEvaluate(
-							portletRequest, fieldDDMForm, fieldDDMFormValues,
-							ddmForm.getDefaultLocale());
-
-					Set<String> invalidDDMFormFields = getInvalidDDMFormFields(
-						fieldDDMForm, ddmFormEvaluatorEvaluateResponse,
-						fieldDDMForm.getDefaultLocale());
-
-					if (!invalidDDMFormFields.isEmpty()) {
-						fieldNamePropertiesMap.put(
-							getFieldLabel(field, ddmForm.getDefaultLocale()),
-							invalidDDMFormFields);
-					}
-				}
-
-			});
+			new FieldJSONObjectConsumer(
+				ddmForm, fieldNamePropertiesMap, portletRequest));
 
 		ddmFormContextVisitor.visit();
 
 		return fieldNamePropertiesMap;
 	}
 
-	protected String getFieldLabel(DDMFormField ddmFormField, Locale locale) {
+	private DDMFormEvaluatorEvaluateResponse _evaluate(
+		PortletRequest portletRequest, DDMForm ddmForm,
+		DDMFormValues ddmFormValues, Locale locale) {
+
+		DDMFormEvaluatorEvaluateRequest.Builder builder =
+			DDMFormEvaluatorEvaluateRequest.Builder.newBuilder(
+				ddmForm, ddmFormValues, locale);
+
+		builder.withCompanyId(
+			_portal.getCompanyId(portletRequest)
+		).withDDMFormInstanceId(
+			ParamUtil.getLong(portletRequest, "formInstanceId")
+		).withGroupId(
+			ParamUtil.getLong(portletRequest, "groupId")
+		).withUserId(
+			_portal.getUserId(portletRequest)
+		);
+
+		return _ddmFormEvaluator.evaluate(builder.build());
+	}
+
+	private String _getFieldLabel(DDMFormField ddmFormField, Locale locale) {
 		LocalizedValue label = ddmFormField.getLabel();
 
 		return label.getString(locale);
 	}
 
-	protected Set<String> getInvalidDDMFormFields(
+	private Set<String> _getInvalidDDMFormFields(
 		DDMForm fieldDDMForm,
 		DDMFormEvaluatorEvaluateResponse ddmFormEvaluatorEvaluateResponse,
 		Locale locale) {
@@ -257,44 +256,138 @@ public class DDMFormInstanceFieldSettingsValidator {
 			return Collections.emptySet();
 		}
 
-		Set<String> ddmFormFieldList = new HashSet<>();
+		Set<String> ddmFormFields = new HashSet<>();
 
 		Map<String, DDMFormField> ddmFormFieldsMap =
 			fieldDDMForm.getDDMFormFieldsMap(true);
 
-		Set<Map.Entry<DDMFormEvaluatorFieldContextKey, Map<String, Object>>>
-			entrySet = ddmFormFieldsPropertyChanges.entrySet();
+		for (Map.Entry<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
+				entry : ddmFormFieldsPropertyChanges.entrySet()) {
 
-		Stream<Map.Entry<DDMFormEvaluatorFieldContextKey, Map<String, Object>>>
-			stream = entrySet.stream();
+			if (!MapUtil.getBoolean(entry.getValue(), "valid", true)) {
+				DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey =
+					entry.getKey();
 
-		stream.forEach(
-			entry -> {
-				if (!MapUtil.getBoolean(entry.getValue(), "valid", true)) {
-					DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey =
-						entry.getKey();
+				DDMFormField propertyFormField = ddmFormFieldsMap.get(
+					ddmFormFieldContextKey.getName());
 
-					DDMFormField propertyFormField = ddmFormFieldsMap.get(
-						ddmFormFieldContextKey.getName());
+				ddmFormFields.add(_getFieldLabel(propertyFormField, locale));
+			}
+		}
 
-					ddmFormFieldList.add(
-						getFieldLabel(propertyFormField, locale));
-				}
-			});
-
-		return ddmFormFieldList;
+		return ddmFormFields;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMFormInstanceFieldSettingsValidator.class);
 
 	@Reference
 	private DDMFormEvaluator _ddmFormEvaluator;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;
+
+	private class FieldJSONObjectConsumer implements Consumer<JSONObject> {
+
+		public FieldJSONObjectConsumer(
+			DDMForm ddmForm, Map<String, Set<String>> fieldNamePropertiesMap,
+			PortletRequest portletRequest) {
+
+			_ddmForm = ddmForm;
+			_fieldNamePropertiesMap = fieldNamePropertiesMap;
+			_portletRequest = portletRequest;
+		}
+
+		@Override
+		public void accept(JSONObject jsonObject) {
+			_evaluateDDMFormField(jsonObject);
+		}
+
+		private void _evaluateDDMFormField(JSONObject jsonObject) {
+			if (jsonObject.has("nestedFields")) {
+				JSONArray nestedFieldsJSONArray = jsonObject.getJSONArray(
+					"nestedFields");
+
+				for (int i = 0; i < nestedFieldsJSONArray.length(); i++) {
+					_evaluateDDMFormField(
+						nestedFieldsJSONArray.getJSONObject(i));
+				}
+			}
+
+			Map<String, DDMFormField> ddmFormFieldsMap =
+				_ddmForm.getDDMFormFieldsMap(true);
+
+			DDMFormField ddmFormField = ddmFormFieldsMap.get(
+				jsonObject.getString("fieldName"));
+
+			if (ddmFormField == null) {
+				return;
+			}
+
+			DDMFormFieldType ddmFormFieldType =
+				_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
+					ddmFormField.getType());
+
+			DDMForm ddmFormFieldTypeSettingsDDMForm = DDMFormFactory.create(
+				ddmFormFieldType.getDDMFormFieldTypeSettings());
+
+			if (StringUtil.equals(ddmFormField.getDataType(), "integer") &&
+				GetterUtil.getBoolean(ddmFormField.getProperty("inputMask"))) {
+
+				Map<String, DDMFormField>
+					ddmFormFieldTypeSettingsDDMFormFieldsMap =
+						ddmFormFieldTypeSettingsDDMForm.getDDMFormFieldsMap(
+							false);
+
+				DDMFormField predefinedValueDDMFormField =
+					ddmFormFieldTypeSettingsDDMFormFieldsMap.get(
+						"predefinedValue");
+
+				predefinedValueDDMFormField.setDataType("integer");
+				predefinedValueDDMFormField.setProperty("inputMask", true);
+				predefinedValueDDMFormField.setProperty(
+					"inputMaskFormat",
+					ddmFormField.getProperty("inputMaskFormat"));
+			}
+
+			DDMFormValues ddmFormFieldTypeSettingsDDMFormValues =
+				_createDDMFormFieldFormValues(
+					jsonObject.getJSONObject("settingsContext"),
+					ddmFormFieldTypeSettingsDDMForm,
+					_ddmForm.getAvailableLocales(),
+					_ddmForm.getDefaultLocale());
+
+			for (Locale availableLocale : _ddmForm.getAvailableLocales()) {
+				DDMFormEvaluatorEvaluateResponse
+					ddmFormEvaluatorEvaluateResponse = _evaluate(
+						_portletRequest, ddmFormFieldTypeSettingsDDMForm,
+						ddmFormFieldTypeSettingsDDMFormValues, availableLocale);
+
+				Set<String> invalidDDMFormFields = _getInvalidDDMFormFields(
+					ddmFormFieldTypeSettingsDDMForm,
+					ddmFormEvaluatorEvaluateResponse,
+					ddmFormFieldTypeSettingsDDMForm.getDefaultLocale());
+
+				if (!invalidDDMFormFields.isEmpty()) {
+					_fieldNamePropertiesMap.put(
+						_getFieldLabel(ddmFormField, availableLocale),
+						invalidDDMFormFields);
+
+					break;
+				}
+			}
+		}
+
+		private final DDMForm _ddmForm;
+		private final Map<String, Set<String>> _fieldNamePropertiesMap;
+		private final PortletRequest _portletRequest;
+
+	}
 
 }

@@ -1,38 +1,31 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-long accountEntryId = ParamUtil.getLong(request, "accountEntryId");
+SelectAccountUsersDisplayContext selectAccountUsersDisplayContext = new SelectAccountUsersDisplayContext(liferayPortletRequest, liferayPortletResponse);
 
-SearchContainer userSearchContainer = AssignableAccountUserDisplaySearchContainerFactory.create(accountEntryId, liferayPortletRequest, liferayPortletResponse);
+SearchContainer<AccountUserDisplay> userSearchContainer = AssignableAccountUserDisplaySearchContainerFactory.create(selectAccountUsersDisplayContext.getAccountEntryId(), liferayPortletRequest, liferayPortletResponse, selectAccountUsersDisplayContext.getRowChecker());
 
-SelectAccountUsersManagementToolbarDisplayContext selectAccountUsersManagementToolbarDisplayContext = new SelectAccountUsersManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, userSearchContainer);
+SelectAccountUsersManagementToolbarDisplayContext selectAccountUsersManagementToolbarDisplayContext = new SelectAccountUsersManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, userSearchContainer, selectAccountUsersDisplayContext);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= selectAccountUsersManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= selectAccountUsersManagementToolbarDisplayContext %>"
+	propsTransformer="{SelectAccountUsersManagementToolbarPropsTransformer} from account-admin-web"
 />
 
-<aui:container cssClass="container-fluid container-fluid-max-xl">
-	<c:if test='<%= !Objects.equals(selectAccountUsersManagementToolbarDisplayContext.getNavigation(), "all-users") %>'>
+<clay:container-fluid
+	id='<%= liferayPortletResponse.getNamespace() + "selectAccountUser" %>'
+>
+	<c:if test='<%= Objects.equals(selectAccountUsersManagementToolbarDisplayContext.getNavigation(), "valid-domain-users") %>'>
 		<clay:alert
-			message='<%= LanguageUtil.get(request, "showing-users-with-valid-domains-only") %>'
-			title='<%= LanguageUtil.get(request, "info") %>'
+			message="showing-users-with-valid-domains-only"
 		/>
 	</c:if>
 
@@ -40,14 +33,14 @@ SelectAccountUsersManagementToolbarDisplayContext selectAccountUsersManagementTo
 		searchContainer="<%= userSearchContainer %>"
 	>
 		<liferay-ui:search-container-row
-			className="com.liferay.portal.kernel.model.User"
+			className="com.liferay.account.admin.web.internal.display.AccountUserDisplay"
 			keyProperty="userId"
-			modelVar="user"
+			modelVar="accountUserDisplay"
 		>
 			<liferay-ui:search-container-column-text
 				cssClass="table-cell-expand-small table-cell-minw-150"
 				name="name"
-				property="fullName"
+				value="<%= HtmlUtil.escape(accountUserDisplay.getName()) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
@@ -58,38 +51,39 @@ SelectAccountUsersManagementToolbarDisplayContext selectAccountUsersManagementTo
 
 			<liferay-ui:search-container-column-text
 				cssClass="table-cell-expand-small table-cell-minw-150"
-				name="account-roles"
-				value=""
+				name="job-title"
+				value="<%= HtmlUtil.escape(accountUserDisplay.getJobTitle()) %>"
 			/>
+
+			<liferay-ui:search-container-column-text
+				cssClass="table-cell-expand-small table-cell-minw-150"
+				name="account-roles"
+				value="<%= HtmlUtil.escape(accountUserDisplay.getAccountRoleNamesString(selectAccountUsersDisplayContext.getAccountEntryId(), locale)) %>"
+			/>
+
+			<c:if test="<%= selectAccountUsersDisplayContext.isSingleSelect() %>">
+				<liferay-ui:search-container-column-text>
+					<aui:button
+						cssClass="choose-user selector-button"
+						data='<%=
+							HashMapBuilder.<String, Object>put(
+								"emailaddress", accountUserDisplay.getEmailAddress()
+							).put(
+								"entityid", accountUserDisplay.getUserId()
+							).put(
+								"entityname", accountUserDisplay.getName()
+							).put(
+								"jobtitle", accountUserDisplay.getJobTitle()
+							).build()
+						%>'
+						value="choose"
+					/>
+				</liferay-ui:search-container-column-text>
+			</c:if>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</aui:container>
-
-<aui:script use="liferay-search-container">
-	var searchContainer = Liferay.SearchContainer.get(
-		'<portlet:namespace />accountUsers'
-	);
-
-	searchContainer.on('rowToggled', function(event) {
-		var selectedItems = event.elements.allSelectedElements;
-
-		var result = {};
-
-		if (!selectedItems.isEmpty()) {
-			result = {
-				data: {
-					value: selectedItems.get('value').join(',')
-				}
-			};
-		}
-
-		Liferay.Util.getOpener().Liferay.fire(
-			'<%= HtmlUtil.escapeJS(renderResponse.getNamespace() + "assignAccountUsers") %>',
-			result
-		);
-	});
-</aui:script>
+</clay:container-fluid>

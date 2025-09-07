@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayLabel from '@clayui/label';
@@ -23,7 +14,7 @@ import {
 	STATUS_PAUSED,
 	STATUS_RUNNING,
 	STATUS_SCHEDULED,
-	STATUS_TERMINATED
+	STATUS_TERMINATED,
 } from '../statuses';
 import {ExperimentStatusType} from '../types';
 
@@ -35,10 +26,10 @@ const STATUS_TO_TYPE = {
 	[STATUS_PAUSED]: 'warning',
 	[STATUS_RUNNING]: 'primary',
 	[STATUS_SCHEDULED]: 'warning',
-	[STATUS_TERMINATED]: 'danger'
+	[STATUS_TERMINATED]: 'danger',
 };
 
-const _statusToLabelDisplayType = status => STATUS_TO_TYPE[status];
+const _statusToLabelDisplayType = (status) => STATUS_TO_TYPE[status];
 
 /**
  * This component simlpy maps a `value` to an associated `displayType` for Experiment statuses

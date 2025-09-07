@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.data.handler.base;
@@ -25,11 +16,14 @@ import com.liferay.exportimport.kernel.lar.ExportImportClassedModelUtil;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.PortletDataException;
-import com.liferay.exportimport.kernel.staging.StagingConstants;
+import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.StagedModel;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.xml.Element;
 
 import java.util.Collections;
@@ -49,6 +43,21 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			String uuid, long groupId, String className, String extraData)
 		throws PortalException {
 
+		long companyId = 0;
+
+		Group group = GroupLocalServiceUtil.fetchGroup(groupId);
+
+		if (group != null) {
+			companyId = group.getCompanyId();
+		}
+		else {
+			companyId = CompanyThreadLocal.getCompanyId();
+		}
+
+		if (!isEnabled(companyId)) {
+			return;
+		}
+
 		StagedModelRepository<T> stagedModelRepository =
 			getStagedModelRepository();
 
@@ -62,6 +71,10 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 
 	@Override
 	public void deleteStagedModel(T stagedModel) throws PortalException {
+		if (!isEnabled(_getCompanyId(stagedModel))) {
+			return;
+		}
+
 		StagedModelRepository<T> stagedModelRepository =
 			getStagedModelRepository();
 
@@ -77,49 +90,52 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			PortletDataContext portletDataContext, T stagedModel)
 		throws PortletDataException {
 
+		if (!isEnabled(_getCompanyId(stagedModel))) {
+			return;
+		}
+
 		super.exportStagedModel(portletDataContext, stagedModel);
 
-		if (ExportImportThreadLocal.isStagingInProcess()) {
-			Element importDataRootElement =
-				portletDataContext.getImportDataRootElement();
+		if (!ExportImportThreadLocal.isStagingInProcess()) {
+			return;
+		}
 
-			Element importDataElement = null;
+		Element importDataRootElement =
+			portletDataContext.getImportDataRootElement();
 
-			try {
-				portletDataContext.setImportDataRootElement(
-					portletDataContext.getExportDataRootElement());
+		Element importDataElement = null;
 
-				importDataElement = portletDataContext.getImportDataElement(
-					stagedModel);
-			}
-			finally {
-				portletDataContext.setImportDataRootElement(
-					importDataRootElement);
-			}
+		try {
+			portletDataContext.setImportDataRootElement(
+				portletDataContext.getExportDataRootElement());
 
-			if (importDataElement == null) {
-				return;
-			}
+			importDataElement = portletDataContext.getImportDataElement(
+				stagedModel);
+		}
+		finally {
+			portletDataContext.setImportDataRootElement(importDataRootElement);
+		}
 
-			ChangesetCollection changesetCollection =
-				ChangesetCollectionLocalServiceUtil.fetchChangesetCollection(
-					portletDataContext.getScopeGroupId(),
-					StagingConstants.
-						RANGE_FROM_LAST_PUBLISH_DATE_CHANGESET_NAME);
+		if (importDataElement == null) {
+			return;
+		}
 
-			if (changesetCollection != null) {
-				long classNameId = ClassNameLocalServiceUtil.getClassNameId(
-					ExportImportClassedModelUtil.getClassName(stagedModel));
+		ChangesetCollection changesetCollection =
+			ChangesetCollectionLocalServiceUtil.fetchChangesetCollection(
+				portletDataContext.getScopeGroupId(),
+				StagingConstants.RANGE_FROM_LAST_PUBLISH_DATE_CHANGESET_NAME);
 
-				ChangesetEntry changesetEntry =
-					ChangesetEntryLocalServiceUtil.fetchChangesetEntry(
-						changesetCollection.getChangesetCollectionId(),
-						classNameId, (long)stagedModel.getPrimaryKeyObj());
+		if (changesetCollection != null) {
+			ChangesetEntry changesetEntry =
+				ChangesetEntryLocalServiceUtil.fetchChangesetEntry(
+					changesetCollection.getChangesetCollectionId(),
+					ClassNameLocalServiceUtil.getClassNameId(
+						ExportImportClassedModelUtil.getClassName(stagedModel)),
+					(long)stagedModel.getPrimaryKeyObj());
 
-				if (changesetEntry != null) {
-					ChangesetThreadLocal.addExportedChangesetEntryId(
-						changesetEntry.getChangesetEntryId());
-				}
+			if (changesetEntry != null) {
+				ChangesetThreadLocal.addExportedChangesetEntryId(
+					changesetEntry.getChangesetEntryId());
 			}
 		}
 	}
@@ -169,6 +185,10 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			PortletDataContext portletDataContext, T stagedModel)
 		throws PortletDataException {
 
+		if (!isEnabled(_getCompanyId(stagedModel))) {
+			return;
+		}
+
 		StagedModelRepository<T> stagedModelRepository =
 			getStagedModelRepository();
 
@@ -182,8 +202,8 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 			portletDataContext, stagedModel);
 	}
 
-	protected ExportImportContentProcessor getExportImportContentProcessor(
-		Class<T> clazz) {
+	protected ExportImportContentProcessor<String>
+		getExportImportContentProcessor(Class<T> clazz) {
 
 		return ExportImportContentProcessorRegistryUtil.
 			getExportImportContentProcessor(clazz.getName());
@@ -191,6 +211,14 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 
 	protected StagedModelRepository<T> getStagedModelRepository() {
 		return null;
+	}
+
+	private long _getCompanyId(T stagedModel) {
+		if (stagedModel != null) {
+			return stagedModel.getCompanyId();
+		}
+
+		return CompanyThreadLocal.getCompanyId();
 	}
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.exportimport.internal.model.adapter;
@@ -51,11 +42,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 			expandoTable = ExpandoTableLocalServiceUtil.getExpandoTable(
 				expandoColumn.getTableId());
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			throw new RuntimeException(
 				"Could not find expando table for tableId=" +
 					expandoColumn.getTableId(),
-				pe);
+				portalException);
 		}
 
 		_expandoTableClassName = expandoTable.getClassName();
@@ -76,6 +67,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	}
 
 	@Override
+	public ExpandoColumn cloneWithOriginalValues() {
+		return (ExpandoColumn)clone();
+	}
+
+	@Override
 	public int compareTo(ExpandoColumn expandoColumn) {
 		return _expandoColumn.compareTo(expandoColumn);
 	}
@@ -93,6 +89,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	@Override
 	public Date getCreateDate() {
 		return new Date();
+	}
+
+	@Override
+	public long getCtCollectionId() {
+		return _expandoColumn.getCtCollectionId();
 	}
 
 	@Override
@@ -133,6 +134,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	@Override
 	public Date getModifiedDate() {
 		return new Date();
+	}
+
+	@Override
+	public long getMvccVersion() {
+		return _expandoColumn.getMvccVersion();
 	}
 
 	@Override
@@ -187,6 +193,10 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 		return _expandoColumn.isCachedModel();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
 		return _expandoColumn.isEntityCacheEnabled();
@@ -197,6 +207,10 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 		return _expandoColumn.isEscapedModel();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
 		return _expandoColumn.isFinderCacheEnabled();
@@ -238,6 +252,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	}
 
 	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void setDefaultData(String defaultData) {
 		_expandoColumn.setDefaultData(defaultData);
 	}
@@ -265,6 +284,11 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	@Override
 	public void setModifiedDate(Date date) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setMvccVersion(long mvccVersion) {
+		_expandoColumn.setMvccVersion(mvccVersion);
 	}
 
 	@Override
@@ -304,9 +328,9 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 
 	@Override
 	public void setTypeSettingsProperties(
-		UnicodeProperties typeSettingsProperties) {
+		UnicodeProperties typeSettingsUnicodeProperties) {
 
-		_expandoColumn.setTypeSettingsProperties(typeSettingsProperties);
+		_expandoColumn.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 	}
 
 	@Override
@@ -327,11 +351,6 @@ public class StagedExpandoColumnImpl implements StagedExpandoColumn {
 	@Override
 	public ExpandoColumn toUnescapedModel() {
 		return _expandoColumn.toUnescapedModel();
-	}
-
-	@Override
-	public String toXmlString() {
-		return _expandoColumn.toXmlString();
 	}
 
 	private ExpandoColumn _expandoColumn;

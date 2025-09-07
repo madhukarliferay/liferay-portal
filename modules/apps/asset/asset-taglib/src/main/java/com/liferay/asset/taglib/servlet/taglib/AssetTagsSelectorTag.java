@@ -1,28 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.taglib.servlet.taglib;
 
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetTagServiceUtil;
+import com.liferay.asset.taglib.internal.item.selector.ItemSelectorUtil;
 import com.liferay.asset.taglib.internal.servlet.ServletContextUtil;
+import com.liferay.asset.tags.item.selector.AssetTagsItemSelectorCriterion;
+import com.liferay.asset.tags.item.selector.AssetTagsItemSelectorReturnType;
+import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
-import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.portlet.LiferayWindowState;
-import com.liferay.portal.kernel.portlet.PortletProvider;
-import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -34,16 +29,18 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.aui.AUIUtil;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import java.util.Set;
 
 /**
  * @author Antonio Pol
@@ -126,7 +123,7 @@ public class AssetTagsSelectorTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setRemoveCallback(String removeCallback) {
@@ -160,38 +157,29 @@ public class AssetTagsSelectorTag extends IncludeTag {
 		_tagNames = null;
 	}
 
-	protected String getEventName() {
-		String portletId = PortletProviderUtil.getPortletId(
-			AssetTag.class.getName(), PortletProvider.Action.BROWSE);
-
-		return PortalUtil.getPortletNamespace(portletId) + "selectTag";
-	}
-
 	protected long[] getGroupIds() {
-		if (_groupIds != null) {
-			return _groupIds;
+		try {
+			if (ArrayUtil.isEmpty(_groupIds)) {
+				HttpServletRequest httpServletRequest = getRequest();
+
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				return SiteConnectedGroupGroupProviderUtil.
+					getCurrentAndAncestorSiteAndDepotGroupIds(
+						themeDisplay.getScopeGroupId());
+			}
+
+			return PortalUtil.getCurrentAndAncestorSiteGroupIds(_groupIds);
 		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long[] groupIds = null;
-
-		Group group = themeDisplay.getScopeGroup();
-
-		if (group.isLayout()) {
-			groupIds = new long[] {group.getParentGroupId()};
+			return new long[0];
 		}
-		else {
-			groupIds = new long[] {group.getGroupId()};
-		}
-
-		if (group.getParentGroupId() != themeDisplay.getCompanyGroupId()) {
-			groupIds = ArrayUtil.append(
-				groupIds, themeDisplay.getCompanyGroupId());
-		}
-
-		return groupIds;
 	}
 
 	protected String getId() {
@@ -200,7 +188,7 @@ public class AssetTagsSelectorTag extends IncludeTag {
 		}
 
 		String randomKey = PortalUtil.generateRandomKey(
-			request, "taglib_ui_asset_tags_selector_page");
+			getRequest(), "taglib_ui_asset_tags_selector_page");
 
 		return randomKey + StringPool.UNDERLINE;
 	}
@@ -210,46 +198,54 @@ public class AssetTagsSelectorTag extends IncludeTag {
 		return _PAGE;
 	}
 
-	protected PortletURL getPortletURL() {
-		try {
-			PortletURL portletURL = PortletProviderUtil.getPortletURL(
-				request, AssetTag.class.getName(),
-				PortletProvider.Action.BROWSE);
+	protected String getPortletURL(String eventName) {
+		AssetTagsItemSelectorCriterion assetTagsItemSelectorCriterion =
+			new AssetTagsItemSelectorCriterion();
 
-			if (portletURL == null) {
-				return null;
-			}
+		assetTagsItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new AssetTagsItemSelectorReturnType());
+		assetTagsItemSelectorCriterion.setGroupIds(getGroupIds());
+		assetTagsItemSelectorCriterion.setMultiSelection(true);
 
-			portletURL.setParameter("eventName", getEventName());
-			portletURL.setParameter("selectedTagNames", "{selectedTagNames}");
-
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-
-			return portletURL;
-		}
-		catch (Exception e) {
-		}
-
-		return null;
+		return PortletURLBuilder.create(
+			ItemSelectorUtil.getItemSelector(
+			).getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(getRequest()),
+				eventName, assetTagsItemSelectorCriterion
+			)
+		).buildString();
 	}
 
 	protected List<String> getTagNames() {
-		if (Validator.isNotNull(_className) && (_classPK > 0)) {
-			List<AssetTag> tags = AssetTagServiceUtil.getTags(
-				_className, _classPK);
+		Set<String> tagNames = new HashSet<>();
 
-			return ListUtil.toList(tags, AssetTag.NAME_ACCESSOR);
+		if (Validator.isNotNull(_className) && (_classPK > 0)) {
+			tagNames.addAll(
+				ListUtil.toList(
+					AssetTagServiceUtil.getTags(_className, _classPK),
+					AssetTag.NAME_ACCESSOR));
 		}
 
 		if (!_ignoreRequestValue) {
-			String curTagsParam = request.getParameter(_hiddenInput);
+			HttpServletRequest httpServletRequest = getRequest();
 
-			if (Validator.isNotNull(curTagsParam)) {
-				return StringUtil.split(curTagsParam);
+			String[] curTagsParam = httpServletRequest.getParameterValues(
+				_hiddenInput);
+
+			if (curTagsParam != null) {
+				List<String> curTags = new ArrayList<>();
+
+				for (String tags : curTagsParam) {
+					Collections.addAll(curTags, tags.split(StringPool.COMMA));
+				}
+
+				tagNames.addAll(curTags);
 			}
 		}
 
-		return StringUtil.split(_tagNames);
+		tagNames.addAll(StringUtil.split(_tagNames));
+
+		return new ArrayList<>(tagNames);
 	}
 
 	@Override
@@ -259,6 +255,11 @@ public class AssetTagsSelectorTag extends IncludeTag {
 	}
 
 	private Map<String, Object> _getData() {
+		String randomNamespace = PortalUtil.generateRandomKey(
+			getRequest(), "taglib_asset_tag_selector");
+
+		String eventName = randomNamespace + "selectTag";
+
 		return HashMapBuilder.<String, Object>put(
 			"addCallback",
 			() -> {
@@ -269,7 +270,7 @@ public class AssetTagsSelectorTag extends IncludeTag {
 				return null;
 			}
 		).put(
-			"eventName", getEventName()
+			"eventName", eventName
 		).put(
 			"groupIds", getGroupIds()
 		).put(
@@ -277,12 +278,7 @@ public class AssetTagsSelectorTag extends IncludeTag {
 		).put(
 			"inputName", _getInputName()
 		).put(
-			"portletURL",
-			() -> {
-				PortletURL portletURL = getPortletURL();
-
-				return portletURL.toString();
-			}
+			"portletURL", getPortletURL(eventName)
 		).put(
 			"removeCallback",
 			() -> {
@@ -298,13 +294,16 @@ public class AssetTagsSelectorTag extends IncludeTag {
 				List<Map<String, String>> selectedItems = new ArrayList<>();
 
 				for (String tagName : getTagNames()) {
-					Map<String, String> selectedItem = HashMapBuilder.put(
-						"label", tagName
-					).put(
-						"value", tagName
-					).build();
+					if (Validator.isNull(tagName)) {
+						continue;
+					}
 
-					selectedItems.add(selectedItem);
+					selectedItems.add(
+						HashMapBuilder.put(
+							"label", tagName
+						).put(
+							"value", tagName
+						).build());
 				}
 
 				return selectedItems;
@@ -323,13 +322,17 @@ public class AssetTagsSelectorTag extends IncludeTag {
 			return _namespace;
 		}
 
-		PortletRequest portletRequest = (PortletRequest)request.getAttribute(
-			JavaConstants.JAVAX_PORTLET_REQUEST);
-		PortletResponse portletResponse = (PortletResponse)request.getAttribute(
-			JavaConstants.JAVAX_PORTLET_RESPONSE);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		PortletRequest portletRequest =
+			(PortletRequest)httpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
+		PortletResponse portletResponse =
+			(PortletResponse)httpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 		if ((portletRequest == null) || (portletResponse == null)) {
-			_namespace = AUIUtil.getNamespace(request);
+			_namespace = AUIUtil.getNamespace(httpServletRequest);
 
 			return _namespace;
 		}
@@ -340,6 +343,9 @@ public class AssetTagsSelectorTag extends IncludeTag {
 	}
 
 	private static final String _PAGE = "/asset_tags_selector/page.jsp";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		AssetTagsSelectorTag.class);
 
 	private String _addCallback;
 	private boolean _allowAddEntry = true;

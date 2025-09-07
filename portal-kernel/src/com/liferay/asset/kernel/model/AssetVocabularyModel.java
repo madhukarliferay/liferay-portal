@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.model;
@@ -17,6 +8,7 @@ package com.liferay.asset.kernel.model;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.LocalizedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
@@ -43,9 +35,10 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface AssetVocabularyModel
 	extends BaseModel<AssetVocabulary>, CTModel<AssetVocabulary>,
-			LocalizedModel, MVCCModel, ShardedModel, StagedGroupedModel {
+			ExternalReferenceCodeModel, LocalizedModel, MVCCModel, ShardedModel,
+			StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a asset vocabulary model instance should use the {@link AssetVocabulary} interface instead.
@@ -122,6 +115,7 @@ public interface AssetVocabularyModel
 	 * @return the external reference code of this asset vocabulary
 	 */
 	@AutoEscape
+	@Override
 	public String getExternalReferenceCode();
 
 	/**
@@ -129,6 +123,7 @@ public interface AssetVocabularyModel
 	 *
 	 * @param externalReferenceCode the external reference code of this asset vocabulary
 	 */
+	@Override
 	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
@@ -489,6 +484,20 @@ public interface AssetVocabularyModel
 	public void setSettings(String settings);
 
 	/**
+	 * Returns the visibility type of this asset vocabulary.
+	 *
+	 * @return the visibility type of this asset vocabulary
+	 */
+	public int getVisibilityType();
+
+	/**
+	 * Sets the visibility type of this asset vocabulary.
+	 *
+	 * @param visibilityType the visibility type of this asset vocabulary
+	 */
+	public void setVisibilityType(int visibilityType);
+
+	/**
 	 * Returns the last publish date of this asset vocabulary.
 	 *
 	 * @return the last publish date of this asset vocabulary
@@ -504,6 +513,20 @@ public interface AssetVocabularyModel
 	@Override
 	public void setLastPublishDate(Date lastPublishDate);
 
+	/**
+	 * Returns the status of this asset vocabulary.
+	 *
+	 * @return the status of this asset vocabulary
+	 */
+	public int getStatus();
+
+	/**
+	 * Sets the status of this asset vocabulary.
+	 *
+	 * @param status the status of this asset vocabulary
+	 */
+	public void setStatus(int status);
+
 	@Override
 	public String[] getAvailableLanguageIds();
 
@@ -516,5 +539,12 @@ public interface AssetVocabularyModel
 	@Override
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
+
+	@Override
+	public AssetVocabulary cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

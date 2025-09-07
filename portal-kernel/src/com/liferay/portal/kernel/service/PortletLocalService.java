@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
 import com.liferay.expando.kernel.model.CustomAttributesDisplay;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.cluster.Clusterable;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -28,20 +21,22 @@ import com.liferay.portal.kernel.model.PortletApp;
 import com.liferay.portal.kernel.model.PortletCategory;
 import com.liferay.portal.kernel.plugin.PluginPackage;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
+import com.liferay.portal.kernel.portlet.PortletFriendlyURLMapperMatch;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
+
+import jakarta.servlet.ServletContext;
 
 import java.io.Serializable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import javax.servlet.ServletContext;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -55,6 +50,9 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see PortletLocalServiceUtil
  * @generated
  */
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.portal.kernel.model.Portlet"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
@@ -63,14 +61,18 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface PortletLocalService
 	extends BaseLocalService, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link PortletLocalServiceUtil} to access the portlet local service. Add custom service methods to <code>com.liferay.portal.service.impl.PortletLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.PortletLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the portlet local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link PortletLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the portlet to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortletLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param portlet the portlet
 	 * @return the portlet that was added
@@ -96,6 +98,12 @@ public interface PortletLocalService
 	public Portlet clonePortlet(String portletId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Creates a new portlet with the primary key. Does not add the portlet to the database.
 	 *
 	 * @param id the primary key for the new portlet
@@ -114,6 +122,10 @@ public interface PortletLocalService
 	/**
 	 * Deletes the portlet with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortletLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param id the primary key of the portlet
 	 * @return the portlet that was removed
 	 * @throws PortalException if a portlet with the primary key could not be found
@@ -121,11 +133,16 @@ public interface PortletLocalService
 	@Indexable(type = IndexableType.DELETE)
 	public Portlet deletePortlet(long id) throws PortalException;
 
+	@CTAware
 	public void deletePortlet(long companyId, String portletId, long plid)
 		throws PortalException;
 
 	/**
 	 * Deletes the portlet from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortletLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param portlet the portlet
 	 * @return the portlet that was removed
@@ -133,11 +150,17 @@ public interface PortletLocalService
 	@Indexable(type = IndexableType.DELETE)
 	public Portlet deletePortlet(Portlet portlet);
 
+	@CTAware
 	public void deletePortlets(long companyId, String[] portletIds, long plid)
 		throws PortalException;
 
 	@Transactional(enabled = false)
 	public void deployPortlet(Portlet portlet) throws Exception;
+
+	public Portlet deployRemotePortlet(
+			long[] companyIds, Portlet portlet, String[] categoryNames,
+			boolean eagerDestroy, boolean clearCache)
+		throws PortalException;
 
 	public Portlet deployRemotePortlet(Portlet portlet, String categoryName)
 		throws PortalException;
@@ -154,6 +177,12 @@ public interface PortletLocalService
 
 	@Transactional(enabled = false)
 	public void destroyRemotePortlet(Portlet portlet);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -252,6 +281,9 @@ public interface PortletLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -278,6 +310,10 @@ public interface PortletLocalService
 
 	@Transactional(enabled = false)
 	public Portlet getPortletByStrutsPath(long companyId, String strutsPath);
+
+	@Transactional(enabled = false)
+	public PortletFriendlyURLMapperMatch getPortletFriendlyURLMapperMatch(
+		String url);
 
 	@Transactional(enabled = false)
 	public List<Portlet> getPortlets();
@@ -345,6 +381,10 @@ public interface PortletLocalService
 
 	/**
 	 * Updates the portlet in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortletLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param portlet the portlet
 	 * @return the portlet that was updated

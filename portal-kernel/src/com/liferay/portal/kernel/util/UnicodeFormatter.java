@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -81,7 +72,11 @@ public class UnicodeFormatter {
 			try {
 				bytes[i / 2] = (byte)Integer.parseInt(s, 16);
 			}
-			catch (NumberFormatException nfe) {
+			catch (NumberFormatException numberFormatException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(numberFormatException);
+				}
+
 				return new byte[0];
 			}
 		}
@@ -98,7 +93,7 @@ public class UnicodeFormatter {
 			return hexString;
 		}
 
-		StringBuilder sb = new StringBuilder();
+		StringBundler sb = new StringBundler();
 
 		for (int i = 2; i < hexString.length(); i = i + 6) {
 			String s = hexString.substring(i, i + 4);
@@ -108,8 +103,8 @@ public class UnicodeFormatter {
 
 				sb.append(c);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 
 				return hexString;
 			}
@@ -119,7 +114,7 @@ public class UnicodeFormatter {
 	}
 
 	public static String toString(char[] array) {
-		StringBuilder sb = new StringBuilder(array.length * 6);
+		StringBundler sb = new StringBundler(array.length * 6);
 
 		char[] hexes = new char[4];
 
@@ -136,7 +131,7 @@ public class UnicodeFormatter {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(s.length() * 6);
+		StringBundler sb = new StringBundler(s.length() * 6);
 
 		char[] hexes = new char[4];
 

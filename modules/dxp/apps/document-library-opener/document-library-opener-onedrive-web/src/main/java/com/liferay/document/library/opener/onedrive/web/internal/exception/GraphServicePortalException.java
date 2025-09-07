@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.opener.onedrive.web.internal.exception;
@@ -21,14 +12,14 @@ import com.liferay.portal.kernel.exception.PortalException;
  */
 public class GraphServicePortalException extends PortalException {
 
-	public GraphServicePortalException(String msg, Throwable cause) {
-		super(msg, cause);
+	public GraphServicePortalException(String msg, Throwable throwable) {
+		super(msg, throwable);
 	}
 
 	public static class AccessDenied extends GraphServicePortalException {
 
-		public AccessDenied(String msg, Throwable cause) {
-			super(msg, cause);
+		public AccessDenied(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
@@ -36,88 +27,88 @@ public class GraphServicePortalException extends PortalException {
 	public static class ActivityLimitReached
 		extends GraphServicePortalException {
 
-		public ActivityLimitReached(String msg, Throwable cause) {
-			super(msg, cause);
+		public ActivityLimitReached(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class InvalidRange extends GraphServicePortalException {
 
-		public InvalidRange(String msg, Throwable cause) {
-			super(msg, cause);
+		public InvalidRange(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class InvalidRequest extends GraphServicePortalException {
 
-		public InvalidRequest(String msg, Throwable cause) {
-			super(msg, cause);
+		public InvalidRequest(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class ItemNotFound extends GraphServicePortalException {
 
-		public ItemNotFound(String msg, Throwable cause) {
-			super(msg, cause);
+		public ItemNotFound(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class MalwareDetected extends GraphServicePortalException {
 
-		public MalwareDetected(String msg, Throwable cause) {
-			super(msg, cause);
+		public MalwareDetected(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class NameAlreadyExists extends GraphServicePortalException {
 
-		public NameAlreadyExists(String msg, Throwable cause) {
-			super(msg, cause);
+		public NameAlreadyExists(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class NotAllowed extends GraphServicePortalException {
 
-		public NotAllowed(String msg, Throwable cause) {
-			super(msg, cause);
+		public NotAllowed(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class NotSupported extends GraphServicePortalException {
 
-		public NotSupported(String msg, Throwable cause) {
-			super(msg, cause);
+		public NotSupported(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class QuotaLimitReached extends GraphServicePortalException {
 
-		public QuotaLimitReached(String msg, Throwable cause) {
-			super(msg, cause);
+		public QuotaLimitReached(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class ResourceModified extends GraphServicePortalException {
 
-		public ResourceModified(String msg, Throwable cause) {
-			super(msg, cause);
+		public ResourceModified(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class ResyncRequired extends GraphServicePortalException {
 
-		public ResyncRequired(String msg, Throwable cause) {
-			super(msg, cause);
+		public ResyncRequired(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
@@ -125,16 +116,16 @@ public class GraphServicePortalException extends PortalException {
 	public static class ServiceNotAvailable
 		extends GraphServicePortalException {
 
-		public ServiceNotAvailable(String msg, Throwable cause) {
-			super(msg, cause);
+		public ServiceNotAvailable(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}
 
 	public static class Unauthenticated extends GraphServicePortalException {
 
-		public Unauthenticated(String msg, Throwable cause) {
-			super(msg, cause);
+		public Unauthenticated(String msg, Throwable throwable) {
+			super(msg, throwable);
 		}
 
 	}

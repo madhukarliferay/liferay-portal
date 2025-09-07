@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.service.http;
@@ -46,15 +37,14 @@ import com.liferay.site.navigation.service.SiteNavigationMenuServiceUtil;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see SiteNavigationMenuServiceSoap
  * @generated
  */
 public class SiteNavigationMenuServiceHttp {
 
 	public static com.liferay.site.navigation.model.SiteNavigationMenu
 			addSiteNavigationMenu(
-				HttpPrincipal httpPrincipal, long groupId, String name,
-				int type, boolean auto,
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long groupId, String name, int type, boolean auto,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -64,39 +54,42 @@ public class SiteNavigationMenuServiceHttp {
 				_addSiteNavigationMenuParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, groupId, name, type, auto, serviceContext);
+				methodKey, externalReferenceCode, groupId, name, type, auto,
+				serviceContext);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static com.liferay.site.navigation.model.SiteNavigationMenu
 			addSiteNavigationMenu(
-				HttpPrincipal httpPrincipal, long groupId, String name,
-				int type,
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long groupId, String name, int type,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -106,38 +99,42 @@ public class SiteNavigationMenuServiceHttp {
 				_addSiteNavigationMenuParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, groupId, name, type, serviceContext);
+				methodKey, externalReferenceCode, groupId, name, type,
+				serviceContext);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static com.liferay.site.navigation.model.SiteNavigationMenu
 			addSiteNavigationMenu(
-				HttpPrincipal httpPrincipal, long groupId, String name,
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long groupId, String name,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -147,32 +144,35 @@ public class SiteNavigationMenuServiceHttp {
 				_addSiteNavigationMenuParameterTypes2);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, groupId, name, serviceContext);
+				methodKey, externalReferenceCode, groupId, name,
+				serviceContext);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -194,25 +194,70 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static com.liferay.site.navigation.model.SiteNavigationMenu
+			deleteSiteNavigationMenu(
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class, "deleteSiteNavigationMenu",
+				_deleteSiteNavigationMenuParameterTypes4);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, externalReferenceCode, groupId);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.site.navigation.model.SiteNavigationMenu)
+				returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -224,7 +269,7 @@ public class SiteNavigationMenuServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "fetchSiteNavigationMenu",
-				_fetchSiteNavigationMenuParameterTypes4);
+				_fetchSiteNavigationMenuParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, siteNavigationMenuId);
@@ -234,25 +279,71 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static com.liferay.site.navigation.model.SiteNavigationMenu
+			getSiteNavigationMenuByExternalReferenceCode(
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class,
+				"getSiteNavigationMenuByExternalReferenceCode",
+				_getSiteNavigationMenuByExternalReferenceCodeParameterTypes6);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, externalReferenceCode, groupId);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.site.navigation.model.SiteNavigationMenu)
+				returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -263,7 +354,7 @@ public class SiteNavigationMenuServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "getSiteNavigationMenus",
-				_getSiteNavigationMenusParameterTypes5);
+				_getSiteNavigationMenusParameterTypes7);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
 
@@ -272,19 +363,21 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List
 				<com.liferay.site.navigation.model.SiteNavigationMenu>)
 					returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -293,12 +386,13 @@ public class SiteNavigationMenuServiceHttp {
 			getSiteNavigationMenus(
 				HttpPrincipal httpPrincipal, long groupId, int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.site.navigation.model.SiteNavigationMenu>
+						orderByComparator) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "getSiteNavigationMenus",
-				_getSiteNavigationMenusParameterTypes6);
+				_getSiteNavigationMenusParameterTypes8);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, start, end, orderByComparator);
@@ -308,19 +402,21 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List
 				<com.liferay.site.navigation.model.SiteNavigationMenu>)
 					returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -330,12 +426,13 @@ public class SiteNavigationMenuServiceHttp {
 				HttpPrincipal httpPrincipal, long groupId, String keywords,
 				int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.site.navigation.model.SiteNavigationMenu>
+						orderByComparator) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "getSiteNavigationMenus",
-				_getSiteNavigationMenusParameterTypes7);
+				_getSiteNavigationMenusParameterTypes9);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, keywords, start, end, orderByComparator);
@@ -345,19 +442,101 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List
 				<com.liferay.site.navigation.model.SiteNavigationMenu>)
 					returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static java.util.List
+		<com.liferay.site.navigation.model.SiteNavigationMenu>
+			getSiteNavigationMenus(
+				HttpPrincipal httpPrincipal, long[] groupIds, int start,
+				int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.site.navigation.model.SiteNavigationMenu>
+						orderByComparator) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class, "getSiteNavigationMenus",
+				_getSiteNavigationMenusParameterTypes10);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupIds, start, end, orderByComparator);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (java.util.List
+				<com.liferay.site.navigation.model.SiteNavigationMenu>)
+					returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static java.util.List
+		<com.liferay.site.navigation.model.SiteNavigationMenu>
+			getSiteNavigationMenus(
+				HttpPrincipal httpPrincipal, long[] groupIds, String keywords,
+				int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.site.navigation.model.SiteNavigationMenu>
+						orderByComparator) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class, "getSiteNavigationMenus",
+				_getSiteNavigationMenusParameterTypes11);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupIds, keywords, start, end, orderByComparator);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (java.util.List
+				<com.liferay.site.navigation.model.SiteNavigationMenu>)
+					returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -368,7 +547,7 @@ public class SiteNavigationMenuServiceHttp {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class,
 				"getSiteNavigationMenusCount",
-				_getSiteNavigationMenusCountParameterTypes8);
+				_getSiteNavigationMenusCountParameterTypes12);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
 
@@ -377,17 +556,19 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Integer)returnObj).intValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -398,7 +579,7 @@ public class SiteNavigationMenuServiceHttp {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class,
 				"getSiteNavigationMenusCount",
-				_getSiteNavigationMenusCountParameterTypes9);
+				_getSiteNavigationMenusCountParameterTypes13);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, keywords);
@@ -408,17 +589,85 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Integer)returnObj).intValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static int getSiteNavigationMenusCount(
+		HttpPrincipal httpPrincipal, long[] groupIds) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class,
+				"getSiteNavigationMenusCount",
+				_getSiteNavigationMenusCountParameterTypes14);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupIds);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return ((Integer)returnObj).intValue();
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static int getSiteNavigationMenusCount(
+		HttpPrincipal httpPrincipal, long[] groupIds, String keywords) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				SiteNavigationMenuServiceUtil.class,
+				"getSiteNavigationMenusCount",
+				_getSiteNavigationMenusCountParameterTypes15);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupIds, keywords);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return ((Integer)returnObj).intValue();
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -432,7 +681,7 @@ public class SiteNavigationMenuServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "updateSiteNavigationMenu",
-				_updateSiteNavigationMenuParameterTypes10);
+				_updateSiteNavigationMenuParameterTypes16);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, siteNavigationMenuId, type, auto, serviceContext);
@@ -442,25 +691,27 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -474,7 +725,7 @@ public class SiteNavigationMenuServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				SiteNavigationMenuServiceUtil.class, "updateSiteNavigationMenu",
-				_updateSiteNavigationMenuParameterTypes11);
+				_updateSiteNavigationMenuParameterTypes17);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, siteNavigationMenuId, name, serviceContext);
@@ -484,25 +735,27 @@ public class SiteNavigationMenuServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.site.navigation.model.SiteNavigationMenu)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -511,47 +764,70 @@ public class SiteNavigationMenuServiceHttp {
 
 	private static final Class<?>[] _addSiteNavigationMenuParameterTypes0 =
 		new Class[] {
-			long.class, String.class, int.class, boolean.class,
+			String.class, long.class, String.class, int.class, boolean.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[] _addSiteNavigationMenuParameterTypes1 =
 		new Class[] {
-			long.class, String.class, int.class,
+			String.class, long.class, String.class, int.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[] _addSiteNavigationMenuParameterTypes2 =
 		new Class[] {
-			long.class, String.class,
+			String.class, long.class, String.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[] _deleteSiteNavigationMenuParameterTypes3 =
 		new Class[] {long.class};
-	private static final Class<?>[] _fetchSiteNavigationMenuParameterTypes4 =
+	private static final Class<?>[] _deleteSiteNavigationMenuParameterTypes4 =
+		new Class[] {String.class, long.class};
+	private static final Class<?>[] _fetchSiteNavigationMenuParameterTypes5 =
 		new Class[] {long.class};
-	private static final Class<?>[] _getSiteNavigationMenusParameterTypes5 =
+	private static final Class<?>[]
+		_getSiteNavigationMenuByExternalReferenceCodeParameterTypes6 =
+			new Class[] {String.class, long.class};
+	private static final Class<?>[] _getSiteNavigationMenusParameterTypes7 =
 		new Class[] {long.class};
-	private static final Class<?>[] _getSiteNavigationMenusParameterTypes6 =
+	private static final Class<?>[] _getSiteNavigationMenusParameterTypes8 =
 		new Class[] {
 			long.class, int.class, int.class,
 			com.liferay.portal.kernel.util.OrderByComparator.class
 		};
-	private static final Class<?>[] _getSiteNavigationMenusParameterTypes7 =
+	private static final Class<?>[] _getSiteNavigationMenusParameterTypes9 =
 		new Class[] {
 			long.class, String.class, int.class, int.class,
 			com.liferay.portal.kernel.util.OrderByComparator.class
 		};
+	private static final Class<?>[] _getSiteNavigationMenusParameterTypes10 =
+		new Class[] {
+			long[].class, int.class, int.class,
+			com.liferay.portal.kernel.util.OrderByComparator.class
+		};
+	private static final Class<?>[] _getSiteNavigationMenusParameterTypes11 =
+		new Class[] {
+			long[].class, String.class, int.class, int.class,
+			com.liferay.portal.kernel.util.OrderByComparator.class
+		};
 	private static final Class<?>[]
-		_getSiteNavigationMenusCountParameterTypes8 = new Class[] {long.class};
+		_getSiteNavigationMenusCountParameterTypes12 = new Class[] {long.class};
 	private static final Class<?>[]
-		_getSiteNavigationMenusCountParameterTypes9 = new Class[] {
+		_getSiteNavigationMenusCountParameterTypes13 = new Class[] {
 			long.class, String.class
 		};
-	private static final Class<?>[] _updateSiteNavigationMenuParameterTypes10 =
+	private static final Class<?>[]
+		_getSiteNavigationMenusCountParameterTypes14 = new Class[] {
+			long[].class
+		};
+	private static final Class<?>[]
+		_getSiteNavigationMenusCountParameterTypes15 = new Class[] {
+			long[].class, String.class
+		};
+	private static final Class<?>[] _updateSiteNavigationMenuParameterTypes16 =
 		new Class[] {
 			long.class, int.class, boolean.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
-	private static final Class<?>[] _updateSiteNavigationMenuParameterTypes11 =
+	private static final Class<?>[] _updateSiteNavigationMenuParameterTypes17 =
 		new Class[] {
 			long.class, String.class,
 			com.liferay.portal.kernel.service.ServiceContext.class

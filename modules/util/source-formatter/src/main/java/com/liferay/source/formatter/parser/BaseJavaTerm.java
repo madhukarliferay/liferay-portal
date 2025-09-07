@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter.parser;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.source.formatter.checks.util.SourceUtil;
+import com.liferay.source.formatter.check.util.SourceUtil;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,15 +19,16 @@ import java.util.regex.Pattern;
 public abstract class BaseJavaTerm implements JavaTerm {
 
 	public BaseJavaTerm(
-		String name, String content, String accessModifier, int lineNumber,
-		boolean isAbstract, boolean isStatic) {
+		String accessModifier, String content, boolean isAbstract,
+		boolean isFinal, boolean isStatic, int lineNumber, String name) {
 
-		_name = name;
-		_content = content;
 		_accessModifier = accessModifier;
-		_lineNumber = lineNumber;
+		_content = content;
 		_isAbstract = isAbstract;
+		_isFinal = isFinal;
 		_isStatic = isStatic;
+		_lineNumber = lineNumber;
+		_name = name;
 	}
 
 	@Override
@@ -45,6 +39,17 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	@Override
 	public String getContent() {
 		return _content;
+	}
+
+	@Override
+	public List<String> getImportNames() {
+		JavaClass parentJavaClass = _parentJavaClass;
+
+		while (parentJavaClass.getParentJavaClass() != null) {
+			parentJavaClass = parentJavaClass.getParentJavaClass();
+		}
+
+		return parentJavaClass.getImportNames();
 	}
 
 	@Override
@@ -63,6 +68,17 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	}
 
 	@Override
+	public String getPackageName() {
+		JavaClass parentJavaClass = _parentJavaClass;
+
+		while (parentJavaClass.getParentJavaClass() != null) {
+			parentJavaClass = parentJavaClass.getParentJavaClass();
+		}
+
+		return parentJavaClass.getPackageName();
+	}
+
+	@Override
 	public JavaClass getParentJavaClass() {
 		return _parentJavaClass;
 	}
@@ -70,6 +86,17 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	@Override
 	public JavaSignature getSignature() {
 		return null;
+	}
+
+	@Override
+	public boolean hasAnnotation() {
+		Pattern pattern = Pattern.compile(
+			StringBundler.concat(
+				"(\\A|\n)", SourceUtil.getIndent(_content), "@"));
+
+		Matcher matcher = pattern.matcher(_content);
+
+		return matcher.find();
 	}
 
 	@Override
@@ -93,6 +120,17 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	@Override
 	public boolean isAbstract() {
 		return _isAbstract;
+	}
+
+	@Override
+	public boolean isDefault() {
+		return Objects.equals(
+			_accessModifier, JavaTerm.ACCESS_MODIFIER_DEFAULT);
+	}
+
+	@Override
+	public boolean isFinal() {
+		return _isFinal;
 	}
 
 	@Override
@@ -141,6 +179,23 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	}
 
 	@Override
+	public boolean isPrivate() {
+		return Objects.equals(
+			_accessModifier, JavaTerm.ACCESS_MODIFIER_PRIVATE);
+	}
+
+	@Override
+	public boolean isProtected() {
+		return Objects.equals(
+			_accessModifier, JavaTerm.ACCESS_MODIFIER_PROTECTED);
+	}
+
+	@Override
+	public boolean isPublic() {
+		return Objects.equals(_accessModifier, JavaTerm.ACCESS_MODIFIER_PUBLIC);
+	}
+
+	@Override
 	public boolean isStatic() {
 		return _isStatic;
 	}
@@ -153,6 +208,7 @@ public abstract class BaseJavaTerm implements JavaTerm {
 	private final String _accessModifier;
 	private final String _content;
 	private final boolean _isAbstract;
+	private final boolean _isFinal;
 	private final boolean _isStatic;
 	private final int _lineNumber;
 	private final String _name;

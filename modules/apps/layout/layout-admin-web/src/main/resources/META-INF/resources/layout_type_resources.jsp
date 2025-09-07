@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -55,11 +46,11 @@ if (selLayout != null) {
 <c:choose>
 	<c:when test='<%= Objects.equals(id, "portlet") %>'>
 		<div class="layout-type">
-			<p class="small text-muted">
+			<p class="small text-secondary">
 				<liferay-ui:message key="empty-page-description" />
 			</p>
 
-			<liferay-ui:layout-templates-list
+			<liferay-layout:layout-templates-list
 				layoutTemplateId="<%= layoutTemplateId %>"
 				layoutTemplateIdPrefix="addLayout"
 				layoutTemplates="<%= LayoutTemplateLocalServiceUtil.getLayoutTemplates(selTheme.getThemeId()) %>"
@@ -74,27 +65,23 @@ if (selLayout != null) {
 
 		<c:if test="<%= layoutPrototype != null %>">
 			<div class="layout-type">
-				<p class="small text-muted">
+				<p class="small text-secondary">
 					<%= HtmlUtil.escape(layoutPrototype.getDescription(locale)) %>
 				</p>
 
-				<aui:input helpMessage="if-enabled-this-page-will-inherit-changes-made-to-the-page-template" id='<%= "addLayoutLayoutPrototypeLinkEnabled" + layoutPrototype.getUuid() %>' label="inherit-changes" name='<%= "layoutPrototypeLinkEnabled" + layoutPrototype.getUuid() %>' type="toggle-switch" value="<%= PropsValues.LAYOUT_PROTOTYPE_LINK_ENABLED_DEFAULT %>" />
+				<aui:input helpMessage="if-enabled-this-page-will-inherit-changes-made-to-the-page-template" id='<%= "addLayoutLayoutPrototypeLinkEnabled" + layoutPrototype.getUuid() %>' inlineLabel="right" label="inherit-changes" labelCssClass="simple-toggle-switch" name='<%= "layoutPrototypeLinkEnabled" + layoutPrototype.getUuid() %>' type="toggle-switch" value="<%= PropsValues.LAYOUT_PROTOTYPE_LINK_ENABLED_DEFAULT %>" />
 			</div>
 		</c:if>
 	</c:when>
 	<c:otherwise>
 
 		<%
-		liferayPortletRequest.setAttribute(WebKeys.LAYOUT_DESCRIPTIONS, layoutsAdminDisplayContext.getLayoutDescriptions());
-
 		LayoutTypeController layoutTypeController = LayoutTypeControllerTracker.getLayoutTypeController(type);
-
-		ResourceBundle layoutTypeResourceBundle = ResourceBundleUtil.getBundle("content.Language", locale, layoutTypeController.getClass());
 		%>
 
 		<div class="layout-type">
-			<p class="small text-muted">
-				<%= LanguageUtil.get(request, layoutTypeResourceBundle, "layout.types." + type + ".description") %>
+			<p class="small text-secondary">
+				<liferay-ui:message key='<%= "layout.types." + HtmlUtil.escape(type) + ".description" %>' />
 			</p>
 
 			<%= layoutTypeController.includeEditContent(request, response, selLayout) %>

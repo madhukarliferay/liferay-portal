@@ -1,27 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
-
-'use strict';
 
 import {
 	getSessionValue,
-	setSessionValue
+	setSessionValue,
 } from '../../../src/main/resources/META-INF/resources/liferay/util/session.es';
 
 describe('Session API', () => {
+	const sessionClickURL =
+		'http://localhost:8080/c/portal/session_click?p_l_id=1';
+
 	beforeEach(() => {
 		fetch.mockResponse('');
+
+		window.Liferay.ThemeDisplay.getPlid = () => 1;
 	});
 
 	describe('getSessionValue', () => {
@@ -31,7 +25,7 @@ describe('Session API', () => {
 			expect(fetch).toHaveBeenCalledTimes(1);
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://localhost:8080/c/portal/session_click',
+				sessionClickURL,
 				expect.anything()
 			);
 		});
@@ -39,12 +33,22 @@ describe('Session API', () => {
 		it('deserializes session serialized objects', () => {
 			fetch.mockResponse('serialize://{"key1":"value1","key2":"value2"}');
 
-			getSessionValue('key').then(value => {
+			getSessionValue('key').then((value) => {
 				expect(value).toEqual({
 					key1: 'value1',
-					key2: 'value2'
+					key2: 'value2',
 				});
 			});
+		});
+
+		it('propagates `useHttpSession` to server when `true`', () => {
+			getSessionValue('key', {useHttpSession: true});
+
+			expect(fetch).toHaveBeenCalledTimes(1);
+
+			expect(fetch.mock.calls[0][1].body.get('useHttpSession')).toBe(
+				'true'
+			);
 		});
 	});
 
@@ -54,9 +58,7 @@ describe('Session API', () => {
 
 			expect(fetch).toHaveBeenCalledTimes(1);
 
-			expect(fetch.mock.calls[0][0]).toBe(
-				'http://localhost:8080/c/portal/session_click'
-			);
+			expect(fetch.mock.calls[0][0]).toBe(sessionClickURL);
 
 			expect(fetch.mock.calls[0][1].body.get('key')).toBe('value');
 		});
@@ -64,17 +66,25 @@ describe('Session API', () => {
 		it('POSTs a key/serializedValue to the session_click endpoint for object values', () => {
 			setSessionValue('key', {
 				key1: 'value1',
-				key2: 'value2'
+				key2: 'value2',
 			});
 
 			expect(fetch).toHaveBeenCalledTimes(1);
 
-			expect(fetch.mock.calls[0][0]).toBe(
-				'http://localhost:8080/c/portal/session_click'
-			);
+			expect(fetch.mock.calls[0][0]).toBe(sessionClickURL);
 
 			expect(fetch.mock.calls[0][1].body.get('key')).toBe(
 				'serialize://{"key1":"value1","key2":"value2"}'
+			);
+		});
+
+		it('propagates `useHttpSession` to server when `true`', () => {
+			setSessionValue('key', 'value', {useHttpSession: true});
+
+			expect(fetch).toHaveBeenCalledTimes(1);
+
+			expect(fetch.mock.calls[0][1].body.get('useHttpSession')).toBe(
+				'true'
 			);
 		});
 	});

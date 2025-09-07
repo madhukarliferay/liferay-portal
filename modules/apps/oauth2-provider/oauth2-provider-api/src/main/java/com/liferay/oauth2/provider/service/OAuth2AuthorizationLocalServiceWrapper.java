@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link OAuth2AuthorizationLocalService}.
@@ -26,6 +18,10 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class OAuth2AuthorizationLocalServiceWrapper
 	implements OAuth2AuthorizationLocalService,
 			   ServiceWrapper<OAuth2AuthorizationLocalService> {
+
+	public OAuth2AuthorizationLocalServiceWrapper() {
+		this(null);
+	}
 
 	public OAuth2AuthorizationLocalServiceWrapper(
 		OAuth2AuthorizationLocalService oAuth2AuthorizationLocalService) {
@@ -79,6 +75,10 @@ public class OAuth2AuthorizationLocalServiceWrapper
 	/**
 	 * Adds the o auth2 authorization to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was added
 	 */
@@ -93,39 +93,41 @@ public class OAuth2AuthorizationLocalServiceWrapper
 	}
 
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorization(
+	public boolean addOAuth2ScopeGrantOAuth2Authorization(
 		long oAuth2ScopeGrantId, long oAuth2AuthorizationId) {
 
-		_oAuth2AuthorizationLocalService.addOAuth2ScopeGrantOAuth2Authorization(
-			oAuth2ScopeGrantId, oAuth2AuthorizationId);
+		return _oAuth2AuthorizationLocalService.
+			addOAuth2ScopeGrantOAuth2Authorization(
+				oAuth2ScopeGrantId, oAuth2AuthorizationId);
 	}
 
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorization(
+	public boolean addOAuth2ScopeGrantOAuth2Authorization(
 		long oAuth2ScopeGrantId,
 		com.liferay.oauth2.provider.model.OAuth2Authorization
 			oAuth2Authorization) {
 
-		_oAuth2AuthorizationLocalService.addOAuth2ScopeGrantOAuth2Authorization(
-			oAuth2ScopeGrantId, oAuth2Authorization);
+		return _oAuth2AuthorizationLocalService.
+			addOAuth2ScopeGrantOAuth2Authorization(
+				oAuth2ScopeGrantId, oAuth2Authorization);
 	}
 
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorizations(
+	public boolean addOAuth2ScopeGrantOAuth2Authorizations(
 		long oAuth2ScopeGrantId,
 		java.util.List<com.liferay.oauth2.provider.model.OAuth2Authorization>
 			oAuth2Authorizations) {
 
-		_oAuth2AuthorizationLocalService.
+		return _oAuth2AuthorizationLocalService.
 			addOAuth2ScopeGrantOAuth2Authorizations(
 				oAuth2ScopeGrantId, oAuth2Authorizations);
 	}
 
 	@Override
-	public void addOAuth2ScopeGrantOAuth2Authorizations(
+	public boolean addOAuth2ScopeGrantOAuth2Authorizations(
 		long oAuth2ScopeGrantId, long[] oAuth2AuthorizationIds) {
 
-		_oAuth2AuthorizationLocalService.
+		return _oAuth2AuthorizationLocalService.
 			addOAuth2ScopeGrantOAuth2Authorizations(
 				oAuth2ScopeGrantId, oAuth2AuthorizationIds);
 	}
@@ -153,7 +155,30 @@ public class OAuth2AuthorizationLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuth2AuthorizationLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	@Override
+	public void deleteExpiredOAuth2Authorizations()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_oAuth2AuthorizationLocalService.deleteExpiredOAuth2Authorizations();
+	}
+
+	/**
 	 * Deletes the o auth2 authorization with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param oAuth2AuthorizationId the primary key of the o auth2 authorization
 	 * @return the o auth2 authorization that was removed
@@ -170,6 +195,10 @@ public class OAuth2AuthorizationLocalServiceWrapper
 
 	/**
 	 * Deletes the o auth2 authorization from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was removed
@@ -234,6 +263,18 @@ public class OAuth2AuthorizationLocalServiceWrapper
 
 		return _oAuth2AuthorizationLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _oAuth2AuthorizationLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _oAuth2AuthorizationLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -351,6 +392,17 @@ public class OAuth2AuthorizationLocalServiceWrapper
 
 		return _oAuth2AuthorizationLocalService.
 			fetchOAuth2AuthorizationByRefreshTokenContent(refreshTokenContent);
+	}
+
+	@Override
+	public com.liferay.oauth2.provider.model.OAuth2Authorization
+		fetchOAuth2AuthorizationByRememberDeviceContent(
+			long userId, long oAuth2ApplicationId,
+			String rememberDeviceContent) {
+
+		return _oAuth2AuthorizationLocalService.
+			fetchOAuth2AuthorizationByRememberDeviceContent(
+				userId, oAuth2ApplicationId, rememberDeviceContent);
 	}
 
 	@Override
@@ -523,6 +575,9 @@ public class OAuth2AuthorizationLocalServiceWrapper
 		return _oAuth2AuthorizationLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -579,6 +634,10 @@ public class OAuth2AuthorizationLocalServiceWrapper
 	/**
 	 * Updates the o auth2 authorization in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OAuth2AuthorizationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param oAuth2Authorization the o auth2 authorization
 	 * @return the o auth2 authorization that was updated
 	 */
@@ -590,6 +649,20 @@ public class OAuth2AuthorizationLocalServiceWrapper
 
 		return _oAuth2AuthorizationLocalService.updateOAuth2Authorization(
 			oAuth2Authorization);
+	}
+
+	@Override
+	public com.liferay.oauth2.provider.model.OAuth2Authorization
+		updateRememberDeviceContent(
+			String refreshTokenContent, String rememberDeviceContent) {
+
+		return _oAuth2AuthorizationLocalService.updateRememberDeviceContent(
+			refreshTokenContent, rememberDeviceContent);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _oAuth2AuthorizationLocalService.getBasePersistence();
 	}
 
 	@Override

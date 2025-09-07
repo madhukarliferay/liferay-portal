@@ -1,28 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.language;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.PortalCacheMapSynchronizeUtil;
 import com.liferay.portal.kernel.cache.PortalCacheMapSynchronizeUtil.Synchronizer;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageWrapper;
 import com.liferay.portal.kernel.log.Log;
@@ -30,32 +25,40 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.FastDateFormatConstants;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Serializable;
 
@@ -78,13 +81,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Provides various translation related functionalities for language keys
@@ -302,9 +298,9 @@ public class LanguageImpl implements Language, Serializable {
 				value = pattern;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -472,9 +468,9 @@ public class LanguageImpl implements Language, Serializable {
 				value = pattern;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -651,9 +647,9 @@ public class LanguageImpl implements Language, Serializable {
 				value = pattern;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -791,13 +787,55 @@ public class LanguageImpl implements Language, Serializable {
 				value = pattern;
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
 		return value;
+	}
+
+	/**
+	 * Returns the translated and formatted storage size
+	 *
+	 * @param  size the storage size
+	 * @param  locale the locale to translate to
+	 * @return the translated storage size
+	 */
+	@Override
+	public String formatStorageSize(double size, Locale locale) {
+		NumberFormat numberFormat = NumberFormat.getInstance(locale);
+
+		numberFormat.setMaximumFractionDigits(0);
+		numberFormat.setMinimumFractionDigits(0);
+
+		String suffix = "storage.size.suffix.b";
+
+		if (size >= _STORAGE_SIZE_DENOMINATOR) {
+			suffix = "storage.size.suffix.kb";
+
+			size /= _STORAGE_SIZE_DENOMINATOR;
+		}
+
+		if (size >= _STORAGE_SIZE_DENOMINATOR) {
+			suffix = "storage.size.suffix.mb";
+
+			size /= _STORAGE_SIZE_DENOMINATOR;
+
+			numberFormat.setMaximumFractionDigits(1);
+		}
+
+		if (size >= _STORAGE_SIZE_DENOMINATOR) {
+			suffix = "storage.size.suffix.gb";
+
+			size /= _STORAGE_SIZE_DENOMINATOR;
+		}
+
+		suffix = get(locale, suffix);
+
+		return StringBundler.concat(
+			numberFormat.format(size), StringPool.SPACE, suffix);
 	}
 
 	/**
@@ -861,7 +899,7 @@ public class LanguageImpl implements Language, Serializable {
 
 		PortletConfig portletConfig =
 			(PortletConfig)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_CONFIG);
+				JavaConstants.JAKARTA_PORTLET_CONFIG);
 
 		Locale locale = _getLocale(httpServletRequest);
 
@@ -913,7 +951,7 @@ public class LanguageImpl implements Language, Serializable {
 		String value = LanguageResources.getMessage(locale, key);
 
 		if (value != null) {
-			return LanguageResources.fixValue(value);
+			return value;
 		}
 
 		if ((key.length() > 0) &&
@@ -966,6 +1004,13 @@ public class LanguageImpl implements Language, Serializable {
 		return defaultValue;
 	}
 
+	@Override
+	public Map<String, Locale> getAvailableLocaleMap() {
+		CompanyLocalesBag companyLocalesBag = _getCompanyLocalesBag();
+
+		return companyLocalesBag.getAvailableLocaleMap();
+	}
+
 	/**
 	 * Returns the locales configured for the portal. Locales can be configured
 	 * in <code>portal.properties</code> using the <code>locales</code> and
@@ -996,13 +1041,21 @@ public class LanguageImpl implements Language, Serializable {
 				return companyLocalesBag.getAvailableLocales();
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		Map<String, Locale> groupLanguageIdLocalesMap =
 			_getGroupLanguageIdLocalesMap(groupId);
 
 		return new LinkedHashSet<>(groupLanguageIdLocalesMap.values());
+	}
+
+	@Override
+	public String getBCP47LangTag(Locale locale) {
+		return LocaleUtil.toBCP47LangTag(locale);
 	}
 
 	@Override
@@ -1050,9 +1103,8 @@ public class LanguageImpl implements Language, Serializable {
 			}
 		}
 
-		Locale locale = PortalUtil.getLocale(httpServletRequest, null, false);
-
-		return getLanguageId(locale);
+		return getLanguageId(
+			PortalUtil.getLocale(httpServletRequest, null, false));
 	}
 
 	/**
@@ -1100,9 +1152,10 @@ public class LanguageImpl implements Language, Serializable {
 				return getLocale(languageCode);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to check if group inherits locales");
+				_log.warn(
+					"Unable to check if group inherits locales", exception);
 			}
 		}
 
@@ -1127,8 +1180,8 @@ public class LanguageImpl implements Language, Serializable {
 	}
 
 	@Override
-	public ResourceBundleLoader getPortalResourceBundleLoader() {
-		return LanguageResources.RESOURCE_BUNDLE_LOADER;
+	public ResourceBundleLoader getResourceBundleLoader() {
+		return LanguageResources.PORTAL_RESOURCE_BUNDLE_LOADER;
 	}
 
 	@Override
@@ -1240,9 +1293,9 @@ public class LanguageImpl implements Language, Serializable {
 
 			value = format(httpServletRequest, "x-" + unit, parts[0]);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -1383,9 +1436,9 @@ public class LanguageImpl implements Language, Serializable {
 
 			value = format(locale, "x-" + unit, parts[0]);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -1501,10 +1554,18 @@ public class LanguageImpl implements Language, Serializable {
 
 		try {
 			if (isInheritLocales(groupId)) {
-				return isAvailableLocale(languageId);
+				Group group = GroupLocalServiceUtil.getGroup(groupId);
+
+				CompanyLocalesBag companyLocalesBag = _getCompanyLocalesBag(
+					group.getCompanyId());
+
+				return companyLocalesBag.containsLanguageId(languageId);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		Map<String, Locale> groupLanguageIdLocalesMap =
@@ -1558,10 +1619,7 @@ public class LanguageImpl implements Language, Serializable {
 			group = group.getLiveGroup();
 		}
 
-		if ((!group.isSite() &&
-			 (group.getType() != GroupConstants.TYPE_DEPOT)) ||
-			group.isCompany()) {
-
+		if ((!group.isSite() && !group.isDepot()) || group.isCompany()) {
 			return true;
 		}
 
@@ -1587,6 +1645,19 @@ public class LanguageImpl implements Language, Serializable {
 	public String process(
 		Supplier<ResourceBundle> resourceBundleSupplier, Locale locale,
 		String content) {
+
+		if (FeatureFlagManagerUtil.isEnabled("LPD-11848")) {
+			Matcher matcher = _liferayLanguageImportPattern.matcher(content);
+
+			if (matcher.find()) {
+				return content;
+			}
+		}
+		else {
+			content = content.replaceAll(
+				_LIFERAY_LANGUAGE_IMPORT_REGEXP,
+				"{/*removed: await import('@liferay/language...')*/}");
+		}
 
 		StringBundler sb = null;
 
@@ -1647,20 +1718,29 @@ public class LanguageImpl implements Language, Serializable {
 
 		String languageId = LocaleUtil.toLanguageId(locale);
 
-		Cookie languageIdCookie = new Cookie(
-			CookieKeys.GUEST_LANGUAGE_ID, languageId);
+		if (StringUtil.equals(
+				languageId,
+				CookiesManagerUtil.getCookieValue(
+					CookiesConstants.NAME_GUEST_LANGUAGE_ID, httpServletRequest,
+					false))) {
 
-		String domain = CookieKeys.getDomain(httpServletRequest);
+			return;
+		}
+
+		Cookie languageIdCookie = new Cookie(
+			CookiesConstants.NAME_GUEST_LANGUAGE_ID, languageId);
+
+		String domain = CookiesManagerUtil.getDomain(httpServletRequest);
 
 		if (Validator.isNotNull(domain)) {
 			languageIdCookie.setDomain(domain);
 		}
 
-		languageIdCookie.setMaxAge(CookieKeys.MAX_AGE);
-		languageIdCookie.setPath(StringPool.SLASH);
+		languageIdCookie.setMaxAge(CookiesConstants.MAX_AGE);
 
-		CookieKeys.addCookie(
-			httpServletRequest, httpServletResponse, languageIdCookie);
+		CookiesManagerUtil.addCookie(
+			CookiesConstants.CONSENT_TYPE_FUNCTIONAL, languageIdCookie,
+			httpServletRequest, httpServletResponse);
 	}
 
 	private static CompanyLocalesBag _getCompanyLocalesBag() {
@@ -1680,10 +1760,6 @@ public class LanguageImpl implements Language, Serializable {
 		return companyLocalesBag;
 	}
 
-	private static void _updateLastModified() {
-		_lastModified = System.currentTimeMillis();
-	}
-
 	private ObjectValuePair<HashMap<String, Locale>, HashMap<String, Locale>>
 		_createGroupLocales(long groupId) {
 
@@ -1696,17 +1772,20 @@ public class LanguageImpl implements Language, Serializable {
 
 			defaultLocale = PortalUtil.getSiteDefaultLocale(group);
 
-			UnicodeProperties typeSettingsProperties =
+			UnicodeProperties typeSettingsUnicodeProperties =
 				group.getTypeSettingsProperties();
 
-			String groupLanguageIds = typeSettingsProperties.getProperty(
+			String groupLanguageIds = typeSettingsUnicodeProperties.getProperty(
 				PropsKeys.LOCALES);
 
 			if (groupLanguageIds != null) {
 				languageIds = StringUtil.split(groupLanguageIds);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		HashMap<String, Locale> groupLanguageIdLocalesMap =
@@ -1749,9 +1828,8 @@ public class LanguageImpl implements Language, Serializable {
 		HttpServletRequest httpServletRequest, String pattern,
 		Object[] formattedArguments) {
 
-		Locale locale = _getLocale(httpServletRequest);
-
-		return _decorateMessageFormat(locale, pattern, formattedArguments);
+		return _decorateMessageFormat(
+			_getLocale(httpServletRequest), pattern, formattedArguments);
 	}
 
 	private String _decorateMessageFormat(
@@ -1800,7 +1878,7 @@ public class LanguageImpl implements Language, Serializable {
 		String value = ResourceBundleUtil.getString(resourceBundle, key);
 
 		if (value != null) {
-			return LanguageResources.fixValue(value);
+			return value;
 		}
 
 		if ((key.length() > 0) &&
@@ -1825,7 +1903,7 @@ public class LanguageImpl implements Language, Serializable {
 		Format numberFormat = null;
 		int pos = 0;
 		StringBuilder sb = new StringBuilder(
-			16 * arguments.length + pattern.length());
+			(16 * arguments.length) + pattern.length());
 
 		int start = pattern.indexOf(CharPool.OPEN_CURLY_BRACE);
 
@@ -1941,11 +2019,20 @@ public class LanguageImpl implements Language, Serializable {
 		_updateLastModified();
 	}
 
+	private void _updateLastModified() {
+		_lastModified = System.currentTimeMillis();
+	}
+
 	private static final String _COMPANY_LOCALES_PORTAL_CACHE_NAME =
 		LanguageImpl.class.getName() + "._companyLocalesPortalCache";
 
 	private static final String _GROUP_LOCALES_PORTAL_CACHE_NAME =
 		LanguageImpl.class.getName() + "._groupLocalesPortalCache";
+
+	private static final String _LIFERAY_LANGUAGE_IMPORT_REGEXP =
+		"await import\\(.@liferay/language/.+?/all\\.js.\\)";
+
+	private static final double _STORAGE_SIZE_DENOMINATOR = 1024.0;
 
 	private static final Log _log = LogFactoryUtil.getLog(LanguageImpl.class);
 
@@ -1954,6 +2041,8 @@ public class LanguageImpl implements Language, Serializable {
 	private static PortalCache<Long, Serializable> _companyLocalesPortalCache;
 	private static PortalCache<Long, Serializable> _groupLocalesPortalCache;
 	private static volatile long _lastModified = System.currentTimeMillis();
+	private static final Pattern _liferayLanguageImportPattern =
+		Pattern.compile(_LIFERAY_LANGUAGE_IMPORT_REGEXP, Pattern.MULTILINE);
 	private static final Pattern _pattern = Pattern.compile(
 		"Liferay\\s*\\.\\s*Language\\s*\\.\\s*get\\s*" +
 			"\\(\\s*[\"']([^)]+)[\"']\\s*\\)",
@@ -1987,6 +2076,10 @@ public class LanguageImpl implements Language, Serializable {
 			return _languageIdLocalesMap.containsKey(languageId);
 		}
 
+		public Map<String, Locale> getAvailableLocaleMap() {
+			return _languageIdLocalesMap;
+		}
+
 		public Set<Locale> getAvailableLocales() {
 			return _availableLocales;
 		}
@@ -2012,12 +2105,12 @@ public class LanguageImpl implements Language, Serializable {
 						companyId, PropsKeys.LOCALES, StringPool.COMMA,
 						PropsValues.LOCALES_ENABLED);
 				}
-				catch (SystemException se) {
+				catch (SystemException systemException) {
 
 					// LPS-52675
 
 					if (_log.isDebugEnabled()) {
-						_log.debug(se, se);
+						_log.debug(systemException);
 					}
 
 					languageIds = PropsValues.LOCALES_ENABLED;
@@ -2028,10 +2121,29 @@ public class LanguageImpl implements Language, Serializable {
 
 			String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 
+			if ((companyId != CompanyConstants.SYSTEM) &&
+				!ArrayUtil.contains(languageIds, defaultLanguageId)) {
+
+				User guestUser = UserLocalServiceUtil.fetchGuestUser(companyId);
+
+				if (guestUser != null) {
+					Locale guestUserLocale = guestUser.getLocale();
+
+					if (guestUserLocale != null) {
+						defaultLocale = guestUserLocale;
+
+						defaultLanguageId = LocaleUtil.toLanguageId(
+							defaultLocale);
+					}
+				}
+			}
+
 			_languageCodeLocalesMap.put(
 				defaultLocale.getLanguage(), defaultLocale);
 
-			_languageIdLocalesMap.put(defaultLanguageId, defaultLocale);
+			LinkedHashMapBuilder.LinkedHashMapWrapper<String, Locale>
+				linkedHashMapWrapper = LinkedHashMapBuilder.put(
+					defaultLanguageId, defaultLocale);
 
 			languageIds = ArrayUtil.remove(languageIds, defaultLanguageId);
 
@@ -2055,7 +2167,7 @@ public class LanguageImpl implements Language, Serializable {
 					_languageCodeLocalesMap.put(languageCode, locale);
 				}
 
-				_languageIdLocalesMap.put(languageId, locale);
+				linkedHashMapWrapper.put(languageId, locale);
 			}
 
 			if (duplicateLanguageCodes.isEmpty()) {
@@ -2070,11 +2182,17 @@ public class LanguageImpl implements Language, Serializable {
 					LocaleUtil.fromLanguageId(languageId, false));
 			}
 
+			Map<String, Locale> languageIdLocalesMap =
+				linkedHashMapWrapper.build();
+
 			_availableLocales = Collections.unmodifiableSet(
-				new LinkedHashSet<>(_languageIdLocalesMap.values()));
+				new LinkedHashSet<>(languageIdLocalesMap.values()));
 
 			Set<Locale> supportedLocalesSet = new HashSet<>(
-				_languageIdLocalesMap.values());
+				languageIdLocalesMap.values());
+
+			_languageIdLocalesMap = Collections.unmodifiableMap(
+				languageIdLocalesMap);
 
 			supportedLocalesSet.removeAll(_localesBetaSet);
 
@@ -2086,8 +2204,7 @@ public class LanguageImpl implements Language, Serializable {
 		private final Set<String> _duplicateLanguageCodes;
 		private final Map<String, Locale> _languageCodeLocalesMap =
 			new HashMap<>();
-		private final Map<String, Locale> _languageIdLocalesMap =
-			new LinkedHashMap<>();
+		private final Map<String, Locale> _languageIdLocalesMap;
 		private final Set<Locale> _localesBetaSet = new HashSet<>();
 		private final Set<Locale> _supportedLocalesSet;
 

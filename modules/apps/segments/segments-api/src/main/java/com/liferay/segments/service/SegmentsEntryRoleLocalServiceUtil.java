@@ -1,22 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.segments.model.SegmentsEntryRole;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for SegmentsEntryRole. This utility wraps
@@ -32,22 +31,15 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class SegmentsEntryRoleLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRoleLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SegmentsEntryRoleLocalServiceUtil} to access the segments entry role local service. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRoleLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-			addSegmentsEntryRole(
-				long segmentsEntryId, long roleId,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SegmentsEntryRole addSegmentsEntryRole(
+			long segmentsEntryId, long roleId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addSegmentsEntryRole(
 			segmentsEntryId, roleId, serviceContext);
@@ -56,14 +48,27 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	/**
 	 * Adds the segments entry role to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was added
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-		addSegmentsEntryRole(
-			com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public static SegmentsEntryRole addSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return getService().addSegmentsEntryRole(segmentsEntryRole);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -72,8 +77,8 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param segmentsEntryRoleId the primary key for the new segments entry role
 	 * @return the new segments entry role
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-		createSegmentsEntryRole(long segmentsEntryRoleId) {
+	public static SegmentsEntryRole createSegmentsEntryRole(
+		long segmentsEntryRoleId) {
 
 		return getService().createSegmentsEntryRole(segmentsEntryRoleId);
 	}
@@ -81,10 +86,9 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -92,20 +96,24 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	/**
 	 * Deletes the segments entry role with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRoleId the primary key of the segments entry role
 	 * @return the segments entry role that was removed
 	 * @throws PortalException if a segments entry role with the primary key could not be found
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-			deleteSegmentsEntryRole(long segmentsEntryRoleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SegmentsEntryRole deleteSegmentsEntryRole(
+			long segmentsEntryRoleId)
+		throws PortalException {
 
 		return getService().deleteSegmentsEntryRole(segmentsEntryRoleId);
 	}
 
-	public static com.liferay.segments.model.SegmentsEntryRole
-			deleteSegmentsEntryRole(long segmentsEntryId, long roleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SegmentsEntryRole deleteSegmentsEntryRole(
+			long segmentsEntryId, long roleId)
+		throws PortalException {
 
 		return getService().deleteSegmentsEntryRole(segmentsEntryId, roleId);
 	}
@@ -113,31 +121,40 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	/**
 	 * Deletes the segments entry role from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was removed
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-		deleteSegmentsEntryRole(
-			com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public static SegmentsEntryRole deleteSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return getService().deleteSegmentsEntryRole(segmentsEntryRole);
 	}
 
 	public static void deleteSegmentsEntryRoles(long segmentsEntryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteSegmentsEntryRoles(segmentsEntryId);
 	}
 
 	public static void deleteSegmentsEntryRolesByRoleId(long roleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteSegmentsEntryRolesByRoleId(roleId);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -147,9 +164,7 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -165,9 +180,8 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -185,10 +199,9 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -200,9 +213,7 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -214,14 +225,14 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.segments.model.SegmentsEntryRole
-		fetchSegmentsEntryRole(long segmentsEntryRoleId) {
+	public static SegmentsEntryRole fetchSegmentsEntryRole(
+		long segmentsEntryRoleId) {
 
 		return getService().fetchSegmentsEntryRole(segmentsEntryRoleId);
 	}
@@ -248,9 +259,11 @@ public class SegmentsEntryRoleLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
@@ -262,9 +275,9 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @return the segments entry role
 	 * @throws PortalException if a segments entry role with the primary key could not be found
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-			getSegmentsEntryRole(long segmentsEntryRoleId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SegmentsEntryRole getSegmentsEntryRole(
+			long segmentsEntryRoleId)
+		throws PortalException {
 
 		return getService().getSegmentsEntryRole(segmentsEntryRoleId);
 	}
@@ -280,20 +293,20 @@ public class SegmentsEntryRoleLocalServiceUtil {
 	 * @param end the upper bound of the range of segments entry roles (not inclusive)
 	 * @return the range of segments entry roles
 	 */
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRoles(int start, int end) {
+	public static List<SegmentsEntryRole> getSegmentsEntryRoles(
+		int start, int end) {
 
 		return getService().getSegmentsEntryRoles(start, end);
 	}
 
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRoles(long segmentsEntryId) {
+	public static List<SegmentsEntryRole> getSegmentsEntryRoles(
+		long segmentsEntryId) {
 
 		return getService().getSegmentsEntryRoles(segmentsEntryId);
 	}
 
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRole>
-		getSegmentsEntryRolesByRoleId(long roleId) {
+	public static List<SegmentsEntryRole> getSegmentsEntryRolesByRoleId(
+		long roleId) {
 
 		return getService().getSegmentsEntryRolesByRoleId(roleId);
 	}
@@ -321,43 +334,38 @@ public class SegmentsEntryRoleLocalServiceUtil {
 		return getService().hasSegmentEntryRole(segmentsEntryId, roleId);
 	}
 
+	public static void setSegmentsEntrySiteRoles(
+			long segmentsEntryId, long[] siteRoleIds,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		getService().setSegmentsEntrySiteRoles(
+			segmentsEntryId, siteRoleIds, serviceContext);
+	}
+
 	/**
 	 * Updates the segments entry role in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SegmentsEntryRoleLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param segmentsEntryRole the segments entry role
 	 * @return the segments entry role that was updated
 	 */
-	public static com.liferay.segments.model.SegmentsEntryRole
-		updateSegmentsEntryRole(
-			com.liferay.segments.model.SegmentsEntryRole segmentsEntryRole) {
+	public static SegmentsEntryRole updateSegmentsEntryRole(
+		SegmentsEntryRole segmentsEntryRole) {
 
 		return getService().updateSegmentsEntryRole(segmentsEntryRole);
 	}
 
 	public static SegmentsEntryRoleLocalService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<SegmentsEntryRoleLocalService, SegmentsEntryRoleLocalService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<SegmentsEntryRoleLocalService>
+		_serviceSnapshot = new Snapshot<>(
+			SegmentsEntryRoleLocalServiceUtil.class,
 			SegmentsEntryRoleLocalService.class);
-
-		ServiceTracker
-			<SegmentsEntryRoleLocalService, SegmentsEntryRoleLocalService>
-				serviceTracker =
-					new ServiceTracker
-						<SegmentsEntryRoleLocalService,
-						 SegmentsEntryRoleLocalService>(
-							 bundle.getBundleContext(),
-							 SegmentsEntryRoleLocalService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

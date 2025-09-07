@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.editor.ckeditor.web.internal.editor.configuration;
@@ -20,7 +11,7 @@ import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
@@ -28,6 +19,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Ambrín Chaudhary
@@ -72,92 +64,94 @@ public class CKEditorCreoleConfigContributor
 		).put(
 			"disableObjectResizing", Boolean.TRUE
 		).put(
-			"extraPlugins", "a11yhelpbtn,creole,itemselector,lfrpopup,wikilink"
+			"extraPlugins",
+			"a11yhelpbtn,creole,itemselector,lfrpopup,showborders," +
+				"sourcearea,wikilink"
 		).put(
 			"filebrowserWindowFeatures",
-			"title=" + LanguageUtil.get(themeDisplay.getLocale(), "browse")
+			"title=" + _language.get(themeDisplay.getLocale(), "browse")
 		).put(
 			"format_tags", "p;h1;h2;h3;h4;h5;h6;pre"
-		);
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("bidi,colorbutton,colordialog,div,elementspath,flash,font,");
-		sb.append("forms,indentblock,justify,keystrokes,link,maximize,");
-		sb.append("newpage,pagebreak,preview,print,save,showblocks,smiley,");
-		sb.append("stylescombo,templates,video");
-
-		jsonObject.put(
-			"removePlugins", sb.toString()
+		).put(
+			"removePlugins",
+			StringBundler.concat(
+				"bidi,codemirror,colorbutton,colordialog,div,elementspath,",
+				"font,forms,indentblock,justify,keystrokes,link,maximize,",
+				"newpage,pagebreak,preview,print,save,showblocks,smiley,",
+				"stylescombo,templates,video")
 		).put(
 			"toolbar_creole",
-			getToolbarsCreoleJSONArray(inputEditorTaglibAttributes)
+			_getToolbarsCreoleJSONArray(inputEditorTaglibAttributes)
 		).put(
 			"toolbar_phone",
-			getToolbarsPhoneJSONArray(inputEditorTaglibAttributes)
+			_getToolbarsPhoneJSONArray(inputEditorTaglibAttributes)
 		).put(
 			"toolbar_tablet",
-			getToolbarsTabletJSONArray(inputEditorTaglibAttributes)
+			_getToolbarsTabletJSONArray(inputEditorTaglibAttributes)
 		);
 	}
 
-	protected JSONArray getToolbarsCreoleJSONArray(
+	private JSONArray _getToolbarsCreoleJSONArray(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
-		JSONArray jsonArray = JSONUtil.putAll(
-			toJSONArray("['Bold', 'Italic', '-' ,'RemoveFormat']"),
-			toJSONArray(
-				"['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent']"),
+		return JSONUtil.putAll(
+			toJSONArray("['Bold', 'Italic', '-', 'RemoveFormat']"),
+			toJSONArray("['NumberedList', 'BulletedList', '-']"),
 			toJSONArray("['Format']"), toJSONArray("['Link', 'Unlink']"),
 			toJSONArray(
-				"['Table', '-','ImageSelector', '-', 'HorizontalRule', '-', " +
-					"'SpecialChar']"),
-			"/",
-			toJSONArray(
-				"['Cut', 'Copy', 'Paste', '-', 'PasteText', 'PasteFromWord', " +
-					"'-', 'SelectAll', '-', 'Undo', 'Redo']"),
-			toJSONArray("['Find','Replace']"));
+				"['Table', '-', 'ImageSelector', '-', 'HorizontalRule']")
+		).put(
+			() -> {
+				if (isShowSource(inputEditorTaglibAttributes)) {
+					return toJSONArray("['Source']");
+				}
 
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		jsonArray.put(toJSONArray("['A11YBtn']"));
-
-		return jsonArray;
+				return null;
+			}
+		).put(
+			toJSONArray("['A11YBtn']")
+		);
 	}
 
-	protected JSONArray getToolbarsPhoneJSONArray(
+	private JSONArray _getToolbarsPhoneJSONArray(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
-		JSONArray jsonArray = JSONUtil.putAll(
+		return JSONUtil.putAll(
 			toJSONArray("['Bold', 'Italic']"),
 			toJSONArray("['NumberedList', 'BulletedList']"),
-			toJSONArray("['Link', 'Unlink']"),
-			toJSONArray("['ImageSelector']"));
+			toJSONArray("['Link', 'Unlink']"), toJSONArray("['ImageSelector']")
+		).put(
+			() -> {
+				if (isShowSource(inputEditorTaglibAttributes)) {
+					return toJSONArray("['Source']");
+				}
 
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		return jsonArray;
+				return null;
+			}
+		);
 	}
 
-	protected JSONArray getToolbarsTabletJSONArray(
+	private JSONArray _getToolbarsTabletJSONArray(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
-		JSONArray jsonArray = JSONUtil.putAll(
+		return JSONUtil.putAll(
 			toJSONArray("['Bold', 'Italic']"),
 			toJSONArray(
 				"['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent']"),
 			toJSONArray("['Format']"), toJSONArray("['Link', 'Unlink']"),
-			toJSONArray("['ImageSelector']"));
+			toJSONArray("['ImageSelector']")
+		).put(
+			() -> {
+				if (isShowSource(inputEditorTaglibAttributes)) {
+					return toJSONArray("['Source']");
+				}
 
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		return jsonArray;
+				return null;
+			}
+		);
 	}
+
+	@Reference
+	private Language _language;
 
 }

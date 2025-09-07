@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.product.navigation.control.menu.web.internal.util;
@@ -23,9 +14,8 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.model.impl.LayoutTypeControllerImpl;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -45,11 +35,9 @@ public class ProductNavigationControlMenuUtil {
 
 		Layout layout = themeDisplay.getLayout();
 
-		if (!layout.isTypePortlet()) {
-			return false;
-		}
+		if (!layout.isTypePortlet() || layout.isTypeAssetDisplay() ||
+			layout.isTypeContent() || StagingUtil.isIncomplete(layout)) {
 
-		if (StagingUtil.isIncomplete(layout)) {
 			return false;
 		}
 
@@ -59,19 +47,9 @@ public class ProductNavigationControlMenuUtil {
 		LayoutTypeController layoutTypeController =
 			layoutTypePortlet.getLayoutTypeController();
 
-		if (layoutTypeController.isFullPageDisplayable()) {
-			return false;
-		}
-
-		if (!(layoutTypeController instanceof LayoutTypeControllerImpl)) {
-			return false;
-		}
-
-		if (!_hasAddContentOrApplicationPermission(themeDisplay)) {
-			return false;
-		}
-
-		if (!(_hasUpdateLayoutPermission(themeDisplay) ||
+		if (layoutTypeController.isFullPageDisplayable() ||
+			!_hasAddContentOrApplicationPermission(themeDisplay) ||
+			!(_hasUpdateLayoutPermission(themeDisplay) ||
 			  _hasCustomizePermission(themeDisplay))) {
 
 			return false;
@@ -85,11 +63,7 @@ public class ProductNavigationControlMenuUtil {
 
 		Layout layout = themeDisplay.getLayout();
 
-		if (layout.isLayoutPrototypeLinkActive()) {
-			return false;
-		}
-
-		return true;
+		return !layout.isLayoutPrototypeLinkActive();
 	}
 
 	private static boolean _hasCustomizePermission(ThemeDisplay themeDisplay)
@@ -99,24 +73,15 @@ public class ProductNavigationControlMenuUtil {
 		LayoutTypePortlet layoutTypePortlet =
 			themeDisplay.getLayoutTypePortlet();
 
-		if (!layout.isTypePortlet() || (layoutTypePortlet == null)) {
-			return false;
-		}
-
-		if (!layoutTypePortlet.isCustomizable() ||
+		if (!layout.isTypePortlet() || (layoutTypePortlet == null) ||
+			!layoutTypePortlet.isCustomizable() ||
 			!layoutTypePortlet.isCustomizedView()) {
 
 			return false;
 		}
 
-		if (LayoutPermissionUtil.contains(
-				themeDisplay.getPermissionChecker(), layout,
-				ActionKeys.CUSTOMIZE)) {
-
-			return true;
-		}
-
-		return false;
+		return LayoutPermissionUtil.contains(
+			themeDisplay.getPermissionChecker(), layout, ActionKeys.CUSTOMIZE);
 	}
 
 	private static boolean _hasUpdateLayoutPermission(ThemeDisplay themeDisplay)

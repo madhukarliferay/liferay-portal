@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.internal.exportimport.content.processor;
@@ -17,8 +8,12 @@ package com.liferay.journal.internal.exportimport.content.processor;
 import com.liferay.exportimport.content.processor.ExportImportContentProcessor;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.journal.model.JournalFeed;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.StagedModel;
@@ -29,6 +24,8 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.util.PropsValues;
 
+import java.util.Arrays;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -37,10 +34,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = "model.class.name=com.liferay.journal.model.JournalFeed",
-	service = {
-		ExportImportContentProcessor.class,
-		JournalFeedExportImportContentProcessor.class
-	}
+	service = ExportImportContentProcessor.class
 )
 public class JournalFeedExportImportContentProcessor
 	implements ExportImportContentProcessor<String> {
@@ -101,20 +95,40 @@ public class JournalFeedExportImportContentProcessor
 		}
 
 		Layout targetLayout = null;
+		String targetLayoutFriendlyURL = null;
 
 		if (friendlyURLParts.length > 3) {
-			String targetLayoutFriendlyURL =
-				StringPool.SLASH + friendlyURLParts[3];
+			targetLayoutFriendlyURL = StringUtil.merge(
+				Arrays.copyOfRange(
+					friendlyURLParts, 3, friendlyURLParts.length),
+				StringPool.SLASH);
+
+			targetLayoutFriendlyURL =
+				StringPool.SLASH + targetLayoutFriendlyURL;
 
 			targetLayout = _layoutLocalService.fetchLayoutByFriendlyURL(
 				targetLayoutGroup.getGroupId(), privateLayout,
 				targetLayoutFriendlyURL);
 		}
 		else {
+			targetLayoutFriendlyURL = oldTargetLayoutFriendlyURL;
+
 			long plid = _portal.getPlidFromFriendlyURL(
-				portletDataContext.getCompanyId(), oldTargetLayoutFriendlyURL);
+				portletDataContext.getCompanyId(), targetLayoutFriendlyURL);
 
 			targetLayout = _layoutLocalService.fetchLayout(plid);
+		}
+
+		if (targetLayout == null) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					StringBundler.concat(
+						"Unable to get target page friendly URL ",
+						targetLayoutFriendlyURL, " for feed: ",
+						feed.getFeedId()));
+			}
+
+			throw new NoSuchLayoutException();
 		}
 
 		Element feedElement = portletDataContext.getExportDataElement(feed);
@@ -178,26 +192,20 @@ public class JournalFeedExportImportContentProcessor
 			groupId, content);
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
 	private static final String _DATA_HANDLER_GROUP_FRIENDLY_URL =
 		"@data_handler_group_friendly_url@";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		JournalFeedExportImportContentProcessor.class);
 
 	@Reference(target = "(model.class.name=java.lang.String)")
 	private ExportImportContentProcessor<String>
 		_defaultTextExportImportContentProcessor;
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference

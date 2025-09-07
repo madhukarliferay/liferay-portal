@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -35,7 +26,7 @@ long currentLayoutBranchId = GetterUtil.getLong((String)request.getAttribute("vi
 >
 	<c:if test="<%= LayoutBranchPermissionUtil.contains(permissionChecker, layoutBranch, ActionKeys.UPDATE) %>">
 		<liferay-portlet:renderURL var="editLayoutBranchURL">
-			<portlet:param name="mvcRenderCommandName" value="editLayoutBranch" />
+			<portlet:param name="mvcRenderCommandName" value="/staging_bar/edit_layout_branch" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
 			<portlet:param name="groupId" value="<%= String.valueOf(layoutBranch.getGroupId()) %>" />
 			<portlet:param name="layoutBranchId" value="<%= String.valueOf(layoutBranch.getLayoutBranchId()) %>" />
@@ -47,7 +38,7 @@ long currentLayoutBranchId = GetterUtil.getLong((String)request.getAttribute("vi
 		/>
 
 		<c:if test="<%= !rootLayoutRevision.isPending() && !layoutBranch.isMaster() && LayoutBranchPermissionUtil.contains(permissionChecker, layoutBranch, ActionKeys.DELETE) %>">
-			<portlet:actionURL name="deleteLayoutBranch" var="deleteLayoutBranchURL">
+			<portlet:actionURL name="/staging_bar/delete_layout_branch" var="deleteLayoutBranchURL">
 				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="groupId" value="<%= String.valueOf(layoutBranch.getGroupId()) %>" />
 				<portlet:param name="layoutBranchId" value="<%= String.valueOf(layoutBranch.getLayoutBranchId()) %>" />

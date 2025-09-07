@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SiteFriendlyURLLocalService}.
@@ -27,17 +19,16 @@ public class SiteFriendlyURLLocalServiceWrapper
 	implements ServiceWrapper<SiteFriendlyURLLocalService>,
 			   SiteFriendlyURLLocalService {
 
+	public SiteFriendlyURLLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SiteFriendlyURLLocalServiceWrapper(
 		SiteFriendlyURLLocalService siteFriendlyURLLocalService) {
 
 		_siteFriendlyURLLocalService = siteFriendlyURLLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SiteFriendlyURLLocalServiceUtil} to access the site friendly url local service. Add custom service methods to <code>com.liferay.site.service.impl.SiteFriendlyURLLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.site.model.SiteFriendlyURL addSiteFriendlyURL(
 			long userId, long companyId, long groupId, String friendlyURL,
@@ -52,6 +43,10 @@ public class SiteFriendlyURLLocalServiceWrapper
 
 	/**
 	 * Adds the site friendly url to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param siteFriendlyURL the site friendly url
 	 * @return the site friendly url that was added
@@ -73,6 +68,17 @@ public class SiteFriendlyURLLocalServiceWrapper
 
 		return _siteFriendlyURLLocalService.addSiteFriendlyURLs(
 			userId, companyId, groupId, friendlyURLMap, serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _siteFriendlyURLLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -104,6 +110,10 @@ public class SiteFriendlyURLLocalServiceWrapper
 	/**
 	 * Deletes the site friendly url with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteFriendlyURLId the primary key of the site friendly url
 	 * @return the site friendly url that was removed
 	 * @throws PortalException if a site friendly url with the primary key could not be found
@@ -129,6 +139,10 @@ public class SiteFriendlyURLLocalServiceWrapper
 	/**
 	 * Deletes the site friendly url from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteFriendlyURL the site friendly url
 	 * @return the site friendly url that was removed
 	 */
@@ -143,6 +157,18 @@ public class SiteFriendlyURLLocalServiceWrapper
 	@Override
 	public void deleteSiteFriendlyURLs(long companyId, long groupId) {
 		_siteFriendlyURLLocalService.deleteSiteFriendlyURLs(companyId, groupId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _siteFriendlyURLLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _siteFriendlyURLLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -310,6 +336,9 @@ public class SiteFriendlyURLLocalServiceWrapper
 		return _siteFriendlyURLLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -439,6 +468,10 @@ public class SiteFriendlyURLLocalServiceWrapper
 	/**
 	 * Updates the site friendly url in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SiteFriendlyURLLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param siteFriendlyURL the site friendly url
 	 * @return the site friendly url that was updated
 	 */
@@ -460,6 +493,11 @@ public class SiteFriendlyURLLocalServiceWrapper
 
 		return _siteFriendlyURLLocalService.updateSiteFriendlyURLs(
 			userId, companyId, groupId, friendlyURLMap, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _siteFriendlyURLLocalService.getBasePersistence();
 	}
 
 	@Override

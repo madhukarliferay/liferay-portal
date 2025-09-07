@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.tld.formatter;
 
-import com.liferay.petra.xml.Dom4jUtil;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.ArgumentsUtil;
 import com.liferay.portal.xml.SAXReaderFactory;
 
@@ -38,7 +31,10 @@ import java.util.TreeMap;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 
 /**
  * @author Brian Wing Shun Chan
@@ -56,8 +52,8 @@ public class TLDFormatter {
 		try {
 			new TLDFormatter(baseDirName, plugin);
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			exception.printStackTrace();
 		}
 	}
 
@@ -73,9 +69,7 @@ public class TLDFormatter {
 						Path file, BasicFileAttributes basicFileAttributes)
 					throws IOException {
 
-					Path fileNamePath = file.getFileName();
-
-					String fileName = fileNamePath.toString();
+					String fileName = String.valueOf(file.getFileName());
 
 					if (!fileName.endsWith(".tld") ||
 						(!_plugin &&
@@ -87,11 +81,11 @@ public class TLDFormatter {
 					try {
 						_formatTLD(file);
 					}
-					catch (IOException ioe) {
-						throw ioe;
+					catch (IOException ioException) {
+						throw ioException;
 					}
-					catch (Exception e) {
-						throw new IOException(e);
+					catch (Exception exception) {
+						throw new IOException(exception);
 					}
 
 					return FileVisitResult.CONTINUE;
@@ -105,6 +99,10 @@ public class TLDFormatter {
 	}
 
 	private void _formatTLD(Path file) throws Exception {
+		System.setProperty(
+			"javax.xml.parsers.SAXParserFactory",
+			"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
+
 		String content = new String(
 			Files.readAllBytes(file), StandardCharsets.UTF_8);
 
@@ -131,7 +129,7 @@ public class TLDFormatter {
 			}
 		}
 
-		String newContent = Dom4jUtil.toString(document);
+		String newContent = _toString(document);
 
 		int x = newContent.indexOf("<tlib-version");
 		int y = newContent.indexOf("</taglib>");
@@ -154,7 +152,7 @@ public class TLDFormatter {
 	}
 
 	private SAXReader _getSAXReader() {
-		return SAXReaderFactory.getSAXReader(null, false, false);
+		return SAXReaderFactory.getSAXReader(null, false, true);
 	}
 
 	private void _sortElements(
@@ -175,6 +173,31 @@ public class TLDFormatter {
 
 			parentElement.add(element);
 		}
+	}
+
+	private String _toString(Node node) throws Exception {
+		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+			new UnsyncByteArrayOutputStream();
+
+		OutputFormat outputFormat = new OutputFormat(StringPool.TAB, true);
+
+		outputFormat.setOmitEncoding(true);
+		outputFormat.setPadText(true);
+		outputFormat.setTrimText(true);
+
+		XMLWriter xmlWriter = new XMLWriter(
+			unsyncByteArrayOutputStream, outputFormat);
+
+		xmlWriter.write(node);
+
+		String content = StringUtil.trimTrailing(
+			unsyncByteArrayOutputStream.toString(StringPool.UTF8));
+
+		while (content.contains(" \n")) {
+			content = StringUtil.replace(content, " \n", "\n");
+		}
+
+		return content;
 	}
 
 	private final Set<String> _modifiedFileNames = new HashSet<>();

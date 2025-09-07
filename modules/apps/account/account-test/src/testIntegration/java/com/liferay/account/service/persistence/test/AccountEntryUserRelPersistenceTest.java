@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -156,17 +148,17 @@ public class AccountEntryUserRelPersistenceTest {
 	}
 
 	@Test
-	public void testCountByAEI() throws Exception {
-		_persistence.countByAEI(RandomTestUtil.nextLong());
+	public void testCountByAccountEntryId() throws Exception {
+		_persistence.countByAccountEntryId(RandomTestUtil.nextLong());
 
-		_persistence.countByAEI(0L);
+		_persistence.countByAccountEntryId(0L);
 	}
 
 	@Test
-	public void testCountByAUI() throws Exception {
-		_persistence.countByAUI(RandomTestUtil.nextLong());
+	public void testCountByAccountUserId() throws Exception {
+		_persistence.countByAccountUserId(RandomTestUtil.nextLong());
 
-		_persistence.countByAUI(0L);
+		_persistence.countByAccountUserId(0L);
 	}
 
 	@Test
@@ -440,20 +432,65 @@ public class AccountEntryUserRelPersistenceTest {
 
 		_persistence.clearCache();
 
-		AccountEntryUserRel existingAccountEntryUserRel =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newAccountEntryUserRel.getPrimaryKey());
+				newAccountEntryUserRel.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AccountEntryUserRel newAccountEntryUserRel = addAccountEntryUserRel();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AccountEntryUserRel.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"accountEntryUserRelId",
+				newAccountEntryUserRel.getAccountEntryUserRelId()));
+
+		List<AccountEntryUserRel> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		AccountEntryUserRel accountEntryUserRel) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingAccountEntryUserRel.getAccountEntryId()),
+			Long.valueOf(accountEntryUserRel.getAccountEntryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAccountEntryUserRel, "getOriginalAccountEntryId",
-				new Class<?>[0]));
+				accountEntryUserRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "accountEntryId"));
 		Assert.assertEquals(
-			Long.valueOf(existingAccountEntryUserRel.getAccountUserId()),
+			Long.valueOf(accountEntryUserRel.getAccountUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAccountEntryUserRel, "getOriginalAccountUserId",
-				new Class<?>[0]));
+				accountEntryUserRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "accountUserId"));
 	}
 
 	protected AccountEntryUserRel addAccountEntryUserRel() throws Exception {

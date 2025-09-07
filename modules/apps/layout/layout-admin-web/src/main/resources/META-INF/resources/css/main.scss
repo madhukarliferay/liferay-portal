@@ -1,45 +1,26 @@
-@import './miller_columns/Layout';
-@import './miller_columns/LayoutColumn';
-@import './seo';
+@import 'atlas-variables';
+
+@import 'LayoutPageTemplateEntryCard';
+
+@import 'miller_columns/MillerColumns';
+
+@import '../js/layout/look_and_feel/GlobalCSSCETsConfiguration';
+@import '../js/layout/look_and_feel/GlobalJSCETsConfiguration';
 
 .portlet-layouts-admin {
-	.customization-settings #main-content {
-		.portlet-column {
-			border: 1px solid #0b5fff;
-			padding: 0 10px;
-			text-align: center;
-		}
-
-		.portlet-layout {
-			margin-bottom: 0;
-		}
-
-		.row {
-			&:nth-child(2n-1) .portlet-column:nth-child(2n-1),
-			&:nth-child(2n) .portlet-column:nth-child(2n) {
-				background-color: #e5f5fc;
-			}
+	.card-page-item-directory {
+		@include media-breakpoint-up(lg) {
+			flex-basis: 33.33333%;
+			max-width: 33.33333%;
 		}
 	}
 
-	.dialog-footer {
-		position: fixed;
+	.customization-settings #main-content .portlet-column {
+		border: 1px solid $primary;
+		text-align: center;
 	}
 
-	.friendly-url {
-		.input-group-item-shrink {
-			max-width: 50%;
-		}
-	}
-
-	.searchcontainer-content .breadcrumb {
-		margin-bottom: 0;
-		padding: 0;
-	}
-
-	.card-img-align-top img {
-		top: 0;
-		transform: translate(-50%, 0);
-		width: 100%;
+	.add-layout-form .sheet-footer {
+		position: absolute;
 	}
 }

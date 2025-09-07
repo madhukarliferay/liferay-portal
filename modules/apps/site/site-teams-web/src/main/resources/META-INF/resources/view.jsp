@@ -1,42 +1,33 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-SiteTeamsDisplayContext siteTeamsDisplayContext = new SiteTeamsDisplayContext(renderRequest, renderResponse, request);
+SiteTeamsDisplayContext siteTeamsDisplayContext = new SiteTeamsDisplayContext(request, renderRequest, renderResponse);
 
-SiteTeamsManagementToolbarDisplayContext siteTeamsManagementToolbarDisplayContext = new SiteTeamsManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, siteTeamsDisplayContext);
+SiteTeamsManagementToolbarDisplayContext siteTeamsManagementToolbarDisplayContext = new SiteTeamsManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, siteTeamsDisplayContext);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= siteTeamsManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= siteTeamsManagementToolbarDisplayContext %>"
+	propsTransformer="{SiteTeamsManagementToolbarPropsTransformer} from site-teams-web"
 />
 
 <portlet:actionURL name="deleteTeams" var="deleteTeamsURL">
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </portlet:actionURL>
 
-<aui:form action="<%= deleteTeamsURL %>" cssClass="container-fluid-1280" name="fm">
+<aui:form action="<%= deleteTeamsURL %>" cssClass="container-fluid" name="fm">
 	<liferay-ui:search-container
 		searchContainer="<%= siteTeamsDisplayContext.getSearchContainer() %>"
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.model.Team"
-			cssClass="selectable"
 			escapedModel="<%= true %>"
 			keyProperty="teamId"
 			modelVar="team"
@@ -46,17 +37,19 @@ SiteTeamsManagementToolbarDisplayContext siteTeamsManagementToolbarDisplayContex
 			PortletURL rowURL = null;
 
 			if (TeamPermissionUtil.contains(permissionChecker, team, ActionKeys.ASSIGN_MEMBERS)) {
-				rowURL = renderResponse.createRenderURL();
-
-				rowURL.setParameter("mvcPath", "/edit_team_assignments.jsp");
-				rowURL.setParameter("teamId", String.valueOf(team.getTeamId()));
+				rowURL = PortletURLBuilder.createRenderURL(
+					renderResponse
+				).setMVCPath(
+					"/edit_team_assignments.jsp"
+				).setParameter(
+					"teamId", team.getTeamId()
+				).buildPortletURL();
 			}
 
-			Map<String, Object> rowData = new HashMap<>();
-
-			rowData.put("actions", siteTeamsManagementToolbarDisplayContext.getAvailableActions(team));
-
-			row.setData(rowData);
+			row.setData(
+				HashMapBuilder.<String, Object>put(
+					"actions", siteTeamsManagementToolbarDisplayContext.getAvailableActions(team)
+				).build());
 			%>
 
 			<c:choose>
@@ -69,13 +62,13 @@ SiteTeamsManagementToolbarDisplayContext siteTeamsManagementToolbarDisplayContex
 					<liferay-ui:search-container-column-text
 						colspan="<%= 2 %>"
 					>
-						<h5>
+						<div class="h5">
 							<aui:a href="<%= (rowURL != null) ? rowURL.toString() : null %>"><%= team.getName() %></aui:a>
-						</h5>
+						</div>
 
-						<h6 class="text-default">
+						<div class="h6 text-default">
 							<span><%= team.getDescription() %></span>
-						</h6>
+						</div>
 					</liferay-ui:search-container-column-text>
 
 					<liferay-ui:search-container-column-jsp
@@ -110,8 +103,3 @@ SiteTeamsManagementToolbarDisplayContext siteTeamsManagementToolbarDisplayContex
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= siteTeamsManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/SiteTeamsManagementToolbarDefaultEventHandler.es"
-/>

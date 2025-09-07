@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.portlet.action;
@@ -27,12 +18,12 @@ import com.liferay.user.associated.data.web.internal.display.UADHierarchyDisplay
 import com.liferay.user.associated.data.web.internal.display.UADInfoPanelDisplay;
 import com.liferay.user.associated.data.web.internal.registry.UADRegistry;
 
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,10 +32,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
-		"mvc.command.name=/info_panel"
+		"jakarta.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+		"mvc.command.name=/user_associated_data/info_panel"
 	},
 	service = MVCResourceCommand.class
 )
@@ -64,17 +54,18 @@ public class InfoPanelMVCResourceCommand extends BaseMVCResourceCommand {
 		for (String key : parameterMap.keySet()) {
 			if (key.startsWith("uadRegistryKey__")) {
 				entityTypes.add(
-					StringUtil.replace(key, "uadRegistryKey__", ""));
+					StringUtil.removeSubstring(key, "uadRegistryKey__"));
 			}
 		}
 
 		for (String entityType : entityTypes) {
-			List<UADEntity> uadEntities = new ArrayList<>();
+			List<UADEntity<Object>> uadEntities = new ArrayList<>();
 
 			String uadRegistryKey = ParamUtil.getString(
 				resourceRequest, "uadRegistryKey__" + entityType);
 
-			UADDisplay uadDisplay = _uadRegistry.getUADDisplay(uadRegistryKey);
+			UADDisplay<Object> uadDisplay =
+				(UADDisplay<Object>)_uadRegistry.getUADDisplay(uadRegistryKey);
 
 			String[] rowIds = ParamUtil.getStringValues(
 				resourceRequest, "rowIds" + entityType);
@@ -82,9 +73,9 @@ public class InfoPanelMVCResourceCommand extends BaseMVCResourceCommand {
 			for (String rowId : rowIds) {
 				Object entity = uadDisplay.get(rowId);
 
-				UADEntity uadEntity = new UADEntity(
+				UADEntity<Object> uadEntity = new UADEntity(
 					entity, uadDisplay.getPrimaryKey(entity), null, false,
-					uadDisplay.getTypeClass(), true, null);
+					uadDisplay.getTypeKey(), true, null);
 
 				uadEntities.add(uadEntity);
 			}
@@ -101,7 +92,7 @@ public class InfoPanelMVCResourceCommand extends BaseMVCResourceCommand {
 
 			if (Validator.isNull(uadRegistryKey)) {
 				uadRegistryKey = ParamUtil.getString(
-					resourceRequest, "parentContainerClass");
+					resourceRequest, "parentContainerTypeKey");
 			}
 
 			if (Validator.isNull(uadRegistryKey)) {
@@ -112,10 +103,8 @@ public class InfoPanelMVCResourceCommand extends BaseMVCResourceCommand {
 					_uadRegistry.getUADHierarchyDisplay(applicationKey);
 
 				if (uadHierarchyDisplay != null) {
-					Class<?> typeClass =
-						uadHierarchyDisplay.getFirstContainerTypeClass();
-
-					uadRegistryKey = typeClass.getName();
+					uadRegistryKey =
+						uadHierarchyDisplay.getFirstContainerTypeKey();
 				}
 				else {
 					uadRegistryKey = ParamUtil.getString(
@@ -125,18 +114,13 @@ public class InfoPanelMVCResourceCommand extends BaseMVCResourceCommand {
 			}
 
 			uadInfoPanelDisplay.setUADDisplay(
-				_uadRegistry.getUADDisplay(uadRegistryKey));
+				(UADDisplay<Object>)_uadRegistry.getUADDisplay(uadRegistryKey));
 		}
 
-		boolean hierarchyView = ParamUtil.getBoolean(
-			resourceRequest, "hierarchyView");
-
-		uadInfoPanelDisplay.setHierarchyView(hierarchyView);
-
-		boolean topLevelView = ParamUtil.getBoolean(
-			resourceRequest, "topLevelView");
-
-		uadInfoPanelDisplay.setTopLevelView(topLevelView);
+		uadInfoPanelDisplay.setHierarchyView(
+			ParamUtil.getBoolean(resourceRequest, "hierarchyView"));
+		uadInfoPanelDisplay.setTopLevelView(
+			ParamUtil.getBoolean(resourceRequest, "topLevelView"));
 
 		resourceRequest.setAttribute(
 			UADWebKeys.UAD_INFO_PANEL_DISPLAY, uadInfoPanelDisplay);

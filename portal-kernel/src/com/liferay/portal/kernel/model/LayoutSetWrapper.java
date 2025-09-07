@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -19,6 +10,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -42,6 +35,7 @@ public class LayoutSetWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("layoutSetId", getLayoutSetId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -51,6 +45,7 @@ public class LayoutSetWrapper
 		attributes.put("logoId", getLogoId());
 		attributes.put("themeId", getThemeId());
 		attributes.put("colorSchemeId", getColorSchemeId());
+		attributes.put("faviconFileEntryId", getFaviconFileEntryId());
 		attributes.put("css", getCss());
 		attributes.put("settings", getSettings());
 		attributes.put("layoutSetPrototypeUuid", getLayoutSetPrototypeUuid());
@@ -66,6 +61,12 @@ public class LayoutSetWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		Long layoutSetId = (Long)attributes.get("layoutSetId");
@@ -122,6 +123,12 @@ public class LayoutSetWrapper
 			setColorSchemeId(colorSchemeId);
 		}
 
+		Long faviconFileEntryId = (Long)attributes.get("faviconFileEntryId");
+
+		if (faviconFileEntryId != null) {
+			setFaviconFileEntryId(faviconFileEntryId);
+		}
+
 		String css = (String)attributes.get("css");
 
 		if (css != null) {
@@ -147,6 +154,11 @@ public class LayoutSetWrapper
 		if (layoutSetPrototypeLinkEnabled != null) {
 			setLayoutSetPrototypeLinkEnabled(layoutSetPrototypeLinkEnabled);
 		}
+	}
+
+	@Override
+	public LayoutSet cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -208,6 +220,31 @@ public class LayoutSetWrapper
 	@Override
 	public String getCss() {
 		return model.getCss();
+	}
+
+	/**
+	 * Returns the ct collection ID of this layout set.
+	 *
+	 * @return the ct collection ID of this layout set
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the favicon file entry ID of this layout set.
+	 *
+	 * @return the favicon file entry ID of this layout set
+	 */
+	@Override
+	public long getFaviconFileEntryId() {
+		return model.getFaviconFileEntryId();
+	}
+
+	@Override
+	public String getFaviconURL() {
+		return model.getFaviconURL();
 	}
 
 	/**
@@ -300,6 +337,11 @@ public class LayoutSetWrapper
 		return model.getLogoId();
 	}
 
+	@Override
+	public java.util.List<Layout> getMergeFailFriendlyURLLayouts() {
+		return model.getMergeFailFriendlyURLLayouts();
+	}
+
 	/**
 	 * Returns the modified date of this layout set.
 	 *
@@ -388,37 +430,21 @@ public class LayoutSetWrapper
 	}
 
 	/**
-	 * Returns the name of the layout set's default virtual host.
-	 *
-	 * <p>
-	 * When accessing a layout set that has a the virtual host, the URL elements
-	 * "/web/sitename" or "/group/sitename" can be omitted.
-	 * </p>
-	 *
-	 * @return the layout set's default virtual host name, or an empty string if
-	 the layout set has no virtual hosts configured
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 #getVirtualHostnames()}
-	 */
-	@Deprecated
-	@Override
-	public String getVirtualHostname() {
-		return model.getVirtualHostname();
-	}
-
-	/**
 	 * Returns the names of the layout set's virtual hosts.
 	 *
 	 * <p>
-	 * When accessing a layout set that has a the virtual host, the URL elements
+	 * When accessing a layout set that has a virtual host, the URL elements
 	 * "/web/sitename" or "/group/sitename" can be omitted.
 	 * </p>
 	 *
-	 * @return the layout set's virtual host names, or an empty string if
-	 the layout set has no virtual hosts configured
+	 * @return a map from the layout set's virtual host names to the language
+	 ids configured for them. If the virtual host is configured
+	 for the default language, it will map to the empty string instead
+	 of a language id. If the layout set has no virtual hosts
+	 configured, the returned map will be empty.
 	 */
 	@Override
-	public java.util.TreeMap<String, String> getVirtualHostnames() {
+	public java.util.NavigableMap<String, String> getVirtualHostnames() {
 		return model.getVirtualHostnames();
 	}
 
@@ -443,6 +469,16 @@ public class LayoutSetWrapper
 	}
 
 	@Override
+	public boolean isLayoutSetPrototypeUpdateable() {
+		return model.isLayoutSetPrototypeUpdateable();
+	}
+
+	@Override
+	public boolean isLayoutSetReadyForPropagation() {
+		return model.isLayoutSetReadyForPropagation();
+	}
+
+	@Override
 	public boolean isLogo() {
 		return model.isLogo();
 	}
@@ -457,11 +493,6 @@ public class LayoutSetWrapper
 		return model.isPrivateLayout();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a layout set model instance should use the <code>LayoutSet</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -512,6 +543,26 @@ public class LayoutSetWrapper
 	@Override
 	public void setCss(String css) {
 		model.setCss(css);
+	}
+
+	/**
+	 * Sets the ct collection ID of this layout set.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout set
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the favicon file entry ID of this layout set.
+	 *
+	 * @param faviconFileEntryId the favicon file entry ID of this layout set
+	 */
+	@Override
+	public void setFaviconFileEntryId(long faviconFileEntryId) {
+		model.setFaviconFileEntryId(faviconFileEntryId);
 	}
 
 	/**
@@ -618,9 +669,10 @@ public class LayoutSetWrapper
 
 	@Override
 	public void setSettingsProperties(
-		com.liferay.portal.kernel.util.UnicodeProperties settingsProperties) {
+		com.liferay.portal.kernel.util.UnicodeProperties
+			settingsUnicodeProperties) {
 
-		model.setSettingsProperties(settingsProperties);
+		model.setSettingsProperties(settingsUnicodeProperties);
 	}
 
 	/**
@@ -634,20 +686,6 @@ public class LayoutSetWrapper
 	}
 
 	/**
-	 * Sets the name of the layout set's virtual host.
-	 *
-	 * @param virtualHostname the name of the layout set's virtual host
-	 * @see #getVirtualHostname()
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 #setVirtualHostnames(TreeMap)}
-	 */
-	@Deprecated
-	@Override
-	public void setVirtualHostname(String virtualHostname) {
-		model.setVirtualHostname(virtualHostname);
-	}
-
-	/**
 	 * Sets the names of the layout set's virtual host name and language IDs.
 	 *
 	 * @param virtualHostnames the map of the layout set's virtual host name and
@@ -655,8 +693,29 @@ public class LayoutSetWrapper
 	 * @see #getVirtualHostnames()
 	 */
 	@Override
-	public void setVirtualHostnames(java.util.TreeMap virtualHostnames) {
+	public void setVirtualHostnames(
+		java.util.NavigableMap<String, String> virtualHostnames) {
+
 		model.setVirtualHostnames(virtualHostnames);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<LayoutSet, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<LayoutSet, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

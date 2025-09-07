@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.model.impl;
 
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,17 +32,17 @@ public class DDLRecordSetCacheModel
 	implements CacheModel<DDLRecordSet>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDLRecordSetCacheModel)) {
+		if (!(object instanceof DDLRecordSetCacheModel)) {
 			return false;
 		}
 
 		DDLRecordSetCacheModel ddlRecordSetCacheModel =
-			(DDLRecordSetCacheModel)obj;
+			(DDLRecordSetCacheModel)object;
 
 		if ((recordSetId == ddlRecordSetCacheModel.recordSetId) &&
 			(mvccVersion == ddlRecordSetCacheModel.mvccVersion)) {
@@ -77,10 +72,12 @@ public class DDLRecordSetCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(41);
+		StringBundler sb = new StringBundler(43);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", recordSetId=");
@@ -129,6 +126,7 @@ public class DDLRecordSetCacheModel
 		DDLRecordSetImpl ddlRecordSetImpl = new DDLRecordSetImpl();
 
 		ddlRecordSetImpl.setMvccVersion(mvccVersion);
+		ddlRecordSetImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			ddlRecordSetImpl.setUuid("");
@@ -221,7 +219,13 @@ public class DDLRecordSetCacheModel
 
 		ddlRecordSetImpl.resetOriginalValues();
 
-		ddlRecordSetImpl.setDDMFormValues(_ddmFormValues);
+		try {
+			_ddmFormValuesMethodHandle.invokeExact(
+				ddlRecordSetImpl, ddmFormValues);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return ddlRecordSetImpl;
 	}
@@ -231,6 +235,8 @@ public class DDLRecordSetCacheModel
 		throws ClassNotFoundException, IOException {
 
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		recordSetId = objectInput.readLong();
@@ -256,10 +262,10 @@ public class DDLRecordSetCacheModel
 		minDisplayRows = objectInput.readInt();
 
 		scope = objectInput.readInt();
-		settings = objectInput.readUTF();
+		settings = (String)objectInput.readObject();
 		lastPublishDate = objectInput.readLong();
 
-		_ddmFormValues =
+		ddmFormValues =
 			(com.liferay.dynamic.data.mapping.storage.DDMFormValues)
 				objectInput.readObject();
 	}
@@ -267,6 +273,8 @@ public class DDLRecordSetCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -337,18 +345,19 @@ public class DDLRecordSetCacheModel
 		objectOutput.writeInt(scope);
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		objectOutput.writeLong(lastPublishDate);
 
-		objectOutput.writeObject(_ddmFormValues);
+		objectOutput.writeObject(ddmFormValues);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long recordSetId;
 	public long groupId;
@@ -368,7 +377,22 @@ public class DDLRecordSetCacheModel
 	public int scope;
 	public String settings;
 	public long lastPublishDate;
-	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
-		_ddmFormValues;
+	public volatile com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		ddmFormValues;
+
+	private static final MethodHandle _ddmFormValuesMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_ddmFormValuesMethodHandle = lookup.findSetter(
+				DDLRecordSetImpl.class, "_ddmFormValues",
+				com.liferay.dynamic.data.mapping.storage.DDMFormValues.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

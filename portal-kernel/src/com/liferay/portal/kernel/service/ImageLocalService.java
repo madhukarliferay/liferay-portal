@@ -1,19 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
@@ -24,6 +18,9 @@ import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -47,22 +44,30 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see ImageLocalServiceUtil
  * @generated
  */
+@CTAware
+@OSGiBeanProperties(
+	property = {"model.class.name=com.liferay.portal.kernel.model.Image"}
+)
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface ImageLocalService
-	extends BaseLocalService, PersistedModelLocalService {
+	extends BaseLocalService, CTService<Image>, PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link ImageLocalServiceUtil} to access the image local service. Add custom service methods to <code>com.liferay.portal.service.impl.ImageLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.ImageLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the image local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ImageLocalServiceUtil} if injection and service tracking are not available.
 	 */
 
 	/**
 	 * Adds the image to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param image the image
 	 * @return the image that was added
@@ -80,7 +85,17 @@ public interface ImageLocalService
 	public Image createImage(long imageId);
 
 	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	/**
 	 * Deletes the image from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param image the image
 	 * @return the image that was removed
@@ -90,6 +105,10 @@ public interface ImageLocalService
 
 	/**
 	 * Deletes the image with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param imageId the primary key of the image
 	 * @return the image that was removed
@@ -104,6 +123,12 @@ public interface ImageLocalService
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -191,6 +216,11 @@ public interface ImageLocalService
 	public Image getImage(long imageId) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public InputStream getImageInputStream(
+			long companyId, long imageId, String type)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public Image getImageOrDefault(long imageId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -231,6 +261,9 @@ public interface ImageLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
@@ -241,26 +274,48 @@ public interface ImageLocalService
 	/**
 	 * Updates the image in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ImageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param image the image
 	 * @return the image that was updated
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public Image updateImage(Image image);
 
-	public Image updateImage(long imageId, byte[] bytes) throws PortalException;
-
-	public Image updateImage(
-			long imageId, byte[] bytes, String type, int height, int width,
-			int size)
-		throws PortalException;
-
-	public Image updateImage(long imageId, File file) throws PortalException;
-
-	public Image updateImage(long imageId, InputStream is)
+	public Image updateImage(long companyId, long imageId, byte[] bytes)
 		throws PortalException;
 
 	public Image updateImage(
-			long imageId, InputStream is, boolean cleanUpStream)
+			long companyId, long imageId, byte[] bytes, String type, int height,
+			int width, int size)
 		throws PortalException;
+
+	public Image updateImage(long companyId, long imageId, File file)
+		throws PortalException;
+
+	public Image updateImage(
+			long companyId, long imageId, InputStream inputStream)
+		throws PortalException;
+
+	public Image updateImage(
+			long companyId, long imageId, InputStream inputStream,
+			boolean cleanUpStream)
+		throws PortalException;
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<Image> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<Image> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<Image>, R, E> updateUnsafeFunction)
+		throws E;
 
 }

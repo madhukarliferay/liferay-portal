@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.ui;
@@ -23,11 +14,11 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.taglib.util.IncludeTag;
 import com.liferay.taglib.util.TagResourceBundleUtil;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyTag;
 
 /**
  * @author Brian Wing Shun Chan
@@ -51,7 +42,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (MultiSessionErrors.isEmpty(portletRequest)) {
 			return SKIP_BODY;
@@ -181,7 +172,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		httpServletRequest.setAttribute(
 			"liferay-ui:error:alertIcon", _getAlertIcon());
@@ -229,7 +220,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (MultiSessionErrors.contains(portletRequest, "warning")) {
 			return "warning-full";
@@ -247,7 +238,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (MultiSessionErrors.contains(portletRequest, "warning")) {
 			String alertMessage = _message;
@@ -297,7 +288,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (MultiSessionErrors.contains(portletRequest, "warning")) {
 			return "warning";
@@ -315,7 +306,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if (MultiSessionErrors.contains(portletRequest, "warning")) {
 			return LanguageUtil.get(httpServletRequest, "warning-colon");
@@ -337,7 +328,7 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		if ((_key != null) && Validator.isNull(_message)) {
 			if (MultiSessionErrors.contains(portletRequest, _key) &&
@@ -349,15 +340,10 @@ public class ErrorTag extends IncludeTag implements BodyTag {
 			return false;
 		}
 
-		if (MultiSessionErrors.contains(portletRequest, "warning")) {
-			return true;
-		}
+		if (MultiSessionErrors.contains(portletRequest, "warning") ||
+			(_key == null) ||
+			MultiSessionErrors.contains(portletRequest, _key)) {
 
-		if (_key == null) {
-			return true;
-		}
-
-		if (MultiSessionErrors.contains(portletRequest, _key)) {
 			return true;
 		}
 

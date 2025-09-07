@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.documentlibrary.service.impl;
 
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryException;
 import com.liferay.document.library.kernel.exception.DuplicateFolderNameException;
 import com.liferay.document.library.kernel.exception.FolderNameException;
@@ -21,17 +13,26 @@ import com.liferay.document.library.kernel.exception.InvalidFolderException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.exception.RequiredFileEntryTypeException;
 import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFileEntryTable;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
+import com.liferay.document.library.kernel.service.DLFileShortcutLocalService;
+import com.liferay.document.library.kernel.service.DLFileVersionLocalService;
 import com.liferay.document.library.kernel.service.persistence.DLFolderPersistence;
 import com.liferay.document.library.kernel.store.DLStoreUtil;
 import com.liferay.document.library.kernel.util.DLValidatorUtil;
 import com.liferay.document.library.kernel.util.comparator.FolderIdComparator;
+import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
+import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -42,12 +43,17 @@ import com.liferay.portal.kernel.lock.InvalidLockException;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.lock.LockManagerUtil;
 import com.liferay.portal.kernel.lock.NoSuchLockException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.WebDAVProps;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.repository.UndeployedExternalRepositoryException;
 import com.liferay.portal.kernel.repository.event.RepositoryEventTrigger;
 import com.liferay.portal.kernel.repository.event.RepositoryEventType;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -56,11 +62,21 @@ import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.RepositoryLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.WebDAVPropsLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
+import com.liferay.portal.kernel.service.persistence.WebDAVPropsPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.trash.helper.TrashHelper;
 import com.liferay.portal.kernel.tree.TreeModelTasksAdapter;
 import com.liferay.portal.kernel.tree.TreePathUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -72,6 +88,7 @@ import com.liferay.portal.util.RepositoryUtil;
 import com.liferay.portlet.documentlibrary.lar.FileEntryUtil;
 import com.liferay.portlet.documentlibrary.model.impl.DLFolderImpl;
 import com.liferay.portlet.documentlibrary.service.base.DLFolderLocalServiceBaseImpl;
+import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 
 import java.io.Serializable;
 
@@ -91,17 +108,18 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 	@Override
 	public DLFolder addFolder(
-			long userId, long groupId, long repositoryId, boolean mountPoint,
-			long parentFolderId, String name, String description,
-			boolean hidden, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			long repositoryId, boolean mountPoint, long parentFolderId,
+			String name, String description, boolean hidden,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		// Folder
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 		parentFolderId = getParentFolderId(
 			groupId, repositoryId, parentFolderId);
-		Date now = new Date();
+		Date date = new Date();
 
 		validateFolder(groupId, parentFolderId, name);
 
@@ -110,6 +128,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		DLFolder dlFolder = dlFolderPersistence.create(folderId);
 
 		dlFolder.setUuid(serviceContext.getUuid());
+		dlFolder.setExternalReferenceCode(externalReferenceCode);
 		dlFolder.setGroupId(groupId);
 		dlFolder.setCompanyId(user.getCompanyId());
 		dlFolder.setUserId(user.getUserId());
@@ -120,12 +139,12 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		dlFolder.setTreePath(dlFolder.buildTreePath());
 		dlFolder.setName(name);
 		dlFolder.setDescription(description);
-		dlFolder.setLastPostDate(now);
+		dlFolder.setLastPostDate(date);
 		dlFolder.setHidden(hidden);
 		dlFolder.setRestrictionType(DLFolderConstants.RESTRICTION_TYPE_INHERIT);
 		dlFolder.setExpandoBridgeAttributes(serviceContext);
 
-		dlFolderPersistence.update(dlFolder);
+		dlFolder = dlFolderPersistence.update(dlFolder);
 
 		// Resources
 
@@ -148,7 +167,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		// Parent folder
 
 		if (parentFolderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-			dlFolderLocalService.updateLastPostDate(parentFolderId, now);
+			dlFolderLocalService.updateLastPostDate(parentFolderId, date);
 		}
 
 		return dlFolder;
@@ -156,20 +175,21 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 	@Override
 	public void deleteAllByGroup(long groupId) throws PortalException {
-		Group group = groupLocalService.getGroup(groupId);
+		Group group = _groupLocalService.getGroup(groupId);
 
-		List<DLFolder> dlFolders = dlFolderPersistence.findByGroupId(groupId);
+		List<DLFolder> dlFolders = dlFolderPersistence.findByG_P(
+			groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
 		for (DLFolder dlFolder : dlFolders) {
 			dlFolderLocalService.deleteFolder(dlFolder);
 		}
 
-		dlFileEntryLocalService.deleteFileEntries(
+		_dlFileEntryLocalService.deleteFileEntries(
 			groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
-		dlFileEntryTypeLocalService.deleteFileEntryTypes(groupId);
+		_dlFileEntryTypeLocalService.deleteFileEntryTypes(groupId);
 
-		dlFileShortcutLocalService.deleteFileShortcuts(
+		_dlFileShortcutLocalService.deleteFileShortcuts(
 			groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
 		DLStoreUtil.deleteDirectory(
@@ -180,7 +200,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	public void deleteAllByRepository(long repositoryId)
 		throws PortalException {
 
-		Repository repository = repositoryLocalService.fetchRepository(
+		Repository repository = _repositoryLocalService.fetchRepository(
 			repositoryId);
 
 		long groupId = repositoryId;
@@ -189,7 +209,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			groupId = repository.getGroupId();
 		}
 
-		Group group = groupLocalService.getGroup(groupId);
+		Group group = _groupLocalService.getGroup(groupId);
 
 		RepositoryEventTrigger repositoryEventTrigger =
 			RepositoryUtil.getRepositoryEventTrigger(repositoryId);
@@ -211,13 +231,13 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		}
 
 		if (repository != null) {
-			dlFileEntryLocalService.deleteRepositoryFileEntries(
+			_dlFileEntryLocalService.deleteRepositoryFileEntries(
 				repository.getRepositoryId());
 		}
 		else {
-			dlFileEntryLocalService.deleteRepositoryFileEntries(groupId);
+			_dlFileEntryLocalService.deleteRepositoryFileEntries(groupId);
 
-			dlFileShortcutLocalService.deleteRepositoryFileShortcuts(groupId);
+			_dlFileShortcutLocalService.deleteRepositoryFileShortcuts(groupId);
 		}
 
 		DLStoreUtil.deleteDirectory(
@@ -352,6 +372,14 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	}
 
 	@Override
+	public List<DLFolder> getFolders(
+		long groupId, boolean mountPoint, String treePath, boolean hidden) {
+
+		return dlFolderPersistence.findByG_M_LikeT_H(
+			groupId, mountPoint, treePath, hidden);
+	}
+
+	@Override
 	public List<DLFolder> getFolders(long groupId, long parentFolderId) {
 		return getFolders(groupId, parentFolderId, true);
 	}
@@ -371,53 +399,47 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	@Override
 	public List<DLFolder> getFolders(
 		long groupId, long parentFolderId, boolean includeMountfolders,
-		int status, int start, int end, OrderByComparator<DLFolder> obc) {
+		int status, int start, int end,
+		OrderByComparator<DLFolder> orderByComparator) {
 
 		if (includeMountfolders) {
 			return dlFolderPersistence.findByG_P_H_S(
-				groupId, parentFolderId, false, status, start, end, obc);
+				groupId, parentFolderId, false, status, start, end,
+				orderByComparator);
 		}
 
 		return dlFolderPersistence.findByG_M_P_H_S(
-			groupId, false, parentFolderId, false, status, start, end, obc);
+			groupId, false, parentFolderId, false, status, start, end,
+			orderByComparator);
 	}
 
 	@Override
 	public List<DLFolder> getFolders(
 		long groupId, long parentFolderId, boolean includeMountfolders,
-		int start, int end, OrderByComparator<DLFolder> obc) {
+		int start, int end, OrderByComparator<DLFolder> orderByComparator) {
 
 		if (includeMountfolders) {
 			return dlFolderPersistence.findByG_P(
-				groupId, parentFolderId, start, end, obc);
+				groupId, parentFolderId, start, end, orderByComparator);
 		}
 
 		return dlFolderPersistence.findByG_M_P_H(
-			groupId, false, parentFolderId, false, start, end, obc);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getFolders(long, long, boolean, int, int, OrderByComparator)}
-	 */
-	@Deprecated
-	@Override
-	public List<DLFolder> getFolders(
-		long groupId, long parentFolderId, int status,
-		boolean includeMountfolders, int start, int end,
-		OrderByComparator<DLFolder> obc) {
-
-		return getFolders(
-			groupId, parentFolderId, includeMountfolders, status, start, end,
-			obc);
+			groupId, false, parentFolderId, false, start, end,
+			orderByComparator);
 	}
 
 	@Override
 	public List<DLFolder> getFolders(
 		long groupId, long parentFolderId, int start, int end,
-		OrderByComparator<DLFolder> obc) {
+		OrderByComparator<DLFolder> orderByComparator) {
 
-		return getFolders(groupId, parentFolderId, true, start, end, obc);
+		return getFolders(
+			groupId, parentFolderId, true, start, end, orderByComparator);
+	}
+
+	@Override
+	public List<DLFolder> getFolders(long classNameId, String treePath) {
+		return dlFolderFinder.findF_ByC_T(classNameId, treePath);
 	}
 
 	@Override
@@ -488,6 +510,35 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	}
 
 	@Override
+	public long getFolderSize(long companyId, long groupId, String treePath) {
+		List<Long> result = dslQuery(
+			DSLQueryFactoryUtil.select(
+				DSLFunctionFactoryUtil.sum(
+					DLFileEntryTable.INSTANCE.size
+				).as(
+					"SUM_VALUE"
+				)
+			).from(
+				DLFileEntryTable.INSTANCE
+			).where(
+				DLFileEntryTable.INSTANCE.companyId.eq(
+					companyId
+				).and(
+					DLFileEntryTable.INSTANCE.groupId.eq(groupId)
+				).and(
+					DLFileEntryTable.INSTANCE.treePath.like(
+						treePath.concat(StringPool.PERCENT))
+				)
+			));
+
+		if (result.get(0) == null) {
+			return 0;
+		}
+
+		return result.get(0);
+	}
+
+	@Override
 	public List<Long> getGroupFolderIds(long groupId, long parentFolderId) {
 		List<Long> folderIds = new ArrayList<>();
 
@@ -521,10 +572,11 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	@Override
 	public List<DLFolder> getMountFolders(
 		long groupId, long parentFolderId, int start, int end,
-		OrderByComparator<DLFolder> obc) {
+		OrderByComparator<DLFolder> orderByComparator) {
 
 		return dlFolderPersistence.findByG_M_P_H(
-			groupId, true, parentFolderId, false, start, end, obc);
+			groupId, true, parentFolderId, false, start, end,
+			orderByComparator);
 	}
 
 	@Override
@@ -536,6 +588,15 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	@Override
 	public List<DLFolder> getNoAssetFolders() {
 		return dlFolderFinder.findF_ByNoAssets();
+	}
+
+	@Override
+	public List<DLFolder> getNotInTrashFolders(
+		long groupId, boolean mountPoint, String treePath, boolean hidden) {
+
+		return dlFolderPersistence.findByG_M_LikeT_H_NotS(
+			groupId, mountPoint, treePath, hidden,
+			WorkflowConstants.STATUS_IN_TRASH);
 	}
 
 	@Override
@@ -680,7 +741,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			dlFolder.setTreePath(dlFolder.buildTreePath());
 			dlFolder.setExpandoBridgeAttributes(serviceContext);
 
-			dlFolderPersistence.update(dlFolder);
+			dlFolder = dlFolderPersistence.update(dlFolder);
 
 			rebuildTree(
 				dlFolder.getCompanyId(), folderId, dlFolder.getTreePath(),
@@ -708,7 +769,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 	@Override
 	public void rebuildTree(
 			long companyId, long parentFolderId, String parentTreePath,
-			final boolean reindex)
+			boolean reindex)
 		throws PortalException {
 
 		TreePathUtil.rebuildTree(
@@ -720,10 +781,10 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 					long previousId, long companyId, long parentPrimaryKey,
 					int size) {
 
-					return dlFolderPersistence.findByF_C_P_NotS(
+					return dlFolderPersistence.findByGtF_C_P(
 						previousId, companyId, parentPrimaryKey,
-						WorkflowConstants.STATUS_IN_TRASH, QueryUtil.ALL_POS,
-						size, new FolderIdComparator(true));
+						QueryUtil.ALL_POS, size,
+						FolderIdComparator.getInstance(true));
 				}
 
 				@Override
@@ -731,11 +792,11 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 						long parentPrimaryKey, String treePath)
 					throws PortalException {
 
-					dlFileEntryLocalService.setTreePaths(
+					_dlFileEntryLocalService.setTreePaths(
 						parentPrimaryKey, treePath, false);
-					dlFileShortcutLocalService.setTreePaths(
+					_dlFileShortcutLocalService.setTreePaths(
 						parentPrimaryKey, treePath);
-					dlFileVersionLocalService.setTreePaths(
+					_dlFileVersionLocalService.setTreePaths(
 						parentPrimaryKey, treePath);
 				}
 
@@ -807,72 +868,16 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 					restrictionType, serviceContext);
 
 				if (!ExportImportThreadLocal.isImportInProcess()) {
-					dlFileEntryTypeLocalService.cascadeFileEntryTypes(
+					_dlFileEntryTypeLocalService.cascadeFileEntryTypes(
 						serviceContext.getUserId(), dlFolder);
 				}
 			}
 
 			// Workflow definitions
 
-			List<ObjectValuePair<Long, String>> workflowDefinitionOVPs =
-				new ArrayList<>();
-
-			if (restrictionType ==
-					DLFolderConstants.
-						RESTRICTION_TYPE_FILE_ENTRY_TYPES_AND_WORKFLOW) {
-
-				workflowDefinitionOVPs.add(
-					new ObjectValuePair<Long, String>(
-						DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL,
-						StringPool.BLANK));
-
-				for (long fileEntryTypeId : fileEntryTypeIds) {
-					String workflowDefinition = ParamUtil.getString(
-						serviceContext, "workflowDefinition" + fileEntryTypeId);
-
-					workflowDefinitionOVPs.add(
-						new ObjectValuePair<Long, String>(
-							fileEntryTypeId, workflowDefinition));
-				}
-			}
-			else if (restrictionType ==
-						DLFolderConstants.RESTRICTION_TYPE_INHERIT) {
-
-				if (originalFileEntryTypeIds.isEmpty()) {
-					originalFileEntryTypeIds.add(
-						DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL);
-				}
-
-				for (long originalFileEntryTypeId : originalFileEntryTypeIds) {
-					workflowDefinitionOVPs.add(
-						new ObjectValuePair<Long, String>(
-							originalFileEntryTypeId, StringPool.BLANK));
-				}
-			}
-			else if (restrictionType ==
-						DLFolderConstants.RESTRICTION_TYPE_WORKFLOW) {
-
-				String workflowDefinition = ParamUtil.getString(
-					serviceContext,
-					"workflowDefinition" +
-						DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL);
-
-				workflowDefinitionOVPs.add(
-					new ObjectValuePair<Long, String>(
-						DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL,
-						workflowDefinition));
-
-				for (long originalFileEntryTypeId : originalFileEntryTypeIds) {
-					workflowDefinitionOVPs.add(
-						new ObjectValuePair<Long, String>(
-							originalFileEntryTypeId, StringPool.BLANK));
-				}
-			}
-
-			workflowDefinitionLinkLocalService.updateWorkflowDefinitionLinks(
-				serviceContext.getUserId(), serviceContext.getCompanyId(),
-				serviceContext.getScopeGroupId(), DLFolder.class.getName(),
-				folderId, workflowDefinitionOVPs);
+			_updateWorkflowDefinitionLinks(
+				folderId, fileEntryTypeIds, restrictionType, serviceContext,
+				originalFileEntryTypeIds);
 
 			return dlFolder;
 		}
@@ -961,16 +966,16 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 			dlFolder.setName(name);
 			dlFolder.setDescription(description);
-			dlFolder.setExpandoBridgeAttributes(serviceContext);
 			dlFolder.setDefaultFileEntryTypeId(defaultFileEntryTypeId);
 			dlFolder.setRestrictionType(restrictionType);
+			dlFolder.setExpandoBridgeAttributes(serviceContext);
 
-			dlFolderPersistence.update(dlFolder);
+			dlFolder = dlFolderPersistence.update(dlFolder);
 
 			// File entry types
 
 			if (fileEntryTypeIds != null) {
-				dlFileEntryTypeLocalService.updateFolderFileEntryTypes(
+				_dlFileEntryTypeLocalService.updateFolderFileEntryTypes(
 					dlFolder, fileEntryTypeIds, defaultFileEntryTypeId,
 					serviceContext);
 			}
@@ -1031,7 +1036,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 		// Folder
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		DLFolder dlFolder = dlFolderPersistence.findByPrimaryKey(folderId);
 
@@ -1042,16 +1047,16 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		dlFolder.setStatusByUserName(user.getFullName());
 		dlFolder.setStatusDate(new Date());
 
-		dlFolderPersistence.update(dlFolder);
+		dlFolder = dlFolderPersistence.update(dlFolder);
 
 		// Asset
 
 		if (status == WorkflowConstants.STATUS_APPROVED) {
-			assetEntryLocalService.updateVisible(
+			_assetEntryLocalService.updateVisible(
 				DLFolder.class.getName(), dlFolder.getFolderId(), true);
 		}
 		else if (status == WorkflowConstants.STATUS_IN_TRASH) {
-			assetEntryLocalService.updateVisible(
+			_assetEntryLocalService.updateVisible(
 				DLFolder.class.getName(), dlFolder.getFolderId(), false);
 		}
 
@@ -1091,8 +1096,8 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 				verified = true;
 			}
 		}
-		catch (ExpiredLockException ele) {
-			throw new NoSuchLockException(ele);
+		catch (ExpiredLockException expiredLockException) {
+			throw new NoSuchLockException(expiredLockException);
 		}
 
 		return verified;
@@ -1121,7 +1126,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			boolean addGuestPermissions)
 		throws PortalException {
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			dlFolder.getCompanyId(), dlFolder.getGroupId(),
 			dlFolder.getUserId(), DLFolder.class.getName(),
 			dlFolder.getFolderId(), false, addGroupPermissions,
@@ -1132,7 +1137,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			DLFolder dlFolder, ModelPermissions modelPermissions)
 		throws PortalException {
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			dlFolder.getCompanyId(), dlFolder.getGroupId(),
 			dlFolder.getUserId(), DLFolder.class.getName(),
 			dlFolder.getFolderId(), modelPermissions);
@@ -1161,20 +1166,19 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			DLFolder dlFolder, boolean includeTrashedEntries)
 		throws PortalException {
 
-		// Resources
-
-		resourceLocalService.deleteResource(
-			dlFolder.getCompanyId(), DLFolder.class.getName(),
-			ResourceConstants.SCOPE_INDIVIDUAL, dlFolder.getFolderId());
-
 		// WebDAVProps
 
-		webDAVPropsLocalService.deleteWebDAVProps(
-			DLFolder.class.getName(), dlFolder.getFolderId());
+		WebDAVProps webDAVProps = _webDAVPropsPersistence.fetchByC_C(
+			_classNameLocalService.getClassNameId(DLFolder.class),
+			dlFolder.getFolderId());
+
+		if (webDAVProps != null) {
+			_webDAVPropsLocalService.deleteWebDAVProps(webDAVProps);
+		}
 
 		// File entries
 
-		dlFileEntryLocalService.deleteFileEntries(
+		_dlFileEntryLocalService.deleteFileEntries(
 			dlFolder.getGroupId(), dlFolder.getFolderId(),
 			includeTrashedEntries);
 
@@ -1183,7 +1187,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		List<Long> fileEntryTypeIds = new ArrayList<>();
 
 		for (DLFileEntryType dlFileEntryType :
-				dlFileEntryTypeLocalService.getDLFolderDLFileEntryTypes(
+				_dlFileEntryTypeLocalService.getDLFolderDLFileEntryTypes(
 					dlFolder.getFolderId())) {
 
 			fileEntryTypeIds.add(dlFileEntryType.getFileEntryTypeId());
@@ -1194,27 +1198,33 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 				DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL);
 		}
 
-		dlFileEntryTypeLocalService.unsetFolderFileEntryTypes(
+		_dlFileEntryTypeLocalService.unsetFolderFileEntryTypes(
 			dlFolder.getFolderId());
 
 		// File shortcuts
 
-		dlFileShortcutLocalService.deleteFileShortcuts(
+		_dlFileShortcutLocalService.deleteFileShortcuts(
 			dlFolder.getGroupId(), dlFolder.getFolderId(),
 			includeTrashedEntries);
 
 		// Expando
 
-		expandoRowLocalService.deleteRows(dlFolder.getFolderId());
+		_expandoRowLocalService.deleteRows(dlFolder.getFolderId());
 
 		// Ratings
 
-		ratingsStatsLocalService.deleteStats(
+		_ratingsStatsLocalService.deleteStats(
 			DLFolder.class.getName(), dlFolder.getFolderId());
 
 		// Folder
 
 		dlFolderPersistence.remove(dlFolder);
+
+		// Resources
+
+		_resourceLocalService.deleteResource(
+			dlFolder.getCompanyId(), DLFolder.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL, dlFolder.getFolderId());
 
 		// Directory
 
@@ -1228,14 +1238,14 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 		for (long fileEntryTypeId : fileEntryTypeIds) {
 			WorkflowDefinitionLink workflowDefinitionLink =
-				workflowDefinitionLinkLocalService.fetchWorkflowDefinitionLink(
+				_workflowDefinitionLinkLocalService.fetchWorkflowDefinitionLink(
 					dlFolder.getCompanyId(), dlFolder.getGroupId(),
 					DLFolder.class.getName(), dlFolder.getFolderId(),
 					fileEntryTypeId);
 
 			if (workflowDefinitionLink != null) {
-				workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
-					workflowDefinitionLink);
+				_workflowDefinitionLinkLocalService.
+					deleteWorkflowDefinitionLink(workflowDefinitionLink);
 			}
 		}
 	}
@@ -1244,21 +1254,34 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			DLFolder dlFolder, boolean includeTrashedEntries)
 		throws PortalException {
 
-		RepositoryEventTrigger repositoryEventTrigger =
-			RepositoryUtil.getRepositoryEventTrigger(
-				dlFolder.getRepositoryId());
+		try {
+			RepositoryEventTrigger repositoryEventTrigger =
+				RepositoryUtil.getRepositoryEventTrigger(
+					dlFolder.getRepositoryId());
 
-		List<DLFolder> dlFolders = dlFolderPersistence.findByG_P(
-			dlFolder.getGroupId(), dlFolder.getFolderId());
+			List<DLFolder> dlFolders = dlFolderPersistence.findByG_P(
+				dlFolder.getGroupId(), dlFolder.getFolderId());
 
-		for (DLFolder curDLFolder : dlFolders) {
-			if (includeTrashedEntries || !curDLFolder.isInTrashExplicitly()) {
-				repositoryEventTrigger.trigger(
-					RepositoryEventType.Delete.class, Folder.class,
-					new LiferayFolder(curDLFolder));
+			for (DLFolder curDLFolder : dlFolders) {
+				TrashHelper trashHelper = _trashHelperSnapshot.get();
 
-				dlFolderLocalService.deleteFolder(
-					curDLFolder, includeTrashedEntries);
+				if (includeTrashedEntries ||
+					!trashHelper.isInTrashExplicitly(curDLFolder)) {
+
+					repositoryEventTrigger.trigger(
+						RepositoryEventType.Delete.class, Folder.class,
+						new LiferayFolder(curDLFolder));
+
+					dlFolderLocalService.deleteFolder(
+						curDLFolder, includeTrashedEntries);
+				}
+			}
+		}
+		catch (UndeployedExternalRepositoryException
+					undeployedExternalRepositoryException) {
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(undeployedExternalRepositoryException);
 			}
 		}
 	}
@@ -1325,7 +1348,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 		if ((parentDLFolder.getRepositoryId() != repositoryId) &&
 			(parentDLFolder.getRepositoryId() != groupId)) {
 
-			Repository repository = repositoryLocalService.getRepository(
+			Repository repository = _repositoryLocalService.getRepository(
 				repositoryId);
 
 			if (repository.getGroupId() != parentDLFolder.getGroupId()) {
@@ -1348,7 +1371,7 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 
 		DLValidatorUtil.validateDirectoryName(name);
 
-		DLFileEntry dlFileEntry = dlFileEntryLocalService.fetchFileEntry(
+		DLFileEntry dlFileEntry = _dlFileEntryLocalService.fetchFileEntry(
 			groupId, parentFolderId, name);
 
 		if (dlFileEntry != null) {
@@ -1381,8 +1404,133 @@ public class DLFolderLocalServiceImpl extends DLFolderLocalServiceBaseImpl {
 			throw new FolderNameException(
 				StringBundler.concat(
 					"Folder name ", folderName,
-					" is invalid because it contains a ", StringPool.SLASH));
+					" is invalid because it contains a /"));
 		}
 	}
+
+	private void _updateWorkflowDefinitionLinks(
+			long folderId, List<Long> fileEntryTypeIds, int restrictionType,
+			ServiceContext serviceContext, Set<Long> originalFileEntryTypeIds)
+		throws PortalException {
+
+		if (!GetterUtil.getBoolean(
+				serviceContext.getAttribute("updateWorkflowDefinitionLinks"),
+				true)) {
+
+			return;
+		}
+
+		List<ObjectValuePair<Long, String>> workflowDefinitionOVPs =
+			new ArrayList<>();
+
+		if (restrictionType ==
+				DLFolderConstants.
+					RESTRICTION_TYPE_FILE_ENTRY_TYPES_AND_WORKFLOW) {
+
+			workflowDefinitionOVPs.add(
+				new ObjectValuePair<Long, String>(
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL,
+					StringPool.BLANK));
+
+			for (long fileEntryTypeId : fileEntryTypeIds) {
+				String workflowDefinition = ParamUtil.getString(
+					serviceContext, "workflowDefinition" + fileEntryTypeId);
+
+				workflowDefinitionOVPs.add(
+					new ObjectValuePair<Long, String>(
+						fileEntryTypeId, workflowDefinition));
+			}
+		}
+		else if (restrictionType ==
+					DLFolderConstants.RESTRICTION_TYPE_INHERIT) {
+
+			if (originalFileEntryTypeIds.isEmpty()) {
+				originalFileEntryTypeIds.add(
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL);
+			}
+
+			for (long originalFileEntryTypeId : originalFileEntryTypeIds) {
+				workflowDefinitionOVPs.add(
+					new ObjectValuePair<Long, String>(
+						originalFileEntryTypeId, StringPool.BLANK));
+			}
+		}
+		else if (restrictionType ==
+					DLFolderConstants.RESTRICTION_TYPE_WORKFLOW) {
+
+			String workflowDefinition = ParamUtil.getString(
+				serviceContext,
+				"workflowDefinition" +
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL);
+
+			workflowDefinitionOVPs.add(
+				new ObjectValuePair<Long, String>(
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL,
+					workflowDefinition));
+
+			for (long originalFileEntryTypeId : originalFileEntryTypeIds) {
+				workflowDefinitionOVPs.add(
+					new ObjectValuePair<Long, String>(
+						originalFileEntryTypeId, StringPool.BLANK));
+			}
+		}
+
+		_workflowDefinitionLinkLocalService.updateWorkflowDefinitionLinks(
+			serviceContext.getUserId(), serviceContext.getCompanyId(),
+			serviceContext.getScopeGroupId(), DLFolder.class.getName(),
+			folderId, workflowDefinitionOVPs);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DLFolderLocalServiceImpl.class);
+
+	private static final Snapshot<TrashHelper> _trashHelperSnapshot =
+		new Snapshot<>(DLFolderLocalServiceImpl.class, TrashHelper.class);
+
+	@BeanReference(type = AssetEntryLocalService.class)
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = DLFileEntryLocalService.class)
+	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@BeanReference(type = DLFileEntryTypeLocalService.class)
+	private DLFileEntryTypeLocalService _dlFileEntryTypeLocalService;
+
+	@BeanReference(type = DLFileShortcutLocalService.class)
+	private DLFileShortcutLocalService _dlFileShortcutLocalService;
+
+	@BeanReference(type = DLFileVersionLocalService.class)
+	private DLFileVersionLocalService _dlFileVersionLocalService;
+
+	@BeanReference(type = ExpandoRowLocalService.class)
+	private ExpandoRowLocalService _expandoRowLocalService;
+
+	@BeanReference(type = GroupLocalService.class)
+	private GroupLocalService _groupLocalService;
+
+	@BeanReference(type = RatingsStatsLocalService.class)
+	private RatingsStatsLocalService _ratingsStatsLocalService;
+
+	@BeanReference(type = RepositoryLocalService.class)
+	private RepositoryLocalService _repositoryLocalService;
+
+	@BeanReference(type = ResourceLocalService.class)
+	private ResourceLocalService _resourceLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
+
+	@BeanReference(type = WebDAVPropsLocalService.class)
+	private WebDAVPropsLocalService _webDAVPropsLocalService;
+
+	@BeanReference(type = WebDAVPropsPersistence.class)
+	private WebDAVPropsPersistence _webDAVPropsPersistence;
+
+	@BeanReference(type = WorkflowDefinitionLinkLocalService.class)
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }

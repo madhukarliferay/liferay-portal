@@ -1,28 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.test;
 
+import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.model.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureLayoutTestHelper;
@@ -30,6 +21,8 @@ import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestHelper;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
 import com.liferay.dynamic.data.mapping.util.DDMXML;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.template.TemplateConstants;
@@ -43,8 +36,6 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
 
 import java.io.Serializable;
 
@@ -65,8 +56,6 @@ public abstract class BaseDDMServiceTestCase {
 
 	@Before
 	public void setUp() throws Exception {
-		setUpDDMXML();
-
 		group = GroupTestUtil.addGroup();
 
 		ddmStructureTestHelper = new DDMStructureTestHelper(
@@ -136,7 +125,7 @@ public abstract class BaseDDMServiceTestCase {
 		return ddmStructureTestHelper.addStructure(
 			group, 0, classNameId, null, name, StringPool.BLANK, ddmForm,
 			DDMUtil.getDefaultDDMFormLayout(ddmForm),
-			StorageType.JSON.getValue(), DDMStructureConstants.TYPE_DEFAULT,
+			StorageType.DEFAULT.getValue(), DDMStructureConstants.TYPE_DEFAULT,
 			WorkflowConstants.STATUS_APPROVED);
 	}
 
@@ -188,7 +177,7 @@ public abstract class BaseDDMServiceTestCase {
 
 		return addStructure(
 			0, classNameId, null, name, description, read("test-structure.xsd"),
-			StorageType.JSON.getValue(), DDMStructureConstants.TYPE_DEFAULT);
+			StorageType.DEFAULT.getValue(), DDMStructureConstants.TYPE_DEFAULT);
 	}
 
 	protected DDMStructure addStructure(
@@ -226,7 +215,7 @@ public abstract class BaseDDMServiceTestCase {
 		serviceContext.setAttribute("status", status);
 
 		return DDMTemplateLocalServiceUtil.addTemplate(
-			TestPropsValues.getUserId(), group.getGroupId(), classNameId,
+			null, TestPropsValues.getUserId(), group.getGroupId(), classNameId,
 			classPK, resourceClassNameId, templateKey,
 			getDefaultLocaleMap(name), getDefaultLocaleMap(description), type,
 			mode, language, script, false, smallImage, smallImageURL, null,
@@ -297,14 +286,16 @@ public abstract class BaseDDMServiceTestCase {
 	protected String read(String fileName) throws Exception {
 		Class<?> clazz = getClass();
 
-		return StringUtil.read(
+		String content = StringUtil.read(
 			clazz.getClassLoader(), getBasePath() + fileName);
-	}
 
-	protected void setUpDDMXML() throws Exception {
-		Registry registry = RegistryUtil.getRegistry();
+		if (fileName.contains("xsd")) {
+			return content;
+		}
 
-		ddmXML = registry.getService(DDMXML.class);
+		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(content);
+
+		return jsonObject.toString();
 	}
 
 	protected DDMForm toDDMForm(String definition) throws Exception {
@@ -329,6 +320,8 @@ public abstract class BaseDDMServiceTestCase {
 
 	protected DDMStructureLayoutTestHelper ddmStructureLayoutTestHelper;
 	protected DDMStructureTestHelper ddmStructureTestHelper;
+
+	@Inject
 	protected DDMXML ddmXML;
 
 	@DeleteAfterTestRun

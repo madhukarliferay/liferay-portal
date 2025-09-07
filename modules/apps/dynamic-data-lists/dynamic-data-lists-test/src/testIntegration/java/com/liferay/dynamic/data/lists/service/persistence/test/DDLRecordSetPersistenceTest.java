@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service.persistence.test;
@@ -26,14 +17,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -127,6 +122,8 @@ public class DDLRecordSetPersistenceTest {
 
 		newDDLRecordSet.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDLRecordSet.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDLRecordSet.setUuid(RandomTestUtil.randomString());
 
 		newDDLRecordSet.setGroupId(RandomTestUtil.nextLong());
@@ -171,6 +168,9 @@ public class DDLRecordSetPersistenceTest {
 		Assert.assertEquals(
 			existingDDLRecordSet.getMvccVersion(),
 			newDDLRecordSet.getMvccVersion());
+		Assert.assertEquals(
+			existingDDLRecordSet.getCtCollectionId(),
+			newDDLRecordSet.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDLRecordSet.getUuid(), newDDLRecordSet.getUuid());
 		Assert.assertEquals(
@@ -308,19 +308,37 @@ public class DDLRecordSetPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<DDLRecordSet> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DDLRecordSet", "mvccVersion", true, "uuid", true, "recordSetId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "versionUserId", true, "versionUserName", true,
-			"createDate", true, "modifiedDate", true, "DDMStructureId", true,
-			"recordSetKey", true, "version", true, "name", true, "description",
-			true, "minDisplayRows", true, "scope", true, "lastPublishDate",
-			true);
+			"DDLRecordSet", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "recordSetId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "versionUserId", true,
+			"versionUserName", true, "createDate", true, "modifiedDate", true,
+			"DDMStructureId", true, "recordSetKey", true, "version", true,
+			"name", true, "description", true, "minDisplayRows", true, "scope",
+			true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -542,29 +560,72 @@ public class DDLRecordSetPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDLRecordSet existingDDLRecordSet = _persistence.findByPrimaryKey(
-			newDDLRecordSet.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDDLRecordSet.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDLRecordSet.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDDLRecordSet, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDLRecordSet newDDLRecordSet = addDDLRecordSet();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDLRecordSet.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"recordSetId", newDDLRecordSet.getRecordSetId()));
+
+		List<DDLRecordSet> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDLRecordSet ddlRecordSet) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDLRecordSet.getGroupId()),
+			ddlRecordSet.getUuid(),
+			ReflectionTestUtil.invoke(
+				ddlRecordSet, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(ddlRecordSet.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDLRecordSet, "getOriginalGroupId", new Class<?>[0]));
+				ddlRecordSet, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingDDLRecordSet.getGroupId()),
+			Long.valueOf(ddlRecordSet.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDLRecordSet, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDLRecordSet.getRecordSetKey(),
-				ReflectionTestUtil.invoke(
-					existingDDLRecordSet, "getOriginalRecordSetKey",
-					new Class<?>[0])));
+				ddlRecordSet, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			ddlRecordSet.getRecordSetKey(),
+			ReflectionTestUtil.invoke(
+				ddlRecordSet, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "recordSetKey"));
 	}
 
 	protected DDLRecordSet addDDLRecordSet() throws Exception {
@@ -573,6 +634,8 @@ public class DDLRecordSetPersistenceTest {
 		DDLRecordSet ddlRecordSet = _persistence.create(pk);
 
 		ddlRecordSet.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddlRecordSet.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddlRecordSet.setUuid(RandomTestUtil.randomString());
 

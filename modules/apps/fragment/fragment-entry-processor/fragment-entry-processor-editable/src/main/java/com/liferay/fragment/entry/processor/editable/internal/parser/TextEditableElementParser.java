@@ -1,47 +1,43 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.entry.processor.editable.internal.parser;
 
-import com.liferay.fragment.entry.processor.editable.EditableFragmentEntryProcessor;
 import com.liferay.fragment.entry.processor.editable.parser.EditableElementParser;
-import com.liferay.fragment.entry.processor.editable.parser.util.EditableElementParserUtil;
-import com.liferay.petra.string.StringPool;
+import com.liferay.fragment.exception.FragmentEntryContentException;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.kernel.util.Validator;
+
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 import org.jsoup.nodes.Element;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
  */
-@Component(
-	immediate = true, property = "type=text",
-	service = EditableElementParser.class
-)
-public class TextEditableElementParser implements EditableElementParser {
-
-	@Override
-	public String getFieldTemplate() {
-		return _TMPL_VALIDATE_TEXT_FIELD;
-	}
+@Component(property = "type=text", service = EditableElementParser.class)
+public class TextEditableElementParser extends BaseEditableElementParser {
 
 	@Override
 	public String getValue(Element element) {
-		return element.html();
+		String html = element.html();
+
+		if (Validator.isNull(html.trim())) {
+			ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+				"content.Language", getClass());
+
+			return _language.get(resourceBundle, "example-text");
+		}
+
+		return html;
 	}
 
 	@Override
@@ -53,27 +49,59 @@ public class TextEditableElementParser implements EditableElementParser {
 	public void replace(
 		Element element, String value, JSONObject configJSONObject) {
 
-		Element bodyElement = EditableElementParserUtil.getDocumentBody(value);
-
 		if (configJSONObject == null) {
-			element.html(bodyElement.html());
+			element.html(value);
 
 			return;
 		}
 
-		EditableElementParserUtil.addClass(
-			element, configJSONObject, "text-", "textAlignment");
-		EditableElementParserUtil.addClass(
-			element, configJSONObject, "text-", "textColor");
-		EditableElementParserUtil.addClass(
-			element, configJSONObject, StringPool.BLANK, "textStyle");
+		String textAlignmentValue = configJSONObject.getString("textAlignment");
 
-		element.html(bodyElement.html());
+		if (Validator.isNotNull(textAlignmentValue)) {
+			element.addClass("text-" + textAlignmentValue);
+		}
+
+		String textColorValue = configJSONObject.getString("textColor");
+
+		if (Validator.isNotNull(textColorValue)) {
+			element.addClass("text-" + textColorValue);
+		}
+
+		String textStyleValue = configJSONObject.getString("textStyle");
+
+		if (Validator.isNotNull(textStyleValue)) {
+			element.addClass(textStyleValue);
+		}
+
+		element.html(value);
 	}
 
-	private static final String _TMPL_VALIDATE_TEXT_FIELD = StringUtil.read(
-		EditableFragmentEntryProcessor.class,
-		"/META-INF/resources/fragment/entry/processor/editable" +
-			"/text_field_template.tmpl");
+	@Override
+	public void validate(Element element) throws FragmentEntryContentException {
+		for (String tag : _TAGS_BLACKLIST) {
+			if (Objects.equals(element.tagName(), tag)) {
+				ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+					"content.Language", getClass());
+
+				throw new FragmentEntryContentException(
+					_language.format(
+						resourceBundle,
+						"an-editable-of-type-x-cannot-be-used-in-a-tag-of-" +
+							"type-x",
+						new Object[] {getEditableElementType(), tag}, false));
+			}
+		}
+
+		super.validate(element);
+	}
+
+	protected String getEditableElementType() {
+		return "text";
+	}
+
+	private static final String[] _TAGS_BLACKLIST = {"img", "a"};
+
+	@Reference
+	private Language _language;
 
 }

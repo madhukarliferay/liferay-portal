@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
@@ -20,6 +11,9 @@ import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,9 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -271,17 +262,17 @@ public class MetaInfoCacheServletResponseTest {
 		MetaInfoCacheServletResponse metaInfoCacheServletResponse =
 			new MetaInfoCacheServletResponse(stubHttpServletResponse);
 
-		Map<String, Set<Header>> headers =
+		Map<String, Set<Header>> headersMap =
 			metaInfoCacheServletResponse.getHeaders();
 
-		Assert.assertEquals(headers.toString(), 0, headers.size());
+		Assert.assertEquals(headersMap.toString(), 0, headersMap.size());
 
 		// Add content type
 
 		metaInfoCacheServletResponse.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.TEXT_HTML);
 
-		Assert.assertEquals(headers.toString(), 0, headers.size());
+		Assert.assertEquals(headersMap.toString(), 0, headersMap.size());
 		Assert.assertEquals(
 			ContentTypes.TEXT_HTML,
 			metaInfoCacheServletResponse.getContentType());
@@ -291,10 +282,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.addHeader("name1", "value1");
 
-		Assert.assertEquals(headers.toString(), 1, headers.size());
+		Assert.assertEquals(headersMap.toString(), 1, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name1"));
 
-		Set<Header> headers1 = headers.get("name1");
+		Set<Header> headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 1, headers1.size());
 		Assert.assertTrue(
@@ -310,10 +301,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.addHeader("name1", "value2");
 
-		Assert.assertEquals(headers.toString(), 1, headers.size());
+		Assert.assertEquals(headersMap.toString(), 1, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name1"));
 
-		headers1 = headers.get("name1");
+		headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 2, headers1.size());
 		Assert.assertTrue(
@@ -329,10 +320,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.addHeader("name2", "value1");
 
-		Assert.assertEquals(headers.toString(), 2, headers.size());
+		Assert.assertEquals(headersMap.toString(), 2, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name2"));
 
-		Set<Header> headers2 = headers.get("name2");
+		Set<Header> headers2 = headersMap.get("name2");
 
 		Assert.assertEquals(headers2.toString(), 1, headers2.size());
 		Assert.assertTrue(
@@ -553,12 +544,12 @@ public class MetaInfoCacheServletResponseTest {
 
 		outerMetaInfoCacheServletResponse.finishResponse();
 
-		Map<String, Set<Header>> headers =
+		Map<String, Set<Header>> headersMap =
 			innerMetaInfoCacheServletResponse.getHeaders();
 
-		Assert.assertEquals(headers.toString(), 2, headers.size());
+		Assert.assertEquals(headersMap.toString(), 2, headersMap.size());
 
-		Set<Header> headers1 = headers.get("name1");
+		Set<Header> headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 2, headers1.size());
 		Assert.assertTrue(
@@ -566,7 +557,7 @@ public class MetaInfoCacheServletResponseTest {
 		Assert.assertTrue(
 			headers1.toString(), headers1.contains(new Header("value2")));
 
-		Set<Header> headers2 = headers.get("name2");
+		Set<Header> headers2 = headersMap.get("name2");
 
 		Assert.assertEquals(headers2.toString(), 1, headers2.size());
 		Assert.assertTrue(
@@ -574,11 +565,11 @@ public class MetaInfoCacheServletResponseTest {
 
 		outerMetaInfoCacheServletResponse.finishResponse();
 
-		headers = innerMetaInfoCacheServletResponse.getHeaders();
+		headersMap = innerMetaInfoCacheServletResponse.getHeaders();
 
-		Assert.assertEquals(headers.toString(), 2, headers.size());
+		Assert.assertEquals(headersMap.toString(), 2, headersMap.size());
 
-		headers1 = headers.get("name1");
+		headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 2, headers1.size());
 		Assert.assertTrue(
@@ -586,7 +577,7 @@ public class MetaInfoCacheServletResponseTest {
 		Assert.assertTrue(
 			headers1.toString(), headers1.contains(new Header("value2")));
 
-		headers2 = headers.get("name2");
+		headers2 = headersMap.get("name2");
 
 		Assert.assertEquals(headers2.toString(), 1, headers2.size());
 		Assert.assertTrue(
@@ -664,7 +655,7 @@ public class MetaInfoCacheServletResponseTest {
 		Assert.assertEquals(
 			LocaleUtil.US, toMetaInfoCacheServletResponse.getLocale());
 		Assert.assertEquals(2048, contentLengthReference.get());
-		Assert.assertEquals("moved", messageReference.get());
+		Assert.assertNull(messageReference.get());
 		Assert.assertEquals(302, statusReference.get());
 
 		// Finish response after commit
@@ -798,7 +789,7 @@ public class MetaInfoCacheServletResponseTest {
 		try {
 			metaInfoCacheServletResponse.setBufferSize(2048);
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 	}
 
@@ -1139,7 +1130,7 @@ public class MetaInfoCacheServletResponseTest {
 		try {
 			metaInfoCacheServletResponse.reset();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 	}
 
@@ -1178,7 +1169,7 @@ public class MetaInfoCacheServletResponseTest {
 		try {
 			metaInfoCacheServletResponse.resetBuffer();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 	}
 
@@ -1255,7 +1246,7 @@ public class MetaInfoCacheServletResponseTest {
 
 			Assert.fail();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 
 		// Set status after commit
@@ -1270,7 +1261,7 @@ public class MetaInfoCacheServletResponseTest {
 
 			Assert.fail();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 	}
 
@@ -1334,7 +1325,7 @@ public class MetaInfoCacheServletResponseTest {
 
 			Assert.fail();
 		}
-		catch (IllegalStateException ise) {
+		catch (IllegalStateException illegalStateException) {
 		}
 	}
 
@@ -1544,7 +1535,7 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.setStatus(400, "Bad Page");
 
-		Assert.assertEquals("Bad Page", messageReference.get());
+		Assert.assertNull(messageReference.get());
 		Assert.assertEquals(400, metaInfoCacheServletResponse.getStatus());
 		Assert.assertEquals(400, statusReference.get());
 
@@ -1614,17 +1605,17 @@ public class MetaInfoCacheServletResponseTest {
 		MetaInfoCacheServletResponse metaInfoCacheServletResponse =
 			new MetaInfoCacheServletResponse(stubHttpServletResponse);
 
-		Map<String, Set<Header>> headers =
+		Map<String, Set<Header>> headersMap =
 			metaInfoCacheServletResponse.getHeaders();
 
-		Assert.assertEquals(headers.toString(), 0, headers.size());
+		Assert.assertEquals(headersMap.toString(), 0, headersMap.size());
 
 		// Set content type
 
 		metaInfoCacheServletResponse.setHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.TEXT_HTML);
 
-		Assert.assertEquals(headers.toString(), 0, headers.size());
+		Assert.assertEquals(headersMap.toString(), 0, headersMap.size());
 		Assert.assertEquals(
 			ContentTypes.TEXT_HTML,
 			metaInfoCacheServletResponse.getContentType());
@@ -1634,10 +1625,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.setHeader("name1", "value1");
 
-		Assert.assertEquals(headers.toString(), 1, headers.size());
+		Assert.assertEquals(headersMap.toString(), 1, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name1"));
 
-		Set<Header> headers1 = headers.get("name1");
+		Set<Header> headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 1, headers1.size());
 		Assert.assertTrue(
@@ -1653,10 +1644,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.setHeader("name1", "value2");
 
-		Assert.assertEquals(headers.toString(), 1, headers.size());
+		Assert.assertEquals(headersMap.toString(), 1, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name1"));
 
-		headers1 = headers.get("name1");
+		headers1 = headersMap.get("name1");
 
 		Assert.assertEquals(headers1.toString(), 1, headers1.size());
 		Assert.assertTrue(
@@ -1672,10 +1663,10 @@ public class MetaInfoCacheServletResponseTest {
 
 		metaInfoCacheServletResponse.setHeader("name2", "value1");
 
-		Assert.assertEquals(headers.toString(), 2, headers.size());
+		Assert.assertEquals(headersMap.toString(), 2, headersMap.size());
 		Assert.assertTrue(metaInfoCacheServletResponse.containsHeader("name2"));
 
-		Set<Header> headers2 = headers.get("name2");
+		Set<Header> headers2 = headersMap.get("name2");
 
 		Assert.assertEquals(headers2.toString(), 1, headers2.size());
 		Assert.assertTrue(
@@ -1785,15 +1776,13 @@ public class MetaInfoCacheServletResponseTest {
 		MetaInfoCacheServletResponse metaInfoCacheServletResponse =
 			new MetaInfoCacheServletResponse(stubHttpServletResponse);
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("{bufferSize=0, charsetName=null, committed=false, ");
-		sb.append("contentLength=-1, contentType=null, error=false, ");
-		sb.append("errorMessage=null, headers={}, location=null, ");
-		sb.append("locale=null, status=200}");
-
 		Assert.assertEquals(
-			sb.toString(), metaInfoCacheServletResponse.toString());
+			StringBundler.concat(
+				"{bufferSize=0, charsetName=null, committed=false, ",
+				"contentLength=-1, contentType=null, error=false, ",
+				"errorMessage=null, headers={}, location=null, locale=null, ",
+				"status=200}"),
+			metaInfoCacheServletResponse.toString());
 	}
 
 }

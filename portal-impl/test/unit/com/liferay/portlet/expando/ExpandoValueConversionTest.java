@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.expando;
 
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portlet.expando.service.impl.ExpandoValueLocalServiceImpl;
 
 import java.math.BigDecimal;
+
+import java.time.format.DateTimeParseException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +22,8 @@ import java.util.Date;
 import jodd.typeconverter.TypeConversionException;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -36,20 +32,25 @@ import org.junit.Test;
  */
 public class ExpandoValueConversionTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testBoolean1() {
-		Boolean convertedBooolean = _converter.convertType(
+		Boolean convertedBoolean = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN, "true");
 
-		Assert.assertTrue(convertedBooolean);
+		Assert.assertTrue(convertedBoolean);
 	}
 
 	@Test
 	public void testBoolean2() {
-		Boolean convertedBooolean = _converter.convertType(
+		Boolean convertedBoolean = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN, "false");
 
-		Assert.assertFalse(convertedBooolean);
+		Assert.assertFalse(convertedBoolean);
 	}
 
 	@Test(expected = TypeConversionException.class)
@@ -59,23 +60,23 @@ public class ExpandoValueConversionTest {
 
 	@Test
 	public void testBooleanArray1() {
-		boolean[] convertedBoooleans = _converter.convertType(
+		boolean[] convertedBooleans = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN_ARRAY, "true");
 
 		Assert.assertEquals(
-			Arrays.toString(convertedBoooleans), 1, convertedBoooleans.length);
-		Assert.assertTrue(convertedBoooleans[0]);
+			Arrays.toString(convertedBooleans), 1, convertedBooleans.length);
+		Assert.assertTrue(convertedBooleans[0]);
 	}
 
 	@Test
 	public void testBooleanArray2() {
-		boolean[] convertedBoooleans = _converter.convertType(
+		boolean[] convertedBooleans = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN_ARRAY, "false,true");
 
 		Assert.assertEquals(
-			Arrays.toString(convertedBoooleans), 2, convertedBoooleans.length);
-		Assert.assertTrue(convertedBoooleans[1]);
-		Assert.assertFalse(convertedBoooleans[0]);
+			Arrays.toString(convertedBooleans), 2, convertedBooleans.length);
+		Assert.assertTrue(convertedBooleans[1]);
+		Assert.assertFalse(convertedBooleans[0]);
 	}
 
 	@Test(expected = TypeConversionException.class)
@@ -86,13 +87,13 @@ public class ExpandoValueConversionTest {
 
 	@Test
 	public void testBooleanArray4() {
-		boolean[] convertedBoooleans = _converter.convertType(
+		boolean[] convertedBooleans = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN_ARRAY, "[false,true]");
 
 		Assert.assertEquals(
-			Arrays.toString(convertedBoooleans), 2, convertedBoooleans.length);
-		Assert.assertTrue(convertedBoooleans[1]);
-		Assert.assertFalse(convertedBoooleans[0]);
+			Arrays.toString(convertedBooleans), 2, convertedBooleans.length);
+		Assert.assertTrue(convertedBooleans[1]);
+		Assert.assertFalse(convertedBooleans[0]);
 	}
 
 	@Test(expected = TypeConversionException.class)
@@ -103,13 +104,13 @@ public class ExpandoValueConversionTest {
 
 	@Test(expected = TypeConversionException.class)
 	public void testBooleanArray6() {
-		boolean[] convertedBoooleans = _converter.convertType(
+		boolean[] convertedBooleans = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN_ARRAY, "[\"false\",true]");
 
 		Assert.assertEquals(
-			Arrays.toString(convertedBoooleans), 2, convertedBoooleans.length);
-		Assert.assertTrue(convertedBoooleans[1]);
-		Assert.assertFalse(convertedBoooleans[0]);
+			Arrays.toString(convertedBooleans), 2, convertedBooleans.length);
+		Assert.assertTrue(convertedBooleans[1]);
+		Assert.assertFalse(convertedBooleans[0]);
 	}
 
 	@Test(expected = TypeConversionException.class)
@@ -125,13 +126,13 @@ public class ExpandoValueConversionTest {
 		booleans.add("true");
 		booleans.add("false");
 
-		boolean[] convertedBoooleans = _converter.convertType(
+		boolean[] convertedBooleans = _converter.convertType(
 			ExpandoColumnConstants.BOOLEAN_ARRAY, booleans);
 
 		Assert.assertEquals(
-			Arrays.toString(convertedBoooleans), 2, convertedBoooleans.length);
-		Assert.assertTrue(convertedBoooleans[0]);
-		Assert.assertFalse(convertedBoooleans[1]);
+			Arrays.toString(convertedBooleans), 2, convertedBooleans.length);
+		Assert.assertTrue(convertedBooleans[0]);
+		Assert.assertFalse(convertedBooleans[1]);
 	}
 
 	@Test(expected = TypeConversionException.class)
@@ -154,9 +155,24 @@ public class ExpandoValueConversionTest {
 		Assert.assertEquals(time, convertedDate.getTime());
 	}
 
-	@Test(expected = NumberFormatException.class)
+	@Test(expected = DateTimeParseException.class)
 	public void testDate2() {
 		_converter.convertType(ExpandoColumnConstants.DATE, "other");
+	}
+
+	@Test
+	public void testDate3() {
+		Date convertedDate = _converter.convertType(
+			ExpandoColumnConstants.DATE, "2021-05-09");
+
+		Assert.assertEquals(
+			"Sun May 09 00:00:00 GMT 2021", convertedDate.toString());
+
+		convertedDate = _converter.convertType(
+			ExpandoColumnConstants.DATE, "2021-5-9");
+
+		Assert.assertEquals(
+			"Sun May 09 00:00:00 GMT 2021", convertedDate.toString());
 	}
 
 	@Test
@@ -216,19 +232,19 @@ public class ExpandoValueConversionTest {
 		Assert.assertEquals(time2, convertedDates[1].getTime());
 	}
 
-	@Test(expected = NumberFormatException.class)
+	@Test(expected = DateTimeParseException.class)
 	public void testDateArray5() {
 		_converter.convertType(
 			ExpandoColumnConstants.DATE_ARRAY, "1376510136750, other");
 	}
 
-	@Test(expected = NumberFormatException.class)
+	@Test(expected = DateTimeParseException.class)
 	public void testDateArray6() {
 		_converter.convertType(
 			ExpandoColumnConstants.DATE_ARRAY, "[1376510136750, other]");
 	}
 
-	@Test(expected = NumberFormatException.class)
+	@Test(expected = DateTimeParseException.class)
 	public void testDateArray7() {
 		_converter.convertType(ExpandoColumnConstants.DATE_ARRAY, "other");
 	}
@@ -260,9 +276,23 @@ public class ExpandoValueConversionTest {
 
 	@Test(expected = ClassCastException.class)
 	public void testDateArray10() {
-		int[] times = {1376510136, 1376510136};
+		_converter.convertType(
+			ExpandoColumnConstants.DATE_ARRAY,
+			new int[] {1376510136, 1376510136});
+	}
 
-		_converter.convertType(ExpandoColumnConstants.DATE_ARRAY, times);
+	@Test
+	public void testDateArray11() {
+		Date[] convertedDates = _converter.convertType(
+			ExpandoColumnConstants.DATE_ARRAY,
+			new String[] {"2021-05-09", "2021-5-9"});
+
+		Assert.assertEquals(
+			Arrays.toString(convertedDates), 2, convertedDates.length);
+		Assert.assertEquals(
+			"Sun May 09 00:00:00 GMT 2021", convertedDates[0].toString());
+		Assert.assertEquals(
+			"Sun May 09 00:00:00 GMT 2021", convertedDates[1].toString());
 	}
 
 	@Test

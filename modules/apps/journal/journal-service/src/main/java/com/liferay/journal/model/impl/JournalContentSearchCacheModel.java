@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model.impl;
@@ -35,17 +26,17 @@ public class JournalContentSearchCacheModel
 	implements CacheModel<JournalContentSearch>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof JournalContentSearchCacheModel)) {
+		if (!(object instanceof JournalContentSearchCacheModel)) {
 			return false;
 		}
 
 		JournalContentSearchCacheModel journalContentSearchCacheModel =
-			(JournalContentSearchCacheModel)obj;
+			(JournalContentSearchCacheModel)object;
 
 		if ((contentSearchId ==
 				journalContentSearchCacheModel.contentSearchId) &&
@@ -76,10 +67,12 @@ public class JournalContentSearchCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(17);
+		StringBundler sb = new StringBundler(19);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", contentSearchId=");
 		sb.append(contentSearchId);
 		sb.append(", groupId=");
@@ -105,6 +98,7 @@ public class JournalContentSearchCacheModel
 			new JournalContentSearchImpl();
 
 		journalContentSearchImpl.setMvccVersion(mvccVersion);
+		journalContentSearchImpl.setCtCollectionId(ctCollectionId);
 		journalContentSearchImpl.setContentSearchId(contentSearchId);
 		journalContentSearchImpl.setGroupId(groupId);
 		journalContentSearchImpl.setCompanyId(companyId);
@@ -134,6 +128,8 @@ public class JournalContentSearchCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		contentSearchId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -150,6 +146,8 @@ public class JournalContentSearchCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(contentSearchId);
 
@@ -177,6 +175,7 @@ public class JournalContentSearchCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long contentSearchId;
 	public long groupId;
 	public long companyId;

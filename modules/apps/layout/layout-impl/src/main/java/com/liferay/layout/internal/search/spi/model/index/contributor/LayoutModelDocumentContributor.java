@@ -1,59 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.internal.search.spi.model.index.contributor;
 
-import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
-import com.liferay.fragment.renderer.FragmentRendererController;
-import com.liferay.layout.internal.search.util.LayoutPageTemplateStructureRenderUtil;
-import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
-import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.model.Group;
+import com.liferay.layout.content.LayoutContentProvider;
+import com.liferay.layout.util.LayoutServiceContextHelper;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.search.BooleanClause;
-import com.liferay.portal.kernel.search.BooleanClauseFactoryUtil;
-import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.Hits;
-import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portal.kernel.search.IndexerRegistryUtil;
-import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.servlet.DynamicServletRequest;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.Localization;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
-import com.liferay.staging.StagingGroupHelper;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -62,14 +30,11 @@ import org.osgi.service.component.annotations.Reference;
  * @author Vagner B.C
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.kernel.model.Layout",
 	service = ModelDocumentContributor.class
 )
 public class LayoutModelDocumentContributor
 	implements ModelDocumentContributor<Layout> {
-
-	public static final String CLASS_NAME = Layout.class.getName();
 
 	@Override
 	public void contribute(Document document, Layout layout) {
@@ -77,19 +42,12 @@ public class LayoutModelDocumentContributor
 			return;
 		}
 
-		document.addUID(CLASS_NAME, layout.getPlid());
 		document.addText(
 			Field.DEFAULT_LANGUAGE_ID, layout.getDefaultLanguageId());
 		document.addLocalizedText(Field.NAME, layout.getNameMap());
-		document.addText(
-			"privateLayout", String.valueOf(layout.isPrivateLayout()));
-		document.addText(Field.TYPE, layout.getType());
+		document.addKeyword(Field.STATUS, _getStatus(layout));
 
-		LayoutPageTemplateStructure layoutPageTemplateStructure =
-			_layoutPageTemplateStructureLocalService.
-				fetchLayoutPageTemplateStructure(
-					layout.getGroupId(), _portal.getClassNameId(Layout.class),
-					layout.getPlid());
+		_addLayoutContentFields(document, layout);
 
 		for (String languageId : layout.getAvailableLanguageIds()) {
 			Locale locale = LocaleUtil.fromLanguageId(languageId);
@@ -99,132 +57,72 @@ public class LayoutModelDocumentContributor
 				layout.getName(locale));
 		}
 
-		if (layoutPageTemplateStructure == null) {
+		document.addText(Field.TYPE, layout.getType());
+		document.addText(
+			"privateLayout", String.valueOf(layout.isPrivateLayout()));
+		document.addLocalizedKeyword(
+			"localized_title",
+			_localization.populateLocalizationMap(
+				layout.getNameMap(), layout.getDefaultLanguageId(),
+				layout.getGroupId()),
+			true, true);
+	}
+
+	private void _addLayoutContentFields(Document document, Layout layout) {
+		if (!layout.isTypeContent() || !layout.isPublished()) {
 			return;
 		}
 
-		HttpServletRequest httpServletRequest = null;
-		HttpServletResponse httpServletResponse = null;
+		try (AutoCloseable autoCloseable =
+				_layoutServiceContextHelper.getServiceContextAutoCloseable(
+					layout)) {
 
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
 
-		if ((serviceContext != null) && (serviceContext.getRequest() != null)) {
-			httpServletRequest = DynamicServletRequest.addQueryString(
-				serviceContext.getRequest(), "p_l_id=" + layout.getPlid(),
-				false);
-			httpServletResponse = serviceContext.getResponse();
-		}
+			ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
 
-		long[] segmentsExperienceIds = {SegmentsExperienceConstants.ID_DEFAULT};
-
-		Set<Locale> locales = LanguageUtil.getAvailableLocales(
-			layout.getGroupId());
-
-		for (Locale locale : locales) {
-			try {
-				String content = StringPool.BLANK;
-
-				if ((httpServletRequest == null) ||
-					(httpServletResponse == null)) {
-
-					content = _getStagedContent(layout, locale);
-				}
-				else {
-					content =
-						LayoutPageTemplateStructureRenderUtil.
-							renderLayoutContent(
-								_fragmentRendererController, httpServletRequest,
-								httpServletResponse,
-								layoutPageTemplateStructure,
-								FragmentEntryLinkConstants.VIEW,
-								new HashMap<>(), locale, segmentsExperienceIds);
-				}
-
-				if (Validator.isNull(content)) {
-					continue;
-				}
+			for (Locale locale :
+					_language.getAvailableLocales(layout.getGroupId())) {
 
 				document.addText(
-					Field.getLocalizedName(locale, Field.CONTENT), content);
+					Field.getLocalizedName(
+						LocaleUtil.toLanguageId(locale), Field.CONTENT),
+					_layoutContentProvider.getLayoutContent(
+						themeDisplay.getRequest(), themeDisplay.getResponse(),
+						layout, locale));
 			}
-			catch (PortalException pe) {
-				throw new SystemException(pe);
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to get layout content for PLID " + layout.getPlid(),
+					exception);
 			}
 		}
 	}
 
-	private String _getStagedContent(Layout layout, Locale locale)
-		throws PortalException {
-
-		Group group = _groupLocalService.getGroup(layout.getGroupId());
-
-		Group stagingGroup = null;
-
-		if (ExportImportThreadLocal.isInitialLayoutStagingInProcess()) {
-			stagingGroup = _stagingGroupHelper.fetchLiveGroup(group);
-		}
-		else if (!group.isStaged() || group.isStagingGroup()) {
-			stagingGroup = group;
-		}
-		else {
-			stagingGroup = group.getStagingGroup();
+	private int _getStatus(Layout layout) {
+		if (layout.isPublished()) {
+			return WorkflowConstants.STATUS_APPROVED;
 		}
 
-		Layout stagingLayout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
-			layout.getUuid(), stagingGroup.getGroupId(),
-			layout.isPrivateLayout());
-
-		SearchContext searchContext = new SearchContext();
-
-		BooleanClause booleanClause = BooleanClauseFactoryUtil.create(
-			Field.ENTRY_CLASS_PK, String.valueOf(stagingLayout.getPlid()),
-			BooleanClauseOccur.MUST.getName());
-
-		searchContext.setBooleanClauses(new BooleanClause[] {booleanClause});
-
-		if ((CompanyThreadLocal.getCompanyId() == 0) ||
-			ExportImportThreadLocal.isStagingInProcess()) {
-
-			searchContext.setCompanyId(stagingLayout.getCompanyId());
-		}
-
-		searchContext.setGroupIds(new long[] {stagingGroup.getGroupId()});
-		searchContext.setEntryClassNames(new String[] {Layout.class.getName()});
-
-		Indexer indexer = IndexerRegistryUtil.getIndexer(
-			Layout.class.getName());
-
-		Hits hits = indexer.search(searchContext);
-
-		Document[] documents = hits.getDocs();
-
-		if (documents.length != 1) {
-			return StringPool.BLANK;
-		}
-
-		Document document = documents[0];
-
-		return document.get(Field.getLocalizedName(locale, Field.CONTENT));
+		return WorkflowConstants.STATUS_DRAFT;
 	}
 
-	@Reference
-	private FragmentRendererController _fragmentRendererController;
+	private static final Log _log = LogFactoryUtil.getLog(
+		LayoutModelDocumentContributor.class);
 
 	@Reference
-	private GroupLocalService _groupLocalService;
+	private Language _language;
 
 	@Reference
-	private LayoutLocalService _layoutLocalService;
+	private LayoutContentProvider _layoutContentProvider;
 
 	@Reference
-	private LayoutPageTemplateStructureLocalService
-		_layoutPageTemplateStructureLocalService;
+	private LayoutServiceContextHelper _layoutServiceContextHelper;
 
 	@Reference
-	private Portal _portal;
-
-	@Reference
-	private StagingGroupHelper _stagingGroupHelper;
+	private Localization _localization;
 
 }

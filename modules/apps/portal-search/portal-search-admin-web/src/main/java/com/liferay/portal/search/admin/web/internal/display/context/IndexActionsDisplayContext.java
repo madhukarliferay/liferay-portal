@@ -1,59 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.admin.web.internal.display.context;
 
+import java.util.Map;
+
 /**
- * @author Adam Brandizzi
+ * @author Olivia Yu
  */
 public class IndexActionsDisplayContext {
 
-	public String getClientVersionString() {
-		return _clientVersionString;
+	public Map<String, Object> getData() {
+		return _data;
 	}
 
-	public String getNodesString() {
-		return _nodesString;
+	public void setData(Map<String, Object> data) {
+		_data = data;
 	}
 
-	public String getVendorString() {
-		return _vendorString;
-	}
-
-	public boolean isMissingSearchEngine() {
-		return _missingSearchEngine;
-	}
-
-	public void setClientVersionString(String clientVersionString) {
-		_clientVersionString = clientVersionString;
-	}
-
-	public void setMissingSearchEngine(boolean missingSearchEngine) {
-		_missingSearchEngine = missingSearchEngine;
-	}
-
-	public void setNodesString(String nodesString) {
-		_nodesString = nodesString;
-	}
-
-	public void setVendorString(String vendorString) {
-		_vendorString = vendorString;
-	}
-
-	private String _clientVersionString;
-	private boolean _missingSearchEngine;
-	private String _nodesString;
-	private String _vendorString;
+	private Map<String, Object> _data;
 
 }

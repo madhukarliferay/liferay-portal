@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,16 +28,16 @@ public class ReleaseCacheModel
 	implements CacheModel<Release>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof ReleaseCacheModel)) {
+		if (!(object instanceof ReleaseCacheModel)) {
 			return false;
 		}
 
-		ReleaseCacheModel releaseCacheModel = (ReleaseCacheModel)obj;
+		ReleaseCacheModel releaseCacheModel = (ReleaseCacheModel)object;
 
 		if ((releaseId == releaseCacheModel.releaseId) &&
 			(mvccVersion == releaseCacheModel.mvccVersion)) {
@@ -76,7 +67,7 @@ public class ReleaseCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(25);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -94,6 +85,8 @@ public class ReleaseCacheModel
 		sb.append(buildNumber);
 		sb.append(", buildDate=");
 		sb.append(buildDate);
+		sb.append(", versionDisplayName=");
+		sb.append(versionDisplayName);
 		sb.append(", verified=");
 		sb.append(verified);
 		sb.append(", state=");
@@ -149,6 +142,13 @@ public class ReleaseCacheModel
 			releaseImpl.setBuildDate(new Date(buildDate));
 		}
 
+		if (versionDisplayName == null) {
+			releaseImpl.setVersionDisplayName("");
+		}
+		else {
+			releaseImpl.setVersionDisplayName(versionDisplayName);
+		}
+
 		releaseImpl.setVerified(verified);
 		releaseImpl.setState(state);
 
@@ -176,6 +176,7 @@ public class ReleaseCacheModel
 
 		buildNumber = objectInput.readInt();
 		buildDate = objectInput.readLong();
+		versionDisplayName = objectInput.readUTF();
 
 		verified = objectInput.readBoolean();
 
@@ -208,6 +209,13 @@ public class ReleaseCacheModel
 		objectOutput.writeInt(buildNumber);
 		objectOutput.writeLong(buildDate);
 
+		if (versionDisplayName == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(versionDisplayName);
+		}
+
 		objectOutput.writeBoolean(verified);
 
 		objectOutput.writeInt(state);
@@ -228,6 +236,7 @@ public class ReleaseCacheModel
 	public String schemaVersion;
 	public int buildNumber;
 	public long buildDate;
+	public String versionDisplayName;
 	public boolean verified;
 	public int state;
 	public String testString;

@@ -1,32 +1,24 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new TrashManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, trashDisplayContext);
+TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new TrashManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, trashDisplayContext);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= trashManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= trashManagementToolbarDisplayContext %>"
+	propsTransformer="{TrashManagementToolbarPropsTransformer} from trash-web"
 />
 
 <liferay-util:include page="/restore_path.jsp" servletContext="<%= application %>" />
 
-<div class="closed container-fluid container-fluid-max-xl sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
 	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/trash/info_panel" var="sidebarPanelURL" />
 
 	<liferay-frontend:sidebar-panel
@@ -36,7 +28,10 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 		<liferay-util:include page="/info_panel.jsp" servletContext="<%= application %>" />
 	</liferay-frontend:sidebar-panel>
 
-	<div class="sidenav-content">
+	<clay:container-fluid
+		cssClass="sidenav-content"
+		size="xxxl"
+	>
 		<c:if test="<%= Validator.isNull(trashDisplayContext.getKeywords()) %>">
 			<liferay-site-navigation:breadcrumb
 				breadcrumbEntries="<%= trashDisplayContext.getPortletBreadcrumbEntries() %>"
@@ -119,9 +114,13 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 					String viewContentURLString = null;
 
 					if (trashRenderer != null) {
-						PortletURL viewContentURL = renderResponse.createRenderURL();
-
-						viewContentURL.setParameter("mvcPath", "/view_content.jsp");
+						PortletURL viewContentURL = PortletURLBuilder.createRenderURL(
+							renderResponse
+						).setMVCPath(
+							"/view_content.jsp"
+						).setRedirect(
+							currentURL
+						).buildPortletURL();
 
 						if (trashEntry.getRootEntry() != null) {
 							viewContentURL.setParameter("classNameId", String.valueOf(trashEntry.getClassNameId()));
@@ -134,11 +133,10 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 						viewContentURLString = viewContentURL.toString();
 					}
 
-					Map<String, Object> rowData = new HashMap<>();
-
-					rowData.put("actions", trashManagementToolbarDisplayContext.getAvailableActions(trashEntry));
-
-					row.setData(rowData);
+					row.setData(
+						HashMapBuilder.<String, Object>put(
+							"actions", trashManagementToolbarDisplayContext.getAvailableActions(trashEntry)
+						).build());
 					%>
 
 					<c:choose>
@@ -151,47 +149,45 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 							<liferay-ui:search-container-column-text
 								colspan="<%= 2 %>"
 							>
-								<h6 class="text-default">
-									<liferay-ui:message arguments="<%= dateFormatDateTime.format(trashEntry.getCreateDate()) %>" key="removed-x" />
-								</h6>
+								<div class="h6 text-default">
+									<liferay-ui:message arguments="<%= dateTimeFormat.format(trashEntry.getCreateDate()) %>" key="removed-x" />
+								</div>
 
-								<h5>
+								<div class="h5">
 									<aui:a href="<%= viewContentURLString %>">
 										<%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %>
 									</aui:a>
-								</h5>
+								</div>
 
-								<h6 class="text-default">
+								<div class="h6 text-default">
 									<strong><liferay-ui:message key="type" />:</strong> <%= ResourceActionsUtil.getModelResource(locale, trashEntry.getClassName()) %>
-								</h6>
+								</div>
 							</liferay-ui:search-container-column-text>
 
 							<liferay-ui:search-container-column-text>
 								<c:choose>
 									<c:when test="<%= trashEntry.getRootEntry() == null %>">
 										<clay:dropdown-actions
-											defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+											aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 											dropdownItems="<%= trashDisplayContext.getTrashEntryActionDropdownItems(trashEntry) %>"
+											propsTransformer="{EntriesPropsTransformer} from trash-web"
 										/>
 									</c:when>
 									<c:otherwise>
 										<clay:dropdown-actions
-											defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+											aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 											dropdownItems="<%= trashDisplayContext.getTrashViewContentActionDropdownItems(trashRenderer.getClassName(), trashRenderer.getClassPK()) %>"
+											propsTransformer="{EntriesPropsTransformer} from trash-web"
 										/>
 									</c:otherwise>
 								</c:choose>
 							</liferay-ui:search-container-column-text>
 						</c:when>
 						<c:when test="<%= trashDisplayContext.isIconView() %>">
-
-							<%
-							row.setCssClass("entry-card lfr-asset-item");
-							%>
-
 							<liferay-ui:search-container-column-text>
 								<clay:vertical-card
-									verticalCard="<%= new TrashEntryVerticalCard(trashEntry, trashRenderer, renderRequest, liferayPortletResponse, searchContainer.getRowChecker(), viewContentURLString) %>"
+									propsTransformer="{EntriesPropsTransformer} from trash-web"
+									verticalCard="<%= new TrashEntryVerticalCard(trashEntry, trashRenderer, liferayPortletResponse, renderRequest, searchContainer.getRowChecker(), viewContentURLString) %>"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:when>
@@ -216,23 +212,24 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 									String viewRootContentURLString = null;
 
 									if (rootTrashRenderer != null) {
-										PortletURL viewContentURL = renderResponse.createRenderURL();
-
-										viewContentURL.setParameter("mvcPath", "/view_content.jsp");
-										viewContentURL.setParameter("trashEntryId", String.valueOf(rootEntry.getEntryId()));
-
-										viewRootContentURLString = viewContentURL.toString();
+										viewRootContentURLString = PortletURLBuilder.createRenderURL(
+											renderResponse
+										).setMVCPath(
+											"/view_content.jsp"
+										).setRedirect(
+											currentURL
+										).setParameter(
+											"trashEntryId", rootEntry.getEntryId()
+										).buildString();
 									}
 									%>
 
 									<liferay-util:buffer
 										var="rootEntryIcon"
 									>
-										<liferay-ui:icon
-											label="<%= true %>"
-											message="<%= HtmlUtil.escape(rootTrashRenderer.getTitle(locale)) %>"
-											method="get"
-											url="<%= viewRootContentURLString %>"
+										<clay:link
+											href="<%= viewRootContentURLString %>"
+											label="<%= HtmlUtil.escape(rootTrashRenderer.getTitle(locale)) %>"
 										/>
 									</liferay-util:buffer>
 
@@ -262,14 +259,16 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 								<c:choose>
 									<c:when test="<%= trashEntry.getRootEntry() == null %>">
 										<clay:dropdown-actions
-											defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+											aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 											dropdownItems="<%= trashDisplayContext.getTrashEntryActionDropdownItems(trashEntry) %>"
+											propsTransformer="{EntriesPropsTransformer} from trash-web"
 										/>
 									</c:when>
 									<c:otherwise>
 										<clay:dropdown-actions
-											defaultEventHandler="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
+											aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 											dropdownItems="<%= trashDisplayContext.getTrashViewContentActionDropdownItems(trashRenderer.getClassName(), trashRenderer.getClassPK()) %>"
+											propsTransformer="{EntriesPropsTransformer} from trash-web"
 										/>
 									</c:otherwise>
 								</c:choose>
@@ -285,15 +284,5 @@ TrashManagementToolbarDisplayContext trashManagementToolbarDisplayContext = new 
 				/>
 			</liferay-ui:search-container>
 		</aui:form>
-	</div>
+	</clay:container-fluid>
 </div>
-
-<liferay-frontend:component
-	componentId="<%= trashManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/ManagementToolbarDefaultEventHandler.es"
-/>
-
-<liferay-frontend:component
-	componentId="<%= TrashWebKeys.TRASH_ENTRIES_DEFAULT_EVENT_HANDLER %>"
-	module="js/EntriesDefaultEventHandler.es"
-/>

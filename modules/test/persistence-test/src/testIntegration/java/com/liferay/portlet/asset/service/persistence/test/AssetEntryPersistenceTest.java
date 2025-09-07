@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -46,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -306,6 +297,14 @@ public class AssetEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_CN() throws Exception {
+		_persistence.countByC_CN(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByC_CN(0L, 0L);
+	}
+
+	@Test
 	public void testCountByC_C() throws Exception {
 		_persistence.countByC_C(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
@@ -363,8 +362,8 @@ public class AssetEntryPersistenceTest {
 			"classNameId", true, "classPK", true, "classUuid", true,
 			"classTypeId", true, "listable", true, "visible", true, "startDate",
 			true, "endDate", true, "publishDate", true, "expirationDate", true,
-			"mimeType", true, "title", true, "url", true, "layoutUuid", true,
-			"height", true, "width", true, "priority", true);
+			"mimeType", true, "url", true, "layoutUuid", true, "height", true,
+			"width", true, "priority", true);
 	}
 
 	@Test
@@ -577,28 +576,71 @@ public class AssetEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		AssetEntry existingAssetEntry = _persistence.findByPrimaryKey(
-			newAssetEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newAssetEntry.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AssetEntry newAssetEntry = addAssetEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AssetEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("entryId", newAssetEntry.getEntryId()));
+
+		List<AssetEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(AssetEntry assetEntry) {
+		Assert.assertEquals(
+			Long.valueOf(assetEntry.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				assetEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			assetEntry.getClassUuid(),
+			ReflectionTestUtil.invoke(
+				assetEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classUuid"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingAssetEntry.getGroupId()),
+			Long.valueOf(assetEntry.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetEntry, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingAssetEntry.getClassUuid(),
-				ReflectionTestUtil.invoke(
-					existingAssetEntry, "getOriginalClassUuid",
-					new Class<?>[0])));
-
+				assetEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingAssetEntry.getClassNameId()),
+			Long.valueOf(assetEntry.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetEntry, "getOriginalClassNameId", new Class<?>[0]));
-		Assert.assertEquals(
-			Long.valueOf(existingAssetEntry.getClassPK()),
-			ReflectionTestUtil.<Long>invoke(
-				existingAssetEntry, "getOriginalClassPK", new Class<?>[0]));
+				assetEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected AssetEntry addAssetEntry() throws Exception {

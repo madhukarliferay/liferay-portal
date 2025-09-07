@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.process.local;
@@ -141,16 +132,16 @@ public class LocalProcessLauncher {
 
 			outProcessOutputStream.flush();
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			errPrintStream.flush();
 
 			ProcessException processException = null;
 
-			if (t instanceof ProcessException) {
-				processException = (ProcessException)t;
+			if (throwable instanceof ProcessException) {
+				processException = (ProcessException)throwable;
 			}
 			else {
-				processException = new ProcessException(t);
+				processException = new ProcessException(throwable);
 			}
 
 			errProcessOutputStream._writeProcessCallable(
@@ -238,7 +229,7 @@ public class LocalProcessLauncher {
 
 		public static final int UNKNOWN_CODE = 3;
 
-		public boolean shutdown(int shutdownCode, Throwable shutdownThrowable);
+		public boolean shutdown(int shutdownCode, Throwable throwable);
 
 	}
 
@@ -275,17 +266,17 @@ public class LocalProcessLauncher {
 					ProcessContext.writeProcessCallable(
 						_pringBackProcessCallable);
 				}
-				catch (InterruptedException ie) {
+				catch (InterruptedException interruptedException) {
 					if (_detach) {
 						return;
 					}
 
-					shutdownThrowable = ie;
+					shutdownThrowable = interruptedException;
 
 					shutdownCode = ShutdownHook.INTERRUPTION_CODE;
 				}
-				catch (IOException ioe) {
-					shutdownThrowable = ioe;
+				catch (IOException ioException) {
+					shutdownThrowable = ioException;
 
 					shutdownCode = ShutdownHook.BROKEN_PIPE_CODE;
 				}
@@ -411,16 +402,16 @@ public class LocalProcessLauncher {
 
 					executorService.submit(processCallable::call);
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 						new UnsyncByteArrayOutputStream();
 
 					UnsyncPrintWriter unsyncPrintWriter = new UnsyncPrintWriter(
 						unsyncByteArrayOutputStream);
 
-					unsyncPrintWriter.println(e);
+					unsyncPrintWriter.println(exception);
 
-					e.printStackTrace(unsyncPrintWriter);
+					exception.printStackTrace(unsyncPrintWriter);
 
 					unsyncPrintWriter.println();
 
@@ -465,7 +456,7 @@ public class LocalProcessLauncher {
 					System.arraycopy(
 						bytes, 0, logData, _logPrefix.length, bytes.length);
 
-					String message = new String(bytes, StringPool.UTF8);
+					String message = new String(logData, StringPool.UTF8);
 
 					_objectOutputStream.writeObject(
 						new LoggingProcessCallable(message, _error));
@@ -495,10 +486,10 @@ public class LocalProcessLauncher {
 				try {
 					_objectOutputStream.writeObject(processCallable);
 				}
-				catch (NotSerializableException nse) {
+				catch (NotSerializableException notSerializableException) {
 					_objectOutputStream.reset();
 
-					throw nse;
+					throw notSerializableException;
 				}
 				finally {
 					_objectOutputStream.flush();

@@ -1,49 +1,44 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.memberships.web.internal.display.context;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
-import com.liferay.portal.kernel.model.UserGroupGroupRole;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupGroupRoleLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.util.comparator.RoleNameComparator;
-import com.liferay.portlet.rolesadmin.search.RoleSearch;
-import com.liferay.portlet.rolesadmin.search.RoleSearchTerms;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
+import com.liferay.roles.admin.search.RoleSearch;
+import com.liferay.roles.admin.search.RoleSearchTerms;
+import com.liferay.site.memberships.constants.SiteMembershipsPortletKeys;
+import com.liferay.site.memberships.web.internal.util.DepotRolesUtil;
+
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -64,8 +59,10 @@ public class UserGroupRolesDisplayContext {
 			return _displayStyle;
 		}
 
-		_displayStyle = ParamUtil.getString(
-			_httpServletRequest, "displayStyle", "icon");
+		_displayStyle = SearchDisplayStyleUtil.getDisplayStyle(
+			_httpServletRequest,
+			SiteMembershipsPortletKeys.SITE_MEMBERSHIPS_ADMIN,
+			"display-style-roles", "icon");
 
 		return _displayStyle;
 	}
@@ -109,65 +106,87 @@ public class UserGroupRolesDisplayContext {
 	}
 
 	public String getOrderByCol() {
-		if (_orderByCol != null) {
+		if (Validator.isNotNull(_orderByCol)) {
 			return _orderByCol;
 		}
 
-		_orderByCol = ParamUtil.getString(
-			_renderRequest, "orderByCol", "title");
+		_orderByCol = SearchOrderByUtil.getOrderByCol(
+			_httpServletRequest,
+			SiteMembershipsPortletKeys.SITE_MEMBERSHIPS_ADMIN,
+			"order-by-col-roles", "title");
 
 		return _orderByCol;
 	}
 
 	public String getOrderByType() {
-		if (_orderByType != null) {
+		if (Validator.isNotNull(_orderByType)) {
 			return _orderByType;
 		}
 
-		_orderByType = ParamUtil.getString(
-			_renderRequest, "orderByType", "asc");
+		_orderByType = SearchOrderByUtil.getOrderByType(
+			_httpServletRequest,
+			SiteMembershipsPortletKeys.SITE_MEMBERSHIPS_ADMIN,
+			"order-by-type-roles", "asc");
 
 		return _orderByType;
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = _renderResponse.createRenderURL();
+		return PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setMVCPath(
+			"/user_groups_roles.jsp"
+		).setKeywords(
+			() -> {
+				String keywords = getKeywords();
 
-		portletURL.setParameter("mvcPath", "/user_groups_roles.jsp");
-		portletURL.setParameter(
-			"userGroupId", String.valueOf(getUserGroupId()));
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
 
-		portletURL.setParameter(
-			"assignRoles", String.valueOf(_isAssignRoles()));
+				return null;
+			}
+		).setParameter(
+			"assignRoles", _isAssignRoles()
+		).setParameter(
+			"displayStyle",
+			() -> {
+				String displayStyle = getDisplayStyle();
 
-		String displayStyle = getDisplayStyle();
+				if (Validator.isNotNull(displayStyle)) {
+					return displayStyle;
+				}
 
-		if (Validator.isNotNull(displayStyle)) {
-			portletURL.setParameter("displayStyle", displayStyle);
-		}
+				return null;
+			}
+		).setParameter(
+			"orderByCol",
+			() -> {
+				String orderByCol = getOrderByCol();
 
-		String keywords = getKeywords();
+				if (Validator.isNotNull(orderByCol)) {
+					return orderByCol;
+				}
 
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
+				return null;
+			}
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = getOrderByType();
 
-		String orderByCol = getOrderByCol();
+				if (Validator.isNotNull(orderByType)) {
+					return orderByType;
+				}
 
-		if (Validator.isNotNull(orderByCol)) {
-			portletURL.setParameter("orderByCol", orderByCol);
-		}
-
-		String orderByType = getOrderByType();
-
-		if (Validator.isNotNull(orderByType)) {
-			portletURL.setParameter("orderByType", orderByType);
-		}
-
-		return portletURL;
+				return null;
+			}
+		).setParameter(
+			"userGroupId", getUserGroupId()
+		).buildPortletURL();
 	}
 
-	public SearchContainer getRoleSearchSearchContainer()
+	public SearchContainer<Role> getRoleSearchSearchContainer()
 		throws PortalException {
 
 		if (_roleSearch != null) {
@@ -183,56 +202,50 @@ public class UserGroupRolesDisplayContext {
 		RoleSearchTerms searchTerms =
 			(RoleSearchTerms)roleSearch.getSearchTerms();
 
-		roleSearch.setRowChecker(new EmptyOnClickRowChecker(_renderResponse));
-		roleSearch.setOrderByCol(_getOrderByCol());
+		roleSearch.setOrderByCol(getOrderByCol());
 
 		boolean orderByAsc = false;
 
-		if (Objects.equals(_getOrderByType(), "asc")) {
+		if (Objects.equals(getOrderByType(), "asc")) {
 			orderByAsc = true;
 		}
 
-		OrderByComparator<Role> orderByComparator = new RoleNameComparator(
-			orderByAsc);
-
-		roleSearch.setOrderByComparator(orderByComparator);
-
+		roleSearch.setOrderByComparator(
+			RoleNameComparator.getInstance(orderByAsc));
 		roleSearch.setOrderByType(getOrderByType());
+
+		int roleType = RoleConstants.TYPE_SITE;
+
+		Group group = GroupLocalServiceUtil.fetchGroup(getGroupId());
+
+		if (group.isDepot()) {
+			roleType = RoleConstants.TYPE_DEPOT;
+		}
 
 		List<Role> roles = RoleLocalServiceUtil.search(
 			themeDisplay.getCompanyId(), searchTerms.getKeywords(),
-			new Integer[] {RoleConstants.TYPE_SITE}, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, orderByComparator);
+			new Integer[] {roleType}, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			roleSearch.getOrderByComparator());
 
 		List<Role> selectedRoles = _getSelectedRoles();
 
-		Stream<Role> stream = roles.stream();
+		roles = ListUtil.filter(
+			roles,
+			role ->
+				(_isAssignRoles() && !selectedRoles.contains(role)) ||
+				(!_isAssignRoles() && selectedRoles.contains(role)));
 
-		roles = stream.filter(
-			role -> {
-				if ((_isAssignRoles() && !selectedRoles.contains(role)) ||
-					(!_isAssignRoles() && selectedRoles.contains(role))) {
+		if (group.isDepot()) {
+			roles = DepotRolesUtil.filterGroupRoles(
+				themeDisplay.getPermissionChecker(), getGroupId(), roles);
+		}
+		else {
+			roles = UsersAdminUtil.filterGroupRoles(
+				themeDisplay.getPermissionChecker(), getGroupId(), roles);
+		}
 
-					return true;
-				}
-
-				return false;
-			}
-		).collect(
-			Collectors.toList()
-		);
-
-		roles = UsersAdminUtil.filterGroupRoles(
-			themeDisplay.getPermissionChecker(), getGroupId(), roles);
-
-		int rolesCount = roles.size();
-
-		roleSearch.setTotal(rolesCount);
-
-		roles = ListUtil.subList(
-			roles, roleSearch.getStart(), roleSearch.getEnd());
-
-		roleSearch.setResults(roles);
+		roleSearch.setResultsAndTotal(roles);
+		roleSearch.setRowChecker(new EmptyOnClickRowChecker(_renderResponse));
 
 		_roleSearch = roleSearch;
 
@@ -249,41 +262,12 @@ public class UserGroupRolesDisplayContext {
 		return _userGroupId;
 	}
 
-	private String _getOrderByCol() {
-		if (Validator.isNotNull(_orderByCol)) {
-			return _orderByCol;
-		}
-
-		_orderByCol = ParamUtil.getString(
-			_httpServletRequest, "orderByCol", "title");
-
-		return _orderByCol;
-	}
-
-	private String _getOrderByType() {
-		if (Validator.isNotNull(_orderByType)) {
-			return _orderByType;
-		}
-
-		_orderByType = ParamUtil.getString(
-			_renderRequest, "orderByType", "asc");
-
-		return _orderByType;
-	}
-
 	private List<Role> _getSelectedRoles() {
-		List<UserGroupGroupRole> userGroupGroupRoles =
+		return TransformUtil.transform(
 			UserGroupGroupRoleLocalServiceUtil.getUserGroupGroupRoles(
-				getUserGroupId(), getGroupId());
-
-		Stream<UserGroupGroupRole> stream = userGroupGroupRoles.stream();
-
-		return stream.map(
+				getUserGroupId(), getGroupId()),
 			userGroupGroupRole -> RoleLocalServiceUtil.fetchRole(
-				userGroupGroupRole.getRoleId())
-		).collect(
-			Collectors.toList()
-		);
+				userGroupGroupRole.getRoleId()));
 	}
 
 	private boolean _isAssignRoles() {

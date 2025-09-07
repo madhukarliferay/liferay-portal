@@ -1,33 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.web.internal.upgrade.v1_1_0;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.upgrade.RenameUpgradePortalPreferences;
+import com.liferay.portal.kernel.upgrade.PortalPreferencesUpgradeProcess;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * @author Bryan Engler
  */
-public class UpgradePortalPreferences extends RenameUpgradePortalPreferences {
+public class UpgradePortalPreferences extends PortalPreferencesUpgradeProcess {
 
 	public UpgradePortalPreferences() {
 		_preferenceNamesMap.put(
@@ -55,12 +42,17 @@ public class UpgradePortalPreferences extends RenameUpgradePortalPreferences {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		populatePreferenceNamesMap();
+		_populatePreferenceNamesMap();
 
 		super.doUpgrade();
 	}
 
-	protected String getNewPreferenceName(String preferenceName) {
+	@Override
+	protected Map<String, String> getPreferenceNamesMap() {
+		return _preferenceNamesMap;
+	}
+
+	private String _getNewPreferenceName(String preferenceName) {
 		for (Pattern pattern : _oldPreferencePatterns) {
 			Matcher matcher = pattern.matcher(preferenceName);
 
@@ -84,53 +76,28 @@ public class UpgradePortalPreferences extends RenameUpgradePortalPreferences {
 		return null;
 	}
 
-	@Override
-	protected Map<String, String> getPreferenceNamesMap() {
-		return _preferenceNamesMap;
-	}
-
-	protected void populatePreferenceNamesMap() throws Exception {
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("select preferences from PortalPreferences where ");
-		sb.append("preferences like '%");
-		sb.append(_NAMESPACE_OLD_SESSION_CLICKS);
-		sb.append("calendar-%'");
-
+	private void _populatePreferenceNamesMap() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			ResultSet rs = ps1.executeQuery()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select key_ from PortalPreferenceValue where namespace = ",
+					"'com.liferay.portal.util.SessionClicks' and key_ like ",
+					"'calendar-%'"));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String preferences = rs.getString("preferences");
+			while (resultSet.next()) {
+				String preferenceName =
+					_NAMESPACE_OLD_SESSION_CLICKS + resultSet.getString("key_");
 
-				populatePreferenceNamesMap(preferences);
-			}
-		}
-	}
+				String newPreferenceName = null;
 
-	protected void populatePreferenceNamesMap(String preferences)
-		throws Exception {
+				if (!_preferenceNamesMap.containsKey(preferenceName)) {
+					newPreferenceName = _getNewPreferenceName(preferenceName);
+				}
 
-		Document document = SAXReaderUtil.read(preferences);
-
-		Element rootElement = document.getRootElement();
-
-		Iterator<Element> iterator = rootElement.elementIterator();
-
-		while (iterator.hasNext()) {
-			Element preferenceElement = iterator.next();
-
-			String preferenceName = preferenceElement.elementText("name");
-
-			String newPreferenceName = null;
-
-			if (!_preferenceNamesMap.containsKey(preferenceName)) {
-				newPreferenceName = getNewPreferenceName(preferenceName);
-			}
-
-			if (newPreferenceName != null) {
-				_preferenceNamesMap.put(preferenceName, newPreferenceName);
+				if (newPreferenceName != null) {
+					_preferenceNamesMap.put(preferenceName, newPreferenceName);
+				}
 			}
 		}
 	}

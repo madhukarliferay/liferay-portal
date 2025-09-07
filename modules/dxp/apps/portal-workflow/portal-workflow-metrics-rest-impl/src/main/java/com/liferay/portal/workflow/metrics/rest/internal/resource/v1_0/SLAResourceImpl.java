@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.rest.internal.resource.v1_0;
@@ -37,7 +28,6 @@ import com.liferay.portal.workflow.metrics.service.WorkflowMetricsSLADefinitionL
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -183,26 +173,27 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 	}
 
 	private NodeKey[] _toNodeKeys(String nodeKeysString) {
-		return Stream.of(
-			StringUtil.split(nodeKeysString)
-		).map(
-			nodeKey -> StringUtil.split(nodeKey, StringPool.COLON)
-		).map(
-			nodeKeyStringParts -> new NodeKey() {
-				{
-					id = nodeKeyStringParts[0];
+		return transform(
+			StringUtil.split(nodeKeysString),
+			nodeKey -> {
+				String[] nodeKeyStringParts = StringUtil.split(
+					nodeKey, StringPool.COLON);
 
-					if (nodeKeyStringParts.length == 1) {
-						executionType = StringPool.BLANK;
+				return new NodeKey() {
+					{
+						setExecutionType(
+							() -> {
+								if (nodeKeyStringParts.length == 1) {
+									return StringPool.BLANK;
+								}
+
+								return nodeKeyStringParts[1];
+							});
+						setId(() -> nodeKeyStringParts[0]);
 					}
-					else {
-						executionType = nodeKeyStringParts[1];
-					}
-				}
-			}
-		).toArray(
-			NodeKey[]::new
-		);
+				};
+			},
+			NodeKey.class);
 	}
 
 	private SLA _toSLA(
@@ -210,15 +201,12 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 
 		return new SLA() {
 			{
-				calendarKey = workflowMetricsSLADefinition.getCalendarKey();
-				dateModified = workflowMetricsSLADefinition.getModifiedDate();
-				description = workflowMetricsSLADefinition.getDescription();
-				duration = workflowMetricsSLADefinition.getDuration();
-				id = workflowMetricsSLADefinition.getPrimaryKey();
-				name = workflowMetricsSLADefinition.getName();
-				processId = workflowMetricsSLADefinition.getProcessId();
-				status = workflowMetricsSLADefinition.getStatus();
-
+				setCalendarKey(workflowMetricsSLADefinition::getCalendarKey);
+				setDateModified(workflowMetricsSLADefinition::getModifiedDate);
+				setDescription(workflowMetricsSLADefinition::getDescription);
+				setDuration(workflowMetricsSLADefinition::getDuration);
+				setId(workflowMetricsSLADefinition::getPrimaryKey);
+				setName(workflowMetricsSLADefinition::getName);
 				setPauseNodeKeys(
 					() -> {
 						String nodeKeysString =
@@ -230,11 +218,13 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 
 						return new PauseNodeKeys() {
 							{
-								nodeKeys = _toNodeKeys(nodeKeysString);
-								status = WorkflowConstants.STATUS_APPROVED;
+								setNodeKeys(() -> _toNodeKeys(nodeKeysString));
+								setStatus(
+									() -> WorkflowConstants.STATUS_APPROVED);
 							}
 						};
 					});
+				setProcessId(workflowMetricsSLADefinition::getProcessId);
 				setStartNodeKeys(
 					() -> {
 						String nodeKeysString =
@@ -246,11 +236,12 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 
 						return new StartNodeKeys() {
 							{
-								nodeKeys = _toNodeKeys(nodeKeysString);
-								status = _toStatus(nodeKeysString);
+								setNodeKeys(() -> _toNodeKeys(nodeKeysString));
+								setStatus(() -> _toStatus(nodeKeysString));
 							}
 						};
 					});
+				setStatus(workflowMetricsSLADefinition::getStatus);
 				setStopNodeKeys(
 					() -> {
 						String nodeKeysString =
@@ -262,8 +253,8 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 
 						return new StopNodeKeys() {
 							{
-								nodeKeys = _toNodeKeys(nodeKeysString);
-								status = _toStatus(nodeKeysString);
+								setNodeKeys(() -> _toNodeKeys(nodeKeysString));
+								setStatus(() -> _toStatus(nodeKeysString));
 							}
 						};
 					});
@@ -280,25 +271,18 @@ public class SLAResourceImpl extends BaseSLAResourceImpl {
 	}
 
 	private String[] _toStringArray(NodeKey[] nodeKeys) {
-		if (nodeKeys == null) {
-			return new String[0];
-		}
-
-		return Stream.of(
-			nodeKeys
-		).map(
+		return transform(
+			nodeKeys,
 			nodeKey -> {
-				if (nodeKey.getExecutionType() == null) {
+				if (Validator.isNull(nodeKey.getExecutionType())) {
 					return nodeKey.getId();
 				}
 
 				return StringBundler.concat(
 					nodeKey.getId(), CharPool.COLON,
 					nodeKey.getExecutionType());
-			}
-		).toArray(
-			String[]::new
-		);
+			},
+			String.class);
 	}
 
 	private String[] _toStringArray(PauseNodeKeys pauseNodeKeys) {

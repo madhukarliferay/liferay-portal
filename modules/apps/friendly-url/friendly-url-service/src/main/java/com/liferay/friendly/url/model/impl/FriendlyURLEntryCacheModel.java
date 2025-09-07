@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.friendly.url.model.impl;
@@ -37,17 +28,17 @@ public class FriendlyURLEntryCacheModel
 	implements CacheModel<FriendlyURLEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof FriendlyURLEntryCacheModel)) {
+		if (!(object instanceof FriendlyURLEntryCacheModel)) {
 			return false;
 		}
 
 		FriendlyURLEntryCacheModel friendlyURLEntryCacheModel =
-			(FriendlyURLEntryCacheModel)obj;
+			(FriendlyURLEntryCacheModel)object;
 
 		if ((friendlyURLEntryId ==
 				friendlyURLEntryCacheModel.friendlyURLEntryId) &&
@@ -78,10 +69,12 @@ public class FriendlyURLEntryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(21);
+		StringBundler sb = new StringBundler(23);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", defaultLanguageId=");
@@ -110,6 +103,7 @@ public class FriendlyURLEntryCacheModel
 		FriendlyURLEntryImpl friendlyURLEntryImpl = new FriendlyURLEntryImpl();
 
 		friendlyURLEntryImpl.setMvccVersion(mvccVersion);
+		friendlyURLEntryImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			friendlyURLEntryImpl.setUuid("");
@@ -154,6 +148,8 @@ public class FriendlyURLEntryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 		defaultLanguageId = objectInput.readUTF();
 
@@ -173,6 +169,8 @@ public class FriendlyURLEntryCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -202,6 +200,7 @@ public class FriendlyURLEntryCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public String defaultLanguageId;
 	public long friendlyURLEntryId;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.servlet;
@@ -21,19 +12,20 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.RoleService;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 import java.util.List;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -42,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = {
 		"dynamic.data.mapping.form.builder.servlet=true",
 		"osgi.http.whiteboard.context.path=/dynamic-data-mapping-form-builder-roles",
@@ -59,35 +50,12 @@ public class RolesServlet extends BaseDDMFormBuilderServlet {
 			HttpServletResponse httpServletResponse)
 		throws IOException, ServletException {
 
-		JSONArray jsonArray = getRolesJSONArray();
+		JSONArray jsonArray = _getRolesJSONArray();
 
 		httpServletResponse.setContentType(ContentTypes.APPLICATION_JSON);
 		httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
-		ServletResponseUtil.write(
-			httpServletResponse, jsonArray.toJSONString());
-	}
-
-	protected JSONArray getRolesJSONArray() {
-		JSONArray jsonArray = _jsonFactory.createJSONArray();
-
-		try {
-			List<Role> roles = _roleService.getRoles(
-				CompanyThreadLocal.getCompanyId(), null);
-
-			for (Role role : roles) {
-				jsonArray.put(toJSONObject(role));
-			}
-
-			return jsonArray;
-		}
-		catch (PortalException pe) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
-			}
-		}
-
-		return jsonArray;
+		ServletResponseUtil.write(httpServletResponse, jsonArray.toString());
 	}
 
 	protected JSONObject toJSONObject(Role role) {
@@ -100,6 +68,32 @@ public class RolesServlet extends BaseDDMFormBuilderServlet {
 		);
 
 		return jsonObject;
+	}
+
+	private JSONArray _getRolesJSONArray() {
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
+
+		try {
+			List<Role> roles = _roleService.getRoles(
+				CompanyThreadLocal.getCompanyId(),
+				new int[] {
+					RoleConstants.TYPE_ORGANIZATION, RoleConstants.TYPE_REGULAR,
+					RoleConstants.TYPE_SITE
+				});
+
+			for (Role role : roles) {
+				jsonArray.put(toJSONObject(role));
+			}
+
+			return jsonArray;
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+		}
+
+		return jsonArray;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(RolesServlet.class);

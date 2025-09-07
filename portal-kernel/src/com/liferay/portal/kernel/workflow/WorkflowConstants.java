@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.workflow;
@@ -27,6 +18,8 @@ public class WorkflowConstants {
 	public static final String CONTEXT_COMMAND = "command";
 
 	public static final String CONTEXT_COMPANY_ID = "companyId";
+
+	public static final String CONTEXT_CT_COLLECTION_ID = "ctCollectionId";
 
 	public static final String CONTEXT_ENTRY_CLASS_NAME = "entryClassName";
 
@@ -69,6 +62,8 @@ public class WorkflowConstants {
 
 	public static final String LABEL_DRAFT = "draft";
 
+	public static final String LABEL_EMPTY = "empty";
+
 	public static final String LABEL_EXPIRED = "expired";
 
 	public static final String LABEL_IN_TRASH = "in-trash";
@@ -81,6 +76,8 @@ public class WorkflowConstants {
 
 	public static final String LABEL_SCHEDULED = "scheduled";
 
+	public static final String RESOURCE_NAME = "com.liferay.portal.workflow";
+
 	public static final String SERVICE_NAME = "com.liferay.portal.workflow";
 
 	public static final int STATUS_ANY = -1;
@@ -90,6 +87,8 @@ public class WorkflowConstants {
 	public static final int STATUS_DENIED = 4;
 
 	public static final int STATUS_DRAFT = 2;
+
+	public static final int STATUS_EMPTY = 9;
 
 	public static final int STATUS_EXPIRED = 3;
 
@@ -119,6 +118,9 @@ public class WorkflowConstants {
 		}
 		else if (label.equals(LABEL_DRAFT)) {
 			return STATUS_DRAFT;
+		}
+		else if (label.equals(LABEL_EMPTY)) {
+			return STATUS_EMPTY;
 		}
 		else if (label.equals(LABEL_EXPIRED)) {
 			return STATUS_EXPIRED;
@@ -155,6 +157,9 @@ public class WorkflowConstants {
 		else if (status == STATUS_DRAFT) {
 			return LABEL_DRAFT;
 		}
+		else if (status == STATUS_EMPTY) {
+			return LABEL_EMPTY;
+		}
 		else if (status == STATUS_EXPIRED) {
 			return LABEL_EXPIRED;
 		}
@@ -190,6 +195,9 @@ public class WorkflowConstants {
 		else if (status == STATUS_DRAFT) {
 			return LABEL_DRAFT;
 		}
+		else if (status == STATUS_EMPTY) {
+			return LABEL_EMPTY;
+		}
 		else if (status == STATUS_EXPIRED) {
 			return LABEL_EXPIRED;
 		}
@@ -210,6 +218,41 @@ public class WorkflowConstants {
 		}
 
 		return LABEL_ANY;
+	}
+
+	public static String getStatusStyle(int status) {
+		if (status == WorkflowConstants.STATUS_APPROVED) {
+			return "success";
+		}
+		else if (status == WorkflowConstants.STATUS_DENIED) {
+			return "danger";
+		}
+		else if (status == WorkflowConstants.STATUS_DRAFT) {
+			return "secondary";
+		}
+		else if (status == WorkflowConstants.STATUS_EMPTY) {
+			return "warning";
+		}
+		else if (status == WorkflowConstants.STATUS_EXPIRED) {
+			return "danger";
+		}
+		else if (status == WorkflowConstants.STATUS_IN_TRASH) {
+			return "info";
+		}
+		else if (status == WorkflowConstants.STATUS_INACTIVE) {
+			return "secondary";
+		}
+		else if (status == WorkflowConstants.STATUS_INCOMPLETE) {
+			return "warning";
+		}
+		else if (status == WorkflowConstants.STATUS_PENDING) {
+			return "info";
+		}
+		else if (status == WorkflowConstants.STATUS_SCHEDULED) {
+			return "info";
+		}
+
+		return "secondary";
 	}
 
 }

@@ -1,27 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.kernel.exception.NoSuchUserGroupGroupRoleException;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.UserGroupGroupRole;
-import com.liferay.portal.kernel.service.persistence.UserGroupGroupRolePK;
+import com.liferay.portal.kernel.service.persistence.RolePersistence;
+import com.liferay.portal.kernel.service.persistence.UserGroupPersistence;
 import com.liferay.portal.service.base.UserGroupGroupRoleLocalServiceBaseImpl;
 
 import java.util.List;
@@ -37,14 +27,18 @@ public class UserGroupGroupRoleLocalServiceImpl
 		long userGroupId, long groupId, long[] roleIds) {
 
 		for (long roleId : roleIds) {
-			UserGroupGroupRolePK pk = new UserGroupGroupRolePK(
-				userGroupId, groupId, roleId);
-
 			UserGroupGroupRole userGroupGroupRole =
-				userGroupGroupRolePersistence.fetchByPrimaryKey(pk);
+				userGroupGroupRolePersistence.fetchByU_G_R(
+					userGroupId, groupId, roleId);
 
 			if (userGroupGroupRole == null) {
-				userGroupGroupRole = userGroupGroupRolePersistence.create(pk);
+				userGroupGroupRole = userGroupGroupRolePersistence.create(
+					counterLocalService.increment(
+						UserGroupGroupRole.class.getName()));
+
+				userGroupGroupRole.setUserGroupId(userGroupId);
+				userGroupGroupRole.setGroupId(groupId);
+				userGroupGroupRole.setRoleId(roleId);
 
 				userGroupGroupRolePersistence.update(userGroupGroupRole);
 			}
@@ -56,14 +50,18 @@ public class UserGroupGroupRoleLocalServiceImpl
 		long[] userGroupIds, long groupId, long roleId) {
 
 		for (long userGroupId : userGroupIds) {
-			UserGroupGroupRolePK pk = new UserGroupGroupRolePK(
-				userGroupId, groupId, roleId);
-
 			UserGroupGroupRole userGroupGroupRole =
-				userGroupGroupRolePersistence.fetchByPrimaryKey(pk);
+				userGroupGroupRolePersistence.fetchByU_G_R(
+					userGroupId, groupId, roleId);
 
 			if (userGroupGroupRole == null) {
-				userGroupGroupRole = userGroupGroupRolePersistence.create(pk);
+				userGroupGroupRole = userGroupGroupRolePersistence.create(
+					counterLocalService.increment(
+						UserGroupGroupRole.class.getName()));
+
+				userGroupGroupRole.setUserGroupId(userGroupId);
+				userGroupGroupRole.setGroupId(groupId);
+				userGroupGroupRole.setRoleId(roleId);
 
 				userGroupGroupRolePersistence.update(userGroupGroupRole);
 			}
@@ -86,19 +84,12 @@ public class UserGroupGroupRoleLocalServiceImpl
 		long userGroupId, long groupId, long[] roleIds) {
 
 		for (long roleId : roleIds) {
-			UserGroupGroupRolePK pk = new UserGroupGroupRolePK(
-				userGroupId, groupId, roleId);
+			UserGroupGroupRole userGroupGroupRole =
+				userGroupGroupRolePersistence.fetchByU_G_R(
+					userGroupId, groupId, roleId);
 
-			try {
-				userGroupGroupRolePersistence.remove(pk);
-			}
-			catch (NoSuchUserGroupGroupRoleException nsuggre) {
-
-				// LPS-52675
-
-				if (_log.isDebugEnabled()) {
-					_log.debug(nsuggre, nsuggre);
-				}
+			if (userGroupGroupRole != null) {
+				userGroupGroupRolePersistence.remove(userGroupGroupRole);
 			}
 		}
 	}
@@ -122,19 +113,12 @@ public class UserGroupGroupRoleLocalServiceImpl
 		long[] userGroupIds, long groupId, long roleId) {
 
 		for (long userGroupId : userGroupIds) {
-			UserGroupGroupRolePK pk = new UserGroupGroupRolePK(
-				userGroupId, groupId, roleId);
+			UserGroupGroupRole userGroupGroupRole =
+				userGroupGroupRolePersistence.fetchByU_G_R(
+					userGroupId, groupId, roleId);
 
-			try {
-				userGroupGroupRolePersistence.remove(pk);
-			}
-			catch (NoSuchUserGroupGroupRoleException nsuggre) {
-
-				// LPS-52675
-
-				if (_log.isDebugEnabled()) {
-					_log.debug(nsuggre, nsuggre);
-				}
+			if (userGroupGroupRole != null) {
+				userGroupGroupRolePersistence.remove(userGroupGroupRole);
 			}
 		}
 	}
@@ -189,13 +173,10 @@ public class UserGroupGroupRoleLocalServiceImpl
 	public boolean hasUserGroupGroupRole(
 		long userGroupId, long groupId, long roleId) {
 
-		UserGroupGroupRolePK pk = new UserGroupGroupRolePK(
+		int count = userGroupGroupRolePersistence.countByU_G_R(
 			userGroupId, groupId, roleId);
 
-		UserGroupGroupRole userGroupGroupRole =
-			userGroupGroupRolePersistence.fetchByPrimaryKey(pk);
-
-		if (userGroupGroupRole != null) {
+		if (count > 0) {
 			return true;
 		}
 
@@ -207,16 +188,19 @@ public class UserGroupGroupRoleLocalServiceImpl
 			long userGroupId, long groupId, String roleName)
 		throws PortalException {
 
-		UserGroup userGroup = userGroupPersistence.findByPrimaryKey(
+		UserGroup userGroup = _userGroupPersistence.findByPrimaryKey(
 			userGroupId);
 
-		Role role = rolePersistence.findByC_N(
+		Role role = _rolePersistence.findByC_N(
 			userGroup.getCompanyId(), roleName);
 
 		return hasUserGroupGroupRole(userGroupId, groupId, role.getRoleId());
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		UserGroupGroupRoleLocalServiceImpl.class);
+	@BeanReference(type = RolePersistence.class)
+	private RolePersistence _rolePersistence;
+
+	@BeanReference(type = UserGroupPersistence.class)
+	private UserGroupPersistence _userGroupPersistence;
 
 }

@@ -1,12 +1,6 @@
 Bundle-Name: Liferay Site Navigation Menu Web
 Bundle-SymbolicName: com.liferay.site.navigation.menu.web
-Bundle-Version: 5.0.0
-Provide-Capability:\
-	liferay.resource.bundle;\
-		resource.bundle.aggregate:String="(bundle.symbolic.name=com.liferay.site.navigation.lang)";\
-		resource.bundle.base.name="content.Language"
-Require-Capability:\
-	liferay.resource.bundle;\
-		filter:="(bundle.symbolic.name=com.liferay.site.navigation.lang)"
+Bundle-Version: 6.0.79
+Liferay-JS-Config: /META-INF/resources/js/legacy/config.js
 Web-ContextPath: /site-navigation-menu-web
 -dsannotations-options: inherit

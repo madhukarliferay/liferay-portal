@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -23,23 +15,29 @@ import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.service.AddressLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.webserver.WebServerServletTokenUtil;
+import com.liferay.users.admin.kernel.file.uploads.UserFileUploadsSettings;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import javax.portlet.PortletPreferences;
 
 /**
  * @author Brian Wing Shun Chan
@@ -91,8 +89,8 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 				address = addresses.get(0);
 			}
 		}
-		catch (Exception e) {
-			_log.error("Unable to get address", e);
+		catch (Exception exception) {
+			_log.error("Unable to get address", exception);
 		}
 
 		if (address == null) {
@@ -174,8 +172,10 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 				return GroupLocalServiceUtil.getOrganizationGroup(
 					getCompanyId(), getOrganizationId());
 			}
-			catch (Exception e) {
-				_log.error("Unable to get organization group", e);
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug("Unable to get organization group", exception);
+				}
 			}
 		}
 
@@ -187,6 +187,28 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 		Group group = getGroup();
 
 		return group.getGroupId();
+	}
+
+	@Override
+	public String getLogoURL() {
+		StringBundler sb = new StringBundler(7);
+
+		sb.append(PortalUtil.getPathImage());
+		sb.append("/organization_logo?img_id=");
+		sb.append(getLogoId());
+
+		UserFileUploadsSettings userFileUploadsSettings =
+			_userFileUploadsSettingsSnapshot.get();
+
+		if (userFileUploadsSettings.isImageCheckToken()) {
+			sb.append("&img_id_token=");
+			sb.append(URLCodec.encodeURL(DigesterUtil.digest(getUuid())));
+		}
+
+		sb.append("&t=");
+		sb.append(WebServerServletTokenUtil.getToken(getLogoId()));
+
+		return sb.toString();
 	}
 
 	@Override
@@ -240,8 +262,8 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 
 			return group.getPrivateLayoutsPageCount();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return 0;
@@ -258,8 +280,8 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 
 			return group.getPublicLayoutsPageCount();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return 0;
@@ -351,5 +373,9 @@ public class OrganizationImpl extends OrganizationBaseImpl {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		OrganizationImpl.class);
+
+	private static final Snapshot<UserFileUploadsSettings>
+		_userFileUploadsSettingsSnapshot = new Snapshot<>(
+			OrganizationImpl.class, UserFileUploadsSettings.class);
 
 }

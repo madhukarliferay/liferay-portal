@@ -1,9 +1,9 @@
-@component-name = "portal-security"
+@component-name = "portal-application-security"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property test.assert.warning.exceptions = "true";
 	property testray.main.component.name = "CAPTCHA";
 
 	setUp {
@@ -11,68 +11,82 @@ definition {
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
 			User.firstLoginPG();
 
-			Page.tearDownCP();
+			PagesAdmin.tearDownCP();
 		}
 	}
 
-	@priority = "4"
-	test ViewCaptchaEnabled {
+	@description = "This is a use case for LRQA-29540. Verify CAPTCHA is enabled when creating an account."
+	@priority = 5
+	test AssertCaptchaEnabled {
 		property captcha.enabled = "true";
+		property portal.acceptance = "true";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
 
-		SignInNavigator.gotoCreateAccount();
+		task ("View captcha") {
+			SignInNavigator.gotoCreateAccount();
 
-		User.viewCaptchaPG(captchaType = "captcha");
+			User.viewCaptchaPG(captchaType = "captcha");
+		}
 	}
 
-	@description = "This test will deploy an OSGI configuration file to test LPS-84310."
-	@priority = "4"
-	test ViewRecaptchaEnabled {
+	@description = "This is a use case for LPS-84310. Verify reCAPTCHA is enabled in account creation after deploying a CAPTCHA OSGi config file."
+	@priority = 5
+	test AssertRecaptchaEnabled {
 		property captcha.enabled = "true";
 		property osgi.module.configuration.file.names = "com.liferay.captcha.configuration.CaptchaConfiguration.config";
-		property osgi.module.configurations = "maxChallenges=&quot;0&quot;";
-		property test.name.skip.portal.instance = "Captcha#ViewRecaptchaEnabled";
+		property osgi.module.configurations = "maxChallenges=\"0\"";
+		property portal.acceptance = "true";
+		property test.liferay.virtual.instance = "false";
+		property test.run.type = "single";
+
 		var recaptchaPrivateKey = PropsUtil.get("recaptcha.private.key");
 		var recaptchaPublicKey = PropsUtil.get("recaptcha.public.key");
 
-		User.firstLoginPG();
+		task ("go to reCAPTCHA setting") {
+			User.firstLoginPG();
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
+			SystemSettings.openSystemSettingsAdmin();
 
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Security Tools",
-			configurationName = "CAPTCHA",
-			configurationScope = "System Scope");
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Security Tools",
+				configurationName = "CAPTCHA",
+				configurationScope = "System Scope");
 
-		SystemSettings.selectOptionSetting(
-			fieldName = "CAPTCHA Engine",
-			selectOption = "reCAPTCHA");
+			SystemSettings.selectOptionSetting(
+				fieldName = "CAPTCHA Engine",
+				selectOption = "reCAPTCHA");
+		}
 
-		SystemSettings.editTextAreaSetting(
-			settingName = "reCAPTCHA Private Key",
-			settingValue = "${recaptchaPrivateKey}");
+		task ("Edit reCAPTCHA private key") {
+			SystemSettings.editTextAreaSetting(
+				settingName = "reCAPTCHA Private Key",
+				settingValue = ${recaptchaPrivateKey});
+		}
 
-		SystemSettings.editTextAreaSetting(
-			settingName = "reCAPTCHA Public Key",
-			settingValue = "${recaptchaPublicKey}");
+		task ("Edit reCAPTCHA public key and save configuration") {
+			SystemSettings.editTextAreaSetting(
+				settingName = "reCAPTCHA Public Key",
+				settingValue = ${recaptchaPublicKey});
 
-		SystemSettings.saveConfiguration();
+			SystemSettings.saveConfiguration();
+		}
 
-		User.logoutPG();
+		task ("Logout and view captcha") {
+			User.logoutPG();
 
-		SignInNavigator.gotoCreateAccount();
+			SignInNavigator.gotoCreateAccount();
 
-		User.viewCaptchaPG(captchaType = "recaptcha");
+			User.viewCaptchaPG(captchaType = "recaptcha");
+		}
 	}
 
 }

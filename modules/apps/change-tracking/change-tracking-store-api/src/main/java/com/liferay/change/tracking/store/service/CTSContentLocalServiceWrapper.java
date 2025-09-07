@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.store.service;
@@ -17,6 +8,7 @@ package com.liferay.change.tracking.store.service;
 import com.liferay.change.tracking.store.model.CTSContent;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -29,6 +21,10 @@ import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersisten
 public class CTSContentLocalServiceWrapper
 	implements CTSContentLocalService, ServiceWrapper<CTSContentLocalService> {
 
+	public CTSContentLocalServiceWrapper() {
+		this(null);
+	}
+
 	public CTSContentLocalServiceWrapper(
 		CTSContentLocalService ctsContentLocalService) {
 
@@ -37,6 +33,10 @@ public class CTSContentLocalServiceWrapper
 
 	/**
 	 * Adds the cts content to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTSContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctsContent the cts content
 	 * @return the cts content that was added
@@ -67,7 +67,22 @@ public class CTSContentLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ctsContentLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the cts content from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTSContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctsContent the cts content
 	 * @return the cts content that was removed
@@ -79,6 +94,10 @@ public class CTSContentLocalServiceWrapper
 
 	/**
 	 * Deletes the cts content with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTSContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ctsContentId the primary key of the cts content
 	 * @return the cts content that was removed
@@ -117,6 +136,18 @@ public class CTSContentLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ctsContentLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ctsContentLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ctsContentLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -312,6 +343,9 @@ public class CTSContentLocalServiceWrapper
 		return _ctsContentLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -337,12 +371,21 @@ public class CTSContentLocalServiceWrapper
 	/**
 	 * Updates the cts content in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CTSContentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ctsContent the cts content
 	 * @return the cts content that was updated
 	 */
 	@Override
 	public CTSContent updateCTSContent(CTSContent ctsContent) {
 		return _ctsContentLocalService.updateCTSContent(ctsContent);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ctsContentLocalService.getBasePersistence();
 	}
 
 	@Override

@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.scope.internal.jaxrs.feature;
 
 import com.liferay.oauth2.provider.scope.internal.constants.OAuth2ProviderScopeConstants;
-import com.liferay.oauth2.provider.scope.internal.jaxrs.filter.BaseContextContainerRequestFilter;
+import com.liferay.oauth2.provider.scope.internal.jaxrs.container.request.filter.BaseContextContainerRequestFilter;
 import com.liferay.oauth2.provider.scope.liferay.OAuth2ProviderScopeLiferayAccessControlContext;
 import com.liferay.oauth2.provider.scope.liferay.ScopeContext;
 import com.liferay.oauth2.provider.scope.spi.application.descriptor.ApplicationDescriptor;
@@ -24,15 +15,26 @@ import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.Configuration;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Feature;
+import jakarta.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.ext.Provider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,17 +42,6 @@ import java.util.Dictionary;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Configuration;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
-import javax.ws.rs.ext.Provider;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -150,7 +141,7 @@ public class LiferayOAuth2OSGiFeature implements Feature {
 			},
 			Priorities.AUTHORIZATION - 9);
 
-		registerDescriptors(osgiJaxRsName);
+		_registerDescriptors(osgiJaxRsName);
 
 		return true;
 	}
@@ -175,7 +166,10 @@ public class LiferayOAuth2OSGiFeature implements Feature {
 			try {
 				serviceRegistration.unregister();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 
@@ -184,27 +178,26 @@ public class LiferayOAuth2OSGiFeature implements Feature {
 		}
 	}
 
-	protected void registerDescriptors(String osgiJaxRsName) {
+	protected static final String OAUTH2_SERVICE_ACCESS_POLICY_NAME =
+		"oauth2.service.access.policy.name";
+
+	private void _registerDescriptors(String osgiJaxRsName) {
 		String bundleSymbolicName = _bundle.getSymbolicName();
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("(&(bundle.symbolic.name=");
-		sb.append(bundleSymbolicName);
-		sb.append(")(objectClass=");
-		sb.append(ResourceBundleLoader.class.getName());
-		sb.append(")(resource.bundle.base.name=content.Language))");
 
 		ServiceTracker<ResourceBundleLoader, ResourceBundleLoader>
 			serviceTracker = ServiceTrackerFactory.open(
-				_bundleContext, sb.toString());
+				_bundleContext,
+				StringBundler.concat(
+					"(&(bundle.symbolic.name=", bundleSymbolicName,
+					")(objectClass=", ResourceBundleLoader.class.getName(),
+					")(resource.bundle.base.name=content.Language))"));
 
 		_serviceTrackers.add(serviceTracker);
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			OAuth2ProviderScopeConstants.OSGI_JAXRS_NAME, osgiJaxRsName);
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				OAuth2ProviderScopeConstants.OSGI_JAXRS_NAME, osgiJaxRsName
+			).build();
 
 		_serviceRegistrations.add(
 			_bundleContext.registerService(
@@ -215,9 +208,6 @@ public class LiferayOAuth2OSGiFeature implements Feature {
 				new ApplicationDescriptorsImpl(serviceTracker, osgiJaxRsName),
 				properties));
 	}
-
-	protected static final String OAUTH2_SERVICE_ACCESS_POLICY_NAME =
-		"oauth2.service.access.policy.name";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		LiferayOAuth2OSGiFeature.class);
@@ -248,7 +238,7 @@ public class LiferayOAuth2OSGiFeature implements Feature {
 		new ArrayList<>();
 
 	private class ApplicationDescriptorsImpl
-		implements ScopeDescriptor, ApplicationDescriptor {
+		implements ApplicationDescriptor, ScopeDescriptor {
 
 		public ApplicationDescriptorsImpl(
 			ServiceTracker<?, ResourceBundleLoader> serviceTracker,

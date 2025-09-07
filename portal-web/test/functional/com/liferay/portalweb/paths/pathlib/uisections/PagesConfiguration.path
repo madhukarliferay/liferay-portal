@@ -2,20 +2,17 @@
 <head>
 <title>PagesConfiguration</title>
 </head>
+
 <body>
-<table cellpadding="1" cellspacing="1" border="1">
+<table border="1" cellpadding="1" cellspacing="1">
 <thead>
 <tr><td rowspan="1" colspan="3">PagesConfiguration</td></tr>
 </thead>
+
 <tbody>
 <tr>
 	<td>PAGES_SPECIFIC_PAGE_NAME</td>
-	<td>//li/div[contains(.,'${key_pageName}')]//span[contains(@class,'icon-check')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>PAGES_SPECIFIC_PAGE_CHECKED</td>
-	<td>//li/div[contains(@class,'checked') and contains(.,'${key_pageName}')]//span[contains(@class,'icon-check')]</td>
+	<td>//span[contains(.,'${key_pageName}')]//input[contains(@type,'checkbox')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -40,22 +37,22 @@
 </tr>
 <tr>
 	<td>CONTENT_CHOOSE_CONTENT_CONTENT_CHECKBOX</td>
-	<td>//label[contains(.,'${key_contentName}')]//following-sibling::span</td>
+	<td>//label[contains(.,'${key_contentName}')]//following-sibling::span | //label[contains(.,'${key_contentName}')]//following-sibling::span/../input</td>
 	<td></td>
 </tr>
 <tr>
-	<td>CONTENT_CHOOSE_CONTENT_CHECKBOX_LABEL</td>
-	<td>//label[contains(.,'${key_contentName}')]/input</td>
+	<td>PAGES_ALL_PAGES_CHECKBOX</td>
+	<td>//span[normalize-space()='Pages']//input[contains(@type,'checkbox')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_ALL_PUBLIC_PAGES_CHECKBOX</td>
-	<td>xpath=(//div[contains(.,'Public Pages')]//span[contains(@class,'icon-check')])[1]</td>
+	<td>//span[contains(.,'Public Pages')]//input[contains(@type,'checkbox')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_ALL_PRIVATE_PAGES_CHECKBOX</td>
-	<td>xpath=(//div[contains(.,'Private Pages')]//span[contains(@class,'icon-check')])[1]</td>
+	<td>//span[contains(.,'Private Pages')]//input[contains(@type,'checkbox')]</td>
 	<td></td>
 </tr>
 <tr>

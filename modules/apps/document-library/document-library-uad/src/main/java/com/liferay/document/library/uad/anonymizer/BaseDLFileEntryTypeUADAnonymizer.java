@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.uad.anonymizer;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.document.library.uad.constants.DLUADConstants;
@@ -47,6 +40,8 @@ public abstract class BaseDLFileEntryTypeUADAnonymizer
 		if (dlFileEntryType.getUserId() == userId) {
 			dlFileEntryType.setUserId(anonymousUser.getUserId());
 			dlFileEntryType.setUserName(anonymousUser.getFullName());
+
+			autoAnonymizeAssetEntry(dlFileEntryType, anonymousUser);
 		}
 
 		dlFileEntryTypeLocalService.updateDLFileEntryType(dlFileEntryType);
@@ -62,6 +57,19 @@ public abstract class BaseDLFileEntryTypeUADAnonymizer
 		return DLFileEntryType.class;
 	}
 
+	protected void autoAnonymizeAssetEntry(
+		DLFileEntryType dlFileEntryType, User anonymousUser) {
+
+		AssetEntry assetEntry = fetchAssetEntry(dlFileEntryType);
+
+		if (assetEntry != null) {
+			assetEntry.setUserId(anonymousUser.getUserId());
+			assetEntry.setUserName(anonymousUser.getFullName());
+
+			assetEntryLocalService.updateAssetEntry(assetEntry);
+		}
+	}
+
 	@Override
 	protected ActionableDynamicQuery doGetActionableDynamicQuery() {
 		return dlFileEntryTypeLocalService.getActionableDynamicQuery();
@@ -71,6 +79,15 @@ public abstract class BaseDLFileEntryTypeUADAnonymizer
 	protected String[] doGetUserIdFieldNames() {
 		return DLUADConstants.USER_ID_FIELD_NAMES_DL_FILE_ENTRY_TYPE;
 	}
+
+	protected AssetEntry fetchAssetEntry(DLFileEntryType dlFileEntryType) {
+		return assetEntryLocalService.fetchEntry(
+			DLFileEntryType.class.getName(),
+			dlFileEntryType.getFileEntryTypeId());
+	}
+
+	@Reference
+	protected AssetEntryLocalService assetEntryLocalService;
 
 	@Reference
 	protected DLFileEntryTypeLocalService dlFileEntryTypeLocalService;

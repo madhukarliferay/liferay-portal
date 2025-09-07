@@ -1,33 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.tree;
 
-import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.TreeModel;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.VerifyThreadLocal;
 
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
 
 /**
  * @author Shinn Lok
@@ -38,24 +26,6 @@ public class TreePathUtil {
 			long companyId, long parentPrimaryKey, String parentTreePath,
 			TreeModelTasks<?> treeModelTasks)
 		throws PortalException {
-
-		if (VerifyThreadLocal.isVerifyInProgress() &&
-			_VERIFY_DATABASE_TRANSACTIONS_DISABLED) {
-
-			ForkJoinPool forkJoinPool = new ForkJoinPool();
-
-			try {
-				forkJoinPool.invoke(
-					new RecursiveRebuildTreeTask(
-						treeModelTasks, companyId, parentPrimaryKey,
-						parentTreePath, 0L));
-			}
-			finally {
-				forkJoinPool.shutdown();
-			}
-
-			return;
-		}
 
 		Deque<Object[]> traces = new LinkedList<>();
 
@@ -91,11 +61,9 @@ public class TreePathUtil {
 			}
 
 			for (TreeModel treeModel : treeModels) {
-				String treePath = curParentTreePath.concat(
-					String.valueOf(treeModel.getPrimaryKeyObj())
-				).concat(
-					StringPool.SLASH
-				);
+				String treePath = StringBundler.concat(
+					curParentTreePath, treeModel.getPrimaryKeyObj(),
+					StringPool.SLASH);
 
 				if (!treePath.equals(treeModel.getTreePath())) {
 					treeModel.updateTreePath(treePath);
@@ -111,83 +79,5 @@ public class TreePathUtil {
 		GetterUtil.getInteger(
 			PropsUtil.get(
 				PropsKeys.MODEL_TREE_REBUILD_QUERY_RESULTS_BATCH_SIZE));
-
-	private static final boolean _VERIFY_DATABASE_TRANSACTIONS_DISABLED =
-		GetterUtil.getBoolean(
-			PropsUtil.get(PropsKeys.VERIFY_DATABASE_TRANSACTIONS_DISABLED));
-
-	private static class RecursiveRebuildTreeTask extends RecursiveAction {
-
-		@Override
-		protected void compute() {
-			try {
-				_treeModelTasks.rebuildDependentModelsTreePaths(
-					_parentPrimaryKey, _parentTreePath);
-			}
-			catch (PortalException pe) {
-				ReflectionUtil.throwException(pe);
-			}
-
-			List<? extends TreeModel> treeModels =
-				_treeModelTasks.findTreeModels(
-					_previousPrimaryKey, _companyId, _parentPrimaryKey,
-					_MODEL_TREE_REBUILD_QUERY_RESULTS_BATCH_SIZE);
-
-			if (treeModels.isEmpty()) {
-				return;
-			}
-
-			if (treeModels.size() ==
-					_MODEL_TREE_REBUILD_QUERY_RESULTS_BATCH_SIZE) {
-
-				TreeModel treeModel = treeModels.get(treeModels.size() - 1);
-
-				RecursiveRebuildTreeTask recursiveRebuildTreeTask =
-					new RecursiveRebuildTreeTask(
-						_treeModelTasks, _companyId, _parentPrimaryKey,
-						_parentTreePath, (long)treeModel.getPrimaryKeyObj());
-
-				recursiveRebuildTreeTask.fork();
-			}
-
-			for (TreeModel treeModel : treeModels) {
-				String treePath = _parentTreePath.concat(
-					String.valueOf(treeModel.getPrimaryKeyObj())
-				).concat(
-					StringPool.SLASH
-				);
-
-				if (!treePath.equals(treeModel.getTreePath())) {
-					treeModel.updateTreePath(treePath);
-				}
-
-				RecursiveRebuildTreeTask recursiveRebuildTreeTask =
-					new RecursiveRebuildTreeTask(
-						_treeModelTasks, _companyId,
-						(long)treeModel.getPrimaryKeyObj(), treePath, 0L);
-
-				recursiveRebuildTreeTask.fork();
-			}
-		}
-
-		private RecursiveRebuildTreeTask(
-			TreeModelTasks<?> treeModelTasks, long companyId,
-			long parentPrimaryKey, String parentTreePath,
-			long previousPrimaryKey) {
-
-			_treeModelTasks = treeModelTasks;
-			_companyId = companyId;
-			_parentPrimaryKey = parentPrimaryKey;
-			_parentTreePath = parentTreePath;
-			_previousPrimaryKey = previousPrimaryKey;
-		}
-
-		private final long _companyId;
-		private final long _parentPrimaryKey;
-		private final String _parentTreePath;
-		private final long _previousPrimaryKey;
-		private final TreeModelTasks<?> _treeModelTasks;
-
-	}
 
 }

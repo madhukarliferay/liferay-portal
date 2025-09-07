@@ -1,26 +1,43 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Hugo Huijser
  */
 public class LinkedHashMapBuilder<K, V> extends BaseMapBuilder {
+
+	public static <K, V> LinkedHashMapWrapper<K, V> create(
+		int initialCapacity) {
+
+		return new LinkedHashMapWrapper<>(initialCapacity);
+	}
+
+	public static <K, V> LinkedHashMapWrapper<K, V> create(
+		int initialCapacity, float loadFactor) {
+
+		return new LinkedHashMapWrapper<>(initialCapacity, loadFactor);
+	}
+
+	public static <K, V> LinkedHashMapWrapper<K, V> create(
+		int initialCapacity, float loadFactor, boolean accessOrder) {
+
+		return new LinkedHashMapWrapper<>(
+			initialCapacity, loadFactor, accessOrder);
+	}
+
+	public static <K, V> LinkedHashMapWrapper<K, V> create(
+		Map<? extends K, ? extends V> map) {
+
+		return new LinkedHashMapWrapper<>(map);
+	}
 
 	public static <K, V> LinkedHashMapWrapper<K, V> put(
 		Collection<? extends K> inputCollection,
@@ -67,8 +84,40 @@ public class LinkedHashMapBuilder<K, V> extends BaseMapBuilder {
 		return linkedHashMapWrapper.put(keyUnsafeSupplier, value);
 	}
 
+	public static <K, V> LinkedHashMapWrapper<K, V> putAll(
+		Map<? extends K, ? extends V> inputMap) {
+
+		LinkedHashMapWrapper<K, V> linkedHashMapWrapper =
+			new LinkedHashMapWrapper<>();
+
+		return linkedHashMapWrapper.putAll(inputMap);
+	}
+
 	public static final class LinkedHashMapWrapper<K, V>
 		extends BaseMapWrapper<K, V> {
+
+		public LinkedHashMapWrapper() {
+			_linkedHashMap = new LinkedHashMap<>();
+		}
+
+		public LinkedHashMapWrapper(int initialCapacity) {
+			_linkedHashMap = new LinkedHashMap<>(initialCapacity);
+		}
+
+		public LinkedHashMapWrapper(int initialCapacity, float loadFactor) {
+			_linkedHashMap = new LinkedHashMap<>(initialCapacity, loadFactor);
+		}
+
+		public LinkedHashMapWrapper(
+			int initialCapacity, float loadFactor, boolean accessOrder) {
+
+			_linkedHashMap = new LinkedHashMap<>(
+				initialCapacity, loadFactor, accessOrder);
+		}
+
+		public LinkedHashMapWrapper(Map<? extends K, ? extends V> map) {
+			_linkedHashMap = new LinkedHashMap<>(map);
+		}
 
 		public LinkedHashMap<K, V> build() {
 			return _linkedHashMap;
@@ -114,13 +163,20 @@ public class LinkedHashMapBuilder<K, V> extends BaseMapBuilder {
 			return this;
 		}
 
+		public LinkedHashMapWrapper<K, V> putAll(
+			Map<? extends K, ? extends V> inputMap) {
+
+			doPutAll(inputMap);
+
+			return this;
+		}
+
 		@Override
 		protected LinkedHashMap<K, V> getMap() {
 			return _linkedHashMap;
 		}
 
-		private final LinkedHashMap<K, V> _linkedHashMap =
-			new LinkedHashMap<>();
+		private final LinkedHashMap<K, V> _linkedHashMap;
 
 	}
 

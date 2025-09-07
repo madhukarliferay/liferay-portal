@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.display.context;
@@ -17,12 +8,13 @@ package com.liferay.document.library.internal.display.context;
 import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.document.library.display.context.DLMimeTypeDisplayContext;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 
 /**
@@ -30,7 +22,6 @@ import org.osgi.service.component.annotations.Modified;
  */
 @Component(
 	configurationPid = "com.liferay.document.library.configuration.DLConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	service = DLMimeTypeDisplayContext.class
 )
 public class DefaultDLMimeTypeDisplayContext
@@ -45,11 +36,6 @@ public class DefaultDLMimeTypeDisplayContext
 					_dlConfiguration.compressedFileMimeTypes(), mimeType)) {
 
 			return "file-icon-color-0";
-		}
-		else if (_containsMimeType(
-					_dlConfiguration.multimediaFileMimeTypes(), mimeType)) {
-
-			return "file-icon-color-5";
 		}
 		else if (_containsMimeType(
 					_dlConfiguration.presentationFileMimeTypes(), mimeType)) {
@@ -71,6 +57,9 @@ public class DefaultDLMimeTypeDisplayContext
 
 			return "file-icon-color-3";
 		}
+		else if (_isMultimediaFileMimeType(mimeType)) {
+			return "file-icon-color-5";
+		}
 
 		return "file-icon-color-0";
 	}
@@ -84,15 +73,6 @@ public class DefaultDLMimeTypeDisplayContext
 					_dlConfiguration.compressedFileMimeTypes(), mimeType)) {
 
 			return "document-compressed";
-		}
-		else if (_containsMimeType(
-					_dlConfiguration.multimediaFileMimeTypes(), mimeType)) {
-
-			if (mimeType.startsWith("image")) {
-				return "document-image";
-			}
-
-			return "document-multimedia";
 		}
 		else if (_containsMimeType(
 					_dlConfiguration.presentationFileMimeTypes(), mimeType)) {
@@ -113,6 +93,13 @@ public class DefaultDLMimeTypeDisplayContext
 					_dlConfiguration.vectorialFileMimeTypes(), mimeType)) {
 
 			return "document-vector";
+		}
+		else if (_isMultimediaFileMimeType(mimeType)) {
+			if (mimeType.startsWith("image")) {
+				return "document-image";
+			}
+
+			return "document-multimedia";
 		}
 
 		return "document-default";
@@ -139,6 +126,20 @@ public class DefaultDLMimeTypeDisplayContext
 					return true;
 				}
 			}
+		}
+
+		return false;
+	}
+
+	private boolean _isMultimediaFileMimeType(String mimeType) {
+		if (Objects.equals(
+				mimeType,
+				ContentTypes.
+					APPLICATION_VND_LIFERAY_VIDEO_EXTERNAL_SHORTCUT_HTML) ||
+			_containsMimeType(
+				_dlConfiguration.multimediaFileMimeTypes(), mimeType)) {
+
+			return true;
 		}
 
 		return false;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -47,6 +40,7 @@ public class LayoutPageTemplateStructureRelWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put(
 			"layoutPageTemplateStructureRelId",
@@ -62,6 +56,11 @@ public class LayoutPageTemplateStructureRelWrapper
 			getLayoutPageTemplateStructureId());
 		attributes.put("segmentsExperienceId", getSegmentsExperienceId());
 		attributes.put("data", getData());
+		attributes.put("lastPublishDate", getLastPublishDate());
+		attributes.put("status", getStatus());
+		attributes.put("statusByUserId", getStatusByUserId());
+		attributes.put("statusByUserName", getStatusByUserName());
+		attributes.put("statusDate", getStatusDate());
 
 		return attributes;
 	}
@@ -72,6 +71,12 @@ public class LayoutPageTemplateStructureRelWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -143,6 +148,41 @@ public class LayoutPageTemplateStructureRelWrapper
 		if (data != null) {
 			setData(data);
 		}
+
+		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
+
+		if (lastPublishDate != null) {
+			setLastPublishDate(lastPublishDate);
+		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
+
+		Long statusByUserId = (Long)attributes.get("statusByUserId");
+
+		if (statusByUserId != null) {
+			setStatusByUserId(statusByUserId);
+		}
+
+		String statusByUserName = (String)attributes.get("statusByUserName");
+
+		if (statusByUserName != null) {
+			setStatusByUserName(statusByUserName);
+		}
+
+		Date statusDate = (Date)attributes.get("statusDate");
+
+		if (statusDate != null) {
+			setStatusDate(statusDate);
+		}
+	}
+
+	@Override
+	public LayoutPageTemplateStructureRel cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -166,6 +206,16 @@ public class LayoutPageTemplateStructureRelWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this layout page template structure rel.
+	 *
+	 * @return the ct collection ID of this layout page template structure rel
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the data of this layout page template structure rel.
 	 *
 	 * @return the data of this layout page template structure rel
@@ -173,6 +223,11 @@ public class LayoutPageTemplateStructureRelWrapper
 	@Override
 	public String getData() {
 		return model.getData();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.json.JSONObject getDataJSONObject() {
+		return model.getDataJSONObject();
 	}
 
 	/**
@@ -183,6 +238,16 @@ public class LayoutPageTemplateStructureRelWrapper
 	@Override
 	public long getGroupId() {
 		return model.getGroupId();
+	}
+
+	/**
+	 * Returns the last publish date of this layout page template structure rel.
+	 *
+	 * @return the last publish date of this layout page template structure rel
+	 */
+	@Override
+	public Date getLastPublishDate() {
+		return model.getLastPublishDate();
 	}
 
 	/**
@@ -246,6 +311,56 @@ public class LayoutPageTemplateStructureRelWrapper
 	}
 
 	/**
+	 * Returns the status of this layout page template structure rel.
+	 *
+	 * @return the status of this layout page template structure rel
+	 */
+	@Override
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
+	 * Returns the status by user ID of this layout page template structure rel.
+	 *
+	 * @return the status by user ID of this layout page template structure rel
+	 */
+	@Override
+	public long getStatusByUserId() {
+		return model.getStatusByUserId();
+	}
+
+	/**
+	 * Returns the status by user name of this layout page template structure rel.
+	 *
+	 * @return the status by user name of this layout page template structure rel
+	 */
+	@Override
+	public String getStatusByUserName() {
+		return model.getStatusByUserName();
+	}
+
+	/**
+	 * Returns the status by user uuid of this layout page template structure rel.
+	 *
+	 * @return the status by user uuid of this layout page template structure rel
+	 */
+	@Override
+	public String getStatusByUserUuid() {
+		return model.getStatusByUserUuid();
+	}
+
+	/**
+	 * Returns the status date of this layout page template structure rel.
+	 *
+	 * @return the status date of this layout page template structure rel
+	 */
+	@Override
+	public Date getStatusDate() {
+		return model.getStatusDate();
+	}
+
+	/**
 	 * Returns the user ID of this layout page template structure rel.
 	 *
 	 * @return the user ID of this layout page template structure rel
@@ -286,10 +401,85 @@ public class LayoutPageTemplateStructureRelWrapper
 	}
 
 	/**
-	 * NOTE FOR DEVELOPERS:
+	 * Returns <code>true</code> if this layout page template structure rel is approved.
 	 *
-	 * Never modify or reference this class directly. All methods that expect a layout page template structure rel model instance should use the <code>LayoutPageTemplateStructureRel</code> interface instead.
+	 * @return <code>true</code> if this layout page template structure rel is approved; <code>false</code> otherwise
 	 */
+	@Override
+	public boolean isApproved() {
+		return model.isApproved();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is denied.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied() {
+		return model.isDenied();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is a draft.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is a draft; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDraft() {
+		return model.isDraft();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is expired.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is expired; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isExpired() {
+		return model.isExpired();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is inactive.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive() {
+		return model.isInactive();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is incomplete.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete() {
+		return model.isIncomplete();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is pending.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is pending; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPending() {
+		return model.isPending();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout page template structure rel is scheduled.
+	 *
+	 * @return <code>true</code> if this layout page template structure rel is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled() {
+		return model.isScheduled();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -316,6 +506,16 @@ public class LayoutPageTemplateStructureRelWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this layout page template structure rel.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout page template structure rel
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the data of this layout page template structure rel.
 	 *
 	 * @param data the data of this layout page template structure rel
@@ -333,6 +533,16 @@ public class LayoutPageTemplateStructureRelWrapper
 	@Override
 	public void setGroupId(long groupId) {
 		model.setGroupId(groupId);
+	}
+
+	/**
+	 * Sets the last publish date of this layout page template structure rel.
+	 *
+	 * @param lastPublishDate the last publish date of this layout page template structure rel
+	 */
+	@Override
+	public void setLastPublishDate(Date lastPublishDate) {
+		model.setLastPublishDate(lastPublishDate);
 	}
 
 	/**
@@ -401,6 +611,56 @@ public class LayoutPageTemplateStructureRelWrapper
 	}
 
 	/**
+	 * Sets the status of this layout page template structure rel.
+	 *
+	 * @param status the status of this layout page template structure rel
+	 */
+	@Override
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
+	 * Sets the status by user ID of this layout page template structure rel.
+	 *
+	 * @param statusByUserId the status by user ID of this layout page template structure rel
+	 */
+	@Override
+	public void setStatusByUserId(long statusByUserId) {
+		model.setStatusByUserId(statusByUserId);
+	}
+
+	/**
+	 * Sets the status by user name of this layout page template structure rel.
+	 *
+	 * @param statusByUserName the status by user name of this layout page template structure rel
+	 */
+	@Override
+	public void setStatusByUserName(String statusByUserName) {
+		model.setStatusByUserName(statusByUserName);
+	}
+
+	/**
+	 * Sets the status by user uuid of this layout page template structure rel.
+	 *
+	 * @param statusByUserUuid the status by user uuid of this layout page template structure rel
+	 */
+	@Override
+	public void setStatusByUserUuid(String statusByUserUuid) {
+		model.setStatusByUserUuid(statusByUserUuid);
+	}
+
+	/**
+	 * Sets the status date of this layout page template structure rel.
+	 *
+	 * @param statusDate the status date of this layout page template structure rel
+	 */
+	@Override
+	public void setStatusDate(Date statusDate) {
+		model.setStatusDate(statusDate);
+	}
+
+	/**
 	 * Sets the user ID of this layout page template structure rel.
 	 *
 	 * @param userId the user ID of this layout page template structure rel
@@ -438,6 +698,25 @@ public class LayoutPageTemplateStructureRelWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<LayoutPageTemplateStructureRel, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<LayoutPageTemplateStructureRel, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.opensaml.integration.internal.certificate;
@@ -34,7 +25,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import java.util.Date;
-import java.util.Optional;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -42,10 +32,8 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import org.osgi.service.component.annotations.Component;
@@ -53,7 +41,7 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = CertificateTool.class)
+@Component(service = CertificateTool.class)
 public class CertificateToolImpl implements CertificateTool {
 
 	@Override
@@ -73,8 +61,9 @@ public class CertificateToolImpl implements CertificateTool {
 			ASN1InputStream asn1InputStream = new ASN1InputStream(
 				byteArrayInputStream)) {
 
-			X500Name issuerX500Name = createX500Name(issuerCertificateEntityId);
-			X500Name subjectX500Name = createX500Name(
+			X500Name issuerX500Name = _createX500Name(
+				issuerCertificateEntityId);
+			X500Name subjectX500Name = _createX500Name(
 				subjectCertificateEntityId);
 
 			X509v1CertificateBuilder x509v1CertificateBuilder =
@@ -88,17 +77,12 @@ public class CertificateToolImpl implements CertificateTool {
 			JcaContentSignerBuilder jcaContentSignerBuilder =
 				new JcaContentSignerBuilder(signatureAlgorithm);
 
-			ContentSigner contentSigner = jcaContentSignerBuilder.build(
-				keyPair.getPrivate());
-
-			X509CertificateHolder x509CertificateHolder =
-				x509v1CertificateBuilder.build(contentSigner);
-
 			return jcaX509CertificateConverter.getCertificate(
-				x509CertificateHolder);
+				x509v1CertificateBuilder.build(
+					jcaContentSignerBuilder.build(keyPair.getPrivate())));
 		}
-		catch (Exception oce) {
-			throw new CertificateException(oce);
+		catch (Exception exception) {
+			throw new CertificateException(exception);
 		}
 	}
 
@@ -125,7 +109,7 @@ public class CertificateToolImpl implements CertificateTool {
 
 		byte[] digest = messageDigest.digest();
 
-		StringBundler sb = new StringBundler(digest.length * 2 - 1);
+		StringBundler sb = new StringBundler((digest.length * 2) - 1);
 
 		for (int i = 0; i < digest.length; i++) {
 			String hex = String.format("%02X", digest[i]);
@@ -156,21 +140,21 @@ public class CertificateToolImpl implements CertificateTool {
 	}
 
 	@Override
-	public Optional<String> getSubjectName(X509Certificate x509Certificate) {
+	public String getSubjectName(X509Certificate x509Certificate) {
 		if (x509Certificate == null) {
-			return Optional.empty();
+			return null;
 		}
 
 		Principal principal = x509Certificate.getSubjectDN();
 
 		if (principal != null) {
-			return Optional.of(principal.getName());
+			return principal.getName();
 		}
 
-		return Optional.empty();
+		return null;
 	}
 
-	protected X500Name createX500Name(CertificateEntityId certificateEntityId) {
+	private X500Name _createX500Name(CertificateEntityId certificateEntityId) {
 		X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
 
 		if (Validator.isNotNull(certificateEntityId.getCommonName())) {

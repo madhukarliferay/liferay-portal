@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal;
 
-import com.liferay.oauth2.provider.scope.liferay.ApplicationDescriptorLocator;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
-import com.liferay.oauth2.provider.scope.liferay.ScopeDescriptorLocator;
+import com.liferay.oauth2.provider.scope.liferay.spi.ApplicationDescriptorLocator;
+import com.liferay.oauth2.provider.scope.liferay.spi.ScopeDescriptorLocator;
 import com.liferay.oauth2.provider.scope.spi.application.descriptor.ApplicationDescriptor;
 import com.liferay.oauth2.provider.scope.spi.scope.descriptor.ScopeDescriptor;
 import com.liferay.petra.string.StringUtil;
@@ -27,8 +18,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Stian Sigvartsen
@@ -83,48 +72,38 @@ public class AssignableScopes {
 	}
 
 	public boolean contains(AssignableScopes assignableScopes) {
-		if (!_liferayOAuth2Scopes.containsAll(
-				assignableScopes.getLiferayOAuth2Scopes())) {
-
-			return false;
-		}
-
-		return true;
+		return _liferayOAuth2Scopes.containsAll(
+			assignableScopes.getLiferayOAuth2Scopes());
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AssignableScopes)) {
+		if (!(object instanceof AssignableScopes)) {
 			return false;
 		}
 
-		AssignableScopes assignableScopes = (AssignableScopes)obj;
+		AssignableScopes assignableScopes = (AssignableScopes)object;
 
-		if (Objects.equals(
-				_liferayOAuth2Scopes,
-				assignableScopes.getLiferayOAuth2Scopes())) {
-
-			return true;
-		}
-
-		return false;
+		return Objects.equals(
+			_liferayOAuth2Scopes, assignableScopes.getLiferayOAuth2Scopes());
 	}
 
 	public AssignableScopes getApplicationAssignableScopes(
 		String applicationName) {
 
-		Stream<LiferayOAuth2Scope> stream = _liferayOAuth2Scopes.stream();
+		Set<LiferayOAuth2Scope> liferayOAuth2Scopes = new HashSet<>();
 
-		Set<LiferayOAuth2Scope> liferayOAuth2Scopes = stream.filter(
-			liferayOAuth2Scope -> applicationName.equals(
-				liferayOAuth2Scope.getApplicationName())
-		).collect(
-			Collectors.toSet()
-		);
+		for (LiferayOAuth2Scope liferayOAuth2Scope : _liferayOAuth2Scopes) {
+			if (Objects.equals(
+					applicationName, liferayOAuth2Scope.getApplicationName())) {
+
+				liferayOAuth2Scopes.add(liferayOAuth2Scope);
+			}
+		}
 
 		return new AssignableScopes(
 			_applicationDescriptorLocator, liferayOAuth2Scopes, _locale,
@@ -156,17 +135,18 @@ public class AssignableScopes {
 	public Set<String> getApplicationScopeDescription(
 		long companyId, String applicationName) {
 
-		Stream<LiferayOAuth2Scope> stream = _liferayOAuth2Scopes.stream();
+		Set<String> scopeDescriptions = new HashSet<>();
 
-		return stream.filter(
-			liferayOAuth2Scope -> applicationName.equals(
-				liferayOAuth2Scope.getApplicationName())
-		).map(
-			liferayOAuth2Scope -> getScopeDescription(
-				companyId, liferayOAuth2Scope)
-		).collect(
-			Collectors.toSet()
-		);
+		for (LiferayOAuth2Scope liferayOAuth2Scope : _liferayOAuth2Scopes) {
+			if (Objects.equals(
+					applicationName, liferayOAuth2Scope.getApplicationName())) {
+
+				scopeDescriptions.add(
+					getScopeDescription(companyId, liferayOAuth2Scope));
+			}
+		}
+
+		return scopeDescriptions;
 	}
 
 	public Set<LiferayOAuth2Scope> getLiferayOAuth2Scopes() {
@@ -194,16 +174,17 @@ public class AssignableScopes {
 	}
 
 	public Set<AssignableScopes> splitByApplicationScopes() {
-		Stream<LiferayOAuth2Scope> stream = _liferayOAuth2Scopes.stream();
+		Set<AssignableScopes> assignableScopess = new HashSet<>();
 
-		return stream.map(
-			liferayOAuth2Scope -> new AssignableScopes(
-				_applicationDescriptorLocator,
-				Collections.singleton(liferayOAuth2Scope), _locale,
-				_scopeDescriptorLocator)
-		).collect(
-			Collectors.toSet()
-		);
+		for (LiferayOAuth2Scope liferayOAuth2Scope : _liferayOAuth2Scopes) {
+			assignableScopess.add(
+				new AssignableScopes(
+					_applicationDescriptorLocator,
+					Collections.singleton(liferayOAuth2Scope), _locale,
+					_scopeDescriptorLocator));
+		}
+
+		return assignableScopess;
 	}
 
 	public AssignableScopes subtract(AssignableScopes assignableScopes) {
@@ -224,7 +205,7 @@ public class AssignableScopes {
 	}
 
 	private final ApplicationDescriptorLocator _applicationDescriptorLocator;
-	private Set<LiferayOAuth2Scope> _liferayOAuth2Scopes = new HashSet<>();
+	private final Set<LiferayOAuth2Scope> _liferayOAuth2Scopes;
 	private final Locale _locale;
 	private final ScopeDescriptorLocator _scopeDescriptorLocator;
 

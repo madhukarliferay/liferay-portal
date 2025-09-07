@@ -1,68 +1,81 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.item.selector.web.internal.display.context;
 
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetVocabularyService;
+import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.document.library.item.selector.web.internal.DLItemSelectorView;
+import com.liferay.document.library.item.selector.web.internal.criterion.DLItemSelectorCriterionCreationMenuRestrictionUtil;
+import com.liferay.document.library.item.selector.web.internal.file.DLCustomFileItemSelectorView;
 import com.liferay.document.library.kernel.model.DLFileEntryConstants;
+import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
 import com.liferay.document.library.kernel.model.DLFileShortcutConstants;
+import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppServiceUtil;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
+import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.kernel.util.DLValidatorUtil;
 import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolver;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolverHandler;
+import com.liferay.item.selector.criteria.file.criterion.CustomFileItemSelectorCriterion;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
+import com.liferay.item.selector.taglib.servlet.taglib.util.RepositoryEntryBrowserTagUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.dao.search.SearchPaginationUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.PortalPreferences;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.Repository;
 import com.liferay.portal.kernel.repository.RepositoryProviderUtil;
 import com.liferay.portal.kernel.repository.capabilities.FileEntryTypeCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchContextFactory;
 import com.liferay.portal.kernel.search.SearchResult;
 import com.liferay.portal.kernel.search.SearchResultUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.MimeTypesUtil;
+import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.util.RepositoryUtil;
 import com.liferay.staging.StagingGroupHelper;
+
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Roberto Díaz
@@ -70,43 +83,71 @@ import javax.servlet.http.HttpServletRequest;
 public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 
 	public DLItemSelectorViewDisplayContext(
-		HttpServletRequest httpServletRequest, T itemSelectorCriterion,
-		DLItemSelectorView<T> dlItemSelectorView,
-		ItemSelectorReturnTypeResolverHandler
-			itemSelectorReturnTypeResolverHandler,
-		String itemSelectedEventName, boolean search, PortletURL portletURL,
 		AssetVocabularyService assetVocabularyService,
 		ClassNameLocalService classNameLocalService,
+		DLFileEntryTypeLocalService dlFileEntryTypeLocalService,
+		DLItemSelectorView<T> dlItemSelectorView,
+		ModelResourcePermission<Folder> folderModelResourcePermission,
+		HttpServletRequest httpServletRequest, T itemSelectorCriterion,
+		String itemSelectedEventName,
+		ItemSelectorReturnTypeResolverHandler
+			itemSelectorReturnTypeResolverHandler,
+		PortletURL portletURL, boolean search,
 		StagingGroupHelper stagingGroupHelper) {
 
-		_httpServletRequest = httpServletRequest;
-		_itemSelectorCriterion = itemSelectorCriterion;
-		_dlItemSelectorView = dlItemSelectorView;
-		_itemSelectorReturnTypeResolverHandler =
-			itemSelectorReturnTypeResolverHandler;
-		_itemSelectedEventName = itemSelectedEventName;
-		_search = search;
-		_portletURL = portletURL;
 		_assetVocabularyService = assetVocabularyService;
 		_classNameLocalService = classNameLocalService;
+		_dlFileEntryTypeLocalService = dlFileEntryTypeLocalService;
+		_dlItemSelectorView = dlItemSelectorView;
+		_folderModelResourcePermission = folderModelResourcePermission;
+		_httpServletRequest = httpServletRequest;
+		_itemSelectorCriterion = itemSelectorCriterion;
+		_itemSelectedEventName = itemSelectedEventName;
+		_itemSelectorReturnTypeResolverHandler =
+			itemSelectorReturnTypeResolverHandler;
+		_portletURL = portletURL;
+		_search = search;
 		_stagingGroupHelper = stagingGroupHelper;
 
-		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+		_portalPreferences = PortletPreferencesFactoryUtil.getPortalPreferences(
+			httpServletRequest);
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
 
+	public Set<String> getAllowedCreationMenuUIItemKeys() {
+		return DLItemSelectorCriterionCreationMenuRestrictionUtil.
+			getAllowedCreationMenuUIItemKeys(_itemSelectorCriterion);
+	}
+
+	public PortletURL getEditImageURL(
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortalException {
+
+		return PortletURLBuilder.createActionURL(
+			liferayPortletResponse, PortletKeys.DOCUMENT_LIBRARY
+		).setActionName(
+			"/document_library/image_editor"
+		).setParameter(
+			"folderId", getFolderId()
+		).buildPortletURL();
+	}
+
 	public String[] getExtensions() {
+		if (_itemSelectorCriterion instanceof CustomFileItemSelectorCriterion) {
+			CustomFileItemSelectorCriterion customFileItemSelectorCriterion =
+				(CustomFileItemSelectorCriterion)_itemSelectorCriterion;
+
+			return customFileItemSelectorCriterion.getExtensions();
+		}
+
 		return _dlItemSelectorView.getExtensions();
 	}
 
-	public long getFolderId() {
-		if (_folderId != null) {
-			return _folderId;
+	public long getFolderId() throws PortalException {
+		if (_folderId == null) {
+			_folderId = _getFolderId(_httpServletRequest);
 		}
-
-		_folderId = ParamUtil.getLong(
-			_httpServletRequest, "folderId",
-			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
 		return _folderId;
 	}
@@ -115,58 +156,47 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		return _itemSelectedEventName;
 	}
 
-	public T getItemSelectorCriterion() {
-		return _itemSelectorCriterion;
-	}
+	public ItemSelectorReturnTypeResolver<?, ?>
+		getItemSelectorReturnTypeResolver() {
 
-	public ItemSelectorReturnTypeResolver getItemSelectorReturnTypeResolver() {
 		return _itemSelectorReturnTypeResolverHandler.
 			getItemSelectorReturnTypeResolver(
 				_itemSelectorCriterion, _dlItemSelectorView, FileEntry.class);
 	}
 
-	public String[] getMimeTypes() {
-		if (_mimeTypes != null) {
-			return _mimeTypes;
+	public long getMaxFileSize() {
+		if (_itemSelectorCriterion instanceof DLCustomFileItemSelectorView) {
+			CustomFileItemSelectorCriterion customFileItemSelectorCriterion =
+				(CustomFileItemSelectorCriterion)_itemSelectorCriterion;
+
+			return DLValidatorUtil.getMaxAllowableSize(
+				_themeDisplay.getScopeGroupId(), null,
+				customFileItemSelectorCriterion.getMaxFileSize());
 		}
 
-		String[] mimeTypes = _dlItemSelectorView.getMimeTypes();
+		return DLValidatorUtil.getMaxAllowableSize(
+			_themeDisplay.getScopeGroupId(), null);
+	}
 
-		ItemSelectorCriterion itemSelectorCriterion =
-			getItemSelectorCriterion();
-
-		if (itemSelectorCriterion instanceof InfoItemItemSelectorCriterion) {
-			InfoItemItemSelectorCriterion infoItemItemSelectorCriterion =
-				(InfoItemItemSelectorCriterion)itemSelectorCriterion;
-
-			String[] infoItemSelectorMimeTypes =
-				infoItemItemSelectorCriterion.getMimeTypes();
-
-			if (ArrayUtil.isNotEmpty(infoItemSelectorMimeTypes)) {
-				mimeTypes = infoItemItemSelectorCriterion.getMimeTypes();
-			}
-		}
-
-		_mimeTypes = mimeTypes;
-
-		return _mimeTypes;
+	public String getMimeTypeRestriction() {
+		return _itemSelectorCriterion.getMimeTypeRestriction();
 	}
 
 	public PortletURL getPortletURL(
 			LiferayPortletResponse liferayPortletResponse)
-		throws PortletException {
+		throws PortalException, PortletException {
 
-		PortletURL portletURL = PortletURLUtil.clone(
-			_portletURL, liferayPortletResponse);
-
-		portletURL.setParameter("folderId", String.valueOf(getFolderId()));
-		portletURL.setParameter("selectedTab", String.valueOf(getTitle()));
-
-		return portletURL;
+		return PortletURLBuilder.create(
+			PortletURLUtil.clone(_portletURL, liferayPortletResponse)
+		).setParameter(
+			"folderId", getFolderId()
+		).setParameter(
+			"selectedTab", getTitle()
+		).buildPortletURL();
 	}
 
 	public List<Object> getRepositoryEntries() throws Exception {
-		if (isSearch()) {
+		if (_isSearch()) {
 			Hits hits = _getHits();
 
 			Document[] docs = hits.getDocs();
@@ -201,10 +231,13 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 			return repositoryEntries;
 		}
 
-		String orderByCol = ParamUtil.getString(
-			_httpServletRequest, "orderByCol", "title");
-		String orderByType = ParamUtil.getString(
-			_httpServletRequest, "orderByType", "asc");
+		OrderByComparator<Object> repositoryModelOrderByComparator =
+			DLUtil.getRepositoryModelOrderByComparator(
+				RepositoryEntryBrowserTagUtil.getOrderByCol(
+					_httpServletRequest, _portalPreferences),
+				RepositoryEntryBrowserTagUtil.getOrderByType(
+					_httpServletRequest, _portalPreferences),
+				true);
 
 		int[] startAndEnd = _getStartAndEnd();
 
@@ -216,27 +249,30 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 			FileEntryTypeCapability fileEntryTypeCapability =
 				repository.getCapability(FileEntryTypeCapability.class);
 
+			Long fileEntryTypeId = _getFileEntryTypeId();
+
+			if (fileEntryTypeId == null) {
+				fileEntryTypeId =
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL;
+			}
+
 			return (List)
 				fileEntryTypeCapability.
 					getFoldersAndFileEntriesAndFileShortcuts(
-						getStagingAwareGroupId(), getFolderId(), getMimeTypes(),
-						_getFileEntryTypeId(), false,
+						_getStagingAwareGroupId(), getFolderId(),
+						_getMimeTypes(), fileEntryTypeId, false,
 						WorkflowConstants.STATUS_APPROVED, startAndEnd[0],
-						startAndEnd[1],
-						DLUtil.getRepositoryModelOrderByComparator(
-							orderByCol, orderByType, true));
+						startAndEnd[1], repositoryModelOrderByComparator);
 		}
 
 		return DLAppServiceUtil.getFoldersAndFileEntriesAndFileShortcuts(
-			getStagingAwareGroupId(), getFolderId(),
-			WorkflowConstants.STATUS_APPROVED, getMimeTypes(), false, false,
-			startAndEnd[0], startAndEnd[1],
-			DLUtil.getRepositoryModelOrderByComparator(
-				orderByCol, orderByType, true));
+			_repository.getRepositoryId(), getFolderId(),
+			WorkflowConstants.STATUS_APPROVED, _getMimeTypes(), true, false,
+			startAndEnd[0], startAndEnd[1], repositoryModelOrderByComparator);
 	}
 
 	public int getRepositoryEntriesCount() throws PortalException {
-		if (isSearch()) {
+		if (_isSearch()) {
 			Hits hits = _getHits();
 
 			return hits.getLength();
@@ -250,39 +286,22 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 			FileEntryTypeCapability fileEntryTypeCapability =
 				repository.getCapability(FileEntryTypeCapability.class);
 
+			Long fileEntryTypeId = _getFileEntryTypeId();
+
+			if (fileEntryTypeId == null) {
+				fileEntryTypeId =
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL;
+			}
+
 			return fileEntryTypeCapability.
 				getFoldersAndFileEntriesAndFileShortcutsCount(
-					getStagingAwareGroupId(), getFolderId(), getMimeTypes(),
-					_getFileEntryTypeId(), false,
-					WorkflowConstants.STATUS_APPROVED);
+					_getStagingAwareGroupId(), getFolderId(), _getMimeTypes(),
+					fileEntryTypeId, false, WorkflowConstants.STATUS_APPROVED);
 		}
 
 		return DLAppServiceUtil.getFoldersAndFileEntriesAndFileShortcutsCount(
-			getStagingAwareGroupId(), getFolderId(),
-			WorkflowConstants.STATUS_APPROVED, getMimeTypes(), false, false);
-	}
-
-	public long getStagingAwareGroupId() {
-		if (_groupId != null) {
-			return _groupId;
-		}
-
-		long groupId = _themeDisplay.getScopeGroupId();
-
-		if (_stagingGroupHelper.isStagingGroup(groupId) &&
-			!_stagingGroupHelper.isStagedPortlet(
-				groupId, DLPortletKeys.DOCUMENT_LIBRARY)) {
-
-			Group group = _stagingGroupHelper.fetchLiveGroup(groupId);
-
-			if (group != null) {
-				groupId = group.getGroupId();
-			}
-		}
-
-		_groupId = groupId;
-
-		return groupId;
+			_repository.getRepositoryId(), getFolderId(),
+			WorkflowConstants.STATUS_APPROVED, _getMimeTypes(), true, false);
 	}
 
 	public String getTitle() {
@@ -293,48 +312,152 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 			LiferayPortletResponse liferayPortletResponse)
 		throws PortalException {
 
+		if (!isShowDragAndDropZone()) {
+			return null;
+		}
+
 		List<AssetVocabulary> assetVocabularies =
 			_assetVocabularyService.getGroupVocabularies(
-				getStagingAwareGroupId());
+				PortalUtil.getCurrentAndAncestorSiteGroupIds(
+					_themeDisplay.getScopeGroupId()));
 
 		if (!assetVocabularies.isEmpty()) {
 			long classNameId = _classNameLocalService.getClassNameId(
 				DLFileEntryConstants.getClassName());
+			long defaultFileEntryTypeId =
+				DLFileEntryTypeLocalServiceUtil.getDefaultFileEntryTypeId(
+					getFolderId());
 
 			for (AssetVocabulary assetVocabulary : assetVocabularies) {
 				if (assetVocabulary.isRequired(
-						classNameId,
-						DLFileEntryTypeConstants.
-							FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT)) {
+						classNameId, defaultFileEntryTypeId,
+						_themeDisplay.getScopeGroupId())) {
 
 					return null;
 				}
 			}
 		}
 
-		PortletURL portletURL = liferayPortletResponse.createActionURL(
-			PortletKeys.DOCUMENT_LIBRARY);
-
-		portletURL.setParameter(
-			ActionRequest.ACTION_NAME, "/document_library/upload_file_entry");
-		portletURL.setParameter("folderId", String.valueOf(getFolderId()));
-
-		return portletURL;
+		return PortletURLBuilder.createActionURL(
+			liferayPortletResponse, PortletKeys.DOCUMENT_LIBRARY
+		).setActionName(
+			"/document_library/upload_file_entry"
+		).setParameter(
+			"folderId", getFolderId()
+		).buildPortletURL();
 	}
 
-	public boolean isSearch() {
-		return _search;
+	public boolean isShowDragAndDropZone() throws PortalException {
+		if (_showDragAndDropZone != null) {
+			return _showDragAndDropZone;
+		}
+
+		if (!ModelResourcePermissionUtil.contains(
+				_folderModelResourcePermission,
+				_themeDisplay.getPermissionChecker(),
+				_themeDisplay.getScopeGroupId(), getFolderId(),
+				ActionKeys.ADD_DOCUMENT)) {
+
+			_showDragAndDropZone = false;
+		}
+		else {
+			if (RepositoryUtil.isExternalRepository(
+					_repository.getRepositoryId()) ||
+				DLUtil.hasWorkflowDefinitionLink(
+					_themeDisplay.getCompanyId(),
+					_themeDisplay.getScopeGroupId(), getFolderId(),
+					DLFileEntryTypeLocalServiceUtil.getDefaultFileEntryTypeId(
+						getFolderId()))) {
+
+				_showDragAndDropZone = false;
+			}
+			else {
+				_showDragAndDropZone = true;
+			}
+		}
+
+		return _showDragAndDropZone;
 	}
 
-	private long _getFileEntryTypeId() {
-		ItemSelectorCriterion itemSelectorCriterion =
-			getItemSelectorCriterion();
+	public void setShowDragAndDropZone(boolean showDragAndDropZone) {
+		_showDragAndDropZone = showDragAndDropZone;
+	}
+
+	private Long _getFileEntryTypeId() {
+		if (!(_itemSelectorCriterion instanceof
+				InfoItemItemSelectorCriterion)) {
+
+			return null;
+		}
 
 		InfoItemItemSelectorCriterion infoItemItemSelectorCriterion =
-			(InfoItemItemSelectorCriterion)itemSelectorCriterion;
+			(InfoItemItemSelectorCriterion)_itemSelectorCriterion;
+
+		Long fileEntryTypeId = _getFileEntryTypeId(
+			infoItemItemSelectorCriterion.getItemSubtype());
+
+		if (fileEntryTypeId != null) {
+			return fileEntryTypeId;
+		}
 
 		return GetterUtil.getLong(
 			infoItemItemSelectorCriterion.getItemSubtype());
+	}
+
+	private Long _getFileEntryTypeId(String fileEntryTypeKey) {
+		DLFileEntryType dlFileEntryType =
+			_dlFileEntryTypeLocalService.fetchFileEntryType(
+				GetterUtil.getLong(fileEntryTypeKey, -1));
+
+		if (dlFileEntryType == null) {
+			dlFileEntryType = _dlFileEntryTypeLocalService.fetchFileEntryType(
+				_themeDisplay.getScopeGroupId(), fileEntryTypeKey);
+		}
+
+		if (dlFileEntryType == null) {
+			dlFileEntryType = _dlFileEntryTypeLocalService.fetchFileEntryType(
+				_themeDisplay.getCompanyGroupId(), fileEntryTypeKey);
+		}
+
+		if (dlFileEntryType != null) {
+			return dlFileEntryType.getFileEntryTypeId();
+		}
+
+		return null;
+	}
+
+	private long _getFolderId(HttpServletRequest httpServletRequest)
+		throws PortalException {
+
+		if (httpServletRequest.getParameter("folderId") != null) {
+			return ParamUtil.getLong(
+				httpServletRequest, "folderId",
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+		}
+
+		long selectedFileEntryId = ParamUtil.getLong(
+			PortalUtil.getOriginalServletRequest(httpServletRequest),
+			"selectedItemIds");
+
+		if (selectedFileEntryId != 0) {
+			FileEntry fileEntry = DLAppServiceUtil.getFileEntry(
+				selectedFileEntryId);
+
+			return fileEntry.getFolderId();
+		}
+
+		return DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+	}
+
+	private long[] _getGroupIds() throws PortalException {
+		if (_isEverywhereScopeFilter()) {
+			return SiteConnectedGroupGroupProviderUtil.
+				getCurrentAndAncestorSiteAndDepotGroupIds(
+					_themeDisplay.getScopeGroupId());
+		}
+
+		return PortalUtil.getCurrentAndAncestorSiteGroupIds(
+			_themeDisplay.getScopeGroupId());
 	}
 
 	private Hits _getHits() throws PortalException {
@@ -343,9 +466,55 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		}
 
 		_hits = DLAppServiceUtil.search(
-			getStagingAwareGroupId(), _getSearchContext());
+			_getStagingAwareGroupId(), _getSearchContext());
 
 		return _hits;
+	}
+
+	private String[] _getMimeTypes() {
+		if (_mimeTypes != null) {
+			return _mimeTypes;
+		}
+
+		String[] mimeTypes = _dlItemSelectorView.getMimeTypes();
+
+		ItemSelectorCriterion itemSelectorCriterion = _itemSelectorCriterion;
+
+		if (itemSelectorCriterion instanceof CustomFileItemSelectorCriterion) {
+			String[] customFileItemSelectorMimeTypes = new String[0];
+
+			CustomFileItemSelectorCriterion customFileItemSelectorCriterion =
+				(CustomFileItemSelectorCriterion)itemSelectorCriterion;
+
+			for (String extension :
+					customFileItemSelectorCriterion.getExtensions()) {
+
+				customFileItemSelectorMimeTypes = ArrayUtil.append(
+					customFileItemSelectorMimeTypes,
+					MimeTypesUtil.getExtensionContentType(extension));
+			}
+
+			if (ArrayUtil.isNotEmpty(customFileItemSelectorMimeTypes)) {
+				mimeTypes = customFileItemSelectorMimeTypes;
+			}
+		}
+		else if (itemSelectorCriterion instanceof
+					InfoItemItemSelectorCriterion) {
+
+			InfoItemItemSelectorCriterion infoItemItemSelectorCriterion =
+				(InfoItemItemSelectorCriterion)itemSelectorCriterion;
+
+			String[] infoItemSelectorMimeTypes =
+				infoItemItemSelectorCriterion.getMimeTypes();
+
+			if (ArrayUtil.isNotEmpty(infoItemSelectorMimeTypes)) {
+				mimeTypes = infoItemItemSelectorCriterion.getMimeTypes();
+			}
+		}
+
+		_mimeTypes = mimeTypes;
+
+		return _mimeTypes;
 	}
 
 	private Repository _getRepository() throws PortalException {
@@ -356,12 +525,21 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		Repository repository = null;
 
 		if (getFolderId() != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-			repository = RepositoryProviderUtil.getFolderRepository(
+			DLFolder dlFolder = DLFolderLocalServiceUtil.fetchDLFolder(
 				getFolderId());
+
+			if ((dlFolder != null) && dlFolder.isMountPoint()) {
+				repository = RepositoryProviderUtil.getRepository(
+					dlFolder.getRepositoryId());
+			}
+			else {
+				repository = RepositoryProviderUtil.getFolderRepository(
+					getFolderId());
+			}
 		}
 		else {
 			repository = RepositoryProviderUtil.getRepository(
-				getStagingAwareGroupId());
+				_getStagingAwareGroupId());
 		}
 
 		_repository = repository;
@@ -384,19 +562,33 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		if (_isFilterByFileEntryType() &&
 			repository.isCapabilityProvided(FileEntryTypeCapability.class)) {
 
-			searchContext.setAttribute(
-				"fileEntryTypeId", _getFileEntryTypeId());
+			Long fileEntryTypeId = _getFileEntryTypeId();
+
+			if (fileEntryTypeId != null) {
+				searchContext.setAttribute("fileEntryTypeId", fileEntryTypeId);
+			}
 		}
 
-		searchContext.setAttribute("mimeTypes", getMimeTypes());
+		searchContext.setAttribute("mimeTypes", _getMimeTypes());
 		searchContext.setEnd(startAndEnd[1]);
 		searchContext.setFolderIds(new long[] {getFolderId()});
-		searchContext.setGroupIds(new long[] {getStagingAwareGroupId()});
+		searchContext.setGroupIds(_getGroupIds());
 		searchContext.setStart(startAndEnd[0]);
 
 		_searchContext = searchContext;
 
 		return _searchContext;
+	}
+
+	private long _getStagingAwareGroupId() {
+		if (_groupId != null) {
+			return _groupId;
+		}
+
+		_groupId = _stagingGroupHelper.getStagedPortletGroupId(
+			_themeDisplay.getScopeGroupId(), DLPortletKeys.DOCUMENT_LIBRARY);
+
+		return _groupId;
 	}
 
 	private int[] _getStartAndEnd() {
@@ -416,6 +608,11 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		return _startAndEnd;
 	}
 
+	private boolean _isEverywhereScopeFilter() {
+		return Objects.equals(
+			ParamUtil.getString(_httpServletRequest, "scope"), "everywhere");
+	}
+
 	private boolean _isFilterByFileEntryType() {
 		if (_filterByFileEntryType != null) {
 			return _filterByFileEntryType;
@@ -423,8 +620,7 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 
 		boolean filterByFileEntryType = false;
 
-		ItemSelectorCriterion itemSelectorCriterion =
-			getItemSelectorCriterion();
+		ItemSelectorCriterion itemSelectorCriterion = _itemSelectorCriterion;
 
 		if (itemSelectorCriterion instanceof InfoItemItemSelectorCriterion) {
 			InfoItemItemSelectorCriterion infoItemItemSelectorCriterion =
@@ -442,11 +638,22 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 		return _filterByFileEntryType;
 	}
 
+	private boolean _isSearch() {
+		if (_isEverywhereScopeFilter()) {
+			return true;
+		}
+
+		return _search;
+	}
+
 	private final AssetVocabularyService _assetVocabularyService;
 	private final ClassNameLocalService _classNameLocalService;
+	private final DLFileEntryTypeLocalService _dlFileEntryTypeLocalService;
 	private final DLItemSelectorView<T> _dlItemSelectorView;
 	private Boolean _filterByFileEntryType;
 	private Long _folderId;
+	private final ModelResourcePermission<Folder>
+		_folderModelResourcePermission;
 	private Long _groupId;
 	private Hits _hits;
 	private final HttpServletRequest _httpServletRequest;
@@ -455,10 +662,12 @@ public class DLItemSelectorViewDisplayContext<T extends ItemSelectorCriterion> {
 	private final ItemSelectorReturnTypeResolverHandler
 		_itemSelectorReturnTypeResolverHandler;
 	private String[] _mimeTypes;
+	private final PortalPreferences _portalPreferences;
 	private final PortletURL _portletURL;
 	private Repository _repository;
 	private final boolean _search;
 	private SearchContext _searchContext;
+	private Boolean _showDragAndDropZone;
 	private final StagingGroupHelper _stagingGroupHelper;
 	private int[] _startAndEnd;
 	private final ThemeDisplay _themeDisplay;

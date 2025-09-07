@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.wab.extender.internal.adapter;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 /**
  * @author Raymond Augé
@@ -58,7 +51,10 @@ public class ServletContextListenerExceptionAdapter
 			try {
 				thread.join();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 		else {
@@ -67,9 +63,7 @@ public class ServletContextListenerExceptionAdapter
 	}
 
 	@Override
-	public void contextInitialized(
-		final ServletContextEvent servletContextEvent) {
-
+	public void contextInitialized(ServletContextEvent servletContextEvent) {
 		if (ServerDetector.isJBoss() || ServerDetector.isWildfly()) {
 			ServletContext servletContext =
 				servletContextEvent.getServletContext();
@@ -92,7 +86,10 @@ public class ServletContextListenerExceptionAdapter
 			try {
 				thread.join();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
 			}
 		}
 		else {
@@ -109,8 +106,8 @@ public class ServletContextListenerExceptionAdapter
 			_servletContextListener.contextDestroyed(
 				new ServletContextEvent(_servletContext));
 		}
-		catch (Exception e) {
-			_exception = e;
+		catch (Exception exception) {
+			_exception = exception;
 		}
 	}
 
@@ -119,10 +116,13 @@ public class ServletContextListenerExceptionAdapter
 			_servletContextListener.contextInitialized(
 				new ServletContextEvent(_servletContext));
 		}
-		catch (Exception e) {
-			_exception = e;
+		catch (Exception exception) {
+			_exception = exception;
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ServletContextListenerExceptionAdapter.class);
 
 	private Exception _exception;
 	private final ServletContext _servletContext;

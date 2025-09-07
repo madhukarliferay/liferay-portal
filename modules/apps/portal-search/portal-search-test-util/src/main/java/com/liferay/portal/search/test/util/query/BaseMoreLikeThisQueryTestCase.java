@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.test.util.query;
@@ -70,7 +61,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 
 			MoreLikeThisQuery.DocumentIdentifier documentIdentifier =
 				queries.documentIdentifier(
-					String.valueOf(getCompanyId()), "LiferayDocumentType", id);
+					String.valueOf(getCompanyId()), "_doc", id);
 
 			MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
 				Collections.singleton(documentIdentifier));
@@ -97,18 +88,75 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	}
 
 	@Test
+	public void testMoreLikeThisWithMinDocFreq() throws Exception {
+		addDocuments("Red Blue", "Red Dog", "Red Blue Color", "Color");
+
+		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+			Collections.singletonList(_FIELD_TITLE), "Red Blue Color");
+
+		moreLikeThisQuery.setMinDocFrequency(1);
+		moreLikeThisQuery.setMinTermFrequency(1);
+
+		assertSearch(
+			null, moreLikeThisQuery,
+			Arrays.asList("Red Blue Color", "Red Blue", "Color", "Red Dog"));
+
+		moreLikeThisQuery.setMinDocFrequency(3);
+
+		assertSearch(
+			null, moreLikeThisQuery,
+			Arrays.asList("Red Blue", "Red Dog", "Red Blue Color"));
+	}
+
+	@Test
+	public void testMoreLikeThisWithMinimumShouldMatch() throws Exception {
+		String[] texts = new String[10];
+
+		for (int i = 0; i < 10; i++) {
+			String text = "";
+
+			for (int j = 1; j <= (10 - i); j++) {
+				text += j + " ";
+			}
+
+			texts[i] = text.trim();
+			addDocuments(text);
+		}
+
+		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+			new String[] {_FIELD_TITLE}, texts[0]);
+
+		for (int i = 0; i <= 10; i++) {
+			String minimumShouldMatch = (10 * i) + "%";
+
+			moreLikeThisQuery.setMinShouldMatch(minimumShouldMatch);
+
+			List<String> expected = new ArrayList<>();
+
+			if (minimumShouldMatch.equals("0%")) {
+				expected = Arrays.asList(texts);
+			}
+			else {
+				for (int j = 0; j < (11 - i); j++) {
+					expected.add(texts[j]);
+				}
+			}
+
+			assertSearch(moreLikeThisQuery, expected);
+		}
+	}
+
+	@Test
 	public void testMoreLikeThisWithMultipleFields() throws Exception {
 		addDocuments("alpha charlie", "delta echo");
 
 		addDocuments(
 			value -> DocumentCreationHelpers.singleText(
 				_FIELD_DESCRIPTION, value),
-			Arrays.asList("bravo charlie"));
-
-		String[] fields = {_FIELD_TITLE};
+			"bravo charlie");
 
 		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
-			fields, "alpha", "bravo");
+			new String[] {_FIELD_TITLE}, "alpha", "bravo");
 
 		moreLikeThisQuery.addField(_FIELD_DESCRIPTION);
 
@@ -129,7 +177,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	protected void addDocuments(String... values) throws Exception {
 		addDocuments(
 			value -> DocumentCreationHelpers.singleText(_FIELD_TITLE, value),
-			Arrays.asList(values));
+			values);
 	}
 
 	protected void assertSearch(
@@ -151,13 +199,10 @@ public abstract class BaseMoreLikeThisQueryTestCase
 		assertSearch(
 			indexingTestHelper -> {
 				SearchSearchRequest searchSearchRequest =
-					new SearchSearchRequest();
+					createSearchSearchRequest();
 
-				searchSearchRequest.setIndexNames(
-					String.valueOf(getCompanyId()));
 				searchSearchRequest.setQuery(legacyMoreLikeThisQuery);
 				searchSearchRequest.setQuery(moreLikeThisQuery);
-				searchSearchRequest.setSize(30);
 
 				SearchEngineAdapter searchEngineAdapter =
 					getSearchEngineAdapter();
@@ -212,11 +257,22 @@ public abstract class BaseMoreLikeThisQueryTestCase
 		assertSearch(null, moreLikeThisQuery, expectedValues);
 	}
 
+	protected SearchSearchRequest createSearchSearchRequest() {
+		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
+
+		searchSearchRequest.setIndexNames(String.valueOf(getCompanyId()));
+		searchSearchRequest.setSize(30);
+
+		return searchSearchRequest;
+	}
+
 	protected void deleteDocumentById(String id) {
 		SearchEngineAdapter searchEngineAdapter = getSearchEngineAdapter();
 
 		DeleteDocumentRequest deleteDocumentRequest = new DeleteDocumentRequest(
-			String.valueOf(getCompanyId()), "LiferayDocumentType", id);
+			String.valueOf(getCompanyId()), id);
+
+		deleteDocumentRequest.setType("_doc");
 
 		searchEngineAdapter.execute(deleteDocumentRequest);
 	}
@@ -228,12 +284,10 @@ public abstract class BaseMoreLikeThisQueryTestCase
 
 		documentBuilder.setString(_FIELD_TITLE, title);
 
-		Document document = documentBuilder.build();
-
 		IndexDocumentRequest indexDocumentRequest = new IndexDocumentRequest(
-			String.valueOf(getCompanyId()), document);
+			String.valueOf(getCompanyId()), documentBuilder.build());
 
-		indexDocumentRequest.setType("LiferayDocumentType");
+		indexDocumentRequest.setType("_doc");
 
 		IndexDocumentResponse indexDocumentResponse =
 			searchEngineAdapter.execute(indexDocumentRequest);

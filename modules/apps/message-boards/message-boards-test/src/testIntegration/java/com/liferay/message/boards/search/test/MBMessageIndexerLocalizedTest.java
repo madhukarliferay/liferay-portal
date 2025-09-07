@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.search.test;
@@ -27,7 +18,6 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -37,17 +27,17 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.SearchContextTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -75,9 +65,7 @@ public class MBMessageIndexerLocalizedTest {
 
 		_indexer = _indexerRegistry.getIndexer(MBMessage.class);
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
-
-		CompanyThreadLocal.setCompanyId(TestPropsValues.getCompanyId());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		List<Locale> availableLocales = Collections.singletonList(
 			LocaleUtil.JAPAN);
@@ -88,24 +76,21 @@ public class MBMessageIndexerLocalizedTest {
 
 	@Test
 	public void testJapaneseDescription() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		MBTestUtil.addMessageWithWorkflow(
 			_group.getGroupId(), MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
-			"平家物語", "諸行無常", true, serviceContext);
+			"平家物語", "諸行無常", true,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 
 		String searchTerm = "諸行";
 
 		Document document = _search(searchTerm, LocaleUtil.JAPAN);
 
-		Map<String, String> titleStrings = HashMapBuilder.put(
-			Field.CONTENT + "_ja_JP", "諸行無常"
-		).build();
-
 		FieldValuesAssert.assertFieldValues(
-			titleStrings, Field.CONTENT + "_ja_JP", document, searchTerm);
+			HashMapBuilder.put(
+				Field.CONTENT + "_ja_JP", "諸行無常"
+			).build(),
+			Field.CONTENT + "_ja_JP", document, searchTerm);
 	}
 
 	@Test
@@ -126,13 +111,15 @@ public class MBMessageIndexerLocalizedTest {
 
 		Document document = _search(searchTerm, LocaleUtil.JAPAN);
 
-		Map<String, String> titleStrings = HashMapBuilder.put(
-			Field.TITLE + "_ja_JP", "東京都"
-		).build();
-
 		FieldValuesAssert.assertFieldValues(
-			titleStrings, Field.TITLE + "_ja_JP", document, searchTerm);
+			HashMapBuilder.put(
+				Field.TITLE + "_ja_JP", "東京都"
+			).build(),
+			Field.TITLE + "_ja_JP", document, searchTerm);
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	private SearchContext _getSearchContext(String searchTerm, Locale locale)
 		throws Exception {
@@ -141,7 +128,6 @@ public class MBMessageIndexerLocalizedTest {
 			_group.getGroupId());
 
 		searchContext.setKeywords(searchTerm);
-
 		searchContext.setLocale(locale);
 
 		QueryConfig queryConfig = searchContext.getQueryConfig();
@@ -163,17 +149,15 @@ public class MBMessageIndexerLocalizedTest {
 
 	private Document _search(String searchTerm, Locale locale) {
 		try {
-			SearchContext searchContext = _getSearchContext(searchTerm, locale);
-
-			Hits hits = _indexer.search(searchContext);
+			Hits hits = _indexer.search(_getSearchContext(searchTerm, locale));
 
 			return _getSingleDocument(searchTerm, hits);
 		}
-		catch (RuntimeException re) {
-			throw re;
+		catch (RuntimeException runtimeException) {
+			throw runtimeException;
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 

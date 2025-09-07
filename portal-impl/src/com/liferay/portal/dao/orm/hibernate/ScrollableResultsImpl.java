@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.hibernate;
@@ -34,8 +25,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.first();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -44,8 +35,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.get();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -54,8 +45,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.get(i);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -64,8 +55,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.last();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -74,8 +65,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.next();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -84,8 +75,8 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.previous();
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
@@ -94,20 +85,15 @@ public class ScrollableResultsImpl implements ScrollableResults {
 		try {
 			return _scrollableResults.scroll(i);
 		}
-		catch (Exception e) {
-			throw ExceptionTranslator.translate(e);
+		catch (Exception exception) {
+			throw ExceptionTranslator.translate(exception);
 		}
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("{_scrollableResults=");
-		sb.append(String.valueOf(_scrollableResults));
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{_scrollableResults=", _scrollableResults, "}");
 	}
 
 	private final org.hibernate.ScrollableResults _scrollableResults;

@@ -1,23 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.clay.sample.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemListBuilder;
 import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
@@ -34,59 +25,64 @@ public class CardsDisplayContext {
 			return _actionDropdownItems;
 		}
 
-		_actionDropdownItems = new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.setHref("#1");
-						dropdownItem.setLabel("Edit");
-						dropdownItem.setSeparator(true);
-					});
+		_actionDropdownItems = DropdownItemListBuilder.addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.setHref("#1");
+							dropdownItem.setLabel("Group 1 - Option 1");
+						}
+					).add(
+						dropdownItem -> {
+							dropdownItem.setHref("#2");
+							dropdownItem.setLabel("Group 1 - Option 2");
+						}
+					).add(
+						dropdownItem -> dropdownItem.setType("divider")
+					).build());
 
-				add(
-					dropdownItem -> {
-						dropdownItem.setHref("#2");
-						dropdownItem.setLabel("Save");
-					});
+				dropdownGroupItem.setLabel("Group 1");
 			}
-		};
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.setHref("#3");
+							dropdownItem.setLabel("Group 2 - Option 1");
+						}
+					).add(
+						dropdownItem -> {
+							dropdownItem.setHref("#4");
+							dropdownItem.setLabel("Group 2 - Option 2");
+						}
+					).build());
+
+				dropdownGroupItem.setLabel("Group 2");
+			}
+		).build();
 
 		return _actionDropdownItems;
 	}
 
 	public List<LabelItem> getLabelItems() {
-		return new LabelItemList() {
-			{
-				LabelItem labelItem1 = new LabelItem();
+		int numItems = 1 + RandomUtil.nextInt(3);
 
-				labelItem1.setLabel("Approved");
-				labelItem1.setStyle("success");
-
-				LabelItem labelItem2 = new LabelItem();
-
-				labelItem2.setLabel("Pending");
-
-				LabelItem labelItem3 = new LabelItem();
-
-				labelItem3.setLabel("Canceled");
-				labelItem3.setStyle("danger");
-
-				int numItems = 1 + RandomUtil.nextInt(3);
-
-				if ((numItems == 0) || (numItems < 2)) {
-					add(labelItem1);
-				}
-				else if (numItems == 2) {
-					add(labelItem1);
-					add(labelItem2);
-				}
-				else if (numItems >= 3) {
-					add(labelItem1);
-					add(labelItem2);
-					add(labelItem3);
-				}
+		return LabelItemListBuilder.add(
+			labelItem -> {
+				labelItem.setLabel("Approved");
+				labelItem.setStyle("success");
 			}
-		};
+		).add(
+			() -> numItems > 1, labelItem -> labelItem.setLabel("Pending")
+		).add(
+			() -> numItems > 2,
+			labelItem -> {
+				labelItem.setLabel("Canceled");
+				labelItem.setStyle("danger");
+			}
+		).build();
 	}
 
 	public Map<String, String> getLabelStylesMap() {

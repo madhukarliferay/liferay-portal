@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model.role;
@@ -33,6 +24,8 @@ public class RoleConstants {
 	public static final String ANALYTICS_ADMINISTRATOR =
 		"Analytics Administrator";
 
+	public static final String CMS_ADMINISTRATOR = "CMS Administrator";
+
 	public static final String GUEST = "Guest";
 
 	public static final String NAME_INVALID_CHARACTERS =
@@ -44,6 +37,9 @@ public class RoleConstants {
 
 	public static final String ORGANIZATION_ADMINISTRATOR =
 		"Organization Administrator";
+
+	public static final String ORGANIZATION_CONTENT_REVIEWER =
+		"Organization Content Reviewer";
 
 	public static final String ORGANIZATION_OWNER = "Organization Owner";
 
@@ -59,6 +55,17 @@ public class RoleConstants {
 
 	public static final String POWER_USER = "Power User";
 
+	public static final String PUBLICATIONS_ADMIN = "Publications Admin";
+
+	public static final String PUBLICATIONS_EDITOR = "Publications Editor";
+
+	public static final String PUBLICATIONS_PUBLISHER =
+		"Publications Publisher";
+
+	public static final String PUBLICATIONS_USER = "Publications User";
+
+	public static final String PUBLICATIONS_VIEWER = "Publications Viewer";
+
 	public static final String SITE_ADMINISTRATOR = "Site Administrator";
 
 	public static final String SITE_CONTENT_REVIEWER = "Site Content Reviewer";
@@ -73,18 +80,29 @@ public class RoleConstants {
 
 	public static final String[] SYSTEM_ROLES = {
 		ADMINISTRATOR, ANALYTICS_ADMINISTRATOR, GUEST, OWNER, POWER_USER,
-		RoleConstants.USER
+		PUBLICATIONS_ADMIN, PUBLICATIONS_EDITOR, PUBLICATIONS_PUBLISHER,
+		PUBLICATIONS_USER, PUBLICATIONS_VIEWER, RoleConstants.USER
 	};
 
 	public static final String[] SYSTEM_SITE_ROLES = {
 		SITE_ADMINISTRATOR, SITE_MEMBER, SITE_OWNER
 	};
 
+	public static final int TYPE_ACCOUNT = 6;
+
+	public static final String TYPE_ACCOUNT_LABEL = "account";
+
+	public static final int TYPE_DEPOT = 5;
+
+	public static final String TYPE_DEPOT_LABEL = "depot";
+
 	public static final int TYPE_ORGANIZATION = 3;
 
 	public static final String TYPE_ORGANIZATION_LABEL = "organization";
 
 	public static final int TYPE_PROVIDER = 4;
+
+	public static final int TYPE_PUBLICATIONS = 7;
 
 	public static final int TYPE_REGULAR = 1;
 
@@ -110,6 +128,23 @@ public class RoleConstants {
 
 	public static final String USER = "User";
 
+	public static int getLabelType(String label) {
+		if (TYPE_ACCOUNT_LABEL.equals(label)) {
+			return TYPE_ACCOUNT;
+		}
+		else if (TYPE_DEPOT_LABEL.equals(label)) {
+			return TYPE_DEPOT;
+		}
+		else if (TYPE_ORGANIZATION_LABEL.equals(label)) {
+			return TYPE_ORGANIZATION;
+		}
+		else if (TYPE_SITE_LABEL.equals(label)) {
+			return TYPE_SITE;
+		}
+
+		return TYPE_REGULAR;
+	}
+
 	public static String getNameGeneralRestrictions(
 		Locale locale, boolean allowNumeric) {
 
@@ -126,7 +161,13 @@ public class RoleConstants {
 	}
 
 	public static String getTypeLabel(int type) {
-		if (type == TYPE_ORGANIZATION) {
+		if (type == TYPE_ACCOUNT) {
+			return TYPE_ACCOUNT_LABEL;
+		}
+		else if (type == TYPE_DEPOT) {
+			return TYPE_DEPOT_LABEL;
+		}
+		else if (type == TYPE_ORGANIZATION) {
 			return TYPE_ORGANIZATION_LABEL;
 		}
 		else if (type == TYPE_SITE) {

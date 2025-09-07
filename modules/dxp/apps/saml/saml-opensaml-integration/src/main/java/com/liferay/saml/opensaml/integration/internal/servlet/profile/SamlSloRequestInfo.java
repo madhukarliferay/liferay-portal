@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.opensaml.integration.internal.servlet.profile;
@@ -17,6 +8,7 @@ package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.saml.persistence.model.SamlIdpSpSession;
+import com.liferay.saml.persistence.model.SamlPeerBinding;
 
 import java.io.Serializable;
 
@@ -42,7 +34,7 @@ public class SamlSloRequestInfo implements Serializable {
 	public static final int REQUEST_STATUS_UNSUPPORTED = 4;
 
 	public String getEntityId() {
-		return _samlIdpSpSession.getSamlSpEntityId();
+		return _samlPeerBinding.getSamlPeerEntityId();
 	}
 
 	public DateTime getInitiateTime() {
@@ -55,6 +47,10 @@ public class SamlSloRequestInfo implements Serializable {
 
 	public SamlIdpSpSession getSamlIdpSpSession() {
 		return _samlIdpSpSession;
+	}
+
+	public SamlPeerBinding getSamlPeerBinding() {
+		return _samlPeerBinding;
 	}
 
 	public int getStatus() {
@@ -75,6 +71,10 @@ public class SamlSloRequestInfo implements Serializable {
 
 	public void setSamlIdpSpSession(SamlIdpSpSession samlIdpSpSession) {
 		_samlIdpSpSession = samlIdpSpSession;
+	}
+
+	public void setSamlPeerBinding(SamlPeerBinding samlPeerBinding) {
+		_samlPeerBinding = samlPeerBinding;
 	}
 
 	public void setStatus(int status) {
@@ -113,6 +113,7 @@ public class SamlSloRequestInfo implements Serializable {
 	private DateTime _initiateTime;
 	private String _name;
 	private SamlIdpSpSession _samlIdpSpSession;
+	private SamlPeerBinding _samlPeerBinding;
 	private int _status;
 	private String _statusCode;
 

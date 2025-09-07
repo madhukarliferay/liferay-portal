@@ -1,63 +1,65 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.document;
 
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.engine.adapter.document.DeleteByQueryDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.DeleteDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.IndexDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.UpdateByQueryDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.UpdateDocumentRequest;
+import com.liferay.portal.search.query.Query;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Dylan Rebelak
  */
 public class ElasticsearchDocumentRequestExecutorTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		_elasticsearchDocumentRequestExecutor =
-			new ElasticsearchDocumentRequestExecutor() {
-				{
-					setDeleteByQueryDocumentRequestExecutor(
-						_deleteByQueryDocumentRequestExecutor);
-					setDeleteDocumentRequestExecutor(
-						_deleteDocumentRequestExecutor);
-					setIndexDocumentRequestExecutor(
-						_indexDocumentRequestExecutor);
-					setUpdateByQueryDocumentRequestExecutor(
-						_updateByQueryDocumentRequestExecutor);
-					setUpdateDocumentRequestExecutor(
-						_updateDocumentRequestExecutor);
-				}
-			};
+			new ElasticsearchDocumentRequestExecutor();
+
+		ReflectionTestUtil.setFieldValue(
+			_elasticsearchDocumentRequestExecutor,
+			"_deleteByQueryDocumentRequestExecutor",
+			_deleteByQueryDocumentRequestExecutor);
+		ReflectionTestUtil.setFieldValue(
+			_elasticsearchDocumentRequestExecutor,
+			"_deleteDocumentRequestExecutor", _deleteDocumentRequestExecutor);
+		ReflectionTestUtil.setFieldValue(
+			_elasticsearchDocumentRequestExecutor,
+			"_indexDocumentRequestExecutor", _indexDocumentRequestExecutor);
+		ReflectionTestUtil.setFieldValue(
+			_elasticsearchDocumentRequestExecutor,
+			"_updateByQueryDocumentRequestExecutor",
+			_updateByQueryDocumentRequestExecutor);
+		ReflectionTestUtil.setFieldValue(
+			_elasticsearchDocumentRequestExecutor,
+			"_updateDocumentRequestExecutor", _updateDocumentRequestExecutor);
 	}
 
 	@Test
 	public void testExecuteDeleteByQueryDocumentRequest() {
 		DeleteByQueryDocumentRequest deleteByQueryDocumentRequest =
-			new DeleteByQueryDocumentRequest(null);
+			new DeleteByQueryDocumentRequest((Query)null);
 
 		_elasticsearchDocumentRequestExecutor.executeDocumentRequest(
 			deleteByQueryDocumentRequest);
@@ -102,7 +104,7 @@ public class ElasticsearchDocumentRequestExecutorTest {
 	@Test
 	public void testExecuteUpdateByQueryDocumentRequest() {
 		UpdateByQueryDocumentRequest updateByQueryDocumentRequest =
-			new UpdateByQueryDocumentRequest(null, null);
+			new UpdateByQueryDocumentRequest((Query)null, null);
 
 		_elasticsearchDocumentRequestExecutor.executeDocumentRequest(
 			updateByQueryDocumentRequest);
@@ -129,24 +131,19 @@ public class ElasticsearchDocumentRequestExecutorTest {
 		);
 	}
 
-	@Mock
-	private DeleteByQueryDocumentRequestExecutor
-		_deleteByQueryDocumentRequestExecutor;
-
-	@Mock
-	private DeleteDocumentRequestExecutor _deleteDocumentRequestExecutor;
-
+	private final DeleteByQueryDocumentRequestExecutor
+		_deleteByQueryDocumentRequestExecutor = Mockito.mock(
+			DeleteByQueryDocumentRequestExecutor.class);
+	private final DeleteDocumentRequestExecutor _deleteDocumentRequestExecutor =
+		Mockito.mock(DeleteDocumentRequestExecutor.class);
 	private ElasticsearchDocumentRequestExecutor
 		_elasticsearchDocumentRequestExecutor;
-
-	@Mock
-	private IndexDocumentRequestExecutor _indexDocumentRequestExecutor;
-
-	@Mock
-	private UpdateByQueryDocumentRequestExecutor
-		_updateByQueryDocumentRequestExecutor;
-
-	@Mock
-	private UpdateDocumentRequestExecutor _updateDocumentRequestExecutor;
+	private final IndexDocumentRequestExecutor _indexDocumentRequestExecutor =
+		Mockito.mock(IndexDocumentRequestExecutor.class);
+	private final UpdateByQueryDocumentRequestExecutor
+		_updateByQueryDocumentRequestExecutor = Mockito.mock(
+			UpdateByQueryDocumentRequestExecutor.class);
+	private final UpdateDocumentRequestExecutor _updateDocumentRequestExecutor =
+		Mockito.mock(UpdateDocumentRequestExecutor.class);
 
 }

@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.announcements.kernel.service;
 
+import com.liferay.announcements.kernel.model.AnnouncementsFlag;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link AnnouncementsFlagLocalService}.
@@ -27,6 +22,10 @@ public class AnnouncementsFlagLocalServiceWrapper
 	implements AnnouncementsFlagLocalService,
 			   ServiceWrapper<AnnouncementsFlagLocalService> {
 
+	public AnnouncementsFlagLocalServiceWrapper() {
+		this(null);
+	}
+
 	public AnnouncementsFlagLocalServiceWrapper(
 		AnnouncementsFlagLocalService announcementsFlagLocalService) {
 
@@ -36,23 +35,23 @@ public class AnnouncementsFlagLocalServiceWrapper
 	/**
 	 * Adds the announcements flag to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AnnouncementsFlagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param announcementsFlag the announcements flag
 	 * @return the announcements flag that was added
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-		addAnnouncementsFlag(
-			com.liferay.announcements.kernel.model.AnnouncementsFlag
-				announcementsFlag) {
+	public AnnouncementsFlag addAnnouncementsFlag(
+		AnnouncementsFlag announcementsFlag) {
 
 		return _announcementsFlagLocalService.addAnnouncementsFlag(
 			announcementsFlag);
 	}
 
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag addFlag(
-		long userId, long entryId, int value) {
-
+	public AnnouncementsFlag addFlag(long userId, long entryId, int value) {
 		return _announcementsFlagLocalService.addFlag(userId, entryId, value);
 	}
 
@@ -63,23 +62,35 @@ public class AnnouncementsFlagLocalServiceWrapper
 	 * @return the new announcements flag
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-		createAnnouncementsFlag(long flagId) {
-
+	public AnnouncementsFlag createAnnouncementsFlag(long flagId) {
 		return _announcementsFlagLocalService.createAnnouncementsFlag(flagId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _announcementsFlagLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
 	 * Deletes the announcements flag from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AnnouncementsFlagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param announcementsFlag the announcements flag
 	 * @return the announcements flag that was removed
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-		deleteAnnouncementsFlag(
-			com.liferay.announcements.kernel.model.AnnouncementsFlag
-				announcementsFlag) {
+	public AnnouncementsFlag deleteAnnouncementsFlag(
+		AnnouncementsFlag announcementsFlag) {
 
 		return _announcementsFlagLocalService.deleteAnnouncementsFlag(
 			announcementsFlag);
@@ -88,22 +99,23 @@ public class AnnouncementsFlagLocalServiceWrapper
 	/**
 	 * Deletes the announcements flag with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AnnouncementsFlagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param flagId the primary key of the announcements flag
 	 * @return the announcements flag that was removed
 	 * @throws PortalException if a announcements flag with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-			deleteAnnouncementsFlag(long flagId)
+	public AnnouncementsFlag deleteAnnouncementsFlag(long flagId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _announcementsFlagLocalService.deleteAnnouncementsFlag(flagId);
 	}
 
 	@Override
-	public void deleteFlag(
-		com.liferay.announcements.kernel.model.AnnouncementsFlag flag) {
-
+	public void deleteFlag(AnnouncementsFlag flag) {
 		_announcementsFlagLocalService.deleteFlag(flag);
 	}
 
@@ -129,6 +141,18 @@ public class AnnouncementsFlagLocalServiceWrapper
 
 		return _announcementsFlagLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _announcementsFlagLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _announcementsFlagLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -223,9 +247,7 @@ public class AnnouncementsFlagLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-		fetchAnnouncementsFlag(long flagId) {
-
+	public AnnouncementsFlag fetchAnnouncementsFlag(long flagId) {
 		return _announcementsFlagLocalService.fetchAnnouncementsFlag(flagId);
 	}
 
@@ -244,8 +266,7 @@ public class AnnouncementsFlagLocalServiceWrapper
 	 * @throws PortalException if a announcements flag with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-			getAnnouncementsFlag(long flagId)
+	public AnnouncementsFlag getAnnouncementsFlag(long flagId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _announcementsFlagLocalService.getAnnouncementsFlag(flagId);
@@ -263,9 +284,8 @@ public class AnnouncementsFlagLocalServiceWrapper
 	 * @return the range of announcements flags
 	 */
 	@Override
-	public java.util.List
-		<com.liferay.announcements.kernel.model.AnnouncementsFlag>
-			getAnnouncementsFlags(int start, int end) {
+	public java.util.List<AnnouncementsFlag> getAnnouncementsFlags(
+		int start, int end) {
 
 		return _announcementsFlagLocalService.getAnnouncementsFlags(start, end);
 	}
@@ -281,8 +301,7 @@ public class AnnouncementsFlagLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag getFlag(
-			long userId, long entryId, int value)
+	public AnnouncementsFlag getFlag(long userId, long entryId, int value)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _announcementsFlagLocalService.getFlag(userId, entryId, value);
@@ -306,6 +325,9 @@ public class AnnouncementsFlagLocalServiceWrapper
 		return _announcementsFlagLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -317,17 +339,44 @@ public class AnnouncementsFlagLocalServiceWrapper
 	/**
 	 * Updates the announcements flag in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect AnnouncementsFlagLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param announcementsFlag the announcements flag
 	 * @return the announcements flag that was updated
 	 */
 	@Override
-	public com.liferay.announcements.kernel.model.AnnouncementsFlag
-		updateAnnouncementsFlag(
-			com.liferay.announcements.kernel.model.AnnouncementsFlag
-				announcementsFlag) {
+	public AnnouncementsFlag updateAnnouncementsFlag(
+		AnnouncementsFlag announcementsFlag) {
 
 		return _announcementsFlagLocalService.updateAnnouncementsFlag(
 			announcementsFlag);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _announcementsFlagLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<AnnouncementsFlag> getCTPersistence() {
+		return _announcementsFlagLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<AnnouncementsFlag> getModelClass() {
+		return _announcementsFlagLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<AnnouncementsFlag>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _announcementsFlagLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

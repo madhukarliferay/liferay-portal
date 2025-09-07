@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.impl;
@@ -21,10 +12,9 @@ import com.liferay.dynamic.data.mapping.service.base.DDMStorageLinkLocalServiceB
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.ListUtil;
 
 import java.util.List;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -42,8 +32,13 @@ public class DDMStorageLinkLocalServiceImpl
 
 	@Override
 	public DDMStorageLink addStorageLink(
-		long classNameId, long classPK, long structureVersionId,
-		ServiceContext serviceContext) {
+			long classNameId, long classPK, long structureVersionId,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		DDMStructureVersion ddmStructureVersion =
+			_ddmStructureVersionLocalService.getDDMStructureVersion(
+				structureVersionId);
 
 		long storageLinkId = counterLocalService.increment();
 
@@ -52,11 +47,10 @@ public class DDMStorageLinkLocalServiceImpl
 
 		storageLink.setClassNameId(classNameId);
 		storageLink.setClassPK(classPK);
+		storageLink.setStructureId(ddmStructureVersion.getStructureId());
 		storageLink.setStructureVersionId(structureVersionId);
 
-		ddmStorageLinkPersistence.update(storageLink);
-
-		return storageLink;
+		return ddmStorageLinkPersistence.update(storageLink);
 	}
 
 	@Override
@@ -95,6 +89,11 @@ public class DDMStorageLinkLocalServiceImpl
 	}
 
 	@Override
+	public DDMStorageLink fetchClassStorageLink(long classPK) {
+		return ddmStorageLinkPersistence.fetchByClassPK(classPK);
+	}
+
+	@Override
 	public DDMStorageLink getClassStorageLink(long classPK)
 		throws PortalException {
 
@@ -110,30 +109,20 @@ public class DDMStorageLinkLocalServiceImpl
 
 	@Override
 	public List<DDMStorageLink> getStructureStorageLinks(long structureId) {
-		List<DDMStructureVersion> structureVersions =
-			_ddmStructureVersionLocalService.getStructureVersions(structureId);
-
-		Stream<DDMStructureVersion> stream = structureVersions.stream();
-
-		LongStream structureVersionIdStream = stream.mapToLong(
-			structureVersion -> structureVersion.getStructureVersionId());
-
 		return ddmStorageLinkPersistence.findByStructureVersionId(
-			structureVersionIdStream.toArray());
+			ListUtil.toLongArray(
+				_ddmStructureVersionLocalService.getStructureVersions(
+					structureId),
+				DDMStructureVersion::getStructureVersionId));
 	}
 
 	@Override
 	public int getStructureStorageLinksCount(long structureId) {
-		List<DDMStructureVersion> structureVersions =
-			_ddmStructureVersionLocalService.getStructureVersions(structureId);
-
-		Stream<DDMStructureVersion> stream = structureVersions.stream();
-
-		LongStream structureVersionIdStream = stream.mapToLong(
-			structureVersion -> structureVersion.getStructureVersionId());
-
 		return ddmStorageLinkPersistence.countByStructureVersionId(
-			structureVersionIdStream.toArray());
+			ListUtil.toLongArray(
+				_ddmStructureVersionLocalService.getStructureVersions(
+					structureId),
+				DDMStructureVersion::getStructureVersionId));
 	}
 
 	@Override
@@ -161,9 +150,7 @@ public class DDMStorageLinkLocalServiceImpl
 		storageLink.setClassNameId(classNameId);
 		storageLink.setClassPK(classPK);
 
-		ddmStorageLinkPersistence.update(storageLink);
-
-		return storageLink;
+		return ddmStorageLinkPersistence.update(storageLink);
 	}
 
 	@Reference

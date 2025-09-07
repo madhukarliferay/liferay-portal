@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.cache.thread.local;
@@ -82,6 +73,13 @@ public class ThreadLocalCacheManager {
 		_eternalThreadLocalCaches.remove();
 	}
 
+	public static void disable() {
+		_disabled = true;
+
+		disable(Lifecycle.ETERNAL);
+		disable(Lifecycle.REQUEST);
+	}
+
 	public static void disable(Lifecycle lifecycle) {
 		ThreadLocalCaches threadLocalCaches = _getThreadLocalCaches(lifecycle);
 
@@ -93,6 +91,13 @@ public class ThreadLocalCacheManager {
 
 			threadLocalCacheMaps.clear();
 		}
+	}
+
+	public static void enable() {
+		_disabled = false;
+
+		enable(Lifecycle.ETERNAL);
+		enable(Lifecycle.REQUEST);
 	}
 
 	public static void enable(Lifecycle lifecycle) {
@@ -108,7 +113,9 @@ public class ThreadLocalCacheManager {
 
 		ThreadLocalCaches threadLocalCaches = _getThreadLocalCaches(lifecycle);
 
-		if ((threadLocalCaches == null) || threadLocalCaches._disabled) {
+		if (_disabled || (threadLocalCaches == null) ||
+			threadLocalCaches._disabled) {
+
 			return (ThreadLocalCache<T>)_emptyThreadLocalCache;
 		}
 
@@ -146,6 +153,7 @@ public class ThreadLocalCacheManager {
 		return null;
 	}
 
+	private static boolean _disabled;
 	private static final EmptyThreadLocalCache<?> _emptyThreadLocalCache =
 		new EmptyThreadLocalCache<>();
 	private static final ThreadLocal<ThreadLocalCaches>
@@ -165,7 +173,7 @@ public class ThreadLocalCacheManager {
 		}
 
 		@Override
-		public void put(String key, T obj) {
+		public void put(String key, T object) {
 		}
 
 		@Override

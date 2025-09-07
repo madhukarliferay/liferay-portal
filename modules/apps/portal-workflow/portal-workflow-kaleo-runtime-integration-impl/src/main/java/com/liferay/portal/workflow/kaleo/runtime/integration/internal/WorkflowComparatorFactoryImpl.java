@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.integration.internal;
@@ -19,7 +10,7 @@ import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
-import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactory;
+import com.liferay.portal.kernel.workflow.comparator.WorkflowDefinitionModifiedDateComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowDefinitionNameComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowInstanceCompletedComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowInstanceEndDateComparator;
@@ -30,21 +21,30 @@ import com.liferay.portal.kernel.workflow.comparator.WorkflowLogUserIdComparator
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskCompletionDateComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskCreateDateComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskDueDateComparator;
+import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskInstanceIdComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskModifiedDateComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskNameComparator;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskUserIdComparator;
+import com.liferay.portal.workflow.comparator.WorkflowComparatorFactory;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Michael C. Han
  */
-@Component(
-	immediate = true, property = "proxy.bean=false",
-	service = WorkflowComparatorFactory.class
-)
+@Component(service = WorkflowComparatorFactory.class)
 public class WorkflowComparatorFactoryImpl
 	implements WorkflowComparatorFactory {
+
+	@Override
+	public OrderByComparator<WorkflowDefinition>
+		getDefinitionModifiedDateComparator(boolean ascending) {
+
+		return new WorkflowDefinitionModifiedDateComparator(
+			ascending, "modifiedDate ASC, version ASC",
+			"modifiedDate DESC, version DESC",
+			new String[] {"modifiedDate", "version"});
+	}
 
 	@Override
 	public OrderByComparator<WorkflowDefinition> getDefinitionNameComparator(
@@ -148,6 +148,16 @@ public class WorkflowComparatorFactoryImpl
 			new String[] {
 				"completed", "dueDate", "modifiedDate", "kaleoTaskId"
 			});
+	}
+
+	@Override
+	public OrderByComparator<WorkflowTask> getTaskInstanceIdComparator(
+		boolean ascending) {
+
+		return new WorkflowTaskInstanceIdComparator(
+			ascending, "completed ASC, kaleoInstanceId ASC",
+			"completed ASC, kaleoInstanceId DESC",
+			new String[] {"completed", "kaleoInstanceId"});
 	}
 
 	@Override

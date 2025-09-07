@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.lar;
@@ -20,6 +11,10 @@ import com.liferay.petra.lang.CentralizedThreadLocal;
  * @author Michael C. Han
  */
 public class ExportImportThreadLocal {
+
+	public static Long getExportImportConfigurationId() {
+		return _exportImportConfigurationId.get();
+	}
 
 	public static boolean isDataDeletionImportInProcess() {
 		if (isLayoutDataDeletionImportInProcess() ||
@@ -108,6 +103,12 @@ public class ExportImportThreadLocal {
 		return _stagingInProcessOnRemoteLive.get();
 	}
 
+	public static void setExportImportConfigurationId(
+		long exportImportConfigurationId) {
+
+		_exportImportConfigurationId.set(exportImportConfigurationId);
+	}
+
 	public static void setInitialLayoutStagingInProcess(
 		boolean initialLayoutStagingInProcess) {
 
@@ -178,6 +179,10 @@ public class ExportImportThreadLocal {
 		_stagingInProcessOnRemoteLive.set(stagingInProcessOnRemoteLive);
 	}
 
+	private static final ThreadLocal<Long> _exportImportConfigurationId =
+		new CentralizedThreadLocal<>(
+			ExportImportThreadLocal.class + "._exportImportConfigurationId",
+			() -> 0L);
 	private static final ThreadLocal<Boolean> _initialLayoutStagingInProcess =
 		new CentralizedThreadLocal<>(
 			ExportImportThreadLocal.class + "._initialLayoutStagingInProcess",

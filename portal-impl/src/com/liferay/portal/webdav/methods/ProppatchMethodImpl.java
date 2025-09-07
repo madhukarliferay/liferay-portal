@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.webdav.methods;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.xml.Dom4jUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.log.Log;
@@ -37,12 +27,12 @@ import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.webdav.InvalidRequestException;
 import com.liferay.portal.webdav.LockException;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Alexander Chow
@@ -56,25 +46,25 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 
 			return writeResponseXML(webDAVRequest, props);
 		}
-		catch (InvalidRequestException ire) {
+		catch (InvalidRequestException invalidRequestException) {
 			if (_log.isInfoEnabled()) {
-				_log.info(ire.getMessage(), ire);
+				_log.info(invalidRequestException);
 			}
 
 			return HttpServletResponse.SC_BAD_REQUEST;
 		}
-		catch (LockException le) {
+		catch (LockException lockException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(le, le);
+				_log.debug(lockException);
 			}
 
 			return WebDAVUtil.SC_LOCKED;
 		}
-		catch (Exception e) {
-			throw new WebDAVException(e);
+		catch (Exception exception) {
+			throw new WebDAVException(exception);
 		}
 	}
 
@@ -84,8 +74,6 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 		WebDAVStorage storage = webDAVRequest.getWebDAVStorage();
 
 		Resource resource = storage.getResource(webDAVRequest);
-
-		WebDAVProps webDAVProps = null;
 
 		if (resource.getPrimaryKey() <= 0) {
 			if (_log.isWarnEnabled()) {
@@ -108,11 +96,9 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 			}
 		}
 
-		webDAVProps = WebDAVPropsLocalServiceUtil.getWebDAVProps(
+		return WebDAVPropsLocalServiceUtil.getWebDAVProps(
 			webDAVRequest.getCompanyId(), resource.getClassName(),
 			resource.getPrimaryKey());
-
-		return webDAVProps;
 	}
 
 	protected Set<QName> processInstructions(WebDAVRequest webDAVRequest)
@@ -131,15 +117,15 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 				return newProps;
 			}
 
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Request XML: \n" +
-						Dom4jUtil.toString(xml, StringPool.FOUR_SPACES));
-			}
-
 			WebDAVProps webDAVProps = getStoredProperties(webDAVRequest);
 
 			Document document = SAXReaderUtil.read(xml);
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Request XML: \n" +
+						document.formattedString(StringPool.FOUR_SPACES));
+			}
 
 			Element rootElement = document.getRootElement();
 
@@ -210,11 +196,11 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 
 			return newProps;
 		}
-		catch (LockException le) {
-			throw le;
+		catch (LockException lockException) {
+			throw lockException;
 		}
-		catch (Exception e) {
-			throw new InvalidRequestException(e);
+		catch (Exception exception) {
+			throw new InvalidRequestException(exception);
 		}
 	}
 

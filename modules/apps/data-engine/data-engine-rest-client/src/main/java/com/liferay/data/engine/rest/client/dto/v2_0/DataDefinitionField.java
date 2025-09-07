@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.rest.client.dto.v2_0;
@@ -17,47 +8,22 @@ package com.liferay.data.engine.rest.client.dto.v2_0;
 import com.liferay.data.engine.rest.client.function.UnsafeSupplier;
 import com.liferay.data.engine.rest.client.serdes.v2_0.DataDefinitionFieldSerDes;
 
+import jakarta.annotation.Generated;
+
+import java.io.Serializable;
+
 import java.util.Map;
 import java.util.Objects;
-
-import javax.annotation.Generated;
 
 /**
  * @author Jeyvison Nascimento
  * @generated
  */
 @Generated("")
-public class DataDefinitionField {
+public class DataDefinitionField implements Cloneable, Serializable {
 
-	public static enum IndexType {
-
-		ALL("all"), KEYWORD("keyword"), NONE("none"), TEXT("text");
-
-		public static IndexType create(String value) {
-			for (IndexType indexType : values()) {
-				if (Objects.equals(indexType.getValue(), value)) {
-					return indexType;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private IndexType(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
+	public static DataDefinitionField toDTO(String json) {
+		return DataDefinitionFieldSerDes.toDTO(json);
 	}
 
 	public Map<String, Object> getCustomProperties() {
@@ -407,6 +373,11 @@ public class DataDefinitionField {
 	protected Boolean visible;
 
 	@Override
+	public DataDefinitionField clone() throws CloneNotSupportedException {
+		return (DataDefinitionField)super.clone();
+	}
+
+	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
 			return true;
@@ -430,6 +401,39 @@ public class DataDefinitionField {
 
 	public String toString() {
 		return DataDefinitionFieldSerDes.toJSON(this);
+	}
+
+	public static enum IndexType {
+
+		ALL("all"), KEYWORD("keyword"), NONE("none"), TEXT("text");
+
+		public static IndexType create(String value) {
+			for (IndexType indexType : values()) {
+				if (Objects.equals(indexType.getValue(), value) ||
+					Objects.equals(indexType.name(), value)) {
+
+					return indexType;
+				}
+			}
+
+			return null;
+		}
+
+		public String getValue() {
+			return _value;
+		}
+
+		@Override
+		public String toString() {
+			return _value;
+		}
+
+		private IndexType(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
 	}
 
 }

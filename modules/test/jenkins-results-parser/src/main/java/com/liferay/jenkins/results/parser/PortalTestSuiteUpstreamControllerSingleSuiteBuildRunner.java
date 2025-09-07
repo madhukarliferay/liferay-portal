@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
 import java.io.IOException;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,6 +25,12 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 	@Override
 	public void run() {
 		retirePreviousBuilds();
+
+		if (_allowConcurrentBuilds() || _expirePreviousBuild()) {
+			super.run();
+
+			return;
+		}
 
 		S buildData = getBuildData();
 
@@ -77,11 +76,15 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 
 	@Override
 	protected void invokeTestSuiteBuilds() {
-		String jobURL = getJobURL();
+		S buildData = getBuildData();
+
+		String testSuiteName = buildData.getTestSuiteName();
+
+		String invocationJobURL = getInvocationJobURL(testSuiteName);
 
 		StringBuilder sb = new StringBuilder();
 
-		sb.append(jobURL);
+		sb.append(invocationJobURL);
 
 		sb.append("/buildWithParameters?");
 
@@ -94,58 +97,95 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 			jenkinsAuthenticationToken = buildProperties.getProperty(
 				"jenkins.authentication.token");
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 
 		sb.append("token=");
 		sb.append(jenkinsAuthenticationToken);
 
-		S buildData = getBuildData();
+		Map<String, String> invocationParameters = new HashMap<>();
 
-		sb.append("&CI_TEST_SUITE=");
-		sb.append(buildData.getTestSuiteName());
-		sb.append("&CONTROLLER_BUILD_URL=");
-		sb.append(buildData.getBuildURL());
-		sb.append("&JENKINS_GITHUB_BRANCH_NAME=");
-		sb.append(buildData.getJenkinsGitHubBranchName());
-		sb.append("&JENKINS_GITHUB_BRANCH_USERNAME=");
-		sb.append(buildData.getJenkinsGitHubUsername());
-		sb.append("&PORTAL_GIT_COMMIT=");
-		sb.append(buildData.getPortalBranchSHA());
+		invocationParameters.putAll(buildData.getBuildParameters());
+
+		invocationParameters.put("CI_TEST_SUITE", testSuiteName);
+		invocationParameters.put(
+			"CONTROLLER_BUILD_URL", buildData.getBuildURL());
+		invocationParameters.put(
+			"JENKINS_GITHUB_BRANCH_NAME",
+			buildData.getJenkinsGitHubBranchName());
+		invocationParameters.put(
+			"JENKINS_GITHUB_BRANCH_USERNAME",
+			buildData.getJenkinsGitHubUsername());
+		invocationParameters.put(
+			"PORTAL_GIT_COMMIT", buildData.getPortalBranchSHA());
 
 		String portalGitHubCompareURL = _getPortalGitHubCompareURL();
 
 		if (portalGitHubCompareURL != null) {
-			sb.append("&PORTAL_GITHUB_COMPARE_URL=");
-			sb.append(portalGitHubCompareURL);
+			invocationParameters.put(
+				"PORTAL_GITHUB_COMPARE_URL", portalGitHubCompareURL);
 		}
 
-		sb.append("&PORTAL_GITHUB_URL=");
-		sb.append(buildData.getPortalGitHubURL());
+		invocationParameters.put(
+			"PORTAL_GITHUB_URL", buildData.getPortalGitHubURL());
+		invocationParameters.put(
+			"PORTAL_UPSTREAM_BRANCH_NAME",
+			buildData.getPortalUpstreamBranchName());
+		invocationParameters.put("SLAVE_LABEL", getSlaveLabel(testSuiteName));
+		invocationParameters.put(
+			"TEST_PORTAL_BUILD_PROFILE",
+			getTestPortalBuildProfile(testSuiteName));
 
 		String testrayProjectName = buildData.getTestrayProjectName();
 
 		if (testrayProjectName != null) {
-			sb.append("&TESTRAY_BUILD_NAME=");
-			sb.append(buildData.getTestrayBuildName());
-			sb.append("&TESTRAY_BUILD_TYPE=");
-			sb.append(buildData.getTestrayBuildType());
-			sb.append("&TESTRAY_PROJECT_NAME=");
-			sb.append(testrayProjectName);
+			invocationParameters.put(
+				"TESTRAY_BUILD_NAME", buildData.getTestrayBuildName());
+			invocationParameters.put(
+				"TESTRAY_PROJECT_NAME", testrayProjectName);
+			invocationParameters.put(
+				"TESTRAY_ROUTINE_NAME", buildData.getTestrayRoutineName());
+		}
+
+		invocationParameters.put(
+			"TESTRAY_SLACK_CHANNELS", getTestraySlackChannels(testSuiteName));
+		invocationParameters.put(
+			"TESTRAY_SLACK_ICON_EMOJI",
+			getTestraySlackIconEmoji(testSuiteName));
+		invocationParameters.put(
+			"TESTRAY_SLACK_USERNAME", getTestraySlackUsername(testSuiteName));
+
+		for (Map.Entry<String, String> invocationParameter :
+				invocationParameters.entrySet()) {
+
+			String invocationParameterValue = invocationParameter.getValue();
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(
+					invocationParameterValue)) {
+
+				continue;
+			}
+
+			sb.append("&");
+			sb.append(invocationParameter.getKey());
+			sb.append("=");
+			sb.append(invocationParameterValue);
 		}
 
 		try {
 			JenkinsResultsParserUtil.toString(sb.toString());
+
+			keepJenkinsBuild(true);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 
 		sb = new StringBuilder();
 
 		sb.append("<a href=\"");
-		sb.append(JenkinsResultsParserUtil.getRemoteURL(jobURL));
+		sb.append(JenkinsResultsParserUtil.getRemoteURL(invocationJobURL));
 		sb.append("\"><strong>IN QUEUE</strong></a>");
 		sb.append("<ul><li><strong>Git ID:</strong> ");
 		sb.append("<a href=\"https://github.com/");
@@ -169,6 +209,119 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 		buildData.setBuildDescription(sb.toString());
 
 		updateBuildDescription();
+	}
+
+	private boolean _allowConcurrentBuilds() {
+		String allowConcurrentBuildsString = System.getenv(
+			"ALLOW_CONCURRENT_BUILDS");
+
+		if (allowConcurrentBuildsString == null) {
+			return false;
+		}
+
+		allowConcurrentBuildsString = allowConcurrentBuildsString.toLowerCase();
+		allowConcurrentBuildsString = allowConcurrentBuildsString.trim();
+
+		return allowConcurrentBuildsString.equals("true");
+	}
+
+	private boolean _expirePreviousBuild() {
+		for (JSONObject previousBuildJSONObject :
+				getPreviousBuildJSONObjects()) {
+
+			String description = previousBuildJSONObject.optString(
+				"description", "");
+
+			if (!description.contains("IN PROGRESS") &&
+				!description.contains("IN QUEUE")) {
+
+				continue;
+			}
+
+			String controllerBuildURL = previousBuildJSONObject.getString(
+				"url");
+
+			Matcher buildURLMatcher = _buildURLPattern.matcher(
+				controllerBuildURL);
+
+			if (!buildURLMatcher.find()) {
+				continue;
+			}
+
+			Matcher jobURLMatcher = _jobURLPattern.matcher(description);
+
+			if (!jobURLMatcher.find()) {
+				continue;
+			}
+
+			Map<String, String> parameters = new HashMap<>();
+
+			parameters.put("CONTROLLER_BUILD_URL", controllerBuildURL);
+
+			JenkinsMaster jenkinsMaster = JenkinsMaster.getInstance(
+				jobURLMatcher.group("masterHostname"));
+
+			String jobName = jobURLMatcher.group("jobName");
+
+			if (jenkinsMaster.isBuildQueued(jobName, parameters) ||
+				jenkinsMaster.isBuildInProgress(jobName, parameters)) {
+
+				long timestamp = previousBuildJSONObject.optLong(
+					"timestamp", 0);
+
+				if (timestamp == 0) {
+					continue;
+				}
+
+				long inProgressBuildDuration =
+					JenkinsResultsParserUtil.getCurrentTimeMillis() - timestamp;
+
+				System.out.println(
+					JenkinsResultsParserUtil.combine(
+						"In progress build started ",
+						JenkinsResultsParserUtil.toDurationString(
+							inProgressBuildDuration),
+						" ago"));
+
+				if (inProgressBuildDuration < _getControllerBuildTimeout()) {
+					return false;
+				}
+			}
+
+			description = description.replace("IN PROGRESS", "EXPIRE");
+			description = description.replace("IN QUEUE", "EXPIRE");
+
+			JenkinsResultsParserUtil.updateBuildDescription(
+				description, previousBuildJSONObject.getInt("number"),
+				buildURLMatcher.group("jobName"),
+				buildURLMatcher.group("masterHostname"));
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private long _getControllerBuildTimeout() {
+		try {
+			S buildData = getBuildData();
+
+			String controllerBuildTimeout =
+				JenkinsResultsParserUtil.getProperty(
+					JenkinsResultsParserUtil.getBuildProperties(),
+					"controller.build.timeout", buildData.getJobName());
+
+			if (!JenkinsResultsParserUtil.isNullOrEmpty(
+					controllerBuildTimeout)) {
+
+				return Long.parseLong(controllerBuildTimeout) * 1000;
+			}
+
+			return _CONTROLLER_BUILD_TIMEOUT_DEFAULT;
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
 	}
 
 	private String _getPortalBranchAbbreviatedSHA() {
@@ -224,6 +377,12 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 			String description = previousBuildJSONObject.optString(
 				"description", "");
 
+			if (description.contains("EXPIRE") ||
+				description.contains("SKIPPED")) {
+
+				continue;
+			}
+
 			if (description.contains(portalBranchSHA)) {
 				return true;
 			}
@@ -264,7 +423,7 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 				continue;
 			}
 
-			String buildURL = buildURLMatcher.group("buildURL");
+			String buildURL = buildURLMatcher.group();
 
 			try {
 				JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
@@ -322,16 +481,23 @@ public class PortalTestSuiteUpstreamControllerSingleSuiteBuildRunner
 					envMapJSONObject.getString("JOB_NAME"),
 					envMapJSONObject.getString("HOSTNAME"));
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
 		}
 
 		return false;
 	}
 
+	private static final Integer _CONTROLLER_BUILD_TIMEOUT_DEFAULT =
+		1000 * 60 * 60 * 24;
+
 	private static final Pattern _buildURLPattern = Pattern.compile(
-		"<a href=\"(?<buildURL>[^\"]+)\">Build URL</a>");
+		"https://(?<masterHostname>test-\\d+-\\d+)\\.liferay\\.com/job/" +
+			"(?<jobName>[^/]+)/(?<buildNumber>\\d+)/?");
+	private static final Pattern _jobURLPattern = Pattern.compile(
+		"https://(?<masterHostname>test-\\d+-\\d+)\\.liferay\\.com/job/" +
+			"(?<jobName>[^/\"]+)/?");
 	private static final Pattern _portalBranchSHAPattern = Pattern.compile(
 		"<strong>Git ID:</strong> <a href=\"https://github.com/[^/]+/[^/]+/" +
 			"commit/(?<branchSHA>[0-9a-f]{40})\">[0-9a-f]{7}</a>");

@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
 
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.model.AssetTagDisplay;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -42,6 +34,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -50,18 +43,28 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface AssetTagService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetTagServiceUtil} to access the asset tag remote service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the asset tag remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link AssetTagServiceUtil} if injection and service tracking are not available.
 	 */
 	public AssetTag addTag(
-			long groupId, String name, ServiceContext serviceContext)
+			String externalReferenceCode, long groupId, String name,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	public void deleteTag(long tagId) throws PortalException;
 
 	public void deleteTags(long[] tagIds) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetTag fetchAssetTagByExternalReferenceCode(
+		String externalReferenceCode, long groupId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetTag getAssetTagByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getGroupsTags(long[] groupIds);
@@ -71,7 +74,8 @@ public interface AssetTagService extends BaseService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getGroupTags(
-		long groupId, int start, int end, OrderByComparator<AssetTag> obc);
+		long groupId, int start, int end,
+		OrderByComparator<AssetTag> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getGroupTagsCount(long groupId);
@@ -96,7 +100,7 @@ public interface AssetTagService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(
 		long groupId, long classNameId, String name, int start, int end,
-		OrderByComparator<AssetTag> obc);
+		OrderByComparator<AssetTag> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(
@@ -105,7 +109,7 @@ public interface AssetTagService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(
 		long groupId, String name, int start, int end,
-		OrderByComparator<AssetTag> obc);
+		OrderByComparator<AssetTag> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(
@@ -114,7 +118,7 @@ public interface AssetTagService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(
 		long[] groupIds, String name, int start, int end,
-		OrderByComparator<AssetTag> obc);
+		OrderByComparator<AssetTag> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetTag> getTags(String className, long classPK);
@@ -123,11 +127,11 @@ public interface AssetTagService extends BaseService {
 	public int getTagsCount(long groupId, String name);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getVisibleAssetsTagsCount(
-		long groupId, long classNameId, String name);
+	public int getTagsCount(long[] groupIds, String name);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getVisibleAssetsTagsCount(long groupId, String name);
+	public int getVisibleAssetsTagsCount(
+		long groupId, long classNameId, String name);
 
 	public void mergeTags(long fromTagId, long toTagId) throws PortalException;
 
@@ -137,11 +141,18 @@ public interface AssetTagService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public JSONArray search(long groupId, String name, int start, int end);
 
+	@AccessControlled(guestAccessEnabled = true)
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public JSONArray search(long[] groupIds, String name, int start, int end);
 
+	public void subscribeTag(long userId, long groupId, long tagId)
+		throws PortalException;
+
+	public void unsubscribeTag(long userId, long tagId) throws PortalException;
+
 	public AssetTag updateTag(
-			long tagId, String name, ServiceContext serviceContext)
+			String externalReferenceCode, long tagId, String name,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 }

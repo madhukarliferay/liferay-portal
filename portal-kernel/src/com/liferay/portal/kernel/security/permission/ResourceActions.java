@@ -1,28 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.security.permission;
 
-import com.liferay.portal.kernel.exception.NoSuchResourceActionException;
+import com.liferay.portal.kernel.exception.ResourceActionsException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.xml.Document;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Locale;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,19 +25,12 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface ResourceActions {
 
-	public void check(Portlet portlet);
-
 	public void check(String portletName);
-
-	public void checkAction(String name, String actionId)
-		throws NoSuchResourceActionException;
 
 	public String getAction(
 		HttpServletRequest httpServletRequest, String action);
 
 	public String getAction(Locale locale, String action);
-
-	public String getActionNamePrefix();
 
 	public String getCompositeModelName(String... classNames);
 
@@ -74,17 +59,9 @@ public interface ResourceActions {
 
 	public Double getModelResourceWeight(String name);
 
-	public String[] getOrganizationModelResources();
-
-	public String[] getPortalModelResources();
-
-	public String getPortletBaseResource(String portletName);
-
 	public List<String> getPortletModelResources(String portletName);
 
 	public List<String> getPortletNames();
-
-	public List<String> getPortletResourceActions(Portlet portlet);
 
 	public List<String> getPortletResourceActions(String name);
 
@@ -96,6 +73,8 @@ public interface ResourceActions {
 
 	public List<String> getPortletResourceLayoutManagerActions(String name);
 
+	public List<String> getPortletResourceOwnerDefaultActions(String name);
+
 	public String getPortletRootModelResource(String portletName);
 
 	public List<String> getResourceActions(String name);
@@ -103,38 +82,49 @@ public interface ResourceActions {
 	public List<String> getResourceActions(
 		String portletResource, String modelResource);
 
-	public List<String> getResourceGroupDefaultActions(String name);
-
 	public List<String> getResourceGuestUnsupportedActions(
 		String portletResource, String modelResource);
 
 	public List<Role> getRoles(
 		long companyId, Group group, String modelResource, int[] roleTypes);
 
-	public String[] getRootModelResources();
-
-	public boolean hasModelResourceActions(String name);
-
-	public boolean isOrganizationModelResource(String modelResource);
-
 	public boolean isPortalModelResource(String modelResource);
 
 	public boolean isRootModelResource(String modelResource);
 
-	public void read(
-			String servletContextName, ClassLoader classLoader, String source)
-		throws Exception;
+	public void populateModelResources(
+			ClassLoader classLoader, String... sources)
+		throws ResourceActionsException;
 
-	public void read(
-			String servletContextName, ClassLoader classLoader,
-			String... sources)
-		throws Exception;
+	public void populateModelResources(
+			ClassLoader classLoader, String[] sources,
+			boolean checkResourceActions)
+		throws ResourceActionsException;
 
-	public void readAndCheck(
-			String servletContextName, ClassLoader classLoader,
-			String... sources)
-		throws Exception;
+	public void populateModelResources(Document document)
+		throws ResourceActionsException;
 
-	public void removePortletResource(String portletName);
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, Document document)
+		throws ResourceActionsException;
+
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, String... sources)
+		throws ResourceActionsException;
+
+	public void populatePortletResources(
+			ClassLoader classLoader, String... sources)
+		throws ResourceActionsException;
+
+	public void populatePortletResources(
+			ClassLoader classLoader, String[] sources,
+			boolean checkResourceActions)
+		throws ResourceActionsException;
+
+	public void removeModelResource(String name, String action);
+
+	public void removeModelResources(Document document);
+
+	public void removePortletResources(Document document);
 
 }

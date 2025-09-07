@@ -9,6 +9,7 @@ import ${apiPackagePath}.model.${entity.name};
 	import ${apiPackagePath}.service.persistence.${entity.name}PK;
 </#if>
 
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 
@@ -17,6 +18,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.math.BigDecimal;
 
@@ -44,28 +48,28 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 	{
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof ${entity.name}CacheModel)) {
+		if (!(object instanceof ${entity.name}CacheModel)) {
 			return false;
 		}
 
-		${entity.name}CacheModel ${entity.varName}CacheModel = (${entity.name}CacheModel)obj;
+		${entity.name}CacheModel ${entity.variableName}CacheModel = (${entity.name}CacheModel)object;
 
 		<#if entity.hasPrimitivePK(false)>
 			<#if entity.isMvccEnabled()>
-				if ((${entity.PKVarName} == ${entity.varName}CacheModel.${entity.PKVarName}) && (mvccVersion == ${entity.varName}CacheModel.mvccVersion)) {
+				if ((${entity.PKVariableName} == ${entity.variableName}CacheModel.${entity.PKVariableName}) && (mvccVersion == ${entity.variableName}CacheModel.mvccVersion)) {
 			<#else>
-				if (${entity.PKVarName} == ${entity.varName}CacheModel.${entity.PKVarName}) {
+				if (${entity.PKVariableName} == ${entity.variableName}CacheModel.${entity.PKVariableName}) {
 			</#if>
 		<#else>
 			<#if entity.isMvccEnabled()>
-				if (${entity.PKVarName}.equals(${entity.varName}CacheModel.${entity.PKVarName}) && (mvccVersion == ${entity.varName}CacheModel.mvccVersion)) {
+				if (${entity.PKVariableName}.equals(${entity.variableName}CacheModel.${entity.PKVariableName}) && (mvccVersion == ${entity.variableName}CacheModel.mvccVersion)) {
 			<#else>
-				if (${entity.PKVarName}.equals(${entity.varName}CacheModel.${entity.PKVarName})) {
+				if (${entity.PKVariableName}.equals(${entity.variableName}CacheModel.${entity.PKVariableName})) {
 			</#if>
 		</#if>
 
@@ -78,11 +82,11 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 	@Override
 	public int hashCode() {
 		<#if entity.isMvccEnabled()>
-			int hashCode = HashUtil.hash(0, ${entity.PKVarName});
+			int hashCode = HashUtil.hash(0, ${entity.PKVariableName});
 
 			return HashUtil.hash(hashCode, mvccVersion);
 		<#else>
-			return HashUtil.hash(0, ${entity.PKVarName});
+			return HashUtil.hash(0, ${entity.PKVariableName});
 		</#if>
 	}
 
@@ -123,41 +127,50 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 
 	@Override
 	public ${entity.name} toEntityModel() {
-		${entity.name}Impl ${entity.varName}Impl = new ${entity.name}Impl();
+		${entity.name}Impl ${entity.variableName}Impl = new ${entity.name}Impl();
 
 		<#list entity.databaseRegularEntityColumns as entityColumn>
 			<#if !stringUtil.equals(entityColumn.type, "Blob")>
 				<#if stringUtil.equals(entityColumn.type, "Date")>
 					if (${entityColumn.name} == Long.MIN_VALUE) {
-						${entity.varName}Impl.set${entityColumn.methodName}(null);
+						${entity.variableName}Impl.set${entityColumn.methodName}(null);
 					}
 					else {
-						${entity.varName}Impl.set${entityColumn.methodName}(new Date(${entityColumn.name}));
+						${entity.variableName}Impl.set${entityColumn.methodName}(new Date(${entityColumn.name}));
 					}
 				<#else>
 					<#if stringUtil.equals(entityColumn.type, "String") && entityColumn.isConvertNull()>
 						if (${entityColumn.name} == null) {
-							${entity.varName}Impl.set${entityColumn.methodName}("");
+							${entity.variableName}Impl.set${entityColumn.methodName}("");
 						}
 						else {
-							${entity.varName}Impl.set${entityColumn.methodName}(${entityColumn.name});
+							${entity.variableName}Impl.set${entityColumn.methodName}(${entityColumn.name});
 						}
 					<#else>
-						${entity.varName}Impl.set${entityColumn.methodName}(${entityColumn.name});
+						${entity.variableName}Impl.set${entityColumn.methodName}(${entityColumn.name});
 					</#if>
 				</#if>
 			</#if>
 		</#list>
 
-		${entity.varName}Impl.resetOriginalValues();
+		${entity.variableName}Impl.resetOriginalValues();
 
-		<#list cacheFields as cacheField>
-			<#assign methodName = serviceBuilder.getCacheFieldMethodName(cacheField) />
+		<#if cacheFields?size != 0>
+			try {
+				<#list cacheFields as cacheField>
+					<#assign
+						variableName = serviceBuilder.getVariableName(cacheField)
+					/>
 
-			${entity.varName}Impl.set${methodName}(${cacheField.name});
-		</#list>
+					_${variableName}MethodHandle.invokeExact(${entity.variableName}Impl, ${variableName});
+				</#list>
+			}
+			catch (Throwable throwable) {
+				ReflectionUtil.throwException(throwable);
+			}
+		</#if>
 
-		return ${entity.varName}Impl;
+		return ${entity.variableName}Impl;
 	}
 
 	@Override
@@ -167,7 +180,7 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 		<#list entity.databaseRegularEntityColumns as entityColumn>
 			<#if entityColumn.primitiveType>
 			<#elseif stringUtil.equals(entityColumn.type, "Date")>
-			<#elseif stringUtil.equals(entityColumn.type, "String")>
+			<#elseif stringUtil.equals(entityColumn.type, "String") && !(serviceBuilder.getSqlType(entity.getName(), entityColumn) == "CLOB")>
 			<#elseif !stringUtil.equals(entityColumn.type, "Blob")>
 				<#assign throwsClassNotFoundException = true />
 			</#if>
@@ -191,18 +204,24 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 			<#elseif stringUtil.equals(entityColumn.type, "Date")>
 				${entityColumn.name} = objectInput.readLong();
 			<#elseif stringUtil.equals(entityColumn.type, "String")>
-				${entityColumn.name} = objectInput.readUTF();
+				<#if serviceBuilder.getSqlType(entity.getName(), entityColumn) == "CLOB">
+					${entityColumn.name} = (String)objectInput.readObject();
+				<#else>
+					${entityColumn.name} = objectInput.readUTF();
+				</#if>
 			<#elseif !stringUtil.equals(entityColumn.type, "Blob")>
 				${entityColumn.name} = (${entityColumn.genericizedType})objectInput.readObject();
 			</#if>
 		</#list>
 
 		<#list cacheFields as cacheField>
-			${cacheField.name} = (${serviceBuilder.getGenericValue(cacheField.type)})objectInput.readObject();
+			<#assign variableName = serviceBuilder.getVariableName(cacheField) />
+
+			${variableName} = (${serviceBuilder.getGenericValue(cacheField.type)})objectInput.readObject();
 		</#list>
 
 		<#if entity.hasCompoundPK()>
-			${entity.PKVarName} = new ${entity.PKClassName}(
+			${entity.PKVariableName} = new ${entity.PKClassName}(
 
 				<#list entity.PKEntityColumns as entityColumn>
 					${entityColumn.name}
@@ -226,19 +245,31 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 			<#elseif stringUtil.equals(entityColumn.type, "Date")>
 				objectOutput.writeLong(${entityColumn.name});
 			<#elseif stringUtil.equals(entityColumn.type, "String")>
-				if (${entityColumn.name} == null) {
-					objectOutput.writeUTF("");
-				}
-				else {
-					objectOutput.writeUTF(${entityColumn.name});
-				}
+				<#if serviceBuilder.getSqlType(entity.getName(), entityColumn) == "CLOB">
+					if (${entityColumn.name} == null) {
+						objectOutput.writeObject("");
+					}
+					else {
+						objectOutput.writeObject(${entityColumn.name});
+					}
+				<#else>
+					if (${entityColumn.name} == null) {
+						objectOutput.writeUTF("");
+					}
+					else {
+						objectOutput.writeUTF(${entityColumn.name});
+					}
+				</#if>
+
 			<#elseif !stringUtil.equals(entityColumn.type, "Blob")>
 				objectOutput.writeObject(${entityColumn.name});
 			</#if>
 		</#list>
 
 		<#list cacheFields as cacheField>
-			objectOutput.writeObject(${cacheField.name});
+			<#assign variableName = serviceBuilder.getVariableName(cacheField) />
+
+			objectOutput.writeObject(${variableName});
 		</#list>
 	}
 
@@ -255,11 +286,39 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Ext
 	</#list>
 
 	<#list cacheFields as cacheField>
-		public ${serviceBuilder.getGenericValue(cacheField.type)} ${cacheField.name};
+		<#assign variableName = serviceBuilder.getVariableName(cacheField) />
+
+		public volatile ${serviceBuilder.getGenericValue(cacheField.type)} ${variableName};
 	</#list>
 
 	<#if entity.hasCompoundPK()>
-		public transient ${entity.name}PK ${entity.PKVarName};
+		public transient ${entity.name}PK ${entity.PKVariableName};
 	</#if>
 
+	<#list cacheFields as cacheField>
+		<#assign
+			variableName = serviceBuilder.getVariableName(cacheField)
+		/>
+
+		private static final MethodHandle _${variableName}MethodHandle;
+	</#list>
+
+	<#if cacheFields?size != 0>
+		static {
+			MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+			try {
+				<#list cacheFields as cacheField>
+					<#assign
+						variableName = serviceBuilder.getVariableName(cacheField)
+					/>
+
+					_${variableName}MethodHandle = lookup.findSetter(${entity.name}Impl.class, "${cacheField.name}", ${cacheField.type.canonicalName}.class);
+				</#list>
+			}
+			catch (ReflectiveOperationException reflectiveOperationException) {
+				throw new ExceptionInInitializerError(reflectiveOperationException);
+			}
+		}
+	</#if>
 }

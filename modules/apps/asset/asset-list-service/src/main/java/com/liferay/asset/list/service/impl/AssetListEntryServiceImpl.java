@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service.impl;
@@ -76,7 +67,8 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 
 	@Override
 	public AssetListEntry addAssetListEntry(
-			long groupId, String title, int type, ServiceContext serviceContext)
+			String externalReferenceCode, long groupId, String title, int type,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_portletResourcePermission.check(
@@ -84,13 +76,14 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 			AssetListActionKeys.ADD_ASSET_LIST_ENTRY);
 
 		return assetListEntryLocalService.addAssetListEntry(
-			getUserId(), groupId, title, type, serviceContext);
+			externalReferenceCode, getUserId(), groupId, title, type,
+			serviceContext);
 	}
 
 	@Override
 	public AssetListEntry addDynamicAssetListEntry(
-			long userId, long groupId, String title, String typeSettings,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long groupId, String title,
+			String typeSettings, ServiceContext serviceContext)
 		throws PortalException {
 
 		_portletResourcePermission.check(
@@ -98,13 +91,14 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 			AssetListActionKeys.ADD_ASSET_LIST_ENTRY);
 
 		return assetListEntryLocalService.addDynamicAssetListEntry(
-			getUserId(), groupId, title, typeSettings, serviceContext);
+			externalReferenceCode, getUserId(), groupId, title, typeSettings,
+			serviceContext);
 	}
 
 	@Override
 	public AssetListEntry addManualAssetListEntry(
-			long userId, long groupId, String title, long[] assetEntryIds,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long groupId, String title,
+			long[] assetEntryIds, ServiceContext serviceContext)
 		throws PortalException {
 
 		_portletResourcePermission.check(
@@ -112,7 +106,8 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 			AssetListActionKeys.ADD_ASSET_LIST_ENTRY);
 
 		return assetListEntryLocalService.addManualAssetListEntry(
-			getUserId(), groupId, title, assetEntryIds, serviceContext);
+			externalReferenceCode, getUserId(), groupId, title, assetEntryIds,
+			serviceContext);
 	}
 
 	@Override
@@ -187,6 +182,24 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 	}
 
 	@Override
+	public AssetListEntry fetchAssetListEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		AssetListEntry assetListEntry =
+			assetListEntryLocalService.
+				fetchAssetListEntryByExternalReferenceCode(
+					externalReferenceCode, groupId);
+
+		if (assetListEntry != null) {
+			_assetListEntryModelResourcePermission.check(
+				getPermissionChecker(), assetListEntry, ActionKeys.VIEW);
+		}
+
+		return assetListEntry;
+	}
+
+	@Override
 	public List<AssetListEntry> getAssetListEntries(
 		long groupId, int start, int end,
 		OrderByComparator<AssetListEntry> orderByComparator) {
@@ -227,6 +240,49 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 	}
 
 	@Override
+	public List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String assetEntrySubtype, String assetEntryType,
+		int start, int end,
+		OrderByComparator<AssetListEntry> orderByComparator) {
+
+		return assetListEntryPersistence.filterFindByG_AES_AET(
+			groupIds, assetEntrySubtype, assetEntryType, start, end,
+			orderByComparator);
+	}
+
+	@Override
+	public List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String title, String assetEntrySubtype,
+		String assetEntryType, int start, int end,
+		OrderByComparator<AssetListEntry> orderByComparator) {
+
+		return assetListEntryPersistence.filterFindByG_LikeT_AES_AET(
+			groupIds,
+			_customSQL.keywords(title, false, WildcardMode.SURROUND)[0],
+			assetEntrySubtype, assetEntryType, start, end, orderByComparator);
+	}
+
+	@Override
+	public List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String title, String[] assetEntryTypes, int start,
+		int end, OrderByComparator<AssetListEntry> orderByComparator) {
+
+		return assetListEntryPersistence.filterFindByG_LikeT_AET(
+			groupIds,
+			_customSQL.keywords(title, false, WildcardMode.SURROUND)[0],
+			assetEntryTypes, start, end, orderByComparator);
+	}
+
+	@Override
+	public List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String[] assetEntryTypes, int start, int end,
+		OrderByComparator<AssetListEntry> orderByComparator) {
+
+		return assetListEntryPersistence.filterFindByG_AET(
+			groupIds, assetEntryTypes, start, end, orderByComparator);
+	}
+
+	@Override
 	public int getAssetListEntriesCount(long groupId) {
 		return assetListEntryPersistence.filterCountByGroupId(groupId);
 	}
@@ -251,6 +307,43 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 	}
 
 	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String assetEntrySubtype, String assetEntryType) {
+
+		return assetListEntryPersistence.filterCountByG_AES_AET(
+			groupIds, assetEntrySubtype, assetEntryType);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String title, String assetEntrySubtype,
+		String assetEntryType) {
+
+		return assetListEntryPersistence.filterCountByG_LikeT_AES_AET(
+			groupIds,
+			_customSQL.keywords(title, false, WildcardMode.SURROUND)[0],
+			assetEntrySubtype, assetEntryType);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String title, String[] assetEntryTypes) {
+
+		return assetListEntryPersistence.filterCountByG_LikeT_AET(
+			groupIds,
+			_customSQL.keywords(title, false, WildcardMode.SURROUND)[0],
+			assetEntryTypes);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String[] assetEntryTypes) {
+
+		return assetListEntryPersistence.filterCountByG_AET(
+			groupIds, assetEntryTypes);
+	}
+
+	@Override
 	public AssetListEntry getAssetListEntry(long assetListEntryId)
 		throws PortalException {
 
@@ -271,6 +364,21 @@ public class AssetListEntryServiceImpl extends AssetListEntryServiceBaseImpl {
 		AssetListEntry assetListEntry =
 			assetListEntryLocalService.getAssetListEntry(
 				groupId, assetListEntryKey);
+
+		_assetListEntryModelResourcePermission.check(
+			getPermissionChecker(), assetListEntry, ActionKeys.VIEW);
+
+		return assetListEntry;
+	}
+
+	@Override
+	public AssetListEntry getAssetListEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		AssetListEntry assetListEntry =
+			assetListEntryLocalService.getAssetListEntryByExternalReferenceCode(
+				externalReferenceCode, groupId);
 
 		_assetListEntryModelResourcePermission.check(
 			getPermissionChecker(), assetListEntry, ActionKeys.VIEW);

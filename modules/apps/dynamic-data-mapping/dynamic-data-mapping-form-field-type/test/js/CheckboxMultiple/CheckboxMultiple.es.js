@@ -1,180 +1,350 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import CheckboxMultiple from '../../../src/main/resources/META-INF/resources/CheckboxMultiple/CheckboxMultiple.es';
+import '@testing-library/jest-dom/extend-expect';
+import {screen} from '@testing-library/dom';
+import {cleanup, render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {PageProvider} from 'data-engine-js-components-web';
+import React from 'react';
 
-let component;
-const spritemap = 'icons.svg';
+import CheckboxMultiple from '../../../src/main/resources/META-INF/resources/js/CheckboxMultiple/CheckboxMultiple.es';
+
+const CheckboxMultipleWithProvider = (props) => (
+	<PageProvider value={{editingLanguageId: 'en_US'}}>
+		<CheckboxMultiple {...props} />
+	</PageProvider>
+);
+
+describe('Smoke test', () => {
+	test('field Checkbox Multiple renders the expected structure with default props', () => {
+		const {container} = render(
+			<CheckboxMultipleWithProvider
+				accessibleProps={{'aria-required': false}}
+				disabled={false}
+				inline={false}
+				isSwitcher={false}
+				localizedValueEdited={false}
+				name="namePropertyValue"
+				options={[
+					{
+						label: 'Option1',
+						reference: 'Option1Reference',
+						value: 'Option1Value',
+					},
+					{
+						label: 'Option2',
+						reference: 'Option2Reference',
+						value: 'Option2Value',
+					},
+				]}
+				predefinedValue={[]}
+				value={[]}
+			/>
+		);
+
+		expect(container).toMatchSnapshot();
+	});
+});
 
 describe('Field Checkbox Multiple', () => {
+
+	// eslint-disable-next-line no-console
+	const originalWarn = console.warn;
+
+	beforeAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = (...args) => {
+			if (/DataProvider: Trying/.test(args[0])) {
+				return;
+			}
+			originalWarn.call(console, ...args);
+		};
+	});
+
+	afterAll(() => {
+
+		// eslint-disable-next-line no-console
+		console.warn = originalWarn;
+	});
+
+	afterEach(cleanup);
+
 	beforeEach(() => {
 		jest.useFakeTimers();
+		fetch.mockResponseOnce(JSON.stringify({}));
 	});
 
-	afterEach(() => {
-		if (component) {
-			component.dispose();
-		}
-	});
+	it('is not editable', () => {
+		render(
+			<CheckboxMultipleWithProvider
+				options={[
+					{
+						label: 'readOnlyOption',
+						value: 'readOnlyOption',
+					},
+				]}
+				readOnly={true}
+			/>
+		);
 
-	it('is not edidable', () => {
-		component = new CheckboxMultiple({
-			readOnly: false,
-			spritemap
-		});
-
-		expect(component).toMatchSnapshot();
+		expect(screen.getByLabelText('readOnlyOption')).toBeDisabled();
 	});
 
 	it('has a helptext', () => {
-		component = new CheckboxMultiple({
-			spritemap,
-			tip: 'Type something'
-		});
+		render(<CheckboxMultipleWithProvider tip="Help Text Content" />);
 
-		expect(component).toMatchSnapshot();
+		const helpTextElements = screen.getAllByText('Help Text Content');
+
+		expect(helpTextElements[0]).toBeVisible();
+		expect(helpTextElements[1]).toHaveClass('sr-only');
 	});
 
-	it('has an id', () => {
-		component = new CheckboxMultiple({
-			id: 'ID',
-			spritemap
-		});
+	it('appends id to field-feedback element id', () => {
+		const {container} = render(
+			<CheckboxMultipleWithProvider id="CheckboxMultipleId" />
+		);
 
-		expect(component).toMatchSnapshot();
+		expect(
+			container.querySelector('#CheckboxMultipleId_fieldFeedback')
+		).toBeInTheDocument();
 	});
 
-	it('has a label', () => {
-		component = new CheckboxMultiple({
-			label: 'label',
-			spritemap
-		});
+	it('applies the predefined value', () => {
+		render(
+			<CheckboxMultipleWithProvider
+				options={[
+					{
+						label: 'Option1',
+						value: 'Option1',
+					},
+					{
+						label: 'Option2',
+						value: 'Option2',
+					},
+				]}
+				predefinedValue={['Option2']}
+			/>
+		);
 
-		expect(component).toMatchSnapshot();
-	});
-
-	it('has a predefined Value', () => {
-		component = new CheckboxMultiple({
-			placeholder: 'Option 1',
-			spritemap
-		});
-
-		expect(component).toMatchSnapshot();
+		expect(screen.getByLabelText('Option1')).not.toBeChecked();
+		expect(screen.getByLabelText('Option2')).toBeChecked();
 	});
 
 	it('is not required', () => {
-		component = new CheckboxMultiple({
-			required: false,
-			spritemap
-		});
+		const {container} = render(
+			<CheckboxMultipleWithProvider
+				label="CheckboxMultipleLabel"
+				required={false}
+			/>
+		);
 
-		expect(component).toMatchSnapshot();
+		expect(
+			container.querySelector('.lexicon-icon.lexicon-icon-asterisk')
+		).not.toBeInTheDocument();
 	});
 
 	it('is shown as a switcher', () => {
-		component = new CheckboxMultiple({
-			showAsSwitcher: true,
-			spritemap
-		});
+		const {container} = render(
+			<CheckboxMultipleWithProvider showAsSwitcher />
+		);
 
-		expect(component).toMatchSnapshot();
+		expect(container.querySelector('input[role="switch"]')).toBeVisible();
 	});
 
 	it('is shown as checkbox', () => {
-		component = new CheckboxMultiple({
-			showAsSwitcher: false,
-			spritemap
-		});
+		const {container} = render(
+			<CheckboxMultipleWithProvider showAsSwitcher={false} />
+		);
 
-		expect(component).toMatchSnapshot();
+		const checkboxElement = container.querySelector(
+			'input[type="checkbox"]'
+		);
+
+		expect(checkboxElement).toBeVisible();
+		expect(checkboxElement).not.toHaveAttribute('role', 'switch');
 	});
 
-	it('renders Label if showLabel is true', () => {
-		component = new CheckboxMultiple({
-			label: 'text',
-			showLabel: true,
-			spritemap
-		});
+	it('renders field label if showLabel is true', () => {
+		render(
+			<CheckboxMultipleWithProvider
+				label="CheckboxMultipleLabel"
+				showLabel
+			/>
+		);
 
-		expect(component).toMatchSnapshot();
+		const labelElements = screen.getAllByText('CheckboxMultipleLabel');
+
+		expect(labelElements.length).toBe(2);
+		expect(labelElements[0]).toBeVisible();
+		expect(labelElements[1]).toHaveClass('sr-only');
 	});
 
-	it('has a spritemap', () => {
-		component = new CheckboxMultiple({
-			spritemap
-		});
+	it('does not render field label if showLabel is false', () => {
+		render(
+			<CheckboxMultipleWithProvider
+				label="CheckboxMultipleLabel"
+				showLabel={false}
+			/>
+		);
 
-		expect(component).toMatchSnapshot();
+		const labelElements = screen.getAllByText('CheckboxMultipleLabel');
+
+		expect(labelElements.length).toBe(1);
+		expect(labelElements[0]).toHaveClass('sr-only');
 	});
 
 	it('has a value', () => {
-		component = new CheckboxMultiple({
-			spritemap,
-			value: true
-		});
+		const {container} = render(
+			<CheckboxMultipleWithProvider value={['Option1Value']} />
+		);
 
-		expect(component).toMatchSnapshot();
+		const hiddenInputElement = container.querySelector(
+			'input[type="hidden"]'
+		);
+
+		expect(hiddenInputElement).toHaveAttribute('value', 'Option1Value');
 	});
 
-	it('has a key', () => {
-		component = new CheckboxMultiple({
-			key: 'key',
-			spritemap
-		});
-
-		expect(component).toMatchSnapshot();
-	});
-
-	it('emits field edit event on field change', done => {
+	it('call the onChange callback on the field change', () => {
 		const handleFieldEdited = jest.fn();
 
-		const events = {fieldEdited: handleFieldEdited};
+		const {container} = render(
+			<CheckboxMultipleWithProvider onChange={handleFieldEdited} />
+		);
 
-		component = new CheckboxMultiple({
-			events,
-			spritemap
-		});
+		userEvent.click(container.querySelector('input'));
 
-		component.on('fieldEdited', () => {
-			expect(handleFieldEdited).toHaveBeenCalled();
-
-			done();
-		});
-
-		component.handleInputChangeEvent({
-			delegateTarget: {
-				checked: true
-			}
-		});
-
-		jest.runAllTimers();
+		expect(handleFieldEdited).toHaveBeenCalled();
 	});
 
-	it('propagates the field edit event on field change', () => {
-		component = new CheckboxMultiple({
-			spritemap
+	it('uses value over predefinedValue if there is a value', () => {
+		const {container, getByLabelText} = render(
+			<CheckboxMultipleWithProvider
+				options={[
+					{
+						label: 'Option 1',
+						value: 'option1',
+					},
+					{
+						label: 'Option 2',
+						value: 'option2',
+					},
+					{
+						label: 'Option 3',
+						value: 'option3',
+					},
+				]}
+				predefinedValue={['option1', 'option2']}
+				value={['option3']}
+			/>
+		);
+
+		expect(getByLabelText('Option 1')).not.toBeChecked();
+		expect(getByLabelText('Option 2')).not.toBeChecked();
+		expect(getByLabelText('Option 3')).toBeChecked();
+
+		const hiddenInput = container.querySelector('input[type="hidden"]');
+
+		expect(hiddenInput).toHaveAttribute('value', 'option3');
+	});
+
+	it('checks the predefinedValue if there is no value', () => {
+		const {getByLabelText} = render(
+			<CheckboxMultipleWithProvider
+				options={[
+					{
+						label: 'Option 1',
+						value: 'option1',
+					},
+					{
+						label: 'Option 2',
+						value: 'option2',
+					},
+					{
+						label: 'Option 3',
+						value: 'option3',
+					},
+				]}
+				predefinedValue={['option1', 'option2']}
+				value={[]}
+			/>
+		);
+
+		expect(getByLabelText('Option 1')).toBeChecked();
+		expect(getByLabelText('Option 2')).toBeChecked();
+		expect(getByLabelText('Option 3')).not.toBeChecked();
+	});
+
+	it('renders data-option-reference attribute regardless of the element being a switcher', () => {
+		const otherProps = {
+			options: [
+				{
+					label: 'Option 1',
+					reference: 'option1Reference',
+					value: 'option1',
+				},
+				{
+					label: 'Option 2',
+					reference: 'option2Reference',
+					value: 'option2',
+				},
+			],
+			predefinedValue: ['option1', 'option2'],
+			value: [],
+		};
+
+		const allProps = [
+			{showAsSwitcher: false, ...otherProps},
+			{showAsSwitcher: true, ...otherProps},
+		];
+
+		allProps.forEach((props) => {
+			const {container} = render(
+				<CheckboxMultipleWithProvider {...props} />
+			);
+
+			const checkboxInputElement1 = container.querySelector(
+				`input[value][type="checkbox"][data-option-reference="option1Reference"]`
+			);
+
+			const checkboxInputElement2 = container.querySelector(
+				`input[value][type="checkbox"][data-option-reference="option2Reference"]`
+			);
+
+			expect(checkboxInputElement1).toBeTruthy();
+			expect(checkboxInputElement2).toBeTruthy();
 		});
+	});
 
-		const spy = jest.spyOn(component, 'emit');
+	it('uncheck all values if the user has edited the field to clear the predefinedValue', () => {
+		const {getByLabelText} = render(
+			<CheckboxMultipleWithProvider
+				localizedValueEdited={{en_US: true}}
+				options={[
+					{
+						label: 'Option 1',
+						value: 'option1',
+					},
+					{
+						label: 'Option 2',
+						value: 'option2',
+					},
+					{
+						label: 'Option 3',
+						value: 'option3',
+					},
+				]}
+				predefinedValue={['option1', 'option2']}
+				value={[]}
+			/>
+		);
 
-		component.handleInputChangeEvent({
-			delegateTarget: {
-				checked: true
-			}
-		});
-
-		expect(spy).toHaveBeenCalled();
-		expect(spy).toHaveBeenCalledWith('fieldEdited', expect.any(Object));
+		expect(getByLabelText('Option 1')).not.toBeChecked();
+		expect(getByLabelText('Option 2')).not.toBeChecked();
+		expect(getByLabelText('Option 3')).not.toBeChecked();
 	});
 });

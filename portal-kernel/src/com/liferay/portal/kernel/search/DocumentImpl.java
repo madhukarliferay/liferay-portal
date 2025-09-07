@@ -1,36 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.search;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.search.geolocation.GeoLocationPoint;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SetUtil;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -75,7 +63,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addDate(String name, Date[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -108,7 +96,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addDateSortable(String name, Date[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -128,32 +116,45 @@ public class DocumentImpl implements Document {
 		addKeyword(name, datesString);
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public void addFile(String name, byte[] bytes, String fileExt) {
-		InputStream is = new UnsyncByteArrayInputStream(bytes);
-
-		addFile(name, is, fileExt);
+		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public void addFile(String name, File file, String fileExt)
 		throws IOException {
 
-		InputStream is = new FileInputStream(file);
-
-		addFile(name, is, fileExt);
+		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
-	public void addFile(String name, InputStream is, String fileExt) {
-		addText(name, FileUtil.extractText(is, fileExt));
+	public void addFile(String name, InputStream inputStream, String fileExt) {
+		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public void addFile(
-		String name, InputStream is, String fileExt, int maxStringLength) {
+		String name, InputStream inputStream, String fileExt,
+		int maxStringLength) {
 
-		addText(name, FileUtil.extractText(is, fileExt, maxStringLength));
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -182,7 +183,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, boolean[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -191,7 +192,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Boolean[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -210,7 +211,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, double[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -219,7 +220,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Double[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -238,7 +239,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, float[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -247,7 +248,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Float[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -261,7 +262,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, int[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -275,7 +276,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Integer[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -294,7 +295,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, long[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -303,7 +304,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Long[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -322,7 +323,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, short[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -331,7 +332,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, Short[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -345,6 +346,10 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, String value, boolean lowerCase) {
+		if (Validator.isNull(value)) {
+			return;
+		}
+
 		createKeywordField(name, value, lowerCase);
 
 		createSortableKeywordField(name, value);
@@ -352,7 +357,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeyword(String name, String[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -361,16 +366,12 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeywordSortable(String name, Boolean value) {
-		String valueString = String.valueOf(value);
-
-		createKeywordField(name, valueString, false);
-
-		_createSortableTextField(name, true, valueString);
+		addKeywordSortable(name, String.valueOf(value));
 	}
 
 	@Override
 	public void addKeywordSortable(String name, Boolean[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -383,6 +384,10 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeywordSortable(String name, String value) {
+		if (Validator.isNull(value)) {
+			return;
+		}
+
 		createKeywordField(name, value, false);
 
 		_createSortableTextField(name, true, value);
@@ -390,9 +395,20 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addKeywordSortable(String name, String[] values) {
-		createField(name, values);
+		if (ArrayUtil.isEmpty(values)) {
+			return;
+		}
 
-		_createSortableTextField(name, true, values);
+		String[] filteredValues = ArrayUtil.filter(
+			values, Validator::isNotNull);
+
+		if (ArrayUtil.isEmpty(filteredValues)) {
+			return;
+		}
+
+		createField(name, filteredValues);
+
+		_createSortableTextField(name, true, filteredValues);
 	}
 
 	@Override
@@ -461,6 +477,19 @@ public class DocumentImpl implements Document {
 	}
 
 	@Override
+	public void addLocalizedText(
+		String name, Map<Locale, String> values, boolean sortable) {
+
+		if ((values == null) || values.isEmpty()) {
+			return;
+		}
+
+		Field field = createField(name, values, sortable);
+
+		field.setTokenized(true);
+	}
+
+	@Override
 	public void addNumber(String name, BigDecimal value) {
 		createNumberField(name, value);
 	}
@@ -482,7 +511,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addNumber(String name, double[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -506,7 +535,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addNumber(String name, float[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -525,7 +554,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addNumber(String name, int[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -554,7 +583,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addNumber(String name, long[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -573,7 +602,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addNumber(String name, String[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -651,7 +680,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addText(String name, String[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -677,7 +706,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public void addTextSortable(String name, String[] values) {
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -730,9 +759,8 @@ public class DocumentImpl implements Document {
 		String portletId, String field1, String field2, String field3,
 		String field4) {
 
-		String uid = Field.getUID(portletId, field1, field2, field3, field4);
-
-		addKeyword(Field.UID, uid);
+		addKeyword(
+			Field.UID, Field.getUID(portletId, field1, field2, field3, field4));
 	}
 
 	@Override
@@ -750,9 +778,7 @@ public class DocumentImpl implements Document {
 			return get(name);
 		}
 
-		String localizedName = Field.getLocalizedName(locale, name);
-
-		Field field = getField(localizedName);
+		Field field = getField(Field.getLocalizedName(locale, name));
 
 		if (field == null) {
 			field = getField(name);
@@ -771,14 +797,10 @@ public class DocumentImpl implements Document {
 			return get(name, defaultName);
 		}
 
-		String localizedName = Field.getLocalizedName(locale, name);
-
-		Field field = getField(localizedName);
+		Field field = getField(Field.getLocalizedName(locale, name));
 
 		if (field == null) {
-			localizedName = Field.getLocalizedName(locale, defaultName);
-
-			field = getField(localizedName);
+			field = getField(Field.getLocalizedName(locale, defaultName));
 		}
 
 		if (field == null) {
@@ -861,11 +883,7 @@ public class DocumentImpl implements Document {
 
 	@Override
 	public boolean hasField(String name) {
-		if (_fields.containsKey(name)) {
-			return true;
-		}
-
-		return false;
+		return _fields.containsKey(name);
 	}
 
 	@Override
@@ -959,7 +977,7 @@ public class DocumentImpl implements Document {
 	protected <T extends Number & Comparable<? super T>> void createNumberField(
 		String name, boolean typify, T... values) {
 
-		if (values == null) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -1007,11 +1025,7 @@ public class DocumentImpl implements Document {
 		Class<? extends Number> clazz) {
 
 		if (typify) {
-			name = name.concat(
-				StringPool.UNDERLINE
-			).concat(
-				"Number"
-			);
+			name = name + "_Number";
 		}
 
 		Field field = createField(Field.getSortableFieldName(name), value);
@@ -1023,7 +1037,7 @@ public class DocumentImpl implements Document {
 	protected <T extends Number & Comparable<? super T>> void
 		createSortableNumericField(String name, boolean typify, T... values) {
 
-		if ((values == null) || (values.length == 0)) {
+		if (ArrayUtil.isEmpty(values)) {
 			return;
 		}
 
@@ -1091,11 +1105,7 @@ public class DocumentImpl implements Document {
 		String name, boolean typify, String value) {
 
 		if (typify) {
-			name = name.concat(
-				StringPool.UNDERLINE
-			).concat(
-				"String"
-			);
+			name = name + "_String";
 		}
 
 		String truncatedValue = value;

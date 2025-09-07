@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SourceLocalService}.
@@ -26,15 +18,14 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class SourceLocalServiceWrapper
 	implements ServiceWrapper<SourceLocalService>, SourceLocalService {
 
+	public SourceLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SourceLocalServiceWrapper(SourceLocalService sourceLocalService) {
 		_sourceLocalService = sourceLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SourceLocalServiceUtil} to access the source local service. Add custom service methods to <code>com.liferay.portal.reports.engine.console.service.impl.SourceLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.reports.engine.console.model.Source addSource(
 			long userId, long groupId,
@@ -52,6 +43,10 @@ public class SourceLocalServiceWrapper
 	/**
 	 * Adds the source to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SourceLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param source the source
 	 * @return the source that was added
 	 */
@@ -60,6 +55,17 @@ public class SourceLocalServiceWrapper
 		com.liferay.portal.reports.engine.console.model.Source source) {
 
 		return _sourceLocalService.addSource(source);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _sourceLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -89,6 +95,10 @@ public class SourceLocalServiceWrapper
 	/**
 	 * Deletes the source with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SourceLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param sourceId the primary key of the source
 	 * @return the source that was removed
 	 * @throws PortalException if a source with the primary key could not be found
@@ -103,6 +113,10 @@ public class SourceLocalServiceWrapper
 
 	/**
 	 * Deletes the source from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SourceLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param source the source
 	 * @return the source that was removed
@@ -121,6 +135,18 @@ public class SourceLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_sourceLocalService.deleteSources(groupId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _sourceLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _sourceLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -241,6 +267,13 @@ public class SourceLocalServiceWrapper
 	}
 
 	@Override
+	public String[] getAttachmentsFileNames(
+		com.liferay.portal.reports.engine.console.model.Source source) {
+
+		return _sourceLocalService.getAttachmentsFileNames(source);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
 		getExportActionableDynamicQuery(
 			com.liferay.exportimport.kernel.lar.PortletDataContext
@@ -267,6 +300,9 @@ public class SourceLocalServiceWrapper
 		return _sourceLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -331,7 +367,8 @@ public class SourceLocalServiceWrapper
 			long groupId, String name, String driverUrl, boolean andSearch,
 			int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				orderByComparator) {
+				<com.liferay.portal.reports.engine.console.model.Source>
+					orderByComparator) {
 
 		return _sourceLocalService.getSources(
 			groupId, name, driverUrl, andSearch, start, end, orderByComparator);
@@ -410,6 +447,10 @@ public class SourceLocalServiceWrapper
 	/**
 	 * Updates the source in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SourceLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param source the source
 	 * @return the source that was updated
 	 */
@@ -418,6 +459,11 @@ public class SourceLocalServiceWrapper
 		com.liferay.portal.reports.engine.console.model.Source source) {
 
 		return _sourceLocalService.updateSource(source);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _sourceLocalService.getBasePersistence();
 	}
 
 	@Override

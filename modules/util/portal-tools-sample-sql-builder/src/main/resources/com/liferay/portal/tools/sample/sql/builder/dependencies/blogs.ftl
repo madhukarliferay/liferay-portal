@@ -1,46 +1,33 @@
-<#assign
-	blogsEntryModels = dataFactory.newBlogsEntryModels(groupId)
-
-	userNotificationDeliveryModel = dataFactory.newUserNotificationDeliveryModel("com_liferay_comment_web_portlet_CommentPortlet")
-/>
-
-${dataFactory.toInsertSQL(userNotificationDeliveryModel)}
-
-<#list blogsEntryModels as blogsEntryModel>
+<#list dataFactory.newBlogsEntryModels(groupId) as blogsEntryModel>
 	${dataFactory.toInsertSQL(blogsEntryModel)}
 
-	<#assign friendlyURLEntryModel = dataFactory.newFriendlyURLEntryModel(blogsEntryModel) />
+	<#assign friendlyURLEntryModel = dataFactory.newFriendlyURLEntryModel(blogsEntryModel.groupId, dataFactory.blogsEntryClassNameId, blogsEntryModel.entryId) />
 
 	${dataFactory.toInsertSQL(friendlyURLEntryModel)}
 
-	${dataFactory.toInsertSQL(dataFactory.newFriendlyURLEntryLocalizationModel(friendlyURLEntryModel, blogsEntryModel))}
+	${dataFactory.toInsertSQL(dataFactory.newFriendlyURLEntryLocalizationModel(friendlyURLEntryModel, blogsEntryModel.urlTitle))}
 
 	${dataFactory.toInsertSQL(dataFactory.newFriendlyURLEntryMapping(friendlyURLEntryModel))}
 
-	${dataFactory.toInsertSQL(dataFactory.newMBDiscussionAssetEntryModel(blogsEntryModel))}
-
 	<@insertAssetEntry
-		_categoryAndTag=true
-		_entry=blogsEntryModel
+		_categoryAndTag = true
+		_entry = blogsEntryModel
 	/>
 
-	<#assign
-		mbThreadId = dataFactory.getCounterNext()
-		mbRootMessageId = dataFactory.getCounterNext()
-	/>
+	<#assign mbRootMessageId = dataFactory.getCounterNext() />
 
 	<@insertMBDiscussion
-		_classNameId=dataFactory.blogsEntryClassNameId
-		_classPK=blogsEntryModel.entryId
-		_groupId=groupId
-		_maxCommentCount=dataFactory.maxBlogsEntryCommentCount
-		_mbRootMessageId=mbRootMessageId
-		_mbThreadId=mbThreadId
+		_classNameId = dataFactory.blogsEntryClassNameId
+		_classPK = blogsEntryModel.entryId
+		_groupId = groupId
+		_maxCommentCount = dataFactory.maxBlogsEntryCommentCount
+		_mbRootMessageId = mbRootMessageId
+		_mbThreadId = dataFactory.getCounterNext()
 	/>
 
 	${dataFactory.toInsertSQL(dataFactory.newSubscriptionModel(blogsEntryModel))}
 
 	${dataFactory.toInsertSQL(dataFactory.newSocialActivityModel(blogsEntryModel))}
 
-	${dataFactory.getCSVWriter("blog").write(blogsEntryModel.entryId + "," + blogsEntryModel.urlTitle + "," + mbRootMessageId + "\n")}
+	${csvFileWriter.write("blog", virtualHostModel.hostname + "," + groupModel.friendlyURL + "," + blogsEntryModel.entryId + "," + blogsEntryModel.urlTitle + "," + mbRootMessageId + "\n")}
 </#list>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.target.platform;
@@ -17,17 +8,15 @@ package com.liferay.gradle.plugins.target.platform;
 import com.liferay.gradle.plugins.target.platform.extensions.TargetPlatformIDEExtension;
 import com.liferay.gradle.plugins.target.platform.internal.util.GradleUtil;
 
-import groovy.lang.Closure;
-import groovy.lang.GroovyObjectSupport;
+import groovy.util.XmlSlurper;
+import groovy.util.slurpersupport.GPathResult;
 
-import io.spring.gradle.dependencymanagement.dsl.DependencyManagementConfigurer;
-import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension;
-import io.spring.gradle.dependencymanagement.dsl.ImportsHandler;
+import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,7 +27,8 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseClasspath;
@@ -63,16 +53,11 @@ public class TargetPlatformIDEPlugin implements Plugin<Project> {
 	public void apply(Project project) {
 		GradleUtil.applyPlugin(project, EclipsePlugin.class);
 		GradleUtil.applyPlugin(project, IdeaPlugin.class);
-		GradleUtil.applyPlugin(project, JavaPlugin.class);
+		GradleUtil.applyPlugin(project, JavaLibraryPlugin.class);
 		GradleUtil.applyPlugin(project, TargetPlatformPlugin.class);
 
-		DependencyManagementExtension dependencyManagementExtension =
-			GradleUtil.getExtension(
-				project, DependencyManagementExtension.class);
-
 		Configuration targetPlatformIDEConfiguration =
-			_addConfigurationTargetPlatformIDE(
-				project, dependencyManagementExtension);
+			_addConfigurationTargetPlatformIDE(project);
 
 		TargetPlatformIDEExtension targetPlatformIDEExtension =
 			GradleUtil.addExtension(
@@ -85,15 +70,40 @@ public class TargetPlatformIDEPlugin implements Plugin<Project> {
 	}
 
 	private Configuration _addConfigurationTargetPlatformIDE(
-		final Project project,
-		final DependencyManagementExtension dependencyManagementExtension) {
+		final Project project) {
 
-		final Configuration configuration = GradleUtil.addConfiguration(
+		Configuration configuration = GradleUtil.addConfiguration(
 			project, TARGET_PLATFORM_IDE_CONFIGURATION_NAME);
 
-		final Configuration bomConfiguration = GradleUtil.getConfiguration(
+		final Configuration ideBomsConfiguration = GradleUtil.addConfiguration(
+			project, _TARGET_PLATFORM_IDE_BOMS_CONFIGURATION_NAME);
+
+		Configuration bomsConfiguration = GradleUtil.getConfiguration(
 			project,
 			TargetPlatformPlugin.TARGET_PLATFORM_BOMS_CONFIGURATION_NAME);
+
+		DependencySet bomsDependencySet = bomsConfiguration.getDependencies();
+
+		bomsDependencySet.all(
+			new Action<Dependency>() {
+
+				@Override
+				public void execute(Dependency dependency) {
+					StringBuilder sb = new StringBuilder();
+
+					sb.append(dependency.getGroup());
+					sb.append(':');
+					sb.append(dependency.getName());
+					sb.append(':');
+					sb.append(dependency.getVersion());
+					sb.append("@pom");
+
+					GradleUtil.addDependency(
+						project, _TARGET_PLATFORM_IDE_BOMS_CONFIGURATION_NAME,
+						sb.toString());
+				}
+
+			});
 
 		configuration.defaultDependencies(
 			new Action<DependencySet>() {
@@ -101,8 +111,7 @@ public class TargetPlatformIDEPlugin implements Plugin<Project> {
 				@Override
 				public void execute(DependencySet dependencySet) {
 					_addDependenciesTargetPlatformIDE(
-						project, dependencyManagementExtension, configuration,
-						bomConfiguration);
+						project, ideBomsConfiguration);
 				}
 
 			});
@@ -115,87 +124,53 @@ public class TargetPlatformIDEPlugin implements Plugin<Project> {
 		return configuration;
 	}
 
-	@SuppressWarnings("serial")
 	private void _addDependenciesTargetPlatformIDE(
-		Project project,
-		DependencyManagementExtension dependencyManagementExtension,
-		Configuration configuration, final Configuration bomConfiguration) {
+		Project project, Configuration ideBomsConfiguration) {
 
-		GroovyObjectSupport groovyObjectSupport =
-			(GroovyObjectSupport)dependencyManagementExtension;
+		Set<File> bomFiles = ideBomsConfiguration.resolve();
 
-		Object[] args = {
-			configuration,
-			new Closure<Void>(project) {
+		for (File bomFile : bomFiles) {
+			try {
+				XmlSlurper xmlSlurper = new XmlSlurper();
 
-				@SuppressWarnings("unused")
-				public void doCall() {
-					DependencySet dependencySet =
-						bomConfiguration.getAllDependencies();
+				GPathResult gPathResult = xmlSlurper.parse(bomFile);
 
-					final DependencyManagementConfigurer
-						dependencyManagementConfigurer =
-							(DependencyManagementConfigurer)getDelegate();
+				gPathResult = (GPathResult)gPathResult.getProperty(
+					"dependencyManagement");
 
-					dependencySet.all(
-						new Action<Dependency>() {
+				gPathResult = (GPathResult)gPathResult.getProperty(
+					"dependencies");
 
-							@Override
-							public void execute(Dependency dependency) {
-								_configureDependencyManagementImportsHandler(
-									dependencyManagementConfigurer, dependency);
-							}
+				gPathResult = (GPathResult)gPathResult.getProperty(
+					"dependency");
 
-						});
-				}
+				Iterator<?> iterator = gPathResult.iterator();
 
-			}
-		};
+				while (iterator.hasNext()) {
+					gPathResult = (GPathResult)iterator.next();
 
-		groovyObjectSupport.invokeMethod("configurations", args);
-
-		Map<String, String> managedVersions =
-			dependencyManagementExtension.getManagedVersionsForConfiguration(
-				configuration);
-
-		if (managedVersions.isEmpty()) {
-			return;
-		}
-
-		Set<String> dependencyNotations = new LinkedHashSet<>();
-
-		for (Map.Entry<String, String> entry : managedVersions.entrySet()) {
-			dependencyNotations.add(entry.getKey() + ":" + entry.getValue());
-		}
-
-		for (String dependencyNotation : dependencyNotations) {
-			GradleUtil.addDependency(
-				project, TARGET_PLATFORM_IDE_CONFIGURATION_NAME,
-				dependencyNotation);
-		}
-	}
-
-	private void _configureDependencyManagementImportsHandler(
-		DependencyManagementConfigurer dependencyManagementConfigurer,
-		final Dependency dependency) {
-
-		dependencyManagementConfigurer.imports(
-			new Action<ImportsHandler>() {
-
-				@Override
-				public void execute(ImportsHandler importsHandler) {
 					StringBuilder sb = new StringBuilder();
 
-					sb.append(dependency.getGroup());
+					sb.append(gPathResult.getProperty("groupId"));
 					sb.append(':');
-					sb.append(dependency.getName());
+					sb.append(gPathResult.getProperty("artifactId"));
 					sb.append(':');
-					sb.append(dependency.getVersion());
+					sb.append(gPathResult.getProperty("version"));
 
-					importsHandler.mavenBom(sb.toString());
+					GradleUtil.addDependency(
+						project, TARGET_PLATFORM_IDE_CONFIGURATION_NAME,
+						sb.toString());
 				}
+			}
+			catch (Exception exception) {
+				Logger logger = project.getLogger();
 
-			});
+				if (logger.isWarnEnabled()) {
+					logger.warn(
+						"Unable to add BOM dependencies from {}", bomFile);
+				}
+			}
+		}
 	}
 
 	private void _configureEclipseModel(
@@ -252,5 +227,8 @@ public class TargetPlatformIDEPlugin implements Plugin<Project> {
 
 		compileClasspath.plus(targetPlatformIDEConfiguration);
 	}
+
+	private static final String _TARGET_PLATFORM_IDE_BOMS_CONFIGURATION_NAME =
+		"targetPlatformIDEBoms";
 
 }

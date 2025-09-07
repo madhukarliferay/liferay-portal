@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model.impl;
@@ -39,9 +30,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.portlet.PortletMode;
+import jakarta.portlet.PortletMode;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Adolfo Pérez
@@ -60,6 +51,7 @@ public class DefaultLayoutTypeAccessPolicyImpl
 		throws PortalException {
 
 		String checkAccessAllowedToPortletCacheKey = StringBundler.concat(
+			"LIFERAY_SHARED_",
 			DefaultLayoutTypeAccessPolicyImpl.class.getName(), "#",
 			layout.getPlid(), "#", portlet.getPortletId());
 
@@ -79,9 +71,6 @@ public class DefaultLayoutTypeAccessPolicyImpl
 				0, ActionKeys.ACCESS);
 		}
 
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
@@ -92,7 +81,8 @@ public class DefaultLayoutTypeAccessPolicyImpl
 			layoutFriendlyURL.equals(
 				PropsUtil.get(PropsKeys.CONTROL_PANEL_LAYOUT_FRIENDLY_URL)) &&
 			PortletPermissionUtil.hasControlPanelAccessPermission(
-				permissionChecker, themeDisplay.getScopeGroupId(), portlet)) {
+				PermissionThreadLocal.getPermissionChecker(),
+				themeDisplay.getScopeGroupId(), portlet)) {
 
 			httpServletRequest.setAttribute(
 				checkAccessAllowedToPortletCacheKey, Boolean.TRUE);
@@ -174,9 +164,6 @@ public class DefaultLayoutTypeAccessPolicyImpl
 			Portlet portlet)
 		throws PortalException {
 
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
@@ -192,22 +179,16 @@ public class DefaultLayoutTypeAccessPolicyImpl
 		}
 
 		return PortletPermissionUtil.hasAccessPermission(
-			permissionChecker, themeDisplay.getScopeGroupId(), layout, portlet,
-			portletMode);
+			PermissionThreadLocal.getPermissionChecker(),
+			themeDisplay.getScopeGroupId(), layout, portlet, portletMode);
 	}
 
 	protected boolean isAccessAllowedToLayoutPortlet(
 		HttpServletRequest httpServletRequest, Layout layout, Portlet portlet) {
 
-		if (isAccessGrantedByRuntimePortlet(httpServletRequest)) {
-			return true;
-		}
-
-		if (isAccessGrantedByPortletOnPage(layout, portlet)) {
-			return true;
-		}
-
-		if (isAccessGrantedByPortletAuthenticationToken(
+		if (isAccessGrantedByRuntimePortlet(httpServletRequest) ||
+			isAccessGrantedByPortletOnPage(layout, portlet) ||
+			isAccessGrantedByPortletAuthenticationToken(
 				httpServletRequest, layout, portlet)) {
 
 			return true;
@@ -223,11 +204,8 @@ public class DefaultLayoutTypeAccessPolicyImpl
 			return false;
 		}
 
-		if (!_PORTLET_ADD_DEFAULT_RESOURCE_CHECK_ENABLED) {
-			return true;
-		}
-
-		if (AuthTokenUtil.isValidPortletInvocationToken(
+		if (!_PORTLET_ADD_DEFAULT_RESOURCE_CHECK_ENABLED ||
+			AuthTokenUtil.isValidPortletInvocationToken(
 				httpServletRequest, layout, portlet)) {
 
 			return true;

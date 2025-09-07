@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.render;
@@ -18,12 +9,12 @@ import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.Fields;
 import com.liferay.portal.kernel.util.MapUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Pablo Carvalho
@@ -40,6 +31,10 @@ public class DDMFormFieldRenderingContext {
 	@Deprecated
 	public String getChildElementsHTML() {
 		return _childElementsHTML;
+	}
+
+	public long getDDMFormInstanceId() {
+		return _ddmFormInstanceId;
 	}
 
 	public Fields getFields() {
@@ -116,6 +111,10 @@ public class DDMFormFieldRenderingContext {
 
 	public boolean isVisible() {
 		return MapUtil.getBoolean(_properties, "visible");
+	}
+
+	public void setDDMFormInstanceId(long ddmFormInstanceId) {
+		_ddmFormInstanceId = ddmFormInstanceId;
 	}
 
 	public void setField(Field field) {
@@ -205,6 +204,7 @@ public class DDMFormFieldRenderingContext {
 	}
 
 	private String _childElementsHTML;
+	private long _ddmFormInstanceId;
 	private Fields _fields;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;

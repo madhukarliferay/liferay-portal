@@ -1,29 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.internal.notification.recipient;
 
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
-import com.liferay.portal.workflow.kaleo.definition.RecipientType;
 import com.liferay.portal.workflow.kaleo.model.KaleoNotificationRecipient;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignmentInstance;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken;
 import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationRecipient;
 import com.liferay.portal.workflow.kaleo.runtime.notification.recipient.NotificationRecipientBuilder;
-import com.liferay.portal.workflow.kaleo.runtime.notification.recipient.NotificationRecipientBuilderRegistry;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +24,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true, property = "recipient.type=ASSIGNEES",
+	property = "recipient.type=ASSIGNEES",
 	service = NotificationRecipientBuilder.class
 )
 public class AssigneeNotificationRecipientBuilder
@@ -49,7 +38,7 @@ public class AssigneeNotificationRecipientBuilder
 			ExecutionContext executionContext)
 		throws Exception {
 
-		addAssignedRecipients(
+		_addAssignedRecipients(
 			notificationRecipients, notificationReceptionType,
 			executionContext);
 	}
@@ -62,12 +51,12 @@ public class AssigneeNotificationRecipientBuilder
 			ExecutionContext executionContext)
 		throws Exception {
 
-		addAssignedRecipients(
+		_addAssignedRecipients(
 			notificationRecipients, notificationReceptionType,
 			executionContext);
 	}
 
-	protected void addAssignedRecipients(
+	private void _addAssignedRecipients(
 			Set<NotificationRecipient> notificationRecipients,
 			NotificationReceptionType notificationReceptionType,
 			ExecutionContext executionContext)
@@ -86,18 +75,16 @@ public class AssigneeNotificationRecipientBuilder
 		for (KaleoTaskAssignmentInstance kaleoTaskAssignmentInstance :
 				kaleoTaskAssignmentInstances) {
 
-			RecipientType recipientType = RecipientType.ROLE;
+			NotificationRecipientBuilder notificationRecipientBuilder =
+				_roleNotificationRecipientBuilder;
 
 			String assigneeClassName =
 				kaleoTaskAssignmentInstance.getAssigneeClassName();
 
 			if (assigneeClassName.equals(User.class.getName())) {
-				recipientType = RecipientType.USER;
+				notificationRecipientBuilder =
+					_userNotificationRecipientBuilder;
 			}
-
-			NotificationRecipientBuilder notificationRecipientBuilder =
-				_notificationRecipientBuilderRegistry.
-					getNotificationRecipientBuilder(recipientType);
 
 			notificationRecipientBuilder.processKaleoTaskAssignmentInstance(
 				notificationRecipients, kaleoTaskAssignmentInstance,
@@ -105,8 +92,10 @@ public class AssigneeNotificationRecipientBuilder
 		}
 	}
 
-	@Reference
-	private NotificationRecipientBuilderRegistry
-		_notificationRecipientBuilderRegistry;
+	@Reference(target = "(recipient.type=ROLE)")
+	private NotificationRecipientBuilder _roleNotificationRecipientBuilder;
+
+	@Reference(target = "(recipient.type=USER)")
+	private NotificationRecipientBuilder _userNotificationRecipientBuilder;
 
 }

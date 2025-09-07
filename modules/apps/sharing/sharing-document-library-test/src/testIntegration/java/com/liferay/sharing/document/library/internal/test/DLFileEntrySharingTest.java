@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharing.document.library.internal.test;
@@ -26,6 +17,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
@@ -68,14 +60,15 @@ public class DLFileEntrySharingTest extends BaseSharingTestCase<DLFileEntry> {
 			ServiceContextTestUtil.getServiceContext(
 				group.getGroupId(), user.getUserId());
 
-		serviceContext.setAddGuestPermissions(false);
 		serviceContext.setAddGroupPermissions(false);
+		serviceContext.setAddGuestPermissions(false);
 
 		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
-			user.getUserId(), group.getGroupId(),
+			null, user.getUserId(), group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			StringUtil.randomString(), "text/plain", StringUtil.randomString(),
-			StringUtil.randomString(), StringPool.BLANK, "test".getBytes(),
+			StringUtil.randomString(), StringUtil.randomString(),
+			StringPool.BLANK, "test".getBytes(), null, null, null,
 			serviceContext);
 
 		return (DLFileEntry)fileEntry.getModel();
@@ -102,11 +95,11 @@ public class DLFileEntrySharingTest extends BaseSharingTestCase<DLFileEntry> {
 			ServiceContextTestUtil.getServiceContext(
 				group.getGroupId(), user.getUserId());
 
-		serviceContext.setAddGuestPermissions(false);
 		serviceContext.setAddGroupPermissions(false);
+		serviceContext.setAddGuestPermissions(false);
 
 		Folder folder = _dlAppLocalService.addFolder(
-			user.getUserId(), group.getGroupId(),
+			null, user.getUserId(), group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
@@ -125,10 +118,11 @@ public class DLFileEntrySharingTest extends BaseSharingTestCase<DLFileEntry> {
 		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
 
 		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
-			user.getUserId(), group.getGroupId(), folder.getFolderId(),
+			null, user.getUserId(), group.getGroupId(), folder.getFolderId(),
 			RandomTestUtil.randomString(), "text",
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			StringPool.BLANK, StringPool.SPACE.getBytes(), serviceContext);
+			RandomTestUtil.randomString(), StringPool.BLANK,
+			StringPool.SPACE.getBytes(), null, null, null, serviceContext);
 
 		FileVersion fileVersion = fileEntry.getFileVersion();
 
@@ -140,7 +134,7 @@ public class DLFileEntrySharingTest extends BaseSharingTestCase<DLFileEntry> {
 
 	@Override
 	protected PermissionSQLContributor getPermissionSQLContributor() {
-		return _permissionSQLContributor;
+		return _permissionSQLContributorSnapshot.get();
 	}
 
 	@Override
@@ -169,10 +163,11 @@ public class DLFileEntrySharingTest extends BaseSharingTestCase<DLFileEntry> {
 	)
 	private ModelResourcePermission<DLFileEntry> _modelResourcePermission;
 
-	@Inject(
-		filter = "model.class.name=com.liferay.document.library.kernel.model.DLFileEntry"
-	)
-	private PermissionSQLContributor _permissionSQLContributor;
+	private final Snapshot<PermissionSQLContributor>
+		_permissionSQLContributorSnapshot = new Snapshot<>(
+			DLFileEntrySharingTest.class, PermissionSQLContributor.class,
+			"(model.class.name=" +
+				"com.liferay.document.library.kernel.model.DLFileEntry)");
 
 	@Inject(
 		filter = "model.class.name=com.liferay.document.library.kernel.model.DLFileEntry"

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.library;
@@ -103,10 +94,11 @@ public class LibraryReferenceTest {
 
 	@Test
 	public void testIntelliJLibPreModules() {
+		StringBundler sb = new StringBundler();
+
 		for (Map.Entry<String, List<String>> entry :
 				_intelliJModuleSourceModules.entrySet()) {
 
-			String intelliJFileName = entry.getKey();
 			List<String> modules = entry.getValue();
 
 			List<String> missingModules = new ArrayList<>();
@@ -123,12 +115,15 @@ public class LibraryReferenceTest {
 				}
 			}
 
-			Assert.assertTrue(
-				intelliJFileName +
-					" is missing orderEntry elements for modules " +
-						missingModules,
-				missingModules.isEmpty());
+			if (!missingModules.isEmpty()) {
+				sb.append(entry.getKey());
+				sb.append(" is missing orderEntry elements for modules: ");
+				sb.append(missingModules);
+				sb.append(StringPool.NEW_LINE);
+			}
 		}
+
+		Assert.assertEquals(sb.toString(), 0, sb.index());
 	}
 
 	@Test
@@ -139,6 +134,10 @@ public class LibraryReferenceTest {
 	@Test
 	public void testLibDependencyJarsInVersionsExt() {
 		for (String jar : _libDependencyJars) {
+			if (_excludeJars.contains(jar)) {
+				continue;
+			}
+
 			Assert.assertTrue(
 				_VERSIONS_EXT_FILE_NAME + " is missing a reference to " + jar,
 				_versionsExtJars.contains(jar));
@@ -320,7 +319,7 @@ public class LibraryReferenceTest {
 		}
 	}
 
-	private static void _initGitIgnoreJars() throws IOException {
+	private static void _initGitIgnoreJars() throws Exception {
 		try (UnsyncBufferedReader unsyncBufferedReader =
 				new UnsyncBufferedReader(
 					new FileReader(new File(_GIT_IGNORE_FILE_NAME)))) {
@@ -346,7 +345,7 @@ public class LibraryReferenceTest {
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				Element element = (Element)nodeList.item(i);
 
-				if (Objects.equals("module", element.getAttribute("type"))) {
+				if (Objects.equals(element.getAttribute("type"), "module")) {
 					intelliJModuleSourceModules.add(
 						element.getAttribute("module-name"));
 				}
@@ -357,7 +356,7 @@ public class LibraryReferenceTest {
 		}
 	}
 
-	private static void _initLibJars(String dirName) throws IOException {
+	private static void _initLibJars(String dirName) throws Exception {
 		Path libDirPath = Paths.get(dirName);
 
 		_readLines(_excludeJars, libDirPath.resolve("versions-ignore.txt"));
@@ -442,7 +441,7 @@ public class LibraryReferenceTest {
 			});
 	}
 
-	private static void _initModuleSourceDirs() throws IOException {
+	private static void _initModuleSourceDirs() throws Exception {
 		Files.walkFileTree(
 			_portalPath.resolve(_MODULES_DIR_NAME),
 			new SimpleFileVisitor<Path>() {
@@ -487,10 +486,10 @@ public class LibraryReferenceTest {
 
 		Properties properties = new Properties();
 
-		try (InputStream in = Files.newInputStream(
+		try (InputStream inputStream = Files.newInputStream(
 				Paths.get(_NETBEANS_PROPERTIES_FILE_NAME))) {
 
-			properties.load(in);
+			properties.load(inputStream);
 		}
 
 		Collections.addAll(
@@ -536,10 +535,10 @@ public class LibraryReferenceTest {
 			for (int j = 0; j < childNodeList.getLength(); j++) {
 				Node childNode = childNodeList.item(j);
 
-				if (Objects.equals("file-name", childNode.getNodeName())) {
+				if (Objects.equals(childNode.getNodeName(), "file-name")) {
 					jar = childNode.getTextContent();
 				}
-				else if (Objects.equals("version", childNode.getNodeName())) {
+				else if (Objects.equals(childNode.getNodeName(), "version")) {
 					version = childNode.getTextContent();
 				}
 			}
@@ -557,7 +556,7 @@ public class LibraryReferenceTest {
 	}
 
 	private static void _readLines(Set<String> lines, Path path)
-		throws IOException {
+		throws Exception {
 
 		if (Files.notExists(path)) {
 			return;
@@ -639,7 +638,6 @@ public class LibraryReferenceTest {
 	private static final Set<String> _ideExcludeJars = new HashSet<>();
 	private static final List<String> _intelliJFileNames = Arrays.asList(
 		"portal-impl/portal-impl.iml", "portal-kernel/portal-kernel.iml",
-		"portal-test-integration/portal-test-integration.iml",
 		"portal-test/portal-test.iml", "portal-web/portal-web.iml",
 		"util-bridges/util-bridges.iml", "util-java/util-java.iml",
 		"util-slf4j/util-slf4j.iml", "util-taglib/util-taglib.iml");

@@ -1,21 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
 import com.liferay.document.library.kernel.exception.RepositoryNameException;
 import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
+import com.liferay.document.library.kernel.service.persistence.DLFolderPersistence;
+import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.InvalidRepositoryException;
 import com.liferay.portal.kernel.exception.NoSuchRepositoryException;
@@ -28,12 +22,15 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.InvalidRepositoryIdException;
 import com.liferay.portal.kernel.repository.LocalRepository;
+import com.liferay.portal.kernel.repository.RepositoryException;
 import com.liferay.portal.kernel.repository.RepositoryFactoryUtil;
-import com.liferay.portal.kernel.repository.RepositoryProvider;
-import com.liferay.portal.kernel.repository.UndeployedExternalRepositoryException;
+import com.liferay.portal.kernel.repository.RepositoryProviderUtil;
 import com.liferay.portal.kernel.repository.capabilities.RepositoryEventTriggerCapability;
 import com.liferay.portal.kernel.repository.event.RepositoryEventType;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.persistence.GroupPersistence;
+import com.liferay.portal.kernel.service.persistence.RepositoryEntryPersistence;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
@@ -48,19 +45,21 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 
 	@Override
 	public Repository addRepository(
-			long userId, long groupId, long classNameId, long parentFolderId,
-			String name, String description, String portletId,
-			UnicodeProperties typeSettingsProperties, boolean hidden,
+			String externalReferenceCode, long userId, long groupId,
+			long classNameId, long parentFolderId, String name,
+			String description, String portletId,
+			UnicodeProperties typeSettingsUnicodeProperties, boolean hidden,
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		long repositoryId = counterLocalService.increment();
 
 		Repository repository = repositoryPersistence.create(repositoryId);
 
 		repository.setUuid(serviceContext.getUuid());
+		repository.setExternalReferenceCode(externalReferenceCode);
 		repository.setGroupId(groupId);
 		repository.setCompanyId(user.getCompanyId());
 		repository.setUserId(user.getUserId());
@@ -69,23 +68,23 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 		repository.setName(name);
 		repository.setDescription(description);
 		repository.setPortletId(portletId);
-		repository.setTypeSettingsProperties(typeSettingsProperties);
+		repository.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 		repository.setDlFolderId(
 			getDLFolderId(
 				user, groupId, repositoryId, parentFolderId, name, description,
 				hidden, serviceContext));
 
-		repositoryPersistence.update(repository);
+		repository = repositoryPersistence.update(repository);
 
 		try {
 			RepositoryFactoryUtil.createRepository(repositoryId);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 
-			throw new InvalidRepositoryException(e);
+			throw new InvalidRepositoryException(exception);
 		}
 
 		return repository;
@@ -93,7 +92,7 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 
 	@Override
 	public void checkRepository(long repositoryId) {
-		Group group = groupPersistence.fetchByPrimaryKey(repositoryId);
+		Group group = _groupPersistence.fetchByPrimaryKey(repositoryId);
 
 		if (group != null) {
 			return;
@@ -102,8 +101,9 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 		try {
 			repositoryPersistence.findByPrimaryKey(repositoryId);
 		}
-		catch (NoSuchRepositoryException nsre) {
-			throw new InvalidRepositoryIdException(nsre.getMessage());
+		catch (NoSuchRepositoryException noSuchRepositoryException) {
+			throw new InvalidRepositoryIdException(
+				noSuchRepositoryException.getMessage());
 		}
 	}
 
@@ -130,7 +130,7 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 
 		try {
 			LocalRepository localRepository =
-				repositoryProvider.getLocalRepository(repositoryId);
+				RepositoryProviderUtil.getLocalRepository(repositoryId);
 
 			if (localRepository.isCapabilityProvided(
 					RepositoryEventTriggerCapability.class)) {
@@ -145,12 +145,12 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 					localRepository);
 			}
 		}
-		catch (UndeployedExternalRepositoryException uere) {
+		catch (RepositoryException repositoryException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Repository deletion events for this repository will not " +
 						"be triggered",
-					uere);
+					repositoryException);
 			}
 		}
 
@@ -162,20 +162,22 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 		action = SystemEventConstants.ACTION_SKIP,
 		type = SystemEventConstants.TYPE_DELETE
 	)
-	public Repository deleteRepository(Repository repository) {
-		expandoValueLocalService.deleteValues(
+	public Repository deleteRepository(Repository repository)
+		throws PortalException {
+
+		_expandoValueLocalService.deleteValues(
 			Repository.class.getName(), repository.getRepositoryId());
 
-		DLFolder dlFolder = dlFolderLocalService.fetchDLFolder(
+		DLFolder dlFolder = _dlFolderLocalService.fetchDLFolder(
 			repository.getDlFolderId());
 
 		if (dlFolder != null) {
-			dlFolderLocalService.deleteDLFolder(dlFolder);
+			_dlFolderLocalService.deleteFolder(dlFolder);
 		}
 
 		repositoryPersistence.remove(repository);
 
-		repositoryEntryPersistence.removeByRepositoryId(
+		_repositoryEntryPersistence.removeByRepositoryId(
 			repository.getRepositoryId());
 
 		return repository;
@@ -196,6 +198,11 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 	@Override
 	public List<Repository> getGroupRepositories(long groupId) {
 		return repositoryPersistence.findByGroupId(groupId);
+	}
+
+	@Override
+	public List<Repository> getRepositories(String portletId) {
+		return repositoryPersistence.findByPortletId(portletId);
 	}
 
 	@Override
@@ -233,26 +240,26 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 		repository.setName(name);
 		repository.setDescription(description);
 
-		repositoryPersistence.update(repository);
+		repository = repositoryPersistence.update(repository);
 
-		DLFolder dlFolder = dlFolderPersistence.findByPrimaryKey(
+		DLFolder dlFolder = _dlFolderPersistence.findByPrimaryKey(
 			repository.getDlFolderId());
 
 		dlFolder.setName(name);
 		dlFolder.setDescription(description);
 
-		dlFolderPersistence.update(dlFolder);
+		_dlFolderPersistence.update(dlFolder);
 	}
 
 	@Override
 	public void updateRepository(
-			long repositoryId, UnicodeProperties typeSettingsProperties)
+			long repositoryId, UnicodeProperties typeSettingsUnicodeProperties)
 		throws PortalException {
 
 		Repository repository = repositoryPersistence.findByPrimaryKey(
 			repositoryId);
 
-		repository.setTypeSettingsProperties(typeSettingsProperties);
+		repository.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 
 		repositoryPersistence.update(repository);
 	}
@@ -267,17 +274,32 @@ public class RepositoryLocalServiceImpl extends RepositoryLocalServiceBaseImpl {
 			throw new RepositoryNameException();
 		}
 
-		DLFolder dlFolder = dlFolderLocalService.addFolder(
-			user.getUserId(), groupId, repositoryId, true, parentFolderId, name,
-			description, hidden, serviceContext);
+		DLFolder dlFolder = _dlFolderLocalService.addFolder(
+			null, user.getUserId(), groupId, repositoryId, true, parentFolderId,
+			name, description, hidden, serviceContext);
 
 		return dlFolder.getFolderId();
 	}
 
-	@BeanReference(type = RepositoryProvider.class)
-	protected RepositoryProvider repositoryProvider;
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		RepositoryLocalServiceImpl.class);
+
+	@BeanReference(type = DLFolderLocalService.class)
+	private DLFolderLocalService _dlFolderLocalService;
+
+	@BeanReference(type = DLFolderPersistence.class)
+	private DLFolderPersistence _dlFolderPersistence;
+
+	@BeanReference(type = ExpandoValueLocalService.class)
+	private ExpandoValueLocalService _expandoValueLocalService;
+
+	@BeanReference(type = GroupPersistence.class)
+	private GroupPersistence _groupPersistence;
+
+	@BeanReference(type = RepositoryEntryPersistence.class)
+	private RepositoryEntryPersistence _repositoryEntryPersistence;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

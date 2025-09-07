@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React from 'react';
@@ -22,7 +16,7 @@ const LAYER_STYLES = {
 	position: 'fixed',
 	top: 0,
 	width: '100%',
-	zIndex: 100
+	zIndex: 100,
 };
 
 const OFFSET_X = 8;
@@ -38,15 +32,15 @@ function getItemStyles(props) {
 
 	return !initialOffset || !currentOffset
 		? {
-				display: 'none'
-		  }
+				display: 'none',
+			}
 		: {
 				WebkitTransform: transform,
-				transform
-		  };
+				transform,
+			};
 }
 
-const ItemDragLayer = props => {
+const ItemDragLayer = (props) => {
 	const {dragging, item, itemType} = props;
 
 	function renderItem() {
@@ -62,10 +56,10 @@ const ItemDragLayer = props => {
 	) : null;
 };
 
-export default DndDragLayer(monitor => ({
+export default DndDragLayer((monitor) => ({
 	currentOffset: monitor.getSourceClientOffset(),
 	dragging: monitor.isDragging(),
 	initialOffset: monitor.getInitialSourceClientOffset(),
 	item: monitor.getItem(),
-	itemType: monitor.getItemType()
+	itemType: monitor.getItemType(),
 }))(ItemDragLayer);

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.documentlibrary.util;
@@ -44,11 +35,8 @@ public class JQTFastStart {
 
 		validate(inputFile, outputFile);
 
-		RandomAccessFile randomAccessInputFile = null;
-		RandomAccessFile randomAccessOutputFile = null;
-
-		try {
-			randomAccessInputFile = new RandomAccessFile(inputFile, "r");
+		try (RandomAccessFile randomAccessInputFile = new RandomAccessFile(
+				inputFile, "r")) {
 
 			Atom atom = null;
 			Atom ftypAtom = null;
@@ -119,41 +107,33 @@ public class JQTFastStart {
 			randomAccessInputFile.seek(
 				ftypAtom.getOffset() + ftypAtom.getSize());
 
-			randomAccessOutputFile = new RandomAccessFile(outputFile, "rw");
+			try (RandomAccessFile randomAccessOutputFile = new RandomAccessFile(
+					outputFile, "rw")) {
 
-			randomAccessOutputFile.setLength(0);
+				randomAccessOutputFile.setLength(0);
 
-			randomAccessOutputFile.write(ftypAtom.getBuffer());
-			randomAccessOutputFile.write(moovAtom.getBuffer());
+				randomAccessOutputFile.write(ftypAtom.getBuffer());
+				randomAccessOutputFile.write(moovAtom.getBuffer());
 
-			byte[] buffer = new byte[1024 * 1024];
+				byte[] buffer = new byte[1024 * 1024];
 
-			while ((randomAccessInputFile.getFilePointer() + buffer.length) <
-						moovAtom.getOffset()) {
+				while ((randomAccessInputFile.getFilePointer() +
+							buffer.length) < moovAtom.getOffset()) {
 
-				int read = randomAccessInputFile.read(buffer);
+					int read = randomAccessInputFile.read(buffer);
 
-				randomAccessOutputFile.write(buffer, 0, read);
-			}
+					randomAccessOutputFile.write(buffer, 0, read);
+				}
 
-			int bufferSize =
-				(int)
-					(moovAtom.getOffset() -
+				int bufferSize =
+					(int)(moovAtom.getOffset() -
 						randomAccessInputFile.getFilePointer());
 
-			buffer = new byte[bufferSize];
+				buffer = new byte[bufferSize];
 
-			randomAccessInputFile.readFully(buffer);
+				randomAccessInputFile.readFully(buffer);
 
-			randomAccessOutputFile.write(buffer);
-		}
-		finally {
-			if (randomAccessInputFile != null) {
-				randomAccessInputFile.close();
-			}
-
-			if (randomAccessOutputFile != null) {
-				randomAccessOutputFile.close();
+				randomAccessOutputFile.write(buffer);
 			}
 		}
 	}

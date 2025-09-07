@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link OrgLaborLocalService}.
@@ -24,33 +17,36 @@ package com.liferay.portal.kernel.service;
 public class OrgLaborLocalServiceWrapper
 	implements OrgLaborLocalService, ServiceWrapper<OrgLaborLocalService> {
 
+	public OrgLaborLocalServiceWrapper() {
+		this(null);
+	}
+
 	public OrgLaborLocalServiceWrapper(
 		OrgLaborLocalService orgLaborLocalService) {
 
 		_orgLaborLocalService = orgLaborLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link OrgLaborLocalServiceUtil} to access the org labor local service. Add custom service methods to <code>com.liferay.portal.service.impl.OrgLaborLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.OrgLabor addOrgLabor(
-			long organizationId, long typeId, int sunOpen, int sunClose,
+			long organizationId, long listTypeId, int sunOpen, int sunClose,
 			int monOpen, int monClose, int tueOpen, int tueClose, int wedOpen,
 			int wedClose, int thuOpen, int thuClose, int friOpen, int friClose,
 			int satOpen, int satClose)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _orgLaborLocalService.addOrgLabor(
-			organizationId, typeId, sunOpen, sunClose, monOpen, monClose,
+			organizationId, listTypeId, sunOpen, sunClose, monOpen, monClose,
 			tueOpen, tueClose, wedOpen, wedClose, thuOpen, thuClose, friOpen,
 			friClose, satOpen, satClose);
 	}
 
 	/**
 	 * Adds the org labor to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OrgLaborLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param orgLabor the org labor
 	 * @return the org labor that was added
@@ -76,7 +72,22 @@ public class OrgLaborLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _orgLaborLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the org labor with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OrgLaborLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param orgLaborId the primary key of the org labor
 	 * @return the org labor that was removed
@@ -92,6 +103,10 @@ public class OrgLaborLocalServiceWrapper
 
 	/**
 	 * Deletes the org labor from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OrgLaborLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param orgLabor the org labor
 	 * @return the org labor that was removed
@@ -112,6 +127,18 @@ public class OrgLaborLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _orgLaborLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _orgLaborLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _orgLaborLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -280,10 +307,13 @@ public class OrgLaborLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _orgLaborLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -294,20 +324,24 @@ public class OrgLaborLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.OrgLabor updateOrgLabor(
-			long orgLaborId, long typeId, int sunOpen, int sunClose,
+			long orgLaborId, long listTypeId, int sunOpen, int sunClose,
 			int monOpen, int monClose, int tueOpen, int tueClose, int wedOpen,
 			int wedClose, int thuOpen, int thuClose, int friOpen, int friClose,
 			int satOpen, int satClose)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _orgLaborLocalService.updateOrgLabor(
-			orgLaborId, typeId, sunOpen, sunClose, monOpen, monClose, tueOpen,
-			tueClose, wedOpen, wedClose, thuOpen, thuClose, friOpen, friClose,
-			satOpen, satClose);
+			orgLaborId, listTypeId, sunOpen, sunClose, monOpen, monClose,
+			tueOpen, tueClose, wedOpen, wedClose, thuOpen, thuClose, friOpen,
+			friClose, satOpen, satClose);
 	}
 
 	/**
 	 * Updates the org labor in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect OrgLaborLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param orgLabor the org labor
 	 * @return the org labor that was updated
@@ -317,6 +351,11 @@ public class OrgLaborLocalServiceWrapper
 		com.liferay.portal.kernel.model.OrgLabor orgLabor) {
 
 		return _orgLaborLocalService.updateOrgLabor(orgLabor);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _orgLaborLocalService.getBasePersistence();
 	}
 
 	@Override

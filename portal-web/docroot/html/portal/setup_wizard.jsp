@@ -1,22 +1,13 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/html/portal/init.jsp" %>
 
-<div class="pt-0" id="wrapper">
+<div class="position-relative pt-0" id="wrapper">
 	<header class="mb-4" id="banner">
 		<div class="mb-4 navbar navbar-classic navbar-top py-3">
 			<div class="container">
@@ -37,7 +28,7 @@
 	</header>
 
 	<div class="container" id="content">
-		<div class="sheet sheet-lg" id="main-content">
+		<div class="pl-4 position-relative pr-4 pt-4 sheet sheet-lg" id="main-content">
 			<h2 class="sheet-title" title="<liferay-ui:message key="basic-configuration" />">
 				<liferay-ui:message key="basic-configuration" />
 			</h2>
@@ -53,7 +44,7 @@
 					boolean defaultDatabase = SetupWizardUtil.isDefaultDatabase(request);
 					%>
 
-					<aui:form action='<%= themeDisplay.getPathMain() + "/portal/setup_wizard" %>' method="post" name="fm" onSubmit="event.preventDefault();">
+					<aui:form action='<%= themeDisplay.getPathMain() + "/portal/setup_wizard" %>' method="post" name="fm" onSubmit="updateConfiguration(event);">
 						<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 
 						<div class="row">
@@ -62,9 +53,7 @@
 									<liferay-ui:message key="portal" />
 								</h3>
 
-								<aui:input label="portal-name" name="companyName" value="<%= PropsValues.COMPANY_DEFAULT_NAME %>">
-									<aui:validator name="required" />
-								</aui:input>
+								<aui:input label="portal-name" name="companyName" required="<%= true %>" value="<%= PropsValues.COMPANY_DEFAULT_NAME %>" />
 
 								<aui:field-wrapper label="default-language" name="companyLocale">
 									<div class="form-group-autofit">
@@ -98,11 +87,12 @@
 									<liferay-ui:message key="administrator-user" />
 								</h3>
 
-								<%@ include file="/html/portal/setup_wizard_user_name.jspf" %>
+								<aui:input label="first-name" name="adminFirstName" required="<%= true %>" value="<%= PropsValues.DEFAULT_ADMIN_FIRST_NAME %>" />
 
-								<aui:input label="email" name="adminEmailAddress">
+								<aui:input label="last-name" name="adminLastName" required="<%= true %>" value="<%= PropsValues.DEFAULT_ADMIN_LAST_NAME %>" />
+
+								<aui:input label="email" name="adminEmailAddress" required="<%= true %>">
 									<aui:validator name="email" />
-									<aui:validator name="required" />
 								</aui:input>
 							</aui:fieldset>
 						</div>
@@ -125,9 +115,9 @@
 											<liferay-ui:message key="this-database-is-useful-for-development-and-demo'ing-purposes" />
 										</c:when>
 										<c:otherwise>
-											<h4>
+											<div class="h4">
 												<liferay-ui:message key="configured-database" />
-											</h4>
+											</div>
 
 											<dl class="database-values dl-horizontal">
 												<c:choose>
@@ -171,7 +161,7 @@
 									</c:choose>
 
 									<c:if test="<%= Validator.isNull(PropsValues.JDBC_DEFAULT_JNDI_NAME) %>">
-										<a href="<%= HttpUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", false) %>" id="customDatabaseOptionsLink">
+										<a href="<%= HttpComponentsUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", false) %>" id="customDatabaseOptionsLink">
 											(<liferay-ui:message key="change" />)
 										</a>
 									</c:if>
@@ -180,7 +170,7 @@
 								<div class="hide" id="customDatabaseOptions">
 									<div class="connection-messages" id="connectionMessages"></div>
 
-									<a class="d-inline-block database-options mb-3" href="<%= HttpUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", true) %>" id="defaultDatabaseOptionsLink">
+									<a class="d-inline-block database-options mb-3" href="<%= HttpComponentsUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", true) %>" id="defaultDatabaseOptionsLink">
 										&laquo; <liferay-ui:message key='<%= defaultDatabase ? "use-default-database" : "use-configured-database" %>' />
 									</a>
 
@@ -190,18 +180,23 @@
 										for (DBType dbType : DBManagerUtil.getDBTypes()) {
 											String dbTypeString = dbType.toString();
 
-											Map<String, Object> data = new HashMap<String, Object>();
-
 											String driverClassName = PropsUtil.get(PropsKeys.SETUP_DATABASE_DRIVER_CLASS_NAME, new Filter(dbTypeString));
 
-											data.put("driverClassName", driverClassName);
-
 											String url = PropsUtil.get(PropsKeys.SETUP_DATABASE_URL, new Filter(dbTypeString));
-
-											data.put("url", url);
 										%>
 
-											<aui:option data="<%= data %>" label='<%= "database." + dbTypeString %>' selected="<%= PropsValues.JDBC_DEFAULT_URL.contains(dbTypeString) %>" value="<%= dbTypeString %>" />
+											<aui:option
+												data='<%=
+													HashMapBuilder.<String, Object>put(
+														"driverClassName", driverClassName
+													).put(
+														"url", url
+													).build()
+												%>'
+												label='<%= "database." + dbTypeString %>'
+												selected="<%= PropsValues.JDBC_DEFAULT_URL.contains(dbTypeString) %>"
+												value="<%= dbTypeString %>"
+											/>
 
 										<%
 										}
@@ -209,13 +204,9 @@
 
 									</aui:select>
 
-									<aui:input id="jdbcDefaultURL" label="jdbc-url" name='<%= "properties--" + PropsKeys.JDBC_DEFAULT_URL + "--" %>' value="<%= PropsValues.JDBC_DEFAULT_URL %>">
-										<aui:validator name="required" />
-									</aui:input>
+									<aui:input id="jdbcDefaultURL" label="jdbc-url" name='<%= "properties--" + PropsKeys.JDBC_DEFAULT_URL + "--" %>' required="<%= true %>" value="<%= PropsValues.JDBC_DEFAULT_URL %>" />
 
-									<aui:input id="jdbcDefaultDriverName" label="jdbc-driver-class-name" name='<%= "properties--" + PropsKeys.JDBC_DEFAULT_DRIVER_CLASS_NAME + "--" %>' value="<%= PropsValues.JDBC_DEFAULT_DRIVER_CLASS_NAME %>">
-										<aui:validator name="required" />
-									</aui:input>
+									<aui:input id="jdbcDefaultDriverName" label="jdbc-driver-class-name" name='<%= "properties--" + PropsKeys.JDBC_DEFAULT_DRIVER_CLASS_NAME + "--" %>' required="<%= true %>" value="<%= PropsValues.JDBC_DEFAULT_DRIVER_CLASS_NAME %>" />
 
 									<aui:input id="jdbcDefaultUserName" label="user-name" name='<%= "properties--" + PropsKeys.JDBC_DEFAULT_USERNAME + "--" %>' value="<%= PropsValues.JDBC_DEFAULT_USERNAME %>" />
 
@@ -236,14 +227,30 @@
 
 						<aui:button-row>
 							<aui:button name="finishButton" type="submit" value="finish-configuration" />
+
+							<div class="btn float-right" id="basicConfiguration">
+
+								<%
+								request.setAttribute("liferay-learn:message:key", "setup-wizard-basic-configuration");
+								request.setAttribute("liferay-learn:message:resource", "portal-web");
+								%>
+
+								<liferay-util:dynamic-include key="/html/portal/setup_wizard.jsp#help_link" />
+							</div>
+
+							<div class="btn float-right hide" id="databaseConfiguration">
+
+								<%
+								request.setAttribute("liferay-learn:message:key", "setup-wizard-database-configuration");
+								request.setAttribute("liferay-learn:message:resource", "portal-web");
+								%>
+
+								<liferay-util:dynamic-include key="/html/portal/setup_wizard.jsp#help_link" />
+							</div>
 						</aui:button-row>
 					</aui:form>
 
 					<aui:script use="aui-base,aui-loading-mask-deprecated,io">
-						var adminEmailAddress = A.one('#<portlet:namespace />adminEmailAddress');
-						var adminFirstName = A.one('#<portlet:namespace />adminFirstName');
-						var adminLastName = A.one('#<portlet:namespace />adminLastName');
-						var companyName = A.one('#<portlet:namespace />companyName');
 						var customDatabaseOptions = A.one('#customDatabaseOptions');
 						var customDatabaseOptionsLink = A.one('#customDatabaseOptionsLink');
 						var databaseSelector = A.one('#databaseType');
@@ -257,6 +264,9 @@
 
 						var sampleData = A.one('#sampleData');
 						var addSampleData = A.one('#addSampleData');
+
+						var basicConfiguration = A.one('#basicConfiguration');
+						var databaseConfiguration = A.one('#databaseConfiguration');
 
 						var command = A.one('#<%= Constants.CMD %>');
 						var setupForm = A.one('#fm');
@@ -275,25 +285,29 @@
 							sampleData.toggle(!showDefault);
 
 							defaultDatabase.val(showDefault);
+
+							databaseConfiguration.toggle(!showDefault);
+
+							basicConfiguration.toggle(showDefault);
 						};
 
 						databaseSelector.on(
 							'focus',
-							function() {
+							function () {
 								addSampleData.removeAttribute('disabled');
 							}
 						);
 
 						jdbcDefaultURL.on(
 							'focus',
-							function() {
+							function () {
 								addSampleData.removeAttribute('disabled');
 							}
 						);
 
 						jdbcDefaultUserName.on(
 							'focus',
-							function() {
+							function () {
 								addSampleData.removeAttribute('disabled');
 							}
 						);
@@ -306,7 +320,7 @@
 							defaultDatabaseOptionsLink.on('click', A.bind(toggleDatabaseOptions, null, true));
 						}
 
-						var onChangeDatabaseSelector = function() {
+						var onChangeDatabaseSelector = function () {
 							var index = databaseSelector.get('selectedIndex');
 
 							var selectedOption = databaseSelector.get('options').item(index);
@@ -332,90 +346,80 @@
 						var loadingMask = new A.LoadingMask(
 							{
 								'strings.loading': '<%= UnicodeLanguageUtil.get(request, "liferay-is-being-installed") %>',
-								target: A.getBody()
+								target: A.one('#main-content')
 							}
 						);
 
 						var updateMessage = function(message) {
-							connectionMessages.html('<div class="alert alert-danger"><span class="alert-indicator"><svg aria-hidden="true" class="lexicon-icon lexicon-icon-exclamation-full"><use xlink:href="<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg#exclamation-full"></use></svg></span><strong class="lead"><liferay-ui:message key="error-colon" /></strong>' + message + '</div>');
+							connectionMessages.html('<div class="alert alert-danger"><span class="alert-indicator"><svg aria-hidden="true" class="lexicon-icon lexicon-icon-exclamation-full"><use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#exclamation-full"></use></svg></span><strong class="lead"><liferay-ui:message key="error-colon" /></strong>' + message + '</div>');
 						};
 
-						var startInstall = function() {
+						var startInstall = function () {
 							connectionMessages.empty();
 
 							loadingMask.show();
 						};
 
-						A.one('#fm').on(
-							'submit',
-							function(event) {
-								var form = document.fm;
+						var updateConfiguration = function(event) {
+							var form = document.fm;
 
-								if ((adminEmailAddress && (adminEmailAddress.val() != '')) && (adminFirstName && (adminFirstName.val() != '')) && (adminLastName && (adminLastName.val() != '')) && (companyName && (companyName.val() != '')) && (jdbcDefaultDriverClassName && (jdbcDefaultDriverClassName.val() != '')) && (jdbcDefaultURL && (jdbcDefaultURL.val() != ''))) {
-									if (defaultDatabase.val() == 'true') {
-										startInstall();
+							if (defaultDatabase.val() == 'true') {
+								startInstall();
 
+								command.val('<%= Constants.UPDATE %>');
+
+								submitForm(form);
+							}
+							else {
+								command.val('<%= Constants.TEST %>');
+
+								startInstall();
+
+								Liferay.Util.fetch(
+									form.action,
+									{
+										body: new FormData(form),
+										method: 'POST'
+									}
+								).then(
+									function(response) {
+										return response.json();
+									}
+								).then(
+									function(responseData) {
 										command.val('<%= Constants.UPDATE %>');
 
-										submitForm(form);
+										if (!responseData.success) {
+											updateMessage(responseData.message);
+
+											loadingMask.hide();
+										}
+										else {
+											submitForm(form);
+										}
 									}
-									else {
-										command.val('<%= Constants.TEST %>');
+								).catch(
+									function () {
+										loadingMask.hide();
 
-										startInstall();
-
-										Liferay.Util.fetch(
-											form.action,
-											{
-												body: new FormData(form),
-												method: 'POST'
-											}
-										).then(
-											function(response) {
-												return response.json();
-											}
-										).then(
-											function(responseData) {
-												command.val('<%= Constants.UPDATE %>');
-
-												if (!responseData.success) {
-													updateMessage(responseData.message);
-
-													loadingMask.hide();
-												}
-												else {
-													submitForm(form);
-												}
-											}
-										).catch(
-											function() {
-												loadingMask.hide();
-
-												updateMessage('<%= UnicodeLanguageUtil.get(request, "an-unexpected-error-occurred-while-connecting-to-the-database") %>');
-											}
-										);
+										updateMessage('<%= UnicodeLanguageUtil.get(request, "an-unexpected-error-occurred-while-connecting-to-the-database") %>');
 									}
-								}
+								);
 							}
-						);
+						};
 					</aui:script>
 				</c:when>
 				<c:otherwise>
-
-					<%
-					boolean propertiesFileCreated = GetterUtil.getBoolean((Boolean)session.getAttribute(WebKeys.SETUP_WIZARD_PROPERTIES_FILE_CREATED));
-					%>
-
 					<c:choose>
-						<c:when test="<%= propertiesFileCreated %>">
+						<c:when test="<%= GetterUtil.getBoolean((Boolean)session.getAttribute(WebKeys.SETUP_WIZARD_PROPERTIES_FILE_CREATED)) %>">
 							<div class="alert alert-success">
 								<span class="alert-indicator">
 									<svg aria-hidden="true" class="lexicon-icon lexicon-icon-check-circle-full">
-										<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg#check-circle-full"></use>
+										<use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#check-circle-full"></use>
 									</svg>
 								</span>
 
-								<strong class="lead"><liferay-ui:message key="success-colon" /></strong><liferay-ui:message key="your-configuration-was-saved-sucessfully" />
+								<strong class="lead"><liferay-ui:message key="success-colon" /></strong><liferay-ui:message key="your-configuration-was-saved-successfully" />
 							</div>
 
 							<p class="lfr-setup-notice">
@@ -440,7 +444,7 @@
 							<div class="alert alert-info">
 								<span class="alert-indicator">
 									<svg aria-hidden="true" class="lexicon-icon lexicon-icon-info-circle">
-										<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg#info-circle"></use>
+										<use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#info-circle"></use>
 									</svg>
 								</span>
 
@@ -452,7 +456,7 @@
 								<div class="alert alert-warning">
 									<span class="alert-indicator">
 										<svg aria-hidden="true" class="lexicon-icon lexicon-icon-warning-full">
-											<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/lexicon/icons.svg#warning-full"></use>
+											<use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#warning-full"></use>
 										</svg>
 									</span>
 
@@ -472,11 +476,17 @@
 		</div>
 	</div>
 
-	<footer id="footer" role="contentinfo">
+	<footer id="footer">
 		<div class="container">
 			<div class="row">
 				<div class="col-md-12 text-center text-md-left">
-					<liferay-ui:message key="powered-by" /> <a class="text-white" href="http://www.liferay.com" rel="external">Liferay</a>
+					<liferay-util:buffer
+						var="poweredByLiferay"
+					>
+						<a class="text-white" href="http://www.liferay.com" rel="external">Liferay</a>
+					</liferay-util:buffer>
+
+					<liferay-ui:message arguments="<%= poweredByLiferay %>" key="powered-by-x" />
 				</div>
 			</div>
 		</div>

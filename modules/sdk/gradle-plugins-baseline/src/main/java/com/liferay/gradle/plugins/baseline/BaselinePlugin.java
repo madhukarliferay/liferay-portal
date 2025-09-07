@@ -1,28 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.baseline;
-
-import aQute.bnd.version.Version;
 
 import com.liferay.gradle.plugins.baseline.internal.util.GradleUtil;
 import com.liferay.gradle.util.Validator;
 
 import java.io.File;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -34,16 +21,14 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.ComponentSelection;
 import org.gradle.api.artifacts.ComponentSelectionRules;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ResolutionStrategy;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.ReportingBasePlugin;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
@@ -63,7 +48,7 @@ public class BaselinePlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
-		GradleUtil.applyPlugin(project, JavaPlugin.class);
+		GradleUtil.applyPlugin(project, JavaLibraryPlugin.class);
 		GradleUtil.applyPlugin(project, ReportingBasePlugin.class);
 
 		final BaselineConfigurationExtension baselineConfigurationExtension =
@@ -74,7 +59,7 @@ public class BaselinePlugin implements Plugin<Project> {
 			project, JavaPlugin.JAR_TASK_NAME);
 
 		final Configuration baselineConfiguration = _addConfigurationBaseline(
-			jar, baselineConfigurationExtension);
+			jar);
 
 		final BaselineTask baselineTask = _addTaskBaseline(jar);
 
@@ -94,27 +79,17 @@ public class BaselinePlugin implements Plugin<Project> {
 	}
 
 	private Configuration _addConfigurationBaseline(
-		final AbstractArchiveTask newJarTask,
-		final BaselineConfigurationExtension baselineConfigurationExtension) {
+		final AbstractArchiveTask newJarTask) {
 
-		Project project = newJarTask.getProject();
-
-		ConfigurationContainer configurationContainer =
-			project.getConfigurations();
-
-		Configuration configuration = configurationContainer.maybeCreate(
-			BASELINE_CONFIGURATION_NAME);
+		Configuration configuration = GradleUtil.addConfiguration(
+			newJarTask.getProject(), BASELINE_CONFIGURATION_NAME);
 
 		configuration.defaultDependencies(
 			new Action<DependencySet>() {
 
 				@Override
 				public void execute(DependencySet dependencySet) {
-					Dependency dependency = _createDependencyBaseline(
-						newJarTask,
-						baselineConfigurationExtension.getLowestMajorVersion());
-
-					dependencySet.add(dependency);
+					_addDependenciesBaseline(newJarTask);
 				}
 
 			});
@@ -128,11 +103,23 @@ public class BaselinePlugin implements Plugin<Project> {
 		return configuration;
 	}
 
-	private BaselineTask _addTaskBaseline(
-		final AbstractArchiveTask newJarTask) {
+	private void _addDependenciesBaseline(AbstractArchiveTask newJarTask) {
+		Project project = newJarTask.getProject();
 
-		final BaselineTask baselineTask = _addTaskBaseline(
-			newJarTask, BASELINE_TASK_NAME, true);
+		Property<String> archiveBaseNameProperty =
+			newJarTask.getArchiveBaseName();
+		Property<String> archiveVersionProperty =
+			newJarTask.getArchiveVersion();
+
+		GradleUtil.addDependency(
+			project, BASELINE_CONFIGURATION_NAME,
+			String.valueOf(project.getGroup()), archiveBaseNameProperty.get(),
+			"(," + archiveVersionProperty.get() + ")", false);
+	}
+
+	private BaselineTask _addTaskBaseline(AbstractArchiveTask newJarTask) {
+		BaselineTask baselineTask = _addTaskBaseline(
+			newJarTask, BASELINE_TASK_NAME);
 
 		baselineTask.setDescription(
 			"Compares the public API of this project with the public API of " +
@@ -143,44 +130,12 @@ public class BaselinePlugin implements Plugin<Project> {
 	}
 
 	private BaselineTask _addTaskBaseline(
-		AbstractArchiveTask newJarTask, int majorVersion) {
-
-		BaselineTask baselineTask = _addTaskBaseline(
-			newJarTask, BASELINE_TASK_NAME + majorVersion, false);
-
-		baselineTask.dependsOn(newJarTask);
-
-		baselineTask.setDescription(
-			"Compares the public API of this project with the public API of " +
-				"the previous released version in the " + majorVersion +
-					".x series, if found.");
-
-		Project project = baselineTask.getProject();
-
-		ConfigurationContainer configurationContainer =
-			project.getConfigurations();
-
-		Dependency dependency = _createDependencyBaseline(
-			newJarTask, majorVersion);
-
-		final Configuration baselineConfiguration =
-			configurationContainer.detachedConfiguration(dependency);
-
-		_configureConfigurationBaseline(baselineConfiguration);
-
-		baselineTask.setBaselineConfiguration(baselineConfiguration);
-
-		return baselineTask;
-	}
-
-	private BaselineTask _addTaskBaseline(
-		final AbstractArchiveTask newJarTask, String taskName,
-		boolean overwrite) {
+		final AbstractArchiveTask newJarTask, String taskName) {
 
 		Project project = newJarTask.getProject();
 
-		final BaselineTask baselineTask = GradleUtil.addTask(
-			project, taskName, BaselineTask.class, overwrite);
+		BaselineTask baselineTask = GradleUtil.addTask(
+			project, taskName, BaselineTask.class);
 
 		File bndFile = project.file("bnd.bnd");
 
@@ -204,10 +159,17 @@ public class BaselinePlugin implements Plugin<Project> {
 				@Override
 				public File call() throws Exception {
 					SourceSet sourceSet = GradleUtil.getSourceSet(
-						baselineTask.getProject(),
+						newJarTask.getProject(),
 						SourceSet.MAIN_SOURCE_SET_NAME);
 
-					return GradleUtil.getSrcDir(sourceSet.getResources());
+					File srcDir = GradleUtil.getSrcDir(
+						sourceSet.getResources());
+
+					if (!srcDir.exists()) {
+						srcDir.mkdirs();
+					}
+
+					return srcDir;
 				}
 
 			});
@@ -249,61 +211,29 @@ public class BaselinePlugin implements Plugin<Project> {
 	}
 
 	private void _configureTaskBaseline(
-		BaselineTask baselineTask, final AbstractArchiveTask newJarTask,
-		final Configuration baselineConfiguration,
+		BaselineTask baselineTask, AbstractArchiveTask newJarTask,
+		Configuration baselineConfiguration,
 		BaselineConfigurationExtension baselineConfigurationExtension) {
 
 		VersionNumber lowestBaselineVersionNumber = VersionNumber.parse(
 			baselineConfigurationExtension.getLowestBaselineVersion());
-		VersionNumber versionNumber = VersionNumber.parse(
-			newJarTask.getVersion());
+		VersionNumber versionNumber = null;
+
+		Property<String> archiveVersionProperty =
+			newJarTask.getArchiveVersion();
+
+		if (archiveVersionProperty != null) {
+			String archiveVersion = archiveVersionProperty.getOrNull();
+
+			if (Validator.isNotNull(archiveVersion)) {
+				versionNumber = VersionNumber.parse(archiveVersion);
+			}
+		}
 
 		if (lowestBaselineVersionNumber.compareTo(versionNumber) >= 0) {
 			baselineTask.setEnabled(false);
 
 			return;
-		}
-
-		Integer lowestMajorVersion =
-			baselineConfigurationExtension.getLowestMajorVersion();
-
-		if (lowestMajorVersion != null) {
-			BaselineTask previousVersionBaselineTask = baselineTask;
-
-			int maxMajorVersion = versionNumber.getMajor();
-
-			if ((versionNumber.getMinor() == 0) &&
-				(versionNumber.getMicro() == 0)) {
-
-				maxMajorVersion--;
-			}
-
-			if (maxMajorVersion >= (lowestMajorVersion + 1)) {
-				baselineTask.setIgnoreExcessiveVersionIncreases(true);
-			}
-
-			for (int majorVersion = lowestMajorVersion + 1;
-				 majorVersion <= maxMajorVersion; majorVersion++) {
-
-				BaselineTask majorVersionBaselineTask = _addTaskBaseline(
-					newJarTask, majorVersion);
-
-				if (majorVersion < maxMajorVersion) {
-					majorVersionBaselineTask.setIgnoreExcessiveVersionIncreases(
-						true);
-				}
-
-				previousVersionBaselineTask.dependsOn(majorVersionBaselineTask);
-
-				previousVersionBaselineTask = majorVersionBaselineTask;
-			}
-		}
-		else if (baselineConfigurationExtension.
-					isLowestMajorVersionRequired()) {
-
-			throw new GradleException(
-				"Please configure a lowest major version for " +
-					baselineTask.getProject());
 		}
 
 		baselineTask.dependsOn(newJarTask);
@@ -363,11 +293,9 @@ public class BaselinePlugin implements Plugin<Project> {
 		}
 
 		baselineTask.setReportDiff(reportDiff);
-
-		boolean reportOnlyDirtyPackages = GradleUtil.getProperty(
-			project, "baseline.jar.report.only.dirty.packages", true);
-
-		baselineTask.setReportOnlyDirtyPackages(reportOnlyDirtyPackages);
+		baselineTask.setReportOnlyDirtyPackages(
+			GradleUtil.getProperty(
+				project, "baseline.jar.report.only.dirty.packages", true));
 	}
 
 	private void _configureTasksBaseline(
@@ -387,83 +315,6 @@ public class BaselinePlugin implements Plugin<Project> {
 				}
 
 			});
-	}
-
-	private Dependency _createDependencyBaseline(
-		AbstractArchiveTask newJarTask, Integer majorVersion) {
-
-		Project project = newJarTask.getProject();
-
-		DependencyHandler dependencyHandler = project.getDependencies();
-
-		Map<String, String> args = new HashMap<>();
-
-		args.put("group", String.valueOf(project.getGroup()));
-		args.put("name", newJarTask.getBaseName());
-
-		String version = null;
-
-		if (majorVersion != null) {
-			StringBuilder sb = new StringBuilder();
-
-			sb.append('[');
-			sb.append(majorVersion);
-			sb.append(".0.0,");
-			sb.append(majorVersion + 1);
-			sb.append(".0.0)");
-
-			version = sb.toString();
-		}
-		else {
-			version = "(," + newJarTask.getVersion() + ")";
-
-			if (newJarTask.getVersion() != null) {
-				Version newVersion = null;
-
-				try {
-					newVersion = new Version(newJarTask.getVersion());
-				}
-				catch (IllegalArgumentException iae) {
-					Logger logger = project.getLogger();
-
-					if (logger.isWarnEnabled()) {
-						logger.warn(
-							"Unable to parse version {}",
-							newJarTask.getVersion());
-					}
-				}
-
-				if ((newVersion != null) &&
-					(newVersion.getQualifier() == null)) {
-
-					if (newVersion.getMicro() > 0) {
-						StringBuilder sb = new StringBuilder();
-
-						sb.append(newVersion.getMajor());
-						sb.append('.');
-						sb.append(newVersion.getMinor());
-						sb.append('.');
-						sb.append(newVersion.getMicro() - 1);
-
-						version = sb.toString();
-					}
-					else if (newVersion.getMinor() > 0) {
-						StringBuilder sb = new StringBuilder();
-
-						sb.append(newVersion.getMajor());
-						sb.append('.');
-						sb.append(newVersion.getMinor() - 1);
-						sb.append(".0");
-
-						version = sb.toString();
-					}
-				}
-			}
-		}
-
-		args.put("version", version);
-
-		return dependencyHandler.create(args);
 	}
 
 }

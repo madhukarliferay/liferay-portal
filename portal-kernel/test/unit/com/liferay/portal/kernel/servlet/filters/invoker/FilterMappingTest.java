@@ -1,26 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet.filters.invoker;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.servlet.HttpMethods;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.ProxyFactory;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,12 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.regex.Pattern;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -321,32 +312,30 @@ public class FilterMappingTest {
 	}
 
 	private void _testWithLog(String[] expectedMessages, Runnable runnable) {
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					FilterMapping.class.getName(), Level.INFO)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				FilterMapping.class.getName(), LoggerTestUtil.INFO)) {
 
 			runnable.run();
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
 			Assert.assertTrue(
 				"logRecords should be empty because the log level is INFO " +
-					"but contains " + logRecords,
-				logRecords.isEmpty());
+					"but contains " + logEntries,
+				logEntries.isEmpty());
 
-			captureHandler.resetLogLevel(Level.FINE);
+			logCapture.resetPriority(Level.FINE.toString());
 
 			runnable.run();
 
 			Assert.assertEquals(
-				logRecords.toString(), expectedMessages.length,
-				logRecords.size());
+				logEntries.toString(), expectedMessages.length,
+				logEntries.size());
 
-			for (int i = 0; i < logRecords.size(); i++) {
-				LogRecord logRecord = logRecords.get(i);
+			for (int i = 0; i < logEntries.size(); i++) {
+				LogEntry logEntry = logEntries.get(i);
 
-				Assert.assertEquals(
-					expectedMessages[i], logRecord.getMessage());
+				Assert.assertEquals(expectedMessages[i], logEntry.getMessage());
 			}
 		}
 	}

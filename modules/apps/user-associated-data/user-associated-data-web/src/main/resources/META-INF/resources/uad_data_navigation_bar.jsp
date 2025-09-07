@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,9 +10,11 @@
 <%
 String servletPath = GetterUtil.getString(request.getServletPath());
 
-PortletURL baseURL = liferayPortletResponse.createRenderURL();
-
-baseURL.setParameter("p_u_i_d", String.valueOf(selectedUser.getUserId()));
+PortletURL baseURL = PortletURLBuilder.createRenderURL(
+	liferayPortletResponse
+).setParameter(
+	"p_u_i_d", selectedUser.getUserId()
+).buildPortletURL();
 %>
 
 <clay:navigation-bar
@@ -35,10 +28,11 @@ baseURL.setParameter("p_u_i_d", String.valueOf(selectedUser.getUserId()));
 						PortletURL reviewDataURL = null;
 
 						try {
-							reviewDataURL = PortletURLUtil.clone(baseURL, renderResponse);
-
-							reviewDataURL.setParameter("mvcRenderCommandName", "/review_uad_data");
-
+							reviewDataURL = PortletURLBuilder.create(
+								PortletURLUtil.clone(baseURL, renderResponse)
+							).setMVCRenderCommandName(
+								"/user_associated_data/review_uad_data"
+							).buildPortletURL();
 						}
 						catch (PortletException e) {
 							reviewDataURL = baseURL;
@@ -46,7 +40,7 @@ baseURL.setParameter("p_u_i_d", String.valueOf(selectedUser.getUserId()));
 
 						navigationItem.setActive(active);
 						navigationItem.setHref(reviewDataURL.toString());
-						navigationItem.setLabel(LanguageUtil.get(request, "review-data"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "review-data"));
 					});
 				add(
 					navigationItem -> {
@@ -55,10 +49,11 @@ baseURL.setParameter("p_u_i_d", String.valueOf(selectedUser.getUserId()));
 						PortletURL nonreviewableDataURL = null;
 
 						try {
-							nonreviewableDataURL = PortletURLUtil.clone(baseURL, renderResponse);
-
-							nonreviewableDataURL.setParameter("mvcRenderCommandName", "/anonymize_nonreviewable_uad_data");
-
+							nonreviewableDataURL = PortletURLBuilder.create(
+								PortletURLUtil.clone(baseURL, renderResponse)
+							).setMVCRenderCommandName(
+								"/user_associated_data/anonymize_nonreviewable_uad_data"
+							).buildPortletURL();
 						}
 						catch (PortletException e) {
 							nonreviewableDataURL = baseURL;
@@ -66,8 +61,9 @@ baseURL.setParameter("p_u_i_d", String.valueOf(selectedUser.getUserId()));
 
 						navigationItem.setActive(active);
 						navigationItem.setHref(nonreviewableDataURL.toString());
-						navigationItem.setLabel(LanguageUtil.get(request, "auto-anonymize-data"));
+						navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "auto-anonymize-data"));
 					});
 			}
-		} %>'
+		}
+	%>'
 />

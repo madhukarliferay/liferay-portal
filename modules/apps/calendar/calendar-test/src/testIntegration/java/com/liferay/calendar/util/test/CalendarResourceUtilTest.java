@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.util.test;
@@ -22,9 +13,10 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import org.junit.After;
@@ -38,6 +30,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Adam Brandizzi
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CalendarResourceUtilTest {
 
@@ -45,7 +38,9 @@ public class CalendarResourceUtilTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
-			new LiferayIntegrationTestRule(), SynchronousMailTestRule.INSTANCE);
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE,
+			SynchronousMailTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
@@ -83,11 +78,9 @@ public class CalendarResourceUtilTest {
 	public void testGetGroupCalendarResourceCreatesResource()
 		throws PortalException {
 
-		ServiceContext serviceContext = new ServiceContext();
-
 		CalendarResource calendarResource =
 			CalendarResourceUtil.getGroupCalendarResource(
-				_group.getGroupId(), serviceContext);
+				_group.getGroupId(), new ServiceContext());
 
 		Assert.assertNotNull(calendarResource);
 	}
@@ -100,11 +93,9 @@ public class CalendarResourceUtilTest {
 
 		Group stagingGroup = _group.getStagingGroup();
 
-		ServiceContext serviceContext = new ServiceContext();
-
 		CalendarResource calendarResource =
 			CalendarResourceUtil.getGroupCalendarResource(
-				stagingGroup.getGroupId(), serviceContext);
+				stagingGroup.getGroupId(), new ServiceContext());
 
 		Assert.assertNotNull(calendarResource);
 	}
@@ -115,16 +106,13 @@ public class CalendarResourceUtilTest {
 
 		GroupTestUtil.enableLocalStaging(_group);
 
-		ServiceContext serviceContext = new ServiceContext();
-
 		CalendarResource calendarResource =
 			CalendarResourceUtil.getGroupCalendarResource(
-				_group.getGroupId(), serviceContext);
+				_group.getGroupId(), new ServiceContext());
 
 		Assert.assertNull(calendarResource);
 	}
 
-	@DeleteAfterTestRun
 	private Group _group;
 
 }

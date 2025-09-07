@@ -1,37 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
-import {openToast} from 'frontend-js-web';
+import {openToast} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 
-import {ConfigContext} from '../../../app/config/index';
-import {DispatchContext} from '../../../app/reducers/index';
+import {useDispatch} from '../../../app/contexts/StoreContext';
 import addFragmentComment from '../../../app/thunks/addFragmentComment';
 import CommentForm from './CommentForm';
 
 export default function ReplyCommentForm({
 	disabled,
 	fragmentEntryLinkId,
-	parentCommentId
+	parentCommentId,
 }) {
 	const [addingComment, setAddingComment] = useState(false);
 	const [showForm, setShowForm] = useState(false);
 	const [textareaContent, setTextareaContent] = useState('');
-	const config = useContext(ConfigContext);
-	const dispatch = useContext(DispatchContext);
+	const dispatch = useDispatch();
 
 	const handleReplyButtonClick = () => {
 		setAddingComment(true);
@@ -39,9 +28,8 @@ export default function ReplyCommentForm({
 		dispatch(
 			addFragmentComment({
 				body: textareaContent,
-				config,
 				fragmentEntryLinkId,
-				parentCommentId
+				parentCommentId,
 			})
 		)
 			.then(() => {
@@ -54,8 +42,7 @@ export default function ReplyCommentForm({
 					message: Liferay.Language.get(
 						'the-reply-could-not-be-saved'
 					),
-					title: Liferay.Language.get('error'),
-					type: 'danger'
+					type: 'danger',
 				});
 
 				setAddingComment(false);
@@ -74,7 +61,7 @@ export default function ReplyCommentForm({
 						setTextareaContent('');
 					}}
 					onSubmitButtonClick={handleReplyButtonClick}
-					onTextareaChange={content =>
+					onTextareaChange={(content) =>
 						content && setTextareaContent(content)
 					}
 					showButtons={true}
@@ -87,7 +74,7 @@ export default function ReplyCommentForm({
 					disabled={disabled}
 					displayType="secondary"
 					onClick={() => setShowForm(true)}
-					small
+					size="sm"
 				>
 					{Liferay.Language.get('reply')}
 				</ClayButton>
@@ -99,5 +86,5 @@ export default function ReplyCommentForm({
 ReplyCommentForm.propTypes = {
 	disabled: PropTypes.bool,
 	fragmentEntryLinkId: PropTypes.string.isRequired,
-	parentCommentId: PropTypes.string.isRequired
+	parentCommentId: PropTypes.string.isRequired,
 };

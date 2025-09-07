@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharing.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.sharing.model.SharingEntry;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for SharingEntry. This utility wraps
@@ -32,7 +26,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class SharingEntryServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.sharing.service.impl.SharingEntryServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -57,20 +51,20 @@ public class SharingEntryServiceUtil {
 	 {@code null} value), if the to/from user IDs are the same, or if
 	 the expiration date is a past value
 	 */
-	public static com.liferay.sharing.model.SharingEntry
-			addOrUpdateSharingEntry(
-				long toUserId, long classNameId, long classPK, long groupId,
-				boolean shareable,
-				java.util.Collection
-					<com.liferay.sharing.security.permission.SharingEntryAction>
-						sharingEntryActions,
-				java.util.Date expirationDate,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static SharingEntry addOrUpdateSharingEntry(
+			String externalReferenceCode, long toUserGroupId, long toUserId,
+			long classNameId, long classPK, long groupId, boolean shareable,
+			java.util.Collection
+				<com.liferay.sharing.security.permission.SharingEntryAction>
+					sharingEntryActions,
+			java.util.Date expirationDate,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
 		return getService().addOrUpdateSharingEntry(
-			toUserId, classNameId, classPK, groupId, shareable,
-			sharingEntryActions, expirationDate, serviceContext);
+			externalReferenceCode, toUserGroupId, toUserId, classNameId,
+			classPK, groupId, shareable, sharingEntryActions, expirationDate,
+			serviceContext);
 	}
 
 	/**
@@ -93,27 +87,58 @@ public class SharingEntryServiceUtil {
 	 null} value), if the to/from user IDs are the same, or if the
 	 expiration date is a past value
 	 */
-	public static com.liferay.sharing.model.SharingEntry addSharingEntry(
-			long toUserId, long classNameId, long classPK, long groupId,
-			boolean shareable,
+	public static SharingEntry addSharingEntry(
+			String externalReferenceCode, long toUserGroupId, long toUserId,
+			long classNameId, long classPK, long groupId, boolean shareable,
 			java.util.Collection
 				<com.liferay.sharing.security.permission.SharingEntryAction>
 					sharingEntryActions,
 			java.util.Date expirationDate,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addSharingEntry(
-			toUserId, classNameId, classPK, groupId, shareable,
-			sharingEntryActions, expirationDate, serviceContext);
+			externalReferenceCode, toUserGroupId, toUserId, classNameId,
+			classPK, groupId, shareable, sharingEntryActions, expirationDate,
+			serviceContext);
 	}
 
-	public static com.liferay.sharing.model.SharingEntry deleteSharingEntry(
+	public static SharingEntry deleteSharingEntry(
+			long toUserGroupId, long toUserId, long classNameId, long classPK)
+		throws PortalException {
+
+		return getService().deleteSharingEntry(
+			toUserGroupId, toUserId, classNameId, classPK);
+	}
+
+	public static SharingEntry deleteSharingEntry(
 			long sharingEntryId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().deleteSharingEntry(sharingEntryId, serviceContext);
+	}
+
+	public static SharingEntry deleteSharingEntry(SharingEntry sharingEntry)
+		throws PortalException {
+
+		return getService().deleteSharingEntry(sharingEntry);
+	}
+
+	public static SharingEntry deleteSharingEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().deleteSharingEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	public static SharingEntry fetchSharingEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().fetchSharingEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -123,6 +148,37 @@ public class SharingEntryServiceUtil {
 	 */
 	public static String getOSGiServiceIdentifier() {
 		return getService().getOSGiServiceIdentifier();
+	}
+
+	public static List<SharingEntry> getSharingEntries(
+			long classNameId, long classPK, long groupId, int start, int end,
+			OrderByComparator<SharingEntry> orderByComparator)
+		throws PortalException {
+
+		return getService().getSharingEntries(
+			classNameId, classPK, groupId, start, end, orderByComparator);
+	}
+
+	public static SharingEntry getSharingEntry(long sharingEntryId)
+		throws PortalException {
+
+		return getService().getSharingEntry(sharingEntryId);
+	}
+
+	public static SharingEntry getSharingEntry(
+			long toUserGroupId, long toUserId, long classNameId, long classPK)
+		throws PortalException {
+
+		return getService().getSharingEntry(
+			toUserGroupId, toUserId, classNameId, classPK);
+	}
+
+	public static SharingEntry getSharingEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getSharingEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -140,14 +196,14 @@ public class SharingEntryServiceUtil {
 	 {@code SharingEntryAction#VIEW}, or contain a {@code null}
 	 value), or if the expiration date is a past value
 	 */
-	public static com.liferay.sharing.model.SharingEntry updateSharingEntry(
+	public static SharingEntry updateSharingEntry(
 			long sharingEntryId,
 			java.util.Collection
 				<com.liferay.sharing.security.permission.SharingEntryAction>
 					sharingEntryActions,
 			boolean shareable, java.util.Date expirationDate,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateSharingEntry(
 			sharingEntryId, sharingEntryActions, shareable, expirationDate,
@@ -155,23 +211,11 @@ public class SharingEntryServiceUtil {
 	}
 
 	public static SharingEntryService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker<SharingEntryService, SharingEntryService>
-		_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(SharingEntryService.class);
-
-		ServiceTracker<SharingEntryService, SharingEntryService>
-			serviceTracker =
-				new ServiceTracker<SharingEntryService, SharingEntryService>(
-					bundle.getBundleContext(), SharingEntryService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
+	private static final Snapshot<SharingEntryService> _serviceSnapshot =
+		new Snapshot<>(
+			SharingEntryServiceUtil.class, SharingEntryService.class);
 
 }

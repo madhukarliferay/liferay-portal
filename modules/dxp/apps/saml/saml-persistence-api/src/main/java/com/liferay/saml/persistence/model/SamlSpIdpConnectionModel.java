@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -38,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface SamlSpIdpConnectionModel
 	extends AuditedModel, BaseModel<SamlSpIdpConnection>, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a saml sp idp connection model instance should use the {@link SamlSpIdpConnection} interface instead.
@@ -170,21 +161,6 @@ public interface SamlSpIdpConnectionModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
-	 * Returns the saml idp entity ID of this saml sp idp connection.
-	 *
-	 * @return the saml idp entity ID of this saml sp idp connection
-	 */
-	@AutoEscape
-	public String getSamlIdpEntityId();
-
-	/**
-	 * Sets the saml idp entity ID of this saml sp idp connection.
-	 *
-	 * @param samlIdpEntityId the saml idp entity ID of this saml sp idp connection
-	 */
-	public void setSamlIdpEntityId(String samlIdpEntityId);
-
-	/**
 	 * Returns the assertion signature required of this saml sp idp connection.
 	 *
 	 * @return the assertion signature required of this saml sp idp connection
@@ -284,6 +260,20 @@ public interface SamlSpIdpConnectionModel
 	public void setLdapImportEnabled(boolean ldapImportEnabled);
 
 	/**
+	 * Returns the metadata updated date of this saml sp idp connection.
+	 *
+	 * @return the metadata updated date of this saml sp idp connection
+	 */
+	public Date getMetadataUpdatedDate();
+
+	/**
+	 * Sets the metadata updated date of this saml sp idp connection.
+	 *
+	 * @param metadataUpdatedDate the metadata updated date of this saml sp idp connection
+	 */
+	public void setMetadataUpdatedDate(Date metadataUpdatedDate);
+
+	/**
 	 * Returns the metadata url of this saml sp idp connection.
 	 *
 	 * @return the metadata url of this saml sp idp connection
@@ -312,20 +302,6 @@ public interface SamlSpIdpConnectionModel
 	 * @param metadataXml the metadata xml of this saml sp idp connection
 	 */
 	public void setMetadataXml(String metadataXml);
-
-	/**
-	 * Returns the metadata updated date of this saml sp idp connection.
-	 *
-	 * @return the metadata updated date of this saml sp idp connection
-	 */
-	public Date getMetadataUpdatedDate();
-
-	/**
-	 * Sets the metadata updated date of this saml sp idp connection.
-	 *
-	 * @param metadataUpdatedDate the metadata updated date of this saml sp idp connection
-	 */
-	public void setMetadataUpdatedDate(Date metadataUpdatedDate);
 
 	/**
 	 * Returns the name of this saml sp idp connection.
@@ -358,6 +334,21 @@ public interface SamlSpIdpConnectionModel
 	public void setNameIdFormat(String nameIdFormat);
 
 	/**
+	 * Returns the saml idp entity ID of this saml sp idp connection.
+	 *
+	 * @return the saml idp entity ID of this saml sp idp connection
+	 */
+	@AutoEscape
+	public String getSamlIdpEntityId();
+
+	/**
+	 * Sets the saml idp entity ID of this saml sp idp connection.
+	 *
+	 * @param samlIdpEntityId the saml idp entity ID of this saml sp idp connection
+	 */
+	public void setSamlIdpEntityId(String samlIdpEntityId);
+
+	/**
 	 * Returns the sign authn request of this saml sp idp connection.
 	 *
 	 * @return the sign authn request of this saml sp idp connection
@@ -379,6 +370,27 @@ public interface SamlSpIdpConnectionModel
 	public void setSignAuthnRequest(boolean signAuthnRequest);
 
 	/**
+	 * Returns the unknown users are strangers of this saml sp idp connection.
+	 *
+	 * @return the unknown users are strangers of this saml sp idp connection
+	 */
+	public boolean getUnknownUsersAreStrangers();
+
+	/**
+	 * Returns <code>true</code> if this saml sp idp connection is unknown users are strangers.
+	 *
+	 * @return <code>true</code> if this saml sp idp connection is unknown users are strangers; <code>false</code> otherwise
+	 */
+	public boolean isUnknownUsersAreStrangers();
+
+	/**
+	 * Sets whether this saml sp idp connection is unknown users are strangers.
+	 *
+	 * @param unknownUsersAreStrangers the unknown users are strangers of this saml sp idp connection
+	 */
+	public void setUnknownUsersAreStrangers(boolean unknownUsersAreStrangers);
+
+	/**
 	 * Returns the user attribute mappings of this saml sp idp connection.
 	 *
 	 * @return the user attribute mappings of this saml sp idp connection
@@ -392,5 +404,27 @@ public interface SamlSpIdpConnectionModel
 	 * @param userAttributeMappings the user attribute mappings of this saml sp idp connection
 	 */
 	public void setUserAttributeMappings(String userAttributeMappings);
+
+	/**
+	 * Returns the user identifier expression of this saml sp idp connection.
+	 *
+	 * @return the user identifier expression of this saml sp idp connection
+	 */
+	@AutoEscape
+	public String getUserIdentifierExpression();
+
+	/**
+	 * Sets the user identifier expression of this saml sp idp connection.
+	 *
+	 * @param userIdentifierExpression the user identifier expression of this saml sp idp connection
+	 */
+	public void setUserIdentifierExpression(String userIdentifierExpression);
+
+	@Override
+	public SamlSpIdpConnection cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

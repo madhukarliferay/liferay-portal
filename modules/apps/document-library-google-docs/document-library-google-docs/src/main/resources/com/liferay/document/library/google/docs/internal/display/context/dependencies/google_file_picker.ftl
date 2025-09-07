@@ -1,9 +1,9 @@
 function GoogleFilePicker(callback) {
-	if (window.gapi) {
+	if (window.google) {
 		callback();
 	}
 	else {
-		Liferay.once('googleAPILoaded', callback);
+		Liferay.once('gisAPILoaded', callback);
 	}
 }
 
@@ -46,15 +46,9 @@ GoogleFilePicker.prototype = {
 			groupDocuments.addView(viewId.SPREADSHEETS);
 			groupDocuments.addView(viewId.PRESENTATIONS);
 
-			var groupPhotos = new google.picker.ViewGroup(viewId.PHOTOS);
-
-			groupPhotos.addView(viewId.PHOTO_UPLOAD);
-			groupPhotos.addView(viewId.WEBCAM);
-
 			var picker = new google.picker.PickerBuilder();
 
 			picker.addViewGroup(groupDocuments);
-			picker.addViewGroup(groupPhotos);
 
 			picker.addView(viewId.RECENTLY_PICKED);
 
@@ -69,22 +63,29 @@ GoogleFilePicker.prototype = {
 	_onAuthAPILoad: function() {
 		var instance = this;
 
-		window.gapi.auth.authorize(
-			{
-				'client_id': GoogleFilePicker.CLIENT_ID,
-				'immediate': false,
-				'scope': GoogleFilePicker.SCOPE
-			},
-			function(authResult) {
-				if (authResult && !authResult.error) {
-					instance._oauthToken = authResult.access_token;
-
-					instance._authAPILoaded = true;
-
-					instance._createPicker();
+		var tokenClient = google.accounts.oauth2.initTokenClient({
+			callback: (authResult) => {
+				if (authResult && authResult.error !== undefined) {
+					throw (authResult);
 				}
-			}
-		);
+
+				instance._oauthToken = authResult.access_token;
+
+				instance._authAPILoaded = true;
+
+				instance._createPicker();
+			},
+			client_id: GoogleFilePicker.CLIENT_ID,
+			error_callback: function(error) {
+				if (process.env.NODE_ENV === 'development') {
+					console.error(error);
+				}
+			},
+			immediate: false,
+			scope: GoogleFilePicker.SCOPE
+		});
+
+		tokenClient.requestAccessToken();
 	},
 
 	_onPickerAPILoad: function() {
@@ -108,6 +109,7 @@ GoogleFilePicker.prototype = {
 					"ICON_URL": doc[googlePickerDoc.ICON_URL] || '',
 					"ID": doc[googlePickerDoc.ID],
 					"NAME": doc[googlePickerDoc.NAME],
+					"TITLE": doc[googlePickerDoc.NAME].replace(/\.[^.]*$/, ''),
 					"URL": doc[googlePickerDoc.URL] || ''
 				});
 		}
@@ -118,13 +120,10 @@ GoogleFilePicker.API_KEY = '${htmlUtil.escapeJS(googleAppsAPIKey)}';
 
 GoogleFilePicker.CLIENT_ID = '${htmlUtil.escapeJS(googleClientId)}';
 
-GoogleFilePicker.SCOPE = [
-	'https://www.googleapis.com/auth/drive.readonly',
-	'https://www.googleapis.com/auth/photos.upload'
-];
+GoogleFilePicker.SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
-window.onGoogleAPILoad = function() {
-	Liferay.fire('googleAPILoaded');
+window.onGisAPILoad = function() {
+	Liferay.fire('gisAPILoaded');
 };
 
 if (!window.gapi && !document.getElementById('googleAPILoader')) {
@@ -135,8 +134,15 @@ if (!window.gapi && !document.getElementById('googleAPILoader')) {
 
 	document.body.appendChild(scriptNode);
 }
-else if (window.gapi) {
-	Liferay.fire('googleAPILoaded');
+
+if (!window.google) {
+	var scriptNodeGis = document.createElement('script');
+
+	scriptNodeGis.id = 'gisAPILoader';
+	scriptNodeGis.onload = onGisAPILoad;
+	scriptNodeGis.src = 'https://accounts.google.com/gsi/client';
+
+	document.body.appendChild(scriptNodeGis);
 }
 
 var FilePicker = GoogleFilePicker;

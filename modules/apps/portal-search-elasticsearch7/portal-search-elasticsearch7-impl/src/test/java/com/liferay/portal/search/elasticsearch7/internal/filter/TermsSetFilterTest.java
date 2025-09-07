@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.filter;
 
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.search.elasticsearch7.internal.LiferayElasticsearchIndexingFixtureFactory;
+import com.liferay.portal.search.elasticsearch7.internal.indexing.LiferayElasticsearchIndexingFixtureFactory;
 import com.liferay.portal.search.filter.FilterBuilders;
 import com.liferay.portal.search.filter.TermsSetFilter;
 import com.liferay.portal.search.filter.TermsSetFilterBuilder;
@@ -23,10 +14,13 @@ import com.liferay.portal.search.internal.filter.FilterBuildersImpl;
 import com.liferay.portal.search.test.util.indexing.BaseIndexingTestCase;
 import com.liferay.portal.search.test.util.indexing.DocumentCreationHelper;
 import com.liferay.portal.search.test.util.indexing.IndexingFixture;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Arrays;
 import java.util.function.Function;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -34,9 +28,14 @@ import org.junit.Test;
  */
 public class TermsSetFilterTest extends BaseIndexingTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testKeywordField() throws Exception {
-		Function<String[], DocumentCreationHelper> function = this::addKeyword;
+		Function<String[], DocumentCreationHelper> function = this::_addKeyword;
 
 		addDocument(function.apply(new String[] {"def", "ghi"}));
 		addDocument(function.apply(new String[] {"ghi", "jkl"}));
@@ -63,7 +62,12 @@ public class TermsSetFilterTest extends BaseIndexingTestCase {
 			});
 	}
 
-	protected DocumentCreationHelper addKeyword(String... values) {
+	@Override
+	protected IndexingFixture createIndexingFixture() throws Exception {
+		return LiferayElasticsearchIndexingFixtureFactory.getInstance();
+	}
+
+	private DocumentCreationHelper _addKeyword(String... values) {
 		return document -> {
 			document.addKeyword(
 				_CONCAT_KEYWORD_FIELD, String.valueOf(Arrays.asList(values)));
@@ -72,11 +76,6 @@ public class TermsSetFilterTest extends BaseIndexingTestCase {
 
 			document.addNumber(_LONG_FIELD, 2);
 		};
-	}
-
-	@Override
-	protected IndexingFixture createIndexingFixture() throws Exception {
-		return LiferayElasticsearchIndexingFixtureFactory.getInstance();
 	}
 
 	private static final String _CONCAT_KEYWORD_FIELD = "screenName";

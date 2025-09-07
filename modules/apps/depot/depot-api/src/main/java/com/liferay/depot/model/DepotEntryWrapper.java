@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,13 +37,16 @@ public class DepotEntryWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("depotEntryId", getDepotEntryId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("type", getType());
 
 		return attributes;
 	}
@@ -61,6 +57,12 @@ public class DepotEntryWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -93,6 +95,12 @@ public class DepotEntryWrapper
 			setUserId(userId);
 		}
 
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
 		Date createDate = (Date)attributes.get("createDate");
 
 		if (createDate != null) {
@@ -104,6 +112,17 @@ public class DepotEntryWrapper
 		if (modifiedDate != null) {
 			setModifiedDate(modifiedDate);
 		}
+
+		Integer type = (Integer)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+	}
+
+	@Override
+	public DepotEntry cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -127,6 +146,16 @@ public class DepotEntryWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this depot entry.
+	 *
+	 * @return the ct collection ID of this depot entry
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the depot entry ID of this depot entry.
 	 *
 	 * @return the depot entry ID of this depot entry
@@ -134,6 +163,13 @@ public class DepotEntryWrapper
 	@Override
 	public long getDepotEntryId() {
 		return model.getDepotEntryId();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Group getGroup()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getGroup();
 	}
 
 	/**
@@ -177,6 +213,16 @@ public class DepotEntryWrapper
 	}
 
 	/**
+	 * Returns the type of this depot entry.
+	 *
+	 * @return the type of this depot entry
+	 */
+	@Override
+	public int getType() {
+		return model.getType();
+	}
+
+	/**
 	 * Returns the user ID of this depot entry.
 	 *
 	 * @return the user ID of this depot entry
@@ -184,6 +230,16 @@ public class DepotEntryWrapper
 	@Override
 	public long getUserId() {
 		return model.getUserId();
+	}
+
+	/**
+	 * Returns the user name of this depot entry.
+	 *
+	 * @return the user name of this depot entry
+	 */
+	@Override
+	public String getUserName() {
+		return model.getUserName();
 	}
 
 	/**
@@ -206,11 +262,6 @@ public class DepotEntryWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a depot entry model instance should use the <code>DepotEntry</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -234,6 +285,16 @@ public class DepotEntryWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this depot entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this depot entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -287,6 +348,16 @@ public class DepotEntryWrapper
 	}
 
 	/**
+	 * Sets the type of this depot entry.
+	 *
+	 * @param type the type of this depot entry
+	 */
+	@Override
+	public void setType(int type) {
+		model.setType(type);
+	}
+
+	/**
 	 * Sets the user ID of this depot entry.
 	 *
 	 * @param userId the user ID of this depot entry
@@ -294,6 +365,16 @@ public class DepotEntryWrapper
 	@Override
 	public void setUserId(long userId) {
 		model.setUserId(userId);
+	}
+
+	/**
+	 * Sets the user name of this depot entry.
+	 *
+	 * @param userName the user name of this depot entry
+	 */
+	@Override
+	public void setUserName(String userName) {
+		model.setUserName(userName);
 	}
 
 	/**
@@ -314,6 +395,25 @@ public class DepotEntryWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<DepotEntry, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<DepotEntry, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
@@ -42,6 +34,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @AccessControlled
+@CTAware
 @JSONWebService
 @ProviderType
 @Transactional(
@@ -50,34 +43,16 @@ import org.osgi.annotation.versioning.ProviderType;
 )
 public interface RoleService extends BaseService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link RoleServiceUtil} to access the role remote service. Add custom service methods to <code>com.liferay.portal.service.impl.RoleServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-
-	/**
-	 * Adds a role. The user is reindexed after role is added.
-	 *
-	 * @param className the name of the class for which the role is created
-	 * @param classPK the primary key of the class for which the role is
-	 created (optionally <code>0</code>)
-	 * @param name the role's name
-	 * @param titleMap the role's localized titles (optionally
-	 <code>null</code>)
-	 * @param descriptionMap the role's localized descriptions (optionally
-	 <code>null</code>)
-	 * @param type the role's type (optionally <code>0</code>)
-	 * @param subtype the role's subtype (optionally <code>null</code>)
-	 * @param serviceContext the service context to be applied (optionally
-	 <code>null</code>). Can set the expando bridge attributes for the
-	 role.
-	 * @return the role
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.service.impl.RoleServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the role remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link RoleServiceUtil} if injection and service tracking are not available.
 	 */
 	public Role addRole(
-			String className, long classPK, String name,
-			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
-			int type, String subtype, ServiceContext serviceContext)
+			String externalReferenceCode, String className, long classPK,
+			String name, Map<Locale, String> titleMap,
+			Map<Locale, String> descriptionMap, int type, String subtype,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -90,6 +65,11 @@ public interface RoleService extends BaseService {
 	public void addUserRoles(long userId, long[] roleIds)
 		throws PortalException;
 
+	public Role copyRole(
+			long userId, String name, long sourceRoleId,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	/**
 	 * Deletes the role with the primary key and its associated permissions.
 	 *
@@ -99,6 +79,14 @@ public interface RoleService extends BaseService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public Role fetchRole(long roleId) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Role fetchRole(long companyId, String name) throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Role fetchRoleByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
 
 	/**
 	 * Returns all the roles associated with the group.
@@ -111,14 +99,21 @@ public interface RoleService extends BaseService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<Role> getGroupRolesAndTeamRoles(
-		long companyId, String keywords, List<String> excludedNames,
-		int[] types, long excludedTeamRoleId, long teamGroupId, int start,
-		int end);
+		long companyId, String name, List<String> excludedNames, String title,
+		String description, int[] types, long excludedTeamRoleId,
+		long teamGroupId, int start, int end);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getGroupRolesAndTeamRolesCount(
-		long companyId, String keywords, List<String> excludedNames,
-		int[] types, long excludedTeamRoleId, long teamGroupId);
+		long companyId, String name, List<String> excludedNames, String title,
+		String description, int[] types, long excludedTeamRoleId,
+		long teamGroupId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Role getOrAddEmptyRole(
+			String externalReferenceCode, String className, long classPK,
+			String name, int type)
+		throws Exception;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -152,6 +147,11 @@ public interface RoleService extends BaseService {
 	public Role getRole(long companyId, String name) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Role getRoleByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<Role> getRoles(int type, String subtype) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -181,7 +181,9 @@ public interface RoleService extends BaseService {
 		throws PortalException;
 
 	/**
-	 * Returns the union of all the user's roles within the groups.
+	 * Returns the union of all the user's roles within the groups. If no
+	 * groups are provided, only the user's directly assigned roles are
+	 * returned.
 	 *
 	 * @param userId the primary key of the user
 	 * @param groups the groups (optionally <code>null</code>)
@@ -238,7 +240,7 @@ public interface RoleService extends BaseService {
 	public List<Role> search(
 		long companyId, String keywords, Integer[] types,
 		LinkedHashMap<String, Object> params, int start, int end,
-		OrderByComparator<Role> obc);
+		OrderByComparator<Role> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int searchCount(
@@ -253,6 +255,14 @@ public interface RoleService extends BaseService {
 	 * @param roleIds the primary keys of the roles
 	 */
 	public void unsetUserRoles(long userId, long[] roleIds)
+		throws PortalException;
+
+	public Role updateExternalReferenceCode(
+			long roleId, String externalReferenceCode)
+		throws PortalException;
+
+	public Role updateExternalReferenceCode(
+			Role role, String externalReferenceCode)
 		throws PortalException;
 
 	/**
@@ -271,9 +281,9 @@ public interface RoleService extends BaseService {
 	 * @return the role with the primary key
 	 */
 	public Role updateRole(
-			long roleId, String name, Map<Locale, String> titleMap,
-			Map<Locale, String> descriptionMap, String subtype,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long roleId, String name,
+			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
+			String subtype, ServiceContext serviceContext)
 		throws PortalException;
 
 }

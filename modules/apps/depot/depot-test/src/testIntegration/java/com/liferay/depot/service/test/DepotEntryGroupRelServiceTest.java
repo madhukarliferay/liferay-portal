@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
@@ -95,10 +87,10 @@ public class DepotEntryGroupRelServiceTest {
 				_permissionCheckerFactory.create(user));
 
 			_depotEntryGroupRelService.getDepotEntryGroupRels(
-				group.getGroupId(), 0, 20);
+				group.getGroupId(), DepotConstants.TYPE_ASSET_LIBRARY, 0, 20);
 		}
-		catch (PrincipalException.MustHavePermission mhp) {
-			String message = mhp.getMessage();
+		catch (PrincipalException.MustHavePermission principalException) {
+			String message = principalException.getMessage();
 
 			Assert.assertTrue(
 				message.contains(
@@ -134,7 +126,8 @@ public class DepotEntryGroupRelServiceTest {
 		try {
 			List<DepotEntryGroupRel> depotEntryGroupRels =
 				_depotEntryGroupRelService.getDepotEntryGroupRels(
-					group.getGroupId(), 0, 20);
+					group.getGroupId(), DepotConstants.TYPE_ASSET_LIBRARY, 0,
+					20);
 
 			Assert.assertEquals(
 				depotEntryGroupRels.toString(), 1, depotEntryGroupRels.size());
@@ -158,6 +151,7 @@ public class DepotEntryGroupRelServiceTest {
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
 			Collections.singletonMap(
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+			DepotConstants.TYPE_ASSET_LIBRARY,
 			ServiceContextTestUtil.getServiceContext());
 
 		_depotEntries.add(depotEntry);

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -20,6 +11,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -43,6 +36,7 @@ public class OrganizationWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("organizationId", getOrganizationId());
@@ -58,9 +52,10 @@ public class OrganizationWrapper
 		attributes.put("recursable", isRecursable());
 		attributes.put("regionId", getRegionId());
 		attributes.put("countryId", getCountryId());
-		attributes.put("statusId", getStatusId());
+		attributes.put("statusListTypeId", getStatusListTypeId());
 		attributes.put("comments", getComments());
 		attributes.put("logoId", getLogoId());
+		attributes.put("status", getStatus());
 
 		return attributes;
 	}
@@ -71,6 +66,12 @@ public class OrganizationWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -165,10 +166,10 @@ public class OrganizationWrapper
 			setCountryId(countryId);
 		}
 
-		Long statusId = (Long)attributes.get("statusId");
+		Long statusListTypeId = (Long)attributes.get("statusListTypeId");
 
-		if (statusId != null) {
-			setStatusId(statusId);
+		if (statusListTypeId != null) {
+			setStatusListTypeId(statusListTypeId);
 		}
 
 		String comments = (String)attributes.get("comments");
@@ -182,6 +183,12 @@ public class OrganizationWrapper
 		if (logoId != null) {
 			setLogoId(logoId);
 		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
 	}
 
 	@Override
@@ -189,6 +196,11 @@ public class OrganizationWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.buildTreePath();
+	}
+
+	@Override
+	public Organization cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	@Override
@@ -260,6 +272,16 @@ public class OrganizationWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this organization.
+	 *
+	 * @return the ct collection ID of this organization
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
 	@Override
 	public java.util.List<Organization> getDescendants() {
 		return model.getDescendants();
@@ -293,6 +315,11 @@ public class OrganizationWrapper
 	@Override
 	public long getLogoId() {
 		return model.getLogoId();
+	}
+
+	@Override
+	public String getLogoURL() {
+		return model.getLogoURL();
 	}
 
 	/**
@@ -358,7 +385,7 @@ public class OrganizationWrapper
 	}
 
 	@Override
-	public javax.portlet.PortletPreferences getPreferences() {
+	public jakarta.portlet.PortletPreferences getPreferences() {
 		return model.getPreferences();
 	}
 
@@ -415,13 +442,23 @@ public class OrganizationWrapper
 	}
 
 	/**
-	 * Returns the status ID of this organization.
+	 * Returns the status of this organization.
 	 *
-	 * @return the status ID of this organization
+	 * @return the status of this organization
 	 */
 	@Override
-	public long getStatusId() {
-		return model.getStatusId();
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
+	 * Returns the status list type ID of this organization.
+	 *
+	 * @return the status list type ID of this organization
+	 */
+	@Override
+	public long getStatusListTypeId() {
+		return model.getStatusListTypeId();
 	}
 
 	@Override
@@ -534,11 +571,6 @@ public class OrganizationWrapper
 		return model.isRoot();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a organization model instance should use the <code>Organization</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -582,6 +614,16 @@ public class OrganizationWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this organization.
+	 *
+	 * @param ctCollectionId the ct collection ID of this organization
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -685,13 +727,23 @@ public class OrganizationWrapper
 	}
 
 	/**
-	 * Sets the status ID of this organization.
+	 * Sets the status of this organization.
 	 *
-	 * @param statusId the status ID of this organization
+	 * @param status the status of this organization
 	 */
 	@Override
-	public void setStatusId(long statusId) {
-		model.setStatusId(statusId);
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
+	 * Sets the status list type ID of this organization.
+	 *
+	 * @param statusListTypeId the status list type ID of this organization
+	 */
+	@Override
+	public void setStatusListTypeId(long statusListTypeId) {
+		model.setStatusListTypeId(statusListTypeId);
 	}
 
 	/**
@@ -755,8 +807,27 @@ public class OrganizationWrapper
 	}
 
 	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
 	public void updateTreePath(String treePath) {
 		model.updateTreePath(treePath);
+	}
+
+	@Override
+	public Map<String, Function<Organization, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<Organization, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

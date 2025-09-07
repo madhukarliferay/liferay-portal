@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.segments.model.SegmentsEntryRel;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for SegmentsEntryRel. This utility wraps
@@ -32,40 +26,11 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class SegmentsEntryRelServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRelServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SegmentsEntryRelServiceUtil} to access the segments entry rel remote service. Add custom service methods to <code>com.liferay.segments.service.impl.SegmentsEntryRelServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.segments.model.SegmentsEntryRel
-			addSegmentsEntryRel(
-				long segmentsEntryId, long classNameId, long classPK,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return getService().addSegmentsEntryRel(
-			segmentsEntryId, classNameId, classPK, serviceContext);
-	}
-
-	public static void deleteSegmentsEntryRel(long segmentsEntryRelId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		getService().deleteSegmentsEntryRel(segmentsEntryRelId);
-	}
-
-	public static void deleteSegmentsEntryRel(
-			long segmentsEntryId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		getService().deleteSegmentsEntryRel(
-			segmentsEntryId, classNameId, classPK);
-	}
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -76,41 +41,38 @@ public class SegmentsEntryRelServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(long segmentsEntryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<SegmentsEntryRel> getSegmentsEntryRels(
+			long segmentsEntryId)
+		throws PortalException {
 
 		return getService().getSegmentsEntryRels(segmentsEntryId);
 	}
 
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(
-				long segmentsEntryId, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.segments.model.SegmentsEntryRel>
-						orderByComparator)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<SegmentsEntryRel> getSegmentsEntryRels(
+			long segmentsEntryId, int start, int end,
+			OrderByComparator<SegmentsEntryRel> orderByComparator)
+		throws PortalException {
 
 		return getService().getSegmentsEntryRels(
 			segmentsEntryId, start, end, orderByComparator);
 	}
 
-	public static java.util.List<com.liferay.segments.model.SegmentsEntryRel>
-			getSegmentsEntryRels(long groupId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<SegmentsEntryRel> getSegmentsEntryRels(
+			long groupId, long classNameId, long classPK)
+		throws PortalException {
 
 		return getService().getSegmentsEntryRels(groupId, classNameId, classPK);
 	}
 
 	public static int getSegmentsEntryRelsCount(long segmentsEntryId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getSegmentsEntryRelsCount(segmentsEntryId);
 	}
 
 	public static int getSegmentsEntryRelsCount(
 			long groupId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getSegmentsEntryRelsCount(
 			groupId, classNameId, classPK);
@@ -124,25 +86,11 @@ public class SegmentsEntryRelServiceUtil {
 	}
 
 	public static SegmentsEntryRelService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<SegmentsEntryRelService, SegmentsEntryRelService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(SegmentsEntryRelService.class);
-
-		ServiceTracker<SegmentsEntryRelService, SegmentsEntryRelService>
-			serviceTracker =
-				new ServiceTracker
-					<SegmentsEntryRelService, SegmentsEntryRelService>(
-						bundle.getBundleContext(),
-						SegmentsEntryRelService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
+	private static final Snapshot<SegmentsEntryRelService> _serviceSnapshot =
+		new Snapshot<>(
+			SegmentsEntryRelServiceUtil.class, SegmentsEntryRelService.class);
 
 }

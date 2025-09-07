@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the message boards category service. This utility wraps <code>com.liferay.message.boards.service.persistence.impl.MBCategoryPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class MBCategoryUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -1307,7 +1294,7 @@ public class MBCategoryUtil {
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
+	 * @param parentCategoryIds the parent category IDs
 	 * @param start the lower bound of the range of message boards categories
 	 * @param end the upper bound of the range of message boards categories (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -1376,6 +1363,70 @@ public class MBCategoryUtil {
 	 */
 	public static int filterCountByG_P(long groupId, long[] parentCategoryIds) {
 		return getPersistence().filterCountByG_P(groupId, parentCategoryIds);
+	}
+
+	/**
+	 * Returns the message boards category where groupId = &#63; and friendlyURL = &#63; or throws a <code>NoSuchCategoryException</code> if it could not be found.
+	 *
+	 * @param groupId the group ID
+	 * @param friendlyURL the friendly url
+	 * @return the matching message boards category
+	 * @throws NoSuchCategoryException if a matching message boards category could not be found
+	 */
+	public static MBCategory findByG_F(long groupId, String friendlyURL)
+		throws com.liferay.message.boards.exception.NoSuchCategoryException {
+
+		return getPersistence().findByG_F(groupId, friendlyURL);
+	}
+
+	/**
+	 * Returns the message boards category where groupId = &#63; and friendlyURL = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param friendlyURL the friendly url
+	 * @return the matching message boards category, or <code>null</code> if a matching message boards category could not be found
+	 */
+	public static MBCategory fetchByG_F(long groupId, String friendlyURL) {
+		return getPersistence().fetchByG_F(groupId, friendlyURL);
+	}
+
+	/**
+	 * Returns the message boards category where groupId = &#63; and friendlyURL = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param friendlyURL the friendly url
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching message boards category, or <code>null</code> if a matching message boards category could not be found
+	 */
+	public static MBCategory fetchByG_F(
+		long groupId, String friendlyURL, boolean useFinderCache) {
+
+		return getPersistence().fetchByG_F(
+			groupId, friendlyURL, useFinderCache);
+	}
+
+	/**
+	 * Removes the message boards category where groupId = &#63; and friendlyURL = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param friendlyURL the friendly url
+	 * @return the message boards category that was removed
+	 */
+	public static MBCategory removeByG_F(long groupId, String friendlyURL)
+		throws com.liferay.message.boards.exception.NoSuchCategoryException {
+
+		return getPersistence().removeByG_F(groupId, friendlyURL);
+	}
+
+	/**
+	 * Returns the number of message boards categories where groupId = &#63; and friendlyURL = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param friendlyURL the friendly url
+	 * @return the number of matching message boards categories
+	 */
+	public static int countByG_F(long groupId, String friendlyURL) {
+		return getPersistence().countByG_F(groupId, friendlyURL);
 	}
 
 	/**
@@ -2181,9 +2232,9 @@ public class MBCategoryUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>MBCategoryModelImpl</code>.
 	 * </p>
 	 *
-	 * @param categoryId the category ID
+	 * @param categoryIds the category IDs
 	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
+	 * @param parentCategoryIds the parent category IDs
 	 * @param start the lower bound of the range of message boards categories
 	 * @param end the upper bound of the range of message boards categories (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2660,7 +2711,7 @@ public class MBCategoryUtil {
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
+	 * @param parentCategoryIds the parent category IDs
 	 * @param status the status
 	 * @param start the lower bound of the range of message boards categories
 	 * @param end the upper bound of the range of message boards categories (not inclusive)
@@ -3138,7 +3189,7 @@ public class MBCategoryUtil {
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
+	 * @param parentCategoryIds the parent category IDs
 	 * @param status the status
 	 * @param start the lower bound of the range of message boards categories
 	 * @param end the upper bound of the range of message boards categories (not inclusive)
@@ -3601,9 +3652,9 @@ public class MBCategoryUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>MBCategoryModelImpl</code>.
 	 * </p>
 	 *
-	 * @param categoryId the category ID
+	 * @param categoryIds the category IDs
 	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
+	 * @param parentCategoryIds the parent category IDs
 	 * @param status the status
 	 * @param start the lower bound of the range of message boards categories
 	 * @param end the upper bound of the range of message boards categories (not inclusive)
@@ -3700,6 +3751,74 @@ public class MBCategoryUtil {
 
 		return getPersistence().filterCountByNotC_G_P_S(
 			categoryIds, groupId, parentCategoryIds, status);
+	}
+
+	/**
+	 * Returns the message boards category where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchCategoryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching message boards category
+	 * @throws NoSuchCategoryException if a matching message boards category could not be found
+	 */
+	public static MBCategory findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.message.boards.exception.NoSuchCategoryException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the message boards category where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching message boards category, or <code>null</code> if a matching message boards category could not be found
+	 */
+	public static MBCategory fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the message boards category where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching message boards category, or <code>null</code> if a matching message boards category could not be found
+	 */
+	public static MBCategory fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the message boards category where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the message boards category that was removed
+	 */
+	public static MBCategory removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.message.boards.exception.NoSuchCategoryException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of message boards categories where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching message boards categories
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
 	}
 
 	/**
@@ -3850,25 +3969,13 @@ public class MBCategoryUtil {
 	}
 
 	public static MBCategoryPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker<MBCategoryPersistence, MBCategoryPersistence>
-		_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(MBCategoryPersistence.class);
-
-		ServiceTracker<MBCategoryPersistence, MBCategoryPersistence>
-			serviceTracker =
-				new ServiceTracker
-					<MBCategoryPersistence, MBCategoryPersistence>(
-						bundle.getBundleContext(), MBCategoryPersistence.class,
-						null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+	public static void setPersistence(MBCategoryPersistence persistence) {
+		_persistence = persistence;
 	}
+
+	private static volatile MBCategoryPersistence _persistence;
 
 }

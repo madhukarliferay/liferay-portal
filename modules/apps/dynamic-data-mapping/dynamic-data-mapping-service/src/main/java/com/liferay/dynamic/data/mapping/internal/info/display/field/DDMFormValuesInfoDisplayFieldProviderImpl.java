@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.info.display.field;
@@ -17,14 +8,16 @@ package com.liferay.dynamic.data.mapping.internal.info.display.field;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.info.display.field.DDMFormValuesInfoDisplayFieldProvider;
-import com.liferay.dynamic.data.mapping.kernel.DDMForm;
-import com.liferay.dynamic.data.mapping.kernel.DDMFormField;
-import com.liferay.dynamic.data.mapping.kernel.DDMFormFieldValue;
-import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
-import com.liferay.dynamic.data.mapping.kernel.Value;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
+import com.liferay.dynamic.data.mapping.model.Value;
+import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
+import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -50,8 +43,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,16 +54,17 @@ import org.osgi.service.component.annotations.Reference;
 public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 	implements DDMFormValuesInfoDisplayFieldProvider<T> {
 
+	@Override
 	public Map<String, Object> getInfoDisplayFieldsValues(
 			T t, DDMFormValues ddmFormValues, Locale locale)
 		throws PortalException {
 
 		Map<String, Object> infoDisplayFieldValues = new HashMap<>();
 
-		Map<String, List<DDMFormFieldValue>> ddmFormFieldsValuesMap =
+		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
 			ddmFormValues.getDDMFormFieldValuesMap();
 
-		if (MapUtil.isEmpty(ddmFormFieldsValuesMap)) {
+		if (MapUtil.isEmpty(ddmFormFieldValuesMap)) {
 			return infoDisplayFieldValues;
 		}
 
@@ -82,13 +74,15 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 			true);
 
 		for (Map.Entry<String, List<DDMFormFieldValue>> entry :
-				ddmFormFieldsValuesMap.entrySet()) {
+				ddmFormFieldValuesMap.entrySet()) {
 
 			DDMFormField ddmFormField = ddmFormFields.get(entry.getKey());
 
 			List<DDMFormFieldValue> ddmFormFieldsValues = entry.getValue();
 
-			if (Objects.equals(ddmFormField.getType(), "ddm-image") &&
+			if ((Objects.equals(
+					ddmFormField.getType(), DDMFormFieldType.IMAGE) ||
+				 Objects.equals(ddmFormField.getType(), "image")) &&
 				(ddmFormFieldsValues.size() > 1)) {
 
 				ddmFormFieldsValues = Collections.singletonList(
@@ -118,9 +112,8 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 			fieldValue = _sanitizeFieldValue(t, ddmFormFieldValue, locale);
 		}
 		else {
-			Stream<DDMFormFieldValue> stream = ddmFormFieldValues.stream();
-
-			fieldValue = stream.map(
+			fieldValue = TransformUtil.transform(
+				ddmFormFieldValues,
 				ddmFormFieldValue -> {
 					try {
 						_addNestedFields(
@@ -129,24 +122,19 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 						return _sanitizeFieldValue(
 							t, ddmFormFieldValue, locale);
 					}
-					catch (PortalException pe) {
+					catch (PortalException portalException) {
 						_log.error(
 							"Unable to sanitize field " +
 								ddmFormFieldValue.getName(),
-							pe);
+							portalException);
 
 						return null;
 					}
-				}
-			).filter(
-				value -> value != null
-			).collect(
-				Collectors.toList()
-			);
+				});
 		}
 
 		if (classTypeValues.containsKey(key)) {
-			Collection fieldValues = new ArrayList<>();
+			Collection<Object> fieldValues = new ArrayList<>();
 
 			Object classTypeValue = classTypeValues.get(key);
 
@@ -176,11 +164,11 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 			Map<String, Object> classTypeValues, Locale locale)
 		throws PortalException {
 
-		Map<String, List<DDMFormFieldValue>> nestedDDMFormFieldsValuesMap =
+		Map<String, List<DDMFormFieldValue>> nestedDDMFormFieldValuesMap =
 			ddmFormFieldValue.getNestedDDMFormFieldValuesMap();
 
 		for (Map.Entry<String, List<DDMFormFieldValue>> entry :
-				nestedDDMFormFieldsValuesMap.entrySet()) {
+				nestedDDMFormFieldValuesMap.entrySet()) {
 
 			List<DDMFormFieldValue> ddmFormFieldValues = entry.getValue();
 
@@ -201,7 +189,10 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 
 		String valueString = value.getString(locale);
 
-		if (Objects.equals(ddmFormFieldValue.getType(), "ddm-date")) {
+		if (Objects.equals(ddmFormFieldValue.getType(), "date") ||
+			Objects.equals(
+				ddmFormFieldValue.getType(), DDMFormFieldType.DATE)) {
+
 			try {
 				DateFormat dateFormat = DateFormat.getDateInstance(
 					DateFormat.SHORT, locale);
@@ -211,18 +202,27 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 
 				return dateFormat.format(date);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+
 				return valueString;
 			}
 		}
-		else if (Objects.equals(ddmFormFieldValue.getType(), "ddm-decimal")) {
+		else if (Objects.equals(
+					ddmFormFieldValue.getType(), DDMFormFieldType.DECIMAL) ||
+				 Objects.equals(ddmFormFieldValue.getType(), "numeric")) {
+
 			NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 
 			return numberFormat.format(GetterUtil.getDouble(valueString));
 		}
-		else if (Objects.equals(ddmFormFieldValue.getType(), "ddm-image")) {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				valueString);
+		else if (Objects.equals(
+					ddmFormFieldValue.getType(), DDMFormFieldType.IMAGE) ||
+				 Objects.equals(ddmFormFieldValue.getType(), "image")) {
+
+			JSONObject jsonObject = _jsonFactory.createJSONObject(valueString);
 
 			jsonObject.put("url", _transformFileEntryURL(valueString));
 
@@ -237,7 +237,7 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 
 	private String _transformFileEntryURL(String data) {
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(data);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(data);
 
 			String uuid = jsonObject.getString("uuid");
 			long groupId = jsonObject.getLong("groupId");
@@ -252,9 +252,9 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 			return _dlURLHelper.getDownloadURL(
 				fileEntry, fileEntry.getFileVersion(), null, StringPool.BLANK);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 		}
 
@@ -269,5 +269,8 @@ public class DDMFormValuesInfoDisplayFieldProviderImpl<T extends GroupedModel>
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

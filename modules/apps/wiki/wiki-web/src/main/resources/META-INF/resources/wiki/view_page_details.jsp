@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,26 +10,37 @@
 <%
 WikiEngineRenderer wikiEngineRenderer = (WikiEngineRenderer)request.getAttribute(WikiWebKeys.WIKI_ENGINE_RENDERER);
 WikiNode node = (WikiNode)request.getAttribute(WikiWebKeys.WIKI_NODE);
+
 WikiPage wikiPage = (WikiPage)request.getAttribute(WikiWebKeys.WIKI_PAGE);
 
 List<FileEntry> attachmentsFileEntries = wikiPage.getAttachmentsFileEntries();
 
 WikiPage initialPage = WikiPageLocalServiceUtil.getPage(wikiPage.getNodeId(), wikiPage.getTitle(), WikiPageConstants.VERSION_DEFAULT);
 
-PortletURL viewPageURL = renderResponse.createRenderURL();
+PortletURL viewPageURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCRenderCommandName(
+	"/wiki/view"
+).setParameter(
+	"nodeName", node.getName()
+).setParameter(
+	"title", wikiPage.getTitle()
+).buildPortletURL();
 
-viewPageURL.setParameter("mvcRenderCommandName", "/wiki/view");
-viewPageURL.setParameter("nodeName", node.getName());
-viewPageURL.setParameter("title", wikiPage.getTitle());
-
-PortletURL editPageURL = renderResponse.createRenderURL();
-
-editPageURL.setParameter("mvcRenderCommandName", "/wiki/edit_page");
-editPageURL.setParameter("redirect", currentURL);
-editPageURL.setParameter("nodeId", String.valueOf(node.getNodeId()));
-editPageURL.setParameter("title", wikiPage.getTitle());
+PortletURL editPageURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCRenderCommandName(
+	"/wiki/edit_page"
+).setRedirect(
+	currentURL
+).setParameter(
+	"nodeId", node.getNodeId()
+).setParameter(
+	"title", wikiPage.getTitle()
+).buildPortletURL();
 
 PortalUtil.addPortletBreadcrumbEntry(request, wikiPage.getTitle(), viewPageURL.toString());
+
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details"), currentURL);
 %>
 
@@ -82,7 +84,7 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 			<liferay-ui:message key="created-by" />
 		</th>
 		<td class="table-cell">
-			<%= HtmlUtil.escape(Validator.isNotNull(initialPage.getUserName()) ? initialPage.getUserName() : "Liferay") %> (<%= dateFormatDateTime.format(initialPage.getCreateDate()) %>)
+			<%= HtmlUtil.escape(Validator.isNotNull(initialPage.getUserName()) ? initialPage.getUserName() : "Liferay") %> (<%= dateTimeFormat.format(initialPage.getCreateDate()) %>)
 		</td>
 	</tr>
 	<tr>
@@ -90,7 +92,7 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 			<liferay-ui:message key="last-changed-by" />
 		</th>
 		<td class="table-cell">
-			<%= HtmlUtil.escape(wikiPage.getUserName()) %> (<%= dateFormatDateTime.format(wikiPage.getModifiedDate()) %>)
+			<%= HtmlUtil.escape(wikiPage.getUserName()) %> (<%= dateTimeFormat.format(wikiPage.getModifiedDate()) %>)
 		</td>
 	</tr>
 	<tr>
@@ -107,14 +109,21 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 		<%
 		String[] conversions = DocumentConversionUtil.getConversions("html");
 
-		PortletURL exportPageURL = renderResponse.createActionURL();
-
-		exportPageURL.setParameter(ActionRequest.ACTION_NAME, "/wiki/export_page");
-		exportPageURL.setParameter("nodeId", String.valueOf(node.getNodeId()));
-		exportPageURL.setParameter("nodeName", node.getName());
-		exportPageURL.setParameter("title", wikiPage.getTitle());
-		exportPageURL.setParameter("version", String.valueOf(wikiPage.getVersion()));
-		exportPageURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+		PortletURL exportPageURL = PortletURLBuilder.createActionURL(
+			renderResponse
+		).setActionName(
+			"/wiki/export_page"
+		).setParameter(
+			"nodeId", node.getNodeId()
+		).setParameter(
+			"nodeName", node.getName()
+		).setParameter(
+			"title", wikiPage.getTitle()
+		).setParameter(
+			"version", wikiPage.getVersion()
+		).setWindowState(
+			LiferayWindowState.EXCLUSIVE
+		).buildPortletURL();
 		%>
 
 		<tr>
@@ -122,32 +131,30 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 				<liferay-ui:message key="convert-to" />
 			</th>
 			<td class="table-cell">
-				<liferay-ui:icon-list>
+				<div class="d-inline-flex">
 
 					<%
 					for (String conversion : conversions) {
-						Map<String, Object> data = new HashMap<>();
-
 						exportPageURL.setParameter("targetExtension", conversion);
-
-						data.put("resource-href", exportPageURL.toString());
 					%>
 
-						<liferay-ui:icon
-							data="<%= data %>"
+						<clay:link
+							aria-label='<%= LanguageUtil.format(request, "download-x-as-x", new Object[] {HtmlUtil.escape(wikiPage.getTitle()), StringUtil.toUpperCase(conversion)}) %>'
+							borderless="<%= true %>"
+							data-resource-href="<%= exportPageURL.toString() %>"
+							displayType="primary"
+							href="<%= exportPageURL.toString() %>"
 							icon="<%= DLUtil.getFileIconCssClass(conversion) %>"
-							label="<%= true %>"
-							markupView="lexicon"
-							message="<%= StringUtil.toUpperCase(conversion) %>"
-							method="get"
-							url="<%= exportPageURL.toString() %>"
+							label="<%= StringUtil.toUpperCase(conversion) %>"
+							small="<%= true %>"
+							type="button"
 						/>
 
 					<%
 					}
 					%>
 
-				</liferay-ui:icon-list>
+				</div>
 			</td>
 		</tr>
 	</c:if>
@@ -190,12 +197,12 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 											<portlet:param name="title" value="<%= String.valueOf(wikiPage.getTitle()) %>" />
 										</portlet:actionURL>
 
-										<liferay-ui:icon
+										<clay:link
+											aria-label='<%= LanguageUtil.get(request, "unsubscribe") %>'
+											href="<%= unsubscribeURL %>"
 											icon="times-circle"
-											label="<%= true %>"
-											markupView="lexicon"
-											message="unsubscribe"
-											url="<%= unsubscribeURL %>"
+											label="unsubscribe"
+											small="<%= true %>"
 										/>
 									</td>
 								</c:when>
@@ -211,12 +218,12 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 											<portlet:param name="title" value="<%= String.valueOf(wikiPage.getTitle()) %>" />
 										</portlet:actionURL>
 
-										<liferay-ui:icon
+										<clay:link
+											aria-label='<%= LanguageUtil.get(request, "subscribe") %>'
+											href="<%= subscribeURL %>"
 											icon="check-circle-full"
-											label="<%= true %>"
-											markupView="lexicon"
-											message="subscribe"
-											url="<%= subscribeURL %>"
+											label="subscribe"
+											small="<%= true %>"
 										/>
 									</td>
 								</c:otherwise>
@@ -238,12 +245,12 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 											<portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" />
 										</portlet:actionURL>
 
-										<liferay-ui:icon
+										<clay:link
+											aria-label='<%= LanguageUtil.get(request, "unsubscribe") %>'
+											href="<%= unsubscribeURL %>"
 											icon="times-circle"
-											label="<%= true %>"
-											markupView="lexicon"
-											message="unsubscribe"
-											url="<%= unsubscribeURL %>"
+											label="unsubscribe"
+											small="<%= true %>"
 										/>
 									</td>
 								</c:when>
@@ -258,12 +265,12 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 											<portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" />
 										</portlet:actionURL>
 
-										<liferay-ui:icon
+										<clay:link
+											aria-label='<%= LanguageUtil.get(request, "subscribe") %>'
+											href="<%= subscribeURL %>"
 											icon="check-circle-full"
-											label="<%= true %>"
-											markupView="lexicon"
-											message="subscribe"
-											url="<%= subscribeURL %>"
+											label="subscribe"
+											small="<%= true %>"
 										/>
 									</td>
 								</c:otherwise>
@@ -281,7 +288,7 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 				<liferay-ui:message key="advanced-actions" />
 			</th>
 			<td class="table-cell">
-				<liferay-ui:icon-list>
+				<div class="d-inline-flex">
 					<c:if test="<%= WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.PERMISSIONS) %>">
 						<liferay-security:permissionsURL
 							modelResource="<%= WikiPage.class.getName() %>"
@@ -291,67 +298,77 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 							windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 						/>
 
-						<liferay-ui:icon
+						<clay:button
+							additionalProps='<%=
+								HashMapBuilder.<String, Object>put(
+									"url", permissionsURL
+								).build()
+							%>'
+							aria-label='<%= LanguageUtil.get(request, "permissions") %>'
+							displayType="link"
 							icon="lock"
-							label="<%= true %>"
-							markupView="lexicon"
-							message="permissions"
-							method="get"
-							url="<%= permissionsURL %>"
-							useDialog="<%= true %>"
+							label="permissions"
+							propsTransformer="{WikiPagePermissionsButtonPropsTransformer} from wiki-web"
+							small="<%= true %>"
 						/>
 					</c:if>
 
 					<c:if test="<%= WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.UPDATE) && WikiNodePermission.contains(permissionChecker, wikiPage.getNodeId(), ActionKeys.ADD_PAGE) %>">
-
-						<%
-						PortletURL copyPageURL = PortletURLUtil.clone(viewPageURL, renderResponse);
-
-						copyPageURL.setParameter("mvcRenderCommandName", "/wiki/edit_page");
-						copyPageURL.setParameter("nodeId", String.valueOf(wikiPage.getNodeId()));
-						copyPageURL.setParameter("title", StringPool.BLANK);
-						copyPageURL.setParameter("editTitle", "1");
-						copyPageURL.setParameter("templateNodeId", String.valueOf(wikiPage.getNodeId()));
-						copyPageURL.setParameter("templateTitle", wikiPage.getTitle());
-						%>
-
-						<liferay-ui:icon
+						<clay:link
+							aria-label='<%= LanguageUtil.get(request, "copy") %>'
+							displayType="link"
+							href='<%=
+								PortletURLBuilder.create(
+									PortletURLUtil.clone(viewPageURL, renderResponse)
+								).setMVCRenderCommandName(
+									"/wiki/edit_page"
+								).setParameter(
+									"editTitle", "1"
+								).setParameter(
+									"nodeId", wikiPage.getNodeId()
+								).setParameter(
+									"templateNodeId", wikiPage.getNodeId()
+								).setParameter(
+									"templateTitle", wikiPage.getTitle()
+								).setParameter(
+									"title", StringPool.BLANK
+								).buildString()
+							%>'
 							icon="paste"
-							label="<%= true %>"
-							markupView="lexicon"
-							message="copy"
-							url="<%= copyPageURL.toString() %>"
+							label="copy"
+							small="<%= true %>"
+							type="button"
 						/>
 					</c:if>
 
 					<c:if test="<%= WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.UPDATE) && WikiNodePermission.contains(permissionChecker, wikiPage.getNodeId(), ActionKeys.ADD_PAGE) %>">
-
-						<%
-						PortletURL movePageURL = PortletURLUtil.clone(viewPageURL, renderResponse);
-
-						movePageURL.setParameter("mvcRenderCommandName", "/wiki/move_page");
-						movePageURL.setParameter("redirect", viewPageURL.toString());
-						%>
-
-						<liferay-ui:icon
+						<clay:link
+							aria-label='<%= LanguageUtil.get(request, "move") %>'
+							displayType="link"
+							href='<%=
+								PortletURLBuilder.create(
+									PortletURLUtil.clone(viewPageURL, renderResponse)
+								).setMVCRenderCommandName(
+									"/wiki/move_page"
+								).setRedirect(
+									viewPageURL
+								).buildString()
+							%>'
 							icon="move"
-							label="<%= true %>"
-							markupView="lexicon"
-							message="move"
-							url="<%= movePageURL.toString() %>"
+							label="move"
+							small="<%= true %>"
+							type="button"
 						/>
 					</c:if>
 
 					<c:if test="<%= WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.DELETE) %>">
 
 						<%
-						PortletURL frontPageURL = PortletURLUtil.clone(viewPageURL, renderResponse);
-
-						frontPageURL.setParameter("title", wikiGroupServiceConfiguration.frontPageName());
-
-						PortletURL deletePageURL = PortletURLUtil.clone(editPageURL, PortletRequest.ACTION_PHASE, renderResponse);
-
-						deletePageURL.setParameter(ActionRequest.ACTION_NAME, "/wiki/edit_page");
+						PortletURL deletePageURL = PortletURLBuilder.create(
+							PortletURLUtil.clone(editPageURL, PortletRequest.ACTION_PHASE, renderResponse)
+						).setActionName(
+							"/wiki/edit_page"
+						).buildPortletURL();
 
 						if (trashHelper.isTrashEnabled(scopeGroupId)) {
 							deletePageURL.setParameter(Constants.CMD, Constants.MOVE_TO_TRASH);
@@ -360,16 +377,32 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "details
 							deletePageURL.setParameter(Constants.CMD, Constants.DELETE);
 						}
 
-						deletePageURL.setParameter("redirect", frontPageURL.toString());
+						deletePageURL.setParameter(
+							"redirect",
+							PortletURLBuilder.create(
+								PortletURLUtil.clone(viewPageURL, renderResponse)
+							).setParameter(
+								"title", wikiGroupServiceConfiguration.frontPageName()
+							).buildString());
 						%>
 
-						<liferay-ui:icon-delete
-							label="<%= true %>"
-							trash="<%= trashHelper.isTrashEnabled(scopeGroupId) %>"
-							url="<%= deletePageURL.toString() %>"
+						<clay:button
+							additionalProps='<%=
+								HashMapBuilder.<String, Object>put(
+									"trashEnabled", trashHelper.isTrashEnabled(scopeGroupId)
+								).put(
+									"url", deletePageURL.toString()
+								).build()
+							%>'
+							aria-label='<%= LanguageUtil.get(request, "delete") %>'
+							displayType="link"
+							icon="trash"
+							label="delete"
+							propsTransformer="{WikiPageDeleteButtonPropsTransformer} from wiki-web"
+							small="<%= true %>"
 						/>
 					</c:if>
-				</liferay-ui:icon-list>
+				</div>
 			</td>
 		</tr>
 	</c:if>

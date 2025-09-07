@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
@@ -24,6 +15,11 @@ import com.liferay.portal.kernel.portlet.LiferayPortletContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 
+import jakarta.portlet.PortletRequestDispatcher;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+
 import java.io.InputStream;
 
 import java.net.MalformedURLException;
@@ -35,11 +31,6 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.portlet.PortletRequestDispatcher;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-
 /**
  * @author Brian Wing Shun Chan
  * @author Brett Randall
@@ -49,11 +40,10 @@ public class PortletContextImpl implements LiferayPortletContext {
 
 	public PortletContextImpl(Portlet portlet, ServletContext servletContext) {
 		_portlet = portlet;
-
 		_servletContext = servletContext;
 
 		_servletContextName = GetterUtil.getString(
-			_servletContext.getServletContextName());
+			servletContext.getServletContextName());
 	}
 
 	@Override
@@ -135,10 +125,11 @@ public class PortletContextImpl implements LiferayPortletContext {
 		try {
 			requestDispatcher = _servletContext.getNamedDispatcher(name);
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to get request dispatcher for name " + name, t);
+					"Unable to get request dispatcher for name " + name,
+					throwable);
 			}
 
 			return null;
@@ -173,10 +164,11 @@ public class PortletContextImpl implements LiferayPortletContext {
 		try {
 			requestDispatcher = _servletContext.getRequestDispatcher(path);
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to get request dispatcher for path " + path, t);
+					"Unable to get request dispatcher for path " + path,
+					throwable);
 			}
 
 			return null;
@@ -249,12 +241,12 @@ public class PortletContextImpl implements LiferayPortletContext {
 	}
 
 	@Override
-	public void setAttribute(String name, Object obj) {
+	public void setAttribute(String name, Object object) {
 		if (name == null) {
 			throw new IllegalArgumentException();
 		}
 
-		_servletContext.setAttribute(name, obj);
+		_servletContext.setAttribute(name, object);
 	}
 
 	private static final int _MAJOR_VERSION = 3;

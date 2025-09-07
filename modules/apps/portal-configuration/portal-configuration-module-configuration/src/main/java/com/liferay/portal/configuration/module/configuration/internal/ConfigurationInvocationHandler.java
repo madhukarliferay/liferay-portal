@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.configuration.module.configuration.internal;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.portal.configuration.persistence.ConfigurationOverridePropertiesUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
 import com.liferay.portal.kernel.settings.TypedSettings;
@@ -26,6 +18,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import java.util.Map;
 
 /**
  * @author Iván Zaera
@@ -42,6 +36,9 @@ public class ConfigurationInvocationHandler<S> implements InvocationHandler {
 		_configurationOverrideInstance =
 			ConfigurationOverrideInstance.getConfigurationOverrideInstance(
 				clazz, typedSettings);
+		_overrideProperties =
+			ConfigurationOverridePropertiesUtil.getOverrideProperties(
+				clazz.getName());
 	}
 
 	public S createProxy() {
@@ -54,6 +51,15 @@ public class ConfigurationInvocationHandler<S> implements InvocationHandler {
 		throws InvocationTargetException {
 
 		try {
+			if (_overrideProperties != null) {
+				Object overrideValue = _overrideProperties.get(
+					method.getName());
+
+				if (overrideValue != null) {
+					return overrideValue;
+				}
+			}
+
 			if (_configurationOverrideInstance != null) {
 				Object result = _configurationOverrideInstance.invoke(method);
 
@@ -64,11 +70,11 @@ public class ConfigurationInvocationHandler<S> implements InvocationHandler {
 
 			return _invokeTypedSettings(method);
 		}
-		catch (InvocationTargetException ite) {
-			throw ite;
+		catch (InvocationTargetException invocationTargetException) {
+			throw invocationTargetException;
 		}
-		catch (ReflectiveOperationException roe) {
-			throw new RuntimeException(roe);
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new RuntimeException(reflectiveOperationException);
 		}
 	}
 
@@ -189,6 +195,7 @@ public class ConfigurationInvocationHandler<S> implements InvocationHandler {
 
 	private final Class<S> _clazz;
 	private final ConfigurationOverrideInstance _configurationOverrideInstance;
+	private final Map<String, Object> _overrideProperties;
 	private final TypedSettings _typedSettings;
 
 }

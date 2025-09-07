@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link PasswordPolicyRelLocalService}.
@@ -25,21 +18,20 @@ public class PasswordPolicyRelLocalServiceWrapper
 	implements PasswordPolicyRelLocalService,
 			   ServiceWrapper<PasswordPolicyRelLocalService> {
 
+	public PasswordPolicyRelLocalServiceWrapper() {
+		this(null);
+	}
+
 	public PasswordPolicyRelLocalServiceWrapper(
 		PasswordPolicyRelLocalService passwordPolicyRelLocalService) {
 
 		_passwordPolicyRelLocalService = passwordPolicyRelLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PasswordPolicyRelLocalServiceUtil} to access the password policy rel local service. Add custom service methods to <code>com.liferay.portal.service.impl.PasswordPolicyRelLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicyRel
 		addPasswordPolicyRel(
-			long passwordPolicyId, java.lang.String className, long classPK) {
+			long passwordPolicyId, String className, long classPK) {
 
 		return _passwordPolicyRelLocalService.addPasswordPolicyRel(
 			passwordPolicyId, className, classPK);
@@ -47,6 +39,10 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	/**
 	 * Adds the password policy rel to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyRelLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicyRel the password policy rel
 	 * @return the password policy rel that was added
@@ -63,7 +59,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public void addPasswordPolicyRels(
-		long passwordPolicyId, java.lang.String className, long[] classPKs) {
+		long passwordPolicyId, String className, long[] classPKs) {
 
 		_passwordPolicyRelLocalService.addPasswordPolicyRels(
 			passwordPolicyId, className, classPKs);
@@ -84,7 +80,23 @@ public class PasswordPolicyRelLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _passwordPolicyRelLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the password policy rel with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyRelLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicyRelId the primary key of the password policy rel
 	 * @return the password policy rel that was removed
@@ -101,7 +113,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public void deletePasswordPolicyRel(
-		long passwordPolicyId, java.lang.String className, long classPK) {
+		long passwordPolicyId, String className, long classPK) {
 
 		_passwordPolicyRelLocalService.deletePasswordPolicyRel(
 			passwordPolicyId, className, classPK);
@@ -109,6 +121,10 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	/**
 	 * Deletes the password policy rel from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyRelLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicyRel the password policy rel
 	 * @return the password policy rel that was removed
@@ -124,9 +140,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 	}
 
 	@Override
-	public void deletePasswordPolicyRel(
-		java.lang.String className, long classPK) {
-
+	public void deletePasswordPolicyRel(String className, long classPK) {
 		_passwordPolicyRelLocalService.deletePasswordPolicyRel(
 			className, classPK);
 	}
@@ -139,7 +153,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public void deletePasswordPolicyRels(
-		long passwordPolicyId, java.lang.String className, long[] classPKs) {
+		long passwordPolicyId, String className, long[] classPKs) {
 
 		_passwordPolicyRelLocalService.deletePasswordPolicyRels(
 			passwordPolicyId, className, classPKs);
@@ -155,6 +169,18 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 		return _passwordPolicyRelLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _passwordPolicyRelLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _passwordPolicyRelLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -258,7 +284,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicyRel
-		fetchPasswordPolicyRel(java.lang.String className, long classPK) {
+		fetchPasswordPolicyRel(String className, long classPK) {
 
 		return _passwordPolicyRelLocalService.fetchPasswordPolicyRel(
 			className, classPK);
@@ -285,7 +311,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _passwordPolicyRelLocalService.getOSGiServiceIdentifier();
 	}
 
@@ -308,7 +334,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicyRel
 			getPasswordPolicyRel(
-				long passwordPolicyId, java.lang.String className, long classPK)
+				long passwordPolicyId, String className, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyRelLocalService.getPasswordPolicyRel(
@@ -317,7 +343,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PasswordPolicyRel
-			getPasswordPolicyRel(java.lang.String className, long classPK)
+			getPasswordPolicyRel(String className, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _passwordPolicyRelLocalService.getPasswordPolicyRel(
@@ -352,6 +378,9 @@ public class PasswordPolicyRelLocalServiceWrapper
 		return _passwordPolicyRelLocalService.getPasswordPolicyRelsCount();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -362,7 +391,7 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	@Override
 	public boolean hasPasswordPolicyRel(
-		long passwordPolicyId, java.lang.String className, long classPK) {
+		long passwordPolicyId, String className, long classPK) {
 
 		return _passwordPolicyRelLocalService.hasPasswordPolicyRel(
 			passwordPolicyId, className, classPK);
@@ -370,6 +399,10 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 	/**
 	 * Updates the password policy rel in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PasswordPolicyRelLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param passwordPolicyRel the password policy rel
 	 * @return the password policy rel that was updated
@@ -382,6 +415,11 @@ public class PasswordPolicyRelLocalServiceWrapper
 
 		return _passwordPolicyRelLocalService.updatePasswordPolicyRel(
 			passwordPolicyRel);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _passwordPolicyRelLocalService.getBasePersistence();
 	}
 
 	@Override

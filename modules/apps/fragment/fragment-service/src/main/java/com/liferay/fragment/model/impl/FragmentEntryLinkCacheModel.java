@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model.impl;
 
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,17 +32,17 @@ public class FragmentEntryLinkCacheModel
 	implements CacheModel<FragmentEntryLink>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof FragmentEntryLinkCacheModel)) {
+		if (!(object instanceof FragmentEntryLinkCacheModel)) {
 			return false;
 		}
 
 		FragmentEntryLinkCacheModel fragmentEntryLinkCacheModel =
-			(FragmentEntryLinkCacheModel)obj;
+			(FragmentEntryLinkCacheModel)object;
 
 		if ((fragmentEntryLinkId ==
 				fragmentEntryLinkCacheModel.fragmentEntryLinkId) &&
@@ -78,12 +73,16 @@ public class FragmentEntryLinkCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(47);
+		StringBundler sb = new StringBundler(59);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", fragmentEntryLinkId=");
 		sb.append(fragmentEntryLinkId);
 		sb.append(", groupId=");
@@ -102,10 +101,14 @@ public class FragmentEntryLinkCacheModel
 		sb.append(originalFragmentEntryLinkId);
 		sb.append(", fragmentEntryId=");
 		sb.append(fragmentEntryId);
+		sb.append(", segmentsExperienceId=");
+		sb.append(segmentsExperienceId);
 		sb.append(", classNameId=");
 		sb.append(classNameId);
 		sb.append(", classPK=");
 		sb.append(classPK);
+		sb.append(", plid=");
+		sb.append(plid);
 		sb.append(", css=");
 		sb.append(css);
 		sb.append(", html=");
@@ -114,6 +117,8 @@ public class FragmentEntryLinkCacheModel
 		sb.append(js);
 		sb.append(", configuration=");
 		sb.append(configuration);
+		sb.append(", deleted=");
+		sb.append(deleted);
 		sb.append(", editableValues=");
 		sb.append(editableValues);
 		sb.append(", namespace=");
@@ -122,6 +127,8 @@ public class FragmentEntryLinkCacheModel
 		sb.append(position);
 		sb.append(", rendererKey=");
 		sb.append(rendererKey);
+		sb.append(", type=");
+		sb.append(type);
 		sb.append(", lastPropagationDate=");
 		sb.append(lastPropagationDate);
 		sb.append(", lastPublishDate=");
@@ -137,12 +144,21 @@ public class FragmentEntryLinkCacheModel
 			new FragmentEntryLinkImpl();
 
 		fragmentEntryLinkImpl.setMvccVersion(mvccVersion);
+		fragmentEntryLinkImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			fragmentEntryLinkImpl.setUuid("");
 		}
 		else {
 			fragmentEntryLinkImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			fragmentEntryLinkImpl.setExternalReferenceCode("");
+		}
+		else {
+			fragmentEntryLinkImpl.setExternalReferenceCode(
+				externalReferenceCode);
 		}
 
 		fragmentEntryLinkImpl.setFragmentEntryLinkId(fragmentEntryLinkId);
@@ -174,8 +190,10 @@ public class FragmentEntryLinkCacheModel
 		fragmentEntryLinkImpl.setOriginalFragmentEntryLinkId(
 			originalFragmentEntryLinkId);
 		fragmentEntryLinkImpl.setFragmentEntryId(fragmentEntryId);
+		fragmentEntryLinkImpl.setSegmentsExperienceId(segmentsExperienceId);
 		fragmentEntryLinkImpl.setClassNameId(classNameId);
 		fragmentEntryLinkImpl.setClassPK(classPK);
+		fragmentEntryLinkImpl.setPlid(plid);
 
 		if (css == null) {
 			fragmentEntryLinkImpl.setCss("");
@@ -205,6 +223,8 @@ public class FragmentEntryLinkCacheModel
 			fragmentEntryLinkImpl.setConfiguration(configuration);
 		}
 
+		fragmentEntryLinkImpl.setDeleted(deleted);
+
 		if (editableValues == null) {
 			fragmentEntryLinkImpl.setEditableValues("");
 		}
@@ -228,6 +248,8 @@ public class FragmentEntryLinkCacheModel
 			fragmentEntryLinkImpl.setRendererKey(rendererKey);
 		}
 
+		fragmentEntryLinkImpl.setType(type);
+
 		if (lastPropagationDate == Long.MIN_VALUE) {
 			fragmentEntryLinkImpl.setLastPropagationDate(null);
 		}
@@ -245,13 +267,29 @@ public class FragmentEntryLinkCacheModel
 
 		fragmentEntryLinkImpl.resetOriginalValues();
 
+		try {
+			_configurationJSONObjectMethodHandle.invokeExact(
+				fragmentEntryLinkImpl, configurationJSONObject);
+
+			_editableValuesJSONObjectMethodHandle.invokeExact(
+				fragmentEntryLinkImpl, editableValuesJSONObject);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+
 		return fragmentEntryLinkImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		fragmentEntryLinkId = objectInput.readLong();
 
@@ -268,31 +306,54 @@ public class FragmentEntryLinkCacheModel
 
 		fragmentEntryId = objectInput.readLong();
 
+		segmentsExperienceId = objectInput.readLong();
+
 		classNameId = objectInput.readLong();
 
 		classPK = objectInput.readLong();
-		css = objectInput.readUTF();
-		html = objectInput.readUTF();
-		js = objectInput.readUTF();
-		configuration = objectInput.readUTF();
-		editableValues = objectInput.readUTF();
+
+		plid = objectInput.readLong();
+		css = (String)objectInput.readObject();
+		html = (String)objectInput.readObject();
+		js = (String)objectInput.readObject();
+		configuration = (String)objectInput.readObject();
+
+		deleted = objectInput.readBoolean();
+		editableValues = (String)objectInput.readObject();
 		namespace = objectInput.readUTF();
 
 		position = objectInput.readInt();
 		rendererKey = objectInput.readUTF();
+
+		type = objectInput.readInt();
 		lastPropagationDate = objectInput.readLong();
 		lastPublishDate = objectInput.readLong();
+
+		configurationJSONObject =
+			(com.liferay.portal.kernel.json.JSONObject)objectInput.readObject();
+
+		editableValuesJSONObject =
+			(com.liferay.portal.kernel.json.JSONObject)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(fragmentEntryLinkId);
@@ -317,43 +378,49 @@ public class FragmentEntryLinkCacheModel
 
 		objectOutput.writeLong(fragmentEntryId);
 
+		objectOutput.writeLong(segmentsExperienceId);
+
 		objectOutput.writeLong(classNameId);
 
 		objectOutput.writeLong(classPK);
 
+		objectOutput.writeLong(plid);
+
 		if (css == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(css);
+			objectOutput.writeObject(css);
 		}
 
 		if (html == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(html);
+			objectOutput.writeObject(html);
 		}
 
 		if (js == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(js);
+			objectOutput.writeObject(js);
 		}
 
 		if (configuration == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(configuration);
+			objectOutput.writeObject(configuration);
 		}
 
+		objectOutput.writeBoolean(deleted);
+
 		if (editableValues == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(editableValues);
+			objectOutput.writeObject(editableValues);
 		}
 
 		if (namespace == null) {
@@ -372,12 +439,19 @@ public class FragmentEntryLinkCacheModel
 			objectOutput.writeUTF(rendererKey);
 		}
 
+		objectOutput.writeInt(type);
 		objectOutput.writeLong(lastPropagationDate);
 		objectOutput.writeLong(lastPublishDate);
+
+		objectOutput.writeObject(configurationJSONObject);
+
+		objectOutput.writeObject(editableValuesJSONObject);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long fragmentEntryLinkId;
 	public long groupId;
 	public long companyId;
@@ -387,17 +461,45 @@ public class FragmentEntryLinkCacheModel
 	public long modifiedDate;
 	public long originalFragmentEntryLinkId;
 	public long fragmentEntryId;
+	public long segmentsExperienceId;
 	public long classNameId;
 	public long classPK;
+	public long plid;
 	public String css;
 	public String html;
 	public String js;
 	public String configuration;
+	public boolean deleted;
 	public String editableValues;
 	public String namespace;
 	public int position;
 	public String rendererKey;
+	public int type;
 	public long lastPropagationDate;
 	public long lastPublishDate;
+	public volatile com.liferay.portal.kernel.json.JSONObject
+		configurationJSONObject;
+	public volatile com.liferay.portal.kernel.json.JSONObject
+		editableValuesJSONObject;
+
+	private static final MethodHandle _configurationJSONObjectMethodHandle;
+	private static final MethodHandle _editableValuesJSONObjectMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_configurationJSONObjectMethodHandle = lookup.findSetter(
+				FragmentEntryLinkImpl.class, "_configurationJSONObject",
+				com.liferay.portal.kernel.json.JSONObject.class);
+
+			_editableValuesJSONObjectMethodHandle = lookup.findSetter(
+				FragmentEntryLinkImpl.class, "_editableValuesJSONObject",
+				com.liferay.portal.kernel.json.JSONObject.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

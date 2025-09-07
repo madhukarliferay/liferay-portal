@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.messaging;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.concurrent.RejectedExecutionHandler;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
 import java.util.Objects;
+import java.util.concurrent.RejectedExecutionHandler;
 
 /**
  * @author Michael C. Han
@@ -57,6 +49,11 @@ public class DestinationConfiguration implements Serializable {
 		String destinationType, String destinationName) {
 
 		_destinationType = destinationType;
+
+		if (Validator.isNull(destinationName)) {
+			throw new IllegalArgumentException("Destination name is null");
+		}
+
 		_destinationName = destinationName;
 	}
 
@@ -73,13 +70,8 @@ public class DestinationConfiguration implements Serializable {
 		DestinationConfiguration destinationConfiguration =
 			(DestinationConfiguration)object;
 
-		if (Objects.equals(
-				_destinationName, destinationConfiguration._destinationName)) {
-
-			return true;
-		}
-
-		return false;
+		return Objects.equals(
+			_destinationName, destinationConfiguration._destinationName);
 	}
 
 	public String getDestinationName() {
@@ -94,10 +86,6 @@ public class DestinationConfiguration implements Serializable {
 		return _maximumQueueSize;
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
 	public RejectedExecutionHandler getRejectedExecutionHandler() {
 		return _rejectedExecutionHandler;
 	}
@@ -123,10 +111,6 @@ public class DestinationConfiguration implements Serializable {
 		_maximumQueueSize = maximumQueueSize;
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
 	public void setRejectedExecutionHandler(
 		RejectedExecutionHandler rejectedExecutionHandler) {
 
@@ -143,23 +127,12 @@ public class DestinationConfiguration implements Serializable {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
-
-		sb.append("{_destinationName=");
-		sb.append(_destinationName);
-		sb.append(", _destinationType=");
-		sb.append(_destinationType);
-		sb.append(", _maximumQueueSize=");
-		sb.append(_maximumQueueSize);
-		sb.append(", _rejectedExecutionHandler=");
-		sb.append(_rejectedExecutionHandler);
-		sb.append(", _workersCoreSize=");
-		sb.append(_workersCoreSize);
-		sb.append(", _workersMaxSize=");
-		sb.append(_workersMaxSize);
-		sb.append("}");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"{_destinationName=", _destinationName, ", _destinationType=",
+			_destinationType, ", _maximumQueueSize=", _maximumQueueSize,
+			", _rejectedExecutionHandler=", _rejectedExecutionHandler,
+			", _workersCoreSize=", _workersCoreSize, ", _workersMaxSize=",
+			_workersMaxSize, "}");
 	}
 
 	private static final int _WORKERS_CORE_SIZE = 2;

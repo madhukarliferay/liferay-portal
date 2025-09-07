@@ -1,0 +1,20 @@
+{
+	"dependencies": {
+		"@clayui/button": "3.144.1",
+		"@clayui/form": "3.145.0",
+		"@clayui/icon": "3.144.1",
+		"@clayui/layout": "3.144.1",
+		"commerce-frontend-js": "*",
+		"frontend-js-web": "*",
+		"prop-types": "15.7.2",
+		"react": "18.2.0"
+	},
+	"main": "js/index.js",
+	"name": "@liferay/commerce-pricing-web",
+	"scripts": {
+		"build": "node-scripts build",
+		"checkFormat": "node-scripts format --check",
+		"format": "node-scripts format"
+	},
+	"version": "4.0.122"
+}

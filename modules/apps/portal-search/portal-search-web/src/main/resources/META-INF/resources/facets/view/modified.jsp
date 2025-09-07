@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -66,7 +57,7 @@ JSONArray rangesJSONArray = dataJSONObject.getJSONArray("ranges");
 int index = 0;
 %>
 
-<div class="panel panel-default">
+<div class="panel panel-secondary">
 	<div class="panel-heading">
 		<div class="panel-title">
 			<liferay-ui:message key="time" />
@@ -83,13 +74,14 @@ int index = 0;
 					<li class="default facet-value">
 
 						<%
-						Map<String, Object> data = new HashMap<>();
-
-						data.put("selection", 0);
-						data.put("value", StringPool.BLANK);
+						Map<String, Object> data = HashMapBuilder.<String, Object>put(
+							"selection", 0
+						).put(
+							"value", StringPool.BLANK
+						).build();
 						%>
 
-						<aui:a cssClass='<%= (Validator.isNull(fieldParamSelection) || fieldParamSelection.equals("0")) ? "facet-term-selected" : "facet-term-unselected" %>' href="javascript:;">
+						<aui:a cssClass='<%= (Validator.isNull(fieldParamSelection) || fieldParamSelection.equals("0")) ? "facet-term-selected" : "facet-term-unselected" %>' href="javascript:void(0);">
 							<liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" />
 						</aui:a>
 					</li>
@@ -101,7 +93,7 @@ int index = 0;
 						String label = HtmlUtil.escape(rangesJSONObject.getString("label"));
 						String range = rangesJSONObject.getString("range");
 
-						index = (i + 1);
+						index = i + 1;
 					%>
 
 						<li class="facet-value">
@@ -113,13 +105,14 @@ int index = 0;
 								rangeCssClass = "facet-term-selected";
 							}
 
-							data = new HashMap<>();
-
-							data.put("selection", index);
-							data.put("value", HtmlUtil.escape(range));
+							data = HashMapBuilder.<String, Object>put(
+								"selection", index
+							).put(
+								"value", HtmlUtil.escape(range)
+							).build();
 							%>
 
-							<aui:a cssClass="<%= rangeCssClass %>" data="<%= data %>" href="javascript:;">
+							<aui:a cssClass="<%= rangeCssClass %>" data="<%= data %>" href="javascript:void(0);">
 								<liferay-ui:message key="<%= label %>" />
 
 								<%
@@ -155,7 +148,7 @@ int index = 0;
 						}
 						%>
 
-						<aui:a cssClass="<%= customRangeCssClass %>" href="javascript:;">
+						<aui:a cssClass="<%= customRangeCssClass %>" href="javascript:void(0);">
 							<liferay-ui:message key="custom-range" />&hellip;
 
 							<c:if test="<%= termCollector != null %>">
@@ -167,7 +160,7 @@ int index = 0;
 					<%
 					Calendar fromCalendar = CalendarFactoryUtil.getCalendar(timeZone, locale);
 
-					if (Validator.isNotNull(fromDate)) {
+					if (fromDate != null) {
 						fromCalendar.setTime(fromDate);
 					}
 					else {
@@ -176,13 +169,16 @@ int index = 0;
 
 					Calendar toCalendar = CalendarFactoryUtil.getCalendar(timeZone, locale);
 
-					if (Validator.isNotNull(toDate)) {
+					if (toDate != null) {
 						toCalendar.setTime(toDate);
 					}
 					%>
 
 					<div class="<%= !fieldParamSelection.equals(String.valueOf(index + 1)) ? "hide" : StringPool.BLANK %> modified-custom-range" id="<%= randomNamespace %>customRange">
-						<div class="col-md-6" id="<%= randomNamespace %>customRangeFrom">
+						<clay:col
+							id='<%= randomNamespace + "customRangeFrom" %>'
+							md="6"
+						>
 							<aui:field-wrapper label="from">
 								<liferay-ui:input-date
 									dayParam='<%= HtmlUtil.escapeJS(facet.getFieldId()) + "dayFrom" %>'
@@ -196,10 +192,13 @@ int index = 0;
 									yearValue="<%= fromCalendar.get(Calendar.YEAR) %>"
 								/>
 							</aui:field-wrapper>
-						</div>
+						</clay:col>
 
-						<div class="col-md-6" id="<%= randomNamespace %>customRangeTo">
-							<aui:field-wrapper label="to">
+						<clay:col
+							id='<%= randomNamespace + "customRangeTo" %>'
+							md="6"
+						>
+							<aui:field-wrapper label="to[date-time]">
 								<liferay-ui:input-date
 									dayParam='<%= HtmlUtil.escapeJS(facet.getFieldId()) + "dayTo" %>'
 									dayValue="<%= toCalendar.get(Calendar.DATE) %>"
@@ -212,10 +211,10 @@ int index = 0;
 									yearValue="<%= toCalendar.get(Calendar.YEAR) %>"
 								/>
 							</aui:field-wrapper>
-						</div>
+						</clay:col>
 
 						<%
-						String taglibSearchCustomRange = "window['" + renderResponse.getNamespace() + HtmlUtil.escapeJS(facet.getFieldId()) + "searchCustomRange'](" + (index + 1) + ");";
+						String taglibSearchCustomRange = "window['" + liferayPortletResponse.getNamespace() + HtmlUtil.escapeJS(facet.getFieldId()) + "searchCustomRange'](" + (index + 1) + ");";
 						%>
 
 						<aui:button disabled="<%= toCalendar.getTimeInMillis() < fromCalendar.getTimeInMillis() %>" name="searchCustomRangeButton" onClick="<%= taglibSearchCustomRange %>" value="search" />
@@ -300,9 +299,8 @@ int index = 0;
 			var data = {};
 
 			data['<%= HtmlUtil.escapeJS(facet.getFieldId()) %>'] = range;
-			data[
-				'<%= HtmlUtil.escapeJS(facet.getFieldId()) %>selection'
-			] = selection;
+			data['<%= HtmlUtil.escapeJS(facet.getFieldId()) %>selection'] =
+				selection;
 
 			Liferay.Util.postForm(form, {data: data});
 		}
@@ -313,14 +311,14 @@ int index = 0;
 	var Util = Liferay.Util;
 
 	var customRangeFrom = Liferay.component(
-		'<%= renderResponse.getNamespace() %>modifiedfromDatePicker'
+		'<%= liferayPortletResponse.getNamespace() %>modifiedfromDatePicker'
 	);
 	var customRangeTo = Liferay.component(
-		'<%= renderResponse.getNamespace() %>modifiedtoDatePicker'
+		'<%= liferayPortletResponse.getNamespace() %>modifiedtoDatePicker'
 	);
 	var searchButton = A.one('#<portlet:namespace />searchCustomRangeButton');
 
-	var preventKeyboardDateChange = function(event) {
+	var preventKeyboardDateChange = function (event) {
 		if (!event.isKey('TAB')) {
 			event.preventDefault();
 		}
@@ -339,7 +337,7 @@ int index = 0;
 		DEFAULTS_FORM_VALIDATOR.STRINGS,
 		{
 			<portlet:namespace />dateRange:
-				'<%= UnicodeLanguageUtil.get(request, "search-custom-range-invalid-date-range") %>'
+				'<%= UnicodeLanguageUtil.get(request, "search-custom-range-invalid-date-range") %>',
 		},
 		true
 	);
@@ -347,12 +345,12 @@ int index = 0;
 	A.mix(
 		DEFAULTS_FORM_VALIDATOR.RULES,
 		{
-			<portlet:namespace />dateRange: function(val, fieldNode, ruleValue) {
+			<portlet:namespace />dateRange: function (val, fieldNode, ruleValue) {
 				return A.Date.isGreaterOrEqual(
 					customRangeTo.getDate(),
 					customRangeFrom.getDate()
 				);
-			}
+			},
 		},
 		true
 	);
@@ -361,35 +359,33 @@ int index = 0;
 		boundingBox: document.<portlet:namespace />fm,
 		fieldContainer: 'div',
 		on: {
-			errorField: function(event) {
+			errorField: function (event) {
 				Util.toggleDisabled(searchButton, true);
 			},
-			validField: function(event) {
+			validField: function (event) {
 				Util.toggleDisabled(searchButton, false);
-			}
+			},
 		},
 		rules: {
 			<portlet:namespace /><%= HtmlUtil.escapeJS(facet.getFieldId()) %>from: {
-				<portlet:namespace />dateRange: true
+				<portlet:namespace />dateRange: true,
 			},
 			<portlet:namespace /><%= HtmlUtil.escapeJS(facet.getFieldId()) %>to: {
-				<portlet:namespace />dateRange: true
-			}
-		}
+				<portlet:namespace />dateRange: true,
+			},
+		},
 	});
 
-	var onRangeSelectionChange = function(event) {
+	var onRangeSelectionChange = function (event) {
 		customRangeValidator.validate();
 	};
 
 	customRangeFrom.on('selectionChange', onRangeSelectionChange);
 	customRangeTo.on('selectionChange', onRangeSelectionChange);
 
-	A.one('.<%= randomNamespace %>custom-range-toggle').on('click', function(
-		event
-	) {
+	A.one('.<%= randomNamespace %>custom-range-toggle').on('click', (event) => {
 		event.halt();
 
-		A.one('#<%= randomNamespace + "customRange" %>').toggle();
+		A.one('#<%= randomNamespace %>customRange').toggle();
 	});
 </aui:script>

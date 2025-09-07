@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.json;
@@ -18,18 +9,22 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
+import com.liferay.portal.kernel.model.UserTrackerPath;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.HitsImpl;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.model.impl.UserTrackerPathImpl;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.LocalizationImpl;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -37,12 +32,13 @@ import org.junit.Test;
  */
 public class JSONSerializerTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
-
-		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
-
 		LocalizationUtil localizationUtil = new LocalizationUtil();
 
 		localizationUtil.setLocalization(new LocalizationImpl());
@@ -64,12 +60,31 @@ public class JSONSerializerTest {
 	}
 
 	@Test
+	public void testSerializeEntityWithGetOriginal() {
+		JSONSerializer jsonSerializer = JSONFactoryUtil.createJSONSerializer();
+
+		UserTrackerPath userTrackerPath = new UserTrackerPathImpl();
+
+		String json = jsonSerializer.serialize(userTrackerPath);
+
+		Assert.assertTrue(
+			json, json.contains("\"originalUserTrackerId\":\"0\""));
+
+		userTrackerPath.setUserTrackerId(1L);
+
+		userTrackerPath.resetOriginalValues();
+
+		json = jsonSerializer.serialize(userTrackerPath);
+
+		Assert.assertTrue(
+			json, json.contains("\"originalUserTrackerId\":\"1\""));
+	}
+
+	@Test
 	public void testSerializeHits() {
 		JSONSerializer jsonSerializer = JSONFactoryUtil.createJSONSerializer();
 
-		Hits hits = new HitsImpl();
-
-		String json = jsonSerializer.serialize(hits);
+		String json = jsonSerializer.serialize(new HitsImpl());
 
 		json = StringUtil.replace(json, CharPool.SPACE, StringPool.BLANK);
 
@@ -89,11 +104,8 @@ public class JSONSerializerTest {
 		String[] groupPermissions = {"VIEW"};
 
 		serviceContext.setAttribute("groupPermissions", groupPermissions);
-
-		ModelPermissions modelPermissions = ModelPermissionsFactory.create(
-			groupPermissions, null);
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(groupPermissions, null));
 
 		String json = JSONFactoryUtil.serialize(serviceContext);
 
@@ -116,11 +128,8 @@ public class JSONSerializerTest {
 		String[] groupPermissions = {"VIEW"};
 
 		serviceContext.setAttribute("groupPermissions", groupPermissions);
-
-		ModelPermissions modelPermissions = ModelPermissionsFactory.create(
-			groupPermissions, null);
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(groupPermissions, null));
 
 		String json1 = JSONFactoryUtil.serialize(serviceContext);
 

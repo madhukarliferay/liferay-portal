@@ -1,23 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.lpkg.deployer.test.util;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.util.StreamUtil;
-import com.liferay.portal.kernel.util.StringBundler;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -116,9 +107,7 @@ public class LPKGTestUtil {
 			sb.append("restart-required=false\n");
 			sb.append("title=");
 
-			Path namePath = path.getFileName();
-
-			String name = namePath.toString();
+			String name = String.valueOf(path.getFileName());
 
 			sb.append(name.substring(0, name.indexOf(".lpkg")));
 
@@ -134,7 +123,7 @@ public class LPKGTestUtil {
 			zipOutputStream.putNextEntry(
 				new ZipEntry(
 					StringBundler.concat(
-						symbolicName, "-", jarVersion.toString(), ".jar")));
+						symbolicName, "-", jarVersion, ".jar")));
 
 			try (InputStream inputStream = createJAR(symbolicName, jarVersion);
 				OutputStream outputStream = StreamUtil.uncloseable(
@@ -171,22 +160,13 @@ public class LPKGTestUtil {
 				jarOutputStream.putNextEntry(
 					new ZipEntry("WEB-INF/liferay-plugin-package.properties"));
 
-				StringBundler sb = new StringBundler(12);
-
-				sb.append("author=Liferay, Inc.\n");
-				sb.append("change-log=\n");
-				sb.append("licenses=LGPL\n");
-				sb.append("liferay-versions=7.0.1+\n");
-				sb.append("long-description=\n");
-				sb.append("module-group-id=liferay\n");
-				sb.append("module-incremental-version=1\n");
-				sb.append("page-url=http://www.liferay.com\n");
-				sb.append("module-version=1.0.20\n");
-				sb.append("name=");
-				sb.append(symbolicName);
-				sb.append("-war");
-
-				String properties = sb.toString();
+				String properties = StringBundler.concat(
+					"author=Liferay, Inc.\n", "change-log=\n",
+					"licenses=LGPL\n", "liferay-versions=7.0.1+\n",
+					"long-description=\n", "module-group-id=liferay\n",
+					"module-incremental-version=1\n",
+					"page-url=http://www.liferay.com\n",
+					"module-version=1.0.20\n", "name=", symbolicName, "-war");
 
 				jarOutputStream.write(properties.getBytes());
 

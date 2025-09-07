@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -37,13 +30,42 @@ import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.tools.deploy.PortletDeployer;
 import com.liferay.portlet.InvokerPortletResponse;
 import com.liferay.portlet.InvokerPortletUtil;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.EventRequest;
+import jakarta.portlet.EventResponse;
+import jakarta.portlet.HeaderRequest;
+import jakarta.portlet.HeaderResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletContext;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+import jakarta.portlet.UnavailableException;
+import jakarta.portlet.filter.ActionFilter;
+import jakarta.portlet.filter.EventFilter;
+import jakarta.portlet.filter.FilterChain;
+import jakarta.portlet.filter.HeaderFilter;
+import jakarta.portlet.filter.PortletFilter;
+import jakarta.portlet.filter.RenderFilter;
+import jakarta.portlet.filter.ResourceFilter;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -51,38 +73,6 @@ import java.io.PrintWriter;
 
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.EventRequest;
-import javax.portlet.EventResponse;
-import javax.portlet.HeaderRequest;
-import javax.portlet.HeaderResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletContext;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletSession;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-import javax.portlet.UnavailableException;
-import javax.portlet.filter.ActionFilter;
-import javax.portlet.filter.EventFilter;
-import javax.portlet.filter.FilterChain;
-import javax.portlet.filter.HeaderFilter;
-import javax.portlet.filter.PortletFilter;
-import javax.portlet.filter.RenderFilter;
-import javax.portlet.filter.ResourceFilter;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.time.StopWatch;
 
@@ -121,7 +111,9 @@ public class InvokerPortletImpl
 
 		Class<? extends Portlet> portletClass = portlet.getClass();
 
-		if (ClassUtil.isSubclass(portletClass, PortletDeployer.JSF_STANDARD)) {
+		if (ClassUtil.isSubclass(
+				portletClass, "jakarta.portlet.faces.GenericFacesPortlet")) {
+
 			facesPortlet = true;
 		}
 		else if (portlet instanceof InvokerPortlet) {
@@ -147,23 +139,20 @@ public class InvokerPortletImpl
 			return;
 		}
 
-		Thread currentThread = Thread.currentThread();
+		ClassLoader classLoader = _portletClassLoader;
 
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		if (classLoader == null) {
+			Thread currentThread = Thread.currentThread();
 
-		try {
-			if (_portletClassLoader != null) {
-				currentThread.setContextClassLoader(_portletClassLoader);
-			}
+			classLoader = currentThread.getContextClassLoader();
+		}
+
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				classLoader)) {
 
 			cleanUp();
 
 			_portlet.destroy();
-		}
-		finally {
-			if (_portletClassLoader != null) {
-				currentThread.setContextClassLoader(contextClassLoader);
-			}
 		}
 	}
 
@@ -194,15 +183,23 @@ public class InvokerPortletImpl
 
 	@Override
 	public ClassLoader getPortletClassLoader() {
+		if (_portlet instanceof InvokerPortlet) {
+			InvokerPortlet invokerPortlet = (InvokerPortlet)_portlet;
+
+			return invokerPortlet.getPortletClassLoader();
+		}
+
 		ClassLoader classLoader =
 			(ClassLoader)_liferayPortletContext.getAttribute(
 				PluginContextListener.PLUGIN_CLASS_LOADER);
 
-		if (classLoader == null) {
-			classLoader = PortalClassLoaderUtil.getClassLoader();
+		if (classLoader != null) {
+			return classLoader;
 		}
 
-		return classLoader;
+		Class<?> portletClass = _portlet.getClass();
+
+		return portletClass.getClassLoader();
 	}
 
 	@Override
@@ -234,28 +231,25 @@ public class InvokerPortletImpl
 	public void init(PortletConfig portletConfig) throws PortletException {
 		_liferayPortletConfig = (LiferayPortletConfig)portletConfig;
 
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
-
 		_portletClassLoader = getPortletClassLoader();
 
-		try {
-			if (_portletClassLoader != null) {
-				currentThread.setContextClassLoader(_portletClassLoader);
-			}
+		ClassLoader classLoader = _portletClassLoader;
+
+		if (classLoader == null) {
+			Thread currentThread = Thread.currentThread();
+
+			classLoader = currentThread.getContextClassLoader();
+		}
+
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				classLoader)) {
 
 			_portlet.init(portletConfig);
 		}
-		catch (Throwable t) {
+		catch (Throwable throwable) {
 			cleanUp();
 
-			throw t;
-		}
-		finally {
-			if (_portletClassLoader != null) {
-				currentThread.setContextClassLoader(contextClassLoader);
-			}
+			throw throwable;
 		}
 	}
 
@@ -285,8 +279,8 @@ public class InvokerPortletImpl
 		try {
 			invokeAction(actionRequest, actionResponse);
 		}
-		catch (Exception e) {
-			processException(e, actionRequest, actionResponse);
+		catch (Exception exception) {
+			processException(exception, actionRequest, actionResponse);
 		}
 
 		if (_log.isDebugEnabled()) {
@@ -308,8 +302,8 @@ public class InvokerPortletImpl
 		try {
 			invokeEvent(eventRequest, eventResponse);
 		}
-		catch (Exception e) {
-			processException(e, eventRequest, eventResponse);
+		catch (Exception exception) {
+			processException(exception, eventRequest, eventResponse);
 		}
 
 		if (_log.isDebugEnabled()) {
@@ -351,14 +345,13 @@ public class InvokerPortletImpl
 				(BufferCacheServletResponse)
 					renderResponseImpl.getHttpServletResponse();
 
-			PortletSession portletSession = renderRequest.getPortletSession();
-
 			long now = System.currentTimeMillis();
 
 			Layout layout = (Layout)renderRequest.getAttribute(WebKeys.LAYOUT);
 
 			Map<String, InvokerPortletResponse> sessionResponses =
-				InvokerPortletUtil.getResponses(portletSession);
+				InvokerPortletUtil.getResponses(
+					renderRequest.getPortletSession());
 
 			String sessionResponseId = InvokerPortletUtil.encodeResponseKey(
 				layout.getPlid(), _portletId,
@@ -372,17 +365,14 @@ public class InvokerPortletImpl
 
 				response = new InvokerPortletResponse(
 					title, bufferCacheServletResponse.getString(),
-					now + Time.SECOND * _expCache.intValue());
+					now + (Time.SECOND * _expCache.intValue()));
 
 				sessionResponses.put(sessionResponseId, response);
 			}
 			else if ((response.getTime() < now) && (_expCache.intValue() > 0)) {
-				String title = invokeRender(renderRequest, renderResponse);
-
-				response.setTitle(title);
-
+				response.setTitle(invokeRender(renderRequest, renderResponse));
 				response.setContent(bufferCacheServletResponse.getString());
-				response.setTime(now + Time.SECOND * _expCache.intValue());
+				response.setTime(now + (Time.SECOND * _expCache.intValue()));
 			}
 			else {
 				renderResponseImpl.setTitle(response.getTitle());
@@ -443,14 +433,13 @@ public class InvokerPortletImpl
 				(BufferCacheServletResponse)
 					headerResponseImpl.getHttpServletResponse();
 
-			PortletSession portletSession = headerRequest.getPortletSession();
-
 			long now = System.currentTimeMillis();
 
 			Layout layout = (Layout)headerRequest.getAttribute(WebKeys.LAYOUT);
 
 			Map<String, InvokerPortletResponse> sessionResponses =
-				InvokerPortletUtil.getResponses(portletSession);
+				InvokerPortletUtil.getResponses(
+					headerRequest.getPortletSession());
 
 			String sessionResponseId = InvokerPortletUtil.encodeResponseKey(
 				layout.getPlid(), _portletId,
@@ -464,6 +453,7 @@ public class InvokerPortletImpl
 			}
 			else if ((response.getTime() < now) && (_expCache > 0)) {
 				invokeHeader(headerRequest, headerResponse);
+
 				response.setContent(bufferCacheServletResponse.getString());
 			}
 			else {
@@ -495,8 +485,8 @@ public class InvokerPortletImpl
 		try {
 			invokeResource(resourceRequest, resourceResponse);
 		}
-		catch (Exception e) {
-			processException(e, resourceRequest, resourceResponse);
+		catch (Exception exception) {
+			processException(exception, resourceRequest, resourceResponse);
 		}
 
 		if (_log.isDebugEnabled()) {
@@ -517,14 +507,14 @@ public class InvokerPortletImpl
 
 			closeable.close();
 		}
-		catch (IOException ioe) {
-			_log.error("Unable to close invoker filter container", ioe);
+		catch (IOException ioException) {
+			_log.error("Unable to close invoker filter container", ioException);
 		}
 	}
 
 	protected void invoke(
-			LiferayPortletRequest portletRequest,
-			LiferayPortletResponse portletResponse, String lifecycle,
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse, String lifecycle,
 			List<? extends PortletFilter> filters)
 		throws IOException, PortletException {
 
@@ -535,7 +525,8 @@ public class InvokerPortletImpl
 				INIT_INVOKER_PORTLET_NAME);
 
 			if (invokerPortletName == null) {
-				invokerPortletName = _liferayPortletConfig.getPortletName();
+				invokerPortletName = PortalUtil.getJsSafePortletId(
+					_liferayPortletConfig.getPortletName());
 			}
 
 			String path = StringPool.SLASH + invokerPortletName + "/invoke";
@@ -547,12 +538,12 @@ public class InvokerPortletImpl
 				servletContext.getRequestDispatcher(path);
 
 			HttpServletRequest httpServletRequest =
-				portletRequest.getHttpServletRequest();
+				liferayPortletRequest.getHttpServletRequest();
 			HttpServletResponse httpServletResponse =
-				portletResponse.getHttpServletResponse();
+				liferayPortletResponse.getHttpServletResponse();
 
 			httpServletRequest.setAttribute(
-				JavaConstants.JAVAX_PORTLET_PORTLET, _portlet);
+				JavaConstants.JAKARTA_PORTLET_PORTLET, _portlet);
 			httpServletRequest.setAttribute(
 				PortletRequest.LIFECYCLE_PHASE, lifecycle);
 			httpServletRequest.setAttribute(
@@ -572,24 +563,26 @@ public class InvokerPortletImpl
 						httpServletRequest, httpServletResponse);
 				}
 			}
-			catch (ServletException se) {
-				Throwable cause = se.getRootCause();
+			catch (ServletException servletException) {
+				Throwable throwable = servletException.getRootCause();
 
-				if (cause instanceof PortletException) {
-					throw (PortletException)cause;
+				if (throwable instanceof PortletException) {
+					throw (PortletException)throwable;
 				}
 
-				throw new PortletException(cause);
+				throw new PortletException(throwable);
 			}
 		}
 		else {
 			PortletFilterUtil.doFilter(
-				portletRequest, portletResponse, lifecycle, filterChain);
+				liferayPortletRequest, liferayPortletResponse, lifecycle,
+				filterChain);
 		}
 
-		portletResponse.transferMarkupHeadElements();
+		liferayPortletResponse.transferMarkupHeadElements();
 
-		Map<String, String[]> properties = portletResponse.getProperties();
+		Map<String, String[]> properties =
+			liferayPortletResponse.getProperties();
 
 		if (MapUtil.isNotEmpty(properties) && (_expCache != null)) {
 			String[] expCache = properties.get(RenderResponse.EXPIRATION_CACHE);
@@ -606,13 +599,10 @@ public class InvokerPortletImpl
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws IOException, PortletException {
 
-		LiferayPortletRequest portletRequest =
-			PortalUtil.getLiferayPortletRequest(actionRequest);
-		LiferayPortletResponse portletResponse =
-			PortalUtil.getLiferayPortletResponse(actionResponse);
-
 		invoke(
-			portletRequest, portletResponse, PortletRequest.ACTION_PHASE,
+			PortalUtil.getLiferayPortletRequest(actionRequest),
+			PortalUtil.getLiferayPortletResponse(actionResponse),
+			PortletRequest.ACTION_PHASE,
 			_invokerFilterContainer.getActionFilters());
 	}
 
@@ -620,13 +610,10 @@ public class InvokerPortletImpl
 			EventRequest eventRequest, EventResponse eventResponse)
 		throws IOException, PortletException {
 
-		LiferayPortletRequest portletRequest =
-			PortalUtil.getLiferayPortletRequest(eventRequest);
-		LiferayPortletResponse portletResponse =
-			PortalUtil.getLiferayPortletResponse(eventResponse);
-
 		invoke(
-			portletRequest, portletResponse, PortletRequest.EVENT_PHASE,
+			PortalUtil.getLiferayPortletRequest(eventRequest),
+			PortalUtil.getLiferayPortletResponse(eventResponse),
+			PortletRequest.EVENT_PHASE,
 			_invokerFilterContainer.getEventFilters());
 	}
 
@@ -634,20 +621,21 @@ public class InvokerPortletImpl
 			HeaderRequest headerRequest, HeaderResponse headerResponse)
 		throws IOException, PortletException {
 
-		LiferayPortletRequest portletRequest =
+		LiferayPortletRequest liferayPortletRequest =
 			PortalUtil.getLiferayPortletRequest(headerRequest);
-		LiferayPortletResponse portletResponse =
+		LiferayPortletResponse liferayPortletResponse =
 			PortalUtil.getLiferayPortletResponse(headerResponse);
 
 		try {
 			invoke(
-				portletRequest, portletResponse, PortletRequest.HEADER_PHASE,
+				liferayPortletRequest, liferayPortletResponse,
+				PortletRequest.HEADER_PHASE,
 				_invokerFilterContainer.getHeaderFilters());
 		}
-		catch (Exception e) {
-			processException(e, headerRequest, headerResponse);
+		catch (Exception exception) {
+			processException(exception, headerRequest, headerResponse);
 
-			throw e;
+			throw exception;
 		}
 	}
 
@@ -655,20 +643,21 @@ public class InvokerPortletImpl
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws IOException, PortletException {
 
-		LiferayPortletRequest portletRequest =
+		LiferayPortletRequest liferayPortletRequest =
 			PortalUtil.getLiferayPortletRequest(renderRequest);
-		LiferayPortletResponse portletResponse =
+		LiferayPortletResponse liferayPortletResponse =
 			PortalUtil.getLiferayPortletResponse(renderResponse);
 
 		try {
 			invoke(
-				portletRequest, portletResponse, PortletRequest.RENDER_PHASE,
+				liferayPortletRequest, liferayPortletResponse,
+				PortletRequest.RENDER_PHASE,
 				_invokerFilterContainer.getRenderFilters());
 		}
-		catch (Exception e) {
-			processException(e, renderRequest, renderResponse);
+		catch (Exception exception) {
+			processException(exception, renderRequest, renderResponse);
 
-			throw e;
+			throw exception;
 		}
 
 		RenderResponseImpl renderResponseImpl =
@@ -681,38 +670,35 @@ public class InvokerPortletImpl
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws IOException, PortletException {
 
-		LiferayPortletRequest portletRequest =
-			PortalUtil.getLiferayPortletRequest(resourceRequest);
-		LiferayPortletResponse portletResponse =
-			PortalUtil.getLiferayPortletResponse(resourceResponse);
-
 		invoke(
-			portletRequest, portletResponse, PortletRequest.RESOURCE_PHASE,
+			PortalUtil.getLiferayPortletRequest(resourceRequest),
+			PortalUtil.getLiferayPortletResponse(resourceResponse),
+			PortletRequest.RESOURCE_PHASE,
 			_invokerFilterContainer.getResourceFilters());
 	}
 
 	protected void processException(
-		Exception e, PortletRequest portletRequest,
-		PortletResponse portletResponse) {
+		Exception exception, PortletRequest liferayPortletRequest,
+		PortletResponse liferayPortletResponse) {
 
-		if (portletResponse instanceof StateAwareResponseImpl) {
+		if (liferayPortletResponse instanceof StateAwareResponseImpl) {
 
 			// PLT.5.4.7, TCK xxiii and PLT.15.2.6, cxlvi
 
 			StateAwareResponseImpl stateAwareResponseImpl =
-				(StateAwareResponseImpl)portletResponse;
+				(StateAwareResponseImpl)liferayPortletResponse;
 
 			stateAwareResponseImpl.reset();
 		}
 
-		if (e instanceof RuntimeException) {
+		if (exception instanceof RuntimeException) {
 
 			// PLT.5.4.7, TCK xxv
 
-			e = new PortletException(e);
+			exception = new PortletException(exception);
 		}
 
-		if (e instanceof UnavailableException) {
+		if (exception instanceof UnavailableException) {
 
 			// PLT.5.4.7, TCK xxiv
 
@@ -721,19 +707,19 @@ public class InvokerPortletImpl
 			PortletLocalServiceUtil.deletePortlet(_portletModel);
 		}
 
-		if (e instanceof PortletException) {
-			if ((portletResponse instanceof StateAwareResponseImpl) &&
-				!(e instanceof UnavailableException)) {
+		if (exception instanceof PortletException) {
+			if ((liferayPortletResponse instanceof StateAwareResponseImpl) &&
+				!(exception instanceof UnavailableException)) {
 
 				return;
 			}
 
-			if (!(portletRequest instanceof RenderRequest)) {
-				portletRequest.setAttribute(_errorKey, e);
+			if (!(liferayPortletRequest instanceof RenderRequest)) {
+				liferayPortletRequest.setAttribute(_errorKey, exception);
 			}
 		}
 		else {
-			ReflectionUtil.throwException(e);
+			ReflectionUtil.throwException(exception);
 		}
 	}
 
@@ -759,12 +745,12 @@ public class InvokerPortletImpl
 		_errorKey = _portletId.concat(PortletException.class.getName());
 
 		if (_log.isDebugEnabled()) {
-			com.liferay.portal.kernel.model.Portlet portletContextPortet =
+			com.liferay.portal.kernel.model.Portlet portletContextPortlet =
 				_liferayPortletContext.getPortlet();
 
 			_log.debug(
 				"Create instance cache wrapper for " +
-					portletContextPortet.getPortletId());
+					portletContextPortlet.getPortletId());
 		}
 	}
 

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,20 +15,27 @@ String headerContainerCssClass = (String)request.getAttribute("liferay-frontend:
 String id = (String)request.getAttribute("liferay-frontend:screen-navigation:id");
 boolean inverted = (boolean)request.getAttribute("liferay-frontend:screen-navigation:inverted");
 String menubarCssClass = (String)request.getAttribute("liferay-frontend:screen-navigation:menubarCssClass");
+Object modelContext = (Object)request.getAttribute("liferay-frontend:screen-navigation:modelContext");
+String navBarCssClass = (String)request.getAttribute("liferay-frontend:screen-navigation:navBarCssClass");
 String navCssClass = (String)request.getAttribute("liferay-frontend:screen-navigation:navCssClass");
 PortletURL portletURL = (PortletURL)request.getAttribute("liferay-frontend:screen-navigation:portletURL");
 ScreenNavigationCategory selectedScreenNavigationCategory = (ScreenNavigationCategory)request.getAttribute("liferay-frontend:screen-navigation:selectedScreenNavigationCategory");
-ScreenNavigationEntry selectedScreenNavigationEntry = (ScreenNavigationEntry)request.getAttribute("liferay-frontend:screen-navigation:selectedScreenNavigationEntry");
+ScreenNavigationEntry<?> selectedScreenNavigationEntry = (ScreenNavigationEntry<?>)request.getAttribute("liferay-frontend:screen-navigation:selectedScreenNavigationEntry");
 List<ScreenNavigationCategory> screenNavigationCategories = (List<ScreenNavigationCategory>)request.getAttribute("liferay-frontend:screen-navigation:screenNavigationCategories");
-List<ScreenNavigationEntry> screenNavigationEntries = (List<ScreenNavigationEntry>)request.getAttribute("liferay-frontend:screen-navigation:screenNavigationEntries");
+List<ScreenNavigationEntry<Object>> screenNavigationEntries = (List<ScreenNavigationEntry<Object>>)request.getAttribute("liferay-frontend:screen-navigation:screenNavigationEntries");
 
 LiferayPortletResponse finalLiferayPortletResponse = liferayPortletResponse;
 %>
 
 <c:if test="<%= ListUtil.isNotEmpty(screenNavigationCategories) && (screenNavigationCategories.size() > 1) %>">
 	<div class="page-header">
-		<div class="<%= headerContainerCssClass %>">
+		<c:if test="<%= Validator.isNotNull(headerContainerCssClass) %>">
+			<div class="<%= headerContainerCssClass %>">
+		</c:if>
+
 			<clay:navigation-bar
+				activeItemAriaCurrent='<%= ListUtil.isNotEmpty(screenNavigationEntries) && (screenNavigationEntries.size() > 1) ? "false" : "page" %>'
+				cssClass="<%= navBarCssClass %>"
 				inverted="<%= inverted %>"
 				navigationItems='<%=
 					new JSPNavigationItemList(pageContext) {
@@ -48,62 +46,120 @@ LiferayPortletResponse finalLiferayPortletResponse = liferayPortletResponse;
 								add(
 									navigationItem -> {
 										navigationItem.setActive((selectedScreenNavigationCategory != null) && Objects.equals(selectedScreenNavigationCategory.getCategoryKey(), screenNavigationCategory.getCategoryKey()));
+										navigationItem.setDeprecated(screenNavigationCategory.isDeprecated());
 										navigationItem.setHref(screenNavigationCategoryURL, "screenNavigationCategoryKey", screenNavigationCategory.getCategoryKey(), "screenNavigationEntryKey", StringPool.BLANK);
 										navigationItem.setLabel(screenNavigationCategory.getLabel(themeDisplay.getLocale()));
-								});
+									});
 							}
 						}
 					}
 				%>'
 			/>
-		</div>
+
+		<c:if test="<%= Validator.isNotNull(headerContainerCssClass) %>">
+			</div>
+		</c:if>
 	</div>
 </c:if>
 
 <c:if test="<%= (selectedScreenNavigationEntry != null) && ListUtil.isNotEmpty(screenNavigationEntries) %>">
-	<div class="<%= containerWrapperCssClass %>">
-		<div class="row">
-			<c:if test="<%= screenNavigationEntries.size() > 1 %>">
-				<div class="<%= navCssClass %>">
-					<nav class="<%= menubarCssClass %>">
-						<a aria-controls="<%= id %>" aria-expanded="false" class="menubar-toggler" data-toggle="collapse" href="#<%= id %>" role="button">
-							<%= selectedScreenNavigationEntry.getLabel(locale) %>
+	<c:if test="<%= Validator.isNotNull(containerWrapperCssClass) %>">
+		<div class="<%= containerWrapperCssClass %>">
+	</c:if>
 
-							<aui:icon image="caret-bottom" markupView="lexicon" />
-						</a>
+		<c:if test="<%= screenNavigationEntries.size() > 1 %>">
+			<div class="row">
+		</c:if>
 
-						<div class="collapse menubar-collapse" id="<%= id %>">
-							<ul class="nav nav-nested">
+		<c:if test="<%= screenNavigationEntries.size() > 1 %>">
+			<div class="<%= navCssClass %>">
+				<nav class="<%= menubarCssClass %>">
+					<a aria-controls="<%= id %>" aria-expanded="false" class="menubar-toggler" data-toggle="liferay-collapse" href="#<%= id %>" role="button">
+						<%= selectedScreenNavigationEntry.getLabel(locale) %>
 
-								<%
-								for (ScreenNavigationEntry screenNavigationEntry : screenNavigationEntries) {
-									PortletURL screenNavigationEntryURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
+						<aui:icon image="caret-bottom" markupView="lexicon" />
+					</a>
 
-									screenNavigationEntryURL.setParameter("screenNavigationCategoryKey", screenNavigationEntry.getCategoryKey());
-									screenNavigationEntryURL.setParameter("screenNavigationEntryKey", screenNavigationEntry.getEntryKey());
-								%>
+					<div class="collapse menubar-collapse" id="<%= id %>">
+						<ul class="nav nav-nested">
 
-									<li class="nav-item">
-										<a class="nav-link <%= Objects.equals(selectedScreenNavigationEntry.getEntryKey(), screenNavigationEntry.getEntryKey()) ? "active" : StringPool.BLANK %>" href="<%= screenNavigationEntryURL %>"><%= screenNavigationEntry.getLabel(themeDisplay.getLocale()) %></a>
-									</li>
+							<%
+							for (ScreenNavigationEntry<Object> screenNavigationEntry : screenNavigationEntries) {
+								String statusLabel = screenNavigationEntry.getStatusLabel(themeDisplay.getLocale(), modelContext);
+							%>
 
-								<%
-								}
-								%>
+								<li class="nav-item">
+									<a
+										aria-current="<%= Objects.equals(selectedScreenNavigationEntry.getEntryKey(), screenNavigationEntry.getEntryKey()) ? "page" : "false" %>"
+										class="nav-link <%= Objects.equals(selectedScreenNavigationEntry.getEntryKey(), screenNavigationEntry.getEntryKey()) ? "active" : StringPool.BLANK %> <%= Validator.isNotNull(statusLabel) ? "align-items-center d-flex" : StringPool.BLANK %>"
+										href="<%=
+											PortletURLBuilder.create(
+												PortletURLUtil.clone(portletURL, liferayPortletResponse)
+											).setParameter(
+												"screenNavigationCategoryKey", screenNavigationEntry.getCategoryKey()
+											).setParameter(
+												"screenNavigationEntryKey", screenNavigationEntry.getEntryKey()
+											).buildPortletURL()
+										%>"
+									>
+										<%= screenNavigationEntry.getLabel(themeDisplay.getLocale()) %>
 
-							</ul>
-						</div>
-					</nav>
-				</div>
-			</c:if>
+										<c:if test="<%= Validator.isNotNull(statusLabel) %>">
+											<clay:label
+												cssClass="ml-2"
+												displayType="<%= screenNavigationEntry.getStatusStyle(modelContext) %>"
+												label="<%= statusLabel %>"
+											/>
+										</c:if>
+									</a>
+								</li>
 
-			<div class="<%= (screenNavigationEntries.size() > 1) ? containerCssClass : fullContainerCssClass %>">
+							<%
+							}
+							%>
 
-				<%
-				selectedScreenNavigationEntry.render(request, PipingServletResponse.createPipingServletResponse(pageContext));
-				%>
-
+						</ul>
+					</div>
+				</nav>
 			</div>
+		</c:if>
+
+		<div class="<%= (screenNavigationEntries.size() > 1) ? containerCssClass : fullContainerCssClass %>">
+
+			<%
+			String selectedScreenNavigationEntryLabel = selectedScreenNavigationEntry.getLabel(themeDisplay.getLocale());
+
+			if (Validator.isNotNull(selectedScreenNavigationEntryLabel)) {
+				PortalUtil.addPageSubtitle(selectedScreenNavigationEntryLabel, request);
+			}
+
+			if (selectedScreenNavigationCategory != null) {
+				String selectedScreenNavigationCategoryLabel = selectedScreenNavigationCategory.getLabel(themeDisplay.getLocale());
+
+				if (Validator.isNotNull(selectedScreenNavigationCategoryLabel)) {
+					PortalUtil.addPageSubtitle(selectedScreenNavigationCategoryLabel, request);
+				}
+			}
+
+			request.setAttribute(ScreenNavigationWebKeys.SELECTED_CATEGORY_KEY, selectedScreenNavigationCategory.getCategoryKey());
+			request.setAttribute(ScreenNavigationWebKeys.SELECTED_ENTRY_KEY, selectedScreenNavigationEntry.getEntryKey());
+
+			try {
+				selectedScreenNavigationEntry.render(request, PipingServletResponseFactory.createPipingServletResponse(pageContext));
+			}
+			finally {
+				request.removeAttribute(ScreenNavigationWebKeys.SELECTED_CATEGORY_KEY);
+				request.removeAttribute(ScreenNavigationWebKeys.SELECTED_ENTRY_KEY);
+			}
+			%>
+
 		</div>
-	</div>
+
+		<c:if test="<%= screenNavigationEntries.size() > 1 %>">
+			</div>
+		</c:if>
+
+	<c:if test="<%= Validator.isNotNull(containerWrapperCssClass) %>">
+		</div>
+	</c:if>
 </c:if>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.deploy.auto;
@@ -34,12 +25,6 @@ public class PluginAutoDeployListenerHelper {
 
 	public PluginAutoDeployListenerHelper(File file) {
 		_file = file;
-	}
-
-	public boolean isExtPlugin() {
-		Matcher matcher = _extPluginPattern.matcher(_file.getName());
-
-		return matcher.find();
 	}
 
 	public boolean isHookPlugin() throws AutoDeployException {
@@ -68,11 +53,7 @@ public class PluginAutoDeployListenerHelper {
 	public boolean isLiferayPackage() {
 		String fileName = _file.getName();
 
-		if (fileName.endsWith(".lpkg")) {
-			return true;
-		}
-
-		return false;
+		return fileName.endsWith(".lpkg");
 	}
 
 	public boolean isMatchingFile(String checkXmlFile)
@@ -111,15 +92,18 @@ public class PluginAutoDeployListenerHelper {
 
 			return true;
 		}
-		catch (IOException ioe) {
-			throw new AutoDeployException(ioe);
+		catch (IOException ioException) {
+			throw new AutoDeployException(ioException);
 		}
 		finally {
 			if (zipFile != null) {
 				try {
 					zipFile.close();
 				}
-				catch (IOException ioe) {
+				catch (IOException ioException) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(ioException);
+					}
 				}
 			}
 		}
@@ -150,7 +134,11 @@ public class PluginAutoDeployListenerHelper {
 	public boolean isPortletPlugin() throws AutoDeployException {
 		if (isMatchingFile(
 				"WEB-INF/" + Portal.PORTLET_XML_FILE_NAME_STANDARD, false) ||
-			isMatchingFile("WEB-INF/beans.xml", false)) {
+			isMatchingFile("WEB-INF/applicationContext.xml", false) ||
+			isMatchingFile("WEB-INF/beans.xml", false) ||
+			isMatchingFile(
+				"WEB-INF/spring-context/portlet-application-context.xml",
+				false)) {
 
 			return true;
 		}
@@ -210,8 +198,6 @@ public class PluginAutoDeployListenerHelper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		PluginAutoDeployListenerHelper.class);
 
-	private static final Pattern _extPluginPattern = Pattern.compile(
-		"-(E|e)xt[-0-9.]*\\+?\\.(war|zip)$");
 	private static final Pattern _hookPluginPattern = Pattern.compile(
 		"-(H|h)ook[-0-9.]*\\+?\\.(war|zip)$");
 	private static final Pattern _themePluginPattern = Pattern.compile(

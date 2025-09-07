@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service.impl;
@@ -18,6 +9,7 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.workflow.kaleo.definition.Action;
 import com.liferay.portal.workflow.kaleo.definition.Assignment;
 import com.liferay.portal.workflow.kaleo.definition.DelayDuration;
@@ -48,15 +40,16 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 
 	@Override
 	public KaleoTimer addKaleoTimer(
-			String kaleoClassName, long kaleoClassPK,
+			String kaleoClassName, long kaleoClassPK, long kaleoDefinitionId,
 			long kaleoDefinitionVersionId, Timer timer,
 			ServiceContext serviceContext)
 		throws PortalException {
 
 		// Kaleo timer
 
-		User user = userLocalService.getUser(serviceContext.getGuestOrUserId());
-		Date now = new Date();
+		User user = _userLocalService.getUser(
+			serviceContext.getGuestOrUserId());
+		Date date = new Date();
 
 		long kaleoTimerId = counterLocalService.increment();
 
@@ -65,10 +58,11 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 		kaleoTimer.setCompanyId(user.getCompanyId());
 		kaleoTimer.setUserId(user.getUserId());
 		kaleoTimer.setUserName(user.getFullName());
-		kaleoTimer.setCreateDate(now);
-		kaleoTimer.setModifiedDate(now);
+		kaleoTimer.setCreateDate(date);
+		kaleoTimer.setModifiedDate(date);
 		kaleoTimer.setKaleoClassName(kaleoClassName);
 		kaleoTimer.setKaleoClassPK(kaleoClassPK);
+		kaleoTimer.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoTimer.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 		kaleoTimer.setName(timer.getName());
 		kaleoTimer.setBlocking(timer.isBlocking());
@@ -92,7 +86,7 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 			kaleoTimer.setRecurrenceScale(durationScale.getValue());
 		}
 
-		kaleoTimerPersistence.update(kaleoTimer);
+		kaleoTimer = kaleoTimerPersistence.update(kaleoTimer);
 
 		// Kaleo actions
 
@@ -100,7 +94,7 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 
 		for (Action action : actions) {
 			_kaleoActionLocalService.addKaleoAction(
-				KaleoTimer.class.getName(), kaleoTimerId,
+				KaleoTimer.class.getName(), kaleoTimerId, kaleoDefinitionId,
 				kaleoDefinitionVersionId, timer.getName(), action,
 				serviceContext);
 		}
@@ -111,7 +105,7 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 
 		for (Assignment reassignment : reassignments) {
 			_kaleoTaskAssignmentLocalService.addKaleoTaskAssignment(
-				KaleoTimer.class.getName(), kaleoTimerId,
+				KaleoTimer.class.getName(), kaleoTimerId, kaleoDefinitionId,
 				kaleoDefinitionVersionId, reassignment, serviceContext);
 		}
 
@@ -121,7 +115,7 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 
 		for (Notification notification : notifications) {
 			_kaleoNotificationLocalService.addKaleoNotification(
-				KaleoTimer.class.getName(), kaleoTimerId,
+				KaleoTimer.class.getName(), kaleoTimerId, kaleoDefinitionId,
 				kaleoDefinitionVersionId, timer.getName(), notification,
 				serviceContext);
 		}
@@ -153,5 +147,8 @@ public class KaleoTimerLocalServiceImpl extends KaleoTimerLocalServiceBaseImpl {
 
 	@Reference
 	private KaleoTaskAssignmentLocalService _kaleoTaskAssignmentLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.workspace;
@@ -54,7 +45,8 @@ public class FrontendPlugin implements Plugin<Project> {
 	public void apply(Project project) {
 		GradleUtil.applyPlugin(project, BasePlugin.class);
 		GradleUtil.applyPlugin(project, LiferayBasePlugin.class);
-		GradleUtil.applyPlugin(project, NodePlugin.class);
+
+		LiferayWorkspaceNodePlugin.INSTANCE.apply(project);
 
 		Map<String, Object> packageJsonMap = _getPackageJsonMap(project);
 
@@ -91,10 +83,8 @@ public class FrontendPlugin implements Plugin<Project> {
 	private void _configureArtifacts(final Project project) {
 		ArtifactHandler artifacts = project.getArtifacts();
 
-		File jarFile = _getJarFile(project);
-
 		artifacts.add(
-			Dependency.ARCHIVES_CONFIGURATION, jarFile,
+			Dependency.ARCHIVES_CONFIGURATION, _getJarFile(project),
 			new Closure<Void>(project) {
 
 				@SuppressWarnings("unused")
@@ -107,7 +97,7 @@ public class FrontendPlugin implements Plugin<Project> {
 					if (GradleUtil.hasTask(
 							project, NodePlugin.PACKAGE_RUN_BUILD_TASK_NAME)) {
 
-						buildTask.finalizedBy(
+						buildTask.dependsOn(
 							NodePlugin.PACKAGE_RUN_BUILD_TASK_NAME);
 					}
 				}
@@ -140,8 +130,9 @@ public class FrontendPlugin implements Plugin<Project> {
 				nodeExtension.setNodeVersion(nodeVersion);
 			}
 		}
-		catch (Exception e) {
-			throw new GradleException("Unable to parse node version", e);
+		catch (Exception exception) {
+			throw new GradleException(
+				"Unable to parse node version", exception);
 		}
 
 		String npmVersion = nodeExtension.getNpmVersion();
@@ -155,8 +146,8 @@ public class FrontendPlugin implements Plugin<Project> {
 				nodeExtension.setNpmVersion(npmVersion);
 			}
 		}
-		catch (Exception e) {
-			throw new GradleException("Unable to parse npm version", e);
+		catch (Exception exception) {
+			throw new GradleException("Unable to parse npm version", exception);
 		}
 	}
 

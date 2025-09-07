@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence;
@@ -17,6 +8,7 @@ package com.liferay.message.boards.service.persistence;
 import com.liferay.message.boards.exception.NoSuchMessageException;
 import com.liferay.message.boards.model.MBMessage;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -32,9 +24,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-public interface MBMessagePersistence extends BasePersistence<MBMessage> {
+public interface MBMessagePersistence
+	extends BasePersistence<MBMessage>, CTPersistence<MBMessage> {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. Always use {@link MBMessageUtil} to access the message-boards message persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this interface.
@@ -1029,7 +1022,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param threadId the thread ID
 	 * @return the matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByThreadReplies(long threadId);
+	public java.util.List<MBMessage> findByThreadIdReplies(long threadId);
 
 	/**
 	 * Returns a range of all the message-boards messages where threadId = &#63;.
@@ -1043,7 +1036,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param end the upper bound of the range of message-boards messages (not inclusive)
 	 * @return the range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByThreadReplies(
+	public java.util.List<MBMessage> findByThreadIdReplies(
 		long threadId, int start, int end);
 
 	/**
@@ -1059,7 +1052,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByThreadReplies(
+	public java.util.List<MBMessage> findByThreadIdReplies(
 		long threadId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -1078,7 +1071,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByThreadReplies(
+	public java.util.List<MBMessage> findByThreadIdReplies(
 		long threadId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator,
@@ -1092,7 +1085,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the first matching message-boards message
 	 * @throws NoSuchMessageException if a matching message-boards message could not be found
 	 */
-	public MBMessage findByThreadReplies_First(
+	public MBMessage findByThreadIdReplies_First(
 			long threadId,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -1105,7 +1098,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
 	 */
-	public MBMessage fetchByThreadReplies_First(
+	public MBMessage fetchByThreadIdReplies_First(
 		long threadId,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -1118,7 +1111,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the last matching message-boards message
 	 * @throws NoSuchMessageException if a matching message-boards message could not be found
 	 */
-	public MBMessage findByThreadReplies_Last(
+	public MBMessage findByThreadIdReplies_Last(
 			long threadId,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -1131,7 +1124,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
 	 */
-	public MBMessage fetchByThreadReplies_Last(
+	public MBMessage fetchByThreadIdReplies_Last(
 		long threadId,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -1145,7 +1138,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the previous, current, and next message-boards message
 	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
 	 */
-	public MBMessage[] findByThreadReplies_PrevAndNext(
+	public MBMessage[] findByThreadIdReplies_PrevAndNext(
 			long messageId, long threadId,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -1156,7 +1149,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 *
 	 * @param threadId the thread ID
 	 */
-	public void removeByThreadReplies(long threadId);
+	public void removeByThreadIdReplies(long threadId);
 
 	/**
 	 * Returns the number of message-boards messages where threadId = &#63;.
@@ -1164,7 +1157,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param threadId the thread ID
 	 * @return the number of matching message-boards messages
 	 */
-	public int countByThreadReplies(long threadId);
+	public int countByThreadIdReplies(long threadId);
 
 	/**
 	 * Returns all the message-boards messages where parentMessageId = &#63;.
@@ -1758,6 +1751,56 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	public int filterCountByG_C(long groupId, long categoryId);
 
 	/**
+	 * Returns the message-boards message where groupId = &#63; and urlSubject = &#63; or throws a <code>NoSuchMessageException</code> if it could not be found.
+	 *
+	 * @param groupId the group ID
+	 * @param urlSubject the url subject
+	 * @return the matching message-boards message
+	 * @throws NoSuchMessageException if a matching message-boards message could not be found
+	 */
+	public MBMessage findByG_US(long groupId, String urlSubject)
+		throws NoSuchMessageException;
+
+	/**
+	 * Returns the message-boards message where groupId = &#63; and urlSubject = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param urlSubject the url subject
+	 * @return the matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
+	 */
+	public MBMessage fetchByG_US(long groupId, String urlSubject);
+
+	/**
+	 * Returns the message-boards message where groupId = &#63; and urlSubject = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param urlSubject the url subject
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
+	 */
+	public MBMessage fetchByG_US(
+		long groupId, String urlSubject, boolean useFinderCache);
+
+	/**
+	 * Removes the message-boards message where groupId = &#63; and urlSubject = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param urlSubject the url subject
+	 * @return the message-boards message that was removed
+	 */
+	public MBMessage removeByG_US(long groupId, String urlSubject)
+		throws NoSuchMessageException;
+
+	/**
+	 * Returns the number of message-boards messages where groupId = &#63; and urlSubject = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param urlSubject the url subject
+	 * @return the number of matching message-boards messages
+	 */
+	public int countByG_US(long groupId, String urlSubject);
+
+	/**
 	 * Returns all the message-boards messages where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2328,7 +2371,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * </p>
 	 *
 	 * @param userId the user ID
-	 * @param classNameId the class name ID
+	 * @param classNameIds the class name IDs
 	 * @param start the lower bound of the range of message-boards messages
 	 * @param end the upper bound of the range of message-boards messages (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2991,7 +3034,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param status the status
 	 * @return the matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByT_notS(long threadId, int status);
+	public java.util.List<MBMessage> findByT_NotS(long threadId, int status);
 
 	/**
 	 * Returns a range of all the message-boards messages where threadId = &#63; and status &ne; &#63;.
@@ -3006,7 +3049,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param end the upper bound of the range of message-boards messages (not inclusive)
 	 * @return the range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByT_notS(
+	public java.util.List<MBMessage> findByT_NotS(
 		long threadId, int status, int start, int end);
 
 	/**
@@ -3023,7 +3066,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByT_notS(
+	public java.util.List<MBMessage> findByT_NotS(
 		long threadId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -3043,7 +3086,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the ordered range of matching message-boards messages
 	 */
-	public java.util.List<MBMessage> findByT_notS(
+	public java.util.List<MBMessage> findByT_NotS(
 		long threadId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator,
@@ -3058,7 +3101,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the first matching message-boards message
 	 * @throws NoSuchMessageException if a matching message-boards message could not be found
 	 */
-	public MBMessage findByT_notS_First(
+	public MBMessage findByT_NotS_First(
 			long threadId, int status,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -3072,7 +3115,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
 	 */
-	public MBMessage fetchByT_notS_First(
+	public MBMessage fetchByT_NotS_First(
 		long threadId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -3086,7 +3129,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the last matching message-boards message
 	 * @throws NoSuchMessageException if a matching message-boards message could not be found
 	 */
-	public MBMessage findByT_notS_Last(
+	public MBMessage findByT_NotS_Last(
 			long threadId, int status,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -3100,7 +3143,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
 	 */
-	public MBMessage fetchByT_notS_Last(
+	public MBMessage fetchByT_NotS_Last(
 		long threadId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 			orderByComparator);
@@ -3115,7 +3158,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @return the previous, current, and next message-boards message
 	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
 	 */
-	public MBMessage[] findByT_notS_PrevAndNext(
+	public MBMessage[] findByT_NotS_PrevAndNext(
 			long messageId, long threadId, int status,
 			com.liferay.portal.kernel.util.OrderByComparator<MBMessage>
 				orderByComparator)
@@ -3127,7 +3170,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param threadId the thread ID
 	 * @param status the status
 	 */
-	public void removeByT_notS(long threadId, int status);
+	public void removeByT_NotS(long threadId, int status);
 
 	/**
 	 * Returns the number of message-boards messages where threadId = &#63; and status &ne; &#63;.
@@ -3136,7 +3179,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * @param status the status
 	 * @return the number of matching message-boards messages
 	 */
-	public int countByT_notS(long threadId, int status);
+	public int countByT_NotS(long threadId, int status);
 
 	/**
 	 * Returns all the message-boards messages where threadId = &#63; and status = &#63;.
@@ -4543,7 +4586,7 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 * </p>
 	 *
 	 * @param userId the user ID
-	 * @param classNameId the class name ID
+	 * @param classNameIds the class name IDs
 	 * @param status the status
 	 * @param start the lower bound of the range of message-boards messages
 	 * @param end the upper bound of the range of message-boards messages (not inclusive)
@@ -5468,6 +5511,56 @@ public interface MBMessagePersistence extends BasePersistence<MBMessage> {
 	 */
 	public int countByU_C_C_S(
 		long userId, long classNameId, long classPK, int status);
+
+	/**
+	 * Returns the message-boards message where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchMessageException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching message-boards message
+	 * @throws NoSuchMessageException if a matching message-boards message could not be found
+	 */
+	public MBMessage findByERC_G(String externalReferenceCode, long groupId)
+		throws NoSuchMessageException;
+
+	/**
+	 * Returns the message-boards message where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
+	 */
+	public MBMessage fetchByERC_G(String externalReferenceCode, long groupId);
+
+	/**
+	 * Returns the message-boards message where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
+	 */
+	public MBMessage fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache);
+
+	/**
+	 * Removes the message-boards message where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the message-boards message that was removed
+	 */
+	public MBMessage removeByERC_G(String externalReferenceCode, long groupId)
+		throws NoSuchMessageException;
+
+	/**
+	 * Returns the number of message-boards messages where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching message-boards messages
+	 */
+	public int countByERC_G(String externalReferenceCode, long groupId);
 
 	/**
 	 * Caches the message-boards message in the entity cache if it is enabled.

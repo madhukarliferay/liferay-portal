@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.json;
 
+import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
@@ -50,9 +42,13 @@ public class JSONObjectImpl implements JSONObject {
 			_jsonObject = new org.json.JSONObject(
 				jsonObjectImpl.getJSONObject(), names);
 		}
-		catch (Exception e) {
-			throw new JSONException(e);
+		catch (Exception exception) {
+			throw new JSONException(exception);
 		}
+	}
+
+	public JSONObjectImpl(org.json.JSONObject jsonObject) {
+		_jsonObject = jsonObject;
 	}
 
 	public JSONObjectImpl(Map<?, ?> map) {
@@ -63,12 +59,8 @@ public class JSONObjectImpl implements JSONObject {
 		_jsonObject = new org.json.JSONObject(bean);
 	}
 
-	public JSONObjectImpl(Object obj, String[] names) {
-		_jsonObject = new org.json.JSONObject(obj, names);
-	}
-
-	public JSONObjectImpl(org.json.JSONObject jsonObject) {
-		_jsonObject = jsonObject;
+	public JSONObjectImpl(Object object, String[] names) {
+		_jsonObject = new org.json.JSONObject(object, names);
 	}
 
 	public JSONObjectImpl(String json) throws JSONException {
@@ -79,8 +71,8 @@ public class JSONObjectImpl implements JSONObject {
 
 			_jsonObject = new org.json.JSONObject(json);
 		}
-		catch (Exception e) {
-			throw new JSONException(e);
+		catch (Exception exception) {
+			throw new JSONException(exception);
 		}
 	}
 
@@ -215,9 +207,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, value);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -229,9 +221,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, value);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -243,9 +235,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, value);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -257,9 +249,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, value);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -267,15 +259,15 @@ public class JSONObjectImpl implements JSONObject {
 	}
 
 	@Override
-	public JSONObject put(String key, JSONArray value) {
+	public JSONObject put(String key, JSONArray jsonArray) {
 		try {
-			JSONArrayImpl jsonArrayImpl = (JSONArrayImpl)value;
+			JSONArrayImpl jsonArrayImpl = (JSONArrayImpl)jsonArray;
 
 			_jsonObject.put(key, jsonArrayImpl.getJSONArray());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -283,15 +275,15 @@ public class JSONObjectImpl implements JSONObject {
 	}
 
 	@Override
-	public JSONObject put(String key, JSONObject value) {
+	public JSONObject put(String key, JSONObject jsonObject) {
 		try {
-			JSONObjectImpl jsonObjectImpl = (JSONObjectImpl)value;
+			JSONObjectImpl jsonObjectImpl = (JSONObjectImpl)jsonObject;
 
 			_jsonObject.put(key, jsonObjectImpl.getJSONObject());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -303,9 +295,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, String.valueOf(value));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -325,9 +317,9 @@ public class JSONObjectImpl implements JSONObject {
 				_jsonObject.put(key, value);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -339,9 +331,9 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			_jsonObject.put(key, value);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -349,16 +341,34 @@ public class JSONObjectImpl implements JSONObject {
 	}
 
 	@Override
-	public JSONObject putException(Exception exception) {
+	public JSONObject put(
+		String key, UnsafeSupplier<Object, Exception> valueUnsafeSupplier) {
+
+		try {
+			Object value = valueUnsafeSupplier.get();
+
+			if (value != null) {
+				return put(key, value);
+			}
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+
+		return this;
+	}
+
+	@Override
+	public JSONObject putException(Exception exception1) {
 		try {
 			_jsonObject.put(
 				"exception",
-				exception.getClass() + StringPool.COLON +
-					exception.getMessage());
+				exception1.getClass() + StringPool.COLON +
+					exception1.getMessage());
 		}
-		catch (Exception e) {
+		catch (Exception exception2) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception2);
 			}
 		}
 
@@ -371,8 +381,8 @@ public class JSONObjectImpl implements JSONObject {
 			_jsonObject = new org.json.JSONObject(
 				(String)objectInput.readObject());
 		}
-		catch (Exception e) {
-			throw new IOException(e);
+		catch (Exception exception) {
+			throw new IOException(exception);
 		}
 	}
 
@@ -387,6 +397,11 @@ public class JSONObjectImpl implements JSONObject {
 	}
 
 	@Override
+	public Map<String, Object> toMap() {
+		return _jsonObject.toMap();
+	}
+
+	@Override
 	public String toString() {
 		return _jsonObject.toString();
 	}
@@ -396,8 +411,8 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			return _jsonObject.toString(indentFactor);
 		}
-		catch (Exception e) {
-			throw new JSONException(e);
+		catch (Exception exception) {
+			throw new JSONException(exception);
 		}
 	}
 
@@ -406,8 +421,8 @@ public class JSONObjectImpl implements JSONObject {
 		try {
 			return _jsonObject.write(writer);
 		}
-		catch (Exception e) {
-			throw new JSONException(e);
+		catch (Exception exception) {
+			throw new JSONException(exception);
 		}
 	}
 

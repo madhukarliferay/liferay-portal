@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_0;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.xml.XMLUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -66,7 +57,7 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 			}
 		}
 
-		return XMLUtil.formatXML(newDocument);
+		return newDocument.formattedString(StringPool.DOUBLE_SPACE);
 	}
 
 	@Override
@@ -76,20 +67,21 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 
 	protected void upgradeStagingPortalPreferences() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select portalPreferencesId, preferences from " +
 					"PortalPreferences");
-			ResultSet rs = ps1.executeQuery();
-			PreparedStatement ps2 =
+			ResultSet resultSet = preparedStatement1.executeQuery();
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update PortalPreferences set preferences = ? where " +
 						"portalPreferencesId = ?")) {
 
-			while (rs.next()) {
-				long portalPreferencesId = rs.getLong("portalPreferencesId");
+			while (resultSet.next()) {
+				long portalPreferencesId = resultSet.getLong(
+					"portalPreferencesId");
 
-				String oldPreferences = rs.getString("preferences");
+				String oldPreferences = resultSet.getString("preferences");
 
 				String newPreferences = null;
 
@@ -97,12 +89,13 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 					newPreferences = convertStagingPreferencesToJSON(
 						oldPreferences);
 				}
-				catch (DocumentException de) {
+				catch (DocumentException documentException) {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							StringBundler.concat(
 								"Portal preferences ", portalPreferencesId,
-								" contains invalid XML, resetting to default"));
+								" contains invalid XML, resetting to default"),
+							documentException);
 					}
 
 					newPreferences = PortletConstants.DEFAULT_PREFERENCES;
@@ -112,14 +105,13 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 					continue;
 				}
 
-				ps2.setString(1, newPreferences);
+				preparedStatement2.setString(1, newPreferences);
+				preparedStatement2.setLong(2, portalPreferencesId);
 
-				ps2.setLong(2, portalPreferencesId);
-
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 

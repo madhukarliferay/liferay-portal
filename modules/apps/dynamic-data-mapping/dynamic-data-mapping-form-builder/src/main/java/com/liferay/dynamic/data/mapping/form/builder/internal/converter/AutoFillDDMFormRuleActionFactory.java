@@ -1,23 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter;
 
 import com.liferay.dynamic.data.mapping.expression.model.Expression;
-import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRuleAction;
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.action.AutoFillDDMFormRuleAction;
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.visitor.ActionExpressionVisitor;
+import com.liferay.dynamic.data.mapping.spi.converter.model.SPIDDMFormRuleAction;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -31,7 +22,7 @@ import java.util.Map;
  */
 public class AutoFillDDMFormRuleActionFactory {
 
-	public static DDMFormRuleAction create(
+	public static SPIDDMFormRuleAction create(
 		List<Expression> expressions,
 		ActionExpressionVisitor actionExpressionVisitor) {
 
@@ -44,11 +35,11 @@ public class AutoFillDDMFormRuleActionFactory {
 
 		return new AutoFillDDMFormRuleAction(
 			ddmDataProviderInstanceUUID,
-			createAutoFillInputParameters(paramsExpression),
-			createAutoFillOutputParameters(resultMapExpression));
+			_createAutoFillInputParameters(paramsExpression),
+			_createAutoFillOutputParameters(resultMapExpression));
 	}
 
-	protected static Map<String, String> createAutoFillInputParameters(
+	private static Map<String, String> _createAutoFillInputParameters(
 		String paramsExpression) {
 
 		Map<String, String> map = new LinkedHashMap<>();
@@ -63,7 +54,7 @@ public class AutoFillDDMFormRuleActionFactory {
 		for (String innerExpression : innerExpressions) {
 			String[] tokens = StringUtil.split(innerExpression, CharPool.EQUAL);
 
-			if (!isValidExpression(tokens)) {
+			if (!_isValidExpression(tokens)) {
 				continue;
 			}
 
@@ -73,7 +64,7 @@ public class AutoFillDDMFormRuleActionFactory {
 		return map;
 	}
 
-	protected static Map<String, String> createAutoFillOutputParameters(
+	private static Map<String, String> _createAutoFillOutputParameters(
 		String resultMapExpression) {
 
 		Map<String, String> map = new LinkedHashMap<>();
@@ -88,7 +79,7 @@ public class AutoFillDDMFormRuleActionFactory {
 		for (String innerExpression : innerExpressions) {
 			String[] tokens = StringUtil.split(innerExpression, CharPool.EQUAL);
 
-			if (!isValidExpression(tokens)) {
+			if (!_isValidExpression(tokens)) {
 				continue;
 			}
 
@@ -98,12 +89,10 @@ public class AutoFillDDMFormRuleActionFactory {
 		return map;
 	}
 
-	protected static boolean isValidExpression(String[] tokens) {
-		if (tokens.length < 2) {
-			return false;
-		}
+	private static boolean _isValidExpression(String[] tokens) {
+		if ((tokens.length < 2) || Validator.isNull(tokens[0]) ||
+			Validator.isNull(tokens[1])) {
 
-		if (Validator.isNull(tokens[0]) || Validator.isNull(tokens[1])) {
 			return false;
 		}
 

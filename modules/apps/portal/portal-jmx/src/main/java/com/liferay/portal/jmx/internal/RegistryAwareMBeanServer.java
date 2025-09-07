@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.jmx.internal;
@@ -42,13 +33,14 @@ import javax.management.QueryExp;
 import javax.management.ReflectionException;
 import javax.management.loading.ClassLoaderRepository;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = MBeanServer.class)
+@Component(service = MBeanServer.class)
 public class RegistryAwareMBeanServer implements MBeanServer {
 
 	@Override
@@ -58,7 +50,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException {
 
 		_mBeanServer.addNotificationListener(
-			getPlatformObjectName(objectName), notificationListener,
+			_getPlatformObjectName(objectName), notificationListener,
 			notificationFilter, handback);
 	}
 
@@ -68,12 +60,9 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 			NotificationFilter notificationFilter, Object handback)
 		throws InstanceNotFoundException {
 
-		ObjectName platformObjectName = getPlatformObjectName(objectName);
-		ObjectName platformListenerObjectName = getPlatformObjectName(
-			listenerObjectName);
-
 		_mBeanServer.addNotificationListener(
-			platformObjectName, platformListenerObjectName, notificationFilter,
+			_getPlatformObjectName(objectName),
+			_getPlatformObjectName(listenerObjectName), notificationFilter,
 			handback);
 	}
 
@@ -125,7 +114,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws OperationsException {
 
 		return _mBeanServer.deserialize(
-			getPlatformObjectName(objectName), data);
+			_getPlatformObjectName(objectName), data);
 	}
 
 	/**
@@ -157,7 +146,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 			   MBeanException, ReflectionException {
 
 		return _mBeanServer.getAttribute(
-			getPlatformObjectName(objectName), attribute);
+			_getPlatformObjectName(objectName), attribute);
 	}
 
 	@Override
@@ -166,7 +155,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, ReflectionException {
 
 		return _mBeanServer.getAttributes(
-			getPlatformObjectName(objectName), attributes);
+			_getPlatformObjectName(objectName), attributes);
 	}
 
 	@Override
@@ -181,7 +170,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException {
 
 		return _mBeanServer.getClassLoaderFor(
-			getPlatformObjectName(objectName));
+			_getPlatformObjectName(objectName));
 	}
 
 	@Override
@@ -209,7 +198,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, IntrospectionException,
 			   ReflectionException {
 
-		return _mBeanServer.getMBeanInfo(getPlatformObjectName(objectName));
+		return _mBeanServer.getMBeanInfo(_getPlatformObjectName(objectName));
 	}
 
 	@Override
@@ -217,7 +206,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException {
 
 		return _mBeanServer.getObjectInstance(
-			getPlatformObjectName(objectName));
+			_getPlatformObjectName(objectName));
 	}
 
 	@Override
@@ -259,7 +248,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, MBeanException, ReflectionException {
 
 		return _mBeanServer.invoke(
-			getPlatformObjectName(objectName), operationName, params,
+			_getPlatformObjectName(objectName), operationName, params,
 			signature);
 	}
 
@@ -268,12 +257,12 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException {
 
 		return _mBeanServer.isInstanceOf(
-			getPlatformObjectName(objectName), className);
+			_getPlatformObjectName(objectName), className);
 	}
 
 	@Override
 	public boolean isRegistered(ObjectName objectName) {
-		return _mBeanServer.isRegistered(getPlatformObjectName(objectName));
+		return _mBeanServer.isRegistered(_getPlatformObjectName(objectName));
 	}
 
 	@Override
@@ -305,7 +294,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, ListenerNotFoundException {
 
 		_mBeanServer.removeNotificationListener(
-			getPlatformObjectName(name), notificationListener);
+			_getPlatformObjectName(name), notificationListener);
 	}
 
 	@Override
@@ -315,7 +304,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, ListenerNotFoundException {
 
 		_mBeanServer.removeNotificationListener(
-			getPlatformObjectName(objectName), notificationListener,
+			_getPlatformObjectName(objectName), notificationListener,
 			notificationFilter, handback);
 	}
 
@@ -324,12 +313,9 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 			ObjectName objectName, ObjectName listenerObjectName)
 		throws InstanceNotFoundException, ListenerNotFoundException {
 
-		ObjectName platformObjectName = getPlatformObjectName(objectName);
-		ObjectName platformListenerObjectName = getPlatformObjectName(
-			listenerObjectName);
-
 		_mBeanServer.removeNotificationListener(
-			platformObjectName, platformListenerObjectName);
+			_getPlatformObjectName(objectName),
+			_getPlatformObjectName(listenerObjectName));
 	}
 
 	@Override
@@ -338,12 +324,9 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 			NotificationFilter notificationFilter, Object handback)
 		throws InstanceNotFoundException, ListenerNotFoundException {
 
-		ObjectName platformObjectName = getPlatformObjectName(objectName);
-		ObjectName platformListenerObjectName = getPlatformObjectName(
-			listenerObjectName);
-
 		_mBeanServer.removeNotificationListener(
-			platformObjectName, platformListenerObjectName, notificationFilter,
+			_getPlatformObjectName(objectName),
+			_getPlatformObjectName(listenerObjectName), notificationFilter,
 			handback);
 	}
 
@@ -353,7 +336,8 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 			   InvalidAttributeValueException, MBeanException,
 			   ReflectionException {
 
-		_mBeanServer.setAttribute(getPlatformObjectName(objectName), attribute);
+		_mBeanServer.setAttribute(
+			_getPlatformObjectName(objectName), attribute);
 	}
 
 	@Override
@@ -362,7 +346,7 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		throws InstanceNotFoundException, ReflectionException {
 
 		return _mBeanServer.setAttributes(
-			getPlatformObjectName(objectName), attributeList);
+			_getPlatformObjectName(objectName), attributeList);
 	}
 
 	@Override
@@ -372,7 +356,12 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		_mBeanRegistry.unregister(objectName.getCanonicalName(), objectName);
 	}
 
-	protected ObjectName getPlatformObjectName(ObjectName objectName) {
+	@Activate
+	protected void activate() {
+		_mBeanServer = _mBeanRegistry.getMBeanServer();
+	}
+
+	private ObjectName _getPlatformObjectName(ObjectName objectName) {
 		ObjectName platformObjectName = _mBeanRegistry.getObjectName(
 			objectName.getCanonicalName());
 
@@ -383,14 +372,9 @@ public class RegistryAwareMBeanServer implements MBeanServer {
 		return platformObjectName;
 	}
 
-	@Reference(unbind = "-")
-	protected void setMBeanRegistry(MBeanRegistry mBeanRegistry) {
-		_mBeanRegistry = mBeanRegistry;
-
-		_mBeanServer = _mBeanRegistry.getMBeanServer();
-	}
-
+	@Reference
 	private MBeanRegistry _mBeanRegistry;
+
 	private MBeanServer _mBeanServer;
 
 }

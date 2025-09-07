@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.seo.model.impl;
@@ -37,17 +28,17 @@ public class LayoutSEOEntryCacheModel
 	implements CacheModel<LayoutSEOEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutSEOEntryCacheModel)) {
+		if (!(object instanceof LayoutSEOEntryCacheModel)) {
 			return false;
 		}
 
 		LayoutSEOEntryCacheModel layoutSEOEntryCacheModel =
-			(LayoutSEOEntryCacheModel)obj;
+			(LayoutSEOEntryCacheModel)object;
 
 		if ((layoutSEOEntryId == layoutSEOEntryCacheModel.layoutSEOEntryId) &&
 			(mvccVersion == layoutSEOEntryCacheModel.mvccVersion)) {
@@ -81,6 +72,8 @@ public class LayoutSEOEntryCacheModel
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", layoutSEOEntryId=");
@@ -105,8 +98,6 @@ public class LayoutSEOEntryCacheModel
 		sb.append(canonicalURL);
 		sb.append(", canonicalURLEnabled=");
 		sb.append(canonicalURLEnabled);
-		sb.append(", DDMStorageId=");
-		sb.append(DDMStorageId);
 		sb.append(", openGraphDescription=");
 		sb.append(openGraphDescription);
 		sb.append(", openGraphDescriptionEnabled=");
@@ -131,6 +122,7 @@ public class LayoutSEOEntryCacheModel
 		LayoutSEOEntryImpl layoutSEOEntryImpl = new LayoutSEOEntryImpl();
 
 		layoutSEOEntryImpl.setMvccVersion(mvccVersion);
+		layoutSEOEntryImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			layoutSEOEntryImpl.setUuid("");
@@ -176,7 +168,6 @@ public class LayoutSEOEntryCacheModel
 		}
 
 		layoutSEOEntryImpl.setCanonicalURLEnabled(canonicalURLEnabled);
-		layoutSEOEntryImpl.setDDMStorageId(DDMStorageId);
 
 		if (openGraphDescription == null) {
 			layoutSEOEntryImpl.setOpenGraphDescription("");
@@ -222,6 +213,8 @@ public class LayoutSEOEntryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		layoutSEOEntryId = objectInput.readLong();
@@ -241,8 +234,6 @@ public class LayoutSEOEntryCacheModel
 		canonicalURL = objectInput.readUTF();
 
 		canonicalURLEnabled = objectInput.readBoolean();
-
-		DDMStorageId = objectInput.readLong();
 		openGraphDescription = objectInput.readUTF();
 
 		openGraphDescriptionEnabled = objectInput.readBoolean();
@@ -258,6 +249,8 @@ public class LayoutSEOEntryCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -297,8 +290,6 @@ public class LayoutSEOEntryCacheModel
 
 		objectOutput.writeBoolean(canonicalURLEnabled);
 
-		objectOutput.writeLong(DDMStorageId);
-
 		if (openGraphDescription == null) {
 			objectOutput.writeUTF("");
 		}
@@ -329,6 +320,7 @@ public class LayoutSEOEntryCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long layoutSEOEntryId;
 	public long groupId;
@@ -341,7 +333,6 @@ public class LayoutSEOEntryCacheModel
 	public long layoutId;
 	public String canonicalURL;
 	public boolean canonicalURLEnabled;
-	public long DDMStorageId;
 	public String openGraphDescription;
 	public boolean openGraphDescriptionEnabled;
 	public String openGraphImageAlt;

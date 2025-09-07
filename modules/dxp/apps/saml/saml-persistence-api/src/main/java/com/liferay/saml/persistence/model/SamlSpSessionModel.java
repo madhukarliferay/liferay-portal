@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -38,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface SamlSpSessionModel
 	extends AuditedModel, BaseModel<SamlSpSession>, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a saml sp session model instance should use the {@link SamlSpSession} interface instead.
@@ -170,34 +161,18 @@ public interface SamlSpSessionModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
-	 * Returns the saml idp entity ID of this saml sp session.
+	 * Returns the saml peer binding ID of this saml sp session.
 	 *
-	 * @return the saml idp entity ID of this saml sp session
+	 * @return the saml peer binding ID of this saml sp session
 	 */
-	@AutoEscape
-	public String getSamlIdpEntityId();
+	public long getSamlPeerBindingId();
 
 	/**
-	 * Sets the saml idp entity ID of this saml sp session.
+	 * Sets the saml peer binding ID of this saml sp session.
 	 *
-	 * @param samlIdpEntityId the saml idp entity ID of this saml sp session
+	 * @param samlPeerBindingId the saml peer binding ID of this saml sp session
 	 */
-	public void setSamlIdpEntityId(String samlIdpEntityId);
-
-	/**
-	 * Returns the saml sp session key of this saml sp session.
-	 *
-	 * @return the saml sp session key of this saml sp session
-	 */
-	@AutoEscape
-	public String getSamlSpSessionKey();
-
-	/**
-	 * Sets the saml sp session key of this saml sp session.
-	 *
-	 * @param samlSpSessionKey the saml sp session key of this saml sp session
-	 */
-	public void setSamlSpSessionKey(String samlSpSessionKey);
+	public void setSamlPeerBindingId(long samlPeerBindingId);
 
 	/**
 	 * Returns the assertion xml of this saml sp session.
@@ -230,64 +205,19 @@ public interface SamlSpSessionModel
 	public void setJSessionId(String jSessionId);
 
 	/**
-	 * Returns the name ID format of this saml sp session.
+	 * Returns the saml sp session key of this saml sp session.
 	 *
-	 * @return the name ID format of this saml sp session
+	 * @return the saml sp session key of this saml sp session
 	 */
 	@AutoEscape
-	public String getNameIdFormat();
+	public String getSamlSpSessionKey();
 
 	/**
-	 * Sets the name ID format of this saml sp session.
+	 * Sets the saml sp session key of this saml sp session.
 	 *
-	 * @param nameIdFormat the name ID format of this saml sp session
+	 * @param samlSpSessionKey the saml sp session key of this saml sp session
 	 */
-	public void setNameIdFormat(String nameIdFormat);
-
-	/**
-	 * Returns the name ID name qualifier of this saml sp session.
-	 *
-	 * @return the name ID name qualifier of this saml sp session
-	 */
-	@AutoEscape
-	public String getNameIdNameQualifier();
-
-	/**
-	 * Sets the name ID name qualifier of this saml sp session.
-	 *
-	 * @param nameIdNameQualifier the name ID name qualifier of this saml sp session
-	 */
-	public void setNameIdNameQualifier(String nameIdNameQualifier);
-
-	/**
-	 * Returns the name ID sp name qualifier of this saml sp session.
-	 *
-	 * @return the name ID sp name qualifier of this saml sp session
-	 */
-	@AutoEscape
-	public String getNameIdSPNameQualifier();
-
-	/**
-	 * Sets the name ID sp name qualifier of this saml sp session.
-	 *
-	 * @param nameIdSPNameQualifier the name ID sp name qualifier of this saml sp session
-	 */
-	public void setNameIdSPNameQualifier(String nameIdSPNameQualifier);
-
-	/**
-	 * Returns the name ID value of this saml sp session.
-	 *
-	 * @return the name ID value of this saml sp session
-	 */
-	@AutoEscape
-	public String getNameIdValue();
-
-	/**
-	 * Sets the name ID value of this saml sp session.
-	 *
-	 * @param nameIdValue the name ID value of this saml sp session
-	 */
-	public void setNameIdValue(String nameIdValue);
+	public void setSamlSpSessionKey(String samlSpSessionKey);
 
 	/**
 	 * Returns the session index of this saml sp session.
@@ -324,5 +254,12 @@ public interface SamlSpSessionModel
 	 * @param terminated the terminated of this saml sp session
 	 */
 	public void setTerminated(boolean terminated);
+
+	@Override
+	public SamlSpSession cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

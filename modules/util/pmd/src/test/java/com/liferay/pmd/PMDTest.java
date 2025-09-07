@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.pmd;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.test.ci.AutoBalanceTestCase;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -31,8 +23,6 @@ import java.nio.file.Path;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 import net.sourceforge.pmd.ant.Formatter;
 import net.sourceforge.pmd.ant.PMDTask;
@@ -46,6 +36,7 @@ import org.apache.tools.ant.types.FileSet;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -55,12 +46,6 @@ public class PMDTest extends AutoBalanceTestCase {
 
 	@Before
 	public void setUp() throws IOException {
-		try (FileReader fileReader = new FileReader(
-				new File(_PROJECT_DIR, "/tools/sdk/build.properties"))) {
-
-			_buildProperties.load(fileReader);
-		}
-
 		try (FileReader fileReader = new FileReader(
 				new File(_PROJECT_DIR, "build.properties"))) {
 
@@ -115,6 +100,7 @@ public class PMDTest extends AutoBalanceTestCase {
 		Files.delete(_logFilePath);
 	}
 
+	@Ignore
 	@Test
 	public void testPMDJava() throws IOException {
 		SourceLanguage sourceLanguage = new SourceLanguage();
@@ -125,22 +111,21 @@ public class PMDTest extends AutoBalanceTestCase {
 
 		_pmdTask.addConfiguredSourceLanguage(sourceLanguage);
 
-		CaptureHandler captureHandler = JDKLoggerTestUtil.configureJDKLogger(
-			ClassTypeResolver.class.getName(), Level.SEVERE);
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				ClassTypeResolver.class.getName(), LoggerTestUtil.ERROR)) {
 
-		try {
 			_pmdTask.execute();
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			if (!logRecords.isEmpty()) {
+			if (!logEntries.isEmpty()) {
 				AssertionError assertionError = new AssertionError(
 					"PMD Java log error");
 
-				for (LogRecord logRecord : logRecords) {
+				for (LogEntry logEntry : logEntries) {
 					assertionError.addSuppressed(
 						new Throwable(
-							logRecord.getMessage(), logRecord.getThrown()));
+							logEntry.getMessage(), logEntry.getThrowable()));
 				}
 
 				throw assertionError;
@@ -150,9 +135,6 @@ public class PMDTest extends AutoBalanceTestCase {
 				_logFilePath, Charset.defaultCharset());
 
 			Assert.assertTrue(list.toString(), list.isEmpty());
-		}
-		finally {
-			captureHandler.close();
 		}
 	}
 

@@ -1,41 +1,34 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-CKEDITOR.dialog.add('link', editor => {
-	var LANG_COMMON = editor.lang.common;
+CKEDITOR.dialog.add('link', (editor) => {
+	const LANG_COMMON = editor.lang.common;
 
-	var LANG_LINK = editor.lang.link;
+	const LANG_LINK = editor.lang.link;
 
-	var PLUGIN = CKEDITOR.plugins.link;
+	const PLUGIN = CKEDITOR.plugins.link;
 
-	var parseLink = function(editor, element) {
-		var instance = this;
+	const parseLink = function (editor, element) {
+		const instance = this;
 
-		var data = {
-			address: ''
+		const data = {
+			address: '',
 		};
 
 		if (element) {
-			var href = element.getAttribute('href');
+			const href = element.getAttribute('href');
 
 			if (editor.config.decodeLinks) {
 				data.address = decodeURIComponent(href);
-			} else {
+			}
+			else {
 				data.address = href;
 			}
-		} else {
-			var selection = editor.getSelection();
+		}
+		else {
+			const selection = editor.getSelection();
 
 			data.address = selection.getSelectedText();
 		}
@@ -53,13 +46,13 @@ CKEDITOR.dialog.add('link', editor => {
 						children: [
 							{
 								commit(data) {
-									var instance = this;
+									const instance = this;
 
 									if (!data) {
 										data = {};
 									}
 
-									var val = instance.getValue();
+									const val = instance.getValue();
 
 									data.address = val;
 									data.text = val;
@@ -68,13 +61,13 @@ CKEDITOR.dialog.add('link', editor => {
 								label: LANG_COMMON.url,
 								required: true,
 								setup(data) {
-									var instance = this;
+									const instance = this;
 
 									if (data) {
 										instance.setValue(data.address);
 									}
 
-									var linkType = instance
+									const linkType = instance
 										.getDialog()
 										.getContentElement('info', 'linkType');
 
@@ -84,24 +77,25 @@ CKEDITOR.dialog.add('link', editor => {
 								},
 								type: 'text',
 								validate() {
-									var instance = this;
+									const instance = this;
 
-									var func = CKEDITOR.dialog.validate.notEmpty(
-										LANG_LINK.noUrl
-									);
+									const func =
+										CKEDITOR.dialog.validate.notEmpty(
+											LANG_LINK.noUrl
+										);
 
 									return func.apply(instance);
-								}
+								},
 							},
 							{
 								id: 'linkBrowse',
 								label: LANG_COMMON.browseServer,
 								onClick(event) {
-									var dialog = event.data.dialog;
+									const dialog = event.data.dialog;
 
-									var editor = dialog.getParentEditor();
+									const editor = dialog.getParentEditor();
 
-									var urlField = dialog.getContentElement(
+									const urlField = dialog.getContentElement(
 										'info',
 										'linkAddress'
 									);
@@ -116,7 +110,8 @@ CKEDITOR.dialog.add('link', editor => {
 												urlField.setValue(
 													selectedItem.title
 												);
-											} else {
+											}
+											else {
 												urlField.setValue(
 													location.origin + newVal
 												);
@@ -125,27 +120,27 @@ CKEDITOR.dialog.add('link', editor => {
 									);
 								},
 								required: true,
-								type: 'button'
-							}
+								type: 'button',
+							},
 						],
 						id: 'linkOptions',
 						padding: 1,
-						type: 'vbox'
-					}
+						type: 'vbox',
+					},
 				],
 				id: 'info',
 				label: LANG_LINK.info,
-				title: LANG_LINK.info
-			}
+				title: LANG_LINK.info,
+			},
 		],
 
 		minHeight: 100,
 		minWidth: 250,
 
 		onFocus() {
-			var instance = this;
+			const instance = this;
 
-			var urlField = instance.getContentElement('info', 'linkAddress');
+			const urlField = instance.getContentElement('info', 'linkAddress');
 
 			urlField.select();
 		},
@@ -153,12 +148,12 @@ CKEDITOR.dialog.add('link', editor => {
 		onLoad() {},
 
 		onOk() {
-			var instance = this;
+			const instance = this;
 
-			var attributes = {};
-			var data = {};
+			const attributes = {};
+			const data = {};
 
-			var editor = instance.getParentEditor();
+			const editor = instance.getParentEditor();
 
 			instance.commitContent(data);
 
@@ -167,12 +162,12 @@ CKEDITOR.dialog.add('link', editor => {
 			attributes.href = data.address;
 
 			if (!instance._.selectedElement) {
-				var selection = editor.getSelection();
+				const selection = editor.getSelection();
 
-				var ranges = selection.getRanges(true);
+				const ranges = selection.getRanges(true);
 
-				if (ranges.length == 1 && ranges[0].collapsed) {
-					var text = new CKEDITOR.dom.text(
+				if (ranges.length === 1 && ranges[0].collapsed) {
+					const text = new CKEDITOR.dom.text(
 						data.text,
 						editor.document
 					);
@@ -183,18 +178,19 @@ CKEDITOR.dialog.add('link', editor => {
 					selection.selectRanges(ranges);
 				}
 
-				var style = new CKEDITOR.style({
+				const style = new CKEDITOR.style({
 					attributes,
-					element: 'a'
+					element: 'a',
 				});
 
 				style.type = CKEDITOR.STYLE_INLINE;
 
 				editor.applyStyle(style);
-			} else {
-				var selectedElement = instance._.selectedElement;
+			}
+			else {
+				const selectedElement = instance._.selectedElement;
 
-				var currentText = selectedElement.getText(data.text);
+				const currentText = selectedElement.getText(data.text);
 
 				selectedElement.setAttributes(attributes);
 
@@ -205,16 +201,16 @@ CKEDITOR.dialog.add('link', editor => {
 		},
 
 		onShow() {
-			var instance = this;
+			const instance = this;
 
 			instance.fakeObj = false;
 
-			var editor = instance.getParentEditor();
+			const editor = instance.getParentEditor();
 
-			var element = PLUGIN.getSelectedLink(editor) || null;
+			const element = PLUGIN.getSelectedLink(editor) || null;
 
 			if (element) {
-				var selection = editor.getSelection();
+				const selection = editor.getSelection();
 
 				selection.selectElement(element);
 			}
@@ -222,6 +218,6 @@ CKEDITOR.dialog.add('link', editor => {
 			instance.setupContent(parseLink.apply(instance, [editor, element]));
 		},
 
-		title: LANG_LINK.title
+		title: LANG_LINK.title,
 	};
 });

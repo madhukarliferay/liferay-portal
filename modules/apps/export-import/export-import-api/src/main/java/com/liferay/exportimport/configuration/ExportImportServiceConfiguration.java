@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.configuration;
@@ -29,12 +20,40 @@ import org.osgi.annotation.versioning.ProviderType;
 	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
+	description = "export-import-service-configuration-description",
 	id = "com.liferay.exportimport.configuration.ExportImportServiceConfiguration",
 	localization = "content/Language",
 	name = "export-import-service-configuration-name"
 )
 @ProviderType
 public interface ExportImportServiceConfiguration {
+
+	@Meta.AD(
+		deflt = "false", description = "include-all-asset-links-help",
+		name = "include-all-asset-links", required = false
+	)
+	public boolean includeAllAssetLinks();
+
+	@Meta.AD(
+		deflt = "true",
+		description = "if-checked,-then-the-generated-previews-and-thumbnails-will-be-included-during-the-staging-process",
+		name = "include-thumbnails-and-previews-during-staging",
+		required = false
+	)
+	public boolean includeThumbnailsAndPreviewsDuringStaging();
+
+	@Meta.AD(
+		deflt = "false",
+		description = "replicate-individual-deletions-by-default-help",
+		name = "replicate-individual-deletions-by-default", required = false
+	)
+	public boolean replicateIndividualDeletionsByDefault();
+
+	@Meta.AD(
+		deflt = "false", description = "publish-permissions-by-default-help",
+		name = "publish-permissions-by-default", required = false
+	)
+	public boolean publishPermissionsByDefault();
 
 	@Meta.AD(
 		deflt = "true", description = "validate-file-entry-references-help",
@@ -55,15 +74,24 @@ public interface ExportImportServiceConfiguration {
 	public boolean validateLayoutReferences();
 
 	@Meta.AD(
-		deflt = "true", description = "staging-delete-temp-lar-on-failure-help",
-		name = "staging-delete-temp-lar-on-failure", required = false
+		description = "validate-layout-references-whitelisted-url-pattern-help",
+		name = "validate-layout-references-whitelisted-url-pattern",
+		required = false
 	)
-	public boolean stagingDeleteTempLarOnFailure();
+	public String[] validateLayoutReferencesWhitelistedURLPatterns();
 
 	@Meta.AD(
-		deflt = "true", description = "staging-delete-temp-lar-on-success-help",
-		name = "staging-delete-temp-lar-on-success", required = false
+		deflt = "true", description = "validate-missing-references-help",
+		name = "validate-missing-references", required = false
 	)
-	public boolean stagingDeleteTempLarOnSuccess();
+	public boolean validateMissingReferences();
+
+	@Meta.AD(
+		deflt = "false",
+		description = "if-checked-then-the-advanced-publication-configuration-screen-will-be-displayed-by-default-when-publishing-pages",
+		name = "show-advanced-staging-configuration-by-default",
+		required = false
+	)
+	public boolean showAdvancedStagingConfigurationByDefault();
 
 }

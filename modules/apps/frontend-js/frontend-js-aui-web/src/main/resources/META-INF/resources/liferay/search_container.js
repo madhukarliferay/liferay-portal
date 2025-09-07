@@ -1,41 +1,36 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 AUI.add(
 	'liferay-search-container',
-	A => {
-		var Lang = A.Lang;
+	(A) => {
+		const Lang = A.Lang;
 
-		var CSS_TEMPLATE = 'lfr-template';
+		const CSS_TEMPLATE = 'd-none';
 
-		var STR_BLANK = '';
+		const STR_BLANK = '';
 
-		var STR_BOUNDING_BOX = 'boundingBox';
+		const STR_BOUNDING_BOX = 'boundingBox';
 
-		var SearchContainer = A.Component.create({
+		const SearchContainer = A.Component.create({
 			_cache: {},
 
 			ATTRS: {
 				id: {
-					value: STR_BLANK
-				}
+					value: STR_BLANK,
+				},
 			},
 
 			NAME: 'searchcontainer',
 
-			constructor(config) {
-				var id = config.id;
+			// NOTE: Do not convert the constructor to an object concise method.
+			//
+			// See: https://stackoverflow.com/a/45119651/2103996
+
+			constructor: function constructor(config) {
+				const id = config.id;
 
 				config.boundingBox = config.boundingBox || '#' + id;
 				config.contentBox =
@@ -45,15 +40,16 @@ AUI.add(
 			},
 
 			get(id) {
-				var instance = this;
+				const instance = this;
 
-				var searchContainer = null;
+				let searchContainer = null;
 
 				if (instance._cache[id]) {
 					searchContainer = instance._cache[id];
-				} else {
+				}
+				else {
 					searchContainer = new SearchContainer({
-						id
+						id,
 					}).render();
 				}
 
@@ -62,7 +58,7 @@ AUI.add(
 
 			prototype: {
 				_addRow() {
-					var instance = this;
+					const instance = this;
 
 					instance._parentContainer.show();
 
@@ -72,11 +68,11 @@ AUI.add(
 				},
 
 				_deleteRow() {
-					var instance = this;
+					const instance = this;
 
-					var action = 'show';
+					let action = 'show';
 
-					if (instance._ids.length == 0) {
+					if (!instance._ids.length) {
 						action = 'hide';
 
 						if (instance._emptyResultsMessage) {
@@ -87,32 +83,44 @@ AUI.add(
 					instance._parentContainer[action]();
 				},
 
-				addRow(arr, id) {
-					var instance = this;
+				addRow(array, id, columnsCssClasses) {
+					const instance = this;
 
-					var row;
+					let row;
 
 					if (id) {
-						var template = instance._table.one('.' + CSS_TEMPLATE);
+						const template = instance._table.one(
+							'.' + CSS_TEMPLATE
+						);
 
 						if (template) {
-							row = template.clone();
+							row = template.previous()
+								? template.previous().clone()
+								: template.clone();
 
-							var cells = row.all('> td');
+							const cells = row.all('> td');
 
 							cells.empty();
 
-							arr.forEach((item, index) => {
-								var cell = cells.item(index);
+							array.forEach((item, index) => {
+								const cell = cells.item(index);
 
 								if (cell) {
 									cell.html(item);
+									if (
+										columnsCssClasses &&
+										columnsCssClasses[index]
+									) {
+										cell.addClass(columnsCssClasses[index]);
+									}
 								}
 							});
 
 							template.placeBefore(row);
 
 							row.removeClass(CSS_TEMPLATE);
+
+							row.attr('id', instance.get('id') + '_' + id);
 
 							instance._ids.push(id);
 						}
@@ -123,7 +131,7 @@ AUI.add(
 							id,
 							ids: instance._ids,
 							row,
-							rowData: arr
+							rowData: array,
 						});
 					}
 
@@ -131,38 +139,42 @@ AUI.add(
 				},
 
 				bindUI() {
-					var instance = this;
+					const instance = this;
 
 					instance.publish('addRow', {
-						defaultFn: instance._addRow
+						defaultFn: instance._addRow,
 					});
 
 					instance.publish('deleteRow', {
-						defaultFn: instance._deleteRow
+						defaultFn: instance._deleteRow,
 					});
 				},
 
-				deleteRow(obj, id) {
-					var instance = this;
+				deleteRow(object, id) {
+					const instance = this;
 
-					if (Lang.isNumber(obj) || Lang.isString(obj)) {
-						var row = null;
+					if (Lang.isNumber(object) || Lang.isString(object)) {
+						let row = null;
 
 						instance._table.all('tr').some((item, index) => {
-							if (!item.hasClass(CSS_TEMPLATE) && index == obj) {
+							if (
+								!item.hasClass(CSS_TEMPLATE) &&
+								index === object
+							) {
 								row = item;
 							}
 
 							return row;
 						});
 
-						obj = row;
-					} else {
-						obj = A.one(obj);
+						object = row;
+					}
+					else {
+						object = A.one(object);
 					}
 
 					if (id) {
-						var index = instance._ids.indexOf(id.toString());
+						const index = instance._ids.indexOf(id.toString());
 
 						if (index > -1) {
 							instance._ids.splice(index, 1);
@@ -174,24 +186,24 @@ AUI.add(
 					instance.fire('deleteRow', {
 						id,
 						ids: instance._ids,
-						row: obj
+						row: object,
 					});
 
-					if (obj) {
-						if (obj.get('nodeName').toLowerCase() !== 'tr') {
-							obj = obj.ancestor('tr');
+					if (object) {
+						if (object.get('nodeName').toLowerCase() !== 'tr') {
+							object = object.ancestor('tr');
 						}
 
 						// LPS-83031
 
 						setTimeout(() => {
-							obj.remove(true);
+							object.remove(true);
 						}, 0);
 					}
 				},
 
 				executeAction(name, params) {
-					var instance = this;
+					const instance = this;
 
 					if (instance._actions[name]) {
 						instance._actions[name](params);
@@ -199,9 +211,9 @@ AUI.add(
 				},
 
 				getData(toArray) {
-					var instance = this;
+					const instance = this;
 
-					var ids = instance._ids;
+					let ids = instance._ids;
 
 					if (!toArray) {
 						ids = ids.join(',');
@@ -211,19 +223,19 @@ AUI.add(
 				},
 
 				getForm() {
-					var instance = this;
+					const instance = this;
 
 					return instance.get(STR_BOUNDING_BOX).ancestor('form');
 				},
 
 				getSize() {
-					var instance = this;
+					const instance = this;
 
 					return instance._ids.length;
 				},
 
 				initializer() {
-					var instance = this;
+					const instance = this;
 
 					instance._ids = [];
 
@@ -233,17 +245,17 @@ AUI.add(
 				},
 
 				registerAction(name, fn) {
-					var instance = this;
+					const instance = this;
 
 					instance._actions[name] = fn;
 				},
 
 				renderUI() {
-					var instance = this;
+					const instance = this;
 
-					var id = instance.get('id');
+					const id = instance.get('id');
 
-					var boundingBox = instance.get(STR_BOUNDING_BOX);
+					const boundingBox = instance.get(STR_BOUNDING_BOX);
 
 					instance._dataStore = A.one('#' + id + 'PrimaryKeys');
 					instance._emptyResultsMessage = A.one(
@@ -251,14 +263,14 @@ AUI.add(
 					);
 
 					if (instance._dataStore) {
-						var dataStoreForm = instance._dataStore.attr('form');
+						const dataStoreForm = instance._dataStore.attr('form');
 
 						if (dataStoreForm) {
-							var method = dataStoreForm
+							const method = dataStoreForm
 								.attr('method')
 								.toLowerCase();
 
-							if (method && method == 'get') {
+							if (method && method === 'get') {
 								instance._dataStore = null;
 							}
 						}
@@ -278,11 +290,11 @@ AUI.add(
 				},
 
 				syncUI() {
-					var instance = this;
+					const instance = this;
 
-					var dataStore = instance._dataStore;
+					const dataStore = instance._dataStore;
 
-					var initialIds = dataStore && dataStore.val();
+					let initialIds = dataStore && dataStore.val();
 
 					if (initialIds) {
 						initialIds = initialIds.split(',');
@@ -292,45 +304,45 @@ AUI.add(
 				},
 
 				updateDataStore(ids) {
-					var instance = this;
+					const instance = this;
 
 					if (ids) {
-						if (typeof ids == 'string') {
+						if (typeof ids === 'string') {
 							ids = ids.split(',');
 						}
 
 						instance._ids = ids;
 					}
 
-					var dataStore = instance._dataStore;
+					const dataStore = instance._dataStore;
 
 					if (dataStore) {
 						dataStore.val(instance._ids.join(','));
 					}
-				}
+				},
 			},
 
-			register(obj) {
-				var instance = this;
+			register(object) {
+				const instance = this;
 
-				var id = obj.get('id');
+				const id = object.get('id');
 
-				instance._cache[id] = obj;
+				instance._cache[id] = object;
 
-				Liferay.component(id, obj, {
-					destroyOnNavigate: true
+				Liferay.component(id, object, {
+					destroyOnNavigate: true,
 				});
 
 				Liferay.fire('search-container:registered', {
-					searchContainer: obj
+					searchContainer: object,
 				});
-			}
+			},
 		});
 
 		Liferay.SearchContainer = SearchContainer;
 	},
 	'',
 	{
-		requires: ['aui-base', 'aui-component']
+		requires: ['aui-base', 'aui-component'],
 	}
 );

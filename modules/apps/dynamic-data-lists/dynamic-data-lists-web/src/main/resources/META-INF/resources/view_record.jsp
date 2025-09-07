@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,6 +19,7 @@ long recordSetId = BeanParamUtil.getLong(record, request, "recordSetId");
 DDLRecordSet recordSet = DDLRecordSetServiceUtil.getRecordSet(recordSetId);
 
 boolean editable = ParamUtil.getBoolean(request, "editable", true);
+
 long formDDMTemplateId = ParamUtil.getLong(request, "formDDMTemplateId");
 
 DDMStructure ddmStructure = recordSet.getDDMStructure(formDDMTemplateId);
@@ -49,7 +41,9 @@ else {
 }
 %>
 
-<div class="container-fluid-1280">
+<%@ include file="/deprecated_warning.jspf" %>
+
+<clay:container-fluid>
 	<c:if test="<%= recordVersion != null %>">
 		<aui:model-context bean="<%= recordVersion %>" model="<%= DDLRecordVersion.class %>" />
 
@@ -100,15 +94,19 @@ else {
 			<aui:button href="<%= redirect %>" name="cancelButton" type="cancel" />
 		</aui:button-row>
 	</aui:fieldset>
-</div>
+</clay:container-fluid>
 
 <%
-PortletURL portletURL = renderResponse.createRenderURL();
+PortalUtil.addPortletBreadcrumbEntry(
+	request, recordSet.getName(locale),
+	PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCPath(
+		"/view_record_set.jsp"
+	).setParameter(
+		"recordSetId", recordSetId
+	).buildString());
 
-portletURL.setParameter("mvcPath", "/view_record_set.jsp");
-portletURL.setParameter("recordSetId", String.valueOf(recordSetId));
-
-PortalUtil.addPortletBreadcrumbEntry(request, recordSet.getName(locale), portletURL.toString());
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.format(request, "view-x", ddmStructure.getName(locale), false), currentURL);
 %>
 

@@ -1,50 +1,6 @@
 <?xml version="1.0"?>
 
 <custom-sql>
-	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.countByG_F">
-		<![CDATA[
-			SELECT
-				COUNT(DISTINCT CONCAT(CAST_TEXT(FragmentEntryLink.classNameId), '-', CAST_TEXT(FragmentEntryLink.classPK))) AS COUNT_VALUE
-			FROM
-				FragmentEntryLink
-			WHERE
-				(FragmentEntryLink.groupId = ?) AND
-				(FragmentEntryLink.fragmentEntryId = ?)
-		]]>
-	</sql>
-	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.countByG_F_C">
-		<![CDATA[
-			SELECT
-				COUNT(DISTINCT FragmentEntryLink.classPK) AS COUNT_VALUE
-			FROM
-				FragmentEntryLink
-			INNER JOIN
-				Layout ON
-					(FragmentEntryLink.groupId = Layout.groupId) AND
-					(FragmentEntryLink.classPK = Layout.plid)
-			WHERE
-				(FragmentEntryLink.groupId = ?) AND
-				(FragmentEntryLink.fragmentEntryId = ?) AND
-				(FragmentEntryLink.classNameId = ?)
-		]]>
-	</sql>
-	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.countByG_F_C_L">
-		<![CDATA[
-			SELECT
-				COUNT(DISTINCT FragmentEntryLink.classPK) AS COUNT_VALUE
-			FROM
-				FragmentEntryLink
-			INNER JOIN
-				LayoutPageTemplateEntry ON
-					(FragmentEntryLink.groupId = LayoutPageTemplateEntry.groupId) AND
-					(FragmentEntryLink.classPK = LayoutPageTemplateEntry.layoutPageTemplateEntryId)
-			WHERE
-				(FragmentEntryLink.groupId = ?) AND
-				(FragmentEntryLink.fragmentEntryId = ?) AND
-				(FragmentEntryLink.classNameId = ?) AND
-				(LayoutPageTemplateEntry.type_ = ?)
-		]]>
-	</sql>
 	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.findByG_F">
 		<![CDATA[
 			SELECT
@@ -54,6 +10,7 @@
 			WHERE
 				(FragmentEntryLink.groupId = ?) AND
 				(FragmentEntryLink.fragmentEntryId = ?) AND
+				(FragmentEntryLink.deleted = [$FALSE$]) AND
 				(
 					FragmentEntryLink.createDate =
 						(
@@ -69,20 +26,31 @@
 				)
 		]]>
 	</sql>
-	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.findByG_F_C">
+	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.findByG_F_P">
 		<![CDATA[
 			SELECT
 				FragmentEntryLink.*
 			FROM
-				Layout
-			INNER JOIN
-				FragmentEntryLink ON
-					(FragmentEntryLink.groupId = Layout.groupId) AND
-					(FragmentEntryLink.classPK = Layout.plid)
+			(
+				SELECT
+					Layout.plid
+				FROM
+					Layout
+				LEFT JOIN
+					LayoutPageTemplateEntry ON
+						(Layout.plid = LayoutPageTemplateEntry.plid) OR
+						(Layout.classPK = LayoutPageTemplateEntry.plid)
+				WHERE
+					LayoutPageTemplateEntry.plid IS NULL
+			)
+			TEMP_TABLE
+				INNER JOIN
+					FragmentEntryLink ON
+						TEMP_TABLE.plid = FragmentEntryLink.plid
 			WHERE
-				(FragmentEntryLink.groupId = ?) AND
-				(FragmentEntryLink.fragmentEntryId = ?) AND
-				(FragmentEntryLink.classNameId = ?) AND
+				(groupId = ?) AND
+				(fragmentEntryId = ?) AND
+				(deleted = [$FALSE$]) AND
 				(
 					FragmentEntryLink.createDate =
 						(
@@ -92,27 +60,38 @@
 								FragmentEntryLink tempFragmentEntryLink
 							WHERE
 								(tempFragmentEntryLink.groupId = FragmentEntryLink.groupId) AND
-								(tempFragmentEntryLink.classPK = FragmentEntryLink.classPK) AND
+								(tempFragmentEntryLink.plid = FragmentEntryLink.plid) AND
 								(tempFragmentEntryLink.fragmentEntryId = FragmentEntryLink.fragmentEntryId)
 						)
 				)
 		]]>
 	</sql>
-	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.findByG_F_C_L">
+	<sql id="com.liferay.fragment.service.persistence.FragmentEntryLinkFinder.findByG_F_P_L">
 		<![CDATA[
 			SELECT
 				FragmentEntryLink.*
 			FROM
-				LayoutPageTemplateEntry
-			INNER JOIN
-				FragmentEntryLink ON
-					(FragmentEntryLink.groupId = LayoutPageTemplateEntry.groupId) AND
-					(FragmentEntryLink.classPK = LayoutPageTemplateEntry.layoutPageTemplateEntryId)
+			(
+				SELECT
+					Layout.plid
+				FROM
+					LayoutPageTemplateEntry
+				INNER JOIN
+					Layout ON
+						(Layout.plid = LayoutPageTemplateEntry.plid) OR
+						(Layout.classPK = LayoutPageTemplateEntry.plid)
+				WHERE
+					LayoutPageTemplateEntry.type_ = ?
+			)
+			TEMP_TABLE
+				INNER JOIN
+					FragmentEntryLink ON
+						TEMP_TABLE.plid = FragmentEntryLink.plid
+
 			WHERE
 				(FragmentEntryLink.groupId = ?) AND
 				(FragmentEntryLink.fragmentEntryId = ?) AND
-				(FragmentEntryLink.classNameId = ?) AND
-				(LayoutPageTemplateEntry.type_ = ?) AND
+				(FragmentEntryLink.deleted = [$FALSE$]) AND
 				(
 					FragmentEntryLink.createDate =
 						(
@@ -122,7 +101,7 @@
 								FragmentEntryLink tempFragmentEntryLink
 							WHERE
 								(tempFragmentEntryLink.groupId = FragmentEntryLink.groupId) AND
-								(tempFragmentEntryLink.classPK = FragmentEntryLink.classPK) AND
+								(tempFragmentEntryLink.plid = FragmentEntryLink.plid) AND
 								(tempFragmentEntryLink.fragmentEntryId = FragmentEntryLink.fragmentEntryId)
 						)
 				)

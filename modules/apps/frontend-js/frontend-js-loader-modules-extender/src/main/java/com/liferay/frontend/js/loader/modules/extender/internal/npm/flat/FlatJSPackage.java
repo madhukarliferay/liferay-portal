@@ -1,26 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.internal.npm.flat;
 
-import com.liferay.frontend.js.loader.modules.extender.npm.JSBundle;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSModule;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSModuleAlias;
-import com.liferay.frontend.js.loader.modules.extender.npm.JSPackage;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackageDependency;
+import com.liferay.frontend.js.loader.modules.extender.npm.ModifiableJSPackage;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.net.URL;
 
@@ -29,13 +21,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Provides a complete implementation of {@link JSPackage}.
  *
  * @author Iván Zaera
  */
-public class FlatJSPackage implements JSPackage {
+public class FlatJSPackage implements ModifiableJSPackage {
 
 	/**
 	 * Constructs a <code>FlatJSPackage</code> with the package's bundle, name,
@@ -65,8 +59,17 @@ public class FlatJSPackage implements JSPackage {
 	 *
 	 * @param jsModule the NPM module
 	 */
+	@Override
 	public void addJSModule(JSModule jsModule) {
-		_jsModules.add(jsModule);
+		if (jsModule.getJSPackage() != this) {
+			throw new IllegalArgumentException(
+				"The given JS module does not belong to this JS package");
+		}
+
+		if (_jsModules.putIfAbsent(jsModule.getName(), jsModule) != null) {
+			throw new IllegalStateException(
+				"A JS module with the same name already exists");
+		}
 	}
 
 	public void addJSModuleAlias(JSModuleAlias jsModuleAlias) {
@@ -98,13 +101,18 @@ public class FlatJSPackage implements JSPackage {
 	}
 
 	@Override
+	public JSModule getJSModule(String packagePath) {
+		return _jsModules.get(packagePath);
+	}
+
+	@Override
 	public Collection<JSModuleAlias> getJSModuleAliases() {
 		return _jsModuleAliases;
 	}
 
 	@Override
 	public Collection<JSModule> getJSModules() {
-		return _jsModules;
+		return _jsModules.values();
 	}
 
 	@Override
@@ -134,8 +142,6 @@ public class FlatJSPackage implements JSPackage {
 
 	@Override
 	public URL getResourceURL(String location) {
-		JSBundle jsBundle = getJSBundle();
-
 		String path = "META-INF/resources/";
 
 		if (_root) {
@@ -147,7 +153,7 @@ public class FlatJSPackage implements JSPackage {
 			sb.append("META-INF/resources/node_modules/");
 
 			if (_name.startsWith(StringPool.AT)) {
-				sb.append(_name.replace(StringPool.SLASH, "%2F"));
+				sb.append(StringUtil.replace(_name, CharPool.SLASH, "%2F"));
 			}
 			else {
 				sb.append(_name);
@@ -161,12 +167,35 @@ public class FlatJSPackage implements JSPackage {
 			path = sb.toString();
 		}
 
-		return jsBundle.getResourceURL(path);
+		return _flatJSBundle.getResourceURL(path);
 	}
 
 	@Override
 	public String getVersion() {
 		return _version;
+	}
+
+	@Override
+	public void removeJSModule(JSModule jsModule) {
+		if (jsModule.getJSPackage() != this) {
+			throw new IllegalArgumentException(
+				"The given JS module does not belong to this JS package");
+		}
+
+		_jsModules.remove(jsModule.getName());
+	}
+
+	@Override
+	public void replaceJSModule(JSModule jsModule) {
+		if (jsModule.getJSPackage() != this) {
+			throw new IllegalArgumentException(
+				"The given JS module does not belong to this JS package");
+		}
+
+		if (_jsModules.replace(jsModule.getName(), jsModule) == null) {
+			throw new IllegalArgumentException(
+				"No JS module with the same name exists");
+		}
 	}
 
 	@Override
@@ -176,7 +205,8 @@ public class FlatJSPackage implements JSPackage {
 
 	private final FlatJSBundle _flatJSBundle;
 	private final List<JSModuleAlias> _jsModuleAliases = new ArrayList<>();
-	private final List<JSModule> _jsModules = new ArrayList<>();
+	private final ConcurrentMap<String, JSModule> _jsModules =
+		new ConcurrentHashMap<>();
 	private final Map<String, JSPackageDependency> _jsPackageDependencies =
 		new HashMap<>();
 	private final String _mainModuleName;

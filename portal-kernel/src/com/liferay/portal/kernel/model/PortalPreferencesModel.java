@@ -1,20 +1,9 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
-
-import com.liferay.portal.kernel.bean.AutoEscape;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -31,9 +20,9 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface PortalPreferencesModel
-	extends BaseModel<PortalPreferences>, MVCCModel {
+	extends BaseModel<PortalPreferences>, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a portal preferences model instance should use the {@link PortalPreferences} interface instead.
@@ -84,6 +73,22 @@ public interface PortalPreferencesModel
 	public void setPortalPreferencesId(long portalPreferencesId);
 
 	/**
+	 * Returns the company ID of this portal preferences.
+	 *
+	 * @return the company ID of this portal preferences
+	 */
+	@Override
+	public long getCompanyId();
+
+	/**
+	 * Sets the company ID of this portal preferences.
+	 *
+	 * @param companyId the company ID of this portal preferences
+	 */
+	@Override
+	public void setCompanyId(long companyId);
+
+	/**
 	 * Returns the owner ID of this portal preferences.
 	 *
 	 * @return the owner ID of this portal preferences
@@ -111,19 +116,11 @@ public interface PortalPreferencesModel
 	 */
 	public void setOwnerType(int ownerType);
 
-	/**
-	 * Returns the preferences of this portal preferences.
-	 *
-	 * @return the preferences of this portal preferences
-	 */
-	@AutoEscape
-	public String getPreferences();
+	@Override
+	public PortalPreferences cloneWithOriginalValues();
 
-	/**
-	 * Sets the preferences of this portal preferences.
-	 *
-	 * @param preferences the preferences of this portal preferences
-	 */
-	public void setPreferences(String preferences);
+	public default String toXmlString() {
+		return null;
+	}
 
 }

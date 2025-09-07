@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.internal.upgrade.v1_3_0;
@@ -43,13 +34,16 @@ public abstract class BaseUpgradeClassNames extends UpgradeProcess {
 		updateClassName("KaleoTaskAssignmentInstance", "assigneeClassName");
 		updateClassName("KaleoTaskInstanceToken", "className");
 
-		updateWorkflowContextEntryClassName("KaleoInstance", "kaleoInstanceId");
-		updateWorkflowContextEntryClassName("KaleoLog", "kaleoLogId");
-		updateWorkflowContextEntryClassName(
+		_updateWorkflowContextEntryClassName(
+			"KaleoInstance", "kaleoInstanceId");
+		_updateWorkflowContextEntryClassName("KaleoLog", "kaleoLogId");
+		_updateWorkflowContextEntryClassName(
 			"KaleoTaskInstanceToken", "kaleoTaskInstanceTokenId");
-		updateWorkflowContextEntryClassName(
+		_updateWorkflowContextEntryClassName(
 			"KaleoTimerInstanceToken", "kaleoTimerInstanceTokenId");
 	}
+
+	protected abstract String getWhereClause();
 
 	protected abstract void updateClassName(
 		String tableName, String columnName);
@@ -62,31 +56,32 @@ public abstract class BaseUpgradeClassNames extends UpgradeProcess {
 			String workflowContext)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"update ", tableName, " set workflowContext = ? where ",
 					primaryKeyName, " = ?"))) {
 
-			ps.setString(1, workflowContext);
-			ps.setLong(2, primaryKeyValue);
+			preparedStatement.setString(1, workflowContext);
+			preparedStatement.setLong(2, primaryKeyValue);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
-	protected void updateWorkflowContextEntryClassName(
+	private void _updateWorkflowContextEntryClassName(
 			String tableName, String primaryKeyName)
 		throws Exception {
 
 		try (LoggingTimer loggingTimer = new LoggingTimer(tableName);
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select ", primaryKeyName, ", workflowContext from ",
-					tableName, " where workflowContext is not null"));
-			ResultSet rs = ps.executeQuery()) {
+					tableName, getWhereClause()));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String workflowContextJSON = rs.getString("workflowContext");
+			while (resultSet.next()) {
+				String workflowContextJSON = resultSet.getString(
+					"workflowContext");
 
 				if (Validator.isNull(workflowContextJSON)) {
 					continue;
@@ -96,7 +91,7 @@ public abstract class BaseUpgradeClassNames extends UpgradeProcess {
 					updateWorkflowContext(workflowContextJSON);
 
 				if (workflowContext != null) {
-					long primaryKeyValue = rs.getLong(primaryKeyName);
+					long primaryKeyValue = resultSet.getLong(primaryKeyName);
 
 					updateWorkflowContext(
 						tableName, primaryKeyName, primaryKeyValue,

@@ -1,42 +1,36 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
-import com.liferay.portal.kernel.model.Account;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.model.ListTypeConstants;
 import com.liferay.portal.kernel.model.Phone;
 import com.liferay.portal.kernel.model.Website;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.service.base.CompanyServiceBaseImpl;
-import com.liferay.portal.util.PrefsPropsUtil;
+import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 import com.liferay.ratings.kernel.transformer.RatingsDataTransformerUtil;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.io.InputStream;
 
 import java.util.List;
-
-import javax.portlet.PortletPreferences;
 
 /**
  * Provides the local service for accessing, adding, checking, and updating
@@ -52,10 +46,11 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	/**
 	 * Adds a company.
 	 *
+	 * @param	companyId the primary key of the company (optionally <code>null</code> or
+	 * 	 *         <code>0</code> to generate a key automatically)
 	 * @param  webId the company's web domain
 	 * @param  virtualHost the company's virtual host name
 	 * @param  mx the company's mail domain
-	 * @param  system whether the company is the very first company (i.e., the
 	 * @param  maxUsers the max number of company users (optionally
 	 *         <code>0</code>)
 	 * @param  active whether the company is active
@@ -64,7 +59,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company addCompany(
-			String webId, String virtualHost, String mx, boolean system,
+			long companyId, String webId, String virtualHost, String mx,
 			int maxUsers, boolean active)
 		throws PortalException {
 
@@ -75,7 +70,42 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		}
 
 		return companyLocalService.addCompany(
-			webId, virtualHost, mx, system, maxUsers, active);
+			companyId, webId, virtualHost, mx, maxUsers, active, true, null,
+			null, null, null, null, null);
+	}
+
+	/**
+	 * Adds a company.
+	 *
+	 * @param  webId the company's web domain
+	 * @param  virtualHost the company's virtual host name
+	 * @param  mx the company's mail domain
+	 * @param  maxUsers the max number of company users (optionally
+	 *         <code>0</code>)
+	 * @param  active whether the company is active
+	 * @return the company
+	 */
+	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
+	@Override
+	public Company addCompany(
+			Long companyId, String webId, String virtualHost, String mx,
+			int maxUsers, boolean active, String defaultAdminPassword,
+			String defaultAdminScreenName, String defaultAdminEmailAddress,
+			String defaultAdminFirstName, String defaultAdminMiddleName,
+			String defaultAdminLastName)
+		throws PortalException {
+
+		PermissionChecker permissionChecker = getPermissionChecker();
+
+		if (!permissionChecker.isOmniadmin()) {
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
+		}
+
+		return companyLocalService.addCompany(
+			companyId, webId, virtualHost, mx, maxUsers, active, true,
+			defaultAdminPassword, defaultAdminScreenName,
+			defaultAdminEmailAddress, defaultAdminFirstName,
+			defaultAdminMiddleName, defaultAdminLastName);
 	}
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
@@ -97,13 +127,27 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 */
 	@Override
 	public void deleteLogo(long companyId) throws PortalException {
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
 		}
 
 		companyLocalService.deleteLogo(companyId);
+	}
+
+	@Override
+	public void forEachCompany(
+			UnsafeConsumer<Company, Exception> unsafeConsumer)
+		throws Exception {
+
+		PermissionChecker permissionChecker = getPermissionChecker();
+
+		if (!permissionChecker.isOmniadmin()) {
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
+		}
+
+		companyLocalService.forEachCompany(unsafeConsumer);
 	}
 
 	/**
@@ -125,28 +169,6 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	@Override
 	public Company getCompanyById(long companyId) throws PortalException {
 		return companyLocalService.getCompanyById(companyId);
-	}
-
-	/**
-	 * Returns the company with the logo.
-	 *
-	 * @param  logoId the ID of the company's logo
-	 * @return Returns the company with the logo
-	 */
-	@Override
-	public Company getCompanyByLogoId(long logoId) throws PortalException {
-		return companyLocalService.getCompanyByLogoId(logoId);
-	}
-
-	/**
-	 * Returns the company with the mail domian.
-	 *
-	 * @param  mx the company's mail domain
-	 * @return Returns the company with the mail domain
-	 */
-	@Override
-	public Company getCompanyByMx(String mx) throws PortalException {
-		return companyLocalService.getCompanyByMx(mx);
 	}
 
 	/**
@@ -187,7 +209,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	public void removePreferences(long companyId, String[] keys)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -257,7 +279,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			String tickerSymbol, String industry, String type, String size)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -299,7 +321,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  emailAddresses the company's email addresses
 	 * @param  phones the company's phone numbers
 	 * @param  websites the company's websites
-	 * @param  properties the company's properties
+	 * @param  unicodeProperties the company's properties
 	 * @return the company with the primary key
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
@@ -311,7 +333,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			String tickerSymbol, String industry, String type, String size,
 			String languageId, String timeZoneId, List<Address> addresses,
 			List<EmailAddress> emailAddresses, List<Phone> phones,
-			List<Website> websites, UnicodeProperties properties)
+			List<Website> websites, UnicodeProperties unicodeProperties)
 		throws PortalException {
 
 		PortletPreferences oldCompanyPortletPreferences =
@@ -324,22 +346,23 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 
 		updateDisplay(company.getCompanyId(), languageId, timeZoneId);
 
-		updatePreferences(company.getCompanyId(), properties);
+		updatePreferences(company.getCompanyId(), unicodeProperties);
 
 		RatingsDataTransformerUtil.transformCompanyRatingsData(
-			companyId, oldCompanyPortletPreferences, properties);
+			companyId, oldCompanyPortletPreferences, unicodeProperties);
 
 		UsersAdminUtil.updateAddresses(
-			Account.class.getName(), company.getAccountId(), addresses);
+			Company.class.getName(), company.getCompanyId(), addresses,
+			ListTypeConstants.COMPANY_ADDRESS);
 
 		UsersAdminUtil.updateEmailAddresses(
-			Account.class.getName(), company.getAccountId(), emailAddresses);
+			Company.class.getName(), company.getCompanyId(), emailAddresses);
 
 		UsersAdminUtil.updatePhones(
-			Account.class.getName(), company.getAccountId(), phones);
+			Company.class.getName(), company.getCompanyId(), phones);
 
 		UsersAdminUtil.updateWebsites(
-			Account.class.getName(), company.getAccountId(), websites);
+			Company.class.getName(), company.getCompanyId(), websites);
 
 		return company;
 	}
@@ -356,7 +379,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			long companyId, String languageId, String timeZoneId)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -376,7 +399,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	public Company updateLogo(long companyId, byte[] bytes)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -397,7 +420,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	public Company updateLogo(long companyId, InputStream inputStream)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -411,22 +434,24 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * found in portal.properties.
 	 *
 	 * @param companyId the primary key of the company
-	 * @param properties the company's properties. See {@link UnicodeProperties}
+	 * @param unicodeProperties the company's properties. See {@link
+	 *        UnicodeProperties}
 	 */
 	@Override
-	public void updatePreferences(long companyId, UnicodeProperties properties)
+	public void updatePreferences(
+			long companyId, UnicodeProperties unicodeProperties)
 		throws PortalException {
 
-		if (!(roleLocalService.hasUserRole(
+		if (!(_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true) ||
-			  roleLocalService.hasUserRole(
+			  _roleLocalService.hasUserRole(
 				  getUserId(), companyId, RoleConstants.ANALYTICS_ADMINISTRATOR,
 				  true))) {
 
 			throw new PrincipalException();
 		}
 
-		companyLocalService.updatePreferences(companyId, properties);
+		companyLocalService.updatePreferences(companyId, unicodeProperties);
 	}
 
 	/**
@@ -455,7 +480,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			boolean strangersVerify, boolean siteLogo)
 		throws PortalException {
 
-		if (!roleLocalService.hasUserRole(
+		if (!_roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
 			throw new PrincipalException();
@@ -465,5 +490,8 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			companyId, authType, autoLogin, sendPassword, strangers,
 			strangersWithMx, strangersVerify, siteLogo);
 	}
+
+	@BeanReference(type = RoleLocalService.class)
+	private RoleLocalService _roleLocalService;
 
 }

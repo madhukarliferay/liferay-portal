@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.util;
 
+import com.liferay.dynamic.data.mapping.constants.DDMConstants;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
@@ -24,21 +16,24 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.AggregateResourceBundle;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
-import com.liferay.portal.kernel.util.ResourceBundleLoaderUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,14 +42,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.osgi.annotation.versioning.ProviderType;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Eduardo García
@@ -64,7 +52,7 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 
 	@Override
 	public String getAvailableFields() {
-		return "Liferay.FormBuilder.AVAILABLE_FIELDS.DDM_STRUCTURE";
+		return DDMConstants.AVAILABLE_FIELDS;
 	}
 
 	@Override
@@ -172,6 +160,8 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 		return getDefaultEditTemplateTitle(locale);
 	}
 
+	public abstract String getPortletId();
+
 	@Override
 	public String getStorageType() {
 		return StringPool.BLANK;
@@ -214,12 +204,12 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 
 		classPKs.add(0L);
 
-		List<DDMStructure> structures =
+		List<DDMStructure> ddmStructures =
 			DDMStructureLocalServiceUtil.getClassStructures(
 				companyId, PortalUtil.getClassNameId(getStructureType()));
 
-		for (DDMStructure structure : structures) {
-			classPKs.add(structure.getPrimaryKey());
+		for (DDMStructure ddmStructure : ddmStructures) {
+			classPKs.add(ddmStructure.getPrimaryKey());
 		}
 
 		return ArrayUtil.toLongArray(classPKs);
@@ -311,15 +301,15 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 			return ParamUtil.getString(liferayPortletRequest, "redirect");
 		}
 
-		String portletId = PortletProviderUtil.getPortletId(
-			DDMStructure.class.getName(), PortletProvider.Action.VIEW);
-
-		PortletURL portletURL = PortalUtil.getControlPanelPortletURL(
-			liferayPortletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter("mvcPath", "/view.jsp");
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			PortalUtil.getControlPanelPortletURL(
+				liferayPortletRequest,
+				PortletProviderUtil.getPortletId(
+					DDMStructure.class.getName(), PortletProvider.Action.VIEW),
+				PortletRequest.RENDER_PHASE)
+		).setMVCPath(
+			"/view.jsp"
+		).buildString();
 	}
 
 	@Override
@@ -354,11 +344,7 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 			return false;
 		}
 
-		if (classPK == 0) {
-			return true;
-		}
-
-		if (structure.getParentStructureId() == 0) {
+		if ((classPK == 0) || (structure.getParentStructureId() == 0)) {
 			return true;
 		}
 
@@ -432,37 +418,10 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 	}
 
 	protected ResourceBundle getResourceBundle(Locale locale) {
-		Bundle bundle = FrameworkUtil.getBundle(getClass());
-
-		ResourceBundleLoader resourceBundleLoader =
-			ResourceBundleLoaderUtil.
-				getResourceBundleLoaderByBundleSymbolicName(
-					bundle.getSymbolicName());
-
-		ResourceBundle ddmDisplayResourceBundle = null;
-
-		if (resourceBundleLoader != null) {
-			ddmDisplayResourceBundle = resourceBundleLoader.loadResourceBundle(
-				locale);
-		}
-
-		ResourceBundle baseDDMDisplayResourceBundle =
-			ResourceBundleUtil.getBundle(
-				"content.Language", locale,
-				BaseDDMDisplay.class.getClassLoader());
-
 		ResourceBundleLoader portalResourceBundleLoader =
 			ResourceBundleLoaderUtil.getPortalResourceBundleLoader();
 
-		if (ddmDisplayResourceBundle == null) {
-			return new AggregateResourceBundle(
-				baseDDMDisplayResourceBundle,
-				portalResourceBundleLoader.loadResourceBundle(locale));
-		}
-
-		return new AggregateResourceBundle(
-			ddmDisplayResourceBundle, baseDDMDisplayResourceBundle,
-			portalResourceBundleLoader.loadResourceBundle(locale));
+		return portalResourceBundleLoader.loadResourceBundle(locale);
 	}
 
 	protected String getViewTemplatesURL(
@@ -471,26 +430,26 @@ public abstract class BaseDDMDisplay implements DDMDisplay {
 			long classPK, long resourceClassNameId)
 		throws Exception {
 
-		String portletId = PortletProviderUtil.getPortletId(
-			DDMStructure.class.getName(), PortletProvider.Action.VIEW);
-
-		PortletURL portletURL = PortalUtil.getControlPanelPortletURL(
-			liferayPortletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter("mvcPath", "/view_template.jsp");
-		portletURL.setParameter("classNameId", String.valueOf(classNameId));
-		portletURL.setParameter("classPK", String.valueOf(classPK));
-		portletURL.setParameter(
-			"resourceClassNameId", String.valueOf(resourceClassNameId));
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			PortalUtil.getControlPanelPortletURL(
+				liferayPortletRequest,
+				PortletProviderUtil.getPortletId(
+					DDMStructure.class.getName(), PortletProvider.Action.VIEW),
+				PortletRequest.RENDER_PHASE)
+		).setMVCPath(
+			"/view_template.jsp"
+		).setParameter(
+			"classNameId", classNameId
+		).setParameter(
+			"classPK", classPK
+		).setParameter(
+			"resourceClassNameId", resourceClassNameId
+		).buildString();
 	}
 
 	private static final Set<String> _templateLanguageTypes = SetUtil.fromArray(
-		new String[] {
-			TemplateConstants.LANG_TYPE_FTL, TemplateConstants.LANG_TYPE_VM
-		});
+		TemplateConstants.LANG_TYPE_FTL, TemplateConstants.LANG_TYPE_VM);
 	private static final Set<String> _viewTemplateExcludedColumnNames =
-		SetUtil.fromArray(new String[] {"structure"});
+		SetUtil.fromArray("structure");
 
 }

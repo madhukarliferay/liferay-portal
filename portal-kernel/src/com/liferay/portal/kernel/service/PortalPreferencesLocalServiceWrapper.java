@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link PortalPreferencesLocalService}.
@@ -25,21 +18,20 @@ public class PortalPreferencesLocalServiceWrapper
 	implements PortalPreferencesLocalService,
 			   ServiceWrapper<PortalPreferencesLocalService> {
 
+	public PortalPreferencesLocalServiceWrapper() {
+		this(null);
+	}
+
 	public PortalPreferencesLocalServiceWrapper(
 		PortalPreferencesLocalService portalPreferencesLocalService) {
 
 		_portalPreferencesLocalService = portalPreferencesLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PortalPreferencesLocalServiceUtil} to access the portal preferences local service. Add custom service methods to <code>com.liferay.portal.service.impl.PortalPreferencesLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.PortalPreferences
 		addPortalPreferences(
-			long ownerId, int ownerType, java.lang.String defaultPreferences) {
+			long ownerId, int ownerType, String defaultPreferences) {
 
 		return _portalPreferencesLocalService.addPortalPreferences(
 			ownerId, ownerType, defaultPreferences);
@@ -47,6 +39,10 @@ public class PortalPreferencesLocalServiceWrapper
 
 	/**
 	 * Adds the portal preferences to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortalPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param portalPreferences the portal preferences
 	 * @return the portal preferences that was added
@@ -59,6 +55,18 @@ public class PortalPreferencesLocalServiceWrapper
 
 		return _portalPreferencesLocalService.addPortalPreferences(
 			portalPreferences);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _portalPreferencesLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -90,6 +98,10 @@ public class PortalPreferencesLocalServiceWrapper
 	/**
 	 * Deletes the portal preferences with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortalPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param portalPreferencesId the primary key of the portal preferences
 	 * @return the portal preferences that was removed
 	 * @throws PortalException if a portal preferences with the primary key could not be found
@@ -106,6 +118,10 @@ public class PortalPreferencesLocalServiceWrapper
 	/**
 	 * Deletes the portal preferences from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortalPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param portalPreferences the portal preferences
 	 * @return the portal preferences that was removed
 	 */
@@ -117,6 +133,18 @@ public class PortalPreferencesLocalServiceWrapper
 
 		return _portalPreferencesLocalService.deletePortalPreferences(
 			portalPreferences);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _portalPreferencesLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _portalPreferencesLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -247,10 +275,13 @@ public class PortalPreferencesLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _portalPreferencesLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -305,7 +336,7 @@ public class PortalPreferencesLocalServiceWrapper
 	}
 
 	@Override
-	public javax.portlet.PortletPreferences getPreferences(
+	public jakarta.portlet.PortletPreferences getPreferences(
 		long ownerId, int ownerType) {
 
 		return _portalPreferencesLocalService.getPreferences(
@@ -313,8 +344,8 @@ public class PortalPreferencesLocalServiceWrapper
 	}
 
 	@Override
-	public javax.portlet.PortletPreferences getPreferences(
-		long ownerId, int ownerType, java.lang.String defaultPreferences) {
+	public jakarta.portlet.PortletPreferences getPreferences(
+		long ownerId, int ownerType, String defaultPreferences) {
 
 		return _portalPreferencesLocalService.getPreferences(
 			ownerId, ownerType, defaultPreferences);
@@ -322,6 +353,10 @@ public class PortalPreferencesLocalServiceWrapper
 
 	/**
 	 * Updates the portal preferences in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PortalPreferencesLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param portalPreferences the portal preferences
 	 * @return the portal preferences that was updated
@@ -347,10 +382,15 @@ public class PortalPreferencesLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.PortalPreferences updatePreferences(
-		long ownerId, int ownerType, java.lang.String xml) {
+		long ownerId, int ownerType, String xml) {
 
 		return _portalPreferencesLocalService.updatePreferences(
 			ownerId, ownerType, xml);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _portalPreferencesLocalService.getBasePersistence();
 	}
 
 	@Override

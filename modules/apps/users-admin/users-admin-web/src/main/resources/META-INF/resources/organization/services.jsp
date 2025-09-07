@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -102,7 +93,7 @@ Format timeFormat = FastDateFormatFactoryUtil.getSimpleDateFormat("HH:mm", local
 
 <liferay-ui:error key="<%= NoSuchListTypeException.class.getName() + Organization.class.getName() + ListTypeConstants.ORGANIZATION_SERVICE %>" message="please-select-a-type" />
 
-<aui:fieldset id='<%= renderResponse.getNamespace() + "services" %>'>
+<aui:fieldset id='<%= liferayPortletResponse.getNamespace() + "services" %>'>
 
 	<%
 	Calendar cal = CalendarFactoryUtil.getCalendar();
@@ -133,18 +124,17 @@ Format timeFormat = FastDateFormatFactoryUtil.getSimpleDateFormat("HH:mm", local
 			<div class="row-fields">
 				<aui:input name='<%= "orgLaborId" + orgLaborsIndex %>' type="hidden" />
 
-				<aui:select label="type" listType="<%= ListTypeConstants.ORGANIZATION_SERVICE %>" name='<%= "orgLaborTypeId" + orgLaborsIndex %>' />
+				<aui:select label="type" listType="<%= ListTypeConstants.ORGANIZATION_SERVICE %>" name='<%= "orgLaborListTypeId" + orgLaborsIndex %>' />
 
 				<%
 				for (int j = 0; j < days.length; j++) {
 					int close = closeArray[j];
-					String day = days[j];
 					int open = openArray[j];
 					String paramPrefix = paramPrefixes[j];
 				%>
 
 					<div class="org-labor-entry">
-						<h5 class="org-labor-entry-title"><%= day %></h5>
+						<div class="h5 org-labor-entry-title"><%= days[j] %></div>
 
 						<aui:select label="Open" name='<%= paramPrefix + "Open" + orgLaborsIndex %>'>
 							<aui:option value="-1" />
@@ -219,6 +209,6 @@ Format timeFormat = FastDateFormatFactoryUtil.getSimpleDateFormat("HH:mm", local
 	new Liferay.AutoFields({
 		contentBox: '#<portlet:namespace />services',
 		fieldIndexes: '<portlet:namespace />orgLaborsIndexes',
-		namespace: '<portlet:namespace />'
+		namespace: '<portlet:namespace />',
 	}).render();
 </aui:script>

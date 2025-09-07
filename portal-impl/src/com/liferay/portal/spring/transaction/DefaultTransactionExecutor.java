@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.spring.transaction;
 
+import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.portal.kernel.transaction.TransactionLifecycleManager;
 
 import org.springframework.transaction.PlatformTransactionManager;
@@ -22,7 +14,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Michael C. Han
  * @author Shuyang Zhou
  */
-public class DefaultTransactionExecutor extends BaseTransactionExecutor {
+public class DefaultTransactionExecutor implements TransactionExecutor {
 
 	public DefaultTransactionExecutor(
 		PlatformTransactionManager platformTransactionManager) {
@@ -41,10 +33,10 @@ public class DefaultTransactionExecutor extends BaseTransactionExecutor {
 			_platformTransactionManager.commit(
 				transactionStatusAdapter.getTransactionStatus());
 		}
-		catch (Throwable t) {
-			transactionManagerThrowable = t;
+		catch (Throwable throwable) {
+			transactionManagerThrowable = throwable;
 
-			throw t;
+			throw throwable;
 		}
 		finally {
 			if (transactionManagerThrowable == null) {
@@ -65,18 +57,43 @@ public class DefaultTransactionExecutor extends BaseTransactionExecutor {
 	}
 
 	@Override
+	public <T> T execute(
+			TransactionAttributeAdapter transactionAttributeAdapter,
+			UnsafeSupplier<T, Throwable> unsafeSupplier)
+		throws Throwable {
+
+		TransactionStatusAdapter transactionStatusAdapter = start(
+			transactionAttributeAdapter);
+
+		T returnValue = null;
+
+		try {
+			returnValue = unsafeSupplier.get();
+		}
+		catch (Throwable throwable) {
+			rollback(
+				throwable, transactionAttributeAdapter,
+				transactionStatusAdapter);
+		}
+
+		commit(transactionAttributeAdapter, transactionStatusAdapter);
+
+		return returnValue;
+	}
+
+	@Override
 	public PlatformTransactionManager getPlatformTransactionManager() {
 		return _platformTransactionManager;
 	}
 
 	@Override
 	public void rollback(
-			Throwable throwable,
+			Throwable throwable1,
 			TransactionAttributeAdapter transactionAttributeAdapter,
 			TransactionStatusAdapter transactionStatusAdapter)
 		throws Throwable {
 
-		boolean rollback = transactionAttributeAdapter.rollbackOn(throwable);
+		boolean rollback = transactionAttributeAdapter.rollbackOn(throwable1);
 
 		Throwable transactionManagerThrowable = null;
 
@@ -90,22 +107,22 @@ public class DefaultTransactionExecutor extends BaseTransactionExecutor {
 					transactionStatusAdapter.getTransactionStatus());
 			}
 
-			throw throwable;
+			throw throwable1;
 		}
-		catch (Throwable t) {
-			if (t != throwable) {
-				t.addSuppressed(throwable);
+		catch (Throwable throwable2) {
+			if (throwable2 != throwable1) {
+				throwable2.addSuppressed(throwable1);
 
-				transactionManagerThrowable = t;
+				transactionManagerThrowable = throwable2;
 			}
 
-			throw t;
+			throw throwable2;
 		}
 		finally {
 			if (rollback) {
 				TransactionLifecycleManager.fireTransactionRollbackedEvent(
 					transactionAttributeAdapter, transactionStatusAdapter,
-					throwable);
+					throwable1);
 			}
 			else if (transactionManagerThrowable == null) {
 				TransactionLifecycleManager.fireTransactionCommittedEvent(
@@ -121,7 +138,7 @@ public class DefaultTransactionExecutor extends BaseTransactionExecutor {
 
 			if (transactionManagerThrowable == null) {
 				transactionStatusAdapter.reportLifecycleListenerThrowables(
-					throwable);
+					throwable1);
 			}
 			else {
 				transactionStatusAdapter.reportLifecycleListenerThrowables(

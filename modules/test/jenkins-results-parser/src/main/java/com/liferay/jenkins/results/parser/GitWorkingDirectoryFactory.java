@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -38,11 +29,16 @@ public class GitWorkingDirectoryFactory {
 
 		if (gitRepositoryDir == null) {
 			if (gitRepositoryName.equals("liferay-portal") &&
+				!upstreamBranchName.startsWith("faro-v") &&
 				!upstreamBranchName.equals("master")) {
 
 				gitRepositoryName += "-ee";
 
 				gitRepositoryDirName = "liferay-portal-" + upstreamBranchName;
+
+				if (upstreamBranchName.contains("release")) {
+					gitRepositoryDirName = "liferay-portal-ee";
+				}
 			}
 
 			if (gitRepositoryName.startsWith("com-liferay-") &&
@@ -54,6 +50,10 @@ public class GitWorkingDirectoryFactory {
 			gitRepositoryDir = new File(
 				JenkinsResultsParserUtil.getBaseGitRepositoryDir(),
 				gitRepositoryDirName);
+		}
+
+		if (gitRepositoryName == null) {
+			gitRepositoryName = gitRepositoryDir.getName();
 		}
 
 		if (!gitRepositoryDir.exists()) {
@@ -72,22 +72,34 @@ public class GitWorkingDirectoryFactory {
 				return _gitWorkingDirectories.get(key);
 			}
 
-			gitRepositoryDirName = gitRepositoryDir.getName();
-
 			GitWorkingDirectory gitWorkingDirectory = null;
 
-			if (gitRepositoryDirName.startsWith("com-liferay-")) {
+			if (gitRepositoryName.startsWith("com-liferay-") ||
+				gitRepositoryDirPath.matches(".*/com-liferay-[^/]*")) {
+
 				gitWorkingDirectory = new SubrepositoryGitWorkingDirectory(
 					upstreamBranchName, gitRepositoryDirPath,
 					gitRepositoryName);
 			}
-			else if (gitRepositoryDirName.startsWith("liferay-plugins")) {
+			else if (gitRepositoryName.startsWith("liferay-plugins") ||
+					 gitRepositoryDirPath.matches(".*/liferay-plugins[^/]*")) {
+
 				gitWorkingDirectory = new PluginsGitWorkingDirectory(
 					upstreamBranchName, gitRepositoryDirPath,
 					gitRepositoryName);
 			}
-			else if (gitRepositoryDirName.startsWith("liferay-portal")) {
+			else if (gitRepositoryName.startsWith("liferay-portal") ||
+					 gitRepositoryDirPath.matches(".*/liferay-portal[^/]*")) {
+
 				gitWorkingDirectory = new PortalGitWorkingDirectory(
+					upstreamBranchName, gitRepositoryDirPath,
+					gitRepositoryName);
+			}
+			else if (gitRepositoryName.equals("liferay-qa-websites-ee") ||
+					 gitRepositoryDirPath.matches(
+						 ".*/liferay-qa-websites-ee")) {
+
+				gitWorkingDirectory = new QAWebsitesGitWorkingDirectory(
 					upstreamBranchName, gitRepositoryDirPath,
 					gitRepositoryName);
 			}
@@ -101,12 +113,14 @@ public class GitWorkingDirectoryFactory {
 
 			return gitWorkingDirectory;
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
+			ioException.printStackTrace();
+
 			throw new RuntimeException(
 				JenkinsResultsParserUtil.combine(
 					"Unable to create Git working directory for directory ",
 					gitRepositoryDir.getPath()),
-				ioe);
+				ioException);
 		}
 	}
 
@@ -120,6 +134,11 @@ public class GitWorkingDirectoryFactory {
 	public static GitWorkingDirectory newGitWorkingDirectory(
 		String upstreamBranchName, String gitRepositoryDirPath,
 		String gitRepositoryName) {
+
+		if (gitRepositoryDirPath == null) {
+			return newGitWorkingDirectory(
+				upstreamBranchName, (File)null, gitRepositoryName);
+		}
 
 		return newGitWorkingDirectory(
 			upstreamBranchName, new File(gitRepositoryDirPath),

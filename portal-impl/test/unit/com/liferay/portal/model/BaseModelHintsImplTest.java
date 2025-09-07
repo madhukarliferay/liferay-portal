@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model;
@@ -17,6 +8,7 @@ package com.liferay.portal.model;
 import com.liferay.portal.kernel.model.ModelHintsCallback;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Tuple;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.File;
 import java.io.InputStream;
@@ -34,6 +26,8 @@ import org.dom4j.io.SAXReader;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.xml.sax.InputSource;
@@ -42,6 +36,11 @@ import org.xml.sax.InputSource;
  * @author Andrew Betts
  */
 public class BaseModelHintsImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -164,19 +163,13 @@ public class BaseModelHintsImplTest {
 
 	@Test
 	public void testGetMaxLength() {
-		int maxLength = _testBaseModelHintsImpl.getMaxLength(
-			_MODEL, "simpleField");
-
-		Assert.assertEquals(75, maxLength);
-
-		maxLength = _testBaseModelHintsImpl.getMaxLength(_MODEL, "hintField");
-
-		Assert.assertEquals(150, maxLength);
-
-		maxLength = _testBaseModelHintsImpl.getMaxLength(
-			_MODEL, "combinedField");
-
-		Assert.assertEquals(4000, maxLength);
+		Assert.assertEquals(
+			75, _testBaseModelHintsImpl.getMaxLength(_MODEL, "simpleField"));
+		Assert.assertEquals(
+			150, _testBaseModelHintsImpl.getMaxLength(_MODEL, "hintField"));
+		Assert.assertEquals(
+			4000,
+			_testBaseModelHintsImpl.getMaxLength(_MODEL, "combinedField"));
 	}
 
 	@Test
@@ -206,19 +199,19 @@ public class BaseModelHintsImplTest {
 
 	@Test
 	public void testGetSanitizeTuples() {
-		List<Tuple> sanitizedTuples = _testBaseModelHintsImpl.getSanitizeTuples(
+		List<Tuple> sanitizeTuples = _testBaseModelHintsImpl.getSanitizeTuples(
 			_MODEL);
 
 		Assert.assertEquals(
-			sanitizedTuples.toString(), 2, sanitizedTuples.size());
+			sanitizeTuples.toString(), 2, sanitizeTuples.size());
 
-		Tuple sanitizeFieldTuple = sanitizedTuples.get(0);
+		Tuple sanitizeFieldTuple = sanitizeTuples.get(0);
 
 		Assert.assertEquals("sanitizeField", sanitizeFieldTuple.getObject(0));
 		Assert.assertEquals("text/html", sanitizeFieldTuple.getObject(1));
 		Assert.assertEquals("ALL", sanitizeFieldTuple.getObject(2));
 
-		Tuple combinedFieldTuple = sanitizedTuples.get(1);
+		Tuple combinedFieldTuple = sanitizeTuples.get(1);
 
 		Assert.assertEquals("combinedField", combinedFieldTuple.getObject(0));
 		Assert.assertEquals("text/plain", combinedFieldTuple.getObject(1));
@@ -431,17 +424,17 @@ public class BaseModelHintsImplTest {
 		}
 
 		@Override
-		public Document read(InputSource in) {
+		public Document read(InputSource inputSource) {
 			return _document;
 		}
 
 		@Override
-		public Document read(InputStream in) {
+		public Document read(InputStream inputStream) {
 			return _document;
 		}
 
 		@Override
-		public Document read(InputStream in, String systemId) {
+		public Document read(InputStream inputStream, String systemId) {
 			return _document;
 		}
 

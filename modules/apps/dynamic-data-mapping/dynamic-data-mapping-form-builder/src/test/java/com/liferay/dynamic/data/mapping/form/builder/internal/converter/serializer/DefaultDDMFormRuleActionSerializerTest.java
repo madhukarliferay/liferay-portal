@@ -1,22 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter.serializer;
 
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.action.DefaultDDMFormRuleAction;
+import com.liferay.dynamic.data.mapping.spi.converter.serializer.SPIDDMFormRuleSerializerContext;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.mockito.Mock;
@@ -25,6 +21,11 @@ import org.mockito.Mock;
  * @author Leonardo Barros
  */
 public class DefaultDDMFormRuleActionSerializerTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testSerializeSetEnabled() {
@@ -35,7 +36,7 @@ public class DefaultDDMFormRuleActionSerializerTest {
 			new DefaultDDMFormRuleActionSerializer(defaultDDMFormRuleAction);
 
 		String result = defaultDDMFormRuleActionSerializer.serialize(
-			_ddmFormRuleSerializerContext);
+			_spiDDMFormRuleSerializerContext);
 
 		Assert.assertEquals("setEnabled('field0', true)", result);
 	}
@@ -49,7 +50,7 @@ public class DefaultDDMFormRuleActionSerializerTest {
 			new DefaultDDMFormRuleActionSerializer(defaultDDMFormRuleAction);
 
 		String result = defaultDDMFormRuleActionSerializer.serialize(
-			_ddmFormRuleSerializerContext);
+			_spiDDMFormRuleSerializerContext);
 
 		Assert.assertEquals("setInvalid('field0', true)", result);
 	}
@@ -63,7 +64,7 @@ public class DefaultDDMFormRuleActionSerializerTest {
 			new DefaultDDMFormRuleActionSerializer(defaultDDMFormRuleAction);
 
 		String result = defaultDDMFormRuleActionSerializer.serialize(
-			_ddmFormRuleSerializerContext);
+			_spiDDMFormRuleSerializerContext);
 
 		Assert.assertEquals("setRequired('field0', true)", result);
 	}
@@ -77,12 +78,26 @@ public class DefaultDDMFormRuleActionSerializerTest {
 			new DefaultDDMFormRuleActionSerializer(defaultDDMFormRuleAction);
 
 		String result = defaultDDMFormRuleActionSerializer.serialize(
-			_ddmFormRuleSerializerContext);
+			_spiDDMFormRuleSerializerContext);
 
 		Assert.assertEquals("setVisible('field0', true)", result);
 	}
 
+	@Test
+	public void testSerializeWithEmptyTarget() {
+		DefaultDDMFormRuleAction defaultDDMFormRuleAction =
+			new DefaultDDMFormRuleAction("show", StringPool.BLANK);
+
+		DefaultDDMFormRuleActionSerializer defaultDDMFormRuleActionSerializer =
+			new DefaultDDMFormRuleActionSerializer(defaultDDMFormRuleAction);
+
+		String result = defaultDDMFormRuleActionSerializer.serialize(
+			_spiDDMFormRuleSerializerContext);
+
+		Assert.assertNull(result);
+	}
+
 	@Mock
-	private DDMFormRuleSerializerContext _ddmFormRuleSerializerContext;
+	private SPIDDMFormRuleSerializerContext _spiDDMFormRuleSerializerContext;
 
 }

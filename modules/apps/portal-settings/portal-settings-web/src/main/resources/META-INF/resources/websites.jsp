@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -75,7 +66,7 @@
 		<liferay-ui:error key="<%= NoSuchListTypeException.class.getName() + className + ListTypeConstants.WEBSITE %>" message="please-select-a-type" />
 		<liferay-ui:error exception="<%= WebsiteURLException.class %>" message="please-enter-a-valid-url" />
 
-		<aui:fieldset id='<%= renderResponse.getNamespace() + "websites" %>'>
+		<aui:fieldset id='<%= liferayPortletResponse.getNamespace() + "websites" %>'>
 
 			<%
 			for (int i = 0; i < websitesIndexes.length; i++) {
@@ -94,7 +85,7 @@
 					</div>
 
 					<div class="form-group-item">
-						<aui:select inlineField="<%= true %>" label="type" listType="<%= className + ListTypeConstants.WEBSITE %>" name='<%= "websiteTypeId" + websitesIndex %>' />
+						<aui:select inlineField="<%= true %>" label="type" listType="<%= className + ListTypeConstants.WEBSITE %>" listTypeFieldName="listTypeId" name='<%= "websiteListTypeId" + websitesIndex %>' />
 					</div>
 
 					<div class="form-group-item form-group-item-label-spacer">
@@ -113,7 +104,7 @@
 			new Liferay.AutoFields({
 				contentBox: '#<portlet:namespace />websites',
 				fieldIndexes: '<portlet:namespace />websitesIndexes',
-				namespace: '<portlet:namespace />'
+				namespace: '<portlet:namespace />',
 			}).render();
 		</aui:script>
 	</c:when>

@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.teams.exportimport.data.handler.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.exportimport.test.util.lar.BaseStagedModelDataHandlerTestCase;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.StagedModel;
@@ -59,6 +51,10 @@ public class TeamStagedModelDataHandlerTest
 	public void tearDown() throws Exception {
 		super.tearDown();
 
+		if (_siteMemberUser != null) {
+			UserLocalServiceUtil.deleteUser(_siteMemberUser);
+		}
+
 		if (_user != null) {
 			UserLocalServiceUtil.deleteUser(_user);
 		}
@@ -82,14 +78,20 @@ public class TeamStagedModelDataHandlerTest
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			serviceContext);
 
-		_user = UserTestUtil.addUser();
+		_siteMemberUser = UserTestUtil.addUser(group.getGroupId());
+
+		UserLocalServiceUtil.addGroupUser(
+			liveGroup.getGroupId(), _siteMemberUser);
+		UserLocalServiceUtil.addTeamUser(team.getTeamId(), _siteMemberUser);
+
+		_user = UserTestUtil.addUser(group.getGroupId());
 
 		UserLocalServiceUtil.addTeamUser(team.getTeamId(), _user);
 
 		_userGroup = UserGroupLocalServiceUtil.addUserGroup(
-			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			serviceContext);
+			StringPool.BLANK, TestPropsValues.getUserId(),
+			TestPropsValues.getCompanyId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), serviceContext);
 
 		UserGroupLocalServiceUtil.addTeamUserGroup(
 			team.getTeamId(), _userGroup);
@@ -138,7 +140,7 @@ public class TeamStagedModelDataHandlerTest
 			importedTeam.getTeamId());
 
 		Assert.assertEquals(teamUsers.toString(), 1, teamUsers.size());
-		Assert.assertEquals(_user, teamUsers.get(0));
+		Assert.assertEquals(_siteMemberUser, teamUsers.get(0));
 
 		List<UserGroup> teamUserGroups =
 			UserGroupLocalServiceUtil.getTeamUserGroups(
@@ -149,6 +151,7 @@ public class TeamStagedModelDataHandlerTest
 		Assert.assertEquals(_userGroup, teamUserGroups.get(0));
 	}
 
+	private User _siteMemberUser;
 	private User _user;
 	private UserGroup _userGroup;
 

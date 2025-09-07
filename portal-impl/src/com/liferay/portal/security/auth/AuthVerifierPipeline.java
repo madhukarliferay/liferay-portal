@@ -1,56 +1,53 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapper;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapperFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.portal.security.auth.registry.AuthVerifierRegistry;
+import com.liferay.portal.spring.context.PortalContextLoaderListener;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
-import javax.servlet.http.HttpServletRequest;
-
-import jodd.util.Wildcard;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Tomas Polesovsky
  * @author Peter Fellwock
+ * @author Arthur Chan
+ * @author Carlos Sierra Andrés
  */
 public class AuthVerifierPipeline {
 
@@ -60,30 +57,126 @@ public class AuthVerifierPipeline {
 		String simpleClassName = StringUtil.extractLast(
 			className, StringPool.PERIOD);
 
-		return PropsKeys.AUTH_VERIFIER.concat(
-			simpleClassName
-		).concat(
-			StringPool.PERIOD
-		);
+		return StringBundler.concat(
+			PropsKeys.AUTH_VERIFIER, simpleClassName, StringPool.PERIOD);
 	}
 
-	public static AuthVerifierResult verifyRequest(
+	public static AuthVerifierPipeline getPortalAuthVerifierPipeline() {
+		return PortalAuthVerifierPipelineHolder._PORTAL_AUTH_VERIFIER_PIPELINE;
+	}
+
+	public AuthVerifierPipeline(
+		List<AuthVerifierConfiguration> authVerifierConfigurations,
+		String contextPath) {
+
+		_authVerifierConfigurations = new ArrayList<>(
+			authVerifierConfigurations);
+
+		_contextPath = contextPath;
+
+		_buildURLPatternMapper();
+	}
+
+	public AuthVerifierResult verifyRequest(
 			AccessControlContext accessControlContext)
 		throws PortalException {
 
-		return _authVerifierPipeline._verifyRequest(accessControlContext);
+		if (accessControlContext == null) {
+			throw new IllegalArgumentException(
+				"Access control context is null");
+		}
+
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
+
+		String requestURI = httpServletRequest.getRequestURI();
+
+		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
+			new AuthVerifierConfigurationConsumer(
+				accessControlContext, _excludeURLPatternMapper, requestURI);
+
+		_includeURLPatternMapper.consumeValues(
+			authVerifierConfigurationConsumer, requestURI);
+
+		if (authVerifierConfigurationConsumer.getAuthVerifierResult() != null) {
+			return authVerifierConfigurationConsumer.getAuthVerifierResult();
+		}
+
+		return _createGuestVerificationResult(accessControlContext);
 	}
 
-	private AuthVerifierPipeline() {
-		Registry registry = RegistryUtil.getRegistry();
+	private static List<AuthVerifierConfiguration> _filterSupremeAuthVerifier(
+		List<AuthVerifierConfiguration> authVerifierConfigurations) {
 
-		Filter filter = registry.getFilter(
-			"(objectClass=" + AuthVerifier.class.getName() + ")");
+		for (AuthVerifierConfiguration authVerifierConfiguration :
+				authVerifierConfigurations) {
 
-		_serviceTracker = registry.trackServices(
-			filter, new AuthVerifierTrackerCustomizer());
+			Properties properties = authVerifierConfiguration.getProperties();
 
-		_serviceTracker.open();
+			for (String key : _SUPREME_AUTH_VERIFIER_KEYS) {
+				if (GetterUtil.getBoolean(properties.get(key))) {
+					return Collections.singletonList(authVerifierConfiguration);
+				}
+			}
+		}
+
+		return authVerifierConfigurations;
+	}
+
+	private synchronized void _addAuthVerifierConfiguration(
+		AuthVerifierConfiguration authVerifierConfiguration) {
+
+		_authVerifierConfigurations.add(authVerifierConfiguration);
+
+		_buildURLPatternMapper();
+	}
+
+	private void _buildURLPatternMapper() {
+		Map<String, List<AuthVerifierConfiguration>>
+			excludeAuthVerifierConfigurationsMap = new HashMap<>();
+		Map<String, List<AuthVerifierConfiguration>>
+			includeAuthVerifierConfigurationsMap = new HashMap<>();
+
+		for (AuthVerifierConfiguration authVerifierConfiguration :
+				_authVerifierConfigurations) {
+
+			Properties properties = authVerifierConfiguration.getProperties();
+
+			String[] urlsExcludes = StringUtil.split(
+				properties.getProperty("urls.excludes"));
+
+			for (String urlsExclude : urlsExcludes) {
+				urlsExclude = _contextPath + _fixLegacyURLPattern(urlsExclude);
+
+				List<AuthVerifierConfiguration>
+					excludeAuthVerifierConfigurations =
+						excludeAuthVerifierConfigurationsMap.computeIfAbsent(
+							urlsExclude, key -> new ArrayList<>());
+
+				excludeAuthVerifierConfigurations.add(
+					authVerifierConfiguration);
+			}
+
+			String[] urlsIncludes = StringUtil.split(
+				properties.getProperty("urls.includes"));
+
+			for (String urlsInclude : urlsIncludes) {
+				urlsInclude = _contextPath + _fixLegacyURLPattern(urlsInclude);
+
+				List<AuthVerifierConfiguration>
+					includeAuthVerifierConfigurations =
+						includeAuthVerifierConfigurationsMap.computeIfAbsent(
+							urlsInclude, key -> new ArrayList<>());
+
+				includeAuthVerifierConfigurations.add(
+					authVerifierConfiguration);
+			}
+		}
+
+		_excludeURLPatternMapper = URLPatternMapperFactory.create(
+			excludeAuthVerifierConfigurationsMap);
+		_includeURLPatternMapper = URLPatternMapperFactory.create(
+			includeAuthVerifierConfigurationsMap);
 	}
 
 	private AuthVerifierResult _createGuestVerificationResult(
@@ -97,164 +190,129 @@ public class AuthVerifierPipeline {
 		HttpServletRequest httpServletRequest =
 			accessControlContext.getRequest();
 
-		long defaultUserId = UserLocalServiceUtil.getDefaultUserId(
-			PortalUtil.getCompanyId(httpServletRequest));
-
-		authVerifierResult.setUserId(defaultUserId);
+		authVerifierResult.setUserId(
+			UserLocalServiceUtil.getGuestUserId(
+				PortalUtil.getCompanyId(httpServletRequest)));
 
 		return authVerifierResult;
 	}
 
-	private List<AuthVerifierConfiguration> _getAuthVerifierConfigurations(
-		AccessControlContext accessControlContext) {
+	private String _fixLegacyURLPattern(String urlPattern) {
+		if ((urlPattern == null) || (urlPattern.length() == 0) ||
+			(urlPattern.charAt(urlPattern.length() - 1) != '*')) {
 
-		HttpServletRequest httpServletRequest =
-			accessControlContext.getRequest();
-
-		List<AuthVerifierConfiguration> authVerifierConfigurations =
-			new ArrayList<>();
-
-		String requestURI = httpServletRequest.getRequestURI();
-
-		String contextPath = httpServletRequest.getContextPath();
-
-		requestURI = requestURI.substring(contextPath.length());
-
-		for (AuthVerifierConfiguration authVerifierConfiguration :
-				_authVerifierConfigurations) {
-
-			authVerifierConfiguration = _mergeAuthVerifierConfiguration(
-				authVerifierConfiguration, accessControlContext);
-
-			if (_isMatchingRequestURI(authVerifierConfiguration, requestURI)) {
-				authVerifierConfigurations.add(authVerifierConfiguration);
-			}
+			return urlPattern;
 		}
 
-		return authVerifierConfigurations;
+		if ((urlPattern.length() > 1) &&
+			(urlPattern.charAt(urlPattern.length() - 2) == '/')) {
+
+			return urlPattern;
+		}
+
+		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
 	}
 
-	private boolean _isMatchingRequestURI(
-		AuthVerifierConfiguration authVerifierConfiguration,
-		String requestURI) {
+	private synchronized void _removeAuthVerifierConfiguration(
+		AuthVerifierConfiguration authVerifierConfiguration) {
 
-		Properties properties = authVerifierConfiguration.getProperties();
+		_authVerifierConfigurations.remove(authVerifierConfiguration);
 
-		String[] urlsExcludes = StringUtil.split(
-			properties.getProperty("urls.excludes"));
-
-		if ((urlsExcludes.length > 0) &&
-			(Wildcard.matchOne(requestURI, urlsExcludes) > -1)) {
-
-			return false;
-		}
-
-		String[] urlsIncludes = StringUtil.split(
-			properties.getProperty("urls.includes"));
-
-		if (urlsIncludes.length == 0) {
-			return false;
-		}
-
-		if (Wildcard.matchOne(requestURI, urlsIncludes) > -1) {
-			return true;
-		}
-
-		return false;
+		_buildURLPatternMapper();
 	}
 
-	private AuthVerifierConfiguration _mergeAuthVerifierConfiguration(
-		AuthVerifierConfiguration authVerifierConfiguration,
-		AccessControlContext accessControlContext) {
+	private static final String[] _SUPREME_AUTH_VERIFIER_KEYS = {
+		"basic_auth", "digest_auth"
+	};
 
-		Map<String, Object> settings = accessControlContext.getSettings();
+	private static final Log _log = LogFactoryUtil.getLog(
+		AuthVerifierPipeline.class);
 
-		String authVerifierSettingsKey = getAuthVerifierPropertyName(
-			authVerifierConfiguration.getAuthVerifierClassName());
+	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
+	private final String _contextPath;
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
+		_excludeURLPatternMapper;
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
+		_includeURLPatternMapper;
 
-		boolean merge = false;
+	private static class AuthVerifierConfigurationConsumer
+		implements Consumer<List<AuthVerifierConfiguration>> {
 
-		Set<String> settingsKeys = settings.keySet();
+		@Override
+		public void accept(
+			List<AuthVerifierConfiguration> authVerifierConfigurations) {
 
-		Iterator<String> iterator = settingsKeys.iterator();
-
-		while (iterator.hasNext() && !merge) {
-			String settingsKey = iterator.next();
-
-			if (settingsKey.startsWith(authVerifierSettingsKey) &&
-				(settings.get(settingsKey) instanceof String)) {
-
-				merge = true;
+			if (_authVerifierResult != null) {
+				return;
 			}
-		}
 
-		if (!merge) {
-			return authVerifierConfiguration;
-		}
+			if (_excludedAuthVerifierConfigurations == null) {
+				_excludedAuthVerifierConfigurations = new HashSet<>();
 
-		AuthVerifierConfiguration mergedAuthVerifierConfiguration =
-			new AuthVerifierConfiguration();
+				_excludeURLPatternMapper.consumeValues(
+					_excludedAuthVerifierConfigurations::addAll, _requestURI);
+			}
 
-		mergedAuthVerifierConfiguration.setAuthVerifier(
-			authVerifierConfiguration.getAuthVerifier());
+			for (AuthVerifierConfiguration authVerifierConfiguration :
+					_filterSupremeAuthVerifier(authVerifierConfigurations)) {
 
-		Properties mergedProperties = new Properties(
-			authVerifierConfiguration.getProperties());
+				if (_excludedAuthVerifierConfigurations.contains(
+						authVerifierConfiguration)) {
 
-		for (Map.Entry<String, Object> entry : settings.entrySet()) {
-			String settingsKey = entry.getKey();
+					continue;
+				}
 
-			if (settingsKey.startsWith(authVerifierSettingsKey)) {
-				Object settingsValue = entry.getValue();
+				_authVerifierResult = _verifyWithAuthVerifierConfiguration(
+					_accessControlContext, authVerifierConfiguration);
 
-				if (settingsValue instanceof String) {
-					String propertiesKey = settingsKey.substring(
-						authVerifierSettingsKey.length());
-
-					mergedProperties.setProperty(
-						propertiesKey, (String)settingsValue);
+				if (_authVerifierResult != null) {
+					return;
 				}
 			}
 		}
 
-		mergedAuthVerifierConfiguration.setProperties(mergedProperties);
+		public AuthVerifierResult getAuthVerifierResult() {
+			return _authVerifierResult;
+		}
 
-		return mergedAuthVerifierConfiguration;
-	}
+		private AuthVerifierConfigurationConsumer(
+			AccessControlContext accessControlContext,
+			URLPatternMapper<List<AuthVerifierConfiguration>>
+				excludeURLPatternMapper,
+			String requestURI) {
 
-	private Map<String, Object> _mergeSettings(
-		Properties properties, Map<String, Object> settings) {
+			_accessControlContext = accessControlContext;
+			_excludeURLPatternMapper = excludeURLPatternMapper;
+			_requestURI = requestURI;
+		}
 
-		Map<String, Object> mergedSettings = new HashMap<>(settings);
+		private Map<String, Object> _mergeSettings(
+			Properties properties, Map<String, Object> settings) {
 
-		if (properties != null) {
-			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-				mergedSettings.put((String)entry.getKey(), entry.getValue());
+			Map<String, Object> mergedSettings = new HashMap<>(settings);
+
+			if (properties != null) {
+				for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+					mergedSettings.put(
+						(String)entry.getKey(), entry.getValue());
+				}
 			}
+
+			return mergedSettings;
 		}
 
-		return mergedSettings;
-	}
-
-	private AuthVerifierResult _verifyRequest(
-			AccessControlContext accessControlContext)
-		throws PortalException {
-
-		if (accessControlContext == null) {
-			throw new IllegalArgumentException(
-				"Access control context is null");
-		}
-
-		List<AuthVerifierConfiguration> authVerifierConfigurations =
-			_getAuthVerifierConfigurations(accessControlContext);
-
-		for (AuthVerifierConfiguration authVerifierConfiguration :
-				authVerifierConfigurations) {
+		private AuthVerifierResult _verifyWithAuthVerifierConfiguration(
+			AccessControlContext accessControlContext,
+			AuthVerifierConfiguration authVerifierConfiguration) {
 
 			AuthVerifierResult authVerifierResult = null;
 
-			AuthVerifier authVerifier =
-				authVerifierConfiguration.getAuthVerifier();
+			AuthVerifier authVerifier = AuthVerifierRegistry.getAuthVerifier(
+				authVerifierConfiguration.getAuthVerifierClassName());
+
+			if (authVerifier == null) {
+				return authVerifierResult;
+			}
 
 			Properties properties = authVerifierConfiguration.getProperties();
 
@@ -262,14 +320,15 @@ public class AuthVerifierPipeline {
 				authVerifierResult = authVerifier.verify(
 					accessControlContext, properties);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
 					Class<?> authVerifierClass = authVerifier.getClass();
 
-					_log.debug("Skipping " + authVerifierClass.getName(), e);
+					_log.debug(
+						"Skipping " + authVerifierClass.getName(), exception);
 				}
 
-				continue;
+				return null;
 			}
 
 			if (authVerifierResult == null) {
@@ -279,179 +338,143 @@ public class AuthVerifierPipeline {
 					"Auth verifier " + authVerifierClass.getName() +
 						" did not return an auth verifier result");
 
-				continue;
+				return null;
 			}
 
-			if (authVerifierResult.getState() !=
+			if (authVerifierResult.getState() ==
 					AuthVerifierResult.State.NOT_APPLICABLE) {
 
-				User user = UserLocalServiceUtil.fetchUser(
-					authVerifierResult.getUserId());
+				return null;
+			}
 
-				if ((user == null) || !user.isActive()) {
-					if (_log.isDebugEnabled()) {
-						Class<?> authVerifierClass = authVerifier.getClass();
+			User user = UserLocalServiceUtil.fetchUser(
+				authVerifierResult.getUserId());
 
-						if (user == null) {
-							_log.debug(
-								StringBundler.concat(
-									"Auth verifier ",
-									authVerifierClass.getName(),
-									" returned null user",
-									authVerifierResult.getUserId()));
-						}
-						else {
-							_log.debug(
-								StringBundler.concat(
-									"Auth verifier ",
-									authVerifierClass.getName(),
-									" returned inactive user",
-									authVerifierResult.getUserId()));
-						}
+			if ((user != null) &&
+				(!user.isActive() ||
+				 !user.isEmailAddressVerificationComplete() ||
+				 user.isPasswordResetRequired())) {
+
+				long userId = authVerifierResult.getUserId();
+
+				if (_log.isDebugEnabled()) {
+					Class<?> authVerifierClass = authVerifier.getClass();
+
+					if (!user.isActive()) {
+						_log.debug(
+							StringBundler.concat(
+								"Auth verifier ", authVerifierClass.getName(),
+								" returned inactive user ", userId));
 					}
-
-					continue;
+					else if (!user.isEmailAddressVerificationComplete()) {
+						_log.debug(
+							StringBundler.concat(
+								"Auth verifier ", authVerifierClass.getName(),
+								" returned user ", userId,
+								" who must verify his email address"));
+					}
+					else {
+						_log.debug(
+							StringBundler.concat(
+								"Auth verifier ", authVerifierClass.getName(),
+								" returned user ", userId,
+								" who must reset his password"));
+					}
 				}
 
-				Map<String, Object> settings = _mergeSettings(
-					properties, authVerifierResult.getSettings());
+				authVerifierResult = new AuthVerifierResult();
 
-				settings.put(AUTH_TYPE, authVerifier.getAuthType());
+				authVerifierResult.setState(
+					AuthVerifierResult.State.UNSUCCESSFUL);
 
-				authVerifierResult.setSettings(settings);
-
-				return authVerifierResult;
+				authVerifierResult.setUserId(userId);
 			}
+
+			Map<String, Object> settings = _mergeSettings(
+				properties, authVerifierResult.getSettings());
+
+			settings.put(AUTH_TYPE, authVerifier.getAuthType());
+
+			authVerifierResult.setSettings(settings);
+
+			return authVerifierResult;
 		}
 
-		return _createGuestVerificationResult(accessControlContext);
+		private final AccessControlContext _accessControlContext;
+		private AuthVerifierResult _authVerifierResult;
+		private Set<AuthVerifierConfiguration>
+			_excludedAuthVerifierConfigurations;
+		private final URLPatternMapper<List<AuthVerifierConfiguration>>
+			_excludeURLPatternMapper;
+		private final String _requestURI;
+
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		AuthVerifierPipeline.class);
+	private static class PortalAuthVerifierPipelineHolder {
 
-	private static final AuthVerifierPipeline _authVerifierPipeline =
-		new AuthVerifierPipeline();
+		private static final AuthVerifierPipeline
+			_PORTAL_AUTH_VERIFIER_PIPELINE;
 
-	private final List<AuthVerifierConfiguration> _authVerifierConfigurations =
-		new CopyOnWriteArrayList<>();
-	private final ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
-		_serviceTracker;
+		static {
+			AuthVerifierPipeline portalAuthVerifierPipeline =
+				new AuthVerifierPipeline(
+					Collections.emptyList(),
+					PortalContextLoaderListener.getPortalServletContextPath());
 
-	private class AuthVerifierTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<AuthVerifier, AuthVerifierConfiguration> {
+			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		@Override
-		public AuthVerifierConfiguration addingService(
-			ServiceReference<AuthVerifier> serviceReference) {
+			ServiceTracker<AuthVerifierConfiguration, AuthVerifierConfiguration>
+				serviceTracker = new ServiceTracker<>(
+					bundleContext, AuthVerifierConfiguration.class,
+					new ServiceTrackerCustomizer
+						<AuthVerifierConfiguration,
+						 AuthVerifierConfiguration>() {
 
-			Registry registry = RegistryUtil.getRegistry();
+						@Override
+						public AuthVerifierConfiguration addingService(
+							ServiceReference<AuthVerifierConfiguration>
+								serviceReference) {
 
-			AuthVerifier authVerifier = registry.getService(serviceReference);
+							AuthVerifierConfiguration
+								authVerifierConfiguration =
+									bundleContext.getService(serviceReference);
 
-			if (authVerifier == null) {
-				return null;
-			}
+							if (authVerifierConfiguration != null) {
+								portalAuthVerifierPipeline.
+									_addAuthVerifierConfiguration(
+										authVerifierConfiguration);
+							}
 
-			Class<?> authVerifierClass = authVerifier.getClass();
+							return authVerifierConfiguration;
+						}
 
-			AuthVerifierConfiguration authVerifierConfiguration =
-				new AuthVerifierConfiguration();
+						@Override
+						public void modifiedService(
+							ServiceReference<AuthVerifierConfiguration>
+								serviceReference,
+							AuthVerifierConfiguration
+								authVerifierConfiguration) {
+						}
 
-			authVerifierConfiguration.setAuthVerifier(authVerifier);
-			authVerifierConfiguration.setAuthVerifierClassName(
-				authVerifierClass.getName());
-			authVerifierConfiguration.setProperties(
-				_loadProperties(serviceReference, authVerifierClass.getName()));
+						@Override
+						public void removedService(
+							ServiceReference<AuthVerifierConfiguration>
+								serviceReference,
+							AuthVerifierConfiguration
+								authVerifierConfiguration) {
 
-			if (!_validate(authVerifierConfiguration)) {
-				return null;
-			}
+							portalAuthVerifierPipeline.
+								_removeAuthVerifierConfiguration(
+									authVerifierConfiguration);
 
-			_authVerifierConfigurations.add(0, authVerifierConfiguration);
+							bundleContext.ungetService(serviceReference);
+						}
 
-			return authVerifierConfiguration;
-		}
+					});
 
-		@Override
-		public void modifiedService(
-			ServiceReference<AuthVerifier> serviceReference,
-			AuthVerifierConfiguration authVerifierConfiguration) {
+			serviceTracker.open();
 
-			_authVerifierConfigurations.remove(authVerifierConfiguration);
-
-			authVerifierConfiguration.setProperties(
-				_loadProperties(
-					serviceReference,
-					authVerifierConfiguration.getAuthVerifierClassName()));
-
-			if (_validate(authVerifierConfiguration)) {
-				_authVerifierConfigurations.add(0, authVerifierConfiguration);
-			}
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<AuthVerifier> serviceReference,
-			AuthVerifierConfiguration authVerifierConfiguration) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-
-			_authVerifierConfigurations.remove(authVerifierConfiguration);
-		}
-
-		private Properties _loadProperties(
-			ServiceReference<AuthVerifier> serviceReference,
-			String authVerifierClassName) {
-
-			Properties properties = new Properties();
-
-			String authVerifierPropertyName = getAuthVerifierPropertyName(
-				authVerifierClassName);
-
-			Map<String, Object> serviceReferenceProperties =
-				serviceReference.getProperties();
-
-			for (Map.Entry<String, Object> entry :
-					serviceReferenceProperties.entrySet()) {
-
-				String key = entry.getKey();
-
-				if (key.startsWith(authVerifierPropertyName)) {
-					key = key.substring(authVerifierPropertyName.length());
-				}
-
-				properties.setProperty(key, String.valueOf(entry.getValue()));
-			}
-
-			return properties;
-		}
-
-		private boolean _validate(
-			AuthVerifierConfiguration authVerifierConfiguration) {
-
-			Properties properties = authVerifierConfiguration.getProperties();
-
-			String[] urlsIncludes = StringUtil.split(
-				properties.getProperty("urls.includes"));
-
-			if (urlsIncludes.length == 0) {
-				if (_log.isWarnEnabled()) {
-					String authVerifierClassName =
-						authVerifierConfiguration.getAuthVerifierClassName();
-
-					_log.warn(
-						"Auth verifier " + authVerifierClassName +
-							" does not have URLs configured");
-				}
-
-				return false;
-			}
-
-			return true;
+			_PORTAL_AUTH_VERIFIER_PIPELINE = portalAuthVerifierPipeline;
 		}
 
 	}

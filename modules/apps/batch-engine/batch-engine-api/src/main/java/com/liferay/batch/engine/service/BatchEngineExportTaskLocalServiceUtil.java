@@ -1,22 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.batch.engine.model.BatchEngineExportTask;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.InputStream;
+import java.io.Serializable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the local service utility for BatchEngineExportTask. This utility wraps
@@ -32,7 +33,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class BatchEngineExportTaskLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.batch.engine.service.impl.BatchEngineExportTaskLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -41,28 +42,29 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	/**
 	 * Adds the batch engine export task to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineExportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param batchEngineExportTask the batch engine export task
 	 * @return the batch engine export task that was added
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		addBatchEngineExportTask(
-			com.liferay.batch.engine.model.BatchEngineExportTask
-				batchEngineExportTask) {
+	public static BatchEngineExportTask addBatchEngineExportTask(
+		BatchEngineExportTask batchEngineExportTask) {
 
 		return getService().addBatchEngineExportTask(batchEngineExportTask);
 	}
 
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		addBatchEngineExportTask(
-			long companyId, long userId, String callbackURL, String className,
-			String contentType, String executeStatus,
-			java.util.List<String> fieldNamesList,
-			java.util.Map<String, java.io.Serializable> parameters,
-			String version) {
+	public static BatchEngineExportTask addBatchEngineExportTask(
+		String externalReferenceCode, long companyId, long userId,
+		String callbackURL, String className, String contentType,
+		String executeStatus, List<String> fieldNames,
+		Map<String, Serializable> parameters, String taskItemDelegateName) {
 
 		return getService().addBatchEngineExportTask(
-			companyId, userId, callbackURL, className, contentType,
-			executeStatus, fieldNamesList, parameters, version);
+			externalReferenceCode, companyId, userId, callbackURL, className,
+			contentType, executeStatus, fieldNames, parameters,
+			taskItemDelegateName);
 	}
 
 	/**
@@ -71,23 +73,35 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param batchEngineExportTaskId the primary key for the new batch engine export task
 	 * @return the new batch engine export task
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		createBatchEngineExportTask(long batchEngineExportTaskId) {
+	public static BatchEngineExportTask createBatchEngineExportTask(
+		long batchEngineExportTaskId) {
 
 		return getService().createBatchEngineExportTask(
 			batchEngineExportTaskId);
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the batch engine export task from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineExportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param batchEngineExportTask the batch engine export task
 	 * @return the batch engine export task that was removed
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		deleteBatchEngineExportTask(
-			com.liferay.batch.engine.model.BatchEngineExportTask
-				batchEngineExportTask) {
+	public static BatchEngineExportTask deleteBatchEngineExportTask(
+		BatchEngineExportTask batchEngineExportTask) {
 
 		return getService().deleteBatchEngineExportTask(batchEngineExportTask);
 	}
@@ -95,13 +109,17 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	/**
 	 * Deletes the batch engine export task with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineExportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param batchEngineExportTaskId the primary key of the batch engine export task
 	 * @return the batch engine export task that was removed
 	 * @throws PortalException if a batch engine export task with the primary key could not be found
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-			deleteBatchEngineExportTask(long batchEngineExportTaskId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static BatchEngineExportTask deleteBatchEngineExportTask(
+			long batchEngineExportTaskId)
+		throws PortalException {
 
 		return getService().deleteBatchEngineExportTask(
 			batchEngineExportTaskId);
@@ -110,17 +128,22 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -130,9 +153,7 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -148,9 +169,8 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -168,10 +188,9 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -183,9 +202,7 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -197,16 +214,24 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		fetchBatchEngineExportTask(long batchEngineExportTaskId) {
+	public static BatchEngineExportTask fetchBatchEngineExportTask(
+		long batchEngineExportTaskId) {
 
 		return getService().fetchBatchEngineExportTask(batchEngineExportTaskId);
+	}
+
+	public static BatchEngineExportTask
+		fetchBatchEngineExportTaskByExternalReferenceCode(
+			String externalReferenceCode, long companyId) {
+
+		return getService().fetchBatchEngineExportTaskByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -216,7 +241,7 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param companyId the primary key of the company
 	 * @return the matching batch engine export task, or <code>null</code> if a matching batch engine export task could not be found
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
+	public static BatchEngineExportTask
 		fetchBatchEngineExportTaskByUuidAndCompanyId(
 			String uuid, long companyId) {
 
@@ -237,11 +262,20 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @return the batch engine export task
 	 * @throws PortalException if a batch engine export task with the primary key could not be found
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-			getBatchEngineExportTask(long batchEngineExportTaskId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static BatchEngineExportTask getBatchEngineExportTask(
+			long batchEngineExportTaskId)
+		throws PortalException {
 
 		return getService().getBatchEngineExportTask(batchEngineExportTaskId);
+	}
+
+	public static BatchEngineExportTask
+			getBatchEngineExportTaskByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getBatchEngineExportTaskByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -252,10 +286,10 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @return the matching batch engine export task
 	 * @throws PortalException if a matching batch engine export task could not be found
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
+	public static BatchEngineExportTask
 			getBatchEngineExportTaskByUuidAndCompanyId(
 				String uuid, long companyId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getBatchEngineExportTaskByUuidAndCompanyId(
 			uuid, companyId);
@@ -272,16 +306,28 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	 * @param end the upper bound of the range of batch engine export tasks (not inclusive)
 	 * @return the range of batch engine export tasks
 	 */
-	public static java.util.List
-		<com.liferay.batch.engine.model.BatchEngineExportTask>
-			getBatchEngineExportTasks(int start, int end) {
+	public static List<BatchEngineExportTask> getBatchEngineExportTasks(
+		int start, int end) {
 
 		return getService().getBatchEngineExportTasks(start, end);
 	}
 
-	public static java.util.List
-		<com.liferay.batch.engine.model.BatchEngineExportTask>
-			getBatchEngineExportTasks(String executeStatus) {
+	public static List<BatchEngineExportTask> getBatchEngineExportTasks(
+		long companyId, int start, int end) {
+
+		return getService().getBatchEngineExportTasks(companyId, start, end);
+	}
+
+	public static List<BatchEngineExportTask> getBatchEngineExportTasks(
+		long companyId, int start, int end,
+		OrderByComparator<BatchEngineExportTask> orderByComparator) {
+
+		return getService().getBatchEngineExportTasks(
+			companyId, start, end, orderByComparator);
+	}
+
+	public static List<BatchEngineExportTask> getBatchEngineExportTasks(
+		String executeStatus) {
 
 		return getService().getBatchEngineExportTasks(executeStatus);
 	}
@@ -295,9 +341,13 @@ public class BatchEngineExportTaskLocalServiceUtil {
 		return getService().getBatchEngineExportTasksCount();
 	}
 
+	public static int getBatchEngineExportTasksCount(long companyId) {
+		return getService().getBatchEngineExportTasksCount(companyId);
+	}
+
 	public static
 		com.liferay.batch.engine.model.BatchEngineExportTaskContentBlobModel
-			getContentBlobModel(java.io.Serializable primaryKey) {
+			getContentBlobModel(Serializable primaryKey) {
 
 		return getService().getContentBlobModel(primaryKey);
 	}
@@ -326,14 +376,16 @@ public class BatchEngineExportTaskLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
-	public static java.io.InputStream openContentInputStream(
+	public static InputStream openContentInputStream(
 		long batchEngineExportTaskId) {
 
 		return getService().openContentInputStream(batchEngineExportTaskId);
@@ -342,41 +394,26 @@ public class BatchEngineExportTaskLocalServiceUtil {
 	/**
 	 * Updates the batch engine export task in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BatchEngineExportTaskLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param batchEngineExportTask the batch engine export task
 	 * @return the batch engine export task that was updated
 	 */
-	public static com.liferay.batch.engine.model.BatchEngineExportTask
-		updateBatchEngineExportTask(
-			com.liferay.batch.engine.model.BatchEngineExportTask
-				batchEngineExportTask) {
+	public static BatchEngineExportTask updateBatchEngineExportTask(
+		BatchEngineExportTask batchEngineExportTask) {
 
 		return getService().updateBatchEngineExportTask(batchEngineExportTask);
 	}
 
 	public static BatchEngineExportTaskLocalService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<BatchEngineExportTaskLocalService, BatchEngineExportTaskLocalService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<BatchEngineExportTaskLocalService>
+		_serviceSnapshot = new Snapshot<>(
+			BatchEngineExportTaskLocalServiceUtil.class,
 			BatchEngineExportTaskLocalService.class);
-
-		ServiceTracker
-			<BatchEngineExportTaskLocalService,
-			 BatchEngineExportTaskLocalService> serviceTracker =
-				new ServiceTracker
-					<BatchEngineExportTaskLocalService,
-					 BatchEngineExportTaskLocalService>(
-						 bundle.getBundleContext(),
-						 BatchEngineExportTaskLocalService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

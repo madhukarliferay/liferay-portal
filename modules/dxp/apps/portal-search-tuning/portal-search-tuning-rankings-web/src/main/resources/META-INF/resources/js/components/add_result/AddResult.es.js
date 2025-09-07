@@ -1,15 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
+import {useModal} from '@clayui/modal';
 import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
@@ -19,8 +14,12 @@ import AddResultModal from './AddResultModal.es';
 /**
  * A button that opens a modal to be able to search, select, and add results.
  */
-function AddResult({fetchDocumentsSearchUrl, onAddResultSubmit}) {
+function AddResult({disabled, fetchDocumentsSearchURL, onAddResultSubmit}) {
 	const [showModal, setShowModal] = useState(false);
+
+	const {observer, onClose} = useModal({
+		onClose: () => setShowModal(false),
+	});
 
 	/**
 	 * Opens the modal when the add result button is clicked.
@@ -29,16 +28,11 @@ function AddResult({fetchDocumentsSearchUrl, onAddResultSubmit}) {
 		setShowModal(true);
 	}
 
-	/**
-	 * Hides the modal.
-	 */
-	function _handleCloseModal() {
-		setShowModal(false);
-	}
-
 	return (
 		<>
 			<ClayButton
+				aria-label={Liferay.Language.get('add-result')}
+				disabled={disabled}
 				key="ADD_RESULT_BUTTON"
 				onClick={_handleAddResultButton}
 			>
@@ -48,9 +42,10 @@ function AddResult({fetchDocumentsSearchUrl, onAddResultSubmit}) {
 			<ErrorBoundary component={Liferay.Language.get('add-result')} toast>
 				{showModal ? (
 					<AddResultModal
-						fetchDocumentsSearchUrl={fetchDocumentsSearchUrl}
+						fetchDocumentsSearchURL={fetchDocumentsSearchURL}
+						observer={observer}
 						onAddResultSubmit={onAddResultSubmit}
-						onCloseModal={_handleCloseModal}
+						onClose={onClose}
 					/>
 				) : null}
 			</ErrorBoundary>
@@ -59,8 +54,13 @@ function AddResult({fetchDocumentsSearchUrl, onAddResultSubmit}) {
 }
 
 AddResult.propTypes = {
-	fetchDocumentsSearchUrl: PropTypes.string.isRequired,
-	onAddResultSubmit: PropTypes.func.isRequired
+	disabled: PropTypes.bool,
+	fetchDocumentsSearchURL: PropTypes.string.isRequired,
+	onAddResultSubmit: PropTypes.func.isRequired,
+};
+
+AddResult.defaultProps = {
+	disabled: false,
 };
 
 export default AddResult;

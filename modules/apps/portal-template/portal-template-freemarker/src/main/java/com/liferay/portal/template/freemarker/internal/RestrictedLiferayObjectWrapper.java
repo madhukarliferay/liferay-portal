@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.template.freemarker.internal;
@@ -19,12 +10,24 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.BaseLocalService;
+import com.liferay.portal.kernel.service.BaseService;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.AggregateClassLoader;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.spring.aop.AopInvocationHandler;
 import com.liferay.portal.util.PortalImpl;
+import com.liferay.portal.util.PropsValues;
 
 import freemarker.ext.beans.BeansWrapper;
+import freemarker.ext.beans.StringModel;
 import freemarker.ext.util.ModelFactory;
 
 import freemarker.template.ObjectWrapper;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * @author Mika Koivisto
@@ -67,9 +71,11 @@ public class RestrictedLiferayObjectWrapper extends LiferayObjectWrapper {
 		}
 
 		if (restrictedMethodNames == null) {
+			_deniedAccessToStringClasses = Collections.emptySet();
 			_restrictedMethodNames = Collections.emptyMap();
 		}
 		else {
+			_deniedAccessToStringClasses = new HashSet<>();
 			_restrictedMethodNames = new HashMap<>();
 
 			for (String restrictedMethodName : restrictedMethodNames) {
@@ -89,6 +95,10 @@ public class RestrictedLiferayObjectWrapper extends LiferayObjectWrapper {
 					restrictedMethodName.substring(0, index));
 				String methodName = StringUtil.trim(
 					restrictedMethodName.substring(index + 1));
+
+				if (methodName.equals("toString")) {
+					_deniedAccessToStringClasses.add(className);
+				}
 
 				Set<String> methodNames =
 					_restrictedMethodNames.computeIfAbsent(
@@ -133,14 +143,19 @@ public class RestrictedLiferayObjectWrapper extends LiferayObjectWrapper {
 					_restrictedClasses.add(
 						aggregateClassLoader.loadClass(restrictedClassName));
 				}
-				catch (ClassNotFoundException cnfe) {
+				catch (ClassNotFoundException classNotFoundException) {
 					if (_log.isInfoEnabled()) {
 						_log.info(
 							StringBundler.concat(
 								"Unable to find restricted class ",
 								restrictedClassName,
 								". Registering as a package."),
-							cnfe);
+							classNotFoundException);
+					}
+
+					if (restrictedClassName.endsWith(StringPool.STAR)) {
+						restrictedClassName = restrictedClassName.substring(
+							0, restrictedClassName.length() - 1);
 					}
 
 					_restrictedPackageNames.add(restrictedClassName);
@@ -161,89 +176,140 @@ public class RestrictedLiferayObjectWrapper extends LiferayObjectWrapper {
 
 		Class<?> clazz = object.getClass();
 
-		String className = clazz.getName();
+		if (PropsValues.TEMPLATE_ENGINE_FREEMARKER_COMPANY_RESTRICT &&
+			(object instanceof BaseModel) &&
+			!CompanyThreadLocal.isInitializingPortalInstance()) {
 
-		if (!_allowAllClasses) {
-			_checkClassIsRestricted(clazz);
+			long currentCompanyId = CompanyThreadLocal.getCompanyId();
+
+			if (currentCompanyId != CompanyConstants.SYSTEM) {
+				BaseModel<?> baseModel = (BaseModel<?>)object;
+
+				Map<String, Function<Object, Object>> getterFunctions =
+					(Map<String, Function<Object, Object>>)
+						(Map<String, ?>)baseModel.getAttributeGetterFunctions();
+
+				Function<Object, Object> function = getterFunctions.get(
+					"companyId");
+
+				if ((function != null) &&
+					(currentCompanyId != (Long)function.apply(object))) {
+
+					throw new TemplateModelException(
+						StringBundler.concat(
+							"Denied access to model object as it does not ",
+							"belong to current company ", currentCompanyId));
+				}
+			}
 		}
 
-		if (_restrictedMethodNames.containsKey(className)) {
-			LiferayFreeMarkerBeanModel liferayFreeMarkerBeanModel =
-				(LiferayFreeMarkerBeanModel)
-					_LIFERAY_FREEMARKER_BEAN_MODEL_FACTORY.create(object, this);
+		if (!_allowAllClasses && _isRestricted(clazz)) {
+			return _RESTRICTED_STRING_MODEL_FACTORY.create(object, this);
+		}
 
-			liferayFreeMarkerBeanModel.setRestrictedMethodNames(
+		String className = clazz.getName();
+
+		if (_restrictedMethodNames.containsKey(className)) {
+			LiferayFreeMarkerStringModel liferayFreeMarkerStringModel =
+				(LiferayFreeMarkerStringModel)
+					_RESTRICTED_STRING_MODEL_FACTORY.create(object, this);
+
+			liferayFreeMarkerStringModel.setDeniedAccessToString(
+				_deniedAccessToStringClasses.contains(className));
+			liferayFreeMarkerStringModel.setRestrictedMethodNames(
 				_restrictedMethodNames.get(className));
 
-			return liferayFreeMarkerBeanModel;
+			return liferayFreeMarkerStringModel;
+		}
+
+		if (_serviceProxyClassNames.contains(className)) {
+			return _SERVICE_PROXY_STRING_MODEL_FACTORY.create(object, this);
+		}
+
+		if (object instanceof BaseLocalService ||
+			object instanceof BaseService) {
+
+			AopInvocationHandler aopInvocationHandler =
+				ProxyUtil.fetchInvocationHandler(
+					object, AopInvocationHandler.class);
+
+			if (aopInvocationHandler != null) {
+				_serviceProxyClassNames.add(className);
+
+				return _SERVICE_PROXY_STRING_MODEL_FACTORY.create(object, this);
+			}
 		}
 
 		return super.wrap(object);
 	}
 
-	private void _checkClassIsRestricted(Class<?> clazz)
-		throws TemplateModelException {
+	private boolean _isRestricted(Class<?> clazz) {
+		return _restrictedClassMap.computeIfAbsent(
+			clazz.getName(),
+			className -> {
+				if (_allowedClassNames.contains(className)) {
+					return false;
+				}
 
-		ClassRestrictionInformation classRestrictionInformation =
-			_classRestrictionInformations.computeIfAbsent(
-				clazz.getName(),
-				className -> {
-					if (_allowedClassNames.contains(className)) {
-						return _nullInstance;
+				for (Class<?> restrictedClass : _restrictedClasses) {
+					if (!restrictedClass.isAssignableFrom(clazz)) {
+						continue;
 					}
 
-					for (Class<?> restrictedClass : _restrictedClasses) {
-						if (!restrictedClass.isAssignableFrom(clazz)) {
-							continue;
-						}
+					return true;
+				}
 
-						return new ClassRestrictionInformation(
-							StringBundler.concat(
-								"Denied resolving class ", className, " by ",
-								restrictedClass.getName()));
+				int index = className.lastIndexOf(StringPool.PERIOD);
+
+				if (index == -1) {
+					return false;
+				}
+
+				String packageName = className.substring(0, index);
+
+				packageName = packageName.concat(StringPool.PERIOD);
+
+				for (String restrictedPackageName : _restrictedPackageNames) {
+					if (!packageName.startsWith(restrictedPackageName)) {
+						continue;
 					}
 
-					int index = className.lastIndexOf(StringPool.PERIOD);
+					return true;
+				}
 
-					if (index == -1) {
-						return _nullInstance;
-					}
-
-					String packageName = className.substring(0, index);
-
-					packageName = packageName.concat(StringPool.PERIOD);
-
-					for (String restrictedPackageName :
-							_restrictedPackageNames) {
-
-						if (!packageName.startsWith(restrictedPackageName)) {
-							continue;
-						}
-
-						return new ClassRestrictionInformation(
-							StringBundler.concat(
-								"Denied resolving class ", className, " by ",
-								restrictedPackageName));
-					}
-
-					return _nullInstance;
-				});
-
-		if (classRestrictionInformation.isRestricted()) {
-			throw new TemplateModelException(
-				classRestrictionInformation.getDescription());
-		}
+				return false;
+			});
 	}
 
-	private static final ModelFactory _LIFERAY_FREEMARKER_BEAN_MODEL_FACTORY =
+	private static final ModelFactory _RESTRICTED_STRING_MODEL_FACTORY =
 		new ModelFactory() {
 
 			@Override
 			public TemplateModel create(
 				Object object, ObjectWrapper objectWrapper) {
 
-				return new LiferayFreeMarkerBeanModel(
+				return new LiferayFreeMarkerStringModel(
 					object, (BeansWrapper)objectWrapper);
+			}
+
+		};
+
+	private static final ModelFactory _SERVICE_PROXY_STRING_MODEL_FACTORY =
+		new ModelFactory() {
+
+			@Override
+			public TemplateModel create(
+				Object object, ObjectWrapper objectWrapper) {
+
+				Class<?> clazz = object.getClass();
+
+				return new StringModel(
+					ProxyUtil.newProxyInstance(
+						clazz.getClassLoader(), clazz.getInterfaces(),
+						(proxy, method, args) -> TransactionInvokerUtil.invoke(
+							_transactionConfig,
+							() -> method.invoke(object, args))),
+					(BeansWrapper)objectWrapper);
 			}
 
 		};
@@ -251,37 +317,28 @@ public class RestrictedLiferayObjectWrapper extends LiferayObjectWrapper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		RestrictedLiferayObjectWrapper.class);
 
-	private static final ClassRestrictionInformation _nullInstance =
-		new ClassRestrictionInformation(null);
+	private static final TransactionConfig _transactionConfig;
+
+	static {
+		TransactionConfig.Builder builder = new TransactionConfig.Builder();
+
+		builder.setPropagation(Propagation.REQUIRES_NEW);
+		builder.setStrictReadOnly(
+			PropsValues.TEMPLATE_ENGINE_FREEMARKER_TRANSACTION_READ_ONLY);
+		builder.setRollbackForClasses(Exception.class);
+
+		_transactionConfig = builder.build();
+	}
 
 	private final boolean _allowAllClasses;
 	private final List<String> _allowedClassNames;
-	private final Map<String, ClassRestrictionInformation>
-		_classRestrictionInformations = new ConcurrentHashMap<>();
+	private final Set<String> _deniedAccessToStringClasses;
 	private final List<Class<?>> _restrictedClasses;
+	private final Map<String, Boolean> _restrictedClassMap =
+		new ConcurrentHashMap<>();
 	private final Map<String, Set<String>> _restrictedMethodNames;
 	private final List<String> _restrictedPackageNames;
-
-	private static class ClassRestrictionInformation {
-
-		public String getDescription() {
-			return _description;
-		}
-
-		public boolean isRestricted() {
-			if (_description == null) {
-				return false;
-			}
-
-			return true;
-		}
-
-		private ClassRestrictionInformation(String description) {
-			_description = description;
-		}
-
-		private final String _description;
-
-	}
+	private final Set<String> _serviceProxyClassNames =
+		Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 }

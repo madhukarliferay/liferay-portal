@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.documentlibrary.model.impl;
@@ -37,17 +28,17 @@ public class DLFileVersionCacheModel
 	implements CacheModel<DLFileVersion>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DLFileVersionCacheModel)) {
+		if (!(object instanceof DLFileVersionCacheModel)) {
 			return false;
 		}
 
 		DLFileVersionCacheModel dlFileVersionCacheModel =
-			(DLFileVersionCacheModel)obj;
+			(DLFileVersionCacheModel)object;
 
 		if ((fileVersionId == dlFileVersionCacheModel.fileVersionId) &&
 			(mvccVersion == dlFileVersionCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class DLFileVersionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(59);
+		StringBundler sb = new StringBundler(69);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", fileVersionId=");
@@ -127,6 +120,14 @@ public class DLFileVersionCacheModel
 		sb.append(size);
 		sb.append(", checksum=");
 		sb.append(checksum);
+		sb.append(", storeUUID=");
+		sb.append(storeUUID);
+		sb.append(", displayDate=");
+		sb.append(displayDate);
+		sb.append(", expirationDate=");
+		sb.append(expirationDate);
+		sb.append(", reviewDate=");
+		sb.append(reviewDate);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append(", status=");
@@ -147,6 +148,7 @@ public class DLFileVersionCacheModel
 		DLFileVersionImpl dlFileVersionImpl = new DLFileVersionImpl();
 
 		dlFileVersionImpl.setMvccVersion(mvccVersion);
+		dlFileVersionImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			dlFileVersionImpl.setUuid("");
@@ -259,6 +261,34 @@ public class DLFileVersionCacheModel
 			dlFileVersionImpl.setChecksum(checksum);
 		}
 
+		if (storeUUID == null) {
+			dlFileVersionImpl.setStoreUUID("");
+		}
+		else {
+			dlFileVersionImpl.setStoreUUID(storeUUID);
+		}
+
+		if (displayDate == Long.MIN_VALUE) {
+			dlFileVersionImpl.setDisplayDate(null);
+		}
+		else {
+			dlFileVersionImpl.setDisplayDate(new Date(displayDate));
+		}
+
+		if (expirationDate == Long.MIN_VALUE) {
+			dlFileVersionImpl.setExpirationDate(null);
+		}
+		else {
+			dlFileVersionImpl.setExpirationDate(new Date(expirationDate));
+		}
+
+		if (reviewDate == Long.MIN_VALUE) {
+			dlFileVersionImpl.setReviewDate(null);
+		}
+		else {
+			dlFileVersionImpl.setReviewDate(new Date(reviewDate));
+		}
+
 		if (lastPublishDate == Long.MIN_VALUE) {
 			dlFileVersionImpl.setLastPublishDate(null);
 		}
@@ -289,8 +319,12 @@ public class DLFileVersionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		fileVersionId = objectInput.readLong();
@@ -316,13 +350,17 @@ public class DLFileVersionCacheModel
 		title = objectInput.readUTF();
 		description = objectInput.readUTF();
 		changeLog = objectInput.readUTF();
-		extraSettings = objectInput.readUTF();
+		extraSettings = (String)objectInput.readObject();
 
 		fileEntryTypeId = objectInput.readLong();
 		version = objectInput.readUTF();
 
 		size = objectInput.readLong();
 		checksum = objectInput.readUTF();
+		storeUUID = objectInput.readUTF();
+		displayDate = objectInput.readLong();
+		expirationDate = objectInput.readLong();
+		reviewDate = objectInput.readLong();
 		lastPublishDate = objectInput.readLong();
 
 		status = objectInput.readInt();
@@ -335,6 +373,8 @@ public class DLFileVersionCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -417,10 +457,10 @@ public class DLFileVersionCacheModel
 		}
 
 		if (extraSettings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(extraSettings);
+			objectOutput.writeObject(extraSettings);
 		}
 
 		objectOutput.writeLong(fileEntryTypeId);
@@ -441,6 +481,16 @@ public class DLFileVersionCacheModel
 			objectOutput.writeUTF(checksum);
 		}
 
+		if (storeUUID == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(storeUUID);
+		}
+
+		objectOutput.writeLong(displayDate);
+		objectOutput.writeLong(expirationDate);
+		objectOutput.writeLong(reviewDate);
 		objectOutput.writeLong(lastPublishDate);
 
 		objectOutput.writeInt(status);
@@ -458,6 +508,7 @@ public class DLFileVersionCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long fileVersionId;
 	public long groupId;
@@ -481,6 +532,10 @@ public class DLFileVersionCacheModel
 	public String version;
 	public long size;
 	public String checksum;
+	public String storeUUID;
+	public long displayDate;
+	public long expirationDate;
+	public long reviewDate;
 	public long lastPublishDate;
 	public int status;
 	public long statusByUserId;

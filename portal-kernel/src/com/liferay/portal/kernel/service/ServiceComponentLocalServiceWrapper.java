@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ServiceComponentLocalService}.
@@ -25,6 +18,10 @@ public class ServiceComponentLocalServiceWrapper
 	implements ServiceComponentLocalService,
 			   ServiceWrapper<ServiceComponentLocalService> {
 
+	public ServiceComponentLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ServiceComponentLocalServiceWrapper(
 		ServiceComponentLocalService serviceComponentLocalService) {
 
@@ -33,6 +30,10 @@ public class ServiceComponentLocalServiceWrapper
 
 	/**
 	 * Adds the service component to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was added
@@ -43,6 +44,18 @@ public class ServiceComponentLocalServiceWrapper
 
 		return _serviceComponentLocalService.addServiceComponent(
 			serviceComponent);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _serviceComponentLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -74,6 +87,10 @@ public class ServiceComponentLocalServiceWrapper
 	/**
 	 * Deletes the service component with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param serviceComponentId the primary key of the service component
 	 * @return the service component that was removed
 	 * @throws PortalException if a service component with the primary key could not be found
@@ -90,6 +107,10 @@ public class ServiceComponentLocalServiceWrapper
 	/**
 	 * Deletes the service component from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was removed
 	 */
@@ -103,13 +124,15 @@ public class ServiceComponentLocalServiceWrapper
 	}
 
 	@Override
-	public void destroyServiceComponent(
-		com.liferay.portal.kernel.service.configuration.
-			ServiceComponentConfiguration serviceComponentConfiguration,
-		java.lang.ClassLoader classLoader) {
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _serviceComponentLocalService.dslQuery(dslQuery);
+	}
 
-		_serviceComponentLocalService.destroyServiceComponent(
-			serviceComponentConfiguration, classLoader);
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _serviceComponentLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -239,10 +262,13 @@ public class ServiceComponentLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _serviceComponentLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -300,9 +326,8 @@ public class ServiceComponentLocalServiceWrapper
 			initServiceComponent(
 				com.liferay.portal.kernel.service.configuration.
 					ServiceComponentConfiguration serviceComponentConfiguration,
-				java.lang.ClassLoader classLoader,
-				java.lang.String buildNamespace, long buildNumber,
-				long buildDate)
+				ClassLoader classLoader, String buildNamespace,
+				long buildNumber, long buildDate)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _serviceComponentLocalService.initServiceComponent(
@@ -312,6 +337,10 @@ public class ServiceComponentLocalServiceWrapper
 
 	/**
 	 * Updates the service component in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ServiceComponentLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param serviceComponent the service component
 	 * @return the service component that was updated
@@ -327,13 +356,11 @@ public class ServiceComponentLocalServiceWrapper
 
 	@Override
 	public void upgradeDB(
-			java.lang.ClassLoader classLoader, java.lang.String buildNamespace,
-			long buildNumber,
+			ClassLoader classLoader, String buildNamespace, long buildNumber,
 			com.liferay.portal.kernel.model.ServiceComponent
 				previousServiceComponent,
-			java.lang.String tablesSQL, java.lang.String sequencesSQL,
-			java.lang.String indexesSQL)
-		throws java.lang.Exception {
+			String tablesSQL, String sequencesSQL, String indexesSQL)
+		throws Exception {
 
 		_serviceComponentLocalService.upgradeDB(
 			classLoader, buildNamespace, buildNumber, previousServiceComponent,
@@ -341,8 +368,8 @@ public class ServiceComponentLocalServiceWrapper
 	}
 
 	@Override
-	public void verifyDB() {
-		_serviceComponentLocalService.verifyDB();
+	public BasePersistence<?> getBasePersistence() {
+		return _serviceComponentLocalService.getBasePersistence();
 	}
 
 	@Override

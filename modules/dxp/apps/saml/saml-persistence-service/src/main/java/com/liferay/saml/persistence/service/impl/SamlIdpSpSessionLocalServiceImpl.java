@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.impl;
@@ -19,16 +10,23 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.saml.persistence.exception.DuplicateSamlIdpSpSessionException;
+import com.liferay.saml.persistence.exception.NoSuchIdpSpSessionException;
 import com.liferay.saml.persistence.model.SamlIdpSpSession;
+import com.liferay.saml.persistence.model.SamlPeerBinding;
+import com.liferay.saml.persistence.service.SamlPeerBindingLocalService;
 import com.liferay.saml.persistence.service.base.SamlIdpSpSessionLocalServiceBaseImpl;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
+ * @author Stian Sigvartsen
  * @author Mika Koivisto
  */
 @Component(
@@ -45,18 +43,27 @@ public class SamlIdpSpSessionLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUserById(serviceContext.getUserId());
-		Date now = new Date();
-
-		SamlIdpSpSession samlIdpSpSession =
-			samlIdpSpSessionPersistence.fetchBySISSI_SSEI(
-				samlIdpSsoSessionId, samlSpEntityId);
+		SamlIdpSpSession samlIdpSpSession = _fetchSamlIdpSpSession(
+			samlIdpSsoSessionId, samlSpEntityId);
 
 		if (samlIdpSpSession != null) {
 			throw new DuplicateSamlIdpSpSessionException(
 				StringBundler.concat(
-					"Duplicate SAML IDP SP ssession ", samlIdpSsoSessionId,
+					"Duplicate SAML IDP SP session ", samlIdpSsoSessionId,
 					" for ", samlSpEntityId));
+		}
+
+		User user = _userLocalService.getUserById(serviceContext.getUserId());
+
+		SamlPeerBinding samlPeerBinding =
+			_samlPeerBindingLocalService.fetchSamlPeerBinding(
+				user.getCompanyId(), false, nameIdFormat, null, nameIdValue,
+				samlSpEntityId);
+
+		if (samlPeerBinding == null) {
+			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
+				user.getUserId(), nameIdFormat, null, null, null, nameIdValue,
+				samlSpEntityId);
 		}
 
 		long samlIdpSpSessionId = counterLocalService.increment(
@@ -65,19 +72,14 @@ public class SamlIdpSpSessionLocalServiceImpl
 		samlIdpSpSession = samlIdpSpSessionPersistence.create(
 			samlIdpSpSessionId);
 
-		samlIdpSpSession.setCompanyId(serviceContext.getCompanyId());
+		samlIdpSpSession.setCompanyId(user.getCompanyId());
 		samlIdpSpSession.setUserId(user.getUserId());
 		samlIdpSpSession.setUserName(user.getFullName());
-		samlIdpSpSession.setCreateDate(now);
-		samlIdpSpSession.setModifiedDate(now);
 		samlIdpSpSession.setSamlIdpSsoSessionId(samlIdpSsoSessionId);
-		samlIdpSpSession.setSamlSpEntityId(samlSpEntityId);
-		samlIdpSpSession.setNameIdFormat(nameIdFormat);
-		samlIdpSpSession.setNameIdValue(nameIdValue);
+		samlIdpSpSession.setSamlPeerBindingId(
+			samlPeerBinding.getSamlPeerBindingId());
 
-		samlIdpSpSessionPersistence.update(samlIdpSpSession);
-
-		return samlIdpSpSession;
+		return samlIdpSpSessionPersistence.update(samlIdpSpSession);
 	}
 
 	@Override
@@ -85,8 +87,14 @@ public class SamlIdpSpSessionLocalServiceImpl
 			long samlIdpSsoSessionId, String samlSpEntityId)
 		throws PortalException {
 
-		return samlIdpSpSessionPersistence.findBySISSI_SSEI(
+		SamlIdpSpSession samlIdpSpSession = _fetchSamlIdpSpSession(
 			samlIdpSsoSessionId, samlSpEntityId);
+
+		if (samlIdpSpSession == null) {
+			throw new NoSuchIdpSpSessionException();
+		}
+
+		return samlIdpSpSession;
 	}
 
 	@Override
@@ -102,15 +110,44 @@ public class SamlIdpSpSessionLocalServiceImpl
 			long samlIdpSsoSessionId, String samlSpEntityId)
 		throws PortalException {
 
-		SamlIdpSpSession samlIdpSpSession =
-			samlIdpSpSessionPersistence.findBySISSI_SSEI(
-				samlIdpSsoSessionId, samlSpEntityId);
+		SamlIdpSpSession samlIdpSpSession = getSamlIdpSpSession(
+			samlIdpSsoSessionId, samlSpEntityId);
 
 		samlIdpSpSession.setModifiedDate(new Date());
 
-		samlIdpSpSessionPersistence.update(samlIdpSpSession);
-
-		return samlIdpSpSession;
+		return samlIdpSpSessionPersistence.update(samlIdpSpSession);
 	}
+
+	private SamlIdpSpSession _fetchSamlIdpSpSession(
+		long samlIdpSsoSessionId, String samlSpEntityId) {
+
+		List<SamlIdpSpSession> samlIdpSsoSessions =
+			samlIdpSpSessionPersistence.findBySamlIdpSsoSessionId(
+				samlIdpSsoSessionId);
+
+		if (samlIdpSsoSessions.isEmpty()) {
+			return null;
+		}
+
+		for (SamlIdpSpSession samlIdpSsoSession : samlIdpSsoSessions) {
+			SamlPeerBinding samlPeerBinding =
+				_samlPeerBindingLocalService.fetchSamlPeerBinding(
+					samlIdpSsoSession.getSamlPeerBindingId());
+
+			if (Objects.equals(
+					samlSpEntityId, samlPeerBinding.getSamlPeerEntityId())) {
+
+				return samlIdpSsoSession;
+			}
+		}
+
+		return null;
+	}
+
+	@Reference
+	private SamlPeerBindingLocalService _samlPeerBindingLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

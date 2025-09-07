@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -40,6 +31,8 @@ public interface BaseModel<T>
 	 * @return the shallow clone of this model instance
 	 */
 	public Object clone();
+
+	public T cloneWithOriginalValues();
 
 	public default Map<String, Function<T, Object>>
 		getAttributeGetterFunctions() {
@@ -84,9 +77,11 @@ public interface BaseModel<T>
 	/**
 	 * Returns <code>true</code> if this model's entity cache is enabled.
 	 *
-	 * @return <code>true</code> if this model's entity cache is enabled;
-	 *         <code>false</code> otherwise
+	 * @return     <code>true</code> if this model's entity cache is enabled;
+	 *             <code>false</code> otherwise
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
 	 */
+	@Deprecated
 	public boolean isEntityCacheEnabled();
 
 	/**
@@ -100,9 +95,11 @@ public interface BaseModel<T>
 	/**
 	 * Returns <code>true</code> if this model's finder cache is enabled.
 	 *
-	 * @return <code>true</code> if this model's finder cache is enabled;
-	 *         <code>false</code> otherwise
+	 * @return     <code>true</code> if this model's finder cache is enabled;
+	 *             <code>false</code> otherwise
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
 	 */
+	@Deprecated
 	public boolean isFinderCacheEnabled();
 
 	/**
@@ -175,12 +172,5 @@ public interface BaseModel<T>
 	public T toEscapedModel();
 
 	public T toUnescapedModel();
-
-	/**
-	 * Returns the XML representation of this model instance.
-	 *
-	 * @return the XML representation of this model instance
-	 */
-	public String toXmlString();
 
 }

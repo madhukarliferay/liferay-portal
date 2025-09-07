@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -30,14 +21,36 @@ PortalSettingsConfigurationScreenContributor portalSettingsConfigurationScreenCo
 
 <portlet:actionURL var="editCompanyURL" />
 
-<div class="sheet sheet-lg">
-	<h2 class="autofit-row">
-		<span class="autofit-col autofit-col-expand">
-			<liferay-ui:message key="<%= portalSettingsConfigurationScreenContributor.getName(locale) %>" />
-		</span>
+<clay:sheet>
+	<clay:content-row
+		cssClass="autofit-padded-no-gutters-x"
+	>
+		<clay:content-col
+			containerElement="h2"
+			expand="<%= true %>"
+		>
+			<clay:content-row
+				cssClass="autofit-padded-no-gutters-x"
+			>
+				<clay:content-col>
+					<liferay-ui:message key="<%= portalSettingsConfigurationScreenContributor.getName(locale) %>" />
+				</clay:content-col>
+
+				<c:if test="<%= portalSettingsConfigurationScreenContributor.isDeprecated() %>">
+					<clay:content-col>
+						<liferay-frontend:feature-indicator
+							interactive="<%= true %>"
+							type="deprecated"
+						/>
+					</clay:content-col>
+				</c:if>
+			</clay:content-row>
+		</clay:content-col>
 
 		<c:if test="<%= Validator.isNotNull(portalSettingsConfigurationScreenContributor.getDeleteMVCActionCommandName()) || Validator.isNotNull(portalSettingsConfigurationScreenContributor.getTestButtonOnClick(renderRequest, renderResponse)) %>">
-			<span class="autofit-col">
+			<clay:content-col
+				containerElement="span"
+			>
 				<liferay-ui:icon-menu
 					cssClass="float-right"
 					direction="right"
@@ -49,15 +62,27 @@ PortalSettingsConfigurationScreenContributor portalSettingsConfigurationScreenCo
 							<portlet:param name="redirect" value="<%= currentURL %>" />
 						</portlet:actionURL>
 
-						<%
-						String taglibOnClick = "if (confirm('" + request.getAttribute(PortalSettingsWebKeys.DELETE_CONFIRMATION_TEXT) + "')) {submitForm(document.hrefFm, '" + resetValuesURL.toString() + "');}";
-						%>
+						<aui:script>
+							function <portlet:namespace />handleResetValues(event) {
+								event.preventDefault();
+
+								Liferay.Util.openConfirmModal({
+									message:
+										'<%= request.getAttribute(PortalSettingsWebKeys.DELETE_CONFIRMATION_TEXT) %>',
+									onConfirm: (isConfirmed) => {
+										if (isConfirmed) {
+											submitForm(document.hrefFm, '<%= resetValuesURL.toString() %>');
+										}
+									},
+								});
+							}
+						</aui:script>
 
 						<liferay-ui:icon
 							message="reset-values"
 							method="post"
-							onClick="<%= taglibOnClick %>"
-							url="javascript:;"
+							onClick='<%= liferayPortletResponse.getNamespace() + "handleResetValues(event)" %>'
+							url="javascript:void(0);"
 						/>
 					</c:if>
 
@@ -66,13 +91,13 @@ PortalSettingsConfigurationScreenContributor portalSettingsConfigurationScreenCo
 							message='<%= GetterUtil.getString(portalSettingsConfigurationScreenContributor.getTestButtonLabel(locale), LanguageUtil.get(request, "test")) %>'
 							method="post"
 							onClick="<%= portalSettingsConfigurationScreenContributor.getTestButtonOnClick(renderRequest, renderResponse) %>"
-							url="javascript:;"
+							url="javascript:void(0);"
 						/>
 					</c:if>
 				</liferay-ui:icon-menu>
-			</span>
+			</clay:content-col>
 		</c:if>
-	</h2>
+	</clay:content-row>
 
 	<aui:form action="<%= editCompanyURL %>" data-senna-off="true" method="post" name="fm">
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
@@ -83,7 +108,7 @@ PortalSettingsConfigurationScreenContributor portalSettingsConfigurationScreenCo
 
 		<liferay-util:include page="<%= portalSettingsConfigurationScreenContributor.getJspPath() %>" servletContext="<%= portalSettingsConfigurationScreenContributor.getServletContext() %>" />
 
-		<div class="sheet-footer">
+		<clay:sheet-footer>
 			<div class="btn-group">
 				<div class="btn-group-item">
 					<aui:button type="submit" value="save" />
@@ -93,6 +118,6 @@ PortalSettingsConfigurationScreenContributor portalSettingsConfigurationScreenCo
 					<aui:button href="<%= redirect %>" name="cancel" type="cancel" />
 				</div>
 			</div>
-		</div>
+		</clay:sheet-footer>
 	</aui:form>
-</div>
+</clay:sheet>

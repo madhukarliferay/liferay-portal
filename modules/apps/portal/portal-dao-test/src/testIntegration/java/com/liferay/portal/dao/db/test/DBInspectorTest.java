@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.db.test;
@@ -58,10 +49,14 @@ public class DBInspectorTest {
 		_db.runSQL(
 			StringBundler.concat(
 				"create table ", _TABLE_NAME, " (id LONG not null primary ",
-				"key, typeBlob BLOB, typeBoolean BOOLEAN, typeDate DATE null, ",
-				"typeDouble DOUBLE, typeInteger INTEGER, typeLong LONG null, ",
-				"typeSBlob SBLOB, typeString STRING null, typeText TEXT null, ",
-				"typeVarchar VARCHAR(75) null);"));
+				"key, notNilColumn VARCHAR(75) not null, nilColumn ",
+				"VARCHAR(75) null, typeBigDecimal BIGDECIMAL, typeBlob BLOB, ",
+				"typeBoolean BOOLEAN, typeDate DATE null, typeDouble DOUBLE, ",
+				"typeInteger INTEGER, typeLong LONG null, typeLongDefault ",
+				"LONG default 10 not null, typeSBlob SBLOB, typeString STRING ",
+				"null, typeText TEXT null, typeVarchar VARCHAR(75) null, ",
+				"typeVarcharDefault VARCHAR(10) default 'testValue' not ",
+				"null);"));
 	}
 
 	@AfterClass
@@ -88,9 +83,16 @@ public class DBInspectorTest {
 	}
 
 	@Test
-	public void testHasColumnNonexisting() throws Exception {
+	public void testHasColumnNonexistent() throws Exception {
 		Assert.assertTrue(
 			!_dbInspector.hasColumn(_TABLE_NAME, _COLUMN_NAME_NONEXISTING));
+	}
+
+	@Test
+	public void testHasColumnTypeBigDecimal() throws Exception {
+		Assert.assertTrue(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeBigDecimal", "BIGDECIMAL"));
 	}
 
 	@Test
@@ -133,6 +135,16 @@ public class DBInspectorTest {
 	}
 
 	@Test
+	public void testHasColumnTypeLongDefaultNotNull() throws Exception {
+		Assert.assertTrue(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeLongDefault", "LONG default 10 not null"));
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeLongDefault", "LONG default 15 not null"));
+	}
+
+	@Test
 	public void testHasColumnTypeSBlob() throws Exception {
 		Assert.assertTrue(
 			_dbInspector.hasColumnType(_TABLE_NAME, "typeSBlob", "SBLOB null"));
@@ -159,6 +171,19 @@ public class DBInspectorTest {
 	}
 
 	@Test
+	public void testHasColumnTypeVarcharDefaultNotNull() throws Exception {
+		Assert.assertTrue(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeVarcharDefault",
+				"VARCHAR(10) default 'testValue' not null"));
+
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeVarcharDefault",
+				"VARCHAR(10) default 'notTestValue' not null"));
+	}
+
+	@Test
 	public void testHasColumnUpperCase() throws Exception {
 		DatabaseMetaData databaseMetaData = _connection.getMetaData();
 
@@ -167,6 +192,34 @@ public class DBInspectorTest {
 		Assert.assertTrue(
 			_dbInspector.hasColumn(
 				_TABLE_NAME, StringUtil.toUpperCase(_COLUMN_NAME)));
+	}
+
+	@Test
+	public void testHasNotNullColumnTypeNotNull() throws Exception {
+		Assert.assertTrue(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "notNilColumn", "VARCHAR(75) not null"));
+	}
+
+	@Test
+	public void testHasNotNullColumnTypeNull() throws Exception {
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "notNilColumn", "VARCHAR(75) null"));
+	}
+
+	@Test
+	public void testHasNullColumnTypeNotNull() throws Exception {
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "nilColumn", "VARCHAR(75) not null"));
+	}
+
+	@Test
+	public void testHasNullColumnTypeNull() throws Exception {
+		Assert.assertTrue(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "nilColumn", "VARCHAR(75) null"));
 	}
 
 	@Test
@@ -185,8 +238,8 @@ public class DBInspectorTest {
 	}
 
 	@Test
-	public void testHasTableNonexisting() throws Exception {
-		Assert.assertTrue(!_dbInspector.hasTable(_TABLE_NAME_NONEXISTING));
+	public void testHasTableNonexistent() throws Exception {
+		Assert.assertFalse(_dbInspector.hasTable(_TABLE_NAME_NONEXISTING));
 	}
 
 	@Test
@@ -199,13 +252,38 @@ public class DBInspectorTest {
 			_dbInspector.hasTable(StringUtil.toUpperCase(_TABLE_NAME)));
 	}
 
+	@Test
+	public void testIsNotNullColumnNullable() throws Exception {
+		Assert.assertTrue(_dbInspector.isNullable(_TABLE_NAME, "nilColumn"));
+	}
+
+	@Test
+	public void testIsNullableColumnNullable() throws Exception {
+		Assert.assertFalse(
+			_dbInspector.isNullable(_TABLE_NAME, "notNilColumn"));
+	}
+
+	@Test
+	public void testNotHasColumnTypeString() throws Exception {
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeVarchar", "STRING null"));
+	}
+
+	@Test
+	public void testNotHasColumnTypeText() throws Exception {
+		Assert.assertFalse(
+			_dbInspector.hasColumnType(
+				_TABLE_NAME, "typeVarchar", "TEXT null"));
+	}
+
 	private static final String _COLUMN_NAME = "id";
 
-	private static final String _COLUMN_NAME_NONEXISTING = "nonexistingColumn";
+	private static final String _COLUMN_NAME_NONEXISTING = "nonexistentColumn";
 
 	private static final String _TABLE_NAME = "DBInspectorTest";
 
-	private static final String _TABLE_NAME_NONEXISTING = "NonexistingTable";
+	private static final String _TABLE_NAME_NONEXISTING = "NonexistentTable";
 
 	private static Connection _connection;
 	private static DB _db;

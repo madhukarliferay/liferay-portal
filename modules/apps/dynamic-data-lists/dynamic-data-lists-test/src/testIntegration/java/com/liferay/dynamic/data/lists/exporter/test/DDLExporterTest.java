@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.exporter.test;
@@ -39,19 +30,17 @@ import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -62,6 +51,8 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.security.permission.SimplePermissionChecker;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -109,7 +100,6 @@ public class DDLExporterTest {
 	public void setUp() throws Exception {
 		_availableLocales = DDMFormTestUtil.createAvailableLocales(
 			LocaleUtil.US);
-		_defaultLocale = LocaleUtil.US;
 		_group = GroupTestUtil.addGroup();
 
 		_originalPermissionChecker =
@@ -167,58 +157,16 @@ public class DDLExporterTest {
 						"Modified Date,Author",
 				header);
 
-			StringBundler sb = new StringBundler(31);
-
-			sb.append("No");
-			sb.append(CharPool.COMMA);
-
-			sb.append("1/1/1970");
-			sb.append(CharPool.COMMA);
-
-			sb.append("1");
-			sb.append(CharPool.COMMA);
-
-			sb.append("file.txt");
-			sb.append(CharPool.COMMA);
-
-			sb.append("\"Latitude: -8.035, Longitude: -34.918\"");
-			sb.append(CharPool.COMMA);
-
-			sb.append("2");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Link to Page content");
-			sb.append(CharPool.COMMA);
-
-			sb.append("3");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Option 1");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Option 1");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Text content");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Text Area content");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Text HTML content");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Approved");
-			sb.append(CharPool.COMMA);
-
-			sb.append(formatDate(recordVersion.getStatusDate()));
-			sb.append(CharPool.COMMA);
-
-			sb.append(recordVersion.getUserName());
-
 			String data = bufferedReader.readLine();
 
-			Assert.assertEquals(sb.toString(), data);
+			Assert.assertEquals(
+				StringBundler.concat(
+					"False,1/1/1970,1,file.txt,\"Latitude: -8.035, Longitude: ",
+					"-34.918\",2,Link to Page content,3,Option 1,Option 1,",
+					"Text content,Text Area content,Text HTML content,",
+					"Approved,", formatDate(recordVersion.getStatusDate()),
+					CharPool.COMMA, recordVersion.getUserName()),
+				data);
 		}
 	}
 
@@ -230,6 +178,8 @@ public class DDLExporterTest {
 		ddmForm.addDDMFormField(
 			DDMFormTestUtil.createTextDDMFormField(
 				"field0", false, false, false));
+		ddmForm.addDDMFormField(
+			createDDMFormField("field1", "radio", "string"));
 
 		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
 			ddmForm, _availableLocales, _defaultLocale);
@@ -237,6 +187,9 @@ public class DDLExporterTest {
 		ddmFormValues.addDDMFormFieldValue(
 			DDMFormValuesTestUtil.createDDMFormFieldValue(
 				"field0", new UnlocalizedValue("text0")));
+		ddmFormValues.addDDMFormFieldValue(
+			DDMFormValuesTestUtil.createDDMFormFieldValue(
+				"field1", createDDMFormFieldValue("Value 1")));
 
 		DDLRecordSetTestHelper recordSetTestHelper = new DDLRecordSetTestHelper(
 			_group);
@@ -259,22 +212,22 @@ public class DDLExporterTest {
 
 		ddmForm.addDDMFormField(
 			DDMFormTestUtil.createTextDDMFormField(
-				"field1", false, false, false));
+				"field2", false, false, false));
 
 		ddmForm.addDDMFormField(
 			DDMFormTestUtil.createTextDDMFormField(
-				"field2", false, false, false));
+				"field3", false, false, false));
 
 		ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
 			ddmForm, _availableLocales, _defaultLocale);
 
 		ddmFormValues.addDDMFormFieldValue(
 			DDMFormValuesTestUtil.createDDMFormFieldValue(
-				"field1", new UnlocalizedValue("text1")));
+				"field2", new UnlocalizedValue("text1")));
 
 		ddmFormValues.addDDMFormFieldValue(
 			DDMFormValuesTestUtil.createDDMFormFieldValue(
-				"field2", new UnlocalizedValue("text2")));
+				"field3", new UnlocalizedValue("text2")));
 
 		DDMStructure ddmStructure = recordSet.getDDMStructure();
 
@@ -307,49 +260,26 @@ public class DDLExporterTest {
 			String header = bufferedReader.readLine();
 
 			Assert.assertEquals(
-				"field0,field1,field2,Status,Modified Date,Author", header);
+				"field0,field1,field2,field3,Status,Modified Date,Author",
+				header);
 
 			String row2 = bufferedReader.readLine();
 
-			StringBundler sb = new StringBundler(10);
-
-			sb.append(CharPool.COMMA);
-
-			sb.append("text1");
-			sb.append(CharPool.COMMA);
-
-			sb.append("text2");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Approved");
-			sb.append(CharPool.COMMA);
-
-			sb.append(formatDate(recordVersion1.getStatusDate()));
-			sb.append(CharPool.COMMA);
-
-			sb.append(recordVersion1.getUserName());
-
-			Assert.assertEquals(sb.toString(), row2);
+			Assert.assertEquals(
+				StringBundler.concat(
+					",,text1,text2,Approved,",
+					formatDate(recordVersion1.getStatusDate()), CharPool.COMMA,
+					recordVersion1.getUserName()),
+				row2);
 
 			String row1 = bufferedReader.readLine();
 
-			sb = new StringBundler(9);
-
-			sb.append("text0");
-			sb.append(CharPool.COMMA);
-
-			sb.append(CharPool.COMMA);
-			sb.append(CharPool.COMMA);
-
-			sb.append("Approved");
-			sb.append(CharPool.COMMA);
-
-			sb.append(formatDate(recordVersion0.getStatusDate()));
-			sb.append(CharPool.COMMA);
-
-			sb.append(recordVersion0.getUserName());
-
-			Assert.assertEquals(sb.toString(), row1);
+			Assert.assertEquals(
+				StringBundler.concat(
+					"text0,Option 1,,,Approved,",
+					formatDate(recordVersion0.getStatusDate()), CharPool.COMMA,
+					recordVersion0.getUserName()),
+				row1);
 		}
 	}
 
@@ -397,20 +327,12 @@ public class DDLExporterTest {
 
 			String row0 = bufferedReader.readLine();
 
-			StringBundler sb = new StringBundler(7);
-
-			sb.append("\"I'm \"\"good\"\"\"");
-			sb.append(CharPool.COMMA);
-
-			sb.append("Approved");
-			sb.append(CharPool.COMMA);
-
-			sb.append(formatDate(recordVersion0.getStatusDate()));
-			sb.append(CharPool.COMMA);
-
-			sb.append(recordVersion0.getUserName());
-
-			Assert.assertEquals(sb.toString(), row0);
+			Assert.assertEquals(
+				StringBundler.concat(
+					"\"I'm \"\"good\"\"\",Approved,",
+					formatDate(recordVersion0.getStatusDate()), CharPool.COMMA,
+					recordVersion0.getUserName()),
+				row0);
 		}
 	}
 
@@ -441,13 +363,16 @@ public class DDLExporterTest {
 
 		DDLExporter ddlExporter = _ddlExporterFactory.getDDLExporter("xls");
 
-		byte[] bytes = ddlExporter.export(recordSet.getRecordSetId());
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"org.apache.poi.POIDocument", LoggerTestUtil.WARN)) {
 
-		try (ByteArrayInputStream byteArrayInputStream =
-				new ByteArrayInputStream(bytes);
-			HSSFWorkbook workbook = new HSSFWorkbook(byteArrayInputStream)) {
+			ByteArrayInputStream byteArrayInputStream =
+				new ByteArrayInputStream(
+					ddlExporter.export(recordSet.getRecordSetId()));
 
-			Sheet sheet = workbook.getSheetAt(0);
+			HSSFWorkbook hssfWorkbook = new HSSFWorkbook(byteArrayInputStream);
+
+			Sheet sheet = hssfWorkbook.getSheetAt(0);
 
 			Row row = sheet.getRow(0);
 
@@ -463,7 +388,7 @@ public class DDLExporterTest {
 
 			cell = row.getCell(0);
 
-			Assert.assertEquals("No", cell.getStringCellValue());
+			Assert.assertEquals("False", cell.getStringCellValue());
 
 			cell = row.getCell(1);
 
@@ -568,7 +493,7 @@ public class DDLExporterTest {
 
 		Element fieldsElement = rootElement.addElement("fields");
 
-		addFieldElement(fieldsElement, "Field0", "No");
+		addFieldElement(fieldsElement, "Field0", "False");
 		addFieldElement(fieldsElement, "Field1", "1/1/1970");
 		addFieldElement(fieldsElement, "Field2", "1");
 		addFieldElement(fieldsElement, "Field3", "file.txt");
@@ -652,17 +577,15 @@ public class DDLExporterTest {
 	}
 
 	protected String createDocumentLibraryDDMFormFieldValue() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		FileEntry fileEntry = DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "file.txt",
-			ContentTypes.TEXT_PLAIN, TestDataConstants.TEST_BYTE_ARRAY,
-			serviceContext);
+			ContentTypes.TEXT_PLAIN, TestDataConstants.TEST_BYTE_ARRAY, null,
+			null, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 
-		JSONObject jsonObject = JSONUtil.put(
+		return JSONUtil.put(
 			"groupId", fileEntry.getGroupId()
 		).put(
 			"name", fileEntry.getTitle()
@@ -672,34 +595,28 @@ public class DDLExporterTest {
 			"title", fileEntry.getTitle()
 		).put(
 			"uuid", fileEntry.getUuid()
-		);
-
-		return jsonObject.toString();
+		).toString();
 	}
 
 	protected String createGeolocationDDMFormFieldValue() throws Exception {
-		JSONObject jsonObject = JSONUtil.put(
+		return JSONUtil.put(
 			"latitude", "-8.035"
 		).put(
 			"longitude", "-34.918"
-		);
-
-		return jsonObject.toString();
+		).toString();
 	}
 
 	protected String createLinkToPageDDMFormFieldValue() throws Exception {
-		Layout layout = LayoutTestUtil.addLayout(
+		Layout layout = LayoutTestUtil.addTypePortletLayout(
 			_group.getGroupId(), "Link to Page content", false);
 
-		JSONObject jsonObject = JSONUtil.put(
+		return JSONUtil.put(
 			"groupId", layout.getGroupId()
 		).put(
 			"layoutId", layout.getLayoutId()
 		).put(
 			"privateLayout", layout.isPrivateLayout()
-		);
-
-		return jsonObject.toString();
+		).toString();
 	}
 
 	protected String createListDDMFormFieldValue() throws Exception {
@@ -823,7 +740,7 @@ public class DDLExporterTest {
 
 	private Set<Locale> _availableLocales;
 	private Map<DDMFormFieldType, String> _ddmFormFieldDataTypes;
-	private Locale _defaultLocale;
+	private final Locale _defaultLocale = LocaleUtil.US;
 	private Map<DDMFormFieldType, String> _fieldValues;
 
 	@DeleteAfterTestRun

@@ -1,22 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {useModal} from '@clayui/modal';
-import {
-	act,
-	cleanup,
-	render,
-	wait,
-	waitForElement
-} from '@testing-library/react';
+import {act, render, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -33,7 +21,7 @@ const variants = [
 		segmentsExperienceId: 'experience-001',
 		segmentsExperimentId: 'experiment-001',
 		segmentsExperimentRelId: 'experiment-rel-001',
-		split: 0
+		split: 0,
 	},
 	{
 		control: true,
@@ -41,7 +29,7 @@ const variants = [
 		segmentsExperienceId: 'experience-002',
 		segmentsExperimentId: 'experiment-001',
 		segmentsExperimentRelId: 'experiment-rel-002',
-		split: 0
+		split: 0,
 	},
 	{
 		control: true,
@@ -49,7 +37,7 @@ const variants = [
 		segmentsExperienceId: 'experience-003',
 		segmentsExperimentId: 'experiment-001',
 		segmentsExperimentRelId: 'experiment-rel-003',
-		split: 0
+		split: 0,
 	},
 	{
 		control: true,
@@ -57,21 +45,21 @@ const variants = [
 		segmentsExperienceId: 'experience-004',
 		segmentsExperimentId: 'experiment-001',
 		segmentsExperimentRelId: 'experiment-rel-004',
-		split: 0
-	}
+		split: 0,
+	},
 ];
 const onRun = jest.fn();
 
-const assetsPath = 'path';
+const imagesPath = 'path';
 
 const experiment = {
 	confidenceLevel: 0,
 	description: '',
 	editable: true,
 	goal: {
-		label: 'click',
-		target: 'click',
-		value: '#element'
+		label: 'Click',
+		target: 'element',
+		value: 'click',
 	},
 	name: 'Experiment name',
 	segmentsEntryName: 'Experience Segment',
@@ -79,13 +67,13 @@ const experiment = {
 	segmentsExperimentId: 'experiment-001',
 	status: {
 		label: 'draft',
-		value: '0'
-	}
+		value: '0',
+	},
 };
 
 const ModalWrapper = ({onCloseMock, onRun, variants}) => {
 	const {observer: modalObserver, onClose: onModalClose} = useModal({
-		onClose: onCloseMock
+		onClose: onCloseMock,
 	});
 
 	return (
@@ -102,20 +90,20 @@ const ModalWrapper = ({onCloseMock, onRun, variants}) => {
 
 const renderReviewExperimentModal = ({
 	getEstimatedTimeMock,
-	onCloseMock = () => {}
+	onCloseMock = () => {},
 }) => {
 	return render(
 		<SegmentsExperimentContext.Provider
 			value={{
 				APIService: {
-					getEstimatedTime: getEstimatedTimeMock
+					getEstimatedTime: getEstimatedTimeMock,
 				},
-				assetsPath
+				imagesPath,
 			}}
 		>
 			<StateContext.Provider
 				value={{
-					experiment
+					experiment,
 				}}
 			>
 				<ModalWrapper
@@ -126,31 +114,32 @@ const renderReviewExperimentModal = ({
 			</StateContext.Provider>
 		</SegmentsExperimentContext.Provider>,
 		{
-			baseElement: document.body
+			baseElement: document.body,
 		}
 	);
 };
 
-const getEstimatedTimeMockFactory = days => () => {
+const getEstimatedTimeMockFactory = (days) => () => {
 	return Promise.resolve({segmentsExperimentEstimatedDaysDuration: days});
 };
 
 describe('ReviewExperimentModal', () => {
-	afterEach(cleanup);
+	beforeAll(() => {
+		window.Liferay = {
+			...Liferay,
+			FeatureFlags: {
+				'LRAC-15017': true,
+			},
+		};
+	});
 
 	describe('Estimated days', () => {
 		afterEach(() => {
 			jest.clearAllTimers();
-
-			cleanup();
 		});
 
 		beforeAll(() => {
 			jest.useFakeTimers();
-		});
-
-		afterEach(() => {
-			cleanup();
 		});
 
 		it('Triggers on first render', async () => {
@@ -159,18 +148,18 @@ describe('ReviewExperimentModal', () => {
 			);
 
 			renderReviewExperimentModal({
-				getEstimatedTimeMock
+				getEstimatedTimeMock,
 			});
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(1)
 			);
 
 			expect(getEstimatedTimeMock).toHaveBeenCalledWith(
 				expect.objectContaining({
-					confidenceLevel: 95
+					confidenceLevel: 95,
 				})
 			);
 		});
@@ -179,13 +168,14 @@ describe('ReviewExperimentModal', () => {
 			const getEstimatedTimeMock = jest.fn(
 				getEstimatedTimeMockFactory(10)
 			);
-			const {getByDisplayValue} = renderReviewExperimentModal({
-				getEstimatedTimeMock
-			});
+			const {findByDisplayValue, getByDisplayValue} =
+				renderReviewExperimentModal({
+					getEstimatedTimeMock,
+				});
 
 			act(() => jest.runAllTimers());
 
-			await waitForElement(() => getByDisplayValue('95'));
+			await findByDisplayValue('95');
 
 			expect(getEstimatedTimeMock).toHaveBeenCalledTimes(1);
 
@@ -193,7 +183,7 @@ describe('ReviewExperimentModal', () => {
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(2)
 			);
 
@@ -207,7 +197,7 @@ describe('ReviewExperimentModal', () => {
 				getEstimatedTimeMockFactory(9)
 			);
 			const {getAllByDisplayValue} = renderReviewExperimentModal({
-				getEstimatedTimeMock
+				getEstimatedTimeMock,
 			});
 
 			act(() => jest.runAllTimers());
@@ -220,7 +210,7 @@ describe('ReviewExperimentModal', () => {
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(2)
 			);
 
@@ -228,7 +218,7 @@ describe('ReviewExperimentModal', () => {
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(3)
 			);
 		});
@@ -236,17 +226,17 @@ describe('ReviewExperimentModal', () => {
 		it('Informs user about an error', async () => {
 			const getEstimatedTimeMock = jest.fn(() => Promise.reject());
 
-			const {getByText} = renderReviewExperimentModal({
-				getEstimatedTimeMock
+			const {findByText} = renderReviewExperimentModal({
+				getEstimatedTimeMock,
 			});
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(1)
 			);
 
-			await waitForElement(() => getByText('not-available'));
+			await findByText('not-available');
 		});
 
 		it('Informs user about estimation', async () => {
@@ -254,17 +244,17 @@ describe('ReviewExperimentModal', () => {
 				getEstimatedTimeMockFactory(20)
 			);
 
-			const {getByText} = renderReviewExperimentModal({
-				getEstimatedTimeMock
+			const {findByText} = renderReviewExperimentModal({
+				getEstimatedTimeMock,
 			});
 
 			act(() => jest.runAllTimers());
 
-			await wait(() =>
+			await waitFor(() =>
 				expect(getEstimatedTimeMock).toHaveBeenCalledTimes(1)
 			);
 
-			await waitForElement(() => getByText('20-days'));
+			await findByText('20-days');
 		});
 	});
 });

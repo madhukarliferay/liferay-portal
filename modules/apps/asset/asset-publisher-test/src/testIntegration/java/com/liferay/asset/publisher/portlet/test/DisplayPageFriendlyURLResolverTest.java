@@ -1,25 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.publisher.portlet.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
+import com.liferay.journal.constants.JournalArticleConstants;
+import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.journal.model.JournalArticleConstants;
-import com.liferay.journal.model.JournalFolderConstants;
 import com.liferay.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.petra.string.StringBundler;
@@ -38,15 +29,14 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.webdav.methods.Method;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PortalInstances;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,9 +69,7 @@ public class DisplayPageFriendlyURLResolverTest {
 
 	@Before
 	public void setUp() throws Exception {
-		PortalInstances.addCompanyId(TestPropsValues.getCompanyId());
-
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 
@@ -89,13 +77,13 @@ public class DisplayPageFriendlyURLResolverTest {
 			ServiceContextTestUtil.getServiceContext();
 
 		LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), _group.getGroupId(), false,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), false,
 			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, "Home", StringPool.BLANK,
 			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
 			StringPool.BLANK, serviceContext);
 
 		Layout layout = LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), _group.getGroupId(), false,
+			null, TestPropsValues.getUserId(), _group.getGroupId(), false,
 			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
 			"Test " + RandomTestUtil.nextInt(), StringPool.BLANK,
 			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
@@ -120,36 +108,35 @@ public class DisplayPageFriendlyURLResolverTest {
 			LocaleUtil.US, "Test Journal Article"
 		).build();
 
-		Map<Locale, String> contentMap = HashMapBuilder.put(
-			LocaleUtil.US, "This test content is in English."
-		).build();
-
 		_article = JournalTestUtil.addArticle(
 			_group.getGroupId(),
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			JournalArticleConstants.CLASSNAME_ID_DEFAULT, titleMap, titleMap,
-			contentMap, layout.getUuid(), LocaleUtil.US, null, false, false,
+			JournalArticleConstants.CLASS_NAME_ID_DEFAULT, titleMap, titleMap,
+			HashMapBuilder.put(
+				LocaleUtil.US, "This test content is in English."
+			).build(),
+			layout.getUuid(), LocaleUtil.US, null, false, false,
 			serviceContext);
 	}
 
 	@Test
 	public void testJournalArticleFriendlyURL() throws Exception {
-		String actualURL = PortalUtil.getActualURL(
-			_group.getGroupId(), false, Portal.PATH_MAIN,
-			"/-/test-journal-article", new HashMap<>(), _getRequestContext());
-
-		Assert.assertNotNull(actualURL);
+		Assert.assertNotNull(
+			PortalUtil.getActualURL(
+				_group.getGroupId(), false, Portal.PATH_MAIN,
+				"/-/test-journal-article", new HashMap<>(),
+				_getRequestContext()));
 	}
 
 	@Test
 	public void testJournalArticleFriendlyURLWithEndingSlash()
 		throws Exception {
 
-		String actualURL = PortalUtil.getActualURL(
-			_group.getGroupId(), false, Portal.PATH_MAIN,
-			"/-/test-journal-article/", new HashMap<>(), _getRequestContext());
-
-		Assert.assertNotNull(actualURL);
+		Assert.assertNotNull(
+			PortalUtil.getActualURL(
+				_group.getGroupId(), false, Portal.PATH_MAIN,
+				"/-/test-journal-article/", new HashMap<>(),
+				_getRequestContext()));
 	}
 
 	@Test
@@ -170,8 +157,8 @@ public class DisplayPageFriendlyURLResolverTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchLayoutException nsle) {
-			_assertCause(nsle, urlTitle);
+		catch (NoSuchLayoutException noSuchLayoutException) {
+			_assertCause(noSuchLayoutException, urlTitle);
 		}
 	}
 
@@ -188,8 +175,8 @@ public class DisplayPageFriendlyURLResolverTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchLayoutException nsle) {
-			_assertCause(nsle, urlTitle);
+		catch (NoSuchLayoutException noSuchLayoutException) {
+			_assertCause(noSuchLayoutException, urlTitle);
 		}
 	}
 
@@ -209,16 +196,19 @@ public class DisplayPageFriendlyURLResolverTest {
 
 			Assert.fail();
 		}
-		catch (NoSuchLayoutException nsle) {
-			_assertCause(nsle, urlTitle);
+		catch (NoSuchLayoutException noSuchLayoutException) {
+			_assertCause(noSuchLayoutException, urlTitle);
 		}
 	}
 
-	private void _assertCause(NoSuchLayoutException nsle, String urlTitle) {
-		Throwable cause = nsle.getCause();
+	private void _assertCause(
+		NoSuchLayoutException noSuchLayoutException, String urlTitle) {
+
+		Throwable throwable = noSuchLayoutException.getCause();
 
 		Assert.assertTrue(
-			String.valueOf(cause), cause instanceof NoSuchArticleException);
+			String.valueOf(throwable),
+			throwable instanceof NoSuchArticleException);
 
 		urlTitle = urlTitle.substring(
 			JournalArticleConstants.CANONICAL_URL_SEPARATOR.length());
@@ -228,7 +218,7 @@ public class DisplayPageFriendlyURLResolverTest {
 				"No JournalArticle exists with the key {groupId=",
 				_group.getGroupId(), ", urlTitle=", urlTitle, ", status=",
 				WorkflowConstants.STATUS_PENDING, "}"),
-			cause.getMessage());
+			throwable.getMessage());
 	}
 
 	private Map<String, Object> _getRequestContext() {

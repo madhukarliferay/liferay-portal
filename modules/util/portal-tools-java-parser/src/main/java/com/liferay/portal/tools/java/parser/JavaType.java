@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.java.parser;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 
 import java.util.List;
@@ -24,9 +16,16 @@ import java.util.List;
  */
 public class JavaType extends BaseJavaTerm implements Comparable<JavaType> {
 
-	public JavaType(String name, int arrayDimension) {
-		_name = new JavaSimpleValue(name);
+	public JavaType(
+		int arrayDimension, List<JavaAnnotation> javaAnnotations, String name) {
+
 		_arrayDimension = arrayDimension;
+		_javaAnnotations = javaAnnotations;
+		_name = new JavaSimpleValue(name);
+	}
+
+	public JavaType(int arrayDimension, String name) {
+		this(arrayDimension, null, name);
 	}
 
 	@Override
@@ -89,6 +88,16 @@ public class JavaType extends BaseJavaTerm implements Comparable<JavaType> {
 
 		indent = "\t" + indent;
 
+		if (ListUtil.isNotEmpty(_javaAnnotations) &&
+			!appendSingleLine(
+				sb, _javaAnnotations, " ", "", " ", maxLineLength)) {
+
+			append(sb, _javaAnnotations, " ", indent, "", "", maxLineLength);
+
+			sb.append("\n");
+			sb.append(indent.substring(1));
+		}
+
 		if ((_genericJavaTypes == null) && (_lowerBoundJavaTypes == null) &&
 			(_upperBoundJavaTypes == null)) {
 
@@ -145,6 +154,7 @@ public class JavaType extends BaseJavaTerm implements Comparable<JavaType> {
 
 	private final int _arrayDimension;
 	private List<JavaType> _genericJavaTypes;
+	private final List<JavaAnnotation> _javaAnnotations;
 	private List<JavaType> _lowerBoundJavaTypes;
 	private final JavaSimpleValue _name;
 	private List<JavaType> _upperBoundJavaTypes;

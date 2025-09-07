@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model.impl;
@@ -37,17 +28,17 @@ public class JournalArticleCacheModel
 	implements CacheModel<JournalArticle>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof JournalArticleCacheModel)) {
+		if (!(object instanceof JournalArticleCacheModel)) {
 			return false;
 		}
 
 		JournalArticleCacheModel journalArticleCacheModel =
-			(JournalArticleCacheModel)obj;
+			(JournalArticleCacheModel)object;
 
 		if ((id == journalArticleCacheModel.id) &&
 			(mvccVersion == journalArticleCacheModel.mvccVersion)) {
@@ -77,7 +68,7 @@ public class JournalArticleCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(71);
+		StringBundler sb = new StringBundler(73);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -101,6 +92,8 @@ public class JournalArticleCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", folderId=");
 		sb.append(folderId);
 		sb.append(", classNameId=");
@@ -115,10 +108,8 @@ public class JournalArticleCacheModel
 		sb.append(version);
 		sb.append(", urlTitle=");
 		sb.append(urlTitle);
-		sb.append(", content=");
-		sb.append(content);
-		sb.append(", DDMStructureKey=");
-		sb.append(DDMStructureKey);
+		sb.append(", DDMStructureId=");
+		sb.append(DDMStructureId);
 		sb.append(", DDMTemplateKey=");
 		sb.append(DDMTemplateKey);
 		sb.append(", defaultLanguageId=");
@@ -137,6 +128,8 @@ public class JournalArticleCacheModel
 		sb.append(smallImage);
 		sb.append(", smallImageId=");
 		sb.append(smallImageId);
+		sb.append(", smallImageSource=");
+		sb.append(smallImageSource);
 		sb.append(", smallImageURL=");
 		sb.append(smallImageURL);
 		sb.append(", lastPublishDate=");
@@ -195,6 +188,13 @@ public class JournalArticleCacheModel
 			journalArticleImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		if (externalReferenceCode == null) {
+			journalArticleImpl.setExternalReferenceCode("");
+		}
+		else {
+			journalArticleImpl.setExternalReferenceCode(externalReferenceCode);
+		}
+
 		journalArticleImpl.setFolderId(folderId);
 		journalArticleImpl.setClassNameId(classNameId);
 		journalArticleImpl.setClassPK(classPK);
@@ -222,19 +222,7 @@ public class JournalArticleCacheModel
 			journalArticleImpl.setUrlTitle(urlTitle);
 		}
 
-		if (content == null) {
-			journalArticleImpl.setContent("");
-		}
-		else {
-			journalArticleImpl.setContent(content);
-		}
-
-		if (DDMStructureKey == null) {
-			journalArticleImpl.setDDMStructureKey("");
-		}
-		else {
-			journalArticleImpl.setDDMStructureKey(DDMStructureKey);
-		}
+		journalArticleImpl.setDDMStructureId(DDMStructureId);
 
 		if (DDMTemplateKey == null) {
 			journalArticleImpl.setDDMTemplateKey("");
@@ -281,6 +269,7 @@ public class JournalArticleCacheModel
 		journalArticleImpl.setIndexable(indexable);
 		journalArticleImpl.setSmallImage(smallImage);
 		journalArticleImpl.setSmallImageId(smallImageId);
+		journalArticleImpl.setSmallImageSource(smallImageSource);
 
 		if (smallImageURL == null) {
 			journalArticleImpl.setSmallImageURL("");
@@ -315,15 +304,11 @@ public class JournalArticleCacheModel
 
 		journalArticleImpl.resetOriginalValues();
 
-		journalArticleImpl.setDocument(_document);
-
 		return journalArticleImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput)
-		throws ClassNotFoundException, IOException {
-
+	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
 		ctCollectionId = objectInput.readLong();
@@ -341,6 +326,7 @@ public class JournalArticleCacheModel
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+		externalReferenceCode = objectInput.readUTF();
 
 		folderId = objectInput.readLong();
 
@@ -352,8 +338,8 @@ public class JournalArticleCacheModel
 
 		version = objectInput.readDouble();
 		urlTitle = objectInput.readUTF();
-		content = objectInput.readUTF();
-		DDMStructureKey = objectInput.readUTF();
+
+		DDMStructureId = objectInput.readLong();
 		DDMTemplateKey = objectInput.readUTF();
 		defaultLanguageId = objectInput.readUTF();
 		layoutUuid = objectInput.readUTF();
@@ -366,6 +352,8 @@ public class JournalArticleCacheModel
 		smallImage = objectInput.readBoolean();
 
 		smallImageId = objectInput.readLong();
+
+		smallImageSource = objectInput.readInt();
 		smallImageURL = objectInput.readUTF();
 		lastPublishDate = objectInput.readLong();
 
@@ -374,9 +362,6 @@ public class JournalArticleCacheModel
 		statusByUserId = objectInput.readLong();
 		statusByUserName = objectInput.readUTF();
 		statusDate = objectInput.readLong();
-
-		_document =
-			(com.liferay.portal.kernel.xml.Document)objectInput.readObject();
 	}
 
 	@Override
@@ -412,6 +397,13 @@ public class JournalArticleCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
+
 		objectOutput.writeLong(folderId);
 
 		objectOutput.writeLong(classNameId);
@@ -441,19 +433,7 @@ public class JournalArticleCacheModel
 			objectOutput.writeUTF(urlTitle);
 		}
 
-		if (content == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(content);
-		}
-
-		if (DDMStructureKey == null) {
-			objectOutput.writeUTF("");
-		}
-		else {
-			objectOutput.writeUTF(DDMStructureKey);
-		}
+		objectOutput.writeLong(DDMStructureId);
 
 		if (DDMTemplateKey == null) {
 			objectOutput.writeUTF("");
@@ -486,6 +466,8 @@ public class JournalArticleCacheModel
 
 		objectOutput.writeLong(smallImageId);
 
+		objectOutput.writeInt(smallImageSource);
+
 		if (smallImageURL == null) {
 			objectOutput.writeUTF("");
 		}
@@ -507,8 +489,6 @@ public class JournalArticleCacheModel
 		}
 
 		objectOutput.writeLong(statusDate);
-
-		objectOutput.writeObject(_document);
 	}
 
 	public long mvccVersion;
@@ -522,6 +502,7 @@ public class JournalArticleCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public String externalReferenceCode;
 	public long folderId;
 	public long classNameId;
 	public long classPK;
@@ -529,8 +510,7 @@ public class JournalArticleCacheModel
 	public String articleId;
 	public double version;
 	public String urlTitle;
-	public String content;
-	public String DDMStructureKey;
+	public long DDMStructureId;
 	public String DDMTemplateKey;
 	public String defaultLanguageId;
 	public String layoutUuid;
@@ -540,12 +520,12 @@ public class JournalArticleCacheModel
 	public boolean indexable;
 	public boolean smallImage;
 	public long smallImageId;
+	public int smallImageSource;
 	public String smallImageURL;
 	public long lastPublishDate;
 	public int status;
 	public long statusByUserId;
 	public String statusByUserName;
 	public long statusDate;
-	public com.liferay.portal.kernel.xml.Document _document;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.impl;
@@ -22,8 +13,8 @@ import com.liferay.calendar.service.CalendarLocalService;
 import com.liferay.calendar.service.CalendarService;
 import com.liferay.calendar.service.base.CalendarBookingServiceBaseImpl;
 import com.liferay.calendar.util.JCalendarUtil;
-import com.liferay.calendar.workflow.CalendarBookingWorkflowConstants;
-import com.liferay.petra.content.ContentUtil;
+import com.liferay.calendar.workflow.constants.CalendarBookingWorkflowConstants;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -50,6 +41,8 @@ import com.liferay.rss.model.SyndLink;
 import com.liferay.rss.model.SyndModelFactory;
 import com.liferay.rss.util.RSSUtil;
 
+import java.io.IOException;
+
 import java.text.Format;
 
 import java.util.ArrayList;
@@ -59,8 +52,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -230,7 +221,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			return null;
 		}
 
-		return filterCalendarBooking(calendarBooking);
+		return _filterCalendarBooking(calendarBooking);
 	}
 
 	@Override
@@ -240,7 +231,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 		CalendarBooking calendarBooking =
 			calendarBookingPersistence.findByPrimaryKey(calendarBookingId);
 
-		return filterCalendarBooking(calendarBooking);
+		return _filterCalendarBooking(calendarBooking);
 	}
 
 	@Override
@@ -265,7 +256,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			calendarBookingLocalService.getCalendarBookingInstance(
 				calendarBookingId, instanceIndex);
 
-		return filterCalendarBooking(calendarBooking);
+		return _filterCalendarBooking(calendarBooking);
 	}
 
 	@Override
@@ -273,11 +264,10 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			long calendarId, int[] statuses)
 		throws PortalException {
 
-		List<CalendarBooking> calendarBookings =
+		return _filterCalendarBookings(
 			calendarBookingLocalService.getCalendarBookings(
-				calendarId, statuses);
-
-		return filterCalendarBookings(calendarBookings, ActionKeys.VIEW);
+				calendarId, statuses),
+			ActionKeys.VIEW);
 	}
 
 	@Override
@@ -299,7 +289,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 				calendarId, startTime, endTime, max);
 
 		for (CalendarBooking calendarBooking : calendarBookings) {
-			filterCalendarBooking(calendarBooking);
+			_filterCalendarBooking(calendarBooking);
 		}
 
 		return calendarBookings;
@@ -313,17 +303,16 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 
 		Calendar calendar = _calendarService.getCalendar(calendarId);
 
-		int[] statuses = {
-			WorkflowConstants.STATUS_APPROVED,
-			CalendarBookingWorkflowConstants.STATUS_MAYBE
-		};
-
 		List<CalendarBooking> calendarBookings = search(
 			themeDisplay.getCompanyId(), new long[0], new long[] {calendarId},
-			new long[0], -1, null, startTime, endTime, true, statuses, 0, max,
-			null);
+			new long[0], -1, null, startTime, endTime, null, true,
+			new int[] {
+				WorkflowConstants.STATUS_APPROVED,
+				CalendarBookingWorkflowConstants.STATUS_MAYBE
+			},
+			0, max, null);
 
-		return exportToRSS(
+		return _exportToRSS(
 			calendar.getName(themeDisplay.getLocale()),
 			calendar.getDescription(themeDisplay.getLocale()), type, version,
 			displayStyle, _portal.getLayoutFullURL(themeDisplay),
@@ -339,11 +328,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			calendarBookingLocalService.getChildCalendarBookings(
 				parentCalendarBookingId);
 
-		for (CalendarBooking calendarBooking : calendarBookings) {
-			filterCalendarBooking(calendarBooking);
-		}
-
-		return calendarBookings;
+		return _filterCalendarBookings(calendarBookings);
 	}
 
 	@Override
@@ -359,24 +344,11 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			return childCalendarBookings;
 		}
 
-		Stream<CalendarBooking> stream = childCalendarBookings.stream();
-
-		stream = stream.filter(
-			calendarBooking -> {
-				try {
-					return !_calendarLocalService.isStagingCalendar(
-						calendarBooking.getCalendar());
-				}
-				catch (PortalException pe) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(pe, pe);
-					}
-
-					return true;
-				}
-			});
-
-		return stream.collect(Collectors.toList());
+		return ListUtil.filter(
+			childCalendarBookings,
+			childCalendarBooking -> !_calendarLocalService.isStagingCalendar(
+				_calendarLocalService.fetchCalendar(
+					childCalendarBooking.getCalendarId())));
 	}
 
 	@Override
@@ -388,11 +360,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			calendarBookingLocalService.getChildCalendarBookings(
 				parentCalendarBookingId, status);
 
-		for (CalendarBooking calendarBooking : calendarBookings) {
-			filterCalendarBooking(calendarBooking);
-		}
-
-		return calendarBookings;
+		return _filterCalendarBookings(calendarBookings);
 	}
 
 	@Override
@@ -511,8 +479,9 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 	public List<CalendarBooking> search(
 			long companyId, long[] groupIds, long[] calendarIds,
 			long[] calendarResourceIds, long parentCalendarBookingId,
-			String keywords, long startTime, long endTime, boolean recurring,
-			int[] statuses, int start, int end,
+			String keywords, long startTime, long endTime,
+			TimeZone displayTimeZone, boolean recurring, int[] statuses,
+			int start, int end,
 			OrderByComparator<CalendarBooking> orderByComparator)
 		throws PortalException {
 
@@ -520,9 +489,10 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			calendarBookingLocalService.search(
 				companyId, groupIds, calendarIds, calendarResourceIds,
 				parentCalendarBookingId, keywords, startTime, endTime,
-				recurring, statuses, start, end, orderByComparator);
+				displayTimeZone, recurring, statuses, start, end,
+				orderByComparator);
 
-		return filterCalendarBookings(calendarBookings, ActionKeys.VIEW);
+		return _filterCalendarBookings(calendarBookings, ActionKeys.VIEW);
 	}
 
 	@Override
@@ -542,7 +512,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 				startTime, endTime, recurring, statuses, andOperator, start,
 				end, orderByComparator);
 
-		return filterCalendarBookings(calendarBookings, ActionKeys.VIEW);
+		return _filterCalendarBookings(calendarBookings, ActionKeys.VIEW);
 	}
 
 	@AccessControlled(guestAccessEnabled = true)
@@ -556,8 +526,8 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 
 		List<CalendarBooking> calendarBookings = search(
 			companyId, groupIds, calendarIds, calendarResourceIds,
-			parentCalendarBookingId, keywords, startTime, endTime, recurring,
-			statuses, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+			parentCalendarBookingId, keywords, startTime, endTime, null,
+			recurring, statuses, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		return calendarBookings.size();
 	}
@@ -806,7 +776,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			secondReminderType, serviceContext);
 	}
 
-	protected String exportToRSS(
+	private String _exportToRSS(
 		String name, String description, String type, double version,
 		String displayStyle, String feedURL,
 		List<CalendarBooking> calendarBookings, ThemeDisplay themeDisplay) {
@@ -824,18 +794,13 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 		for (CalendarBooking calendarBooking : calendarBookings) {
 			SyndEntry syndEntry = _syndModelFactory.createSyndEntry();
 
-			String author = _portal.getUserName(calendarBooking);
-
-			syndEntry.setAuthor(author);
+			syndEntry.setAuthor(_portal.getUserName(calendarBooking));
 
 			SyndContent syndContent = _syndModelFactory.createSyndContent();
 
 			syndContent.setType(RSSUtil.ENTRY_TYPE_DEFAULT);
-
-			String value = _getContent(
-				calendarBooking, displayStyle, themeDisplay);
-
-			syndContent.setValue(value);
+			syndContent.setValue(
+				_getContent(calendarBooking, displayStyle, themeDisplay));
 
 			syndEntry.setDescription(syndContent);
 
@@ -871,7 +836,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 		return _rssExporter.export(syndFeed);
 	}
 
-	protected CalendarBooking filterCalendarBooking(
+	private CalendarBooking _filterCalendarBooking(
 			CalendarBooking calendarBooking)
 		throws PortalException {
 
@@ -891,19 +856,38 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 		return calendarBooking;
 	}
 
-	protected List<CalendarBooking> filterCalendarBookings(
+	private List<CalendarBooking> _filterCalendarBookings(
+		List<CalendarBooking> calendarBookings) {
+
+		return TransformUtil.transform(
+			calendarBookings,
+			calendarBooking -> {
+				try {
+					return _filterCalendarBooking(calendarBooking);
+				}
+				catch (PortalException portalException) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(portalException);
+					}
+
+					return null;
+				}
+			});
+	}
+
+	private List<CalendarBooking> _filterCalendarBookings(
 			List<CalendarBooking> calendarBookings, String actionId)
 		throws PortalException {
 
 		calendarBookings = ListUtil.copy(calendarBookings);
 
-		Iterator<CalendarBooking> itr = calendarBookings.iterator();
+		Iterator<CalendarBooking> iterator = calendarBookings.iterator();
 
-		while (itr.hasNext()) {
-			CalendarBooking calendarBooking = itr.next();
+		while (iterator.hasNext()) {
+			CalendarBooking calendarBooking = iterator.next();
 
-			if (isPendingInWorkflow(calendarBooking)) {
-				itr.remove();
+			if (_isPendingInWorkflow(calendarBooking)) {
+				iterator.remove();
 
 				continue;
 			}
@@ -916,10 +900,10 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 						getPermissionChecker(), calendarBooking.getCalendarId(),
 						actionId)) {
 
-					itr.remove();
+					iterator.remove();
 				}
 				else {
-					filterCalendarBooking(calendarBooking);
+					_filterCalendarBooking(calendarBooking);
 				}
 			}
 		}
@@ -927,21 +911,7 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 		return calendarBookings;
 	}
 
-	protected boolean isPendingInWorkflow(CalendarBooking calendarBooking)
-		throws PortalException {
-
-		if (calendarBooking.isPending() &&
-			!_calendarModelResourcePermission.contains(
-				getPermissionChecker(), calendarBooking.getCalendarId(),
-				CalendarActionKeys.MANAGE_BOOKINGS)) {
-
-			return true;
-		}
-
-		return false;
-	}
-
-	private static String _getContent(
+	private String _getContent(
 		CalendarBooking calendarBooking, String displayStyle,
 		ThemeDisplay themeDisplay) {
 
@@ -954,9 +924,19 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			return calendarBooking.getTitle(themeDisplay.getLocale());
 		}
 
-		String content = ContentUtil.get(
-			CalendarServiceConfigurationValues.class.getClassLoader(),
-			CalendarServiceConfigurationValues.CALENDAR_RSS_TEMPLATE);
+		String content = null;
+
+		try {
+			content = StringUtil.read(
+				CalendarServiceConfigurationValues.class.getClassLoader(),
+				CalendarServiceConfigurationValues.CALENDAR_RSS_TEMPLATE);
+		}
+		catch (IOException ioException) {
+			_log.error(
+				"Unable to read the content for " +
+					CalendarServiceConfigurationValues.CALENDAR_RSS_TEMPLATE,
+				ioException);
+		}
 
 		TimeZone timeZone = themeDisplay.getTimeZone();
 
@@ -964,10 +944,10 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			timeZone = TimeZone.getTimeZone(StringPool.UTC);
 		}
 
-		Format dateFormatDateTime = FastDateFormatFactoryUtil.getDateTime(
+		Format dateTimeFormat = FastDateFormatFactoryUtil.getDateTime(
 			themeDisplay.getLocale(), timeZone);
 
-		content = StringUtil.replace(
+		return StringUtil.replace(
 			content,
 			new String[] {
 				"[$EVENT_DESCRIPTION$]", "[$EVENT_END_DATE$]",
@@ -975,13 +955,25 @@ public class CalendarBookingServiceImpl extends CalendarBookingServiceBaseImpl {
 			},
 			new String[] {
 				calendarBooking.getDescription(themeDisplay.getLocale()),
-				dateFormatDateTime.format(calendarBooking.getEndTime()),
+				dateTimeFormat.format(calendarBooking.getEndTime()),
 				calendarBooking.getLocation(),
-				dateFormatDateTime.format(calendarBooking.getStartTime()),
+				dateTimeFormat.format(calendarBooking.getStartTime()),
 				calendarBooking.getTitle(themeDisplay.getLocale())
 			});
+	}
 
-		return content;
+	private boolean _isPendingInWorkflow(CalendarBooking calendarBooking)
+		throws PortalException {
+
+		if (calendarBooking.isPending() &&
+			!_calendarModelResourcePermission.contains(
+				getPermissionChecker(), calendarBooking.getCalendarId(),
+				CalendarActionKeys.MANAGE_BOOKINGS)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

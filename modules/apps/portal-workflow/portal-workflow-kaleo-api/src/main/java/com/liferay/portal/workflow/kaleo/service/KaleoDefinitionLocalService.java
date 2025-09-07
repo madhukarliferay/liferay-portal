@@ -1,21 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service;
 
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -26,6 +22,8 @@ import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -48,34 +46,43 @@ import org.osgi.annotation.versioning.ProviderType;
  * @see KaleoDefinitionLocalServiceUtil
  * @generated
  */
+@CTAware
 @ProviderType
 @Transactional(
 	isolation = Isolation.PORTAL,
 	rollbackFor = {PortalException.class, SystemException.class}
 )
 public interface KaleoDefinitionLocalService
-	extends BaseLocalService, PersistedModelLocalService {
+	extends BaseLocalService, CTService<KaleoDefinition>,
+			PersistedModelLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this interface directly. Always use {@link KaleoDefinitionLocalServiceUtil} to access the kaleo definition local service. Add custom service methods to <code>com.liferay.portal.workflow.kaleo.service.impl.KaleoDefinitionLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.portal.workflow.kaleo.service.impl.KaleoDefinitionLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the kaleo definition local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link KaleoDefinitionLocalServiceUtil} if injection and service tracking are not available.
 	 */
-	public void activateKaleoDefinition(
+	@Indexable(type = IndexableType.REINDEX)
+	public KaleoDefinition activateKaleoDefinition(
 			long kaleoDefinitionId, long kaleoDefinitionVersionId,
 			long startKaleoNodeId, ServiceContext serviceContext)
 		throws PortalException;
 
-	public void activateKaleoDefinition(
+	@Indexable(type = IndexableType.REINDEX)
+	public KaleoDefinition activateKaleoDefinition(
 			long kaleoDefinitionId, ServiceContext serviceContext)
 		throws PortalException;
 
-	public void activateKaleoDefinition(
+	@Indexable(type = IndexableType.REINDEX)
+	public KaleoDefinition activateKaleoDefinition(
 			String name, int version, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Adds the kaleo definition to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoDefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kaleoDefinition the kaleo definition
 	 * @return the kaleo definition that was added
@@ -84,8 +91,9 @@ public interface KaleoDefinitionLocalService
 	public KaleoDefinition addKaleoDefinition(KaleoDefinition kaleoDefinition);
 
 	public KaleoDefinition addKaleoDefinition(
-			String name, String title, String description, String content,
-			int version, ServiceContext serviceContext)
+			String externalReferenceCode, String name, String title,
+			String description, String content, String scope, int version,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -97,7 +105,14 @@ public interface KaleoDefinitionLocalService
 	@Transactional(enabled = false)
 	public KaleoDefinition createKaleoDefinition(long kaleoDefinitionId);
 
-	public void deactivateKaleoDefinition(
+	/**
+	 * @throws PortalException
+	 */
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public KaleoDefinition deactivateKaleoDefinition(
 			String name, int version, ServiceContext serviceContext)
 		throws PortalException;
 
@@ -105,6 +120,10 @@ public interface KaleoDefinitionLocalService
 
 	/**
 	 * Deletes the kaleo definition from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoDefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kaleoDefinition the kaleo definition
 	 * @return the kaleo definition that was removed
@@ -115,6 +134,10 @@ public interface KaleoDefinitionLocalService
 
 	/**
 	 * Deletes the kaleo definition with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoDefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kaleoDefinitionId the primary key of the kaleo definition
 	 * @return the kaleo definition that was removed
@@ -134,6 +157,12 @@ public interface KaleoDefinitionLocalService
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public <T> T dslQuery(DSLQuery dslQuery);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int dslQueryCount(DSLQuery dslQuery);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public DynamicQuery dynamicQuery();
@@ -209,7 +238,26 @@ public interface KaleoDefinitionLocalService
 		String name, ServiceContext serviceContext);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KaleoDefinition fetchKaleoDefinitionByExternalReferenceCode(
+		String externalReferenceCode, long companyId);
+
+	/**
+	 * Returns the kaleo definition matching the UUID and group.
+	 *
+	 * @param uuid the kaleo definition's UUID
+	 * @param groupId the primary key of the group
+	 * @return the matching kaleo definition, or <code>null</code> if a matching kaleo definition could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KaleoDefinition fetchKaleoDefinitionByUuidAndGroupId(
+		String uuid, long groupId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		PortletDataContext portletDataContext);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
@@ -229,6 +277,28 @@ public interface KaleoDefinitionLocalService
 	public KaleoDefinition getKaleoDefinition(
 			String name, ServiceContext serviceContext)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KaleoDefinition getKaleoDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException;
+
+	/**
+	 * Returns the kaleo definition matching the UUID and group.
+	 *
+	 * @param uuid the kaleo definition's UUID
+	 * @param groupId the primary key of the group
+	 * @return the matching kaleo definition
+	 * @throws PortalException if a matching kaleo definition could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KaleoDefinition getKaleoDefinitionByUuidAndGroupId(
+			String uuid, long groupId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<KaleoDefinition> getKaleoDefinitions(
+		boolean active, int start, int end);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<KaleoDefinition> getKaleoDefinitions(
@@ -255,6 +325,32 @@ public interface KaleoDefinitionLocalService
 		int start, int end,
 		OrderByComparator<KaleoDefinition> orderByComparator,
 		ServiceContext serviceContext);
+
+	/**
+	 * Returns all the kaleo definitions matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the kaleo definitions
+	 * @param companyId the primary key of the company
+	 * @return the matching kaleo definitions, or an empty list if no matches were found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<KaleoDefinition> getKaleoDefinitionsByUuidAndCompanyId(
+		String uuid, long companyId);
+
+	/**
+	 * Returns a range of kaleo definitions matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the kaleo definitions
+	 * @param companyId the primary key of the company
+	 * @param start the lower bound of the range of kaleo definitions
+	 * @param end the upper bound of the range of kaleo definitions (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the range of matching kaleo definitions, or an empty list if no matches were found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<KaleoDefinition> getKaleoDefinitionsByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		OrderByComparator<KaleoDefinition> orderByComparator);
 
 	/**
 	 * Returns the number of kaleo definitions.
@@ -286,18 +382,45 @@ public interface KaleoDefinitionLocalService
 	 */
 	public String getOSGiServiceIdentifier();
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<KaleoDefinition> getScopeKaleoDefinitions(
+		String scope, boolean active, int start, int end,
+		OrderByComparator<KaleoDefinition> orderByComparator,
+		ServiceContext serviceContext);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<KaleoDefinition> getScopeKaleoDefinitions(
+		String scope, int start, int end,
+		OrderByComparator<KaleoDefinition> orderByComparator,
+		ServiceContext serviceContext);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getScopeKaleoDefinitionsCount(
+		String scope, boolean active, ServiceContext serviceContext);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getScopeKaleoDefinitionsCount(
+		String scope, ServiceContext serviceContext);
+
 	public KaleoDefinition updatedKaleoDefinition(
-			long kaleoDefinitionId, String title, String description,
-			String content, ServiceContext serviceContext)
+			String externalReferenceCode, long kaleoDefinitionId, String title,
+			String description, String content, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
 	 * Updates the kaleo definition in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoDefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param kaleoDefinition the kaleo definition
 	 * @return the kaleo definition that was updated
@@ -305,5 +428,20 @@ public interface KaleoDefinitionLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public KaleoDefinition updateKaleoDefinition(
 		KaleoDefinition kaleoDefinition);
+
+	@Override
+	@Transactional(enabled = false)
+	public CTPersistence<KaleoDefinition> getCTPersistence();
+
+	@Override
+	@Transactional(enabled = false)
+	public Class<KaleoDefinition> getModelClass();
+
+	@Override
+	@Transactional(rollbackFor = Throwable.class)
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<KaleoDefinition>, R, E>
+				updateUnsafeFunction)
+		throws E;
 
 }

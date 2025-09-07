@@ -1,23 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -40,11 +35,21 @@ public class RegionWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
+		attributes.put("uuid", getUuid());
+		attributes.put("defaultLanguageId", getDefaultLanguageId());
 		attributes.put("regionId", getRegionId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("countryId", getCountryId());
-		attributes.put("regionCode", getRegionCode());
-		attributes.put("name", getName());
 		attributes.put("active", isActive());
+		attributes.put("name", getName());
+		attributes.put("position", getPosition());
+		attributes.put("regionCode", getRegionCode());
+		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
 	}
@@ -57,10 +62,58 @@ public class RegionWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		String defaultLanguageId = (String)attributes.get("defaultLanguageId");
+
+		if (defaultLanguageId != null) {
+			setDefaultLanguageId(defaultLanguageId);
+		}
+
 		Long regionId = (Long)attributes.get("regionId");
 
 		if (regionId != null) {
 			setRegionId(regionId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
 		}
 
 		Long countryId = (Long)attributes.get("countryId");
@@ -69,10 +122,10 @@ public class RegionWrapper
 			setCountryId(countryId);
 		}
 
-		String regionCode = (String)attributes.get("regionCode");
+		Boolean active = (Boolean)attributes.get("active");
 
-		if (regionCode != null) {
-			setRegionCode(regionCode);
+		if (active != null) {
+			setActive(active);
 		}
 
 		String name = (String)attributes.get("name");
@@ -81,11 +134,28 @@ public class RegionWrapper
 			setName(name);
 		}
 
-		Boolean active = (Boolean)attributes.get("active");
+		Double position = (Double)attributes.get("position");
 
-		if (active != null) {
-			setActive(active);
+		if (position != null) {
+			setPosition(position);
 		}
+
+		String regionCode = (String)attributes.get("regionCode");
+
+		if (regionCode != null) {
+			setRegionCode(regionCode);
+		}
+
+		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
+
+		if (lastPublishDate != null) {
+			setLastPublishDate(lastPublishDate);
+		}
+	}
+
+	@Override
+	public Region cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -98,6 +168,21 @@ public class RegionWrapper
 		return model.getActive();
 	}
 
+	@Override
+	public String[] getAvailableLanguageIds() {
+		return model.getAvailableLanguageIds();
+	}
+
+	/**
+	 * Returns the company ID of this region.
+	 *
+	 * @return the company ID of this region
+	 */
+	@Override
+	public long getCompanyId() {
+		return model.getCompanyId();
+	}
+
 	/**
 	 * Returns the country ID of this region.
 	 *
@@ -106,6 +191,61 @@ public class RegionWrapper
 	@Override
 	public long getCountryId() {
 		return model.getCountryId();
+	}
+
+	/**
+	 * Returns the create date of this region.
+	 *
+	 * @return the create date of this region
+	 */
+	@Override
+	public Date getCreateDate() {
+		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the ct collection ID of this region.
+	 *
+	 * @return the ct collection ID of this region
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the default language ID of this region.
+	 *
+	 * @return the default language ID of this region
+	 */
+	@Override
+	public String getDefaultLanguageId() {
+		return model.getDefaultLanguageId();
+	}
+
+	@Override
+	public Map<String, String> getLanguageIdToTitleMap() {
+		return model.getLanguageIdToTitleMap();
+	}
+
+	/**
+	 * Returns the last publish date of this region.
+	 *
+	 * @return the last publish date of this region
+	 */
+	@Override
+	public Date getLastPublishDate() {
+		return model.getLastPublishDate();
+	}
+
+	/**
+	 * Returns the modified date of this region.
+	 *
+	 * @return the modified date of this region
+	 */
+	@Override
+	public Date getModifiedDate() {
+		return model.getModifiedDate();
 	}
 
 	/**
@@ -126,6 +266,16 @@ public class RegionWrapper
 	@Override
 	public String getName() {
 		return model.getName();
+	}
+
+	/**
+	 * Returns the position of this region.
+	 *
+	 * @return the position of this region
+	 */
+	@Override
+	public double getPosition() {
+		return model.getPosition();
 	}
 
 	/**
@@ -158,6 +308,71 @@ public class RegionWrapper
 		return model.getRegionId();
 	}
 
+	@Override
+	public String getTitle() {
+		return model.getTitle();
+	}
+
+	@Override
+	public String getTitle(String languageId) {
+		return model.getTitle(languageId);
+	}
+
+	@Override
+	public String getTitle(String languageId, boolean useDefault) {
+		return model.getTitle(languageId, useDefault);
+	}
+
+	@Override
+	public String getTitleCurrentLanguageId() {
+		return model.getTitleCurrentLanguageId();
+	}
+
+	@Override
+	public String getTitleMapAsXML() {
+		return model.getTitleMapAsXML();
+	}
+
+	/**
+	 * Returns the user ID of this region.
+	 *
+	 * @return the user ID of this region
+	 */
+	@Override
+	public long getUserId() {
+		return model.getUserId();
+	}
+
+	/**
+	 * Returns the user name of this region.
+	 *
+	 * @return the user name of this region
+	 */
+	@Override
+	public String getUserName() {
+		return model.getUserName();
+	}
+
+	/**
+	 * Returns the user uuid of this region.
+	 *
+	 * @return the user uuid of this region
+	 */
+	@Override
+	public String getUserUuid() {
+		return model.getUserUuid();
+	}
+
+	/**
+	 * Returns the uuid of this region.
+	 *
+	 * @return the uuid of this region
+	 */
+	@Override
+	public String getUuid() {
+		return model.getUuid();
+	}
+
 	/**
 	 * Returns <code>true</code> if this region is active.
 	 *
@@ -166,6 +381,11 @@ public class RegionWrapper
 	@Override
 	public boolean isActive() {
 		return model.isActive();
+	}
+
+	@Override
+	public void persist() {
+		model.persist();
 	}
 
 	/**
@@ -179,6 +399,16 @@ public class RegionWrapper
 	}
 
 	/**
+	 * Sets the company ID of this region.
+	 *
+	 * @param companyId the company ID of this region
+	 */
+	@Override
+	public void setCompanyId(long companyId) {
+		model.setCompanyId(companyId);
+	}
+
+	/**
 	 * Sets the country ID of this region.
 	 *
 	 * @param countryId the country ID of this region
@@ -186,6 +416,56 @@ public class RegionWrapper
 	@Override
 	public void setCountryId(long countryId) {
 		model.setCountryId(countryId);
+	}
+
+	/**
+	 * Sets the create date of this region.
+	 *
+	 * @param createDate the create date of this region
+	 */
+	@Override
+	public void setCreateDate(Date createDate) {
+		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this region.
+	 *
+	 * @param ctCollectionId the ct collection ID of this region
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the default language ID of this region.
+	 *
+	 * @param defaultLanguageId the default language ID of this region
+	 */
+	@Override
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		model.setDefaultLanguageId(defaultLanguageId);
+	}
+
+	/**
+	 * Sets the last publish date of this region.
+	 *
+	 * @param lastPublishDate the last publish date of this region
+	 */
+	@Override
+	public void setLastPublishDate(Date lastPublishDate) {
+		model.setLastPublishDate(lastPublishDate);
+	}
+
+	/**
+	 * Sets the modified date of this region.
+	 *
+	 * @param modifiedDate the modified date of this region
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate) {
+		model.setModifiedDate(modifiedDate);
 	}
 
 	/**
@@ -206,6 +486,16 @@ public class RegionWrapper
 	@Override
 	public void setName(String name) {
 		model.setName(name);
+	}
+
+	/**
+	 * Sets the position of this region.
+	 *
+	 * @param position the position of this region
+	 */
+	@Override
+	public void setPosition(double position) {
+		model.setPosition(position);
 	}
 
 	/**
@@ -236,6 +526,73 @@ public class RegionWrapper
 	@Override
 	public void setRegionId(long regionId) {
 		model.setRegionId(regionId);
+	}
+
+	@Override
+	public void setTitleCurrentLanguageId(String languageId) {
+		model.setTitleCurrentLanguageId(languageId);
+	}
+
+	/**
+	 * Sets the user ID of this region.
+	 *
+	 * @param userId the user ID of this region
+	 */
+	@Override
+	public void setUserId(long userId) {
+		model.setUserId(userId);
+	}
+
+	/**
+	 * Sets the user name of this region.
+	 *
+	 * @param userName the user name of this region
+	 */
+	@Override
+	public void setUserName(String userName) {
+		model.setUserName(userName);
+	}
+
+	/**
+	 * Sets the user uuid of this region.
+	 *
+	 * @param userUuid the user uuid of this region
+	 */
+	@Override
+	public void setUserUuid(String userUuid) {
+		model.setUserUuid(userUuid);
+	}
+
+	/**
+	 * Sets the uuid of this region.
+	 *
+	 * @param uuid the uuid of this region
+	 */
+	@Override
+	public void setUuid(String uuid) {
+		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<Region, Object>> getAttributeGetterFunctions() {
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<Region, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return model.getStagedModelType();
 	}
 
 	@Override

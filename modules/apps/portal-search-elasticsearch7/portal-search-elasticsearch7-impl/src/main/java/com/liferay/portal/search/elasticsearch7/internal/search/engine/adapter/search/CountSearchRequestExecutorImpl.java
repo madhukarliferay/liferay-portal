@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.search;
@@ -58,8 +49,10 @@ public class CountSearchRequestExecutorImpl
 
 		searchSourceBuilder.size(0);
 		searchSourceBuilder.trackScores(false);
+		searchSourceBuilder.trackTotalHits(true);
 
-		SearchResponse searchResponse = getSearchResponse(searchRequest);
+		SearchResponse searchResponse = getSearchResponse(
+			searchRequest, countSearchRequest);
 
 		SearchHits searchHits = searchResponse.getHits();
 
@@ -84,47 +77,34 @@ public class CountSearchRequestExecutorImpl
 		return countSearchResponse;
 	}
 
-	protected SearchResponse getSearchResponse(SearchRequest searchRequest) {
+	protected SearchResponse getSearchResponse(
+		SearchRequest searchRequest, CountSearchRequest countSearchRequest) {
+
 		RestHighLevelClient restHighLevelClient =
-			_elasticsearchClientResolver.getRestHighLevelClient();
+			_elasticsearchClientResolver.getRestHighLevelClient(
+				countSearchRequest.getConnectionId(),
+				countSearchRequest.isPreferLocalCluster());
 
 		try {
 			return restHighLevelClient.search(
 				searchRequest, RequestOptions.DEFAULT);
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setCommonSearchResponseAssembler(
-		CommonSearchResponseAssembler commonSearchResponseAssembler) {
-
-		_commonSearchResponseAssembler = commonSearchResponseAssembler;
-	}
-
-	@Reference(unbind = "-")
-	protected void setCommonSearchSourceBuilderAssembler(
-		CommonSearchSourceBuilderAssembler commonSearchSourceBuilderAssembler) {
-
-		_commonSearchSourceBuilderAssembler =
-			commonSearchSourceBuilderAssembler;
-	}
-
-	@Reference(unbind = "-")
-	protected void setElasticsearchClientResolver(
-		ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		_elasticsearchClientResolver = elasticsearchClientResolver;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CountSearchRequestExecutorImpl.class);
 
+	@Reference
 	private CommonSearchResponseAssembler _commonSearchResponseAssembler;
+
+	@Reference
 	private CommonSearchSourceBuilderAssembler
 		_commonSearchSourceBuilderAssembler;
+
+	@Reference
 	private ElasticsearchClientResolver _elasticsearchClientResolver;
 
 }

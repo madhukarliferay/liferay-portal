@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.log.Log;
@@ -30,14 +23,14 @@ import java.lang.reflect.Method;
  */
 public class ClassLoaderProxy {
 
-	public ClassLoaderProxy(Object obj, ClassLoader classLoader) {
-		this(obj, obj.getClass().getName(), classLoader);
+	public ClassLoaderProxy(Object object, ClassLoader classLoader) {
+		this(object, object.getClass().getName(), classLoader);
 	}
 
 	public ClassLoaderProxy(
-		Object obj, String className, ClassLoader classLoader) {
+		Object object, String className, ClassLoader classLoader) {
 
-		_obj = obj;
+		_object = object;
 		_className = className;
 		_classLoader = classLoader;
 	}
@@ -55,21 +48,19 @@ public class ClassLoaderProxy {
 
 		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
 
-		try {
-			currentThread.setContextClassLoader(_classLoader);
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				_classLoader)) {
 
 			return _invoke(methodHandler);
 		}
-		catch (InvocationTargetException ite) {
-			throw translateThrowable(ite.getCause(), contextClassLoader);
+		catch (InvocationTargetException invocationTargetException) {
+			throw translateThrowable(
+				invocationTargetException.getCause(), contextClassLoader);
 		}
-		catch (Throwable t) {
-			_log.error(t, t);
+		catch (Throwable throwable) {
+			_log.error(throwable, throwable);
 
-			throw t;
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
+			throw throwable;
 		}
 	}
 
@@ -109,9 +100,9 @@ public class ClassLoaderProxy {
 
 	private Object _invoke(MethodHandler methodHandler) throws Exception {
 		try {
-			return methodHandler.invoke(_obj);
+			return methodHandler.invoke(_object);
 		}
-		catch (NoSuchMethodException nsme) {
+		catch (NoSuchMethodException noSuchMethodException) {
 			MethodKey methodKey = methodHandler.getMethodKey();
 
 			String name = methodKey.getMethodName();
@@ -144,11 +135,11 @@ public class ClassLoaderProxy {
 				}
 
 				if (correctParams) {
-					return method.invoke(_obj, methodHandler.getArguments());
+					return method.invoke(_object, methodHandler.getArguments());
 				}
 			}
 
-			throw nsme;
+			throw noSuchMethodException;
 		}
 	}
 
@@ -157,6 +148,6 @@ public class ClassLoaderProxy {
 
 	private final ClassLoader _classLoader;
 	private final String _className;
-	private final Object _obj;
+	private final Object _object;
 
 }

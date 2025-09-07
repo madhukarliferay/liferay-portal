@@ -1,6 +1,30 @@
+.portlet-forms {
+	.ddm-form-builder {
+		.multi-panel-sidebar {
+			height: calc(
+				100vh - var(--control-menu-container-height) - #{$form-navigation-bar-height +
+					$form-management-bar-height}
+			);
+			top: calc(
+				var(--control-menu-container-height) + #{$form-navigation-bar-height +
+					$form-management-bar-height}
+			);
+		}
+
+		transition: padding ease 0.5s;
+
+		&--sidebar-open {
+			padding-left: 0;
+			padding-right: 408px;
+		}
+	}
+}
+
 .portlet-forms,
 .form-entry {
-	label {
+	label,
+	legend,
+	p {
 		float: initial;
 	}
 
@@ -30,12 +54,20 @@
 			font-weight: normal;
 			line-height: 24px;
 			padding: $baseline * 2 0 0 0;
+
+			p {
+				font-weight: 400;
+			}
 		}
 
 		.ddm-form-name {
 			font-size: 32px;
-			font-weight: 300;
+			font-weight: 600;
 			padding: $baseline * 5 0 0 0;
+
+			p {
+				font-weight: 600;
+			}
 		}
 	}
 
@@ -59,6 +91,7 @@
 	.lfr-ddm-form-page-title {
 		font-weight: normal;
 		resize: none;
+		width: 90%;
 		word-break: normal;
 	}
 
@@ -67,8 +100,20 @@
 		font-size: 14px;
 	}
 
+	.form-builder-page-header-title {
+		font-weight: 600;
+	}
+
 	.form-feedback-item {
 		font-size: 14px;
+	}
+
+	.horizontal-line {
+		background-color: #cdced9;
+		height: 1px;
+		margin-bottom: 40px;
+		margin-top: 40px;
+		padding: 0 10px;
 	}
 
 	.lfr-ddm-form-page-description {
@@ -83,6 +128,12 @@
 	}
 
 	.liferay-ddm-form-field-paragraph {
+		overflow-x: auto;
+
+		blockquote {
+			margin: 1em 40px;
+		}
+
 		p {
 			margin-top: 14px;
 			word-wrap: break-word;
@@ -96,9 +147,14 @@
 
 	.lfr-ddm-form-page-title,
 	.form-builder-page-header-title.form-control {
-		font-size: 19px;
+		font-size: 28px;
 		margin-bottom: 9px;
 		margin-top: 0;
+		overflow-wrap: break-word;
+	}
+
+	.management-bar {
+		border-bottom: 1px solid #e7e7ed;
 	}
 
 	.checkbox-multiple-options .checkbox-multiple-switcher-inline {

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.internal.search;
@@ -31,14 +22,15 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.model.uid.UIDFactory;
 import com.liferay.trash.TrashHelper;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.service.WikiNodeLocalService;
 
-import java.util.Locale;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
+import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -46,7 +38,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eudaldo Alonso
  */
-@Component(immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 
 	public static final String CLASS_NAME = WikiNode.class.getName();
@@ -77,12 +69,15 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 
 	@Override
 	protected void doDelete(WikiNode wikiNode) throws Exception {
-		deleteDocument(wikiNode.getCompanyId(), wikiNode.getNodeId());
+		deleteDocument(
+			wikiNode.getCompanyId(), "UID=" + uidFactory.getUID(wikiNode));
 	}
 
 	@Override
 	protected Document doGetDocument(WikiNode wikiNode) throws Exception {
 		Document document = getBaseModelDocument(CLASS_NAME, wikiNode);
+
+		uidFactory.setUID(wikiNode, document);
 
 		document.addText(Field.DESCRIPTION, wikiNode.getDescription());
 
@@ -115,7 +110,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 	protected void doReindex(String[] ids) throws Exception {
 		long companyId = GetterUtil.getLong(ids[0]);
 
-		reindexEntries(companyId);
+		_reindexEntries(companyId);
 	}
 
 	@Override
@@ -123,20 +118,25 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 		Document document = getDocument(wikiNode);
 
 		if (wikiNode.isInTrash()) {
-			_indexWriterHelper.deleteDocument(
-				getSearchEngineId(), wikiNode.getCompanyId(),
-				document.get(Field.UID), isCommitImmediately());
+			_deleteDocument(wikiNode);
 
 			return;
 		}
 
-		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), wikiNode.getCompanyId(), document,
+		_indexWriterHelper.updateDocument(wikiNode.getCompanyId(), document);
+	}
+
+	@Reference
+	protected UIDFactory uidFactory;
+
+	private void _deleteDocument(WikiNode wikiNode) throws Exception {
+		_indexWriterHelper.deleteDocument(
+			wikiNode.getCompanyId(), uidFactory.getUID(wikiNode),
 			isCommitImmediately());
 	}
 
-	protected void reindexEntries(long companyId) throws PortalException {
-		final IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+	private void _reindexEntries(long companyId) throws Exception {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
 			_wikiNodeLocalService.getIndexableActionableDynamicQuery();
 
 		indexableActionableDynamicQuery.setAddCriteriaMethod(
@@ -153,24 +153,16 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 					indexableActionableDynamicQuery.addDocuments(
 						getDocument(node));
 				}
-				catch (PortalException pe) {
+				catch (PortalException portalException) {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Unable to index wiki node " + node.getNodeId(),
-							pe);
+							portalException);
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiNodeLocalService(
-		WikiNodeLocalService wikiNodeLocalService) {
-
-		_wikiNodeLocalService = wikiNodeLocalService;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -182,6 +174,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 	@Reference
 	private TrashHelper _trashHelper;
 
+	@Reference
 	private WikiNodeLocalService _wikiNodeLocalService;
 
 	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiNode)")

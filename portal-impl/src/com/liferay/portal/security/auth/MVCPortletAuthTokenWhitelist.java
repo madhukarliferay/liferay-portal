@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth;
@@ -17,6 +8,7 @@ package com.liferay.portal.security.auth;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -24,16 +16,16 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.security.auth.BaseAuthTokenWhitelist;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
-import com.liferay.registry.util.StringPlus;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,10 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Tomas Polesovsky
@@ -173,12 +164,8 @@ public class MVCPortletAuthTokenWhitelist extends BaseAuthTokenWhitelist {
 
 		String namespace = PortalUtil.getPortletNamespace(portletId);
 
-		String[] actionNames = httpServletRequest.getParameterValues(
+		return httpServletRequest.getParameterValues(
 			namespace.concat(ActionRequest.ACTION_NAME));
-
-		String actions = StringUtil.merge(actionNames);
-
-		return StringUtil.split(actions);
 	}
 
 	protected String[] getMVCActionCommandNames(
@@ -187,32 +174,24 @@ public class MVCPortletAuthTokenWhitelist extends BaseAuthTokenWhitelist {
 		Map<String, String[]> parameterMap =
 			liferayPortletURL.getParameterMap();
 
-		String[] actionNames = parameterMap.get(ActionRequest.ACTION_NAME);
-
-		String actions = StringUtil.merge(actionNames);
-
-		return StringUtil.split(actions);
+		return parameterMap.get(ActionRequest.ACTION_NAME);
 	}
 
 	protected String getWhitelistValue(
 		String portletName, String whitelistAction) {
 
-		return portletName.concat(
-			StringPool.POUND
-		).concat(
-			whitelistAction
-		);
+		return StringBundler.concat(
+			portletName, StringPool.POUND, whitelistAction);
 	}
 
 	protected void trackWhitelistServices(
 		String whitelistName, Class<?> serviceClass, Set<String> whiteList) {
 
-		Registry registry = RegistryUtil.getRegistry();
-
-		ServiceTracker<Object, Object> serviceTracker = registry.trackServices(
-			registry.getFilter(
+		ServiceTracker<Object, Object> serviceTracker = new ServiceTracker<>(
+			SystemBundleUtil.getBundleContext(),
+			SystemBundleUtil.createFilter(
 				StringBundler.concat(
-					"(&(&(", whitelistName, "=*)(javax.portlet.name=*))",
+					"(&(&(", whitelistName, "=*)(jakarta.portlet.name=*))",
 					"(objectClass=", serviceClass.getName(), "))")),
 			new TokenWhitelistTrackerCustomizer(whiteList));
 
@@ -236,7 +215,7 @@ public class MVCPortletAuthTokenWhitelist extends BaseAuthTokenWhitelist {
 	private boolean _containsAll(
 		String portletId, Set<String> whitelist, String[] items) {
 
-		if (items.length == 0) {
+		if (ArrayUtil.isEmpty(items)) {
 			return false;
 		}
 
@@ -271,11 +250,11 @@ public class MVCPortletAuthTokenWhitelist extends BaseAuthTokenWhitelist {
 		public Object addingService(ServiceReference<Object> serviceReference) {
 			Collection<String> whitelistValues = new ArrayList<>();
 
-			List<String> whitelistActions = StringPlus.asList(
+			List<String> whitelistActions = StringUtil.asList(
 				serviceReference.getProperty("mvc.command.name"));
 
-			List<String> portletNames = StringPlus.asList(
-				serviceReference.getProperty("javax.portlet.name"));
+			List<String> portletNames = StringUtil.asList(
+				serviceReference.getProperty("jakarta.portlet.name"));
 
 			for (String portletName : portletNames) {
 				for (String whitelistAction : whitelistActions) {

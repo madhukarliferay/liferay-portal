@@ -1,23 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.osgi.util;
+
+import com.liferay.portal.kernel.util.HashMapDictionary;
+
+import java.util.Dictionary;
+import java.util.function.Function;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
@@ -47,8 +45,8 @@ public class ServiceTrackerFactory {
 			return new ServiceTracker<>(
 				bundleContext, bundleContext.createFilter(filterString), null);
 		}
-		catch (InvalidSyntaxException ise) {
-			throwException(ise);
+		catch (InvalidSyntaxException invalidSyntaxException) {
+			throwException(invalidSyntaxException);
 
 			return null;
 		}
@@ -63,15 +61,15 @@ public class ServiceTrackerFactory {
 				bundleContext, bundleContext.createFilter(filterString),
 				serviceTrackerCustomizer);
 		}
-		catch (InvalidSyntaxException ise) {
-			throwException(ise);
+		catch (InvalidSyntaxException invalidSyntaxException) {
+			throwException(invalidSyntaxException);
 
 			return null;
 		}
 	}
 
 	/**
-	 * @deprecated As of Mueller (7.2.x), with no replacement
+	 * @deprecated As of Mueller (7.2.x), with no direct replacement
 	 */
 	@Deprecated
 	public static <T> ServiceTracker<T, T> create(Class<T> clazz) {
@@ -123,7 +121,7 @@ public class ServiceTrackerFactory {
 	}
 
 	/**
-	 * @deprecated As of Mueller (7.2.x), with no replacement
+	 * @deprecated As of Mueller (7.2.x), with no direct replacement
 	 */
 	@Deprecated
 	public static <T> ServiceTracker<T, T> open(Class<T> clazz) {
@@ -132,6 +130,68 @@ public class ServiceTrackerFactory {
 		serviceTracker.open();
 
 		return serviceTracker;
+	}
+
+	public static <T, W> ServiceTracker<T, ServiceRegistration<W>>
+		openWrapperServiceRegistrator(
+			BundleContext bundleContext, Class<T> trackedClass,
+			Class<W> registeredClass, Function<T, W> wrapperFunction,
+			String... propertyNames) {
+
+		return open(
+			bundleContext, trackedClass,
+			new ServiceTrackerCustomizer<T, ServiceRegistration<W>>() {
+
+				@Override
+				public ServiceRegistration<W> addingService(
+					ServiceReference<T> serviceReference) {
+
+					return bundleContext.registerService(
+						registeredClass,
+						wrapperFunction.apply(
+							bundleContext.getService(serviceReference)),
+						_buildProperties(serviceReference));
+				}
+
+				@Override
+				public void modifiedService(
+					ServiceReference<T> serviceReference,
+					ServiceRegistration<W> serviceRegistration) {
+
+					serviceRegistration.setProperties(
+						_buildProperties(serviceReference));
+				}
+
+				@Override
+				public void removedService(
+					ServiceReference<T> serviceReference,
+					ServiceRegistration<W> serviceRegistration) {
+
+					serviceRegistration.unregister();
+
+					bundleContext.ungetService(serviceReference);
+				}
+
+				private Dictionary<String, Object> _buildProperties(
+					ServiceReference<?> serviceReference) {
+
+					Dictionary<String, Object> properties =
+						new HashMapDictionary<>();
+
+					for (String propertyName : propertyNames) {
+						properties.put(
+							propertyName,
+							serviceReference.getProperty(propertyName));
+					}
+
+					properties.put(
+						"original.service.id",
+						serviceReference.getProperty("service.id"));
+
+					return properties;
+				}
+
+			});
 	}
 
 	public static <T> T throwException(Throwable throwable) {

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.model.impl;
@@ -38,18 +29,18 @@ public class WorkflowMetricsSLADefinitionCacheModel
 			   MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof WorkflowMetricsSLADefinitionCacheModel)) {
+		if (!(object instanceof WorkflowMetricsSLADefinitionCacheModel)) {
 			return false;
 		}
 
 		WorkflowMetricsSLADefinitionCacheModel
 			workflowMetricsSLADefinitionCacheModel =
-				(WorkflowMetricsSLADefinitionCacheModel)obj;
+				(WorkflowMetricsSLADefinitionCacheModel)object;
 
 		if ((workflowMetricsSLADefinitionId ==
 				workflowMetricsSLADefinitionCacheModel.
@@ -267,7 +258,9 @@ public class WorkflowMetricsSLADefinitionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
@@ -284,7 +277,7 @@ public class WorkflowMetricsSLADefinitionCacheModel
 
 		active = objectInput.readBoolean();
 		calendarKey = objectInput.readUTF();
-		description = objectInput.readUTF();
+		description = (String)objectInput.readObject();
 
 		duration = objectInput.readLong();
 		name = objectInput.readUTF();
@@ -342,10 +335,10 @@ public class WorkflowMetricsSLADefinitionCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		objectOutput.writeLong(duration);

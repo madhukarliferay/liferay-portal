@@ -6,15 +6,13 @@ metadata:
 spec:
     {{- if $.Values.slave.ports.vnc.enabled }}
     ports:
-        - containerPort: {{ $.Values.slave.ports.vnc.containerPort }}
-          name: {{ $.Values.slave.ports.vnc.name }}
+        -   containerPort: {{ $.Values.slave.ports.vnc.containerPort }}
+            name: {{ $.Values.slave.ports.vnc.name }}
     {{- end }}
     selector:
         app: {{ $masterPodName }}
     type: NodePort
-
 ---
-
 {{- if $.Values.master.ports.vnc.enabled }}
 {{- if $.Values.slave.ports.vnc.enabled }}
 apiVersion: extensions/v1beta1
@@ -24,12 +22,12 @@ metadata:
     namespace: {{ $namespace }}
 spec:
     rules:
-        - host: {{ $.Values.ingressHostname }}
-          http:
-              paths:
-                  - backend:
-                        serviceName: {{ $masterSubdomain }}
-                        servicePort: 8080
-                    path: /{{ $masterPodName }}
+        -   host: {{ $.Values.ingressHostname }}
+            http:
+                paths:
+                    -   backend:
+                            serviceName: {{ $masterSubdomain }}
+                            servicePort: 8080
+                        path: /{{ $masterPodName }}
 {{- end }}
 {{- end }}

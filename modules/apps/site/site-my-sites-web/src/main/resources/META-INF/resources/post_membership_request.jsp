@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,18 +11,16 @@
 String redirect = ParamUtil.getString(request, "redirect");
 
 if (Validator.isNull(redirect)) {
-	PortletURL portletURL = renderResponse.createRenderURL();
-
-	portletURL.setParameter("tabs1", "available-sites");
-
-	redirect = portletURL.toString();
+	redirect = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setTabs1(
+		"available-sites"
+	).buildString();
 }
 
 long groupId = ParamUtil.getLong(request, "groupId");
 
 Group group = GroupLocalServiceUtil.fetchGroup(groupId);
-
-MembershipRequest membershipRequest = (MembershipRequest)request.getAttribute(WebKeys.MEMBERSHIP_REQUEST);
 %>
 
 <portlet:actionURL name="postMembershipRequest" var="postMembershipRequestURL">
@@ -39,7 +28,7 @@ MembershipRequest membershipRequest = (MembershipRequest)request.getAttribute(We
 	<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
 </portlet:actionURL>
 
-<aui:form action="<%= postMembershipRequestURL %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= postMembershipRequestURL %>" cssClass="container-fluid" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
 	<c:if test="<%= !layout.isTypeControlPanel() %>">
@@ -53,19 +42,21 @@ MembershipRequest membershipRequest = (MembershipRequest)request.getAttribute(We
 
 	<liferay-ui:error exception="<%= MembershipRequestCommentsException.class %>" message="please-enter-valid-comments" />
 
-	<aui:model-context bean="<%= membershipRequest %>" model="<%= MembershipRequest.class %>" />
+	<aui:model-context bean="<%= (MembershipRequest)request.getAttribute(WebKeys.MEMBERSHIP_REQUEST) %>" model="<%= MembershipRequest.class %>" />
 
-	<c:if test="<%= Validator.isNotNull(group.getDescription()) %>">
+	<c:if test="<%= Validator.isNotNull(group.getDescription()) && Validator.isNotNull(group.getDescription(locale)) %>">
 		<div class="alert alert-info">
 			<%= HtmlUtil.escape(group.getDescription(locale)) %>
 		</div>
 	</c:if>
 
-	<aui:fieldset-group markupView="lexicon">
-		<aui:fieldset>
-			<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="comments" />
-		</aui:fieldset>
-	</aui:fieldset-group>
+	<div class="sheet">
+		<div class="panel-group panel-group-flush">
+			<aui:fieldset>
+				<aui:input name="comments" />
+			</aui:fieldset>
+		</div>
+	</div>
 
 	<aui:button-row>
 		<aui:button type="submit" />

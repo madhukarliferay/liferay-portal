@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,14 +15,14 @@ CompanyPortletRatingsDefinitionDisplayContext companyPortletRatingsDefinitionDis
 
 <p><liferay-ui:message key="select-the-default-ratings-type-for-the-following-applications" /></p>
 
-<aui:fieldset id='<%= renderResponse.getNamespace() + "ratingsSettingsContainer" %>'>
+<aui:fieldset id='<%= liferayPortletResponse.getNamespace() + "ratingsSettingsContainer" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 
 	<%
 	Map<String, Map<String, RatingsType>> companyRatingsTypeMaps = companyPortletRatingsDefinitionDisplayContext.getCompanyRatingsTypeMaps();
 
-	for (String portletId : companyRatingsTypeMaps.keySet()) {
-		Portlet portlet = PortletLocalServiceUtil.getPortletById(portletId);
+	for (Map.Entry<String, Map<String, RatingsType>> entry : companyRatingsTypeMaps.entrySet()) {
+		Portlet portlet = PortletLocalServiceUtil.getPortletById(entry.getKey());
 	%>
 
 		<p>
@@ -39,7 +30,7 @@ CompanyPortletRatingsDefinitionDisplayContext companyPortletRatingsDefinitionDis
 		</p>
 
 		<%
-		Map<String, RatingsType> ratingsTypeMap = companyRatingsTypeMaps.get(portletId);
+		Map<String, RatingsType> ratingsTypeMap = companyRatingsTypeMaps.get(entry.getKey());
 
 		Set<String> classNames = ratingsTypeMap.keySet();
 
@@ -71,32 +62,35 @@ CompanyPortletRatingsDefinitionDisplayContext companyPortletRatingsDefinitionDis
 </aui:fieldset>
 
 <aui:script use="aui-base">
-	var ratingsSettingsContainer = A.one(
-		'#<portlet:namespace />ratingsSettingsContainer'
+	const ratingsSettingsContainer = document.getElementById(
+		'<portlet:namespace />ratingsSettingsContainer'
 	);
 
 	var ratingsTypeChanged = false;
 
-	ratingsSettingsContainer.delegate(
+	ratingsSettingsContainer.addEventListener(
 		'change',
-		function(event) {
+		(event) => {
 			ratingsTypeChanged = true;
 		},
 		'select'
 	);
 
-	var form = A.one('#<portlet:namespace />fm');
+	const form = document.getElementById('<portlet:namespace />fm');
 
-	form.on('submit', function(event) {
-		if (
-			ratingsTypeChanged &&
-			!confirm(
-				'<%= UnicodeLanguageUtil.get(request, "existing-ratings-data-values-will-be-adapted-to-match-the-new-ratings-type-even-though-it-may-not-be-accurate") %>'
-			)
-		) {
-			event.preventDefault();
+	form.addEventListener('submit', (event) => {
+		if (ratingsTypeChanged) {
+			Liferay.Util.openConfirmModal({
+				message:
+					'<%= UnicodeLanguageUtil.get(request, "existing-ratings-data-values-will-be-adapted-to-match-the-new-ratings-type-even-though-it-may-not-be-accurate") %>',
+				onConfirm: (isConfirmed) => {
+					if (!isConfirmed) {
+						event.preventDefault();
 
-			event.stopImmediatePropagation();
+						event.stopImmediatePropagation();
+					}
+				},
+			});
 		}
 	});
 </aui:script>

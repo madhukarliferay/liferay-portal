@@ -1,33 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.constants.SamlWebKeys;
+import com.liferay.saml.opensaml.integration.field.expression.handler.registry.UserFieldExpressionHandlerRegistry;
+import com.liferay.saml.opensaml.integration.field.expression.resolver.registry.UserFieldExpressionResolverRegistry;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
-import com.liferay.saml.web.internal.constants.SamlAdminPortletKeys;
+import com.liferay.saml.web.internal.display.context.AttributeMappingDisplayContext;
 
-import javax.portlet.PortletException;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -36,9 +30,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Stian Sigvartsen
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
+		"jakarta.portlet.name=" + SamlPortletKeys.SAML_ADMIN,
 		"mvc.command.name=/admin/edit_identity_provider_connection"
 	},
 	service = MVCRenderCommand.class
@@ -51,53 +44,74 @@ public class EditIdentityProviderConnectionMVCRenderCommand
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortletException {
 
-		long samlSpIdpConnectionId = ParamUtil.getLong(
-			renderRequest, "samlSpIdpConnectionId");
+		try {
+			return _render(renderRequest);
+		}
+		catch (Exception exception) {
+			throw new PortletException(exception);
+		}
+	}
 
-		renderRequest.setAttribute(
-			SamlProviderConfigurationHelper.class.getName(),
-			_samlProviderConfigurationHelper);
+	private long _getClockSkew(
+		RenderRequest renderRequest, SamlSpIdpConnection samlSpIdpConnection) {
+
+		if (samlSpIdpConnection != null) {
+			return ParamUtil.getLong(
+				renderRequest, "clockSkew", samlSpIdpConnection.getClockSkew());
+		}
 
 		SamlProviderConfiguration samlProviderConfiguration =
 			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
-		long clockSkew;
+		return ParamUtil.getLong(
+			renderRequest, "clockSkew", samlProviderConfiguration.clockSkew());
+	}
+
+	private String _render(RenderRequest renderRequest) throws Exception {
+		long samlSpIdpConnectionId = ParamUtil.getLong(
+			renderRequest, "samlSpIdpConnectionId");
+
+		SamlSpIdpConnection samlSpIdpConnection = null;
 
 		if (samlSpIdpConnectionId > 0) {
-			try {
-				SamlSpIdpConnection samlSpIdpConnection =
-					_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
-						samlSpIdpConnectionId);
-
-				clockSkew = ParamUtil.getLong(
-					renderRequest, "clockSkew",
-					samlSpIdpConnection.getClockSkew());
-
-				renderRequest.setAttribute(
-					SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
-			}
-			catch (PortalException pe) {
-				throw new PortletException(pe);
-			}
-		}
-		else {
-			clockSkew = ParamUtil.getLong(
-				renderRequest, "clockSkew",
-				samlProviderConfiguration.clockSkew());
+			samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+					samlSpIdpConnectionId);
 		}
 
-		renderRequest.setAttribute(SamlWebKeys.SAML_CLOCK_SKEW, clockSkew);
+		renderRequest.setAttribute(
+			AttributeMappingDisplayContext.class.getName(),
+			new AttributeMappingDisplayContext(
+				renderRequest, samlSpIdpConnection,
+				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY),
+				_userFieldExpressionHandlerRegistry));
+		renderRequest.setAttribute(
+			SamlProviderConfigurationHelper.class.getName(),
+			_samlProviderConfigurationHelper);
+		renderRequest.setAttribute(
+			SamlWebKeys.SAML_CLOCK_SKEW,
+			_getClockSkew(renderRequest, samlSpIdpConnection));
+		renderRequest.setAttribute(
+			SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
+		renderRequest.setAttribute(
+			UserFieldExpressionResolverRegistry.class.getName(),
+			_userFieldExpressionResolverRegistry);
 
 		return "/admin/edit_identity_provider_connection.jsp";
 	}
-
-	@Reference
-	private Portal _portal;
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
 
 	@Reference
 	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
+
+	@Reference
+	private UserFieldExpressionHandlerRegistry
+		_userFieldExpressionHandlerRegistry;
+
+	@Reference
+	private UserFieldExpressionResolverRegistry
+		_userFieldExpressionResolverRegistry;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,6 +37,7 @@ public class SegmentsEntryWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put("segmentsEntryId", getSegmentsEntryId());
 		attributes.put("groupId", getGroupId());
@@ -58,7 +52,6 @@ public class SegmentsEntryWrapper
 		attributes.put("active", isActive());
 		attributes.put("criteria", getCriteria());
 		attributes.put("source", getSource());
-		attributes.put("type", getType());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -70,6 +63,12 @@ public class SegmentsEntryWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -156,17 +155,16 @@ public class SegmentsEntryWrapper
 			setSource(source);
 		}
 
-		String type = (String)attributes.get("type");
-
-		if (type != null) {
-			setType(type);
-		}
-
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+	}
+
+	@Override
+	public SegmentsEntry cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -217,6 +215,16 @@ public class SegmentsEntryWrapper
 	@Override
 	public com.liferay.segments.criteria.Criteria getCriteriaObj() {
 		return model.getCriteriaObj();
+	}
+
+	/**
+	 * Returns the ct collection ID of this segments entry.
+	 *
+	 * @return the ct collection ID of this segments entry
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
 	}
 
 	@Override
@@ -426,6 +434,11 @@ public class SegmentsEntryWrapper
 		return model.getPrimaryKey();
 	}
 
+	@Override
+	public long[] getRoleIds() {
+		return model.getRoleIds();
+	}
+
 	/**
 	 * Returns the segments entry ID of this segments entry.
 	 *
@@ -454,16 +467,6 @@ public class SegmentsEntryWrapper
 	@Override
 	public String getSource() {
 		return model.getSource();
-	}
-
-	/**
-	 * Returns the type of this segments entry.
-	 *
-	 * @return the type of this segments entry
-	 */
-	@Override
-	public String getType() {
-		return model.getType();
 	}
 
 	/**
@@ -516,11 +519,6 @@ public class SegmentsEntryWrapper
 		return model.isActive();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a segments entry model instance should use the <code>SegmentsEntry</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -579,6 +577,16 @@ public class SegmentsEntryWrapper
 	@Override
 	public void setCriteria(String criteria) {
 		model.setCriteria(criteria);
+	}
+
+	/**
+	 * Sets the ct collection ID of this segments entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this segments entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -792,16 +800,6 @@ public class SegmentsEntryWrapper
 	}
 
 	/**
-	 * Sets the type of this segments entry.
-	 *
-	 * @param type the type of this segments entry
-	 */
-	@Override
-	public void setType(String type) {
-		model.setType(type);
-	}
-
-	/**
 	 * Sets the user ID of this segments entry.
 	 *
 	 * @param userId the user ID of this segments entry
@@ -839,6 +837,25 @@ public class SegmentsEntryWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<SegmentsEntry, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<SegmentsEntry, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

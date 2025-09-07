@@ -1,79 +1,63 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayTable from '@clayui/table';
 import React from 'react';
 
 import ListHeadItem from '../../../shared/components/list/ListHeadItem.es';
-import WorkloadByStepCardItem from './WorkloadByStepCardItem.es';
+import Item from './WorkloadByStepCardItem.es';
 
-export default class WorkloadByStepCardTable extends React.Component {
-	constructor(props) {
-		super(props);
-	}
+function Table({items, processId}) {
+	const onTimeTitle = Liferay.Language.get('on-time');
+	const overdueTitle = Liferay.Language.get('overdue');
+	const stepNameTitle = Liferay.Language.get('step-name');
+	const totalPendingTitle = Liferay.Language.get('total-pending');
 
-	render() {
-		const {items, processId} = this.props;
-		const onTimeTitle = Liferay.Language.get('on-time');
-		const overdueTitle = Liferay.Language.get('overdue');
-		const stepNameTitle = Liferay.Language.get('step-name');
-		const totalPendingTitle = Liferay.Language.get('total-pending');
+	return (
+		<ClayTable headingNoWrap>
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell expanded headingCell>
+						{stepNameTitle}
+					</ClayTable.Cell>
 
-		return (
-			<div className="table-responsive">
-				<table className="show-quick-actions-on-hover table table-autofit table-heading-nowrap table-hover table-list">
-					<thead>
-						<tr>
-							<th className="table-cell-expand table-head-title">
-								{stepNameTitle}
-							</th>
+					<ClayTable.Cell className="text-right" headingCell>
+						<ListHeadItem
+							iconColor="danger"
+							iconName="exclamation-circle"
+							name="overdueInstanceCount"
+							title={overdueTitle}
+						/>
+					</ClayTable.Cell>
 
-							<th className="table-head-title text-right">
-								<ListHeadItem
-									iconColor="danger"
-									iconName="exclamation-circle"
-									name="overdueInstanceCount"
-									title={overdueTitle}
-								/>
-							</th>
+					<ClayTable.Cell className="text-right" headingCell>
+						<ListHeadItem
+							iconColor="success"
+							iconName="check-circle"
+							name="onTimeInstanceCount"
+							title={onTimeTitle}
+						/>
+					</ClayTable.Cell>
 
-							<th className="table-head-title text-right">
-								<ListHeadItem
-									iconColor="success"
-									iconName="check-circle"
-									name="onTimeInstanceCount"
-									title={onTimeTitle}
-								/>
-							</th>
+					<ClayTable.Cell className="text-right" headingCell>
+						<ListHeadItem
+							name="instanceCount"
+							title={totalPendingTitle}
+						/>
+					</ClayTable.Cell>
+				</ClayTable.Row>
+			</ClayTable.Head>
 
-							<th className="table-head-title text-right">
-								<ListHeadItem
-									name="instanceCount"
-									title={totalPendingTitle}
-								/>
-							</th>
-						</tr>
-					</thead>
-
-					<tbody>
-						{items.map((step, index) => (
-							<WorkloadByStepCardItem
-								{...step}
-								key={index}
-								processId={processId}
-								taskKey={step.key}
-							/>
-						))}
-					</tbody>
-				</table>
-			</div>
-		);
-	}
+			<ClayTable.Body>
+				{items.map((step, index) => (
+					<Table.Item {...step} key={index} processId={processId} />
+				))}
+			</ClayTable.Body>
+		</ClayTable>
+	);
 }
+
+Table.Item = Item;
+export default Table;

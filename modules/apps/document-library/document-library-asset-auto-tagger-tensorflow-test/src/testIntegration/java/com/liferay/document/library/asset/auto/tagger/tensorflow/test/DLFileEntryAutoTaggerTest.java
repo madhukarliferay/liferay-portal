@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.asset.auto.tagger.tensorflow.test;
@@ -33,11 +24,11 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -62,7 +53,7 @@ public class DLFileEntryAutoTaggerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		_group = GroupTestUtil.addGroup();
 
@@ -72,16 +63,17 @@ public class DLFileEntryAutoTaggerTest {
 
 	@Test
 	public void testAutoTagsABMPImage() throws Exception {
-		_withTensorflowAutoTagProviderEnabled(
+		_withTensorFlowAutoTagProviderEnabled(
 			() -> {
 				FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-					_serviceContext.getScopeGroupId(),
+					null, _serviceContext.getScopeGroupId(),
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 					"indigobunting.bmp", ContentTypes.IMAGE_BMP,
 					"indigobunting", StringUtil.randomString(),
-					StringUtil.randomString(),
-					FileUtil.getBytes(getClass(), "indigobunting.bmp"),
-					_serviceContext);
+					StringUtil.randomString(), StringUtil.randomString(),
+					FileUtil.getBytes(
+						getClass(), "dependencies/indigobunting.bmp"),
+					null, null, null, _serviceContext);
 
 				AssetEntry assetEntry = _assetEntryLocalService.getEntry(
 					DLFileEntryConstants.getClassName(),
@@ -93,15 +85,16 @@ public class DLFileEntryAutoTaggerTest {
 
 	@Test
 	public void testAutoTagsAJPEGImage() throws Exception {
-		_withTensorflowAutoTagProviderEnabled(
+		_withTensorFlowAutoTagProviderEnabled(
 			() -> {
 				FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-					_serviceContext.getScopeGroupId(),
+					null, _serviceContext.getScopeGroupId(),
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "goldfinch.jpg",
 					ContentTypes.IMAGE_JPEG, "goldfinch",
 					StringUtil.randomString(), StringUtil.randomString(),
-					FileUtil.getBytes(getClass(), "goldfinch.jpg"),
-					_serviceContext);
+					StringUtil.randomString(),
+					FileUtil.getBytes(getClass(), "dependencies/goldfinch.jpg"),
+					null, null, null, _serviceContext);
 
 				AssetEntry assetEntry = _assetEntryLocalService.getEntry(
 					DLFileEntryConstants.getClassName(),
@@ -113,15 +106,17 @@ public class DLFileEntryAutoTaggerTest {
 
 	@Test
 	public void testAutoTagsAPNGImage() throws Exception {
-		_withTensorflowAutoTagProviderEnabled(
+		_withTensorFlowAutoTagProviderEnabled(
 			() -> {
 				FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-					_serviceContext.getScopeGroupId(),
+					null, _serviceContext.getScopeGroupId(),
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 					"hummingbird.png", ContentTypes.IMAGE_PNG, "hummingbird",
 					StringUtil.randomString(), StringUtil.randomString(),
-					FileUtil.getBytes(getClass(), "hummingbird.png"),
-					_serviceContext);
+					StringUtil.randomString(),
+					FileUtil.getBytes(
+						getClass(), "dependencies/hummingbird.png"),
+					null, null, null, _serviceContext);
 
 				AssetEntry assetEntry = _assetEntryLocalService.getEntry(
 					DLFileEntryConstants.getClassName(),
@@ -141,22 +136,23 @@ public class DLFileEntryAutoTaggerTest {
 		throw new AssertionError("The asset entry was not tagged with " + tag);
 	}
 
-	private void _withTensorflowAutoTagProviderEnabled(
+	private void _withTensorFlowAutoTagProviderEnabled(
 			UnsafeRunnable<Exception> unsafeRunnable)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("com.liferay.document.library.asset.auto.tagger.tensorflow.");
-		sb.append("internal.configuration.");
-		sb.append("TensorFlowImageAssetAutoTagProviderCompanyConfiguration");
-
-		Dictionary<String, Object> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("enabled", true);
+		Dictionary<String, Object> dictionary =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"enabled", true
+			).build();
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(sb.toString(), dictionary)) {
+				new ConfigurationTemporarySwapper(
+					StringBundler.concat(
+						"com.liferay.document.library.asset.auto.tagger.",
+						"tensorflow.internal.configuration.",
+						"TensorFlowImageAssetAutoTagProviderCompany",
+						"Configuration"),
+					dictionary)) {
 
 			unsafeRunnable.run();
 		}

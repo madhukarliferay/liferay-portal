@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.kernel.service;
@@ -27,22 +18,22 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class AssetTagServiceWrapper
 	implements AssetTagService, ServiceWrapper<AssetTagService> {
 
+	public AssetTagServiceWrapper() {
+		this(null);
+	}
+
 	public AssetTagServiceWrapper(AssetTagService assetTagService) {
 		_assetTagService = assetTagService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetTagServiceUtil} to access the asset tag remote service. Add custom service methods to <code>com.liferay.portlet.asset.service.impl.AssetTagServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public AssetTag addTag(
-			long groupId, String name,
+			String externalReferenceCode, long groupId, String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _assetTagService.addTag(groupId, name, serviceContext);
+		return _assetTagService.addTag(
+			externalReferenceCode, groupId, name, serviceContext);
 	}
 
 	@Override
@@ -60,6 +51,23 @@ public class AssetTagServiceWrapper
 	}
 
 	@Override
+	public AssetTag fetchAssetTagByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return _assetTagService.fetchAssetTagByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public AssetTag getAssetTagByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetTagService.getAssetTagByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
 	public java.util.List<AssetTag> getGroupsTags(long[] groupIds) {
 		return _assetTagService.getGroupsTags(groupIds);
 	}
@@ -72,9 +80,11 @@ public class AssetTagServiceWrapper
 	@Override
 	public java.util.List<AssetTag> getGroupTags(
 		long groupId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
+			orderByComparator) {
 
-		return _assetTagService.getGroupTags(groupId, start, end, obc);
+		return _assetTagService.getGroupTags(
+			groupId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -116,10 +126,11 @@ public class AssetTagServiceWrapper
 	@Override
 	public java.util.List<AssetTag> getTags(
 		long groupId, long classNameId, String name, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
+			orderByComparator) {
 
 		return _assetTagService.getTags(
-			groupId, classNameId, name, start, end, obc);
+			groupId, classNameId, name, start, end, orderByComparator);
 	}
 
 	@Override
@@ -132,9 +143,11 @@ public class AssetTagServiceWrapper
 	@Override
 	public java.util.List<AssetTag> getTags(
 		long groupId, String name, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
+			orderByComparator) {
 
-		return _assetTagService.getTags(groupId, name, start, end, obc);
+		return _assetTagService.getTags(
+			groupId, name, start, end, orderByComparator);
 	}
 
 	@Override
@@ -147,9 +160,11 @@ public class AssetTagServiceWrapper
 	@Override
 	public java.util.List<AssetTag> getTags(
 		long[] groupIds, String name, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
+			orderByComparator) {
 
-		return _assetTagService.getTags(groupIds, name, start, end, obc);
+		return _assetTagService.getTags(
+			groupIds, name, start, end, orderByComparator);
 	}
 
 	@Override
@@ -163,16 +178,16 @@ public class AssetTagServiceWrapper
 	}
 
 	@Override
+	public int getTagsCount(long[] groupIds, String name) {
+		return _assetTagService.getTagsCount(groupIds, name);
+	}
+
+	@Override
 	public int getVisibleAssetsTagsCount(
 		long groupId, long classNameId, String name) {
 
 		return _assetTagService.getVisibleAssetsTagsCount(
 			groupId, classNameId, name);
-	}
-
-	@Override
-	public int getVisibleAssetsTagsCount(long groupId, String name) {
-		return _assetTagService.getVisibleAssetsTagsCount(groupId, name);
 	}
 
 	@Override
@@ -204,12 +219,27 @@ public class AssetTagServiceWrapper
 	}
 
 	@Override
+	public void subscribeTag(long userId, long groupId, long tagId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_assetTagService.subscribeTag(userId, groupId, tagId);
+	}
+
+	@Override
+	public void unsubscribeTag(long userId, long tagId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_assetTagService.unsubscribeTag(userId, tagId);
+	}
+
+	@Override
 	public AssetTag updateTag(
-			long tagId, String name,
+			String externalReferenceCode, long tagId, String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _assetTagService.updateTag(tagId, name, serviceContext);
+		return _assetTagService.updateTag(
+			externalReferenceCode, tagId, name, serviceContext);
 	}
 
 	@Override

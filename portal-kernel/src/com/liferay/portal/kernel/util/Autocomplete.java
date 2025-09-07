@@ -1,26 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Brian Wing Shun Chan
@@ -45,13 +36,12 @@ public class Autocomplete {
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
 		for (int i = 0; (i < array.length) && (i < max); i++) {
-			Map<String, String> map = HashMapBuilder.put(
-				"text", array[i][0]
-			).put(
-				"value", array[i][1]
-			).build();
-
-			jsonArray.put(map);
+			jsonArray.put(
+				HashMapBuilder.put(
+					"text", array[i][0]
+				).put(
+					"value", array[i][1]
+				).build());
 		}
 
 		return jsonArray;
@@ -66,24 +56,19 @@ public class Autocomplete {
 			max = array.length;
 		}
 
-		StringBundler sb = new StringBundler(array.length * 8 + 3);
+		StringBundler sb = new StringBundler((array.length * 5) + 2);
 
-		sb.append("<?xml version=\"1.0\"?>");
-
-		sb.append("<ajaxresponse>");
+		sb.append("<?xml version=\"1.0\"?><ajaxresponse>");
 
 		for (int i = 0; (i < array.length) && (i < max); i++) {
 			String text = array[i][0];
 			String value = array[i][1];
 
-			sb.append("<item>");
-			sb.append("<text><![CDATA[");
+			sb.append("<item><text><![CDATA[");
 			sb.append(text);
-			sb.append("]]></text>");
-			sb.append("<value><![CDATA[");
+			sb.append("]]></text><value><![CDATA[");
 			sb.append(value);
-			sb.append("]]></value>");
-			sb.append("</item>");
+			sb.append("]]></value></item>");
 		}
 
 		sb.append("</ajaxresponse>");

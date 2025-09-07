@@ -1,11 +1,25 @@
 package ${apiPackagePath}.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.bean.PortletBeanLocatorUtil;
+<#if entity.hasEntityColumns()>
+	import ${apiPackagePath}.model.${entity.name};
+</#if>
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.InputStream;
+import java.io.Serializable;
+
+import java.sql.Blob;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 <#if stringUtil.equals(sessionTypeName, "Local")>
 /**
@@ -46,7 +60,7 @@ import org.osgi.util.tracker.ServiceTracker;
 </#if>
 public class ${entity.name}${sessionTypeName}ServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>${packagePath}.service.impl.${entity.name}${sessionTypeName}ServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -61,11 +75,7 @@ public class ${entity.name}${sessionTypeName}ServiceUtil {
 			</#if>
 			public static
 
-			<#if method.name = "dynamicQuery" && (serviceBuilder.getTypeGenericsName(method.returns) == "java.util.List<T>")>
-				<T>
-			</#if>
-
-			${serviceBuilder.getTypeGenericsName(method.returns)} ${method.name}(
+			${serviceBuilder.getTypeParametersDefinition(method.typeParameters)} ${serviceBuilder.getTypeGenericsName(method.returns)} ${method.name}(
 
 			<#list method.parameters as parameter>
 				${serviceBuilder.getTypeGenericsName(parameter.type)} ${parameter.name}
@@ -116,35 +126,23 @@ public class ${entity.name}${sessionTypeName}ServiceUtil {
 	</#if>
 
 	public static ${entity.name}${sessionTypeName}Service getService() {
-		<#if osgiModule>
-			return _serviceTracker.getService();
+		<#if dependencyInjectorDS && serviceBuilder.isVersionGTE_7_4_0()>
+			return _serviceSnapshot.get();
 		<#else>
-			if (_service == null) {
-				<#if validator.isNotNull(pluginName)>
-					_service = (${entity.name}${sessionTypeName}Service)PortletBeanLocatorUtil.locate(ServletContextUtil.getServletContextName(), ${entity.name}${sessionTypeName}Service.class.getName());
-				<#else>
-					_service = (${entity.name}${sessionTypeName}Service)PortalBeanLocatorUtil.locate(${entity.name}${sessionTypeName}Service.class.getName());
-				</#if>
-			}
-
 			return _service;
 		</#if>
 	}
 
-	<#if osgiModule>
-		private static ServiceTracker<${entity.name}${sessionTypeName}Service, ${entity.name}${sessionTypeName}Service> _serviceTracker;
-
-		static {
-			Bundle bundle = FrameworkUtil.getBundle(${entity.name}${sessionTypeName}Service.class);
-
-			ServiceTracker<${entity.name}${sessionTypeName}Service, ${entity.name}${sessionTypeName}Service> serviceTracker = new ServiceTracker<${entity.name}${sessionTypeName}Service, ${entity.name}${sessionTypeName}Service>(bundle.getBundleContext(), ${entity.name}${sessionTypeName}Service.class, null);
-
-			serviceTracker.open();
-
-			_serviceTracker = serviceTracker;
+	<#if !dependencyInjectorDS || serviceBuilder.isVersionLTE_7_3_0()>
+		public static void setService(${entity.name}${sessionTypeName}Service service) {
+			_service = service;
 		}
+	</#if>
+
+	<#if dependencyInjectorDS && serviceBuilder.isVersionGTE_7_4_0()>
+		private static final Snapshot<${entity.name}${sessionTypeName}Service> _serviceSnapshot = new Snapshot<>(${entity.name}${sessionTypeName}ServiceUtil.class, ${entity.name}${sessionTypeName}Service.class);
 	<#else>
-		private static ${entity.name}${sessionTypeName}Service _service;
+		private static volatile ${entity.name}${sessionTypeName}Service _service;
 	</#if>
 
 }

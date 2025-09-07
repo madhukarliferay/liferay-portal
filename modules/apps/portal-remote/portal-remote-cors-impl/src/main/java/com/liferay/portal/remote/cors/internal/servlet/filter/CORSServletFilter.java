@@ -1,71 +1,40 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.cors.internal.servlet.filter;
 
+import com.liferay.oauth2.provider.scope.liferay.OAuth2ProviderScopeLiferayAccessControlContext;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.servlet.BaseFilter;
 import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.remote.cors.internal.CORSSupport;
+import com.liferay.portal.util.PropsValues;
 
-import java.io.IOException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Carlos Sierra Andrés
  */
-public class CORSServletFilter implements Filter {
+public class CORSServletFilter extends BaseFilter {
 
 	@Override
-	public void destroy() {
-	}
+	public boolean isFilterEnabled(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
 
-	@Override
-	public final void doFilter(
-			ServletRequest servletRequest, ServletResponse servletResponse,
-			FilterChain filterChain)
-		throws IOException, ServletException {
-
-		HttpServletRequest httpServletRequest =
-			(HttpServletRequest)servletRequest;
-
-		if (corsSupport.isCORSRequest(httpServletRequest::getHeader)) {
-			try {
-				processCORSRequest(
-					httpServletRequest, (HttpServletResponse)servletResponse,
-					filterChain);
-			}
-			catch (Exception e) {
-				throw new ServletException(e);
-			}
-		}
-		else {
-			filterChain.doFilter(servletRequest, servletResponse);
-		}
-	}
-
-	@Override
-	public void init(FilterConfig filterConfig) throws ServletException {
+		return CORSSupport.isCORSRequest(httpServletRequest::getHeader);
 	}
 
 	public void processCORSRequest(
@@ -89,7 +58,11 @@ public class CORSServletFilter implements Filter {
 
 		if (corsSupport.isValidCORSRequest(
 				httpServletRequest.getMethod(),
-				httpServletRequest::getHeader)) {
+				httpServletRequest::getHeader) &&
+			(PropsValues.CORS_DISABLE_AUTHORIZATION_CONTEXT_CHECK ||
+			 OAuth2ProviderScopeLiferayAccessControlContext.
+				 isOAuth2AuthVerified() ||
+			 _isGuest())) {
 
 			corsSupport.writeResponseHeaders(
 				httpServletRequest::getHeader, httpServletResponse::setHeader);
@@ -102,6 +75,42 @@ public class CORSServletFilter implements Filter {
 		corsSupport.setCORSHeaders(corsHeaders);
 	}
 
+	@Override
+	protected Log getLog() {
+		return _log;
+	}
+
+	@Override
+	protected void processFilter(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, FilterChain filterChain)
+		throws ServletException {
+
+		try {
+			processCORSRequest(
+				httpServletRequest, httpServletResponse, filterChain);
+		}
+		catch (Exception exception) {
+			throw new ServletException(exception);
+		}
+	}
+
 	protected final CORSSupport corsSupport = new CORSSupport();
+
+	private boolean _isGuest() {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		if (permissionChecker == null) {
+			return true;
+		}
+
+		User user = permissionChecker.getUser();
+
+		return user.isGuestUser();
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CORSServletFilter.class);
 
 }

@@ -1,30 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharing.test.util;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -34,13 +26,14 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.security.permission.contributor.PermissionSQLContributor;
 import com.liferay.portal.test.rule.Inject;
@@ -76,63 +69,54 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 	@Before
 	public void setUp() throws Exception {
-		_company = CompanyTestUtil.addCompany();
-
-		_user = UserTestUtil.addCompanyAdminUser(_company);
-
-		_group = GroupTestUtil.addGroup(
-			_company.getCompanyId(), _user.getUserId(),
-			GroupConstants.DEFAULT_PARENT_GROUP_ID);
+		_group = GroupTestUtil.addGroup();
 
 		_groupUser = UserTestUtil.addGroupUser(
 			_group, RoleConstants.POWER_USER);
 
 		_powerUserRole = _roleLocalService.getRole(
-			_company.getCompanyId(), RoleConstants.POWER_USER);
+			TestPropsValues.getCompanyId(), RoleConstants.POWER_USER);
 	}
 
 	@Test
 	public void testAdminCanShareWithAddDiscussion() throws Exception {
 		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(_user);
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
 
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
-				_user, permissionChecker)) {
-
-			T model = getModel(_user, _group);
+				TestPropsValues.getUser(), permissionChecker)) {
 
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.ADD_DISCUSSION);
 		}
 	}
 
 	@Test
 	public void testAdminCanShareWithUpdate() throws Exception {
 		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(_user);
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
 
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
-				_user, permissionChecker)) {
-
-			T model = getModel(_user, _group);
+				TestPropsValues.getUser(), permissionChecker)) {
 
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.UPDATE);
 		}
 	}
 
 	@Test
 	public void testAdminCanShareWithView() throws Exception {
 		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(_user);
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
 
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
-				_user, permissionChecker)) {
-
-			T model = getModel(_user, _group);
+				TestPropsValues.getUser(), permissionChecker)) {
 
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.VIEW);
 		}
 	}
 
@@ -142,17 +126,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
@@ -179,29 +162,29 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model1 = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
-		long classPK = (Long)model.getPrimaryKeyObj();
+		long classNameId1 = _classNameLocalService.getClassNameId(
+			model1.getModelClassName());
+		long classPK1 = (Long)model1.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			classNameId1, classPK1, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
-		T model2 = getModel(_user, _group);
+		T model2 = getModel(TestPropsValues.getUser(), _group);
 
 		long classNameId2 = _classNameLocalService.getClassNameId(
 			model2.getModelClassName());
 		long classPK2 = (Long)model2.getPrimaryKeyObj();
 
 		SharingEntry sharingEntry = _sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId2, classPK2,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			classNameId2, classPK2, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
@@ -212,7 +195,7 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		Assert.assertEquals(
 			toUserSharingEntries.toString(), 2, toUserSharingEntries.size());
 
-		deleteModel(model);
+		deleteModel(model1);
 
 		toUserSharingEntries =
 			_sharingEntryLocalService.getToUserSharingEntries(
@@ -235,25 +218,63 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 			T model = getModel(TestPropsValues.getUser(), _group);
 
-			long classNameId = _classNameLocalService.getClassNameId(
-				model.getModelClassName());
 			long classPK = (long)model.getPrimaryKeyObj();
 
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(_group.getGroupId());
-
 			_sharingEntryLocalService.addSharingEntry(
-				TestPropsValues.getUserId(), _groupUser.getUserId(),
-				classNameId, classPK, _group.getGroupId(), true,
+				null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+				_classNameLocalService.getClassNameId(
+					model.getModelClassName()),
+				classPK, _group.getGroupId(), true,
 				Collections.singletonList(SharingEntryAction.VIEW), null,
-				serviceContext);
+				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 			Assert.assertEquals(1, getModelCount(_group));
 		}
 	}
 
 	@Test
+	public void testInlinePermissionsToUserGroup() throws Exception {
+		UserGroup userGroup = UserGroupTestUtil.addUserGroup();
+
+		PermissionChecker permissionChecker =
+			PermissionCheckerFactoryUtil.create(_groupUser);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_groupUser, permissionChecker)) {
+
+			Assert.assertEquals(0, getModelCount(_group));
+
+			T model = getModel(TestPropsValues.getUser(), _group);
+
+			long classPK = (long)model.getPrimaryKeyObj();
+
+			_userGroupLocalService.addUserUserGroup(
+				_groupUser.getUserId(), userGroup);
+
+			_sharingEntryLocalService.addSharingEntry(
+				null, TestPropsValues.getUserId(), userGroup.getUserGroupId(),
+				0,
+				_classNameLocalService.getClassNameId(
+					model.getModelClassName()),
+				classPK, _group.getGroupId(), true,
+				Collections.singletonList(SharingEntryAction.VIEW), null,
+				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+			Assert.assertEquals(1, getModelCount(_group));
+		}
+		finally {
+			_userGroupLocalService.deleteUserUserGroup(
+				_groupUser.getUserId(), userGroup);
+
+			_userGroupLocalService.deleteUserGroup(userGroup);
+		}
+	}
+
+	@Test
 	public void testModelClassNameReturnsPermissionSQL() throws Exception {
+		UserGroup userGroup1 = UserGroupTestUtil.addUserGroup();
+		UserGroup userGroup2 = UserGroupTestUtil.addUserGroup();
+
 		PermissionChecker permissionChecker =
 			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser());
 
@@ -262,24 +283,43 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 			T model = getModel(TestPropsValues.getUser(), _group);
 
-			StringBundler sb = new StringBundler(6);
-
-			sb.append("1234 IN (SELECT SharingEntry.classPK FROM ");
-			sb.append("SharingEntry WHERE (SharingEntry.toUserId = ");
-			sb.append(TestPropsValues.getUserId());
-			sb.append(") AND (SharingEntry.classNameId = ");
-			sb.append(
-				_classNameLocalService.getClassNameId(
-					model.getModelClassName()));
-			sb.append("))");
-
 			PermissionSQLContributor permissionSQLContributor =
 				getPermissionSQLContributor();
 
+			_userGroupLocalService.addUserUserGroup(
+				TestPropsValues.getUserId(), userGroup1);
+			_userGroupLocalService.addUserUserGroup(
+				TestPropsValues.getUserId(), userGroup2);
+
 			Assert.assertEquals(
-				sb.toString(),
+				StringBundler.concat(
+					"1234 IN (SELECT SharingEntry.classPK FROM SharingEntry ",
+					"WHERE ((SharingEntry.toUserGroupId IN ( ",
+					StringUtil.merge(
+						new long[] {
+							userGroup1.getUserGroupId(),
+							userGroup2.getUserGroupId()
+						},
+						","),
+					")) OR (SharingEntry.toUserId = ",
+					TestPropsValues.getUserId(),
+					")) AND (SharingEntry.classNameId = ",
+					_classNameLocalService.getClassNameId(
+						model.getModelClassName()),
+					"))"),
 				permissionSQLContributor.getPermissionSQL(
-					model.getModelClassName(), "1234", null, null, null));
+					model.getModelClassName(), "1234", null, null));
+		}
+		finally {
+			_userGroupLocalService.deleteUserUserGroup(
+				TestPropsValues.getUserId(), userGroup1);
+
+			_userGroupLocalService.deleteUserGroup(userGroup1);
+
+			_userGroupLocalService.deleteUserUserGroup(
+				TestPropsValues.getUserId(), userGroup2);
+
+			_userGroupLocalService.deleteUserGroup(userGroup2);
 		}
 	}
 
@@ -289,17 +329,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
@@ -326,17 +365,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(
 				SharingEntryAction.ADD_DISCUSSION, SharingEntryAction.VIEW),
 			null, serviceContext);
@@ -358,17 +396,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(
 				SharingEntryAction.ADD_DISCUSSION, SharingEntryAction.VIEW),
 			null, serviceContext);
@@ -397,10 +434,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.UPDATE);
 		}
 	}
 
@@ -417,10 +453,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.VIEW);
 		}
 	}
 
@@ -437,10 +472,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.ADD_DISCUSSION);
 		}
 	}
 
@@ -454,10 +488,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.ADD_DISCUSSION);
 		}
 	}
 
@@ -471,10 +504,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsPermission(
-				permissionChecker, model, ActionKeys.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				ActionKeys.ADD_DISCUSSION);
 		}
 	}
 
@@ -488,10 +520,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsPermission(
-				permissionChecker, model, ActionKeys.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				ActionKeys.VIEW);
 		}
 	}
 
@@ -505,10 +536,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.UPDATE);
 		}
 	}
 
@@ -522,10 +552,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsPermission(
-				permissionChecker, model, ActionKeys.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				ActionKeys.UPDATE);
 		}
 	}
 
@@ -539,10 +568,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.VIEW);
 		}
 	}
 
@@ -556,10 +584,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsPermission(
-				permissionChecker, model, ActionKeys.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				ActionKeys.VIEW);
 		}
 	}
 
@@ -569,17 +596,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
@@ -600,17 +626,16 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true,
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
 			Arrays.asList(SharingEntryAction.UPDATE, SharingEntryAction.VIEW),
 			null, serviceContext);
 
@@ -638,10 +663,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.ADD_DISCUSSION);
 		}
 	}
 
@@ -658,10 +682,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.VIEW);
 		}
 	}
 
@@ -678,10 +701,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.UPDATE);
 		}
 	}
 
@@ -697,10 +719,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.ADD_DISCUSSION);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.ADD_DISCUSSION);
 		}
 	}
 
@@ -716,10 +737,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertNotContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.UPDATE);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.UPDATE);
 		}
 	}
 
@@ -733,10 +753,9 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 			ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_groupUser, permissionChecker)) {
 
-			T model = getModel(_user, _group);
-
 			_assertContainsSharingPermission(
-				permissionChecker, model, SharingEntryAction.VIEW);
+				permissionChecker, getModel(TestPropsValues.getUser(), _group),
+				SharingEntryAction.VIEW);
 		}
 	}
 
@@ -746,18 +765,17 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getPendingModel(_user, _group);
+		T model = getPendingModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true, Arrays.asList(SharingEntryAction.VIEW),
-			null, serviceContext);
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
+			Arrays.asList(SharingEntryAction.VIEW), null, serviceContext);
 
 		PermissionChecker permissionChecker =
 			PermissionCheckerFactoryUtil.create(_groupUser);
@@ -776,18 +794,17 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
+				_group.getGroupId(), TestPropsValues.getUserId());
 
-		T model = getModel(_user, _group);
+		T model = getModel(TestPropsValues.getUser(), _group);
 
-		long classNameId = _classNameLocalService.getClassNameId(
-			model.getModelClassName());
 		long classPK = (Long)model.getPrimaryKeyObj();
 
 		_sharingEntryLocalService.addSharingEntry(
-			_user.getUserId(), _groupUser.getUserId(), classNameId, classPK,
-			_group.getGroupId(), true, Arrays.asList(SharingEntryAction.VIEW),
-			null, serviceContext);
+			null, TestPropsValues.getUserId(), 0, _groupUser.getUserId(),
+			_classNameLocalService.getClassNameId(model.getModelClassName()),
+			classPK, _group.getGroupId(), true,
+			Arrays.asList(SharingEntryAction.VIEW), null, serviceContext);
 
 		PermissionChecker permissionChecker =
 			PermissionCheckerFactoryUtil.create(_groupUser);
@@ -881,9 +898,8 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 	private ClassNameLocalService _classNameLocalService;
 
 	@DeleteAfterTestRun
-	private Company _company;
-
 	private Group _group;
+
 	private User _groupUser;
 	private Role _powerUserRole;
 
@@ -896,7 +912,8 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 	@Inject
 	private SharingEntryLocalService _sharingEntryLocalService;
 
-	private User _user;
+	@Inject
+	private UserGroupLocalService _userGroupLocalService;
 
 	private class AddModelResourcePermission implements AutoCloseable {
 
@@ -912,8 +929,8 @@ public abstract class BaseSharingTestCase<T extends ClassedModel> {
 						String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
 						role.getRoleId(), actionKey);
 				}
-				catch (PortalException pe) {
-					_log.error(pe, pe);
+				catch (PortalException portalException) {
+					_log.error(portalException);
 				}
 			}
 		}

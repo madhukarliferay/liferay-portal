@@ -1,8 +1,12 @@
+create index IX_56567C8E on FriendlyURLEntry (classNameId, companyId);
 create index IX_F3DC928B on FriendlyURLEntry (groupId, classNameId, classPK);
-create index IX_20861768 on FriendlyURLEntry (uuid_[$COLUMN_LENGTH:75$], companyId);
-create unique index IX_63FD57EA on FriendlyURLEntry (uuid_[$COLUMN_LENGTH:75$], groupId);
+create unique index IX_D51F1A48 on FriendlyURLEntry (uuid_[$COLUMN_LENGTH:75$], groupId, ctCollectionId);
 
-create unique index IX_68BE94B1 on FriendlyURLEntryLocalization (friendlyURLEntryId, languageId[$COLUMN_LENGTH:75$]);
-create unique index IX_8AB5CAE on FriendlyURLEntryLocalization (groupId, classNameId, urlTitle[$COLUMN_LENGTH:255$]);
+create index IX_2B00D1D3 on FriendlyURLEntryLocalization (classNameId, groupId, languageId[$COLUMN_LENGTH:75$], classPK);
+create unique index IX_53B5CB4B on FriendlyURLEntryLocalization (classNameId, groupId, languageId[$COLUMN_LENGTH:75$], urlTitle[$COLUMN_LENGTH:255$], ctCollectionId);
+create index IX_570320E6 on FriendlyURLEntryLocalization (classNameId, groupId, urlTitle[$COLUMN_LENGTH:255$]);
+create index IX_310462C on FriendlyURLEntryLocalization (classNameId, urlTitle[$COLUMN_LENGTH:255$], ctCollectionId, companyId);
+create index IX_BFA6E36A on FriendlyURLEntryLocalization (friendlyURLEntryId);
+create unique index IX_5292D20F on FriendlyURLEntryLocalization (languageId[$COLUMN_LENGTH:75$], ctCollectionId, friendlyURLEntryId);
 
-create unique index IX_3B5E645B on FriendlyURLEntryMapping (classNameId, classPK);
+create unique index IX_5BE324B9 on FriendlyURLEntryMapping (classNameId, classPK, ctCollectionId);

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.dao.db;
@@ -24,35 +15,55 @@ import javax.sql.DataSource;
 public class DBManagerUtil {
 
 	public static DB getDB() {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		return dbManager.getDB();
 	}
 
 	public static DB getDB(DBType dbType, DataSource dataSource) {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		return dbManager.getDB(dbType, dataSource);
 	}
 
 	public static DB getDB(Object dialect, DataSource dataSource) {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		return dbManager.getDB(dbManager.getDBType(dialect), dataSource);
 	}
 
-	public static DBManager getDBManager() {
-		return _dbManager;
+	public static int getDBInMaxParameters() {
+		DBManager dbManager = _dbManager;
+
+		return dbManager.getDBInMaxParameters();
+	}
+
+	public static int getDBMaxParameters() {
+		DBManager dbManager = _dbManager;
+
+		return dbManager.getDBMaxParameters();
+	}
+
+	public static DBType getDBType() {
+		DBManager dbManager = _dbManager;
+
+		return dbManager.getDBType();
+	}
+
+	public static DBType getDBType(DataSource dataSource) {
+		DBManager dbManager = _dbManager;
+
+		return dbManager.getDBType(dataSource);
 	}
 
 	public static DBType getDBType(Object dialect) {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		return dbManager.getDBType(dialect);
 	}
 
 	public static Set<DBType> getDBTypes() {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		return dbManager.getDBTypes();
 	}
@@ -62,13 +73,13 @@ public class DBManagerUtil {
 	}
 
 	public static void setDB(DBType dbType, DataSource dataSource) {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		dbManager.setDB(dbManager.getDB(dbType, dataSource));
 	}
 
 	public static void setDB(Object dialect, DataSource dataSource) {
-		DBManager dbManager = getDBManager();
+		DBManager dbManager = _dbManager;
 
 		dbManager.setDB(
 			dbManager.getDB(dbManager.getDBType(dialect), dataSource));

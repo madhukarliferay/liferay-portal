@@ -1,31 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.document.library.kernel.store.Store;
+import com.liferay.document.library.kernel.util.DLValidatorUtil;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.image.HookFactory;
+import com.liferay.portal.image.ImageToolUtil;
 import com.liferay.portal.kernel.exception.ImageTypeException;
-import com.liferay.portal.kernel.exception.NoSuchImageException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.image.Hook;
-import com.liferay.portal.kernel.image.ImageToolUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Image;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.GroupThreadLocal;
+import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.webserver.WebServerServletTokenUtil;
 import com.liferay.portal.service.base.ImageLocalServiceBaseImpl;
 
@@ -49,80 +44,89 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 			return null;
 		}
 
-		/*if (PropsValues.IMAGE_HOOK_IMPL.equals(
-				DatabaseHook.class.getName()) &&
-			(imagePersistence.getListeners().length == 0)) {
-
-			runSQL("delete from Image where imageId = " + imageId);
-
-			imagePersistence.clearCache();
-		}
-		else {*/
-
 		Image image = getImage(imageId);
 
-		if (image != null) {
-			imagePersistence.remove(image);
-
-			Hook hook = HookFactory.getInstance();
-
-			try {
-				hook.deleteImage(image);
-			}
-			catch (NoSuchImageException nsie) {
-
-				// DLHook throws NoSuchImageException if the file no longer
-				// exists. See LPS-30430. This exception can be ignored.
-
-				if (_log.isWarnEnabled()) {
-					_log.warn(nsie, nsie);
-				}
-			}
+		if (image == null) {
+			return null;
 		}
 
+		imagePersistence.remove(image);
+
+		Store store = _storeSnapshot.get();
+
+		store.deleteFile(
+			image.getCompanyId(), _REPOSITORY_ID,
+			_getFileName(image.getImageId(), image.getType()),
+			Store.VERSION_DEFAULT);
+
 		return image;
-		//}
 	}
 
 	@Override
 	public Image getCompanyLogo(long imageId) {
 		Image image = getImage(imageId);
 
-		if (image == null) {
-			image = ImageToolUtil.getDefaultCompanyLogo();
+		if (image != null) {
+			return image;
 		}
 
-		return image;
+		return ImageToolUtil.getDefaultCompanyLogo();
 	}
 
 	@Override
 	public Image getImage(long imageId) {
-		if (imageId > 0) {
-			try {
-				return imagePersistence.fetchByPrimaryKey(imageId);
+		try {
+			if (imageId <= 0) {
+				return null;
 			}
-			catch (Exception e) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Unable to get image ", imageId, ": ",
-							e.getMessage()));
-				}
+
+			return imagePersistence.fetchByPrimaryKey(imageId);
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Unable to get image ", imageId, ": ",
+						exception.getMessage()));
 			}
+
+			return null;
+		}
+	}
+
+	@Override
+	public InputStream getImageInputStream(
+			long companyId, long imageId, String type)
+		throws PortalException {
+
+		Store store = _storeSnapshot.get();
+
+		String fileName = _getFileName(imageId, type);
+
+		if (store.hasFile(
+				companyId, _REPOSITORY_ID, fileName, Store.VERSION_DEFAULT)) {
+
+			return store.getFileAsStream(
+				companyId, _REPOSITORY_ID, fileName, StringPool.BLANK);
 		}
 
-		return null;
+		if (_log.isDebugEnabled()) {
+			_log.debug("Get image " + imageId + " from the default company");
+		}
+
+		return store.getFileAsStream(
+			0, _REPOSITORY_ID, fileName, StringPool.BLANK);
 	}
 
 	@Override
 	public Image getImageOrDefault(long imageId) {
 		Image image = getImage(imageId);
 
-		if (image == null) {
-			image = ImageToolUtil.getDefaultSpacer();
+		if (image != null) {
+			return image;
 		}
 
-		return image;
+		return ImageToolUtil.getDefaultSpacer();
 	}
 
 	@Override
@@ -137,38 +141,40 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 
 	@Override
 	public Image moveImage(long imageId, byte[] bytes) throws PortalException {
-		Image image = updateImage(counterLocalService.increment(), bytes);
+		Image image = updateImage(
+			_getImageCompanyId(imageId), counterLocalService.increment(),
+			bytes);
 
-		if (imageId > 0) {
-			deleteImage(imageId);
-		}
+		deleteImage(imageId);
 
 		return image;
 	}
 
 	@Override
-	public Image updateImage(long imageId, byte[] bytes)
+	public Image updateImage(long companyId, long imageId, byte[] bytes)
 		throws PortalException {
 
-		Image image = null;
-
 		try {
-			image = ImageToolUtil.getImage(bytes);
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
+			Image image = ImageToolUtil.getImage(bytes);
 
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
+			return updateImage(
+				companyId, imageId, image.getTextObj(), image.getType(),
+				image.getHeight(), image.getWidth(), image.getSize());
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
 	}
 
 	@Override
 	public Image updateImage(
-			long imageId, byte[] bytes, String type, int height, int width,
-			int size)
+			long companyId, long imageId, byte[] bytes, String type, int height,
+			int width, int size)
 		throws PortalException {
+
+		if ((companyId == CompanyConstants.SYSTEM) && _log.isWarnEnabled()) {
+			_log.warn("Associating image " + imageId + " to a system company");
+		}
 
 		validate(type);
 
@@ -176,6 +182,8 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 
 		if (image == null) {
 			image = imagePersistence.create(imageId);
+
+			image.setCompanyId(companyId);
 		}
 
 		image.setModifiedDate(new Date());
@@ -184,11 +192,33 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 		image.setWidth(width);
 		image.setSize(size);
 
-		Hook hook = HookFactory.getInstance();
+		String fileName = _getFileName(image.getImageId(), image.getType());
 
-		hook.updateImage(image, type, bytes);
+		DLValidatorUtil.validateFileSize(
+			GroupThreadLocal.getGroupId(), fileName,
+			MimeTypesUtil.getContentType(fileName), bytes);
 
-		imagePersistence.update(image);
+		Store store = _storeSnapshot.get();
+
+		if (store.hasFile(
+				image.getCompanyId(), _REPOSITORY_ID, fileName,
+				Store.VERSION_DEFAULT)) {
+
+			store.deleteFile(
+				image.getCompanyId(), _REPOSITORY_ID, fileName,
+				Store.VERSION_DEFAULT);
+		}
+
+		try (InputStream inputStream = new UnsyncByteArrayInputStream(bytes)) {
+			store.addFile(
+				image.getCompanyId(), _REPOSITORY_ID, fileName,
+				Store.VERSION_DEFAULT, inputStream);
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
+
+		image = imagePersistence.update(image);
 
 		WebServerServletTokenUtil.resetToken(imageId);
 
@@ -196,56 +226,54 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 	}
 
 	@Override
-	public Image updateImage(long imageId, File file) throws PortalException {
-		Image image = null;
-
-		try {
-			image = ImageToolUtil.getImage(file);
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
-
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
-	}
-
-	@Override
-	public Image updateImage(long imageId, InputStream is)
+	public Image updateImage(long companyId, long imageId, File file)
 		throws PortalException {
 
-		Image image = null;
-
 		try {
-			image = ImageToolUtil.getImage(is);
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
+			Image image = ImageToolUtil.getImage(file);
 
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
+			return updateImage(
+				companyId, imageId, image.getTextObj(), image.getType(),
+				image.getHeight(), image.getWidth(), image.getSize());
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
 	}
 
 	@Override
 	public Image updateImage(
-			long imageId, InputStream is, boolean cleanUpStream)
+			long companyId, long imageId, InputStream inputStream)
 		throws PortalException {
 
-		Image image = null;
+		try {
+			Image image = ImageToolUtil.getImage(inputStream);
+
+			return updateImage(
+				companyId, imageId, image.getTextObj(), image.getType(),
+				image.getHeight(), image.getWidth(), image.getSize());
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
+	}
+
+	@Override
+	public Image updateImage(
+			long companyId, long imageId, InputStream inputStream,
+			boolean cleanUpStream)
+		throws PortalException {
 
 		try {
-			image = ImageToolUtil.getImage(is, cleanUpStream);
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
+			Image image = ImageToolUtil.getImage(inputStream, cleanUpStream);
 
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
+			return updateImage(
+				companyId, imageId, image.getTextObj(), image.getType(),
+				image.getHeight(), image.getWidth(), image.getSize());
+		}
+		catch (IOException ioException) {
+			throw new SystemException(ioException);
+		}
 	}
 
 	protected void validate(String type) throws PortalException {
@@ -265,7 +293,31 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 		}
 	}
 
+	private String _getFileName(long imageId, String type) {
+		return imageId + StringPool.PERIOD + type;
+	}
+
+	private long _getImageCompanyId(long imageId) {
+		Image image = getImage(imageId);
+
+		if (image == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Image " + imageId + " is associated to a system company");
+			}
+
+			return CompanyConstants.SYSTEM;
+		}
+
+		return image.getCompanyId();
+	}
+
+	private static final long _REPOSITORY_ID = 0;
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImageLocalServiceImpl.class);
+
+	private static final Snapshot<Store> _storeSnapshot = new Snapshot<>(
+		ImageLocalServiceImpl.class, Store.class, "(default=true)");
 
 }

@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portlet.social.service.base.SocialActivityAchievementLocalServiceBaseImpl;
 import com.liferay.social.kernel.model.SocialAchievement;
 import com.liferay.social.kernel.model.SocialActivityAchievement;
+import com.liferay.social.kernel.service.SocialActivityCounterLocalService;
 
 import java.util.List;
 
@@ -42,7 +36,7 @@ public class SocialActivityAchievementLocalServiceImpl
 			return;
 		}
 
-		User user = userPersistence.findByPrimaryKey(userId);
+		User user = _userPersistence.findByPrimaryKey(userId);
 
 		long activityAchievementId = counterLocalService.increment();
 
@@ -65,7 +59,7 @@ public class SocialActivityAchievementLocalServiceImpl
 
 		socialActivityAchievementPersistence.update(activityAchievement);
 
-		socialActivityCounterLocalService.incrementUserAchievementCounter(
+		_socialActivityCounterLocalService.incrementUserAchievementCounter(
 			userId, groupId);
 	}
 
@@ -122,5 +116,12 @@ public class SocialActivityAchievementLocalServiceImpl
 	public int getUserAchievementsCount(long userId, long groupId) {
 		return socialActivityAchievementPersistence.countByG_U(groupId, userId);
 	}
+
+	@BeanReference(type = SocialActivityCounterLocalService.class)
+	private SocialActivityCounterLocalService
+		_socialActivityCounterLocalService;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

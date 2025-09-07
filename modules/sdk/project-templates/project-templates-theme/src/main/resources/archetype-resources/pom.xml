@@ -13,34 +13,63 @@
 	<properties>
 		<com.liferay.css.builder.outputDir>${project.build.directory}/build-css</com.liferay.css.builder.outputDir>
 		<com.liferay.portal.tools.theme.builder.outputDir>target/build-theme</com.liferay.portal.tools.theme.builder.outputDir>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.compiler.source.version>1.8</java.compiler.source.version>
+		<java.compiler.target.version>1.8</java.compiler.target.version>
 #if (${liferayVersion.startsWith("7.0")})
-		<com.liferay.frontend.css.common.version>2.0.3</com.liferay.frontend.css.common.version>
-		<com.liferay.frontend.theme.styled.version>2.0.13</com.liferay.frontend.theme.styled.version>
-		<com.liferay.frontend.theme.unstyled.version>2.0.13</com.liferay.frontend.theme.unstyled.version>
+		<liferay.bom.version>7.0.10.17</liferay.bom.version>
 #elseif (${liferayVersion.startsWith("7.1")})
-		<com.liferay.frontend.css.common.version>3.0.1</com.liferay.frontend.css.common.version>
-		<com.liferay.frontend.theme.styled.version>3.0.4</com.liferay.frontend.theme.styled.version>
-		<com.liferay.frontend.theme.unstyled.version>3.0.4</com.liferay.frontend.theme.unstyled.version>
+		<liferay.bom.version>7.1.10.7</liferay.bom.version>
 #elseif (${liferayVersion.startsWith("7.2")})
-		<com.liferay.frontend.css.common.version>4.0.0</com.liferay.frontend.css.common.version>
-		<com.liferay.frontend.theme.styled.version>4.0.2</com.liferay.frontend.theme.styled.version>
-		<com.liferay.frontend.theme.unstyled.version>4.0.1</com.liferay.frontend.theme.unstyled.version>
+		<liferay.bom.version>7.2.10.7</liferay.bom.version>
+#else
+		<liferay.bom.version>${liferayVersion}</liferay.bom.version>
 #end
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.liferay.portal</groupId>
+				<artifactId>release.${liferayProduct}.bom</artifactId>
+				<version>${liferay.bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.liferay.portal</groupId>
+				<artifactId>release.${liferayProduct}.bom.compile.only</artifactId>
+				<version>${liferay.bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.liferay.portal</groupId>
+				<artifactId>release.${liferayProduct}.bom.third.party</artifactId>
+				<version>${liferay.bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<repositories>
+		<repository>
+			<id>liferay-public</id>
+			<url>https://repository-cdn.liferay.com/nexus/content/groups/public/</url>
+		</repository>
+	</repositories>
 	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>${java.compiler.source.version}</source>
+					<target>${java.compiler.target.version}</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.3.1</version>
 				<configuration>
 					<packagingExcludes>**/*.scss</packagingExcludes>
 					<webResources>
@@ -60,7 +89,13 @@
 			<plugin>
 				<groupId>com.liferay</groupId>
 				<artifactId>com.liferay.css.builder</artifactId>
-				<version>@com.liferay.css.builder.version@</version>
+#if (${liferayVersion.startsWith("7.0")})
+				<version>3.0.0</version>
+#elseif (${liferayVersion.startsWith("7.1")} || ${liferayVersion.startsWith("7.2")} || ${liferayVersion.startsWith("7.3")})
+				<version>3.0.3</version>
+#else
+				<version>3.1.5</version>
+#end
 				<executions>
 					<execution>
 						<phase>compile</phase>
@@ -99,19 +134,16 @@
 		<dependency>## Ignore Dependency Comparison
 			<groupId>com.liferay</groupId>
 			<artifactId>com.liferay.frontend.css.common</artifactId>
-			<version>${com.liferay.frontend.css.common.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>## Ignore Dependency Comparison
 			<groupId>com.liferay</groupId>
 			<artifactId>com.liferay.frontend.theme.styled</artifactId>
-			<version>${com.liferay.frontend.theme.styled.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>## Ignore Dependency Comparison
 			<groupId>com.liferay</groupId>
 			<artifactId>com.liferay.frontend.theme.unstyled</artifactId>
-			<version>${com.liferay.frontend.theme.unstyled.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

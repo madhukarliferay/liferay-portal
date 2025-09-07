@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,6 +18,7 @@ if (Validator.isNull(redirect)) {
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
+portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 %>
@@ -45,55 +37,52 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 	<aui:input name="groupId" type="hidden" value="<%= scopeGroupId %>" />
 
 	<liferay-frontend:edit-form-body>
-		<liferay-frontend:fieldset-group>
-			<liferay-frontend:fieldset>
-				<div class="button-holder">
-					<liferay-asset:asset-tags-selector
-						addCallback="onAddTag"
-						allowAddEntry="<%= false %>"
-						hiddenInput="mergeTagNames"
-						id="assetTagsSelector"
-						removeCallback="onRemoveTag"
-						tagNames="<%= StringUtil.merge(assetTagsDisplayContext.getMergeTagNames()) %>"
-					/>
-				</div>
+		<liferay-frontend:fieldset>
+			<div class="button-holder">
+				<liferay-asset:asset-tags-selector
+					addCallback="onAddTag"
+					allowAddEntry="<%= false %>"
+					hiddenInput="mergeTagNames"
+					id="assetTagsSelector"
+					removeCallback="onRemoveTag"
+					tagNames="<%= StringUtil.merge(assetTagsDisplayContext.getMergeTagNames()) %>"
+				/>
+			</div>
 
-				<aui:select cssClass="target-tag" label="into-this-tag" name="targetTagName">
+			<aui:select cssClass="target-tag" label="into-this-tag" name="targetTagName">
 
-					<%
-					for (String tagName : assetTagsDisplayContext.getMergeTagNames()) {
-					%>
+				<%
+				for (String tagName : assetTagsDisplayContext.getMergeTagNames()) {
+				%>
 
-						<aui:option label="<%= tagName %>" />
+					<aui:option label="<%= tagName %>" localizeLabel="<%= false %>" />
 
-					<%
-					}
-					%>
+				<%
+				}
+				%>
 
-				</aui:select>
-			</liferay-frontend:fieldset>
-		</liferay-frontend:fieldset-group>
+			</aui:select>
+		</liferay-frontend:fieldset>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= redirect %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
-<aui:script require="metal-dom/src/all/dom as dom">
+<aui:script sandbox="<%= true %>">
 	var targetTagNameSelect = document.getElementById(
 		'<portlet:namespace />targetTagName'
 	);
 
 	if (targetTagNameSelect) {
-		window['<portlet:namespace />onAddTag'] = function(item) {
+		window['<portlet:namespace />onAddTag'] = function (item) {
 			var value = item.value;
 
 			if (value !== undefined) {
-				dom.append(
-					targetTagNameSelect,
+				targetTagNameSelect.append(
 					Liferay.Util.sub(
 						'<option value="{0}">{1}</option>',
 						value,
@@ -103,7 +92,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 			}
 		};
 
-		window['<portlet:namespace />onRemoveTag'] = function(item) {
+		window['<portlet:namespace />onRemoveTag'] = function (item) {
 			var value = item.value;
 
 			if (value !== undefined) {
@@ -111,7 +100,9 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 					'option[value="' + value + '"]'
 				);
 
-				dom.exitDocument(targetTagNameOption);
+				if (targetTagNameOption) {
+					targetTagNameOption.remove();
+				}
 			}
 		};
 	}
@@ -122,30 +113,36 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 	);
 
 	if (form && mergeTagNamesInputs && targetTagNameSelect) {
-		form.addEventListener('submit', function(event) {
-			var mergeTagNames = Array.from(mergeTagNamesInputs).map(function(
-				mergeTagNamesInput
-			) {
-				return mergeTagNamesInput.value;
-			});
+		form.addEventListener('submit', (event) => {
+			var mergeTagNames = Array.from(mergeTagNamesInputs).map(
+				(mergeTagNamesInput) => {
+					return mergeTagNamesInput.value;
+				}
+			);
 
 			if (mergeTagNames.length < 2) {
-				alert(
-					'<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />'
-				);
+				Liferay.Util.openAlertModal({
+					message:
+						'<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />',
+				});
 
 				return;
 			}
 
 			var mergeText = Liferay.Util.sub(
 				'<liferay-ui:message key="are-you-sure-you-want-to-merge-x-into-x" />',
-				mergeTagNames,
+				mergeTagNames.join(', '),
 				targetTagNameSelect.value
 			);
 
-			if (confirm(mergeText)) {
-				submitForm(form);
-			}
+			Liferay.Util.openConfirmModal({
+				message: mergeText,
+				onConfirm: (isConfirmed) => {
+					if (isConfirmed) {
+						submitForm(form);
+					}
+				},
+			});
 		});
 	}
 </aui:script>

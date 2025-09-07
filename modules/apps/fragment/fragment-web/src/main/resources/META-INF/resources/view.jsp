@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,205 +10,224 @@
 <%
 List<FragmentCollection> fragmentCollections = (List<FragmentCollection>)request.getAttribute(FragmentWebKeys.FRAGMENT_COLLECTIONS);
 Map<String, List<FragmentCollection>> inheritedFragmentCollections = (Map<String, List<FragmentCollection>>)request.getAttribute(FragmentWebKeys.INHERITED_FRAGMENT_COLLECTIONS);
+List<FragmentCollection> systemFragmentCollections = (List<FragmentCollection>)request.getAttribute(FragmentWebKeys.SYSTEM_FRAGMENT_COLLECTIONS);
 
 List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDisplayContext.getFragmentCollectionContributors(locale);
+ImportDisplayContext importDisplayContext = new ImportDisplayContext(request, renderRequest, renderResponse);
 %>
 
-<div class="container-fluid container-fluid-max-xl container-view">
-	<div class="row">
-		<div class="col-lg-3">
-			<nav class="menubar menubar-transparent menubar-vertical-expand-lg">
-				<ul class="nav nav-nested">
-					<li class="nav-item">
-						<portlet:renderURL var="editFragmentCollectionURL">
-							<portlet:param name="mvcRenderCommandName" value="/fragment/edit_fragment_collection" />
-							<portlet:param name="redirect" value="<%= currentURL %>" />
-						</portlet:renderURL>
+<liferay-ui:error embed="<%= false %>" exception="<%= DuplicateFragmentCollectionKeyException.class %>">
 
-						<c:choose>
-							<c:when test="<%= ListUtil.isNotEmpty(fragmentCollections) || ListUtil.isNotEmpty(fragmentCollectionContributors) || MapUtil.isNotEmpty(inheritedFragmentCollections) %>">
-								<div class="autofit-row autofit-row-center mb-4">
-									<div class="autofit-col autofit-col-expand">
-										<strong class="text-uppercase">
-											<liferay-ui:message key="collections" />
-										</strong>
-									</div>
+	<%
+	DuplicateFragmentCollectionKeyException dfcke = (DuplicateFragmentCollectionKeyException)errorException;
+	%>
 
-									<div class="autofit-col autofit-col-end">
-										<ul class="navbar-nav">
-											<li>
-												<c:if test="<%= FragmentPermission.contains(permissionChecker, scopeGroupId, FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES) %>">
-													<liferay-ui:icon
-														icon="plus"
-														iconCssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-														markupView="lexicon"
-														url="<%= editFragmentCollectionURL %>"
-													/>
-												</c:if>
-											</li>
-											<li>
-												<clay:dropdown-actions
-													componentId='<%= renderResponse.getNamespace() + "actionsComponent" %>'
-													dropdownItems="<%= fragmentDisplayContext.getCollectionsDropdownItems() %>"
-												/>
-											</li>
-										</ul>
-									</div>
-								</div>
+	<liferay-ui:message arguments='<%= "<em>" + dfcke.getMessage() + "</em>" %>' key="a-fragment-set-with-the-key-x-already-exists" />
+</liferay-ui:error>
 
-								<ul class="mb-2 nav nav-stacked">
-									<c:if test="<%= ListUtil.isNotEmpty(fragmentCollectionContributors) %>">
-										<span class="text-truncate">
-											<liferay-ui:message key="default" />
-										</span>
+<liferay-ui:error embed="<%= false %>" exception="<%= DuplicateFragmentEntryKeyException.class %>">
 
-										<%
-										for (FragmentCollectionContributor fragmentCollectionContributor : fragmentCollectionContributors) {
-										%>
+	<%
+	DuplicateFragmentEntryKeyException dfeke = (DuplicateFragmentEntryKeyException)errorException;
+	%>
 
-											<li class="nav-item">
+	<liferay-ui:message arguments='<%= "<em>" + dfeke.getMessage() + "</em>" %>' key="a-fragment-entry-with-the-key-x-already-exists" />
+</liferay-ui:error>
 
-												<%
-												PortletURL fragmentCollectionURL = renderResponse.createRenderURL();
+<liferay-ui:error embed="<%= false %>" exception="<%= InvalidFileException.class %>" message="the-selected-file-is-not-a-valid-zip-file" />
 
-												fragmentCollectionURL.setParameter("mvcRenderCommandName", "/fragment/view");
-												fragmentCollectionURL.setParameter("fragmentCollectionKey", String.valueOf(fragmentCollectionContributor.getFragmentCollectionKey()));
-												%>
+<liferay-ui:success key="fragmentEntryCopied" message="the-fragment-was-copied-successfully" />
 
-												<a class="nav-link text-truncate <%= Objects.equals(fragmentCollectionContributor.getFragmentCollectionKey(), fragmentDisplayContext.getFragmentCollectionKey()) ? "active" : StringPool.BLANK %>" href="<%= fragmentCollectionURL.toString() %>">
-													<%= HtmlUtil.escape(fragmentCollectionContributor.getName(locale)) %>
+<clay:container-fluid
+	cssClass="container-view"
+	size="xxxl"
+>
+	<clay:row>
+		<clay:col
+			lg="3"
+		>
+			<portlet:renderURL var="editFragmentCollectionURL">
+				<portlet:param name="mvcRenderCommandName" value="/fragment/edit_fragment_collection" />
+				<portlet:param name="redirect" value="<%= currentURL %>" />
+			</portlet:renderURL>
 
-													<liferay-ui:icon
-														icon="lock"
-														iconCssClass="text-muted"
-														markupView="lexicon"
-													/>
-												</a>
-											</li>
+			<c:choose>
+				<c:when test="<%= ListUtil.isNotEmpty(fragmentCollections) || ListUtil.isNotEmpty(fragmentCollectionContributors) || MapUtil.isNotEmpty(inheritedFragmentCollections) %>">
+					<clay:content-row
+						cssClass="mb-4"
+						verticalAlign="center"
+					>
+						<clay:content-col
+							expand="<%= true %>"
+						>
+							<strong class="text-uppercase">
+								<liferay-ui:message key="fragment-sets" />
+							</strong>
+						</clay:content-col>
 
-										<%
-										}
-										%>
-
+						<clay:content-col>
+							<ul class="align-items-center navbar-nav">
+								<li>
+									<c:if test="<%= FragmentPermission.contains(permissionChecker, scopeGroupId, FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES) %>">
+										<clay:link
+											borderless="<%= true %>"
+											cssClass="component-action lfr-portal-tooltip"
+											href="<%= editFragmentCollectionURL %>"
+											icon="plus"
+											title='<%= LanguageUtil.get(request, "add-fragment-set") %>'
+											type="button"
+										/>
 									</c:if>
-								</ul>
+								</li>
 
-								<ul class="mb-2 nav nav-stacked">
+								<c:if test="<%= fragmentDisplayContext.isShowMarketplace() %>">
+									<li>
+										<div>
+											<react:component
+												module="{MarketplaceButton} from layout-js-components-web"
+												props="<%= fragmentDisplayContext.getMarketplaceProps() %>"
+											/>
+										</div>
+									</li>
+								</c:if>
+
+								<li>
 
 									<%
-									for (Map.Entry<String, List<FragmentCollection>> entry : inheritedFragmentCollections.entrySet()) {
+									Map<String, Object> fragmentCollectionsViewContext = fragmentDisplayContext.getFragmentCollectionsViewContext();
 									%>
 
-										<span class="text-truncate"><%= entry.getKey() %></span>
+									<clay:dropdown-actions
+										additionalProps='<%=
+											HashMapBuilder.<String, Object>put(
+												"deleteFragmentCollectionURL", fragmentCollectionsViewContext.get("deleteFragmentCollectionURL")
+											).put(
+												"exportFragmentCollectionsURL", fragmentCollectionsViewContext.get("exportFragmentCollectionsURL")
+											).put(
+												"importURL", fragmentCollectionsViewContext.get("importURL")
+											).put(
+												"viewDeleteFragmentCollectionsURL", fragmentCollectionsViewContext.get("viewDeleteFragmentCollectionsURL")
+											).put(
+												"viewExportFragmentCollectionsURL", fragmentCollectionsViewContext.get("viewExportFragmentCollectionsURL")
+											).put(
+												"viewImportURL", fragmentCollectionsViewContext.get("viewImportURL")
+											).build()
+										%>'
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+										dropdownItems="<%= fragmentDisplayContext.getCollectionsDropdownItems() %>"
+										propsTransformer="{FragmentCollectionViewDefaultPropsTransformer} from fragment-web"
+										title='<%= LanguageUtil.get(request, "fragment-sets-options") %>'
+									/>
+								</li>
+							</ul>
+						</clay:content-col>
+					</clay:content-row>
 
-										<%
-										for (FragmentCollection fragmentCollection : entry.getValue()) {
-										%>
+					<c:if test="<%= ListUtil.isNotEmpty(fragmentCollectionContributors) || ListUtil.isNotEmpty(systemFragmentCollections) %>">
+						<span class="text-truncate">
+							<liferay-ui:message key="default" />
+						</span>
 
-											<li class="nav-item">
+						<clay:vertical-nav
+							verticalNavItems="<%= fragmentDisplayContext.getVerticalNavItemList(systemFragmentCollections, fragmentCollectionContributors) %>"
+						/>
+					</c:if>
 
-												<%
-												PortletURL fragmentCollectionURL = renderResponse.createRenderURL();
+					<%
+					for (Map.Entry<String, List<FragmentCollection>> entry : inheritedFragmentCollections.entrySet()) {
+					%>
 
-												fragmentCollectionURL.setParameter("mvcRenderCommandName", "/fragment/view");
-												fragmentCollectionURL.setParameter("fragmentCollectionId", String.valueOf(fragmentCollection.getFragmentCollectionId()));
-												%>
+						<span class="text-truncate"><%= entry.getKey() %></span>
 
-												<a class="nav-link text-truncate <%= (fragmentCollection.getFragmentCollectionId() == fragmentDisplayContext.getFragmentCollectionId()) ? "active" : StringPool.BLANK %>" href="<%= fragmentCollectionURL.toString() %>">
-													<%= HtmlUtil.escape(fragmentCollection.getName()) %>
+						<clay:vertical-nav
+							verticalNavItems="<%= fragmentDisplayContext.getVerticalNavItemList(entry.getValue()) %>"
+						/>
 
-													<liferay-ui:icon
-														icon="lock"
-														iconCssClass="text-muted"
-														markupView="lexicon"
-													/>
-												</a>
-											</li>
+					<%
+					}
+					%>
 
-									<%
-										}
-									}
-									%>
+					<c:if test="<%= ListUtil.isNotEmpty(fragmentCollections) %>">
+						<span class="text-truncate"><%= HtmlUtil.escape(fragmentDisplayContext.getGroupName(scopeGroupId)) %></span>
 
-								</ul>
+						<clay:vertical-nav
+							verticalNavItems="<%= fragmentDisplayContext.getVerticalNavItemList(fragmentCollections) %>"
+						/>
+					</c:if>
+				</c:when>
+				<c:otherwise>
+					<p class="text-uppercase">
+						<strong><liferay-ui:message key="fragment-sets" /></strong>
+					</p>
 
-								<ul class="mb-2 nav nav-stacked">
-									<c:if test="<%= ListUtil.isNotEmpty(fragmentCollections) %>">
-										<span class="text-truncate"><%= fragmentDisplayContext.getGroupName(scopeGroupId) %></span>
+					<liferay-frontend:empty-result-message
+						actionDropdownItems="<%= FragmentPermission.contains(permissionChecker, scopeGroupId, FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES) ? fragmentDisplayContext.getActionDropdownItems() : null %>"
+						additionalProps="<%= fragmentDisplayContext.getFragmentCollectionsViewContext() %>"
+						animationType="<%= EmptyResultMessageKeys.AnimationType.NONE %>"
+						buttonPropsTransformer="{FragmentCollectionViewButtonPropsTransformer} from fragment-web"
+						description='<%= LanguageUtil.get(request, "fragment-sets-are-needed-to-create-fragments") %>'
+						elementType='<%= LanguageUtil.get(request, "fragment-sets") %>'
+						propsTransformer="{FragmentCollectionViewDefaultPropsTransformer} from fragment-web"
+						propsTransformerServletContext="<%= application %>"
+					/>
+				</c:otherwise>
+			</c:choose>
+		</clay:col>
 
-										<%
-										for (FragmentCollection fragmentCollection : fragmentCollections) {
-										%>
+		<clay:col
+			lg="9"
+		>
 
-											<li class="nav-item">
+			<%
+			FragmentCollectionContributor fragmentCollectionContributor = fragmentDisplayContext.getFragmentCollectionContributor();
+			%>
 
-												<%
-												PortletURL fragmentCollectionURL = renderResponse.createRenderURL();
-
-												fragmentCollectionURL.setParameter("mvcRenderCommandName", "/fragment/view");
-												fragmentCollectionURL.setParameter("fragmentCollectionId", String.valueOf(fragmentCollection.getFragmentCollectionId()));
-												%>
-
-												<a class="nav-link text-truncate <%= (fragmentCollection.getFragmentCollectionId() == fragmentDisplayContext.getFragmentCollectionId()) ? "active" : StringPool.BLANK %>" href="<%= fragmentCollectionURL.toString() %>">
-													<%= HtmlUtil.escape(fragmentCollection.getName()) %>
-
-													<c:if test="<%= fragmentCollection.getGroupId() != scopeGroupId %>">
-														<liferay-ui:icon
-															icon="lock"
-															iconCssClass="text-muted"
-															markupView="lexicon"
-														/>
-													</c:if>
-												</a>
-											</li>
-
-										<%
-										}
-										%>
-
-									</c:if>
-								</ul>
-							</c:when>
-							<c:otherwise>
-								<p class="text-uppercase">
-									<strong><liferay-ui:message key="collections" /></strong>
-								</p>
-
-								<liferay-frontend:empty-result-message
-									actionDropdownItems="<%= FragmentPermission.contains(permissionChecker, scopeGroupId, FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES) ? fragmentDisplayContext.getActionDropdownItems() : null %>"
-									animationType="<%= EmptyResultMessageKeys.AnimationType.NONE %>"
-									componentId='<%= renderResponse.getNamespace() + "emptyResultMessageComponent" %>'
-									description='<%= LanguageUtil.get(request, "collections-are-needed-to-create-fragments") %>'
-									elementType='<%= LanguageUtil.get(request, "collections") %>'
-								/>
-							</c:otherwise>
-						</c:choose>
-					</li>
-				</ul>
-			</nav>
-		</div>
-
-		<div class="col-lg-9">
-			<c:if test="<%= (fragmentDisplayContext.getFragmentCollection() != null) || (fragmentDisplayContext.getFragmentCollectionContributor() != null) %>">
-				<div class="sheet">
+			<c:if test="<%= (fragmentDisplayContext.getFragmentCollection() != null) || (fragmentCollectionContributor != null) %>">
+				<clay:sheet
+					size="full"
+				>
 					<h2 class="sheet-title">
-						<div class="autofit-row autofit-row-center">
-							<div class="autofit-col">
+						<clay:content-row
+							verticalAlign="center"
+						>
+							<clay:content-col>
 								<%= fragmentDisplayContext.getFragmentCollectionName() %>
-							</div>
+							</clay:content-col>
 
-							<c:if test="<%= fragmentDisplayContext.showFragmentCollectionActions() %>">
-								<div class="autofit-col autofit-col-end inline-item-after">
-									<liferay-util:include page="/fragment_collection_action.jsp" servletContext="<%= application %>" />
+							<c:if test="<%= (fragmentCollectionContributor != null) && fragmentCollectionContributor.isDeprecated() %>">
+								<div class="c-ml-3">
+									<liferay-frontend:feature-indicator
+										interactive="<%= true %>"
+										type="deprecated"
+									/>
 								</div>
 							</c:if>
-						</div>
+
+							<c:if test="<%= fragmentDisplayContext.isShowFragmentCollectionActions() %>">
+								<clay:content-col
+									cssClass="inline-item-after"
+								>
+
+									<%
+									FragmentCollectionActionDropdownItemsProvider fragmentCollectionActionDropdownItemsProvider = new FragmentCollectionActionDropdownItemsProvider(fragmentDisplayContext, request, renderResponse);
+									%>
+
+									<clay:dropdown-actions
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+										dropdownItems="<%= fragmentCollectionActionDropdownItemsProvider.getActionDropdownItems() %>"
+										propsTransformer="{FragmentCollectionDropdownPropsTransformer} from fragment-web"
+									/>
+								</clay:content-col>
+							</c:if>
+						</clay:content-row>
 					</h2>
 
-					<div class="sheet-section">
-						<clay:navigation-bar
-							navigationItems="<%= fragmentDisplayContext.getNavigationItems() %>"
-						/>
+					<clay:sheet-section>
+						<c:if test="<%= !ListUtil.isEmpty(fragmentDisplayContext.getNavigationItems()) %>">
+							<clay:navigation-bar
+								navigationItems="<%= fragmentDisplayContext.getNavigationItems() %>"
+							/>
+						</c:if>
 
 						<c:choose>
 							<c:when test="<%= fragmentDisplayContext.isSelectedFragmentCollectionContributor() %>">
@@ -234,17 +244,40 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 								</c:choose>
 							</c:otherwise>
 						</c:choose>
-					</div>
-				</div>
+					</clay:sheet-section>
+				</clay:sheet>
 			</c:if>
-		</div>
-	</div>
-</div>
+		</clay:col>
+	</clay:row>
+</clay:container-fluid>
 
-<aui:form cssClass="hide" name="fragmentCollectionsFm">
+<aui:form cssClass="hide" name="fm">
 </aui:form>
 
-<liferay-frontend:component
-	context="<%= fragmentDisplayContext.getFragmentCollectionsViewContext() %>"
-	module="js/FragmentCollectionsView.es"
-/>
+<%
+List<String> draftFragmentsImporterResultEntries = importDisplayContext.getFragmentsImporterResultEntries(FragmentsImporterResultEntry.Status.IMPORTED_DRAFT);
+%>
+
+<aui:script>
+	<c:if test="<%= ListUtil.isNotEmpty(draftFragmentsImporterResultEntries) %>">
+		Liferay.Util.openToast({
+			message:
+				'<liferay-ui:message arguments='<%= "<strong>" + StringUtil.merge(draftFragmentsImporterResultEntries, StringPool.COMMA_AND_SPACE) + "</strong>" %>' key="the-following-fragments-have-validation-issues.-they-have-been-left-in-draft-status-x" />',
+			title: '<liferay-ui:message key="warning" />:',
+			type: 'warning',
+		});
+	</c:if>
+
+	<%
+	List<String> invalidFragmentsImporterResultEntries = importDisplayContext.getFragmentsImporterResultEntries(FragmentsImporterResultEntry.Status.INVALID);
+	%>
+
+	<c:if test="<%= ListUtil.isNotEmpty(invalidFragmentsImporterResultEntries) %>">
+		Liferay.Util.openToast({
+			message:
+				'<liferay-ui:message arguments='<%= "<strong>" + StringUtil.merge(invalidFragmentsImporterResultEntries, StringPool.COMMA_AND_SPACE) + "</strong>" %>' key="the-following-fragments-could-not-be-imported-x" />',
+			title: '<liferay-ui:message key="warning" />:',
+			type: 'warning',
+		});
+	</c:if>
+</aui:script>

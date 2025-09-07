@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {fetch} from 'frontend-js-web';
@@ -22,14 +16,14 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		editSegmentsExperimentStatusURL,
 		editSegmentsExperimentURL,
 		editSegmentsVariantURL,
-		runSegmentsExperimentURL
+		runSegmentsExperimentURL,
 	} = endpoints;
 
 	function createExperiment(body) {
 		return _fetchWithError(createSegmentsExperimentURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -37,7 +31,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(createSegmentsVariantURL, {
 			body: _getFormDataRequest(body, contentPageEditorNamespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -45,7 +39,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(deleteSegmentsExperimentURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -53,7 +47,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(deleteSegmentsVariantURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -61,7 +55,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(editSegmentsExperimentURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -69,7 +63,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(editSegmentsExperimentStatusURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -77,7 +71,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(editSegmentsVariantURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -87,17 +81,19 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 			{
 				body: _getFormDataRequest(body, namespace),
 				credentials: 'include',
-				method: 'POST'
+				method: 'POST',
 			}
 		);
 	}
 
 	function publishExperience(body) {
+
 		// TODO somehow type this
+
 		return _fetchWithError(editSegmentsExperimentStatusURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -105,7 +101,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		return _fetchWithError(runSegmentsExperimentURL, {
 			body: _getFormDataRequest(body, namespace),
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -119,7 +115,7 @@ function APIService({contentPageEditorNamespace, endpoints, namespace}) {
 		editVariant,
 		getEstimatedTime,
 		publishExperience,
-		runExperiment
+		runExperiment,
 	};
 }
 
@@ -135,9 +131,9 @@ APIService.propTypes = {
 		editSegmentsExperimentStatusURL: PropTypes.string.isRequired,
 		editSegmentsExperimentURL: PropTypes.string.isRequired,
 		editSegmentsVariantURL: PropTypes.string.isRequired,
-		runSegmentsExperimentURL: PropTypes.string.isRequired
+		runSegmentsExperimentURL: PropTypes.string.isRequired,
 	}),
-	namespace: PropTypes.string.isRequired
+	namespace: PropTypes.string.isRequired,
 };
 
 export default APIService;
@@ -164,9 +160,12 @@ export function _getFormDataRequest(body, prefix, formData = new FormData()) {
  */
 function _fetchWithError(url, options = {}) {
 	return fetch(url, options)
-		.then(response => response.json())
-		.then(objectResponse => {
-			if (objectResponse.error) throw objectResponse.error;
+		.then((response) => response.json())
+		.then((objectResponse) => {
+			if (objectResponse.error) {
+				throw objectResponse.error;
+			}
+
 			return objectResponse;
 		});
 }

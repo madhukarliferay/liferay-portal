@@ -1,40 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.admin.web.internal.portlet.action;
 
-import com.liferay.document.library.kernel.service.DLAppService;
-import com.liferay.document.library.util.DLURLHelper;
-import com.liferay.dynamic.data.mapping.storage.StorageEngine;
+import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.admin.web.internal.display.context.LayoutsAdminDisplayContext;
-import com.liferay.layout.seo.canonical.url.LayoutSEOCanonicalURLProvider;
-import com.liferay.layout.seo.kernel.LayoutSEOLinkManager;
-import com.liferay.layout.seo.service.LayoutSEOSiteLocalService;
-import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.layout.admin.web.internal.display.context.MillerColumnsDisplayContext;
+import com.liferay.layout.admin.web.internal.helper.LayoutActionsHelper;
+import com.liferay.layout.set.prototype.helper.LayoutSetPrototypeHelper;
+import com.liferay.layout.util.template.LayoutConverterRegistry;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.translation.security.permission.TranslationPermission;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,10 +34,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
-		"mvc.command.name=/layout/get_layout_children"
+		"jakarta.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
+		"mvc.command.name=/layout_admin/get_layout_children"
 	},
 	service = MVCActionCommand.class
 )
@@ -57,46 +47,57 @@ public class GetLayoutChildrenMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		long plid = ParamUtil.getLong(actionRequest, "plid");
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
-		Layout layout = _layoutLocalService.fetchLayout(plid);
+		LayoutActionsHelper layoutActionsHelper = new LayoutActionsHelper(
+			_layoutConverterRegistry, themeDisplay, _translationPermission);
 
 		LayoutsAdminDisplayContext layoutsAdminDisplayContext =
 			new LayoutsAdminDisplayContext(
-				_dlurlHelper, _portal.getLiferayPortletRequest(actionRequest),
+				_itemSelector, layoutActionsHelper, _layoutLocalService,
+				_layoutSetPrototypeHelper,
+				_portal.getLiferayPortletRequest(actionRequest),
 				_portal.getLiferayPortletResponse(actionResponse));
 
-		JSONArray jsonArray = layoutsAdminDisplayContext.getLayoutsJSONArray(
-			layout.getLayoutId(), layout.isPrivateLayout());
+		MillerColumnsDisplayContext millerColumnsDisplayContext =
+			new MillerColumnsDisplayContext(
+				_layoutSetPrototypeHelper, layoutsAdminDisplayContext,
+				_portal.getLiferayPortletRequest(actionRequest),
+				_portal.getLiferayPortletResponse(actionResponse));
 
-		JSONObject jsonObject = JSONUtil.put("children", jsonArray);
+		hideDefaultSuccessMessage(actionRequest);
 
 		JSONPortletResponseUtil.writeJSON(
-			actionRequest, actionResponse, jsonObject);
+			actionRequest, actionResponse,
+			JSONUtil.put(
+				"children",
+				() -> {
+					long plid = ParamUtil.getLong(actionRequest, "plid");
+
+					Layout layout = _layoutLocalService.fetchLayout(plid);
+
+					return millerColumnsDisplayContext.getLayoutsJSONArray(
+						layout.getLayoutId(), layout.isPrivateLayout());
+				}));
 	}
 
 	@Reference
-	private DLAppService _dlAppService;
+	private ItemSelector _itemSelector;
 
 	@Reference
-	private DLURLHelper _dlurlHelper;
+	private LayoutConverterRegistry _layoutConverterRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
-	private LayoutSEOCanonicalURLProvider _layoutSEOCanonicalURLProvider;
-
-	@Reference
-	private LayoutSEOLinkManager _layoutSEOLinkManager;
-
-	@Reference
-	private LayoutSEOSiteLocalService _layoutSEOSiteLocalService;
+	private LayoutSetPrototypeHelper _layoutSetPrototypeHelper;
 
 	@Reference
 	private Portal _portal;
 
 	@Reference
-	private StorageEngine _storageEngine;
+	private TranslationPermission _translationPermission;
 
 }

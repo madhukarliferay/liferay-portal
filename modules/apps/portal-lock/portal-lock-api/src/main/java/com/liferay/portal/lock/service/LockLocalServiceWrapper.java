@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.lock.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link LockLocalService}.
@@ -26,12 +18,20 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class LockLocalServiceWrapper
 	implements LockLocalService, ServiceWrapper<LockLocalService> {
 
+	public LockLocalServiceWrapper() {
+		this(null);
+	}
+
 	public LockLocalServiceWrapper(LockLocalService lockLocalService) {
 		_lockLocalService = lockLocalService;
 	}
 
 	/**
 	 * Adds the lock to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LockLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param lock the lock
 	 * @return the lock that was added
@@ -60,7 +60,22 @@ public class LockLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _lockLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the lock from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LockLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param lock the lock
 	 * @return the lock that was removed
@@ -74,6 +89,10 @@ public class LockLocalServiceWrapper
 
 	/**
 	 * Deletes the lock with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LockLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param lockId the primary key of the lock
 	 * @return the lock that was removed
@@ -95,6 +114,18 @@ public class LockLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _lockLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _lockLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _lockLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -297,6 +328,20 @@ public class LockLocalServiceWrapper
 		return _lockLocalService.getLocks(start, end);
 	}
 
+	@Override
+	public java.util.List<com.liferay.portal.lock.model.Lock> getLocks(
+		long companyId, long userId, String className) {
+
+		return _lockLocalService.getLocks(companyId, userId, className);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.lock.model.Lock> getLocks(
+		long companyId, String className) {
+
+		return _lockLocalService.getLocks(companyId, className);
+	}
+
 	/**
 	 * Returns the number of locks.
 	 *
@@ -317,6 +362,9 @@ public class LockLocalServiceWrapper
 		return _lockLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -427,6 +475,10 @@ public class LockLocalServiceWrapper
 	/**
 	 * Updates the lock in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LockLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param lock the lock
 	 * @return the lock that was updated
 	 */
@@ -435,6 +487,11 @@ public class LockLocalServiceWrapper
 		com.liferay.portal.lock.model.Lock lock) {
 
 		return _lockLocalService.updateLock(lock);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _lockLocalService.getBasePersistence();
 	}
 
 	@Override

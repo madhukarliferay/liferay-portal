@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.source.formatter.checkstyle.util;
@@ -52,6 +43,10 @@ public class CheckstyleUtil {
 
 	public static final int BATCH_SIZE = 1000;
 
+	public static final String FILTER_CHECK_NAMES_KEY = "filterCheckNames";
+
+	public static final String MAX_DIR_LEVEL_KEY = "maxDirLevel";
+
 	public static final String MAX_LINE_LENGTH_KEY = "maxLineLength";
 
 	public static final String SHOW_DEBUG_INFORMATION_KEY =
@@ -70,11 +65,11 @@ public class CheckstyleUtil {
 			new PropertiesExpander(System.getProperties()),
 			ConfigurationLoader.IgnoredModulesOptions.EXECUTE);
 
-		DefaultConfiguration treeWalkerConfiguration = _getChildConfiguration(
-			configuration, "TreeWalker");
+		DefaultConfiguration treeWalkerDefaultConfiguration =
+			_getChildDefaultConfiguration(configuration, "TreeWalker");
 
 		Configuration[] checkConfigurations =
-			treeWalkerConfiguration.getChildren();
+			treeWalkerDefaultConfiguration.getChildren();
 
 		if (checkConfigurations == null) {
 			return configuration;
@@ -85,31 +80,33 @@ public class CheckstyleUtil {
 
 		List<String> checkNames = new ArrayList<>();
 
-		String filterCheckName = sourceFormatterArgs.getCheckName();
+		List<String> filterCheckCategoryNames =
+			sourceFormatterArgs.getCheckCategoryNames();
+		List<String> filterCheckNames = sourceFormatterArgs.getCheckNames();
 
 		for (Configuration checkConfiguration : checkConfigurations) {
 			if (!(checkConfiguration instanceof DefaultConfiguration)) {
 				continue;
 			}
 
+			String checkCategory = checkConfiguration.getAttribute("category");
+
 			String checkName = checkConfiguration.getName();
 
 			String checkSimpleName = SourceFormatterUtil.getSimpleName(
 				checkName);
 
-			if ((filterCheckName != null) &&
-				!filterCheckName.equals(checkSimpleName)) {
+			if ((checkCategory.startsWith("Upgrade") &&
+				 !filterCheckCategoryNames.contains(checkCategory)) ||
+				((!filterCheckCategoryNames.isEmpty() ||
+				  !filterCheckNames.isEmpty()) &&
+				 !filterCheckCategoryNames.contains(checkCategory) &&
+				 !filterCheckNames.contains(checkSimpleName))) {
 
-				treeWalkerConfiguration.removeChild(checkConfiguration);
+				treeWalkerDefaultConfiguration.removeChild(checkConfiguration);
 
 				continue;
 			}
-
-			if (!checkName.startsWith("com.liferay.")) {
-				continue;
-			}
-
-			checkNames.add(checkSimpleName);
 
 			DefaultConfiguration defaultConfiguration =
 				new DefaultConfiguration(checkName);
@@ -121,21 +118,39 @@ public class CheckstyleUtil {
 					entry.getKey(), entry.getValue());
 			}
 
-			if (excludesJSONObject.length() != 0) {
+			if (checkName.startsWith("com.liferay.")) {
+				checkNames.add(checkSimpleName);
+
+				if (excludesJSONObject.length() != 0) {
+					defaultConfiguration.addAttribute(
+						_EXCLUDES_KEY, excludesJSONObject.toString());
+				}
+
 				defaultConfiguration.addAttribute(
-					_EXCLUDES_KEY, excludesJSONObject.toString());
+					_ATTRIBUTES_KEY,
+					String.valueOf(
+						_getAttributesJSONObject(
+							propertiesMap, checkSimpleName, checkConfiguration,
+							sourceFormatterArgs)));
+			}
+			else {
+				for (String attributeName :
+						checkConfiguration.getAttributeNames()) {
+
+					if (!attributeName.equals("category") &&
+						!attributeName.equals("description") &&
+						!attributeName.equals("documentationLocation")) {
+
+						defaultConfiguration.addAttribute(
+							attributeName,
+							checkConfiguration.getAttribute(attributeName));
+					}
+				}
 			}
 
-			JSONObject attributesJSONObject = _getAttributesJSONObject(
-				propertiesMap, checkSimpleName, checkConfiguration,
-				sourceFormatterArgs);
+			treeWalkerDefaultConfiguration.removeChild(checkConfiguration);
 
-			defaultConfiguration.addAttribute(
-				_ATTRIBUTES_KEY, attributesJSONObject.toString());
-
-			treeWalkerConfiguration.removeChild(checkConfiguration);
-
-			treeWalkerConfiguration.addChild(defaultConfiguration);
+			treeWalkerDefaultConfiguration.addChild(defaultConfiguration);
 		}
 
 		if (sourceFormatterArgs.isShowDebugInformation()) {
@@ -191,6 +206,14 @@ public class CheckstyleUtil {
 			new String[][] {
 				{BASE_DIR_NAME_KEY, sourceFormatterArgs.getBaseDirName()},
 				{
+					FILTER_CHECK_NAMES_KEY,
+					StringUtil.merge(sourceFormatterArgs.getCheckNames())
+				},
+				{
+					MAX_DIR_LEVEL_KEY,
+					String.valueOf(sourceFormatterArgs.getMaxDirLevel())
+				},
+				{
 					MAX_LINE_LENGTH_KEY,
 					String.valueOf(sourceFormatterArgs.getMaxLineLength())
 				},
@@ -206,7 +229,10 @@ public class CheckstyleUtil {
 
 		attributesJSONObject = SourceFormatterCheckUtil.addPropertiesAttributes(
 			attributesJSONObject, propertiesMap,
-			SourceFormatterUtil.GIT_LIFERAY_PORTAL_BRANCH);
+			SourceFormatterUtil.GIT_LIFERAY_PORTAL_BRANCH,
+			SourceFormatterUtil.UPGRADE_FROM_VERSION,
+			SourceFormatterUtil.UPGRADE_TO_LIFERAY_VERSION,
+			SourceFormatterUtil.UPGRADE_TO_RELEASE_VERSION);
 
 		attributesJSONObject = SourceFormatterCheckUtil.addPropertiesAttributes(
 			attributesJSONObject, propertiesMap, CheckType.CHECKSTYLE,
@@ -215,7 +241,7 @@ public class CheckstyleUtil {
 		return attributesJSONObject;
 	}
 
-	private static DefaultConfiguration _getChildConfiguration(
+	private static DefaultConfiguration _getChildDefaultConfiguration(
 		Configuration configuration, String name) {
 
 		if (!(configuration instanceof DefaultConfiguration)) {

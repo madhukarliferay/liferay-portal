@@ -1,25 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+/* eslint-disable @liferay/empty-line-between-elements */
+
+import ClayTable from '@clayui/table';
 import React from 'react';
 
 import {formatDuration} from '../../../shared/util/duration.es';
-import {getFormattedPercentage} from '../../../shared/util/util.es';
+import {
+	getFormattedPercentage,
+	isValidNumber,
+} from '../../../shared/util/util.es';
 
-const Item = ({
+function Item({
 	breachedInstanceCount,
 	breachedInstancePercentage,
 	durationAvg,
-	name
-}) => {
+	node: {label},
+}) {
 	const formattedDuration = formatDuration(durationAvg);
 	const formattedPercentage = getFormattedPercentage(
 		breachedInstancePercentage,
@@ -27,48 +27,59 @@ const Item = ({
 	);
 
 	return (
-		<tr>
-			<td data-testid="stepName">{name}</td>
+		<ClayTable.Row>
+			<ClayTable.Cell expanded>{label}</ClayTable.Cell>
 
-			<td className="text-right" data-testid="slaBreached">
-				{breachedInstanceCount} ({formattedPercentage})
-			</td>
+			<ClayTable.Cell className="text-right">
+				{isValidNumber(breachedInstanceCount)
+					? breachedInstanceCount
+					: 0}{' '}
+				({formattedPercentage})
+			</ClayTable.Cell>
 
-			<td className="text-right" data-testid="avgCompletionTime">
+			<ClayTable.Cell className="text-right">
 				{formattedDuration}
-			</td>
-		</tr>
+			</ClayTable.Cell>
+		</ClayTable.Row>
 	);
-};
+}
 
-const Table = ({items = []}) => (
-	<div className="mb-3 table-responsive table-scrollable">
-		<table className="table table-autofit table-heading-nowrap table-hover table-list">
-			<thead>
-				<tr>
-					<th style={{width: '60%'}}>
+function Table({items = []}) {
+	return (
+		<ClayTable className="mb-3 table-scrollable" headingNoWrap>
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell headingCell style={{width: '60%'}}>
 						{Liferay.Language.get('step-name')}
-					</th>
+					</ClayTable.Cell>
 
-					<th className="text-right" style={{width: '20%'}}>
+					<ClayTable.Cell
+						className="text-right"
+						headingCell
+						style={{width: '20%'}}
+					>
 						{Liferay.Language.get('sla-breached-percent')}
-					</th>
+					</ClayTable.Cell>
 
-					<th className="text-right" style={{width: '20%'}}>
+					<ClayTable.Cell
+						className="text-right"
+						headingCell
+						style={{width: '20%'}}
+					>
 						{Liferay.Language.get('average-completion-time')}
-					</th>
-				</tr>
-			</thead>
+					</ClayTable.Cell>
+				</ClayTable.Row>
+			</ClayTable.Head>
 
-			<tbody>
+			<ClayTable.Body>
 				{items.map((item, index) => (
 					<Table.Item {...item} key={index} />
 				))}
-			</tbody>
-		</table>
-	</div>
-);
+			</ClayTable.Body>
+		</ClayTable>
+	);
+}
 
 Table.Item = Item;
 
-export {Table};
+export default Table;

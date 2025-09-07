@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.aggregation.metrics;
@@ -19,7 +10,9 @@ import com.liferay.portal.search.aggregation.AggregationTranslator;
 import com.liferay.portal.search.aggregation.metrics.TopHitsAggregation;
 import com.liferay.portal.search.aggregation.pipeline.PipelineAggregationTranslator;
 import com.liferay.portal.search.elasticsearch7.internal.highlight.HighlightTranslator;
+import com.liferay.portal.search.elasticsearch7.internal.query.ElasticsearchQueryTranslator;
 import com.liferay.portal.search.elasticsearch7.internal.script.ScriptTranslator;
+import com.liferay.portal.search.elasticsearch7.internal.sort.ElasticsearchSortFieldTranslator;
 import com.liferay.portal.search.query.QueryTranslator;
 import com.liferay.portal.search.script.ScriptField;
 import com.liferay.portal.search.sort.Sort;
@@ -39,7 +32,6 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
@@ -136,8 +128,6 @@ public class TopHitsAggregationTranslatorImpl
 			topHitsAggregationBuilder.sorts(sortBuilders);
 		}
 
-		topHitsAggregationBuilder.storedFields();
-
 		if (topHitsAggregation.getTrackScores() != null) {
 			topHitsAggregationBuilder.trackScores(
 				topHitsAggregation.getTrackScores());
@@ -150,24 +140,12 @@ public class TopHitsAggregationTranslatorImpl
 		return topHitsAggregationBuilder;
 	}
 
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	protected void setQueryTranslator(
-		QueryTranslator<QueryBuilder> queryTranslator) {
-
-		_queryTranslator = queryTranslator;
-	}
-
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	protected void setSortFieldTranslator(
-		SortFieldTranslator<SortBuilder> sortFieldTranslator) {
-
-		_sortFieldTranslator = sortFieldTranslator;
-	}
-
 	private final HighlightTranslator _highlightTranslator =
 		new HighlightTranslator();
-	private QueryTranslator<QueryBuilder> _queryTranslator;
+	private final QueryTranslator<QueryBuilder> _queryTranslator =
+		new ElasticsearchQueryTranslator();
 	private final ScriptTranslator _scriptTranslator = new ScriptTranslator();
-	private SortFieldTranslator<SortBuilder> _sortFieldTranslator;
+	private final SortFieldTranslator<SortBuilder<?>> _sortFieldTranslator =
+		new ElasticsearchSortFieldTranslator();
 
 }

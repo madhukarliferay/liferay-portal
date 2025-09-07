@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.internal.resolution;
@@ -20,6 +11,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +34,10 @@ public class BrowserModulesResolution {
 		}
 	}
 
+	public void addError(String error) {
+		_errors.add(error);
+	}
+
 	public void addProcessedModuleName(String moduleName) {
 		_processedModuleNames.add(moduleName);
 	}
@@ -62,6 +58,10 @@ public class BrowserModulesResolution {
 		sb.append(moduleName);
 
 		_explanation.add(0, sb.toString());
+	}
+
+	public void addWarning(String warning) {
+		_warnings.add(warning);
 	}
 
 	public void dedentExplanation() {
@@ -113,24 +113,58 @@ public class BrowserModulesResolution {
 	}
 
 	public String toJSON() {
-		Map<String, Object> map = HashMapBuilder.<String, Object>put(
-			"configMap", _mappedModuleNamesMap
-		).build();
+		return _jsonFactory.looseSerializeDeep(
+			HashMapBuilder.<String, Object>put(
+				"configMap", _mappedModuleNamesMap
+			).put(
+				"errors",
+				() -> {
+					if (_errors.isEmpty()) {
+						return null;
+					}
 
-		if (_explanation != null) {
-			map.put("explanation", _resolvedModuleNames);
-		}
+					List<String> sortedErrors = new ArrayList<>(_errors);
 
-		map.put("moduleFlags", _flagsJSONObjects);
-		map.put("moduleMap", _dependenciesMap);
-		map.put("pathMap", _pathsMap);
-		map.put("resolvedModules", _resolvedModuleNames);
+					Collections.sort(sortedErrors);
 
-		return _jsonFactory.looseSerializeDeep(map);
+					return sortedErrors;
+				}
+			).put(
+				"explanation",
+				() -> {
+					if (_explanation != null) {
+						return _resolvedModuleNames;
+					}
+
+					return null;
+				}
+			).put(
+				"moduleFlags", _flagsJSONObjects
+			).put(
+				"moduleMap", _dependenciesMap
+			).put(
+				"pathMap", _pathsMap
+			).put(
+				"resolvedModules", _resolvedModuleNames
+			).put(
+				"warnings",
+				() -> {
+					if (_warnings.isEmpty()) {
+						return null;
+					}
+
+					List<String> sortedWarnings = new ArrayList<>(_warnings);
+
+					Collections.sort(sortedWarnings);
+
+					return sortedWarnings;
+				}
+			).build());
 	}
 
 	private final Map<String, Map<String, String>> _dependenciesMap =
 		new HashMap<>();
+	private final Set<String> _errors = new HashSet<>();
 	private int _explainIndentation;
 	private List<String> _explanation;
 	private final Map<String, JSONObject> _flagsJSONObjects = new HashMap<>();
@@ -139,5 +173,6 @@ public class BrowserModulesResolution {
 	private final Map<String, String> _pathsMap = new HashMap<>();
 	private final Set<String> _processedModuleNames = new HashSet<>();
 	private final List<String> _resolvedModuleNames = new ArrayList<>();
+	private final Set<String> _warnings = new HashSet<>();
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -126,6 +117,8 @@ public class WorkflowInstanceLinkPersistenceTest {
 
 		newWorkflowInstanceLink.setMvccVersion(RandomTestUtil.nextLong());
 
+		newWorkflowInstanceLink.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newWorkflowInstanceLink.setGroupId(RandomTestUtil.nextLong());
 
 		newWorkflowInstanceLink.setCompanyId(RandomTestUtil.nextLong());
@@ -155,6 +148,9 @@ public class WorkflowInstanceLinkPersistenceTest {
 		Assert.assertEquals(
 			existingWorkflowInstanceLink.getMvccVersion(),
 			newWorkflowInstanceLink.getMvccVersion());
+		Assert.assertEquals(
+			existingWorkflowInstanceLink.getCtCollectionId(),
+			newWorkflowInstanceLink.getCtCollectionId());
 		Assert.assertEquals(
 			existingWorkflowInstanceLink.getWorkflowInstanceLinkId(),
 			newWorkflowInstanceLink.getWorkflowInstanceLinkId());
@@ -187,6 +183,14 @@ public class WorkflowInstanceLinkPersistenceTest {
 		Assert.assertEquals(
 			existingWorkflowInstanceLink.getWorkflowInstanceId(),
 			newWorkflowInstanceLink.getWorkflowInstanceId());
+	}
+
+	@Test
+	public void testCountByC_C() throws Exception {
+		_persistence.countByC_C(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByC_C(0L, 0L);
 	}
 
 	@Test
@@ -235,7 +239,7 @@ public class WorkflowInstanceLinkPersistenceTest {
 
 	protected OrderByComparator<WorkflowInstanceLink> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"WorkflowInstanceLink", "mvccVersion", true,
+			"WorkflowInstanceLink", "mvccVersion", true, "ctCollectionId", true,
 			"workflowInstanceLinkId", true, "groupId", true, "companyId", true,
 			"userId", true, "userName", true, "createDate", true,
 			"modifiedDate", true, "classNameId", true, "classPK", true,
@@ -482,6 +486,8 @@ public class WorkflowInstanceLinkPersistenceTest {
 		WorkflowInstanceLink workflowInstanceLink = _persistence.create(pk);
 
 		workflowInstanceLink.setMvccVersion(RandomTestUtil.nextLong());
+
+		workflowInstanceLink.setCtCollectionId(RandomTestUtil.nextLong());
 
 		workflowInstanceLink.setGroupId(RandomTestUtil.nextLong());
 

@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.ResourceAction;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for ResourceAction. This utility wraps
@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class ResourceActionLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.ResourceActionLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
@@ -39,18 +39,21 @@ public class ResourceActionLocalServiceUtil {
 	/**
 	 * Adds the resource action to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ResourceActionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param resourceAction the resource action
 	 * @return the resource action that was added
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-		addResourceAction(
-			com.liferay.portal.kernel.model.ResourceAction resourceAction) {
+	public static ResourceAction addResourceAction(
+		ResourceAction resourceAction) {
 
 		return getService().addResourceAction(resourceAction);
 	}
 
-	public static com.liferay.portal.kernel.model.ResourceAction
-		addResourceAction(String name, String actionId, long bitwiseValue) {
+	public static ResourceAction addResourceAction(
+		String name, String actionId, long bitwiseValue) {
 
 		return getService().addResourceAction(name, actionId, bitwiseValue);
 	}
@@ -60,16 +63,25 @@ public class ResourceActionLocalServiceUtil {
 	}
 
 	public static void checkResourceActions(
-		String name, java.util.List<String> actionIds) {
+		String name, List<String> actionIds) {
 
 		getService().checkResourceActions(name, actionIds);
 	}
 
 	public static void checkResourceActions(
-		String name, java.util.List<String> actionIds,
-		boolean addDefaultActions) {
+		String name, List<String> actionIds, boolean addDefaultActions) {
 
 		getService().checkResourceActions(name, actionIds, addDefaultActions);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -78,19 +90,16 @@ public class ResourceActionLocalServiceUtil {
 	 * @param resourceActionId the primary key for the new resource action
 	 * @return the new resource action
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-		createResourceAction(long resourceActionId) {
-
+	public static ResourceAction createResourceAction(long resourceActionId) {
 		return getService().createResourceAction(resourceActionId);
 	}
 
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -98,13 +107,16 @@ public class ResourceActionLocalServiceUtil {
 	/**
 	 * Deletes the resource action with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ResourceActionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param resourceActionId the primary key of the resource action
 	 * @return the resource action that was removed
 	 * @throws PortalException if a resource action with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-			deleteResourceAction(long resourceActionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static ResourceAction deleteResourceAction(long resourceActionId)
+		throws PortalException {
 
 		return getService().deleteResourceAction(resourceActionId);
 	}
@@ -112,19 +124,28 @@ public class ResourceActionLocalServiceUtil {
 	/**
 	 * Deletes the resource action from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ResourceActionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param resourceAction the resource action
 	 * @return the resource action that was removed
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-		deleteResourceAction(
-			com.liferay.portal.kernel.model.ResourceAction resourceAction) {
+	public static ResourceAction deleteResourceAction(
+		ResourceAction resourceAction) {
 
 		return getService().deleteResourceAction(resourceAction);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -134,9 +155,7 @@ public class ResourceActionLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -152,9 +171,8 @@ public class ResourceActionLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -172,10 +190,9 @@ public class ResourceActionLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -187,9 +204,7 @@ public class ResourceActionLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -201,20 +216,18 @@ public class ResourceActionLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.portal.kernel.model.ResourceAction
-		fetchResourceAction(long resourceActionId) {
-
+	public static ResourceAction fetchResourceAction(long resourceActionId) {
 		return getService().fetchResourceAction(resourceActionId);
 	}
 
-	public static com.liferay.portal.kernel.model.ResourceAction
-		fetchResourceAction(String name, String actionId) {
+	public static ResourceAction fetchResourceAction(
+		String name, String actionId) {
 
 		return getService().fetchResourceAction(name, actionId);
 	}
@@ -241,11 +254,17 @@ public class ResourceActionLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
+	}
+
+	public static String getRegistryName() {
+		return getService().getRegistryName();
 	}
 
 	/**
@@ -255,16 +274,14 @@ public class ResourceActionLocalServiceUtil {
 	 * @return the resource action
 	 * @throws PortalException if a resource action with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-			getResourceAction(long resourceActionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static ResourceAction getResourceAction(long resourceActionId)
+		throws PortalException {
 
 		return getService().getResourceAction(resourceActionId);
 	}
 
-	public static com.liferay.portal.kernel.model.ResourceAction
-			getResourceAction(String name, String actionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static ResourceAction getResourceAction(String name, String actionId)
+		throws PortalException {
 
 		return getService().getResourceAction(name, actionId);
 	}
@@ -280,15 +297,11 @@ public class ResourceActionLocalServiceUtil {
 	 * @param end the upper bound of the range of resource actions (not inclusive)
 	 * @return the range of resource actions
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.ResourceAction>
-		getResourceActions(int start, int end) {
-
+	public static List<ResourceAction> getResourceActions(int start, int end) {
 		return getService().getResourceActions(start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.ResourceAction>
-		getResourceActions(String name) {
-
+	public static List<ResourceAction> getResourceActions(String name) {
 		return getService().getResourceActions(name);
 	}
 
@@ -305,28 +318,34 @@ public class ResourceActionLocalServiceUtil {
 		return getService().getResourceActionsCount(name);
 	}
 
+	public static void invalidate() {
+		getService().invalidate();
+	}
+
 	/**
 	 * Updates the resource action in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ResourceActionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param resourceAction the resource action
 	 * @return the resource action that was updated
 	 */
-	public static com.liferay.portal.kernel.model.ResourceAction
-		updateResourceAction(
-			com.liferay.portal.kernel.model.ResourceAction resourceAction) {
+	public static ResourceAction updateResourceAction(
+		ResourceAction resourceAction) {
 
 		return getService().updateResourceAction(resourceAction);
 	}
 
 	public static ResourceActionLocalService getService() {
-		if (_service == null) {
-			_service = (ResourceActionLocalService)PortalBeanLocatorUtil.locate(
-				ResourceActionLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static ResourceActionLocalService _service;
+	public static void setService(ResourceActionLocalService service) {
+		_service = service;
+	}
+
+	private static volatile ResourceActionLocalService _service;
 
 }

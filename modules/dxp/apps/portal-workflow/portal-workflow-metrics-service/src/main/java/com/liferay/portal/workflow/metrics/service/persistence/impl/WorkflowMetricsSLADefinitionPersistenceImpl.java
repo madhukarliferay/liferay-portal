@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.persistence.impl;
@@ -32,6 +23,8 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -39,9 +32,11 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.workflow.metrics.exception.NoSuchSLADefinitionException;
 import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinition;
+import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinitionTable;
 import com.liferay.portal.workflow.metrics.model.impl.WorkflowMetricsSLADefinitionImpl;
 import com.liferay.portal.workflow.metrics.model.impl.WorkflowMetricsSLADefinitionModelImpl;
 import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionPersistence;
+import com.liferay.portal.workflow.metrics.service.persistence.WorkflowMetricsSLADefinitionUtil;
 import com.liferay.portal.workflow.metrics.service.persistence.impl.constants.WorkflowMetricsPersistenceConstants;
 
 import java.io.Serializable;
@@ -78,7 +73,7 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	extends BasePersistenceImpl<WorkflowMetricsSLADefinition>
 	implements WorkflowMetricsSLADefinitionPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>WorkflowMetricsSLADefinitionUtil</code> to access the workflow metrics sla definition persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -208,55 +203,54 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_UUID_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -264,12 +258,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -300,16 +290,16 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -355,16 +345,16 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -435,8 +425,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -449,28 +439,28 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_UUID_2);
 		}
 
 		if (orderByComparator != null) {
@@ -478,72 +468,72 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
 		if (orderByComparator != null) {
@@ -551,11 +541,11 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -596,44 +586,42 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_UUID_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -650,7 +638,6 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		"(workflowMetricsSLADefinition.uuid IS NULL OR workflowMetricsSLADefinition.uuid = '')";
 
 	private FinderPath _finderPathFetchByUUID_G;
-	private FinderPath _finderPathCountByUUID_G;
 
 	/**
 	 * Returns the workflow metrics sla definition where uuid = &#63; and groupId = &#63; or throws a <code>NoSuchSLADefinitionException</code> if it could not be found.
@@ -668,23 +655,23 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			fetchByUUID_G(uuid, groupId);
 
 		if (workflowMetricsSLADefinition == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("uuid=");
-			msg.append(uuid);
+			sb.append("uuid=");
+			sb.append(uuid);
 
-			msg.append(", groupId=");
-			msg.append(groupId);
+			sb.append(", groupId=");
+			sb.append(groupId);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchSLADefinitionException(msg.toString());
+			throw new NoSuchSLADefinitionException(sb.toString());
 		}
 
 		return workflowMetricsSLADefinition;
@@ -743,41 +730,41 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (result == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_G_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_G_UUID_2);
 			}
 
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
+			sb.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				qPos.add(groupId);
+				queryPos.add(groupId);
 
-				List<WorkflowMetricsSLADefinition> list = q.list();
+				List<WorkflowMetricsSLADefinition> list = query.list();
 
 				if (list.isEmpty()) {
 					if (useFinderCache) {
@@ -794,13 +781,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					cacheResult(workflowMetricsSLADefinition);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByUUID_G, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -842,64 +824,14 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	 */
 	@Override
 	public int countByUUID_G(String uuid, long groupId) {
-		uuid = Objects.toString(uuid, "");
+		WorkflowMetricsSLADefinition workflowMetricsSLADefinition =
+			fetchByUUID_G(uuid, groupId);
 
-		FinderPath finderPath = _finderPathCountByUUID_G;
-
-		Object[] finderArgs = new Object[] {uuid, groupId};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
-			}
-
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				qPos.add(groupId);
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (workflowMetricsSLADefinition == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String _FINDER_COLUMN_UUID_G_UUID_2 =
@@ -1037,59 +969,58 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 			}
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1097,12 +1028,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1134,19 +1061,19 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -1194,19 +1121,19 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -1279,8 +1206,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1294,117 +1221,117 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 		}
 
-		query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1449,48 +1376,46 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 			}
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1510,7 +1435,6 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		"workflowMetricsSLADefinition.companyId = ?";
 
 	private FinderPath _finderPathFetchByWMSLAD_A;
-	private FinderPath _finderPathCountByWMSLAD_A;
 
 	/**
 	 * Returns the workflow metrics sla definition where workflowMetricsSLADefinitionId = &#63; and active = &#63; or throws a <code>NoSuchSLADefinitionException</code> if it could not be found.
@@ -1529,23 +1453,23 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			fetchByWMSLAD_A(workflowMetricsSLADefinitionId, active);
 
 		if (workflowMetricsSLADefinition == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("workflowMetricsSLADefinitionId=");
-			msg.append(workflowMetricsSLADefinitionId);
+			sb.append("workflowMetricsSLADefinitionId=");
+			sb.append(workflowMetricsSLADefinitionId);
 
-			msg.append(", active=");
-			msg.append(active);
+			sb.append(", active=");
+			sb.append(active);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchSLADefinitionException(msg.toString());
+			throw new NoSuchSLADefinitionException(sb.toString());
 		}
 
 		return workflowMetricsSLADefinition;
@@ -1605,31 +1529,30 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (result == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(
-				_FINDER_COLUMN_WMSLAD_A_WORKFLOWMETRICSSLADEFINITIONID_2);
+			sb.append(_FINDER_COLUMN_WMSLAD_A_WORKFLOWMETRICSSLADEFINITIONID_2);
 
-			query.append(_FINDER_COLUMN_WMSLAD_A_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_WMSLAD_A_ACTIVE_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(workflowMetricsSLADefinitionId);
+				queryPos.add(workflowMetricsSLADefinitionId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				List<WorkflowMetricsSLADefinition> list = q.list();
+				List<WorkflowMetricsSLADefinition> list = query.list();
 
 				if (list.isEmpty()) {
 					if (useFinderCache) {
@@ -1663,13 +1586,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					cacheResult(workflowMetricsSLADefinition);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByWMSLAD_A, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1713,54 +1631,14 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	public int countByWMSLAD_A(
 		long workflowMetricsSLADefinitionId, boolean active) {
 
-		FinderPath finderPath = _finderPathCountByWMSLAD_A;
+		WorkflowMetricsSLADefinition workflowMetricsSLADefinition =
+			fetchByWMSLAD_A(workflowMetricsSLADefinitionId, active);
 
-		Object[] finderArgs = new Object[] {
-			workflowMetricsSLADefinitionId, active
-		};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
-
-			query.append(
-				_FINDER_COLUMN_WMSLAD_A_WORKFLOWMETRICSSLADEFINITIONID_2);
-
-			query.append(_FINDER_COLUMN_WMSLAD_A_ACTIVE_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(workflowMetricsSLADefinitionId);
-
-				qPos.add(active);
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (workflowMetricsSLADefinition == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String
@@ -1894,48 +1772,47 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_S_STATUS_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(status);
+				queryPos.add(status);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1943,12 +1820,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1980,19 +1853,19 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -2040,19 +1913,19 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -2123,8 +1996,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2138,106 +2011,106 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-		query.append(_FINDER_COLUMN_C_S_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
 
-		query.append(_FINDER_COLUMN_C_S_STATUS_2);
+		sb.append(_FINDER_COLUMN_C_S_STATUS_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
-		qPos.add(status);
+		queryPos.add(status);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2280,37 +2153,35 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_S_STATUS_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(status);
+				queryPos.add(status);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2457,52 +2328,51 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -2510,12 +2380,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2548,22 +2414,22 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -2613,22 +2479,22 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -2702,8 +2568,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2717,110 +2583,110 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-		query.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
+		sb.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
-		qPos.add(active);
+		queryPos.add(active);
 
-		qPos.add(processId);
+		queryPos.add(processId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2865,41 +2731,39 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_PROCESSID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3062,67 +2926,66 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
 
 			boolean bindName = false;
 
 			if (name.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
+				sb.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
 			}
 			else {
 				bindName = true;
 
-				query.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
+				sb.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
 			}
 
-			query.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
 				if (bindName) {
-					qPos.add(name);
+					queryPos.add(name);
 				}
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -3130,12 +2993,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3170,25 +3029,25 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", name=");
-		msg.append(name);
+		sb.append(", name=");
+		sb.append(name);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -3241,25 +3100,25 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", name=");
-		msg.append(name);
+		sb.append(", name=");
+		sb.append(name);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -3338,8 +3197,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3353,125 +3212,125 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-		query.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
 
-		query.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
+		sb.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
 
 		boolean bindName = false;
 
 		if (name.isEmpty()) {
-			query.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
+			sb.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
 		}
 		else {
 			bindName = true;
 
-			query.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
 		}
 
-		query.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
+		sb.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
-		qPos.add(active);
+		queryPos.add(active);
 
 		if (bindName) {
-			qPos.add(name);
+			queryPos.add(name);
 		}
 
-		qPos.add(processId);
+		queryPos.add(processId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -3524,56 +3383,54 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_ACTIVE_2);
 
 			boolean bindName = false;
 
 			if (name.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
+				sb.append(_FINDER_COLUMN_C_A_N_P_NAME_3);
 			}
 			else {
 				bindName = true;
 
-				query.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
+				sb.append(_FINDER_COLUMN_C_A_N_P_NAME_2);
 			}
 
-			query.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_N_P_PROCESSID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
 				if (bindName) {
-					qPos.add(name);
+					queryPos.add(name);
 				}
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3742,56 +3599,55 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
-				qPos.add(status);
+				queryPos.add(status);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -3799,12 +3655,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3839,25 +3691,25 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -3910,25 +3762,25 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -4005,8 +3857,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -4020,114 +3872,114 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-		query.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
+		sb.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
+		sb.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
-		qPos.add(active);
+		queryPos.add(active);
 
-		qPos.add(processId);
+		queryPos.add(processId);
 
-		qPos.add(status);
+		queryPos.add(status);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -4180,45 +4032,43 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_PROCESSID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_A_P_S_STATUS_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
-				qPos.add(status);
+				queryPos.add(status);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4381,71 +4231,70 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					7 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(7);
+				sb = new StringBundler(7);
 			}
 
-			query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
 
 			boolean bindProcessVersion = false;
 
 			if (processVersion.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
+				sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
 			}
 			else {
 				bindProcessVersion = true;
 
-				query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
+				sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
 			}
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(
-					WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+				sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
 				if (bindProcessVersion) {
-					qPos.add(processVersion);
+					queryPos.add(processVersion);
 				}
 
-				qPos.add(status);
+				queryPos.add(status);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -4453,12 +4302,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4496,28 +4341,28 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append(", processVersion!=");
-		msg.append(processVersion);
+		sb.append(", processVersion!=");
+		sb.append(processVersion);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -4576,28 +4421,28 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			return workflowMetricsSLADefinition;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("companyId=");
-		msg.append(companyId);
+		sb.append("companyId=");
+		sb.append(companyId);
 
-		msg.append(", active=");
-		msg.append(active);
+		sb.append(", active=");
+		sb.append(active);
 
-		msg.append(", processId=");
-		msg.append(processId);
+		sb.append(", processId=");
+		sb.append(processId);
 
-		msg.append(", processVersion!=");
-		msg.append(processVersion);
+		sb.append(", processVersion!=");
+		sb.append(processVersion);
 
-		msg.append(", status=");
-		msg.append(status);
+		sb.append(", status=");
+		sb.append(status);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchSLADefinitionException(msg.toString());
+		throw new NoSuchSLADefinitionException(sb.toString());
 	}
 
 	/**
@@ -4680,8 +4525,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -4696,129 +4541,129 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		OrderByComparator<WorkflowMetricsSLADefinition> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(7);
+			sb = new StringBundler(7);
 		}
 
-		query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+		sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-		query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
+		sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
 
-		query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
+		sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
 
 		boolean bindProcessVersion = false;
 
 		if (processVersion.isEmpty()) {
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
 		}
 		else {
 			bindProcessVersion = true;
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
 		}
 
-		query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
+		sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
+			sb.append(WorkflowMetricsSLADefinitionModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
-		qPos.add(active);
+		queryPos.add(active);
 
-		qPos.add(processId);
+		queryPos.add(processId);
 
 		if (bindProcessVersion) {
-			qPos.add(processVersion);
+			queryPos.add(processVersion);
 		}
 
-		qPos.add(status);
+		queryPos.add(status);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						workflowMetricsSLADefinition)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<WorkflowMetricsSLADefinition> list = q.list();
+		List<WorkflowMetricsSLADefinition> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -4877,60 +4722,58 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			query.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
+			sb.append(_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION_WHERE);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_COMPANYID_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_ACTIVE_2);
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSID_2);
 
 			boolean bindProcessVersion = false;
 
 			if (processVersion.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
+				sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_3);
 			}
 			else {
 				bindProcessVersion = true;
 
-				query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
+				sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_PROCESSVERSION_2);
 			}
 
-			query.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
+			sb.append(_FINDER_COLUMN_C_A_P_NOTPV_S_STATUS_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				qPos.add(active);
+				queryPos.add(active);
 
-				qPos.add(processId);
+				queryPos.add(processId);
 
 				if (bindProcessVersion) {
-					qPos.add(processVersion);
+					queryPos.add(processVersion);
 				}
 
-				qPos.add(status);
+				queryPos.add(status);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4959,11 +4802,6 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		"workflowMetricsSLADefinition.status = ?";
 
 	public WorkflowMetricsSLADefinitionPersistenceImpl() {
-		setModelClass(WorkflowMetricsSLADefinition.class);
-
-		setModelImplClass(WorkflowMetricsSLADefinitionImpl.class);
-		setModelPKClass(long.class);
-
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
 
 		dbColumnNames.put("uuid", "uuid_");
@@ -4972,6 +4810,13 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		dbColumnNames.put("active", "active_");
 
 		setDBColumnNames(dbColumnNames);
+
+		setModelClass(WorkflowMetricsSLADefinition.class);
+
+		setModelImplClass(WorkflowMetricsSLADefinitionImpl.class);
+		setModelPKClass(long.class);
+
+		setTable(WorkflowMetricsSLADefinitionTable.INSTANCE);
 	}
 
 	/**
@@ -4984,7 +4829,7 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		WorkflowMetricsSLADefinition workflowMetricsSLADefinition) {
 
 		entityCache.putResult(
-			entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
+			WorkflowMetricsSLADefinitionImpl.class,
 			workflowMetricsSLADefinition.getPrimaryKey(),
 			workflowMetricsSLADefinition);
 
@@ -5004,9 +4849,9 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 				workflowMetricsSLADefinition.isActive()
 			},
 			workflowMetricsSLADefinition);
-
-		workflowMetricsSLADefinition.resetOriginalValues();
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the workflow metrics sla definitions in the entity cache if it is enabled.
@@ -5017,17 +4862,22 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	public void cacheResult(
 		List<WorkflowMetricsSLADefinition> workflowMetricsSLADefinitions) {
 
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (workflowMetricsSLADefinitions.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (WorkflowMetricsSLADefinition workflowMetricsSLADefinition :
 				workflowMetricsSLADefinitions) {
 
 			if (entityCache.getResult(
-					entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
+					WorkflowMetricsSLADefinitionImpl.class,
 					workflowMetricsSLADefinition.getPrimaryKey()) == null) {
 
 				cacheResult(workflowMetricsSLADefinition);
-			}
-			else {
-				workflowMetricsSLADefinition.resetOriginalValues();
 			}
 		}
 	}
@@ -5043,9 +4893,7 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(WorkflowMetricsSLADefinitionImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(WorkflowMetricsSLADefinitionImpl.class);
 	}
 
 	/**
@@ -5060,48 +4908,30 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		WorkflowMetricsSLADefinition workflowMetricsSLADefinition) {
 
 		entityCache.removeResult(
-			entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
-			workflowMetricsSLADefinition.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
-		clearUniqueFindersCache(
-			(WorkflowMetricsSLADefinitionModelImpl)workflowMetricsSLADefinition,
-			true);
+			WorkflowMetricsSLADefinitionImpl.class,
+			workflowMetricsSLADefinition);
 	}
 
 	@Override
 	public void clearCache(
 		List<WorkflowMetricsSLADefinition> workflowMetricsSLADefinitions) {
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (WorkflowMetricsSLADefinition workflowMetricsSLADefinition :
 				workflowMetricsSLADefinitions) {
 
 			entityCache.removeResult(
-				entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
-				workflowMetricsSLADefinition.getPrimaryKey());
-
-			clearUniqueFindersCache(
-				(WorkflowMetricsSLADefinitionModelImpl)
-					workflowMetricsSLADefinition,
-				true);
+				WorkflowMetricsSLADefinitionImpl.class,
+				workflowMetricsSLADefinition);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(WorkflowMetricsSLADefinitionImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
 			entityCache.removeResult(
-				entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
-				primaryKey);
+				WorkflowMetricsSLADefinitionImpl.class, primaryKey);
 		}
 	}
 
@@ -5115,10 +4945,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		};
 
 		finderCache.putResult(
-			_finderPathCountByUUID_G, args, Long.valueOf(1), false);
-		finderCache.putResult(
 			_finderPathFetchByUUID_G, args,
-			workflowMetricsSLADefinitionModelImpl, false);
+			workflowMetricsSLADefinitionModelImpl);
 
 		args = new Object[] {
 			workflowMetricsSLADefinitionModelImpl.
@@ -5127,62 +4955,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		};
 
 		finderCache.putResult(
-			_finderPathCountByWMSLAD_A, args, Long.valueOf(1), false);
-		finderCache.putResult(
 			_finderPathFetchByWMSLAD_A, args,
-			workflowMetricsSLADefinitionModelImpl, false);
-	}
-
-	protected void clearUniqueFindersCache(
-		WorkflowMetricsSLADefinitionModelImpl
-			workflowMetricsSLADefinitionModelImpl,
-		boolean clearCurrent) {
-
-		if (clearCurrent) {
-			Object[] args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getUuid(),
-				workflowMetricsSLADefinitionModelImpl.getGroupId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
-
-		if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-			 _finderPathFetchByUUID_G.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getOriginalUuid(),
-				workflowMetricsSLADefinitionModelImpl.getOriginalGroupId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
-
-		if (clearCurrent) {
-			Object[] args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.
-					getWorkflowMetricsSLADefinitionId(),
-				workflowMetricsSLADefinitionModelImpl.isActive()
-			};
-
-			finderCache.removeResult(_finderPathCountByWMSLAD_A, args);
-			finderCache.removeResult(_finderPathFetchByWMSLAD_A, args);
-		}
-
-		if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-			 _finderPathFetchByWMSLAD_A.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.
-					getOriginalWorkflowMetricsSLADefinitionId(),
-				workflowMetricsSLADefinitionModelImpl.getOriginalActive()
-			};
-
-			finderCache.removeResult(_finderPathCountByWMSLAD_A, args);
-			finderCache.removeResult(_finderPathFetchByWMSLAD_A, args);
-		}
+			workflowMetricsSLADefinitionModelImpl);
 	}
 
 	/**
@@ -5258,11 +5032,11 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 
 			return remove(workflowMetricsSLADefinition);
 		}
-		catch (NoSuchSLADefinitionException nsee) {
-			throw nsee;
+		catch (NoSuchSLADefinitionException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -5289,8 +5063,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 				session.delete(workflowMetricsSLADefinition);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -5344,25 +5118,25 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		Date now = new Date();
+		Date date = new Date();
 
 		if (isNew && (workflowMetricsSLADefinition.getCreateDate() == null)) {
 			if (serviceContext == null) {
-				workflowMetricsSLADefinition.setCreateDate(now);
+				workflowMetricsSLADefinition.setCreateDate(date);
 			}
 			else {
 				workflowMetricsSLADefinition.setCreateDate(
-					serviceContext.getCreateDate(now));
+					serviceContext.getCreateDate(date));
 			}
 		}
 
 		if (!workflowMetricsSLADefinitionModelImpl.hasSetModifiedDate()) {
 			if (serviceContext == null) {
-				workflowMetricsSLADefinition.setModifiedDate(now);
+				workflowMetricsSLADefinition.setModifiedDate(date);
 			}
 			else {
 				workflowMetricsSLADefinition.setModifiedDate(
-					serviceContext.getModifiedDate(now));
+					serviceContext.getModifiedDate(date));
 			}
 		}
 
@@ -5371,10 +5145,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		try {
 			session = openSession();
 
-			if (workflowMetricsSLADefinition.isNew()) {
+			if (isNew) {
 				session.save(workflowMetricsSLADefinition);
-
-				workflowMetricsSLADefinition.setNew(false);
 			}
 			else {
 				workflowMetricsSLADefinition =
@@ -5382,241 +5154,22 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 						workflowMetricsSLADefinition);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getUuid()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid, args);
-
-			args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getUuid(),
-				workflowMetricsSLADefinitionModelImpl.getCompanyId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid_C, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid_C, args);
-
-			args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-				workflowMetricsSLADefinitionModelImpl.getStatus()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_S, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_S, args);
-
-			args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-				workflowMetricsSLADefinitionModelImpl.isActive(),
-				workflowMetricsSLADefinitionModelImpl.getProcessId()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_A_P, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_A_P, args);
-
-			args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-				workflowMetricsSLADefinitionModelImpl.isActive(),
-				workflowMetricsSLADefinitionModelImpl.getName(),
-				workflowMetricsSLADefinitionModelImpl.getProcessId()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_A_N_P, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_A_N_P, args);
-
-			args = new Object[] {
-				workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-				workflowMetricsSLADefinitionModelImpl.isActive(),
-				workflowMetricsSLADefinitionModelImpl.getProcessId(),
-				workflowMetricsSLADefinitionModelImpl.getStatus()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_A_P_S, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByC_A_P_S, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getOriginalUuid()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getUuid()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-			}
-
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getOriginalUuid(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getUuid(),
-					workflowMetricsSLADefinitionModelImpl.getCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-			}
-
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_S.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.
-						getOriginalCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalStatus()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_S, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_S, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.getStatus()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_S, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_S, args);
-			}
-
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_A_P.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.
-						getOriginalCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalActive(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalProcessId()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_P, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_P, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.isActive(),
-					workflowMetricsSLADefinitionModelImpl.getProcessId()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_P, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_P, args);
-			}
-
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_A_N_P.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.
-						getOriginalCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalActive(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalName(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalProcessId()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_N_P, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_N_P, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.isActive(),
-					workflowMetricsSLADefinitionModelImpl.getName(),
-					workflowMetricsSLADefinitionModelImpl.getProcessId()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_N_P, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_N_P, args);
-			}
-
-			if ((workflowMetricsSLADefinitionModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByC_A_P_S.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.
-						getOriginalCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalActive(),
-					workflowMetricsSLADefinitionModelImpl.
-						getOriginalProcessId(),
-					workflowMetricsSLADefinitionModelImpl.getOriginalStatus()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_P_S, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_P_S, args);
-
-				args = new Object[] {
-					workflowMetricsSLADefinitionModelImpl.getCompanyId(),
-					workflowMetricsSLADefinitionModelImpl.isActive(),
-					workflowMetricsSLADefinitionModelImpl.getProcessId(),
-					workflowMetricsSLADefinitionModelImpl.getStatus()
-				};
-
-				finderCache.removeResult(_finderPathCountByC_A_P_S, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByC_A_P_S, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, WorkflowMetricsSLADefinitionImpl.class,
-			workflowMetricsSLADefinition.getPrimaryKey(),
-			workflowMetricsSLADefinition, false);
+			WorkflowMetricsSLADefinitionImpl.class,
+			workflowMetricsSLADefinitionModelImpl, false, true);
 
-		clearUniqueFindersCache(workflowMetricsSLADefinitionModelImpl, false);
 		cacheUniqueFindersCache(workflowMetricsSLADefinitionModelImpl);
+
+		if (isNew) {
+			workflowMetricsSLADefinition.setNew(false);
+		}
 
 		workflowMetricsSLADefinition.resetOriginalValues();
 
@@ -5767,19 +5320,19 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 			String sql = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					2 + (orderByComparator.getOrderByFields().length * 2));
 
-				query.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION);
+				sb.append(_SQL_SELECT_WORKFLOWMETRICSSLADEFINITION);
 
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				sql = query.toString();
+				sql = sb.toString();
 			}
 			else {
 				sql = _SQL_SELECT_WORKFLOWMETRICSSLADEFINITION;
@@ -5793,10 +5346,10 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
 				list = (List<WorkflowMetricsSLADefinition>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -5804,12 +5357,8 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5848,19 +5397,16 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(
+				Query query = session.createQuery(
 					_SQL_COUNT_WORKFLOWMETRICSSLADEFINITION);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(
 					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5900,249 +5446,199 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		WorkflowMetricsSLADefinitionModelImpl.setEntityCacheEnabled(
-			entityCacheEnabled);
-		WorkflowMetricsSLADefinitionModelImpl.setFinderCacheEnabled(
-			finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 			new String[] {
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_"}, true);
 
 		_finderPathWithoutPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
-			new String[] {String.class.getName()},
-			WorkflowMetricsSLADefinitionModelImpl.UUID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			true);
 
 		_finderPathCountByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-			new String[] {String.class.getName()});
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			false);
 
 		_finderPathFetchByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByUUID_G",
+			FINDER_CLASS_NAME_ENTITY, "fetchByUUID_G",
 			new String[] {String.class.getName(), Long.class.getName()},
-			WorkflowMetricsSLADefinitionModelImpl.UUID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.GROUPID_COLUMN_BITMASK);
-
-		_finderPathCountByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUUID_G",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {"uuid_", "groupId"}, true);
 
 		_finderPathWithPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 			new String[] {
 				String.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathWithoutPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 			new String[] {String.class.getName(), Long.class.getName()},
-			WorkflowMetricsSLADefinitionModelImpl.UUID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.COMPANYID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathCountByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"uuid_", "companyId"}, false);
 
 		_finderPathFetchByWMSLAD_A = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByWMSLAD_A",
+			FINDER_CLASS_NAME_ENTITY, "fetchByWMSLAD_A",
 			new String[] {Long.class.getName(), Boolean.class.getName()},
-			WorkflowMetricsSLADefinitionModelImpl.
-				WORKFLOWMETRICSSLADEFINITIONID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.ACTIVE_COLUMN_BITMASK);
-
-		_finderPathCountByWMSLAD_A = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByWMSLAD_A",
-			new String[] {Long.class.getName(), Boolean.class.getName()});
+			new String[] {"wmSLADefinitionId", "active_"}, true);
 
 		_finderPathWithPaginationFindByC_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_S",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"companyId", "status"}, true);
 
 		_finderPathWithoutPaginationFindByC_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_S",
 			new String[] {Long.class.getName(), Integer.class.getName()},
-			WorkflowMetricsSLADefinitionModelImpl.COMPANYID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.STATUS_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {"companyId", "status"}, true);
 
 		_finderPathCountByC_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_S",
-			new String[] {Long.class.getName(), Integer.class.getName()});
+			new String[] {Long.class.getName(), Integer.class.getName()},
+			new String[] {"companyId", "status"}, false);
 
 		_finderPathWithPaginationFindByC_A_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "processId"}, true);
 
 		_finderPathWithoutPaginationFindByC_A_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName()
 			},
-			WorkflowMetricsSLADefinitionModelImpl.COMPANYID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.ACTIVE_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.PROCESSID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {"companyId", "active_", "processId"}, true);
 
 		_finderPathCountByC_A_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "processId"}, false);
 
 		_finderPathWithPaginationFindByC_A_N_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_N_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				String.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "name", "processId"}, true);
 
 		_finderPathWithoutPaginationFindByC_A_N_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_N_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				String.class.getName(), Long.class.getName()
 			},
-			WorkflowMetricsSLADefinitionModelImpl.COMPANYID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.ACTIVE_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.NAME_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.PROCESSID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {"companyId", "active_", "name", "processId"}, true);
 
 		_finderPathCountByC_A_N_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_N_P",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				String.class.getName(), Long.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "name", "processId"}, false);
 
 		_finderPathWithPaginationFindByC_A_P_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_P_S",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "processId", "status"}, true);
 
 		_finderPathWithoutPaginationFindByC_A_P_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_P_S",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), Integer.class.getName()
 			},
-			WorkflowMetricsSLADefinitionModelImpl.COMPANYID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.ACTIVE_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.PROCESSID_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.STATUS_COLUMN_BITMASK |
-			WorkflowMetricsSLADefinitionModelImpl.MODIFIEDDATE_COLUMN_BITMASK);
+			new String[] {"companyId", "active_", "processId", "status"}, true);
 
 		_finderPathCountByC_A_P_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_P_S",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), Integer.class.getName()
-			});
+			},
+			new String[] {"companyId", "active_", "processId", "status"},
+			false);
 
 		_finderPathWithPaginationFindByC_A_P_NotPV_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			WorkflowMetricsSLADefinitionImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_P_NotPV_S",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {
+				"companyId", "active_", "processId", "processVersion", "status"
+			},
+			true);
 
 		_finderPathWithPaginationCountByC_A_P_NotPV_S = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_A_P_NotPV_S",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName()
-			});
+			},
+			new String[] {
+				"companyId", "active_", "processId", "processVersion", "status"
+			},
+			false);
+
+		WorkflowMetricsSLADefinitionUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		WorkflowMetricsSLADefinitionUtil.setPersistence(null);
+
 		entityCache.removeCache(
 			WorkflowMetricsSLADefinitionImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -6151,12 +5647,6 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinition"),
-			true);
 	}
 
 	@Override
@@ -6176,8 +5666,6 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		super.setSessionFactory(sessionFactory);
 	}
-
-	private boolean _columnBitmaskEnabled;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -6212,13 +5700,9 @@ public class WorkflowMetricsSLADefinitionPersistenceImpl
 	private static final Set<String> _badColumnNames = SetUtil.fromArray(
 		new String[] {"uuid", "workflowMetricsSLADefinitionId", "active"});
 
-	static {
-		try {
-			Class.forName(WorkflowMetricsPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

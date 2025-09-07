@@ -1,55 +1,57 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.login.web.internal.portlet.util;
 
-import com.liferay.login.web.internal.constants.LoginPortletKeys;
-import com.liferay.petra.content.ContentUtil;
+import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.string.StringUtil;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletModeException;
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.WindowState;
+import jakarta.portlet.WindowStateException;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
+
 import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletMode;
-import javax.portlet.PortletModeException;
-import javax.portlet.PortletPreferences;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-import javax.portlet.WindowStateException;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
@@ -64,63 +66,65 @@ public class LoginUtil {
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Map<String, String> definitionTerms = LinkedHashMapBuilder.put(
+		return LinkedHashMapBuilder.put(
 			"[$FROM_ADDRESS$]", HtmlUtil.escape(emailFromAddress)
 		).put(
 			"[$FROM_NAME$]", HtmlUtil.escape(emailFromName)
-		).build();
+		).put(
+			"[$PASSWORD_RESET_URL$]",
+			() -> {
+				if (!showPasswordTerms) {
+					return null;
+				}
 
-		if (showPasswordTerms) {
-			definitionTerms.put(
-				"[$PASSWORD_RESET_URL$]",
-				LanguageUtil.get(
-					themeDisplay.getLocale(), "the-password-reset-url"));
-		}
+				return LanguageUtil.get(
+					themeDisplay.getLocale(), "the-password-reset-url");
+			}
+		).put(
+			"[$PORTAL_URL$]",
+			() -> {
+				Company company = themeDisplay.getCompany();
 
-		Company company = themeDisplay.getCompany();
-
-		definitionTerms.put("[$PORTAL_URL$]", company.getVirtualHostname());
-
-		definitionTerms.put(
+				return company.getVirtualHostname();
+			}
+		).put(
 			"[$REMOTE_ADDRESS$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(), "the-browser's-remote-address"));
-		definitionTerms.put(
+				themeDisplay.getLocale(), "the-browser's-remote-address")
+		).put(
 			"[$REMOTE_HOST$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(), "the-browser's-remote-host"));
-		definitionTerms.put(
+				themeDisplay.getLocale(), "the-browser's-remote-host")
+		).put(
 			"[$TO_ADDRESS$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(),
-				"the-address-of-the-email-recipient"));
-		definitionTerms.put(
+				themeDisplay.getLocale(), "the-address-of-the-email-recipient")
+		).put(
 			"[$TO_NAME$]",
 			LanguageUtil.get(
-				themeDisplay.getLocale(), "the-name-of-the-email-recipient"));
-		definitionTerms.put(
+				themeDisplay.getLocale(), "the-name-of-the-email-recipient")
+		).put(
 			"[$USER_ID$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-user-id"));
-
-		definitionTerms.put(
+			LanguageUtil.get(themeDisplay.getLocale(), "the-user-id")
+		).put(
 			"[$USER_SCREENNAME$]",
-			LanguageUtil.get(themeDisplay.getLocale(), "the-user-screen-name"));
-
-		return definitionTerms;
+			LanguageUtil.get(themeDisplay.getLocale(), "the-user-screen-name")
+		).build();
 	}
 
 	public static String getEmailFromAddress(
-		PortletPreferences preferences, long companyId) {
+		PortletPreferences portletPreferences, long companyId) {
 
 		return PortalUtil.getEmailFromAddress(
-			preferences, companyId, PropsValues.LOGIN_EMAIL_FROM_ADDRESS);
+			portletPreferences, companyId,
+			PropsValues.LOGIN_EMAIL_FROM_ADDRESS);
 	}
 
 	public static String getEmailFromName(
-		PortletPreferences preferences, long companyId) {
+		PortletPreferences portletPreferences, long companyId) {
 
 		return PortalUtil.getEmailFromName(
-			preferences, companyId, PropsValues.LOGIN_EMAIL_FROM_NAME);
+			portletPreferences, companyId, PropsValues.LOGIN_EMAIL_FROM_NAME);
 	}
 
 	public static String getEmailTemplateXML(
@@ -129,17 +133,27 @@ public class LoginUtil {
 		String companyPortletPreferencesTemplateKey,
 		String portalPropertiesTemplateKey) {
 
-		PortletPreferences companyPortletPreferences =
-			PrefsPropsUtil.getPreferences(companyId, true);
-
 		String xml = LocalizationUtil.getLocalizationXmlFromPreferences(
 			portletPreferences, portletRequest, portletPreferencesTemplateKey,
 			"preferences", null);
 
 		if (xml == null) {
-			String defaultContent = ContentUtil.get(
-				PortalClassLoaderUtil.getClassLoader(),
-				PropsUtil.get(portalPropertiesTemplateKey));
+			PortletPreferences companyPortletPreferences =
+				PrefsPropsUtil.getPreferences(companyId);
+
+			String defaultContent = null;
+
+			try {
+				defaultContent = StringUtil.read(
+					PortalClassLoaderUtil.getClassLoader(),
+					PropsUtil.get(portalPropertiesTemplateKey));
+			}
+			catch (IOException ioException) {
+				_log.error(
+					"Unable to read the content for " +
+						PropsUtil.get(portalPropertiesTemplateKey),
+					ioException);
+			}
 
 			xml = LocalizationUtil.getLocalizationXmlFromPreferences(
 				companyPortletPreferences, portletRequest,
@@ -157,8 +171,8 @@ public class LoginUtil {
 		String login = httpServletRequest.getParameter(paramName);
 
 		if ((login == null) || login.equals(StringPool.NULL)) {
-			login = CookieKeys.getCookie(
-				httpServletRequest, CookieKeys.LOGIN, false);
+			login = CookiesManagerUtil.getCookieValue(
+				CookiesConstants.NAME_LOGIN, httpServletRequest, false);
 
 			String authType = company.getAuthType();
 
@@ -177,16 +191,84 @@ public class LoginUtil {
 			HttpServletRequest httpServletRequest, long plid)
 		throws PortletModeException, WindowStateException {
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, LoginPortletKeys.LOGIN, plid,
-			PortletRequest.RENDER_PHASE);
+		String portletName = LoginPortletKeys.LOGIN;
 
-		portletURL.setParameter("saveLastPath", Boolean.FALSE.toString());
-		portletURL.setParameter("mvcRenderCommandName", "/login/login");
-		portletURL.setPortletMode(PortletMode.VIEW);
-		portletURL.setWindowState(WindowState.MAXIMIZED);
+		if (FeatureFlagManagerUtil.isEnabled("LPD-6378")) {
+			PortletConfig portletConfig =
+				(PortletConfig)httpServletRequest.getAttribute(
+					JavaConstants.JAKARTA_PORTLET_CONFIG);
 
-		return portletURL;
+			portletName = portletConfig.getPortletName();
+
+			if (!portletName.equals(LoginPortletKeys.CREATE_ACCOUNT) &&
+				!portletName.equals(LoginPortletKeys.LOGIN) &&
+				!portletName.equals(LoginPortletKeys.FORGOT_PASSWORD)) {
+
+				portletName = LoginPortletKeys.LOGIN;
+			}
+		}
+
+		return PortletURLBuilder.create(
+			PortletURLFactoryUtil.create(
+				httpServletRequest, portletName, plid,
+				PortletRequest.RENDER_PHASE)
+		).setMVCRenderCommandName(
+			"/login/login"
+		).setParameter(
+			"saveLastPath", false
+		).setPortletMode(
+			PortletMode.VIEW
+		).setWindowState(
+			WindowState.MAXIMIZED
+		).buildPortletURL();
+	}
+
+	public static boolean isAllowedToRenderView(
+		String defaultMVCPath, String defaultMVCRenderCommandName,
+		RenderRequest renderRequest) {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		if (!themeDisplay.isSignedIn()) {
+			return true;
+		}
+
+		String mvcPath = ParamUtil.getString(renderRequest, "mvcPath");
+		String mvcRenderCommandName = ParamUtil.getString(
+			renderRequest, "mvcRenderCommandName");
+
+		if ((Validator.isNull(mvcPath) &&
+			 Validator.isNull(mvcRenderCommandName)) ||
+			mvcPath.equals(defaultMVCPath) ||
+			mvcRenderCommandName.equals(defaultMVCRenderCommandName)) {
+
+			return false;
+		}
+
+		return true;
+	}
+
+	public static void sendEmailUserCreationAttempt(
+			ActionRequest actionRequest, String fromName, String fromAddress,
+			String toAddress, String subject, String body)
+		throws Exception {
+
+		HttpServletRequest httpServletRequest =
+			PortalUtil.getHttpServletRequest(actionRequest);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		Company company = themeDisplay.getCompany();
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			User.class.getName(), actionRequest);
+
+		UserLocalServiceUtil.sendEmailUserCreationAttempt(
+			company.getCompanyId(), toAddress, fromName, fromAddress, subject,
+			body, serviceContext);
 	}
 
 	public static void sendPassword(
@@ -214,5 +296,29 @@ public class LoginUtil {
 			company.getCompanyId(), toAddress, fromName, fromAddress, subject,
 			body, serviceContext);
 	}
+
+	public static void sendPasswordLockout(
+			ActionRequest actionRequest, String fromName, String fromAddress,
+			String toAddress, String subject, String body)
+		throws Exception {
+
+		HttpServletRequest httpServletRequest =
+			PortalUtil.getHttpServletRequest(actionRequest);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		Company company = themeDisplay.getCompany();
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			User.class.getName(), actionRequest);
+
+		UserLocalServiceUtil.sendPasswordLockout(
+			company.getCompanyId(), toAddress, fromName, fromAddress, subject,
+			body, serviceContext);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(LoginUtil.class);
 
 }

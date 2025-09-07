@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.process.local;
@@ -82,7 +73,7 @@ public class LocalProcessExecutor implements ProcessExecutor {
 				currentEnvironment.putAll(environment);
 			}
 
-			final Process process = processBuilder.start();
+			Process process = processBuilder.start();
 
 			ObjectOutputStream bootstrapObjectOutputStream =
 				new ObjectOutputStream(process.getOutputStream());
@@ -118,15 +109,15 @@ public class LocalProcessExecutor implements ProcessExecutor {
 			return new LocalProcessChannel<>(
 				noticeableFuture, objectOutputStream, asyncBroker);
 		}
-		catch (IOException ioe) {
-			throw new ProcessException(ioe);
+		catch (IOException ioException) {
+			throw new ProcessException(ioException);
 		}
 	}
 
-	private static String _buildThreadName(
+	private String _buildThreadName(
 		ProcessCallable<?> processCallable, List<String> arguments) {
 
-		StringBundler sb = new StringBundler(arguments.size() * 2 + 2);
+		StringBundler sb = new StringBundler((arguments.size() * 2) + 2);
 
 		sb.append(processCallable);
 		sb.append(StringPool.OPEN_BRACKET);
@@ -143,7 +134,7 @@ public class LocalProcessExecutor implements ProcessExecutor {
 		return sb.toString();
 	}
 
-	private static <T> NoticeableFuture<T> _submit(
+	private <T> NoticeableFuture<T> _submit(
 		String threadName, Callable<T> callable) {
 
 		DefaultNoticeableFuture<T> defaultNoticeableFuture =
@@ -202,7 +193,7 @@ public class LocalProcessExecutor implements ProcessExecutor {
 
 						break;
 					}
-					catch (StreamCorruptedException sce) {
+					catch (StreamCorruptedException streamCorruptedException) {
 
 						// Collecting bad header as log information
 
@@ -214,33 +205,34 @@ public class LocalProcessExecutor implements ProcessExecutor {
 				}
 
 				while (true) {
-					Object obj = null;
+					Object object = null;
 
 					try {
-						obj = objectInputStream.readObject();
+						object = objectInputStream.readObject();
 					}
-					catch (WriteAbortedException wae) {
+					catch (WriteAbortedException writeAbortedException) {
 						_processLogConsumer.accept(
 							new LocalProcessLog(
 								ProcessLog.Level.WARN,
-								"Caught a write aborted exception", wae));
+								"Caught a write aborted exception",
+								writeAbortedException));
 
 						continue;
 					}
 
-					if (!(obj instanceof ProcessCallable)) {
+					if (!(object instanceof ProcessCallable)) {
 						_processLogConsumer.accept(
 							new LocalProcessLog(
 								ProcessLog.Level.INFO,
 								"Received a nonprocess callable piping back " +
-									obj,
+									object,
 								null));
 
 						continue;
 					}
 
 					ProcessCallable<?> processCallable =
-						(ProcessCallable<?>)obj;
+						(ProcessCallable<?>)object;
 
 					if (processCallable instanceof ResultProcessCallable) {
 						resultProcessCallable =
@@ -261,16 +253,16 @@ public class LocalProcessExecutor implements ProcessExecutor {
 									returnValue),
 								null));
 					}
-					catch (Throwable t) {
+					catch (Throwable throwable) {
 						_processLogConsumer.accept(
 							new LocalProcessLog(
 								ProcessLog.Level.ERROR,
 								"Unable to invoke generic process callable",
-								t));
+								throwable));
 					}
 				}
 			}
-			catch (StreamCorruptedException sce) {
+			catch (StreamCorruptedException streamCorruptedException) {
 				Path path = Files.createTempFile(
 					"corrupted-stream-dump-", ".log");
 
@@ -279,25 +271,26 @@ public class LocalProcessExecutor implements ProcessExecutor {
 						ProcessLog.Level.ERROR,
 						"Dumping content of corrupted object input stream to " +
 							path.toAbsolutePath(),
-						sce));
+						streamCorruptedException));
 
 				Files.copy(
 					unsyncBufferedInputStream, path,
 					StandardCopyOption.REPLACE_EXISTING);
 
 				throw new ProcessException(
-					"Corrupted object input stream", sce);
+					"Corrupted object input stream", streamCorruptedException);
 			}
-			catch (EOFException eofe) {
+			catch (EOFException eofException) {
 				throw new ProcessException(
-					"Subprocess piping back ended prematurely", eofe);
+					"Subprocess piping back ended prematurely", eofException);
 			}
-			catch (Throwable t) {
+			catch (Throwable throwable) {
 				_processLogConsumer.accept(
 					new LocalProcessLog(
-						ProcessLog.Level.ERROR, "Abort subprocess piping", t));
+						ProcessLog.Level.ERROR, "Abort subprocess piping",
+						throwable));
 
-				throw t;
+				throw throwable;
 			}
 			finally {
 				try {
@@ -307,11 +300,12 @@ public class LocalProcessExecutor implements ProcessExecutor {
 						throw new TerminationProcessException(exitCode);
 					}
 				}
-				catch (InterruptedException ie) {
+				catch (InterruptedException interruptedException) {
 					_process.destroy();
 
 					throw new ProcessException(
-						"Forcibly killed subprocess on interruption", ie);
+						"Forcibly killed subprocess on interruption",
+						interruptedException);
 				}
 
 				AsyncBrokerThreadLocal.removeAsyncBroker();

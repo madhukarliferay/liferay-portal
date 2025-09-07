@@ -1,130 +1,117 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.web.internal.facet.display.context;
 
 import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.search.facet.Facet;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.facet.collector.FacetCollector;
 import com.liferay.portal.kernel.search.facet.collector.TermCollector;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.search.web.internal.facet.display.builder.AssetCategoriesSearchFacetDisplayBuilder;
-import com.liferay.portal.search.web.internal.facet.display.builder.AssetCategoryPermissionChecker;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.web.internal.BaseFacetDisplayContextTestCase;
+import com.liferay.portal.search.web.internal.category.facet.configuration.CategoryFacetPortletInstanceConfiguration;
+import com.liferay.portal.search.web.internal.facet.display.context.builder.AssetCategoriesSearchFacetDisplayContextBuilder;
+import com.liferay.portal.search.web.internal.facet.display.context.builder.AssetCategoryPermissionChecker;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import jakarta.portlet.RenderRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author André de Oliveira
  */
-public class AssetCategoriesSearchFacetDisplayContextTest {
+public class AssetCategoriesSearchFacetDisplayContextTest
+	extends BaseFacetDisplayContextTestCase {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(String parameterValue)
+		throws Exception {
+
+		return createFacetDisplayContext(parameterValue, "count:desc");
+	}
+
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(
+			String parameterValue, String order)
+		throws ConfigurationException {
+
+		AssetCategoriesSearchFacetDisplayContextBuilder
+			assetCategoriesSearchFacetDisplayContextBuilder =
+				new AssetCategoriesSearchFacetDisplayContextBuilder(
+					Mockito.mock(GroupLocalService.class),
+					Mockito.mock(RenderRequest.class));
+
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetCategoryLocalService(_assetCategoryLocalService);
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetCategoryPermissionChecker(_assetCategoryPermissionChecker);
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetVocabularyLocalService(_assetVocabularyLocalService);
+		assetCategoriesSearchFacetDisplayContextBuilder.setDisplayStyle(
+			"cloud");
+		assetCategoriesSearchFacetDisplayContextBuilder.setFacet(facet);
+		assetCategoriesSearchFacetDisplayContextBuilder.setFrequenciesVisible(
+			true);
+		assetCategoriesSearchFacetDisplayContextBuilder.setFrequencyThreshold(
+			0);
+		assetCategoriesSearchFacetDisplayContextBuilder.setLocale(
+			LocaleUtil.getDefault());
+		assetCategoriesSearchFacetDisplayContextBuilder.setMaxTerms(0);
+		assetCategoriesSearchFacetDisplayContextBuilder.setOrder(order);
+		assetCategoriesSearchFacetDisplayContextBuilder.setParameterName(
+			facet.getFieldId());
+		assetCategoriesSearchFacetDisplayContextBuilder.setParameterValue(
+			parameterValue);
+		assetCategoriesSearchFacetDisplayContextBuilder.setPortal(
+			_getPortal(null));
+
+		if (_excludedGroupId > 0) {
+			assetCategoriesSearchFacetDisplayContextBuilder.setExcludedGroupId(
+				_excludedGroupId);
+		}
+
+		return assetCategoriesSearchFacetDisplayContextBuilder.build();
+	}
 
 	@Before
-	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-
-		Mockito.doReturn(
-			_facetCollector
-		).when(
-			_facet
-		).getFacetCollector();
-	}
-
-	@Test
-	public void testEmptySearchResults() throws Exception {
-		String facetParam = StringPool.BLANK;
-
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
-
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 0,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
-
-		Assert.assertEquals(
-			facetParam,
-			assetCategoriesSearchFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testEmptySearchResultsWithPreviousSelection() throws Exception {
-		long assetCategoryId = RandomTestUtil.randomLong();
-
-		setUpAssetCategory(assetCategoryId, 0);
-
-		String facetParam = String.valueOf(assetCategoryId);
-
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
-
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 1,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
-
-		AssetCategoriesSearchFacetTermDisplayContext
-			assetCategoriesSearchFacetTermDisplayContext =
-				assetCategoriesSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			assetCategoryId,
-			assetCategoriesSearchFacetTermDisplayContext.getAssetCategoryId());
-		Assert.assertEquals(
-			String.valueOf(assetCategoryId),
-			assetCategoriesSearchFacetTermDisplayContext.getDisplayName());
-		Assert.assertEquals(
-			0, assetCategoriesSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetTermDisplayContext.isFrequencyVisible());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetTermDisplayContext.isSelected());
-
-		Assert.assertEquals(
-			facetParam,
-			assetCategoriesSearchFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
+	@Override
+	public void setUp() throws Exception {
+		setUpAssetVocabularyLocalService();
+		setUpFacet();
 	}
 
 	@Test
@@ -137,7 +124,7 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 
 		createGroup(groupId, stagingGroupId);
 
-		setUpAssetCategory(assetCategoryId, stagingGroupId);
+		_setUpAssetCategory(assetCategoryId, stagingGroupId);
 
 		_excludedGroupId = stagingGroupId;
 
@@ -147,27 +134,189 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 
 		String facetParam = StringPool.BLANK;
 
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			facetParam);
 
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 0,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
 
 		_excludedGroupId = 0;
 	}
 
+	@Ignore
+	@Override
+	@Test
+	public void testGetDisplayStyleGroup() {
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGetDisplayStyleGroupWithConfiguration() {
+	}
+
+	@Test
+	public void testGetGroupVocabularyExternalReferenceCodes()
+		throws Exception {
+
+		long assetCategoryId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		AssetCategory assetCategory1 = _createAssetCategory(
+			assetCategoryId, groupId);
+
+		long assetVocabularyId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			assetCategory1.getVocabularyId()
+		).thenReturn(
+			assetVocabularyId
+		);
+
+		AssetVocabulary assetVocabulary = Mockito.mock(AssetVocabulary.class);
+
+		String assetVocabularyExternalReferenceCode =
+			RandomTestUtil.randomString();
+
+		Mockito.when(
+			assetVocabulary.getExternalReferenceCode()
+		).thenReturn(
+			assetVocabularyExternalReferenceCode
+		);
+
+		Mockito.when(
+			assetVocabulary.getGroupId()
+		).thenReturn(
+			groupId
+		);
+
+		String title = RandomTestUtil.randomString();
+
+		Mockito.when(
+			assetVocabulary.getTitle(Mockito.any(Locale.class))
+		).thenReturn(
+			title
+		);
+
+		Mockito.when(
+			assetVocabulary.getVocabularyId()
+		).thenReturn(
+			assetVocabularyId
+		);
+
+		AssetVocabularyLocalService assetVocabularyLocalService = Mockito.mock(
+			AssetVocabularyLocalService.class);
+
+		Mockito.when(
+			assetVocabularyLocalService.fetchAssetVocabulary(assetVocabularyId)
+		).thenReturn(
+			assetVocabulary
+		);
+
+		Group group = Mockito.mock(Group.class);
+
+		String groupExternalReferenceCode = RandomTestUtil.randomString();
+
+		Mockito.when(
+			group.getExternalReferenceCode()
+		).thenReturn(
+			groupExternalReferenceCode
+		);
+
+		GroupLocalService groupLocalService = Mockito.mock(
+			GroupLocalService.class);
+
+		Mockito.when(
+			groupLocalService.fetchGroup(groupId)
+		).thenReturn(
+			group
+		);
+
+		FacetCollector facetCollector = Mockito.mock(FacetCollector.class);
+
+		TermCollector termCollector = Mockito.mock(TermCollector.class);
+
+		Mockito.when(
+			termCollector.getFrequency()
+		).thenReturn(
+			1
+		);
+
+		Mockito.when(
+			termCollector.getTerm()
+		).thenReturn(
+			String.valueOf(assetCategoryId)
+		);
+
+		Mockito.when(
+			facetCollector.getTermCollectors()
+		).thenReturn(
+			ListUtil.fromArray(termCollector)
+		);
+
+		Mockito.when(
+			facet.getFacetCollector()
+		).thenReturn(
+			facetCollector
+		);
+
+		Mockito.when(
+			facet.getFieldName()
+		).thenReturn(
+			"assetCategoryIds"
+		);
+
+		AssetCategoriesSearchFacetDisplayContextBuilder
+			assetCategoriesSearchFacetDisplayContextBuilder =
+				new AssetCategoriesSearchFacetDisplayContextBuilder(
+					groupLocalService, Mockito.mock(RenderRequest.class));
+
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetCategoryLocalService(_assetCategoryLocalService);
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetVocabularyLocalService(assetVocabularyLocalService);
+		assetCategoriesSearchFacetDisplayContextBuilder.
+			setAssetCategoryPermissionChecker(assetCategory2 -> true);
+		assetCategoriesSearchFacetDisplayContextBuilder.setDisplayStyle(
+			"cloud");
+		assetCategoriesSearchFacetDisplayContextBuilder.setFacet(facet);
+		assetCategoriesSearchFacetDisplayContextBuilder.setFrequenciesVisible(
+			true);
+		assetCategoriesSearchFacetDisplayContextBuilder.setLocale(
+			LocaleUtil.US);
+		assetCategoriesSearchFacetDisplayContextBuilder.setMaxTerms(10);
+		assetCategoriesSearchFacetDisplayContextBuilder.setParameterName(
+			"category");
+		assetCategoriesSearchFacetDisplayContextBuilder.setPortal(
+			_getPortal(null));
+
+		AssetCategoriesSearchFacetDisplayContext
+			assetCategoriesSearchFacetDisplayContext =
+				assetCategoriesSearchFacetDisplayContextBuilder.build();
+
+		Assert.assertEquals(
+			ListUtil.fromArray(
+				groupExternalReferenceCode + "&&" +
+					assetVocabularyExternalReferenceCode),
+			assetCategoriesSearchFacetDisplayContext.
+				getGroupVocabularyExternalReferenceCodes());
+		Assert.assertEquals(
+			ListUtil.fromArray(assetVocabularyId),
+			assetCategoriesSearchFacetDisplayContext.getVocabularyIds());
+		Assert.assertEquals(
+			ListUtil.fromArray(title),
+			assetCategoriesSearchFacetDisplayContext.getVocabularyNames());
+	}
+
+	@Override
 	@Test
 	public void testOneTerm() throws Exception {
 		long assetCategoryId = RandomTestUtil.randomLong();
 
-		setUpAssetCategory(assetCategoryId, 0);
+		_setUpAssetCategory(assetCategoryId, 0);
 
 		int frequency = RandomTestUtil.randomInt();
 
@@ -175,102 +324,159 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 
 		String facetParam = StringPool.BLANK;
 
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			facetParam);
 
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 1,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 1, bucketDisplayContexts.size());
 
-		AssetCategoriesSearchFacetTermDisplayContext
-			assetCategoriesSearchFacetTermDisplayContext =
-				assetCategoriesSearchFacetTermDisplayContexts.get(0);
+		BucketDisplayContext bucketDisplayContext = bucketDisplayContexts.get(
+			0);
 
-		Assert.assertEquals(
-			assetCategoryId,
-			assetCategoriesSearchFacetTermDisplayContext.getAssetCategoryId());
 		Assert.assertEquals(
 			String.valueOf(assetCategoryId),
-			assetCategoriesSearchFacetTermDisplayContext.getDisplayName());
+			bucketDisplayContext.getBucketText());
 		Assert.assertEquals(
-			frequency,
-			assetCategoriesSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetTermDisplayContext.isFrequencyVisible());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetTermDisplayContext.isSelected());
+			String.valueOf(assetCategoryId),
+			bucketDisplayContext.getFilterValue());
+		Assert.assertEquals(frequency, bucketDisplayContext.getFrequency());
+		Assert.assertTrue(bucketDisplayContext.isFrequencyVisible());
+		Assert.assertFalse(bucketDisplayContext.isSelected());
 
 		Assert.assertEquals(
-			facetParam,
-			assetCategoriesSearchFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
+			facetParam, facetDisplayContext.getParameterValue());
+		Assert.assertTrue(facetDisplayContext.isNothingSelected());
+		Assert.assertFalse(facetDisplayContext.isRenderNothing());
 	}
 
+	@Override
 	@Test
 	public void testOneTermWithPreviousSelection() throws Exception {
 		long assetCategoryId = RandomTestUtil.randomLong();
 
-		setUpAssetCategory(assetCategoryId, 0);
+		_setUpAssetCategory(assetCategoryId, 0);
 
 		int frequency = RandomTestUtil.randomInt();
 
 		setUpOneTermCollector(assetCategoryId, frequency);
 
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				String.valueOf(assetCategoryId));
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			String.valueOf(assetCategoryId));
 
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 1,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 1, bucketDisplayContexts.size());
 
-		AssetCategoriesSearchFacetTermDisplayContext
-			assetCategoriesSearchFacetTermDisplayContext =
-				assetCategoriesSearchFacetTermDisplayContexts.get(0);
+		BucketDisplayContext bucketDisplayContext = bucketDisplayContexts.get(
+			0);
 
-		Assert.assertEquals(
-			assetCategoryId,
-			assetCategoriesSearchFacetTermDisplayContext.getAssetCategoryId());
 		Assert.assertEquals(
 			String.valueOf(assetCategoryId),
-			assetCategoriesSearchFacetTermDisplayContext.getDisplayName());
+			bucketDisplayContext.getBucketText());
 		Assert.assertEquals(
-			frequency,
-			assetCategoriesSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetTermDisplayContext.isFrequencyVisible());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetTermDisplayContext.isSelected());
+			String.valueOf(assetCategoryId),
+			bucketDisplayContext.getFilterValue());
+		Assert.assertEquals(frequency, bucketDisplayContext.getFrequency());
+		Assert.assertTrue(bucketDisplayContext.isFrequencyVisible());
+		Assert.assertTrue(bucketDisplayContext.isSelected());
 
 		Assert.assertEquals(
 			assetCategoryId,
-			GetterUtil.getLong(
-				assetCategoriesSearchFacetDisplayContext.getParameterValue()));
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
+			GetterUtil.getLong(facetDisplayContext.getParameterValue()));
+		Assert.assertFalse(facetDisplayContext.isNothingSelected());
+		Assert.assertFalse(facetDisplayContext.isRenderNothing());
+	}
+
+	@Override
+	@Test
+	public void testOrderByTermFrequencyAscending() throws Exception {
+		long[] assetCategoryIds = {3L, 4L, 2L, 1L};
+
+		List<TermCollector> termCollectors = _getTermCollectors(
+			assetCategoryIds, new int[] {6, 5, 5, 4});
+
+		String[] expectedCategoryIds = {"1", "2", "4", "3"};
+		int[] expectedFrequencies = {4, 5, 5, 6};
+
+		_testOrderBy(
+			assetCategoryIds, termCollectors, "count:asc", expectedCategoryIds,
+			expectedFrequencies);
+	}
+
+	@Override
+	@Test
+	public void testOrderByTermFrequencyDescending() throws Exception {
+		long[] assetCategoryIds = {3L, 4L, 2L, 1L};
+
+		List<TermCollector> termCollectors = _getTermCollectors(
+			assetCategoryIds, new int[] {6, 5, 5, 4});
+
+		String[] expectedCategoryIds = {"3", "2", "4", "1"};
+		int[] expectedFrequencies = {6, 5, 5, 4};
+
+		_testOrderBy(
+			assetCategoryIds, termCollectors, "count:desc", expectedCategoryIds,
+			expectedFrequencies);
+	}
+
+	@Override
+	@Test
+	public void testOrderByTermValueAscending() throws Exception {
+		long[] assetCategoryIds = {2L, 1L, 2L, 3L};
+
+		List<TermCollector> termCollectors = _getTermCollectors(
+			assetCategoryIds);
+
+		String[] expectedCategoryIds = {"1", "2", "2", "3"};
+		int[] expectedFrequencies = {2, 3, 1, 4};
+
+		_testOrderBy(
+			assetCategoryIds, termCollectors, "key:asc", expectedCategoryIds,
+			expectedFrequencies);
+	}
+
+	@Override
+	@Test
+	public void testOrderByTermValueDescending() throws Exception {
+		long[] assetCategoryIds = {2L, 1L, 2L, 3L};
+
+		List<TermCollector> termCollectors = _getTermCollectors(
+			assetCategoryIds);
+
+		String[] expectedCategoryIds = {"3", "2", "2", "1"};
+		int[] expectedFrequencies = {4, 3, 1, 2};
+
+		_testOrderBy(
+			assetCategoryIds, termCollectors, "key:desc", expectedCategoryIds,
+			expectedFrequencies);
+	}
+
+	@Test
+	public void testSelectionOfNonexistentTerms() throws Exception {
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			RandomTestUtil.randomString());
+
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
+
+		Assert.assertEquals(
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
+
+		Assert.assertEquals("0", facetDisplayContext.getParameterValue());
+		Assert.assertFalse(facetDisplayContext.isNothingSelected());
+		Assert.assertFalse(facetDisplayContext.isRenderNothing());
 	}
 
 	@Test
 	public void testUnauthorized() throws Exception {
 		long assetCategoryId = RandomTestUtil.randomLong();
 
-		setUpAssetCategoryUnauthorized(assetCategoryId);
+		_setUpAssetCategoryUnauthorized(assetCategoryId);
 
 		int frequency = RandomTestUtil.randomInt();
 
@@ -278,59 +484,180 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 
 		String facetParam = StringPool.BLANK;
 
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			facetParam);
 
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 0,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
 
 		Assert.assertEquals(
-			facetParam,
-			assetCategoriesSearchFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertTrue(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
+			facetParam, facetDisplayContext.getParameterValue());
+		Assert.assertTrue(facetDisplayContext.isNothingSelected());
+		Assert.assertTrue(facetDisplayContext.isRenderNothing());
 	}
 
 	@Test
 	public void testUnauthorizedWithPreviousSelection() throws Exception {
 		long assetCategoryId = RandomTestUtil.randomLong();
 
-		setUpAssetCategoryUnauthorized(assetCategoryId);
+		_setUpAssetCategoryUnauthorized(assetCategoryId);
 
 		String facetParam = String.valueOf(assetCategoryId);
 
-		AssetCategoriesSearchFacetDisplayContext
-			assetCategoriesSearchFacetDisplayContext = createDisplayContext(
-				facetParam);
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			facetParam);
 
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts =
-				assetCategoriesSearchFacetDisplayContext.
-					getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			facetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			assetCategoriesSearchFacetTermDisplayContexts.toString(), 0,
-			assetCategoriesSearchFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
 
 		Assert.assertEquals(
-			facetParam,
-			assetCategoriesSearchFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetCategoriesSearchFacetDisplayContext.isRenderNothing());
+			facetParam, facetDisplayContext.getParameterValue());
+		Assert.assertFalse(facetDisplayContext.isNothingSelected());
+		Assert.assertFalse(facetDisplayContext.isRenderNothing());
 	}
 
-	protected AssetCategory createAssetCategory(
+	protected Group createGroup(long groupId, long stagingGroupId) {
+		Group group = Mockito.mock(Group.class);
+
+		Mockito.doReturn(
+			groupId
+		).when(
+			group
+		).getGroupId();
+
+		return group;
+	}
+
+	@Override
+	protected String createTerm() {
+		return String.valueOf(RandomTestUtil.randomLong());
+	}
+
+	protected TermCollector createTermCollector(
+		long assetCategoryId, int frequency) {
+
+		TermCollector termCollector = Mockito.mock(TermCollector.class);
+
+		Mockito.doReturn(
+			frequency
+		).when(
+			termCollector
+		).getFrequency();
+
+		if (_isLegacyField()) {
+			Mockito.doReturn(
+				String.valueOf(assetCategoryId)
+			).when(
+				termCollector
+			).getTerm();
+		}
+		else {
+			Mockito.doReturn(
+				"vocabularyId-" + assetCategoryId
+			).when(
+				termCollector
+			).getTerm();
+		}
+
+		return termCollector;
+	}
+
+	@Override
+	protected FacetDisplayContext getFacetDisplayContext(Group group)
+		throws Exception {
+
+		AssetCategoriesSearchFacetDisplayContextBuilder
+			assetCategoriesSearchFacetDisplayContextBuilder =
+				new AssetCategoriesSearchFacetDisplayContextBuilder(
+					Mockito.mock(GroupLocalService.class),
+					getRenderRequest(group));
+
+		assetCategoriesSearchFacetDisplayContextBuilder.setPortal(
+			_getPortal(group));
+
+		return assetCategoriesSearchFacetDisplayContextBuilder.build();
+	}
+
+	protected String getFacetFieldName() {
+		return "assetVocabularyCategoryIds";
+	}
+
+	@Override
+	protected void setUpAsset(String assetCategoryId) throws Exception {
+		_groupId = RandomTestUtil.randomLong();
+
+		_setUpAssetCategory(GetterUtil.getLong(assetCategoryId), _groupId);
+	}
+
+	protected void setUpAssetVocabularyLocalService() {
+		AssetVocabulary assetVocabulary = Mockito.mock(AssetVocabulary.class);
+
+		Mockito.doReturn(
+			"name"
+		).when(
+			assetVocabulary
+		).getTitle(
+			Mockito.any(Locale.class)
+		);
+
+		Mockito.doReturn(
+			assetVocabulary
+		).when(
+			_assetVocabularyLocalService
+		).fetchAssetVocabulary(
+			Mockito.anyLong()
+		);
+	}
+
+	protected void setUpFacet() throws Exception {
+		super.setUp();
+
+		Mockito.doReturn(
+			getFacetFieldName()
+		).when(
+			facet
+		).getFieldName();
+	}
+
+	protected void setUpOneTermCollector(long assetCategoryId, int frequency) {
+		Mockito.doReturn(
+			Collections.singletonList(
+				createTermCollector(assetCategoryId, frequency))
+		).when(
+			facetCollector
+		).getTermCollectors();
+	}
+
+	@Override
+	protected void setUpPortletDisplayStyleGroupExternalReferenceCode(
+		String externalReferenceCode) {
+
+		CategoryFacetPortletInstanceConfiguration
+			categoryFacetPortletInstanceConfiguration = Mockito.mock(
+				CategoryFacetPortletInstanceConfiguration.class);
+
+		Mockito.when(
+			categoryFacetPortletInstanceConfiguration.
+				displayStyleGroupExternalReferenceCode()
+		).thenReturn(
+			externalReferenceCode
+		);
+
+		configurationProviderUtilMockedStatic.when(
+			() -> ConfigurationProviderUtil.getPortletInstanceConfiguration(
+				Mockito.any(), Mockito.any())
+		).thenReturn(
+			categoryFacetPortletInstanceConfiguration
+		);
+	}
+
+	private AssetCategory _createAssetCategory(
 		long assetCategoryId, long groupId) {
 
 		AssetCategory assetCategory = Mockito.mock(AssetCategory.class);
@@ -366,69 +693,66 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 		return assetCategory;
 	}
 
-	protected AssetCategoriesSearchFacetDisplayContext createDisplayContext(
-		String parameterValue) {
+	private HttpServletRequest _getHttpServletRequest(Group group) {
+		HttpServletRequest httpServletRequest = Mockito.mock(
+			HttpServletRequest.class);
 
-		AssetCategoriesSearchFacetDisplayBuilder
-			assetCategoriesSearchFacetDisplayBuilder =
-				new AssetCategoriesSearchFacetDisplayBuilder();
+		Mockito.doReturn(
+			getThemeDisplay(group)
+		).when(
+			httpServletRequest
+		).getAttribute(
+			WebKeys.THEME_DISPLAY
+		);
 
-		assetCategoriesSearchFacetDisplayBuilder.setAssetCategoryLocalService(
-			_assetCategoryLocalService);
-		assetCategoriesSearchFacetDisplayBuilder.
-			setAssetCategoryPermissionChecker(_assetCategoryPermissionChecker);
-		assetCategoriesSearchFacetDisplayBuilder.setDisplayStyle("cloud");
-		assetCategoriesSearchFacetDisplayBuilder.setFacet(_facet);
-		assetCategoriesSearchFacetDisplayBuilder.setFrequenciesVisible(true);
-		assetCategoriesSearchFacetDisplayBuilder.setFrequencyThreshold(0);
-		assetCategoriesSearchFacetDisplayBuilder.setMaxTerms(0);
-		assetCategoriesSearchFacetDisplayBuilder.setParameterName(
-			_facet.getFieldId());
-		assetCategoriesSearchFacetDisplayBuilder.setParameterValue(
-			parameterValue);
+		return httpServletRequest;
+	}
 
-		if (_excludedGroupId > 0) {
-			assetCategoriesSearchFacetDisplayBuilder.setExcludedGroupId(
-				_excludedGroupId);
+	private Portal _getPortal(Group group) throws ConfigurationException {
+		Portal portal = Mockito.mock(Portal.class);
+
+		Mockito.doReturn(
+			_getHttpServletRequest(group)
+		).when(
+			portal
+		).getHttpServletRequest(
+			Mockito.any()
+		);
+
+		return portal;
+	}
+
+	private List<TermCollector> _getTermCollectors(long... assetCategoryIds) {
+		int[] frequencies = new int[assetCategoryIds.length];
+
+		for (int i = 0; i < assetCategoryIds.length; i++) {
+			frequencies[i] = i + 1;
 		}
 
-		return assetCategoriesSearchFacetDisplayBuilder.build();
+		return _getTermCollectors(assetCategoryIds, frequencies);
 	}
 
-	protected Group createGroup(long groupId, long stagingGroupId) {
-		Group group = Mockito.mock(Group.class);
+	private List<TermCollector> _getTermCollectors(
+		long[] assetCategoryIds, int[] frequencies) {
 
-		Mockito.doReturn(
-			groupId
-		).when(
-			group
-		).getGroupId();
+		List<TermCollector> termCollectors = new ArrayList<>();
 
-		return group;
+		for (int i = 0; i < assetCategoryIds.length; i++) {
+			termCollectors.add(
+				createTermCollector(assetCategoryIds[i], frequencies[i]));
+		}
+
+		return termCollectors;
 	}
 
-	protected TermCollector createTermCollector(
-		long assetCategoryId, int frequency) {
+	private boolean _isLegacyField() {
+		String fieldName = getFacetFieldName();
 
-		TermCollector termCollector = Mockito.mock(TermCollector.class);
-
-		Mockito.doReturn(
-			frequency
-		).when(
-			termCollector
-		).getFrequency();
-
-		Mockito.doReturn(
-			String.valueOf(assetCategoryId)
-		).when(
-			termCollector
-		).getTerm();
-
-		return termCollector;
+		return fieldName.equals("assetCategoryIds");
 	}
 
-	protected void setUpAssetCategory(long assetCategoryId, long groupId) {
-		AssetCategory assetCategory = createAssetCategory(
+	private void _setUpAssetCategory(long assetCategoryId, long groupId) {
+		AssetCategory assetCategory = _createAssetCategory(
 			assetCategoryId, groupId);
 
 		Mockito.doReturn(
@@ -440,8 +764,8 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 		);
 	}
 
-	protected void setUpAssetCategoryUnauthorized(long assetCategoryId) {
-		AssetCategory assetCategory = createAssetCategory(assetCategoryId, 0);
+	private void _setUpAssetCategoryUnauthorized(long assetCategoryId) {
+		AssetCategory assetCategory = _createAssetCategory(assetCategoryId, 0);
 
 		Mockito.doReturn(
 			false
@@ -452,30 +776,46 @@ public class AssetCategoriesSearchFacetDisplayContextTest {
 		);
 	}
 
-	protected void setUpOneTermCollector(long assetCategoryId, int frequency) {
-		Mockito.doReturn(
-			Collections.singletonList(
-				createTermCollector(assetCategoryId, frequency))
-		).when(
-			_facetCollector
-		).getTermCollectors();
+	private void _setUpMultipleAssetCategory(long[] assetCategoryId) {
+		for (int i = 0; i < assetCategoryId.length; i++) {
+			AssetCategory assetCategory = _createAssetCategory(
+				assetCategoryId[i], i);
+
+			Mockito.doReturn(
+				true
+			).when(
+				_assetCategoryPermissionChecker
+			).hasPermission(
+				assetCategory
+			);
+		}
 	}
 
-	@Mock
-	private AssetCategoryLocalService _assetCategoryLocalService;
+	private void _testOrderBy(
+			long[] assetCategoryIds, List<TermCollector> termCollectors,
+			String order, String[] expectedTerms, int[] expectedFrequencies)
+		throws Exception {
 
-	@Mock
-	private AssetCategoryPermissionChecker _assetCategoryPermissionChecker;
+		_setUpMultipleAssetCategory(assetCategoryIds);
 
+		setUpTermCollectors(facetCollector, termCollectors);
+
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			StringPool.BLANK, order);
+
+		assertFacetOrder(
+			facetDisplayContext.getBucketDisplayContexts(), expectedTerms,
+			expectedFrequencies);
+	}
+
+	private final AssetCategoryLocalService _assetCategoryLocalService =
+		Mockito.mock(AssetCategoryLocalService.class);
+	private final AssetCategoryPermissionChecker
+		_assetCategoryPermissionChecker = Mockito.mock(
+			AssetCategoryPermissionChecker.class);
+	private final AssetVocabularyLocalService _assetVocabularyLocalService =
+		Mockito.mock(AssetVocabularyLocalService.class);
 	private long _excludedGroupId;
-
-	@Mock
-	private Facet _facet;
-
-	@Mock
-	private FacetCollector _facetCollector;
-
-	@Mock
-	private Group _group;
+	private long _groupId;
 
 }

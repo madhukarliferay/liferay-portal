@@ -1,28 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.staging.processes.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
 import com.liferay.portal.kernel.language.LanguageUtil;
 
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Péter Alius
@@ -30,28 +21,23 @@ import javax.servlet.http.HttpServletRequest;
 public class PublishTemplatesDisplayContext {
 
 	public PublishTemplatesDisplayContext(
-		RenderResponse renderResponse, HttpServletRequest httpServletRequest) {
+		HttpServletRequest httpServletRequest, RenderResponse renderResponse) {
 
-		_renderResponse = renderResponse;
 		_httpServletRequest = httpServletRequest;
+		_renderResponse = renderResponse;
 	}
 
 	public List<NavigationItem> getNavigationItems() {
-		return new NavigationItemList() {
-			{
-				add(
-					navigationItem -> {
-						navigationItem.setActive(true);
-						navigationItem.setHref(
-							_renderResponse.createRenderURL(),
-							"mvcRenderCommandName",
-							"viewPublishConfigurations");
-						navigationItem.setLabel(
-							LanguageUtil.get(
-								_httpServletRequest, "publish-templates"));
-					});
+		return NavigationItemListBuilder.add(
+			navigationItem -> {
+				navigationItem.setActive(true);
+				navigationItem.setHref(
+					_renderResponse.createRenderURL(), "mvcRenderCommandName",
+					"/staging_processes/view_publish_configurations");
+				navigationItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "publish-templates"));
 			}
-		};
+		).build();
 	}
 
 	private final HttpServletRequest _httpServletRequest;

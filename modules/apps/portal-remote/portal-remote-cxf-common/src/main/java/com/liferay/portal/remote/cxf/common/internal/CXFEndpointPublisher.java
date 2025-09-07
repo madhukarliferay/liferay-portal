@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.cxf.common.internal;
@@ -22,20 +13,20 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.remote.cxf.common.configuration.CXFEndpointPublisherConfiguration;
 import com.liferay.portal.servlet.filters.authverifier.AuthVerifierFilter;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+
 import java.io.IOException;
 
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.CXFBusFactory;
@@ -50,7 +41,6 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.http.context.ServletContextHelper;
 import org.osgi.service.http.whiteboard.HttpWhiteboardConstants;
 
@@ -105,15 +95,6 @@ public class CXFEndpointPublisher {
 		_dependencyManager.clear();
 	}
 
-	@Modified
-	protected void modified(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		deactivate();
-
-		activate(bundleContext, properties);
-	}
-
 	private DependencyManager _dependencyManager;
 
 	private static class ServicesRegistrator {
@@ -143,9 +124,7 @@ public class CXFEndpointPublisher {
 		protected void start() {
 			Dictionary<String, Object> properties = new Hashtable<>();
 
-			Object contextPathObject = _properties.get("contextPath");
-
-			String contextPath = contextPathObject.toString();
+			String contextPath = String.valueOf(_properties.get("contextPath"));
 
 			String contextName = contextPath.substring(1);
 
@@ -192,6 +171,13 @@ public class CXFEndpointPublisher {
 				CXFNonSpringServlet.class.getName());
 			properties.put(
 				HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/*");
+
+			Object property = properties.get(
+				"servlet.init.hide-service-list-page");
+
+			if (property == null) {
+				properties.put("servlet.init.hide-service-list-page", "true");
+			}
 
 			cxfNonSpringServlet.setBus(bus);
 
@@ -275,11 +261,12 @@ public class CXFEndpointPublisher {
 			try {
 				_busServiceRegistration.unregister();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Unable to unregister CXF bus service registration " +
-							_busServiceRegistration);
+							_busServiceRegistration,
+						exception);
 				}
 			}
 
@@ -287,12 +274,13 @@ public class CXFEndpointPublisher {
 				try {
 					_remoteAccessFilterServiceRegistration.unregister();
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Unable to unregister RemoteAccessFilter " +
 								"registration " +
-									_remoteAccessFilterServiceRegistration);
+									_remoteAccessFilterServiceRegistration,
+							exception);
 					}
 				}
 			}
@@ -301,12 +289,13 @@ public class CXFEndpointPublisher {
 				try {
 					_authVerifierFilterServiceRegistration.unregister();
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Unable to unregister AuthVerifierFilter " +
 								"registration " +
-									_authVerifierFilterServiceRegistration);
+									_authVerifierFilterServiceRegistration,
+							exception);
 					}
 				}
 			}
@@ -314,23 +303,25 @@ public class CXFEndpointPublisher {
 			try {
 				_servletServiceRegistration.unregister();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Unable to unregister servlet service registration " +
-							_servletServiceRegistration);
+							_servletServiceRegistration,
+						exception);
 				}
 			}
 
 			try {
 				_servletContextHelperServiceRegistration.unregister();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Unable to unregister servlet context helper service " +
 							"registration " +
-								_servletContextHelperServiceRegistration);
+								_servletContextHelperServiceRegistration,
+						exception);
 				}
 			}
 		}
@@ -370,8 +361,8 @@ public class CXFEndpointPublisher {
 
 					chain.doFilter(servletRequest, servletResponse);
 				}
-				catch (Exception e) {
-					throw new ServletException(e);
+				catch (Exception exception) {
+					throw new ServletException(exception);
 				}
 				finally {
 					AccessControlThreadLocal.setRemoteAccess(remoteAccess);

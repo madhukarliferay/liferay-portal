@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.asset.kernel.exception.DuplicateAssetVocabularyExternalReferenceCodeException;
 import com.liferay.asset.kernel.exception.NoSuchVocabularyException;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
@@ -26,14 +18,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -152,7 +148,11 @@ public class AssetVocabularyPersistenceTest {
 
 		newAssetVocabulary.setSettings(RandomTestUtil.randomString());
 
+		newAssetVocabulary.setVisibilityType(RandomTestUtil.nextInt());
+
 		newAssetVocabulary.setLastPublishDate(RandomTestUtil.nextDate());
+
+		newAssetVocabulary.setStatus(RandomTestUtil.nextInt());
 
 		_assetVocabularies.add(_persistence.update(newAssetVocabulary));
 
@@ -202,9 +202,37 @@ public class AssetVocabularyPersistenceTest {
 			existingAssetVocabulary.getSettings(),
 			newAssetVocabulary.getSettings());
 		Assert.assertEquals(
+			existingAssetVocabulary.getVisibilityType(),
+			newAssetVocabulary.getVisibilityType());
+		Assert.assertEquals(
 			Time.getShortTimestamp(
 				existingAssetVocabulary.getLastPublishDate()),
 			Time.getShortTimestamp(newAssetVocabulary.getLastPublishDate()));
+		Assert.assertEquals(
+			existingAssetVocabulary.getStatus(),
+			newAssetVocabulary.getStatus());
+	}
+
+	@Test(
+		expected = DuplicateAssetVocabularyExternalReferenceCodeException.class
+	)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		AssetVocabulary assetVocabulary = addAssetVocabulary();
+
+		AssetVocabulary newAssetVocabulary = addAssetVocabulary();
+
+		newAssetVocabulary.setGroupId(assetVocabulary.getGroupId());
+
+		newAssetVocabulary = _persistence.update(newAssetVocabulary);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newAssetVocabulary);
+
+		newAssetVocabulary.setExternalReferenceCode(
+			assetVocabulary.getExternalReferenceCode());
+
+		_persistence.update(newAssetVocabulary);
 	}
 
 	@Test
@@ -272,12 +300,27 @@ public class AssetVocabularyPersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_ERC() throws Exception {
-		_persistence.countByC_ERC(RandomTestUtil.nextLong(), "");
+	public void testCountByG_V() throws Exception {
+		_persistence.countByG_V(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
-		_persistence.countByC_ERC(0L, "null");
+		_persistence.countByG_V(0L, 0);
+	}
 
-		_persistence.countByC_ERC(0L, (String)null);
+	@Test
+	public void testCountByG_VArrayable() throws Exception {
+		_persistence.countByG_V(
+			new long[] {RandomTestUtil.nextLong(), 0L},
+			new int[] {RandomTestUtil.nextInt(), 0});
+	}
+
+	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
 	}
 
 	@Test
@@ -305,6 +348,24 @@ public class AssetVocabularyPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
@@ -316,7 +377,7 @@ public class AssetVocabularyPersistenceTest {
 			"groupId", true, "companyId", true, "userId", true, "userName",
 			true, "createDate", true, "modifiedDate", true, "name", true,
 			"title", true, "description", true, "settings", true,
-			"lastPublishDate", true);
+			"visibilityType", true, "lastPublishDate", true, "status", true);
 	}
 
 	@Test
@@ -539,44 +600,83 @@ public class AssetVocabularyPersistenceTest {
 
 		_persistence.clearCache();
 
-		AssetVocabulary existingAssetVocabulary = _persistence.findByPrimaryKey(
-			newAssetVocabulary.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newAssetVocabulary.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingAssetVocabulary.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingAssetVocabulary, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AssetVocabulary newAssetVocabulary = addAssetVocabulary();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AssetVocabulary.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"vocabularyId", newAssetVocabulary.getVocabularyId()));
+
+		List<AssetVocabulary> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(AssetVocabulary assetVocabulary) {
 		Assert.assertEquals(
-			Long.valueOf(existingAssetVocabulary.getGroupId()),
+			assetVocabulary.getUuid(),
+			ReflectionTestUtil.invoke(
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(assetVocabulary.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetVocabulary, "getOriginalGroupId",
-				new Class<?>[0]));
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingAssetVocabulary.getGroupId()),
+			Long.valueOf(assetVocabulary.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetVocabulary, "getOriginalGroupId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingAssetVocabulary.getName(),
-				ReflectionTestUtil.invoke(
-					existingAssetVocabulary, "getOriginalName",
-					new Class<?>[0])));
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			assetVocabulary.getName(),
+			ReflectionTestUtil.invoke(
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingAssetVocabulary.getCompanyId()),
+			assetVocabulary.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(assetVocabulary.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAssetVocabulary, "getOriginalCompanyId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingAssetVocabulary.getExternalReferenceCode(),
-				ReflectionTestUtil.invoke(
-					existingAssetVocabulary, "getOriginalExternalReferenceCode",
-					new Class<?>[0])));
+				assetVocabulary, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected AssetVocabulary addAssetVocabulary() throws Exception {
@@ -612,7 +712,11 @@ public class AssetVocabularyPersistenceTest {
 
 		assetVocabulary.setSettings(RandomTestUtil.randomString());
 
+		assetVocabulary.setVisibilityType(RandomTestUtil.nextInt());
+
 		assetVocabulary.setLastPublishDate(RandomTestUtil.nextDate());
+
+		assetVocabulary.setStatus(RandomTestUtil.nextInt());
 
 		_assetVocabularies.add(_persistence.update(assetVocabulary));
 

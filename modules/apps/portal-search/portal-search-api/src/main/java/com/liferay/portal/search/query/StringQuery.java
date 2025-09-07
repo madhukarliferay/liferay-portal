@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.query;
+
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -27,9 +20,14 @@ import org.osgi.annotation.versioning.ProviderType;
  * </p>
  *
  * @author Bruno Farache
+ * @author Petteri Karttunen
  */
 @ProviderType
 public interface StringQuery extends Query {
+
+	public void addField(String field);
+
+	public void addField(String field, Float boost);
 
 	public Boolean getAllowLeadingWildcard();
 
@@ -45,17 +43,34 @@ public interface StringQuery extends Query {
 
 	public Boolean getEnablePositionIncrements();
 
+	public Boolean getEscape();
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getFieldsBoosts}
+	 */
+	@Deprecated
+	public default Map<String, Float> getFields() {
+		return getFieldsBoosts();
+	}
+
+	public Map<String, Float> getFieldsBoosts();
+
 	public Float getFuzziness();
 
 	public Integer getFuzzyMaxExpansions();
 
 	public Integer getFuzzyPrefixLength();
 
+	public String getFuzzyRewrite();
+
 	public Boolean getFuzzyTranspositions();
 
 	public Boolean getLenient();
 
 	public Integer getMaxDeterminedStates();
+
+	public String getMinimumShouldMatch();
 
 	public Integer getPhraseSlop();
 
@@ -66,6 +81,8 @@ public interface StringQuery extends Query {
 	public String getQuoteFieldSuffix();
 
 	public String getRewrite();
+
+	public Float getTieBreaker();
 
 	public String getTimeZone();
 
@@ -84,17 +101,23 @@ public interface StringQuery extends Query {
 
 	public void setEnablePositionIncrements(Boolean enablePositionIncrements);
 
+	public void setEscape(boolean escape);
+
 	public void setFuzziness(Float fuzziness);
 
 	public void setFuzzyMaxExpansions(Integer fuzzyMaxExpansions);
 
 	public void setFuzzyPrefixLength(Integer fuzzyPrefixLength);
 
+	public void setFuzzyRewrite(String fuzzyRewrite);
+
 	public void setFuzzyTranspositions(Boolean fuzzyTranspositions);
 
 	public void setLenient(Boolean lenient);
 
 	public void setMaxDeterminedStates(Integer maxDeterminedStates);
+
+	public void setMinimumShouldMatch(String minimumShouldMatch);
 
 	public void setPhraseSlop(Integer phraseSlop);
 
@@ -103,6 +126,8 @@ public interface StringQuery extends Query {
 	public void setQuoteFieldSuffix(String quoteFieldSuffix);
 
 	public void setRewrite(String rewrite);
+
+	public void setTieBreaker(float tieBreaker);
 
 	public void setTimeZone(String timeZone);
 

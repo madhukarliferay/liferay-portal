@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.ant.bnd.npm;
@@ -53,7 +44,7 @@ public class NpmAnalyzerPluginTest {
 		Assert.assertEquals("liferay", npmModule.name);
 		Assert.assertEquals("1.2.4", npmModule.version);
 		Assert.assertTrue(npmModule.dependencies.containsKey("lodash"));
-		Assert.assertEquals("~3.9.3", npmModule.dependencies.get("lodash"));
+		Assert.assertEquals("~4.17.21", npmModule.dependencies.get("lodash"));
 	}
 
 	@Test
@@ -315,19 +306,15 @@ public class NpmAnalyzerPluginTest {
 			"/liferay-1.2.4",
 			analyzer.getProperty(NpmAnalyzerPlugin.WEB_CONTEXT_PATH));
 
-		String property = analyzer.getProperty(Constants.PROVIDE_CAPABILITY);
-
 		Assert.assertEquals(
 			"osgi.webresource;osgi.webresource=liferay;" +
 				"version:Version=\"1.2.4\"",
-			property);
-
-		property = analyzer.getProperty(Constants.REQUIRE_CAPABILITY);
+			analyzer.getProperty(Constants.PROVIDE_CAPABILITY));
 
 		Assert.assertEquals(
 			"osgi.webresource;filter:=\"(&(osgi.webresource=liferay)" +
 				"(&(version>=1.0.0)(!(version>=1.1.0))))\"",
-			property);
+			analyzer.getProperty(Constants.REQUIRE_CAPABILITY));
 	}
 
 	@Test
@@ -352,12 +339,10 @@ public class NpmAnalyzerPluginTest {
 			"/liferay-0.0.0.1word-cha_rs",
 			analyzer.getProperty(NpmAnalyzerPlugin.WEB_CONTEXT_PATH));
 
-		String property = analyzer.getProperty(Constants.PROVIDE_CAPABILITY);
-
 		Assert.assertEquals(
 			"osgi.webresource;osgi.webresource=liferay;" +
 				"version:Version=\"0.0.0.1word-cha_rs\"",
-			property);
+			analyzer.getProperty(Constants.PROVIDE_CAPABILITY));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

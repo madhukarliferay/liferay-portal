@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.service.test;
@@ -28,18 +19,22 @@ import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalServiceUtil;
+import com.liferay.document.library.util.DLFileEntryTypeUtil;
 import com.liferay.dynamic.data.mapping.kernel.DDMForm;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
-import com.liferay.dynamic.data.mapping.kernel.DDMStructure;
 import com.liferay.dynamic.data.mapping.kernel.LocalizedValue;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
+import com.liferay.dynamic.data.mapping.util.DDMBeanTranslator;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalServiceUtil;
 import com.liferay.expando.kernel.service.ExpandoTableLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -57,12 +52,15 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.io.Serializable;
 
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -94,14 +92,13 @@ public class DLFileVersionTest {
 		setUpParentFolder();
 		setUpResourcePermission();
 
-		com.liferay.dynamic.data.mapping.model.DDMStructure ddmStructure =
-			DDMStructureTestUtil.addStructure(
-				_group.getGroupId(), DLFileEntryMetadata.class.getName());
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), DLFileEntryMetadata.class.getName());
 
 		_dlFileEntryType = DLFileEntryTypeServiceUtil.addFileEntryType(
-			_group.getGroupId(), StringUtil.randomString(),
-			StringUtil.randomString(),
-			new long[] {ddmStructure.getStructureId()},
+			null, _group.getGroupId(), ddmStructure.getStructureId(), null,
+			Collections.singletonMap(LocaleUtil.US, "New File Entry Type"),
+			Collections.singletonMap(LocaleUtil.US, "New File Entry Type"),
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		ExpandoTable expandoTable =
@@ -115,9 +112,10 @@ public class DLFileVersionTest {
 		_serviceContext = getServiceContext();
 
 		FileEntry fileEntry = DLAppServiceUtil.addFileEntry(
-			_group.getGroupId(), _parentFolder.getFolderId(), _SOURCE_FILE_NAME,
-			ContentTypes.APPLICATION_OCTET_STREAM, _TITLE, StringPool.BLANK,
-			StringPool.BLANK, _DATA_VERSION_1, _serviceContext);
+			null, _group.getGroupId(), _parentFolder.getFolderId(),
+			_SOURCE_FILE_NAME, ContentTypes.APPLICATION_OCTET_STREAM, _TITLE,
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+			_DATA_VERSION_1, null, null, null, _serviceContext);
 
 		_fileVersion = DLFileVersionLocalServiceUtil.getFileVersion(
 			fileEntry.getFileEntryId(), DLFileEntryConstants.VERSION_DEFAULT);
@@ -139,20 +137,28 @@ public class DLFileVersionTest {
 		DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
-			_fileVersion.getMimeType(), _UPDATE_VALUE,
+			_fileVersion.getMimeType(), _UPDATE_VALUE, StringPool.BLANK,
 			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1,
+			_fileVersion.getDisplayDate(), _fileVersion.getExpirationDate(),
+			_fileVersion.getReviewDate(), _serviceContext);
 
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		DLAppServiceUtil.revertFileEntry(
 			fileEntry.getFileEntryId(), DLFileEntryConstants.VERSION_DEFAULT,
@@ -168,8 +174,11 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_2, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_2, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -179,9 +188,29 @@ public class DLFileVersionTest {
 	public void testUpdateDescription() throws Exception {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
-			_fileVersion.getMimeType(), _fileVersion.getTitle(), _UPDATE_VALUE,
+			_fileVersion.getMimeType(), _fileVersion.getTitle(),
+			StringPool.BLANK, _UPDATE_VALUE, _fileVersion.getChangeLog(),
+			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1,
+			_fileVersion.getDisplayDate(), _fileVersion.getExpirationDate(),
+			_fileVersion.getReviewDate(), _serviceContext);
+
+		Assert.assertNotEquals(
+			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
+	}
+
+	@Test
+	public void testUpdateDisplayDate() throws Exception {
+		updateServiceContext(
+			_UPDATE_VALUE, _dlFileEntryType.getFileEntryTypeId(),
+			StringPool.BLANK);
+
+		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
+			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
+			_fileVersion.getMimeType(), _fileVersion.getTitle(),
+			StringPool.BLANK, _fileVersion.getDescription(),
 			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
-			_DATA_VERSION_1, _serviceContext);
+			_DATA_VERSION_1, new Date(), _fileVersion.getExpirationDate(),
+			_fileVersion.getReviewDate(), _serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -196,8 +225,30 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
+
+		Assert.assertNotEquals(
+			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
+	}
+
+	@Test
+	public void testUpdateExpirationDate() throws Exception {
+		updateServiceContext(
+			_UPDATE_VALUE, _dlFileEntryType.getFileEntryTypeId(),
+			StringPool.BLANK);
+
+		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
+			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
+			_fileVersion.getMimeType(), _fileVersion.getTitle(),
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			new Date(System.currentTimeMillis() + Time.MINUTE),
+			_fileVersion.getReviewDate(), _serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -213,8 +264,11 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -229,8 +283,11 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -241,10 +298,31 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		Assert.assertEquals("1.1", fileEntry.getVersion());
+	}
+
+	@Test
+	public void testUpdateReviewDate() throws Exception {
+		updateServiceContext(
+			_UPDATE_VALUE, _dlFileEntryType.getFileEntryTypeId(),
+			StringPool.BLANK);
+
+		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
+			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
+			_fileVersion.getMimeType(), _fileVersion.getTitle(),
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_1, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), new Date(), _serviceContext);
+
+		Assert.assertNotEquals(
+			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
 	}
 
 	@Test
@@ -252,8 +330,11 @@ public class DLFileVersionTest {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
 			_fileVersion.getMimeType(), _fileVersion.getTitle(),
-			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_3, _serviceContext);
+			StringPool.BLANK, _fileVersion.getDescription(),
+			_fileVersion.getChangeLog(), DLVersionNumberIncrease.MINOR,
+			_DATA_VERSION_3, _fileVersion.getDisplayDate(),
+			_fileVersion.getExpirationDate(), _fileVersion.getReviewDate(),
+			_serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -263,9 +344,11 @@ public class DLFileVersionTest {
 	public void testUpdateTitle() throws Exception {
 		FileEntry fileEntry = DLAppServiceUtil.updateFileEntry(
 			_fileVersion.getFileEntryId(), _SOURCE_FILE_NAME,
-			_fileVersion.getMimeType(), _UPDATE_VALUE,
+			_fileVersion.getMimeType(), _UPDATE_VALUE, StringPool.BLANK,
 			_fileVersion.getDescription(), _fileVersion.getChangeLog(),
-			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1, _serviceContext);
+			DLVersionNumberIncrease.MINOR, _DATA_VERSION_1,
+			_fileVersion.getDisplayDate(), _fileVersion.getExpirationDate(),
+			_fileVersion.getReviewDate(), _serviceContext);
 
 		Assert.assertNotEquals(
 			DLFileEntryConstants.VERSION_DEFAULT, fileEntry.getVersion());
@@ -308,15 +391,13 @@ public class DLFileVersionTest {
 
 		serviceContext.setExpandoBridgeAttributes(expandoBridgeAttributes);
 
-		DLFileEntryType fileEntryType =
+		List<DDMStructure> ddmStructures = DLFileEntryTypeUtil.getDDMStructures(
 			DLFileEntryTypeLocalServiceUtil.getFileEntryType(
-				_dlFileEntryType.getFileEntryTypeId());
-
-		List<DDMStructure> ddmStructures = fileEntryType.getDDMStructures();
+				_dlFileEntryType.getFileEntryTypeId()));
 
 		for (DDMStructure ddmStructure : ddmStructures) {
 			DDMFormValues ddmFormValues = createDDMFormValues(
-				ddmStructure.getDDMForm());
+				_ddmBeanTranslator.translate(ddmStructure.getDDMForm()));
 
 			for (String fieldName : ddmStructure.getFieldNames()) {
 				DDMFormFieldValue ddmFormFieldValue = createDDMFormFieldValue(
@@ -340,16 +421,18 @@ public class DLFileVersionTest {
 				_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				"Test Folder");
 		}
-		catch (NoSuchFolderException nsfe) {
+		catch (NoSuchFolderException noSuchFolderException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchFolderException);
+			}
 		}
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		_parentFolder = DLAppServiceUtil.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			"Test Folder", RandomTestUtil.randomString(), serviceContext);
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Test Folder",
+			RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	protected void setUpResourcePermission() throws Exception {
@@ -383,10 +466,8 @@ public class DLFileVersionTest {
 			return;
 		}
 
-		DLFileEntryType fileEntryType =
-			DLFileEntryTypeLocalServiceUtil.getFileEntryType(fileEntryTypeId);
-
-		List<DDMStructure> ddmStructures = fileEntryType.getDDMStructures();
+		List<DDMStructure> ddmStructures = DLFileEntryTypeUtil.getDDMStructures(
+			DLFileEntryTypeLocalServiceUtil.getFileEntryType(fileEntryTypeId));
 
 		for (DDMStructure ddmStructure : ddmStructures) {
 			DDMFormValues ddmFormValues =
@@ -435,6 +516,9 @@ public class DLFileVersionTest {
 
 	private static final String _UPDATE_VALUE = "Update Value";
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		DLFileVersionTest.class);
+
 	static {
 		for (int i = 0; i < _DATA_SIZE_1; i++) {
 			_DATA_VERSION_1[i] = (byte)i;
@@ -445,6 +529,9 @@ public class DLFileVersionTest {
 			_DATA_VERSION_3[i] = (byte)i;
 		}
 	}
+
+	@Inject
+	private DDMBeanTranslator _ddmBeanTranslator;
 
 	@DeleteAfterTestRun
 	private DLFileEntryType _dlFileEntryType;

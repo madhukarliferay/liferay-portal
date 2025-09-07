@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model;
@@ -23,6 +14,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -46,6 +39,7 @@ public class KaleoInstanceWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("kaleoInstanceId", getKaleoInstanceId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -53,12 +47,14 @@ public class KaleoInstanceWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("kaleoDefinitionId", getKaleoDefinitionId());
 		attributes.put(
 			"kaleoDefinitionVersionId", getKaleoDefinitionVersionId());
 		attributes.put("kaleoDefinitionName", getKaleoDefinitionName());
 		attributes.put("kaleoDefinitionVersion", getKaleoDefinitionVersion());
 		attributes.put(
 			"rootKaleoInstanceTokenId", getRootKaleoInstanceTokenId());
+		attributes.put("active", isActive());
 		attributes.put("className", getClassName());
 		attributes.put("classPK", getClassPK());
 		attributes.put("completed", isCompleted());
@@ -74,6 +70,12 @@ public class KaleoInstanceWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		Long kaleoInstanceId = (Long)attributes.get("kaleoInstanceId");
@@ -118,6 +120,12 @@ public class KaleoInstanceWrapper
 			setModifiedDate(modifiedDate);
 		}
 
+		Long kaleoDefinitionId = (Long)attributes.get("kaleoDefinitionId");
+
+		if (kaleoDefinitionId != null) {
+			setKaleoDefinitionId(kaleoDefinitionId);
+		}
+
 		Long kaleoDefinitionVersionId = (Long)attributes.get(
 			"kaleoDefinitionVersionId");
 
@@ -144,6 +152,12 @@ public class KaleoInstanceWrapper
 
 		if (rootKaleoInstanceTokenId != null) {
 			setRootKaleoInstanceTokenId(rootKaleoInstanceTokenId);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
 		}
 
 		String className = (String)attributes.get("className");
@@ -175,6 +189,21 @@ public class KaleoInstanceWrapper
 		if (workflowContext != null) {
 			setWorkflowContext(workflowContext);
 		}
+	}
+
+	@Override
+	public KaleoInstance cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the active of this kaleo instance.
+	 *
+	 * @return the active of this kaleo instance
+	 */
+	@Override
+	public boolean getActive() {
+		return model.getActive();
 	}
 
 	/**
@@ -238,6 +267,16 @@ public class KaleoInstanceWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this kaleo instance.
+	 *
+	 * @return the ct collection ID of this kaleo instance
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the group ID of this kaleo instance.
 	 *
 	 * @return the group ID of this kaleo instance
@@ -245,6 +284,16 @@ public class KaleoInstanceWrapper
 	@Override
 	public long getGroupId() {
 		return model.getGroupId();
+	}
+
+	/**
+	 * Returns the kaleo definition ID of this kaleo instance.
+	 *
+	 * @return the kaleo definition ID of this kaleo instance
+	 */
+	@Override
+	public long getKaleoDefinitionId() {
+		return model.getKaleoDefinitionId();
 	}
 
 	/**
@@ -385,6 +434,16 @@ public class KaleoInstanceWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this kaleo instance is active.
+	 *
+	 * @return <code>true</code> if this kaleo instance is active; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isActive() {
+		return model.isActive();
+	}
+
+	/**
 	 * Returns <code>true</code> if this kaleo instance is completed.
 	 *
 	 * @return <code>true</code> if this kaleo instance is completed; <code>false</code> otherwise
@@ -394,14 +453,19 @@ public class KaleoInstanceWrapper
 		return model.isCompleted();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a kaleo instance model instance should use the <code>KaleoInstance</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets whether this kaleo instance is active.
+	 *
+	 * @param active the active of this kaleo instance
+	 */
+	@Override
+	public void setActive(boolean active) {
+		model.setActive(active);
 	}
 
 	/**
@@ -465,6 +529,16 @@ public class KaleoInstanceWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this kaleo instance.
+	 *
+	 * @param ctCollectionId the ct collection ID of this kaleo instance
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the group ID of this kaleo instance.
 	 *
 	 * @param groupId the group ID of this kaleo instance
@@ -472,6 +546,16 @@ public class KaleoInstanceWrapper
 	@Override
 	public void setGroupId(long groupId) {
 		model.setGroupId(groupId);
+	}
+
+	/**
+	 * Sets the kaleo definition ID of this kaleo instance.
+	 *
+	 * @param kaleoDefinitionId the kaleo definition ID of this kaleo instance
+	 */
+	@Override
+	public void setKaleoDefinitionId(long kaleoDefinitionId) {
+		model.setKaleoDefinitionId(kaleoDefinitionId);
 	}
 
 	/**
@@ -592,6 +676,25 @@ public class KaleoInstanceWrapper
 	@Override
 	public void setWorkflowContext(String workflowContext) {
 		model.setWorkflowContext(workflowContext);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<KaleoInstance, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<KaleoInstance, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

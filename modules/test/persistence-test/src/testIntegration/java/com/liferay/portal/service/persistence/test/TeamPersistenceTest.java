@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,19 +12,24 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchTeamException;
 import com.liferay.portal.kernel.model.Team;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.TeamLocalServiceUtil;
 import com.liferay.portal.kernel.service.persistence.TeamPersistence;
 import com.liferay.portal.kernel.service.persistence.TeamUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +120,8 @@ public class TeamPersistenceTest {
 
 		newTeam.setMvccVersion(RandomTestUtil.nextLong());
 
+		newTeam.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newTeam.setUuid(RandomTestUtil.randomString());
 
 		newTeam.setCompanyId(RandomTestUtil.nextLong());
@@ -152,6 +149,8 @@ public class TeamPersistenceTest {
 
 		Assert.assertEquals(
 			existingTeam.getMvccVersion(), newTeam.getMvccVersion());
+		Assert.assertEquals(
+			existingTeam.getCtCollectionId(), newTeam.getCtCollectionId());
 		Assert.assertEquals(existingTeam.getUuid(), newTeam.getUuid());
 		Assert.assertEquals(existingTeam.getTeamId(), newTeam.getTeamId());
 		Assert.assertEquals(
@@ -201,6 +200,13 @@ public class TeamPersistenceTest {
 	}
 
 	@Test
+	public void testCountByCompanyId() throws Exception {
+		_persistence.countByCompanyId(RandomTestUtil.nextLong());
+
+		_persistence.countByCompanyId(0L);
+	}
+
+	@Test
 	public void testCountByGroupId() throws Exception {
 		_persistence.countByGroupId(RandomTestUtil.nextLong());
 
@@ -241,16 +247,34 @@ public class TeamPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<Team> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"Team", "mvccVersion", true, "uuid", true, "teamId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "groupId", true, "name", true,
-			"description", true, "lastPublishDate", true);
+			"Team", "mvccVersion", true, "ctCollectionId", true, "uuid", true,
+			"teamId", true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "groupId", true, "name",
+			true, "description", true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -457,28 +481,70 @@ public class TeamPersistenceTest {
 
 		_persistence.clearCache();
 
-		Team existingTeam = _persistence.findByPrimaryKey(
-			newTeam.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newTeam.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingTeam.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingTeam, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		Team newTeam = addTeam();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Team.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("teamId", newTeam.getTeamId()));
+
+		List<Team> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(Team team) {
 		Assert.assertEquals(
-			Long.valueOf(existingTeam.getGroupId()),
+			team.getUuid(),
+			ReflectionTestUtil.invoke(
+				team, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(team.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingTeam, "getOriginalGroupId", new Class<?>[0]));
+				team, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingTeam.getGroupId()),
+			Long.valueOf(team.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingTeam, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingTeam.getName(),
-				ReflectionTestUtil.invoke(
-					existingTeam, "getOriginalName", new Class<?>[0])));
+				team, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"groupId"));
+		Assert.assertEquals(
+			team.getName(),
+			ReflectionTestUtil.invoke(
+				team, "getColumnOriginalValue", new Class<?>[] {String.class},
+				"name"));
 	}
 
 	protected Team addTeam() throws Exception {
@@ -487,6 +553,8 @@ public class TeamPersistenceTest {
 		Team team = _persistence.create(pk);
 
 		team.setMvccVersion(RandomTestUtil.nextLong());
+
+		team.setCtCollectionId(RandomTestUtil.nextLong());
 
 		team.setUuid(RandomTestUtil.randomString());
 

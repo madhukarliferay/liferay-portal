@@ -1,12 +1,11 @@
 @import 'app';
-@import 'dropdown';
 @import 'clay_chart';
-@import 'empty-content';
-@import 'global-colors';
-@import 'multi-select';
-@import 'process-dashboard';
+@import 'dropdown';
+@import 'global_colors';
+@import 'multi_select';
+@import 'process_tabs';
 @import 'table';
-@import 'velocity-chart';
+@import 'velocity_chart';
 
 body {
 	margin: 0;

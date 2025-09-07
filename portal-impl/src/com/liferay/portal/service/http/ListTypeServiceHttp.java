@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.http;
@@ -46,7 +37,6 @@ import com.liferay.portal.kernel.util.MethodKey;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see ListTypeServiceSoap
  * @generated
  */
 public class ListTypeServiceHttp {
@@ -68,29 +58,31 @@ public class ListTypeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.portal.kernel.model.ListType)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static com.liferay.portal.kernel.model.ListType getListType(
-		HttpPrincipal httpPrincipal, String name, String type) {
+		HttpPrincipal httpPrincipal, long companyId, String name, String type) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
@@ -98,54 +90,91 @@ public class ListTypeServiceHttp {
 				_getListTypeParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, name, type);
+				methodKey, companyId, name, type);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.portal.kernel.model.ListType)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.ListType>
-		getListTypes(HttpPrincipal httpPrincipal, String type) {
+	public static long getListTypeId(
+		HttpPrincipal httpPrincipal, long companyId, String name, String type) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
-				ListTypeServiceUtil.class, "getListTypes",
-				_getListTypesParameterTypes2);
+				ListTypeServiceUtil.class, "getListTypeId",
+				_getListTypeIdParameterTypes2);
 
-			MethodHandler methodHandler = new MethodHandler(methodKey, type);
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, companyId, name, type);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
+			}
+
+			return ((Long)returnObj).longValue();
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static java.util.List<com.liferay.portal.kernel.model.ListType>
+		getListTypes(HttpPrincipal httpPrincipal, long companyId, String type) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				ListTypeServiceUtil.class, "getListTypes",
+				_getListTypesParameterTypes3);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, companyId, type);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
 			}
 
 			return (java.util.List<com.liferay.portal.kernel.model.ListType>)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -157,7 +186,7 @@ public class ListTypeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				ListTypeServiceUtil.class, "validate",
-				_validateParameterTypes3);
+				_validateParameterTypes4);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, listTypeId, classNameId, type);
@@ -165,22 +194,24 @@ public class ListTypeServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -191,7 +222,7 @@ public class ListTypeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				ListTypeServiceUtil.class, "validate",
-				_validateParameterTypes4);
+				_validateParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, listTypeId, type);
@@ -199,22 +230,24 @@ public class ListTypeServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -224,15 +257,17 @@ public class ListTypeServiceHttp {
 		long.class
 	};
 	private static final Class<?>[] _getListTypeParameterTypes1 = new Class[] {
-		String.class, String.class
+		long.class, String.class, String.class
 	};
-	private static final Class<?>[] _getListTypesParameterTypes2 = new Class[] {
-		String.class
-	};
-	private static final Class<?>[] _validateParameterTypes3 = new Class[] {
-		long.class, long.class, String.class
+	private static final Class<?>[] _getListTypeIdParameterTypes2 =
+		new Class[] {long.class, String.class, String.class};
+	private static final Class<?>[] _getListTypesParameterTypes3 = new Class[] {
+		long.class, String.class
 	};
 	private static final Class<?>[] _validateParameterTypes4 = new Class[] {
+		long.class, long.class, String.class
+	};
+	private static final Class<?>[] _validateParameterTypes5 = new Class[] {
 		long.class, String.class
 	};
 

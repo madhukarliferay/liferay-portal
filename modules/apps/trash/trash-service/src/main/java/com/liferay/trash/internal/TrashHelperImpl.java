@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.trash.internal;
@@ -17,12 +8,17 @@ package com.liferay.trash.internal;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ContainerModel;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.trash.TrashHandler;
@@ -43,13 +39,13 @@ import com.liferay.trash.model.TrashVersion;
 import com.liferay.trash.service.TrashEntryLocalService;
 import com.liferay.trash.service.TrashVersionLocalService;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.text.Format;
 
 import java.util.Date;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,7 +53,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eudaldo Alonso
  */
-@Component(immediate = true, service = TrashHelper.class)
+@Component(service = TrashHelper.class)
 public class TrashHelperImpl implements TrashHelper {
 
 	@Override
@@ -66,11 +62,11 @@ public class TrashHelperImpl implements TrashHelper {
 			group.getCompanyId(), PropsKeys.TRASH_ENTRIES_MAX_AGE,
 			PropsValues.TRASH_ENTRIES_MAX_AGE);
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			group.getParentLiveGroupTypeSettingsProperties();
 
 		return GetterUtil.getInteger(
-			typeSettingsProperties.getProperty("trashEntriesMaxAge"),
+			typeSettingsUnicodeProperties.getProperty("trashEntriesMaxAge"),
 			trashEntriesMaxAge);
 	}
 
@@ -117,6 +113,70 @@ public class TrashHelperImpl implements TrashHelper {
 	}
 
 	@Override
+	public String getOriginalTitle(String title, String paramName) {
+		return _getOriginalTitle(title, paramName, _TRASH_PREFIX);
+	}
+
+	@Override
+	public TrashEntry getTrashEntry(TrashedModel trashedModel)
+		throws PortalException {
+
+		if (!trashedModel.isInTrash()) {
+			return null;
+		}
+
+		BaseModel<?> baseModel = (BaseModel<?>)trashedModel;
+
+		TrashEntry trashEntry = _trashEntryLocalService.fetchEntry(
+			baseModel.getModelClassName(), trashedModel.getTrashEntryClassPK());
+
+		if (trashEntry != null) {
+			return trashEntry;
+		}
+
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			baseModel.getModelClassName());
+
+		if (Validator.isNotNull(
+				trashHandler.getContainerModelClassName(
+					(Long)baseModel.getPrimaryKeyObj()))) {
+
+			ContainerModel containerModel = null;
+
+			try {
+				containerModel = trashHandler.getParentContainerModel(
+					trashedModel);
+			}
+			catch (NoSuchModelException noSuchModelException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(noSuchModelException);
+				}
+
+				return null;
+			}
+
+			while (containerModel != null) {
+				if (containerModel instanceof TrashedModel) {
+					return getTrashEntry((TrashedModel)containerModel);
+				}
+
+				trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+					trashHandler.getContainerModelClassName(
+						containerModel.getContainerModelId()));
+
+				if (trashHandler == null) {
+					return null;
+				}
+
+				containerModel = trashHandler.getContainerModel(
+					containerModel.getParentContainerModelId());
+			}
+		}
+
+		return null;
+	}
+
+	@Override
 	public String getTrashTitle(long entryId) {
 		return _getTrashTitle(entryId, _TRASH_PREFIX);
 	}
@@ -130,9 +190,10 @@ public class TrashHelperImpl implements TrashHelper {
 		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
 			className);
 
-		if (trashHandler.isInTrashContainer(classPK)) {
-			com.liferay.trash.kernel.model.TrashEntry trashEntry =
-				trashHandler.getTrashEntry(classPK);
+		TrashedModel trashedModel = trashHandler.getTrashedModel(classPK);
+
+		if ((trashedModel != null) && isInTrashContainer(trashedModel)) {
+			TrashEntry trashEntry = getTrashEntry(trashedModel);
 
 			className = trashEntry.getClassName();
 			classPK = trashEntry.getClassPK();
@@ -146,16 +207,21 @@ public class TrashHelperImpl implements TrashHelper {
 			return null;
 		}
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		PortletURL portletURL = PortletURLBuilder.create(
+			PortletProviderUtil.getPortletURL(
+				httpServletRequest, TrashEntry.class.getName(),
+				PortletProvider.Action.VIEW)
+		).setMVCPath(
+			"/view_content.jsp"
+		).setRedirect(
+			() -> {
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
 
-		PortletURL portletURL = PortletProviderUtil.getPortletURL(
-			httpServletRequest, TrashEntry.class.getName(),
-			PortletProvider.Action.VIEW);
-
-		portletURL.setParameter("mvcPath", "/view_content.jsp");
-		portletURL.setParameter("redirect", themeDisplay.getURLCurrent());
+				return themeDisplay.getURLCurrent();
+			}
+		).buildPortletURL();
 
 		TrashEntry trashEntry = _trashEntryLocalService.getEntry(
 			className, classPK);
@@ -175,6 +241,85 @@ public class TrashHelperImpl implements TrashHelper {
 	}
 
 	@Override
+	public boolean isInTrashContainer(TrashedModel trashedModel) {
+		if (trashedModel == null) {
+			return false;
+		}
+
+		BaseModel<?> baseModel = (BaseModel<?>)trashedModel;
+
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			baseModel.getModelClassName());
+
+		if ((trashHandler == null) ||
+			Validator.isNull(
+				trashHandler.getContainerModelClassName(
+					(Long)baseModel.getPrimaryKeyObj()))) {
+
+			return false;
+		}
+
+		try {
+			ContainerModel containerModel =
+				trashHandler.getParentContainerModel(trashedModel);
+
+			if (containerModel == null) {
+				return false;
+			}
+
+			if (containerModel instanceof TrashedModel) {
+				TrashedModel containerTrashedModel =
+					(TrashedModel)containerModel;
+
+				return containerTrashedModel.isInTrash();
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isInTrashExplicitly(TrashedModel trashedModel) {
+		if (!trashedModel.isInTrash()) {
+			return false;
+		}
+
+		BaseModel<?> baseModel = (BaseModel<?>)trashedModel;
+
+		TrashEntry trashEntry = _trashEntryLocalService.fetchEntry(
+			baseModel.getModelClassName(), trashedModel.getTrashEntryClassPK());
+
+		if (trashEntry != null) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isInTrashImplicitly(TrashedModel trashedModel) {
+		if (!trashedModel.isInTrash()) {
+			return false;
+		}
+
+		BaseModel<?> baseModel = (BaseModel<?>)trashedModel;
+
+		TrashEntry trashEntry = _trashEntryLocalService.fetchEntry(
+			baseModel.getModelClassName(), trashedModel.getTrashEntryClassPK());
+
+		if (trashEntry != null) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
 	public boolean isTrashEnabled(Group group) {
 		boolean companyTrashEnabled = PrefsPropsUtil.getBoolean(
 			group.getCompanyId(), PropsKeys.TRASH_ENABLED);
@@ -183,11 +328,11 @@ public class TrashHelperImpl implements TrashHelper {
 			return false;
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			group.getParentLiveGroupTypeSettingsProperties();
 
 		return GetterUtil.getBoolean(
-			typeSettingsProperties.getProperty("trashEnabled"), true);
+			typeSettingsUnicodeProperties.getProperty("trashEnabled"), true);
 	}
 
 	@Override
@@ -196,13 +341,7 @@ public class TrashHelperImpl implements TrashHelper {
 	}
 
 	private String _getNewName(String oldName, String token) {
-		StringBundler sb = new StringBundler(3);
-
-		sb.append(oldName);
-		sb.append(StringPool.SPACE);
-		sb.append(token);
-
-		return sb.toString();
+		return StringBundler.concat(oldName, StringPool.SPACE, token);
 	}
 
 	private String _getOriginalTitle(
@@ -234,11 +373,12 @@ public class TrashHelperImpl implements TrashHelper {
 				title = trashEntry.getTypeSettingsProperty(paramName);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"No trash entry or trash version exists with ID " +
-						trashEntryId);
+						trashEntryId,
+					exception);
 			}
 		}
 
@@ -250,11 +390,7 @@ public class TrashHelperImpl implements TrashHelper {
 	}
 
 	private boolean _isValidTrashTitle(String title, String prefix) {
-		if (title.startsWith(prefix)) {
-			return true;
-		}
-
-		return false;
+		return title.startsWith(prefix);
 	}
 
 	private static final String _TRASH_PREFIX = StringPool.SLASH;

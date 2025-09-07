@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -45,8 +36,6 @@ for (int i = 0; i < controls.length; i++) {
 			<c:when test="<%= controls[i] instanceof PortletDataHandlerBoolean %>">
 
 				<%
-				Map<String, Object> data = new HashMap<String, Object>();
-
 				PortletDataHandlerBoolean control = (PortletDataHandlerBoolean)controls[i];
 
 				String controlLabel = LanguageUtil.get(request, resourceBundle, control.getControlLabel());
@@ -59,14 +48,16 @@ for (int i = 0; i < controls.length; i++) {
 					long modelAdditionCount = manifestSummary.getModelAdditionCount(stagedModelType);
 
 					if (modelAdditionCount != 0) {
-						controlLabel += modelAdditionCount > 0 ? " (" + modelAdditionCount + ")" : StringPool.BLANK;
+						controlLabel += (modelAdditionCount > 0) ? " (" + modelAdditionCount + ")" : StringPool.BLANK;
 					}
 					else {
 						continue control;
 					}
 				}
 
-				data.put("name", controlLabel);
+				Map<String, Object> data = HashMapBuilder.<String, Object>put(
+					"name", controlLabel
+				).build();
 
 				if (!childControl) {
 					data.put("root-control-id", liferayPortletResponse.getNamespace() + rootControlId);
@@ -102,7 +93,7 @@ for (int i = 0; i < controls.length; i++) {
 			</c:when>
 			<c:when test="<%= controls[i] instanceof PortletDataHandlerChoice %>">
 				<label>
-					<%= LanguageUtil.get(request, resourceBundle, controls[i].getControlLabel()) %>
+					<liferay-ui:message key="<%= controls[i].getControlLabel() %>" />
 
 					<%
 					PortletDataHandlerChoice control = (PortletDataHandlerChoice)controls[i];
@@ -114,14 +105,23 @@ for (int i = 0; i < controls.length; i++) {
 
 						String controlValue = MapUtil.getString(parameterMap, control.getNamespacedControlName(), defaultChoice);
 
-						Map<String, Object> data = new HashMap<String, Object>();
-
 						String controlName = LanguageUtil.get(request, resourceBundle, choice);
-
-						data.put("name", controlName);
 					%>
 
-						<aui:input checked="<%= controlValue.equals(choice) %>" data="<%= data %>" disabled="<%= disableInputs %>" helpMessage="<%= control.getHelpMessage(locale, action) %>" label="<%= controlName %>" name="<%= control.getNamespacedControlName() %>" type="radio" value="<%= choice %>" />
+						<aui:input
+							checked="<%= controlValue.equals(choice) %>"
+							data='<%=
+								HashMapBuilder.<String, Object>put(
+									"name", controlName
+								).build()
+							%>'
+							disabled="<%= disableInputs %>"
+							helpMessage="<%= control.getHelpMessage(locale, action) %>"
+							label="<%= controlName %>"
+							name="<%= control.getNamespacedControlName() %>"
+							type="radio"
+							value="<%= choice %>"
+						/>
 
 					<%
 					}

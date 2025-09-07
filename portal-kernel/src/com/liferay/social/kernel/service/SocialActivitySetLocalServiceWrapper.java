@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.service;
 
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.social.kernel.model.SocialActivitySet;
 
 /**
  * Provides a wrapper for {@link SocialActivitySetLocalService}.
@@ -27,20 +22,18 @@ public class SocialActivitySetLocalServiceWrapper
 	implements ServiceWrapper<SocialActivitySetLocalService>,
 			   SocialActivitySetLocalService {
 
+	public SocialActivitySetLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SocialActivitySetLocalServiceWrapper(
 		SocialActivitySetLocalService socialActivitySetLocalService) {
 
 		_socialActivitySetLocalService = socialActivitySetLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link SocialActivitySetLocalServiceUtil} to access the social activity set local service. Add custom service methods to <code>com.liferay.portlet.social.service.impl.SocialActivitySetLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet addActivitySet(
-			long activityId)
+	public SocialActivitySet addActivitySet(long activityId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _socialActivitySetLocalService.addActivitySet(activityId);
@@ -49,17 +42,31 @@ public class SocialActivitySetLocalServiceWrapper
 	/**
 	 * Adds the social activity set to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SocialActivitySetLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param socialActivitySet the social activity set
 	 * @return the social activity set that was added
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		addSocialActivitySet(
-			com.liferay.social.kernel.model.SocialActivitySet
-				socialActivitySet) {
+	public SocialActivitySet addSocialActivitySet(
+		SocialActivitySet socialActivitySet) {
 
 		return _socialActivitySetLocalService.addSocialActivitySet(
 			socialActivitySet);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _socialActivitySetLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -69,9 +76,7 @@ public class SocialActivitySetLocalServiceWrapper
 	 * @return the new social activity set
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		createSocialActivitySet(long activitySetId) {
-
+	public SocialActivitySet createSocialActivitySet(long activitySetId) {
 		return _socialActivitySetLocalService.createSocialActivitySet(
 			activitySetId);
 	}
@@ -106,13 +111,16 @@ public class SocialActivitySetLocalServiceWrapper
 	/**
 	 * Deletes the social activity set with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SocialActivitySetLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param activitySetId the primary key of the social activity set
 	 * @return the social activity set that was removed
 	 * @throws PortalException if a social activity set with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-			deleteSocialActivitySet(long activitySetId)
+	public SocialActivitySet deleteSocialActivitySet(long activitySetId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _socialActivitySetLocalService.deleteSocialActivitySet(
@@ -122,17 +130,31 @@ public class SocialActivitySetLocalServiceWrapper
 	/**
 	 * Deletes the social activity set from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SocialActivitySetLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param socialActivitySet the social activity set
 	 * @return the social activity set that was removed
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		deleteSocialActivitySet(
-			com.liferay.social.kernel.model.SocialActivitySet
-				socialActivitySet) {
+	public SocialActivitySet deleteSocialActivitySet(
+		SocialActivitySet socialActivitySet) {
 
 		return _socialActivitySetLocalService.deleteSocialActivitySet(
 			socialActivitySet);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _socialActivitySetLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _socialActivitySetLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -227,9 +249,7 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		fetchSocialActivitySet(long activitySetId) {
-
+	public SocialActivitySet fetchSocialActivitySet(long activitySetId) {
 		return _socialActivitySetLocalService.fetchSocialActivitySet(
 			activitySetId);
 	}
@@ -242,25 +262,24 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		getClassActivitySet(long classNameId, long classPK, int type) {
+	public SocialActivitySet getClassActivitySet(
+		long classNameId, long classPK, int type) {
 
 		return _socialActivitySetLocalService.getClassActivitySet(
 			classNameId, classPK, type);
 	}
 
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		getClassActivitySet(
-			long userId, long classNameId, long classPK, int type) {
+	public SocialActivitySet getClassActivitySet(
+		long userId, long classNameId, long classPK, int type) {
 
 		return _socialActivitySetLocalService.getClassActivitySet(
 			userId, classNameId, classPK, type);
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getGroupActivitySets(long groupId, int start, int end) {
+	public java.util.List<SocialActivitySet> getGroupActivitySets(
+		long groupId, int start, int end) {
 
 		return _socialActivitySetLocalService.getGroupActivitySets(
 			groupId, start, end);
@@ -281,8 +300,8 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getOrganizationActivitySets(long organizationId, int start, int end) {
+	public java.util.List<SocialActivitySet> getOrganizationActivitySets(
+		long organizationId, int start, int end) {
 
 		return _socialActivitySetLocalService.getOrganizationActivitySets(
 			organizationId, start, end);
@@ -304,6 +323,9 @@ public class SocialActivitySetLocalServiceWrapper
 		return _socialActivitySetLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -313,16 +335,16 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getRelationActivitySets(long userId, int start, int end) {
+	public java.util.List<SocialActivitySet> getRelationActivitySets(
+		long userId, int start, int end) {
 
 		return _socialActivitySetLocalService.getRelationActivitySets(
 			userId, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getRelationActivitySets(long userId, int type, int start, int end) {
+	public java.util.List<SocialActivitySet> getRelationActivitySets(
+		long userId, int type, int start, int end) {
 
 		return _socialActivitySetLocalService.getRelationActivitySets(
 			userId, type, start, end);
@@ -348,8 +370,7 @@ public class SocialActivitySetLocalServiceWrapper
 	 * @throws PortalException if a social activity set with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-			getSocialActivitySet(long activitySetId)
+	public SocialActivitySet getSocialActivitySet(long activitySetId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _socialActivitySetLocalService.getSocialActivitySet(
@@ -368,8 +389,8 @@ public class SocialActivitySetLocalServiceWrapper
 	 * @return the range of social activity sets
 	 */
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getSocialActivitySets(int start, int end) {
+	public java.util.List<SocialActivitySet> getSocialActivitySets(
+		int start, int end) {
 
 		return _socialActivitySetLocalService.getSocialActivitySets(start, end);
 	}
@@ -385,7 +406,7 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet getUserActivitySet(
+	public SocialActivitySet getUserActivitySet(
 		long groupId, long userId, int type) {
 
 		return _socialActivitySetLocalService.getUserActivitySet(
@@ -393,7 +414,7 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet getUserActivitySet(
+	public SocialActivitySet getUserActivitySet(
 		long groupId, long userId, long classNameId, int type) {
 
 		return _socialActivitySetLocalService.getUserActivitySet(
@@ -401,8 +422,8 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getUserActivitySets(long userId, int start, int end) {
+	public java.util.List<SocialActivitySet> getUserActivitySets(
+		long userId, int start, int end) {
 
 		return _socialActivitySetLocalService.getUserActivitySets(
 			userId, start, end);
@@ -414,8 +435,8 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getUserGroupsActivitySets(long userId, int start, int end) {
+	public java.util.List<SocialActivitySet> getUserGroupsActivitySets(
+		long userId, int start, int end) {
 
 		return _socialActivitySetLocalService.getUserGroupsActivitySets(
 			userId, start, end);
@@ -428,8 +449,8 @@ public class SocialActivitySetLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet>
-		getUserViewableActivitySets(long userId, int start, int end) {
+	public java.util.List<SocialActivitySet> getUserViewableActivitySets(
+		long userId, int start, int end) {
 
 		return _socialActivitySetLocalService.getUserViewableActivitySets(
 			userId, start, end);
@@ -452,17 +473,44 @@ public class SocialActivitySetLocalServiceWrapper
 	/**
 	 * Updates the social activity set in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SocialActivitySetLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param socialActivitySet the social activity set
 	 * @return the social activity set that was updated
 	 */
 	@Override
-	public com.liferay.social.kernel.model.SocialActivitySet
-		updateSocialActivitySet(
-			com.liferay.social.kernel.model.SocialActivitySet
-				socialActivitySet) {
+	public SocialActivitySet updateSocialActivitySet(
+		SocialActivitySet socialActivitySet) {
 
 		return _socialActivitySetLocalService.updateSocialActivitySet(
 			socialActivitySet);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _socialActivitySetLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<SocialActivitySet> getCTPersistence() {
+		return _socialActivitySetLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<SocialActivitySet> getModelClass() {
+		return _socialActivitySetLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<SocialActivitySet>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _socialActivitySetLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

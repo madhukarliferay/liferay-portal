@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.expression.internal;
@@ -17,62 +8,69 @@ package com.liferay.dynamic.data.mapping.expression.internal;
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionFactory;
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.expression.internal.functions.PowFunction;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.math.BigDecimal;
 
-import java.util.Map;
-
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
 /**
  * @author Leonardo Barros
  */
-@RunWith(MockitoJUnitRunner.class)
-public class DDMExpressionFactoryImplTest extends PowerMockito {
+public class DDMExpressionFactoryImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@Before
+	public void setUp() throws Exception {
+		_setUpDDMExpressionFunctionRegistry();
+	}
 
 	@Test
 	public void testCreateDDMExpression() throws Exception {
-		DDMExpressionFactoryImpl ddmExpressionFactoryImpl =
-			new DDMExpressionFactoryImpl();
-
-		ddmExpressionFactoryImpl.ddmExpressionFunctionTracker =
-			_ddmExpressionFunctionTracker;
-
-		Map<String, DDMExpressionFunctionFactory> factories =
-			HashMapBuilder.<String, DDMExpressionFunctionFactory>put(
-				"pow", () -> new PowFunction()
-			).build();
-
-		when(
-			_ddmExpressionFunctionTracker.getDDMExpressionFunctionFactories(
-				Matchers.any())
-		).thenReturn(
-			factories
-		);
-
-		CreateExpressionRequest.Builder builder =
-			CreateExpressionRequest.Builder.newBuilder("pow(2,3)");
-
 		DDMExpression<BigDecimal> ddmExpression =
-			ddmExpressionFactoryImpl.createExpression(builder.build());
+			_ddmExpressionFactoryImpl.createExpression(
+				CreateExpressionRequest.Builder.newBuilder(
+					"pow(2,3)"
+				).build());
 
-		BigDecimal actual = ddmExpression.evaluate();
+		BigDecimal bigDecimal = ddmExpression.evaluate();
 
-		Assert.assertEquals(0, actual.compareTo(new BigDecimal(8)));
+		Assert.assertEquals(0, bigDecimal.compareTo(new BigDecimal(8)));
 	}
 
-	@Mock
-	private DDMExpressionFunctionTracker _ddmExpressionFunctionTracker;
+	private void _setUpDDMExpressionFunctionRegistry() throws Exception {
+		DDMExpressionFunctionRegistry ddmExpressionFunctionRegistry =
+			Mockito.mock(DDMExpressionFunctionRegistry.class);
+
+		Mockito.when(
+			ddmExpressionFunctionRegistry.getDDMExpressionFunctionFactories(
+				Mockito.any())
+		).thenReturn(
+			HashMapBuilder.<String, DDMExpressionFunctionFactory>put(
+				"pow", () -> new PowFunction()
+			).build()
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ddmExpressionFactoryImpl, "ddmExpressionFunctionRegistry",
+			ddmExpressionFunctionRegistry);
+	}
+
+	private final DDMExpressionFactoryImpl _ddmExpressionFactoryImpl =
+		new DDMExpressionFactoryImpl();
 
 }

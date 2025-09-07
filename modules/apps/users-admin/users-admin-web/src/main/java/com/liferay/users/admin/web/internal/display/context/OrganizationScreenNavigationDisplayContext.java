@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.users.admin.web.internal.display.context;
@@ -21,12 +12,12 @@ import com.liferay.portal.kernel.model.Organization;
  */
 public class OrganizationScreenNavigationDisplayContext {
 
-	public String getBackURL() {
-		return _backURL;
+	public String getActionName() {
+		return _actionName;
 	}
 
-	public String getEditOrganizationActionURL() {
-		return _editOrganizationActionURL;
+	public String getBackURL() {
+		return _backURL;
 	}
 
 	public String getFormLabel() {
@@ -45,8 +36,8 @@ public class OrganizationScreenNavigationDisplayContext {
 		return _organizationId;
 	}
 
-	public long getParentOrganizationId() {
-		return _organization.getParentOrganizationId();
+	public String getRedirect() {
+		return _redirect;
 	}
 
 	public boolean isShowControls() {
@@ -57,12 +48,12 @@ public class OrganizationScreenNavigationDisplayContext {
 		return _showTitle;
 	}
 
-	public void setBackURL(String backURL) {
-		_backURL = backURL;
+	public void setActionName(String actionName) {
+		_actionName = actionName;
 	}
 
-	public void setEditOrganizationActionURL(String editOrganizationActionURL) {
-		_editOrganizationActionURL = editOrganizationActionURL;
+	public void setBackURL(String backURL) {
+		_backURL = backURL;
 	}
 
 	public void setFormLabel(String formLabel) {
@@ -81,6 +72,10 @@ public class OrganizationScreenNavigationDisplayContext {
 		_organizationId = organizationId;
 	}
 
+	public void setRedirect(String redirect) {
+		_redirect = redirect;
+	}
+
 	public void setShowControls(boolean showControls) {
 		_showControls = showControls;
 	}
@@ -89,12 +84,13 @@ public class OrganizationScreenNavigationDisplayContext {
 		_showTitle = showTitle;
 	}
 
+	private String _actionName;
 	private String _backURL;
-	private String _editOrganizationActionURL;
 	private String _formLabel;
 	private String _jspPath;
 	private Organization _organization;
 	private long _organizationId;
+	private String _redirect;
 	private boolean _showControls;
 	private boolean _showTitle;
 

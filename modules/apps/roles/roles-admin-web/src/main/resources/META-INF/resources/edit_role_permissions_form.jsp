@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,10 +9,6 @@
 
 <%
 String tabs3 = ParamUtil.getString(request, "tabs3", "current");
-
-String redirect = ParamUtil.getString(request, "redirect");
-
-String backURL = ParamUtil.getString(request, "backURL", redirect);
 
 long roleId = ParamUtil.getLong(request, "roleId");
 
@@ -45,7 +32,7 @@ if (Validator.isNotNull(portletResource)) {
 	}
 }
 
-List modelResources = null;
+List<String> modelResources = null;
 
 if (Validator.isNotNull(portletResource)) {
 	modelResources = ResourceActionsUtil.getPortletModelResources(portletResource);
@@ -62,13 +49,14 @@ if (Validator.isNotNull(portletResource)) {
 	<aui:input name="roleId" type="hidden" value="<%= role.getRoleId() %>" />
 	<aui:input name="portletResource" type="hidden" value="<%= portletResource %>" />
 	<aui:input name="modelResources" type="hidden" value='<%= (modelResources == null) ? "" : StringUtil.merge(modelResources) %>' />
+	<aui:input name="accountRoleGroupScope" type="hidden" value="<%= roleDisplayContext.isAccountRoleGroupScope() %>" />
 	<aui:input name="selectedTargets" type="hidden" />
 	<aui:input name="unselectedTargets" type="hidden" />
 
-	<div class="sheet sheet-lg">
-		<div class="sheet-header">
-			<h3 class="sheet-title"><%= HtmlUtil.escape(portletResourceLabel) %></h3>
-		</div>
+	<clay:sheet>
+		<clay:sheet-header>
+			<h3 class="sheet-title" data-qa-id="portletResourceLabel"><%= HtmlUtil.escape(portletResourceLabel) %></h3>
+		</clay:sheet-header>
 
 		<%
 		request.setAttribute("edit_role_permissions.jsp-curPortletResource", portletResource);
@@ -85,17 +73,37 @@ if (Validator.isNotNull(portletResource)) {
 		}
 		%>
 
-		<div class="sheet-section">
+		<clay:sheet-section>
 			<c:if test="<%= Validator.isNotNull(applicationPermissionsLabel) %>">
-				<h4 class="sheet-subtitle"><liferay-ui:message key="<%= applicationPermissionsLabel %>" /> <liferay-ui:icon-help message='<%= applicationPermissionsLabel + "-help" %>' /></h4>
+				<div class="sheet-subtitle">
+					<liferay-ui:message key="<%= applicationPermissionsLabel %>" />
+
+					<clay:icon
+						aria-label='<%= LanguageUtil.get(request, applicationPermissionsLabel + "-help") %>'
+						cssClass="lfr-portal-tooltip"
+						data-title='<%= LanguageUtil.get(request, applicationPermissionsLabel + "-help") %>'
+						symbol="question-circle-full"
+						tabindex="0"
+					/>
+				</div>
 			</c:if>
 
 			<liferay-util:include page="/edit_role_permissions_resource.jsp" servletContext="<%= application %>" />
-		</div>
+		</clay:sheet-section>
 
 		<c:if test="<%= (modelResources != null) && !modelResources.isEmpty() %>">
-			<div class="sheet-section">
-				<h4 class="sheet-subtitle"><liferay-ui:message key="resource-permissions" /> <liferay-ui:icon-help message="resource-permissions-help" /></h4>
+			<clay:sheet-section>
+				<div class="sheet-subtitle">
+					<liferay-ui:message key="resource-permissions" />
+
+					<clay:icon
+						aria-label='<%= LanguageUtil.get(request, "resource-permissions-help") %>'
+						cssClass="lfr-portal-tooltip"
+						data-title='<%= LanguageUtil.get(request, "resource-permissions-help") %>'
+						symbol="question-circle-full"
+						tabindex="0"
+					/>
+				</div>
 
 				<div class="permission-group">
 
@@ -103,12 +111,12 @@ if (Validator.isNotNull(portletResource)) {
 					modelResources = ListUtil.sort(modelResources, new ModelResourceWeightComparator());
 
 					for (int i = 0; i < modelResources.size(); i++) {
-						String curModelResource = (String)modelResources.get(i);
+						String curModelResource = modelResources.get(i);
 
 						String curModelResourceName = ResourceActionsUtil.getModelResource(request, curModelResource);
 					%>
 
-						<h5 class="sheet-tertiary-title" id="<%= _getResourceHtmlId(curModelResource) %>"><%= curModelResourceName %></h5>
+						<div class="sheet-tertiary-title" id="<%= roleDisplayContext.getResourceHtmlId(curModelResource) %>"><%= curModelResourceName %></div>
 
 						<%
 						request.setAttribute("edit_role_permissions.jsp-curModelResource", curModelResource);
@@ -122,116 +130,32 @@ if (Validator.isNotNull(portletResource)) {
 					%>
 
 				</div>
-			</div>
+			</clay:sheet-section>
 		</c:if>
 
-		<c:if test="<%= portletResource.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATE) %>">
-			<div class="sheet-section">
-				<h4 class="sheet-subtitle"><liferay-ui:message key="related-application-permissions" /></h4>
+		<c:if test="<%= portletResource.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATE) || portletResource.equals(TemplatePortletKeys.TEMPLATE) %>">
+			<clay:sheet-section>
+				<div class="sheet-subtitle"><liferay-ui:message key="related-application-permissions" /></div>
 
 				<div class="related-permissions">
 
 					<%
-					Set<String> relatedPortletResources = new HashSet<String>();
-
-					List<String> headerNames = new ArrayList<String>();
-
-					headerNames.add("permissions");
-					headerNames.add("sites");
-
-					SearchContainer searchContainer = new SearchContainer(liferayPortletRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, liferayPortletResponse.createRenderURL(), headerNames, "there-are-no-applications-that-support-widget-templates");
-
-					searchContainer.setRowChecker(new ResourceActionRowChecker(liferayPortletResponse));
-
-					List resultRows = searchContainer.getResultRows();
-
-					List<TemplateHandler> templateHandlers = PortletDisplayTemplateUtil.getPortletDisplayTemplateHandlers();
-
-					ListUtil.sort(templateHandlers, new TemplateHandlerComparator(locale));
-
-					for (TemplateHandler templateHandler : templateHandlers) {
-						String actionId = ActionKeys.ADD_PORTLET_DISPLAY_TEMPLATE;
-						String resource = templateHandler.getResourceName();
-						int scope = ResourceConstants.SCOPE_COMPANY;
-						boolean supportsFilterByGroup = true;
-						String target = resource + actionId;
-						List<Group> groups = Collections.emptyList();
-
-						String groupIds = ParamUtil.getString(request, "groupIds" + target, null);
-
-						long[] groupIdsArray = StringUtil.split(groupIds, 0L);
-
-						List<String> groupNames = new ArrayList<String>();
-
-						Portlet curPortlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), resource);
-
-						if (portlet.isSystem()) {
-							continue;
-						}
-
-						if (role.getType() == RoleConstants.TYPE_REGULAR) {
-							LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
-
-							RolePermissions rolePermissions = new RolePermissions(resource, ResourceConstants.SCOPE_GROUP, actionId, role.getRoleId());
-
-							groupParams.put("rolePermissions", rolePermissions);
-
-							groups = GroupLocalServiceUtil.search(company.getCompanyId(), new long[] {PortalUtil.getClassNameId(Company.class), PortalUtil.getClassNameId(Group.class), PortalUtil.getClassNameId(Organization.class), PortalUtil.getClassNameId(UserPersonalSite.class)}, null, null, groupParams, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
-							groupIdsArray = new long[groups.size()];
-
-							for (int i = 0; i < groups.size(); i++) {
-								Group group = (Group)groups.get(i);
-
-								groupIdsArray[i] = group.getGroupId();
-
-								groupNames.add(HtmlUtil.escape(group.getDescriptiveName(locale)));
-							}
-
-							if (!groups.isEmpty()) {
-								scope = ResourceConstants.SCOPE_GROUP;
-							}
-						}
-						else {
-							scope = ResourceConstants.SCOPE_GROUP_TEMPLATE;
-						}
-
-						ResultRow row = new ResultRow(new Object[] {role, actionId, resource, target, scope, supportsFilterByGroup, groups, groupIdsArray, groupNames}, target, relatedPortletResources.size());
-
-						relatedPortletResources.add(curPortlet.getPortletId());
-
-						row.addText(PortalUtil.getPortletLongTitle(curPortlet, application, locale) + ": " + _getActionLabel(request, themeDisplay, resource, actionId));
-
-						row.addJSP("/edit_role_permissions_resource_scope.jsp", application, request, response);
-
-						resultRows.add(row);
-					}
-
-					searchContainer.setTotal(relatedPortletResources.size());
+					EditRolePermissionsFormDisplayContext editRolePermissionsFormDisplayContext = new EditRolePermissionsFormDisplayContext(request, response, liferayPortletRequest, liferayPortletResponse, roleDisplayContext, application);
 					%>
 
-					<aui:input name="relatedPortletResources" type="hidden" value="<%= StringUtil.merge(relatedPortletResources) %>" />
+					<aui:input name="relatedPortletResources" type="hidden" value="<%= StringUtil.merge(editRolePermissionsFormDisplayContext.getRelatedPortletResources()) %>" />
 
 					<liferay-ui:search-iterator
+						markupView="deprecated"
 						paginate="<%= false %>"
-						searchContainer="<%= searchContainer %>"
+						searchContainer="<%= editRolePermissionsFormDisplayContext.getSearchContainer() %>"
 					/>
 				</div>
-			</div>
+			</clay:sheet-section>
 		</c:if>
 
-		<div class="sheet-footer">
-			<aui:button cssClass="btn-primary" onClick='<%= liferayPortletResponse.getNamespace() + "updateActions();" %>' value="save" />
-		</div>
-	</div>
+		<clay:sheet-footer>
+			<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "updateActions();" %>' primary="<%= true %>" value="save" />
+		</clay:sheet-footer>
+	</clay:sheet>
 </aui:form>
-
-<%
-PortletURL definePermissionsURL = liferayPortletResponse.createRenderURL();
-
-definePermissionsURL.setParameter("mvcPath", "/edit_role_permissions.jsp");
-definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
-definePermissionsURL.setParameter("redirect", backURL);
-definePermissionsURL.setParameter("roleId", String.valueOf(role.getRoleId()));
-definePermissionsURL.setParameter("tabs1", "define-permissions");
-%>

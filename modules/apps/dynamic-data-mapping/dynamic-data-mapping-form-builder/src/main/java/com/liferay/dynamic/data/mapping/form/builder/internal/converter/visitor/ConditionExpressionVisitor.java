@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter.visitor;
@@ -26,9 +17,11 @@ import com.liferay.dynamic.data.mapping.expression.model.IntegerLiteral;
 import com.liferay.dynamic.data.mapping.expression.model.NotExpression;
 import com.liferay.dynamic.data.mapping.expression.model.OrExpression;
 import com.liferay.dynamic.data.mapping.expression.model.StringLiteral;
-import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRuleCondition;
+import com.liferay.dynamic.data.mapping.expression.model.Term;
+import com.liferay.dynamic.data.mapping.spi.converter.model.SPIDDMFormRuleCondition;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,10 +35,6 @@ import java.util.Stack;
  */
 public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 
-	public List<DDMFormRuleCondition> getConditions() {
-		return _conditions;
-	}
-
 	public String getLogicalOperator() {
 		if (_andOperator) {
 			return "AND";
@@ -54,40 +43,45 @@ public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 		return "OR";
 	}
 
+	public List<SPIDDMFormRuleCondition> getSPIDDMFormRuleConditions() {
+		return _spiDDMFormRuleConditions;
+	}
+
 	@Override
 	public Object visit(AndExpression andExpression) {
 		_andOperator = true;
 
-		return doVisitLogicalExpression(andExpression);
+		return _visitLogicalExpression(andExpression);
 	}
 
 	@Override
 	public Object visit(ArrayExpression arrayExpression) {
 		String value = arrayExpression.getValue();
 
-		return new DDMFormRuleCondition.Operand(
+		return new SPIDDMFormRuleCondition.Operand(
 			"list", value.replaceAll("\\[|\\]|'", StringPool.BLANK));
 	}
 
 	@Override
 	public Object visit(ComparisonExpression comparisonExpression) {
-		DDMFormRuleCondition.Operand leftOperand = doVisit(
+		SPIDDMFormRuleCondition.Operand leftOperand = doVisit(
 			comparisonExpression.getLeftOperandExpression());
-		DDMFormRuleCondition.Operand rightOperand = doVisit(
+		SPIDDMFormRuleCondition.Operand rightOperand = doVisit(
 			comparisonExpression.getRightOperandExpression());
 
-		DDMFormRuleCondition ddmFormRuleCondition = new DDMFormRuleCondition(
-			_operatorMap.get(comparisonExpression.getOperator()),
-			Arrays.asList(leftOperand, rightOperand));
+		SPIDDMFormRuleCondition spiDDMFormRuleCondition =
+			new SPIDDMFormRuleCondition(
+				_operators.get(comparisonExpression.getOperator()),
+				Arrays.asList(leftOperand, rightOperand));
 
-		_conditions.push(ddmFormRuleCondition);
+		_spiDDMFormRuleConditions.push(spiDDMFormRuleCondition);
 
-		return _conditions;
+		return _spiDDMFormRuleConditions;
 	}
 
 	@Override
 	public Object visit(FloatingPointLiteral floatingPointLiteral) {
-		return new DDMFormRuleCondition.Operand(
+		return new SPIDDMFormRuleCondition.Operand(
 			"double", floatingPointLiteral.getValue());
 	}
 
@@ -98,29 +92,72 @@ public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 		List<Expression> parameterExpressions =
 			functionCallExpression.getParameterExpressions();
 
-		if (Objects.equals(functionName, "getValue")) {
-			DDMFormRuleCondition.Operand operand = doVisit(
+		if (Objects.equals(functionName, "getJSONValue")) {
+			SPIDDMFormRuleCondition.Operand operand = doVisit(
 				parameterExpressions.get(0));
 
-			return new DDMFormRuleCondition.Operand(
+			return new SPIDDMFormRuleCondition.Operand(
+				"json", operand.getValue());
+		}
+
+		if (Objects.equals(functionName, "getOptionLabel")) {
+			SPIDDMFormRuleCondition.Operand operand = doVisit(
+				parameterExpressions.get(1));
+
+			String operandType = operand.getType();
+
+			if (StringUtil.equals(operand.getType(), "string")) {
+				operandType = "option";
+			}
+
+			return new SPIDDMFormRuleCondition.Operand(
+				operandType, operand.getValue());
+		}
+
+		if (Objects.equals(functionName, "getValue")) {
+			SPIDDMFormRuleCondition.Operand operand = doVisit(
+				parameterExpressions.get(0));
+
+			return new SPIDDMFormRuleCondition.Operand(
 				"field", operand.getValue());
 		}
 
-		List<DDMFormRuleCondition.Operand> operands = new ArrayList<>();
+		List<SPIDDMFormRuleCondition.Operand> operands = new ArrayList<>();
 
 		for (Expression parameterExpression : parameterExpressions) {
-			operands.add(
-				(DDMFormRuleCondition.Operand)doVisit(parameterExpression));
+			if (parameterExpression instanceof FunctionCallExpression) {
+				FunctionCallExpression parameterFunctionCallExpression =
+					(FunctionCallExpression)parameterExpression;
+
+				if (StringUtil.equals(
+						parameterFunctionCallExpression.getFunctionName(),
+						"getOptionLabel")) {
+
+					operands.add(doVisit(parameterExpression));
+
+					continue;
+				}
+			}
+
+			if (functionCallExpression.hasNestedFunctions()) {
+				operands.add(
+					new SPIDDMFormRuleCondition.Operand(
+						"condition", parameterExpression.toString()));
+			}
+			else {
+				operands.add(doVisit(parameterExpression));
+			}
 		}
 
-		_conditions.push(createDDMFormRuleCondition(functionName, operands));
+		_spiDDMFormRuleConditions.push(
+			_createDDMFormRuleCondition(functionName, operands));
 
-		return _conditions;
+		return _spiDDMFormRuleConditions;
 	}
 
 	@Override
 	public Object visit(IntegerLiteral integerLiteral) {
-		return new DDMFormRuleCondition.Operand(
+		return new SPIDDMFormRuleCondition.Operand(
 			"integer", integerLiteral.getValue());
 	}
 
@@ -128,59 +165,65 @@ public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 	public Object visit(NotExpression notExpression) {
 		doVisit(notExpression.getOperandExpression());
 
-		DDMFormRuleCondition condition = _conditions.peek();
+		SPIDDMFormRuleCondition spiDDMFormRuleCondition =
+			_spiDDMFormRuleConditions.peek();
 
-		String operator = condition.getOperator();
+		String operator = spiDDMFormRuleCondition.getOperator();
 
-		condition.setOperator("not-" + operator);
+		spiDDMFormRuleCondition.setOperator("not-" + operator);
 
-		return _conditions;
+		return _spiDDMFormRuleConditions;
 	}
 
 	@Override
 	public Object visit(OrExpression orExpression) {
 		_andOperator = false;
 
-		return doVisitLogicalExpression(orExpression);
+		return _visitLogicalExpression(orExpression);
 	}
 
 	@Override
 	public Object visit(StringLiteral stringLiteral) {
-		return new DDMFormRuleCondition.Operand(
+		return new SPIDDMFormRuleCondition.Operand(
 			"string", stringLiteral.getValue());
 	}
 
-	protected DDMFormRuleCondition createDDMFormRuleCondition(
-		String functionName, List<DDMFormRuleCondition.Operand> operands) {
-
-		String functionNameOperator = _functionNameOperatorMap.get(
-			functionName);
-
-		return new DDMFormRuleCondition(functionNameOperator, operands);
+	@Override
+	public Object visit(Term term) {
+		return new SPIDDMFormRuleCondition.Operand("field", term.getValue());
 	}
 
 	protected <T> T doVisit(Expression expression) {
 		return (T)expression.accept(this);
 	}
 
-	protected List<DDMFormRuleCondition> doVisitLogicalExpression(
-		BinaryExpression binaryExpression) {
+	private SPIDDMFormRuleCondition _createDDMFormRuleCondition(
+		String functionName, List<SPIDDMFormRuleCondition.Operand> operands) {
 
-		Object o1 = doVisit(binaryExpression.getLeftOperandExpression());
-		Object o2 = doVisit(binaryExpression.getRightOperandExpression());
+		String functionNameOperator = _functionNameOperators.getOrDefault(
+			functionName, functionName);
 
-		if (o1 instanceof DDMFormRuleCondition) {
-			_conditions.push((DDMFormRuleCondition)o1);
-		}
-
-		if (o2 instanceof DDMFormRuleCondition) {
-			_conditions.push((DDMFormRuleCondition)o2);
-		}
-
-		return _conditions;
+		return new SPIDDMFormRuleCondition(functionNameOperator, operands);
 	}
 
-	private static final Map<String, String> _functionNameOperatorMap =
+	private List<SPIDDMFormRuleCondition> _visitLogicalExpression(
+		BinaryExpression binaryExpression) {
+
+		Object object1 = doVisit(binaryExpression.getLeftOperandExpression());
+		Object object2 = doVisit(binaryExpression.getRightOperandExpression());
+
+		if (object1 instanceof SPIDDMFormRuleCondition) {
+			_spiDDMFormRuleConditions.push((SPIDDMFormRuleCondition)object1);
+		}
+
+		if (object2 instanceof SPIDDMFormRuleCondition) {
+			_spiDDMFormRuleConditions.push((SPIDDMFormRuleCondition)object2);
+		}
+
+		return _spiDDMFormRuleConditions;
+	}
+
+	private static final Map<String, String> _functionNameOperators =
 		HashMapBuilder.put(
 			"belongsTo", "belongs-to"
 		).put(
@@ -190,7 +233,7 @@ public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 		).put(
 			"isEmpty", "is-empty"
 		).build();
-	private static final Map<String, String> _operatorMap = HashMapBuilder.put(
+	private static final Map<String, String> _operators = HashMapBuilder.put(
 		"<", "less-than"
 	).put(
 		"<=", "less-than-equals"
@@ -201,6 +244,7 @@ public class ConditionExpressionVisitor extends ExpressionVisitor<Object> {
 	).build();
 
 	private boolean _andOperator = true;
-	private final Stack<DDMFormRuleCondition> _conditions = new Stack<>();
+	private final Stack<SPIDDMFormRuleCondition> _spiDDMFormRuleConditions =
+		new Stack<>();
 
 }

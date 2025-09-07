@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-content-management"
 definition {
 
 	property portal.release = "true";
@@ -12,9 +12,9 @@ definition {
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -27,26 +27,16 @@ definition {
 	}
 
 	@description = "This makes sure that multiple blog images can be previewed by using the keyboard."
-	@priority = "5"
-	test PreviewMultipleImagesInBlogsImages {
-		for (var i : list "1,2,3") {
-			BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
-
-			Blogs.addEntryWithUploadedCoverImage(
-				coverImageName = "Document_${i}",
-				entryContent = "Blogs Entry Content",
-				entryTitle = "Blogs Entry Title ${i}",
-				navTab = "Upload Image",
-				uploadFileName = "Document_${i}.jpg");
-
-			Button.clickPublish();
-
-			Pause(locator1 = "10000");
+	@priority = 5
+	@refactordone
+	test CanPreviewMultipleImagesInBlogsImages {
+		for (var num : list "1,2,3") {
+			JSONBlog.uploadBlogImage(
+				groupName = "Guest",
+				sourceFileName = "Document_${num}.jpg");
 		}
 
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
-
-		BlogsNavigator.gotoAddEntry();
+		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
 
 		BlogsNavigator.gotoSelectFile();
 
@@ -78,25 +68,33 @@ definition {
 
 		SelectFrame(value1 = "relative=top");
 
-		IFrame.closeFrame();
+		Click(
+			key_modalTitle = "Select File",
+			locator1 = "Button#CLOSE_MODAL");
 
 		for (var coverImageName : list "Document_1,Document_2,Document_3") {
 			AssertElementNotPresent(
-				key_coverImageName = "${coverImageName}",
+				key_coverImageName = ${coverImageName},
 				locator1 = "BlogsEntry#ENTRY_COVER_IMAGE_UNPUBLISHED");
 		}
 	}
 
 	@description = "This makes sure that multiple DM images can be previewed by using the keyboard."
-	@priority = "5"
-	test PreviewMultipleImagesInDM {
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+	@priority = 5
+	@refactordone
+	test CanPreviewMultipleImagesInDM {
+		HeadlessSite.addSite(siteName = "Site Name");
 
-		DMDocument.addMultipleCP(dmDocumentFileList = "Document_1.jpg,Document_2.jpg,Document_3.jpg");
+		for (var documentTitle : list "Document_1,Document_2,Document_3") {
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = ${documentTitle},
+				groupName = "Site Name",
+				mimeType = "image/jpeg",
+				sourceFileName = "${documentTitle}.jpg");
+		}
 
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
-
-		BlogsNavigator.gotoAddEntry();
+		BlogsNavigator.openToAddEntry(siteURLKey = "site-name");
 
 		BlogsNavigator.gotoSelectFile();
 
@@ -104,7 +102,7 @@ definition {
 
 		ItemSelector.viewPreview(
 			footer = "1 of 3",
-			imageFileName = "Document_1.jpg");
+			imageFileName = "Document_1");
 
 		AssertVisible(locator1 = "ItemSelector#VIEWER_LEFT");
 
@@ -124,7 +122,7 @@ definition {
 
 		ItemSelector.viewPreview(
 			footer = "3 of 3",
-			imageFileName = "Document_3.jpg");
+			imageFileName = "Document_3");
 
 		KeyPress(
 			locator1 = "ItemSelector#VIEWER_INFO",
@@ -132,34 +130,28 @@ definition {
 
 		SelectFrame(value1 = "relative=top");
 
-		IFrame.closeFrame();
+		Click(
+			key_modalTitle = "Select File",
+			locator1 = "Button#CLOSE_MODAL");
 
 		for (var coverImageName : list "Document_1,Document_2,Document_3") {
 			AssertElementNotPresent(
-				key_coverImageName = "${coverImageName}",
+				key_coverImageName = ${coverImageName},
 				locator1 = "BlogsEntry#ENTRY_COVER_IMAGE_UNPUBLISHED");
 		}
 	}
 
 	@description = "This ensures that navigation arrows do not appear in image preview when there is only one image in the library."
-	@priority = "5"
-	test PreviewSingleImage {
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+	@priority = 5
+	@refactordone
+	test CanPreviewSingleImage {
+		property portal.acceptance = "true";
 
-		Blogs.addEntryWithUploadedCoverImage(
-			coverImageName = "Document_1",
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title 1",
-			navTab = "Upload Image",
-			uploadFileName = "Document_1.jpg");
+		Blogs.addImageToBlogImages(
+			siteURLKey = "guest",
+			uploadFileNames = "Document_1.jpg");
 
-		Button.clickPublish();
-
-		Pause(locator1 = "10000");
-
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
-
-		BlogsNavigator.gotoAddEntry();
+		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
 
 		BlogsNavigator.gotoSelectFile();
 

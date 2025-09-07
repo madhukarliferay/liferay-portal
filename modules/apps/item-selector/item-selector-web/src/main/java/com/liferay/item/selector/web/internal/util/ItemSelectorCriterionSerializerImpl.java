@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector.web.internal.util;
@@ -23,12 +14,13 @@ import com.liferay.item.selector.ItemSelectorViewReturnTypeProviderHandler;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.osgi.util.ServiceTrackerFactory;
+import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONContext;
 import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONDeserializerTransformer;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONSerializer;
 import com.liferay.portal.kernel.json.JSONTransformer;
 import com.liferay.portal.kernel.log.Log;
@@ -57,7 +49,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  * @author Iván Zaera
  * @author Roberto Díaz
  */
-@Component(immediate = true, service = ItemSelectorCriterionSerializer.class)
+@Component(service = ItemSelectorCriterionSerializer.class)
 public class ItemSelectorCriterionSerializerImpl
 	implements ItemSelectorCriterionSerializer {
 
@@ -66,10 +58,17 @@ public class ItemSelectorCriterionSerializerImpl
 		Class<T> itemSelectorCriterionClass, String json) {
 
 		JSONDeserializer<T> jsonDeserializer =
-			JSONFactoryUtil.createJSONDeserializer();
+			_jsonFactory.createJSONDeserializer();
+
+		DesiredItemSelectorReturnTypesJSONDeserializerTransformer
+			desiredItemSelectorReturnTypesJSONDeserializerTransformer =
+				_desiredItemSelectorReturnTypesJSONDeserializerTransformerDCLSingleton.
+					getSingleton(
+						this::
+							_createDesiredItemSelectorReturnTypesJSONDeserializerTransformer);
 
 		jsonDeserializer.transform(
-			_desiredItemSelectorReturnTypesJSONDeserializerTransformer,
+			desiredItemSelectorReturnTypesJSONDeserializerTransformer,
 			"desiredItemSelectorReturnTypes");
 
 		return jsonDeserializer.deserialize(json, itemSelectorCriterionClass);
@@ -77,7 +76,7 @@ public class ItemSelectorCriterionSerializerImpl
 
 	@Override
 	public String serialize(ItemSelectorCriterion itemSelectorCriterion) {
-		JSONSerializer jsonSerializer = JSONFactoryUtil.createJSONSerializer();
+		JSONSerializer jsonSerializer = _jsonFactory.createJSONSerializer();
 
 		jsonSerializer.transform(
 			_desiredItemSelectorReturnTypesJSONTransformer,
@@ -88,28 +87,22 @@ public class ItemSelectorCriterionSerializerImpl
 		return jsonSerializer.serializeDeep(itemSelectorCriterion);
 	}
 
-	@Reference(unbind = "-")
-	public void setItemSelectorViewReturnTypeProviderHandler(
-		ItemSelectorViewReturnTypeProviderHandler
-			itemSelectorViewReturnTypeProviderHandler) {
-
-		_itemSelectorViewReturnTypeProviderHandler =
-			itemSelectorViewReturnTypeProviderHandler;
-	}
-
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
 
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-			bundleContext, ItemSelectorView.class, "item.selector.view.key");
+			bundleContext,
+			(Class<ItemSelectorView<?>>)(Class<?>)ItemSelectorView.class,
+			"item.selector.view.key");
 
-		_serviceTracker = ServiceTrackerFactory.open(
+		_serviceTracker = ServiceTrackerFactory.create(
 			bundleContext, ItemSelectorViewReturnTypeProvider.class,
 			new ItemSelectorViewReturnTypeProviderServiceTrackerCustomizer());
 
-		_serviceTrackerItemSelectorView = ServiceTrackerFactory.open(
-			bundleContext, ItemSelectorView.class,
+		_serviceTrackerItemSelectorView = ServiceTrackerFactory.create(
+			bundleContext,
+			(Class<ItemSelectorView<?>>)(Class<?>)ItemSelectorView.class,
 			new ItemSelectorReturnTypeServiceTrackerCustomizer());
 	}
 
@@ -119,16 +112,26 @@ public class ItemSelectorCriterionSerializerImpl
 		Class<? extends ItemSelectorReturnType> itemSelectorReturnTypeClass =
 			itemSelectorReturnType.getClass();
 
+		addItemSelectorReturnType(
+			itemSelectorReturnTypeClass.getName(), itemSelectorReturnType);
+		addItemSelectorReturnType(
+			ItemSelectorKeyUtil.getItemSelectorReturnTypeKey(
+				itemSelectorReturnTypeClass),
+			itemSelectorReturnType);
+	}
+
+	protected void addItemSelectorReturnType(
+		String key, ItemSelectorReturnType itemSelectorReturnType) {
+
 		List<ItemSelectorReturnType> itemSelectorReturnTypes =
-			_itemSelectorReturnTypes.get(itemSelectorReturnTypeClass.getName());
+			_itemSelectorReturnTypes.get(key);
 
 		if (itemSelectorReturnTypes == null) {
 			itemSelectorReturnTypes = new CopyOnWriteArrayList<>();
 
 			List<ItemSelectorReturnType> previousItemSelectorReturnTypes =
 				_itemSelectorReturnTypes.putIfAbsent(
-					itemSelectorReturnTypeClass.getName(),
-					itemSelectorReturnTypes);
+					key, itemSelectorReturnTypes);
 
 			if (previousItemSelectorReturnTypes != null) {
 				itemSelectorReturnTypes = previousItemSelectorReturnTypes;
@@ -145,6 +148,15 @@ public class ItemSelectorCriterionSerializerImpl
 		_serviceTrackerMap.close();
 	}
 
+	private DesiredItemSelectorReturnTypesJSONDeserializerTransformer
+		_createDesiredItemSelectorReturnTypesJSONDeserializerTransformer() {
+
+		_serviceTracker.open();
+		_serviceTrackerItemSelectorView.open();
+
+		return new DesiredItemSelectorReturnTypesJSONDeserializerTransformer();
+	}
+
 	private static final String[] _EXCLUDED_FIELD_NAMES = {
 		"availableItemSelectorReturnTypes", "class"
 	};
@@ -153,22 +165,29 @@ public class ItemSelectorCriterionSerializerImpl
 		ItemSelectorCriterionSerializerImpl.class);
 
 	private BundleContext _bundleContext;
-	private final DesiredItemSelectorReturnTypesJSONDeserializerTransformer
-		_desiredItemSelectorReturnTypesJSONDeserializerTransformer =
-			new DesiredItemSelectorReturnTypesJSONDeserializerTransformer();
+	private final DCLSingleton
+		<DesiredItemSelectorReturnTypesJSONDeserializerTransformer>
+			_desiredItemSelectorReturnTypesJSONDeserializerTransformerDCLSingleton =
+				new DCLSingleton<>();
 	private final DesiredItemSelectorReturnTypesJSONTransformer
 		_desiredItemSelectorReturnTypesJSONTransformer =
 			new DesiredItemSelectorReturnTypesJSONTransformer();
 	private final ConcurrentMap<String, List<ItemSelectorReturnType>>
 		_itemSelectorReturnTypes = new ConcurrentHashMap<>();
+
+	@Reference
 	private ItemSelectorViewReturnTypeProviderHandler
 		_itemSelectorViewReturnTypeProviderHandler;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
 	private ServiceTracker
 		<ItemSelectorViewReturnTypeProvider, ItemSelectorViewReturnTypeProvider>
 			_serviceTracker;
-	private ServiceTracker<ItemSelectorView, ItemSelectorView>
+	private ServiceTracker<ItemSelectorView<?>, ItemSelectorView<?>>
 		_serviceTrackerItemSelectorView;
-	private ServiceTrackerMap<String, ItemSelectorView> _serviceTrackerMap;
+	private ServiceTrackerMap<String, ItemSelectorView<?>> _serviceTrackerMap;
 
 	private static class DesiredItemSelectorReturnTypesJSONTransformer
 		implements JSONTransformer {
@@ -179,18 +198,16 @@ public class ItemSelectorCriterionSerializerImpl
 				(List<ItemSelectorReturnType>)object;
 
 			StringBundler sb = new StringBundler(
-				desiredItemSelectorReturnTypes.size() * 2 + 1);
+				(desiredItemSelectorReturnTypes.size() * 2) + 1);
 
 			sb.append(StringPool.QUOTE);
 
 			for (ItemSelectorReturnType itemSelectorReturnType :
 					desiredItemSelectorReturnTypes) {
 
-				Class<? extends ItemSelectorReturnType>
-					itemSelectorReturnTypeClass =
-						itemSelectorReturnType.getClass();
-
-				sb.append(itemSelectorReturnTypeClass.getName());
+				sb.append(
+					ItemSelectorKeyUtil.getItemSelectorReturnTypeKey(
+						itemSelectorReturnType.getClass()));
 
 				sb.append(StringPool.COMMA);
 			}
@@ -257,13 +274,13 @@ public class ItemSelectorCriterionSerializerImpl
 
 	private class ItemSelectorReturnTypeServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer
-			<ItemSelectorView, ItemSelectorView> {
+			<ItemSelectorView<?>, ItemSelectorView<?>> {
 
 		@Override
-		public ItemSelectorView addingService(
-			ServiceReference<ItemSelectorView> serviceReference) {
+		public ItemSelectorView<?> addingService(
+			ServiceReference<ItemSelectorView<?>> serviceReference) {
 
-			ItemSelectorView itemSelectorView = _bundleContext.getService(
+			ItemSelectorView<?> itemSelectorView = _bundleContext.getService(
 				serviceReference);
 
 			String itemSelectorViewKey = GetterUtil.getString(
@@ -286,14 +303,14 @@ public class ItemSelectorCriterionSerializerImpl
 
 		@Override
 		public void modifiedService(
-			ServiceReference<ItemSelectorView> serviceReference,
-			ItemSelectorView itemSelectorView) {
+			ServiceReference<ItemSelectorView<?>> serviceReference,
+			ItemSelectorView<?> itemSelectorView) {
 		}
 
 		@Override
 		public void removedService(
-			ServiceReference<ItemSelectorView> serviceReference,
-			ItemSelectorView itemSelectorView) {
+			ServiceReference<ItemSelectorView<?>> serviceReference,
+			ItemSelectorView<?> itemSelectorView) {
 
 			try {
 				List<ItemSelectorReturnType> supportedItemSelectorReturnTypes =
@@ -309,6 +326,12 @@ public class ItemSelectorCriterionSerializerImpl
 					List<ItemSelectorReturnType> itemSelectorReturnTypes =
 						_itemSelectorReturnTypes.get(
 							supportedItemSelectorReturnTypeClass.getName());
+
+					itemSelectorReturnTypes.remove(0);
+
+					itemSelectorReturnTypes = _itemSelectorReturnTypes.get(
+						ItemSelectorKeyUtil.getItemSelectorReturnTypeKey(
+							supportedItemSelectorReturnTypeClass));
 
 					itemSelectorReturnTypes.remove(0);
 				}
@@ -333,8 +356,8 @@ public class ItemSelectorCriterionSerializerImpl
 			String itemSelectorViewKey = GetterUtil.getString(
 				serviceReference.getProperty("item.selector.view.key"));
 
-			ItemSelectorView itemSelectorView = _serviceTrackerMap.getService(
-				itemSelectorViewKey);
+			ItemSelectorView<?> itemSelectorView =
+				_serviceTrackerMap.getService(itemSelectorViewKey);
 
 			if (itemSelectorView == null) {
 				return null;

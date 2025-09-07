@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service.impl;
@@ -17,9 +8,13 @@ package com.liferay.fragment.service.impl;
 import com.liferay.fragment.exception.DuplicateFragmentCollectionKeyException;
 import com.liferay.fragment.exception.FragmentCollectionNameException;
 import com.liferay.fragment.model.FragmentCollection;
+import com.liferay.fragment.model.FragmentComposition;
 import com.liferay.fragment.model.FragmentEntry;
+import com.liferay.fragment.service.FragmentCompositionLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.fragment.service.base.FragmentCollectionLocalServiceBaseImpl;
+import com.liferay.fragment.service.persistence.FragmentCompositionPersistence;
+import com.liferay.fragment.service.persistence.FragmentEntryPersistence;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -28,7 +23,9 @@ import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -53,24 +50,25 @@ public class FragmentCollectionLocalServiceImpl
 
 	@Override
 	public FragmentCollection addFragmentCollection(
-			long userId, long groupId, String name, String description,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			String name, String description, ServiceContext serviceContext)
 		throws PortalException {
 
 		return addFragmentCollection(
-			userId, groupId, StringPool.BLANK, name, description,
-			serviceContext);
+			externalReferenceCode, userId, groupId, StringPool.BLANK, name,
+			description, false, serviceContext);
 	}
 
 	@Override
 	public FragmentCollection addFragmentCollection(
-			long userId, long groupId, String fragmentCollectionKey,
-			String name, String description, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long groupId,
+			String fragmentCollectionKey, String name, String description,
+			boolean marketplace, ServiceContext serviceContext)
 		throws PortalException {
 
 		// Fragment collection
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long companyId = user.getCompanyId();
 
@@ -81,7 +79,7 @@ public class FragmentCollectionLocalServiceImpl
 			serviceContext = new ServiceContext();
 		}
 
-		validate(name);
+		_validate(name);
 
 		if (Validator.isNull(fragmentCollectionKey)) {
 			fragmentCollectionKey = generateFragmentCollectionKey(
@@ -91,7 +89,7 @@ public class FragmentCollectionLocalServiceImpl
 		fragmentCollectionKey = _getFragmentCollectionKey(
 			fragmentCollectionKey);
 
-		validateFragmentCollectionKey(groupId, fragmentCollectionKey);
+		_validateFragmentCollectionKey(groupId, fragmentCollectionKey);
 
 		long fragmentCollectionId = counterLocalService.increment();
 
@@ -99,6 +97,7 @@ public class FragmentCollectionLocalServiceImpl
 			fragmentCollectionPersistence.create(fragmentCollectionId);
 
 		fragmentCollection.setUuid(serviceContext.getUuid());
+		fragmentCollection.setExternalReferenceCode(externalReferenceCode);
 		fragmentCollection.setGroupId(groupId);
 		fragmentCollection.setCompanyId(companyId);
 		fragmentCollection.setUserId(user.getUserId());
@@ -110,10 +109,9 @@ public class FragmentCollectionLocalServiceImpl
 		fragmentCollection.setFragmentCollectionKey(fragmentCollectionKey);
 		fragmentCollection.setName(name);
 		fragmentCollection.setDescription(description);
+		fragmentCollection.setMarketplace(marketplace);
 
-		fragmentCollectionPersistence.update(fragmentCollection);
-
-		return fragmentCollection;
+		return fragmentCollectionPersistence.update(fragmentCollection);
 	}
 
 	@Override
@@ -122,13 +120,13 @@ public class FragmentCollectionLocalServiceImpl
 			FragmentCollection fragmentCollection)
 		throws PortalException {
 
-		/// Fragment collection
+		// Fragment collection
 
 		fragmentCollectionPersistence.remove(fragmentCollection);
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			fragmentCollection.getCompanyId(),
 			FragmentCollection.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL,
@@ -139,10 +137,21 @@ public class FragmentCollectionLocalServiceImpl
 		PortletFileRepositoryUtil.deletePortletFolder(
 			fragmentCollection.getResourcesFolderId(false));
 
+		// Fragment compositions
+
+		List<FragmentComposition> fragmentCompositions =
+			_fragmentCompositionPersistence.findByFragmentCollectionId(
+				fragmentCollection.getFragmentCollectionId());
+
+		for (FragmentComposition fragmentComposition : fragmentCompositions) {
+			_fragmentCompositionLocalService.deleteFragmentComposition(
+				fragmentComposition);
+		}
+
 		// Fragment entries
 
 		List<FragmentEntry> fragmentEntries =
-			fragmentEntryPersistence.findByFragmentCollectionId(
+			_fragmentEntryPersistence.findByFragmentCollectionId(
 				fragmentCollection.getFragmentCollectionId());
 
 		for (FragmentEntry fragmentEntry : fragmentEntries) {
@@ -159,6 +168,16 @@ public class FragmentCollectionLocalServiceImpl
 
 		return fragmentCollectionLocalService.deleteFragmentCollection(
 			getFragmentCollection(fragmentCollectionId));
+	}
+
+	@Override
+	public FragmentCollection deleteFragmentCollection(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return fragmentCollectionLocalService.deleteFragmentCollection(
+			fragmentCollectionPersistence.findByERC_G(
+				externalReferenceCode, groupId));
 	}
 
 	@Override
@@ -241,6 +260,32 @@ public class FragmentCollectionLocalServiceImpl
 	}
 
 	@Override
+	public String getUniqueFragmentCollectionName(long groupId, String name) {
+		FragmentCollection fragmentCollection =
+			fragmentCollectionPersistence.fetchByG_LikeN_First(
+				groupId, name, null);
+
+		if (fragmentCollection == null) {
+			return name;
+		}
+
+		int count = 1;
+
+		while (true) {
+			String newName = StringUtil.appendParentheticalSuffix(
+				name, count++);
+
+			fragmentCollection =
+				fragmentCollectionPersistence.fetchByG_LikeN_First(
+					groupId, newName, null);
+
+			if (fragmentCollection == null) {
+				return newName;
+			}
+		}
+	}
+
+	@Override
 	public FragmentCollection updateFragmentCollection(
 			long fragmentCollectionId, String name, String description)
 		throws PortalException {
@@ -249,18 +294,26 @@ public class FragmentCollectionLocalServiceImpl
 			fragmentCollectionPersistence.findByPrimaryKey(
 				fragmentCollectionId);
 
-		validate(name);
+		_validate(name);
 
 		fragmentCollection.setModifiedDate(new Date());
 		fragmentCollection.setName(name);
 		fragmentCollection.setDescription(description);
 
-		fragmentCollectionPersistence.update(fragmentCollection);
-
-		return fragmentCollection;
+		return fragmentCollectionPersistence.update(fragmentCollection);
 	}
 
-	protected void validate(String name) throws PortalException {
+	private String _getFragmentCollectionKey(String fragmentCollectionKey) {
+		if (fragmentCollectionKey != null) {
+			fragmentCollectionKey = fragmentCollectionKey.trim();
+
+			return StringUtil.toLowerCase(fragmentCollectionKey);
+		}
+
+		return StringPool.BLANK;
+	}
+
+	private void _validate(String name) throws PortalException {
 		if (Validator.isNull(name)) {
 			throw new FragmentCollectionNameException("Name must not be null");
 		}
@@ -273,7 +326,7 @@ public class FragmentCollectionLocalServiceImpl
 		}
 	}
 
-	protected void validateFragmentCollectionKey(
+	private void _validateFragmentCollectionKey(
 			long groupId, String fragmentCollectionKey)
 		throws PortalException {
 
@@ -289,17 +342,22 @@ public class FragmentCollectionLocalServiceImpl
 		}
 	}
 
-	private String _getFragmentCollectionKey(String fragmentCollectionKey) {
-		if (fragmentCollectionKey != null) {
-			fragmentCollectionKey = fragmentCollectionKey.trim();
+	@Reference
+	private FragmentCompositionLocalService _fragmentCompositionLocalService;
 
-			return StringUtil.toLowerCase(fragmentCollectionKey);
-		}
-
-		return StringPool.BLANK;
-	}
+	@Reference
+	private FragmentCompositionPersistence _fragmentCompositionPersistence;
 
 	@Reference
 	private FragmentEntryLocalService _fragmentEntryLocalService;
+
+	@Reference
+	private FragmentEntryPersistence _fragmentEntryPersistence;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

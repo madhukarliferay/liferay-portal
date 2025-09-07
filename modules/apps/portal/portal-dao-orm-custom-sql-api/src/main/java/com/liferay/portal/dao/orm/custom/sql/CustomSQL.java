@@ -1,22 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.custom.sql;
 
+import com.liferay.petra.sql.dsl.expression.Expression;
+import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.dao.orm.WildcardMode;
 import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.function.BiFunction;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * @author Brian Wing Shun Chan
@@ -24,6 +21,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
  * @author Raymond Augé
  * @see    com.liferay.util.dao.orm.CustomSQL
  */
+@ProviderType
 public interface CustomSQL {
 
 	public String appendCriteria(String sql, String criteria);
@@ -36,6 +34,14 @@ public interface CustomSQL {
 	public String get(
 		Class<?> clazz, String id, QueryDefinition<?> queryDefinition,
 		String tableName);
+
+	public Predicate getKeywordsPredicate(
+		Expression<String> expression,
+		BiFunction<Expression<String>, String, Predicate> operatorBiFunction,
+		String[] values);
+
+	public Predicate getKeywordsPredicate(
+		Expression<String> expression, String[] values);
 
 	public String[] keywords(String keywords);
 
@@ -70,6 +76,7 @@ public interface CustomSQL {
 		String sql, String field, String operator, boolean last,
 		String[] values);
 
-	public String replaceOrderBy(String sql, OrderByComparator<?> obc);
+	public String replaceOrderBy(
+		String sql, OrderByComparator<?> orderByComparator);
 
 }

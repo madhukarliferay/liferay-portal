@@ -1,34 +1,49 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-SearchContainer accountEntryDisplaySearchContainer = AccountEntryDisplaySearchContainerFactory.create(liferayPortletRequest, liferayPortletResponse);
+long accountGroupId = ParamUtil.getLong(request, "accountGroupId");
 
-accountEntryDisplaySearchContainer.setRowChecker(null);
+boolean filterManageableAccountEntries = true;
+
+LinkedHashMap<String, Object> params = new LinkedHashMap<>();
+
+if (accountGroupId == 0) {
+	params.put("allowNewUserMembership", Boolean.TRUE);
+}
+else if (AccountGroupPermission.contains(permissionChecker, accountGroupId, AccountActionKeys.ASSIGN_ACCOUNTS)) {
+	filterManageableAccountEntries = false;
+}
+
+SearchContainer<AccountEntryDisplay> accountEntryDisplaySearchContainer = AccountEntryDisplaySearchContainerFactory.createWithParams(liferayPortletRequest, liferayPortletResponse, params, filterManageableAccountEntries);
+
+if (accountGroupId > 0) {
+	accountEntryDisplaySearchContainer.setRowChecker(new AccountGroupAccountEntryRowChecker(accountGroupId, liferayPortletResponse));
+}
+else if (ParamUtil.getLong(request, "userId") > 0) {
+	accountEntryDisplaySearchContainer.setRowChecker(new UserAccountEntryRowChecker(liferayPortletResponse, ParamUtil.getLong(request, "userId")));
+}
 
 SelectAccountEntryManagementToolbarDisplayContext selectAccountEntryManagementToolbarDisplayContext = new SelectAccountEntryManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, accountEntryDisplaySearchContainer);
+
+if (selectAccountEntryManagementToolbarDisplayContext.isSingleSelect()) {
+	accountEntryDisplaySearchContainer.setRowChecker(null);
+}
 %>
 
 <clay:management-toolbar
-	displayContext="<%= selectAccountEntryManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= selectAccountEntryManagementToolbarDisplayContext %>"
 />
 
-<aui:container cssClass="container-fluid container-fluid-max-xl" id="selectAccountEntry">
+<clay:container-fluid
+	id='<%= liferayPortletResponse.getNamespace() + "selectAccountEntry" %>'
+>
 	<liferay-ui:search-container
 		searchContainer="<%= accountEntryDisplaySearchContainer %>"
 	>
@@ -37,39 +52,55 @@ SelectAccountEntryManagementToolbarDisplayContext selectAccountEntryManagementTo
 			keyProperty="accountEntryId"
 			modelVar="accountEntryDisplay"
 		>
+
+			<%
+			Map<String, Object> data = HashMapBuilder.<String, Object>put(
+				"accountentryid", accountEntryDisplay.getAccountEntryId()
+			).put(
+				"entityid", accountEntryDisplay.getAccountEntryId()
+			).put(
+				"entityname", accountEntryDisplay.getName()
+			).build();
+
+			row.setData(data);
+
+			String cssClass = "table-cell-expand";
+			%>
+
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-expand table-title"
+				cssClass='<%= cssClass + " table-title" %>'
 				name="name"
-				property="name"
+				value="<%= HtmlUtil.escape(accountEntryDisplay.getName()) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-expand"
-				name="parent-account"
-				property="parentAccountEntryName"
+				cssClass="<%= cssClass %>"
+				name="type"
+				translate="<%= true %>"
+				value="<%= HtmlUtil.escape(accountEntryDisplay.getType()) %>"
 			/>
 
-			<liferay-ui:search-container-column-text>
+			<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-47858") %>'>
+				<liferay-ui:search-container-column-text
+					cssClass="table-cell-expand-smallest"
+					name="status"
+				>
+					<clay:label
+						displayType="<%= accountEntryDisplay.getStatusLabelStyle() %>"
+						label="<%= accountEntryDisplay.getStatusLabel() %>"
+					/>
+				</liferay-ui:search-container-column-text>
+			</c:if>
 
-				<%
-				Map<String, Object> data = HashMapBuilder.<String, Object>put(
-					"accountentryid", accountEntryDisplay.getAccountEntryId()
-				).build();
-				%>
-
-				<aui:button cssClass="choose-account selector-button" data="<%= data %>" value="choose" />
-			</liferay-ui:search-container-column-text>
+			<c:if test="<%= selectAccountEntryManagementToolbarDisplayContext.isSingleSelect() %>">
+				<liferay-ui:search-container-column-text>
+					<aui:button cssClass="choose-account selector-button" data="<%= data %>" value="choose" />
+				</liferay-ui:search-container-column-text>
+			</c:if>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</aui:container>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectAccountEntry',
-		'<%= HtmlUtil.escapeJS(liferayPortletResponse.getNamespace() + "addAccountUser") %>'
-	);
-</aui:script>
+</clay:container-fluid>

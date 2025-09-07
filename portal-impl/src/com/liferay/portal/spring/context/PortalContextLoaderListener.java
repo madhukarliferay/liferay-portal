@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.spring.context;
@@ -17,46 +8,55 @@ package com.liferay.portal.spring.context;
 import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.lang.ClassLoaderPool;
 import com.liferay.petra.reflect.ReflectionUtil;
-import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.bean.BeanLocatorImpl;
 import com.liferay.portal.dao.init.DBInitUtil;
-import com.liferay.portal.dao.orm.hibernate.FieldInterceptionHelperUtil;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.deploy.hot.CustomJspBagRegistryUtil;
 import com.liferay.portal.deploy.hot.ServiceWrapperRegistry;
+import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
+import com.liferay.portal.kernel.concurrent.SystemExecutorServiceUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.deploy.hot.HotDeployUtil;
 import com.liferay.portal.kernel.exception.LoggedExceptionInInitializerError;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.log4j.Log4JUtil;
 import com.liferay.portal.kernel.messaging.MessageBus;
-import com.liferay.portal.kernel.messaging.sender.SingleDestinationMessageSenderFactory;
+import com.liferay.portal.kernel.module.util.ServiceLatch;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.DirectServletRegistryUtil;
-import com.liferay.portal.kernel.servlet.PortletSessionListenerManager;
-import com.liferay.portal.kernel.servlet.SerializableSessionAttributeListener;
 import com.liferay.portal.kernel.servlet.ServletContextClassLoaderPool;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.ClearThreadLocalUtil;
 import com.liferay.portal.kernel.util.ClearTimerThreadUtil;
+import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.ModuleFrameworkPropsValues;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.kernel.util.PortalLifecycleUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.module.framework.ModuleFrameworkUtilAdapter;
-import com.liferay.portal.servlet.PortalSessionListener;
+import com.liferay.portal.module.framework.ModuleFrameworkUtil;
+import com.liferay.portal.spring.aop.AopConfigurableApplicationContextConfigurator;
 import com.liferay.portal.spring.aop.DynamicProxyCreator;
 import com.liferay.portal.spring.configurator.ConfigurableApplicationContextConfigurator;
+import com.liferay.portal.spring.hibernate.PortalHibernateConfiguration;
+import com.liferay.portal.spring.override.OverrideBeanDefinitionRegistryPostProcessor;
+import com.liferay.portal.spring.transaction.TransactionManagerFactory;
+import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PortalClassPathUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.registry.dependency.ServiceDependencyListener;
-import com.liferay.registry.dependency.ServiceDependencyManager;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import java.beans.PropertyDescriptor;
 
@@ -67,19 +67,29 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-
 import javax.sql.DataSource;
+
+import org.hibernate.SessionFactory;
 
 import org.springframework.beans.CachedIntrospectionResults;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -110,7 +120,7 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		ApplicationContext applicationContext =
 			ContextLoader.getCurrentWebApplicationContext();
 
-		ModuleFrameworkUtilAdapter.unregisterContext(applicationContext);
+		ModuleFrameworkUtil.unregisterContext(applicationContext);
 
 		ThreadLocalCacheManager.destroy();
 
@@ -121,48 +131,49 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		try {
 			DirectServletRegistryUtil.clearServlets();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		try {
 			HotDeployUtil.reset();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
-		try {
-			PortalLifecycleUtil.reset();
-		}
-		catch (Exception e) {
-			_log.error(e, e);
+		if (DBManagerUtil.getDBType() == DBType.HYPERSONIC) {
+			try (Connection connection = DataAccess.getConnection();
+				Statement statement = connection.createStatement()) {
+
+				statement.executeUpdate("SHUTDOWN");
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
 		}
 
-		closeDataSource("counterDataSource");
-
-		closeDataSource("liferayDataSource");
+		DataSource dataSource = (DataSource)PortalBeanLocatorUtil.locate(
+			"liferayDataSource");
 
 		super.contextDestroyed(servletContextEvent);
 
-		try {
-			ModuleFrameworkUtilAdapter.stopRuntime();
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
+		SessionFactory sessionFactory =
+			(SessionFactory)InfrastructureUtil.getSessionFactory();
+
+		sessionFactory.close();
+
+		closeDataSource(dataSource);
+
+		_cleanUpJDBCDrivers();
 
 		try {
-			ModuleFrameworkUtilAdapter.stopFramework(
+			ModuleFrameworkUtil.stopFramework(
 				PropsValues.MODULE_FRAMEWORK_STOP_WAIT_TIMEOUT);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
-
-		ModuleFrameworkUtilAdapter.unregisterContext(_arrayApplicationContext);
-
-		_arrayApplicationContext.close();
 
 		ClassLoaderPool.unregister(_portalServletContextName);
 		ServletContextClassLoaderPool.unregister(_portalServletContextName);
@@ -170,41 +181,145 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		try {
 			ClearThreadLocalUtil.clearThreadLocal();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		try {
 			ClearTimerThreadUtil.clearTimerThread();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+
+		Log4JUtil.shutdownLog4J();
+
+		try {
+			SystemExecutorServiceUtil.shutdown();
+		}
+		catch (InterruptedException interruptedException) {
+			_log.error(interruptedException);
 		}
 	}
 
 	@Override
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
 		try {
-			Class.forName(SystemProperties.class.getName());
+			_contextInitialized(servletContextEvent);
 		}
-		catch (ClassNotFoundException cnfe) {
-			throw new RuntimeException(cnfe);
+		catch (Exception exception) {
+			_log.error(exception);
+
+			throw new RuntimeException(exception);
+		}
+	}
+
+	protected void clearFilteredPropertyDescriptorsCache(
+		AutowireCapableBeanFactory autowireCapableBeanFactory) {
+
+		try {
+			Map<Class<?>, PropertyDescriptor[]>
+				filteredPropertyDescriptorsCache =
+					(Map<Class<?>, PropertyDescriptor[]>)
+						_FILTERED_PROPERTY_DESCRIPTORS_CACHE_FIELD.get(
+							autowireCapableBeanFactory);
+
+			filteredPropertyDescriptorsCache.clear();
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+	}
+
+	protected void closeDataSource(DataSource dataSource) {
+		if (dataSource instanceof DelegatingDataSource) {
+			DelegatingDataSource delegatingDataSource =
+				(DelegatingDataSource)dataSource;
+
+			dataSource = delegatingDataSource.getTargetDataSource();
 		}
 
-		FieldInterceptionHelperUtil.initialize();
+		if (dataSource instanceof Closeable) {
+			try {
+				Closeable closeable = (Closeable)dataSource;
 
-		final ServletContext servletContext =
-			servletContextEvent.getServletContext();
-
-		String portalLibDir = servletContext.getRealPath("/WEB-INF/lib");
-
-		portalLibDir = StringUtil.replace(
-			portalLibDir, CharPool.BACK_SLASH, CharPool.FORWARD_SLASH);
-
-		if (Validator.isNotNull(portalLibDir)) {
-			SystemProperties.set(
-				PropsKeys.LIFERAY_LIB_PORTAL_DIR, portalLibDir);
+				closeable.close();
+			}
+			catch (IOException ioException) {
+				_log.error(ioException);
+			}
 		}
+	}
+
+	@Override
+	protected void customizeContext(
+		ServletContext servletContext,
+		ConfigurableWebApplicationContext configurableWebApplicationContext) {
+
+		ConfigurableApplicationContextConfigurator
+			configurableApplicationContextConfigurator =
+				new AopConfigurableApplicationContextConfigurator();
+
+		configurableApplicationContextConfigurator.configure(
+			configurableWebApplicationContext);
+
+		Properties properties = PropsUtil.getProperties("spring.bean.", true);
+
+		if (!properties.isEmpty()) {
+			configurableWebApplicationContext.addBeanFactoryPostProcessor(
+				new OverrideBeanDefinitionRegistryPostProcessor(properties));
+		}
+	}
+
+	private void _cleanUpJDBCDrivers() {
+		Enumeration<Driver> enumeration = DriverManager.getDrivers();
+
+		while (enumeration.hasMoreElements()) {
+			Driver driver = enumeration.nextElement();
+
+			Class<?> driverClass = driver.getClass();
+
+			if (PortalClassLoaderUtil.isPortalClassLoader(
+					driverClass.getClassLoader())) {
+
+				try {
+					DriverManager.deregisterDriver(driver);
+				}
+				catch (SQLException sqlException) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"Unable to deregister driver " + driver,
+							sqlException);
+					}
+				}
+			}
+		}
+
+		DBType dbType = DBManagerUtil.getDBType();
+
+		if (dbType == DBType.MYSQL) {
+			try {
+				Class<?> clazz = Class.forName(
+					"com.mysql.cj.jdbc.AbandonedConnectionCleanupThread");
+
+				Method method = clazz.getMethod("checkedShutdown");
+
+				method.invoke(null);
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn("Unable to cleanly shut down MySQL", exception);
+				}
+			}
+		}
+	}
+
+	private void _contextInitialized(ServletContextEvent servletContextEvent)
+		throws Exception {
+
+		Class.forName(SystemProperties.class.getName());
+
+		ServletContext servletContext = servletContextEvent.getServletContext();
 
 		PortalClassPathUtil.initializeClassPaths(servletContext);
 
@@ -223,7 +338,7 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		_portalServletContextPath = servletContext.getContextPath();
 
 		File tempDir = (File)servletContext.getAttribute(
-			JavaConstants.JAVAX_SERVLET_CONTEXT_TEMPDIR);
+			JavaConstants.JAKARTA_SERVLET_CONTEXT_TEMPDIR);
 
 		PropsValues.LIFERAY_WEB_PORTAL_CONTEXT_TEMPDIR =
 			tempDir.getAbsolutePath();
@@ -234,26 +349,52 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 			try {
 				Files.createDirectories(tempDirPath);
 			}
-			catch (IOException ioe) {
-				_log.error("Unable to create " + tempDirPath, ioe);
+			catch (IOException ioException) {
+				_log.error("Unable to create " + tempDirPath, ioException);
 			}
 		}
 
-		try {
-			ModuleFrameworkUtilAdapter.initFramework();
+		ModuleFrameworkUtil.createFramework();
 
-			DBInitUtil.init();
+		ExecutorService executorService =
+			SystemExecutorServiceUtil.getExecutorService();
 
-			_arrayApplicationContext = new ArrayApplicationContext(
-				PropsValues.SPRING_INFRASTRUCTURE_CONFIGS);
+		Future<Future<?>> future1 = executorService.submit(
+			() -> {
+				DBInitUtil.init();
 
-			servletContext.setAttribute(
-				PortalApplicationContext.PARENT_APPLICATION_CONTEXT,
-				_arrayApplicationContext);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+				DataSource dataSource = DBInitUtil.getDataSource();
+
+				InfrastructureUtil.setDataSource(dataSource);
+
+				return executorService.submit(
+					() -> {
+						PortalHibernateConfiguration
+							portalHibernateConfiguration =
+								new PortalHibernateConfiguration();
+
+						portalHibernateConfiguration.setDataSource(dataSource);
+
+						portalHibernateConfiguration.afterPropertiesSet();
+
+						SessionFactory sessionFactory =
+							portalHibernateConfiguration.getObject();
+
+						InfrastructureUtil.setSessionFactory(sessionFactory);
+
+						InfrastructureUtil.setTransactionManager(
+							TransactionManagerFactory.createTransactionManager(
+								dataSource, sessionFactory));
+
+						return null;
+					});
+			});
+
+		ModuleFrameworkUtil.initFramework();
+
+		Future<?> future2 = future1.get();
+
+		future2.get();
 
 		ClassLoader portalClassLoader = PortalClassLoaderUtil.getClassLoader();
 
@@ -261,31 +402,20 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		ServletContextClassLoaderPool.register(
 			_portalServletContextName, portalClassLoader);
 
-		ServiceDependencyManager serviceDependencyManager =
-			new ServiceDependencyManager();
+		ServiceLatch serviceLatch = SystemBundleUtil.newServiceLatch();
 
-		serviceDependencyManager.addServiceDependencyListener(
-			new ServiceDependencyListener() {
+		serviceLatch.waitFor(MessageBus.class);
+		serviceLatch.waitFor(PortalExecutorManager.class);
+		serviceLatch.waitFor(SchedulerEngineHelper.class);
 
-				@Override
-				public void dependenciesFulfilled() {
-					_serviceWrapperRegistry = new ServiceWrapperRegistry();
-				}
-
-				@Override
-				public void destroy() {
-				}
-
-			});
-
-		serviceDependencyManager.registerDependencies(
-			MessageBus.class, PortalExecutorManager.class,
-			SchedulerEngineHelper.class,
-			SingleDestinationMessageSenderFactory.class);
+		serviceLatch.openOn(
+			() -> _serviceWrapperRegistry = new ServiceWrapperRegistry());
 
 		FutureTask<Void> springInitTask = null;
 
-		if (PropsValues.MODULE_FRAMEWORK_CONCURRENT_STARTUP_ENABLED) {
+		if (ModuleFrameworkPropsValues.
+				MODULE_FRAMEWORK_CONCURRENT_STARTUP_ENABLED) {
+
 			springInitTask = new FutureTask<>(
 				() -> {
 					super.contextInitialized(servletContextEvent);
@@ -293,39 +423,19 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 					return null;
 				});
 
-			Thread springInitThread = new Thread(
-				springInitTask, "Portal Spring Init Thread");
-
-			springInitThread.setDaemon(true);
-
-			springInitThread.start();
+			executorService.submit(
+				SystemExecutorServiceUtil.renameThread(
+					springInitTask, "Portal Spring Init Thread"));
 		}
 
-		try {
-			ModuleFrameworkUtilAdapter.registerContext(
-				_arrayApplicationContext);
-
-			ModuleFrameworkUtilAdapter.startFramework();
-
-			ModuleFrameworkUtilAdapter.startRuntime();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		ModuleFrameworkUtil.startFramework();
 
 		if (springInitTask == null) {
 			super.contextInitialized(servletContextEvent);
 		}
 		else {
-			try {
-				springInitTask.get();
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+			springInitTask.get();
 		}
-
-		InitUtil.registerSpringInitialized();
 
 		ServletContextPool.put(_portalServletContextName, servletContext);
 
@@ -353,80 +463,40 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 		dynamicProxyCreator.clear();
 
-		try {
-			ModuleFrameworkUtilAdapter.registerContext(applicationContext);
+		boolean upgradeDatabaseAutoRun =
+			DBUpgrader.isUpgradeDatabaseAutoRunEnabled();
+
+		if (upgradeDatabaseAutoRun) {
+			StartupHelperUtil.setUpgrading(true);
+
+			try {
+				DBUpgrader.upgradePortal();
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+
+		ModuleFrameworkUtil.registerContext(applicationContext);
 
 		CustomJspBagRegistryUtil.getCustomJspBags();
 
-		initListeners(servletContext);
-	}
+		if (!upgradeDatabaseAutoRun) {
 
-	protected void clearFilteredPropertyDescriptorsCache(
-		AutowireCapableBeanFactory autowireCapableBeanFactory) {
+			// Check class names
 
-		try {
-			Map<Class<?>, PropertyDescriptor[]>
-				filteredPropertyDescriptorsCache =
-					(Map<Class<?>, PropertyDescriptor[]>)
-						_FILTERED_PROPERTY_DESCRIPTORS_CACHE_FIELD.get(
-							autowireCapableBeanFactory);
+			if (_log.isDebugEnabled()) {
+				_log.debug("Check class names");
+			}
 
-			filteredPropertyDescriptorsCache.clear();
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
-	}
-
-	protected void closeDataSource(String name) {
-		DataSource dataSource = (DataSource)PortalBeanLocatorUtil.locate(name);
-
-		if (dataSource instanceof DelegatingDataSource) {
-			DelegatingDataSource delegatingDataSource =
-				(DelegatingDataSource)dataSource;
-
-			dataSource = delegatingDataSource.getTargetDataSource();
-		}
-
-		if (dataSource instanceof Closeable) {
 			try {
-				Closeable closeable = (Closeable)dataSource;
-
-				closeable.close();
+				DBPartitionUtil.forEachCompanyId(
+					companyId -> ClassNameLocalServiceUtil.checkClassNames());
 			}
-			catch (IOException ioe) {
-				_log.error(ioe, ioe);
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
 			}
 		}
-	}
-
-	@Override
-	protected void customizeContext(
-		ServletContext servletContext,
-		ConfigurableWebApplicationContext configurableWebApplicationContext) {
-
-		ConfigurableApplicationContextConfigurator
-			configurableApplicationContextConfigurator =
-				_arrayApplicationContext.getBean(
-					"configurableApplicationContextConfigurator",
-					ConfigurableApplicationContextConfigurator.class);
-
-		configurableApplicationContextConfigurator.configure(
-			configurableWebApplicationContext);
-	}
-
-	protected void initListeners(ServletContext servletContext) {
-		if (PropsValues.SESSION_VERIFY_SERIALIZABLE_ATTRIBUTE) {
-			servletContext.addListener(
-				SerializableSessionAttributeListener.class);
-		}
-
-		servletContext.addListener(PortalSessionListener.class);
-		servletContext.addListener(PortletSessionListenerManager.class);
 	}
 
 	private void _logJVMArguments() {
@@ -469,12 +539,11 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 					AbstractAutowireCapableBeanFactory.class,
 					"filteredPropertyDescriptorsCache");
 		}
-		catch (Exception e) {
-			throw new LoggedExceptionInInitializerError(e);
+		catch (Exception exception) {
+			throw new LoggedExceptionInInitializerError(exception);
 		}
 	}
 
-	private ArrayApplicationContext _arrayApplicationContext;
 	private ServiceWrapperRegistry _serviceWrapperRegistry;
 
 }

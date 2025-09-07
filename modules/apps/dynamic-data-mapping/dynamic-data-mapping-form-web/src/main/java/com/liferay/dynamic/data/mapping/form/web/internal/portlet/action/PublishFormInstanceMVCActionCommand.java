@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.portlet.action;
@@ -27,7 +18,6 @@ import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
@@ -41,8 +31,8 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -51,10 +41,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bruno Basto
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
-		"mvc.command.name=publishFormInstance"
+		"jakarta.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
+		"mvc.command.name=/dynamic_data_mapping_form/publish_form_instance"
 	},
 	service = MVCActionCommand.class
 )
@@ -73,13 +62,13 @@ public class PublishFormInstanceMVCActionCommand
 
 		boolean published = !_isFormInstancePublished(ddmFormInstance);
 
-		updateFormInstancePermission(
+		_updateFormInstancePermission(
 			actionRequest, ddmFormInstance.getFormInstanceId(), published);
 
 		DDMFormValues settingsDDMFormValues =
 			ddmFormInstance.getSettingsDDMFormValues();
 
-		updatePublishedDDMFormFieldValue(settingsDDMFormValues, published);
+		_updatePublishedDDMFormFieldValue(settingsDDMFormValues, published);
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DDMFormInstance.class.getName(), actionRequest);
@@ -116,44 +105,41 @@ public class PublishFormInstanceMVCActionCommand
 		portletURL.setParameter("showPublishAlert", Boolean.TRUE.toString());
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMFormInstanceService(
-		DDMFormInstanceService ddmFormInstanceService) {
+	private boolean _isFormInstancePublished(DDMFormInstance formInstance)
+		throws Exception {
 
-		_ddmFormInstanceService = ddmFormInstanceService;
+		DDMFormInstanceSettings ddmFormInstanceSettings =
+			formInstance.getSettingsModel();
+
+		return ddmFormInstanceSettings.published();
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMFormValuesQueryFactory(
-		DDMFormValuesQueryFactory ddmFormValuesQueryFactory) {
-
-		_ddmFormValuesQueryFactory = ddmFormValuesQueryFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setResourcePermissionLocalService(
-		ResourcePermissionLocalService resourcePermissionLocalService) {
-
-		_resourcePermissionLocalService = resourcePermissionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setRoleLocalService(RoleLocalService roleLocalService) {
-		_roleLocalService = roleLocalService;
-	}
-
-	protected void updateFormInstancePermission(
+	private void _updateFormInstancePermission(
 			ActionRequest actionRequest, long formInstanceId, boolean published)
-		throws PortalException {
+		throws Exception {
 
 		Role role = _roleLocalService.getRole(
 			_portal.getCompanyId(actionRequest), RoleConstants.GUEST);
 
 		ResourcePermission resourcePermission =
-			_resourcePermissionLocalService.getResourcePermission(
+			_resourcePermissionLocalService.fetchResourcePermission(
 				role.getCompanyId(), DDMFormInstance.class.getName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
 				String.valueOf(formInstanceId), role.getRoleId());
+
+		if (resourcePermission == null) {
+			_resourcePermissionLocalService.setResourcePermissions(
+				role.getCompanyId(), DDMFormInstance.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(formInstanceId), role.getRoleId(),
+				new String[] {DDMActionKeys.ADD_FORM_INSTANCE_RECORD});
+
+			resourcePermission =
+				_resourcePermissionLocalService.fetchResourcePermission(
+					role.getCompanyId(), DDMFormInstance.class.getName(),
+					ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(formInstanceId), role.getRoleId());
+		}
 
 		if (published) {
 			resourcePermission.addResourceAction(
@@ -168,9 +154,9 @@ public class PublishFormInstanceMVCActionCommand
 			resourcePermission);
 	}
 
-	protected void updatePublishedDDMFormFieldValue(
+	private void _updatePublishedDDMFormFieldValue(
 			DDMFormValues ddmFormValues, boolean published)
-		throws PortalException {
+		throws Exception {
 
 		DDMFormValuesQuery ddmFormValuesQuery =
 			_ddmFormValuesQueryFactory.create(ddmFormValues, "/published");
@@ -184,22 +170,19 @@ public class PublishFormInstanceMVCActionCommand
 			ddmFormValues.getDefaultLocale(), Boolean.toString(published));
 	}
 
-	private boolean _isFormInstancePublished(DDMFormInstance formInstance)
-		throws PortalException {
-
-		DDMFormInstanceSettings ddmFormInstanceSettings =
-			formInstance.getSettingsModel();
-
-		return ddmFormInstanceSettings.published();
-	}
-
+	@Reference
 	private DDMFormInstanceService _ddmFormInstanceService;
+
+	@Reference
 	private DDMFormValuesQueryFactory _ddmFormValuesQueryFactory;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Reference
 	private RoleLocalService _roleLocalService;
 
 }

@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,17 +32,17 @@ public class DDMStructureLayoutCacheModel
 	implements CacheModel<DDMStructureLayout>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMStructureLayoutCacheModel)) {
+		if (!(object instanceof DDMStructureLayoutCacheModel)) {
 			return false;
 		}
 
 		DDMStructureLayoutCacheModel ddmStructureLayoutCacheModel =
-			(DDMStructureLayoutCacheModel)obj;
+			(DDMStructureLayoutCacheModel)object;
 
 		if ((structureLayoutId ==
 				ddmStructureLayoutCacheModel.structureLayoutId) &&
@@ -78,10 +73,12 @@ public class DDMStructureLayoutCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(33);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", structureLayoutId=");
@@ -121,6 +118,7 @@ public class DDMStructureLayoutCacheModel
 			new DDMStructureLayoutImpl();
 
 		ddmStructureLayoutImpl.setMvccVersion(mvccVersion);
+		ddmStructureLayoutImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			ddmStructureLayoutImpl.setUuid("");
@@ -189,7 +187,13 @@ public class DDMStructureLayoutCacheModel
 
 		ddmStructureLayoutImpl.resetOriginalValues();
 
-		ddmStructureLayoutImpl.setDDMFormLayout(_ddmFormLayout);
+		try {
+			_ddmFormLayoutMethodHandle.invokeExact(
+				ddmStructureLayoutImpl, ddmFormLayout);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return ddmStructureLayoutImpl;
 	}
@@ -199,6 +203,8 @@ public class DDMStructureLayoutCacheModel
 		throws ClassNotFoundException, IOException {
 
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		structureLayoutId = objectInput.readLong();
@@ -216,11 +222,11 @@ public class DDMStructureLayoutCacheModel
 		structureLayoutKey = objectInput.readUTF();
 
 		structureVersionId = objectInput.readLong();
-		name = objectInput.readUTF();
-		description = objectInput.readUTF();
-		definition = objectInput.readUTF();
+		name = (String)objectInput.readObject();
+		description = (String)objectInput.readObject();
+		definition = (String)objectInput.readObject();
 
-		_ddmFormLayout =
+		ddmFormLayout =
 			(com.liferay.dynamic.data.mapping.model.DDMFormLayout)
 				objectInput.readObject();
 	}
@@ -228,6 +234,8 @@ public class DDMStructureLayoutCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -266,30 +274,31 @@ public class DDMStructureLayoutCacheModel
 		objectOutput.writeLong(structureVersionId);
 
 		if (name == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(name);
+			objectOutput.writeObject(name);
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (definition == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(definition);
+			objectOutput.writeObject(definition);
 		}
 
-		objectOutput.writeObject(_ddmFormLayout);
+		objectOutput.writeObject(ddmFormLayout);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long structureLayoutId;
 	public long groupId;
@@ -304,6 +313,22 @@ public class DDMStructureLayoutCacheModel
 	public String name;
 	public String description;
 	public String definition;
-	public com.liferay.dynamic.data.mapping.model.DDMFormLayout _ddmFormLayout;
+	public volatile com.liferay.dynamic.data.mapping.model.DDMFormLayout
+		ddmFormLayout;
+
+	private static final MethodHandle _ddmFormLayoutMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_ddmFormLayoutMethodHandle = lookup.findSetter(
+				DDMStructureLayoutImpl.class, "_ddmFormLayout",
+				com.liferay.dynamic.data.mapping.model.DDMFormLayout.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

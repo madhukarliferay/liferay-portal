@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.constants;
@@ -25,6 +16,8 @@ public interface SamlWebKeys {
 	public static final String FORCE_REAUTHENTICATION =
 		"FORCE_REAUTHENTICATION";
 
+	public static final String SAML_ACS_LOGIN = "SAML_ACS_LOGIN";
+
 	public static final String SAML_ASSERTION_LIFETIME =
 		"SAML_ASSERTION_LIFETIME";
 
@@ -33,6 +26,9 @@ public interface SamlWebKeys {
 	public static final String SAML_CLOCK_SKEW = "SAML_CLOCK_SKEW";
 
 	public static final String SAML_ENTITY_ID = "SAML_ENTITY_ID";
+
+	public static final String SAML_IDP_REDIRECT_MESSAGE =
+		"SAML_IDP_REDIRECT_MESSAGE";
 
 	public static final String SAML_IDP_SP_CONNECTION =
 		"SAML_IDP_SP_CONNECTION";
@@ -46,6 +42,8 @@ public interface SamlWebKeys {
 	public static final String SAML_KEEP_ALIVE_URL = "SAML_KEEP_ALIVE_URL";
 
 	public static final String SAML_KEEP_ALIVE_URLS = "SAML_KEEP_ALIVE_URLS";
+
+	public static final String SAML_KEYSTORE = "SAML_KEYSTORE";
 
 	public static final String SAML_SLO_CONTEXT = "SAML_SLO_CONTEXT";
 
@@ -69,6 +67,8 @@ public interface SamlWebKeys {
 
 	public static final String SAML_SP_SESSION_KEY = "SAML_SP_SESSION_KEY";
 
+	public static final String SAML_SSO_ERROR = "SAML_SSO_ERROR";
+
 	public static final String SAML_SSO_LOGIN_CONTEXT =
 		"SAML_SSO_LOGIN_CONTEXT";
 
@@ -76,6 +76,8 @@ public interface SamlWebKeys {
 		"SAML_SSO_REQUEST_CONTEXT";
 
 	public static final String SAML_SSO_SESSION_ID = "SAML_SSO_SESSION_ID";
+
+	public static final String SAML_SUBJECT_NAME_ID = "SAML_SUBJECT_NAME_ID";
 
 	public static final String SAML_X509_CERTIFICATE = "SAML_X509_CERTIFICATE";
 

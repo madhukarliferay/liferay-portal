@@ -1,25 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.permission.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.petra.sql.dsl.query.GroupByStep;
+import com.liferay.petra.sql.dsl.query.JoinStep;
+import com.liferay.petra.sql.dsl.spi.ast.DefaultASTNodeListener;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutTable;
+import com.liferay.portal.kernel.model.PortletPreferencesTable;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -50,6 +49,8 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -152,7 +153,7 @@ public class InlineSQLHelperImplTest {
 			_groupThree.getCompanyId(), RoleConstants.USER);
 
 		long[] roleIds = ReflectionTestUtil.invoke(
-			_inlineSQLHelper, "getRoleIds", new Class<?>[] {long.class},
+			_inlineSQLHelper, "_getRoleIds", new Class<?>[] {long.class},
 			_groupThree.getGroupId());
 
 		String msg = StringUtil.merge(roleIds);
@@ -175,15 +176,12 @@ public class InlineSQLHelperImplTest {
 
 		String sql = _replacePermissionCheckJoin(_SQL_PLAIN, _groupIds);
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(" OR (");
-		sb.append(_GROUP_ID_FIELD);
-		sb.append(" IN (");
-		sb.append(_groupOne.getGroupId());
-		sb.append("))");
-
-		Assert.assertTrue(sql, sql.contains(sb.toString()));
+		Assert.assertTrue(
+			sql,
+			sql.contains(
+				StringBundler.concat(
+					" OR (JournalArticle.groupId IN (", _groupOne.getGroupId(),
+					"))")));
 	}
 
 	@Test
@@ -201,8 +199,8 @@ public class InlineSQLHelperImplTest {
 		_setPermissionChecker();
 
 		String sql = _inlineSQLHelper.replacePermissionCheck(
-			_SQL_PLAIN, _CLASS_NAME, _CLASS_PK_FIELD, _USER_ID_FIELD,
-			_GROUP_ID_FIELD, new long[] {_groupOne.getGroupId()}, null);
+			_SQL_PLAIN, _CLASS_NAME, _CLASS_PK_FIELD,
+			new long[] {_groupOne.getGroupId()});
 
 		Assert.assertSame(_SQL_PLAIN, sql);
 
@@ -236,11 +234,7 @@ public class InlineSQLHelperImplTest {
 	public void testInvalidCompany() throws Exception {
 		_company = CompanyTestUtil.addCompany();
 
-		_groupThree = GroupTestUtil.addGroup();
-
-		_groupThree.setCompanyId(_company.getCompanyId());
-
-		_groupLocalService.updateGroup(_groupThree);
+		_groupThree = GroupTestUtil.addGroupToCompany(_company.getCompanyId());
 
 		_addGroupRole(_groupThree, RoleConstants.SITE_MEMBER);
 
@@ -249,14 +243,25 @@ public class InlineSQLHelperImplTest {
 		_setPermissionChecker();
 
 		_inlineSQLHelper.replacePermissionCheck(
-			_SQL_PLAIN, _CLASS_NAME, _CLASS_PK_FIELD, _USER_ID_FIELD,
-			_GROUP_ID_FIELD,
-			new long[] {_groupOne.getGroupId(), _groupThree.getGroupId()},
-			null);
+			_SQL_PLAIN, _CLASS_NAME, _CLASS_PK_FIELD,
+			new long[] {_groupOne.getGroupId(), _groupThree.getGroupId()});
 	}
 
 	@Test
-	public void testIsNotEnabledForOmniAdmin() throws Exception {
+	public void testIsNotEnabledForCompanyAdminWithNewCompany()
+		throws Exception {
+
+		_company = CompanyTestUtil.addCompany();
+
+		_user = UserTestUtil.addCompanyAdminUser(_company);
+
+		_setPermissionChecker();
+
+		Assert.assertFalse(_inlineSQLHelper.isEnabled());
+	}
+
+	@Test
+	public void testIsNotEnabledForOmniadmin() throws Exception {
 		Role role = _roleLocalService.getRole(
 			_user.getCompanyId(), RoleConstants.ADMINISTRATOR);
 
@@ -278,6 +283,85 @@ public class InlineSQLHelperImplTest {
 	}
 
 	@Test
+	public void testReplaceQuery() throws Exception {
+		_addGroupRole(_groupOne, RoleConstants.SITE_ADMINISTRATOR);
+		_addGroupRole(_groupTwo, RoleConstants.SITE_MEMBER);
+
+		_setPermissionChecker();
+
+		JoinStep joinStep = DSLQueryFactoryUtil.select(
+		).from(
+			LayoutTable.INSTANCE
+		);
+
+		DSLQuery dslQuery = _inlineSQLHelper.replacePermissionCheck(
+			joinStep, Layout.class, LayoutTable.INSTANCE.plid, _groupIds);
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"select * from Layout where (Layout.plid in (select distinct ",
+				"ResourcePermission.primKeyId from ResourcePermission where ",
+				"ResourcePermission.companyId = ? and ResourcePermission.name ",
+				"= ? and ResourcePermission.scope = ? and ",
+				"ResourcePermission.viewActionId = ? and ",
+				"(ResourcePermission.roleId in (?, ?, ?, ?) or ",
+				"ResourcePermission.ownerId = ?)) or Layout.groupId in (?))"),
+			dslQuery.toString());
+
+		_assertValidSql(dslQuery);
+
+		Assert.assertEquals(
+			dslQuery.toString(),
+			String.valueOf(
+				joinStep.where(
+					_inlineSQLHelper.getPermissionWherePredicate(
+						Layout.class, LayoutTable.INSTANCE.plid, _groupIds))));
+
+		GroupByStep groupByStep = joinStep.innerJoinON(
+			PortletPreferencesTable.INSTANCE,
+			PortletPreferencesTable.INSTANCE.plid.eq(LayoutTable.INSTANCE.plid)
+		).where(
+			LayoutTable.INSTANCE.companyId.eq(0L)
+		);
+
+		dslQuery = _inlineSQLHelper.replacePermissionCheck(
+			groupByStep, Layout.class, LayoutTable.INSTANCE.plid, _groupIds);
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"select * from Layout inner join PortletPreferences on ",
+				"PortletPreferences.plid = Layout.plid where Layout.companyId ",
+				"= ? and (Layout.plid in (select distinct ",
+				"ResourcePermission.primKeyId from ResourcePermission where ",
+				"ResourcePermission.companyId = ? and ResourcePermission.name ",
+				"= ? and ResourcePermission.scope = ? and ",
+				"ResourcePermission.viewActionId = ? and ",
+				"(ResourcePermission.roleId in (?, ?, ?, ?) or ",
+				"ResourcePermission.ownerId = ?)) or Layout.groupId in (?))"),
+			dslQuery.toString());
+
+		_assertValidSql(dslQuery);
+
+		dslQuery = _inlineSQLHelper.replacePermissionCheck(
+			groupByStep, Layout.class, LayoutTable.INSTANCE.plid);
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"select * from Layout inner join PortletPreferences on ",
+				"PortletPreferences.plid = Layout.plid where Layout.companyId ",
+				"= ? and (Layout.plid in (select distinct ",
+				"ResourcePermission.primKeyId from ResourcePermission where ",
+				"ResourcePermission.companyId = ? and ResourcePermission.name ",
+				"= ? and ResourcePermission.scope = ? and ",
+				"ResourcePermission.viewActionId = ? and ",
+				"(ResourcePermission.roleId in (?, ?) or ",
+				"ResourcePermission.ownerId = ?)))"),
+			dslQuery.toString());
+
+		_assertValidSql(dslQuery);
+	}
+
+	@Test
 	public void testSQLComposition() throws Exception {
 		_addGroupRole(_groupOne, RoleConstants.SITE_MEMBER);
 		_addGroupRole(_groupTwo, RoleConstants.SITE_MEMBER);
@@ -286,36 +370,9 @@ public class InlineSQLHelperImplTest {
 
 		String sql = _replacePermissionCheckJoin(_SQL_PLAIN, _groupIds);
 
-		_assertWhereClause(sql, _CLASS_PK_FIELD);
+		_checkSQLComposition(sql);
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_RESOURCE_PERMISSION);
-		sb.append(".name = '");
-		sb.append(_CLASS_NAME);
-		sb.append("'");
-
-		Assert.assertTrue(sql, sql.contains(sb.toString()));
-
-		sb = new StringBundler(3);
-
-		sb.append(_RESOURCE_PERMISSION);
-		sb.append(".companyId = ");
-		sb.append(CompanyThreadLocal.getCompanyId());
-
-		Assert.assertTrue(sql, sql.contains(sb.toString()));
-
-		sb = new StringBundler(3);
-
-		sb.append(_USER_ID_FIELD);
-		sb.append(" = ");
-		sb.append(_user.getUserId());
-
-		Assert.assertTrue(sql, sql.contains(sb.toString()));
-
-		_assertValidSql(sql);
-
-		sql = _replacePermissionCheckJoin(_SQL_PLAIN + _SQL_WHERE);
+		sql = _replacePermissionCheckJoin(_SQL_PLAIN + _SQL_WHERE, _groupIds);
 
 		_assertWhereClause(sql, _CLASS_PK_FIELD);
 
@@ -325,6 +382,27 @@ public class InlineSQLHelperImplTest {
 				" AND " + _SQL_WHERE.substring(_WHERE_CLAUSE.length())));
 
 		_assertValidSql(sql);
+	}
+
+	@Test
+	public void testSQLCompositionNested() throws Exception {
+		_addGroupRole(_groupOne, RoleConstants.SITE_MEMBER);
+		_addGroupRole(_groupTwo, RoleConstants.SITE_MEMBER);
+
+		_setPermissionChecker();
+
+		String sql = _replacePermissionCheckJoin(
+			StringBundler.concat(
+				"SELECT COUNT(*) FROM JournalArticle LEFT JOIN (SELECT ",
+				"JournalArticleLocalization.articlePK FROM ",
+				"JournalArticleLocalization WHERE ",
+				"JournalArticleLocalization.languageId = 'en_US') ",
+				"JournalArticleLocalization ON (JournalArticle.id_ = ",
+				"JournalArticleLocalization.articlePK) WHERE ",
+				"JournalArticle.urlTitle like '%test%'"),
+			_groupIds);
+
+		_checkSQLComposition(sql);
 	}
 
 	private void _addGroupRole(Group group, String roleName) throws Exception {
@@ -360,41 +438,68 @@ public class InlineSQLHelperImplTest {
 		}
 	}
 
+	private void _assertValidSql(DSLQuery dslQuery) throws Exception {
+		DefaultASTNodeListener defaultASTNodeListener =
+			new DefaultASTNodeListener();
+
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				dslQuery.toSQL(defaultASTNodeListener))) {
+
+			List<Object> scalarValues =
+				defaultASTNodeListener.getScalarValues();
+
+			for (int i = 0; i < scalarValues.size(); i++) {
+				preparedStatement.setObject(i + 1, scalarValues.get(i));
+			}
+
+			preparedStatement.executeQuery();
+		}
+	}
+
 	private void _assertValidSql(String sql) throws Exception {
 		try (Connection connection = DataAccess.getConnection();
-			PreparedStatement ps = connection.prepareStatement(sql)) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.execute();
+			preparedStatement.execute();
 		}
 	}
 
 	private void _assertWhereClause(String sql, String classPK) {
-		StringBundler sb = new StringBundler(4);
+		Assert.assertTrue(
+			sql,
+			sql.contains(
+				StringBundler.concat(_WHERE_CLAUSE, "(", classPK, " IN (")));
+	}
 
-		sb.append(_WHERE_CLAUSE);
-		sb.append("(");
-		sb.append(classPK);
-		sb.append(" IN (");
+	private void _checkSQLComposition(String sql) throws Exception {
+		_assertWhereClause(sql, _CLASS_PK_FIELD);
 
-		Assert.assertTrue(sql, sql.contains(sb.toString()));
+		Assert.assertTrue(
+			sql,
+			sql.contains(
+				StringBundler.concat(
+					_RESOURCE_PERMISSION, ".name = '", _CLASS_NAME, "'")));
+
+		Assert.assertTrue(
+			sql,
+			sql.contains(
+				StringBundler.concat(
+					_RESOURCE_PERMISSION, ".companyId = ",
+					CompanyThreadLocal.getCompanyId())));
+
+		_assertValidSql(sql);
 	}
 
 	private String _replacePermissionCheckJoin(String sql, long... groupIds) {
-		return ReflectionTestUtil.invoke(
-			_inlineSQLHelper, "replacePermissionCheckJoin",
-			new Class<?>[] {
-				String.class, String.class, String.class, String.class,
-				String.class, long[].class, String.class
-			},
-			sql, _CLASS_NAME, _CLASS_PK_FIELD, _USER_ID_FIELD, _GROUP_ID_FIELD,
-			groupIds, null);
+		return _inlineSQLHelper.replacePermissionCheck(
+			sql, _CLASS_NAME, _CLASS_PK_FIELD, groupIds);
 	}
 
 	private void _setPermissionChecker() throws Exception {
-		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(_user);
-
-		PermissionThreadLocal.setPermissionChecker(permissionChecker);
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
 	}
 
 	private static final String _CLASS_NAME =
@@ -404,8 +509,6 @@ public class InlineSQLHelperImplTest {
 		"JournalArticle.resourcePrimKey";
 
 	private static final String _GROUP_BY_CLAUSE = " GROUP BY ";
-
-	private static final String _GROUP_ID_FIELD = "groupIdField";
 
 	private static final String _ORDER_BY_CLAUSE = " ORDER BY ";
 
@@ -420,9 +523,6 @@ public class InlineSQLHelperImplTest {
 
 	private static final String _SQL_WHERE =
 		" WHERE " + _CLASS_PK_FIELD + " != 0";
-
-	private static final String _USER_ID_FIELD =
-		_RESOURCE_PERMISSION + ".ownerId";
 
 	private static final String _WHERE_CLAUSE = " WHERE ";
 

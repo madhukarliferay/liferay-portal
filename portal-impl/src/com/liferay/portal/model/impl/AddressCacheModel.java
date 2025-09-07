@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -37,16 +28,16 @@ public class AddressCacheModel
 	implements CacheModel<Address>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AddressCacheModel)) {
+		if (!(object instanceof AddressCacheModel)) {
 			return false;
 		}
 
-		AddressCacheModel addressCacheModel = (AddressCacheModel)obj;
+		AddressCacheModel addressCacheModel = (AddressCacheModel)object;
 
 		if ((addressId == addressCacheModel.addressId) &&
 			(mvccVersion == addressCacheModel.mvccVersion)) {
@@ -76,12 +67,16 @@ public class AddressCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(41);
+		StringBundler sb = new StringBundler(61);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", addressId=");
 		sb.append(addressId);
 		sb.append(", companyId=");
@@ -98,26 +93,42 @@ public class AddressCacheModel
 		sb.append(classNameId);
 		sb.append(", classPK=");
 		sb.append(classPK);
+		sb.append(", countryId=");
+		sb.append(countryId);
+		sb.append(", listTypeId=");
+		sb.append(listTypeId);
+		sb.append(", regionId=");
+		sb.append(regionId);
+		sb.append(", city=");
+		sb.append(city);
+		sb.append(", description=");
+		sb.append(description);
+		sb.append(", latitude=");
+		sb.append(latitude);
+		sb.append(", longitude=");
+		sb.append(longitude);
+		sb.append(", mailing=");
+		sb.append(mailing);
+		sb.append(", name=");
+		sb.append(name);
+		sb.append(", primary=");
+		sb.append(primary);
 		sb.append(", street1=");
 		sb.append(street1);
 		sb.append(", street2=");
 		sb.append(street2);
 		sb.append(", street3=");
 		sb.append(street3);
-		sb.append(", city=");
-		sb.append(city);
+		sb.append(", subtype=");
+		sb.append(subtype);
+		sb.append(", validationDate=");
+		sb.append(validationDate);
+		sb.append(", validationStatus=");
+		sb.append(validationStatus);
 		sb.append(", zip=");
 		sb.append(zip);
-		sb.append(", regionId=");
-		sb.append(regionId);
-		sb.append(", countryId=");
-		sb.append(countryId);
-		sb.append(", typeId=");
-		sb.append(typeId);
-		sb.append(", mailing=");
-		sb.append(mailing);
-		sb.append(", primary=");
-		sb.append(primary);
+		sb.append(", status=");
+		sb.append(status);
 		sb.append("}");
 
 		return sb.toString();
@@ -128,12 +139,20 @@ public class AddressCacheModel
 		AddressImpl addressImpl = new AddressImpl();
 
 		addressImpl.setMvccVersion(mvccVersion);
+		addressImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			addressImpl.setUuid("");
 		}
 		else {
 			addressImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			addressImpl.setExternalReferenceCode("");
+		}
+		else {
+			addressImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		addressImpl.setAddressId(addressId);
@@ -163,6 +182,36 @@ public class AddressCacheModel
 
 		addressImpl.setClassNameId(classNameId);
 		addressImpl.setClassPK(classPK);
+		addressImpl.setCountryId(countryId);
+		addressImpl.setListTypeId(listTypeId);
+		addressImpl.setRegionId(regionId);
+
+		if (city == null) {
+			addressImpl.setCity("");
+		}
+		else {
+			addressImpl.setCity(city);
+		}
+
+		if (description == null) {
+			addressImpl.setDescription("");
+		}
+		else {
+			addressImpl.setDescription(description);
+		}
+
+		addressImpl.setLatitude(latitude);
+		addressImpl.setLongitude(longitude);
+		addressImpl.setMailing(mailing);
+
+		if (name == null) {
+			addressImpl.setName("");
+		}
+		else {
+			addressImpl.setName(name);
+		}
+
+		addressImpl.setPrimary(primary);
 
 		if (street1 == null) {
 			addressImpl.setStreet1("");
@@ -185,12 +234,21 @@ public class AddressCacheModel
 			addressImpl.setStreet3(street3);
 		}
 
-		if (city == null) {
-			addressImpl.setCity("");
+		if (subtype == null) {
+			addressImpl.setSubtype("");
 		}
 		else {
-			addressImpl.setCity(city);
+			addressImpl.setSubtype(subtype);
 		}
+
+		if (validationDate == Long.MIN_VALUE) {
+			addressImpl.setValidationDate(null);
+		}
+		else {
+			addressImpl.setValidationDate(new Date(validationDate));
+		}
+
+		addressImpl.setValidationStatus(validationStatus);
 
 		if (zip == null) {
 			addressImpl.setZip("");
@@ -199,11 +257,7 @@ public class AddressCacheModel
 			addressImpl.setZip(zip);
 		}
 
-		addressImpl.setRegionId(regionId);
-		addressImpl.setCountryId(countryId);
-		addressImpl.setTypeId(typeId);
-		addressImpl.setMailing(mailing);
-		addressImpl.setPrimary(primary);
+		addressImpl.setStatus(status);
 
 		addressImpl.resetOriginalValues();
 
@@ -213,7 +267,10 @@ public class AddressCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		addressId = objectInput.readLong();
 
@@ -227,32 +284,53 @@ public class AddressCacheModel
 		classNameId = objectInput.readLong();
 
 		classPK = objectInput.readLong();
-		street1 = objectInput.readUTF();
-		street2 = objectInput.readUTF();
-		street3 = objectInput.readUTF();
-		city = objectInput.readUTF();
-		zip = objectInput.readUTF();
-
-		regionId = objectInput.readLong();
 
 		countryId = objectInput.readLong();
 
-		typeId = objectInput.readLong();
+		listTypeId = objectInput.readLong();
+
+		regionId = objectInput.readLong();
+		city = objectInput.readUTF();
+		description = objectInput.readUTF();
+
+		latitude = objectInput.readDouble();
+
+		longitude = objectInput.readDouble();
 
 		mailing = objectInput.readBoolean();
+		name = objectInput.readUTF();
 
 		primary = objectInput.readBoolean();
+		street1 = objectInput.readUTF();
+		street2 = objectInput.readUTF();
+		street3 = objectInput.readUTF();
+		subtype = objectInput.readUTF();
+		validationDate = objectInput.readLong();
+
+		validationStatus = objectInput.readInt();
+		zip = objectInput.readUTF();
+
+		status = objectInput.readInt();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(addressId);
@@ -275,6 +353,41 @@ public class AddressCacheModel
 
 		objectOutput.writeLong(classPK);
 
+		objectOutput.writeLong(countryId);
+
+		objectOutput.writeLong(listTypeId);
+
+		objectOutput.writeLong(regionId);
+
+		if (city == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(city);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		objectOutput.writeDouble(latitude);
+
+		objectOutput.writeDouble(longitude);
+
+		objectOutput.writeBoolean(mailing);
+
+		if (name == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		objectOutput.writeBoolean(primary);
+
 		if (street1 == null) {
 			objectOutput.writeUTF("");
 		}
@@ -296,12 +409,16 @@ public class AddressCacheModel
 			objectOutput.writeUTF(street3);
 		}
 
-		if (city == null) {
+		if (subtype == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(city);
+			objectOutput.writeUTF(subtype);
 		}
+
+		objectOutput.writeLong(validationDate);
+
+		objectOutput.writeInt(validationStatus);
 
 		if (zip == null) {
 			objectOutput.writeUTF("");
@@ -310,19 +427,13 @@ public class AddressCacheModel
 			objectOutput.writeUTF(zip);
 		}
 
-		objectOutput.writeLong(regionId);
-
-		objectOutput.writeLong(countryId);
-
-		objectOutput.writeLong(typeId);
-
-		objectOutput.writeBoolean(mailing);
-
-		objectOutput.writeBoolean(primary);
+		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long addressId;
 	public long companyId;
 	public long userId;
@@ -331,15 +442,23 @@ public class AddressCacheModel
 	public long modifiedDate;
 	public long classNameId;
 	public long classPK;
+	public long countryId;
+	public long listTypeId;
+	public long regionId;
+	public String city;
+	public String description;
+	public double latitude;
+	public double longitude;
+	public boolean mailing;
+	public String name;
+	public boolean primary;
 	public String street1;
 	public String street2;
 	public String street3;
-	public String city;
+	public String subtype;
+	public long validationDate;
+	public int validationStatus;
 	public String zip;
-	public long regionId;
-	public long countryId;
-	public long typeId;
-	public boolean mailing;
-	public boolean primary;
+	public int status;
 
 }

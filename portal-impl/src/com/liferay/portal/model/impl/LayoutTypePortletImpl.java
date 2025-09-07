@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
 
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.configuration.Filter;
@@ -26,7 +18,6 @@ import com.liferay.portal.kernel.model.CustomizedPages;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
-import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutTemplate;
 import com.liferay.portal.kernel.model.LayoutTypeAccessPolicy;
 import com.liferay.portal.kernel.model.LayoutTypeController;
@@ -37,6 +28,7 @@ import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletPreferencesIds;
 import com.liferay.portal.kernel.model.PortletWrapper;
 import com.liferay.portal.kernel.model.ResourcePermission;
+import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.PortletLayoutListener;
@@ -60,13 +52,14 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.sites.kernel.util.SitesUtil;
 import com.liferay.util.JS;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.text.DateFormat;
 import java.text.Format;
@@ -78,9 +71,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
-
-import javax.portlet.PortletPreferences;
 
 /**
  * @author Brian Wing Shun Chan
@@ -224,11 +216,11 @@ public class LayoutTypePortletImpl
 		// specified
 
 		if (startPortlets == null) {
-			startPortlets = new ArrayList<>();
+			startPortlets = Collections.emptyList();
 		}
 
 		if (endPortlets == null) {
-			endPortlets = new ArrayList<>();
+			endPortlets = Collections.emptyList();
 		}
 
 		if (startPortlets.isEmpty() && endPortlets.isEmpty()) {
@@ -268,14 +260,44 @@ public class LayoutTypePortletImpl
 	}
 
 	@Override
-	public List<Portlet> getAllPortlets() {
-		List<Portlet> explicitlyAddedPortlets = getExplicitlyAddedPortlets();
-
+	public List<Portlet> getAllNonembeddedPortlets() {
 		List<Portlet> staticPortlets = getStaticPortlets(
 			PropsKeys.LAYOUT_STATIC_PORTLETS_ALL);
 
+		List<Portlet> explicitlyAddedPortlets = new ArrayList<>();
+
+		Layout layout = getLayout();
+
+		if (layout.isTypeAssetDisplay() || layout.isTypeContent()) {
+			List<com.liferay.portal.kernel.model.PortletPreferences>
+				portletPreferencesList =
+					PortletPreferencesLocalServiceUtil.
+						getPortletPreferencesByPlid(layout.getPlid());
+
+			for (com.liferay.portal.kernel.model.PortletPreferences
+					portletPreferences : portletPreferencesList) {
+
+				Portlet portlet = PortletLocalServiceUtil.getPortletById(
+					layout.getCompanyId(), portletPreferences.getPortletId());
+
+				if (portlet != null) {
+					explicitlyAddedPortlets.add(portlet);
+				}
+			}
+		}
+		else {
+			explicitlyAddedPortlets = getExplicitlyAddedPortlets(false);
+		}
+
+		return addStaticPortlets(explicitlyAddedPortlets, staticPortlets, null);
+	}
+
+	@Override
+	public List<Portlet> getAllPortlets() {
 		return addStaticPortlets(
-			explicitlyAddedPortlets, staticPortlets, getEmbeddedPortlets());
+			getExplicitlyAddedPortlets(),
+			getStaticPortlets(PropsKeys.LAYOUT_STATIC_PORTLETS_ALL),
+			getEmbeddedPortlets());
 	}
 
 	@Override
@@ -286,17 +308,15 @@ public class LayoutTypePortletImpl
 			return portlets;
 		}
 
-		List<Portlet> filteredPortlets = new ArrayList<>();
+		return TransformUtil.transform(
+			portlets,
+			portlet -> {
+				if (portlet.isSystem() && !includeSystem) {
+					return null;
+				}
 
-		for (Portlet portlet : portlets) {
-			if (portlet.isSystem() && !includeSystem) {
-				continue;
-			}
-
-			filteredPortlets.add(portlet);
-		}
-
-		return filteredPortlets;
+				return portlet;
+			});
 	}
 
 	@Override
@@ -324,6 +344,61 @@ public class LayoutTypePortletImpl
 	}
 
 	@Override
+	public String getColumn(String portletId) {
+		String portletIdColumnId = StringPool.BLANK;
+
+		List<String> columnIds = getColumns();
+
+		for (String columnId : columnIds) {
+			String[] portletIds = StringUtil.split(getColumnValue(columnId));
+
+			for (String columnPortletId : portletIds) {
+				if (columnPortletId.equals(portletId)) {
+					return columnId;
+				}
+
+				if (Validator.isNull(portletIdColumnId) &&
+					Objects.equals(
+						PortletIdCodec.decodePortletName(columnPortletId),
+						PortletIdCodec.decodePortletName(portletId))) {
+
+					portletIdColumnId = columnId;
+				}
+			}
+		}
+
+		return portletIdColumnId;
+	}
+
+	@Override
+	public List<String> getColumns() {
+		List<String> columns = new ArrayList<>();
+
+		Layout layout = getLayout();
+
+		if (layout.isTypePanel()) {
+			columns.add("panelSelectedPortlets");
+		}
+		else if (layout.isTypePortlet()) {
+			if (Objects.equals(
+					layout.getType(),
+					LayoutConstants.TYPE_FULL_PAGE_APPLICATION)) {
+
+				columns.add("fullPageApplicationPortlet");
+			}
+			else {
+				LayoutTemplate layoutTemplate = getLayoutTemplate();
+
+				columns.addAll(layoutTemplate.getColumns());
+
+				Collections.addAll(columns, getNestedColumns());
+			}
+		}
+
+		return columns;
+	}
+
+	@Override
 	public List<Portlet> getEmbeddedPortlets() {
 		Layout layout = getLayout();
 
@@ -332,11 +407,30 @@ public class LayoutTypePortletImpl
 
 	@Override
 	public List<Portlet> getExplicitlyAddedPortlets() {
+		return getExplicitlyAddedPortlets(true);
+	}
+
+	@Override
+	public List<Portlet> getExplicitlyAddedPortlets(
+		boolean includeCustomizableColumns) {
+
 		List<Portlet> portlets = new ArrayList<>();
 
 		List<String> columns = getColumns();
 
 		for (String columnId : columns) {
+			if (!includeCustomizableColumns) {
+				String customizableString = getTypeSettingsProperty(
+					CustomizedPages.namespaceColumnId(columnId));
+
+				boolean customizable = GetterUtil.getBoolean(
+					customizableString);
+
+				if (customizable && !isLayoutSetPrototype()) {
+					continue;
+				}
+			}
+
 			portlets.addAll(getAllPortlets(columnId));
 		}
 
@@ -346,8 +440,9 @@ public class LayoutTypePortletImpl
 	@Override
 	public Layout getLayoutSetPrototypeLayout() {
 		if (_layoutSetPrototypeLayout == null) {
-			_layoutSetPrototypeLayout = SitesUtil.getLayoutSetPrototypeLayout(
-				getLayout());
+			Layout layout = getLayout();
+
+			_layoutSetPrototypeLayout = layout.getLayoutSetPrototypeLayout();
 
 			if (_layoutSetPrototypeLayout == null) {
 				_layoutSetPrototypeLayout = _nullLayout;
@@ -369,10 +464,10 @@ public class LayoutTypePortletImpl
 			return StringPool.BLANK;
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			layoutSetPrototypeLayout.getTypeSettingsProperties();
 
-		return typeSettingsProperties.getProperty(key);
+		return typeSettingsUnicodeProperties.getProperty(key);
 	}
 
 	@Override
@@ -517,6 +612,87 @@ public class LayoutTypePortletImpl
 	}
 
 	@Override
+	public List<Portlet> getStaticPortlets(String position) {
+		String[] portletIds = getStaticPortletIds(position);
+
+		List<Portlet> portlets = new ArrayList<>();
+
+		for (String portletId : portletIds) {
+			if (Validator.isNull(portletId) ||
+				hasNonstaticPortletId(portletId)) {
+
+				continue;
+			}
+
+			Portlet portlet = PortletLocalServiceUtil.getPortletById(
+				getCompanyId(), portletId);
+
+			if (portlet == null) {
+				continue;
+			}
+
+			Portlet staticPortlet = portlet;
+
+			if (portlet.isInstanceable()) {
+
+				// Instanceable portlets do not need to be cloned because they
+				// are already cloned. See the method getPortletById in the
+				// class PortletLocalServiceImpl and how it references the
+				// method getClonedInstance in the class PortletImpl.
+
+			}
+			else {
+				staticPortlet = new PortletWrapper(portlet) {
+
+					@Override
+					public boolean getStatic() {
+						return _staticPortlet;
+					}
+
+					@Override
+					public boolean getStaticStart() {
+						return _staticPortletStart;
+					}
+
+					@Override
+					public boolean isStatic() {
+						return _staticPortlet;
+					}
+
+					@Override
+					public boolean isStaticStart() {
+						return _staticPortletStart;
+					}
+
+					@Override
+					public void setStatic(boolean staticPortlet) {
+						_staticPortlet = staticPortlet;
+					}
+
+					@Override
+					public void setStaticStart(boolean staticPortletStart) {
+						_staticPortletStart = staticPortletStart;
+					}
+
+					private boolean _staticPortlet;
+					private boolean _staticPortletStart;
+
+				};
+			}
+
+			staticPortlet.setStatic(true);
+
+			if (position.startsWith("layout.static.portlets.start")) {
+				staticPortlet.setStaticStart(true);
+			}
+
+			portlets.add(staticPortlet);
+		}
+
+		return portlets;
+	}
+
+	@Override
 	public boolean hasDefaultScopePortletId(long groupId, String portletId) {
 		if (hasPortletId(portletId)) {
 			long scopeGroupId = PortalUtil.getScopeGroupId(
@@ -604,11 +780,9 @@ public class LayoutTypePortletImpl
 		List<String> columns = getColumns();
 
 		for (String columnId : columns) {
-			if (hasNonstaticPortletId(columnId, portletId)) {
-				return true;
-			}
+			if (hasNonstaticPortletId(columnId, portletId) ||
+				hasStaticPortletId(columnId, portletId)) {
 
-			if (hasStaticPortletId(columnId, portletId)) {
 				return true;
 			}
 		}
@@ -636,11 +810,16 @@ public class LayoutTypePortletImpl
 			PortletPreferencesLocalServiceUtil.getPortletPreferencesCount(
 				PortletKeys.PREFS_OWNER_TYPE_LAYOUT, layout.getPlid(),
 				portletId);
+
+		if (count1 > 0) {
+			return true;
+		}
+
 		long count2 =
 			PortletPreferencesLocalServiceUtil.getPortletPreferencesCount(
 				PortletKeys.PREFS_OWNER_TYPE_USER, layout.getPlid(), portletId);
 
-		if ((count1 > 0) || (count2 > 0)) {
+		if (count2 > 0) {
 			return true;
 		}
 
@@ -660,11 +839,7 @@ public class LayoutTypePortletImpl
 
 	@Override
 	public boolean hasStateMaxPortletId(String portletId) {
-		if (StringUtil.contains(getStateMax(), portletId)) {
-			return true;
-		}
-
-		return false;
+		return StringUtil.contains(getStateMax(), portletId);
 	}
 
 	@Override
@@ -680,11 +855,7 @@ public class LayoutTypePortletImpl
 
 	@Override
 	public boolean hasStateMinPortletId(String portletId) {
-		if (StringUtil.contains(getStateMin(), portletId)) {
-			return true;
-		}
-
-		return false;
+		return StringUtil.contains(getStateMin(), portletId);
 	}
 
 	@Override
@@ -753,11 +924,7 @@ public class LayoutTypePortletImpl
 		boolean customizable = GetterUtil.getBoolean(customizableString);
 
 		if (customizable) {
-			if (isLayoutSetPrototype()) {
-				return false;
-			}
-
-			return true;
+			return !isLayoutSetPrototype();
 		}
 
 		if (hasUserPreferences()) {
@@ -826,8 +993,8 @@ public class LayoutTypePortletImpl
 
 			return propertiesModifiedDate.after(preferencesModifiedDate);
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return false;
@@ -879,13 +1046,16 @@ public class LayoutTypePortletImpl
 				}
 			}
 		}
-		catch (Exception e) {
-			_log.error("Unable to fire portlet layout listener event", e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to fire portlet layout listener event", exception);
 		}
 	}
 
 	@Override
-	public void removeCustomization(UnicodeProperties typeSettingsProperties) {
+	public void removeCustomization(
+		UnicodeProperties typeSettingsUnicodeProperties) {
+
 		for (String columnId : getColumns()) {
 			if (!isColumnCustomizable(columnId)) {
 				continue;
@@ -895,7 +1065,7 @@ public class LayoutTypePortletImpl
 					getTypeSettingsProperty(
 						CustomizedPages.namespaceColumnId(columnId)))) {
 
-				typeSettingsProperties.remove(
+				typeSettingsUnicodeProperties.remove(
 					CustomizedPages.namespaceColumnId(columnId));
 			}
 		}
@@ -957,23 +1127,26 @@ public class LayoutTypePortletImpl
 
 	@Override
 	public void removeNestedColumns(String portletNamespace) {
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
-		UnicodeProperties newTypeSettingsProperties = new UnicodeProperties();
+		UnicodeProperties newTypeSettingsUnicodeProperties =
+			new UnicodeProperties();
 
 		for (Map.Entry<String, String> entry :
-				typeSettingsProperties.entrySet()) {
+				typeSettingsUnicodeProperties.entrySet()) {
 
 			String key = entry.getKey();
 
 			if (!key.startsWith(portletNamespace)) {
-				newTypeSettingsProperties.setProperty(key, entry.getValue());
+				newTypeSettingsUnicodeProperties.setProperty(
+					key, entry.getValue());
 			}
 		}
 
 		Layout layout = getLayout();
 
-		layout.setTypeSettingsProperties(newTypeSettingsProperties);
+		layout.setTypeSettingsProperties(newTypeSettingsUnicodeProperties);
 
 		String nestedColumnIds = GetterUtil.getString(
 			getTypeSettingsProperty(
@@ -1016,8 +1189,8 @@ public class LayoutTypePortletImpl
 				return;
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 
 			return;
 		}
@@ -1062,10 +1235,11 @@ public class LayoutTypePortletImpl
 
 				try {
 					portletPreferences.setValue(columnId, columnValue);
+
 					portletPreferences.store();
 				}
-				catch (Exception e) {
-					_log.error("Unable to save portlet preferences", e);
+				catch (Exception exception) {
+					_log.error("Unable to save portlet preferences", exception);
 				}
 			}
 			else if (hasUserPreferences()) {
@@ -1080,8 +1254,8 @@ public class LayoutTypePortletImpl
 			try {
 				onRemoveFromLayout(new String[] {portletId});
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 	}
@@ -1167,8 +1341,8 @@ public class LayoutTypePortletImpl
 		try {
 			onRemoveFromLayout(customPortletIds.toArray(new String[0]));
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		_portalPreferences.resetValues(CustomizedPages.namespacePlid(plid));
@@ -1336,14 +1510,27 @@ public class LayoutTypePortletImpl
 					PermissionThreadLocal.getPermissionChecker(), layout,
 					portlet, ActionKeys.ADD_TO_PAGE)) {
 
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"User has no permissions to add portlet ",
+							portletId, " to layout ", layout.getPlid()));
+				}
+
 				return null;
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		if (portlet.isSystem()) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Portlet " + portletId +
+						" cannot be added because it is a system portlet");
+			}
+
 			return null;
 		}
 
@@ -1356,6 +1543,14 @@ public class LayoutTypePortletImpl
 		}
 
 		if (hasPortletId(portletId, strictHasPortlet)) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Portlet ", portletId, " cannot be added to layout ",
+						layout.getPlid(), " because it already has another ",
+						"portlet with the same portlet ID"));
+			}
+
 			return null;
 		}
 
@@ -1370,12 +1565,27 @@ public class LayoutTypePortletImpl
 		}
 
 		if (columnId == null) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Portlet ", portletId, " cannot be added to layout ",
+						layout.getPlid(), " because column ID is null"));
+			}
+
 			return null;
 		}
 
 		if (isColumnCustomizable(columnId)) {
 			if (isColumnDisabled(columnId) &&
 				!columnId.startsWith(_NESTED_PORTLETS_NAMESPACE)) {
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Portlet ", portletId,
+							" cannot be added to layout ", layout.getPlid(),
+							" because column ", columnId, " is disabled"));
+				}
 
 				return null;
 			}
@@ -1436,10 +1646,11 @@ public class LayoutTypePortletImpl
 
 			try {
 				portletPreferences.setValue(columnId, columnValue);
+
 				portletPreferences.store();
 			}
-			catch (Exception e) {
-				_log.error("Unable to save portlet preferences", e);
+			catch (Exception exception) {
+				_log.error("Unable to save portlet preferences", exception);
 			}
 		}
 		else if (hasUserPreferences()) {
@@ -1462,8 +1673,9 @@ public class LayoutTypePortletImpl
 				}
 			}
 		}
-		catch (Exception e) {
-			_log.error("Unable to fire portlet layout listener event", e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to fire portlet layout listener event", exception);
 		}
 
 		return portletId;
@@ -1488,14 +1700,14 @@ public class LayoutTypePortletImpl
 					layout.getGroupId(), userId, layout, targetPortletId,
 					false);
 
-			UnicodeProperties typeSettingsProperties =
+			UnicodeProperties typeSettingsUnicodeProperties =
 				layout.getTypeSettingsProperties();
 
 			String sourcePortletNamespace = PortalUtil.getPortletNamespace(
 				sourcePortletId);
 
 			for (Map.Entry<String, String> entry :
-					typeSettingsProperties.entrySet()) {
+					typeSettingsUnicodeProperties.entrySet()) {
 
 				String key = entry.getKey();
 
@@ -1515,7 +1727,10 @@ public class LayoutTypePortletImpl
 				portletPreferencesIds.getPlid(),
 				portletPreferencesIds.getPortletId(), sourcePortletPreferences);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 	}
 
@@ -1547,59 +1762,6 @@ public class LayoutTypePortletImpl
 			ResourcePermissionLocalServiceUtil.addResourcePermission(
 				resourcePermission);
 		}
-	}
-
-	protected String getColumn(String portletId) {
-		String portletIdColumnId = StringPool.BLANK;
-
-		List<String> columnIds = getColumns();
-
-		for (String columnId : columnIds) {
-			String[] portletIds = StringUtil.split(getColumnValue(columnId));
-
-			for (String columnPortletId : portletIds) {
-				if (columnPortletId.equals(portletId)) {
-					return columnId;
-				}
-
-				if (Validator.isNull(portletIdColumnId) &&
-					Objects.equals(
-						PortletIdCodec.decodePortletName(columnPortletId),
-						PortletIdCodec.decodePortletName(portletId))) {
-
-					portletIdColumnId = columnId;
-				}
-			}
-		}
-
-		return portletIdColumnId;
-	}
-
-	protected List<String> getColumns() {
-		List<String> columns = new ArrayList<>();
-
-		Layout layout = getLayout();
-
-		if (layout.isTypePortlet()) {
-			if (Objects.equals(
-					layout.getType(),
-					LayoutConstants.TYPE_FULL_PAGE_APPLICATION)) {
-
-				columns.add("fullPageApplicationPortlet");
-			}
-			else {
-				LayoutTemplate layoutTemplate = getLayoutTemplate();
-
-				columns.addAll(layoutTemplate.getColumns());
-
-				Collections.addAll(columns, getNestedColumns());
-			}
-		}
-		else if (layout.isTypePanel()) {
-			columns.add("panelSelectedPortlets");
-		}
-
-		return columns;
 	}
 
 	protected String getColumnValue(String columnId) {
@@ -1683,6 +1845,10 @@ public class LayoutTypePortletImpl
 	}
 
 	protected String[] getStaticPortletIds(String position) {
+		if (!_HAS_STATIC_PORTLETS) {
+			return StringPool.EMPTY_ARRAY;
+		}
+
 		Layout layout = getLayout();
 
 		Group group = _getGroup();
@@ -1719,98 +1885,16 @@ public class LayoutTypePortletImpl
 		return portletIds;
 	}
 
-	protected List<Portlet> getStaticPortlets(String position) {
-		String[] portletIds = getStaticPortletIds(position);
-
-		List<Portlet> portlets = new ArrayList<>();
-
-		for (String portletId : portletIds) {
-			if (Validator.isNull(portletId) ||
-				hasNonstaticPortletId(portletId)) {
-
-				continue;
-			}
-
-			Portlet portlet = PortletLocalServiceUtil.getPortletById(
-				getCompanyId(), portletId);
-
-			if (portlet != null) {
-				Portlet staticPortlet = portlet;
-
-				if (portlet.isInstanceable()) {
-
-					// Instanceable portlets do not need to be cloned because
-					// they are already cloned. See the method getPortletById in
-					// the class PortletLocalServiceImpl and how it references
-					// the method getClonedInstance in the class PortletImpl.
-
-				}
-				else {
-					staticPortlet = new PortletWrapper(portlet) {
-
-						@Override
-						public boolean getStatic() {
-							return _staticPortlet;
-						}
-
-						@Override
-						public boolean getStaticStart() {
-							return _staticPortletStart;
-						}
-
-						@Override
-						public boolean isStatic() {
-							return _staticPortlet;
-						}
-
-						@Override
-						public boolean isStaticStart() {
-							return _staticPortletStart;
-						}
-
-						@Override
-						public void setStatic(boolean staticPortlet) {
-							_staticPortlet = staticPortlet;
-						}
-
-						@Override
-						public void setStaticStart(boolean staticPortletStart) {
-							_staticPortletStart = staticPortletStart;
-						}
-
-						private boolean _staticPortlet;
-						private boolean _staticPortletStart;
-
-					};
-				}
-
-				staticPortlet.setStatic(true);
-
-				if (position.startsWith("layout.static.portlets.start")) {
-					staticPortlet.setStaticStart(true);
-				}
-
-				portlets.add(staticPortlet);
-			}
-		}
-
-		return portlets;
-	}
-
 	protected String getThemeId() {
 		try {
 			Layout layout = getLayout();
 
-			if (!layout.isInheritLookAndFeel()) {
-				return layout.getThemeId();
-			}
+			Theme theme = layout.getTheme();
 
-			LayoutSet layoutSet = layout.getLayoutSet();
-
-			return layoutSet.getThemeId();
+			return theme.getThemeId();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return null;
@@ -1862,8 +1946,8 @@ public class LayoutTypePortletImpl
 					continue;
 				}
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 
 			String newPortletId = null;
@@ -1877,8 +1961,8 @@ public class LayoutTypePortletImpl
 				preferencesUniquePerLayout =
 					portlet.isPreferencesUniquePerLayout();
 			}
-			catch (SystemException se) {
-				_log.error(se, se);
+			catch (SystemException systemException) {
+				_log.error(systemException);
 			}
 
 			if (PortletIdCodec.hasInstanceId(portletId) ||
@@ -1975,8 +2059,8 @@ public class LayoutTypePortletImpl
 
 			return group.isLayoutSetPrototype();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return false;
@@ -2020,15 +2104,14 @@ public class LayoutTypePortletImpl
 				getCompanyId(), portletIdList.toArray(new String[0]),
 				getPlid());
 		}
-		catch (PortalException pe) {
-			_log.error(pe, pe);
+		catch (PortalException portalException) {
+			_log.error(portalException);
 		}
 	}
 
 	protected void setUserPreference(String key, String value) {
 		_portalPreferences.setValue(
 			CustomizedPages.namespacePlid(getPlid()), key, value);
-
 		_portalPreferences.setValue(
 			CustomizedPages.namespacePlid(getPlid()), _MODIFIED_DATE,
 			_dateFormat.format(new Date()));
@@ -2067,9 +2150,10 @@ public class LayoutTypePortletImpl
 
 		String instanceId = PortletIdCodec.decodeInstanceId(columnId);
 
-		if (instanceId.indexOf(StringPool.UNDERLINE) != -1) {
-			instanceId = instanceId.substring(
-				0, instanceId.indexOf(StringPool.UNDERLINE));
+		int index = instanceId.indexOf(StringPool.UNDERLINE);
+
+		if (index != -1) {
+			instanceId = instanceId.substring(0, index);
 		}
 
 		long userId = PortletIdCodec.decodeUserId(columnId);
@@ -2088,14 +2172,17 @@ public class LayoutTypePortletImpl
 	private void _removeNestedColumns(
 		String portletNamespace, Set<String> portletIdList) {
 
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
-		UnicodeProperties newTypeSettingsProperties = new UnicodeProperties();
+		UnicodeProperties newTypeSettingsUnicodeProperties =
+			new UnicodeProperties();
 
-		StringBundler sb = new StringBundler(typeSettingsProperties.size() * 2);
+		StringBundler sb = new StringBundler(
+			typeSettingsUnicodeProperties.size() * 2);
 
 		for (Map.Entry<String, String> entry :
-				typeSettingsProperties.entrySet()) {
+				typeSettingsUnicodeProperties.entrySet()) {
 
 			String key = entry.getKey();
 
@@ -2122,21 +2209,22 @@ public class LayoutTypePortletImpl
 			}
 		}
 
-		typeSettingsProperties = getTypeSettingsProperties();
+		typeSettingsUnicodeProperties = getTypeSettingsProperties();
 
 		for (Map.Entry<String, String> entry :
-				typeSettingsProperties.entrySet()) {
+				typeSettingsUnicodeProperties.entrySet()) {
 
 			String key = entry.getKey();
 
 			if (!key.startsWith(portletNamespace)) {
-				newTypeSettingsProperties.setProperty(key, entry.getValue());
+				newTypeSettingsUnicodeProperties.setProperty(
+					key, entry.getValue());
 			}
 		}
 
 		Layout layout = getLayout();
 
-		layout.setTypeSettingsProperties(newTypeSettingsProperties);
+		layout.setTypeSettingsProperties(newTypeSettingsUnicodeProperties);
 
 		String nestedColumnIds = GetterUtil.getString(
 			getTypeSettingsProperty(
@@ -2150,6 +2238,8 @@ public class LayoutTypePortletImpl
 			StringUtil.merge(nestedColumnIdsArray));
 	}
 
+	private static final boolean _HAS_STATIC_PORTLETS;
+
 	private static final String _MODIFIED_DATE = "modifiedDate";
 
 	private static final String _NESTED_PORTLETS_NAMESPACE =
@@ -2161,6 +2251,13 @@ public class LayoutTypePortletImpl
 		LayoutTypePortletImpl.class);
 
 	private static final Layout _nullLayout = new LayoutImpl();
+
+	static {
+		Properties properties = PropsUtil.getProperties(
+			PropsKeys.LAYOUT_STATIC_PORTLETS, false);
+
+		_HAS_STATIC_PORTLETS = !properties.isEmpty();
+	}
 
 	private String _addedCustomPortletMode;
 	private boolean _customizedView;

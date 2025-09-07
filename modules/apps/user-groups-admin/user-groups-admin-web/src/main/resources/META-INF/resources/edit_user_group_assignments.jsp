@@ -1,23 +1,24 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String redirect = ParamUtil.getString(request, "redirect");
+String backURL = ParamUtil.getString(request, "backURL");
+
+PortletURL homeURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/view.jsp"
+).buildPortletURL();
+
+if (Validator.isNull(backURL)) {
+	backURL = homeURL.toString();
+}
 
 long userGroupId = ParamUtil.getLong(request, "userGroupId");
 
@@ -35,34 +36,13 @@ else {
 }
 
 portletDisplay.setShowBackIcon(true);
-portletDisplay.setURLBack(redirect);
+portletDisplay.setURLBack(backURL);
 
 renderResponse.setTitle(userGroup.getName());
-
-PortletURL homeURL = renderResponse.createRenderURL();
-
-homeURL.setParameter("mvcPath", "/view.jsp");
 
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "user-groups"), homeURL.toString());
 PortalUtil.addPortletBreadcrumbEntry(request, userGroup.getName(), null);
 
-List<NavigationItem> navigationItems = new ArrayList<>();
-
-NavigationItem entriesNavigationItem = new NavigationItem();
-
-entriesNavigationItem.setActive(true);
-entriesNavigationItem.setHref(StringPool.BLANK);
-entriesNavigationItem.setLabel(LanguageUtil.get(request, "users"));
-
-navigationItems.add(entriesNavigationItem);
-%>
-
-<clay:navigation-bar
-	inverted="<%= true %>"
-	navigationItems="<%= navigationItems %>"
-/>
-
-<%
 EditUserGroupAssignmentsManagementToolbarDisplayContext editUserGroupAssignmentsManagementToolbarDisplayContext = new EditUserGroupAssignmentsManagementToolbarDisplayContext(request, renderRequest, renderResponse, displayStyle, "/edit_user_group_assignments.jsp");
 
 LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
@@ -73,17 +53,17 @@ if (filterManageableOrganizations) {
 
 userParams.put("usersUserGroups", Long.valueOf(userGroup.getUserGroupId()));
 
-SearchContainer searchContainer = editUserGroupAssignmentsManagementToolbarDisplayContext.getSearchContainer(userParams);
-
-PortletURL portletURL = editUserGroupAssignmentsManagementToolbarDisplayContext.getPortletURL();
+SearchContainer<User> searchContainer = editUserGroupAssignmentsManagementToolbarDisplayContext.getSearchContainer(userParams);
 %>
 
 <clay:management-toolbar
 	actionDropdownItems="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getActionDropdownItems() %>"
+	additionalProps="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getAdditionalProps() %>"
 	clearResultsURL="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getClearResultsURL() %>"
-	componentId="editUserGroupAssignmentsManagementToolbar"
-	filterDropdownItems="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getFilterDropdownItems() %>"
+	creationMenu="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getCreationMenu() %>"
 	itemsTotal="<%= searchContainer.getTotal() %>"
+	orderDropdownItems="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getOrderByDropdownItems() %>"
+	propsTransformer="{EditUserGroupAssignmentsManagementToolbarPropsTransformer} from user-groups-admin-web"
 	searchActionURL="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getSearchActionURL() %>"
 	searchContainerId="users"
 	searchFormName="searchFm"
@@ -95,7 +75,7 @@ PortletURL portletURL = editUserGroupAssignmentsManagementToolbarDisplayContext.
 	viewTypeItems="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getViewTypeItems() %>"
 />
 
-<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= editUserGroupAssignmentsManagementToolbarDisplayContext.getPortletURL() %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 	<aui:input name="userGroupId" type="hidden" value="<%= userGroup.getUserGroupId() %>" />
 	<aui:input name="deleteUserGroupIds" type="hidden" />
@@ -103,11 +83,8 @@ PortletURL portletURL = editUserGroupAssignmentsManagementToolbarDisplayContext.
 	<aui:input name="removeUserIds" type="hidden" />
 
 	<div id="breadcrumb">
-		<liferay-ui:breadcrumb
-			showCurrentGroup="<%= false %>"
-			showGuestGroup="<%= false %>"
-			showLayout="<%= false %>"
-			showPortletBreadcrumb="<%= true %>"
+		<liferay-site-navigation:breadcrumb
+			breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 		/>
 	</div>
 
@@ -123,12 +100,54 @@ PortletURL portletURL = editUserGroupAssignmentsManagementToolbarDisplayContext.
 			modelVar="user2"
 			rowIdProperty="screenName"
 		>
+			<c:choose>
+				<c:when test='<%= displayStyle.equals("descriptive") %>'>
+					<liferay-ui:search-container-column-text>
+						<liferay-user:user-portrait
+							userId="<%= user2.getUserId() %>"
+						/>
+					</liferay-ui:search-container-column-text>
 
-			<%
-			boolean showActions = true;
-			%>
+					<liferay-ui:search-container-column-text
+						colspan="<%= 2 %>"
+					>
+						<div class="h5"><%= user2.getFullName() %></div>
 
-			<%@ include file="/user_search_columns.jspf" %>
+						<div class="h6 text-default">
+							<span><%= user2.getScreenName() %></span>
+						</div>
+					</liferay-ui:search-container-column-text>
+
+					<liferay-ui:search-container-column-jsp
+						path="/user_action.jsp"
+					/>
+				</c:when>
+				<c:when test='<%= displayStyle.equals("icon") %>'>
+					<liferay-ui:search-container-column-text>
+						<clay:user-card
+							propsTransformer="{UserDropdownDefaultPropsTransformer} from user-groups-admin-web"
+							userCard="<%= new UserVerticalCard(renderRequest, renderResponse, userSearchContainer.getRowChecker(), user2) %>"
+						/>
+					</liferay-ui:search-container-column-text>
+				</c:when>
+				<c:otherwise>
+					<liferay-ui:search-container-column-text
+						cssClass="table-cell-expand table-cell-minw-200 table-title"
+						name="name"
+						property="fullName"
+					/>
+
+					<liferay-ui:search-container-column-text
+						cssClass="table-cell-expand table-cell-minw-200"
+						name="screen-name"
+						property="screenName"
+					/>
+
+					<liferay-ui:search-container-column-jsp
+						path="/user_action.jsp"
+					/>
+				</c:otherwise>
+			</c:choose>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
@@ -137,62 +156,3 @@ PortletURL portletURL = editUserGroupAssignmentsManagementToolbarDisplayContext.
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<aui:script require="frontend-js-web/liferay/ItemSelectorDialog.es as ItemSelectorDialog">
-	var form = document.<portlet:namespace />fm;
-
-	<portlet:renderURL var="selectUsersURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-		<portlet:param name="mvcPath" value="/select_user_group_users.jsp" />
-		<portlet:param name="userGroupId" value="<%= String.valueOf(userGroupId) %>" />
-	</portlet:renderURL>
-
-	function <portlet:namespace />addUsers(event) {
-		var itemSelectorDialog = new ItemSelectorDialog.default({
-			eventName: '<portlet:namespace />selectUsers',
-			title:
-				'<liferay-ui:message arguments="<%= HtmlUtil.escape(userGroup.getName()) %>" key="add-users-to-x" />',
-			url: '<%= selectUsersURL %>'
-		});
-
-		itemSelectorDialog.on('selectedItemChange', function(event) {
-			var selectedItem = event.selectedItem;
-
-			if (selectedItem) {
-				Liferay.Util.postForm(form, {
-					data: {
-						addUserIds: selectedItem
-					},
-					url: '<portlet:actionURL name="editUserGroupAssignments" />'
-				});
-			}
-		});
-
-		itemSelectorDialog.open();
-	}
-
-	function <portlet:namespace />removeUsers() {
-		Liferay.Util.postForm(form, {
-			data: {
-				redirect: '<%= portletURL.toString() %>',
-				removeUserIds: Liferay.Util.listCheckedExcept(
-					form,
-					'<portlet:namespace />allRowIds'
-				)
-			},
-			url: '<portlet:actionURL name="editUserGroupAssignments" />'
-		});
-	}
-
-	Liferay.componentReady('editUserGroupAssignmentsManagementToolbar').then(
-		function(managementToolbar) {
-			managementToolbar.on(
-				'actionItemClicked',
-				<portlet:namespace />removeUsers
-			);
-			managementToolbar.on(
-				'creationButtonClicked',
-				<portlet:namespace />addUsers
-			);
-		}
-	);
-</aui:script>

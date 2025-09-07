@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.user.client.dto.v1_0;
@@ -17,16 +8,23 @@ package com.liferay.headless.admin.user.client.dto.v1_0;
 import com.liferay.headless.admin.user.client.function.UnsafeSupplier;
 import com.liferay.headless.admin.user.client.serdes.v1_0.PostalAddressSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class PostalAddress {
+public class PostalAddress implements Cloneable, Serializable {
+
+	public static PostalAddress toDTO(String json) {
+		return PostalAddressSerDes.toDTO(json);
+	}
 
 	public String getAddressCountry() {
 		return addressCountry;
@@ -48,6 +46,30 @@ public class PostalAddress {
 	}
 
 	protected String addressCountry;
+
+	public Map<String, String> getAddressCountry_i18n() {
+		return addressCountry_i18n;
+	}
+
+	public void setAddressCountry_i18n(
+		Map<String, String> addressCountry_i18n) {
+
+		this.addressCountry_i18n = addressCountry_i18n;
+	}
+
+	public void setAddressCountry_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			addressCountry_i18nUnsafeSupplier) {
+
+		try {
+			addressCountry_i18n = addressCountry_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> addressCountry_i18n;
 
 	public String getAddressLocality() {
 		return addressLocality;
@@ -91,6 +113,27 @@ public class PostalAddress {
 
 	protected String addressRegion;
 
+	public String getAddressSubtype() {
+		return addressSubtype;
+	}
+
+	public void setAddressSubtype(String addressSubtype) {
+		this.addressSubtype = addressSubtype;
+	}
+
+	public void setAddressSubtype(
+		UnsafeSupplier<String, Exception> addressSubtypeUnsafeSupplier) {
+
+		try {
+			addressSubtype = addressSubtypeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String addressSubtype;
+
 	public String getAddressType() {
 		return addressType;
 	}
@@ -112,6 +155,27 @@ public class PostalAddress {
 
 	protected String addressType;
 
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String externalReferenceCode;
+
 	public Long getId() {
 		return id;
 	}
@@ -130,6 +194,46 @@ public class PostalAddress {
 	}
 
 	protected Long id;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setName(UnsafeSupplier<String, Exception> nameUnsafeSupplier) {
+		try {
+			name = nameUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String name;
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public void setPhoneNumber(
+		UnsafeSupplier<String, Exception> phoneNumberUnsafeSupplier) {
+
+		try {
+			phoneNumber = phoneNumberUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String phoneNumber;
 
 	public String getPostalCode() {
 		return postalCode;
@@ -235,6 +339,11 @@ public class PostalAddress {
 	}
 
 	protected String streetAddressLine3;
+
+	@Override
+	public PostalAddress clone() throws CloneNotSupportedException {
+		return (PostalAddress)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

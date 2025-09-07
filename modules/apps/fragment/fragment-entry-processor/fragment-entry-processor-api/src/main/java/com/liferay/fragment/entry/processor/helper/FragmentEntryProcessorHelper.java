@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.entry.processor.helper;
@@ -17,6 +8,9 @@ package com.liferay.fragment.entry.processor.helper;
 import aQute.bnd.annotation.ProviderType;
 
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
+import com.liferay.info.item.InfoItemFieldValues;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.type.WebImage;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 
@@ -29,40 +23,42 @@ import java.util.Map;
 @ProviderType
 public interface FragmentEntryProcessorHelper {
 
-	public String getEditableValue(
-		JSONObject jsonObject, Locale locale, long[] segmentsExperienceIds);
+	public String getEditableValue(JSONObject jsonObject, Locale locale);
 
-	public Object getMappedValue(
-			JSONObject jsonObject,
-			Map<Long, Map<String, Object>> infoDisplaysFieldValues,
+	public Object getFieldValue(
+			JSONObject editableValueJSONObject,
+			Map<InfoItemReference, InfoItemFieldValues> infoDisplaysFieldValues,
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException;
 
-	public default Object getMappedValue(
-			JSONObject jsonObject,
-			Map<Long, Map<String, Object>> infoDisplaysFieldValues, String mode,
-			Locale locale, long previewClassPK, int previewType)
-		throws PortalException {
+	public long getFileEntryId(
+		InfoItemReference infoItemReference, String fieldName, Locale locale);
 
-		return getMappedValue(
-			jsonObject, infoDisplaysFieldValues, mode, locale, previewClassPK,
-			0, previewType);
-	}
-
-	public Object getMappedValue(
-			JSONObject jsonObject,
-			Map<Long, Map<String, Object>> infoDisplaysFieldValues, String mode,
-			Locale locale, long previewClassPK, long previewClassNameId,
-			int previewType)
+	public long getFileEntryId(
+			long classNameId, long classPK, String fieldName, Locale locale)
 		throws PortalException;
 
-	public boolean isAssetDisplayPage(String mode);
+	public long getFileEntryId(String className, long classPK);
+
+	public long getFileEntryId(WebImage webImage);
+
+	public InfoItemFieldMapped getInfoItemFieldMapped(
+		JSONObject editableValueJSONObject,
+		FragmentEntryProcessorContext fragmentEntryProcessorContext);
+
+	public Object getMappedInfoItemFieldValue(
+		JSONObject editableValueJSONObject, String fieldName,
+		FragmentEntryProcessorContext fragmentEntryProcessorContext,
+		InfoItemFieldValues infoItemFieldValues);
+
+	public boolean hasViewPermission(
+		JSONObject editableValueJSONObject,
+		FragmentEntryProcessorContext fragmentEntryProcessorContext);
 
 	public boolean isMapped(JSONObject jsonObject);
 
-	public String processTemplate(
-			String html,
-			FragmentEntryProcessorContext fragmentEntryProcessorContext)
-		throws PortalException;
+	public boolean isMappedCollection(JSONObject jsonObject);
+
+	public boolean isMappedDisplayPage(JSONObject jsonObject);
 
 }

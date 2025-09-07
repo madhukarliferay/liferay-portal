@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoActionCacheModel
 	implements CacheModel<KaleoAction>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoActionCacheModel)) {
+		if (!(object instanceof KaleoActionCacheModel)) {
 			return false;
 		}
 
 		KaleoActionCacheModel kaleoActionCacheModel =
-			(KaleoActionCacheModel)obj;
+			(KaleoActionCacheModel)object;
 
 		if ((kaleoActionId == kaleoActionCacheModel.kaleoActionId) &&
 			(mvccVersion == kaleoActionCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class KaleoActionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(39);
+		StringBundler sb = new StringBundler(47);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoActionId=");
 		sb.append(kaleoActionId);
 		sb.append(", groupId=");
@@ -99,6 +92,8 @@ public class KaleoActionCacheModel
 		sb.append(kaleoClassName);
 		sb.append(", kaleoClassPK=");
 		sb.append(kaleoClassPK);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoNodeName=");
@@ -117,6 +112,10 @@ public class KaleoActionCacheModel
 		sb.append(scriptRequiredContexts);
 		sb.append(", priority=");
 		sb.append(priority);
+		sb.append(", type=");
+		sb.append(type);
+		sb.append(", status=");
+		sb.append(status);
 		sb.append("}");
 
 		return sb.toString();
@@ -127,6 +126,7 @@ public class KaleoActionCacheModel
 		KaleoActionImpl kaleoActionImpl = new KaleoActionImpl();
 
 		kaleoActionImpl.setMvccVersion(mvccVersion);
+		kaleoActionImpl.setCtCollectionId(ctCollectionId);
 		kaleoActionImpl.setKaleoActionId(kaleoActionId);
 		kaleoActionImpl.setGroupId(groupId);
 		kaleoActionImpl.setCompanyId(companyId);
@@ -161,6 +161,7 @@ public class KaleoActionCacheModel
 		}
 
 		kaleoActionImpl.setKaleoClassPK(kaleoClassPK);
+		kaleoActionImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoActionImpl.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 
 		if (kaleoNodeName == null) {
@@ -214,14 +215,27 @@ public class KaleoActionCacheModel
 
 		kaleoActionImpl.setPriority(priority);
 
+		if (type == null) {
+			kaleoActionImpl.setType("");
+		}
+		else {
+			kaleoActionImpl.setType(type);
+		}
+
+		kaleoActionImpl.setStatus(status);
+
 		kaleoActionImpl.resetOriginalValues();
 
 		return kaleoActionImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoActionId = objectInput.readLong();
 
@@ -237,21 +251,28 @@ public class KaleoActionCacheModel
 
 		kaleoClassPK = objectInput.readLong();
 
+		kaleoDefinitionId = objectInput.readLong();
+
 		kaleoDefinitionVersionId = objectInput.readLong();
 		kaleoNodeName = objectInput.readUTF();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
 		executionType = objectInput.readUTF();
-		script = objectInput.readUTF();
+		script = (String)objectInput.readObject();
 		scriptLanguage = objectInput.readUTF();
 		scriptRequiredContexts = objectInput.readUTF();
 
 		priority = objectInput.readInt();
+		type = objectInput.readUTF();
+
+		status = objectInput.readInt();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoActionId);
 
@@ -279,6 +300,8 @@ public class KaleoActionCacheModel
 		}
 
 		objectOutput.writeLong(kaleoClassPK);
+
+		objectOutput.writeLong(kaleoDefinitionId);
 
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
@@ -311,10 +334,10 @@ public class KaleoActionCacheModel
 		}
 
 		if (script == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(script);
+			objectOutput.writeObject(script);
 		}
 
 		if (scriptLanguage == null) {
@@ -332,9 +355,19 @@ public class KaleoActionCacheModel
 		}
 
 		objectOutput.writeInt(priority);
+
+		if (type == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
+		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoActionId;
 	public long groupId;
 	public long companyId;
@@ -344,6 +377,7 @@ public class KaleoActionCacheModel
 	public long modifiedDate;
 	public String kaleoClassName;
 	public long kaleoClassPK;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public String kaleoNodeName;
 	public String name;
@@ -353,5 +387,7 @@ public class KaleoActionCacheModel
 	public String scriptLanguage;
 	public String scriptRequiredContexts;
 	public int priority;
+	public String type;
+	public int status;
 
 }

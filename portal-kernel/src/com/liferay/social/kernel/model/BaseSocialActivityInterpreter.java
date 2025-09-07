@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.model;
@@ -28,7 +19,9 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
@@ -37,21 +30,21 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
+import com.liferay.portal.kernel.trash.helper.TrashHelper;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.social.kernel.service.SocialActivityLocalServiceUtil;
 import com.liferay.social.kernel.service.SocialActivitySetLocalServiceUtil;
 import com.liferay.social.kernel.service.persistence.SocialActivityUtil;
-import com.liferay.trash.kernel.util.TrashUtil;
+
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
 
 import java.util.List;
 import java.util.ResourceBundle;
-
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
 
 /**
  * @author Brian Wing Shun Chan
@@ -82,8 +75,8 @@ public abstract class BaseSocialActivityInterpreter
 		try {
 			return doInterpret(activity, serviceContext);
 		}
-		catch (Exception e) {
-			_log.error("Unable to interpret activity", e);
+		catch (Exception exception) {
+			_log.error("Unable to interpret activity", exception);
 		}
 
 		return null;
@@ -96,8 +89,8 @@ public abstract class BaseSocialActivityInterpreter
 		try {
 			return doInterpret(activitySet, serviceContext);
 		}
-		catch (Exception e) {
-			_log.error("Unable to interpret activity set", e);
+		catch (Exception exception) {
+			_log.error("Unable to interpret activity set", exception);
 		}
 
 		return null;
@@ -123,6 +116,10 @@ public abstract class BaseSocialActivityInterpreter
 		}
 	}
 
+	protected ResourceBundleLoader acquireResourceBundleLoader() {
+		return locale -> ResourceBundleUtil.getBundle(locale, getClass());
+	}
+
 	protected String addNoSuchEntryRedirect(
 			String url, String className, long classPK,
 			ServiceContext serviceContext)
@@ -135,19 +132,14 @@ public abstract class BaseSocialActivityInterpreter
 			return url;
 		}
 
-		return HttpUtil.setParameter(url, "noSuchEntryRedirect", viewEntryURL);
+		return HttpComponentsUtil.setParameter(
+			url, "noSuchEntryRedirect", viewEntryURL);
 	}
 
 	protected String buildLink(String link, String text) {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("<a href=\"");
-		sb.append(link);
-		sb.append("\">");
-		sb.append(text);
-		sb.append("</a>");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"<a class=\"text-decoration-underline\" href=\"", link, "\">", text,
+			"</a>");
 	}
 
 	protected SocialActivityFeedEntry doInterpret(
@@ -171,9 +163,8 @@ public abstract class BaseSocialActivityInterpreter
 			return null;
 		}
 
-		String body = getBody(activity, serviceContext);
-
-		return new SocialActivityFeedEntry(link, title, body);
+		return new SocialActivityFeedEntry(
+			link, title, getBody(activity, serviceContext));
 	}
 
 	protected SocialActivityFeedEntry doInterpret(
@@ -239,13 +230,15 @@ public abstract class BaseSocialActivityInterpreter
 				return HtmlUtil.escape(groupName);
 			}
 
-			groupName = StringBundler.concat(
-				"<a class=\"group\" href=\"", groupDisplayURL, "\">",
-				HtmlUtil.escape(groupName), "</a>");
-
-			return groupName;
+			return StringBundler.concat(
+				"<a class=\"group text-decoration-underline\" href=\"",
+				groupDisplayURL, "\">", HtmlUtil.escape(groupName), "</a>");
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -271,8 +264,9 @@ public abstract class BaseSocialActivityInterpreter
 				return value;
 			}
 		}
-		catch (JSONException jsone) {
-			_log.error("Unable to create a JSON object from " + json, jsone);
+		catch (JSONException jsonException) {
+			_log.error(
+				"Unable to create a JSON object from " + json, jsonException);
 		}
 
 		return defaultValue;
@@ -282,43 +276,51 @@ public abstract class BaseSocialActivityInterpreter
 			SocialActivity activity, ServiceContext serviceContext)
 		throws Exception {
 
-		String className = activity.getClassName();
-		long classPK = activity.getClassPK();
+		try {
+			String className = activity.getClassName();
+			long classPK = activity.getClassPK();
 
-		String viewEntryInTrashURL = getViewEntryInTrashURL(
-			className, classPK, serviceContext);
+			String viewEntryInTrashURL = getViewEntryInTrashURL(
+				className, classPK, serviceContext);
 
-		if (viewEntryInTrashURL != null) {
-			return viewEntryInTrashURL;
+			if (viewEntryInTrashURL != null) {
+				return viewEntryInTrashURL;
+			}
+
+			String path = getPath(activity, serviceContext);
+
+			if (Validator.isNull(path)) {
+				return null;
+			}
+
+			path = addNoSuchEntryRedirect(
+				path, className, classPK, serviceContext);
+
+			if (!path.startsWith(StringPool.SLASH)) {
+				return path;
+			}
+
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(serviceContext.getPortalURL());
+
+			if (!path.startsWith(PortalUtil.getPathContext())) {
+				sb.append(PortalUtil.getPathContext());
+			}
+
+			if (!path.startsWith(serviceContext.getPathMain())) {
+				sb.append(serviceContext.getPathMain());
+			}
+
+			sb.append(path);
+
+			return sb.toString();
 		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
 
-		String path = getPath(activity, serviceContext);
-
-		if (Validator.isNull(path)) {
 			return null;
 		}
-
-		path = addNoSuchEntryRedirect(path, className, classPK, serviceContext);
-
-		if (!path.startsWith(StringPool.SLASH)) {
-			return path;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(serviceContext.getPortalURL());
-
-		if (!path.startsWith(PortalUtil.getPathContext())) {
-			sb.append(PortalUtil.getPathContext());
-		}
-
-		if (!path.startsWith(serviceContext.getPathMain())) {
-			sb.append(serviceContext.getPathMain());
-		}
-
-		sb.append(path);
-
-		return sb.toString();
 	}
 
 	protected String getPath(
@@ -327,8 +329,6 @@ public abstract class BaseSocialActivityInterpreter
 
 		return StringPool.BLANK;
 	}
-
-	protected abstract ResourceBundleLoader getResourceBundleLoader();
 
 	protected String getTitle(
 			SocialActivity activity, ServiceContext serviceContext)
@@ -346,14 +346,12 @@ public abstract class BaseSocialActivityInterpreter
 			return null;
 		}
 
-		String link = getLink(activity, serviceContext);
-
-		String entryTitle = getEntryTitle(activity, serviceContext);
-
 		Object[] titleArguments = getTitleArguments(
-			groupName, activity, link, entryTitle, serviceContext);
+			groupName, activity, getLink(activity, serviceContext),
+			getEntryTitle(activity, serviceContext), serviceContext);
 
-		ResourceBundleLoader resourceBundleLoader = getResourceBundleLoader();
+		ResourceBundleLoader resourceBundleLoader =
+			acquireResourceBundleLoader();
 
 		if (resourceBundleLoader == null) {
 			return serviceContext.translate(titlePattern, titleArguments);
@@ -371,9 +369,10 @@ public abstract class BaseSocialActivityInterpreter
 			String title, ServiceContext serviceContext)
 		throws Exception {
 
-		String userName = getUserName(activity.getUserId(), serviceContext);
-
-		return new Object[] {groupName, userName, wrapLink(link, title)};
+		return new Object[] {
+			groupName, getUserName(activity.getUserId(), serviceContext),
+			wrapLink(link, title)
+		};
 	}
 
 	protected String getTitlePattern(String groupName, SocialActivity activity)
@@ -405,13 +404,15 @@ public abstract class BaseSocialActivityInterpreter
 			String userDisplayURL = user.getDisplayURL(
 				serviceContext.getThemeDisplay());
 
-			userName = StringBundler.concat(
+			return StringBundler.concat(
 				"<a class=\"user\" href=\"", userDisplayURL, "\">",
 				HtmlUtil.escape(userName), "</a>");
-
-			return userName;
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -424,7 +425,9 @@ public abstract class BaseSocialActivityInterpreter
 			className);
 
 		if ((trashHandler != null) && trashHandler.isInTrash(classPK)) {
-			PortletURL portletURL = TrashUtil.getViewContentURL(
+			TrashHelper trashHelper = _trashHelperSnapshot.get();
+
+			PortletURL portletURL = trashHelper.getViewContentURL(
 				serviceContext.getRequest(), className, classPK);
 
 			if (portletURL == null) {
@@ -495,7 +498,8 @@ public abstract class BaseSocialActivityInterpreter
 	protected String wrapLink(
 		String link, String key, ServiceContext serviceContext) {
 
-		ResourceBundleLoader resourceBundleLoader = getResourceBundleLoader();
+		ResourceBundleLoader resourceBundleLoader =
+			acquireResourceBundleLoader();
 
 		ResourceBundle resourceBundle = resourceBundleLoader.loadResourceBundle(
 			serviceContext.getLocale());
@@ -507,5 +511,8 @@ public abstract class BaseSocialActivityInterpreter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseSocialActivityInterpreter.class);
+
+	private static final Snapshot<TrashHelper> _trashHelperSnapshot =
+		new Snapshot<>(BaseSocialActivityInterpreter.class, TrashHelper.class);
 
 }

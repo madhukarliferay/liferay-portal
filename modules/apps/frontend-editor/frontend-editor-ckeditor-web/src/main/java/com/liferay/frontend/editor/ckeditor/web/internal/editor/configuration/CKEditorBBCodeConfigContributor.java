@@ -1,25 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.editor.ckeditor.web.internal.editor.configuration;
 
 import com.liferay.message.boards.constants.MBThreadConstants;
 import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
-import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -28,6 +18,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Ambrín Chaudhary
@@ -54,7 +45,8 @@ public class CKEditorBBCodeConfigContributor
 		).put(
 			"enterMode", 2
 		).put(
-			"extraPlugins", "a11yhelpbtn,bbcode,itemselector,wikilink"
+			"extraPlugins",
+			"a11yhelpbtn,bbcode,filebrowser,itemselector,sourcearea"
 		).put(
 			"fontSize_defaultLabel", "14"
 		).put(
@@ -67,14 +59,14 @@ public class CKEditorBBCodeConfigContributor
 			HtmlUtil.escape(themeDisplay.getPathThemeImages()) +
 				"/message_boards/"
 		).put(
-			"lang", getLangJSONObject(inputEditorTaglibAttributes)
+			"lang", _getLangJSONObject(inputEditorTaglibAttributes)
 		).put(
 			"newThreadURL", MBThreadConstants.NEW_THREAD_URL
 		).put(
 			"removePlugins",
-			"bidi,div,elementspath,flash,forms,indentblock,keystrokes,link," +
-				"maximize,newpage,pagebreak,preview,print,save,showblocks," +
-					"templates,video"
+			"bidi,codemirror,div,elementspath,forms,indentblock,keystrokes," +
+				"maximize,newpage,pagebreak,preview,print,save," +
+					"showblocks,templates,video"
 		).put(
 			"smiley_descriptions",
 			toJSONArray(BBCodeTranslatorUtil.getEmoticonDescriptions())
@@ -87,89 +79,19 @@ public class CKEditorBBCodeConfigContributor
 		).put(
 			"smiley_symbols",
 			toJSONArray(BBCodeTranslatorUtil.getEmoticonSymbols())
-		).put(
-			"toolbar_bbcode",
-			getToolbarsBBCodeJSONArray(inputEditorTaglibAttributes)
-		).put(
-			"toolbar_phone",
-			getToolbarsPhoneJSONArray(inputEditorTaglibAttributes)
-		).put(
-			"toolbar_tablet",
-			getToolbarsTabletJSONArray(inputEditorTaglibAttributes)
 		);
 	}
 
-	protected JSONObject getLangJSONObject(
+	private JSONObject _getLangJSONObject(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
 		return JSONUtil.put(
 			"code",
-			LanguageUtil.get(
+			_language.get(
 				getContentsLocale(inputEditorTaglibAttributes), "code"));
 	}
 
-	protected JSONArray getToolbarsBBCodeJSONArray(
-		Map<String, Object> inputEditorTaglibAttributes) {
-
-		JSONArray jsonArray = JSONUtil.putAll(
-			toJSONArray("['Bold', 'Italic', 'Underline', 'Strike']"),
-			toJSONArray("['TextColor']"),
-			toJSONArray(
-				"['JustifyLeft', 'JustifyCenter', 'JustifyRight', " +
-					"'JustifyBlock']"),
-			toJSONArray(
-				"['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', " +
-					"'-', 'Blockquote', '-', 'Code']"),
-			"/", toJSONArray("['Format', 'Font', 'FontSize']"),
-			toJSONArray("['Link', 'Unlink']"),
-			toJSONArray("['ImageSelector', '-', 'Smiley']"), "/",
-			toJSONArray(
-				"['Cut', 'Copy', 'Paste', '-', 'SelectAll', '-', 'Undo', " +
-					"'Redo']"));
-
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		jsonArray.put(toJSONArray("['A11YBtn']"));
-
-		return jsonArray;
-	}
-
-	protected JSONArray getToolbarsPhoneJSONArray(
-		Map<String, Object> inputEditorTaglibAttributes) {
-
-		JSONArray jsonArray = JSONUtil.putAll(
-			toJSONArray("['Bold', 'Italic', 'Underline']"),
-			toJSONArray("['NumberedList', 'BulletedList']"),
-			toJSONArray("['Link', 'Unlink']"),
-			toJSONArray("['ImageSelector']"));
-
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		return jsonArray;
-	}
-
-	protected JSONArray getToolbarsTabletJSONArray(
-		Map<String, Object> inputEditorTaglibAttributes) {
-
-		JSONArray jsonArray = JSONUtil.putAll(
-			toJSONArray("['Bold', 'Italic', 'Underline', 'Strike']"),
-			toJSONArray(
-				"['JustifyLeft', 'JustifyCenter', 'JustifyRight', " +
-					"'JustifyBlock']"),
-			toJSONArray("['NumberedList', 'BulletedList']"),
-			toJSONArray("['Styles', 'FontSize']"),
-			toJSONArray("['Link', 'Unlink']"),
-			toJSONArray("['ImageSelector']"));
-
-		if (isShowSource(inputEditorTaglibAttributes)) {
-			jsonArray.put(toJSONArray("['Source']"));
-		}
-
-		return jsonArray;
-	}
+	@Reference
+	private Language _language;
 
 }

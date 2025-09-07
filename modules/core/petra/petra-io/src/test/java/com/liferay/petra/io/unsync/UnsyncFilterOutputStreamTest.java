@@ -1,20 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io.unsync;
 
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -32,8 +26,10 @@ import org.junit.Test;
 public class UnsyncFilterOutputStreamTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		CodeCoverageAssertor.INSTANCE;
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			CodeCoverageAssertor.INSTANCE, LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testClose() throws IOException {
@@ -63,17 +59,33 @@ public class UnsyncFilterOutputStreamTest {
 		Assert.assertTrue(flushCalled.get());
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testCloseNull() throws IOException {
 		UnsyncFilterOutputStream unsyncFilterOutputStream =
 			new UnsyncFilterOutputStream(null);
+
+		try {
+			unsyncFilterOutputStream.close();
+
+			Assert.fail();
+		}
+		catch (NullPointerException nullPointerException) {
+		}
+
+		unsyncFilterOutputStream = new UnsyncFilterOutputStream(null) {
+
+			@Override
+			public void flush() throws IOException {
+			}
+
+		};
 
 		unsyncFilterOutputStream.close();
 	}
 
 	@Test
 	public void testCloseWithException() throws IOException {
-		IOException ioException = new IOException();
+		IOException ioException1 = new IOException();
 
 		AtomicBoolean closeCalled = new AtomicBoolean();
 
@@ -88,7 +100,7 @@ public class UnsyncFilterOutputStreamTest {
 
 					@Override
 					public void flush() throws IOException {
-						throw ioException;
+						throw ioException1;
 					}
 
 				});
@@ -98,8 +110,8 @@ public class UnsyncFilterOutputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
-			Assert.assertSame(ioException, ioe);
+		catch (IOException ioException2) {
+			Assert.assertSame(ioException1, ioException2);
 		}
 
 		Assert.assertTrue(closeCalled.get());
@@ -107,8 +119,8 @@ public class UnsyncFilterOutputStreamTest {
 
 	@Test
 	public void testCloseWithTwoExceptions() throws IOException {
-		IOException flushException = new IOException();
-		IOException closeException = new IOException();
+		IOException ioException1 = new IOException();
+		IOException ioException2 = new IOException();
 
 		UnsyncFilterOutputStream unsyncFilterOutputStream =
 			new UnsyncFilterOutputStream(
@@ -116,12 +128,12 @@ public class UnsyncFilterOutputStreamTest {
 
 					@Override
 					public void close() throws IOException {
-						throw closeException;
+						throw ioException2;
 					}
 
 					@Override
 					public void flush() throws IOException {
-						throw flushException;
+						throw ioException1;
 					}
 
 				});
@@ -131,14 +143,14 @@ public class UnsyncFilterOutputStreamTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
-			Assert.assertSame(flushException, ioe);
+		catch (IOException ioException3) {
+			Assert.assertSame(ioException1, ioException3);
 
-			Throwable[] throwables = flushException.getSuppressed();
+			Throwable[] throwables = ioException1.getSuppressed();
 
 			Assert.assertEquals(
 				Arrays.toString(throwables), 1, throwables.length);
-			Assert.assertSame(closeException, throwables[0]);
+			Assert.assertSame(ioException2, throwables[0]);
 		}
 	}
 

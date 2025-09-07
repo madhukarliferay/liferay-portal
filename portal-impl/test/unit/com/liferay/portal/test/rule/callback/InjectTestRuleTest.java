@@ -1,59 +1,62 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.test.rule.callback;
 
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.ConsoleTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.InjectTestBag;
 import com.liferay.portal.test.rule.InjectTestRule;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.Description;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Preston Crary
  */
 public class InjectTestRuleTest {
 
-	@Before
-	public void setUp() {
-		RegistryUtil.setRegistry(new BasicRegistryImpl());
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@After
+	public void tearDown() {
+		_serviceRegistrations.forEach(ServiceRegistration::unregister);
+
+		_serviceRegistrations.clear();
 	}
 
 	@Test
 	public void testInjectBaseTestCase() throws Exception {
-		Registry registry = RegistryUtil.getRegistry();
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
 		Service1 service1 = new Service1();
 
-		registry.registerService(Service1.class, service1);
+		_serviceRegistrations.add(
+			bundleContext.registerService(Service1.class, service1, null));
 
 		Service2 service2 = new Service2();
 
-		registry.registerService(Service2.class, service2);
+		_serviceRegistrations.add(
+			bundleContext.registerService(Service2.class, service2, null));
 
 		TestCase1 testCase1 = new TestCase1();
 
@@ -98,13 +101,14 @@ public class InjectTestRuleTest {
 
 		InjectTestBag injectTestBag = null;
 
-		UnsyncByteArrayOutputStream ubaos = ConsoleTestUtil.hijackStdOut();
+		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+			ConsoleTestUtil.hijackStdOut();
 
 		try {
 			Thread registerThread = new Thread(
 				() -> {
 					while (true) {
-						String stdOut = ubaos.toString();
+						String stdOut = unsyncByteArrayOutputStream.toString();
 
 						if (!stdOut.contains(
 								"Waiting for service " +
@@ -115,9 +119,12 @@ public class InjectTestRuleTest {
 
 						Assert.assertNull(TestCase2._service1);
 
-						Registry registry = RegistryUtil.getRegistry();
+						BundleContext bundleContext =
+							SystemBundleUtil.getBundleContext();
 
-						registry.registerService(Service1.class, service1);
+						_serviceRegistrations.add(
+							bundleContext.registerService(
+								Service1.class, service1, null));
 
 						return;
 					}
@@ -131,32 +138,77 @@ public class InjectTestRuleTest {
 			registerThread.join();
 		}
 		finally {
-			ConsoleTestUtil.restoreStdOut(ubaos);
+			ConsoleTestUtil.restoreStdOut(unsyncByteArrayOutputStream);
 		}
 
 		Assert.assertSame(service1, TestCase2._service1);
 
-		AtomicBoolean ungetServiceCalled = new AtomicBoolean();
-
-		RegistryUtil.setRegistry(
-			new BasicRegistryImpl() {
-
-				@Override
-				public <T> boolean ungetService(
-					ServiceReference<T> serviceReference) {
-
-					ungetServiceCalled.set(true);
-
-					return false;
-				}
-
-			});
-
 		InjectTestRule.INSTANCE.afterClass(description, injectTestBag);
 
 		Assert.assertNull(TestCase2._service1);
+	}
 
-		Assert.assertTrue(ungetServiceCalled.get());
+	@Test
+	public void testInjectFieldWithSameNameInParentAndChildClass()
+		throws Exception {
+
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		Service1 service1 = new Service1();
+
+		_serviceRegistrations.add(
+			bundleContext.registerService(Service1.class, service1, null));
+
+		Service2 service2 = new Service2();
+
+		_serviceRegistrations.add(
+			bundleContext.registerService(Service2.class, service2, null));
+
+		TestCase3 testCase3 = new TestCase3();
+
+		Assert.assertNull(TestCase3.getService1());
+		Assert.assertNull(testCase3._service1);
+
+		Assert.assertNull(testCase3.getService2());
+		Assert.assertNull(testCase3._service2);
+
+		Description description = Description.createTestDescription(
+			TestCase3.class, TestCase3.class.getName());
+
+		InjectTestBag classInjectTestBag = InjectTestRule.INSTANCE.beforeClass(
+			description);
+
+		Assert.assertSame(service1, TestCase3.getService1());
+		Assert.assertNull(testCase3._service1);
+
+		Assert.assertNull(testCase3.getService2());
+		Assert.assertNull(testCase3._service2);
+
+		InjectTestBag methodInjectTestBag =
+			InjectTestRule.INSTANCE.beforeMethod(description, testCase3);
+
+		Assert.assertSame(service1, TestCase3.getService1());
+		Assert.assertSame(service1, testCase3._service1);
+
+		Assert.assertSame(service2, testCase3.getService2());
+		Assert.assertSame(service2, testCase3._service2);
+
+		InjectTestRule.INSTANCE.afterMethod(
+			description, methodInjectTestBag, testCase3);
+
+		Assert.assertSame(service1, TestCase3.getService1());
+		Assert.assertNull(testCase3._service1);
+
+		Assert.assertNull(testCase3.getService2());
+		Assert.assertNull(testCase3._service2);
+
+		InjectTestRule.INSTANCE.afterClass(description, classInjectTestBag);
+
+		Assert.assertNull(TestCase3.getService1());
+		Assert.assertNull(testCase3._service1);
+
+		Assert.assertNull(testCase3.getService2());
+		Assert.assertNull(testCase3._service2);
 	}
 
 	@Test
@@ -170,19 +222,19 @@ public class InjectTestRuleTest {
 
 		Assert.assertNull(testCase2._service2);
 
-		Registry registry = RegistryUtil.getRegistry();
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		Service2 service2 = new Service2();
-
-		registry.registerService(Service2.class, service2);
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				Service2.class, new Service2(), null));
 
 		injectTestBag.injectFields();
 
 		Assert.assertNull(testCase2._service2);
 
-		Service3 service3a = new Service3();
-
-		registry.registerService(Service3.class, service3a);
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				Service3.class, new Service3(), null));
 
 		injectTestBag.injectFields();
 
@@ -190,11 +242,12 @@ public class InjectTestRuleTest {
 
 		Service3 service3b = new Service3();
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			"inject.test.rule.test", true
-		).build();
-
-		registry.registerService(Service3.class, service3b, properties);
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				Service3.class, service3b,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"inject.test.rule.test", true
+				).build()));
 
 		injectTestBag.injectFields();
 
@@ -208,6 +261,9 @@ public class InjectTestRuleTest {
 
 		Assert.assertNull(testCase2._service2);
 	}
+
+	private final List<ServiceRegistration<?>> _serviceRegistrations =
+		new ArrayList<>();
 
 	private static class BaseTestCase {
 
@@ -242,6 +298,16 @@ public class InjectTestRuleTest {
 		private final Service2 _service2 = null;
 
 		private final Service3 _service3 = null;
+
+	}
+
+	private static class TestCase3 extends BaseTestCase {
+
+		@Inject
+		private Service1 _service1;
+
+		@Inject
+		private Service2 _service2;
 
 	}
 

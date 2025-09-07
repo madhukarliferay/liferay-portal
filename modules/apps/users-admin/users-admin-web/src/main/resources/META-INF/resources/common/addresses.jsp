@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,101 +16,116 @@ String emptyResultsMessage = ParamUtil.getString(request, "emptyResultsMessage")
 List<Address> addresses = AddressServiceUtil.getAddresses(className, classPK);
 %>
 
-<div class="sheet-header">
-	<h2 class="autofit-row sheet-title">
-		<span class="autofit-col autofit-col-expand">
-			<span class="heading-text"><liferay-ui:message key="addresses" /></span>
-		</span>
-		<span class="autofit-col">
+<clay:sheet-header>
+	<clay:content-row
+		cssClass="sheet-title"
+	>
+		<clay:content-col
+			expand="<%= true %>"
+		>
+			<h2 class="heading-text"><liferay-ui:message key="addresses" /></h2>
+		</clay:content-col>
+
+		<clay:content-col>
 			<span class="heading-end">
-
-				<%
-				PortletURL editURL = liferayPortletResponse.createRenderURL();
-
-				editURL.setParameter("mvcPath", "/common/edit_address.jsp");
-				editURL.setParameter("redirect", currentURL);
-				editURL.setParameter("className", className);
-				editURL.setParameter("classPK", String.valueOf(classPK));
-				%>
-
-				<liferay-ui:icon
-					label="<%= true %>"
-					linkCssClass="add-address-link btn btn-secondary btn-sm"
-					message="add"
-					url="<%= editURL.toString() %>"
+				<clay:link
+					aria-label='<%= LanguageUtil.format(request, "add-x", "addresses") %>'
+					cssClass="add-address-link btn btn-secondary btn-sm"
+					displayType="null"
+					href='<%=
+						PortletURLBuilder.createRenderURL(
+							liferayPortletResponse
+						).setMVCPath(
+							"/common/edit_address.jsp"
+						).setRedirect(
+							currentURL
+						).setParameter(
+							"className", className
+						).setParameter(
+							"classPK", classPK
+						).buildString()
+					%>'
+					label="add"
+					role="button"
 				/>
 			</span>
-		</span>
-	</h2>
-</div>
+		</clay:content-col>
+	</clay:content-row>
+</clay:sheet-header>
 
 <c:if test="<%= addresses.isEmpty() %>">
 	<div class="contact-information-empty-results-message-wrapper">
-		<liferay-ui:empty-result-message
-			message="<%= emptyResultsMessage %>"
+		<liferay-frontend:empty-result-message
+			animationType="<%= EmptyResultMessageKeys.AnimationType.EMPTY %>"
+			title="<%= LanguageUtil.get(resourceBundle, emptyResultsMessage) %>"
 		/>
 	</div>
 </c:if>
 
 <div
 	class="<%=
-		CSSClassNames.builder(
-			"addresses-table-wrapper", "table-responsive"
+		CSSClasses.builder(
+			"addresses-table-wrapper"
 		).add(
 			"hide", addresses.isEmpty()
 		).build()
 	%>"
 >
-	<table class="table table-autofit">
-		<tbody>
+	<ul class="list-group list-group-flush">
 
-			<%
-			for (Address address : addresses) {
-			%>
+		<%
+		for (Address address : addresses) {
+		%>
 
-				<tr>
-					<td>
-						<div class="sticker sticker-secondary sticker-static">
-							<aui:icon image="picture" markupView="lexicon" />
-						</div>
-					</td>
-					<td class="table-cell-expand">
-						<h4>
+			<li class="list-group-item list-group-item-flex">
+				<clay:content-col>
+					<clay:sticker
+						cssClass="sticker-static"
+						displayType="secondary"
+						icon="picture"
+					/>
+				</clay:content-col>
 
-							<%
-							ListType listType = address.getType();
-							%>
+				<clay:content-col
+					expand="<%= true %>"
+				>
+					<span class="h3">
 
-							<liferay-ui:message key="<%= listType.getName() %>" />
-						</h4>
+						<%
+						ListType listType = address.getListType();
+						%>
 
-						<div class="address-display-wrapper">
-							<liferay-text-localizer:address-display
-								address="<%= address %>"
+						<liferay-ui:message key="<%= listType.getName() %>" />
+					</span>
+
+					<div class="address-display-wrapper list-group-text">
+						<liferay-text-localizer:address-display
+							address="<%= address %>"
+						/>
+					</div>
+
+					<c:if test="<%= address.isPrimary() %>">
+						<div class="address-primary-label-wrapper">
+							<clay:label
+								displayType="primary"
+								label="primary"
 							/>
 						</div>
+					</c:if>
+				</clay:content-col>
 
-						<c:if test="<%= address.isPrimary() %>">
-							<div class="address-primary-label-wrapper">
-								<span class="label label-primary">
-									<span class="label-item label-item-expand"><%= StringUtil.toUpperCase(LanguageUtil.get(request, "primary"), locale) %></span>
-								</span>
-							</div>
-						</c:if>
-					</td>
-					<td>
-						<span class="autofit-col lfr-search-container-wrapper">
-							<liferay-util:include page="/common/address_action.jsp" servletContext="<%= application %>">
-								<liferay-util:param name="addressId" value="<%= String.valueOf(address.getAddressId()) %>" />
-							</liferay-util:include>
-						</span>
-					</td>
-				</tr>
+				<clay:content-col
+					cssClass="lfr-search-container-wrapper"
+				>
+					<liferay-util:include page="/common/address_action.jsp" servletContext="<%= application %>">
+						<liferay-util:param name="addressId" value="<%= String.valueOf(address.getAddressId()) %>" />
+					</liferay-util:include>
+				</clay:content-col>
+			</li>
 
-			<%
-			}
-			%>
+		<%
+		}
+		%>
 
-		</tbody>
-	</table>
+	</ul>
 </div>

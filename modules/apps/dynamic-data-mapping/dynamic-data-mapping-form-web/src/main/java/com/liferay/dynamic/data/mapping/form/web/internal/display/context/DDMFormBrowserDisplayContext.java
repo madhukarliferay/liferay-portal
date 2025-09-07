@@ -1,46 +1,41 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.display.context;
 
-import com.liferay.dynamic.data.mapping.form.web.internal.display.context.util.DDMFormWebRequestHelper;
-import com.liferay.dynamic.data.mapping.form.web.internal.search.FormInstanceSearch;
+import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
+import com.liferay.dynamic.data.mapping.form.web.internal.display.context.helper.DDMFormWebRequestHelper;
+import com.liferay.dynamic.data.mapping.form.web.internal.search.DDMFormInstanceSearch;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.util.comparator.DDMFormInstanceModifiedDateComparator;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Jürgen Kappler
@@ -55,19 +50,59 @@ public class DDMFormBrowserDisplayContext {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
-		_httpServletRequest = PortalUtil.getHttpServletRequest(_renderRequest);
+		_httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
 
 		_formWebRequestHelper = new DDMFormWebRequestHelper(
 			_httpServletRequest);
 	}
 
 	public String getClearResultsURL() throws PortletException {
-		PortletURL clearResultsURL = PortletURLUtil.clone(
-			getPortletURL(), _renderResponse);
+		return PortletURLBuilder.create(
+			PortletURLUtil.clone(getPortletURL(), _renderResponse)
+		).setKeywords(
+			StringPool.BLANK
+		).buildString();
+	}
 
-		clearResultsURL.setParameter("keywords", StringPool.BLANK);
+	public DDMFormInstanceSearch getDDMFormInstanceSearch()
+		throws PortalException {
 
-		return clearResultsURL.toString();
+		if (_ddmFormInstanceSearch != null) {
+			return _ddmFormInstanceSearch;
+		}
+
+		PortletURL portletURL = PortletURLBuilder.create(
+			getPortletURL()
+		).setParameter(
+			"displayStyle", getDisplayStyle()
+		).buildPortletURL();
+
+		DDMFormInstanceSearch ddmFormInstanceSearch = new DDMFormInstanceSearch(
+			_renderRequest, portletURL);
+
+		if (ddmFormInstanceSearch.isSearch()) {
+			ddmFormInstanceSearch.setEmptyResultsMessage("no-forms-were-found");
+		}
+		else {
+			ddmFormInstanceSearch.setEmptyResultsMessage("there-are-no-forms");
+		}
+
+		ddmFormInstanceSearch.setOrderByCol(getOrderByCol());
+		ddmFormInstanceSearch.setOrderByComparator(
+			_getDDMFormInstanceOrderByComparator(getOrderByType()));
+		ddmFormInstanceSearch.setOrderByType(getOrderByType());
+		ddmFormInstanceSearch.setResultsAndTotal(
+			() -> _ddmFormInstanceService.search(
+				_formWebRequestHelper.getCompanyId(),
+				_formWebRequestHelper.getScopeGroupId(), getKeywords(),
+				ddmFormInstanceSearch.getStart(),
+				ddmFormInstanceSearch.getEnd(),
+				ddmFormInstanceSearch.getOrderByComparator()),
+			getTotalItems());
+
+		_ddmFormInstanceSearch = ddmFormInstanceSearch;
+
+		return _ddmFormInstanceSearch;
 	}
 
 	public String getDisplayStyle() {
@@ -75,8 +110,9 @@ public class DDMFormBrowserDisplayContext {
 			return _displayStyle;
 		}
 
-		_displayStyle = ParamUtil.getString(
-			_httpServletRequest, "displayStyle", "list");
+		_displayStyle = SearchDisplayStyleUtil.getDisplayStyle(
+			_httpServletRequest,
+			DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_BROWSER, "list");
 
 		return _displayStyle;
 	}
@@ -93,78 +129,6 @@ public class DDMFormBrowserDisplayContext {
 		return _eventName;
 	}
 
-	public List<DropdownItem> getFilterItemsDropdownItems() {
-		HttpServletRequest httpServletRequest =
-			_formWebRequestHelper.getRequest();
-
-		return new DropdownItemList() {
-			{
-				addGroup(
-					dropdownGroupItem -> {
-						dropdownGroupItem.setDropdownItems(
-							getFilterNavigationDropdownItems());
-						dropdownGroupItem.setLabel(
-							LanguageUtil.get(
-								httpServletRequest, "filter-by-navigation"));
-					});
-
-				addGroup(
-					dropdownGroupItem -> {
-						dropdownGroupItem.setDropdownItems(
-							getOrderByDropdownItems());
-						dropdownGroupItem.setLabel(
-							LanguageUtil.get(httpServletRequest, "order-by"));
-					});
-			}
-		};
-	}
-
-	public FormInstanceSearch getFormInstanceSearch() throws PortalException {
-		if (_formInstanceSearch != null) {
-			return _formInstanceSearch;
-		}
-
-		String displayStyle = getDisplayStyle();
-
-		PortletURL portletURL = getPortletURL();
-
-		portletURL.setParameter("displayStyle", displayStyle);
-
-		FormInstanceSearch formInstanceSearch = new FormInstanceSearch(
-			_renderRequest, portletURL);
-
-		String orderByType = getOrderByType();
-
-		OrderByComparator<DDMFormInstance> orderByComparator =
-			_getDDMFormInstanceOrderByComparator(orderByType);
-
-		formInstanceSearch.setOrderByCol(getOrderByCol());
-
-		formInstanceSearch.setOrderByComparator(orderByComparator);
-		formInstanceSearch.setOrderByType(orderByType);
-
-		if (formInstanceSearch.isSearch()) {
-			formInstanceSearch.setEmptyResultsMessage("no-forms-were-found");
-		}
-		else {
-			formInstanceSearch.setEmptyResultsMessage("there-are-no-forms");
-		}
-
-		List<DDMFormInstance> results = _ddmFormInstanceService.search(
-			_formWebRequestHelper.getCompanyId(),
-			_formWebRequestHelper.getScopeGroupId(), getKeywords(),
-			formInstanceSearch.getStart(), formInstanceSearch.getEnd(),
-			formInstanceSearch.getOrderByComparator());
-
-		formInstanceSearch.setResults(results);
-
-		formInstanceSearch.setTotal(getTotalItems());
-
-		_formInstanceSearch = formInstanceSearch;
-
-		return _formInstanceSearch;
-	}
-
 	public String getKeywords() {
 		if (Validator.isNotNull(_keywords)) {
 			return _keywords;
@@ -176,22 +140,20 @@ public class DDMFormBrowserDisplayContext {
 	}
 
 	public List<NavigationItem> getNavigationItems() {
-		HttpServletRequest httpServletRequest =
-			_formWebRequestHelper.getRequest();
+		return NavigationItemListBuilder.add(
+			navigationItem -> {
+				navigationItem.setActive(true);
+				navigationItem.setHref(
+					_renderResponse.createRenderURL(), "mvcPath",
+					"/browser/view.jsp");
 
-		return new NavigationItemList() {
-			{
-				add(
-					navigationItem -> {
-						navigationItem.setActive(true);
-						navigationItem.setHref(
-							_renderResponse.createRenderURL(), "mvcPath",
-							"/browser/view.jsp");
-						navigationItem.setLabel(
-							LanguageUtil.get(httpServletRequest, "entries"));
-					});
+				HttpServletRequest httpServletRequest =
+					_formWebRequestHelper.getRequest();
+
+				navigationItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "entries"));
 			}
-		};
+		).build();
 	}
 
 	public String getOrderByCol() {
@@ -199,8 +161,9 @@ public class DDMFormBrowserDisplayContext {
 			return _orderByCol;
 		}
 
-		_orderByCol = ParamUtil.getString(
-			_httpServletRequest, "orderByCol", "modified-date");
+		_orderByCol = SearchOrderByUtil.getOrderByCol(
+			_httpServletRequest,
+			DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_BROWSER, "modified-date");
 
 		return _orderByCol;
 	}
@@ -210,65 +173,104 @@ public class DDMFormBrowserDisplayContext {
 			return _orderByType;
 		}
 
-		_orderByType = ParamUtil.getString(
-			_httpServletRequest, "orderByType", "asc");
+		_orderByType = SearchOrderByUtil.getOrderByType(
+			_httpServletRequest,
+			DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_BROWSER, "asc");
 
 		return _orderByType;
 	}
 
+	public List<DropdownItem> getOrderItemsDropdownItems() {
+		return DropdownItemListBuilder.add(
+			getOrderByDropdownItem("modified-date")
+		).build();
+	}
+
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = _renderResponse.createRenderURL();
+		return PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setMVCPath(
+			"/browser/view.jsp"
+		).setKeywords(
+			() -> {
+				String keywords = getKeywords();
 
-		portletURL.setParameter("mvcPath", "/browser/view.jsp");
-		portletURL.setParameter("displayStyle", getDisplayStyle());
-		portletURL.setParameter("eventName", getEventName());
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
 
-		String delta = ParamUtil.getString(_renderRequest, "delta");
+				return null;
+			}
+		).setParameter(
+			"delta",
+			() -> {
+				String delta = ParamUtil.getString(_renderRequest, "delta");
 
-		if (Validator.isNotNull(delta)) {
-			portletURL.setParameter("delta", delta);
-		}
+				if (Validator.isNotNull(delta)) {
+					return delta;
+				}
 
-		String displayStyle = ParamUtil.getString(
-			_renderRequest, "displayStyle");
+				return null;
+			}
+		).setParameter(
+			"displayStyle", getDisplayStyle()
+		).setParameter(
+			"displayStyle",
+			() -> {
+				String displayStyle = ParamUtil.getString(
+					_renderRequest, "displayStyle");
 
-		if (Validator.isNotNull(displayStyle)) {
-			portletURL.setParameter("displayStyle", getDisplayStyle());
-		}
+				if (Validator.isNotNull(displayStyle)) {
+					return getDisplayStyle();
+				}
 
-		String keywords = getKeywords();
+				return null;
+			}
+		).setParameter(
+			"eventName", getEventName()
+		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByCol",
+			() -> {
+				String orderByCol = getOrderByCol();
 
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
+				if (Validator.isNotNull(orderByCol)) {
+					return orderByCol;
+				}
 
-		String orderByCol = getOrderByCol();
+				return null;
+			}
+		).setParameter(
+			"orderByType", getOrderByType()
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = getOrderByType();
 
-		if (Validator.isNotNull(orderByCol)) {
-			portletURL.setParameter("orderByCol", orderByCol);
-		}
+				if (Validator.isNotNull(orderByType)) {
+					return orderByType;
+				}
 
-		String orderByType = getOrderByType();
-
-		if (Validator.isNotNull(orderByType)) {
-			portletURL.setParameter("orderByType", orderByType);
-		}
-
-		return portletURL;
+				return null;
+			}
+		).buildPortletURL();
 	}
 
 	public String getSearchActionURL() {
-		PortletURL portletURL = _renderResponse.createRenderURL();
-
-		portletURL.setParameter("mvcPath", "/browser/view.jsp");
-		portletURL.setParameter("displayStyle", getDisplayStyle());
-		portletURL.setParameter("eventName", getEventName());
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
-
-		return portletURL.toString();
+		return PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setMVCPath(
+			"/browser/view.jsp"
+		).setParameter(
+			"displayStyle", getDisplayStyle()
+		).setParameter(
+			"eventName", getEventName()
+		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
+		).buildString();
 	}
 
 	public String getSearchContainerId() {
@@ -276,15 +278,21 @@ public class DDMFormBrowserDisplayContext {
 	}
 
 	public String getSortingURL() throws Exception {
-		PortletURL sortingURL = PortletURLUtil.clone(
-			getPortletURL(), _renderResponse);
+		return PortletURLBuilder.create(
+			PortletURLUtil.clone(getPortletURL(), _renderResponse)
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = ParamUtil.getString(
+					_renderRequest, "orderByType");
 
-		String orderByType = ParamUtil.getString(_renderRequest, "orderByType");
+				if (orderByType.equals("asc")) {
+					return "desc";
+				}
 
-		sortingURL.setParameter(
-			"orderByType", orderByType.equals("asc") ? "desc" : "asc");
-
-		return sortingURL.toString();
+				return "asc";
+			}
+		).buildString();
 	}
 
 	public int getTotalItems() {
@@ -307,22 +315,6 @@ public class DDMFormBrowserDisplayContext {
 		return false;
 	}
 
-	protected List<DropdownItem> getFilterNavigationDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.setActive(true);
-						dropdownItem.setHref(
-							getPortletURL(), "navigation", "all");
-						dropdownItem.setLabel(
-							LanguageUtil.get(
-								_formWebRequestHelper.getRequest(), "all"));
-					});
-			}
-		};
-	}
-
 	protected UnsafeConsumer<DropdownItem, Exception> getOrderByDropdownItem(
 		String orderByCol) {
 
@@ -332,14 +324,6 @@ public class DDMFormBrowserDisplayContext {
 			dropdownItem.setLabel(
 				LanguageUtil.get(
 					_formWebRequestHelper.getRequest(), orderByCol));
-		};
-	}
-
-	protected List<DropdownItem> getOrderByDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(getOrderByDropdownItem("modified-date"));
-			}
 		};
 	}
 
@@ -355,10 +339,10 @@ public class DDMFormBrowserDisplayContext {
 		return new DDMFormInstanceModifiedDateComparator(orderByAsc);
 	}
 
+	private DDMFormInstanceSearch _ddmFormInstanceSearch;
 	private final DDMFormInstanceService _ddmFormInstanceService;
 	private String _displayStyle;
 	private String _eventName;
-	private FormInstanceSearch _formInstanceSearch;
 	private Integer _formInstanceSearchTotal;
 	private final DDMFormWebRequestHelper _formWebRequestHelper;
 	private final HttpServletRequest _httpServletRequest;

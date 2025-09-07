@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins;
@@ -17,14 +8,14 @@ package com.liferay.gradle.plugins;
 import com.liferay.gradle.plugins.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.node.NodeExtension;
 import com.liferay.gradle.plugins.node.NodePlugin;
-import com.liferay.gradle.plugins.node.tasks.ExecuteNodeTask;
-import com.liferay.gradle.plugins.node.tasks.ExecutePackageManagerTask;
-import com.liferay.gradle.plugins.node.tasks.NpmInstallTask;
-import com.liferay.gradle.plugins.node.tasks.PublishNodeModuleTask;
+import com.liferay.gradle.plugins.node.task.ExecutePackageManagerTask;
+import com.liferay.gradle.plugins.node.task.NpmInstallTask;
+import com.liferay.gradle.plugins.node.task.PublishNodeModuleTask;
 import com.liferay.gradle.util.Validator;
 
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.TaskContainer;
 
 /**
@@ -33,11 +24,58 @@ import org.gradle.api.tasks.TaskContainer;
 public class NodeDefaultsPlugin extends BaseDefaultsPlugin<NodePlugin> {
 
 	@Override
-	protected void configureDefaults(Project project, NodePlugin nodePlugin) {
-		_configureNode(project);
-		_configureTasksExecutePackageManager(project);
-		_configureTasksNpmInstall(project);
-		_configureTasksPublishNodeModule(project);
+	protected void applyPluginDefaults(Project project, NodePlugin nodePlugin) {
+
+		// Extensions
+
+		ExtensionContainer extensionContainer = project.getExtensions();
+
+		NodeExtension nodeExtension = extensionContainer.getByType(
+			NodeExtension.class);
+
+		_configureExtensionNode(project, nodeExtension);
+
+		// Containers
+
+		TaskContainer taskContainer = project.getTasks();
+
+		taskContainer.withType(
+			ExecutePackageManagerTask.class,
+			new Action<ExecutePackageManagerTask>() {
+
+				@Override
+				public void execute(
+					ExecutePackageManagerTask executePackageManagerTask) {
+
+					_configureTaskExecutePackageManager(
+						executePackageManagerTask);
+				}
+
+			});
+
+		taskContainer.withType(
+			NpmInstallTask.class,
+			new Action<NpmInstallTask>() {
+
+				@Override
+				public void execute(NpmInstallTask npmInstallTask) {
+					_configureTaskNpmInstall(npmInstallTask);
+				}
+
+			});
+
+		taskContainer.withType(
+			PublishNodeModuleTask.class,
+			new Action<PublishNodeModuleTask>() {
+
+				@Override
+				public void execute(
+					PublishNodeModuleTask publishNodeModuleTask) {
+
+					_configureTaskPublishNodeModule(publishNodeModuleTask);
+				}
+
+			});
 	}
 
 	@Override
@@ -45,9 +83,8 @@ public class NodeDefaultsPlugin extends BaseDefaultsPlugin<NodePlugin> {
 		return NodePlugin.class;
 	}
 
-	private void _configureNode(Project project) {
-		NodeExtension nodeExtension = GradleUtil.getExtension(
-			project, NodeExtension.class);
+	private void _configureExtensionNode(
+		Project project, NodeExtension nodeExtension) {
 
 		nodeExtension.setGlobal(true);
 		nodeExtension.setNodeVersion(_NODE_VERSION);
@@ -87,8 +124,19 @@ public class NodeDefaultsPlugin extends BaseDefaultsPlugin<NodePlugin> {
 			(String)null);
 
 		if (Validator.isNotNull(sassBinarySite)) {
-			_setTaskExecuteNodeArgDefault(
-				npmInstallTask, _SASS_BINARY_SITE_ARG, sassBinarySite);
+			boolean sassBinarySiteArg = false;
+
+			for (Object object : npmInstallTask.getArgs()) {
+				String arg = GradleUtil.toString(object);
+
+				if (arg.startsWith(_SASS_BINARY_SITE_ARG)) {
+					sassBinarySiteArg = true;
+				}
+			}
+
+			if (!sassBinarySiteArg) {
+				npmInstallTask.args(_SASS_BINARY_SITE_ARG + sassBinarySite);
+			}
 		}
 	}
 
@@ -97,123 +145,45 @@ public class NodeDefaultsPlugin extends BaseDefaultsPlugin<NodePlugin> {
 
 		Project project = publishNodeModuleTask.getProject();
 
-		String author = GradleUtil.getProperty(
+		String moduleAuthor = GradleUtil.getProperty(
 			project, "nodejs.npm.module.author", (String)null);
 
-		if (Validator.isNotNull(author)) {
-			publishNodeModuleTask.setModuleAuthor(author);
+		if (Validator.isNotNull(moduleAuthor)) {
+			publishNodeModuleTask.setModuleAuthor(moduleAuthor);
 		}
 
-		String bugsUrl = GradleUtil.getProperty(
+		String moduleBugsUrl = GradleUtil.getProperty(
 			project, "nodejs.npm.module.bugs.url", (String)null);
 
-		if (Validator.isNotNull(bugsUrl)) {
-			publishNodeModuleTask.setModuleBugsUrl(bugsUrl);
+		if (Validator.isNotNull(moduleBugsUrl)) {
+			publishNodeModuleTask.setModuleBugsUrl(moduleBugsUrl);
 		}
 
-		String license = GradleUtil.getProperty(
+		String moduleLicense = GradleUtil.getProperty(
 			project, "nodejs.npm.module.license", (String)null);
 
-		if (Validator.isNotNull(license)) {
-			publishNodeModuleTask.setModuleLicense(license);
+		if (Validator.isNotNull(moduleLicense)) {
+			publishNodeModuleTask.setModuleLicense(moduleLicense);
 		}
 
-		String emailAddress = GradleUtil.getProperty(
-			project, "nodejs.npm.email", (String)null);
-
-		if (Validator.isNotNull(emailAddress)) {
-			publishNodeModuleTask.setNpmEmailAddress(emailAddress);
-		}
-
-		String password = GradleUtil.getProperty(
-			project, "nodejs.npm.password", (String)null);
-
-		if (Validator.isNotNull(password)) {
-			publishNodeModuleTask.setNpmPassword(password);
-		}
-
-		String userName = GradleUtil.getProperty(
-			project, "nodejs.npm.user", (String)null);
-
-		if (Validator.isNotNull(userName)) {
-			publishNodeModuleTask.setNpmUserName(userName);
-		}
-
-		String repository = GradleUtil.getProperty(
+		String moduleRepository = GradleUtil.getProperty(
 			project, "nodejs.npm.module.repository", (String)null);
 
-		if (Validator.isNotNull(repository)) {
-			publishNodeModuleTask.setModuleRepository(repository);
+		if (Validator.isNotNull(moduleRepository)) {
+			publishNodeModuleTask.setModuleRepository(moduleRepository);
+		}
+
+		String npmAccessToken = GradleUtil.getProperty(
+			project, "nodejs.npm.access.token", (String)null);
+
+		if (Validator.isNotNull(npmAccessToken)) {
+			publishNodeModuleTask.setNpmAccessToken(npmAccessToken);
 		}
 	}
 
-	private void _configureTasksExecutePackageManager(Project project) {
-		TaskContainer taskContainer = project.getTasks();
+	private static final String _NODE_VERSION = "20.12.2";
 
-		taskContainer.withType(
-			ExecutePackageManagerTask.class,
-			new Action<ExecutePackageManagerTask>() {
-
-				@Override
-				public void execute(
-					ExecutePackageManagerTask executePackageManagerTask) {
-
-					_configureTaskExecutePackageManager(
-						executePackageManagerTask);
-				}
-
-			});
-	}
-
-	private void _configureTasksNpmInstall(Project project) {
-		TaskContainer taskContainer = project.getTasks();
-
-		taskContainer.withType(
-			NpmInstallTask.class,
-			new Action<NpmInstallTask>() {
-
-				@Override
-				public void execute(NpmInstallTask npmInstallTask) {
-					_configureTaskNpmInstall(npmInstallTask);
-				}
-
-			});
-	}
-
-	private void _configureTasksPublishNodeModule(Project project) {
-		TaskContainer taskContainer = project.getTasks();
-
-		taskContainer.withType(
-			PublishNodeModuleTask.class,
-			new Action<PublishNodeModuleTask>() {
-
-				@Override
-				public void execute(
-					PublishNodeModuleTask publishNodeModuleTask) {
-
-					_configureTaskPublishNodeModule(publishNodeModuleTask);
-				}
-
-			});
-	}
-
-	private void _setTaskExecuteNodeArgDefault(
-		ExecuteNodeTask executeNodeTask, String key, String value) {
-
-		for (Object object : executeNodeTask.getArgs()) {
-			String arg = GradleUtil.toString(object);
-
-			if (arg.startsWith(key)) {
-				return;
-			}
-		}
-
-		executeNodeTask.args(key + value);
-	}
-
-	private static final String _NODE_VERSION = "10.15.1";
-
-	private static final String _NPM_VERSION = "6.4.1";
+	private static final String _NPM_VERSION = "10.5.0";
 
 	private static final String _SASS_BINARY_SITE_ARG = "--sass-binary-site=";
 

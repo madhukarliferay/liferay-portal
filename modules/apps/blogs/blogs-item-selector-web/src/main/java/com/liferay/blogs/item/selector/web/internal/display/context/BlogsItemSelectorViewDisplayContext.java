@@ -1,40 +1,42 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.item.selector.web.internal.display.context;
 
 import com.liferay.blogs.configuration.BlogsFileUploadsConfiguration;
-import com.liferay.blogs.item.selector.criterion.BlogsItemSelectorCriterion;
+import com.liferay.blogs.item.selector.BlogsItemSelectorCriterion;
 import com.liferay.blogs.item.selector.web.internal.BlogsItemSelectorView;
+import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
+import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolver;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolverHandler;
+import com.liferay.item.selector.taglib.servlet.taglib.util.RepositoryEntryBrowserTagUtil;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.PortalPreferences;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalServiceUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortletKeys;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Collections;
 import java.util.Locale;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
+import java.util.Set;
 
 /**
  * @author Roberto Díaz
@@ -42,29 +44,44 @@ import javax.servlet.http.HttpServletRequest;
 public class BlogsItemSelectorViewDisplayContext {
 
 	public BlogsItemSelectorViewDisplayContext(
+		BlogsEntryLocalService blogsEntryLocalService,
 		BlogsItemSelectorCriterion blogsItemSelectorCriterion,
 		BlogsItemSelectorView blogsItemSelectorView,
+		HttpServletRequest httpServletRequest, String itemSelectedEventName,
 		ItemSelectorReturnTypeResolverHandler
 			itemSelectorReturnTypeResolverHandler,
-		String itemSelectedEventName, boolean search, PortletURL portletURL,
-		BlogsEntryLocalService blogsEntryLocalService) {
+		PortletURL portletURL, boolean search) {
 
+		_blogsEntryLocalService = blogsEntryLocalService;
 		_blogsItemSelectorCriterion = blogsItemSelectorCriterion;
 		_blogsItemSelectorView = blogsItemSelectorView;
+		_httpServletRequest = httpServletRequest;
+		_itemSelectedEventName = itemSelectedEventName;
 		_itemSelectorReturnTypeResolverHandler =
 			itemSelectorReturnTypeResolverHandler;
-		_itemSelectedEventName = itemSelectedEventName;
-		_search = search;
 		_portletURL = portletURL;
-		_blogsEntryLocalService = blogsEntryLocalService;
+		_search = search;
+
+		_portalPreferences = PortletPreferencesFactoryUtil.getPortalPreferences(
+			httpServletRequest);
 	}
 
 	public Folder fetchAttachmentsFolder(long userId, long groupId) {
 		return _blogsEntryLocalService.fetchAttachmentsFolder(userId, groupId);
 	}
 
-	public BlogsItemSelectorCriterion getBlogsItemSelectorCriterion() {
-		return _blogsItemSelectorCriterion;
+	public Set<String> getAllowedCreationMenuUIItemKeys() {
+		return Collections.emptySet();
+	}
+
+	public PortletURL getEditImageURL(
+		LiferayPortletResponse liferayPortletResponse) {
+
+		return PortletURLBuilder.createActionURL(
+			liferayPortletResponse, PortletKeys.BLOGS
+		).setActionName(
+			"/blogs/image_editor"
+		).buildPortletURL();
 	}
 
 	public String[] getImageExtensions() throws ConfigurationException {
@@ -79,11 +96,25 @@ public class BlogsItemSelectorViewDisplayContext {
 		return _itemSelectedEventName;
 	}
 
-	public ItemSelectorReturnTypeResolver getItemSelectorReturnTypeResolver() {
+	public ItemSelectorReturnTypeResolver<?, ?>
+		getItemSelectorReturnTypeResolver() {
+
 		return _itemSelectorReturnTypeResolverHandler.
 			getItemSelectorReturnTypeResolver(
 				_blogsItemSelectorCriterion, _blogsItemSelectorView,
 				FileEntry.class);
+	}
+
+	public String getMimeTypeRestriction() {
+		return _blogsItemSelectorCriterion.getMimeTypeRestriction();
+	}
+
+	public OrderByComparator<FileEntry> getOrderByComparator() {
+		return DLUtil.getRepositoryModelOrderByComparator(
+			RepositoryEntryBrowserTagUtil.getOrderByCol(
+				_httpServletRequest, _portalPreferences),
+			RepositoryEntryBrowserTagUtil.getOrderByType(
+				_httpServletRequest, _portalPreferences));
 	}
 
 	public PortletURL getPortletURL(
@@ -91,14 +122,11 @@ public class BlogsItemSelectorViewDisplayContext {
 			LiferayPortletResponse liferayPortletResponse)
 		throws PortletException {
 
-		PortletURL portletURL = PortletURLUtil.clone(
-			_portletURL, liferayPortletResponse);
-
-		portletURL.setParameter(
-			"selectedTab",
-			String.valueOf(getTitle(httpServletRequest.getLocale())));
-
-		return portletURL;
+		return PortletURLBuilder.create(
+			PortletURLUtil.clone(_portletURL, liferayPortletResponse)
+		).setParameter(
+			"selectedTab", getTitle(httpServletRequest.getLocale())
+		).buildPortletURL();
 	}
 
 	public String getTitle(Locale locale) {
@@ -108,17 +136,28 @@ public class BlogsItemSelectorViewDisplayContext {
 	public PortletURL getUploadURL(
 		LiferayPortletResponse liferayPortletResponse) {
 
-		PortletURL portletURL = liferayPortletResponse.createActionURL(
-			PortletKeys.BLOGS);
-
-		portletURL.setParameter(
-			ActionRequest.ACTION_NAME, "/blogs/upload_image");
-
-		return portletURL;
+		return PortletURLBuilder.createActionURL(
+			liferayPortletResponse, PortletKeys.BLOGS
+		).setActionName(
+			"/blogs/upload_image"
+		).buildPortletURL();
 	}
 
 	public boolean isSearch() {
 		return _search;
+	}
+
+	public boolean showDragAndDropZone(ThemeDisplay themeDisplay) {
+		if (FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-29516")) {
+
+			return true;
+		}
+
+		return !WorkflowDefinitionLinkLocalServiceUtil.
+			hasWorkflowDefinitionLink(
+				themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(),
+				BlogsEntry.class.getName());
 	}
 
 	private BlogsFileUploadsConfiguration _getBlogsFileUploadsConfiguration()
@@ -137,9 +176,11 @@ public class BlogsItemSelectorViewDisplayContext {
 	private BlogsFileUploadsConfiguration _blogsFileUploadsConfiguration;
 	private final BlogsItemSelectorCriterion _blogsItemSelectorCriterion;
 	private final BlogsItemSelectorView _blogsItemSelectorView;
+	private final HttpServletRequest _httpServletRequest;
 	private final String _itemSelectedEventName;
 	private final ItemSelectorReturnTypeResolverHandler
 		_itemSelectorReturnTypeResolverHandler;
+	private final PortalPreferences _portalPreferences;
 	private final PortletURL _portletURL;
 	private final boolean _search;
 

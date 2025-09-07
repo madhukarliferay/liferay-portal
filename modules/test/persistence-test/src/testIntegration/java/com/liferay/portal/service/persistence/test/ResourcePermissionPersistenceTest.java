@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchResourcePermissionException;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -227,6 +218,16 @@ public class ResourcePermissionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_N_S() throws Exception {
+		_persistence.countByC_N_S(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextInt());
+
+		_persistence.countByC_N_S(0L, "null", 0);
+
+		_persistence.countByC_N_S(0L, (String)null, 0);
+	}
+
+	@Test
 	public void testCountByC_S_P() throws Exception {
 		_persistence.countByC_S_P(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt(), "");
@@ -244,6 +245,16 @@ public class ResourcePermissionPersistenceTest {
 		_persistence.countByC_N_S_P(0L, "null", 0, "null");
 
 		_persistence.countByC_N_S_P(0L, (String)null, 0, (String)null);
+	}
+
+	@Test
+	public void testCountByC_N_S_PArrayable() throws Exception {
+		_persistence.countByC_N_S_P(
+			RandomTestUtil.nextLong(), RandomTestUtil.randomString(),
+			RandomTestUtil.nextInt(),
+			new String[] {
+				RandomTestUtil.randomString(), "", "null", null, null
+			});
 	}
 
 	@Test
@@ -277,24 +288,23 @@ public class ResourcePermissionPersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_N_S_P_R_V() throws Exception {
-		_persistence.countByC_N_S_P_R_V(
+	public void testCountByC_N_S_R_V() throws Exception {
+		_persistence.countByC_N_S_R_V(
 			RandomTestUtil.nextLong(), "", RandomTestUtil.nextInt(),
-			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
-			RandomTestUtil.randomBoolean());
+			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean());
 
-		_persistence.countByC_N_S_P_R_V(
-			0L, "null", 0, 0L, 0L, RandomTestUtil.randomBoolean());
+		_persistence.countByC_N_S_R_V(
+			0L, "null", 0, 0L, RandomTestUtil.randomBoolean());
 
-		_persistence.countByC_N_S_P_R_V(
-			0L, (String)null, 0, 0L, 0L, RandomTestUtil.randomBoolean());
+		_persistence.countByC_N_S_R_V(
+			0L, (String)null, 0, 0L, RandomTestUtil.randomBoolean());
 	}
 
 	@Test
-	public void testCountByC_N_S_P_R_VArrayable() throws Exception {
-		_persistence.countByC_N_S_P_R_V(
+	public void testCountByC_N_S_R_VArrayable() throws Exception {
+		_persistence.countByC_N_S_R_V(
 			RandomTestUtil.nextLong(), RandomTestUtil.randomString(),
-			RandomTestUtil.nextInt(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextInt(),
 			new long[] {RandomTestUtil.nextLong(), 0L},
 			RandomTestUtil.randomBoolean());
 	}
@@ -560,37 +570,78 @@ public class ResourcePermissionPersistenceTest {
 
 		_persistence.clearCache();
 
-		ResourcePermission existingResourcePermission =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newResourcePermission.getPrimaryKey());
+				newResourcePermission.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		ResourcePermission newResourcePermission = addResourcePermission();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			ResourcePermission.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"resourcePermissionId",
+				newResourcePermission.getResourcePermissionId()));
+
+		List<ResourcePermission> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(ResourcePermission resourcePermission) {
 		Assert.assertEquals(
-			Long.valueOf(existingResourcePermission.getCompanyId()),
+			Long.valueOf(resourcePermission.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingResourcePermission, "getOriginalCompanyId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingResourcePermission.getName(),
-				ReflectionTestUtil.invoke(
-					existingResourcePermission, "getOriginalName",
-					new Class<?>[0])));
+				resourcePermission, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 		Assert.assertEquals(
-			Integer.valueOf(existingResourcePermission.getScope()),
+			resourcePermission.getName(),
+			ReflectionTestUtil.invoke(
+				resourcePermission, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "name"));
+		Assert.assertEquals(
+			Integer.valueOf(resourcePermission.getScope()),
 			ReflectionTestUtil.<Integer>invoke(
-				existingResourcePermission, "getOriginalScope",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingResourcePermission.getPrimKey(),
-				ReflectionTestUtil.invoke(
-					existingResourcePermission, "getOriginalPrimKey",
-					new Class<?>[0])));
+				resourcePermission, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "scope"));
 		Assert.assertEquals(
-			Long.valueOf(existingResourcePermission.getRoleId()),
+			resourcePermission.getPrimKey(),
+			ReflectionTestUtil.invoke(
+				resourcePermission, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "primKey"));
+		Assert.assertEquals(
+			Long.valueOf(resourcePermission.getRoleId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingResourcePermission, "getOriginalRoleId",
-				new Class<?>[0]));
+				resourcePermission, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "roleId"));
 	}
 
 	protected ResourcePermission addResourcePermission() throws Exception {

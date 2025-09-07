@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.util;
@@ -38,7 +29,24 @@ public class PortalTools {
 
 	public static final String PORTAL_VERSION_7_1_X = "7.1.x";
 
+	public static final String PORTAL_VERSION_7_2_X = "7.2.x";
+
+	public static final String PORTAL_VERSION_7_3_X = "7.3.x";
+
 	public static final String PORTAL_VERSION_PROPERTY_NAME = "portal.version";
+
+	public static void addPortalToolDependencies(
+		Project project, String configurationName, String portalToolGroup,
+		String portalToolName) {
+
+		String portalToolVersion = getVersion(project, portalToolName);
+
+		if (Validator.isNotNull(portalToolVersion)) {
+			GradleUtil.addDependency(
+				project, configurationName, portalToolGroup, portalToolName,
+				portalToolVersion);
+		}
+	}
 
 	public static String getPortalVersion(Project project) {
 		return _getPortalVersion(project);
@@ -158,8 +166,8 @@ public class PortalTools {
 		try {
 			_populateVersionsMap(classLoader, null, null);
 		}
-		catch (IOException ioe) {
-			throw new ExceptionInInitializerError(ioe);
+		catch (IOException ioException) {
+			throw new ExceptionInInitializerError(ioException);
 		}
 	}
 

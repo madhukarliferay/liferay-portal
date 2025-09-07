@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link TicketLocalService}.
@@ -24,19 +17,18 @@ package com.liferay.portal.kernel.service;
 public class TicketLocalServiceWrapper
 	implements ServiceWrapper<TicketLocalService>, TicketLocalService {
 
+	public TicketLocalServiceWrapper() {
+		this(null);
+	}
+
 	public TicketLocalServiceWrapper(TicketLocalService ticketLocalService) {
 		_ticketLocalService = ticketLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link TicketLocalServiceUtil} to access the ticket local service. Add custom service methods to <code>com.liferay.portal.service.impl.TicketLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.Ticket addDistinctTicket(
-		long companyId, java.lang.String className, long classPK, int type,
-		java.lang.String extraInfo, java.util.Date expirationDate,
+		long companyId, String className, long classPK, int type,
+		String extraInfo, java.util.Date expirationDate,
 		ServiceContext serviceContext) {
 
 		return _ticketLocalService.addDistinctTicket(
@@ -46,8 +38,8 @@ public class TicketLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Ticket addTicket(
-		long companyId, java.lang.String className, long classPK, int type,
-		java.lang.String extraInfo, java.util.Date expirationDate,
+		long companyId, String className, long classPK, int type,
+		String extraInfo, java.util.Date expirationDate,
 		ServiceContext serviceContext) {
 
 		return _ticketLocalService.addTicket(
@@ -58,6 +50,10 @@ public class TicketLocalServiceWrapper
 	/**
 	 * Adds the ticket to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TicketLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ticket the ticket
 	 * @return the ticket that was added
 	 */
@@ -66,6 +62,17 @@ public class TicketLocalServiceWrapper
 		com.liferay.portal.kernel.model.Ticket ticket) {
 
 		return _ticketLocalService.addTicket(ticket);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ticketLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -93,6 +100,10 @@ public class TicketLocalServiceWrapper
 	/**
 	 * Deletes the ticket with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TicketLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ticketId the primary key of the ticket
 	 * @return the ticket that was removed
 	 * @throws PortalException if a ticket with the primary key could not be found
@@ -107,6 +118,10 @@ public class TicketLocalServiceWrapper
 	/**
 	 * Deletes the ticket from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TicketLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ticket the ticket
 	 * @return the ticket that was removed
 	 */
@@ -115,6 +130,30 @@ public class TicketLocalServiceWrapper
 		com.liferay.portal.kernel.model.Ticket ticket) {
 
 		return _ticketLocalService.deleteTicket(ticket);
+	}
+
+	@Override
+	public void deleteTickets(long companyId, String className, long classPK) {
+		_ticketLocalService.deleteTickets(companyId, className, classPK);
+	}
+
+	@Override
+	public void deleteTickets(
+		long companyId, String className, long classPK, int type) {
+
+		_ticketLocalService.deleteTickets(companyId, className, classPK, type);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ticketLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ticketLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -212,9 +251,7 @@ public class TicketLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Ticket fetchTicket(
-		java.lang.String key) {
-
+	public com.liferay.portal.kernel.model.Ticket fetchTicket(String key) {
 		return _ticketLocalService.fetchTicket(key);
 	}
 
@@ -238,10 +275,13 @@ public class TicketLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _ticketLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -265,8 +305,7 @@ public class TicketLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.model.Ticket getTicket(
-			java.lang.String key)
+	public com.liferay.portal.kernel.model.Ticket getTicket(String key)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ticketLocalService.getTicket(key);
@@ -292,7 +331,14 @@ public class TicketLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.Ticket> getTickets(
-		long companyId, java.lang.String className, long classPK, int type) {
+		long companyId, String className, long classPK) {
+
+		return _ticketLocalService.getTickets(companyId, className, classPK);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.kernel.model.Ticket> getTickets(
+		long companyId, String className, long classPK, int type) {
 
 		return _ticketLocalService.getTickets(
 			companyId, className, classPK, type);
@@ -300,7 +346,7 @@ public class TicketLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.Ticket> getTickets(
-		java.lang.String className, long classPK, int type) {
+		String className, long classPK, int type) {
 
 		return _ticketLocalService.getTickets(className, classPK, type);
 	}
@@ -317,8 +363,8 @@ public class TicketLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Ticket updateTicket(
-			long ticketId, java.lang.String className, long classPK, int type,
-			java.lang.String extraInfo, java.util.Date expirationDate)
+			long ticketId, String className, long classPK, int type,
+			String extraInfo, java.util.Date expirationDate)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ticketLocalService.updateTicket(
@@ -328,6 +374,10 @@ public class TicketLocalServiceWrapper
 	/**
 	 * Updates the ticket in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect TicketLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ticket the ticket
 	 * @return the ticket that was updated
 	 */
@@ -336,6 +386,11 @@ public class TicketLocalServiceWrapper
 		com.liferay.portal.kernel.model.Ticket ticket) {
 
 		return _ticketLocalService.updateTicket(ticket);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ticketLocalService.getBasePersistence();
 	}
 
 	@Override

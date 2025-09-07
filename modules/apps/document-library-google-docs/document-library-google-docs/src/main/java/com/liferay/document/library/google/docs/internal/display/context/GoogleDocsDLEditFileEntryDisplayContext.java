@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.google.docs.internal.display.context;
@@ -17,19 +8,20 @@ package com.liferay.document.library.google.docs.internal.display.context;
 import com.liferay.document.library.display.context.BaseDLEditFileEntryDisplayContext;
 import com.liferay.document.library.display.context.DLEditFileEntryDisplayContext;
 import com.liferay.document.library.display.context.DLFilePicker;
-import com.liferay.document.library.google.docs.internal.util.GoogleDocsConstants;
+import com.liferay.document.library.google.docs.internal.helper.GoogleDocsMetadataHelper;
+import com.liferay.document.library.google.docs.internal.util.constants.GoogleDocsConstants;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
-import com.liferay.dynamic.data.mapping.kernel.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.UUID;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.UUID;
 
 /**
  * @author Iván Zaera
@@ -51,11 +43,14 @@ public class GoogleDocsDLEditFileEntryDisplayContext
 	public GoogleDocsDLEditFileEntryDisplayContext(
 		DLEditFileEntryDisplayContext parentDLEditFileEntryDisplayContext,
 		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse, FileEntry fileEntry) {
+		HttpServletResponse httpServletResponse, FileEntry fileEntry,
+		GoogleDocsMetadataHelper googleDocsMetadataHelper) {
 
 		super(
 			_UUID, parentDLEditFileEntryDisplayContext, httpServletRequest,
 			httpServletResponse, fileEntry);
+
+		_googleDocsMetadataHelper = googleDocsMetadataHelper;
 	}
 
 	@Override
@@ -68,7 +63,8 @@ public class GoogleDocsDLEditFileEntryDisplayContext
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
 		return new GoogleDocsDLFilePicker(
-			portletDisplay.getNamespace(), onFilePickCallback, themeDisplay);
+			_googleDocsMetadataHelper, portletDisplay.getNamespace(),
+			onFilePickCallback, themeDisplay);
 	}
 
 	@Override
@@ -113,5 +109,7 @@ public class GoogleDocsDLEditFileEntryDisplayContext
 
 	private static final UUID _UUID = UUID.fromString(
 		"62BE5287-BEA3-4E3F-9731-15B1B901380D");
+
+	private GoogleDocsMetadataHelper _googleDocsMetadataHelper;
 
 }

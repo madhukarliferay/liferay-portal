@@ -1,27 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth;
 
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.auth.AuthDNE;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.AuthFailure;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +31,7 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		return _authPipeline._authenticate(
+		return _authenticate(
 			key, companyId, emailAddress, password,
 			CompanyConstants.AUTH_TYPE_EA, headerMap, parameterMap);
 	}
@@ -46,7 +41,7 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		return _authPipeline._authenticate(
+		return _authenticate(
 			key, companyId, screenName, password, CompanyConstants.AUTH_TYPE_SN,
 			headerMap, parameterMap);
 	}
@@ -56,9 +51,34 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		return _authPipeline._authenticate(
+		return _authenticate(
 			key, companyId, String.valueOf(userId), password,
 			CompanyConstants.AUTH_TYPE_ID, headerMap, parameterMap);
+	}
+
+	public static void onDoesNotExist(
+			long companyId, String authType, String login,
+			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
+		throws AuthException {
+
+		List<AuthDNE> authDNEs = _authDNEs.toList();
+
+		if (authDNEs.isEmpty()) {
+			return;
+		}
+
+		for (AuthDNE authDNE : authDNEs) {
+			try {
+				authDNE.onDoesNotExist(
+					companyId, authType, login, headerMap, parameterMap);
+			}
+			catch (AuthException authException) {
+				throw authException;
+			}
+			catch (Exception exception) {
+				throw new AuthException(exception);
+			}
+		}
 	}
 
 	public static void onFailureByEmailAddress(
@@ -66,7 +86,7 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		_authPipeline._onFailure(
+		_onFailure(
 			key, companyId, emailAddress, CompanyConstants.AUTH_TYPE_EA,
 			headerMap, parameterMap);
 	}
@@ -76,7 +96,7 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		_authPipeline._onFailure(
+		_onFailure(
 			key, companyId, screenName, CompanyConstants.AUTH_TYPE_SN,
 			headerMap, parameterMap);
 	}
@@ -86,7 +106,7 @@ public class AuthPipeline {
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
 
-		_authPipeline._onFailure(
+		_onFailure(
 			key, companyId, String.valueOf(userId),
 			CompanyConstants.AUTH_TYPE_ID, headerMap, parameterMap);
 	}
@@ -117,14 +137,7 @@ public class AuthPipeline {
 		onFailureByUserId(key, companyId, userId, headerMap, parameterMap);
 	}
 
-	private AuthPipeline() {
-		_authenticators = ServiceTrackerCollections.openMultiValueMap(
-			Authenticator.class, "key");
-		_authFailures = ServiceTrackerCollections.openMultiValueMap(
-			AuthFailure.class, "key");
-	}
-
-	private int _authenticate(
+	private static int _authenticate(
 			String key, long companyId, String login, String password,
 			String authType, Map<String, String[]> headerMap,
 			Map<String, String[]> parameterMap)
@@ -164,11 +177,11 @@ public class AuthPipeline {
 					return authResult;
 				}
 			}
-			catch (AuthException ae) {
-				throw ae;
+			catch (AuthException authException) {
+				throw authException;
 			}
-			catch (Exception e) {
-				throw new AuthException(e);
+			catch (Exception exception) {
+				throw new AuthException(exception);
 			}
 		}
 
@@ -179,7 +192,7 @@ public class AuthPipeline {
 		return Authenticator.SUCCESS;
 	}
 
-	private void _onFailure(
+	private static void _onFailure(
 			String key, long companyId, String login, String authType,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
 		throws AuthException {
@@ -207,19 +220,23 @@ public class AuthPipeline {
 						companyId, userId, headerMap, parameterMap);
 				}
 			}
-			catch (AuthException ae) {
-				throw ae;
+			catch (AuthException authException) {
+				throw authException;
 			}
-			catch (Exception e) {
-				throw new AuthException(e);
+			catch (Exception exception) {
+				throw new AuthException(exception);
 			}
 		}
 	}
 
-	private static final AuthPipeline _authPipeline = new AuthPipeline();
-
-	private final ServiceTrackerMap<String, List<Authenticator>>
-		_authenticators;
-	private final ServiceTrackerMap<String, List<AuthFailure>> _authFailures;
+	private static final ServiceTrackerList<AuthDNE> _authDNEs =
+		ServiceTrackerListFactory.open(
+			SystemBundleUtil.getBundleContext(), AuthDNE.class);
+	private static final ServiceTrackerMap<String, List<Authenticator>>
+		_authenticators = ServiceTrackerMapFactory.openMultiValueMap(
+			SystemBundleUtil.getBundleContext(), Authenticator.class, "key");
+	private static final ServiceTrackerMap<String, List<AuthFailure>>
+		_authFailures = ServiceTrackerMapFactory.openMultiValueMap(
+			SystemBundleUtil.getBundleContext(), AuthFailure.class, "key");
 
 }

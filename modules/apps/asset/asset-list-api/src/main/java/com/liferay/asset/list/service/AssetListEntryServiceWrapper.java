@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service;
 
+import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,17 +18,16 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class AssetListEntryServiceWrapper
 	implements AssetListEntryService, ServiceWrapper<AssetListEntryService> {
 
+	public AssetListEntryServiceWrapper() {
+		this(null);
+	}
+
 	public AssetListEntryServiceWrapper(
 		AssetListEntryService assetListEntryService) {
 
 		_assetListEntryService = assetListEntryService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link AssetListEntryServiceUtil} to access the asset list entry remote service. Add custom service methods to <code>com.liferay.asset.list.service.impl.AssetListEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public void addAssetEntrySelection(
 			long assetListEntryId, long assetEntryId, long segmentsEntryId,
@@ -58,33 +49,37 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry addAssetListEntry(
-			long groupId, String title, int type,
+	public AssetListEntry addAssetListEntry(
+			String externalReferenceCode, long groupId, String title, int type,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.addAssetListEntry(
-			groupId, title, type, serviceContext);
+			externalReferenceCode, groupId, title, type, serviceContext);
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry addDynamicAssetListEntry(
-			long userId, long groupId, String title, String typeSettings,
+	public AssetListEntry addDynamicAssetListEntry(
+			String externalReferenceCode, long groupId, String title,
+			String typeSettings,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.addDynamicAssetListEntry(
-			userId, groupId, title, typeSettings, serviceContext);
+			externalReferenceCode, groupId, title, typeSettings,
+			serviceContext);
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry addManualAssetListEntry(
-			long userId, long groupId, String title, long[] assetEntryIds,
+	public AssetListEntry addManualAssetListEntry(
+			String externalReferenceCode, long groupId, String title,
+			long[] assetEntryIds,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.addManualAssetListEntry(
-			userId, groupId, title, assetEntryIds, serviceContext);
+			externalReferenceCode, groupId, title, assetEntryIds,
+			serviceContext);
 	}
 
 	@Override
@@ -104,8 +99,7 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry deleteAssetListEntry(
-			long assetListEntryId)
+	public AssetListEntry deleteAssetListEntry(long assetListEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.deleteAssetListEntry(assetListEntryId);
@@ -121,59 +115,105 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry fetchAssetListEntry(
-			long assetListEntryId)
+	public AssetListEntry fetchAssetListEntry(long assetListEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.fetchAssetListEntry(assetListEntryId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntry>
-		getAssetListEntries(
-			long groupId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntry>
-					orderByComparator) {
+	public AssetListEntry fetchAssetListEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetListEntryService.
+			fetchAssetListEntryByExternalReferenceCode(
+				externalReferenceCode, groupId);
+	}
+
+	@Override
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long groupId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
 
 		return _assetListEntryService.getAssetListEntries(
 			groupId, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntry>
-		getAssetListEntries(
-			long groupId, String title, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntry>
-					orderByComparator) {
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long groupId, String title, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
 
 		return _assetListEntryService.getAssetListEntries(
 			groupId, title, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntry>
-		getAssetListEntries(
-			long[] groupIds, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntry>
-					orderByComparator) {
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
 
 		return _assetListEntryService.getAssetListEntries(
 			groupIds, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.asset.list.model.AssetListEntry>
-		getAssetListEntries(
-			long[] groupIds, String title, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.asset.list.model.AssetListEntry>
-					orderByComparator) {
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String title, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
 
 		return _assetListEntryService.getAssetListEntries(
 			groupIds, title, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String assetEntrySubtype, String assetEntryType,
+		int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
+
+		return _assetListEntryService.getAssetListEntries(
+			groupIds, assetEntrySubtype, assetEntryType, start, end,
+			orderByComparator);
+	}
+
+	@Override
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String title, String assetEntrySubtype,
+		String assetEntryType, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
+
+		return _assetListEntryService.getAssetListEntries(
+			groupIds, title, assetEntrySubtype, assetEntryType, start, end,
+			orderByComparator);
+	}
+
+	@Override
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String title, String[] assetEntryTypes, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
+
+		return _assetListEntryService.getAssetListEntries(
+			groupIds, title, assetEntryTypes, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<AssetListEntry> getAssetListEntries(
+		long[] groupIds, String[] assetEntryTypes, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<AssetListEntry>
+			orderByComparator) {
+
+		return _assetListEntryService.getAssetListEntries(
+			groupIds, assetEntryTypes, start, end, orderByComparator);
 	}
 
 	@Override
@@ -197,15 +237,47 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry getAssetListEntry(
-			long assetListEntryId)
+	public int getAssetListEntriesCount(
+		long[] groupIds, String assetEntrySubtype, String assetEntryType) {
+
+		return _assetListEntryService.getAssetListEntriesCount(
+			groupIds, assetEntrySubtype, assetEntryType);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String title, String assetEntrySubtype,
+		String assetEntryType) {
+
+		return _assetListEntryService.getAssetListEntriesCount(
+			groupIds, title, assetEntrySubtype, assetEntryType);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String title, String[] assetEntryTypes) {
+
+		return _assetListEntryService.getAssetListEntriesCount(
+			groupIds, title, assetEntryTypes);
+	}
+
+	@Override
+	public int getAssetListEntriesCount(
+		long[] groupIds, String[] assetEntryTypes) {
+
+		return _assetListEntryService.getAssetListEntriesCount(
+			groupIds, assetEntryTypes);
+	}
+
+	@Override
+	public AssetListEntry getAssetListEntry(long assetListEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.getAssetListEntry(assetListEntryId);
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry getAssetListEntry(
+	public AssetListEntry getAssetListEntry(
 			long groupId, String assetListEntryKey)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -214,8 +286,17 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry
-			getAssetListEntryByUuidAndGroupId(String uuid, long groupId)
+	public AssetListEntry getAssetListEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetListEntryService.getAssetListEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public AssetListEntry getAssetListEntryByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetListEntryService.getAssetListEntryByUuidAndGroupId(
@@ -253,7 +334,7 @@ public class AssetListEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.list.model.AssetListEntry updateAssetListEntry(
+	public AssetListEntry updateAssetListEntry(
 			long assetListEntryId, String title)
 		throws com.liferay.portal.kernel.exception.PortalException {
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.user.resource.v1_0.test;
@@ -17,6 +8,7 @@ package com.liferay.headless.admin.user.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.admin.user.client.dto.v1_0.SegmentUser;
 import com.liferay.headless.admin.user.client.pagination.Page;
+import com.liferay.headless.admin.user.client.problem.Problem;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
@@ -27,15 +19,17 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.test.rule.SynchronousMailTestRule;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.test.util.SegmentsTestUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,6 +38,11 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
+
+	@ClassRule
+	@Rule
+	public static final SynchronousMailTestRule synchronousMailTestRule =
+		SynchronousMailTestRule.INSTANCE;
 
 	@Test
 	public void testGetSegmentUserAccountsEmptyPage() throws Exception {
@@ -61,28 +60,9 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 		Page<SegmentUser> page = segmentUserResource.getSegmentUserAccountsPage(
 			testGetSegmentUserAccountsPage_getSegmentId(), null);
 
-		Assert.assertEquals(1, page.getTotalCount());
+		long totalCount = page.getTotalCount();
 
 		Long segmentId = testGetSegmentUserAccountsPage_getSegmentId();
-
-		Long irrelevantSegmentId =
-			testGetSegmentUserAccountsPage_getIrrelevantSegmentId();
-
-		if (irrelevantSegmentId != null) {
-			SegmentUser irrelevantSegmentUser =
-				testGetSegmentUserAccountsPage_addSegmentUser(
-					irrelevantSegmentId, randomIrrelevantSegmentUser());
-
-			page = segmentUserResource.getSegmentUserAccountsPage(
-				irrelevantSegmentId, null);
-
-			Assert.assertEquals(1, page.getTotalCount());
-
-			assertEquals(
-				Arrays.asList(irrelevantSegmentUser),
-				(List<SegmentUser>)page.getItems());
-			assertValid(page);
-		}
 
 		testGetSegmentUserAccountsPage_addSegmentUser(
 			segmentId, randomSegmentUser());
@@ -91,12 +71,12 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 
 		page = segmentUserResource.getSegmentUserAccountsPage(segmentId, null);
 
-		Assert.assertEquals(3, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
 		assertValid(page);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = Problem.ProblemException.class)
 	public void testGetSegmentUserAccountsPageWithNonexistingSegmentId()
 		throws Exception {
 
@@ -104,13 +84,11 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 			RandomTestUtil.randomLong(), null);
 	}
 
-	@Ignore
-	@Test
-	public void testGetSegmentUserAccountsPageWithPagination() {
-	}
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	@Override
-	protected SegmentUser randomSegmentUser() throws Exception {
+	protected SegmentUser randomSegmentUser() {
 		return new SegmentUser() {
 			{
 				emailAddress = RandomTestUtil.randomString() + "@liferay.com";
@@ -140,19 +118,18 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 	protected Long testGetSegmentUserAccountsPage_getSegmentId()
 		throws Exception {
 
-		String criteria = JSONUtil.put(
-			"criteria",
-			JSONUtil.put(
-				"user",
-				JSONUtil.put(
-					"conjunction", "and"
-				).put(
-					"filterString", _filterString
-				))
-		).toString();
-
 		SegmentsEntry segmentsEntry = SegmentsTestUtil.addSegmentsEntry(
-			testGroup.getGroupId(), criteria, User.class.getName());
+			testGroup.getGroupId(),
+			JSONUtil.put(
+				"criteria",
+				JSONUtil.put(
+					"user",
+					JSONUtil.put(
+						"conjunction", "and"
+					).put(
+						"filterString", _filterString
+					))
+			).toString());
 
 		return segmentsEntry.getSegmentsEntryId();
 	}
@@ -167,7 +144,9 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 		};
 	}
 
-	private String _filterString = "(contains(emailAddress, 'liferay'))";
+	private String _filterString =
+		"(contains(emailAddress, 'liferay') and (not (emailAddress eq " +
+			"'test@liferay.com')))";
 
 	@DeleteAfterTestRun
 	private final List<User> _users = new ArrayList<>();

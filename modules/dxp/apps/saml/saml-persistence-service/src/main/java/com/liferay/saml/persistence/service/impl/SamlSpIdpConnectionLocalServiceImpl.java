@@ -1,25 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.impl;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.persistence.exception.DuplicateSamlSpIdpConnectionSamlIdpEntityIdException;
 import com.liferay.saml.persistence.exception.SamlSpIdpConnectionMetadataUrlException;
@@ -49,15 +40,14 @@ public class SamlSpIdpConnectionLocalServiceImpl
 
 	@Override
 	public SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, String userIdentifierExpression,
+			ServiceContext serviceContext)
 		throws PortalException {
-
-		Date now = new Date();
 
 		if (Validator.isNull(samlIdpEntityId)) {
 			throw new SamlSpIdpConnectionSamlIdpEntityIdException(
@@ -80,17 +70,14 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			samlSpIdpConnectionPersistence.create(samlSpIdpConnectionId);
 
 		samlSpIdpConnection.setCompanyId(serviceContext.getCompanyId());
-		samlSpIdpConnection.setCreateDate(now);
-		samlSpIdpConnection.setModifiedDate(now);
-		samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
 		samlSpIdpConnection.setAssertionSignatureRequired(
 			assertionSignatureRequired);
 		samlSpIdpConnection.setClockSkew(clockSkew);
 		samlSpIdpConnection.setEnabled(enabled);
-		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 		samlSpIdpConnection.setForceAuthn(forceAuthn);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
-		samlSpIdpConnection.setMetadataUpdatedDate(now);
+		samlSpIdpConnection.setMetadataUpdatedDate(new Date());
+		samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
 
 		if ((metadataXmlInputStream == null) &&
 			Validator.isNotNull(metadataUrl)) {
@@ -100,12 +87,12 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			try {
 				metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new SamlSpIdpConnectionMetadataUrlException(
 					StringBundler.concat(
 						"Unable to get metadata from ", metadataUrl, ": ",
-						e.getMessage()),
-					e);
+						exception.getMessage()),
+					exception);
 			}
 		}
 
@@ -115,16 +102,19 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		}
 
 		samlSpIdpConnection.setMetadataXml(
-			getMetadataXml(metadataXmlInputStream, samlIdpEntityId));
+			_getMetadataXml(metadataXmlInputStream, samlIdpEntityId));
 		samlSpIdpConnection.setName(name);
 		samlSpIdpConnection.setNameIdFormat(nameIdFormat);
 		samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
 		samlSpIdpConnection.setSignAuthnRequest(signAuthnRequest);
+		samlSpIdpConnection.setUnknownUsersAreStrangers(
+			unknownUsersAreStrangers);
 		samlSpIdpConnection.setUserAttributeMappings(userAttributeMappings);
+		samlSpIdpConnection.setUserIdentifierExpression(
+			userIdentifierExpression);
+		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 
-		samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
-
-		return samlSpIdpConnection;
+		return samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
 	}
 
 	@Override
@@ -152,7 +142,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 	@Override
 	public List<SamlSpIdpConnection> getSamlSpIdpConnections(
 		long companyId, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<SamlSpIdpConnection> orderByComparator) {
 
 		return samlSpIdpConnectionPersistence.findByCompanyId(
 			companyId, start, end, orderByComparator);
@@ -182,12 +172,12 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		try {
 			metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SamlSpIdpConnectionMetadataUrlException(
 				StringBundler.concat(
 					"Unable to get metadata from ", metadataUrl, ": ",
-					e.getMessage()),
-				e);
+					exception.getMessage()),
+				exception);
 		}
 
 		String metadataXml = StringPool.BLANK;
@@ -197,12 +187,12 @@ public class SamlSpIdpConnectionLocalServiceImpl
 				metadataXmlInputStream,
 				samlSpIdpConnection.getSamlIdpEntityId());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SamlSpIdpConnectionMetadataXmlException(
 				StringBundler.concat(
 					"Unable to parse metadata from ", metadataUrl, ": ",
-					e.getMessage()),
-				e);
+					exception.getMessage()),
+				exception);
 		}
 
 		samlSpIdpConnection.setMetadataUpdatedDate(new Date());
@@ -213,15 +203,15 @@ public class SamlSpIdpConnectionLocalServiceImpl
 
 	@Override
 	public SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean forceAuthn,
+			boolean ldapImportEnabled, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, String userIdentifierExpression,
+			ServiceContext serviceContext)
 		throws PortalException {
-
-		Date now = new Date();
 
 		if (Validator.isNull(samlIdpEntityId)) {
 			throw new SamlSpIdpConnectionSamlIdpEntityIdException(
@@ -244,19 +234,17 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		}
 
 		samlSpIdpConnection.setCompanyId(serviceContext.getCompanyId());
-		samlSpIdpConnection.setCreateDate(now);
-		samlSpIdpConnection.setModifiedDate(now);
-		samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
 		samlSpIdpConnection.setAssertionSignatureRequired(
 			assertionSignatureRequired);
 		samlSpIdpConnection.setClockSkew(clockSkew);
 		samlSpIdpConnection.setEnabled(enabled);
-		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 		samlSpIdpConnection.setForceAuthn(forceAuthn);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
-		samlSpIdpConnection.setMetadataUpdatedDate(now);
+		samlSpIdpConnection.setMetadataUpdatedDate(new Date());
+		samlSpIdpConnection.setUnknownUsersAreStrangers(
+			unknownUsersAreStrangers);
 
-		if (enabled && (metadataXmlInputStream == null) &&
+		if ((metadataXmlInputStream == null) &&
 			Validator.isNotNull(metadataUrl)) {
 
 			samlSpIdpConnection.setMetadataUrl(metadataUrl);
@@ -264,24 +252,29 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			try {
 				metadataXmlInputStream = _metadataUtil.getMetadata(metadataUrl);
 			}
-			catch (Exception e) {
-				throw new SamlSpIdpConnectionMetadataUrlException(
-					StringBundler.concat(
-						"Unable to get metadata from ", metadataUrl, ": ",
-						e.getMessage()),
-					e);
+			catch (Exception exception) {
+				if (enabled) {
+					throw new SamlSpIdpConnectionMetadataUrlException(
+						StringBundler.concat(
+							"Unable to get metadata from ", metadataUrl, ": ",
+							exception.getMessage()),
+						exception);
+				}
 			}
+		}
+		else {
+			samlSpIdpConnection.setMetadataUrl(StringPool.BLANK);
 		}
 
 		String metadataXml = StringPool.BLANK;
 
 		if (metadataXmlInputStream != null) {
-			metadataXml = getMetadataXml(
+			metadataXml = _getMetadataXml(
 				metadataXmlInputStream, samlIdpEntityId);
 		}
 
 		if (Validator.isNotNull(metadataXml)) {
-			samlSpIdpConnection.setMetadataUpdatedDate(now);
+			samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 			samlSpIdpConnection.setMetadataXml(metadataXml);
 		}
 
@@ -290,13 +283,14 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
 		samlSpIdpConnection.setSignAuthnRequest(signAuthnRequest);
 		samlSpIdpConnection.setUserAttributeMappings(userAttributeMappings);
+		samlSpIdpConnection.setUserIdentifierExpression(
+			userIdentifierExpression);
+		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 
-		samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
-
-		return samlSpIdpConnection;
+		return samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
 	}
 
-	protected String getMetadataXml(
+	private String _getMetadataXml(
 			InputStream metadataXmlInputStream, String samlIdpEntityId)
 		throws PortalException {
 
@@ -306,8 +300,8 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			metadataXml = _metadataUtil.parseMetadataXml(
 				metadataXmlInputStream, samlIdpEntityId);
 		}
-		catch (Exception e) {
-			throw new SamlSpIdpConnectionMetadataXmlException(e);
+		catch (Exception exception) {
+			throw new SamlSpIdpConnectionMetadataXmlException(exception);
 		}
 
 		if (Validator.isNull(metadataXml)) {

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.antivirus;
+
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 import java.io.File;
 
@@ -22,12 +15,8 @@ import java.io.File;
  */
 public class AntivirusScannerUtil {
 
-	public static AntivirusScanner getAntivirusScanner() {
-		return _antivirusScanner;
-	}
-
 	public static boolean isActive() {
-		AntivirusScanner antivirusScanner = getAntivirusScanner();
+		AntivirusScanner antivirusScanner = _antivirusScannerSnapshot.get();
 
 		if (antivirusScanner == null) {
 			return false;
@@ -38,20 +27,21 @@ public class AntivirusScannerUtil {
 
 	public static void scan(byte[] bytes) throws AntivirusScannerException {
 		if (isActive()) {
-			getAntivirusScanner().scan(bytes);
+			AntivirusScanner antivirusScanner = _antivirusScannerSnapshot.get();
+
+			antivirusScanner.scan(bytes);
 		}
 	}
 
 	public static void scan(File file) throws AntivirusScannerException {
 		if (isActive()) {
-			getAntivirusScanner().scan(file);
+			AntivirusScanner antivirusScanner = _antivirusScannerSnapshot.get();
+
+			antivirusScanner.scan(file);
 		}
 	}
 
-	public void setAntivirusScanner(AntivirusScanner antivirusScanner) {
-		_antivirusScanner = antivirusScanner;
-	}
-
-	private static AntivirusScanner _antivirusScanner;
+	private static final Snapshot<AntivirusScanner> _antivirusScannerSnapshot =
+		new Snapshot<>(AntivirusScannerUtil.class, AntivirusScanner.class);
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.image.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +116,10 @@ public class AMImageEntryPersistenceTest {
 
 		AMImageEntry newAMImageEntry = _persistence.create(pk);
 
+		newAMImageEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		newAMImageEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newAMImageEntry.setUuid(RandomTestUtil.randomString());
 
 		newAMImageEntry.setGroupId(RandomTestUtil.nextLong());
@@ -150,6 +145,12 @@ public class AMImageEntryPersistenceTest {
 		AMImageEntry existingAMImageEntry = _persistence.findByPrimaryKey(
 			newAMImageEntry.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingAMImageEntry.getMvccVersion(),
+			newAMImageEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingAMImageEntry.getCtCollectionId(),
+			newAMImageEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingAMImageEntry.getUuid(), newAMImageEntry.getUuid());
 		Assert.assertEquals(
@@ -279,10 +280,11 @@ public class AMImageEntryPersistenceTest {
 
 	protected OrderByComparator<AMImageEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"AMImageEntry", "uuid", true, "amImageEntryId", true, "groupId",
-			true, "companyId", true, "createDate", true, "configurationUuid",
-			true, "fileVersionId", true, "mimeType", true, "height", true,
-			"width", true, "size", true);
+			"AMImageEntry", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "amImageEntryId", true, "groupId", true, "companyId", true,
+			"createDate", true, "configurationUuid", true, "fileVersionId",
+			true, "mimeType", true, "height", true, "width", true, "size",
+			true);
 	}
 
 	@Test
@@ -504,36 +506,82 @@ public class AMImageEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		AMImageEntry existingAMImageEntry = _persistence.findByPrimaryKey(
-			newAMImageEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newAMImageEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingAMImageEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingAMImageEntry, "getOriginalUuid", new Class<?>[0])));
-		Assert.assertEquals(
-			Long.valueOf(existingAMImageEntry.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingAMImageEntry, "getOriginalGroupId", new Class<?>[0]));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingAMImageEntry.getConfigurationUuid(),
-				ReflectionTestUtil.invoke(
-					existingAMImageEntry, "getOriginalConfigurationUuid",
-					new Class<?>[0])));
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AMImageEntry newAMImageEntry = addAMImageEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AMImageEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"amImageEntryId", newAMImageEntry.getAmImageEntryId()));
+
+		List<AMImageEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(AMImageEntry amImageEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingAMImageEntry.getFileVersionId()),
+			amImageEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				amImageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(amImageEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAMImageEntry, "getOriginalFileVersionId",
-				new Class<?>[0]));
+				amImageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			amImageEntry.getConfigurationUuid(),
+			ReflectionTestUtil.invoke(
+				amImageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "configurationUuid"));
+		Assert.assertEquals(
+			Long.valueOf(amImageEntry.getFileVersionId()),
+			ReflectionTestUtil.<Long>invoke(
+				amImageEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "fileVersionId"));
 	}
 
 	protected AMImageEntry addAMImageEntry() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		AMImageEntry amImageEntry = _persistence.create(pk);
+
+		amImageEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		amImageEntry.setCtCollectionId(RandomTestUtil.nextLong());
 
 		amImageEntry.setUuid(RandomTestUtil.randomString());
 

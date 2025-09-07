@@ -1,22 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.util;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletProvider;
@@ -24,7 +13,7 @@ import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
 import com.liferay.portal.kernel.servlet.JSPSupportServlet;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.TagSupport;
 import com.liferay.taglib.portlet.ActionURLTag;
@@ -34,36 +23,28 @@ import com.liferay.taglib.portletext.RuntimeTag;
 import com.liferay.taglib.security.DoAsURLTag;
 import com.liferay.taglib.security.PermissionsURLTag;
 import com.liferay.taglib.servlet.PageContextWrapper;
-import com.liferay.taglib.theme.LayoutIconTag;
 import com.liferay.taglib.theme.MetaTagsTag;
 import com.liferay.taglib.theme.WrapPortletTag;
-import com.liferay.taglib.ui.AssetCategoriesSummaryTag;
-import com.liferay.taglib.ui.AssetTagsSummaryTag;
-import com.liferay.taglib.ui.BreadcrumbTag;
 import com.liferay.taglib.ui.IconHelpTag;
 import com.liferay.taglib.ui.IconTag;
-import com.liferay.taglib.ui.JournalArticleTag;
 import com.liferay.taglib.ui.LanguageTag;
-import com.liferay.taglib.ui.RatingsTag;
-import com.liferay.taglib.ui.SitesDirectoryTag;
-import com.liferay.taglib.ui.ToggleTag;
+
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspFactory;
+import jakarta.servlet.jsp.PageContext;
 
 import java.io.Writer;
 
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspFactory;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -84,8 +65,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		JspFactory jspFactory = JspFactory.getDefaultFactory();
 
 		_pageContext = jspFactory.getPageContext(
-			new JSPSupportServlet(_servletContext), _httpServletRequest,
-			_httpServletResponse, null, false, 0, false);
+			new JSPSupportServlet(_servletContext), httpServletRequest,
+			httpServletResponse, null, false, 0, false);
 	}
 
 	@Override
@@ -118,8 +99,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 
 		String resourceID = null;
 		String cacheability = null;
-		Map<String, String[]> parameterMap = HttpUtil.parameterMapFromString(
-			queryString);
+		Map<String, String[]> parameterMap =
+			HttpComponentsUtil.parameterMapFromString(queryString);
 		Set<String> removedParameterNames = null;
 
 		PortletURL portletURL = ActionURLTag.doTag(
@@ -167,108 +148,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void assetCategoriesSummary(
-			String className, long classPK, String message,
-			PortletURL portletURL)
-		throws Exception {
-
-		AssetCategoriesSummaryTag<?> assetCategorySummaryTag =
-			new AssetCategoriesSummaryTag<>();
-
-		setUp(assetCategorySummaryTag);
-
-		assetCategorySummaryTag.setClassName(className);
-		assetCategorySummaryTag.setClassPK(classPK);
-		assetCategorySummaryTag.setMessage(message);
-		assetCategorySummaryTag.setPortletURL(portletURL);
-
-		assetCategorySummaryTag.runTag();
-	}
-
-	@Override
-	public void assetTagsSummary(
-			String className, long classPK, String message,
-			String assetTagNames, PortletURL portletURL)
-		throws Exception {
-
-		AssetTagsSummaryTag<?> assetTagsSummaryTag =
-			new AssetTagsSummaryTag<>();
-
-		setUp(assetTagsSummaryTag);
-
-		assetTagsSummaryTag.setClassName(className);
-		assetTagsSummaryTag.setClassPK(classPK);
-		assetTagsSummaryTag.setMessage(message);
-		assetTagsSummaryTag.setPortletURL(portletURL);
-		assetTagsSummaryTag.setAssetTagNames(assetTagNames);
-
-		assetTagsSummaryTag.runTag();
-	}
-
-	@Override
-	public void breadcrumb() throws Exception {
-		BreadcrumbTag breadcrumbTag = new BreadcrumbTag();
-
-		setUp(breadcrumbTag);
-
-		breadcrumbTag.runTag();
-	}
-
-	@Override
-	public void breadcrumb(
-			long ddmTemplateGroupId, String ddmTemplateKey,
-			boolean showGuestGroup, boolean showParentGroups,
-			boolean showLayout, boolean showPortletBreadcrumb)
-		throws Exception {
-
-		BreadcrumbTag breadcrumbTag = new BreadcrumbTag();
-
-		setUp(breadcrumbTag);
-
-		breadcrumbTag.setDdmTemplateGroupId(ddmTemplateGroupId);
-		breadcrumbTag.setDdmTemplateKey(ddmTemplateKey);
-		breadcrumbTag.setShowGuestGroup(showGuestGroup);
-		breadcrumbTag.setShowLayout(showLayout);
-		breadcrumbTag.setShowParentGroups(showParentGroups);
-		breadcrumbTag.setShowPortletBreadcrumb(showPortletBreadcrumb);
-
-		breadcrumbTag.runTag();
-	}
-
-	@Override
 	public void doAsURL(long doAsUserId) throws Exception {
 		DoAsURLTag.doTag(doAsUserId, _httpServletRequest);
-	}
-
-	@Override
-	public AssetCategoriesSummaryTag<?> getAssetCategoriesSummaryTag()
-		throws Exception {
-
-		AssetCategoriesSummaryTag<?> assetCategoriesSummaryTag =
-			new AssetCategoriesSummaryTag<>();
-
-		setUp(assetCategoriesSummaryTag);
-
-		return assetCategoriesSummaryTag;
-	}
-
-	@Override
-	public AssetTagsSummaryTag<?> getAssetTagsSummaryTag() throws Exception {
-		AssetTagsSummaryTag<?> assetTagsSummaryTag =
-			new AssetTagsSummaryTag<>();
-
-		setUp(assetTagsSummaryTag);
-
-		return assetTagsSummaryTag;
-	}
-
-	@Override
-	public BreadcrumbTag getBreadcrumbTag() throws Exception {
-		BreadcrumbTag breadcrumbTag = new BreadcrumbTag();
-
-		setUp(breadcrumbTag);
-
-		return breadcrumbTag;
 	}
 
 	@Override
@@ -281,26 +162,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public JournalArticleTag getJournalArticleTag() throws Exception {
-		JournalArticleTag journalArticleTag = new JournalArticleTag();
-
-		setUp(journalArticleTag);
-
-		return journalArticleTag;
-	}
-
-	@Override
 	public PageContext getPageContext() {
 		return _pageContext;
-	}
-
-	@Override
-	public RatingsTag getRatingsTag() throws Exception {
-		RatingsTag ratingsTag = new RatingsTag();
-
-		setUp(ratingsTag);
-
-		return ratingsTag;
 	}
 
 	@Override
@@ -364,24 +227,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void journalArticle(
-			String articleId, long groupId, String ddmTemplateKey)
-		throws Exception {
-
-		JournalArticleTag journalArticleTag = new JournalArticleTag();
-
-		setUp(journalArticleTag);
-
-		journalArticleTag.setArticleId(articleId);
-		journalArticleTag.setGroupId(groupId);
-		journalArticleTag.setLanguageId(
-			LanguageUtil.getLanguageId(_httpServletRequest));
-		journalArticleTag.setDDMTemplateKey(ddmTemplateKey);
-
-		journalArticleTag.runTag();
-	}
-
-	@Override
 	public void language() throws Exception {
 		LanguageTag languageTag = new LanguageTag();
 
@@ -425,15 +270,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		languageTag.setName(name);
 
 		languageTag.runTag();
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public void layoutIcon(Layout layout) throws Exception {
-		LayoutIconTag.doTag(layout, _pageContext);
 	}
 
 	@Override
@@ -498,25 +334,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void ratings(
-			String className, long classPK, int numberOfStars, String type,
-			String url)
-		throws Exception {
-
-		RatingsTag ratingsTag = new RatingsTag();
-
-		setUp(ratingsTag);
-
-		ratingsTag.setClassName(className);
-		ratingsTag.setClassPK(classPK);
-		ratingsTag.setNumberOfStars(numberOfStars);
-		ratingsTag.setType(type);
-		ratingsTag.setUrl(url);
-
-		ratingsTag.runTag();
-	}
-
-	@Override
 	public String renderURL(long plid, String portletName, String queryString)
 		throws Exception {
 
@@ -547,8 +364,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		String name = null;
 		String resourceID = null;
 		String cacheability = null;
-		Map<String, String[]> parameterMap = HttpUtil.parameterMapFromString(
-			queryString);
+		Map<String, String[]> parameterMap =
+			HttpComponentsUtil.parameterMapFromString(queryString);
 		Set<String> removedParameterNames = null;
 
 		PortletURL portletURL = ActionURLTag.doTag(
@@ -664,41 +481,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		RuntimeTag.doTag(
 			portletName, instanceId, queryString, defaultPreferences,
 			_pageContext, _httpServletRequest, _httpServletResponse);
-	}
-
-	@Override
-	public void sitesDirectory() throws Exception {
-		SitesDirectoryTag sitesDirectoryTag = new SitesDirectoryTag();
-
-		setUp(sitesDirectoryTag);
-
-		sitesDirectoryTag.runTag();
-	}
-
-	@Override
-	public void sitesDirectory(String displayStyle, String sites)
-		throws Exception {
-
-		SitesDirectoryTag sitesDirectoryTag = new SitesDirectoryTag();
-
-		setUp(sitesDirectoryTag);
-
-		sitesDirectoryTag.setDisplayStyle(displayStyle);
-		sitesDirectoryTag.setSites(sites);
-
-		sitesDirectoryTag.runTag();
-	}
-
-	@Override
-	public void toggle(
-			String id, String showImage, String hideImage, String showMessage,
-			String hideMessage, boolean defaultShowContent)
-		throws Exception {
-
-		ToggleTag.doTag(
-			id, showImage, hideImage, showMessage, hideMessage,
-			defaultShowContent, null, _servletContext, _httpServletRequest,
-			_httpServletResponse);
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.whip.agent;
@@ -61,9 +52,8 @@ public class InstrumentationAgent {
 					continue;
 				}
 
-				ClassData classData = projectData.getClassData(clazz.getName());
-
-				_assertClassDataCoverage(assertionErrors, classData);
+				_assertClassDataCoverage(
+					assertionErrors, projectData.getClassData(clazz.getName()));
 
 				if (includeInnerClasses) {
 					Class<?>[] declaredClasses = clazz.getDeclaredClasses();
@@ -80,10 +70,9 @@ public class InstrumentationAgent {
 							}
 						}
 
-						classData = projectData.getClassData(
-							declaredClass.getName());
-
-						_assertClassDataCoverage(assertionErrors, classData);
+						_assertClassDataCoverage(
+							assertionErrors,
+							projectData.getClassData(declaredClass.getName()));
 					}
 				}
 			}
@@ -91,9 +80,9 @@ public class InstrumentationAgent {
 			for (Method method : methods) {
 				Class<?> clazz = method.getDeclaringClass();
 
-				ClassData classData = projectData.getClassData(clazz.getName());
-
-				_assertMethodCoverage(assertionErrors, classData, method);
+				_assertMethodCoverage(
+					assertionErrors, projectData.getClassData(clazz.getName()),
+					method);
 			}
 
 			if (!assertionErrors.isEmpty()) {
@@ -130,9 +119,9 @@ public class InstrumentationAgent {
 					_instrumentation.redefineClasses(
 						classDefinitions.toArray(new ClassDefinition[0]));
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					throw new RuntimeException(
-						"Unable to uninstrument classes", e);
+						"Unable to uninstrument classes", exception);
 				}
 			}
 		}
@@ -233,7 +222,7 @@ public class InstrumentationAgent {
 		String[] excludes = arguments[1].split(",");
 
 		if (Boolean.getBoolean("whip.static.instrument")) {
-			final WhipClassFileTransformer whipClassFileTransformer =
+			WhipClassFileTransformer whipClassFileTransformer =
 				new WhipClassFileTransformer(includes, excludes);
 
 			instrumentation.addTransformer(whipClassFileTransformer);
@@ -411,8 +400,8 @@ public class InstrumentationAgent {
 		try {
 			_lockFile.createNewFile();
 		}
-		catch (IOException ioe) {
-			throw new ExceptionInInitializerError(ioe);
+		catch (IOException ioException) {
+			throw new ExceptionInInitializerError(ioException);
 		}
 	}
 
@@ -424,7 +413,7 @@ public class InstrumentationAgent {
 
 				return new ClassDefinition(clazz, _bytes);
 			}
-			catch (Throwable t) {
+			catch (Throwable throwable) {
 				return null;
 			}
 		}

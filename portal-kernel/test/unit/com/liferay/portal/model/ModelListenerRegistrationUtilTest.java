@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model;
@@ -18,13 +9,13 @@ import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.ModelListenerRegistrationUtil;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Leon Chi
@@ -37,12 +28,12 @@ public class ModelListenerRegistrationUtilTest {
 			new BaseModelListener<Contact>() {
 			};
 
-		RegistryUtil.setRegistry(new BasicRegistryImpl());
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		Registry registry = RegistryUtil.getRegistry();
-
-		ServiceRegistration<ModelListener> serviceRegistration =
-			registry.registerService(ModelListener.class, baseModelListener);
+		ServiceRegistration<ModelListener<?>> serviceRegistration =
+			bundleContext.registerService(
+				(Class<ModelListener<?>>)(Class<?>)ModelListener.class,
+				baseModelListener, null);
 
 		try {
 			Assert.assertArrayEquals(

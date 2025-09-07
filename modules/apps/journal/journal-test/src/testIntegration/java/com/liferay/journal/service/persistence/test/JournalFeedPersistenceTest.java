@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service.persistence.test;
@@ -26,15 +17,20 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -46,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -127,6 +122,8 @@ public class JournalFeedPersistenceTest {
 
 		newJournalFeed.setMvccVersion(RandomTestUtil.nextLong());
 
+		newJournalFeed.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newJournalFeed.setUuid(RandomTestUtil.randomString());
 
 		newJournalFeed.setGroupId(RandomTestUtil.nextLong());
@@ -147,7 +144,7 @@ public class JournalFeedPersistenceTest {
 
 		newJournalFeed.setDescription(RandomTestUtil.randomString());
 
-		newJournalFeed.setDDMStructureKey(RandomTestUtil.randomString());
+		newJournalFeed.setDDMStructureId(RandomTestUtil.nextLong());
 
 		newJournalFeed.setDDMTemplateKey(RandomTestUtil.randomString());
 
@@ -181,6 +178,9 @@ public class JournalFeedPersistenceTest {
 			existingJournalFeed.getMvccVersion(),
 			newJournalFeed.getMvccVersion());
 		Assert.assertEquals(
+			existingJournalFeed.getCtCollectionId(),
+			newJournalFeed.getCtCollectionId());
+		Assert.assertEquals(
 			existingJournalFeed.getUuid(), newJournalFeed.getUuid());
 		Assert.assertEquals(
 			existingJournalFeed.getId(), newJournalFeed.getId());
@@ -206,8 +206,8 @@ public class JournalFeedPersistenceTest {
 			existingJournalFeed.getDescription(),
 			newJournalFeed.getDescription());
 		Assert.assertEquals(
-			existingJournalFeed.getDDMStructureKey(),
-			newJournalFeed.getDDMStructureKey());
+			existingJournalFeed.getDDMStructureId(),
+			newJournalFeed.getDDMStructureId());
 		Assert.assertEquals(
 			existingJournalFeed.getDDMTemplateKey(),
 			newJournalFeed.getDDMTemplateKey());
@@ -310,18 +310,36 @@ public class JournalFeedPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<JournalFeed> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"JournalFeed", "mvccVersion", true, "uuid", true, "id", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "feedId", true,
-			"name", true, "description", true, "DDMStructureKey", true,
-			"DDMTemplateKey", true, "DDMRendererTemplateKey", true, "delta",
-			true, "orderByCol", true, "orderByType", true,
+			"JournalFeed", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "id", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true, "modifiedDate", true,
+			"feedId", true, "name", true, "description", true, "DDMStructureId",
+			true, "DDMTemplateKey", true, "DDMRendererTemplateKey", true,
+			"delta", true, "orderByCol", true, "orderByType", true,
 			"targetLayoutFriendlyUrl", true, "targetPortletId", true,
 			"contentField", true, "feedFormat", true, "feedVersion", true,
 			"lastPublishDate", true);
@@ -537,29 +555,71 @@ public class JournalFeedPersistenceTest {
 
 		_persistence.clearCache();
 
-		JournalFeed existingJournalFeed = _persistence.findByPrimaryKey(
-			newJournalFeed.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newJournalFeed.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingJournalFeed.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingJournalFeed, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		JournalFeed newJournalFeed = addJournalFeed();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			JournalFeed.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("id", newJournalFeed.getId()));
+
+		List<JournalFeed> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(JournalFeed journalFeed) {
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFeed.getGroupId()),
+			journalFeed.getUuid(),
+			ReflectionTestUtil.invoke(
+				journalFeed, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(journalFeed.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFeed, "getOriginalGroupId", new Class<?>[0]));
+				journalFeed, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingJournalFeed.getGroupId()),
+			Long.valueOf(journalFeed.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingJournalFeed, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingJournalFeed.getFeedId(),
-				ReflectionTestUtil.invoke(
-					existingJournalFeed, "getOriginalFeedId",
-					new Class<?>[0])));
+				journalFeed, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			journalFeed.getFeedId(),
+			ReflectionTestUtil.invoke(
+				journalFeed, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "feedId"));
 	}
 
 	protected JournalFeed addJournalFeed() throws Exception {
@@ -568,6 +628,8 @@ public class JournalFeedPersistenceTest {
 		JournalFeed journalFeed = _persistence.create(pk);
 
 		journalFeed.setMvccVersion(RandomTestUtil.nextLong());
+
+		journalFeed.setCtCollectionId(RandomTestUtil.nextLong());
 
 		journalFeed.setUuid(RandomTestUtil.randomString());
 
@@ -589,7 +651,7 @@ public class JournalFeedPersistenceTest {
 
 		journalFeed.setDescription(RandomTestUtil.randomString());
 
-		journalFeed.setDDMStructureKey(RandomTestUtil.randomString());
+		journalFeed.setDDMStructureId(RandomTestUtil.nextLong());
 
 		journalFeed.setDDMTemplateKey(RandomTestUtil.randomString());
 

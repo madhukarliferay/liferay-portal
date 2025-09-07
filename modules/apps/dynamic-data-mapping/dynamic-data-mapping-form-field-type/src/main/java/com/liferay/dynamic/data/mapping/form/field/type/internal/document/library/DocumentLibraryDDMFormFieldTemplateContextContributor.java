@@ -1,63 +1,87 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.document.library;
 
-import com.liferay.document.library.kernel.service.DLAppService;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.dynamic.data.mapping.constants.DDMFormConstants;
+import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.dynamic.data.mapping.form.item.selector.DDMUserPersonalFolderItemSelectorCriterion;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
-import com.liferay.petra.string.StringBundler;
+import com.liferay.dynamic.data.mapping.security.permission.DDMPermissionChecker;
+import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalService;
+import com.liferay.dynamic.data.mapping.util.DDMFormUtil;
+import com.liferay.item.selector.ItemSelector;
+import com.liferay.item.selector.ItemSelectorCriterion;
+import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
+import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Repository;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
+import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
-import com.liferay.portal.kernel.util.Html;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
-import com.liferay.portal.kernel.util.URLCodec;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ResourceURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pedro Queiroz
  */
 @Component(
-	immediate = true, property = "ddm.form.field.type.name=document_library",
-	service = {
-		DDMFormFieldTemplateContextContributor.class,
-		DocumentLibraryDDMFormFieldTemplateContextContributor.class
-	}
+	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DOCUMENT_LIBRARY,
+	service = DDMFormFieldTemplateContextContributor.class
 )
 public class DocumentLibraryDDMFormFieldTemplateContextContributor
 	implements DDMFormFieldTemplateContextContributor {
@@ -67,196 +91,638 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
-		Map<String, Object> parameters = new HashMap<>();
+		return HashMapBuilder.<String, Object>put(
+			"allowGuestUsers",
+			GetterUtil.getBoolean(ddmFormField.getProperty("allowGuestUsers"))
+		).put(
+			"ddmFormInstanceRecordId",
+			() -> {
+				long ddmFormInstanceRecordId = _getDDMFormInstanceRecordId(
+					ddmFormField, ddmFormFieldRenderingContext);
 
-		HttpServletRequest httpServletRequest =
-			ddmFormFieldRenderingContext.getHttpServletRequest();
+				if (ddmFormInstanceRecordId == 0) {
+					return null;
+				}
 
-		if (Validator.isNotNull(ddmFormFieldRenderingContext.getValue())) {
-			JSONObject valueJSONObject = getValueJSONObject(
-				ddmFormFieldRenderingContext.getValue());
-
-			if ((valueJSONObject != null) && (valueJSONObject.length() > 0)) {
-				FileEntry fileEntry = getFileEntry(valueJSONObject);
-
-				parameters.put("fileEntryTitle", getFileEntryTitle(fileEntry));
-				parameters.put(
-					"fileEntryURL",
-					getFileEntryURL(httpServletRequest, fileEntry));
+				return ddmFormInstanceRecordId;
 			}
-		}
+		).put(
+			"fileEntryDeleteURL",
+			() -> {
+				HttpServletRequest httpServletRequest =
+					ddmFormFieldRenderingContext.getHttpServletRequest();
 
-		parameters.put(
-			"groupId", ddmFormFieldRenderingContext.getProperty("groupId"));
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(
+						httpServletRequest);
 
-		parameters.put(
-			"itemSelectorAuthToken",
-			getItemSelectorAuthToken(httpServletRequest));
-		parameters.put(
-			"lexiconIconsPath", getLexiconIconsPath(httpServletRequest));
+				return PortletURLBuilder.create(
+					requestBackedPortletURLFactory.createActionURL(
+						GetterUtil.getString(
+							_portal.getPortletId(httpServletRequest),
+							DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM))
+				).setActionName(
+					"/dynamic_data_mapping_form/delete_file_entry"
+				).buildString();
+			}
+		).put(
+			"groupId", ddmFormFieldRenderingContext.getProperty("groupId")
+		).put(
+			"maximumRepetitions",
+			GetterUtil.getInteger(
+				ddmFormField.getProperty("maximumRepetitions"))
+		).put(
+			"maximumSubmissionLimitReached",
+			GetterUtil.getBoolean(
+				ddmFormField.getProperty("maximumSubmissionLimitReached"))
+		).put(
+			"message",
+			_getMessage(
+				ddmFormFieldRenderingContext.getLocale(),
+				ddmFormFieldRenderingContext.getValue())
+		).put(
+			"objectFieldAcceptedFileExtensions",
+			GetterUtil.getString(
+				ddmFormField.getProperty("objectFieldAcceptedFileExtensions"))
+		).put(
+			"value",
+			() -> {
+				String value = ddmFormFieldRenderingContext.getValue();
 
-		Locale displayLocale;
+				if (Validator.isNull(value)) {
+					return "{}";
+				}
 
-		if (ddmFormFieldRenderingContext.isViewMode()) {
-			displayLocale = ddmFormFieldRenderingContext.getLocale();
-		}
-		else {
-			displayLocale = getDisplayLocale(
-				ddmFormFieldRenderingContext.getHttpServletRequest());
-		}
-
-		Map<String, String> stringsMap = new HashMap<>();
-
-		stringsMap.put(
-			"select",
-			LanguageUtil.get(getResourceBundle(displayLocale), "select"));
-
-		parameters.put("strings", stringsMap);
-
-		String value = ddmFormFieldRenderingContext.getValue();
-
-		if (Validator.isNull(value)) {
-			value = "{}";
-		}
-
-		parameters.put("value", value);
-
-		return parameters;
+				return value;
+			}
+		).putAll(
+			_getFileEntryParameters(ddmFormField, ddmFormFieldRenderingContext)
+		).putAll(
+			_getUploadParameters(ddmFormField, ddmFormFieldRenderingContext)
+		).build();
 	}
 
-	protected Locale getDisplayLocale(HttpServletRequest httpServletRequest) {
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getLocale();
+	@Activate
+	protected void activate(BundleContext bundleContext) {
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			bundleContext, DDMPermissionChecker.class, "jakarta.portlet.name");
 	}
 
-	protected FileEntry getFileEntry(JSONObject valueJSONObject) {
+	protected boolean containsPermission(
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext,
+		String portletId) {
+
+		if (portletId.equals(DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN)) {
+			return true;
+		}
+
 		try {
-			return dlAppService.getFileEntryByUuidAndGroupId(
-				valueJSONObject.getString("uuid"),
-				valueJSONObject.getLong("groupId"));
+			DDMPermissionChecker ddmPermissionChecker =
+				_serviceTrackerMap.getService(portletId);
+
+			if (ddmPermissionChecker == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"No dynamic data mapping permission checker found " +
+							"for portlet " + portletId);
+				}
+
+				return true;
+			}
+
+			return ddmPermissionChecker.containsPermission(
+				ddmFormFieldRenderingContext);
 		}
-		catch (PortalException pe) {
-			_log.error("Unable to retrieve file entry ", pe);
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			return false;
+		}
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_serviceTrackerMap.close();
+	}
+
+	protected ResourceBundle getResourceBundle(Locale locale) {
+		return new AggregateResourceBundle(
+			ResourceBundleUtil.getBundle(
+				"content.Language", locale, getClass()),
+			_portal.getResourceBundle(locale));
+	}
+
+	protected ThemeDisplay getThemeDisplay(
+		HttpServletRequest httpServletRequest) {
+
+		return (ThemeDisplay)httpServletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+	}
+
+	private Folder _createDDMFormFolder(
+		long userId, long repositoryId, HttpServletRequest httpServletRequest) {
+
+		try {
+			return _portletFileRepository.addPortletFolder(
+				userId, repositoryId,
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				DDMFormConstants.DDM_FORM_UPLOADED_FILES_FOLDER_NAME,
+				_getServiceContext(httpServletRequest));
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
 
 			return null;
 		}
 	}
 
-	protected String getFileEntryTitle(FileEntry fileEntry) {
-		if (fileEntry == null) {
-			return StringPool.BLANK;
-		}
-
-		return html.escape(fileEntry.getTitle());
-	}
-
-	protected String getFileEntryURL(
-		HttpServletRequest httpServletRequest, FileEntry fileEntry) {
-
-		if (fileEntry == null) {
-			return StringPool.BLANK;
-		}
-
-		StringBundler sb = new StringBundler(9);
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		sb.append(themeDisplay.getPathContext());
-
-		sb.append("/documents/");
-		sb.append(fileEntry.getRepositoryId());
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getFolderId());
-		sb.append(StringPool.SLASH);
-		sb.append(
-			URLCodec.encodeURL(html.unescape(fileEntry.getTitle()), true));
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getUuid());
-
-		return html.escape(sb.toString());
-	}
-
-	protected String getItemSelectorAuthToken(
-		HttpServletRequest httpServletRequest) {
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		if (themeDisplay == null) {
-			return StringPool.BLANK;
-		}
+	private Folder _createPrivateUserFolder(
+		long repositoryId, long parentFolderId,
+		HttpServletRequest httpServletRequest, User user) {
 
 		try {
-			return AuthTokenUtil.getToken(
-				httpServletRequest,
-				portal.getControlPanelPlid(themeDisplay.getCompanyId()),
-				PortletKeys.ITEM_SELECTOR);
+			return _dlAppLocalService.addFolder(
+				null, user.getUserId(), repositoryId, parentFolderId,
+				user.getScreenName(),
+				_language.get(
+					getResourceBundle(user.getLocale()),
+					"this-folder-was-automatically-created-by-forms-to-store-" +
+						"all-your-uploaded-files"),
+				ServiceContextFactory.getInstance(httpServletRequest));
 		}
-		catch (PortalException pe) {
-			_log.error("Unable to generate item selector auth token ", pe);
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to retrieve private uploads folder of user " +
+						user.getUserId(),
+					portalException);
+			}
+
+			return null;
+		}
+	}
+
+	private long _getDDMFormFolderId(
+		long companyId, long repositoryId,
+		HttpServletRequest httpServletRequest) {
+
+		Folder folder = null;
+
+		try {
+			folder = _portletFileRepository.getPortletFolder(
+				repositoryId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				DDMFormConstants.DDM_FORM_UPLOADED_FILES_FOLDER_NAME);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			User user = DDMFormUtil.getDDMFormDefaultUser(companyId);
+
+			if (user != null) {
+				folder = _createDDMFormFolder(
+					user.getUserId(), repositoryId, httpServletRequest);
+			}
+		}
+
+		if (folder == null) {
+			return DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+		}
+
+		return folder.getFolderId();
+	}
+
+	private long _getDDMFormInstanceRecordId(
+		DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+
+		long ddmFormInstanceRecordId = GetterUtil.getLong(
+			ddmFormField.getProperty("ddmFormInstanceRecordId"));
+
+		if (ddmFormInstanceRecordId > 0) {
+			return ddmFormInstanceRecordId;
+		}
+
+		return GetterUtil.getLong(
+			ddmFormFieldRenderingContext.getProperty(
+				"ddmFormInstanceRecordId"));
+	}
+
+	private FileEntry _getFileEntry(JSONObject valueJSONObject) {
+		try {
+			return _dlAppLocalService.getFileEntryByUuidAndGroupId(
+				valueJSONObject.getString("uuid"),
+				valueJSONObject.getLong("groupId"));
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to get file entry", portalException);
+			}
+
+			return null;
+		}
+	}
+
+	private Map<String, Object> _getFileEntryParameters(
+		DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+
+		String value = ddmFormFieldRenderingContext.getValue();
+
+		if (Validator.isNull(value)) {
+			return new HashMap<>();
+		}
+
+		JSONObject valueJSONObject = _getValueJSONObject(value);
+
+		if ((valueJSONObject == null) || (valueJSONObject.length() <= 0)) {
+			return new HashMap<>();
+		}
+
+		FileEntry fileEntry = _getFileEntry(valueJSONObject);
+
+		return HashMapBuilder.<String, Object>put(
+			"fileEntryTitle", _getFileEntryTitle(fileEntry)
+		).put(
+			"fileEntryURL",
+			() -> {
+				if (fileEntry == null) {
+					return StringPool.BLANK;
+				}
+
+				long ddmFormInstanceRecordId = _getDDMFormInstanceRecordId(
+					ddmFormField, ddmFormFieldRenderingContext);
+
+				if (ddmFormInstanceRecordId == 0) {
+					return _dlURLHelper.getDownloadURL(
+						fileEntry, fileEntry.getFileVersion(),
+						getThemeDisplay(
+							ddmFormFieldRenderingContext.
+								getHttpServletRequest()),
+						StringPool.BLANK);
+				}
+
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(
+						ddmFormFieldRenderingContext.getHttpServletRequest());
+
+				return ResourceURLBuilder.createResourceURL(
+					(ResourceURL)
+						requestBackedPortletURLFactory.createResourceURL(
+							DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM)
+				).setParameter(
+					"ddmFormFieldName", ddmFormField.getName()
+				).setParameter(
+					"ddmFormInstanceRecordId", ddmFormInstanceRecordId
+				).setParameter(
+					"fileEntryId", fileEntry.getFileEntryId()
+				).setResourceID(
+					"/dynamic_data_mapping_form/download_file_entry"
+				).buildString();
+			}
+		).build();
+	}
+
+	private String _getFileEntryTitle(FileEntry fileEntry) {
+		if (fileEntry == null) {
+			return StringPool.BLANK;
+		}
+
+		return HtmlUtil.escape(fileEntry.getTitle());
+	}
+
+	private String _getGuestUploadURL(
+		DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext,
+		long folderId, HttpServletRequest httpServletRequest) {
+
+		RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+			RequestBackedPortletURLFactoryUtil.create(httpServletRequest);
+
+		return PortletURLBuilder.create(
+			requestBackedPortletURLFactory.createActionURL(
+				GetterUtil.getString(
+					_portal.getPortletId(httpServletRequest),
+					DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM))
+		).setActionName(
+			"/dynamic_data_mapping_form/upload_file_entry"
+		).setParameter(
+			"folderId", folderId
+		).setParameter(
+			"formInstanceId",
+			ParamUtil.getString(
+				httpServletRequest, "formInstanceId",
+				String.valueOf(
+					ddmFormFieldRenderingContext.getDDMFormInstanceId()))
+		).setParameter(
+			"groupId", ddmFormFieldRenderingContext.getProperty("groupId")
+		).setParameter(
+			"objectFieldId",
+			GetterUtil.getLong(ddmFormField.getProperty("objectFieldId"))
+		).buildString();
+	}
+
+	private String _getItemSelectorURL(
+		DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext,
+		long folderId, long repositoryId, ThemeDisplay themeDisplay) {
+
+		if (_itemSelector == null) {
+			return StringPool.BLANK;
+		}
+
+		long groupId = GetterUtil.getLong(
+			ddmFormFieldRenderingContext.getProperty("groupId"));
+
+		Group group = _groupLocalService.fetchGroup(groupId);
+
+		if (group == null) {
+			group = themeDisplay.getScopeGroup();
+		}
+
+		List<ItemSelectorCriterion> itemSelectorCriteria = new ArrayList<>();
+
+		String portletNamespace =
+			ddmFormFieldRenderingContext.getPortletNamespace();
+
+		if (!StringUtil.startsWith(
+				portletNamespace,
+				_portal.getPortletNamespace(
+					DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM))) {
+
+			FileItemSelectorCriterion fileItemSelectorCriterion =
+				new FileItemSelectorCriterion();
+
+			fileItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+				new FileEntryItemSelectorReturnType());
+
+			itemSelectorCriteria.add(fileItemSelectorCriterion);
+		}
+
+		DDMUserPersonalFolderItemSelectorCriterion
+			ddmUserPersonalFolderItemSelectorCriterion =
+				new DDMUserPersonalFolderItemSelectorCriterion(
+					folderId, groupId);
+
+		ddmUserPersonalFolderItemSelectorCriterion.
+			setDesiredItemSelectorReturnTypes(
+				new FileEntryItemSelectorReturnType());
+		ddmUserPersonalFolderItemSelectorCriterion.setObjectFieldId(
+			GetterUtil.getLong(ddmFormField.getProperty("objectFieldId")));
+		ddmUserPersonalFolderItemSelectorCriterion.setRepositoryId(
+			repositoryId);
+
+		itemSelectorCriteria.add(ddmUserPersonalFolderItemSelectorCriterion);
+
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(
+					ddmFormFieldRenderingContext.getHttpServletRequest()),
+				group, groupId, portletNamespace + "selectDocumentLibrary",
+				itemSelectorCriteria.toArray(new ItemSelectorCriterion[0])));
+	}
+
+	private String _getMessage(Locale defaultLocale, String value) {
+		if (Validator.isNull(value)) {
+			return StringPool.BLANK;
+		}
+
+		JSONObject valueJSONObject = _getValueJSONObject(value);
+
+		if ((valueJSONObject == null) || (valueJSONObject.length() <= 0)) {
+			return StringPool.BLANK;
+		}
+
+		FileEntry fileEntry = _getFileEntry(valueJSONObject);
+
+		if (fileEntry == null) {
+			return _language.get(
+				getResourceBundle(defaultLocale),
+				"the-selected-document-was-deleted");
+		}
+
+		if (fileEntry.isInTrash()) {
+			return _language.get(
+				getResourceBundle(defaultLocale),
+				"the-selected-document-was-moved-to-the-recycle-bin");
 		}
 
 		return StringPool.BLANK;
 	}
 
-	protected String getLexiconIconsPath(
-		HttpServletRequest httpServletRequest) {
+	private long _getPrivateUserFolderId(
+		long repositoryId, long parentFolderId,
+		HttpServletRequest httpServletRequest, User user) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		Folder folder = null;
 
-		StringBundler sb = new StringBundler(3);
-
-		sb.append(themeDisplay.getPathThemeImages());
-		sb.append("/lexicon/icons.svg");
-		sb.append(StringPool.POUND);
-
-		return sb.toString();
-	}
-
-	protected ResourceBundle getResourceBundle(Locale locale) {
-		ResourceBundle portalResourceBundle = portal.getResourceBundle(locale);
-
-		ResourceBundle moduleResourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
-
-		return new AggregateResourceBundle(
-			moduleResourceBundle, portalResourceBundle);
-	}
-
-	protected JSONObject getValueJSONObject(String value) {
 		try {
-			return jsonFactory.createJSONObject(value);
+			folder = _dlAppLocalService.getFolder(
+				repositoryId, parentFolderId, user.getScreenName());
 		}
-		catch (JSONException jsone) {
+		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(jsone, jsone);
+				_log.debug(
+					"The user " + user.getUserId() +
+						" does not have a private uploads folder",
+					portalException);
+			}
+
+			folder = _createPrivateUserFolder(
+				repositoryId, parentFolderId, httpServletRequest, user);
+		}
+
+		if (folder == null) {
+			return DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+		}
+
+		return folder.getFolderId();
+	}
+
+	private Repository _getRepository(
+		long groupId, HttpServletRequest httpServletRequest) {
+
+		try {
+			Repository repository =
+				_portletFileRepository.fetchPortletRepository(
+					groupId, DDMFormConstants.SERVICE_NAME);
+
+			if (repository != null) {
+				return repository;
+			}
+
+			return _portletFileRepository.addPortletRepository(
+				groupId, DDMFormConstants.SERVICE_NAME,
+				_getServiceContext(httpServletRequest));
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
 			}
 
 			return null;
 		}
 	}
 
-	@Reference
-	protected DLAppService dlAppService;
+	private ServiceContext _getServiceContext(
+			HttpServletRequest httpServletRequest)
+		throws PortalException {
 
-	@Reference
-	protected Html html;
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			httpServletRequest);
 
-	@Reference
-	protected JSONFactory jsonFactory;
+		serviceContext.setAddGroupPermissions(true);
+		serviceContext.setAddGuestPermissions(true);
 
-	@Reference
-	protected Portal portal;
+		return serviceContext;
+	}
+
+	private Map<String, Object> _getUploadParameters(
+		DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+
+		if (ddmFormFieldRenderingContext.isReadOnly()) {
+			return new HashMap<>();
+		}
+
+		HttpServletRequest httpServletRequest =
+			ddmFormFieldRenderingContext.getHttpServletRequest();
+
+		ThemeDisplay themeDisplay = getThemeDisplay(httpServletRequest);
+
+		if ((themeDisplay == null) ||
+			(!themeDisplay.isSignedIn() &&
+			 !GetterUtil.getBoolean(
+				 ddmFormField.getProperty("allowGuestUsers")))) {
+
+			return new HashMap<>();
+		}
+
+		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
+
+		if (!containsPermission(
+				ddmFormFieldRenderingContext,
+				portletDisplay.getRootPortletId())) {
+
+			return HashMapBuilder.<String, Object>put(
+				"showUploadPermissionMessage", true
+			).build();
+		}
+
+		long groupId = GetterUtil.getLong(
+			ddmFormFieldRenderingContext.getProperty("groupId"));
+
+		DDMFormInstance ddmFormInstance =
+			_ddmFormInstanceLocalService.fetchDDMFormInstance(
+				ddmFormFieldRenderingContext.getDDMFormInstanceId());
+
+		if (ddmFormInstance != null) {
+			groupId = ddmFormInstance.getGroupId();
+		}
+
+		Repository repository = _getRepository(groupId, httpServletRequest);
+
+		if (repository == null) {
+			return new HashMap<>();
+		}
+
+		long ddmFormFolderId = _getDDMFormFolderId(
+			themeDisplay.getCompanyId(), repository.getRepositoryId(),
+			httpServletRequest);
+
+		if (!themeDisplay.isSignedIn()) {
+			return HashMapBuilder.<String, Object>put(
+				"folderId", ddmFormFolderId
+			).put(
+				"guestUploadURL",
+				() -> {
+					String guestUploadURL = GetterUtil.getString(
+						ddmFormField.getProperty("guestUploadURL"));
+
+					if (Validator.isNotNull(guestUploadURL)) {
+						return guestUploadURL;
+					}
+
+					return _getGuestUploadURL(
+						ddmFormField, ddmFormFieldRenderingContext,
+						ddmFormFolderId, httpServletRequest);
+				}
+			).build();
+		}
+
+		long privateUserFolderId = _getPrivateUserFolderId(
+			repository.getRepositoryId(), ddmFormFolderId, httpServletRequest,
+			themeDisplay.getUser());
+
+		return HashMapBuilder.<String, Object>put(
+			"folderId", privateUserFolderId
+		).put(
+			"itemSelectorURL",
+			() -> {
+				String itemSelectorURL = GetterUtil.getString(
+					ddmFormField.getProperty("itemSelectorURL"));
+
+				if (Validator.isNotNull(itemSelectorURL)) {
+					return itemSelectorURL;
+				}
+
+				return _getItemSelectorURL(
+					ddmFormField, ddmFormFieldRenderingContext,
+					privateUserFolderId, repository.getRepositoryId(),
+					themeDisplay);
+			}
+		).build();
+	}
+
+	private JSONObject _getValueJSONObject(String value) {
+		try {
+			return _jsonFactory.createJSONObject(value);
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
+			return null;
+		}
+	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DocumentLibraryDDMFormFieldTemplateContextContributor.class);
+
+	@Reference
+	private DDMFormInstanceLocalService _ddmFormInstanceLocalService;
+
+	@Reference
+	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private DLURLHelper _dlURLHelper;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private ItemSelector _itemSelector;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Portal _portal;
+
+	@Reference
+	private PortletFileRepository _portletFileRepository;
+
+	private volatile ServiceTrackerMap<String, DDMPermissionChecker>
+		_serviceTrackerMap;
 
 }

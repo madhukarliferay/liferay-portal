@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,8 +16,6 @@ portletDisplay.setNamespace(PortalUtil.getPortletNamespace(portlet.getPortletId(
 String url = PortletURLUtil.getRefreshURL(request, themeDisplay, false);
 
 Map<String, String[]> parameters = PortletURLUtil.getRefreshURLParameters(request);
-
-String data = JSONFactoryUtil.looseSerializeDeep(parameters);
 %>
 
 <div class="loading-animation" id="p_p_id<%= portletDisplay.getNamespace() %>">
@@ -38,7 +27,7 @@ String data = JSONFactoryUtil.looseSerializeDeep(parameters);
 
 	Liferay.Portlet.addHTML(
 		{
-			data: <%= data %>,
+			data: <%= JSONFactoryUtil.looseSerializeDeep(parameters) %>,
 			onComplete: function(portlet, portletId) {
 				portlet.refreshURL = '<%= HtmlUtil.escapeJS(url) %>';
 			},

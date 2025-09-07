@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -24,6 +15,19 @@ public class PortalTopLevelBuildData
 
 	public static boolean isValidJSONObject(JSONObject jsonObject) {
 		return isValidJSONObject(jsonObject, _TYPE);
+	}
+
+	@Override
+	public Job.BuildProfile getBuildProfile() {
+		String portalUpstreamBranchName = getPortalUpstreamBranchName();
+
+		if (portalUpstreamBranchName.equals("master") ||
+			portalUpstreamBranchName.startsWith("7")) {
+
+			return Job.BuildProfile.DXP;
+		}
+
+		return Job.BuildProfile.PORTAL;
 	}
 
 	@Override
@@ -76,8 +80,8 @@ public class PortalTopLevelBuildData
 
 		super(runID, jobName, buildURL);
 
-		setPortalGitHubURL(URL_PORTAL_GITHUB_BRANCH_DEFAULT);
-		setPortalUpstreamBranchName(NAME_PORTAL_UPSTREAM_BRANCH_DEFAULT);
+		setPortalGitHubURL(_getPortalGitHubURL());
+		setPortalUpstreamBranchName(_getPortalUpstreamBranchName());
 
 		validateKeys(_REQUIRED_KEYS);
 	}
@@ -85,6 +89,27 @@ public class PortalTopLevelBuildData
 	@Override
 	protected String getType() {
 		return _TYPE;
+	}
+
+	private String _getPortalGitHubURL() {
+		String portalGitHubURL = optString("portal_github_url");
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(portalGitHubURL)) {
+			return portalGitHubURL;
+		}
+
+		return URL_PORTAL_GITHUB_BRANCH_DEFAULT;
+	}
+
+	private String _getPortalUpstreamBranchName() {
+		String portalUpstreamBranchName = optString(
+			"portal_upstream_branch_name");
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(portalUpstreamBranchName)) {
+			return portalUpstreamBranchName;
+		}
+
+		return NAME_PORTAL_UPSTREAM_BRANCH_DEFAULT;
 	}
 
 	private static final String[] _REQUIRED_KEYS = {

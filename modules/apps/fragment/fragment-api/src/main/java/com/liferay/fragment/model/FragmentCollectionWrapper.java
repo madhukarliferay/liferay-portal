@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -44,7 +37,9 @@ public class FragmentCollectionWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("fragmentCollectionId", getFragmentCollectionId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -55,6 +50,7 @@ public class FragmentCollectionWrapper
 		attributes.put("fragmentCollectionKey", getFragmentCollectionKey());
 		attributes.put("name", getName());
 		attributes.put("description", getDescription());
+		attributes.put("marketplace", isMarketplace());
 		attributes.put("lastPublishDate", getLastPublishDate());
 
 		return attributes;
@@ -68,10 +64,23 @@ public class FragmentCollectionWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long fragmentCollectionId = (Long)attributes.get(
@@ -136,11 +145,22 @@ public class FragmentCollectionWrapper
 			setDescription(description);
 		}
 
+		Boolean marketplace = (Boolean)attributes.get("marketplace");
+
+		if (marketplace != null) {
+			setMarketplace(marketplace);
+		}
+
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
 
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+	}
+
+	@Override
+	public FragmentCollection cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -164,6 +184,16 @@ public class FragmentCollectionWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this fragment collection.
+	 *
+	 * @return the ct collection ID of this fragment collection
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
 	 * Returns the description of this fragment collection.
 	 *
 	 * @return the description of this fragment collection
@@ -171,6 +201,16 @@ public class FragmentCollectionWrapper
 	@Override
 	public String getDescription() {
 		return model.getDescription();
+	}
+
+	/**
+	 * Returns the external reference code of this fragment collection.
+	 *
+	 * @return the external reference code of this fragment collection
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -214,6 +254,16 @@ public class FragmentCollectionWrapper
 	}
 
 	/**
+	 * Returns the marketplace of this fragment collection.
+	 *
+	 * @return the marketplace of this fragment collection
+	 */
+	@Override
+	public boolean getMarketplace() {
+		return model.getMarketplace();
+	}
+
+	/**
 	 * Returns the modified date of this fragment collection.
 	 *
 	 * @return the modified date of this fragment collection
@@ -254,6 +304,13 @@ public class FragmentCollectionWrapper
 	}
 
 	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry getResource(
+		String path) {
+
+		return model.getResource(path);
+	}
+
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry>
 			getResources()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -273,6 +330,14 @@ public class FragmentCollectionWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getResourcesFolderId(createIfAbsent);
+	}
+
+	@Override
+	public Map<String, com.liferay.portal.kernel.repository.model.FileEntry>
+			getResourcesMap()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getResourcesMap();
 	}
 
 	/**
@@ -323,10 +388,15 @@ public class FragmentCollectionWrapper
 	}
 
 	/**
-	 * NOTE FOR DEVELOPERS:
+	 * Returns <code>true</code> if this fragment collection is marketplace.
 	 *
-	 * Never modify or reference this class directly. All methods that expect a fragment collection model instance should use the <code>FragmentCollection</code> interface instead.
+	 * @return <code>true</code> if this fragment collection is marketplace; <code>false</code> otherwise
 	 */
+	@Override
+	public boolean isMarketplace() {
+		return model.isMarketplace();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -338,6 +408,14 @@ public class FragmentCollectionWrapper
 		throws Exception {
 
 		model.populateZipWriter(zipWriter);
+	}
+
+	@Override
+	public void populateZipWriter(
+			com.liferay.portal.kernel.zip.ZipWriter zipWriter, String path)
+		throws Exception {
+
+		model.populateZipWriter(zipWriter, path);
 	}
 
 	/**
@@ -361,6 +439,16 @@ public class FragmentCollectionWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this fragment collection.
+	 *
+	 * @param ctCollectionId the ct collection ID of this fragment collection
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
 	 * Sets the description of this fragment collection.
 	 *
 	 * @param description the description of this fragment collection
@@ -368,6 +456,16 @@ public class FragmentCollectionWrapper
 	@Override
 	public void setDescription(String description) {
 		model.setDescription(description);
+	}
+
+	/**
+	 * Sets the external reference code of this fragment collection.
+	 *
+	 * @param externalReferenceCode the external reference code of this fragment collection
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -408,6 +506,16 @@ public class FragmentCollectionWrapper
 	@Override
 	public void setLastPublishDate(Date lastPublishDate) {
 		model.setLastPublishDate(lastPublishDate);
+	}
+
+	/**
+	 * Sets whether this fragment collection is marketplace.
+	 *
+	 * @param marketplace the marketplace of this fragment collection
+	 */
+	@Override
+	public void setMarketplace(boolean marketplace) {
+		model.setMarketplace(marketplace);
 	}
 
 	/**
@@ -488,6 +596,25 @@ public class FragmentCollectionWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<FragmentCollection, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<FragmentCollection, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

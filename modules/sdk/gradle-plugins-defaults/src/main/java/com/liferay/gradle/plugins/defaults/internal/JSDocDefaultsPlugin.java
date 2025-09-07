@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.gradle.plugins.defaults.internal;
@@ -37,7 +28,9 @@ public class JSDocDefaultsPlugin extends BaseDefaultsPlugin<JSDocPlugin> {
 	public static final Plugin<Project> INSTANCE = new JSDocDefaultsPlugin();
 
 	@Override
-	protected void configureDefaults(Project project, JSDocPlugin jsDocPlugin) {
+	protected void applyPluginDefaults(
+		Project project, JSDocPlugin jsDocPlugin) {
+
 		_configureTasksJSDoc(project);
 	}
 
@@ -59,7 +52,7 @@ public class JSDocDefaultsPlugin extends BaseDefaultsPlugin<JSDocPlugin> {
 		jsDocTask.setConfiguration(
 			textResourceFactory.fromString(_CONFIG_JSON));
 
-		File readmeFile = project.file("README.markdown");
+		File readmeFile = project.file("README.md");
 
 		if (readmeFile.exists()) {
 			jsDocTask.setReadmeFile(readmeFile);
@@ -89,8 +82,8 @@ public class JSDocDefaultsPlugin extends BaseDefaultsPlugin<JSDocPlugin> {
 				"com/liferay/gradle/plugins/defaults/internal/dependencies" +
 					"/config-jsdoc.json");
 		}
-		catch (IOException ioe) {
-			throw new ExceptionInInitializerError(ioe);
+		catch (IOException ioException) {
+			throw new ExceptionInInitializerError(ioException);
 		}
 	}
 

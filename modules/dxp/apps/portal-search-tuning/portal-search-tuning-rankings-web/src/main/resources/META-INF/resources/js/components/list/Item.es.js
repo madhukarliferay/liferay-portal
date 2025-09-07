@@ -1,17 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import {ClayCheckbox} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
+import ClayLabel from '@clayui/label';
+import ClayLayout from '@clayui/layout';
 import ClaySticker from '@clayui/sticker';
 import getCN from 'classnames';
 import {PropTypes} from 'prop-types';
@@ -37,12 +33,12 @@ const DOCUMENT_CSS_CLASS_COLOR_MAP = {
 	'document-pdf': 'file-icon-color-3',
 	'document-presentation': 'file-icon-color-4',
 	'document-table': 'file-icon-color-2',
-	'document-text': 'file-icon-color-6'
+	'document-text': 'file-icon-color-6',
 };
 
 const HOVER_TYPES = {
 	BOTTOM: 'bottom',
-	TOP: 'top'
+	TOP: 'top',
 };
 
 const ROOT_CLASS = 'list-item-root';
@@ -56,6 +52,7 @@ const ROOT_CLASS = 'list-item-root';
 const ResultPinIconDisplay = () => (
 	<div className="quick-action-menu result-pin-icon-display">
 		<ClayButton
+			aria-label={Liferay.Language.get('pinned-result')}
 			className="btn-outline-borderless component-action quick-action-item"
 			displayType="secondary"
 			monospaced
@@ -85,7 +82,7 @@ function beginDrag({
 	pinned,
 	selected,
 	title,
-	type
+	type,
 }) {
 	onBlur();
 
@@ -100,7 +97,7 @@ function beginDrag({
 		pinned,
 		selected,
 		title,
-		type
+		type,
 	};
 }
 
@@ -134,7 +131,7 @@ function drop({index}, monitor, component) {
 
 	return {
 		hoverPosition: decoratedComponent.state.hoverPosition,
-		index
+		index,
 	};
 }
 
@@ -163,7 +160,8 @@ function endDrag(props, monitor) {
 		}
 
 		onFocus(hoverPosition !== null ? focusIndex : dragIndex);
-	} else {
+	}
+	else {
 		onFocus(dragIndex);
 	}
 }
@@ -190,9 +188,11 @@ function hover(props, monitor, component) {
 
 	if (dragIndex === destIndex) {
 		component.setState({hoverPosition: null});
-	} else if (hoverAbove) {
+	}
+	else if (hoverAbove) {
 		component.setState({hoverPosition: HOVER_TYPES.TOP});
-	} else {
+	}
+	else {
 		component.setState({hoverPosition: HOVER_TYPES.BOTTOM});
 	}
 }
@@ -225,7 +225,7 @@ const DND_PROPS = {
 	connectDragPreview: PropTypes.func,
 	connectDragSource: PropTypes.func,
 	connectDropTarget: PropTypes.func,
-	dragging: PropTypes.bool
+	dragging: PropTypes.bool,
 };
 
 class Item extends PureComponent {
@@ -235,7 +235,9 @@ class Item extends PureComponent {
 		author: PropTypes.string,
 		clicks: PropTypes.number,
 		date: PropTypes.string,
+		deleted: PropTypes.bool,
 		description: PropTypes.string,
+		disabled: PropTypes.bool,
 		focus: PropTypes.bool,
 		hidden: PropTypes.bool,
 		icon: PropTypes.string,
@@ -255,28 +257,29 @@ class Item extends PureComponent {
 		selected: PropTypes.bool,
 		title: PropTypes.string,
 		type: PropTypes.string,
-		url: PropTypes.string
+		viewURL: PropTypes.string,
 	};
 
 	static defaultProps = {
 		author: '',
-		connectDragPreview: val => val,
-		connectDragSource: val => val,
-		connectDropTarget: val => val,
+		connectDragPreview: (val) => val,
+		connectDragSource: (val) => val,
+		connectDropTarget: (val) => val,
 		date: '',
+		disabled: false,
 		onBlur: () => {},
 		onFocus: () => {},
 		onMove: () => {},
 		onRemoveSelect: () => {},
 		onSelect: () => {},
 		title: '-',
-		type: ''
+		type: '',
 	};
 
 	rootRef = React.createRef();
 
 	state = {
-		hoverPosition: null
+		hoverPosition: null,
 	};
 
 	/**
@@ -292,7 +295,7 @@ class Item extends PureComponent {
 
 		if (connectDragPreview) {
 			connectDragPreview(getEmptyImage(), {
-				captureDraggingState: true
+				captureDraggingState: true,
 			});
 		}
 	}
@@ -315,7 +318,7 @@ class Item extends PureComponent {
 		this.props.onBlur();
 	};
 
-	_handleFocus = event => {
+	_handleFocus = (event) => {
 		if (event.target.classList.contains(ROOT_CLASS)) {
 			const {index, onFocus} = this.props;
 
@@ -335,28 +338,25 @@ class Item extends PureComponent {
 		}
 	};
 
-	_handleKeyDown = event => {
+	_handleKeyDown = (event) => {
 		const {focus} = this.props;
 
 		if (focus) {
 			if (event.key === KEY_CODES.S) {
 				this._handleSelect();
-			} else if (event.key === KEY_CODES.P) {
+			}
+			else if (event.key === KEY_CODES.P) {
 				this._handlePin();
-			} else if (event.key === KEY_CODES.H) {
+			}
+			else if (event.key === KEY_CODES.H) {
 				this._handleHide();
 			}
 		}
 	};
 
 	_handlePin = () => {
-		const {
-			addedResult,
-			id,
-			onClickPin,
-			onRemoveSelect,
-			pinned
-		} = this.props;
+		const {addedResult, id, onClickPin, onRemoveSelect, pinned} =
+			this.props;
 
 		if (addedResult) {
 			onRemoveSelect([id]);
@@ -379,7 +379,9 @@ class Item extends PureComponent {
 			connectDragSource,
 			connectDropTarget,
 			date,
+			deleted,
 			description,
+			disabled,
 			dragging,
 			focus,
 			hidden,
@@ -394,7 +396,7 @@ class Item extends PureComponent {
 			style,
 			title,
 			type,
-			url
+			viewURL,
 		} = this.props;
 
 		const {hoverPosition} = this.state;
@@ -419,7 +421,7 @@ class Item extends PureComponent {
 				'result-ranking-item-focus': focus,
 				'result-ranking-item-hidden': hidden,
 				'result-ranking-item-pinned': pinned,
-				'result-ranking-item-reorder': reorder
+				'result-ranking-item-reorder': reorder,
 			}
 		);
 
@@ -434,8 +436,8 @@ class Item extends PureComponent {
 				style={style}
 				tabIndex={0}
 			>
-				<div
-					className="autofit-col result-drag"
+				<ClayLayout.ContentCol
+					className="result-drag"
 					data-testid="DRAG_ICON"
 					style={{visibility: pinned ? 'visible' : 'hidden'}}
 				>
@@ -444,27 +446,49 @@ class Item extends PureComponent {
 							<ClayIcon symbol="drag" />
 						</span>
 					)}
-				</div>
+				</ClayLayout.ContentCol>
 
-				<div className="autofit-col">
+				<ClayLayout.ContentCol>
 					<ClayCheckbox
 						aria-label={Liferay.Language.get('select')}
 						checked={selected}
+						disabled={disabled}
 						onChange={this._handleSelect}
 					/>
-				</div>
+				</ClayLayout.ContentCol>
 
-				<div className="autofit-col">
+				<ClayLayout.ContentCol>
 					<ClaySticker className={classSticker} displayType="light">
 						<ClayIcon symbol={icon ? icon : DEFAULT_ICON} />
 					</ClaySticker>
-				</div>
+				</ClayLayout.ContentCol>
 
-				<div className="autofit-col autofit-col-expand">
-					<section className="autofit-section">
+				<ClayLayout.ContentCol expand>
+					<ClayLayout.ContentSection containerElement="section">
 						<div className="list-group-title">
 							<span className="text-truncate-inline">
-								{url ? <a href={url}>{title}</a> : title}
+								{viewURL ? (
+									<a
+										href={viewURL}
+										rel="noopener noreferrer"
+										target="_blank"
+									>
+										{`${title} `}
+
+										<ClayIcon symbol="shortcut" />
+									</a>
+								) : (
+									title
+								)}
+
+								{deleted && (
+									<ClayLabel
+										className="delete-label"
+										displayType="danger"
+									>
+										{Liferay.Language.get('deleted')}
+									</ClayLabel>
+								)}
 							</span>
 						</div>
 
@@ -487,59 +511,85 @@ class Item extends PureComponent {
 								{description}
 							</p>
 						)}
-					</section>
-				</div>
+					</ClayLayout.ContentSection>
+				</ClayLayout.ContentCol>
 
-				<div className="autofit-col">
-					{pinned && <ResultPinIconDisplay />}
+				{!disabled && (
+					<ClayLayout.ContentCol>
+						{pinned && <ResultPinIconDisplay />}
 
-					<div className="quick-action-menu">
-						{onClickHide && (
-							<ClayButton
-								className="btn-outline-borderless component-action quick-action-item"
-								displayType="secondary"
-								monospaced
-								onClick={this._handleHide}
-								title={
-									hidden
-										? Liferay.Language.get('show-result')
-										: Liferay.Language.get('hide-result')
-								}
-							>
-								<ClayIcon symbol={hidden ? 'view' : 'hidden'} />
-							</ClayButton>
+						<div className="quick-action-menu">
+							{onClickHide && (
+								<ClayButton
+									aria-label={
+										hidden
+											? Liferay.Language.get(
+													'show-result'
+												)
+											: Liferay.Language.get(
+													'hide-result'
+												)
+									}
+									className="btn-outline-borderless component-action quick-action-item"
+									displayType="secondary"
+									monospaced
+									onClick={this._handleHide}
+									title={
+										hidden
+											? Liferay.Language.get(
+													'show-result'
+												)
+											: Liferay.Language.get(
+													'hide-result'
+												)
+									}
+								>
+									<ClayIcon
+										symbol={hidden ? 'view' : 'hidden'}
+									/>
+								</ClayButton>
+							)}
+
+							{onClickPin && (
+								<ClayButton
+									aria-label={
+										pinned
+											? Liferay.Language.get(
+													'unpin-result'
+												)
+											: Liferay.Language.get('pin-result')
+									}
+									className="btn-outline-borderless component-action quick-action-item"
+									displayType="secondary"
+									monospaced
+									onClick={this._handlePin}
+									title={
+										pinned
+											? Liferay.Language.get(
+													'unpin-result'
+												)
+											: Liferay.Language.get('pin-result')
+									}
+								>
+									{pinned ? (
+										<ClayIcon key="UNPIN" symbol="unpin" />
+									) : (
+										<ClayIcon key="PIN" symbol="pin" />
+									)}
+								</ClayButton>
+							)}
+						</div>
+
+						{(onClickPin || onClickHide) && (
+							<ItemDropdown
+								hidden={hidden}
+								onClickHide={this._handleHide}
+								onClickPin={this._handlePin}
+								pinned={pinned}
+							/>
 						)}
-
-						{onClickPin && (
-							<ClayButton
-								className="btn-outline-borderless component-action quick-action-item"
-								displayType="secondary"
-								monospaced
-								onClick={this._handlePin}
-								title={
-									pinned
-										? Liferay.Language.get('unpin-result')
-										: Liferay.Language.get('pin-result')
-								}
-							>
-								{pinned ? (
-									<ClayIcon key="UNPIN" symbol="unpin" />
-								) : (
-									<ClayIcon key="PIN" symbol="pin" />
-								)}
-							</ClayButton>
-						)}
-					</div>
-
-					{(onClickPin || onClickHide) && (
-						<ItemDropdown
-							hidden={hidden}
-							onClickHide={this._handleHide}
-							onClickPin={this._handlePin}
-							pinned={pinned}
-						/>
-					)}
-				</div>
+					</ClayLayout.ContentCol>
+				)}
 
 				{!isNil(clicks) && (
 					<div className="click-count list-group-text sticker-bottom-right">
@@ -559,12 +609,12 @@ const ItemWithDrag = dragSource(
 	DRAG_TYPES.LIST_ITEM,
 	{
 		beginDrag,
-		endDrag
+		endDrag,
 	},
 	(connect, monitor) => ({
 		connectDragPreview: connect.dragPreview(),
 		connectDragSource: connect.dragSource(),
-		dragging: monitor.isDragging()
+		dragging: monitor.isDragging(),
 	})
 )(Item);
 
@@ -573,11 +623,11 @@ export default dropTarget(
 	{
 		canDrop,
 		drop,
-		hover
+		hover,
 	},
 	(connect, monitor) => ({
 		canDrop: monitor.canDrop(),
 		connectDropTarget: connect.dropTarget(),
-		over: monitor.isOver()
+		over: monitor.isOver(),
 	})
 )(ItemWithDrag);

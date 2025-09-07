@@ -1,25 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.trash;
 
+import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.model.DLFileShortcut;
 import com.liferay.document.library.kernel.model.DLFileShortcutConstants;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.service.DLFileShortcutLocalService;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -33,20 +26,21 @@ import com.liferay.portal.kernel.repository.Repository;
 import com.liferay.portal.kernel.repository.RepositoryProviderUtil;
 import com.liferay.portal.kernel.repository.capabilities.TrashCapability;
 import com.liferay.portal.kernel.repository.capabilities.UnsupportedCapabilityException;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
-import com.liferay.portal.kernel.trash.TrashRendererFactory;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -60,7 +54,7 @@ import org.osgi.service.component.annotations.Reference;
 	property = "model.class.name=com.liferay.document.library.kernel.model.DLFileShortcut",
 	service = TrashHandler.class
 )
-public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
+public class DLFileShortcutTrashHandler extends BaseDLTrashHandler {
 
 	@Override
 	public void deleteTrashEntry(long classPK) throws PortalException {
@@ -76,7 +70,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 	public ContainerModel getParentContainerModel(long classPK)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		long parentFolderId = dlFileShortcut.getFolderId();
 
@@ -101,7 +95,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		return _dlURLHelper.getFileEntryControlPanelLink(
 			portletRequest, dlFileShortcut.getToFileEntryId());
@@ -112,7 +106,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		return _dlURLHelper.getFolderControlPanelLink(
 			portletRequest, dlFileShortcut.getFolderId());
@@ -122,20 +116,21 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 	public String getRestoreMessage(PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		return DLUtil.getAbsolutePath(
-			portletRequest, dlFileShortcut.getFolderId());
+			portletRequest, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFileShortcut.getFolderId());
 	}
 
 	@Override
 	public TrashedModel getTrashedModel(long classPK) {
 		try {
-			return getDLFileShortcut(classPK);
+			return _getDLFileShortcut(classPK);
 		}
-		catch (PortalException | UnsupportedCapabilityException e) {
+		catch (PortalException | UnsupportedCapabilityException exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 
 			return null;
@@ -144,7 +139,10 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 
 	@Override
 	public TrashRenderer getTrashRenderer(long classPK) throws PortalException {
-		return _trashRendererFactory.getTrashRenderer(classPK);
+		DLFileShortcut dlFileShortcut =
+			_dlFileShortcutLocalService.getFileShortcut(classPK);
+
+		return new DLFileShortcutTrashRenderer(dlFileShortcut, _trashHelper);
 	}
 
 	@Override
@@ -154,7 +152,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 		throws PortalException {
 
 		if (trashActionId.equals(TrashActionKeys.MOVE)) {
-			return ModelResourcePermissionHelper.contains(
+			return ModelResourcePermissionUtil.contains(
 				_folderModelResourcePermission, permissionChecker, groupId,
 				classPK, ActionKeys.ADD_SHORTCUT);
 		}
@@ -165,16 +163,16 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 
 	@Override
 	public boolean isMovable(long classPK) throws PortalException {
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		try {
 			DLFolder parentFolder = dlFileShortcut.getDLFolder();
 
 			return parentFolder.isInTrash();
 		}
-		catch (NoSuchFolderException nsfe) {
+		catch (NoSuchFolderException noSuchFolderException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfe, nsfe);
+				_log.debug(noSuchFolderException);
 			}
 
 			return true;
@@ -183,14 +181,30 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 
 	@Override
 	public boolean isRestorable(long classPK) throws PortalException {
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		try {
 			dlFileShortcut.getFolder();
 		}
-		catch (NoSuchFolderException nsfe) {
+		catch (NoSuchFolderException noSuchFolderException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfe, nsfe);
+				_log.debug(noSuchFolderException);
+			}
+
+			return false;
+		}
+
+		try {
+			FileEntry toFileEntry = _dlAppLocalService.getFileEntry(
+				dlFileShortcut.getToFileEntryId());
+
+			if (toFileEntry.isInTrash()) {
+				return false;
+			}
+		}
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchFileEntryException);
 			}
 
 			return false;
@@ -204,7 +218,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			return false;
 		}
 
-		return !dlFileShortcut.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(dlFileShortcut);
 	}
 
 	@Override
@@ -213,7 +227,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		_dlAppLocalService.updateFileShortcut(
 			userId, classPK, containerModelId,
@@ -255,23 +269,6 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			userId, documentRepository.getFileShortcut(classPK));
 	}
 
-	protected DLFileShortcut getDLFileShortcut(long classPK)
-		throws PortalException {
-
-		Repository repository =
-			RepositoryProviderUtil.getFileShortcutRepository(classPK);
-
-		if (!repository.isCapabilityProvided(TrashCapability.class)) {
-			throw new UnsupportedCapabilityException(
-				TrashCapability.class,
-				"Repository " + repository.getRepositoryId());
-		}
-
-		FileShortcut fileShortcut = repository.getFileShortcut(classPK);
-
-		return (DLFileShortcut)fileShortcut.getModel();
-	}
-
 	@Override
 	protected DocumentRepository getDocumentRepository(long classPK)
 		throws PortalException {
@@ -293,7 +290,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			PermissionChecker permissionChecker, long classPK, String actionId)
 		throws PortalException {
 
-		DLFileShortcut dlFileShortcut = getDLFileShortcut(classPK);
+		DLFileShortcut dlFileShortcut = _getDLFileShortcut(classPK);
 
 		if (dlFileShortcut.isInHiddenFolder() &&
 			actionId.equals(ActionKeys.VIEW)) {
@@ -305,25 +302,31 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 			permissionChecker, classPK, actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
-	}
+	private DLFileShortcut _getDLFileShortcut(long classPK)
+		throws PortalException {
 
-	@Reference(
-		target = "(model.class.name=com.liferay.document.library.kernel.model.DLFileShortcut)",
-		unbind = "-"
-	)
-	protected void setTrashRendererFactory(
-		TrashRendererFactory trashRendererFactory) {
+		Repository repository =
+			RepositoryProviderUtil.getFileShortcutRepository(classPK);
 
-		_trashRendererFactory = trashRendererFactory;
+		if (!repository.isCapabilityProvided(TrashCapability.class)) {
+			throw new UnsupportedCapabilityException(
+				TrashCapability.class,
+				"Repository " + repository.getRepositoryId());
+		}
+
+		FileShortcut fileShortcut = repository.getFileShortcut(classPK);
+
+		return (DLFileShortcut)fileShortcut.getModel();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLFileShortcutTrashHandler.class);
 
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private DLFileShortcutLocalService _dlFileShortcutLocalService;
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
@@ -339,6 +342,7 @@ public class DLFileShortcutTrashHandler extends DLBaseTrashHandler {
 	)
 	private ModelResourcePermission<Folder> _folderModelResourcePermission;
 
-	private TrashRendererFactory _trashRendererFactory;
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

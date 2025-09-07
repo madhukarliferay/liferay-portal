@@ -1,39 +1,32 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.util;
 
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.servlet.taglib.util.OutputData;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.BodyContent;
 
 import java.io.IOException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.BodyContent;
-
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockBodyContent;
@@ -45,6 +38,11 @@ import org.springframework.mock.web.MockPageContext;
  * @author Kyle Stiemann
  */
 public class HtmlTopTagTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testDataSennaTrackAttribute() throws Exception {
@@ -79,7 +77,7 @@ public class HtmlTopTagTest {
 			null);
 	}
 
-	private static void _assertContainsRegex(
+	private void _assertContainsRegex(
 		String string, String containedRegex, String message) {
 
 		Pattern pattern = Pattern.compile(containedRegex);
@@ -89,7 +87,7 @@ public class HtmlTopTagTest {
 		Assert.assertTrue(message, matcher.find());
 	}
 
-	private static String _getElementAttributes(String element) {
+	private String _getElementAttributes(String element) {
 		Matcher matcher = _getElementNameAndAttributesPattern.matcher(element);
 
 		Assert.assertTrue(matcher.find());
@@ -97,7 +95,7 @@ public class HtmlTopTagTest {
 		return matcher.group(_ELEMENT_ATTRIBUTES_GROUP_INDEX);
 	}
 
-	private static String _getElementName(String element) {
+	private String _getElementName(String element) {
 		Matcher matcher = _getElementNameAndAttributesPattern.matcher(element);
 
 		Assert.assertTrue(matcher.find());
@@ -105,9 +103,9 @@ public class HtmlTopTagTest {
 		return matcher.group(_ELEMENT_NAME_GROUP_INDEX);
 	}
 
-	private static void _testDataSennaTrackAttributeAdded(
-			final String element, String expectedDataSennaTrackValue)
-		throws IOException, JspException {
+	private void _testDataSennaTrackAttributeAdded(
+			String element, String expectedDataSennaTrackValue)
+		throws Exception {
 
 		HtmlTopTag htmlTopTag = new HtmlTopTag();
 
@@ -135,15 +133,15 @@ public class HtmlTopTagTest {
 						return new OutputData() {
 
 							@Override
-							public void addData(
+							public void addDataSB(
 								String outputKey, String webKey,
 								StringBundler sb) {
 
 								try {
 									jspWriter.write(sb.toString());
 								}
-								catch (IOException ioe) {
-									ReflectionUtil.throwException(ioe);
+								catch (IOException ioException) {
+									ReflectionUtil.throwException(ioException);
 								}
 							}
 

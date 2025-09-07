@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.web.internal.servlet;
@@ -26,17 +17,18 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Adolfo Pérez
  */
-@Component(immediate = true, service = AMRequestHandlerLocator.class)
+@Component(service = AMRequestHandlerLocator.class)
 public class AMRequestHandlerLocator {
 
-	public AMRequestHandler locateForPattern(String pattern) {
+	public AMRequestHandler<?> locateForPattern(String pattern) {
 		return _serviceTrackerMap.getService(pattern);
 	}
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-			bundleContext, AMRequestHandler.class,
+			bundleContext,
+			(Class<AMRequestHandler<?>>)(Class<?>)AMRequestHandler.class,
 			"(adaptive.media.handler.pattern=*)",
 			(serviceReference, emitter) -> emitter.emit(
 				(String)serviceReference.getProperty(
@@ -48,6 +40,6 @@ public class AMRequestHandlerLocator {
 		_serviceTrackerMap.close();
 	}
 
-	private ServiceTrackerMap<String, AMRequestHandler> _serviceTrackerMap;
+	private ServiceTrackerMap<String, AMRequestHandler<?>> _serviceTrackerMap;
 
 }

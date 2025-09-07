@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.controller.test;
@@ -24,14 +15,14 @@ import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portlet.PortletPreferencesImpl;
 
-import java.util.Date;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.Date;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,7 +45,7 @@ public class PortletImportControllerTest extends BaseExportImportTestCase {
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		super.setUp();
 
@@ -74,10 +65,9 @@ public class PortletImportControllerTest extends BaseExportImportTestCase {
 			group, lastPublishDate, null);
 
 		Assert.assertEquals(
-			PortletKeys.PREFS_OWNER_ID_DEFAULT,
-			portletPreferencesImpl.getOwnerId());
+			group.getGroupId(), portletPreferencesImpl.getOwnerId());
 		Assert.assertEquals(
-			PortletKeys.PREFS_OWNER_TYPE_LAYOUT,
+			PortletKeys.PREFS_OWNER_TYPE_GROUP,
 			portletPreferencesImpl.getOwnerType());
 		Assert.assertEquals(
 			LayoutConstants.DEFAULT_PLID, portletPreferencesImpl.getPlid());
@@ -90,12 +80,10 @@ public class PortletImportControllerTest extends BaseExportImportTestCase {
 		PortletPreferences portletPreferences =
 			PortletPreferencesFactoryUtil.getStrictPortletSetup(
 				importedGroup.getCompanyId(), importedGroup.getGroupId(),
-				BookmarksPortletKeys.BOOKMARKS);
+				BookmarksPortletKeys.BOOKMARKS_ADMIN);
 
-		Assert.assertEquals(
-			Long.valueOf(lastPublishDate.getTime()),
-			Long.valueOf(
-				portletPreferences.getValue("last-publish-date", null)));
+		Assert.assertNull(
+			portletPreferences.getValue("last-publish-date", null));
 	}
 
 	@Test
@@ -213,7 +201,7 @@ public class PortletImportControllerTest extends BaseExportImportTestCase {
 			portletPreferences =
 				PortletPreferencesFactoryUtil.getStrictPortletSetup(
 					group.getCompanyId(), group.getGroupId(),
-					BookmarksPortletKeys.BOOKMARKS);
+					BookmarksPortletKeys.BOOKMARKS_ADMIN);
 		}
 		else {
 			portletPreferences =

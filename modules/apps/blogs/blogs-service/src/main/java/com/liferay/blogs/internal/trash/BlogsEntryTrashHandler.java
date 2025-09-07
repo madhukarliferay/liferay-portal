@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.internal.trash;
@@ -21,18 +12,20 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.trash.BaseTrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.trash.BaseTrashHandler;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,14 +56,15 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		PortletURL portletURL = getRestoreURL(portletRequest, classPK, false);
-
 		BlogsEntry entry = _blogsEntryLocalService.getEntry(classPK);
 
-		portletURL.setParameter("entryId", String.valueOf(entry.getEntryId()));
-		portletURL.setParameter("urlTitle", entry.getUrlTitle());
-
-		return portletURL.toString();
+		return PortletURLBuilder.create(
+			_getRestoreURL(portletRequest, classPK, false)
+		).setParameter(
+			"entryId", entry.getEntryId()
+		).setParameter(
+			"urlTitle", entry.getUrlTitle()
+		).buildString();
 	}
 
 	@Override
@@ -78,7 +72,7 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 			PortletRequest portletRequest, long classPK)
 		throws PortalException {
 
-		PortletURL portletURL = getRestoreURL(portletRequest, classPK, true);
+		PortletURL portletURL = _getRestoreURL(portletRequest, classPK, true);
 
 		return portletURL.toString();
 	}
@@ -111,7 +105,7 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 			return false;
 		}
 
-		return !entry.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(entry);
 	}
 
 	@Override
@@ -121,7 +115,16 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 		_blogsEntryLocalService.restoreEntryFromTrash(userId, classPK);
 	}
 
-	protected PortletURL getRestoreURL(
+	@Override
+	protected boolean hasPermission(
+			PermissionChecker permissionChecker, long classPK, String actionId)
+		throws PortalException {
+
+		return _blogsEntryModelResourcePermission.contains(
+			permissionChecker, classPK, actionId);
+	}
+
+	private PortletURL _getRestoreURL(
 			PortletRequest portletRequest, long classPK, boolean containerModel)
 		throws PortalException {
 
@@ -153,15 +156,6 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 		return portletURL;
 	}
 
-	@Override
-	protected boolean hasPermission(
-			PermissionChecker permissionChecker, long classPK, String actionId)
-		throws PortalException {
-
-		return _blogsEntryModelResourcePermission.contains(
-			permissionChecker, classPK, actionId);
-	}
-
 	@Reference
 	private BlogsEntryLocalService _blogsEntryLocalService;
 
@@ -171,5 +165,8 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

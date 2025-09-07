@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter.serializer;
@@ -17,19 +8,22 @@ package com.liferay.dynamic.data.mapping.form.builder.internal.converter.seriali
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.action.CalculateDDMFormRuleAction;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.spi.converter.serializer.SPIDDMFormRuleActionSerializer;
+import com.liferay.dynamic.data.mapping.spi.converter.serializer.SPIDDMFormRuleSerializerContext;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Leonardo Barros
  */
 public class CalculateDDMFormRuleActionSerializer
-	implements DDMFormRuleActionSerializer {
+	implements SPIDDMFormRuleActionSerializer {
 
 	public CalculateDDMFormRuleActionSerializer(
 		CalculateDDMFormRuleAction calculateDDMFormRuleAction) {
@@ -39,25 +33,27 @@ public class CalculateDDMFormRuleActionSerializer
 
 	@Override
 	public String serialize(
-		DDMFormRuleSerializerContext ddmFormRuleSerializerContext) {
+		SPIDDMFormRuleSerializerContext spiDDMFormRuleSerializerContext) {
 
-		DDMForm ddmForm = ddmFormRuleSerializerContext.getAttribute("form");
+		if (Validator.isNull(_calculateDDMFormRuleAction.getTarget())) {
+			return null;
+		}
 
-		Map<String, DDMFormField> ddmFormFieldMap = ddmForm.getDDMFormFieldsMap(
-			true);
+		DDMForm ddmForm = spiDDMFormRuleSerializerContext.getAttribute("form");
 
-		String expression = removeBrackets(
+		Map<String, DDMFormField> ddmFormFieldsMap =
+			ddmForm.getDDMFormFieldsMap(true);
+
+		String expression = _removeBrackets(
 			_calculateDDMFormRuleAction.getExpression());
 
-		Set<String> keySet = ddmFormFieldMap.keySet();
+		Set<String> ddmFormFieldNames = new HashSet<>();
 
-		Stream<String> ddmFormFieldStream = keySet.stream();
-
-		Set<String> ddmFormFieldNames = ddmFormFieldStream.filter(
-			ddmFormField -> expression.contains(ddmFormField)
-		).collect(
-			Collectors.toSet()
-		);
+		for (String ddmFormField : ddmFormFieldsMap.keySet()) {
+			if (expression.contains(ddmFormField)) {
+				ddmFormFieldNames.add(ddmFormField);
+			}
+		}
 
 		String newExpression = buildExpression(expression, ddmFormFieldNames);
 
@@ -74,7 +70,7 @@ public class CalculateDDMFormRuleActionSerializer
 
 		StringBuilder newExpressionSB = new StringBuilder();
 
-		StringBuilder sb = new StringBuilder();
+		StringBundler sb = new StringBundler();
 
 		for (int i = 0; i < expression.length(); i++) {
 			char token = expression.charAt(i);
@@ -83,7 +79,7 @@ public class CalculateDDMFormRuleActionSerializer
 
 			String compareStr = sb.toString();
 
-			boolean match = matchAnyField(compareStr, ddmFormFieldNames);
+			boolean match = _matchAnyField(compareStr, ddmFormFieldNames);
 
 			if (match) {
 				newExpressionSB.append(token);
@@ -98,12 +94,12 @@ public class CalculateDDMFormRuleActionSerializer
 			}
 			else {
 				if (i > start) {
-					replace(expression, newExpressionSB, start, i);
+					_replace(expression, newExpressionSB, start, i);
 				}
 
 				newExpressionSB.append(token);
 
-				sb = new StringBuilder();
+				sb = new StringBundler();
 
 				start = Integer.MAX_VALUE;
 				end = Integer.MIN_VALUE;
@@ -111,13 +107,13 @@ public class CalculateDDMFormRuleActionSerializer
 		}
 
 		if (end > start) {
-			replace(expression, newExpressionSB, start, end);
+			_replace(expression, newExpressionSB, start, end);
 		}
 
 		return newExpressionSB.toString();
 	}
 
-	protected boolean matchAnyField(
+	private boolean _matchAnyField(
 		String compareStr, Set<String> ddmFormFields) {
 
 		for (String ddmFormField : ddmFormFields) {
@@ -129,12 +125,12 @@ public class CalculateDDMFormRuleActionSerializer
 		return false;
 	}
 
-	protected String removeBrackets(String expression) {
+	private String _removeBrackets(String expression) {
 		return StringUtil.removeChars(
 			expression, CharPool.OPEN_BRACKET, CharPool.CLOSE_BRACKET);
 	}
 
-	protected void replace(
+	private void _replace(
 		String expression, StringBuilder newExpressionSB, int start, int end) {
 
 		String fieldName = expression.substring(start, end);

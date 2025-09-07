@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.type.controller.internal.portlet.test;
@@ -27,7 +18,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import org.junit.After;
@@ -42,18 +33,17 @@ public abstract class BaseLayoutTypePortletImplTestCase {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		layout = LayoutTestUtil.addLayout(_group, false);
+		layout = LayoutTestUtil.addTypePortletLayout(_group, false);
 
 		layoutTypePortlet = (LayoutTypePortlet)layout.getLayoutType();
-
-		_layoutStaticPortletsAll = PropsValues.LAYOUT_STATIC_PORTLETS_ALL;
 	}
 
 	@After
 	public void tearDown() {
-		StringBundler sb = new StringBundler(_layoutStaticPortletsAll.length);
+		StringBundler sb = new StringBundler(
+			_LAYOUT_STATIC_PORTLETS_ALL.length);
 
-		for (String layoutStaticPortlet : _layoutStaticPortletsAll) {
+		for (String layoutStaticPortlet : _LAYOUT_STATIC_PORTLETS_ALL) {
 			sb.append(layoutStaticPortlet);
 		}
 
@@ -73,9 +63,10 @@ public abstract class BaseLayoutTypePortletImplTestCase {
 	protected Layout layout;
 	protected LayoutTypePortlet layoutTypePortlet;
 
+	private static final String[] _LAYOUT_STATIC_PORTLETS_ALL =
+		PropsValues.LAYOUT_STATIC_PORTLETS_ALL;
+
 	@DeleteAfterTestRun
 	private Group _group;
-
-	private String[] _layoutStaticPortletsAll;
 
 }

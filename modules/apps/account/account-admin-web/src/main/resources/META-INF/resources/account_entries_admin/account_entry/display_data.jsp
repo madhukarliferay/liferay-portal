@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,39 +9,59 @@
 
 <%
 AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttribute(AccountWebKeys.ACCOUNT_ENTRY_DISPLAY);
+
+String[] types = GetterUtil.getStringValues(request.getAttribute(AccountWebKeys.ACCOUNT_ENTRY_ALLOWED_TYPES), AccountConstants.getAccountEntryTypes(themeDisplay.getCompanyId()));
 %>
 
-<div class="sheet-section">
+<clay:sheet-section>
+	<aui:input name="emailAddress" type="hidden" value="<%= accountEntryDisplay.getEmailAddress() %>" />
+
 	<h3 class="sheet-subtitle">
-		<%= LanguageUtil.get(request, "account-display-data") %>
+		<liferay-ui:message key="account-display-data" />
 	</h3>
 
-	<aui:row>
-		<aui:col width="<%= 50 %>">
-			<aui:field-wrapper cssClass="form-group lfr-input-text-container">
-				<aui:input label="account-name" name="name" required="<%= true %>" type="text" value="<%= (accountEntryDisplay == null) ? StringPool.BLANK : accountEntryDisplay.getName() %>">
-					<aui:validator name="maxLength"><%= ModelHintsUtil.getMaxLength(AccountEntry.class.getName(), "name") %></aui:validator>
-				</aui:input>
-			</aui:field-wrapper>
-		</aui:col>
+	<liferay-frontend:logo-selector
+		currentLogoURL="<%= accountEntryDisplay.getLogoURL() %>"
+		defaultLogoURL="<%= accountEntryDisplay.getDefaultLogoURL() %>"
+		label='<%= LanguageUtil.get(request, "image") %>'
+	/>
 
-		<aui:col width="<%= 40 %>">
-			<div class="text-center">
-				<liferay-ui:logo-selector
-					currentLogoURL='<%= ((accountEntryDisplay == null) || (accountEntryDisplay.getLogoId() == 0)) ? themeDisplay.getPathImage() + "/organization_logo?img_id=0" : accountEntryDisplay.getLogoURL(themeDisplay) %>'
-					defaultLogo="<%= (accountEntryDisplay == null) || (accountEntryDisplay.getLogoId() == 0) %>"
-					defaultLogoURL='<%= themeDisplay.getPathImage() + "/organization_logo?img_id=0" %>'
-					tempImageFileName='<%= (accountEntryDisplay == null) ? "0" : String.valueOf(accountEntryDisplay.getAccountEntryId()) %>'
-				/>
-			</div>
-		</aui:col>
-	</aui:row>
+	<aui:input bean="<%= accountEntryDisplay %>" label="account-name" model="<%= AccountEntry.class %>" name="name" />
+
+	<c:choose>
+		<c:when test="<%= accountEntryDisplay.getAccountEntryId() > 0 %>">
+			<aui:input disabled="<%= true %>" label="type" name="type" value="<%= LanguageUtil.get(request, accountEntryDisplay.getType()) %>" />
+		</c:when>
+		<c:otherwise>
+			<aui:select label="type" name="type">
+
+				<%
+				for (String type : types) {
+				%>
+
+					<aui:option label="<%= LanguageUtil.get(request, type) %>" value="<%= type %>" />
+
+				<%
+				}
+				%>
+
+			</aui:select>
+		</c:otherwise>
+	</c:choose>
+
+	<aui:input helpMessage="tax-id-help" label="tax-id" name="taxIdNumber" type="text" value="<%= accountEntryDisplay.getTaxIdNumber() %>">
+		<aui:validator name="maxLength"><%= ModelHintsUtil.getMaxLength(AccountEntry.class.getName(), "taxIdNumber") %></aui:validator>
+	</aui:input>
+
+	<liferay-ui:error embed="<%= false %>" key="<%= DuplicateAccountEntryExternalReferenceCodeException.class.getName() %>" message="the-given-external-reference-code-belongs-to-another-account" />
+
+	<aui:input bean="<%= accountEntryDisplay %>" label="external-reference-code" model="<%= AccountEntry.class %>" name="externalReferenceCode" />
+
+	<c:if test="<%= accountEntryDisplay.getAccountEntryId() > 0 %>">
+		<aui:input cssClass="disabled" label="account-id" name="accountEntryId" readonly="true" type="text" value="<%= String.valueOf(accountEntryDisplay.getAccountEntryId()) %>" />
+	</c:if>
 
 	<aui:field-wrapper cssClass="form-group lfr-input-text-container">
-		<aui:input name="description" type="textarea" value="<%= (accountEntryDisplay == null) ? StringPool.BLANK : accountEntryDisplay.getDescription() %>" />
+		<aui:input name="description" type="textarea" value="<%= accountEntryDisplay.getDescription() %>" />
 	</aui:field-wrapper>
-
-	<aui:field-wrapper cssClass="form-group lfr-input-text-container">
-		<aui:input label="" labelOff="inactive" labelOn="active" name="active" type="toggle-switch" value="<%= (accountEntryDisplay == null) ? true : accountEntryDisplay.isActive() %>" />
-	</aui:field-wrapper>
-</div>
+</clay:sheet-section>

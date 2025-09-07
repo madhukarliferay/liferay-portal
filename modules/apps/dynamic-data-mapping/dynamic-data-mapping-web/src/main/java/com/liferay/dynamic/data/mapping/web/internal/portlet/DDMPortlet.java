@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.web.internal.portlet;
 
+import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.constants.DDMWebKeys;
 import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
@@ -35,15 +27,12 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateService;
-import com.liferay.dynamic.data.mapping.storage.StorageAdapterRegistry;
-import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistry;
 import com.liferay.dynamic.data.mapping.util.DDMTemplateHelper;
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldName;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetOptionsForField;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldName;
-import com.liferay.dynamic.data.mapping.web.internal.configuration.DDMWebConfiguration;
 import com.liferay.dynamic.data.mapping.web.internal.display.context.DDMDisplayContext;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.LocaleException;
@@ -61,20 +50,19 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
 import java.io.IOException;
 
 import java.util.Map;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
@@ -82,15 +70,13 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	configurationPid = "com.liferay.dynamic.data.mapping.web.internal.configuration.DDMWebConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
+	configurationPid = "com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration",
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.autopropagated-parameters=backURL",
 		"com.liferay.portlet.autopropagated-parameters=navigationStartsOn",
 		"com.liferay.portlet.autopropagated-parameters=refererPortletName",
 		"com.liferay.portlet.autopropagated-parameters=refererWebDAVToken",
-		"com.liferay.portlet.autopropagated-parameters=scopeTitle",
 		"com.liferay.portlet.autopropagated-parameters=showAncestorScopes",
 		"com.liferay.portlet.autopropagated-parameters=showBackURL",
 		"com.liferay.portlet.autopropagated-parameters=showCacheableInput",
@@ -99,22 +85,23 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.css-class-wrapper=portlet-dynamic-data-mapping",
 		"com.liferay.portlet.display-category=category.hidden",
 		"com.liferay.portlet.header-portlet-css=/css/main.css",
-		"com.liferay.portlet.header-portlet-javascript=/js/custom_fields.js",
-		"com.liferay.portlet.header-portlet-javascript=/js/main.js",
+		"com.liferay.portlet.header-portlet-javascript=/js/legacy/custom_fields.js",
+		"com.liferay.portlet.header-portlet-javascript=/js/legacy/main.js",
 		"com.liferay.portlet.preferences-owned-by-group=true",
 		"com.liferay.portlet.private-request-attributes=false",
 		"com.liferay.portlet.private-session-attributes=false",
 		"com.liferay.portlet.render-weight=50",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Dynamic Data Mapping Web",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.always-send-redirect=true",
-		"javax.portlet.init-param.copy-request-parameters=true",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/view.jsp",
-		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"jakarta.portlet.display-name=Dynamic Data Mapping Web",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.always-send-redirect=true",
+		"jakarta.portlet.init-param.copy-request-parameters=true",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/view.jsp",
+		"jakarta.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=power-user,user",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
@@ -128,38 +115,39 @@ public class DDMPortlet extends MVCPortlet {
 		try {
 			super.processAction(actionRequest, actionResponse);
 		}
-		catch (Exception e) {
-			if (e instanceof NoSuchStructureException ||
-				e instanceof NoSuchTemplateException ||
-				e instanceof PortletPreferencesException ||
-				e instanceof PrincipalException) {
+		catch (Exception exception) {
+			if (exception instanceof NoSuchStructureException ||
+				exception instanceof NoSuchTemplateException ||
+				exception instanceof PortletPreferencesException ||
+				exception instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass());
+				SessionErrors.add(actionRequest, exception.getClass());
 
 				include("/error.jsp", actionRequest, actionResponse);
 			}
-			else if (e instanceof DDMFormLayoutValidationException ||
-					 e instanceof DDMFormValidationException ||
-					 e instanceof LocaleException ||
-					 e instanceof MustNotDuplicateFieldName ||
-					 e instanceof MustSetOptionsForField ||
-					 e instanceof MustSetValidCharactersForFieldName ||
-					 e instanceof RequiredStructureException ||
-					 e instanceof RequiredTemplateException ||
-					 e instanceof StructureDefinitionException ||
-					 e instanceof StructureDuplicateElementException ||
-					 e instanceof StructureNameException ||
-					 e instanceof TemplateNameException ||
-					 e instanceof TemplateNameException ||
-					 e instanceof TemplateScriptException ||
-					 e instanceof TemplateSmallImageContentException ||
-					 e instanceof TemplateSmallImageNameException ||
-					 e instanceof TemplateSmallImageSizeException) {
+			else if (exception instanceof DDMFormLayoutValidationException ||
+					 exception instanceof DDMFormValidationException ||
+					 exception instanceof LocaleException ||
+					 exception instanceof MustNotDuplicateFieldName ||
+					 exception instanceof MustSetOptionsForField ||
+					 exception instanceof MustSetValidCharactersForFieldName ||
+					 exception instanceof RequiredStructureException ||
+					 exception instanceof RequiredTemplateException ||
+					 exception instanceof StructureDefinitionException ||
+					 exception instanceof StructureDuplicateElementException ||
+					 exception instanceof StructureNameException ||
+					 exception instanceof TemplateNameException ||
+					 exception instanceof TemplateNameException ||
+					 exception instanceof TemplateScriptException ||
+					 exception instanceof TemplateSmallImageContentException ||
+					 exception instanceof TemplateSmallImageNameException ||
+					 exception instanceof TemplateSmallImageSizeException) {
 
-				SessionErrors.add(actionRequest, e.getClass(), e);
+				SessionErrors.add(
+					actionRequest, exception.getClass(), exception);
 
-				if (e instanceof RequiredStructureException ||
-					e instanceof RequiredTemplateException) {
+				if (exception instanceof RequiredStructureException ||
+					exception instanceof RequiredTemplateException) {
 
 					String redirect = portal.escapeRedirect(
 						ParamUtil.getString(actionRequest, "redirect"));
@@ -170,7 +158,7 @@ public class DDMPortlet extends MVCPortlet {
 				}
 			}
 			else {
-				throw e;
+				throw exception;
 			}
 		}
 	}
@@ -181,31 +169,32 @@ public class DDMPortlet extends MVCPortlet {
 		throws IOException, PortletException {
 
 		try {
-			setDDMDisplayContextRequestAttribute(renderRequest, renderResponse);
+			_setDDMDisplayContextRequestAttribute(
+				renderRequest, renderResponse);
 
-			setDDMTemplateRequestAttribute(renderRequest);
+			_setDDMTemplateRequestAttribute(renderRequest);
 
-			setDDMStructureRequestAttribute(renderRequest);
+			_setDDMStructureRequestAttribute(renderRequest);
 		}
-		catch (NoSuchStructureException | NoSuchTemplateException e) {
+		catch (NoSuchStructureException | NoSuchTemplateException exception) {
 
 			// Let this slide because the user can manually input a structure
 			// or template key for a new model that does not yet exist
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 		}
-		catch (Exception e) {
-			if (e instanceof PortletPreferencesException ||
-				e instanceof PrincipalException) {
+		catch (Exception exception) {
+			if (exception instanceof PortletPreferencesException ||
+				exception instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass());
+				SessionErrors.add(renderRequest, exception.getClass());
 
 				include("/error.jsp", renderRequest, renderResponse);
 			}
 			else {
-				throw new PortletException(e);
+				throw new PortletException(exception);
 			}
 		}
 
@@ -224,42 +213,49 @@ public class DDMPortlet extends MVCPortlet {
 			DDMWebConfiguration.class, properties);
 	}
 
-	protected void setDDMDisplayContextRequestAttribute(
+	@Reference
+	protected volatile DDMStructureLinkLocalService
+		ddmStructureLinkLocalService;
+
+	@Reference
+	protected volatile DDMStructureLocalService ddmStructureLocalService;
+
+	@Reference
+	protected volatile DDMStructureService ddmStructureService;
+
+	@Reference
+	protected DDMTemplateHelper ddmTemplateHelper;
+
+	@Reference
+	protected volatile DDMTemplateLocalService ddmTemplateLocalService;
+
+	@Reference
+	protected volatile DDMTemplateService ddmTemplateService;
+
+	protected volatile DDMWebConfiguration ddmWebConfiguration;
+
+	@Reference
+	protected Portal portal;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.dynamic.data.mapping.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))"
+	)
+	protected Release release;
+
+	private void _setDDMDisplayContextRequestAttribute(
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortalException {
 
 		DDMDisplayContext ddmDisplayContext = new DDMDisplayContext(
-			renderRequest, renderResponse, _ddmDisplayRegistry,
-			ddmStructureLinkLocalService, ddmStructureService,
-			_ddmTemplateHelper, ddmTemplateService, ddmWebConfiguration,
-			_storageAdapterRegistry);
+			renderRequest, renderResponse, ddmStructureLinkLocalService,
+			ddmStructureService, ddmTemplateHelper, ddmTemplateService,
+			ddmWebConfiguration);
 
 		renderRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT, ddmDisplayContext);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMDisplayRegistry(
-		DDMDisplayRegistry ddmDisplayRegistry) {
-
-		_ddmDisplayRegistry = ddmDisplayRegistry;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureLinkLocalService(
-		DDMStructureLinkLocalService ddmStructureLinkLocalService) {
-
-		this.ddmStructureLinkLocalService = ddmStructureLinkLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		this.ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	protected void setDDMStructureRequestAttribute(RenderRequest renderRequest)
+	private void _setDDMStructureRequestAttribute(RenderRequest renderRequest)
 		throws PortalException {
 
 		long classNameId = ParamUtil.getLong(renderRequest, "classNameId");
@@ -280,26 +276,7 @@ public class DDMPortlet extends MVCPortlet {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMStructureService(
-		DDMStructureService ddmStructureService) {
-
-		this.ddmStructureService = ddmStructureService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateHelper(DDMTemplateHelper ddmTemplateHelper) {
-		_ddmTemplateHelper = ddmTemplateHelper;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateLocalService(
-		DDMTemplateLocalService ddmTemplateLocalService) {
-
-		this.ddmTemplateLocalService = ddmTemplateLocalService;
-	}
-
-	protected void setDDMTemplateRequestAttribute(RenderRequest renderRequest)
+	private void _setDDMTemplateRequestAttribute(RenderRequest renderRequest)
 		throws PortalException {
 
 		long templateId = ParamUtil.getLong(renderRequest, "templateId");
@@ -313,42 +290,6 @@ public class DDMPortlet extends MVCPortlet {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMTemplateService(
-		DDMTemplateService ddmTemplateService) {
-
-		this.ddmTemplateService = ddmTemplateService;
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.dynamic.data.mapping.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setStorageAdapterRegistry(
-		StorageAdapterRegistry storageAdapterRegistry) {
-
-		_storageAdapterRegistry = storageAdapterRegistry;
-	}
-
-	protected volatile DDMStructureLinkLocalService
-		ddmStructureLinkLocalService;
-	protected volatile DDMStructureLocalService ddmStructureLocalService;
-	protected volatile DDMStructureService ddmStructureService;
-	protected volatile DDMTemplateLocalService ddmTemplateLocalService;
-	protected volatile DDMTemplateService ddmTemplateService;
-	protected volatile DDMWebConfiguration ddmWebConfiguration;
-
-	@Reference
-	protected Portal portal;
-
 	private static final Log _log = LogFactoryUtil.getLog(DDMPortlet.class);
-
-	private DDMDisplayRegistry _ddmDisplayRegistry;
-	private DDMTemplateHelper _ddmTemplateHelper;
-	private StorageAdapterRegistry _storageAdapterRegistry;
 
 }

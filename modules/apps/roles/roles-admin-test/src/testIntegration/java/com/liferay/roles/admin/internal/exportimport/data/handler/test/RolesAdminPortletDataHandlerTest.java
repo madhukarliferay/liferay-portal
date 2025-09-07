@@ -1,38 +1,62 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.roles.admin.internal.exportimport.data.handler.test;
 
-import com.liferay.account.model.AccountRole;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationSettingsMapFactoryUtil;
+import com.liferay.exportimport.kernel.configuration.constants.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.lar.DataLevel;
 import com.liferay.exportimport.kernel.lar.ManifestSummary;
+import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
+import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
+import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
+import com.liferay.exportimport.kernel.service.ExportImportLocalService;
 import com.liferay.exportimport.test.util.lar.BasePortletDataHandlerTestCase;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.test.rule.FeatureFlags;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.roles.admin.constants.RolesAdminPortletKeys;
+import com.liferay.roles.admin.role.type.contributor.RoleTypeContributor;
+import com.liferay.roles.admin.role.type.contributor.provider.RoleTypeContributorProvider;
+import com.liferay.staging.StagingGroupHelper;
 
+import java.io.File;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +65,11 @@ import org.junit.runner.RunWith;
 /**
  * @author Zoltan Csaszi
  */
+@FeatureFlags(
+	featureFlags = {
+		@FeatureFlag(value = "LPD-35914"), @FeatureFlag(value = "LPD-47858")
+	}
+)
 @RunWith(Arquillian.class)
 public class RolesAdminPortletDataHandlerTest
 	extends BasePortletDataHandlerTestCase {
@@ -48,7 +77,80 @@ public class RolesAdminPortletDataHandlerTest
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
+
+	@BeforeClass
+	public static void setUpClass() {
+		FeatureFlagTestUtil.invokeFeatureFlagListeners(
+			CompanyConstants.SYSTEM, true, "LPD-35914");
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		FeatureFlagTestUtil.invokeFeatureFlagListeners(
+			CompanyConstants.SYSTEM, false, "LPD-35914");
+	}
+
+	@Test
+	public void testExportImportRole() throws Exception {
+		Group group = _stagingGroupHelper.fetchCompanyGroup(
+			TestPropsValues.getCompanyId());
+
+		Role role = _roleLocalService.addRole(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(), null, 0,
+			RandomTestUtil.randomString(), null,
+			Collections.singletonMap(
+				LocaleUtil.US, RandomTestUtil.randomString(4001)),
+			RoleConstants.TYPE_REGULAR, null, null);
+
+		File larFile = _exportImportLocalService.exportLayoutsAsFile(
+			_exportImportConfigurationLocalService.
+				addDraftExportImportConfiguration(
+					TestPropsValues.getUserId(),
+					ExportImportConfigurationConstants.TYPE_EXPORT_LAYOUT,
+					ExportImportConfigurationSettingsMapFactoryUtil.
+						buildExportLayoutSettingsMap(
+							TestPropsValues.getUser(), group.getGroupId(),
+							false, new long[0],
+							HashMapBuilder.put(
+								PortletDataHandlerKeys.PORTLET_DATA,
+								new String[] {Boolean.TRUE.toString()}
+							).put(
+								PortletDataHandlerKeys.PORTLET_DATA + "_" +
+									RolesAdminPortletKeys.ROLES_ADMIN,
+								new String[] {Boolean.TRUE.toString()}
+							).build())));
+
+		_roleLocalService.deleteRole(role);
+
+		ExportImportConfiguration exportImportConfiguration =
+			_exportImportConfigurationLocalService.
+				addDraftExportImportConfiguration(
+					TestPropsValues.getUserId(),
+					ExportImportConfigurationConstants.TYPE_IMPORT_LAYOUT,
+					ExportImportConfigurationSettingsMapFactoryUtil.
+						buildImportLayoutSettingsMap(
+							TestPropsValues.getUser(), group.getGroupId(),
+							false, new long[0],
+							HashMapBuilder.put(
+								PortletDataHandlerKeys.PORTLET_DATA,
+								new String[] {Boolean.TRUE.toString()}
+							).put(
+								PortletDataHandlerKeys.PORTLET_DATA + "_" +
+									RolesAdminPortletKeys.ROLES_ADMIN,
+								new String[] {Boolean.TRUE.toString()}
+							).build()));
+
+		_exportImportLocalService.importLayouts(
+			exportImportConfiguration, larFile);
+
+		Assert.assertNotNull(
+			_roleLocalService.fetchRoleByExternalReferenceCode(
+				role.getExternalReferenceCode(),
+				TestPropsValues.getCompanyId()));
+	}
 
 	@Override
 	@Test
@@ -63,7 +165,18 @@ public class RolesAdminPortletDataHandlerTest
 			_company.getCompanyId(), _user.getUserId(),
 			GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
-		super.testPrepareManifestSummary();
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
+
+		try {
+			super.testPrepareManifestSummary();
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(permissionChecker);
+		}
 	}
 
 	@Override
@@ -74,14 +187,33 @@ public class RolesAdminPortletDataHandlerTest
 	protected void checkManifestSummaryReferrerClassNames(
 		ManifestSummary manifestSummary) {
 
+		Set<String> classNames = new HashSet<>();
+
+		classNames.add(StagedModelType.REFERRER_CLASS_NAME_ALL);
+		classNames.add(Role.class.getName());
+
+		for (RoleTypeContributor roleTypeContributor :
+				_roleTypeContributorProvider.getRoleTypeContributors()) {
+
+			if (Validator.isNotNull(roleTypeContributor.getClassName())) {
+				classNames.add(roleTypeContributor.getClassName());
+			}
+		}
+
 		for (String manifestSummaryKey :
 				manifestSummary.getManifestSummaryKeys()) {
 
-			Assert.assertTrue(
-				manifestSummaryKey.endsWith(
-					StagedModelType.REFERRER_CLASS_NAME_ALL) ||
-				manifestSummaryKey.endsWith(AccountRole.class.getName()) ||
-				manifestSummaryKey.endsWith(Role.class.getName()));
+			boolean hasMatch = false;
+
+			for (String className : classNames) {
+				if (manifestSummaryKey.endsWith(className)) {
+					hasMatch = true;
+
+					break;
+				}
+			}
+
+			Assert.assertTrue(hasMatch);
 		}
 	}
 
@@ -112,6 +244,22 @@ public class RolesAdminPortletDataHandlerTest
 
 	@DeleteAfterTestRun
 	private Company _company;
+
+	@Inject
+	private ExportImportConfigurationLocalService
+		_exportImportConfigurationLocalService;
+
+	@Inject
+	private ExportImportLocalService _exportImportLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private RoleTypeContributorProvider _roleTypeContributorProvider;
+
+	@Inject
+	private StagingGroupHelper _stagingGroupHelper;
 
 	@DeleteAfterTestRun
 	private User _user;

@@ -1,124 +1,128 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayLayout from '@clayui/layout';
+import ClayPanel from '@clayui/panel';
 import React, {useMemo} from 'react';
 
-import Panel from '../../../shared/components/Panel.es';
-import PromisesResolver from '../../../shared/components/request/PromisesResolver.es';
-import {useFetch} from '../../../shared/hooks/useFetch.es';
+import PanelHeaderWithOptions from '../../../shared/components/panel-header-with-options/PanelHeaderWithOptions.es';
+import PromisesResolver from '../../../shared/components/promises-resolver/PromisesResolver.es';
 import {useFilter} from '../../../shared/hooks/useFilter.es';
+import {usePost} from '../../../shared/hooks/usePost.es';
 import ProcessStepFilter from '../../filter/ProcessStepFilter.es';
 import TimeRangeFilter from '../../filter/TimeRangeFilter.es';
-import {isValidDate} from '../../filter/util/timeRangeUtil.es';
+import {getTimeRangeParams} from '../../filter/util/timeRangeUtil.es';
 import {Body, Footer} from './PerformanceByAssigneeCardBody.es';
 
-const Header = ({dispatch, prefixKey, processId}) => {
+function Header({disableFilters, prefixKey, processId}) {
 	return (
-		<Panel.HeaderWithOptions
+		<PanelHeaderWithOptions
+			className="tabs-panel-header"
 			description={Liferay.Language.get(
 				'performance-by-assignee-description'
 			)}
-			elementClasses="dashboard-panel-header"
 			title={Liferay.Language.get('performance-by-assignee')}
 		>
-			<div className="autofit-col m-0 management-bar management-bar-light navbar">
-				<ul className="navbar-nav">
+			<ClayLayout.ContentCol className="m-0 management-bar management-bar-light navbar">
+				<div className="navbar-nav">
 					<ProcessStepFilter
-						dispatch={dispatch}
+						disabled={disableFilters}
 						options={{
 							hideControl: true,
 							multiple: false,
-							position: 'right',
 							withAllSteps: true,
-							withSelectionTitle: true
+							withSelectionTitle: true,
 						}}
 						prefixKey={prefixKey}
 						processId={processId}
 					/>
 
 					<TimeRangeFilter
-						className={'pl-3'}
-						dispatch={dispatch}
-						options={{position: 'right'}}
+						className="pl-3"
+						disabled={disableFilters}
 						prefixKey={prefixKey}
 					/>
-				</ul>
-			</div>
-		</Panel.HeaderWithOptions>
+				</div>
+			</ClayLayout.ContentCol>
+		</PanelHeaderWithOptions>
 	);
-};
+}
 
-const PerformanceByAssigneeCard = ({routeParams}) => {
+function PerformanceByAssigneeCard({routeParams}) {
 	const {processId} = routeParams;
-
 	const filterKeys = ['processStep', 'timeRange'];
 	const prefixKey = 'assignee';
 	const prefixKeys = [prefixKey];
-	const {dispatch, filterState = {}, filterValues} = useFilter(
+
+	const {
+		filterValues: {
+			assigneeDateEnd,
+			assigneeDateStart,
+			assigneeTaskNames: [taskName] = ['allSteps'],
+			assigneeTimeRange: [key] = [],
+		},
+		filtersError,
+	} = useFilter({
 		filterKeys,
-		prefixKeys
+		prefixKeys,
+	});
+
+	const taskNames = taskName !== 'allSteps' ? [taskName] : undefined;
+	const timeRange = useMemo(
+		() => getTimeRangeParams(assigneeDateStart, assigneeDateEnd),
+		[assigneeDateEnd, assigneeDateStart]
 	);
 
-	const params = {
-		completed: true,
-		page: 1,
-		pageSize: 10,
-		sort: 'durationTaskAvg:desc'
-	};
+	const {data, postData} = usePost({
+		body: {
+			completed: true,
+			taskNames,
+			...timeRange,
+		},
+		params: {
+			page: 1,
+			pageSize: 10,
+			sort: 'durationTaskAvg:desc',
+		},
+		url: `/processes/${processId}/assignees/metrics`,
+	});
 
-	const processStep = filterValues.assigneetaskKeys || [];
-	if (processStep.length && processStep[0] !== 'allSteps') {
-		params.taskKeys = processStep[0];
-	}
+	const promises = useMemo(() => {
+		if (timeRange.dateEnd && timeRange.dateStart) {
+			return [postData()];
+		}
 
-	const timeRange = filterState.assigneetimeRange || [];
-	const timeRangeValues = timeRange.length ? timeRange[0] : {};
-	const {dateEnd, dateStart} = timeRangeValues;
+		return [new Promise((_, reject) => reject(filtersError))];
 
-	if (isValidDate(dateEnd) && isValidDate(dateStart)) {
-		params.dateEnd = dateEnd.toISOString();
-		params.dateStart = dateStart.toISOString();
-	}
-
-	const {data, fetchData} = useFetch(
-		`/processes/${processId}/assignee-users`,
-		params
-	);
-
-	const promises = useMemo(() => [fetchData()], [fetchData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filtersError, routeParams, timeRange.dateEnd, timeRange.dateStart]);
 
 	return (
-		<Panel elementClasses="dashboard-card">
+		<ClayPanel className="mt-4 tabs-card">
 			<PromisesResolver promises={promises}>
 				<PerformanceByAssigneeCard.Header
-					dispatch={dispatch}
+					disableFilters={filtersError}
 					prefixKey={prefixKey}
 					{...routeParams}
 				/>
 
 				<PerformanceByAssigneeCard.Body
-					data={data}
-					filtered={params.taskKeys}
+					{...data}
+					filtered={!!taskNames}
 				/>
 
 				<PerformanceByAssigneeCard.Footer
-					processStep={params.taskKeys}
-					timeRange={timeRangeValues}
-					totalCount={data.totalCount}
+					processStep={taskName}
+					timeRange={{key, ...timeRange}}
+					totalCount={data?.totalCount}
 					{...routeParams}
 				/>
 			</PromisesResolver>
-		</Panel>
+		</ClayPanel>
 	);
-};
+}
 
 PerformanceByAssigneeCard.Body = Body;
 PerformanceByAssigneeCard.Footer = Footer;

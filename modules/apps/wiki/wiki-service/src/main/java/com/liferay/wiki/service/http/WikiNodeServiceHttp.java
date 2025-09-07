@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.http;
@@ -46,7 +37,6 @@ import com.liferay.wiki.service.WikiNodeServiceUtil;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see WikiNodeServiceSoap
  * @generated
  */
 public class WikiNodeServiceHttp {
@@ -68,24 +58,68 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.wiki.model.WikiNode)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static com.liferay.wiki.model.WikiNode addNode(
+			HttpPrincipal httpPrincipal, String externalReferenceCode,
+			String name, String description,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				WikiNodeServiceUtil.class, "addNode", _addNodeParameterTypes1);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, externalReferenceCode, name, description,
+				serviceContext);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.wiki.model.WikiNode)returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -95,29 +129,31 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "deleteNode",
-				_deleteNodeParameterTypes1);
+				_deleteNodeParameterTypes2);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -127,7 +163,7 @@ public class WikiNodeServiceHttp {
 
 		try {
 			MethodKey methodKey = new MethodKey(
-				WikiNodeServiceUtil.class, "getNode", _getNodeParameterTypes2);
+				WikiNodeServiceUtil.class, "getNode", _getNodeParameterTypes3);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
@@ -136,24 +172,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.wiki.model.WikiNode)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -163,7 +201,7 @@ public class WikiNodeServiceHttp {
 
 		try {
 			MethodKey methodKey = new MethodKey(
-				WikiNodeServiceUtil.class, "getNode", _getNodeParameterTypes3);
+				WikiNodeServiceUtil.class, "getNode", _getNodeParameterTypes4);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, name);
@@ -173,24 +211,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.wiki.model.WikiNode)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -201,7 +241,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodes",
-				_getNodesParameterTypes4);
+				_getNodesParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
 
@@ -210,24 +250,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List<com.liferay.wiki.model.WikiNode>)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -238,7 +280,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodes",
-				_getNodesParameterTypes5);
+				_getNodesParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, status);
@@ -248,24 +290,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List<com.liferay.wiki.model.WikiNode>)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -275,7 +319,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodes",
-				_getNodesParameterTypes6);
+				_getNodesParameterTypes7);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, start, end);
@@ -285,17 +329,19 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List<com.liferay.wiki.model.WikiNode>)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -306,7 +352,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodes",
-				_getNodesParameterTypes7);
+				_getNodesParameterTypes8);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, status, start, end);
@@ -316,17 +362,19 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List<com.liferay.wiki.model.WikiNode>)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -334,32 +382,34 @@ public class WikiNodeServiceHttp {
 		HttpPrincipal httpPrincipal, long groupId, int status, int start,
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.wiki.model.WikiNode> obc) {
+			<com.liferay.wiki.model.WikiNode> orderByComparator) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodes",
-				_getNodesParameterTypes8);
+				_getNodesParameterTypes9);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, groupId, status, start, end, obc);
+				methodKey, groupId, status, start, end, orderByComparator);
 
 			Object returnObj = null;
 
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (java.util.List<com.liferay.wiki.model.WikiNode>)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -367,7 +417,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodesCount",
-				_getNodesCountParameterTypes9);
+				_getNodesCountParameterTypes10);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
 
@@ -376,17 +426,19 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Integer)returnObj).intValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -396,7 +448,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "getNodesCount",
-				_getNodesCountParameterTypes10);
+				_getNodesCountParameterTypes11);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, groupId, status);
@@ -406,22 +458,66 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Integer)returnObj).intValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static com.liferay.wiki.model.WikiNode
+			getWikiNodeByExternalReferenceCode(
+				HttpPrincipal httpPrincipal, long groupId,
+				String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				WikiNodeServiceUtil.class, "getWikiNodeByExternalReferenceCode",
+				_getWikiNodeByExternalReferenceCodeParameterTypes12);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupId, externalReferenceCode);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.wiki.model.WikiNode)returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
 	public static void importPages(
-			HttpPrincipal httpPrincipal, long nodeId, String importer,
+			HttpPrincipal httpPrincipal, long nodeId,
 			java.io.InputStream[] inputStreams,
 			java.util.Map<String, String[]> options)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -429,30 +525,32 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "importPages",
-				_importPagesParameterTypes11);
+				_importPagesParameterTypes13);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, nodeId, importer, inputStreams, options);
+				methodKey, nodeId, inputStreams, options);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -463,7 +561,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "moveNodeToTrash",
-				_moveNodeToTrashParameterTypes12);
+				_moveNodeToTrashParameterTypes14);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
@@ -472,24 +570,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.wiki.model.WikiNode)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -500,29 +600,31 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "restoreNodeFromTrash",
-				_restoreNodeFromTrashParameterTypes13);
+				_restoreNodeFromTrashParameterTypes15);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -532,29 +634,31 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "subscribeNode",
-				_subscribeNodeParameterTypes14);
+				_subscribeNodeParameterTypes16);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -564,29 +668,31 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "unsubscribeNode",
-				_unsubscribeNodeParameterTypes15);
+				_unsubscribeNodeParameterTypes17);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, nodeId);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -599,7 +705,7 @@ public class WikiNodeServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				WikiNodeServiceUtil.class, "updateNode",
-				_updateNodeParameterTypes16);
+				_updateNodeParameterTypes18);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, nodeId, name, description, serviceContext);
@@ -609,24 +715,26 @@ public class WikiNodeServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.wiki.model.WikiNode)returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -636,48 +744,55 @@ public class WikiNodeServiceHttp {
 		String.class, String.class,
 		com.liferay.portal.kernel.service.ServiceContext.class
 	};
-	private static final Class<?>[] _deleteNodeParameterTypes1 = new Class[] {
-		long.class
+	private static final Class<?>[] _addNodeParameterTypes1 = new Class[] {
+		String.class, String.class, String.class,
+		com.liferay.portal.kernel.service.ServiceContext.class
 	};
-	private static final Class<?>[] _getNodeParameterTypes2 = new Class[] {
+	private static final Class<?>[] _deleteNodeParameterTypes2 = new Class[] {
 		long.class
 	};
 	private static final Class<?>[] _getNodeParameterTypes3 = new Class[] {
-		long.class, String.class
-	};
-	private static final Class<?>[] _getNodesParameterTypes4 = new Class[] {
 		long.class
 	};
+	private static final Class<?>[] _getNodeParameterTypes4 = new Class[] {
+		long.class, String.class
+	};
 	private static final Class<?>[] _getNodesParameterTypes5 = new Class[] {
-		long.class, int.class
+		long.class
 	};
 	private static final Class<?>[] _getNodesParameterTypes6 = new Class[] {
-		long.class, int.class, int.class
+		long.class, int.class
 	};
 	private static final Class<?>[] _getNodesParameterTypes7 = new Class[] {
-		long.class, int.class, int.class, int.class
+		long.class, int.class, int.class
 	};
 	private static final Class<?>[] _getNodesParameterTypes8 = new Class[] {
+		long.class, int.class, int.class, int.class
+	};
+	private static final Class<?>[] _getNodesParameterTypes9 = new Class[] {
 		long.class, int.class, int.class, int.class,
 		com.liferay.portal.kernel.util.OrderByComparator.class
 	};
-	private static final Class<?>[] _getNodesCountParameterTypes9 =
-		new Class[] {long.class};
 	private static final Class<?>[] _getNodesCountParameterTypes10 =
+		new Class[] {long.class};
+	private static final Class<?>[] _getNodesCountParameterTypes11 =
 		new Class[] {long.class, int.class};
-	private static final Class<?>[] _importPagesParameterTypes11 = new Class[] {
-		long.class, String.class, java.io.InputStream[].class,
-		java.util.Map.class
+	private static final Class<?>[]
+		_getWikiNodeByExternalReferenceCodeParameterTypes12 = new Class[] {
+			long.class, String.class
+		};
+	private static final Class<?>[] _importPagesParameterTypes13 = new Class[] {
+		long.class, java.io.InputStream[].class, java.util.Map.class
 	};
-	private static final Class<?>[] _moveNodeToTrashParameterTypes12 =
+	private static final Class<?>[] _moveNodeToTrashParameterTypes14 =
 		new Class[] {long.class};
-	private static final Class<?>[] _restoreNodeFromTrashParameterTypes13 =
+	private static final Class<?>[] _restoreNodeFromTrashParameterTypes15 =
 		new Class[] {long.class};
-	private static final Class<?>[] _subscribeNodeParameterTypes14 =
+	private static final Class<?>[] _subscribeNodeParameterTypes16 =
 		new Class[] {long.class};
-	private static final Class<?>[] _unsubscribeNodeParameterTypes15 =
+	private static final Class<?>[] _unsubscribeNodeParameterTypes17 =
 		new Class[] {long.class};
-	private static final Class<?>[] _updateNodeParameterTypes16 = new Class[] {
+	private static final Class<?>[] _updateNodeParameterTypes18 = new Class[] {
 		long.class, String.class, String.class,
 		com.liferay.portal.kernel.service.ServiceContext.class
 	};

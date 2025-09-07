@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.bundle.support.maven;
@@ -29,6 +20,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrea Di Giorgi
@@ -48,11 +40,13 @@ public class BundleSupportMavenTest extends BundleSupportCommandsTest {
 
 	@Ignore
 	@Override
+	@Test
 	public void testDistBundleTar() throws Exception {
 	}
 
 	@Ignore
 	@Override
+	@Test
 	public void testDistBundleZip() throws Exception {
 	}
 
@@ -68,12 +62,12 @@ public class BundleSupportMavenTest extends BundleSupportCommandsTest {
 	@Override
 	protected void createToken(
 			String emailAddress, boolean force, String password,
-			File passwordFile, File tokenFile, URL tokenUrl)
+			File passwordFile, File tokenFile, URL tokenURL)
 		throws Exception {
 
 		_execute(
 			"create-token", null, null, null, emailAddress, null, null, force,
-			null, null, password, passwordFile, 0, tokenFile, tokenUrl, null,
+			null, null, password, passwordFile, 0, tokenFile, tokenURL, null,
 			null);
 	}
 
@@ -122,7 +116,7 @@ public class BundleSupportMavenTest extends BundleSupportCommandsTest {
 			String emailAddress, String environment, String fileName,
 			boolean force, File liferayHomeDir, String outputFileName,
 			String password, File passwordFile, int stripComponents,
-			File tokenFile, URL tokenUrl, URL url, String userName)
+			File tokenFile, URL tokenURL, URL url, String userName)
 		throws Exception {
 
 		File projectDir = new File(temporaryFolder.getRoot(), "maven");
@@ -160,7 +154,7 @@ public class BundleSupportMavenTest extends BundleSupportCommandsTest {
 		pomXml = _replace(
 			pomXml, "[$BUNDLE_SUPPORT_STRIP_COMPONENTS$]", stripComponents);
 		pomXml = _replace(pomXml, "[$BUNDLE_SUPPORT_TOKEN_FILE$]", tokenFile);
-		pomXml = _replace(pomXml, "[$BUNDLE_SUPPORT_TOKEN_URL$]", tokenUrl);
+		pomXml = _replace(pomXml, "[$BUNDLE_SUPPORT_TOKEN_URL$]", tokenURL);
 		pomXml = _replace(pomXml, "[$BUNDLE_SUPPORT_URL$]", url);
 		pomXml = _replace(pomXml, "[$BUNDLE_SUPPORT_USER_NAME$]", userName);
 

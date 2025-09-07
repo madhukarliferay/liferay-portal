@@ -1,47 +1,37 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 AUI().use(
 	'aui-base',
 	'aui-io-plugin-deprecated',
-	'liferay-portlet-url',
 	'liferay-util-window',
-	function(A) {
+	function (A) {
 		Liferay.namespace('Microblogs');
 
 		Liferay.Microblogs = {
-			init: function(param) {
-				var instance = this;
+			init: function (param) {
+				const instance = this;
 
 				instance._baseActionURL = param.baseActionURL;
 				instance._microblogsEntriesURL = param.microblogsEntriesURL;
 			},
 
-			closePopup: function() {
-				var instance = this;
+			closePopup: function () {
+				const instance = this;
 
-				var popup = instance.getPopup();
+				const popup = instance.getPopup();
 
 				if (popup) {
 					popup.hide();
 				}
 			},
 
-			displayPopup: function(url, title) {
-				var instance = this;
+			displayPopup: function (url, title) {
+				const instance = this;
 
-				var popup = instance.getPopup();
+				const popup = instance.getPopup();
 
 				popup.show();
 
@@ -52,8 +42,8 @@ AUI().use(
 				popup.io.start();
 			},
 
-			getPopup: function() {
-				var instance = this;
+			getPopup: function () {
+				const instance = this;
 
 				if (!instance._popup) {
 					instance._popup = Liferay.Util.Window.getWindow({
@@ -63,11 +53,11 @@ AUI().use(
 							cssClass: 'microblogs-portlet',
 							modal: true,
 							resizable: false,
-							width: 475
-						}
+							width: 475,
+						},
 					})
 						.plug(A.Plugin.IO, {
-							autoLoad: false
+							autoLoad: false,
 						})
 						.render();
 				}
@@ -75,27 +65,27 @@ AUI().use(
 				return instance._popup;
 			},
 
-			updateMicroblogs: function(form, url, updateContainer) {
-				var instance = this;
+			updateMicroblogs: function (form, url, updateContainer) {
+				const instance = this;
 
 				Liferay.Util.fetch(form.getAttribute('action'), {
 					body: new FormData(form.getDOM()),
-					method: 'POST'
-				}).then(function() {
+					method: 'POST',
+				}).then(function () {
 					instance.updateMicroblogsList(url, updateContainer);
 
 					Liferay.fire('microblogPosted');
 				});
 			},
 
-			updateMicroblogsList: function(url, updateContainer) {
-				var instance = this;
+			updateMicroblogsList: function (url, updateContainer) {
+				const instance = this;
 
 				instance._micrblogsEntries = updateContainer;
 
 				if (!instance._micrblogsEntries.io) {
 					instance._micrblogsEntries.plug(A.Plugin.IO, {
-						autoLoad: false
+						autoLoad: false,
 					});
 				}
 
@@ -108,28 +98,27 @@ AUI().use(
 				instance._micrblogsEntries.io.start();
 			},
 
-			updateViewCount: function(microblogsEntryId) {
-				var instance = this;
+			updateViewCount: function (microblogsEntryId) {
+				const instance = this;
 
-				var portletURL = new Liferay.PortletURL.createURL(
-					instance._baseActionURL
+				const portletURL = new Liferay.Util.PortletURL.createPortletURL(
+					instance._baseActionURL,
+					{
+						'jakarta.portlet.action':
+							'updateMicroblogsEntryViewCount',
+						microblogsEntryId,
+						'p_p_state': 'normal',
+					}
 				);
-
-				portletURL.setParameter(
-					'javax.portlet.action',
-					'updateMicroblogsEntryViewCount'
-				);
-				portletURL.setParameter('microblogsEntryId', microblogsEntryId);
-				portletURL.setWindowState('normal');
 
 				Liferay.Util.fetch(portletURL.toString(), {
-					method: 'POST'
+					method: 'POST',
 				});
-			}
+			},
 		};
 
-		Liferay.on('sessionExpired', function(event) {
-			var reload = function() {
+		Liferay.on('sessionExpired', function (event) {
+			const reload = () => {
 				window.location.reload();
 			};
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -90,7 +81,7 @@ public class JenkinsPerformanceDataUtil {
 							url + "/testReport/api/json"),
 						false);
 				}
-				catch (FileNotFoundException fnfe) {
+				catch (FileNotFoundException fileNotFoundException) {
 					jsonObject = JenkinsResultsParserUtil.toJSONObject(
 						JenkinsResultsParserUtil.getLocalURL(url + "/api/json"),
 						false);
@@ -111,17 +102,18 @@ public class JenkinsPerformanceDataUtil {
 
 					break;
 				}
-				catch (IllegalArgumentException iae) {
+				catch (IllegalArgumentException illegalArgumentException) {
 					retryCount++;
 
 					if (retryCount > 5) {
 						System.out.println("Exceeded max retries");
 
-						throw iae;
+						throw illegalArgumentException;
 					}
 
 					System.out.println(
-						"Retry in 60 seconds: " + iae.getMessage());
+						"Retry in 60 seconds: " +
+							illegalArgumentException.getMessage());
 
 					Thread.sleep(60 * 1000);
 				}
@@ -131,10 +123,10 @@ public class JenkinsPerformanceDataUtil {
 
 			_truncate(_results, size);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			System.out.println("Unable to parse performance data.");
 
-			e.printStackTrace();
+			exception.printStackTrace();
 
 			_broken = true;
 		}
@@ -167,10 +159,11 @@ public class JenkinsPerformanceDataUtil {
 		}
 
 		public Result(String jobName, JSONObject sourceJSONObject) {
+			_jobName = jobName;
+
 			_axis = "";
 			_className = "";
 			_duration = sourceJSONObject.getInt("duration") / 1000;
-			_jobName = jobName;
 			_name = sourceJSONObject.getString("fullDisplayName");
 			_status = sourceJSONObject.getString("result");
 			_url = sourceJSONObject.getString("url");

@@ -1,32 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.rest.internal.storage;
 
-import com.liferay.data.engine.rest.dto.v2_0.DataRecord;
-import com.liferay.data.engine.rest.dto.v2_0.DataRecordCollection;
-import com.liferay.data.engine.rest.internal.dto.v2_0.util.DataDefinitionUtil;
-import com.liferay.data.engine.rest.internal.dto.v2_0.util.DataRecordCollectionUtil;
-import com.liferay.data.engine.rest.internal.dto.v2_0.util.DataRecordValuesUtil;
 import com.liferay.data.engine.storage.DataStorage;
-import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalService;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
-import com.liferay.dynamic.data.mapping.model.DDMContent;
-import com.liferay.dynamic.data.mapping.service.DDMContentLocalService;
-import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
-import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.util.Map;
 
@@ -35,37 +16,31 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Jeyvison Nascimento
+ * @author Leonardo Barros
  */
-@Component(
-	immediate = true, property = "data.storage.type=json",
-	service = DataStorage.class
-)
+@Component(property = "data.storage.type=json", service = DataStorage.class)
 public class JSONDataStorage implements DataStorage {
 
 	@Override
 	public long delete(long dataStorageId) throws Exception {
-		DDMContent ddmContent = _ddmContentLocalService.fetchDDMContent(
-			dataStorageId);
-
-		if (ddmContent != null) {
-			_ddmContentLocalService.deleteDDMContent(ddmContent);
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"JSON data storage is deprecated, using default data storage");
 		}
 
-		return dataStorageId;
+		return _dataStorage.delete(dataStorageId);
 	}
 
 	@Override
 	public Map<String, Object> get(long dataDefinitionId, long dataStorageId)
 		throws Exception {
 
-		DDMContent ddmContent = _ddmContentLocalService.getContent(
-			dataStorageId);
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"JSON data storage is deprecated, using default data storage");
+		}
 
-		return DataRecordValuesUtil.toDataRecordValues(
-			DataDefinitionUtil.toDataDefinition(
-				_ddmFormFieldTypeServicesTracker,
-				_ddmStructureLocalService.getStructure(dataDefinitionId)),
-			ddmContent.getData());
+		return _dataStorage.get(dataDefinitionId, dataStorageId);
 	}
 
 	@Override
@@ -74,39 +49,19 @@ public class JSONDataStorage implements DataStorage {
 			long siteId)
 		throws Exception {
 
-		DataRecordCollection dataRecordCollection =
-			DataRecordCollectionUtil.toDataRecordCollection(
-				_ddlRecordSetLocalService.getRecordSet(dataRecordCollectionId));
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"JSON data storage is deprecated, using default data storage");
+		}
 
-		DDMContent ddmContent = _ddmContentLocalService.addContent(
-			PrincipalThreadLocal.getUserId(), siteId,
-			DataRecord.class.getName(), null,
-			DataRecordValuesUtil.toJSON(
-				DataDefinitionUtil.toDataDefinition(
-					_ddmFormFieldTypeServicesTracker,
-					_ddmStructureLocalService.getStructure(
-						dataRecordCollection.getDataDefinitionId())),
-				dataRecordValues),
-			new ServiceContext() {
-				{
-					setScopeGroupId(siteId);
-					setUserId(PrincipalThreadLocal.getUserId());
-				}
-			});
-
-		return ddmContent.getPrimaryKey();
+		return _dataStorage.save(
+			dataRecordCollectionId, dataRecordValues, siteId);
 	}
 
-	@Reference
-	private DDLRecordSetLocalService _ddlRecordSetLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		JSONDataStorage.class);
 
-	@Reference
-	private DDMContentLocalService _ddmContentLocalService;
-
-	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
-
-	@Reference
-	private DDMStructureLocalService _ddmStructureLocalService;
+	@Reference(target = "(data.storage.type=default)")
+	private DataStorage _dataStorage;
 
 }

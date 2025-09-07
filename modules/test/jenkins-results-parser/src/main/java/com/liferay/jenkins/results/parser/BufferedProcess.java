@@ -1,41 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import java.util.Arrays;
 
 /**
  * @author Peter Yoo
  */
 public class BufferedProcess extends Process {
 
-	public BufferedProcess(int bufferSize, Process process) {
+	public BufferedProcess(Process process) {
 		_process = process;
 
 		_standardErrorInputStreamBuffer = new InputStreamBuffer(
-			bufferSize, _process.getErrorStream());
+			process.getErrorStream());
 
 		_standardErrorInputStreamBuffer.start();
 
 		_standardOutInputStreamBuffer = new InputStreamBuffer(
-			bufferSize, _process.getInputStream());
+			process.getInputStream());
 
 		_standardOutInputStreamBuffer.start();
 	}
@@ -84,90 +74,39 @@ public class BufferedProcess extends Process {
 
 	private class InputStreamBuffer extends Thread {
 
-		public InputStreamBuffer(int bufferSize, InputStream inputStream) {
-			_buffer = new byte[bufferSize];
+		public InputStreamBuffer(InputStream inputStream) {
 			_inputStream = inputStream;
 		}
 
 		public void run() {
 			try {
-				byte[] bytes = new byte[Math.min(256, _buffer.length)];
+				byte[] bytes = new byte[256];
 
 				int bytesRead = 0;
-
-				_index = 0;
 
 				while (bytesRead != -1) {
 					bytesRead = _inputStream.read(bytes);
 
 					if (bytesRead > 0) {
-						int spaceAvailable = _buffer.length - _index;
-
-						if (bytesRead > spaceAvailable) {
-							int spaceNeeded = bytesRead - spaceAvailable;
-
-							_makeSpace(spaceNeeded);
-						}
-
-						synchronized (_buffer) {
-							System.arraycopy(
-								bytes, 0, _buffer, _index, bytesRead);
-
-							_index += bytesRead;
-							_totalBytesRead += bytesRead;
+						synchronized (_byteArrayOutputStream) {
+							_byteArrayOutputStream.write(bytes, 0, bytesRead);
 						}
 					}
 				}
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
 		}
 
 		public InputStream toInputStream() {
-			byte[] bytes = null;
-
-			if (_totalBytesRead > _buffer.length) {
-				String message = JenkinsResultsParserUtil.combine(
-					"[Truncated ",
-					String.valueOf(_totalBytesRead - _buffer.length),
-					" bytes] \n...");
-
-				byte[] messageBytes = message.getBytes();
-
-				bytes = new byte[messageBytes.length + _index];
-
-				System.arraycopy(
-					messageBytes, 0, bytes, 0, messageBytes.length);
-
-				System.arraycopy(
-					_buffer, 0, bytes, messageBytes.length, _index);
-			}
-			else {
-				bytes = Arrays.copyOf(_buffer, _index);
-			}
-
-			return new ByteArrayInputStream(bytes);
+			return new ByteArrayInputStream(
+				_byteArrayOutputStream.toByteArray());
 		}
 
-		private void _makeSpace(int spacesNeeded) {
-			if ((_index - spacesNeeded) < 0) {
-				throw new IllegalArgumentException(
-					JenkinsResultsParserUtil.combine(
-						"Unable to shift buffer content left ",
-						String.valueOf(spacesNeeded), " spaces"));
-			}
-
-			System.arraycopy(
-				_buffer, spacesNeeded, _buffer, 0, _index - spacesNeeded);
-
-			_index -= spacesNeeded;
-		}
-
-		private final byte[] _buffer;
-		private int _index;
+		private final ByteArrayOutputStream _byteArrayOutputStream =
+			new ByteArrayOutputStream();
 		private final InputStream _inputStream;
-		private int _totalBytesRead;
 
 	}
 

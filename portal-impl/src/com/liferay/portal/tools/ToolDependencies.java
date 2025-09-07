@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools;
@@ -27,38 +18,29 @@ import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.PortalCacheManagerProvider;
 import com.liferay.portal.kernel.cache.SingleVMPool;
 import com.liferay.portal.kernel.cache.key.CacheKeyGeneratorUtil;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.auth.DefaultFullNameGenerator;
 import com.liferay.portal.kernel.security.auth.FullNameGenerator;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
-import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
-import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.UnsecureSAXReaderUtil;
 import com.liferay.portal.model.DefaultModelHintsImpl;
 import com.liferay.portal.security.permission.ResourceActionsImpl;
 import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
-import com.liferay.portal.service.permission.PortletPermissionImpl;
-import com.liferay.portal.util.DigesterImpl;
 import com.liferay.portal.util.FastDateFormatFactoryImpl;
 import com.liferay.portal.util.FileImpl;
-import com.liferay.portal.util.FriendlyURLNormalizerImpl;
-import com.liferay.portal.util.HtmlImpl;
-import com.liferay.portal.util.HttpImpl;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PortalImpl;
 import com.liferay.portal.xml.SAXReaderImpl;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
 
 import java.io.Serializable;
 
@@ -72,6 +54,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.osgi.framework.BundleContext;
+
 /**
  * @author Raymond Augé
  */
@@ -82,20 +66,23 @@ public class ToolDependencies {
 
 		wireCaches();
 
-		Registry registry = RegistryUtil.getRegistry();
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		registry.registerService(
-			FullNameGenerator.class, new DefaultFullNameGenerator());
+		bundleContext.registerService(
+			FriendlyURLNormalizer.class,
+			(FriendlyURLNormalizer)ProxyUtil.newProxyInstance(
+				ToolDependencies.class.getClassLoader(),
+				new Class<?>[] {FriendlyURLNormalizer.class},
+				(proxy, method, args) -> null),
+			null);
+		bundleContext.registerService(
+			FullNameGenerator.class, DefaultFullNameGenerator.INSTANCE, null);
 
 		CacheKeyGeneratorUtil cacheKeyGeneratorUtil =
 			new CacheKeyGeneratorUtil();
 
 		cacheKeyGeneratorUtil.setDefaultCacheKeyGenerator(
 			new SimpleCacheKeyGenerator());
-
-		DigesterUtil digesterUtil = new DigesterUtil();
-
-		digesterUtil.setDigester(new DigesterImpl());
 
 		FastDateFormatFactoryUtil fastDateFormatFactoryUtil =
 			new FastDateFormatFactoryUtil();
@@ -107,28 +94,9 @@ public class ToolDependencies {
 
 		fileUtil.setFile(new FileImpl());
 
-		FriendlyURLNormalizerUtil friendlyURLNormalizerUtil =
-			new FriendlyURLNormalizerUtil();
-
-		friendlyURLNormalizerUtil.setFriendlyURLNormalizer(
-			new FriendlyURLNormalizerImpl());
-
-		HtmlUtil htmlUtil = new HtmlUtil();
-
-		htmlUtil.setHtml(new HtmlImpl());
-
-		HttpUtil httpUtil = new HttpUtil();
-
-		httpUtil.setHttp(new HttpImpl());
-
 		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
 
 		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
-
-		PortletPermissionUtil portletPermissionUtil =
-			new PortletPermissionUtil();
-
-		portletPermissionUtil.setPortletPermission(new PortletPermissionImpl());
 
 		SAXReaderUtil saxReaderUtil = new SAXReaderUtil();
 
@@ -147,9 +115,7 @@ public class ToolDependencies {
 		UnsecureSAXReaderUtil unsecureSAXReaderUtil =
 			new UnsecureSAXReaderUtil();
 
-		SAXReaderImpl unsecureSAXReaderImpl = new SAXReaderImpl();
-
-		unsecureSAXReaderUtil.setSAXReader(unsecureSAXReaderImpl);
+		unsecureSAXReaderUtil.setSAXReader(new SAXReaderImpl());
 
 		// DefaultModelHintsImpl requires SecureXMLFactoryProviderUtil
 
@@ -164,19 +130,21 @@ public class ToolDependencies {
 	}
 
 	public static void wireCaches() {
-		RegistryUtil.setRegistry(new BasicRegistryImpl());
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		Registry registry = RegistryUtil.getRegistry();
-
-		registry.registerService(
+		bundleContext.registerService(
 			PortalCacheManager.class,
-			new TestPortalCacheManager<>(PortalCacheManagerNames.MULTI_VM));
-		registry.registerService(
+			new TestPortalCacheManager<>(PortalCacheManagerNames.MULTI_VM),
+			null);
+		bundleContext.registerService(
 			PortalCacheManager.class,
-			new TestPortalCacheManager<>(PortalCacheManagerNames.SINGLE_VM));
+			new TestPortalCacheManager<>(PortalCacheManagerNames.SINGLE_VM),
+			null);
 
-		registry.registerService(MultiVMPool.class, new TestMultiVMPool());
-		registry.registerService(SingleVMPool.class, new TestSingleVMPool());
+		bundleContext.registerService(
+			MultiVMPool.class, new TestMultiVMPool(), null);
+		bundleContext.registerService(
+			SingleVMPool.class, new TestSingleVMPool(), null);
 	}
 
 	public static void wireDeployers() {
@@ -192,11 +160,7 @@ public class ToolDependencies {
 
 		ResourceActionsUtil resourceActionsUtil = new ResourceActionsUtil();
 
-		ResourceActionsImpl resourceActionsImpl = new ResourceActionsImpl();
-
-		resourceActionsImpl.afterPropertiesSet();
-
-		resourceActionsUtil.setResourceActions(resourceActionsImpl);
+		resourceActionsUtil.setResourceActions(new ResourceActionsImpl());
 	}
 
 	private static class TestMultiVMPool implements MultiVMPool {
@@ -215,7 +179,7 @@ public class ToolDependencies {
 
 		@Override
 		public PortalCache<? extends Serializable, ? extends Serializable>
-			getPortalCache(String portalCacheName, boolean blocking) {
+			getPortalCache(String portalCacheName, boolean mvcc) {
 
 			return getPortalCache(portalCacheName);
 		}
@@ -223,7 +187,7 @@ public class ToolDependencies {
 		@Override
 		public PortalCache<? extends Serializable, ? extends Serializable>
 			getPortalCache(
-				String portalCacheName, boolean blocking, boolean mvcc) {
+				String portalCacheName, boolean mvcc, boolean sharded) {
 
 			return getPortalCache(portalCacheName);
 		}
@@ -278,11 +242,12 @@ public class ToolDependencies {
 			return _portalCacheName;
 		}
 
-		public boolean isBlocking() {
+		public boolean isMVCC() {
 			return false;
 		}
 
-		public boolean isMVCC() {
+		@Override
+		public boolean isSharded() {
 			return false;
 		}
 
@@ -402,15 +367,16 @@ public class ToolDependencies {
 
 		@Override
 		public PortalCache<K, V> getPortalCache(
-				String portalCacheName, boolean blocking)
+				String portalCacheName, boolean mvcc)
 			throws PortalCacheException {
 
-			return getPortalCache(portalCacheName, blocking, false);
+			return getPortalCache(
+				portalCacheName, mvcc, DBPartition.isPartitionEnabled());
 		}
 
 		@Override
 		public PortalCache<K, V> getPortalCache(
-				String portalCacheName, boolean blocking, boolean mvcc)
+				String portalCacheName, boolean mvcc, boolean sharded)
 			throws PortalCacheException {
 
 			PortalCache<K, V> portalCache = _portalCaches.get(portalCacheName);
@@ -444,20 +410,6 @@ public class ToolDependencies {
 		}
 
 		@Override
-		public boolean isClusterAware() {
-			return false;
-		}
-
-		/**
-		 * @deprecated As of Mueller (7.2.x), replaced by {@link
-		 *             #reconfigurePortalCaches(URL, ClassLoader)}
-		 */
-		@Deprecated
-		@Override
-		public void reconfigurePortalCaches(URL configurationURL) {
-		}
-
-		@Override
 		public void reconfigurePortalCaches(
 			URL configurationURL, ClassLoader classLoader) {
 		}
@@ -472,6 +424,10 @@ public class ToolDependencies {
 		@Override
 		public void removePortalCache(String portalCacheName) {
 			_portalCaches.remove(portalCacheName);
+		}
+
+		@Override
+		public void removePortalCaches(long companyId) {
 		}
 
 		@Override
@@ -507,13 +463,6 @@ public class ToolDependencies {
 			String portalCacheName) {
 
 			return _portalCacheManager.getPortalCache(portalCacheName);
-		}
-
-		@Override
-		public PortalCache<? extends Serializable, ?> getPortalCache(
-			String portalCacheName, boolean blocking) {
-
-			return getPortalCache(portalCacheName);
 		}
 
 		@Override

@@ -1,28 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.journal.web.internal.exportimport.content.processor;
 
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.exportimport.content.processor.ExportImportContentProcessor;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.mockito.Mockito;
@@ -32,12 +27,20 @@ import org.mockito.Mockito;
  */
 public class AMJournalArticleExportImportContentProcessorTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() throws Exception {
 		ReflectionTestUtil.setFieldValue(
 			_amJournalArticleExportImportContentProcessor,
 			"_amJournalArticleContentHTMLReplacer",
 			_amJournalArticleContentHTMLReplacer);
+		ReflectionTestUtil.setFieldValue(
+			_amJournalArticleExportImportContentProcessor,
+			"_ddmStructureLocalService", _ddmStructureLocalService);
 		ReflectionTestUtil.setFieldValue(
 			_amJournalArticleExportImportContentProcessor,
 			"_htmlExportImportContentProcessor",
@@ -54,9 +57,9 @@ public class AMJournalArticleExportImportContentProcessorTest {
 		).then(
 			answer -> {
 				AMJournalArticleContentHTMLReplacer.Replace replace =
-					answer.getArgumentAt(
+					answer.getArgument(
 						1, AMJournalArticleContentHTMLReplacer.Replace.class);
-				String content = answer.getArgumentAt(0, String.class);
+				String content = answer.getArgument(0, String.class);
 
 				return replace.apply(content);
 			}
@@ -179,6 +182,8 @@ public class AMJournalArticleExportImportContentProcessorTest {
 	private final AMJournalArticleExportImportContentProcessor
 		_amJournalArticleExportImportContentProcessor =
 			new AMJournalArticleExportImportContentProcessor();
+	private final DDMStructureLocalService _ddmStructureLocalService =
+		Mockito.mock(DDMStructureLocalService.class);
 	private final ExportImportContentProcessor<String>
 		_htmlExportImportContentProcessor = Mockito.mock(
 			ExportImportContentProcessor.class);

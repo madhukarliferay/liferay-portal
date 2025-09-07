@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.notification;
@@ -19,12 +10,12 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+
 import java.io.UnsupportedEncodingException;
 
 import java.util.Objects;
-
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 
 /**
  * @author Michael C. Han
@@ -35,10 +26,11 @@ public class NotificationRecipient {
 		String emailAddress,
 		NotificationReceptionType notificationReceptionType) {
 
-		_companyId = 0;
 		_emailAddress = emailAddress;
-		_fullName = null;
 		_notificationReceptionType = notificationReceptionType;
+
+		_companyId = 0;
+		_fullName = null;
 		_screenName = null;
 		_userId = 0;
 	}
@@ -46,26 +38,27 @@ public class NotificationRecipient {
 	public NotificationRecipient(
 		User user, NotificationReceptionType notificationReceptionType) {
 
+		_notificationReceptionType = notificationReceptionType;
+
 		_companyId = user.getCompanyId();
 		_emailAddress = user.getEmailAddress();
 		_fullName = user.getFullName();
-		_notificationReceptionType = notificationReceptionType;
 		_screenName = user.getScreenName();
 		_userId = user.getUserId();
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof NotificationRecipient)) {
+		if (!(object instanceof NotificationRecipient)) {
 			return false;
 		}
 
 		NotificationRecipient notificationRecipient =
-			(NotificationRecipient)obj;
+			(NotificationRecipient)object;
 
 		if ((_companyId == notificationRecipient._companyId) &&
 			Objects.equals(

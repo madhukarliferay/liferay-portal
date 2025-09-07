@@ -1,22 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
+
+import java.util.Date;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +28,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface ExpandoColumnModel
-	extends BaseModel<ExpandoColumn>, ShardedModel {
+	extends BaseModel<ExpandoColumn>, CTModel<ExpandoColumn>, MVCCModel,
+			ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a expando column model instance should use the {@link ExpandoColumn} interface instead.
@@ -46,6 +42,7 @@ public interface ExpandoColumnModel
 	 *
 	 * @return the primary key of this expando column
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -53,7 +50,40 @@ public interface ExpandoColumnModel
 	 *
 	 * @param primaryKey the primary key of this expando column
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
+
+	/**
+	 * Returns the mvcc version of this expando column.
+	 *
+	 * @return the mvcc version of this expando column
+	 */
+	@Override
+	public long getMvccVersion();
+
+	/**
+	 * Sets the mvcc version of this expando column.
+	 *
+	 * @param mvccVersion the mvcc version of this expando column
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this expando column.
+	 *
+	 * @return the ct collection ID of this expando column
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this expando column.
+	 *
+	 * @param ctCollectionId the ct collection ID of this expando column
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the column ID of this expando column.
@@ -84,6 +114,20 @@ public interface ExpandoColumnModel
 	 */
 	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the modified date of this expando column.
+	 *
+	 * @return the modified date of this expando column
+	 */
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this expando column.
+	 *
+	 * @param modifiedDate the modified date of this expando column
+	 */
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the table ID of this expando column.
@@ -157,5 +201,12 @@ public interface ExpandoColumnModel
 	 * @param typeSettings the type settings of this expando column
 	 */
 	public void setTypeSettings(String typeSettings);
+
+	@Override
+	public ExpandoColumn cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

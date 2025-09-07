@@ -1,18 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.web.internal.modified.facet.display.context;
+
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
+import com.liferay.portal.search.web.internal.modified.facet.configuration.ModifiedFacetPortletInstanceConfiguration;
 
 import java.io.Serializable;
 
@@ -23,16 +17,20 @@ import java.util.List;
  */
 public class ModifiedFacetDisplayContext implements Serializable {
 
-	public ModifiedFacetTermDisplayContext
-		getCustomRangeModifiedFacetTermDisplayContext() {
-
-		return _customRangeModifiedFacetTermDisplayContext;
+	public List<BucketDisplayContext> getBucketDisplayContexts() {
+		return _bucketDisplayContexts;
 	}
 
-	public ModifiedFacetTermDisplayContext
-		getDefaultModifiedFacetTermDisplayContext() {
+	public BucketDisplayContext getCustomRangeBucketDisplayContext() {
+		return _customRangeBucketDisplayContext;
+	}
 
-		return _defaultModifiedFacetTermDisplayContext;
+	public BucketDisplayContext getDefaultBucketDisplayContext() {
+		return _defaultBucketDisplayContext;
+	}
+
+	public long getDisplayStyleGroupId() {
+		return _displayStyleGroupId;
 	}
 
 	public ModifiedFacetCalendarDisplayContext
@@ -41,10 +39,14 @@ public class ModifiedFacetDisplayContext implements Serializable {
 		return _modifiedFacetCalendarDisplayContext;
 	}
 
-	public List<ModifiedFacetTermDisplayContext>
-		getModifiedFacetTermDisplayContexts() {
+	public ModifiedFacetPortletInstanceConfiguration
+		getModifiedFacetPortletInstanceConfiguration() {
 
-		return _modifiedFacetTermDisplayContexts;
+		return _modifiedFacetPortletInstanceConfiguration;
+	}
+
+	public String getPaginationStartParameterName() {
+		return _paginationStartParameterName;
 	}
 
 	public String getParameterName() {
@@ -59,6 +61,12 @@ public class ModifiedFacetDisplayContext implements Serializable {
 		return _renderNothing;
 	}
 
+	public void setBucketDisplayContexts(
+		List<BucketDisplayContext> bucketDisplayContexts) {
+
+		_bucketDisplayContexts = bucketDisplayContexts;
+	}
+
 	public void setCalendarDisplayContext(
 		ModifiedFacetCalendarDisplayContext
 			modifiedFacetCalendarDisplayContext) {
@@ -67,28 +75,38 @@ public class ModifiedFacetDisplayContext implements Serializable {
 			modifiedFacetCalendarDisplayContext;
 	}
 
-	public void setCustomRangeModifiedFacetTermDisplayContext(
-		ModifiedFacetTermDisplayContext customRangeTermDisplayContext) {
+	public void setCustomRangeBucketDisplayContext(
+		BucketDisplayContext customRangeTermDisplayContext) {
 
-		_customRangeModifiedFacetTermDisplayContext =
-			customRangeTermDisplayContext;
+		_customRangeBucketDisplayContext = customRangeTermDisplayContext;
 	}
 
-	public void setDefaultModifiedFacetTermDisplayContext(
-		ModifiedFacetTermDisplayContext defaultTermDisplayContext) {
+	public void setDefaultBucketDisplayContext(
+		BucketDisplayContext defaultTermDisplayContext) {
 
-		_defaultModifiedFacetTermDisplayContext = defaultTermDisplayContext;
+		_defaultBucketDisplayContext = defaultTermDisplayContext;
 	}
 
-	public void setModifiedFacetTermDisplayContexts(
-		List<ModifiedFacetTermDisplayContext>
-			modifiedFacetTermDisplayContexts) {
+	public void setDisplayStyleGroupId(long displayStyleGroupId) {
+		_displayStyleGroupId = displayStyleGroupId;
+	}
 
-		_modifiedFacetTermDisplayContexts = modifiedFacetTermDisplayContexts;
+	public void setModifiedFacetPortletInstanceConfiguration(
+		ModifiedFacetPortletInstanceConfiguration
+			modifiedFacetPortletInstanceConfiguration) {
+
+		_modifiedFacetPortletInstanceConfiguration =
+			modifiedFacetPortletInstanceConfiguration;
 	}
 
 	public void setNothingSelected(boolean nothingSelected) {
 		_nothingSelected = nothingSelected;
+	}
+
+	public void setPaginationStartParameterName(
+		String paginationStartParameterName) {
+
+		_paginationStartParameterName = paginationStartParameterName;
 	}
 
 	public void setParameterName(String paramName) {
@@ -99,15 +117,16 @@ public class ModifiedFacetDisplayContext implements Serializable {
 		_renderNothing = renderNothing;
 	}
 
-	private ModifiedFacetTermDisplayContext
-		_customRangeModifiedFacetTermDisplayContext;
-	private ModifiedFacetTermDisplayContext
-		_defaultModifiedFacetTermDisplayContext;
+	private List<BucketDisplayContext> _bucketDisplayContexts;
+	private BucketDisplayContext _customRangeBucketDisplayContext;
+	private BucketDisplayContext _defaultBucketDisplayContext;
+	private long _displayStyleGroupId;
 	private ModifiedFacetCalendarDisplayContext
 		_modifiedFacetCalendarDisplayContext;
-	private List<ModifiedFacetTermDisplayContext>
-		_modifiedFacetTermDisplayContexts;
+	private ModifiedFacetPortletInstanceConfiguration
+		_modifiedFacetPortletInstanceConfiguration;
 	private boolean _nothingSelected;
+	private String _paginationStartParameterName;
 	private String _parameterName;
 	private boolean _renderNothing;
 

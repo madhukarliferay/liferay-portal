@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.criteria;
@@ -20,11 +11,9 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * Represents a segment criteria as a composition of {@link Criterion} objects.
@@ -32,9 +21,6 @@ import java.util.stream.Stream;
  * @author Eduardo García
  */
 public final class Criteria implements Serializable {
-
-	public Criteria() {
-	}
 
 	public void addCriterion(
 		String key, Type type, String filterString, Conjunction conjunction) {
@@ -97,19 +83,25 @@ public final class Criteria implements Serializable {
 	}
 
 	public Conjunction getTypeConjunction(Type type) {
-		Collection<Criterion> criteria = _criteria.values();
+		for (Criterion criterion : _criteria.values()) {
+			if (Objects.equals(type.getValue(), criterion.getTypeValue())) {
+				return Conjunction.parse(criterion.getConjunction());
+			}
+		}
 
-		Stream<Criterion> stream = criteria.stream();
+		return Conjunction.AND;
+	}
 
-		return stream.filter(
-			criterion -> Objects.equals(
-				type.getValue(), criterion.getTypeValue())
-		).map(
-			criterion -> Conjunction.parse(criterion.getConjunction())
-		).findFirst(
-		).orElse(
-			Conjunction.AND
-		);
+	public void mergeCriteria(Criteria criteria, Conjunction conjunction) {
+		Map<String, Criterion> criteriaMap = criteria._criteria;
+
+		for (Map.Entry<String, Criterion> entry : criteriaMap.entrySet()) {
+			Criterion criterion = entry.getValue();
+
+			addCriterion(
+				entry.getKey(), Type.parse(criterion.getTypeValue()),
+				criterion.getFilterString(), conjunction);
+		}
 	}
 
 	public static final class Criterion implements Serializable {
@@ -178,10 +170,14 @@ public final class Criteria implements Serializable {
 
 	public enum Type {
 
-		CONTEXT("context"), MODEL("model"), REFERRED("referred");
+		ANALYTICS("analytics"), CONTEXT("context"), MODEL("model"),
+		REFERRED("referred");
 
 		public static Type parse(String value) {
-			if (Objects.equals(CONTEXT.getValue(), value)) {
+			if (Objects.equals(ANALYTICS.getValue(), value)) {
+				return ANALYTICS;
+			}
+			else if (Objects.equals(CONTEXT.getValue(), value)) {
 				return CONTEXT;
 			}
 			else if (Objects.equals(MODEL.getValue(), value)) {
@@ -214,22 +210,15 @@ public final class Criteria implements Serializable {
 	private String _combineFilters(
 		String filterString1, String filterString2, Conjunction conjunction) {
 
-		StringBundler sb = new StringBundler(9);
-
-		sb.append(StringPool.OPEN_PARENTHESIS);
-		sb.append(filterString1);
-		sb.append(StringPool.CLOSE_PARENTHESIS);
-		sb.append(StringPool.SPACE);
-		sb.append(conjunction.getValue());
-		sb.append(StringPool.SPACE);
-		sb.append(StringPool.OPEN_PARENTHESIS);
-		sb.append(filterString2);
-		sb.append(StringPool.CLOSE_PARENTHESIS);
-
-		return sb.toString();
+		return StringBundler.concat(
+			StringPool.OPEN_PARENTHESIS, filterString1,
+			StringPool.CLOSE_PARENTHESIS, StringPool.SPACE,
+			conjunction.getValue(), StringPool.SPACE,
+			StringPool.OPEN_PARENTHESIS, filterString2,
+			StringPool.CLOSE_PARENTHESIS);
 	}
 
-	private Map<String, Criterion> _criteria = new HashMap<>();
-	private Map<String, String> _filterStrings = new HashMap<>();
+	private final Map<String, Criterion> _criteria = new HashMap<>();
+	private final Map<String, String> _filterStrings = new HashMap<>();
 
 }

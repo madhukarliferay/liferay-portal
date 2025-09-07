@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.marketplace.store.web.internal.util;
@@ -34,22 +25,22 @@ import java.util.Arrays;
 public class MarketplaceLicenseUtil {
 
 	public static String getOrder(String productEntryName) throws Exception {
-		JSONObject jsonObject = JSONUtil.put(
-			"cmd", "GET_ORDER"
-		).put(
-			"hostName", LicenseManagerUtil.getHostName()
-		).put(
-			"ipAddresses", StringUtil.merge(LicenseManagerUtil.getIpAddresses())
-		).put(
-			"macAddresses",
-			StringUtil.merge(LicenseManagerUtil.getMacAddresses())
-		).put(
-			"productEntryName", productEntryName
-		).put(
-			"serverId", Arrays.toString(getServerIdBytes())
-		);
-
-		String response = LicenseUtil.sendRequest(jsonObject.toString());
+		String response = LicenseUtil.sendRequest(
+			JSONUtil.put(
+				"cmd", "GET_ORDER"
+			).put(
+				"hostName", LicenseManagerUtil.getHostName()
+			).put(
+				"ipAddresses",
+				StringUtil.merge(LicenseManagerUtil.getIpAddresses())
+			).put(
+				"macAddresses",
+				StringUtil.merge(LicenseManagerUtil.getMacAddresses())
+			).put(
+				"productEntryName", productEntryName
+			).put(
+				"serverId", Arrays.toString(getServerIdBytes())
+			).toString());
 
 		JSONObject responseJSONObject = JSONFactoryUtil.createJSONObject(
 			response);

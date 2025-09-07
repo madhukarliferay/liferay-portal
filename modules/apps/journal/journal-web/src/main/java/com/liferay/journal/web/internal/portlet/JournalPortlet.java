@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.web.internal.portlet;
@@ -17,15 +8,25 @@ package com.liferay.journal.web.internal.portlet;
 import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvider;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
 import com.liferay.asset.kernel.exception.AssetTagException;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
+import com.liferay.change.tracking.spi.history.util.CTTimelineUtil;
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryException;
 import com.liferay.document.library.kernel.exception.FileSizeException;
+import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
 import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
 import com.liferay.dynamic.data.mapping.exception.NoSuchTemplateException;
 import com.liferay.dynamic.data.mapping.exception.StorageFieldRequiredException;
+import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMTemplate;
+import com.liferay.dynamic.data.mapping.util.DDMFormValuesToMapConverter;
 import com.liferay.dynamic.data.mapping.util.DDMTemplateHelper;
+import com.liferay.dynamic.data.mapping.util.FieldsToDDMFormValuesConverter;
 import com.liferay.exportimport.kernel.exception.ExportImportContentValidationException;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.journal.configuration.JournalFileUploadsConfiguration;
+import com.liferay.journal.constants.JournalConstants;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.constants.JournalWebKeys;
 import com.liferay.journal.exception.ArticleContentException;
@@ -52,59 +53,71 @@ import com.liferay.journal.exception.MaxAddMenuFavItemsException;
 import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.exception.NoSuchFeedException;
 import com.liferay.journal.exception.NoSuchFolderException;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.model.JournalFolder;
+import com.liferay.journal.service.JournalFolderService;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.journal.util.JournalConverter;
-import com.liferay.journal.web.internal.configuration.JournalDDMEditorConfiguration;
+import com.liferay.journal.util.JournalHelper;
 import com.liferay.journal.web.internal.configuration.JournalWebConfiguration;
+import com.liferay.journal.web.internal.display.context.JournalDisplayContext;
+import com.liferay.journal.web.internal.display.context.JournalEditDDMStructuresDisplayContext;
+import com.liferay.journal.web.internal.display.context.JournalEditDDMTemplateDisplayContext;
+import com.liferay.journal.web.internal.helper.JournalDDMTemplateHelper;
 import com.liferay.journal.web.internal.portlet.action.ActionUtil;
-import com.liferay.journal.web.internal.util.JournalDDMTemplateUtil;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.LocaleException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.LiferayFileItemException;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.translation.security.permission.TranslationPermission;
+import com.liferay.translation.url.provider.TranslationURLProvider;
 import com.liferay.trash.TrashHelper;
 import com.liferay.trash.util.TrashWebKeys;
 
+import jakarta.persistence.PersistenceException;
+
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 
-import java.util.Map;
 import java.util.Objects;
 
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eduardo García
  */
 @Component(
-	configurationPid = {
-		"com.liferay.journal.web.internal.configuration.JournalDDMEditorConfiguration",
-		"com.liferay.journal.web.internal.configuration.JournalWebConfiguration"
-	},
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-journal",
 		"com.liferay.portlet.display-category=category.hidden",
-		"com.liferay.portlet.header-portlet-css=/css/ddm_form.css",
 		"com.liferay.portlet.header-portlet-css=/css/main.css",
-		"com.liferay.portlet.header-portlet-css=/css/tree.css",
 		"com.liferay.portlet.icon=/icons/journal.png",
 		"com.liferay.portlet.layout-cacheable=true",
 		"com.liferay.portlet.preferences-owned-by-group=true",
@@ -114,17 +127,17 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.render-weight=50",
 		"com.liferay.portlet.scopeable=true",
 		"com.liferay.portlet.use-default-template=true",
-		"com.liferay.portlet.webdav-storage-token=journal",
-		"javax.portlet.display-name=Web Content",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.mvc-action-command-package-prefix=com.liferay.journal.web.portlet.action",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/view.jsp",
-		"javax.portlet.name=" + JournalPortletKeys.JOURNAL,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"jakarta.portlet.display-name=Web Content",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.mvc-action-command-package-prefix=com.liferay.journal.web.portlet.action",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/view.jsp",
+		"jakarta.portlet.name=" + JournalPortletKeys.JOURNAL,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=power-user,user",
+		"jakarta.portlet.version=4.0"
 	},
-	service = {JournalPortlet.class, Portlet.class}
+	service = Portlet.class
 )
 public class JournalPortlet extends MVCPortlet {
 
@@ -138,36 +151,83 @@ public class JournalPortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			AssetDisplayPageFriendlyURLProvider.class.getName(),
 			_assetDisplayPageFriendlyURLProvider);
-
+		renderRequest.setAttribute(
+			AssetVocabularyLocalService.class.getName(),
+			_assetVocabularyLocalService);
 		renderRequest.setAttribute(TrashWebKeys.TRASH_HELPER, _trashHelper);
-
-		String path = getPath(renderRequest, renderResponse);
-
-		if (Objects.equals(path, "/edit_article.jsp")) {
-			renderRequest.setAttribute(
-				JournalWebKeys.ITEM_SELECTOR, _itemSelector);
-		}
-
-		if (Objects.equals(path, "/edit_ddm_template.jsp")) {
-			renderRequest.setAttribute(
-				DDMTemplateHelper.class.getName(), _ddmTemplateHelper);
-			renderRequest.setAttribute(
-				JournalDDMTemplateUtil.class.getName(),
-				_journalDDMTemplateUtil);
-		}
-
 		renderRequest.setAttribute(
-			JournalDDMEditorConfiguration.class.getName(),
-			_journalDDMEditorConfiguration);
+			DDMFormValuesFactory.class.getName(), _ddmFormValuesFactory);
 		renderRequest.setAttribute(
-			JournalFileUploadsConfiguration.class.getName(),
-			_journalFileUploadsConfiguration);
+			DDMFormValuesToMapConverter.class.getName(),
+			_ddmFormValuesToMapConverter);
 		renderRequest.setAttribute(
-			JournalWebConfiguration.class.getName(), _journalWebConfiguration);
+			FieldsToDDMFormValuesConverter.class.getName(),
+			_fieldsToDDMFormValuesConverter);
+		renderRequest.setAttribute(ItemSelector.class.getName(), _itemSelector);
+		renderRequest.setAttribute(
+			JournalHelper.class.getName(), _journalHelper);
 		renderRequest.setAttribute(
 			JournalWebKeys.JOURNAL_CONTENT, _journalContent);
 		renderRequest.setAttribute(
 			JournalWebKeys.JOURNAL_CONVERTER, _journalConverter);
+		renderRequest.setAttribute(
+			SiteConnectedGroupGroupProvider.class.getName(),
+			_siteConnectedGroupGroupProvider);
+		renderRequest.setAttribute(
+			TranslationPermission.class.getName(), _translationPermission);
+		renderRequest.setAttribute(
+			TranslationURLProvider.class.getName(), _translationURLProvider);
+
+		try {
+			renderRequest.setAttribute(
+				DDMWebConfiguration.class.getName(),
+				_configurationProvider.getSystemConfiguration(
+					DDMWebConfiguration.class));
+			renderRequest.setAttribute(
+				JournalFileUploadsConfiguration.class.getName(),
+				_configurationProvider.getSystemConfiguration(
+					JournalFileUploadsConfiguration.class));
+
+			JournalWebConfiguration journalWebConfiguration =
+				_configurationProvider.getSystemConfiguration(
+					JournalWebConfiguration.class);
+
+			renderRequest.setAttribute(
+				JournalWebConfiguration.class.getName(),
+				journalWebConfiguration);
+
+			renderRequest.setAttribute(
+				JournalDisplayContext.class.getName(),
+				JournalDisplayContext.create(
+					_assetDisplayPageFriendlyURLProvider, _itemSelector,
+					_journalHelper, journalWebConfiguration, renderRequest,
+					renderResponse, _resourcePermissionLocalService,
+					_roleLocalService, _trashHelper));
+
+			String path = getPath(renderRequest, renderResponse);
+
+			if (Objects.equals(path, "/data_engine/basic_info.jsp") ||
+				Objects.equals(path, "/edit_data_definition.jsp")) {
+
+				renderRequest.setAttribute(
+					JournalEditDDMStructuresDisplayContext.class.getName(),
+					new JournalEditDDMStructuresDisplayContext(
+						_portal, renderRequest, renderResponse));
+			}
+			else if (Objects.equals(
+						path, "/ddm_template/edit_properties.jsp") ||
+					 Objects.equals(path, "/edit_ddm_template.jsp")) {
+
+				renderRequest.setAttribute(
+					JournalEditDDMTemplateDisplayContext.class.getName(),
+					new JournalEditDDMTemplateDisplayContext(
+						_ddmTemplateHelper, _journalDDMTemplateHelper, _portal,
+						renderRequest, renderResponse));
+			}
+		}
+		catch (ConfigurationException configurationException) {
+			throw new PortletException(configurationException);
+		}
 
 		super.render(renderRequest, renderResponse);
 	}
@@ -177,30 +237,42 @@ public class JournalPortlet extends MVCPortlet {
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws IOException, PortletException {
 
+		JournalWebConfiguration journalWebConfiguration = null;
+
+		try {
+			journalWebConfiguration =
+				_configurationProvider.getSystemConfiguration(
+					JournalWebConfiguration.class);
+		}
+		catch (ConfigurationException configurationException) {
+			throw new PortletException(configurationException);
+		}
+
 		resourceRequest.setAttribute(
 			AssetDisplayPageFriendlyURLProvider.class.getName(),
 			_assetDisplayPageFriendlyURLProvider);
 		resourceRequest.setAttribute(
 			DDMTemplateHelper.class.getName(), _ddmTemplateHelper);
 		resourceRequest.setAttribute(
-			JournalDDMEditorConfiguration.class.getName(),
-			_journalDDMEditorConfiguration);
+			ItemSelector.class.getName(), _itemSelector);
 		resourceRequest.setAttribute(
-			JournalWebConfiguration.class.getName(), _journalWebConfiguration);
+			JournalDisplayContext.class.getName(),
+			JournalDisplayContext.create(
+				_assetDisplayPageFriendlyURLProvider, _itemSelector,
+				_journalHelper, journalWebConfiguration, resourceRequest,
+				resourceResponse, _resourcePermissionLocalService,
+				_roleLocalService, _trashHelper));
+		resourceRequest.setAttribute(
+			JournalHelper.class.getName(), _journalHelper);
+		resourceRequest.setAttribute(
+			JournalWebConfiguration.class.getName(), journalWebConfiguration);
+		resourceRequest.setAttribute(
+			TranslationPermission.class.getName(), _translationPermission);
+		resourceRequest.setAttribute(
+			TranslationURLProvider.class.getName(), _translationURLProvider);
 		resourceRequest.setAttribute(TrashWebKeys.TRASH_HELPER, _trashHelper);
 
 		super.serveResource(resourceRequest, resourceResponse);
-	}
-
-	@Activate
-	@Modified
-	protected void activate(Map<String, Object> properties) {
-		_journalDDMEditorConfiguration = ConfigurableUtil.createConfigurable(
-			JournalDDMEditorConfiguration.class, properties);
-		_journalFileUploadsConfiguration = ConfigurableUtil.createConfigurable(
-			JournalFileUploadsConfiguration.class, properties);
-		_journalWebConfiguration = ConfigurableUtil.createConfigurable(
-			JournalWebConfiguration.class, properties);
 	}
 
 	@Override
@@ -209,21 +281,41 @@ public class JournalPortlet extends MVCPortlet {
 		throws IOException, PortletException {
 
 		try {
+			HttpServletRequest httpServletRequest =
+				_portal.getHttpServletRequest(renderRequest);
+
 			String path = getPath(renderRequest, renderResponse);
 
 			if (Objects.equals(path, "/edit_article.jsp") ||
 				Objects.equals(path, "/view_article_history.jsp")) {
 
-				ActionUtil.getArticle(renderRequest);
+				ActionUtil.getArticle(httpServletRequest);
+			}
+			else if (Objects.equals(path, "/view_ddm_structures.jsp")) {
+				CTTimelineUtil.setClassName(
+					httpServletRequest, DDMStructure.class);
+			}
+			else if (Objects.equals(path, "/view_ddm_templates.jsp")) {
+				CTTimelineUtil.setClassName(
+					httpServletRequest, DDMTemplate.class);
+			}
+			else if (Validator.isNull(path)) {
+				CTTimelineUtil.setClassName(
+					httpServletRequest, JournalArticle.class);
 			}
 			else {
-				ActionUtil.getFolder(renderRequest);
+				_getFolder(httpServletRequest);
 			}
 		}
-		catch (Exception e) {
-			_log.error(e.getMessage());
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+			else {
+				_log.error(exception);
+			}
 
-			SessionErrors.add(renderRequest, e.getClass());
+			SessionErrors.add(renderRequest, exception.getClass());
 		}
 
 		if (SessionErrors.contains(
@@ -252,38 +344,39 @@ public class JournalPortlet extends MVCPortlet {
 	}
 
 	@Override
-	protected boolean isSessionErrorException(Throwable cause) {
-		if (cause instanceof ArticleContentException ||
-			cause instanceof ArticleContentSizeException ||
-			cause instanceof ArticleDisplayDateException ||
-			cause instanceof ArticleExpirationDateException ||
-			cause instanceof ArticleIdException ||
-			cause instanceof ArticleSmallImageNameException ||
-			cause instanceof ArticleSmallImageSizeException ||
-			cause instanceof ArticleTitleException ||
-			cause instanceof ArticleVersionException ||
-			cause instanceof AssetCategoryException ||
-			cause instanceof AssetTagException ||
-			cause instanceof DuplicateArticleIdException ||
-			cause instanceof DuplicateFeedIdException ||
-			cause instanceof DuplicateFileEntryException ||
-			cause instanceof DuplicateFolderNameException ||
-			cause instanceof ExportImportContentValidationException ||
-			cause instanceof FeedContentFieldException ||
-			cause instanceof FeedIdException ||
-			cause instanceof FeedNameException ||
-			cause instanceof FeedTargetLayoutFriendlyUrlException ||
-			cause instanceof FeedTargetPortletIdException ||
-			cause instanceof FileSizeException ||
-			cause instanceof FolderNameException ||
-			cause instanceof InvalidDDMStructureException ||
-			cause instanceof InvalidFolderException ||
-			cause instanceof LiferayFileItemException ||
-			cause instanceof LocaleException ||
-			cause instanceof MaxAddMenuFavItemsException ||
-			cause instanceof StorageFieldRequiredException ||
-			cause instanceof SystemException ||
-			super.isSessionErrorException(cause)) {
+	protected boolean isSessionErrorException(Throwable throwable) {
+		if (throwable instanceof ArticleContentException ||
+			throwable instanceof ArticleContentSizeException ||
+			throwable instanceof ArticleDisplayDateException ||
+			throwable instanceof ArticleExpirationDateException ||
+			throwable instanceof ArticleIdException ||
+			throwable instanceof ArticleSmallImageNameException ||
+			throwable instanceof ArticleSmallImageSizeException ||
+			throwable instanceof ArticleTitleException ||
+			throwable instanceof ArticleVersionException ||
+			throwable instanceof AssetCategoryException ||
+			throwable instanceof AssetTagException ||
+			throwable instanceof DuplicateArticleIdException ||
+			throwable instanceof DuplicateFeedIdException ||
+			throwable instanceof DuplicateFileEntryException ||
+			throwable instanceof DuplicateFolderNameException ||
+			throwable instanceof ExportImportContentValidationException ||
+			throwable instanceof FeedContentFieldException ||
+			throwable instanceof FeedIdException ||
+			throwable instanceof FeedNameException ||
+			throwable instanceof FeedTargetLayoutFriendlyUrlException ||
+			throwable instanceof FeedTargetPortletIdException ||
+			throwable instanceof FileSizeException ||
+			throwable instanceof FolderNameException ||
+			throwable instanceof InvalidDDMStructureException ||
+			throwable instanceof InvalidFolderException ||
+			throwable instanceof LiferayFileItemException ||
+			throwable instanceof LocaleException ||
+			throwable instanceof MaxAddMenuFavItemsException ||
+			throwable instanceof PersistenceException ||
+			throwable instanceof StorageFieldRequiredException ||
+			throwable instanceof SystemException ||
+			super.isSessionErrorException(throwable)) {
 
 			return true;
 		}
@@ -291,11 +384,26 @@ public class JournalPortlet extends MVCPortlet {
 		return false;
 	}
 
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.journal.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
+	private void _getFolder(HttpServletRequest httpServletRequest)
+		throws PortalException {
+
+		long folderId = ParamUtil.getLong(httpServletRequest, "folderId");
+
+		if (folderId > 0) {
+			_journalFolderService.fetchFolder(folderId);
+
+			CTTimelineUtil.setCTTimelineKeys(
+				httpServletRequest, JournalFolder.class, folderId);
+		}
+		else {
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)httpServletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+			_portletResourcePermission.check(
+				themeDisplay.getPermissionChecker(),
+				themeDisplay.getScopeGroup(), ActionKeys.VIEW);
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(JournalPortlet.class);
@@ -305,7 +413,22 @@ public class JournalPortlet extends MVCPortlet {
 		_assetDisplayPageFriendlyURLProvider;
 
 	@Reference
+	private AssetVocabularyLocalService _assetVocabularyLocalService;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private DDMFormValuesFactory _ddmFormValuesFactory;
+
+	@Reference
+	private DDMFormValuesToMapConverter _ddmFormValuesToMapConverter;
+
+	@Reference
 	private DDMTemplateHelper _ddmTemplateHelper;
+
+	@Reference
+	private FieldsToDDMFormValuesConverter _fieldsToDDMFormValuesConverter;
 
 	@Reference
 	private ItemSelector _itemSelector;
@@ -316,15 +439,42 @@ public class JournalPortlet extends MVCPortlet {
 	@Reference
 	private JournalConverter _journalConverter;
 
-	private volatile JournalDDMEditorConfiguration
-		_journalDDMEditorConfiguration;
+	@Reference
+	private JournalDDMTemplateHelper _journalDDMTemplateHelper;
 
 	@Reference
-	private JournalDDMTemplateUtil _journalDDMTemplateUtil;
+	private JournalFolderService _journalFolderService;
 
-	private volatile JournalFileUploadsConfiguration
-		_journalFileUploadsConfiguration;
-	private volatile JournalWebConfiguration _journalWebConfiguration;
+	@Reference
+	private JournalHelper _journalHelper;
+
+	@Reference
+	private Portal _portal;
+
+	@Reference(
+		target = "(resource.name=" + JournalConstants.RESOURCE_NAME + ")"
+	)
+	private PortletResourcePermission _portletResourcePermission;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.journal.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))"
+	)
+	private Release _release;
+
+	@Reference
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Reference
+	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
+
+	@Reference
+	private TranslationPermission _translationPermission;
+
+	@Reference
+	private TranslationURLProvider _translationURLProvider;
 
 	@Reference
 	private TrashHelper _trashHelper;

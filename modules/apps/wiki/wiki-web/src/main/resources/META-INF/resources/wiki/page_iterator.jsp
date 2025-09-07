@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,9 +16,11 @@ String navigation = ParamUtil.getString(request, "navigation", "all-pages");
 long categoryId = ParamUtil.getLong(request, "categoryId");
 String tagName = ParamUtil.getString(request, "tag");
 
-PortletURL portletURL = renderResponse.createRenderURL();
-
-portletURL.setParameter("nodeName", node.getName());
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setParameter(
+	"nodeName", node.getName()
+).buildPortletURL();
 
 if (wikiPage != null) {
 	portletURL.setParameter("title", wikiPage.getTitle());
@@ -48,17 +41,19 @@ else if (navigation.equals("draft-pages")) {
 	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "draft-pages"), portletURL.toString());
 }
 else if (navigation.equals("history")) {
-	PortletURL viewPageHistoryURL = PortletURLUtil.clone(portletURL, renderResponse);
-
 	if (wikiPage != null) {
 		portletURL.setParameter("mvcRenderCommandName", "/wiki/view");
 
 		PortalUtil.addPortletBreadcrumbEntry(request, wikiPage.getTitle(), portletURL.toString());
 	}
 
-	viewPageHistoryURL.setParameter("mvcRenderCommandName", "/wiki/view_page_activities");
-
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "history"), viewPageHistoryURL.toString());
+	PortalUtil.addPortletBreadcrumbEntry(
+		request, LanguageUtil.get(request, "history"),
+		PortletURLBuilder.create(
+			PortletURLUtil.clone(portletURL, renderResponse)
+		).setMVCRenderCommandName(
+			"/wiki/view_page_activities"
+		).buildString());
 }
 else if (navigation.equals("incoming-links")) {
 	if (wikiPage != null) {
@@ -113,14 +108,14 @@ if (navigation.equals("all-pages") || navigation.equals("categorized-pages") || 
 	headerNames.add(StringPool.BLANK);
 }
 
-WikiListPagesDisplayContext wikiListPagesDisplayContext = wikiDisplayContextProvider.getWikiListPagesDisplayContext(request, response, node);
+WikiListPagesDisplayContext wikiListPagesDisplayContext = new WikiListPagesDisplayContext(request, (TrashHelper)request.getAttribute(TrashWebKeys.TRASH_HELPER), node);
 
 String orderByCol = ParamUtil.getString(request, "orderByCol");
 String orderByType = ParamUtil.getString(request, "orderByType");
 
-SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, currentURLObj, headerNames, wikiListPagesDisplayContext.getEmptyResultsMessage());
+SearchContainer<WikiPage> searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, currentURLObj, headerNames, wikiListPagesDisplayContext.getEmptyResultsMessage());
 
-Map orderableHeaders = new HashMap();
+Map<String, String> orderableHeaders = new HashMap<>();
 
 if (navigation.equals("all-pages") || navigation.equals("categorized-pages") || navigation.equals("tagged-pages")) {
 	orderableHeaders.put("date", "modifiedDate");
@@ -143,7 +138,7 @@ wikiListPagesDisplayContext.populateResultsAndTotal(searchContainer);
 
 List<WikiPage> pages = searchContainer.getResults();
 
-List resultRows = searchContainer.getResultRows();
+List<com.liferay.portal.kernel.dao.search.ResultRow> resultRows = searchContainer.getResultRows();
 
 for (int i = 0; i < pages.size(); i++) {
 	WikiPage curWikiPage = pages.get(i);
@@ -161,7 +156,10 @@ for (int i = 0; i < pages.size(); i++) {
 		}
 
 		rowURL.setParameter("redirect", currentURL);
-		rowURL.setParameter("nodeName", curWikiPage.getNode().getName());
+
+		WikiNode wikiNode = curWikiPage.getNode();
+
+		rowURL.setParameter("nodeName", wikiNode.getName());
 	}
 	else {
 		rowURL.setParameter("mvcRenderCommandName", "/wiki/edit_page");
@@ -201,7 +199,7 @@ for (int i = 0; i < pages.size(); i++) {
 	// User
 
 	if (!curWikiPage.isNew()) {
-		row.addText(HtmlUtil.escape(PortalUtil.getUserName(curWikiPage)), rowURL);
+		row.addText(HtmlUtil.escape(curWikiPage.getUserName()), rowURL);
 	}
 	else {
 		row.addText(StringPool.BLANK);
@@ -260,18 +258,19 @@ for (int i = 0; i < pages.size(); i++) {
 />
 
 <liferay-ui:search-iterator
+	markupView="deprecated"
 	paginate='<%= navigation.equals("history") ? false : true %>'
 	searchContainer="<%= searchContainer %>"
 />
 
 <c:if test='<%= navigation.equals("history") %>'>
-	<aui:script require="metal-dom/src/dom as dom">
+	<aui:script sandbox="<%= true %>">
 		function <portlet:namespace />initRowsChecked() {
 			var rowIdsNodes = document.querySelectorAll(
 				'input[name=<portlet:namespace />rowIds]'
 			);
 
-			Array.prototype.forEach.call(rowIdsNodes, function(rowIdsNode, index) {
+			Array.prototype.forEach.call(rowIdsNodes, (rowIdsNode, index) => {
 				if (index > 1) {
 					rowIdsNode.checked = false;
 				}
@@ -297,12 +296,12 @@ for (int i = 0; i < pages.size(); i++) {
 		<c:if test="<%= pages.size() > 1 %>">
 
 			<%
-			WikiPage latestWikiPage = (WikiPage)pages.get(1);
+			WikiPage latestWikiPage = pages.get(1);
 			%>
 
 			var compareButton = document.getElementById('<portlet:namespace />compare');
 
-			compareButton.addEventListener('click', function(event) {
+			compareButton.addEventListener('click', (event) => {
 				<portlet:renderURL var="compareVersionURL">
 					<portlet:param name="mvcRenderCommandName" value="/wiki/compare_versions" />
 					<portlet:param name="backURL" value="<%= currentURL %>" />
@@ -331,7 +330,8 @@ for (int i = 0; i < pages.size(); i++) {
 								'<portlet:namespace />targetVersion=<%= wikiPage.getVersion() %>',
 								uri
 							);
-						} else if (rowIdsSize === 2) {
+						}
+						else if (rowIdsSize === 2) {
 							uri = Liferay.Util.addParams(
 								'<portlet:namespace />sourceVersion=' + rowIds[1].value,
 								uri
@@ -355,11 +355,11 @@ for (int i = 0; i < pages.size(); i++) {
 		);
 
 		if (searchContainer) {
-			dom.delegate(
+			Liferay.Util.delegate(
 				searchContainer,
 				'click',
 				'input[name=<portlet:namespace />rowIds]',
-				function(event) {
+				(event) => {
 					<portlet:namespace />updateRowsChecked(event.delegateTarget);
 				}
 			);

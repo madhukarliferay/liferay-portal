@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.odata.filter.expression;
@@ -120,6 +111,21 @@ public interface ExpressionVisitor<T> {
 	}
 
 	/**
+	 * Called for each {@link ListExpression}.
+	 *
+	 * @param  operation the list expression's operation
+	 * @param  left the return value of the left subtree
+	 * @param  right the return value of the lists of right subtrees
+	 * @return T the object of type {@code T}
+	 * @throws ExpressionVisitException if an expression visit exception
+	 *         occurred
+	 * @review
+	 */
+	public T visitListExpressionOperation(
+			ListExpression.Operation operation, T left, List<T> right)
+		throws ExpressionVisitException;
+
+	/**
 	 * Called for each {@link LiteralExpression}.
 	 *
 	 * @param  literalExpression the literal expression
@@ -157,6 +163,13 @@ public interface ExpressionVisitor<T> {
 	public T visitMethodExpression(
 			List<T> expressions, MethodExpression.Type type)
 		throws ExpressionVisitException;
+
+	public default T visitNavigationPropertyExpression(
+		NavigationPropertyExpression navigationPropertyExpression) {
+
+		throw new UnsupportedOperationException(
+			"Unsupported method navigationPropertyExpression");
+	}
 
 	/**
 	 * Called for each traversed {@link PrimitivePropertyExpression} expression.

@@ -1,23 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.menu.item.layout.internal.portlet.action;
 
-import com.liferay.petra.string.StringUtil;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -25,25 +18,25 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.site.navigation.admin.constants.SiteNavigationAdminPortletKeys;
 import com.liferay.site.navigation.exception.SiteNavigationMenuItemNameException;
-import com.liferay.site.navigation.menu.item.util.SiteNavigationMenuItemUtil;
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 import com.liferay.site.navigation.service.SiteNavigationMenuItemService;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -52,9 +45,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + SiteNavigationAdminPortletKeys.SITE_NAVIGATION_ADMIN,
+		"jakarta.portlet.name=" + SiteNavigationAdminPortletKeys.SITE_NAVIGATION_ADMIN,
 		"mvc.command.name=/navigation_menu/add_layout_site_navigation_menu_item"
 	},
 	service = MVCActionCommand.class
@@ -72,88 +64,117 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 
 		long siteNavigationMenuId = ParamUtil.getLong(
 			actionRequest, "siteNavigationMenuId");
-
-		String type = ParamUtil.getString(actionRequest, "type");
-
-		UnicodeProperties typeSettingsProperties =
-			SiteNavigationMenuItemUtil.getSiteNavigationMenuItemProperties(
-				actionRequest, "TypeSettingsProperties--");
+		String siteNavigationMenuItemType = ParamUtil.getString(
+			actionRequest, "siteNavigationMenuItemType");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
 
-		List<String> layoutUUIDs = StringUtil.split(
-			typeSettingsProperties.getProperty("layoutUuid"));
-
 		Map<Long, SiteNavigationMenuItem> layoutSiteNavigationMenuItemMap =
-			new HashMap<>();
+			new LinkedHashMap<>();
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
-			for (String layoutUuid : layoutUUIDs) {
-				long groupId = GetterUtil.getLong(
-					typeSettingsProperties.get("groupId"));
-				boolean privateLayout = GetterUtil.getBoolean(
-					typeSettingsProperties.get("privateLayout"));
+			JSONArray jsonArray = _jsonFactory.createJSONArray(
+				ParamUtil.getString(actionRequest, "items"));
 
-				Layout layout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
-					layoutUuid, groupId, privateLayout);
+			Iterator<JSONObject> iterator = jsonArray.iterator();
+
+			while (iterator.hasNext()) {
+				JSONObject itemJSONObject = iterator.next();
+
+				String externalReferenceCode = itemJSONObject.getString(
+					"externalReferenceCode");
+				long groupId = itemJSONObject.getLong("groupId");
+
+				Layout layout =
+					_layoutLocalService.fetchLayoutByExternalReferenceCode(
+						externalReferenceCode, groupId);
 
 				if (layout == null) {
 					continue;
 				}
 
-				UnicodeProperties curTypeSettingsProperties =
-					new UnicodeProperties(true);
-
-				curTypeSettingsProperties.setProperty(
-					"groupId", String.valueOf(groupId));
-				curTypeSettingsProperties.setProperty("layoutUuid", layoutUuid);
-				curTypeSettingsProperties.setProperty(
-					"privateLayout", String.valueOf(privateLayout));
-				curTypeSettingsProperties.setProperty(
-					"title", layout.getName(themeDisplay.getLocale()));
+				long parentSiteNavigationMenuItemId = ParamUtil.getLong(
+					actionRequest, "parentSiteNavigationMenuItemId");
 
 				SiteNavigationMenuItem siteNavigationMenuItem =
 					_siteNavigationMenuItemService.addSiteNavigationMenuItem(
-						themeDisplay.getScopeGroupId(), siteNavigationMenuId, 0,
-						type, curTypeSettingsProperties.toString(),
+						null, themeDisplay.getScopeGroupId(),
+						siteNavigationMenuId, parentSiteNavigationMenuItemId,
+						siteNavigationMenuItemType,
+						UnicodePropertiesBuilder.create(
+							true
+						).put(
+							"externalReferenceCode", externalReferenceCode
+						).put(
+							"groupId", String.valueOf(groupId)
+						).put(
+							"layoutUuid", itemJSONObject.getString("id")
+						).put(
+							"privateLayout",
+							String.valueOf(
+								itemJSONObject.getBoolean("privateLayout"))
+						).put(
+							"title", layout.getName(themeDisplay.getLocale())
+						).buildString(),
 						serviceContext);
 
 				layoutSiteNavigationMenuItemMap.put(
 					layout.getPlid(), siteNavigationMenuItem);
 			}
 
+			int order = ParamUtil.getInteger(actionRequest, "order", -1);
+
+			int nextOrder = order;
+
 			for (Map.Entry<Long, SiteNavigationMenuItem> entry :
 					layoutSiteNavigationMenuItemMap.entrySet()) {
 
-				Layout layout = _layoutLocalService.fetchLayout(entry.getKey());
+				if (order < 0) {
+					Layout layout = _layoutLocalService.fetchLayout(
+						entry.getKey());
 
-				if (layout.getParentPlid() <= 0) {
-					continue;
+					if (layout.getParentPlid() <= 0) {
+						continue;
+					}
+
+					SiteNavigationMenuItem parentSiteNavigationMenuItem =
+						layoutSiteNavigationMenuItemMap.get(
+							layout.getParentPlid());
+
+					if (parentSiteNavigationMenuItem == null) {
+						continue;
+					}
+
+					SiteNavigationMenuItem siteNavigationMenuItem =
+						entry.getValue();
+
+					_siteNavigationMenuItemService.updateSiteNavigationMenuItem(
+						siteNavigationMenuItem.getSiteNavigationMenuItemId(),
+						parentSiteNavigationMenuItem.
+							getSiteNavigationMenuItemId(),
+						layout.getPriority());
 				}
+				else {
+					SiteNavigationMenuItem siteNavigationMenuItem =
+						entry.getValue();
 
-				SiteNavigationMenuItem parentSiteNavigationMenuItem =
-					layoutSiteNavigationMenuItemMap.get(layout.getParentPlid());
+					_siteNavigationMenuItemService.updateSiteNavigationMenuItem(
+						siteNavigationMenuItem.getSiteNavigationMenuItemId(),
+						siteNavigationMenuItem.
+							getParentSiteNavigationMenuItemId(),
+						nextOrder);
 
-				if (parentSiteNavigationMenuItem == null) {
-					continue;
+					nextOrder++;
 				}
-
-				SiteNavigationMenuItem siteNavigationMenuItem =
-					entry.getValue();
-
-				_siteNavigationMenuItemService.updateSiteNavigationMenuItem(
-					siteNavigationMenuItem.getSiteNavigationMenuItemId(),
-					parentSiteNavigationMenuItem.getSiteNavigationMenuItemId(),
-					layout.getPriority());
 			}
 
 			if (MapUtil.isEmpty(layoutSiteNavigationMenuItemMap)) {
 				jsonObject.put(
 					"errorMessage",
-					LanguageUtil.get(
+					_language.get(
 						_portal.getHttpServletRequest(actionRequest),
 						"please-choose-at-least-one-page"));
 			}
@@ -161,12 +182,31 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 				jsonObject.put(
 					"siteNavigationMenuItemId",
 					layoutSiteNavigationMenuItemMap);
+
+				String message = _language.format(
+					themeDisplay.getLocale(), "x-x-was-added-to-this-menu",
+					Arrays.asList(jsonArray.length(), "page"));
+
+				if (jsonArray.length() > 1) {
+					message = _language.format(
+						themeDisplay.getLocale(), "x-x-were-added-to-this-menu",
+						Arrays.asList(jsonArray.length(), "pages"));
+				}
+
+				SessionMessages.add(
+					actionRequest, "siteNavigationMenuItemsAdded", message);
 			}
 		}
-		catch (SiteNavigationMenuItemNameException snmine) {
+		catch (SiteNavigationMenuItemNameException
+					siteNavigationMenuItemNameException) {
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(siteNavigationMenuItemNameException);
+			}
+
 			jsonObject.put(
 				"errorMessage",
-				LanguageUtil.get(
+				_language.get(
 					_portal.getHttpServletRequest(actionRequest),
 					"an-unexpected-error-occurred"));
 		}
@@ -174,6 +214,15 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 		JSONPortletResponseUtil.writeJSON(
 			actionRequest, actionResponse, jsonObject);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		AddLayoutSiteNavigationMenuItemMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

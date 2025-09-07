@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.validation;
@@ -42,10 +33,9 @@ public class ModelValidationResults {
 	}
 
 	public String getExceptionsString() {
-		StringBundler sb = new StringBundler(3);
+		StringBundler sb = new StringBundler((_exceptions.size() * 4) + 2);
 
-		sb.append("Exceptions: ");
-		sb.append(StringPool.OPEN_CURLY_BRACE);
+		sb.append("Exceptions: {");
 
 		for (Map.Entry<String, Throwable> exception : _exceptions.entrySet()) {
 			sb.append("Message: ");
@@ -64,10 +54,9 @@ public class ModelValidationResults {
 	}
 
 	public String getFieldsString() {
-		StringBundler sb = new StringBundler(3);
+		StringBundler sb = new StringBundler((_fields.size() * 4) + 2);
 
-		sb.append("Fields: ");
-		sb.append(StringPool.OPEN_CURLY_BRACE);
+		sb.append("Fields: {");
 
 		for (Map.Entry<String, Object> field : _fields.entrySet()) {
 			sb.append("Field: ");
@@ -112,9 +101,9 @@ public class ModelValidationResults {
 		}
 
 		public FailureBuilder exceptionFailure(
-			String message, Throwable cause) {
+			String message, Throwable throwable) {
 
-			modelValidationResults._exceptions.put(message, cause);
+			modelValidationResults._exceptions.put(message, throwable);
 
 			return this;
 		}
@@ -134,9 +123,9 @@ public class ModelValidationResults {
 		}
 
 		public WarningBuilder exceptionWarning(
-			String message, Throwable cause) {
+			String message, Throwable throwable) {
 
-			modelValidationResults._exceptions.put(message, cause);
+			modelValidationResults._exceptions.put(message, throwable);
 
 			return this;
 		}
@@ -159,8 +148,8 @@ public class ModelValidationResults {
 
 	private static final int _WARNING = 2;
 
-	private Map<String, Throwable> _exceptions = new HashMap<>();
-	private Map<String, Object> _fields = new HashMap<>();
+	private final Map<String, Throwable> _exceptions = new HashMap<>();
+	private final Map<String, Object> _fields = new HashMap<>();
 	private final int _outcome;
 
 	private static class Builder {

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.item.selector.web.internal;
@@ -23,23 +14,23 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
-import com.liferay.site.item.selector.criterion.SiteItemSelectorCriterion;
+import com.liferay.site.item.selector.SiteItemSelectorCriterion;
 import com.liferay.site.item.selector.web.internal.renderer.RecentGroupItemSelectorViewRenderer;
-import com.liferay.site.util.GroupURLProvider;
-import com.liferay.site.util.RecentGroupManager;
+import com.liferay.site.manager.RecentGroupManager;
+import com.liferay.site.provider.GroupURLProvider;
+
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -73,8 +64,11 @@ public class RecentSitesItemSelectorView
 	}
 
 	@Override
-	public boolean isVisible(ThemeDisplay themeDisplay) {
-		return true;
+	public boolean isVisible(
+		SiteItemSelectorCriterion siteItemSelectorCriterion,
+		ThemeDisplay themeDisplay) {
+
+		return siteItemSelectorCriterion.isIncludeRecentSites();
 	}
 
 	@Override
@@ -84,21 +78,21 @@ public class RecentSitesItemSelectorView
 			PortletURL portletURL, String itemSelectedEventName, boolean search)
 		throws IOException, ServletException {
 
-		_recentGroupItemSelectorViewRender.renderHTML(
+		_recentGroupItemSelectorViewRenderer.renderHTML(
 			servletRequest, servletResponse, siteItemSelectorCriterion,
 			portletURL, itemSelectedEventName, search);
 	}
 
 	@Activate
 	protected void activate() {
-		_recentGroupItemSelectorViewRender =
+		_recentGroupItemSelectorViewRenderer =
 			new RecentGroupItemSelectorViewRenderer(
 				_groupURLProvider, _recentGroupManager, _servletContext);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		_recentGroupItemSelectorViewRender = null;
+		_recentGroupItemSelectorViewRenderer = null;
 	}
 
 	private static final List<ItemSelectorReturnType>
@@ -115,7 +109,7 @@ public class RecentSitesItemSelectorView
 	private Portal _portal;
 
 	private RecentGroupItemSelectorViewRenderer
-		_recentGroupItemSelectorViewRender;
+		_recentGroupItemSelectorViewRenderer;
 
 	@Reference
 	private RecentGroupManager _recentGroupManager;

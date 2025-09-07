@@ -1,69 +1,91 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React from 'react';
+import ClayTable from '@clayui/table';
+import React, {useEffect} from 'react';
 
-import InstanceListPageItem from './InstanceListPageItem.es';
+import ListHeadItem from '../../shared/components/list/ListHeadItem.es';
+import {useIsAdmin} from '../../shared/hooks/useIsAdmin.es';
+import Item from './InstanceListPageItem.es';
 
-const InstanceListPageTable = ({items}) => {
+const Table = ({items, totalCount}) => {
+	const {fetchData, isAdmin} = useIsAdmin();
+
+	useEffect(() => {
+		fetchData();
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	return (
-		<div className="table-responsive">
-			<table
-				className="show-quick-actions-on-hover table table-fixed table-heading-nowrap table-hover table-list"
-				style={{minWidth: '64rem'}}
-			>
-				<thead>
-					<tr>
-						<th style={{width: '4%'}} />
+		<ClayTable>
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell headingCell style={{width: '5%'}} />
 
-						<th className="table-head-title" style={{width: '8%'}}>
-							{Liferay.Language.get('id')}
-						</th>
+					<ClayTable.Cell headingCell style={{width: '5%'}}>
+						{Liferay.Language.get('id')}
+					</ClayTable.Cell>
 
-						<th
-							className="table-cell-expand table-head-title"
-							style={{width: '22%'}}
-						>
-							{Liferay.Language.get('item-subject')}
-						</th>
+					<ClayTable.Cell headingCell style={{width: '14%'}}>
+						<ListHeadItem
+							name="dateOverdue"
+							title={Liferay.Language.get('due-date')}
+						/>
+					</ClayTable.Cell>
 
-						<th className="table-head-title" style={{width: '20%'}}>
-							{Liferay.Language.get('process-step')}
-						</th>
+					<ClayTable.Cell headingCell style={{width: '13%'}}>
+						<ListHeadItem
+							name="assetType"
+							title={Liferay.Language.get('item-subject')}
+						/>
+					</ClayTable.Cell>
 
-						<th className="table-head-title" style={{width: '14%'}}>
-							{Liferay.Language.get('assignee')}
-						</th>
+					<ClayTable.Cell headingCell style={{width: '14%'}}>
+						{Liferay.Language.get('process-step')}
+					</ClayTable.Cell>
 
-						<th className="table-head-title" style={{width: '14%'}}>
-							{Liferay.Language.get('created-by')}
-						</th>
+					<ClayTable.Cell headingCell style={{width: '14%'}}>
+						<ListHeadItem
+							name="assigneeName"
+							title={Liferay.Language.get('assignee')}
+						/>
+					</ClayTable.Cell>
 
-						<th
-							className="pr-4 table-head-title text-right"
-							style={{width: '18%'}}
-						>
-							{Liferay.Language.get('creation-date')}
-						</th>
-					</tr>
-				</thead>
+					<ClayTable.Cell headingCell style={{width: '14%'}}>
+						<ListHeadItem
+							name="userName"
+							title={Liferay.Language.get('created-by')}
+						/>
+					</ClayTable.Cell>
 
-				<tbody>
-					{items.map((item, index) => (
-						<InstanceListPageItem {...item} key={index} />
-					))}
-				</tbody>
-			</table>
-		</div>
+					<ClayTable.Cell headingCell style={{width: '16%'}}>
+						<ListHeadItem
+							name="dateCreated"
+							title={Liferay.Language.get('creation-date')}
+						/>
+					</ClayTable.Cell>
+
+					<ClayTable.Cell headingCell style={{width: '5%'}} />
+				</ClayTable.Row>
+			</ClayTable.Head>
+
+			<ClayTable.Body>
+				{items.map((item, index) => (
+					<Table.Item
+						{...item}
+						isAdmin={isAdmin}
+						key={index}
+						totalCount={totalCount}
+					/>
+				))}
+			</ClayTable.Body>
+		</ClayTable>
 	);
 };
 
-export default InstanceListPageTable;
+Table.Item = Item;
+
+export {Table};

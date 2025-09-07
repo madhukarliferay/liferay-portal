@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link CompanyLocalService}.
@@ -24,12 +17,20 @@ package com.liferay.portal.kernel.service;
 public class CompanyLocalServiceWrapper
 	implements CompanyLocalService, ServiceWrapper<CompanyLocalService> {
 
+	public CompanyLocalServiceWrapper() {
+		this(null);
+	}
+
 	public CompanyLocalServiceWrapper(CompanyLocalService companyLocalService) {
 		_companyLocalService = companyLocalService;
 	}
 
 	/**
 	 * Adds the company to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CompanyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param company the company
 	 * @return the company that was added
@@ -42,13 +43,13 @@ public class CompanyLocalServiceWrapper
 	}
 
 	/**
-	 * Adds a company.
+	 * Adds a company with the primary key.
 	 *
+	 * @param companyId the primary key of the company (optionally <code>null</code> or
+	 <code>0</code> to generate a key automatically)
 	 * @param webId the the company's web domain
 	 * @param virtualHostname the company's virtual host name
 	 * @param mx the company's mail domain
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
 	 * @param maxUsers the max number of company users (optionally
 	 <code>0</code>)
 	 * @param active whether the company is active
@@ -56,12 +57,35 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company addCompany(
-			java.lang.String webId, java.lang.String virtualHostname,
-			java.lang.String mx, boolean system, int maxUsers, boolean active)
+			Long companyId, String webId, String virtualHostname, String mx,
+			int maxUsers, boolean active, boolean addDefaultAdminUser,
+			String defaultAdminPassword, String defaultAdminScreenName,
+			String defaultAdminEmailAddress, String defaultAdminFirstName,
+			String defaultAdminMiddleName, String defaultAdminLastName)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.addCompany(
-			webId, virtualHostname, mx, system, maxUsers, active);
+			companyId, webId, virtualHostname, mx, maxUsers, active,
+			addDefaultAdminUser, defaultAdminPassword, defaultAdminScreenName,
+			defaultAdminEmailAddress, defaultAdminFirstName,
+			defaultAdminMiddleName, defaultAdminLastName);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Company addDBPartitionCompany(
+			long companyId, String name, String virtualHostname, String webId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.addDBPartitionCompany(
+			companyId, name, virtualHostname, webId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Company checkCompany(
+			com.liferay.portal.kernel.model.Company company, boolean newCompany)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.checkCompany(company, newCompany);
 	}
 
 	/**
@@ -74,30 +98,10 @@ public class CompanyLocalServiceWrapper
 	 * @return the company with the web domain
 	 */
 	@Override
-	public com.liferay.portal.kernel.model.Company checkCompany(
-			java.lang.String webId)
+	public com.liferay.portal.kernel.model.Company checkCompany(String webId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.checkCompany(webId);
-	}
-
-	/**
-	 * Returns the company with the web domain and mail domain. If no such
-	 * company exits, the method will create a new company.
-	 *
-	 * The method goes through a series of checks to ensure that the company
-	 * contains default users, groups, etc.
-	 *
-	 * @param webId the company's web domain
-	 * @param mx the company's mail domain
-	 * @return the company with the web domain and mail domain
-	 */
-	@Override
-	public com.liferay.portal.kernel.model.Company checkCompany(
-			java.lang.String webId, java.lang.String mx)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _companyLocalService.checkCompany(webId, mx);
 	}
 
 	/**
@@ -111,6 +115,16 @@ public class CompanyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_companyLocalService.checkCompanyKey(companyId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Company copyDBPartitionCompany(
+			long fromCompanyId, Long toCompanyId, String name,
+			String virtualHostname, String webId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.copyDBPartitionCompany(
+			fromCompanyId, toCompanyId, name, virtualHostname, webId);
 	}
 
 	/**
@@ -127,7 +141,22 @@ public class CompanyLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the company from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CompanyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param company the company
 	 * @return the company that was removed
@@ -143,6 +172,10 @@ public class CompanyLocalServiceWrapper
 
 	/**
 	 * Deletes the company with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CompanyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param companyId the primary key of the company
 	 * @return the company that was removed
@@ -177,6 +210,18 @@ public class CompanyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _companyLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _companyLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -269,6 +314,13 @@ public class CompanyLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.portal.kernel.model.Company exportCompany(long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.exportCompany(companyId);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.model.Company fetchCompany(
 		long companyId) {
 
@@ -298,9 +350,45 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company fetchCompanyByVirtualHost(
-		java.lang.String virtualHostname) {
+		String virtualHostname) {
 
 		return _companyLocalService.fetchCompanyByVirtualHost(virtualHostname);
+	}
+
+	@Override
+	public <E extends Exception> void forEachCompany(
+			com.liferay.petra.function.UnsafeConsumer
+				<com.liferay.portal.kernel.model.Company, E> unsafeConsumer)
+		throws E {
+
+		_companyLocalService.forEachCompany(unsafeConsumer);
+	}
+
+	@Override
+	public <E extends Exception> void forEachCompany(
+			com.liferay.petra.function.UnsafeConsumer
+				<com.liferay.portal.kernel.model.Company, E> unsafeConsumer,
+			java.util.List<com.liferay.portal.kernel.model.Company> companies)
+		throws E {
+
+		_companyLocalService.forEachCompany(unsafeConsumer, companies);
+	}
+
+	@Override
+	public <E extends Exception> void forEachCompanyId(
+			com.liferay.petra.function.UnsafeConsumer<Long, E> unsafeConsumer)
+		throws E {
+
+		_companyLocalService.forEachCompanyId(unsafeConsumer);
+	}
+
+	@Override
+	public <E extends Exception> void forEachCompanyId(
+			com.liferay.petra.function.UnsafeConsumer<Long, E> unsafeConsumer,
+			long[] companyIds)
+		throws E {
+
+		_companyLocalService.forEachCompanyId(unsafeConsumer, companyIds);
 	}
 
 	@Override
@@ -320,27 +408,6 @@ public class CompanyLocalServiceWrapper
 		getCompanies() {
 
 		return _companyLocalService.getCompanies();
-	}
-
-	/**
-	 * Returns all the companies used by WSRP.
-	 *
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
-	 * @return the companies used by WSRP
-	 */
-	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Company> getCompanies(
-		boolean system) {
-
-		return _companyLocalService.getCompanies(system);
-	}
-
-	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Company> getCompanies(
-		boolean system, int start, int end) {
-
-		return _companyLocalService.getCompanies(system, start, end);
 	}
 
 	/**
@@ -372,18 +439,6 @@ public class CompanyLocalServiceWrapper
 	}
 
 	/**
-	 * Returns the number of companies used by WSRP.
-	 *
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
-	 * @return the number of companies used by WSRP
-	 */
-	@Override
-	public int getCompaniesCount(boolean system) {
-		return _companyLocalService.getCompaniesCount(system);
-	}
-
-	/**
 	 * Returns the company with the primary key.
 	 *
 	 * @param companyId the primary key of the company
@@ -412,34 +467,6 @@ public class CompanyLocalServiceWrapper
 	}
 
 	/**
-	 * Returns the company with the logo.
-	 *
-	 * @param logoId the ID of the company's logo
-	 * @return the company with the logo
-	 */
-	@Override
-	public com.liferay.portal.kernel.model.Company getCompanyByLogoId(
-			long logoId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _companyLocalService.getCompanyByLogoId(logoId);
-	}
-
-	/**
-	 * Returns the company with the mail domain.
-	 *
-	 * @param mx the company's mail domain
-	 * @return the company with the mail domain
-	 */
-	@Override
-	public com.liferay.portal.kernel.model.Company getCompanyByMx(
-			java.lang.String mx)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _companyLocalService.getCompanyByMx(mx);
-	}
-
-	/**
 	 * Returns the company with the virtual host name.
 	 *
 	 * @param virtualHostname the company's virtual host name
@@ -447,7 +474,7 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company getCompanyByVirtualHost(
-			java.lang.String virtualHostname)
+			String virtualHostname)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.getCompanyByVirtualHost(virtualHostname);
@@ -461,7 +488,7 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company getCompanyByWebId(
-			java.lang.String webId)
+			String webId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.getCompanyByWebId(webId);
@@ -477,7 +504,7 @@ public class CompanyLocalServiceWrapper
 	 * @throws Exception if a user with the primary key could not be found
 	 */
 	@Override
-	public long getCompanyIdByUserId(long userId) throws java.lang.Exception {
+	public long getCompanyIdByUserId(long userId) throws Exception {
 		return _companyLocalService.getCompanyIdByUserId(userId);
 	}
 
@@ -494,10 +521,13 @@ public class CompanyLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _companyLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -517,7 +547,7 @@ public class CompanyLocalServiceWrapper
 	 * @param keys the company's preferences keys to be remove
 	 */
 	@Override
-	public void removePreferences(long companyId, java.lang.String[] keys) {
+	public void removePreferences(long companyId, String[] keys) {
 		_companyLocalService.removePreferences(companyId, keys);
 	}
 
@@ -540,8 +570,7 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.search.Hits search(
-		long companyId, long userId, java.lang.String keywords, int start,
-		int end) {
+		long companyId, long userId, String keywords, int start, int end) {
 
 		return _companyLocalService.search(
 			companyId, userId, keywords, start, end);
@@ -567,8 +596,8 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.search.Hits search(
-		long companyId, long userId, java.lang.String portletId, long groupId,
-		java.lang.String type, java.lang.String keywords, int start, int end) {
+		long companyId, long userId, String portletId, long groupId,
+		String type, String keywords, int start, int end) {
 
 		return _companyLocalService.search(
 			companyId, userId, portletId, groupId, type, keywords, start, end);
@@ -576,6 +605,10 @@ public class CompanyLocalServiceWrapper
 
 	/**
 	 * Updates the company in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect CompanyLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param company the company
 	 * @return the company that was updated
@@ -600,8 +633,8 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company updateCompany(
-			long companyId, java.lang.String virtualHostname,
-			java.lang.String mx, int maxUsers, boolean active)
+			long companyId, String virtualHostname, String mx, int maxUsers,
+			boolean active)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.updateCompany(
@@ -636,13 +669,10 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company updateCompany(
-			long companyId, java.lang.String virtualHostname,
-			java.lang.String mx, java.lang.String homeURL, boolean hasLogo,
-			byte[] logoBytes, java.lang.String name, java.lang.String legalName,
-			java.lang.String legalId, java.lang.String legalType,
-			java.lang.String sicCode, java.lang.String tickerSymbol,
-			java.lang.String industry, java.lang.String type,
-			java.lang.String size)
+			long companyId, String virtualHostname, String mx, String homeURL,
+			boolean hasLogo, byte[] logoBytes, String name, String legalName,
+			String legalId, String legalType, String sicCode,
+			String tickerSymbol, String industry, String type, String size)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.updateCompany(
@@ -660,8 +690,7 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public void updateDisplay(
-			long companyId, java.lang.String languageId,
-			java.lang.String timeZoneId)
+			long companyId, String languageId, String timeZoneId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_companyLocalService.updateDisplay(companyId, languageId, timeZoneId);
@@ -672,6 +701,24 @@ public class CompanyLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_companyLocalService.updateDisplayGroupNames(companyId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Company updateIndexNameNext(
+			long companyId, String indexNameNext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.updateIndexNameNext(
+			companyId, indexNameNext);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.Company updateIndexNames(
+			long companyId, String indexNameCurrent, String indexNameNext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _companyLocalService.updateIndexNames(
+			companyId, indexNameCurrent, indexNameNext);
 	}
 
 	/**
@@ -708,15 +755,15 @@ public class CompanyLocalServiceWrapper
 	 * Update the company's logo.
 	 *
 	 * @param companyId the primary key of the company
-	 * @param is the input stream of the company's logo image
+	 * @param inputStream the input stream of the company's logo image
 	 * @return the company with the primary key
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Company updateLogo(
-			long companyId, java.io.InputStream is)
+			long companyId, java.io.InputStream inputStream)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _companyLocalService.updateLogo(companyId, is);
+		return _companyLocalService.updateLogo(companyId, inputStream);
 	}
 
 	/**
@@ -724,15 +771,16 @@ public class CompanyLocalServiceWrapper
 	 * found in portal.properties.
 	 *
 	 * @param companyId the primary key of the company
-	 * @param properties the company's properties. See {@link UnicodeProperties}
+	 * @param unicodeProperties the company's properties. See {@link
+	 UnicodeProperties}
 	 */
 	@Override
 	public void updatePreferences(
 			long companyId,
-			com.liferay.portal.kernel.util.UnicodeProperties properties)
+			com.liferay.portal.kernel.util.UnicodeProperties unicodeProperties)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_companyLocalService.updatePreferences(companyId, properties);
+		_companyLocalService.updatePreferences(companyId, unicodeProperties);
 	}
 
 	/**
@@ -755,13 +803,18 @@ public class CompanyLocalServiceWrapper
 	 */
 	@Override
 	public void updateSecurity(
-		long companyId, java.lang.String authType, boolean autoLogin,
+		long companyId, String authType, boolean autoLogin,
 		boolean sendPassword, boolean strangers, boolean strangersWithMx,
 		boolean strangersVerify, boolean siteLogo) {
 
 		_companyLocalService.updateSecurity(
 			companyId, authType, autoLogin, sendPassword, strangers,
 			strangersWithMx, strangersVerify, siteLogo);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _companyLocalService.getBasePersistence();
 	}
 
 	@Override

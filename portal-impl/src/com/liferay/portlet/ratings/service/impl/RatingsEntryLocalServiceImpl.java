@@ -1,32 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.ratings.service.impl;
 
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.social.SocialActivityManagerUtil;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portlet.ratings.service.base.RatingsEntryLocalServiceBaseImpl;
 import com.liferay.ratings.kernel.exception.EntryScoreException;
 import com.liferay.ratings.kernel.model.RatingsEntry;
 import com.liferay.ratings.kernel.model.RatingsStats;
+import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
+import com.liferay.ratings.kernel.service.persistence.RatingsStatsPersistence;
 import com.liferay.social.kernel.model.SocialActivityConstants;
 
 import java.util.Date;
@@ -46,7 +43,7 @@ public class RatingsEntryLocalServiceImpl
 		throws PortalException {
 
 		RatingsEntry entry = ratingsEntryPersistence.fetchByU_C_C(
-			userId, classNameLocalService.getClassNameId(className), classPK);
+			userId, _classNameLocalService.getClassNameId(className), classPK);
 
 		ratingsEntryLocalService.deleteEntry(entry, userId, className, classPK);
 	}
@@ -64,17 +61,17 @@ public class RatingsEntryLocalServiceImpl
 		}
 
 		ratingsEntryPersistence.removeByU_C_C(
-			userId, classNameLocalService.getClassNameId(className), classPK);
+			userId, _classNameLocalService.getClassNameId(className), classPK);
 
 		// Stats
 
-		RatingsStats stats = ratingsStatsLocalService.getStats(
+		RatingsStats stats = _ratingsStatsLocalService.getStats(
 			className, classPK);
 
 		int totalEntries = stats.getTotalEntries() - 1;
 
 		if (totalEntries == 0) {
-			ratingsStatsPersistence.remove(stats);
+			_ratingsStatsPersistence.remove(stats);
 		}
 		else {
 			double oldScore = entry.getScore();
@@ -91,12 +88,12 @@ public class RatingsEntryLocalServiceImpl
 			stats.setTotalScore(totalScore);
 			stats.setAverageScore(averageScore);
 
-			ratingsStatsPersistence.update(stats);
+			_ratingsStatsPersistence.update(stats);
 		}
 
 		// Social
 
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
 			className, classPK);
 
 		if (assetEntry != null) {
@@ -114,14 +111,14 @@ public class RatingsEntryLocalServiceImpl
 		long userId, String className, long classPK) {
 
 		return ratingsEntryPersistence.fetchByU_C_C(
-			userId, classNameLocalService.getClassNameId(className), classPK);
+			userId, _classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	@Override
 	public Map<Long, RatingsEntry> getEntries(
 		long userId, String className, long[] classPKs) {
 
-		long classNameId = classNameLocalService.getClassNameId(className);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		Map<Long, RatingsEntry> ratingsEntries = new HashMap<>();
 
@@ -138,7 +135,7 @@ public class RatingsEntryLocalServiceImpl
 	@Override
 	public List<RatingsEntry> getEntries(String className, long classPK) {
 		return ratingsEntryPersistence.findByC_C(
-			classNameLocalService.getClassNameId(className), classPK);
+			_classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	@Override
@@ -146,13 +143,13 @@ public class RatingsEntryLocalServiceImpl
 		String className, long classPK, double score) {
 
 		return ratingsEntryPersistence.findByC_C_S(
-			classNameLocalService.getClassNameId(className), classPK, score);
+			_classNameLocalService.getClassNameId(className), classPK, score);
 	}
 
 	@Override
 	public int getEntriesCount(String className, long classPK, double score) {
 		return ratingsEntryPersistence.countByC_C_S(
-			classNameLocalService.getClassNameId(className), classPK, score);
+			_classNameLocalService.getClassNameId(className), classPK, score);
 	}
 
 	@Override
@@ -160,7 +157,7 @@ public class RatingsEntryLocalServiceImpl
 		throws PortalException {
 
 		return ratingsEntryPersistence.findByU_C_C(
-			userId, classNameLocalService.getClassNameId(className), classPK);
+			userId, _classNameLocalService.getClassNameId(className), classPK);
 	}
 
 	@Override
@@ -171,7 +168,7 @@ public class RatingsEntryLocalServiceImpl
 
 		// Entry
 
-		long classNameId = classNameLocalService.getClassNameId(className);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		validate(score);
 
@@ -183,15 +180,16 @@ public class RatingsEntryLocalServiceImpl
 
 			entry.setScore(score);
 
-			ratingsEntryPersistence.update(entry);
+			entry = ratingsEntryPersistence.update(entry);
 
 			// Stats
 
-			RatingsStats stats = ratingsStatsPersistence.fetchByC_C(
+			RatingsStats stats = _ratingsStatsPersistence.fetchByC_C(
 				classNameId, classPK);
 
 			if (stats == null) {
-				stats = ratingsStatsLocalService.addStats(classNameId, classPK);
+				stats = _ratingsStatsLocalService.addStats(
+					classNameId, classPK);
 			}
 
 			stats.setModifiedDate(new Date());
@@ -199,10 +197,10 @@ public class RatingsEntryLocalServiceImpl
 			stats.setAverageScore(
 				stats.getTotalScore() / stats.getTotalEntries());
 
-			ratingsStatsPersistence.update(stats);
+			_ratingsStatsPersistence.update(stats);
 		}
 		else {
-			User user = userPersistence.findByPrimaryKey(userId);
+			User user = _userPersistence.findByPrimaryKey(userId);
 
 			long entryId = counterLocalService.increment();
 
@@ -215,15 +213,16 @@ public class RatingsEntryLocalServiceImpl
 			entry.setClassPK(classPK);
 			entry.setScore(score);
 
-			ratingsEntryPersistence.update(entry);
+			entry = ratingsEntryPersistence.update(entry);
 
 			// Stats
 
-			RatingsStats stats = ratingsStatsPersistence.fetchByC_C(
+			RatingsStats stats = _ratingsStatsPersistence.fetchByC_C(
 				classNameId, classPK);
 
 			if (stats == null) {
-				stats = ratingsStatsLocalService.addStats(classNameId, classPK);
+				stats = _ratingsStatsLocalService.addStats(
+					classNameId, classPK);
 			}
 
 			stats.setModifiedDate(new Date());
@@ -232,12 +231,12 @@ public class RatingsEntryLocalServiceImpl
 			stats.setAverageScore(
 				stats.getTotalScore() / stats.getTotalEntries());
 
-			ratingsStatsPersistence.update(stats);
+			_ratingsStatsPersistence.update(stats);
 		}
 
 		// Social
 
-		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
 			className, classPK);
 
 		if (assetEntry != null) {
@@ -258,5 +257,20 @@ public class RatingsEntryLocalServiceImpl
 				"Score " + score + " is not a value between 0 and 1");
 		}
 	}
+
+	@BeanReference(type = AssetEntryLocalService.class)
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = RatingsStatsLocalService.class)
+	private RatingsStatsLocalService _ratingsStatsLocalService;
+
+	@BeanReference(type = RatingsStatsPersistence.class)
+	private RatingsStatsPersistence _ratingsStatsPersistence;
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

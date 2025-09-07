@@ -1,19 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.notification;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
+import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.workflow.constants.MyWorkflowTasksConstants;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
 import com.liferay.portal.workflow.kaleo.definition.RecipientType;
 import com.liferay.portal.workflow.kaleo.model.KaleoNotificationRecipient;
@@ -54,9 +49,9 @@ public abstract class BaseNotificationSender implements NotificationSender {
 				notificationRecipientsMap, defaultSubject, notificationMessage,
 				executionContext);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new NotificationMessageSenderException(
-				"Unable to send notification message", e);
+				"Unable to send notification message", exception);
 		}
 	}
 
@@ -66,6 +61,38 @@ public abstract class BaseNotificationSender implements NotificationSender {
 			String defaultSubject, String notificationMessage,
 			ExecutionContext executionContext)
 		throws Exception;
+
+	protected Set<NotificationRecipient> getDeliverableNotificationRecipients(
+			Set<NotificationRecipient> notificationRecipients,
+			int notificationDeliveryType)
+		throws PortalException {
+
+		Set<NotificationRecipient> newNotificationRecipients = new HashSet<>();
+
+		if (notificationRecipients == null) {
+			return newNotificationRecipients;
+		}
+
+		for (NotificationRecipient notificationRecipient :
+				notificationRecipients) {
+
+			if (notificationRecipient.getUserId() <= 0) {
+				continue;
+			}
+
+			if (UserNotificationManagerUtil.isDeliver(
+					notificationRecipient.getUserId(),
+					PortletKeys.MY_WORKFLOW_TASK, 0,
+					MyWorkflowTasksConstants.
+						NOTIFICATION_TYPE_MY_WORKFLOW_TASKS,
+					notificationDeliveryType)) {
+
+				newNotificationRecipients.add(notificationRecipient);
+			}
+		}
+
+		return newNotificationRecipients;
+	}
 
 	protected Map<NotificationReceptionType, Set<NotificationRecipient>>
 			getNotificationRecipientsMap(

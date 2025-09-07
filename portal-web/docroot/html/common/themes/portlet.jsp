@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -23,13 +14,11 @@ String tilesPortletContent = GetterUtil.getString(request.getAttribute(WebKeys.P
 
 Portlet portlet = (Portlet)request.getAttribute(WebKeys.RENDER_PORTLET);
 
-PortletPreferences portletSetup = portletDisplay.getPortletSetup();
-
 LiferayRenderResponse liferayRenderResponse = (LiferayRenderResponse)LiferayPortletUtil.getLiferayPortletResponse(renderResponse);
 
 // Portlet title
 
-String portletTitle = PortletConfigurationUtil.getPortletTitle(portletSetup, themeDisplay.getLanguageId());
+String portletTitle = PortletConfigurationUtil.getPortletTitle(portletDisplay.getId(), portletDisplay.getPortletPreferences(), themeDisplay.getLanguageId());
 
 if (portletDisplay.isActive() && Validator.isNull(portletTitle)) {
 	portletTitle = liferayRenderResponse.getTitle();
@@ -44,9 +33,7 @@ portletDisplay.setTitle(portletTitle);
 // Portlet description
 
 if (Validator.isNull(portletDisplay.getDescription())) {
-	String portletDescription = PortalUtil.getPortletDescription(portlet, application, locale);
-
-	portletDisplay.setDescription(portletDescription);
+	portletDisplay.setDescription(PortalUtil.getPortletDescription(portlet, application, locale));
 }
 
 Group group = layout.getGroup();
@@ -72,7 +59,9 @@ Group group = layout.getGroup();
 				<c:otherwise>
 
 					<%
-					pageContext.getOut().print(renderRequest.getAttribute(WebKeys.PORTLET_CONTENT));
+					JspWriter jspWriter = pageContext.getOut();
+
+					jspWriter.print(renderRequest.getAttribute(WebKeys.PORTLET_CONTENT));
 					%>
 
 				</c:otherwise>

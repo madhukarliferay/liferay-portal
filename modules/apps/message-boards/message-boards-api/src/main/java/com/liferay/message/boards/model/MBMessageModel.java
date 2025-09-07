@@ -1,27 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
 import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.model.WorkflowedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -40,10 +33,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface MBMessageModel
-	extends AttachedModel, BaseModel<MBMessage>, ShardedModel,
+	extends AttachedModel, BaseModel<MBMessage>, CTModel<MBMessage>,
+			ExternalReferenceCodeModel, MVCCModel, ShardedModel,
 			StagedGroupedModel, TrashedModel, WorkflowedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a message-boards message model instance should use the {@link MBMessage} interface instead.
@@ -54,6 +48,7 @@ public interface MBMessageModel
 	 *
 	 * @return the primary key of this message-boards message
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -61,7 +56,40 @@ public interface MBMessageModel
 	 *
 	 * @param primaryKey the primary key of this message-boards message
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
+
+	/**
+	 * Returns the mvcc version of this message-boards message.
+	 *
+	 * @return the mvcc version of this message-boards message
+	 */
+	@Override
+	public long getMvccVersion();
+
+	/**
+	 * Sets the mvcc version of this message-boards message.
+	 *
+	 * @param mvccVersion the mvcc version of this message-boards message
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this message-boards message.
+	 *
+	 * @return the ct collection ID of this message-boards message
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this message-boards message.
+	 *
+	 * @param ctCollectionId the ct collection ID of this message-boards message
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this message-boards message.
@@ -79,6 +107,23 @@ public interface MBMessageModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this message-boards message.
+	 *
+	 * @return the external reference code of this message-boards message
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this message-boards message.
+	 *
+	 * @param externalReferenceCode the external reference code of this message-boards message
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the message ID of this message-boards message.
@@ -336,6 +381,21 @@ public interface MBMessageModel
 	public void setSubject(String subject);
 
 	/**
+	 * Returns the url subject of this message-boards message.
+	 *
+	 * @return the url subject of this message-boards message
+	 */
+	@AutoEscape
+	public String getUrlSubject();
+
+	/**
+	 * Sets the url subject of this message-boards message.
+	 *
+	 * @param urlSubject the url subject of this message-boards message
+	 */
+	public void setUrlSubject(String urlSubject);
+
+	/**
 	 * Returns the body of this message-boards message.
 	 *
 	 * @return the body of this message-boards message
@@ -540,15 +600,6 @@ public interface MBMessageModel
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * Returns the trash entry created when this message-boards message was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this message-boards message.
-	 *
-	 * @return the trash entry created when this message-boards message was moved to the Recycle Bin
-	 */
-	@Override
-	public com.liferay.trash.kernel.model.TrashEntry getTrashEntry()
-		throws PortalException;
-
-	/**
 	 * Returns the class primary key of the trash entry for this message-boards message.
 	 *
 	 * @return the class primary key of the trash entry for this message-boards message
@@ -557,36 +608,12 @@ public interface MBMessageModel
 	public long getTrashEntryClassPK();
 
 	/**
-	 * Returns the trash handler for this message-boards message.
-	 *
-	 * @return the trash handler for this message-boards message
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.trash.TrashHandler getTrashHandler();
-
-	/**
 	 * Returns <code>true</code> if this message-boards message is in the Recycle Bin.
 	 *
 	 * @return <code>true</code> if this message-boards message is in the Recycle Bin; <code>false</code> otherwise
 	 */
 	@Override
 	public boolean isInTrash();
-
-	/**
-	 * Returns <code>true</code> if the parent of this message-boards message is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if the parent of this message-boards message is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isInTrashContainer();
-
-	@Override
-	public boolean isInTrashExplicitly();
-
-	@Override
-	public boolean isInTrashImplicitly();
 
 	/**
 	 * Returns <code>true</code> if this message-boards message is approved.
@@ -651,5 +678,12 @@ public interface MBMessageModel
 	 */
 	@Override
 	public boolean isScheduled();
+
+	@Override
+	public MBMessage cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

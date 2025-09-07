@@ -1,70 +1,58 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-ContributedFragmentManagementToolbarDisplayContext contributedFragmentManagementToolbarDisplayContext = new ContributedFragmentManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, fragmentDisplayContext);
+ContributedFragmentManagementToolbarDisplayContext contributedFragmentManagementToolbarDisplayContext = new ContributedFragmentManagementToolbarDisplayContext(fragmentDisplayContext, request, liferayPortletRequest, liferayPortletResponse);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= contributedFragmentManagementToolbarDisplayContext %>"
+	additionalProps="<%= contributedFragmentManagementToolbarDisplayContext.getComponentContext() %>"
+	managementToolbarDisplayContext="<%= contributedFragmentManagementToolbarDisplayContext %>"
+	propsTransformer="{ViewContributedFragmentEntriesManagementToolbarPropsTransformer} from fragment-web"
 />
 
 <aui:form name="fm">
 	<liferay-ui:search-container
-		searchContainer="<%= fragmentDisplayContext.getContributedFragmentEntriesSearchContainer() %>"
+		searchContainer="<%= fragmentDisplayContext.getContributedEntriesSearchContainer() %>"
 	>
 		<liferay-ui:search-container-row
-			className="com.liferay.fragment.model.FragmentEntry"
-			keyProperty="fragmentEntryKey"
-			modelVar="fragmentEntry"
+			className="Object"
+			modelVar="object"
 		>
-
-			<%
-			row.setCssClass("card-page-item-asset " + row.getCssClass());
-			%>
-
 			<liferay-ui:search-container-column-text>
-				<clay:vertical-card
-					verticalCard="<%= new ContributedFragmentEntryVerticalCard(fragmentEntry, renderRequest, renderResponse, searchContainer.getRowChecker()) %>"
-				/>
+				<c:choose>
+					<c:when test="<%= object instanceof FragmentComposition %>">
+						<clay:vertical-card
+							additionalProps="<%= fragmentDisplayContext.getAdditionalProps() %>"
+							propsTransformer="{ContributedFragmentEntryDropdownPropsTransformer} from fragment-web"
+							verticalCard="<%= new ContributedFragmentCompositionVerticalCard((FragmentComposition)object, renderRequest, renderResponse, searchContainer.getRowChecker()) %>"
+						/>
+					</c:when>
+					<c:otherwise>
+						<clay:vertical-card
+							additionalProps="<%= fragmentDisplayContext.getAdditionalProps() %>"
+							propsTransformer="{ContributedFragmentEntryDropdownPropsTransformer} from fragment-web"
+							verticalCard="<%= new ContributedFragmentEntryVerticalCard((FragmentEntry)object, renderRequest, renderResponse, searchContainer.getRowChecker()) %>"
+						/>
+					</c:otherwise>
+				</c:choose>
 			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
 			displayStyle="icon"
 			markupView="lexicon"
-			searchResultCssClass="card-page"
 		/>
 	</liferay-ui:search-container>
 </aui:form>
 
 <aui:form name="fragmentEntryFm">
-	<aui:input name="fragmentEntryKeys" type="hidden" />
+	<aui:input name="contributedEntryKeys" type="hidden" />
 	<aui:input name="fragmentCollectionId" type="hidden" />
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= FragmentWebKeys.FRAGMENT_ENTRY_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-	module="js/FragmentEntryDropdownDefaultEventHandler.es"
-/>
-
-<liferay-frontend:component
-	componentId="<%= contributedFragmentManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	context="<%= contributedFragmentManagementToolbarDisplayContext.getComponentContext() %>"
-	module="js/ManagementToolbarDefaultEventHandler.es"
-/>

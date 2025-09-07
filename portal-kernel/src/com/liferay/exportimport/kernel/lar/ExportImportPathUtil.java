@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.lar;
@@ -104,13 +95,8 @@ public class ExportImportPathUtil {
 					" because it is not an XML file");
 		}
 
-		return path.substring(
-			0, pos
-		).concat(
-			"-expando"
-		).concat(
-			path.substring(pos)
-		);
+		return StringBundler.concat(
+			path.substring(0, pos), "-expando", path.substring(pos));
 	}
 
 	public static String getModelPath(
@@ -350,33 +336,19 @@ public class ExportImportPathUtil {
 	public static String getPortletPath(
 		PortletDataContext portletDataContext, String portletId) {
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(getRootPath(portletDataContext));
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(PATH_PREFIX_PORTLET);
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(portletId);
-
-		return sb.toString();
+		return StringBundler.concat(
+			getRootPath(portletDataContext), StringPool.FORWARD_SLASH,
+			PATH_PREFIX_PORTLET, StringPool.FORWARD_SLASH, portletId);
 	}
 
 	public static String getPortletPreferencesPath(
 		PortletDataContext portletDataContext, String portletId, long ownerId,
 		int ownerType, long plid) {
 
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(getPortletPath(portletDataContext, portletId));
-		sb.append("/preferences/");
-		sb.append(getOwnerTypePath(ownerType));
-		sb.append(ownerId);
-		sb.append(CharPool.FORWARD_SLASH);
-		sb.append(plid);
-		sb.append(CharPool.FORWARD_SLASH);
-		sb.append("portlet-preferences.xml");
-
-		return sb.toString();
+		return StringBundler.concat(
+			getPortletPath(portletDataContext, portletId), "/preferences/",
+			getOwnerTypePath(ownerType), ownerId, CharPool.FORWARD_SLASH, plid,
+			"/portlet-preferences.xml");
 	}
 
 	/**
@@ -409,20 +381,11 @@ public class ExportImportPathUtil {
 		PortletDataContext portletDataContext, String serviceName, long ownerId,
 		int ownerType) {
 
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(getRootPath(portletDataContext));
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(PATH_PREFIX_SERVICE);
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(serviceName);
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(getOwnerTypePath(ownerType));
-		sb.append(ownerId);
-		sb.append(CharPool.FORWARD_SLASH);
-		sb.append("portlet-preferences.xml");
-
-		return sb.toString();
+		return StringBundler.concat(
+			getRootPath(portletDataContext), StringPool.FORWARD_SLASH,
+			PATH_PREFIX_SERVICE, StringPool.FORWARD_SLASH, serviceName,
+			StringPool.FORWARD_SLASH, getOwnerTypePath(ownerType), ownerId,
+			"/portlet-preferences.xml");
 	}
 
 	/**
@@ -500,14 +463,9 @@ public class ExportImportPathUtil {
 	protected static String getRootPath(
 		String pathPrefix, long pathPrimaryKey) {
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(pathPrefix);
-		sb.append(StringPool.FORWARD_SLASH);
-		sb.append(pathPrimaryKey);
-
-		return sb.toString();
+		return StringBundler.concat(
+			StringPool.FORWARD_SLASH, pathPrefix, StringPool.FORWARD_SLASH,
+			pathPrimaryKey);
 	}
 
 	private static final String _FILE_EXTENSION_XML = ".xml";

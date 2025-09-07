@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.ldap.dummy;
@@ -30,28 +21,28 @@ import javax.naming.directory.SearchResult;
 public class DummyDirContext extends DummyContext implements DirContext {
 
 	@Override
-	public void bind(Name name, Object obj, Attributes attrs)
+	public void bind(Name name, Object object, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
 	}
 
 	@Override
-	public void bind(String name, Object obj, Attributes attrs)
+	public void bind(String name, Object object, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
 	}
 
 	@Override
-	public DirContext createSubcontext(Name name, Attributes attrs)
+	public DirContext createSubcontext(Name name, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
 	}
 
 	@Override
-	public DirContext createSubcontext(String name, Attributes attrs)
+	public DirContext createSubcontext(String name, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
@@ -107,7 +98,7 @@ public class DummyDirContext extends DummyContext implements DirContext {
 
 	@Override
 	public void modifyAttributes(
-			Name name, int modificationOp, Attributes attrs)
+			Name name, int modificationOp, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
@@ -122,7 +113,7 @@ public class DummyDirContext extends DummyContext implements DirContext {
 
 	@Override
 	public void modifyAttributes(
-			String name, int modificationOp, Attributes attrs)
+			String name, int modificationOp, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
@@ -136,14 +127,14 @@ public class DummyDirContext extends DummyContext implements DirContext {
 	}
 
 	@Override
-	public void rebind(Name name, Object obj, Attributes attrs)
+	public void rebind(Name name, Object object, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();
 	}
 
 	@Override
-	public void rebind(String name, Object obj, Attributes attrs)
+	public void rebind(String name, Object object, Attributes attributes)
 		throws NamingException {
 
 		throw new OperationNotSupportedException();

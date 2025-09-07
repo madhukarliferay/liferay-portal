@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.staging;
@@ -31,14 +22,14 @@ import com.liferay.portal.kernel.security.auth.HttpPrincipal;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.xml.Element;
 
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.File;
 
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -94,7 +85,7 @@ public interface Staging {
 		Locale locale, Map<String, MissingReference> missingReferences);
 
 	public JSONObject getExceptionMessagesJSONObject(
-		Locale locale, Exception e,
+		Locale locale, Exception exception,
 		ExportImportConfiguration exportImportConfiguration);
 
 	public Group getLiveGroup(Group group);
@@ -119,6 +110,9 @@ public interface Staging {
 
 	public long getRecentLayoutSetBranchId(User user, long layoutSetId);
 
+	public Layout getRemoteLayout(long userId, long stagingGroupId, long plid)
+		throws PortalException;
+
 	public long getRemoteLayoutPlid(long userId, long stagingGroupId, long plid)
 		throws PortalException;
 
@@ -139,6 +133,9 @@ public interface Staging {
 
 	public WorkflowTask getWorkflowTask(
 			long userId, LayoutRevision layoutRevision)
+		throws PortalException;
+
+	public boolean hasRemoteLayout(long userId, long stagingGroupId, long plid)
 		throws PortalException;
 
 	public boolean hasWorkflowTask(long userId, LayoutRevision layoutRevision)
@@ -253,6 +250,11 @@ public interface Staging {
 
 	public void setRecentLayoutSetBranchId(
 			User user, long layoutSetId, long layoutSetBranchId)
+		throws PortalException;
+
+	public void setRemoteSiteURL(
+			Group stagingGroup, boolean overrideRemoteSiteURL,
+			String remoteSiteURL)
 		throws PortalException;
 
 	public String stripProtocolFromRemoteAddress(String remoteAddress);

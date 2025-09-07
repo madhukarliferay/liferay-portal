@@ -1,23 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
+import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateRequest;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateResponse;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -26,15 +18,29 @@ import com.liferay.dynamic.data.mapping.model.DDMFormLayoutColumn;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayoutPage;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayoutRow;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.google.places.util.GooglePlacesUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,41 +57,47 @@ public class DDMFormPagesTemplateContextFactory {
 
 	public DDMFormPagesTemplateContextFactory(
 		DDMForm ddmForm, DDMFormLayout ddmFormLayout,
-		DDMFormRenderingContext ddmFormRenderingContext) {
+		DDMFormRenderingContext ddmFormRenderingContext,
+		DDMStructureLayoutLocalService ddmStructureLayoutLocalService,
+		DDMStructureLocalService ddmStructureLocalService,
+		GroupLocalService groupLocalService, HtmlParser htmlParser,
+		JSONFactory jsonFactory) {
 
 		_ddmForm = ddmForm;
 		_ddmFormLayout = ddmFormLayout;
 		_ddmFormRenderingContext = ddmFormRenderingContext;
+		_ddmStructureLayoutLocalService = ddmStructureLayoutLocalService;
+		_ddmStructureLocalService = ddmStructureLocalService;
+		_groupLocalService = groupLocalService;
+		_htmlParser = htmlParser;
+		_jsonFactory = jsonFactory;
 
 		DDMFormValues ddmFormValues =
 			ddmFormRenderingContext.getDDMFormValues();
 
+		DefaultDDMFormValuesFactory defaultDDMFormValuesFactory =
+			new DefaultDDMFormValuesFactory(ddmForm);
+
 		if ((ddmFormValues == null) ||
 			ListUtil.isEmpty(ddmFormValues.getDDMFormFieldValues())) {
-
-			DefaultDDMFormValuesFactory defaultDDMFormValuesFactory =
-				new DefaultDDMFormValuesFactory(
-					ddmForm, ddmFormRenderingContext.getLocale());
 
 			ddmFormValues = defaultDDMFormValuesFactory.create();
 		}
 		else {
-			removeStaleDDMFormFieldValues(
-				ddmForm.getDDMFormFieldsMap(true),
-				ddmFormValues.getDDMFormFieldValues());
+			defaultDDMFormValuesFactory.populate(ddmFormValues);
 		}
 
 		_ddmFormValues = ddmFormValues;
 
 		_ddmFormFieldsMap = ddmForm.getDDMFormFieldsMap(true);
-		_ddmFormFieldValuesMap = ddmFormValues.getDDMFormFieldValuesMap();
+		_ddmFormFieldValuesMap = ddmFormValues.getDDMFormFieldValuesMap(true);
 		_locale = ddmFormRenderingContext.getLocale();
 	}
 
 	public List<Object> create() {
 		_evaluate();
 
-		return createPagesTemplateContext(
+		return _createPagesTemplateContext(
 			_ddmFormLayout.getDDMFormLayoutPages());
 	}
 
@@ -93,13 +105,45 @@ public class DDMFormPagesTemplateContextFactory {
 		_ddmFormEvaluator = ddmFormEvaluator;
 	}
 
-	public void setDDMFormFieldTypeServicesTracker(
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
+	public void setDDMFormFieldTypeServicesRegistry(
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry) {
 
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 	}
 
-	protected boolean containsRequiredField(List<String> ddmFormFieldNames) {
+	protected String getValue(
+		DDMFormRenderingContext ddmFormRenderingContext, String value) {
+
+		if (ddmFormRenderingContext.isViewMode()) {
+			return _htmlParser.extractText(value);
+		}
+
+		return value;
+	}
+
+	protected boolean isShowRequiredFieldsWarning(
+		List<DDMFormLayoutRow> ddmFormLayoutRows) {
+
+		if (!_ddmFormRenderingContext.isShowRequiredFieldsWarning()) {
+			return false;
+		}
+
+		for (DDMFormLayoutRow ddmFormLayoutRow : ddmFormLayoutRows) {
+			for (DDMFormLayoutColumn ddmFormLayoutColumn :
+					ddmFormLayoutRow.getDDMFormLayoutColumns()) {
+
+				if (_containsRequiredField(
+						ddmFormLayoutColumn.getDDMFormFieldNames())) {
+
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _containsRequiredField(List<String> ddmFormFieldNames) {
 		for (String ddmFormFieldName : ddmFormFieldNames) {
 			DDMFormField ddmFormField = _ddmFormFieldsMap.get(ddmFormFieldName);
 
@@ -111,38 +155,33 @@ public class DDMFormPagesTemplateContextFactory {
 		return false;
 	}
 
-	protected List<Object> createColumnsTemplateContext(
+	private List<Object> _createColumnsTemplateContext(
 		List<DDMFormLayoutColumn> ddmFormLayoutColumns) {
 
-		List<Object> columnsTemplateContext = new ArrayList<>();
-
-		for (DDMFormLayoutColumn ddmFormLayoutColumn : ddmFormLayoutColumns) {
-			columnsTemplateContext.add(
-				createColumnTemplateContext(ddmFormLayoutColumn));
-		}
-
-		return columnsTemplateContext;
+		return TransformUtil.transform(
+			ddmFormLayoutColumns,
+			ddmFormLayoutColumn -> _createColumnTemplateContext(
+				ddmFormLayoutColumn.getDDMFormFieldNames(),
+				ddmFormLayoutColumn.getSize()));
 	}
 
-	protected Map<String, Object> createColumnTemplateContext(
-		DDMFormLayoutColumn ddmFormLayoutColumn) {
+	private Map<String, Object> _createColumnTemplateContext(
+		List<String> ddmFormFiledNames, int size) {
 
 		return HashMapBuilder.<String, Object>put(
-			"fields",
-			createFieldsTemplateContext(
-				ddmFormLayoutColumn.getDDMFormFieldNames())
+			"fields", _createFieldsTemplateContext(ddmFormFiledNames)
 		).put(
-			"size", ddmFormLayoutColumn.getSize()
+			"size", size
 		).build();
 	}
 
-	protected List<Object> createFieldsTemplateContext(
+	private List<Object> _createFieldsTemplateContext(
 		List<String> ddmFormFieldNames) {
 
 		List<Object> fieldsTemplateContext = new ArrayList<>();
 
 		for (String ddmFormFieldName : ddmFormFieldNames) {
-			List<Object> fieldTemplateContexts = createFieldTemplateContext(
+			List<Object> fieldTemplateContexts = _createFieldTemplateContext(
 				ddmFormFieldName);
 
 			if (ListUtil.isNotEmpty(fieldTemplateContexts)) {
@@ -153,22 +192,24 @@ public class DDMFormPagesTemplateContextFactory {
 		return fieldsTemplateContext;
 	}
 
-	protected List<Object> createFieldTemplateContext(String ddmFormFieldName) {
+	private List<Object> _createFieldTemplateContext(String ddmFormFieldName) {
 		DDMFormFieldTemplateContextFactory ddmFormFieldTemplateContextFactory =
 			new DDMFormFieldTemplateContextFactory(
-				_ddmFormFieldsMap,
+				_ddmFormEvaluator, ddmFormFieldName, _ddmFormFieldsMap,
 				_ddmFormEvaluatorEvaluateResponse.
 					getDDMFormFieldsPropertyChanges(),
 				_ddmFormFieldValuesMap.get(ddmFormFieldName),
-				_ddmFormRenderingContext, _pageEnabled);
+				_ddmFormRenderingContext, _ddmStructureLayoutLocalService,
+				_ddmStructureLocalService, _groupLocalService, _htmlParser,
+				_jsonFactory, _pageEnabled, _ddmFormLayout);
 
-		ddmFormFieldTemplateContextFactory.setDDMFormFieldTypeServicesTracker(
-			_ddmFormFieldTypeServicesTracker);
+		ddmFormFieldTemplateContextFactory.setDDMFormFieldTypeServicesRegistry(
+			_ddmFormFieldTypeServicesRegistry);
 
 		return ddmFormFieldTemplateContextFactory.create();
 	}
 
-	protected List<Object> createPagesTemplateContext(
+	private List<Object> _createPagesTemplateContext(
 		List<DDMFormLayoutPage> ddmFormLayoutPages) {
 
 		List<Object> pagesTemplateContext = new ArrayList<>();
@@ -177,40 +218,38 @@ public class DDMFormPagesTemplateContextFactory {
 
 		for (DDMFormLayoutPage ddmFormLayoutPage : ddmFormLayoutPages) {
 			pagesTemplateContext.add(
-				createPageTemplateContext(ddmFormLayoutPage, i++));
+				_createPageTemplateContext(ddmFormLayoutPage, i++));
 		}
 
 		return pagesTemplateContext;
 	}
 
-	protected Map<String, Object> createPageTemplateContext(
+	private Map<String, Object> _createPageTemplateContext(
 		DDMFormLayoutPage ddmFormLayoutPage, int pageIndex) {
 
 		Map<String, Object> pageTemplateContext = new HashMap<>();
 
 		LocalizedValue description = ddmFormLayoutPage.getDescription();
 
-		pageTemplateContext.put(
-			"description",
-			getValue(_ddmFormRenderingContext, description.getString(_locale)));
+		pageTemplateContext.put("description", description.getString(_locale));
 
-		_pageEnabled = isPageEnabled(pageIndex);
+		_pageEnabled = _isPageEnabled(pageIndex);
 
 		pageTemplateContext.put("enabled", _pageEnabled);
 
 		pageTemplateContext.put(
 			"localizedDescription",
-			getLocalizedValueMap(description, _ddmFormRenderingContext));
+			_getLocalizedValueMap(description, _ddmFormRenderingContext));
 
 		LocalizedValue title = ddmFormLayoutPage.getTitle();
 
 		pageTemplateContext.put(
 			"localizedTitle",
-			getLocalizedValueMap(title, _ddmFormRenderingContext));
+			_getLocalizedValueMap(title, _ddmFormRenderingContext));
 
 		pageTemplateContext.put(
 			"rows",
-			createRowsTemplateContext(
+			_createRowsTemplateContext(
 				ddmFormLayoutPage.getDDMFormLayoutRows()));
 
 		boolean showRequiredFieldsWarning = isShowRequiredFieldsWarning(
@@ -219,36 +258,77 @@ public class DDMFormPagesTemplateContextFactory {
 		pageTemplateContext.put(
 			"showRequiredFieldsWarning", showRequiredFieldsWarning);
 
-		pageTemplateContext.put(
-			"title",
-			getValue(_ddmFormRenderingContext, title.getString(_locale)));
+		pageTemplateContext.put("title", title.getString(_locale));
 
 		return pageTemplateContext;
 	}
 
-	protected List<Object> createRowsTemplateContext(
+	private List<Object> _createRowsTemplateContext(
 		List<DDMFormLayoutRow> ddmFormLayoutRows) {
 
-		List<Object> rowsTemplateContext = new ArrayList<>();
-
-		for (DDMFormLayoutRow ddmFormLayoutRow : ddmFormLayoutRows) {
-			rowsTemplateContext.add(createRowTemplateContext(ddmFormLayoutRow));
-		}
-
-		return rowsTemplateContext;
+		return TransformUtil.transform(
+			ddmFormLayoutRows,
+			ddmFormLayoutRow -> _createRowTemplateContext(ddmFormLayoutRow));
 	}
 
-	protected Map<String, Object> createRowTemplateContext(
+	private Map<String, Object> _createRowTemplateContext(
 		DDMFormLayoutRow ddmFormLayoutRow) {
 
 		return HashMapBuilder.<String, Object>put(
 			"columns",
-			createColumnsTemplateContext(
+			_createColumnsTemplateContext(
 				ddmFormLayoutRow.getDDMFormLayoutColumns())
 		).build();
 	}
 
-	protected Map<String, String> getLocalizedValueMap(
+	private void _evaluate() {
+		try {
+			HttpServletRequest httpServletRequest =
+				_ddmFormRenderingContext.getHttpServletRequest();
+
+			long companyId = PortalUtil.getCompanyId(httpServletRequest);
+
+			DDMFormEvaluatorEvaluateRequest.Builder
+				ddmFormEvaluatorEvaluateRequestBuilder =
+					DDMFormEvaluatorEvaluateRequest.Builder.newBuilder(
+						_ddmForm, _ddmFormValues, _locale);
+
+			ddmFormEvaluatorEvaluateRequestBuilder.withCompanyId(
+				companyId
+			).withDDMFormInstanceId(
+				_ddmFormRenderingContext.getDDMFormInstanceId()
+			).withDDMFormLayout(
+				_ddmFormLayout
+			).withEditingFieldValue(
+				Validator.isNotNull(httpServletRequest.getParameter("trigger"))
+			).withGooglePlacesAPIKey(
+				GooglePlacesUtil.getGooglePlacesAPIKey(
+					companyId, _ddmFormRenderingContext.getGroupId(),
+					_groupLocalService)
+			).withGroupId(
+				_ddmFormRenderingContext.getGroupId()
+			).withObjectFieldsJSONArray(
+				_ddmForm.getObjectFieldsJSONArray()
+			).withTimeZoneId(
+				_getTimeZoneId(httpServletRequest)
+			).withUserId(
+				PortalUtil.getUserId(httpServletRequest)
+			).withViewMode(
+				_isViewMode()
+			);
+
+			_ddmFormEvaluatorEvaluateResponse = _ddmFormEvaluator.evaluate(
+				ddmFormEvaluatorEvaluateRequestBuilder.build());
+		}
+		catch (Exception exception) {
+			_log.error("Unable to evaluate the form", exception);
+
+			throw new IllegalStateException(
+				"Unexpected error occurred during form evaluation", exception);
+		}
+	}
+
+	private Map<String, String> _getLocalizedValueMap(
 		LocalizedValue localizedValue,
 		DDMFormRenderingContext ddmFormRenderingContext) {
 
@@ -268,50 +348,50 @@ public class DDMFormPagesTemplateContextFactory {
 		return map;
 	}
 
-	protected String getValue(
-		DDMFormRenderingContext ddmFormRenderingContext, String value) {
+	private String _getTimeZoneId(HttpServletRequest httpServletRequest) {
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-		if (ddmFormRenderingContext.isViewMode()) {
-			return HtmlUtil.extractText(value);
+		if (themeDisplay == null) {
+			return StringPool.BLANK;
 		}
 
-		return value;
+		User user = themeDisplay.getUser();
+
+		return user.getTimeZoneId();
 	}
 
-	protected boolean isPageEnabled(int pageIndex) {
+	private boolean _isPageEnabled(int pageIndex) {
 		Set<Integer> disabledPagesIndexes =
 			_ddmFormEvaluatorEvaluateResponse.getDisabledPagesIndexes();
 
-		if (disabledPagesIndexes.contains(pageIndex)) {
-			return false;
-		}
-
-		return true;
+		return !disabledPagesIndexes.contains(pageIndex);
 	}
 
-	protected boolean isShowRequiredFieldsWarning(
-		List<DDMFormLayoutRow> ddmFormLayoutRows) {
+	private boolean _isViewMode() {
+		Boolean viewMode = _ddmFormRenderingContext.getProperty("viewMode");
 
-		if (!_ddmFormRenderingContext.isShowRequiredFieldsWarning()) {
-			return false;
+		if (viewMode != null) {
+			return viewMode;
 		}
 
-		for (DDMFormLayoutRow ddmFormLayoutRow : ddmFormLayoutRows) {
-			for (DDMFormLayoutColumn ddmFormLayoutColumn :
-					ddmFormLayoutRow.getDDMFormLayoutColumns()) {
+		String portletNamespace =
+			_ddmFormRenderingContext.getPortletNamespace();
 
-				if (containsRequiredField(
-						ddmFormLayoutColumn.getDDMFormFieldNames())) {
+		if ((portletNamespace != null) &&
+			!StringUtil.equals(
+				portletNamespace,
+				PortalUtil.getPortletNamespace(
+					DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN))) {
 
-					return true;
-				}
-			}
+			return true;
 		}
 
 		return false;
 	}
 
-	protected void removeStaleDDMFormFieldValues(
+	private void _removeStaleDDMFormFieldValues(
 		Map<String, DDMFormField> ddmFormFieldsMap,
 		List<DDMFormFieldValue> ddmFormFieldValues) {
 
@@ -324,36 +404,9 @@ public class DDMFormPagesTemplateContextFactory {
 				iterator.remove();
 			}
 
-			removeStaleDDMFormFieldValues(
+			_removeStaleDDMFormFieldValues(
 				ddmFormFieldsMap,
 				ddmFormFieldValue.getNestedDDMFormFieldValues());
-		}
-	}
-
-	private void _evaluate() {
-		try {
-			DDMFormEvaluatorEvaluateRequest.Builder
-				formEvaluatorEvaluateRequestBuilder =
-					DDMFormEvaluatorEvaluateRequest.Builder.newBuilder(
-						_ddmForm, _ddmFormValues, _locale);
-
-			formEvaluatorEvaluateRequestBuilder.withCompanyId(
-				PortalUtil.getCompanyId(
-					_ddmFormRenderingContext.getHttpServletRequest()));
-			formEvaluatorEvaluateRequestBuilder.withGroupId(
-				_ddmFormRenderingContext.getGroupId());
-			formEvaluatorEvaluateRequestBuilder.withUserId(
-				PortalUtil.getUserId(
-					_ddmFormRenderingContext.getHttpServletRequest()));
-
-			_ddmFormEvaluatorEvaluateResponse = _ddmFormEvaluator.evaluate(
-				formEvaluatorEvaluateRequestBuilder.build());
-		}
-		catch (Exception e) {
-			_log.error("Unable to evaluate the form", e);
-
-			throw new IllegalStateException(
-				"Unexpected error occurred during form evaluation", e);
 		}
 	}
 
@@ -364,11 +417,17 @@ public class DDMFormPagesTemplateContextFactory {
 	private DDMFormEvaluator _ddmFormEvaluator;
 	private DDMFormEvaluatorEvaluateResponse _ddmFormEvaluatorEvaluateResponse;
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 	private final Map<String, List<DDMFormFieldValue>> _ddmFormFieldValuesMap;
 	private final DDMFormLayout _ddmFormLayout;
 	private final DDMFormRenderingContext _ddmFormRenderingContext;
 	private final DDMFormValues _ddmFormValues;
+	private final DDMStructureLayoutLocalService
+		_ddmStructureLayoutLocalService;
+	private final DDMStructureLocalService _ddmStructureLocalService;
+	private final GroupLocalService _groupLocalService;
+	private final HtmlParser _htmlParser;
+	private final JSONFactory _jsonFactory;
 	private final Locale _locale;
 	private boolean _pageEnabled;
 

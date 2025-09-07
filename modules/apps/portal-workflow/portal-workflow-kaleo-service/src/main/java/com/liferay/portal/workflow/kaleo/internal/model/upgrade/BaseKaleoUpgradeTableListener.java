@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.internal.model.upgrade;
@@ -39,23 +30,16 @@ public class BaseKaleoUpgradeTableListener extends BaseUpgradeTableListener {
 
 		Map<Long, Long> keyValueMap = new HashMap<>();
 
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			con = DataAccess.getConnection();
-
-			ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select ", keyColumnName, ", ", valueColumnName, " from ",
 					tableName));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			rs = ps.executeQuery();
-
-			while (rs.next()) {
-				long key = rs.getLong(keyColumnName);
-				long value = rs.getLong(valueColumnName);
+			while (resultSet.next()) {
+				long key = resultSet.getLong(keyColumnName);
+				long value = resultSet.getLong(valueColumnName);
 
 				if (_log.isDebugEnabled()) {
 					_log.debug(
@@ -67,11 +51,8 @@ public class BaseKaleoUpgradeTableListener extends BaseUpgradeTableListener {
 				keyValueMap.put(key, value);
 			}
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			DataAccess.cleanUp(con, ps, rs);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 
 		return keyValueMap;
@@ -93,20 +74,11 @@ public class BaseKaleoUpgradeTableListener extends BaseUpgradeTableListener {
 		throws Exception {
 
 		for (Map.Entry<Long, Long> entry : keyValueMap.entrySet()) {
-			StringBundler sb = new StringBundler(10);
-
-			sb.append("update ");
-			sb.append(tableName);
-			sb.append(" set kaleoClassName = '");
-			sb.append(kaleoClassName);
-			sb.append("', kaleoClassPK = ");
-			sb.append(entry.getValue());
-			sb.append(" where ");
-			sb.append(keyColumnName);
-			sb.append(" = ");
-			sb.append(entry.getKey());
-
-			runSQL(sb.toString());
+			runSQL(
+				StringBundler.concat(
+					"update ", tableName, " set kaleoClassName = '",
+					kaleoClassName, "', kaleoClassPK = ", entry.getValue(),
+					" where ", keyColumnName, " = ", entry.getKey()));
 		}
 	}
 

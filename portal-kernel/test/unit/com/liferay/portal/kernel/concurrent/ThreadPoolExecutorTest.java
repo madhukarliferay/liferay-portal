@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.concurrent;
@@ -149,7 +140,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		threadPoolExecutor = new ThreadPoolExecutor(
@@ -160,7 +151,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		threadPoolExecutor = new ThreadPoolExecutor(
@@ -171,7 +162,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		threadPoolExecutor = new ThreadPoolExecutor(
@@ -182,7 +173,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 	}
 
@@ -319,7 +310,7 @@ public class ThreadPoolExecutorTest {
 
 					Assert.fail();
 				}
-				catch (RejectedExecutionException ree) {
+				catch (RejectedExecutionException rejectedExecutionException) {
 				}
 
 				Assert.assertEquals(10, threadPoolExecutor.getPoolSize());
@@ -426,7 +417,7 @@ public class ThreadPoolExecutorTest {
 
 					Assert.fail();
 				}
-				catch (RejectedExecutionException ree) {
+				catch (RejectedExecutionException rejectedExecutionException) {
 				}
 
 				Assert.assertEquals(10, threadPoolExecutor.getPoolSize());
@@ -562,8 +553,7 @@ public class ThreadPoolExecutorTest {
 		Assert.assertEquals(
 			60 * 1000000000L,
 			threadPoolExecutor.getKeepAliveTime(TimeUnit.NANOSECONDS));
-		Assert.assertEquals(
-			false, threadPoolExecutor.isAllowCoreThreadTimeout());
+		Assert.assertFalse(threadPoolExecutor.isAllowCoreThreadTimeout());
 		Assert.assertEquals(
 			Integer.MAX_VALUE,
 			threadPoolExecutor.getRemainingTaskQueueCapacity());
@@ -594,8 +584,7 @@ public class ThreadPoolExecutorTest {
 		Assert.assertEquals(
 			TestUtil.KEEPALIVE_TIME * 1000000,
 			threadPoolExecutor.getKeepAliveTime(TimeUnit.NANOSECONDS));
-		Assert.assertEquals(
-			true, threadPoolExecutor.isAllowCoreThreadTimeout());
+		Assert.assertTrue(threadPoolExecutor.isAllowCoreThreadTimeout());
 		Assert.assertEquals(
 			3, threadPoolExecutor.getRemainingTaskQueueCapacity());
 
@@ -633,8 +622,7 @@ public class ThreadPoolExecutorTest {
 		Assert.assertEquals(
 			TestUtil.KEEPALIVE_TIME * 1000000,
 			threadPoolExecutor.getKeepAliveTime(TimeUnit.NANOSECONDS));
-		Assert.assertEquals(
-			true, threadPoolExecutor.isAllowCoreThreadTimeout());
+		Assert.assertTrue(threadPoolExecutor.isAllowCoreThreadTimeout());
 		Assert.assertEquals(
 			3, threadPoolExecutor.getRemainingTaskQueueCapacity());
 		Assert.assertSame(
@@ -656,7 +644,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -665,7 +653,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -674,7 +662,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -683,7 +671,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -691,7 +679,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -700,7 +688,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -709,7 +697,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException iae) {
+		catch (IllegalArgumentException illegalArgumentException) {
 		}
 
 		try {
@@ -720,7 +708,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		try {
@@ -730,7 +718,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 
 		try {
@@ -740,7 +728,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 	}
 
@@ -784,7 +772,7 @@ public class ThreadPoolExecutorTest {
 						takeLock.unlock();
 					}
 				}
-				catch (InterruptedException ie) {
+				catch (InterruptedException interruptedException) {
 				}
 			}
 
@@ -795,9 +783,7 @@ public class ThreadPoolExecutorTest {
 		executeLatch.await();
 
 		try {
-			MarkerBlockingJob markerBlockingJob = new MarkerBlockingJob();
-
-			threadPoolExecutor.execute(markerBlockingJob);
+			threadPoolExecutor.execute(new MarkerBlockingJob());
 
 			List<Runnable> rejectedList =
 				recordRejectedExecutionHandler.getRejectedList();
@@ -963,7 +949,7 @@ public class ThreadPoolExecutorTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
+		catch (NullPointerException nullPointerException) {
 		}
 		finally {
 			TestUtil.closePool(threadPoolExecutor);
@@ -1008,7 +994,7 @@ public class ThreadPoolExecutorTest {
 						putLock.unlock();
 					}
 				}
-				catch (InterruptedException ie) {
+				catch (InterruptedException interruptedException) {
 				}
 			}
 

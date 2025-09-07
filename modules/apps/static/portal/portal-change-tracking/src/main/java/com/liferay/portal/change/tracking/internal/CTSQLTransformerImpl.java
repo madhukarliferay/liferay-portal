@@ -1,32 +1,48 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.change.tracking.internal;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapperFactory;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.io.Deserializer;
+import com.liferay.petra.io.Serializer;
 import com.liferay.petra.io.unsync.UnsyncStringReader;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.change.tracking.registry.CTModelRegistration;
 import com.liferay.portal.change.tracking.registry.CTModelRegistry;
-import com.liferay.portal.change.tracking.sql.CTSQLContextFactory;
-import com.liferay.portal.change.tracking.sql.CTSQLModeThreadLocal;
 import com.liferay.portal.change.tracking.sql.CTSQLTransformer;
 import com.liferay.portal.kernel.cache.PortalCache;
-import com.liferay.portal.kernel.cache.SingleVMPool;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.change.tracking.sql.CTSQLModeThreadLocal;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
+import com.liferay.portal.kernel.service.change.tracking.CTService;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import java.nio.ByteBuffer;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -146,41 +162,89 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
+import net.sf.jsqlparser.statement.select.SetOperation;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.select.TableFunction;
+import net.sf.jsqlparser.statement.select.UnionOp;
 import net.sf.jsqlparser.statement.select.ValuesList;
 import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.truncate.Truncate;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.statement.upsert.Upsert;
 import net.sf.jsqlparser.statement.values.ValuesStatement;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * @author Preston Crary
  */
-@Component(immediate = true, service = CTSQLTransformer.class)
 public class CTSQLTransformerImpl implements CTSQLTransformer {
+
+	@SuppressWarnings("unchecked")
+	public void activate(BundleContext bundleContext) throws Exception {
+		_bundleContext = bundleContext;
+
+		_ctTransformedSQLsPortalCache = PortalCacheHelperUtil.getPortalCache(
+			PortalCacheManagerNames.SINGLE_VM,
+			_CT_TRANSFORMED_SQLS_PORTAL_CACHE_NAME);
+		_productionTransformedSQLsPortalCache =
+			PortalCacheHelperUtil.getPortalCache(
+				PortalCacheManagerNames.SINGLE_VM,
+				_PRODUCTION_TRANSFORMED_SQLS_PORTAL_CACHE_NAME);
+
+		_readTransformedSQLsFile();
+
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			_bundleContext, (Class<CTService<?>>)(Class<?>)CTService.class,
+			null,
+			ServiceReferenceMapperFactory.createFromFunction(
+				_bundleContext, CTService::getModelClass));
+
+		_releaseServiceTracker = new ServiceTracker<>(
+			_bundleContext,
+			_bundleContext.createFilter(
+				StringBundler.concat(
+					"(&(objectClass=", Release.class.getName(),
+					")(release.bundle.symbolic.name=",
+					"com.liferay.change.tracking.service)",
+					"(release.schema.version>=2.1.0))")),
+			null);
+
+		_releaseServiceTracker.open();
+	}
+
+	public void deactivate() {
+		_writeTransformedSQLsFile();
+
+		_serviceTrackerMap.close();
+
+		_releaseServiceTracker.close();
+	}
 
 	@Override
 	public String transform(String sql) {
 		long ctCollectionId = CTCollectionThreadLocal.getCTCollectionId();
 
-		if (ctCollectionId == 0) {
-			String transformedSQL = _portalCache.get(sql);
+		String transformedSQL = null;
 
-			if (transformedSQL != null) {
-				return transformedSQL;
-			}
+		String key = _getTransformedSQLKey(ctCollectionId, sql);
+
+		if (ctCollectionId ==
+				CTCollectionThreadLocal.CT_COLLECTION_ID_PRODUCTION) {
+
+			transformedSQL = _productionTransformedSQLsPortalCache.get(key);
+		}
+		else {
+			transformedSQL = _ctTransformedSQLsPortalCache.get(key);
+		}
+
+		if (transformedSQL != null) {
+			return transformedSQL;
 		}
 
 		boolean foundTable = false;
@@ -194,7 +258,7 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 		}
 
 		if (!foundTable) {
-			_portalCache.put(sql, sql);
+			_productionTransformedSQLsPortalCache.put(key, sql);
 
 			return sql;
 		}
@@ -203,7 +267,7 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			Statement statement = _jSqlParser.parse(
 				new UnsyncStringReader(_escape(sql)));
 
-			String transformedSQL = sql;
+			transformedSQL = sql;
 
 			if (statement instanceof Select) {
 				statement.accept(
@@ -221,29 +285,21 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 				transformedSQL = _unescape(statement.toString());
 			}
 
-			if (ctCollectionId == 0) {
-				_portalCache.put(sql, transformedSQL);
+			if (ctCollectionId ==
+					CTCollectionThreadLocal.CT_COLLECTION_ID_PRODUCTION) {
+
+				_productionTransformedSQLsPortalCache.put(key, transformedSQL);
+			}
+			else {
+				_ctTransformedSQLsPortalCache.put(key, transformedSQL);
 			}
 
 			return transformedSQL;
 		}
-		catch (JSQLParserException jsqlpe) {
+		catch (JSQLParserException jsqlParserException) {
 			throw new RuntimeException(
-				"Failed to parse sql for " + sql, jsqlpe);
+				"Unable to parse SQL for " + sql, jsqlParserException);
 		}
-	}
-
-	@Activate
-	@SuppressWarnings("unchecked")
-	protected void activate() {
-		_portalCache =
-			(PortalCache<String, String>)_singleVMPool.getPortalCache(
-				CTSQLTransformerImpl.class.getName());
-	}
-
-	@Deactivate
-	protected void deactivate() {
-		_portalCache.removeAll();
 	}
 
 	/**
@@ -254,6 +310,50 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			sql, "LIKE ? ESCAPE '\\'", "LIKE '[$LFR_LIKE_ESCAPE_STRING$]'");
 	}
 
+	private String _getTransformedSQLKey(long ctCollectionId, String sql) {
+		if (ctCollectionId ==
+				CTCollectionThreadLocal.CT_COLLECTION_ID_PRODUCTION) {
+
+			return sql;
+		}
+
+		return StringBundler.concat(ctCollectionId, StringPool.POUND, sql);
+	}
+
+	private void _readTransformedSQLsFile() {
+		File transformedSQLsFile = _bundleContext.getDataFile(
+			_TRANSFORMED_SQLS_FILE_NAME);
+
+		if (!transformedSQLsFile.exists()) {
+			return;
+		}
+
+		try {
+			Deserializer deserializer = new Deserializer(
+				ByteBuffer.wrap(FileUtil.getBytes(transformedSQLsFile)));
+
+			Bundle bundle = _bundleContext.getBundle();
+
+			if (deserializer.readLong() != bundle.getLastModified()) {
+				return;
+			}
+
+			int size = deserializer.readInt();
+
+			for (int i = 0; i < size; i++) {
+				_productionTransformedSQLsPortalCache.put(
+					deserializer.readString(), deserializer.readString());
+			}
+		}
+		catch (IOException ioException) {
+			_log.error(
+				"Unable to load " + _TRANSFORMED_SQLS_FILE_NAME, ioException);
+		}
+		finally {
+			transformedSQLsFile.delete();
+		}
+	}
+
 	/**
 	 * See https://github.com/JSQLParser/JSqlParser/issues/832
 	 */
@@ -262,19 +362,65 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			sql, "LIKE '[$LFR_LIKE_ESCAPE_STRING$]'", "LIKE ? ESCAPE '\\'");
 	}
 
+	private void _writeTransformedSQLsFile() {
+		List<String> transformedSQLKeys =
+			_productionTransformedSQLsPortalCache.getKeys();
+
+		if (transformedSQLKeys.isEmpty()) {
+			return;
+		}
+
+		Bundle bundle = _bundleContext.getBundle();
+
+		Serializer serializer = new Serializer();
+
+		serializer.writeLong(bundle.getLastModified());
+
+		serializer.writeInt(transformedSQLKeys.size());
+
+		for (String key : transformedSQLKeys) {
+			serializer.writeString(key);
+
+			serializer.writeString(
+				_productionTransformedSQLsPortalCache.get(key));
+		}
+
+		File transformedSQLsFile = _bundleContext.getDataFile(
+			_TRANSFORMED_SQLS_FILE_NAME);
+
+		try (OutputStream outputStream = new FileOutputStream(
+				transformedSQLsFile)) {
+
+			serializer.writeTo(outputStream);
+		}
+		catch (IOException ioException) {
+			_log.error(
+				"Unable to write " + _TRANSFORMED_SQLS_FILE_NAME, ioException);
+
+			transformedSQLsFile.delete();
+		}
+	}
+
+	private static final String _CT_TRANSFORMED_SQLS_PORTAL_CACHE_NAME =
+		CTSQLTransformerImpl.class.getName() + "._ctTransformedSQLsPortalCache";
+
+	private static final String _PRODUCTION_TRANSFORMED_SQLS_PORTAL_CACHE_NAME =
+		CTSQLTransformerImpl.class.getName() +
+			"._productionTransformedSQLsPortalCache";
+
+	private static final String _TRANSFORMED_SQLS_FILE_NAME =
+		"transformedSQLsFile";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CTSQLTransformerImpl.class);
+
 	private static final JSqlParser _jSqlParser = new CCJSqlParserManager();
 
-	@Reference(
-		cardinality = ReferenceCardinality.OPTIONAL,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY
-	)
-	private volatile CTSQLContextFactory _ctSQLContextFactory;
-
-	private PortalCache<String, String> _portalCache;
-
-	@Reference
-	private SingleVMPool _singleVMPool;
+	private BundleContext _bundleContext;
+	private PortalCache<String, String> _ctTransformedSQLsPortalCache;
+	private PortalCache<String, String> _productionTransformedSQLsPortalCache;
+	private ServiceTracker<?, ?> _releaseServiceTracker;
+	private ServiceTrackerMap<Class<?>, CTService<?>> _serviceTrackerMap;
 
 	private abstract static class BaseStatementVisitor
 		implements ExpressionVisitor, FromItemVisitor, ItemsListVisitor,
@@ -334,14 +480,15 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 
 			leftExpression.accept(this);
 
-			Expression betweenExpressionStart =
+			Expression betweenExpressionStartExpression =
 				between.getBetweenExpressionStart();
 
-			betweenExpressionStart.accept(this);
+			betweenExpressionStartExpression.accept(this);
 
-			Expression betweenExpressionEnd = between.getBetweenExpressionEnd();
+			Expression betweenExpressionEndExpression =
+				between.getBetweenExpressionEnd();
 
-			betweenExpressionEnd.accept(this);
+			betweenExpressionEndExpression.accept(this);
 		}
 
 		@Override
@@ -756,10 +903,10 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 
 			plainSelect.setWhere(_visit(plainSelect.getWhere()));
 
-			Expression having = plainSelect.getHaving();
+			Expression havingExpression = plainSelect.getHaving();
 
-			if (having != null) {
-				having.accept(this);
+			if (havingExpression != null) {
+				havingExpression.accept(this);
 			}
 
 			OracleHierarchicalExpression oracleHierarchicalExpression =
@@ -981,30 +1128,86 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			selectBody.accept(this);
 		}
 
+		protected static EqualsTo equalsTo(
+			Expression leftExpression, Expression rightExpression) {
+
+			EqualsTo equalsTo = new EqualsTo();
+
+			equalsTo.setLeftExpression(leftExpression);
+			equalsTo.setRightExpression(rightExpression);
+
+			return equalsTo;
+		}
+
 		protected BaseStatementVisitor(long ctCollectionId) {
 			this.ctCollectionId = ctCollectionId;
 		}
 
 		protected abstract Expression getWhereExpression(
-			Table table, String tableName,
-			CTModelRegistration ctModelRegistration);
+			Table table, CTModelRegistration ctModelRegistration);
 
 		protected abstract BaseStatementVisitor newInstance();
 
 		protected boolean allowNull;
 		protected final long ctCollectionId;
 
+		private boolean _includeCTExpression(
+			Expression whereExpression, TableWrapper tableWrapper) {
+
+			Iterator<TableWrapper> iterator = _tableWrappers.iterator();
+
+			if (iterator.hasNext()) {
+				TableWrapper fromTableWrapper = iterator.next();
+
+				if (fromTableWrapper.equals(tableWrapper)) {
+					return true;
+				}
+			}
+
+			if (whereExpression == null) {
+				return false;
+			}
+
+			List<String> tableNames = _tablesNamesFinder.getTableList(
+				whereExpression);
+
+			Table table = tableWrapper._table;
+
+			if (tableNames.contains(table.getName()) ||
+				tableNames.contains(
+					StringUtil.trim(String.valueOf(table.getAlias())))) {
+
+				return true;
+			}
+
+			return false;
+		}
+
 		private void _visit(BinaryExpression binaryExpression) {
-			Expression leftExpression = binaryExpression.getLeftExpression();
+			Deque<Expression> deque = new LinkedList<>();
 
-			leftExpression.accept(this);
+			deque.add(binaryExpression);
 
-			Expression rightExpression = binaryExpression.getRightExpression();
+			Expression expression = null;
 
-			rightExpression.accept(this);
+			while ((expression = deque.poll()) != null) {
+				if (expression instanceof BinaryExpression) {
+					BinaryExpression nextBinaryExpression =
+						(BinaryExpression)expression;
+
+					deque.push(nextBinaryExpression.getRightExpression());
+
+					deque.push(nextBinaryExpression.getLeftExpression());
+				}
+				else {
+					expression.accept(this);
+				}
+			}
 		}
 
 		private Expression _visit(Expression whereExpression) {
+			Expression originalWhereExpression = whereExpression;
+
 			if (whereExpression != null) {
 				whereExpression.accept(this);
 			}
@@ -1012,14 +1215,15 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			for (TableWrapper tableWrapper : _tableWrappers) {
 				Table table = tableWrapper._table;
 
-				String tableName = table.getName();
-
 				CTModelRegistration ctModelRegistration =
-					CTModelRegistry.getCTModelRegistration(tableName);
+					CTModelRegistry.getCTModelRegistration(table.getName());
 
-				if (ctModelRegistration != null) {
+				if ((ctModelRegistration != null) &&
+					_includeCTExpression(
+						originalWhereExpression, tableWrapper)) {
+
 					Expression ctExpression = getWhereExpression(
-						table, tableName, ctModelRegistration);
+						table, ctModelRegistration);
 
 					if (whereExpression == null) {
 						whereExpression = ctExpression;
@@ -1034,6 +1238,8 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 			return whereExpression;
 		}
 
+		private final TablesNamesFinder _tablesNamesFinder =
+			new TablesNamesFinder();
 		private final Set<TableWrapper> _tableWrappers = new LinkedHashSet<>();
 
 	}
@@ -1043,15 +1249,11 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 
 		@Override
 		protected Expression getWhereExpression(
-			Table table, String tableName,
-			CTModelRegistration ctModelRegistration) {
+			Table table, CTModelRegistration ctModelRegistration) {
 
-			EqualsTo equalsTo = new EqualsTo();
-
-			equalsTo.setLeftExpression(new Column(table, "ctCollectionId"));
-			equalsTo.setRightExpression(new LongValue(ctCollectionId));
-
-			return equalsTo;
+			return equalsTo(
+				new Column(table, "ctCollectionId"),
+				new LongValue(ctCollectionId));
 		}
 
 		@Override
@@ -1121,11 +1323,10 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 
 		@Override
 		protected Expression getWhereExpression(
-			Table table, String tableName,
-			CTModelRegistration ctModelRegistration) {
+			Table table, CTModelRegistration ctModelRegistration) {
 
 			Expression expression = _getWhereExpression(
-				table, tableName, ctModelRegistration);
+				table, ctModelRegistration);
 
 			if (allowNull) {
 				IsNullExpression isNullExpression = new IsNullExpression();
@@ -1154,99 +1355,166 @@ public class CTSQLTransformerImpl implements CTSQLTransformer {
 		}
 
 		private Expression _getWhereExpression(
-			Table table, String tableName,
-			CTModelRegistration ctModelRegistration) {
+			Table table, CTModelRegistration ctModelRegistration) {
 
 			if (CTSQLModeThreadLocal.CTSQLMode.CT_ONLY == _ctSQLMode) {
-				EqualsTo equalsTo = new EqualsTo();
-
-				equalsTo.setLeftExpression(new Column(table, "ctCollectionId"));
-				equalsTo.setRightExpression(new LongValue(ctCollectionId));
-
-				return equalsTo;
+				return equalsTo(
+					new Column(table, "ctCollectionId"),
+					new LongValue(ctCollectionId));
 			}
 
-			Column ctCollectionIdColumn = new Column(table, "ctCollectionId");
+			if ((ctCollectionId == 0) ||
+				(_releaseServiceTracker.getService() == null)) {
 
-			EqualsTo equalsToCTCollectionIdZero = new EqualsTo();
-
-			equalsToCTCollectionIdZero.setLeftExpression(ctCollectionIdColumn);
-
-			equalsToCTCollectionIdZero.setRightExpression(new LongValue("0"));
-
-			if (ctCollectionId == 0) {
-				return equalsToCTCollectionIdZero;
+				return equalsTo(
+					new Column(table, "ctCollectionId"), new LongValue("0"));
 			}
 
-			CTSQLContextFactory ctSQLContextFactory = _ctSQLContextFactory;
+			Table ctEntryTable = new Table("CTEntry");
 
-			if (ctSQLContextFactory == null) {
-				return equalsToCTCollectionIdZero;
+			PlainSelect ctEntryPlainSelect = new PlainSelect();
+
+			ctEntryPlainSelect.setSelectItems(
+				Collections.singletonList(
+					new SelectExpressionItem(
+						new Column(ctEntryTable, "modelClassPK"))));
+
+			ctEntryPlainSelect.setFromItem(ctEntryTable);
+
+			ctEntryPlainSelect.setWhere(
+				new AndExpression(
+					equalsTo(
+						new Column(ctEntryTable, "ctCollectionId"),
+						new LongValue(ctCollectionId)),
+					equalsTo(
+						new Column(ctEntryTable, "modelClassNameId"),
+						new LongValue(
+							ClassNameLocalServiceUtil.getClassNameId(
+								ctModelRegistration.getModelClass())))));
+
+			SelectBody selectBody = ctEntryPlainSelect;
+
+			CTService<?> ctService = _serviceTrackerMap.getService(
+				ctModelRegistration.getModelClass());
+
+			List<String[]> uniqueIndexColumnNames = Collections.emptyList();
+
+			if (ctService == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"No change tracking service found for model class " +
+							ctModelRegistration.getModelClass());
+				}
+			}
+			else {
+				CTPersistence<?> ctPersistence = ctService.getCTPersistence();
+
+				uniqueIndexColumnNames =
+					ctPersistence.getUniqueIndexColumnNames();
 			}
 
-			CTSQLContextFactory.CTSQLContext ctSQLContext =
-				ctSQLContextFactory.createCTSQLContext(
-					ctCollectionId, tableName,
-					ctModelRegistration.getPrimaryColumnName(),
-					ctModelRegistration.getModelClass());
+			String primaryKeyName = ctModelRegistration.getPrimaryColumnName();
 
-			List<Long> excludePKs = ctSQLContext.getExcludePKs();
+			if (!uniqueIndexColumnNames.isEmpty()) {
+				List<SelectBody> selectBodies = new ArrayList<>(
+					uniqueIndexColumnNames.size() + 1);
 
-			if (excludePKs.isEmpty()) {
-				if (ctSQLContext.hasAdded()) {
-					EqualsTo equalsToCTCollectionIdCurrent = new EqualsTo();
+				selectBodies.add(selectBody);
 
-					equalsToCTCollectionIdCurrent.setLeftExpression(
-						ctCollectionIdColumn);
-					equalsToCTCollectionIdCurrent.setRightExpression(
-						new LongValue(ctCollectionId));
+				List<Boolean> brackets = new ArrayList<>(
+					uniqueIndexColumnNames.size() + 1);
 
-					return new Parenthesis(
-						new OrExpression(
-							equalsToCTCollectionIdZero,
-							equalsToCTCollectionIdCurrent));
+				brackets.add(Boolean.FALSE);
+
+				List<SetOperation> setOperations = new ArrayList<>(
+					uniqueIndexColumnNames.size());
+
+				for (String[] columnNames : uniqueIndexColumnNames) {
+					Table sourceTable = new Table(table.getName());
+
+					sourceTable.setAlias(new Alias("sourceTable", false));
+
+					PlainSelect plainSelect = new PlainSelect();
+
+					plainSelect.setSelectItems(
+						Collections.singletonList(
+							new SelectExpressionItem(
+								new Column(sourceTable, primaryKeyName))));
+
+					plainSelect.setFromItem(sourceTable);
+
+					Table targetTable = new Table(table.getName());
+
+					targetTable.setAlias(new Alias("targetTable", false));
+
+					NotEqualsTo notEqualsTo = new NotEqualsTo("!=");
+
+					notEqualsTo.setLeftExpression(
+						new Column(sourceTable, primaryKeyName));
+					notEqualsTo.setRightExpression(
+						new Column(targetTable, primaryKeyName));
+
+					AndExpression andExpression = new AndExpression(
+						new AndExpression(
+							notEqualsTo,
+							equalsTo(
+								new Column(sourceTable, "ctCollectionId"),
+								new LongValue("0"))),
+						equalsTo(
+							new Column(targetTable, "ctCollectionId"),
+							new LongValue(ctCollectionId)));
+
+					for (String columnName : columnNames) {
+						andExpression = new AndExpression(
+							andExpression,
+							equalsTo(
+								new Column(sourceTable, columnName),
+								new Column(targetTable, columnName)));
+					}
+
+					Join join = new Join();
+
+					join.setInner(true);
+					join.setOnExpression(andExpression);
+					join.setRightItem(targetTable);
+
+					plainSelect.setJoins(Collections.singletonList(join));
+
+					selectBodies.add(plainSelect);
+
+					brackets.add(Boolean.FALSE);
+
+					setOperations.add(new UnionOp());
 				}
 
-				return equalsToCTCollectionIdZero;
+				SetOperationList setOperationList = new SetOperationList();
+
+				setOperationList.setBracketsOpsAndSelects(
+					brackets, selectBodies, setOperations);
+
+				selectBody = setOperationList;
 			}
 
-			List<Expression> notInExpressions = new ArrayList<>(
-				excludePKs.size());
+			SubSelect subSelect = new SubSelect();
 
-			for (Long excludePK : excludePKs) {
-				notInExpressions.add(new LongValue(excludePK));
-			}
-
-			if (ctSQLContext.hasAdded() || ctSQLContext.hasModified()) {
-				InExpression inExpression = new InExpression(
-					new Column(
-						table, ctModelRegistration.getPrimaryColumnName()),
-					new ExpressionList(notInExpressions));
-
-				inExpression.setNot(true);
-
-				EqualsTo equalsToCTCollectionIdCurrent = new EqualsTo();
-
-				equalsToCTCollectionIdCurrent.setLeftExpression(
-					ctCollectionIdColumn);
-				equalsToCTCollectionIdCurrent.setRightExpression(
-					new LongValue(ctCollectionId));
-
-				return new Parenthesis(
-					new AndExpression(
-						inExpression,
-						new OrExpression(
-							equalsToCTCollectionIdZero,
-							equalsToCTCollectionIdCurrent)));
-			}
+			subSelect.setSelectBody(selectBody);
 
 			InExpression inExpression = new InExpression(
-				new Column(table, ctModelRegistration.getPrimaryColumnName()),
-				new ExpressionList(notInExpressions));
+				new Column(table, primaryKeyName), subSelect);
 
 			inExpression.setNot(true);
 
-			return new AndExpression(inExpression, equalsToCTCollectionIdZero);
+			return new Parenthesis(
+				new OrExpression(
+					equalsTo(
+						new Column(table, "ctCollectionId"),
+						new LongValue(ctCollectionId)),
+					new Parenthesis(
+						new AndExpression(
+							equalsTo(
+								new Column(table, "ctCollectionId"),
+								new LongValue("0")),
+							inExpression))));
 		}
 
 		private final CTSQLModeThreadLocal.CTSQLMode _ctSQLMode;

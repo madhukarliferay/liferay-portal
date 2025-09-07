@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +117,8 @@ public class KBCommentPersistenceTest {
 
 		newKBComment.setMvccVersion(RandomTestUtil.nextLong());
 
+		newKBComment.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newKBComment.setUuid(RandomTestUtil.randomString());
 
 		newKBComment.setGroupId(RandomTestUtil.nextLong());
@@ -159,6 +152,9 @@ public class KBCommentPersistenceTest {
 
 		Assert.assertEquals(
 			existingKBComment.getMvccVersion(), newKBComment.getMvccVersion());
+		Assert.assertEquals(
+			existingKBComment.getCtCollectionId(),
+			newKBComment.getCtCollectionId());
 		Assert.assertEquals(
 			existingKBComment.getUuid(), newKBComment.getUuid());
 		Assert.assertEquals(
@@ -300,11 +296,12 @@ public class KBCommentPersistenceTest {
 
 	protected OrderByComparator<KBComment> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"KBComment", "mvccVersion", true, "uuid", true, "kbCommentId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "classNameId", true,
-			"classPK", true, "content", true, "userRating", true,
-			"lastPublishDate", true, "status", true);
+			"KBComment", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "kbCommentId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "classNameId", true, "classPK", true,
+			"content", true, "userRating", true, "lastPublishDate", true,
+			"status", true);
 	}
 
 	@Test
@@ -522,18 +519,61 @@ public class KBCommentPersistenceTest {
 
 		_persistence.clearCache();
 
-		KBComment existingKBComment = _persistence.findByPrimaryKey(
-			newKBComment.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newKBComment.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingKBComment.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingKBComment, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		KBComment newKBComment = addKBComment();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			KBComment.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"kbCommentId", newKBComment.getKbCommentId()));
+
+		List<KBComment> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(KBComment kbComment) {
 		Assert.assertEquals(
-			Long.valueOf(existingKBComment.getGroupId()),
+			kbComment.getUuid(),
+			ReflectionTestUtil.invoke(
+				kbComment, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(kbComment.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingKBComment, "getOriginalGroupId", new Class<?>[0]));
+				kbComment, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected KBComment addKBComment() throws Exception {
@@ -542,6 +582,8 @@ public class KBCommentPersistenceTest {
 		KBComment kbComment = _persistence.create(pk);
 
 		kbComment.setMvccVersion(RandomTestUtil.nextLong());
+
+		kbComment.setCtCollectionId(RandomTestUtil.nextLong());
 
 		kbComment.setUuid(RandomTestUtil.randomString());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.internal.test;
@@ -20,6 +11,7 @@ import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.TestIndexer;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -55,8 +47,8 @@ public class IndexerRegistryImplTest {
 		BundleContext bundleContext = bundle.getBundleContext();
 
 		_serviceRegistration = bundleContext.registerService(
-			Indexer.class, new TestIndexer(_CLASS_NAME),
-			new HashMapDictionary<>());
+			(Class<Indexer<?>>)(Class<?>)Indexer.class,
+			new TestIndexer(_CLASS_NAME), new HashMapDictionary<>());
 	}
 
 	@AfterClass
@@ -83,9 +75,12 @@ public class IndexerRegistryImplTest {
 		Assert.assertEquals(_CLASS_NAME, testIndexer.getClassName());
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	private static final String _CLASS_NAME = RandomTestUtil.randomString();
 
-	private static ServiceRegistration<Indexer> _serviceRegistration;
+	private static ServiceRegistration<Indexer<?>> _serviceRegistration;
 
 	@Inject
 	private IndexerRegistry _indexerRegistry;

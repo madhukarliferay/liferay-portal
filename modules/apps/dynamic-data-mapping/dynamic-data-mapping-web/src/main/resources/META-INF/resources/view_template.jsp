@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -70,15 +61,17 @@ if (layout != null) {
 	</c:choose>
 </c:if>
 
-<aui:form action="<%= viewTemplateURL.toString() %>" method="post" name="fm">
+<aui:form action="<%= viewTemplateURL %>" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= ddmDisplayContext.getTemplateSearchActionURL() %>" />
 	<aui:input name="deleteTemplateIds" type="hidden" />
 
-	<div class="container-fluid container-fluid-max-xl" id="<portlet:namespace />entriesContainer">
+	<clay:container-fluid
+		id='<%= liferayPortletResponse.getNamespace() + "entriesContainer" %>'
+	>
 		<liferay-ui:search-container
 			id="<%= ddmDisplayContext.getTemplateSearchContainerId() %>"
 			rowChecker="<%= new DDMTemplateRowChecker(renderResponse) %>"
-			searchContainer="<%= ddmDisplayContext.getTemplateSearch() %>"
+			searchContainer="<%= ddmDisplayContext.getDDMTemplateSearchContainer() %>"
 		>
 			<liferay-ui:search-container-row
 				className="com.liferay.dynamic.data.mapping.model.DDMTemplate"
@@ -90,17 +83,23 @@ if (layout != null) {
 				String rowHREF = StringPool.BLANK;
 
 				if (DDMTemplatePermission.contains(permissionChecker, template, ActionKeys.UPDATE)) {
-					PortletURL rowURL = renderResponse.createRenderURL();
-
-					rowURL.setParameter("mvcPath", "/edit_template.jsp");
-					rowURL.setParameter("groupId", String.valueOf(template.getGroupId()));
-					rowURL.setParameter("templateId", String.valueOf(template.getTemplateId()));
-					rowURL.setParameter("classNameId", String.valueOf(classNameId));
-					rowURL.setParameter("classPK", String.valueOf(template.getClassPK()));
-					rowURL.setParameter("type", template.getType());
-					rowURL.setParameter("structureAvailableFields", renderResponse.getNamespace() + "getAvailableFields");
-
-					rowHREF = rowURL.toString();
+					rowHREF = PortletURLBuilder.createRenderURL(
+						renderResponse
+					).setMVCPath(
+						"/edit_template.jsp"
+					).setParameter(
+						"classNameId", classNameId
+					).setParameter(
+						"classPK", template.getClassPK()
+					).setParameter(
+						"groupId", template.getGroupId()
+					).setParameter(
+						"structureAvailableFields", liferayPortletResponse.getNamespace() + "getAvailableFields"
+					).setParameter(
+						"templateId", template.getTemplateId()
+					).setParameter(
+						"type", template.getType()
+					).buildString();
 				}
 				%>
 
@@ -218,5 +217,5 @@ if (layout != null) {
 				markupView="lexicon"
 			/>
 		</liferay-ui:search-container>
-	</div>
+	</clay:container-fluid>
 </aui:form>

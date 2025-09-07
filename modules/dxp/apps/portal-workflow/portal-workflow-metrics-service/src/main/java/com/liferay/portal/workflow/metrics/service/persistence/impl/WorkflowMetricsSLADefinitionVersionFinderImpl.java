@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.persistence.impl;
 
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -57,33 +47,32 @@ public class WorkflowMetricsSLADefinitionVersionFinderImpl
 			String sql = _customSQL.get(getClass(), FIND_BY_C_CD_P_S);
 
 			if (processId == null) {
-				sql = StringUtil.replace(
-					sql, "(WMSLADefinitionVersion.processId = ? ) AND",
-					StringPool.BLANK);
+				sql = StringUtil.removeSubstring(
+					sql, "(WMSLADefinitionVersion.processId = ? ) AND");
 			}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity(
+			sqlQuery.addEntity(
 				"WorkflowMetricsSLADefinitionVersion",
 				WorkflowMetricsSLADefinitionVersionImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(companyId);
-			qPos.add(createDate);
+			queryPos.add(companyId);
+			queryPos.add(createDate);
 
 			if (processId != null) {
-				qPos.add(processId);
+				queryPos.add(processId);
 			}
 
-			qPos.add(status);
+			queryPos.add(status);
 
 			return (List<WorkflowMetricsSLADefinitionVersion>)QueryUtil.list(
-				q, getDialect(), start, end);
+				sqlQuery, getDialect(), start, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);

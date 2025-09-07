@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.web.internal.search.bar.portlet;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Validator;
 
-import java.util.Optional;
+import jakarta.portlet.PortletPreferences;
 
 /**
  * @author André de Oliveira
@@ -24,18 +18,31 @@ import java.util.Optional;
 public class SearchBarPortletDestinationUtil {
 
 	public static boolean isSameDestination(
-		SearchBarPortletPreferences searchBarPortletPreferences,
-		ThemeDisplay themeDisplay) {
+		PortletPreferences portletPreferences, ThemeDisplay themeDisplay) {
 
-		Optional<String> optional =
-			searchBarPortletPreferences.getDestination();
+		String destination = GetterUtil.getString(
+			portletPreferences.getValue("destination", StringPool.BLANK));
 
-		if (!optional.isPresent()) {
+		if (Validator.isNull(destination) ||
+			isSameDestination(
+				destination,
+				themeDisplay.getLayoutFriendlyURL(themeDisplay.getLayout()))) {
+
 			return true;
 		}
 
-		if (isSameDestination(
-				optional.get(),
+		return false;
+	}
+
+	public static boolean isSameDestination(
+		SearchBarPortletPreferences searchBarPortletPreferences,
+		ThemeDisplay themeDisplay) {
+
+		String destination = searchBarPortletPreferences.getDestination();
+
+		if (Validator.isNull(destination) ||
+			isSameDestination(
+				destination,
 				themeDisplay.getLayoutFriendlyURL(themeDisplay.getLayout()))) {
 
 			return true;
@@ -53,7 +60,8 @@ public class SearchBarPortletDestinationUtil {
 			offset = 1;
 		}
 
-		if (destination.regionMatches(
+		if ((destination.length() == (friendlyURL.length() - offset)) &&
+			destination.regionMatches(
 				0, friendlyURL, offset, friendlyURL.length() - offset)) {
 
 			return true;

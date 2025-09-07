@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,14 +23,16 @@ else {
 	currentLayoutRevisionId = recentLayoutRevision.getLayoutRevisionId();
 }
 
-List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChildLayoutRevisions(layoutSetBranchId, LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID, plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, new LayoutRevisionIdComparator(true));
+Long liveLayoutRevisionId = null;
+
+List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChildLayoutRevisions(layoutSetBranchId, LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID, plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, LayoutRevisionCreateDateComparator.getInstance(true));
 %>
 
 <liferay-util:include page="/navigation.jsp" servletContext="<%= application %>">
 	<liferay-util:param name="navigationName" value="history" />
 </liferay-util:include>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<c:if test="<%= !rootLayoutRevisions.isEmpty() %>">
 		<c:if test="<%= rootLayoutRevisions.size() > 1 %>">
 			<aui:select cssClass="variation-selector" inlineLabel="left" label="" name="variationsSelector">
@@ -62,7 +55,8 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 		<div class="layout-revision-container" id="<portlet:namespace />layoutRevisionsContainer">
 
 			<%
-			for (LayoutRevision rootLayoutRevision : rootLayoutRevisions) {
+			for (int i = 0; i < rootLayoutRevisions.size(); i++) {
+				LayoutRevision rootLayoutRevision = rootLayoutRevisions.get(i);
 			%>
 
 				<div class="layout-variation-container <%= (recentLayoutRevision.getLayoutBranchId() == rootLayoutRevision.getLayoutBranchId()) ? StringPool.BLANK : "hide" %>" id="<portlet:namespace /><%= rootLayoutRevision.getLayoutRevisionId() %>">
@@ -76,10 +70,11 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 					</c:if>
 
 					<liferay-ui:search-container
+						id='<%= liferayPortletResponse.getNamespace() + "layoutRevisionsSearchContainer_" + i %>'
 						total="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisionsCount(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid()) %>"
 					>
 						<liferay-ui:search-container-results
-							results="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisions(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, new LayoutRevisionIdComparator(false)) %>"
+							results="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisions(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, LayoutRevisionCreateDateComparator.getInstance(false)) %>"
 						/>
 
 						<liferay-ui:search-container-row
@@ -99,17 +94,12 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 								<aui:model-context bean="<%= curLayoutRevision %>" model="<%= LayoutRevision.class %>" />
 
 								<%
-								int status = curLayoutRevision.getStatus();
+								if ((liveLayoutRevisionId == null) && curLayoutRevision.isApproved()) {
+									liveLayoutRevisionId = _getLastImportLayoutRevisionId(group, layout, themeDisplay.getUser());
+								}
 								%>
 
-								<c:choose>
-									<c:when test="<%= curLayoutRevision.isHead() %>">
-										<aui:workflow-status showIcon="<%= false %>" showLabel="<%= false %>" status="<%= status %>" statusMessage="ready-for-publication" />
-									</c:when>
-									<c:otherwise>
-										<aui:workflow-status showIcon="<%= false %>" showLabel="<%= false %>" status="<%= status %>" />
-									</c:otherwise>
-								</c:choose>
+								<aui:workflow-status showIcon="<%= false %>" showLabel="<%= false %>" status="<%= curLayoutRevision.getStatus() %>" statusMessage="<%= _getStatusMessage(curLayoutRevision, GetterUtil.getLong(liveLayoutRevisionId)) %>" />
 							</liferay-ui:search-container-column-text>
 
 							<liferay-ui:search-container-column-text
@@ -121,9 +111,11 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 										<span class="current-version"><liferay-ui:message key="current-version" /></span>
 									</c:when>
 									<c:otherwise>
-										<a class="layout-revision selection-handle" data-layoutRevisionId="<%= curLayoutRevision.getLayoutRevisionId() %>" data-layoutSetBranchId="<%= curLayoutRevision.getLayoutSetBranchId() %>" href="javascript:;" onclick="<%= renderResponse.getNamespace() + "selectRevision(" + curLayoutRevision.getLayoutRevisionId() + ", " + curLayoutRevision.getLayoutSetBranchId() + ");" %>" title="<liferay-ui:message key="go-to-this-version" />">
-											<%= curLayoutRevision.getLayoutRevisionId() %>
-										</a>
+										<liferay-ui:csp>
+											<a class="layout-revision selection-handle" data-layoutRevisionId="<%= curLayoutRevision.getLayoutRevisionId() %>" data-layoutSetBranchId="<%= curLayoutRevision.getLayoutSetBranchId() %>" href="javascript:void(0);" onclick="<portlet:namespace />selectRevision(<%= curLayoutRevision.getLayoutRevisionId() %>, <%= curLayoutRevision.getLayoutSetBranchId() %>);" title="<liferay-ui:message key="go-to-this-version" />">
+												<%= curLayoutRevision.getLayoutRevisionId() %>
+											</a>
+										</liferay-ui:csp>
 									</c:otherwise>
 								</c:choose>
 							</liferay-ui:search-container-column-text>
@@ -169,67 +161,70 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 
 		</div>
 	</c:if>
-</div>
+</clay:container-fluid>
 
-<script>
-function <portlet:namespace />selectRevision(
-	layoutRevisionId,
-	layoutSetBranchId
-) {
-	var updateLayoutData = {
-		cmd: 'select_layout_revision',
-		doAsUserId: themeDisplay.getDoAsUserIdEncoded(),
-		layoutRevisionId: layoutRevisionId,
-		layoutSetBranchId: layoutSetBranchId,
-		p_auth: Liferay.authToken,
-		p_l_id: themeDisplay.getPlid(),
-		p_v_l_s_g_id: themeDisplay.getSiteGroupId()
-	};
+<aui:script>
+	function <portlet:namespace />selectRevision(
+		layoutRevisionId,
+		layoutSetBranchId
+	) {
+		var updateLayoutData = {
+			cmd: 'select_layout_revision',
+			doAsUserId: themeDisplay.getDoAsUserIdEncoded(),
+			layoutRevisionId: layoutRevisionId,
+			layoutSetBranchId: layoutSetBranchId,
+			p_auth: Liferay.authToken,
+			p_l_id: themeDisplay.getPlid(),
+			p_v_l_s_g_id: themeDisplay.getSiteGroupId(),
+		};
 
-	Liferay.Util.fetch(themeDisplay.getPathMain() + '/portal/update_layout', {
-		body: Liferay.Util.objectToFormData(updateLayoutData),
-		method: 'POST'
-	}).then(function() {
-		var parentWindow = Liferay.Util.getOpener();
+		Liferay.Util.fetch(themeDisplay.getPathMain() + '/portal/update_layout', {
+			body: Liferay.Util.objectToFormData(updateLayoutData),
+			method: 'POST',
+		}).then(() => {
+			var parentWindow = Liferay.Util.getOpener();
 
-		parentWindow.location = parentWindow.location.href.split('?')[0];
-	});
-}
-
-(function() {
-	var layoutBranchesContainers = document.querySelectorAll(
-		'.layout-variation-container'
-	);
-	var variationsSelector = document.getElementById(
-		'<portlet:namespace />variationsSelector'
-	);
-
-	if (layoutBranchesContainers && variationsSelector) {
-		variationsSelector.addEventListener('change', function() {
-			var variation = variationsSelector.value;
-
-			if (variation === 'all') {
-				Array.prototype.forEach.call(layoutBranchesContainers, function(
-					layoutBranchesContainer
-				) {
-					layoutBranchesContainer.classList.remove('hide');
-				});
-			} else {
-				Array.prototype.forEach.call(layoutBranchesContainers, function(
-					layoutBranchesContainer
-				) {
-					layoutBranchesContainer.classList.add('hide');
-				});
-
-				var variationElement = document.getElementById(
-					'<portlet:namespace />' + variation
-				);
-
-				if (variationElement) {
-					variationElement.classList.remove('hide');
-				}
-			}
+			parentWindow.location = parentWindow.location.href.split('?')[0];
 		});
 	}
-})();
-</script>
+
+	(function () {
+		var layoutBranchesContainers = document.querySelectorAll(
+			'.layout-variation-container'
+		);
+		var variationsSelector = document.getElementById(
+			'<portlet:namespace />variationsSelector'
+		);
+
+		if (layoutBranchesContainers && variationsSelector) {
+			variationsSelector.addEventListener('change', () => {
+				var variation = variationsSelector.value;
+
+				if (variation === 'all') {
+					Array.prototype.forEach.call(
+						layoutBranchesContainers,
+						(layoutBranchesContainer) => {
+							layoutBranchesContainer.classList.remove('hide');
+						}
+					);
+				}
+				else {
+					Array.prototype.forEach.call(
+						layoutBranchesContainers,
+						(layoutBranchesContainer) => {
+							layoutBranchesContainer.classList.add('hide');
+						}
+					);
+
+					var variationElement = document.getElementById(
+						'<portlet:namespace />' + variation
+					);
+
+					if (variationElement) {
+						variationElement.classList.remove('hide');
+					}
+				}
+			});
+		}
+	})();
+</aui:script>

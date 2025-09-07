@@ -1,27 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.web.internal.util;
 
-import com.liferay.portal.kernel.dao.search.RowChecker;
+import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 
-import javax.portlet.PortletResponse;
+import jakarta.portlet.PortletResponse;
 
 /**
  * @author Pavel Savinov
  */
-public class JournalArticleTranslationRowChecker extends RowChecker {
+public class JournalArticleTranslationRowChecker
+	extends EmptyOnClickRowChecker {
 
 	public JournalArticleTranslationRowChecker(
 		PortletResponse portletResponse) {
@@ -30,29 +22,29 @@ public class JournalArticleTranslationRowChecker extends RowChecker {
 	}
 
 	@Override
-	public boolean isChecked(Object obj) {
-		if (obj instanceof JournalArticleTranslation) {
+	public boolean isChecked(Object object) {
+		if (object instanceof JournalArticleTranslation) {
 			JournalArticleTranslation articleTranslation =
-				(JournalArticleTranslation)obj;
+				(JournalArticleTranslation)object;
 
 			if (articleTranslation.isDefault()) {
 				return false;
 			}
 		}
 
-		return super.isDisabled(obj);
+		return super.isDisabled(object);
 	}
 
 	@Override
-	public boolean isDisabled(Object obj) {
-		if (obj instanceof JournalArticleTranslation) {
+	public boolean isDisabled(Object object) {
+		if (object instanceof JournalArticleTranslation) {
 			JournalArticleTranslation articleTranslation =
-				(JournalArticleTranslation)obj;
+				(JournalArticleTranslation)object;
 
 			return articleTranslation.isDefault();
 		}
 
-		return super.isDisabled(obj);
+		return super.isDisabled(object);
 	}
 
 }

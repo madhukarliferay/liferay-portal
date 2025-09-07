@@ -1,26 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io;
 
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.test.rule.NewEnvTestRule;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.Closeable;
 import java.io.File;
@@ -48,7 +40,7 @@ public class StreamUtilTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
-			CodeCoverageAssertor.INSTANCE, NewEnvTestRule.INSTANCE);
+			CodeCoverageAssertor.INSTANCE, LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testCleanUp() throws IOException {
@@ -70,10 +62,10 @@ public class StreamUtilTest {
 
 			Assert.fail();
 		}
-		catch (IOException ioe) {
-			Assert.assertSame(ioException1, ioe);
+		catch (IOException ioException3) {
+			Assert.assertSame(ioException1, ioException3);
 
-			Throwable[] throwables = ioe.getSuppressed();
+			Throwable[] throwables = ioException3.getSuppressed();
 
 			Assert.assertEquals(
 				Arrays.toString(throwables), 1, throwables.length);
@@ -120,6 +112,25 @@ public class StreamUtilTest {
 
 		Assert.assertArrayEquals(
 			bytes, StreamUtil.toByteArray(unsyncByteArrayInputStream));
+
+		IOException ioException1 = new IOException();
+
+		try {
+			StreamUtil.toByteArray(
+				new UnsyncByteArrayInputStream(bytes) {
+
+					@Override
+					public int read(byte[] bytes) {
+						return ReflectionUtil.throwException(ioException1);
+					}
+
+				});
+
+			Assert.fail();
+		}
+		catch (IOException ioException2) {
+			Assert.assertSame(ioException1, ioException2);
+		}
 	}
 
 	@Test
@@ -321,14 +332,38 @@ public class StreamUtilTest {
 	}
 
 	@Test
+	public void testTransferIOException() throws IOException {
+		IOException ioException1 = new IOException();
+
+		try {
+			StreamUtil.transfer(
+				new UnsyncByteArrayInputStream(new byte[0]) {
+
+					@Override
+					public int read(byte[] bytes) {
+						return ReflectionUtil.throwException(ioException1);
+					}
+
+				},
+				new UnsyncByteArrayOutputStream());
+
+			Assert.fail();
+		}
+		catch (IOException ioException2) {
+			Assert.assertSame(ioException1, ioException2);
+		}
+	}
+
+	@Test
 	public void testTransferNPEs() throws IOException {
 		try {
 			StreamUtil.transfer(null, null);
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
-			Assert.assertEquals("Input stream is null", npe.getMessage());
+		catch (NullPointerException nullPointerException) {
+			Assert.assertEquals(
+				"Input stream is null", nullPointerException.getMessage());
 		}
 
 		try {
@@ -337,8 +372,9 @@ public class StreamUtilTest {
 
 			Assert.fail();
 		}
-		catch (NullPointerException npe) {
-			Assert.assertEquals("Output stream is null", npe.getMessage());
+		catch (NullPointerException nullPointerException) {
+			Assert.assertEquals(
+				"Output stream is null", nullPointerException.getMessage());
 		}
 	}
 

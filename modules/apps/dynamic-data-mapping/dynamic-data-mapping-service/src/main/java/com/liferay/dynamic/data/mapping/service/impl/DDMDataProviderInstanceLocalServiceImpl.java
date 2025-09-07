@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.impl;
@@ -17,19 +8,21 @@ package com.liferay.dynamic.data.mapping.service.impl;
 import com.liferay.dynamic.data.mapping.data.provider.configuration.DDMDataProviderConfiguration;
 import com.liferay.dynamic.data.mapping.exception.DataProviderInstanceNameException;
 import com.liferay.dynamic.data.mapping.exception.DataProviderInstanceURLException;
+import com.liferay.dynamic.data.mapping.exception.DuplicateDataProviderInstanceInputParameterNameException;
 import com.liferay.dynamic.data.mapping.exception.NoSuchDataProviderInstanceException;
 import com.liferay.dynamic.data.mapping.exception.RequiredDataProviderInstanceException;
-import com.liferay.dynamic.data.mapping.internal.data.provider.configuration.activator.DDMDataProviderConfigurationActivator;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializerSerializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializerSerializeResponse;
 import com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.service.base.DDMDataProviderInstanceLocalServiceBaseImpl;
+import com.liferay.dynamic.data.mapping.service.persistence.DDMDataProviderInstanceLinkPersistence;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidator;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
@@ -37,9 +30,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -48,19 +45,23 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.net.URL;
 
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Leonardo Barros
  */
 @Component(
+	configurationPid = "com.liferay.dynamic.data.mapping.data.provider.configuration.DDMDataProviderConfiguration",
 	property = "model.class.name=com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance",
 	service = AopService.class
 )
@@ -76,9 +77,9 @@ public class DDMDataProviderInstanceLocalServiceImpl
 
 		// Data provider instance
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
-		validate(nameMap, ddmFormValues);
+		_validate(nameMap, ddmFormValues);
 
 		long dataProviderInstanceId = counterLocalService.increment();
 
@@ -92,22 +93,23 @@ public class DDMDataProviderInstanceLocalServiceImpl
 		dataProviderInstance.setUserName(user.getFullName());
 		dataProviderInstance.setNameMap(nameMap);
 		dataProviderInstance.setDescriptionMap(descriptionMap);
-		dataProviderInstance.setDefinition(serialize(ddmFormValues));
+		dataProviderInstance.setDefinition(_serialize(ddmFormValues));
 		dataProviderInstance.setType(type);
 
-		ddmDataProviderInstancePersistence.update(dataProviderInstance);
+		dataProviderInstance = ddmDataProviderInstancePersistence.update(
+			dataProviderInstance);
 
 		// Resources
 
 		if (serviceContext.isAddGroupPermissions() ||
 			serviceContext.isAddGuestPermissions()) {
 
-			addDataProviderInstanceResources(
+			_addDataProviderInstanceResources(
 				dataProviderInstance, serviceContext.isAddGroupPermissions(),
 				serviceContext.isAddGuestPermissions());
 		}
 		else {
-			addDataProviderInstanceResources(
+			_addDataProviderInstanceResources(
 				dataProviderInstance, serviceContext.getModelPermissions());
 		}
 
@@ -115,13 +117,14 @@ public class DDMDataProviderInstanceLocalServiceImpl
 	}
 
 	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public void deleteDataProviderInstance(
 			DDMDataProviderInstance dataProviderInstance)
 		throws PortalException {
 
 		if (!GroupThreadLocal.isDeleteInProcess()) {
 			int count =
-				ddmDataProviderInstanceLinkPersistence.
+				_ddmDataProviderInstanceLinkPersistence.
 					countByDataProviderInstanceId(
 						dataProviderInstance.getDataProviderInstanceId());
 
@@ -138,7 +141,7 @@ public class DDMDataProviderInstanceLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			dataProviderInstance.getCompanyId(),
 			DDMDataProviderInstance.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL,
@@ -158,7 +161,7 @@ public class DDMDataProviderInstanceLocalServiceImpl
 	}
 
 	@Override
-	public void deleteDataProviderInstances(long companyId, final long groupId)
+	public void deleteDataProviderInstances(long companyId, long groupId)
 		throws PortalException {
 
 		ActionableDynamicQuery actionableDynamicQuery =
@@ -174,7 +177,6 @@ public class DDMDataProviderInstanceLocalServiceImpl
 		actionableDynamicQuery.setPerformActionMethod(
 			(DDMDataProviderInstance ddmDataProviderInstance) ->
 				deleteDataProviderInstance(ddmDataProviderInstance));
-
 		actionableDynamicQuery.setCompanyId(companyId);
 
 		actionableDynamicQuery.performActions();
@@ -292,31 +294,38 @@ public class DDMDataProviderInstanceLocalServiceImpl
 			DDMFormValues ddmFormValues, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
-
-		validate(nameMap, ddmFormValues);
+		_validate(nameMap, ddmFormValues);
 
 		DDMDataProviderInstance dataProviderInstance =
 			ddmDataProviderInstancePersistence.findByPrimaryKey(
 				dataProviderInstanceId);
 
+		User user = _userLocalService.getUser(userId);
+
 		dataProviderInstance.setUserId(user.getUserId());
 		dataProviderInstance.setUserName(user.getFullName());
+
+		dataProviderInstance.setModifiedDate(new Date());
 		dataProviderInstance.setNameMap(nameMap);
 		dataProviderInstance.setDescriptionMap(descriptionMap);
-		dataProviderInstance.setDefinition(serialize(ddmFormValues));
+		dataProviderInstance.setDefinition(_serialize(ddmFormValues));
 
-		ddmDataProviderInstancePersistence.update(dataProviderInstance);
-
-		return dataProviderInstance;
+		return ddmDataProviderInstancePersistence.update(dataProviderInstance);
 	}
 
-	protected void addDataProviderInstanceResources(
+	@Activate
+	@Modified
+	protected void activate(Map<String, Object> properties) {
+		_ddmDataProviderConfiguration = ConfigurableUtil.createConfigurable(
+			DDMDataProviderConfiguration.class, properties);
+	}
+
+	private void _addDataProviderInstanceResources(
 			DDMDataProviderInstance dataProviderInstance,
 			boolean addGroupPermissions, boolean addGuestPermissions)
 		throws PortalException {
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			dataProviderInstance.getCompanyId(),
 			dataProviderInstance.getGroupId(), dataProviderInstance.getUserId(),
 			DDMDataProviderInstance.class.getName(),
@@ -324,19 +333,35 @@ public class DDMDataProviderInstanceLocalServiceImpl
 			addGroupPermissions, addGuestPermissions);
 	}
 
-	protected void addDataProviderInstanceResources(
+	private void _addDataProviderInstanceResources(
 			DDMDataProviderInstance dataProviderInstance,
 			ModelPermissions modelPermissions)
 		throws PortalException {
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			dataProviderInstance.getCompanyId(),
 			dataProviderInstance.getGroupId(), dataProviderInstance.getUserId(),
 			DDMDataProviderInstance.class.getName(),
 			dataProviderInstance.getDataProviderInstanceId(), modelPermissions);
 	}
 
-	protected String serialize(DDMFormValues ddmFormValues) {
+	private boolean _isLocalNetworkURL(String value) {
+		try {
+			URL url = new URL(value);
+
+			return InetAddressUtil.isLocalInetAddress(
+				InetAddressUtil.getInetAddressByName(url.getHost()));
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return true;
+	}
+
+	private String _serialize(DDMFormValues ddmFormValues) {
 		DDMFormValuesSerializerSerializeRequest.Builder builder =
 			DDMFormValuesSerializerSerializeRequest.Builder.newBuilder(
 				ddmFormValues);
@@ -348,7 +373,7 @@ public class DDMDataProviderInstanceLocalServiceImpl
 		return ddmFormValuesSerializerSerializeResponse.getContent();
 	}
 
-	protected void validate(
+	private void _validate(
 			Map<Locale, String> nameMap, DDMFormValues ddmFormValues)
 		throws PortalException {
 
@@ -361,31 +386,54 @@ public class DDMDataProviderInstanceLocalServiceImpl
 				"Name is null for locale " + locale.getDisplayName());
 		}
 
-		DDMDataProviderConfiguration ddmDataProviderConfiguration =
-			_ddmDataProviderConfigurationActivator.
-				getDDMDataProviderConfiguration();
-
-		if (!ddmDataProviderConfiguration.accessLocalNetwork()) {
+		if (!_ddmDataProviderConfiguration.accessLocalNetwork()) {
 			_validateLocalNetworkURL(ddmFormValues);
 		}
+
+		_validateInputParameterNames(ddmFormValues);
 
 		_ddmFormValuesValidator.validate(ddmFormValues);
 	}
 
-	private boolean _isLocalNetworkURL(String value) {
-		try {
-			URL url = new URL(value);
+	private void _validateInputParameterNames(DDMFormValues ddmFormValues)
+		throws PortalException {
 
-			return InetAddressUtil.isLocalInetAddress(
-				InetAddressUtil.getInetAddressByName(url.getHost()));
+		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
+			ddmFormValues.getDDMFormFieldValuesMap();
+
+		if (!ddmFormFieldValuesMap.containsKey("inputParameters")) {
+			return;
 		}
-		catch (Exception e) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+
+		Set<String> inputParameterNames = new HashSet<>();
+
+		for (DDMFormFieldValue inputParametersDDMFormFieldValue :
+				ddmFormFieldValuesMap.get("inputParameters")) {
+
+			Map<String, List<DDMFormFieldValue>> nestedDDMFormFieldValuesMap =
+				inputParametersDDMFormFieldValue.
+					getNestedDDMFormFieldValuesMap();
+
+			for (DDMFormFieldValue inputParameterNameDDMFormFieldValue :
+					nestedDDMFormFieldValuesMap.get("inputParameterName")) {
+
+				Value inputParameterNameValue =
+					inputParameterNameDDMFormFieldValue.getValue();
+
+				Map<Locale, String> inputParameterNameValuesMap =
+					inputParameterNameValue.getValues();
+
+				for (String inputParameterName :
+						inputParameterNameValuesMap.values()) {
+
+					if (!inputParameterNames.add(inputParameterName)) {
+						throw new DuplicateDataProviderInstanceInputParameterNameException(
+							"Duplicate data provider input parameter name: " +
+								inputParameterName);
+					}
+				}
 			}
 		}
-
-		return true;
 	}
 
 	private void _validateLocalNetworkURL(DDMFormValues ddmFormValues)
@@ -398,10 +446,9 @@ public class DDMDataProviderInstanceLocalServiceImpl
 			return;
 		}
 
-		List<DDMFormFieldValue> ddmFormFieldValues = ddmFormFieldValuesMap.get(
-			"url");
+		for (DDMFormFieldValue ddmFormFieldValue :
+				ddmFormFieldValuesMap.get("url")) {
 
-		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
 			Value value = ddmFormFieldValue.getValue();
 
 			for (Locale locale : value.getAvailableLocales()) {
@@ -422,17 +469,22 @@ public class DDMDataProviderInstanceLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMDataProviderInstanceLocalServiceImpl.class);
 
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY
-	)
-	private volatile DDMDataProviderConfigurationActivator
-		_ddmDataProviderConfigurationActivator;
+	private volatile DDMDataProviderConfiguration _ddmDataProviderConfiguration;
+
+	@Reference
+	private DDMDataProviderInstanceLinkPersistence
+		_ddmDataProviderInstanceLinkPersistence;
 
 	@Reference
 	private DDMFormValuesValidator _ddmFormValuesValidator;
 
 	@Reference(target = "(ddm.form.values.serializer.type=json)")
 	private DDMFormValuesSerializer _jsonDDMFormValuesSerializer;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

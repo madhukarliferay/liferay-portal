@@ -2,15 +2,17 @@
 <head>
 <title>JSONWSUser</title>
 </head>
+
 <body>
-<table cellpadding="1" cellspacing="1" border="1">
+<table border="1" cellpadding="1" cellspacing="1">
 <thead>
 <tr><td rowspan="1" colspan="3">JSONWSUser</td></tr>
 </thead>
+
 <tbody>
 <tr>
 	<td>API_METHOD</td>
-	<td>//div[contains(@class,'lfr-api-method') and contains(@class,'lfr-api-section')]/h2</td>
+	<td>//div[contains(@class,'lfr-api-method')]/div/h2</td>
 	<td></td>
 </tr>
 <tr>
@@ -18,7 +20,9 @@
 	<td></td>
 	<td></td>
 </tr>
+
 <!--API_EXECUTE-->
+
 <tr>
 	<td>API_EXECUTE_USER_ID_FIELD</td>
 	<td>//textarea[@name='userId']</td>
@@ -56,12 +60,12 @@
 </tr>
 <tr>
 	<td>API_EXECUTE_PREFIX_ID_FIELD</td>
-	<td>//textarea[@name='prefixId']</td>
+	<td>//textarea[@name='prefixListTypeId']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>API_EXECUTE_SUFFIX_ID_FIELD</td>
-	<td>//textarea[@name='suffixId']</td>
+	<td>//textarea[@name='suffixListTypeId']</td>
 	<td></td>
 </tr>
 <tr>

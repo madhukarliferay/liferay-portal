@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_5;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
@@ -39,15 +31,11 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
-				"select companyId from Company");
-			ResultSet rs = ps.executeQuery()) {
-
+		try (LoggingTimer loggingTimer = new LoggingTimer()) {
 			upgradePortalPreferences(PortletKeys.PREFS_OWNER_ID_DEFAULT);
 
-			while (rs.next()) {
-				upgradePortalPreferences(rs.getLong("companyId"));
+			for (long companyId : PortalInstancePool.getCompanyIds()) {
+				upgradePortalPreferences(companyId);
 			}
 		}
 	}
@@ -58,11 +46,12 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 			"where ownerId = ", companyId, " and ownerType = ",
 			PortletKeys.PREFS_OWNER_TYPE_COMPANY);
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql);
-			ResultSet rs = ps1.executeQuery()) {
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String preferences = rs.getString("preferences");
+			while (resultSet.next()) {
+				String preferences = resultSet.getString("preferences");
 
 				Document document = SAXReaderUtil.read(preferences);
 
@@ -87,20 +76,17 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 
 							String value = valueElement.getStringValue();
 
-							StringBundler sb = new StringBundler(10);
-
-							sb.append("Detected a value of \"");
-							sb.append(value);
-							sb.append("\" for portal property ");
-							sb.append(obsoletePortalPreference);
-							sb.append(" stored in portal preferences. ");
-							sb.append("Storing this property in portal ");
-							sb.append("preferences is no longer supported; ");
-							sb.append("please set this property to this ");
-							sb.append("value in portal-ext.properties if you ");
-							sb.append("wish to retain it.");
-
-							_log.warn(sb.toString());
+							_log.warn(
+								StringBundler.concat(
+									"Detected a value of \"", value,
+									"\" for portal property ",
+									obsoletePortalPreference,
+									" stored in portal preferences. Storing ",
+									"this property in portal preferences is ",
+									"no longer supported; please set this ",
+									"property to this value in ",
+									"portal-ext.properties if you wish to ",
+									"retain it."));
 						}
 
 						portletPreferencesElement.remove(element);
@@ -110,14 +96,16 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 				}
 
 				if (updatedDocument) {
-					try (PreparedStatement ps2 = connection.prepareStatement(
-							"update PortalPreferences set preferences = ? " +
-								"where portalPreferencesId = ?")) {
+					try (PreparedStatement preparedStatement2 =
+							connection.prepareStatement(
+								"update PortalPreferences set preferences = " +
+									"? where portalPreferencesId = ?")) {
 
-						ps2.setString(1, document.asXML());
-						ps2.setLong(2, rs.getLong("portalPreferencesId"));
+						preparedStatement2.setString(1, document.asXML());
+						preparedStatement2.setLong(
+							2, resultSet.getLong("portalPreferencesId"));
 
-						ps2.executeUpdate();
+						preparedStatement2.executeUpdate();
 					}
 				}
 			}
@@ -125,16 +113,13 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 	}
 
 	private static final String[] _OBSOLETE_PORTAL_PREFERENCES = {
-		PropsKeys.AUTO_DEPLOY_CUSTOM_PORTLET_XML,
-		PropsKeys.AUTO_DEPLOY_DEPLOY_DIR, PropsKeys.AUTO_DEPLOY_DEST_DIR,
-		PropsKeys.AUTO_DEPLOY_ENABLED, PropsKeys.AUTO_DEPLOY_INTERVAL,
-		PropsKeys.AUTO_DEPLOY_JBOSS_PREFIX,
-		PropsKeys.AUTO_DEPLOY_TOMCAT_CONF_DIR,
-		PropsKeys.AUTO_DEPLOY_TOMCAT_LIB_DIR, PropsKeys.AUTO_DEPLOY_UNPACK_WAR,
-		PropsKeys.PLUGIN_NOTIFICATIONS_ENABLED,
-		PropsKeys.PLUGIN_NOTIFICATIONS_PACKAGES_IGNORED,
-		PropsKeys.PLUGIN_REPOSITORIES_TRUSTED,
-		PropsKeys.PLUGIN_REPOSITORIES_UNTRUSTED
+		"auto.deploy.custom.portlet.xml", PropsKeys.AUTO_DEPLOY_DEPLOY_DIR,
+		"auto.deploy.dest.dir", PropsKeys.AUTO_DEPLOY_ENABLED,
+		PropsKeys.AUTO_DEPLOY_INTERVAL, "auto.deploy.jboss.prefix",
+		PropsKeys.AUTO_DEPLOY_TOMCAT_CONF_DIR, "auto.deploy.tomcat.lib.dir",
+		"auto.deploy.unpack.war", "plugin.notifications.enabled",
+		"plugin.notifications.packages.ignored", "plugin.repositories.trusted",
+		"plugin.repositories.untrusted"
 	};
 
 	private static final Log _log = LogFactoryUtil.getLog(

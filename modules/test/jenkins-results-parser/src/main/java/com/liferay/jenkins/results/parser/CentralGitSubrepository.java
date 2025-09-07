@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -43,16 +34,17 @@ public class CentralGitSubrepository {
 
 		_gitSubrepositoryName = _getGitSubrepositoryName();
 
-		StringBuilder sb = new StringBuilder();
-
 		Properties buildProperties = null;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException("Unable to get build properties", ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(
+				"Unable to get build properties", ioException);
 		}
+
+		StringBuilder sb = new StringBuilder();
 
 		sb.append(buildProperties.getProperty("base.repository.dir"));
 		sb.append("/");
@@ -64,11 +56,11 @@ public class CentralGitSubrepository {
 
 		_gitSubrepositoryDirectory = sb.toString();
 
-		_gitSubrepositoryUpstreamBranchName =
-			_getGitSubrepositoryUpstreamBranchName();
+		_gitSubrepositoryUpstreamBranchName = _centralUpstreamBranchName;
 		_gitSubrepositoryUsername = _getGitSubrepositoryUsername();
 
-		String tempBranchName = "temp-" + System.currentTimeMillis();
+		String tempBranchName =
+			"temp-" + JenkinsResultsParserUtil.getCurrentTimeMillis();
 
 		GitWorkingDirectory gitWorkingDirectory =
 			GitWorkingDirectoryFactory.newGitWorkingDirectory(
@@ -115,7 +107,7 @@ public class CentralGitSubrepository {
 
 			_ciProperties.load(new FileInputStream(ciPropertiesFile));
 		}
-		catch (FileNotFoundException fnfe) {
+		catch (FileNotFoundException fileNotFoundException) {
 			System.out.println(
 				"Unable to find ci.properties in " +
 					_gitSubrepositoryDirectory);
@@ -162,13 +154,8 @@ public class CentralGitSubrepository {
 		String gitSubrepositoryMergedCommit = _gitrepoProperties.getProperty(
 			"commit", "");
 
-		if (gitSubrepositoryMergedCommit.equals(
-				getGitSubrepositoryUpstreamCommit())) {
-
-			return true;
-		}
-
-		return false;
+		return gitSubrepositoryMergedCommit.equals(
+			getGitSubrepositoryUpstreamCommit());
 	}
 
 	private String _getGitSubrepositoryName() {
@@ -178,31 +165,6 @@ public class CentralGitSubrepository {
 		int y = remote.indexOf(".git");
 
 		return remote.substring(x, y);
-	}
-
-	private String _getGitSubrepositoryUpstreamBranchName() {
-		String remote = _gitrepoProperties.getProperty("remote");
-
-		String gitSubrepositoryUpstreamBranchName = _centralUpstreamBranchName;
-
-		if (gitSubrepositoryUpstreamBranchName.contains("7.0")) {
-			gitSubrepositoryUpstreamBranchName = "7.0.x";
-		}
-		else if (gitSubrepositoryUpstreamBranchName.contains("7.1")) {
-			gitSubrepositoryUpstreamBranchName = "7.1.x";
-		}
-		else if (gitSubrepositoryUpstreamBranchName.contains("7.2")) {
-			gitSubrepositoryUpstreamBranchName = "7.2.x";
-		}
-		else if (gitSubrepositoryUpstreamBranchName.contains("master")) {
-			gitSubrepositoryUpstreamBranchName = "master";
-		}
-
-		if (remote.contains("-private")) {
-			gitSubrepositoryUpstreamBranchName += "-private";
-		}
-
-		return gitSubrepositoryUpstreamBranchName;
 	}
 
 	private String _getGitSubrepositoryUpstreamCommit() throws IOException {
@@ -237,11 +199,10 @@ public class CentralGitSubrepository {
 			_gitSubrepositoryName, _gitSubrepositoryUsername, path);
 
 		for (int i = 0; i < 15; i++) {
-			JSONArray statusesJSONArray = new JSONArray(
-				JenkinsResultsParserUtil.toString(
-					JenkinsResultsParserUtil.combine(
-						url, "?page=", String.valueOf(i + 1)),
-					true));
+			JSONArray statusesJSONArray = JenkinsResultsParserUtil.toJSONArray(
+				JenkinsResultsParserUtil.combine(
+					url, "?page=", String.valueOf(i + 1)),
+				true);
 
 			if ((statusesJSONArray == null) ||
 				(statusesJSONArray.length() == 0)) {

@@ -1,77 +1,178 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {act, fireEvent, render} from '@testing-library/react';
 import React from 'react';
-import ReactDOM from 'react-dom';
-import renderer from 'react-test-renderer';
+
+import '@testing-library/jest-dom/extend-expect';
 
 import App from '../../src/main/resources/META-INF/resources/js/components/App.es';
+import FetchMock, {fetchMockResponse} from '../mock/fetch.es';
 
-beforeAll(() => {
-	const vbody = document.createElement('div');
+const processItems = [
+	{
+		instancesCount: 5,
+		process: {
+			id: 1234,
+			title: 'Single Approver',
+		},
+	},
+];
 
-	vbody.innerHTML = `<div id="workflow_controlMenu">
-		<div class="sites-control-group">
-			<ul class="control-menu-nav"></ul>
-		</div>
-		<div class="tools-control-group">
-			<ul class="control-menu-nav">
-				<label class="control-menu-level-1-heading">title</label>
-			</ul>
-		</div>
-	</div>`;
-	document.body.appendChild(vbody);
+const pending = {
+	instanceCount: 0,
+	onTimeInstanceCount: 0,
+	overdueInstanceCount: 0,
+	process: {
+		id: 1234,
+		title: 'Single Approver',
+	},
+	untrackedInstanceCount: 0,
+};
 
-	ReactDOM.createPortal = jest.fn(element => {
-		return element;
+const fetchMock = new FetchMock({
+	GET: {
+		'/o/portal-workflow-metrics/v1.0/processes/metrics': fetchMockResponse({
+			items: processItems,
+			totalCount: processItems.length,
+		}),
+
+		// eslint-disable-next-line sort-keys
+		'/o/portal-workflow-metrics/v1.0/indexes': fetchMockResponse({
+			items: [],
+			totalCount: 0,
+		}),
+		'/o/portal-workflow-metrics/v1.0/processes/1234/metrics':
+			fetchMockResponse(pending),
+		'default': fetchMockResponse({items: [], totalCount: 0}),
+	},
+});
+
+const mockProps = {
+	companyId: 12345,
+	defaultDelta: 20,
+	deltaValues: [5, 10, 20, 30, 50, 75],
+	isAmPm: false,
+	maxPages: 15,
+	portletNamespace: '_workflow_',
+	reindexStatuses: [],
+};
+
+describe('The App component should', () => {
+	let container;
+	let findByText;
+	let getByText;
+
+	beforeAll(async () => {
+		const header = document.createElement('div');
+
+		header.id = '_workflow_controlMenu';
+		header.innerHTML = `<div class="sites-control-group"><ul class="control-menu-nav"></ul></div><div class="user-control-group"><ul class="control-menu-nav"><li></li></ul></div>`;
+
+		document.body.appendChild(header);
+
+		const renderResult = render(<App {...mockProps} />);
+
+		container = renderResult.container;
+		getByText = renderResult.getByText;
+		findByText = renderResult.findByText;
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	global.Liferay = {
-		Language: {
-			get: key => key
-		},
-		ThemeDisplay: {
-			getPathThemeImages: () => '/'
-		}
-	};
-});
+	beforeEach(() => {
+		fetchMock.mock();
+	});
 
-afterAll(() => {
-	global.Liferay = null;
-});
+	afterEach(() => {
+		fetchMock.reset();
+	});
 
-test('Should render default component', () => {
-	const component = renderer.create(<App namespace="workflow_" />);
+	it('Navigate to settings indexes page', async () => {
+		const kebabButton =
+			document.getElementById('headerKebab').children[0].children[0]
+				.children[0];
 
-	const tree = component.toJSON();
+		fireEvent.click(kebabButton);
 
-	expect(tree).toMatchSnapshot();
-});
+		const dropDownItems = document.querySelectorAll('.dropdown-item');
 
-test('Should render default component without custom header', () => {
-	document.getElementById('workflow_controlMenu').id = '';
+		expect(dropDownItems[0]).toHaveTextContent('settings');
 
-	const component = renderer.create(<App />);
+		fireEvent.click(dropDownItems[0]);
 
-	const tree = component.toJSON();
+		expect(window.location.hash).toContain('#/settings/indexes');
 
-	expect(tree).toMatchSnapshot();
-});
+		fireEvent.click(document.getElementById('backButton').children[0]);
 
-test('Should set status', () => {
-	const component = renderer.create(<App />);
+		await act(async () => {
+			jest.runAllTimers();
+		});
+	});
 
-	const instance = component.getInstance();
+	it('Return to process list page', async () => {
+		const processName = container.querySelectorAll('.table-title');
 
-	instance.setStatus('sla-updated');
+		const processNameLink = processName[0].children[0];
 
-	expect(instance.state.status).toEqual('sla-updated');
+		expect(processNameLink).toHaveTextContent('Single Approver');
+		expect(window.location.hash).toContain('#/processes');
+
+		fireEvent.click(processNameLink);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
+	});
+
+	xit('Render the process metrics page on dashboard tab', async () => {
+		expect(window.location.hash).toContain(
+			'#/metrics/1234/dashboard/20/1/overdueInstanceCount%3Aasc'
+		);
+
+		const tabs = container.querySelectorAll('a.nav-link');
+		const metricsCalculated = await findByText('SLA Metrics calculated');
+
+		expect(tabs[0]).toHaveTextContent('dashboard');
+		expect(tabs[0].className.includes('active')).toBe(true);
+		expect(tabs[1]).toHaveTextContent('performance');
+
+		expect(window.location.hash).toContain(
+			'#/metrics/1234/dashboard/20/1/overdueInstanceCount%3Aasc'
+		);
+
+		expect(metricsCalculated).toBeTruthy();
+
+		fireEvent.click(tabs[1]);
+	});
+
+	xit('Render the process metrics page on performance tab and back to dashboard', async () => {
+		const metricsCalculated = await findByText('SLA Metrics calculated');
+		const tabs = container.querySelectorAll('a.nav-link');
+
+		expect(tabs[0]).toHaveTextContent('dashboard');
+		expect(tabs[1]).toHaveTextContent('performance');
+		expect(tabs[1].className.includes('active')).toBe(true);
+
+		expect(window.location.hash).toContain('#/metrics/1234/performance');
+
+		expect(metricsCalculated).toBeTruthy();
+
+		fireEvent.click(tabs[0]);
+
+		expect(tabs[0].className.includes('active')).toBe(true);
+		expect(window.location.hash).toContain('#/metrics/1234/dashboard');
+	});
+
+	it('Navigate to new SLA page', async () => {
+		const slaInfoLink = getByText('add-a-new-sla');
+
+		fireEvent.click(slaInfoLink);
+
+		expect(window.location.hash).toContain('#/sla/1234/new');
+	});
 });

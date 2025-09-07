@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.application.list.deploy.hot;
@@ -22,8 +13,9 @@ import com.liferay.portal.kernel.deploy.hot.HotDeployEvent;
 import com.liferay.portal.kernel.deploy.hot.HotDeployException;
 import com.liferay.portal.kernel.deploy.hot.HotDeployListener;
 import com.liferay.portal.kernel.model.PortletConstants;
+import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
@@ -31,6 +23,8 @@ import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.UnsecureSAXReaderUtil;
 import com.liferay.portal.util.PortletCategoryUtil;
+
+import jakarta.servlet.ServletContext;
 
 import java.io.IOException;
 
@@ -42,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.ServletContext;
-
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -53,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Adolfo Pérez
  */
-@Component(immediate = true, service = HotDeployListener.class)
+@Component(service = HotDeployListener.class)
 public class LegacyPortletPanelAppHotDeployListener
 	extends BaseHotDeployListener {
 
@@ -74,14 +66,18 @@ public class LegacyPortletPanelAppHotDeployListener
 
 				ServiceRegistration<PanelApp> serviceRegistration =
 					_bundleContext.registerService(
-						PanelApp.class, new PortletPanelAppAdapter(portletId),
+						PanelApp.class,
+						new PortletPanelAppAdapter(
+							portletId,
+							() -> _portletLocalService.getPortletById(
+								portletId)),
 						properties);
 
 				_serviceRegistrations.put(portletId, serviceRegistration);
 			}
 		}
-		catch (DocumentException | IOException e) {
-			throw new HotDeployException(e);
+		catch (DocumentException | IOException exception) {
+			throw new HotDeployException(exception);
 		}
 	}
 
@@ -104,8 +100,8 @@ public class LegacyPortletPanelAppHotDeployListener
 				}
 			}
 		}
-		catch (DocumentException | IOException e) {
-			throw new HotDeployException(e);
+		catch (DocumentException | IOException exception) {
+			throw new HotDeployException(exception);
 		}
 	}
 
@@ -138,7 +134,7 @@ public class LegacyPortletPanelAppHotDeployListener
 			return Collections.emptyList();
 		}
 
-		List<Dictionary<String, Object>> propertiesList = new ArrayList<>();
+		List<Dictionary<String, Object>> properties = new ArrayList<>();
 
 		Document document = UnsecureSAXReaderUtil.read(xml, true);
 
@@ -160,37 +156,42 @@ public class LegacyPortletPanelAppHotDeployListener
 				PortletCategoryUtil.getPortletCategoryKey(
 					controlPanelEntryCategory);
 
-			Dictionary<String, Object> properties = new HashMapDictionary<>();
+			properties.add(
+				HashMapDictionaryBuilder.<String, Object>put(
+					"panel.app.order",
+					() -> {
+						String controlPanelEntryWeight =
+							portletElement.elementText(
+								"control-panel-entry-weight");
 
-			String portletName = portletElement.elementText("portlet-name");
+						if (Validator.isNull(controlPanelEntryWeight)) {
+							return null;
+						}
 
-			String portletId = getPortletId(
-				hotDeployEvent.getServletContextName(), portletName);
-
-			properties.put("panel.app.portlet.id", portletId);
-
-			properties.put("panel.category.key", controlPanelEntryCategory);
-
-			String controlPanelEntryWeight = portletElement.elementText(
-				"control-panel-entry-weight");
-
-			if (Validator.isNotNull(controlPanelEntryWeight)) {
-				int panelAppOrder = (int)Math.ceil(
-					GetterUtil.getDouble(controlPanelEntryWeight) * 100);
-
-				properties.put("panel.app.order", panelAppOrder);
-			}
-
-			propertiesList.add(properties);
+						return (int)Math.ceil(
+							GetterUtil.getDouble(controlPanelEntryWeight) *
+								100);
+					}
+				).put(
+					"panel.app.portlet.id",
+					getPortletId(
+						hotDeployEvent.getServletContextName(),
+						portletElement.elementText("portlet-name"))
+				).put(
+					"panel.category.key", controlPanelEntryCategory
+				).build());
 		}
 
-		return propertiesList;
+		return properties;
 	}
 
 	private BundleContext _bundleContext;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortletLocalService _portletLocalService;
 
 	private final Map<String, ServiceRegistration<PanelApp>>
 		_serviceRegistrations = new ConcurrentHashMap<>();

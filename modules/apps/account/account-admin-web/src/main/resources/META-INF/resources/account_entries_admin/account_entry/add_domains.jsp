@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,29 +11,33 @@
 String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "addDomains");
 %>
 
-<div class="modal-body">
-	<clay:alert
-		elementClasses="hide"
-		id='<%= renderResponse.getNamespace() + "domainAlert" %>'
-		message='<%= LanguageUtil.get(request, "please-enter-valid-mail-domains-separated-by-commas") %>'
-		style="danger"
-		title='<%= LanguageUtil.get(request, "error") %>'
-	/>
-
-	<aui:field-wrapper cssClass="form-group">
-		<aui:input label="domain" name="domain" />
-
-		<div class="form-text">
-			<liferay-ui:message key="for-multiple-domains,-separate-each-domain-by-a-comma" />
+<liferay-frontend:edit-form
+	action="javascript:void(0);"
+	onSubmit='<%= liferayPortletResponse.getNamespace() + "addDomains();" %>'
+>
+	<liferay-frontend:edit-form-body>
+		<div class="hide" id="<portlet:namespace />domainAlert">
+			<clay:alert
+				displayType="danger"
+				message="please-enter-valid-mail-domains-separated-by-commas"
+			/>
 		</div>
-	</aui:field-wrapper>
 
-	<aui:button-row>
-		<aui:button onClick='<%= renderResponse.getNamespace() + "addDomains();" %>' primary="<%= true %>" value="save" />
+		<aui:field-wrapper cssClass="form-group">
+			<aui:input label="domain" name="domain" />
 
-		<aui:button type="cancel" />
-	</aui:button-row>
-</div>
+			<div class="form-text">
+				<liferay-ui:message key="for-multiple-domains,-separate-each-domain-by-a-comma" />
+			</div>
+		</aui:field-wrapper>
+	</liferay-frontend:edit-form-body>
+
+	<liferay-frontend:edit-form-footer>
+		<liferay-frontend:edit-form-buttons
+			submitLabel="save"
+		/>
+	</liferay-frontend:edit-form-footer>
+</liferay-frontend:edit-form>
 
 <aui:script>
 	function <portlet:namespace />addDomains() {
@@ -73,18 +68,12 @@ String eventName = ParamUtil.getString(request, "eventName", liferayPortletRespo
 			}
 		}
 
-		<portlet:namespace/>closePopup();
-	}
-
-	function <portlet:namespace/>closePopup() {
-		var Util = Liferay.Util;
-
-		var openingLiferay = Util.getOpener().Liferay;
+		var openingLiferay = Liferay.Util.getOpener().Liferay;
 
 		openingLiferay.fire('<%= HtmlUtil.escapeJS(eventName) %>', {
-			data: document.getElementById('<portlet:namespace />domain').value
+			data: document.getElementById('<portlet:namespace />domain').value,
 		});
 
-		Util.getWindow().hide();
+		openingLiferay.fire('closeModal');
 	}
 </aui:script>

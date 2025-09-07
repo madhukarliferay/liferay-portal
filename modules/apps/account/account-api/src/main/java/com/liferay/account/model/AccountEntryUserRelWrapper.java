@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.account.model;
@@ -84,6 +75,28 @@ public class AccountEntryUserRelWrapper
 		}
 	}
 
+	@Override
+	public AccountEntryUserRel cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
+	public AccountEntry fetchAccountEntry() {
+		return model.fetchAccountEntry();
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.User fetchUser() {
+		return model.fetchUser();
+	}
+
+	@Override
+	public AccountEntry getAccountEntry()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getAccountEntry();
+	}
+
 	/**
 	 * Returns the account entry ID of this account entry user rel.
 	 *
@@ -154,11 +167,21 @@ public class AccountEntryUserRelWrapper
 		return model.getPrimaryKey();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a account entry user rel model instance should use the <code>AccountEntryUserRel</code> interface instead.
-	 */
+	@Override
+	public com.liferay.portal.kernel.model.User getUser()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getUser();
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.kernel.model.UserGroupRole>
+			getUserGroupRoles()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getUserGroupRoles();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -232,6 +255,11 @@ public class AccountEntryUserRelWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

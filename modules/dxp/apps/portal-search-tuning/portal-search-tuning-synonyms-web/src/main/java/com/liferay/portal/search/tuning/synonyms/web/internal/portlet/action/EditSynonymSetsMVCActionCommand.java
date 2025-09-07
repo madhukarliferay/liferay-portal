@@ -1,100 +1,135 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.tuning.synonyms.web.internal.portlet.action;
 
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
+import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexNameBuilder;
+import com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration;
 import com.liferay.portal.search.tuning.synonyms.web.internal.constants.SynonymsPortletKeys;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSet;
-import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetFilterHelper;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexReader;
-import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexWriter;
+import com.liferay.portal.search.tuning.synonyms.web.internal.storage.SynonymSetStorageAdapter;
+import com.liferay.portal.search.tuning.synonyms.web.internal.synchronizer.IndexToFilterSynchronizer;
 
-import java.util.Optional;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import java.util.Map;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Filipe Oshiro
  */
 @Component(
-	immediate = true,
+	configurationPid = "com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration",
 	property = {
-		"javax.portlet.name=" + SynonymsPortletKeys.SYNONYMS,
-		"mvc.command.name=editSynonymSet"
+		"jakarta.portlet.name=" + SynonymsPortletKeys.SYNONYMS,
+		"mvc.command.name=/synonyms/edit_synonym_sets"
 	},
 	service = MVCActionCommand.class
 )
 public class EditSynonymSetsMVCActionCommand extends BaseMVCActionCommand {
+
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_synonymSetIndexReader = new SynonymSetIndexReader(
+			_searchEngineAdapter);
+
+		modified(properties);
+	}
 
 	@Override
 	protected void doProcessAction(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		String indexName = _indexNameBuilder.getIndexName(
-			portal.getCompanyId(actionRequest));
-
-		updateSynonymSetIndex(
-			indexName, ParamUtil.getString(actionRequest, "synonymSet"),
-			getSynonymSetOptional(actionRequest));
-
-		_synonymSetFilterHelper.updateFilters(indexName);
+		updateSynonymSets(
+			actionRequest, ParamUtil.getString(actionRequest, "synonymSet"));
 
 		sendRedirect(actionRequest, actionResponse);
 	}
 
-	protected Optional<SynonymSet> getSynonymSetOptional(
-		ActionRequest actionRequest) {
+	protected SynonymSet getSynonymSet(
+		SynonymSetIndexName synonymSetIndexName, ActionRequest actionRequest) {
 
-		return Optional.ofNullable(
-			ParamUtil.getString(actionRequest, "synonymSetId", null)
-		).flatMap(
-			_synonymSetIndexReader::fetchOptional
-		);
+		String synonymSetId = ParamUtil.getString(
+			actionRequest, "synonymSetId", null);
+
+		if (synonymSetId == null) {
+			return null;
+		}
+
+		return _synonymSetIndexReader.fetch(synonymSetIndexName, synonymSetId);
+	}
+
+	@Modified
+	protected void modified(Map<String, Object> properties) {
+		SynonymsConfiguration synonymsConfiguration =
+			ConfigurableUtil.createConfigurable(
+				SynonymsConfiguration.class, properties);
+
+		_indexToFilterSynchronizer = new IndexToFilterSynchronizer(
+			synonymsConfiguration.filterNames(), _searchEngineAdapter,
+			_synonymSetIndexReader);
 	}
 
 	protected void updateSynonymSetIndex(
-		String indexName, String synonyms,
-		Optional<SynonymSet> synonymSetOptional) {
+			SynonymSetIndexName synonymSetIndexName, String synonyms,
+			SynonymSet synonymSet)
+		throws PortalException {
 
 		SynonymSet.SynonymSetBuilder synonymSetBuilder =
 			new SynonymSet.SynonymSetBuilder();
 
-		synonymSetBuilder.index(
-			indexName
-		).synonyms(
-			synonyms
-		);
+		synonymSetBuilder.synonyms(synonyms);
 
-		synonymSetOptional.ifPresent(
-			synonymSet1 -> synonymSetBuilder.id(synonymSet1.getId()));
-
-		if (synonymSetOptional.isPresent()) {
-			_synonymSetIndexWriter.update(synonymSetBuilder.build());
+		if (synonymSet == null) {
+			_synonymSetStorageAdapter.create(
+				synonymSetIndexName, synonymSetBuilder.build());
 		}
 		else {
-			_synonymSetIndexWriter.create(synonymSetBuilder.build());
+			synonymSetBuilder.synonymSetDocumentId(
+				synonymSet.getSynonymSetDocumentId());
+
+			_synonymSetStorageAdapter.update(
+				synonymSetIndexName, synonymSetBuilder.build());
 		}
+	}
+
+	protected void updateSynonymSets(
+			ActionRequest actionRequest, String... synonymSets)
+		throws PortalException {
+
+		long companyId = portal.getCompanyId(actionRequest);
+
+		SynonymSetIndexName synonymSetIndexName =
+			_synonymSetIndexNameBuilder.getSynonymSetIndexName(companyId);
+
+		SynonymSet synonymSet = getSynonymSet(
+			synonymSetIndexName, actionRequest);
+
+		for (String synonyms : synonymSets) {
+			updateSynonymSetIndex(synonymSetIndexName, synonyms, synonymSet);
+		}
+
+		_indexToFilterSynchronizer.copyToFilter(
+			synonymSetIndexName, _indexNameBuilder.getIndexName(companyId),
+			false);
 	}
 
 	@Reference
@@ -103,13 +138,17 @@ public class EditSynonymSetsMVCActionCommand extends BaseMVCActionCommand {
 	@Reference
 	private IndexNameBuilder _indexNameBuilder;
 
-	@Reference
-	private SynonymSetFilterHelper _synonymSetFilterHelper;
+	private volatile IndexToFilterSynchronizer _indexToFilterSynchronizer;
 
 	@Reference
+	private SearchEngineAdapter _searchEngineAdapter;
+
+	@Reference
+	private SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder;
+
 	private SynonymSetIndexReader _synonymSetIndexReader;
 
 	@Reference
-	private SynonymSetIndexWriter _synonymSetIndexWriter;
+	private SynonymSetStorageAdapter _synonymSetStorageAdapter;
 
 }

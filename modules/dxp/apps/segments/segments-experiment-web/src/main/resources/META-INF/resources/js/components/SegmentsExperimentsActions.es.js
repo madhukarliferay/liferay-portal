@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
@@ -19,33 +13,36 @@ import React, {useContext} from 'react';
 import SegmentsExperimentsContext from '../context.es';
 import {
 	closeReviewAndRunExperiment,
-	updateSegmentsExperimentStatus,
+	openTerminateModal,
 	reviewAndRunExperiment,
-	runExperiment
+	runExperiment,
 } from '../state/actions.es';
 import {
-	STATUS_COMPLETED,
 	STATUS_DRAFT,
 	STATUS_FINISHED_NO_WINNER,
 	STATUS_FINISHED_WINNER,
 	STATUS_PAUSED,
 	STATUS_RUNNING,
-	STATUS_TERMINATED
+	STATUS_TERMINATED,
 } from '../util/statuses.es';
-import {StateContext, DispatchContext} from './../state/context.es';
+import {DispatchContext, StateContext} from './../state/context.es';
 import {ReviewExperimentModal} from './ReviewExperimentModal.es';
 
-function SegmentsExperimentsActions({onEditSegmentsExperimentStatus}) {
+function SegmentsExperimentsActions({
+	onCreateSegmentsExperiment,
+	onDeleteSegmentsExperiment,
+	onEditSegmentsExperimentStatus,
+}) {
 	const {
 		experiment,
 		reviewExperimentModal,
 		variants,
-		viewExperimentURL
+		viewExperimentDetailsURL,
 	} = useContext(StateContext);
 	const dispatch = useContext(DispatchContext);
 
 	const {observer, onClose} = useModal({
-		onClose: () => dispatch(closeReviewAndRunExperiment())
+		onClose: () => dispatch(closeReviewAndRunExperiment()),
 	});
 	const {APIService} = useContext(SegmentsExperimentsContext);
 
@@ -64,19 +61,7 @@ function SegmentsExperimentsActions({onEditSegmentsExperimentStatus}) {
 				<ClayButton
 					className="w-100"
 					displayType="secondary"
-					onClick={() => {
-						const confirmed = confirm(
-							Liferay.Language.get(
-								'are-you-sure-you-want-to-terminate-this-test'
-							)
-						);
-
-						if (confirmed)
-							onEditSegmentsExperimentStatus(
-								experiment,
-								STATUS_TERMINATED
-							);
-					}}
+					onClick={() => dispatch(openTerminateModal())}
 				>
 					{Liferay.Language.get('terminate-test')}
 				</ClayButton>
@@ -98,25 +83,26 @@ function SegmentsExperimentsActions({onEditSegmentsExperimentStatus}) {
 				</>
 			)}
 
-			{experiment.status.value === STATUS_FINISHED_WINNER && (
+			{(experiment.status.value === STATUS_FINISHED_WINNER ||
+				experiment.status.value === STATUS_FINISHED_NO_WINNER) && (
 				<>
 					<ClayButton
 						className="w-100"
 						displayType="secondary"
-						onClick={_handleDiscardExperiment}
+						onClick={onDeleteSegmentsExperiment}
 					>
 						{Liferay.Language.get('discard-test')}
 					</ClayButton>
 				</>
 			)}
 
-			{experiment.status.value === STATUS_FINISHED_NO_WINNER && (
+			{experiment.status.value === STATUS_TERMINATED && (
 				<ClayButton
 					className="w-100"
 					displayType="primary"
-					onClick={_handleDiscardExperiment}
+					onClick={onCreateSegmentsExperiment}
 				>
-					{Liferay.Language.get('discard-test')}
+					{Liferay.Language.get('create-new-test')}
 				</ClayButton>
 			)}
 
@@ -128,55 +114,52 @@ function SegmentsExperimentsActions({onEditSegmentsExperimentStatus}) {
 					variants={variants}
 				/>
 			)}
-			{viewExperimentURL && (
+
+			{viewExperimentDetailsURL && (
 				<ClayLink
 					className="btn btn-secondary btn-sm mt-3 w-100"
+					decoration="none"
 					displayType="secondary"
-					href={viewExperimentURL}
+					href={viewExperimentDetailsURL}
 					target="_blank"
 				>
 					{Liferay.Language.get('view-data-in-analytics-cloud')}
+
 					<ClayIcon className="ml-2" symbol="shortcut" />
 				</ClayLink>
 			)}
 		</>
 	);
 
-	function _handleRunExperiment({confidenceLevel, splitVariantsMap}) {
+	function _handleRunExperiment({
+		confidenceLevel,
+		segmentsExperimentType,
+		splitVariantsMap,
+	}) {
 		const body = {
 			confidenceLevel,
 			segmentsExperimentId: experiment.segmentsExperimentId,
 			segmentsExperimentRels: JSON.stringify(splitVariantsMap),
-			status: STATUS_RUNNING
+			segmentsExperimentType,
+			status: STATUS_RUNNING,
 		};
 
-		return APIService.runExperiment(body).then(response => {
+		return APIService.runExperiment(body).then((response) => {
 			const {segmentsExperiment} = response;
 
 			dispatch(
 				runExperiment({
 					experiment: segmentsExperiment,
-					splitVariantsMap
+					splitVariantsMap,
 				})
 			);
-		});
-	}
-
-	function _handleDiscardExperiment() {
-		const body = {
-			segmentsExperimentId: experiment.segmentsExperimentId,
-			status: STATUS_COMPLETED,
-			winnerSegmentsExperienceId: experiment.segmentsExperienceId
-		};
-
-		APIService.publishExperience(body).then(({segmentsExperiment}) => {
-			dispatch(updateSegmentsExperimentStatus(segmentsExperiment));
 		});
 	}
 }
 
 SegmentsExperimentsActions.propTypes = {
-	onEditSegmentsExperimentStatus: PropTypes.func.isRequired
+	onCreateSegmentsExperiment: PropTypes.func.isRequired,
+	onEditSegmentsExperimentStatus: PropTypes.func.isRequired,
 };
 
 export default SegmentsExperimentsActions;

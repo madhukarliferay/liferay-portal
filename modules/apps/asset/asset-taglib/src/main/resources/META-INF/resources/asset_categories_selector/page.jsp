@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,13 +10,11 @@
 <%
 Map<String, Object> data = (Map<String, Object>)request.getAttribute("liferay-asset:asset-categories-selector:data");
 
-String id = (String)data.get("id");
-String inputName = (String)data.get("inputName");
 List<Map<String, Object>> vocabularies = (List<Map<String, Object>>)data.get("vocabularies");
 %>
 
 <div>
-	<div id="<%= id %>">
+	<div id="<%= (String)data.get("id") %>">
 
 		<%
 		for (Map<String, Object> vocabulary : vocabularies) {
@@ -33,26 +22,18 @@ List<Map<String, Object>> vocabularies = (List<Map<String, Object>>)data.get("vo
 		%>
 
 			<div class="field-content">
-				<div class="form-group" id="<%= "namespace_assetCategoriesSelector_" + vocabularyId %>">
+				<div class="form-group" id="namespace_assetCategoriesSelector_<%= vocabularyId %>">
 					<c:if test='<%= Validator.isNotNull(vocabulary.get("title")) %>'>
-						<label>
-							<%= vocabulary.get("title") %>
+						<label for="namespace_assetCategoriesSelector_<%= vocabularyId %>_MultiSelect">
+							<%= HtmlUtil.escape(GetterUtil.getString(vocabulary.get("title"))) %>
 
-							<c:if test='<%= Validator.isNotNull(vocabulary.get("group")) %>'>
-								<%= StringPool.BLANK + "(" + vocabulary.get("group") + ")" %>
-							</c:if>
-
-							<%
-							boolean required = GetterUtil.getBoolean(vocabulary.get("required"));
-							%>
-
-							<c:if test="<%= required %>">
+							<c:if test='<%= GetterUtil.getBoolean(vocabulary.get("required")) %>'>
 								<span class="reference-mark">
 									<clay:icon
 										symbol="asterisk"
 									/>
 
-									<span class="hide-accessible">
+									<span class="hide-accessible sr-only">
 										<liferay-ui:message key="required" />
 									</span>
 								</span>
@@ -69,20 +50,18 @@ List<Map<String, Object>> vocabularies = (List<Map<String, Object>>)data.get("vo
 									List<Map<String, Object>> selectedItems = (List<Map<String, Object>>)vocabulary.get("selectedItems");
 									%>
 
-									<c:if test="<%= Validator.isNotNull(selectedItems) %>">
+									<c:if test="<%= selectedItems != null %>">
 
 										<%
 										for (Map<String, Object> selectedItem : selectedItems) {
-											String selectedItemLabel = GetterUtil.getString(selectedItem.get("label"));
-											String selectedItemValue = GetterUtil.getString(selectedItem.get("value"));
 										%>
 
 											<clay:label
-												closeable="<%= true %>"
-												label="<%= selectedItemLabel %>"
+												dismissible="<%= true %>"
+												label='<%= HtmlUtil.escape(GetterUtil.getString(selectedItem.get("label"))) %>'
 											/>
 
-											<input name="<%= inputName %>" type="hidden" value="<%= selectedItemValue %>" />
+											<input name="<%= (String)data.get("inputName") %>" type="hidden" value="<%= GetterUtil.getString(selectedItem.get("value")) %>" />
 
 										<%
 										}
@@ -90,7 +69,7 @@ List<Map<String, Object>> vocabularies = (List<Map<String, Object>>)data.get("vo
 
 									</c:if>
 
-									<input class="form-control-inset" type="text" value="" />
+									<input class="form-control-inset" id="namespace_assetCategoriesSelector_<%= vocabularyId %>_MultiSelect" type="text" value="" />
 								</div>
 							</div>
 						</div>
@@ -111,7 +90,7 @@ List<Map<String, Object>> vocabularies = (List<Map<String, Object>>)data.get("vo
 	</div>
 
 	<react:component
-		data="<%= data %>"
-		module="asset_categories_selector/AssetCategoriesSelectorTag.es"
+		module="{AssetCategoriesSelectorTag} from asset-taglib"
+		props="<%= data %>"
 	/>
 </div>

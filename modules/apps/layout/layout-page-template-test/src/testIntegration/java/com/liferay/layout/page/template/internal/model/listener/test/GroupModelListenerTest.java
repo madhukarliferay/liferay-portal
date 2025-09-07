@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.internal.model.listener.test;
@@ -22,15 +13,16 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentCollectionLocalService;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateCollectionTypeConstants;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateConstants;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateCollectionLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
+import com.liferay.layout.page.template.test.util.LayoutPageTemplateTestUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -38,17 +30,15 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -67,87 +57,74 @@ public class GroupModelListenerTest {
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
 
-	@Before
-	public void setUp() throws Exception {
-		_group = GroupTestUtil.addGroup();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		Group group = _groupLocalService.fetchGroup(_group.getGroupId());
-
-		if (group != null) {
-			_groupLocalService.deleteGroup(group);
-		}
-	}
-
 	@Test
 	public void testDeletingGroupDeletesFragmentCollections() throws Exception {
-		FragmentCollection fragmentCollection = _addFragmentCollection();
+		Group group = GroupTestUtil.addGroup();
 
-		_groupLocalService.deleteGroup(_group);
+		FragmentCollection fragmentCollection = _addFragmentCollection(
+			group.getGroupId());
 
-		fragmentCollection =
+		_groupLocalService.deleteGroup(group);
+
+		Assert.assertNull(
 			_fragmentCollectionLocalService.fetchFragmentCollection(
-				fragmentCollection.getFragmentCollectionId());
-
-		Assert.assertNull(fragmentCollection);
+				fragmentCollection.getFragmentCollectionId()));
 	}
 
 	@Test
 	public void testDeletingGroupDeletesFragmentEntryLinks() throws Exception {
-		FragmentEntryLink fragmentEntryLink = _addFragmentEntryLink();
+		Group group = GroupTestUtil.addGroup();
 
-		_groupLocalService.deleteGroup(_group);
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_addLayoutPageTemplateEntry(group.getGroupId());
 
-		fragmentEntryLink =
+		FragmentEntryLink fragmentEntryLink = _addFragmentEntryLink(
+			group.getGroupId(), layoutPageTemplateEntry.getPlid());
+
+		_groupLocalService.deleteGroup(group);
+
+		Assert.assertNull(
 			_fragmentEntryLinkLocalService.fetchFragmentEntryLink(
-				fragmentEntryLink.getFragmentEntryLinkId());
-
-		Assert.assertNull(fragmentEntryLink);
+				fragmentEntryLink.getFragmentEntryLinkId()));
 	}
 
 	@Test
 	public void testDeletingGroupDeletesLayoutPageTemplateCollections()
 		throws Exception {
 
+		Group group = GroupTestUtil.addGroup();
+
 		LayoutPageTemplateCollection layoutPageTemplateCollection =
-			_addLayoutPageTemplateCollection();
+			_addLayoutPageTemplateCollection(group.getGroupId());
 
-		_groupLocalService.deleteGroup(_group);
+		_groupLocalService.deleteGroup(group);
 
-		layoutPageTemplateCollection =
+		Assert.assertNull(
 			_layoutPageTemplateCollectionLocalService.
 				fetchLayoutPageTemplateCollection(
 					layoutPageTemplateCollection.
-						getLayoutPageTemplateCollectionId());
-
-		Assert.assertNull(layoutPageTemplateCollection);
+						getLayoutPageTemplateCollectionId()));
 	}
 
 	@Test
 	public void testDeletingGroupDeletesLayoutPageTemplateEntries()
 		throws Exception {
 
+		Group group = GroupTestUtil.addGroup();
+
 		List<LayoutPageTemplateEntry> originalLayoutPageTemplateEntries =
 			_layoutPageTemplateEntryLocalService.getLayoutPageTemplateEntries(
-				_group.getGroupId());
+				group.getGroupId());
 
-		LayoutPageTemplateCollection layoutPageTemplateCollection =
-			_addLayoutPageTemplateCollection();
+		_addLayoutPageTemplateEntry(group.getGroupId());
+		_addLayoutPageTemplateEntry(group.getGroupId());
+		_addLayoutPageTemplateEntry(group.getGroupId());
 
-		_addLayoutPageTemplateEntry(
-			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId());
-
-		_addLayoutPageTemplateEntry(RandomTestUtil.randomLong());
-
-		_addLayoutPageTemplateEntry(0);
-
-		_groupLocalService.deleteGroup(_group);
+		_groupLocalService.deleteGroup(group);
 
 		List<LayoutPageTemplateEntry> actualLayoutPageTemplateEntries =
 			_layoutPageTemplateEntryLocalService.getLayoutPageTemplateEntries(
-				_group.getGroupId());
+				group.getGroupId());
 
 		Assert.assertEquals(
 			originalLayoutPageTemplateEntries.toString(),
@@ -155,69 +132,72 @@ public class GroupModelListenerTest {
 			actualLayoutPageTemplateEntries.size());
 	}
 
-	private FragmentCollection _addFragmentCollection() throws PortalException {
+	private FragmentCollection _addFragmentCollection(long groupId)
+		throws Exception {
+
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
+				groupId, TestPropsValues.getUserId());
 
 		return _fragmentCollectionLocalService.addFragmentCollection(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), groupId,
 			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
 	}
 
-	private FragmentEntryLink _addFragmentEntryLink() throws PortalException {
+	private FragmentEntryLink _addFragmentEntryLink(long groupId, long plid)
+		throws Exception {
+
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
+				groupId, TestPropsValues.getUserId());
 
-		FragmentCollection fragmentCollection = _addFragmentCollection();
+		FragmentCollection fragmentCollection = _addFragmentCollection(groupId);
 
 		FragmentEntry fragmentEntry =
 			_fragmentEntryLocalService.addFragmentEntry(
-				TestPropsValues.getUserId(), _group.getGroupId(),
+				null, TestPropsValues.getUserId(), groupId,
 				fragmentCollection.getFragmentCollectionId(), null,
 				RandomTestUtil.randomString(), StringPool.BLANK,
-				RandomTestUtil.randomString(), StringPool.BLANK,
-				StringPool.BLANK, 0, FragmentConstants.TYPE_SECTION,
+				RandomTestUtil.randomString(), StringPool.BLANK, false,
+				StringPool.BLANK, null, 0, false, false,
+				FragmentConstants.TYPE_SECTION, null,
 				WorkflowConstants.STATUS_APPROVED, serviceContext);
 
 		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
-			TestPropsValues.getUserId(), _group.getGroupId(), 0,
+			null, TestPropsValues.getUserId(), groupId, 0,
 			fragmentEntry.getFragmentEntryId(),
-			PortalUtil.getClassNameId(Layout.class),
-			RandomTestUtil.randomLong(), fragmentEntry.getCss(),
-			fragmentEntry.getHtml(), fragmentEntry.getJs(),
-			fragmentEntry.getConfiguration(), StringPool.BLANK,
-			StringPool.BLANK, 0, null, serviceContext);
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				plid),
+			plid, fragmentEntry.getCss(), fragmentEntry.getHtml(),
+			fragmentEntry.getJs(), fragmentEntry.getConfiguration(),
+			StringPool.BLANK, StringPool.BLANK, 0, null,
+			fragmentEntry.getType(), serviceContext);
 	}
 
-	private LayoutPageTemplateCollection _addLayoutPageTemplateCollection()
-		throws PortalException {
+	private LayoutPageTemplateCollection _addLayoutPageTemplateCollection(
+			long groupId)
+		throws Exception {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
+				groupId, TestPropsValues.getUserId());
 
 		return _layoutPageTemplateCollectionLocalService.
 			addLayoutPageTemplateCollection(
-				TestPropsValues.getUserId(), _group.getGroupId(),
-				RandomTestUtil.randomString(), StringPool.BLANK,
+				null, TestPropsValues.getUserId(), groupId,
+				LayoutPageTemplateConstants.
+					PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
+				null, RandomTestUtil.randomString(), StringPool.BLANK,
+				LayoutPageTemplateCollectionTypeConstants.BASIC,
 				serviceContext);
 	}
 
-	private LayoutPageTemplateEntry _addLayoutPageTemplateEntry(
-			long layoutPageTemplateCollectionId)
-		throws PortalException {
+	private LayoutPageTemplateEntry _addLayoutPageTemplateEntry(long groupId)
+		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
-		return _layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
-			layoutPageTemplateCollectionId, RandomTestUtil.randomString(),
-			LayoutPageTemplateEntryTypeConstants.TYPE_BASIC,
-			WorkflowConstants.STATUS_DRAFT, serviceContext);
+		return LayoutPageTemplateTestUtil.addLayoutPageTemplateEntry(
+			groupId, LayoutPageTemplateEntryTypeConstants.BASIC,
+			WorkflowConstants.STATUS_DRAFT);
 	}
 
 	@Inject
@@ -229,8 +209,6 @@ public class GroupModelListenerTest {
 	@Inject
 	private FragmentEntryLocalService _fragmentEntryLocalService;
 
-	private Group _group;
-
 	@Inject
 	private GroupLocalService _groupLocalService;
 
@@ -241,5 +219,8 @@ public class GroupModelListenerTest {
 	@Inject
 	private LayoutPageTemplateEntryLocalService
 		_layoutPageTemplateEntryLocalService;
+
+	@Inject
+	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 }

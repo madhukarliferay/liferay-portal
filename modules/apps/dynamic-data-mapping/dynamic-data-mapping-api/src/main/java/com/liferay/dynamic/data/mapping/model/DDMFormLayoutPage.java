@@ -1,23 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
+
+import com.liferay.petra.lang.HashUtil;
 
 import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Marcellus Tavares
@@ -42,6 +36,29 @@ public class DDMFormLayoutPage implements Serializable {
 		_ddmFormLayoutRows.add(ddmFormLayoutRow);
 	}
 
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+
+		if (!(object instanceof DDMFormLayoutPage)) {
+			return false;
+		}
+
+		DDMFormLayoutPage ddmFormLayoutPage = (DDMFormLayoutPage)object;
+
+		if (Objects.equals(
+				_ddmFormLayoutRows, ddmFormLayoutPage._ddmFormLayoutRows) &&
+			Objects.equals(_description, ddmFormLayoutPage._description) &&
+			Objects.equals(_title, ddmFormLayoutPage._title)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	public DDMFormLayoutRow getDDMFormLayoutRow(int index) {
 		return _ddmFormLayoutRows.get(index);
 	}
@@ -56,6 +73,15 @@ public class DDMFormLayoutPage implements Serializable {
 
 	public LocalizedValue getTitle() {
 		return _title;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = HashUtil.hash(0, _ddmFormLayoutRows);
+
+		hash = HashUtil.hash(hash, _description);
+
+		return HashUtil.hash(hash, _title);
 	}
 
 	public void setDDMFormLayoutRows(List<DDMFormLayoutRow> ddmFormLayoutRows) {

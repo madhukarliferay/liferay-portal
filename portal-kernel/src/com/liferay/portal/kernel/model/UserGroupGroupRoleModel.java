@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
-import com.liferay.portal.kernel.service.persistence.UserGroupGroupRolePK;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -31,9 +22,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface UserGroupGroupRoleModel
-	extends BaseModel<UserGroupGroupRole>, MVCCModel, ShardedModel {
+	extends BaseModel<UserGroupGroupRole>, CTModel<UserGroupGroupRole>,
+			MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a user group group role model instance should use the {@link UserGroupGroupRole} interface instead.
@@ -44,14 +36,16 @@ public interface UserGroupGroupRoleModel
 	 *
 	 * @return the primary key of this user group group role
 	 */
-	public UserGroupGroupRolePK getPrimaryKey();
+	@Override
+	public long getPrimaryKey();
 
 	/**
 	 * Sets the primary key of this user group group role.
 	 *
 	 * @param primaryKey the primary key of this user group group role
 	 */
-	public void setPrimaryKey(UserGroupGroupRolePK primaryKey);
+	@Override
+	public void setPrimaryKey(long primaryKey);
 
 	/**
 	 * Returns the mvcc version of this user group group role.
@@ -68,6 +62,52 @@ public interface UserGroupGroupRoleModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this user group group role.
+	 *
+	 * @return the ct collection ID of this user group group role
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this user group group role.
+	 *
+	 * @param ctCollectionId the ct collection ID of this user group group role
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
+	 * Returns the user group group role ID of this user group group role.
+	 *
+	 * @return the user group group role ID of this user group group role
+	 */
+	public long getUserGroupGroupRoleId();
+
+	/**
+	 * Sets the user group group role ID of this user group group role.
+	 *
+	 * @param userGroupGroupRoleId the user group group role ID of this user group group role
+	 */
+	public void setUserGroupGroupRoleId(long userGroupGroupRoleId);
+
+	/**
+	 * Returns the company ID of this user group group role.
+	 *
+	 * @return the company ID of this user group group role
+	 */
+	@Override
+	public long getCompanyId();
+
+	/**
+	 * Sets the company ID of this user group group role.
+	 *
+	 * @param companyId the company ID of this user group group role
+	 */
+	@Override
+	public void setCompanyId(long companyId);
 
 	/**
 	 * Returns the user group ID of this user group group role.
@@ -111,20 +151,11 @@ public interface UserGroupGroupRoleModel
 	 */
 	public void setRoleId(long roleId);
 
-	/**
-	 * Returns the company ID of this user group group role.
-	 *
-	 * @return the company ID of this user group group role
-	 */
 	@Override
-	public long getCompanyId();
+	public UserGroupGroupRole cloneWithOriginalValues();
 
-	/**
-	 * Sets the company ID of this user group group role.
-	 *
-	 * @param companyId the company ID of this user group group role
-	 */
-	@Override
-	public void setCompanyId(long companyId);
+	public default String toXmlString() {
+		return null;
+	}
 
 }

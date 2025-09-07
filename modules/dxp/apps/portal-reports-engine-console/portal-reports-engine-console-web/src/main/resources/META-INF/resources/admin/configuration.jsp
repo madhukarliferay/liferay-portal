@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -18,6 +9,7 @@
 
 <%
 boolean enabled = true;
+
 String emailFromName = ParamUtil.getString(request, "preferences--emailFromName--", reportsGroupServiceEmailConfiguration.emailFromName());
 String emailFromAddress = ParamUtil.getString(request, "preferences--emailFromAddress--", reportsGroupServiceEmailConfiguration.emailFromAddress());
 
@@ -35,13 +27,9 @@ Map<String, String> emailDefinitionTerms = EmailConfigurationUtil.getEmailDefini
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 	<aui:input name="redirect" type="hidden" value="<%= configurationRenderURL %>" />
 
-	<%
-	String tabs1Names = "email-from,delivery-email,notifications-email";
-	%>
-
 	<div class="portlet-configuration-body-content">
 		<liferay-ui:tabs
-			names="<%= tabs1Names %>"
+			names="email-from,delivery-email,notifications-email"
 			refresh="<%= false %>"
 		>
 			<liferay-ui:error key="emailDeliveryBody" message="please-enter-a-valid-body" />
@@ -52,43 +40,49 @@ Map<String, String> emailDefinitionTerms = EmailConfigurationUtil.getEmailDefini
 			<liferay-ui:error key="emailNotificationsSubject" message="please-enter-a-valid-subject" />
 
 			<liferay-ui:section>
-				<div class="container-fluid-1280">
-					<aui:fieldset-group markupView="lexicon">
-						<aui:fieldset>
-							<aui:input cssClass="lfr-input-text-container" label="name" name="preferences--emailFromName--" type="text" value="<%= emailFromName %>" />
+				<clay:container-fluid>
+					<div class="sheet">
+						<div class="panel-group panel-group-flush">
+							<aui:fieldset>
+								<aui:input cssClass="lfr-input-text-container" label="name" name="preferences--emailFromName--" type="text" value="<%= emailFromName %>" />
 
-							<aui:input cssClass="lfr-input-text-container" label="address" name="preferences--emailFromAddress--" type="text" value="<%= emailFromAddress %>" />
-						</aui:fieldset>
-					</aui:fieldset-group>
-				</div>
+								<aui:input cssClass="lfr-input-text-container" label="address" name="preferences--emailFromAddress--" type="text" value="<%= emailFromAddress %>" />
+							</aui:fieldset>
+						</div>
+					</div>
+				</clay:container-fluid>
 			</liferay-ui:section>
 
 			<liferay-ui:section>
-				<div class="container-fluid-1280">
-					<aui:fieldset-group markupView="lexicon">
-						<liferay-frontend:email-notification-settings
-							emailBodyLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailDeliveryBody() %>"
-							emailDefinitionTerms="<%= emailDefinitionTerms %>"
-							emailEnabled="<%= enabled %>"
-							emailParam="emailDelivery"
-							emailSubjectLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailDeliverySubject() %>"
-						/>
-					</aui:fieldset-group>
-				</div>
+				<clay:container-fluid>
+					<div class="sheet">
+						<div class="panel-group panel-group-flush">
+							<liferay-frontend:email-notification-settings
+								emailBodyLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailDeliveryBody() %>"
+								emailDefinitionTerms="<%= emailDefinitionTerms %>"
+								emailEnabled="<%= enabled %>"
+								emailParam="emailDelivery"
+								emailSubjectLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailDeliverySubject() %>"
+							/>
+						</div>
+					</div>
+				</clay:container-fluid>
 			</liferay-ui:section>
 
 			<liferay-ui:section>
-				<div class="container-fluid-1280">
-					<aui:fieldset-group markupView="lexicon">
-						<liferay-frontend:email-notification-settings
-							emailBodyLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailNotificationsBody() %>"
-							emailDefinitionTerms="<%= emailDefinitionTerms %>"
-							emailEnabled="<%= enabled %>"
-							emailParam="emailNotifications"
-							emailSubjectLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailNotificationsSubject() %>"
-						/>
-					</aui:fieldset-group>
-				</div>
+				<clay:container-fluid>
+					<div class="sheet">
+						<div class="panel-group panel-group-flush">
+							<liferay-frontend:email-notification-settings
+								emailBodyLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailNotificationsBody() %>"
+								emailDefinitionTerms="<%= emailDefinitionTerms %>"
+								emailEnabled="<%= enabled %>"
+								emailParam="emailNotifications"
+								emailSubjectLocalizedValuesMap="<%= reportsGroupServiceEmailConfiguration.emailNotificationsSubject() %>"
+							/>
+						</div>
+					</div>
+				</clay:container-fluid>
 			</liferay-ui:section>
 		</liferay-ui:tabs>
 	</div>

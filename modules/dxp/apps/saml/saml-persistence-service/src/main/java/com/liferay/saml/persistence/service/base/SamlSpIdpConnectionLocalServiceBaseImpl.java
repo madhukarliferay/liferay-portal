@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service.base;
 
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -27,31 +18,30 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSpConnectionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSpSessionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSsoSessionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpAuthRequestPersistence;
 import com.liferay.saml.persistence.service.persistence.SamlSpIdpConnectionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpMessagePersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpSessionPersistence;
 
 import java.io.Serializable;
+
+import java.sql.Connection;
 
 import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -70,7 +60,7 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	implements AopService, IdentifiableOSGiService,
 			   SamlSpIdpConnectionLocalService {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Use <code>SamlSpIdpConnectionLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalServiceUtil</code>.
@@ -78,6 +68,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 
 	/**
 	 * Adds the saml sp idp connection to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was added
@@ -109,6 +103,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	/**
 	 * Deletes the saml sp idp connection with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpIdpConnectionId the primary key of the saml sp idp connection
 	 * @return the saml sp idp connection that was removed
 	 * @throws PortalException if a saml sp idp connection with the primary key could not be found
@@ -125,6 +123,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	/**
 	 * Deletes the saml sp idp connection from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was removed
 	 */
@@ -134,6 +136,18 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 		SamlSpIdpConnection samlSpIdpConnection) {
 
 		return samlSpIdpConnectionPersistence.remove(samlSpIdpConnection);
+	}
+
+	@Override
+	public <T> T dslQuery(DSLQuery dslQuery) {
+		return samlSpIdpConnectionPersistence.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(DSLQuery dslQuery) {
+		Long count = dslQuery(dslQuery);
+
+		return count.intValue();
 	}
 
 	@Override
@@ -300,13 +314,37 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	 * @throws PortalException
 	 */
 	@Override
+	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
+
+		return samlSpIdpConnectionPersistence.create(
+			((Long)primaryKeyObj).longValue());
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement SamlSpIdpConnectionLocalServiceImpl#deleteSamlSpIdpConnection(SamlSpIdpConnection) to avoid orphaned data");
+		}
 
 		return samlSpIdpConnectionLocalService.deleteSamlSpIdpConnection(
 			(SamlSpIdpConnection)persistedModel);
 	}
 
+	@Override
+	public BasePersistence<SamlSpIdpConnection> getBasePersistence() {
+		return samlSpIdpConnectionPersistence;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException {
@@ -345,6 +383,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	/**
 	 * Updates the saml sp idp connection in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpIdpConnectionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpIdpConnection the saml sp idp connection
 	 * @return the saml sp idp connection that was updated
 	 */
@@ -354,6 +396,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 		SamlSpIdpConnection samlSpIdpConnection) {
 
 		return samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
+	}
+
+	@Deactivate
+	protected void deactivate() {
 	}
 
 	@Override
@@ -394,36 +440,28 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	 * @param sql the sql query
 	 */
 	protected void runSQL(String sql) {
+		DataSource dataSource = samlSpIdpConnectionPersistence.getDataSource();
+
+		DB db = DBManagerUtil.getDB();
+
+		Connection currentConnection = CurrentConnectionUtil.getConnection(
+			dataSource);
+
 		try {
-			DataSource dataSource =
-				samlSpIdpConnectionPersistence.getDataSource();
+			if (currentConnection != null) {
+				db.runSQL(currentConnection, new String[] {sql});
 
-			DB db = DBManagerUtil.getDB();
+				return;
+			}
 
-			sql = db.buildSQL(sql);
-			sql = PortalUtil.transformSQL(sql);
-
-			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(
-				dataSource, sql);
-
-			sqlUpdate.update();
+			try (Connection connection = dataSource.getConnection()) {
+				db.runSQL(connection, new String[] {sql});
+			}
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
-
-	@Reference
-	protected SamlIdpSpConnectionPersistence samlIdpSpConnectionPersistence;
-
-	@Reference
-	protected SamlIdpSpSessionPersistence samlIdpSpSessionPersistence;
-
-	@Reference
-	protected SamlIdpSsoSessionPersistence samlIdpSsoSessionPersistence;
-
-	@Reference
-	protected SamlSpAuthRequestPersistence samlSpAuthRequestPersistence;
 
 	protected SamlSpIdpConnectionLocalService samlSpIdpConnectionLocalService;
 
@@ -431,25 +469,10 @@ public abstract class SamlSpIdpConnectionLocalServiceBaseImpl
 	protected SamlSpIdpConnectionPersistence samlSpIdpConnectionPersistence;
 
 	@Reference
-	protected SamlSpMessagePersistence samlSpMessagePersistence;
-
-	@Reference
-	protected SamlSpSessionPersistence samlSpSessionPersistence;
-
-	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameLocalService
-		classNameLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ResourceLocalService
-		resourceLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		SamlSpIdpConnectionLocalServiceBaseImpl.class);
 
 }

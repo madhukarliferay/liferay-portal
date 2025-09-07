@@ -7,6 +7,8 @@
 		name="mirrors-get"
 	/>
 
+	<property name="mirrors.hostname" value="mirrors.lax.liferay.com" />
+
 	<target name="test-1">
 		<mirrors-get
 			dest="test"
@@ -21,17 +23,16 @@
 		<mirrors-get
 			dest="test"
 			force="true"
-			src="http://mirrors.lax.liferay.com/dtb5pzswcit1e.cloudfront.net/product_files/Pivotal-tc-Server/pivotal-tc-server-developer-3.1.2.RELEASE.zip"
-			trylocalnetwork="true"
+			src="abc"
 			verbose="true"
 		/>
 	</target>
 
 	<target name="test-3">
 		<mirrors-get
-			dest="test"
-			force="true"
-			src="http://dtb5pzswcit1e.cloudfront.net/product_files/Pivotal-tc-Server/pivotal-tc-server-developer-3.1.2.RELEASE.zip"
+			dest="mysql-connector-j-8.3.0.jar"
+			force="false"
+			src="https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/mysql-connector-j-8.3.0.jar"
 			trylocalnetwork="false"
 			verbose="true"
 		/>
@@ -39,9 +40,10 @@
 
 	<target name="test-4">
 		<mirrors-get
-			dest="test"
+			dest="liferay-portal-tomcat-master-private.tar.gz"
 			force="true"
-			src="abc"
+			src="https://username:password@files.liferay.com/private/ee/portal/snapshot-master-private/latest/liferay-portal-tomcat-master-private.tar.gz"
+			trylocalnetwork="true"
 			verbose="true"
 		/>
 	</target>

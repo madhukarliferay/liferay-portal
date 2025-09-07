@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.service.permission.test;
@@ -24,7 +15,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.permission.UserPermission;
+import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
@@ -51,6 +42,31 @@ public class UserPermissionTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
+	public void testContainsPermissionsActionId() throws Exception {
+		_user1 = UserTestUtil.addUser();
+		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_userLocalService.addRoleUser(_role.getRoleId(), _user1);
+
+		PermissionChecker permissionChecker = _permissionCheckerFactory.create(
+			_user1);
+
+		Assert.assertFalse(
+			UserPermissionUtil.contains(
+				permissionChecker, _user1.getUserId(), null,
+				ActionKeys.PERMISSIONS));
+
+		RoleTestUtil.addResourcePermission(
+			_role, User.class.getName(), ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(_user1.getCompanyId()), ActionKeys.PERMISSIONS);
+
+		Assert.assertTrue(
+			UserPermissionUtil.contains(
+				permissionChecker, _user1.getUserId(), null,
+				ActionKeys.PERMISSIONS));
+	}
+
+	@Test
 	public void testContainsViewActionId() throws Exception {
 		_user1 = UserTestUtil.addUser();
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
@@ -65,13 +81,13 @@ public class UserPermissionTest {
 			_user1);
 
 		Assert.assertTrue(
-			_userPermission.contains(
+			UserPermissionUtil.contains(
 				permissionChecker, ResourceConstants.PRIMKEY_DNE,
 				ActionKeys.VIEW));
 	}
 
 	@Test
-	public void testOrganizationManageUsersPermission() throws Exception {
+	public void testOrganizationActionIds() throws Exception {
 		_user1 = UserTestUtil.addUser();
 		_user2 = UserTestUtil.addUser();
 
@@ -88,7 +104,7 @@ public class UserPermissionTest {
 			_user1);
 
 		Assert.assertFalse(
-			_userPermission.contains(
+			UserPermissionUtil.contains(
 				permissionChecker, _user2.getUserId(), ActionKeys.UPDATE));
 
 		_organization = OrganizationTestUtil.addOrganization();
@@ -97,7 +113,7 @@ public class UserPermissionTest {
 			_organization.getOrganizationId(), _user2.getUserId());
 
 		Assert.assertTrue(
-			_userPermission.contains(
+			UserPermissionUtil.contains(
 				permissionChecker, _user2.getUserId(), ActionKeys.UPDATE));
 	}
 
@@ -118,8 +134,5 @@ public class UserPermissionTest {
 
 	@Inject
 	private UserLocalService _userLocalService;
-
-	@Inject
-	private UserPermission _userPermission;
 
 }

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.internal;
 
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletApp;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
@@ -22,16 +14,16 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portlet.extra.config.ExtraPortletAppConfig;
 import com.liferay.portlet.extra.config.ExtraPortletAppConfigRegistry;
 
+import jakarta.portlet.MimeResponse;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+import jakarta.portlet.ResourceURL;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Locale;
-
-import javax.portlet.MimeResponse;
-import javax.portlet.PortletRequest;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-import javax.portlet.ResourceURL;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Brian Wing Shun Chan
@@ -42,23 +34,28 @@ public class ResourceResponseImpl
 
 	@Override
 	public void addDateHeader(String name, long date) {
-		response.addDateHeader(name, date);
+		httpServletResponse.addDateHeader(name, date);
 	}
 
 	@Override
 	public void addHeader(String name, String value) {
-		response.addHeader(name, value);
+		httpServletResponse.addHeader(name, value);
 	}
 
 	@Override
 	public void addIntHeader(String name, int value) {
-		response.addIntHeader(name, value);
+		httpServletResponse.addIntHeader(name, value);
 	}
 
 	@Override
 	public void addProperty(Cookie cookie) {
+		if (cookie == null) {
+			throw new IllegalArgumentException();
+		}
+
 		if (!(isCalledFlushBuffer() || isCommitted())) {
-			response.addCookie(cookie);
+			CookiesManagerUtil.addCookie(
+				cookie, getHttpServletRequest(), httpServletResponse);
 		}
 	}
 
@@ -95,46 +92,44 @@ public class ResourceResponseImpl
 
 	@Override
 	public int getStatus() {
-		return response.getStatus();
+		return httpServletResponse.getStatus();
 	}
 
 	@Override
 	public void setCharacterEncoding(String charset) {
-		response.setCharacterEncoding(charset);
+		httpServletResponse.setCharacterEncoding(charset);
 
 		_canSetLocaleEncoding = false;
 	}
 
 	@Override
 	public void setContentLength(int length) {
-		response.setContentLength(length);
+		httpServletResponse.setContentLength(length);
 	}
 
 	@Override
 	public void setContentLengthLong(long length) {
-		response.setContentLengthLong(length);
+		httpServletResponse.setContentLengthLong(length);
 	}
 
 	@Override
 	public void setDateHeader(String name, long date) {
-		response.setDateHeader(name, date);
+		httpServletResponse.setDateHeader(name, date);
 	}
 
 	@Override
 	public void setHeader(String name, String value) {
-		response.setHeader(name, value);
+		httpServletResponse.setHeader(name, value);
 
 		if (name.equals(ResourceResponse.HTTP_STATUS_CODE)) {
-			int status = GetterUtil.getInteger(
-				value, HttpServletResponse.SC_OK);
-
-			response.setStatus(status);
+			httpServletResponse.setStatus(
+				GetterUtil.getInteger(value, HttpServletResponse.SC_OK));
 		}
 	}
 
 	@Override
 	public void setIntHeader(String name, int value) {
-		response.setIntHeader(name, value);
+		httpServletResponse.setIntHeader(name, value);
 	}
 
 	@Override
@@ -143,7 +138,7 @@ public class ResourceResponseImpl
 			return;
 		}
 
-		response.setLocale(locale);
+		httpServletResponse.setLocale(locale);
 
 		if (_canSetLocaleEncoding) {
 			Portlet portlet = getPortlet();
@@ -167,7 +162,7 @@ public class ResourceResponseImpl
 
 	@Override
 	public void setStatus(int statusCode) {
-		response.setStatus(statusCode);
+		httpServletResponse.setStatus(statusCode);
 	}
 
 	private boolean _canSetLocaleEncoding = true;

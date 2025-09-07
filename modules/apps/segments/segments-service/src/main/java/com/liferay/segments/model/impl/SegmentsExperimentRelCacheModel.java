@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model.impl;
@@ -37,17 +28,17 @@ public class SegmentsExperimentRelCacheModel
 	implements CacheModel<SegmentsExperimentRel>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SegmentsExperimentRelCacheModel)) {
+		if (!(object instanceof SegmentsExperimentRelCacheModel)) {
 			return false;
 		}
 
 		SegmentsExperimentRelCacheModel segmentsExperimentRelCacheModel =
-			(SegmentsExperimentRelCacheModel)obj;
+			(SegmentsExperimentRelCacheModel)object;
 
 		if ((segmentsExperimentRelId ==
 				segmentsExperimentRelCacheModel.segmentsExperimentRelId) &&
@@ -78,10 +69,12 @@ public class SegmentsExperimentRelCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(25);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", segmentsExperimentRelId=");
 		sb.append(segmentsExperimentRelId);
 		sb.append(", groupId=");
@@ -113,6 +106,7 @@ public class SegmentsExperimentRelCacheModel
 			new SegmentsExperimentRelImpl();
 
 		segmentsExperimentRelImpl.setMvccVersion(mvccVersion);
+		segmentsExperimentRelImpl.setCtCollectionId(ctCollectionId);
 		segmentsExperimentRelImpl.setSegmentsExperimentRelId(
 			segmentsExperimentRelId);
 		segmentsExperimentRelImpl.setGroupId(groupId);
@@ -153,6 +147,8 @@ public class SegmentsExperimentRelCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 
+		ctCollectionId = objectInput.readLong();
+
 		segmentsExperimentRelId = objectInput.readLong();
 
 		groupId = objectInput.readLong();
@@ -174,6 +170,8 @@ public class SegmentsExperimentRelCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(segmentsExperimentRelId);
 
@@ -201,6 +199,7 @@ public class SegmentsExperimentRelCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long segmentsExperimentRelId;
 	public long groupId;
 	public long companyId;

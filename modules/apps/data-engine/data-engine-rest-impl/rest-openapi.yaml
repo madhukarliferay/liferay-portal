@@ -8,31 +8,35 @@ components:
                     items:
                         type: string
                     type: array
-                classNameId:
-                    format: int64
-                    type: integer
+                contentType:
+                    type: string
                 dataDefinitionFields:
                     items:
                         $ref: "#/components/schemas/DataDefinitionField"
                     type: array
                 dataDefinitionKey:
                     type: string
-                dataDefinitionRules:
+                dataRules:
                     items:
-                        $ref: "#/components/schemas/DataDefinitionRule"
-                    type: array
+                        $ref: "#/components/schemas/DataRule"
+                    type:
+                        array
                 dateCreated:
                     format: date-time
                     type: string
                 dateModified:
                     format: date-time
                     type: string
+                defaultDataLayout:
+                    $ref: "#/components/schemas/DataLayout"
                 defaultLanguageId:
                     type: string
                 description:
                     additionalProperties:
                         type: object
                     type: object
+                externalReferenceCode:
+                    type: string
                 id:
                     format: int64
                     type: integer
@@ -50,6 +54,9 @@ components:
                     type: integer
             type: object
         DataDefinitionField:
+            # @review
+            description:
+                Represents the value of each field in data definition.
             properties:
                 customProperties:
                     additionalProperties:
@@ -65,7 +72,7 @@ components:
                     format: int64
                     type: integer
                 indexType:
-                    default: "all"
+                    default: all
                     enum: [all, keyword, none, text]
                     type: string
                 indexable:
@@ -79,6 +86,8 @@ components:
                 name:
                     type: string
                 nestedDataDefinitionFields:
+                    description:
+                        "A list of child data definition fields that depend on this resource."
                     items:
                         $ref: "#/components/schemas/DataDefinitionField"
                     type:
@@ -98,49 +107,42 @@ components:
                 visible:
                     type: boolean
             type: object
-        DataDefinitionPermission:
+        DataDefinitionFieldLink:
             properties:
-                addDataDefinition:
-                    type: boolean
-                definePermissions:
-                    type: boolean
-                delete:
-                    type: boolean
-                roleNames:
+                dataDefinition:
+                    $ref: "#/components/schemas/DataDefinition"
+                dataLayouts:
                     items:
-                        type: string
+                        $ref: "#/components/schemas/DataLayout"
                     type:
                         array
-                update:
-                    type: boolean
-                view:
-                    type: boolean
-            type: object
-        DataDefinitionRule:
-            properties:
-                dataDefinitionFieldNames:
+                dataListViews:
                     items:
-                        type: string
-                    type: array
-                dataDefinitionRuleParameters:
-                    additionalProperties:
-                        type: object
-                    type: object
-                name:
-                    type: string
-                ruleType:
-                    type: string
+                        $ref: "#/components/schemas/DataListView"
+                    type:
+                        array
             type: object
         DataLayout:
             properties:
+                contentType:
+                    type: string
                 dataDefinitionId:
                     format: int64
                     type: integer
+                dataLayoutFields:
+                    additionalProperties:
+                        type: object
+                    type: object
                 dataLayoutKey:
                     type: string
                 dataLayoutPages:
                     items:
                         $ref: "#/components/schemas/DataLayoutPage"
+                    type:
+                        array
+                dataRules:
+                    items:
+                        $ref: "#/components/schemas/DataRule"
                     type:
                         array
                 dateCreated:
@@ -195,23 +197,26 @@ components:
                         type: object
                     type: object
             type: object
-        DataLayoutPermission:
+        DataLayoutRenderingContext:
             properties:
-                addDataLayout:
+                containerId:
+                    type: string
+                dataRecordValues:
+                    additionalProperties:
+                        type: object
+                    type: object
+                namespace:
+                    type: string
+                pathThemeImages:
+                    type: string
+                readOnly:
                     type: boolean
-                definePermissions:
-                    type: boolean
-                delete:
-                    type: boolean
-                roleNames:
-                    items:
-                        type: string
-                    type:
-                        array
-                update:
-                    type: boolean
-                view:
-                    type: boolean
+                scopeGroupId:
+                    format: int64
+                    type: integer
+                siteGroupId:
+                    format: int64
+                    type: integer
             type: object
         DataLayoutRow:
             properties:
@@ -257,16 +262,6 @@ components:
                     format: int64
                     type: integer
             type: object
-        DataModelPermission:
-            properties:
-                actionIds:
-                    items:
-                        type: string
-                    type:
-                        array
-                roleName:
-                    type: string
-            type: object
         DataRecord:
             description:
                 https://www.schema.org/DataRecord
@@ -280,6 +275,9 @@ components:
                     type: object
                 id:
                     format: int64
+                    type: integer
+                status:
+                    readOnly: true
                     type: integer
         DataRecordCollection:
             description:
@@ -305,44 +303,106 @@ components:
                     format: int64
                     type: integer
             type: object
-        DataRecordCollectionPermission:
+        DataRule:
             properties:
-                addDataRecord:
-                    type: boolean
-                addDataRecordCollection:
-                    type: boolean
-                definePermissions:
-                    type: boolean
-                delete:
-                    type: boolean
-                deleteDataRecord:
-                    type: boolean
-                exportDataRecord:
-                    type: boolean
-                roleNames:
+                actions:
                     items:
-                        type: string
+                        additionalProperties:
+                            type: object
+                        type: object
                     type:
                         array
-                update:
-                    type: boolean
-                updateDataRecord:
-                    type: boolean
-                view:
-                    type: boolean
-                viewDataRecord:
-                    type: boolean
+                conditions:
+                    items:
+                        additionalProperties:
+                            type: object
+                        type: object
+                    type:
+                        array
+                logicalOperator:
+                    type: string
+                name:
+                    additionalProperties:
+                        type: object
+                    type: object
             type: object
 info:
     description:
-        ""
+        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
+        'com.liferay.data.engine.rest.client', and version '3.0.38'."
     license:
-        name: "Apache 2.0"
-        url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-    title: "Data Engine"
+        name: Apache 2.0
+        url: http://www.apache.org/licenses/LICENSE-2.0.html
+    title: Data Engine
     version: v2.0
 openapi: 3.0.1
 paths:
+    "/data-definitions/by-content-type/{contentType}":
+        get:
+            operationId: getDataDefinitionByContentTypeContentTypePage
+            parameters:
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataDefinition"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataDefinition"
+                                type: array
+            tags: ["DataDefinition"]
+        post:
+            operationId: postDataDefinitionByContentType
+            parameters:
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
+            tags: ["DataDefinition"]
     "/data-definitions/data-definition-fields/field-types":
         get:
             operationId: getDataDefinitionDataDefinitionFieldFieldTypes
@@ -352,35 +412,35 @@ paths:
                         application/json:
                             schema:
                                 type: string
-                    description:
-                        ""
+                        application/xml:
+                            schema:
+                                type: string
             tags: ["DataDefinition"]
     "/data-definitions/{dataDefinitionId}":
         delete:
             operationId: deleteDataDefinition
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
+                        application/xml: {}
             tags: ["DataDefinition"]
         get:
             operationId: getDataDefinition
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -390,18 +450,43 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataDefinition"
-                    description:
-                        ""
+            tags: ["DataDefinition"]
+        patch:
+            operationId: patchDataDefinition
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
             tags: ["DataDefinition"]
         put:
             operationId: putDataDefinition
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -419,92 +504,97 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataDefinition"
-                    description:
-                        ""
             tags: ["DataDefinition"]
-    "/data-definitions/{dataDefinitionId}/data-definition-field-links":
-        get:
-            operationId: getDataDefinitionDataDefinitionFieldLinks
+    "/data-definitions/{dataDefinitionId}/copy":
+        post:
+            operationId: postDataDefinitionCopy
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: fieldName
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
                         application/json:
                             schema:
-                                type: string
-                    description:
-                        ""
+                                $ref: "#/components/schemas/DataDefinition"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
             tags: ["DataDefinition"]
-    "/data-definitions/{dataDefinitionId}/data-definition-permissions":
-        post:
-            operationId: postDataDefinitionDataDefinitionPermission
+    "/data-definitions/{dataDefinitionId}/data-definition-field-links":
+        get:
+            operationId: getDataDefinitionDataDefinitionFieldLinksPage
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataDefinitionPermission"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataDefinitionPermission"
-                description:
-                    ""
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: fieldName
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataDefinitionFieldLink"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataDefinitionFieldLink"
+                                type: array
+            tags: ["DataDefinitionFieldLink"]
+    "/data-definitions/{dataDefinitionId}/data-layouts":
+        delete:
+            operationId: deleteDataDefinitionDataLayout
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
-            tags: ["DataDefinition"]
-    "/data-definitions/{dataDefinitionId}/data-layouts":
+                        application/xml: {}
+            tags: ["DataLayout"]
         get:
             operationId: getDataDefinitionDataLayoutsPage
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
-                - in: query
-                  name: sort
-                  required: false
-                  schema:
-                      type: string
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -518,18 +608,16 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/DataLayout"
                                 type: array
-                    description:
-                        ""
             tags: ["DataLayout"]
         post:
             operationId: postDataDefinitionDataLayout
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -547,154 +635,100 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataLayout"
-                    description:
-                        ""
             tags: ["DataLayout"]
     "/data-definitions/{dataDefinitionId}/data-list-views":
-        get:
-            operationId: getDataDefinitionDataListViewsPage
+        delete:
+            operationId: deleteDataDefinitionDataListView
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
-                - in: query
-                  name: sort
-                  required: false
-                  schema:
-                      type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataListView"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataListView"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataListView"]
-        post:
-            operationId: postDataDefinitionDataListView
-            parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataListView"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataListView"
-                description:
-                    ""
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/DataListView"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/DataListView"
-                    description:
-                        ""
-            tags: ["DataListView"]
-    "/data-definitions/{dataDefinitionId}/data-model-permissions":
-        get:
-            operationId: getDataDefinitionDataModelPermissionsPage
-            parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: roleNames
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
-        put:
-            operationId: putDataDefinitionDataModelPermission
-            parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                    application/xml:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                description:
-                    ""
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
+                        application/xml: {}
+            tags: ["DataListView"]
+        get:
+            operationId: getDataDefinitionDataListViewsPage
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataListView"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DataListView"
+                                type: array
+            tags: ["DataListView"]
+        post:
+            operationId: postDataDefinitionDataListView
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DataListView"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DataListView"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DataListView"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataListView"
+            tags: ["DataListView"]
     "/data-definitions/{dataDefinitionId}/data-record-collection":
         get:
             operationId: getDataDefinitionDataRecordCollection
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -704,31 +738,29 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecordCollection"
-                    description:
-                        ""
             tags: ["DataRecordCollection"]
     "/data-definitions/{dataDefinitionId}/data-record-collections":
         get:
             operationId: getDataDefinitionDataRecordCollectionsPage
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
             responses:
                 200:
                     content:
@@ -742,18 +774,16 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/DataRecordCollection"
                                 type: array
-                    description:
-                        ""
             tags: ["DataRecordCollection"]
         post:
             operationId: postDataDefinitionDataRecordCollection
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -771,27 +801,40 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecordCollection"
-                    description:
-                        ""
             tags: ["DataRecordCollection"]
     "/data-definitions/{dataDefinitionId}/data-records":
         get:
             operationId: getDataDefinitionDataRecordsPage
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: dataListViewId
+                    required: false
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -805,18 +848,16 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/DataRecord"
                                 type: array
-                    description:
-                        ""
             tags: ["DataRecord"]
         post:
             operationId: postDataDefinitionDataRecord
             parameters:
-                - in: path
-                  name: dataDefinitionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -834,35 +875,71 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecord"
-                    description:
-                        ""
             tags: ["DataRecord"]
+    "/data-definitions/{dataDefinitionId}/permissions":
+        get:
+            operationId: getDataDefinitionPermissionsPage
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: roleNames
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DataDefinition"]
+        put:
+            operationId: putDataDefinitionPermissionsPage
+            parameters:
+                -   in: path
+                    name: dataDefinitionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json: {}
+                    application/xml: {}
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DataDefinition"]
     "/data-layouts/{dataLayoutId}":
         delete:
             operationId: deleteDataLayout
             parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataLayoutId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
+                        application/xml: {}
             tags: ["DataLayout"]
         get:
             operationId: getDataLayout
             parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataLayoutId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -872,18 +949,16 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataLayout"
-                    description:
-                        ""
             tags: ["DataLayout"]
         put:
             operationId: putDataLayout
             parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataLayoutId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -901,128 +976,64 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataLayout"
-                    description:
-                        ""
             tags: ["DataLayout"]
-    "/data-layouts/{dataLayoutId}/data-layout-permissions":
+    "/data-layouts/{dataLayoutId}/context":
         post:
-            operationId: postDataLayoutDataLayoutPermission
+            operationId: postDataLayoutContext
             parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: dataLayoutId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/DataLayoutPermission"
+                            $ref: "#/components/schemas/DataLayoutRenderingContext"
                     application/xml:
                         schema:
-                            $ref: "#/components/schemas/DataLayoutPermission"
-                description:
-                    ""
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
-            tags: ["DataLayout"]
-    "/data-layouts/{dataLayoutId}/data-model-permissions":
-        get:
-            operationId: getDataLayoutDataModelPermissionsPage
-            parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: roleNames
-                  required: true
-                  schema:
-                      type: string
+                            $ref: "#/components/schemas/DataLayoutRenderingContext"
             responses:
                 200:
                     content:
                         application/json:
                             schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
+                                additionalProperties:
+                                    type: object
+                                type: object
                         application/xml:
                             schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
-        put:
-            operationId: putDataLayoutDataModelPermission
-            parameters:
-                - in: path
-                  name: dataLayoutId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                    application/xml:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                description:
-                    ""
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
+                                additionalProperties:
+                                    type: object
+                                type: object
+            tags: ["DataLayout"]
     "/data-list-views/{dataListViewId}":
         delete:
             operationId: deleteDataListView
             parameters:
-                - in: path
-                  name: dataListViewId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataListViewId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
+                        application/xml: {}
             tags: ["DataListView"]
         get:
             operationId: getDataListView
             parameters:
-                - in: path
-                  name: dataListViewId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataListViewId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -1032,18 +1043,16 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataListView"
-                    description:
-                        ""
             tags: ["DataListView"]
         put:
             operationId: putDataListView
             parameters:
-                - in: path
-                  name: dataListViewId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataListViewId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -1061,35 +1070,32 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataListView"
-                    description:
-                        ""
             tags: ["DataListView"]
     "/data-record-collections/{dataRecordCollectionId}":
         delete:
             operationId: deleteDataRecordCollection
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
+                        application/xml: {}
             tags: ["DataRecordCollection"]
         get:
             operationId: getDataRecordCollection
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -1099,18 +1105,16 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecordCollection"
-                    description:
-                        ""
             tags: ["DataRecordCollection"]
         put:
             operationId: putDataRecordCollection
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -1128,139 +1132,40 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecordCollection"
-                    description:
-                        ""
-            tags: ["DataRecordCollection"]
-    "/data-record-collections/{dataRecordCollectionId}/data-model-permissions":
-        get:
-            operationId: getDataRecordCollectionDataModelPermissionsPage
-            parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: roleNames
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataModelPermission"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
-        put:
-            operationId: putDataRecordCollectionDataModelPermission
-            parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                    application/xml:
-                        schema:
-                            items:
-                                $ref: "#/components/schemas/DataModelPermission"
-                            type: array
-                description:
-                    ""
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
-    "/data-record-collections/{dataRecordCollectionId}/data-model-permissions/by-current-user":
-        get:
-            operationId: getDataRecordCollectionDataModelPermissionByCurrentUser
-            parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                type: string
-                    description:
-                        ""
-            tags: ["DataModelPermission"]
-    "/data-record-collections/{dataRecordCollectionId}/data-record-collection-permissions":
-        post:
-            operationId: postDataRecordCollectionDataRecordCollectionPermission
-            parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataRecordCollectionPermission"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataRecordCollectionPermission"
-                description:
-                    ""
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
             tags: ["DataRecordCollection"]
     "/data-record-collections/{dataRecordCollectionId}/data-records":
         get:
             operationId: getDataRecordCollectionDataRecordsPage
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: dataListViewId
+                    required: false
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1274,18 +1179,16 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/DataRecord"
                                 type: array
-                    description:
-                        ""
             tags: ["DataRecord"]
         post:
             operationId: postDataRecordCollectionDataRecord
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -1303,62 +1206,119 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecord"
-                    description:
-                        ""
             tags: ["DataRecord"]
     "/data-record-collections/{dataRecordCollectionId}/data-records/export":
         get:
             operationId: getDataRecordCollectionDataRecordExport
             parameters:
-                - in: path
-                  name: dataRecordCollectionId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
             responses:
                 204:
                     content:
                         application/json:
                             schema:
                                 type: string
-                    description:
-                        ""
+                        application/xml:
+                            schema:
+                                type: string
             tags: ["DataRecord"]
+    "/data-record-collections/{dataRecordCollectionId}/permissions":
+        get:
+            operationId: getDataRecordCollectionPermissionsPage
+            parameters:
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: roleNames
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DataRecordCollection"]
+        put:
+            operationId: putDataRecordCollectionPermissionsPage
+            parameters:
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json: {}
+                    application/xml: {}
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DataRecordCollection"]
+    "/data-record-collections/{dataRecordCollectionId}/permissions/by-current-user":
+        get:
+            operationId: getDataRecordCollectionPermissionByCurrentUser
+            parameters:
+                -   in: path
+                    name: dataRecordCollectionId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                        application/xml:
+                            schema:
+                                type: string
+            tags: ["DataRecordCollection"]
     "/data-records/{dataRecordId}":
         delete:
             operationId: deleteDataRecord
             parameters:
-                - in: path
-                  name: dataRecordId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
+                        application/xml: {}
             tags: ["DataRecord"]
         get:
             operationId: getDataRecord
             parameters:
-                - in: path
-                  name: dataRecordId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             responses:
                 200:
                     content:
@@ -1368,18 +1328,43 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecord"
-                    description:
-                        ""
+            tags: ["DataRecord"]
+        patch:
+            operationId: patchDataRecord
+            parameters:
+                -   in: path
+                    name: dataRecordId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DataRecord"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DataRecord"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DataRecord"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataRecord"
             tags: ["DataRecord"]
         put:
             operationId: putDataRecord
             parameters:
-                - in: path
-                  name: dataRecordId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: dataRecordId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
             requestBody:
                 content:
                     application/json:
@@ -1397,71 +1382,39 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecord"
-                    description:
-                        ""
             tags: ["DataRecord"]
-    "/sites/{siteId}/data-definition-permissions":
-        post:
-            operationId: postSiteDataDefinitionPermission
-            parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataDefinitionPermission"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataDefinitionPermission"
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
-            tags: ["DataDefinition"]
-    "/sites/{siteId}/data-definitions":
+    "/sites/{siteId}/data-definitions/by-content-type/{contentType}":
         get:
-            operationId: getSiteDataDefinitionsPage
+            operationId: getSiteDataDefinitionByContentTypeContentTypePage
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: classNameId
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
-                - in: query
-                  name: sort
-                  required: false
-                  schema:
-                      type: string
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: keywords
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: sort
+                    required: false
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1475,18 +1428,21 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/DataDefinition"
                                 type: array
-                    description:
-                        ""
             tags: ["DataDefinition"]
         post:
-            operationId: postSiteDataDefinition
+            operationId: postSiteDataDefinitionByContentType
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
             requestBody:
                 content:
                     application/json:
@@ -1504,29 +1460,27 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataDefinition"
-                    description:
-                        ""
             tags: ["DataDefinition"]
-    "/sites/{siteId}/data-definitions/{dataDefinitionKey}":
+    "/sites/{siteId}/data-definitions/by-content-type/{contentType}/by-data-definition-key/{dataDefinitionKey}":
         get:
-            operationId: getSiteDataDefinition
+            operationId: getSiteDataDefinitionByContentTypeByDataDefinitionKey
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: path
-                  name: dataDefinitionKey
-                  required: true
-                  schema:
-                      type: string
-                - in: query
-                  name: classNameId
-                  schema:
-                      format: int64
-                      type: integer
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: dataDefinitionKey
+                    required: true
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1536,97 +1490,119 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataDefinition"
-                    description:
-                        ""
             tags: ["DataDefinition"]
-    "/sites/{siteId}/data-layout-permissions":
-        post:
-            operationId: postSiteDataLayoutPermission
+    "/sites/{siteId}/data-definitions/by-content-type/{contentType}/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            operationId: deleteSiteDataDefinitionByContentTypeByExternalReferenceCode
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataLayoutPermission"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataLayoutPermission"
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
             responses:
                 204:
                     content:
                         application/json: {}
-                    description:
-                        ""
-            tags: ["DataLayout"]
-    "/sites/{siteId}/data-layouts":
+                        application/xml: {}
+            tags: ["DataDefinition"]
         get:
-            operationId: getSiteDataLayoutsPage
+            operationId: getSiteDataDefinitionByContentTypeByExternalReferenceCode
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
-                - in: query
-                  name: sort
-                  required: false
-                  schema:
-                      type: string
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
                         application/json:
                             schema:
-                                items:
-                                    $ref: "#/components/schemas/DataLayout"
-                                type: array
+                                $ref: "#/components/schemas/DataDefinition"
                         application/xml:
                             schema:
-                                items:
-                                    $ref: "#/components/schemas/DataLayout"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataLayout"]
-    "/sites/{siteId}/data-layouts/{dataLayoutKey}":
-        get:
-            operationId: getSiteDataLayout
+                                $ref: "#/components/schemas/DataDefinition"
+            tags: ["DataDefinition"]
+        put:
+            operationId: putSiteDataDefinitionByContentTypeByExternalReferenceCode
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: path
-                  name: dataLayoutKey
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DataDefinition"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DataDefinition"
+            tags: ["DataDefinition"]
+    "/sites/{siteId}/data-layouts/by-content-type/{contentType}/by-data-layout-key/{dataLayoutKey}":
+        get:
+            operationId: getSiteDataLayoutByContentTypeByDataLayoutKey
+            parameters:
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: contentType
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: dataLayoutKey
+                    required: true
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1636,92 +1612,22 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataLayout"
-                    description:
-                        ""
             tags: ["DataLayout"]
-    "/sites/{siteId}/data-record-collection-permissions":
-        post:
-            operationId: postSiteDataRecordCollectionPermission
-            parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: operation
-                  required: true
-                  schema:
-                      type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/DataRecordCollectionPermission"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/DataRecordCollectionPermission"
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                    description:
-                        ""
-            tags: ["DataRecordCollection"]
-    "/sites/{siteId}/data-record-collections":
+    "/sites/{siteId}/data-record-collections/by-data-record-collection-key/{dataRecordCollectionKey}":
         get:
-            operationId: getSiteDataRecordCollectionsPage
+            operationId: getSiteDataRecordCollectionByDataRecordCollectionKey
             parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: query
-                  name: keywords
-                  schema:
-                      type: string
-                - in: query
-                  name: page
-                  schema:
-                      type: integer
-                - in: query
-                  name: pageSize
-                  schema:
-                      type: integer
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataRecordCollection"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/DataRecordCollection"
-                                type: array
-                    description:
-                        ""
-            tags: ["DataRecordCollection"]
-    "/sites/{siteId}/data-record-collections/{dataRecordCollectionKey}":
-        get:
-            operationId: getSiteDataRecordCollection
-            parameters:
-                - in: path
-                  name: siteId
-                  required: true
-                  schema:
-                      format: int64
-                      type: integer
-                - in: path
-                  name: dataRecordCollectionKey
-                  required: true
-                  schema:
-                      type: string
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: dataRecordCollectionKey
+                    required: true
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1731,6 +1637,4 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/DataRecordCollection"
-                    description:
-                        ""
             tags: ["DataRecordCollection"]

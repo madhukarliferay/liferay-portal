@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.util.test;
@@ -49,15 +40,14 @@ public class FragmentEntryConfigurationParserTest {
 		JSONObject configurationDefaultValuesJSONObject =
 			_fragmentEntryConfigurationParser.
 				getConfigurationDefaultValuesJSONObject(
-					_read("configuration.json"));
+					_readJSONObject("configuration.json"));
 
 		JSONObject expectedConfigurationDefaultValuesJSONObject =
-			JSONFactoryUtil.createJSONObject(
-				_read("expected-configuration-default-values.json"));
+			_readJSONObject("expected-configuration-default-values.json");
 
 		Assert.assertEquals(
-			expectedConfigurationDefaultValuesJSONObject.toJSONString(),
-			configurationDefaultValuesJSONObject.toJSONString());
+			expectedConfigurationDefaultValuesJSONObject.toString(),
+			configurationDefaultValuesJSONObject.toString());
 	}
 
 	@Test
@@ -80,26 +70,25 @@ public class FragmentEntryConfigurationParserTest {
 			new Locale(language), clazz);
 	}
 
-	private String _read(String fileName) throws Exception {
-		return new String(
-			FileUtil.getBytes(getClass(), "dependencies/" + fileName));
+	private JSONObject _readJSONObject(String fileName) throws Exception {
+		return JSONFactoryUtil.createJSONObject(
+			new String(
+				FileUtil.getBytes(getClass(), "dependencies/" + fileName)));
 	}
 
 	private void _testTranslateConfiguration(String language) throws Exception {
-		JSONObject configurationJSONOjbect = JSONFactoryUtil.createJSONObject(
-			_read("configuration_untranslated.json"));
+		JSONObject configurationJSONObject = _readJSONObject(
+			"configuration_untranslated.json");
 
-		JSONObject expectedConfigurationTranslatedJSONObject =
-			JSONFactoryUtil.createJSONObject(
-				_read(
-					String.format(
-						"expected_configuration_translated_%s.json",
-						language)));
+		JSONObject expectedConfigurationTranslatedJSONObject = _readJSONObject(
+			String.format(
+				"expected_configuration_translated_%s.json", language));
 
 		Assert.assertEquals(
-			expectedConfigurationTranslatedJSONObject.toJSONString(),
-			_fragmentEntryConfigurationParser.translateConfiguration(
-				configurationJSONOjbect, _getResourceBundle(language)));
+			expectedConfigurationTranslatedJSONObject.toString(),
+			String.valueOf(
+				_fragmentEntryConfigurationParser.translateConfiguration(
+					configurationJSONObject, _getResourceBundle(language))));
 	}
 
 	@Inject

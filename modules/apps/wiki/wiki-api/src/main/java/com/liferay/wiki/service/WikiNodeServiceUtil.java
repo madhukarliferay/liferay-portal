@@ -1,22 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.wiki.model.WikiNode;
+
+import java.io.InputStream;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the remote service utility for WikiNode. This utility wraps
@@ -32,76 +29,74 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class WikiNodeServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.wiki.service.impl.WikiNodeServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 
 	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link WikiNodeServiceUtil} to access the wiki node remote service. Add custom service methods to <code>com.liferay.wiki.service.impl.WikiNodeServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #addNode(String,
+	 String, String, ServiceContext)}
 	 */
-	public static com.liferay.wiki.model.WikiNode addNode(
+	@Deprecated
+	public static WikiNode addNode(
 			String name, String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addNode(name, description, serviceContext);
 	}
 
-	public static void deleteNode(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static WikiNode addNode(
+			String externalReferenceCode, String name, String description,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
 
+		return getService().addNode(
+			externalReferenceCode, name, description, serviceContext);
+	}
+
+	public static void deleteNode(long nodeId) throws PortalException {
 		getService().deleteNode(nodeId);
 	}
 
-	public static com.liferay.wiki.model.WikiNode getNode(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static WikiNode getNode(long nodeId) throws PortalException {
 		return getService().getNode(nodeId);
 	}
 
-	public static com.liferay.wiki.model.WikiNode getNode(
-			long groupId, String name)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static WikiNode getNode(long groupId, String name)
+		throws PortalException {
 
 		return getService().getNode(groupId, name);
 	}
 
-	public static java.util.List<com.liferay.wiki.model.WikiNode> getNodes(
-			long groupId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static List<WikiNode> getNodes(long groupId) throws PortalException {
 		return getService().getNodes(groupId);
 	}
 
-	public static java.util.List<com.liferay.wiki.model.WikiNode> getNodes(
-			long groupId, int status)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<WikiNode> getNodes(long groupId, int status)
+		throws PortalException {
 
 		return getService().getNodes(groupId, status);
 	}
 
-	public static java.util.List<com.liferay.wiki.model.WikiNode> getNodes(
-		long groupId, int start, int end) {
-
+	public static List<WikiNode> getNodes(long groupId, int start, int end) {
 		return getService().getNodes(groupId, start, end);
 	}
 
-	public static java.util.List<com.liferay.wiki.model.WikiNode> getNodes(
+	public static List<WikiNode> getNodes(
 		long groupId, int status, int start, int end) {
 
 		return getService().getNodes(groupId, status, start, end);
 	}
 
-	public static java.util.List<com.liferay.wiki.model.WikiNode> getNodes(
+	public static List<WikiNode> getNodes(
 		long groupId, int status, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.wiki.model.WikiNode> obc) {
+		OrderByComparator<WikiNode> orderByComparator) {
 
-		return getService().getNodes(groupId, status, start, end, obc);
+		return getService().getNodes(
+			groupId, status, start, end, orderByComparator);
 	}
 
 	public static int getNodesCount(long groupId) {
@@ -121,64 +116,54 @@ public class WikiNodeServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static void importPages(
-			long nodeId, String importer, java.io.InputStream[] inputStreams,
-			java.util.Map<String, String[]> options)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static WikiNode getWikiNodeByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
 
-		getService().importPages(nodeId, importer, inputStreams, options);
+		return getService().getWikiNodeByExternalReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
-	public static com.liferay.wiki.model.WikiNode moveNodeToTrash(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static void importPages(
+			long nodeId, InputStream[] inputStreams,
+			Map<String, String[]> options)
+		throws PortalException {
 
+		getService().importPages(nodeId, inputStreams, options);
+	}
+
+	public static WikiNode moveNodeToTrash(long nodeId) throws PortalException {
 		return getService().moveNodeToTrash(nodeId);
 	}
 
 	public static void restoreNodeFromTrash(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().restoreNodeFromTrash(nodeId);
 	}
 
-	public static void subscribeNode(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void subscribeNode(long nodeId) throws PortalException {
 		getService().subscribeNode(nodeId);
 	}
 
-	public static void unsubscribeNode(long nodeId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void unsubscribeNode(long nodeId) throws PortalException {
 		getService().unsubscribeNode(nodeId);
 	}
 
-	public static com.liferay.wiki.model.WikiNode updateNode(
+	public static WikiNode updateNode(
 			long nodeId, String name, String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateNode(
 			nodeId, name, description, serviceContext);
 	}
 
 	public static WikiNodeService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker<WikiNodeService, WikiNodeService>
-		_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(WikiNodeService.class);
-
-		ServiceTracker<WikiNodeService, WikiNodeService> serviceTracker =
-			new ServiceTracker<WikiNodeService, WikiNodeService>(
-				bundle.getBundleContext(), WikiNodeService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
+	private static final Snapshot<WikiNodeService> _serviceSnapshot =
+		new Snapshot<>(WikiNodeServiceUtil.class, WikiNodeService.class);
 
 }

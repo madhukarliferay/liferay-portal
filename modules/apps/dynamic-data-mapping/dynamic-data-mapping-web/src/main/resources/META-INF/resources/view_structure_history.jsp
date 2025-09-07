@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -25,18 +16,27 @@ DDMStructure structure = DDMStructureServiceUtil.getStructure(structureId);
 
 String title = LanguageUtil.format(request, "x-history", structure.getName(locale), false);
 
-PortletURL portletURL = renderResponse.createRenderURL();
+PortletURL portletURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/view_structure_history.jsp"
+).setRedirect(
+	redirect
+).setParameter(
+	"structureId", structureId
+).buildPortletURL();
 
-portletURL.setParameter("mvcPath", "/view_structure_history.jsp");
-portletURL.setParameter("redirect", redirect);
-portletURL.setParameter("structureId", String.valueOf(structureId));
-
-PortletURL backURL = renderResponse.createRenderURL();
-
-backURL.setParameter("mvcPath", "/edit_structure.jsp");
-backURL.setParameter("redirect", redirect);
-backURL.setParameter("classNameId", String.valueOf(PortalUtil.getClassNameId(DDMStructure.class)));
-backURL.setParameter("classPK", String.valueOf(structure.getStructureId()));
+PortletURL backURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/edit_structure.jsp"
+).setRedirect(
+	redirect
+).setParameter(
+	"classNameId", PortalUtil.getClassNameId(DDMStructure.class)
+).setParameter(
+	"classPK", structure.getStructureId()
+).buildPortletURL();
 %>
 
 <c:choose>
@@ -53,13 +53,13 @@ backURL.setParameter("classPK", String.valueOf(structure.getStructureId()));
 	<c:otherwise>
 		<liferay-ui:header
 			backURL="<%= backURL.toString() %>"
-			cssClass="container-fluid-1280"
+			cssClass="container-fluid container-fluid-max-xl"
 			title="<%= title %>"
 		/>
 	</c:otherwise>
 </c:choose>
 
-<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= portletURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<liferay-ui:search-container
 		searchContainer="<%= new StructureSearch(renderRequest, portletURL) %>"
 		total="<%= DDMStructureVersionServiceUtil.getStructureVersionsCount(structureId) %>"

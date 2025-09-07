@@ -1,32 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.internal.search.index;
 
-import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
-import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.PortalRunMode;
-import com.liferay.portal.search.engine.adapter.document.BulkDocumentRequest;
-import com.liferay.portal.search.engine.adapter.document.IndexDocumentRequest;
-import com.liferay.portal.workflow.kaleo.service.KaleoInstanceLocalService;
+import com.liferay.portal.search.document.Document;
+import com.liferay.portal.search.document.DocumentBuilder;
+import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.workflow.metrics.internal.search.constants.WorkflowMetricsIndexTypeConstants;
 import com.liferay.portal.workflow.metrics.internal.sla.processor.WorkflowMetricsSLATaskResult;
+import com.liferay.portal.workflow.metrics.search.index.constants.WorkflowMetricsIndexNameConstants;
 import com.liferay.portal.workflow.metrics.sla.processor.WorkflowMetricsSLAStatus;
-
-import java.sql.Timestamp;
-
-import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -34,131 +19,134 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Inácio Nery
  */
-@Component(
-	immediate = true, service = SLATaskResultWorkflowMetricsIndexer.class
-)
+@Component(service = SLATaskResultWorkflowMetricsIndexer.class)
 public class SLATaskResultWorkflowMetricsIndexer
 	extends BaseSLAWorkflowMetricsIndexer {
 
-	public void addDocuments(
-		List<WorkflowMetricsSLATaskResult> workflowMetricsSLATaskResults) {
+	public Document creatDefaultDocument(
+		long companyId, long nodeId, long processId, String taskName) {
 
-		if (searchEngineAdapter == null) {
-			return;
-		}
+		WorkflowMetricsSLATaskResult workflowMetricsSLATaskResult =
+			new WorkflowMetricsSLATaskResult();
 
-		BulkDocumentRequest bulkDocumentRequest = new BulkDocumentRequest();
+		workflowMetricsSLATaskResult.setCompanyId(companyId);
+		workflowMetricsSLATaskResult.setNodeId(nodeId);
+		workflowMetricsSLATaskResult.setProcessId(processId);
+		workflowMetricsSLATaskResult.setTaskName(taskName);
 
-		workflowMetricsSLATaskResults.forEach(
-			workflowMetricsSLATaskResult -> {
-				Document document = createDocument(
-					workflowMetricsSLATaskResult);
-
-				bulkDocumentRequest.addBulkableDocumentRequest(
-					new IndexDocumentRequest(
-						getIndexName(), document.getUID(), document) {
-
-						{
-							setType(getIndexType());
-						}
-					});
-			});
-
-		if (ListUtil.isNotEmpty(
-				bulkDocumentRequest.getBulkableDocumentRequests())) {
-
-			if (PortalRunMode.isTestMode()) {
-				bulkDocumentRequest.setRefresh(true);
-			}
-
-			searchEngineAdapter.execute(bulkDocumentRequest);
-		}
+		return createDocument(workflowMetricsSLATaskResult);
 	}
 
 	public Document createDocument(
 		WorkflowMetricsSLATaskResult workflowMetricsSLATaskResult) {
 
-		Document document = new DocumentImpl();
+		DocumentBuilder documentBuilder = documentBuilderFactory.builder();
 
-		document.addUID(
-			"WorkflowMetricsSLATaskResult",
-			digest(
-				workflowMetricsSLATaskResult.getCompanyId(),
-				workflowMetricsSLATaskResult.getInstanceId(),
-				workflowMetricsSLATaskResult.getProcessId(),
-				workflowMetricsSLATaskResult.getSLADefinitionId(),
-				workflowMetricsSLATaskResult.getTaskId(),
-				workflowMetricsSLATaskResult.getTokenId()));
+		documentBuilder.setValue("active", true);
 
-		if (workflowMetricsSLATaskResult.getAssigneeId() != null) {
-			document.addKeyword(
-				"assigneeId", workflowMetricsSLATaskResult.getAssigneeId());
+		if (workflowMetricsSLATaskResult.getAssigneeIds() != null) {
+			documentBuilder.setLongs(
+				"assigneeIds", workflowMetricsSLATaskResult.getAssigneeIds());
+			documentBuilder.setString(
+				"assigneeType", workflowMetricsSLATaskResult.getAssigneeType());
 		}
 
-		document.addKeyword(
-			"breached", workflowMetricsSLATaskResult.isBreached());
-		document.addKeyword(
-			"companyId", workflowMetricsSLATaskResult.getCompanyId());
+		documentBuilder.setValue(
+			"breached", workflowMetricsSLATaskResult.isBreached()
+		).setLong(
+			"companyId", workflowMetricsSLATaskResult.getCompanyId()
+		);
 
 		if (workflowMetricsSLATaskResult.getCompletionLocalDateTime() != null) {
-			document.addDateSortable(
+			documentBuilder.setDate(
 				"completionDate",
-				Timestamp.valueOf(
+				formatLocalDateTime(
 					workflowMetricsSLATaskResult.getCompletionLocalDateTime()));
 		}
 
 		if (workflowMetricsSLATaskResult.getCompletionUserId() != null) {
-			document.addKeyword(
+			documentBuilder.setLong(
 				"completionUserId",
 				workflowMetricsSLATaskResult.getCompletionUserId());
 		}
 
-		document.addKeyword("deleted", false);
-		document.addKeyword(
+		documentBuilder.setValue(
+			"deleted", false
+		).setValue(
 			"instanceCompleted",
-			workflowMetricsSLATaskResult.getCompletionLocalDateTime() != null);
-		document.addKeyword(
+			workflowMetricsSLATaskResult.isInstanceCompleted()
+		);
+
+		if (workflowMetricsSLATaskResult.getInstanceCompletionLocalDateTime() !=
+				null) {
+
+			documentBuilder.setDate(
+				"instanceCompletionDate",
+				formatLocalDateTime(
+					workflowMetricsSLATaskResult.
+						getInstanceCompletionLocalDateTime()));
+		}
+
+		documentBuilder.setLong(
 			"instanceId", workflowMetricsSLATaskResult.getInstanceId());
-		document.addDateSortable(
-			"lastCheckDate",
-			Timestamp.valueOf(
-				workflowMetricsSLATaskResult.getLastCheckLocalDateTime()));
-		document.addKeyword("onTime", workflowMetricsSLATaskResult.isOnTime());
-		document.addKeyword(
-			"processId", workflowMetricsSLATaskResult.getProcessId());
-		document.addKeyword(
-			"slaDefinitionId",
-			workflowMetricsSLATaskResult.getSLADefinitionId());
+
+		if (workflowMetricsSLATaskResult.getModifiedLocalDateTime() != null) {
+			documentBuilder.setDate(
+				"modifiedDate",
+				formatLocalDateTime(
+					workflowMetricsSLATaskResult.getModifiedLocalDateTime()));
+		}
+
+		documentBuilder.setLong(
+			"nodeId", workflowMetricsSLATaskResult.getNodeId()
+		).setValue(
+			"onTime", workflowMetricsSLATaskResult.isOnTime()
+		).setLong(
+			"processId", workflowMetricsSLATaskResult.getProcessId()
+		).setLong(
+			"slaDefinitionId", workflowMetricsSLATaskResult.getSLADefinitionId()
+		);
 
 		WorkflowMetricsSLAStatus workflowMetricsSLAStatus =
 			workflowMetricsSLATaskResult.getWorkflowMetricsSLAStatus();
 
-		document.addKeyword("status", workflowMetricsSLAStatus.name());
+		if (workflowMetricsSLAStatus != null) {
+			documentBuilder.setString(
+				"status", workflowMetricsSLAStatus.name());
+		}
 
-		document.addKeyword("taskId", workflowMetricsSLATaskResult.getTaskId());
-		document.addKeyword(
-			"taskName", workflowMetricsSLATaskResult.getTaskName());
-		document.addKeyword(
-			"tokenId", workflowMetricsSLATaskResult.getTokenId());
+		documentBuilder.setLong(
+			"taskId", workflowMetricsSLATaskResult.getTaskId()
+		).setString(
+			"taskName", workflowMetricsSLATaskResult.getTaskName()
+		).setString(
+			"uid",
+			digest(
+				workflowMetricsSLATaskResult.getCompanyId(),
+				workflowMetricsSLATaskResult.getInstanceId(),
+				workflowMetricsSLATaskResult.getNodeId(),
+				workflowMetricsSLATaskResult.getProcessId(),
+				workflowMetricsSLATaskResult.getSLADefinitionId(),
+				workflowMetricsSLATaskResult.getTaskId())
+		);
 
-		return document;
+		return documentBuilder.build();
 	}
 
 	@Override
-	public void reindex(long companyId) {
+	public String getIndexName(long companyId) {
+		return WorkflowMetricsIndex.getIndexName(
+			_indexNameBuilder,
+			WorkflowMetricsIndexNameConstants.SUFFIX_SLA_TASK_RESULT,
+			companyId);
 	}
 
 	@Override
-	protected String getIndexName() {
-		return "workflow-metrics-sla-task-results";
-	}
-
-	@Override
-	protected String getIndexType() {
-		return "WorkflowMetricsSLATaskResultType";
+	public String getIndexType() {
+		return WorkflowMetricsIndexTypeConstants.SLA_TASK_RESULT_TYPE;
 	}
 
 	@Reference
-	private KaleoInstanceLocalService _kaleoInstanceLocalService;
+	private IndexNameBuilder _indexNameBuilder;
 
 }

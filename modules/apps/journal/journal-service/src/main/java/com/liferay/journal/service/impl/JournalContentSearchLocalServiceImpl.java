@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.service.impl;
@@ -18,6 +9,7 @@ import com.liferay.journal.model.JournalContentSearch;
 import com.liferay.journal.service.base.JournalContentSearchLocalServiceBaseImpl;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -27,7 +19,10 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.portlet.DisplayInformationProvider;
-import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.PortletPreferenceValueLocalService;
+import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.util.PortletKeys;
 
 import java.io.Serializable;
@@ -43,6 +38,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -86,11 +82,11 @@ public class JournalContentSearchLocalServiceImpl
 			List<PortletPreferences> portletPreferencesList = new ArrayList<>();
 
 			portletPreferencesList.addAll(
-				portletPreferencesLocalService.getPortletPreferences(
+				_portletPreferencesLocalService.getPortletPreferences(
 					companyId, PortletKeys.PREFS_OWNER_ID_DEFAULT,
 					PortletKeys.PREFS_OWNER_TYPE_LAYOUT, rootPortletId));
 			portletPreferencesList.addAll(
-				portletPreferencesLocalService.getPortletPreferences(
+				_portletPreferencesLocalService.getPortletPreferences(
 					companyId, PortletKeys.PREFS_OWNER_ID_DEFAULT,
 					PortletKeys.PREFS_OWNER_TYPE_LAYOUT,
 					rootPortletId + "_INSTANCE_%"));
@@ -98,9 +94,8 @@ public class JournalContentSearchLocalServiceImpl
 			for (PortletPreferences portletPreferences :
 					portletPreferencesList) {
 
-				long plid = portletPreferences.getPlid();
-
-				Layout layout = layoutLocalService.fetchLayout(plid);
+				Layout layout = _layoutLocalService.fetchLayout(
+					portletPreferences.getPlid());
 
 				if (layout == null) {
 					continue;
@@ -108,11 +103,9 @@ public class JournalContentSearchLocalServiceImpl
 
 				String portletId = portletPreferences.getPortletId();
 
-				javax.portlet.PortletPreferences jxPortletPreferences =
-					PortletPreferencesFactoryUtil.fromXML(
-						companyId, PortletKeys.PREFS_OWNER_ID_DEFAULT,
-						PortletKeys.PREFS_OWNER_TYPE_LAYOUT, plid, portletId,
-						portletPreferences.getPreferences());
+				jakarta.portlet.PortletPreferences jxPortletPreferences =
+					_portletPreferenceValueLocalService.getPreferences(
+						portletPreferences);
 
 				String articleId = displayInformationProvider.getClassPK(
 					jxPortletPreferences);
@@ -221,17 +214,10 @@ public class JournalContentSearchLocalServiceImpl
 	public List<Long> getLayoutIds(
 		long groupId, boolean privateLayout, String articleId) {
 
-		List<Long> layoutIds = new ArrayList<>();
-
-		List<JournalContentSearch> contentSearches =
+		return TransformUtil.transform(
 			journalContentSearchPersistence.findByG_P_A(
-				groupId, privateLayout, articleId);
-
-		for (JournalContentSearch contentSearch : contentSearches) {
-			layoutIds.add(contentSearch.getLayoutId());
-		}
-
-		return layoutIds;
+				groupId, privateLayout, articleId),
+			contentSearch -> contentSearch.getLayoutId());
 	}
 
 	@Override
@@ -275,7 +261,7 @@ public class JournalContentSearchLocalServiceImpl
 				groupId, privateLayout, layoutId, portletId);
 		}
 
-		Group group = groupLocalService.getGroup(groupId);
+		Group group = _groupLocalService.getGroup(groupId);
 
 		JournalContentSearch contentSearch =
 			journalContentSearchPersistence.fetchByG_P_L_P_A(
@@ -295,9 +281,7 @@ public class JournalContentSearchLocalServiceImpl
 			contentSearch.setArticleId(articleId);
 		}
 
-		journalContentSearchPersistence.update(contentSearch);
-
-		return contentSearch;
+		return journalContentSearchPersistence.update(contentSearch);
 	}
 
 	@Override
@@ -325,16 +309,32 @@ public class JournalContentSearchLocalServiceImpl
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
 			bundleContext, DisplayInformationProvider.class,
-			"javax.portlet.name");
+			"jakarta.portlet.name");
 	}
 
 	@Deactivate
+	@Override
 	protected void deactivate() {
+		super.deactivate();
+
 		_serviceTrackerMap.close();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalContentSearchLocalServiceImpl.class);
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private PortletPreferencesLocalService _portletPreferencesLocalService;
+
+	@Reference
+	private PortletPreferenceValueLocalService
+		_portletPreferenceValueLocalService;
 
 	private ServiceTrackerMap<String, DisplayInformationProvider>
 		_serviceTrackerMap;
@@ -342,9 +342,9 @@ public class JournalContentSearchLocalServiceImpl
 	private static class JournalContentSearchKey implements Serializable {
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(Object object) {
 			JournalContentSearchKey journalContentSearchKey =
-				(JournalContentSearchKey)obj;
+				(JournalContentSearchKey)object;
 
 			if (Objects.equals(
 					journalContentSearchKey._articleId, _articleId) &&

@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.web.internal.struts;
 
+import com.liferay.message.boards.constants.MBCategoryConstants;
 import com.liferay.message.boards.service.MBMessageService;
 import com.liferay.message.boards.settings.MBGroupServiceSettings;
+import com.liferay.message.boards.web.internal.util.MBRequestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -30,8 +23,8 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.rss.util.RSSUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -48,7 +41,7 @@ public class RSSStrutsAction implements StrutsAction {
 			HttpServletResponse httpServletResponse)
 		throws Exception {
 
-		if (!isRSSFeedsEnabled(httpServletRequest)) {
+		if (!_isRSSFeedsEnabled(httpServletRequest)) {
 			_portal.sendRSSFeedsDisabledError(
 				httpServletRequest, httpServletResponse);
 
@@ -58,18 +51,19 @@ public class RSSStrutsAction implements StrutsAction {
 		try {
 			ServletResponseUtil.sendFile(
 				httpServletRequest, httpServletResponse, null,
-				getRSS(httpServletRequest), ContentTypes.TEXT_XML_UTF8);
+				_getRSS(httpServletRequest), ContentTypes.TEXT_XML_UTF8);
 
 			return null;
 		}
-		catch (Exception e) {
-			_portal.sendError(e, httpServletRequest, httpServletResponse);
+		catch (Exception exception) {
+			_portal.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}
 	}
 
-	protected byte[] getRSS(HttpServletRequest httpServletRequest)
+	private byte[] _getRSS(HttpServletRequest httpServletRequest)
 		throws Exception {
 
 		ThemeDisplay themeDisplay =
@@ -84,7 +78,6 @@ public class RSSStrutsAction implements StrutsAction {
 
 		long companyId = ParamUtil.getLong(httpServletRequest, "companyId");
 		long groupId = ParamUtil.getLong(httpServletRequest, "groupId");
-		long userId = ParamUtil.getLong(httpServletRequest, "userId");
 		long categoryId = ParamUtil.getLong(httpServletRequest, "mbCategoryId");
 		long threadId = ParamUtil.getLong(httpServletRequest, "threadId");
 		int max = ParamUtil.getInteger(
@@ -102,7 +95,7 @@ public class RSSStrutsAction implements StrutsAction {
 
 		String rss = StringPool.BLANK;
 
-		if (threadId > 0) {
+		if (threadId != 0) {
 			String feedURL = StringBundler.concat(
 				themeDisplay.getPortalURL(), themeDisplay.getPathMain(),
 				"/message_boards/find_thread?p_l_id=", plid, "&threadId=",
@@ -112,7 +105,7 @@ public class RSSStrutsAction implements StrutsAction {
 				threadId, WorkflowConstants.STATUS_APPROVED, max, type, version,
 				displayStyle, feedURL, entryURL, themeDisplay);
 		}
-		else if (categoryId > 0) {
+		else if (categoryId != MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 			String feedURL = StringBundler.concat(
 				themeDisplay.getPortalURL(), themeDisplay.getPathMain(),
 				"/message_boards/find_category?p_l_id=", plid, "&mbCategoryId=",
@@ -122,7 +115,7 @@ public class RSSStrutsAction implements StrutsAction {
 				groupId, categoryId, WorkflowConstants.STATUS_APPROVED, max,
 				type, version, displayStyle, feedURL, entryURL, themeDisplay);
 		}
-		else if (groupId > 0) {
+		else if (groupId != 0) {
 			String mvcRenderCommandName = ParamUtil.getString(
 				httpServletRequest, "mvcRenderCommandName");
 
@@ -142,6 +135,8 @@ public class RSSStrutsAction implements StrutsAction {
 					"&mbCategoryId=", categoryId);
 			}
 
+			long userId = ParamUtil.getLong(httpServletRequest, "userId");
+
 			if (userId > 0) {
 				rss = _mbMessageService.getGroupMessagesRSS(
 					groupId, userId, WorkflowConstants.STATUS_APPROVED, max,
@@ -154,7 +149,7 @@ public class RSSStrutsAction implements StrutsAction {
 					version, displayStyle, feedURL, entryURL, themeDisplay);
 			}
 		}
-		else if (companyId > 0) {
+		else if (companyId != 0) {
 			String feedURL = StringPool.BLANK;
 
 			rss = _mbMessageService.getCompanyMessagesRSS(
@@ -165,7 +160,7 @@ public class RSSStrutsAction implements StrutsAction {
 		return rss.getBytes(StringPool.UTF8);
 	}
 
-	protected boolean isRSSFeedsEnabled(HttpServletRequest httpServletRequest)
+	private boolean _isRSSFeedsEnabled(HttpServletRequest httpServletRequest)
 		throws Exception {
 
 		ThemeDisplay themeDisplay =
@@ -173,7 +168,8 @@ public class RSSStrutsAction implements StrutsAction {
 				WebKeys.THEME_DISPLAY);
 
 		MBGroupServiceSettings mbGroupServiceSettings =
-			MBGroupServiceSettings.getInstance(themeDisplay.getSiteGroupId());
+			MBRequestUtil.getMBGroupServiceSettings(
+				httpServletRequest, themeDisplay.getSiteGroupId());
 
 		return mbGroupServiceSettings.isEnableRSS();
 	}

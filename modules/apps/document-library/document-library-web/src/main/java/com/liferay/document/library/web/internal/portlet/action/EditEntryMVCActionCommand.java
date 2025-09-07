@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.web.internal.portlet.action;
@@ -53,15 +44,14 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.trash.service.TrashEntryService;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -74,9 +64,9 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = {
-		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
-		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_ADMIN,
-		"javax.portlet.name=" + DLPortletKeys.MEDIA_GALLERY_DISPLAY,
+		"jakarta.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
+		"jakarta.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_ADMIN,
+		"jakarta.portlet.name=" + DLPortletKeys.MEDIA_GALLERY_DISPLAY,
 		"mvc.command.name=/document_library/edit_entry",
 		"mvc.command.name=/document_library/move_entry"
 	},
@@ -125,34 +115,38 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 				}
 			}
 		}
-		catch (DuplicateLockException dle) {
-			SessionErrors.add(actionRequest, dle.getClass(), dle.getLock());
+		catch (DuplicateLockException duplicateLockException) {
+			SessionErrors.add(
+				actionRequest, duplicateLockException.getClass(),
+				duplicateLockException.getLock());
 
 			actionResponse.setRenderParameter(
 				"mvcPath", "/document_library/error.jsp");
 		}
 		catch (NoSuchFileEntryException | NoSuchFolderException |
-			   PrincipalException e) {
+			   PrincipalException exception) {
 
-			SessionErrors.add(actionRequest, e.getClass());
+			SessionErrors.add(actionRequest, exception.getClass());
 
 			actionResponse.setRenderParameter(
 				"mvcPath", "/document_library/error.jsp");
 		}
-		catch (DuplicateFileEntryException dfee) {
+		catch (DuplicateFileEntryException duplicateFileEntryException) {
 			HttpServletResponse httpServletResponse =
 				_portal.getHttpServletResponse(actionResponse);
 
 			httpServletResponse.setStatus(
 				ServletResponseConstants.SC_DUPLICATE_FILE_EXCEPTION);
 
-			SessionErrors.add(actionRequest, dfee.getClass(), dfee);
+			SessionErrors.add(
+				actionRequest, duplicateFileEntryException.getClass(),
+				duplicateFileEntryException);
 		}
 		catch (AssetCategoryException | AssetTagException |
 			   DuplicateFolderNameException | FileEntryLockException |
-			   InvalidFolderException | SourceFileNameException e) {
+			   InvalidFolderException | SourceFileNameException exception) {
 
-			SessionErrors.add(actionRequest, e.getClass(), e);
+			SessionErrors.add(actionRequest, exception.getClass(), exception);
 		}
 	}
 
@@ -252,11 +246,11 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 				fileEntry, moveToTrash, trashedModels));
 
 		if (moveToTrash && !trashedModels.isEmpty()) {
-			Map<String, Object> data = HashMapBuilder.<String, Object>put(
-				"trashedModels", trashedModels
-			).build();
-
-			addDeleteSuccessData(actionRequest, data);
+			addDeleteSuccessData(
+				actionRequest,
+				HashMapBuilder.<String, Object>put(
+					"trashedModels", trashedModels
+				).build());
 		}
 	}
 
@@ -277,8 +271,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 				_dlAppService.deleteFileEntry(fileEntry.getFileEntryId());
 			}
 		}
-		catch (PortalException pe) {
-			ReflectionUtil.throwException(pe);
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
 		}
 	}
 
@@ -300,8 +294,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 					fileShortcut.getFileShortcutId());
 			}
 		}
-		catch (PortalException pe) {
-			ReflectionUtil.throwException(pe);
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
 		}
 	}
 
@@ -325,8 +319,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 				_dlAppService.deleteFolder(folder.getFolderId());
 			}
 		}
-		catch (PortalException pe) {
-			ReflectionUtil.throwException(pe);
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
 		}
 	}
 

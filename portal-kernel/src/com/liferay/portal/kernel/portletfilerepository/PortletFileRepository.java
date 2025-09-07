@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portletfilerepository;
@@ -52,15 +43,17 @@ public interface PortletFileRepository {
 		throws PortalException;
 
 	public FileEntry addPortletFileEntry(
-			long groupId, long userId, String className, long classPK,
-			String portletId, long folderId, File file, String fileName,
-			String mimeType, boolean indexingEnabled)
+			String externalReferenceCode, long groupId, long userId,
+			String className, long classPK, String portletId, long folderId,
+			File file, String fileName, String mimeType,
+			boolean indexingEnabled)
 		throws PortalException;
 
 	public FileEntry addPortletFileEntry(
-			long groupId, long userId, String className, long classPK,
-			String portletId, long folderId, InputStream inputStream,
-			String fileName, String mimeType, boolean indexingEnabled)
+			String externalReferenceCode, long groupId, long userId,
+			String className, long classPK, String portletId, long folderId,
+			InputStream inputStream, String fileName, String mimeType,
+			boolean indexingEnabled)
 		throws PortalException;
 
 	public Folder addPortletFolder(
@@ -98,6 +91,9 @@ public interface PortletFileRepository {
 	public FileEntry fetchPortletFileEntry(
 		long groupId, long folderId, String fileName);
 
+	public FileEntry fetchPortletFileEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId);
+
 	public Repository fetchPortletRepository(long groupId, String portletId);
 
 	public String getDownloadPortletFileEntryURL(
@@ -116,16 +112,17 @@ public interface PortletFileRepository {
 
 	public List<FileEntry> getPortletFileEntries(
 			long groupId, long folderId, int status, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public List<FileEntry> getPortletFileEntries(
-			long groupId, long folderId, OrderByComparator<FileEntry> obc)
+			long groupId, long folderId,
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public List<FileEntry> getPortletFileEntries(
 			long groupId, long folderId, String[] mimeTypes, int status,
-			int start, int end, OrderByComparator<FileEntry> obc)
+			int start, int end, OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException;
 
 	public int getPortletFileEntriesCount(long groupId, long folderId)
@@ -147,6 +144,10 @@ public interface PortletFileRepository {
 		throws PortalException;
 
 	public FileEntry getPortletFileEntry(String uuid, long groupId)
+		throws PortalException;
+
+	public FileEntry getPortletFileEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
 		throws PortalException;
 
 	public String getPortletFileEntryURL(

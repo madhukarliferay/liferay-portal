@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,27 +23,45 @@
 
 	<tbody>
 		<tr>
-			<td><clay:checkbox checked="<%= true %>" label="My Input" name="name" showLabel="<%= false %>" /></td>
+			<td><clay:checkbox checked="<%= true %>" name="name" /></td>
 			<td>On</td>
 		</tr>
 		<tr>
-			<td><clay:checkbox label="My Input" name="name" showLabel="<%= false %>" /></td>
+			<td><clay:checkbox name="name" /></td>
 			<td>Off</td>
 		</tr>
 		<tr>
-			<td><clay:checkbox checked="<%= true %>" disabled="<%= true %>" label="My Input" name="name" showLabel="<%= false %>" /></td>
+			<td><clay:checkbox checked="<%= true %>" cssClass="custom-css-class" data-qa-id="clayCustomCheckbox01" name="name" /></td>
+			<td>With custom class and id</td>
+		</tr>
+		<tr>
+			<td><clay:checkbox label="Checkbox with Label" name="checkboxWithLabel" /></td>
+			<td>With Label</td>
+		</tr>
+		<tr>
+			<td><clay:checkbox checked="<%= true %>" disabled="<%= true %>" name="name" /></td>
 			<td>On disabled</td>
 		</tr>
 		<tr>
-			<td><clay:checkbox disabled="<%= true %>" label="My Input" name="name" showLabel="<%= false %>" /></td>
+			<td><clay:checkbox disabled="<%= true %>" name="name" /></td>
 			<td>Off disabled</td>
 		</tr>
 		<tr>
-			<td><clay:checkbox indeterminate="<%= true %>" label="My Input" name="name" showLabel="<%= false %>" /></td>
-			<td>Checkbox Variable for multiple selection</td>
+			<td><clay:checkbox indeterminate="<%= true %>" name="name" /></td>
+			<td>Indeterminate</td>
 		</tr>
 	</tbody>
 </table>
+
+<blockquote>
+	<p>Demonstrate a checkbox with an indeterminate state in the TreeView component.</p>
+</blockquote>
+
+<div>
+	<react:component
+		module="{ClaySampleTreeViewWithCheckbox} from frontend-taglib-clay-sample-web"
+	/>
+</div>
 
 <h3>RADIO</h3>
 
@@ -103,6 +112,9 @@ for (int i = 0; i < 8; i++) {
 %>
 
 <clay:select
+	containerCssClass="custom-container-css-class"
+	cssClass="custom-css-class"
+	id="pe0mdaf1n"
 	label="Regular Select Element"
 	name="name"
 	options="<%= selectOptions %>"
@@ -110,12 +122,14 @@ for (int i = 0; i < 8; i++) {
 
 <clay:select
 	disabled="<%= true %>"
+	id="6e0paj9ij"
 	label="Disabled Regular Select Element"
 	name="name"
 	options="<%= selectOptions %>"
 />
 
 <clay:select
+	id="lb6e0l8fq"
 	label="Multiple Select Element"
 	multiple="<%= true %>"
 	name="name"
@@ -124,8 +138,31 @@ for (int i = 0; i < 8; i++) {
 
 <clay:select
 	disabled="<%= true %>"
+	id="c8fs6qlrj"
 	label="Disabled Multiple Select Element"
 	multiple="<%= true %>"
 	name="name"
 	options="<%= selectOptions %>"
+/>
+
+<h3>MULTISELECT</h3>
+
+<clay:multiselect
+	helpText="Help text is displayed here."
+	id="multiselect-1"
+	inputName="multiSelectInput1"
+	label="Multiselect 1"
+	multiselectLocator="<%= multiselectDisplayContext.getMultiselectLocator() %>"
+	selectedMultiselectItems="<%= multiselectDisplayContext.getSelectedMultiselectItemsWithCustomProperties() %>"
+	sourceMultiselectItems="<%= multiselectDisplayContext.getSourceMultiselectItemsWithCustomProperties() %>"
+/>
+
+<clay:multiselect
+	helpText="Help text is displayed here."
+	id="multiselect-2"
+	inputName="multiSelectInput2"
+	label="Multiselect with Custom Menu Renderer"
+	propsTransformer="{ClaySampleMultiselectPropsTransformer} from frontend-taglib-clay-sample-web"
+	selectedMultiselectItems="<%= multiselectDisplayContext.getSelectedMultiselectItems() %>"
+	sourceMultiselectItems="<%= multiselectDisplayContext.getSourceMultiselectItems() %>"
 />

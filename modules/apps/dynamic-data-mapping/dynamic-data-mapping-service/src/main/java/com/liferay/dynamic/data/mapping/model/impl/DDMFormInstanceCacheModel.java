@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
 
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,17 +32,17 @@ public class DDMFormInstanceCacheModel
 	implements CacheModel<DDMFormInstance>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMFormInstanceCacheModel)) {
+		if (!(object instanceof DDMFormInstanceCacheModel)) {
 			return false;
 		}
 
 		DDMFormInstanceCacheModel ddmFormInstanceCacheModel =
-			(DDMFormInstanceCacheModel)obj;
+			(DDMFormInstanceCacheModel)object;
 
 		if ((formInstanceId == ddmFormInstanceCacheModel.formInstanceId) &&
 			(mvccVersion == ddmFormInstanceCacheModel.mvccVersion)) {
@@ -77,10 +72,12 @@ public class DDMFormInstanceCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(37);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
 		sb.append(", formInstanceId=");
@@ -123,6 +120,7 @@ public class DDMFormInstanceCacheModel
 		DDMFormInstanceImpl ddmFormInstanceImpl = new DDMFormInstanceImpl();
 
 		ddmFormInstanceImpl.setMvccVersion(mvccVersion);
+		ddmFormInstanceImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			ddmFormInstanceImpl.setUuid("");
@@ -205,7 +203,13 @@ public class DDMFormInstanceCacheModel
 
 		ddmFormInstanceImpl.resetOriginalValues();
 
-		ddmFormInstanceImpl.setDDMFormValues(_ddmFormValues);
+		try {
+			_ddmFormValuesMethodHandle.invokeExact(
+				ddmFormInstanceImpl, ddmFormValues);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return ddmFormInstanceImpl;
 	}
@@ -215,6 +219,8 @@ public class DDMFormInstanceCacheModel
 		throws ClassNotFoundException, IOException {
 
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
 
 		formInstanceId = objectInput.readLong();
@@ -234,11 +240,11 @@ public class DDMFormInstanceCacheModel
 		structureId = objectInput.readLong();
 		version = objectInput.readUTF();
 		name = objectInput.readUTF();
-		description = objectInput.readUTF();
-		settings = objectInput.readUTF();
+		description = (String)objectInput.readObject();
+		settings = (String)objectInput.readObject();
 		lastPublishDate = objectInput.readLong();
 
-		_ddmFormValues =
+		ddmFormValues =
 			(com.liferay.dynamic.data.mapping.storage.DDMFormValues)
 				objectInput.readObject();
 	}
@@ -246,6 +252,8 @@ public class DDMFormInstanceCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		if (uuid == null) {
 			objectOutput.writeUTF("");
@@ -298,25 +306,26 @@ public class DDMFormInstanceCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		objectOutput.writeLong(lastPublishDate);
 
-		objectOutput.writeObject(_ddmFormValues);
+		objectOutput.writeObject(ddmFormValues);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
 	public long formInstanceId;
 	public long groupId;
@@ -333,7 +342,22 @@ public class DDMFormInstanceCacheModel
 	public String description;
 	public String settings;
 	public long lastPublishDate;
-	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
-		_ddmFormValues;
+	public volatile com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		ddmFormValues;
+
+	private static final MethodHandle _ddmFormValuesMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_ddmFormValuesMethodHandle = lookup.findSetter(
+				DDMFormInstanceImpl.class, "_ddmFormValues",
+				com.liferay.dynamic.data.mapping.storage.DDMFormValues.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

@@ -1,39 +1,32 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String tabs1 = ParamUtil.getString(request, "tabs1", "timeline");
-
 int cur = ParamUtil.getInteger(request, SearchContainer.DEFAULT_CUR_PARAM);
 
 long parentMicroblogsEntryId = ParamUtil.getLong(request, "parentMicroblogsEntryId");
 
-List<MicroblogsEntry> microblogsEntries = MicroblogsEntryLocalServiceUtil.getParentMicroblogsEntryMicroblogsEntries(MicroblogsEntryConstants.TYPE_REPLY, parentMicroblogsEntryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, new EntryCreateDateComparator(true));
+List<MicroblogsEntry> microblogsEntries = MicroblogsEntryLocalServiceUtil.getParentMicroblogsEntryMicroblogsEntries(MicroblogsEntryConstants.TYPE_REPLY, parentMicroblogsEntryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, EntryCreateDateComparator.getInstance(true));
 
 request.setAttribute(WebKeys.MICROBLOGS_ENTRIES, microblogsEntries);
 
-PortletURL microblogsEntriesURL = renderResponse.createRenderURL();
-
-microblogsEntriesURL.setWindowState(WindowState.NORMAL);
-
-microblogsEntriesURL.setParameter("mvcPath", "/microblogs/view.jsp");
-microblogsEntriesURL.setParameter("tabs1", tabs1);
-microblogsEntriesURL.setParameter("cur", String.valueOf(cur));
+PortletURL microblogsEntriesURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/microblogs/view.jsp"
+).setTabs1(
+	ParamUtil.getString(request, "tabs1", "timeline")
+).setParameter(
+	"cur", cur
+).setWindowState(
+	WindowState.NORMAL
+).buildPortletURL();
 
 request.setAttribute(WebKeys.MICROBLOGS_ENTRIES_URL, microblogsEntriesURL);
 %>

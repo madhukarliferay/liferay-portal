@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.wab.reference.support.internal;
@@ -19,7 +10,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
@@ -38,7 +29,6 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,7 +46,6 @@ import org.osgi.service.url.URLStreamHandlerService;
  * @author Gregory Amerson
  */
 @Component(
-	immediate = true,
 	property = URLConstants.URL_HANDLER_PROTOCOL + "=webbundledir",
 	service = URLStreamHandlerService.class
 )
@@ -70,7 +59,7 @@ public class WabDirURLStreamHandlerService
 
 			File warDir = new File(uri);
 
-			String bundleSymbolicName = _http.getParameter(
+			String bundleSymbolicName = HttpComponentsUtil.getParameter(
 				url.toExternalForm(), "Bundle-SymbolicName");
 
 			if (bundleSymbolicName.equals(StringPool.BLANK)) {
@@ -85,7 +74,7 @@ public class WabDirURLStreamHandlerService
 				bundleSymbolicName = _getNameFromProperties(warDir);
 			}
 
-			String contextName = _http.getParameter(
+			String contextName = HttpComponentsUtil.getParameter(
 				url.toExternalForm(), "Web-ContextPath");
 
 			if (contextName.equals(StringPool.BLANK)) {
@@ -109,14 +98,13 @@ public class WabDirURLStreamHandlerService
 				contextName = StringPool.SLASH.concat(contextName);
 			}
 
-			Map<String, String[]> parameters = HashMapBuilder.put(
-				"Bundle-SymbolicName", new String[] {bundleSymbolicName}
-			).put(
-				"Web-ContextPath", new String[] {contextName}
-			).build();
-
 			File generatedJarFile = _wabGenerator.generate(
-				_classLoader, warDir, parameters);
+				_classLoader, warDir,
+				HashMapBuilder.put(
+					"Bundle-SymbolicName", new String[] {bundleSymbolicName}
+				).put(
+					"Web-ContextPath", new String[] {contextName}
+				).build());
 
 			if (generatedJarFile != null) {
 				_file.unzip(generatedJarFile, warDir);
@@ -129,8 +117,8 @@ public class WabDirURLStreamHandlerService
 
 			return wabDirHandler.openConnection(url);
 		}
-		catch (Exception e) {
-			_log.error("Unable to open connection", e);
+		catch (Exception exception) {
+			_log.error("Unable to open connection", exception);
 		}
 
 		return null;
@@ -211,8 +199,8 @@ public class WabDirURLStreamHandlerService
 		try {
 			return UnsecureSAXReaderUtil.read(content);
 		}
-		catch (DocumentException de) {
-			throw new IOException(de);
+		catch (DocumentException documentException) {
+			throw new IOException(documentException);
 		}
 	}
 
@@ -226,9 +214,6 @@ public class WabDirURLStreamHandlerService
 
 	@Reference
 	private com.liferay.portal.kernel.util.File _file;
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private WabGenerator _wabGenerator;

@@ -1,25 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.engine.adapter.index;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.search.engine.adapter.ccr.CrossClusterRequest;
 
 /**
  * @author Michael C. Han
  */
-public class FlushIndexRequest implements IndexRequest<FlushIndexResponse> {
+public class FlushIndexRequest
+	extends CrossClusterRequest implements IndexRequest<FlushIndexResponse> {
 
 	public FlushIndexRequest() {
 		_indexNames = StringPool.EMPTY_ARRAY;
@@ -39,17 +32,6 @@ public class FlushIndexRequest implements IndexRequest<FlushIndexResponse> {
 	@Override
 	public String[] getIndexNames() {
 		return _indexNames;
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x), with no direct replacement. This method
-	 *             should not be in the parent interface.  Only certain
-	 *             IndexRequests work with mappings.
-	 */
-	@Deprecated
-	@Override
-	public String getMappingName() {
-		throw new UnsupportedOperationException();
 	}
 
 	public boolean isForce() {

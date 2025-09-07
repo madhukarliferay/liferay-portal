@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +117,8 @@ public class BookmarksEntryPersistenceTest {
 
 		newBookmarksEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newBookmarksEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newBookmarksEntry.setUuid(RandomTestUtil.randomString());
 
 		newBookmarksEntry.setGroupId(RandomTestUtil.nextLong());
@@ -170,6 +163,9 @@ public class BookmarksEntryPersistenceTest {
 		Assert.assertEquals(
 			existingBookmarksEntry.getMvccVersion(),
 			newBookmarksEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingBookmarksEntry.getCtCollectionId(),
+			newBookmarksEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingBookmarksEntry.getUuid(), newBookmarksEntry.getUuid());
 		Assert.assertEquals(
@@ -391,13 +387,13 @@ public class BookmarksEntryPersistenceTest {
 
 	protected OrderByComparator<BookmarksEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"BookmarksEntry", "mvccVersion", true, "uuid", true, "entryId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"folderId", true, "treePath", true, "name", true, "url", true,
-			"description", true, "priority", true, "lastPublishDate", true,
-			"status", true, "statusByUserId", true, "statusByUserName", true,
-			"statusDate", true);
+			"BookmarksEntry", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "entryId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "folderId", true, "treePath", true, "name",
+			true, "url", true, "description", true, "priority", true,
+			"lastPublishDate", true, "status", true, "statusByUserId", true,
+			"statusByUserName", true, "statusDate", true);
 	}
 
 	@Test
@@ -616,19 +612,61 @@ public class BookmarksEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		BookmarksEntry existingBookmarksEntry = _persistence.findByPrimaryKey(
-			newBookmarksEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newBookmarksEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingBookmarksEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingBookmarksEntry, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		BookmarksEntry newBookmarksEntry = addBookmarksEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			BookmarksEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"entryId", newBookmarksEntry.getEntryId()));
+
+		List<BookmarksEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(BookmarksEntry bookmarksEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingBookmarksEntry.getGroupId()),
+			bookmarksEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				bookmarksEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(bookmarksEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingBookmarksEntry, "getOriginalGroupId", new Class<?>[0]));
+				bookmarksEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected BookmarksEntry addBookmarksEntry() throws Exception {
@@ -637,6 +675,8 @@ public class BookmarksEntryPersistenceTest {
 		BookmarksEntry bookmarksEntry = _persistence.create(pk);
 
 		bookmarksEntry.setMvccVersion(RandomTestUtil.nextLong());
+
+		bookmarksEntry.setCtCollectionId(RandomTestUtil.nextLong());
 
 		bookmarksEntry.setUuid(RandomTestUtil.randomString());
 

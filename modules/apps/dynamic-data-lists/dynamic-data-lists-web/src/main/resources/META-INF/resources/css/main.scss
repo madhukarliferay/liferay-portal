@@ -6,7 +6,7 @@
 	}
 }
 
-.dialog-iframe-popup .portlet-dynamic-data-lists .lfr-form-content {
+.portal-popup .portlet-dynamic-data-lists .lfr-form-content {
 	position: relative;
 }
 
@@ -63,12 +63,45 @@
 
 	.lfr-ddm-container {
 		background-color: #fff;
+
+		.form-group .input-checkbox-wrapper {
+			display: none;
+		}
 	}
 }
 
 .portlet-dynamic-data-lists {
-	.sidenav-close {
-		display: inline-block;
+	.form-control[readonly] {
+		background-color: #f1f2f5;
+		border-color: #e7e7ed;
+		color: #d3d3d3;
+		cursor: not-allowed;
+	}
+
+	.has-error .form-control[readonly] {
+		background-color: #feefef;
+		border-color: #f48989;
+	}
+
+	.has-success .form-control[readonly] {
+		background-color: #f1f2f5;
+		border-color: #e7e7ed;
+	}
+
+	.sidebar {
+		.taglib-workflow-status {
+			display: block;
+			margin-bottom: 12px;
+
+			.workflow-status {
+				color: inherit;
+			}
+
+			.workflow-label {
+				display: block;
+				margin-bottom: 4px;
+			}
+		}
 	}
 }
 

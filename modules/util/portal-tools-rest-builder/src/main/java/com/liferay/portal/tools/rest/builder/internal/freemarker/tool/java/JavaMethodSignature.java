@@ -1,22 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java;
 
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.FreeMarkerTool;
-import com.liferay.portal.vulcan.yaml.openapi.Operation;
-import com.liferay.portal.vulcan.yaml.openapi.PathItem;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Operation;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.PathItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,17 +17,6 @@ import java.util.Set;
  * @author Peter Shin
  */
 public class JavaMethodSignature {
-
-	public JavaMethodSignature(
-		String path, PathItem pathItem, Operation operation,
-		Set<String> requestBodyMediaTypes, String schemaName,
-		List<JavaMethodParameter> javaMethodParameters, String methodName,
-		String returnType) {
-
-		this(
-			path, pathItem, operation, requestBodyMediaTypes, schemaName,
-			javaMethodParameters, methodName, returnType, null);
-	}
 
 	public JavaMethodSignature(
 		String path, PathItem pathItem, Operation operation,
@@ -57,7 +37,7 @@ public class JavaMethodSignature {
 			FreeMarkerTool freeMarkerTool = FreeMarkerTool.getInstance();
 
 			if (freeMarkerTool.isPathParameter(
-					javaMethodParameter, _operation)) {
+					javaMethodParameter, operation)) {
 
 				_pathJavaMethodParameters.add(javaMethodParameter);
 			}
@@ -112,7 +92,7 @@ public class JavaMethodSignature {
 	private final String _parentSchemaName;
 	private final String _path;
 	private final PathItem _pathItem;
-	private List<JavaMethodParameter> _pathJavaMethodParameters =
+	private final List<JavaMethodParameter> _pathJavaMethodParameters =
 		new ArrayList<>();
 	private final Set<String> _requestBodyMediaTypes;
 	private final String _returnType;

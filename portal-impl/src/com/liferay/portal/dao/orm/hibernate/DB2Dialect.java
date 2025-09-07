@@ -1,22 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.orm.hibernate;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
+
+import org.hibernate.dialect.pagination.AbstractLimitHandler;
+import org.hibernate.dialect.pagination.LimitHandler;
+import org.hibernate.engine.spi.RowSelection;
 
 /**
  * @author Shepherd Ching
@@ -33,6 +28,11 @@ public class DB2Dialect extends org.hibernate.dialect.DB2Dialect {
 	@Override
 	public String getForUpdateString() {
 		return " for read only with rs use and keep exclusive locks";
+	}
+
+	@Override
+	public LimitHandler getLimitHandler() {
+		return _db2LimitHandler;
 	}
 
 	@Override
@@ -81,14 +81,7 @@ public class DB2Dialect extends org.hibernate.dialect.DB2Dialect {
 
 	@Override
 	public boolean supportsVariableLimit() {
-		return _SUPPORTS_VARIABLE_LIMIT;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	protected void addOptimizeForLimitedRows(StringBundler sb, int limit) {
+		return false;
 	}
 
 	protected void addQueryForLimitedRows(
@@ -105,6 +98,31 @@ public class DB2Dialect extends org.hibernate.dialect.DB2Dialect {
 	private static final String _SQL_FETCH_FIRST_LIMITED_ROWS_ONLY =
 		"FETCH FIRST [$LIMIT$] ROWS ONLY";
 
-	private static final boolean _SUPPORTS_VARIABLE_LIMIT = false;
+	private final DB2LimitHandler _db2LimitHandler = new DB2LimitHandler();
+
+	private final class DB2LimitHandler extends AbstractLimitHandler {
+
+		@Override
+		public String processSql(String sql, RowSelection selection) {
+			return getLimitString(
+				sql, selection.getFirstRow(), getMaxOrLimit(selection));
+		}
+
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
+
+		@Override
+		public boolean supportsVariableLimit() {
+			return false;
+		}
+
+		@Override
+		public boolean useMaxForLimit() {
+			return true;
+		}
+
+	}
 
 }

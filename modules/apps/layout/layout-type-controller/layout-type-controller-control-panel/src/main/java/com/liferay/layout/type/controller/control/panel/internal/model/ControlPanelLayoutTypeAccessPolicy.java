@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.type.controller.control.panel.internal.model;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypeAccessPolicy;
@@ -27,7 +19,7 @@ import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -35,7 +27,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = "layout.type=" + LayoutConstants.TYPE_CONTROL_PANEL,
 	service = LayoutTypeAccessPolicy.class
 )
@@ -48,24 +39,22 @@ public class ControlPanelLayoutTypeAccessPolicy
 			Portlet portlet)
 		throws PortalException {
 
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
+		Group scopeGroup = themeDisplay.getScopeGroup();
+
+		if (scopeGroup.isOrganization() && !scopeGroup.isSite()) {
+			throw new PrincipalException(
+				"Unable to access an organization's site that is not enabled");
+		}
+
 		if (PortletPermissionUtil.hasControlPanelAccessPermission(
-				permissionChecker, themeDisplay.getScopeGroupId(), portlet)) {
-
-			return;
-		}
-
-		if (isAccessGrantedByRuntimePortlet(httpServletRequest)) {
-			return;
-		}
-
-		if (isAccessGrantedByPortletAuthenticationToken(
+				PermissionThreadLocal.getPermissionChecker(),
+				themeDisplay.getScopeGroupId(), portlet) ||
+			isAccessGrantedByRuntimePortlet(httpServletRequest) ||
+			isAccessGrantedByPortletAuthenticationToken(
 				httpServletRequest, layout, portlet)) {
 
 			return;

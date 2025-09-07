@@ -1,0 +1,224 @@
+{
+	"deletedItems": [
+	],
+	"items": {
+		"04beb47f-aef2-c7d1-7488-2cf883d5ea5f": {
+			"children": [
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"fragmentEntryLinkId": "${imageFragmentEntryLinkId}",
+				"landscapeMobile": {
+					"styles": {
+					}
+				},
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				}
+			},
+			"itemId": "04beb47f-aef2-c7d1-7488-2cf883d5ea5f",
+			"parentId": "b5790764-71af-e60d-e3de-c55628082e93",
+			"type": "fragment"
+		},
+		"1c6fc711-006e-7de3-7b15-f49da2d0ea6b": {
+			"children": [
+				"717d0a19-70d6-843f-910c-9b20ac78425b"
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"landscapeMobile": {
+					"styles": {
+					}
+				},
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				}
+			},
+			"itemId": "1c6fc711-006e-7de3-7b15-f49da2d0ea6b",
+			"parentId": "3116f399-7ed8-a49d-92d4-6fb2aef34264",
+			"type": "container"
+		},
+		"3116f399-7ed8-a49d-92d4-6fb2aef34264": {
+			"children": [
+				"1c6fc711-006e-7de3-7b15-f49da2d0ea6b"
+			],
+			"config": {
+			},
+			"itemId": "3116f399-7ed8-a49d-92d4-6fb2aef34264",
+			"parentId": "",
+			"type": "root"
+		},
+		"32e63793-003e-58b1-0924-c9ed97062895": {
+			"children": [
+				"5bcb2140-df54-e513-6203-27fecbd8d6a9",
+				"b5790764-71af-e60d-e3de-c55628082e93"
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"gutters": true,
+				"landscapeMobile": {
+					"modulesPerRow": 1,
+					"styles": {
+					}
+				},
+				"modulesPerRow": 2,
+				"numberOfColumns": 2,
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"reverseOrder": false,
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				},
+				"verticalAlignment": "middle"
+			},
+			"itemId": "32e63793-003e-58b1-0924-c9ed97062895",
+			"parentId": "717d0a19-70d6-843f-910c-9b20ac78425b",
+			"type": "row"
+		},
+		"5bcb2140-df54-e513-6203-27fecbd8d6a9": {
+			"children": [
+				"81156efb-8ff4-e032-5916-aa9cc8fac626",
+				"f3754904-7e1e-d5de-52f6-73a71ea171ff"
+			],
+			"config": {
+				"landscapeMobile": {
+					"size": 12
+				},
+				"portraitMobile": {
+				},
+				"size": 6,
+				"tablet": {
+				}
+			},
+			"itemId": "5bcb2140-df54-e513-6203-27fecbd8d6a9",
+			"parentId": "32e63793-003e-58b1-0924-c9ed97062895",
+			"type": "column"
+		},
+		"717d0a19-70d6-843f-910c-9b20ac78425b": {
+			"children": [
+				"32e63793-003e-58b1-0924-c9ed97062895"
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"landscapeMobile": {
+					"styles": {
+					}
+				},
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				},
+				"widthType": "fixed"
+			},
+			"itemId": "717d0a19-70d6-843f-910c-9b20ac78425b",
+			"parentId": "1c6fc711-006e-7de3-7b15-f49da2d0ea6b",
+			"type": "container"
+		},
+		"81156efb-8ff4-e032-5916-aa9cc8fac626": {
+			"children": [
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"fragmentEntryLinkId": "${paragraphTitleFragmentEntryLinkId}",
+				"landscapeMobile": {
+					"styles": {
+					}
+				},
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				}
+			},
+			"itemId": "81156efb-8ff4-e032-5916-aa9cc8fac626",
+			"parentId": "5bcb2140-df54-e513-6203-27fecbd8d6a9",
+			"type": "fragment"
+		},
+		"b5790764-71af-e60d-e3de-c55628082e93": {
+			"children": [
+				"04beb47f-aef2-c7d1-7488-2cf883d5ea5f"
+			],
+			"config": {
+				"landscapeMobile": {
+					"size": 12
+				},
+				"portraitMobile": {
+				},
+				"size": 6,
+				"tablet": {
+				}
+			},
+			"itemId": "b5790764-71af-e60d-e3de-c55628082e93",
+			"parentId": "32e63793-003e-58b1-0924-c9ed97062895",
+			"type": "column"
+		},
+		"f3754904-7e1e-d5de-52f6-73a71ea171ff": {
+			"children": [
+			],
+			"config": {
+				"cssClasses": [
+				],
+				"fragmentEntryLinkId": "${paragraphContentFragmentEntryLinkId}",
+				"landscapeMobile": {
+					"styles": {
+					}
+				},
+				"portraitMobile": {
+					"styles": {
+					}
+				},
+				"styles": {
+				},
+				"tablet": {
+					"styles": {
+					}
+				}
+			},
+			"itemId": "f3754904-7e1e-d5de-52f6-73a71ea171ff",
+			"parentId": "5bcb2140-df54-e513-6203-27fecbd8d6a9",
+			"type": "fragment"
+		}
+	},
+	"pageRules": [
+	],
+	"rootItems": {
+		"dropZone": "",
+		"main": "3116f399-7ed8-a49d-92d4-6fb2aef34264"
+	},
+	"version": 1.1
+}

@@ -1,150 +1,91 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React, {useContext, useMemo} from 'react';
+import React from 'react';
 
-import {getFiltersParam} from '../../shared/components/filter/util/filterUtil.es';
-import EmptyState from '../../shared/components/list/EmptyState.es';
-import ReloadButton from '../../shared/components/list/ReloadButton.es';
-import LoadingState from '../../shared/components/loading/LoadingState.es';
-import PaginationBar from '../../shared/components/pagination/PaginationBar.es';
-import PromisesResolver from '../../shared/components/request/PromisesResolver.es';
-import Request from '../../shared/components/request/Request.es';
+import {useFetch} from '../../shared/hooks/useFetch.es';
+import {useFilter} from '../../shared/hooks/useFilter.es';
 import {useProcessTitle} from '../../shared/hooks/useProcessTitle.es';
-import InstanceListPageFilters from './InstanceListPageFilters.es';
-import InstanceListPageItemDetail from './InstanceListPageItemDetail.es';
-import InstanceListPageTable from './InstanceListPageTable.es';
-import {InstanceFiltersProvider} from './store/InstanceListPageFiltersStore.es';
-import {
-	InstanceListProvider,
-	InstanceListContext
-} from './store/InstanceListPageStore.es';
+import {processStatusConstants} from '../filter/ProcessStatusFilter.es';
+import {useTimeRangeFetch} from '../filter/hooks/useTimeRangeFetch.es';
+import {getTimeRangeParams} from '../filter/util/timeRangeUtil.es';
+import Body from './InstanceListPageBody.es';
+import Header from './InstanceListPageHeader.es';
+import InstanceListPageProvider from './InstanceListPageProvider.es';
+import ModalProvider from './modal/ModalProvider.es';
 
-export function InstanceListPage({page, pageSize, processId, query}) {
-	const {
-		assigneeUserIds = [],
-		slaStatuses = [],
-		statuses = [],
-		taskKeys = [],
-		timeRange = []
-	} = getFiltersParam(query);
+function InstanceListPage({routeParams}) {
+	useTimeRangeFetch();
+
+	const {page, pageSize, processId, sort} = routeParams;
 
 	useProcessTitle(processId, Liferay.Language.get('all-items'));
 
-	return (
-		<Request>
-			<InstanceFiltersProvider
-				assigneeKeys={assigneeUserIds}
-				processId={processId}
-				processStatusKeys={statuses}
-				processStepKeys={taskKeys}
-				slaStatusKeys={slaStatuses}
-				timeRangeKeys={timeRange}
-			>
-				<InstanceListProvider
-					page={page}
-					pageSize={pageSize}
-					processId={processId}
-					query={query}
-				>
-					<InstanceListPage.Header
-						processId={processId}
-						query={query}
-					/>
+	const filterKeys = [
+		'assignee',
+		'processStep',
+		'processStatus',
+		'slaStatus',
+		'timeRange',
+	];
 
-					<InstanceListPage.Body
-						page={page}
-						pageSize={pageSize}
-						processId={processId}
-						query={query}
-					/>
-				</InstanceListProvider>
-			</InstanceFiltersProvider>
-		</Request>
+	const {
+		filterValues: {
+			assigneeIds,
+			dateEnd,
+			dateStart,
+			slaStatuses,
+			statuses,
+			taskNames,
+		},
+		prefixedKeys,
+		selectedFilters,
+	} = useFilter({filterKeys});
+
+	const completed = statuses?.some(
+		(status) => status === processStatusConstants.completed
+	);
+
+	const timeRange = completed ? getTimeRangeParams(dateStart, dateEnd) : {};
+
+	const {data, fetchData} = useFetch({
+		params: {
+			assigneeIds,
+			page,
+			pageSize,
+			slaStatuses,
+			sort,
+			statuses,
+			taskNames,
+			...timeRange,
+		},
+		url: `/processes/${processId}/instances`,
+	});
+
+	return (
+		<ModalProvider processId={processId}>
+			<InstanceListPageProvider>
+				<InstanceListPage.Header
+					filterKeys={prefixedKeys}
+					items={data?.items}
+					processId={processId}
+					routeParams={routeParams}
+					selectedFilters={selectedFilters}
+					totalCount={data?.totalCount}
+				/>
+
+				<InstanceListPage.Body
+					data={data}
+					fetchData={fetchData}
+					filtered={!!selectedFilters.length}
+					routeParams={routeParams}
+				/>
+			</InstanceListPageProvider>
+		</ModalProvider>
 	);
 }
-
-const Body = ({page, pageSize, processId}) => {
-	const {fetchInstances, items, searching, totalCount} = useContext(
-		InstanceListContext
-	);
-
-	const emptyMessageText = searching
-		? Liferay.Language.get('no-results-were-found')
-		: Liferay.Language.get(
-				'once-there-are-active-processes-metrics-will-appear-here'
-		  );
-	const errorMessageText = Liferay.Language.get(
-		'there-was-a-problem-retrieving-data-please-try-reloading-the-page'
-	);
-
-	const promises = useMemo(() => [fetchInstances()], [fetchInstances]);
-
-	return (
-		<>
-			<div className="container-fluid-1280 mt-4">
-				<PromisesResolver promises={promises}>
-					<PromisesResolver.Pending>
-						<LoadingState />
-					</PromisesResolver.Pending>
-
-					<PromisesResolver.Resolved>
-						{items && items.length ? (
-							<>
-								<InstanceListPageTable items={items} />
-
-								<PaginationBar
-									page={page}
-									pageCount={items.length}
-									pageSize={pageSize}
-									totalCount={totalCount}
-								/>
-							</>
-						) : (
-							<EmptyState
-								className="border-1"
-								hideAnimation={false}
-								message={emptyMessageText}
-								type="not-found"
-							/>
-						)}
-					</PromisesResolver.Resolved>
-
-					<PromisesResolver.Rejected>
-						<EmptyState
-							actionButton={<ReloadButton />}
-							className="border-1"
-							hideAnimation={true}
-							message={errorMessageText}
-							messageClassName="small"
-							type="error"
-						/>
-					</PromisesResolver.Rejected>
-				</PromisesResolver>
-			</div>
-
-			<InstanceListPageItemDetail processId={processId} />
-		</>
-	);
-};
-
-const Header = () => {
-	const {totalCount} = useContext(InstanceListContext);
-
-	return (
-		<Request.Success>
-			<InstanceListPageFilters totalCount={totalCount} />
-		</Request.Success>
-	);
-};
 
 InstanceListPage.Body = Body;
 InstanceListPage.Header = Header;

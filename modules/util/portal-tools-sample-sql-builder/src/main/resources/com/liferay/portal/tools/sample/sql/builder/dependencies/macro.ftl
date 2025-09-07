@@ -14,13 +14,13 @@
 		<#list assetCategoryIds as assetCategoryId>
 			<#local assetEntryAssetCategoryRelId = dataFactory.getCounterNext()>
 
-			insert into AssetEntryAssetCategoryRel values (0, ${assetEntryAssetCategoryRelId}, ${assetEntryModel.companyId}, ${assetEntryModel.entryId}, ${assetCategoryId}, 0);
+			insert into AssetEntryAssetCategoryRel values (0, 0, ${assetEntryAssetCategoryRelId}, ${assetEntryModel.companyId}, ${assetEntryModel.entryId}, ${assetCategoryId}, 0);
 		</#list>
 
 		<#local assetTagIds = dataFactory.getAssetTagIds(assetEntryModel)>
 
 		<#list assetTagIds as assetTagId>
-			insert into AssetEntries_AssetTags values (${assetEntryModel.companyId}, ${assetEntryModel.entryId}, ${assetTagId});
+			${dataFactory.toInsertSQL("AssetEntries_AssetTags", assetEntryModel.companyId, assetEntryModel.entryId, assetTagId)}
 		</#list>
 	</#if>
 </#macro>
@@ -28,6 +28,7 @@
 <#macro insertContentLayout
 	_layoutModel
 	_fragmentEntryModel
+	_journalArticleModel
 >
 	${dataFactory.toInsertSQL(_layoutModel)}
 
@@ -37,7 +38,11 @@
 
 	${dataFactory.toInsertSQL(fragmentEntryLinkModel)}
 
-	${dataFactory.toInsertSQL(dataFactory.newJournalContentPortletPreferencesModel(fragmentEntryLinkModel))}
+	<#local journalContentPortletPreferencesModel = dataFactory.newJournalContentPortletPreferencesModel(fragmentEntryLinkModel)>
+
+	${dataFactory.toInsertSQL(journalContentPortletPreferencesModel)}
+
+	${dataFactory.toInsertSQL(dataFactory.newJournalContentPortletPreferenceValueModel(journalContentPortletPreferencesModel, _journalArticleModel))}
 
 	<#local layoutPageTemplateStructureModel = dataFactory.newLayoutPageTemplateStructureModel(_layoutModel)>
 
@@ -48,21 +53,60 @@
 	${dataFactory.toInsertSQL(layoutPageTemplateStructureRelModel)}
 </#macro>
 
+<#macro insertContentPageLayout
+	_fragmentEntryLinkModels
+	_layoutModels
+	_templateFileName
+>
+	<#list _fragmentEntryLinkModels as fragmentEntryLinkModel>
+		${dataFactory.toInsertSQL(fragmentEntryLinkModel)}
+	</#list>
+
+	<#list _layoutModels as layoutModel>
+		${dataFactory.toInsertSQL(layoutModel)}
+
+		${dataFactory.toInsertSQL(dataFactory.newLayoutFriendlyURLModel(layoutModel))}
+
+		<#local layoutPageTemplateStructureModel = dataFactory.newLayoutPageTemplateStructureModel(layoutModel)>
+
+		${dataFactory.toInsertSQL(layoutPageTemplateStructureModel)}
+
+		<#local layoutPageTemplateStructureRelModel = dataFactory.newLayoutPageTemplateStructureRelModel(layoutModel, layoutPageTemplateStructureModel, _fragmentEntryLinkModels, _templateFileName)>
+
+		${dataFactory.toInsertSQL(layoutPageTemplateStructureRelModel)}
+	</#list>
+</#macro>
+
 <#macro insertDDMContent
 	_ddmStorageLinkId
 	_ddmStructureId
 	_entry
+	_ddmStructureVersionId = 0
 	_currentIndex = -1
 >
 	<#if _currentIndex = -1>
-		<#local ddmContentModel = dataFactory.newDDMContentModel(_entry)>
+		<#local ddmStorageLinkModel = dataFactory.newDDMStorageLinkModel(_entry, _ddmStorageLinkId, _ddmStructureId)>
+
+		<#local ddmFieldModels = dataFactory.newDDMFieldModels(_entry, ddmStorageLinkModel)>
+
+		<#local ddmFieldAttributeModels = dataFactory.newDDMFieldAttributeModels(_entry, ddmFieldModels, ddmStorageLinkModel)>
 	<#else>
-		<#local ddmContentModel = dataFactory.newDDMContentModel(_entry, _currentIndex)>
+		<#local ddmStorageLinkModel = dataFactory.newDDMStorageLinkModel(_entry, _ddmStorageLinkId, _ddmStructureId, _ddmStructureVersionId)>
+
+		<#local ddmFieldModels = dataFactory.newDDMFieldModels(_currentIndex, _entry, ddmStorageLinkModel)>
+
+		<#local ddmFieldAttributeModels = dataFactory.newDDMFieldAttributeModels(_currentIndex, _entry, ddmFieldModels, ddmStorageLinkModel)>
 	</#if>
 
-	${dataFactory.toInsertSQL(ddmContentModel)}
+	<#list ddmFieldModels as ddmFieldModel>
+		${dataFactory.toInsertSQL(ddmFieldModel)}
+	</#list>
 
-	${dataFactory.toInsertSQL(dataFactory.newDDMStorageLinkModel(_ddmStorageLinkId, ddmContentModel, _ddmStructureId))}
+	<#list ddmFieldAttributeModels as ddmFieldAttributeModel>
+		${dataFactory.toInsertSQL(ddmFieldAttributeModel)}
+	</#list>
+
+	${dataFactory.toInsertSQL(ddmStorageLinkModel)}
 </#macro>
 
 <#macro insertDDMStructure
@@ -80,18 +124,18 @@
 <#macro insertDLFolder
 	_ddmStructureId
 	_dlFolderDepth
-	_groupId
+	_groupModel
 	_parentDLFolderId
 >
 	<#if _dlFolderDepth <= dataFactory.maxDLFolderDepth>
-		<#local dlFolderModels = dataFactory.newDLFolderModels(_groupId, _parentDLFolderId)>
+		<#local dlFolderModels = dataFactory.newDLFolderModels(_groupModel.groupId, _parentDLFolderId, _dlFolderDepth)>
 
 		<#list dlFolderModels as dlFolderModel>
 			${dataFactory.toInsertSQL(dlFolderModel)}
 
-			<@insertAssetEntry _entry=dlFolderModel />
+			<@insertAssetEntry _entry = dlFolderModel />
 
-			<#local dlFileEntryModels = dataFactory.newDlFileEntryModels(dlFolderModel)>
+			<#local dlFileEntryModels = dataFactory.newDLFileEntryModels(dlFolderModel)>
 
 			<#list dlFileEntryModels as dlFileEntryModel>
 				${dataFactory.toInsertSQL(dlFileEntryModel)}
@@ -100,23 +144,23 @@
 
 				${dataFactory.toInsertSQL(dlFileVersionModel)}
 
-				<@insertAssetEntry _entry=dlFileEntryModel />
+				<@insertAssetEntry _entry = dlFileEntryModel />
 
 				<#local ddmStorageLinkId = dataFactory.getCounterNext()>
 
 				<@insertDDMContent
-					_ddmStorageLinkId=ddmStorageLinkId
-					_ddmStructureId=_ddmStructureId
-					_entry=dlFileEntryModel
+					_ddmStorageLinkId = ddmStorageLinkId
+					_ddmStructureId = _ddmStructureId
+					_entry = dlFileEntryModel
 				/>
 
 				<@insertMBDiscussion
-					_classNameId=dataFactory.DLFileEntryClassNameId
-					_classPK=dlFileEntryModel.fileEntryId
-					_groupId=dlFileEntryModel.groupId
-					_maxCommentCount=0
-					_mbRootMessageId=dataFactory.getCounterNext()
-					_mbThreadId=dataFactory.getCounterNext()
+					_classNameId = dataFactory.DLFileEntryClassNameId
+					_classPK = dlFileEntryModel.fileEntryId
+					_groupId = dlFileEntryModel.groupId
+					_maxCommentCount = 0
+					_mbRootMessageId = dataFactory.getCounterNext()
+					_mbThreadId = dataFactory.getCounterNext()
 				/>
 
 				${dataFactory.toInsertSQL(dataFactory.newSocialActivityModel(dlFileEntryModel))}
@@ -127,14 +171,16 @@
 
 				${dataFactory.toInsertSQL(dataFactory.newDDMStructureLinkModel(dlFileEntryMetadataModel))}
 
-				${dataFactory.getCSVWriter("documentLibrary").write(dlFileEntryModel.uuid + "," + dlFolderModel.folderId + "," + dlFileEntryModel.name + "," + dlFileEntryModel.fileEntryId + "\n")}
+				${csvFileWriter.write("documentLibrary", virtualHostModel.hostname + "," + _groupModel.friendlyURL + "," + dlFileEntryModel.uuid + "," + dlFolderModel.folderId + "," + dlFileEntryModel.name + "," + dlFileEntryModel.fileEntryId + "," + dlFileEntryModel.fileName + "," + _groupModel.groupId + "\n")}
 			</#list>
 
+			<#local groupModel = _groupModel>
+
 			<@insertDLFolder
-				_ddmStructureId=_ddmStructureId
-				_dlFolderDepth=_dlFolderDepth + 1
-				_groupId=groupId
-				_parentDLFolderId=dlFolderModel.folderId
+				_ddmStructureId = _ddmStructureId
+				_dlFolderDepth = _dlFolderDepth + 1
+				_groupModel = groupModel
+				_parentDLFolderId = dlFolderModel.folderId
 			/>
 		</#list>
 	</#if>
@@ -150,6 +196,44 @@
 	<#list layoutSetModels as layoutSetModel>
 		${dataFactory.toInsertSQL(layoutSetModel)}
 	</#list>
+</#macro>
+
+<#macro insertJournalArticle
+	_journalArticleModel
+	_journalDDMStructureModel
+	_journalDDMTemplateModel
+	_insertAssetEntry
+>
+	${dataFactory.toInsertSQL(_journalArticleModel)}
+
+	<#local ddmFieldModels = dataFactory.newDDMFieldModels(_journalArticleModel) />
+
+	<#list ddmFieldModels as ddmFieldModel>
+		${dataFactory.toInsertSQL(ddmFieldModel)}
+	</#list>
+
+	<#local ddmFieldAttributeModels = dataFactory.newDDMFieldAttributeModels(_journalArticleModel, ddmFieldModels) />
+
+	<#list ddmFieldAttributeModels as ddmFieldAttributeModel>
+		${dataFactory.toInsertSQL(ddmFieldAttributeModel)}
+	</#list>
+
+	<#local journalArticleLocalizationModel = dataFactory.newJournalArticleLocalizationModel(_journalArticleModel)>
+
+	${dataFactory.toInsertSQL(journalArticleLocalizationModel)}
+
+	${dataFactory.toInsertSQL(dataFactory.newDDMTemplateLinkModel(_journalArticleModel, _journalDDMTemplateModel.templateId))}
+
+	${dataFactory.toInsertSQL(dataFactory.newDDMStorageLinkModel(_journalArticleModel, _journalDDMStructureModel.structureId))}
+
+	${dataFactory.toInsertSQL(dataFactory.newSocialActivityModel(_journalArticleModel))}
+
+	<#if _insertAssetEntry>
+		<@insertAssetEntry
+			_categoryAndTag = true
+			_entry = dataFactory.newObjectValuePair(journalArticleModel, journalArticleLocalizationModel)
+		/>
+	</#if>
 </#macro>
 
 <#macro insertLayout
@@ -168,18 +252,18 @@
 	_mbRootMessageId
 	_mbThreadId
 >
-	<#local mbThreadModel = dataFactory.newMBThreadModel(_mbThreadId, _groupId, _mbRootMessageId, _maxCommentCount)>
+	<#local mbThreadModel = dataFactory.newMBThreadModel(_mbThreadId, _groupId, _mbRootMessageId)>
 
 	${dataFactory.toInsertSQL(mbThreadModel)}
 
 	<#local mbRootMessageModel = dataFactory.newMBMessageModel(mbThreadModel, _classNameId, _classPK, 0)>
 
-	<@insertMBMessage _mbMessageModel=mbRootMessageModel />
+	<@insertMBMessage _mbMessageModel = mbRootMessageModel />
 
 	<#local mbMessageModels = dataFactory.newMBMessageModels(mbThreadModel, _classNameId, _classPK, _maxCommentCount)>
 
 	<#list mbMessageModels as mbMessageModel>
-		<@insertMBMessage _mbMessageModel=mbMessageModel />
+		<@insertMBMessage _mbMessageModel = mbMessageModel />
 
 		${dataFactory.toInsertSQL(dataFactory.newSocialActivityModel(mbMessageModel))}
 	</#list>
@@ -192,7 +276,7 @@
 >
 	${dataFactory.toInsertSQL(_mbMessageModel)}
 
-	<@insertAssetEntry _entry=_mbMessageModel />
+	<@insertAssetEntry _entry = _mbMessageModel />
 </#macro>
 
 <#macro insertUser
@@ -205,10 +289,10 @@
 	${dataFactory.toInsertSQL(dataFactory.newContactModel(_userModel))}
 
 	<#list _roleIds as roleId>
-		insert into Users_Roles values (0, ${roleId}, ${_userModel.userId});
+		${dataFactory.toInsertSQL("Users_Roles", _userModel.companyId, roleId, _userModel.userId)}
 	</#list>
 
 	<#list _groupIds as groupId>
-		insert into Users_Groups values (0, ${groupId}, ${_userModel.userId});
+		${dataFactory.toInsertSQL("Users_Groups", _userModel.companyId, groupId, _userModel.userId)}
 	</#list>
 </#macro>

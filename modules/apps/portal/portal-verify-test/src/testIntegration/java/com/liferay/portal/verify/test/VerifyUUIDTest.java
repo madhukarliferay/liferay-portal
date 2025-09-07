@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.verify.test;
@@ -17,18 +8,16 @@ package com.liferay.portal.verify.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.reflect.ReflectionUtil;
-import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.verify.model.VerifiableUUIDModel;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.verify.VerifyProcess;
 import com.liferay.portal.verify.VerifyUUID;
-import com.liferay.portal.verify.model.AssetTagVerifiableModel;
+import com.liferay.portal.verify.model.AssetTagVerifiableUUIDModel;
 import com.liferay.portal.verify.test.util.BaseVerifyProcessTestCase;
 
 import java.util.Collection;
@@ -36,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,19 +40,25 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new AssumeTestRule("assume"), new LiferayIntegrationTestRule());
+
+	public static void assume() {
+		DBType dbType = DBManagerUtil.getDBType();
+
+		Assume.assumeTrue(
+			(dbType != DBType.DB2) && (dbType != DBType.HYPERSONIC));
+	}
 
 	@Test
-	public void testVerifyModel() {
-		_testDoVerify(new AssetTagVerifiableModel());
+	public void testVerifyModel() throws Exception {
+		VerifyUUID.verify(new AssetTagVerifiableUUIDModel());
 	}
 
 	@Test
 	public void testVerifyModelWithUnknownPKColumnName() throws Exception {
 		try {
-			ReflectionTestUtil.invoke(
-				_verifyUUID, "verifyUUID",
-				new Class<?>[] {VerifiableUUIDModel.class},
+			VerifyUUID.verify(
 				new VerifiableUUIDModel() {
 
 					@Override
@@ -77,9 +73,9 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 
 				});
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_verifyException(
-				e,
+				exception,
 				HashMapBuilder.put(
 					DBType.DB2, "DB2 SQL Error: SQLCODE="
 				).put(
@@ -90,8 +86,6 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 				).put(
 					DBType.POSTGRESQL,
 					"ERROR: column \"unknown\" does not exist"
-				).put(
-					DBType.SYBASE, "Invalid column name 'Unknown'."
 				).build());
 		}
 	}
@@ -100,12 +94,9 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 	public void testVerifyParallelUnknownModelWithUnknownPKColumnName()
 		throws Exception {
 
-		VerifiableUUIDModel[] verifiableUUIDModels = new VerifiableUUIDModel
-			[PropsValues.VERIFY_PROCESS_CONCURRENCY_THRESHOLD];
+		VerifiableUUIDModel[] verifiableUUIDModels = new VerifiableUUIDModel[3];
 
-		for (int i = 0; i < PropsValues.VERIFY_PROCESS_CONCURRENCY_THRESHOLD;
-			 i++) {
-
+		for (int i = 0; i < verifiableUUIDModels.length; i++) {
 			verifiableUUIDModels[i] = new VerifiableUUIDModel() {
 
 				@Override
@@ -122,11 +113,11 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 		}
 
 		try {
-			_testDoVerify(verifiableUUIDModels);
+			VerifyUUID.verify(verifiableUUIDModels);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_verifyException(
-				e,
+				exception,
 				HashMapBuilder.put(
 					DBType.DB2, "DB2 SQL Error: SQLCODE="
 				).put(
@@ -142,7 +133,7 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 					DBType.POSTGRESQL,
 					"ERROR: relation \"unknown\" does not exist"
 				).put(
-					DBType.SYBASE, "Unknown not found."
+					DBType.SQLSERVER, "Invalid object name 'Unknown'"
 				).build());
 		}
 	}
@@ -152,7 +143,7 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 		throws Exception {
 
 		try {
-			_testDoVerify(
+			VerifyUUID.verify(
 				new VerifiableUUIDModel() {
 
 					@Override
@@ -167,9 +158,9 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 
 				});
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_verifyException(
-				e,
+				exception,
 				HashMapBuilder.put(
 					DBType.DB2, "DB2 SQL Error: SQLCODE="
 				).put(
@@ -185,7 +176,7 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 					DBType.POSTGRESQL,
 					"ERROR: relation \"unknown\" does not exist"
 				).put(
-					DBType.SYBASE, "Unknown not found."
+					DBType.SQLSERVER, "Invalid object name 'Unknown'"
 				).build());
 		}
 	}
@@ -195,32 +186,22 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 		return _verifyUUID;
 	}
 
-	private static void _verifyException(
-			Exception e, Map<DBType, String> expectedMessages)
+	private void _verifyException(
+			Exception exception, Map<DBType, String> expectedMessages)
 		throws Exception {
 
-		DB db = DBManagerUtil.getDB();
-
-		DBType dbType = db.getDBType();
-
-		String expectedMessagePrefix = expectedMessages.get(dbType);
+		String expectedMessagePrefix = expectedMessages.get(
+			DBManagerUtil.getDBType());
 
 		if (expectedMessagePrefix == null) {
-			throw e;
+			throw exception;
 		}
 
-		String message = e.getMessage();
+		String message = exception.getMessage();
 
 		Assert.assertTrue(
-			message + " does not start " + expectedMessagePrefix,
-			message.startsWith(expectedMessagePrefix));
-	}
-
-	private void _testDoVerify(VerifiableUUIDModel... verifiableUUIDModels) {
-		ReflectionTestUtil.invoke(
-			_verifyUUID, "doVerify",
-			new Class<?>[] {VerifiableUUIDModel[].class},
-			new Object[] {verifiableUUIDModels});
+			message + " does not contain " + expectedMessagePrefix,
+			message.contains(expectedMessagePrefix));
 	}
 
 	private static final String _UNKNOWN = "Unknown";
@@ -234,8 +215,8 @@ public class VerifyUUIDTest extends BaseVerifyProcessTestCase {
 			try {
 				UnsafeConsumer.accept(callables, Callable<Void>::call);
 			}
-			catch (Throwable t) {
-				ReflectionUtil.throwException(t);
+			catch (Throwable throwable) {
+				ReflectionUtil.throwException(throwable);
 			}
 		}
 

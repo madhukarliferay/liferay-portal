@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools;
@@ -18,16 +9,19 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.SortedProperties;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.SystemProperties;
 
 import java.io.File;
 import java.io.FileReader;
 
-import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -50,8 +44,8 @@ public class TCKtoJUnitConverter {
 		try {
 			_convert(new File(inputFile), new File(outputDir));
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
@@ -100,15 +94,14 @@ public class TCKtoJUnitConverter {
 		}
 
 		String hostname = GetterUtil.getString(
-			System.getProperty("env.USERDOMAIN"));
+			SystemProperties.get("env.USERDOMAIN"));
 
 		hostname = StringUtil.toLowerCase(hostname);
 
 		StringBundler sb = new StringBundler();
 
-		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
-
-		sb.append("<testsuite errors=\"");
+		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<testsuite ");
+		sb.append("errors=\"");
 
 		if (passed) {
 			sb.append("0");
@@ -132,28 +125,24 @@ public class TCKtoJUnitConverter {
 		sb.append(className);
 		sb.append("\" tests=\"1\" time=\"0.0\" timestamp=\"");
 		sb.append(System.currentTimeMillis());
-		sb.append("\">\n");
-		sb.append("\t<properties>\n");
+		sb.append("\">\n\t<properties>\n");
 
-		Properties properties = new SortedProperties(System.getProperties());
+		Properties properties = System.getProperties();
 
-		Enumeration<String> keys =
-			(Enumeration<String>)properties.propertyNames();
+		List<String> propertyNames = new ArrayList<>(
+			properties.stringPropertyNames());
 
-		while (keys.hasMoreElements()) {
-			String key = keys.nextElement();
+		propertyNames.sort(null);
 
-			String value = properties.getProperty(key);
-
+		for (String propertyName : propertyNames) {
 			sb.append("\t\t<property name=\"");
-			sb.append(HtmlUtil.escape(key));
+			sb.append(HtmlUtil.escape(propertyName));
 			sb.append("\" value=\"");
-			sb.append(HtmlUtil.escape(value));
+			sb.append(HtmlUtil.escape(properties.getProperty(propertyName)));
 			sb.append("\" />\n");
 		}
 
-		sb.append("\t</properties>\n");
-		sb.append("\t<testcase classname=\"");
+		sb.append("\t</properties>\n\t<testcase classname=\"");
 		sb.append(className);
 		sb.append("\" name=\"test\" time=\"0.0\"");
 
@@ -163,22 +152,22 @@ public class TCKtoJUnitConverter {
 		else {
 			String failureMessage = HtmlUtil.escape(message.substring(8));
 
-			sb.append(">\n");
-			sb.append("\t\t<failure message=\"");
+			sb.append(">\n\t\t<failure message=\"");
 			sb.append(failureMessage);
 			sb.append("\" type=\"junit.framework.AssertionFailedError\">\n");
 			sb.append(failureMessage);
-			sb.append("\n\t\t</failure>\n");
-			sb.append("\t</testcase>\n");
+			sb.append("\n\t\t</failure>\n\t</testcase>\n");
 		}
 
-		sb.append("\t<system-out><![CDATA[]]></system-out>\n");
-		sb.append("\t<system-err><![CDATA[]]></system-err>\n");
-		sb.append("</testsuite>");
+		sb.append("\t<system-out><![CDATA[]]></system-out>\n\t<system-err><![");
+		sb.append("CDATA[]]></system-err>\n</testsuite>");
 
 		FileUtil.write(
 			StringBundler.concat(outputDir, "/TEST-", className, ".xml"),
 			sb.toString());
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		TCKtoJUnitConverter.class);
 
 }

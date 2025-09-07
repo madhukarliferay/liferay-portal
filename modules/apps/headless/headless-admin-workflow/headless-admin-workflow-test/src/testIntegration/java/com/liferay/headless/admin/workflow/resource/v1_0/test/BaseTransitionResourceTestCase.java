@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.workflow.resource.v1_0.test;
@@ -28,44 +19,47 @@ import com.liferay.headless.admin.workflow.client.pagination.Page;
 import com.liferay.headless.admin.workflow.client.pagination.Pagination;
 import com.liferay.headless.admin.workflow.client.resource.v1_0.TransitionResource;
 import com.liferay.headless.admin.workflow.client.serdes.v1_0.TransitionSerDes;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
-import java.lang.reflect.InvocationTargetException;
+import jakarta.annotation.Generated;
 
-import java.text.DateFormat;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+
+import java.lang.reflect.Method;
+
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-
-import org.apache.commons.beanutils.BeanUtilsBean;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -89,7 +83,7 @@ public abstract class BaseTransitionResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -103,9 +97,16 @@ public abstract class BaseTransitionResourceTestCase {
 
 		_transitionResource.setContextCompany(testCompany);
 
-		TransitionResource.Builder builder = TransitionResource.builder();
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
-		transitionResource = builder.locale(
+		transitionResource = TransitionResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
 			LocaleUtil.getDefault()
 		).build();
 	}
@@ -118,7 +119,32 @@ public abstract class BaseTransitionResourceTestCase {
 
 	@Test
 	public void testClientSerDesToDTO() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Transition transition1 = randomTransition();
+
+		String json = objectMapper.writeValueAsString(transition1);
+
+		Transition transition2 = TransitionSerDes.toDTO(json);
+
+		Assert.assertTrue(equals(transition1, transition2));
+	}
+
+	@Test
+	public void testClientSerDesToJSON() throws Exception {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		Transition transition = randomTransition();
+
+		String json1 = objectMapper.writeValueAsString(transition);
+		String json2 = TransitionSerDes.toJSON(transition);
+
+		Assert.assertEquals(
+			objectMapper.readTree(json1), objectMapper.readTree(json2));
+	}
+
+	protected ObjectMapper getClientSerDesObjectMapper() {
+		return new ObjectMapper() {
 			{
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				configure(
@@ -133,40 +159,6 @@ public abstract class BaseTransitionResourceTestCase {
 					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
 			}
 		};
-
-		Transition transition1 = randomTransition();
-
-		String json = objectMapper.writeValueAsString(transition1);
-
-		Transition transition2 = TransitionSerDes.toDTO(json);
-
-		Assert.assertTrue(equals(transition1, transition2));
-	}
-
-	@Test
-	public void testClientSerDesToJSON() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
-
-		Transition transition = randomTransition();
-
-		String json1 = objectMapper.writeValueAsString(transition);
-		String json2 = TransitionSerDes.toJSON(transition);
-
-		Assert.assertEquals(
-			objectMapper.readTree(json1), objectMapper.readTree(json2));
 	}
 
 	@Test
@@ -175,7 +167,10 @@ public abstract class BaseTransitionResourceTestCase {
 
 		Transition transition = randomTransition();
 
-		transition.setTransitionName(regex);
+		transition.setLabel(regex);
+		transition.setName(regex);
+		transition.setSourceNodeName(regex);
+		transition.setTargetNodeName(regex);
 
 		String json = TransitionSerDes.toJSON(transition);
 
@@ -183,37 +178,42 @@ public abstract class BaseTransitionResourceTestCase {
 
 		transition = TransitionSerDes.toDTO(json);
 
-		Assert.assertEquals(regex, transition.getTransitionName());
+		Assert.assertEquals(regex, transition.getLabel());
+		Assert.assertEquals(regex, transition.getName());
+		Assert.assertEquals(regex, transition.getSourceNodeName());
+		Assert.assertEquals(regex, transition.getTargetNodeName());
 	}
 
 	@Test
 	public void testGetWorkflowInstanceNextTransitionsPage() throws Exception {
-		Page<Transition> page =
-			transitionResource.getWorkflowInstanceNextTransitionsPage(
-				testGetWorkflowInstanceNextTransitionsPage_getWorkflowInstanceId(),
-				Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long workflowInstanceId =
 			testGetWorkflowInstanceNextTransitionsPage_getWorkflowInstanceId();
 		Long irrelevantWorkflowInstanceId =
 			testGetWorkflowInstanceNextTransitionsPage_getIrrelevantWorkflowInstanceId();
 
-		if ((irrelevantWorkflowInstanceId != null)) {
+		Page<Transition> page =
+			transitionResource.getWorkflowInstanceNextTransitionsPage(
+				workflowInstanceId, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantWorkflowInstanceId != null) {
 			Transition irrelevantTransition =
 				testGetWorkflowInstanceNextTransitionsPage_addTransition(
 					irrelevantWorkflowInstanceId, randomIrrelevantTransition());
 
 			page = transitionResource.getWorkflowInstanceNextTransitionsPage(
-				irrelevantWorkflowInstanceId, Pagination.of(1, 2));
+				irrelevantWorkflowInstanceId,
+				Pagination.of(1, (int)totalCount + 1));
 
-			Assert.assertEquals(1, page.getTotalCount());
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
 
-			assertEquals(
-				Arrays.asList(irrelevantTransition),
-				(List<Transition>)page.getItems());
-			assertValid(page);
+			assertContains(
+				irrelevantTransition, (List<Transition>)page.getItems());
+			assertValid(
+				page,
+				testGetWorkflowInstanceNextTransitionsPage_getExpectedActions(
+					irrelevantWorkflowInstanceId));
 		}
 
 		Transition transition1 =
@@ -225,14 +225,26 @@ public abstract class BaseTransitionResourceTestCase {
 				workflowInstanceId, randomTransition());
 
 		page = transitionResource.getWorkflowInstanceNextTransitionsPage(
-			workflowInstanceId, Pagination.of(1, 2));
+			workflowInstanceId, Pagination.of(1, 10));
 
-		Assert.assertEquals(2, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(transition1, transition2),
-			(List<Transition>)page.getItems());
-		assertValid(page);
+		assertContains(transition1, (List<Transition>)page.getItems());
+		assertContains(transition2, (List<Transition>)page.getItems());
+		assertValid(
+			page,
+			testGetWorkflowInstanceNextTransitionsPage_getExpectedActions(
+				workflowInstanceId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetWorkflowInstanceNextTransitionsPage_getExpectedActions(
+				Long workflowInstanceId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -241,6 +253,12 @@ public abstract class BaseTransitionResourceTestCase {
 
 		Long workflowInstanceId =
 			testGetWorkflowInstanceNextTransitionsPage_getWorkflowInstanceId();
+
+		Page<Transition> transitionsPage =
+			transitionResource.getWorkflowInstanceNextTransitionsPage(
+				workflowInstanceId, null);
+
+		int totalCount = GetterUtil.getInteger(transitionsPage.getTotalCount());
 
 		Transition transition1 =
 			testGetWorkflowInstanceNextTransitionsPage_addTransition(
@@ -254,31 +272,69 @@ public abstract class BaseTransitionResourceTestCase {
 			testGetWorkflowInstanceNextTransitionsPage_addTransition(
 				workflowInstanceId, randomTransition());
 
-		Page<Transition> page1 =
-			transitionResource.getWorkflowInstanceNextTransitionsPage(
-				workflowInstanceId, Pagination.of(1, 2));
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
 
-		List<Transition> transitions1 = (List<Transition>)page1.getItems();
+		int pageSizeLimit = 500;
 
-		Assert.assertEquals(transitions1.toString(), 2, transitions1.size());
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Transition> page1 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		Page<Transition> page2 =
-			transitionResource.getWorkflowInstanceNextTransitionsPage(
-				workflowInstanceId, Pagination.of(2, 2));
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
 
-		Assert.assertEquals(3, page2.getTotalCount());
+			assertContains(transition1, (List<Transition>)page1.getItems());
 
-		List<Transition> transitions2 = (List<Transition>)page2.getItems();
+			Page<Transition> page2 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		Assert.assertEquals(transitions2.toString(), 1, transitions2.size());
+			assertContains(transition2, (List<Transition>)page2.getItems());
 
-		Page<Transition> page3 =
-			transitionResource.getWorkflowInstanceNextTransitionsPage(
-				workflowInstanceId, Pagination.of(1, 3));
+			Page<Transition> page3 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(transition1, transition2, transition3),
-			(List<Transition>)page3.getItems());
+			assertContains(transition3, (List<Transition>)page3.getItems());
+		}
+		else {
+			Page<Transition> page1 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId, Pagination.of(1, totalCount + 2));
+
+			List<Transition> transitions1 = (List<Transition>)page1.getItems();
+
+			Assert.assertEquals(
+				transitions1.toString(), totalCount + 2, transitions1.size());
+
+			Page<Transition> page2 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId, Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Transition> transitions2 = (List<Transition>)page2.getItems();
+
+			Assert.assertEquals(
+				transitions2.toString(), 1, transitions2.size());
+
+			Page<Transition> page3 =
+				transitionResource.getWorkflowInstanceNextTransitionsPage(
+					workflowInstanceId, Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(transition1, (List<Transition>)page3.getItems());
+			assertContains(transition2, (List<Transition>)page3.getItems());
+			assertContains(transition3, (List<Transition>)page3.getItems());
+		}
 	}
 
 	protected Transition
@@ -307,32 +363,34 @@ public abstract class BaseTransitionResourceTestCase {
 
 	@Test
 	public void testGetWorkflowTaskNextTransitionsPage() throws Exception {
-		Page<Transition> page =
-			transitionResource.getWorkflowTaskNextTransitionsPage(
-				testGetWorkflowTaskNextTransitionsPage_getWorkflowTaskId(),
-				Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long workflowTaskId =
 			testGetWorkflowTaskNextTransitionsPage_getWorkflowTaskId();
 		Long irrelevantWorkflowTaskId =
 			testGetWorkflowTaskNextTransitionsPage_getIrrelevantWorkflowTaskId();
 
-		if ((irrelevantWorkflowTaskId != null)) {
+		Page<Transition> page =
+			transitionResource.getWorkflowTaskNextTransitionsPage(
+				workflowTaskId, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantWorkflowTaskId != null) {
 			Transition irrelevantTransition =
 				testGetWorkflowTaskNextTransitionsPage_addTransition(
 					irrelevantWorkflowTaskId, randomIrrelevantTransition());
 
 			page = transitionResource.getWorkflowTaskNextTransitionsPage(
-				irrelevantWorkflowTaskId, Pagination.of(1, 2));
+				irrelevantWorkflowTaskId,
+				Pagination.of(1, (int)totalCount + 1));
 
-			Assert.assertEquals(1, page.getTotalCount());
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
 
-			assertEquals(
-				Arrays.asList(irrelevantTransition),
-				(List<Transition>)page.getItems());
-			assertValid(page);
+			assertContains(
+				irrelevantTransition, (List<Transition>)page.getItems());
+			assertValid(
+				page,
+				testGetWorkflowTaskNextTransitionsPage_getExpectedActions(
+					irrelevantWorkflowTaskId));
 		}
 
 		Transition transition1 =
@@ -344,14 +402,26 @@ public abstract class BaseTransitionResourceTestCase {
 				workflowTaskId, randomTransition());
 
 		page = transitionResource.getWorkflowTaskNextTransitionsPage(
-			workflowTaskId, Pagination.of(1, 2));
+			workflowTaskId, Pagination.of(1, 10));
 
-		Assert.assertEquals(2, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(transition1, transition2),
-			(List<Transition>)page.getItems());
-		assertValid(page);
+		assertContains(transition1, (List<Transition>)page.getItems());
+		assertContains(transition2, (List<Transition>)page.getItems());
+		assertValid(
+			page,
+			testGetWorkflowTaskNextTransitionsPage_getExpectedActions(
+				workflowTaskId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetWorkflowTaskNextTransitionsPage_getExpectedActions(
+				Long workflowTaskId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -360,6 +430,12 @@ public abstract class BaseTransitionResourceTestCase {
 
 		Long workflowTaskId =
 			testGetWorkflowTaskNextTransitionsPage_getWorkflowTaskId();
+
+		Page<Transition> transitionsPage =
+			transitionResource.getWorkflowTaskNextTransitionsPage(
+				workflowTaskId, null);
+
+		int totalCount = GetterUtil.getInteger(transitionsPage.getTotalCount());
 
 		Transition transition1 =
 			testGetWorkflowTaskNextTransitionsPage_addTransition(
@@ -373,31 +449,69 @@ public abstract class BaseTransitionResourceTestCase {
 			testGetWorkflowTaskNextTransitionsPage_addTransition(
 				workflowTaskId, randomTransition());
 
-		Page<Transition> page1 =
-			transitionResource.getWorkflowTaskNextTransitionsPage(
-				workflowTaskId, Pagination.of(1, 2));
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
 
-		List<Transition> transitions1 = (List<Transition>)page1.getItems();
+		int pageSizeLimit = 500;
 
-		Assert.assertEquals(transitions1.toString(), 2, transitions1.size());
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Transition> page1 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		Page<Transition> page2 =
-			transitionResource.getWorkflowTaskNextTransitionsPage(
-				workflowTaskId, Pagination.of(2, 2));
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
 
-		Assert.assertEquals(3, page2.getTotalCount());
+			assertContains(transition1, (List<Transition>)page1.getItems());
 
-		List<Transition> transitions2 = (List<Transition>)page2.getItems();
+			Page<Transition> page2 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		Assert.assertEquals(transitions2.toString(), 1, transitions2.size());
+			assertContains(transition2, (List<Transition>)page2.getItems());
 
-		Page<Transition> page3 =
-			transitionResource.getWorkflowTaskNextTransitionsPage(
-				workflowTaskId, Pagination.of(1, 3));
+			Page<Transition> page3 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit));
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(transition1, transition2, transition3),
-			(List<Transition>)page3.getItems());
+			assertContains(transition3, (List<Transition>)page3.getItems());
+		}
+		else {
+			Page<Transition> page1 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId, Pagination.of(1, totalCount + 2));
+
+			List<Transition> transitions1 = (List<Transition>)page1.getItems();
+
+			Assert.assertEquals(
+				transitions1.toString(), totalCount + 2, transitions1.size());
+
+			Page<Transition> page2 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId, Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Transition> transitions2 = (List<Transition>)page2.getItems();
+
+			Assert.assertEquals(
+				transitions2.toString(), 1, transitions2.size());
+
+			Page<Transition> page3 =
+				transitionResource.getWorkflowTaskNextTransitionsPage(
+					workflowTaskId, Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(transition1, (List<Transition>)page3.getItems());
+			assertContains(transition2, (List<Transition>)page3.getItems());
+			assertContains(transition3, (List<Transition>)page3.getItems());
+		}
 	}
 
 	protected Transition testGetWorkflowTaskNextTransitionsPage_addTransition(
@@ -420,6 +534,28 @@ public abstract class BaseTransitionResourceTestCase {
 		throws Exception {
 
 		return null;
+	}
+
+	@Test
+	public void testBatchEngineDeleteImportTask() throws Exception {
+		Assert.assertTrue(true);
+	}
+
+	protected void assertContains(
+		Transition transition, List<Transition> transitions) {
+
+		boolean contains = false;
+
+		for (Transition item : transitions) {
+			if (equals(transition, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			transitions + " does not contain " + transition, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -472,33 +608,38 @@ public abstract class BaseTransitionResourceTestCase {
 		}
 	}
 
-	protected void assertEqualsJSONArray(
-		List<Transition> transitions, JSONArray jsonArray) {
-
-		for (Transition transition : transitions) {
-			boolean contains = false;
-
-			for (Object object : jsonArray) {
-				if (equalsJSONObject(transition, (JSONObject)object)) {
-					contains = true;
-
-					break;
-				}
-			}
-
-			Assert.assertTrue(
-				jsonArray + " does not contain " + transition, contains);
-		}
-	}
-
-	protected void assertValid(Transition transition) {
+	protected void assertValid(Transition transition) throws Exception {
 		boolean valid = true;
 
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals("transitionName", additionalAssertFieldName)) {
-				if (transition.getTransitionName() == null) {
+			if (Objects.equals("label", additionalAssertFieldName)) {
+				if (transition.getLabel() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("name", additionalAssertFieldName)) {
+				if (transition.getName() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("sourceNodeName", additionalAssertFieldName)) {
+				if (transition.getSourceNodeName() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("targetNodeName", additionalAssertFieldName)) {
+				if (transition.getTargetNodeName() == null) {
 					valid = false;
 				}
 
@@ -514,6 +655,13 @@ public abstract class BaseTransitionResourceTestCase {
 	}
 
 	protected void assertValid(Page<Transition> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Transition> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Transition> transitions = page.getItems();
@@ -528,19 +676,76 @@ public abstract class BaseTransitionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		assertValid(page.getActions(), expectedActions);
+	}
+
+	protected void assertValid(
+		Map<String, Map<String, String>> actions1,
+		Map<String, Map<String, String>> actions2) {
+
+		for (String key : actions2.keySet()) {
+			Map action = actions1.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map<String, String> expectedAction = actions2.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[0];
 	}
 
-	protected List<GraphQLField> getGraphQLFields() {
+	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(
+					com.liferay.headless.admin.workflow.dto.v1_0.Transition.
+						class)) {
 
-			graphQLFields.add(new GraphQLField(additionalAssertFieldName));
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
+
+				continue;
+			}
+
+			graphQLFields.addAll(getGraphQLFields(field));
+		}
+
+		return graphQLFields;
+	}
+
+	protected List<GraphQLField> getGraphQLFields(
+			java.lang.reflect.Field... fields)
+		throws Exception {
+
+		List<GraphQLField> graphQLFields = new ArrayList<>();
+
+		for (java.lang.reflect.Field field : fields) {
+			com.liferay.portal.vulcan.graphql.annotation.GraphQLField
+				vulcanGraphQLField = field.getAnnotation(
+					com.liferay.portal.vulcan.graphql.annotation.GraphQLField.
+						class);
+
+			if (vulcanGraphQLField != null) {
+				Class<?> clazz = field.getType();
+
+				if (clazz.isArray()) {
+					clazz = clazz.getComponentType();
+				}
+
+				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
+					getDeclaredFields(clazz));
+
+				graphQLFields.add(
+					new GraphQLField(field.getName(), childrenGraphQLFields));
+			}
 		}
 
 		return graphQLFields;
@@ -558,10 +763,41 @@ public abstract class BaseTransitionResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals("transitionName", additionalAssertFieldName)) {
+			if (Objects.equals("label", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						transition1.getTransitionName(),
-						transition2.getTransitionName())) {
+						transition1.getLabel(), transition2.getLabel())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("name", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						transition1.getName(), transition2.getName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("sourceNodeName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						transition1.getSourceNodeName(),
+						transition2.getSourceNodeName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("targetNodeName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						transition1.getTargetNodeName(),
+						transition2.getTargetNodeName())) {
 
 					return false;
 				}
@@ -577,26 +813,49 @@ public abstract class BaseTransitionResourceTestCase {
 		return true;
 	}
 
-	protected boolean equalsJSONObject(
-		Transition transition, JSONObject jsonObject) {
+	protected boolean equals(
+		Map<String, Object> map1, Map<String, Object> map2) {
 
-		for (String fieldName : getAdditionalAssertFieldNames()) {
-			if (Objects.equals("transitionName", fieldName)) {
-				if (!Objects.deepEquals(
-						transition.getTransitionName(),
-						jsonObject.getString("transitionName"))) {
+		if (Objects.equals(map1.keySet(), map2.keySet())) {
+			for (Map.Entry<String, Object> entry : map1.entrySet()) {
+				if (entry.getValue() instanceof Map) {
+					if (!equals(
+							(Map)entry.getValue(),
+							(Map)map2.get(entry.getKey()))) {
+
+						return false;
+					}
+				}
+				else if (!Objects.deepEquals(
+							entry.getValue(), map2.get(entry.getKey()))) {
 
 					return false;
 				}
-
-				continue;
 			}
 
-			throw new IllegalArgumentException(
-				"Invalid field name " + fieldName);
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
+		throws Exception {
+
+		if (clazz.getClassLoader() == null) {
+			return new java.lang.reflect.Field[0];
+		}
+
+		return TransformUtil.transform(
+			ReflectionUtil.getDeclaredFields(clazz),
+			field -> {
+				if (field.isSynthetic()) {
+					return null;
+				}
+
+				return field;
+			},
+			java.lang.reflect.Field.class);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()
@@ -613,6 +872,10 @@ public abstract class BaseTransitionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -622,18 +885,18 @@ public abstract class BaseTransitionResourceTestCase {
 	protected List<EntityField> getEntityFields(EntityField.Type type)
 		throws Exception {
 
-		java.util.Collection<EntityField> entityFields = getEntityFields();
+		return TransformUtil.transform(
+			getEntityFields(),
+			entityField -> {
+				if (!Objects.equals(entityField.getType(), type) ||
+					ArrayUtil.contains(
+						getIgnoredEntityFieldNames(), entityField.getName())) {
 
-		Stream<EntityField> stream = entityFields.stream();
+					return null;
+				}
 
-		return stream.filter(
-			entityField ->
-				Objects.equals(entityField.getType(), type) &&
-				!ArrayUtil.contains(
-					getIgnoredEntityFieldNames(), entityField.getName())
-		).collect(
-			Collectors.toList()
-		);
+				return entityField;
+			});
 	}
 
 	protected String getFilterString(
@@ -649,10 +912,186 @@ public abstract class BaseTransitionResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
-		if (entityFieldName.equals("transitionName")) {
-			sb.append("'");
-			sb.append(String.valueOf(transition.getTransitionName()));
-			sb.append("'");
+		if (entityFieldName.equals("label")) {
+			Object object = transition.getLabel();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("name")) {
+			Object object = transition.getName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("sourceNodeName")) {
+			Object object = transition.getSourceNodeName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("targetNodeName")) {
+			Object object = transition.getTargetNodeName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -671,17 +1110,43 @@ public abstract class BaseTransitionResourceTestCase {
 			"application/json");
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
 		httpInvoker.path("http://localhost:8080/o/graphql");
-		httpInvoker.userNameAndPassword("test@liferay.com:test");
+		httpInvoker.userNameAndPassword(
+			"test@liferay.com:" + PropsValues.DEFAULT_ADMIN_PASSWORD);
 
 		HttpInvoker.HttpResponse httpResponse = httpInvoker.invoke();
 
 		return httpResponse.getContent();
 	}
 
+	protected JSONObject invokeGraphQLMutation(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField mutationGraphQLField = new GraphQLField(
+			"mutation", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(mutationGraphQLField.toString()));
+	}
+
+	protected JSONObject invokeGraphQLQuery(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField queryGraphQLField = new GraphQLField(
+			"query", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(queryGraphQLField.toString()));
+	}
+
 	protected Transition randomTransition() throws Exception {
 		return new Transition() {
 			{
-				transitionName = RandomTestUtil.randomString();
+				label = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				sourceNodeName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				targetNodeName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 			}
 		};
 	}
@@ -697,9 +1162,131 @@ public abstract class BaseTransitionResourceTestCase {
 	}
 
 	protected TransitionResource transitionResource;
-	protected Group irrelevantGroup;
-	protected Company testCompany;
-	protected Group testGroup;
+	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
+	protected com.liferay.portal.kernel.model.Company testCompany;
+	protected com.liferay.portal.kernel.model.Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = source.getClass();
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					_getAllDeclaredFields(sourceClass)) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				try {
+					Method setMethod = _getMethod(
+						targetClass, field.getName(), "set",
+						getMethod.getReturnType());
+
+					setMethod.invoke(target, getMethod.invoke(source));
+				}
+				catch (Exception e) {
+					continue;
+				}
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static List<java.lang.reflect.Field> _getAllDeclaredFields(
+			Class<?> clazz) {
+
+			List<java.lang.reflect.Field> fields = new ArrayList<>();
+
+			while ((clazz != null) && (clazz != Object.class)) {
+				for (java.lang.reflect.Field field :
+						clazz.getDeclaredFields()) {
+
+					fields.add(field);
+				}
+
+				clazz = clazz.getSuperclass();
+			}
+
+			return fields;
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -707,9 +1294,22 @@ public abstract class BaseTransitionResourceTestCase {
 			this(key, new HashMap<>(), graphQLFields);
 		}
 
+		public GraphQLField(String key, List<GraphQLField> graphQLFields) {
+			this(key, new HashMap<>(), graphQLFields);
+		}
+
 		public GraphQLField(
 			String key, Map<String, Object> parameterMap,
 			GraphQLField... graphQLFields) {
+
+			_key = key;
+			_parameterMap = parameterMap;
+			_graphQLFields = Arrays.asList(graphQLFields);
+		}
+
+		public GraphQLField(
+			String key, Map<String, Object> parameterMap,
+			List<GraphQLField> graphQLFields) {
 
 			_key = key;
 			_parameterMap = parameterMap;
@@ -727,25 +1327,25 @@ public abstract class BaseTransitionResourceTestCase {
 						_parameterMap.entrySet()) {
 
 					sb.append(entry.getKey());
-					sb.append(":");
+					sb.append(": ");
 					sb.append(entry.getValue());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append(")");
 			}
 
-			if (_graphQLFields.length > 0) {
+			if (!_graphQLFields.isEmpty()) {
 				sb.append("{");
 
 				for (GraphQLField graphQLField : _graphQLFields) {
 					sb.append(graphQLField.toString());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append("}");
 			}
@@ -753,28 +1353,18 @@ public abstract class BaseTransitionResourceTestCase {
 			return sb.toString();
 		}
 
-		private final GraphQLField[] _graphQLFields;
+		private final List<GraphQLField> _graphQLFields;
 		private final String _key;
 		private final Map<String, Object> _parameterMap;
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseTransitionResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseTransitionResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
+	private static Format _format;
 
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
-	private static DateFormat _dateFormat;
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.headless.admin.workflow.resource.v1_0.TransitionResource

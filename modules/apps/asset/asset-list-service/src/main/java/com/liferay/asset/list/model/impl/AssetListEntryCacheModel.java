@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model.impl;
@@ -37,17 +28,17 @@ public class AssetListEntryCacheModel
 	implements CacheModel<AssetListEntry>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AssetListEntryCacheModel)) {
+		if (!(object instanceof AssetListEntryCacheModel)) {
 			return false;
 		}
 
 		AssetListEntryCacheModel assetListEntryCacheModel =
-			(AssetListEntryCacheModel)obj;
+			(AssetListEntryCacheModel)object;
 
 		if ((assetListEntryId == assetListEntryCacheModel.assetListEntryId) &&
 			(mvccVersion == assetListEntryCacheModel.mvccVersion)) {
@@ -77,12 +68,16 @@ public class AssetListEntryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", assetListEntryId=");
 		sb.append(assetListEntryId);
 		sb.append(", groupId=");
@@ -103,6 +98,10 @@ public class AssetListEntryCacheModel
 		sb.append(title);
 		sb.append(", type=");
 		sb.append(type);
+		sb.append(", assetEntrySubtype=");
+		sb.append(assetEntrySubtype);
+		sb.append(", assetEntryType=");
+		sb.append(assetEntryType);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
 		sb.append("}");
@@ -115,12 +114,20 @@ public class AssetListEntryCacheModel
 		AssetListEntryImpl assetListEntryImpl = new AssetListEntryImpl();
 
 		assetListEntryImpl.setMvccVersion(mvccVersion);
+		assetListEntryImpl.setCtCollectionId(ctCollectionId);
 
 		if (uuid == null) {
 			assetListEntryImpl.setUuid("");
 		}
 		else {
 			assetListEntryImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			assetListEntryImpl.setExternalReferenceCode("");
+		}
+		else {
+			assetListEntryImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		assetListEntryImpl.setAssetListEntryId(assetListEntryId);
@@ -165,6 +172,20 @@ public class AssetListEntryCacheModel
 
 		assetListEntryImpl.setType(type);
 
+		if (assetEntrySubtype == null) {
+			assetListEntryImpl.setAssetEntrySubtype("");
+		}
+		else {
+			assetListEntryImpl.setAssetEntrySubtype(assetEntrySubtype);
+		}
+
+		if (assetEntryType == null) {
+			assetListEntryImpl.setAssetEntryType("");
+		}
+		else {
+			assetListEntryImpl.setAssetEntryType(assetEntryType);
+		}
+
 		if (lastPublishDate == Long.MIN_VALUE) {
 			assetListEntryImpl.setLastPublishDate(null);
 		}
@@ -180,7 +201,10 @@ public class AssetListEntryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		assetListEntryId = objectInput.readLong();
 
@@ -196,6 +220,8 @@ public class AssetListEntryCacheModel
 		title = objectInput.readUTF();
 
 		type = objectInput.readInt();
+		assetEntrySubtype = objectInput.readUTF();
+		assetEntryType = objectInput.readUTF();
 		lastPublishDate = objectInput.readLong();
 	}
 
@@ -203,11 +229,20 @@ public class AssetListEntryCacheModel
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
 
+		objectOutput.writeLong(ctCollectionId);
+
 		if (uuid == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(assetListEntryId);
@@ -243,11 +278,28 @@ public class AssetListEntryCacheModel
 		}
 
 		objectOutput.writeInt(type);
+
+		if (assetEntrySubtype == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(assetEntrySubtype);
+		}
+
+		if (assetEntryType == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(assetEntryType);
+		}
+
 		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public String uuid;
+	public String externalReferenceCode;
 	public long assetListEntryId;
 	public long groupId;
 	public long companyId;
@@ -258,6 +310,8 @@ public class AssetListEntryCacheModel
 	public String assetListEntryKey;
 	public String title;
 	public int type;
+	public String assetEntrySubtype;
+	public String assetEntryType;
 	public long lastPublishDate;
 
 }

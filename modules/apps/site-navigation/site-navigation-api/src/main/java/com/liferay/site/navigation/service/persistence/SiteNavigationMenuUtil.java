@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the site navigation menu service. This utility wraps <code>com.liferay.site.navigation.service.persistence.impl.SiteNavigationMenuPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class SiteNavigationMenuUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -757,6 +744,133 @@ public class SiteNavigationMenuUtil {
 	}
 
 	/**
+	 * Returns all the site navigation menus that the user has permission to view where groupId = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @return the matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByGroupId(
+		long[] groupIds) {
+
+		return getPersistence().filterFindByGroupId(groupIds);
+	}
+
+	/**
+	 * Returns a range of all the site navigation menus that the user has permission to view where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @return the range of matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByGroupId(
+		long[] groupIds, int start, int end) {
+
+		return getPersistence().filterFindByGroupId(groupIds, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus that the user has permission to view where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().filterFindByGroupId(
+			groupIds, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns all the site navigation menus where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @return the matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByGroupId(long[] groupIds) {
+		return getPersistence().findByGroupId(groupIds);
+	}
+
+	/**
+	 * Returns a range of all the site navigation menus where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @return the range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByGroupId(
+		long[] groupIds, int start, int end) {
+
+		return getPersistence().findByGroupId(groupIds, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().findByGroupId(
+			groupIds, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where groupId = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByGroupId(
+			groupIds, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
 	 * Removes all the site navigation menus where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -776,6 +890,16 @@ public class SiteNavigationMenuUtil {
 	}
 
 	/**
+	 * Returns the number of site navigation menus where groupId = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @return the number of matching site navigation menus
+	 */
+	public static int countByGroupId(long[] groupIds) {
+		return getPersistence().countByGroupId(groupIds);
+	}
+
+	/**
 	 * Returns the number of site navigation menus that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -783,6 +907,189 @@ public class SiteNavigationMenuUtil {
 	 */
 	public static int filterCountByGroupId(long groupId) {
 		return getPersistence().filterCountByGroupId(groupId);
+	}
+
+	/**
+	 * Returns the number of site navigation menus that the user has permission to view where groupId = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @return the number of matching site navigation menus that the user has permission to view
+	 */
+	public static int filterCountByGroupId(long[] groupIds) {
+		return getPersistence().filterCountByGroupId(groupIds);
+	}
+
+	/**
+	 * Returns all the site navigation menus where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByCompanyId(long companyId) {
+		return getPersistence().findByCompanyId(companyId);
+	}
+
+	/**
+	 * Returns a range of all the site navigation menus where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @return the range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByCompanyId(
+		long companyId, int start, int end) {
+
+		return getPersistence().findByCompanyId(companyId, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().findByCompanyId(
+			companyId, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByCompanyId(
+			companyId, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first site navigation menu in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching site navigation menu
+	 * @throws NoSuchMenuException if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu findByCompanyId_First(
+			long companyId,
+			OrderByComparator<SiteNavigationMenu> orderByComparator)
+		throws com.liferay.site.navigation.exception.NoSuchMenuException {
+
+		return getPersistence().findByCompanyId_First(
+			companyId, orderByComparator);
+	}
+
+	/**
+	 * Returns the first site navigation menu in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching site navigation menu, or <code>null</code> if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu fetchByCompanyId_First(
+		long companyId,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().fetchByCompanyId_First(
+			companyId, orderByComparator);
+	}
+
+	/**
+	 * Returns the last site navigation menu in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching site navigation menu
+	 * @throws NoSuchMenuException if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu findByCompanyId_Last(
+			long companyId,
+			OrderByComparator<SiteNavigationMenu> orderByComparator)
+		throws com.liferay.site.navigation.exception.NoSuchMenuException {
+
+		return getPersistence().findByCompanyId_Last(
+			companyId, orderByComparator);
+	}
+
+	/**
+	 * Returns the last site navigation menu in the ordered set where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching site navigation menu, or <code>null</code> if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu fetchByCompanyId_Last(
+		long companyId,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().fetchByCompanyId_Last(
+			companyId, orderByComparator);
+	}
+
+	/**
+	 * Returns the site navigation menus before and after the current site navigation menu in the ordered set where companyId = &#63;.
+	 *
+	 * @param siteNavigationMenuId the primary key of the current site navigation menu
+	 * @param companyId the company ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next site navigation menu
+	 * @throws NoSuchMenuException if a site navigation menu with the primary key could not be found
+	 */
+	public static SiteNavigationMenu[] findByCompanyId_PrevAndNext(
+			long siteNavigationMenuId, long companyId,
+			OrderByComparator<SiteNavigationMenu> orderByComparator)
+		throws com.liferay.site.navigation.exception.NoSuchMenuException {
+
+		return getPersistence().findByCompanyId_PrevAndNext(
+			siteNavigationMenuId, companyId, orderByComparator);
+	}
+
+	/**
+	 * Removes all the site navigation menus where companyId = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 */
+	public static void removeByCompanyId(long companyId) {
+		getPersistence().removeByCompanyId(companyId);
+	}
+
+	/**
+	 * Returns the number of site navigation menus where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching site navigation menus
+	 */
+	public static int countByCompanyId(long companyId) {
+		return getPersistence().countByCompanyId(companyId);
 	}
 
 	/**
@@ -1087,6 +1394,142 @@ public class SiteNavigationMenuUtil {
 	}
 
 	/**
+	 * Returns all the site navigation menus that the user has permission to view where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @return the matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByG_LikeN(
+		long[] groupIds, String name) {
+
+		return getPersistence().filterFindByG_LikeN(groupIds, name);
+	}
+
+	/**
+	 * Returns a range of all the site navigation menus that the user has permission to view where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @return the range of matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByG_LikeN(
+		long[] groupIds, String name, int start, int end) {
+
+		return getPersistence().filterFindByG_LikeN(groupIds, name, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus that the user has permission to view where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching site navigation menus that the user has permission to view
+	 */
+	public static List<SiteNavigationMenu> filterFindByG_LikeN(
+		long[] groupIds, String name, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().filterFindByG_LikeN(
+			groupIds, name, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns all the site navigation menus where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @return the matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByG_LikeN(
+		long[] groupIds, String name) {
+
+		return getPersistence().findByG_LikeN(groupIds, name);
+	}
+
+	/**
+	 * Returns a range of all the site navigation menus where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @return the range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByG_LikeN(
+		long[] groupIds, String name, int start, int end) {
+
+		return getPersistence().findByG_LikeN(groupIds, name, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByG_LikeN(
+		long[] groupIds, String name, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator) {
+
+		return getPersistence().findByG_LikeN(
+			groupIds, name, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the site navigation menus where groupId = &#63; and name LIKE &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SiteNavigationMenuModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param start the lower bound of the range of site navigation menus
+	 * @param end the upper bound of the range of site navigation menus (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching site navigation menus
+	 */
+	public static List<SiteNavigationMenu> findByG_LikeN(
+		long[] groupIds, String name, int start, int end,
+		OrderByComparator<SiteNavigationMenu> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_LikeN(
+			groupIds, name, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
 	 * Removes all the site navigation menus where groupId = &#63; and name LIKE &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1108,6 +1551,17 @@ public class SiteNavigationMenuUtil {
 	}
 
 	/**
+	 * Returns the number of site navigation menus where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @return the number of matching site navigation menus
+	 */
+	public static int countByG_LikeN(long[] groupIds, String name) {
+		return getPersistence().countByG_LikeN(groupIds, name);
+	}
+
+	/**
 	 * Returns the number of site navigation menus that the user has permission to view where groupId = &#63; and name LIKE &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1116,6 +1570,17 @@ public class SiteNavigationMenuUtil {
 	 */
 	public static int filterCountByG_LikeN(long groupId, String name) {
 		return getPersistence().filterCountByG_LikeN(groupId, name);
+	}
+
+	/**
+	 * Returns the number of site navigation menus that the user has permission to view where groupId = any &#63; and name LIKE &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @return the number of matching site navigation menus that the user has permission to view
+	 */
+	public static int filterCountByG_LikeN(long[] groupIds, String name) {
+		return getPersistence().filterCountByG_LikeN(groupIds, name);
 	}
 
 	/**
@@ -1657,6 +2122,74 @@ public class SiteNavigationMenuUtil {
 	}
 
 	/**
+	 * Returns the site navigation menu where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchMenuException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching site navigation menu
+	 * @throws NoSuchMenuException if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.site.navigation.exception.NoSuchMenuException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the site navigation menu where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching site navigation menu, or <code>null</code> if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the site navigation menu where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching site navigation menu, or <code>null</code> if a matching site navigation menu could not be found
+	 */
+	public static SiteNavigationMenu fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the site navigation menu where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the site navigation menu that was removed
+	 */
+	public static SiteNavigationMenu removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.site.navigation.exception.NoSuchMenuException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of site navigation menus where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching site navigation menus
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
 	 * Caches the site navigation menu in the entity cache if it is enabled.
 	 *
 	 * @param siteNavigationMenu the site navigation menu
@@ -1812,29 +2345,15 @@ public class SiteNavigationMenuUtil {
 	}
 
 	public static SiteNavigationMenuPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<SiteNavigationMenuPersistence, SiteNavigationMenuPersistence>
-			_serviceTracker;
+	public static void setPersistence(
+		SiteNavigationMenuPersistence persistence) {
 
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			SiteNavigationMenuPersistence.class);
-
-		ServiceTracker
-			<SiteNavigationMenuPersistence, SiteNavigationMenuPersistence>
-				serviceTracker =
-					new ServiceTracker
-						<SiteNavigationMenuPersistence,
-						 SiteNavigationMenuPersistence>(
-							 bundle.getBundleContext(),
-							 SiteNavigationMenuPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+		_persistence = persistence;
 	}
+
+	private static volatile SiteNavigationMenuPersistence _persistence;
 
 }

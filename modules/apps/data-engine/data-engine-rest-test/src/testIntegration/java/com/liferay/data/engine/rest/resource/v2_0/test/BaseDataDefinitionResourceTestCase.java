@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.rest.resource.v2_0.test;
@@ -26,58 +17,78 @@ import com.liferay.data.engine.rest.client.dto.v2_0.DataDefinition;
 import com.liferay.data.engine.rest.client.http.HttpInvoker;
 import com.liferay.data.engine.rest.client.pagination.Page;
 import com.liferay.data.engine.rest.client.pagination.Pagination;
+import com.liferay.data.engine.rest.client.permission.Permission;
 import com.liferay.data.engine.rest.client.resource.v2_0.DataDefinitionResource;
 import com.liferay.data.engine.rest.client.serdes.v2_0.DataDefinitionSerDes;
+import com.liferay.headless.batch.engine.client.dto.v1_0.ImportTask;
+import com.liferay.headless.batch.engine.client.http.HttpInvoker.HttpResponse;
+import com.liferay.headless.batch.engine.client.resource.v1_0.ImportTaskResource;
+import com.liferay.oauth2.provider.scope.ScopeChecker;
 import com.liferay.petra.function.UnsafeTriConsumer;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegateBuilderRegistry;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
-import java.lang.reflect.InvocationTargetException;
+import jakarta.annotation.Generated;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.PathSegment;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
+
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.net.URI;
+
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.log4j.Level;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -86,6 +97,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 /**
  * @author Jeyvison Nascimento
@@ -96,12 +110,14 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 	@ClassRule
 	@Rule
-	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
-		new LiferayIntegrationTestRule();
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -115,10 +131,26 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 		_dataDefinitionResource.setContextCompany(testCompany);
 
-		DataDefinitionResource.Builder builder =
-			DataDefinitionResource.builder();
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
-		dataDefinitionResource = builder.locale(
+		dataDefinitionResource = DataDefinitionResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
 			LocaleUtil.getDefault()
 		).build();
 	}
@@ -131,7 +163,32 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 	@Test
 	public void testClientSerDesToDTO() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		DataDefinition dataDefinition1 = randomDataDefinition();
+
+		String json = objectMapper.writeValueAsString(dataDefinition1);
+
+		DataDefinition dataDefinition2 = DataDefinitionSerDes.toDTO(json);
+
+		Assert.assertTrue(equals(dataDefinition1, dataDefinition2));
+	}
+
+	@Test
+	public void testClientSerDesToJSON() throws Exception {
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
+
+		DataDefinition dataDefinition = randomDataDefinition();
+
+		String json1 = objectMapper.writeValueAsString(dataDefinition);
+		String json2 = DataDefinitionSerDes.toJSON(dataDefinition);
+
+		Assert.assertEquals(
+			objectMapper.readTree(json1), objectMapper.readTree(json2));
+	}
+
+	protected ObjectMapper getClientSerDesObjectMapper() {
+		return new ObjectMapper() {
 			{
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				configure(
@@ -146,40 +203,6 @@ public abstract class BaseDataDefinitionResourceTestCase {
 					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
 			}
 		};
-
-		DataDefinition dataDefinition1 = randomDataDefinition();
-
-		String json = objectMapper.writeValueAsString(dataDefinition1);
-
-		DataDefinition dataDefinition2 = DataDefinitionSerDes.toDTO(json);
-
-		Assert.assertTrue(equals(dataDefinition1, dataDefinition2));
-	}
-
-	@Test
-	public void testClientSerDesToJSON() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
-
-		DataDefinition dataDefinition = randomDataDefinition();
-
-		String json1 = objectMapper.writeValueAsString(dataDefinition);
-		String json2 = DataDefinitionSerDes.toJSON(dataDefinition);
-
-		Assert.assertEquals(
-			objectMapper.readTree(json1), objectMapper.readTree(json2));
 	}
 
 	@Test
@@ -188,8 +211,10 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 		DataDefinition dataDefinition = randomDataDefinition();
 
+		dataDefinition.setContentType(regex);
 		dataDefinition.setDataDefinitionKey(regex);
 		dataDefinition.setDefaultLanguageId(regex);
+		dataDefinition.setExternalReferenceCode(regex);
 		dataDefinition.setStorageType(regex);
 
 		String json = DataDefinitionSerDes.toJSON(dataDefinition);
@@ -198,20 +223,16 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 		dataDefinition = DataDefinitionSerDes.toDTO(json);
 
+		Assert.assertEquals(regex, dataDefinition.getContentType());
 		Assert.assertEquals(regex, dataDefinition.getDataDefinitionKey());
 		Assert.assertEquals(regex, dataDefinition.getDefaultLanguageId());
+		Assert.assertEquals(regex, dataDefinition.getExternalReferenceCode());
 		Assert.assertEquals(regex, dataDefinition.getStorageType());
 	}
 
 	@Test
-	public void testGetDataDefinitionDataDefinitionFieldFieldTypes()
-		throws Exception {
-
-		Assert.assertTrue(false);
-	}
-
-	@Test
 	public void testDeleteDataDefinition() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
 		DataDefinition dataDefinition =
 			testDeleteDataDefinition_addDataDefinition();
 
@@ -224,7 +245,6 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			404,
 			dataDefinitionResource.getDataDefinitionHttpResponse(
 				dataDefinition.getId()));
-
 		assertHttpResponseStatusCode(
 			404, dataDefinitionResource.getDataDefinitionHttpResponse(0L));
 	}
@@ -232,55 +252,169 @@ public abstract class BaseDataDefinitionResourceTestCase {
 	protected DataDefinition testDeleteDataDefinition_addDataDefinition()
 		throws Exception {
 
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
 	public void testGraphQLDeleteDataDefinition() throws Exception {
-		DataDefinition dataDefinition =
-			testGraphQLDataDefinition_addDataDefinition();
 
-		GraphQLField graphQLField = new GraphQLField(
-			"mutation",
-			new GraphQLField(
-				"deleteDataDefinition",
-				new HashMap<String, Object>() {
-					{
-						put("dataDefinitionId", dataDefinition.getId());
-					}
-				}));
+		// No namespace
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
+		DataDefinition dataDefinition1 =
+			testGraphQLDeleteDataDefinition_addDataDefinition();
 
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"deleteDataDefinition",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataDefinitionId",
+									dataDefinition1.getId());
+							}
+						})),
+				"JSONObject/data", "Object/deleteDataDefinition"));
 
-		Assert.assertTrue(dataJSONObject.getBoolean("deleteDataDefinition"));
-
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"graphql.execution.SimpleDataFetcherExceptionHandler",
-					Level.WARN)) {
-
-			graphQLField = new GraphQLField(
-				"query",
+		JSONArray errorsJSONArray1 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
 				new GraphQLField(
 					"dataDefinition",
 					new HashMap<String, Object>() {
 						{
-							put("dataDefinitionId", dataDefinition.getId());
+							put("dataDefinitionId", dataDefinition1.getId());
 						}
 					},
-					new GraphQLField("id")));
+					new GraphQLField("id"))),
+			"JSONArray/errors");
 
-			jsonObject = JSONFactoryUtil.createJSONObject(
-				invoke(graphQLField.toString()));
+		Assert.assertTrue(errorsJSONArray1.length() > 0);
 
-			JSONArray errorsJSONArray = jsonObject.getJSONArray("errors");
+		// Using the namespace dataEngine_v2_0
 
-			Assert.assertTrue(errorsJSONArray.length() > 0);
-		}
+		DataDefinition dataDefinition2 =
+			testGraphQLDeleteDataDefinition_addDataDefinition();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"deleteDataDefinition",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"dataDefinitionId",
+										dataDefinition2.getId());
+								}
+							}))),
+				"JSONObject/data", "JSONObject/dataEngine_v2_0",
+				"Object/deleteDataDefinition"));
+
+		JSONArray errorsJSONArray2 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"dataEngine_v2_0",
+					new GraphQLField(
+						"dataDefinition",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataDefinitionId",
+									dataDefinition2.getId());
+							}
+						},
+						new GraphQLField("id")))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray2.length() > 0);
+	}
+
+	protected DataDefinition testGraphQLDeleteDataDefinition_addDataDefinition()
+		throws Exception {
+
+		return testGraphQLDataDefinition_addDataDefinition();
+	}
+
+	@Test
+	public void testDeleteDataDefinitionBatch() throws Exception {
+		DataDefinition dataDefinition1 =
+			testDeleteDataDefinitionBatch_addDataDefinition();
+
+		testDeleteDataDefinitionBatch_deleteDataDefinition(
+			202, null, dataDefinition1.getId());
+
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.getDataDefinitionHttpResponse(
+				dataDefinition1.getId()));
+	}
+
+	protected DataDefinition testDeleteDataDefinitionBatch_addDataDefinition()
+		throws Exception {
+
+		return testDeleteDataDefinition_addDataDefinition();
+	}
+
+	protected void testDeleteDataDefinitionBatch_deleteDataDefinition(
+			int expectedStatusCode, String externalReferenceCode, Long id)
+		throws Exception {
+
+		HttpInvoker.HttpResponse httpResponse =
+			dataDefinitionResource.deleteDataDefinitionBatchHttpResponse(
+				null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode
+					).put(
+						"id", () -> id
+					)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		waitForFinish(
+			"COMPLETED",
+			JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+	}
+
+	@Test
+	public void testDeleteSiteDataDefinitionByContentTypeByExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		DataDefinition dataDefinition =
+			testDeleteSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition();
+
+		assertHttpResponseStatusCode(
+			204,
+			dataDefinitionResource.
+				deleteSiteDataDefinitionByContentTypeByExternalReferenceCodeHttpResponse(
+					dataDefinition.getSiteId(), dataDefinition.getContentType(),
+					dataDefinition.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByExternalReferenceCodeHttpResponse(
+					dataDefinition.getSiteId(), dataDefinition.getContentType(),
+					dataDefinition.getExternalReferenceCode()));
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByExternalReferenceCodeHttpResponse(
+					dataDefinition.getSiteId(), dataDefinition.getContentType(),
+					"-"));
+	}
+
+	protected DataDefinition
+			testDeleteSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
@@ -296,40 +430,1528 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		assertValid(getDataDefinition);
 	}
 
+	@Test
+	public void testVulcanCRUDItemDelegateGetItem() throws Exception {
+		DataDefinition postDataDefinition =
+			testGetDataDefinition_addDataDefinition();
+
+		DataDefinition getDataDefinition =
+			dataDefinitionResource.getDataDefinition(
+				postDataDefinition.getId());
+
+		VulcanCRUDItemDelegate vulcanCRUDItemDelegate =
+			_vulcanCRUDItemDelegateBuilderRegistry.builder(
+				testCompany,
+				"com.liferay.data.engine.rest.dto.v2_0.DataDefinition"
+			).acceptLanguage(
+				new AcceptLanguage() {
+
+					@Override
+					public List<Locale> getLocales() {
+						return Arrays.asList(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public String getPreferredLanguageId() {
+						return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public Locale getPreferredLocale() {
+						return LocaleUtil.getDefault();
+					}
+
+				}
+			).groupLocalService(
+				_groupLocalService
+			).httpServletRequest(
+				testVulcanCRUDItemDelegate_getHttpServletRequest()
+			).httpServletResponse(
+				new MockHttpServletResponse()
+			).resourceActionLocalService(
+				_resourceActionLocalService
+			).resourcePermissionLocalService(
+				_resourcePermissionLocalService
+			).roleLocalService(
+				_roleLocalService
+			).scopeChecker(
+				_scopeChecker
+			).uriInfo(
+				testVulcanCRUDItemDelegate_getUriInfo()
+			).user(
+				testVulcanCRUDItemDelegate_getUser()
+			).build();
+
+		Object item = vulcanCRUDItemDelegate.getItem(
+			postDataDefinition.getId());
+
+		assertEquals(
+			getDataDefinition, DataDefinitionSerDes.toDTO(item.toString()));
+	}
+
+	protected HttpServletRequest
+		testVulcanCRUDItemDelegate_getHttpServletRequest() {
+
+		return new MockHttpServletRequest() {
+
+			@Override
+			public StringBuffer getRequestURL() {
+				return new StringBuffer(
+					StringBundler.concat(
+						"http://localhost:8080/o/v1.0/",
+						RandomTestUtil.randomString(), "/",
+						RandomTestUtil.randomString()));
+			}
+
+		};
+	}
+
+	protected UriInfo testVulcanCRUDItemDelegate_getUriInfo() {
+		String applicationPath = RandomTestUtil.randomString() + "/";
+		String resourcePath = RandomTestUtil.randomString();
+
+		return new UriInfo() {
+
+			@Override
+			public String getPath() {
+				return resourcePath;
+			}
+
+			@Override
+			public String getPath(boolean decode) {
+				return getPath();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments(boolean decode) {
+				return getPathSegments();
+			}
+
+			@Override
+			public URI getRequestUri() {
+				return URI.create(
+					"http://localhost:8080/o/" + applicationPath +
+						resourcePath);
+			}
+
+			@Override
+			public UriBuilder getRequestUriBuilder() {
+				return UriBuilder.fromUri(getRequestUri());
+			}
+
+			@Override
+			public URI getAbsolutePath() {
+				return getRequestUri();
+			}
+
+			@Override
+			public UriBuilder getAbsolutePathBuilder() {
+				return getRequestUriBuilder();
+			}
+
+			@Override
+			public URI getBaseUri() {
+				return URI.create("http://localhost:8080/o/" + applicationPath);
+			}
+
+			@Override
+			public UriBuilder getBaseUriBuilder() {
+				return UriBuilder.fromUri(getBaseUri());
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters(
+				boolean decode) {
+
+				return getPathParameters();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters(
+				boolean decode) {
+
+				return getQueryParameters();
+			}
+
+			@Override
+			public List<String> getMatchedURIs() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<String> getMatchedURIs(boolean decode) {
+				return getMatchedURIs();
+			}
+
+			@Override
+			public List<Object> getMatchedResources() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public URI resolve(URI requestUri) {
+				return getBaseUri().resolve(requestUri);
+			}
+
+			@Override
+			public URI relativize(URI uri) {
+				return getBaseUri().relativize(uri);
+			}
+
+		};
+	}
+
+	protected com.liferay.portal.kernel.model.User
+		testVulcanCRUDItemDelegate_getUser() {
+
+		return _testCompanyAdminUser;
+	}
+
 	protected DataDefinition testGetDataDefinition_addDataDefinition()
 		throws Exception {
 
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
 	public void testGraphQLGetDataDefinition() throws Exception {
 		DataDefinition dataDefinition =
-			testGraphQLDataDefinition_addDataDefinition();
+			testGraphQLGetDataDefinition_addDataDefinition();
 
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"dataDefinition",
-				new HashMap<String, Object>() {
-					{
-						put("dataDefinitionId", dataDefinition.getId());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
+		// No namespace
 
 		Assert.assertTrue(
-			equalsJSONObject(
+			equals(
 				dataDefinition,
-				dataJSONObject.getJSONObject("dataDefinition")));
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataDefinition",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"dataDefinitionId",
+											dataDefinition.getId());
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data", "Object/dataDefinition"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataDefinition,
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataDefinition",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"dataDefinitionId",
+												dataDefinition.getId());
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataDefinition"))));
+	}
+
+	@Test
+	public void testGraphQLGetDataDefinitionNotFound() throws Exception {
+		Long irrelevantDataDefinitionId = RandomTestUtil.randomLong();
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataDefinition",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataDefinitionId",
+									irrelevantDataDefinitionId);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataDefinition",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"dataDefinitionId",
+										irrelevantDataDefinitionId);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataDefinition testGraphQLGetDataDefinition_addDataDefinition()
+		throws Exception {
+
+		return testGraphQLDataDefinition_addDataDefinition();
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePage()
+		throws Exception {
+
+		String contentType =
+			testGetDataDefinitionByContentTypeContentTypePage_getContentType();
+		String irrelevantContentType =
+			testGetDataDefinitionByContentTypeContentTypePage_getIrrelevantContentType();
+
+		Page<DataDefinition> page =
+			dataDefinitionResource.
+				getDataDefinitionByContentTypeContentTypePage(
+					contentType, null, Pagination.of(1, 10), null);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantContentType != null) {
+			DataDefinition irrelevantDataDefinition =
+				testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+					irrelevantContentType, randomIrrelevantDataDefinition());
+
+			page =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						irrelevantContentType, null,
+						Pagination.of(1, (int)totalCount + 1), null);
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(
+				irrelevantDataDefinition,
+				(List<DataDefinition>)page.getItems());
+			assertValid(
+				page,
+				testGetDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+					irrelevantContentType));
+		}
+
+		DataDefinition dataDefinition1 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition2 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, randomDataDefinition());
+
+		page =
+			dataDefinitionResource.
+				getDataDefinitionByContentTypeContentTypePage(
+					contentType, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(dataDefinition1, (List<DataDefinition>)page.getItems());
+		assertContains(dataDefinition2, (List<DataDefinition>)page.getItems());
+		assertValid(
+			page,
+			testGetDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+				contentType));
+
+		dataDefinitionResource.deleteDataDefinition(dataDefinition1.getId());
+
+		dataDefinitionResource.deleteDataDefinition(dataDefinition2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+				String contentType)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePageWithPagination()
+		throws Exception {
+
+		String contentType =
+			testGetDataDefinitionByContentTypeContentTypePage_getContentType();
+
+		Page<DataDefinition> dataDefinitionsPage =
+			dataDefinitionResource.
+				getDataDefinitionByContentTypeContentTypePage(
+					contentType, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(
+			dataDefinitionsPage.getTotalCount());
+
+		DataDefinition dataDefinition1 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition2 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition3 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, randomDataDefinition());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<DataDefinition> page1 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)page1.getItems());
+
+			Page<DataDefinition> page2 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)page2.getItems());
+
+			Page<DataDefinition> page3 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			assertContains(
+				dataDefinition3, (List<DataDefinition>)page3.getItems());
+		}
+		else {
+			Page<DataDefinition> page1 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null, Pagination.of(1, totalCount + 2),
+						null);
+
+			List<DataDefinition> dataDefinitions1 =
+				(List<DataDefinition>)page1.getItems();
+
+			Assert.assertEquals(
+				dataDefinitions1.toString(), totalCount + 2,
+				dataDefinitions1.size());
+
+			Page<DataDefinition> page2 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null, Pagination.of(2, totalCount + 2),
+						null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<DataDefinition> dataDefinitions2 =
+				(List<DataDefinition>)page2.getItems();
+
+			Assert.assertEquals(
+				dataDefinitions2.toString(), 1, dataDefinitions2.size());
+
+			Page<DataDefinition> page3 =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)page3.getItems());
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)page3.getItems());
+			assertContains(
+				dataDefinition3, (List<DataDefinition>)page3.getItems());
+		}
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePageWithSortDateTime()
+		throws Exception {
+
+		testGetDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(),
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePageWithSortDouble()
+		throws Exception {
+
+		testGetDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(
+					dataDefinition2, entityField.getName(), 0.5);
+			});
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePageWithSortInteger()
+		throws Exception {
+
+		testGetDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(
+					dataDefinition2, entityField.getName(), 1);
+			});
+	}
+
+	@Test
+	public void testGetDataDefinitionByContentTypeContentTypePageWithSortString()
+		throws Exception {
+
+		testGetDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.STRING,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				Class<?> clazz = dataDefinition1.getClass();
+
+				String entityFieldName = entityField.getName();
+
+				Method method = clazz.getMethod(
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(Map.class)) {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						Collections.singletonMap("Aaa", "Aaa"));
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						Collections.singletonMap("Bbb", "Bbb"));
+				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
+				else {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+				}
+			});
+	}
+
+	protected void testGetDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type type,
+			UnsafeTriConsumer
+				<EntityField, DataDefinition, DataDefinition, Exception>
+					unsafeTriConsumer)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		String contentType =
+			testGetDataDefinitionByContentTypeContentTypePage_getContentType();
+
+		DataDefinition dataDefinition1 = randomDataDefinition();
+		DataDefinition dataDefinition2 = randomDataDefinition();
+
+		for (EntityField entityField : entityFields) {
+			unsafeTriConsumer.accept(
+				entityField, dataDefinition1, dataDefinition2);
+		}
+
+		dataDefinition1 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, dataDefinition1);
+
+		dataDefinition2 =
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				contentType, dataDefinition2);
+
+		Page<DataDefinition> page =
+			dataDefinitionResource.
+				getDataDefinitionByContentTypeContentTypePage(
+					contentType, null, null, null);
+
+		for (EntityField entityField : entityFields) {
+			Page<DataDefinition> ascPage =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(1, (int)page.getTotalCount() + 1),
+						entityField.getName() + ":asc");
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)ascPage.getItems());
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)ascPage.getItems());
+
+			Page<DataDefinition> descPage =
+				dataDefinitionResource.
+					getDataDefinitionByContentTypeContentTypePage(
+						contentType, null,
+						Pagination.of(1, (int)page.getTotalCount() + 1),
+						entityField.getName() + ":desc");
+
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)descPage.getItems());
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)descPage.getItems());
+		}
+	}
+
+	protected DataDefinition
+			testGetDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				String contentType, DataDefinition dataDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetDataDefinitionByContentTypeContentTypePage_getContentType()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetDataDefinitionByContentTypeContentTypePage_getIrrelevantContentType()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
+	public void testGetDataDefinitionDataDefinitionFieldFieldTypes()
+		throws Exception {
+
+		Assert.assertTrue(false);
+	}
+
+	@Test
+	public void testGetDataDefinitionPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		DataDefinition postDataDefinition =
+			testGetDataDefinitionPermissionsPage_addDataDefinition();
+
+		Page<Permission> page =
+			dataDefinitionResource.getDataDefinitionPermissionsPage(
+				postDataDefinition.getId(), RoleConstants.GUEST);
+
+		Assert.assertNotNull(page);
+	}
+
+	protected DataDefinition
+			testGetDataDefinitionPermissionsPage_addDataDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeByDataDefinitionKey()
+		throws Exception {
+
+		DataDefinition postDataDefinition =
+			testGetSiteDataDefinitionByContentTypeByDataDefinitionKey_addDataDefinition();
+
+		DataDefinition getDataDefinition =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByDataDefinitionKey(
+					postDataDefinition.getSiteId(),
+					postDataDefinition.getContentType(),
+					postDataDefinition.getDataDefinitionKey());
+
+		assertEquals(postDataDefinition, getDataDefinition);
+		assertValid(getDataDefinition);
+	}
+
+	protected DataDefinition
+			testGetSiteDataDefinitionByContentTypeByDataDefinitionKey_addDataDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataDefinitionByContentTypeByDataDefinitionKey()
+		throws Exception {
+
+		DataDefinition dataDefinition =
+			testGraphQLGetSiteDataDefinitionByContentTypeByDataDefinitionKey_addDataDefinition();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				dataDefinition,
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataDefinitionByContentTypeByDataDefinitionKey",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"siteKey",
+											"\"" + dataDefinition.getSiteId() +
+												"\"");
+										put(
+											"contentType",
+											"\"" +
+												dataDefinition.
+													getContentType() + "\"");
+										put(
+											"dataDefinitionKey",
+											"\"" +
+												dataDefinition.
+													getDataDefinitionKey() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/dataDefinitionByContentTypeByDataDefinitionKey"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataDefinition,
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataDefinitionByContentTypeByDataDefinitionKey",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"siteKey",
+												"\"" +
+													dataDefinition.getSiteId() +
+														"\"");
+											put(
+												"contentType",
+												"\"" +
+													dataDefinition.
+														getContentType() +
+															"\"");
+											put(
+												"dataDefinitionKey",
+												"\"" +
+													dataDefinition.
+														getDataDefinitionKey() +
+															"\"");
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataDefinitionByContentTypeByDataDefinitionKey"))));
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataDefinitionByContentTypeByDataDefinitionKeyNotFound()
+		throws Exception {
+
+		String irrelevantContentType =
+			"\"" + RandomTestUtil.randomString() + "\"";
+		String irrelevantDataDefinitionKey =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataDefinitionByContentTypeByDataDefinitionKey",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"siteKey",
+									"\"" + irrelevantGroup.getGroupId() + "\"");
+								put("contentType", irrelevantContentType);
+								put(
+									"dataDefinitionKey",
+									irrelevantDataDefinitionKey);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataDefinitionByContentTypeByDataDefinitionKey",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"siteKey",
+										"\"" + irrelevantGroup.getGroupId() +
+											"\"");
+									put("contentType", irrelevantContentType);
+									put(
+										"dataDefinitionKey",
+										irrelevantDataDefinitionKey);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataDefinition
+			testGraphQLGetSiteDataDefinitionByContentTypeByDataDefinitionKey_addDataDefinition()
+		throws Exception {
+
+		return testGraphQLDataDefinition_addDataDefinition();
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeByExternalReferenceCode()
+		throws Exception {
+
+		DataDefinition postDataDefinition =
+			testGetSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition();
+
+		DataDefinition getDataDefinition =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByExternalReferenceCode(
+					postDataDefinition.getSiteId(),
+					postDataDefinition.getContentType(),
+					postDataDefinition.getExternalReferenceCode());
+
+		assertEquals(postDataDefinition, getDataDefinition);
+		assertValid(getDataDefinition);
+	}
+
+	protected DataDefinition
+			testGetSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataDefinitionByContentTypeByExternalReferenceCode()
+		throws Exception {
+
+		DataDefinition dataDefinition =
+			testGraphQLGetSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				dataDefinition,
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataDefinitionByContentTypeByExternalReferenceCode",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"siteKey",
+											"\"" + dataDefinition.getSiteId() +
+												"\"");
+										put(
+											"contentType",
+											"\"" +
+												dataDefinition.
+													getContentType() + "\"");
+										put(
+											"externalReferenceCode",
+											"\"" +
+												dataDefinition.
+													getExternalReferenceCode() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/dataDefinitionByContentTypeByExternalReferenceCode"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataDefinition,
+				DataDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataDefinitionByContentTypeByExternalReferenceCode",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"siteKey",
+												"\"" +
+													dataDefinition.getSiteId() +
+														"\"");
+											put(
+												"contentType",
+												"\"" +
+													dataDefinition.
+														getContentType() +
+															"\"");
+											put(
+												"externalReferenceCode",
+												"\"" +
+													dataDefinition.
+														getExternalReferenceCode() +
+															"\"");
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataDefinitionByContentTypeByExternalReferenceCode"))));
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataDefinitionByContentTypeByExternalReferenceCodeNotFound()
+		throws Exception {
+
+		String irrelevantContentType =
+			"\"" + RandomTestUtil.randomString() + "\"";
+		String irrelevantExternalReferenceCode =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataDefinitionByContentTypeByExternalReferenceCode",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"siteKey",
+									"\"" + irrelevantGroup.getGroupId() + "\"");
+								put("contentType", irrelevantContentType);
+								put(
+									"externalReferenceCode",
+									irrelevantExternalReferenceCode);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataDefinitionByContentTypeByExternalReferenceCode",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"siteKey",
+										"\"" + irrelevantGroup.getGroupId() +
+											"\"");
+									put("contentType", irrelevantContentType);
+									put(
+										"externalReferenceCode",
+										irrelevantExternalReferenceCode);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataDefinition
+			testGraphQLGetSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition()
+		throws Exception {
+
+		return testGraphQLDataDefinition_addDataDefinition();
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePage()
+		throws Exception {
+
+		Long siteId =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getSiteId();
+		Long irrelevantSiteId =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getIrrelevantSiteId();
+		String contentType =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getContentType();
+		String irrelevantContentType =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getIrrelevantContentType();
+
+		Page<DataDefinition> page =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeContentTypePage(
+					siteId, contentType, null, Pagination.of(1, 10), null);
+
+		long totalCount = page.getTotalCount();
+
+		if ((irrelevantSiteId != null) && (irrelevantContentType != null)) {
+			DataDefinition irrelevantDataDefinition =
+				testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+					irrelevantSiteId, irrelevantContentType,
+					randomIrrelevantDataDefinition());
+
+			page =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						irrelevantSiteId, irrelevantContentType, null,
+						Pagination.of(1, (int)totalCount + 1), null);
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(
+				irrelevantDataDefinition,
+				(List<DataDefinition>)page.getItems());
+			assertValid(
+				page,
+				testGetSiteDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+					irrelevantSiteId, irrelevantContentType));
+		}
+
+		DataDefinition dataDefinition1 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition2 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, randomDataDefinition());
+
+		page =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeContentTypePage(
+					siteId, contentType, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(dataDefinition1, (List<DataDefinition>)page.getItems());
+		assertContains(dataDefinition2, (List<DataDefinition>)page.getItems());
+		assertValid(
+			page,
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+				siteId, contentType));
+
+		dataDefinitionResource.deleteDataDefinition(dataDefinition1.getId());
+
+		dataDefinitionResource.deleteDataDefinition(dataDefinition2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getExpectedActions(
+				Long siteId, String contentType)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePageWithPagination()
+		throws Exception {
+
+		Long siteId =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getSiteId();
+		String contentType =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getContentType();
+
+		Page<DataDefinition> dataDefinitionsPage =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeContentTypePage(
+					siteId, contentType, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(
+			dataDefinitionsPage.getTotalCount());
+
+		DataDefinition dataDefinition1 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition2 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, randomDataDefinition());
+
+		DataDefinition dataDefinition3 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, randomDataDefinition());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<DataDefinition> page1 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)page1.getItems());
+
+			Page<DataDefinition> page2 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)page2.getItems());
+
+			Page<DataDefinition> page3 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+							pageSizeLimit),
+						null);
+
+			assertContains(
+				dataDefinition3, (List<DataDefinition>)page3.getItems());
+		}
+		else {
+			Page<DataDefinition> page1 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(1, totalCount + 2), null);
+
+			List<DataDefinition> dataDefinitions1 =
+				(List<DataDefinition>)page1.getItems();
+
+			Assert.assertEquals(
+				dataDefinitions1.toString(), totalCount + 2,
+				dataDefinitions1.size());
+
+			Page<DataDefinition> page2 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(2, totalCount + 2), null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<DataDefinition> dataDefinitions2 =
+				(List<DataDefinition>)page2.getItems();
+
+			Assert.assertEquals(
+				dataDefinitions2.toString(), 1, dataDefinitions2.size());
+
+			Page<DataDefinition> page3 =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)page3.getItems());
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)page3.getItems());
+			assertContains(
+				dataDefinition3, (List<DataDefinition>)page3.getItems());
+		}
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePageWithSortDateTime()
+		throws Exception {
+
+		testGetSiteDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(),
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePageWithSortDouble()
+		throws Exception {
+
+		testGetSiteDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(
+					dataDefinition2, entityField.getName(), 0.5);
+			});
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePageWithSortInteger()
+		throws Exception {
+
+		testGetSiteDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				BeanTestUtil.setProperty(
+					dataDefinition1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(
+					dataDefinition2, entityField.getName(), 1);
+			});
+	}
+
+	@Test
+	public void testGetSiteDataDefinitionByContentTypeContentTypePageWithSortString()
+		throws Exception {
+
+		testGetSiteDataDefinitionByContentTypeContentTypePageWithSort(
+			EntityField.Type.STRING,
+			(entityField, dataDefinition1, dataDefinition2) -> {
+				Class<?> clazz = dataDefinition1.getClass();
+
+				String entityFieldName = entityField.getName();
+
+				Method method = clazz.getMethod(
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(Map.class)) {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						Collections.singletonMap("Aaa", "Aaa"));
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						Collections.singletonMap("Bbb", "Bbb"));
+				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
+				else {
+					BeanTestUtil.setProperty(
+						dataDefinition1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						dataDefinition2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+				}
+			});
+	}
+
+	protected void
+			testGetSiteDataDefinitionByContentTypeContentTypePageWithSort(
+				EntityField.Type type,
+				UnsafeTriConsumer
+					<EntityField, DataDefinition, DataDefinition, Exception>
+						unsafeTriConsumer)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Long siteId =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getSiteId();
+		String contentType =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getContentType();
+
+		DataDefinition dataDefinition1 = randomDataDefinition();
+		DataDefinition dataDefinition2 = randomDataDefinition();
+
+		for (EntityField entityField : entityFields) {
+			unsafeTriConsumer.accept(
+				entityField, dataDefinition1, dataDefinition2);
+		}
+
+		dataDefinition1 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, dataDefinition1);
+
+		dataDefinition2 =
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				siteId, contentType, dataDefinition2);
+
+		Page<DataDefinition> page =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeContentTypePage(
+					siteId, contentType, null, null, null);
+
+		for (EntityField entityField : entityFields) {
+			Page<DataDefinition> ascPage =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(1, (int)page.getTotalCount() + 1),
+						entityField.getName() + ":asc");
+
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)ascPage.getItems());
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)ascPage.getItems());
+
+			Page<DataDefinition> descPage =
+				dataDefinitionResource.
+					getSiteDataDefinitionByContentTypeContentTypePage(
+						siteId, contentType, null,
+						Pagination.of(1, (int)page.getTotalCount() + 1),
+						entityField.getName() + ":desc");
+
+			assertContains(
+				dataDefinition2, (List<DataDefinition>)descPage.getItems());
+			assertContains(
+				dataDefinition1, (List<DataDefinition>)descPage.getItems());
+		}
+	}
+
+	protected DataDefinition
+			testGetSiteDataDefinitionByContentTypeContentTypePage_addDataDefinition(
+				Long siteId, String contentType, DataDefinition dataDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Long
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getSiteId()
+		throws Exception {
+
+		return testGroup.getGroupId();
+	}
+
+	protected Long
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getIrrelevantSiteId()
+		throws Exception {
+
+		return irrelevantGroup.getGroupId();
+	}
+
+	protected String
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getContentType()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetSiteDataDefinitionByContentTypeContentTypePage_getIrrelevantContentType()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
+	public void testPatchDataDefinition() throws Exception {
+		DataDefinition postDataDefinition =
+			testPatchDataDefinition_addDataDefinition();
+
+		DataDefinition randomPatchDataDefinition = randomPatchDataDefinition();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		DataDefinition patchDataDefinition =
+			dataDefinitionResource.patchDataDefinition(
+				postDataDefinition.getId(), randomPatchDataDefinition);
+
+		DataDefinition expectedPatchDataDefinition = postDataDefinition.clone();
+
+		BeanTestUtil.copyProperties(
+			randomPatchDataDefinition, expectedPatchDataDefinition);
+
+		DataDefinition getDataDefinition =
+			dataDefinitionResource.getDataDefinition(
+				patchDataDefinition.getId());
+
+		assertEquals(expectedPatchDataDefinition, getDataDefinition);
+		assertValid(getDataDefinition);
+	}
+
+	protected DataDefinition testPatchDataDefinition_addDataDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testPostDataDefinitionByContentType() throws Exception {
+		DataDefinition randomDataDefinition = randomDataDefinition();
+
+		DataDefinition postDataDefinition =
+			testPostDataDefinitionByContentType_addDataDefinition(
+				randomDataDefinition);
+
+		assertEquals(randomDataDefinition, postDataDefinition);
+		assertValid(postDataDefinition);
+	}
+
+	protected DataDefinition
+			testPostDataDefinitionByContentType_addDataDefinition(
+				DataDefinition dataDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testPostDataDefinitionCopy() throws Exception {
+		DataDefinition randomDataDefinition = randomDataDefinition();
+
+		DataDefinition postDataDefinition =
+			testPostDataDefinitionCopy_addDataDefinition(randomDataDefinition);
+
+		assertEquals(randomDataDefinition, postDataDefinition);
+		assertValid(postDataDefinition);
+	}
+
+	protected DataDefinition testPostDataDefinitionCopy_addDataDefinition(
+			DataDefinition dataDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testPostSiteDataDefinitionByContentType() throws Exception {
+		DataDefinition randomDataDefinition = randomDataDefinition();
+
+		DataDefinition postDataDefinition =
+			testPostSiteDataDefinitionByContentType_addDataDefinition(
+				randomDataDefinition);
+
+		assertEquals(randomDataDefinition, postDataDefinition);
+		assertValid(postDataDefinition);
+	}
+
+	protected DataDefinition
+			testPostSiteDataDefinitionByContentType_addDataDefinition(
+				DataDefinition dataDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
@@ -356,619 +1978,205 @@ public abstract class BaseDataDefinitionResourceTestCase {
 	protected DataDefinition testPutDataDefinition_addDataDefinition()
 		throws Exception {
 
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
-	public void testGetDataDefinitionDataDefinitionFieldLinks()
-		throws Exception {
-
-		Assert.assertTrue(false);
-	}
-
-	@Test
-	public void testPostDataDefinitionDataDefinitionPermission()
-		throws Exception {
-
+	public void testPutDataDefinitionPermissionsPage() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		DataDefinition dataDefinition =
-			testPostDataDefinitionDataDefinitionPermission_addDataDefinition();
+			testPutDataDefinitionPermissionsPage_addDataDefinition();
 
-		assertHttpResponseStatusCode(
-			204,
-			dataDefinitionResource.
-				postDataDefinitionDataDefinitionPermissionHttpResponse(
-					dataDefinition.getId(), null, null));
-
-		assertHttpResponseStatusCode(
-			404,
-			dataDefinitionResource.
-				postDataDefinitionDataDefinitionPermissionHttpResponse(
-					0L, null, null));
-	}
-
-	protected DataDefinition
-			testPostDataDefinitionDataDefinitionPermission_addDataDefinition()
-		throws Exception {
-
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
-	}
-
-	@Test
-	public void testPostSiteDataDefinitionPermission() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
-		DataDefinition dataDefinition =
-			testPostSiteDataDefinitionPermission_addDataDefinition();
+		com.liferay.portal.kernel.model.Role role = RoleTestUtil.addRole(
+			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
-			dataDefinitionResource.postSiteDataDefinitionPermissionHttpResponse(
-				null, null, null));
-
-		assertHttpResponseStatusCode(
-			404,
-			dataDefinitionResource.postSiteDataDefinitionPermissionHttpResponse(
-				null, null, null));
-	}
-
-	protected DataDefinition
-			testPostSiteDataDefinitionPermission_addDataDefinition()
-		throws Exception {
-
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
-	}
-
-	@Test
-	public void testGetSiteDataDefinitionsPage() throws Exception {
-		Page<DataDefinition> page =
-			dataDefinitionResource.getSiteDataDefinitionsPage(
-				testGetSiteDataDefinitionsPage_getSiteId(), null,
-				RandomTestUtil.randomString(), Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
-		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
-		Long irrelevantSiteId =
-			testGetSiteDataDefinitionsPage_getIrrelevantSiteId();
-
-		if ((irrelevantSiteId != null)) {
-			DataDefinition irrelevantDataDefinition =
-				testGetSiteDataDefinitionsPage_addDataDefinition(
-					irrelevantSiteId, randomIrrelevantDataDefinition());
-
-			page = dataDefinitionResource.getSiteDataDefinitionsPage(
-				irrelevantSiteId, null, null, Pagination.of(1, 2), null);
-
-			Assert.assertEquals(1, page.getTotalCount());
-
-			assertEquals(
-				Arrays.asList(irrelevantDataDefinition),
-				(List<DataDefinition>)page.getItems());
-			assertValid(page);
-		}
-
-		DataDefinition dataDefinition1 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
-
-		DataDefinition dataDefinition2 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
-
-		page = dataDefinitionResource.getSiteDataDefinitionsPage(
-			siteId, null, null, Pagination.of(1, 2), null);
-
-		Assert.assertEquals(2, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataDefinition1, dataDefinition2),
-			(List<DataDefinition>)page.getItems());
-		assertValid(page);
-
-		dataDefinitionResource.deleteDataDefinition(dataDefinition1.getId());
-
-		dataDefinitionResource.deleteDataDefinition(dataDefinition2.getId());
-	}
-
-	@Test
-	public void testGetSiteDataDefinitionsPageWithPagination()
-		throws Exception {
-
-		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
-
-		DataDefinition dataDefinition1 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
-
-		DataDefinition dataDefinition2 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
-
-		DataDefinition dataDefinition3 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
-
-		Page<DataDefinition> page1 =
-			dataDefinitionResource.getSiteDataDefinitionsPage(
-				siteId, null, null, Pagination.of(1, 2), null);
-
-		List<DataDefinition> dataDefinitions1 =
-			(List<DataDefinition>)page1.getItems();
-
-		Assert.assertEquals(
-			dataDefinitions1.toString(), 2, dataDefinitions1.size());
-
-		Page<DataDefinition> page2 =
-			dataDefinitionResource.getSiteDataDefinitionsPage(
-				siteId, null, null, Pagination.of(2, 2), null);
-
-		Assert.assertEquals(3, page2.getTotalCount());
-
-		List<DataDefinition> dataDefinitions2 =
-			(List<DataDefinition>)page2.getItems();
-
-		Assert.assertEquals(
-			dataDefinitions2.toString(), 1, dataDefinitions2.size());
-
-		Page<DataDefinition> page3 =
-			dataDefinitionResource.getSiteDataDefinitionsPage(
-				siteId, null, null, Pagination.of(1, 3), null);
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataDefinition1, dataDefinition2, dataDefinition3),
-			(List<DataDefinition>)page3.getItems());
-	}
-
-	@Test
-	public void testGetSiteDataDefinitionsPageWithSortDateTime()
-		throws Exception {
-
-		testGetSiteDataDefinitionsPageWithSort(
-			EntityField.Type.DATE_TIME,
-			(entityField, dataDefinition1, dataDefinition2) -> {
-				BeanUtils.setProperty(
-					dataDefinition1, entityField.getName(),
-					DateUtils.addMinutes(new Date(), -2));
-			});
-	}
-
-	@Test
-	public void testGetSiteDataDefinitionsPageWithSortInteger()
-		throws Exception {
-
-		testGetSiteDataDefinitionsPageWithSort(
-			EntityField.Type.INTEGER,
-			(entityField, dataDefinition1, dataDefinition2) -> {
-				BeanUtils.setProperty(
-					dataDefinition1, entityField.getName(), 0);
-				BeanUtils.setProperty(
-					dataDefinition2, entityField.getName(), 1);
-			});
-	}
-
-	@Test
-	public void testGetSiteDataDefinitionsPageWithSortString()
-		throws Exception {
-
-		testGetSiteDataDefinitionsPageWithSort(
-			EntityField.Type.STRING,
-			(entityField, dataDefinition1, dataDefinition2) -> {
-				Class<?> clazz = dataDefinition1.getClass();
-
-				Method method = clazz.getMethod(
-					"get" +
-						StringUtil.upperCaseFirstLetter(entityField.getName()));
-
-				Class<?> returnType = method.getReturnType();
-
-				if (returnType.isAssignableFrom(Map.class)) {
-					BeanUtils.setProperty(
-						dataDefinition1, entityField.getName(),
-						Collections.singletonMap("Aaa", "Aaa"));
-					BeanUtils.setProperty(
-						dataDefinition2, entityField.getName(),
-						Collections.singletonMap("Bbb", "Bbb"));
-				}
-				else {
-					BeanUtils.setProperty(
-						dataDefinition1, entityField.getName(), "Aaa");
-					BeanUtils.setProperty(
-						dataDefinition2, entityField.getName(), "Bbb");
-				}
-			});
-	}
-
-	protected void testGetSiteDataDefinitionsPageWithSort(
-			EntityField.Type type,
-			UnsafeTriConsumer
-				<EntityField, DataDefinition, DataDefinition, Exception>
-					unsafeTriConsumer)
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(type);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
-
-		DataDefinition dataDefinition1 = randomDataDefinition();
-		DataDefinition dataDefinition2 = randomDataDefinition();
-
-		for (EntityField entityField : entityFields) {
-			unsafeTriConsumer.accept(
-				entityField, dataDefinition1, dataDefinition2);
-		}
-
-		dataDefinition1 = testGetSiteDataDefinitionsPage_addDataDefinition(
-			siteId, dataDefinition1);
-
-		dataDefinition2 = testGetSiteDataDefinitionsPage_addDataDefinition(
-			siteId, dataDefinition2);
-
-		for (EntityField entityField : entityFields) {
-			Page<DataDefinition> ascPage =
-				dataDefinitionResource.getSiteDataDefinitionsPage(
-					siteId, null, null, Pagination.of(1, 2),
-					entityField.getName() + ":asc");
-
-			assertEquals(
-				Arrays.asList(dataDefinition1, dataDefinition2),
-				(List<DataDefinition>)ascPage.getItems());
-
-			Page<DataDefinition> descPage =
-				dataDefinitionResource.getSiteDataDefinitionsPage(
-					siteId, null, null, Pagination.of(1, 2),
-					entityField.getName() + ":desc");
-
-			assertEquals(
-				Arrays.asList(dataDefinition2, dataDefinition1),
-				(List<DataDefinition>)descPage.getItems());
-		}
-	}
-
-	protected DataDefinition testGetSiteDataDefinitionsPage_addDataDefinition(
-			Long siteId, DataDefinition dataDefinition)
-		throws Exception {
-
-		return dataDefinitionResource.postSiteDataDefinition(
-			siteId, dataDefinition);
-	}
-
-	protected Long testGetSiteDataDefinitionsPage_getSiteId() throws Exception {
-		return testGroup.getGroupId();
-	}
-
-	protected Long testGetSiteDataDefinitionsPage_getIrrelevantSiteId()
-		throws Exception {
-
-		return irrelevantGroup.getGroupId();
-	}
-
-	@Test
-	public void testGraphQLGetSiteDataDefinitionsPage() throws Exception {
-		List<GraphQLField> graphQLFields = new ArrayList<>();
-
-		List<GraphQLField> itemsGraphQLFields = getGraphQLFields();
-
-		graphQLFields.add(
-			new GraphQLField(
-				"items", itemsGraphQLFields.toArray(new GraphQLField[0])));
-
-		graphQLFields.add(new GraphQLField("page"));
-		graphQLFields.add(new GraphQLField("totalCount"));
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"dataDefinitions",
-				new HashMap<String, Object>() {
-					{
-						put("page", 1);
-						put("pageSize", 2);
-						put("siteKey", "\"" + testGroup.getGroupId() + "\"");
+			200,
+			dataDefinitionResource.putDataDefinitionPermissionsPageHttpResponse(
+				dataDefinition.getId(),
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"VIEW"});
+							setRoleName(role.getName());
+						}
 					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
+				}));
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		JSONObject dataDefinitionsJSONObject = dataJSONObject.getJSONObject(
-			"dataDefinitions");
-
-		Assert.assertEquals(0, dataDefinitionsJSONObject.get("totalCount"));
-
-		DataDefinition dataDefinition1 =
-			testGraphQLDataDefinition_addDataDefinition();
-		DataDefinition dataDefinition2 =
-			testGraphQLDataDefinition_addDataDefinition();
-
-		jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		dataJSONObject = jsonObject.getJSONObject("data");
-
-		dataDefinitionsJSONObject = dataJSONObject.getJSONObject(
-			"dataDefinitions");
-
-		Assert.assertEquals(2, dataDefinitionsJSONObject.get("totalCount"));
-
-		assertEqualsJSONArray(
-			Arrays.asList(dataDefinition1, dataDefinition2),
-			dataDefinitionsJSONObject.getJSONArray("items"));
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.putDataDefinitionPermissionsPageHttpResponse(
+				0L,
+				new Permission[] {
+					new Permission() {
+						{
+							setActionIds(new String[] {"-"});
+							setRoleName("-");
+						}
+					}
+				}));
 	}
 
-	@Test
-	public void testPostSiteDataDefinition() throws Exception {
-		DataDefinition randomDataDefinition = randomDataDefinition();
-
-		DataDefinition postDataDefinition =
-			testPostSiteDataDefinition_addDataDefinition(randomDataDefinition);
-
-		assertEquals(randomDataDefinition, postDataDefinition);
-		assertValid(postDataDefinition);
-	}
-
-	protected DataDefinition testPostSiteDataDefinition_addDataDefinition(
-			DataDefinition dataDefinition)
+	protected DataDefinition
+			testPutDataDefinitionPermissionsPage_addDataDefinition()
 		throws Exception {
 
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGetSiteDataDefinitionsPage_getSiteId(), dataDefinition);
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
-	public void testGraphQLPostSiteDataDefinition() throws Exception {
+	public void testPutSiteDataDefinitionByContentTypeByExternalReferenceCode()
+		throws Exception {
+
+		DataDefinition postDataDefinition =
+			testPutSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition();
+
 		DataDefinition randomDataDefinition = randomDataDefinition();
 
-		DataDefinition dataDefinition =
-			testGraphQLDataDefinition_addDataDefinition(randomDataDefinition);
+		DataDefinition putDataDefinition =
+			dataDefinitionResource.
+				putSiteDataDefinitionByContentTypeByExternalReferenceCode(
+					postDataDefinition.getSiteId(),
+					postDataDefinition.getContentType(),
+					postDataDefinition.getExternalReferenceCode(),
+					randomDataDefinition);
 
-		Assert.assertTrue(
-			equalsJSONObject(
-				randomDataDefinition,
-				JSONFactoryUtil.createJSONObject(
-					JSONFactoryUtil.serialize(dataDefinition))));
-	}
-
-	@Test
-	public void testGetSiteDataDefinition() throws Exception {
-		DataDefinition postDataDefinition =
-			testGetSiteDataDefinition_addDataDefinition();
+		assertEquals(randomDataDefinition, putDataDefinition);
+		assertValid(putDataDefinition);
 
 		DataDefinition getDataDefinition =
-			dataDefinitionResource.getSiteDataDefinition(
-				postDataDefinition.getSiteId(),
-				postDataDefinition.getDataDefinitionKey(), null);
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByExternalReferenceCode(
+					putDataDefinition.getSiteId(),
+					putDataDefinition.getContentType(),
+					putDataDefinition.getExternalReferenceCode());
 
-		assertEquals(postDataDefinition, getDataDefinition);
+		assertEquals(randomDataDefinition, getDataDefinition);
 		assertValid(getDataDefinition);
+
+		DataDefinition newDataDefinition =
+			testPutSiteDataDefinitionByContentTypeByExternalReferenceCode_createDataDefinition();
+
+		putDataDefinition =
+			dataDefinitionResource.
+				putSiteDataDefinitionByContentTypeByExternalReferenceCode(
+					newDataDefinition.getSiteId(),
+					newDataDefinition.getContentType(),
+					newDataDefinition.getExternalReferenceCode(),
+					newDataDefinition);
+
+		assertEquals(newDataDefinition, putDataDefinition);
+		assertValid(putDataDefinition);
+
+		getDataDefinition =
+			dataDefinitionResource.
+				getSiteDataDefinitionByContentTypeByExternalReferenceCode(
+					putDataDefinition.getSiteId(),
+					putDataDefinition.getContentType(),
+					putDataDefinition.getExternalReferenceCode());
+
+		assertEquals(newDataDefinition, getDataDefinition);
+
+		Assert.assertEquals(
+			newDataDefinition.getExternalReferenceCode(),
+			putDataDefinition.getExternalReferenceCode());
 	}
 
-	protected DataDefinition testGetSiteDataDefinition_addDataDefinition()
+	protected DataDefinition
+			testPutSiteDataDefinitionByContentTypeByExternalReferenceCode_addDataDefinition()
 		throws Exception {
 
-		return dataDefinitionResource.postSiteDataDefinition(
-			testGroup.getGroupId(), randomDataDefinition());
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected DataDefinition
+			testPutSiteDataDefinitionByContentTypeByExternalReferenceCode_createDataDefinition()
+		throws Exception {
+
+		return randomDataDefinition();
 	}
 
 	@Test
-	public void testGraphQLGetSiteDataDefinition() throws Exception {
-		DataDefinition dataDefinition =
-			testGraphQLDataDefinition_addDataDefinition();
+	public void testBatchEngineDeleteImportTask() throws Exception {
+		DataDefinition dataDefinition1 =
+			testBatchEngineDeleteImportTask_addDataDefinition();
 
-		List<GraphQLField> graphQLFields = getGraphQLFields();
+		testBatchEngineDeleteImportTask_deleteDataDefinition(
+			200, null, dataDefinition1.getId());
 
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"siteDataDefinition",
-				new HashMap<String, Object>() {
-					{
-						put("siteId", dataDefinition.getSiteId());
-						put(
-							"dataDefinitionKey",
-							dataDefinition.getDataDefinitionKey());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.getDataDefinitionHttpResponse(
+				dataDefinition1.getId()));
+	}
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
+	protected DataDefinition testBatchEngineDeleteImportTask_addDataDefinition()
+		throws Exception {
 
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
+		return testDeleteDataDefinition_addDataDefinition();
+	}
 
-		Assert.assertTrue(
-			equalsJSONObject(
-				dataDefinition,
-				dataJSONObject.getJSONObject("siteDataDefinition")));
+	protected void testBatchEngineDeleteImportTask_deleteDataDefinition(
+			int expectedStatusCode, String externalReferenceCode, Long id,
+			String... parameters)
+		throws Exception {
+
+		ImportTaskResource importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).parameters(
+			parameters
+		).build();
+
+		HttpResponse httpResponse =
+			importTaskResource.deleteImportTaskHttpResponse(
+				"com.liferay.data.engine.rest.dto.v2_0.DataDefinition", null,
+				null, null, null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode
+					).put(
+						"id", () -> id
+					)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		if (expectedStatusCode == 200) {
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+		}
 	}
 
 	protected DataDefinition testGraphQLDataDefinition_addDataDefinition()
 		throws Exception {
 
-		return testGraphQLDataDefinition_addDataDefinition(
-			randomDataDefinition());
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
-	protected DataDefinition testGraphQLDataDefinition_addDataDefinition(
-			DataDefinition dataDefinition)
-		throws Exception {
+	protected void assertContains(
+		DataDefinition dataDefinition, List<DataDefinition> dataDefinitions) {
 
-		StringBuilder sb = new StringBuilder("{");
+		boolean contains = false;
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		for (DataDefinition item : dataDefinitions) {
+			if (equals(dataDefinition, item)) {
+				contains = true;
 
-			if (Objects.equals("classNameId", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getClassNameId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals(
-					"dataDefinitionKey", additionalAssertFieldName)) {
-
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getDataDefinitionKey();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals(
-					"defaultLanguageId", additionalAssertFieldName)) {
-
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getDefaultLanguageId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("id", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("siteId", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getSiteId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("storageType", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getStorageType();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
-			}
-
-			if (Objects.equals("userId", additionalAssertFieldName)) {
-				sb.append(additionalAssertFieldName);
-				sb.append(": ");
-
-				Object value = dataDefinition.getUserId();
-
-				if (value instanceof String) {
-					sb.append("\"");
-					sb.append(value);
-					sb.append("\"");
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append(", ");
+				break;
 			}
 		}
 
-		sb.append("}");
-
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		graphQLFields.add(new GraphQLField("id"));
-
-		GraphQLField graphQLField = new GraphQLField(
-			"mutation",
-			new GraphQLField(
-				"createSiteDataDefinition",
-				new HashMap<String, Object>() {
-					{
-						put("siteKey", "\"" + testGroup.getGroupId() + "\"");
-						put("dataDefinition", sb.toString());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONDeserializer<DataDefinition> jsonDeserializer =
-			JSONFactoryUtil.createJSONDeserializer();
-
-		String object = invoke(graphQLField.toString());
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(object);
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		return jsonDeserializer.deserialize(
-			String.valueOf(
-				dataJSONObject.getJSONObject("createSiteDataDefinition")),
-			DataDefinition.class);
+		Assert.assertTrue(
+			dataDefinitions + " does not contain " + dataDefinition, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -1024,26 +2232,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		}
 	}
 
-	protected void assertEqualsJSONArray(
-		List<DataDefinition> dataDefinitions, JSONArray jsonArray) {
-
-		for (DataDefinition dataDefinition : dataDefinitions) {
-			boolean contains = false;
-
-			for (Object object : jsonArray) {
-				if (equalsJSONObject(dataDefinition, (JSONObject)object)) {
-					contains = true;
-
-					break;
-				}
-			}
-
-			Assert.assertTrue(
-				jsonArray + " does not contain " + dataDefinition, contains);
-		}
-	}
-
-	protected void assertValid(DataDefinition dataDefinition) {
+	protected void assertValid(DataDefinition dataDefinition) throws Exception {
 		boolean valid = true;
 
 		if (dataDefinition.getDateCreated() == null) {
@@ -1077,8 +2266,8 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("classNameId", additionalAssertFieldName)) {
-				if (dataDefinition.getClassNameId() == null) {
+			if (Objects.equals("contentType", additionalAssertFieldName)) {
+				if (dataDefinition.getContentType() == null) {
 					valid = false;
 				}
 
@@ -1105,10 +2294,18 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"dataDefinitionRules", additionalAssertFieldName)) {
+			if (Objects.equals("dataRules", additionalAssertFieldName)) {
+				if (dataDefinition.getDataRules() == null) {
+					valid = false;
+				}
 
-				if (dataDefinition.getDataDefinitionRules() == null) {
+				continue;
+			}
+
+			if (Objects.equals(
+					"defaultDataLayout", additionalAssertFieldName)) {
+
+				if (dataDefinition.getDefaultDataLayout() == null) {
 					valid = false;
 				}
 
@@ -1127,6 +2324,16 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 			if (Objects.equals("description", additionalAssertFieldName)) {
 				if (dataDefinition.getDescription() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (dataDefinition.getExternalReferenceCode() == null) {
 					valid = false;
 				}
 
@@ -1166,6 +2373,13 @@ public abstract class BaseDataDefinitionResourceTestCase {
 	}
 
 	protected void assertValid(Page<DataDefinition> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<DataDefinition> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<DataDefinition> dataDefinitions = page.getItems();
@@ -1180,19 +2394,78 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		assertValid(page.getActions(), expectedActions);
+	}
+
+	protected void assertValid(
+		Map<String, Map<String, String>> actions1,
+		Map<String, Map<String, String>> actions2) {
+
+		for (String key : actions2.keySet()) {
+			Map action = actions1.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map<String, String> expectedAction = actions2.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[0];
 	}
 
-	protected List<GraphQLField> getGraphQLFields() {
+	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		graphQLFields.add(new GraphQLField("siteId"));
 
-			graphQLFields.add(new GraphQLField(additionalAssertFieldName));
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(
+					com.liferay.data.engine.rest.dto.v2_0.DataDefinition.
+						class)) {
+
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
+
+				continue;
+			}
+
+			graphQLFields.addAll(getGraphQLFields(field));
+		}
+
+		return graphQLFields;
+	}
+
+	protected List<GraphQLField> getGraphQLFields(
+			java.lang.reflect.Field... fields)
+		throws Exception {
+
+		List<GraphQLField> graphQLFields = new ArrayList<>();
+
+		for (java.lang.reflect.Field field : fields) {
+			com.liferay.portal.vulcan.graphql.annotation.GraphQLField
+				vulcanGraphQLField = field.getAnnotation(
+					com.liferay.portal.vulcan.graphql.annotation.GraphQLField.
+						class);
+
+			if (vulcanGraphQLField != null) {
+				Class<?> clazz = field.getType();
+
+				if (clazz.isArray()) {
+					clazz = clazz.getComponentType();
+				}
+
+				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
+					getDeclaredFields(clazz));
+
+				graphQLFields.add(
+					new GraphQLField(field.getName(), childrenGraphQLFields));
+			}
 		}
 
 		return graphQLFields;
@@ -1231,10 +2504,10 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("classNameId", additionalAssertFieldName)) {
+			if (Objects.equals("contentType", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						dataDefinition1.getClassNameId(),
-						dataDefinition2.getClassNameId())) {
+						dataDefinition1.getContentType(),
+						dataDefinition2.getContentType())) {
 
 					return false;
 				}
@@ -1268,12 +2541,10 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"dataDefinitionRules", additionalAssertFieldName)) {
-
+			if (Objects.equals("dataRules", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						dataDefinition1.getDataDefinitionRules(),
-						dataDefinition2.getDataDefinitionRules())) {
+						dataDefinition1.getDataRules(),
+						dataDefinition2.getDataRules())) {
 
 					return false;
 				}
@@ -1304,6 +2575,19 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals(
+					"defaultDataLayout", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						dataDefinition1.getDefaultDataLayout(),
+						dataDefinition2.getDefaultDataLayout())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
 					"defaultLanguageId", additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
@@ -1317,9 +2601,22 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals("description", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)dataDefinition1.getDescription(),
+						(Map)dataDefinition2.getDescription())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
 				if (!Objects.deepEquals(
-						dataDefinition1.getDescription(),
-						dataDefinition2.getDescription())) {
+						dataDefinition1.getExternalReferenceCode(),
+						dataDefinition2.getExternalReferenceCode())) {
 
 					return false;
 				}
@@ -1338,8 +2635,9 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals("name", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition1.getName(), dataDefinition2.getName())) {
+				if (!equals(
+						(Map)dataDefinition1.getName(),
+						(Map)dataDefinition2.getName())) {
 
 					return false;
 				}
@@ -1377,80 +2675,49 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		return true;
 	}
 
-	protected boolean equalsJSONObject(
-		DataDefinition dataDefinition, JSONObject jsonObject) {
+	protected boolean equals(
+		Map<String, Object> map1, Map<String, Object> map2) {
 
-		for (String fieldName : getAdditionalAssertFieldNames()) {
-			if (Objects.equals("classNameId", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getClassNameId(),
-						jsonObject.getLong("classNameId"))) {
+		if (Objects.equals(map1.keySet(), map2.keySet())) {
+			for (Map.Entry<String, Object> entry : map1.entrySet()) {
+				if (entry.getValue() instanceof Map) {
+					if (!equals(
+							(Map)entry.getValue(),
+							(Map)map2.get(entry.getKey()))) {
+
+						return false;
+					}
+				}
+				else if (!Objects.deepEquals(
+							entry.getValue(), map2.get(entry.getKey()))) {
 
 					return false;
 				}
-
-				continue;
 			}
 
-			if (Objects.equals("dataDefinitionKey", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getDataDefinitionKey(),
-						jsonObject.getString("dataDefinitionKey"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("defaultLanguageId", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getDefaultLanguageId(),
-						jsonObject.getString("defaultLanguageId"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("id", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getId(), jsonObject.getLong("id"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("storageType", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getStorageType(),
-						jsonObject.getString("storageType"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("userId", fieldName)) {
-				if (!Objects.deepEquals(
-						dataDefinition.getUserId(),
-						jsonObject.getLong("userId"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			throw new IllegalArgumentException(
-				"Invalid field name " + fieldName);
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
+		throws Exception {
+
+		if (clazz.getClassLoader() == null) {
+			return new java.lang.reflect.Field[0];
+		}
+
+		return TransformUtil.transform(
+			ReflectionUtil.getDeclaredFields(clazz),
+			field -> {
+				if (field.isSynthetic()) {
+					return null;
+				}
+
+				return field;
+			},
+			java.lang.reflect.Field.class);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()
@@ -1467,6 +2734,10 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1476,18 +2747,18 @@ public abstract class BaseDataDefinitionResourceTestCase {
 	protected List<EntityField> getEntityFields(EntityField.Type type)
 		throws Exception {
 
-		java.util.Collection<EntityField> entityFields = getEntityFields();
+		return TransformUtil.transform(
+			getEntityFields(),
+			entityField -> {
+				if (!Objects.equals(entityField.getType(), type) ||
+					ArrayUtil.contains(
+						getIgnoredEntityFieldNames(), entityField.getName())) {
 
-		Stream<EntityField> stream = entityFields.stream();
+					return null;
+				}
 
-		return stream.filter(
-			entityField ->
-				Objects.equals(entityField.getType(), type) &&
-				!ArrayUtil.contains(
-					getIgnoredEntityFieldNames(), entityField.getName())
-		).collect(
-			Collectors.toList()
-		);
+				return entityField;
+			});
 	}
 
 	protected String getFilterString(
@@ -1509,9 +2780,50 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("classNameId")) {
-			throw new IllegalArgumentException(
-				"Invalid entity field " + entityFieldName);
+		if (entityFieldName.equals("contentType")) {
+			Object object = dataDefinition.getContentType();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("dataDefinitionFields")) {
@@ -1520,36 +2832,70 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		}
 
 		if (entityFieldName.equals("dataDefinitionKey")) {
-			sb.append("'");
-			sb.append(String.valueOf(dataDefinition.getDataDefinitionKey()));
-			sb.append("'");
+			Object object = dataDefinition.getDataDefinitionKey();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
 
-		if (entityFieldName.equals("dataDefinitionRules")) {
+		if (entityFieldName.equals("dataRules")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
 		if (entityFieldName.equals("dateCreated")) {
 			if (operator.equals("between")) {
+				Date date = dataDefinition.getDateCreated();
+
 				sb = new StringBundler();
 
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(
-							dataDefinition.getDateCreated(), -2)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(
-							dataDefinition.getDateCreated(), 2)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -1559,7 +2905,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(dataDefinition.getDateCreated()));
+				sb.append(_format.format(dataDefinition.getDateCreated()));
 			}
 
 			return sb.toString();
@@ -1567,22 +2913,18 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 		if (entityFieldName.equals("dateModified")) {
 			if (operator.equals("between")) {
+				Date date = dataDefinition.getDateModified();
+
 				sb = new StringBundler();
 
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(
-							dataDefinition.getDateModified(), -2)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(
-						DateUtils.addSeconds(
-							dataDefinition.getDateModified(), 2)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -1592,16 +2934,59 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(dataDefinition.getDateModified()));
+				sb.append(_format.format(dataDefinition.getDateModified()));
 			}
 
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("defaultDataLayout")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("defaultLanguageId")) {
-			sb.append("'");
-			sb.append(String.valueOf(dataDefinition.getDefaultLanguageId()));
-			sb.append("'");
+			Object object = dataDefinition.getDefaultLanguageId();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -1609,6 +2994,52 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		if (entityFieldName.equals("description")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("externalReferenceCode")) {
+			Object object = dataDefinition.getExternalReferenceCode();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("id")) {
@@ -1627,9 +3058,47 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		}
 
 		if (entityFieldName.equals("storageType")) {
-			sb.append("'");
-			sb.append(String.valueOf(dataDefinition.getStorageType()));
-			sb.append("'");
+			Object object = dataDefinition.getStorageType();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -1653,24 +3122,51 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			"application/json");
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
 		httpInvoker.path("http://localhost:8080/o/graphql");
-		httpInvoker.userNameAndPassword("test@liferay.com:test");
+		httpInvoker.userNameAndPassword(
+			"test@liferay.com:" + PropsValues.DEFAULT_ADMIN_PASSWORD);
 
 		HttpInvoker.HttpResponse httpResponse = httpInvoker.invoke();
 
 		return httpResponse.getContent();
 	}
 
+	protected JSONObject invokeGraphQLMutation(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField mutationGraphQLField = new GraphQLField(
+			"mutation", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(mutationGraphQLField.toString()));
+	}
+
+	protected JSONObject invokeGraphQLQuery(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField queryGraphQLField = new GraphQLField(
+			"query", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(queryGraphQLField.toString()));
+	}
+
 	protected DataDefinition randomDataDefinition() throws Exception {
 		return new DataDefinition() {
 			{
-				classNameId = RandomTestUtil.randomLong();
-				dataDefinitionKey = RandomTestUtil.randomString();
+				contentType = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				dataDefinitionKey = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
-				defaultLanguageId = RandomTestUtil.randomString();
+				defaultLanguageId = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				externalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				siteId = testGroup.getGroupId();
-				storageType = RandomTestUtil.randomString();
+				storageType = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				userId = RandomTestUtil.randomLong();
 			}
 		};
@@ -1688,10 +3184,155 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		return randomDataDefinition();
 	}
 
+	protected final JSONObject waitForFinish(
+			String expectedExecuteStatus, JSONObject jsonObject)
+		throws Exception {
+
+		while (true) {
+			ImportTask importTask = importTaskResource.getImportTask(
+				jsonObject.getLong("id"));
+
+			ImportTask.ExecuteStatus executeStatus =
+				importTask.getExecuteStatus();
+
+			if (StringUtil.equals(executeStatus.getValue(), "COMPLETED") ||
+				StringUtil.equals(executeStatus.getValue(), "FAILED")) {
+
+				Assert.assertEquals(
+					expectedExecuteStatus, executeStatus.getValue());
+
+				return jsonObject;
+			}
+		}
+	}
+
 	protected DataDefinitionResource dataDefinitionResource;
-	protected Group irrelevantGroup;
-	protected Company testCompany;
-	protected Group testGroup;
+	protected ImportTaskResource importTaskResource;
+	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
+	protected com.liferay.portal.kernel.model.Company testCompany;
+	protected com.liferay.portal.kernel.model.Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = source.getClass();
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					_getAllDeclaredFields(sourceClass)) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				try {
+					Method setMethod = _getMethod(
+						targetClass, field.getName(), "set",
+						getMethod.getReturnType());
+
+					setMethod.invoke(target, getMethod.invoke(source));
+				}
+				catch (Exception e) {
+					continue;
+				}
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static List<java.lang.reflect.Field> _getAllDeclaredFields(
+			Class<?> clazz) {
+
+			List<java.lang.reflect.Field> fields = new ArrayList<>();
+
+			while ((clazz != null) && (clazz != Object.class)) {
+				for (java.lang.reflect.Field field :
+						clazz.getDeclaredFields()) {
+
+					fields.add(field);
+				}
+
+				clazz = clazz.getSuperclass();
+			}
+
+			return fields;
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -1699,9 +3340,22 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			this(key, new HashMap<>(), graphQLFields);
 		}
 
+		public GraphQLField(String key, List<GraphQLField> graphQLFields) {
+			this(key, new HashMap<>(), graphQLFields);
+		}
+
 		public GraphQLField(
 			String key, Map<String, Object> parameterMap,
 			GraphQLField... graphQLFields) {
+
+			_key = key;
+			_parameterMap = parameterMap;
+			_graphQLFields = Arrays.asList(graphQLFields);
+		}
+
+		public GraphQLField(
+			String key, Map<String, Object> parameterMap,
+			List<GraphQLField> graphQLFields) {
 
 			_key = key;
 			_parameterMap = parameterMap;
@@ -1719,25 +3373,25 @@ public abstract class BaseDataDefinitionResourceTestCase {
 						_parameterMap.entrySet()) {
 
 					sb.append(entry.getKey());
-					sb.append(":");
+					sb.append(": ");
 					sb.append(entry.getValue());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append(")");
 			}
 
-			if (_graphQLFields.length > 0) {
+			if (!_graphQLFields.isEmpty()) {
 				sb.append("{");
 
 				for (GraphQLField graphQLField : _graphQLFields) {
 					sb.append(graphQLField.toString());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append("}");
 			}
@@ -1745,31 +3399,43 @@ public abstract class BaseDataDefinitionResourceTestCase {
 			return sb.toString();
 		}
 
-		private final GraphQLField[] _graphQLFields;
+		private final List<GraphQLField> _graphQLFields;
 		private final String _key;
 		private final Map<String, Object> _parameterMap;
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseDataDefinitionResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseDataDefinitionResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
+	private static Format _format;
 
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
-	private static DateFormat _dateFormat;
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource
 		_dataDefinitionResource;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private ScopeChecker _scopeChecker;
+
+	@Inject
+	private UserLocalService _userLocalService;
+
+	@Inject
+	private VulcanCRUDItemDelegateBuilderRegistry
+		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }

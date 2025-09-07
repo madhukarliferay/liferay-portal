@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.test;
@@ -17,8 +8,8 @@ package com.liferay.calendar.service.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.calendar.model.Calendar;
 import com.liferay.calendar.model.CalendarResource;
-import com.liferay.calendar.service.CalendarResourceLocalServiceUtil;
-import com.liferay.calendar.service.CalendarServiceUtil;
+import com.liferay.calendar.service.CalendarResourceLocalService;
+import com.liferay.calendar.service.CalendarService;
 import com.liferay.calendar.test.util.CalendarStagingTestUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
@@ -26,13 +17,15 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -48,13 +41,16 @@ import org.junit.runner.RunWith;
 /**
  * @author Adam Brandizzi
  */
+@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CalendarServiceTest {
 
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@After
 	public void tearDown() {
@@ -71,7 +67,7 @@ public class CalendarServiceTest {
 
 		Group stagingGroup = _liveGroup.getStagingGroup();
 
-		_adminUser = UserTestUtil.addOmniAdminUser();
+		_adminUser = UserTestUtil.addOmniadminUser();
 
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_adminUser)) {
@@ -100,7 +96,7 @@ public class CalendarServiceTest {
 		throws PortalException {
 
 		Assert.assertTrue(
-			CalendarServiceUtil.isManageableFromGroup(
+			_calendarService.isManageableFromGroup(
 				calendar.getCalendarId(), group.getGroupId()));
 	}
 
@@ -108,13 +104,13 @@ public class CalendarServiceTest {
 		throws PortalException {
 
 		Assert.assertFalse(
-			CalendarServiceUtil.isManageableFromGroup(
+			_calendarService.isManageableFromGroup(
 				calendar.getCalendarId(), group.getGroupId()));
 	}
 
 	protected Calendar getGroupCalendar(Group group) throws Exception {
 		CalendarResource calendarResource =
-			CalendarResourceLocalServiceUtil.fetchCalendarResource(
+			_calendarResourceLocalService.fetchCalendarResource(
 				PortalUtil.getClassNameId(Group.class), group.getGroupId());
 
 		if (calendarResource == null) {
@@ -124,25 +120,26 @@ public class CalendarServiceTest {
 
 			Map<Locale, String> descriptionMap = new HashMap<>();
 
-			ServiceContext serviceContext = new ServiceContext();
-
 			calendarResource =
-				CalendarResourceLocalServiceUtil.addCalendarResource(
+				_calendarResourceLocalService.addCalendarResource(
 					group.getCreatorUserId(), group.getGroupId(),
 					PortalUtil.getClassNameId(Group.class), group.getGroupId(),
-					null, null, nameMap, descriptionMap, true, serviceContext);
+					null, null, nameMap, descriptionMap, true,
+					new ServiceContext());
 		}
 
 		return calendarResource.getDefaultCalendar();
 	}
 
-	@DeleteAfterTestRun
 	private User _adminUser;
 
-	@DeleteAfterTestRun
-	private Group _liveGroup;
+	@Inject
+	private CalendarResourceLocalService _calendarResourceLocalService;
 
-	@DeleteAfterTestRun
+	@Inject
+	private CalendarService _calendarService;
+
+	private Group _liveGroup;
 	private Group _notStagedGroup;
 
 }

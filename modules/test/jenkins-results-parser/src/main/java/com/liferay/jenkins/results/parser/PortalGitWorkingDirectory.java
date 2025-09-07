@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -29,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +30,32 @@ import org.json.JSONObject;
  * @author Peter Yoo
  */
 public class PortalGitWorkingDirectory extends GitWorkingDirectory {
+
+	public Properties getAppServerProperties() {
+		if (_appServerProperties != null) {
+			return _appServerProperties;
+		}
+
+		_appServerProperties = JenkinsResultsParserUtil.getProperties(
+			new File(getWorkingDirectory(), "app.server.properties"));
+
+		return _appServerProperties;
+	}
+
+	public List<File> getJSUnitFiles() {
+		if (_jsUnitFiles != null) {
+			return _jsUnitFiles;
+		}
+
+		_jsUnitFiles = new ArrayList<>(findFiles(null, "describe\\("));
+
+		return _jsUnitFiles;
+	}
+
+	public String getMajorPortalVersion() {
+		return JenkinsResultsParserUtil.getProperty(
+			getReleaseProperties(), "lp.version.major");
+	}
 
 	public List<File> getModifiedModuleDirsList() throws IOException {
 		return getModifiedModuleDirsList(null, null);
@@ -51,6 +69,21 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 		return JenkinsResultsParserUtil.getDirectoriesContainingFiles(
 			getModuleDirsList(excludesPathMatchers, includesPathMatchers),
 			getModifiedFilesList());
+	}
+
+	public List<File> getModifiedNonposhiModules() throws IOException {
+		List<File> modifiedFilesList = getModifiedFilesList();
+
+		List<File> modifiedNonposhiFilesList = new ArrayList<>();
+
+		for (File modifiedFile : modifiedFilesList) {
+			if (!JenkinsResultsParserUtil.isPoshiFile(modifiedFile)) {
+				modifiedNonposhiFilesList.add(modifiedFile);
+			}
+		}
+
+		return JenkinsResultsParserUtil.getDirectoriesContainingFiles(
+			getModuleDirsList(null, null), modifiedNonposhiFilesList);
 	}
 
 	public List<File> getModifiedNPMTestModuleDirsList() throws IOException {
@@ -68,6 +101,21 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 		return modifiedNPMTestModuleDirsList;
 	}
 
+	public List<File> getModifiedPoshiModules() throws IOException {
+		List<File> modifiedFilesList = getModifiedFilesList();
+
+		List<File> modifiedPoshiFilesList = new ArrayList<>();
+
+		for (File modifiedFile : modifiedFilesList) {
+			if (JenkinsResultsParserUtil.isPoshiFile(modifiedFile)) {
+				modifiedPoshiFilesList.add(modifiedFile);
+			}
+		}
+
+		return JenkinsResultsParserUtil.getDirectoriesContainingFiles(
+			getModuleDirsList(null, null), modifiedPoshiFilesList);
+	}
+
 	public List<File> getModuleAppDirs() {
 		List<File> moduleAppDirs = new ArrayList<>();
 
@@ -75,6 +123,25 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 			new File(getWorkingDirectory(), "modules"), "app\\.bnd");
 
 		for (File moduleAppBndFile : moduleAppBndFiles) {
+			moduleAppDirs.add(moduleAppBndFile.getParentFile());
+		}
+
+		return moduleAppDirs;
+	}
+
+	public List<File> getModuleDirs() {
+		List<File> moduleAppDirs = new ArrayList<>();
+
+		List<File> moduleAppBndFiles = JenkinsResultsParserUtil.findFiles(
+			new File(getWorkingDirectory(), "modules"), "bnd\\.bnd");
+
+		for (File moduleAppBndFile : moduleAppBndFiles) {
+			String moduleAppBndFilePath = moduleAppBndFile.toString();
+
+			if (moduleAppBndFilePath.contains("node_modules")) {
+				continue;
+			}
+
 			moduleAppDirs.add(moduleAppBndFile.getParentFile());
 		}
 
@@ -90,7 +157,7 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 			List<PathMatcher> includesPathMatchers)
 		throws IOException {
 
-		final File modulesDir = new File(getWorkingDirectory(), "modules");
+		File modulesDir = new File(getWorkingDirectory(), "modules");
 
 		if (!modulesDir.exists()) {
 			return new ArrayList<>();
@@ -109,7 +176,7 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 
 				@Override
 				public FileVisitResult postVisitDirectory(
-					Path filePath, IOException exc) {
+					Path filePath, IOException ioException) {
 
 					if (_module == null) {
 						return FileVisitResult.CONTINUE;
@@ -134,7 +201,7 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 
 				@Override
 				public FileVisitResult preVisitDirectory(
-					Path filePath, BasicFileAttributes attrs) {
+					Path filePath, BasicFileAttributes basicFileAttributes) {
 
 					if (!JenkinsResultsParserUtil.isFileIncluded(
 							excludedModulesPathMatchers,
@@ -173,6 +240,32 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 		return moduleDirsList;
 	}
 
+	public List<File> getModulePullSubrepoDirs() {
+		File modulesDir = new File(getWorkingDirectory(), "modules");
+
+		if (!modulesDir.exists()) {
+			return new ArrayList<>();
+		}
+
+		List<File> moduleSubrepoDirs = new ArrayList<>();
+
+		List<File> gitrepoFiles = JenkinsResultsParserUtil.findFiles(
+			modulesDir, "\\.gitrepo");
+
+		for (File gitrepoFile : gitrepoFiles) {
+			Properties gitrepoProperties =
+				JenkinsResultsParserUtil.getProperties(gitrepoFile);
+
+			String mode = gitrepoProperties.getProperty("mode", "push");
+
+			if (mode.equals("pull")) {
+				moduleSubrepoDirs.add(gitrepoFile.getParentFile());
+			}
+		}
+
+		return moduleSubrepoDirs;
+	}
+
 	public List<File> getNPMTestModuleDirsList() throws IOException {
 		List<File> npmModuleDirsList = new ArrayList<>();
 
@@ -185,62 +278,53 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 		return npmModuleDirsList;
 	}
 
-	protected PortalGitWorkingDirectory(
-			String upstreamBranchName, String workingDirectoryPath)
-		throws IOException {
+	public PluginsGitWorkingDirectory getPluginsGitWorkingDirectory() {
+		String lpPluginsDir = JenkinsResultsParserUtil.getProperty(
+			getReleaseProperties(), "lp.plugins.dir");
 
-		super(upstreamBranchName, workingDirectoryPath);
-	}
+		GitWorkingDirectory pluginsGitWorkingDirectory =
+			GitWorkingDirectoryFactory.newGitWorkingDirectory(
+				getUpstreamBranchName(), new File(lpPluginsDir),
+				"liferay-plugins-ee");
 
-	protected PortalGitWorkingDirectory(
-			String upstreamBranchName, String workingDirectoryPath,
-			String gitRepositoryName)
-		throws IOException {
-
-		super(upstreamBranchName, workingDirectoryPath, gitRepositoryName);
-	}
-
-	private boolean _isNPMTestModuleDir(File moduleDir) {
-		List<File> packageJSONFiles = JenkinsResultsParserUtil.findFiles(
-			moduleDir, "package\\.json");
-
-		for (File packageJSONFile : packageJSONFiles) {
-			JSONObject jsonObject = null;
-
-			try {
-				jsonObject = JenkinsResultsParserUtil.createJSONObject(
-					JenkinsResultsParserUtil.read(packageJSONFile));
-			}
-			catch (IOException ioe) {
-				System.out.println(
-					"Unable to read invalid JSON " + packageJSONFile.getPath());
-
-				continue;
-			}
-			catch (JSONException jsone) {
-				System.out.println(
-					"Invalid JSON file " + packageJSONFile.getPath());
-
-				continue;
-			}
-
-			if (!jsonObject.has("scripts")) {
-				continue;
-			}
-
-			JSONObject scriptsJSONObject = jsonObject.getJSONObject("scripts");
-
-			if (!scriptsJSONObject.has("test")) {
-				continue;
-			}
-
-			return true;
+		if (pluginsGitWorkingDirectory instanceof PluginsGitWorkingDirectory) {
+			return (PluginsGitWorkingDirectory)pluginsGitWorkingDirectory;
 		}
 
-		return false;
+		throw new RuntimeException(
+			"Unable to find a plugins Git working directory");
 	}
 
-	private static class Module {
+	public Properties getReleaseProperties() {
+		if (_releaseProperties != null) {
+			return _releaseProperties;
+		}
+
+		_releaseProperties = JenkinsResultsParserUtil.getProperties(
+			new File(getWorkingDirectory(), "release.properties"));
+
+		return _releaseProperties;
+	}
+
+	public Properties getTestProperties() {
+		if (_testProperties != null) {
+			return _testProperties;
+		}
+
+		File testPropertiesFile = new File(
+			getWorkingDirectory(), "test.properties");
+
+		if (!testPropertiesFile.exists()) {
+			return _testProperties;
+		}
+
+		_testProperties = JenkinsResultsParserUtil.getProperties(
+			testPropertiesFile);
+
+		return _testProperties;
+	}
+
+	public static class Module {
 
 		public static Module getModule(Path path) {
 			File file = path.toFile();
@@ -297,5 +381,65 @@ public class PortalGitWorkingDirectory extends GitWorkingDirectory {
 		private final int _priority;
 
 	}
+
+	protected PortalGitWorkingDirectory(
+			String upstreamBranchName, String workingDirectoryPath)
+		throws IOException {
+
+		super(upstreamBranchName, workingDirectoryPath);
+	}
+
+	protected PortalGitWorkingDirectory(
+			String upstreamBranchName, String workingDirectoryPath,
+			String gitRepositoryName)
+		throws IOException {
+
+		super(upstreamBranchName, workingDirectoryPath, gitRepositoryName);
+	}
+
+	private boolean _isNPMTestModuleDir(File moduleDir) {
+		List<File> packageJSONFiles = JenkinsResultsParserUtil.findFiles(
+			moduleDir, "package\\.json");
+
+		for (File packageJSONFile : packageJSONFiles) {
+			JSONObject jsonObject = null;
+
+			try {
+				jsonObject = JenkinsResultsParserUtil.createJSONObject(
+					JenkinsResultsParserUtil.read(packageJSONFile));
+			}
+			catch (IOException ioException) {
+				System.out.println(
+					"Unable to read invalid JSON " + packageJSONFile.getPath());
+
+				continue;
+			}
+			catch (JSONException jsonException) {
+				System.out.println(
+					"Invalid JSON file " + packageJSONFile.getPath());
+
+				continue;
+			}
+
+			if (!jsonObject.has("scripts")) {
+				continue;
+			}
+
+			JSONObject scriptsJSONObject = jsonObject.getJSONObject("scripts");
+
+			if (!scriptsJSONObject.has("test")) {
+				continue;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private Properties _appServerProperties;
+	private List<File> _jsUnitFiles;
+	private Properties _releaseProperties;
+	private Properties _testProperties;
 
 }

@@ -1,31 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.lang.builder;
 
 import com.liferay.lang.builder.comparator.LangBuilderCategoryComparator;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
-import com.liferay.portal.kernel.language.LanguageConstants;
+import com.liferay.portal.kernel.language.LanguageBuilderUtil;
 import com.liferay.portal.kernel.language.LanguageValidator;
+import com.liferay.portal.kernel.language.constants.LanguageConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.PropertiesUtil;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.tools.ArgumentsUtil;
@@ -37,7 +29,6 @@ import io.github.firemaples.translate.Translate;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -45,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,14 +52,9 @@ import org.apache.commons.io.FileUtils;
  */
 public class LangBuilder {
 
-	public static final String AUTOMATIC_COPY =
-		com.liferay.portal.tools.LangBuilder.AUTOMATIC_COPY;
-
-	public static final String AUTOMATIC_TRANSLATION =
-		com.liferay.portal.tools.LangBuilder.AUTOMATIC_TRANSLATION;
-
 	public static void main(String[] args) throws Exception {
-		Map<String, String> arguments = ArgumentsUtil.parseArguments(args);
+		Map<String, String> arguments = new HashMap<>(
+			ArgumentsUtil.parseArguments(args));
 
 		System.setProperty("line.separator", StringPool.NEW_LINE);
 
@@ -109,8 +96,8 @@ public class LangBuilder {
 				excludedLanguageIds, langDirName, langFileName,
 				titleCapitalization, translate, translateSubscriptionKey);
 		}
-		catch (Exception e) {
-			ArgumentsUtil.processMainException(arguments, e);
+		catch (Exception exception) {
+			ArgumentsUtil.processMainException(arguments, exception);
 		}
 	}
 
@@ -124,7 +111,17 @@ public class LangBuilder {
 		_langDirName = langDirName;
 		_langFileName = langFileName;
 		_titleCapitalization = titleCapitalization;
-		_translate = translate;
+
+		if (Validator.isNull(translateSubscriptionKey)) {
+			System.out.println(
+				"Translation is disabled because credentials are not " +
+					"specified");
+
+			_translate = false;
+		}
+		else {
+			_translate = translate;
+		}
 
 		Translate.setSubscriptionKey(translateSubscriptionKey);
 
@@ -141,7 +138,7 @@ public class LangBuilder {
 
 		File propertiesFile = new File(
 			StringBundler.concat(
-				_langDirName, "/", _langFileName, ".properties"));
+				langDirName, "/", langFileName, ".properties"));
 
 		if (!propertiesFile.exists()) {
 			return;
@@ -149,54 +146,51 @@ public class LangBuilder {
 
 		String content = _orderProperties(propertiesFile, false);
 
-		// Locales that are not invoked by _createProperties should still be
-		// rewritten to use the right line separator
-
-		_orderProperties(
-			new File(
-				StringBundler.concat(
-					_langDirName, "/", _langFileName, "_en_AU.properties")),
-			true);
-		_orderProperties(
-			new File(
-				StringBundler.concat(
-					_langDirName, "/", _langFileName, "_en_GB.properties")),
-			true);
-		_orderProperties(
-			new File(
-				StringBundler.concat(
-					_langDirName, "/", _langFileName, "_fr_CA.properties")),
-			true);
-
 		_copyProperties(propertiesFile, "en");
+
+		// Automatic copy locales
 
 		_createProperties(content, "ar"); // Arabic
 		_createProperties(content, "eu"); // Basque
 		_createProperties(content, "bg"); // Bulgarian
+		_createProperties(content, "my"); // Burmese (Myanmar)
+		_createProperties(content, "km"); // Cambodian
 		_createProperties(content, "ca"); // Catalan
 		_createProperties(content, "zh_CN"); // Chinese (China)
 		_createProperties(content, "zh_TW"); // Chinese (Taiwan)
 		_createProperties(content, "hr"); // Croatian
+		_createProperties(content, "hr_BA"); // Croatian (Bosnia and Herzegovina)
 		_createProperties(content, "cs"); // Czech
 		_createProperties(content, "da"); // Danish
 		_createProperties(content, "nl"); // Dutch (Netherlands)
 		_createProperties(content, "nl_BE", "nl"); // Dutch (Belgium)
+		_createProperties(content, "en_AU"); // English (Australia)
+		_createProperties(content, "en_CA"); // English (Canada)
+		_createProperties(content, "en_IE"); // English (Ireland)
+		_createProperties(content, "en_GB"); // English (United Kingdom)
 		_createProperties(content, "et"); // Estonian
 		_createProperties(content, "fi"); // Finnish
 		_createProperties(content, "fr"); // French
+		_createProperties(content, "fr_BE", "fr"); // French (Belgium)
+		_createProperties(content, "fr_CA"); // French (Canada)
 		_createProperties(content, "gl"); // Galician
 		_createProperties(content, "de"); // German
+		_createProperties(content, "de_AT", "de"); // German (Austria)
 		_createProperties(content, "el"); // Greek
 		_createProperties(content, "iw"); // Hebrew
 		_createProperties(content, "hi_IN"); // Hindi (India)
 		_createProperties(content, "hu"); // Hungarian
 		_createProperties(content, "in"); // Indonesian
 		_createProperties(content, "it"); // Italian
+		_createProperties(content, "it_CH", "it"); // Italian (Switzerland)
 		_createProperties(content, "ja"); // Japanese
 		_createProperties(content, "kk"); // Kazakh
 		_createProperties(content, "ko"); // Korean
 		_createProperties(content, "lo"); // Lao
 		_createProperties(content, "lt"); // Lithuanian
+		_createProperties(content, "mk"); // Macedonian
+		_createProperties(content, "ms"); // Malay
+		_createProperties(content, "no", "nb"); // Norwegian
 		_createProperties(content, "nb"); // Norwegian Bokmål
 		_createProperties(content, "fa"); // Persian
 		_createProperties(content, "pl"); // Polish
@@ -209,26 +203,17 @@ public class LangBuilder {
 		_createProperties(content, "sk"); // Slovak
 		_createProperties(content, "sl"); // Slovene
 		_createProperties(content, "es"); // Spanish
+		_createProperties(content, "es_AR", "es"); // Spanish (Argentina)
+		_createProperties(content, "es_CO", "es"); // Spanish (Colombia)
+		_createProperties(content, "es_MX", "es"); // Spanish (Mexico)
 		_createProperties(content, "sv"); // Swedish
+		_createProperties(content, "fr_CH", "fr"); // Swiss French
+		_createProperties(content, "de_CH", "de"); // Swiss German
 		_createProperties(content, "ta_IN"); // Tamil
 		_createProperties(content, "th"); // Thai
 		_createProperties(content, "tr"); // Turkish
 		_createProperties(content, "uk"); // Ukrainian
 		_createProperties(content, "vi"); // Vietnamese
-	}
-
-	private static String _getSpecialPropertyValue(String key) {
-		if (key.equals(LanguageConstants.KEY_DIR)) {
-			return LanguageConstants.VALUE_LTR;
-		}
-		else if (key.equals(LanguageConstants.KEY_LINE_BEGIN)) {
-			return LanguageConstants.VALUE_LEFT;
-		}
-		else if (key.equals(LanguageConstants.KEY_LINE_END)) {
-			return LanguageConstants.VALUE_RIGHT;
-		}
-
-		return StringPool.BLANK;
 	}
 
 	private static void _processCurrentBranch(
@@ -258,8 +243,8 @@ public class LangBuilder {
 					titleCapitalization, translate, translateSubscriptionKey);
 			}
 		}
-		catch (GitException ge) {
-			System.out.println(ge.getMessage());
+		catch (GitException gitException) {
+			System.out.println(gitException.getMessage());
 		}
 	}
 
@@ -284,7 +269,7 @@ public class LangBuilder {
 	}
 
 	private void _copyProperties(File file, String languageId)
-		throws IOException {
+		throws Exception {
 
 		Path path = Paths.get(
 			_langDirName,
@@ -295,14 +280,14 @@ public class LangBuilder {
 	}
 
 	private void _createProperties(String content, String languageId)
-		throws IOException {
+		throws Exception {
 
 		_createProperties(content, languageId, null);
 	}
 
 	private void _createProperties(
 			String content, String languageId, String parentLanguageId)
-		throws IOException {
+		throws Exception {
 
 		File propertiesFile = new File(
 			StringBundler.concat(
@@ -361,7 +346,17 @@ public class LangBuilder {
 					translatedText = null;
 				}
 
+				if ((translatedText != null) && (parentProperties != null) &&
+					translatedText.endsWith(
+						LanguageBuilderUtil.AUTOMATIC_COPY)) {
+
+					translatedText = null;
+				}
+
+				boolean inheritedFromParent = false;
+
 				if ((translatedText == null) && (parentProperties != null)) {
+					inheritedFromParent = true;
 					translatedText = parentProperties.getProperty(key);
 				}
 
@@ -374,40 +369,41 @@ public class LangBuilder {
 						if ((translatedText == null) &&
 							(parentProperties != null)) {
 
+							inheritedFromParent = true;
 							translatedText = parentProperties.getProperty(key);
 						}
 					}
 				}
 
-				if ((translatedText != null) &&
-					translatedText.endsWith(AUTOMATIC_COPY)) {
+				boolean automaticCopy = false;
 
+				if (!inheritedFromParent && (translatedText != null) &&
+					translatedText.endsWith(
+						LanguageBuilderUtil.AUTOMATIC_COPY)) {
+
+					automaticCopy = true;
 					translatedText = "";
 				}
 
 				if ((translatedText == null) || translatedText.equals("")) {
 					String value = array[1];
 
-					if (line.contains("{") || line.contains("<")) {
-						translatedText = value + AUTOMATIC_COPY;
+					if (LanguageValidator.isSpecialPropertyKey(key)) {
+						translatedText = _getSpecialPropertyValue(key);
+					}
+					else if (line.contains("{") || line.contains("<") ||
+							 ArrayUtil.contains(
+								 _AUTOMATIC_COPY_LANGUAGE_IDS, languageId)) {
+
+						translatedText =
+							value + LanguageBuilderUtil.AUTOMATIC_COPY;
 					}
 					else if (line.contains("[")) {
-						int pos = line.indexOf("[");
-
-						String baseKey = line.substring(0, pos);
-
-						String translatedBaseKey = properties.getProperty(
-							baseKey);
-
-						if (Validator.isNotNull(translatedBaseKey)) {
-							translatedText = translatedBaseKey;
-						}
-						else {
-							translatedText = value + AUTOMATIC_COPY;
-						}
+						translatedText =
+							value + LanguageBuilderUtil.AUTOMATIC_COPY;
 					}
-					else if (LanguageValidator.isSpecialPropertyKey(key)) {
-						translatedText = _getSpecialPropertyValue(key);
+					else if (!automaticCopy && key.endsWith("-delimiter")) {
+						translatedText = "";
 					}
 					else if (languageId.equals("el") &&
 							 (key.equals("enabled") || key.equals("on") ||
@@ -441,18 +437,22 @@ public class LangBuilder {
 							"en", languageId, key, value, 0);
 
 						if (Validator.isNull(translatedText)) {
-							translatedText = value + AUTOMATIC_COPY;
+							translatedText =
+								value + LanguageBuilderUtil.AUTOMATIC_COPY;
 						}
 						else if (!key.startsWith("country.") &&
 								 !key.startsWith("language.")) {
 
 							translatedText =
-								translatedText + AUTOMATIC_TRANSLATION;
+								translatedText +
+									LanguageBuilderUtil.AUTOMATIC_TRANSLATION;
 						}
 					}
 				}
 
-				if (Validator.isNotNull(translatedText)) {
+				if (Validator.isNotNull(translatedText) ||
+					key.endsWith("-delimiter")) {
+
 					translatedText = _fixTranslation(translatedText);
 
 					sb.append(key);
@@ -468,6 +468,22 @@ public class LangBuilder {
 		content = sb.toString();
 
 		_write(propertiesFile, content);
+	}
+
+	private String _fixContraction(
+		String s, String contraction, String replacement) {
+
+		int i = s.indexOf(contraction);
+
+		if ((i == -1) ||
+			((i > 0) && Character.isLetterOrDigit(s.charAt(i - 1))) ||
+			(((i + contraction.length()) < s.length()) &&
+			 Character.isLetterOrDigit(s.charAt(i + contraction.length())))) {
+
+			return s;
+		}
+
+		return StringUtil.replaceFirst(s, contraction, replacement, i);
 	}
 
 	private String _fixEnglishTranslation(String key, String value) {
@@ -496,6 +512,8 @@ public class LangBuilder {
 
 	private String _fixTranslation(String value) {
 		value = StringUtil.replace(value, "\n", "\\n");
+		value = StringUtil.replace(
+			value, CharPool.NO_BREAK_SPACE, CharPool.SPACE);
 
 		value = StringUtil.replace(
 			value.trim(),
@@ -514,6 +532,22 @@ public class LangBuilder {
 				'\u201e', '\u201f'
 			},
 			new char[] {'\'', '\'', '\'', '\'', '\"', '\"', '\"', '\"'});
+
+		for (String[] contractionArray : _CONTRACTIONS) {
+			String contraction = contractionArray[0];
+			String replacement = contractionArray[1];
+
+			value = _fixContraction(value, contraction, replacement);
+
+			if (!contraction.startsWith("I'")) {
+				value = _fixContraction(
+					value,
+					Character.toLowerCase(contraction.charAt(0)) +
+						contraction.substring(1),
+					Character.toLowerCase(replacement.charAt(0)) +
+						replacement.substring(1));
+			}
+		}
 
 		return value;
 	}
@@ -566,6 +600,20 @@ public class LangBuilder {
 		return languageId;
 	}
 
+	private String _getSpecialPropertyValue(String key) {
+		if (key.equals(LanguageConstants.KEY_DIR)) {
+			return LanguageConstants.VALUE_LTR;
+		}
+		else if (key.equals(LanguageConstants.KEY_LINE_BEGIN)) {
+			return LanguageConstants.VALUE_LEFT;
+		}
+		else if (key.equals(LanguageConstants.KEY_LINE_END)) {
+			return LanguageConstants.VALUE_RIGHT;
+		}
+
+		return StringPool.BLANK;
+	}
+
 	private void _initKeysWithUpdatedValues() throws Exception {
 		File backupLanguageFile = new File(
 			StringBundler.concat(
@@ -597,10 +645,12 @@ public class LangBuilder {
 	}
 
 	private String _orderProperties(File propertiesFile, boolean checkExistence)
-		throws IOException {
+		throws Exception {
 
 		if (checkExistence && !propertiesFile.exists()) {
-			return null;
+			_write(propertiesFile, StringPool.BLANK);
+
+			return StringPool.BLANK;
 		}
 
 		boolean useSingleCategory = true;
@@ -689,7 +739,7 @@ public class LangBuilder {
 		return content;
 	}
 
-	private String _read(File file) throws IOException {
+	private String _read(File file) throws Exception {
 		String s = new String(
 			Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 
@@ -697,7 +747,7 @@ public class LangBuilder {
 			s, StringPool.RETURN_NEW_LINE, StringPool.NEW_LINE);
 	}
 
-	private Properties _readProperties(File file) throws IOException {
+	private Properties _readProperties(File file) throws Exception {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
 		}
@@ -723,9 +773,6 @@ public class LangBuilder {
 			return null;
 		}
 
-		Language fromLanguage = Language.fromString(
-			_getMicrosoftLanguageId(fromLanguageId));
-
 		Language toLanguage = Language.fromString(
 			_getMicrosoftLanguageId(toLanguageId));
 
@@ -733,26 +780,21 @@ public class LangBuilder {
 			return null;
 		}
 
+		Language fromLanguage = Language.fromString(
+			_getMicrosoftLanguageId(fromLanguageId));
+
 		String toText = null;
 
 		try {
-			StringBundler sb = new StringBundler(8);
-
-			sb.append("Translating ");
-			sb.append(fromLanguageId);
-			sb.append("_");
-			sb.append(toLanguageId);
-			sb.append(" ");
-			sb.append(key);
-			sb.append(" ");
-			sb.append(fromText);
-
-			System.out.println(sb.toString());
+			System.out.println(
+				StringBundler.concat(
+					"Translating ", fromLanguageId, "_", toLanguageId, " ", key,
+					" ", fromText));
 
 			toText = Translate.execute(fromText, fromLanguage, toLanguage);
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			exception.printStackTrace();
 		}
 
 		// Keep trying
@@ -765,9 +807,29 @@ public class LangBuilder {
 		return toText;
 	}
 
-	private void _write(File file, String s) throws IOException {
+	private void _write(File file, String s) throws Exception {
 		FileUtils.writeStringToFile(file, s, StringPool.UTF8);
 	}
+
+	private static final String[] _AUTOMATIC_COPY_LANGUAGE_IDS = {
+		"en_AU", "en_GB", "fr_CA"
+	};
+
+	private static final String[][] _CONTRACTIONS = {
+		{"Aren't", "Are not"}, {"Can't", "Cannot"}, {"Could've", "Could have"},
+		{"Couldn't", "Could not"}, {"Didn't", "Did not"},
+		{"Doesn't", "Does not"}, {"Don't", "Do not"}, {"Hadn't", "Had not"},
+		{"Hasn't", "Has not"}, {"Haven't", "Have not"}, {"How's", "How is"},
+		{"I'd", "I would"}, {"I'll", "I will"}, {"I've", "I have"},
+		{"Isn't", "Is not"}, {"It's", "It is"}, {"Let's", "Let us"},
+		{"Shouldn't", "Should not"}, {"That's", "That is"},
+		{"There's", "There is"}, {"Wasn't", "Was not"}, {"We'd", "We would"},
+		{"We'll", "We will"}, {"We're", "We are"}, {"We've", "We have"},
+		{"Weren't", "Were not"}, {"What's", "What is"}, {"Where's", "Where is"},
+		{"Would've", "Would have"}, {"Wouldn't", "Would not"},
+		{"You'd", "You would"}, {"You'll", "You will"}, {"You're", "You are"},
+		{"You've", "You have"}
+	};
 
 	private final String[] _excludedLanguageIds;
 	private final Set<String> _keysWithUpdatedValues = new HashSet<>();

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.message.boards.exception.DuplicateMBCategoryExternalReferenceCodeException;
 import com.liferay.message.boards.exception.NoSuchCategoryException;
 import com.liferay.message.boards.model.MBCategory;
 import com.liferay.message.boards.service.MBCategoryLocalServiceUtil;
@@ -26,14 +18,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -124,7 +120,13 @@ public class MBCategoryPersistenceTest {
 
 		MBCategory newMBCategory = _persistence.create(pk);
 
+		newMBCategory.setMvccVersion(RandomTestUtil.nextLong());
+
+		newMBCategory.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newMBCategory.setUuid(RandomTestUtil.randomString());
+
+		newMBCategory.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		newMBCategory.setGroupId(RandomTestUtil.nextLong());
 
@@ -146,11 +148,7 @@ public class MBCategoryPersistenceTest {
 
 		newMBCategory.setDisplayStyle(RandomTestUtil.randomString());
 
-		newMBCategory.setThreadCount(RandomTestUtil.nextInt());
-
-		newMBCategory.setMessageCount(RandomTestUtil.nextInt());
-
-		newMBCategory.setLastPostDate(RandomTestUtil.nextDate());
+		newMBCategory.setFriendlyURL(RandomTestUtil.randomString());
 
 		newMBCategory.setLastPublishDate(RandomTestUtil.nextDate());
 
@@ -168,7 +166,16 @@ public class MBCategoryPersistenceTest {
 			newMBCategory.getPrimaryKey());
 
 		Assert.assertEquals(
+			existingMBCategory.getMvccVersion(),
+			newMBCategory.getMvccVersion());
+		Assert.assertEquals(
+			existingMBCategory.getCtCollectionId(),
+			newMBCategory.getCtCollectionId());
+		Assert.assertEquals(
 			existingMBCategory.getUuid(), newMBCategory.getUuid());
+		Assert.assertEquals(
+			existingMBCategory.getExternalReferenceCode(),
+			newMBCategory.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingMBCategory.getCategoryId(), newMBCategory.getCategoryId());
 		Assert.assertEquals(
@@ -197,14 +204,8 @@ public class MBCategoryPersistenceTest {
 			existingMBCategory.getDisplayStyle(),
 			newMBCategory.getDisplayStyle());
 		Assert.assertEquals(
-			existingMBCategory.getThreadCount(),
-			newMBCategory.getThreadCount());
-		Assert.assertEquals(
-			existingMBCategory.getMessageCount(),
-			newMBCategory.getMessageCount());
-		Assert.assertEquals(
-			Time.getShortTimestamp(existingMBCategory.getLastPostDate()),
-			Time.getShortTimestamp(newMBCategory.getLastPostDate()));
+			existingMBCategory.getFriendlyURL(),
+			newMBCategory.getFriendlyURL());
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingMBCategory.getLastPublishDate()),
 			Time.getShortTimestamp(newMBCategory.getLastPublishDate()));
@@ -219,6 +220,26 @@ public class MBCategoryPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingMBCategory.getStatusDate()),
 			Time.getShortTimestamp(newMBCategory.getStatusDate()));
+	}
+
+	@Test(expected = DuplicateMBCategoryExternalReferenceCodeException.class)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		MBCategory mbCategory = addMBCategory();
+
+		MBCategory newMBCategory = addMBCategory();
+
+		newMBCategory.setGroupId(mbCategory.getGroupId());
+
+		newMBCategory = _persistence.update(newMBCategory);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newMBCategory);
+
+		newMBCategory.setExternalReferenceCode(
+			mbCategory.getExternalReferenceCode());
+
+		_persistence.update(newMBCategory);
 	}
 
 	@Test
@@ -275,6 +296,15 @@ public class MBCategoryPersistenceTest {
 		_persistence.countByG_P(
 			RandomTestUtil.nextLong(),
 			new long[] {RandomTestUtil.nextLong(), 0L});
+	}
+
+	@Test
+	public void testCountByG_F() throws Exception {
+		_persistence.countByG_F(RandomTestUtil.nextLong(), "");
+
+		_persistence.countByG_F(0L, "null");
+
+		_persistence.countByG_F(0L, (String)null);
 	}
 
 	@Test
@@ -363,6 +393,15 @@ public class MBCategoryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByERC_G() throws Exception {
+		_persistence.countByERC_G("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_G("null", 0L);
+
+		_persistence.countByERC_G((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		MBCategory newMBCategory = addMBCategory();
 
@@ -387,19 +426,38 @@ public class MBCategoryPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<MBCategory> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"MBCategory", "uuid", true, "categoryId", true, "groupId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "parentCategoryId", true, "name", true,
-			"description", true, "displayStyle", true, "threadCount", true,
-			"messageCount", true, "lastPostDate", true, "lastPublishDate", true,
-			"status", true, "statusByUserId", true, "statusByUserName", true,
-			"statusDate", true);
+			"MBCategory", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "externalReferenceCode", true, "categoryId", true, "groupId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "parentCategoryId", true,
+			"name", true, "description", true, "displayStyle", true,
+			"friendlyURL", true, "lastPublishDate", true, "status", true,
+			"statusByUserId", true, "statusByUserName", true, "statusDate",
+			true);
 	}
 
 	@Test
@@ -617,18 +675,83 @@ public class MBCategoryPersistenceTest {
 
 		_persistence.clearCache();
 
-		MBCategory existingMBCategory = _persistence.findByPrimaryKey(
-			newMBCategory.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newMBCategory.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingMBCategory.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingMBCategory, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		MBCategory newMBCategory = addMBCategory();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			MBCategory.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"categoryId", newMBCategory.getCategoryId()));
+
+		List<MBCategory> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(MBCategory mbCategory) {
 		Assert.assertEquals(
-			Long.valueOf(existingMBCategory.getGroupId()),
+			mbCategory.getUuid(),
+			ReflectionTestUtil.invoke(
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(mbCategory.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBCategory, "getOriginalGroupId", new Class<?>[0]));
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			Long.valueOf(mbCategory.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			mbCategory.getFriendlyURL(),
+			ReflectionTestUtil.invoke(
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "friendlyURL"));
+
+		Assert.assertEquals(
+			mbCategory.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(mbCategory.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				mbCategory, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected MBCategory addMBCategory() throws Exception {
@@ -636,7 +759,13 @@ public class MBCategoryPersistenceTest {
 
 		MBCategory mbCategory = _persistence.create(pk);
 
+		mbCategory.setMvccVersion(RandomTestUtil.nextLong());
+
+		mbCategory.setCtCollectionId(RandomTestUtil.nextLong());
+
 		mbCategory.setUuid(RandomTestUtil.randomString());
+
+		mbCategory.setExternalReferenceCode(RandomTestUtil.randomString());
 
 		mbCategory.setGroupId(RandomTestUtil.nextLong());
 
@@ -658,11 +787,7 @@ public class MBCategoryPersistenceTest {
 
 		mbCategory.setDisplayStyle(RandomTestUtil.randomString());
 
-		mbCategory.setThreadCount(RandomTestUtil.nextInt());
-
-		mbCategory.setMessageCount(RandomTestUtil.nextInt());
-
-		mbCategory.setLastPostDate(RandomTestUtil.nextDate());
+		mbCategory.setFriendlyURL(RandomTestUtil.randomString());
 
 		mbCategory.setLastPublishDate(RandomTestUtil.nextDate());
 

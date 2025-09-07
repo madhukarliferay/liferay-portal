@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -30,7 +21,8 @@
 ErrorData errorData = pageContext.getErrorData();
 
 int code = errorData.getStatusCode();
-String msg = String.valueOf(request.getAttribute(JavaConstants.JAVAX_SERVLET_ERROR_MESSAGE));
+
+String msg = String.valueOf(request.getAttribute(JavaConstants.JAKARTA_SERVLET_ERROR_MESSAGE));
 String uri = errorData.getRequestURI();
 
 String xRequestWith = request.getHeader(HttpHeaders.X_REQUESTED_WITH);
@@ -49,9 +41,7 @@ String xRequestWith = request.getHeader(HttpHeaders.X_REQUESTED_WITH);
 				redirect = PortalUtil.getPathMain();
 			}
 			else {
-				String validPortalDomain = PortalUtil.getValidPortalDomain(PortalUtil.getDefaultCompanyId(), request.getServerName());
-
-				redirect = PortalUtil.getPortalURL(validPortalDomain, request.getServerPort(), request.isSecure()) + PortalUtil.getPathContext() + PortalUtil.getRelativeHomeURL(request);
+				redirect = PortalUtil.getPortalURL(PortalUtil.getValidPortalDomain(PortalUtil.getDefaultCompanyId(), request.getServerName()), request.getServerPort(), request.isSecure()) + PortalUtil.getPathContext() + PortalUtil.getRelativeHomeURL(request);
 			}
 
 			if (!request.isRequestedSessionIdFromCookie()) {
@@ -65,26 +55,28 @@ String xRequestWith = request.getHeader(HttpHeaders.X_REQUESTED_WITH);
 				<meta content="1; url=<%= HtmlUtil.escapeAttribute(redirect) %>" http-equiv="refresh" />
 			</head>
 
-			<body onload="javascript:location.replace('<%= HtmlUtil.escapeJS(redirect) %>')">
+			<liferay-ui:csp>
+				<body onload="javascript:location.replace('<%= HtmlUtil.escapeJS(redirect) %>')">
 
-				<!--
-				The numbers below are used to fill up space so that this works properly in IE.
-				See http://support.microsoft.com/default.aspx?scid=kb;en-us;Q294807 for more
-				information on why this is necessary.
+					<!--
+					The numbers below are used to fill up space so that this works properly in IE.
+					See http://support.microsoft.com/default.aspx?scid=kb;en-us;Q294807 for more
+					information on why this is necessary.
 
-				12345678901234567890123456789012345678901234567890123456789012345678901234567890
-				12345678901234567890123456789012345678901234567890123456789012345678901234567890
-				12345678901234567890123456789012345678901234567890123456789012345678901234567890
-				-->
-			</body>
+					12345678901234567890123456789012345678901234567890123456789012345678901234567890
+					12345678901234567890123456789012345678901234567890123456789012345678901234567890
+					12345678901234567890123456789012345678901234567890123456789012345678901234567890
+					-->
+				</body>
+			</liferay-ui:csp>
 		</c:when>
 		<c:otherwise>
 			<head>
-				<title>Http Status <%= code %> - <%= LanguageUtil.get(request, "http-status-code[" + code + "]") %></title>
+				<title>Http Status <%= code %> - <liferay-ui:message key='<%= "http-status-code[" + code + "]" %>' /></title>
 			</head>
 
 			<body>
-				<h1>Http Status <%= code %> - <%= LanguageUtil.get(request, "http-status-code[" + code + "]") %></h1>
+				<h1>Http Status <%= code %> - <liferay-ui:message key='<%= "http-status-code[" + code + "]" %>' /></h1>
 
 				<p>
 					<liferay-ui:message key="message" />: <%= HtmlUtil.escape(msg) %>

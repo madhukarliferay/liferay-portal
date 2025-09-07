@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.util;
@@ -43,7 +34,7 @@ public class SocialCounterPeriodUtil {
 	}
 
 	public static Date getDate(int activityDay) {
-		return new Date(_BASE_TIME + activityDay * Time.DAY);
+		return new Date(_BASE_TIME + (activityDay * Time.DAY));
 	}
 
 	public static int getEndPeriod() {
@@ -73,7 +64,7 @@ public class SocialCounterPeriodUtil {
 			return getActivityDay(calendar);
 		}
 
-		return getEndPeriod() - offset * getPeriodLength();
+		return getEndPeriod() - (offset * getPeriodLength());
 	}
 
 	public static int getEndPeriod(long time) {
@@ -103,18 +94,18 @@ public class SocialCounterPeriodUtil {
 
 	public static int getOffset(int activityDay) {
 		if (_isMonthlyPeriod()) {
-			Calendar calendar = new GregorianCalendar();
+			Calendar calendar1 = new GregorianCalendar();
 
 			Calendar calendar2 = new GregorianCalendar();
 
-			calendar2.setTimeInMillis(_BASE_TIME + activityDay * Time.DAY);
+			calendar2.setTimeInMillis(_BASE_TIME + (activityDay * Time.DAY));
 
 			int monthDelta =
-				calendar.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
+				calendar1.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
 			int yearDelta =
-				calendar.get(Calendar.YEAR) - calendar2.get(Calendar.YEAR);
+				calendar1.get(Calendar.YEAR) - calendar2.get(Calendar.YEAR);
 
-			return -(yearDelta * 12 + monthDelta);
+			return -((yearDelta * 12) + monthDelta);
 		}
 
 		return -((getStartPeriod() - activityDay) / getPeriodLength());
@@ -158,10 +149,9 @@ public class SocialCounterPeriodUtil {
 			calendar.set(Calendar.DATE, 1);
 			calendar.set(Calendar.HOUR_OF_DAY, 0);
 			calendar.set(Calendar.MINUTE, 0);
+			calendar.add(Calendar.MONTH, offset);
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
-
-			calendar.add(Calendar.MONTH, offset);
 
 			return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 		}
@@ -198,11 +188,9 @@ public class SocialCounterPeriodUtil {
 			Calendar calendar = new GregorianCalendar();
 
 			calendar.set(Calendar.DATE, 1);
-
-			calendar.add(Calendar.MONTH, offset);
-
 			calendar.set(Calendar.HOUR_OF_DAY, 0);
 			calendar.set(Calendar.MINUTE, 0);
+			calendar.add(Calendar.MONTH, offset);
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
 
@@ -211,7 +199,7 @@ public class SocialCounterPeriodUtil {
 			return getActivityDay(calendarTime.getTime());
 		}
 
-		return getStartPeriod() + offset * getPeriodLength();
+		return getStartPeriod() + (offset * getPeriodLength());
 	}
 
 	public static int getStartPeriod(long time) {
@@ -227,11 +215,7 @@ public class SocialCounterPeriodUtil {
 	}
 
 	private static boolean _isMonthlyPeriod() {
-		if (_SOCIAL_ACTIVITY_COUNTER_PERIOD_LENGTH.equals("month")) {
-			return true;
-		}
-
-		return false;
+		return _SOCIAL_ACTIVITY_COUNTER_PERIOD_LENGTH.equals("month");
 	}
 
 	private static boolean _isWithinPeriod(

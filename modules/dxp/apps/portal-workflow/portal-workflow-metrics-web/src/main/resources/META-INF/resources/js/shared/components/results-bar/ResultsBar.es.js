@@ -1,129 +1,152 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import pathToRegexp from 'path-to-regexp';
-import React from 'react';
-import {Link} from 'react-router-dom';
+import ClayButton from '@clayui/button';
+import ClayIcon from '@clayui/icon';
+import ClayLayout from '@clayui/layout';
+import ClayList from '@clayui/list';
+import React, {useCallback} from 'react';
 
+import {useFilter} from '../../hooks/useFilter.es';
 import {useRouter} from '../../hooks/useRouter.es';
 import {sub} from '../../util/lang.es';
-import Icon from '../Icon.es';
-import {removeItem, removeFilters} from '../filter/util/filterUtil.es';
+import {
+	removeFilters,
+	removeItem,
+	replaceHistory,
+} from '../filter/util/filterUtil.es';
 
 const ResultsBar = ({children}) => {
 	return (
-		<nav className="subnav-tbar subnav-tbar-primary tbar tbar-inline-xs-down">
-			<div className="container-fluid container-fluid-max-xl">
-				<ul className="tbar-nav tbar-nav-wrap">{children}</ul>
-			</div>
+		<nav className="mt-0 subnav-tbar subnav-tbar-primary tbar tbar-inline-xs-down">
+			<ClayLayout.ContainerFluid>
+				<ClayList.ItemText className="tbar-nav tbar-nav-wrap">
+					{children}
+				</ClayList.ItemText>
+			</ClayLayout.ContainerFluid>
 		</nav>
 	);
 };
 
-const Clear = props => {
-	const {
-		location: {search},
-		match: {path}
-	} = useRouter();
+const Clear = ({filters = [], filterKeys = [], withoutRouteParams}) => {
+	const {dispatch, filterState} = useFilter({withoutRouteParams});
+	const routerProps = useRouter();
 
-	const handleClearAll = () => {
-		const {filters = []} = props;
-
-		filters.map(filter => {
-			filter.items.map(item => {
+	const handleClearAll = useCallback(() => {
+		filters.map((filter) => {
+			filter.items.map((item) => {
 				item.active = false;
 			});
 		});
-	};
 
-	const pathname = pathToRegexp.compile(path)(props);
+		filterKeys.forEach((key) => {
+			delete filterState[key];
+		});
 
-	const query = removeFilters(search);
+		dispatch(filterState);
+
+		if (!withoutRouteParams) {
+			const query = removeFilters(routerProps.location.search);
+
+			replaceHistory(query, routerProps);
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filterState, routerProps, withoutRouteParams]);
 
 	return (
-		<li className="tbar-item tbar-item-expand">
+		<ClayList.ItemText className="tbar-item tbar-item-expand">
 			<div className="tbar-section text-right">
-				<Link
+				<ClayButton
 					className="component-link tbar-link"
-					data-testid="clearAll"
+					displayType="link"
 					onClick={handleClearAll}
-					to={{
-						pathname,
-						search: query
-					}}
+					small
 				>
-					<span>{Liferay.Language.get('clear-all')}</span>
-				</Link>
+					{Liferay.Language.get('clear-all')}
+				</ClayButton>
 			</div>
-		</li>
+		</ClayList.ItemText>
 	);
 };
 
-const FilterItem = props => {
-	const {filter, item} = props;
-	const {
-		location: {search},
-		match: {path}
-	} = useRouter();
+const FilterItem = ({filter, item, withoutRouteParams}) => {
+	const {dispatch, filterState} = useFilter({withoutRouteParams});
+	const routerProps = useRouter();
 
-	const pathname = pathToRegexp.compile(path)(props);
-
-	const query = removeItem(filter.key, item, search);
-
-	const removeFilter = () => {
+	const removeFilter = useCallback(() => {
 		item.active = false;
-	};
+
+		filterState[filter.key] = filterState[filter.key]
+			? filterState[filter.key].filter(({key}) => key !== item.key)
+			: undefined;
+
+		dispatch(filterState);
+
+		if (!withoutRouteParams) {
+			const query = removeItem(
+				filter.key,
+				item,
+				routerProps.location.search
+			);
+
+			replaceHistory(query, routerProps);
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filterState, routerProps, withoutRouteParams]);
 
 	return (
-		<li className="tbar-item">
+		<ClayList.ItemText className="tbar-item">
 			<div className="tbar-section">
 				<span className="component-label label label-dismissible tbar-label">
 					<span className="label-item label-item-expand">
 						<div className="label-section">
 							<span className="font-weight-normal">{`${filter.name}: `}</span>
 
-							<strong>{item.name}</strong>
+							<strong>
+								{filter.items[0].key !== 'custom'
+									? item.label || item.name
+									: item.resultName}
+							</strong>
 						</div>
 					</span>
 
 					{!filter.pinned && (
 						<span className="label-item label-item-after">
-							<Link
-								aria-label="close"
-								className="close"
-								data-testid="removeFilter"
+							<ClayButton
+								className="text-dark"
+								displayType="unstyled"
 								onClick={removeFilter}
-								to={{
-									pathname,
-									search: query
-								}}
 							>
-								<Icon iconName="times" />
-							</Link>
+								<ClayIcon symbol="times" />
+							</ClayButton>
 						</span>
 					)}
 				</span>
 			</div>
-		</li>
+		</ClayList.ItemText>
 	);
 };
 
-const FilterItems = props => {
-	const {filters = []} = props;
-
-	return filters.map(filter =>
-		filter.items.map((item, index) => (
-			<FilterItem filter={filter} item={item} key={index} {...props} />
-		))
-	);
+const FilterItems = ({filters = [], hideFilters = [], ...props}) => {
+	return filters
+		.filter(
+			(filterItem) =>
+				!hideFilters.find((hideItem) => filterItem.key === hideItem)
+		)
+		.map((filter) =>
+			filter.items.map((item, index) => (
+				<FilterItem
+					filter={filter}
+					item={item}
+					key={index}
+					{...props}
+				/>
+			))
+		);
 };
 
 const TotalCount = ({search, totalCount}) => {
@@ -134,15 +157,15 @@ const TotalCount = ({search, totalCount}) => {
 	}
 
 	return (
-		<li className="tbar-item">
+		<ClayList.ItemText className="tbar-item">
 			<div className="tbar-section">
 				<span className="component-text text-truncate-inline">
-					<span className="text-truncate" data-testid="totalCount">
+					<span className="text-truncate">
 						{sub(resultText, [totalCount, search])}
 					</span>
 				</span>
 			</div>
-		</li>
+		</ClayList.ItemText>
 	);
 };
 

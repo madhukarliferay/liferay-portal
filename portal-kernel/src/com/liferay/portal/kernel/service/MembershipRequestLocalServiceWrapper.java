@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link MembershipRequestLocalService}.
@@ -25,21 +18,20 @@ public class MembershipRequestLocalServiceWrapper
 	implements MembershipRequestLocalService,
 			   ServiceWrapper<MembershipRequestLocalService> {
 
+	public MembershipRequestLocalServiceWrapper() {
+		this(null);
+	}
+
 	public MembershipRequestLocalServiceWrapper(
 		MembershipRequestLocalService membershipRequestLocalService) {
 
 		_membershipRequestLocalService = membershipRequestLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link MembershipRequestLocalServiceUtil} to access the membership request local service. Add custom service methods to <code>com.liferay.portal.service.impl.MembershipRequestLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.MembershipRequest
 			addMembershipRequest(
-				long userId, long groupId, java.lang.String comments,
+				long userId, long groupId, String comments,
 				ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -49,6 +41,10 @@ public class MembershipRequestLocalServiceWrapper
 
 	/**
 	 * Adds the membership request to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MembershipRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param membershipRequest the membership request
 	 * @return the membership request that was added
@@ -78,7 +74,23 @@ public class MembershipRequestLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _membershipRequestLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the membership request with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MembershipRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param membershipRequestId the primary key of the membership request
 	 * @return the membership request that was removed
@@ -95,6 +107,10 @@ public class MembershipRequestLocalServiceWrapper
 
 	/**
 	 * Deletes the membership request from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MembershipRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param membershipRequest the membership request
 	 * @return the membership request that was removed
@@ -135,6 +151,18 @@ public class MembershipRequestLocalServiceWrapper
 
 		return _membershipRequestLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _membershipRequestLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _membershipRequestLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -309,10 +337,13 @@ public class MembershipRequestLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _membershipRequestLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -342,10 +373,11 @@ public class MembershipRequestLocalServiceWrapper
 		search(
 			long groupId, int status, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.MembershipRequest> obc) {
+				<com.liferay.portal.kernel.model.MembershipRequest>
+					orderByComparator) {
 
 		return _membershipRequestLocalService.search(
-			groupId, status, start, end, obc);
+			groupId, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -355,6 +387,10 @@ public class MembershipRequestLocalServiceWrapper
 
 	/**
 	 * Updates the membership request in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect MembershipRequestLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param membershipRequest the membership request
 	 * @return the membership request that was updated
@@ -371,14 +407,19 @@ public class MembershipRequestLocalServiceWrapper
 
 	@Override
 	public void updateStatus(
-			long replierUserId, long membershipRequestId,
-			java.lang.String replyComments, long statusId,
-			boolean addUserToGroup, ServiceContext serviceContext)
+			long replierUserId, long membershipRequestId, String replyComments,
+			long statusId, boolean addUserToGroup,
+			ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_membershipRequestLocalService.updateStatus(
 			replierUserId, membershipRequestId, replyComments, statusId,
 			addUserToGroup, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _membershipRequestLocalService.getBasePersistence();
 	}
 
 	@Override

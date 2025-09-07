@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.util;
@@ -28,10 +19,10 @@ import java.awt.Color;
 public class ColorUtil {
 
 	public static Color blend(Color color1, Color color2, double ratio) {
-		int[] rgb1 = {color1.getRed(), color1.getGreen(), color1.getBlue()};
-		int[] rgb2 = {color2.getRed(), color2.getGreen(), color2.getBlue()};
-
-		return blend(rgb1, rgb2, ratio);
+		return blend(
+			new int[] {color1.getRed(), color1.getGreen(), color1.getBlue()},
+			new int[] {color2.getRed(), color2.getGreen(), color2.getBlue()},
+			ratio);
 	}
 
 	public static Color blend(int[] color1, int[] color2, double ratio) {
@@ -49,32 +40,17 @@ public class ColorUtil {
 	}
 
 	public static String getHex(int[] rgb) {
-		StringBundler sb = new StringBundler(7);
-
-		sb.append("#");
-
-		sb.append(
+		return StringBundler.concat(
+			"#",
 			_KEY.substring(
-				(int)Math.floor(rgb[0] / 16),
-				(int)Math.floor(rgb[0] / 16) + 1));
-
-		sb.append(_KEY.substring(rgb[0] % 16, (rgb[0] % 16) + 1));
-
-		sb.append(
+				(int)Math.floor(rgb[0] / 16), (int)Math.floor(rgb[0] / 16) + 1),
+			_KEY.substring(rgb[0] % 16, (rgb[0] % 16) + 1),
 			_KEY.substring(
-				(int)Math.floor(rgb[1] / 16),
-				(int)Math.floor(rgb[1] / 16) + 1));
-
-		sb.append(_KEY.substring(rgb[1] % 16, (rgb[1] % 16) + 1));
-
-		sb.append(
+				(int)Math.floor(rgb[1] / 16), (int)Math.floor(rgb[1] / 16) + 1),
+			_KEY.substring(rgb[1] % 16, (rgb[1] % 16) + 1),
 			_KEY.substring(
-				(int)Math.floor(rgb[2] / 16),
-				(int)Math.floor(rgb[2] / 16) + 1));
-
-		sb.append(_KEY.substring(rgb[2] % 16, (rgb[2] % 16) + 1));
-
-		return sb.toString();
+				(int)Math.floor(rgb[2] / 16), (int)Math.floor(rgb[2] / 16) + 1),
+			_KEY.substring(rgb[2] % 16, (rgb[2] % 16) + 1));
 	}
 
 	public static int[] getRGB(String hex) {

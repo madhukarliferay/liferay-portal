@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -24,16 +15,18 @@
 
 		<aui:script position="inline" sandbox="<%= true %>">
 			var publishGlobalLink = document.getElementById(
-				'<portlet:namespace /><%= groupId + "publishGlobalLink" %>'
+				'<portlet:namespace /><%= groupId %>publishGlobalLink'
 			);
 
 			if (publishGlobalLink) {
-				publishGlobalLink.addEventListener('click', function(event) {
+				publishGlobalLink.addEventListener('click', (event) => {
 					event.preventDefault();
 
-					Liferay.LayoutExporter.publishToLive({
+					Liferay.Util.openModal({
+						containerProps: {},
+						iframeBodyCssClass: '',
 						title: '<%= UnicodeFormatter.toString(publishMessage) %>',
-						url: publishGlobalLink.getAttribute('href')
+						url: publishGlobalLink.getAttribute('href'),
 					});
 				});
 			}
@@ -42,12 +35,13 @@
 	<c:otherwise>
 
 		<%
+		ExportImportServiceConfiguration exportImportServiceConfiguration = ConfigurationProviderUtil.getCompanyConfiguration(ExportImportServiceConfiguration.class, CompanyThreadLocal.getCompanyId());
 		Group groupType = layout.getGroup();
 		%>
 
 		<c:if test="<%= (liveGroup != null) && GroupPermissionUtil.contains(permissionChecker, liveGroup, ActionKeys.PUBLISH_STAGING) %>">
 			<liferay-portlet:renderURL portletName="<%= PortletKeys.EXPORT_IMPORT %>" var="publishRedirectURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-				<portlet:param name="mvcRenderCommandName" value="publishLayouts" />
+				<portlet:param name="mvcRenderCommandName" value="/export_import/publish_layouts" />
 				<portlet:param name="<%= Constants.CMD %>" value="<%= localPublishing ? Constants.PUBLISH_TO_LIVE : Constants.PUBLISH_TO_REMOTE %>" />
 				<portlet:param name="tabs2" value="current-and-previous" />
 				<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
@@ -56,11 +50,11 @@
 			</liferay-portlet:renderURL>
 
 			<%
-			UnicodeProperties liveGroupTypeSettings = liveGroup.getTypeSettingsProperties();
+			UnicodeProperties liveGroupTypeSettingsUnicodeProperties = liveGroup.getTypeSettingsProperties();
 			%>
 
 			<liferay-portlet:renderURL portletName="<%= PortletKeys.EXPORT_IMPORT %>" varImpl="simplePublishLayoutsURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-				<portlet:param name="mvcRenderCommandName" value="publishLayoutsSimple" />
+				<portlet:param name="mvcRenderCommandName" value="/export_import/publish_layouts_simple" />
 				<portlet:param name="<%= Constants.CMD %>" value="<%= localPublishing ? Constants.PUBLISH_TO_LIVE : Constants.PUBLISH_TO_REMOTE %>" />
 				<portlet:param name="redirect" value="<%= publishRedirectURL %>" />
 				<portlet:param name="backURL" value="<%= currentURL %>" />
@@ -69,11 +63,26 @@
 				<portlet:param name="localPublishing" value="<%= String.valueOf(localPublishing) %>" />
 				<portlet:param name="privateLayout" value="<%= String.valueOf(privateLayout) %>" />
 				<portlet:param name="quickPublish" value="<%= Boolean.TRUE.toString() %>" />
-				<portlet:param name="remoteAddress" value='<%= liveGroupTypeSettings.getProperty("remoteAddress") %>' />
-				<portlet:param name="remotePort" value='<%= liveGroupTypeSettings.getProperty("remotePort") %>' />
-				<portlet:param name="remotePathContext" value='<%= liveGroupTypeSettings.getProperty("remotePathContext") %>' />
-				<portlet:param name="remoteGroupId" value='<%= liveGroupTypeSettings.getProperty("remoteGroupId") %>' />
-				<portlet:param name="secureConnection" value='<%= liveGroupTypeSettings.getProperty("secureConnection") %>' />
+				<portlet:param name="remotePathContext" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("remotePathContext") %>' />
+				<portlet:param name="remoteGroupId" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("remoteGroupId") %>' />
+				<portlet:param name="secureConnection" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("secureConnection") %>' />
+				<portlet:param name="sourceGroupId" value="<%= String.valueOf(stagingGroupId) %>" />
+				<portlet:param name="targetGroupId" value="<%= String.valueOf(liveGroupId) %>" />
+			</liferay-portlet:renderURL>
+
+			<liferay-portlet:renderURL portletName="<%= PortletKeys.EXPORT_IMPORT %>" varImpl="advancedPublishLayoutsURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+				<portlet:param name="mvcRenderCommandName" value="/export_import/publish_layouts" />
+				<portlet:param name="<%= Constants.CMD %>" value="<%= localPublishing ? Constants.PUBLISH_TO_LIVE : Constants.PUBLISH_TO_REMOTE %>" />
+				<portlet:param name="redirect" value="<%= publishRedirectURL %>" />
+				<portlet:param name="backURL" value="<%= currentURL %>" />
+				<portlet:param name="lastImportUserName" value="<%= user.getFullName() %>" />
+				<portlet:param name="lastImportUserUuid" value="<%= String.valueOf(user.getUserUuid()) %>" />
+				<portlet:param name="localPublishing" value="<%= String.valueOf(localPublishing) %>" />
+				<portlet:param name="privateLayout" value="<%= String.valueOf(privateLayout) %>" />
+				<portlet:param name="quickPublish" value="<%= Boolean.TRUE.toString() %>" />
+				<portlet:param name="remotePathContext" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("remotePathContext") %>' />
+				<portlet:param name="remoteGroupId" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("remoteGroupId") %>' />
+				<portlet:param name="secureConnection" value='<%= liveGroupTypeSettingsUnicodeProperties.getProperty("secureConnection") %>' />
 				<portlet:param name="sourceGroupId" value="<%= String.valueOf(stagingGroupId) %>" />
 				<portlet:param name="targetGroupId" value="<%= String.valueOf(liveGroupId) %>" />
 			</liferay-portlet:renderURL>
@@ -93,6 +102,7 @@
 					layoutSetBranch = LayoutSetBranchLocalServiceUtil.getLayoutSetBranch(layoutSetBranchId);
 
 					simplePublishLayoutsURL.setParameter("layoutSetBranchName", layoutSetBranch.getName());
+
 					simplePublishLayoutsURL.setParameter("layoutSetBranchId", String.valueOf(layoutSetBranchId));
 
 					publishRenderURL.setParameter("layoutSetBranchId", String.valueOf(layoutSetBranchId));
@@ -136,65 +146,59 @@
 			<liferay-util:buffer
 				var="publishOnLayoutLink"
 			>
-				<li class="control-menu-nav-item">
-					<div class="dropdown publish-btn-group">
-						<button class="btn btn-primary btn-sm" href="<%= simplePublishLayoutsURL.toString() %>" id="<%= layoutSetBranchId + "publishToLiveLink" %>" type="button">
-							<liferay-ui:message key="publish-to-live" />
-						</button>
+				<div class="btn-group dropdown">
+					<button class="btn btn-primary btn-sm" href="<%= exportImportServiceConfiguration.showAdvancedStagingConfigurationByDefault() ? advancedPublishLayoutsURL : simplePublishLayoutsURL %>" id="<%= layoutSetBranchId %>publishToLiveLink" type="button">
+						<liferay-ui:message key="publish-to-live" />
+					</button>
 
-						<c:if test="<%= branchingEnabled %>">
-							<button aria-expanded="false" class="btn btn-primary btn-sm d-block d-sm-none dropdown-toggle" data-toggle="dropdown" type="button">
-								<aui:icon image="angle-down" markupView="lexicon" />
+					<c:if test="<%= branchingEnabled %>">
+						<clay:button
+							aria-expanded="false"
+							cssClass="d-block d-sm-none dropdown-toggle"
+							data-toggle="dropdown"
+							icon="angle-down"
+							small="<%= true %>"
+							title="toggle-dropdown"
+						/>
 
-								<span class="sr-only">
-									<liferay-ui:message key="toggle-dropdown" />
-								</span>
-							</button>
+						<ul class="dropdown-menu" role="menu">
+							<c:if test="<%= !layoutRevision.isIncomplete() %>">
+								<li>
+									<a class="dropdown-item" href="javascript:Liferay.fire('<portlet:namespace />viewHistory', {layoutRevisionId: '<%= layoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= layoutRevision.getLayoutSetBranchId() %>'}); void(0);">
+										<liferay-ui:message key="history" />
+									</a>
+								</li>
+							</c:if>
 
-							<ul class="dropdown-menu" role="menu">
-								<c:if test="<%= !layoutRevision.isIncomplete() %>">
+							<c:if test="<%= !hasWorkflowTask %>">
+								<c:if test="<%= !layoutRevision.isMajor() && (layoutRevision.getParentLayoutRevisionId() != LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID) %>">
 									<li>
-										<a class="dropdown-icon" href="javascript:Liferay.fire('<%= liferayPortletResponse.getNamespace() %>viewHistory', {layoutRevisionId: '<%= layoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= layoutRevision.getLayoutSetBranchId() %>'}); void(0);">
-											<liferay-ui:message key="history" />
+										<a class="dropdown-item" href="javascript:Liferay.fire('<portlet:namespace />undo', {layoutRevisionId: '<%= layoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= layoutRevision.getLayoutSetBranchId() %>'}); void(0);">
+											<liferay-ui:message key="undo" />
 										</a>
 									</li>
 								</c:if>
 
-								<c:if test="<%= !hasWorkflowTask %>">
-									<c:if test="<%= !layoutRevision.isMajor() && (layoutRevision.getParentLayoutRevisionId() != LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID) %>">
+								<c:if test="<%= layoutRevision.hasChildren() %>">
+
+									<%
+									List<LayoutRevision> childLayoutRevisions = layoutRevision.getChildren();
+
+									LayoutRevision firstChildLayoutRevision = childLayoutRevisions.get(0);
+									%>
+
+									<c:if test="<%= firstChildLayoutRevision.isInactive() %>">
 										<li>
-											<a class="dropdown-icon" href="javascript:Liferay.fire('<%= liferayPortletResponse.getNamespace() %>undo', {layoutRevisionId: '<%= layoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= layoutRevision.getLayoutSetBranchId() %>'}); void(0);">
-												<liferay-ui:message key="undo" />
+											<a class="dropdown-item" href="javascript:Liferay.fire('<portlet:namespace />redo', {layoutRevisionId: '<%= firstChildLayoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= firstChildLayoutRevision.getLayoutSetBranchId() %>'}); void(0);">
+												<liferay-ui:message key="redo" />
 											</a>
 										</li>
 									</c:if>
-
-									<c:if test="<%= layoutRevision.hasChildren() %>">
-
-										<%
-										List<LayoutRevision> childLayoutRevisions = layoutRevision.getChildren();
-
-										LayoutRevision firstChildLayoutRevision = childLayoutRevisions.get(0);
-
-										if (firstChildLayoutRevision.isInactive()) {
-										%>
-
-											<li>
-												<a class="dropdown-icon" href="javascript:Liferay.fire('<%= liferayPortletResponse.getNamespace() %>redo', {layoutRevisionId: '<%= firstChildLayoutRevision.getLayoutRevisionId() %>', layoutSetBranchId: '<%= firstChildLayoutRevision.getLayoutSetBranchId() %>'}); void(0);">
-													<liferay-ui:message key="redo" />
-												</a>
-											</li>
-
-										<%
-										}
-										%>
-
-									</c:if>
 								</c:if>
-							</ul>
-						</c:if>
-					</div>
-				</li>
+							</c:if>
+						</ul>
+					</c:if>
+				</div>
 			</liferay-util:buffer>
 
 			<c:choose>
@@ -214,12 +218,14 @@
 				);
 
 				if (publishLink) {
-					publishLink.addEventListener('click', function(event) {
+					publishLink.addEventListener('click', (event) => {
 						event.preventDefault();
 
-						Liferay.LayoutExporter.publishToLive({
+						Liferay.Util.openModal({
+							containerProps: {},
+							iframeBodyCssClass: '',
 							title: '<%= UnicodeFormatter.toString(publishMessage) %>',
-							url: publishLink.getAttribute('href')
+							url: publishLink.getAttribute('href'),
 						});
 					});
 				}
@@ -229,24 +235,18 @@
 				);
 
 				if (publishToLiveLink) {
-					publishToLiveLink.addEventListener('click', function(event) {
+					publishToLiveLink.addEventListener('click', (event) => {
 						event.preventDefault();
 
-						Liferay.Util.openWindow({
-							dialog: {
-								after: {
-									destroy: function(event) {
-										window.location.reload();
-									}
-								},
-								destroyOnHide: true
-							},
-							dialogIframe: {
-								bodyCssClass: 'dialog-with-footer'
-							},
+						Liferay.Util.openModal({
+							containerProps: {},
 							id: '<portlet:namespace />publishLatestChangesDialog',
+							iframeBodyCssClass: 'dialog-with-footer',
+							onClose: () => {
+								window.location.reload();
+							},
 							title: '<%= UnicodeFormatter.toString(publishMessage) %>',
-							uri: publishToLiveLink.getAttribute('href')
+							url: publishToLiveLink.getAttribute('href'),
 						});
 					});
 				}
@@ -286,17 +286,15 @@
 				);
 
 				if (layoutSetBranchesLink) {
-					layoutSetBranchesLink.addEventListener('click', function(event) {
+					layoutSetBranchesLink.addEventListener('click', (event) => {
 						event.preventDefault();
 
-						Liferay.Util.openWindow({
-							dialog: {
-								width: 820
-							},
+						Liferay.Util.openModal({
+							containerProps: {},
 							id: '<portlet:namespace />layoutSetBranches',
-							title:
-								'<%= UnicodeLanguageUtil.get(request, "manage-site-pages-variations") %>',
-							uri: layoutSetBranchesLink.getAttribute('href')
+							iframeBodyCssClass: 'dialog-with-footer',
+							title: '<%= UnicodeLanguageUtil.get(request, "manage-site-pages-variations") %>',
+							url: layoutSetBranchesLink.getAttribute('href'),
 						});
 					});
 				}

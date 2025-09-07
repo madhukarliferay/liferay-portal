@@ -1,84 +1,134 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.taglib.servlet.taglib.base;
 
 import com.liferay.data.engine.taglib.internal.servlet.ServletContextUtil;
+import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Jeyvison Nascimento
  * @author Leonardo Barros
- * @generated
  */
-public abstract class BaseDataLayoutBuilderTag extends com.liferay.taglib.util.IncludeTag {
+public abstract class BaseDataLayoutBuilderTag extends IncludeTag {
 
 	@Override
 	public int doStartTag() throws JspException {
-		setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
+		setAttributeNamespace(ATTRIBUTE_NAMESPACE);
 
 		return super.doStartTag();
 	}
 
-	public java.lang.String getComponentId() {
+	public List<Map<String, Object>> getAdditionalPanels() {
+		return _additionalPanels;
+	}
+
+	public String getComponentId() {
 		return _componentId;
 	}
 
-	public java.lang.String getDataDefinitionInputId() {
-		return _dataDefinitionInputId;
+	public String getContentType() {
+		return _contentType;
 	}
 
-	public java.lang.Long getDataLayoutId() {
+	public Long getDataDefinitionId() {
+		return _dataDefinitionId;
+	}
+
+	public Long getDataLayoutId() {
 		return _dataLayoutId;
 	}
 
-	public java.lang.String getDataLayoutInputId() {
-		return _dataLayoutInputId;
+	public boolean getDisplayFieldName() {
+		return _displayFieldName;
+	}
+
+	public String getFieldSetContentType() {
+		return _fieldSetContentType;
+	}
+
+	public Long getGroupId() {
+		return _groupId;
 	}
 
 	public boolean getLocalizable() {
 		return _localizable;
 	}
 
-	public java.lang.String getNamespace() {
+	public ServletContext getModuleServletContext() {
+		return _moduleServletContext;
+	}
+
+	public String getNamespace() {
 		return _namespace;
 	}
 
-	public void setComponentId(java.lang.String componentId) {
+	public Set<String> getScopes() {
+		return _scopes;
+	}
+
+	public boolean getSearchableFieldsDisabled() {
+		return _searchableFieldsDisabled;
+	}
+
+	public String getSubmitButtonId() {
+		return _submitButtonId;
+	}
+
+	public void setAdditionalPanels(
+		List<Map<String, Object>> additionalPanels) {
+
+		_additionalPanels = additionalPanels;
+	}
+
+	public void setComponentId(String componentId) {
 		_componentId = componentId;
 	}
 
-	public void setDataDefinitionInputId(java.lang.String dataDefinitionInputId) {
-		_dataDefinitionInputId = dataDefinitionInputId;
+	public void setContentType(String contentType) {
+		_contentType = contentType;
 	}
 
-	public void setDataLayoutId(java.lang.Long dataLayoutId) {
+	public void setDataDefinitionId(Long dataDefinitionId) {
+		_dataDefinitionId = dataDefinitionId;
+	}
+
+	public void setDataLayoutId(Long dataLayoutId) {
 		_dataLayoutId = dataLayoutId;
 	}
 
-	public void setDataLayoutInputId(java.lang.String dataLayoutInputId) {
-		_dataLayoutInputId = dataLayoutInputId;
+	public void setDisplayFieldName(boolean displayFieldName) {
+		_displayFieldName = displayFieldName;
+	}
+
+	public void setFieldSetContentType(String fieldSetContentType) {
+		_fieldSetContentType = fieldSetContentType;
+	}
+
+	public void setGroupId(Long groupId) {
+		_groupId = groupId;
 	}
 
 	public void setLocalizable(boolean localizable) {
 		_localizable = localizable;
 	}
 
-	public void setNamespace(java.lang.String namespace) {
+	public void setModuleServletContext(ServletContext moduleServletContext) {
+		_moduleServletContext = moduleServletContext;
+	}
+
+	public void setNamespace(String namespace) {
 		_namespace = namespace;
 	}
 
@@ -89,16 +139,36 @@ public abstract class BaseDataLayoutBuilderTag extends com.liferay.taglib.util.I
 		setServletContext(ServletContextUtil.getServletContext());
 	}
 
+	public void setScopes(Set<String> scopes) {
+		_scopes = scopes;
+	}
+
+	public void setSearchableFieldsDisabled(boolean searchableFieldsDisabled) {
+		_searchableFieldsDisabled = searchableFieldsDisabled;
+	}
+
+	public void setSubmitButtonId(String submitButtonId) {
+		_submitButtonId = submitButtonId;
+	}
+
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_additionalPanels = null;
 		_componentId = null;
-		_dataDefinitionInputId = null;
+		_contentType = null;
+		_dataDefinitionId = null;
 		_dataLayoutId = null;
-		_dataLayoutInputId = null;
+		_displayFieldName = false;
+		_fieldSetContentType = null;
+		_groupId = null;
 		_localizable = false;
+		_moduleServletContext = null;
 		_namespace = null;
+		_scopes = null;
+		_searchableFieldsDisabled = false;
+		_submitButtonId = null;
 	}
 
 	@Override
@@ -112,28 +182,52 @@ public abstract class BaseDataLayoutBuilderTag extends com.liferay.taglib.util.I
 	}
 
 	@Override
-	protected void setAttributes(HttpServletRequest request) {
-		setNamespacedAttribute(request, "componentId", _componentId);
-		setNamespacedAttribute(request, "dataDefinitionInputId", _dataDefinitionInputId);
-		setNamespacedAttribute(request, "dataLayoutId", _dataLayoutId);
-		setNamespacedAttribute(request, "dataLayoutInputId", _dataLayoutInputId);
-		setNamespacedAttribute(request, "localizable", _localizable);
-		setNamespacedAttribute(request, "namespace", _namespace);
+	protected void setAttributes(HttpServletRequest httpServletRequest) {
+		setNamespacedAttribute(
+			httpServletRequest, "additionalPanels", _additionalPanels);
+		setNamespacedAttribute(httpServletRequest, "componentId", _componentId);
+		setNamespacedAttribute(httpServletRequest, "contentType", _contentType);
+		setNamespacedAttribute(
+			httpServletRequest, "dataDefinitionId", _dataDefinitionId);
+		setNamespacedAttribute(
+			httpServletRequest, "dataLayoutId", _dataLayoutId);
+		setNamespacedAttribute(
+			httpServletRequest, "displayFieldName", _displayFieldName);
+		setNamespacedAttribute(
+			httpServletRequest, "fieldSetContentType", _fieldSetContentType);
+		setNamespacedAttribute(httpServletRequest, "groupId", _groupId);
+		setNamespacedAttribute(httpServletRequest, "localizable", _localizable);
+		setNamespacedAttribute(
+			httpServletRequest, "moduleServletContext", _moduleServletContext);
+		setNamespacedAttribute(httpServletRequest, "namespace", _namespace);
+		setNamespacedAttribute(httpServletRequest, "scopes", _scopes);
+		setNamespacedAttribute(
+			httpServletRequest, "searchableFieldsDisabled",
+			_searchableFieldsDisabled);
+		setNamespacedAttribute(
+			httpServletRequest, "submitButtonId", _submitButtonId);
 	}
 
-	protected static final String _ATTRIBUTE_NAMESPACE = "liferay-data-engine:data-layout-builder:";
+	protected static final String ATTRIBUTE_NAMESPACE =
+		"liferay-data-engine:data-layout-builder:";
 
-	private static final String _END_PAGE =
-		"/data_layout_builder/end.jsp";
+	private static final String _END_PAGE = "/data_layout_builder/end.jsp";
 
-	private static final String _START_PAGE =
-		"/data_layout_builder/start.jsp";
+	private static final String _START_PAGE = "/data_layout_builder/start.jsp";
 
-	private java.lang.String _componentId = null;
-	private java.lang.String _dataDefinitionInputId = null;
-	private java.lang.Long _dataLayoutId = null;
-	private java.lang.String _dataLayoutInputId = null;
-	private boolean _localizable = false;
-	private java.lang.String _namespace = null;
+	private List<Map<String, Object>> _additionalPanels;
+	private String _componentId;
+	private String _contentType;
+	private Long _dataDefinitionId;
+	private Long _dataLayoutId;
+	private boolean _displayFieldName;
+	private String _fieldSetContentType;
+	private Long _groupId;
+	private boolean _localizable;
+	private ServletContext _moduleServletContext;
+	private String _namespace;
+	private Set<String> _scopes;
+	private boolean _searchableFieldsDisabled;
+	private String _submitButtonId;
 
 }

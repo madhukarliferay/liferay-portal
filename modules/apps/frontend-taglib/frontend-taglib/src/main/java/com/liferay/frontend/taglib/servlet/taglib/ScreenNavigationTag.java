@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.servlet.taglib;
@@ -25,15 +16,15 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.List;
 import java.util.Objects;
-
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Eudaldo Alonso
@@ -52,14 +43,14 @@ public class ScreenNavigationTag extends IncludeTag {
 
 	@Override
 	public int doStartTag() throws JspException {
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		HttpServletRequest httpServletRequest = getRequest();
 
-		ScreenNavigationRegistry screenNavigationRegistry =
-			ServletContextUtil.getScreenNavigationRegistry();
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		_screenNavigationCategories =
-			screenNavigationRegistry.getScreenNavigationCategories(
+			ScreenNavigationRegistryUtil.getScreenNavigationCategories(
 				_key, themeDisplay.getUser(), getModelContext());
 
 		return super.doStartTag();
@@ -107,6 +98,10 @@ public class ScreenNavigationTag extends IncludeTag {
 		}
 
 		return _context;
+	}
+
+	public String getNavBarCssClass() {
+		return _navBarCssClass;
 	}
 
 	public String getNavCssClass() {
@@ -161,6 +156,10 @@ public class ScreenNavigationTag extends IncludeTag {
 		_modelBean = modelBean;
 	}
 
+	public void setNavBarCssClass(String navBarCssClass) {
+		_navBarCssClass = navBarCssClass;
+	}
+
 	public void setNavCssClass(String navCssClass) {
 		_navCssClass = navCssClass;
 	}
@@ -181,16 +180,17 @@ public class ScreenNavigationTag extends IncludeTag {
 		super.cleanUp();
 
 		_containerCssClass = "col-md-9";
-		_containerWrapperCssClass = "container";
+		_containerWrapperCssClass = StringPool.BLANK;
 		_context = null;
-		_fullContainerCssClass = "col-md-12";
-		_headerContainerCssClass = "container";
+		_fullContainerCssClass = StringPool.BLANK;
+		_headerContainerCssClass = StringPool.BLANK;
 		_id = null;
 		_inverted = false;
 		_key = null;
 		_menubarCssClass =
 			"menubar menubar-transparent menubar-vertical-expand-md";
 		_modelBean = null;
+		_navBarCssClass = StringPool.BLANK;
 		_navCssClass = "col-md-3";
 		_portletURL = null;
 		_screenNavigationCategories = null;
@@ -223,7 +223,7 @@ public class ScreenNavigationTag extends IncludeTag {
 		if (Validator.isNotNull(id)) {
 			PortletResponse portletResponse =
 				(PortletResponse)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_RESPONSE);
+					JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 			String namespace = StringPool.BLANK;
 
@@ -250,6 +250,12 @@ public class ScreenNavigationTag extends IncludeTag {
 		httpServletRequest.setAttribute(
 			"liferay-frontend:screen-navigation:menubarCssClass",
 			_menubarCssClass);
+		httpServletRequest.setAttribute(
+			"liferay-frontend:screen-navigation:modelContext",
+			getModelContext());
+		httpServletRequest.setAttribute(
+			"liferay-frontend:screen-navigation:navBarCssClass",
+			_navBarCssClass);
 		httpServletRequest.setAttribute(
 			"liferay-frontend:screen-navigation:navCssClass", _navCssClass);
 		httpServletRequest.setAttribute(
@@ -281,20 +287,20 @@ public class ScreenNavigationTag extends IncludeTag {
 	}
 
 	private String _getDefaultScreenNavigationEntryKey() {
-		List<ScreenNavigationEntry> screenNavigationEntries =
+		List<ScreenNavigationEntry<Object>> screenNavigationEntries =
 			_getScreenNavigationEntries();
 
 		if (ListUtil.isEmpty(screenNavigationEntries)) {
 			return null;
 		}
 
-		ScreenNavigationEntry screenNavigationEntry =
+		ScreenNavigationEntry<Object> screenNavigationEntry =
 			screenNavigationEntries.get(0);
 
 		return screenNavigationEntry.getEntryKey();
 	}
 
-	private List<ScreenNavigationEntry> _getScreenNavigationEntries() {
+	private List<ScreenNavigationEntry<Object>> _getScreenNavigationEntries() {
 		ScreenNavigationCategory selectedScreenNavigationCategory =
 			_getSelectedScreenNavigationCategory();
 
@@ -302,20 +308,20 @@ public class ScreenNavigationTag extends IncludeTag {
 			return null;
 		}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		HttpServletRequest httpServletRequest = getRequest();
 
-		ScreenNavigationRegistry screenNavigationRegistry =
-			ServletContextUtil.getScreenNavigationRegistry();
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-		return screenNavigationRegistry.getScreenNavigationEntries(
+		return ScreenNavigationRegistryUtil.getScreenNavigationEntries(
 			selectedScreenNavigationCategory, themeDisplay.getUser(),
 			getModelContext());
 	}
 
 	private ScreenNavigationCategory _getSelectedScreenNavigationCategory() {
 		String screenNavigationCategoryKey = ParamUtil.getString(
-			request, "screenNavigationCategoryKey",
+			getRequest(), "screenNavigationCategoryKey",
 			_getDefaultScreenNavigationCategoryKey());
 
 		for (ScreenNavigationCategory screenNavigationCategory :
@@ -332,22 +338,22 @@ public class ScreenNavigationTag extends IncludeTag {
 		return null;
 	}
 
-	private ScreenNavigationEntry _getSelectedScreenNavigationEntry() {
+	private ScreenNavigationEntry<?> _getSelectedScreenNavigationEntry() {
 		String screenNavigationEntryKey = ParamUtil.getString(
-			request, "screenNavigationEntryKey");
+			getRequest(), "screenNavigationEntryKey");
 
 		if (Validator.isNull(screenNavigationEntryKey)) {
 			screenNavigationEntryKey = _getDefaultScreenNavigationEntryKey();
 		}
 
-		List<ScreenNavigationEntry> screenNavigationEntries =
+		List<ScreenNavigationEntry<Object>> screenNavigationEntries =
 			_getScreenNavigationEntries();
 
 		if (ListUtil.isEmpty(screenNavigationEntries)) {
 			return null;
 		}
 
-		for (ScreenNavigationEntry screenNavigationEntry :
+		for (ScreenNavigationEntry<Object> screenNavigationEntry :
 				screenNavigationEntries) {
 
 			if (Objects.equals(
@@ -366,16 +372,17 @@ public class ScreenNavigationTag extends IncludeTag {
 	private static final String _PAGE = "/screen_navigation/page.jsp";
 
 	private String _containerCssClass = "col-md-9";
-	private String _containerWrapperCssClass = "container";
+	private String _containerWrapperCssClass = StringPool.BLANK;
 	private Object _context;
-	private String _fullContainerCssClass = "col-md-12";
-	private String _headerContainerCssClass = "container";
+	private String _fullContainerCssClass = StringPool.BLANK;
+	private String _headerContainerCssClass = StringPool.BLANK;
 	private String _id;
 	private boolean _inverted;
 	private String _key;
 	private String _menubarCssClass =
 		"menubar menubar-transparent menubar-vertical-expand-md";
 	private Object _modelBean;
+	private String _navBarCssClass = StringPool.BLANK;
 	private String _navCssClass = "col-md-3";
 	private PortletURL _portletURL;
 	private List<ScreenNavigationCategory> _screenNavigationCategories;

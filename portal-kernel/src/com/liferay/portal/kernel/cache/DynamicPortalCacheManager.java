@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.cache;
 
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.util.ProxyFactory;
 
 import java.io.Serializable;
@@ -49,6 +41,7 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 		_dynamicPortalCaches.clear();
 	}
 
+	@Override
 	public PortalCache<K, V> fetchPortalCache(String portalCacheName) {
 		return _dynamicPortalCaches.computeIfAbsent(
 			portalCacheName,
@@ -61,8 +54,8 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 				}
 
 				return new DynamicPortalCache<>(
-					this, portalCache, key, portalCache.isBlocking(),
-					portalCache.isMVCC());
+					this, portalCache, key, portalCache.isMVCC(),
+					portalCache.isSharded());
 			});
 	}
 
@@ -75,22 +68,23 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 
 	@Override
 	public PortalCache<K, V> getPortalCache(
-			String portalCacheName, boolean blocking)
+			String portalCacheName, boolean mvcc)
 		throws PortalCacheException {
 
-		return getPortalCache(portalCacheName, blocking, false);
+		return getPortalCache(
+			portalCacheName, mvcc, DBPartition.isPartitionEnabled());
 	}
 
 	@Override
 	public PortalCache<K, V> getPortalCache(
-			String portalCacheName, boolean blocking, boolean mvcc)
+			String portalCacheName, boolean mvcc, boolean sharded)
 		throws PortalCacheException {
 
 		return _dynamicPortalCaches.computeIfAbsent(
 			portalCacheName,
 			key -> new DynamicPortalCache<>(
-				this, _portalCacheManager.getPortalCache(key, blocking, mvcc),
-				key, blocking, mvcc));
+				this, _portalCacheManager.getPortalCache(key, mvcc, sharded),
+				key, mvcc, sharded));
 	}
 
 	@Override
@@ -107,21 +101,6 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 	@Override
 	public String getPortalCacheManagerName() {
 		return _portalCacheManagerName;
-	}
-
-	@Override
-	public boolean isClusterAware() {
-		return _portalCacheManager.isClusterAware();
-	}
-
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 *             #reconfigurePortalCaches(URL, ClassLoader)}
-	 */
-	@Deprecated
-	@Override
-	public void reconfigurePortalCaches(URL configurationURL) {
-		reconfigurePortalCaches(configurationURL, null);
 	}
 
 	@Override
@@ -163,6 +142,11 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 		_dynamicPortalCaches.remove(portalCacheName);
 
 		_portalCacheManager.removePortalCache(portalCacheName);
+	}
+
+	@Override
+	public void removePortalCaches(long companyId) {
+		_portalCacheManager.removePortalCaches(companyId);
 	}
 
 	@Override
@@ -220,8 +204,8 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 			dynamicPortalCache.setPortalCache(
 				_portalCacheManager.getPortalCache(
 					dynamicPortalCache.getPortalCacheName(),
-					dynamicPortalCache.isBlocking(),
-					dynamicPortalCache.isMVCC()));
+					dynamicPortalCache.isMVCC(),
+					dynamicPortalCache.isSharded()));
 		}
 	}
 

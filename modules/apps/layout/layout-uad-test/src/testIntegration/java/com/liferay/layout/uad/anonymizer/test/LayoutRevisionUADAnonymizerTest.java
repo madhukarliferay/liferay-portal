@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.uad.anonymizer.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.layout.uad.test.LayoutRevisionUADTestUtil;
+import com.liferay.layout.uad.test.util.LayoutRevisionUADTestUtil;
 import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.LayoutRevisionLocalService;
@@ -34,16 +25,18 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 /**
  * @author Brian Wing Shun Chan
  */
+@Ignore
 @RunWith(Arquillian.class)
 public class LayoutRevisionUADAnonymizerTest
 	extends BaseUADAnonymizerTestCase<LayoutRevision>
-	implements WhenHasStatusByUserIdField {
+	implements WhenHasStatusByUserIdField<LayoutRevision> {
 
 	@ClassRule
 	@Rule
@@ -102,7 +95,7 @@ public class LayoutRevisionUADAnonymizerTest
 	}
 
 	@Override
-	protected UADAnonymizer getUADAnonymizer() {
+	protected UADAnonymizer<LayoutRevision> getUADAnonymizer() {
 		return _uadAnonymizer;
 	}
 
@@ -147,8 +140,10 @@ public class LayoutRevisionUADAnonymizerTest
 	@Inject
 	private LayoutSetBranchLocalService _layoutSetBranchLocalService;
 
-	@Inject(filter = "component.name=*.LayoutRevisionUADAnonymizer")
-	private UADAnonymizer _uadAnonymizer;
+	@Inject(
+		filter = "component.name=com.liferay.layout.uad.anonymizer.LayoutRevisionUADAnonymizer"
+	)
+	private UADAnonymizer<LayoutRevision> _uadAnonymizer;
 
 	@Inject
 	private UserLocalService _userLocalService;

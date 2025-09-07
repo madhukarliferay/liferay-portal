@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.membership.policy.organization.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.model.Organization;
-import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
@@ -28,11 +18,11 @@ import com.liferay.portal.security.membership.policy.organization.BaseOrganizati
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portlet.RenderResponseFactory;
-import com.liferay.portlet.sites.search.OrganizationRoleUserChecker;
-import com.liferay.portlet.usersadmin.search.UserOrganizationChecker;
+import com.liferay.site.search.OrganizationRoleUserChecker;
+import com.liferay.users.admin.search.UserOrganizationChecker;
 
-import javax.portlet.RenderResponse;
-import javax.portlet.filter.RenderResponseWrapper;
+import jakarta.portlet.RenderResponse;
+import jakarta.portlet.filter.RenderResponseWrapper;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -78,11 +68,10 @@ public class OrganizationMembershipPolicyRowCheckerTest
 
 		long forbiddenRoleId = addForbiddenRoles()[0];
 
-		Role role = RoleLocalServiceUtil.getRole(forbiddenRoleId);
-
 		OrganizationRoleUserChecker organizationRoleUserChecker =
 			new OrganizationRoleUserChecker(
-				_renderResponse, organization, role);
+				_renderResponse, organization,
+				RoleLocalServiceUtil.getRole(forbiddenRoleId));
 
 		User user = UserTestUtil.addUser();
 
@@ -113,11 +102,10 @@ public class OrganizationMembershipPolicyRowCheckerTest
 
 		long requiredRoleId = addRequiredRoles()[0];
 
-		Role role = RoleLocalServiceUtil.getRole(requiredRoleId);
-
 		OrganizationRoleUserChecker organizationRoleUserChecker =
 			new OrganizationRoleUserChecker(
-				_renderResponse, organization, role);
+				_renderResponse, organization,
+				RoleLocalServiceUtil.getRole(requiredRoleId));
 
 		User user = UserTestUtil.addUser();
 
@@ -151,11 +139,10 @@ public class OrganizationMembershipPolicyRowCheckerTest
 
 		long forbiddenRoleId = addForbiddenRoles()[0];
 
-		Role role = RoleLocalServiceUtil.getRole(forbiddenRoleId);
-
 		OrganizationRoleUserChecker organizationRoleUserChecker =
 			new OrganizationRoleUserChecker(
-				_renderResponse, organization, role);
+				_renderResponse, organization,
+				RoleLocalServiceUtil.getRole(forbiddenRoleId));
 
 		User user = UserTestUtil.addUser();
 
@@ -193,11 +180,10 @@ public class OrganizationMembershipPolicyRowCheckerTest
 
 		long requiredRoleId = addRequiredRoles()[0];
 
-		Role role = RoleLocalServiceUtil.getRole(requiredRoleId);
-
 		OrganizationRoleUserChecker organizationRoleUserChecker =
 			new OrganizationRoleUserChecker(
-				_renderResponse, organization, role);
+				_renderResponse, organization,
+				RoleLocalServiceUtil.getRole(requiredRoleId));
 
 		User user = UserTestUtil.addUser();
 

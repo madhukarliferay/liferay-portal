@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,16 +28,16 @@ public class KaleoLogCacheModel
 	implements CacheModel<KaleoLog>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoLogCacheModel)) {
+		if (!(object instanceof KaleoLogCacheModel)) {
 			return false;
 		}
 
-		KaleoLogCacheModel kaleoLogCacheModel = (KaleoLogCacheModel)obj;
+		KaleoLogCacheModel kaleoLogCacheModel = (KaleoLogCacheModel)object;
 
 		if ((kaleoLogId == kaleoLogCacheModel.kaleoLogId) &&
 			(mvccVersion == kaleoLogCacheModel.mvccVersion)) {
@@ -76,10 +67,12 @@ public class KaleoLogCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(63);
+		StringBundler sb = new StringBundler(67);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoLogId=");
 		sb.append(kaleoLogId);
 		sb.append(", groupId=");
@@ -98,6 +91,8 @@ public class KaleoLogCacheModel
 		sb.append(kaleoClassName);
 		sb.append(", kaleoClassPK=");
 		sb.append(kaleoClassPK);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoInstanceId=");
@@ -150,6 +145,7 @@ public class KaleoLogCacheModel
 		KaleoLogImpl kaleoLogImpl = new KaleoLogImpl();
 
 		kaleoLogImpl.setMvccVersion(mvccVersion);
+		kaleoLogImpl.setCtCollectionId(ctCollectionId);
 		kaleoLogImpl.setKaleoLogId(kaleoLogId);
 		kaleoLogImpl.setGroupId(groupId);
 		kaleoLogImpl.setCompanyId(companyId);
@@ -184,6 +180,7 @@ public class KaleoLogCacheModel
 		}
 
 		kaleoLogImpl.setKaleoClassPK(kaleoClassPK);
+		kaleoLogImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoLogImpl.setKaleoDefinitionVersionId(kaleoDefinitionVersionId);
 		kaleoLogImpl.setKaleoInstanceId(kaleoInstanceId);
 		kaleoLogImpl.setKaleoInstanceTokenId(kaleoInstanceTokenId);
@@ -284,8 +281,12 @@ public class KaleoLogCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoLogId = objectInput.readLong();
 
@@ -300,6 +301,8 @@ public class KaleoLogCacheModel
 		kaleoClassName = objectInput.readUTF();
 
 		kaleoClassPK = objectInput.readLong();
+
+		kaleoDefinitionId = objectInput.readLong();
 
 		kaleoDefinitionVersionId = objectInput.readLong();
 
@@ -325,17 +328,19 @@ public class KaleoLogCacheModel
 
 		currentAssigneeClassPK = objectInput.readLong();
 		type = objectInput.readUTF();
-		comment = objectInput.readUTF();
+		comment = (String)objectInput.readObject();
 		startDate = objectInput.readLong();
 		endDate = objectInput.readLong();
 
 		duration = objectInput.readLong();
-		workflowContext = objectInput.readUTF();
+		workflowContext = (String)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoLogId);
 
@@ -363,6 +368,8 @@ public class KaleoLogCacheModel
 		}
 
 		objectOutput.writeLong(kaleoClassPK);
+
+		objectOutput.writeLong(kaleoDefinitionId);
 
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
@@ -432,10 +439,10 @@ public class KaleoLogCacheModel
 		}
 
 		if (comment == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(comment);
+			objectOutput.writeObject(comment);
 		}
 
 		objectOutput.writeLong(startDate);
@@ -444,14 +451,15 @@ public class KaleoLogCacheModel
 		objectOutput.writeLong(duration);
 
 		if (workflowContext == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(workflowContext);
+			objectOutput.writeObject(workflowContext);
 		}
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoLogId;
 	public long groupId;
 	public long companyId;
@@ -461,6 +469,7 @@ public class KaleoLogCacheModel
 	public long modifiedDate;
 	public String kaleoClassName;
 	public long kaleoClassPK;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public long kaleoInstanceId;
 	public long kaleoInstanceTokenId;

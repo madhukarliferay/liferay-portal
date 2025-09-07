@@ -7,14 +7,18 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransfor
 import com.liferay.gradle.plugins.change.log.builder.BuildChangeLogTask
 import com.liferay.gradle.plugins.defaults.internal.util.GradleUtil
 import com.liferay.gradle.util.FileUtil
+import com.liferay.gradle.util.StringUtil
+import com.liferay.gradle.util.Validator
 
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 
 import groovy.json.JsonSlurper
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
+import java.util.function.Function;
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.regex.Matcher
@@ -38,13 +42,13 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilter
 
 import org.gradle.StartParameter
-import org.gradle.api.Transformer
 import org.gradle.api.internal.BuildDefinition
 import org.gradle.internal.build.BuildState
 import org.gradle.internal.build.BuildStateRegistry
 import org.gradle.internal.build.PublicBuildPath
-import org.gradle.internal.build.StandAloneNestedBuild
-import org.gradle.internal.invocation.BuildController
+import org.gradle.internal.buildtree.BuildTreeLifecycleController
+import org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController
+import org.gradle.internal.buildtree.NestedBuildTree
 import org.gradle.util.GUtil
 import org.gradle.util.VersionNumber
 
@@ -52,8 +56,8 @@ buildscript {
 	apply from: file("build-buildscript.gradle"), to: buildscript
 
 	dependencies {
-		classpath group: "com.github.jengelman.gradle.plugins", name: "shadow", version: "2.0.4"
-		classpath group: "de.undercouch", name: "gradle-download-task", version: "3.4.3"
+		classpath group: "com.github.johnrengelman", name: "shadow", version: "8.1.1"
+		classpath group: "de.undercouch", name: "gradle-download-task", version: "5.4.0"
 		classpath group: "org.ajoberstar", name: "gradle-git", version: "1.6.0"
 	}
 
@@ -66,32 +70,28 @@ buildscript {
 
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "de.undercouch.download"
-apply plugin: "java"
+apply plugin: "java-library"
 apply plugin: "org.ajoberstar.grgit"
 
 apply from: "releng-pom.gradle"
 
 task buildFixPackChangeLog(type: BuildChangeLogTask)
-task cherryPickArtifacts
 task cleanReleng
-task cleanVersionOverride
-task lockDependencyVersion
-task lockPrivateDependencyVersions
+task deployReleng
 task portalArtifactsJar(type: ShadowJar)
 task portalJavadoc(type: Javadoc)
 task portalJavadocJar(type: Jar)
 task portalSourcesJar(type: ShadowJar)
 task prepareMajorIncrement
-task syncGitRepoReleases
+task prepareMajorIncrementAppProperties
+task syncAppProperties
 task tagAppReleases
 
 buildFixPackChangeLog {
 	changeLogHeader = {
-		File releaseInfoFile = file("../portal-kernel/src/com/liferay/portal/kernel/util/ReleaseInfo.java")
+		Properties releaseProperties = GUtil.loadProperties(file("../release.properties"))
 
-		Matcher matcher = (releaseInfoFile.text =~ /private static final String _VERSION = "(.+)";/)
-
-		return matcher[0][1]
+		return releaseProperties.getProperty("release.info.version")
 	}
 
 	changeLogFile = "../.releng/fix-pack.changelog"
@@ -104,34 +104,6 @@ buildFixPackChangeLog {
 	}
 
 	ticketIdPrefixes "LRQA"
-}
-
-cherryPickArtifacts {
-	description = "Cherry-picks 'apply' and 'prep next' artifact publishing commits from a release branch. Required properties: '-Psince', '-Puntil'."
-
-	doLast {
-		assert project.properties["since"] : "Please provide a Git commit hash for the '-Psince' property"
-		assert project.properties["until"] : "Please provide a Git commit hash for the '-Puntil' property"
-
-		Commit sinceParentCommit = JGitUtil.resolveCommit(grgit.repository, since)
-
-		List<Commit> commits = grgit.log {
-			range sinceParentCommit.parentIds.first(), until
-		}
-
-		commits.reverseEach {
-			Commit commit ->
-
-			if (commit.shortMessage.endsWith(" apply")) {
-				_cherryPickApply(commit)
-			}
-			else if (commit.shortMessage.contains("prep next")) {
-				_cherryPickPrepNext(commit)
-			}
-		}
-	}
-
-	group = "releng"
 }
 
 cleanReleng {
@@ -160,196 +132,76 @@ cleanReleng {
 	group = "releng"
 }
 
-cleanVersionOverride {
-	description = "Removes all version override files belonging to a particular subrepository. Required property: '-PgitRepoPath'."
-
+deployReleng {
 	doLast {
-		assert project.properties["gitRepoPath"] : "Please provide a value for the '-PgitRepoPath' property"
+		fileTree(dir: file(".releng"), excludes: ["/sdk/**", "**/test/**", "/third-party/**", "/util/**"], include: "**/*.properties").each {
+			File relengFile ->
 
-		File gitRepoDir = file(gitRepoPath)
+			String relativePath = FileUtil.relativize(relengFile.parentFile, file(".releng"))
 
-		FileTree bndBndFileTree = fileTree(dir: gitRepoDir, include : "**/bnd.bnd")
+			if (Validator.isNotNull(relativePath)) {
+				File relengIgnoreMarkerDir = GradleUtil.getRootDir(file(relativePath), ".lfrbuild-releng-ignore")
 
-		delete bndBndFileTree.collect {
-			new File(gitRepoDir.parentFile, ".version-override-${it.parentFile.name}.properties")
-		}
-	}
+				if (relengIgnoreMarkerDir) {
+					return
+				}
 
-	group = "releng"
-}
-
-lockDependencyVersion {
-	description = "Replaces 'default' or project dependencies in all 'apps' and 'core' modules with a specific version, if compilation completes successfully. Required properties: '-PdependencyName', '-PdependencyVersion'."
-
-	doLast {
-		assert project.properties["dependencyName"] : "Please provide a value for the '-PdependencyName' property"
-		assert project.properties["dependencyVersion"] : "Please provide a value for the '-PdependencyVersion' property"
-
-		assert dependencyName.startsWith("com.liferay.") : "Please provide a value for the '-PdependencyName' property which starts with 'com.liferay.'"
-
-		Path repositoryRootDirPath = grgit.repository.rootDir.parentFile.toPath()
-
-		Pattern dependencyPattern
-		String dependencyGroup = "com.liferay"
-
-		String dependencyProjectName = dependencyName.substring(12)
-
-		dependencyProjectName = dependencyProjectName.replace('.' as char, '-' as char)
-
-		if (dependencyName.startsWith("com.liferay.portal.") || dependencyName.startsWith("com.liferay.util.")) {
-			dependencyGroup = "com.liferay.portal"
-			dependencyPattern = ~/(compileOnly|provided)\s+group:\s*"${dependencyGroup}",\s*name:\s*"${dependencyName}",\s*version:\s*"default"/
-		}
-		else {
-			dependencyPattern = ~/(compileOnly|provided) project\(".+:${dependencyProjectName}"\)/
-		}
-
-		String dependencyReplacement = "\$1 group: \"${dependencyGroup}\", name: \"${dependencyName}\", version: \"${dependencyVersion}\""
-
-		boolean commitChanges = false
-
-		List<String> buildGradleExcludes = ["**/build/", "**/classes/", "**/node_modules/"]
-
-		if (dependencyName in ["com.liferay.portal.impl", "com.liferay.portal.kernel"]) {
-			buildGradleExcludes = buildGradleExcludes + ["core/portal-bootstrap/"]
-		}
-
-		FileTree buildGradleFileTree = fileTree(dir: projectDir, excludes: buildGradleExcludes, includes: ["apps/**/build.gradle", "core/**/build.gradle"])
-
-		buildGradleFileTree.each {
-			File buildGradleFile ->
-
-			File moduleDir = buildGradleFile.parentFile
-
-			if (moduleDir.name.endsWith("-test") || _isGitRepoReadOnly(moduleDir)) {
+				if (!_exists(file(relativePath), ".lfrbuild-portal")) {
+					return
+				}
+			}
+			else if (relengFile.name == "artifact.properties") {
 				return
 			}
 
-			// Update build.gradle
+			Properties relengProperties = GUtil.loadProperties(relengFile)
 
-			String buildGradle = buildGradleFile.text
+			String artifactURL = relengProperties.getProperty("artifact.url")
 
-			String newBuildGradle = buildGradle.replaceFirst(dependencyPattern, dependencyReplacement)
-
-			if (buildGradle == newBuildGradle) {
+			if (!artifactURL || !artifactURL.endsWith(".jar")) {
 				return
 			}
 
-			buildGradleFile.text = newBuildGradle
+			if (relengFile.name != "artifact.properties") {
+				String jarFileName = relengFile.name[0 .. -12] + ".jar"
 
-			// Try to build module with the new dependency
+				if (jarFileName == "portal-test.jar") {
+					return
+				}
 
-			String buildGradleRelativePath = String.valueOf(repositoryRootDirPath.relativize(buildGradleFile.toPath()))
+				File deployDir = file(project.properties["app.server." + "${project.'app.server.type'}" + ".portal.dir"] + "/WEB-INF/lib/")
 
-			buildGradleRelativePath = buildGradleRelativePath.replace(File.separatorChar, '/' as char)
+				if (_exists(file(project.properties["app.server." + "${project.'app.server.type'}" + ".lib.global.dir"]), jarFileName)) {
+					deployDir = file(project.properties["app.server." + "${project.'app.server.type'}" + ".lib.global.dir"])
+				}
 
-			if (!_executeGradle(moduleDir, ["classes", "testClasses", "testIntegrationClasses", "compileJSP", "formatSource"], [:], false)) {
-				println "Unable to lock dependency '${dependencyName}' version to ${dependencyVersion} in ${relativePath(moduleDir)}"
-
-				_resetFileChanges buildGradleRelativePath
-
-				return
+				FileUtil.get(project, artifactURL, project.properties['systemProp.repository.private.username'], project.properties['systemProp.repository.private.password'], new File(deployDir, jarFileName), false, true)
 			}
+			else {
+				String jarFileName = artifactURL.substring(artifactURL.lastIndexOf("/") + 1).replaceFirst(/-\d+(\.\d+)*\.jar$/, ".jar")
 
-			// Add build.gradle to Git index if build completed successfully
+				File deployDir = file("${project.'liferay.home'}/osgi/modules/")
 
-			grgit.add patterns: [buildGradleRelativePath]
-
-			commitChanges = true
-
-			println "Dependency '${dependencyName}' version locked to ${dependencyVersion} in ${relativePath(moduleDir)}"
-		}
-
-		if (commitChanges) {
-			grgit.commit message: "${dependencyProjectName} ${dependencyVersion} apply"
-		}
-	}
-
-	group = "releng"
-}
-
-lockPrivateDependencyVersions {
-	description = "Replaces project dependencies in private modules with the first compatible module dependency."
-
-	doLast {
-		FileTree buildGradleFileTree = fileTree(dir: new File(projectDir, "private"), includes: ["apps/**/build.gradle", "core/**/build.gradle"])
-
-		buildGradleFileTree.each {
-			File buildGradleFile ->
-
-			File moduleDir = buildGradleFile.parentFile
-
-			if (_isGitRepoReadOnly(moduleDir)) {
-				return
-			}
-
-			// Replace one project dependency at a time
-
-			String buildGradle = buildGradleFile.text
-
-			List<String[]> buildGradleDependencies = buildGradle.findAll(/project\(":(.+)"\)/, {
-					String all, String dependencyPath ->
-
-					[all, dependencyPath]
-				})
-
-			for (String[] buildGradleDependency in buildGradleDependencies) {
-				String dependencyPath = buildGradleDependency[1]
-
-				// Exclude project dependencies to private modules, since those are already available in the build
-
-				if (dependencyPath.startsWith("private:")) {
-					continue
+				if (jarFileName.endsWith(".test.util.jar")) {
+					deployDir = file("${project.'liferay.home'}/osgi/test/")
+				}
+				else if (_exists(file("${project.'liferay.home'}/osgi/core/"), jarFileName)) {
+					deployDir = file("${project.'liferay.home'}/osgi/core/")
+				}
+				else if (_exists(file("${project.'liferay.home'}/osgi/portal/"), jarFileName)) {
+					deployDir = file("${project.'liferay.home'}/osgi/portal/")
+				}
+				else if (_exists(file("${project.'liferay.home'}/osgi/static/"), jarFileName)) {
+					deployDir = file("${project.'liferay.home'}/osgi/static/")
+				}
+				else if (_exists(file(project.properties["app.server." + "${project.'app.server.type'}" + ".portal.dir"] + "/WEB-INF/lib/"), jarFileName)) {
+					deployDir = file(project.properties["app.server." + "${project.'app.server.type'}" + ".portal.dir"] + "/WEB-INF/lib/")
+				}
+				else if (_exists(file(project.properties["app.server." + "${project.'app.server.type'}" + ".portal.dir"] + "/WEB-INF/shielded-container-lib/"), jarFileName)) {
+					deployDir = file(project.properties["app.server." + "${project.'app.server.type'}" + ".portal.dir"] + "/WEB-INF/shielded-container-lib/")
 				}
 
-				// Look for the public module pointed by the project dependency
-
-				File dependencyDir = new File(projectDir, dependencyPath.replace(':' as char, File.separatorChar))
-
-				File dependencyBndBndFile = new File(dependencyDir, "bnd.bnd")
-
-				if (!dependencyBndBndFile.exists()) {
-					println "Unable to lock dependency ':${dependencyPath}' in ${buildGradleFile}: ${dependencyBndBndFile} does not exist"
-
-					continue
-				}
-
-				Properties dependencyBndBndProperties = GUtil.loadProperties(dependencyBndBndFile)
-
-				String dependencyVersion = dependencyBndBndProperties.getProperty("Bundle-Version")
-
-				VersionNumber versionNumber = VersionNumber.parse(dependencyVersion)
-
-				if (versionNumber.micro == 0) {
-					println "Unable to lock dependency ':${dependencyPath}' in ${buildGradleFile}: ${dependencyDir} has not been published"
-
-					continue
-				}
-
-				String dependencyName = dependencyBndBndProperties.getProperty("Bundle-SymbolicName")
-
-				// Try to replace the project dependency with a module dependency having the lowest minor version possible, until compilation completes successfully
-
-				for (int i = 0; i <= versionNumber.minor; i++) {
-					VersionNumber dependencyVersionNumber = new VersionNumber(versionNumber.major, i, 0, null)
-
-					String newBuildGradle = buildGradle.replace(buildGradleDependency[0], "group: \"com.liferay\", name: \"${dependencyName}\", version: \"${dependencyVersionNumber}\"")
-
-					buildGradleFile.text = newBuildGradle
-
-					// Try to build the module with the new dependency, and revert the change if the compilation fails
-
-					if (!_executeGradle(moduleDir, ["classes", "testClasses", "testIntegrationClasses", "compileJSP", "formatSource"], [:], false)) {
-						println "Unable to lock dependency '${dependencyName}' version to ${dependencyVersion} in ${relativePath(moduleDir)}"
-
-						buildGradleFile.text = buildGradle
-					}
-					else {
-						buildGradle = newBuildGradle
-
-						break
-					}
-				}
+				FileUtil.get(project, artifactURL, project.properties['systemProp.repository.private.username'], project.properties['systemProp.repository.private.password'], new File(deployDir, jarFileName), false, true)
 			}
 		}
 	}
@@ -359,21 +211,22 @@ lockPrivateDependencyVersions {
 
 portalArtifactsJar {
 	ext {
-		relengPropertiesFiles = null
+		relengProjectDirs = null
 	}
 
-	baseName = "portal"
-	classifier = null
+	archiveBaseName = "portal"
+	archiveClassifier = null
+	archiveVersion = _getReleaseInfoVersion()
+	duplicatesStrategy = "exclude"
 	includeEmptyDirs = false
-	version = _getReleaseInfoVersion()
 	zip64 = true
 
 	doFirst {
-		relengPropertiesFiles = _getRelengPropertiesFiles()
+		relengProjectDirs = _getRelengProjectDirs()
 
 		ConfigurationContainer configurationContainer = project.getConfigurations()
 
-		Configuration detachedConfiguration = configurationContainer.detachedConfiguration(_getPortalArtifactsDependencies(relengPropertiesFiles) as Dependency[])
+		Configuration detachedConfiguration = configurationContainer.detachedConfiguration(_getPortalArtifactsDependencies(relengProjectDirs) as Dependency[])
 
 		detachedConfiguration.resolve()
 
@@ -404,10 +257,13 @@ portalJavadoc {
 	destinationDir = new File(buildDir, "releng/portalJavadoc")
 	options.addStringOption("Xdoclint:none", "-quiet")
 	options.encoding = "ISO-8859-1"
-	options.stylesheetFile = file("../tools/styles/javadoc.css")
 	source {
 		zipTree(portalSourcesJar.archivePath).matching {
-			include _getPortalJavadocIncludes(portalArtifactsJar.relengPropertiesFiles)
+			exclude "module-info.java"
+			exclude "org/apache/axis/enum/**"
+			exclude "org/apache/commons/lang/enum/**"
+			exclude "org/objectweb/asm/util/CheckMethodAdapter.java"
+			include "**/*.java"
 		}
 	}
 	title = "Portal " + _getReleaseInfoVersion()
@@ -440,11 +296,11 @@ portalJavadoc {
 portalJavadocJar {
 	dependsOn portalJavadoc
 
-	baseName = "portal"
-	classifier = "javadoc"
+	archiveBaseName = "portal"
+	archiveClassifier = "javadoc"
+	archiveVersion = _getReleaseInfoVersion()
 	from portalJavadoc
 	includeEmptyDirs = false
-	version = _getReleaseInfoVersion()
 
 	doLast {
 		println "Created jar " + archivePath
@@ -460,15 +316,18 @@ portalJavadocJar {
 }
 
 portalSourcesJar {
-	baseName = "portal"
-	classifier = "sources"
+	dependsOn portalArtifactsJar
+
+	archiveBaseName = "portal"
+	archiveClassifier = "sources"
+	archiveVersion = _getReleaseInfoVersion()
+	duplicatesStrategy = "exclude"
 	includeEmptyDirs = false
-	version = _getReleaseInfoVersion()
 
 	doFirst {
 		ConfigurationContainer configurationContainer = project.getConfigurations()
 
-		Configuration detachedConfiguration = configurationContainer.detachedConfiguration(_getPortalSourcesDependencies(portalArtifactsJar.relengPropertiesFiles) as Dependency[])
+		Configuration detachedConfiguration = configurationContainer.detachedConfiguration(_getPortalSourcesDependencies(portalArtifactsJar.relengProjectDirs) as Dependency[])
 
 		detachedConfiguration.resolve()
 
@@ -506,11 +365,9 @@ prepareMajorIncrement {
 
 		Map<String, String> moduleNamePathsMap = [
 			"com.liferay.portal.configuration.metatype": ":apps:static:portal-configuration:portal-configuration-metatype-api",
-			"com.liferay.portal.mobile.device.detection.fiftyonedegrees": ":apps:portal-mobile-device-detection-fiftyonedegrees:portal-mobile-device-detection-fiftyonedegrees",
 			"com.liferay.portal.osgi.web.wab.generator": ":apps:static:portal-osgi-web:portal-osgi-web-wab-generator-api",
 			"com.liferay.portal.profile": ":apps:static:portal:portal-profile-api",
-			"com.liferay.portal.template.soy": ":apps:portal-template:portal-template-soy-api",
-			"com.liferay.portal.upgrade": ":apps:portal:portal-upgrade-api"
+			"com.liferay.portal.upgrade": ":apps:static:portal:portal-upgrade-api"
 		]
 
 		projectDir.traverse(
@@ -566,7 +423,7 @@ prepareMajorIncrement {
 		Closure<Void> convertToProjectDependenciesClosure = {
 			File dir ->
 
-			if (dir.parentFile.name == "util") {
+			if ((dir.parentFile.name == "poshi") || (dir.parentFile.name == "util")) {
 				return
 			}
 
@@ -763,7 +620,7 @@ prepareMajorIncrement {
 
 		File portalRootDir = projectDir.parentFile
 
-		String[] dirNames = ["portal-impl", "portal-kernel", "portal-test", "portal-test-integration", "portal-web", "support-tomcat", "util-bridges", "util-java", "util-slf4j", "util-taglib"]
+		String[] dirNames = ["portal-impl", "portal-kernel", "portal-test", "portal-web", "support-tomcat", "util-bridges", "util-java", "util-slf4j", "util-taglib"]
 
 		dirNames.each {
 			incrementMajorVersionClosure new File(portalRootDir, it)
@@ -773,62 +630,74 @@ prepareMajorIncrement {
 	group = "releng"
 }
 
+prepareMajorIncrementAppProperties {
+	description = "Increment 'app.marketplace.version' to the next major version for all 'app.properties' files."
+	group = "releng"
+
+	doLast {
+		FileTree appPropertiesFileTree = fileTree(dir: projectDir, includes: [".releng/apps/**/app.properties", ".releng/dxp/**/app.properties"])
+
+		appPropertiesFileTree.each {
+			File appPropertiesFile ->
+
+			File markerFile = new File(appPropertiesFile.parentFile, ".lfrbuild-app-portal-build-ignore")
+
+			if (!markerFile.exists()) {
+				appPropertiesFile.text = appPropertiesFile.text.replaceFirst(~/app.marketplace.version=(\w+\.\w+\.\w+)/) {
+					String all, String versionString ->
+
+					VersionNumber versionNumber = VersionNumber.parse(versionString)
+
+					VersionNumber newVersionNumber = new VersionNumber(versionNumber.major + 1, 0, 0, null)
+
+					all.replace versionString, newVersionNumber as String
+				}
+			}
+		}
+	}
+}
+
 repositories {
 	maven {
 		url "https://repository-cdn.liferay.com/nexus/content/groups/public"
 	}
 }
 
-syncGitRepoReleases {
-	description = "Runs 'gradlew baseline -PsyncRelease' on every read-only Git subrepository."
+syncAppProperties {
+	description = "Updates the 'app.portal.build' property for all 'app.properties' files."
+	group = "releng"
 
 	doLast {
-		FileTree gitRepoFileTree = fileTree(dir: projectDir, include: "**/.gitrepo")
+		Properties releaseProperties = GUtil.loadProperties(new File(projectDir.parentFile, "release.properties"))
 
-		gitRepoFileTree.each {
-			File gitRepoFile ->
+		FileTree appPropertiesFileTree = fileTree(dir: projectDir, includes: [".releng/apps/**/app.properties"])
 
-			if (!gitRepoFile.text.contains("mode = pull")) {
-				return
+		appPropertiesFileTree.each {
+			File appPropertiesFile ->
+
+			File markerFile = new File(appPropertiesFile.parentFile, ".lfrbuild-app-portal-build-ignore")
+
+			if (!markerFile.exists()) {
+				appPropertiesFile.text = appPropertiesFile.text.replaceFirst(~/app.portal.build=.+/, "app.portal.build=" + releaseProperties.getProperty("release.info.build"))
 			}
+		}
 
-			File moduleDir = gitRepoFile.parentFile
+		if (FileUtil.exists(project, ".releng/dxp") && FileUtil.exists(project, "../release.profile-dxp.properties")) {
+			releaseProperties = GUtil.loadProperties(new File(projectDir.parentFile, "release.profile-dxp.properties"))
 
-			FileTree bndBndFileTree = fileTree(dir: moduleDir, include: "**/bnd.bnd")
+			appPropertiesFileTree = fileTree(dir: projectDir, includes: [".releng/dxp/**/app.properties"])
 
-			if (bndBndFileTree.empty) {
-				return
-			}
+			appPropertiesFileTree.each {
+				File appPropertiesFile ->
 
-			println "Synchronizing ${relativePath(moduleDir)} with release branch"
+				File markerFile = new File(appPropertiesFile.parentFile, ".lfrbuild-app-portal-build-ignore")
 
-			File settingsGradleFile = new File(moduleDir, "settings.gradle")
-			File settingsGradleBackupFile = new File(moduleDir, "settings.gradle.backup")
-
-			String syncRelease
-
-			try {
-				assert settingsGradleFile.renameTo(settingsGradleBackupFile)
-
-				syncRelease = _setSystemProperty("org.gradle.project.syncRelease", "true")
-
-				StartParameter startParameter = gradle.startParameter.newBuild()
-
-				startParameter.currentDir = moduleDir
-				startParameter.projectProperties = ["syncRelease": "true"]
-				startParameter.taskNames = ["baseline"]
-
-				_executeGradle(startParameter, true)
-			}
-			finally {
-				assert settingsGradleBackupFile.renameTo(settingsGradleFile)
-
-				_setSystemProperty "org.gradle.project.syncRelease", syncRelease
+				if (!markerFile.exists()) {
+					appPropertiesFile.text = appPropertiesFile.text.replaceFirst(~/app.portal.build=.+/, "app.portal.build=" + releaseProperties.getProperty("release.info.build"))
+				}
 			}
 		}
 	}
-
-	group = "releng"
 }
 
 tagAppReleases {
@@ -1096,9 +965,7 @@ private void _cherryPickPrepNext(Commit commit) {
 		StartParameter startParameter = gradle.startParameter.newBuild()
 
 		String baselineIgnoreFailures = _setSystemProperty("baseline.ignoreFailures", "true")
-		String syncRelease = _setSystemProperty("org.gradle.project.syncRelease", "true")
 
-		startParameter.projectProperties = ["syncRelease": "true"]
 		startParameter.taskNames = [moduleTaskPrefix + "baseline"]
 
 		try {
@@ -1106,7 +973,6 @@ private void _cherryPickPrepNext(Commit commit) {
 		}
 		finally {
 			_setSystemProperty "baseline.ignoreFailures", baselineIgnoreFailures
-			_setSystemProperty "org.gradle.project.syncRelease", syncRelease
 		}
 	}
 }
@@ -1137,13 +1003,14 @@ private String _downloadFile(File destinationDir, String... urls) {
 			return url
 		}
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 5; i++) {
 			try {
 				FileUtil.get(project, url, project.properties['systemProp.repository.private.username'], project.properties['systemProp.repository.private.password'], file, false, true)
 
 				return url
 			}
 			catch (Exception e) {
+				sleep(5000)
 			}
 		}
 	}
@@ -1188,13 +1055,13 @@ private boolean _executeGradle(StartParameter startParameter, boolean rethrowExc
 	BuildDefinition buildDefinition = BuildDefinition.fromStartParameter(startParameter, gradle.services.get(PublicBuildPath))
 	BuildStateRegistry buildStateRegistry = gradle.services.get(BuildStateRegistry)
 
-	StandAloneNestedBuild standAloneNestedBuild = buildStateRegistry.addNestedBuildTree(buildDefinition, gradle.services.get(BuildState))
+	NestedBuildTree nestedBuildTree = buildStateRegistry.addNestedBuildTree(buildDefinition, gradle.services.get(BuildState), String.valueOf(System.currentTimeMillis()))
 
-	Transformer<Void, BuildController> transformer = new Transformer<Void, BuildController>() {
+	Function<BuildTreeLifecycleController, Void> function = new Function<BuildTreeLifecycleController, Void>() {
 
 		@Override
-		public Void transform(BuildController buildController) {
-			buildController.run()
+		public Void apply(BuildTreeLifecycleController buildTreeLifecycleController) {
+			buildTreeLifecycleController.scheduleAndRunTasks()
 
 			return null
 		}
@@ -1202,7 +1069,7 @@ private boolean _executeGradle(StartParameter startParameter, boolean rethrowExc
 	}
 
 	try {
-		standAloneNestedBuild.run(transformer)
+		nestedBuildTree.run(function)
 
 		return true
 	}
@@ -1251,6 +1118,54 @@ private InputStream _getCommitFileStream(String commitId, String fileName) {
 	}
 }
 
+private List<String> _getExcludes(File jarFile) {
+	List<String> excludes = new ArrayList<>()
+
+	if (jarFile.name.startsWith("com.liferay")) {
+		excludes.add("*.jar")
+		excludes.add("**/javadocs-*.xml")
+		excludes.add("**/node_modules/**")
+	}
+
+	excludes.add("/META-INF/custom-sql/**")
+	excludes.add("/META-INF/images/**")
+	excludes.add("/META-INF/sql/**")
+	excludes.add("/META-INF/versions/**")
+
+	return excludes
+}
+
+private List<String> _getIncludes(File jarFile) {
+	List<String> includes = new ArrayList<>()
+
+	if (!jarFile.name.startsWith("com.liferay")) {
+		return includes
+	}
+
+	includes.add("*")
+	includes.add("META-INF/**")
+	includes.add("OSGI-INF/**")
+	includes.add("WEB-INF/**")
+
+	FileTree jarFileTree = zipTree(jarFile)
+
+	aQute.bnd.osgi.Jar jar = new aQute.bnd.osgi.Jar(jarFile)
+
+	jarFileTree.visit {
+		if (!it.isDirectory()) {
+			return
+		}
+
+		String path = it.path
+
+		if (path.startsWith("com/liferay/") && ((jar.getResource(path + "/packageinfo") != null) || path.endsWith("/taglib") || path.startsWith("com/liferay/portal/kernel/"))) {
+			includes.add(path + "/*")
+		}
+	}
+
+	return includes
+}
+
 private File _getModuleDir(String name) {
 	File moduleDir = null
 
@@ -1286,31 +1201,83 @@ private String _getModuleTaskPrefix(File moduleDir) {
 	":" + moduleTaskPrefix.replace(File.separatorChar, ':' as char) + ":"
 }
 
-private List<Dependency> _getPortalArtifactsDependencies(List<File> relengPropertiesFiles) {
+private List<Dependency> _getPortalArtifactsDependencies(List<File> relengProjectDirs) {
 	File cacheDir = new File(buildDir, "releng/portalCache")
 	File portalArtifactsDir = new File(buildDir, "releng/portalArtifacts")
 
 	delete portalArtifactsDir
 
-	List<String> artifactURLs = new ArrayList<>()
+	List<Dependency> dependencies = new ArrayList<>()
 
-	for (File artifactPropertiesFile : relengPropertiesFiles) {
-		Properties artifactProperties = GUtil.loadProperties(artifactPropertiesFile)
+	for (File relengProjectDir : relengProjectDirs) {
+		Properties properties = GUtil.loadProperties(new File(relengProjectDir, "bnd.bnd"))
 
-		artifactURLs.add(artifactProperties.getProperty("artifact.url"))
+		File jarFile = file("../tools/sdk/dist/" + properties.getProperty("Bundle-SymbolicName") + "-" + properties.getProperty("Bundle-Version") + ".jar")
+
+		File dir = new File(portalArtifactsDir, jarFile.name[0 .. -5])
+
+		copy {
+			from zipTree(jarFile).matching {
+				exclude _getExcludes(jarFile)
+				include _getIncludes(jarFile)
+			}
+
+			into dir
+		}
+
+		DependencyHandler dependencyHandler = project.getDependencies()
+
+		dependencies.add(dependencyHandler.create(files(dir)))
+
+		logger.lifecycle "Added {}", jarFile.name
 	}
 
-	XmlSlurper xmlSlurper = new XmlSlurper()
+	["portal-impl", "portal-kernel", "support-tomcat", "util-bridges", "util-java", "util-slf4j", "util-taglib"].each {
+		File jarFile = file("../" + it + "/" + it + ".jar")
 
-	File sourceFormatterPropertiesFile = new File(projectDir, "source-formatter.properties")
+		if (!jarFile.exists()) {
+			throw new GradleException("Unable to find ${jarFile}")
+		}
+
+		File dir = new File(portalArtifactsDir, jarFile.name[0 .. -5])
+
+		copy {
+			from zipTree(jarFile).matching {
+				exclude _getExcludes(jarFile)
+				include _getIncludes(jarFile)
+			}
+
+			into dir
+		}
+
+		DependencyHandler dependencyHandler = project.getDependencies()
+
+		dependencies.add(dependencyHandler.create(files(dir)))
+
+		logger.lifecycle "Added {}", jarFile.name
+	}
+
+	List<String> artifactURLs = new ArrayList<>()
+
+	File sourceFormatterPropertiesFile = new File(projectDir, "../source-formatter.properties")
 
 	if (sourceFormatterPropertiesFile.exists()) {
 		Properties sourceFormatterProperties = GUtil.loadProperties(sourceFormatterPropertiesFile)
 
-		String enforceVersionArtifacts = sourceFormatterProperties.getProperty("source.check.gradle.dependency.artifacts.check.enforceVersionArtifacts");
+		String enforceVersionArtifacts = sourceFormatterProperties.getProperty("source.check.GradleDependencyArtifactsCheck.enforceVersionArtifacts");
 
 		if (enforceVersionArtifacts != null) {
 			for (String artifact : enforceVersionArtifacts.split(",")) {
+				if (!artifact.startsWith("com.fasterxml") &&
+					!artifact.startsWith("com.liferay:biz.aQute.bnd.annotation:") &&
+					!artifact.startsWith("io.swagger") &&
+					!artifact.startsWith("javax") &&
+					!artifact.startsWith("org.jsoup") &&
+					!artifact.startsWith("org.osgi")) {
+
+					continue
+				}
+
 				String[] array = artifact.split(":")
 
 				if (array.length != 3) {
@@ -1321,13 +1288,15 @@ private List<Dependency> _getPortalArtifactsDependencies(List<File> relengProper
 
 				String groupPath = group.replace('.' as char, '/' as char)
 
+				if (groupPath.equals("com/fasterxml/jackson-dataformat")) {
+					groupPath = "com/fasterxml/jackson/dataformat"
+				}
+
 				String name = array[1]
 				String version = array[2]
 
 				String[] urls = [
-					"https://repository-cdn.liferay.com/nexus/service/local/repositories/gradle-plugins/content/${groupPath}/${name}/${version}/${name}-${version}.jar",
-					"https://repository-cdn.liferay.com/nexus/service/local/repositories/liferay-public-releases/content/${groupPath}/${name}/${version}/${name}-${version}.jar",
-					"https://repository-cdn.liferay.com/nexus/service/local/repositories/maven2/content/${groupPath}/${name}/${version}/${name}-${version}.jar"
+					"https://repository-cdn.liferay.com/nexus/content/groups/public/${groupPath}/${name}/${version}/${name}-${version}.jar"
 				]
 
 				artifactURLs.add(_downloadFile(cacheDir, urls))
@@ -1335,15 +1304,17 @@ private List<Dependency> _getPortalArtifactsDependencies(List<File> relengProper
 		}
 	}
 
-	List<Dependency> dependencies = new ArrayList<>()
-
 	for (String artifactURL : artifactURLs) {
 		File jarFile = new File(cacheDir, artifactURL.substring(artifactURL.lastIndexOf("/") + 1))
 
 		File dir = new File(portalArtifactsDir, jarFile.name[0 .. -5])
 
 		copy {
-			from zipTree(jarFile)
+			from zipTree(jarFile).matching {
+				exclude _getExcludes(jarFile)
+				include _getIncludes(jarFile)
+			}
+
 			into dir
 		}
 
@@ -1352,6 +1323,32 @@ private List<Dependency> _getPortalArtifactsDependencies(List<File> relengProper
 		dependencies.add(dependencyHandler.create(files(dir)))
 
 		logger.lifecycle "Added {}", jarFile.name
+	}
+
+	portalArtifactsDir.eachFile {
+		File portalArtifactDir ->
+
+		File servicesDir = new File(portalArtifactDir, "META-INF/services")
+
+		if (servicesDir.exists()) {
+			servicesDir.eachFile {
+				File servicesFile ->
+
+				servicesFile.getText("UTF-8").eachLine {
+					String line ->
+
+					if (Validator.isNotNull(line)) {
+						File file = new File(portalArtifactDir, line.replace('.' as char, '/' as char) + ".class")
+
+						if (!file.exists()) {
+							delete servicesFile
+
+							return
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return dependencies
@@ -1384,7 +1381,7 @@ private List<Dependency> _getPortalJavadocDependencies() {
 
 			Map<String, String> map = evaluate("[" + line.substring(13, line.length()) + "]")
 
-			if (!map.group.startsWith("com.liferay") || !map.version.matches("[0-9.]*")) {
+			if (!map.group.startsWith("com.liferay") || (!map.version.equals("default") && !map.version.matches("[0-9.]*"))) {
 				dependencyNotations.add(map.group + ":" + map.name + ":" + map.version)
 			}
 		}
@@ -1401,67 +1398,7 @@ private List<Dependency> _getPortalJavadocDependencies() {
 	return dependencies
 }
 
-private List<String> _getPortalJavadocIncludes(List<File> relengPropertiesFiles) {
-	File cacheDir = new File(buildDir, "releng/portalCache")
-
-	List<String> includes = new ArrayList<>()
-
-	for (File artifactPropertiesFile : relengPropertiesFiles) {
-		Properties artifactProperties = GUtil.loadProperties(artifactPropertiesFile)
-
-		String artifactURL = artifactProperties.getProperty("artifact.url")
-
-		File jarFile = new File(cacheDir, artifactURL.substring(artifactURL.lastIndexOf("/") + 1))
-
-		aQute.bnd.osgi.Jar jar = new aQute.bnd.osgi.Jar(jarFile)
-
-		Resource resource = jar.getResource("META-INF/MANIFEST.MF")
-
-		if (resource == null) {
-			continue
-		}
-
-		Manifest manifest = new Manifest(resource.openInputStream())
-
-		Attributes attributes = manifest.getMainAttributes()
-
-		String exportPackageValue = attributes.getValue(Constants.EXPORT_PACKAGE)
-
-		if (exportPackageValue == null) {
-			continue
-		}
-
-		for (String pattern : exportPackageValue.split(",")) {
-			pattern = pattern.trim()
-
-			if (pattern.startsWith("!")) {
-				continue
-			}
-
-			pattern = pattern.substring(0, pattern.length())
-
-			if (pattern.contains(";")) {
-				pattern = pattern.substring(0, pattern.indexOf(';'))
-			}
-
-			if (pattern.equals("org.apache.axis.enum")) {
-				continue
-			}
-
-			pattern = "**/" + pattern.replace('.', '/')
-
-			if (!pattern.endsWith("/*")) {
-				pattern += "/*"
-			}
-
-			includes.add(pattern + ".java")
-		}
-	}
-
-	return includes
-}
-
-private List<File> _getPortalSourcesDependencies(List<File> relengPropertiesFiles) {
+private List<File> _getPortalSourcesDependencies(List<File> relengProjectDirs) {
 	File cacheDir = new File(buildDir, "releng/portalCache")
 	File portalSourcesDir = new File(buildDir, "releng/portalSources")
 
@@ -1469,34 +1406,123 @@ private List<File> _getPortalSourcesDependencies(List<File> relengPropertiesFile
 
 	List<Dependency> dependencies = new ArrayList<>()
 
-	for (File artifactPropertiesFile : relengPropertiesFiles) {
-		Properties artifactProperties = GUtil.loadProperties(artifactPropertiesFile)
+	List<String> relativePaths = []
 
-		String artifactSourcesURL = artifactProperties.getProperty("artifact.sources.url")
+	for (File relengProjectDir : relengProjectDirs) {
+		logger.lifecycle "Building {}", FileUtil.relativize(relengProjectDir, projectDir)
 
-		if (!artifactSourcesURL && !artifactPropertiesFile.name.equals("artifact.properties")) {
-			String artifactURL = artifactProperties.getProperty("artifact.url")
+		relativePaths.add FileUtil.relativize(relengProjectDir, projectDir)
+	}
 
-			artifactSourcesURL = artifactURL[0 .. -5] + "-sources.jar"
+	StartParameter startParameter = gradle.startParameter.newBuild()
+
+	startParameter.setParallelProjectExecutionEnabled(true)
+	startParameter.taskNames = relativePaths.collect {
+		":" + it.replace(File.separatorChar, ':' as char) + ":jarSources"
+	}
+
+	String buildExcludeDirs = _setSystemProperty("build.exclude.dirs", "apps/site-initializer/site-initializer-extender/site-initializer-extender-test,dxp/apps/osb/osb-faro")
+
+	try {
+		_executeGradle(startParameter, true)
+	}
+	finally {
+		_setSystemProperty "build.exclude.dirs", buildExcludeDirs
+	}
+
+	for (File relengProjectDir : relengProjectDirs) {
+		Properties properties = GUtil.loadProperties(new File(relengProjectDir, "bnd.bnd"))
+
+		File jarFile = file("../tools/sdk/dist/" + properties.getProperty("Bundle-SymbolicName") + "-" + properties.getProperty("Bundle-Version") + "-sources.jar")
+
+		File dir = new File(portalSourcesDir, jarFile.name[0 .. -5])
+
+		copy {
+			from zipTree(jarFile)
+			into dir
 		}
 
-		if (artifactSourcesURL && artifactSourcesURL.endsWith(".jar")) {
-			_downloadFile(cacheDir, artifactSourcesURL)
+		DependencyHandler dependencyHandler = project.getDependencies()
 
-			File jarFile = new File(cacheDir, artifactSourcesURL.substring(artifactSourcesURL.lastIndexOf("/") + 1))
+		dependencies.add(dependencyHandler.create(files(dir)))
 
-			File dir = new File(portalSourcesDir, jarFile.name[0 .. -5])
+		logger.lifecycle "Added {}", jarFile.name
+	}
 
-			copy {
-				from zipTree(jarFile)
-				into dir
+	["portal-impl", "portal-kernel", "support-tomcat", "util-bridges", "util-java", "util-slf4j", "util-taglib"].each {
+		File jarFile = file("../" + it + "/" + it + "-sources.jar")
+
+		if (!jarFile.exists()) {
+			throw new GradleException("Unable to find ${jarFile}")
+		}
+
+		File dir = new File(portalSourcesDir, jarFile.name[0 .. -5])
+
+		copy {
+			from zipTree(jarFile)
+			into dir
+		}
+
+		DependencyHandler dependencyHandler = project.getDependencies()
+
+		dependencies.add(dependencyHandler.create(files(dir)))
+
+		logger.lifecycle "Added {}", jarFile.name
+	}
+
+	File sourceFormatterPropertiesFile = new File(projectDir, "../source-formatter.properties")
+
+	if (sourceFormatterPropertiesFile.exists()) {
+		Properties sourceFormatterProperties = GUtil.loadProperties(sourceFormatterPropertiesFile)
+
+		String enforceVersionArtifacts = sourceFormatterProperties.getProperty("source.check.GradleDependencyArtifactsCheck.enforceVersionArtifacts");
+
+		if (enforceVersionArtifacts != null) {
+			for (String artifact : enforceVersionArtifacts.split(",")) {
+				if (!artifact.startsWith("com.fasterxml") &&
+					!artifact.startsWith("com.liferay:biz.aQute.bnd.annotation:") &&
+					!artifact.startsWith("io.swagger") &&
+					!artifact.startsWith("javax") &&
+					!artifact.startsWith("org.jsoup") &&
+					!artifact.startsWith("org.osgi")) {
+
+					continue
+				}
+
+				String[] array = artifact.split(":")
+
+				if (array.length != 3) {
+					continue;
+				}
+
+				String group = array[0]
+
+				String groupPath = group.replace('.' as char, '/' as char)
+
+				if (groupPath.equals("com/fasterxml/jackson-dataformat")) {
+					groupPath = "com/fasterxml/jackson/dataformat"
+				}
+
+				String name = array[1]
+				String version = array[2]
+
+				_downloadFile(cacheDir, "https://repository-cdn.liferay.com/nexus/content/groups/public/${groupPath}/${name}/${version}/${name}-${version}-sources.jar")
+
+				File jarFile = new File(cacheDir, "${name}-${version}-sources.jar")
+
+				File dir = new File(portalSourcesDir, jarFile.name[0 .. -5])
+
+				copy {
+					from zipTree(jarFile)
+					into dir
+				}
+
+				DependencyHandler dependencyHandler = project.getDependencies()
+
+				dependencies.add(dependencyHandler.create(files(dir)))
+
+				logger.lifecycle "Added {}", jarFile.name
 			}
-
-			DependencyHandler dependencyHandler = project.getDependencies()
-
-			dependencies.add(dependencyHandler.create(files(dir)))
-
-			logger.lifecycle "Added {}", jarFile.name
 		}
 	}
 
@@ -1504,24 +1530,56 @@ private List<File> _getPortalSourcesDependencies(List<File> relengPropertiesFile
 }
 
 private String _getReleaseInfoVersion() {
-	File releaseInfoFile = file("../portal-kernel/src/com/liferay/portal/kernel/util/ReleaseInfo.java")
+	File releasePropertiesFile = file("../release.profile-dxp.properties")
 
-	Matcher matcher = (releaseInfoFile.text =~ /private static final String _VERSION = "(.+)";/)
+	if (!releasePropertiesFile.exists()) {
+		releasePropertiesFile = file("../release.properties")
+	}
 
-	return matcher[0][1]
+	Properties releaseProperties = GUtil.loadProperties(releasePropertiesFile)
+
+	String version = releaseProperties.getProperty("release.info.version.major") + "." + releaseProperties.getProperty("release.info.version.minor") + "." + releaseProperties.getProperty("release.info.version.bug.fix")
+
+	if (Validator.isNotNull(releaseProperties.getProperty("release.info.version.trivial"))) {
+		version = version + "." + releaseProperties.getProperty("release.info.version.trivial")
+	}
+
+	return version
 }
 
-private List<File> _getRelengPropertiesFiles() {
+private List<File> _getRelengProjectDirs() {
 	File cacheDir = new File(buildDir, "releng/portalCache")
 
 	if (!cacheDir.exists()) {
 		cacheDir.mkdirs()
 	}
 
-	List<File> artifactPropertiesFiles = new ArrayList<>()
+	List<String> relativePaths = new ArrayList<>()
 
-	fileTree(dir: file(".releng"), exclude: "**/test/**", include: "**/*.properties").each {
+	List<String> excludes = ["/sdk/**", "**/test/**", "/third-party/**", "/util/**"]
+
+	File releasePropertiesFile = file("../release.profile-dxp.properties")
+
+	if (!releasePropertiesFile.exists()) {
+		excludes.add("/dxp/**")
+	}
+
+	fileTree(dir: file(".releng"), excludes: excludes, include: "**/*.properties").each {
 		File relengFile ->
+
+		String relativePath = FileUtil.relativize(relengFile.parentFile, file(".releng"))
+
+		if (Validator.isNull(relativePath)) {
+			return
+		}
+
+		if (Validator.isNotNull(relativePath)) {
+			File relengIgnoreMarkerDir = GradleUtil.getRootDir(file(relativePath), ".lfrbuild-releng-ignore")
+
+			if (relengIgnoreMarkerDir) {
+				return
+			}
+		}
 
 		Properties relengProperties = GUtil.loadProperties(relengFile)
 
@@ -1531,16 +1589,50 @@ private List<File> _getRelengPropertiesFiles() {
 			return
 		}
 
-		_downloadFile(cacheDir, artifactURL)
+		File bndBndFile = new File(file(relativePath), "bnd.bnd")
 
-		File jarFile = new File(cacheDir, artifactURL.substring(artifactURL.lastIndexOf("/") + 1))
+		if (!bndBndFile.exists()) {
+			return
+		}
+
+		logger.lifecycle "Building {}", relativePath
+
+		relativePaths.add(relativePath)
+	}
+
+	StartParameter startParameter = gradle.startParameter.newBuild()
+
+	startParameter.setParallelProjectExecutionEnabled(true)
+	startParameter.taskNames = relativePaths.collect {
+		":" + it.replace(File.separatorChar, ':' as char) + ":jar"
+	}
+
+	String buildExcludeDirs = _setSystemProperty("build.exclude.dirs", "apps/site-initializer/site-initializer-extender/site-initializer-extender-test,dxp/apps/osb/osb-faro")
+
+	try {
+		_executeGradle(startParameter, true)
+	}
+	finally {
+		_setSystemProperty "build.exclude.dirs", buildExcludeDirs
+	}
+
+	List<File> relengProjectDirs = []
+
+	for (String relativePath : relativePaths) {
+		Properties properties = GUtil.loadProperties(new File(file(relativePath), "bnd.bnd"))
+
+		File jarFile = file("../tools/sdk/dist/" + properties.getProperty("Bundle-SymbolicName") + "-" + properties.getProperty("Bundle-Version") + ".jar")
+
+		if (!jarFile.exists()) {
+			throw new GradleException("Unable to find ${jarFile}")
+		}
 
 		aQute.bnd.osgi.Jar jar = new aQute.bnd.osgi.Jar(jarFile)
 
 		Resource resource = jar.getResource("META-INF/MANIFEST.MF")
 
 		if (resource == null) {
-			return
+			continue
 		}
 
 		Manifest manifest = new Manifest(resource.openInputStream())
@@ -1550,15 +1642,18 @@ private List<File> _getRelengPropertiesFiles() {
 		String exportPackageValue = attributes.getValue(Constants.EXPORT_PACKAGE)
 
 		if (exportPackageValue == null) {
-			return
+			continue
 		}
 
-		artifactPropertiesFiles.add(relengFile)
+		copy {
+			from jarFile
+			into cacheDir
+		}
 
-		logger.lifecycle relengFile.path
+		relengProjectDirs.add(file(relativePath))
 	}
 
-	return artifactPropertiesFiles
+	return relengProjectDirs
 }
 
 private RevCommit _getRevCommit(String commitId) {

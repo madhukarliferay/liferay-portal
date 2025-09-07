@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.service;
 
+import com.liferay.expando.kernel.model.ExpandoColumn;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link ExpandoColumnLocalService}.
@@ -27,27 +22,25 @@ public class ExpandoColumnLocalServiceWrapper
 	implements ExpandoColumnLocalService,
 			   ServiceWrapper<ExpandoColumnLocalService> {
 
+	public ExpandoColumnLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ExpandoColumnLocalServiceWrapper(
 		ExpandoColumnLocalService expandoColumnLocalService) {
 
 		_expandoColumnLocalService = expandoColumnLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ExpandoColumnLocalServiceUtil} to access the expando column local service. Add custom service methods to <code>com.liferay.portlet.expando.service.impl.ExpandoColumnLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn addColumn(
-			long tableId, String name, int type)
+	public ExpandoColumn addColumn(long tableId, String name, int type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.addColumn(tableId, name, type);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn addColumn(
+	public ExpandoColumn addColumn(
 			long tableId, String name, int type, Object defaultData)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -58,13 +51,15 @@ public class ExpandoColumnLocalServiceWrapper
 	/**
 	 * Adds the expando column to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoColumnLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoColumn the expando column
 	 * @return the expando column that was added
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn addExpandoColumn(
-		com.liferay.expando.kernel.model.ExpandoColumn expandoColumn) {
-
+	public ExpandoColumn addExpandoColumn(ExpandoColumn expandoColumn) {
 		return _expandoColumnLocalService.addExpandoColumn(expandoColumn);
 	}
 
@@ -75,15 +70,24 @@ public class ExpandoColumnLocalServiceWrapper
 	 * @return the new expando column
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn createExpandoColumn(
-		long columnId) {
-
+	public ExpandoColumn createExpandoColumn(long columnId) {
 		return _expandoColumnLocalService.createExpandoColumn(columnId);
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
-	public void deleteColumn(
-		com.liferay.expando.kernel.model.ExpandoColumn column) {
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _expandoColumnLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	@Override
+	public void deleteColumn(ExpandoColumn column)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_expandoColumnLocalService.deleteColumn(column);
 	}
@@ -105,7 +109,9 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteColumn(long tableId, String name) {
+	public void deleteColumn(long tableId, String name)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_expandoColumnLocalService.deleteColumn(tableId, name);
 	}
 
@@ -119,7 +125,9 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteColumns(long tableId) {
+	public void deleteColumns(long tableId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_expandoColumnLocalService.deleteColumns(tableId);
 	}
 
@@ -144,26 +152,31 @@ public class ExpandoColumnLocalServiceWrapper
 	/**
 	 * Deletes the expando column from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoColumnLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoColumn the expando column
 	 * @return the expando column that was removed
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn deleteExpandoColumn(
-		com.liferay.expando.kernel.model.ExpandoColumn expandoColumn) {
-
+	public ExpandoColumn deleteExpandoColumn(ExpandoColumn expandoColumn) {
 		return _expandoColumnLocalService.deleteExpandoColumn(expandoColumn);
 	}
 
 	/**
 	 * Deletes the expando column with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoColumnLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param columnId the primary key of the expando column
 	 * @return the expando column that was removed
 	 * @throws PortalException if a expando column with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn deleteExpandoColumn(
-			long columnId)
+	public ExpandoColumn deleteExpandoColumn(long columnId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.deleteExpandoColumn(columnId);
@@ -178,6 +191,18 @@ public class ExpandoColumnLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _expandoColumnLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _expandoColumnLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -272,9 +297,20 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn fetchExpandoColumn(
-		long columnId) {
+	public ExpandoColumn fetchColumn(
+		long companyId, long classNameId, String tableName, String name) {
 
+		return _expandoColumnLocalService.fetchColumn(
+			companyId, classNameId, tableName, name);
+	}
+
+	@Override
+	public ExpandoColumn fetchColumn(long tableId, String name) {
+		return _expandoColumnLocalService.fetchColumn(tableId, name);
+	}
+
+	@Override
+	public ExpandoColumn fetchExpandoColumn(long columnId) {
 		return _expandoColumnLocalService.fetchExpandoColumn(columnId);
 	}
 
@@ -286,30 +322,30 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getColumn(
-			long columnId)
+	public ExpandoColumn getColumn(long columnId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.getColumn(columnId);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getColumn(
-		long companyId, long classNameId, String tableName, String name) {
+	public ExpandoColumn getColumn(
+			long companyId, long classNameId, String tableName, String name)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.getColumn(
 			companyId, classNameId, tableName, name);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getColumn(
-		long tableId, String name) {
+	public ExpandoColumn getColumn(long tableId, String name)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.getColumn(tableId, name);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getColumn(
+	public ExpandoColumn getColumn(
 		long companyId, String className, String tableName, String name) {
 
 		return _expandoColumnLocalService.getColumn(
@@ -317,50 +353,46 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(long tableId) {
-
+	public java.util.List<ExpandoColumn> getColumns(long tableId) {
 		return _expandoColumnLocalService.getColumns(tableId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(long tableId, java.util.Collection<String> names) {
+	public java.util.List<ExpandoColumn> getColumns(
+		long tableId, java.util.Collection<String> names) {
 
 		return _expandoColumnLocalService.getColumns(tableId, names);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(long companyId, long classNameId, String tableName) {
+	public java.util.List<ExpandoColumn> getColumns(
+		long companyId, long classNameId, String tableName) {
 
 		return _expandoColumnLocalService.getColumns(
 			companyId, classNameId, tableName);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(
-			long companyId, long classNameId, String tableName,
-			java.util.Collection<String> names) {
+	public java.util.List<ExpandoColumn> getColumns(
+		long companyId, long classNameId, String tableName,
+		java.util.Collection<String> names) {
 
 		return _expandoColumnLocalService.getColumns(
 			companyId, classNameId, tableName, names);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(long companyId, String className, String tableName) {
+	public java.util.List<ExpandoColumn> getColumns(
+		long companyId, String className, String tableName) {
 
 		return _expandoColumnLocalService.getColumns(
 			companyId, className, tableName);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getColumns(
-			long companyId, String className, String tableName,
-			java.util.Collection<String> columnNames) {
+	public java.util.List<ExpandoColumn> getColumns(
+		long companyId, String className, String tableName,
+		java.util.Collection<String> columnNames) {
 
 		return _expandoColumnLocalService.getColumns(
 			companyId, className, tableName, columnNames);
@@ -388,7 +420,7 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getDefaultTableColumn(
+	public ExpandoColumn getDefaultTableColumn(
 		long companyId, long classNameId, String name) {
 
 		return _expandoColumnLocalService.getDefaultTableColumn(
@@ -396,7 +428,7 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getDefaultTableColumn(
+	public ExpandoColumn getDefaultTableColumn(
 		long companyId, String className, String name) {
 
 		return _expandoColumnLocalService.getDefaultTableColumn(
@@ -404,16 +436,16 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getDefaultTableColumns(long companyId, long classNameId) {
+	public java.util.List<ExpandoColumn> getDefaultTableColumns(
+		long companyId, long classNameId) {
 
 		return _expandoColumnLocalService.getDefaultTableColumns(
 			companyId, classNameId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getDefaultTableColumns(long companyId, String className) {
+	public java.util.List<ExpandoColumn> getDefaultTableColumns(
+		long companyId, String className) {
 
 		return _expandoColumnLocalService.getDefaultTableColumns(
 			companyId, className);
@@ -439,8 +471,7 @@ public class ExpandoColumnLocalServiceWrapper
 	 * @throws PortalException if a expando column with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn getExpandoColumn(
-			long columnId)
+	public ExpandoColumn getExpandoColumn(long columnId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.getExpandoColumn(columnId);
@@ -458,9 +489,7 @@ public class ExpandoColumnLocalServiceWrapper
 	 * @return the range of expando columns
 	 */
 	@Override
-	public java.util.List<com.liferay.expando.kernel.model.ExpandoColumn>
-		getExpandoColumns(int start, int end) {
-
+	public java.util.List<ExpandoColumn> getExpandoColumns(int start, int end) {
 		return _expandoColumnLocalService.getExpandoColumns(start, end);
 	}
 
@@ -491,6 +520,9 @@ public class ExpandoColumnLocalServiceWrapper
 		return _expandoColumnLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -500,15 +532,14 @@ public class ExpandoColumnLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn updateColumn(
-			long columnId, String name, int type)
+	public ExpandoColumn updateColumn(long columnId, String name, int type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.updateColumn(columnId, name, type);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn updateColumn(
+	public ExpandoColumn updateColumn(
 			long columnId, String name, int type, Object defaultData)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -519,23 +550,49 @@ public class ExpandoColumnLocalServiceWrapper
 	/**
 	 * Updates the expando column in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExpandoColumnLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param expandoColumn the expando column
 	 * @return the expando column that was updated
 	 */
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn updateExpandoColumn(
-		com.liferay.expando.kernel.model.ExpandoColumn expandoColumn) {
-
+	public ExpandoColumn updateExpandoColumn(ExpandoColumn expandoColumn) {
 		return _expandoColumnLocalService.updateExpandoColumn(expandoColumn);
 	}
 
 	@Override
-	public com.liferay.expando.kernel.model.ExpandoColumn updateTypeSettings(
-			long columnId, String typeSettings)
+	public ExpandoColumn updateTypeSettings(long columnId, String typeSettings)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _expandoColumnLocalService.updateTypeSettings(
 			columnId, typeSettings);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _expandoColumnLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<ExpandoColumn> getCTPersistence() {
+		return _expandoColumnLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<ExpandoColumn> getModelClass() {
+		return _expandoColumnLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<ExpandoColumn>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _expandoColumnLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

@@ -1,37 +1,30 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.web.internal.field.customizer;
 
+import com.liferay.item.selector.ItemSelector;
+import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
+import com.liferay.organizations.item.selector.OrganizationItemSelectorCriterion;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.model.Organization;
-import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.segments.constants.SegmentsPortletKeys;
 import com.liferay.segments.field.Field;
 import com.liferay.segments.field.customizer.SegmentsFieldCustomizer;
 
+import jakarta.portlet.PortletRequest;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -40,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = {
 		"segments.field.customizer.entity.name=Organization",
 		"segments.field.customizer.key=" + OrganizationSegmentsFieldCustomizer.KEY,
@@ -80,6 +72,11 @@ public class OrganizationSegmentsFieldCustomizer
 	}
 
 	@Override
+	public String getIcon() {
+		return "organizations";
+	}
+
+	@Override
 	public String getKey() {
 		return KEY;
 	}
@@ -87,25 +84,29 @@ public class OrganizationSegmentsFieldCustomizer
 	@Override
 	public Field.SelectEntity getSelectEntity(PortletRequest portletRequest) {
 		try {
-			PortletURL portletURL = _portal.getControlPanelPortletURL(
-				portletRequest, SegmentsPortletKeys.SEGMENTS,
-				PortletRequest.RENDER_PHASE);
+			OrganizationItemSelectorCriterion
+				organizationItemSelectorCriterion =
+					new OrganizationItemSelectorCriterion();
 
-			portletURL.setParameter(
-				"mvcRenderCommandName", "selectOrganizations");
-			portletURL.setParameter("eventName", "selectEntity");
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
+			organizationItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+				Collections.singletonList(new UUIDItemSelectorReturnType()));
+			organizationItemSelectorCriterion.setMultiSelection(true);
 
 			return new Field.SelectEntity(
 				"selectEntity",
 				getSelectEntityTitle(
 					_portal.getLocale(portletRequest),
 					Organization.class.getName()),
-				portletURL.toString(), true);
+				String.valueOf(
+					_itemSelector.getItemSelectorURL(
+						RequestBackedPortletURLFactoryUtil.create(
+							portletRequest),
+						"selectEntity", organizationItemSelectorCriterion)),
+				true);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to get select entity", e);
+				_log.warn("Unable to get select entity", exception);
 			}
 
 			return null;
@@ -127,6 +128,9 @@ public class OrganizationSegmentsFieldCustomizer
 
 	private static final List<String> _fieldNames = ListUtil.fromArray(
 		"organizationId", "parentOrganizationId");
+
+	@Reference
+	private ItemSelector _itemSelector;
 
 	@Reference
 	private OrganizationLocalService _organizationLocalService;

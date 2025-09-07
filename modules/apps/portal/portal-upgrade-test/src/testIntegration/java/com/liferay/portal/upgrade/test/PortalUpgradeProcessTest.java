@@ -1,28 +1,32 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.model.ReleaseConstants;
+import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.upgrade.DummyUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.util.UpgradeVersionTreeMap;
+import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.version.Version;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.Iterator;
@@ -49,7 +53,7 @@ public class PortalUpgradeProcessTest {
 		new LiferayIntegrationTestRule();
 
 	@BeforeClass
-	public static void setUpClass() throws SQLException {
+	public static void setUpClass() throws Exception {
 		try (Connection connection = DataAccess.getConnection()) {
 			_currentSchemaVersion =
 				PortalUpgradeProcess.getCurrentSchemaVersion(connection);
@@ -57,7 +61,7 @@ public class PortalUpgradeProcessTest {
 	}
 
 	@Before
-	public void setUp() throws SQLException {
+	public void setUp() throws Exception {
 		_innerPortalUpgradeProcess = new InnerPortalUpgradeProcess();
 	}
 
@@ -66,6 +70,47 @@ public class PortalUpgradeProcessTest {
 		_updateSchemaVersion(_currentSchemaVersion);
 
 		_innerPortalUpgradeProcess.close();
+	}
+
+	@Test
+	public void testCreatePortalReleaseSavesDisplayName() throws Exception {
+		DB db = DBManagerUtil.getDB();
+
+		db.runSQL(
+			StringBundler.concat(
+				"update Release_ set releaseId = -1, servletContextName = '",
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME,
+				"-backup' where servletContextName = '",
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME, "'"));
+
+		try (Connection connection = DataAccess.getConnection()) {
+			PortalUpgradeProcess.createPortalRelease(connection);
+
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"select versionDisplayName from Release_ where ",
+							"servletContextName = '",
+							ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME,
+							"' and versionDisplayName = '",
+							ReleaseInfo.getVersionDisplayName(), "'"));
+				ResultSet resultSet = preparedStatement.executeQuery()) {
+
+				Assert.assertTrue(resultSet.next());
+			}
+		}
+		finally {
+			db.runSQL(
+				"delete from Release_ where servletContextName = '" +
+					ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME + "'");
+			db.runSQL(
+				StringBundler.concat(
+					"update Release_ set releaseId = ",
+					ReleaseConstants.DEFAULT_ID, ", servletContextName = '",
+					ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME,
+					"' where servletContextName = '",
+					ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME, "-backup'"));
+		}
 	}
 
 	@Test
@@ -123,12 +168,12 @@ public class PortalUpgradeProcessTest {
 			_innerPortalUpgradeProcess, "getPendingSchemaVersions",
 			new Class<?>[] {Version.class}, _ORIGINAL_SCHEMA_VERSION);
 
-		Iterator<Version> itr = pendingSchemaVersions.iterator();
+		Iterator<Version> iterator = pendingSchemaVersions.iterator();
 
-		Version latestSchemaVersion = itr.next();
+		Version latestSchemaVersion = iterator.next();
 
-		while (itr.hasNext()) {
-			latestSchemaVersion = itr.next();
+		while (iterator.hasNext()) {
+			latestSchemaVersion = iterator.next();
 		}
 
 		Assert.assertEquals(
@@ -148,6 +193,37 @@ public class PortalUpgradeProcessTest {
 
 		Assert.assertEquals(
 			latestSchemaVersion.getMajor(), requiredSchemaVersion.getMajor());
+	}
+
+	@Test
+	public void testGetRequiredSchemaVersionWithMultipleSteps()
+		throws Exception {
+
+		UpgradeVersionTreeMap newUpgradeProcesses = new UpgradeVersionTreeMap();
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PortalUpgradeProcess.class, "_upgradeVersionTreeMap",
+					newUpgradeProcesses)) {
+
+			newUpgradeProcesses.put(
+				new Version(2, 3, 2), new DummyUpgradeProcess());
+			newUpgradeProcesses.put(
+				new Version(2, 4, 0), new DummyUpgradeProcess(),
+				new DummyUpgradeProcess(), new DummyUpgradeProcess());
+			newUpgradeProcesses.put(
+				new Version(2, 4, 1), new DummyUpgradeProcess());
+
+			Version requiredSchemaVersion =
+				PortalUpgradeProcess.getRequiredSchemaVersion();
+
+			Assert.assertEquals(2, requiredSchemaVersion.getMajor());
+			Assert.assertEquals(4, requiredSchemaVersion.getMinor());
+			Assert.assertEquals(0, requiredSchemaVersion.getMicro());
+
+			Assert.assertEquals(
+				StringPool.BLANK, requiredSchemaVersion.getQualifier());
+		}
 	}
 
 	@Test
@@ -225,6 +301,43 @@ public class PortalUpgradeProcessTest {
 	}
 
 	@Test
+	public void testSupportsRetry() throws Exception {
+		try (Connection connection = DataAccess.getConnection()) {
+			Assert.assertTrue(PortalUpgradeProcess.supportsRetry(connection));
+		}
+
+		_testSupportsRetry(6210);
+		_testSupportsRetry(7010);
+	}
+
+	@Test
+	public void testUpdateVersionDisplayName() throws Exception {
+		DB db = DBManagerUtil.getDB();
+
+		db.runSQL(
+			StringBundler.concat(
+				"update Release_ set versionDisplayName = ",
+				"'wrongVersionDisplayName' where servletContextName = '",
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME, "'"));
+
+		try (Connection connection = DataAccess.getConnection()) {
+			_updateVersionDisplayName();
+
+			Assert.assertEquals(
+				ReleaseInfo.getVersionDisplayName(),
+				PortalUpgradeProcess.getCurrentVersionDisplayName(connection));
+		}
+		finally {
+			db.runSQL(
+				StringBundler.concat(
+					"update Release_ set versionDisplayName = '",
+					ReleaseInfo.getVersionDisplayName(),
+					"' where servletContextName = '",
+					ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME, "'"));
+		}
+	}
+
+	@Test
 	public void testUpgradeWhenCoreIsInLatestSchemaVersion() throws Exception {
 		_updateSchemaVersion(PortalUpgradeProcess.getLatestSchemaVersion());
 
@@ -233,9 +346,9 @@ public class PortalUpgradeProcessTest {
 		try {
 			portalServiceUpgrade.upgrade();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SQLException(
-				"No upgrade processes should have been executed", e);
+				"No upgrade processes should have been executed", exception);
 		}
 
 		try (Connection connection = DataAccess.getConnection()) {
@@ -255,12 +368,12 @@ public class PortalUpgradeProcessTest {
 		try {
 			portalServiceUpgrade.upgrade();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SQLException(
 				"The execution of the upgrade process failed after being " +
 					"reexecuted. Upgrade processes must be harmless if they " +
 						"were executed previously.",
-				e);
+				exception);
 		}
 
 		try (Connection connection = DataAccess.getConnection()) {
@@ -270,9 +383,7 @@ public class PortalUpgradeProcessTest {
 	}
 
 	@Test
-	public void testValidateCoreIsInRequiredSchemaVersion()
-		throws SQLException {
-
+	public void testValidateCoreIsInRequiredSchemaVersion() throws Exception {
 		try (Connection connection = DataAccess.getConnection()) {
 			Assert.assertTrue(
 				"You must first upgrade the portal to the required schema " +
@@ -282,10 +393,35 @@ public class PortalUpgradeProcessTest {
 		}
 	}
 
-	private void _updateSchemaVersion(Version version) {
-		ReflectionTestUtil.invoke(
-			_innerPortalUpgradeProcess, "updateSchemaVersion",
-			new Class<?>[] {Version.class}, version);
+	private void _testSupportsRetry(int buildNumber) throws Exception {
+		Release release = _releaseLocalService.fetchRelease(
+			ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME);
+
+		int currentBuildNumber = release.getBuildNumber();
+
+		release.setBuildNumber(buildNumber);
+
+		release = _releaseLocalService.updateRelease(release);
+
+		try (Connection connection = DataAccess.getConnection()) {
+			Assert.assertFalse(PortalUpgradeProcess.supportsRetry(connection));
+		}
+		finally {
+			release = _releaseLocalService.fetchRelease(
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME);
+
+			release.setBuildNumber(currentBuildNumber);
+
+			_releaseLocalService.updateRelease(release);
+		}
+	}
+
+	private void _updateSchemaVersion(Version version) throws Exception {
+		_innerPortalUpgradeProcess.updateSchemaVersion(version);
+	}
+
+	private void _updateVersionDisplayName() throws Exception {
+		_innerPortalUpgradeProcess.updateVersionDisplayName();
 	}
 
 	private static final Version _ORIGINAL_SCHEMA_VERSION = new Version(
@@ -295,11 +431,25 @@ public class PortalUpgradeProcessTest {
 
 	private InnerPortalUpgradeProcess _innerPortalUpgradeProcess;
 
+	@Inject
+	private ReleaseLocalService _releaseLocalService;
+
 	private static class InnerPortalUpgradeProcess
 		extends PortalUpgradeProcess {
 
 		public void close() throws SQLException {
 			connection.close();
+		}
+
+		public void updateSchemaVersion(Version newSchemaVersion)
+			throws SQLException {
+
+			PortalUpgradeProcess.updateSchemaVersion(
+				connection, newSchemaVersion);
+		}
+
+		public void updateVersionDisplayName() throws SQLException {
+			PortalUpgradeProcess.updateVersionDisplayName(connection);
 		}
 
 		private InnerPortalUpgradeProcess() throws SQLException {

@@ -1,27 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.experiment.web.internal.util;
 
+import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
@@ -30,8 +22,6 @@ import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.model.SegmentsExperimentRel;
 
 import java.util.Locale;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 /**
  * @author David Arques
@@ -41,76 +31,41 @@ public class SegmentsExperimentUtil {
 	public static final String ANALYTICS_CLOUD_TRIAL_URL =
 		"https://www.liferay.com/products/analytics-cloud/get-started";
 
-	public static boolean isAnalyticsEnabled(long companyId) {
-		if (Validator.isNull(
-				PrefsPropsUtil.getString(
-					companyId, "liferayAnalyticsDataSourceId")) ||
-			Validator.isNull(
-				PrefsPropsUtil.getString(
-					companyId,
-					"liferayAnalyticsFaroBackendSecuritySignature")) ||
-			Validator.isNull(
-				PrefsPropsUtil.getString(
-					companyId, "liferayAnalyticsFaroBackendURL"))) {
-
-			return false;
-		}
-
-		return true;
-	}
-
-	public static boolean isAnalyticsEnabled(long companyId, long groupId) {
-		if (!isAnalyticsEnabled(companyId)) {
-			return false;
-		}
-
-		if (PrefsPropsUtil.getBoolean(
-				companyId, "liferayAnalyticsEnableAllGroupIds")) {
-
-			return true;
-		}
-
-		String[] liferayAnalyticsGroupIds = PrefsPropsUtil.getStringArray(
-			companyId, "liferayAnalyticsGroupIds", StringPool.COMMA);
-
-		if (ArrayUtil.contains(
-				liferayAnalyticsGroupIds, String.valueOf(groupId))) {
-
-			return true;
-		}
-
-		return false;
-	}
-
 	public static JSONObject toGoalJSONObject(
-		Locale locale, UnicodeProperties typeSettingsProperties) {
+		Locale locale, UnicodeProperties typeSettingsUnicodeProperties) {
 
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, SegmentsExperimentUtil.class);
-
-		String goal = typeSettingsProperties.getProperty("goal");
+		String goal = typeSettingsUnicodeProperties.getProperty("goal");
 
 		return JSONUtil.put(
-			"label", LanguageUtil.get(resourceBundle, goal)
+			"label",
+			LanguageUtil.get(
+				ResourceBundleUtil.getBundle(
+					"content.Language", locale, SegmentsExperimentUtil.class),
+				goal)
 		).put(
-			"target", typeSettingsProperties.getProperty("goalTarget")
+			"target", typeSettingsUnicodeProperties.getProperty("goalTarget")
 		).put(
 			"value", goal
 		);
 	}
 
 	public static JSONObject toSegmentsExperimentJSONObject(
+			AnalyticsConfiguration analyticsConfiguration, Group group,
 			Locale locale, SegmentsExperiment segmentsExperiment)
 		throws PortalException {
 
 		if (segmentsExperiment == null) {
-			return JSONFactoryUtil.createJSONObject();
+			return null;
 		}
 
 		return JSONUtil.put(
 			"confidenceLevel", segmentsExperiment.getConfidenceLevel()
 		).put(
 			"description", segmentsExperiment.getDescription()
+		).put(
+			"detailsURL",
+			_getViewSegmentsExperimentDetailsURL(
+				analyticsConfiguration, group, segmentsExperiment)
 		).put(
 			"editable", _isEditable(segmentsExperiment)
 		).put(
@@ -129,6 +84,8 @@ public class SegmentsExperimentUtil {
 			String.valueOf(segmentsExperiment.getSegmentsExperimentId())
 		).put(
 			"status", toStatusJSONObject(locale, segmentsExperiment.getStatus())
+		).put(
+			"type", toTypeJSONObject(locale, segmentsExperiment.getType())
 		);
 	}
 
@@ -159,24 +116,74 @@ public class SegmentsExperimentUtil {
 	}
 
 	public static JSONObject toStatusJSONObject(Locale locale, int status) {
-		Optional<SegmentsExperimentConstants.Status> statusObjectOptional =
+		SegmentsExperimentConstants.Status segmentsExperimentConstantsStatus =
 			SegmentsExperimentConstants.Status.parse(status);
 
-		if (!statusObjectOptional.isPresent()) {
+		if (segmentsExperimentConstantsStatus == null) {
 			return null;
 		}
 
-		SegmentsExperimentConstants.Status statusObject =
-			statusObjectOptional.get();
+		return JSONUtil.put(
+			"label",
+			LanguageUtil.get(
+				ResourceBundleUtil.getBundle(
+					"content.Language", locale, SegmentsExperimentUtil.class),
+				segmentsExperimentConstantsStatus.getLabel())
+		).put(
+			"value", segmentsExperimentConstantsStatus.getValue()
+		);
+	}
 
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, SegmentsExperimentUtil.class);
+	public static JSONObject toTypeJSONObject(Locale locale, String type) {
+		SegmentsExperimentConstants.Type segmentsExperimentConstantsType =
+			SegmentsExperimentConstants.Type.parse(type);
+
+		if (segmentsExperimentConstantsType == null) {
+			return null;
+		}
 
 		return JSONUtil.put(
-			"label", LanguageUtil.get(resourceBundle, statusObject.getLabel())
+			"label",
+			LanguageUtil.get(
+				ResourceBundleUtil.getBundle(
+					"content.Language", locale, SegmentsExperimentUtil.class),
+				segmentsExperimentConstantsType.getLabel())
 		).put(
-			"value", statusObject.getValue()
+			"value", segmentsExperimentConstantsType.name()
 		);
+	}
+
+	private static String _getViewSegmentsExperimentDetailsURL(
+		AnalyticsConfiguration analyticsConfiguration, Group group,
+		SegmentsExperiment segmentsExperiment) {
+
+		if (segmentsExperiment == null) {
+			return StringPool.BLANK;
+		}
+
+		String liferayAnalyticsURL =
+			analyticsConfiguration.liferayAnalyticsURL();
+
+		if (Validator.isNull(liferayAnalyticsURL)) {
+			return StringPool.BLANK;
+		}
+
+		StringBundler sb = new StringBundler(5);
+
+		sb.append(liferayAnalyticsURL);
+
+		String analyticsChannelId = GetterUtil.getString(
+			group.getTypeSettingsProperty("analyticsChannelId"));
+
+		if (Validator.isNotNull(analyticsChannelId)) {
+			sb.append(StringPool.SLASH);
+			sb.append(analyticsChannelId);
+		}
+
+		sb.append("/tests/overview/");
+		sb.append(segmentsExperiment.getSegmentsExperimentKey());
+
+		return sb.toString();
 	}
 
 	private static boolean _isEditable(SegmentsExperiment segmentsExperiment) {

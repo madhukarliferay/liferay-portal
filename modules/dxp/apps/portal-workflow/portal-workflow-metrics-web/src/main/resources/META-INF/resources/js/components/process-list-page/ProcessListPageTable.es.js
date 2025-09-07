@@ -1,31 +1,26 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayTable from '@clayui/table';
 import React from 'react';
 
 import ListHeadItem from '../../shared/components/list/ListHeadItem.es';
-import {ChildLink} from '../../shared/components/router/routerWrapper.es';
+import ChildLink from '../../shared/components/router/ChildLink.es';
 
-const Item = ({
-	id,
+function Item({
 	instanceCount,
 	onTimeInstanceCount,
 	overdueInstanceCount,
-	title
-}) => {
+	process: {id, title},
+}) {
 	return (
 		<ClayTable.Row>
-			<ClayTable.Cell className="table-title" data-testid="processName">
-				<ChildLink to={`/metrics/${id}`}>{title}</ChildLink>
+			<ClayTable.Cell className="table-title">
+				<ChildLink to={`/metrics/${id}`}>
+					{title || Liferay.Language.get('untitled-workflow')}
+				</ChildLink>
 			</ClayTable.Cell>
 
 			<ClayTable.Cell className="text-right">
@@ -41,9 +36,9 @@ const Item = ({
 			</ClayTable.Cell>
 		</ClayTable.Row>
 	);
-};
+}
 
-const Table = ({items}) => {
+function Table({items}) {
 	const onTimeTitle = Liferay.Language.get('on-time');
 	const overdueTitle = Liferay.Language.get('overdue');
 	const processNameTitle = Liferay.Language.get('process-name');
@@ -87,8 +82,8 @@ const Table = ({items}) => {
 			</ClayTable.Body>
 		</ClayTable>
 	);
-};
+}
 
 Table.Item = Item;
 
-export {Table};
+export default Table;

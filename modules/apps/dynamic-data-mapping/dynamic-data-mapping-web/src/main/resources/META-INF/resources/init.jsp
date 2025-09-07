@@ -1,20 +1,11 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
@@ -28,6 +19,8 @@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
 <%@ page import="com.liferay.dynamic.data.mapping.constants.DDMPortletKeys" %><%@
+page import="com.liferay.dynamic.data.mapping.constants.DDMStructureConstants" %><%@
+page import="com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants" %><%@
 page import="com.liferay.dynamic.data.mapping.constants.DDMWebKeys" %><%@
 page import="com.liferay.dynamic.data.mapping.exception.NoSuchStructureException" %><%@
 page import="com.liferay.dynamic.data.mapping.exception.RequiredStructureException" %><%@
@@ -42,11 +35,10 @@ page import="com.liferay.dynamic.data.mapping.exception.TemplateSmallImageConten
 page import="com.liferay.dynamic.data.mapping.exception.TemplateSmallImageNameException" %><%@
 page import="com.liferay.dynamic.data.mapping.exception.TemplateSmallImageSizeException" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMForm" %><%@
+page import="com.liferay.dynamic.data.mapping.model.DDMFormField" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMStructure" %><%@
-page import="com.liferay.dynamic.data.mapping.model.DDMStructureConstants" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMStructureVersion" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMTemplate" %><%@
-page import="com.liferay.dynamic.data.mapping.model.DDMTemplateConstants" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMTemplateVersion" %><%@
 page import="com.liferay.dynamic.data.mapping.service.DDMStorageLinkLocalServiceUtil" %><%@
 page import="com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil" %><%@
@@ -92,6 +84,11 @@ page import="com.liferay.portal.kernel.model.Group" %><%@
 page import="com.liferay.portal.kernel.model.Portlet" %><%@
 page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %><%@
 page import="com.liferay.portal.kernel.portlet.PortletURLFactoryUtil" %><%@
+page import="com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder" %><%@
+page import="com.liferay.portal.kernel.resource.bundle.AggregateResourceBundleLoader" %><%@
+page import="com.liferay.portal.kernel.resource.bundle.ClassResourceBundleLoader" %><%@
+page import="com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader" %><%@
+page import="com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil" %><%@
 page import="com.liferay.portal.kernel.security.permission.ActionKeys" %><%@
 page import="com.liferay.portal.kernel.security.permission.ResourceActionsUtil" %><%@
 page import="com.liferay.portal.kernel.service.GroupLocalServiceUtil" %><%@
@@ -101,22 +98,22 @@ page import="com.liferay.portal.kernel.template.TemplateHandler" %><%@
 page import="com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil" %><%@
 page import="com.liferay.portal.kernel.template.TemplateVariableDefinition" %><%@
 page import="com.liferay.portal.kernel.template.TemplateVariableGroup" %><%@
-page import="com.liferay.portal.kernel.util.AggregateResourceBundleLoader" %><%@
+page import="com.liferay.portal.kernel.util.HashMapBuilder" %><%@
 page import="com.liferay.portal.kernel.util.HtmlUtil" %><%@
 page import="com.liferay.portal.kernel.util.LocaleUtil" %><%@
 page import="com.liferay.portal.kernel.util.ParamUtil" %><%@
 page import="com.liferay.portal.kernel.util.PortalUtil" %><%@
-page import="com.liferay.portal.kernel.util.ResourceBundleLoader" %><%@
-page import="com.liferay.portal.kernel.util.ResourceBundleLoaderUtil" %><%@
-page import="com.liferay.portal.kernel.util.ResourceBundleUtil" %><%@
 page import="com.liferay.portal.kernel.util.StringUtil" %><%@
-page import="com.liferay.portal.kernel.util.TextFormatter" %><%@
 page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowConstants" %><%@
 page import="com.liferay.portal.language.LanguageResources" %><%@
-page import="com.liferay.portal.template.TemplateContextHelper" %><%@
+page import="com.liferay.portal.template.engine.TemplateContextHelper" %><%@
 page import="com.liferay.taglib.search.ResultRow" %>
+
+<%@ page import="jakarta.portlet.PortletRequest" %><%@
+page import="jakarta.portlet.PortletURL" %><%@
+page import="jakarta.portlet.WindowState" %>
 
 <%@ page import="java.util.HashMap" %><%@
 page import="java.util.List" %><%@
@@ -126,10 +123,6 @@ page import="java.util.Objects" %><%@
 page import="java.util.ResourceBundle" %><%@
 page import="java.util.Set" %><%@
 page import="java.util.StringTokenizer" %>
-
-<%@ page import="javax.portlet.PortletRequest" %><%@
-page import="javax.portlet.PortletURL" %><%@
-page import="javax.portlet.WindowState" %>
 
 <%@ page import="org.osgi.framework.Bundle" %><%@
 page import="org.osgi.framework.FrameworkUtil" %>
@@ -142,8 +135,6 @@ page import="org.osgi.framework.FrameworkUtil" %>
 
 <%
 String refererWebDAVToken = ParamUtil.getString(request, "refererWebDAVToken", portletConfig.getInitParameter("refererWebDAVToken"));
-String scopeTitle = ParamUtil.getString(request, "scopeTitle");
-boolean showAncestorScopes = ParamUtil.getBoolean(request, "showAncestorScopes");
 boolean showManageTemplates = ParamUtil.getBoolean(request, "showManageTemplates", true);
 
 DDMDisplay ddmDisplay = null;
@@ -154,6 +145,7 @@ String scopeAvailableFields = StringPool.BLANK;
 long scopeClassNameId = 0;
 String scopeStorageType = StringPool.BLANK;
 String scopeTemplateType = StringPool.BLANK;
+String scopeTitle = StringPool.BLANK;
 
 DDMDisplayContext ddmDisplayContext = (DDMDisplayContext)request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT);
 
@@ -166,12 +158,13 @@ if (ddmDisplayContext != null) {
 	scopeClassNameId = PortalUtil.getClassNameId(ddmDisplay.getStructureType());
 	scopeStorageType = ddmDisplay.getStorageType();
 	scopeTemplateType = ddmDisplay.getTemplateType();
+	scopeTitle = ddmDisplayContext.getScopedStructureLabel();
 }
 
 String storageTypeValue = StringPool.BLANK;
 
-if (scopeStorageType.equals("json")) {
-	storageTypeValue = StorageType.JSON.getValue();
+if (scopeStorageType.equals("default")) {
+	storageTypeValue = StorageType.DEFAULT.getValue();
 }
 
 String templateTypeValue = StringPool.BLANK;

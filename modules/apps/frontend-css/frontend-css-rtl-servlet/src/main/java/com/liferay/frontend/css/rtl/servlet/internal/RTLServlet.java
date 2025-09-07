@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.css.rtl.servlet.internal;
@@ -23,7 +14,12 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -36,11 +32,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.framework.Bundle;
 import org.osgi.service.http.context.ServletContextHelper;
@@ -63,21 +54,21 @@ public class RTLServlet extends HttpServlet {
 			HttpServletResponse httpServletResponse)
 		throws IOException, ServletException {
 
-		URL url = getResourceURL(httpServletRequest);
+		URL url = _getResourceURL(httpServletRequest);
 
 		if (url == null) {
 			httpServletResponse.sendError(
 				HttpServletResponse.SC_NOT_FOUND, "Not Found");
 		}
 		else {
-			transfer(url, httpServletResponse);
+			_transfer(url, httpServletResponse);
 		}
 	}
 
 	@Override
 	protected long getLastModified(HttpServletRequest httpServletRequest) {
 		try {
-			URL url = getResourceURL(httpServletRequest);
+			URL url = _getResourceURL(httpServletRequest);
 
 			if (url != null) {
 				URLConnection urlConnection = url.openConnection();
@@ -87,12 +78,16 @@ public class RTLServlet extends HttpServlet {
 
 			return super.getLastModified(httpServletRequest);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ioException);
+			}
+
 			return super.getLastModified(httpServletRequest);
 		}
 	}
 
-	protected URL getResourceURL(HttpServletRequest httpServletRequest)
+	private URL _getResourceURL(HttpServletRequest httpServletRequest)
 		throws IOException {
 
 		String path = URLDecoder.decode(
@@ -141,12 +136,10 @@ public class RTLServlet extends HttpServlet {
 
 		CSSRTLConverter cssRTLConverter = new CSSRTLConverter(false);
 
-		String rtl = cssRTLConverter.process(StringUtil.read(url.openStream()));
+		String rtl = cssRTLConverter.process(URLUtil.toString(url));
 
 		InputStream inputStream = new ByteArrayInputStream(
 			rtl.getBytes(StringPool.UTF8));
-
-		OutputStream outputStream = null;
 
 		try {
 			File parentFile = dataFile.getParentFile();
@@ -155,18 +148,13 @@ public class RTLServlet extends HttpServlet {
 
 			dataFile.createNewFile();
 
-			outputStream = new FileOutputStream(dataFile);
-
-			StreamUtil.transfer(inputStream, outputStream, false);
-		}
-		catch (IOException ioe) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to cache RTL CSS", ioe);
+			try (OutputStream outputStream = new FileOutputStream(dataFile)) {
+				StreamUtil.transfer(inputStream, outputStream, false);
 			}
 		}
-		finally {
-			if (outputStream != null) {
-				outputStream.close();
+		catch (IOException ioException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to cache RTL CSS", ioException);
 			}
 		}
 
@@ -177,14 +165,14 @@ public class RTLServlet extends HttpServlet {
 		return uri.toURL();
 	}
 
-	protected void transfer(URL url, HttpServletResponse httpServletResponse)
+	private void _transfer(URL url, HttpServletResponse httpServletResponse)
 		throws IOException {
 
 		URLConnection urlConnection = url.openConnection();
 
 		httpServletResponse.setContentLength(urlConnection.getContentLength());
 
-		httpServletResponse.setContentType(ContentTypes.TEXT_CSS);
+		httpServletResponse.setContentType(ContentTypes.TEXT_CSS_UTF8);
 		httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 		StreamUtil.transfer(

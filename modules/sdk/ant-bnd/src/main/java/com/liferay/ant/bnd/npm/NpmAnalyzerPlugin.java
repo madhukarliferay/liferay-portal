@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.ant.bnd.npm;
@@ -88,7 +79,6 @@ public class NpmAnalyzerPlugin implements AnalyzerPlugin {
 		major = matcher.group("major");
 		minor = matcher.group("minor");
 		micro = matcher.group("micro");
-		qualifier = matcher.group("qualifier");
 
 		if (minor == null) {
 			major = Integer.parseInt(major) + 1 + "";
@@ -106,6 +96,9 @@ public class NpmAnalyzerPlugin implements AnalyzerPlugin {
 		}
 		else {
 			sb.append(")(version<=");
+
+			qualifier = matcher.group("qualifier");
+
 			sb.append(toVersion(major, minor, micro, qualifier));
 		}
 
@@ -367,7 +360,7 @@ public class NpmAnalyzerPlugin implements AnalyzerPlugin {
 			try {
 				version = new Version(npmModule.version);
 			}
-			catch (IllegalArgumentException iae) {
+			catch (IllegalArgumentException illegalArgumentException) {
 				String sanitizedQualifier = npmModule.version.replaceAll(
 					"[^-_\\da-zA-Z]", "");
 

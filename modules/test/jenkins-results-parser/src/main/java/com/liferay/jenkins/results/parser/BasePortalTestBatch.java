@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -23,39 +14,41 @@ import java.util.Map;
 /**
  * @author Michael Hashimoto
  */
-public abstract class BasePortalTestBatch
-	<T extends PortalBatchBuildData, S extends PortalWorkspace>
-		extends BaseTestBatch<T, S> {
+public abstract class BasePortalTestBatch<T extends PortalBatchBuildData>
+	extends BaseTestBatch<T> {
 
-	protected BasePortalTestBatch(T batchBuildData, S workspace) {
+	protected BasePortalTestBatch(T batchBuildData, Workspace workspace) {
 		super(batchBuildData, workspace);
 	}
 
 	@Override
 	protected void executeBatch() throws AntException {
-		BatchBuildData batchBuildData = getBatchBuildData();
+		PortalBatchBuildData portalBatchBuildData = getBatchBuildData();
 
 		Map<String, String> buildParameters = new HashMap<>();
 
 		buildParameters.put(
 			"axis.variable",
-			JenkinsResultsParserUtil.join(",", batchBuildData.getTestList()));
-		buildParameters.put("test.batch.name", batchBuildData.getBatchName());
+			JenkinsResultsParserUtil.join(
+				",", portalBatchBuildData.getTestList()));
 
-		Map<String, String> environmentVariables = new HashMap<>();
-
-		if (JenkinsResultsParserUtil.isCINode()) {
-			String batchName = batchBuildData.getBatchName();
-
-			environmentVariables.put("ANT_OPTS", getAntOpts(batchName));
-			environmentVariables.put("JAVA_HOME", getJavaHome(batchName));
-			environmentVariables.put("PATH", getPath(batchName));
-		}
+		buildParameters.put(
+			"test.batch.name", portalBatchBuildData.getBatchName());
 
 		AntUtil.callTarget(
 			getPrimaryPortalWorkspaceDirectory(), "build-test-batch.xml",
-			batchBuildData.getBatchName(), buildParameters,
-			environmentVariables);
+			portalBatchBuildData.getBatchName(), buildParameters,
+			getEnvironmentVariables(), getAntLibDir());
+	}
+
+	protected File getAntLibDir() {
+		File antLibDir = new File(System.getenv("WORKSPACE"), "lib");
+
+		if (antLibDir.exists()) {
+			return antLibDir;
+		}
+
+		return null;
 	}
 
 	@Override
@@ -63,11 +56,37 @@ public abstract class BasePortalTestBatch
 		return super.getBatchBuildData();
 	}
 
+	protected Map<String, String> getEnvironmentVariables() {
+		Map<String, String> environmentVariables = new HashMap<>();
+
+		PortalBatchBuildData portalBatchBuildData = getBatchBuildData();
+
+		environmentVariables.put(
+			"TEST_PORTAL_BRANCH_NAME",
+			portalBatchBuildData.getPortalUpstreamBranchName());
+
+		if (JenkinsResultsParserUtil.isCINode()) {
+			String batchName = portalBatchBuildData.getBatchName();
+
+			environmentVariables.put("ANT_OPTS", getAntOpts(batchName));
+			environmentVariables.put("JAVA_HOME", getJavaHome(batchName));
+			environmentVariables.put("JAVA_OPTS", getJavaOpts(batchName));
+			environmentVariables.put("PATH", getPath(batchName));
+		}
+
+		environmentVariables.putAll(
+			portalBatchBuildData.getTopLevelBuildParameters());
+
+		environmentVariables.putAll(portalBatchBuildData.getBuildParameters());
+
+		return environmentVariables;
+	}
+
 	protected File getPrimaryPortalWorkspaceDirectory() {
-		PortalWorkspace portalWorkspace = getWorkspace();
+		Workspace workspace = getWorkspace();
 
 		WorkspaceGitRepository workspaceGitRepository =
-			portalWorkspace.getPrimaryPortalWorkspaceGitRepository();
+			workspace.getPrimaryWorkspaceGitRepository();
 
 		return workspaceGitRepository.getDirectory();
 	}
@@ -77,10 +96,10 @@ public abstract class BasePortalTestBatch
 		try {
 			AntUtil.callTarget(
 				getPrimaryPortalWorkspaceDirectory(), "build-test.xml",
-				"merge-test-results");
+				"merge-test-results", null, null, getAntLibDir());
 		}
-		catch (AntException ae) {
-			throw new RuntimeException(ae);
+		catch (AntException antException) {
+			throw new RuntimeException(antException);
 		}
 
 		File sourceFile = new File(
@@ -100,12 +119,12 @@ public abstract class BasePortalTestBatch
 		try {
 			JenkinsResultsParserUtil.copy(sourceFile, targetFile);
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			throw new RuntimeException(
 				JenkinsResultsParserUtil.combine(
 					"Unable to copy test results file from ",
 					sourceFile.getPath(), " to ", targetFile.getPath()),
-				ioe);
+				ioException);
 		}
 	}
 

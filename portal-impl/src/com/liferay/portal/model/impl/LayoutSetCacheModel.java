@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
 
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.LayoutSet;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,16 +32,16 @@ public class LayoutSetCacheModel
 	implements CacheModel<LayoutSet>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof LayoutSetCacheModel)) {
+		if (!(object instanceof LayoutSetCacheModel)) {
 			return false;
 		}
 
-		LayoutSetCacheModel layoutSetCacheModel = (LayoutSetCacheModel)obj;
+		LayoutSetCacheModel layoutSetCacheModel = (LayoutSetCacheModel)object;
 
 		if ((layoutSetId == layoutSetCacheModel.layoutSetId) &&
 			(mvccVersion == layoutSetCacheModel.mvccVersion)) {
@@ -76,10 +71,12 @@ public class LayoutSetCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(29);
+		StringBundler sb = new StringBundler(33);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", layoutSetId=");
 		sb.append(layoutSetId);
 		sb.append(", groupId=");
@@ -98,6 +95,8 @@ public class LayoutSetCacheModel
 		sb.append(themeId);
 		sb.append(", colorSchemeId=");
 		sb.append(colorSchemeId);
+		sb.append(", faviconFileEntryId=");
+		sb.append(faviconFileEntryId);
 		sb.append(", css=");
 		sb.append(css);
 		sb.append(", settings=");
@@ -116,6 +115,7 @@ public class LayoutSetCacheModel
 		LayoutSetImpl layoutSetImpl = new LayoutSetImpl();
 
 		layoutSetImpl.setMvccVersion(mvccVersion);
+		layoutSetImpl.setCtCollectionId(ctCollectionId);
 		layoutSetImpl.setLayoutSetId(layoutSetId);
 		layoutSetImpl.setGroupId(groupId);
 		layoutSetImpl.setCompanyId(companyId);
@@ -151,6 +151,8 @@ public class LayoutSetCacheModel
 			layoutSetImpl.setColorSchemeId(colorSchemeId);
 		}
 
+		layoutSetImpl.setFaviconFileEntryId(faviconFileEntryId);
+
 		if (css == null) {
 			layoutSetImpl.setCss("");
 		}
@@ -177,10 +179,16 @@ public class LayoutSetCacheModel
 
 		layoutSetImpl.resetOriginalValues();
 
-		layoutSetImpl.setCompanyFallbackVirtualHostname(
-			_companyFallbackVirtualHostname);
+		try {
+			_companyFallbackVirtualHostnameMethodHandle.invokeExact(
+				layoutSetImpl, companyFallbackVirtualHostname);
 
-		layoutSetImpl.setVirtualHostnames(_virtualHostnames);
+			_virtualHostnamesMethodHandle.invokeExact(
+				layoutSetImpl, virtualHostnames);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return layoutSetImpl;
 	}
@@ -190,6 +198,8 @@ public class LayoutSetCacheModel
 		throws ClassNotFoundException, IOException {
 
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		layoutSetId = objectInput.readLong();
 
@@ -204,19 +214,24 @@ public class LayoutSetCacheModel
 		logoId = objectInput.readLong();
 		themeId = objectInput.readUTF();
 		colorSchemeId = objectInput.readUTF();
-		css = objectInput.readUTF();
-		settings = objectInput.readUTF();
+
+		faviconFileEntryId = objectInput.readLong();
+		css = (String)objectInput.readObject();
+		settings = (String)objectInput.readObject();
 		layoutSetPrototypeUuid = objectInput.readUTF();
 
 		layoutSetPrototypeLinkEnabled = objectInput.readBoolean();
 
-		_companyFallbackVirtualHostname = (String)objectInput.readObject();
-		_virtualHostnames = (java.util.TreeMap)objectInput.readObject();
+		companyFallbackVirtualHostname = (String)objectInput.readObject();
+
+		virtualHostnames = (java.util.NavigableMap)objectInput.readObject();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(layoutSetId);
 
@@ -244,18 +259,20 @@ public class LayoutSetCacheModel
 			objectOutput.writeUTF(colorSchemeId);
 		}
 
+		objectOutput.writeLong(faviconFileEntryId);
+
 		if (css == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(css);
+			objectOutput.writeObject(css);
 		}
 
 		if (settings == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(settings);
+			objectOutput.writeObject(settings);
 		}
 
 		if (layoutSetPrototypeUuid == null) {
@@ -267,11 +284,13 @@ public class LayoutSetCacheModel
 
 		objectOutput.writeBoolean(layoutSetPrototypeLinkEnabled);
 
-		objectOutput.writeObject(_companyFallbackVirtualHostname);
-		objectOutput.writeObject(_virtualHostnames);
+		objectOutput.writeObject(companyFallbackVirtualHostname);
+
+		objectOutput.writeObject(virtualHostnames);
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long layoutSetId;
 	public long groupId;
 	public long companyId;
@@ -281,11 +300,33 @@ public class LayoutSetCacheModel
 	public long logoId;
 	public String themeId;
 	public String colorSchemeId;
+	public long faviconFileEntryId;
 	public String css;
 	public String settings;
 	public String layoutSetPrototypeUuid;
 	public boolean layoutSetPrototypeLinkEnabled;
-	public String _companyFallbackVirtualHostname;
-	public java.util.TreeMap _virtualHostnames;
+	public volatile String companyFallbackVirtualHostname;
+	public volatile java.util.NavigableMap virtualHostnames;
+
+	private static final MethodHandle
+		_companyFallbackVirtualHostnameMethodHandle;
+	private static final MethodHandle _virtualHostnamesMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_companyFallbackVirtualHostnameMethodHandle = lookup.findSetter(
+				LayoutSetImpl.class, "_companyFallbackVirtualHostname",
+				String.class);
+
+			_virtualHostnamesMethodHandle = lookup.findSetter(
+				LayoutSetImpl.class, "_virtualHostnames",
+				java.util.NavigableMap.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

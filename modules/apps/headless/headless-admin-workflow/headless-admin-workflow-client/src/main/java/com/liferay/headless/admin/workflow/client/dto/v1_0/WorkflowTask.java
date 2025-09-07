@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.workflow.client.dto.v1_0;
@@ -17,17 +8,46 @@ package com.liferay.headless.admin.workflow.client.dto.v1_0;
 import com.liferay.headless.admin.workflow.client.function.UnsafeSupplier;
 import com.liferay.headless.admin.workflow.client.serdes.v1_0.WorkflowTaskSerDes;
 
-import java.util.Date;
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class WorkflowTask {
+public class WorkflowTask implements Cloneable, Serializable {
+
+	public static WorkflowTask toDTO(String json) {
+		return WorkflowTaskSerDes.toDTO(json);
+	}
+
+	public Map<String, Map<String, String>> getActions() {
+		return actions;
+	}
+
+	public void setActions(Map<String, Map<String, String>> actions) {
+		this.actions = actions;
+	}
+
+	public void setActions(
+		UnsafeSupplier<Map<String, Map<String, String>>, Exception>
+			actionsUnsafeSupplier) {
+
+		try {
+			actions = actionsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, Map<String, String>> actions;
 
 	public Creator getAssigneePerson() {
 		return assigneePerson;
@@ -155,69 +175,6 @@ public class WorkflowTask {
 
 	protected Date dateDue;
 
-	public Long getDefinitionId() {
-		return definitionId;
-	}
-
-	public void setDefinitionId(Long definitionId) {
-		this.definitionId = definitionId;
-	}
-
-	public void setDefinitionId(
-		UnsafeSupplier<Long, Exception> definitionIdUnsafeSupplier) {
-
-		try {
-			definitionId = definitionIdUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Long definitionId;
-
-	public String getDefinitionName() {
-		return definitionName;
-	}
-
-	public void setDefinitionName(String definitionName) {
-		this.definitionName = definitionName;
-	}
-
-	public void setDefinitionName(
-		UnsafeSupplier<String, Exception> definitionNameUnsafeSupplier) {
-
-		try {
-			definitionName = definitionNameUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String definitionName;
-
-	public String getDefinitionVersion() {
-		return definitionVersion;
-	}
-
-	public void setDefinitionVersion(String definitionVersion) {
-		this.definitionVersion = definitionVersion;
-	}
-
-	public void setDefinitionVersion(
-		UnsafeSupplier<String, Exception> definitionVersionUnsafeSupplier) {
-
-		try {
-			definitionVersion = definitionVersionUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String definitionVersion;
-
 	public String getDescription() {
 		return description;
 	}
@@ -258,26 +215,26 @@ public class WorkflowTask {
 
 	protected Long id;
 
-	public Long getInstanceId() {
-		return instanceId;
+	public String getLabel() {
+		return label;
 	}
 
-	public void setInstanceId(Long instanceId) {
-		this.instanceId = instanceId;
+	public void setLabel(String label) {
+		this.label = label;
 	}
 
-	public void setInstanceId(
-		UnsafeSupplier<Long, Exception> instanceIdUnsafeSupplier) {
+	public void setLabel(
+		UnsafeSupplier<String, Exception> labelUnsafeSupplier) {
 
 		try {
-			instanceId = instanceIdUnsafeSupplier.get();
+			label = labelUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected Long instanceId;
+	protected String label;
 
 	public String getName() {
 		return name;
@@ -319,6 +276,119 @@ public class WorkflowTask {
 	}
 
 	protected ObjectReviewed objectReviewed;
+
+	public Long getWorkflowDefinitionId() {
+		return workflowDefinitionId;
+	}
+
+	public void setWorkflowDefinitionId(Long workflowDefinitionId) {
+		this.workflowDefinitionId = workflowDefinitionId;
+	}
+
+	public void setWorkflowDefinitionId(
+		UnsafeSupplier<Long, Exception> workflowDefinitionIdUnsafeSupplier) {
+
+		try {
+			workflowDefinitionId = workflowDefinitionIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long workflowDefinitionId;
+
+	public String getWorkflowDefinitionName() {
+		return workflowDefinitionName;
+	}
+
+	public void setWorkflowDefinitionName(String workflowDefinitionName) {
+		this.workflowDefinitionName = workflowDefinitionName;
+	}
+
+	public void setWorkflowDefinitionName(
+		UnsafeSupplier<String, Exception>
+			workflowDefinitionNameUnsafeSupplier) {
+
+		try {
+			workflowDefinitionName = workflowDefinitionNameUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String workflowDefinitionName;
+
+	public String getWorkflowDefinitionVersion() {
+		return workflowDefinitionVersion;
+	}
+
+	public void setWorkflowDefinitionVersion(String workflowDefinitionVersion) {
+		this.workflowDefinitionVersion = workflowDefinitionVersion;
+	}
+
+	public void setWorkflowDefinitionVersion(
+		UnsafeSupplier<String, Exception>
+			workflowDefinitionVersionUnsafeSupplier) {
+
+		try {
+			workflowDefinitionVersion =
+				workflowDefinitionVersionUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String workflowDefinitionVersion;
+
+	public Long getWorkflowInstanceId() {
+		return workflowInstanceId;
+	}
+
+	public void setWorkflowInstanceId(Long workflowInstanceId) {
+		this.workflowInstanceId = workflowInstanceId;
+	}
+
+	public void setWorkflowInstanceId(
+		UnsafeSupplier<Long, Exception> workflowInstanceIdUnsafeSupplier) {
+
+		try {
+			workflowInstanceId = workflowInstanceIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long workflowInstanceId;
+
+	public WorkflowLog[] getWorkflowLogs() {
+		return workflowLogs;
+	}
+
+	public void setWorkflowLogs(WorkflowLog[] workflowLogs) {
+		this.workflowLogs = workflowLogs;
+	}
+
+	public void setWorkflowLogs(
+		UnsafeSupplier<WorkflowLog[], Exception> workflowLogsUnsafeSupplier) {
+
+		try {
+			workflowLogs = workflowLogsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected WorkflowLog[] workflowLogs;
+
+	@Override
+	public WorkflowTask clone() throws CloneNotSupportedException {
+		return (WorkflowTask)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

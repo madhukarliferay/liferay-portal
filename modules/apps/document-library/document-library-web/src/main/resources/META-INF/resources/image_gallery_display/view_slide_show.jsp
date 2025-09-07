@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,22 +18,26 @@ if (folder != null) {
 	repositoryId = folder.getRepositoryId();
 }
 
-List fileEntries = DLAppServiceUtil.getFileEntries(repositoryId, folderId);
+List<FileEntry> fileEntries = DLAppServiceUtil.getFileEntries(repositoryId, folderId);
 
 int defaultSpeed = 3000;
 %>
 
 <aui:form>
 	<aui:fieldset column="<%= true %>">
-		<aui:col width="<%= 50 %>">
-			<aui:button onClick='<%= renderResponse.getNamespace() + "showPrevious();" %>' value="previous" />
-			<aui:button onClick='<%= renderResponse.getNamespace() + "play();" %>' value="play" />
-			<aui:button onClick='<%= renderResponse.getNamespace() + "pause();" %>' value="pause" />
-			<aui:button onClick='<%= renderResponse.getNamespace() + "showNext();" %>' value="next" />
-		</aui:col>
+		<clay:col
+			md="6"
+		>
+			<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "showPrevious();" %>' value="previous" />
+			<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "play();" %>' value="play" />
+			<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "pause();" %>' value="pause" />
+			<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "showNext();" %>' value="next" />
+		</clay:col>
 
-		<aui:col width="<%= 50 %>">
-			<aui:select inlineLabel="left" name="speed" onChange='<%= renderResponse.getNamespace() + "changeSpeed(this[this.selectedIndex].value * 1000);" %>'>
+		<clay:col
+			md="6"
+		>
+			<aui:select inlineLabel="left" name="speed" onChange='<%= liferayPortletResponse.getNamespace() + "changeSpeed(this[this.selectedIndex].value * 1000);" %>'>
 
 				<%
 				for (int i = 1; i <= 10; i++) {
@@ -55,7 +50,7 @@ int defaultSpeed = 3000;
 				%>
 
 			</aui:select>
-		</aui:col>
+		</clay:col>
 	</aui:fieldset>
 </aui:form>
 
@@ -64,20 +59,14 @@ int defaultSpeed = 3000;
 <table class="lfr-table">
 	<tr>
 		<td>
+			<c:if test="<%= !fileEntries.isEmpty() %>">
 
-			<%
-			if (!fileEntries.isEmpty()) {
-				FileEntry fileEntry = (FileEntry)fileEntries.get(0);
+				<%
+				FileEntry fileEntry = fileEntries.get(0);
+				%>
 
-				String largeSrc = DLURLHelperUtil.getPreviewURL(fileEntry, fileEntry.getFileVersion(), themeDisplay, StringPool.BLANK);
-			%>
-
-				<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="slide-show" />" name="<portlet:namespace />slideShow" src="<%= largeSrc %>" />
-
-			<%
-			}
-			%>
-
+				<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="slide-show" />" name="<portlet:namespace />slideShow" src="<%= DLURLHelperUtil.getPreviewURL(fileEntry, fileEntry.getFileVersion(), themeDisplay, StringPool.BLANK) %>" />
+			</c:if>
 		</td>
 	</tr>
 </table>
@@ -87,12 +76,11 @@ int defaultSpeed = 3000;
 
 	<%
 	for (int i = 0; i < fileEntries.size(); i++) {
-		FileEntry fileEntry = (FileEntry)fileEntries.get(i);
-
-		String largeSrc = DLURLHelperUtil.getPreviewURL(fileEntry, fileEntry.getFileVersion(), themeDisplay, StringPool.BLANK);
+		FileEntry fileEntry = fileEntries.get(i);
 	%>
 
-		<portlet:namespace />imgArray[<%= i %>] = '<%= largeSrc %>';
+		<portlet:namespace />imgArray[<%= i %>] =
+			'<%= DLURLHelperUtil.getPreviewURL(fileEntry, fileEntry.getFileVersion(), themeDisplay, StringPool.BLANK) %>';
 
 	<%
 	}

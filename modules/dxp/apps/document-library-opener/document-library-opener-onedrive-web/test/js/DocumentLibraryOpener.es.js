@@ -1,19 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-'use strict';
+import {openModal} from 'frontend-js-components-web';
 
-import DocumentLibraryOpener from '../../src/main/resources/META-INF/resources/js/DocumentLibraryOpener.es';
+import {DocumentLibraryOpener} from '../../src/main/resources/META-INF/resources/js/index';
 
 const realSetTimeout = setTimeout;
+let mockUnmount;
+
+jest.mock('frontend-js-components-web', () => {
+	mockUnmount = jest.fn();
+
+	return {
+		openModal: jest.fn((options) => {
+			setTimeout(() => {
+				options.onOpen?.();
+			}, 0);
+
+			return {
+				unmount: mockUnmount,
+			};
+		}),
+		openToast: jest.fn(),
+	};
+});
+
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+}));
 
 function replyAndWait({body = {}, ms}) {
 	return () => {
@@ -22,7 +38,7 @@ function replyAndWait({body = {}, ms}) {
 		}, 0);
 
 		return Promise.resolve({
-			body: JSON.stringify(body)
+			body: JSON.stringify(body),
 		});
 	};
 }
@@ -36,12 +52,8 @@ describe('DocumentLibraryOpener', () => {
 	beforeEach(() => {
 		jest.spyOn(window, 'open').mockImplementation(() => {});
 		global.Liferay.Portlet = {refresh: jest.fn()};
-		global.Liferay.Util.openWindow = jest
-			.fn()
-			.mockImplementation((_, cb) => cb());
-		global.Liferay.Util.getWindow = () => ({hide: jest.fn()});
 		global.themeDisplay = {
-			getPathThemeImages: jest.fn().mockImplementation(() => '//images/')
+			getPathThemeImages: jest.fn().mockImplementation(() => '//images/'),
 		};
 
 		jest.useFakeTimers();
@@ -52,12 +64,11 @@ describe('DocumentLibraryOpener', () => {
 
 	afterEach(() => {
 		window.open.mockRestore();
-		delete global.Liferay.Util.openWindow;
-		delete global.Liferay.Util.getWindow;
 		delete global.themeDisplay;
 		delete global.Liferay.Portlet.refresh;
 
 		jest.useRealTimers();
+		jest.clearAllMocks();
 	});
 
 	describe('.edit()', () => {
@@ -66,17 +77,17 @@ describe('DocumentLibraryOpener', () => {
 				fetch.mockResponses(
 					[
 						JSON.stringify({
-							oneDriveBackgroundTaskStatusURL: STATUS_URL
-						})
+							oneDriveBackgroundTaskStatusURL: STATUS_URL,
+						}),
 					],
 					[
 						replyAndWait({
 							body: {
 								complete: true,
-								office365EditURL: OFFICE365_EDIT_URL
+								office365EditURL: OFFICE365_EDIT_URL,
 							},
-							ms: 2000
-						})
+							ms: 2000,
+						}),
 					]
 				);
 
@@ -84,11 +95,8 @@ describe('DocumentLibraryOpener', () => {
 			});
 
 			it('opens the loading modal', () => {
-				expect(global.Liferay.Util.openWindow).toHaveBeenCalledTimes(1);
-				expect(
-					global.Liferay.Util.openWindow.mock.calls[0][0].dialog
-						.bodyContent
-				).toContain(
+				expect(openModal).toHaveBeenCalledTimes(1);
+				expect(openModal.mock.calls[0][0].bodyHTML).toContain(
 					'you-are-being-redirected-to-an-external-editor-to-edit-this-document'
 				);
 			});
@@ -105,6 +113,10 @@ describe('DocumentLibraryOpener', () => {
 				expect(window.open).toHaveBeenCalledTimes(1);
 				expect(window.open.mock.calls[0][0]).toBe(OFFICE365_EDIT_URL);
 			});
+
+			it('and the modal is hidden', () => {
+				expect(mockUnmount).toHaveBeenCalledTimes(1);
+			});
 		});
 
 		describe('when the background task finishes right after the first polling request', () => {
@@ -112,25 +124,25 @@ describe('DocumentLibraryOpener', () => {
 				fetch.mockResponses(
 					[
 						JSON.stringify({
-							oneDriveBackgroundTaskStatusURL: STATUS_URL
-						})
+							oneDriveBackgroundTaskStatusURL: STATUS_URL,
+						}),
 					],
 					[
 						replyAndWait({
 							body: {
-								complete: false
+								complete: false,
 							},
-							ms: 500
-						})
+							ms: 500,
+						}),
 					],
 					[
 						replyAndWait({
 							body: {
 								complete: true,
-								office365EditURL: OFFICE365_EDIT_URL
+								office365EditURL: OFFICE365_EDIT_URL,
 							},
-							ms: 2000
-						})
+							ms: 2000,
+						}),
 					]
 				);
 
@@ -138,11 +150,8 @@ describe('DocumentLibraryOpener', () => {
 			});
 
 			it('opens the loading modal', () => {
-				expect(global.Liferay.Util.openWindow).toHaveBeenCalledTimes(1);
-				expect(
-					global.Liferay.Util.openWindow.mock.calls[0][0].dialog
-						.bodyContent
-				).toContain(
+				expect(openModal).toHaveBeenCalledTimes(1);
+				expect(openModal.mock.calls[0][0].bodyHTML).toContain(
 					'you-are-being-redirected-to-an-external-editor-to-edit-this-document'
 				);
 			});
@@ -170,24 +179,24 @@ describe('DocumentLibraryOpener', () => {
 				fetch.mockResponses(
 					[
 						JSON.stringify({
-							oneDriveBackgroundTaskStatusURL: STATUS_URL
-						})
+							oneDriveBackgroundTaskStatusURL: STATUS_URL,
+						}),
 					],
 					[
 						replyAndWait({
 							body: {
-								complete: false
+								complete: false,
 							},
-							ms: 500
-						})
+							ms: 500,
+						}),
 					],
 					[
 						replyAndWait({
 							body: {
-								error: true
+								error: true,
 							},
-							ms: 2000
-						})
+							ms: 2000,
+						}),
 					]
 				);
 
@@ -195,11 +204,8 @@ describe('DocumentLibraryOpener', () => {
 			});
 
 			it('opens the loading modal', () => {
-				expect(global.Liferay.Util.openWindow).toHaveBeenCalledTimes(1);
-				expect(
-					global.Liferay.Util.openWindow.mock.calls[0][0].dialog
-						.bodyContent
-				).toContain(
+				expect(openModal).toHaveBeenCalledTimes(1);
+				expect(openModal.mock.calls[0][0].bodyHTML).toContain(
 					'you-are-being-redirected-to-an-external-editor-to-edit-this-document'
 				);
 			});
@@ -219,6 +225,10 @@ describe('DocumentLibraryOpener', () => {
 			it('and, since the task has failed, shows an error message', () => {
 				expect(opener._showError).toHaveBeenCalledTimes(1);
 			});
+
+			it('and the modal is hidden', () => {
+				expect(mockUnmount).toHaveBeenCalledTimes(1);
+			});
 		});
 	});
 
@@ -229,25 +239,22 @@ describe('DocumentLibraryOpener', () => {
 					replyAndWait({
 						body: {
 							complete: true,
-							office365EditURL: OFFICE365_EDIT_URL
+							office365EditURL: OFFICE365_EDIT_URL,
 						},
-						ms: 2000
-					})
+						ms: 2000,
+					}),
 				]);
 
 				return opener.open({
 					dialogMessage:
 						'you-are-being-redirected-to-an-external-editor-to-create-this-document',
-					statusURL: STATUS_URL
+					statusURL: STATUS_URL,
 				});
 			});
 
 			it('opens the loading modal with the creation message', () => {
-				expect(global.Liferay.Util.openWindow).toHaveBeenCalledTimes(1);
-				expect(
-					global.Liferay.Util.openWindow.mock.calls[0][0].dialog
-						.bodyContent
-				).toContain(
+				expect(openModal).toHaveBeenCalledTimes(1);
+				expect(openModal.mock.calls[0][0].bodyHTML).toContain(
 					'you-are-being-redirected-to-an-external-editor-to-create-this-document'
 				);
 			});
@@ -264,6 +271,10 @@ describe('DocumentLibraryOpener', () => {
 			it('and the portlet did not refresh', () => {
 				expect(global.Liferay.Portlet.refresh).toHaveBeenCalledTimes(0);
 			});
+
+			it('and the modal is hidden', () => {
+				expect(mockUnmount).toHaveBeenCalledTimes(1);
+			});
 		});
 
 		describe('when the creation background task finishes at the first polling request with refresh', () => {
@@ -272,26 +283,23 @@ describe('DocumentLibraryOpener', () => {
 					replyAndWait({
 						body: {
 							complete: true,
-							office365EditURL: OFFICE365_EDIT_URL
+							office365EditURL: OFFICE365_EDIT_URL,
 						},
-						ms: 2000
-					})
+						ms: 2000,
+					}),
 				]);
 
 				return opener.open({
 					dialogMessage:
 						'you-are-being-redirected-to-an-external-editor-to-create-this-document',
 					refresh: true,
-					statusURL: STATUS_URL
+					statusURL: STATUS_URL,
 				});
 			});
 
 			it('opens the loading modal with the creation message', () => {
-				expect(global.Liferay.Util.openWindow).toHaveBeenCalledTimes(1);
-				expect(
-					global.Liferay.Util.openWindow.mock.calls[0][0].dialog
-						.bodyContent
-				).toContain(
+				expect(openModal).toHaveBeenCalledTimes(1);
+				expect(openModal.mock.calls[0][0].bodyHTML).toContain(
 					'you-are-being-redirected-to-an-external-editor-to-create-this-document'
 				);
 			});
@@ -307,6 +315,10 @@ describe('DocumentLibraryOpener', () => {
 
 			it('and the portlet did refresh', () => {
 				expect(global.Liferay.Portlet.refresh).toHaveBeenCalledTimes(1);
+			});
+
+			it('and the modal is hidden', () => {
+				expect(mockUnmount).toHaveBeenCalledTimes(1);
 			});
 		});
 	});

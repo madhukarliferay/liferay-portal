@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,12 +13,11 @@ ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_
 Object[] objArray = (Object[])row.getObject();
 
 BlogsStatsUser statsUser = (BlogsStatsUser)objArray[0];
-String rowHREF = (String)objArray[1];
 %>
 
-<liferay-ui:user-display
-	url="<%= rowHREF %>"
-	userId="<%= statsUser.getUserId() %>"
+<liferay-user:user-display
+	url="<%= (String)objArray[1] %>"
+	userId="<%= statsUser.getStatsUserId() %>"
 >
 	<div class="blogger-post-count">
 		<c:choose>
@@ -45,6 +35,6 @@ String rowHREF = (String)objArray[1];
 	</div>
 
 	<div class="blogger-date">
-		<span><liferay-ui:message key="date" />:</span> <%= dateFormatDate.format(statsUser.getLastPostDate()) %>
+		<span><liferay-ui:message key="date" />:</span> <%= dateFormat.format(statsUser.getLastPostDate()) %>
 	</div>
-</liferay-ui:user-display>
+</liferay-user:user-display>

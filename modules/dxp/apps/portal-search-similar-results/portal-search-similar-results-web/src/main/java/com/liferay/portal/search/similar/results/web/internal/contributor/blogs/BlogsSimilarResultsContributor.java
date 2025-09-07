@@ -1,28 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.similar.results.web.internal.contributor.blogs;
 
-import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRenderer;
-import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
-import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.search.model.uid.UIDFactory;
+import com.liferay.portal.search.similar.results.web.internal.contributor.SimilarResultsContributor;
+import com.liferay.portal.search.similar.results.web.internal.helper.HttpHelperUtil;
 import com.liferay.portal.search.similar.results.web.internal.util.SearchStringUtil;
-import com.liferay.portal.search.similar.results.web.internal.util.http.HttpHelper;
-import com.liferay.portal.search.similar.results.web.spi.contributor.SimilarResultsContributor;
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.CriteriaBuilder;
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.CriteriaHelper;
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.DestinationBuilder;
@@ -30,23 +20,26 @@ import com.liferay.portal.search.similar.results.web.spi.contributor.helper.Dest
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.RouteBuilder;
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.RouteHelper;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Wade Cao
  * @author André de Oliveira
  */
-@Component(service = SimilarResultsContributor.class)
 public class BlogsSimilarResultsContributor
 	implements SimilarResultsContributor {
+
+	public BlogsSimilarResultsContributor(
+		BlogsEntryLocalService blogsEntryLocalService, UIDFactory uidFactory) {
+
+		_blogsEntryLocalService = blogsEntryLocalService;
+		_uidFactory = uidFactory;
+	}
 
 	@Override
 	public void detectRoute(
 		RouteBuilder routeBuilder, RouteHelper routeHelper) {
 
-		String[] parameters = _httpHelper.getFriendlyURLParameters(
-			routeHelper.getURLString());
+		String[] parameters = HttpHelperUtil.getFriendlyURLParameters(
+			HttpComponentsUtil.decodePath(routeHelper.getURLString()));
 
 		SearchStringUtil.requireEquals("blogs", parameters[0]);
 
@@ -68,36 +61,7 @@ public class BlogsSimilarResultsContributor
 			return;
 		}
 
-		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
-			groupId, blogsEntry.getUuid());
-
-		if (assetEntry == null) {
-			return;
-		}
-
-		criteriaBuilder.uid(
-			Field.getUID(
-				assetEntry.getClassName(),
-				String.valueOf(blogsEntry.getEntryId())));
-	}
-
-	@Reference(unbind = "-")
-	public void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
-
-		_assetEntryLocalService = assetEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	public void setBlogsEntryLocalService(
-		BlogsEntryLocalService blogsEntryLocalService) {
-
-		_blogsEntryLocalService = blogsEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	public void setHttpHelper(HttpHelper httpHelper) {
-		_httpHelper = httpHelper;
+		criteriaBuilder.uid(_uidFactory.getUID(blogsEntry));
 	}
 
 	@Override
@@ -105,16 +69,28 @@ public class BlogsSimilarResultsContributor
 		DestinationBuilder destinationBuilder,
 		DestinationHelper destinationHelper) {
 
+		AssetRenderer<?> assetRenderer = destinationHelper.getAssetRenderer();
+
+		if (assetRenderer.getGroupId() != destinationHelper.getScopeGroupId()) {
+			destinationBuilder.replaceURLString(
+				destinationHelper.getAssetViewURL());
+
+			return;
+		}
+
 		String urlTitle = (String)destinationHelper.getRouteParameter(
 			"urlTitle");
 
-		AssetRenderer<?> assetRenderer = destinationHelper.getAssetRenderer();
-
-		destinationBuilder.replace(urlTitle, assetRenderer.getUrlTitle());
+		destinationBuilder.replace(
+			_getBlogsURLParameterPattern(urlTitle),
+			_getBlogsURLParameterPattern(assetRenderer.getUrlTitle()));
 	}
 
-	private AssetEntryLocalService _assetEntryLocalService;
-	private BlogsEntryLocalService _blogsEntryLocalService;
-	private HttpHelper _httpHelper;
+	private String _getBlogsURLParameterPattern(String parameterValue) {
+		return "-/blogs/" + parameterValue + "?";
+	}
+
+	private final BlogsEntryLocalService _blogsEntryLocalService;
+	private final UIDFactory _uidFactory;
 
 }

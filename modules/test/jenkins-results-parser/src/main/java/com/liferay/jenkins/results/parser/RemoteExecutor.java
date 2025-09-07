@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -26,6 +18,14 @@ import java.util.concurrent.TimeoutException;
  * @author Peter Yoo
  */
 public class RemoteExecutor {
+
+	public static long getTimeout() {
+		return _timeout;
+	}
+
+	public static void setTimeout(long timeout) {
+		_timeout = _timeout;
+	}
 
 	public int execute(
 		int threadCount, String[] targetSlaves, String[] commands) {
@@ -44,7 +44,7 @@ public class RemoteExecutor {
 			"Remote execution starting with " + threadCount + " threads.");
 
 		try {
-			_start = System.currentTimeMillis();
+			_start = JenkinsResultsParserUtil.getCurrentTimeMillis();
 
 			for (String targetSlave : _targetSlaves) {
 				executorService.execute(
@@ -104,7 +104,7 @@ public class RemoteExecutor {
 		sb.append("\nTarget slaves:");
 		sb.append(_targetSlaves.length);
 		sb.append("\nTotal duration: ");
-		sb.append(System.currentTimeMillis() - _start);
+		sb.append(JenkinsResultsParserUtil.getCurrentTimeMillis() - _start);
 		sb.append("\n");
 
 		System.out.println(sb.toString());
@@ -114,13 +114,16 @@ public class RemoteExecutor {
 
 			System.out.println(
 				"Remote execution completed in " +
-					(System.currentTimeMillis() - _start) + "ms.");
+					(JenkinsResultsParserUtil.getCurrentTimeMillis() - _start) +
+						"ms.");
 		}
 	}
 
 	private void _onThreadStart(RemoteExecutorThread remoteExecutorThread) {
 		_busySlaves.add(remoteExecutorThread._targetSlave);
 	}
+
+	private static long _timeout = 1000 * 60 * 60;
 
 	private final List<String> _busySlaves = new ArrayList<>();
 	private String[] _commands;
@@ -140,19 +143,20 @@ public class RemoteExecutor {
 
 			_error = false;
 
-			long start = System.currentTimeMillis();
+			long start = JenkinsResultsParserUtil.getCurrentTimeMillis();
 
 			try {
 				int returnCode = _executeBashCommands();
 
-				_duration = System.currentTimeMillis() - start;
+				_duration =
+					JenkinsResultsParserUtil.getCurrentTimeMillis() - start;
 
 				if (returnCode != 0) {
 					_handleError(null);
 				}
 			}
-			catch (Exception e) {
-				_handleError(e.getMessage());
+			catch (Exception exception) {
+				_handleError(exception.getMessage());
 			}
 			finally {
 				synchronized (_remoteExecutor) {
@@ -190,7 +194,7 @@ public class RemoteExecutor {
 			sb.append("'");
 
 			Process process = JenkinsResultsParserUtil.executeBashCommands(
-				sb.toString());
+				true, new File("."), getTimeout(), sb.toString());
 
 			return process.exitValue();
 		}

@@ -1,39 +1,40 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.groups.admin.web.internal.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.search.Hits;
+import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portal.kernel.search.IndexerRegistry;
-import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.test.randomizerbumpers.NumericStringRandomizerBumper;
+import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.RoleTestUtil;
-import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.search.searcher.SearchRequestBuilder;
+import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
+import com.liferay.portal.search.searcher.SearchResponse;
+import com.liferay.portal.search.searcher.Searcher;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.search.test.util.DocumentsAssert;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.users.admin.kernel.util.UsersAdmin;
+import com.liferay.users.admin.test.util.search.GroupBlueprint;
+import com.liferay.users.admin.test.util.search.GroupSearchFixture;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Assert;
@@ -56,67 +57,134 @@ public class UserGroupIndexerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_indexer = _indexerRegistry.getIndexer(UserGroup.class);
+		GroupSearchFixture groupSearchFixture = new GroupSearchFixture();
+
+		Group group = groupSearchFixture.addGroup(new GroupBlueprint());
+
+		UserGroupFixture userGroupFixture = new UserGroupFixture(
+			group, userGroupLocalService);
+
+		_group = group;
+
+		_groups = groupSearchFixture.getGroups();
+
+		_userGroupFixture = userGroupFixture;
+		_userGroups = userGroupFixture.getUserGroups();
 	}
 
 	@Test
 	public void testSearchUserGroups() throws Exception {
-		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+		Role role = _addRole();
 
-		long companyId = _role.getCompanyId();
+		long companyId = role.getCompanyId();
 
-		int count = _userGroupLocalService.searchCount(
+		groupLocalService.addRoleGroup(role.getRoleId(), _group.getGroupId());
+
+		int originalUserGroupCount = userGroupLocalService.searchCount(
 			companyId, null, new LinkedHashMap<String, Object>());
 
-		UserGroup userGroup = addUserGroup();
+		String baseName = RandomTestUtil.randomString();
 
-		addUserGroup();
+		int newUserGroupCount = 2;
 
-		GroupLocalServiceUtil.addRoleGroup(
-			_role.getRoleId(), userGroup.getGroupId());
+		List<String> userGroupNames = new ArrayList<>();
 
-		Hits hits = search(companyId);
+		for (int i = 0; i < newUserGroupCount; i++) {
+			UserGroup userGroup = addUserGroup(baseName);
 
-		Assert.assertEquals(hits.toString(), count + 2, hits.getLength());
+			userGroupNames.add(userGroup.getName());
+		}
+
+		SearchRequestBuilder searchRequestBuilder1 = _getSearchRequestBuilder(
+			companyId);
+
+		SearchResponse searchResponse1 = searcher.search(
+			searchRequestBuilder1.queryString(
+				baseName
+			).build());
+
+		DocumentsAssert.assertValuesIgnoreRelevance(
+			searchResponse1.getRequestString(), searchResponse1.getDocuments(),
+			Field.NAME, userGroupNames);
+
+		SearchRequestBuilder searchRequestBuilder2 = _getSearchRequestBuilder(
+			companyId);
+
+		SearchResponse searchResponse2 = searcher.search(
+			searchRequestBuilder2.emptySearchEnabled(
+				true
+			).size(
+				0
+			).build());
+
+		Assert.assertEquals(
+			originalUserGroupCount + newUserGroupCount,
+			searchResponse2.getCount());
 	}
 
-	protected UserGroup addUserGroup() throws Exception {
-		UserGroup userGroup = UserGroupTestUtil.addUserGroup();
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
-		_userGroups.add(userGroup);
-
-		return userGroup;
-	}
-
-	protected SearchContext getSearchContext(long companyId) {
-		SearchContext searchContext = new SearchContext();
-
-		searchContext.setCompanyId(companyId);
-
-		return searchContext;
-	}
-
-	protected Hits search(long companyId) throws Exception {
-		SearchContext searchContext = getSearchContext(companyId);
-
-		return _indexer.search(searchContext);
+	protected UserGroup addUserGroup(String baseName) {
+		return _userGroupFixture.createUserGroup(
+			baseName + StringPool.SPACE + RandomTestUtil.randomString());
 	}
 
 	@Inject
-	private static IndexerRegistry _indexerRegistry;
+	protected GroupLocalService groupLocalService;
+
+	@Inject(
+		filter = "indexer.class.name=com.liferay.portal.kernel.model.UserGroup"
+	)
+	protected Indexer<UserGroup> indexer;
 
 	@Inject
-	private static UserGroupLocalService _userGroupLocalService;
+	protected RoleLocalService roleLocalService;
 
 	@Inject
-	private static UsersAdmin _usersAdmin;
+	protected Searcher searcher;
 
-	private Indexer<UserGroup> _indexer;
+	@Inject
+	protected SearchRequestBuilderFactory searchRequestBuilderFactory;
+
+	@Inject
+	protected UserGroupLocalService userGroupLocalService;
+
+	private Role _addRole() throws Exception {
+		Role role = roleLocalService.addRole(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(), null, 0,
+			RandomTestUtil.randomString(
+				NumericStringRandomizerBumper.INSTANCE,
+				UniqueStringRandomizerBumper.INSTANCE),
+			null, null, RoleConstants.TYPE_REGULAR, null, null);
+
+		_roles.add(role);
+
+		return role;
+	}
+
+	private SearchRequestBuilder _getSearchRequestBuilder(long companyId) {
+		return searchRequestBuilderFactory.builder(
+		).companyId(
+			companyId
+		).fields(
+			StringPool.STAR
+		).modelIndexerClasses(
+			UserGroup.class
+		);
+	}
+
+	private Group _group;
 
 	@DeleteAfterTestRun
-	private Role _role;
+	private List<Group> _groups;
 
 	@DeleteAfterTestRun
-	private final List<UserGroup> _userGroups = new LinkedList<>();
+	private List<Role> _roles = new ArrayList<>();
+
+	private UserGroupFixture _userGroupFixture;
+
+	@DeleteAfterTestRun
+	private List<UserGroup> _userGroups;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.internal.model.adapter;
@@ -21,11 +12,11 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupWrapper;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.site.model.adapter.StagedGroup;
 
@@ -40,12 +31,11 @@ import java.util.Objects;
 /**
  * @author Daniel Kocsis
  */
-public class StagedGroupImpl implements StagedGroup {
-
-	public StagedGroupImpl() {
-	}
+public class StagedGroupImpl extends GroupWrapper implements StagedGroup {
 
 	public StagedGroupImpl(Group group) {
+		super(group);
+
 		Objects.requireNonNull(
 			group, "Unable to create a new staged group for a null group");
 
@@ -53,55 +43,8 @@ public class StagedGroupImpl implements StagedGroup {
 	}
 
 	@Override
-	public String buildTreePath() throws PortalException {
-		return _group.buildTreePath();
-	}
-
-	@Override
-	public void clearStagingGroup() {
-		_group.clearStagingGroup();
-	}
-
-	@Override
 	public Object clone() {
 		return new StagedGroupImpl((Group)_group.clone());
-	}
-
-	@Override
-	public int compareTo(Group group) {
-		return _group.compareTo(group);
-	}
-
-	@Override
-	public boolean getActive() {
-		return _group.isActive();
-	}
-
-	@Override
-	public List<Group> getAncestors() {
-		return _group.getAncestors();
-	}
-
-	@Override
-	public String[] getAvailableLanguageIds() {
-		return _group.getAvailableLanguageIds();
-	}
-
-	@Override
-	public List<Group> getChildren(boolean site) {
-		return _group.getChildren(site);
-	}
-
-	@Override
-	public List<Group> getChildrenWithLayouts(
-		boolean site, int start, int end, OrderByComparator<Group> obc) {
-
-		return _group.getChildrenWithLayouts(site, start, end, obc);
-	}
-
-	@Override
-	public int getChildrenWithLayoutsCount(boolean site) {
-		return _group.getChildrenWithLayoutsCount(site);
 	}
 
 	@Override
@@ -229,6 +172,11 @@ public class StagedGroupImpl implements StagedGroup {
 	@Override
 	public String getFriendlyURL() {
 		return _group.getFriendlyURL();
+	}
+
+	@Override
+	public Group getGroup() {
+		return _group;
 	}
 
 	@Override
@@ -545,6 +493,10 @@ public class StagedGroupImpl implements StagedGroup {
 		return _group.isControlPanel();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
 		return _group.isEntityCacheEnabled();
@@ -555,6 +507,10 @@ public class StagedGroupImpl implements StagedGroup {
 		return _group.isEscapedModel();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
 		return _group.isFinderCacheEnabled();
@@ -915,9 +871,9 @@ public class StagedGroupImpl implements StagedGroup {
 
 	@Override
 	public void setTypeSettingsProperties(
-		UnicodeProperties typeSettingsProperties) {
+		UnicodeProperties typeSettingsUnicodeProperties) {
 
-		_group.setTypeSettingsProperties(typeSettingsProperties);
+		_group.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 	}
 
 	@Override
@@ -938,11 +894,6 @@ public class StagedGroupImpl implements StagedGroup {
 	@Override
 	public Group toUnescapedModel() {
 		return _group.toUnescapedModel();
-	}
-
-	@Override
-	public String toXmlString() {
-		return _group.toXmlString();
 	}
 
 	@Override

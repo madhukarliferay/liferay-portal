@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,7 +19,6 @@ DLViewMoreMenuItemsDisplayContext dlViewMoreMenuItemsDisplayContext = new DLView
 
 <clay:management-toolbar
 	clearResultsURL="<%= dlViewMoreMenuItemsDisplayContext.getClearResultsURL() %>"
-	componentId="dlViewMoreMenuItemsManagementToolbar"
 	disabled="<%= dlViewMoreMenuItemsDisplayContext.getTotalItems() == 0 %>"
 	itemsTotal="<%= dlViewMoreMenuItemsDisplayContext.getTotalItems() %>"
 	searchActionURL="<%= dlViewMoreMenuItemsDisplayContext.getSearchActionURL() %>"
@@ -36,7 +26,7 @@ DLViewMoreMenuItemsDisplayContext dlViewMoreMenuItemsDisplayContext = new DLView
 	selectable="<%= false %>"
 />
 
-<aui:form cssClass="container-fluid-1280" name="addMenuItemFm">
+<aui:form cssClass="container-fluid container-fluid-max-xxxl" name="addMenuItemFm">
 	<liferay-ui:search-container
 		searchContainer="<%= dlViewMoreMenuItemsDisplayContext.getSearchContainer() %>"
 	>
@@ -46,20 +36,26 @@ DLViewMoreMenuItemsDisplayContext dlViewMoreMenuItemsDisplayContext = new DLView
 			keyProperty="fileEntryTypeId"
 			modelVar="fileEntryType"
 		>
-
-			<%
-			Map<String, Object> data = new HashMap<>();
-
-			data.put("fileEntryTypeId", String.valueOf(fileEntryType.getFileEntryTypeId()));
-			%>
-
 			<liferay-ui:search-container-column-text
 				name="name"
 			>
-				<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+				<aui:a
+					cssClass="selector-button"
+					data='<%=
+						HashMapBuilder.<String, Object>put(
+							"fileEntryTypeId", String.valueOf(fileEntryType.getFileEntryTypeId())
+						).build()
+					%>'
+					href="javascript:void(0);"
+				>
 					<%= HtmlUtil.escape(fileEntryType.getName(locale)) %>
 				</aui:a>
 			</liferay-ui:search-container-column-text>
+
+			<liferay-ui:search-container-column-text
+				name="scope"
+				value="<%= dlViewMoreMenuItemsDisplayContext.getDLFileEntryTypeScopeName(fileEntryType, locale) %>"
+			/>
 
 			<liferay-ui:search-container-column-text
 				name="description"
@@ -77,24 +73,3 @@ DLViewMoreMenuItemsDisplayContext dlViewMoreMenuItemsDisplayContext = new DLView
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<aui:script use="aui-base">
-	var Util = Liferay.Util;
-
-	A.one('#<portlet:namespace />addMenuItemFm').delegate(
-		'click',
-		function(event) {
-			Util.getOpener().Liferay.fire(
-				'<%= HtmlUtil.escapeJS(dlViewMoreMenuItemsDisplayContext.getEventName()) %>',
-				{
-					fileEntryTypeId: event.currentTarget.attr(
-						'data-fileEntryTypeId'
-					)
-				}
-			);
-
-			Util.getWindow().destroy();
-		},
-		'.selector-button'
-	);
-</aui:script>

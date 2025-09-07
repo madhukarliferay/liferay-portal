@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model.impl;
 
 import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
+import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelTitleComparator;
 import com.liferay.message.boards.constants.MBCategoryConstants;
@@ -25,8 +17,11 @@ import com.liferay.message.boards.model.MBMessage;
 import com.liferay.message.boards.model.MBThread;
 import com.liferay.message.boards.service.MBCategoryLocalServiceUtil;
 import com.liferay.message.boards.service.MBThreadLocalServiceUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
@@ -120,6 +115,28 @@ public class MBMessageImpl extends MBMessageBaseImpl {
 	}
 
 	@Override
+	public FileEntry getAttachmentsFileEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		FileEntry fileEntry =
+			PortletFileRepositoryUtil.
+				getPortletFileEntryByExternalReferenceCode(
+					externalReferenceCode, groupId);
+
+		long attachmentsFolderId = getAttachmentsFolderId();
+
+		if (attachmentsFolderId == fileEntry.getFolderId()) {
+			return fileEntry;
+		}
+
+		throw new NoSuchFileEntryException(
+			StringBundler.concat(
+				"No FileEntry exists with the key {fileEntryId=",
+				fileEntry.getFileEntryId(), "}"));
+	}
+
+	@Override
 	public long getAttachmentsFolderId() throws PortalException {
 		if (_attachmentsFolderId !=
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
@@ -136,10 +153,10 @@ public class MBMessageImpl extends MBMessageBaseImpl {
 			PortletFileRepositoryUtil.fetchPortletRepository(
 				getGroupId(), MBConstants.SERVICE_NAME);
 
-		long threadAttachmetsFolderId = getThreadAttachmentsFolderId();
+		long threadAttachmentsFolderId = getThreadAttachmentsFolderId();
 
 		if ((repository == null) ||
-			(threadAttachmetsFolderId ==
+			(threadAttachmentsFolderId ==
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
 
 			return DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
@@ -147,12 +164,15 @@ public class MBMessageImpl extends MBMessageBaseImpl {
 
 		try {
 			Folder folder = PortletFileRepositoryUtil.getPortletFolder(
-				repository.getRepositoryId(), threadAttachmetsFolderId,
+				repository.getRepositoryId(), threadAttachmentsFolderId,
 				String.valueOf(getMessageId()));
 
 			_attachmentsFolderId = folder.getFolderId();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return _attachmentsFolderId;
@@ -251,11 +271,7 @@ public class MBMessageImpl extends MBMessageBaseImpl {
 	public boolean isFormatBBCode() {
 		String format = getFormat();
 
-		if (format.equals("bbcode")) {
-			return true;
-		}
-
-		return false;
+		return format.equals("bbcode");
 	}
 
 	@Override
@@ -278,6 +294,8 @@ public class MBMessageImpl extends MBMessageBaseImpl {
 	public void setAttachmentsFolderId(long attachmentsFolderId) {
 		_attachmentsFolderId = attachmentsFolderId;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(MBMessageImpl.class);
 
 	private long _attachmentsFolderId;
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.configuration.admin.web.internal.util;
@@ -30,18 +21,19 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
 
 import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -56,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  * @author Michael C. Han
  */
-@Component(immediate = true, service = ConfigurationEntryRetriever.class)
+@Component(service = ConfigurationEntryRetriever.class)
 public class ConfigurationEntryRetrieverImpl
 	implements ConfigurationEntryRetriever {
 
@@ -128,13 +120,14 @@ public class ConfigurationEntryRetrieverImpl
 				configurationScreen.getCategoryKey());
 		}
 
-		Set<ConfigurationCategorySectionDisplay> configurationCategorySections =
-			new TreeSet<>(new ConfigurationCategorySectionDisplayComparator());
+		Set<ConfigurationCategorySectionDisplay>
+			configurationCategorySectionDisplays = new TreeSet<>(
+				new ConfigurationCategorySectionDisplayComparator());
 
-		configurationCategorySections.addAll(
+		configurationCategorySectionDisplays.addAll(
 			configurationCategorySectionDisplaysMap.values());
 
-		return new ArrayList<>(configurationCategorySections);
+		return new ArrayList<>(configurationCategorySectionDisplays);
 	}
 
 	@Override
@@ -143,9 +136,31 @@ public class ConfigurationEntryRetrieverImpl
 		ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
 
 		Set<ConfigurationEntry> configurationEntries = new TreeSet<>(
-			getConfigurationEntryComparator());
+			_getConfigurationEntryComparator());
 
 		Locale locale = LocaleUtil.fromLanguageId(languageId);
+
+		List<ConfigurationScreen> configurationScreens =
+			_configurationScreensServiceTrackerMap.getService(
+				configurationCategory);
+
+		if (configurationScreens != null) {
+			for (ConfigurationScreen configurationScreen :
+					configurationScreens) {
+
+				if (!scope.equals(configurationScreen.getScope()) ||
+					!configurationScreen.isVisible()) {
+
+					continue;
+				}
+
+				ConfigurationEntry configurationEntry =
+					new ConfigurationScreenConfigurationEntry(
+						configurationScreen, locale);
+
+				configurationEntries.add(configurationEntry);
+			}
+		}
 
 		Set<ConfigurationModel> configurationModels =
 			_configurationModelRetriever.getConfigurationModels(
@@ -155,28 +170,10 @@ public class ConfigurationEntryRetrieverImpl
 			if (configurationModel.isGenerateUI()) {
 				ConfigurationEntry configurationEntry =
 					new ConfigurationModelConfigurationEntry(
-						configurationModel, locale,
-						_resourceBundleLoaderProvider);
+						configurationModel, locale);
 
 				configurationEntries.add(configurationEntry);
 			}
-		}
-
-		Set<ConfigurationScreen> configurationScreens = getConfigurationScreens(
-			configurationCategory);
-
-		for (ConfigurationScreen configurationScreen : configurationScreens) {
-			if (!scope.equals(configurationScreen.getScope()) ||
-				!configurationScreen.isVisible()) {
-
-				continue;
-			}
-
-			ConfigurationEntry configurationEntry =
-				new ConfigurationScreenConfigurationEntry(
-					configurationScreen, locale);
-
-			configurationEntries.add(configurationEntry);
 		}
 
 		return configurationEntries;
@@ -194,15 +191,6 @@ public class ConfigurationEntryRetrieverImpl
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
 
-		_configurationCategoriesServiceTrackerMap =
-			ServiceTrackerMapFactory.openMultiValueMap(
-				bundleContext, ConfigurationCategory.class, null,
-				(serviceReference, emitter) -> {
-					ConfigurationCategory configurationCategory =
-						bundleContext.getService(serviceReference);
-
-					emitter.emit(configurationCategory.getCategorySection());
-				});
 		_configurationCategoryServiceTrackerMap =
 			ServiceTrackerMapFactory.openSingleValueMap(
 				bundleContext, ConfigurationCategory.class, null,
@@ -235,7 +223,6 @@ public class ConfigurationEntryRetrieverImpl
 
 	@Deactivate
 	protected void deactivate() {
-		_configurationCategoriesServiceTrackerMap.close();
 		_configurationCategoryServiceTrackerMap.close();
 		_configurationScreenServiceTrackerMap.close();
 		_configurationScreensServiceTrackerMap.close();
@@ -245,25 +232,18 @@ public class ConfigurationEntryRetrieverImpl
 				configurationCategoryServiceRegistration.unregister());
 	}
 
-	protected Comparator<ConfigurationEntry> getConfigurationEntryComparator() {
+	private Comparator<ConfigurationEntry> _getConfigurationEntryComparator() {
 		return new ConfigurationEntryComparator();
 	}
 
-	protected Set<ConfigurationScreen> getConfigurationScreens(
-		String configurationCategoryKey) {
+	private boolean _isCategorySectionEnabled(String categorySection) {
+		if (!_searchCapabilities.isCommerceSupported() &&
+			Objects.equals(categorySection, "commerce")) {
 
-		Set<ConfigurationScreen> configurationCategoriesSet =
-			Collections.emptySet();
-
-		List<ConfigurationScreen> configurationCategories =
-			_configurationScreensServiceTrackerMap.getService(
-				configurationCategoryKey);
-
-		if (configurationCategories != null) {
-			configurationCategoriesSet = new HashSet<>(configurationCategories);
+			return false;
 		}
 
-		return configurationCategoriesSet;
+		return true;
 	}
 
 	private void _populateConfigurationCategorySectionDisplay(
@@ -280,6 +260,12 @@ public class ConfigurationEntryRetrieverImpl
 				curConfigurationCategoryKey);
 
 			_registerConfigurationCategory(curConfigurationCategory);
+		}
+
+		if (!_isCategorySectionEnabled(
+				curConfigurationCategory.getCategorySection())) {
+
+			return;
 		}
 
 		ConfigurationCategorySectionDisplay
@@ -315,14 +301,12 @@ public class ConfigurationEntryRetrieverImpl
 	}
 
 	private BundleContext _bundleContext;
-	private ServiceTrackerMap<String, List<ConfigurationCategory>>
-		_configurationCategoriesServiceTrackerMap;
 	private final Set<ServiceRegistration<ConfigurationCategory>>
 		_configurationCategoryServiceRegistrations = new HashSet<>();
 	private ServiceTrackerMap<String, ConfigurationCategory>
 		_configurationCategoryServiceTrackerMap;
 
-	@Reference
+	@Reference(target = "(filter.visibility=true)")
 	private ConfigurationModelRetriever _configurationModelRetriever;
 
 	private ServiceTrackerMap<String, ConfigurationScreen>
@@ -331,7 +315,7 @@ public class ConfigurationEntryRetrieverImpl
 		_configurationScreensServiceTrackerMap;
 
 	@Reference
-	private ResourceBundleLoaderProvider _resourceBundleLoaderProvider;
+	private SearchCapabilities _searchCapabilities;
 
 	private static class ConfigurationCategorySectionDisplayComparator
 		implements Comparator<ConfigurationCategorySectionDisplay> {

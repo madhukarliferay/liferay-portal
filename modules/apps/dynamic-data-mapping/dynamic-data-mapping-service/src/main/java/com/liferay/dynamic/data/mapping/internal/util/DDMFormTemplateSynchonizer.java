@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal.util;
 
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
@@ -22,8 +14,8 @@ import com.liferay.dynamic.data.mapping.io.DDMFormSerializerSerializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormSerializerSerializeResponse;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.util.Validator;
@@ -148,8 +140,8 @@ public class DDMFormTemplateSynchonizer {
 
 		String fieldType = structureDDMFormField.getType();
 
-		if (fieldType.equals(DDMImpl.TYPE_SELECT) ||
-			fieldType.equals(DDMImpl.TYPE_RADIO)) {
+		if (fieldType.equals(DDMFormFieldType.SELECT) ||
+			fieldType.equals(DDMFormFieldType.RADIO)) {
 
 			templateDDMFormField.setDDMFormFieldOptions(
 				structureDDMFormField.getDDMFormFieldOptions());
@@ -160,11 +152,9 @@ public class DDMFormTemplateSynchonizer {
 		DDMFormField structureDDMFormField, DDMFormField templateDDMFormField,
 		String templateMode) {
 
-		if (structureDDMFormField == null) {
-			return;
-		}
+		if ((structureDDMFormField == null) ||
+			!templateMode.equals(DDMTemplateConstants.TEMPLATE_MODE_CREATE)) {
 
-		if (!templateMode.equals(DDMTemplateConstants.TEMPLATE_MODE_CREATE)) {
 			return;
 		}
 
@@ -175,17 +165,17 @@ public class DDMFormTemplateSynchonizer {
 		Map<String, DDMFormField> structureDDMFormFieldsMap,
 		List<DDMFormField> templateDDMFormFields, String templateMode) {
 
-		Iterator<DDMFormField> itr = templateDDMFormFields.iterator();
+		Iterator<DDMFormField> iterator = templateDDMFormFields.iterator();
 
-		while (itr.hasNext()) {
-			DDMFormField templateDDMFormField = itr.next();
+		while (iterator.hasNext()) {
+			DDMFormField templateDDMFormField = iterator.next();
 
 			String name = templateDDMFormField.getName();
 
 			if (Validator.isNotNull(templateDDMFormField.getDataType()) &&
 				!structureDDMFormFieldsMap.containsKey(name)) {
 
-				itr.remove();
+				iterator.remove();
 
 				continue;
 			}
@@ -206,9 +196,7 @@ public class DDMFormTemplateSynchonizer {
 	protected void updateDDMTemplate(
 		DDMTemplate ddmTemplate, DDMForm templateDDMForm) {
 
-		String script = serialize(templateDDMForm);
-
-		ddmTemplate.setScript(script);
+		ddmTemplate.setScript(serialize(templateDDMForm));
 
 		_ddmTemplateLocalService.updateDDMTemplate(ddmTemplate);
 	}

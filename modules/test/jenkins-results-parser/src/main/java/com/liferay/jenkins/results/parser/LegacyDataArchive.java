@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -32,8 +23,8 @@ public class LegacyDataArchive {
 		return _legacyDataArchiveFile;
 	}
 
-	public LegacyDataArchiveUtil getLegacyDataArchiveUtil() {
-		return _legacyDataArchiveUtil;
+	public LegacyDataArchiveHelper getLegacyDataArchiveHelper() {
+		return _legacyDataArchiveHelper;
 	}
 
 	public GitWorkingDirectory getLegacyGitWorkingDirectory() {
@@ -63,18 +54,13 @@ public class LegacyDataArchive {
 
 		String gitCommitMessage = localGitCommit.getMessage();
 
-		if (gitCommitMessage.contains(
-				latestTestLocalGitCommit.getAbbreviatedSHA())) {
-
-			return true;
-		}
-
-		return false;
+		return gitCommitMessage.contains(
+			latestTestLocalGitCommit.getAbbreviatedSHA());
 	}
 
 	public void stageLegacyDataArchive() throws IOException {
 		File generatedArchiveDirectory =
-			_legacyDataArchiveUtil.getGeneratedArchiveDirectory();
+			_legacyDataArchiveHelper.getGeneratedArchiveDirectory();
 
 		File generatedArchiveFile = new File(
 			JenkinsResultsParserUtil.combine(
@@ -100,15 +86,15 @@ public class LegacyDataArchive {
 		_databaseName = databaseName;
 
 		_legacyDataArchivePortalVersion =
-			_legacyDataArchiveGroup.getLegacyDataArchivePortalVersion();
+			legacyDataArchiveGroup.getLegacyDataArchivePortalVersion();
 
-		_legacyDataArchiveUtil =
-			_legacyDataArchivePortalVersion.getLegacyDataArchiveUtil();
+		_legacyDataArchiveHelper =
+			_legacyDataArchivePortalVersion.getLegacyDataArchiveHelper();
 
 		_legacyGitWorkingDirectory =
-			_legacyDataArchiveUtil.getLegacyGitWorkingDirectory();
+			_legacyDataArchiveHelper.getLegacyGitWorkingDirectory();
 
-		_dataArchiveType = _legacyDataArchiveGroup.getDataArchiveType();
+		_dataArchiveType = legacyDataArchiveGroup.getDataArchiveType();
 
 		File legacyDataWorkingDirectory =
 			_legacyGitWorkingDirectory.getWorkingDirectory();
@@ -125,9 +111,9 @@ public class LegacyDataArchive {
 	private final String _databaseName;
 	private final File _legacyDataArchiveFile;
 	private final LegacyDataArchiveGroup _legacyDataArchiveGroup;
+	private final LegacyDataArchiveHelper _legacyDataArchiveHelper;
 	private final LegacyDataArchivePortalVersion
 		_legacyDataArchivePortalVersion;
-	private final LegacyDataArchiveUtil _legacyDataArchiveUtil;
 	private final GitWorkingDirectory _legacyGitWorkingDirectory;
 
 }

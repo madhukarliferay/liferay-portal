@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.user.client.dto.v1_0;
@@ -17,16 +8,23 @@ package com.liferay.headless.admin.user.client.dto.v1_0;
 import com.liferay.headless.admin.user.client.function.UnsafeSupplier;
 import com.liferay.headless.admin.user.client.serdes.v1_0.LocationSerDes;
 
-import java.util.Objects;
+import jakarta.annotation.Generated;
 
-import javax.annotation.Generated;
+import java.io.Serializable;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class Location {
+public class Location implements Cloneable, Serializable {
+
+	public static Location toDTO(String json) {
+		return LocationSerDes.toDTO(json);
+	}
 
 	public String getAddressCountry() {
 		return addressCountry;
@@ -49,6 +47,51 @@ public class Location {
 
 	protected String addressCountry;
 
+	public String getAddressCountryCode() {
+		return addressCountryCode;
+	}
+
+	public void setAddressCountryCode(String addressCountryCode) {
+		this.addressCountryCode = addressCountryCode;
+	}
+
+	public void setAddressCountryCode(
+		UnsafeSupplier<String, Exception> addressCountryCodeUnsafeSupplier) {
+
+		try {
+			addressCountryCode = addressCountryCodeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String addressCountryCode;
+
+	public Map<String, String> getAddressCountry_i18n() {
+		return addressCountry_i18n;
+	}
+
+	public void setAddressCountry_i18n(
+		Map<String, String> addressCountry_i18n) {
+
+		this.addressCountry_i18n = addressCountry_i18n;
+	}
+
+	public void setAddressCountry_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			addressCountry_i18nUnsafeSupplier) {
+
+		try {
+			addressCountry_i18n = addressCountry_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> addressCountry_i18n;
+
 	public String getAddressRegion() {
 		return addressRegion;
 	}
@@ -70,6 +113,27 @@ public class Location {
 
 	protected String addressRegion;
 
+	public String getAddressRegionCode() {
+		return addressRegionCode;
+	}
+
+	public void setAddressRegionCode(String addressRegionCode) {
+		this.addressRegionCode = addressRegionCode;
+	}
+
+	public void setAddressRegionCode(
+		UnsafeSupplier<String, Exception> addressRegionCodeUnsafeSupplier) {
+
+		try {
+			addressRegionCode = addressRegionCodeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String addressRegionCode;
+
 	public Long getId() {
 		return id;
 	}
@@ -88,6 +152,11 @@ public class Location {
 	}
 
 	protected Long id;
+
+	@Override
+	public Location clone() throws CloneNotSupportedException {
+		return (Location)super.clone();
+	}
 
 	@Override
 	public boolean equals(Object object) {

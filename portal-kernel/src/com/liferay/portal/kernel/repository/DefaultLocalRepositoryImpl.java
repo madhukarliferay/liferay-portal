@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.repository;
@@ -28,6 +19,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.File;
 import java.io.InputStream;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,34 +45,37 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 
 	@Override
 	public FileEntry addFileEntry(
-		long userId, long folderId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog, File file,
-		ServiceContext serviceContext) {
+		String externalReferenceCode, long userId, long folderId,
+		String sourceFileName, String mimeType, String title, String urlTitle,
+		String description, String changeLog, File file, Date displayDate,
+		Date expirationDate, Date reviewDate, ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public FileEntry addFileEntry(
-		long userId, long folderId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog, InputStream is,
-		long size, ServiceContext serviceContext) {
+		String externalReferenceCode, long userId, long folderId,
+		String sourceFileName, String mimeType, String title, String urlTitle,
+		String description, String changeLog, InputStream inputStream,
+		long size, Date displayDate, Date expirationDate, Date reviewDate,
+		ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public FileShortcut addFileShortcut(
-		long userId, long folderId, long toFileEntryId,
-		ServiceContext serviceContext) {
+		String externalReferenceCode, long userId, long folderId,
+		long toFileEntryId, ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Folder addFolder(
-		long userId, long parentFolderId, String name, String description,
-		ServiceContext serviceContext) {
+		String externalReferenceCode, long userId, long parentFolderId,
+		String name, String description, ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -148,6 +143,13 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	}
 
 	@Override
+	public FileEntry fetchFileEntry(long folderId, String title)
+		throws PortalException {
+
+		return _repository.fetchFileEntry(folderId, title);
+	}
+
+	@Override
 	public <T extends Capability> T getCapability(Class<T> capabilityClass) {
 		return _repository.getCapability(capabilityClass);
 	}
@@ -155,28 +157,31 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public List<FileEntry> getFileEntries(
 			long folderId, int status, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException {
 
-		return _repository.getFileEntries(folderId, status, start, end, obc);
+		return _repository.getFileEntries(
+			folderId, status, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<FileEntry> getFileEntries(
-			long folderId, int start, int end, OrderByComparator<FileEntry> obc)
+			long folderId, int start, int end,
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException {
 
-		return _repository.getFileEntries(folderId, start, end, obc);
+		return _repository.getFileEntries(
+			folderId, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<FileEntry> getFileEntries(
 			long folderId, String[] mimeTypes, int status, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException {
 
 		return _repository.getFileEntries(
-			folderId, mimeTypes, status, start, end, obc);
+			folderId, mimeTypes, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -229,6 +234,13 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	}
 
 	@Override
+	public FileEntry getFileEntryByFileName(long folderId, String fileName)
+		throws PortalException {
+
+		return _repository.getFileEntryByFileName(folderId, fileName);
+	}
+
+	@Override
 	public FileEntry getFileEntryByUuid(String uuid) throws PortalException {
 		return _repository.getFileEntryByUuid(uuid);
 	}
@@ -260,31 +272,33 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public List<Folder> getFolders(
 			long parentFolderId, boolean includeMountFolders, int start,
-			int end, OrderByComparator<Folder> obc)
+			int end, OrderByComparator<Folder> orderByComparator)
 		throws PortalException {
 
 		return _repository.getFolders(
-			parentFolderId, includeMountFolders, start, end, obc);
+			parentFolderId, includeMountFolders, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<Folder> getFolders(
 			long parentFolderId, int status, boolean includeMountFolders,
-			int start, int end, OrderByComparator<Folder> obc)
+			int start, int end, OrderByComparator<Folder> orderByComparator)
 		throws PortalException {
 
 		return _repository.getFolders(
-			parentFolderId, status, includeMountFolders, start, end, obc);
+			parentFolderId, status, includeMountFolders, start, end,
+			orderByComparator);
 	}
 
 	@Override
 	public List<RepositoryEntry> getFoldersAndFileEntriesAndFileShortcuts(
 			long folderId, int status, boolean includeMountFolders, int start,
-			int end, OrderByComparator<?> obc)
+			int end, OrderByComparator<?> orderByComparator)
 		throws PortalException {
 
 		return _repository.getFoldersAndFileEntriesAndFileShortcuts(
-			folderId, status, includeMountFolders, start, end, obc);
+			folderId, status, includeMountFolders, start, end,
+			orderByComparator);
 	}
 
 	@Override
@@ -315,11 +329,11 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public List<FileEntry> getRepositoryFileEntries(
 			long userId, long rootFolderId, int start, int end,
-			OrderByComparator<FileEntry> obc)
+			OrderByComparator<FileEntry> orderByComparator)
 		throws PortalException {
 
 		return _repository.getRepositoryFileEntries(
-			userId, rootFolderId, start, end, obc);
+			userId, rootFolderId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -363,8 +377,9 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry updateFileEntry(
 		long userId, long fileEntryId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog,
+		String title, String urlTitle, String description, String changeLog,
 		DLVersionNumberIncrease dlVersionNumberIncrease, File file,
+		Date displayDate, Date expirationDate, Date reviewDate,
 		ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
@@ -373,9 +388,10 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry updateFileEntry(
 		long userId, long fileEntryId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog,
-		DLVersionNumberIncrease dlVersionNumberIncrease, InputStream is,
-		long size, ServiceContext serviceContext) {
+		String title, String urlTitle, String description, String changeLog,
+		DLVersionNumberIncrease dlVersionNumberIncrease,
+		InputStream inputStream, long size, Date displayDate,
+		Date expirationDate, Date reviewDate, ServiceContext serviceContext) {
 
 		throw new UnsupportedOperationException();
 	}

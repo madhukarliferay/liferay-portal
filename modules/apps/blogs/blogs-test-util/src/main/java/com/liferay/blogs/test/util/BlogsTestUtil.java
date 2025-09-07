@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.test.util;
@@ -18,7 +9,7 @@ import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.editor.EditorConstants;
+import com.liferay.portal.kernel.editor.constants.EditorConstants;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
@@ -30,7 +21,6 @@ import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
 import java.io.Serializable;
 
 import java.util.Calendar;
-import java.util.Map;
 
 import org.junit.Assert;
 
@@ -99,17 +89,9 @@ public class BlogsTestUtil {
 	public static String getTempBlogsEntryAttachmentFileEntryImgTag(
 		long dataImageId, String url) {
 
-		StringBundler sb = new StringBundler(7);
-
-		sb.append("<img ");
-		sb.append(EditorConstants.ATTRIBUTE_DATA_IMAGE_ID);
-		sb.append("=\"");
-		sb.append(dataImageId);
-		sb.append("\" src=\"");
-		sb.append(url);
-		sb.append("\"/>");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"<img ", EditorConstants.ATTRIBUTE_DATA_IMAGE_ID, "=\"",
+			dataImageId, "\" src=\"", url, "\"/>");
 	}
 
 	public static void populateNotificationsServiceContext(
@@ -129,18 +111,16 @@ public class BlogsTestUtil {
 			BlogsEntry entry, ServiceContext serviceContext)
 		throws Exception {
 
-		Map<String, Serializable> workflowContext =
+		return BlogsEntryLocalServiceUtil.updateStatus(
+			entry.getUserId(), entry.getEntryId(),
+			WorkflowConstants.STATUS_APPROVED, serviceContext,
 			HashMapBuilder.<String, Serializable>put(
 				WorkflowConstants.CONTEXT_URL, "http://localhost"
 			).put(
 				WorkflowConstants.CONTEXT_USER_PORTRAIT_URL, "http://localhost"
 			).put(
 				WorkflowConstants.CONTEXT_USER_URL, "http://localhost"
-			).build();
-
-		return BlogsEntryLocalServiceUtil.updateStatus(
-			entry.getUserId(), entry.getEntryId(),
-			WorkflowConstants.STATUS_APPROVED, serviceContext, workflowContext);
+			).build());
 	}
 
 }

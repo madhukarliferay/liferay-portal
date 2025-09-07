@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.internal.exportimport.data.handler.test;
@@ -19,7 +10,7 @@ import com.liferay.calendar.model.Calendar;
 import com.liferay.calendar.model.CalendarBooking;
 import com.liferay.calendar.model.CalendarBookingModel;
 import com.liferay.calendar.model.CalendarResource;
-import com.liferay.calendar.service.CalendarBookingLocalServiceUtil;
+import com.liferay.calendar.service.CalendarBookingLocalService;
 import com.liferay.calendar.test.util.CalendarBookingTestUtil;
 import com.liferay.calendar.test.util.CalendarTestUtil;
 import com.liferay.calendar.test.util.RecurrenceTestUtil;
@@ -33,6 +24,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
@@ -77,14 +69,14 @@ public class CalendarBookingStagedModelDataHandlerTest
 				RecurrenceTestUtil.getDailyRecurrence(), serviceContext);
 
 		CalendarBooking calendarBookingInstance =
-			CalendarBookingLocalServiceUtil.updateCalendarBookingInstance(
+			_calendarBookingLocalService.updateCalendarBookingInstance(
 				TestPropsValues.getUserId(),
 				calendarBooking.getCalendarBookingId(), 2,
 				calendar.getCalendarId(), calendarBooking.getTitleMap(),
 				calendarBooking.getDescriptionMap(),
 				calendarBooking.getLocation(),
-				calendarBooking.getStartTime() + Time.DAY * 2,
-				calendarBooking.getEndTime() + Time.DAY * 2,
+				calendarBooking.getStartTime() + (Time.DAY * 2),
+				calendarBooking.getEndTime() + (Time.DAY * 2),
 				calendarBooking.isAllDay(), null, false, 0, null, 0, null,
 				serviceContext);
 
@@ -108,7 +100,7 @@ public class CalendarBookingStagedModelDataHandlerTest
 				exportedCalendarBooking.getUuid(), liveGroup);
 
 		List<CalendarBooking> importedCalendarBookingInstances =
-			CalendarBookingLocalServiceUtil.getRecurringCalendarBookings(
+			_calendarBookingLocalService.getRecurringCalendarBookings(
 				importedCalendarBooking);
 
 		CalendarBookingModel importedCalendarBookingInstance =
@@ -197,8 +189,8 @@ public class CalendarBookingStagedModelDataHandlerTest
 	protected StagedModel getStagedModel(String uuid, Group group)
 		throws PortalException {
 
-		return CalendarBookingLocalServiceUtil.
-			getCalendarBookingByUuidAndGroupId(uuid, group.getGroupId());
+		return _calendarBookingLocalService.getCalendarBookingByUuidAndGroupId(
+			uuid, group.getGroupId());
 	}
 
 	@Override
@@ -210,5 +202,8 @@ public class CalendarBookingStagedModelDataHandlerTest
 	protected boolean isCommentableStagedModel() {
 		return true;
 	}
+
+	@Inject
+	private CalendarBookingLocalService _calendarBookingLocalService;
 
 }

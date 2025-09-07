@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.batch.engine.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedModel;
@@ -42,10 +34,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface BatchEngineImportTaskModel
-	extends BaseModel<BatchEngineImportTask>, MVCCModel, ShardedModel,
-			StagedModel {
+	extends BaseModel<BatchEngineImportTask>, ExternalReferenceCodeModel,
+			MVCCModel, ShardedModel, StagedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a batch engine import task model instance should use the {@link BatchEngineImportTask} interface instead.
@@ -97,6 +89,23 @@ public interface BatchEngineImportTaskModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this batch engine import task.
+	 *
+	 * @return the external reference code of this batch engine import task
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this batch engine import task.
+	 *
+	 * @param externalReferenceCode the external reference code of this batch engine import task
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the batch engine import task ID of this batch engine import task.
@@ -320,6 +329,20 @@ public interface BatchEngineImportTaskModel
 	public void setFieldNameMapping(Map<String, Serializable> fieldNameMapping);
 
 	/**
+	 * Returns the import strategy of this batch engine import task.
+	 *
+	 * @return the import strategy of this batch engine import task
+	 */
+	public int getImportStrategy();
+
+	/**
+	 * Sets the import strategy of this batch engine import task.
+	 *
+	 * @param importStrategy the import strategy of this batch engine import task
+	 */
+	public void setImportStrategy(int importStrategy);
+
+	/**
 	 * Returns the operation of this batch engine import task.
 	 *
 	 * @return the operation of this batch engine import task
@@ -349,6 +372,20 @@ public interface BatchEngineImportTaskModel
 	public void setParameters(Map<String, Serializable> parameters);
 
 	/**
+	 * Returns the processed items count of this batch engine import task.
+	 *
+	 * @return the processed items count of this batch engine import task
+	 */
+	public int getProcessedItemsCount();
+
+	/**
+	 * Sets the processed items count of this batch engine import task.
+	 *
+	 * @param processedItemsCount the processed items count of this batch engine import task
+	 */
+	public void setProcessedItemsCount(int processedItemsCount);
+
+	/**
 	 * Returns the start time of this batch engine import task.
 	 *
 	 * @return the start time of this batch engine import task
@@ -363,18 +400,39 @@ public interface BatchEngineImportTaskModel
 	public void setStartTime(Date startTime);
 
 	/**
-	 * Returns the version of this batch engine import task.
+	 * Returns the task item delegate name of this batch engine import task.
 	 *
-	 * @return the version of this batch engine import task
+	 * @return the task item delegate name of this batch engine import task
 	 */
 	@AutoEscape
-	public String getVersion();
+	public String getTaskItemDelegateName();
 
 	/**
-	 * Sets the version of this batch engine import task.
+	 * Sets the task item delegate name of this batch engine import task.
 	 *
-	 * @param version the version of this batch engine import task
+	 * @param taskItemDelegateName the task item delegate name of this batch engine import task
 	 */
-	public void setVersion(String version);
+	public void setTaskItemDelegateName(String taskItemDelegateName);
+
+	/**
+	 * Returns the total items count of this batch engine import task.
+	 *
+	 * @return the total items count of this batch engine import task
+	 */
+	public int getTotalItemsCount();
+
+	/**
+	 * Sets the total items count of this batch engine import task.
+	 *
+	 * @param totalItemsCount the total items count of this batch engine import task
+	 */
+	public void setTotalItemsCount(int totalItemsCount);
+
+	@Override
+	public BatchEngineImportTask cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

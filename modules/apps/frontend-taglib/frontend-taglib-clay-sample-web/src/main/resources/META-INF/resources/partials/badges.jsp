@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,57 +11,71 @@
 	<p>Badges help highlight important information such as notifications or new and unread messages. Badges have circular borders and are only used to specify a number.</p>
 </blockquote>
 
-<div class="row text-center">
-	<div class="col-md-1">
+<clay:row
+	cssClass="text-center"
+>
+	<clay:col
+		md="1"
+	>
 		<clay:badge
 			label="8"
 		/>
 
 		<div>Primary</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:badge
+			displayType="secondary"
 			label="87"
-			style="secondary"
 		/>
 
 		<div>Secondary</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:badge
+			displayType="info"
 			label="91"
-			style="info"
 		/>
 
 		<div>Info</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:badge
+			displayType="danger"
 			label="130"
-			style="danger"
 		/>
 
 		<div>Error</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:badge
+			displayType="success"
 			label="1111"
-			style="success"
 		/>
 
 		<div>Success</div>
-	</div>
+	</clay:col>
 
-	<div class="col-md-1">
+	<clay:col
+		md="1"
+	>
 		<clay:badge
+			displayType="warning"
 			label="21"
-			style="warning"
 		/>
 
 		<div>Warning</div>
-	</div>
-</div>
+	</clay:col>
+</clay:row>

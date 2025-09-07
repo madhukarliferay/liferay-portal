@@ -1,43 +1,53 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.events;
 
+import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.io.Deserializer;
+import com.liferay.petra.io.Serializer;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.exception.ResourceActionsException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogContext;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.patcher.PatcherUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.patcher.PatcherValues;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.util.UpgradeProcessUtil;
-import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.version.Version;
+import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
-import com.liferay.portal.verify.VerifyException;
-import com.liferay.portal.verify.VerifyProcessUtil;
+import com.liferay.portal.upgrade.log.UpgradeLogContext;
+import com.liferay.portal.util.PropsValues;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+import java.nio.ByteBuffer;
 
 import java.sql.Connection;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Brian Wing Shun Chan
@@ -47,26 +57,20 @@ import java.util.List;
 public class StartupHelperUtil {
 
 	public static void initResourceActions() {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			List<String> modelNames = ResourceActionsUtil.getModelNames();
+		try {
+			ResourceActionLocalServiceUtil.checkResourceActions();
+		}
+		catch (Exception exception) {
+			ReflectionUtil.throwException(exception);
+		}
 
-			for (String modelName : modelNames) {
-				List<String> actionIds =
-					ResourceActionsUtil.getModelResourceActions(modelName);
-
-				ResourceActionLocalServiceUtil.checkResourceActions(
-					modelName, actionIds, true);
-			}
-
-			List<String> portletNames = ResourceActionsUtil.getPortletNames();
-
-			for (String portletName : portletNames) {
-				List<String> actionIds =
-					ResourceActionsUtil.getPortletResourceActions(portletName);
-
-				ResourceActionLocalServiceUtil.checkResourceActions(
-					portletName, actionIds, true);
-			}
+		try {
+			ResourceActionsUtil.populateModelResources(
+				StartupHelperUtil.class.getClassLoader(),
+				PropsValues.RESOURCE_ACTIONS_CONFIGS);
+		}
+		catch (ResourceActionsException resourceActionsException) {
+			ReflectionUtil.throwException(resourceActionsException);
 		}
 	}
 
@@ -74,26 +78,24 @@ public class StartupHelperUtil {
 		return _dbNew;
 	}
 
-	public static boolean isStartupFinished() {
-		return _startupFinished;
+	public static boolean isDBWarmed() {
+		return _dbWarmedSCLSingleton.getSingleton(
+			StartupHelperUtil::_isDBWarmed);
 	}
 
-	public static boolean isUpgraded() {
-		return _upgraded;
+	public static boolean isNewRelease() {
+		return _newRelease;
 	}
 
 	public static boolean isUpgrading() {
 		return _upgrading;
 	}
 
-	public static boolean isVerified() {
-		return _verified;
-	}
-
 	public static void printPatchLevel() {
-		if (_log.isInfoEnabled() && !PatcherUtil.hasInconsistentPatchLevels()) {
+		if (_log.isInfoEnabled()) {
 			String installedPatches = StringUtil.merge(
-				PatcherUtil.getInstalledPatches(), StringPool.COMMA_AND_SPACE);
+				PatcherValues.INSTALLED_PATCH_NAMES,
+				StringPool.COMMA_AND_SPACE);
 
 			if (Validator.isNull(installedPatches)) {
 				_log.info("There are no patches installed");
@@ -105,86 +107,80 @@ public class StartupHelperUtil {
 		}
 	}
 
-	public static void setDbNew(boolean dbNew) {
-		_dbNew = dbNew;
-	}
+	public static void setDBNew(boolean dbNew) {
+		if (dbNew != _dbNew) {
+			_dbWarmedSCLSingleton.destroy(null);
 
-	public static void setDropIndexes(boolean dropIndexes) {
-		_dropIndexes = dropIndexes;
-	}
-
-	public static void setStartupFinished(boolean startupFinished) {
-		_startupFinished = startupFinished;
-	}
-
-	public static void updateIndexes() {
-		updateIndexes(_dropIndexes);
-	}
-
-	public static void updateIndexes(boolean dropIndexes) {
-		DB db = DBManagerUtil.getDB();
-
-		Connection connection = null;
-
-		try {
-			connection = DataAccess.getConnection();
-
-			updateIndexes(db, connection, dropIndexes);
+			_dbNew = dbNew;
 		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+	}
+
+	public static void setNewRelease(boolean newRelease) {
+		_newRelease = newRelease;
+	}
+
+	public static void setUpgrading(boolean upgrading) {
+		if (upgrading == _upgrading) {
+			return;
+		}
+
+		_dbWarmedSCLSingleton.destroy(null);
+
+		_upgrading = upgrading;
+
+		if (upgrading) {
+			ThreadLocalCacheManager.disable();
+
+			if (PropsValues.UPGRADE_LOG_CONTEXT_ENABLED) {
+				BundleContext bundleContext =
+					SystemBundleUtil.getBundleContext();
+
+				_serviceRegistration = bundleContext.registerService(
+					LogContext.class, UpgradeLogContext.getInstance(), null);
 			}
+
+			DBUpgrader.startUpgradeLogAppender();
 		}
-		finally {
-			DataAccess.cleanUp(connection);
-		}
-	}
+		else {
+			DBUpgrader.stopUpgradeLogAppender();
 
-	public static void updateIndexes(
-		DB db, Connection connection, boolean dropIndexes) {
+			ServiceRegistration<?> serviceRegistration = _serviceRegistration;
 
-		try {
-			Thread currentThread = Thread.currentThread();
+			if (serviceRegistration != null) {
+				serviceRegistration.unregister();
 
-			ClassLoader classLoader = currentThread.getContextClassLoader();
-
-			String tablesSQL = StringUtil.read(
-				classLoader,
-				"com/liferay/portal/tools/sql/dependencies/portal-tables.sql");
-
-			String indexesSQL = StringUtil.read(
-				classLoader,
-				"com/liferay/portal/tools/sql/dependencies/indexes.sql");
-
-			db.updateIndexes(connection, tablesSQL, indexesSQL, dropIndexes);
-		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_serviceRegistration = null;
 			}
+
+			ThreadLocalCacheManager.enable();
 		}
 	}
 
 	public static void upgradeProcess(int buildNumber) throws UpgradeException {
-		_upgrading = true;
+		List<String> upgradeProcessClassNames = new ArrayList<>();
 
-		try {
-			List<UpgradeProcess> upgradeProcesses =
-				UpgradeProcessUtil.initUpgradeProcesses(
-					PortalClassLoaderUtil.getClassLoader(),
-					_UPGRADE_PROCESS_CLASS_NAMES);
-
-			_upgraded = UpgradeProcessUtil.upgradeProcess(
-				buildNumber, upgradeProcesses);
+		if (FeatureFlagManagerUtil.isEnabled("LPS-157670")) {
+			Collections.addAll(
+				upgradeProcessClassNames,
+				"com.liferay.portal.upgrade.UpgradeProcess_6_1_1",
+				"com.liferay.portal.upgrade.UpgradeProcess_6_2_0");
 		}
-		finally {
-			_upgrading = false;
-		}
-	}
 
-	public static void verifyProcess(boolean verified) throws VerifyException {
-		_verified = VerifyProcessUtil.verifyProcess(_upgraded, verified);
+		Collections.addAll(
+			upgradeProcessClassNames,
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_0",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_1",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_3",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_5",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_6",
+			"com.liferay.portal.upgrade.PortalUpgradeProcess");
+
+		List<UpgradeProcess> upgradeProcesses =
+			UpgradeProcessUtil.initUpgradeProcesses(
+				PortalClassLoaderUtil.getClassLoader(),
+				upgradeProcessClassNames.toArray(new String[0]));
+
+		UpgradeProcessUtil.upgradeProcess(buildNumber, upgradeProcesses);
 	}
 
 	public static void verifyRequiredSchemaVersion() throws Exception {
@@ -192,8 +188,10 @@ public class StartupHelperUtil {
 			_log.debug("Check the portal's required schema version");
 		}
 
-		if (!PortalUpgradeProcess.isInRequiredSchemaVersion(
-				DataAccess.getConnection())) {
+		try (Connection connection = DataAccess.getConnection()) {
+			if (PortalUpgradeProcess.isInRequiredSchemaVersion(connection)) {
+				return;
+			}
 
 			Version currentSchemaVersion =
 				PortalUpgradeProcess.getCurrentSchemaVersion(
@@ -219,35 +217,59 @@ public class StartupHelperUtil {
 
 			throw new RuntimeException(msg);
 		}
-
-		if (!PortalUpgradeProcess.isInLatestSchemaVersion(
-				DataAccess.getConnection())) {
-
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Execute the upgrade tool first if you need to upgrade " +
-						"the portal to the latest schema version");
-			}
-		}
 	}
 
-	private static final String[] _UPGRADE_PROCESS_CLASS_NAMES = {
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_0",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_1",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_3",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_5",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_6",
-		"com.liferay.portal.upgrade.PortalUpgradeProcess"
-	};
+	private static boolean _isDBWarmed() {
+		boolean dbWarmed = true;
+
+		if (_dbNew || DBUpgrader.isUpgradeDatabaseAutoRunEnabled()) {
+			dbWarmed = false;
+		}
+
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		File dataFile = bundleContext.getDataFile("dbWarmed.data");
+
+		if (dbWarmed && dataFile.exists()) {
+			try {
+				Deserializer deserializer = new Deserializer(
+					ByteBuffer.wrap(FileUtil.getBytes(dataFile)));
+
+				if (deserializer.readBoolean()) {
+					dbWarmed = false;
+				}
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn("Unable to read DB warmed state", exception);
+				}
+			}
+		}
+
+		Serializer serializer = new Serializer();
+
+		serializer.writeBoolean(_upgrading);
+
+		try (OutputStream outputStream = new FileOutputStream(dataFile)) {
+			serializer.writeTo(outputStream);
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to write DB warmed state", exception);
+			}
+		}
+
+		return dbWarmed;
+	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		StartupHelperUtil.class);
 
-	private static boolean _dbNew;
-	private static boolean _dropIndexes;
-	private static boolean _startupFinished;
-	private static boolean _upgraded;
-	private static boolean _upgrading;
-	private static boolean _verified;
+	private static volatile boolean _dbNew;
+	private static final DCLSingleton<Boolean> _dbWarmedSCLSingleton =
+		new DCLSingleton<>();
+	private static boolean _newRelease;
+	private static volatile ServiceRegistration<?> _serviceRegistration;
+	private static volatile boolean _upgrading;
 
 }

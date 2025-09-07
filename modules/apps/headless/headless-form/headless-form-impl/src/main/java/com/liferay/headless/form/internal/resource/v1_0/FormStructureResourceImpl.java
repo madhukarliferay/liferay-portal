@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.form.internal.resource.v1_0;
@@ -17,7 +8,7 @@ package com.liferay.headless.form.internal.resource.v1_0;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.headless.form.dto.v1_0.FormStructure;
-import com.liferay.headless.form.internal.dto.v1_0.util.StructureUtil;
+import com.liferay.headless.form.dto.v1_0.util.StructureUtil;
 import com.liferay.headless.form.resource.v1_0.FormStructureResource;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Portal;
@@ -31,11 +22,13 @@ import org.osgi.service.component.annotations.ServiceScope;
 /**
  * @author Javier Gamarra
  * @author Victor Oliveira
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/form-structure.properties",
 	scope = ServiceScope.PROTOTYPE, service = FormStructureResource.class
 )
+@Deprecated
 public class FormStructureResourceImpl extends BaseFormStructureResourceImpl {
 
 	@Override
@@ -43,6 +36,7 @@ public class FormStructureResourceImpl extends BaseFormStructureResourceImpl {
 		throws Exception {
 
 		return StructureUtil.toFormStructure(
+			contextAcceptLanguage.isAcceptAllLanguages(),
 			_ddmStructureLocalService.getStructure(formStructureId),
 			contextAcceptLanguage.getPreferredLocale(), _portal,
 			_userLocalService);
@@ -59,8 +53,9 @@ public class FormStructureResourceImpl extends BaseFormStructureResourceImpl {
 					siteId, _getClassNameId(), pagination.getStartPosition(),
 					pagination.getEndPosition(), null),
 				ddmStructure -> StructureUtil.toFormStructure(
-					ddmStructure, contextAcceptLanguage.getPreferredLocale(),
-					_portal, _userLocalService)),
+					contextAcceptLanguage.isAcceptAllLanguages(), ddmStructure,
+					contextAcceptLanguage.getPreferredLocale(), _portal,
+					_userLocalService)),
 			pagination,
 			_ddmStructureLocalService.getStructuresCount(
 				siteId, _getClassNameId()));

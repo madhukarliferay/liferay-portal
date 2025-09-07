@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.reading.time.internal.calculator;
@@ -19,6 +10,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.reading.time.calculator.ReadingTimeCalculator;
 
 import java.time.Duration;
@@ -26,9 +18,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -36,18 +29,22 @@ import org.junit.Test;
  */
 public class ReadingTimeCalculatorImplTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testAcceptsHTMLAndText() {
 		ReadingTimeCalculator readingTimeCalculator =
 			new ReadingTimeCalculatorImpl();
 
 		for (String contentType : _supportedContentTypes) {
-			Optional<Duration> readingTimeOptional =
-				readingTimeCalculator.calculate(
-					StringUtil.randomString(), contentType,
-					LocaleUtil.getDefault());
+			Duration readingTimeDuration = readingTimeCalculator.calculate(
+				StringUtil.randomString(), contentType,
+				LocaleUtil.getDefault());
 
-			Assert.assertTrue(readingTimeOptional.isPresent());
+			Assert.assertNotNull(readingTimeDuration);
 		}
 	}
 
@@ -66,7 +63,7 @@ public class ReadingTimeCalculatorImplTest {
 		Duration readingTimeDuration = _calculateReadingTime(
 			sb.toString(), "text/html", LocaleUtil.getDefault());
 
-		Assert.assertEquals(60 + 3 * 3, readingTimeDuration.getSeconds());
+		Assert.assertEquals(60 + (3 * 3), readingTimeDuration.getSeconds());
 	}
 
 	@Test
@@ -118,12 +115,11 @@ public class ReadingTimeCalculatorImplTest {
 		ReadingTimeCalculator readingTimeCalculator =
 			new ReadingTimeCalculatorImpl();
 
-		Optional<Duration> readingTimeOptional =
-			readingTimeCalculator.calculate(
-				StringUtil.randomString(), ContentTypes.APPLICATION_PDF,
-				LocaleUtil.getDefault());
+		Duration readingTimeDuration = readingTimeCalculator.calculate(
+			StringUtil.randomString(), ContentTypes.APPLICATION_PDF,
+			LocaleUtil.getDefault());
 
-		Assert.assertFalse(readingTimeOptional.isPresent());
+		Assert.assertNull(readingTimeDuration);
 	}
 
 	private Duration _calculateReadingTime(
@@ -132,10 +128,7 @@ public class ReadingTimeCalculatorImplTest {
 		ReadingTimeCalculator readingTimeCalculator =
 			new ReadingTimeCalculatorImpl();
 
-		Optional<Duration> durationOptional = readingTimeCalculator.calculate(
-			content, contentType, locale);
-
-		return durationOptional.get();
+		return readingTimeCalculator.calculate(content, contentType, locale);
 	}
 
 	private static final List<String> _supportedContentTypes = Arrays.asList(

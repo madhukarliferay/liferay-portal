@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -124,6 +115,10 @@ public class MBDiscussionPersistenceTest {
 
 		MBDiscussion newMBDiscussion = _persistence.create(pk);
 
+		newMBDiscussion.setMvccVersion(RandomTestUtil.nextLong());
+
+		newMBDiscussion.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newMBDiscussion.setUuid(RandomTestUtil.randomString());
 
 		newMBDiscussion.setGroupId(RandomTestUtil.nextLong());
@@ -151,6 +146,12 @@ public class MBDiscussionPersistenceTest {
 		MBDiscussion existingMBDiscussion = _persistence.findByPrimaryKey(
 			newMBDiscussion.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingMBDiscussion.getMvccVersion(),
+			newMBDiscussion.getMvccVersion());
+		Assert.assertEquals(
+			existingMBDiscussion.getCtCollectionId(),
+			newMBDiscussion.getCtCollectionId());
 		Assert.assertEquals(
 			existingMBDiscussion.getUuid(), newMBDiscussion.getUuid());
 		Assert.assertEquals(
@@ -211,13 +212,6 @@ public class MBDiscussionPersistenceTest {
 	}
 
 	@Test
-	public void testCountByClassNameId() throws Exception {
-		_persistence.countByClassNameId(RandomTestUtil.nextLong());
-
-		_persistence.countByClassNameId(0L);
-	}
-
-	@Test
 	public void testCountByThreadId() throws Exception {
 		_persistence.countByThreadId(RandomTestUtil.nextLong());
 
@@ -257,9 +251,10 @@ public class MBDiscussionPersistenceTest {
 
 	protected OrderByComparator<MBDiscussion> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"MBDiscussion", "uuid", true, "discussionId", true, "groupId", true,
-			"companyId", true, "userId", true, "userName", true, "createDate",
-			true, "modifiedDate", true, "classNameId", true, "classPK", true,
+			"MBDiscussion", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "discussionId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "classNameId", true, "classPK", true,
 			"threadId", true, "lastPublishDate", true);
 	}
 
@@ -482,39 +477,88 @@ public class MBDiscussionPersistenceTest {
 
 		_persistence.clearCache();
 
-		MBDiscussion existingMBDiscussion = _persistence.findByPrimaryKey(
-			newMBDiscussion.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newMBDiscussion.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingMBDiscussion.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingMBDiscussion, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		MBDiscussion newMBDiscussion = addMBDiscussion();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			MBDiscussion.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"discussionId", newMBDiscussion.getDiscussionId()));
+
+		List<MBDiscussion> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(MBDiscussion mbDiscussion) {
 		Assert.assertEquals(
-			Long.valueOf(existingMBDiscussion.getGroupId()),
+			mbDiscussion.getUuid(),
+			ReflectionTestUtil.invoke(
+				mbDiscussion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(mbDiscussion.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBDiscussion, "getOriginalGroupId", new Class<?>[0]));
+				mbDiscussion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingMBDiscussion.getThreadId()),
+			Long.valueOf(mbDiscussion.getThreadId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBDiscussion, "getOriginalThreadId", new Class<?>[0]));
+				mbDiscussion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "threadId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingMBDiscussion.getClassNameId()),
+			Long.valueOf(mbDiscussion.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBDiscussion, "getOriginalClassNameId",
-				new Class<?>[0]));
+				mbDiscussion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingMBDiscussion.getClassPK()),
+			Long.valueOf(mbDiscussion.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingMBDiscussion, "getOriginalClassPK", new Class<?>[0]));
+				mbDiscussion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected MBDiscussion addMBDiscussion() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		MBDiscussion mbDiscussion = _persistence.create(pk);
+
+		mbDiscussion.setMvccVersion(RandomTestUtil.nextLong());
+
+		mbDiscussion.setCtCollectionId(RandomTestUtil.nextLong());
 
 		mbDiscussion.setUuid(RandomTestUtil.randomString());
 

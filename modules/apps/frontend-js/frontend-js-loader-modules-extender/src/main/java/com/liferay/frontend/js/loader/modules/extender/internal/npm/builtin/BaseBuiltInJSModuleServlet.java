@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.js.loader.modules.extender.internal.npm.builtin;
 
 import com.liferay.frontend.js.loader.modules.extender.npm.JSBundle;
+import com.liferay.frontend.js.loader.modules.extender.npm.JSModule;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackage;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
@@ -23,28 +15,24 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MimeTypes;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-
 import java.util.Locale;
-
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -65,17 +53,16 @@ public abstract class BaseBuiltInJSModuleServlet extends HttpServlet {
 
 	@Override
 	public void destroy() {
-		_bundleSymbolicNameServiceTrackerMap.close();
+		_serviceTrackerMap.close();
 	}
 
 	@Override
 	public void init() {
 		Bundle bundle = FrameworkUtil.getBundle(getClass());
 
-		_bundleSymbolicNameServiceTrackerMap =
-			ServiceTrackerMapFactory.openSingleValueMap(
-				bundle.getBundleContext(), ResourceBundleLoader.class,
-				"bundle.symbolic.name");
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			bundle.getBundleContext(), ResourceBundleLoader.class,
+			"bundle.symbolic.name");
 	}
 
 	protected abstract MimeTypes getMimeTypes();
@@ -122,59 +109,59 @@ public abstract class BaseBuiltInJSModuleServlet extends HttpServlet {
 			String pathInfo)
 		throws IOException {
 
+		InputStream inputStream = null;
+
+		String extension = FileUtil.getExtension(pathInfo);
 		JSPackage jsPackage = resourceDescriptor.getJsPackage();
 
-		URL url = null;
+		String moduleName = resourceDescriptor.getPackagePath();
 
-		if (PropsValues.WORK_DIR_OVERRIDE_ENABLED && pathInfo.endsWith(".js")) {
-			JSBundle jsBundle = jsPackage.getJSBundle();
+		if (moduleName != null) {
+			if (extension.equals("map")) {
+				JSModule jsModule = jsPackage.getJSModule(
+					moduleName.substring(0, moduleName.length() - 7));
 
-			File file = new File(
-				_workDirName,
-				StringBundler.concat(
-					jsBundle.getName(), StringPool.DASH, jsBundle.getVersion(),
-					File.separator, resourceDescriptor.getPackagePath()));
-
-			if (file.exists()) {
-				try {
-					URI uri = file.toURI();
-
-					url = uri.toURL();
+				if (jsModule != null) {
+					inputStream = jsModule.getSourceMapInputStream();
 				}
-				catch (MalformedURLException murle) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Invalid override URL " + file.toString(), murle);
-					}
+			}
+			else {
+				if (extension.equals("js")) {
+					moduleName = moduleName.substring(
+						0, moduleName.length() - 3);
+				}
+
+				JSModule jsModule = jsPackage.getJSModule(moduleName);
+
+				if (jsModule != null) {
+					inputStream = jsModule.getInputStream();
 				}
 			}
 		}
-
-		if (url == null) {
-			url = jsPackage.getResourceURL(resourceDescriptor.getPackagePath());
+		else {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Module name is null");
+			}
 		}
 
-		if (url == null) {
+		if (inputStream == null) {
 			httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
 
 			return;
 		}
 
-		try (InputStream inputStream = url.openStream()) {
+		try {
 			String content = StringUtil.read(inputStream);
 
 			httpServletResponse.setCharacterEncoding(StringPool.UTF8);
 
 			PrintWriter printWriter = httpServletResponse.getWriter();
 
-			String extension = FileUtil.getExtension(pathInfo);
-
 			if (extension.equals("js")) {
 				JSBundle jsBundle = jsPackage.getJSBundle();
 
 				ResourceBundleLoader resourceBundleLoader =
-					_bundleSymbolicNameServiceTrackerMap.getService(
-						jsBundle.getName());
+					_serviceTrackerMap.getService(jsBundle.getName());
 
 				if (resourceBundleLoader != null) {
 					content = LanguageUtil.process(
@@ -185,12 +172,16 @@ public abstract class BaseBuiltInJSModuleServlet extends HttpServlet {
 
 			printWriter.print(content);
 		}
-		catch (IOException ioe) {
-			_log.error("Unable to read " + resourceDescriptor.toString(), ioe);
+		catch (IOException ioException) {
+			_log.error(
+				"Unable to read " + resourceDescriptor.toString(), ioException);
 
 			httpServletResponse.sendError(
 				HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 				"Unable to read file");
+		}
+		finally {
+			inputStream.close();
 		}
 	}
 
@@ -217,8 +208,7 @@ public abstract class BaseBuiltInJSModuleServlet extends HttpServlet {
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseBuiltInJSModuleServlet.class);
 
-	private ServiceTrackerMap<String, ResourceBundleLoader>
-		_bundleSymbolicNameServiceTrackerMap;
+	private ServiceTrackerMap<String, ResourceBundleLoader> _serviceTrackerMap;
 	private final String _workDirName;
 
 }

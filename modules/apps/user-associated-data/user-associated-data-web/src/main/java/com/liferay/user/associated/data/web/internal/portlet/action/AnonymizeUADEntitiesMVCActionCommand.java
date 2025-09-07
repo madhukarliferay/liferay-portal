@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.portlet.action;
@@ -18,18 +9,18 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.user.associated.data.anonymizer.UADAnonymizer;
+import com.liferay.user.associated.data.anonymizer.UADAnonymousUserProvider;
 import com.liferay.user.associated.data.constants.UserAssociatedDataPortletKeys;
 import com.liferay.user.associated.data.display.UADDisplay;
 import com.liferay.user.associated.data.web.internal.display.UADHierarchyDisplay;
-import com.liferay.user.associated.data.web.internal.util.UADAnonymizerHelper;
+
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
 
 import java.io.Serializable;
 
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -38,10 +29,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Noah Sherrill
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
-		"mvc.command.name=/anonymize_uad_entities"
+		"jakarta.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+		"mvc.command.name=/user_associated_data/anonymize_uad_entities"
 	},
 	service = MVCActionCommand.class
 )
@@ -55,7 +45,7 @@ public class AnonymizeUADEntitiesMVCActionCommand
 
 		User selectedUser = getSelectedUser(actionRequest);
 
-		User anonymousUser = _uadAnonymizerHelper.getAnonymousUser(
+		User anonymousUser = _uadAnonymousUserProvider.getAnonymousUser(
 			selectedUser.getCompanyId());
 
 		String applicationKey = ParamUtil.getString(
@@ -67,10 +57,11 @@ public class AnonymizeUADEntitiesMVCActionCommand
 		for (String entityType : getEntityTypes(actionRequest)) {
 			String[] primaryKeys = getPrimaryKeys(actionRequest, entityType);
 
-			UADAnonymizer entityUADAnonymizer = getUADAnonymizer(
-				actionRequest, entityType);
-			UADDisplay<?> entityUADDisplay = getUADDisplay(
-				actionRequest, entityType);
+			UADAnonymizer<Object> entityUADAnonymizer =
+				(UADAnonymizer<Object>)getUADAnonymizer(
+					actionRequest, entityType);
+			UADDisplay<Object> entityUADDisplay =
+				(UADDisplay<Object>)getUADDisplay(actionRequest, entityType);
 
 			for (String primaryKey : primaryKeys) {
 				_anonymize(
@@ -83,8 +74,8 @@ public class AnonymizeUADEntitiesMVCActionCommand
 	}
 
 	private void _anonymize(
-			User anonymousUser, UADAnonymizer entityUADAnonymizer,
-			UADDisplay<?> entityUADDisplay, String primaryKey,
+			User anonymousUser, UADAnonymizer<Object> entityUADAnonymizer,
+			UADDisplay<Object> entityUADDisplay, String primaryKey,
 			long selectedUserId, UADHierarchyDisplay uadHierarchyDisplay)
 		throws Exception {
 
@@ -96,20 +87,21 @@ public class AnonymizeUADEntitiesMVCActionCommand
 					entity, selectedUserId, anonymousUser);
 			}
 
-			Map<Class<?>, List<Serializable>> containerItemPKsMap =
+			Map<String, List<Serializable>> containerItemPKsMap =
 				uadHierarchyDisplay.getContainerItemPKsMap(
-					entityUADDisplay.getTypeClass(),
+					entityUADDisplay.getTypeKey(),
 					uadHierarchyDisplay.getPrimaryKey(entity), selectedUserId);
 
-			for (Map.Entry<Class<?>, List<Serializable>> entry :
+			for (Map.Entry<String, List<Serializable>> entry :
 					containerItemPKsMap.entrySet()) {
 
-				Class<?> containerItemClass = entry.getKey();
+				String typeKey = entry.getKey();
 
-				UADAnonymizer containerItemUADAnonymizer =
-					uadRegistry.getUADAnonymizer(containerItemClass.getName());
-				UADDisplay containerItemUADDisplay = uadRegistry.getUADDisplay(
-					containerItemClass.getName());
+				UADAnonymizer<Object> containerItemUADAnonymizer =
+					(UADAnonymizer<Object>)uadRegistry.getUADAnonymizer(
+						typeKey);
+				UADDisplay<Object> containerItemUADDisplay =
+					(UADDisplay<Object>)uadRegistry.getUADDisplay(typeKey);
 
 				doMultipleAction(
 					entry.getValue(),
@@ -129,6 +121,6 @@ public class AnonymizeUADEntitiesMVCActionCommand
 	}
 
 	@Reference
-	private UADAnonymizerHelper _uadAnonymizerHelper;
+	private UADAnonymousUserProvider _uadAnonymousUserProvider;
 
 }

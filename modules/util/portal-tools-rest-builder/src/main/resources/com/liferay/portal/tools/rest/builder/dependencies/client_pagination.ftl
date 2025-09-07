@@ -1,6 +1,6 @@
 package ${configYAML.apiPackagePath}.client.pagination;
 
-import javax.annotation.Generated;
+import ${configYAML.javaEEPackage}.annotation.Generated;
 
 /**
  * @author ${configYAML.author}
@@ -14,6 +14,10 @@ public class Pagination {
 	}
 
 	public int getEndPosition() {
+		if ((_page < 0) || (_pageSize < 0)) {
+			return -1;
+		}
+
 		return _page * _pageSize;
 	}
 
@@ -26,7 +30,23 @@ public class Pagination {
 	}
 
 	public int getStartPosition() {
+		if ((_page < 0) || (_pageSize < 0)) {
+			return -1;
+		}
+
 		return (_page - 1) * _pageSize;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{\"page\": ");
+
+		sb.append(_page);
+		sb.append(", \"pageSize\": ");
+		sb.append(_pageSize);
+		sb.append("}");
+
+		return sb.toString();
 	}
 
 	private Pagination(int page, int pageSize) {

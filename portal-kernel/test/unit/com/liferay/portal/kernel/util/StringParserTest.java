@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
@@ -30,96 +21,100 @@ public class StringParserTest {
 		StringParser stringParser = StringParser.create(
 			"/{nodeId:\\d+}/{title:[^/]+}/");
 
-		Map<String, String> params = HashMapBuilder.put(
-			"nodeId", "123"
-		).put(
-			"title", "abc"
-		).build();
+		Assert.assertEquals(
+			"/123/abc/",
+			stringParser.build(
+				HashMapBuilder.put(
+					"nodeId", "123"
+				).put(
+					"title", "abc"
+				).build()));
 
-		Assert.assertEquals("/123/abc/", stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"nodeId", "1a3"
+				).put(
+					"title", "abc"
+				).build()));
 
-		params = HashMapBuilder.put(
-			"nodeId", "1a3"
-		).put(
-			"title", "abc"
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
-
-		params = HashMapBuilder.put(
-			"nodeId", "123"
-		).put(
-			"title", "ab/c"
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"nodeId", "123"
+				).put(
+					"title", "ab/c"
+				).build()));
 
 		stringParser = StringParser.create("{mvcPathName}");
 
-		params = HashMapBuilder.put(
-			"mvcPathName", "test-path"
-		).build();
-
-		Assert.assertEquals("test-path", stringParser.build(params));
+		Assert.assertEquals(
+			"test-path",
+			stringParser.build(
+				HashMapBuilder.put(
+					"mvcPathName", "test-path"
+				).build()));
 
 		stringParser = StringParser.create("/maximized");
 
-		params = HashMapBuilder.put(
-			"nodeId", "123"
-		).put(
-			"title", "abc"
-		).build();
-
-		Assert.assertEquals("/maximized", stringParser.build(params));
+		Assert.assertEquals(
+			"/maximized",
+			stringParser.build(
+				HashMapBuilder.put(
+					"nodeId", "123"
+				).put(
+					"title", "abc"
+				).build()));
 
 		stringParser = StringParser.create(
 			"/{userIdAndInstanceId}/{type}/{urlTitle:(?!id/)[^/]+}");
 
-		params = HashMapBuilder.put(
-			"type", "abc"
-		).put(
-			"urlTitle", "xyz"
-		).put(
-			"userIdAndInstanceId", "123"
-		).build();
+		Assert.assertEquals(
+			"/123/abc/xyz",
+			stringParser.build(
+				HashMapBuilder.put(
+					"type", "abc"
+				).put(
+					"urlTitle", "xyz"
+				).put(
+					"userIdAndInstanceId", "123"
+				).build()));
 
-		Assert.assertEquals("/123/abc/xyz", stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"type", "abc"
+				).put(
+					"urlTitle", "id/xyz"
+				).put(
+					"userIdAndInstanceId", "123"
+				).build()));
 
-		params = HashMapBuilder.put(
-			"type", "abc"
-		).put(
-			"urlTitle", "id/xyz"
-		).put(
-			"userIdAndInstanceId", "123"
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
-
-		params = HashMapBuilder.put(
-			"type", "abc"
-		).put(
-			"urlTitle", "xy/z"
-		).put(
-			"userIdAndInstanceId", "123"
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"type", "abc"
+				).put(
+					"urlTitle", "xy/z"
+				).put(
+					"userIdAndInstanceId", "123"
+				).build()));
 
 		stringParser = StringParser.create("/{test}");
 
-		params = HashMapBuilder.put(
-			"test", "a."
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"test", "a."
+				).build()));
 
 		stringParser = StringParser.create("/{test:\\d+}");
 
-		params = HashMapBuilder.put(
-			"test", "1a"
-		).build();
-
-		Assert.assertNull(stringParser.build(params));
+		Assert.assertNull(
+			stringParser.build(
+				HashMapBuilder.put(
+					"test", "1a"
+				).build()));
 	}
 
 	@Test

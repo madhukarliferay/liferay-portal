@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
@@ -22,6 +13,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,35 +21,32 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 /**
  * @author Leonardo Barros
  */
-@PrepareForTest(LanguageUtil.class)
-@RunWith(MockitoJUnitRunner.class)
-public class SetOptionsFunctionTest extends PowerMockito {
+public class SetOptionsFunctionTest {
 
-	@Before
-	public void setUp() throws Exception {
-		_setOptionsFunction = new SetOptionsFunction(_jsonFactory);
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
+	@BeforeClass
+	public static void setUpClass() {
 		_setUpLanguageUtil();
 	}
 
 	@Test
 	public void testApply() {
-		when(
+		Mockito.when(
 			_language.getLanguageId(new Locale("pt", "BR"))
 		).thenReturn(
 			"pt_BR"
@@ -77,14 +66,13 @@ public class SetOptionsFunctionTest extends PowerMockito {
 
 		jsonObject.put("pt_BR", jsonArray);
 
-		String json = jsonObject.toJSONString();
+		String json = jsonObject.toString();
 
-		DefaultDDMExpressionObserver defaultDDMExpressionObserver =
-			new DefaultDDMExpressionObserver();
+		DefaultDDMExpressionObserver spyDefaultDDMExpressionObserver =
+			Mockito.spy(new DefaultDDMExpressionObserver());
 
-		DefaultDDMExpressionObserver spy = spy(defaultDDMExpressionObserver);
-
-		_setOptionsFunction.setDDMExpressionObserver(spy);
+		_setOptionsFunction.setDDMExpressionObserver(
+			spyDefaultDDMExpressionObserver);
 
 		_setOptionsFunction.setDDMExpressionParameterAccessor(
 			new DefaultDDMExpressionParameterAccessor());
@@ -95,7 +83,7 @@ public class SetOptionsFunctionTest extends PowerMockito {
 			ArgumentCaptor.forClass(UpdateFieldPropertyRequest.class);
 
 		Mockito.verify(
-			spy, Mockito.times(1)
+			spyDefaultDDMExpressionObserver, Mockito.times(1)
 		).updateFieldProperty(
 			argumentCaptor.capture()
 		);
@@ -126,18 +114,17 @@ public class SetOptionsFunctionTest extends PowerMockito {
 
 	@Test
 	public void testInvalidJSON() {
-		when(
+		Mockito.when(
 			_language.getLanguageId(new Locale("pt", "BR"))
 		).thenReturn(
 			"pt_BR"
 		);
 
-		DefaultDDMExpressionObserver defaultDDMExpressionObserver =
-			new DefaultDDMExpressionObserver();
+		DefaultDDMExpressionObserver spyDefaultDDMExpressionObserver =
+			Mockito.spy(new DefaultDDMExpressionObserver());
 
-		DefaultDDMExpressionObserver spy = spy(defaultDDMExpressionObserver);
-
-		_setOptionsFunction.setDDMExpressionObserver(spy);
+		_setOptionsFunction.setDDMExpressionObserver(
+			spyDefaultDDMExpressionObserver);
 
 		_setOptionsFunction.setDDMExpressionParameterAccessor(
 			new DefaultDDMExpressionParameterAccessor());
@@ -148,7 +135,7 @@ public class SetOptionsFunctionTest extends PowerMockito {
 			ArgumentCaptor.forClass(UpdateFieldPropertyRequest.class);
 
 		Mockito.verify(
-			spy, Mockito.times(1)
+			spyDefaultDDMExpressionObserver, Mockito.times(1)
 		).updateFieldProperty(
 			argumentCaptor.capture()
 		);
@@ -176,6 +163,12 @@ public class SetOptionsFunctionTest extends PowerMockito {
 		Assert.assertFalse(_setOptionsFunction.apply("field", "json"));
 	}
 
+	private static void _setUpLanguageUtil() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		languageUtil.setLanguage(_language);
+	}
+
 	private JSONObject _createJSONObject(String label, String value) {
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
@@ -188,17 +181,10 @@ public class SetOptionsFunctionTest extends PowerMockito {
 		return jsonObject;
 	}
 
-	private void _setUpLanguageUtil() {
-		LanguageUtil languageUtil = new LanguageUtil();
-
-		languageUtil.setLanguage(_language);
-	}
-
 	private static final JSONFactory _jsonFactory = new JSONFactoryImpl();
+	private static final Language _language = Mockito.mock(Language.class);
 
-	@Mock
-	private Language _language;
-
-	private SetOptionsFunction _setOptionsFunction;
+	private final SetOptionsFunction _setOptionsFunction =
+		new SetOptionsFunction(_jsonFactory);
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.util;
@@ -46,36 +37,38 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		if (publicId != null) {
 			for (KeyValuePair kvp : _PUBLIC_IDS) {
 				if (publicId.equals(kvp.getKey())) {
-					InputStream is = classLoader.getResourceAsStream(
+					InputStream inputStream = classLoader.getResourceAsStream(
 						_DEFINITIONS_PATH + kvp.getValue());
 
-					if (is == null) {
-						is = classLoader.getResourceAsStream(kvp.getValue());
+					if (inputStream == null) {
+						inputStream = classLoader.getResourceAsStream(
+							kvp.getValue());
 					}
 
 					if (_log.isDebugEnabled()) {
 						_log.debug("Entity found for public id " + publicId);
 					}
 
-					return new InputSource(is);
+					return new InputSource(inputStream);
 				}
 			}
 		}
 		else if (systemId != null) {
 			for (KeyValuePair kvp : _SYSTEM_IDS) {
 				if (systemId.equals(kvp.getKey())) {
-					InputStream is = classLoader.getResourceAsStream(
+					InputStream inputStream = classLoader.getResourceAsStream(
 						_DEFINITIONS_PATH + kvp.getValue());
 
-					if (is == null) {
-						is = classLoader.getResourceAsStream(kvp.getValue());
+					if (inputStream == null) {
+						inputStream = classLoader.getResourceAsStream(
+							kvp.getValue());
 					}
 
 					if (_log.isDebugEnabled()) {
 						_log.debug("Entity found for system id " + systemId);
 					}
 
-					InputSource inputSource = new InputSource(is);
+					InputSource inputSource = new InputSource(inputStream);
 
 					inputSource.setSystemId(kvp.getKey());
 
@@ -152,6 +145,8 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"-//Liferay//DTD Display 7.3.0//EN", "liferay-display_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Display 7.4.0//EN", "liferay-display_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Friendly URL Routes 6.0.0//EN",
 			"liferay-friendly-url-routes_6_0_0.dtd"),
 		new KeyValuePair(
@@ -173,6 +168,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Friendly URL Routes 7.3.0//EN",
 			"liferay-friendly-url-routes_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Friendly URL Routes 7.4.0//EN",
+			"liferay-friendly-url-routes_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Hook 5.1.0//EN", "liferay-hook_5_1_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Hook 5.2.0//EN", "liferay-hook_5_2_0.dtd"),
@@ -190,6 +188,8 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Hook 7.2.0//EN", "liferay-hook_7_2_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Hook 7.3.0//EN", "liferay-hook_7_3_0.dtd"),
+		new KeyValuePair(
+			"-//Liferay//DTD Hook 7.4.0//EN", "liferay-hook_7_4_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Layout Templates 3.6.0//EN",
 			"liferay-layout-templates_3_6_0.dtd"),
@@ -230,6 +230,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Layout Templates 7.3.0//EN",
 			"liferay-layout-templates_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Layout Templates 7.4.0//EN",
+			"liferay-layout-templates_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Look and Feel 3.5.0//EN",
 			"liferay-look-and-feel_3_5_0.dtd"),
 		new KeyValuePair(
@@ -269,6 +272,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Look and Feel 7.3.0//EN",
 			"liferay-look-and-feel_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Look and Feel 7.4.0//EN",
+			"liferay-look-and-feel_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Plugin Package 4.3.0//EN",
 			"liferay-plugin-package_4_3_0.dtd"),
 		new KeyValuePair(
@@ -302,6 +308,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Plugin Package 7.3.0//EN",
 			"liferay-plugin-package_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Plugin Package 7.4.0//EN",
+			"liferay-plugin-package_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Plugin Repository 4.3.0//EN",
 			"liferay-plugin-repository_4_3_0.dtd"),
 		new KeyValuePair(
@@ -334,6 +343,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"-//Liferay//DTD Plugin Repository 7.3.0//EN",
 			"liferay-plugin-repository_7_3_0.dtd"),
+		new KeyValuePair(
+			"-//Liferay//DTD Plugin Repository 7.4.0//EN",
+			"liferay-plugin-repository_7_4_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Portlet Application 3.5.0//EN",
 			"liferay-portlet-app_3_5_0.dtd"),
@@ -395,6 +407,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Portlet Application 7.3.0//EN",
 			"liferay-portlet-app_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Portlet Application 7.4.0//EN",
+			"liferay-portlet-app_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Resource Action Mapping 6.0.0//EN",
 			"liferay-resource-action-mapping_6_0_0.dtd"),
 		new KeyValuePair(
@@ -415,6 +430,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"-//Liferay//DTD Resource Action Mapping 7.3.0//EN",
 			"liferay-resource-action-mapping_7_3_0.dtd"),
+		new KeyValuePair(
+			"-//Liferay//DTD Resource Action Mapping 7.4.0//EN",
+			"liferay-resource-action-mapping_7_4_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Service Builder 3.5.0//EN",
 			"liferay-service-builder_3_5_0.dtd"),
@@ -467,6 +485,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Service Builder 7.3.0//EN",
 			"liferay-service-builder_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Service Builder 7.4.0//EN",
+			"liferay-service-builder_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD Social 6.1.0//EN", "liferay-social_6_1_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Social 6.2.0//EN", "liferay-social_6_2_0.dtd"),
@@ -478,6 +499,8 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Social 7.2.0//EN", "liferay-social_7_2_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Social 7.3.0//EN", "liferay-social_7_3_0.dtd"),
+		new KeyValuePair(
+			"-//Liferay//DTD Social 7.4.0//EN", "liferay-social_7_4_0.dtd"),
 		new KeyValuePair(
 			"-//Liferay//DTD Theme Loader 4.3.0//EN",
 			"liferay-theme-loader_4_3_0.dtd"),
@@ -512,6 +535,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"-//Liferay//DTD Theme Loader 7.3.0//EN",
 			"liferay-theme-loader_7_3_0.dtd"),
 		new KeyValuePair(
+			"-//Liferay//DTD Theme Loader 7.4.0//EN",
+			"liferay-theme-loader_7_4_0.dtd"),
+		new KeyValuePair(
 			"-//Liferay//DTD User Notification Definition 6.2.0//EN",
 			"liferay-user-notification-definitions_6_2_0.dtd"),
 		new KeyValuePair(
@@ -526,6 +552,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"-//Liferay//DTD User Notification Definition 7.3.0//EN",
 			"liferay-user-notification-definitions_7_3_0.dtd"),
+		new KeyValuePair(
+			"-//Liferay//DTD User Notification Definition 7.4.0//EN",
+			"liferay-user-notification-definitions_7_4_0.dtd"),
 		new KeyValuePair(
 			"-//MuleSource //DTD mule-configuration XML V1.0//EN",
 			"mule-configuration.dtd"),
@@ -577,6 +606,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"http://xmlns.jcp.org/xml/ns/portlet/portlet-app_3_0.xsd",
 			"portlet-app_3_0.xsd"),
 		new KeyValuePair(
+			"http://jakarta.ee/xml/ns/portlet/portlet-app_4_0.xsd",
+			"portlet-app_4_0.xsd"),
+		new KeyValuePair(
 			"http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
 			"web-app_2_4.xsd"),
 		new KeyValuePair(
@@ -607,6 +639,9 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 			"http://www.liferay.com/dtd/liferay-ddm-structure_7_1_0.xsd",
 			"liferay-ddm-structure_7_1_0.xsd"),
 		new KeyValuePair(
+			"http://www.liferay.com/dtd/liferay-jsp-view-state_1_0_0.xsd",
+			"liferay-jsp-view-state_1_0_0.xsd"),
+		new KeyValuePair(
 			"http://www.liferay.com/dtd/liferay-workflow-definition_6_0_0.xsd",
 			"liferay-workflow-definition_6_0_0.xsd"),
 		new KeyValuePair(
@@ -627,7 +662,29 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"http://www.liferay.com/dtd/liferay-workflow-definition_7_3_0.xsd",
 			"liferay-workflow-definition_7_3_0.xsd"),
-		new KeyValuePair("http://www.w3.org/2001/xml.xsd", "xml.xsd")
+		new KeyValuePair(
+			"http://www.liferay.com/dtd/liferay-workflow-definition_7_4_0.xsd",
+			"liferay-workflow-definition_7_4_0.xsd"),
+		new KeyValuePair("http://www.w3.org/2001/xml.xsd", "xml.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee/jakartaee_10.xsd",
+			"jakartaee_10.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee" +
+				"/jakartaee_web_services_client_2_0.xsd",
+			"jakartaee_web_services_client_2_0.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee/jsp_3_1.xsd", "jsp_3_1.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd",
+			"web-app_6_0.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee/web-common_6_0.xsd",
+			"web-common_6_0.xsd"),
+		new KeyValuePair(
+			"https://jakarta.ee/xml/ns/jakartaee/web-fragment_6_0.xsd",
+			"web-fragment_6_0.xsd"),
+		new KeyValuePair("https://www.w3.org/2001/xml.xsd", "xml.xsd")
 	};
 
 	private static final Log _log = LogFactoryUtil.getLog(EntityResolver.class);

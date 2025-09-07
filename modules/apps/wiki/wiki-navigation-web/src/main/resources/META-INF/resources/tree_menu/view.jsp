@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,40 +10,48 @@
 <%
 String title = ParamUtil.getString(request, "title", wikiGroupServiceConfiguration.frontPageName());
 
-String portletId = PortletProviderUtil.getPortletId(WikiPage.class.getName(), PortletProvider.Action.VIEW);
-
-PortletURL viewURL = liferayPortletResponse.createRenderURL(portletId);
-
-viewURL.setParameter("mvcRenderCommandName", "/wiki/view_page");
+PortletURL viewURL = PortletURLBuilder.createRenderURL(
+	liferayPortletResponse, PortletProviderUtil.getPortletId(WikiPage.class.getName(), PortletProvider.Action.VIEW)
+).setMVCRenderCommandName(
+	"/wiki/view_page"
+).buildPortletURL();
 
 List<MenuItem> menuItems = MenuItem.fromWikiNode(selNodeId, depth, viewURL);
 %>
 
 <c:choose>
 	<c:when test="<%= !menuItems.isEmpty() %>">
-		<%= _buildTreeMenuHTML(menuItems, title, true) %>
+		<div class="loading tree-view-container">
+			<span aria-hidden="true" class="loading-animation loading-animation-sm"></span>
+			<%= _buildTreeMenuHTML(menuItems, title, true) %>
 
-		<aui:script use="aui-tree-view">
-			var wikiPageList = A.one('.wiki-navigation-portlet-tree-menu .tree-menu');
+			<aui:script use="aui-tree-view">
+				var wikiPageList = A.one(
+					'.wiki-navigation-portlet-tree-menu .loading .tree-menu'
+				);
+				var wikiPageListContainer = wikiPageList.ancestor('.tree-view-container');
 
-			var treeView = new A.TreeView({
-				contentBox: wikiPageList
-			}).render();
+				var treeView = new A.TreeView({
+					contentBox: wikiPageList,
+				}).render();
 
-			var selected = wikiPageList.one('.tree-node .tag-selected');
+				wikiPageListContainer.removeClass('loading');
 
-			if (selected) {
-				var selectedChild = treeView.getNodeByChild(selected);
+				var selected = wikiPageList.one('.tree-node .tag-selected');
 
-				selectedChild.expand();
+				if (selected) {
+					var selectedChild = treeView.getNodeByChild(selected);
 
-				selectedChild.eachParent(function(node) {
-					if (node instanceof A.TreeNode) {
-						node.expand();
-					}
-				});
-			}
-		</aui:script>
+					selectedChild.expand();
+
+					selectedChild.eachParent((node) => {
+						if (node instanceof A.TreeNode) {
+							node.expand();
+						}
+					});
+				}
+			</aui:script>
+		</div>
 	</c:when>
 	<c:otherwise>
 		<liferay-ui:message key="no-wiki-pages-were-found" />
@@ -68,7 +67,7 @@ private String _buildTreeMenuHTML(List<MenuItem> menuItems, String curTitle, boo
 	}
 
 	for (MenuItem menuItem : menuItems) {
-		String label = menuItem.getLabel();
+		String name = menuItem.getName();
 		String url = menuItem.getURL();
 
 		sb.append("<li class=\"tree-node\">");
@@ -76,18 +75,18 @@ private String _buildTreeMenuHTML(List<MenuItem> menuItems, String curTitle, boo
 		if (Validator.isNotNull(url)) {
 			sb.append("<a ");
 
-			if (label.equals(curTitle)) {
+			if (name.equals(curTitle)) {
 				sb.append("class=\"tag-selected\" ");
 			}
 
 			sb.append("href=\"");
 			sb.append(url);
 			sb.append("\">");
-			sb.append(label);
+			sb.append(name);
 			sb.append("</a>");
 		}
 		else {
-			sb.append(label);
+			sb.append(name);
 		}
 
 		if (!menuItem.getChildren().isEmpty()) {

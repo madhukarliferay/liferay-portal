@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
@@ -22,6 +13,7 @@ import com.liferay.portal.kernel.model.LocalizedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedAuditedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 import java.util.Locale;
@@ -42,10 +34,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface DDMContentModel
-	extends BaseModel<DDMContent>, GroupedModel, LocalizedModel, MVCCModel,
-			ShardedModel, StagedAuditedModel {
+	extends BaseModel<DDMContent>, CTModel<DDMContent>, GroupedModel,
+			LocalizedModel, MVCCModel, ShardedModel, StagedAuditedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a ddm content model instance should use the {@link DDMContent} interface instead.
@@ -56,6 +48,7 @@ public interface DDMContentModel
 	 *
 	 * @return the primary key of this ddm content
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -63,6 +56,7 @@ public interface DDMContentModel
 	 *
 	 * @param primaryKey the primary key of this ddm content
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -80,6 +74,22 @@ public interface DDMContentModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this ddm content.
+	 *
+	 * @return the ct collection ID of this ddm content
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this ddm content.
+	 *
+	 * @param ctCollectionId the ct collection ID of this ddm content
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this ddm content.
@@ -366,5 +376,12 @@ public interface DDMContentModel
 	@Override
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
+
+	@Override
+	public DDMContent cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

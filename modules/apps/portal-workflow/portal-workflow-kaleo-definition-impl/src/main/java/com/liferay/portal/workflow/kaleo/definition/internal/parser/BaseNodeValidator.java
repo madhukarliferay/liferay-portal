@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.definition.internal.parser;
@@ -22,9 +13,8 @@ import com.liferay.portal.workflow.kaleo.definition.Transition;
 import com.liferay.portal.workflow.kaleo.definition.exception.KaleoDefinitionValidationException;
 import com.liferay.portal.workflow.kaleo.definition.parser.NodeValidator;
 
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Michael C. Han
@@ -38,30 +28,57 @@ public abstract class BaseNodeValidator<T extends Node>
 
 		doValidate(definition, node);
 
-		validateTransitions(node.getOutgoingTransitions());
-
-		validateNotifications(node);
+		_validateLabel(node);
+		_validateName(node);
+		_validateNotifications(node);
+		_validateTransitions(node.getOutgoingTransitions());
 	}
 
 	protected abstract void doValidate(Definition definition, T node)
 		throws KaleoDefinitionValidationException;
 
-	protected void validateNotifications(T node)
+	private void _validateLabel(T node)
 		throws KaleoDefinitionValidationException {
 
-		Set<Notification> notifications = node.getNotifications();
+		Map<Locale, String> labelMap = node.getLabelMap();
 
-		Stream<Notification> notificationsStream = notifications.stream();
+		if (labelMap == null) {
+			return;
+		}
 
-		if (notificationsStream.anyMatch(
-				notification -> Validator.isNull(notification.getTemplate()))) {
+		for (Map.Entry<Locale, String> entry : labelMap.entrySet()) {
+			String value = entry.getValue();
 
-			throw new KaleoDefinitionValidationException.
-				EmptyNotificationTemplate(node.getName());
+			if (value.length() > _NODE_VALUE_MAX_LENGTH) {
+				throw new KaleoDefinitionValidationException.
+					MustSetValidNodeNameLength(_NODE_VALUE_MAX_LENGTH, value);
+			}
 		}
 	}
 
-	protected void validateTransition(Transition transition)
+	private void _validateName(T node)
+		throws KaleoDefinitionValidationException {
+
+		String name = node.getName();
+
+		if (name.length() > _NODE_VALUE_MAX_LENGTH) {
+			throw new KaleoDefinitionValidationException.
+				MustSetValidNodeNameLength(_NODE_VALUE_MAX_LENGTH, name);
+		}
+	}
+
+	private void _validateNotifications(T node)
+		throws KaleoDefinitionValidationException {
+
+		for (Notification notification : node.getNotifications()) {
+			if (Validator.isNull(notification.getTemplate())) {
+				throw new KaleoDefinitionValidationException.
+					EmptyNotificationTemplate(node.getDefaultLabel());
+			}
+		}
+	}
+
+	private void _validateTransition(Transition transition)
 		throws KaleoDefinitionValidationException {
 
 		if (transition.getTargetNode() == null) {
@@ -70,12 +87,14 @@ public abstract class BaseNodeValidator<T extends Node>
 		}
 	}
 
-	protected void validateTransitions(Map<String, Transition> transitions)
+	private void _validateTransitions(Map<String, Transition> transitions)
 		throws KaleoDefinitionValidationException {
 
 		for (Transition transition : transitions.values()) {
-			validateTransition(transition);
+			_validateTransition(transition);
 		}
 	}
+
+	private static final int _NODE_VALUE_MAX_LENGTH = 200;
 
 }

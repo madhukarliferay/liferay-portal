@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.service;
 
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
+import com.liferay.portal.workflow.kaleo.model.KaleoTransition;
 
 /**
  * Provides a wrapper for {@link KaleoTransitionLocalService}.
@@ -27,6 +22,10 @@ public class KaleoTransitionLocalServiceWrapper
 	implements KaleoTransitionLocalService,
 			   ServiceWrapper<KaleoTransitionLocalService> {
 
+	public KaleoTransitionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public KaleoTransitionLocalServiceWrapper(
 		KaleoTransitionLocalService kaleoTransitionLocalService) {
 
@@ -36,34 +35,31 @@ public class KaleoTransitionLocalServiceWrapper
 	/**
 	 * Adds the kaleo transition to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoTransitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kaleoTransition the kaleo transition
 	 * @return the kaleo transition that was added
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-		addKaleoTransition(
-			com.liferay.portal.workflow.kaleo.model.KaleoTransition
-				kaleoTransition) {
-
+	public KaleoTransition addKaleoTransition(KaleoTransition kaleoTransition) {
 		return _kaleoTransitionLocalService.addKaleoTransition(kaleoTransition);
 	}
 
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-			addKaleoTransition(
-				long kaleoDefinitionVersionId, long kaleoNodeId,
-				com.liferay.portal.workflow.kaleo.definition.Transition
-					transition,
-				com.liferay.portal.workflow.kaleo.model.KaleoNode
-					sourceKaleoNode,
-				com.liferay.portal.workflow.kaleo.model.KaleoNode
-					targetKaleoNode,
-				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+	public KaleoTransition addKaleoTransition(
+			long kaleoDefinitionId, long kaleoDefinitionVersionId,
+			long kaleoNodeId,
+			com.liferay.portal.workflow.kaleo.definition.Transition transition,
+			com.liferay.portal.workflow.kaleo.model.KaleoNode sourceKaleoNode,
+			com.liferay.portal.workflow.kaleo.model.KaleoNode targetKaleoNode,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kaleoTransitionLocalService.addKaleoTransition(
-			kaleoDefinitionVersionId, kaleoNodeId, transition, sourceKaleoNode,
-			targetKaleoNode, serviceContext);
+			kaleoDefinitionId, kaleoDefinitionVersionId, kaleoNodeId,
+			transition, sourceKaleoNode, targetKaleoNode, serviceContext);
 	}
 
 	/**
@@ -73,11 +69,20 @@ public class KaleoTransitionLocalServiceWrapper
 	 * @return the new kaleo transition
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-		createKaleoTransition(long kaleoTransitionId) {
-
+	public KaleoTransition createKaleoTransition(long kaleoTransitionId) {
 		return _kaleoTransitionLocalService.createKaleoTransition(
 			kaleoTransitionId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _kaleoTransitionLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	@Override
@@ -97,14 +102,16 @@ public class KaleoTransitionLocalServiceWrapper
 	/**
 	 * Deletes the kaleo transition from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoTransitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kaleoTransition the kaleo transition
 	 * @return the kaleo transition that was removed
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-		deleteKaleoTransition(
-			com.liferay.portal.workflow.kaleo.model.KaleoTransition
-				kaleoTransition) {
+	public KaleoTransition deleteKaleoTransition(
+		KaleoTransition kaleoTransition) {
 
 		return _kaleoTransitionLocalService.deleteKaleoTransition(
 			kaleoTransition);
@@ -113,13 +120,16 @@ public class KaleoTransitionLocalServiceWrapper
 	/**
 	 * Deletes the kaleo transition with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoTransitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kaleoTransitionId the primary key of the kaleo transition
 	 * @return the kaleo transition that was removed
 	 * @throws PortalException if a kaleo transition with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-			deleteKaleoTransition(long kaleoTransitionId)
+	public KaleoTransition deleteKaleoTransition(long kaleoTransitionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kaleoTransitionLocalService.deleteKaleoTransition(
@@ -136,6 +146,18 @@ public class KaleoTransitionLocalServiceWrapper
 
 		return _kaleoTransitionLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _kaleoTransitionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _kaleoTransitionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -230,9 +252,7 @@ public class KaleoTransitionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-		fetchKaleoTransition(long kaleoTransitionId) {
-
+	public KaleoTransition fetchKaleoTransition(long kaleoTransitionId) {
 		return _kaleoTransitionLocalService.fetchKaleoTransition(
 			kaleoTransitionId);
 	}
@@ -245,8 +265,7 @@ public class KaleoTransitionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-			getDefaultKaleoTransition(long kaleoNodeId)
+	public KaleoTransition getDefaultKaleoTransition(long kaleoNodeId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kaleoTransitionLocalService.getDefaultKaleoTransition(
@@ -262,10 +281,9 @@ public class KaleoTransitionLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List
-		<com.liferay.portal.workflow.kaleo.model.KaleoTransition>
-			getKaleoDefinitionVersionKaleoTransitions(
-				long kaleoDefinitionVersionId) {
+	public java.util.List<KaleoTransition>
+		getKaleoDefinitionVersionKaleoTransitions(
+			long kaleoDefinitionVersionId) {
 
 		return _kaleoTransitionLocalService.
 			getKaleoDefinitionVersionKaleoTransitions(kaleoDefinitionVersionId);
@@ -279,8 +297,7 @@ public class KaleoTransitionLocalServiceWrapper
 	 * @throws PortalException if a kaleo transition with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-			getKaleoTransition(long kaleoTransitionId)
+	public KaleoTransition getKaleoTransition(long kaleoTransitionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kaleoTransitionLocalService.getKaleoTransition(
@@ -288,8 +305,7 @@ public class KaleoTransitionLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-			getKaleoTransition(long kaleoNodeId, String name)
+	public KaleoTransition getKaleoTransition(long kaleoNodeId, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kaleoTransitionLocalService.getKaleoTransition(
@@ -308,17 +324,15 @@ public class KaleoTransitionLocalServiceWrapper
 	 * @return the range of kaleo transitions
 	 */
 	@Override
-	public java.util.List
-		<com.liferay.portal.workflow.kaleo.model.KaleoTransition>
-			getKaleoTransitions(int start, int end) {
+	public java.util.List<KaleoTransition> getKaleoTransitions(
+		int start, int end) {
 
 		return _kaleoTransitionLocalService.getKaleoTransitions(start, end);
 	}
 
 	@Override
-	public java.util.List
-		<com.liferay.portal.workflow.kaleo.model.KaleoTransition>
-			getKaleoTransitions(long kaleoNodeId) {
+	public java.util.List<KaleoTransition> getKaleoTransitions(
+		long kaleoNodeId) {
 
 		return _kaleoTransitionLocalService.getKaleoTransitions(kaleoNodeId);
 	}
@@ -349,6 +363,9 @@ public class KaleoTransitionLocalServiceWrapper
 		return _kaleoTransitionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -360,17 +377,44 @@ public class KaleoTransitionLocalServiceWrapper
 	/**
 	 * Updates the kaleo transition in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect KaleoTransitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param kaleoTransition the kaleo transition
 	 * @return the kaleo transition that was updated
 	 */
 	@Override
-	public com.liferay.portal.workflow.kaleo.model.KaleoTransition
-		updateKaleoTransition(
-			com.liferay.portal.workflow.kaleo.model.KaleoTransition
-				kaleoTransition) {
+	public KaleoTransition updateKaleoTransition(
+		KaleoTransition kaleoTransition) {
 
 		return _kaleoTransitionLocalService.updateKaleoTransition(
 			kaleoTransition);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _kaleoTransitionLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<KaleoTransition> getCTPersistence() {
+		return _kaleoTransitionLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<KaleoTransition> getModelClass() {
+		return _kaleoTransitionLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<KaleoTransition>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _kaleoTransitionLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

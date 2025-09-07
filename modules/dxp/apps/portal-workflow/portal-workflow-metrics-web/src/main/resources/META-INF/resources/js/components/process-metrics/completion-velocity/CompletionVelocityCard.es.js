@@ -1,134 +1,125 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayLayout from '@clayui/layout';
+import ClayPanel from '@clayui/panel';
 import React, {useMemo} from 'react';
 
-import Panel from '../../../shared/components/Panel.es';
-import PromisesResolver from '../../../shared/components/request/PromisesResolver.es';
+import PanelHeaderWithOptions from '../../../shared/components/panel-header-with-options/PanelHeaderWithOptions.es';
+import PromisesResolver from '../../../shared/components/promises-resolver/PromisesResolver.es';
 import {useFetch} from '../../../shared/hooks/useFetch.es';
 import {useFilter} from '../../../shared/hooks/useFilter.es';
 import TimeRangeFilter from '../../filter/TimeRangeFilter.es';
 import VelocityUnitFilter from '../../filter/VelocityUnitFilter.es';
-import {isValidDate} from '../../filter/util/timeRangeUtil.es';
+import {getTimeRangeParams} from '../../filter/util/timeRangeUtil.es';
 import {getVelocityUnits} from '../../filter/util/velocityUnitUtil.es';
-import {Body} from './CompletionVelocityCardBody.es';
+import Body from './CompletionVelocityCardBody.es';
 
-const CompletionVelocityCard = ({routeParams}) => {
+function CompletionVelocityCard({routeParams}) {
 	const {processId} = routeParams;
-
 	const filterKeys = ['timeRange', 'velocityUnit'];
 	const prefixKey = 'completion';
 	const prefixKeys = [prefixKey];
-	const {dispatch, filterState = {}} = useFilter(filterKeys, prefixKeys);
 
 	const {
-		completionvelocityUnit: velocityUnit = [],
-		completiontimeRange: timeRange = []
-	} = filterState;
+		filterValues: {
+			completionDateEnd,
+			completionDateStart,
+			completionVelocityUnit: [velocity] = [],
+		},
+		filtersError,
+	} = useFilter({filterKeys, prefixKeys});
 
-	const timeRangeValues = timeRange.length ? timeRange[0] : {};
-	const {dateEnd, dateStart} = timeRangeValues;
-
-	let timeRangeParams = {};
-	if (isValidDate(dateEnd) && isValidDate(dateStart)) {
-		timeRangeParams = {
-			dateEnd: dateEnd.toISOString(),
-			dateStart: dateStart.toISOString()
-		};
-	}
-
-	const velocityUnitKeys = velocityUnit.length ? velocityUnit[0] : {};
+	const timeRange = useMemo(
+		() => getTimeRangeParams(completionDateStart, completionDateEnd),
+		[completionDateEnd, completionDateStart]
+	);
 
 	const velocityUnits = useMemo(
-		() => getVelocityUnits({dateEnd, dateStart}),
-		[dateEnd, dateStart]
+		() => getVelocityUnits(timeRange),
+		[timeRange]
 	);
 
-	const defaultUnit = useMemo(
-		() =>
-			velocityUnits.find(
-				velocityUnit => velocityUnit.defaultVelocityUnit
-			) || {},
-		[velocityUnits]
-	);
+	const defaultUnit =
+		velocityUnits.find((unit) => unit.defaultVelocityUnit) || {};
 
-	const velocityUnitValues = useMemo(
-		() =>
-			velocityUnits.find(
-				velocityUnit => velocityUnit.key === velocityUnitKeys.key
-			) || defaultUnit,
-		[defaultUnit, velocityUnits, velocityUnitKeys.key]
-	);
-	const {key: unit} = velocityUnitValues;
+	const velocityUnit =
+		velocityUnits.find((unit) => unit.key === velocity) || defaultUnit;
 
-	const {data, fetchData} = useFetch(`processes/${processId}/metric`, {
-		...timeRangeParams,
-		unit
+	const {key: unit} = velocityUnit;
+
+	const {data, fetchData} = useFetch({
+		params: {
+			...timeRange,
+			unit,
+		},
+		url: `/processes/${processId}/histograms/metrics`,
 	});
 
 	const promises = useMemo(() => {
-		if (timeRangeParams.dateEnd && timeRangeParams.dateStart && unit) {
+		if (timeRange.dateEnd && timeRange.dateStart && unit) {
 			return [fetchData()];
 		}
 
-		return [new Promise(() => {})];
-	}, [timeRangeParams.dateEnd, timeRangeParams.dateStart, fetchData, unit]);
+		return [new Promise((_, reject) => reject(filtersError))];
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		filtersError,
+		timeRange.dateEnd,
+		timeRange.dateStart,
+		routeParams,
+		unit,
+	]);
 
 	return (
 		<PromisesResolver promises={promises}>
-			<Panel>
+			<ClayPanel className="mt-4">
 				<CompletionVelocityCard.Header
-					dispatch={dispatch}
+					disableFilters={filtersError}
 					prefixKey={prefixKey}
-					timeRange={timeRangeValues}
+					timeRange={timeRange}
 				/>
 
 				<CompletionVelocityCard.Body
 					data={data}
-					timeRange={timeRangeValues}
-					velocityUnit={velocityUnitValues}
+					timeRange={timeRange}
+					velocityUnit={velocityUnit}
 				/>
-			</Panel>
+			</ClayPanel>
 		</PromisesResolver>
 	);
-};
+}
 
-const Header = ({dispatch, prefixKey, timeRange}) => {
+function Header({disableFilters, prefixKey, timeRange}) {
 	return (
-		<Panel.HeaderWithOptions
+		<PanelHeaderWithOptions
+			className="pb-0 tabs-panel-header"
 			description={Liferay.Language.get(
 				'completion-velocity-description'
 			)}
-			elementClasses="dashboard-panel-header pb-0"
 			title={Liferay.Language.get('completion-velocity')}
 		>
-			<div className="autofit-col m-0 management-bar management-bar-light navbar">
-				<ul className="navbar-nav">
+			<ClayLayout.ContentCol className="m-0 management-bar management-bar-light navbar">
+				<div className="navbar-nav">
 					<TimeRangeFilter
-						dispatch={dispatch}
-						options={{position: 'right'}}
+						disabled={disableFilters}
 						prefixKey={prefixKey}
 					/>
 
 					<VelocityUnitFilter
-						className={'pl-3'}
-						dispatch={dispatch}
+						className="pl-3"
+						disabled={disableFilters}
 						prefixKey={prefixKey}
 						timeRange={timeRange}
 					/>
-				</ul>
-			</div>
-		</Panel.HeaderWithOptions>
+				</div>
+			</ClayLayout.ContentCol>
+		</PanelHeaderWithOptions>
 	);
-};
+}
 
 CompletionVelocityCard.Header = Header;
 CompletionVelocityCard.Body = Body;

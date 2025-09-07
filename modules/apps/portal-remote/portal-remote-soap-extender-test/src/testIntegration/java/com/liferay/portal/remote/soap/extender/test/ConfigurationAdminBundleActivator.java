@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.soap.extender.test;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -56,7 +48,7 @@ public class ConfigurationAdminBundleActivator implements BundleActivator {
 			_jaxWsApiConfiguration = configurationAdmin.getConfiguration(
 				"com.liferay.portal.remote.soap.extender.internal." +
 					"configuration.JaxWsApiConfiguration",
-				null);
+				StringPool.QUESTION);
 
 			_jaxWsApiConfigurationProperties =
 				_jaxWsApiConfiguration.getProperties();
@@ -83,23 +75,18 @@ public class ConfigurationAdminBundleActivator implements BundleActivator {
 
 			_soapConfiguration.update(properties);
 
-			StringBundler sb = new StringBundler(5);
-
-			sb.append("(&(objectClass=");
-			sb.append(ServletContextHelper.class.getName());
-			sb.append(")(");
-			sb.append(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME);
-			sb.append("=soap-test))");
-
-			_filterString = sb.toString();
+			_filterString = StringBundler.concat(
+				"(&(objectClass=", ServletContextHelper.class.getName(), ")(",
+				HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME,
+				"=soap-test))");
 
 			try {
 				WaiterUtil.waitForFilter(bundleContext, _filterString, 10_000);
 			}
-			catch (TimeoutException te) {
+			catch (TimeoutException timeoutException) {
 				_cleanUp();
 
-				throw te;
+				throw timeoutException;
 			}
 		}
 		finally {
@@ -121,7 +108,7 @@ public class ConfigurationAdminBundleActivator implements BundleActivator {
 		try {
 			_soapConfiguration.delete();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		try {
@@ -132,13 +119,13 @@ public class ConfigurationAdminBundleActivator implements BundleActivator {
 				_jaxWsApiConfiguration.delete();
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		try {
 			_cxfConfiguration.delete();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 	}
 

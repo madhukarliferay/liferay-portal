@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.grid;
@@ -24,14 +15,22 @@ import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormValuesTestUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Pedro Queiroz
  */
 public class GridDDMFormFieldValueRendererTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testRender() throws Exception {
@@ -71,7 +70,7 @@ public class GridDDMFormFieldValueRendererTest {
 		ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
 
 		GridDDMFormFieldValueRenderer gridDDMFormFieldValueRenderer =
-			createGridDDMFormFieldValueRenderer();
+			_createGridDDMFormFieldValueRenderer();
 
 		Assert.assertEquals(
 			"rowLabel 1: columnLabel 1",
@@ -120,7 +119,7 @@ public class GridDDMFormFieldValueRendererTest {
 		ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
 
 		GridDDMFormFieldValueRenderer gridDDMFormFieldValueRenderer =
-			createGridDDMFormFieldValueRenderer();
+			_createGridDDMFormFieldValueRenderer();
 
 		Assert.assertEquals(
 			"rowLabel 1: columnLabel 1, rowLabel 2: columnLabel 2",
@@ -128,8 +127,8 @@ public class GridDDMFormFieldValueRendererTest {
 				ddmFormFieldValue, LocaleUtil.US));
 	}
 
-	protected GridDDMFormFieldValueAccessor
-		createGridDDMFormFieldValueAccessor() {
+	private GridDDMFormFieldValueAccessor
+		_createGridDDMFormFieldValueAccessor() {
 
 		GridDDMFormFieldValueAccessor gridDDMFormFieldValueAccessor =
 			new GridDDMFormFieldValueAccessor();
@@ -139,15 +138,14 @@ public class GridDDMFormFieldValueRendererTest {
 		return gridDDMFormFieldValueAccessor;
 	}
 
-	protected GridDDMFormFieldValueRenderer
-			createGridDDMFormFieldValueRenderer()
+	private GridDDMFormFieldValueRenderer _createGridDDMFormFieldValueRenderer()
 		throws Exception {
 
 		GridDDMFormFieldValueRenderer gridDDMFormFieldValueRenderer =
 			new GridDDMFormFieldValueRenderer();
 
 		gridDDMFormFieldValueRenderer.gridDDMFormFieldValueAccessor =
-			createGridDDMFormFieldValueAccessor();
+			_createGridDDMFormFieldValueAccessor();
 
 		return gridDDMFormFieldValueRenderer;
 	}

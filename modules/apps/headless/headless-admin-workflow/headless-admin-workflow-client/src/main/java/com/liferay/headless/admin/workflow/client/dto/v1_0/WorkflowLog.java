@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.workflow.client.dto.v1_0;
@@ -17,48 +8,22 @@ package com.liferay.headless.admin.workflow.client.dto.v1_0;
 import com.liferay.headless.admin.workflow.client.function.UnsafeSupplier;
 import com.liferay.headless.admin.workflow.client.serdes.v1_0.WorkflowLogSerDes;
 
+import jakarta.annotation.Generated;
+
+import java.io.Serializable;
+
 import java.util.Date;
 import java.util.Objects;
-
-import javax.annotation.Generated;
 
 /**
  * @author Javier Gamarra
  * @generated
  */
 @Generated("")
-public class WorkflowLog {
+public class WorkflowLog implements Cloneable, Serializable {
 
-	public static enum Type {
-
-		TASK_ASSIGN("TaskAssign"), TASK_COMPLETION("TaskCompletion"),
-		TASK_UPDATE("TaskUpdate"), TRANSITION("Transition");
-
-		public static Type create(String value) {
-			for (Type type : values()) {
-				if (Objects.equals(type.getValue(), value)) {
-					return type;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Type(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
+	public static WorkflowLog toDTO(String json) {
+		return WorkflowLogSerDes.toDTO(json);
 	}
 
 	public Creator getAuditPerson() {
@@ -123,6 +88,27 @@ public class WorkflowLog {
 	}
 
 	protected Date dateCreated;
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setDescription(
+		UnsafeSupplier<String, Exception> descriptionUnsafeSupplier) {
+
+		try {
+			description = descriptionUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String description;
 
 	public Long getId() {
 		return id;
@@ -227,6 +213,27 @@ public class WorkflowLog {
 
 	protected String previousState;
 
+	public String getPreviousStateLabel() {
+		return previousStateLabel;
+	}
+
+	public void setPreviousStateLabel(String previousStateLabel) {
+		this.previousStateLabel = previousStateLabel;
+	}
+
+	public void setPreviousStateLabel(
+		UnsafeSupplier<String, Exception> previousStateLabelUnsafeSupplier) {
+
+		try {
+			previousStateLabel = previousStateLabelUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String previousStateLabel;
+
 	public Role getRole() {
 		return role;
 	}
@@ -267,26 +274,26 @@ public class WorkflowLog {
 
 	protected String state;
 
-	public Long getTaskId() {
-		return taskId;
+	public String getStateLabel() {
+		return stateLabel;
 	}
 
-	public void setTaskId(Long taskId) {
-		this.taskId = taskId;
+	public void setStateLabel(String stateLabel) {
+		this.stateLabel = stateLabel;
 	}
 
-	public void setTaskId(
-		UnsafeSupplier<Long, Exception> taskIdUnsafeSupplier) {
+	public void setStateLabel(
+		UnsafeSupplier<String, Exception> stateLabelUnsafeSupplier) {
 
 		try {
-			taskId = taskIdUnsafeSupplier.get();
+			stateLabel = stateLabelUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected Long taskId;
+	protected String stateLabel;
 
 	public Type getType() {
 		return type;
@@ -315,6 +322,32 @@ public class WorkflowLog {
 
 	protected Type type;
 
+	public Long getWorkflowTaskId() {
+		return workflowTaskId;
+	}
+
+	public void setWorkflowTaskId(Long workflowTaskId) {
+		this.workflowTaskId = workflowTaskId;
+	}
+
+	public void setWorkflowTaskId(
+		UnsafeSupplier<Long, Exception> workflowTaskIdUnsafeSupplier) {
+
+		try {
+			workflowTaskId = workflowTaskIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long workflowTaskId;
+
+	@Override
+	public WorkflowLog clone() throws CloneNotSupportedException {
+		return (WorkflowLog)super.clone();
+	}
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -339,6 +372,41 @@ public class WorkflowLog {
 
 	public String toString() {
 		return WorkflowLogSerDes.toJSON(this);
+	}
+
+	public static enum Type {
+
+		INSTANCE_FAIL("InstanceFail"), NODE_ENTRY("NodeEntry"),
+		TASK_ASSIGN("TaskAssign"), TASK_COMPLETION("TaskCompletion"),
+		TASK_UPDATE("TaskUpdate"), TRANSITION("Transition");
+
+		public static Type create(String value) {
+			for (Type type : values()) {
+				if (Objects.equals(type.getValue(), value) ||
+					Objects.equals(type.name(), value)) {
+
+					return type;
+				}
+			}
+
+			return null;
+		}
+
+		public String getValue() {
+			return _value;
+		}
+
+		@Override
+		public String toString() {
+			return _value;
+		}
+
+		private Type(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
 	}
 
 }

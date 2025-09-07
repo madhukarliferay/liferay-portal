@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {cleanup, fireEvent, render} from '@testing-library/react';
 import React from 'react';
 
-import Carousel from '../../src/main/resources/META-INF/resources/item_selector_preview/js/Carousel.es';
+import Carousel from '../../src/main/resources/META-INF/resources/js/item_selector_preview/Carousel';
 
 const itemTitle = 'test image.jpg';
 const itemUrl = 'image1.jpg';
@@ -26,16 +17,16 @@ const basicMetadata = {
 			data: [
 				{
 					key: Liferay.Language.get('format'),
-					value: 'jpg'
+					value: 'jpg',
 				},
 				{
 					key: Liferay.Language.get('name'),
-					value: 'test image.jpg'
-				}
+					value: 'test image.jpg',
+				},
 			],
-			title: 'file-info'
-		}
-	]
+			title: 'file-info',
+		},
+	],
 };
 
 const carouselProps = {
@@ -44,13 +35,14 @@ const carouselProps = {
 		returntype: 'returntype',
 		title: itemTitle,
 		url: itemUrl,
-		value: itemUrl
+		value: itemUrl,
 	},
 	handleClickNext: jest.fn(),
-	handleClickPrevious: jest.fn()
+	handleClickPrevious: jest.fn(),
+	isImage: true,
 };
 
-const renderCarouselComponent = props => render(<Carousel {...props} />);
+const renderCarouselComponent = (props) => render(<Carousel {...props} />);
 
 describe('Carousel', () => {
 	afterEach(cleanup);
@@ -92,7 +84,7 @@ describe('Arrow elements', () => {
 	it('does not render arrows if prop "showArrows" is false', () => {
 		const {container} = renderCarouselComponent({
 			...carouselProps,
-			showArrows: false
+			showArrows: false,
 		});
 
 		expect(container.querySelector('.icon-arrow')).toBeNull();
@@ -119,6 +111,6 @@ describe('Infopanel', () => {
 	it('renders item data on the info panel', () => {
 		const {getByText} = renderCarouselComponent(carouselProps);
 
-		expect(getByText(itemTitle));
+		expect(getByText(itemTitle)).toBeTruthy();
 	});
 });

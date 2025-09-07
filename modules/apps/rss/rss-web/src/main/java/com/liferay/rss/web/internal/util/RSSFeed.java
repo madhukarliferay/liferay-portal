@@ -1,31 +1,23 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.rss.web.internal.util;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Http;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
 import com.liferay.rss.web.internal.configuration.RSSWebCacheConfiguration;
 
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
-import com.sun.syndication.feed.synd.SyndImage;
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndImage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +37,12 @@ public class RSSFeed {
 		SyndFeed syndFeed = getSyndFeed();
 
 		if (syndFeed == null) {
+			_title = title;
+
 			_baseURL = StringPool.BLANK;
 			_syndFeedImageLink = StringPool.BLANK;
 			_syndFeedImageURL = StringPool.BLANK;
 			_syndFeedLink = StringPool.BLANK;
-			_title = title;
 
 			return;
 		}
@@ -64,15 +57,11 @@ public class RSSFeed {
 		String syndFeedLink = syndFeed.getLink();
 
 		if (Validator.isNull(syndFeedLink) ||
-			!HttpUtil.hasDomain(syndFeedLink)) {
+			!HttpComponentsUtil.hasDomain(syndFeedLink)) {
 
-			baseURL = HttpUtil.getProtocol(
-				_url
-			).concat(
-				Http.PROTOCOL_DELIMITER
-			).concat(
-				HttpUtil.getDomain(_url)
-			);
+			baseURL = StringBundler.concat(
+				HttpComponentsUtil.getProtocol(url), Http.PROTOCOL_DELIMITER,
+				HttpComponentsUtil.getDomain(url));
 
 			if (Validator.isNotNull(syndFeedLink)) {
 				syndFeedLink = baseURL.concat(syndFeedLink);
@@ -82,13 +71,10 @@ public class RSSFeed {
 			}
 		}
 		else {
-			baseURL = HttpUtil.getProtocol(
-				syndFeedLink
-			).concat(
-				Http.PROTOCOL_DELIMITER
-			).concat(
-				HttpUtil.getDomain(syndFeedLink)
-			);
+			baseURL = StringBundler.concat(
+				HttpComponentsUtil.getProtocol(syndFeedLink),
+				Http.PROTOCOL_DELIMITER,
+				HttpComponentsUtil.getDomain(syndFeedLink));
 		}
 
 		SyndImage syndImage = syndFeed.getImage();
@@ -96,22 +82,23 @@ public class RSSFeed {
 		if (syndImage != null) {
 			syndFeedImageLink = syndImage.getLink();
 
-			if (!HttpUtil.hasDomain(syndFeedImageLink)) {
+			if (!HttpComponentsUtil.hasDomain(syndFeedImageLink)) {
 				syndFeedImageLink = baseURL + syndFeedImageLink;
 			}
 
 			syndFeedImageURL = syndImage.getUrl();
 
-			if (!HttpUtil.hasDomain(syndFeedImageURL)) {
+			if (!HttpComponentsUtil.hasDomain(syndFeedImageURL)) {
 				syndFeedImageURL = baseURL + syndFeedImageURL;
 			}
 		}
+
+		_title = title;
 
 		_baseURL = baseURL;
 		_syndFeedImageLink = syndFeedImageLink;
 		_syndFeedImageURL = syndFeedImageURL;
 		_syndFeedLink = syndFeedLink;
-		_title = title;
 	}
 
 	public String getBaseURL() {
@@ -146,10 +133,11 @@ public class RSSFeed {
 			return _syndFeed;
 		}
 
-		WebCacheItem wci = new RSSWebCacheItem(_rssWebCacheConfiguration, _url);
+		WebCacheItem webCacheItem = new RSSWebCacheItem(
+			_rssWebCacheConfiguration, _url);
 
 		_syndFeed = (SyndFeed)WebCachePoolUtil.get(
-			RSSFeed.class.getName() + StringPool.PERIOD + _url, wci);
+			RSSFeed.class.getName() + StringPool.POUND + _url, webCacheItem);
 
 		return _syndFeed;
 	}

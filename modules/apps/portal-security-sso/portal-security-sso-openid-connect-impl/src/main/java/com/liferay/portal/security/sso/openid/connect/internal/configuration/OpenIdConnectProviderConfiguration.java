@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.sso.openid.connect.internal.configuration;
@@ -23,7 +14,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  */
 @ExtendedObjectClassDefinition(
 	category = "sso", factoryInstanceLabelAttribute = "providerName",
-	scope = ExtendedObjectClassDefinition.Scope.SYSTEM
+	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
 	factory = true,
@@ -37,18 +28,6 @@ public interface OpenIdConnectProviderConfiguration {
 		deflt = "", description = "provider-name-help", name = "provider-name"
 	)
 	public String providerName();
-
-	@Meta.AD(
-		deflt = "", description = "open-id-connect-client-id-help",
-		name = "open-id-connect-client-id"
-	)
-	public String openIdConnectClientId();
-
-	@Meta.AD(
-		deflt = "", description = "open-id-connect-client-secret-help",
-		name = "open-id-connect-client-secret"
-	)
-	public String openIdConnectClientSecret();
 
 	@Meta.AD(
 		deflt = "openid email profile", description = "scopes-help",
@@ -105,9 +84,46 @@ public interface OpenIdConnectProviderConfiguration {
 	public String tokenEndPoint();
 
 	@Meta.AD(
+		deflt = "1000", description = "token-connection-timeout-help",
+		name = "token-connection-timeout", required = false
+	)
+	public int tokenConnectionTimeout();
+
+	@Meta.AD(
 		deflt = "", description = "user-info-endpoint-help",
 		name = "user-info-endpoint", required = false
 	)
 	public String userInfoEndPoint();
+
+	@Meta.AD(
+		deflt = "", description = "open-id-connect-client-id-help",
+		name = "open-id-connect-client-id"
+	)
+	public String openIdConnectClientId();
+
+	@Meta.AD(
+		deflt = "", description = "open-id-connect-client-secret-help",
+		name = "open-id-connect-client-secret"
+	)
+	public String openIdConnectClientSecret();
+
+	@Meta.AD(
+		deflt = "", description = "registered-id-token-signing-alg-help",
+		name = "registered-id-token-signing-alg", required = false
+	)
+	public String registeredIdTokenSigningAlg();
+
+	@Meta.AD(
+		deflt = "",
+		description = "custom-authorization-request-parameters-help",
+		name = "custom-authorization-request-parameters", required = false
+	)
+	public String[] customAuthorizationRequestParameters();
+
+	@Meta.AD(
+		deflt = "", description = "custom-token-request-parameters-help",
+		name = "custom-token-request-parameters", required = false
+	)
+	public String[] customTokenRequestParameters();
 
 }

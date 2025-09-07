@@ -1,23 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.webserver;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.URLCodec;
+
+import java.text.Format;
 
 import java.util.Date;
 
@@ -38,6 +32,14 @@ public class WebServerEntry {
 		_name = name;
 		_createDate = createDate;
 		_modifiedDate = modifiedDate;
+
+		if (modifiedDate != null) {
+			Format format = FastDateFormatFactoryUtil.getSimpleDateFormat(
+				"d MMM yyyy HH:mm z");
+
+			_modifiedDateString = format.format(modifiedDate);
+		}
+
 		_description = GetterUtil.getString(description);
 		_size = size;
 	}
@@ -52,6 +54,10 @@ public class WebServerEntry {
 
 	public Date getModifiedDate() {
 		return _modifiedDate;
+	}
+
+	public String getModifiedDateString() {
+		return _modifiedDateString;
 	}
 
 	public String getName() {
@@ -78,6 +84,10 @@ public class WebServerEntry {
 		_modifiedDate = modifiedDate;
 	}
 
+	public void setModifiedDateString(String modifiedDateString) {
+		_modifiedDateString = modifiedDateString;
+	}
+
 	public void setName(String name) {
 		_name = name;
 	}
@@ -92,7 +102,7 @@ public class WebServerEntry {
 
 	protected String getPath(String path, String name) {
 		if (name.endsWith(StringPool.SLASH)) {
-			name = HttpUtil.fixPath(name, false, true);
+			name = HttpComponentsUtil.fixPath(name, false, true);
 
 			return getPath(path, name) + StringPool.SLASH;
 		}
@@ -110,6 +120,7 @@ public class WebServerEntry {
 	private Date _createDate;
 	private String _description;
 	private Date _modifiedDate;
+	private String _modifiedDateString;
 	private String _name;
 	private String _path;
 	private long _size;

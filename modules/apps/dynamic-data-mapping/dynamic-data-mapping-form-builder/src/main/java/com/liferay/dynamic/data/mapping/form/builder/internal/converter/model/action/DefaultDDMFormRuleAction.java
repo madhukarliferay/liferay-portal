@@ -1,23 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.action;
 
-import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRuleAction;
-import com.liferay.dynamic.data.mapping.form.builder.internal.converter.serializer.DDMFormRuleActionSerializer;
-import com.liferay.dynamic.data.mapping.form.builder.internal.converter.serializer.DDMFormRuleSerializerContext;
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.serializer.DefaultDDMFormRuleActionSerializer;
+import com.liferay.dynamic.data.mapping.spi.converter.model.SPIDDMFormRuleAction;
+import com.liferay.dynamic.data.mapping.spi.converter.serializer.SPIDDMFormRuleActionSerializer;
+import com.liferay.dynamic.data.mapping.spi.converter.serializer.SPIDDMFormRuleSerializerContext;
 import com.liferay.petra.lang.HashUtil;
 
 import java.util.Objects;
@@ -25,7 +16,7 @@ import java.util.Objects;
 /**
  * @author Rafael Praxedes
  */
-public class DefaultDDMFormRuleAction implements DDMFormRuleAction {
+public class DefaultDDMFormRuleAction implements SPIDDMFormRuleAction {
 
 	public DefaultDDMFormRuleAction() {
 	}
@@ -36,17 +27,17 @@ public class DefaultDDMFormRuleAction implements DDMFormRuleAction {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DefaultDDMFormRuleAction)) {
+		if (!(object instanceof DefaultDDMFormRuleAction)) {
 			return false;
 		}
 
 		DefaultDDMFormRuleAction ddmFormRuleAction =
-			(DefaultDDMFormRuleAction)obj;
+			(DefaultDDMFormRuleAction)object;
 
 		if (Objects.equals(_action, ddmFormRuleAction._action) &&
 			Objects.equals(_target, ddmFormRuleAction._target)) {
@@ -75,13 +66,13 @@ public class DefaultDDMFormRuleAction implements DDMFormRuleAction {
 
 	@Override
 	public String serialize(
-		DDMFormRuleSerializerContext ddmFormRuleSerializerContext) {
+		SPIDDMFormRuleSerializerContext spiDDMFormRuleSerializerContext) {
 
-		DDMFormRuleActionSerializer ddmFormRuleActionSerializer =
+		SPIDDMFormRuleActionSerializer spiDDMFormRuleActionSerializer =
 			new DefaultDDMFormRuleActionSerializer(this);
 
-		return ddmFormRuleActionSerializer.serialize(
-			ddmFormRuleSerializerContext);
+		return spiDDMFormRuleActionSerializer.serialize(
+			spiDDMFormRuleSerializerContext);
 	}
 
 	public void setAction(String action) {

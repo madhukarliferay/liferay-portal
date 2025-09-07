@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -20,6 +11,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -43,7 +36,9 @@ public class AddressWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("addressId", getAddressId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
@@ -52,16 +47,24 @@ public class AddressWrapper
 		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("classNameId", getClassNameId());
 		attributes.put("classPK", getClassPK());
+		attributes.put("countryId", getCountryId());
+		attributes.put("listTypeId", getListTypeId());
+		attributes.put("regionId", getRegionId());
+		attributes.put("city", getCity());
+		attributes.put("description", getDescription());
+		attributes.put("latitude", getLatitude());
+		attributes.put("longitude", getLongitude());
+		attributes.put("mailing", isMailing());
+		attributes.put("name", getName());
+		attributes.put("primary", isPrimary());
 		attributes.put("street1", getStreet1());
 		attributes.put("street2", getStreet2());
 		attributes.put("street3", getStreet3());
-		attributes.put("city", getCity());
+		attributes.put("subtype", getSubtype());
+		attributes.put("validationDate", getValidationDate());
+		attributes.put("validationStatus", getValidationStatus());
 		attributes.put("zip", getZip());
-		attributes.put("regionId", getRegionId());
-		attributes.put("countryId", getCountryId());
-		attributes.put("typeId", getTypeId());
-		attributes.put("mailing", isMailing());
-		attributes.put("primary", isPrimary());
+		attributes.put("status", getStatus());
 
 		return attributes;
 	}
@@ -74,10 +77,23 @@ public class AddressWrapper
 			setMvccVersion(mvccVersion);
 		}
 
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
+		}
+
 		String uuid = (String)attributes.get("uuid");
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long addressId = (Long)attributes.get("addressId");
@@ -128,6 +144,66 @@ public class AddressWrapper
 			setClassPK(classPK);
 		}
 
+		Long countryId = (Long)attributes.get("countryId");
+
+		if (countryId != null) {
+			setCountryId(countryId);
+		}
+
+		Long listTypeId = (Long)attributes.get("listTypeId");
+
+		if (listTypeId != null) {
+			setListTypeId(listTypeId);
+		}
+
+		Long regionId = (Long)attributes.get("regionId");
+
+		if (regionId != null) {
+			setRegionId(regionId);
+		}
+
+		String city = (String)attributes.get("city");
+
+		if (city != null) {
+			setCity(city);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+
+		Double latitude = (Double)attributes.get("latitude");
+
+		if (latitude != null) {
+			setLatitude(latitude);
+		}
+
+		Double longitude = (Double)attributes.get("longitude");
+
+		if (longitude != null) {
+			setLongitude(longitude);
+		}
+
+		Boolean mailing = (Boolean)attributes.get("mailing");
+
+		if (mailing != null) {
+			setMailing(mailing);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		Boolean primary = (Boolean)attributes.get("primary");
+
+		if (primary != null) {
+			setPrimary(primary);
+		}
+
 		String street1 = (String)attributes.get("street1");
 
 		if (street1 != null) {
@@ -146,10 +222,22 @@ public class AddressWrapper
 			setStreet3(street3);
 		}
 
-		String city = (String)attributes.get("city");
+		String subtype = (String)attributes.get("subtype");
 
-		if (city != null) {
-			setCity(city);
+		if (subtype != null) {
+			setSubtype(subtype);
+		}
+
+		Date validationDate = (Date)attributes.get("validationDate");
+
+		if (validationDate != null) {
+			setValidationDate(validationDate);
+		}
+
+		Integer validationStatus = (Integer)attributes.get("validationStatus");
+
+		if (validationStatus != null) {
+			setValidationStatus(validationStatus);
 		}
 
 		String zip = (String)attributes.get("zip");
@@ -158,35 +246,16 @@ public class AddressWrapper
 			setZip(zip);
 		}
 
-		Long regionId = (Long)attributes.get("regionId");
+		Integer status = (Integer)attributes.get("status");
 
-		if (regionId != null) {
-			setRegionId(regionId);
+		if (status != null) {
+			setStatus(status);
 		}
+	}
 
-		Long countryId = (Long)attributes.get("countryId");
-
-		if (countryId != null) {
-			setCountryId(countryId);
-		}
-
-		Long typeId = (Long)attributes.get("typeId");
-
-		if (typeId != null) {
-			setTypeId(typeId);
-		}
-
-		Boolean mailing = (Boolean)attributes.get("mailing");
-
-		if (mailing != null) {
-			setMailing(mailing);
-		}
-
-		Boolean primary = (Boolean)attributes.get("primary");
-
-		if (primary != null) {
-			setPrimary(primary);
-		}
+	@Override
+	public Address cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -275,6 +344,71 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Returns the ct collection ID of this address.
+	 *
+	 * @return the ct collection ID of this address
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
+	/**
+	 * Returns the description of this address.
+	 *
+	 * @return the description of this address
+	 */
+	@Override
+	public String getDescription() {
+		return model.getDescription();
+	}
+
+	/**
+	 * Returns the external reference code of this address.
+	 *
+	 * @return the external reference code of this address
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
+	/**
+	 * Returns the latitude of this address.
+	 *
+	 * @return the latitude of this address
+	 */
+	@Override
+	public double getLatitude() {
+		return model.getLatitude();
+	}
+
+	@Override
+	public ListType getListType() {
+		return model.getListType();
+	}
+
+	/**
+	 * Returns the list type ID of this address.
+	 *
+	 * @return the list type ID of this address
+	 */
+	@Override
+	public long getListTypeId() {
+		return model.getListTypeId();
+	}
+
+	/**
+	 * Returns the longitude of this address.
+	 *
+	 * @return the longitude of this address
+	 */
+	@Override
+	public double getLongitude() {
+		return model.getLongitude();
+	}
+
+	/**
 	 * Returns the mailing of this address.
 	 *
 	 * @return the mailing of this address
@@ -302,6 +436,21 @@ public class AddressWrapper
 	@Override
 	public long getMvccVersion() {
 		return model.getMvccVersion();
+	}
+
+	/**
+	 * Returns the name of this address.
+	 *
+	 * @return the name of this address
+	 */
+	@Override
+	public String getName() {
+		return model.getName();
+	}
+
+	@Override
+	public String getPhoneNumber() {
+		return model.getPhoneNumber();
 	}
 
 	/**
@@ -340,6 +489,16 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Returns the status of this address.
+	 *
+	 * @return the status of this address
+	 */
+	@Override
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
 	 * Returns the street1 of this address.
 	 *
 	 * @return the street1 of this address
@@ -369,19 +528,14 @@ public class AddressWrapper
 		return model.getStreet3();
 	}
 
-	@Override
-	public ListType getType() {
-		return model.getType();
-	}
-
 	/**
-	 * Returns the type ID of this address.
+	 * Returns the subtype of this address.
 	 *
-	 * @return the type ID of this address
+	 * @return the subtype of this address
 	 */
 	@Override
-	public long getTypeId() {
-		return model.getTypeId();
+	public String getSubtype() {
+		return model.getSubtype();
 	}
 
 	/**
@@ -425,6 +579,26 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Returns the validation date of this address.
+	 *
+	 * @return the validation date of this address
+	 */
+	@Override
+	public Date getValidationDate() {
+		return model.getValidationDate();
+	}
+
+	/**
+	 * Returns the validation status of this address.
+	 *
+	 * @return the validation status of this address
+	 */
+	@Override
+	public int getValidationStatus() {
+		return model.getValidationStatus();
+	}
+
+	/**
 	 * Returns the zip of this address.
 	 *
 	 * @return the zip of this address
@@ -454,11 +628,6 @@ public class AddressWrapper
 		return model.isPrimary();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a address model instance should use the <code>Address</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -540,6 +709,66 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Sets the ct collection ID of this address.
+	 *
+	 * @param ctCollectionId the ct collection ID of this address
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
+	}
+
+	/**
+	 * Sets the description of this address.
+	 *
+	 * @param description the description of this address
+	 */
+	@Override
+	public void setDescription(String description) {
+		model.setDescription(description);
+	}
+
+	/**
+	 * Sets the external reference code of this address.
+	 *
+	 * @param externalReferenceCode the external reference code of this address
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
+	 * Sets the latitude of this address.
+	 *
+	 * @param latitude the latitude of this address
+	 */
+	@Override
+	public void setLatitude(double latitude) {
+		model.setLatitude(latitude);
+	}
+
+	/**
+	 * Sets the list type ID of this address.
+	 *
+	 * @param listTypeId the list type ID of this address
+	 */
+	@Override
+	public void setListTypeId(long listTypeId) {
+		model.setListTypeId(listTypeId);
+	}
+
+	/**
+	 * Sets the longitude of this address.
+	 *
+	 * @param longitude the longitude of this address
+	 */
+	@Override
+	public void setLongitude(double longitude) {
+		model.setLongitude(longitude);
+	}
+
+	/**
 	 * Sets whether this address is mailing.
 	 *
 	 * @param mailing the mailing of this address
@@ -567,6 +796,16 @@ public class AddressWrapper
 	@Override
 	public void setMvccVersion(long mvccVersion) {
 		model.setMvccVersion(mvccVersion);
+	}
+
+	/**
+	 * Sets the name of this address.
+	 *
+	 * @param name the name of this address
+	 */
+	@Override
+	public void setName(String name) {
+		model.setName(name);
 	}
 
 	/**
@@ -600,6 +839,16 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Sets the status of this address.
+	 *
+	 * @param status the status of this address
+	 */
+	@Override
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
 	 * Sets the street1 of this address.
 	 *
 	 * @param street1 the street1 of this address
@@ -630,13 +879,13 @@ public class AddressWrapper
 	}
 
 	/**
-	 * Sets the type ID of this address.
+	 * Sets the subtype of this address.
 	 *
-	 * @param typeId the type ID of this address
+	 * @param subtype the subtype of this address
 	 */
 	@Override
-	public void setTypeId(long typeId) {
-		model.setTypeId(typeId);
+	public void setSubtype(String subtype) {
+		model.setSubtype(subtype);
 	}
 
 	/**
@@ -680,6 +929,26 @@ public class AddressWrapper
 	}
 
 	/**
+	 * Sets the validation date of this address.
+	 *
+	 * @param validationDate the validation date of this address
+	 */
+	@Override
+	public void setValidationDate(Date validationDate) {
+		model.setValidationDate(validationDate);
+	}
+
+	/**
+	 * Sets the validation status of this address.
+	 *
+	 * @param validationStatus the validation status of this address
+	 */
+	@Override
+	public void setValidationStatus(int validationStatus) {
+		model.setValidationStatus(validationStatus);
+	}
+
+	/**
 	 * Sets the zip of this address.
 	 *
 	 * @param zip the zip of this address
@@ -687,6 +956,25 @@ public class AddressWrapper
 	@Override
 	public void setZip(String zip) {
 		model.setZip(zip);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<Address, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<Address, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

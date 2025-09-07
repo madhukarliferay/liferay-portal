@@ -1,79 +1,74 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {cleanup, render, waitForElement} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import {act, cleanup, render} from '@testing-library/react';
 import React from 'react';
 
 import ProcessListPage from '../../../src/main/resources/META-INF/resources/js/components/process-list-page/ProcessListPage.es';
 import {MockRouter} from '../../mock/MockRouter.es';
 
 describe('The process list page component having data should', () => {
-	let getAllByTestId;
+	let container;
 
 	const items = [
 		{
 			instancesCount: 0,
-			title: 'Single Approver 1'
+			process: {
+				title: 'Single Approver 1',
+			},
 		},
 		{
 			instancesCount: 0,
-			title: 'Single Approver 2'
+			process: {
+				title: 'Single Approver 2',
+			},
 		},
 		{
 			instancesCount: 0,
-			title: 'Single Approver 3'
-		}
+			process: {
+				title: 'Single Approver 3',
+			},
+		},
 	];
-
 	const data = {items, totalCount: items.length};
 
-	const clientMock = {
-		get: jest.fn().mockResolvedValue({data})
-	};
+	fetch.mockResolvedValueOnce({
+		json: () => Promise.resolve(data),
+		ok: true,
+	});
 
 	const routeParams = {
 		page: 1,
 		pageSize: 20,
 		query: '',
-		sort: 'overdueInstanceCount%3Adesc'
+		sort: 'overdueInstanceCount%3Adesc',
 	};
 
 	afterEach(cleanup);
 
-	const wrapper = ({children}) => (
-		<MockRouter client={clientMock}>{children}</MockRouter>
-	);
+	const wrapper = ({children}) => <MockRouter>{children}</MockRouter>;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		const renderResult = render(
 			<ProcessListPage routeParams={routeParams} />,
 			{wrapper}
 		);
 
-		getAllByTestId = renderResult.getAllByTestId;
+		container = renderResult.container;
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Be rendered with process names', async () => {
-		const processName = await waitForElement(() =>
-			getAllByTestId('processName')
-		);
+	it('Be rendered with process names', () => {
+		const processName = container.querySelectorAll('.table-title');
 
-		expect(processName[0].children[0].innerHTML).toEqual(
-			'Single Approver 1'
-		);
-		expect(processName[1].children[0].innerHTML).toEqual(
-			'Single Approver 2'
-		);
-		expect(processName[2].children[0].innerHTML).toEqual(
-			'Single Approver 3'
-		);
+		expect(processName[0]).toHaveTextContent('Single Approver 1');
+		expect(processName[1]).toHaveTextContent('Single Approver 2');
+		expect(processName[2]).toHaveTextContent('Single Approver 3');
 	});
 });

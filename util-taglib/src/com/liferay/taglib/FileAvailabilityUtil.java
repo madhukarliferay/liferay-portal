@@ -1,24 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.PortalWebResourcesUtil;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.servlet.ServletContext;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,11 +21,11 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.ServletContext;
-
 /**
  * @author Shuyang Zhou
+ * @deprecated As of Cavanaugh (7.4.x), replaced by {@link com.liferay.portal.kernel.servlet.FileAvailabilityUtil}
  */
+@Deprecated
 public class FileAvailabilityUtil {
 
 	public static void clearAvailabilities() {
@@ -72,7 +67,10 @@ public class FileAvailabilityUtil {
 		try {
 			url = servletContext.getResource(path);
 		}
-		catch (MalformedURLException murle) {
+		catch (MalformedURLException malformedURLException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(malformedURLException);
+			}
 		}
 
 		if ((url == null) && !PortalWebResourcesUtil.isAvailable(path)) {
@@ -103,5 +101,8 @@ public class FileAvailabilityUtil {
 
 		return availabilities;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		FileAvailabilityUtil.class);
 
 }

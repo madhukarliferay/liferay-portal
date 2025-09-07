@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -132,6 +123,9 @@ public class CalendarNotificationTemplatePersistenceTest {
 		newCalendarNotificationTemplate.setMvccVersion(
 			RandomTestUtil.nextLong());
 
+		newCalendarNotificationTemplate.setCtCollectionId(
+			RandomTestUtil.nextLong());
+
 		newCalendarNotificationTemplate.setUuid(RandomTestUtil.randomString());
 
 		newCalendarNotificationTemplate.setGroupId(RandomTestUtil.nextLong());
@@ -179,6 +173,9 @@ public class CalendarNotificationTemplatePersistenceTest {
 		Assert.assertEquals(
 			existingCalendarNotificationTemplate.getMvccVersion(),
 			newCalendarNotificationTemplate.getMvccVersion());
+		Assert.assertEquals(
+			existingCalendarNotificationTemplate.getCtCollectionId(),
+			newCalendarNotificationTemplate.getCtCollectionId());
 		Assert.assertEquals(
 			existingCalendarNotificationTemplate.getUuid(),
 			newCalendarNotificationTemplate.getUuid());
@@ -308,7 +305,8 @@ public class CalendarNotificationTemplatePersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"CalendarNotificationTemplate", "mvccVersion", true, "uuid", true,
+			"CalendarNotificationTemplate", "mvccVersion", true,
+			"ctCollectionId", true, "uuid", true,
 			"calendarNotificationTemplateId", true, "groupId", true,
 			"companyId", true, "userId", true, "userName", true, "createDate",
 			true, "modifiedDate", true, "calendarId", true, "notificationType",
@@ -570,40 +568,83 @@ public class CalendarNotificationTemplatePersistenceTest {
 
 		_persistence.clearCache();
 
-		CalendarNotificationTemplate existingCalendarNotificationTemplate =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newCalendarNotificationTemplate.getPrimaryKey());
+				newCalendarNotificationTemplate.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingCalendarNotificationTemplate.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingCalendarNotificationTemplate, "getOriginalUuid",
-					new Class<?>[0])));
-		Assert.assertEquals(
-			Long.valueOf(existingCalendarNotificationTemplate.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingCalendarNotificationTemplate, "getOriginalGroupId",
-				new Class<?>[0]));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		CalendarNotificationTemplate newCalendarNotificationTemplate =
+			addCalendarNotificationTemplate();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			CalendarNotificationTemplate.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"calendarNotificationTemplateId",
+				newCalendarNotificationTemplate.
+					getCalendarNotificationTemplateId()));
+
+		List<CalendarNotificationTemplate> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		CalendarNotificationTemplate calendarNotificationTemplate) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingCalendarNotificationTemplate.getCalendarId()),
+			calendarNotificationTemplate.getUuid(),
+			ReflectionTestUtil.invoke(
+				calendarNotificationTemplate, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(calendarNotificationTemplate.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingCalendarNotificationTemplate, "getOriginalCalendarId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingCalendarNotificationTemplate.getNotificationType(),
-				ReflectionTestUtil.invoke(
-					existingCalendarNotificationTemplate,
-					"getOriginalNotificationType", new Class<?>[0])));
-		Assert.assertTrue(
-			Objects.equals(
-				existingCalendarNotificationTemplate.
-					getNotificationTemplateType(),
-				ReflectionTestUtil.invoke(
-					existingCalendarNotificationTemplate,
-					"getOriginalNotificationTemplateType", new Class<?>[0])));
+				calendarNotificationTemplate, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
+		Assert.assertEquals(
+			Long.valueOf(calendarNotificationTemplate.getCalendarId()),
+			ReflectionTestUtil.<Long>invoke(
+				calendarNotificationTemplate, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "calendarId"));
+		Assert.assertEquals(
+			calendarNotificationTemplate.getNotificationType(),
+			ReflectionTestUtil.invoke(
+				calendarNotificationTemplate, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "notificationType"));
+		Assert.assertEquals(
+			calendarNotificationTemplate.getNotificationTemplateType(),
+			ReflectionTestUtil.invoke(
+				calendarNotificationTemplate, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "notificationTemplateType"));
 	}
 
 	protected CalendarNotificationTemplate addCalendarNotificationTemplate()
@@ -615,6 +656,9 @@ public class CalendarNotificationTemplatePersistenceTest {
 			_persistence.create(pk);
 
 		calendarNotificationTemplate.setMvccVersion(RandomTestUtil.nextLong());
+
+		calendarNotificationTemplate.setCtCollectionId(
+			RandomTestUtil.nextLong());
 
 		calendarNotificationTemplate.setUuid(RandomTestUtil.randomString());
 

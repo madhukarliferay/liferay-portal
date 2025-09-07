@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.client.test;
@@ -17,11 +8,14 @@ package com.liferay.oauth2.provider.client.test;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandler;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandlerFactory;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
 import com.liferay.oauth2.provider.scope.spi.scope.mapper.ScopeMapper;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
+import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -35,26 +29,28 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
+
+import jakarta.ws.rs.core.Application;
 
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.Application;
+import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -77,10 +73,12 @@ public abstract class BaseTestPreparatorBundleActivator
 
 		autoCloseables = new ArrayList<>();
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("osgi.jaxrs.name", "Default");
-		properties.put("service.ranking", Integer.MAX_VALUE);
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"osgi.jaxrs.name", "Default"
+			).put(
+				"service.ranking", Integer.MAX_VALUE
+			).build();
 
 		registerPrefixHandler(
 			PrefixHandler.PASS_THROUGH_PREFIX_HANDLER, properties);
@@ -89,10 +87,10 @@ public abstract class BaseTestPreparatorBundleActivator
 		try {
 			prepareTest();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			_cleanUp();
 
-			throw new RuntimeException(e);
+			throw new RuntimeException(exception);
 		}
 	}
 
@@ -110,6 +108,57 @@ public abstract class BaseTestPreparatorBundleActivator
 		return user;
 	}
 
+	protected OAuth2Authorization addOAuth2Authorization(
+		long companyId, User user, OAuth2Application oAuth2Application,
+		String accessTokenContent, Date accessTokenCreateDate,
+		Date accessTokenExpirationDate) {
+
+		return addOAuth2Authorization(
+			companyId, user, oAuth2Application, accessTokenContent,
+			accessTokenCreateDate, accessTokenExpirationDate, null, null, null);
+	}
+
+	protected OAuth2Authorization addOAuth2Authorization(
+		long companyId, User user, OAuth2Application oAuth2Application,
+		String accessTokenContent, Date accessTokenCreateDate,
+		Date accessTokenExpirationDate, String refreshTokenContent,
+		Date refreshTokenCreateDate, Date refreshTokenExpirationDate) {
+
+		ServiceReference<OAuth2AuthorizationLocalService> serviceReference =
+			bundleContext.getServiceReference(
+				OAuth2AuthorizationLocalService.class);
+
+		OAuth2AuthorizationLocalService oAuth2AuthorizationLocalService =
+			bundleContext.getService(serviceReference);
+
+		autoCloseables.add(() -> bundleContext.ungetService(serviceReference));
+
+		OAuth2Authorization oAuth2Authorization =
+			oAuth2AuthorizationLocalService.addOAuth2Authorization(
+				companyId, user.getUserId(), user.getFullName(),
+				oAuth2Application.getOAuth2ApplicationId(),
+				oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
+				accessTokenContent, accessTokenCreateDate,
+				accessTokenExpirationDate, "localhost", "127.0.0.1",
+				refreshTokenContent, refreshTokenCreateDate,
+				refreshTokenExpirationDate);
+
+		autoCloseables.add(
+			() -> {
+				OAuth2Authorization fetchedAuth2Authorization =
+					OAuth2AuthorizationLocalServiceUtil.
+						fetchOAuth2Authorization(
+							oAuth2Authorization.getOAuth2AuthorizationId());
+
+				if (fetchedAuth2Authorization != null) {
+					OAuth2AuthorizationLocalServiceUtil.
+						deleteOAuth2Authorization(fetchedAuth2Authorization);
+				}
+			});
+
+		return oAuth2Authorization;
+	}
+
 	protected User addUser(Company company) throws Exception {
 		User user = UserTestUtil.addUser(company);
 
@@ -123,7 +172,8 @@ public abstract class BaseTestPreparatorBundleActivator
 		String virtualHostname = hostName + ".xyz";
 
 		Company company = CompanyLocalServiceUtil.addCompany(
-			hostName, virtualHostname, virtualHostname, false, 0, true);
+			null, hostName, virtualHostname, virtualHostname, 0, true, true,
+			null, null, null, null, null, null);
 
 		autoCloseables.add(
 			() -> CompanyLocalServiceUtil.deleteCompany(
@@ -139,9 +189,9 @@ public abstract class BaseTestPreparatorBundleActivator
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		Dictionary<String, Object> registrationProperties =
-			new HashMapDictionary<>();
-
-		registrationProperties.put(Constants.SERVICE_PID, factoryPid);
+			HashMapDictionaryBuilder.<String, Object>put(
+				Constants.SERVICE_PID, factoryPid
+			).build();
 
 		ServiceRegistration<ManagedServiceFactory> serviceRegistration =
 			bundleContext.registerService(
@@ -193,18 +243,18 @@ public abstract class BaseTestPreparatorBundleActivator
 
 				return configuration;
 			}
-			catch (IOException ioe) {
-				throw new RuntimeException(ioe);
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
-			catch (InterruptedException ie) {
+			catch (InterruptedException interruptedException) {
 				try {
 					configuration.delete();
 				}
-				catch (IOException ioe) {
-					throw new RuntimeException(ioe);
+				catch (IOException ioException) {
+					throw new RuntimeException(ioException);
 				}
 
-				throw new RuntimeException(ie);
+				throw new RuntimeException(interruptedException);
 			}
 			finally {
 				bundleContext.ungetService(serviceReference);
@@ -240,18 +290,33 @@ public abstract class BaseTestPreparatorBundleActivator
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId,
-			List<GrantType> availableGrants, List<String> availableScopes)
+			List<GrantType> allowedGrantTypesList, boolean rememberDevice,
+			List<String> scopeAliasesList, boolean trustedApplication)
 		throws PortalException {
 
 		return createOAuth2Application(
 			companyId, user, clientId, "oauthTestApplicationSecret",
-			availableGrants, availableScopes,
-			Collections.singletonList("http://redirecturi:8080"));
+			allowedGrantTypesList,
+			Collections.singletonList("http://redirecturi:8080"),
+			rememberDevice, scopeAliasesList, trustedApplication);
 	}
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId,
-			List<String> availableScopes)
+			List<GrantType> allowedGrantTypesList,
+			List<String> scopeAliasesList)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, "oauthTestApplicationSecret",
+			allowedGrantTypesList,
+			Collections.singletonList("http://redirecturi:8080"),
+			scopeAliasesList);
+	}
+
+	protected OAuth2Application createOAuth2Application(
+			long companyId, User user, String clientId,
+			List<String> scopeAliasesList)
 		throws PortalException {
 
 		return createOAuth2Application(
@@ -259,13 +324,39 @@ public abstract class BaseTestPreparatorBundleActivator
 			Arrays.asList(
 				GrantType.CLIENT_CREDENTIALS,
 				GrantType.RESOURCE_OWNER_PASSWORD),
-			availableScopes);
+			false, scopeAliasesList, false);
 	}
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId, String clientSecret,
-			List<GrantType> availableGrants, List<String> availableScopes,
-			List<String> redirectUris)
+			List<GrantType> allowedGrantTypesList,
+			List<String> redirectURIsList, boolean rememberDevice,
+			List<String> scopeAliasesList, boolean trustedApplication)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, clientSecret, allowedGrantTypesList,
+			OAuthConstants.TOKEN_ENDPOINT_AUTH_POST, null, redirectURIsList,
+			rememberDevice, scopeAliasesList, trustedApplication);
+	}
+
+	protected OAuth2Application createOAuth2Application(
+			long companyId, User user, String clientId, String clientSecret,
+			List<GrantType> allowedGrantTypesList,
+			List<String> redirectURIsList, List<String> scopeAliasesList)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, clientSecret, allowedGrantTypesList,
+			redirectURIsList, false, scopeAliasesList, false);
+	}
+
+	protected OAuth2Application createOAuth2Application(
+			long companyId, User user, String clientId, String clientSecret,
+			List<GrantType> allowedGrantTypesList,
+			String clientAuthenticationMethod, String jwks,
+			List<String> redirectURIsList, boolean rememberDevice,
+			List<String> scopeAliasesList, boolean trustedApplication)
 		throws PortalException {
 
 		ServiceReference<OAuth2ApplicationLocalService> serviceReference =
@@ -279,19 +370,77 @@ public abstract class BaseTestPreparatorBundleActivator
 
 		OAuth2Application oAuth2Application =
 			oAuth2ApplicationLocalService.addOAuth2Application(
-				companyId, user.getUserId(), user.getLogin(), availableGrants,
+				companyId, user.getUserId(), user.getFullName(),
+				allowedGrantTypesList, clientAuthenticationMethod,
 				user.getUserId(), clientId, 0, clientSecret,
 				"test oauth application",
-				Collections.singletonList("token_introspection"),
-				"http://localhost:8080", 0, "test application",
-				"http://localhost:8080", redirectUris, availableScopes,
-				new ServiceContext());
+				Collections.singletonList("token.introspection"),
+				"http://localhost:8080", 0, jwks, "test application",
+				"http://localhost:8080", redirectURIsList, rememberDevice,
+				scopeAliasesList, trustedApplication, new ServiceContext());
 
 		autoCloseables.add(
-			() -> oAuth2ApplicationLocalService.deleteOAuth2Application(
-				oAuth2Application.getOAuth2ApplicationId()));
+			() -> {
+				OAuth2Application fetchedOAuth2Application =
+					oAuth2ApplicationLocalService.fetchOAuth2Application(
+						oAuth2Application.getOAuth2ApplicationId());
+
+				if (fetchedOAuth2Application != null) {
+					oAuth2ApplicationLocalService.deleteOAuth2Application(
+						fetchedOAuth2Application);
+				}
+			});
 
 		return oAuth2Application;
+	}
+
+	protected OAuth2Application createOAuth2ApplicationWithClientSecretJWT(
+			long companyId, User user, String clientId, String clientSecret,
+			List<GrantType> allowedGrantTypesList,
+			List<String> scopeAliasesList)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, clientSecret, allowedGrantTypesList,
+			"client_secret_jwt", null, Arrays.asList(), false, scopeAliasesList,
+			false);
+	}
+
+	protected OAuth2Application createOAuth2ApplicationWithClientSecretPost(
+			long companyId, User user, String clientId, String clientSecret,
+			List<GrantType> allowedGrantTypesList,
+			List<String> scopeAliasesList)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, clientSecret, allowedGrantTypesList,
+			"client_secret_post", null, Arrays.asList(), false,
+			scopeAliasesList, false);
+	}
+
+	protected OAuth2Application createOAuth2ApplicationWithNone(
+			long companyId, User user, String clientId,
+			List<GrantType> allowedGrantTypesList,
+			List<String> redirectURIsList, boolean rememberDevice,
+			List<String> scopeAliasesList, boolean trustedApplication)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, null, allowedGrantTypesList,
+			OAuthConstants.TOKEN_ENDPOINT_AUTH_NONE, null, redirectURIsList,
+			rememberDevice, scopeAliasesList, trustedApplication);
+	}
+
+	protected OAuth2Application createOAuth2ApplicationWithPrivateKeyJWT(
+			long companyId, User user, String clientId,
+			List<GrantType> allowedGrantTypesList, String jwks,
+			List<String> scopeAliasesList)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, null, allowedGrantTypesList,
+			"private_key_jwt", jwks, Arrays.asList(), false, scopeAliasesList,
+			false);
 	}
 
 	protected void createServiceAccessProfile(
@@ -308,20 +457,20 @@ public abstract class BaseTestPreparatorBundleActivator
 			autoCloseables.add(
 				() -> bundleContext.ungetService(serviceReference));
 
-			Map<Locale, String> titleMap = HashMapBuilder.put(
-				LocaleUtil.getDefault(), name
-			).build();
-
 			SAPEntry sapEntry = sapEntryLocalService.addSAPEntry(
 				userId, allowedServiceSignatures, defaultSAPEntry, enabled,
-				name, titleMap, new ServiceContext());
+				name,
+				HashMapBuilder.put(
+					LocaleUtil.getDefault(), name
+				).build(),
+				new ServiceContext());
 
 			autoCloseables.add(
 				() -> sapEntryLocalService.deleteSAPEntry(
 					sapEntry.getSapEntryId()));
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -332,10 +481,10 @@ public abstract class BaseTestPreparatorBundleActivator
 			return false;
 		}
 
-		Enumeration<String> keys = properties1.keys();
+		Enumeration<String> enumeration = properties1.keys();
 
-		while (keys.hasMoreElements()) {
-			String key = keys.nextElement();
+		while (enumeration.hasMoreElements()) {
+			String key = enumeration.nextElement();
 
 			if (!Objects.deepEquals(
 					properties1.get(key), properties2.get(key))) {
@@ -433,8 +582,8 @@ public abstract class BaseTestPreparatorBundleActivator
 			try {
 				previousAutoCloseable.close();
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 	}

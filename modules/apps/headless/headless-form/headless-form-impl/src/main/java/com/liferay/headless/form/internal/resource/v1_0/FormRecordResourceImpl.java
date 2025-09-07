@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.form.internal.resource.v1_0;
@@ -30,11 +21,10 @@ import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.headless.form.dto.v1_0.FormRecord;
+import com.liferay.headless.form.dto.v1_0.util.FormRecordUtil;
 import com.liferay.headless.form.internal.dto.v1_0.util.DDMFormValuesUtil;
-import com.liferay.headless.form.internal.dto.v1_0.util.FormRecordUtil;
 import com.liferay.headless.form.resource.v1_0.FormRecordResource;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -48,12 +38,9 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import jakarta.ws.rs.BadRequestException;
 
-import javax.ws.rs.BadRequestException;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -62,11 +49,13 @@ import org.osgi.service.component.annotations.ServiceScope;
 /**
  * @author Javier Gamarra
  * @author Victor Oliveira
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/form-record.properties",
 	scope = ServiceScope.PROTOTYPE, service = FormRecordResource.class
 )
+@Deprecated
 public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 
 	@Override
@@ -167,7 +156,7 @@ public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 	}
 
 	private ServiceContext _createServiceContext(boolean draft)
-		throws PortalException {
+		throws Exception {
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DDMFormInstanceRecord.class.getName(), contextHttpServletRequest);
@@ -189,43 +178,29 @@ public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 	private void _linkFileEntries(
 		DDMForm ddmForm, DDMFormValues ddmFormValues) {
 
-		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
-
-		Stream<DDMFormField> ddmFormFieldsStream = ddmFormFields.stream();
-
-		ddmFormFieldsStream.filter(
-			ddmFormField -> Objects.equals(
-				ddmFormField.getType(), "document_library")
-		).map(
-			field -> {
-				List<DDMFormFieldValue> ddmFormFieldValues =
-					ddmFormValues.getDDMFormFieldValues();
-
-				Stream<DDMFormFieldValue> ddmFormFieldValuesStream =
-					ddmFormFieldValues.stream();
-
-				return ddmFormFieldValuesStream.filter(
-					value -> Objects.equals(field.getName(), value.getName())
-				).collect(
-					Collectors.toList()
-				);
+		for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
+			if (!Objects.equals(ddmFormField.getType(), "document_library")) {
+				continue;
 			}
-		).forEach(
-			ddmFormFieldValues -> {
-				try {
-					for (DDMFormFieldValue ddmFormFieldValue :
-							ddmFormFieldValues) {
+
+			try {
+				for (DDMFormFieldValue ddmFormFieldValue :
+						ddmFormValues.getDDMFormFieldValues()) {
+
+					if (Objects.equals(
+							ddmFormField.getName(),
+							ddmFormFieldValue.getName())) {
 
 						_setValue(ddmFormFieldValue);
 					}
 				}
-				catch (Exception e) {
-					_log.error(e, e);
-
-					throw new BadRequestException(e);
-				}
 			}
-		);
+			catch (Exception exception) {
+				_log.error(exception);
+
+				throw new BadRequestException(exception);
+			}
+		}
 	}
 
 	private void _setValue(DDMFormFieldValue ddmFormFieldValue)
@@ -233,7 +208,7 @@ public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 
 		Value value = ddmFormFieldValue.getValue();
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			value.getString(contextAcceptLanguage.getPreferredLocale()));
 
 		long fileEntryId = jsonObject.getLong("fileEntryId");
@@ -289,6 +264,9 @@ public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 
 	@Reference
 	private DLURLHelper _dlurlHelper;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.remote.rest.extender.client.test;
@@ -18,8 +9,10 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import jakarta.ws.rs.core.Application;
 
 import java.net.URL;
 
@@ -30,8 +23,6 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import javax.ws.rs.core.Application;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.endpoint.Server;
@@ -117,9 +108,10 @@ public class JaxRsComponentRegistrationTest {
 				ServiceTrackerFactory.open(
 					_bundleContext,
 					StringBundler.concat(
-						"(&(objectClass=", Bus.class.getName(), ")(",
+						"(&(",
 						HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH,
-						"=/rest-test))"));
+						"=/rest-test)(objectClass=", Bus.class.getName(),
+						"))"));
 
 			Bus bus = serviceTracker.waitForService(10000L);
 
@@ -164,7 +156,14 @@ public class JaxRsComponentRegistrationTest {
 	public void testIsRegistered() throws Exception {
 		URL url = new URL("http://localhost:8080/o/rest-test/testApp/sayHello");
 
-		Assert.assertEquals("Hello.", StringUtil.read(url.openStream()));
+		Assert.assertEquals("Hello.", URLUtil.toString(url));
+	}
+
+	@Test(expected = Exception.class)
+	public void testServiceListIsUnavailable() throws Exception {
+		URL url = new URL("http://localhost:8080/o/rest-test/services");
+
+		URLUtil.toString(url);
 	}
 
 	private void _cleanUp() throws Exception {
@@ -177,10 +176,10 @@ public class JaxRsComponentRegistrationTest {
 
 					@Override
 					public void removedService(
-						ServiceReference<ServletContextHelper> reference,
+						ServiceReference<ServletContextHelper> serviceReference,
 						ServletContextHelper service) {
 
-						Object contextName = reference.getProperty(
+						Object contextName = serviceReference.getProperty(
 							HttpWhiteboardConstants.
 								HTTP_WHITEBOARD_CONTEXT_NAME);
 
@@ -198,19 +197,19 @@ public class JaxRsComponentRegistrationTest {
 		try {
 			_serviceRegistration.unregister();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		try {
 			_restConfiguration.delete();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		try {
 			_cxfConfiguration.delete();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 		}
 
 		if (!countDownLatch.await(10, TimeUnit.MINUTES)) {

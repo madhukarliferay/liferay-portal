@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -125,6 +116,8 @@ public class WikiPageResourcePersistenceTest {
 
 		newWikiPageResource.setMvccVersion(RandomTestUtil.nextLong());
 
+		newWikiPageResource.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newWikiPageResource.setUuid(RandomTestUtil.randomString());
 
 		newWikiPageResource.setGroupId(RandomTestUtil.nextLong());
@@ -143,6 +136,9 @@ public class WikiPageResourcePersistenceTest {
 		Assert.assertEquals(
 			existingWikiPageResource.getMvccVersion(),
 			newWikiPageResource.getMvccVersion());
+		Assert.assertEquals(
+			existingWikiPageResource.getCtCollectionId(),
+			newWikiPageResource.getCtCollectionId());
 		Assert.assertEquals(
 			existingWikiPageResource.getUuid(), newWikiPageResource.getUuid());
 		Assert.assertEquals(
@@ -223,9 +219,9 @@ public class WikiPageResourcePersistenceTest {
 
 	protected OrderByComparator<WikiPageResource> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"WikiPageResource", "mvccVersion", true, "uuid", true,
-			"resourcePrimKey", true, "groupId", true, "companyId", true,
-			"nodeId", true, "title", true);
+			"WikiPageResource", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "resourcePrimKey", true, "groupId", true, "companyId",
+			true, "nodeId", true, "title", true);
 	}
 
 	@Test
@@ -448,32 +444,72 @@ public class WikiPageResourcePersistenceTest {
 
 		_persistence.clearCache();
 
-		WikiPageResource existingWikiPageResource =
-			_persistence.findByPrimaryKey(newWikiPageResource.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newWikiPageResource.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingWikiPageResource.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingWikiPageResource, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		WikiPageResource newWikiPageResource = addWikiPageResource();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			WikiPageResource.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"resourcePrimKey", newWikiPageResource.getResourcePrimKey()));
+
+		List<WikiPageResource> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(WikiPageResource wikiPageResource) {
 		Assert.assertEquals(
-			Long.valueOf(existingWikiPageResource.getGroupId()),
+			wikiPageResource.getUuid(),
+			ReflectionTestUtil.invoke(
+				wikiPageResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(wikiPageResource.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWikiPageResource, "getOriginalGroupId",
-				new Class<?>[0]));
+				wikiPageResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingWikiPageResource.getNodeId()),
+			Long.valueOf(wikiPageResource.getNodeId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWikiPageResource, "getOriginalNodeId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingWikiPageResource.getTitle(),
-				ReflectionTestUtil.invoke(
-					existingWikiPageResource, "getOriginalTitle",
-					new Class<?>[0])));
+				wikiPageResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "nodeId"));
+		Assert.assertEquals(
+			wikiPageResource.getTitle(),
+			ReflectionTestUtil.invoke(
+				wikiPageResource, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "title"));
 	}
 
 	protected WikiPageResource addWikiPageResource() throws Exception {
@@ -482,6 +518,8 @@ public class WikiPageResourcePersistenceTest {
 		WikiPageResource wikiPageResource = _persistence.create(pk);
 
 		wikiPageResource.setMvccVersion(RandomTestUtil.nextLong());
+
+		wikiPageResource.setCtCollectionId(RandomTestUtil.nextLong());
 
 		wikiPageResource.setUuid(RandomTestUtil.randomString());
 

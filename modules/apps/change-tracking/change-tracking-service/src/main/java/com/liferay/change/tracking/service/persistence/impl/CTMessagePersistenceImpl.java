@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.service.persistence.impl;
 
 import com.liferay.change.tracking.exception.NoSuchMessageException;
 import com.liferay.change.tracking.model.CTMessage;
+import com.liferay.change.tracking.model.CTMessageTable;
 import com.liferay.change.tracking.model.impl.CTMessageImpl;
 import com.liferay.change.tracking.model.impl.CTMessageModelImpl;
 import com.liferay.change.tracking.service.persistence.CTMessagePersistence;
+import com.liferay.change.tracking.service.persistence.CTMessageUtil;
 import com.liferay.change.tracking.service.persistence.impl.constants.CTPersistenceConstants;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.configuration.Configuration;
@@ -32,9 +25,12 @@ import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 
 import java.io.Serializable;
@@ -66,7 +62,7 @@ import org.osgi.service.component.annotations.Reference;
 public class CTMessagePersistenceImpl
 	extends BasePersistenceImpl<CTMessage> implements CTMessagePersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>CTMessageUtil</code> to access the ct message persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -83,9 +79,9 @@ public class CTMessagePersistenceImpl
 	private FinderPath _finderPathWithPaginationFindAll;
 	private FinderPath _finderPathWithoutPaginationFindAll;
 	private FinderPath _finderPathCountAll;
-	private FinderPath _finderPathWithPaginationFindByCTCollectionId;
-	private FinderPath _finderPathWithoutPaginationFindByCTCollectionId;
-	private FinderPath _finderPathCountByCTCollectionId;
+	private FinderPath _finderPathWithPaginationFindByCtCollectionId;
+	private FinderPath _finderPathWithoutPaginationFindByCtCollectionId;
+	private FinderPath _finderPathCountByCtCollectionId;
 
 	/**
 	 * Returns all the ct messages where ctCollectionId = &#63;.
@@ -94,8 +90,8 @@ public class CTMessagePersistenceImpl
 	 * @return the matching ct messages
 	 */
 	@Override
-	public List<CTMessage> findByCTCollectionId(long ctCollectionId) {
-		return findByCTCollectionId(
+	public List<CTMessage> findByCtCollectionId(long ctCollectionId) {
+		return findByCtCollectionId(
 			ctCollectionId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
@@ -112,10 +108,10 @@ public class CTMessagePersistenceImpl
 	 * @return the range of matching ct messages
 	 */
 	@Override
-	public List<CTMessage> findByCTCollectionId(
+	public List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end) {
 
-		return findByCTCollectionId(ctCollectionId, start, end, null);
+		return findByCtCollectionId(ctCollectionId, start, end, null);
 	}
 
 	/**
@@ -132,11 +128,11 @@ public class CTMessagePersistenceImpl
 	 * @return the ordered range of matching ct messages
 	 */
 	@Override
-	public List<CTMessage> findByCTCollectionId(
+	public List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end,
 		OrderByComparator<CTMessage> orderByComparator) {
 
-		return findByCTCollectionId(
+		return findByCtCollectionId(
 			ctCollectionId, start, end, orderByComparator, true);
 	}
 
@@ -155,7 +151,7 @@ public class CTMessagePersistenceImpl
 	 * @return the ordered range of matching ct messages
 	 */
 	@Override
-	public List<CTMessage> findByCTCollectionId(
+	public List<CTMessage> findByCtCollectionId(
 		long ctCollectionId, int start, int end,
 		OrderByComparator<CTMessage> orderByComparator,
 		boolean useFinderCache) {
@@ -167,12 +163,12 @@ public class CTMessagePersistenceImpl
 			(orderByComparator == null)) {
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByCTCollectionId;
+				finderPath = _finderPathWithoutPaginationFindByCtCollectionId;
 				finderArgs = new Object[] {ctCollectionId};
 			}
 		}
 		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByCTCollectionId;
+			finderPath = _finderPathWithPaginationFindByCtCollectionId;
 			finderArgs = new Object[] {
 				ctCollectionId, start, end, orderByComparator
 			};
@@ -196,43 +192,43 @@ public class CTMessagePersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_CTMESSAGE_WHERE);
+			sb.append(_SQL_SELECT_CTMESSAGE_WHERE);
 
-			query.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
+			sb.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(CTMessageModelImpl.ORDER_BY_JPQL);
+				sb.append(CTMessageModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(ctCollectionId);
+				queryPos.add(ctCollectionId);
 
 				list = (List<CTMessage>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -240,12 +236,8 @@ public class CTMessagePersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -264,27 +256,27 @@ public class CTMessagePersistenceImpl
 	 * @throws NoSuchMessageException if a matching ct message could not be found
 	 */
 	@Override
-	public CTMessage findByCTCollectionId_First(
+	public CTMessage findByCtCollectionId_First(
 			long ctCollectionId, OrderByComparator<CTMessage> orderByComparator)
 		throws NoSuchMessageException {
 
-		CTMessage ctMessage = fetchByCTCollectionId_First(
+		CTMessage ctMessage = fetchByCtCollectionId_First(
 			ctCollectionId, orderByComparator);
 
 		if (ctMessage != null) {
 			return ctMessage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("ctCollectionId=");
-		msg.append(ctCollectionId);
+		sb.append("ctCollectionId=");
+		sb.append(ctCollectionId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchMessageException(msg.toString());
+		throw new NoSuchMessageException(sb.toString());
 	}
 
 	/**
@@ -295,10 +287,10 @@ public class CTMessagePersistenceImpl
 	 * @return the first matching ct message, or <code>null</code> if a matching ct message could not be found
 	 */
 	@Override
-	public CTMessage fetchByCTCollectionId_First(
+	public CTMessage fetchByCtCollectionId_First(
 		long ctCollectionId, OrderByComparator<CTMessage> orderByComparator) {
 
-		List<CTMessage> list = findByCTCollectionId(
+		List<CTMessage> list = findByCtCollectionId(
 			ctCollectionId, 0, 1, orderByComparator);
 
 		if (!list.isEmpty()) {
@@ -317,27 +309,27 @@ public class CTMessagePersistenceImpl
 	 * @throws NoSuchMessageException if a matching ct message could not be found
 	 */
 	@Override
-	public CTMessage findByCTCollectionId_Last(
+	public CTMessage findByCtCollectionId_Last(
 			long ctCollectionId, OrderByComparator<CTMessage> orderByComparator)
 		throws NoSuchMessageException {
 
-		CTMessage ctMessage = fetchByCTCollectionId_Last(
+		CTMessage ctMessage = fetchByCtCollectionId_Last(
 			ctCollectionId, orderByComparator);
 
 		if (ctMessage != null) {
 			return ctMessage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("ctCollectionId=");
-		msg.append(ctCollectionId);
+		sb.append("ctCollectionId=");
+		sb.append(ctCollectionId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchMessageException(msg.toString());
+		throw new NoSuchMessageException(sb.toString());
 	}
 
 	/**
@@ -348,16 +340,16 @@ public class CTMessagePersistenceImpl
 	 * @return the last matching ct message, or <code>null</code> if a matching ct message could not be found
 	 */
 	@Override
-	public CTMessage fetchByCTCollectionId_Last(
+	public CTMessage fetchByCtCollectionId_Last(
 		long ctCollectionId, OrderByComparator<CTMessage> orderByComparator) {
 
-		int count = countByCTCollectionId(ctCollectionId);
+		int count = countByCtCollectionId(ctCollectionId);
 
 		if (count == 0) {
 			return null;
 		}
 
-		List<CTMessage> list = findByCTCollectionId(
+		List<CTMessage> list = findByCtCollectionId(
 			ctCollectionId, count - 1, count, orderByComparator);
 
 		if (!list.isEmpty()) {
@@ -377,7 +369,7 @@ public class CTMessagePersistenceImpl
 	 * @throws NoSuchMessageException if a ct message with the primary key could not be found
 	 */
 	@Override
-	public CTMessage[] findByCTCollectionId_PrevAndNext(
+	public CTMessage[] findByCtCollectionId_PrevAndNext(
 			long ctMessageId, long ctCollectionId,
 			OrderByComparator<CTMessage> orderByComparator)
 		throws NoSuchMessageException {
@@ -391,123 +383,123 @@ public class CTMessagePersistenceImpl
 
 			CTMessage[] array = new CTMessageImpl[3];
 
-			array[0] = getByCTCollectionId_PrevAndNext(
+			array[0] = getByCtCollectionId_PrevAndNext(
 				session, ctMessage, ctCollectionId, orderByComparator, true);
 
 			array[1] = ctMessage;
 
-			array[2] = getByCTCollectionId_PrevAndNext(
+			array[2] = getByCtCollectionId_PrevAndNext(
 				session, ctMessage, ctCollectionId, orderByComparator, false);
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
 
-	protected CTMessage getByCTCollectionId_PrevAndNext(
+	protected CTMessage getByCtCollectionId_PrevAndNext(
 		Session session, CTMessage ctMessage, long ctCollectionId,
 		OrderByComparator<CTMessage> orderByComparator, boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_CTMESSAGE_WHERE);
+		sb.append(_SQL_SELECT_CTMESSAGE_WHERE);
 
-		query.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
+		sb.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(CTMessageModelImpl.ORDER_BY_JPQL);
+			sb.append(CTMessageModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(ctCollectionId);
+		queryPos.add(ctCollectionId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(ctMessage)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<CTMessage> list = q.list();
+		List<CTMessage> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -523,9 +515,9 @@ public class CTMessagePersistenceImpl
 	 * @param ctCollectionId the ct collection ID
 	 */
 	@Override
-	public void removeByCTCollectionId(long ctCollectionId) {
+	public void removeByCtCollectionId(long ctCollectionId) {
 		for (CTMessage ctMessage :
-				findByCTCollectionId(
+				findByCtCollectionId(
 					ctCollectionId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 					null)) {
 
@@ -540,41 +532,39 @@ public class CTMessagePersistenceImpl
 	 * @return the number of matching ct messages
 	 */
 	@Override
-	public int countByCTCollectionId(long ctCollectionId) {
-		FinderPath finderPath = _finderPathCountByCTCollectionId;
+	public int countByCtCollectionId(long ctCollectionId) {
+		FinderPath finderPath = _finderPathCountByCtCollectionId;
 
 		Object[] finderArgs = new Object[] {ctCollectionId};
 
 		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_CTMESSAGE_WHERE);
+			sb.append(_SQL_COUNT_CTMESSAGE_WHERE);
 
-			query.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
+			sb.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(ctCollectionId);
+				queryPos.add(ctCollectionId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -592,6 +582,8 @@ public class CTMessagePersistenceImpl
 
 		setModelImplClass(CTMessageImpl.class);
 		setModelPKClass(long.class);
+
+		setTable(CTMessageTable.INSTANCE);
 	}
 
 	/**
@@ -602,11 +594,10 @@ public class CTMessagePersistenceImpl
 	@Override
 	public void cacheResult(CTMessage ctMessage) {
 		entityCache.putResult(
-			entityCacheEnabled, CTMessageImpl.class, ctMessage.getPrimaryKey(),
-			ctMessage);
-
-		ctMessage.resetOriginalValues();
+			CTMessageImpl.class, ctMessage.getPrimaryKey(), ctMessage);
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the ct messages in the entity cache if it is enabled.
@@ -615,15 +606,18 @@ public class CTMessagePersistenceImpl
 	 */
 	@Override
 	public void cacheResult(List<CTMessage> ctMessages) {
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (ctMessages.size() > _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (CTMessage ctMessage : ctMessages) {
 			if (entityCache.getResult(
-					entityCacheEnabled, CTMessageImpl.class,
-					ctMessage.getPrimaryKey()) == null) {
+					CTMessageImpl.class, ctMessage.getPrimaryKey()) == null) {
 
 				cacheResult(ctMessage);
-			}
-			else {
-				ctMessage.resetOriginalValues();
 			}
 		}
 	}
@@ -639,9 +633,7 @@ public class CTMessagePersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(CTMessageImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(CTMessageImpl.class);
 	}
 
 	/**
@@ -653,34 +645,22 @@ public class CTMessagePersistenceImpl
 	 */
 	@Override
 	public void clearCache(CTMessage ctMessage) {
-		entityCache.removeResult(
-			entityCacheEnabled, CTMessageImpl.class, ctMessage.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		entityCache.removeResult(CTMessageImpl.class, ctMessage);
 	}
 
 	@Override
 	public void clearCache(List<CTMessage> ctMessages) {
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (CTMessage ctMessage : ctMessages) {
-			entityCache.removeResult(
-				entityCacheEnabled, CTMessageImpl.class,
-				ctMessage.getPrimaryKey());
+			entityCache.removeResult(CTMessageImpl.class, ctMessage);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(CTMessageImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
-			entityCache.removeResult(
-				entityCacheEnabled, CTMessageImpl.class, primaryKey);
+			entityCache.removeResult(CTMessageImpl.class, primaryKey);
 		}
 	}
 
@@ -696,6 +676,8 @@ public class CTMessagePersistenceImpl
 
 		ctMessage.setNew(true);
 		ctMessage.setPrimaryKey(ctMessageId);
+
+		ctMessage.setCompanyId(CompanyThreadLocal.getCompanyId());
 
 		return ctMessage;
 	}
@@ -742,11 +724,11 @@ public class CTMessagePersistenceImpl
 
 			return remove(ctMessage);
 		}
-		catch (NoSuchMessageException nsee) {
-			throw nsee;
+		catch (NoSuchMessageException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -769,8 +751,8 @@ public class CTMessagePersistenceImpl
 				session.delete(ctMessage);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -810,66 +792,26 @@ public class CTMessagePersistenceImpl
 		try {
 			session = openSession();
 
-			if (ctMessage.isNew()) {
+			if (isNew) {
 				session.save(ctMessage);
-
-				ctMessage.setNew(false);
 			}
 			else {
 				ctMessage = (CTMessage)session.merge(ctMessage);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				ctMessageModelImpl.getCtCollectionId()
-			};
-
-			finderCache.removeResult(_finderPathCountByCTCollectionId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByCTCollectionId, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((ctMessageModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByCTCollectionId.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					ctMessageModelImpl.getOriginalCtCollectionId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByCTCollectionId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByCTCollectionId, args);
-
-				args = new Object[] {ctMessageModelImpl.getCtCollectionId()};
-
-				finderCache.removeResult(
-					_finderPathCountByCTCollectionId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByCTCollectionId, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, CTMessageImpl.class, ctMessage.getPrimaryKey(),
-			ctMessage, false);
+			CTMessageImpl.class, ctMessageModelImpl, false, true);
+
+		if (isNew) {
+			ctMessage.setNew(false);
+		}
 
 		ctMessage.resetOriginalValues();
 
@@ -1013,19 +955,19 @@ public class CTMessagePersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 			String sql = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					2 + (orderByComparator.getOrderByFields().length * 2));
 
-				query.append(_SQL_SELECT_CTMESSAGE);
+				sb.append(_SQL_SELECT_CTMESSAGE);
 
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				sql = query.toString();
+				sql = sb.toString();
 			}
 			else {
 				sql = _SQL_SELECT_CTMESSAGE;
@@ -1038,10 +980,10 @@ public class CTMessagePersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
 				list = (List<CTMessage>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1049,12 +991,8 @@ public class CTMessagePersistenceImpl
 					finderCache.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1091,18 +1029,15 @@ public class CTMessagePersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(_SQL_COUNT_CTMESSAGE);
+				Query query = session.createQuery(_SQL_COUNT_CTMESSAGE);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				finderCache.putResult(
 					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1137,49 +1072,47 @@ public class CTMessagePersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		CTMessageModelImpl.setEntityCacheEnabled(entityCacheEnabled);
-		CTMessageModelImpl.setFinderCacheEnabled(finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, CTMessageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, CTMessageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
-		_finderPathWithPaginationFindByCTCollectionId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, CTMessageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCTCollectionId",
+		_finderPathWithPaginationFindByCtCollectionId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCtCollectionId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"ctCollectionId"}, true);
 
-		_finderPathWithoutPaginationFindByCTCollectionId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, CTMessageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByCTCollectionId",
+		_finderPathWithoutPaginationFindByCtCollectionId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByCtCollectionId",
 			new String[] {Long.class.getName()},
-			CTMessageModelImpl.CTCOLLECTIONID_COLUMN_BITMASK);
+			new String[] {"ctCollectionId"}, true);
 
-		_finderPathCountByCTCollectionId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByCTCollectionId",
-			new String[] {Long.class.getName()});
+		_finderPathCountByCtCollectionId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByCtCollectionId",
+			new String[] {Long.class.getName()},
+			new String[] {"ctCollectionId"}, false);
+
+		CTMessageUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		CTMessageUtil.setPersistence(null);
+
 		entityCache.removeCache(CTMessageImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -1188,12 +1121,6 @@ public class CTMessagePersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.change.tracking.model.CTMessage"),
-			true);
 	}
 
 	@Override
@@ -1213,8 +1140,6 @@ public class CTMessagePersistenceImpl
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		super.setSessionFactory(sessionFactory);
 	}
-
-	private boolean _columnBitmaskEnabled;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -1245,13 +1170,9 @@ public class CTMessagePersistenceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		CTMessagePersistenceImpl.class);
 
-	static {
-		try {
-			Class.forName(CTPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

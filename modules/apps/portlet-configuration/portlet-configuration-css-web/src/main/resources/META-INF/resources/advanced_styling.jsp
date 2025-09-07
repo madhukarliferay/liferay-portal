@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -22,7 +13,7 @@
 	</p>
 
 	<p>
-		<liferay-ui:message key="portlet-id" />: <strong>#portlet_<%= portletConfigurationCSSPortletDisplayContext.getPortletResource() %></strong>
+		<liferay-ui:message key="portlet-id" />: <strong>#portlet_<%= HtmlUtil.escapeJS(portletConfigurationCSSPortletDisplayContext.getPortletResource()) %></strong>
 	</p>
 
 	<p>
@@ -35,27 +26,36 @@
 <aui:input label="enter-your-custom-css" name="customCSS" type="textarea" value="<%= portletConfigurationCSSPortletDisplayContext.getCustomCSS() %>" />
 
 <div id="lfr-add-rule-container">
-	<aui:button cssClass="btn btn-link" id="addId" value="add-a-css-rule-for-this-portlet" />
+	<aui:button cssClass="btn btn-sm" id="addId" value="add-a-css-rule-for-this-portlet" />
 
-	<aui:button cssClass="btn btn-link" id="addClass" value="add-a-css-rule-for-all-portlets-like-this-one" />
+	<aui:button cssClass="btn btn-sm" id="addClass" value="add-a-css-rule-for-all-portlets-like-this-one" />
 </div>
 
 <aui:script>
 	function <portlet:namespace />insertCustomCSSValue(value) {
-		var customCSS = document.getElementById('<portlet:namespace />customCSS');
+		var customCSSTextarea = document.getElementById(
+			'<portlet:namespace />customCSS'
+		);
 
-		if (customCSS) {
-			var customCSSVal = customCSS.value.trim();
+		if (customCSSTextarea) {
+			var customCSSTextareaValue = customCSSTextarea.value.trim();
 
-			if (customCSSVal.length) {
-				customCSSVal += '\n\n';
+			if (customCSSTextareaValue.length) {
+				customCSSTextareaValue += '\n\n';
 			}
 
-			var newVal = customCSSVal + value + ' {\n\t\n}\n';
+			var newValue = customCSSTextareaValue + value + ' {\n\t\n}\n';
 
-			customCSS.value = newVal;
+			customCSSTextarea.value = newValue;
 
-			Liferay.Util.setCursorPosition(customCSS, newVal.length - 3);
+			customCSSTextarea.focus();
+
+			var newCursorPosition = customCSSTextarea.value.length - 3;
+
+			customCSSTextarea.setSelectionRange(
+				newCursorPosition,
+				newCursorPosition
+			);
 		}
 	}
 
@@ -64,9 +64,9 @@
 	);
 
 	if (<portlet:namespace />addId) {
-		<portlet:namespace />addId.addEventListener('click', function() {
+		<portlet:namespace />addId.addEventListener('click', () => {
 			<portlet:namespace />insertCustomCSSValue(
-				'#portlet_<%= portletConfigurationCSSPortletDisplayContext.getPortletResource() %>'
+				'#portlet_<%= HtmlUtil.escapeJS(portletConfigurationCSSPortletDisplayContext.getPortletResource()) %>'
 			);
 		});
 	}
@@ -76,14 +76,15 @@
 	);
 
 	if (<portlet:namespace />addClass) {
-		<portlet:namespace />addClass.addEventListener('click', function() {
+		<portlet:namespace />addClass.addEventListener('click', () => {
 			<portlet:namespace />insertCustomCSSValue(portletClasses);
 		});
 	}
 
-	var portlet = Liferay.Util.getOpener()[
-		'portlet_<%= portletConfigurationCSSPortletDisplayContext.getPortletResource() %>'
-	];
+	var portlet =
+		Liferay.Util.getOpener()[
+			'portlet_<%= HtmlUtil.escapeJS(portletConfigurationCSSPortletDisplayContext.getPortletResource()) %>'
+		];
 
 	if (portlet) {
 		var portletContent = portlet.querySelector('.portlet-content');
@@ -107,17 +108,16 @@
 
 			portletContent
 				.getAttribute('class')
-				.replace(/(?:([\w\d-]+)-)?portlet(?:-?([\w\d-]+-?))?/g, function(
-					match,
-					subMatch1,
-					subMatch2
-				) {
-					var regexIgnoredClasses = /boundary|draggable/;
+				.replace(
+					/(?:([\w\d-]+)-)?portlet(?:-?([\w\d-]+-?))?/g,
+					(match, subMatch1, subMatch2) => {
+						var regexIgnoredClasses = /boundary|draggable/;
 
-					if (!regexIgnoredClasses.test(subMatch2)) {
-						boundaryClasses.push(match);
+						if (!regexIgnoredClasses.test(subMatch2)) {
+							boundaryClasses.push(match);
+						}
 					}
-				});
+				);
 
 			portletClasses = '.' + boundaryClasses.join('.') + portletClasses;
 

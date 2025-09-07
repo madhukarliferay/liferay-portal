@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.sharepoint;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -26,10 +16,10 @@ import com.liferay.portal.kernel.webdav.WebDAVUtil;
 import com.liferay.portal.sharepoint.methods.Method;
 import com.liferay.portal.sharepoint.methods.MethodFactory;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * @author Bruno Farache
@@ -56,8 +46,8 @@ public class SharepointServlet extends HttpServlet {
 				vtiInfHtml(httpServletResponse);
 			}
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
@@ -72,9 +62,9 @@ public class SharepointServlet extends HttpServlet {
 			if (uri.equals("/_vti_bin/shtml.dll/_vti_rpc") ||
 				uri.equals("/sharepoint/_vti_bin/_vti_aut/author.dll")) {
 
-				HttpSession session = httpServletRequest.getSession();
+				HttpSession httpSession = httpServletRequest.getSession();
 
-				User user = (User)session.getAttribute(WebKeys.USER);
+				User user = (User)httpSession.getAttribute(WebKeys.USER);
 
 				SharepointRequest sharepointRequest = new SharepointRequest(
 					httpServletRequest, httpServletResponse, user);
@@ -102,7 +92,6 @@ public class SharepointServlet extends HttpServlet {
 				}
 
 				sharepointRequest.setRootPath(rootPath);
-
 				sharepointRequest.setSharepointStorage(
 					SharepointUtil.getStorage(rootPath));
 
@@ -127,31 +116,23 @@ public class SharepointServlet extends HttpServlet {
 				}
 			}
 		}
-		catch (SharepointException se) {
-			_log.error(se, se);
+		catch (SharepointException sharepointException) {
+			_log.error(sharepointException);
 		}
 	}
 
 	protected void vtiInfHtml(HttpServletResponse httpServletResponse)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(13);
-
-		sb.append("<!-- FrontPage Configuration Information");
-		sb.append(StringPool.NEW_LINE);
-		sb.append(" FPVersion=\"6.0.2.9999\"");
-		sb.append(StringPool.NEW_LINE);
-		sb.append("FPShtmlScriptUrl=\"_vti_bin/shtml.dll/_vti_rpc\"");
-		sb.append(StringPool.NEW_LINE);
-		sb.append("FPAuthorScriptUrl=\"_vti_bin/_vti_aut/author.dll\"");
-		sb.append(StringPool.NEW_LINE);
-		sb.append("FPAdminScriptUrl=\"_vti_bin/_vti_adm/admin.dll\"");
-		sb.append(StringPool.NEW_LINE);
-		sb.append("TPScriptUrl=\"_vti_bin/owssvr.dll\"");
-		sb.append(StringPool.NEW_LINE);
-		sb.append("-->");
-
-		ServletResponseUtil.write(httpServletResponse, sb.toString());
+		ServletResponseUtil.write(
+			httpServletResponse,
+			StringBundler.concat(
+				"<!-- FrontPage Configuration Information\n ",
+				"FPVersion=\"6.0.2.9999\"\n",
+				"FPShtmlScriptUrl=\"_vti_bin/shtml.dll/_vti_rpc\"\n",
+				"FPAuthorScriptUrl=\"_vti_bin/_vti_aut/author.dll\"\n",
+				"FPAdminScriptUrl=\"_vti_bin/_vti_adm/admin.dll\"\n",
+				"TPScriptUrl=\"_vti_bin/owssvr.dll\"\n-->"));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

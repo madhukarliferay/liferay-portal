@@ -1,26 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.language;
 
-import com.liferay.petra.concurrent.ConcurrentReferenceValueHashMap;
+import com.liferay.petra.concurrent.ConcurrentReferenceKeyHashMap;
+import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.memory.FinalizeManager;
 import com.liferay.petra.string.StringPool;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 
 import java.net.URL;
 import java.net.URLConnection;
@@ -29,6 +23,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 
 /**
  * @author Raymond Augé
@@ -56,60 +52,79 @@ public class UTF8Control extends ResourceBundle.Control {
 			return null;
 		}
 
+		if (!reload) {
+			Map<URL, ResourceBundle> resourceBundles = _resourceBundlesMap.get(
+				classLoader);
+
+			if (resourceBundles != null) {
+				ResourceBundle resourceBundle = resourceBundles.get(url);
+
+				if (resourceBundle != null) {
+					return resourceBundle;
+				}
+			}
+		}
+
 		URLConnection urlConnection = url.openConnection();
 
 		urlConnection.setUseCaches(!reload);
 
-		if (!reload) {
-			CachedResourceBundle cachedResourceBundle =
-				_cachedResourceBundles.get(url);
+		try (InputStream inputStream = urlConnection.getInputStream();
+			Reader reader = _toReader(url, inputStream)) {
 
-			if ((cachedResourceBundle != null) &&
-				(urlConnection.getLastModified() <=
-					cachedResourceBundle.getLastModified())) {
+			ResourceBundle resourceBundle = new PropertyResourceBundle(reader);
 
-				return cachedResourceBundle.getResourceBundle();
-			}
-		}
+			Map<URL, ResourceBundle> resourceBundles =
+				_resourceBundlesMap.computeIfAbsent(
+					classLoader, key -> new ConcurrentHashMap<>());
 
-		try (InputStream inputStream = urlConnection.getInputStream()) {
-			ResourceBundle resourceBundle = new PropertyResourceBundle(
-				new InputStreamReader(inputStream, StringPool.UTF8));
-
-			CachedResourceBundle cachedResourceBundle =
-				new CachedResourceBundle(
-					resourceBundle, urlConnection.getLastModified());
-
-			_cachedResourceBundles.put(url, cachedResourceBundle);
+			resourceBundles.put(url, resourceBundle);
 
 			return resourceBundle;
 		}
 	}
 
-	private static final Map<URL, CachedResourceBundle> _cachedResourceBundles =
-		new ConcurrentReferenceValueHashMap<>(
-			FinalizeManager.SOFT_REFERENCE_FACTORY);
+	private Reader _toReader(URL url, InputStream inputStream)
+		throws IOException {
 
-	private static final class CachedResourceBundle {
-
-		public CachedResourceBundle(
-			ResourceBundle resourceBundle, long lastModified) {
-
-			_resourceBundle = resourceBundle;
-			_lastModified = lastModified;
+		if (_textReplacerBiFunction == null) {
+			return new InputStreamReader(inputStream, StringPool.UTF8);
 		}
 
-		public long getLastModified() {
-			return _lastModified;
+		return new UnsyncStringReader(
+			_textReplacerBiFunction.apply(
+				"UTF8Control#" + url,
+				StreamUtil.toString(inputStream, StringPool.UTF8)));
+	}
+
+	private static final Map<ClassLoader, Map<URL, ResourceBundle>>
+		_resourceBundlesMap = new ConcurrentReferenceKeyHashMap<>(
+			FinalizeManager.WEAK_REFERENCE_FACTORY);
+	private static final BiFunction<String, String, String>
+		_textReplacerBiFunction;
+
+	static {
+		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+
+		Object instance = null;
+
+		try {
+			Class<?> clazz = classLoader.loadClass(
+				"com.liferay.portal.tools.jakarta.ee.transformer.function." +
+					"TextReplacerBiFunction");
+
+			instance = clazz.newInstance();
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			if (!(reflectiveOperationException instanceof
+					ClassNotFoundException)) {
+
+				throw new ExceptionInInitializerError(
+					reflectiveOperationException);
+			}
 		}
 
-		public ResourceBundle getResourceBundle() {
-			return _resourceBundle;
-		}
-
-		private final long _lastModified;
-		private final ResourceBundle _resourceBundle;
-
+		_textReplacerBiFunction = (BiFunction<String, String, String>)instance;
 	}
 
 }

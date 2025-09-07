@@ -2,50 +2,52 @@
 <head>
 <title>SiteNavigationMenu</title>
 </head>
+
 <body>
-<table cellpadding="1" cellspacing="1" border="1">
+<table border="1" cellpadding="1" cellspacing="1">
 <thead>
 <tr><td rowspan="1" colspan="3">SiteNavigationMenu</td></tr>
 </thead>
+
 <tbody>
 <tr>
 	<td>ITEM_ENTRY</td>
-	<td>//div[contains(@class,'navigation-menu-item')][@data-title='${key_itemName}']</td>
+	<td>//div[contains(@class,'MenuItem')]//p[contains(@class,'card-title')][normalize-space()='${key_itemName}']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>ITEM_ENTRY_CLOSE</td>
-	<td>//div[contains(@class,'navigation-menu-item')][@data-title='${key_itemName}']//span[*[name()='svg'][contains(@class,'circle')]]</td>
+	<td>ITEM_ENTRY_BODY</td>
+	<td>//div[contains(@role,'menuitem')][.//p[contains(@class,'card-title')][normalize-space()='${key_itemName}']]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>ITEM_ENTRY_N</td>
-	<td>xpath=(//div[contains(@class,'navigation-menu-item__content')])[${key_index}]</td>
+	<td>xpath=(//p[contains(@class,'card-title')])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
-	<td>ITEM_ENTRY_STICKER</td>
-	<td>//div[contains(@class,'navigation-menu-item')][@data-title='${key_itemName}']//span[*[name()='svg'][contains(@class,'icon')]]</td>
+	<td>ITEM_ENTRY_NESTED</td>
+	<td>//div[contains(@class,'MenuItem')][@data-parent-item-id="${key_parentItemId}"]//p[contains(@class,'card-title')][normalize-space()='${key_itemName}']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>ITEM_LINK</td>
-	<td>//div[contains(@class,'card')]//span[normalize-space()='${key_itemName}']</td>
+	<td>ITEM_ENTRY_STATUS</td>
+	<td>xpath=(//div[contains(@class,'MenuItem')]//p[contains(@class,'card-title')][normalize-space()='${key_itemName}']/..//span[@class='label-item label-item-expand'])[${index}]</td>
 	<td></td>
 </tr>
 <tr>
-	<td>SET_CUSTOM_NAME_CHECKBOX</td>
-	<td>//label[contains(.,'Set Custom Name')]/input[@type='checkbox']</td>
+	<td>USE_CUSTOM_NAME_CHECKBOX</td>
+	<td>//label[contains(.,'Use Custom Name')]/input[@type='checkbox']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>SIDEBAR</td>
-	<td>//div[contains(@class,'sidebar')]</td>
+	<td>SIDEBAR_OPEN</td>
+	<td>//div[contains(@class,'AppLayout-sidebar--visible')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SCOPE_COG</td>
-	<td>//div[contains(@class,'scope-selector')]//*[*[name()='svg'][contains(@class,'lexicon-icon-cog')]]</td>
+	<td>//div[contains(@class,'dropdown')]//button[contains(@class,'dropdown-toggle')]//*[contains(@class,'lexicon-icon-cog')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -55,7 +57,7 @@
 </tr>
 <tr>
 	<td>SIDEBAR_ITEM_NAME</td>
-	<td>//div[contains(@class,'sidebar-header')][contains(.,'${key_itemName}')]</td>
+	<td>//div[contains(@class,'sidebar-header')]//p[contains(@class,'component-title')]//span[normalize-space()='${key_itemName}']</td>
 	<td></td>
 </tr>
 <tr>

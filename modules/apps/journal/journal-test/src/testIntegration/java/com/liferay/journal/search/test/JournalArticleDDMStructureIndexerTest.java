@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.search.test;
@@ -18,13 +9,15 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.test.util.background.task.DDMStructureBackgroundTask;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.DDMStructureIndexer;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -33,6 +26,8 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.search.test.util.IndexerFixture;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -96,7 +91,13 @@ public class JournalArticleDDMStructureIndexerTest {
 
 		disableJournalArticleIndexer();
 
-		runBackgroundTaskReindex(structure);
+		Message message = new Message();
+
+		message.put("structureId", structure.getStructureId());
+
+		message.put("ddmStructureIndexer", _ddmStructureIndexer);
+
+		_messageBus.sendMessage("liferay/ddm_structure_reindex", message);
 
 		journalArticleIndexer.searchNoOne(searchTerm, locale);
 	}
@@ -115,10 +116,18 @@ public class JournalArticleDDMStructureIndexerTest {
 
 		journalArticleIndexer.deleteDocument(document);
 
-		runBackgroundTaskReindex(structure);
+		Message message = new Message();
+
+		message.put("ddmStructureIndexer", _ddmStructureIndexer);
+		message.put("structureId", structure.getStructureId());
+
+		_messageBus.sendMessage("liferay/ddm_structure_reindex", message);
 
 		journalArticleIndexer.searchOnlyOne(searchTerm, locale);
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected void disableJournalArticleIndexer() {
 		Indexer<?> indexer = IndexerRegistryUtil.getIndexer(
@@ -134,18 +143,10 @@ public class JournalArticleDDMStructureIndexerTest {
 		indexer.setIndexerEnabled(true);
 	}
 
-	protected void runBackgroundTaskReindex(DDMStructure structure)
-		throws Exception {
-
-		DDMStructureBackgroundTask backgroundTask =
-			new DDMStructureBackgroundTask(structure.getStructureId());
-
-		backgroundTaskExecutor.execute(backgroundTask);
-	}
-
 	protected void setUpJournalArticleDDMStructureFixture() throws Exception {
 		structureFixture = new JournalArticleDDMStructureFixture(
-			group, journalArticleLocalService);
+			ddmStructureLocalService, group, journalArticleLocalService,
+			portal);
 
 		ddmStructures = structureFixture.getStructures();
 
@@ -168,12 +169,13 @@ public class JournalArticleDDMStructureIndexerTest {
 	}
 
 	@Inject
+	protected static DDMStructureLocalService ddmStructureLocalService;
+
+	@Inject
 	protected static JournalArticleLocalService journalArticleLocalService;
 
-	@Inject(
-		filter = "background.task.executor.class.name=com.liferay.dynamic.data.mapping.internal.background.task.DDMStructureIndexerBackgroundTaskExecutor"
-	)
-	protected BackgroundTaskExecutor backgroundTaskExecutor;
+	@Inject
+	protected static Portal portal;
 
 	@Inject(filter = "ddm.form.deserializer.type=json")
 	protected DDMFormDeserializer ddmFormDeserializer;
@@ -194,5 +196,13 @@ public class JournalArticleDDMStructureIndexerTest {
 
 	@DeleteAfterTestRun
 	protected List<User> users;
+
+	@Inject
+	private static MessageBus _messageBus;
+
+	@Inject(
+		filter = "ddm.structure.indexer.class.name=com.liferay.journal.model.JournalArticle"
+	)
+	private DDMStructureIndexer _ddmStructureIndexer;
 
 }

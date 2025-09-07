@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.io.unsync;
@@ -121,7 +112,7 @@ public class UnsyncPrintWriter extends PrintWriter {
 
 			_writer = null;
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
 			_hasError = true;
 		}
 	}
@@ -135,7 +126,7 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.flush();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}
@@ -239,12 +230,12 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.write(_LINE_SEPARATOR);
 			}
-			catch (InterruptedIOException iioe) {
+			catch (InterruptedIOException interruptedIOException) {
 				Thread currentThread = Thread.currentThread();
 
 				currentThread.interrupt();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}
@@ -328,12 +319,12 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.write(chars, offset, length);
 			}
-			catch (InterruptedIOException iioe) {
+			catch (InterruptedIOException interruptedIOException) {
 				Thread currentThread = Thread.currentThread();
 
 				currentThread.interrupt();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}
@@ -348,12 +339,12 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.write(c);
 			}
-			catch (InterruptedIOException iioe) {
+			catch (InterruptedIOException interruptedIOException) {
 				Thread currentThread = Thread.currentThread();
 
 				currentThread.interrupt();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}
@@ -368,12 +359,12 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.write(string);
 			}
-			catch (InterruptedIOException iioe) {
+			catch (InterruptedIOException interruptedIOException) {
 				Thread currentThread = Thread.currentThread();
 
 				currentThread.interrupt();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}
@@ -388,12 +379,12 @@ public class UnsyncPrintWriter extends PrintWriter {
 			try {
 				_writer.write(string, offset, length);
 			}
-			catch (InterruptedIOException iioe) {
+			catch (InterruptedIOException interruptedIOException) {
 				Thread currentThread = Thread.currentThread();
 
 				currentThread.interrupt();
 			}
-			catch (IOException ioe) {
+			catch (IOException ioException) {
 				_hasError = true;
 			}
 		}

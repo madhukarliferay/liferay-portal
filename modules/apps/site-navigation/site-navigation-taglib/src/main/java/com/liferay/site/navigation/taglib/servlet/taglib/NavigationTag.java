@@ -1,44 +1,30 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.navigation.taglib.servlet.taglib;
 
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.portletdisplaytemplate.PortletDisplayTemplateManagerUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.theme.NavItem;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.display.template.PortletDisplayTemplate;
-import com.liferay.site.navigation.taglib.internal.portlet.display.template.PortletDisplayTemplateUtil;
-import com.liferay.site.navigation.taglib.internal.servlet.NavItemClassNameIdUtil;
+import com.liferay.portlet.display.template.util.PortletDisplayTemplateUtil;
 import com.liferay.site.navigation.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.site.navigation.taglib.internal.util.NavItemUtil;
+import com.liferay.site.navigation.taglib.servlet.taglib.util.NavItemUtil;
 import com.liferay.taglib.util.IncludeTag;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
 
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -81,61 +67,33 @@ public class NavigationTag extends IncludeTag {
 
 	@Override
 	public int processEndTag() throws Exception {
-		PortletDisplayTemplate portletDisplayTemplate =
-			PortletDisplayTemplateUtil.getPortletDisplayTemplate();
-
-		if (portletDisplayTemplate == null) {
-			return EVAL_PAGE;
-		}
-
 		DDMTemplate portletDisplayDDMTemplate =
-			portletDisplayTemplate.getPortletDisplayTemplateDDMTemplate(
+			PortletDisplayTemplateUtil.getPortletDisplayTemplateDDMTemplate(
 				getDisplayStyleGroupId(),
-				NavItemClassNameIdUtil.getNavItemClassNameId(),
+				ClassNameLocalServiceUtil.getClassNameId(NavItem.class),
 				getDisplayStyle(), true);
 
 		if (portletDisplayDDMTemplate == null) {
 			return EVAL_PAGE;
 		}
 
-		List<NavItem> branchNavItems = null;
-		List<NavItem> navItems = null;
-
-		try {
-			branchNavItems = getBranchNavItems(request);
-
-			navItems = NavItemUtil.getNavItems(
-				request, _rootLayoutType, _rootLayoutLevel, _rootLayoutUuid,
-				branchNavItems);
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
-
-		HttpServletResponse httpServletResponse =
-			(HttpServletResponse)pageContext.getResponse();
-
-		Map<String, Object> contextObjects = HashMapBuilder.<String, Object>put(
-			"branchNavItems", branchNavItems
-		).put(
-			"displayDepth", _displayDepth
-		).put(
-			"includedLayouts", _includedLayouts
-		).put(
-			"preview", _preview
-		).put(
-			"rootLayoutLevel", _rootLayoutLevel
-		).put(
-			"rootLayoutType", _rootLayoutType
-		).build();
-
-		String result = portletDisplayTemplate.renderDDMTemplate(
-			request, httpServletResponse, portletDisplayDDMTemplate, navItems,
-			contextObjects);
-
 		JspWriter jspWriter = pageContext.getOut();
 
-		jspWriter.write(result);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		Map<String, Object> navigationMenuContext =
+			NavItemUtil.getNavigationMenuContext(
+				_displayDepth, _includedLayouts, httpServletRequest,
+				NavigationMenuMode.DEFAULT, _preview, _rootLayoutUuid,
+				_rootLayoutLevel, _rootLayoutType, 0);
+
+		jspWriter.write(
+			PortletDisplayTemplateUtil.renderDDMTemplate(
+				httpServletRequest,
+				(HttpServletResponse)pageContext.getResponse(),
+				portletDisplayDDMTemplate.getTemplateId(),
+				(List<NavItem>)navigationMenuContext.get("navItems"),
+				navigationMenuContext));
 
 		return EVAL_PAGE;
 	}
@@ -160,7 +118,7 @@ public class NavigationTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setPreview(boolean preview) {
@@ -193,17 +151,12 @@ public class NavigationTag extends IncludeTag {
 		_rootLayoutUuid = null;
 	}
 
-	protected List<NavItem> getBranchNavItems(
-			HttpServletRequest httpServletRequest)
-		throws PortalException {
-
-		return NavItemUtil.getBranchNavItems(httpServletRequest);
-	}
-
 	protected String getDisplayStyle() {
 		if (Validator.isNotNull(_ddmTemplateKey)) {
-			return PortletDisplayTemplateManagerUtil.getDisplayStyle(
-				_ddmTemplateKey);
+			PortletDisplayTemplate portletDisplayTemplate =
+				ServletContextUtil.getPortletDisplayTemplate();
+
+			return portletDisplayTemplate.getDisplayStyle(_ddmTemplateKey);
 		}
 
 		return StringPool.BLANK;
@@ -214,8 +167,11 @@ public class NavigationTag extends IncludeTag {
 			return _ddmTemplateGroupId;
 		}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return themeDisplay.getScopeGroupId();
 	}
@@ -230,8 +186,6 @@ public class NavigationTag extends IncludeTag {
 	}
 
 	private static final String _PAGE = "/navigation/page.jsp";
-
-	private static final Log _log = LogFactoryUtil.getLog(NavigationTag.class);
 
 	private long _ddmTemplateGroupId;
 	private String _ddmTemplateKey;

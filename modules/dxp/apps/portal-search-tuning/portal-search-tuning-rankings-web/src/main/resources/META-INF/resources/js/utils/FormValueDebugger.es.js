@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React from 'react';
@@ -36,11 +30,11 @@ const FormValueDebugger = ({values}) => (
 		className="alert alert-dark"
 		style={{
 			margin: '0 auto',
-			maxWidth: '1000px'
+			maxWidth: '1000px',
 		}}
 	>
 		<p>
-			<strong>{'Form hidden values for debugging'}</strong>
+			<strong>Form hidden values for debugging</strong>
 
 			{
 				' (Only the values from the frontend component. There are others defined in the JSP)'
@@ -50,15 +44,17 @@ const FormValueDebugger = ({values}) => (
 		<table className="table table-bordered table-striped">
 			<thead>
 				<tr>
-					<th>{'Name'}</th>
-					<th>{'Value'}</th>
+					<th>Name</th>
+
+					<th>Value</th>
 				</tr>
 			</thead>
 
 			<tbody>
-				{values.map(({name, value}) => (
-					<tr key={name}>
+				{values.map(({name, value}, index) => (
+					<tr key={`${index}-${name}`}>
 						<td>{name}</td>
+
 						<td>
 							{Array.isArray(value) ? (
 								<PrettyPrintArray value={value} />

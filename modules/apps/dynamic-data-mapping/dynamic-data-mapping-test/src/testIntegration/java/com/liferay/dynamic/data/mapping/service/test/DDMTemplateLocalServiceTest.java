@@ -1,39 +1,42 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
+import com.liferay.dynamic.data.mapping.exception.DuplicateDDMTemplateExternalReferenceCodeException;
+import com.liferay.dynamic.data.mapping.exception.TemplateCreationDisabledException;
 import com.liferay.dynamic.data.mapping.exception.TemplateDuplicateTemplateKeyException;
 import com.liferay.dynamic.data.mapping.exception.TemplateNameException;
 import com.liferay.dynamic.data.mapping.exception.TemplateScriptException;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
+import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.util.comparator.TemplateIdComparator;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Assert;
@@ -62,61 +65,105 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 	}
 
 	@Test
+	public void testAddTemplate() throws Exception {
+		DDMTemplate template = _ddmTemplateLocalService.addTemplate(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			group.getGroupId(), _classNameId, 0, _resourceClassNameId,
+			Collections.singletonMap(
+				LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()),
+			null, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			ServiceContextTestUtil.getServiceContext());
+
+		Assert.assertTrue(
+			Validator.isNotNull(template.getExternalReferenceCode()));
+	}
+
+	@Test(expected = TemplateDuplicateTemplateKeyException.class)
 	public void testAddTemplateWithDuplicateKey() throws Exception {
 		String templateKey = RandomTestUtil.randomString();
 		String language = TemplateConstants.LANG_TYPE_VM;
 
-		try {
-			addTemplate(
-				_classNameId, 0, templateKey, "Test Template 1",
-				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
-				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
-				getTestTemplateScript(language),
-				WorkflowConstants.STATUS_APPROVED);
-			addTemplate(
-				_classNameId, 0, templateKey, "Test Template 2",
-				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
-				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
-				getTestTemplateScript(language),
-				WorkflowConstants.STATUS_APPROVED);
-
-			Assert.fail();
-		}
-		catch (TemplateDuplicateTemplateKeyException tdtke) {
-		}
+		addTemplate(
+			_classNameId, 0, templateKey, "Test Template 1",
+			DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
+			getTestTemplateScript(language), WorkflowConstants.STATUS_APPROVED);
+		addTemplate(
+			_classNameId, 0, templateKey, "Test Template 2",
+			DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
+			getTestTemplateScript(language), WorkflowConstants.STATUS_APPROVED);
 	}
 
-	@Test
+	@Test(expected = DuplicateDDMTemplateExternalReferenceCodeException.class)
+	public void testAddTemplateWithExistingExternalReferenceCode()
+		throws Exception {
+
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		_ddmTemplateLocalService.addTemplate(
+			externalReferenceCode, TestPropsValues.getUserId(),
+			group.getGroupId(), _classNameId, 0, _resourceClassNameId,
+			Collections.singletonMap(
+				LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()),
+			null, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			ServiceContextTestUtil.getServiceContext());
+		_ddmTemplateLocalService.addTemplate(
+			externalReferenceCode, TestPropsValues.getUserId(),
+			group.getGroupId(), _classNameId, 0, _resourceClassNameId,
+			Collections.singletonMap(
+				LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()),
+			null, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			ServiceContextTestUtil.getServiceContext());
+	}
+
+	@Test(expected = TemplateNameException.class)
 	public void testAddTemplateWithoutName() throws Exception {
-		String language = TemplateConstants.LANG_TYPE_VM;
-
-		try {
-			addTemplate(
-				_classNameId, 0, null, StringPool.BLANK,
-				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
-				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
-				getTestTemplateScript(language),
-				WorkflowConstants.STATUS_APPROVED);
-
-			Assert.fail();
-		}
-		catch (TemplateNameException tne) {
-		}
+		addTemplate(
+			_classNameId, 0, null, StringPool.BLANK,
+			DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			WorkflowConstants.STATUS_APPROVED);
 	}
 
-	@Test
+	@Test(expected = TemplateScriptException.class)
 	public void testAddTemplateWithoutScript() throws Exception {
-		try {
+		addTemplate(
+			_classNameId, 0, null, "Test Template",
+			DDMTemplateConstants.TEMPLATE_TYPE_FORM,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM, StringPool.BLANK,
+			WorkflowConstants.STATUS_APPROVED);
+	}
+
+	@Test(expected = TemplateCreationDisabledException.class)
+	public void testAddTemplateWithTemplateCreationDisabled() throws Exception {
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					"com.liferay.dynamic.data.mapping.configuration." +
+						"DDMWebConfiguration",
+					HashMapDictionaryBuilder.<String, Object>put(
+						"enableTemplateCreation", false
+					).build())) {
+
 			addTemplate(
 				_classNameId, 0, null, "Test Template",
-				DDMTemplateConstants.TEMPLATE_TYPE_FORM,
+				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
 				DDMTemplateConstants.TEMPLATE_MODE_CREATE,
-				TemplateConstants.LANG_TYPE_VM, StringPool.BLANK,
+				TemplateConstants.LANG_TYPE_VM,
+				getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
 				WorkflowConstants.STATUS_APPROVED);
-
-			Assert.fail();
-		}
-		catch (TemplateScriptException tse) {
 		}
 	}
 
@@ -151,6 +198,52 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 	}
 
 	@Test
+	public void testDeleteTemplateByExternalReferenceCode() throws Exception {
+		DDMTemplate template = _ddmTemplateLocalService.addTemplate(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			group.getGroupId(), _classNameId, 0, _resourceClassNameId,
+			Collections.singletonMap(
+				LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()),
+			null, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			ServiceContextTestUtil.getServiceContext());
+
+		_ddmTemplateLocalService.deleteTemplate(
+			template.getExternalReferenceCode(), template.getGroupId());
+
+		Assert.assertNull(
+			_ddmTemplateLocalService.fetchTemplate(template.getTemplateId()));
+	}
+
+	@Test
+	public void testFetchDDMTemplateByExternalReferenceCode() throws Exception {
+		Company company = _companyLocalService.getCompany(group.getCompanyId());
+
+		DDMTemplate template = _ddmTemplateLocalService.addTemplate(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			company.getGroupId(), _classNameId, 0, _resourceClassNameId,
+			Collections.singletonMap(
+				LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()),
+			null, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			ServiceContextTestUtil.getServiceContext());
+
+		Assert.assertNull(
+			_ddmTemplateLocalService.fetchDDMTemplateByExternalReferenceCode(
+				template.getExternalReferenceCode(), group.getGroupId(),
+				false));
+		Assert.assertNotNull(
+			_ddmTemplateLocalService.fetchDDMTemplateByExternalReferenceCode(
+				template.getExternalReferenceCode(), group.getGroupId(), true));
+
+		_ddmTemplateLocalService.deleteTemplate(template);
+	}
+
+	@Test
 	public void testFetchTemplate() throws Exception {
 		DDMTemplate template = addDisplayTemplate(
 			_classNameId, _resourceClassNameId, "Test Template",
@@ -168,10 +261,12 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, _resourceClassNameId, "Test Template",
 			WorkflowConstants.STATUS_APPROVED);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(
-			template.getGroupId(), template.getClassNameId());
+		List<DDMTemplate> ddmTemplates =
+			DDMTemplateLocalServiceUtil.getTemplates(
+				template.getGroupId(), template.getClassNameId());
 
-		Assert.assertTrue(templates.toString(), templates.contains(template));
+		Assert.assertTrue(
+			ddmTemplates.toString(), ddmTemplates.contains(template));
 	}
 
 	@Test
@@ -183,13 +278,13 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, 0, _resourceClassNameId, "Contact", null,
 			WorkflowConstants.STATUS_DRAFT);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, _resourceClassNameId, null, null, null, null, null,
 			WorkflowConstants.STATUS_ANY, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(templates.toString(), 2, templates.size());
+		Assert.assertEquals(ddmTemplates.toString(), 2, ddmTemplates.size());
 	}
 
 	@Test
@@ -204,15 +299,15 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, 0, _resourceClassNameId, "Meeting", "Meeting",
 			WorkflowConstants.STATUS_APPROVED);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, _resourceClassNameId, null, "Meeting", null, null, null,
 			WorkflowConstants.STATUS_APPROVED, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(templates.toString(), 1, templates.size());
+		Assert.assertEquals(ddmTemplates.toString(), 1, ddmTemplates.size());
 
-		DDMTemplate template = templates.get(0);
+		DDMTemplate template = ddmTemplates.get(0);
 
 		Assert.assertEquals(
 			"Meeting", template.getDescription(group.getDefaultLanguageId()));
@@ -227,13 +322,13 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, 0, _resourceClassNameId, "Contact", null,
 			WorkflowConstants.STATUS_DRAFT);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, _resourceClassNameId, null, null, null, null, null,
 			WorkflowConstants.STATUS_DRAFT, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(templates.toString(), 1, templates.size());
+		Assert.assertEquals(ddmTemplates.toString(), 1, ddmTemplates.size());
 	}
 
 	@Test
@@ -248,14 +343,14 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, _resourceClassNameId, "Meeting",
 			WorkflowConstants.STATUS_APPROVED);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, _resourceClassNameId, "Event", null, null, null, null,
 			WorkflowConstants.STATUS_APPROVED, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(templates.toString(), 1, templates.size());
-		Assert.assertEquals("Event", getTemplateName(templates.get(0)));
+		Assert.assertEquals(ddmTemplates.toString(), 1, ddmTemplates.size());
+		Assert.assertEquals("Event", getTemplateName(ddmTemplates.get(0)));
 	}
 
 	@Test
@@ -270,13 +365,13 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, 0, _resourceClassNameId, "Meeting", "Meeting",
 			WorkflowConstants.STATUS_APPROVED);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, 0, "Event", "Meeting", null, null, null,
 			WorkflowConstants.STATUS_APPROVED, true, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
-		Assert.assertEquals(templates.toString(), 2, templates.size());
+		Assert.assertEquals(ddmTemplates.toString(), 2, ddmTemplates.size());
 	}
 
 	@Test
@@ -291,14 +386,14 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 			_classNameId, 0, _resourceClassNameId, "Meeting", "Meeting",
 			WorkflowConstants.STATUS_APPROVED);
 
-		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.search(
+		List<DDMTemplate> ddmTemplates = DDMTemplateLocalServiceUtil.search(
 			TestPropsValues.getCompanyId(), new long[] {group.getGroupId()},
 			null, null, _resourceClassNameId, "Event", "Meeting", null, null,
 			null, WorkflowConstants.STATUS_APPROVED, false, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, new TemplateIdComparator(true));
+			QueryUtil.ALL_POS, TemplateIdComparator.getInstance(true));
 
-		Assert.assertEquals("Event", getTemplateName(templates.get(0)));
-		Assert.assertEquals("Meeting", getTemplateName(templates.get(1)));
+		Assert.assertEquals("Event", getTemplateName(ddmTemplates.get(0)));
+		Assert.assertEquals("Meeting", getTemplateName(ddmTemplates.get(1)));
 	}
 
 	@Test
@@ -501,33 +596,35 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 
 	@Test
 	public void testSmallImageWithInvalidURL() throws Exception {
-		String language = TemplateConstants.LANG_TYPE_VM;
-
 		DDMTemplate template = addTemplate(
 			_classNameId, 0, _resourceClassNameId, StringUtil.randomString(),
 			StringUtil.randomString(), StringUtil.randomString(),
 			DDMTemplateConstants.TEMPLATE_TYPE_FORM,
-			DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
-			getTestTemplateScript(language), WorkflowConstants.STATUS_APPROVED,
-			true, "foo");
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			WorkflowConstants.STATUS_APPROVED, true, "foo");
 
-		Assert.assertEquals(false, template.isSmallImage());
+		Assert.assertFalse(template.isSmallImage());
 	}
 
 	@Test
 	public void testSmallImageWithValidURL() throws Exception {
-		String language = TemplateConstants.LANG_TYPE_VM;
-
 		DDMTemplate template = addTemplate(
 			_classNameId, 0, _resourceClassNameId, StringUtil.randomString(),
 			StringUtil.randomString(), StringUtil.randomString(),
 			DDMTemplateConstants.TEMPLATE_TYPE_FORM,
-			DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
-			getTestTemplateScript(language), WorkflowConstants.STATUS_APPROVED,
-			true, "http://foo.com/example.png");
+			DDMTemplateConstants.TEMPLATE_MODE_CREATE,
+			TemplateConstants.LANG_TYPE_VM,
+			getTestTemplateScript(TemplateConstants.LANG_TYPE_VM),
+			WorkflowConstants.STATUS_APPROVED, true,
+			"http://foo.com/example.png");
 
-		Assert.assertEquals(true, template.isSmallImage());
+		Assert.assertTrue(template.isSmallImage());
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected DDMTemplate copyTemplate(DDMTemplate template) throws Exception {
 		return DDMTemplateLocalServiceUtil.copyTemplate(
@@ -539,20 +636,13 @@ public class DDMTemplateLocalServiceTest extends BaseDDMServiceTestCase {
 		return template.getName(group.getDefaultLanguageId());
 	}
 
-	protected DDMTemplate updateTemplate(DDMTemplate template)
-		throws Exception {
-
-		return DDMTemplateLocalServiceUtil.updateTemplate(
-			template.getUserId(), template.getTemplateId(),
-			template.getClassPK(), template.getNameMap(),
-			template.getDescriptionMap(), template.getType(),
-			template.getMode(), template.getLanguage(), template.getScript(),
-			template.isCacheable(), template.isSmallImage(),
-			template.getSmallImageURL(), null,
-			ServiceContextTestUtil.getServiceContext());
-	}
-
 	private static long _classNameId;
 	private static long _resourceClassNameId;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.web.internal.asset.model;
@@ -27,6 +18,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -38,15 +30,15 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Locale;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Fabio Pezzutto
@@ -58,10 +50,10 @@ public class CalendarBookingAssetRenderer
 
 	public CalendarBookingAssetRenderer(
 		CalendarBooking calendarBooking,
-		ModelResourcePermission<Calendar> modelResourcePermission) {
+		ModelResourcePermission<Calendar> calendarModelResourcePermission) {
 
 		_calendarBooking = calendarBooking;
-		_calendarModelResourcePermission = modelResourcePermission;
+		_calendarModelResourcePermission = calendarModelResourcePermission;
 	}
 
 	@Override
@@ -147,16 +139,15 @@ public class CalendarBookingAssetRenderer
 			group = themeDisplay.getScopeGroup();
 		}
 
-		PortletURL portletURL = PortalUtil.getControlPanelPortletURL(
-			liferayPortletRequest, group, CalendarPortletKeys.CALENDAR, 0, 0,
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter("mvcPath", "/edit_calendar_booking.jsp");
-		portletURL.setParameter(
-			"calendarBookingId",
-			String.valueOf(_calendarBooking.getCalendarBookingId()));
-
-		return portletURL;
+		return PortletURLBuilder.create(
+			PortalUtil.getControlPanelPortletURL(
+				liferayPortletRequest, group, CalendarPortletKeys.CALENDAR, 0,
+				0, PortletRequest.RENDER_PHASE)
+		).setMVCPath(
+			"/edit_calendar_booking.jsp"
+		).setParameter(
+			"calendarBookingId", _calendarBooking.getCalendarBookingId()
+		).buildPortletURL();
 	}
 
 	@Override
@@ -166,22 +157,21 @@ public class CalendarBookingAssetRenderer
 		String noSuchEntryRedirect) {
 
 		try {
-			PortletURL portletURL = liferayPortletResponse.createRenderURL(
-				CalendarPortletKeys.CALENDAR);
-
-			portletURL.setParameter("mvcPath", "/view_calendar_booking.jsp");
-			portletURL.setParameter(
+			return PortletURLBuilder.createRenderURL(
+				liferayPortletResponse, CalendarPortletKeys.CALENDAR
+			).setMVCPath(
+				"/view_calendar_booking.jsp"
+			).setParameter(
+				"calendarBookingId", _calendarBooking.getCalendarBookingId()
+			).setParameter(
 				"returnToFullPageURL",
-				PortalUtil.getCurrentURL(liferayPortletRequest));
-			portletURL.setParameter(
-				"calendarBookingId",
-				String.valueOf(_calendarBooking.getCalendarBookingId()));
-			portletURL.setWindowState(WindowState.MAXIMIZED);
-
-			return portletURL.toString();
+				PortalUtil.getCurrentURL(liferayPortletRequest)
+			).setWindowState(
+				WindowState.MAXIMIZED
+			).buildString();
 		}
-		catch (Exception e) {
-			_log.error("Unable to get view in context URL", e);
+		catch (Exception exception) {
+			_log.error("Unable to get view in context URL", exception);
 		}
 
 		return null;
@@ -238,8 +228,8 @@ public class CalendarBookingAssetRenderer
 
 			return calendar.isEnableComments();
 		}
-		catch (Exception e) {
-			_log.error("Unable to check commentable", e);
+		catch (Exception exception) {
+			_log.error("Unable to check commentable", exception);
 		}
 
 		return false;
@@ -257,8 +247,8 @@ public class CalendarBookingAssetRenderer
 
 			return calendar.isEnableRatings();
 		}
-		catch (Exception e) {
-			_log.error("Unable to check ratable", e);
+		catch (Exception exception) {
+			_log.error("Unable to check ratable", exception);
 		}
 
 		return false;

@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.web.internal.display.context;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -31,17 +25,12 @@ import com.liferay.segments.provider.SegmentsEntryProviderRegistry;
 import com.liferay.segments.service.SegmentsEntryService;
 import com.liferay.segments.web.internal.constants.SegmentsWebKeys;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import jakarta.portlet.PortletSession;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
-import javax.portlet.PortletSession;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Eduardo García
@@ -64,18 +53,20 @@ public class PreviewSegmentsEntryUsersDisplayContext {
 		_userODataRetriever = userODataRetriever;
 		_userLocalService = userLocalService;
 
-		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
 
-	public SearchContainer getSearchContainer() {
+	public SearchContainer<User> getSearchContainer() {
 		if (_userSearchContainer != null) {
 			return _userSearchContainer;
 		}
 
-		SearchContainer userSearchContainer = new SearchContainer(
-			_renderRequest, getPortletURL(), null,
-			"no-users-have-been-assigned-to-this-segment");
+		SearchContainer<User> userSearchContainer = new SearchContainer(
+			_renderRequest, _getPortletURL(), null,
+			LanguageUtil.get(
+				_httpServletRequest,
+				"no-users-have-been-assigned-to-this-segment"));
 
 		userSearchContainer.setId("segmentsEntryUsers");
 
@@ -83,11 +74,8 @@ public class PreviewSegmentsEntryUsersDisplayContext {
 			return userSearchContainer;
 		}
 
-		int total = 0;
-		List<User> users = null;
-
 		try {
-			Criteria criteria = getCriteriaFromSession();
+			Criteria criteria = _getCriteriaFromSession();
 
 			SegmentsEntry segmentsEntry = getSegmentsEntry();
 
@@ -95,77 +83,42 @@ public class PreviewSegmentsEntryUsersDisplayContext {
 				Validator.isNotNull(
 					criteria.getFilterString(Criteria.Type.MODEL))) {
 
-				total = _userODataRetriever.getResultsCount(
-					_themeDisplay.getCompanyId(),
-					criteria.getFilterString(Criteria.Type.MODEL),
-					_themeDisplay.getLocale());
-
-				users = _userODataRetriever.getResults(
-					_themeDisplay.getCompanyId(),
-					criteria.getFilterString(Criteria.Type.MODEL),
-					_themeDisplay.getLocale(), userSearchContainer.getStart(),
-					userSearchContainer.getEnd());
+				userSearchContainer.setResultsAndTotal(
+					() -> _userODataRetriever.getResults(
+						_themeDisplay.getCompanyId(),
+						criteria.getFilterString(Criteria.Type.MODEL),
+						_themeDisplay.getLocale(),
+						userSearchContainer.getStart(),
+						userSearchContainer.getEnd()),
+					_userODataRetriever.getResultsCount(
+						_themeDisplay.getCompanyId(),
+						criteria.getFilterString(Criteria.Type.MODEL),
+						_themeDisplay.getLocale()));
 			}
-			else if (segmentsEntry != null) {
-				total =
+			else if ((criteria == null) && (segmentsEntry != null)) {
+				userSearchContainer.setResultsAndTotal(
+					() -> TransformUtil.transformToList(
+						_segmentsEntryProviderRegistry.getSegmentsEntryClassPKs(
+							segmentsEntry.getSegmentsEntryId(),
+							userSearchContainer.getStart(),
+							userSearchContainer.getEnd()),
+						_userLocalService::fetchUser),
 					_segmentsEntryProviderRegistry.
 						getSegmentsEntryClassPKsCount(
-							segmentsEntry.getSegmentsEntryId());
-
-				long[] segmentsEntryClassPKs =
-					_segmentsEntryProviderRegistry.getSegmentsEntryClassPKs(
-						segmentsEntry.getSegmentsEntryId(),
-						userSearchContainer.getStart(),
-						userSearchContainer.getEnd());
-
-				LongStream segmentsEntryClassPKsStream = Arrays.stream(
-					segmentsEntryClassPKs);
-
-				users = segmentsEntryClassPKsStream.boxed(
-				).map(
-					userId -> _userLocalService.fetchUser(userId)
-				).collect(
-					Collectors.toList()
-				);
+							segmentsEntry.getSegmentsEntryId()));
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to obtain a preview of the segment users", pe);
+					"Unable to obtain a preview of the segment users",
+					portalException);
 			}
 		}
-
-		userSearchContainer.setResults(users);
-		userSearchContainer.setTotal(total);
 
 		_userSearchContainer = userSearchContainer;
 
 		return _userSearchContainer;
-	}
-
-	protected Criteria getCriteriaFromSession() {
-		PortletSession portletSession = _renderRequest.getPortletSession();
-
-		return (Criteria)portletSession.getAttribute(
-			SegmentsWebKeys.PREVIEW_SEGMENTS_ENTRY_CRITERIA);
-	}
-
-	protected PortletURL getPortletURL() {
-		PortletURL portletURL = _renderResponse.createRenderURL();
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "previewSegmentsEntryUsers");
-
-		SegmentsEntry segmentsEntry = getSegmentsEntry();
-
-		if (segmentsEntry != null) {
-			portletURL.setParameter(
-				"segmentsEntryId",
-				String.valueOf(segmentsEntry.getSegmentsEntryId()));
-		}
-
-		return portletURL;
 	}
 
 	protected SegmentsEntry getSegmentsEntry() {
@@ -181,15 +134,42 @@ public class PreviewSegmentsEntryUsersDisplayContext {
 				_segmentsEntry = _segmentsEntryService.getSegmentsEntry(
 					segmentsEntryId);
 			}
-			catch (PortalException pe) {
+			catch (PortalException portalException) {
 				_log.error(
-					"Unable to get segment entry " + segmentsEntryId, pe);
+					"Unable to get segment entry " + segmentsEntryId,
+					portalException);
 
 				return null;
 			}
 		}
 
 		return _segmentsEntry;
+	}
+
+	private Criteria _getCriteriaFromSession() {
+		PortletSession portletSession = _renderRequest.getPortletSession();
+
+		return (Criteria)portletSession.getAttribute(
+			SegmentsWebKeys.PREVIEW_SEGMENTS_ENTRY_CRITERIA);
+	}
+
+	private PortletURL _getPortletURL() {
+		return PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setMVCRenderCommandName(
+			"/segments/preview_segments_entry_users"
+		).setParameter(
+			"segmentsEntryId",
+			() -> {
+				SegmentsEntry segmentsEntry = getSegmentsEntry();
+
+				if (segmentsEntry != null) {
+					return segmentsEntry.getSegmentsEntryId();
+				}
+
+				return null;
+			}
+		).buildPortletURL();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -204,6 +184,6 @@ public class PreviewSegmentsEntryUsersDisplayContext {
 	private final ThemeDisplay _themeDisplay;
 	private final UserLocalService _userLocalService;
 	private final ODataRetriever<User> _userODataRetriever;
-	private SearchContainer _userSearchContainer;
+	private SearchContainer<User> _userSearchContainer;
 
 }

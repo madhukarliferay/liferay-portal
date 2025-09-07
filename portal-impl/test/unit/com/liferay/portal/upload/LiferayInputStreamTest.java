@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upload;
@@ -18,7 +9,7 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.servlet.filters.uploadservletrequest.UploadServletRequestFilter;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.InputStream;
 
@@ -29,6 +20,8 @@ import java.lang.reflect.Method;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -37,6 +30,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
  * @author Preston Crary
  */
 public class LiferayInputStreamTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() throws Exception {
@@ -103,8 +101,7 @@ public class LiferayInputStreamTest {
 		throws Exception {
 
 		_mockHttpServletRequest.setAttribute(
-			UploadServletRequestFilter.COPY_MULTIPART_STREAM_TO_FILE,
-			Boolean.FALSE);
+			LiferayInputStream.COPY_MULTIPART_STREAM_TO_FILE, Boolean.FALSE);
 
 		testInitialRead(_UNCACHEABLE_BYTES);
 	}
@@ -154,10 +151,9 @@ public class LiferayInputStreamTest {
 	protected void testGetCachedInputStream(boolean readable, byte[] content)
 		throws Exception {
 
-		_mockHttpServletRequest.setContent(content);
-
 		_mockHttpServletRequest.setAttribute(
-			UploadServletRequestFilter.COPY_MULTIPART_STREAM_TO_FILE, readable);
+			LiferayInputStream.COPY_MULTIPART_STREAM_TO_FILE, readable);
+		_mockHttpServletRequest.setContent(content);
 
 		_liferayInputStream = new LiferayInputStream(_mockHttpServletRequest);
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
@@ -17,6 +8,7 @@ package com.liferay.dynamic.data.mapping.service;
 import com.liferay.dynamic.data.mapping.model.DDMStructureLink;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
@@ -30,6 +22,10 @@ public class DDMStructureLinkLocalServiceWrapper
 	implements DDMStructureLinkLocalService,
 			   ServiceWrapper<DDMStructureLinkLocalService> {
 
+	public DDMStructureLinkLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DDMStructureLinkLocalServiceWrapper(
 		DDMStructureLinkLocalService ddmStructureLinkLocalService) {
 
@@ -38,6 +34,10 @@ public class DDMStructureLinkLocalServiceWrapper
 
 	/**
 	 * Adds the ddm structure link to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmStructureLink the ddm structure link
 	 * @return the ddm structure link that was added
@@ -71,7 +71,23 @@ public class DDMStructureLinkLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLinkLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the ddm structure link from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param ddmStructureLink the ddm structure link
 	 * @return the ddm structure link that was removed
@@ -86,6 +102,10 @@ public class DDMStructureLinkLocalServiceWrapper
 
 	/**
 	 * Deletes the ddm structure link with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param structureLinkId the primary key of the ddm structure link
 	 * @return the ddm structure link that was removed
@@ -142,6 +162,18 @@ public class DDMStructureLinkLocalServiceWrapper
 	public void deleteStructureStructureLinks(long structureId) {
 		_ddmStructureLinkLocalService.deleteStructureStructureLinks(
 			structureId);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _ddmStructureLinkLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _ddmStructureLinkLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -248,6 +280,10 @@ public class DDMStructureLinkLocalServiceWrapper
 		return _ddmStructureLinkLocalService.getActionableDynamicQuery();
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public java.util.List<DDMStructureLink> getClassNameStructureLinks(
 		long classNameId) {
@@ -317,6 +353,9 @@ public class DDMStructureLinkLocalServiceWrapper
 		return _ddmStructureLinkLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -442,6 +481,10 @@ public class DDMStructureLinkLocalServiceWrapper
 	/**
 	 * Updates the ddm structure link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DDMStructureLinkLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param ddmStructureLink the ddm structure link
 	 * @return the ddm structure link that was updated
 	 */
@@ -461,6 +504,11 @@ public class DDMStructureLinkLocalServiceWrapper
 
 		return _ddmStructureLinkLocalService.updateStructureLink(
 			structureLinkId, classNameId, classPK, structureId);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _ddmStructureLinkLocalService.getBasePersistence();
 	}
 
 	@Override

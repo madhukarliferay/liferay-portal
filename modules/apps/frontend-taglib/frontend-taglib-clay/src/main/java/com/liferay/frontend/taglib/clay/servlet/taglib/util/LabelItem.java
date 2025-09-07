@@ -1,19 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.clay.servlet.taglib.util;
 
+import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.HashMap;
@@ -24,40 +17,10 @@ import java.util.Map;
  */
 public class LabelItem extends HashMap<String, Object> {
 
-	public static String getStyleFromWorkflowStatus(int status) {
-		if (status == WorkflowConstants.STATUS_APPROVED) {
-			return "success";
-		}
-		else if (status == WorkflowConstants.STATUS_DENIED) {
-			return "danger";
-		}
-		else if (status == WorkflowConstants.STATUS_DRAFT) {
-			return "secondary";
-		}
-		else if (status == WorkflowConstants.STATUS_EXPIRED) {
-			return "danger";
-		}
-		else if (status == WorkflowConstants.STATUS_IN_TRASH) {
-			return "info";
-		}
-		else if (status == WorkflowConstants.STATUS_INACTIVE) {
-			return "secondary";
-		}
-		else if (status == WorkflowConstants.STATUS_INCOMPLETE) {
-			return "warning";
-		}
-		else if (status == WorkflowConstants.STATUS_PENDING) {
-			return "info";
-		}
-		else if (status == WorkflowConstants.STATUS_SCHEDULED) {
-			return "info";
-		}
-
-		return "secondary";
-	}
-
 	public LabelItem() {
 		put("closeable", false);
+		put("dismissible", false);
+		put("large", false);
 	}
 
 	public void putData(String key, String value) {
@@ -72,26 +35,52 @@ public class LabelItem extends HashMap<String, Object> {
 		data.put(key, value);
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #setDismissible()}
+	 */
+	@Deprecated
 	public void setCloseable(boolean closeable) {
 		put("closeable", closeable);
+		setDismissible(closeable);
 	}
 
 	public void setData(Map<String, Object> data) {
 		put("data", data);
 	}
 
+	public void setDismissible(boolean dismissible) {
+		put("dismissible", dismissible);
+	}
+
+	public void setDisplayType(String displayType) {
+		put("displayType", displayType);
+	}
+
 	public void setLabel(String label) {
 		put("label", label);
 	}
 
-	public void setStatus(int status) {
-		setLabel(WorkflowConstants.getStatusLabel(status));
-
-		setStyle(getStyleFromWorkflowStatus(status));
+	public void setLarge(boolean large) {
+		put("large", large);
 	}
 
+	public void setStatus(int status) {
+		setLabel(
+			LanguageUtil.get(
+				LocaleUtil.getMostRelevantLocale(),
+				WorkflowConstants.getStatusLabel(status)));
+		setStyle(WorkflowConstants.getStatusStyle(status));
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #setDisplayType()}
+	 */
+	@Deprecated
 	public void setStyle(String style) {
 		put("style", style);
+		setDisplayType(style);
 	}
 
 }

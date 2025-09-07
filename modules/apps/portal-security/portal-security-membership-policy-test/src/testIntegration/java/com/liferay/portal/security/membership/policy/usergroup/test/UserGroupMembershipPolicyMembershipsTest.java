@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.membership.policy.usergroup.test;
@@ -119,11 +110,9 @@ public class UserGroupMembershipPolicyMembershipsTest
 	public void testAssignUserToForbiddenUserGroups() throws Exception {
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, addForbiddenUserGroups(),
-			Collections.<UserGroupRole>emptyList());
+			UserLocalServiceUtil.getUser(userIds[0]), null, null, null,
+			addForbiddenUserGroups(), Collections.<UserGroupRole>emptyList());
 	}
 
 	@Test
@@ -136,16 +125,16 @@ public class UserGroupMembershipPolicyMembershipsTest
 			UserLocalServiceUtil.getUserGroupUsersCount(
 				requiredUserGroupIds[0]);
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, new long[] {requiredUserGroupIds[0]},
+			UserLocalServiceUtil.getUser(userIds[0]), null, null, null,
+			new long[] {requiredUserGroupIds[0]},
 			Collections.<UserGroupRole>emptyList());
 
 		Assert.assertEquals(
 			initialUserGroupUsersCount + 1,
 			UserLocalServiceUtil.getUserGroupUsersCount(
 				requiredUserGroupIds[0]));
+
 		Assert.assertTrue(isPropagateMembership());
 	}
 
@@ -176,11 +165,9 @@ public class UserGroupMembershipPolicyMembershipsTest
 
 		long[] userIds = addUsers();
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, addRequiredUserGroups(),
-			Collections.<UserGroupRole>emptyList());
+			UserLocalServiceUtil.getUser(userIds[0]), null, null, null,
+			addRequiredUserGroups(), Collections.<UserGroupRole>emptyList());
 
 		Assert.assertTrue(isPropagateMembership());
 	}
@@ -200,7 +187,7 @@ public class UserGroupMembershipPolicyMembershipsTest
 		long[] userUserGroupIds = ArrayUtil.append(
 			standardUserGroupIds, requiredUserGroupIds);
 
-		MembershipPolicyTestUtil.updateUser(
+		user = MembershipPolicyTestUtil.updateUser(
 			user, null, null, null, userUserGroupIds,
 			Collections.<UserGroupRole>emptyList());
 
@@ -209,7 +196,7 @@ public class UserGroupMembershipPolicyMembershipsTest
 		Assert.assertEquals(
 			userGroups.toString(), userUserGroupIds.length, userGroups.size());
 
-		MembershipPolicyTestUtil.updateUser(
+		user = MembershipPolicyTestUtil.updateUser(
 			user, null, null, null, requiredUserGroupIds,
 			Collections.<UserGroupRole>emptyList());
 
@@ -235,7 +222,7 @@ public class UserGroupMembershipPolicyMembershipsTest
 		long[] userUserGroupIds = ArrayUtil.append(
 			standardUserGroupIds, requiredUserGroupIds);
 
-		MembershipPolicyTestUtil.updateUser(
+		user = MembershipPolicyTestUtil.updateUser(
 			user, null, null, null, userUserGroupIds,
 			Collections.<UserGroupRole>emptyList());
 
@@ -244,7 +231,7 @@ public class UserGroupMembershipPolicyMembershipsTest
 		Assert.assertEquals(
 			userGroups.toString(), userUserGroupIds.length, userGroups.size());
 
-		MembershipPolicyTestUtil.updateUser(
+		user = MembershipPolicyTestUtil.updateUser(
 			user, null, null, null, standardUserGroupIds,
 			Collections.<UserGroupRole>emptyList());
 
@@ -299,8 +286,8 @@ public class UserGroupMembershipPolicyMembershipsTest
 		UserGroup userGroup = MembershipPolicyTestUtil.addUserGroup();
 
 		UserGroupServiceUtil.updateUserGroup(
-			userGroup.getUserGroupId(), userGroup.getName(),
-			userGroup.getDescription(),
+			userGroup.getExternalReferenceCode(), userGroup.getUserGroupId(),
+			userGroup.getName(), userGroup.getDescription(),
 			ServiceContextTestUtil.getServiceContext());
 
 		Assert.assertTrue(isVerify());

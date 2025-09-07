@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.action;
@@ -23,16 +14,17 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.SessionClicks;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 
-import java.util.Enumeration;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.util.Enumeration;
 
 /**
  * @author Brian Wing Shun Chan
@@ -49,22 +41,26 @@ public class SessionClickAction implements Action {
 			AuthTokenUtil.checkCSRFToken(
 				httpServletRequest, SessionClickAction.class.getName());
 
-			HttpSession session = httpServletRequest.getSession();
+			HttpSession httpSession = httpServletRequest.getSession();
 
-			Enumeration<String> enu = httpServletRequest.getParameterNames();
+			Enumeration<String> enumeration =
+				httpServletRequest.getParameterNames();
 
 			boolean useHttpSession = ParamUtil.getBoolean(
 				httpServletRequest, "useHttpSession");
 
-			while (enu.hasMoreElements()) {
-				String name = enu.nextElement();
+			while (enumeration.hasMoreElements()) {
+				String name = enumeration.nextElement();
 
-				if (!name.equals("doAsUserId") && !name.equals("p_auth")) {
+				if (!StringUtil.equals(name, "cmd") &&
+					!StringUtil.equals(name, "doAsUserId") &&
+					!StringUtil.equals(name, "p_auth")) {
+
 					String value = ParamUtil.getString(
 						httpServletRequest, name);
 
 					if (useHttpSession) {
-						SessionClicks.put(session, name, value);
+						SessionClicks.put(httpSession, name, value);
 					}
 					else {
 						SessionClicks.put(httpServletRequest, name, value);
@@ -78,7 +74,7 @@ public class SessionClickAction implements Action {
 				String cmd = ParamUtil.getString(
 					httpServletRequest, Constants.CMD);
 
-				if (cmd.equals("get")) {
+				if (StringUtil.equals(cmd, "get")) {
 					httpServletResponse.setContentType(ContentTypes.TEXT_PLAIN);
 				}
 				else {
@@ -94,27 +90,28 @@ public class SessionClickAction implements Action {
 
 			return null;
 		}
-		catch (Exception e) {
-			PortalUtil.sendError(e, httpServletRequest, httpServletResponse);
+		catch (Exception exception) {
+			PortalUtil.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}
 	}
 
 	protected String getValue(HttpServletRequest httpServletRequest) {
-		HttpSession session = httpServletRequest.getSession();
+		HttpSession httpSession = httpServletRequest.getSession();
 
 		String cmd = ParamUtil.getString(httpServletRequest, Constants.CMD);
 
 		boolean useHttpSession = ParamUtil.getBoolean(
 			httpServletRequest, "useHttpSession");
 
-		if (cmd.equals("get")) {
+		if (StringUtil.equals(cmd, "get")) {
 			String key = ParamUtil.getString(httpServletRequest, "key");
 			String value = StringPool.BLANK;
 
 			if (useHttpSession) {
-				value = SessionClicks.get(session, key, cmd);
+				value = SessionClicks.get(httpSession, key, cmd);
 			}
 			else {
 				value = SessionClicks.get(httpServletRequest, key, cmd);
@@ -122,7 +119,7 @@ public class SessionClickAction implements Action {
 
 			return value;
 		}
-		else if (cmd.equals("getAll")) {
+		else if (StringUtil.equals(cmd, "getAll")) {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
 
 			String[] keys = httpServletRequest.getParameterValues("key");
@@ -131,7 +128,7 @@ public class SessionClickAction implements Action {
 				String value = StringPool.BLANK;
 
 				if (useHttpSession) {
-					value = SessionClicks.get(session, key, cmd);
+					value = SessionClicks.get(httpSession, key, cmd);
 				}
 				else {
 					value = SessionClicks.get(httpServletRequest, key, cmd);

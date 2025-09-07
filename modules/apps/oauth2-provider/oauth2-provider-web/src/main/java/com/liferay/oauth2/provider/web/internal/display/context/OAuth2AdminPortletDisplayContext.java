@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal.display.context;
@@ -24,17 +15,20 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.PortletRequest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import javax.portlet.PortletPreferences;
-import javax.portlet.PortletRequest;
+import java.util.ResourceBundle;
 
 /**
  * @author Tomas Polesovsky
@@ -43,31 +37,50 @@ public class OAuth2AdminPortletDisplayContext
 	extends BaseOAuth2PortletDisplayContext {
 
 	public OAuth2AdminPortletDisplayContext(
-		OAuth2ApplicationService oAuth2ApplicationService,
+		DLURLHelper dlURLHelper,
 		OAuth2ApplicationScopeAliasesLocalService
 			oAuth2ApplicationScopeAliasesLocalService,
+		OAuth2ApplicationService oAuth2ApplicationService,
 		OAuth2ProviderConfiguration oAuth2ProviderConfiguration,
-		PortletRequest portletRequest, ThemeDisplay themeDisplay,
-		DLURLHelper dlURLHelper) {
+		PortletRequest portletRequest, ThemeDisplay themeDisplay) {
 
-		_oAuth2ProviderConfiguration = oAuth2ProviderConfiguration;
-
-		super.oAuth2ApplicationService = oAuth2ApplicationService;
-		super.portletRequest = portletRequest;
-		super.themeDisplay = themeDisplay;
-		super.dlURLHelper = dlURLHelper;
+		super(
+			dlURLHelper, oAuth2ApplicationService, portletRequest,
+			themeDisplay);
 
 		this.oAuth2ApplicationScopeAliasesLocalService =
 			oAuth2ApplicationScopeAliasesLocalService;
+		_oAuth2ProviderConfiguration = oAuth2ProviderConfiguration;
+
+		_resourceBundle = ResourceBundleUtil.getBundle(
+			"content.Language", themeDisplay.getLocale(), getClass());
+	}
+
+	public String getExtraPropertiesContent(
+		OAuth2Application oAuth2Application) {
+
+		if (hasRememberDevicePermission() &&
+			oAuth2Application.isRememberDevice()) {
+
+			return LanguageUtil.get(_resourceBundle, "remember-device-is-on");
+		}
+
+		if (hasAddTrustedApplicationPermission() &&
+			oAuth2Application.isTrustedApplication()) {
+
+			return LanguageUtil.get(_resourceBundle, "trusted");
+		}
+
+		return StringPool.BLANK;
 	}
 
 	public List<GrantType> getGrantTypes(
 		PortletPreferences portletPreferences) {
 
+		List<GrantType> grantTypes = new ArrayList<>();
+
 		String[] oAuth2Grants = StringUtil.split(
 			portletPreferences.getValue("oAuth2Grants", StringPool.BLANK));
-
-		List<GrantType> grantTypes = new ArrayList<>();
 
 		for (String oAuth2Grant : oAuth2Grants) {
 			grantTypes.add(GrantType.valueOf(oAuth2Grant));
@@ -127,5 +140,6 @@ public class OAuth2AdminPortletDisplayContext
 		oAuth2ApplicationScopeAliasesLocalService;
 
 	private final OAuth2ProviderConfiguration _oAuth2ProviderConfiguration;
+	private final ResourceBundle _resourceBundle;
 
 }

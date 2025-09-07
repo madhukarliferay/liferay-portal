@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.oauth2.provider.web.internal.portlet.action;
@@ -41,6 +32,10 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.PortletPreferences;
+
 import java.io.InputStream;
 
 import java.util.ArrayList;
@@ -48,10 +43,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletPreferences;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -64,8 +55,8 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	configurationPid = "com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration",
 	property = {
-		"javax.portlet.name=" + OAuth2ProviderPortletKeys.OAUTH2_ADMIN,
-		"mvc.command.name=/admin/update_oauth2_application"
+		"jakarta.portlet.name=" + OAuth2ProviderPortletKeys.OAUTH2_ADMIN,
+		"mvc.command.name=/oauth2_provider/update_oauth2_application"
 	},
 	service = MVCActionCommand.class
 )
@@ -84,15 +75,15 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 
 		int clientProfileId = ParamUtil.getInteger(request, "clientProfile");
 
-		ClientProfile clientProfile = getClientProfile(clientProfileId);
+		ClientProfile clientProfile = _getClientProfile(clientProfileId);
 
 		PortletPreferences portletPreferences = request.getPreferences();
 
 		OAuth2AdminPortletDisplayContext oAuth2AdminPortletDisplayContext =
 			new OAuth2AdminPortletDisplayContext(
-				_oAuth2ApplicationService,
-				_oAuth2ApplicationScopeAliasesLocalService,
-				_oAuth2ProviderConfiguration, request, null, _dlurlHelper);
+				_dlurlHelper, _oAuth2ApplicationScopeAliasesLocalService,
+				_oAuth2ApplicationService, _oAuth2ProviderConfiguration,
+				request, themeDisplay);
 
 		String[] oAuth2Features =
 			oAuth2AdminPortletDisplayContext.getOAuth2Features(
@@ -101,7 +92,7 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 		List<String> featuresList = new ArrayList<>();
 
 		for (String feature : oAuth2Features) {
-			if (ParamUtil.getBoolean(request, "feature-" + feature, false)) {
+			if (ParamUtil.getBoolean(request, "feature-" + feature)) {
 				featuresList.add(feature);
 			}
 		}
@@ -120,6 +111,10 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 			}
 		}
 
+		String clientAuthenticationMethod = ParamUtil.get(
+			request, "clientAuthenticationMethod", StringPool.BLANK);
+		long clientCredentialUserId = ParamUtil.get(
+			request, "clientCredentialUserId", themeDisplay.getUserId());
 		String clientId = ParamUtil.get(request, "clientId", StringPool.BLANK);
 		String clientSecret = ParamUtil.get(
 			request, "clientSecret", StringPool.BLANK);
@@ -127,6 +122,7 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 			request, "description", StringPool.BLANK);
 		String homePageURL = ParamUtil.get(
 			request, "homePageURL", StringPool.BLANK);
+		String jwks = ParamUtil.get(request, "jwks", StringPool.BLANK);
 		String name = ParamUtil.get(request, "name", StringPool.BLANK);
 		String privacyPolicyURL = ParamUtil.get(
 			request, "privacyPolicyURL", StringPool.BLANK);
@@ -134,13 +130,23 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 			StringUtil.splitLines(
 				ParamUtil.get(request, "redirectURIs", StringPool.BLANK)));
 		List<String> scopeAliasesList = Collections.emptyList();
-		long clientCredentialUserId = ParamUtil.get(
-			request, "clientCredentialUserId", themeDisplay.getUserId());
+
+		boolean rememberDevice = false;
+		boolean trustedApplication = false;
+
+		if (allowedGrantTypesList.contains(GrantType.AUTHORIZATION_CODE) ||
+			allowedGrantTypesList.contains(GrantType.AUTHORIZATION_CODE_PKCE)) {
+
+			trustedApplication = ParamUtil.getBoolean(
+				request, "trustedApplication");
+
+			if (!trustedApplication) {
+				rememberDevice = ParamUtil.getBoolean(
+					request, "rememberDevice");
+			}
+		}
 
 		try {
-			ServiceContext serviceContext = ServiceContextFactory.getInstance(
-				OAuth2Application.class.getName(), request);
-
 			if (oAuth2ApplicationId == 0) {
 				if (Validator.isBlank(clientId)) {
 					clientId = OAuth2SecureRandomGenerator.generateClientId();
@@ -153,12 +159,18 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 					}
 				}
 
+				ServiceContext serviceContext =
+					ServiceContextFactory.getInstance(
+						OAuth2Application.class.getName(), request);
+
 				OAuth2Application oAuth2Application =
 					_oAuth2ApplicationService.addOAuth2Application(
-						allowedGrantTypesList, clientCredentialUserId, clientId,
-						clientProfile.id(), clientSecret, description,
-						featuresList, homePageURL, 0, name, privacyPolicyURL,
-						redirectURIsList, scopeAliasesList, serviceContext);
+						allowedGrantTypesList, clientAuthenticationMethod,
+						clientCredentialUserId, clientId, clientProfile.id(),
+						clientSecret, description, featuresList, homePageURL, 0,
+						jwks, name, privacyPolicyURL, redirectURIsList,
+						rememberDevice, scopeAliasesList, trustedApplication,
+						serviceContext);
 
 				response.setRenderParameter(
 					"oAuth2ApplicationId",
@@ -170,13 +182,14 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 						oAuth2ApplicationId);
 
 				_oAuth2ApplicationService.updateOAuth2Application(
-					oAuth2ApplicationId, allowedGrantTypesList,
+					oAuth2ApplicationId,
+					oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
+					allowedGrantTypesList, clientAuthenticationMethod,
 					clientCredentialUserId, clientId, clientProfile.id(),
 					clientSecret, description, featuresList, homePageURL,
-					oAuth2Application.getIconFileEntryId(), name,
-					privacyPolicyURL, redirectURIsList,
-					oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
-					serviceContext);
+					oAuth2Application.getIconFileEntryId(), jwks, name,
+					privacyPolicyURL, redirectURIsList, rememberDevice,
+					trustedApplication);
 
 				long fileEntryId = ParamUtil.getLong(request, "fileEntryId");
 
@@ -197,14 +210,14 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 				}
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(portalException);
 			}
 
-			Class<?> peClass = pe.getClass();
+			Class<?> peClass = portalException.getClass();
 
-			SessionErrors.add(request, peClass.getName(), pe);
+			SessionErrors.add(request, peClass.getName(), portalException);
 		}
 
 		String backURL = ParamUtil.get(request, "backURL", StringPool.BLANK);
@@ -220,7 +233,7 @@ public class UpdateOAuth2ApplicationMVCActionCommand
 			OAuth2ProviderConfiguration.class, properties);
 	}
 
-	protected ClientProfile getClientProfile(int clientProfileId) {
+	private ClientProfile _getClientProfile(int clientProfileId) {
 		for (ClientProfile clientProfile : ClientProfile.values()) {
 			if (clientProfile.id() == clientProfileId) {
 				return clientProfile;

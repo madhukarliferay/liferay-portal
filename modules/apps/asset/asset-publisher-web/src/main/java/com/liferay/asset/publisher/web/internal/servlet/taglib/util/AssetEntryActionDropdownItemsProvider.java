@@ -1,40 +1,36 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.publisher.web.internal.servlet.taglib.util;
 
-import com.liferay.asset.kernel.action.AssetEntryAction;
 import com.liferay.asset.kernel.model.AssetRenderer;
+import com.liferay.asset.publisher.action.AssetEntryAction;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.RenderLayoutContentThreadLocal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Collections;
 import java.util.List;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -42,8 +38,9 @@ import javax.servlet.http.HttpServletRequest;
 public class AssetEntryActionDropdownItemsProvider {
 
 	public AssetEntryActionDropdownItemsProvider(
-		AssetRenderer assetRenderer, List<AssetEntryAction> assetEntryActions,
-		String fullContentRedirect, LiferayPortletRequest liferayPortletRequest,
+		AssetRenderer<?> assetRenderer,
+		List<AssetEntryAction<?>> assetEntryActions, String fullContentRedirect,
+		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse) {
 
 		_assetRenderer = assetRenderer;
@@ -60,6 +57,10 @@ public class AssetEntryActionDropdownItemsProvider {
 	}
 
 	public List<DropdownItem> getActionDropdownItems() {
+		if (RenderLayoutContentThreadLocal.isRenderLayoutContent()) {
+			return Collections.emptyList();
+		}
+
 		return new DropdownItemList() {
 			{
 				PortletURL editAssetEntryURL = _getEditAssetEntryURL();
@@ -67,46 +68,54 @@ public class AssetEntryActionDropdownItemsProvider {
 				if (editAssetEntryURL != null) {
 					add(
 						dropdownItem -> {
-							dropdownItem.setIcon("pencil");
-							dropdownItem.putData(
-								"useDialog", Boolean.FALSE.toString());
 							dropdownItem.setHref(editAssetEntryURL.toString());
+							dropdownItem.setIcon("pencil");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "edit"));
 						});
 				}
 
 				if (ListUtil.isNotEmpty(_assetEntryActions)) {
-					for (AssetEntryAction assetEntryAction :
+					for (AssetEntryAction<?> assetEntryAction :
 							_assetEntryActions) {
 
+						AssetEntryAction<Object> objectAssetEntryAction =
+							(AssetEntryAction<Object>)assetEntryAction;
+
 						try {
-							if (!assetEntryAction.hasPermission(
+							if (!objectAssetEntryAction.hasPermission(
 									_themeDisplay.getPermissionChecker(),
-									_assetRenderer)) {
+									(AssetRenderer<Object>)_assetRenderer)) {
 
 								continue;
 							}
 						}
-						catch (Exception e) {
+						catch (Exception exception) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(exception);
+							}
+
 							continue;
 						}
 
-						String title = assetEntryAction.getMessage(
+						String title = objectAssetEntryAction.getMessage(
 							_themeDisplay.getLocale());
 
 						add(
 							dropdownItem -> {
-								dropdownItem.setHref(
-									assetEntryAction.getDialogURL(
-										_httpServletRequest, _assetRenderer));
-								dropdownItem.setIcon(
-									assetEntryAction.getIcon());
 								dropdownItem.putData(
-									"destroyOnHide", Boolean.TRUE.toString());
+									"action", "assetEntryAction");
+								dropdownItem.putData(
+									"assetEntryActionTitle", title);
+								dropdownItem.putData(
+									"assetEntryActionURL",
+									objectAssetEntryAction.getDialogURL(
+										_httpServletRequest,
+										(AssetRenderer<Object>)_assetRenderer));
 								dropdownItem.putData(
 									"useDialog", Boolean.TRUE.toString());
-								dropdownItem.putData("title", title);
+								dropdownItem.setIcon(
+									objectAssetEntryAction.getIcon());
 								dropdownItem.setLabel(title);
 							});
 					}
@@ -136,25 +145,33 @@ public class AssetEntryActionDropdownItemsProvider {
 				redirect = _fullContentRedirect;
 			}
 
-			PortletURL portletURL = _assetRenderer.getURLEdit(
-				_liferayPortletRequest, _liferayPortletResponse,
-				LiferayWindowState.NORMAL, redirect);
+			return PortletURLBuilder.create(
+				_assetRenderer.getURLEdit(
+					_liferayPortletRequest, _liferayPortletResponse,
+					LiferayWindowState.NORMAL, redirect)
+			).setPortletResource(
+				() -> {
+					PortletDisplay portletDisplay =
+						_themeDisplay.getPortletDisplay();
 
-			PortletDisplay portletDisplay = _themeDisplay.getPortletDisplay();
-
-			portletURL.setParameter(
-				"portletResource", portletDisplay.getPortletName());
-
-			return portletURL;
+					return portletDisplay.getPortletName();
+				}
+			).buildPortletURL();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		return null;
 	}
 
-	private final List<AssetEntryAction> _assetEntryActions;
-	private final AssetRenderer _assetRenderer;
+	private static final Log _log = LogFactoryUtil.getLog(
+		AssetEntryActionDropdownItemsProvider.class);
+
+	private final List<AssetEntryAction<?>> _assetEntryActions;
+	private final AssetRenderer<?> _assetRenderer;
 	private final String _fullContentRedirect;
 	private final HttpServletRequest _httpServletRequest;
 	private final LiferayPortletRequest _liferayPortletRequest;

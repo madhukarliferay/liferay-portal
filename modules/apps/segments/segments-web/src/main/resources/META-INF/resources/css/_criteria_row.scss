@@ -1,3 +1,5 @@
+@import 'atlas-variables';
+
 .criterion-row-root {
 	border: 2px solid transparent;
 	border-radius: 4px;
@@ -13,6 +15,14 @@
 		padding: 16px;
 	}
 
+	&.criterion-row-root-warning {
+		background: #fff4ec;
+		border: 1px solid #ff8f38;
+		border-left: 3px solid #ff8f38;
+		border-radius: 4px;
+		padding: 16px;
+	}
+
 	.edit-container {
 		align-items: center;
 		display: flex;
@@ -20,6 +30,10 @@
 		margin: 0;
 		padding: 0;
 		width: 100%;
+
+		&.dnd-drag {
+			opacity: 0.4;
+		}
 
 		.criterion-input {
 			flex: 1;
@@ -33,6 +47,15 @@
 			&.select-entity-input {
 				min-width: 200px;
 			}
+
+			&--error {
+				border-color: var(--danger);
+				&:focus {
+					box-shadow:
+						0 0 0 0.125rem #fff,
+						0 0 0 0.25rem var(--danger);
+				}
+			}
 		}
 
 		.criterion-string {
@@ -43,10 +66,6 @@
 	.operator,
 	.operator-input {
 		text-transform: lowercase;
-	}
-
-	&.dnd-drag {
-		opacity: 0.4;
 	}
 
 	&.dnd-hover {

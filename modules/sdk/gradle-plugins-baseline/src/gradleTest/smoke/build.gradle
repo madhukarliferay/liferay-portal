@@ -1,10 +1,11 @@
+import aQute.bnd.gradle.BundleTaskExtension
 import aQute.bnd.osgi.Constants
 
 import org.gradle.util.VersionNumber
 
 buildscript {
 	dependencies {
-		classpath group: "biz.aQute.bnd", name: "biz.aQute.bnd.gradle", version: "4.3.0"
+		classpath group: "biz.aQute.bnd", name: "biz.aQute.bnd.gradle", version: "6.4.0"
 	}
 
 	repositories {
@@ -14,7 +15,6 @@ buildscript {
 	}
 }
 
-apply plugin: "biz.aQute.bnd.builder"
 apply plugin: "com.liferay.baseline"
 
 Properties bndProperties = _getBndProperties(project)
@@ -34,7 +34,13 @@ baselineConfiguration {
 }
 
 jar {
-	bnd "-include": "bnd.bnd"
+	BundleTaskExtension bundleTaskExtension = new BundleTaskExtension(jar)
+
+	bundleTaskExtension.bndfile.set(file("bnd.bnd"))
+
+	convention.plugins.bundle = bundleTaskExtension
+
+	doLast bundleTaskExtension.buildAction()
 }
 
 repositories {

@@ -1,6 +1,7 @@
+@import 'admin';
 @import 'atlas-variables';
 
-/* ---------- Configuration ---------- */
+// ---------- Configuration ----------
 
 .portlet-configuration {
 	.kb-block-labels .field-label {
@@ -16,7 +17,7 @@
 	}
 }
 
-/* ---------- Portal ---------- */
+// ---------- Portal ----------
 
 .controls-hidden .kb-article-icons {
 	display: none;
@@ -57,39 +58,10 @@
 		}
 	}
 
-	.taglib-ratings.stars {
-		margin: 15px 0 0;
-		padding: 0;
-	}
-
-	/* ---------- Portlet ---------- */
-
-	.kb-article {
-		.panel .panel-body,
-		.panel .list-group-item {
-			padding: 15px 30px;
-		}
-
-		h1 {
-			font-size: 48px;
-			margin-bottom: 30px;
-		}
-
-		.kb-article-assets,
-		.kb-attachments,
-		.taglib-asset-links,
-		.kb-article-ratings {
-			margin-top: 20px;
-		}
-	}
+	// ---------- Portlet ----------
 
 	.kb-add-article-button {
 		font-weight: normal;
-	}
-
-	.kb-article-ratings {
-		display: inline-block;
-		width: 100%;
 	}
 
 	.kb-article-siblings {
@@ -281,7 +253,7 @@
 	}
 
 	.kb-entity-header {
-		margin: 5px 0 5px 0;
+		margin: 5px 0;
 		padding: 0 5px 3px;
 
 		.kb-article-source-url {
@@ -319,21 +291,7 @@
 	}
 }
 
-#wrapper .knowledge-base-portlet .card-horizontal.main-content-card {
-	min-height: 0;
-}
-
-.firefox .knowledge-base-portlet {
-	fieldset {
-		display: table-cell;
-	}
-
-	.kbarticle-navigation a {
-		word-wrap: break-word;
-	}
-}
-
-/* ---------- Skin ---------- */
+// ---------- Skin ----------
 
 .knowledge-base-portlet {
 	a.text-default,

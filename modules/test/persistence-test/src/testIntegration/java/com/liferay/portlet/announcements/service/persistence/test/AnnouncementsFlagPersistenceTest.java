@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.announcements.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -125,6 +117,8 @@ public class AnnouncementsFlagPersistenceTest {
 
 		newAnnouncementsFlag.setMvccVersion(RandomTestUtil.nextLong());
 
+		newAnnouncementsFlag.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newAnnouncementsFlag.setCompanyId(RandomTestUtil.nextLong());
 
 		newAnnouncementsFlag.setUserId(RandomTestUtil.nextLong());
@@ -143,6 +137,9 @@ public class AnnouncementsFlagPersistenceTest {
 		Assert.assertEquals(
 			existingAnnouncementsFlag.getMvccVersion(),
 			newAnnouncementsFlag.getMvccVersion());
+		Assert.assertEquals(
+			existingAnnouncementsFlag.getCtCollectionId(),
+			newAnnouncementsFlag.getCtCollectionId());
 		Assert.assertEquals(
 			existingAnnouncementsFlag.getFlagId(),
 			newAnnouncementsFlag.getFlagId());
@@ -211,9 +208,9 @@ public class AnnouncementsFlagPersistenceTest {
 
 	protected OrderByComparator<AnnouncementsFlag> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"AnnouncementsFlag", "mvccVersion", true, "flagId", true,
-			"companyId", true, "userId", true, "createDate", true, "entryId",
-			true, "value", true);
+			"AnnouncementsFlag", "mvccVersion", true, "ctCollectionId", true,
+			"flagId", true, "companyId", true, "userId", true, "createDate",
+			true, "entryId", true, "value", true);
 	}
 
 	@Test
@@ -434,24 +431,67 @@ public class AnnouncementsFlagPersistenceTest {
 
 		_persistence.clearCache();
 
-		AnnouncementsFlag existingAnnouncementsFlag =
-			_persistence.findByPrimaryKey(newAnnouncementsFlag.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(
+				newAnnouncementsFlag.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		AnnouncementsFlag newAnnouncementsFlag = addAnnouncementsFlag();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			AnnouncementsFlag.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"flagId", newAnnouncementsFlag.getFlagId()));
+
+		List<AnnouncementsFlag> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(AnnouncementsFlag announcementsFlag) {
 		Assert.assertEquals(
-			Long.valueOf(existingAnnouncementsFlag.getUserId()),
+			Long.valueOf(announcementsFlag.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAnnouncementsFlag, "getOriginalUserId",
-				new Class<?>[0]));
+				announcementsFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
 		Assert.assertEquals(
-			Long.valueOf(existingAnnouncementsFlag.getEntryId()),
+			Long.valueOf(announcementsFlag.getEntryId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingAnnouncementsFlag, "getOriginalEntryId",
-				new Class<?>[0]));
+				announcementsFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "entryId"));
 		Assert.assertEquals(
-			Integer.valueOf(existingAnnouncementsFlag.getValue()),
+			Integer.valueOf(announcementsFlag.getValue()),
 			ReflectionTestUtil.<Integer>invoke(
-				existingAnnouncementsFlag, "getOriginalValue",
-				new Class<?>[0]));
+				announcementsFlag, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "value"));
 	}
 
 	protected AnnouncementsFlag addAnnouncementsFlag() throws Exception {
@@ -460,6 +500,8 @@ public class AnnouncementsFlagPersistenceTest {
 		AnnouncementsFlag announcementsFlag = _persistence.create(pk);
 
 		announcementsFlag.setMvccVersion(RandomTestUtil.nextLong());
+
+		announcementsFlag.setCtCollectionId(RandomTestUtil.nextLong());
 
 		announcementsFlag.setCompanyId(RandomTestUtil.nextLong());
 

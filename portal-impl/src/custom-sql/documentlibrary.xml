@@ -11,21 +11,8 @@
 				DLFileVersion ON
 					DLFileVersion.fileEntryId = DLFileEntry.fileEntryId
 			WHERE
-				(CAST_TEXT(DLFileEntry.extraSettings) != '') OR
-				(CAST_TEXT(DLFileVersion.extraSettings) != '')
-		]]>
-	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.countByG_F">
-		<![CDATA[
-			SELECT
-				COUNT(DISTINCT DLFileEntry.fileEntryId) AS COUNT_VALUE
-			FROM
-				DLFileEntry
-			[$JOIN$]
-			WHERE
-				(DLFileEntry.groupId = ?) AND
-				([$STATUS$])
-				[$FOLDER_ID$]
+				(LENGTH(DLFileEntry.extraSettings) > 0) OR
+				(LENGTH(DLFileVersion.extraSettings) > 0)
 		]]>
 	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.countByG_M_R">
@@ -47,25 +34,6 @@
 				([$STATUS$])
 		]]>
 	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.countByG_U_F">
-		<![CDATA[
-			SELECT
-				COUNT(DISTINCT DLFileEntry.fileEntryId) AS COUNT_VALUE
-			FROM
-				DLFileEntry
-			INNER JOIN
-				DLFileVersion ON
-					DLFileVersion.fileEntryId = DLFileEntry.fileEntryId
-			WHERE
-				(DLFileVersion.groupId = ?) AND
-				(
-					(DLFileEntry.userId = ?) OR
-					(DLFileVersion.userId = ?)
-				) AND
-				([$STATUS$])
-				[$FOLDER_ID$]
-		]]>
-	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.countByG_F_S">
 		<![CDATA[
 			SELECT
@@ -76,19 +44,6 @@
 				(DLFileVersion.groupId = ?) AND
 				([$STATUS$])
 				[$FOLDER_ID$]
-		]]>
-	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByAnyImageId">
-		<![CDATA[
-			SELECT
-				{DLFileEntry.*}
-			FROM
-				DLFileEntry
-			WHERE
-				(DLFileEntry.smallImageId = ?) OR
-				(DLFileEntry.largeImageId = ?) OR
-				(DLFileEntry.custom1ImageId = ?) OR
-				(DLFileEntry.custom2ImageId = ?)
 		]]>
 	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByCompanyId">
@@ -134,20 +89,6 @@
 				)
 		]]>
 	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByMisversioned">
-		<![CDATA[
-			SELECT
-				{DLFileEntry.*}
-			FROM
-				DLFileEntry
-			LEFT JOIN
-				DLFileVersion ON
-					(DLFileVersion.fileEntryId = DLFileEntry.fileEntryId) AND
-					(DLFileVersion.version = DLFileEntry.version)
-			WHERE
-				DLFileVersion.fileEntryId IS NULL
-		]]>
-	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByNoAssets">
 		<![CDATA[
 			SELECT
@@ -165,15 +106,15 @@
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByExtraSettings">
 		<![CDATA[
 			SELECT
-				DISTINCT {DLFileEntry.*}
+				DISTINCT DLFileEntry.fileEntryId, DLFileEntry.modifiedDate
 			FROM
 				DLFileEntry
 			INNER JOIN
 				DLFileVersion ON
 					DLFileVersion.fileEntryId = DLFileEntry.fileEntryId
 			WHERE
-				(CAST_TEXT(DLFileEntry.extraSettings) != '') OR
-				(CAST_TEXT(DLFileVersion.extraSettings) != '')
+				(LENGTH(DLFileEntry.extraSettings) > 0) OR
+				(LENGTH(DLFileVersion.extraSettings) > 0)
 			ORDER BY
 				DLFileEntry.modifiedDate DESC
 		]]>
@@ -191,27 +132,6 @@
 				Group_.groupId IS NULL
 		]]>
 	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByG_F">
-		<![CDATA[
-			SELECT
-				{DLFileEntry.*}
-			FROM
-				(
-					SELECT
-						DISTINCT DLFileEntry.fileEntryId
-					FROM
-						DLFileEntry
-					[$JOIN$]
-					WHERE
-						(DLFileEntry.groupId = ?) AND
-						([$STATUS$])
-						[$FOLDER_ID$]
-				) TEMP_TABLE
-				INNER JOIN
-					DLFileEntry ON
-						TEMP_TABLE.fileEntryId = DLFileEntry.fileEntryId
-		]]>
-	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByC_T">
 		<![CDATA[
 			SELECT
@@ -224,40 +144,6 @@
 			WHERE
 				(DLFileEntry.treePath LIKE ?) AND
 				(AssetEntry.classNameId = ?)
-		]]>
-	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.findByG_U_F">
-		<![CDATA[
-			SELECT
-				{DLFileEntry.*}
-			FROM
-				(
-					SELECT
-						DISTINCT DLFileEntry.fileEntryId
-					FROM
-						DLFileEntry
-					INNER JOIN
-						DLFileVersion ON
-							DLFileVersion.fileEntryId = DLFileEntry.fileEntryId
-					WHERE
-						(DLFileVersion.groupId = ?) AND
-						(
-							(DLFileEntry.userId = ?) OR
-							(DLFileVersion.userId = ?)
-						) AND
-						([$STATUS$])
-						[$FOLDER_ID$]
-				) TEMP_TABLE
-				INNER JOIN
-					DLFileEntry ON
-						TEMP_TABLE.fileEntryId = DLFileEntry.fileEntryId
-		]]>
-	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryFinder.joinAE_ByDLFileEntry">
-		<![CDATA[
-			INNER JOIN
-				DLFileEntry ON
-					DLFileEntry.fileEntryId = AssetEntry.classPK
 		]]>
 	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFileEntryMetadataFinder.findByMismatchedCompanyId">
@@ -633,13 +519,6 @@
 				(DLFileShortcut.active_ = ?) AND
 				([$STATUS$]) AND
 				[$FILE_SHORTCUT_FOLDER_ID$]
-		]]>
-	</sql>
-	<sql id="com.liferay.document.library.kernel.service.persistence.DLFolderFinder.joinAE_ByDLFolder">
-		<![CDATA[
-			INNER JOIN
-				DLFolder ON
-					DLFolder.folderId = AssetEntry.classPK
 		]]>
 	</sql>
 	<sql id="com.liferay.document.library.kernel.service.persistence.DLFolderFinder.joinFE_ByDLFileVersion">

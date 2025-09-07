@@ -1,6 +1,8 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-content-management"
 definition {
 
+	property custom.properties = "jsonws.web.service.paths.excludes=";
+	property portal.acceptance = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Mentions";
@@ -16,149 +18,135 @@ definition {
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ProductMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "userea@liferay.com");
 
-		User.editPasswordCP(
-			password = "password",
-			userEmailAddress = "userea@liferay.com",
-			userScreenName = "usersn");
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "userea@liferay.com",
+			userLoginFullName = "userfn userln");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
 	}
 
 	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testLiferayVirtualInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			MessageboardsCategory.tearDownCP();
-
-			MessageboardsThread.tearDownCP(assetType = "Message Boards Thread");
-
-			Page.tearDownCP();
+			MessageboardsThread.tearDownCP(assetType = "Thread Subject");
 		}
 	}
 
-	@priority = "5"
-	test ViewMentionViaMessageBoardsThread {
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
+	@priority = 5
+	@refactordone
+	test CanViewMentionViaMBThread {
 		Mentions.addMentionViaMessageBoardThread(
 			mentionsUserFullName = "userfn userln",
 			mentionsUserScreenName = "usersn",
+			siteURLKey = "guest",
 			threadSubject = "Thread Subject");
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
-		MessageboardsThread.gotoCP(threadSubject = "Thread Subject");
 
 		Mentions.viewMentionTagLink(
 			mentionsUserFullName = "userfn userln",
 			mentionsUserScreenName = "usersn");
 	}
 
-	@priority = "5"
-	test ViewMentionViaMessageBoardsThreadReply {
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
-		MessageboardsThread.addCP(
+	@priority = 4
+	@refactordone
+	test CanViewMentionViaMBThreadReply {
+		JSONMBMessage.addMessage(
+			groupName = "Guest",
 			threadBody = "Thread Body",
 			threadSubject = "Thread Subject");
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
 		Mentions.addMentionViaMessageBoardsReply(
+			groupName = "Guest",
 			mentionsUserFullName = "userfn userln",
 			mentionsUserScreenName = "usersn",
+			siteURLKey = "guest",
 			threadBody = "Thread Reply Body",
 			threadSubject = "Thread Subject");
 
-		Navigator.openURL();
+		Mentions.viewMentionTagLink(
+			mentionsUserFullName = "userfn userln",
+			mentionsUserScreenName = "usersn");
+	}
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
-		MessageboardsThread.gotoCP(threadSubject = "Thread Subject");
-
-		MessageboardsThread.viewReplyCP(
-			replyCount = "2",
+	@priority = 4
+	@refactorneeded
+	test CanViewMentionViaUpdatedMBThread {
+		JSONMBMessage.addMessage(
+			groupName = "Guest",
 			threadBody = "Thread Body",
-			threadBody2 = "Thread Reply Body",
-			threadSubject = "Thread Subject",
-			userName = "Test Test",
-			userName2 = "Test Test");
+			threadSubject = "Thread Subject");
+
+		Mentions.addMentionViaMessageBoardThreadEdit(
+			groupName = "Guest",
+			mentionsUserFullName = "userfn userln",
+			mentionsUserScreenName = "usersn",
+			siteURLKey = "guest",
+			threadBody = "Thread Body Edit",
+			threadSubject = "Thread Subject");
+
+		MessageBoardsAdmin.openMessageBoardsAdmin(siteURLKey = "guest");
+
+		MessageboardsThread.viewCP(
+			replyCount = 0,
+			threadBody = "Thread Body Edit",
+			threadSubject = "Thread Subject");
 
 		Mentions.viewMentionTagLink(
 			mentionsUserFullName = "userfn userln",
 			mentionsUserScreenName = "usersn");
 	}
 
-	@priority = "5"
-	test ViewMentionViaUpdatedMessageBoardsThread {
-		Navigator.openURL();
+	@description = "This test covers LPS-117986. It ensures that multiple mentions can be added to thread."
+	@priority = 4
+	@refactordone
+	test MultipleMentionsCanBeAddedToThread {
+		JSONUser.addUser(
+			userEmailAddress = "userea2@liferay.com",
+			userFirstName = "userfn2",
+			userLastName = "userln2",
+			userScreenName = "usersn2");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "userea2@liferay.com");
 
-		MessageboardsThread.addCP(
-			threadBody = "Thread Body",
-			threadSubject = "Thread Subject");
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "userea2@liferay.com",
+			userLoginFullName = "userfn2 userln2");
 
-		Navigator.openURL();
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
-		Mentions.addMentionViaMessageBoardThreadEdit(
-			mentionsUserFullName = "userfn userln",
-			mentionsUserScreenName = "usersn",
-			threadBody = "Thread Body",
-			threadSubject = "Thread Subject");
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			panel = "Site Administration",
-			portlet = "Message Boards");
-
-		MessageboardsThread.viewCP(
-			replyCount = "0",
-			threadBody = "Thread Body",
+		Mentions.addMentionViaMessageBoardThread(
+			mentionsUserScreenNameList = "usersn,usersn2",
+			multipleMentions = "true",
+			siteURLKey = "guest",
 			threadSubject = "Thread Subject");
 
 		Mentions.viewMentionTagLink(
 			mentionsUserFullName = "userfn userln",
 			mentionsUserScreenName = "usersn");
+
+		MessageboardsThread.openToThread(
+			groupName = "Guest",
+			siteURLKey = "guest",
+			threadSubject = "Thread Subject");
+
+		Mentions.viewMentionTagLink(
+			mentionsUserFullName = "userfn2 userln2",
+			mentionsUserScreenName = "usersn2");
 	}
 
 }

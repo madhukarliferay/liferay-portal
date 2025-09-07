@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet.filters.absoluteredirects.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.servlet.filters.absoluteredirects.AbsoluteRedirectsFilter;
@@ -104,7 +96,8 @@ public class VirtualHostAbsoluteRedirectsFilterTest {
 
 			Assert.assertEquals(
 				virtualHost.getLanguageId(),
-				_mockHttpServletRequest.getAttribute(WebKeys.I18N_LANGUAGE_ID));
+				_mockHttpServletRequest.getAttribute(
+					WebKeys.VIRTUAL_HOST_LANGUAGE_ID));
 
 			LayoutSet layoutSet =
 				(LayoutSet)_mockHttpServletRequest.getAttribute(
@@ -160,7 +153,8 @@ public class VirtualHostAbsoluteRedirectsFilterTest {
 
 		Assert.assertEquals(
 			virtualHost.getLanguageId(),
-			_mockHttpServletRequest.getAttribute(WebKeys.I18N_LANGUAGE_ID));
+			_mockHttpServletRequest.getAttribute(
+				WebKeys.VIRTUAL_HOST_LANGUAGE_ID));
 
 		LayoutSet layoutSet = (LayoutSet)_mockHttpServletRequest.getAttribute(
 			WebKeys.VIRTUAL_HOST_LAYOUT_SET);
@@ -187,8 +181,15 @@ public class VirtualHostAbsoluteRedirectsFilterTest {
 		Assert.assertEquals(_layoutSetId, layoutSet.getLayoutSetId());
 	}
 
+	@Test
+	public void testSingleVirtualHostWithoutUSLocale() throws Exception {
+		_availableLocales = SetUtil.fromArray(LocaleUtil.GERMANY);
+
+		testSingleVirtualHostWithoutLocale();
+	}
+
 	private void _setupRequest(String hostname, String languageId)
-		throws AvailableLocaleException {
+		throws Exception {
 
 		_mockHttpServletRequest = new MockHttpServletRequest();
 

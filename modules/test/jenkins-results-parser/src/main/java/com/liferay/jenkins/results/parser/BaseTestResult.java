@@ -1,30 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
+
 import java.io.IOException;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
-
-import org.dom4j.Element;
 
 import org.json.JSONObject;
 
@@ -32,7 +19,7 @@ import org.json.JSONObject;
  * @author Leslie Wong
  * @author Yi-Chen Tsai
  */
-public class BaseTestResult implements TestResult {
+public abstract class BaseTestResult implements TestResult {
 
 	@Override
 	public Build getBuild() {
@@ -40,99 +27,194 @@ public class BaseTestResult implements TestResult {
 	}
 
 	@Override
-	public String getClassName() {
-		return _className;
-	}
+	public TestClass getTestClass() {
+		TestClassResult testClassResult = getTestClassResult();
 
-	@Override
-	public String getDisplayName() {
-		String testName = getTestName();
-
-		if (testName.startsWith("test[")) {
-			return testName.substring(5, testName.length() - 1);
+		if (testClassResult == null) {
+			return null;
 		}
 
-		return getSimpleClassName() + "." + testName;
+		return testClassResult.getTestClass();
 	}
 
 	@Override
-	public long getDuration() {
-		return _duration;
-	}
+	public TestClassResult getTestClassResult() {
+		List<TestClassResult> testClassResults = _build.getTestClassResults();
 
-	@Override
-	public String getErrorDetails() {
-		return _errorDetails;
-	}
-
-	@Override
-	public String getErrorStackTrace() {
-		return _errorStackTrace;
-	}
-
-	@Override
-	public Element getGitHubElement() {
-		String testReportURL = getTestReportURL();
-
-		Element downstreamBuildListItemElement = Dom4JUtil.getNewElement(
-			"div", null);
-
-		downstreamBuildListItemElement.add(
-			Dom4JUtil.getNewAnchorElement(testReportURL, getDisplayName()));
-
-		String errorStackTrace = getErrorStackTrace();
-
-		if ((errorStackTrace != null) && !errorStackTrace.isEmpty()) {
-			String trimmedStackTrace = StringUtils.abbreviate(
-				errorStackTrace, _LINES_ERROR_STACK_DISPLAY_SIZE_MAX);
-
-			downstreamBuildListItemElement.add(
-				Dom4JUtil.toCodeSnippetElement(trimmedStackTrace));
+		if ((testClassResults == null) || testClassResults.isEmpty()) {
+			return null;
 		}
 
-		return downstreamBuildListItemElement;
-	}
+		String testClassName = getClassName();
 
-	@Override
-	public String getPackageName() {
-		String className = getClassName();
+		for (TestClassResult testClassResult : _build.getTestClassResults()) {
+			if (!testClassName.equals(testClassResult.getClassName())) {
+				continue;
+			}
 
-		int x = className.lastIndexOf(".");
+			_testClassResult = testClassResult;
 
-		if (x < 0) {
-			return "(root)";
+			break;
 		}
 
-		return className.substring(0, x);
+		return _testClassResult;
 	}
 
 	@Override
-	public String getSimpleClassName() {
-		String className = getClassName();
+	public TestHistory getTestHistory() {
+		TestClass testClass = getTestClass();
 
-		int x = className.lastIndexOf(".");
+		if (testClass == null) {
+			return null;
+		}
 
-		return className.substring(x + 1);
+		return testClass.getTestHistory();
 	}
 
 	@Override
-	public String getStatus() {
-		return _status;
+	public JSONObject getTestReportJSONObject() {
+		JSONObject testResultJSONObject = new JSONObject();
+
+		testResultJSONObject.put("duration", getDuration());
+
+		String errorDetails = getErrorDetails();
+
+		if (errorDetails != null) {
+			if (errorDetails.contains("\n")) {
+				int index = errorDetails.indexOf("\n");
+
+				errorDetails = errorDetails.substring(0, index);
+			}
+
+			if (errorDetails.length() > 200) {
+				errorDetails = errorDetails.substring(0, 200);
+			}
+
+			testResultJSONObject.put("errorDetails", errorDetails);
+		}
+
+		if (isFailing()) {
+			testResultJSONObject.put("errorStackTrace", getErrorStackTrace());
+		}
+
+		testResultJSONObject.put(
+			"name", getDisplayName()
+		).put(
+			"status", getStatus()
+		).put(
+			"testTaskName", getTestTaskName()
+		);
+
+		return testResultJSONObject;
 	}
 
 	@Override
-	public String getTestName() {
-		return _testName;
+	public boolean isFailing() {
+		String status = getStatus();
+
+		if (status.equals("FIXED") || status.equals("PASSED") ||
+			status.equals("SKIPPED")) {
+
+			return false;
+		}
+
+		return true;
 	}
 
-	public String getTestrayLogsURL() {
+	@Override
+	public boolean isSkipped() {
+		String status = getStatus();
+
+		return status.equals("SKIPPED");
+	}
+
+	@Override
+	public boolean isUniqueFailure() {
+		if (!isFailing()) {
+			return false;
+		}
+
+		Build build = getBuild();
+
+		if (!build.isCompareToUpstream()) {
+			return true;
+		}
+
+		String batchName = build.getBatchName(build.getJobVariant());
+
+		TopLevelBuild topLevelBuild = build.getTopLevelBuild();
+
+		for (String upstreamFailure :
+				UpstreamFailureUtil.getUpstreamJobFailures(
+					"test", topLevelBuild)) {
+
+			String testFailure = JenkinsResultsParserUtil.combine(
+				getDisplayName(), ",", batchName);
+
+			if (upstreamFailure.equals(testFailure)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	protected BaseTestResult(Build build) {
+		if (build == null) {
+			throw new IllegalArgumentException("Build is null");
+		}
+
+		_build = build;
+	}
+
+	protected String getAxisNumber() {
+		Build build = getBuild();
+
+		if (build instanceof AxisBuild) {
+			AxisBuild axisBuild = (AxisBuild)build;
+
+			return axisBuild.getAxisNumber();
+		}
+		else if (build instanceof DownstreamBuild) {
+			DownstreamBuild downstreamBuild = (DownstreamBuild)build;
+
+			return downstreamBuild.getAxisVariable();
+		}
+
+		return "INVALID_AXIS_NUMBER";
+	}
+
+	protected String getConsoleOutputURL() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(getTestrayLogsURL());
+		sb.append("/jenkins-console.txt.gz");
+
+		return sb.toString();
+	}
+
+	protected String getLiferayLogURL() {
+		StringBuilder sb = new StringBuilder();
+
+		String name = getDisplayName();
+
+		sb.append(getTestrayLogsURL());
+		sb.append("/");
+		sb.append(name.replace('#', '_'));
+		sb.append("/liferay-log.txt.gz");
+
+		return sb.toString();
+	}
+
+	protected String getTestrayLogsURL() {
 		Properties buildProperties = null;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
 		}
-		catch (IOException ioe) {
-			throw new RuntimeException("Unable to get build properties", ioe);
+		catch (IOException ioException) {
+			throw new RuntimeException(
+				"Unable to get build properties", ioException);
 		}
 
 		String logBaseURL = null;
@@ -159,107 +241,28 @@ public class BaseTestResult implements TestResult {
 			build.getJobVariant(), "/", getAxisNumber());
 	}
 
-	@Override
-	public String getTestReportURL() {
-		StringBuilder sb = new StringBuilder();
-
-		Build build = getBuild();
-
-		sb.append(build.getBuildURL());
-
-		sb.append("/testReport/");
-		sb.append(getPackageName());
-		sb.append("/");
-		sb.append(getSimpleClassName());
-		sb.append("/");
-		sb.append(getEncodedTestName());
-
-		String testReportURL = sb.toString();
-
-		if (testReportURL.startsWith("http")) {
-			try {
-				return JenkinsResultsParserUtil.encode(testReportURL);
-			}
-			catch (MalformedURLException | URISyntaxException e) {
-				System.out.println(
-					"Unable to encode the test report " + testReportURL);
-			}
-		}
-
-		return testReportURL;
+	protected String getTestTaskName() {
+		return null;
 	}
 
-	@Override
-	public boolean isFailing() {
-		if (_status.equals("FIXED") || _status.equals("PASSED") ||
-			_status.equals("SKIPPED")) {
+	protected boolean hasLiferayLog() {
+		String liferayLog = null;
 
+		try {
+			liferayLog = JenkinsResultsParserUtil.toString(
+				getLiferayLogURL(), false, 0, 0, 0);
+		}
+		catch (IOException ioException) {
 			return false;
 		}
 
-		return true;
+		return !liferayLog.isEmpty();
 	}
-
-	protected BaseTestResult(Build build, JSONObject caseJSONObject) {
-		if (build == null) {
-			throw new IllegalArgumentException("Build is null");
-		}
-
-		_build = build;
-		_className = caseJSONObject.getString("className");
-		_duration = (long)(caseJSONObject.getDouble("duration") * 1000D);
-		_status = caseJSONObject.getString("status");
-		_testName = caseJSONObject.getString("name");
-
-		if (_status.equals("FAILED") && caseJSONObject.has("errorDetails") &&
-			caseJSONObject.has("errorStackTrace")) {
-
-			_errorDetails = caseJSONObject.optString("errorDetails");
-			_errorStackTrace = caseJSONObject.optString("errorStackTrace");
-		}
-		else {
-			_errorDetails = null;
-			_errorStackTrace = null;
-		}
-	}
-
-	protected String getAxisNumber() {
-		Build build = getBuild();
-
-		if (build instanceof AxisBuild) {
-			AxisBuild axisBuild = (AxisBuild)build;
-
-			return axisBuild.getAxisNumber();
-		}
-
-		return "INVALID_AXIS_NUMBER";
-	}
-
-	protected String getEncodedTestName() {
-		StringBuilder sb = new StringBuilder(getTestName());
-
-		for (int i = 0; i < sb.length(); i++) {
-			char c = sb.charAt(i);
-
-			if (!Character.isJavaIdentifierPart(c)) {
-				sb.setCharAt(i, '_');
-			}
-		}
-
-		return sb.toString();
-	}
-
-	private static final int _LINES_ERROR_STACK_DISPLAY_SIZE_MAX = 1500;
 
 	private static final String _URL_BASE_LOGS_DEFAULT =
-		"https://testray.liferay.com/reports/production/logs";
+		"https://storage.cloud.google.com/testray-results";
 
 	private final Build _build;
-	private final String _className;
-	private final long _duration;
-	private final String _errorDetails;
-	private final String _errorStackTrace;
-	private final String _status;
-	private final String _testName;
+	private TestClassResult _testClassResult;
 
 }

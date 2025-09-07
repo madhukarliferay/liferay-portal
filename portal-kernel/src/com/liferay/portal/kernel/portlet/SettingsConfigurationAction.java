@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
@@ -24,12 +14,13 @@ import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.FallbackKeysSettingsUtil;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.ModifiableSettings;
 import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.SettingsDescriptor;
-import com.liferay.portal.kernel.settings.SettingsFactoryUtil;
+import com.liferay.portal.kernel.settings.SettingsLocatorHelperUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -43,21 +34,21 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.PortletConfig;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+import jakarta.portlet.ValidatorException;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletRequest;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-import javax.portlet.ValidatorException;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Iván Zaera
@@ -109,16 +100,15 @@ public abstract class SettingsConfigurationAction
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Layout layout = PortletConfigurationLayoutUtil.getLayout(themeDisplay);
-
 		String portletResource = ParamUtil.getString(
 			actionRequest, "portletResource");
 
 		PortletPermissionUtil.check(
 			themeDisplay.getPermissionChecker(), themeDisplay.getScopeGroupId(),
-			layout, portletResource, ActionKeys.CONFIGURATION);
+			PortletConfigurationLayoutUtil.getLayout(themeDisplay),
+			portletResource, ActionKeys.CONFIGURATION);
 
-		UnicodeProperties properties = PropertiesParamUtil.getProperties(
+		UnicodeProperties unicodeProperties = PropertiesParamUtil.getProperties(
 			actionRequest, _parameterNamePrefix);
 
 		Settings settings = getSettings(actionRequest);
@@ -126,7 +116,7 @@ public abstract class SettingsConfigurationAction
 		ModifiableSettings modifiableSettings =
 			settings.getModifiableSettings();
 
-		for (Map.Entry<String, String> entry : properties.entrySet()) {
+		for (Map.Entry<String, String> entry : unicodeProperties.entrySet()) {
 			String name = entry.getKey();
 			String value = entry.getValue();
 
@@ -158,34 +148,37 @@ public abstract class SettingsConfigurationAction
 
 		postProcess(themeDisplay.getCompanyId(), actionRequest, settings);
 
-		if (SessionErrors.isEmpty(actionRequest)) {
-			try {
-				modifiableSettings.store();
-			}
-			catch (ValidatorException ve) {
-				SessionErrors.add(
-					actionRequest, ValidatorException.class.getName(), ve);
+		if (!SessionErrors.isEmpty(actionRequest)) {
+			return;
+		}
 
-				return;
-			}
+		try {
+			modifiableSettings.store();
+		}
+		catch (ValidatorException validatorException) {
+			SessionErrors.add(
+				actionRequest, ValidatorException.class.getName(),
+				validatorException);
 
-			SessionMessages.add(
-				actionRequest,
-				PortalUtil.getPortletId(actionRequest) +
-					SessionMessages.KEY_SUFFIX_REFRESH_PORTLET,
-				portletResource);
+			return;
+		}
 
-			SessionMessages.add(
-				actionRequest,
-				PortalUtil.getPortletId(actionRequest) +
-					SessionMessages.KEY_SUFFIX_UPDATED_CONFIGURATION);
+		SessionMessages.add(
+			actionRequest,
+			PortalUtil.getPortletId(actionRequest) +
+				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET,
+			portletResource);
 
-			String redirect = PortalUtil.escapeRedirect(
-				ParamUtil.getString(actionRequest, "redirect"));
+		SessionMessages.add(
+			actionRequest,
+			PortalUtil.getPortletId(actionRequest) +
+				SessionMessages.KEY_SUFFIX_UPDATED_CONFIGURATION);
 
-			if (Validator.isNotNull(redirect)) {
-				actionResponse.sendRedirect(redirect);
-			}
+		String redirect = PortalUtil.escapeRedirect(
+			ParamUtil.getString(actionRequest, "redirect"));
+
+		if (Validator.isNotNull(redirect)) {
+			actionResponse.sendRedirect(redirect);
 		}
 	}
 
@@ -250,12 +243,12 @@ public abstract class SettingsConfigurationAction
 			actionRequest, "settingsScope");
 
 		if (settingsScope.equals("company")) {
-			return SettingsFactoryUtil.getSettings(
+			return FallbackKeysSettingsUtil.getSettings(
 				new CompanyServiceSettingsLocator(
 					themeDisplay.getCompanyId(), serviceName));
 		}
 		else if (settingsScope.equals("group")) {
-			return SettingsFactoryUtil.getSettings(
+			return FallbackKeysSettingsUtil.getSettings(
 				new GroupServiceSettingsLocator(
 					themeDisplay.getScopeGroupId(), serviceName));
 		}
@@ -263,7 +256,7 @@ public abstract class SettingsConfigurationAction
 			String portletResource = ParamUtil.getString(
 				actionRequest, "portletResource");
 
-			return SettingsFactoryUtil.getSettings(
+			return FallbackKeysSettingsUtil.getSettings(
 				new PortletInstanceSettingsLocator(
 					themeDisplay.getLayout(), portletResource));
 		}
@@ -296,7 +289,7 @@ public abstract class SettingsConfigurationAction
 
 	protected void updateMultiValuedKeys(ActionRequest actionRequest) {
 		SettingsDescriptor settingsDescriptor =
-			SettingsFactoryUtil.getSettingsDescriptor(
+			SettingsLocatorHelperUtil.getSettingsDescriptor(
 				getSettingsId(actionRequest));
 
 		Set<String> multiValuedKeys = settingsDescriptor.getMultiValuedKeys();
@@ -318,24 +311,24 @@ public abstract class SettingsConfigurationAction
 
 		boolean emailEnabled = GetterUtil.getBoolean(
 			getParameter(actionRequest, emailParam + "Enabled"));
-		String emailSubject = null;
-		String emailBody = null;
+
+		if (!emailEnabled) {
+			return;
+		}
 
 		String languageId = LocaleUtil.toLanguageId(
 			LocaleUtil.getSiteDefault());
 
-		emailSubject = getLocalizedParameter(
+		String emailSubject = getLocalizedParameter(
 			actionRequest, emailParam + "Subject", languageId);
-		emailBody = getLocalizedParameter(
+		String emailBody = getLocalizedParameter(
 			actionRequest, emailParam + "Body", languageId);
 
-		if (emailEnabled) {
-			if (Validator.isNull(emailSubject)) {
-				SessionErrors.add(actionRequest, emailParam + "Subject");
-			}
-			else if (Validator.isNull(emailBody)) {
-				SessionErrors.add(actionRequest, emailParam + "Body");
-			}
+		if (Validator.isNull(emailSubject)) {
+			SessionErrors.add(actionRequest, emailParam + "Subject");
+		}
+		else if (Validator.isNull(emailBody)) {
+			SessionErrors.add(actionRequest, emailParam + "Body");
 		}
 	}
 

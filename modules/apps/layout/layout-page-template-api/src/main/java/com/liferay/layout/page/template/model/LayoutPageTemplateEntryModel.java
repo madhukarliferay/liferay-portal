@@ -1,26 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
 import com.liferay.portal.kernel.model.TypedModel;
 import com.liferay.portal.kernel.model.WorkflowedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -39,10 +32,12 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface LayoutPageTemplateEntryModel
-	extends BaseModel<LayoutPageTemplateEntry>, MVCCModel, ShardedModel,
-			StagedGroupedModel, TypedModel, WorkflowedModel {
+	extends BaseModel<LayoutPageTemplateEntry>,
+			CTModel<LayoutPageTemplateEntry>, ExternalReferenceCodeModel,
+			MVCCModel, ShardedModel, StagedGroupedModel, TypedModel,
+			WorkflowedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a layout page template entry model instance should use the {@link LayoutPageTemplateEntry} interface instead.
@@ -53,6 +48,7 @@ public interface LayoutPageTemplateEntryModel
 	 *
 	 * @return the primary key of this layout page template entry
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -60,6 +56,7 @@ public interface LayoutPageTemplateEntryModel
 	 *
 	 * @param primaryKey the primary key of this layout page template entry
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -79,6 +76,22 @@ public interface LayoutPageTemplateEntryModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this layout page template entry.
+	 *
+	 * @return the ct collection ID of this layout page template entry
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this layout page template entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout page template entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this layout page template entry.
 	 *
 	 * @return the uuid of this layout page template entry
@@ -94,6 +107,23 @@ public interface LayoutPageTemplateEntryModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this layout page template entry.
+	 *
+	 * @return the external reference code of this layout page template entry
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this layout page template entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this layout page template entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the layout page template entry ID of this layout page template entry.
@@ -236,6 +266,22 @@ public interface LayoutPageTemplateEntryModel
 	 */
 	public void setLayoutPageTemplateCollectionId(
 		long layoutPageTemplateCollectionId);
+
+	/**
+	 * Returns the layout page template entry key of this layout page template entry.
+	 *
+	 * @return the layout page template entry key of this layout page template entry
+	 */
+	@AutoEscape
+	public String getLayoutPageTemplateEntryKey();
+
+	/**
+	 * Sets the layout page template entry key of this layout page template entry.
+	 *
+	 * @param layoutPageTemplateEntryKey the layout page template entry key of this layout page template entry
+	 */
+	public void setLayoutPageTemplateEntryKey(
+		String layoutPageTemplateEntryKey);
 
 	/**
 	 * Returns the fully qualified class name of this layout page template entry.
@@ -529,5 +575,12 @@ public interface LayoutPageTemplateEntryModel
 	 */
 	@Override
 	public boolean isScheduled();
+
+	@Override
+	public LayoutPageTemplateEntry cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

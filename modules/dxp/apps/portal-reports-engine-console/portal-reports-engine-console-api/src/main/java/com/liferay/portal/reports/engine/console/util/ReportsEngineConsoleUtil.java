@@ -1,30 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.util;
 
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.reports.engine.console.exception.SourceJDBCConnectionException;
+
+import jakarta.portlet.PortletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.Connection;
 
@@ -34,10 +28,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
-
-import javax.portlet.PortletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 import javax.sql.DataSource;
 
@@ -121,9 +111,6 @@ public class ReportsEngineConsoleUtil {
 			String driverPassword)
 		throws PortalException {
 
-		DataSource dataSource = null;
-		Connection connection = null;
-
 		try {
 			Properties properties = new Properties();
 
@@ -132,15 +119,14 @@ public class ReportsEngineConsoleUtil {
 			properties.setProperty("url", driverUrl);
 			properties.setProperty("username", driverUserName);
 
-			dataSource = BasicDataSourceFactory.createDataSource(properties);
+			DataSource dataSource = BasicDataSourceFactory.createDataSource(
+				properties);
 
-			connection = dataSource.getConnection();
+			try (Connection connection = dataSource.getConnection()) {
+			}
 		}
-		catch (Exception e) {
-			throw new SourceJDBCConnectionException(e);
-		}
-		finally {
-			DataAccess.cleanUp(connection);
+		catch (Exception exception) {
+			throw new SourceJDBCConnectionException(exception);
 		}
 	}
 

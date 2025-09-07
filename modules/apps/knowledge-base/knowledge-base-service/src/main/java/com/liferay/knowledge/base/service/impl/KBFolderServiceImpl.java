@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.service.impl;
@@ -20,8 +11,9 @@ import com.liferay.knowledge.base.service.base.KBFolderServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
@@ -44,18 +36,19 @@ public class KBFolderServiceImpl extends KBFolderServiceBaseImpl {
 
 	@Override
 	public KBFolder addKBFolder(
-			long groupId, long parentResourceClassNameId,
-			long parentResourcePrimKey, String name, String description,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long groupId,
+			long parentResourceClassNameId, long parentResourcePrimKey,
+			String name, String description, ServiceContext serviceContext)
 		throws PortalException {
 
-		ModelResourcePermissionHelper.check(
+		ModelResourcePermissionUtil.check(
 			_kbFolderModelResourcePermission, getPermissionChecker(), groupId,
 			parentResourcePrimKey, KBActionKeys.ADD_KB_FOLDER);
 
 		return kbFolderLocalService.addKBFolder(
-			getUserId(), groupId, parentResourceClassNameId,
-			parentResourcePrimKey, name, description, serviceContext);
+			externalReferenceCode, getUserId(), groupId,
+			parentResourceClassNameId, parentResourcePrimKey, name, description,
+			serviceContext);
 	}
 
 	@Override
@@ -75,11 +68,12 @@ public class KBFolderServiceImpl extends KBFolderServiceBaseImpl {
 
 	@Override
 	public KBFolder fetchFirstChildKBFolder(
-			long groupId, long kbFolderId, OrderByComparator<KBFolder> obc)
+			long groupId, long kbFolderId,
+			OrderByComparator<KBFolder> orderByComparator)
 		throws PortalException {
 
 		List<KBFolder> kbFolders = kbFolderPersistence.filterFindByG_P(
-			groupId, kbFolderId, 0, 1, obc);
+			groupId, kbFolderId, 0, 1, orderByComparator);
 
 		if (kbFolders.isEmpty()) {
 			return null;
@@ -124,6 +118,21 @@ public class KBFolderServiceImpl extends KBFolderServiceBaseImpl {
 			getPermissionChecker(), kbFolderId, KBActionKeys.VIEW);
 
 		return kbFolderLocalService.getKBFolder(kbFolderId);
+	}
+
+	@Override
+	public KBFolder getKBFolderByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		KBFolder kbFolder =
+			kbFolderLocalService.getKBFolderByExternalReferenceCode(
+				externalReferenceCode, groupId);
+
+		_kbFolderModelResourcePermission.check(
+			getPermissionChecker(), kbFolder, KBActionKeys.VIEW);
+
+		return kbFolder;
 	}
 
 	@Override
@@ -186,6 +195,18 @@ public class KBFolderServiceImpl extends KBFolderServiceBaseImpl {
 			getPermissionChecker(), kbFolderId, KBActionKeys.MOVE_KB_FOLDER);
 
 		kbFolderLocalService.moveKBFolder(kbFolderId, parentKBFolderId);
+	}
+
+	@Override
+	public KBFolder moveKBFolderToTrash(long kbFolderId)
+		throws PortalException {
+
+		_kbFolderModelResourcePermission.check(
+			getPermissionChecker(),
+			kbFolderLocalService.getKBFolder(kbFolderId), ActionKeys.DELETE);
+
+		return kbFolderLocalService.moveKBFolderToTrash(
+			getUserId(), kbFolderId);
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.internal;
@@ -17,7 +8,6 @@ package com.liferay.dynamic.data.mapping.internal;
 import com.liferay.dynamic.data.mapping.exception.StorageException;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
 import com.liferay.dynamic.data.mapping.kernel.StorageEngineManager;
-import com.liferay.dynamic.data.mapping.kernel.StorageFieldRequiredException;
 import com.liferay.dynamic.data.mapping.model.DDMContent;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMStorageLink;
@@ -29,9 +19,9 @@ import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapter;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterDeleteRequest;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterGetRequest;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterGetResponse;
+import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterRegistry;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterSaveRequest;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterSaveResponse;
-import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterTracker;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.util.DDM;
 import com.liferay.dynamic.data.mapping.util.DDMBeanTranslator;
@@ -47,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(immediate = true, service = StorageEngineManager.class)
+@Component(service = StorageEngineManager.class)
 public class StorageEngineManagerImpl implements StorageEngineManager {
 
 	@Override
@@ -56,45 +46,37 @@ public class StorageEngineManagerImpl implements StorageEngineManager {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		try {
-			com.liferay.dynamic.data.mapping.storage.DDMFormValues
-				translatedDDMFormValues = _ddmBeanTranslator.translate(
-					ddmFormValues);
+		com.liferay.dynamic.data.mapping.storage.DDMFormValues
+			translatedDDMFormValues = _ddmBeanTranslator.translate(
+				ddmFormValues);
 
-			_validate(translatedDDMFormValues, serviceContext);
+		_validate(translatedDDMFormValues, serviceContext);
 
-			DDMStorageAdapterSaveRequest.Builder builder =
+		DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
+
+		DDMStorageAdapterSaveResponse ddmStorageAdapterSaveResponse =
+			ddmStorageAdapter.save(
 				DDMStorageAdapterSaveRequest.Builder.newBuilder(
-					serviceContext.getUserId(),
-					serviceContext.getScopeGroupId(), translatedDDMFormValues);
-
-			DDMStorageAdapterSaveRequest ddmStorageAdapterSaveRequest =
-				builder.withUuid(
+					serviceContext.getUserId(), translatedDDMFormValues
+				).withStructureId(
+					ddmStructureId
+				).withUuid(
 					serviceContext.getUuid()
 				).withClassName(
 					DDMStorageLink.class.getName()
-				).build();
+				).build());
 
-			DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
+		long primaryKey = ddmStorageAdapterSaveResponse.getPrimaryKey();
 
-			DDMStorageAdapterSaveResponse ddmStorageAdapterSaveResponse =
-				ddmStorageAdapter.save(ddmStorageAdapterSaveRequest);
+		DDMStructureVersion ddmStructureVersion =
+			_ddmStructureVersionLocalService.getLatestStructureVersion(
+				ddmStructureId);
 
-			long primaryKey = ddmStorageAdapterSaveResponse.getPrimaryKey();
+		_ddmStorageLinkLocalService.addStorageLink(
+			_portal.getClassNameId(DDMContent.class.getName()), primaryKey,
+			ddmStructureVersion.getStructureVersionId(), serviceContext);
 
-			DDMStructureVersion ddmStructureVersion =
-				_ddmStructureVersionLocalService.getLatestStructureVersion(
-					ddmStructureId);
-
-			_ddmStorageLinkLocalService.addStorageLink(
-				_portal.getClassNameId(DDMContent.class.getName()), primaryKey,
-				ddmStructureVersion.getStructureVersionId(), serviceContext);
-
-			return primaryKey;
-		}
-		catch (PortalException pe) {
-			throw _translate(pe);
-		}
+		return primaryKey;
 	}
 
 	@Override
@@ -115,14 +97,11 @@ public class StorageEngineManagerImpl implements StorageEngineManager {
 
 		DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
 
-		DDMStorageAdapterGetRequest.Builder builder =
-			DDMStorageAdapterGetRequest.Builder.newBuilder(classPK, ddmForm);
-
-		DDMStorageAdapterGetRequest ddmStorageAdapterGetRequest =
-			builder.build();
-
 		DDMStorageAdapterGetResponse ddmStorageAdapterGetResponse =
-			ddmStorageAdapter.get(ddmStorageAdapterGetRequest);
+			ddmStorageAdapter.get(
+				DDMStorageAdapterGetRequest.Builder.newBuilder(
+					classPK, ddmForm
+				).build());
 
 		return _ddmBeanTranslator.translate(
 			ddmStorageAdapterGetResponse.getDDMFormValues());
@@ -145,59 +124,39 @@ public class StorageEngineManagerImpl implements StorageEngineManager {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		try {
-			com.liferay.dynamic.data.mapping.storage.DDMFormValues
-				translatedDDMFormValues = _ddmBeanTranslator.translate(
-					ddmFormValues);
+		com.liferay.dynamic.data.mapping.storage.DDMFormValues
+			translatedDDMFormValues = _ddmBeanTranslator.translate(
+				ddmFormValues);
 
-			_validate(translatedDDMFormValues, serviceContext);
+		_validate(translatedDDMFormValues, serviceContext);
 
-			DDMStorageAdapterSaveRequest.Builder builder =
-				DDMStorageAdapterSaveRequest.Builder.newBuilder(
-					serviceContext.getUserId(),
-					serviceContext.getScopeGroupId(), translatedDDMFormValues);
+		DDMStorageLink ddmStorageLink =
+			_ddmStorageLinkLocalService.getClassStorageLink(classPK);
 
-			DDMStorageAdapterSaveRequest ddmStorageAdapterSaveRequest =
-				builder.withPrimaryKey(
-					classPK
-				).build();
+		DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
 
-			DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
-
-			ddmStorageAdapter.save(ddmStorageAdapterSaveRequest);
-		}
-		catch (PortalException pe) {
-			throw _translate(pe);
-		}
+		ddmStorageAdapter.save(
+			DDMStorageAdapterSaveRequest.Builder.newBuilder(
+				serviceContext.getUserId(), translatedDDMFormValues
+			).withStructureId(
+				ddmStorageLink.getStructureId()
+			).withPrimaryKey(
+				classPK
+			).build());
 	}
 
 	private void _deleteStorage(long storageId) throws StorageException {
 		DDMStorageAdapter ddmStorageAdapter = _getDDMStorageAdapter();
 
-		DDMStorageAdapterDeleteRequest.Builder builder =
-			DDMStorageAdapterDeleteRequest.Builder.newBuilder(storageId);
-
-		DDMStorageAdapterDeleteRequest ddmStorageAdapterDeleteRequest =
-			builder.build();
-
-		ddmStorageAdapter.delete(ddmStorageAdapterDeleteRequest);
+		ddmStorageAdapter.delete(
+			DDMStorageAdapterDeleteRequest.Builder.newBuilder(
+				storageId
+			).build());
 	}
 
 	private DDMStorageAdapter _getDDMStorageAdapter() {
-		return _ddmStorageAdapterTracker.getDDMStorageAdapter(
-			StorageType.JSON.toString());
-	}
-
-	private PortalException _translate(PortalException portalException) {
-		if (portalException instanceof
-				com.liferay.dynamic.data.mapping.exception.
-					StorageFieldRequiredException) {
-
-			return new StorageFieldRequiredException(
-				portalException.getMessage(), portalException.getCause());
-		}
-
-		return portalException;
+		return _ddmStorageAdapterRegistry.getDDMStorageAdapter(
+			StorageType.DEFAULT.toString());
 	}
 
 	private void _validate(
@@ -226,7 +185,7 @@ public class StorageEngineManagerImpl implements StorageEngineManager {
 	private DDMFormValuesValidator _ddmFormValuesValidator;
 
 	@Reference
-	private DDMStorageAdapterTracker _ddmStorageAdapterTracker;
+	private DDMStorageAdapterRegistry _ddmStorageAdapterRegistry;
 
 	@Reference
 	private DDMStorageLinkLocalService _ddmStorageLinkLocalService;

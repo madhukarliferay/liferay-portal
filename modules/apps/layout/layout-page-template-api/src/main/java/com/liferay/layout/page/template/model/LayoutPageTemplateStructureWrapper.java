@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.model;
@@ -21,6 +12,8 @@ import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -47,6 +40,7 @@ public class LayoutPageTemplateStructureWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
 		attributes.put(
 			"layoutPageTemplateStructureId",
@@ -57,8 +51,7 @@ public class LayoutPageTemplateStructureWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
-		attributes.put("classNameId", getClassNameId());
-		attributes.put("classPK", getClassPK());
+		attributes.put("plid", getPlid());
 
 		return attributes;
 	}
@@ -69,6 +62,12 @@ public class LayoutPageTemplateStructureWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		Long ctCollectionId = (Long)attributes.get("ctCollectionId");
+
+		if (ctCollectionId != null) {
+			setCtCollectionId(ctCollectionId);
 		}
 
 		String uuid = (String)attributes.get("uuid");
@@ -120,47 +119,16 @@ public class LayoutPageTemplateStructureWrapper
 			setModifiedDate(modifiedDate);
 		}
 
-		Long classNameId = (Long)attributes.get("classNameId");
+		Long plid = (Long)attributes.get("plid");
 
-		if (classNameId != null) {
-			setClassNameId(classNameId);
-		}
-
-		Long classPK = (Long)attributes.get("classPK");
-
-		if (classPK != null) {
-			setClassPK(classPK);
+		if (plid != null) {
+			setPlid(plid);
 		}
 	}
 
-	/**
-	 * Returns the fully qualified class name of this layout page template structure.
-	 *
-	 * @return the fully qualified class name of this layout page template structure
-	 */
 	@Override
-	public String getClassName() {
-		return model.getClassName();
-	}
-
-	/**
-	 * Returns the class name ID of this layout page template structure.
-	 *
-	 * @return the class name ID of this layout page template structure
-	 */
-	@Override
-	public long getClassNameId() {
-		return model.getClassNameId();
-	}
-
-	/**
-	 * Returns the class pk of this layout page template structure.
-	 *
-	 * @return the class pk of this layout page template structure
-	 */
-	@Override
-	public long getClassPK() {
-		return model.getClassPK();
+	public LayoutPageTemplateStructure cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -183,16 +151,29 @@ public class LayoutPageTemplateStructureWrapper
 		return model.getCreateDate();
 	}
 
+	/**
+	 * Returns the ct collection ID of this layout page template structure.
+	 *
+	 * @return the ct collection ID of this layout page template structure
+	 */
+	@Override
+	public long getCtCollectionId() {
+		return model.getCtCollectionId();
+	}
+
 	@Override
 	public String getData(long segmentsExperienceId) {
 		return model.getData(segmentsExperienceId);
 	}
 
 	@Override
-	public String getData(long[] segmentsExperienceIds)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public String getData(String segmentsExperienceKey) {
+		return model.getData(segmentsExperienceKey);
+	}
 
-		return model.getData(segmentsExperienceIds);
+	@Override
+	public String getDefaultSegmentsExperienceData() {
+		return model.getDefaultSegmentsExperienceData();
 	}
 
 	/**
@@ -233,6 +214,16 @@ public class LayoutPageTemplateStructureWrapper
 	@Override
 	public long getMvccVersion() {
 		return model.getMvccVersion();
+	}
+
+	/**
+	 * Returns the plid of this layout page template structure.
+	 *
+	 * @return the plid of this layout page template structure
+	 */
+	@Override
+	public long getPlid() {
+		return model.getPlid();
 	}
 
 	/**
@@ -285,39 +276,9 @@ public class LayoutPageTemplateStructureWrapper
 		return model.getUuid();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a layout page template structure model instance should use the <code>LayoutPageTemplateStructure</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
-	}
-
-	@Override
-	public void setClassName(String className) {
-		model.setClassName(className);
-	}
-
-	/**
-	 * Sets the class name ID of this layout page template structure.
-	 *
-	 * @param classNameId the class name ID of this layout page template structure
-	 */
-	@Override
-	public void setClassNameId(long classNameId) {
-		model.setClassNameId(classNameId);
-	}
-
-	/**
-	 * Sets the class pk of this layout page template structure.
-	 *
-	 * @param classPK the class pk of this layout page template structure
-	 */
-	@Override
-	public void setClassPK(long classPK) {
-		model.setClassPK(classPK);
 	}
 
 	/**
@@ -338,6 +299,16 @@ public class LayoutPageTemplateStructureWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the ct collection ID of this layout page template structure.
+	 *
+	 * @param ctCollectionId the ct collection ID of this layout page template structure
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		model.setCtCollectionId(ctCollectionId);
 	}
 
 	/**
@@ -380,6 +351,16 @@ public class LayoutPageTemplateStructureWrapper
 	@Override
 	public void setMvccVersion(long mvccVersion) {
 		model.setMvccVersion(mvccVersion);
+	}
+
+	/**
+	 * Sets the plid of this layout page template structure.
+	 *
+	 * @param plid the plid of this layout page template structure
+	 */
+	@Override
+	public void setPlid(long plid) {
+		model.setPlid(plid);
 	}
 
 	/**
@@ -430,6 +411,25 @@ public class LayoutPageTemplateStructureWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
+	}
+
+	@Override
+	public Map<String, Function<LayoutPageTemplateStructure, Object>>
+		getAttributeGetterFunctions() {
+
+		return model.getAttributeGetterFunctions();
+	}
+
+	@Override
+	public Map<String, BiConsumer<LayoutPageTemplateStructure, Object>>
+		getAttributeSetterBiConsumers() {
+
+		return model.getAttributeSetterBiConsumers();
 	}
 
 	@Override

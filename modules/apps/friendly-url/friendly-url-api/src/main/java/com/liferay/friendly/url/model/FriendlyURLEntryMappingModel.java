@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.friendly.url.model;
@@ -18,6 +9,7 @@ import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -34,10 +26,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface FriendlyURLEntryMappingModel
-	extends AttachedModel, BaseModel<FriendlyURLEntryMapping>, MVCCModel,
-			ShardedModel {
+	extends AttachedModel, BaseModel<FriendlyURLEntryMapping>,
+			CTModel<FriendlyURLEntryMapping>, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a friendly url entry mapping model instance should use the {@link FriendlyURLEntryMapping} interface instead.
@@ -48,6 +40,7 @@ public interface FriendlyURLEntryMappingModel
 	 *
 	 * @return the primary key of this friendly url entry mapping
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -55,6 +48,7 @@ public interface FriendlyURLEntryMappingModel
 	 *
 	 * @param primaryKey the primary key of this friendly url entry mapping
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -72,6 +66,22 @@ public interface FriendlyURLEntryMappingModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this friendly url entry mapping.
+	 *
+	 * @return the ct collection ID of this friendly url entry mapping
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this friendly url entry mapping.
+	 *
+	 * @param ctCollectionId the ct collection ID of this friendly url entry mapping
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the friendly url entry mapping ID of this friendly url entry mapping.
@@ -158,5 +168,12 @@ public interface FriendlyURLEntryMappingModel
 	 * @param friendlyURLEntryId the friendly url entry ID of this friendly url entry mapping
 	 */
 	public void setFriendlyURLEntryId(long friendlyURLEntryId);
+
+	@Override
+	public FriendlyURLEntryMapping cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.scheduler.multiple.internal;
@@ -19,8 +10,8 @@ import com.liferay.portal.kernel.cluster.ClusterInvokeThreadLocal;
 import com.liferay.portal.kernel.cluster.ClusterMasterExecutorUtil;
 import com.liferay.portal.kernel.cluster.Clusterable;
 import com.liferay.portal.kernel.cluster.ClusterableInvokerUtil;
-import com.liferay.portal.kernel.cluster.NullClusterable;
 import com.liferay.portal.kernel.util.MethodKey;
+import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.kernel.util.ProxyUtil;
 
 import java.lang.reflect.InvocationHandler;
@@ -42,6 +33,9 @@ public class ClusterableProxyFactory {
 			new ClusterableInvocationHandler<>(targetObject));
 	}
 
+	private static final Clusterable _NULL_CLUSTERABLE =
+		ProxyFactory.newDummyInstance(Clusterable.class);
+
 	private static class ClusterableInvocationHandler<T>
 		implements InvocationHandler {
 
@@ -56,7 +50,7 @@ public class ClusterableProxyFactory {
 			Clusterable clusterable = _getClusterable(
 				method, _targetObject.getClass());
 
-			if (clusterable == NullClusterable.NULL_CLUSTERABLE) {
+			if (clusterable == _NULL_CLUSTERABLE) {
 				return method.invoke(_targetObject, arguments);
 			}
 
@@ -97,7 +91,7 @@ public class ClusterableProxyFactory {
 				method, _targetObject.getClass(), Clusterable.class);
 
 			if (clusterable == null) {
-				clusterable = NullClusterable.NULL_CLUSTERABLE;
+				clusterable = _NULL_CLUSTERABLE;
 			}
 
 			_clusterables.put(methodKey, clusterable);

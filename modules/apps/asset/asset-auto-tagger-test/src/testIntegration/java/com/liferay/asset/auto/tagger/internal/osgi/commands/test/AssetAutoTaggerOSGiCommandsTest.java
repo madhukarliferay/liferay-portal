@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.auto.tagger.internal.osgi.commands.test;
@@ -33,12 +24,15 @@ import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceRegistration;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.lang.reflect.Method;
 
@@ -46,19 +40,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Alejandro Tardín
@@ -74,17 +66,6 @@ public class AssetAutoTaggerOSGiCommandsTest
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			SynchronousDestinationTestRule.INSTANCE);
-
-	@Override
-	public void setUp() throws Exception {
-		super.setUp();
-
-		Registry registry = RegistryUtil.getRegistry();
-
-		_assetAutoTaggerOSGiCommands = registry.getService(
-			"com.liferay.asset.auto.tagger.internal.osgi.commands." +
-				"AssetAutoTaggerOSGiCommands");
-	}
 
 	@Test
 	public void testCommitAutoTagsRemovesAllTheAutoTaggerEntries()
@@ -168,23 +149,24 @@ public class AssetAutoTaggerOSGiCommandsTest
 	public void testTagAllUntaggedTagsAllTheAssetsThatHaveNoTagsWithAnAssetEntryAutoTagProvider()
 		throws Exception {
 
-		Registry registry = RegistryUtil.getRegistry();
+		Bundle bundle = FrameworkUtil.getBundle(
+			AssetAutoTaggerOSGiCommandsTest.class);
 
-		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
-			"model.class.name", AssetEntry.class.getName()
-		).build();
+		BundleContext bundleContext = bundle.getBundleContext();
 
-		ServiceRegistration<AssetAutoTagProvider>
-			assetAutoTagProviderServiceRegistration = registry.registerService(
+		ServiceRegistration<?> assetAutoTagProviderServiceRegistration =
+			bundleContext.registerService(
 				AssetAutoTagProvider.class,
-				model -> Arrays.asList(ASSET_TAG_NAME_AUTO), properties);
+				model -> Arrays.asList(ASSET_TAG_NAME_AUTO),
+				MapUtil.singletonDictionary(
+					"model.class.name", AssetEntry.class.getName()));
 
 		String className = RandomTestUtil.randomString();
 
-		ServiceRegistration<AssetRendererFactory>
-			assetRendererFactoryServiceRegistration = registry.registerService(
+		ServiceRegistration<?> assetRendererFactoryServiceRegistration =
+			bundleContext.registerService(
 				AssetRendererFactory.class,
-				new TestAssetRendererFactory(className));
+				new TestAssetRendererFactory(className), null);
 
 		try {
 			withAutoTaggerDisabled(
@@ -281,22 +263,27 @@ public class AssetAutoTaggerOSGiCommandsTest
 			classNames);
 	}
 
+	@Inject(
+		filter = "osgi.command.scope=assetAutoTagger",
+		type = Inject.NoType.class
+	)
+	private static Object _assetAutoTaggerOSGiCommands;
+
 	@Inject
 	private AssetAutoTaggerEntryLocalService _assetAutoTaggerEntryLocalService;
-
-	private Object _assetAutoTaggerOSGiCommands;
 
 	@Inject
 	private AssetEntryLocalService _assetEntryLocalService;
 
-	private class TestAssetRendererFactory extends BaseAssetRendererFactory {
+	private class TestAssetRendererFactory
+		extends BaseAssetRendererFactory<Object> {
 
 		public TestAssetRendererFactory(String className) {
 			_className = className;
 		}
 
 		@Override
-		public AssetRenderer getAssetRenderer(long classPK, int type) {
+		public AssetRenderer<Object> getAssetRenderer(long classPK, int type) {
 			return new BaseAssetRenderer() {
 
 				@Override

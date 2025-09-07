@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.change.tracking.web.internal.portlet.action;
@@ -17,19 +8,27 @@ package com.liferay.change.tracking.web.internal.portlet.action;
 import com.liferay.change.tracking.constants.CTPortletKeys;
 import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.model.CTPreferences;
-import com.liferay.change.tracking.service.CTCollectionLocalService;
+import com.liferay.change.tracking.service.CTCollectionService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+
+import java.io.IOException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -38,11 +37,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + CTPortletKeys.CHANGE_LISTS,
-		"mvc.command.name=/change_lists/add_ct_collection",
-		"mvc.command.name=/change_lists/edit_ct_collection"
+		"jakarta.portlet.name=" + CTPortletKeys.PUBLICATIONS,
+		"mvc.command.name=/change_tracking/edit_ct_collection"
 	},
 	service = MVCActionCommand.class
 )
@@ -50,7 +47,8 @@ public class EditCTCollectionMVCActionCommand extends BaseMVCActionCommand {
 
 	@Override
 	protected void doProcessAction(
-		ActionRequest actionRequest, ActionResponse actionResponse) {
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws IOException {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -58,20 +56,22 @@ public class EditCTCollectionMVCActionCommand extends BaseMVCActionCommand {
 		long ctCollectionId = ParamUtil.getLong(
 			actionRequest, "ctCollectionId");
 
+		long ctRemoteId = ParamUtil.getLong(actionRequest, "ctRemoteId");
 		String name = ParamUtil.getString(actionRequest, "name");
 		String description = ParamUtil.getString(actionRequest, "description");
 
 		try {
 			if (ctCollectionId > 0) {
-				_ctCollectionLocalService.updateCTCollection(
+				_ctCollectionService.updateCTCollection(
 					themeDisplay.getUserId(), ctCollectionId, name,
 					description);
 			}
 			else {
 				CTCollection ctCollection =
-					_ctCollectionLocalService.addCTCollection(
-						themeDisplay.getCompanyId(), themeDisplay.getUserId(),
-						name, description);
+					_ctCollectionService.addCTCollection(
+						null, themeDisplay.getCompanyId(),
+						themeDisplay.getUserId(), ctRemoteId, name,
+						description);
 
 				CTPreferences ctPreferences =
 					_ctPreferencesLocalService.getCTPreferences(
@@ -79,25 +79,56 @@ public class EditCTCollectionMVCActionCommand extends BaseMVCActionCommand {
 
 				ctPreferences.setCtCollectionId(
 					ctCollection.getCtCollectionId());
+				ctPreferences.setPreviousCtCollectionId(
+					CTCollectionThreadLocal.getCTCollectionId());
 
 				_ctPreferencesLocalService.updateCTPreferences(ctPreferences);
+
+				ctCollectionId = ctCollection.getCtCollectionId();
+			}
+
+			JSONPortletResponseUtil.writeJSON(
+				actionRequest, actionResponse,
+				JSONUtil.put(
+					"ctCollectionId", String.valueOf(ctCollectionId)
+				).put(
+					"redirect", true
+				));
+		}
+		catch (Exception exception) {
+			if (exception instanceof ModelListenerException ||
+				exception instanceof PortalException) {
+
+				JSONPortletResponseUtil.writeJSON(
+					actionRequest, actionResponse,
+					JSONUtil.put(
+						"errorMessage",
+						_language.get(
+							_portal.getHttpServletRequest(actionRequest),
+							"an-unexpected-error-occurred")));
+			}
+			else {
+				throw new SystemException(exception);
 			}
 		}
-		catch (PortalException pe) {
-			SessionErrors.add(actionRequest, pe.getClass());
 
-			_portal.copyRequestParameters(actionRequest, actionResponse);
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
-			actionResponse.setRenderParameter(
-				"mvcPath", "/edit_ct_collection.jsp");
+		if (Validator.isNotNull(redirect)) {
+			hideDefaultSuccessMessage(actionRequest);
+
+			sendRedirect(actionRequest, actionResponse, redirect);
 		}
 	}
 
 	@Reference
-	private CTCollectionLocalService _ctCollectionLocalService;
+	private CTCollectionService _ctCollectionService;
 
 	@Reference
 	private CTPreferencesLocalService _ctPreferencesLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

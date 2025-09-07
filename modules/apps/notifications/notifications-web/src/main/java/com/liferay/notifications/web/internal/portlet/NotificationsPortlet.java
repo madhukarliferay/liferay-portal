@@ -1,210 +1,159 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.notifications.web.internal.portlet;
 
+import com.liferay.bulk.selection.BulkSelection;
+import com.liferay.bulk.selection.BulkSelectionFactory;
 import com.liferay.notifications.web.internal.constants.NotificationsPortletKeys;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.model.UserNotificationDelivery;
-import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
+import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
+import com.liferay.portal.kernel.notifications.UserNotificationDeliveryType;
+import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.UserNotificationDeliveryLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.subscription.model.Subscription;
 import com.liferay.subscription.service.SubscriptionLocalService;
 
-import java.io.IOException;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
 
-import java.util.ResourceBundle;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Sergio González
+ * @author Roberto Díaz
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=notifications-portlet",
 		"com.liferay.portlet.display-category=category.hidden",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Notifications",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.add-process-action-success-action=false",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/notifications/view.jsp",
-		"javax.portlet.name=" + NotificationsPortletKeys.NOTIFICATIONS,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator,guest,power-user,user"
+		"jakarta.portlet.display-name=Notifications",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.add-process-action-success-action=false",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/notifications/view.jsp",
+		"jakarta.portlet.name=" + NotificationsPortletKeys.NOTIFICATIONS,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=administrator,guest,power-user,user",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
 public class NotificationsPortlet extends MVCPortlet {
 
-	public void deleteNotifications(
-			ActionRequest actionRequest, ActionResponse actionResponse)
+	public void delete(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			String actionName)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		long[] userNotificationEventIds = ParamUtil.getLongValues(
-			actionRequest, "rowIds");
+		BulkSelection<UserNotificationEvent>
+			userNotificationEventBulkSelection =
+				_userNotificationEventBulkSelectionFactory.create(
+					_getParameterMap(actionRequest, themeDisplay));
 
-		for (long userNotificationEventId : userNotificationEventIds) {
-			_deleteUserNotificationEvent(
-				themeDisplay.getUserId(), userNotificationEventId);
+		userNotificationEventBulkSelection.forEach(
+			userNotificationEvent -> _deleteUserNotificationEvent(
+				themeDisplay.getUserId(),
+				userNotificationEvent.getUserNotificationEventId()));
+
+		String message = "notification-was-deleted-successfully";
+
+		if (actionName.equals("deleteNotifications")) {
+			message = "notifications-were-deleted-successfully";
 		}
 
-		_addSuccessMessage(
-			actionRequest, "notifications-were-deleted-successfully");
+		_addSuccessMessage(actionRequest, message);
 
 		_sendRedirect(actionRequest, actionResponse);
 	}
 
-	public void deleteUserNotificationEvent(
-			ActionRequest actionRequest, ActionResponse actionResponse)
+	public void markAsRead(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			String actionName)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		long userNotificationEventId = ParamUtil.getLong(
-			actionRequest, "userNotificationEventId");
+		BulkSelection<UserNotificationEvent>
+			userNotificationEventBulkSelection =
+				_userNotificationEventBulkSelectionFactory.create(
+					_getParameterMap(actionRequest, themeDisplay));
 
-		_deleteUserNotificationEvent(
-			themeDisplay.getUserId(), userNotificationEventId);
+		userNotificationEventBulkSelection.forEach(
+			userNotificationEvent -> _updateArchived(
+				themeDisplay.getUserId(),
+				userNotificationEvent.getUserNotificationEventId(), true));
 
-		_addSuccessMessage(
-			actionRequest, "notification-was-deleted-successfully");
+		String message = "notification-was-marked-as-read-successfully";
 
-		_sendRedirect(actionRequest, actionResponse);
-	}
+		if (actionName.equals("markAllNotificationsAsRead") ||
+			ParamUtil.getBoolean(actionRequest, "selectAll")) {
 
-	public void markAllNotificationsAsRead(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		boolean actionRequired = ParamUtil.getBoolean(
-			actionRequest, "actionRequired");
-
-		_userNotificationEventLocalService.archiveUserNotificationEvents(
-			themeDisplay.getUserId(),
-			UserNotificationDeliveryConstants.TYPE_WEBSITE, actionRequired);
-
-		_addSuccessMessage(
-			actionRequest,
-			"all-notifications-were-marked-as-read-successfully");
-
-		_sendRedirect(actionRequest, actionResponse);
-	}
-
-	public void markNotificationAsRead(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long userNotificationEventId = ParamUtil.getLong(
-			actionRequest, "userNotificationEventId");
-
-		updateArchived(themeDisplay.getUserId(), userNotificationEventId, true);
-
-		_addSuccessMessage(
-			actionRequest, "notification-was-marked-as-read-successfully");
-
-		_sendRedirect(actionRequest, actionResponse);
-	}
-
-	public void markNotificationAsUnread(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long userNotificationEventId = ParamUtil.getLong(
-			actionRequest, "userNotificationEventId");
-
-		updateArchived(
-			themeDisplay.getUserId(), userNotificationEventId, false);
-
-		_addSuccessMessage(
-			actionRequest, "notification-was-marked-as-unread-successfully");
-
-		_sendRedirect(actionRequest, actionResponse);
-	}
-
-	public void markNotificationsAsRead(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long[] userNotificationEventIds = ParamUtil.getLongValues(
-			actionRequest, "rowIds");
-
-		for (long userNotificationEventId : userNotificationEventIds) {
-			updateArchived(
-				themeDisplay.getUserId(), userNotificationEventId, true);
+			message = "all-notifications-were-marked-as-read-successfully";
+		}
+		else if (actionName.equals("markNotificationsAsRead")) {
+			message = "notifications-were-marked-as-read-successfully";
 		}
 
-		_addSuccessMessage(
-			actionRequest, "notifications-were-marked-as-read-successfully");
+		_addSuccessMessage(actionRequest, message);
 
 		_sendRedirect(actionRequest, actionResponse);
 	}
 
-	public void markNotificationsAsUnread(
-			ActionRequest actionRequest, ActionResponse actionResponse)
+	public void markAsUnread(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			String actionName)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		long[] userNotificationEventIds = ParamUtil.getLongValues(
-			actionRequest, "rowIds");
+		BulkSelection<UserNotificationEvent>
+			userNotificationEventBulkSelection =
+				_userNotificationEventBulkSelectionFactory.create(
+					_getParameterMap(actionRequest, themeDisplay));
 
-		for (long userNotificationEventId : userNotificationEventIds) {
-			updateArchived(
-				themeDisplay.getUserId(), userNotificationEventId, false);
+		userNotificationEventBulkSelection.forEach(
+			userNotificationEvent -> _updateArchived(
+				themeDisplay.getUserId(),
+				userNotificationEvent.getUserNotificationEventId(), false));
+
+		String message = "notification-was-marked-as-unread-successfully";
+
+		if (actionName.equals("markNotificationsAsUnread")) {
+			message = "notifications-were-marked-as-unread-successfully";
 		}
 
-		_addSuccessMessage(
-			actionRequest, "notifications-were-marked-as-unread-successfully");
+		_addSuccessMessage(actionRequest, message);
 
 		_sendRedirect(actionRequest, actionResponse);
 	}
@@ -225,23 +174,21 @@ public class NotificationsPortlet extends MVCPortlet {
 			String actionName = ParamUtil.getString(
 				actionRequest, ActionRequest.ACTION_NAME);
 
-			if (actionName.equals("deleteNotifications")) {
-				deleteNotifications(actionRequest, actionResponse);
+			if (actionName.equals("deleteNotifications") ||
+				actionName.equals("deleteUserNotificationEvent")) {
+
+				delete(actionRequest, actionResponse, actionName);
 			}
-			else if (actionName.equals("deleteUserNotificationEvent")) {
-				deleteUserNotificationEvent(actionRequest, actionResponse);
+			else if (actionName.equals("markAllNotificationsAsRead") ||
+					 actionName.equals("markNotificationAsRead") ||
+					 actionName.equals("markNotificationsAsRead")) {
+
+				markAsRead(actionRequest, actionResponse, actionName);
 			}
-			else if (actionName.equals("markNotificationsAsRead")) {
-				markNotificationsAsRead(actionRequest, actionResponse);
-			}
-			else if (actionName.equals("markNotificationAsRead")) {
-				markNotificationAsRead(actionRequest, actionResponse);
-			}
-			else if (actionName.equals("markNotificationsAsUnread")) {
-				markNotificationsAsUnread(actionRequest, actionResponse);
-			}
-			else if (actionName.equals("markNotificationAsUnread")) {
-				markNotificationAsUnread(actionRequest, actionResponse);
+			else if (actionName.equals("markNotificationAsUnread") ||
+					 actionName.equals("markNotificationsAsUnread")) {
+
+				markAsUnread(actionRequest, actionResponse, actionName);
 			}
 			else if (actionName.equals("unsubscribe")) {
 				unsubscribe(actionRequest, actionResponse);
@@ -253,8 +200,8 @@ public class NotificationsPortlet extends MVCPortlet {
 				super.processAction(actionRequest, actionResponse);
 			}
 		}
-		catch (Exception e) {
-			throw new PortletException(e);
+		catch (Exception exception) {
+			throw new PortletException(exception);
 		}
 	}
 
@@ -279,7 +226,7 @@ public class NotificationsPortlet extends MVCPortlet {
 		if ((userNotificationEvent != null) &&
 			!userNotificationEvent.isArchived()) {
 
-			updateArchived(
+			_updateArchived(
 				themeDisplay.getUserId(), userNotificationEventId, true);
 		}
 
@@ -307,38 +254,9 @@ public class NotificationsPortlet extends MVCPortlet {
 		}
 
 		_addSuccessMessage(
-			actionRequest, "your-configuration-was-saved-sucessfully");
+			actionRequest, "your-configuration-was-saved-successfully");
 
 		_sendRedirect(actionRequest, actionResponse);
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.notifications.web)(&(release.schema.version>=2.1.0)(!(release.schema.version>=3.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
-	}
-
-	protected void updateArchived(
-			long userId, long userNotificationEventId, boolean archived)
-		throws PortalException {
-
-		UserNotificationEvent userNotificationEvent =
-			_userNotificationEventLocalService.fetchUserNotificationEvent(
-				userNotificationEventId);
-
-		if (userNotificationEvent == null) {
-			return;
-		}
-
-		if (userNotificationEvent.getUserId() != userId) {
-			throw new PrincipalException();
-		}
-
-		userNotificationEvent.setArchived(archived);
-
-		_userNotificationEventLocalService.updateUserNotificationEvent(
-			userNotificationEvent);
 	}
 
 	private void _addSuccessMessage(
@@ -347,16 +265,13 @@ public class NotificationsPortlet extends MVCPortlet {
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		ResourceBundle resourceBundle =
-			_resourceBundleLoader.loadResourceBundle(themeDisplay.getLocale());
-
 		SessionMessages.add(
 			actionRequest, "requestProcessed",
-			LanguageUtil.get(resourceBundle, message));
+			_language.get(themeDisplay.getLocale(), message));
 	}
 
 	private void _deleteSubscription(long userId, long subscriptionId)
-		throws PortalException {
+		throws Exception {
 
 		Subscription subscription = _subscriptionLocalService.fetchSubscription(
 			subscriptionId);
@@ -392,20 +307,52 @@ public class NotificationsPortlet extends MVCPortlet {
 			userNotificationEvent);
 	}
 
+	private Map<String, String[]> _getParameterMap(
+		ActionRequest actionRequest, ThemeDisplay themeDisplay) {
+
+		return HashMapBuilder.create(
+			actionRequest.getParameterMap()
+		).put(
+			"userId", new String[] {String.valueOf(themeDisplay.getUserId())}
+		).build();
+	}
+
 	private void _sendRedirect(
 			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws IOException {
+		throws Exception {
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
 		if (Validator.isNotNull(redirect)) {
-			actionResponse.sendRedirect(redirect);
+			actionResponse.sendRedirect(_portal.escapeRedirect(redirect));
 		}
+	}
+
+	private void _updateArchived(
+			long userId, long userNotificationEventId, boolean archived)
+		throws PortalException {
+
+		UserNotificationEvent userNotificationEvent =
+			_userNotificationEventLocalService.fetchUserNotificationEvent(
+				userNotificationEventId);
+
+		if (userNotificationEvent == null) {
+			return;
+		}
+
+		if (userNotificationEvent.getUserId() != userId) {
+			throw new PrincipalException();
+		}
+
+		userNotificationEvent.setArchived(archived);
+
+		_userNotificationEventLocalService.updateUserNotificationEvent(
+			userNotificationEvent);
 	}
 
 	private void _updateUserNotificationDelivery(
 			long userId, long userNotificationDeliveryId, boolean deliver)
-		throws PortalException {
+		throws Exception {
 
 		UserNotificationDelivery userNotificationDelivery =
 			_userNotificationDeliveryLocalService.fetchUserNotificationDelivery(
@@ -419,12 +366,51 @@ public class NotificationsPortlet extends MVCPortlet {
 			throw new PrincipalException();
 		}
 
+		UserNotificationDefinition userNotificationDefinition =
+			UserNotificationManagerUtil.fetchUserNotificationDefinition(
+				userNotificationDelivery.getPortletId(),
+				userNotificationDelivery.getClassNameId(),
+				userNotificationDelivery.getNotificationType());
+
+		if (userNotificationDefinition == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					String.format(
+						"No user notification definition found for class " +
+							"name ID %d, notification type %d, and portlet %s",
+						userNotificationDelivery.getClassNameId(),
+						userNotificationDelivery.getNotificationType(),
+						userNotificationDelivery.getPortletId()));
+			}
+
+			return;
+		}
+
+		UserNotificationDeliveryType userNotificationDeliveryType =
+			userNotificationDefinition.getUserNotificationDeliveryType(
+				userNotificationDelivery.getDeliveryType());
+
+		if (!userNotificationDeliveryType.isModifiable()) {
+			return;
+		}
+
 		_userNotificationDeliveryLocalService.updateUserNotificationDelivery(
 			userNotificationDeliveryId, deliver);
 	}
 
-	@Reference(target = "(bundle.symbolic.name=com.liferay.notifications.web)")
-	private ResourceBundleLoader _resourceBundleLoader;
+	private static final Log _log = LogFactoryUtil.getLog(
+		NotificationsPortlet.class);
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Portal _portal;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.notifications.web)(&(release.schema.version>=2.1.0)(!(release.schema.version>=3.0.0))))"
+	)
+	private Release _release;
 
 	@Reference
 	private SubscriptionLocalService _subscriptionLocalService;
@@ -432,6 +418,12 @@ public class NotificationsPortlet extends MVCPortlet {
 	@Reference
 	private UserNotificationDeliveryLocalService
 		_userNotificationDeliveryLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.portal.kernel.model.UserNotificationEvent)"
+	)
+	private BulkSelectionFactory<UserNotificationEvent>
+		_userNotificationEventBulkSelectionFactory;
 
 	@Reference
 	private UserNotificationEventLocalService

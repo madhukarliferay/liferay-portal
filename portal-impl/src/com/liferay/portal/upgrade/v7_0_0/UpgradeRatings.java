@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.v7_0_0;
@@ -23,7 +14,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.sql.PreparedStatement;
@@ -42,12 +33,12 @@ public class UpgradeRatings extends UpgradeProcess {
 
 	protected void upgradeRatingsEntry() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select distinct classNameId from RatingsEntry");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				upgradeRatingsEntry(rs.getLong("classNameId"));
+			while (resultSet.next()) {
+				upgradeRatingsEntry(resultSet.getLong("classNameId"));
 			}
 		}
 	}
@@ -82,64 +73,66 @@ public class UpgradeRatings extends UpgradeProcess {
 			long classNameId, int normalizationFactor)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update RatingsEntry set score = score / ? where classNameId " +
 					"= ?")) {
 
-			ps.setInt(1, normalizationFactor);
-			ps.setLong(2, classNameId);
+			preparedStatement.setInt(1, normalizationFactor);
+			preparedStatement.setLong(2, classNameId);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
 	protected void upgradeRatingsEntryThumbs(long classNameId)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update RatingsEntry set score = ? where score = ? and " +
 					"classNameId = ?")) {
 
-			ps.setDouble(1, 0);
-			ps.setDouble(2, -1);
-			ps.setLong(3, classNameId);
+			preparedStatement.setDouble(1, 0);
+			preparedStatement.setDouble(2, -1);
+			preparedStatement.setLong(3, classNameId);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
 	protected void upgradeRatingsStats() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			StringBundler sb = new StringBundler(4);
-
-			sb.append("select classNameId, classPK, count(1) as ");
-			sb.append("totalEntries, sum(RatingsEntry.score) as totalScore, ");
-			sb.append("sum(RatingsEntry.score) / count(1) as averageScore ");
-			sb.append("from RatingsEntry group by classNameId, classPK");
-
-			String selectSQL = sb.toString();
+			String selectSQL = StringBundler.concat(
+				"select classNameId, classPK, count(1) as totalEntries, ",
+				"sum(RatingsEntry.score) as totalScore, ",
+				"sum(RatingsEntry.score) / count(1) as averageScore from ",
+				"RatingsEntry group by classNameId, classPK");
 
 			String updateSQL =
 				"update RatingsStats set totalEntries = ?, totalScore = ?, " +
 					"averageScore = ? where classNameId = ? and classPK = ?";
 
-			try (PreparedStatement ps1 = connection.prepareStatement(selectSQL);
-				ResultSet rs = ps1.executeQuery();
-				PreparedStatement ps2 =
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(selectSQL);
+				ResultSet resultSet = preparedStatement1.executeQuery();
+				PreparedStatement preparedStatement2 =
 					AutoBatchPreparedStatementUtil.autoBatch(
-						connection.prepareStatement(updateSQL))) {
+						connection, updateSQL)) {
 
-				while (rs.next()) {
-					ps2.setInt(1, rs.getInt("totalEntries"));
-					ps2.setDouble(2, rs.getDouble("totalScore"));
-					ps2.setDouble(3, rs.getDouble("averageScore"));
-					ps2.setLong(4, rs.getLong("classNameId"));
-					ps2.setLong(5, rs.getLong("classPK"));
+				while (resultSet.next()) {
+					preparedStatement2.setInt(
+						1, resultSet.getInt("totalEntries"));
+					preparedStatement2.setDouble(
+						2, resultSet.getDouble("totalScore"));
+					preparedStatement2.setDouble(
+						3, resultSet.getDouble("averageScore"));
+					preparedStatement2.setLong(
+						4, resultSet.getLong("classNameId"));
+					preparedStatement2.setLong(5, resultSet.getLong("classPK"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}

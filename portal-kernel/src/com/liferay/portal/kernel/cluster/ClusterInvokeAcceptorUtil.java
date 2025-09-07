@@ -1,27 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.cluster;
 
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.osgi.framework.BundleContext;
 
 /**
  * @author Tina Tian
@@ -31,71 +19,27 @@ public class ClusterInvokeAcceptorUtil {
 	public static ClusterInvokeAcceptor getClusterInvokeAcceptor(
 		String clusterInvokeAcceptorName) {
 
-		return _clusterInvokeAcceptors.get(clusterInvokeAcceptorName);
+		return _clusterInvokeAcceptor.getService(clusterInvokeAcceptorName);
 	}
 
 	private ClusterInvokeAcceptorUtil() {
 	}
 
-	private static final Map<String, ClusterInvokeAcceptor>
-		_clusterInvokeAcceptors = new ConcurrentHashMap<>();
-	private static final ServiceTracker
-		<ClusterInvokeAcceptor, ClusterInvokeAcceptor> _serviceTracker;
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 
-	private static class ClusterInvokeAcceptorServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<ClusterInvokeAcceptor, ClusterInvokeAcceptor> {
+	private static final ServiceTrackerMap<String, ClusterInvokeAcceptor>
+		_clusterInvokeAcceptor = ServiceTrackerMapFactory.openSingleValueMap(
+			_bundleContext, ClusterInvokeAcceptor.class, null,
+			(serviceReference, emitter) -> {
+				ClusterInvokeAcceptor clusterInvokeAcceptor =
+					_bundleContext.getService(serviceReference);
 
-		@Override
-		public ClusterInvokeAcceptor addingService(
-			ServiceReference<ClusterInvokeAcceptor> serviceReference) {
+				Class<?> clazz = clusterInvokeAcceptor.getClass();
 
-			Registry registry = RegistryUtil.getRegistry();
+				emitter.emit(clazz.getName());
 
-			ClusterInvokeAcceptor clusterInvokeAcceptor = registry.getService(
-				serviceReference);
-
-			Class<?> clazz = clusterInvokeAcceptor.getClass();
-
-			_clusterInvokeAcceptors.put(clazz.getName(), clusterInvokeAcceptor);
-
-			return clusterInvokeAcceptor;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<ClusterInvokeAcceptor> serviceReference,
-			ClusterInvokeAcceptor clusterInvokeAcceptor) {
-
-			Class<?> clazz = clusterInvokeAcceptor.getClass();
-
-			_clusterInvokeAcceptors.put(clazz.getName(), clusterInvokeAcceptor);
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<ClusterInvokeAcceptor> serviceReference,
-			ClusterInvokeAcceptor clusterInvokeAcceptor) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-
-			Class<?> clazz = clusterInvokeAcceptor.getClass();
-
-			_clusterInvokeAcceptors.remove(clazz.getName());
-		}
-
-	}
-
-	static {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			ClusterInvokeAcceptor.class,
-			new ClusterInvokeAcceptorServiceTrackerCustomizer());
-
-		_serviceTracker.open();
-	}
+				_bundleContext.ungetService(serviceReference);
+			});
 
 }

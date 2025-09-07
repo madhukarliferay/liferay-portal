@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.log;
@@ -21,27 +12,27 @@ public interface Log {
 
 	public void debug(Object msg);
 
-	public void debug(Object msg, Throwable t);
+	public void debug(Object msg, Throwable throwable);
 
-	public void debug(Throwable t);
+	public void debug(Throwable throwable);
 
 	public void error(Object msg);
 
-	public void error(Object msg, Throwable t);
+	public void error(Object msg, Throwable throwable);
 
-	public void error(Throwable t);
+	public void error(Throwable throwable);
 
 	public void fatal(Object msg);
 
-	public void fatal(Object msg, Throwable t);
+	public void fatal(Object msg, Throwable throwable);
 
-	public void fatal(Throwable t);
+	public void fatal(Throwable throwable);
 
 	public void info(Object msg);
 
-	public void info(Object msg, Throwable t);
+	public void info(Object msg, Throwable throwable);
 
-	public void info(Throwable t);
+	public void info(Throwable throwable);
 
 	public boolean isDebugEnabled();
 
@@ -59,14 +50,14 @@ public interface Log {
 
 	public void trace(Object msg);
 
-	public void trace(Object msg, Throwable t);
+	public void trace(Object msg, Throwable throwable);
 
-	public void trace(Throwable t);
+	public void trace(Throwable throwable);
 
 	public void warn(Object msg);
 
-	public void warn(Object msg, Throwable t);
+	public void warn(Object msg, Throwable throwable);
 
-	public void warn(Throwable t);
+	public void warn(Throwable throwable);
 
 }

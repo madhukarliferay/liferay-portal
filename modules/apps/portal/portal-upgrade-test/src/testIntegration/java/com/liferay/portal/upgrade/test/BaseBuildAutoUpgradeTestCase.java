@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.upgrade.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
@@ -23,6 +15,7 @@ import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.service.ServiceComponentLocalService;
 import com.liferay.portal.kernel.service.persistence.ServiceComponentPersistence;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.DBAssertionUtil;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
@@ -32,8 +25,9 @@ import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.test.model.impl.BuildAutoUpgradeTestEntityModelImpl;
@@ -41,8 +35,6 @@ import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 import java.io.InputStream;
-
-import java.lang.reflect.Field;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -54,9 +46,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -91,17 +80,14 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 
 	@Before
 	public void setUp() throws Exception {
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"drop table BuildAutoUpgradeTestEntity")) {
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
-		catch (SQLException sqle) {
+		catch (SQLException sqlException) {
 		}
-
-		_previousSchemaModuleBuildAutoUpgrade =
-			PropsValues.SCHEMA_MODULE_BUILD_AUTO_UPGRADE;
 
 		PropsValues.SCHEMA_MODULE_BUILD_AUTO_UPGRADE = true;
 	}
@@ -109,23 +95,23 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 	@After
 	public void tearDown() throws Throwable {
 		PropsValues.SCHEMA_MODULE_BUILD_AUTO_UPGRADE =
-			_previousSchemaModuleBuildAutoUpgrade;
+			_PREVIOUS_SCHEMA_MODULE_BUILD_AUTO_UPGRADE;
 
 		if (_bundle != null) {
 			_bundle.uninstall();
 		}
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"drop table BuildAutoUpgradeTestEntity")) {
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
-		catch (SQLException sqle) {
+		catch (SQLException sqlException) {
 		}
 
 		Release release = _releaseLocalService.fetchRelease(
-			BUNDLE_SYMBOLICNAME);
+			BUNDLE_SYMBOLIC_NAME);
 
 		if (release != null) {
 			_releaseLocalService.deleteRelease(release);
@@ -149,13 +135,12 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		Object serviceComponentLocalServiceImpl =
 			aopInvocationHandler.getTarget();
 
-		Class<?> clazz = serviceComponentLocalServiceImpl.getClass();
+		DCLSingleton<?> serviceComponentsDCLSingleton =
+			ReflectionTestUtil.getFieldValue(
+				serviceComponentLocalServiceImpl,
+				"_serviceComponentsDCLSingleton");
 
-		Field field = clazz.getDeclaredField("_serviceComponents");
-
-		field.setAccessible(true);
-
-		field.set(serviceComponentLocalServiceImpl, null);
+		serviceComponentsDCLSingleton.destroy(null);
 	}
 
 	@Test
@@ -171,11 +156,11 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 
 		_bundle.start();
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"insert into BuildAutoUpgradeTestEntity values (1, 'data')")) {
 
-			Assert.assertEquals(1, ps.executeUpdate());
+			Assert.assertEquals(1, preparedStatement.executeUpdate());
 		}
 
 		// Initial columns
@@ -190,29 +175,29 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		DBAssertionUtil.assertColumns(
 			"BuildAutoUpgradeTestEntity", "id_", "data_", "data2");
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select id_, data_, data2 from BuildAutoUpgradeTestEntity");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			Assert.assertTrue(rs.next());
+			Assert.assertTrue(resultSet.next());
 
-			Assert.assertEquals(1, rs.getLong("id_"));
-			Assert.assertEquals("data", rs.getString("data_"));
+			Assert.assertEquals(1, resultSet.getLong("id_"));
+			Assert.assertEquals("data", resultSet.getString("data_"));
 
-			String data2 = rs.getString("data2");
+			String data2 = resultSet.getString("data2");
 
 			Assert.assertTrue(data2, Validator.isNull(data2));
 
-			Assert.assertFalse(rs.next());
+			Assert.assertFalse(resultSet.next());
 		}
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"update BuildAutoUpgradeTestEntity set data2 = 'data2' where " +
 					"id_ = 1")) {
 
-			Assert.assertEquals(1, ps.executeUpdate());
+			Assert.assertEquals(1, preparedStatement.executeUpdate());
 		}
 
 		// Remove "data_" column
@@ -222,17 +207,17 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		DBAssertionUtil.assertColumns(
 			"BuildAutoUpgradeTestEntity", "id_", "data2");
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select id_, data2 from BuildAutoUpgradeTestEntity");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			Assert.assertTrue(rs.next());
+			Assert.assertTrue(resultSet.next());
 
-			Assert.assertEquals(1, rs.getLong("id_"));
-			Assert.assertEquals("data2", rs.getString("data2"));
+			Assert.assertEquals(1, resultSet.getLong("id_"));
+			Assert.assertEquals("data2", resultSet.getString("data2"));
 
-			Assert.assertFalse(rs.next());
+			Assert.assertFalse(resultSet.next());
 		}
 
 		// Remove "data2" column and add "data_" column
@@ -242,20 +227,20 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		DBAssertionUtil.assertColumns(
 			"BuildAutoUpgradeTestEntity", "id_", "data_");
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select id_, data_ from BuildAutoUpgradeTestEntity");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			Assert.assertTrue(rs.next());
+			Assert.assertTrue(resultSet.next());
 
-			Assert.assertEquals(1, rs.getLong("id_"));
+			Assert.assertEquals(1, resultSet.getLong("id_"));
 
-			String data = rs.getString("data_");
+			String data = resultSet.getString("data_");
 
 			Assert.assertTrue(data, Validator.isNull(data));
 
-			Assert.assertFalse(rs.next());
+			Assert.assertFalse(resultSet.next());
 		}
 	}
 
@@ -393,7 +378,7 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		throws IOException;
 
 	protected String toCreateSQL(Object[][] tableColumns) {
-		StringBundler sb = new StringBundler(tableColumns.length * 5 + 1);
+		StringBundler sb = new StringBundler((tableColumns.length * 5) + 1);
 
 		sb.append("create table BuildAutoUpgradeTestEntity (");
 
@@ -432,7 +417,7 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		return sb.toString();
 	}
 
-	protected static final String BUNDLE_SYMBOLICNAME =
+	protected static final String BUNDLE_SYMBOLIC_NAME =
 		"build.auto.upgrade.test";
 
 	protected static final String ENTITY_PATH;
@@ -445,16 +430,14 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		ENTITY_PATH = path.concat(".class");
 	}
 
-	private String _assertAndGetFirstLogRecordMessage(
-		CaptureAppender captureAppender) {
+	private String _assertAndGetFirstLogRecordMessage(LogCapture logCapture) {
+		List<LogEntry> logEntries = logCapture.getLogEntries();
 
-		List<LoggingEvent> loggingEvents = captureAppender.getLoggingEvents();
+		Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-		Assert.assertEquals(loggingEvents.toString(), 1, loggingEvents.size());
+		LogEntry logEntry = logEntries.get(0);
 
-		LoggingEvent loggingEvent = loggingEvents.get(0);
-
-		return loggingEvent.getRenderedMessage();
+		return logEntry.getMessage();
 	}
 
 	private void _initTableColumns(
@@ -506,25 +489,24 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 	}
 
 	private void _updateBundle(InputStream inputStream) throws Exception {
-		try (CaptureAppender serviceComponentCaptureHandler =
-				Log4JLoggerTestUtil.configureLog4JLogger(
+		try (LogCapture serviceComponentLogCapture =
+				LoggerTestUtil.configureLog4JLogger(
 					"com.liferay.portal.service.impl." +
 						"ServiceComponentLocalServiceImpl",
-					Level.WARN);
-			CaptureAppender baseDBCaptureHandler =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.portal.dao.db.BaseDB", Level.WARN)) {
+					LoggerTestUtil.WARN);
+			LogCapture baseDBLogCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.dao.db.BaseDB", LoggerTestUtil.WARN)) {
 
 			_bundle.update(inputStream);
 
 			String message = _assertAndGetFirstLogRecordMessage(
-				serviceComponentCaptureHandler);
+				serviceComponentLogCapture);
 
 			Assert.assertTrue(
 				message,
 				message.startsWith("Auto upgrading BuildAutoUpgradeTest"));
 
-			message = _assertAndGetFirstLogRecordMessage(baseDBCaptureHandler);
+			message = _assertAndGetFirstLogRecordMessage(baseDBLogCapture);
 
 			Assert.assertTrue(
 				message,
@@ -532,8 +514,10 @@ public abstract class BaseBuildAutoUpgradeTestCase {
 		}
 	}
 
+	private static final boolean _PREVIOUS_SCHEMA_MODULE_BUILD_AUTO_UPGRADE =
+		PropsValues.SCHEMA_MODULE_BUILD_AUTO_UPGRADE;
+
 	private Bundle _bundle;
-	private boolean _previousSchemaModuleBuildAutoUpgrade;
 
 	@Inject
 	private ReleaseLocalService _releaseLocalService;

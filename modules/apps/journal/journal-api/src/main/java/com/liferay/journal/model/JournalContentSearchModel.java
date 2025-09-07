@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model;
@@ -18,6 +9,7 @@ import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -34,9 +26,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface JournalContentSearchModel
-	extends BaseModel<JournalContentSearch>, MVCCModel, ShardedModel {
+	extends BaseModel<JournalContentSearch>, CTModel<JournalContentSearch>,
+			MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a journal content search model instance should use the {@link JournalContentSearch} interface instead.
@@ -47,6 +40,7 @@ public interface JournalContentSearchModel
 	 *
 	 * @return the primary key of this journal content search
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,6 +48,7 @@ public interface JournalContentSearchModel
 	 *
 	 * @param primaryKey the primary key of this journal content search
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -71,6 +66,22 @@ public interface JournalContentSearchModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this journal content search.
+	 *
+	 * @return the ct collection ID of this journal content search
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this journal content search.
+	 *
+	 * @param ctCollectionId the ct collection ID of this journal content search
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the content search ID of this journal content search.
@@ -180,5 +191,12 @@ public interface JournalContentSearchModel
 	 * @param articleId the article ID of this journal content search
 	 */
 	public void setArticleId(String articleId);
+
+	@Override
+	public JournalContentSearch cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

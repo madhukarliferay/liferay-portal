@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.clay.servlet.taglib.util;
@@ -24,16 +15,28 @@ import java.util.List;
 /**
  * @author Carlos Lancha
  */
-public class CreationMenu extends HashMap {
+public class CreationMenu extends HashMap<String, Object> {
 
 	public CreationMenu() {
 		put("primaryItems", _primaryDropdownItems);
+	}
+
+	public CreationMenu addDropdownItem(DropdownItem dropdownItem) {
+		return addPrimaryDropdownItem(dropdownItem);
 	}
 
 	public CreationMenu addDropdownItem(
 		UnsafeConsumer<DropdownItem, Exception> unsafeConsumer) {
 
 		addPrimaryDropdownItem(unsafeConsumer);
+
+		return this;
+	}
+
+	public CreationMenu addFavoriteDropdownItem(DropdownItem dropdownItem) {
+		_favoriteDropdownItems.add(dropdownItem);
+
+		put("secondaryItems", _buildSecondaryDropdownItems());
 
 		return this;
 	}
@@ -46,13 +49,15 @@ public class CreationMenu extends HashMap {
 		try {
 			unsafeConsumer.accept(dropdownItem);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 
-		_favoriteDropdownItems.add(dropdownItem);
+		return addFavoriteDropdownItem(dropdownItem);
+	}
 
-		put("secondaryItems", _buildSecondaryDropdownItems());
+	public CreationMenu addPrimaryDropdownItem(DropdownItem dropdownItem) {
+		_primaryDropdownItems.add(dropdownItem);
 
 		return this;
 	}
@@ -65,11 +70,17 @@ public class CreationMenu extends HashMap {
 		try {
 			unsafeConsumer.accept(dropdownItem);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 
-		_primaryDropdownItems.add(dropdownItem);
+		return addPrimaryDropdownItem(dropdownItem);
+	}
+
+	public CreationMenu addRestDropdownItem(DropdownItem dropdownItem) {
+		_restDropdownItems.add(dropdownItem);
+
+		put("secondaryItems", _buildSecondaryDropdownItems());
 
 		return this;
 	}
@@ -82,15 +93,22 @@ public class CreationMenu extends HashMap {
 		try {
 			unsafeConsumer.accept(dropdownItem);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
 		}
 
-		_restDropdownItems.add(dropdownItem);
+		return addRestDropdownItem(dropdownItem);
+	}
 
-		put("secondaryItems", _buildSecondaryDropdownItems());
+	@Override
+	public boolean isEmpty() {
+		if (_favoriteDropdownItems.isEmpty() &&
+			_primaryDropdownItems.isEmpty() && _restDropdownItems.isEmpty()) {
 
-		return this;
+			return true;
+		}
+
+		return super.isEmpty();
 	}
 
 	public void setCaption(String caption) {

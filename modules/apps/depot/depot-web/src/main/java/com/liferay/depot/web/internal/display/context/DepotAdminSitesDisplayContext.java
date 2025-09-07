@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.web.internal.display.context;
@@ -20,9 +11,10 @@ import com.liferay.depot.service.DepotEntryGroupRelLocalServiceUtil;
 import com.liferay.depot.web.internal.constants.DepotAdminWebKeys;
 import com.liferay.depot.web.internal.util.DepotEntryURLUtil;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.item.selector.ItemSelector;
-import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -34,13 +26,14 @@ import com.liferay.portal.kernel.service.GroupServiceUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.site.item.selector.criterion.SiteItemSelectorCriterion;
+import com.liferay.site.item.selector.SiteItemSelectorCriterion;
+import com.liferay.staging.StagingGroupHelper;
+import com.liferay.staging.StagingGroupHelperUtil;
+
+import jakarta.portlet.PortletURL;
 
 import java.util.List;
 import java.util.Locale;
-
-import javax.portlet.ActionURL;
-import javax.portlet.PortletURL;
 
 /**
  * @author Cristina González
@@ -55,82 +48,107 @@ public class DepotAdminSitesDisplayContext {
 		_liferayPortletResponse = liferayPortletResponse;
 
 		_currentURL = PortletURLUtil.getCurrent(
-			_liferayPortletRequest, _liferayPortletResponse);
+			liferayPortletRequest, liferayPortletResponse);
 	}
 
 	public DropdownItemList getConnectedSiteDropdownItems(
 		DepotEntryGroupRel depotEntryGroupRel) {
 
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						ActionURL disconnectSiteActionURL =
+		return DropdownItemListBuilder.add(
+			dropdownItem -> {
+				dropdownItem.setDisabled(
+					_isLayoutSetPrototype(depotEntryGroupRel));
+				dropdownItem.setHref(
+					String.valueOf(
+						DepotEntryURLUtil.getUpdateSearchableActionURL(
+							depotEntryGroupRel.getDepotEntryGroupRelId(),
+							!depotEntryGroupRel.isSearchable(),
+							_currentURL.toString(), _liferayPortletResponse)));
+				dropdownItem.setLabel(
+					LanguageUtil.get(
+						PortalUtil.getHttpServletRequest(
+							_liferayPortletRequest),
+						_getUpdateSearchableKey(depotEntryGroupRel)));
+			}
+		).add(
+			dropdownItem -> {
+				dropdownItem.setData(
+					HashMapBuilder.<String, Object>put(
+						"action", "shareWebContentStructures"
+					).put(
+						"shared", depotEntryGroupRel.isDdmStructuresAvailable()
+					).put(
+						"url",
+						String.valueOf(
+							DepotEntryURLUtil.
+								getUpdateDDMStructuresAvailableActionURL(
+									depotEntryGroupRel.
+										getDepotEntryGroupRelId(),
+									!depotEntryGroupRel.
+										isDdmStructuresAvailable(),
+									_currentURL.toString(),
+									_liferayPortletResponse))
+					).build());
+				dropdownItem.setDisabled(
+					_isLayoutSetPrototype(depotEntryGroupRel));
+				dropdownItem.setLabel(
+					LanguageUtil.get(
+						PortalUtil.getHttpServletRequest(
+							_liferayPortletRequest),
+						_getUpdateDDMStructuresAvailableKey(
+							depotEntryGroupRel)));
+			}
+		).add(
+			dropdownItem -> {
+				dropdownItem.setData(
+					HashMapBuilder.<String, Object>put(
+						"action", "disconnect"
+					).put(
+						"url",
+						() -> String.valueOf(
 							DepotEntryURLUtil.getDisconnectSiteActionURL(
 								depotEntryGroupRel.getDepotEntryGroupRelId(),
 								_currentURL.toString(),
-								_liferayPortletResponse);
-
-						dropdownItem.setData(
-							HashMapBuilder.<String, Object>put(
-								"action", "disconnect"
-							).put(
-								"disconnectSiteActionURL",
-								disconnectSiteActionURL.toString()
-							).build());
-
-						dropdownItem.setLabel(
-							LanguageUtil.get(
-								PortalUtil.getHttpServletRequest(
-									_liferayPortletRequest),
-								"disconnect"));
-					});
-
-				add(
-					dropdownItem -> {
-						ActionURL updateSearchableActionURL =
-							DepotEntryURLUtil.getUpdateSearchableActionURL(
-								depotEntryGroupRel.getDepotEntryGroupRelId(),
-								!depotEntryGroupRel.isSearchable(),
-								_currentURL.toString(),
-								_liferayPortletResponse);
-
-						dropdownItem.setHref(
-							updateSearchableActionURL.toString());
-
-						dropdownItem.setLabel(
-							LanguageUtil.get(
-								PortalUtil.getHttpServletRequest(
-									_liferayPortletRequest),
-								_getUpdateSearchableKey(depotEntryGroupRel)));
-					});
+								_liferayPortletResponse))
+					).build());
+				dropdownItem.setDisabled(
+					depotEntryGroupRel.isDdmStructuresAvailable());
+				dropdownItem.setLabel(
+					LanguageUtil.get(
+						PortalUtil.getHttpServletRequest(
+							_liferayPortletRequest),
+						"disconnect"));
 			}
-		};
+		).build();
 	}
 
 	public List<DepotEntryGroupRel> getDepotEntryGroupRels() {
-		DepotEntry depotEntry = (DepotEntry)_liferayPortletRequest.getAttribute(
-			DepotAdminWebKeys.DEPOT_ENTRY);
-
 		return DepotEntryGroupRelLocalServiceUtil.getDepotEntryGroupRels(
-			depotEntry);
+			_getDepotEntry());
 	}
 
-	public PortletURL getItemSelectorURL() {
+	public PortletURL getItemSelectorURL() throws PortalException {
 		ItemSelector itemSelector =
 			(ItemSelector)_liferayPortletRequest.getAttribute(
 				DepotAdminWebKeys.ITEM_SELECTOR);
 
-		ItemSelectorCriterion itemSelectorCriterion =
+		SiteItemSelectorCriterion siteItemSelectorCriterion =
 			new SiteItemSelectorCriterion();
 
-		itemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+		siteItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			new URLItemSelectorReturnType());
+
+		DepotEntry depotEntry = _getDepotEntry();
+
+		Group group = depotEntry.getGroup();
+
+		siteItemSelectorCriterion.setIncludeLayoutSetPrototypes(
+			!group.isStaged());
 
 		return itemSelector.getItemSelectorURL(
 			RequestBackedPortletURLFactoryUtil.create(_liferayPortletRequest),
 			_liferayPortletResponse.getNamespace() + "selectSite",
-			itemSelectorCriterion);
+			siteItemSelectorCriterion);
 	}
 
 	public String getSiteName(DepotEntryGroupRel depotEntryGroupRel)
@@ -142,7 +160,53 @@ public class DepotAdminSitesDisplayContext {
 		Group group = GroupServiceUtil.getGroup(
 			depotEntryGroupRel.getToGroupId());
 
-		return group.getDescriptiveName(locale);
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(group.getDescriptiveName(locale));
+
+		if (_isLayoutSetPrototype(depotEntryGroupRel)) {
+			_appendSuffix(sb, "site-template");
+		}
+		else if (group.isStaged() && !group.isStagedRemotely() &&
+				 group.isStagingGroup()) {
+
+			_appendSuffix(sb, "staging");
+		}
+
+		return sb.toString();
+	}
+
+	public boolean isLiveDepotEntry() throws PortalException {
+		DepotEntry depotEntry = _getDepotEntry();
+
+		StagingGroupHelper stagingGroupHelper =
+			StagingGroupHelperUtil.getStagingGroupHelper();
+
+		return stagingGroupHelper.isLiveGroup(depotEntry.getGroup());
+	}
+
+	private void _appendSuffix(StringBuilder sb, String key) {
+		sb.append(StringPool.SPACE);
+		sb.append(StringPool.OPEN_PARENTHESIS);
+		sb.append(
+			LanguageUtil.get(
+				PortalUtil.getHttpServletRequest(_liferayPortletRequest), key));
+		sb.append(StringPool.CLOSE_PARENTHESIS);
+	}
+
+	private DepotEntry _getDepotEntry() {
+		return (DepotEntry)_liferayPortletRequest.getAttribute(
+			DepotAdminWebKeys.DEPOT_ENTRY);
+	}
+
+	private String _getUpdateDDMStructuresAvailableKey(
+		DepotEntryGroupRel depotEntryGroupRel) {
+
+		if (!depotEntryGroupRel.isDdmStructuresAvailable()) {
+			return "make-structures-available";
+		}
+
+		return "make-structures-unavailable";
 	}
 
 	private String _getUpdateSearchableKey(
@@ -153,6 +217,15 @@ public class DepotAdminSitesDisplayContext {
 		}
 
 		return "make-searchable";
+	}
+
+	private boolean _isLayoutSetPrototype(DepotEntryGroupRel depotEntryGroupRel)
+		throws PortalException {
+
+		Group group = GroupServiceUtil.getGroup(
+			depotEntryGroupRel.getToGroupId());
+
+		return group.isLayoutSetPrototype();
 	}
 
 	private final PortletURL _currentURL;

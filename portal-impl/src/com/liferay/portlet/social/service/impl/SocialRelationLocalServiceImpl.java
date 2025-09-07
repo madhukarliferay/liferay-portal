@@ -1,25 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portlet.social.service.base.SocialRelationLocalServiceBaseImpl;
 import com.liferay.social.kernel.exception.RelationUserIdException;
 import com.liferay.social.kernel.model.SocialRelation;
-import com.liferay.social.kernel.util.SocialRelationTypesUtil;
+import com.liferay.social.kernel.model.SocialRelationConstants;
 
 import java.util.List;
 
@@ -72,8 +65,8 @@ public class SocialRelationLocalServiceImpl
 			throw new RelationUserIdException();
 		}
 
-		User user1 = userPersistence.findByPrimaryKey(userId1);
-		User user2 = userPersistence.findByPrimaryKey(userId2);
+		User user1 = _userPersistence.findByPrimaryKey(userId1);
+		User user2 = _userPersistence.findByPrimaryKey(userId2);
 
 		if (user1.getCompanyId() != user2.getCompanyId()) {
 			throw new RelationUserIdException();
@@ -93,10 +86,10 @@ public class SocialRelationLocalServiceImpl
 			relation.setUserId2(userId2);
 			relation.setType(type);
 
-			socialRelationPersistence.update(relation);
+			relation = socialRelationPersistence.update(relation);
 		}
 
-		if (SocialRelationTypesUtil.isTypeBi(type)) {
+		if (_isTypeBi(type)) {
 			SocialRelation biRelation =
 				socialRelationPersistence.fetchByU1_U2_T(
 					userId2, userId1, type);
@@ -161,7 +154,7 @@ public class SocialRelationLocalServiceImpl
 	public void deleteRelation(SocialRelation relation) throws PortalException {
 		socialRelationPersistence.remove(relation);
 
-		if (SocialRelationTypesUtil.isTypeBi(relation.getType())) {
+		if (_isTypeBi(relation.getType())) {
 			SocialRelation biRelation = socialRelationPersistence.findByU1_U2_T(
 				relation.getUserId2(), relation.getUserId1(),
 				relation.getType());
@@ -392,19 +385,36 @@ public class SocialRelationLocalServiceImpl
 			return false;
 		}
 
-		User user1 = userPersistence.fetchByPrimaryKey(userId1);
+		User user1 = _userPersistence.fetchByPrimaryKey(userId1);
 
-		if ((user1 == null) || user1.isDefaultUser()) {
+		if ((user1 == null) || user1.isGuestUser()) {
 			return false;
 		}
 
-		User user2 = userPersistence.fetchByPrimaryKey(userId2);
+		User user2 = _userPersistence.fetchByPrimaryKey(userId2);
 
-		if ((user2 == null) || user2.isDefaultUser()) {
+		if ((user2 == null) || user2.isGuestUser()) {
 			return false;
 		}
 
 		return !hasRelation(userId1, userId2, type);
 	}
+
+	private boolean _isTypeBi(int type) {
+		if ((type == SocialRelationConstants.TYPE_UNI_CHILD) ||
+			(type == SocialRelationConstants.TYPE_UNI_ENEMY) ||
+			(type == SocialRelationConstants.TYPE_UNI_FOLLOWER) ||
+			(type == SocialRelationConstants.TYPE_UNI_PARENT) ||
+			(type == SocialRelationConstants.TYPE_UNI_SUBORDINATE) ||
+			(type == SocialRelationConstants.TYPE_UNI_SUPERVISOR)) {
+
+			return false;
+		}
+
+		return true;
+	}
+
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

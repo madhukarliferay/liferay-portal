@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.project.templates.extensions.util;
 
 import com.liferay.project.templates.extensions.ProjectTemplatesArgs;
-import com.liferay.project.templates.extensions.ProjectTemplatesConstants;
+import com.liferay.project.templates.extensions.constants.ProjectTemplatesConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,37 +40,36 @@ public class ProjectTemplatesUtil {
 		Properties projectTemplateJarVersionsProperties =
 			getProjectTemplateJarVersionsProperties();
 
-		if (projectTemplateJarVersionsProperties.containsKey(artifactId)) {
-			String version = String.valueOf(
-				projectTemplateJarVersionsProperties.get(artifactId));
-
-			try {
-				String jarName = getArchetypeJarName(artifactId, version);
-
-				InputStream inputStream =
-					ProjectTemplatesUtil.class.getResourceAsStream(jarName);
-
-				Path archetypePath = Files.createTempFile(
-					"temp-archetype", null);
-
-				Files.copy(
-					inputStream, archetypePath,
-					StandardCopyOption.REPLACE_EXISTING);
-
-				File archetypeFile = archetypePath.toFile();
-
-				_archetypeFiles.put(artifactId, archetypeFile);
-
-				archetypeFile.deleteOnExit();
-
-				return archetypeFile;
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+		if (!projectTemplateJarVersionsProperties.containsKey(artifactId)) {
+			return null;
 		}
 
-		return null;
+		String version = String.valueOf(
+			projectTemplateJarVersionsProperties.get(artifactId));
+
+		try {
+			String jarName = getArchetypeJarName(artifactId, version);
+
+			InputStream inputStream =
+				ProjectTemplatesUtil.class.getResourceAsStream(jarName);
+
+			Path archetypePath = Files.createTempFile("temp-archetype", null);
+
+			Files.copy(
+				inputStream, archetypePath,
+				StandardCopyOption.REPLACE_EXISTING);
+
+			File archetypeFile = archetypePath.toFile();
+
+			_archetypeFiles.put(artifactId, archetypeFile);
+
+			archetypeFile.deleteOnExit();
+
+			return archetypeFile;
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 
 	public static File getArchetypeFile(String artifactId, File file)
@@ -87,36 +77,38 @@ public class ProjectTemplatesUtil {
 
 		File archetypeFile = getArchetypeFile(artifactId);
 
-		if (archetypeFile == null) {
-			try (JarFile jarFile = new JarFile(file)) {
-				Enumeration<JarEntry> enumeration = jarFile.entries();
+		if (archetypeFile != null) {
+			return archetypeFile;
+		}
 
-				while (enumeration.hasMoreElements()) {
-					JarEntry jarEntry = enumeration.nextElement();
+		try (JarFile jarFile = new JarFile(file)) {
+			Enumeration<JarEntry> enumeration = jarFile.entries();
 
-					if (jarEntry.isDirectory()) {
-						continue;
-					}
+			while (enumeration.hasMoreElements()) {
+				JarEntry jarEntry = enumeration.nextElement();
 
-					String name = jarEntry.getName();
-
-					if (!name.startsWith(artifactId + "-")) {
-						continue;
-					}
-
-					Path archetypePath = Files.createTempFile(
-						"temp-archetype", null);
-
-					Files.copy(
-						jarFile.getInputStream(jarEntry), archetypePath,
-						StandardCopyOption.REPLACE_EXISTING);
-
-					archetypeFile = archetypePath.toFile();
-
-					_archetypeFiles.put(artifactId, archetypeFile);
-
-					archetypeFile.deleteOnExit();
+				if (jarEntry.isDirectory()) {
+					continue;
 				}
+
+				String name = jarEntry.getName();
+
+				if (!name.startsWith(artifactId + "-")) {
+					continue;
+				}
+
+				Path archetypePath = Files.createTempFile(
+					"temp-archetype", null);
+
+				Files.copy(
+					jarFile.getInputStream(jarEntry), archetypePath,
+					StandardCopyOption.REPLACE_EXISTING);
+
+				archetypeFile = archetypePath.toFile();
+
+				_archetypeFiles.put(artifactId, archetypeFile);
+
+				archetypeFile.deleteOnExit();
 			}
 		}
 
@@ -130,10 +122,10 @@ public class ProjectTemplatesUtil {
 	}
 
 	public static List<String> getArchetypeJarNames() throws IOException {
+		List<String> archetypeJarNames = new ArrayList<>();
+
 		Properties projectTemplateJarVersionsProperties =
 			getProjectTemplateJarVersionsProperties();
-
-		List<String> archetypeJarNames = new ArrayList<>();
 
 		Set<String> artifactIds =
 			projectTemplateJarVersionsProperties.stringPropertyNames();
@@ -193,25 +185,32 @@ public class ProjectTemplatesUtil {
 						archetypesDirPath, "*.project.templates.*")) {
 
 				for (Path path : directoryStream) {
-					String fileName = String.valueOf(path.getFileName());
+					try {
+						String bundleSymbolicName =
+							FileUtil.getManifestProperty(
+								path.toFile(), "Bundle-SymbolicName");
 
-					String templateName = getTemplateName(fileName);
+						String templateName = getTemplateName(
+							bundleSymbolicName);
 
-					if (templateName.equals(template)) {
-						File templateFile = path.toFile();
-
-						if (templateVersion != null) {
-							String bundleVersion = FileUtil.getManifestProperty(
-								templateFile, "Bundle-Version");
-
-							if (templateVersion.equals(bundleVersion)) {
-								return templateFile;
-							}
-
+						if (!templateName.equals(template)) {
 							continue;
 						}
 
-						return templateFile;
+						File templateFile = path.toFile();
+
+						if (templateVersion == null) {
+							return templateFile;
+						}
+
+						String bundleVersion = FileUtil.getManifestProperty(
+							templateFile, "Bundle-Version");
+
+						if (templateVersion.equals(bundleVersion)) {
+							return templateFile;
+						}
+					}
+					catch (IOException ioException) {
 					}
 				}
 			}
@@ -227,16 +226,29 @@ public class ProjectTemplatesUtil {
 	public static String getTemplateName(String name) {
 		String projectTemplatesString = "project.templates.";
 
-		int projectTemplatesEndIndex =
-			name.indexOf(projectTemplatesString) +
-				projectTemplatesString.length();
+		try {
+			if (!name.contains(projectTemplatesString)) {
+				return name;
+			}
 
-		String templateName = name.substring(
-			projectTemplatesEndIndex, name.lastIndexOf('-'));
+			int projectTemplatesEndIndex =
+				name.indexOf(projectTemplatesString) +
+					projectTemplatesString.length();
 
-		templateName = templateName.replace('.', '-');
+			int dashIndex = name.indexOf("-");
 
-		return templateName;
+			if (dashIndex < 0) {
+				dashIndex = name.length();
+			}
+
+			String templateName = name.substring(
+				projectTemplatesEndIndex, dashIndex);
+
+			return templateName.replace('.', '-');
+		}
+		catch (Throwable throwable) {
+			return name;
+		}
 	}
 
 	private static final Map<String, File> _archetypeFiles = new HashMap<>();

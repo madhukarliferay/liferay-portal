@@ -1,22 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.parsers.bbcode;
 
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceTracker;
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 /**
  * @author Iliyan Peychev
@@ -25,49 +14,49 @@ import com.liferay.registry.ServiceTracker;
 public class BBCodeTranslatorUtil {
 
 	public static BBCodeTranslator getBBCodeTranslator() {
-		return _bbCodeTranslatorUtil._getBBCodeTranslator();
+		return _bbCodeTranslatorSnapshot.get();
 	}
 
 	public static String[] getEmoticonDescriptions() {
-		return getBBCodeTranslator().getEmoticonDescriptions();
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.getEmoticonDescriptions();
 	}
 
 	public static String[] getEmoticonFiles() {
-		return getBBCodeTranslator().getEmoticonFiles();
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.getEmoticonFiles();
 	}
 
 	public static String[][] getEmoticons() {
-		return getBBCodeTranslator().getEmoticons();
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.getEmoticons();
 	}
 
 	public static String[] getEmoticonSymbols() {
-		return getBBCodeTranslator().getEmoticonSymbols();
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.getEmoticonSymbols();
 	}
 
 	public static String getHTML(String bbcode) {
-		return getBBCodeTranslator().getHTML(bbcode);
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.getHTML(bbcode);
 	}
 
 	public static String parse(String message) {
-		return getBBCodeTranslator().parse(message);
+		BBCodeTranslator bbCodeTranslator = _bbCodeTranslatorSnapshot.get();
+
+		return bbCodeTranslator.parse(message);
 	}
 
 	private BBCodeTranslatorUtil() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(BBCodeTranslator.class);
-
-		_serviceTracker.open();
 	}
 
-	private BBCodeTranslator _getBBCodeTranslator() {
-		return _serviceTracker.getService();
-	}
-
-	private static final BBCodeTranslatorUtil _bbCodeTranslatorUtil =
-		new BBCodeTranslatorUtil();
-
-	private final ServiceTracker<BBCodeTranslator, BBCodeTranslator>
-		_serviceTracker;
+	private static final Snapshot<BBCodeTranslator> _bbCodeTranslatorSnapshot =
+		new Snapshot<>(BBCodeTranslatorUtil.class, BBCodeTranslator.class);
 
 }

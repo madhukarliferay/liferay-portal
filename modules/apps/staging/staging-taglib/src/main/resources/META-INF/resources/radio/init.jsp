@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -46,16 +37,16 @@ if (!ignoreRequestValue) {
 	}
 }
 
-String checkedString = (checked) ? "checked" : "";
+String checkedString = checked ? "checked" : "";
 String description = LanguageUtil.get(request, descriptionKey);
-String disabledString = (disabled) ? "disabled" : "";
-String dataQAID = (name.equals(id)) ? name : name + StringPool.UNDERLINE + id;
+String disabledString = disabled ? "disabled" : "";
+String dataQAID = name.equals(id) ? name : name + StringPool.UNDERLINE + id;
 String domId = liferayPortletResponse.getNamespace() + id;
 String domName = liferayPortletResponse.getNamespace() + name;
-String inlineString = (inline) ? "custom-control-inline" : "";
+String inlineString = inline ? "custom-control-inline" : "";
 String label = LanguageUtil.get(request, labelKey);
 String popoverName = name + "_popover";
-String popoverText = (Validator.isNull(popoverTextKey)) ? StringPool.SPACE : LanguageUtil.get(request, popoverTextKey);
+String popoverText = Validator.isNull(popoverTextKey) ? StringPool.SPACE : LanguageUtil.get(request, popoverTextKey);
 
 String separator = Validator.isNotNull(description) ? ":" : "";
 %>

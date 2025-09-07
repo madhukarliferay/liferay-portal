@@ -1,23 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.engine.adapter.index;
 
+import com.liferay.portal.search.engine.adapter.ccr.CrossClusterRequest;
+
 /**
  * @author Michael C. Han
+ * @author Joshua Cords
+ * @author Tibor Lipusz
  */
-public class CreateIndexRequest implements IndexRequest<CreateIndexResponse> {
+public class CreateIndexRequest
+	extends CrossClusterRequest implements IndexRequest<CreateIndexResponse> {
 
 	public CreateIndexRequest(String indexName) {
 		_indexName = indexName;
@@ -39,19 +35,24 @@ public class CreateIndexRequest implements IndexRequest<CreateIndexResponse> {
 		return new String[] {_indexName};
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), with no direct replacement. This method
-	 *             should not be in the parent interface.  Only certain
-	 *             IndexRequests work with mappings.
-	 */
-	@Deprecated
-	@Override
-	public String getMappingName() {
-		throw new UnsupportedOperationException();
+	public String getMappings() {
+		return _mappings;
+	}
+
+	public String getSettings() {
+		return _settings;
 	}
 
 	public String getSource() {
 		return _source;
+	}
+
+	public void setMappings(String mappings) {
+		_mappings = mappings;
+	}
+
+	public void setSettings(String settings) {
+		_settings = settings;
 	}
 
 	public void setSource(String source) {
@@ -59,6 +60,8 @@ public class CreateIndexRequest implements IndexRequest<CreateIndexResponse> {
 	}
 
 	private final String _indexName;
+	private String _mappings;
+	private String _settings;
 	private String _source;
 
 }

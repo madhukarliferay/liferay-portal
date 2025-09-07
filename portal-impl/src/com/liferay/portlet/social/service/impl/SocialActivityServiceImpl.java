@@ -1,31 +1,27 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.impl;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.social.service.base.SocialActivityServiceBaseImpl;
 import com.liferay.social.kernel.model.SocialActivity;
 import com.liferay.social.kernel.model.SocialActivityInterpreter;
 import com.liferay.social.kernel.model.impl.SocialActivityInterpreterImpl;
+import com.liferay.social.kernel.service.SocialActivityInterpreterLocalService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,12 +57,11 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 			long classNameId, int start, int end)
 		throws PortalException {
 
-		List<SocialActivity> activities =
+		return filterActivities(
 			socialActivityLocalService.getActivities(
 				classNameId, 0,
-				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT);
-
-		return filterActivities(activities, start, end);
+				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT),
+			start, end);
 	}
 
 	/**
@@ -96,12 +91,11 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 			int end)
 		throws PortalException {
 
-		List<SocialActivity> activities =
+		return filterActivities(
 			socialActivityLocalService.getActivities(
 				mirrorActivityId, classNameId, classPK, 0,
-				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT);
-
-		return filterActivities(activities, start, end);
+				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT),
+			start, end);
 	}
 
 	/**
@@ -131,13 +125,12 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 			int end)
 		throws PortalException {
 
-		List<SocialActivity> activities =
+		return filterActivities(
 			socialActivityLocalService.getActivities(
 				mirrorActivityId,
-				classNameLocalService.getClassNameId(className), classPK, 0,
-				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT);
-
-		return filterActivities(activities, start, end);
+				_classNameLocalService.getClassNameId(className), classPK, 0,
+				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT),
+			start, end);
 	}
 
 	/**
@@ -163,12 +156,11 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 			String className, int start, int end)
 		throws PortalException {
 
-		List<SocialActivity> activities =
+		return filterActivities(
 			socialActivityLocalService.getActivities(
-				classNameLocalService.getClassNameId(className), 0,
-				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT);
-
-		return filterActivities(activities, start, end);
+				_classNameLocalService.getClassNameId(className), 0,
+				end + PropsValues.SOCIAL_ACTIVITY_FILTER_SEARCH_LIMIT),
+			start, end);
 	}
 
 	/**
@@ -216,7 +208,7 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 		long mirrorActivityId, String className, long classPK) {
 
 		return getActivitiesCount(
-			mirrorActivityId, classNameLocalService.getClassNameId(className),
+			mirrorActivityId, _classNameLocalService.getClassNameId(className),
 			classPK);
 	}
 
@@ -229,7 +221,7 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 	@Override
 	public int getActivitiesCount(String className) {
 		return getActivitiesCount(
-			classNameLocalService.getClassNameId(className));
+			_classNameLocalService.getClassNameId(className));
 	}
 
 	/**
@@ -243,11 +235,11 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 		SocialActivity activity = socialActivityLocalService.getActivity(
 			activityId);
 
-		List<SocialActivityInterpreter> activityInterpreters =
-			socialActivityInterpreterLocalService.getActivityInterpreters(
-				StringPool.BLANK);
+		if (!hasPermission(
+				activity,
+				_socialActivityInterpreterLocalService.getActivityInterpreters(
+					StringPool.BLANK))) {
 
-		if (!hasPermission(activity, activityInterpreters)) {
 			throw new PrincipalException.MustHavePermission(
 				0, SocialActivity.class.getName(), activityId);
 		}
@@ -380,11 +372,11 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 		SocialActivity activity = socialActivityLocalService.getMirrorActivity(
 			mirrorActivityId);
 
-		List<SocialActivityInterpreter> activityInterpreters =
-			socialActivityInterpreterLocalService.getActivityInterpreters(
-				StringPool.BLANK);
+		if (!hasPermission(
+				activity,
+				_socialActivityInterpreterLocalService.getActivityInterpreters(
+					StringPool.BLANK))) {
 
-		if (!hasPermission(activity, activityInterpreters)) {
 			throw new PrincipalException.MustHavePermission(
 				0, SocialActivity.class.getName(), mirrorActivityId);
 		}
@@ -750,7 +742,7 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 		List<SocialActivity> filteredActivities = new ArrayList<>();
 
 		List<SocialActivityInterpreter> activityInterpreters =
-			socialActivityInterpreterLocalService.getActivityInterpreters(
+			_socialActivityInterpreterLocalService.getActivityInterpreters(
 				StringPool.BLANK);
 
 		for (SocialActivity activity : activities) {
@@ -805,12 +797,25 @@ public class SocialActivityServiceImpl extends SocialActivityServiceBaseImpl {
 						return true;
 					}
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
 				}
 			}
 		}
 
 		return false;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SocialActivityServiceImpl.class);
+
+	@BeanReference(type = ClassNameLocalService.class)
+	private ClassNameLocalService _classNameLocalService;
+
+	@BeanReference(type = SocialActivityInterpreterLocalService.class)
+	private SocialActivityInterpreterLocalService
+		_socialActivityInterpreterLocalService;
 
 }

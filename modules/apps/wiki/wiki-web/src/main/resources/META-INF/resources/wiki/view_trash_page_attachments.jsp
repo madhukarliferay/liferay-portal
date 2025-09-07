@@ -1,31 +1,22 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/wiki/init.jsp" %>
 
 <%
-WikiPage wikiPage = (WikiPage)request.getAttribute(WikiWebKeys.WIKI_PAGE);
 WikiNode node = (WikiNode)request.getAttribute(WikiWebKeys.WIKI_NODE);
+WikiPage wikiPage = (WikiPage)request.getAttribute(WikiWebKeys.WIKI_PAGE);
 %>
 
 <portlet:actionURL name="/wiki/edit_page_attachment" var="undoTrashURL">
 	<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.RESTORE %>" />
 </portlet:actionURL>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<liferay-trash:undo
 		portletURL="<%= undoTrashURL %>"
 	/>
@@ -55,13 +46,19 @@ WikiNode node = (WikiNode)request.getAttribute(WikiWebKeys.WIKI_NODE);
 	int attachmentsFileEntriesCount = wikiPage.getDeletedAttachmentsFileEntriesCount();
 	String emptyResultsMessage = "this-page-does-not-have-file-attachments-in-the-recycle-bin";
 
-	PortletURL iteratorURL = renderResponse.createRenderURL();
-
-	iteratorURL.setParameter("mvcRenderCommandName", "/wiki/view_trash_page_attachments");
-	iteratorURL.setParameter("redirect", currentURL);
-	iteratorURL.setParameter("nodeId", String.valueOf(wikiPage.getNodeId()));
-	iteratorURL.setParameter("title", wikiPage.getTitle());
-	iteratorURL.setWindowState(LiferayWindowState.POP_UP);
+	PortletURL iteratorURL = PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCRenderCommandName(
+		"/wiki/view_trash_page_attachments"
+	).setRedirect(
+		currentURL
+	).setParameter(
+		"nodeId", wikiPage.getNodeId()
+	).setParameter(
+		"title", wikiPage.getTitle()
+	).setWindowState(
+		LiferayWindowState.POP_UP
+	).buildPortletURL();
 
 	boolean paginate = false;
 	boolean showPageAttachmentAction = true;
@@ -69,4 +66,4 @@ WikiNode node = (WikiNode)request.getAttribute(WikiWebKeys.WIKI_NODE);
 	%>
 
 	<%@ include file="/wiki/attachments_list.jspf" %>
-</div>
+</clay:container-fluid>

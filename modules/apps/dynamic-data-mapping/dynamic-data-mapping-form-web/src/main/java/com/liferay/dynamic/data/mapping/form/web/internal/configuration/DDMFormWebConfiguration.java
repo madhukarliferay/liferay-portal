@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.configuration;
@@ -45,10 +36,34 @@ public interface DDMFormWebConfiguration {
 	public String csvExport();
 
 	@Meta.AD(
-		deflt = "descriptive", name = "default-display-view",
-		optionLabels = {"%list", "%table"},
-		optionValues = {"descriptive", "list"}, required = false
+		deflt = "5", description = "maximum-repetitions-for-upload-fields-help",
+		name = "maximum-repetitions-for-upload-fields", required = false
 	)
-	public String defaultDisplayView();
+	public int maximumRepetitionsForUploadFields();
+
+	@Meta.AD(
+		deflt = "doc, docx, jpeg, jpg, pdf, png, ppt, pptx, tiff, txt, xls, xlsx",
+		description = "guest-upload-file-extensions-help",
+		name = "guest-upload-file-extensions", required = false
+	)
+	public String guestUploadFileExtensions();
+
+	@Meta.AD(
+		deflt = "25", description = "guest-upload-maximum-file-size-help",
+		name = "guest-upload-maximum-file-size", required = false
+	)
+	public long guestUploadMaximumFileSize();
+
+	@Meta.AD(
+		deflt = "5", description = "guest-upload-maximum-submissions-help",
+		name = "guest-upload-maximum-submissions", required = false
+	)
+	public int guestUploadMaximumSubmissions();
+
+	@Meta.AD(
+		deflt = "false", description = "propagate-language-selection-help",
+		name = "propagate-language-selection", required = false
+	)
+	public boolean propagateLanguageSelection();
 
 }

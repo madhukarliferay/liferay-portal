@@ -1,27 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.minifier;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.util.ProxyFactory;
-import com.liferay.registry.BasicRegistryImpl;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -29,15 +23,38 @@ import org.junit.Test;
  */
 public class MinifierUtilTest {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Before
 	public void setUp() {
-		Registry registry = new BasicRegistryImpl();
+		_minifierEnabled = GetterUtil.getBoolean(
+			PropsUtil.get(PropsKeys.MINIFIER_ENABLED));
 
-		RegistryUtil.setRegistry(registry);
+		PropsUtil.set(PropsKeys.MINIFIER_ENABLED, "true");
+	}
 
-		registry.registerService(
-			JavaScriptMinifier.class,
-			ProxyFactory.newDummyInstance(JavaScriptMinifier.class));
+	@After
+	public void tearDown() {
+		PropsUtil.set(
+			PropsKeys.MINIFIER_ENABLED, String.valueOf(_minifierEnabled));
+	}
+
+	@Test
+	public void testProcessMinifiedCssWithContainerQuery() {
+		String minifiedCss = MinifierUtil.minifyCss(
+			"@container c-card-page (min-width: 540px)");
+
+		Assert.assertEquals(
+			"@container c-card-page (min-width:540px)", minifiedCss);
+
+		minifiedCss = MinifierUtil.minifyCss(
+			"@container     c-card-page    (min-width: 540px)   ;");
+
+		Assert.assertEquals(
+			"@container c-card-page (min-width:540px);", minifiedCss);
 	}
 
 	@Test
@@ -92,5 +109,7 @@ public class MinifierUtilTest {
 				"calc(10px / 2);",
 			minifiedCss);
 	}
+
+	private static boolean _minifierEnabled;
 
 }

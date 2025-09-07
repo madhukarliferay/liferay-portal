@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.entry.rel.model;
@@ -17,6 +8,7 @@ package com.liferay.asset.entry.rel.model;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -33,9 +25,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface AssetEntryAssetCategoryRelModel
-	extends BaseModel<AssetEntryAssetCategoryRel>, MVCCModel, ShardedModel {
+	extends BaseModel<AssetEntryAssetCategoryRel>,
+			CTModel<AssetEntryAssetCategoryRel>, MVCCModel, ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a asset entry asset category rel model instance should use the {@link AssetEntryAssetCategoryRel} interface instead.
@@ -46,6 +39,7 @@ public interface AssetEntryAssetCategoryRelModel
 	 *
 	 * @return the primary key of this asset entry asset category rel
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -53,6 +47,7 @@ public interface AssetEntryAssetCategoryRelModel
 	 *
 	 * @param primaryKey the primary key of this asset entry asset category rel
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -70,6 +65,22 @@ public interface AssetEntryAssetCategoryRelModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this asset entry asset category rel.
+	 *
+	 * @return the ct collection ID of this asset entry asset category rel
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this asset entry asset category rel.
+	 *
+	 * @param ctCollectionId the ct collection ID of this asset entry asset category rel
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the asset entry asset category rel ID of this asset entry asset category rel.
@@ -143,5 +154,12 @@ public interface AssetEntryAssetCategoryRelModel
 	 * @param priority the priority of this asset entry asset category rel
 	 */
 	public void setPriority(int priority);
+
+	@Override
+	public AssetEntryAssetCategoryRel cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

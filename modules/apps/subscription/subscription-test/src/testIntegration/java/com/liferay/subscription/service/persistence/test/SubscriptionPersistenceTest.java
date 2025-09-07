@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.subscription.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -125,6 +117,8 @@ public class SubscriptionPersistenceTest {
 
 		newSubscription.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSubscription.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSubscription.setGroupId(RandomTestUtil.nextLong());
 
 		newSubscription.setCompanyId(RandomTestUtil.nextLong());
@@ -151,6 +145,9 @@ public class SubscriptionPersistenceTest {
 		Assert.assertEquals(
 			existingSubscription.getMvccVersion(),
 			newSubscription.getMvccVersion());
+		Assert.assertEquals(
+			existingSubscription.getCtCollectionId(),
+			newSubscription.getCtCollectionId());
 		Assert.assertEquals(
 			existingSubscription.getSubscriptionId(),
 			newSubscription.getSubscriptionId());
@@ -194,18 +191,19 @@ public class SubscriptionPersistenceTest {
 	}
 
 	@Test
-	public void testCountByClassNameId() throws Exception {
-		_persistence.countByClassNameId(RandomTestUtil.nextLong());
-
-		_persistence.countByClassNameId(0L);
-	}
-
-	@Test
 	public void testCountByG_U() throws Exception {
 		_persistence.countByG_U(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
 
 		_persistence.countByG_U(0L, 0L);
+	}
+
+	@Test
+	public void testCountByC_C() throws Exception {
+		_persistence.countByC_C(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByC_C(0L, 0L);
 	}
 
 	@Test
@@ -267,10 +265,11 @@ public class SubscriptionPersistenceTest {
 
 	protected OrderByComparator<Subscription> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"Subscription", "mvccVersion", true, "subscriptionId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "modifiedDate", true, "classNameId", true,
-			"classPK", true, "frequency", true);
+			"Subscription", "mvccVersion", true, "ctCollectionId", true,
+			"subscriptionId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "classNameId", true, "classPK", true,
+			"frequency", true);
 	}
 
 	@Test
@@ -492,26 +491,71 @@ public class SubscriptionPersistenceTest {
 
 		_persistence.clearCache();
 
-		Subscription existingSubscription = _persistence.findByPrimaryKey(
-			newSubscription.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newSubscription.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		Subscription newSubscription = addSubscription();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Subscription.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"subscriptionId", newSubscription.getSubscriptionId()));
+
+		List<Subscription> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(Subscription subscription) {
 		Assert.assertEquals(
-			Long.valueOf(existingSubscription.getCompanyId()),
+			Long.valueOf(subscription.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSubscription, "getOriginalCompanyId", new Class<?>[0]));
+				subscription, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSubscription.getUserId()),
+			Long.valueOf(subscription.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSubscription, "getOriginalUserId", new Class<?>[0]));
+				subscription, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSubscription.getClassNameId()),
+			Long.valueOf(subscription.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSubscription, "getOriginalClassNameId",
-				new Class<?>[0]));
+				subscription, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSubscription.getClassPK()),
+			Long.valueOf(subscription.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSubscription, "getOriginalClassPK", new Class<?>[0]));
+				subscription, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 	}
 
 	protected Subscription addSubscription() throws Exception {
@@ -520,6 +564,8 @@ public class SubscriptionPersistenceTest {
 		Subscription subscription = _persistence.create(pk);
 
 		subscription.setMvccVersion(RandomTestUtil.nextLong());
+
+		subscription.setCtCollectionId(RandomTestUtil.nextLong());
 
 		subscription.setGroupId(RandomTestUtil.nextLong());
 

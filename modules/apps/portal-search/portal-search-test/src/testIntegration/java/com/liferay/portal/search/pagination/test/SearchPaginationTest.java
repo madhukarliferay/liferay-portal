@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.pagination.test;
@@ -35,6 +26,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
@@ -225,6 +217,9 @@ public class SearchPaginationTest {
 		Assert.assertEquals(hits.toString(), 1, docs.length);
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected Hits getHits(int start, int end) throws Exception {
 		return getHits(_randomLastName, start, end);
 	}
@@ -279,24 +274,12 @@ public class SearchPaginationTest {
 			returnedUsers.add(UserLocalServiceUtil.getUser(userId));
 		}
 
-		StringBundler sb = new StringBundler(13);
-
-		sb.append("{end=");
-		sb.append(end);
-		sb.append(", expectedRecalculatedStart=");
-		sb.append(expectedRecalculatedStart);
-		sb.append(", expectedTotal=");
-		sb.append(expectedTotal);
-		sb.append(", returnedUsers=");
-		sb.append(returnedUsers);
-		sb.append(", start=");
-		sb.append(start);
-		sb.append(", _users=");
-		sb.append(_users);
-		sb.append("}");
-
 		Assert.assertEquals(
-			sb.toString(),
+			StringBundler.concat(
+				"{end=", end, ", expectedRecalculatedStart=",
+				expectedRecalculatedStart, ", expectedTotal=", expectedTotal,
+				", returnedUsers=", returnedUsers, ", start=", start,
+				", _users=", _users, "}"),
 			_users.subList(
 				expectedRecalculatedStart,
 				expectedRecalculatedStart + docs.length),

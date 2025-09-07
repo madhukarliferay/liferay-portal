@@ -1,54 +1,62 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
+SiteAdminDisplayContext siteAdminDisplayContext = new SiteAdminDisplayContext(request, liferayPortletRequest, liferayPortletResponse);
+
 Group group = siteAdminDisplayContext.getGroup();
 
 if (group != null) {
 	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(
+		PortletURLBuilder.createRenderURL(
+			renderResponse
+		).setMVCPath(
+			"/view.jsp"
+		).setParameter(
+			"groupId", group.getParentGroupId()
+		).buildString());
+	portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
-	PortletURL backURL = renderResponse.createRenderURL();
+	Group parentGroup = group.getParentGroup();
 
-	backURL.setParameter("mvcPath", "/view.jsp");
-	backURL.setParameter("groupId", String.valueOf(group.getParentGroupId()));
+	if (parentGroup != null) {
+		portletDisplay.setURLBackTitle(parentGroup.getDescriptiveName(locale));
+	}
 
-	portletDisplay.setURLBack(backURL.toString());
-
-	renderResponse.setTitle(HtmlUtil.escape(group.getDescriptiveName(locale)));
+	renderResponse.setTitle(group.getDescriptiveName(locale));
 }
+
+SiteAdminManagementToolbarDisplayContext siteAdminManagementToolbarDisplayContext = new SiteAdminManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, siteAdminDisplayContext);
 %>
 
 <clay:management-toolbar
-	displayContext="<%= siteAdminManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= siteAdminManagementToolbarDisplayContext %>"
+	propsTransformer="{SiteManagementToolbarPropsTransformer} from site-admin-web"
 />
 
-<div class="closed container-fluid-1280 sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
-	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/site/info_panel" var="sidebarPanelURL" />
+<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+	<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/site_admin/info_panel" var="sidebarPanelURL" />
 
 	<liferay-frontend:sidebar-panel
 		resourceURL="<%= sidebarPanelURL %>"
 		searchContainerId="sites"
+		title='<%= LanguageUtil.get(request, "sites") %>'
 	>
 		<liferay-util:include page="/info_panel.jsp" servletContext="<%= application %>" />
 	</liferay-frontend:sidebar-panel>
 
-	<div class="sidenav-content">
-		<portlet:actionURL name="deleteGroups" var="deleteGroupsURL" />
+	<clay:container-fluid
+		cssClass="sidenav-content"
+		fullWidth="<%= true %>"
+	>
+		<portlet:actionURL name="/site_admin/delete_groups" var="deleteGroupsURL" />
 
 		<aui:form action="<%= deleteGroupsURL %>" name="fm">
 			<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
@@ -84,12 +92,12 @@ if (group != null) {
 			<liferay-ui:error exception="<%= RequiredGroupException.MustNotDeleteGroupThatHasChild.class %>" message="you-cannot-delete-sites-that-have-subsites" />
 			<liferay-ui:error exception="<%= RequiredGroupException.MustNotDeleteSystemGroup.class %>" message="the-site-cannot-be-deleted-or-deactivated-because-it-is-a-required-system-site" />
 
+			<%
+			request.setAttribute(SiteAdminDisplayContext.class.getName(), siteAdminDisplayContext);
+			request.setAttribute(SiteAdminManagementToolbarDisplayContext.class.getName(), siteAdminManagementToolbarDisplayContext);
+			%>
+
 			<liferay-util:include page="/view_entries.jsp" servletContext="<%= application %>" />
 		</aui:form>
-	</div>
+	</clay:container-fluid>
 </div>
-
-<liferay-frontend:component
-	componentId="<%= siteAdminManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/ManagementToolbarDefaultEventHandler.es"
-/>

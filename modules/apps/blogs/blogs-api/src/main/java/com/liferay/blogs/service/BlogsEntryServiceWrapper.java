@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.blogs.service;
 
+import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -26,15 +18,25 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class BlogsEntryServiceWrapper
 	implements BlogsEntryService, ServiceWrapper<BlogsEntryService> {
 
+	public BlogsEntryServiceWrapper() {
+		this(null);
+	}
+
 	public BlogsEntryServiceWrapper(BlogsEntryService blogsEntryService) {
 		_blogsEntryService = blogsEntryService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link BlogsEntryServiceUtil} to access the blogs entry remote service. Add custom service methods to <code>com.liferay.blogs.service.impl.BlogsEntryServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry
+			addAttachmentFileEntry(
+				String externalReferenceCode, long groupId, String fileName,
+				String mimeType, java.io.InputStream inputStream)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _blogsEntryService.addAttachmentFileEntry(
+			externalReferenceCode, groupId, fileName, mimeType, inputStream);
+	}
+
 	@Override
 	public com.liferay.portal.kernel.repository.model.Folder
 			addAttachmentsFolder(long groupId)
@@ -43,33 +45,8 @@ public class BlogsEntryServiceWrapper
 		return _blogsEntryService.addAttachmentsFolder(groupId);
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link #addEntry(String,
-	 String, String, String, int, int, int, int, int, boolean,
-	 boolean, String[], String, ImageSelector, ImageSelector,
-	 ServiceContext)}
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.blogs.model.BlogsEntry addEntry(
-			String title, String description, String content,
-			int displayDateMonth, int displayDateDay, int displayDateYear,
-			int displayDateHour, int displayDateMinute, boolean allowPingbacks,
-			boolean allowTrackbacks, String[] trackbacks, boolean smallImage,
-			String smallImageURL, String smallImageFileName,
-			java.io.InputStream smallImageInputStream,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _blogsEntryService.addEntry(
-			title, description, content, displayDateMonth, displayDateDay,
-			displayDateYear, displayDateHour, displayDateMinute, allowPingbacks,
-			allowTrackbacks, trackbacks, smallImage, smallImageURL,
-			smallImageFileName, smallImageInputStream, serviceContext);
-	}
-
-	@Override
-	public com.liferay.blogs.model.BlogsEntry addEntry(
+	public BlogsEntry addEntry(
 			String title, String subtitle, String description, String content,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
 			int displayDateHour, int displayDateMinute, boolean allowPingbacks,
@@ -90,12 +67,13 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry addEntry(
-			String title, String subtitle, String urlTitle, String description,
-			String content, int displayDateMonth, int displayDateDay,
-			int displayDateYear, int displayDateHour, int displayDateMinute,
-			boolean allowPingbacks, boolean allowTrackbacks,
-			String[] trackbacks, String coverImageCaption,
+	public BlogsEntry addEntry(
+			String externalReferenceCode, String title, String subtitle,
+			String urlTitle, String description, String content,
+			int displayDateMonth, int displayDateDay, int displayDateYear,
+			int displayDateHour, int displayDateMinute, boolean allowPingbacks,
+			boolean allowTrackbacks, String[] trackbacks,
+			String coverImageCaption,
 			com.liferay.portal.kernel.servlet.taglib.ui.ImageSelector
 				coverImageImageSelector,
 			com.liferay.portal.kernel.servlet.taglib.ui.ImageSelector
@@ -104,10 +82,18 @@ public class BlogsEntryServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.addEntry(
-			title, subtitle, urlTitle, description, content, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			allowPingbacks, allowTrackbacks, trackbacks, coverImageCaption,
-			coverImageImageSelector, smallImageImageSelector, serviceContext);
+			externalReferenceCode, title, subtitle, urlTitle, description,
+			content, displayDateMonth, displayDateDay, displayDateYear,
+			displayDateHour, displayDateMinute, allowPingbacks, allowTrackbacks,
+			trackbacks, coverImageCaption, coverImageImageSelector,
+			smallImageImageSelector, serviceContext);
+	}
+
+	@Override
+	public void deleteAttachmentFileEntry(long fileEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_blogsEntryService.deleteAttachmentFileEntry(fileEntryId);
 	}
 
 	@Override
@@ -118,7 +104,43 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getCompanyEntries(
+	public BlogsEntry fetchBlogsEntryByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _blogsEntryService.fetchBlogsEntryByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry
+			getAttachmentFileEntry(long fileEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _blogsEntryService.getAttachmentFileEntry(fileEntryId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry
+			getAttachmentFileEntryByExternalReferenceCode(
+				String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _blogsEntryService.getAttachmentFileEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public BlogsEntry getBlogsEntryByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _blogsEntryService.getBlogsEntryByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	@Override
+	public java.util.List<BlogsEntry> getCompanyEntries(
 			long companyId, java.util.Date displayDate, int status, int max)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -140,30 +162,28 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry[] getEntriesPrevAndNext(
-			long entryId)
+	public BlogsEntry[] getEntriesPrevAndNext(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.getEntriesPrevAndNext(entryId);
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry getEntry(long entryId)
+	public BlogsEntry getEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.getEntry(entryId);
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry getEntry(
-			long groupId, String urlTitle)
+	public BlogsEntry getEntry(long groupId, String urlTitle)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.getEntry(groupId, urlTitle);
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupEntries(
+	public java.util.List<BlogsEntry> getGroupEntries(
 		long groupId, java.util.Date displayDate, int status, int max) {
 
 		return _blogsEntryService.getGroupEntries(
@@ -171,7 +191,7 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupEntries(
+	public java.util.List<BlogsEntry> getGroupEntries(
 		long groupId, java.util.Date displayDate, int status, int start,
 		int end) {
 
@@ -180,27 +200,27 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupEntries(
+	public java.util.List<BlogsEntry> getGroupEntries(
 		long groupId, int status, int max) {
 
 		return _blogsEntryService.getGroupEntries(groupId, status, max);
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupEntries(
+	public java.util.List<BlogsEntry> getGroupEntries(
 		long groupId, int status, int start, int end) {
 
 		return _blogsEntryService.getGroupEntries(groupId, status, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupEntries(
+	public java.util.List<BlogsEntry> getGroupEntries(
 		long groupId, int status, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.blogs.model.BlogsEntry> obc) {
+		com.liferay.portal.kernel.util.OrderByComparator<BlogsEntry>
+			orderByComparator) {
 
 		return _blogsEntryService.getGroupEntries(
-			groupId, status, start, end, obc);
+			groupId, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -230,7 +250,7 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry> getGroupsEntries(
+	public java.util.List<BlogsEntry> getGroupsEntries(
 			long companyId, long groupId, java.util.Date displayDate,
 			int status, int max)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -240,25 +260,23 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry>
-		getGroupUserEntries(
-			long groupId, long userId, int status, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.blogs.model.BlogsEntry> obc) {
+	public java.util.List<BlogsEntry> getGroupUserEntries(
+		long groupId, long userId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BlogsEntry>
+			orderByComparator) {
 
 		return _blogsEntryService.getGroupUserEntries(
-			groupId, userId, status, start, end, obc);
+			groupId, userId, status, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry>
-		getGroupUserEntries(
-			long groupId, long userId, int[] statuses, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.blogs.model.BlogsEntry> obc) {
+	public java.util.List<BlogsEntry> getGroupUserEntries(
+		long groupId, long userId, int[] statuses, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BlogsEntry>
+			orderByComparator) {
 
 		return _blogsEntryService.getGroupUserEntries(
-			groupId, userId, statuses, start, end, obc);
+			groupId, userId, statuses, start, end, orderByComparator);
 	}
 
 	@Override
@@ -276,10 +294,9 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.blogs.model.BlogsEntry>
-			getOrganizationEntries(
-				long organizationId, java.util.Date displayDate, int status,
-				int max)
+	public java.util.List<BlogsEntry> getOrganizationEntries(
+			long organizationId, java.util.Date displayDate, int status,
+			int max)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.getOrganizationEntries(
@@ -310,7 +327,7 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry moveEntryToTrash(long entryId)
+	public BlogsEntry moveEntryToTrash(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _blogsEntryService.moveEntryToTrash(entryId);
@@ -337,34 +354,8 @@ public class BlogsEntryServiceWrapper
 		_blogsEntryService.unsubscribe(groupId);
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link #updateEntry(long,
-	 String, String, String, String, int, int, int, int, int,
-	 boolean, boolean, String[], String, ImageSelector,
-	 ImageSelector, ServiceContext)}
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.blogs.model.BlogsEntry updateEntry(
-			long entryId, String title, String description, String content,
-			int displayDateMonth, int displayDateDay, int displayDateYear,
-			int displayDateHour, int displayDateMinute, boolean allowPingbacks,
-			boolean allowTrackbacks, String[] trackbacks, boolean smallImage,
-			String smallImageURL, String smallImageFileName,
-			java.io.InputStream smallImageInputStream,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _blogsEntryService.updateEntry(
-			entryId, title, description, content, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			allowPingbacks, allowTrackbacks, trackbacks, smallImage,
-			smallImageURL, smallImageFileName, smallImageInputStream,
-			serviceContext);
-	}
-
-	@Override
-	public com.liferay.blogs.model.BlogsEntry updateEntry(
+	public BlogsEntry updateEntry(
 			long entryId, String title, String subtitle, String description,
 			String content, int displayDateMonth, int displayDateDay,
 			int displayDateYear, int displayDateHour, int displayDateMinute,
@@ -385,7 +376,7 @@ public class BlogsEntryServiceWrapper
 	}
 
 	@Override
-	public com.liferay.blogs.model.BlogsEntry updateEntry(
+	public BlogsEntry updateEntry(
 			long entryId, String title, String subtitle, String urlTitle,
 			String description, String content, int displayDateMonth,
 			int displayDateDay, int displayDateYear, int displayDateHour,

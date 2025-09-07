@@ -1,45 +1,35 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
 
+import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypeController;
 import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
+import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.servlet.TransferHeadersHelperUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.struts.StrutsUtil;
-import com.liferay.portal.util.PropsUtil;
-import com.liferay.taglib.servlet.PipingServletResponse;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Raymond Augé
@@ -108,10 +98,6 @@ public class LayoutTypeControllerImpl implements LayoutTypeController {
 
 		if (Validator.isNull(portletId)) {
 			return _viewPage;
-		}
-
-		if (_type.equals(LayoutConstants.TYPE_PANEL)) {
-			return StrutsUtil.TEXT_HTML_DIR + "/portal/layout/view/panel.jsp";
 		}
 
 		return StrutsUtil.TEXT_HTML_DIR + "/portal/layout/view/portlet.jsp";
@@ -211,15 +197,6 @@ public class LayoutTypeControllerImpl implements LayoutTypeController {
 	}
 
 	@Override
-	public boolean isPrimaryType() {
-		if (_type.equals(LayoutConstants.TYPE_PORTLET)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	@Override
 	public boolean isSitemapable() {
 		return _sitemapable;
 	}
@@ -231,10 +208,6 @@ public class LayoutTypeControllerImpl implements LayoutTypeController {
 
 	@Override
 	public boolean isWorkflowEnabled() {
-		if (_type.equals(LayoutConstants.TYPE_URL)) {
-			return false;
-		}
-
 		return true;
 	}
 
@@ -250,8 +223,8 @@ public class LayoutTypeControllerImpl implements LayoutTypeController {
 
 			return values.contains(friendlyURL);
 		}
-		catch (SystemException se) {
-			throw new RuntimeException(se);
+		catch (SystemException systemException) {
+			throw new RuntimeException(systemException);
 		}
 	}
 

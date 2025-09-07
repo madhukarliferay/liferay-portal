@@ -1,24 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -37,10 +30,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface AssetListEntryModel
-	extends BaseModel<AssetListEntry>, MVCCModel, ShardedModel,
+	extends BaseModel<AssetListEntry>, CTModel<AssetListEntry>,
+			ExternalReferenceCodeModel, MVCCModel, ShardedModel,
 			StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a asset list entry model instance should use the {@link AssetListEntry} interface instead.
@@ -51,6 +45,7 @@ public interface AssetListEntryModel
 	 *
 	 * @return the primary key of this asset list entry
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -58,6 +53,7 @@ public interface AssetListEntryModel
 	 *
 	 * @param primaryKey the primary key of this asset list entry
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -77,6 +73,22 @@ public interface AssetListEntryModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this asset list entry.
+	 *
+	 * @return the ct collection ID of this asset list entry
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this asset list entry.
+	 *
+	 * @param ctCollectionId the ct collection ID of this asset list entry
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this asset list entry.
 	 *
 	 * @return the uuid of this asset list entry
@@ -92,6 +104,23 @@ public interface AssetListEntryModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this asset list entry.
+	 *
+	 * @return the external reference code of this asset list entry
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this asset list entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this asset list entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the asset list entry ID of this asset list entry.
@@ -265,6 +294,36 @@ public interface AssetListEntryModel
 	public void setType(int type);
 
 	/**
+	 * Returns the asset entry subtype of this asset list entry.
+	 *
+	 * @return the asset entry subtype of this asset list entry
+	 */
+	@AutoEscape
+	public String getAssetEntrySubtype();
+
+	/**
+	 * Sets the asset entry subtype of this asset list entry.
+	 *
+	 * @param assetEntrySubtype the asset entry subtype of this asset list entry
+	 */
+	public void setAssetEntrySubtype(String assetEntrySubtype);
+
+	/**
+	 * Returns the asset entry type of this asset list entry.
+	 *
+	 * @return the asset entry type of this asset list entry
+	 */
+	@AutoEscape
+	public String getAssetEntryType();
+
+	/**
+	 * Sets the asset entry type of this asset list entry.
+	 *
+	 * @param assetEntryType the asset entry type of this asset list entry
+	 */
+	public void setAssetEntryType(String assetEntryType);
+
+	/**
 	 * Returns the last publish date of this asset list entry.
 	 *
 	 * @return the last publish date of this asset list entry
@@ -279,5 +338,12 @@ public interface AssetListEntryModel
 	 */
 	@Override
 	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public AssetListEntry cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

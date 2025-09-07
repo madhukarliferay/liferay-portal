@@ -1,25 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.test.CaptureHandler;
-import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 
 import java.io.UnsupportedEncodingException;
 
@@ -36,8 +28,6 @@ import java.nio.charset.StandardCharsets;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -169,25 +159,21 @@ public class URLCodecTest {
 			Charset.class, "cache1",
 			new Object[] {_testCharset.name(), _testCharset});
 
-		try (CaptureHandler captureHandler =
-				JDKLoggerTestUtil.configureJDKLogger(
-					URLCodec.class.getName(), Level.ALL)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				URLCodec.class.getName(), LoggerTestUtil.ALL)) {
 
 			Assert.assertEquals(
 				"URLCodec returns blank string when ChaesetEncoder/Decoder" +
 					"throws CharacterCodingException during encoding/decoding",
 				StringPool.BLANK, codecFunction.apply("test-charset"));
 
-			List<LogRecord> logRecords = captureHandler.getLogRecords();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(logRecords.toString(), 1, logRecords.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LogRecord logRecord = logRecords.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			Assert.assertEquals(
-				"java.nio.charset.UnmappableCharacterException: Input length " +
-					"= 1",
-				logRecord.getMessage());
+			Assert.assertEquals("Input length = 1", logEntry.getMessage());
 		}
 		finally {
 			ReflectionTestUtil.setFieldValue(
@@ -203,8 +189,8 @@ public class URLCodecTest {
 
 			Assert.fail(encodedURLString);
 		}
-		catch (IllegalArgumentException iae) {
-			String message = iae.getMessage();
+		catch (IllegalArgumentException illegalArgumentException) {
+			String message = illegalArgumentException.getMessage();
 
 			if (invalidHexChar) {
 				Assert.assertTrue(
@@ -305,8 +291,8 @@ public class URLCodecTest {
 					_ENCODED_URLS[i], CharPool.PLUS, "%20");
 			}
 		}
-		catch (UnsupportedEncodingException uee) {
-			throw new ExceptionInInitializerError(uee);
+		catch (UnsupportedEncodingException unsupportedEncodingException) {
+			throw new ExceptionInInitializerError(unsupportedEncodingException);
 		}
 	}
 

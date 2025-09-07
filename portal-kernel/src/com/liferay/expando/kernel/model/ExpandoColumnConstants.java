@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.expando.kernel.model;
@@ -190,7 +181,7 @@ public class ExpandoColumnConstants {
 
 	public static final String UNKNOWN_LABEL = "Unknown";
 
-	public static final String getDataType(int type) {
+	public static String getDataType(int type) {
 		if ((type == DOUBLE) || (type == DOUBLE_ARRAY) || (type == FLOAT) ||
 			(type == FLOAT_ARRAY)) {
 
@@ -211,18 +202,13 @@ public class ExpandoColumnConstants {
 		return StringPool.BLANK;
 	}
 
-	public static final String getDefaultDisplayTypeProperty(
-		int type, UnicodeProperties properties) {
+	public static String getDefaultDisplayTypeProperty(
+		int type, UnicodeProperties unicodeProperties) {
 
 		if (type == BOOLEAN) {
 			return PROPERTY_DISPLAY_TYPE_BOOLEAN;
 		}
-		else if ((type == BOOLEAN_ARRAY) || (type == DATE_ARRAY) ||
-				 (type == DOUBLE_ARRAY) || (type == FLOAT_ARRAY) ||
-				 (type == INTEGER_ARRAY) || (type == LONG_ARRAY) ||
-				 (type == NUMBER_ARRAY) || (type == SHORT_ARRAY) ||
-				 (type == STRING_ARRAY) || (type == STRING_ARRAY_LOCALIZED)) {
-
+		else if (isArray(type)) {
 			return PROPERTY_DISPLAY_TYPE_SELECTION_LIST;
 		}
 		else if (type == DATE) {
@@ -233,7 +219,7 @@ public class ExpandoColumnConstants {
 		}
 		else if ((type == STRING) || (type == STRING_LOCALIZED)) {
 			int propertyHeight = GetterUtil.getInteger(
-				properties.get(PROPERTY_HEIGHT));
+				unicodeProperties.get(PROPERTY_HEIGHT));
 
 			if (propertyHeight > 0) {
 				return PROPERTY_DISPLAY_TYPE_TEXT_BOX;
@@ -245,7 +231,7 @@ public class ExpandoColumnConstants {
 		return StringPool.BLANK;
 	}
 
-	public static final String getPrecisionType(int type) {
+	public static String getPrecisionType(int type) {
 		if ((type == DOUBLE) || (type == DOUBLE_ARRAY) || (type == LONG) ||
 			(type == LONG_ARRAY)) {
 
@@ -263,7 +249,7 @@ public class ExpandoColumnConstants {
 		return StringPool.BLANK;
 	}
 
-	public static final Serializable getSerializable(int type, String value) {
+	public static Serializable getSerializable(int type, String value) {
 		if (type == BOOLEAN) {
 			return GetterUtil.getBoolean(value);
 		}
@@ -277,9 +263,9 @@ public class ExpandoColumnConstants {
 
 				return dateFormat.parse(value);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn("Unable to parse date " + value, e);
+					_log.warn("Unable to parse date " + value, exception);
 				}
 			}
 		}
@@ -333,7 +319,7 @@ public class ExpandoColumnConstants {
 		return value;
 	}
 
-	public static final String getTypeLabel(int type) {
+	public static String getTypeLabel(int type) {
 		if (type == BOOLEAN) {
 			return BOOLEAN_LABEL;
 		}
@@ -399,6 +385,19 @@ public class ExpandoColumnConstants {
 		}
 
 		return UNKNOWN_LABEL;
+	}
+
+	public static boolean isArray(int type) {
+		if ((type == BOOLEAN_ARRAY) || (type == DATE_ARRAY) ||
+			(type == DOUBLE_ARRAY) || (type == FLOAT_ARRAY) ||
+			(type == INTEGER_ARRAY) || (type == LONG_ARRAY) ||
+			(type == NUMBER_ARRAY) || (type == SHORT_ARRAY) ||
+			(type == STRING_ARRAY) || (type == STRING_ARRAY_LOCALIZED)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

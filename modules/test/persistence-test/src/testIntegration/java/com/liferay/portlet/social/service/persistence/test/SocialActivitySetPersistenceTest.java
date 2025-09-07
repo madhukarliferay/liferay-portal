@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.persistence.test;
@@ -121,6 +112,10 @@ public class SocialActivitySetPersistenceTest {
 
 		SocialActivitySet newSocialActivitySet = _persistence.create(pk);
 
+		newSocialActivitySet.setMvccVersion(RandomTestUtil.nextLong());
+
+		newSocialActivitySet.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSocialActivitySet.setGroupId(RandomTestUtil.nextLong());
 
 		newSocialActivitySet.setCompanyId(RandomTestUtil.nextLong());
@@ -146,6 +141,12 @@ public class SocialActivitySetPersistenceTest {
 		SocialActivitySet existingSocialActivitySet =
 			_persistence.findByPrimaryKey(newSocialActivitySet.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingSocialActivitySet.getMvccVersion(),
+			newSocialActivitySet.getMvccVersion());
+		Assert.assertEquals(
+			existingSocialActivitySet.getCtCollectionId(),
+			newSocialActivitySet.getCtCollectionId());
 		Assert.assertEquals(
 			existingSocialActivitySet.getActivitySetId(),
 			newSocialActivitySet.getActivitySetId());
@@ -256,10 +257,11 @@ public class SocialActivitySetPersistenceTest {
 
 	protected OrderByComparator<SocialActivitySet> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SocialActivitySet", "activitySetId", true, "groupId", true,
-			"companyId", true, "userId", true, "createDate", true,
-			"modifiedDate", true, "classNameId", true, "classPK", true, "type",
-			true, "extraData", true, "activityCount", true);
+			"SocialActivitySet", "mvccVersion", true, "ctCollectionId", true,
+			"activitySetId", true, "groupId", true, "companyId", true, "userId",
+			true, "createDate", true, "modifiedDate", true, "classNameId", true,
+			"classPK", true, "type", true, "extraData", true, "activityCount",
+			true);
 	}
 
 	@Test
@@ -482,6 +484,10 @@ public class SocialActivitySetPersistenceTest {
 		long pk = RandomTestUtil.nextLong();
 
 		SocialActivitySet socialActivitySet = _persistence.create(pk);
+
+		socialActivitySet.setMvccVersion(RandomTestUtil.nextLong());
+
+		socialActivitySet.setCtCollectionId(RandomTestUtil.nextLong());
 
 		socialActivitySet.setGroupId(RandomTestUtil.nextLong());
 

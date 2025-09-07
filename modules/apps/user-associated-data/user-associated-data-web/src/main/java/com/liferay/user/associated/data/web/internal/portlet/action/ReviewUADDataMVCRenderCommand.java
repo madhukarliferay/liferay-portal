@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.user.associated.data.web.internal.portlet.action;
 
+import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
@@ -23,6 +15,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.user.associated.data.constants.UserAssociatedDataPortletKeys;
 import com.liferay.user.associated.data.display.UADDisplay;
@@ -35,19 +28,19 @@ import com.liferay.user.associated.data.web.internal.display.UADEntity;
 import com.liferay.user.associated.data.web.internal.display.UADHierarchyDisplay;
 import com.liferay.user.associated.data.web.internal.display.UADInfoPanelDisplay;
 import com.liferay.user.associated.data.web.internal.display.ViewUADEntitiesDisplay;
+import com.liferay.user.associated.data.web.internal.helper.SelectedUserHelper;
+import com.liferay.user.associated.data.web.internal.helper.UADApplicationSummaryHelper;
 import com.liferay.user.associated.data.web.internal.registry.UADRegistry;
 import com.liferay.user.associated.data.web.internal.util.GroupUtil;
-import com.liferay.user.associated.data.web.internal.util.SelectedUserHelper;
-import com.liferay.user.associated.data.web.internal.util.UADApplicationSummaryHelper;
-import com.liferay.user.associated.data.web.internal.util.UADSearchContainerBuilder;
+import com.liferay.user.associated.data.web.internal.util.UADSearchContainerBuilderUtil;
+
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -56,10 +49,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
-		"mvc.command.name=/review_uad_data"
+		"jakarta.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
+		"mvc.command.name=/user_associated_data/review_uad_data"
 	},
 	service = MVCRenderCommand.class
 )
@@ -107,7 +99,8 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 			String uadRegistryKey = _getUADRegistryKey(
 				applicationKey, renderRequest);
 
-			UADDisplay uadDisplay = _uadRegistry.getUADDisplay(uadRegistryKey);
+			UADDisplay<?> uadDisplay = _uadRegistry.getUADDisplay(
+				uadRegistryKey);
 
 			renderRequest.setAttribute(
 				UADWebKeys.UAD_INFO_PANEL_DISPLAY,
@@ -118,8 +111,8 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 					applicationKey, renderRequest, renderResponse, scopeDisplay,
 					user, uadDisplay, uadHierarchyDisplay, uadRegistryKey));
 		}
-		catch (Exception e) {
-			throw new PortletException(e);
+		catch (Exception exception) {
+			throw new PortletException(exception);
 		}
 
 		return "/review_uad_data.jsp";
@@ -180,13 +173,13 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 		List<ScopeDisplay> scopeDisplays = new ArrayList<>();
 
 		for (String scope : UADConstants.SCOPES) {
-			long[] gropuIds = GroupUtil.getGroupIds(
+			long[] groupIds = GroupUtil.getGroupIds(
 				_groupLocalService, user, scope);
 
 			ScopeDisplay scopeDisplay = new ScopeDisplay(
-				scope, gropuIds,
+				scope, groupIds,
 				_uadApplicationSummaryHelper.getUADApplicationSummaryDisplays(
-					user.getUserId(), gropuIds));
+					user.getUserId(), groupIds));
 
 			scopeDisplays.add(scopeDisplay);
 		}
@@ -194,11 +187,11 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 		return scopeDisplays;
 	}
 
-	private SearchContainer<UADEntity> _getSearchContainer(
+	private SearchContainer<UADEntity<?>> _getSearchContainer(
 			String applicationKey, RenderRequest renderRequest,
 			RenderResponse renderResponse, ScopeDisplay scopeDisplay,
-			UADDisplay uadDisplay, UADHierarchyDisplay uadHierarchyDisplay,
-			User user)
+			UADDisplay<Object> uadDisplay,
+			UADHierarchyDisplay uadHierarchyDisplay, User user)
 		throws Exception {
 
 		LiferayPortletResponse liferayPortletResponse =
@@ -207,21 +200,23 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 			renderRequest, renderResponse);
 
 		if (applicationKey.equals(UADConstants.ALL_APPLICATIONS)) {
-			return _uadSearchContainerBuilder.getSearchContainer(
-				renderRequest, liferayPortletResponse, currentURL,
-				scopeDisplay.getUADApplicationSummaryDisplays());
+			return UADSearchContainerBuilderUtil.
+				getApplicationSummaryUADEntitySearchContainer(
+					liferayPortletResponse, renderRequest, currentURL,
+					scopeDisplay.getUADApplicationSummaryDisplays());
 		}
 
 		if (uadHierarchyDisplay != null) {
-			return _uadSearchContainerBuilder.getSearchContainer(
-				renderRequest, liferayPortletResponse, applicationKey,
-				currentURL, scopeDisplay.getGroupIds(),
-				uadHierarchyDisplay.getFirstContainerTypeClass(), 0L, user,
-				uadHierarchyDisplay);
+			return UADSearchContainerBuilderUtil.
+				getHierarchyUADEntitySearchContainer(
+					liferayPortletResponse, renderRequest, applicationKey,
+					currentURL, scopeDisplay.getGroupIds(),
+					uadHierarchyDisplay.getFirstContainerTypeKey(), 0L, user,
+					uadHierarchyDisplay);
 		}
 
-		return _uadSearchContainerBuilder.getSearchContainer(
-			renderRequest, liferayPortletResponse, currentURL,
+		return UADSearchContainerBuilderUtil.getUADEntitySearchContainer(
+			liferayPortletResponse, renderRequest, currentURL,
 			scopeDisplay.getGroupIds(), user, uadDisplay);
 	}
 
@@ -231,17 +226,17 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 	}
 
 	private UADInfoPanelDisplay _getUADInfoPanelDisplay(
-		UADDisplay uadDisplay, UADHierarchyDisplay uadHierarchyDisplay) {
+		UADDisplay<?> uadDisplay, UADHierarchyDisplay uadHierarchyDisplay) {
 
 		UADInfoPanelDisplay uadInfoPanelDisplay = new UADInfoPanelDisplay();
 
 		if (uadHierarchyDisplay != null) {
 			uadInfoPanelDisplay.setHierarchyView(true);
 			uadInfoPanelDisplay.setUADDisplay(
-				uadHierarchyDisplay.getUADDisplays()[0]);
+				(UADDisplay<Object>)uadHierarchyDisplay.getUADDisplays()[0]);
 		}
 		else {
-			uadInfoPanelDisplay.setUADDisplay(uadDisplay);
+			uadInfoPanelDisplay.setUADDisplay((UADDisplay<Object>)uadDisplay);
 		}
 
 		return uadInfoPanelDisplay;
@@ -265,7 +260,7 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 	private ViewUADEntitiesDisplay _getViewUADEntitiesDisplay(
 			String applicationKey, RenderRequest renderRequest,
 			RenderResponse renderResponse, ScopeDisplay scopeDisplay, User user,
-			UADDisplay uadDisplay, UADHierarchyDisplay uadHierarchyDisplay,
+			UADDisplay<?> uadDisplay, UADHierarchyDisplay uadHierarchyDisplay,
 			String uadRegistryKey)
 		throws Exception {
 
@@ -275,10 +270,23 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 		viewUADEntitiesDisplay.setApplicationKey(applicationKey);
 		viewUADEntitiesDisplay.setGroupIds(scopeDisplay.getGroupIds());
 		viewUADEntitiesDisplay.setScope(scopeDisplay.getScopeName());
-		viewUADEntitiesDisplay.setSearchContainer(
-			_getSearchContainer(
-				applicationKey, renderRequest, renderResponse, scopeDisplay,
-				uadDisplay, uadHierarchyDisplay, user));
+
+		SearchContainer<UADEntity<?>> searchContainer = _getSearchContainer(
+			applicationKey, renderRequest, renderResponse, scopeDisplay,
+			(UADDisplay<Object>)uadDisplay, uadHierarchyDisplay, user);
+
+		String id = StringUtil.replace(
+			applicationKey, CharPool.PERIOD, CharPool.UNDERLINE);
+
+		if (Validator.isNull(id)) {
+			id = StringUtil.randomId();
+		}
+
+		id = "uadEntities_" + id;
+
+		searchContainer.setId(id);
+
+		viewUADEntitiesDisplay.setSearchContainer(searchContainer);
 
 		if (uadHierarchyDisplay != null) {
 			viewUADEntitiesDisplay.setHierarchy(true);
@@ -286,12 +294,12 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 				new UADHierarchyResultRowSplitter(
 					LocaleThreadLocal.getThemeDisplayLocale(),
 					uadHierarchyDisplay.getUADDisplays()));
-			viewUADEntitiesDisplay.setTypeClasses(
-				uadHierarchyDisplay.getTypeClasses());
+			viewUADEntitiesDisplay.setTypeKeys(
+				uadHierarchyDisplay.getTypeKeys());
 		}
 		else {
-			viewUADEntitiesDisplay.setTypeClasses(
-				new Class<?>[] {uadDisplay.getTypeClass()});
+			viewUADEntitiesDisplay.setTypeKeys(
+				new String[] {uadDisplay.getTypeKey()});
 			viewUADEntitiesDisplay.setTypeName(
 				uadDisplay.getTypeName(
 					LocaleThreadLocal.getThemeDisplayLocale()));
@@ -312,9 +320,6 @@ public class ReviewUADDataMVCRenderCommand implements MVCRenderCommand {
 
 	@Reference
 	private UADRegistry _uadRegistry;
-
-	@Reference
-	private UADSearchContainerBuilder _uadSearchContainerBuilder;
 
 	@Reference
 	private SelectedUserHelper _userHelper;

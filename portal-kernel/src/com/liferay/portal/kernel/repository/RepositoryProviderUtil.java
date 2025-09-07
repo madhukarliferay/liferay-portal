@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.repository;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 import java.util.List;
 
@@ -26,100 +18,138 @@ public class RepositoryProviderUtil {
 	public static LocalRepository getFileEntryLocalRepository(long fileEntryId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileEntryLocalRepository(fileEntryId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileEntryLocalRepository(fileEntryId);
 	}
 
 	public static Repository getFileEntryRepository(long fileEntryId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileEntryRepository(fileEntryId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileEntryRepository(fileEntryId);
 	}
 
 	public static LocalRepository getFileShortcutLocalRepository(
 			long fileShortcutId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileShortcutLocalRepository(
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileShortcutLocalRepository(
 			fileShortcutId);
 	}
 
 	public static Repository getFileShortcutRepository(long fileShortcutId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileShortcutRepository(
-			fileShortcutId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileShortcutRepository(fileShortcutId);
 	}
 
 	public static LocalRepository getFileVersionLocalRepository(
 			long fileVersionId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileVersionLocalRepository(
-			fileVersionId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileVersionLocalRepository(fileVersionId);
 	}
 
 	public static Repository getFileVersionRepository(long fileVersionId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFileVersionRepository(fileVersionId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFileVersionRepository(fileVersionId);
 	}
 
 	public static LocalRepository getFolderLocalRepository(long folderId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFolderLocalRepository(folderId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFolderLocalRepository(folderId);
 	}
 
 	public static Repository getFolderRepository(long folderId)
 		throws PortalException {
 
-		return getRepositoryProvider().getFolderRepository(folderId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getFolderRepository(folderId);
 	}
 
 	public static List<LocalRepository> getGroupLocalRepositories(long groupId)
 		throws PortalException {
 
-		return getRepositoryProvider().getGroupLocalRepositories(groupId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getGroupLocalRepositories(groupId);
 	}
 
 	public static List<Repository> getGroupRepositories(long groupId)
 		throws PortalException {
 
-		return getRepositoryProvider().getGroupRepositories(groupId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getGroupRepositories(groupId);
 	}
 
 	public static LocalRepository getImageLocalRepository(long imageId)
 		throws PortalException {
 
-		return getRepositoryProvider().getImageLocalRepository(imageId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getImageLocalRepository(imageId);
 	}
 
 	public static Repository getImageRepository(long imageId)
 		throws PortalException {
 
-		return getRepositoryProvider().getImageRepository(imageId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getImageRepository(imageId);
 	}
 
 	public static LocalRepository getLocalRepository(long repositoryId)
 		throws PortalException {
 
-		return getRepositoryProvider().getLocalRepository(repositoryId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getLocalRepository(repositoryId);
 	}
 
 	public static Repository getRepository(long repositoryId)
 		throws PortalException {
 
-		return getRepositoryProvider().getRepository(repositoryId);
+		RepositoryProvider repositoryProvider =
+			_repositoryProviderSnapshot.get();
+
+		return repositoryProvider.getRepository(repositoryId);
 	}
 
 	public static RepositoryProvider getRepositoryProvider() {
-		return _repositoryProvider;
+		return _repositoryProviderSnapshot.get();
 	}
 
-	public void setRepositoryProvider(RepositoryProvider repositoryProvider) {
-		_repositoryProvider = repositoryProvider;
-	}
-
-	private static RepositoryProvider _repositoryProvider;
+	private static final Snapshot<RepositoryProvider>
+		_repositoryProviderSnapshot = new Snapshot<>(
+			RepositoryProviderUtil.class, RepositoryProvider.class);
 
 }

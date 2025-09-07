@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -48,14 +39,10 @@ public class SamlSpSessionWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
-		attributes.put("samlIdpEntityId", getSamlIdpEntityId());
-		attributes.put("samlSpSessionKey", getSamlSpSessionKey());
+		attributes.put("samlPeerBindingId", getSamlPeerBindingId());
 		attributes.put("assertionXml", getAssertionXml());
 		attributes.put("jSessionId", getJSessionId());
-		attributes.put("nameIdFormat", getNameIdFormat());
-		attributes.put("nameIdNameQualifier", getNameIdNameQualifier());
-		attributes.put("nameIdSPNameQualifier", getNameIdSPNameQualifier());
-		attributes.put("nameIdValue", getNameIdValue());
+		attributes.put("samlSpSessionKey", getSamlSpSessionKey());
 		attributes.put("sessionIndex", getSessionIndex());
 		attributes.put("terminated", isTerminated());
 
@@ -100,16 +87,10 @@ public class SamlSpSessionWrapper
 			setModifiedDate(modifiedDate);
 		}
 
-		String samlIdpEntityId = (String)attributes.get("samlIdpEntityId");
+		Long samlPeerBindingId = (Long)attributes.get("samlPeerBindingId");
 
-		if (samlIdpEntityId != null) {
-			setSamlIdpEntityId(samlIdpEntityId);
-		}
-
-		String samlSpSessionKey = (String)attributes.get("samlSpSessionKey");
-
-		if (samlSpSessionKey != null) {
-			setSamlSpSessionKey(samlSpSessionKey);
+		if (samlPeerBindingId != null) {
+			setSamlPeerBindingId(samlPeerBindingId);
 		}
 
 		String assertionXml = (String)attributes.get("assertionXml");
@@ -124,30 +105,10 @@ public class SamlSpSessionWrapper
 			setJSessionId(jSessionId);
 		}
 
-		String nameIdFormat = (String)attributes.get("nameIdFormat");
+		String samlSpSessionKey = (String)attributes.get("samlSpSessionKey");
 
-		if (nameIdFormat != null) {
-			setNameIdFormat(nameIdFormat);
-		}
-
-		String nameIdNameQualifier = (String)attributes.get(
-			"nameIdNameQualifier");
-
-		if (nameIdNameQualifier != null) {
-			setNameIdNameQualifier(nameIdNameQualifier);
-		}
-
-		String nameIdSPNameQualifier = (String)attributes.get(
-			"nameIdSPNameQualifier");
-
-		if (nameIdSPNameQualifier != null) {
-			setNameIdSPNameQualifier(nameIdSPNameQualifier);
-		}
-
-		String nameIdValue = (String)attributes.get("nameIdValue");
-
-		if (nameIdValue != null) {
-			setNameIdValue(nameIdValue);
+		if (samlSpSessionKey != null) {
+			setSamlSpSessionKey(samlSpSessionKey);
 		}
 
 		String sessionIndex = (String)attributes.get("sessionIndex");
@@ -161,6 +122,11 @@ public class SamlSpSessionWrapper
 		if (terminated != null) {
 			setTerminated(terminated);
 		}
+	}
+
+	@Override
+	public SamlSpSession cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -214,46 +180,6 @@ public class SamlSpSessionWrapper
 	}
 
 	/**
-	 * Returns the name ID format of this saml sp session.
-	 *
-	 * @return the name ID format of this saml sp session
-	 */
-	@Override
-	public String getNameIdFormat() {
-		return model.getNameIdFormat();
-	}
-
-	/**
-	 * Returns the name ID name qualifier of this saml sp session.
-	 *
-	 * @return the name ID name qualifier of this saml sp session
-	 */
-	@Override
-	public String getNameIdNameQualifier() {
-		return model.getNameIdNameQualifier();
-	}
-
-	/**
-	 * Returns the name ID sp name qualifier of this saml sp session.
-	 *
-	 * @return the name ID sp name qualifier of this saml sp session
-	 */
-	@Override
-	public String getNameIdSPNameQualifier() {
-		return model.getNameIdSPNameQualifier();
-	}
-
-	/**
-	 * Returns the name ID value of this saml sp session.
-	 *
-	 * @return the name ID value of this saml sp session
-	 */
-	@Override
-	public String getNameIdValue() {
-		return model.getNameIdValue();
-	}
-
-	/**
 	 * Returns the primary key of this saml sp session.
 	 *
 	 * @return the primary key of this saml sp session
@@ -264,13 +190,13 @@ public class SamlSpSessionWrapper
 	}
 
 	/**
-	 * Returns the saml idp entity ID of this saml sp session.
+	 * Returns the saml peer binding ID of this saml sp session.
 	 *
-	 * @return the saml idp entity ID of this saml sp session
+	 * @return the saml peer binding ID of this saml sp session
 	 */
 	@Override
-	public String getSamlIdpEntityId() {
-		return model.getSamlIdpEntityId();
+	public long getSamlPeerBindingId() {
+		return model.getSamlPeerBindingId();
 	}
 
 	/**
@@ -353,11 +279,6 @@ public class SamlSpSessionWrapper
 		return model.isTerminated();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a saml sp session model instance should use the <code>SamlSpSession</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -414,46 +335,6 @@ public class SamlSpSessionWrapper
 	}
 
 	/**
-	 * Sets the name ID format of this saml sp session.
-	 *
-	 * @param nameIdFormat the name ID format of this saml sp session
-	 */
-	@Override
-	public void setNameIdFormat(String nameIdFormat) {
-		model.setNameIdFormat(nameIdFormat);
-	}
-
-	/**
-	 * Sets the name ID name qualifier of this saml sp session.
-	 *
-	 * @param nameIdNameQualifier the name ID name qualifier of this saml sp session
-	 */
-	@Override
-	public void setNameIdNameQualifier(String nameIdNameQualifier) {
-		model.setNameIdNameQualifier(nameIdNameQualifier);
-	}
-
-	/**
-	 * Sets the name ID sp name qualifier of this saml sp session.
-	 *
-	 * @param nameIdSPNameQualifier the name ID sp name qualifier of this saml sp session
-	 */
-	@Override
-	public void setNameIdSPNameQualifier(String nameIdSPNameQualifier) {
-		model.setNameIdSPNameQualifier(nameIdSPNameQualifier);
-	}
-
-	/**
-	 * Sets the name ID value of this saml sp session.
-	 *
-	 * @param nameIdValue the name ID value of this saml sp session
-	 */
-	@Override
-	public void setNameIdValue(String nameIdValue) {
-		model.setNameIdValue(nameIdValue);
-	}
-
-	/**
 	 * Sets the primary key of this saml sp session.
 	 *
 	 * @param primaryKey the primary key of this saml sp session
@@ -464,13 +345,13 @@ public class SamlSpSessionWrapper
 	}
 
 	/**
-	 * Sets the saml idp entity ID of this saml sp session.
+	 * Sets the saml peer binding ID of this saml sp session.
 	 *
-	 * @param samlIdpEntityId the saml idp entity ID of this saml sp session
+	 * @param samlPeerBindingId the saml peer binding ID of this saml sp session
 	 */
 	@Override
-	public void setSamlIdpEntityId(String samlIdpEntityId) {
-		model.setSamlIdpEntityId(samlIdpEntityId);
+	public void setSamlPeerBindingId(long samlPeerBindingId) {
+		model.setSamlPeerBindingId(samlPeerBindingId);
 	}
 
 	/**
@@ -541,6 +422,11 @@ public class SamlSpSessionWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

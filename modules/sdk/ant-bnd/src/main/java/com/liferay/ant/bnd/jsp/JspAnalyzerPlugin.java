@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.ant.bnd.jsp;
@@ -105,10 +96,21 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 		}
 
 		if (matches) {
-			addRequiredPackageImports(analyzer, _REQUIRED_PACKAGE_NAMES);
+			String[] requiredPackageImports = _REQUIRED_PACKAGE_NAMES_JAKARTA;
+
+			if (_isUseJavaxImports(taglibURIs)) {
+				requiredPackageImports = _REQUIRED_PACKAGE_NAMES_JAVAX;
+			}
+
+			addRequiredPackageImports(analyzer, requiredPackageImports);
 		}
 
 		return false;
+	}
+
+	@Override
+	public int ordering() {
+		return 1;
 	}
 
 	protected void addApiUses(Analyzer analyzer, String originalContent) {
@@ -245,7 +247,7 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 					}
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 		}
 	}
@@ -272,19 +274,12 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 
 		Clazz clazz = null;
 
-		try {
-			InputStream inputStream = resource.openInputStream();
-
+		try (InputStream inputStream = resource.openInputStream()) {
 			clazz = new Clazz(analyzer, fqnToPath, resource);
 
-			try {
-				clazz.parseClassFile();
-			}
-			finally {
-				inputStream.close();
-			}
+			clazz.parseClassFile();
 		}
-		catch (Throwable e) {
+		catch (Throwable throwable) {
 			return;
 		}
 
@@ -329,13 +324,21 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 			// indicate that it already has access to the required classes
 
 			if (containsTLD(analyzer, analyzer.getJar(), "META-INF", uri) ||
+				containsTLD(
+					analyzer, analyzer.getJar(), "META-INF/resources", uri) ||
 				containsTLD(analyzer, analyzer.getJar(), "WEB-INF/tld", uri) ||
-				containsTLDInBundleClassPath(analyzer, "META-INF", uri)) {
+				containsTLDInBundleClassPath(analyzer, "META-INF", uri) ||
+				containsTLDInBundleClassPath(
+					analyzer, "META-INF/resources", uri)) {
 
 				continue;
 			}
 
-			if (Arrays.binarySearch(_JSTL_CORE_URIS, uri) < 0) {
+			if (Arrays.binarySearch(_JSTL_CORE_URIS_JAKARTA, uri) < 0) {
+				addTaglibRequirement(taglibRequirements, uri);
+			}
+
+			if (Arrays.binarySearch(_JSTL_CORE_URIS_JAVAX, uri) < 0) {
 				addTaglibRequirement(taglibRequirements, uri);
 			}
 		}
@@ -447,7 +450,7 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 					}
 				}
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 		}
 
@@ -455,12 +458,14 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 	}
 
 	protected Set<String> getTaglibURIs(String originalContent) {
-		String content = _removeComments(originalContent);
+		Set<String> taglibURis = new HashSet<String>();
+
+		String noCommentsContent = _removeComments(originalContent);
+
+		String content = noCommentsContent;
 
 		int contentX = -1;
 		int contentY = content.length();
-
-		Set<String> taglibURis = new HashSet<String>();
 
 		while (true) {
 			contentX = content.lastIndexOf("<%@", contentY);
@@ -490,11 +495,50 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 			contentY -= 3;
 		}
 
+		if (noCommentsContent.contains("jsp:root")) {
+			content = noCommentsContent;
+
+			contentX = -1;
+			contentY = content.length();
+
+			while (true) {
+				contentX = content.lastIndexOf("xmlns:", contentY);
+
+				if (contentX == -1) {
+					break;
+				}
+
+				contentY = contentX;
+
+				int importX = content.indexOf("xmlns:", contentY);
+
+				int importY = -1;
+
+				if (importX != -1) {
+					importX = content.indexOf("\"", importX) + 1;
+
+					importY = content.indexOf("\"", importX);
+				}
+
+				if ((importX != -1) && (importY != -1)) {
+					String s = content.substring(importX, importY);
+
+					if (!s.startsWith("urn:jsptagdir") &&
+						!s.startsWith("urn:jsptld")) {
+
+						taglibURis.add(s);
+					}
+				}
+
+				contentY -= 1;
+			}
+		}
+
 		return taglibURis;
 	}
 
 	protected boolean matchesURI(
-		Analyzer analyzer, String path, Resource resource, final String uri) {
+		Analyzer analyzer, String path, Resource resource, String uri) {
 
 		try {
 			URIFinder uriFinder = new URIFinder(uri);
@@ -511,21 +555,57 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 
 			return uriFinder.hasURI();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			analyzer.error(
-				"Unexpected exception in processing TLD " + path + ": " + e);
+				"Unexpected exception in processing TLD " + path + ": " +
+					exception);
 		}
 
 		return false;
 	}
 
-	private static String _removeComments(String content) {
+	private boolean _isUseJavaxImports(Set<String> taglibURIs) {
+		if (taglibURIs.isEmpty()) {
+			return false;
+		}
+
+		for (String javaxURI : _JSTL_CORE_URIS_JAVAX) {
+			if (taglibURIs.contains(javaxURI)) {
+				return true;
+			}
+		}
+
+		for (String jakartaURI : _JSTL_CORE_URIS_JAKARTA) {
+			if (taglibURIs.contains(jakartaURI)) {
+				return false;
+			}
+		}
+
+		for (String uri : taglibURIs) {
+			if (uri.contains("javax")) {
+				return true;
+			}
+
+			if (uri.contains("jakarta")) {
+				return false;
+			}
+		}
+
+		return false;
+	}
+
+	private String _removeComments(String content) {
 		Matcher matcher = _commentPattern.matcher(content);
 
 		return matcher.replaceAll("");
 	}
 
-	private static final String[] _JSTL_CORE_URIS = {
+	private static final String[] _JSTL_CORE_URIS_JAKARTA = {
+		"jakarta.tags.core", "jakarta.tags.fmt", "jakarta.tags.functions",
+		"jakarta.tags.sql", "jakarta.tags.xml"
+	};
+
+	private static final String[] _JSTL_CORE_URIS_JAVAX = {
 		"http://java.sun.com/jsp/jstl/core", "http://java.sun.com/jsp/jstl/fmt",
 		"http://java.sun.com/jsp/jstl/functions",
 		"http://java.sun.com/jsp/jstl/sql", "http://java.sun.com/jsp/jstl/xml"
@@ -534,7 +614,11 @@ public class JspAnalyzerPlugin implements AnalyzerPlugin {
 	private static final String _LOAD_EXTERNAL_DTD =
 		"http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
-	private static final String[] _REQUIRED_PACKAGE_NAMES = {
+	private static final String[] _REQUIRED_PACKAGE_NAMES_JAKARTA = {
+		"jakarta.servlet", "jakarta.servlet.http"
+	};
+
+	private static final String[] _REQUIRED_PACKAGE_NAMES_JAVAX = {
 		"javax.servlet", "javax.servlet.http"
 	};
 

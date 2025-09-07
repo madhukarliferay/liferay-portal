@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder.test.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -517,34 +508,76 @@ public class LVEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		LVEntry existingLVEntry = _persistence.findByPrimaryKey(
-			newLVEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newLVEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingLVEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingLVEntry, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		LVEntry newLVEntry = addLVEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			LVEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq("lvEntryId", newLVEntry.getLvEntryId()));
+
+		List<LVEntry> result = _persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(LVEntry lvEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingLVEntry.getGroupId()),
+			lvEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				lvEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(lvEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLVEntry, "getOriginalGroupId", new Class<?>[0]));
+				lvEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingLVEntry.getGroupId()),
+			Long.valueOf(lvEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLVEntry, "getOriginalGroupId", new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingLVEntry.getUniqueGroupKey(),
-				ReflectionTestUtil.invoke(
-					existingLVEntry, "getOriginalUniqueGroupKey",
-					new Class<?>[0])));
+				lvEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+		Assert.assertEquals(
+			lvEntry.getUniqueGroupKey(),
+			ReflectionTestUtil.invoke(
+				lvEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uniqueGroupKey"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingLVEntry.getHeadId()),
+			Long.valueOf(lvEntry.getHeadId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLVEntry, "getOriginalHeadId", new Class<?>[0]));
+				lvEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "headId"));
 	}
 
 	protected LVEntry addLVEntry() throws Exception {
@@ -556,7 +589,7 @@ public class LVEntryPersistenceTest {
 
 		lvEntry.setUuid(RandomTestUtil.randomString());
 
-		lvEntry.setHeadId(RandomTestUtil.nextLong());
+		lvEntry.setHeadId(-pk);
 
 		lvEntry.setDefaultLanguageId(RandomTestUtil.randomString());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model;
@@ -48,6 +39,7 @@ public class DDMStructureWrapper
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("structureId", getStructureId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -89,6 +81,13 @@ public class DDMStructureWrapper
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long structureId = (Long)attributes.get("structureId");
@@ -207,10 +206,20 @@ public class DDMStructureWrapper
 	}
 
 	@Override
+	public DDMStructure cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
 	public DDMForm createFullHierarchyDDMForm()
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.createFullHierarchyDDMForm();
+	}
+
+	@Override
+	public DDMStructureLayout fetchDDMStructureLayout() {
+		return model.fetchDDMStructureLayout();
 	}
 
 	@Override
@@ -288,6 +297,13 @@ public class DDMStructureWrapper
 	}
 
 	@Override
+	public DDMFormField getDDMFormFieldByFieldReference(String fieldReference)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getDDMFormFieldByFieldReference(fieldReference);
+	}
+
+	@Override
 	public java.util.List<DDMFormField> getDDMFormFields(
 		boolean includeTransientFields) {
 
@@ -299,6 +315,11 @@ public class DDMStructureWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getDDMFormLayout();
+	}
+
+	@Override
+	public long getDefaultDDMStructureLayoutId() {
+		return model.getDefaultDDMStructureLayoutId();
 	}
 
 	@Override
@@ -392,6 +413,16 @@ public class DDMStructureWrapper
 		return model.getDescriptionMap();
 	}
 
+	/**
+	 * Returns the external reference code of this ddm structure.
+	 *
+	 * @return the external reference code of this ddm structure
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
 	@Override
 	public String getFieldDataType(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -423,6 +454,14 @@ public class DDMStructureWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getFieldProperty(fieldName, property);
+	}
+
+	@Override
+	public String getFieldPropertyByFieldReference(
+			String fieldReference, String property)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getFieldPropertyByFieldReference(fieldReference, property);
 	}
 
 	@Override
@@ -785,6 +824,11 @@ public class DDMStructureWrapper
 	}
 
 	@Override
+	public boolean hasFieldByFieldReference(String fieldReference) {
+		return model.hasFieldByFieldReference(fieldReference);
+	}
+
+	@Override
 	public boolean isFieldRepeatable(String fieldName)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -798,11 +842,6 @@ public class DDMStructureWrapper
 		return model.isFieldTransient(fieldName);
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a ddm structure model instance should use the <code>DDMStructure</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -948,6 +987,16 @@ public class DDMStructureWrapper
 		java.util.Locale defaultLocale) {
 
 		model.setDescriptionMap(descriptionMap, defaultLocale);
+	}
+
+	/**
+	 * Sets the external reference code of this ddm structure.
+	 *
+	 * @param externalReferenceCode the external reference code of this ddm structure
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -1191,6 +1240,11 @@ public class DDMStructureWrapper
 	@Override
 	public void setVersionUserUuid(String versionUserUuid) {
 		model.setVersionUserUuid(versionUserUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React, {useMemo} from 'react';
@@ -17,40 +11,39 @@ import {useFilterStatic} from '../../shared/components/filter/hooks/useFilterSta
 import filterConstants from '../../shared/components/filter/util/filterConstants.es';
 import {getVelocityUnits} from './util/velocityUnitUtil.es';
 
-const VelocityUnitFilter = ({
+export default function VelocityUnitFilter({
+	disabled,
 	className,
-	dispatch,
 	filterKey = filterConstants.velocityUnit.key,
 	options = {},
 	prefixKey = '',
-	timeRange
-}) => {
-	const defaultOptions = {
+	timeRange,
+}) {
+	options = {
 		hideControl: true,
 		multiple: false,
-		position: 'right',
-		withSelectionTitle: true
+		withSelectionTitle: true,
+		withoutRouteParams: false,
+		...options,
 	};
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	options = useMemo(() => ({...defaultOptions, ...options}), [options]);
-
-	const velocityUnits = useMemo(() => getVelocityUnits(timeRange), [
-		timeRange
-	]);
-
-	const {items, selectedItems} = useFilterStatic(
-		dispatch,
-		filterKey,
-		prefixKey,
-		velocityUnits
+	const velocityUnits = useMemo(
+		() => getVelocityUnits(timeRange),
+		[timeRange]
 	);
 
+	const {items, selectedItems} = useFilterStatic({
+		filterKey,
+		prefixKey,
+		staticItems: velocityUnits,
+		...options,
+	});
+
 	const defaultItem = useMemo(
-		() => items.find(item => item.defaultVelocityUnit) || items[0],
+		() => items.find((item) => item.defaultVelocityUnit) || items[0],
 		[items]
 	);
 
-	if (defaultItem && !selectedItems.length) {
+	if (defaultItem && options.withSelectionTitle && !selectedItems.length) {
 		selectedItems[0] = defaultItem;
 	}
 
@@ -63,8 +56,8 @@ const VelocityUnitFilter = ({
 
 	return (
 		<Filter
-			dataTestId="velocityUnitFilter"
 			defaultItem={defaultItem}
+			disabled={disabled}
 			elementClasses={className}
 			filterKey={filterKey}
 			items={items}
@@ -73,6 +66,4 @@ const VelocityUnitFilter = ({
 			{...options}
 		/>
 	);
-};
-
-export default VelocityUnitFilter;
+}

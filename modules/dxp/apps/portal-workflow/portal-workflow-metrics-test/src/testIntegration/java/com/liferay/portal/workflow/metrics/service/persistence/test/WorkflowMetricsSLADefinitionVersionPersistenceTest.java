@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.metrics.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -663,37 +654,83 @@ public class WorkflowMetricsSLADefinitionVersionPersistenceTest {
 
 		_persistence.clearCache();
 
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(
+				newWorkflowMetricsSLADefinitionVersion.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
 		WorkflowMetricsSLADefinitionVersion
-			existingWorkflowMetricsSLADefinitionVersion =
-				_persistence.findByPrimaryKey(
-					newWorkflowMetricsSLADefinitionVersion.getPrimaryKey());
+			newWorkflowMetricsSLADefinitionVersion =
+				addWorkflowMetricsSLADefinitionVersion();
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingWorkflowMetricsSLADefinitionVersion.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingWorkflowMetricsSLADefinitionVersion,
-					"getOriginalUuid", new Class<?>[0])));
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			WorkflowMetricsSLADefinitionVersion.class,
+			_dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"workflowMetricsSLADefinitionVersionId",
+				newWorkflowMetricsSLADefinitionVersion.
+					getWorkflowMetricsSLADefinitionVersionId()));
+
+		List<WorkflowMetricsSLADefinitionVersion> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		WorkflowMetricsSLADefinitionVersion
+			workflowMetricsSLADefinitionVersion) {
+
 		Assert.assertEquals(
-			Long.valueOf(
-				existingWorkflowMetricsSLADefinitionVersion.getGroupId()),
+			workflowMetricsSLADefinitionVersion.getUuid(),
+			ReflectionTestUtil.invoke(
+				workflowMetricsSLADefinitionVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(workflowMetricsSLADefinitionVersion.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWorkflowMetricsSLADefinitionVersion,
-				"getOriginalGroupId", new Class<?>[0]));
+				workflowMetricsSLADefinitionVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingWorkflowMetricsSLADefinitionVersion.getVersion(),
-				ReflectionTestUtil.invoke(
-					existingWorkflowMetricsSLADefinitionVersion,
-					"getOriginalVersion", new Class<?>[0])));
+		Assert.assertEquals(
+			workflowMetricsSLADefinitionVersion.getVersion(),
+			ReflectionTestUtil.invoke(
+				workflowMetricsSLADefinitionVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "version"));
 		Assert.assertEquals(
 			Long.valueOf(
-				existingWorkflowMetricsSLADefinitionVersion.
+				workflowMetricsSLADefinitionVersion.
 					getWorkflowMetricsSLADefinitionId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingWorkflowMetricsSLADefinitionVersion,
-				"getOriginalWorkflowMetricsSLADefinitionId", new Class<?>[0]));
+				workflowMetricsSLADefinitionVersion, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "wmSLADefinitionId"));
 	}
 
 	protected WorkflowMetricsSLADefinitionVersion

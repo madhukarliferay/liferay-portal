@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.exportimport.data.handler.test;
@@ -34,7 +25,6 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -43,16 +33,14 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -79,50 +67,44 @@ public class JournalFeedStagedModelDataHandlerTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_layout = LayoutTestUtil.addLayout(stagingGroup);
+		_layout = LayoutTestUtil.addTypePortletLayout(stagingGroup);
 
 		ServiceContext serviceContext = new ServiceContext();
 
 		serviceContext.setUuid(_layout.getUuid());
 
 		LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), liveGroup.getGroupId(),
+			null, TestPropsValues.getUserId(), liveGroup.getGroupId(),
 			_layout.isPrivateLayout(), _layout.getParentLayoutId(),
 			_layout.getName(), _layout.getTitle(), _layout.getDescription(),
 			_layout.getType(), _layout.isHidden(), _layout.getFriendlyURL(),
 			serviceContext);
 
-		CompanyThreadLocal.setCompanyId(TestPropsValues.getCompanyId());
-
 		serviceContext.setCompanyId(TestPropsValues.getCompanyId());
 
-		PortalPreferences portalPreferenceces =
+		PortalPreferences portalPreferences =
 			PortletPreferencesFactoryUtil.getPortalPreferences(
 				TestPropsValues.getUserId(), true);
 
 		_originalPortalPreferencesXML = PortletPreferencesFactoryUtil.toXML(
-			portalPreferenceces);
+			portalPreferences);
 
-		portalPreferenceces.setValue(
-			"", "publishToLiveByDefaultEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "publishToLiveByDefaultEnabled", "true");
+		portalPreferences.setValue(
 			"", "versionHistoryByDefaultEnabled", "true");
-		portalPreferenceces.setValue("", "articleCommentsEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "articleCommentsEnabled", "true");
+		portalPreferences.setValue(
 			"", "expireAllArticleVersionsEnabled", "true");
-		portalPreferenceces.setValue("", "folderIconCheckCountEnabled", "true");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue("", "folderIconCheckCountEnabled", "true");
+		portalPreferences.setValue(
 			"", "indexAllArticleVersionsEnabled", "true");
-		portalPreferenceces.setValue(
-			"", "databaseContentKeywordSearchEnabled", "true");
-		portalPreferenceces.setValue("", "journalArticleStorageType", "json");
-		portalPreferenceces.setValue(
+		portalPreferences.setValue(
 			"", "journalArticlePageBreakToken", "@page_break@");
 
 		PortalPreferencesLocalServiceUtil.updatePreferences(
 			TestPropsValues.getCompanyId(),
 			PortletKeys.PREFS_OWNER_TYPE_COMPANY,
-			PortletPreferencesFactoryUtil.toXML(portalPreferenceces));
+			PortletPreferencesFactoryUtil.toXML(portalPreferences));
 	}
 
 	@After
@@ -139,23 +121,20 @@ public class JournalFeedStagedModelDataHandlerTest
 	@Override
 	@Test
 	public void testCleanStagedModelDataHandler() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.journal.internal.exportimport.data.handler." +
-						"JournalFeedStagedModelDataHandler",
-					Level.WARN)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.journal.internal.exportimport.data.handler." +
+					"JournalFeedStagedModelDataHandler",
+				LoggerTestUtil.WARN)) {
 
 			super.testCleanStagedModelDataHandler();
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 1, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			String message = (String)loggingEvent.getMessage();
+			String message = logEntry.getMessage();
 
 			Assert.assertTrue(
 				message, message.startsWith("A feed with the ID "));
@@ -167,60 +146,64 @@ public class JournalFeedStagedModelDataHandlerTest
 
 	@Test
 	public void testDoubleExportImport() throws Exception {
-		Map<String, List<StagedModel>> dependentStagedModelsMap =
-			addDependentStagedModelsMap(stagingGroup);
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.journal.internal.exportimport.data.handler." +
+					"JournalFeedStagedModelDataHandler",
+				LoggerTestUtil.WARN)) {
 
-		StagedModel stagedModel = addStagedModel(
-			stagingGroup, dependentStagedModelsMap);
+			Map<String, List<StagedModel>> dependentStagedModelsMap =
+				addDependentStagedModelsMap(stagingGroup);
 
-		ExportImportThreadLocal.setPortletImportInProcess(true);
+			StagedModel stagedModel = addStagedModel(
+				stagingGroup, dependentStagedModelsMap);
 
-		try {
-			exportImportStagedModel(stagedModel);
+			ExportImportThreadLocal.setPortletImportInProcess(true);
+
+			try {
+				exportImportStagedModel(stagedModel);
+			}
+			finally {
+				ExportImportThreadLocal.setPortletImportInProcess(false);
+			}
+
+			StagedModel importedStagedModel = getStagedModel(
+				stagedModel.getUuid(), liveGroup);
+
+			Assert.assertNotNull(importedStagedModel);
+
+			ExportImportThreadLocal.setPortletImportInProcess(true);
+
+			try {
+				exportImportStagedModel(stagedModel);
+			}
+			finally {
+				ExportImportThreadLocal.setPortletImportInProcess(false);
+			}
+
+			importedStagedModel = getStagedModel(
+				stagedModel.getUuid(), liveGroup);
+
+			Assert.assertNotNull(importedStagedModel);
 		}
-		finally {
-			ExportImportThreadLocal.setPortletImportInProcess(false);
-		}
-
-		StagedModel importedStagedModel = getStagedModel(
-			stagedModel.getUuid(), liveGroup);
-
-		Assert.assertNotNull(importedStagedModel);
-
-		ExportImportThreadLocal.setPortletImportInProcess(true);
-
-		try {
-			exportImportStagedModel(stagedModel);
-		}
-		finally {
-			ExportImportThreadLocal.setPortletImportInProcess(false);
-		}
-
-		importedStagedModel = getStagedModel(stagedModel.getUuid(), liveGroup);
-
-		Assert.assertNotNull(importedStagedModel);
 	}
 
 	@Override
 	@Test
 	public void testStagedModelDataHandler() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.journal.internal.exportimport.data.handler." +
-						"JournalFeedStagedModelDataHandler",
-					Level.WARN)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.journal.internal.exportimport.data.handler." +
+					"JournalFeedStagedModelDataHandler",
+				LoggerTestUtil.WARN)) {
 
 			super.testStagedModelDataHandler();
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 1, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
-			String message = (String)loggingEvent.getMessage();
+			String message = logEntry.getMessage();
 
 			Assert.assertTrue(
 				message, message.startsWith("A feed with the ID "));
@@ -279,7 +262,7 @@ public class JournalFeedStagedModelDataHandlerTest
 
 		return JournalTestUtil.addFeed(
 			group.getGroupId(), _layout.getPlid(),
-			RandomTestUtil.randomString(), ddmStructure.getStructureKey(),
+			RandomTestUtil.randomString(), ddmStructure.getStructureId(),
 			ddmTemplate.getTemplateKey(), rendererDDMTemplate.getTemplateKey());
 	}
 

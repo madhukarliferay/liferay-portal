@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,20 +18,22 @@
 		status = WorkflowConstants.STATUS_ANY;
 	}
 
-	List<FileVersion> fileVersions = fileEntry.getFileVersions(status);
+	int start = 0;
+	int end = 10;
 
-	for (FileVersion fileVersion : fileVersions) {
-		request.setAttribute("info_panel.jsp-fileVersion", fileVersion);
+	for (FileVersion fileVersion : DLFileEntryUtil.getFileEntryVersionsSorted(fileEntry, status, start, end)) {
 	%>
 
 		<li class="list-group-item list-group-item-flex">
-			<div class="autofit-col autofit-col-expand">
+			<clay:content-col
+				expand="<%= true %>"
+			>
 				<div class="list-group-title">
 					<liferay-ui:message arguments="<%= fileVersion.getVersion() %>" key="version-x" />
 				</div>
 
 				<div class="list-group-subtitle">
-					<liferay-ui:message arguments="<%= new Object[] {HtmlUtil.escape(fileVersion.getUserName()), dateFormatDateTime.format(fileVersion.getCreateDate())} %>" key="by-x-on-x" translateArguments="<%= false %>" />
+					<liferay-ui:message arguments="<%= new Object[] {HtmlUtil.escape(fileVersion.getUserName()), dateTimeFormat.format(fileVersion.getCreateDate())} %>" key="by-x-on-x" translateArguments="<%= false %>" />
 				</div>
 
 				<div class="list-group-subtext">
@@ -53,15 +46,41 @@
 						</c:otherwise>
 					</c:choose>
 				</div>
-			</div>
+			</clay:content-col>
 
-			<div class="autofit-col">
-				<liferay-util:include page="/document_library/file_entry_history_action.jsp" servletContext="<%= application %>" />
-			</div>
+			<clay:content-col>
+
+				<%
+				DLViewFileEntryHistoryDisplayContext dlViewFileEntryHistoryDisplayContext = dlDisplayContextProvider.getDLViewFileEntryHistoryDisplayContext(request, response, fileVersion);
+				%>
+
+				<clay:dropdown-actions
+					aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+					dropdownItems="<%= dlViewFileEntryHistoryDisplayContext.getActionDropdownItems() %>"
+					propsTransformer="{DLFileEntryDropdownPropsTransformer} from document-library-web"
+				/>
+			</clay:content-col>
 		</li>
 
 	<%
 	}
 	%>
 
+	<c:if test="<%= fileEntry.getFileVersionsCount(status) >= end %>">
+		<portlet:renderURL var="viewMoreURL">
+			<portlet:param name="mvcRenderCommandName" value="/document_library/view_file_entry_history" />
+			<portlet:param name="backURL" value="<%= currentURL %>" />
+			<portlet:param name="fileEntryId" value="<%= String.valueOf(fileEntry.getFileEntryId()) %>" />
+		</portlet:renderURL>
+
+		<div class="m-4 text-center">
+			<clay:link
+				displayType="secondary"
+				href="<%= viewMoreURL %>"
+				label="view-more"
+				small="<%= true %>"
+				type="button"
+			/>
+		</div>
+	</c:if>
 </ul>

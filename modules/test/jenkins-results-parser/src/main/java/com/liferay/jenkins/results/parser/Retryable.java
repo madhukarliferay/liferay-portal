@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -28,7 +19,7 @@ public abstract class Retryable<T> {
 		boolean verbose) {
 
 		_exceptionOnFail = exceptionOnFail;
-		_maxRetries = maxRetries;
+		this.maxRetries = maxRetries;
 		_retryPeriod = retryPeriod;
 		_verbose = verbose;
 	}
@@ -46,16 +37,16 @@ public abstract class Retryable<T> {
 			try {
 				return execute();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 				retryCount++;
 
 				if (_verbose) {
-					System.out.println("An error has occurred: " + e);
+					System.out.println("An error has occurred: " + exception);
 				}
 
-				if ((_maxRetries >= 0) && (retryCount > _maxRetries)) {
+				if ((maxRetries >= 0) && (retryCount > maxRetries)) {
 					if (_exceptionOnFail) {
-						throw e;
+						throw exception;
 					}
 
 					return null;
@@ -63,9 +54,10 @@ public abstract class Retryable<T> {
 
 				sleep(_retryPeriod * 1000);
 
-				if (_verbose) {
-					System.out.println(
-						"Retry attempt " + retryCount + " of " + _maxRetries);
+				String retryMessage = getRetryMessage(retryCount);
+
+				if (!JenkinsResultsParserUtil.isNullOrEmpty(retryMessage)) {
+					System.out.println(retryMessage);
 				}
 			}
 		}
@@ -75,13 +67,20 @@ public abstract class Retryable<T> {
 		try {
 			Thread.sleep(duration);
 		}
-		catch (InterruptedException ie) {
-			throw new RuntimeException(ie);
+		catch (InterruptedException interruptedException) {
+			throw new RuntimeException(interruptedException);
 		}
 	}
 
+	protected String getRetryMessage(int retryCount) {
+		return JenkinsResultsParserUtil.combine(
+			"Retry attempt ", String.valueOf(retryCount), " of ",
+			String.valueOf(maxRetries));
+	}
+
+	protected int maxRetries;
+
 	private boolean _exceptionOnFail;
-	private int _maxRetries;
 	private int _retryPeriod;
 	private boolean _verbose;
 

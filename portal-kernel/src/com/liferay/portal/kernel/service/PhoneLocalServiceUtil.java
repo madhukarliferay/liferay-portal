@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.Phone;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * Provides the local service utility for Phone. This utility wraps
@@ -30,38 +30,45 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class PhoneLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.PhoneLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 
 	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PhoneLocalServiceUtil} to access the phone local service. Add custom service methods to <code>com.liferay.portal.service.impl.PhoneLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.portal.kernel.model.Phone addPhone(
-			long userId, String className, long classPK, String number,
-			String extension, long typeId, boolean primary,
-			ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return getService().addPhone(
-			userId, className, classPK, number, extension, typeId, primary,
-			serviceContext);
-	}
-
-	/**
 	 * Adds the phone to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PhoneLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param phone the phone
 	 * @return the phone that was added
 	 */
-	public static com.liferay.portal.kernel.model.Phone addPhone(
-		com.liferay.portal.kernel.model.Phone phone) {
-
+	public static Phone addPhone(Phone phone) {
 		return getService().addPhone(phone);
+	}
+
+	public static Phone addPhone(
+			String externalReferenceCode, long userId, String className,
+			long classPK, String number, String extension, long listTypeId,
+			boolean primary, ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().addPhone(
+			externalReferenceCode, userId, className, classPK, number,
+			extension, listTypeId, primary, serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel createPersistedModel(
+			Serializable primaryKeyObj)
+		throws PortalException {
+
+		return getService().createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -70,19 +77,16 @@ public class PhoneLocalServiceUtil {
 	 * @param phoneId the primary key for the new phone
 	 * @return the new phone
 	 */
-	public static com.liferay.portal.kernel.model.Phone createPhone(
-		long phoneId) {
-
+	public static Phone createPhone(long phoneId) {
 		return getService().createPhone(phoneId);
 	}
 
 	/**
 	 * @throws PortalException
 	 */
-	public static com.liferay.portal.kernel.model.PersistedModel
-			deletePersistedModel(
-				com.liferay.portal.kernel.model.PersistedModel persistedModel)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PersistedModel deletePersistedModel(
+			PersistedModel persistedModel)
+		throws PortalException {
 
 		return getService().deletePersistedModel(persistedModel);
 	}
@@ -90,26 +94,29 @@ public class PhoneLocalServiceUtil {
 	/**
 	 * Deletes the phone with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PhoneLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param phoneId the primary key of the phone
 	 * @return the phone that was removed
 	 * @throws PortalException if a phone with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Phone deletePhone(
-			long phoneId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Phone deletePhone(long phoneId) throws PortalException {
 		return getService().deletePhone(phoneId);
 	}
 
 	/**
 	 * Deletes the phone from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PhoneLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param phone the phone
 	 * @return the phone that was removed
 	 */
-	public static com.liferay.portal.kernel.model.Phone deletePhone(
-		com.liferay.portal.kernel.model.Phone phone) {
-
+	public static Phone deletePhone(Phone phone) {
 		return getService().deletePhone(phone);
 	}
 
@@ -119,9 +126,15 @@ public class PhoneLocalServiceUtil {
 		getService().deletePhones(companyId, className, classPK);
 	}
 
-	public static com.liferay.portal.kernel.dao.orm.DynamicQuery
-		dynamicQuery() {
+	public static <T> T dslQuery(DSLQuery dslQuery) {
+		return getService().dslQuery(dslQuery);
+	}
 
+	public static int dslQueryCount(DSLQuery dslQuery) {
+		return getService().dslQueryCount(dslQuery);
+	}
+
+	public static DynamicQuery dynamicQuery() {
 		return getService().dynamicQuery();
 	}
 
@@ -131,9 +144,7 @@ public class PhoneLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return getService().dynamicQuery(dynamicQuery);
 	}
 
@@ -149,9 +160,8 @@ public class PhoneLocalServiceUtil {
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end) {
 
 		return getService().dynamicQuery(dynamicQuery, start, end);
 	}
@@ -169,10 +179,9 @@ public class PhoneLocalServiceUtil {
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
 	 */
-	public static <T> java.util.List<T> dynamicQuery(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
-		int end,
-		com.liferay.portal.kernel.util.OrderByComparator<T> orderByComparator) {
+	public static <T> List<T> dynamicQuery(
+		DynamicQuery dynamicQuery, int start, int end,
+		OrderByComparator<T> orderByComparator) {
 
 		return getService().dynamicQuery(
 			dynamicQuery, start, end, orderByComparator);
@@ -184,9 +193,7 @@ public class PhoneLocalServiceUtil {
 	 * @param dynamicQuery the dynamic query
 	 * @return the number of rows matching the dynamic query
 	 */
-	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery) {
-
+	public static long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
@@ -198,16 +205,21 @@ public class PhoneLocalServiceUtil {
 	 * @return the number of rows matching the dynamic query
 	 */
 	public static long dynamicQueryCount(
-		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		DynamicQuery dynamicQuery,
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
-	public static com.liferay.portal.kernel.model.Phone fetchPhone(
-		long phoneId) {
-
+	public static Phone fetchPhone(long phoneId) {
 		return getService().fetchPhone(phoneId);
+	}
+
+	public static Phone fetchPhoneByExternalReferenceCode(
+		String externalReferenceCode, long companyId) {
+
+		return getService().fetchPhoneByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -217,8 +229,8 @@ public class PhoneLocalServiceUtil {
 	 * @param companyId the primary key of the company
 	 * @return the matching phone, or <code>null</code> if a matching phone could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Phone
-		fetchPhoneByUuidAndCompanyId(String uuid, long companyId) {
+	public static Phone fetchPhoneByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return getService().fetchPhoneByUuidAndCompanyId(uuid, companyId);
 	}
@@ -253,9 +265,11 @@ public class PhoneLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.PersistedModel
-			getPersistedModel(java.io.Serializable primaryKeyObj)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	/**
+	 * @throws PortalException
+	 */
+	public static PersistedModel getPersistedModel(Serializable primaryKeyObj)
+		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
 	}
@@ -267,10 +281,16 @@ public class PhoneLocalServiceUtil {
 	 * @return the phone
 	 * @throws PortalException if a phone with the primary key could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Phone getPhone(long phoneId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static Phone getPhone(long phoneId) throws PortalException {
 		return getService().getPhone(phoneId);
+	}
+
+	public static Phone getPhoneByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getPhoneByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -281,16 +301,13 @@ public class PhoneLocalServiceUtil {
 	 * @return the matching phone
 	 * @throws PortalException if a matching phone could not be found
 	 */
-	public static com.liferay.portal.kernel.model.Phone
-			getPhoneByUuidAndCompanyId(String uuid, long companyId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static Phone getPhoneByUuidAndCompanyId(String uuid, long companyId)
+		throws PortalException {
 
 		return getService().getPhoneByUuidAndCompanyId(uuid, companyId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Phone>
-		getPhones() {
-
+	public static List<Phone> getPhones() {
 		return getService().getPhones();
 	}
 
@@ -305,14 +322,12 @@ public class PhoneLocalServiceUtil {
 	 * @param end the upper bound of the range of phones (not inclusive)
 	 * @return the range of phones
 	 */
-	public static java.util.List<com.liferay.portal.kernel.model.Phone>
-		getPhones(int start, int end) {
-
+	public static List<Phone> getPhones(int start, int end) {
 		return getService().getPhones(start, end);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Phone>
-		getPhones(long companyId, String className, long classPK) {
+	public static List<Phone> getPhones(
+		long companyId, String className, long classPK) {
 
 		return getService().getPhones(companyId, className, classPK);
 	}
@@ -326,36 +341,38 @@ public class PhoneLocalServiceUtil {
 		return getService().getPhonesCount();
 	}
 
-	public static com.liferay.portal.kernel.model.Phone updatePhone(
-			long phoneId, String number, String extension, long typeId,
-			boolean primary)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return getService().updatePhone(
-			phoneId, number, extension, typeId, primary);
-	}
-
 	/**
 	 * Updates the phone in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect PhoneLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param phone the phone
 	 * @return the phone that was updated
 	 */
-	public static com.liferay.portal.kernel.model.Phone updatePhone(
-		com.liferay.portal.kernel.model.Phone phone) {
-
+	public static Phone updatePhone(Phone phone) {
 		return getService().updatePhone(phone);
 	}
 
-	public static PhoneLocalService getService() {
-		if (_service == null) {
-			_service = (PhoneLocalService)PortalBeanLocatorUtil.locate(
-				PhoneLocalService.class.getName());
-		}
+	public static Phone updatePhone(
+			String externalReferenceCode, long phoneId, String number,
+			String extension, long listTypeId, boolean primary)
+		throws PortalException {
 
+		return getService().updatePhone(
+			externalReferenceCode, phoneId, number, extension, listTypeId,
+			primary);
+	}
+
+	public static PhoneLocalService getService() {
 		return _service;
 	}
 
-	private static PhoneLocalService _service;
+	public static void setService(PhoneLocalService service) {
+		_service = service;
+	}
+
+	private static volatile PhoneLocalService _service;
 
 }

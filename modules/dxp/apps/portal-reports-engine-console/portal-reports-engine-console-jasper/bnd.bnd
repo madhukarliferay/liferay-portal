@@ -1,57 +1,64 @@
 Bundle-Name: Liferay Portal Reports Engine Console Jasper
 Bundle-SymbolicName: com.liferay.portal.reports.engine.console.jasper
-Bundle-Version: 3.0.0
+Bundle-Version: 4.0.37
 DynamicImport-Package: *
 Import-Package:\
 	!antlr.*,\
 	\
 	!bsh,\
 	\
+	!com.adobe.xmp.*,\
+	\
 	!com.apple.mrj.*,\
 	\
+	!com.drew.*,\
+	\
 	!com.fasterxml.jackson.*,\
+	\
+	!com.github.kklisura.*,\
+	\
+	!com.graphbuilder.curve.*,\
+	!com.graphbuilder.geom.*,\
 	\
 	!com.keypoint.*,\
 	\
 	!com.lowagie.toolbox.*,\
 	\
-	!com.microsoft.schemas.office.*,\
-	\
-	!com.sun.*,\
-	\
-	!com.thoughtworks.*,\
-	\
-	!groovyjarjarasm.asm.tree.analysis.*,\
-	\
 	!javax.accessibility.*,\
+	\
+	!javax.annotation,\
 	\
 	!javax.crypto.*,\
 	\
 	!javax.imageio.*,\
 	\
+	!javax.persistence,\
+	\
 	!javax.print.*,\
 	\
-	!javax.swing.*,\
+	!javax.rmi.*,\
 	\
-	!jline.*,\
+	!javax.servlet.*,\
 	\
-	!junit.*,\
+	!javax.transaction.*,\
+	\
+	!javax.xml.soap,\
 	\
 	!mondrian.*,\
 	\
 	!net.sf.cglib.proxy.*,\
-	!net.sf.saxon.*,\
 	\
 	!net.sourceforge.barbecue.*,\
 	\
-	!org.apache.batik.*,\
+	!org.apache.batik.anim.*,\
+	!org.apache.batik.bridge.*,\
+	!org.apache.batik.dom.*,\
+	!org.apache.batik.ext.*,\
+	!org.apache.batik.gvt.*,\
+	!org.apache.batik.util.*,\
 	!org.apache.bcel.*,\
-	!org.apache.bsf.*,\
-	!org.apache.commons.cli.*,\
 	!org.apache.commons.javaflow.*,\
 	!org.apache.commons.jci.*,\
-	!org.apache.ivy.*,\
-	!org.apache.jcp.xml.dsig.internal.dom.*,\
 	!org.apache.log.*,\
 	!org.apache.oro.*,\
 	!org.apache.poi.hdgf.*,\
@@ -69,29 +76,30 @@ Import-Package:\
 	!org.apache.xerces.impl.xpath.regex.*,\
 	!org.apache.xml.resolver.*,\
 	!org.apache.xmlbeans.*,\
+	!org.apache.xpath.*,\
 	\
-	!org.bouncycastle.*,\
+	!org.bouncycastle.asn1.*,\
+	!org.bouncycastle.cert.*,\
+	!org.bouncycastle.cms.*,\
+	!org.bouncycastle.crypto.*,\
+	!org.bouncycastle.jce.provider.*,\
+	!org.bouncycastle.operator.bc.*,\
+	!org.bouncycastle.tsp.*,\
+	!org.bouncycastle.util.*,\
 	\
 	!org.dom4j.*,\
 	\
 	!org.eclipse.*,\
 	\
-	!org.etsi.uri.x01903.*,\
-	\
 	!org.exolab.castor.*,\
 	\
-	!org.fusesource.*,\
+	!org.hibernate.*,\
 	\
-	!org.jaxen.*,\
-	\
-	!org.junit.*,\
+	!org.kohsuke.groovy.sandbox.*,\
 	\
 	!org.krysalis.barcode4j.*,\
 	\
 	!org.mozilla.*,\
-	\
-	!org.openxmlformats.schemas.officeDocument.x2006.math,\
-	!org.openxmlformats.schemas.schemaLibrary.x2006.main,\
 	\
 	!org.osgi.service.prefs.*,\
 	\
@@ -102,6 +110,29 @@ Import-Package:\
 	!schemasMicrosoftComOfficeWord,\
 	\
 	!sun.*,\
+	\
+	com.github.*;resolution:=optional,\
+	\
+	com.microsoft.schemas.office.powerpoint.*;resolution:=optional,\
+	com.microsoft.schemas.office.word.*;resolution:=optional,\
+	\
+	com.sun.*;resolution:=optional,\
+	\
+	net.sf.*;resolution:=optional,\
+	\
+	org.apache.batik.*;resolution:=optional,\
+	org.apache.commons.math3.*;resolution:=optional,\
+	org.apache.jcp.*;resolution:=optional,\
+	\
+	org.bouncycastle.*;resolution:=optional,\
+	\
+	org.brotli.*;resolution:=optional,\
+	\
+	org.etsi.*;resolution:=optional,\
+	\
+	org.openxmlformats.schemas.*;resolution:=optional,\
+	\
+	org.tukaani.*;resolution:=optional,\
 	\
 	*
 Liferay-Releng-Module-Group-Title: Liferay JasperReports

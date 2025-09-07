@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
@@ -18,6 +9,8 @@ import java.io.File;
 
 import java.net.URI;
 import java.net.URL;
+
+import java.util.Properties;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -79,10 +72,18 @@ public class JenkinsResultsParserUtilTest
 
 	@Test
 	public void testFixURL() {
-		testEquals("ABC%28123", JenkinsResultsParserUtil.fixURL("ABC(123"));
-		testEquals("ABC%29123", JenkinsResultsParserUtil.fixURL("ABC)123"));
-		testEquals("ABC%5B123", JenkinsResultsParserUtil.fixURL("ABC[123"));
-		testEquals("ABC%5D123", JenkinsResultsParserUtil.fixURL("ABC]123"));
+		testEquals("ABC%28123", _fixURLMultipleTimes("ABC(123"));
+		testEquals("ABC%29123", _fixURLMultipleTimes("ABC)123"));
+		testEquals("ABC%5B123", _fixURLMultipleTimes("ABC[123"));
+		testEquals("ABC%5D123", _fixURLMultipleTimes("ABC]123"));
+		testEquals("!master", _fixURLMultipleTimes("!master"));
+		testEquals("0%201%202", _fixURLMultipleTimes("0 1 2"));
+		testEquals(
+			"https://test-1-1.liferay.com/job(master)?" +
+				"AXIS_VARIABLE=0%201&label_exp=!master&job=test%287.2.x%29",
+			_fixURLMultipleTimes(
+				"https://test-1-1.liferay.com/job(master)?" +
+					"AXIS_VARIABLE=0 1&label_exp=!master&job=test(7.2.x)"));
 	}
 
 	@Test
@@ -123,6 +124,180 @@ public class JenkinsResultsParserUtilTest
 			"http://test-4-1/ABC?123=456&xyz=abc",
 			JenkinsResultsParserUtil.getLocalURL(
 				"http://test-4-1/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://release.liferay.com/1/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getLocalURL(
+				"https://release.liferay.com/1/ABC?123=456&xyz=abc"));
+		testEquals(
+			"http://release-1/1/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://release-1/1/ABC?123=456&xyz=abc"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/files.liferay.com/private/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors.lax.liferay.com/files.liferay.com/private/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/files.liferay.com/private/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors.dlc.liferay.com/files.liferay.com/private/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/files.liferay.com/private/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors/files.liferay.com/private/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/files.liferay.com/private/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"https://files.liferay.com/private/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors.lax.liferay.com/releases.liferay.com/portal/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors.dlc.liferay.com/releases.liferay.com/portal/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"http://mirrors/releases.liferay.com/portal/"));
+		testEquals(
+			"http://mirrors.lax.liferay.com/releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getLocalURL(
+				"https://releases.liferay.com/portal/"));
+	}
+
+	@Test
+	public void testGetProperty() {
+		Properties properties = new Properties();
+
+		properties.setProperty("base", "0");
+		properties.setProperty("base[opt0]", "1");
+		properties.setProperty("base[opt0][opt2]", "2");
+		properties.setProperty("base[opt0][opt3]", "3");
+		properties.setProperty("base[opt1]", "4");
+		properties.setProperty("base0[opt[0]]", "5");
+		properties.setProperty("base0[opt[1][1][1]]", "6");
+		properties.setProperty("base0[opt[1][1][1]][opt[2][2][2]]", "7");
+		properties.setProperty("base1[opt1]", "8");
+		properties.setProperty("base1[opt1][opt2]", "");
+
+		_testGetProperty("0", properties, "base");
+		_testGetProperty(null, properties, "invalid");
+		_testGetProperty("1", properties, "base", "opt0", "invalid");
+		_testGetProperty("2", properties, "base[opt0]", "opt2");
+		_testGetProperty("3", properties, "base", "opt0", "opt3");
+		_testGetProperty("4", properties, "base", "opt1", null, "invalid");
+		_testGetProperty("5", properties, "base0", "opt[0]");
+		_testGetProperty("6", properties, "base0", "opt[1][1][1]", "invalid");
+		_testGetProperty(
+			"7", properties, "base0", "opt[2][2][2]", "invalid", "opt[1][1][1]",
+			null);
+		_testGetProperty("", properties, "base1", "opt1", "opt2");
+
+		testEquals(
+			"1",
+			JenkinsResultsParserUtil.getProperty(properties, "base[opt0]"));
+		testEquals(
+			"1",
+			JenkinsResultsParserUtil.getProperty(
+				properties, "base[opt0]", true, "invalid"));
+		testEquals(
+			null,
+			JenkinsResultsParserUtil.getProperty(
+				properties, "base[opt0]", false, "invalid"));
+	}
+
+	@Test
+	public void testGetPropertyName() {
+		Properties properties = new Properties();
+
+		properties.setProperty("base", "0");
+		properties.setProperty("base[opt0]", "1");
+		properties.setProperty("base[opt0][opt2]", "2");
+		properties.setProperty("base[opt0][opt3]", "3");
+		properties.setProperty("base[opt1]", "4");
+		properties.setProperty("base0[opt[0]]", "5");
+		properties.setProperty("base0[opt[1][1][1]]", "6");
+		properties.setProperty("base0[opt[1][1][1]][opt[2][2][2]]", "7");
+		properties.setProperty("base1[opt1]", "8");
+		properties.setProperty("base1[opt1][opt2]", "");
+
+		_testGetPropertyName("base", "0", properties, "base");
+		_testGetPropertyName("invalid", null, properties, "invalid");
+		_testGetPropertyName(
+			"base[opt0]", "1", properties, "base", "opt0", "invalid");
+		_testGetPropertyName(
+			"base[opt0][opt2]", "2", properties, "base[opt0]", "opt2");
+		_testGetPropertyName(
+			"base[opt0][opt3]", "3", properties, "base", "opt0", "opt3");
+		_testGetPropertyName(
+			"base[opt1]", "4", properties, "base", "opt1", null, "invalid");
+		_testGetPropertyName(
+			"base0[opt[0]]", "5", properties, "base0", "opt[0]");
+		_testGetPropertyName(
+			"base0[opt[1][1][1]]", "6", properties, "base0", "opt[1][1][1]",
+			"invalid");
+		_testGetPropertyName(
+			"base0[opt[1][1][1]][opt[2][2][2]]", "7", properties, "base0",
+			"opt[2][2][2]", "invalid", "opt[1][1][1]", null);
+		_testGetPropertyName(
+			"base1[opt1][opt2]", "", properties, "base1", "opt1", "opt2");
+	}
+
+	@Test
+	public void testGetRemoteURL() {
+		testEquals(
+			"https://test.liferay.com/8/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://test-8/8/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://test-1-20.liferay.com/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://test-1-20/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://test-4-1.liferay.com/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"https://test-4-1.liferay.com/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://release.liferay.com/1/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"https://release.liferay.com/1/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://release.liferay.com/1/ABC?123=456&xyz=abc",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://release-1/1/ABC?123=456&xyz=abc"));
+		testEquals(
+			"https://files.liferay.com/private/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors.lax.liferay.com/files.liferay.com/private/"));
+		testEquals(
+			"https://files.liferay.com/private/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors.dlc.liferay.com/files.liferay.com/private/"));
+		testEquals(
+			"https://files.liferay.com/private/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors/files.liferay.com/private/"));
+		testEquals(
+			"https://files.liferay.com/private/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"https://files.liferay.com/private/"));
+		testEquals(
+			"https://releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors.lax.liferay.com/releases.liferay.com/portal/"));
+		testEquals(
+			"https://releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors.dlc.liferay.com/releases.liferay.com/portal/"));
+		testEquals(
+			"https://releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"http://mirrors/releases.liferay.com/portal/"));
+		testEquals(
+			"https://releases.liferay.com/portal/",
+			JenkinsResultsParserUtil.getRemoteURL(
+				"https://releases.liferay.com/portal/"));
 	}
 
 	@Test
@@ -143,10 +318,15 @@ public class JenkinsResultsParserUtilTest
 
 		JSONObject jsonObject = new JSONObject();
 
-		jsonObject.put("boolean", true);
-		jsonObject.put("double", 1.1);
-		jsonObject.put("int", 1);
-		jsonObject.put("string", "value");
+		jsonObject.put(
+			"boolean", true
+		).put(
+			"double", 1.1
+		).put(
+			"int", 1
+		).put(
+			"string", "value"
+		);
 
 		expectedJSONArray.put(jsonObject);
 		actualJSONArray.put(jsonObject);
@@ -190,24 +370,39 @@ public class JenkinsResultsParserUtilTest
 	public void testIsJSONObjectEqual() {
 		JSONObject expectedJSONObject = new JSONObject();
 
-		expectedJSONObject.put("boolean", true);
-		expectedJSONObject.put("double", 1.1);
-		expectedJSONObject.put("int", 1);
-		expectedJSONObject.put("string", "value");
+		expectedJSONObject.put(
+			"boolean", true
+		).put(
+			"double", 1.1
+		).put(
+			"int", 1
+		).put(
+			"string", "value"
+		);
 
 		JSONObject actualJSONObject = new JSONObject();
 
-		actualJSONObject.put("boolean", true);
-		actualJSONObject.put("double", 1.1);
-		actualJSONObject.put("int", 1);
-		actualJSONObject.put("string", "value");
+		actualJSONObject.put(
+			"boolean", true
+		).put(
+			"double", 1.1
+		).put(
+			"int", 1
+		).put(
+			"string", "value"
+		);
 
 		JSONObject jsonObject = new JSONObject();
 
-		jsonObject.put("boolean", true);
-		jsonObject.put("double", 1.1);
-		jsonObject.put("int", 1);
-		jsonObject.put("string", "value");
+		jsonObject.put(
+			"boolean", true
+		).put(
+			"double", 1.1
+		).put(
+			"int", 1
+		).put(
+			"string", "value"
+		);
 
 		expectedJSONObject.put("json_object", jsonObject);
 		actualJSONObject.put("json_object", jsonObject);
@@ -292,6 +487,38 @@ public class JenkinsResultsParserUtilTest
 		URL url = uri.toURL();
 
 		return url.toString();
+	}
+
+	private String _fixURLMultipleTimes(String urlString) {
+		return JenkinsResultsParserUtil.fixURL(
+			JenkinsResultsParserUtil.fixURL(
+				JenkinsResultsParserUtil.fixURL(urlString)));
+	}
+
+	private void _testGetProperty(
+		String expectedPropertyValue, Properties properties,
+		String basePropertyName, String... propertyOpts) {
+
+		testEquals(
+			expectedPropertyValue,
+			JenkinsResultsParserUtil.getProperty(
+				properties, basePropertyName, propertyOpts));
+	}
+
+	private void _testGetPropertyName(
+		String expectedPropertyName, String expectedPropertyValue,
+		Properties properties, String basePropertyName,
+		String... propertyOpts) {
+
+		String actualPropertyName = JenkinsResultsParserUtil.getPropertyName(
+			properties, basePropertyName, propertyOpts);
+
+		testEquals(expectedPropertyName, actualPropertyName);
+
+		testEquals(
+			expectedPropertyValue,
+			JenkinsResultsParserUtil.getProperty(
+				properties, actualPropertyName));
 	}
 
 }

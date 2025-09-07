@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.workflow;
@@ -21,28 +12,33 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalServiceUtil;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalServiceUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Serializable;
 
 import java.util.Locale;
 import java.util.Map;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-import javax.portlet.WindowStateException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Bruno Farache
@@ -88,6 +84,53 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 	}
 
 	@Override
+	public String getNotificationLink(
+			long workflowTaskId, ServiceContext serviceContext)
+		throws PortalException {
+
+		try {
+			HttpServletRequest httpServletRequest = serviceContext.getRequest();
+
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)httpServletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+			Layout layout = themeDisplay.getLayout();
+
+			if (!StringUtil.matches(layout.getFriendlyURL(), "/manage")) {
+				layout = LayoutLocalServiceUtil.fetchLayoutByFriendlyURL(
+					layout.getGroupId(), false, "/manage");
+			}
+
+			if (layout == null) {
+				layout = LayoutLocalServiceUtil.fetchLayout(
+					themeDisplay.getPlid());
+			}
+
+			return PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					serviceContext.getRequest(), PortletKeys.MY_WORKFLOW_TASK,
+					layout.getPlid(), PortletRequest.RENDER_PHASE)
+			).setMVCPath(
+				"/edit_workflow_task.jsp"
+			).setBackURL(
+				themeDisplay.getURLCurrent()
+			).setParameter(
+				"workflowTaskId", String.valueOf(workflowTaskId)
+			).setWindowState(
+				WindowState.MAXIMIZED
+			).buildString();
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+		}
+
+		return null;
+	}
+
+	@Override
 	public String getSummary(
 		long classPK, PortletRequest portletRequest,
 		PortletResponse portletResponse) {
@@ -100,9 +143,9 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 					portletRequest, portletResponse);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -118,9 +161,9 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 				return assetRenderer.getTitle(locale);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -140,35 +183,13 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 					liferayPortletRequest, liferayPortletResponse);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
 		return null;
-	}
-
-	@Override
-	public String getURLEditWorkflowTask(
-			long workflowTaskId, ServiceContext serviceContext)
-		throws PortalException {
-
-		try {
-			PortletURL portletURL = PortletURLFactoryUtil.create(
-				serviceContext.getRequest(), PortletKeys.MY_WORKFLOW_TASK,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter("mvcPath", "/edit_workflow_task.jsp");
-			portletURL.setParameter(
-				"workflowTaskId", String.valueOf(workflowTaskId));
-			portletURL.setWindowState(WindowState.MAXIMIZED);
-
-			return portletURL.toString();
-		}
-		catch (WindowStateException wse) {
-			throw new PortalException(wse);
-		}
 	}
 
 	@Override
@@ -184,9 +205,9 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 					liferayPortletRequest, liferayPortletResponse);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -208,9 +229,9 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 					noSuchEntryRedirect);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 
@@ -243,9 +264,9 @@ public abstract class BaseWorkflowHandler<T> implements WorkflowHandler<T> {
 					httpServletRequest, httpServletResponse, template);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 

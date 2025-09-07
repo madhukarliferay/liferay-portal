@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link UserTrackerPathLocalService}.
@@ -25,6 +18,10 @@ public class UserTrackerPathLocalServiceWrapper
 	implements ServiceWrapper<UserTrackerPathLocalService>,
 			   UserTrackerPathLocalService {
 
+	public UserTrackerPathLocalServiceWrapper() {
+		this(null);
+	}
+
 	public UserTrackerPathLocalServiceWrapper(
 		UserTrackerPathLocalService userTrackerPathLocalService) {
 
@@ -34,6 +31,10 @@ public class UserTrackerPathLocalServiceWrapper
 	/**
 	 * Adds the user tracker path to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerPathLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTrackerPath the user tracker path
 	 * @return the user tracker path that was added
 	 */
@@ -42,6 +43,17 @@ public class UserTrackerPathLocalServiceWrapper
 		com.liferay.portal.kernel.model.UserTrackerPath userTrackerPath) {
 
 		return _userTrackerPathLocalService.addUserTrackerPath(userTrackerPath);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _userTrackerPathLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -73,6 +85,10 @@ public class UserTrackerPathLocalServiceWrapper
 	/**
 	 * Deletes the user tracker path with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerPathLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTrackerPathId the primary key of the user tracker path
 	 * @return the user tracker path that was removed
 	 * @throws PortalException if a user tracker path with the primary key could not be found
@@ -89,6 +105,10 @@ public class UserTrackerPathLocalServiceWrapper
 	/**
 	 * Deletes the user tracker path from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerPathLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTrackerPath the user tracker path
 	 * @return the user tracker path that was removed
 	 */
@@ -99,6 +119,18 @@ public class UserTrackerPathLocalServiceWrapper
 
 		return _userTrackerPathLocalService.deleteUserTrackerPath(
 			userTrackerPath);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _userTrackerPathLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _userTrackerPathLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -221,10 +253,13 @@ public class UserTrackerPathLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _userTrackerPathLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -288,6 +323,10 @@ public class UserTrackerPathLocalServiceWrapper
 	/**
 	 * Updates the user tracker path in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserTrackerPathLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userTrackerPath the user tracker path
 	 * @return the user tracker path that was updated
 	 */
@@ -298,6 +337,11 @@ public class UserTrackerPathLocalServiceWrapper
 
 		return _userTrackerPathLocalService.updateUserTrackerPath(
 			userTrackerPath);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _userTrackerPathLocalService.getBasePersistence();
 	}
 
 	@Override

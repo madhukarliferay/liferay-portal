@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.expando.model.impl;
@@ -120,10 +111,8 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 			return null;
 		}
 
-		String defaultLanguageId = LocalizationUtil.getDefaultLanguageId(
-			getData());
-
-		return LocaleUtil.fromLanguageId(defaultLanguageId);
+		return LocaleUtil.fromLanguageId(
+			LocalizationUtil.getDefaultLanguageId(getData()));
 	}
 
 	@Override
@@ -417,12 +406,12 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public void setGeolocationJSONObject(JSONObject data)
+	public void setGeolocationJSONObject(JSONObject dataJSONObject)
 		throws PortalException {
 
 		validate(ExpandoColumnConstants.GEOLOCATION);
 
-		setData(data.toJSONString());
+		setData(dataJSONObject.toString());
 	}
 
 	@Override
@@ -565,10 +554,10 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 			return;
 		}
 
-		String data = LocalizationUtil.updateLocalization(
-			dataMap, getData(), "Data", LocaleUtil.toLanguageId(defaultLocale));
-
-		setData(data);
+		setData(
+			LocalizationUtil.updateLocalization(
+				dataMap, getData(), "Data",
+				LocaleUtil.toLanguageId(defaultLocale)));
 	}
 
 	protected String getData(String languageId) {
@@ -617,24 +606,14 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	protected void validate(int type) throws PortalException {
 		ExpandoColumn column = getColumn();
 
-		if (column == null) {
+		if ((column == null) || (column.getType() == type)) {
 			return;
 		}
 
-		if (column.getType() == type) {
-			return;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append("Column ");
-		sb.append(getColumnId());
-		sb.append(" has type ");
-		sb.append(ExpandoColumnConstants.getTypeLabel(column.getType()));
-		sb.append(" and is not compatible with type ");
-		sb.append(ExpandoColumnConstants.getTypeLabel(type));
-
-		throw new ValueDataException(sb.toString());
+		throw new ValueDataException.MismatchColumnType(
+			getColumnId(),
+			ExpandoColumnConstants.getTypeLabel(column.getType()),
+			ExpandoColumnConstants.getTypeLabel(type));
 	}
 
 	private static final String _EXPANDO_COMMA = "[$LIFERAY_EXPANDO_COMMA$]";

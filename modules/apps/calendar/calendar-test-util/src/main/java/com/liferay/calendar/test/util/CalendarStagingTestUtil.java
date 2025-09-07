@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.test.util;
@@ -22,18 +13,21 @@ import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.lar.UserIdStrategy;
 import com.liferay.exportimport.kernel.service.StagingLocalServiceUtil;
-import com.liferay.exportimport.kernel.staging.StagingConstants;
 import com.liferay.exportimport.kernel.staging.StagingUtil;
+import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ListUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +60,7 @@ public class CalendarStagingTestUtil {
 
 		addStagingAttribute(
 			serviceContext,
-			StagingUtil.getStagedPortletId(CalendarPortletKeys.CALENDAR),
+			StagingUtil.getStagedPortletId(CalendarPortletKeys.CALENDAR_ADMIN),
 			enableCalendarStaging);
 		addStagingAttribute(
 			serviceContext, PortletDataHandlerKeys.PORTLET_CONFIGURATION_ALL,
@@ -116,6 +110,34 @@ public class CalendarStagingTestUtil {
 		StagingUtil.publishLayouts(
 			TestPropsValues.getUserId(), stagingGroup.getGroupId(),
 			liveGroup.getGroupId(), false, parameters);
+	}
+
+	public static void publishPortlet(
+			Group liveGroup, Layout targetLayout, boolean enableCalendarStaging)
+		throws PortalException {
+
+		Group stagingGroup = liveGroup.getStagingGroup();
+
+		Layout sourceLayout = LayoutLocalServiceUtil.getLayoutByUuidAndGroupId(
+			targetLayout.getUuid(), stagingGroup.getGroupId(), false);
+
+		List<String> portletIds = new ArrayList<>();
+
+		portletIds.add(CalendarPortletKeys.CALENDAR_ADMIN);
+
+		Map<String, String[]> parameters =
+			ExportImportConfigurationParameterMapFactoryUtil.buildParameterMap(
+				PortletDataHandlerKeys.DATA_STRATEGY_MIRROR_OVERWRITE, true,
+				false, true, false, false, true, true, true, true, false, null,
+				true, false, enableCalendarStaging ? portletIds : null, false,
+				null, ExportImportDateUtil.RANGE_ALL, true, true,
+				UserIdStrategy.CURRENT_USER_ID);
+
+		StagingUtil.publishPortlet(
+			TestPropsValues.getUserId(), stagingGroup.getGroupId(),
+			liveGroup.getGroupId(), sourceLayout.getPlid(),
+			targetLayout.getPlid(), CalendarPortletKeys.CALENDAR_ADMIN,
+			parameters);
 	}
 
 	protected static void addStagingAttribute(

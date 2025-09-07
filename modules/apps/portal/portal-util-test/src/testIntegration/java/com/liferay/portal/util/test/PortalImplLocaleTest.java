@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.util.test;
@@ -27,8 +18,8 @@ import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.servlet.I18nServlet;
@@ -37,14 +28,11 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PortalImpl;
 import com.liferay.portal.util.PropsValues;
 
-import java.io.IOException;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -85,7 +73,7 @@ public class PortalImplLocaleTest {
 
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group);
+		_layout = LayoutTestUtil.addTypePortletLayout(_group);
 
 		CompanyTestUtil.resetCompanyLocales(
 			_group.getCompanyId(),
@@ -103,7 +91,7 @@ public class PortalImplLocaleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		PropsValues.LOCALES_ENABLED = _props.getArray(
+		PropsValues.LOCALES_ENABLED = PropsUtil.getArray(
 			PropsKeys.LOCALES_ENABLED);
 
 		_language.init();
@@ -115,11 +103,13 @@ public class PortalImplLocaleTest {
 
 	@Test
 	public void testInvalidResourceWithLocale() throws Exception {
-		MockHttpServletResponse httpServletResponse = _testLocaleForLanguageId(
-			"/en", "/WEB-INF/web.xml;.js", LocaleUtil.GERMANY);
+		MockHttpServletResponse mockHttpServletResponse =
+			_testLocaleForLanguageId(
+				"/en", "/WEB-INF/web.xml;.js", LocaleUtil.GERMANY);
 
 		Assert.assertEquals(
-			HttpServletResponse.SC_NOT_FOUND, httpServletResponse.getStatus());
+			HttpServletResponse.SC_NOT_FOUND,
+			mockHttpServletResponse.getStatus());
 	}
 
 	@Test
@@ -144,7 +134,7 @@ public class PortalImplLocaleTest {
 
 	private void _testLocaleForLanguageId(
 			String i18nLanguageId, Locale expectedLocale)
-		throws IOException, ServletException {
+		throws Exception {
 
 		_testLocaleForLanguageId(
 			i18nLanguageId, _group.getFriendlyURL() + _layout.getFriendlyURL(),
@@ -153,7 +143,7 @@ public class PortalImplLocaleTest {
 
 	private MockHttpServletResponse _testLocaleForLanguageId(
 			String i18nLanguageId, String pathInfo, Locale expectedLocale)
-		throws IOException, ServletException {
+		throws Exception {
 
 		MockServletContext mockServletContext = new MockServletContext() {
 		};
@@ -167,10 +157,10 @@ public class PortalImplLocaleTest {
 			new MockHttpServletRequest(
 				mockServletContext, HttpMethods.GET, i18nLanguageId + pathInfo);
 
+		mockHttpServletRequest.addHeader("Host", "localhost");
+		mockHttpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
 		mockHttpServletRequest.setPathInfo(pathInfo);
 		mockHttpServletRequest.setServletPath(i18nLanguageId);
-
-		mockHttpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
 
 		MockHttpServletResponse mockHttpServletResponse =
 			new MockHttpServletResponse();
@@ -201,8 +191,5 @@ public class PortalImplLocaleTest {
 	private Layout _layout;
 
 	private final PortalImpl _portalImpl = new PortalImpl();
-
-	@Inject
-	private Props _props;
 
 }

@@ -1,36 +1,38 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.service.persistence.impl;
 
+import com.liferay.asset.kernel.model.AssetEntries_AssetTagsTable;
+import com.liferay.asset.kernel.model.AssetEntryTable;
 import com.liferay.asset.kernel.model.AssetTag;
+import com.liferay.asset.kernel.model.AssetTagTable;
 import com.liferay.asset.kernel.service.persistence.AssetTagFinder;
-import com.liferay.portal.kernel.dao.orm.QueryPos;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.sql.dsl.Column;
+import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.Table;
+import com.liferay.petra.sql.dsl.expression.Expression;
+import com.liferay.petra.sql.dsl.expression.Predicate;
+import com.liferay.petra.sql.dsl.query.GroupByStep;
+import com.liferay.petra.sql.dsl.query.HavingStep;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portlet.asset.model.impl.AssetTagImpl;
-import com.liferay.util.dao.orm.CustomSQLUtil;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Brian Wing Shun Chan
@@ -39,59 +41,6 @@ import java.util.List;
 public class AssetTagFinderImpl
 	extends AssetTagFinderBaseImpl implements AssetTagFinder {
 
-	public static final String COUNT_BY_G_N =
-		AssetTagFinder.class.getName() + ".countByG_N";
-
-	public static final String COUNT_BY_G_C_N =
-		AssetTagFinder.class.getName() + ".countByG_C_N";
-
-	public static final String FIND_BY_G_C_N =
-		AssetTagFinder.class.getName() + ".findByG_C_N";
-
-	public static final String FIND_BY_G_N_S_E =
-		AssetTagFinder.class.getName() + ".findByG_N_S_E";
-
-	@Override
-	public int countByG_N(long groupId, String name) {
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(COUNT_BY_G_N);
-
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(groupId);
-
-			String lowerCaseName = StringUtil.toLowerCase(name);
-
-			qPos.add(lowerCaseName);
-
-			Iterator<Long> itr = q.iterate();
-
-			if (itr.hasNext()) {
-				Long count = itr.next();
-
-				if (count != null) {
-					return count.intValue();
-				}
-			}
-
-			return 0;
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
 	@Override
 	public int countByG_C_N(long groupId, long classNameId, String name) {
 		Session session = null;
@@ -99,26 +48,58 @@ public class AssetTagFinderImpl
 		try {
 			session = openSession();
 
-			String sql = CustomSQLUtil.get(COUNT_BY_G_C_N);
+			Long[] assetTagIds = _getAssetTagIds(groupId, classNameId, name);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			if (ArrayUtil.isEmpty(assetTagIds)) {
+				return 0;
+			}
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(
+				DSLQueryFactoryUtil.count(
+				).from(
+					AssetTagTable.INSTANCE
+				).innerJoinON(
+					AssetEntries_AssetTagsTable.INSTANCE,
+					AssetEntries_AssetTagsTable.INSTANCE.tagId.eq(
+						AssetTagTable.INSTANCE.tagId)
+				).innerJoinON(
+					AssetEntryTable.INSTANCE,
+					AssetEntryTable.INSTANCE.entryId.eq(
+						AssetEntries_AssetTagsTable.INSTANCE.entryId)
+				).where(
+					() -> {
+						Predicate predicate =
+							AssetEntryTable.INSTANCE.groupId.eq(
+								groupId
+							).and(
+								() -> {
+									if (classNameId <= 0) {
+										return null;
+									}
 
-			QueryPos qPos = QueryPos.getInstance(q);
+									return AssetEntryTable.INSTANCE.classNameId.
+										eq(classNameId);
+								}
+							).and(
+								AssetEntryTable.INSTANCE.visible.eq(true)
+							);
 
-			qPos.add(groupId);
-			qPos.add(classNameId);
+						if (name == null) {
+							return predicate;
+						}
 
-			String lowerCaseName = StringUtil.toLowerCase(name);
+						return predicate.and(
+							AssetEntries_AssetTagsTable.INSTANCE.tagId.in(
+								assetTagIds));
+					}
+				));
 
-			qPos.add(lowerCaseName);
-			qPos.add(lowerCaseName);
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			if (iterator.hasNext()) {
+				Long count = iterator.next();
 
 				if (count != null) {
 					return count.intValue();
@@ -127,8 +108,8 @@ public class AssetTagFinderImpl
 
 			return 0;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -138,88 +119,227 @@ public class AssetTagFinderImpl
 	@Override
 	public List<AssetTag> findByG_C_N(
 		long groupId, long classNameId, String name, int start, int end,
-		OrderByComparator<AssetTag> obc) {
+		OrderByComparator<AssetTag> orderByComparator) {
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			String sql = CustomSQLUtil.get(FIND_BY_G_C_N);
+			Table<AssetTagTable> tempAssetTagTable = _getAssetTagHavingStep(
+				groupId, classNameId, name
+			).unionAll(
+				_getAssetTagGroupByStep(groupId, name)
+			).as(
+				AssetTagTable.INSTANCE.getName(), AssetTagTable.INSTANCE
+			);
 
-			sql = CustomSQLUtil.replaceOrderBy(sql, obc);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(
+				DSLQueryFactoryUtil.selectDistinct(
+					tempAssetTagTable
+				).from(
+					tempAssetTagTable
+				).orderBy(
+					orderByStep -> {
+						if (orderByComparator == null) {
+							return orderByStep.orderBy(
+								AssetTagTable.INSTANCE.name.ascending());
+						}
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+						return orderByStep.orderBy(
+							AssetTagTable.INSTANCE, orderByComparator);
+					}
+				).limit(
+					start, end
+				));
 
-			q.addEntity("AssetTag", AssetTagImpl.class);
+			sqlQuery.addEntity("AssetTag", AssetTagImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(groupId);
-			qPos.add(classNameId);
-
-			String lowerCaseName = StringUtil.toLowerCase(name);
-
-			qPos.add(lowerCaseName);
-			qPos.add(lowerCaseName);
-
-			return (List<AssetTag>)QueryUtil.list(q, getDialect(), start, end);
+			return (List<AssetTag>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
 
-	@Override
-	public List<AssetTag> findByG_N_S_E(
-		long groupId, String name, int startPeriod, int endPeriod,
-		int periodLength) {
+	private Expression<?>[] _getAssetTagExpressions(
+		boolean includeAssetCount, boolean replaceAssetCount) {
 
-		Session session = null;
+		Collection<Column<AssetTagTable, ?>> columns =
+			AssetTagTable.INSTANCE.getColumns();
 
-		try {
-			session = openSession();
+		Expression<?>[] expressions = new Expression<?>[0];
 
-			String sql = CustomSQLUtil.get(FIND_BY_G_N_S_E);
+		for (Iterator<?> iterator = columns.iterator(); iterator.hasNext();) {
+			Column<AssetTagTable, ?> column =
+				(Column<AssetTagTable, ?>)iterator.next();
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			Expression<?> expression = column;
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			if (Objects.equals(column.getName(), "assetCount")) {
+				if (!includeAssetCount) {
+					continue;
+				}
 
-			qPos.add(groupId);
-			qPos.add(name);
-			qPos.add(startPeriod);
-			qPos.add(endPeriod);
-			qPos.add(periodLength);
-			qPos.add(endPeriod);
-
-			List<AssetTag> assetTags = new ArrayList<>();
-
-			Iterator<Object[]> itr = q.iterate();
-
-			while (itr.hasNext()) {
-				Object[] array = itr.next();
-
-				AssetTag assetTag = new AssetTagImpl();
-
-				assetTag.setTagId(GetterUtil.getLong(array[0]));
-				assetTag.setName(GetterUtil.getString(array[1]));
-				assetTag.setAssetCount(GetterUtil.getInteger(array[2]));
-
-				assetTags.add(assetTag);
+				if (replaceAssetCount) {
+					expression = _assetTagCountExpression;
+				}
 			}
 
-			return assetTags;
+			expressions = ArrayUtil.append(expressions, expression);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+
+		return expressions;
+	}
+
+	private GroupByStep _getAssetTagGroupByStep(long groupId, String name) {
+		return DSLQueryFactoryUtil.select(
+			_getAssetTagExpressions(true, false)
+		).from(
+			AssetTagTable.INSTANCE
+		).where(
+			() -> {
+				Predicate predicate = AssetTagTable.INSTANCE.groupId.eq(
+					groupId
+				).and(
+					AssetTagTable.INSTANCE.assetCount.eq(0)
+				);
+
+				if (name == null) {
+					return predicate;
+				}
+
+				return predicate.and(
+					DSLFunctionFactoryUtil.lower(
+						AssetTagTable.INSTANCE.name
+					).like(
+						StringUtil.toLowerCase(name)
+					));
+			}
+		);
+	}
+
+	private HavingStep _getAssetTagHavingStep(
+		long groupId, long classNameId, String name) {
+
+		return DSLQueryFactoryUtil.select(
+			_getAssetTagExpressions(true, true)
+		).from(
+			AssetTagTable.INSTANCE
+		).innerJoinON(
+			AssetEntries_AssetTagsTable.INSTANCE,
+			AssetEntries_AssetTagsTable.INSTANCE.tagId.eq(
+				AssetTagTable.INSTANCE.tagId)
+		).innerJoinON(
+			AssetEntryTable.INSTANCE,
+			AssetEntryTable.INSTANCE.entryId.eq(
+				AssetEntries_AssetTagsTable.INSTANCE.entryId)
+		).where(
+			() -> {
+				Predicate predicate = AssetEntryTable.INSTANCE.groupId.eq(
+					groupId
+				).and(
+					AssetEntryTable.INSTANCE.classNameId.eq(classNameId)
+				).and(
+					AssetEntryTable.INSTANCE.visible.eq(true)
+				);
+
+				if (name == null) {
+					return predicate;
+				}
+
+				return predicate.and(
+					DSLFunctionFactoryUtil.lower(
+						AssetTagTable.INSTANCE.name
+					).like(
+						StringUtil.toLowerCase(name)
+					));
+			}
+		).groupBy(
+			_getAssetTagExpressions(false, false)
+		);
+	}
+
+	private Long[] _getAssetTagIds(
+		long groupId, long classNameId, String name) {
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(
+				DSLQueryFactoryUtil.selectDistinct(
+					AssetTagTable.INSTANCE
+				).from(
+					AssetTagTable.INSTANCE
+				).innerJoinON(
+					AssetEntries_AssetTagsTable.INSTANCE,
+					AssetEntries_AssetTagsTable.INSTANCE.tagId.eq(
+						AssetTagTable.INSTANCE.tagId)
+				).innerJoinON(
+					AssetEntryTable.INSTANCE,
+					AssetEntryTable.INSTANCE.entryId.eq(
+						AssetEntries_AssetTagsTable.INSTANCE.entryId)
+				).where(
+					AssetEntryTable.INSTANCE.groupId.eq(
+						groupId
+					).and(
+						() -> {
+							if (classNameId <= 0) {
+								return null;
+							}
+
+							return AssetEntryTable.INSTANCE.classNameId.eq(
+								classNameId);
+						}
+					).and(
+						AssetEntryTable.INSTANCE.visible.eq(true)
+					).and(
+						() -> {
+							if (name == null) {
+								return null;
+							}
+
+							return AssetTagTable.INSTANCE.name.like(name);
+						}
+					)
+				));
+
+			sqlQuery.addEntity("AssetTag", AssetTagImpl.class);
+
+			List<AssetTag> assetTags = (List<AssetTag>)QueryUtil.list(
+				sqlQuery, getDialect(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			List<Long> assetTagIds = TransformUtil.unsafeTransform(
+				assetTags,
+				assetTag -> {
+					if (!StringUtil.equals(assetTag.getName(), name)) {
+						return null;
+					}
+
+					return Long.valueOf(assetTag.getTagId());
+				});
+
+			return assetTagIds.toArray(new Long[0]);
+		}
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
+
+	private final Expression<Long> _assetTagCountExpression =
+		DSLFunctionFactoryUtil.count(
+			AssetTagTable.INSTANCE.tagId
+		).as(
+			"assetCount"
+		);
 
 }

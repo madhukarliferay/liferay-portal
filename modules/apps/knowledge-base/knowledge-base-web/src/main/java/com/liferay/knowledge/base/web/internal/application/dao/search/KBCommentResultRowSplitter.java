@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.web.internal.application.dao.search;
@@ -79,19 +70,19 @@ public class KBCommentResultRowSplitter implements ResultRowSplitter {
 		if (!newResultRows.isEmpty()) {
 			resultRowSplitterEntries.add(
 				new ResultRowSplitterEntry(
-					getNewKBCommentsLabel(), newResultRows));
+					_getNewKBCommentsLabel(), newResultRows));
 		}
 
 		if (!inProgressResultRows.isEmpty()) {
 			resultRowSplitterEntries.add(
 				new ResultRowSplitterEntry(
-					getInProgressKBCommentsLabel(), inProgressResultRows));
+					_getInProgressKBCommentsLabel(), inProgressResultRows));
 		}
 
 		if (!completedResultRows.isEmpty()) {
 			resultRowSplitterEntries.add(
 				new ResultRowSplitterEntry(
-					getCompletedKBCommentsLabel(), completedResultRows));
+					_getCompletedKBCommentsLabel(), completedResultRows));
 		}
 
 		if (_orderByType.equals("asc")) {
@@ -101,18 +92,18 @@ public class KBCommentResultRowSplitter implements ResultRowSplitter {
 		return resultRowSplitterEntries;
 	}
 
-	protected String getCompletedKBCommentsLabel() {
+	private String _getCompletedKBCommentsLabel() {
 		int completedKBCommentsCount = 0;
 
 		try {
 			completedKBCommentsCount =
 				_kbSuggestionListDisplayContext.getCompletedKBCommentsCount();
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			_log.error(
 				"Unable to obtain completed knowledge base comments count " +
 					"for group " + _kbSuggestionListDisplayContext.getGroupId(),
-				pe);
+				portalException);
 		}
 
 		return String.format(
@@ -120,19 +111,19 @@ public class KBCommentResultRowSplitter implements ResultRowSplitter {
 			completedKBCommentsCount);
 	}
 
-	protected String getInProgressKBCommentsLabel() {
+	private String _getInProgressKBCommentsLabel() {
 		int inProgressKBCommentsCount = 0;
 
 		try {
 			inProgressKBCommentsCount =
 				_kbSuggestionListDisplayContext.getInProgressKBCommentsCount();
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			_log.error(
 				"Unable to obtain in progress knowledge base comments count " +
 					"for  group " +
 						_kbSuggestionListDisplayContext.getGroupId(),
-				pe);
+				portalException);
 		}
 
 		return String.format(
@@ -140,18 +131,18 @@ public class KBCommentResultRowSplitter implements ResultRowSplitter {
 			inProgressKBCommentsCount);
 	}
 
-	protected String getNewKBCommentsLabel() {
+	private String _getNewKBCommentsLabel() {
 		int newKBCommentsCount = 0;
 
 		try {
 			newKBCommentsCount =
 				_kbSuggestionListDisplayContext.getNewKBCommentsCount();
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			_log.error(
 				"Unable to obtain new knowledge base comments count for " +
 					"group " + _kbSuggestionListDisplayContext.getGroupId(),
-				pe);
+				portalException);
 		}
 
 		return String.format(

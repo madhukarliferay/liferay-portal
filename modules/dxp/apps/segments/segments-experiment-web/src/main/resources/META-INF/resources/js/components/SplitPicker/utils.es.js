@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 /**
@@ -36,7 +30,7 @@ function _fixSplitArray(variants, editedIndex, indexToFix, totalSplit) {
 		if (correctedSplit < 0) {
 			variants[indexToFix] = {
 				...variants[indexToFix],
-				split: 0
+				split: 0,
 			};
 
 			return _fixSplitArray(
@@ -45,10 +39,11 @@ function _fixSplitArray(variants, editedIndex, indexToFix, totalSplit) {
 				nextIndexToFix,
 				100 - (correctedSplit - variants[indexToFix].split)
 			);
-		} else {
+		}
+		else {
 			variants[indexToFix] = {
 				...variants[indexToFix],
-				split: correctedSplit
+				split: correctedSplit,
 			};
 		}
 	}
@@ -59,7 +54,7 @@ function _fixSplitArray(variants, editedIndex, indexToFix, totalSplit) {
 		if (correctedSplit > 100) {
 			variants[indexToFix] = {
 				...variants[indexToFix],
-				split: 100
+				split: 100,
 			};
 
 			return _fixSplitArray(
@@ -68,10 +63,11 @@ function _fixSplitArray(variants, editedIndex, indexToFix, totalSplit) {
 				nextIndexToFix,
 				totalSplit - correctedSplit
 			);
-		} else {
+		}
+		else {
 			variants[indexToFix] = {
 				...variants[indexToFix],
-				split: correctedSplit
+				split: correctedSplit,
 			};
 		}
 	}
@@ -98,7 +94,8 @@ function changeSplitValue(splitVariants, variantId, value) {
 			newSplitVariants.push({...variant, split: value});
 			totalSplit += value;
 			editedIndex = i;
-		} else {
+		}
+		else {
 			newSplitVariants.push(variant);
 			totalSplit += variant.split;
 		}

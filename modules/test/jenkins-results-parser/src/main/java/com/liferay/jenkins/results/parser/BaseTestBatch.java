@@ -1,53 +1,45 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
+import java.io.IOException;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Michael Hashimoto
  */
-public abstract class BaseTestBatch
-	<T extends BatchBuildData, S extends Workspace>
-		implements TestBatch<T, S> {
-
-	public JDK getJDK() {
-		return _jdk;
-	}
+public abstract class BaseTestBatch<T extends BatchBuildData>
+	implements TestBatch<T> {
 
 	@Override
 	public void run() {
 		try {
 			executeBatch();
 		}
-		catch (AntException ae) {
-			throw new RuntimeException(ae);
+		catch (AntException antException) {
+			throw new RuntimeException(antException);
 		}
 		finally {
 			publishResults();
 		}
 	}
 
-	protected BaseTestBatch(T batchBuildData, S workspace) {
+	protected BaseTestBatch(T batchBuildData, Workspace workspace) {
 		_batchBuildData = batchBuildData;
-		_jdk = JDKFactory.getJDK(batchBuildData.getBatchName());
 		_workspace = workspace;
 	}
 
 	protected abstract void executeBatch() throws AntException;
 
 	protected String getAntOpts(String batchName) {
-		return _jdk.getAntOpts();
+		return JenkinsResultsParserUtil.combine(
+			_getBuildProperty("java.jdk.opts.default.runtime", batchName),
+			" -XX:+IgnoreUnrecognizedVMOptions");
 	}
 
 	protected T getBatchBuildData() {
@@ -55,23 +47,59 @@ public abstract class BaseTestBatch
 	}
 
 	protected String getJavaHome(String batchName) {
-		return _jdk.getJavaHome();
+		return _getBuildProperty("java.jdk.default.compile", batchName);
+	}
+
+	protected String getJavaOpts(String batchName) {
+		return JenkinsResultsParserUtil.combine(
+			_getBuildProperty("java.jdk.opts.default.runtime", batchName),
+			" -XX:+IgnoreUnrecognizedVMOptions");
 	}
 
 	protected String getPath(String batchName) {
 		String path = System.getenv("PATH");
 
-		return path.replaceAll("jdk", _jdk.getName());
+		if (JenkinsResultsParserUtil.isNullOrEmpty(path)) {
+			return null;
+		}
+
+		Matcher javaHomeMatcher = _javaHomePattern.matcher(path);
+
+		if (javaHomeMatcher.find()) {
+			path = path.replace(
+				javaHomeMatcher.group(), getJavaHome(batchName) + "/bin");
+		}
+		else {
+			path = getJavaHome(batchName) + "/bin:" + path;
+		}
+
+		return path;
 	}
 
-	protected S getWorkspace() {
+	protected Workspace getWorkspace() {
 		return _workspace;
 	}
 
 	protected abstract void publishResults();
 
+	private String _getBuildProperty(String baseProperty, String batchName) {
+		WorkspaceGitRepository workspaceGitRepository =
+			_workspace.getPrimaryWorkspaceGitRepository();
+
+		try {
+			return JenkinsResultsParserUtil.getProperty(
+				JenkinsResultsParserUtil.getBuildProperties(), baseProperty,
+				workspaceGitRepository.getUpstreamBranchName(), batchName);
+		}
+		catch (IOException ioException) {
+			return null;
+		}
+	}
+
+	private static final Pattern _javaHomePattern = Pattern.compile(
+		"/opt/java/(jdk|zulu)[^:]+");
+
 	private final T _batchBuildData;
-	private final JDK _jdk;
-	private final S _workspace;
+	private final Workspace _workspace;
 
 }

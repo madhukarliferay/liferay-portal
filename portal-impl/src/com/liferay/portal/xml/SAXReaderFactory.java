@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.xml;
@@ -28,7 +19,7 @@ import org.xml.sax.XMLReader;
  */
 public class SAXReaderFactory {
 
-	public static final SAXReader getSAXReader(
+	public static SAXReader getSAXReader(
 		XMLReader xmlReader, boolean validate, boolean secure) {
 
 		SAXReader saxReader = null;
@@ -52,10 +43,11 @@ public class SAXReaderFactory {
 				saxReader.setFeature(_FEATURES_LOAD_EXTERNAL_DTD, validate);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"XSD validation is disabled because " + e.getMessage());
+					"XSD validation is disabled because " +
+						exception.getMessage());
 			}
 
 			saxReader = new SAXReader(xmlReader, false);
@@ -67,7 +59,7 @@ public class SAXReaderFactory {
 		return saxReader;
 	}
 
-	public static final SAXReader getSAXReader(
+	public static SAXReader getSAXReader(
 		XMLReader xmlReader, XMLSchema xmlSchema, boolean validate,
 		boolean secure) {
 
@@ -83,10 +75,11 @@ public class SAXReaderFactory {
 			saxReader.setProperty(
 				_PROPERTY_SCHEMA_SOURCE, xmlSchema.getSchemaSource());
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"XSD validation is disabled because " + e.getMessage());
+					"XSD validation is disabled because " +
+						exception.getMessage());
 			}
 		}
 

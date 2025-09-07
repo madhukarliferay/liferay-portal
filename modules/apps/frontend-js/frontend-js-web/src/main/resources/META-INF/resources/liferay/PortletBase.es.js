@@ -1,31 +1,117 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import core from 'metal';
-import Component from 'metal-component';
-import dom from 'metal-dom';
-
 import objectToFormData from './util/form/object_to_form_data.es';
+
+function toElementHelper(elementOrSelector) {
+	if (typeof elementOrSelector === 'string') {
+		elementOrSelector = document.querySelector(elementOrSelector);
+	}
+
+	return elementOrSelector;
+}
+
+/**
+ * The purpose of this class is to mimic the lifecycles from metal-state.
+ * There are several classes that extend PortletBase and expect some of these
+ * lifecycles to exist. This pseudo-lifecycle class is meant to provide backwards
+ * compatibility for classes extending PortletBase.
+ */
+class LifeCycles {
+	get namespace() {
+		return this._STATE_.namespace;
+	}
+	get portletNamespace() {
+		return this._STATE_.portletNamespace;
+	}
+	get rootNode() {
+		return this._STATE_.rootNode;
+	}
+	set portletNamespace(portletNamespace) {
+		this.rootNode = `#p_p_id${portletNamespace}`;
+
+		this._STATE_.portletNamespace = portletNamespace;
+	}
+	set namespace(namespace) {
+		this.rootNode = `#p_p_id${namespace}`;
+
+		this._STATE_.namespace = namespace;
+	}
+	set rootNode(rootNode) {
+		if (typeof rootNode === 'string') {
+			rootNode = document.getElementById(
+				rootNode[0] === '#' ? rootNode.slice(1) : rootNode
+			);
+		}
+
+		this._STATE_.rootNode = rootNode;
+	}
+	constructor(props) {
+		this._EVENTS_ = {};
+		this._STATE_ = {
+			namespace: null,
+			portletNamespace: null,
+			rootNode: null,
+		};
+
+		const {namespace, portletNamespace, rootNode} = props;
+
+		if (namespace) {
+			this.namespace = namespace;
+		}
+
+		if (portletNamespace) {
+			this.portletNamespace = portletNamespace;
+		}
+
+		if (rootNode) {
+			this.rootNode = rootNode;
+		}
+
+		this.created(props);
+		this.attached(props);
+	}
+	dispose() {
+		this.disposeInternal();
+
+		this.detached();
+
+		this.disposed();
+	}
+	attached() {}
+	created() {}
+	detached() {}
+	disposed() {}
+	disposeInternal() {}
+	emit(eventName, data) {
+		const callbacks = this._EVENTS_[eventName];
+
+		if (callbacks && callbacks.length) {
+			for (let i = 0; i < callbacks.length; i++) {
+				callbacks[i](data);
+			}
+		}
+	}
+
+	on(eventName, callback) {
+		if (!this._EVENTS_[eventName]) {
+			this._EVENTS_[eventName] = [];
+		}
+
+		this._EVENTS_[eventName].push(callback);
+	}
+}
 
 /**
  * Provides helper functions that simplify querying the DOM for elements related
  * to a specific portlet.
  *
  * @abstract
- * @extends {Component}
  */
-class PortletBase extends Component {
+class PortletBase extends LifeCycles {
+
 	/**
 	 * Returns a Node List containing all the matching element nodes within the
 	 * subtrees of the root object, in tree order. If there are no matching
@@ -39,7 +125,7 @@ class PortletBase extends Component {
 	 *         tree order.
 	 */
 	all(selectors, root) {
-		root = dom.toElement(root) || this.rootNode || document;
+		root = toElementHelper(root) || this.rootNode || document;
 
 		return root.querySelectorAll(
 			this.namespaceSelectors_(
@@ -52,7 +138,7 @@ class PortletBase extends Component {
 	/**
 	 * Performs an HTTP POST request to the given URL with the given body.
 	 *
-	 * @deprecated since 7.3, use <code>Liferay.Util.fetch</code>.
+	 * @deprecated As of Athanasius (7.3.x), replaced by `Liferay.Util.fetch`.
 	 * @param      {!string} url The URL to send the post request to.
 	 * @param      {!Object|!FormData} body The request body.
 	 * @return     {Promise} A promise.
@@ -60,11 +146,11 @@ class PortletBase extends Component {
 	fetch(url, body) {
 		const requestBody = this.getRequestBody_(body);
 
-		// eslint-disable-next-line liferay-portal/no-global-fetch
+		// eslint-disable-next-line @liferay/portal/no-global-fetch
 		return fetch(url, {
 			body: requestBody,
 			credentials: 'include',
-			method: 'POST'
+			method: 'POST',
 		});
 	}
 
@@ -79,11 +165,14 @@ class PortletBase extends Component {
 
 		if (body instanceof FormData) {
 			requestBody = body;
-		} else if (body instanceof HTMLFormElement) {
+		}
+		else if (body instanceof HTMLFormElement) {
 			requestBody = new FormData(body);
-		} else if (typeof body === 'object') {
+		}
+		else if (typeof body === 'object') {
 			requestBody = objectToFormData(this.ns(body));
-		} else {
+		}
+		else {
 			requestBody = body;
 		}
 
@@ -113,8 +202,8 @@ class PortletBase extends Component {
 	 * @return {Object|string} An object with its properties namespaced, using
 	 *         the portlet namespace or a namespaced string.
 	 */
-	ns(obj) {
-		return Liferay.Util.ns(this.portletNamespace || this.namespace, obj);
+	ns(object) {
+		return Liferay.Util.ns(this.portletNamespace || this.namespace, object);
 	}
 
 	/**
@@ -129,7 +218,7 @@ class PortletBase extends Component {
 	 *         or <code>null</code>.
 	 */
 	one(selectors, root) {
-		root = dom.toElement(root) || this.rootNode || document;
+		root = toElementHelper(root) || this.rootNode || document;
 
 		return root.querySelector(
 			this.namespaceSelectors_(
@@ -138,63 +227,6 @@ class PortletBase extends Component {
 			)
 		);
 	}
-
-	/**
-	 * Returns the default portlet root node element. By default, this is the
-	 * element with ID <code>p_p_id{portletNamespace}</code>.
-	 *
-	 * @protected
-	 * @return {Element} The portlet's default root node element.
-	 */
-	rootNodeValueFn_() {
-		return dom.toElement(
-			`#p_p_id${this.portletNamespace || this.namespace}`
-		);
-	}
 }
-
-/**
- * State definition.
- *
- * @ignore
- * @static
- * @type {!Object}
- */
-PortletBase.STATE = {
-	/**
-	 * Portlet's namespace.
-	 *
-	 * @deprecated since 7.1
-	 * @instance
-	 * @memberof PortletBase
-	 * @type {string}
-	 */
-	namespace: {
-		validator: core.isString
-	},
-
-	/**
-	 * Portlet's namespace.
-	 *
-	 * @instance
-	 * @memberof PortletBase
-	 * @type {string}
-	 */
-	portletNamespace: {
-		validator: core.isString
-	},
-
-	/**
-	 * Portlet's root node element.
-	 *
-	 * @instance
-	 * @memberof PortletBase
-	 * @type {Element}
-	 */
-	rootNode: {
-		setter: dom.toElement,
-		valueFn: 'rootNodeValueFn_'
-	}
-};
 
 export default PortletBase;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service.test;
@@ -18,7 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.fragment.constants.FragmentActionKeys;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.service.FragmentCollectionService;
-import com.liferay.fragment.util.FragmentTestUtil;
+import com.liferay.fragment.test.util.FragmentTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -36,7 +27,6 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -86,11 +76,12 @@ public class FragmentCollectionServicePermissionTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(_group, _user.getUserId());
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.addFragmentCollection(
-			_group.getGroupId(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
+			null, _group.getGroupId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), StringPool.BLANK, false,
+			serviceContext);
 	}
 
 	@Test
@@ -102,11 +93,12 @@ public class FragmentCollectionServicePermissionTest {
 
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.addFragmentCollection(
-			_group.getGroupId(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), StringPool.BLANK, serviceContext);
+			null, _group.getGroupId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), StringPool.BLANK, false,
+			serviceContext);
 	}
 
 	@Test(expected = PrincipalException.MustHavePermission.class)
@@ -114,10 +106,10 @@ public class FragmentCollectionServicePermissionTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(_group, _user.getUserId());
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.addFragmentCollection(
-			_group.getGroupId(), RandomTestUtil.randomString(),
+			null, _group.getGroupId(), RandomTestUtil.randomString(),
 			StringPool.BLANK, serviceContext);
 	}
 
@@ -128,10 +120,10 @@ public class FragmentCollectionServicePermissionTest {
 
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.addFragmentCollection(
-			_group.getGroupId(), RandomTestUtil.randomString(),
+			null, _group.getGroupId(), RandomTestUtil.randomString(),
 			StringPool.BLANK, serviceContext);
 	}
 
@@ -149,7 +141,7 @@ public class FragmentCollectionServicePermissionTest {
 			fragmentCollection2.getFragmentCollectionId()
 		};
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.deleteFragmentCollections(
 			fragmentCollectionIds);
@@ -171,7 +163,7 @@ public class FragmentCollectionServicePermissionTest {
 
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.deleteFragmentCollections(
 			fragmentCollectionIds);
@@ -184,7 +176,7 @@ public class FragmentCollectionServicePermissionTest {
 		FragmentCollection fragmentCollection =
 			FragmentTestUtil.addFragmentCollection(_group.getGroupId());
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.deleteFragmentCollection(
 			fragmentCollection.getFragmentCollectionId());
@@ -197,7 +189,7 @@ public class FragmentCollectionServicePermissionTest {
 
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.deleteFragmentCollection(
 			fragmentCollection.getFragmentCollectionId());
@@ -208,7 +200,7 @@ public class FragmentCollectionServicePermissionTest {
 		FragmentCollection fragmentCollection =
 			FragmentTestUtil.addFragmentCollection(_group.getGroupId());
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.fetchFragmentCollection(
 			fragmentCollection.getFragmentCollectionId());
@@ -216,7 +208,7 @@ public class FragmentCollectionServicePermissionTest {
 
 	@Test(expected = PrincipalException.MustHavePermission.class)
 	public void testGetTempFileNamesWithoutPermissions() throws Exception {
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.getTempFileNames(
 			_group.getGroupId(), StringPool.BLANK);
@@ -226,7 +218,7 @@ public class FragmentCollectionServicePermissionTest {
 	public void testGetTempFileNamesWithPermissions() throws Exception {
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.getTempFileNames(
 			_group.getGroupId(), StringPool.BLANK);
@@ -239,7 +231,7 @@ public class FragmentCollectionServicePermissionTest {
 		FragmentCollection fragmentCollection =
 			FragmentTestUtil.addFragmentCollection(_group.getGroupId());
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.updateFragmentCollection(
 			fragmentCollection.getFragmentCollectionId(),
@@ -253,7 +245,7 @@ public class FragmentCollectionServicePermissionTest {
 
 		_setRolePermissions(FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES);
 
-		ServiceTestUtil.setUser(_user);
+		UserTestUtil.setUser(_user);
 
 		_fragmentCollectionService.updateFragmentCollection(
 			fragmentCollection.getFragmentCollectionId(),

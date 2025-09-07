@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.teams.service.test;
@@ -58,23 +49,24 @@ public class TeamLocalServiceTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext());
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			_group.getTypeSettingsProperties();
 
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"defaultTeamIds", String.valueOf(team.getTeamId()));
 
-		_groupLocalService.updateGroup(_group);
+		_group = _groupLocalService.updateGroup(_group);
 
 		_teamLocalService.deleteTeam(team);
 
 		_group = _groupLocalService.getGroup(_group.getGroupId());
 
-		typeSettingsProperties = _group.getTypeSettingsProperties();
+		typeSettingsUnicodeProperties = _group.getTypeSettingsProperties();
 
 		List<Long> defaultTeamIds = ListUtil.fromArray(
 			StringUtil.split(
-				typeSettingsProperties.getProperty("defaultTeamIds"), 0L));
+				typeSettingsUnicodeProperties.getProperty("defaultTeamIds"),
+				0L));
 
 		Assert.assertFalse(defaultTeamIds.contains(team.getTeamId()));
 	}

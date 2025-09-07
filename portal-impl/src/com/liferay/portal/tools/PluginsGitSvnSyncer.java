@@ -1,28 +1,20 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.FileImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -63,8 +55,8 @@ public class PluginsGitSvnSyncer {
 				_updateSvnIgnores(gitPluginsDirName, svnPluginsDirName);
 			}
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 	}
 
@@ -76,7 +68,7 @@ public class PluginsGitSvnSyncer {
 		String[] stderr = _getExecOutput(process.getErrorStream());
 
 		if (stderr.length > 0) {
-			StringBundler sb = new StringBundler(stderr.length * 3 + 3);
+			StringBundler sb = new StringBundler((stderr.length * 3) + 3);
 
 			sb.append("Received errors in executing '");
 			sb.append(cmd);
@@ -94,14 +86,14 @@ public class PluginsGitSvnSyncer {
 		return _getExecOutput(process.getInputStream());
 	}
 
-	private String[] _getExecOutput(InputStream is) throws IOException {
+	private String[] _getExecOutput(InputStream inputStream) throws Exception {
 		List<String> list = new ArrayList<>();
 
 		UnsyncBufferedReader unsyncBufferedReader = null;
 
 		try {
 			unsyncBufferedReader = new UnsyncBufferedReader(
-				new InputStreamReader(is));
+				new InputStreamReader(inputStream));
 
 			String line = unsyncBufferedReader.readLine();
 
@@ -120,7 +112,10 @@ public class PluginsGitSvnSyncer {
 				try {
 					unsyncBufferedReader.close();
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
 				}
 			}
 		}
@@ -173,13 +168,13 @@ public class PluginsGitSvnSyncer {
 
 		Collections.sort(ignores);
 
-		Iterator<String> itr = ignores.iterator();
+		Iterator<String> iterator = ignores.iterator();
 
-		while (itr.hasNext()) {
-			String ignore = itr.next();
+		while (iterator.hasNext()) {
+			String ignore = iterator.next();
 
 			if (ignore.equals("classes")) {
-				itr.remove();
+				iterator.remove();
 			}
 		}
 
@@ -277,14 +272,14 @@ public class PluginsGitSvnSyncer {
 			try {
 				_exec(_SVN_DEL_IGNORES + destDirName + dirName);
 			}
-			catch (Exception e) {
-				String message = e.getMessage();
+			catch (Exception exception) {
+				String message = exception.getMessage();
 
 				if (!message.contains(
 						"svn: Attempting to delete nonexistent property " +
 							"'svn:ignore'")) {
 
-					throw e;
+					throw exception;
 				}
 			}
 
@@ -322,6 +317,9 @@ public class PluginsGitSvnSyncer {
 	private static final String _SVN_GET_IGNORES = "svn propget svn:ignore ";
 
 	private static final String _SVN_SET_IGNORES = "svn propset svn:ignore ";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		PluginsGitSvnSyncer.class);
 
 	private static final FileImpl _fileImpl = FileImpl.getInstance();
 

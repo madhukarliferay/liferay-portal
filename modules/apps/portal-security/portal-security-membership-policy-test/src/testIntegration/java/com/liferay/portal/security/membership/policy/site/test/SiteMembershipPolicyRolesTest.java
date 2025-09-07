@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.membership.policy.site.test;
@@ -26,7 +17,6 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupRoleServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
-import com.liferay.portal.kernel.service.persistence.UserGroupRolePK;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -86,18 +76,18 @@ public class SiteMembershipPolicyRolesTest
 		long[] userIds = addUsers();
 		long[] forbiddenRoleIds = addForbiddenRoles();
 
-		UserGroupRolePK userGroupRolePK = new UserGroupRolePK(
-			userIds[0], group.getGroupId(), forbiddenRoleIds[0]);
-
 		UserGroupRole userGroupRole =
-			UserGroupRoleLocalServiceUtil.createUserGroupRole(userGroupRolePK);
+			UserGroupRoleLocalServiceUtil.createUserGroupRole(0);
+
+		userGroupRole.setUserId(userIds[0]);
+		userGroupRole.setGroupId(group.getGroupId());
+		userGroupRole.setRoleId(forbiddenRoleIds[0]);
 
 		userGroupRoles.add(userGroupRole);
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, null, userGroupRoles);
+			UserLocalServiceUtil.getUser(userIds[0]), null, null, null, null,
+			userGroupRoles);
 	}
 
 	@Test(expected = MembershipPolicyException.class)
@@ -115,18 +105,18 @@ public class SiteMembershipPolicyRolesTest
 		long[] userIds = addUsers();
 		long[] standardRoleIds = addStandardRoles();
 
-		UserGroupRolePK userGroupRolePK = new UserGroupRolePK(
-			userIds[0], group.getGroupId(), standardRoleIds[0]);
-
 		UserGroupRole userGroupRole =
-			UserGroupRoleLocalServiceUtil.createUserGroupRole(userGroupRolePK);
+			UserGroupRoleLocalServiceUtil.createUserGroupRole(0);
+
+		userGroupRole.setUserId(userIds[0]);
+		userGroupRole.setGroupId(group.getGroupId());
+		userGroupRole.setRoleId(standardRoleIds[0]);
 
 		userGroupRoles.add(userGroupRole);
 
-		User user = UserLocalServiceUtil.getUser(userIds[0]);
-
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, null, userGroupRoles);
+			UserLocalServiceUtil.getUser(userIds[0]), null, null, null, null,
+			userGroupRoles);
 
 		Assert.assertTrue(isPropagateRoles());
 	}
@@ -189,10 +179,10 @@ public class SiteMembershipPolicyRolesTest
 		List<UserGroupRole> initialUserGroupRoles =
 			UserGroupRoleLocalServiceUtil.getUserGroupRoles(user.getUserId());
 
-		List<UserGroupRole> emptyNonAbstractList = new ArrayList<>();
+		List<UserGroupRole> emptyNonabstractList = new ArrayList<>();
 
 		MembershipPolicyTestUtil.updateUser(
-			user, null, null, null, null, emptyNonAbstractList);
+			user, null, null, null, null, emptyNonabstractList);
 
 		List<UserGroupRole> currentUserGroupRoles =
 			UserGroupRoleLocalServiceUtil.getUserGroupRoles(user.getUserId());
@@ -240,7 +230,8 @@ public class SiteMembershipPolicyRolesTest
 		Role role = MembershipPolicyTestUtil.addRole(RoleConstants.TYPE_SITE);
 
 		RoleServiceUtil.updateRole(
-			role.getRoleId(), RandomTestUtil.randomString(), role.getTitleMap(),
+			role.getExternalReferenceCode(), role.getRoleId(),
+			RandomTestUtil.randomString(), role.getTitleMap(),
 			role.getDescriptionMap(), role.getSubtype(), new ServiceContext());
 
 		Assert.assertTrue(isVerify());

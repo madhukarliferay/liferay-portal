@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
@@ -46,6 +37,7 @@ public class LayoutWrapper
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("ctCollectionId", getCtCollectionId());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("plid", getPlid());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -72,16 +64,22 @@ public class LayoutWrapper
 		attributes.put("iconImageId", getIconImageId());
 		attributes.put("themeId", getThemeId());
 		attributes.put("colorSchemeId", getColorSchemeId());
+		attributes.put("styleBookEntryId", getStyleBookEntryId());
 		attributes.put("css", getCss());
 		attributes.put("priority", getPriority());
+		attributes.put("faviconFileEntryId", getFaviconFileEntryId());
 		attributes.put("masterLayoutPlid", getMasterLayoutPlid());
 		attributes.put("layoutPrototypeUuid", getLayoutPrototypeUuid());
 		attributes.put(
 			"layoutPrototypeLinkEnabled", isLayoutPrototypeLinkEnabled());
 		attributes.put(
-			"sourcePrototypeLayoutUuid", getSourcePrototypeLayoutUuid());
+			"layoutSetPrototypeLayoutERC", getLayoutSetPrototypeLayoutERC());
 		attributes.put("publishDate", getPublishDate());
 		attributes.put("lastPublishDate", getLastPublishDate());
+		attributes.put("status", getStatus());
+		attributes.put("statusByUserId", getStatusByUserId());
+		attributes.put("statusByUserName", getStatusByUserName());
+		attributes.put("statusDate", getStatusDate());
 
 		return attributes;
 	}
@@ -104,6 +102,13 @@ public class LayoutWrapper
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long plid = (Long)attributes.get("plid");
@@ -262,6 +267,12 @@ public class LayoutWrapper
 			setColorSchemeId(colorSchemeId);
 		}
 
+		Long styleBookEntryId = (Long)attributes.get("styleBookEntryId");
+
+		if (styleBookEntryId != null) {
+			setStyleBookEntryId(styleBookEntryId);
+		}
+
 		String css = (String)attributes.get("css");
 
 		if (css != null) {
@@ -272,6 +283,12 @@ public class LayoutWrapper
 
 		if (priority != null) {
 			setPriority(priority);
+		}
+
+		Long faviconFileEntryId = (Long)attributes.get("faviconFileEntryId");
+
+		if (faviconFileEntryId != null) {
+			setFaviconFileEntryId(faviconFileEntryId);
 		}
 
 		Long masterLayoutPlid = (Long)attributes.get("masterLayoutPlid");
@@ -294,11 +311,11 @@ public class LayoutWrapper
 			setLayoutPrototypeLinkEnabled(layoutPrototypeLinkEnabled);
 		}
 
-		String sourcePrototypeLayoutUuid = (String)attributes.get(
-			"sourcePrototypeLayoutUuid");
+		String layoutSetPrototypeLayoutERC = (String)attributes.get(
+			"layoutSetPrototypeLayoutERC");
 
-		if (sourcePrototypeLayoutUuid != null) {
-			setSourcePrototypeLayoutUuid(sourcePrototypeLayoutUuid);
+		if (layoutSetPrototypeLayoutERC != null) {
+			setLayoutSetPrototypeLayoutERC(layoutSetPrototypeLayoutERC);
 		}
 
 		Date publishDate = (Date)attributes.get("publishDate");
@@ -312,6 +329,40 @@ public class LayoutWrapper
 		if (lastPublishDate != null) {
 			setLastPublishDate(lastPublishDate);
 		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
+
+		Long statusByUserId = (Long)attributes.get("statusByUserId");
+
+		if (statusByUserId != null) {
+			setStatusByUserId(statusByUserId);
+		}
+
+		String statusByUserName = (String)attributes.get("statusByUserName");
+
+		if (statusByUserName != null) {
+			setStatusByUserName(statusByUserName);
+		}
+
+		Date statusDate = (Date)attributes.get("statusDate");
+
+		if (statusDate != null) {
+			setStatusDate(statusDate);
+		}
+	}
+
+	@Override
+	public Layout cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
+	public Layout fetchDraftLayout() {
+		return model.fetchDraftLayout();
 	}
 
 	/**
@@ -369,6 +420,13 @@ public class LayoutWrapper
 	@Override
 	public String[] getAvailableLanguageIds() {
 		return model.getAvailableLanguageIds();
+	}
+
+	@Override
+	public String getBreadcrumb(java.util.Locale locale)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getBreadcrumb(locale);
 	}
 
 	/**
@@ -613,6 +671,31 @@ public class LayoutWrapper
 	}
 
 	/**
+	 * Returns the external reference code of this layout.
+	 *
+	 * @return the external reference code of this layout
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
+	/**
+	 * Returns the favicon file entry ID of this layout.
+	 *
+	 * @return the favicon file entry ID of this layout
+	 */
+	@Override
+	public long getFaviconFileEntryId() {
+		return model.getFaviconFileEntryId();
+	}
+
+	@Override
+	public String getFaviconURL() {
+		return model.getFaviconURL();
+	}
+
+	/**
 	 * Returns the friendly url of this layout.
 	 *
 	 * @return the friendly url of this layout
@@ -709,6 +792,11 @@ public class LayoutWrapper
 	@Override
 	public String getHTMLTitle(String localeLanguageId) {
 		return model.getHTMLTitle(localeLanguageId);
+	}
+
+	@Override
+	public String getIcon() {
+		return model.getIcon();
 	}
 
 	/**
@@ -856,6 +944,21 @@ public class LayoutWrapper
 	@Override
 	public LayoutSet getLayoutSet() {
 		return model.getLayoutSet();
+	}
+
+	@Override
+	public Layout getLayoutSetPrototypeLayout() {
+		return model.getLayoutSetPrototypeLayout();
+	}
+
+	/**
+	 * Returns the layout set prototype layout erc of this layout.
+	 *
+	 * @return the layout set prototype layout erc of this layout
+	 */
+	@Override
+	public String getLayoutSetPrototypeLayoutERC() {
+		return model.getLayoutSetPrototypeLayoutERC();
 	}
 
 	/**
@@ -1057,7 +1160,7 @@ public class LayoutWrapper
 
 	@Override
 	public String getRegularURL(
-			javax.servlet.http.HttpServletRequest httpServletRequest)
+			jakarta.servlet.http.HttpServletRequest httpServletRequest)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getRegularURL(httpServletRequest);
@@ -1065,7 +1168,7 @@ public class LayoutWrapper
 
 	@Override
 	public String getResetLayoutURL(
-			javax.servlet.http.HttpServletRequest httpServletRequest)
+			jakarta.servlet.http.HttpServletRequest httpServletRequest)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getResetLayoutURL(httpServletRequest);
@@ -1073,7 +1176,7 @@ public class LayoutWrapper
 
 	@Override
 	public String getResetMaxStateURL(
-			javax.servlet.http.HttpServletRequest httpServletRequest)
+			jakarta.servlet.http.HttpServletRequest httpServletRequest)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getResetMaxStateURL(httpServletRequest);
@@ -1163,13 +1266,63 @@ public class LayoutWrapper
 	}
 
 	/**
-	 * Returns the source prototype layout uuid of this layout.
+	 * Returns the status of this layout.
 	 *
-	 * @return the source prototype layout uuid of this layout
+	 * @return the status of this layout
 	 */
 	@Override
-	public String getSourcePrototypeLayoutUuid() {
-		return model.getSourcePrototypeLayoutUuid();
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
+	 * Returns the status by user ID of this layout.
+	 *
+	 * @return the status by user ID of this layout
+	 */
+	@Override
+	public long getStatusByUserId() {
+		return model.getStatusByUserId();
+	}
+
+	/**
+	 * Returns the status by user name of this layout.
+	 *
+	 * @return the status by user name of this layout
+	 */
+	@Override
+	public String getStatusByUserName() {
+		return model.getStatusByUserName();
+	}
+
+	/**
+	 * Returns the status by user uuid of this layout.
+	 *
+	 * @return the status by user uuid of this layout
+	 */
+	@Override
+	public String getStatusByUserUuid() {
+		return model.getStatusByUserUuid();
+	}
+
+	/**
+	 * Returns the status date of this layout.
+	 *
+	 * @return the status date of this layout
+	 */
+	@Override
+	public Date getStatusDate() {
+		return model.getStatusDate();
+	}
+
+	/**
+	 * Returns the style book entry ID of this layout.
+	 *
+	 * @return the style book entry ID of this layout
+	 */
+	@Override
+	public long getStyleBookEntryId() {
+		return model.getStyleBookEntryId();
 	}
 
 	/**
@@ -1418,12 +1571,22 @@ public class LayoutWrapper
 
 	@Override
 	public boolean includeLayoutContent(
-			javax.servlet.http.HttpServletRequest httpServletRequest,
-			javax.servlet.http.HttpServletResponse httpServletResponse)
+			jakarta.servlet.http.HttpServletRequest httpServletRequest,
+			jakarta.servlet.http.HttpServletResponse httpServletResponse)
 		throws Exception {
 
 		return model.includeLayoutContent(
 			httpServletRequest, httpServletResponse);
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is approved.
+	 *
+	 * @return <code>true</code> if this layout is approved; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isApproved() {
+		return model.isApproved();
 	}
 
 	@Override
@@ -1453,6 +1616,46 @@ public class LayoutWrapper
 	@Override
 	public boolean isCustomizable() {
 		return model.isCustomizable();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is denied.
+	 *
+	 * @return <code>true</code> if this layout is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied() {
+		return model.isDenied();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is a draft.
+	 *
+	 * @return <code>true</code> if this layout is a draft; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDraft() {
+		return model.isDraft();
+	}
+
+	@Override
+	public boolean isDraftLayout() {
+		return model.isDraftLayout();
+	}
+
+	@Override
+	public boolean isEmbeddedPersonalApplication() {
+		return model.isEmbeddedPersonalApplication();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is expired.
+	 *
+	 * @return <code>true</code> if this layout is expired; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isExpired() {
+		return model.isExpired();
 	}
 
 	/**
@@ -1496,6 +1699,26 @@ public class LayoutWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this layout is inactive.
+	 *
+	 * @return <code>true</code> if this layout is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive() {
+		return model.isInactive();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is incomplete.
+	 *
+	 * @return <code>true</code> if this layout is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete() {
+		return model.isIncomplete();
+	}
+
+	/**
 	 * Returns <code>true</code> if the current layout utilizes its {@link
 	 * LayoutSet}'s look and feel options (e.g. theme and color scheme).
 	 *
@@ -1505,6 +1728,11 @@ public class LayoutWrapper
 	@Override
 	public boolean isInheritLookAndFeel() {
 		return model.isInheritLookAndFeel();
+	}
+
+	@Override
+	public boolean isLayoutDeleteable() {
+		return model.isLayoutDeleteable();
 	}
 
 	/**
@@ -1528,6 +1756,26 @@ public class LayoutWrapper
 	@Override
 	public boolean isLayoutPrototypeLinkEnabled() {
 		return model.isLayoutPrototypeLinkEnabled();
+	}
+
+	@Override
+	public boolean isLayoutSortable() {
+		return model.isLayoutSortable();
+	}
+
+	@Override
+	public boolean isLayoutUpdateable() {
+		return model.isLayoutUpdateable();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is pending.
+	 *
+	 * @return <code>true</code> if this layout is pending; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPending() {
+		return model.isPending();
 	}
 
 	@Override
@@ -1562,6 +1810,11 @@ public class LayoutWrapper
 		return model.isPublicLayout();
 	}
 
+	@Override
+	public boolean isPublished() {
+		return model.isPublished();
+	}
+
 	/**
 	 * Returns <code>true</code> if the current layout is the root layout.
 	 *
@@ -1571,6 +1824,16 @@ public class LayoutWrapper
 	@Override
 	public boolean isRootLayout() {
 		return model.isRootLayout();
+	}
+
+	/**
+	 * Returns <code>true</code> if this layout is scheduled.
+	 *
+	 * @return <code>true</code> if this layout is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled() {
+		return model.isScheduled();
 	}
 
 	@Override
@@ -1603,6 +1866,16 @@ public class LayoutWrapper
 	}
 
 	@Override
+	public boolean isTypeAssetDisplay() {
+		return model.isTypeAssetDisplay();
+	}
+
+	@Override
+	public boolean isTypeContent() {
+		return model.isTypeContent();
+	}
+
+	@Override
 	public boolean isTypeControlPanel() {
 		return model.isTypeControlPanel();
 	}
@@ -1610,6 +1883,11 @@ public class LayoutWrapper
 	@Override
 	public boolean isTypeEmbedded() {
 		return model.isTypeEmbedded();
+	}
+
+	@Override
+	public boolean isTypeEmpty() {
+		return model.isTypeEmpty();
 	}
 
 	@Override
@@ -1633,18 +1911,23 @@ public class LayoutWrapper
 	}
 
 	@Override
+	public boolean isTypeUtility() {
+		return model.isTypeUtility();
+	}
+
+	@Override
+	public boolean isUnlocked(String mode, long userId) {
+		return model.isUnlocked(mode, userId);
+	}
+
+	@Override
 	public boolean matches(
-		javax.servlet.http.HttpServletRequest httpServletRequest,
+		jakarta.servlet.http.HttpServletRequest httpServletRequest,
 		String friendlyURL) {
 
 		return model.matches(httpServletRequest, friendlyURL);
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a layout model instance should use the <code>Layout</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -1808,6 +2091,26 @@ public class LayoutWrapper
 	}
 
 	/**
+	 * Sets the external reference code of this layout.
+	 *
+	 * @param externalReferenceCode the external reference code of this layout
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
+	 * Sets the favicon file entry ID of this layout.
+	 *
+	 * @param faviconFileEntryId the favicon file entry ID of this layout
+	 */
+	@Override
+	public void setFaviconFileEntryId(long faviconFileEntryId) {
+		model.setFaviconFileEntryId(faviconFileEntryId);
+	}
+
+	/**
 	 * Sets the friendly url of this layout.
 	 *
 	 * @param friendlyURL the friendly url of this layout
@@ -1957,6 +2260,18 @@ public class LayoutWrapper
 	@Override
 	public void setLayoutSet(LayoutSet layoutSet) {
 		model.setLayoutSet(layoutSet);
+	}
+
+	/**
+	 * Sets the layout set prototype layout erc of this layout.
+	 *
+	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc of this layout
+	 */
+	@Override
+	public void setLayoutSetPrototypeLayoutERC(
+		String layoutSetPrototypeLayoutERC) {
+
+		model.setLayoutSetPrototypeLayoutERC(layoutSetPrototypeLayoutERC);
 	}
 
 	/**
@@ -2188,13 +2503,63 @@ public class LayoutWrapper
 	}
 
 	/**
-	 * Sets the source prototype layout uuid of this layout.
+	 * Sets the status of this layout.
 	 *
-	 * @param sourcePrototypeLayoutUuid the source prototype layout uuid of this layout
+	 * @param status the status of this layout
 	 */
 	@Override
-	public void setSourcePrototypeLayoutUuid(String sourcePrototypeLayoutUuid) {
-		model.setSourcePrototypeLayoutUuid(sourcePrototypeLayoutUuid);
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
+	 * Sets the status by user ID of this layout.
+	 *
+	 * @param statusByUserId the status by user ID of this layout
+	 */
+	@Override
+	public void setStatusByUserId(long statusByUserId) {
+		model.setStatusByUserId(statusByUserId);
+	}
+
+	/**
+	 * Sets the status by user name of this layout.
+	 *
+	 * @param statusByUserName the status by user name of this layout
+	 */
+	@Override
+	public void setStatusByUserName(String statusByUserName) {
+		model.setStatusByUserName(statusByUserName);
+	}
+
+	/**
+	 * Sets the status by user uuid of this layout.
+	 *
+	 * @param statusByUserUuid the status by user uuid of this layout
+	 */
+	@Override
+	public void setStatusByUserUuid(String statusByUserUuid) {
+		model.setStatusByUserUuid(statusByUserUuid);
+	}
+
+	/**
+	 * Sets the status date of this layout.
+	 *
+	 * @param statusDate the status date of this layout
+	 */
+	@Override
+	public void setStatusDate(Date statusDate) {
+		model.setStatusDate(statusDate);
+	}
+
+	/**
+	 * Sets the style book entry ID of this layout.
+	 *
+	 * @param styleBookEntryId the style book entry ID of this layout
+	 */
+	@Override
+	public void setStyleBookEntryId(long styleBookEntryId) {
+		model.setStyleBookEntryId(styleBookEntryId);
 	}
 
 	/**
@@ -2304,9 +2669,9 @@ public class LayoutWrapper
 	@Override
 	public void setTypeSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties
-			typeSettingsProperties) {
+			typeSettingsUnicodeProperties) {
 
-		model.setTypeSettingsProperties(typeSettingsProperties);
+		model.setTypeSettingsProperties(typeSettingsUnicodeProperties);
 	}
 
 	/**
@@ -2347,6 +2712,11 @@ public class LayoutWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

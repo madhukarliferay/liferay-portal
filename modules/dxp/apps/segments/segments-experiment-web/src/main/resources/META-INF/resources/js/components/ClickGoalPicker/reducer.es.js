@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React from 'react';
@@ -23,7 +17,7 @@ export function reducer(state, action) {
 				if (state.mode !== mode) {
 					return {
 						...state,
-						mode
+						mode,
 					};
 				}
 			}
@@ -32,30 +26,32 @@ export function reducer(state, action) {
 		case 'editTarget':
 			return {
 				...state,
-				editingTarget: action.selector
+				editingTarget: action.selector,
+			};
+
+		case 'invalidTarget':
+			return {
+				...state,
+				isValidTarget: false,
 			};
 
 		case 'selectTarget':
 			return {
 				...state,
 				editingTarget: null,
+				isValidTarget: true,
 				mode: 'active',
-				selectedTarget: action.selector
+				selectedTarget: action.selector,
 			};
 
 		default:
 	}
+
 	return state;
 }
 
-export function getInitialState(target) {
-	return {
-		...INITIAL_STATE,
-		selectedTarget: target
-	};
-}
-
 const INITIAL_STATE = {
+
 	/**
 	 * The click goal target that is currently being edited.
 	 *
@@ -67,6 +63,11 @@ const INITIAL_STATE = {
 	 * the `editingTarget` becomes the new `selectedTarget`.
 	 */
 	editingTarget: '',
+
+	/**
+	 * The click goal target is valid or not.
+	 */
+	isValidTarget: true,
 
 	/**
 	 * The mode of the component, which will be one of:
@@ -89,7 +90,14 @@ const INITIAL_STATE = {
 	 * As noted above, it is possible to have one target selected and another
 	 * being edited at the same time.
 	 */
-	selectedTarget: ''
+	selectedTarget: '',
 };
+
+export function getInitialState(target) {
+	return {
+		...INITIAL_STATE,
+		selectedTarget: target,
+	};
+}
 
 export const StateContext = React.createContext(INITIAL_STATE);

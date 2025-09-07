@@ -1,24 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.taglib.ui;
 
 import com.liferay.taglib.util.IncludeTag;
 
-import java.util.Date;
+import jakarta.servlet.http.HttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * @author Brian Wing Shun Chan
@@ -31,6 +22,10 @@ public class InputTimeTag extends IncludeTag {
 
 	public int getAmPmValue() {
 		return _amPmValue;
+	}
+
+	public String getAutoComplete() {
+		return _autoComplete;
 	}
 
 	public String getCssClass() {
@@ -77,12 +72,20 @@ public class InputTimeTag extends IncludeTag {
 		return _disabled;
 	}
 
+	public boolean isUseNamespace() {
+		return _useNamespace;
+	}
+
 	public void setAmPmParam(String amPmParam) {
 		_amPmParam = amPmParam;
 	}
 
 	public void setAmPmValue(int amPmValue) {
 		_amPmValue = amPmValue;
+	}
+
+	public void setAutoComplete(String autoComplete) {
+		_autoComplete = autoComplete;
 	}
 
 	public void setCssClass(String cssClass) {
@@ -109,6 +112,10 @@ public class InputTimeTag extends IncludeTag {
 		_hourValue = hourValue;
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	public void setMinuteInterval(int minuteInterval) {
 		_minuteInterval = minuteInterval;
 	}
@@ -129,12 +136,17 @@ public class InputTimeTag extends IncludeTag {
 		_timeFormat = timeFormat;
 	}
 
+	public void setUseNamespace(boolean useNamespace) {
+		_useNamespace = useNamespace;
+	}
+
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
 		_amPmParam = null;
 		_amPmValue = 0;
+		_autoComplete = null;
 		_cssClass = null;
 		_dateParam = null;
 		_dateValue = null;
@@ -146,6 +158,7 @@ public class InputTimeTag extends IncludeTag {
 		_minuteValue = 0;
 		_name = null;
 		_timeFormat = null;
+		_useNamespace = true;
 	}
 
 	@Override
@@ -159,6 +172,8 @@ public class InputTimeTag extends IncludeTag {
 			"liferay-ui:input-time:amPmParam", _amPmParam);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-time:amPmValue", String.valueOf(_amPmValue));
+		httpServletRequest.setAttribute(
+			"liferay-ui:input-time:autoComplete", _autoComplete);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-time:cssClass", _cssClass);
 		httpServletRequest.setAttribute(
@@ -181,12 +196,16 @@ public class InputTimeTag extends IncludeTag {
 		httpServletRequest.setAttribute("liferay-ui:input-time:name", _name);
 		httpServletRequest.setAttribute(
 			"liferay-ui:input-time:timeFormat", String.valueOf(_timeFormat));
+		httpServletRequest.setAttribute(
+			"liferay-ui:input-time:useNamespace",
+			String.valueOf(_useNamespace));
 	}
 
 	private static final String _PAGE = "/html/taglib/ui/input_time/page.jsp";
 
 	private String _amPmParam;
 	private int _amPmValue;
+	private String _autoComplete;
 	private String _cssClass;
 	private String _dateParam;
 	private Date _dateValue;
@@ -198,5 +217,6 @@ public class InputTimeTag extends IncludeTag {
 	private int _minuteValue;
 	private String _name;
 	private String _timeFormat;
+	private boolean _useNamespace = true;
 
 }

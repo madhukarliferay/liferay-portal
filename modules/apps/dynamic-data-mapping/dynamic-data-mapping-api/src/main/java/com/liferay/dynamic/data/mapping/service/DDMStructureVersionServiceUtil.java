@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DDMStructureVersion. This utility wraps
@@ -32,20 +26,14 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDMStructureVersionServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMStructureVersionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DDMStructureVersionServiceUtil} to access the ddm structure version remote service. Add custom service methods to <code>com.liferay.dynamic.data.mapping.service.impl.DDMStructureVersionServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.dynamic.data.mapping.model.DDMStructureVersion
-			getLatestStructureVersion(long structureId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStructureVersion getLatestStructureVersion(
+			long structureId)
+		throws PortalException {
 
 		return getService().getLatestStructureVersion(structureId);
 	}
@@ -59,54 +47,35 @@ public class DDMStructureVersionServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.dynamic.data.mapping.model.DDMStructureVersion
-			getStructureVersion(long structureVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDMStructureVersion getStructureVersion(
+			long structureVersionId)
+		throws PortalException {
 
 		return getService().getStructureVersion(structureVersionId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.mapping.model.DDMStructureVersion>
-				getStructureVersions(
-					long structureId, int start, int end,
-					com.liferay.portal.kernel.util.OrderByComparator
-						<com.liferay.dynamic.data.mapping.model.
-							DDMStructureVersion> orderByComparator)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDMStructureVersion> getStructureVersions(
+			long structureId, int start, int end,
+			OrderByComparator<DDMStructureVersion> orderByComparator)
+		throws PortalException {
 
 		return getService().getStructureVersions(
 			structureId, start, end, orderByComparator);
 	}
 
 	public static int getStructureVersionsCount(long structureId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getStructureVersionsCount(structureId);
 	}
 
 	public static DDMStructureVersionService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDMStructureVersionService, DDMStructureVersionService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDMStructureVersionService> _serviceSnapshot =
+		new Snapshot<>(
+			DDMStructureVersionServiceUtil.class,
 			DDMStructureVersionService.class);
-
-		ServiceTracker<DDMStructureVersionService, DDMStructureVersionService>
-			serviceTracker =
-				new ServiceTracker
-					<DDMStructureVersionService, DDMStructureVersionService>(
-						bundle.getBundleContext(),
-						DDMStructureVersionService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

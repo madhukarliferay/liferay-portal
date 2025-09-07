@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.editor.configuration.internal;
@@ -18,14 +9,12 @@ import com.liferay.message.boards.constants.MBPortletKeys;
 import com.liferay.portal.kernel.editor.configuration.EditorOptions;
 import com.liferay.portal.kernel.editor.configuration.EditorOptionsContributor;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 
 import java.util.Map;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -34,10 +23,10 @@ import org.osgi.service.component.annotations.Component;
  */
 @Component(
 	property = {
-		"editor.name=alloyeditor", "editor.name=alloyeditor_bbcode",
 		"editor.name=ckeditor", "editor.name=ckeditor_bbcode",
-		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS,
-		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN
+		"editor.name=ckeditor_classic",
+		"jakarta.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS,
+		"jakarta.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN
 	},
 	service = EditorOptionsContributor.class
 )
@@ -50,26 +39,29 @@ public class MBEditorOptionsContributor implements EditorOptionsContributor {
 		ThemeDisplay themeDisplay,
 		RequestBackedPortletURLFactory requestBackedPortletURLFactory) {
 
-		PortletURL portletURL = requestBackedPortletURLFactory.createActionURL(
-			PortletKeys.MESSAGE_BOARDS);
+		editorOptions.setUploadURL(
+			PortletURLBuilder.create(
+				requestBackedPortletURLFactory.createActionURL(
+					PortletKeys.MESSAGE_BOARDS)
+			).setActionName(
+				"/message_boards/upload_temp_image"
+			).setParameter(
+				"categoryId",
+				() -> {
+					Map<String, String> fileBrowserParamsMap =
+						(Map<String, String>)inputEditorTaglibAttributes.get(
+							"liferay-ui:input-editor:fileBrowserParams");
 
-		portletURL.setParameter(
-			ActionRequest.ACTION_NAME, "/message_boards/upload_temp_image");
+					long categoryId = 0;
 
-		Map<String, String> fileBrowserParamsMap =
-			(Map<String, String>)inputEditorTaglibAttributes.get(
-				"liferay-ui:input-editor:fileBrowserParams");
+					if (fileBrowserParamsMap != null) {
+						categoryId = GetterUtil.getLong(
+							fileBrowserParamsMap.get("categoryId"));
+					}
 
-		long categoryId = 0;
-
-		if (fileBrowserParamsMap != null) {
-			categoryId = GetterUtil.getLong(
-				fileBrowserParamsMap.get("categoryId"));
-		}
-
-		portletURL.setParameter("categoryId", String.valueOf(categoryId));
-
-		editorOptions.setUploadURL(portletURL.toString());
+					return categoryId;
+				}
+			).buildString());
 	}
 
 }

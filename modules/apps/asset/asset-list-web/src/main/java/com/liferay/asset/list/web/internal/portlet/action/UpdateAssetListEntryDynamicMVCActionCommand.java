@@ -1,25 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.web.internal.portlet.action;
 
 import com.liferay.asset.kernel.exception.DuplicateQueryRuleException;
-import com.liferay.asset.kernel.model.AssetQueryRule;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
 import com.liferay.asset.list.constants.AssetListPortletKeys;
 import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.list.service.AssetListEntryService;
+import com.liferay.asset.publisher.util.AssetQueryRule;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -30,14 +21,15 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 
 import org.apache.commons.lang.text.StrMatcher;
 import org.apache.commons.lang.text.StrTokenizer;
@@ -49,9 +41,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
-		"javax.portlet.name=" + AssetListPortletKeys.ASSET_LIST,
+		"jakarta.portlet.name=" + AssetListPortletKeys.ASSET_LIST,
 		"mvc.command.name=/asset_list/update_asset_list_entry_dynamic"
 	},
 	service = MVCActionCommand.class
@@ -78,32 +69,37 @@ public class UpdateAssetListEntryDynamicMVCActionCommand
 			actionRequest, "segmentsEntryId");
 
 		try {
-			UnicodeProperties properties = new UnicodeProperties(true);
+			UnicodeProperties unicodeProperties =
+				UnicodePropertiesBuilder.create(
+					true
+				).fastLoad(
+					assetListEntry.getTypeSettings(segmentsEntryId)
+				).build();
 
-			properties.fastLoad(
-				assetListEntry.getTypeSettings(segmentsEntryId));
+			_updateQueryLogic(actionRequest, unicodeProperties);
 
-			updateQueryLogic(actionRequest, properties);
-
-			UnicodeProperties typeSettingsProperties =
+			UnicodeProperties typeSettingsUnicodeProperties =
 				PropertiesParamUtil.getProperties(
 					actionRequest, "TypeSettingsProperties--");
 
-			properties.putAll(typeSettingsProperties);
+			unicodeProperties.putAll(typeSettingsUnicodeProperties);
 
 			_assetListEntryService.updateAssetListEntryTypeSettings(
-				assetListEntryId, segmentsEntryId, properties.toString());
+				assetListEntryId, segmentsEntryId,
+				unicodeProperties.toString());
 		}
-		catch (DuplicateQueryRuleException dqre) {
+		catch (DuplicateQueryRuleException duplicateQueryRuleException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(dqre, dqre);
+				_log.debug(duplicateQueryRuleException);
 			}
 
-			SessionErrors.add(actionRequest, dqre.getClass(), dqre);
+			SessionErrors.add(
+				actionRequest, duplicateQueryRuleException.getClass(),
+				duplicateQueryRuleException);
 		}
 	}
 
-	protected AssetQueryRule getQueryRule(
+	private AssetQueryRule _getQueryRule(
 		ActionRequest actionRequest, int index) {
 
 		boolean contains = ParamUtil.getBoolean(
@@ -137,8 +133,8 @@ public class UpdateAssetListEntryDynamicMVCActionCommand
 		return new AssetQueryRule(contains, andOperator, name, values);
 	}
 
-	protected void updateQueryLogic(
-			ActionRequest actionRequest, UnicodeProperties properties)
+	private void _updateQueryLogic(
+			ActionRequest actionRequest, UnicodeProperties unicodeProperties)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -155,20 +151,20 @@ public class UpdateAssetListEntryDynamicMVCActionCommand
 		List<AssetQueryRule> queryRules = new ArrayList<>();
 
 		for (int queryRulesIndex : queryRulesIndexes) {
-			AssetQueryRule queryRule = getQueryRule(
+			AssetQueryRule queryRule = _getQueryRule(
 				actionRequest, queryRulesIndex);
 
-			validateQueryRule(userId, groupId, queryRules, queryRule);
+			_validateQueryRule(userId, groupId, queryRules, queryRule);
 
 			queryRules.add(queryRule);
 
-			properties.put(
+			unicodeProperties.put(
 				"queryContains" + i, String.valueOf(queryRule.isContains()));
-			properties.put(
+			unicodeProperties.put(
 				"queryAndOperator" + i,
 				String.valueOf(queryRule.isAndOperator()));
-			properties.put("queryName" + i, queryRule.getName());
-			properties.put(
+			unicodeProperties.put("queryName" + i, queryRule.getName());
+			unicodeProperties.put(
 				"queryValues" + i, StringUtil.merge(queryRule.getValues()));
 
 			i++;
@@ -176,21 +172,21 @@ public class UpdateAssetListEntryDynamicMVCActionCommand
 
 		// Clear previous preferences that are now blank
 
-		String value = properties.getProperty("queryValues" + i);
+		String value = unicodeProperties.getProperty("queryValues" + i);
 
 		while (Validator.isNotNull(value)) {
-			properties.remove("queryContains" + i);
-			properties.remove("queryAndOperator" + i);
-			properties.remove("queryName" + i);
-			properties.remove("queryValues" + i);
+			unicodeProperties.remove("queryContains" + i);
+			unicodeProperties.remove("queryAndOperator" + i);
+			unicodeProperties.remove("queryName" + i);
+			unicodeProperties.remove("queryValues" + i);
 
 			i++;
 
-			value = properties.getProperty("queryValues" + i);
+			value = unicodeProperties.getProperty("queryValues" + i);
 		}
 	}
 
-	protected void validateQueryRule(
+	private void _validateQueryRule(
 			long userId, long groupId, List<AssetQueryRule> queryRules,
 			AssetQueryRule queryRule)
 		throws Exception {

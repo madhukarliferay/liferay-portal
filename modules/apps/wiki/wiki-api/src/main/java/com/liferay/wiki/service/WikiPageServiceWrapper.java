@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.wiki.model.WikiPage;
 
 /**
  * Provides a wrapper for {@link WikiPageService}.
@@ -26,17 +18,16 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class WikiPageServiceWrapper
 	implements ServiceWrapper<WikiPageService>, WikiPageService {
 
+	public WikiPageServiceWrapper() {
+		this(null);
+	}
+
 	public WikiPageServiceWrapper(WikiPageService wikiPageService) {
 		_wikiPageService = wikiPageService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link WikiPageServiceUtil} to access the wiki page remote service. Add custom service methods to <code>com.liferay.wiki.service.impl.WikiPageServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.wiki.model.WikiPage addPage(
+	public WikiPage addPage(
 			long nodeId, String title, String content, String summary,
 			boolean minorEdit,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -46,8 +37,14 @@ public class WikiPageServiceWrapper
 			nodeId, title, content, summary, minorEdit, serviceContext);
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #addPage(String,
+	 long, String, String, String, boolean, String, String,
+	 String, ServiceContext)}
+	 */
+	@Deprecated
 	@Override
-	public com.liferay.wiki.model.WikiPage addPage(
+	public WikiPage addPage(
 			long nodeId, String title, String content, String summary,
 			boolean minorEdit, String format, String parentTitle,
 			String redirectTitle,
@@ -57,6 +54,34 @@ public class WikiPageServiceWrapper
 		return _wikiPageService.addPage(
 			nodeId, title, content, summary, minorEdit, format, parentTitle,
 			redirectTitle, serviceContext);
+	}
+
+	@Override
+	public WikiPage addPage(
+			String externalReferenceCode, long nodeId, String title,
+			double version, String content, String summary, boolean minorEdit,
+			String format, boolean head, String parentTitle,
+			String redirectTitle,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageService.addPage(
+			externalReferenceCode, nodeId, title, version, content, summary,
+			minorEdit, format, head, parentTitle, redirectTitle,
+			serviceContext);
+	}
+
+	@Override
+	public WikiPage addPage(
+			String externalReferenceCode, long nodeId, String title,
+			String content, String summary, boolean minorEdit, String format,
+			String parentTitle, String redirectTitle,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageService.addPage(
+			externalReferenceCode, nodeId, title, content, summary, minorEdit,
+			format, parentTitle, redirectTitle, serviceContext);
 	}
 
 	@Override
@@ -168,16 +193,33 @@ public class WikiPageServiceWrapper
 		_wikiPageService.discardDraft(nodeId, title, version);
 	}
 
+	/**
+	 * Returns the latest wiki page matching the group and the external
+	 * reference code
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the latest matching wiki page, or <code>null</code> if no
+	 matching wiki page could be found
+	 */
 	@Override
-	public com.liferay.wiki.model.WikiPage fetchPage(
-			long nodeId, String title, double version)
+	public WikiPage fetchLatestPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageService.fetchLatestPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	@Override
+	public WikiPage fetchPage(long nodeId, String title, double version)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.fetchPage(nodeId, title, version);
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getChildren(
+	public java.util.List<WikiPage> getChildren(
 			long groupId, long nodeId, boolean head, String parentTitle)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -185,16 +227,32 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getDraftPage(
-			long nodeId, String title)
+	public WikiPage getDraftPage(long nodeId, String title)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getDraftPage(nodeId, title);
 	}
 
+	/**
+	 * Returns the latest wiki page matching the group and the external
+	 * reference code
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the latest matching wiki page
+	 * @throws PortalException if a portal exception occurred
+	 */
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getNodePages(
-			long nodeId, int max)
+	public WikiPage getLatestPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageService.getLatestPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	@Override
+	public java.util.List<WikiPage> getNodePages(long nodeId, int max)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getNodePages(nodeId, max);
@@ -213,7 +271,7 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getOrphans(
+	public java.util.List<WikiPage> getOrphans(
 			com.liferay.wiki.model.WikiNode node)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -231,70 +289,74 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getPage(long pageId)
+	public WikiPage getPage(long pageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPage(pageId);
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getPage(
-			long groupId, long nodeId, String title)
+	public WikiPage getPage(long groupId, long nodeId, String title)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPage(groupId, nodeId, title);
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getPage(long nodeId, String title)
+	public WikiPage getPage(long nodeId, String title)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPage(nodeId, title);
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getPage(
-			long nodeId, String title, Boolean head)
+	public WikiPage getPage(long nodeId, String title, Boolean head)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPage(nodeId, title, head);
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage getPage(
-			long nodeId, String title, double version)
+	public WikiPage getPage(long nodeId, String title, double version)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPage(nodeId, title, version);
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getPages(
-			long groupId, long nodeId, boolean head, int status, int start,
-			int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.wiki.model.WikiPage> obc)
+	public WikiPage getPageByPageId(long pageId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _wikiPageService.getPages(
-			groupId, nodeId, head, status, start, end, obc);
+		return _wikiPageService.getPageByPageId(pageId);
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getPages(
+	public java.util.List<WikiPage> getPages(
+			long groupId, long nodeId, boolean head, int status, int start,
+			int end,
+			com.liferay.portal.kernel.util.OrderByComparator<WikiPage>
+				orderByComparator)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageService.getPages(
+			groupId, nodeId, head, status, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<WikiPage> getPages(
 			long groupId, long nodeId, boolean head, long userId,
 			boolean includeOwner, int status, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.wiki.model.WikiPage> obc)
+			com.liferay.portal.kernel.util.OrderByComparator<WikiPage>
+				orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.getPages(
 			groupId, nodeId, head, userId, includeOwner, status, start, end,
-			obc);
+			orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getPages(
+	public java.util.List<WikiPage> getPages(
 			long groupId, long userId, long nodeId, int status, int start,
 			int end)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -340,7 +402,7 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.wiki.model.WikiPage> getRecentChanges(
+	public java.util.List<WikiPage> getRecentChanges(
 			long groupId, long nodeId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -372,16 +434,14 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage movePageToTrash(
-			long nodeId, String title)
+	public WikiPage movePageToTrash(long nodeId, String title)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.movePageToTrash(nodeId, title);
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage movePageToTrash(
-			long nodeId, String title, double version)
+	public WikiPage movePageToTrash(long nodeId, String title, double version)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageService.movePageToTrash(nodeId, title, version);
@@ -413,7 +473,7 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage revertPage(
+	public WikiPage revertPage(
 			long nodeId, String title, double version,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -437,7 +497,7 @@ public class WikiPageServiceWrapper
 	}
 
 	@Override
-	public com.liferay.wiki.model.WikiPage updatePage(
+	public WikiPage updatePage(
 			long nodeId, String title, double version, String content,
 			String summary, boolean minorEdit, String format,
 			String parentTitle, String redirectTitle,

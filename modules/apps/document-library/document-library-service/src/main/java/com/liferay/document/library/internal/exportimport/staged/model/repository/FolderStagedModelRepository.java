@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.exportimport.staged.model.repository;
 
-import com.liferay.document.library.exportimport.data.handler.DLExportableRepositoryPublisher;
+import com.liferay.document.library.internal.util.DLExportableRepositoryPublisherUtil;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
@@ -24,8 +15,6 @@ import com.liferay.exportimport.kernel.lar.PortletDataException;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
-import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
-import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
@@ -34,13 +23,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.repository.model.Folder;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -102,8 +87,9 @@ public class FolderStagedModelRepository
 	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
 		PortletDataContext portletDataContext) {
 
-		Collection<Long> exportableRepositoryIds = _getExportableRepositoryIds(
-			portletDataContext);
+		Collection<Long> exportableRepositoryIds =
+			DLExportableRepositoryPublisherUtil.publish(
+				portletDataContext.getScopeGroupId());
 
 		ExportActionableDynamicQuery exportActionableDynamicQuery =
 			_dlFolderLocalService.getExportActionableDynamicQuery(
@@ -127,11 +113,9 @@ public class FolderStagedModelRepository
 					return;
 				}
 
-				Folder folder = _dlAppLocalService.getFolder(
-					dlFolder.getFolderId());
-
 				StagedModelDataHandlerUtil.exportStagedModel(
-					portletDataContext, folder);
+					portletDataContext,
+					_dlAppLocalService.getFolder(dlFolder.getFolderId()));
 			});
 		exportActionableDynamicQuery.setStagedModelType(
 			new StagedModelType(DLFolderConstants.getClassName()));
@@ -165,43 +149,8 @@ public class FolderStagedModelRepository
 		throw new UnsupportedOperationException();
 	}
 
-	@Activate
-	protected void activate(BundleContext bundleContext) {
-		_dlExportableRepositoryPublishers = ServiceTrackerListFactory.open(
-			bundleContext, DLExportableRepositoryPublisher.class);
-	}
-
-	@Deactivate
-	protected void deactivate() {
-		if (_dlExportableRepositoryPublishers != null) {
-			_dlExportableRepositoryPublishers.close();
-		}
-	}
-
-	private Collection<Long> _getExportableRepositoryIds(
-		PortletDataContext portletDataContext) {
-
-		Collection<Long> exportableRepositoryIds = new HashSet<>();
-
-		exportableRepositoryIds.add(portletDataContext.getScopeGroupId());
-
-		for (DLExportableRepositoryPublisher dlExportableRepositoryPublisher :
-				_dlExportableRepositoryPublishers) {
-
-			dlExportableRepositoryPublisher.publish(
-				portletDataContext.getScopeGroupId(),
-				exportableRepositoryIds::add);
-		}
-
-		return exportableRepositoryIds;
-	}
-
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
-
-	private ServiceTrackerList
-		<DLExportableRepositoryPublisher, DLExportableRepositoryPublisher>
-			_dlExportableRepositoryPublishers;
 
 	@Reference
 	private DLFolderLocalService _dlFolderLocalService;

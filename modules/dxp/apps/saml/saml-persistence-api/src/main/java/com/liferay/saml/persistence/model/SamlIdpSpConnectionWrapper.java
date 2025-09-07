@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.model;
@@ -48,7 +39,6 @@ public class SamlIdpSpConnectionWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
-		attributes.put("samlSpEntityId", getSamlSpEntityId());
 		attributes.put("assertionLifetime", getAssertionLifetime());
 		attributes.put("attributeNames", getAttributeNames());
 		attributes.put("attributesEnabled", isAttributesEnabled());
@@ -62,6 +52,7 @@ public class SamlIdpSpConnectionWrapper
 		attributes.put("name", getName());
 		attributes.put("nameIdAttribute", getNameIdAttribute());
 		attributes.put("nameIdFormat", getNameIdFormat());
+		attributes.put("samlSpEntityId", getSamlSpEntityId());
 
 		return attributes;
 	}
@@ -103,12 +94,6 @@ public class SamlIdpSpConnectionWrapper
 
 		if (modifiedDate != null) {
 			setModifiedDate(modifiedDate);
-		}
-
-		String samlSpEntityId = (String)attributes.get("samlSpEntityId");
-
-		if (samlSpEntityId != null) {
-			setSamlSpEntityId(samlSpEntityId);
 		}
 
 		Integer assertionLifetime = (Integer)attributes.get(
@@ -185,6 +170,17 @@ public class SamlIdpSpConnectionWrapper
 		if (nameIdFormat != null) {
 			setNameIdFormat(nameIdFormat);
 		}
+
+		String samlSpEntityId = (String)attributes.get("samlSpEntityId");
+
+		if (samlSpEntityId != null) {
+			setSamlSpEntityId(samlSpEntityId);
+		}
+	}
+
+	@Override
+	public SamlIdpSpConnection cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -437,11 +433,6 @@ public class SamlIdpSpConnectionWrapper
 		return model.isEncryptionForced();
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a saml idp sp connection model instance should use the <code>SamlIdpSpConnection</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -657,6 +648,11 @@ public class SamlIdpSpConnectionWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

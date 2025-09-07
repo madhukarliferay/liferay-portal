@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.model.impl;
@@ -37,17 +28,17 @@ public class AssetCategoryCacheModel
 	implements CacheModel<AssetCategory>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof AssetCategoryCacheModel)) {
+		if (!(object instanceof AssetCategoryCacheModel)) {
 			return false;
 		}
 
 		AssetCategoryCacheModel assetCategoryCacheModel =
-			(AssetCategoryCacheModel)obj;
+			(AssetCategoryCacheModel)object;
 
 		if ((categoryId == assetCategoryCacheModel.categoryId) &&
 			(mvccVersion == assetCategoryCacheModel.mvccVersion)) {
@@ -77,7 +68,7 @@ public class AssetCategoryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(37);
+		StringBundler sb = new StringBundler(39);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -115,6 +106,8 @@ public class AssetCategoryCacheModel
 		sb.append(vocabularyId);
 		sb.append(", lastPublishDate=");
 		sb.append(lastPublishDate);
+		sb.append(", status=");
+		sb.append(status);
 		sb.append("}");
 
 		return sb.toString();
@@ -206,13 +199,17 @@ public class AssetCategoryCacheModel
 			assetCategoryImpl.setLastPublishDate(new Date(lastPublishDate));
 		}
 
+		assetCategoryImpl.setStatus(status);
+
 		assetCategoryImpl.resetOriginalValues();
 
 		return assetCategoryImpl;
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		ctCollectionId = objectInput.readLong();
@@ -233,11 +230,13 @@ public class AssetCategoryCacheModel
 		parentCategoryId = objectInput.readLong();
 		treePath = objectInput.readUTF();
 		name = objectInput.readUTF();
-		title = objectInput.readUTF();
-		description = objectInput.readUTF();
+		title = (String)objectInput.readObject();
+		description = (String)objectInput.readObject();
 
 		vocabularyId = objectInput.readLong();
 		lastPublishDate = objectInput.readLong();
+
+		status = objectInput.readInt();
 	}
 
 	@Override
@@ -295,21 +294,23 @@ public class AssetCategoryCacheModel
 		}
 
 		if (title == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(title);
+			objectOutput.writeObject(title);
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		objectOutput.writeLong(vocabularyId);
 		objectOutput.writeLong(lastPublishDate);
+
+		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
@@ -330,5 +331,6 @@ public class AssetCategoryCacheModel
 	public String description;
 	public long vocabularyId;
 	public long lastPublishDate;
+	public int status;
 
 }

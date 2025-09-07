@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.PortletConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -27,18 +21,21 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.BaseModelPermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionRegistryUtil;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.TeamLocalService;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.service.permission.TeamPermissionUtil;
+import com.liferay.portal.kernel.service.persistence.RolePersistence;
+import com.liferay.portal.kernel.service.persistence.TeamPersistence;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.service.base.PermissionServiceBaseImpl;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
 
 import java.util.List;
 
@@ -59,6 +56,7 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
+	@Transactional(readOnly = true)
 	public void checkPermission(long groupId, String name, long primKey)
 		throws PortalException {
 
@@ -74,13 +72,14 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 	 * @param primKey the primary key of the service
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public void checkPermission(long groupId, String name, String primKey)
 		throws PortalException {
 
 		checkPermission(getPermissionChecker(), groupId, name, primKey);
 	}
 
-	protected boolean checkBaseModelPermission(
+	protected boolean checkModelResourcePermission(
 			PermissionChecker permissionChecker, long groupId, String className,
 			long classPK)
 		throws PortalException {
@@ -90,7 +89,7 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 		if (className.equals(Team.class.getName())) {
 			className = Group.class.getName();
 
-			Team team = teamLocalService.fetchTeam(classPK);
+			Team team = _teamLocalService.fetchTeam(classPK);
 
 			classPK = team.getGroupId();
 
@@ -98,37 +97,27 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 		}
 
 		ModelResourcePermission<?> modelResourcePermission =
-			_modelPermissions.getService(className);
+			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
+				className);
 
-		if (modelResourcePermission != null) {
-			PortletResourcePermission portletResourcePermission =
-				modelResourcePermission.getPortletResourcePermission();
+		if (modelResourcePermission == null) {
+			return false;
+		}
 
-			if (portletResourcePermission == null) {
-				modelResourcePermission.check(
-					permissionChecker, classPK, actionId);
+		PortletResourcePermission portletResourcePermission =
+			modelResourcePermission.getPortletResourcePermission();
 
-				return true;
-			}
-
-			ModelResourcePermissionHelper.check(
-				modelResourcePermission, permissionChecker, groupId, classPK,
-				actionId);
+		if (portletResourcePermission == null) {
+			modelResourcePermission.check(permissionChecker, classPK, actionId);
 
 			return true;
 		}
 
-		BaseModelPermissionChecker baseModelPermissionChecker =
-			_baseModelPermissionCheckers.getService(className);
+		ModelResourcePermissionUtil.check(
+			modelResourcePermission, permissionChecker, groupId, classPK,
+			actionId);
 
-		if (baseModelPermissionChecker != null) {
-			baseModelPermissionChecker.checkBaseModel(
-				permissionChecker, groupId, classPK, actionId);
-
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	protected void checkPermission(
@@ -136,7 +125,7 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 			String primKey)
 		throws PortalException {
 
-		if (checkBaseModelPermission(
+		if (checkModelResourcePermission(
 				permissionChecker, groupId, name,
 				GetterUtil.getLong(primKey))) {
 
@@ -173,12 +162,15 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 						return;
 					}
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
 				}
 			}
 
 			ResourcePermission resourcePermission =
-				resourcePermissionLocalService.getResourcePermission(
+				_resourcePermissionLocalService.getResourcePermission(
 					permissionChecker.getCompanyId(), name,
 					ResourceConstants.SCOPE_INDIVIDUAL, primKey,
 					permissionChecker.getOwnerRoleId());
@@ -195,11 +187,12 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 			if (name.equals(Role.class.getName())) {
 				long roleId = GetterUtil.getLong(primKey);
 
-				role = rolePersistence.findByPrimaryKey(roleId);
+				role = _rolePersistence.findByPrimaryKey(roleId);
 			}
 
 			if ((role != null) && role.isTeam()) {
-				Team team = teamPersistence.findByPrimaryKey(role.getClassPK());
+				Team team = _teamPersistence.findByPrimaryKey(
+					role.getClassPK());
 
 				TeamPermissionUtil.check(
 					permissionChecker, team, ActionKeys.PERMISSIONS);
@@ -221,12 +214,19 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 		}
 	}
 
-	private static final ServiceTrackerMap<String, BaseModelPermissionChecker>
-		_baseModelPermissionCheckers =
-			ServiceTrackerCollections.openSingleValueMap(
-				BaseModelPermissionChecker.class, "model.class.name");
-	private static final ServiceTrackerMap<String, ModelResourcePermission>
-		_modelPermissions = ServiceTrackerCollections.openSingleValueMap(
-			ModelResourcePermission.class, "model.class.name");
+	private static final Log _log = LogFactoryUtil.getLog(
+		PermissionServiceImpl.class);
+
+	@BeanReference(type = ResourcePermissionLocalService.class)
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@BeanReference(type = RolePersistence.class)
+	private RolePersistence _rolePersistence;
+
+	@BeanReference(type = TeamLocalService.class)
+	private TeamLocalService _teamLocalService;
+
+	@BeanReference(type = TeamPersistence.class)
+	private TeamPersistence _teamPersistence;
 
 }

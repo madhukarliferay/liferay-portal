@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.kernel.store;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
 
 import java.io.File;
 import java.io.InputStream;
@@ -43,129 +35,47 @@ import java.io.InputStream;
  * String dirName = "portlet_name/1234";
  *
  * try {
- * DLStoreUtil.addDirectory(companyId, repositoryId, dirName);
+ *     DLStoreUtil.addDirectory(companyId, repositoryId, dirName);
  * }
  * catch (PortalException pe) {
  * }
  *
  * DLStoreUtil.addFile(
- * companyId, repositoryId, dirName + "/" + fileName, file);
+ *     companyId, repositoryId, dirName + "/" + fileName, file);
  * </code>
  * </pre></p>
  *
  * @author Brian Wing Shun Chan
  * @author Alexander Chow
  * @author Edward Han
+ * @author Raymond Augé
  * @see    DLStoreImpl
  */
 public class DLStoreUtil {
 
-	/**
-	 * Adds a file based on a byte array.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param bytes the files's data
-	 */
-	public static void addFile(
-			long companyId, long repositoryId, String fileName,
-			boolean validateFileExtension, byte[] bytes)
+	public static void addFile(DLStoreRequest dlStoreRequest, byte[] bytes)
 		throws PortalException {
 
-		getStore().addFile(
-			companyId, repositoryId, fileName, validateFileExtension, bytes);
+		DLStore dlStore = _getDLStore();
+
+		dlStore.addFile(dlStoreRequest, bytes);
 	}
 
-	/**
-	 * Adds a file based on a {@link File} object.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param file Name the file name
-	 */
-	public static void addFile(
-			long companyId, long repositoryId, String fileName,
-			boolean validateFileExtension, File file)
+	public static void addFile(DLStoreRequest dlStoreRequest, File file)
 		throws PortalException {
 
-		getStore().addFile(
-			companyId, repositoryId, fileName, validateFileExtension, file);
+		DLStore dlStore = _getDLStore();
+
+		dlStore.addFile(dlStoreRequest, file);
 	}
 
-	/**
-	 * Adds a file based on a {@link InputStream} object.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param is the files's data
-	 */
 	public static void addFile(
-			long companyId, long repositoryId, String fileName,
-			boolean validateFileExtension, InputStream is)
+			DLStoreRequest dlStoreRequest, InputStream inputStream)
 		throws PortalException {
 
-		getStore().addFile(
-			companyId, repositoryId, fileName, validateFileExtension, is);
-	}
+		DLStore dlStore = _getDLStore();
 
-	/**
-	 * Adds a file based on a byte array. Enforces validation of file's
-	 * extension.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param bytes the files's data
-	 */
-	public static void addFile(
-			long companyId, long repositoryId, String fileName, byte[] bytes)
-		throws PortalException {
-
-		getStore().addFile(companyId, repositoryId, fileName, bytes);
-	}
-
-	/**
-	 * Adds a file based on a {@link File} object. Enforces validation of file's
-	 * extension.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param file Name the file name
-	 */
-	public static void addFile(
-			long companyId, long repositoryId, String fileName, File file)
-		throws PortalException {
-
-		getStore().addFile(companyId, repositoryId, fileName, file);
-	}
-
-	/**
-	 * Adds a file based on an {@link InputStream} object. Enforces validation
-	 * of file's extension.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param is the files's data
-	 */
-	public static void addFile(
-			long companyId, long repositoryId, String fileName, InputStream is)
-		throws PortalException {
-
-		getStore().addFile(companyId, repositoryId, fileName, is);
+		dlStore.addFile(dlStoreRequest, inputStream);
 	}
 
 	/**
@@ -183,7 +93,9 @@ public class DLStoreUtil {
 			String fromVersionLabel, String toVersionLabel)
 		throws PortalException {
 
-		getStore().copyFileVersion(
+		DLStore dlStore = _getDLStore();
+
+		dlStore.copyFileVersion(
 			companyId, repositoryId, fileName, fromVersionLabel,
 			toVersionLabel);
 	}
@@ -197,9 +109,12 @@ public class DLStoreUtil {
 	 * @param dirName the directory's name
 	 */
 	public static void deleteDirectory(
-		long companyId, long repositoryId, String dirName) {
+			long companyId, long repositoryId, String dirName)
+		throws PortalException {
 
-		getStore().deleteDirectory(companyId, repositoryId, dirName);
+		DLStore dlStore = _getDLStore();
+
+		dlStore.deleteDirectory(companyId, repositoryId, dirName);
 	}
 
 	/**
@@ -215,7 +130,9 @@ public class DLStoreUtil {
 			long companyId, long repositoryId, String fileName)
 		throws PortalException {
 
-		getStore().deleteFile(companyId, repositoryId, fileName);
+		DLStore dlStore = _getDLStore();
+
+		dlStore.deleteFile(companyId, repositoryId, fileName);
 	}
 
 	/**
@@ -232,64 +149,9 @@ public class DLStoreUtil {
 			String versionLabel)
 		throws PortalException {
 
-		getStore().deleteFile(companyId, repositoryId, fileName, versionLabel);
-	}
+		DLStore dlStore = _getDLStore();
 
-	/**
-	 * Returns the file as a byte array.
-	 *
-	 * @param  companyId the primary key of the company
-	 * @param  repositoryId the primary key of the data repository (optionally
-	 *         {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param  fileName the file's name
-	 * @return Returns the byte array with the file's name
-	 */
-	public static byte[] getFileAsBytes(
-			long companyId, long repositoryId, String fileName)
-		throws PortalException {
-
-		return getStore().getFileAsBytes(companyId, repositoryId, fileName);
-	}
-
-	/**
-	 * Returns the file as a byte array.
-	 *
-	 * @param  companyId the primary key of the company
-	 * @param  repositoryId the primary key of the data repository (optionally
-	 *         {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param  fileName the file's name
-	 * @param  versionLabel the file's version label
-	 * @return Returns the byte array with the file's name
-	 */
-	public static byte[] getFileAsBytes(
-			long companyId, long repositoryId, String fileName,
-			String versionLabel)
-		throws PortalException {
-
-		return getStore().getFileAsBytes(
-			companyId, repositoryId, fileName, versionLabel);
-	}
-
-	/**
-	 * Returns the file as an {@link InputStream} object.
-	 *
-	 * <p>
-	 * If using an S3 store, it is preferable for performance reasons to use
-	 * this method to get the file as an {@link InputStream} instead of using
-	 * other methods to get the file as a {@link File}.
-	 * </p>
-	 *
-	 * @param  companyId the primary key of the company
-	 * @param  repositoryId the primary key of the data repository (optionally
-	 *         {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param  fileName the file's name
-	 * @return Returns the {@link InputStream} object with the file's name
-	 */
-	public static InputStream getFileAsStream(
-			long companyId, long repositoryId, String fileName)
-		throws PortalException {
-
-		return getStore().getFileAsStream(companyId, repositoryId, fileName);
+		dlStore.deleteFile(companyId, repositoryId, fileName, versionLabel);
 	}
 
 	/**
@@ -313,7 +175,9 @@ public class DLStoreUtil {
 			String versionLabel)
 		throws PortalException {
 
-		return getStore().getFileAsStream(
+		DLStore dlStore = _getDLStore();
+
+		return dlStore.getFileAsStream(
 			companyId, repositoryId, fileName, versionLabel);
 	}
 
@@ -330,7 +194,9 @@ public class DLStoreUtil {
 			long companyId, long repositoryId, String dirName)
 		throws PortalException {
 
-		return getStore().getFileNames(companyId, repositoryId, dirName);
+		DLStore dlStore = _getDLStore();
+
+		return dlStore.getFileNames(companyId, repositoryId, dirName);
 	}
 
 	/**
@@ -346,7 +212,9 @@ public class DLStoreUtil {
 			long companyId, long repositoryId, String fileName)
 		throws PortalException {
 
-		return getStore().getFileSize(companyId, repositoryId, fileName);
+		DLStore dlStore = _getDLStore();
+
+		return dlStore.getFileSize(companyId, repositoryId, fileName);
 	}
 
 	/**
@@ -356,24 +224,7 @@ public class DLStoreUtil {
 	 * @return Returns the {@link DLStore} object
 	 */
 	public static DLStore getStore() {
-		return _store;
-	}
-
-	/**
-	 * Returns <code>true</code> if the file exists.
-	 *
-	 * @param  companyId the primary key of the company
-	 * @param  repositoryId the primary key of the data repository (optionally
-	 *         {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param  fileName the file's name
-	 * @return <code>true</code> if the file exists; <code>false</code>
-	 *         otherwise
-	 */
-	public static boolean hasFile(
-			long companyId, long repositoryId, String fileName)
-		throws PortalException {
-
-		return getStore().hasFile(companyId, repositoryId, fileName);
+		return _getDLStore();
 	}
 
 	/**
@@ -392,60 +243,44 @@ public class DLStoreUtil {
 			String versionLabel)
 		throws PortalException {
 
-		return getStore().hasFile(
-			companyId, repositoryId, fileName, versionLabel);
+		DLStore dlStore = _getDLStore();
+
+		return dlStore.hasFile(companyId, repositoryId, fileName, versionLabel);
 	}
 
-	public static boolean isValidName(String name) {
-		return getStore().isValidName(name);
+	public static void updateFile(DLStoreRequest dlStoreRequest, File file)
+		throws PortalException {
+
+		DLStore dlStore = _getDLStore();
+
+		dlStore.updateFile(dlStoreRequest, file);
+	}
+
+	public static void updateFile(
+			DLStoreRequest dlStoreRequest, InputStream inputStream)
+		throws PortalException {
+
+		DLStore dlStore = _getDLStore();
+
+		dlStore.updateFile(dlStoreRequest, inputStream);
 	}
 
 	/**
-	 * Updates a file based on a {@link File} object.
+	 * Moves a file to a new data repository.
 	 *
 	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param fileExtension the file's extension
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param versionLabel the file's new version label
-	 * @param sourceFileName the new file's original name
-	 * @param file Name the file name
+	 * @param repositoryId the primary key of the data repository
+	 * @param newRepositoryId the primary key of the new data repository
+	 * @param fileName the file's name
 	 */
 	public static void updateFile(
-			long companyId, long repositoryId, String fileName,
-			String fileExtension, boolean validateFileExtension,
-			String versionLabel, String sourceFileName, File file)
+			long companyId, long repositoryId, long newRepositoryId,
+			String fileName)
 		throws PortalException {
 
-		getStore().updateFile(
-			companyId, repositoryId, fileName, fileExtension,
-			validateFileExtension, versionLabel, sourceFileName, file);
-	}
+		DLStore dlStore = _getDLStore();
 
-	/**
-	 * Updates a file based on a {@link InputStream} object.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param repositoryId the primary key of the data repository (optionally
-	 *        {@link com.liferay.portal.kernel.model.CompanyConstants#SYSTEM})
-	 * @param fileName the file name
-	 * @param fileExtension the file's extension
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param versionLabel the file's new version label
-	 * @param sourceFileName the new file's original name
-	 * @param is the new file's data
-	 */
-	public static void updateFile(
-			long companyId, long repositoryId, String fileName,
-			String fileExtension, boolean validateFileExtension,
-			String versionLabel, String sourceFileName, InputStream is)
-		throws PortalException {
-
-		getStore().updateFile(
-			companyId, repositoryId, fileName, fileExtension,
-			validateFileExtension, versionLabel, sourceFileName, is);
+		dlStore.updateFile(companyId, repositoryId, newRepositoryId, fileName);
 	}
 
 	/**
@@ -465,127 +300,29 @@ public class DLStoreUtil {
 			String fromVersionLabel, String toVersionLabel)
 		throws PortalException {
 
-		getStore().updateFileVersion(
+		DLStore dlStore = _getDLStore();
+
+		dlStore.updateFileVersion(
 			companyId, repositoryId, fileName, fromVersionLabel,
 			toVersionLabel);
 	}
 
-	/**
-	 * Validates a file's name.
-	 *
-	 * @param fileName the file's name
-	 * @param validateFileExtension whether to validate the file's extension
-	 */
-	public static void validate(String fileName, boolean validateFileExtension)
-		throws PortalException {
-
-		getStore().validate(fileName, validateFileExtension);
+	public void setDLStore(DLStore dlStore) {
+		_dlStore = dlStore;
 	}
 
-	/**
-	 * Validates a file's name and data.
-	 *
-	 * @param fileName the file's name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param bytes the file's data (optionally <code>null</code>)
-	 */
-	public static void validate(
-			String fileName, boolean validateFileExtension, byte[] bytes)
-		throws PortalException {
+	private static DLStore _getDLStore() {
+		DLStore dlStore = _storeSnapshot.get();
 
-		getStore().validate(fileName, validateFileExtension, bytes);
+		if (dlStore != null) {
+			return dlStore;
+		}
+
+		return _dlStore;
 	}
 
-	/**
-	 * Validates a file's name and data.
-	 *
-	 * @param fileName the file's name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param file Name the file's name
-	 */
-	public static void validate(
-			String fileName, boolean validateFileExtension, File file)
-		throws PortalException {
-
-		getStore().validate(fileName, validateFileExtension, file);
-	}
-
-	/**
-	 * Validates a file's name and data.
-	 *
-	 * @param fileName the file's name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param is the file's data (optionally <code>null</code>)
-	 */
-	public static void validate(
-			String fileName, boolean validateFileExtension, InputStream is)
-		throws PortalException {
-
-		getStore().validate(fileName, validateFileExtension, is);
-	}
-
-	public static void validate(
-			String fileName, String fileExtension, String sourceFileName,
-			boolean validateFileExtension)
-		throws PortalException {
-
-		getStore().validate(
-			fileName, fileExtension, sourceFileName, validateFileExtension);
-	}
-
-	/**
-	 * Validates a file's name and data.
-	 *
-	 * @param fileName the file's name
-	 * @param fileExtension the file's extension
-	 * @param sourceFileName the file's original name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param file Name the file's name
-	 */
-	public static void validate(
-			String fileName, String fileExtension, String sourceFileName,
-			boolean validateFileExtension, File file)
-		throws PortalException {
-
-		getStore().validate(
-			fileName, fileExtension, sourceFileName, validateFileExtension,
-			file);
-	}
-
-	/**
-	 * Validates a file's name and data.
-	 *
-	 * @param fileName the file's name
-	 * @param fileExtension the file's extension
-	 * @param sourceFileName the file's original name
-	 * @param validateFileExtension whether to validate the file's extension
-	 * @param is the file's data (optionally <code>null</code>)
-	 */
-	public static void validate(
-			String fileName, String fileExtension, String sourceFileName,
-			boolean validateFileExtension, InputStream is)
-		throws PortalException {
-
-		getStore().validate(
-			fileName, fileExtension, sourceFileName, validateFileExtension, is);
-	}
-
-	public static void validateDirectoryName(String directoryName)
-		throws PortalException {
-
-		getStore().validateDirectoryName(directoryName);
-	}
-
-	/**
-	 * Set's the {@link DLStore} object. Used primarily by Spring and should not
-	 * be used by the client.
-	 *
-	 * @param store the {@link DLStore} object
-	 */
-	public void setStore(DLStore store) {
-		_store = store;
-	}
-
-	private static DLStore _store;
+	private static DLStore _dlStore;
+	private static volatile Snapshot<DLStore> _storeSnapshot = new Snapshot<>(
+		DLStoreUtil.class, DLStore.class, null, true);
 
 }

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.editor.configuration.internal;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.editor.configuration.BaseEditorConfigContributor;
 import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -25,9 +17,9 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.wiki.constants.WikiPortletKeys;
 
-import java.util.Map;
+import jakarta.portlet.ResourceURL;
 
-import javax.portlet.ResourceURL;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -38,9 +30,9 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	property = {
 		"editor.name=alloyeditor_creole", "editor.name=ckeditor_creole",
-		"javax.portlet.name=" + WikiPortletKeys.WIKI,
-		"javax.portlet.name=" + WikiPortletKeys.WIKI_ADMIN,
-		"javax.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI_ADMIN,
+		"jakarta.portlet.name=" + WikiPortletKeys.WIKI_DISPLAY,
 		"service.ranking:Integer=100"
 	},
 	service = EditorConfigContributor.class
@@ -54,48 +46,56 @@ public class WikiCreoleAutoCompleteEditorConfigContributor
 		ThemeDisplay themeDisplay,
 		RequestBackedPortletURLFactory requestBackedPortletURLFactory) {
 
-		JSONObject autoCompleteConfigJSONObject = JSONUtil.put(
-			"requestTemplate", "query={query}");
+		jsonObject.put(
+			"autocomplete",
+			JSONUtil.put(
+				"requestTemplate", "query={query}"
+			).put(
+				"trigger",
+				JSONUtil.put(
+					JSONUtil.put(
+						"resultFilters",
+						"function(query, results) {return results;}"
+					).put(
+						"resultTextLocator", "title"
+					).put(
+						"source",
+						() -> {
+							PortletDisplay portletDisplay =
+								themeDisplay.getPortletDisplay();
 
-		JSONObject triggerJSONObject = JSONUtil.put(
-			"resultFilters", "function(query, results) {return results;}"
-		).put(
-			"resultTextLocator", "title"
-		);
+							ResourceURL autoCompletePageTitleURL =
+								(ResourceURL)
+									requestBackedPortletURLFactory.
+										createResourceURL(
+											portletDisplay.getId());
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
+							Map<String, String> fileBrowserParams =
+								(Map<String, String>)
+									inputEditorTaglibAttributes.get(
+										"liferay-ui:input-editor:" +
+											"fileBrowserParams");
 
-		ResourceURL autoCompletePageTitleURL =
-			(ResourceURL)requestBackedPortletURLFactory.createResourceURL(
-				portletDisplay.getId());
+							autoCompletePageTitleURL.setParameter(
+								"nodeId", fileBrowserParams.get("nodeId"));
 
-		Map<String, String> fileBrowserParams =
-			(Map<String, String>)inputEditorTaglibAttributes.get(
-				"liferay-ui:input-editor:fileBrowserParams");
+							autoCompletePageTitleURL.setResourceID(
+								"/wiki/autocomplete_page_title");
 
-		autoCompletePageTitleURL.setParameter(
-			"nodeId", fileBrowserParams.get("nodeId"));
-
-		autoCompletePageTitleURL.setResourceID("/wiki/autocomplete_page_title");
-
-		String source =
-			autoCompletePageTitleURL.toString() + "&" +
-				_portal.getPortletNamespace(portletDisplay.getId());
-
-		triggerJSONObject.put(
-			"source", source
-		).put(
-			"term", "["
-		).put(
-			"tplReplace", "<a href=\"{title}\">{title}</a>"
-		).put(
-			"tplResults", "<span class=\"h5 text-truncate\">{title}</span>"
-		);
-
-		autoCompleteConfigJSONObject.put(
-			"trigger", JSONUtil.put(triggerJSONObject));
-
-		jsonObject.put("autocomplete", autoCompleteConfigJSONObject);
+							return StringBundler.concat(
+								autoCompletePageTitleURL, "&",
+								_portal.getPortletNamespace(
+									portletDisplay.getId()));
+						}
+					).put(
+						"term", "["
+					).put(
+						"tplReplace", "<a href=\"{title}\">{title}</a>"
+					).put(
+						"tplResults",
+						"<span class=\"h5 text-truncate\">{title}</span>"
+					))
+			));
 
 		String extraPlugins = jsonObject.getString("extraPlugins");
 

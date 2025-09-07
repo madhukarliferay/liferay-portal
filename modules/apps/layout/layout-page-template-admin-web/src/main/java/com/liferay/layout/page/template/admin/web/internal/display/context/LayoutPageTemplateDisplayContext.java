@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.admin.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.VerticalNavItemList;
+import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
 import com.liferay.layout.page.template.admin.web.internal.security.permission.resource.LayoutPageTemplateCollectionPermission;
 import com.liferay.layout.page.template.admin.web.internal.security.permission.resource.LayoutPageTemplatePermission;
 import com.liferay.layout.page.template.admin.web.internal.util.LayoutPageTemplatePortletUtil;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateCollectionServiceUtil;
@@ -27,21 +21,22 @@ import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Jürgen Kappler
@@ -49,53 +44,43 @@ import javax.servlet.http.HttpServletRequest;
 public class LayoutPageTemplateDisplayContext {
 
 	public LayoutPageTemplateDisplayContext(
-		RenderRequest renderRequest, RenderResponse renderResponse,
-		HttpServletRequest httpServletRequest) {
+		HttpServletRequest httpServletRequest, RenderRequest renderRequest,
+		RenderResponse renderResponse) {
 
+		_httpServletRequest = httpServletRequest;
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
-		_httpServletRequest = httpServletRequest;
 
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
 
 	public List<DropdownItem> getActionDropdownItems() {
-		return new DropdownItemList() {
-			{
-				add(
-					dropdownItem -> {
-						dropdownItem.setHref(
-							_renderResponse.createRenderURL(),
-							"mvcRenderCommandName",
-							"/layout_page_template/edit_layout_page_template_" +
-								"collection",
-							"redirect", _themeDisplay.getURLCurrent());
-						dropdownItem.setLabel(
-							LanguageUtil.get(_httpServletRequest, "new"));
-					});
+		return DropdownItemListBuilder.add(
+			dropdownItem -> {
+				dropdownItem.setHref(
+					_renderResponse.createRenderURL(), "mvcRenderCommandName",
+					"/layout_page_template_admin" +
+						"/edit_layout_page_template_collection",
+					"redirect", _themeDisplay.getURLCurrent());
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "new"));
 			}
-		};
+		).build();
 	}
 
 	public List<DropdownItem> getCollectionsDropdownItems() throws Exception {
-		return new DropdownItemList() {
-			{
-				if (LayoutPageTemplateCollectionPermission.contains(
-						_themeDisplay.getPermissionChecker(),
-						getLayoutPageTemplateCollectionId(),
-						ActionKeys.DELETE)) {
-
-					add(
-						dropdownItem -> {
-							dropdownItem.putData("action", "deleteCollections");
-							dropdownItem.setLabel(
-								LanguageUtil.get(
-									_httpServletRequest, "delete"));
-						});
-				}
+		return DropdownItemListBuilder.add(
+			() -> LayoutPageTemplateCollectionPermission.contains(
+				_themeDisplay.getPermissionChecker(),
+				getLayoutPageTemplateCollectionId(), ActionKeys.DELETE),
+			dropdownItem -> {
+				dropdownItem.putData("action", "deleteCollections");
+				dropdownItem.setIcon("trash");
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "delete"));
 			}
-		};
+		).build();
 	}
 
 	public String getKeywords() {
@@ -142,9 +127,15 @@ public class LayoutPageTemplateDisplayContext {
 					getLayoutPageTemplateCollectionId();
 		}
 
-		_layoutPageTemplateCollectionId = ParamUtil.getLong(
-			_httpServletRequest, "layoutPageTemplateCollectionId",
-			defaultLayoutPageTemplateCollectionId);
+		long layoutPageTemplateCollectionId = ParamUtil.getLong(
+			_httpServletRequest, "layoutPageTemplateCollectionId");
+
+		if (layoutPageTemplateCollectionId <= 0) {
+			layoutPageTemplateCollectionId =
+				defaultLayoutPageTemplateCollectionId;
+		}
+
+		_layoutPageTemplateCollectionId = layoutPageTemplateCollectionId;
 
 		return _layoutPageTemplateCollectionId;
 	}
@@ -159,75 +150,67 @@ public class LayoutPageTemplateDisplayContext {
 		_layoutPageTemplateCollections =
 			LayoutPageTemplateCollectionServiceUtil.
 				getLayoutPageTemplateCollections(
-					_themeDisplay.getScopeGroupId());
+					_themeDisplay.getScopeGroupId(),
+					LayoutPageTemplateEntryTypeConstants.BASIC);
 
 		return _layoutPageTemplateCollections;
 	}
 
-	public SearchContainer getLayoutPageTemplateEntriesSearchContainer() {
+	public SearchContainer<LayoutPageTemplateEntry>
+		getLayoutPageTemplateEntriesSearchContainer() {
+
 		if (_layoutPageTemplateEntriesSearchContainer != null) {
 			return _layoutPageTemplateEntriesSearchContainer;
 		}
 
-		SearchContainer layoutPageTemplateEntriesSearchContainer =
-			new SearchContainer(
+		SearchContainer<LayoutPageTemplateEntry>
+			layoutPageTemplateEntriesSearchContainer = new SearchContainer(
 				_renderRequest, getPortletURL(), null,
 				"there-are-no-page-templates");
 
-		layoutPageTemplateEntriesSearchContainer.setRowChecker(
-			new EmptyOnClickRowChecker(_renderResponse));
-
 		layoutPageTemplateEntriesSearchContainer.setOrderByCol(getOrderByCol());
-
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator =
+		layoutPageTemplateEntriesSearchContainer.setOrderByComparator(
 			LayoutPageTemplatePortletUtil.
 				getLayoutPageTemplateEntryOrderByComparator(
-					getOrderByCol(), getOrderByType());
-
-		layoutPageTemplateEntriesSearchContainer.setOrderByComparator(
-			orderByComparator);
-
+					getOrderByCol(), getOrderByType()));
 		layoutPageTemplateEntriesSearchContainer.setOrderByType(
 			getOrderByType());
 
-		List<LayoutPageTemplateEntry> layoutPageTemplateEntries = null;
-		int layoutPageTemplateEntriesCount = 0;
-
 		if (isSearch()) {
-			layoutPageTemplateEntries =
-				LayoutPageTemplateEntryServiceUtil.getLayoutPageTemplateEntries(
-					_themeDisplay.getScopeGroupId(),
-					getLayoutPageTemplateCollectionId(), getKeywords(),
-					layoutPageTemplateEntriesSearchContainer.getStart(),
-					layoutPageTemplateEntriesSearchContainer.getEnd(),
-					orderByComparator);
-
-			layoutPageTemplateEntriesCount =
+			layoutPageTemplateEntriesSearchContainer.setResultsAndTotal(
+				() ->
+					LayoutPageTemplateEntryServiceUtil.
+						getLayoutPageTemplateEntries(
+							_themeDisplay.getScopeGroupId(),
+							getLayoutPageTemplateCollectionId(), getKeywords(),
+							layoutPageTemplateEntriesSearchContainer.getStart(),
+							layoutPageTemplateEntriesSearchContainer.getEnd(),
+							layoutPageTemplateEntriesSearchContainer.
+								getOrderByComparator()),
 				LayoutPageTemplateEntryServiceUtil.
 					getLayoutPageTemplateEntriesCount(
 						_themeDisplay.getScopeGroupId(),
-						getLayoutPageTemplateCollectionId(), getKeywords());
+						getLayoutPageTemplateCollectionId(), getKeywords()));
 		}
 		else {
-			layoutPageTemplateEntries =
-				LayoutPageTemplateEntryServiceUtil.getLayoutPageTemplateEntries(
-					_themeDisplay.getScopeGroupId(),
-					getLayoutPageTemplateCollectionId(),
-					layoutPageTemplateEntriesSearchContainer.getStart(),
-					layoutPageTemplateEntriesSearchContainer.getEnd(),
-					orderByComparator);
-
-			layoutPageTemplateEntriesCount =
+			layoutPageTemplateEntriesSearchContainer.setResultsAndTotal(
+				() ->
+					LayoutPageTemplateEntryServiceUtil.
+						getLayoutPageTemplateEntries(
+							_themeDisplay.getScopeGroupId(),
+							getLayoutPageTemplateCollectionId(),
+							layoutPageTemplateEntriesSearchContainer.getStart(),
+							layoutPageTemplateEntriesSearchContainer.getEnd(),
+							layoutPageTemplateEntriesSearchContainer.
+								getOrderByComparator()),
 				LayoutPageTemplateEntryServiceUtil.
 					getLayoutPageTemplateEntriesCount(
 						_themeDisplay.getScopeGroupId(),
-						getLayoutPageTemplateCollectionId());
+						getLayoutPageTemplateCollectionId()));
 		}
 
-		layoutPageTemplateEntriesSearchContainer.setResults(
-			layoutPageTemplateEntries);
-		layoutPageTemplateEntriesSearchContainer.setTotal(
-			layoutPageTemplateEntriesCount);
+		layoutPageTemplateEntriesSearchContainer.setRowChecker(
+			new EmptyOnClickRowChecker(_renderResponse));
 
 		_layoutPageTemplateEntriesSearchContainer =
 			layoutPageTemplateEntriesSearchContainer;
@@ -243,7 +226,7 @@ public class LayoutPageTemplateDisplayContext {
 		}
 
 		_layoutPageTemplateEntry =
-			LayoutPageTemplateEntryServiceUtil.fetchLayoutPageTemplateEntry(
+			LayoutPageTemplateEntryServiceUtil.getLayoutPageTemplateEntry(
 				getLayoutPageTemplateEntryId());
 
 		return _layoutPageTemplateEntry;
@@ -265,8 +248,10 @@ public class LayoutPageTemplateDisplayContext {
 			return _orderByCol;
 		}
 
-		_orderByCol = ParamUtil.getString(
-			_httpServletRequest, "orderByCol", "create-date");
+		_orderByCol = SearchOrderByUtil.getOrderByCol(
+			_httpServletRequest,
+			LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
+			"layout-page-template-order-by-col", "create-date");
 
 		return _orderByCol;
 	}
@@ -276,65 +261,112 @@ public class LayoutPageTemplateDisplayContext {
 			return _orderByType;
 		}
 
-		_orderByType = ParamUtil.getString(
-			_httpServletRequest, "orderByType", "asc");
+		_orderByType = SearchOrderByUtil.getOrderByType(
+			_httpServletRequest,
+			LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
+			"layout-page-template-order-by-type", "asc");
 
 		return _orderByType;
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = _renderResponse.createRenderURL();
+		return PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setRedirect(
+			_themeDisplay.getURLCurrent()
+		).setKeywords(
+			() -> {
+				String keywords = getKeywords();
 
-		portletURL.setParameter("tabs1", "page-templates");
-		portletURL.setParameter("redirect", _themeDisplay.getURLCurrent());
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
 
-		long layoutPageTemplateCollectionId =
-			getLayoutPageTemplateCollectionId();
+				return null;
+			}
+		).setTabs1(
+			"page-templates"
+		).setParameter(
+			"layoutPageTemplateCollectionId",
+			() -> {
+				long layoutPageTemplateCollectionId =
+					getLayoutPageTemplateCollectionId();
 
-		if (layoutPageTemplateCollectionId > 0) {
-			portletURL.setParameter(
-				"layoutPageTemplateCollectionId",
-				String.valueOf(layoutPageTemplateCollectionId));
+				if (layoutPageTemplateCollectionId > 0) {
+					return layoutPageTemplateCollectionId;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByCol",
+			() -> {
+				String orderByCol = getOrderByCol();
+
+				if (Validator.isNotNull(orderByCol)) {
+					return orderByCol;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = getOrderByType();
+
+				if (Validator.isNotNull(orderByType)) {
+					return orderByType;
+				}
+
+				return null;
+			}
+		).buildPortletURL();
+	}
+
+	public VerticalNavItemList getVerticalNavItemList() {
+		VerticalNavItemList verticalNavItemList = new VerticalNavItemList();
+
+		for (LayoutPageTemplateCollection layoutPageTemplateCollection :
+				getLayoutPageTemplateCollections()) {
+
+			verticalNavItemList.add(
+				verticalNavItem -> {
+					String name = layoutPageTemplateCollection.getName();
+
+					long layoutPageTemplateCollectionId =
+						layoutPageTemplateCollection.
+							getLayoutPageTemplateCollectionId();
+
+					verticalNavItem.setActive(
+						layoutPageTemplateCollectionId ==
+							getLayoutPageTemplateCollectionId());
+
+					verticalNavItem.setHref(
+						PortletURLBuilder.createRenderURL(
+							_renderResponse
+						).setTabs1(
+							"page-templates"
+						).setParameter(
+							"layoutPageTemplateCollectionId",
+							layoutPageTemplateCollection.
+								getLayoutPageTemplateCollectionId()
+						).buildString());
+					verticalNavItem.setId(name);
+					verticalNavItem.setLabel(name);
+				});
 		}
 
-		String keywords = getKeywords();
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
-
-		String orderByCol = getOrderByCol();
-
-		if (Validator.isNotNull(orderByCol)) {
-			portletURL.setParameter("orderByCol", orderByCol);
-		}
-
-		String orderByType = getOrderByType();
-
-		if (Validator.isNotNull(orderByType)) {
-			portletURL.setParameter("orderByType", orderByType);
-		}
-
-		return portletURL;
+		return verticalNavItemList;
 	}
 
 	public boolean isSearch() {
-		if (Validator.isNotNull(getKeywords())) {
-			return true;
-		}
-
-		return false;
+		return Validator.isNotNull(getKeywords());
 	}
 
 	public boolean isShowAddButton(String actionId) {
-		if (LayoutPageTemplatePermission.contains(
-				_themeDisplay.getPermissionChecker(),
-				_themeDisplay.getSiteGroupId(), actionId)) {
-
-			return true;
-		}
-
-		return false;
+		return LayoutPageTemplatePermission.contains(
+			_themeDisplay.getPermissionChecker(),
+			_themeDisplay.getSiteGroupId(), actionId);
 	}
 
 	private final HttpServletRequest _httpServletRequest;
@@ -342,7 +374,8 @@ public class LayoutPageTemplateDisplayContext {
 	private LayoutPageTemplateCollection _layoutPageTemplateCollection;
 	private Long _layoutPageTemplateCollectionId;
 	private List<LayoutPageTemplateCollection> _layoutPageTemplateCollections;
-	private SearchContainer _layoutPageTemplateEntriesSearchContainer;
+	private SearchContainer<LayoutPageTemplateEntry>
+		_layoutPageTemplateEntriesSearchContainer;
 	private LayoutPageTemplateEntry _layoutPageTemplateEntry;
 	private Long _layoutPageTemplateEntryId;
 	private String _orderByCol;

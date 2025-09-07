@@ -1,20 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.service;
 
+import com.liferay.bookmarks.model.BookmarksEntry;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link BookmarksEntryLocalService}.
@@ -27,6 +22,10 @@ public class BookmarksEntryLocalServiceWrapper
 	implements BookmarksEntryLocalService,
 			   ServiceWrapper<BookmarksEntryLocalService> {
 
+	public BookmarksEntryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public BookmarksEntryLocalServiceWrapper(
 		BookmarksEntryLocalService bookmarksEntryLocalService) {
 
@@ -36,18 +35,20 @@ public class BookmarksEntryLocalServiceWrapper
 	/**
 	 * Adds the bookmarks entry to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BookmarksEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param bookmarksEntry the bookmarks entry
 	 * @return the bookmarks entry that was added
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry addBookmarksEntry(
-		com.liferay.bookmarks.model.BookmarksEntry bookmarksEntry) {
-
+	public BookmarksEntry addBookmarksEntry(BookmarksEntry bookmarksEntry) {
 		return _bookmarksEntryLocalService.addBookmarksEntry(bookmarksEntry);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry addEntry(
+	public BookmarksEntry addEntry(
 			long userId, long groupId, long folderId, String name, String url,
 			String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -64,35 +65,49 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @return the new bookmarks entry
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry createBookmarksEntry(
-		long entryId) {
-
+	public BookmarksEntry createBookmarksEntry(long entryId) {
 		return _bookmarksEntryLocalService.createBookmarksEntry(entryId);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _bookmarksEntryLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
 	 * Deletes the bookmarks entry from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BookmarksEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param bookmarksEntry the bookmarks entry
 	 * @return the bookmarks entry that was removed
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry deleteBookmarksEntry(
-		com.liferay.bookmarks.model.BookmarksEntry bookmarksEntry) {
-
+	public BookmarksEntry deleteBookmarksEntry(BookmarksEntry bookmarksEntry) {
 		return _bookmarksEntryLocalService.deleteBookmarksEntry(bookmarksEntry);
 	}
 
 	/**
 	 * Deletes the bookmarks entry with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BookmarksEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param entryId the primary key of the bookmarks entry
 	 * @return the bookmarks entry that was removed
 	 * @throws PortalException if a bookmarks entry with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry deleteBookmarksEntry(
-			long entryId)
+	public BookmarksEntry deleteBookmarksEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.deleteBookmarksEntry(entryId);
@@ -115,15 +130,14 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry deleteEntry(
-			com.liferay.bookmarks.model.BookmarksEntry entry)
+	public BookmarksEntry deleteEntry(BookmarksEntry entry)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.deleteEntry(entry);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry deleteEntry(long entryId)
+	public BookmarksEntry deleteEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.deleteEntry(entryId);
@@ -138,6 +152,18 @@ public class BookmarksEntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _bookmarksEntryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _bookmarksEntryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -232,9 +258,7 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry fetchBookmarksEntry(
-		long entryId) {
-
+	public BookmarksEntry fetchBookmarksEntry(long entryId) {
 		return _bookmarksEntryLocalService.fetchBookmarksEntry(entryId);
 	}
 
@@ -246,8 +270,8 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @return the matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry
-		fetchBookmarksEntryByUuidAndGroupId(String uuid, long groupId) {
+	public BookmarksEntry fetchBookmarksEntryByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _bookmarksEntryLocalService.fetchBookmarksEntryByUuidAndGroupId(
 			uuid, groupId);
@@ -272,8 +296,8 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @return the range of bookmarks entries
 	 */
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getBookmarksEntries(int start, int end) {
+	public java.util.List<BookmarksEntry> getBookmarksEntries(
+		int start, int end) {
 
 		return _bookmarksEntryLocalService.getBookmarksEntries(start, end);
 	}
@@ -286,8 +310,8 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @return the matching bookmarks entries, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getBookmarksEntriesByUuidAndCompanyId(String uuid, long companyId) {
+	public java.util.List<BookmarksEntry> getBookmarksEntriesByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return _bookmarksEntryLocalService.
 			getBookmarksEntriesByUuidAndCompanyId(uuid, companyId);
@@ -304,12 +328,10 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @return the range of matching bookmarks entries, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getBookmarksEntriesByUuidAndCompanyId(
-			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.bookmarks.model.BookmarksEntry>
-					orderByComparator) {
+	public java.util.List<BookmarksEntry> getBookmarksEntriesByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BookmarksEntry>
+			orderByComparator) {
 
 		return _bookmarksEntryLocalService.
 			getBookmarksEntriesByUuidAndCompanyId(
@@ -334,8 +356,7 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @throws PortalException if a bookmarks entry with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry getBookmarksEntry(
-			long entryId)
+	public BookmarksEntry getBookmarksEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.getBookmarksEntry(entryId);
@@ -350,8 +371,8 @@ public class BookmarksEntryLocalServiceWrapper
 	 * @throws PortalException if a matching bookmarks entry could not be found
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry
-			getBookmarksEntryByUuidAndGroupId(String uuid, long groupId)
+	public BookmarksEntry getBookmarksEntryByUuidAndGroupId(
+			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.getBookmarksEntryByUuidAndGroupId(
@@ -359,41 +380,36 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getEntries(long groupId, long folderId, int start, int end) {
+	public java.util.List<BookmarksEntry> getEntries(
+		long groupId, long folderId, int start, int end) {
 
 		return _bookmarksEntryLocalService.getEntries(
 			groupId, folderId, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getEntries(
-			long groupId, long folderId, int status, int start, int end) {
+	public java.util.List<BookmarksEntry> getEntries(
+		long groupId, long folderId, int status, int start, int end) {
 
 		return _bookmarksEntryLocalService.getEntries(
 			groupId, folderId, status, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getEntries(
-			long groupId, long folderId, int status, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.bookmarks.model.BookmarksEntry>
-					orderByComparator) {
+	public java.util.List<BookmarksEntry> getEntries(
+		long groupId, long folderId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BookmarksEntry>
+			orderByComparator) {
 
 		return _bookmarksEntryLocalService.getEntries(
 			groupId, folderId, status, start, end, orderByComparator);
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getEntries(
-			long groupId, long folderId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.bookmarks.model.BookmarksEntry>
-					orderByComparator) {
+	public java.util.List<BookmarksEntry> getEntries(
+		long groupId, long folderId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<BookmarksEntry>
+			orderByComparator) {
 
 		return _bookmarksEntryLocalService.getEntries(
 			groupId, folderId, start, end, orderByComparator);
@@ -411,7 +427,7 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry getEntry(long entryId)
+	public BookmarksEntry getEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.getEntry(entryId);
@@ -436,15 +452,15 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getGroupEntries(long groupId, int start, int end) {
+	public java.util.List<BookmarksEntry> getGroupEntries(
+		long groupId, int start, int end) {
 
 		return _bookmarksEntryLocalService.getGroupEntries(groupId, start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry>
-		getGroupEntries(long groupId, long userId, int start, int end) {
+	public java.util.List<BookmarksEntry> getGroupEntries(
+		long groupId, long userId, int start, int end) {
 
 		return _bookmarksEntryLocalService.getGroupEntries(
 			groupId, userId, start, end);
@@ -478,6 +494,9 @@ public class BookmarksEntryLocalServiceWrapper
 		return _bookmarksEntryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -487,15 +506,14 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry moveEntry(
-			long entryId, long parentFolderId)
+	public BookmarksEntry moveEntry(long entryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.moveEntry(entryId, parentFolderId);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry moveEntryFromTrash(
+	public BookmarksEntry moveEntryFromTrash(
 			long userId, long entryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -504,39 +522,33 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry moveEntryToTrash(
-			long userId, com.liferay.bookmarks.model.BookmarksEntry entry)
+	public BookmarksEntry moveEntryToTrash(long userId, BookmarksEntry entry)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.moveEntryToTrash(userId, entry);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry moveEntryToTrash(
-			long userId, long entryId)
+	public BookmarksEntry moveEntryToTrash(long userId, long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.moveEntryToTrash(userId, entryId);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry openEntry(
-		long userId, com.liferay.bookmarks.model.BookmarksEntry entry) {
-
+	public BookmarksEntry openEntry(long userId, BookmarksEntry entry) {
 		return _bookmarksEntryLocalService.openEntry(userId, entry);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry openEntry(
-			long userId, long entryId)
+	public BookmarksEntry openEntry(long userId, long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.openEntry(userId, entryId);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry restoreEntryFromTrash(
-			long userId, long entryId)
+	public BookmarksEntry restoreEntryFromTrash(long userId, long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.restoreEntryFromTrash(
@@ -576,9 +588,8 @@ public class BookmarksEntryLocalServiceWrapper
 
 	@Override
 	public void updateAsset(
-			long userId, com.liferay.bookmarks.model.BookmarksEntry entry,
-			long[] assetCategoryIds, String[] assetTagNames,
-			long[] assetLinkEntryIds, Double priority)
+			long userId, BookmarksEntry entry, long[] assetCategoryIds,
+			String[] assetTagNames, long[] assetLinkEntryIds, Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		_bookmarksEntryLocalService.updateAsset(
@@ -589,18 +600,20 @@ public class BookmarksEntryLocalServiceWrapper
 	/**
 	 * Updates the bookmarks entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect BookmarksEntryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param bookmarksEntry the bookmarks entry
 	 * @return the bookmarks entry that was updated
 	 */
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry updateBookmarksEntry(
-		com.liferay.bookmarks.model.BookmarksEntry bookmarksEntry) {
-
+	public BookmarksEntry updateBookmarksEntry(BookmarksEntry bookmarksEntry) {
 		return _bookmarksEntryLocalService.updateBookmarksEntry(bookmarksEntry);
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry updateEntry(
+	public BookmarksEntry updateEntry(
 			long userId, long entryId, long groupId, long folderId, String name,
 			String url, String description,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -612,12 +625,36 @@ public class BookmarksEntryLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.bookmarks.model.BookmarksEntry updateStatus(
-			long userId, com.liferay.bookmarks.model.BookmarksEntry entry,
-			int status)
+	public BookmarksEntry updateStatus(
+			long userId, BookmarksEntry entry, int status)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _bookmarksEntryLocalService.updateStatus(userId, entry, status);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _bookmarksEntryLocalService.getBasePersistence();
+	}
+
+	@Override
+	public CTPersistence<BookmarksEntry> getCTPersistence() {
+		return _bookmarksEntryLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<BookmarksEntry> getModelClass() {
+		return _bookmarksEntryLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<BookmarksEntry>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _bookmarksEntryLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet;
@@ -17,20 +8,20 @@ package com.liferay.portlet;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import jakarta.portlet.PortletAsyncContext;
+import jakarta.portlet.PortletAsyncEvent;
+import jakarta.portlet.PortletAsyncListener;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.PortletAsyncContext;
-import javax.portlet.PortletAsyncEvent;
-import javax.portlet.PortletAsyncListener;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
 
 /**
  * @author Dante Wang
@@ -61,8 +52,9 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 						_portletAsyncContext, resourceRequest,
 						resourceResponse));
 			}
-			catch (IOException ioe) {
-				_log.error("Unable to notify listener for onError", ioe);
+			catch (IOException ioException) {
+				_log.error(
+					"Unable to notify listener for onError", ioException);
 			}
 		}
 
@@ -73,8 +65,9 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 						_portletAsyncContext, resourceRequest,
 						resourceResponse));
 			}
-			catch (IOException ioe) {
-				_log.error("Unable to notify listener for onTimeout", ioe);
+			catch (IOException ioException) {
+				_log.error(
+					"Unable to notify listener for onTimeout", ioException);
 			}
 		}
 
@@ -85,8 +78,9 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 						_portletAsyncContext, resourceRequest,
 						resourceResponse));
 			}
-			catch (IOException ioe) {
-				_log.error("Unable to notify listener for onComplete", ioe);
+			catch (IOException ioException) {
+				_log.error(
+					"Unable to notify listener for onComplete", ioException);
 			}
 		}
 
@@ -117,10 +111,10 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 	public void onError(AsyncEvent asyncEvent) throws IOException {
 		_firedOnError = true;
 
-		Throwable t = asyncEvent.getThrowable();
+		Throwable throwable = asyncEvent.getThrowable();
 
 		if (_portletAsyncListenerAdapterEntries.isEmpty()) {
-			_log.error(t, t);
+			_log.error(throwable, throwable);
 		}
 
 		try {
@@ -134,14 +128,18 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 					new PortletAsyncEvent(
 						_portletAsyncContext,
 						asyncListenerAdapterEntry.getResourceRequest(),
-						asyncListenerAdapterEntry.getResourceResponse(), t));
+						asyncListenerAdapterEntry.getResourceResponse(),
+						throwable));
 			}
 		}
 		finally {
 			try {
 				_portletAsyncContext.complete();
 			}
-			catch (IllegalStateException ise) {
+			catch (IllegalStateException illegalStateException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalStateException);
+				}
 			}
 		}
 	}
@@ -205,7 +203,10 @@ public class PortletAsyncListenerAdapter implements AsyncListener {
 			try {
 				_portletAsyncContext.complete();
 			}
-			catch (IllegalStateException ise) {
+			catch (IllegalStateException illegalStateException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalStateException);
+				}
 			}
 		}
 	}

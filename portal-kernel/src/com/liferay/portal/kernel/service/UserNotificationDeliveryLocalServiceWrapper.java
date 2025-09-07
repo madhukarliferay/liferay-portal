@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link UserNotificationDeliveryLocalService}.
@@ -25,6 +18,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	implements ServiceWrapper<UserNotificationDeliveryLocalService>,
 			   UserNotificationDeliveryLocalService {
 
+	public UserNotificationDeliveryLocalServiceWrapper() {
+		this(null);
+	}
+
 	public UserNotificationDeliveryLocalServiceWrapper(
 		UserNotificationDeliveryLocalService
 			userNotificationDeliveryLocalService) {
@@ -33,15 +30,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 			userNotificationDeliveryLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link UserNotificationDeliveryLocalServiceUtil} to access the user notification delivery local service. Add custom service methods to <code>com.liferay.portal.service.impl.UserNotificationDeliveryLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.UserNotificationDelivery
 			addUserNotificationDelivery(
-				long userId, java.lang.String portletId, long classNameId,
+				long userId, String portletId, long classNameId,
 				int notificationType, int deliveryType, boolean deliver)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -54,6 +46,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	/**
 	 * Adds the user notification delivery to the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserNotificationDeliveryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userNotificationDelivery the user notification delivery
 	 * @return the user notification delivery that was added
 	 */
@@ -65,6 +61,18 @@ public class UserNotificationDeliveryLocalServiceWrapper
 
 		return _userNotificationDeliveryLocalService.
 			addUserNotificationDelivery(userNotificationDelivery);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _userNotificationDeliveryLocalService.createPersistedModel(
+			primaryKeyObj);
 	}
 
 	/**
@@ -102,6 +110,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	/**
 	 * Deletes the user notification delivery with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserNotificationDeliveryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userNotificationDeliveryId the primary key of the user notification delivery
 	 * @return the user notification delivery that was removed
 	 * @throws PortalException if a user notification delivery with the primary key could not be found
@@ -117,8 +129,8 @@ public class UserNotificationDeliveryLocalServiceWrapper
 
 	@Override
 	public void deleteUserNotificationDelivery(
-		long userId, java.lang.String portletId, long classNameId,
-		int notificationType, int deliveryType) {
+		long userId, String portletId, long classNameId, int notificationType,
+		int deliveryType) {
 
 		_userNotificationDeliveryLocalService.deleteUserNotificationDelivery(
 			userId, portletId, classNameId, notificationType, deliveryType);
@@ -126,6 +138,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 
 	/**
 	 * Deletes the user notification delivery from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserNotificationDeliveryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param userNotificationDelivery the user notification delivery
 	 * @return the user notification delivery that was removed
@@ -138,6 +154,18 @@ public class UserNotificationDeliveryLocalServiceWrapper
 
 		return _userNotificationDeliveryLocalService.
 			deleteUserNotificationDelivery(userNotificationDelivery);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _userNotificationDeliveryLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _userNotificationDeliveryLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -243,7 +271,7 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.UserNotificationDelivery
 		fetchUserNotificationDelivery(
-			long userId, java.lang.String portletId, long classNameId,
+			long userId, String portletId, long classNameId,
 			int notificationType, int deliveryType) {
 
 		return _userNotificationDeliveryLocalService.
@@ -273,10 +301,13 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _userNotificationDeliveryLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -336,7 +367,7 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.UserNotificationDelivery
 			getUserNotificationDelivery(
-				long userId, java.lang.String portletId, long classNameId,
+				long userId, String portletId, long classNameId,
 				int notificationType, int deliveryType, boolean deliver)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -358,6 +389,10 @@ public class UserNotificationDeliveryLocalServiceWrapper
 	/**
 	 * Updates the user notification delivery in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect UserNotificationDeliveryLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param userNotificationDelivery the user notification delivery
 	 * @return the user notification delivery that was updated
 	 */
@@ -369,6 +404,11 @@ public class UserNotificationDeliveryLocalServiceWrapper
 
 		return _userNotificationDeliveryLocalService.
 			updateUserNotificationDelivery(userNotificationDelivery);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _userNotificationDeliveryLocalService.getBasePersistence();
 	}
 
 	@Override

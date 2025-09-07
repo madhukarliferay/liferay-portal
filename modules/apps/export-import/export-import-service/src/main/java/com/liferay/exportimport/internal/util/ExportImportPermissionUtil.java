@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.internal.util;
@@ -22,7 +13,9 @@ import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +26,24 @@ import java.util.Set;
 public class ExportImportPermissionUtil {
 
 	public static final String ROLE_TEAM_PREFIX = "ROLE_TEAM_,*";
+
+	public static void deleteResourcePermissions(
+			long companyId, String resourceName, String resourcePrimKey,
+			Collection<Long> roleIds)
+		throws PortalException {
+
+		for (long roleId : roleIds) {
+			ResourcePermission resourcePermission =
+				ResourcePermissionLocalServiceUtil.fetchResourcePermission(
+					companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+					resourcePrimKey, roleId);
+
+			if (resourcePermission != null) {
+				ResourcePermissionLocalServiceUtil.deleteResourcePermission(
+					resourcePermission.getResourcePermissionId());
+			}
+		}
+	}
 
 	public static Map<Long, Set<String>> getRoleIdsToActionIds(
 		long companyId, String resourceName, long resourcePK) {
@@ -53,12 +64,12 @@ public class ExportImportPermissionUtil {
 			existingRoleIdsToActionIds = getRoleIdsToActionIds(
 				companyId, resourceName, resourcePK, existingActionIds);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(portalException);
 			}
 		}
 
@@ -97,12 +108,8 @@ public class ExportImportPermissionUtil {
 			long roleId = roleIdsToActionIds.getKey();
 
 			if (importedRoleIdsToActionIds.containsKey(roleId)) {
-				String[] actionIds = importedRoleIdsToActionIds.remove(roleId);
-
-				mergedRoleIdsToActionIds.put(roleId, actionIds);
-			}
-			else {
-				mergedRoleIdsToActionIds.put(roleId, new String[0]);
+				mergedRoleIdsToActionIds.put(
+					roleId, importedRoleIdsToActionIds.remove(roleId));
 			}
 		}
 
@@ -131,17 +138,24 @@ public class ExportImportPermissionUtil {
 				companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
 				resourcePK);
 
-		Map<Long, String[]> mergedRoleIdsToActionIds = new HashMap<>(
-			roleIdsToActionIds);
+		Set<Long> roleIds = new HashSet<>();
 
 		for (ResourcePermission resourcePermission : resourcePermissions) {
-			mergedRoleIdsToActionIds.putIfAbsent(
-				resourcePermission.getRoleId(), new String[0]);
+			if (!roleIdsToActionIds.containsKey(
+					resourcePermission.getRoleId())) {
+
+				roleIds.add(resourcePermission.getRoleId());
+			}
+		}
+
+		if (!roleIds.isEmpty()) {
+			deleteResourcePermissions(
+				companyId, resourceName, resourcePK, roleIds);
 		}
 
 		ResourcePermissionLocalServiceUtil.setResourcePermissions(
 			companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
-			resourcePK, mergedRoleIdsToActionIds);
+			resourcePK, roleIdsToActionIds);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

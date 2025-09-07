@@ -1,26 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.background.task.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.Serializable;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -29,53 +24,52 @@ import org.junit.Test;
 public class BackgroundTaskThreadLocalManagerImplTest
 	extends BaseBackgroundTaskTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	@Test
 	public void testDeserializeThreadLocals() {
-		Map<String, Serializable> taskContextMap =
+		backgroundTaskThreadLocalManagerImpl.deserializeThreadLocals(
+			COMPANY_ID,
 			HashMapBuilder.<String, Serializable>put(
 				BackgroundTaskThreadLocalManagerImpl.KEY_THREAD_LOCAL_VALUES,
 				initializeThreadLocalValues()
-			).build();
-
-		backgroundTaskThreadLocalManagerImpl.deserializeThreadLocals(
-			taskContextMap);
+			).build());
 
 		assertThreadLocalValues();
 	}
 
 	@Test
 	public void testGetThreadLocalValues() {
-		initalizeThreadLocals();
-
-		Map<String, Serializable> threadLocalValues =
-			backgroundTaskThreadLocalManagerImpl.getThreadLocalValues();
-
-		assertThreadLocalValues(threadLocalValues);
+		try (SafeCloseable safeCloseable = initalizeThreadLocals()) {
+			assertThreadLocalValues(
+				backgroundTaskThreadLocalManagerImpl.getThreadLocalValues());
+		}
 	}
 
 	@Test
 	public void testSerializeThreadLocals() {
-		initalizeThreadLocals();
+		try (SafeCloseable safeCloseable = initalizeThreadLocals()) {
+			Map<String, Serializable> taskContextMap = new HashMap<>();
 
-		Map<String, Serializable> taskContextMap = new HashMap<>();
+			backgroundTaskThreadLocalManagerImpl.serializeThreadLocals(
+				taskContextMap);
 
-		backgroundTaskThreadLocalManagerImpl.serializeThreadLocals(
-			taskContextMap);
+			Map<String, Serializable> threadLocalValues =
+				(Map<String, Serializable>)taskContextMap.get(
+					BackgroundTaskThreadLocalManagerImpl.
+						KEY_THREAD_LOCAL_VALUES);
 
-		Map<String, Serializable> threadLocalValues =
-			(Map<String, Serializable>)taskContextMap.get(
-				BackgroundTaskThreadLocalManagerImpl.KEY_THREAD_LOCAL_VALUES);
-
-		assertThreadLocalValues(threadLocalValues);
+			assertThreadLocalValues(threadLocalValues);
+		}
 	}
 
 	@Test
 	public void testSetThreadLocalValues() {
-		Map<String, Serializable> threadLocalValues =
-			initializeThreadLocalValues();
-
 		backgroundTaskThreadLocalManagerImpl.setThreadLocalValues(
-			threadLocalValues);
+			COMPANY_ID, initializeThreadLocalValues());
 
 		assertThreadLocalValues();
 	}

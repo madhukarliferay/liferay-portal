@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.model.impl;
@@ -30,8 +21,6 @@ import java.util.Map;
 public class MBTreeWalkerImpl implements MBTreeWalker {
 
 	public MBTreeWalkerImpl(List<MBMessage> messages) {
-		_messageIdsMap = new HashMap<>();
-
 		MBMessage rootMessage = null;
 
 		try {
@@ -51,11 +40,12 @@ public class MBTreeWalkerImpl implements MBTreeWalker {
 				}
 			}
 		}
-		catch (Exception e) {
-			_log.error("Unable to initialize tree walker", e);
+		catch (Exception exception) {
+			_log.error("Unable to initialize tree walker", exception);
 		}
 
 		_messages = messages;
+
 		_rootMessage = rootMessage;
 	}
 
@@ -114,11 +104,7 @@ public class MBTreeWalkerImpl implements MBTreeWalker {
 	public boolean isLeaf(MBMessage message) {
 		Long messageIdObj = Long.valueOf(message.getMessageId());
 
-		if (_messageIdsMap.containsKey(messageIdObj)) {
-			return false;
-		}
-
-		return true;
+		return !_messageIdsMap.containsKey(messageIdObj);
 	}
 
 	@Override
@@ -131,7 +117,7 @@ public class MBTreeWalkerImpl implements MBTreeWalker {
 	private static final Log _log = LogFactoryUtil.getLog(
 		MBTreeWalkerImpl.class);
 
-	private final Map<Long, Integer> _messageIdsMap;
+	private final Map<Long, Integer> _messageIdsMap = new HashMap<>();
 	private final List<MBMessage> _messages;
 	private boolean _odd;
 	private final MBMessage _rootMessage;

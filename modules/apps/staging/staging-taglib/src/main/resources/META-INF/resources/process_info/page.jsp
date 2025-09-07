@@ -1,65 +1,69 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/process_info/init.jsp" %>
 
-<div class="container text-secondary">
-	<div class="row">
-		<div class="col-sm">
+<clay:container-fluid
+	cssClass="text-secondary"
+>
+	<clay:row>
+		<clay:col
+			sm=""
+		>
 			<liferay-staging:process-title
 				backgroundTask="<%= backgroundTask %>"
 				listView="<%= false %>"
 			/>
-		</div>
-	</div>
+		</clay:col>
+	</clay:row>
 
-	<div class="row">
-		<div class="col-sm"><%= HtmlUtil.escape(userName) %></div>
-		<div class="col-sm">
+	<clay:row>
+		<clay:col
+			sm=""
+		>
+			<%= HtmlUtil.escape(userName) %>
+		</clay:col>
+
+		<clay:col
+			sm=""
+		>
 			<liferay-staging:process-date
 				date="<%= backgroundTask.getCreateDate() %>"
 				labelKey="start-date"
 				listView="<%= false %>"
 			/>
-		</div>
+		</clay:col>
 
-		<div class="col-sm">
+		<clay:col
+			sm=""
+		>
 			<liferay-staging:process-date
 				date="<%= backgroundTask.getCompletionDate() %>"
 				labelKey="completion-date"
 				listView="<%= false %>"
 			/>
-		</div>
-	</div>
+		</clay:col>
+	</clay:row>
 
-	<div class="row">
-		<div class="col">
+	<clay:row>
+		<clay:col>
 			<liferay-staging:process-in-progress
 				backgroundTask="<%= backgroundTask %>"
 				listView="<%= false %>"
 			/>
-		</div>
-	</div>
+		</clay:col>
+	</clay:row>
 
-	<div class="row">
-		<div class="col">
+	<clay:row>
+		<clay:col>
 			<liferay-staging:process-status
 				backgroundTaskStatus="<%= backgroundTask.getStatus() %>"
 				backgroundTaskStatusLabel="<%= backgroundTask.getStatusLabel() %>"
 			/>
-		</div>
-	</div>
-</div>
+		</clay:col>
+	</clay:row>
+</clay:container-fluid>

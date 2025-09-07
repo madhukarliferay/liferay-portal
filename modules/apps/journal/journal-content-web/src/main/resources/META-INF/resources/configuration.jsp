@@ -1,24 +1,11 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
-
-<%
-String redirect = ParamUtil.getString(request, "redirect");
-%>
 
 <liferay-ui:error exception="<%= NoSuchArticleException.class %>" message="the-web-content-could-not-be-found" />
 
@@ -36,25 +23,21 @@ String redirect = ParamUtil.getString(request, "redirect");
 	<aui:input name="preferences--assetEntryId--" type="hidden" value="<%= journalContentDisplayContext.getAssetEntryId() %>" />
 
 	<liferay-frontend:edit-form-body>
-		<liferay-frontend:fieldset-group>
-			<liferay-frontend:fieldset>
-				<div id="<portlet:namespace />articlePreview">
-					<liferay-util:include page="/journal_resources.jsp" servletContext="<%= application %>">
-						<liferay-util:param name="refererPortletName" value="<%= renderResponse.getNamespace() %>" />
-					</liferay-util:include>
-				</div>
-			</liferay-frontend:fieldset>
-		</liferay-frontend:fieldset-group>
+		<liferay-frontend:fieldset>
+			<div id="<portlet:namespace />articlePreview">
+				<liferay-util:include page="/journal_resources.jsp" servletContext="<%= application %>">
+					<liferay-util:param name="refererPortletName" value="<%= liferayPortletResponse.getNamespace() %>" />
+				</liferay-util:include>
+			</div>
+		</liferay-frontend:fieldset>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button name="saveButton" type="submit" />
-
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
-<aui:script require="metal-dom/src/all/dom as dom, frontend-js-web/liferay/ItemSelectorDialog.es as ItemSelectorDialog">
+<aui:script sandbox="<%= true %>">
 	var articlePreview = document.getElementById(
 		'<portlet:namespace />articlePreview'
 	);
@@ -62,31 +45,28 @@ String redirect = ParamUtil.getString(request, "redirect");
 		'<portlet:namespace />assetEntryId'
 	);
 
-	var itemSelectorDialog = new ItemSelectorDialog.default({
-		eventName: '<portlet:namespace />selectedItem',
-		singleSelect: true,
-		title: '<liferay-ui:message key="select-web-content" />',
-		url: '<%= journalContentDisplayContext.getItemSelectorURL() %>'
-	});
+	Liferay.Util.delegate(
+		articlePreview,
+		'click',
+		'.web-content-selector',
+		(event) => {
+			event.preventDefault();
 
-	itemSelectorDialog.on('selectedItemChange', function(event) {
-		var selectedItem = event.selectedItem;
-
-		if (!selectedItem) {
-			return;
+			Liferay.Util.openSelectionModal({
+				onSelect: function (data) {
+					if (data.value && data.value.length) {
+						const selectedItem = JSON.parse(data.value);
+						retrieveWebContent(selectedItem.classPK);
+					}
+				},
+				selectEventName: '<portlet:namespace />selectedItem',
+				title: '<liferay-ui:message key="select-web-content" />',
+				url: '<%= journalContentDisplayContext.getItemSelectorURL() %>',
+			});
 		}
+	);
 
-		var itemValue = JSON.parse(selectedItem.value);
-
-		retrieveWebContent(itemValue.classPK);
-	});
-
-	dom.delegate(articlePreview, 'click', '.web-content-selector', function(event) {
-		event.preventDefault();
-		itemSelectorDialog.open();
-	});
-
-	dom.delegate(articlePreview, 'click', '.selector-button', function(event) {
+	Liferay.Util.delegate(articlePreview, 'click', '.selector-button', (event) => {
 		event.preventDefault();
 		retrieveWebContent(-1);
 	});
@@ -99,6 +79,6 @@ String redirect = ParamUtil.getString(request, "redirect");
 			uri
 		);
 
-		location.href = uri;
+		Liferay.Util.navigate(uri);
 	}
 </aui:script>

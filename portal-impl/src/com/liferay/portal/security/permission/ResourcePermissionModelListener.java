@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.permission;
@@ -35,12 +26,18 @@ public class ResourcePermissionModelListener
 	}
 
 	@Override
-	public void onAfterUpdate(ResourcePermission resourcePermission) {
+	public void onAfterUpdate(
+		ResourcePermission originalResourcePermission,
+		ResourcePermission resourcePermission) {
+
 		_clearCache(resourcePermission);
 	}
 
 	@Override
-	public void onBeforeUpdate(ResourcePermission resourcePermission) {
+	public void onBeforeUpdate(
+		ResourcePermission originalResourcePermission,
+		ResourcePermission resourcePermission) {
+
 		ResourcePermissionModelImpl resourcePermissionModelImpl =
 			(ResourcePermissionModelImpl)resourcePermission;
 
@@ -48,9 +45,9 @@ public class ResourcePermissionModelListener
 
 		if ((columnBitmask & _CLEAR_ON_BEFORE_BITMASK) != 0) {
 			PermissionCacheUtil.clearResourcePermissionCache(
-				resourcePermissionModelImpl.getOriginalScope(),
-				resourcePermissionModelImpl.getOriginalName(),
-				resourcePermissionModelImpl.getOriginalPrimKey());
+				resourcePermissionModelImpl.getColumnOriginalValue("scope"),
+				resourcePermissionModelImpl.getColumnOriginalValue("name"),
+				resourcePermissionModelImpl.getColumnOriginalValue("primKey"));
 		}
 	}
 

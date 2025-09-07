@@ -1,21 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.runtime.internal.notification.recipient;
 
+import com.liferay.depot.constants.DepotRolesConstants;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
@@ -30,30 +24,37 @@ import com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.workflow.configuration.WorkflowDefinitionConfiguration;
 import com.liferay.portal.workflow.kaleo.definition.NotificationReceptionType;
 import com.liferay.portal.workflow.kaleo.model.KaleoInstanceToken;
 import com.liferay.portal.workflow.kaleo.model.KaleoNotificationRecipient;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignmentInstance;
+import com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken;
 import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.runtime.notification.NotificationRecipient;
 import com.liferay.portal.workflow.kaleo.runtime.notification.recipient.NotificationRecipientBuilder;
+import com.liferay.portal.workflow.kaleo.runtime.util.validator.GroupAwareRoleValidator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
  */
 @Component(
-	immediate = true, property = "recipient.type=ROLE",
-	service = {
-		NotificationRecipientBuilder.class,
-		RoleNotificationRecipientBuilder.class
-	}
+	configurationPid = "com.liferay.portal.workflow.configuration.WorkflowDefinitionConfiguration",
+	property = "recipient.type=ROLE",
+	service = NotificationRecipientBuilder.class
 )
 public class RoleNotificationRecipientBuilder
 	implements NotificationRecipientBuilder {
@@ -69,7 +70,7 @@ public class RoleNotificationRecipientBuilder
 		long roleId = kaleoNotificationRecipient.getRecipientClassPK();
 
 		addRoleRecipientAddresses(
-			notificationRecipients, _roleLocalService.getRole(roleId),
+			notificationRecipients, roleLocalService.getRole(roleId),
 			notificationReceptionType, executionContext);
 	}
 
@@ -84,8 +85,19 @@ public class RoleNotificationRecipientBuilder
 		long roleId = kaleoTaskAssignmentInstance.getAssigneeClassPK();
 
 		addRoleRecipientAddresses(
-			notificationRecipients, _roleLocalService.getRole(roleId),
+			notificationRecipients, roleLocalService.getRole(roleId),
 			notificationReceptionType, executionContext);
+	}
+
+	@Activate
+	@Modified
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
+		_serviceTrackerList = ServiceTrackerListFactory.open(
+			bundleContext, GroupAwareRoleValidator.class);
+		_workflowDefinitionConfiguration = ConfigurableUtil.createConfigurable(
+			WorkflowDefinitionConfiguration.class, properties);
 	}
 
 	protected void addRoleRecipientAddresses(
@@ -94,25 +106,46 @@ public class RoleNotificationRecipientBuilder
 			ExecutionContext executionContext)
 		throws Exception {
 
-		List<User> users = getRoleUsers(role, executionContext);
+		for (User user : _getRoleUsers(role, executionContext)) {
+			if (user.isActive() &&
+				!_isSelfAssignedUser(executionContext, user)) {
 
-		for (User user : users) {
-			if (user.isActive()) {
-				NotificationRecipient notificationRecipient =
-					new NotificationRecipient(user, notificationReceptionType);
-
-				notificationRecipients.add(notificationRecipient);
+				notificationRecipients.add(
+					new NotificationRecipient(user, notificationReceptionType));
 			}
 		}
 	}
 
-	protected List<Long> getAncestorGroupIds(Group group, Role role)
-		throws PortalException {
+	@Deactivate
+	protected void deactivate() {
+		_serviceTrackerList.close();
+	}
+
+	@Reference
+	protected GroupLocalService groupLocalService;
+
+	@Reference
+	protected OrganizationLocalService organizationLocalService;
+
+	@Reference
+	protected RoleLocalService roleLocalService;
+
+	@Reference
+	protected UserGroupGroupRoleLocalService userGroupGroupRoleLocalService;
+
+	@Reference
+	protected UserGroupRoleLocalService userGroupRoleLocalService;
+
+	@Reference
+	protected UserLocalService userLocalService;
+
+	private List<Long> _getAncestorGroupIds(Group group, Role role)
+		throws Exception {
 
 		List<Long> groupIds = new ArrayList<>();
 
 		for (Group ancestorGroup : group.getAncestors()) {
-			if (isValidGroup(group, role)) {
+			if (_isValidGroup(group, role)) {
 				groupIds.add(ancestorGroup.getGroupId());
 			}
 		}
@@ -120,16 +153,16 @@ public class RoleNotificationRecipientBuilder
 		return groupIds;
 	}
 
-	protected List<Long> getAncestorOrganizationGroupIds(Group group, Role role)
-		throws PortalException {
+	private List<Long> _getAncestorOrganizationGroupIds(Group group, Role role)
+		throws Exception {
 
 		List<Long> groupIds = new ArrayList<>();
 
-		Organization organization = _organizationLocalService.getOrganization(
+		Organization organization = organizationLocalService.getOrganization(
 			group.getOrganizationId());
 
 		for (Organization ancestorOrganization : organization.getAncestors()) {
-			if (isValidGroup(group, role)) {
+			if (_isValidGroup(group, role)) {
 				groupIds.add(ancestorOrganization.getGroupId());
 			}
 		}
@@ -137,23 +170,21 @@ public class RoleNotificationRecipientBuilder
 		return groupIds;
 	}
 
-	protected List<Long> getGroupIds(long groupId, Role role)
-		throws PortalException {
-
+	private List<Long> _getGroupIds(long groupId, Role role) throws Exception {
 		List<Long> groupIds = new ArrayList<>();
 
 		if (groupId != WorkflowConstants.DEFAULT_GROUP_ID) {
-			Group group = _groupLocalService.getGroup(groupId);
+			Group group = groupLocalService.getGroup(groupId);
 
 			if (group.isOrganization()) {
-				groupIds.addAll(getAncestorOrganizationGroupIds(group, role));
+				groupIds.addAll(_getAncestorOrganizationGroupIds(group, role));
 			}
 
-			if (group.isSite()) {
-				groupIds.addAll(getAncestorGroupIds(group, role));
+			if (group.isSite() && !_isPreventNotifyingAncestorSites()) {
+				groupIds.addAll(_getAncestorGroupIds(group, role));
 			}
 
-			if (isValidGroup(group, role)) {
+			if (_isValidGroup(group, role)) {
 				groupIds.add(groupId);
 			}
 		}
@@ -161,28 +192,28 @@ public class RoleNotificationRecipientBuilder
 		return groupIds;
 	}
 
-	protected List<User> getRoleUsers(
+	private List<User> _getRoleUsers(
 			Role role, ExecutionContext executionContext)
 		throws Exception {
 
 		long roleId = role.getRoleId();
 
 		if (role.getType() == RoleConstants.TYPE_REGULAR) {
-			return _userLocalService.getInheritedRoleUsers(
+			return userLocalService.getInheritedRoleUsers(
 				roleId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 		}
 
 		KaleoInstanceToken kaleoInstanceToken =
 			executionContext.getKaleoInstanceToken();
 
-		List<Long> groupIds = getGroupIds(
+		List<Long> groupIds = _getGroupIds(
 			kaleoInstanceToken.getGroupId(), role);
 
 		List<User> users = new ArrayList<>();
 
 		for (Long groupId : groupIds) {
 			List<UserGroupRole> userGroupRoles =
-				_userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
+				userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
 					groupId, roleId);
 
 			for (UserGroupRole userGroupRole : userGroupRoles) {
@@ -190,24 +221,76 @@ public class RoleNotificationRecipientBuilder
 			}
 
 			List<UserGroupGroupRole> userGroupGroupRoles =
-				_userGroupGroupRoleLocalService.
+				userGroupGroupRoleLocalService.
 					getUserGroupGroupRolesByGroupAndRole(groupId, roleId);
 
 			for (UserGroupGroupRole userGroupGroupRole : userGroupGroupRoles) {
 				users.addAll(
-					_userLocalService.getUserGroupUsers(
+					userLocalService.getUserGroupUsers(
 						userGroupGroupRole.getUserGroupId()));
+			}
+
+			if (Objects.equals(
+					role.getName(), DepotRolesConstants.ASSET_LIBRARY_MEMBER) ||
+				Objects.equals(role.getName(), RoleConstants.SITE_MEMBER)) {
+
+				users.addAll(
+					userLocalService.getGroupUsers(
+						groupId, WorkflowConstants.STATUS_APPROVED, null));
+			}
+
+			if (Objects.equals(
+					role.getName(), RoleConstants.ORGANIZATION_USER)) {
+
+				Group group = groupLocalService.getGroup(groupId);
+
+				if (group.isOrganization()) {
+					long organizationId = group.getClassPK();
+
+					users.addAll(
+						userLocalService.getOrganizationUsers(organizationId));
+				}
 			}
 		}
 
 		return users;
 	}
 
-	protected boolean isValidGroup(Group group, Role role)
-		throws PortalException {
+	private boolean _isPreventNotifyingAncestorSites() {
+		return _workflowDefinitionConfiguration.preventNotifyingAncestorSites();
+	}
 
-		if ((group != null) && group.isOrganization() &&
-			(role.getType() == RoleConstants.TYPE_ORGANIZATION)) {
+	private boolean _isSelfAssignedUser(
+		ExecutionContext executionContext, User user) {
+
+		KaleoTaskInstanceToken kaleoTaskInstanceToken =
+			executionContext.getKaleoTaskInstanceToken();
+
+		if (kaleoTaskInstanceToken == null) {
+			return false;
+		}
+
+		KaleoTaskAssignmentInstance kaleoTaskAssignmentInstance =
+			kaleoTaskInstanceToken.getFirstKaleoTaskAssignmentInstance();
+
+		if ((user.getUserId() == kaleoTaskAssignmentInstance.getUserId()) &&
+			(user.getUserId() ==
+				kaleoTaskAssignmentInstance.getAssigneeClassPK())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isValidGroup(Group group, Role role) throws Exception {
+		if ((group != null) && group.isDepot() &&
+			(role.getType() == RoleConstants.TYPE_DEPOT)) {
+
+			return true;
+		}
+		else if ((group != null) && group.isOrganization() &&
+				 (role.getType() == RoleConstants.TYPE_ORGANIZATION)) {
 
 			return true;
 		}
@@ -217,25 +300,20 @@ public class RoleNotificationRecipientBuilder
 			return true;
 		}
 
+		for (GroupAwareRoleValidator groupAwareRoleValidator :
+				_serviceTrackerList) {
+
+			if (groupAwareRoleValidator.isValidGroup(group, role)) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 
-	@Reference
-	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private OrganizationLocalService _organizationLocalService;
-
-	@Reference
-	private RoleLocalService _roleLocalService;
-
-	@Reference
-	private UserGroupGroupRoleLocalService _userGroupGroupRoleLocalService;
-
-	@Reference
-	private UserGroupRoleLocalService _userGroupRoleLocalService;
-
-	@Reference
-	private UserLocalService _userLocalService;
+	private volatile ServiceTrackerList<GroupAwareRoleValidator>
+		_serviceTrackerList;
+	private volatile WorkflowDefinitionConfiguration
+		_workflowDefinitionConfiguration;
 
 }

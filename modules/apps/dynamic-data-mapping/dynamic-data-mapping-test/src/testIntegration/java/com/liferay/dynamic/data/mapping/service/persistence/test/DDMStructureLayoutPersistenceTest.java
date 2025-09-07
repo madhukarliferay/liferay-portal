@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -128,6 +119,8 @@ public class DDMStructureLayoutPersistenceTest {
 
 		newDDMStructureLayout.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDDMStructureLayout.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDDMStructureLayout.setUuid(RandomTestUtil.randomString());
 
 		newDDMStructureLayout.setGroupId(RandomTestUtil.nextLong());
@@ -164,6 +157,9 @@ public class DDMStructureLayoutPersistenceTest {
 		Assert.assertEquals(
 			existingDDMStructureLayout.getMvccVersion(),
 			newDDMStructureLayout.getMvccVersion());
+		Assert.assertEquals(
+			existingDDMStructureLayout.getCtCollectionId(),
+			newDDMStructureLayout.getCtCollectionId());
 		Assert.assertEquals(
 			existingDDMStructureLayout.getUuid(),
 			newDDMStructureLayout.getUuid());
@@ -312,11 +308,11 @@ public class DDMStructureLayoutPersistenceTest {
 
 	protected OrderByComparator<DDMStructureLayout> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DDMStructureLayout", "mvccVersion", true, "uuid", true,
-			"structureLayoutId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
-			"modifiedDate", true, "classNameId", true, "structureLayoutKey",
-			true, "structureVersionId", true);
+			"DDMStructureLayout", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "structureLayoutId", true, "groupId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "classNameId", true,
+			"structureLayoutKey", true, "structureVersionId", true);
 	}
 
 	@Test
@@ -545,44 +541,85 @@ public class DDMStructureLayoutPersistenceTest {
 
 		_persistence.clearCache();
 
-		DDMStructureLayout existingDDMStructureLayout =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newDDMStructureLayout.getPrimaryKey());
+				newDDMStructureLayout.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDMStructureLayout.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDDMStructureLayout, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DDMStructureLayout newDDMStructureLayout = addDDMStructureLayout();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DDMStructureLayout.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"structureLayoutId",
+				newDDMStructureLayout.getStructureLayoutId()));
+
+		List<DDMStructureLayout> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DDMStructureLayout ddmStructureLayout) {
 		Assert.assertEquals(
-			Long.valueOf(existingDDMStructureLayout.getGroupId()),
+			ddmStructureLayout.getUuid(),
+			ReflectionTestUtil.invoke(
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(ddmStructureLayout.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMStructureLayout, "getOriginalGroupId",
-				new Class<?>[0]));
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingDDMStructureLayout.getStructureVersionId()),
+			Long.valueOf(ddmStructureLayout.getStructureVersionId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMStructureLayout, "getOriginalStructureVersionId",
-				new Class<?>[0]));
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "structureVersionId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingDDMStructureLayout.getGroupId()),
+			Long.valueOf(ddmStructureLayout.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMStructureLayout, "getOriginalGroupId",
-				new Class<?>[0]));
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingDDMStructureLayout.getClassNameId()),
+			Long.valueOf(ddmStructureLayout.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDDMStructureLayout, "getOriginalClassNameId",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingDDMStructureLayout.getStructureLayoutKey(),
-				ReflectionTestUtil.invoke(
-					existingDDMStructureLayout, "getOriginalStructureLayoutKey",
-					new Class<?>[0])));
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
+		Assert.assertEquals(
+			ddmStructureLayout.getStructureLayoutKey(),
+			ReflectionTestUtil.invoke(
+				ddmStructureLayout, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "structureLayoutKey"));
 	}
 
 	protected DDMStructureLayout addDDMStructureLayout() throws Exception {
@@ -591,6 +628,8 @@ public class DDMStructureLayoutPersistenceTest {
 		DDMStructureLayout ddmStructureLayout = _persistence.create(pk);
 
 		ddmStructureLayout.setMvccVersion(RandomTestUtil.nextLong());
+
+		ddmStructureLayout.setCtCollectionId(RandomTestUtil.nextLong());
 
 		ddmStructureLayout.setUuid(RandomTestUtil.randomString());
 

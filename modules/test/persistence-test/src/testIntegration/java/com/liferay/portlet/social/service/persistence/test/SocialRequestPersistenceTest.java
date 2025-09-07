@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.social.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -122,6 +113,10 @@ public class SocialRequestPersistenceTest {
 
 		SocialRequest newSocialRequest = _persistence.create(pk);
 
+		newSocialRequest.setMvccVersion(RandomTestUtil.nextLong());
+
+		newSocialRequest.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSocialRequest.setUuid(RandomTestUtil.randomString());
 
 		newSocialRequest.setGroupId(RandomTestUtil.nextLong());
@@ -151,6 +146,12 @@ public class SocialRequestPersistenceTest {
 		SocialRequest existingSocialRequest = _persistence.findByPrimaryKey(
 			newSocialRequest.getPrimaryKey());
 
+		Assert.assertEquals(
+			existingSocialRequest.getMvccVersion(),
+			newSocialRequest.getMvccVersion());
+		Assert.assertEquals(
+			existingSocialRequest.getCtCollectionId(),
+			newSocialRequest.getCtCollectionId());
 		Assert.assertEquals(
 			existingSocialRequest.getUuid(), newSocialRequest.getUuid());
 		Assert.assertEquals(
@@ -313,10 +314,11 @@ public class SocialRequestPersistenceTest {
 
 	protected OrderByComparator<SocialRequest> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SocialRequest", "uuid", true, "requestId", true, "groupId", true,
-			"companyId", true, "userId", true, "createDate", true,
-			"modifiedDate", true, "classNameId", true, "classPK", true, "type",
-			true, "extraData", true, "receiverUserId", true, "status", true);
+			"SocialRequest", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "requestId", true, "groupId", true, "companyId", true,
+			"userId", true, "createDate", true, "modifiedDate", true,
+			"classNameId", true, "classPK", true, "type", true, "extraData",
+			true, "receiverUserId", true, "status", true);
 	}
 
 	@Test
@@ -535,48 +537,97 @@ public class SocialRequestPersistenceTest {
 
 		_persistence.clearCache();
 
-		SocialRequest existingSocialRequest = _persistence.findByPrimaryKey(
-			newSocialRequest.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newSocialRequest.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingSocialRequest.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingSocialRequest, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SocialRequest newSocialRequest = addSocialRequest();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SocialRequest.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"requestId", newSocialRequest.getRequestId()));
+
+		List<SocialRequest> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(SocialRequest socialRequest) {
 		Assert.assertEquals(
-			Long.valueOf(existingSocialRequest.getGroupId()),
+			socialRequest.getUuid(),
+			ReflectionTestUtil.invoke(
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(socialRequest.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialRequest, "getOriginalGroupId", new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingSocialRequest.getUserId()),
+			Long.valueOf(socialRequest.getUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialRequest, "getOriginalUserId", new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "userId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSocialRequest.getClassNameId()),
+			Long.valueOf(socialRequest.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialRequest, "getOriginalClassNameId",
-				new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
 		Assert.assertEquals(
-			Long.valueOf(existingSocialRequest.getClassPK()),
+			Long.valueOf(socialRequest.getClassPK()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialRequest, "getOriginalClassPK", new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
 		Assert.assertEquals(
-			Integer.valueOf(existingSocialRequest.getType()),
+			Integer.valueOf(socialRequest.getType()),
 			ReflectionTestUtil.<Integer>invoke(
-				existingSocialRequest, "getOriginalType", new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "type_"));
 		Assert.assertEquals(
-			Long.valueOf(existingSocialRequest.getReceiverUserId()),
+			Long.valueOf(socialRequest.getReceiverUserId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSocialRequest, "getOriginalReceiverUserId",
-				new Class<?>[0]));
+				socialRequest, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "receiverUserId"));
 	}
 
 	protected SocialRequest addSocialRequest() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
 		SocialRequest socialRequest = _persistence.create(pk);
+
+		socialRequest.setMvccVersion(RandomTestUtil.nextLong());
+
+		socialRequest.setCtCollectionId(RandomTestUtil.nextLong());
 
 		socialRequest.setUuid(RandomTestUtil.randomString());
 

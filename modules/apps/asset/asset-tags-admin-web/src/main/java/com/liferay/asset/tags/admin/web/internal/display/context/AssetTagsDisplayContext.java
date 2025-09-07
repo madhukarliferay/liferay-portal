@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.tags.admin.web.internal.display.context;
@@ -18,15 +9,20 @@ import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetTagServiceUtil;
+import com.liferay.asset.tags.constants.AssetTagsAdminPortletKeys;
+import com.liferay.change.tracking.spi.history.util.CTTimelineUtil;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.search.BaseModelSearchResult;
+import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -35,19 +31,18 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portlet.asset.util.comparator.AssetTagAssetCountComparator;
 import com.liferay.portlet.asset.util.comparator.AssetTagNameComparator;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.StagingGroupHelperUtil;
 
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Juergen Kappler
@@ -55,16 +50,86 @@ import javax.servlet.http.HttpServletRequest;
 public class AssetTagsDisplayContext {
 
 	public AssetTagsDisplayContext(
-		RenderRequest renderRequest, RenderResponse renderResponse,
-		HttpServletRequest httpServletRequest) {
+		HttpServletRequest httpServletRequest, RenderRequest renderRequest,
+		RenderResponse renderResponse) {
 
+		_httpServletRequest = httpServletRequest;
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
-		_httpServletRequest = httpServletRequest;
-
-		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
+	}
+
+	public List<DropdownItem> getAssetTagActionDropdownItems(AssetTag tag) {
+		return DropdownItemListBuilder.addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						this::isShowTagsActions,
+						dropdownItem -> {
+							dropdownItem.setHref(
+								PortletURLBuilder.createRenderURL(
+									_renderResponse
+								).setMVCPath(
+									"/edit_tag.jsp"
+								).setParameter(
+									"tagId", tag.getTagId()
+								).buildString());
+							dropdownItem.setIcon("pencil");
+							dropdownItem.setLabel(
+								LanguageUtil.get(_httpServletRequest, "edit"));
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						this::isShowTagsActions,
+						dropdownItem -> {
+							dropdownItem.setHref(
+								PortletURLBuilder.createRenderURL(
+									_renderResponse
+								).setMVCPath(
+									"/merge_tag.jsp"
+								).setParameter(
+									"mergeTagIds", tag.getTagId()
+								).buildString());
+							dropdownItem.setIcon("merge");
+							dropdownItem.setLabel(
+								LanguageUtil.get(_httpServletRequest, "merge"));
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData("action", "deleteTag");
+							dropdownItem.putData(
+								"deleteTagURL",
+								PortletURLBuilder.createActionURL(
+									_renderResponse
+								).setActionName(
+									"deleteTag"
+								).setRedirect(
+									_themeDisplay.getURLCurrent()
+								).setParameter(
+									"tagId", tag.getTagId()
+								).buildString());
+							dropdownItem.setIcon("trash");
+							dropdownItem.setLabel(
+								LanguageUtil.get(
+									_httpServletRequest, "delete"));
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).build();
 	}
 
 	public String getAssetTitle() {
@@ -82,24 +147,16 @@ public class AssetTagsDisplayContext {
 			return _displayStyle;
 		}
 
-		_displayStyle = ParamUtil.getString(
-			_httpServletRequest, "displayStyle", "list");
+		_displayStyle = SearchDisplayStyleUtil.getDisplayStyle(
+			_httpServletRequest, AssetTagsAdminPortletKeys.ASSET_TAGS_ADMIN,
+			"list");
 
 		return _displayStyle;
 	}
 
 	public long getFullTagsCount(AssetTag tag) {
-		int[] statuses = {
-			WorkflowConstants.STATUS_APPROVED, WorkflowConstants.STATUS_PENDING,
-			WorkflowConstants.STATUS_SCHEDULED
-		};
-
-		Hits hits = AssetEntryLocalServiceUtil.search(
-			tag.getCompanyId(), new long[] {_themeDisplay.getScopeGroupId()},
-			_themeDisplay.getUserId(), null, 0, null, null, null, null,
-			tag.getName(), true, statuses, false, 0, 1);
-
-		return hits.getLength();
+		return AssetEntryLocalServiceUtil.getAssetTagAssetEntriesCount(
+			tag.getTagId());
 	}
 
 	public String getKeywords() {
@@ -142,8 +199,9 @@ public class AssetTagsDisplayContext {
 			return _orderByCol;
 		}
 
-		_orderByCol = ParamUtil.getString(
-			_httpServletRequest, "orderByCol", "name");
+		_orderByCol = SearchOrderByUtil.getOrderByCol(
+			_httpServletRequest, AssetTagsAdminPortletKeys.ASSET_TAGS_ADMIN,
+			"name");
 
 		return _orderByCol;
 	}
@@ -153,8 +211,9 @@ public class AssetTagsDisplayContext {
 			return _orderByType;
 		}
 
-		_orderByType = ParamUtil.getString(
-			_httpServletRequest, "orderByType", "asc");
+		_orderByType = SearchOrderByUtil.getOrderByType(
+			_httpServletRequest, AssetTagsAdminPortletKeys.ASSET_TAGS_ADMIN,
+			"asc");
 
 		return _orderByType;
 	}
@@ -184,20 +243,22 @@ public class AssetTagsDisplayContext {
 
 		_tagId = ParamUtil.getLong(_httpServletRequest, "tagId");
 
+		CTTimelineUtil.setCTTimelineKeys(
+			_httpServletRequest, AssetTag.class, _tagId);
+
 		return _tagId;
 	}
 
-	public SearchContainer getTagsSearchContainer() throws PortalException {
+	public SearchContainer<AssetTag> getTagsSearchContainer()
+		throws PortalException {
+
 		if (_tagsSearchContainer != null) {
 			return _tagsSearchContainer;
 		}
 
-		SearchContainer tagsSearchContainer = new SearchContainer(
+		SearchContainer<AssetTag> tagsSearchContainer = new SearchContainer<>(
 			_renderRequest, _renderResponse.createRenderURL(), null,
 			"there-are-no-tags");
-
-		tagsSearchContainer.setRowChecker(
-			new EmptyOnClickRowChecker(_renderResponse));
 
 		String keywords = getKeywords();
 
@@ -217,15 +278,11 @@ public class AssetTagsDisplayContext {
 					getOrderByType());
 			}
 
-			BaseModelSearchResult<AssetTag> baseModelSearchResult =
+			tagsSearchContainer.setResultsAndTotal(
 				AssetTagLocalServiceUtil.searchTags(
 					new long[] {_themeDisplay.getScopeGroupId()}, keywords,
 					tagsSearchContainer.getStart(),
-					tagsSearchContainer.getEnd(), sort);
-
-			tagsSearchContainer.setResults(
-				baseModelSearchResult.getBaseModels());
-			tagsSearchContainer.setTotal(baseModelSearchResult.getLength());
+					tagsSearchContainer.getEnd(), sort));
 		}
 		else {
 			String orderByCol = getOrderByCol();
@@ -246,28 +303,26 @@ public class AssetTagsDisplayContext {
 				orderByComparator = new AssetTagNameComparator(orderByAsc);
 			}
 			else if (orderByCol.equals("usages")) {
-				orderByComparator = new AssetTagAssetCountComparator(
+				orderByComparator = AssetTagAssetCountComparator.getInstance(
 					orderByAsc);
 			}
 
 			tagsSearchContainer.setOrderByComparator(orderByComparator);
-
 			tagsSearchContainer.setOrderByType(orderByType);
 
 			long scopeGroupId = _themeDisplay.getScopeGroupId();
 
-			int tagsCount = AssetTagServiceUtil.getTagsCount(
-				scopeGroupId, keywords);
-
-			tagsSearchContainer.setTotal(tagsCount);
-
-			List<AssetTag> tags = AssetTagServiceUtil.getTags(
-				scopeGroupId, StringPool.BLANK, tagsSearchContainer.getStart(),
-				tagsSearchContainer.getEnd(),
-				tagsSearchContainer.getOrderByComparator());
-
-			tagsSearchContainer.setResults(tags);
+			tagsSearchContainer.setResultsAndTotal(
+				() -> AssetTagServiceUtil.getTags(
+					scopeGroupId, StringPool.BLANK,
+					tagsSearchContainer.getStart(),
+					tagsSearchContainer.getEnd(),
+					tagsSearchContainer.getOrderByComparator()),
+				AssetTagServiceUtil.getTagsCount(scopeGroupId, keywords));
 		}
+
+		tagsSearchContainer.setRowChecker(
+			new EmptyOnClickRowChecker(_renderResponse));
 
 		_tagsSearchContainer = tagsSearchContainer;
 
@@ -308,7 +363,7 @@ public class AssetTagsDisplayContext {
 	private Boolean _showTagsActions;
 	private AssetTag _tag;
 	private Long _tagId;
-	private SearchContainer _tagsSearchContainer;
+	private SearchContainer<AssetTag> _tagsSearchContainer;
 	private final ThemeDisplay _themeDisplay;
 
 }

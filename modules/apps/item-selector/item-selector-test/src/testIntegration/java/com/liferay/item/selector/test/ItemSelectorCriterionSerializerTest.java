@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.item.selector.test;
@@ -62,18 +53,16 @@ public class ItemSelectorCriterionSerializerTest {
 
 	@Test
 	public void testSerializationAndDeserializationWithProvidedSupportedReturnTypes() {
-		TestItemSelectorView testItemSelectorView = new TestItemSelectorView();
-
-		ServiceRegistration<ItemSelectorView>
+		ServiceRegistration<ItemSelectorView<?>>
 			itemSelectorViewServiceRegistration = registerItemSelectorView(
-				testItemSelectorView, "test-view");
+				new TestItemSelectorView(), "test-view");
 
 		ServiceRegistration<ItemSelectorViewReturnTypeProvider>
 			itemSelectorViewReturnTypeProviderServiceRegistration =
 				registerItemSelectorViewProvider(
 					new TestItemSelectorViewReturnTypeProvider(), "test-view");
 
-		List serviceRegistrations = new ArrayList<>();
+		List<ServiceRegistration<?>> serviceRegistrations = new ArrayList<>();
 
 		serviceRegistrations.add(itemSelectorViewServiceRegistration);
 		serviceRegistrations.add(
@@ -124,15 +113,16 @@ public class ItemSelectorCriterionSerializerTest {
 		}
 	}
 
-	protected ServiceRegistration<ItemSelectorView> registerItemSelectorView(
-		ItemSelectorView itemSelectorView, String itemSelectorViewKey) {
+	protected ServiceRegistration<ItemSelectorView<?>> registerItemSelectorView(
+		ItemSelectorView<?> itemSelectorView, String itemSelectorViewKey) {
 
 		Dictionary<String, Object> properties = new Hashtable<>();
 
 		properties.put("item.selector.view.key", itemSelectorViewKey);
 
 		return _bundleContext.registerService(
-			ItemSelectorView.class, itemSelectorView, properties);
+			(Class<ItemSelectorView<?>>)(Class<?>)ItemSelectorView.class,
+			itemSelectorView, properties);
 	}
 
 	protected ServiceRegistration<ItemSelectorViewReturnTypeProvider>
@@ -150,7 +140,9 @@ public class ItemSelectorCriterionSerializerTest {
 			itemSelectorViewReturnTypeProvider, properties);
 	}
 
-	private void _unregister(List<ServiceRegistration> serviceRegistrations) {
+	private void _unregister(
+		List<ServiceRegistration<?>> serviceRegistrations) {
+
 		serviceRegistrations.forEach(ServiceRegistration::unregister);
 	}
 

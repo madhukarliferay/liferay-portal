@@ -1,43 +1,31 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.internal.search.spi.model.index.contributor;
 
-import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
-import com.liferay.asset.kernel.model.AssetEntry;
-import com.liferay.asset.kernel.model.AssetRenderer;
-import com.liferay.asset.kernel.model.AssetRendererFactory;
-import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 import com.liferay.portal.workflow.kaleo.internal.search.KaleoTaskInstanceTokenField;
+import com.liferay.portal.workflow.kaleo.model.KaleoDefinition;
+import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignmentInstance;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken;
+import com.liferay.portal.workflow.kaleo.runtime.util.WorkflowContextUtil;
+import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionVersionLocalService;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
@@ -47,11 +35,11 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken",
 	service = ModelDocumentContributor.class
 )
 public class KaleoTaskInstanceTokenModelDocumentContributor
+	extends BaseKaleoModelDocumentContributor
 	implements ModelDocumentContributor<KaleoTaskInstanceToken> {
 
 	@Override
@@ -89,6 +77,9 @@ public class KaleoTaskInstanceTokenModelDocumentContributor
 			KaleoTaskInstanceTokenField.CLASS_NAME,
 			kaleoTaskInstanceToken.getClassName());
 		document.addKeyword(
+			Field.CLASS_NAME_ID,
+			portal.getClassNameId(kaleoTaskInstanceToken.getClassName()));
+		document.addKeyword(
 			Field.CLASS_PK, kaleoTaskInstanceToken.getClassPK());
 		document.addKeywordSortable(
 			KaleoTaskInstanceTokenField.COMPLETED,
@@ -101,7 +92,34 @@ public class KaleoTaskInstanceTokenModelDocumentContributor
 		document.addDateSortable(
 			KaleoTaskInstanceTokenField.DUE_DATE,
 			kaleoTaskInstanceToken.getDueDate());
-		document.addKeyword(
+
+		try {
+			KaleoDefinitionVersion kaleoDefinitionVersion =
+				kaleoDefinitionVersionLocalService.getKaleoDefinitionVersion(
+					kaleoTaskInstanceToken.getKaleoDefinitionVersionId());
+
+			KaleoDefinition kaleoDefinition =
+				kaleoDefinitionVersion.getKaleoDefinition();
+
+			document.addKeyword(
+				KaleoTaskInstanceTokenField.KALEO_DEFINITION_ID,
+				kaleoDefinition.getKaleoDefinitionId());
+
+			WorkflowHandler<?> workflowHandler =
+				WorkflowHandlerRegistryUtil.getWorkflowHandler(
+					kaleoTaskInstanceToken.getClassName());
+
+			workflowHandler.contributeWorkflowContext(
+				WorkflowContextUtil.convert(
+					kaleoTaskInstanceToken.getWorkflowContext()));
+		}
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(portalException);
+			}
+		}
+
+		document.addNumberSortable(
 			KaleoTaskInstanceTokenField.KALEO_INSTANCE_ID,
 			kaleoTaskInstanceToken.getKaleoInstanceId());
 		document.addNumberSortable(
@@ -118,93 +136,24 @@ public class KaleoTaskInstanceTokenModelDocumentContributor
 		document.addNumberSortable(
 			Field.USER_ID, kaleoTaskInstanceToken.getUserId());
 
-		AssetEntry assetEntry = getAssetEntry(kaleoTaskInstanceToken);
-
-		if (assetEntry != null) {
-			document.addKeyword(
-				KaleoTaskInstanceTokenField.ASSET_CLASS_NAME_ID,
-				assetEntry.getClassNameId());
-			document.addKeyword(
-				KaleoTaskInstanceTokenField.ASSET_CLASS_PK,
-				assetEntry.getClassPK());
-			document.addLocalizedText(
-				KaleoTaskInstanceTokenField.ASSET_DESCRIPTION,
-				LocalizationUtil.populateLocalizationMap(
-					assetEntry.getDescriptionMap(),
-					assetEntry.getDefaultLanguageId(),
-					assetEntry.getGroupId()));
-			document.addLocalizedText(
-				KaleoTaskInstanceTokenField.ASSET_TITLE,
-				LocalizationUtil.populateLocalizationMap(
-					assetEntry.getTitleMap(), assetEntry.getDefaultLanguageId(),
-					assetEntry.getGroupId()));
-		}
-		else {
-			WorkflowHandler<?> workflowHandler =
-				WorkflowHandlerRegistryUtil.getWorkflowHandler(
-					kaleoTaskInstanceToken.getClassName());
-
-			for (Locale availableLocale :
-					LanguageUtil.getAvailableLocales(
-						kaleoTaskInstanceToken.getGroupId())) {
-
-				document.addText(
-					LocalizationUtil.getLocalizedName(
-						KaleoTaskInstanceTokenField.ASSET_TITLE,
-						availableLocale.getLanguage()),
-					workflowHandler.getTitle(
-						kaleoTaskInstanceToken.getClassPK(), availableLocale));
-			}
-		}
-	}
-
-	protected AssetEntry getAssetEntry(
-		KaleoTaskInstanceToken kaleoTaskInstanceToken) {
-
-		try {
-			AssetRenderer<?> assetRenderer = getAssetRenderer(
-				kaleoTaskInstanceToken.getClassName(),
-				kaleoTaskInstanceToken.getClassPK());
-
-			if (assetRenderer != null) {
-				return assetEntryLocalService.getEntry(
-					assetRenderer.getClassName(), assetRenderer.getClassPK());
-			}
-		}
-		catch (PortalException pe) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
-			}
-		}
-
-		return null;
-	}
-
-	protected AssetRenderer<?> getAssetRenderer(String className, long classPK)
-		throws PortalException {
-
-		AssetRendererFactory<?> assetRendererFactory = getAssetRendererFactory(
-			className);
-
-		if (assetRendererFactory != null) {
-			return assetRendererFactory.getAssetRenderer(classPK);
-		}
-
-		return null;
-	}
-
-	protected AssetRendererFactory<?> getAssetRendererFactory(
-		String className) {
-
-		return AssetRendererFactoryRegistryUtil.
-			getAssetRendererFactoryByClassName(className);
+		addAssetEntryAttributes(
+			assetEntry -> {
+				document.addKeyword(
+					KaleoTaskInstanceTokenField.ASSET_CLASS_NAME_ID,
+					assetEntry.getClassNameId());
+				document.addKeyword(
+					KaleoTaskInstanceTokenField.ASSET_CLASS_PK,
+					assetEntry.getClassPK());
+			},
+			kaleoTaskInstanceToken.getClassName(),
+			kaleoTaskInstanceToken.getClassPK(), document,
+			kaleoTaskInstanceToken.getGroupId());
 	}
 
 	protected String[] getLanguageIds(
 		String defaultLanguageId, String content) {
 
-		String[] languageIds = LocalizationUtil.getAvailableLanguageIds(
-			content);
+		String[] languageIds = _localization.getAvailableLanguageIds(content);
 
 		if (languageIds.length == 0) {
 			languageIds = new String[] {defaultLanguageId};
@@ -214,15 +163,19 @@ public class KaleoTaskInstanceTokenModelDocumentContributor
 	}
 
 	@Reference
-	protected AssetEntryLocalService assetEntryLocalService;
+	protected ClassNameLocalService classNameLocalService;
 
 	@Reference
-	protected ClassNameLocalService classNameLocalService;
+	protected KaleoDefinitionVersionLocalService
+		kaleoDefinitionVersionLocalService;
 
 	@Reference
 	protected Portal portal;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		KaleoTaskInstanceTokenModelDocumentContributor.class);
+
+	@Reference
+	private Localization _localization;
 
 }

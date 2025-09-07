@@ -1,21 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.util.xml;
 
 import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -32,19 +22,17 @@ import java.util.List;
  */
 public class BeanToXMLUtil {
 
-	public static void addBean(Object obj, Element parentEl) {
-		Class<?> clazz = obj.getClass();
+	public static void addBean(Object object, Element parentEl) {
+		Class<?> clazz = object.getClass();
 
-		String classNameWithoutPackage = getClassNameWithoutPackage(
-			clazz.getName());
+		Element el = parentEl.addElement(
+			getClassNameWithoutPackage(clazz.getName()));
 
-		Element el = parentEl.addElement(classNameWithoutPackage);
-
-		addFields(obj, el);
+		addFields(object, el);
 	}
 
-	public static void addFields(Object obj, Element parentEl) {
-		Class<?> clazz = obj.getClass();
+	public static void addFields(Object object, Element parentEl) {
+		Class<?> clazz = object.getClass();
 
 		Method[] methods = clazz.getMethods();
 
@@ -54,31 +42,31 @@ public class BeanToXMLUtil {
 			if (methodName.startsWith("get") &&
 				!methodName.equals("getClass")) {
 
-				String memberName = StringUtil.replace(
-					methodName, "get", StringPool.BLANK);
+				String memberName = StringUtil.removeSubstring(
+					methodName, "get");
 
 				memberName = TextFormatter.format(memberName, TextFormatter.I);
 				memberName = TextFormatter.format(memberName, TextFormatter.K);
 
 				try {
-					Object returnValue = method.invoke(obj, new Object[0]);
+					Object returnValue = method.invoke(object, new Object[0]);
 
 					if (returnValue instanceof List<?>) {
 						List<Object> list = (List<Object>)returnValue;
 
 						Element listEl = parentEl.addElement(memberName);
 
-						for (Object curObj : list) {
-							addBean(curObj, listEl);
+						for (Object curObject : list) {
+							addBean(curObject, listEl);
 						}
 					}
 					else {
 						_add(parentEl, memberName, returnValue.toString());
 					}
 				}
-				catch (Exception e) {
+				catch (Exception exception) {
 					if (_log.isWarnEnabled()) {
-						_log.warn(e.getMessage());
+						_log.warn(exception);
 					}
 				}
 			}

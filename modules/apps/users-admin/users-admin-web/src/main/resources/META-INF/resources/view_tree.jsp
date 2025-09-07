@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -20,8 +11,6 @@
 String backURL = GetterUtil.getString(request.getAttribute("view.jsp-backURL"));
 Organization organization = (Organization)request.getAttribute("view.jsp-organization");
 long organizationId = GetterUtil.getLong(request.getAttribute("view.jsp-organizationId"));
-String toolbarItem = GetterUtil.getString(request.getAttribute("view.jsp-toolbarItem"));
-String usersListView = GetterUtil.getString(request.getAttribute("view.jsp-usersListView"));
 
 String displayStyle = ParamUtil.getString(request, "displayStyle");
 
@@ -52,13 +41,15 @@ if (filterManageableOrganizations && organizations.isEmpty()) {
 	showList = false;
 }
 
-PortletURL homeURL = renderResponse.createRenderURL();
-
-homeURL.setParameter("mvcPath", "/view.jsp");
-homeURL.setParameter("toolbarItem", "view-all-organizations");
-homeURL.setParameter("usersListView", UserConstants.LIST_VIEW_FLAT_ORGANIZATIONS);
-
-PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "users-and-organizations"), homeURL.toString());
+PortalUtil.addPortletBreadcrumbEntry(
+	request, LanguageUtil.get(request, "users-and-organizations"),
+	PortletURLBuilder.createRenderURL(
+		renderResponse
+	).setMVCPath(
+		"/view.jsp"
+	).setParameter(
+		"screenNavigationCategoryKey", UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS
+	).buildString());
 
 if (organization != null) {
 	UsersAdminUtil.addPortletBreadcrumbEntries(organization, request, renderResponse);
@@ -71,17 +62,23 @@ if (organization != null) {
 		<%
 		ViewTreeManagementToolbarDisplayContext viewTreeManagementToolbarDisplayContext = new ViewTreeManagementToolbarDisplayContext(request, renderRequest, renderResponse, organization, displayStyle);
 
-		SearchContainer searchContainer = viewTreeManagementToolbarDisplayContext.getSearchContainer();
+		SearchContainer<Object> searchContainer = viewTreeManagementToolbarDisplayContext.getSearchContainer();
 		%>
 
 		<clay:management-toolbar
 			actionDropdownItems="<%= viewTreeManagementToolbarDisplayContext.getActionDropdownItems() %>"
+			additionalProps='<%=
+				HashMapBuilder.<String, Object>put(
+					"basePortletURL", String.valueOf(renderResponse.createRenderURL())
+				).build()
+			%>'
 			clearResultsURL="<%= viewTreeManagementToolbarDisplayContext.getClearResultsURL() %>"
-			componentId="viewTreeManagementToolbar"
 			creationMenu="<%= viewTreeManagementToolbarDisplayContext.getCreationMenu() %>"
 			filterDropdownItems="<%= viewTreeManagementToolbarDisplayContext.getFilterDropdownItems() %>"
 			filterLabelItems="<%= viewTreeManagementToolbarDisplayContext.getFilterLabelItems() %>"
 			itemsTotal="<%= searchContainer.getTotal() %>"
+			orderDropdownItems="<%= viewTreeManagementToolbarDisplayContext.getFilterDropdownItems() %>"
+			propsTransformer="{ViewTreeManagementToolbarPropsTransformer} from users-admin-web"
 			searchActionURL="<%= viewTreeManagementToolbarDisplayContext.getSearchActionURL() %>"
 			searchContainerId="organizationUsers"
 			searchFormName="searchFm"
@@ -93,15 +90,14 @@ if (organization != null) {
 			viewTypeItems="<%= viewTreeManagementToolbarDisplayContext.getViewTypeItems() %>"
 		/>
 
-		<aui:form cssClass="container-fluid-1280" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "search();" %>'>
-			<aui:input name="<%= Constants.CMD %>" type="hidden" />
-			<aui:input name="toolbarItem" type="hidden" value="<%= toolbarItem %>" />
+		<aui:form cssClass="container-fluid container-fluid-max-xl" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "search();" %>'>
 			<aui:input name="redirect" type="hidden" value="<%= viewTreeManagementToolbarDisplayContext.getPortletURL().toString() %>" />
 			<aui:input name="onErrorRedirect" type="hidden" value="<%= currentURL %>" />
 			<aui:input name="deleteOrganizationIds" type="hidden" />
 			<aui:input name="deleteUserIds" type="hidden" />
 			<aui:input name="removeOrganizationIds" type="hidden" />
 			<aui:input name="removeUserIds" type="hidden" />
+			<aui:input name="screenNavigationCategoryKey" type="hidden" value="<%= UserScreenNavigationEntryConstants.CATEGORY_KEY_ORGANIZATIONS %>" />
 
 			<liferay-ui:error exception="<%= RequiredOrganizationException.class %>" message="you-cannot-delete-organizations-that-have-suborganizations-or-users" />
 			<liferay-ui:error exception="<%= RequiredUserException.class %>" message="you-cannot-delete-or-deactivate-yourself" />
@@ -111,19 +107,17 @@ if (organization != null) {
 				<%
 				portletDisplay.setShowBackIcon(true);
 				portletDisplay.setURLBack(Validator.isNotNull(backURL) ? backURL : UsersAdminPortletURLUtil.createParentOrganizationViewTreeURL(organizationId, renderResponse));
+				portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 				renderResponse.setTitle(organization.getName());
 				%>
 
 			</c:if>
 
-			<c:if test="<%= (portletName.equals(UsersAdminPortletKeys.USERS_ADMIN) && usersListView.equals(UserConstants.LIST_VIEW_TREE)) || portletName.equals(UsersAdminPortletKeys.MY_ORGANIZATIONS) %>">
+			<c:if test="<%= portletName.equals(UsersAdminPortletKeys.USERS_ADMIN) || portletName.equals(UsersAdminPortletKeys.MY_ORGANIZATIONS) %>">
 				<div id="breadcrumb">
-					<liferay-ui:breadcrumb
-						showCurrentGroup="<%= false %>"
-						showGuestGroup="<%= false %>"
-						showLayout="<%= false %>"
-						showPortletBreadcrumb="<%= true %>"
+					<liferay-site-navigation:breadcrumb
+						breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 					/>
 				</div>
 			</c:if>
@@ -140,11 +134,14 @@ if (organization != null) {
 
 					<%
 					Organization curOrganization = null;
+					OrganizationActionDropdownItems organizationActionDropdownItems = null;
 					Map<String, Object> rowData = new HashMap<String, Object>();
 					User user2 = null;
 
 					if (result instanceof Organization) {
 						curOrganization = (Organization)result;
+
+						organizationActionDropdownItems = new OrganizationActionDropdownItems(curOrganization, renderRequest, renderResponse);
 
 						rowData.put("actions", StringUtil.merge(viewTreeManagementToolbarDisplayContext.getAvailableActions(curOrganization)));
 					}
@@ -170,86 +167,7 @@ if (organization != null) {
 	</c:when>
 	<c:otherwise>
 		<clay:alert
-			message='<%= LanguageUtil.get(request, "you-do-not-belong-to-an-organization-and-are-not-allowed-to-view-other-organizations") %>'
-			style="info"
-			title='<%= LanguageUtil.get(request, "info") + ":" %>'
+			message="you-do-not-belong-to-an-organization-and-are-not-allowed-to-view-other-organizations"
 		/>
 	</c:otherwise>
 </c:choose>
-
-<aui:script>
-	function <portlet:namespace />delete(organizationsRedirect) {
-		<portlet:namespace />deleteOrganizations(organizationsRedirect);
-	}
-
-	<portlet:namespace />doDeleteOrganizations = function(
-		organizationIds,
-		organizationsRedirect
-	) {
-		var form = document.<portlet:namespace />fm;
-
-		if (organizationsRedirect) {
-			Liferay.Util.setFormValues(form, {
-				redirect: organizationsRedirect
-			});
-		}
-
-		Liferay.Util.postForm(form, {
-			data: {
-				deleteOrganizationIds: organizationIds,
-				deleteUserIds: Liferay.Util.listCheckedExcept(
-					form,
-					'<portlet:namespace />allRowIds',
-					'<portlet:namespace />rowIdsUser'
-				)
-			},
-			url:
-				'<portlet:actionURL name="/users_admin/delete_organizations_and_users" />'
-		});
-	};
-
-	<portlet:actionURL name="/users_admin/edit_organization_assignments" var="removeOrganizationsAndUsersURL">
-		<portlet:param name="assignmentsRedirect" value="<%= currentURL %>" />
-		<portlet:param name="organizationId" value="<%= String.valueOf(organizationId) %>" />
-	</portlet:actionURL>
-
-	function <portlet:namespace />removeOrganizationsAndUsers() {
-		var form = document.<portlet:namespace />fm;
-
-		Liferay.Util.postForm(form, {
-			data: {
-				removeOrganizationIds: Liferay.Util.listCheckedExcept(
-					form,
-					'<portlet:namespace />allRowIds',
-					'<portlet:namespace />rowIdsOrganization'
-				),
-				removeUserIds: Liferay.Util.listCheckedExcept(
-					form,
-					'<portlet:namespace />allRowIds',
-					'<portlet:namespace />rowIdsUser'
-				)
-			},
-			url: '<%= removeOrganizationsAndUsersURL.toString() %>'
-		});
-	}
-
-	var selectUsers = function(organizationId) {
-		<portlet:namespace />openSelectUsersDialog(organizationId);
-	};
-
-	var ACTIONS = {
-		selectUsers: selectUsers
-	};
-
-	Liferay.componentReady('viewTreeManagementToolbar').then(function(
-		managementToolbar
-	) {
-		managementToolbar.on('creationMenuItemClicked', function(event) {
-			var itemData = event.data.item.data;
-
-			if (itemData && itemData.action && ACTIONS[itemData.action]) {
-				ACTIONS[itemData.action](itemData.organizationId);
-			}
-		});
-	});
-</aui:script>

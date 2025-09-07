@@ -1,23 +1,18 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
-<aui:row id="grouping">
-	<aui:col width="<%= 30 %>">
+<clay:row
+	id='<%= liferayPortletResponse.getNamespace() + "grouping" %>'
+>
+	<clay:col
+		md="4"
+	>
 
 		<%
 		long assetVocabularyId = GetterUtil.getLong(portletPreferences.getValue("assetVocabularyId", null));
@@ -29,13 +24,15 @@
 
 			<%
 			Group companyGroup = company.getGroup();
-
-			if (scopeGroupId != companyGroup.getGroupId()) {
-				List<AssetVocabulary> assetVocabularies = AssetVocabularyLocalServiceUtil.getGroupVocabularies(scopeGroupId, false);
-
-				if (!assetVocabularies.isEmpty()) {
 			%>
 
+			<c:if test="<%= scopeGroupId != companyGroup.getGroupId() %>">
+
+				<%
+				List<AssetVocabulary> assetVocabularies = AssetVocabularyLocalServiceUtil.getGroupVocabularies(scopeGroupId, false);
+				%>
+
+				<c:if test="<%= !assetVocabularies.isEmpty() %>">
 					<optgroup label="<liferay-ui:message key="vocabularies" />">
 
 						<%
@@ -49,18 +46,14 @@
 						%>
 
 					</optgroup>
-
-			<%
-				}
-			}
-			%>
+				</c:if>
+			</c:if>
 
 			<%
 			List<AssetVocabulary> assetVocabularies = AssetVocabularyLocalServiceUtil.getGroupVocabularies(companyGroup.getGroupId(), false);
-
-			if (!assetVocabularies.isEmpty()) {
 			%>
 
+			<c:if test="<%= !assetVocabularies.isEmpty() %>">
 				<optgroup label="<liferay-ui:message key="vocabularies" /> (<liferay-ui:message key="global" />)">
 
 					<%
@@ -74,11 +67,7 @@
 					%>
 
 				</optgroup>
-
-			<%
-			}
-			%>
-
+			</c:if>
 		</aui:select>
-	</aui:col>
-</aui:row>
+	</clay:col>
+</clay:row>

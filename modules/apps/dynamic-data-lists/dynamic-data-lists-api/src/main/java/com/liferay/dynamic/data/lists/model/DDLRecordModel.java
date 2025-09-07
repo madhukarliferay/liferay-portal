@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.model;
@@ -19,6 +10,7 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -37,9 +29,10 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface DDLRecordModel
-	extends BaseModel<DDLRecord>, MVCCModel, ShardedModel, StagedGroupedModel {
+	extends BaseModel<DDLRecord>, CTModel<DDLRecord>, MVCCModel, ShardedModel,
+			StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a ddl record model instance should use the {@link DDLRecord} interface instead.
@@ -50,6 +43,7 @@ public interface DDLRecordModel
 	 *
 	 * @return the primary key of this ddl record
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -57,6 +51,7 @@ public interface DDLRecordModel
 	 *
 	 * @param primaryKey the primary key of this ddl record
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -74,6 +69,22 @@ public interface DDLRecordModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this ddl record.
+	 *
+	 * @return the ct collection ID of this ddl record
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this ddl record.
+	 *
+	 * @param ctCollectionId the ct collection ID of this ddl record
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this ddl record.
@@ -306,6 +317,35 @@ public interface DDLRecordModel
 	public void setRecordSetVersion(String recordSetVersion);
 
 	/**
+	 * Returns the class name of this ddl record.
+	 *
+	 * @return the class name of this ddl record
+	 */
+	@AutoEscape
+	public String getClassName();
+
+	/**
+	 * Sets the class name of this ddl record.
+	 *
+	 * @param className the class name of this ddl record
+	 */
+	public void setClassName(String className);
+
+	/**
+	 * Returns the class pk of this ddl record.
+	 *
+	 * @return the class pk of this ddl record
+	 */
+	public long getClassPK();
+
+	/**
+	 * Sets the class pk of this ddl record.
+	 *
+	 * @param classPK the class pk of this ddl record
+	 */
+	public void setClassPK(long classPK);
+
+	/**
 	 * Returns the version of this ddl record.
 	 *
 	 * @return the version of this ddl record
@@ -349,5 +389,12 @@ public interface DDLRecordModel
 	 */
 	@Override
 	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public DDLRecord cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

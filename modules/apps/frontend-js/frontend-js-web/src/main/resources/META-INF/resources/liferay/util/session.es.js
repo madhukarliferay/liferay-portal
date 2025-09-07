@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import fetch from './fetch.es';
@@ -32,26 +23,31 @@ function getSessionClickFormData(cmd) {
 }
 
 function getSessionClickURL() {
-	return `${Liferay.ThemeDisplay.getPortalURL()}${Liferay.ThemeDisplay.getPathMain()}/portal/session_click`;
+	return `${Liferay.ThemeDisplay.getPortalURL()}${Liferay.ThemeDisplay.getPathMain()}/portal/session_click?p_l_id=${Liferay.ThemeDisplay.getPlid()}`;
 }
 
 /**
  * Gets the Store utility fetch value for given key
  * @param {String} key string for fetch request
+ * @param {Object} options (currently only useHttpSession, defaulting to false)
  * @return {Promise}
  * @review
  */
-export function getSessionValue(key) {
+export function getSessionValue(key, options = {}) {
 	const formData = getSessionClickFormData('get');
 
 	formData.append('key', key);
 
+	if (options.useHttpSession) {
+		formData.append('useHttpSession', true);
+	}
+
 	return fetch(getSessionClickURL(), {
 		body: formData,
-		method: 'POST'
+		method: 'POST',
 	})
-		.then(response => response.text())
-		.then(responseText => {
+		.then((response) => response.text())
+		.then((responseText) => {
 			if (responseText.startsWith(TOKEN_SERIALIZE)) {
 				const value = responseText.substring(TOKEN_SERIALIZE.length);
 
@@ -66,10 +62,11 @@ export function getSessionValue(key) {
  * Sets the Store utility fetch value
  * @param {String} key of the formData
  * @param {Object|String} value of the key for the formData
+ * @param {Object} options (currently only useHttpSession, defaulting to false)
  * @return {Promise}
  * @review
  */
-export function setSessionValue(key, value) {
+export function setSessionValue(key, value, options = {}) {
 	const formData = getSessionClickFormData('set');
 
 	if (value && typeof value === 'object') {
@@ -78,8 +75,12 @@ export function setSessionValue(key, value) {
 
 	formData.append(key, value);
 
+	if (options.useHttpSession) {
+		formData.append('useHttpSession', true);
+	}
+
 	return fetch(getSessionClickURL(), {
 		body: formData,
-		method: 'POST'
+		method: 'POST',
 	});
 }

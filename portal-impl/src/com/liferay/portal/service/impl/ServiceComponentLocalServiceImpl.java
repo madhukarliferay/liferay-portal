@@ -1,41 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBContext;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.db.DBProcessContext;
 import com.liferay.portal.kernel.exception.OldServiceComponentException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
-import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.model.ServiceComponent;
 import com.liferay.portal.kernel.service.configuration.ServiceComponentConfiguration;
 import com.liferay.portal.kernel.service.configuration.servlet.ServletServiceContextComponentConfiguration;
-import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTable;
-import com.liferay.portal.kernel.upgrade.util.UpgradeTableFactoryUtil;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTableListener;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -45,23 +32,16 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.UnsecureSAXReaderUtil;
 import com.liferay.portal.service.base.ServiceComponentLocalServiceBaseImpl;
+import com.liferay.portal.upgrade.util.UpgradeTableFactoryUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import java.lang.reflect.Field;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -69,38 +49,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ServiceComponentLocalServiceImpl
 	extends ServiceComponentLocalServiceBaseImpl {
-
-	public ServiceComponentLocalServiceImpl() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		Filter filter = registry.getFilter(
-			StringBundler.concat(
-				"(&(objectClass=", UpgradeStep.class.getName(),
-				")(upgrade.from.schema.version=0.0.0)(upgrade.initial.",
-				"database.creation=true))"));
-
-		_upgradeStepServiceTracker = registry.trackServices(
-			filter, new UpgradeStepServiceTrackerCustomizer());
-
-		_upgradeStepServiceTracker.open();
-	}
-
-	@Override
-	public void destroy() {
-		super.destroy();
-
-		_upgradeStepServiceTracker.close();
-	}
-
-	@Override
-	public void destroyServiceComponent(
-		ServiceComponentConfiguration serviceComponentConfiguration,
-		ClassLoader classLoader) {
-
-		if (PropsValues.CACHE_CLEAR_ON_PLUGIN_UNDEPLOY) {
-			CacheRegistryUtil.clear();
-		}
-	}
 
 	@Override
 	public List<ServiceComponent> getLatestServiceComponents() {
@@ -119,8 +67,8 @@ public class ServiceComponentLocalServiceImpl
 				classLoader,
 				serviceComponentConfiguration.getModelHintsInputStream());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 
 		try {
@@ -128,18 +76,19 @@ public class ServiceComponentLocalServiceImpl
 				classLoader,
 				serviceComponentConfiguration.getModelHintsExtInputStream());
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 
 		long previousBuildNumber = 0;
 		ServiceComponent previousServiceComponent = null;
-		ServiceComponent serviceComponent = null;
 
 		Map<String, ServiceComponent> serviceComponents =
-			_getServiceComponents();
+			_serviceComponentsDCLSingleton.getSingleton(
+				this::_createServiceComponents);
 
-		serviceComponent = serviceComponents.get(buildNamespace);
+		ServiceComponent serviceComponent = serviceComponents.get(
+			buildNamespace);
 
 		if (serviceComponent == null) {
 			long serviceComponentId = counterLocalService.increment();
@@ -153,6 +102,26 @@ public class ServiceComponentLocalServiceImpl
 		}
 		else {
 			previousBuildNumber = serviceComponent.getBuildNumber();
+
+			if (previousBuildNumber < buildNumber) {
+				List<ServiceComponent> currentServiceComponents =
+					serviceComponentPersistence.findByBuildNamespace(
+						buildNamespace, 0, 1);
+
+				ServiceComponent currentServiceComponent =
+					currentServiceComponents.get(0);
+
+				long currentBuildNumber =
+					currentServiceComponent.getBuildNumber();
+
+				if (currentBuildNumber > previousBuildNumber) {
+					serviceComponent = currentServiceComponent;
+
+					previousBuildNumber = currentBuildNumber;
+
+					serviceComponents.put(buildNamespace, serviceComponent);
+				}
+			}
 
 			if (previousBuildNumber < buildNumber) {
 				previousServiceComponent = serviceComponent;
@@ -173,7 +142,10 @@ public class ServiceComponentLocalServiceImpl
 						" has build number ", previousBuildNumber,
 						" which is newer than ", buildNumber));
 			}
-			else {
+			else if (!StringUtil.equals(
+						buildNamespace,
+						ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME)) {
+
 				return serviceComponent;
 			}
 		}
@@ -230,74 +202,21 @@ public class ServiceComponentLocalServiceImpl
 
 			return serviceComponent;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 	}
 
 	@Override
 	public void upgradeDB(
-			final ClassLoader classLoader, final String buildNamespace,
-			final long buildNumber,
-			final ServiceComponent previousServiceComponent,
-			final String tablesSQL, final String sequencesSQL,
-			final String indexesSQL)
+			ClassLoader classLoader, String buildNamespace, long buildNumber,
+			ServiceComponent previousServiceComponent, String tablesSQL,
+			String sequencesSQL, String indexesSQL)
 		throws Exception {
 
 		_upgradeDB(
 			classLoader, buildNamespace, buildNumber, previousServiceComponent,
 			tablesSQL, sequencesSQL, indexesSQL);
-	}
-
-	@Override
-	public void verifyDB() {
-		for (Object service : _upgradeStepServiceTracker.getServices()) {
-			UpgradeStepHolder upgradeStepHolder = (UpgradeStepHolder)service;
-
-			String servletContextName = upgradeStepHolder._servletContextName;
-
-			Release release = releaseLocalService.fetchRelease(
-				upgradeStepHolder._servletContextName);
-
-			if ((release != null) &&
-				!Objects.equals(release.getSchemaVersion(), "0.0.0")) {
-
-				continue;
-			}
-
-			try {
-				UpgradeStep upgradeStep = upgradeStepHolder._upgradeStep;
-
-				upgradeStep.upgrade(
-					new DBProcessContext() {
-
-						@Override
-						public DBContext getDBContext() {
-							return new DBContext();
-						}
-
-						@Override
-						public OutputStream getOutputStream() {
-							return null;
-						}
-
-					});
-
-				releaseLocalService.updateRelease(
-					servletContextName, "0.0.1", "0.0.0");
-
-				release = releaseLocalService.fetchRelease(servletContextName);
-
-				int buildNumber = upgradeStepHolder._buildNumber;
-
-				release.setBuildNumber(buildNumber);
-
-				releaseLocalService.updateRelease(release);
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
-		}
 	}
 
 	protected List<String> getModelNames(ClassLoader classLoader)
@@ -316,11 +235,12 @@ public class ServiceComponentLocalServiceImpl
 
 			modelNames.addAll(getModelNames(xml));
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"No optional file META-INF/portlet-model-hints-ext.xml " +
-						"found");
+						"found",
+					exception);
 			}
 		}
 
@@ -328,27 +248,17 @@ public class ServiceComponentLocalServiceImpl
 	}
 
 	protected List<String> getModelNames(String xml) throws DocumentException {
-		List<String> modelNames = new ArrayList<>();
-
 		Document document = UnsecureSAXReaderUtil.read(xml);
 
 		Element rootElement = document.getRootElement();
 
-		List<Element> modelElements = rootElement.elements("model");
-
-		for (Element modelElement : modelElements) {
-			String name = modelElement.attributeValue("name");
-
-			modelNames.add(name);
-		}
-
-		return modelNames;
+		return TransformUtil.transform(
+			rootElement.elements("model"),
+			modelElement -> modelElement.attributeValue("name"));
 	}
 
 	protected List<String> getModifiedTableNames(
 		String previousTablesSQL, String tablesSQL) {
-
-		List<String> modifiedTableNames = new ArrayList<>();
 
 		List<String> previousTablesSQLParts = ListUtil.fromArray(
 			StringUtil.split(previousTablesSQL, StringPool.SEMICOLON));
@@ -357,14 +267,14 @@ public class ServiceComponentLocalServiceImpl
 
 		tablesSQLParts.removeAll(previousTablesSQLParts);
 
-		for (String tablesSQLPart : tablesSQLParts) {
-			int x = tablesSQLPart.indexOf("create table ");
-			int y = tablesSQLPart.indexOf(" (");
+		return TransformUtil.transform(
+			tablesSQLParts,
+			tablesSQLPart -> {
+				int x = tablesSQLPart.indexOf("create table ");
+				int y = tablesSQLPart.indexOf(" (");
 
-			modifiedTableNames.add(tablesSQLPart.substring(x + 13, y));
-		}
-
-		return modifiedTableNames;
+				return tablesSQLPart.substring(x + 13, y);
+			});
 	}
 
 	protected UpgradeTableListener getUpgradeTableListener(
@@ -390,10 +300,11 @@ public class ServiceComponentLocalServiceImpl
 
 			return upgradeTableListener;
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
-					"Unable to instantiate " + upgradeTableListenerClassName);
+					"Unable to instantiate " + upgradeTableListenerClassName,
+					exception);
 			}
 
 			return null;
@@ -483,39 +394,27 @@ public class ServiceComponentLocalServiceImpl
 		}
 	}
 
-	private Map<String, ServiceComponent> _getServiceComponents() {
-		if (_serviceComponents != null) {
-			return _serviceComponents;
+	private Map<String, ServiceComponent> _createServiceComponents() {
+		Map<String, ServiceComponent> serviceComponents =
+			new ConcurrentHashMap<>();
+
+		for (ServiceComponent serviceComponent :
+				serviceComponentPersistence.findAll()) {
+
+			String buildNamespace = serviceComponent.getBuildNamespace();
+
+			ServiceComponent previousServiceComponent = serviceComponents.get(
+				buildNamespace);
+
+			if ((previousServiceComponent == null) ||
+				(serviceComponent.getBuildNumber() >
+					previousServiceComponent.getBuildNumber())) {
+
+				serviceComponents.put(buildNamespace, serviceComponent);
+			}
 		}
 
-		synchronized (this) {
-			if (_serviceComponents != null) {
-				return _serviceComponents;
-			}
-
-			Map<String, ServiceComponent> serviceComponents =
-				new ConcurrentHashMap<>();
-
-			for (ServiceComponent serviceComponent :
-					serviceComponentPersistence.findAll()) {
-
-				String buildNamespace = serviceComponent.getBuildNamespace();
-
-				ServiceComponent previousServiceComponent =
-					serviceComponents.get(buildNamespace);
-
-				if ((previousServiceComponent == null) ||
-					(serviceComponent.getBuildNumber() >
-						previousServiceComponent.getBuildNumber())) {
-
-					serviceComponents.put(buildNamespace, serviceComponent);
-				}
-			}
-
-			_serviceComponents = serviceComponents;
-		}
-
-		return _serviceComponents;
+		return serviceComponents;
 	}
 
 	private void _upgradeDB(
@@ -531,23 +430,19 @@ public class ServiceComponentLocalServiceImpl
 				_log.info("Running " + buildNamespace + " SQL scripts");
 			}
 
-			db.runSQLTemplateString(tablesSQL, true, false);
-			db.runSQLTemplateString(sequencesSQL, true, false);
-			db.runSQLTemplateString(indexesSQL, true, false);
+			db.runSQLTemplate(tablesSQL, false);
+			db.runSQLTemplate(sequencesSQL, false);
+			db.runSQLTemplate(indexesSQL, false);
 		}
 		else if (PropsValues.SCHEMA_MODULE_BUILD_AUTO_UPGRADE) {
 			if (_log.isWarnEnabled()) {
-				StringBundler sb = new StringBundler(7);
-
-				sb.append("Auto upgrading ");
-				sb.append(buildNamespace);
-				sb.append(" database to build number ");
-				sb.append(buildNumber);
-				sb.append(" is not supported for a production environment. ");
-				sb.append("Write an UpgradeStep to ensure data is upgraded ");
-				sb.append("correctly.");
-
-				_log.warn(sb.toString());
+				_log.warn(
+					StringBundler.concat(
+						"Auto upgrading ", buildNamespace,
+						" database to build number ", buildNumber,
+						" is not supported for a production environment. ",
+						"Write an UpgradeStep to ensure data is upgraded ",
+						"correctly."));
 			}
 
 			if (!tablesSQL.equals(previousServiceComponent.getTablesSQL())) {
@@ -555,7 +450,7 @@ public class ServiceComponentLocalServiceImpl
 					_log.info("Upgrading database with tables.sql");
 				}
 
-				db.runSQLTemplateString(tablesSQL, true, false);
+				db.runSQLTemplate(tablesSQL, false);
 
 				upgradeModels(classLoader, previousServiceComponent, tablesSQL);
 			}
@@ -567,7 +462,7 @@ public class ServiceComponentLocalServiceImpl
 					_log.info("Upgrading database with sequences.sql");
 				}
 
-				db.runSQLTemplateString(sequencesSQL, true, false);
+				db.runSQLTemplate(sequencesSQL, false);
 			}
 
 			if (!indexesSQL.equals(previousServiceComponent.getIndexesSQL()) ||
@@ -577,7 +472,7 @@ public class ServiceComponentLocalServiceImpl
 					_log.info("Upgrading database with indexes.sql");
 				}
 
-				db.runSQLTemplateString(indexesSQL, true, false);
+				db.runSQLTemplate(indexesSQL, false);
 			}
 		}
 	}
@@ -589,61 +484,7 @@ public class ServiceComponentLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		ServiceComponentLocalServiceImpl.class);
 
-	private volatile Map<String, ServiceComponent> _serviceComponents;
-	private final ServiceTracker<UpgradeStep, UpgradeStepHolder>
-		_upgradeStepServiceTracker;
-
-	private static class UpgradeStepHolder {
-
-		private UpgradeStepHolder(
-			String servletContextName, int buildNumber,
-			UpgradeStep upgradeStep) {
-
-			_servletContextName = servletContextName;
-			_buildNumber = buildNumber;
-			_upgradeStep = upgradeStep;
-		}
-
-		private final int _buildNumber;
-		private final String _servletContextName;
-		private final UpgradeStep _upgradeStep;
-
-	}
-
-	private static class UpgradeStepServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer<UpgradeStep, UpgradeStepHolder> {
-
-		@Override
-		public UpgradeStepHolder addingService(
-			ServiceReference<UpgradeStep> serviceReference) {
-
-			String servletContextName = (String)serviceReference.getProperty(
-				"upgrade.bundle.symbolic.name");
-			int buildNumber = GetterUtil.getInteger(
-				serviceReference.getProperty("build.number"));
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			UpgradeStep upgradeStep = registry.getService(serviceReference);
-
-			return new UpgradeStepHolder(
-				servletContextName, buildNumber, upgradeStep);
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<UpgradeStep> serviceReference,
-			UpgradeStepHolder upgradeStepHolder) {
-
-			addingService(serviceReference);
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<UpgradeStep> serviceReference,
-			UpgradeStepHolder upgradeStepHolder) {
-		}
-
-	}
+	private final DCLSingleton<Map<String, ServiceComponent>>
+		_serviceComponentsDCLSingleton = new DCLSingleton<>();
 
 }

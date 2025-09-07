@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.invitation.invite.members.web.internal.portlet;
@@ -19,7 +10,7 @@ import com.liferay.invitation.invite.members.service.MemberRequestLocalService;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.CustomSQLParam;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -30,10 +21,12 @@ import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -44,17 +37,15 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.util.comparator.UserFirstNameComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
-import java.util.LinkedHashMap;
-import java.util.List;
+import jakarta.portlet.ActionRequest;
+import jakarta.portlet.ActionResponse;
+import jakarta.portlet.Portlet;
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.Portlet;
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,7 +54,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Ryan Park
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=so-portlet-invite-members",
@@ -71,14 +61,15 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.header-portlet-css=/invite_members/css/main.css",
 		"com.liferay.portlet.icon=/icons/invite_members.png",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Invite Members",
-		"javax.portlet.expiration-cache=0",
-		"javax.portlet.init-param.template-path=/META-INF/resources/",
-		"javax.portlet.init-param.view-template=/invite_members/view.jsp",
-		"javax.portlet.name=" + InviteMembersPortletKeys.INVITE_MEMBERS,
-		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user",
-		"javax.portlet.supported-public-render-parameter=invitedMembersCount"
+		"jakarta.portlet.display-name=Invite Members",
+		"jakarta.portlet.expiration-cache=0",
+		"jakarta.portlet.init-param.template-path=/META-INF/resources/",
+		"jakarta.portlet.init-param.view-template=/invite_members/view.jsp",
+		"jakarta.portlet.name=" + InviteMembersPortletKeys.INVITE_MEMBERS,
+		"jakarta.portlet.resource-bundle=content.Language",
+		"jakarta.portlet.security-role-ref=guest,power-user,user",
+		"jakarta.portlet.supported-public-render-parameter=invitedMembersCount",
+		"jakarta.portlet.version=4.0"
 	},
 	service = Portlet.class
 )
@@ -99,38 +90,37 @@ public class InviteMembersPortlet extends MVCPortlet {
 			"count",
 			_getAvailableUsersCount(
 				themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(),
-				keywords));
-
-		JSONObject optionsJSONObject = JSONUtil.put(
-			"end", end
+				keywords)
 		).put(
-			"keywords", keywords
-		).put(
-			"start", start
+			"options",
+			JSONUtil.put(
+				"end", end
+			).put(
+				"keywords", keywords
+			).put(
+				"start", start
+			)
 		);
-
-		jsonObject.put("options", optionsJSONObject);
 
 		List<User> users = _getAvailableUsers(
 			themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(),
 			keywords, start, end);
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (User user : users) {
-			JSONObject userJSONObject = JSONUtil.put(
-				"hasPendingMemberRequest",
-				_memberRequestLocalService.hasPendingMemberRequest(
-					themeDisplay.getScopeGroupId(), user.getUserId())
-			).put(
-				"userEmailAddress", user.getEmailAddress()
-			).put(
-				"userFullName", user.getFullName()
-			).put(
-				"userId", user.getUserId()
-			);
-
-			jsonArray.put(userJSONObject);
+			jsonArray.put(
+				JSONUtil.put(
+					"hasPendingMemberRequest",
+					_memberRequestLocalService.hasPendingMemberRequest(
+						themeDisplay.getScopeGroupId(), user.getUserId())
+				).put(
+					"userEmailAddress", user.getEmailAddress()
+				).put(
+					"userFullName", user.getFullName()
+				).put(
+					"userId", user.getUserId()
+				));
 		}
 
 		jsonObject.put("users", jsonArray);
@@ -143,11 +133,11 @@ public class InviteMembersPortlet extends MVCPortlet {
 		throws Exception {
 
 		try {
-			doSendInvite(actionRequest);
+			_sendInvite(actionRequest);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+				_log.warn(exception);
 			}
 		}
 	}
@@ -167,8 +157,8 @@ public class InviteMembersPortlet extends MVCPortlet {
 				super.serveResource(resourceRequest, resourceResponse);
 			}
 		}
-		catch (Exception e) {
-			throw new PortletException(e);
+		catch (Exception exception) {
+			throw new PortletException(exception);
 		}
 	}
 
@@ -183,22 +173,91 @@ public class InviteMembersPortlet extends MVCPortlet {
 			actionRequest, "memberRequestId");
 		int status = ParamUtil.getInteger(actionRequest, "status");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			_memberRequestLocalService.updateMemberRequest(
 				themeDisplay.getUserId(), memberRequestId, status);
 
+			long userNotificationEventId = ParamUtil.getLong(
+				actionRequest, "userNotificationEventId");
+
+			if (userNotificationEventId != 0) {
+				_updateArchived(
+					themeDisplay.getUserId(), userNotificationEventId);
+			}
+
 			jsonObject.put("success", Boolean.TRUE);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			jsonObject.put("success", Boolean.FALSE);
 		}
 
 		writeJSON(actionRequest, actionResponse, jsonObject);
 	}
 
-	protected void doSendInvite(ActionRequest actionRequest) throws Exception {
+	private List<User> _getAvailableUsers(
+			long companyId, long groupId, String keywords, int start, int end)
+		throws Exception {
+
+		return _userLocalService.search(
+			companyId, keywords, WorkflowConstants.STATUS_APPROVED,
+			LinkedHashMapBuilder.<String, Object>put(
+				"usersInvited",
+				new CustomSQLParam(
+					_customSQL.get(
+						getClass(),
+						"com.liferay.portal.service.persistence.UserFinder." +
+							"filterByUsersGroupsGroupId"),
+					groupId)
+			).build(),
+			start, end, UserFirstNameComparator.getInstance(true));
+	}
+
+	private int _getAvailableUsersCount(
+			long companyId, long groupId, String keywords)
+		throws Exception {
+
+		return _userLocalService.searchCount(
+			companyId, keywords, WorkflowConstants.STATUS_APPROVED,
+			LinkedHashMapBuilder.<String, Object>put(
+				"usersInvited",
+				new CustomSQLParam(
+					_customSQL.get(
+						getClass(),
+						"com.liferay.portal.service.persistence.UserFinder." +
+							"filterByUsersGroupsGroupId"),
+					groupId)
+			).build());
+	}
+
+	private long[] _getLongArray(PortletRequest portletRequest, String name) {
+		String value = portletRequest.getParameter(name);
+
+		if (value == null) {
+			return null;
+		}
+
+		return StringUtil.split(GetterUtil.getString(value), 0L);
+	}
+
+	private String[] _getStringArray(
+		PortletRequest portletRequest, String name) {
+
+		String value = portletRequest.getParameter(name);
+
+		if (value == null) {
+			return null;
+		}
+
+		return StringUtil.split(GetterUtil.getString(value));
+	}
+
+	private void _sendInvite(ActionRequest actionRequest) throws Exception {
 		long groupId = ParamUtil.getLong(actionRequest, "groupId");
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -211,26 +270,27 @@ public class InviteMembersPortlet extends MVCPortlet {
 		}
 
 		long invitedTeamId = ParamUtil.getLong(actionRequest, "invitedTeamId");
-		long[] receiverUserIds = getLongArray(actionRequest, "receiverUserIds");
+		long[] receiverUserIds = _getLongArray(
+			actionRequest, "receiverUserIds");
 		long invitedRoleId = ParamUtil.getLong(actionRequest, "invitedRoleId");
-		String[] receiverEmailAddresses = getStringArray(
+		String[] receiverEmailAddresses = _getStringArray(
 			actionRequest, "receiverEmailAddresses");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
 
-		PortletURL portletURL = PortletProviderUtil.getPortletURL(
-			actionRequest, _groupLocalService.getGroup(groupId),
-			UserNotificationEvent.class.getName(), PortletProvider.Action.VIEW);
-
-		serviceContext.setAttribute("redirectURL", portletURL.toString());
-
-		String createAccountURL = _portal.getCreateAccountURL(
-			_portal.getHttpServletRequest(actionRequest), themeDisplay);
-
-		serviceContext.setAttribute("createAccountURL", createAccountURL);
-
+		serviceContext.setAttribute(
+			"createAccountURL",
+			_portal.getCreateAccountURL(
+				_portal.getHttpServletRequest(actionRequest), themeDisplay));
 		serviceContext.setAttribute("loginURL", themeDisplay.getURLSignIn());
+		serviceContext.setAttribute(
+			"redirectURL",
+			String.valueOf(
+				PortletProviderUtil.getPortletURL(
+					actionRequest, _groupLocalService.getGroup(groupId),
+					UserNotificationEvent.class.getName(),
+					PortletProvider.Action.VIEW)));
 
 		_memberRequestLocalService.addMemberRequests(
 			themeDisplay.getUserId(), groupId, receiverUserIds, invitedRoleId,
@@ -241,73 +301,25 @@ public class InviteMembersPortlet extends MVCPortlet {
 			invitedRoleId, invitedTeamId, serviceContext);
 	}
 
-	protected long[] getLongArray(PortletRequest portletRequest, String name) {
-		String value = portletRequest.getParameter(name);
-
-		if (value == null) {
-			return null;
-		}
-
-		return StringUtil.split(GetterUtil.getString(value), 0L);
-	}
-
-	protected String[] getStringArray(
-		PortletRequest portletRequest, String name) {
-
-		String value = portletRequest.getParameter(name);
-
-		if (value == null) {
-			return null;
-		}
-
-		return StringUtil.split(GetterUtil.getString(value));
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.invitation.invite.members.service)(&(release.schema.version>=2.0.0)(!(release.schema.version>=3.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
-	}
-
-	private List<User> _getAvailableUsers(
-			long companyId, long groupId, String keywords, int start, int end)
+	private void _updateArchived(long userId, long userNotificationEventId)
 		throws Exception {
 
-		LinkedHashMap<String, Object> usersParams =
-			LinkedHashMapBuilder.<String, Object>put(
-				"usersInvited",
-				new CustomSQLParam(
-					_customSQL.get(
-						getClass(),
-						"com.liferay.portal.service.persistence.UserFinder." +
-							"filterByUsersGroupsGroupId"),
-					groupId)
-			).build();
+		UserNotificationEvent userNotificationEvent =
+			_userNotificationEventLocalService.fetchUserNotificationEvent(
+				userNotificationEventId);
 
-		return _userLocalService.search(
-			companyId, keywords, WorkflowConstants.STATUS_APPROVED, usersParams,
-			start, end, new UserFirstNameComparator(true));
-	}
+		if (userNotificationEvent == null) {
+			return;
+		}
 
-	private int _getAvailableUsersCount(
-			long companyId, long groupId, String keywords)
-		throws Exception {
+		if (userNotificationEvent.getUserId() != userId) {
+			throw new PrincipalException();
+		}
 
-		LinkedHashMap<String, Object> usersParams =
-			LinkedHashMapBuilder.<String, Object>put(
-				"usersInvited",
-				new CustomSQLParam(
-					_customSQL.get(
-						getClass(),
-						"com.liferay.portal.service.persistence.UserFinder." +
-							"filterByUsersGroupsGroupId"),
-					groupId)
-			).build();
+		userNotificationEvent.setArchived(true);
 
-		return _userLocalService.searchCount(
-			companyId, keywords, WorkflowConstants.STATUS_APPROVED,
-			usersParams);
+		_userNotificationEventLocalService.updateUserNotificationEvent(
+			userNotificationEvent);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -320,12 +332,24 @@ public class InviteMembersPortlet extends MVCPortlet {
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private MemberRequestLocalService _memberRequestLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.invitation.invite.members.service)(&(release.schema.version>=2.0.0)(!(release.schema.version>=3.0.0))))"
+	)
+	private Release _release;
+
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private UserNotificationEventLocalService
+		_userNotificationEventLocalService;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.servlet;
@@ -17,29 +8,30 @@ package com.liferay.portal.servlet;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Map;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Filter;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Pavel Savinov
@@ -57,15 +49,13 @@ public class ServletAdapter extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-		Registry registry = RegistryUtil.getRegistry();
-
-		Filter filter = registry.getFilter(
+		Filter filter = SystemBundleUtil.createFilter(
 			StringBundler.concat(
 				"(&", config.getInitParameter("filter"), "(objectClass=",
 				Servlet.class.getName(), "))"));
 
-		_serviceTracker = registry.trackServices(
-			filter, new ServletTrackerCustomizer());
+		_serviceTracker = new ServiceTracker<>(
+			_bundleContext, filter, new ServletTrackerCustomizer());
 
 		_serviceTracker.open();
 	}
@@ -101,27 +91,29 @@ public class ServletAdapter extends HttpServlet {
 
 	private static final Log _log = LogFactoryUtil.getLog(ServletAdapter.class);
 
+	private final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 	private ServiceTracker<Servlet, Servlet> _serviceTracker;
 
-	private static class ServletTrackerCustomizer
+	private class ServletTrackerCustomizer
 		implements ServiceTrackerCustomizer<Servlet, Servlet> {
 
 		@Override
 		public Servlet addingService(
 			ServiceReference<Servlet> serviceReference) {
 
-			Map<String, Object> properties = serviceReference.getProperties();
-
 			ServletConfig servletConfig = new ServletConfig() {
 
 				@Override
 				public String getInitParameter(String name) {
-					return GetterUtil.getString(properties.get(name), null);
+					return GetterUtil.getString(
+						serviceReference.getProperty(name), null);
 				}
 
 				@Override
 				public Enumeration<String> getInitParameterNames() {
-					return Collections.enumeration(properties.keySet());
+					return Collections.enumeration(
+						Arrays.asList(serviceReference.getPropertyKeys()));
 				}
 
 				@Override
@@ -133,20 +125,19 @@ public class ServletAdapter extends HttpServlet {
 				@Override
 				public String getServletName() {
 					return GetterUtil.getString(
-						properties.get("osgi.http.whiteboard.servlet.name"));
+						serviceReference.getProperty(
+							"osgi.http.whiteboard.servlet.name"));
 				}
 
 			};
 
-			Registry registry = RegistryUtil.getRegistry();
-
-			Servlet servlet = registry.getService(serviceReference);
+			Servlet servlet = _bundleContext.getService(serviceReference);
 
 			try {
 				servlet.init(servletConfig);
 			}
-			catch (ServletException se) {
-				_log.error("Unable to initialize servlet", se);
+			catch (ServletException servletException) {
+				_log.error("Unable to initialize servlet", servletException);
 			}
 
 			return servlet;
@@ -162,6 +153,8 @@ public class ServletAdapter extends HttpServlet {
 			ServiceReference<Servlet> serviceReference, Servlet service) {
 
 			service.destroy();
+
+			_bundleContext.ungetService(serviceReference);
 		}
 
 	}

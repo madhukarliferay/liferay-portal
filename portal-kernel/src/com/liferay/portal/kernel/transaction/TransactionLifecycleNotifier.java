@@ -1,27 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.transaction;
 
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
-
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
 /**
  * @author Michael C. Han
@@ -65,7 +51,7 @@ public class TransactionLifecycleNotifier {
 		TransactionStatus transactionStatus) {
 
 		for (TransactionLifecycleListener transactionLifecycleListener :
-				_transactionLifecycleNotifier._transactionLifecycleListeners) {
+				_transactionLifecycleListeners) {
 
 			transactionLifecycleListener.committed(
 				transactionAttribute, transactionStatus);
@@ -77,7 +63,7 @@ public class TransactionLifecycleNotifier {
 		TransactionStatus transactionStatus) {
 
 		for (TransactionLifecycleListener transactionLifecycleListener :
-				_transactionLifecycleNotifier._transactionLifecycleListeners) {
+				_transactionLifecycleListeners) {
 
 			transactionLifecycleListener.created(
 				transactionAttribute, transactionStatus);
@@ -89,7 +75,7 @@ public class TransactionLifecycleNotifier {
 		TransactionStatus transactionStatus, Throwable throwable) {
 
 		for (TransactionLifecycleListener transactionLifecycleListener :
-				_transactionLifecycleNotifier._transactionLifecycleListeners) {
+				_transactionLifecycleListeners) {
 
 			transactionLifecycleListener.rollbacked(
 				transactionAttribute, transactionStatus, throwable);
@@ -97,56 +83,11 @@ public class TransactionLifecycleNotifier {
 	}
 
 	private TransactionLifecycleNotifier() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		_serviceTracker = registry.trackServices(
-			TransactionLifecycleListener.class,
-			new TransactionLifecycleListenerServiceTrackerCustomizer());
-
-		_serviceTracker.open();
 	}
 
-	private static final TransactionLifecycleNotifier
-		_transactionLifecycleNotifier = new TransactionLifecycleNotifier();
-
-	private final ServiceTracker
-		<TransactionLifecycleListener, TransactionLifecycleListener>
-			_serviceTracker;
-	private final Set<TransactionLifecycleListener>
-		_transactionLifecycleListeners = new CopyOnWriteArraySet<>();
-
-	private class TransactionLifecycleListenerServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<TransactionLifecycleListener, TransactionLifecycleListener> {
-
-		@Override
-		public TransactionLifecycleListener addingService(
-			ServiceReference<TransactionLifecycleListener> serviceReference) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			TransactionLifecycleListener transactionLifecycleListener =
-				registry.getService(serviceReference);
-
-			_transactionLifecycleListeners.add(transactionLifecycleListener);
-
-			return transactionLifecycleListener;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<TransactionLifecycleListener> serviceReference,
-			TransactionLifecycleListener transactionLifecycleListener) {
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<TransactionLifecycleListener> serviceReference,
-			TransactionLifecycleListener transactionLifecycleListener) {
-
-			_transactionLifecycleListeners.remove(transactionLifecycleListener);
-		}
-
-	}
+	private static final ServiceTrackerList<TransactionLifecycleListener>
+		_transactionLifecycleListeners = ServiceTrackerListFactory.open(
+			SystemBundleUtil.getBundleContext(),
+			TransactionLifecycleListener.class);
 
 }

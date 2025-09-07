@@ -1,68 +1,29 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser;
 
-import java.io.File;
-
-import java.util.Collections;
-import java.util.Set;
+import org.json.JSONObject;
 
 /**
  * @author Michael Hashimoto
  */
 public class PortalReleaseJob extends BasePortalReleaseJob {
 
-	public PortalReleaseJob(String jobName, String portalBranchName) {
-		super(jobName, portalBranchName);
+	protected PortalReleaseJob(
+		BuildProfile buildProfile, String jobName,
+		PortalGitWorkingDirectory portalGitWorkingDirectory,
+		String testSuiteName, String upstreamBranchName) {
 
-		GitWorkingDirectory jenkinsGitWorkingDirectory =
-			getJenkinsGitWorkingDirectory();
-
-		jobPropertiesFiles.add(
-			new File(
-				jenkinsGitWorkingDirectory.getWorkingDirectory(),
-				"commands/dependencies/test-portal-release.properties"));
-
-		readJobProperties();
+		super(
+			buildProfile, jobName, portalGitWorkingDirectory, testSuiteName,
+			upstreamBranchName);
 	}
 
-	@Override
-	public Set<String> getBatchNames() {
-		Set<String> testBatchNames = super.getBatchNames();
-
-		testBatchNames.addAll(_getOptionalBatchNames());
-
-		return testBatchNames;
+	protected PortalReleaseJob(JSONObject jsonObject) {
+		super(jsonObject);
 	}
-
-	public void setPortalReleaseRef(String portalReleaseRef) {
-		_portalReleaseRef = portalReleaseRef;
-	}
-
-	private Set<String> _getOptionalBatchNames() {
-		if (_portalReleaseRef == null) {
-			return Collections.emptySet();
-		}
-
-		String testBatchNamesString = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(),
-			"test.batch.names.optional[" + _portalReleaseRef + "]");
-
-		return getSetFromString(testBatchNamesString);
-	}
-
-	private String _portalReleaseRef;
 
 }

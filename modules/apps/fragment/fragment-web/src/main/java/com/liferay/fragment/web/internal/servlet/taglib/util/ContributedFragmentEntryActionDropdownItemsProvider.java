@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.web.internal.servlet.taglib.util;
@@ -18,22 +9,21 @@ import com.liferay.fragment.constants.FragmentActionKeys;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.web.internal.security.permission.resource.FragmentPermission;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Eudaldo Alonso
@@ -54,51 +44,44 @@ public class ContributedFragmentEntryActionDropdownItemsProvider {
 	}
 
 	public List<DropdownItem> getActionDropdownItems() throws Exception {
-		return new DropdownItemList() {
-			{
-				if (FragmentPermission.contains(
-						_themeDisplay.getPermissionChecker(),
-						_themeDisplay.getScopeGroupId(),
-						FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES)) {
-
-					add(_getCopyToFragmentEntryActionUnsafeConsumer());
-				}
-			}
-		};
+		return DropdownItemListBuilder.add(
+			() -> FragmentPermission.contains(
+				_themeDisplay.getPermissionChecker(),
+				_themeDisplay.getScopeGroupId(),
+				FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES),
+			_getCopyToFragmentEntryActionUnsafeConsumer()
+		).build();
 	}
 
 	private UnsafeConsumer<DropdownItem, Exception>
-			_getCopyToFragmentEntryActionUnsafeConsumer()
-		throws Exception {
+		_getCopyToFragmentEntryActionUnsafeConsumer() {
 
-		PortletURL selectFragmentCollectionURL =
-			_renderResponse.createRenderURL();
+		LiferayPortletURL addFragmentCollectionURL =
+			(LiferayPortletURL)_renderResponse.createResourceURL();
 
-		selectFragmentCollectionURL.setParameter(
-			"mvcRenderCommandName", "/fragment/select_fragment_collection");
-
-		selectFragmentCollectionURL.setWindowState(LiferayWindowState.POP_UP);
-
-		PortletURL copyContributedFragmentEntryURL =
-			_renderResponse.createActionURL();
-
-		copyContributedFragmentEntryURL.setParameter(
-			ActionRequest.ACTION_NAME,
-			"/fragment/copy_contributed_fragment_entry");
-		copyContributedFragmentEntryURL.setParameter(
-			"redirect", _themeDisplay.getURLCurrent());
+		addFragmentCollectionURL.setCopyCurrentRenderParameters(false);
+		addFragmentCollectionURL.setResourceID(
+			"/fragment/add_fragment_collection");
 
 		return dropdownItem -> {
-			dropdownItem.putData("action", "copyToContributedFragmentEntry");
 			dropdownItem.putData(
-				"fragmentEntryKey",
+				"action", "copyContributedEntryToFragmentCollection");
+			dropdownItem.putData(
+				"addFragmentCollectionURL",
+				addFragmentCollectionURL.toString());
+			dropdownItem.putData(
+				"contributedEntryKey",
 				String.valueOf(_fragmentEntry.getFragmentEntryKey()));
 			dropdownItem.putData(
-				"copyContributedFragmentEntryURL",
-				copyContributedFragmentEntryURL.toString());
-			dropdownItem.putData(
-				"selectFragmentCollectionURL",
-				selectFragmentCollectionURL.toString());
+				"copyContributedEntryURL",
+				PortletURLBuilder.createActionURL(
+					_renderResponse
+				).setActionName(
+					"/fragment/copy_fragment_entry"
+				).setRedirect(
+					_themeDisplay.getURLCurrent()
+				).buildString());
+			dropdownItem.setIcon("copy");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "copy-to"));
 		};

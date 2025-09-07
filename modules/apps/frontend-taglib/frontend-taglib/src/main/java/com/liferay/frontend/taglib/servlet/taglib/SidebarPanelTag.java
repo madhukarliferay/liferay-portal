@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.servlet.taglib;
@@ -17,8 +8,9 @@ package com.liferay.frontend.taglib.servlet.taglib;
 import com.liferay.frontend.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * @author Carlos Lancha
@@ -29,9 +21,11 @@ public class SidebarPanelTag extends IncludeTag {
 	public int doEndTag() throws JspException {
 		setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
 
+		HttpServletRequest httpServletRequest = getRequest();
+
 		setNamespacedAttribute(
-			request, "searchContainerId", _searchContainerId);
-		setNamespacedAttribute(request, "resourceURL", _resourceURL);
+			httpServletRequest, "searchContainerId", _searchContainerId);
+		setNamespacedAttribute(httpServletRequest, "resourceURL", _resourceURL);
 
 		return super.doEndTag();
 	}
@@ -40,9 +34,16 @@ public class SidebarPanelTag extends IncludeTag {
 	public int doStartTag() throws JspException {
 		setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
 
+		setNamespacedAttribute(getRequest(), "closeButton", _closeButton);
+		setNamespacedAttribute(getRequest(), "title", _title);
+
 		super.doStartTag();
 
 		return EVAL_BODY_INCLUDE;
+	}
+
+	public boolean getCloseButton() {
+		return _closeButton;
 	}
 
 	public String getResourceURL() {
@@ -53,11 +54,19 @@ public class SidebarPanelTag extends IncludeTag {
 		return _searchContainerId;
 	}
 
+	public String getTitle() {
+		return _title;
+	}
+
+	public void setCloseButton(boolean closeButton) {
+		_closeButton = closeButton;
+	}
+
 	@Override
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setResourceURL(String resourceURL) {
@@ -68,12 +77,18 @@ public class SidebarPanelTag extends IncludeTag {
 		_searchContainerId = searchContainerId;
 	}
 
+	public void setTitle(String title) {
+		_title = title;
+	}
+
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_closeButton = true;
 		_resourceURL = null;
 		_searchContainerId = null;
+		_title = null;
 	}
 
 	@Override
@@ -93,7 +108,9 @@ public class SidebarPanelTag extends IncludeTag {
 
 	private static final String _START_PAGE = "/sidebar_panel/start.jsp";
 
+	private boolean _closeButton = true;
 	private String _resourceURL;
 	private String _searchContainerId;
+	private String _title;
 
 }

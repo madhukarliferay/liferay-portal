@@ -1,9 +1,14 @@
-$toolbarDesktopHeight: 64px;
-$toolbarHeight: 110px;
+@import 'atlas-variables';
+
+@import '../ddm_template_editor/components/PropertiesPanel';
+
+$toolbarDesktopHeight: 4rem;
+$toolbarHeight: 6.875rem;
 $toolbarZIndex: 971;
 
-$controlMenuDesktopHeight: 56px;
-$controlMenuHeight: 49px;
+$sidebarHeaderHeight: 104px;
+$sidebarWidth: 398px;
+$sidebarWidthClosed: 40px;
 
 $productMenuTransitionDuration: 0.5s;
 $productMenuWidth: 320px;
@@ -35,53 +40,32 @@ $productMenuWidth: 320px;
 			}
 		}
 
-		.alloy-editor-container .alloy-editor-wrapper {
-			padding-top: 0;
-		}
-
-		.alloy-editor-switch {
-			margin-top: -40px;
-		}
-
-		.form-builder-field {
-			box-shadow: none;
-			margin: 0;
-			padding-bottom: 0;
-			padding-right: 0;
-		}
-
 		.input-localized.input-localized-editor .form-control {
 			border-width: 1px;
 			min-height: 2.5rem;
 			padding: 0.5rem 1rem;
 		}
-
-		.input-localized-content {
-			margin-bottom: 24px;
-		}
-
-		.lfr-ddm-field-group {
-			margin-bottom: 10px;
-			margin-top: 10px;
-			padding: 28px 24px;
-		}
-
-		.lfr-ddm-container > .lfr-ddm-field-group {
-			padding: 0;
-		}
 	}
 
 	.edit-article-form {
-		.component-tbar {
+		.ck.ck-sticky-panel__content.ck-sticky-panel__content_sticky {
+			z-index: $toolbarZIndex - 1;
+		}
+
+		.component-tbar.tbar-article {
 			height: auto;
 			left: 0;
 			min-height: 3.5rem;
-			position: fixed;
-			top: $controlMenuHeight;
-			transition: left ease $productMenuTransitionDuration,
+			transition:
+				left ease $productMenuTransitionDuration,
 				width ease $productMenuTransitionDuration;
 			width: 100%;
 			z-index: $toolbarZIndex;
+
+			@include media-breakpoint-up(sm) {
+				position: fixed;
+				top: var(--control-menu-container-height);
+			}
 
 			body.open & {
 				left: $productMenuWidth;
@@ -99,13 +83,16 @@ $productMenuWidth: 320px;
 				> .tbar-nav {
 					flex-wrap: wrap;
 
+					@include media-breakpoint-up(lg) {
+						flex-wrap: nowrap;
+					}
+
 					> .tbar-item {
-						padding: 0.5em;
+						padding: 0.75rem;
 					}
 
 					> .tbar-item:first-child {
-						border-top: solid thin #e7e7ed;
-						order: 1;
+						border-bottom: solid thin #e7e7ed;
 						width: 100%;
 					}
 
@@ -126,18 +113,11 @@ $productMenuWidth: 320px;
 			}
 
 			.input-localized {
-				flex-direction: row-reverse;
-
 				.form-validator-stack {
 					display: none;
 				}
 
-				.input-group-item {
-					order: 2;
-				}
-
 				.input-localized-content {
-					order: 1;
 					padding-right: 0.5rem;
 				}
 			}
@@ -146,14 +126,16 @@ $productMenuWidth: 320px;
 				border: 0;
 			}
 
-			@media (min-width: 768px) {
+			.translation-manager {
+				width: 115px;
+			}
+
+			@include media-breakpoint-up(lg) {
 				min-height: $toolbarDesktopHeight;
-				top: $controlMenuDesktopHeight;
 
 				> .container-fluid > .tbar-nav {
 					> .tbar-item:first-child {
-						border-top: none;
-						order: 0;
+						border-bottom: none;
 						width: auto;
 					}
 
@@ -168,25 +150,53 @@ $productMenuWidth: 320px;
 			}
 		}
 
-		.contextual-sidebar-content {
-			margin-top: $toolbarHeight;
-
-			@media (min-width: 768px) {
+		.article-content-content {
+			@include media-breakpoint-up(lg) {
 				margin-top: $toolbarDesktopHeight;
 			}
 
-			@media (max-width: 769px) {
+			@include media-breakpoint-between(sm, md) {
+				margin-top: $toolbarHeight;
+			}
+
+			.friendly-url {
+				margin-bottom: 0.25rem;
+			}
+		}
+
+		.contextual-sidebar-content {
+			@include media-breakpoint-down(md) {
 				> .container-fluid {
-					margin: 0;
+					margin: 0 auto;
 					padding: 0;
 
 					> .sheet {
 						border: none;
 						border-radius: 0;
-						min-height: calc(
-							100vh - #{$controlMenuHeight + $toolbarHeight}
-						);
 					}
+				}
+			}
+
+			.contextual-sidebar-mr {
+				margin: 0 $sidebarWidthClosed + 4px 0 4px;
+				padding-top: $toolbarHeight + 1.5rem;
+
+				@include media-breakpoint-up(lg) {
+					margin: 0 $sidebarWidth + 8px 0 0;
+					padding-top: $toolbarDesktopHeight;
+				}
+			}
+
+			.contextual-sidebar-mr-n {
+				margin-right: -$sidebarWidth;
+			}
+
+			.sidebar-body {
+				@include media-breakpoint-down(md) {
+					height: calc(
+						100vh - var(--control-menu-container-height) - #{$sidebarHeaderHeight} -
+							#{$toolbarHeight}
+					);
 				}
 			}
 		}
@@ -194,32 +204,34 @@ $productMenuWidth: 320px;
 		.edit-article-sidebar {
 			border-left: 1px #e7e7ed solid;
 			box-shadow: none;
-			height: calc(
-				100vh - #{$controlMenuHeight + $toolbarHeight}
-			) !important;
+			max-width: 320px;
+			outline: 0;
 			overflow-y: scroll;
-			top: $controlMenuHeight + $toolbarHeight !important;
-			width: 100%;
-			z-index: 1;
+			padding-top: 0;
+			position: fixed;
+			width: $productMenuWidth;
+			z-index: 5;
 
-			@media (min-width: 768px) {
-				height: calc(
-					100vh - #{$controlMenuDesktopHeight + $toolbarDesktopHeight}
-				) !important;
-				top: $controlMenuDesktopHeight + $toolbarDesktopHeight !important;
-				width: $productMenuWidth;
+			@include media-breakpoint-down(xs) {
+				height: auto;
+				overflow: hidden;
+				top: 0;
+
+				&.contextual-sidebar {
+					position: absolute;
+				}
 			}
 
-			.article-content-description {
-				@extend .article-content-content;
+			@include media-breakpoint-between(sm, md) {
+				$management-bar-height: 110px;
 
-				.language-value,
-				.input-localized-content {
-					margin-bottom: 0;
-				}
-
-				.alloy-editor-switch {
-					display: none;
+				&.contextual-sidebar {
+					height: calc(
+						100vh - var(--control-menu-container-height) - #{$management-bar-height}
+					);
+					top: calc(
+						var(--control-menu-container-height) + #{$management-bar-height}
+					);
 				}
 			}
 
@@ -237,7 +249,43 @@ $productMenuWidth: 320px;
 			}
 		}
 
+		.edit-article-panel {
+			border-color: $gray-400;
+
+			.sheet-subtitle {
+				border-width: 0;
+				font-size: 1.25rem;
+				padding: 1.25rem;
+				padding-bottom: 0;
+				text-transform: none;
+
+				.lexicon-icon {
+					font-size: 1.25rem;
+					margin-top: 1rem;
+					position: relative;
+					right: 0.5rem;
+				}
+			}
+		}
+
 		.sidebar-body {
+			.collapse-icon {
+				border-bottom: 1px solid $light;
+				color: $secondary;
+
+				&:hover {
+					color: $dark;
+				}
+
+				.collapse-icon-open {
+					color: $dark;
+				}
+			}
+
+			.panel {
+				margin-bottom: 0;
+			}
+
 			.panel-body {
 				margin-bottom: 16px;
 				padding: 0;
@@ -249,9 +297,7 @@ $productMenuWidth: 320px;
 		}
 	}
 
-	.check-circle-center {
-		.green {
-			color: #008000;
-		}
+	.lfr-lock-error-indicator {
+		cursor: pointer;
 	}
 }

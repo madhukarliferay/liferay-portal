@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.exportimport.data.handler;
@@ -34,9 +25,9 @@ import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.xml.Element;
 
-import java.util.List;
+import jakarta.portlet.PortletPreferences;
 
-import javax.portlet.PortletPreferences;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -46,14 +37,14 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	property = "javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
+	property = "jakarta.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
 	service = PortletDataHandler.class
 )
 public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 
 	public static final String NAMESPACE = "forms";
 
-	public static final String SCHEMA_VERSION = "1.0.0";
+	public static final String SCHEMA_VERSION = "4.0.0";
 
 	@Override
 	public String getSchemaVersion() {
@@ -64,19 +55,20 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 	protected void activate() {
 		setDataLocalized(true);
 		setDeletionSystemEventStagedModelTypes(
+			new StagedModelType(DDMDataProviderInstance.class),
 			new StagedModelType(DDMFormInstanceRecord.class),
 			new StagedModelType(DDMFormInstance.class));
 
 		PortletDataHandlerControl[] formsPortletDataHandlerControlChildren = {
-			new PortletDataHandlerBoolean(
-				NAMESPACE, "ddm-data-provider", true, false, null,
-				DDMDataProviderInstance.class.getName()),
 			new PortletDataHandlerBoolean(
 				NAMESPACE, "form-entries", true, false, null,
 				DDMFormInstanceRecord.class.getName())
 		};
 
 		setExportControls(
+			new PortletDataHandlerBoolean(
+				NAMESPACE, "ddm-data-provider", true, false, null,
+				DDMDataProviderInstance.class.getName()),
 			new PortletDataHandlerBoolean(
 				NAMESPACE, "forms", true, false,
 				formsPortletDataHandlerControlChildren,
@@ -105,13 +97,24 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 
 	@Override
 	protected String doExportData(
-			final PortletDataContext portletDataContext, String portletId,
+			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
 		portletDataContext.addPortletPermissions(DDMConstants.RESOURCE_NAME);
 
 		Element rootElement = addExportDataRootElement(portletDataContext);
+
+		if (portletDataContext.getBooleanParameter(
+				NAMESPACE, "ddm-data-provider")) {
+
+			ActionableDynamicQuery
+				ddmDataProviderInstanceActionableDynamicQuery =
+					_ddmDataProviderInstanceStagedModelRepository.
+						getExportActionableDynamicQuery(portletDataContext);
+
+			ddmDataProviderInstanceActionableDynamicQuery.performActions();
+		}
 
 		if (portletDataContext.getBooleanParameter(NAMESPACE, "forms")) {
 			ActionableDynamicQuery formInstanceActionableDynamicQuery =
@@ -140,6 +143,24 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 
 		portletDataContext.importPortletPermissions(DDMConstants.RESOURCE_NAME);
 
+		if (portletDataContext.getBooleanParameter(
+				NAMESPACE, "ddm-data-provider")) {
+
+			Element dataProviderInstancesElement =
+				portletDataContext.getImportDataGroupElement(
+					DDMDataProviderInstance.class);
+
+			List<Element> dataProviderInstanceElements =
+				dataProviderInstancesElement.elements();
+
+			for (Element dataProviderInstanceElement :
+					dataProviderInstanceElements) {
+
+				StagedModelDataHandlerUtil.importStagedModel(
+					portletDataContext, dataProviderInstanceElement);
+			}
+		}
+
 		if (portletDataContext.getBooleanParameter(NAMESPACE, "forms")) {
 			Element formInstancesElement =
 				portletDataContext.getImportDataGroupElement(
@@ -162,20 +183,6 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 			for (Element structureElement : structureElements) {
 				StagedModelDataHandlerUtil.importStagedModel(
 					portletDataContext, structureElement);
-			}
-
-			Element dataProviderInstancesElement =
-				portletDataContext.getImportDataGroupElement(
-					DDMDataProviderInstance.class);
-
-			List<Element> dataProviderInstanceElements =
-				dataProviderInstancesElement.elements();
-
-			for (Element dataProviderInstanceElement :
-					dataProviderInstanceElements) {
-
-				StagedModelDataHandlerUtil.importStagedModel(
-					portletDataContext, dataProviderInstanceElement);
 			}
 		}
 
@@ -210,12 +217,20 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 			_staging.populateLastPublishDateCounts(
 				portletDataContext,
 				new StagedModelType[] {
+					new StagedModelType(
+						DDMDataProviderInstance.class.getName()),
 					new StagedModelType(DDMFormInstance.class.getName()),
 					new StagedModelType(DDMFormInstanceRecord.class.getName())
 				});
 
 			return;
 		}
+
+		ActionableDynamicQuery ddmDataProviderInstanceActionableDynamicQuery =
+			_ddmDataProviderInstanceStagedModelRepository.
+				getExportActionableDynamicQuery(portletDataContext);
+
+		ddmDataProviderInstanceActionableDynamicQuery.performCount();
 
 		ActionableDynamicQuery formInstanceActionableDynamicQuery =
 			_formInstanceStagedModelRepository.getExportActionableDynamicQuery(
@@ -231,37 +246,25 @@ public class DDMFormAdminPortletDataHandler extends BasePortletDataHandler {
 	}
 
 	@Reference(
-		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord)",
-		unbind = "-"
+		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance)"
 	)
-	protected void setDDMFormInstanceRecordStagedModelRepository(
-		StagedModelRepository<DDMFormInstanceRecord>
-			formInstanceRecordStagedModelRepository) {
-
-		_formInstanceRecordStagedModelRepository =
-			formInstanceRecordStagedModelRepository;
-	}
+	private StagedModelRepository<DDMDataProviderInstance>
+		_ddmDataProviderInstanceStagedModelRepository;
 
 	@Reference(
-		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMFormInstance)",
-		unbind = "-"
+		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord)"
 	)
-	protected void setDDMFormInstanceStagedModelRepository(
-		StagedModelRepository<DDMFormInstance>
-			formInstanceStagedModelRepository) {
-
-		_formInstanceStagedModelRepository = formInstanceStagedModelRepository;
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	private StagedModelRepository<DDMFormInstanceRecord>
 		_formInstanceRecordStagedModelRepository;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMFormInstance)"
+	)
 	private StagedModelRepository<DDMFormInstance>
 		_formInstanceStagedModelRepository;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private Staging _staging;

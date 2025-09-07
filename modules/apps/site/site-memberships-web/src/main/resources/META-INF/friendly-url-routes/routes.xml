@@ -1,22 +1,7 @@
 <?xml version="1.0"?>
-<!DOCTYPE routes PUBLIC "-//Liferay//DTD Friendly URL Routes 7.0.0//EN" "http://www.liferay.com/dtd/liferay-friendly-url-routes_7_0_0.dtd">
+<!DOCTYPE routes PUBLIC "-//Liferay//DTD Friendly URL Routes 7.4.0//EN" "http://www.liferay.com/dtd/liferay-friendly-url-routes_7_4_0.dtd">
 
 <routes>
-	<route>
-		<pattern>/select_organizations</pattern>
-		<implicit-parameter name="mvcPath">/select_organizations.jsp</implicit-parameter>
-		<implicit-parameter name="p_p_state">pop_up</implicit-parameter>
-	</route>
-	<route>
-		<pattern>/select_user_groups</pattern>
-		<implicit-parameter name="mvcPath">/select_user_groups.jsp</implicit-parameter>
-		<implicit-parameter name="p_p_state">pop_up</implicit-parameter>
-	</route>
-	<route>
-		<pattern>/select_users</pattern>
-		<implicit-parameter name="mvcPath">/select_users.jsp</implicit-parameter>
-		<implicit-parameter name="p_p_state">pop_up</implicit-parameter>
-	</route>
 	<route>
 		<pattern>/membership_request/preview/{membershipRequestId:\d+}</pattern>
 		<implicit-parameter name="mvcPath">/preview_membership_request.jsp</implicit-parameter>

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.plugin;
@@ -17,6 +8,8 @@ package com.liferay.portal.kernel.plugin;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -24,6 +17,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.Serializable;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -152,19 +146,17 @@ public class Version implements Comparable<Version>, Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof Version)) {
+		if (!(object instanceof Version)) {
 			return false;
 		}
 
-		Version version = (Version)obj;
-
 		String versionString1 = toString();
-		String versionString2 = version.toString();
+		String versionString2 = String.valueOf((Version)object);
 
 		if (versionString1.equals(UNKNOWN) || versionString2.equals(UNKNOWN)) {
 			return false;
@@ -215,27 +207,24 @@ public class Version implements Comparable<Version>, Serializable {
 	}
 
 	public boolean includes(Version version) {
-		if (equals(version)) {
+		if (equals(version) || Objects.equals(getMajor(), StringPool.STAR)) {
 			return true;
 		}
 
-		if (getMajor().equals(StringPool.STAR)) {
-			return true;
-		}
-
-		if (getMajor().equals(version.getMajor())) {
-			if (getMinor().equals(StringPool.STAR)) {
+		if (Objects.equals(getMajor(), version.getMajor())) {
+			if (Objects.equals(getMinor(), StringPool.STAR)) {
 				return true;
 			}
 
-			if (getMinor().equals(version.getMinor())) {
-				if (getBugFix().equals(StringPool.STAR)) {
+			if (Objects.equals(getMinor(), version.getMinor())) {
+				if (Objects.equals(getBugFix(), StringPool.STAR)) {
 					return true;
 				}
 
-				if (getBugFix().equals(version.getBugFix())) {
-					if (getBuildNumber().equals(StringPool.STAR) ||
-						getBuildNumber().equals(version.getBuildNumber())) {
+				if (Objects.equals(getBugFix(), version.getBugFix())) {
+					if (Objects.equals(getBuildNumber(), StringPool.STAR) ||
+						Objects.equals(
+							getBuildNumber(), version.getBuildNumber())) {
 
 						return true;
 					}
@@ -318,32 +307,6 @@ public class Version implements Comparable<Version>, Serializable {
 		}
 	}
 
-	private static boolean _contains(
-		String containerString, String numberString) {
-
-		if (containerString.endsWith(StringPool.PLUS)) {
-			String containerNumberString = containerString.substring(
-				0, containerString.length() - 1);
-
-			try {
-				int containerNumber = GetterUtil.getInteger(
-					containerNumberString);
-				int number = GetterUtil.getInteger(numberString);
-
-				if (containerNumber <= number) {
-					return true;
-				}
-
-				return false;
-			}
-			catch (NumberFormatException nfe) {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
 	private static String _toString(
 		String major, String minor, String bugFix, String buildNumber,
 		String qualifier) {
@@ -407,7 +370,37 @@ public class Version implements Comparable<Version>, Serializable {
 		return 0;
 	}
 
+	private boolean _contains(String containerString, String numberString) {
+		if (containerString.endsWith(StringPool.PLUS)) {
+			String containerNumberString = containerString.substring(
+				0, containerString.length() - 1);
+
+			try {
+				int containerNumber = GetterUtil.getInteger(
+					containerNumberString);
+				int number = GetterUtil.getInteger(numberString);
+
+				if (containerNumber <= number) {
+					return true;
+				}
+
+				return false;
+			}
+			catch (NumberFormatException numberFormatException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(numberFormatException);
+				}
+
+				return false;
+			}
+		}
+
+		return false;
+	}
+
 	private static final String _SEPARATOR = StringPool.PERIOD;
+
+	private static final Log _log = LogFactoryUtil.getLog(Version.class);
 
 	private static final Map<String, Version> _versions =
 		new ConcurrentHashMap<>();

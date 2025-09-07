@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.exportimport.service.http;
@@ -46,7 +37,6 @@ import com.liferay.portal.kernel.util.MethodKey;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see StagingServiceSoap
  * @generated
  */
 public class StagingServiceHttp {
@@ -66,22 +56,24 @@ public class StagingServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -102,24 +94,107 @@ public class StagingServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Long)returnObj).longValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static void enableLocalStaging(
+			HttpPrincipal httpPrincipal, long groupId, boolean branchingPublic,
+			boolean branchingPrivate,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				StagingServiceUtil.class, "enableLocalStaging",
+				_enableLocalStagingParameterTypes2);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupId, branchingPublic, branchingPrivate,
+				serviceContext);
+
+			try {
+				TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
+	public static void enableRemoteStaging(
+			HttpPrincipal httpPrincipal, long groupId, boolean branchingPublic,
+			boolean branchingPrivate, String remoteAddress, int remotePort,
+			String remotePathContext, boolean secureConnection,
+			long remoteGroupId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				StagingServiceUtil.class, "enableRemoteStaging",
+				_enableRemoteStagingParameterTypes3);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, groupId, branchingPublic, branchingPrivate,
+				remoteAddress, remotePort, remotePathContext, secureConnection,
+				remoteGroupId, serviceContext);
+
+			try {
+				TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				if (exception instanceof
+						com.liferay.portal.kernel.exception.PortalException) {
+
+					throw (com.liferay.portal.kernel.exception.PortalException)
+						exception;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -131,7 +206,7 @@ public class StagingServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				StagingServiceUtil.class, "hasRemoteLayout",
-				_hasRemoteLayoutParameterTypes2);
+				_hasRemoteLayoutParameterTypes4);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, uuid, groupId, privateLayout);
@@ -141,24 +216,26 @@ public class StagingServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return ((Boolean)returnObj).booleanValue();
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -170,7 +247,7 @@ public class StagingServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				StagingServiceUtil.class, "propagateExportImportLifecycleEvent",
-				_propagateExportImportLifecycleEventParameterTypes3);
+				_propagateExportImportLifecycleEventParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, code, processFlag, processId, arguments);
@@ -178,22 +255,24 @@ public class StagingServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -207,7 +286,7 @@ public class StagingServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				StagingServiceUtil.class, "publishStagingRequest",
-				_publishStagingRequestParameterTypes4);
+				_publishStagingRequestParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, stagingRequestId, exportImportConfiguration);
@@ -217,25 +296,27 @@ public class StagingServiceHttp {
 			try {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 
 			return (com.liferay.exportimport.kernel.lar.MissingReferences)
 				returnObj;
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -247,7 +328,7 @@ public class StagingServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				StagingServiceUtil.class, "updateStagingRequest",
-				_updateStagingRequestParameterTypes5);
+				_updateStagingRequestParameterTypes7);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, stagingRequestId, fileName, bytes);
@@ -255,22 +336,24 @@ public class StagingServiceHttp {
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
-			catch (Exception e) {
-				if (e instanceof
+			catch (Exception exception) {
+				if (exception instanceof
 						com.liferay.portal.kernel.exception.PortalException) {
 
 					throw (com.liferay.portal.kernel.exception.PortalException)
-						e;
+						exception;
 				}
 
 				throw new com.liferay.portal.kernel.exception.SystemException(
-					e);
+					exception);
 			}
 		}
-		catch (com.liferay.portal.kernel.exception.SystemException se) {
-			_log.error(se, se);
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
 
-			throw se;
+			_log.error(systemException, systemException);
+
+			throw systemException;
 		}
 	}
 
@@ -280,19 +363,30 @@ public class StagingServiceHttp {
 		new Class[] {long.class};
 	private static final Class<?>[] _createStagingRequestParameterTypes1 =
 		new Class[] {long.class, String.class};
-	private static final Class<?>[] _hasRemoteLayoutParameterTypes2 =
+	private static final Class<?>[] _enableLocalStagingParameterTypes2 =
+		new Class[] {
+			long.class, boolean.class, boolean.class,
+			com.liferay.portal.kernel.service.ServiceContext.class
+		};
+	private static final Class<?>[] _enableRemoteStagingParameterTypes3 =
+		new Class[] {
+			long.class, boolean.class, boolean.class, String.class, int.class,
+			String.class, boolean.class, long.class,
+			com.liferay.portal.kernel.service.ServiceContext.class
+		};
+	private static final Class<?>[] _hasRemoteLayoutParameterTypes4 =
 		new Class[] {String.class, long.class, boolean.class};
 	private static final Class<?>[]
-		_propagateExportImportLifecycleEventParameterTypes3 = new Class[] {
+		_propagateExportImportLifecycleEventParameterTypes5 = new Class[] {
 			int.class, int.class, String.class, java.util.List.class
 		};
-	private static final Class<?>[] _publishStagingRequestParameterTypes4 =
+	private static final Class<?>[] _publishStagingRequestParameterTypes6 =
 		new Class[] {
 			long.class,
 			com.liferay.exportimport.kernel.model.ExportImportConfiguration.
 				class
 		};
-	private static final Class<?>[] _updateStagingRequestParameterTypes5 =
+	private static final Class<?>[] _updateStagingRequestParameterTypes7 =
 		new Class[] {long.class, String.class, byte[].class};
 
 }

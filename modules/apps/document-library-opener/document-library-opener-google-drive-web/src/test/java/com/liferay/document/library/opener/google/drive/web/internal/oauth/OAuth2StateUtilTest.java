@@ -1,28 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.opener.google.drive.web.internal.oauth;
 
 import com.liferay.document.library.opener.oauth.OAuth2State;
-import com.liferay.portal.kernel.test.util.PropsTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-
-import java.util.Collections;
-import java.util.Optional;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -33,10 +22,10 @@ import org.springframework.mock.web.MockHttpSession;
  */
 public class OAuth2StateUtilTest {
 
-	@BeforeClass
-	public static void setUpClass() {
-		PropsTestUtil.setProps(Collections.emptyMap());
-	}
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Test
 	public void testCleanUp() {
@@ -51,10 +40,8 @@ public class OAuth2StateUtilTest {
 
 		OAuth2StateUtil.cleanUp(mockHttpServletRequest);
 
-		Optional<OAuth2State> oAuth2StateOptional =
-			OAuth2StateUtil.getOAuth2StateOptional(mockHttpServletRequest);
-
-		Assert.assertFalse(oAuth2StateOptional.isPresent());
+		Assert.assertNull(
+			OAuth2StateUtil.getOAuth2State(mockHttpServletRequest));
 	}
 
 	@Test
@@ -70,12 +57,9 @@ public class OAuth2StateUtilTest {
 
 		OAuth2StateUtil.save(mockHttpServletRequest, initialOAuth2State);
 
-		Optional<OAuth2State> oAuth2StateOptional =
-			OAuth2StateUtil.getOAuth2StateOptional(mockHttpServletRequest);
-
-		OAuth2State oAuth2State = oAuth2StateOptional.get();
-
-		_assertOAuth2State(initialOAuth2State, state, oAuth2State);
+		_assertOAuth2State(
+			initialOAuth2State, state,
+			OAuth2StateUtil.getOAuth2State(mockHttpServletRequest));
 	}
 
 	@Test
@@ -83,14 +67,10 @@ public class OAuth2StateUtilTest {
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
-		MockHttpSession mockHttpSession = new MockHttpSession();
+		mockHttpServletRequest.setSession(new MockHttpSession());
 
-		mockHttpServletRequest.setSession(mockHttpSession);
-
-		Optional<OAuth2State> oAuth2StateOptional =
-			OAuth2StateUtil.getOAuth2StateOptional(mockHttpServletRequest);
-
-		Assert.assertFalse(oAuth2StateOptional.isPresent());
+		Assert.assertNull(
+			OAuth2StateUtil.getOAuth2State(mockHttpServletRequest));
 	}
 
 	@Test
@@ -139,12 +119,9 @@ public class OAuth2StateUtilTest {
 
 		OAuth2StateUtil.save(mockHttpServletRequest, initialOAuth2State);
 
-		Optional<OAuth2State> oAuth2StateOptional =
-			OAuth2StateUtil.getOAuth2StateOptional(mockHttpServletRequest);
-
-		OAuth2State oAuth2State = oAuth2StateOptional.get();
-
-		_assertOAuth2State(initialOAuth2State, state, oAuth2State);
+		_assertOAuth2State(
+			initialOAuth2State, state,
+			OAuth2StateUtil.getOAuth2State(mockHttpServletRequest));
 	}
 
 	private void _assertOAuth2State(

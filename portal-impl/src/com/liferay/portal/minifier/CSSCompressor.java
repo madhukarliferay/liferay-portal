@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.minifier;
@@ -30,7 +21,9 @@ import java.util.regex.Pattern;
 
 /**
  * @author Iván Zaera Avellón
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Deprecated
 public class CSSCompressor {
 
 	public CSSCompressor(Reader reader) throws IOException {
@@ -69,6 +62,8 @@ public class CSSCompressor {
 		css = _collapseWhitespace(css);
 
 		css = _removeUnneededLeadingSpaces(css);
+
+		css = _restoreContainerQuerySpaces(css);
 
 		css = _retainSpaceForSpecialIE6Cases(css);
 
@@ -362,9 +357,7 @@ public class CSSCompressor {
 
 			token = token.substring(1, token.length() - 1);
 
-			if (token.indexOf("___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_") >=
-					0) {
-
+			if (token.contains("___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_")) {
 				for (int i = 0; i < comments.size(); i++) {
 					token = StringUtil.replace(
 						token,
@@ -426,7 +419,8 @@ public class CSSCompressor {
 				if (endIndex <= 0) {
 					break;
 				}
-				else if ((endIndex > 0) && (css.charAt(endIndex - 1) != '\\')) {
+
+				if (css.charAt(endIndex - 1) != '\\') {
 					foundTerminator = true;
 
 					if (!Objects.equals(terminator, ")")) {
@@ -525,7 +519,7 @@ public class CSSCompressor {
 				}
 			}
 
-			css = StringUtil.replace(css, "/*" + placeholder + "*/", "");
+			css = StringUtil.removeSubstring(css, "/*" + placeholder + "*/");
 		}
 
 		return css;
@@ -631,6 +625,26 @@ public class CSSCompressor {
 				sb,
 				StringUtil.toLowerCase(matcher.group(1)) + ":0" +
 					matcher.group(2));
+		}
+
+		matcher.appendTail(sb);
+
+		return sb.toString();
+	}
+
+	private String _restoreContainerQuerySpaces(String css) {
+		StringBuffer sb = new StringBuffer();
+
+		Matcher matcher = _restoreContainerQuerySpacesPattern.matcher(css);
+
+		while (matcher.find()) {
+			String group = matcher.group();
+
+			group = group.substring(0, group.length() - 1);
+
+			group += " (";
+
+			matcher.appendReplacement(sb, group);
 		}
 
 		matcher.appendTail(sb);
@@ -862,6 +876,8 @@ public class CSSCompressor {
 	private static final Pattern _replaceBorderNonePattern = Pattern.compile(
 		"(?i)(border|border-top|border-right|border-bottom|border-left|" +
 			"outline|background):none(;|})");
+	private static final Pattern _restoreContainerQuerySpacesPattern =
+		Pattern.compile("@container\\s+([^\\s(]+\\()");
 	private static final Pattern _restoreSomeMultipleZeroesPattern =
 		Pattern.compile(
 			StringBundler.concat(
@@ -880,6 +896,6 @@ public class CSSCompressor {
 				"([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])",
 				"(:?\\}|[^0-9a-fA-F{][^{]*?\\})"));
 
-	private StringBuffer _sb = new StringBuffer();
+	private final StringBuffer _sb = new StringBuffer();
 
 }

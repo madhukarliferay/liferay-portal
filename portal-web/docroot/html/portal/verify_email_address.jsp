@@ -1,26 +1,29 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/html/portal/init.jsp" %>
 
 <%
-String referer = ParamUtil.getString(request, WebKeys.REFERER, themeDisplay.getPathMain());
+String currentURL = PortalUtil.getCurrentURL(request);
+
+String referer = ParamUtil.getString(request, WebKeys.REFERER, currentURL);
 
 if (referer.equals(themeDisplay.getPathMain() + "/portal/update_email_address")) {
 	referer = themeDisplay.getPathMain() + "?doAsUserId=" + themeDisplay.getDoAsUserId();
+}
+else if (currentURL.startsWith(themeDisplay.getPathMain() + "/portal/verify_email_address")) {
+	long requestPlid = ParamUtil.getLong(request, "p_l_id");
+
+	if (requestPlid > 0) {
+		referer = PortalUtil.getLayoutURL(LayoutLocalServiceUtil.getLayout(requestPlid), themeDisplay);
+	}
+	else {
+		referer = themeDisplay.getPathMain();
+	}
 }
 
 String ticketKey = ParamUtil.getString(request, "ticketKey");
@@ -59,7 +62,7 @@ String ticketKey = ParamUtil.getString(request, "ticketKey");
 				</div>
 			</c:if>
 
-			<aui:input autoFocus="<%= true %>" class="lfr-input-text-container" label="email-verification-code" name="ticketKey" size="36" type="text" value="<%= ticketKey %>" />
+			<aui:input class="lfr-input-text-container" label="email-verification-code" name="ticketKey" size="36" type="text" value="<%= ticketKey %>" />
 
 			<aui:button-row>
 				<aui:button type="submit" value="verify" />
@@ -68,6 +71,8 @@ String ticketKey = ParamUtil.getString(request, "ticketKey");
 					<aui:button href='<%= themeDisplay.getPathMain() + "/portal/verify_email_address?p_l_id=" + layout.getPlid() + "&cmd=" + Constants.SEND + "&referer=" + URLCodec.encodeURL(referer) %>' value="send-new-verification-code" />
 
 					<aui:button href='<%= themeDisplay.getPathMain() + "/portal/update_email_address?p_l_id=" + layout.getPlid() + "&referer=" + URLCodec.encodeURL(referer) %>' value="change-email-address" />
+
+					<aui:button href='<%= themeDisplay.getPathMain() + "/portal/logout " %>' type="cancel" />
 				</c:if>
 			</aui:button-row>
 		</aui:form>

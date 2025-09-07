@@ -1,30 +1,21 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
+import {useIsMounted} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
-import {useIsMounted} from 'frontend-js-react-web';
-import {openToast} from 'frontend-js-web';
+import {openToast, useSessionState} from 'frontend-js-components-web';
+import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 
-import {ConfigContext} from '../../../app/config/index';
-import {DispatchContext} from '../../../app/reducers/index';
-import FragmentCommentService from '../../../app/services/FragmentCommentService';
-import {StoreContext} from '../../../app/store/index';
+import {HIGHLIGHTED_COMMENT_ID_KEY} from '../../../app/config/constants/highlightedCommentIdKey';
+import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
+import FragmentService from '../../../app/services/FragmentService';
 import deleteFragmentComment from '../../../app/thunks/deleteFragmentComment';
 import InlineConfirm from '../../../common/components/InlineConfirm';
 import UserIcon from '../../../common/components/UserIcon';
@@ -36,7 +27,7 @@ export default function FragmentComment({
 	comment,
 	fragmentEntryLinkId,
 	onEdit,
-	parentCommentId
+	parentCommentId,
 }) {
 	const {
 		author,
@@ -45,7 +36,7 @@ export default function FragmentComment({
 		dateDescription,
 		edited,
 		modifiedDateDescription,
-		resolved
+		resolved,
 	} = comment;
 
 	const [changingResolved, setChangingResolved] = useState(false);
@@ -53,12 +44,16 @@ export default function FragmentComment({
 	const [editing, setEditing] = useState(false);
 	const [hidden, setHidden] = useState(false);
 	const [highlighted, setHighlighted] = useState(false);
+	const [highlightedMessageId, setHighlightedMessageId] = useSessionState(
+		HIGHLIGHTED_COMMENT_ID_KEY
+	);
 	const [showDeleteMask, setShowDeleteMask] = useState(false);
 	const [showResolveMask, setShowResolveMask] = useState(false);
 
-	const {showResolvedComments} = useContext(StoreContext);
-	const dispatch = useContext(DispatchContext);
-	const config = useContext(ConfigContext);
+	const showResolvedComments = useSelector(
+		(state) => state.showResolvedComments
+	);
+	const dispatch = useDispatch();
 
 	const showModifiedDateTooltip = !!(edited && modifiedDateDescription);
 
@@ -69,49 +64,12 @@ export default function FragmentComment({
 		'page-editor__fragment-comment--reply': !!parentCommentId,
 		'page-editor__fragment-comment--resolved': resolved,
 		'page-editor__fragment-comment--with-delete-mask': showDeleteMask,
-		'page-editor__fragment-comment--with-resolve-mask': showResolveMask
+		'page-editor__fragment-comment--with-resolve-mask': showResolveMask,
 	});
-
-	const handleResolveButtonClick = () => {
-		setChangingResolved(true);
-
-		FragmentCommentService.editFragmentEntryLinkComment({
-			body,
-			commentId,
-			config,
-			fragmentEntryLinkId,
-			resolved: !resolved
-		})
-			.then(comment => {
-				setChangingResolved(false);
-
-				if (showResolvedComments) {
-					onEdit(comment);
-				} else if (!resolved) {
-					setShowResolveMask(true);
-					hideComment(() => onEdit(comment));
-				}
-			})
-			.catch(() => {
-				openToast({
-					message: resolved
-						? Liferay.Language.get(
-								'the-comment-could-not-be-unresolved'
-						  )
-						: Liferay.Language.get(
-								'the-comment-could-not-be-resolved'
-						  ),
-					title: Liferay.Language.get('error'),
-					type: 'danger'
-				});
-
-				setChangingResolved(false);
-			});
-	};
 
 	const isMounted = useIsMounted();
 
-	const hideComment = onHide => {
+	const hideComment = (onHide) => {
 		setHidden(true);
 
 		setTimeout(() => {
@@ -123,17 +81,48 @@ export default function FragmentComment({
 		}, 1000);
 	};
 
+	const handleResolveButtonClick = () => {
+		setChangingResolved(true);
+
+		FragmentService.editComment({
+			body,
+			commentId,
+			onNetworkStatus: dispatch,
+			resolved: !resolved,
+		})
+			.then((comment) => {
+				setChangingResolved(false);
+
+				if (showResolvedComments) {
+					onEdit(comment);
+				}
+				else if (!resolved) {
+					setShowResolveMask(true);
+					hideComment(() => onEdit(comment));
+				}
+			})
+			.catch(() => {
+				openToast({
+					message: resolved
+						? Liferay.Language.get(
+								'the-comment-could-not-be-unresolved'
+							)
+						: Liferay.Language.get(
+								'the-comment-could-not-be-resolved'
+							),
+					type: 'danger',
+				});
+
+				setChangingResolved(false);
+			});
+	};
+
 	useEffect(() => {
-		const highlightMessageId = window.sessionStorage.getItem(
-			'HIGHLIGHTED_COMMENT_ID_KEY'
-		);
-
-		if (highlightMessageId === commentId) {
-			window.sessionStorage.removeItem('HIGHLIGHTED_COMMENT_ID_KEY');
-
+		if (highlightedMessageId === commentId) {
 			setHighlighted(true);
+			setHighlightedMessageId(null);
 		}
-	}, [commentId]);
+	}, [commentId, highlightedMessageId, setHighlightedMessageId]);
 
 	return (
 		<article className={commentClassname}>
@@ -152,11 +141,11 @@ export default function FragmentComment({
 
 					<p
 						className={classNames('m-0 text-secondary', {
-							'lfr-portal-tooltip': showModifiedDateTooltip
+							'lfr-portal-tooltip': showModifiedDateTooltip,
 						})}
 						data-title={
 							showModifiedDateTooltip &&
-							Liferay.Util.sub(
+							sub(
 								Liferay.Language.get('edited-x'),
 								modifiedDateDescription
 							)
@@ -175,18 +164,24 @@ export default function FragmentComment({
 					/>
 				)}
 
-				{Liferay.ThemeDisplay.getUserId() === author.userId && (
+				{String(Liferay.ThemeDisplay.getUserId()) === author.userId && (
 					<ClayDropDown
 						active={dropDownActive}
+						menuElementAttrs={{
+							containerProps: {
+								className: 'cadmin',
+							},
+						}}
 						onActiveChange={setDropDownActive}
 						trigger={
 							<ClayButton
+								aria-label={Liferay.Language.get('options')}
 								borderless
 								disabled={editing}
 								displayType="secondary"
 								monospaced
 								outline
-								small
+								size="sm"
 							>
 								<ClayIcon symbol="ellipsis-v" />
 							</ClayButton>
@@ -234,12 +229,12 @@ export default function FragmentComment({
 				Boolean(comment.children.length) && (
 					<footer className="mb-2 page-editor__fragment-comment-replies">
 						{comment.children &&
-							comment.children.map(childComment => (
+							comment.children.map((childComment) => (
 								<FragmentComment
 									comment={{
 										...childComment,
 										parentCommentId: comment.commentId,
-										resolved
+										resolved,
 									}}
 									fragmentEntryLinkId={fragmentEntryLinkId}
 									key={childComment.commentId}
@@ -269,17 +264,15 @@ export default function FragmentComment({
 						dispatch(
 							deleteFragmentComment({
 								commentId,
-								config,
 								fragmentEntryLinkId,
-								parentCommentId
+								parentCommentId,
 							})
 						).catch(() => {
 							openToast({
 								message: Liferay.Language.get(
 									'the-comment-could-not-be-deleted'
 								),
-								title: Liferay.Language.get('error'),
-								type: 'danger'
+								type: 'danger',
 							});
 						})
 					}
@@ -299,15 +292,15 @@ FragmentComment.propTypes = {
 	comment: PropTypes.shape({
 		author: PropTypes.shape({
 			fullName: PropTypes.string,
-			portraitURL: PropTypes.string
+			portraitURL: PropTypes.string,
 		}),
 		body: PropTypes.string,
 		commentId: PropTypes.string.isRequired,
 		dateDescription: PropTypes.string,
-		parentCommentId: PropTypes.string
+		parentCommentId: PropTypes.string,
 	}),
 
 	fragmentEntryLinkId: PropTypes.string.isRequired,
 	onEdit: PropTypes.func,
-	parentCommentId: PropTypes.string
+	parentCommentId: PropTypes.string,
 };

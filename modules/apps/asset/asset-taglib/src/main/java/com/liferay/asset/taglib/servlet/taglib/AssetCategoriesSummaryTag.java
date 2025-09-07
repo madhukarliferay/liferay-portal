@@ -1,30 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.taglib.servlet.taglib;
 
 import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetVocabularyConstants;
 import com.liferay.asset.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
 
 /**
  * @author Brian Wing Shun Chan
@@ -56,6 +48,10 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 		return _portletURL;
 	}
 
+	public int[] getVisibleTypes() {
+		return _visibleTypes;
+	}
+
 	public void setClassName(String className) {
 		_className = className;
 	}
@@ -76,7 +72,7 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
-		servletContext = ServletContextUtil.getServletContext();
+		setServletContext(ServletContextUtil.getServletContext());
 	}
 
 	public void setParamName(String paramName) {
@@ -85,6 +81,10 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 
 	public void setPortletURL(PortletURL portletURL) {
 		_portletURL = portletURL;
+	}
+
+	public void setVisibleTypes(int[] visibleTypes) {
+		_visibleTypes = visibleTypes;
 	}
 
 	@Override
@@ -97,6 +97,7 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 		_message = null;
 		_paramName = null;
 		_portletURL = null;
+		_visibleTypes = null;
 	}
 
 	@Override
@@ -119,7 +120,6 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 		httpServletRequest.setAttribute(
 			"liferay-asset:asset-categories-summary:assetCategories",
 			assetCategories);
-
 		httpServletRequest.setAttribute(
 			"liferay-asset:asset-categories-summary:className", _className);
 		httpServletRequest.setAttribute(
@@ -134,6 +134,16 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 			"liferay-asset:asset-categories-summary:paramName", _paramName);
 		httpServletRequest.setAttribute(
 			"liferay-asset:asset-categories-summary:portletURL", _portletURL);
+
+		if (_visibleTypes == null) {
+			_visibleTypes = new int[] {
+				AssetVocabularyConstants.VISIBILITY_TYPE_PUBLIC
+			};
+		}
+
+		httpServletRequest.setAttribute(
+			"liferay-asset:asset-categories-summary:visibleTypes",
+			_visibleTypes);
 	}
 
 	private static final String _PAGE = "/asset_categories_summary/page.jsp";
@@ -144,5 +154,6 @@ public class AssetCategoriesSummaryTag<R> extends IncludeTag {
 	private String _message;
 	private String _paramName;
 	private PortletURL _portletURL;
+	private int[] _visibleTypes;
 
 }

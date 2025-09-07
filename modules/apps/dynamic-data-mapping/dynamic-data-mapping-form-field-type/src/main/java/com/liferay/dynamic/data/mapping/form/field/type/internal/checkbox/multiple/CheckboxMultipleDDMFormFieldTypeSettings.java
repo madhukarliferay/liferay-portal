@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox.multiple;
@@ -34,8 +25,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 			actions = {
 				"setOptions('predefinedValue', getValue('options'))",
 				"setRequired('options', true)",
-				"setVisible('repeatable', false)",
-				"setVisible('validation', false)"
+				"setVisible('requiredErrorMessage', getValue('required'))"
 			},
 			condition = "TRUE"
 		)
@@ -52,7 +42,8 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"label", "tip", "required", "showAsSwitcher",
+								"label", "tip", "required",
+								"requiredErrorMessage", "showAsSwitcher",
 								"options"
 							}
 						)
@@ -68,11 +59,13 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"name", "visibilityExpression",
-								"predefinedValue", "validation",
-								"fieldNamespace", "indexType", "localizable",
-								"readOnly", "dataType", "type", "showLabel",
-								"repeatable", "inline"
+								"fieldReference", "name",
+								"visibilityExpression", "predefinedValue",
+								"objectFieldName", "fieldNamespace",
+								"indexType", "labelAtStructureLevel",
+								"localizable", "nativeField", "readOnly",
+								"dataType", "type", "showLabel", "repeatable",
+								"inline"
 							}
 						)
 					}
@@ -84,7 +77,10 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 public interface CheckboxMultipleDDMFormFieldTypeSettings
 	extends DefaultDDMFormFieldTypeSettings {
 
-	@DDMFormField(label = "%inline", properties = "showAsSwitcher=true")
+	@DDMFormField(
+		label = "%inline",
+		properties = {"showAsSwitcher=true", "visualProperty=true"}
+	)
 	public boolean inline();
 
 	@DDMFormField(
@@ -96,7 +92,8 @@ public interface CheckboxMultipleDDMFormFieldTypeSettings
 		label = "%predefined-value",
 		properties = {
 			"multiple=true", "placeholder=%enter-a-default-value",
-			"tooltip=%enter-a-default-value-that-is-submitted-if-no-other-value-is-entered"
+			"tooltip=%enter-a-default-value-that-is-submitted-if-no-other-value-is-entered",
+			"visualProperty=true"
 		},
 		type = "select"
 	)
@@ -104,8 +101,9 @@ public interface CheckboxMultipleDDMFormFieldTypeSettings
 	public LocalizedValue predefinedValue();
 
 	@DDMFormField(
-		dataType = "boolean", label = "%show-as-a-switcher",
-		properties = "showAsSwitcher=true", type = "checkbox"
+		dataType = "boolean", label = "%show-as-a-switch",
+		properties = {"showAsSwitcher=true", "visualProperty=true"},
+		type = "checkbox"
 	)
 	public boolean showAsSwitcher();
 

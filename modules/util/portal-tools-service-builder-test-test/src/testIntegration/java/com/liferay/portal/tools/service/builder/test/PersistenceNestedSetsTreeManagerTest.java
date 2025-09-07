@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.service.builder.test;
@@ -28,8 +19,8 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -44,8 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.log4j.Level;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -245,9 +234,8 @@ public class PersistenceNestedSetsTreeManagerTest {
 	public void testError() {
 		_sessionFactoryInvocationHandler.setFailOpenSession(true);
 
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					BasePersistenceImpl.class.getName(), Level.OFF)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				BasePersistenceImpl.class.getName(), LoggerTestUtil.OFF)) {
 
 			try {
 				ReflectionTestUtil.invoke(
@@ -257,12 +245,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -273,12 +262,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -289,12 +279,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -305,12 +296,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -324,12 +316,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -343,12 +336,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 
 			try {
@@ -358,12 +352,13 @@ public class PersistenceNestedSetsTreeManagerTest {
 
 				Assert.fail();
 			}
-			catch (SystemException se) {
-				Throwable t = se.getCause();
+			catch (SystemException systemException) {
+				Throwable throwable = systemException.getCause();
 
-				t = t.getCause();
+				throwable = throwable.getCause();
 
-				Assert.assertEquals("Unable to open session", t.getMessage());
+				Assert.assertEquals(
+					"Unable to open session", throwable.getMessage());
 			}
 		}
 		finally {
@@ -747,7 +742,8 @@ public class PersistenceNestedSetsTreeManagerTest {
 				_nestedSetsTreeEntryPersistence.remove(nestedSetsTreeEntry);
 			}
 			else {
-				_nestedSetsTreeEntryPersistence.update(nestedSetsTreeEntry);
+				nestedSetsTreeEntry = _nestedSetsTreeEntryPersistence.update(
+					nestedSetsTreeEntry);
 			}
 		}
 

@@ -1,37 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {EventHandler} from 'metal-events';
+import {EventHandler} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useRef, useState, useContext} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
-import {ConfigContext} from '../../app/config/index';
+import {config} from '../../app/config/index';
 
 export default function Editor({
 	autoFocus = false,
 	configurationName,
 	id,
 	initialValue,
+	label,
 	onChange,
-	placeholder
+	placeholder,
 }) {
-	const {defaultEditorConfigurations, portletNamespace} = useContext(
-		ConfigContext
-	);
-
 	const editorConfig =
-		defaultEditorConfigurations[configurationName].editorConfig;
+		config.defaultEditorConfigurations[configurationName].editorConfig;
 
 	const [editor, setEditor] = useState(null);
 
@@ -77,7 +65,7 @@ export default function Editor({
 			...editorConfig,
 			enterMode: 1,
 			startupFocus: autoFocus,
-			title: false
+			title: label,
 		});
 
 		let ready = false;
@@ -87,6 +75,8 @@ export default function Editor({
 			.once('instanceReady', () => {
 				ready = true;
 
+				wrapperRef.current.removeAttribute('title');
+
 				setEditor(newEditor);
 			});
 
@@ -95,27 +85,31 @@ export default function Editor({
 				if (ready) {
 					newEditor.destroy();
 					setEditor(null);
-				} else {
+				}
+				else {
 					instanceReadyEventHandler.removeListener();
 
 					newEditor.get('nativeEditor').once('instanceReady', () => {
 						newEditor.destroy();
 					});
 				}
-			} catch (_err) {
+			}
+			catch (_err) {
+
 				// https://github.com/liferay/alloy-editor/issues/1306
+
 			}
 		};
-	}, [autoFocus, editorConfig]);
+	}, [autoFocus, editorConfig, label]);
 
 	return (
-		<div className="alloy-editor-container" id={`${portletNamespace}${id}`}>
+		<div className="alloy-editor-container">
 			<div
-				className="alloy-editor alloy-editor-placeholder form-control form-control-sm page-editor__editor"
+				className="alloy-editor form-control form-control-sm page-editor__editor page-editor__editor-placeholder"
 				contentEditable={false}
 				data-placeholder={placeholder}
 				data-required={false}
-				id={`${portletNamespace}${id}`}
+				id={id}
 				name={id}
 				ref={wrapperRef}
 			/>
@@ -131,5 +125,5 @@ Editor.propTypes = {
 	id: PropTypes.string.isRequired,
 	initialValue: PropTypes.string.isRequired,
 	onChange: PropTypes.func.isRequired,
-	placeholder: PropTypes.string.isRequired
+	placeholder: PropTypes.string.isRequired,
 };

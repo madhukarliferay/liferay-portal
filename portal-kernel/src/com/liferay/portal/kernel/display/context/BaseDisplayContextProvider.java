@@ -1,31 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.display.context;
 
-import com.liferay.registry.Filter;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Iván Zaera
@@ -34,13 +25,11 @@ public class BaseDisplayContextProvider<T extends DisplayContextFactory>
 	implements DisplayContextProvider {
 
 	public BaseDisplayContextProvider(Class<T> displayContextFactoryClass) {
-		Registry registry = RegistryUtil.getRegistry();
-
-		Filter filter = registry.getFilter(
-			"(objectClass=" + displayContextFactoryClass.getName() + ")");
-
-		_serviceTracker = registry.trackServices(
-			filter, new DisplayContextFactoryServiceTrackerCustomizer());
+		_serviceTracker = new ServiceTracker<>(
+			_bundleContext,
+			SystemBundleUtil.createFilter(
+				"(objectClass=" + displayContextFactoryClass.getName() + ")"),
+			new DisplayContextFactoryServiceTrackerCustomizer());
 
 		_serviceTracker.open();
 	}
@@ -54,6 +43,8 @@ public class BaseDisplayContextProvider<T extends DisplayContextFactory>
 			_displayContextFactoryReferences);
 	}
 
+	private final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 	private final SortedSet<DisplayContextFactoryReference<T>>
 		_displayContextFactoryReferences = new ConcurrentSkipListSet<>();
 	private final ConcurrentMap<T, DisplayContextFactoryReference<T>>
@@ -102,9 +93,8 @@ public class BaseDisplayContextProvider<T extends DisplayContextFactory>
 
 		@Override
 		public T addingService(ServiceReference<T> serviceReference) {
-			Registry registry = RegistryUtil.getRegistry();
-
-			T displayContextFactory = registry.getService(serviceReference);
+			T displayContextFactory = _bundleContext.getService(
+				serviceReference);
 
 			DisplayContextFactoryReference<T> displayContextFactoryReference =
 				new DisplayContextFactoryReference<>(
@@ -143,6 +133,8 @@ public class BaseDisplayContextProvider<T extends DisplayContextFactory>
 
 			_displayContextFactoryReferences.remove(
 				displayContextFactoryReference);
+
+			_bundleContext.ungetService(serviceReference);
 		}
 
 	}

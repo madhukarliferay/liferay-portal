@@ -59,10 +59,6 @@
 			includes="*.jar"
 		/>
 		<fileset
-			dir="${project.dir}/lib/global"
-			includes="*.jar"
-		/>
-		<fileset
 			dir="${project.dir}/lib/portal"
 			includes="*.jar"
 		/>
@@ -86,11 +82,7 @@
 		<pathelement path="${classpath.full}" />
 		<fileset
 			dir="${project.dir}/lib/development"
-			includes="osgi-annotation-versioning.jar,jsp-api.jar,mail.jar,servlet-api.jar"
-		/>
-		<fileset
-			dir="${project.dir}/lib/global"
-			includes="*.jar"
+			includes="osgi-annotation-versioning.jar,osgi-core.jar,portlet.jar,tomcat-jsp-api.jar,mail.jar,tomcat-servlet-api.jar"
 		/>
 		<path refid="lib.pre.classpath" />
 		<path refid="web-lib.classpath" />
@@ -152,11 +144,14 @@
 		</not>
 	</condition>
 
-	<property name="aspectj.agent" value="-javaagent:${project.dir}/lib/portal/aspectj-weaver.jar" />
+	<property name="aspectj.agent" value="-javaagent:${project.dir}/lib/development/aspectj-weaver.jar" />
 	<property name="aspectj.configuration" value="com/liferay/aspectj/aop.xml" />
 	<property name="definitions.dir" value="${project.dir}/definitions" />
 	<property name="doc.dir" value="${project.dir}/api" />
 	<property name="jacoco.agent.configuration" value="=destfile=${jacoco.dump.file},excludes=${jacoco.excludes},includes=${jacoco.includes},output=file,append=true" />
+
+	<var name="fork.mode" value="false" />
+	<var if:true="${jvm.debug}" name="fork.mode" value="true" />
 
 	<tempfile deleteonexit="true" destdir="${project.dir}" property="app.server.tmp.properties" suffix=".properties" />
 
@@ -171,10 +166,6 @@
 	</loadproperties>
 
 	<delete file="${app.server.tmp.properties}" />
-
-	<condition property="app.server.portal.war.name" value="${app.server.websphere.portal.war.name}">
-		<equals arg1="${app.server.type}" arg2="websphere" />
-	</condition>
 
 	<property name="liferay.home" value="${app.server.parent.dir}" />
 
@@ -230,70 +221,34 @@
 		</or>
 	</condition>
 
-	<fail message="Please use Java 1.8.">
+	<fail message="Please use Java 1.8, 17, or 21.">
 		<condition>
 			<not>
 				<or>
 					<equals arg1="${java.specification.version}" arg2="1.8" />
+					<equals arg1="${java.specification.version}" arg2="17" />
+					<equals arg1="${java.specification.version}" arg2="21" />
 					<isset property="env.JENKINS_HOME" />
 				</or>
 			</not>
 		</condition>
 	</fail>
 
-	<condition property="correct.ant.version">
-		<antversion atleast="1.9.3" />
+	<condition else="1.10.14" property="java.ant.version" value="1.9.3">
+		<equals arg1="${java.specification.version}" arg2="1.8" />
 	</condition>
 
-	<fail message="Please use Ant 1.9.3 or above.">
+	<condition property="correct.ant.version">
+		<antversion atleast="${java.ant.version}" />
+	</condition>
+
+	<fail message="Please use Ant ${java.ant.version} or above.">
 		<condition>
 			<not>
 				<istrue value="${correct.ant.version}" />
 			</not>
 		</condition>
 	</fail>
-
-	<whichresource property="google.errorprone.compiler" resource="/com/google/errorprone/ErrorProneAntCompilerAdapter.class" />
-
-	<if>
-		<and>
-			<equals arg1="${javac.compiler}" arg2="com.google.errorprone.ErrorProneAntCompilerAdapter" />
-			<not>
-				<isset property="google.errorprone.compiler" />
-			</not>
-		</and>
-		<then>
-			<trycatch>
-				<try>
-					<copy
-						file="${project.dir}/lib/development/error-prone-ant.jar"
-						todir="${ant.home}/lib"
-					/>
-				</try>
-				<catch>
-					<fail>
-.
-
-Please manually copy ${project.dir}/lib/development/error-prone-ant.jar to
-${ant.home}/lib to install Error-Prone. Then rerun your task.
-					</fail>
-				</catch>
-			</trycatch>
-
-			<if>
-				<available file="${ant.home}/lib/error-prone-ant.jar" />
-				<then>
-					<fail>
-.
-
-Task cannot continue because Error-Prone is not installed.
-
-Error-Prone was automatically installed. Please rerun your task.
-					</fail>
-				</then>
-			</if>
-		</then>
-	</if>
 
 	<fail message=".${line.separator}Please set the environment variable ANT_OPTS to the recommended value of${line.separator}&quot;-Xmx2560m&quot;.">
 		<condition>
@@ -331,8 +286,6 @@ information.
 	<macrodef name="app-server-properties-reset">
 		<sequential>
 			<delete file="app.server.${user.name}.properties" />
-
-			<delete file="${sdk.dir}/build.${user.name}.properties" />
 		</sequential>
 	</macrodef>
 
@@ -341,8 +294,6 @@ information.
 
 		<sequential>
 			<echo file="app.server.${user.name}.properties">@{properties.content}</echo>
-
-			<echo file="${sdk.dir}/build.${user.name}.properties">@{properties.content}</echo>
 		</sequential>
 	</macrodef>
 
@@ -356,6 +307,7 @@ information.
 				<arg value="log" />
 				<arg value="--format=%s" />
 				<arg value="${latest.artifact.git.id}..HEAD" />
+				<arg value=":(exclude)test" />
 				<arg value="." />
 			</exec>
 
@@ -440,7 +392,9 @@ information.
 						encoding="${javac.encoding}"
 						includeAntRuntime="false"
 						nowarn="${javac.nowarn}"
+						source="${ant.build.javac.source}"
 						srcdir="test/@{test.type}"
+						target="${ant.build.javac.target}"
 					/>
 				</then>
 			</if>
@@ -521,6 +475,8 @@ information.
 				regexp="\n(?!\w|\t)|\t"
 				replace=""
 			/>
+
+			<echo>Executing commands: ${commands.trimmed}</echo>
 
 			<for delimiter="${line.separator}" list="${commands.trimmed}" param="command">
 				<sequential>
@@ -636,12 +592,12 @@ information.
 									<if>
 										<contains string="${command.executable}" substring=".sh" />
 										<then>
-											<exec dir="@{dir}" executable="/bin/bash" failonerror="@{failonerror}">
+											<exec dir="@{dir}" executable="/bin/bash" failonerror="@{failonerror}" logError="true">
 												<arg line="${command.executable} ${command.arg.line}" />
 											</exec>
 										</then>
 										<else>
-											<exec dir="@{dir}" executable="/bin/bash" failonerror="@{failonerror}">
+											<exec dir="@{dir}" executable="/bin/bash" failonerror="@{failonerror}" logError="true">
 												<arg value="-c" />
 												<arg value="${command.executable} ${command.arg.line}" />
 											</exec>
@@ -649,7 +605,7 @@ information.
 									</if>
 								</then>
 								<else>
-									<exec dir="@{dir}" executable="cmd.exe" failonerror="@{failonerror}">
+									<exec dir="@{dir}" executable="cmd.exe" failonerror="@{failonerror}" logError="true">
 										<arg line="/c @{command}" />
 									</exec>
 								</else>
@@ -664,8 +620,11 @@ information.
 	<macrodef name="generate-backend-batch-junit-report">
 		<attribute name="junit.failure.count" />
 		<attribute name="junit.failure.message.element" />
+		<attribute default="0.0" name="test.class.duration" />
+		<attribute default="" name="test.class.file.name" />
 		<attribute name="test.class.name" />
 		<attribute name="test.command.name" />
+		<attribute default="." name="test.results.dir" />
 
 		<sequential>
 			<local name="junit.timestamp" />
@@ -674,16 +633,180 @@ information.
 				<format pattern="yyyy-MM-dd_kk:mm:ss" property="junit.timestamp" />
 			</tstamp>
 
-			<echo file="TEST-@{test.class.name}.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+			<local name="test.class.file.name" />
 
-			<testsuite errors="@{junit.failure.count}" failures="@{junit.failure.count}" hostname="localhost" name="@{test.class.name}" skipped="0" tests="1" time="0.0" timestamp="${junit.timestamp}">
+			<condition else="@{test.class.file.name}" property="test.class.file.name" value="@{test.class.name}">
+				<equals arg1="@{test.class.file.name}" arg2="" />
+			</condition>
+
+			<echo>Writing @{test.results.dir}/TEST-${test.class.file.name}.xml</echo>
+
+			<echo file="@{test.results.dir}/TEST-${test.class.file.name}.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+
+			<testsuite errors="@{junit.failure.count}" failures="@{junit.failure.count}" hostname="localhost" name="@{test.class.name}" skipped="0" tests="1" time="@{test.class.duration}" timestamp="${junit.timestamp}">
 				<properties />
-				<testcase classname="@{test.class.name}" name="@{test.command.name}" time="0.0">
+				<testcase classname="@{test.class.name}" name="@{test.command.name}" time="@{test.class.duration}">
 					@{junit.failure.message.element}
 				</testcase>
 				<system-out></system-out>
 				<system-err></system-err>
 			</testsuite>]]></echo>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="generate-backend-batch-junit-report-ant-target">
+		<attribute name="ant.target.failure.count" />
+		<attribute default="" name="ant.target.failure.message" />
+		<attribute default="" name="ant.target.failure.stacktrace" />
+		<attribute name="ant.target.file" />
+		<attribute name="ant.target.name" />
+		<attribute name="ant.target.start.time" />
+
+		<sequential>
+			<local name="ant.target.duration" />
+			<local name="ant.target.failure.message" />
+			<local name="ant.target.failure.message.element" />
+			<local name="ant.target.failure.stacktrace" />
+
+			<beanshell>
+				<![CDATA[
+					long duration = System.currentTimeMillis() - Long.valueOf("@{ant.target.start.time}");
+
+					project.setProperty("ant.target.duration", String.valueOf((double)duration / 1000));
+				]]>
+			</beanshell>
+
+			<condition else="@{ant.target.failure.message}" property="ant.target.failure.message" value="@{ant.target.file} @{ant.target.name} was not executed. Please check the logs for details.">
+				<equals arg1="@{ant.target.failure.message}" arg2="" />
+			</condition>
+
+			<antelope:stringutil property="ant.target.failure.stacktrace" string="@{ant.target.failure.stacktrace}">
+				<antelope:replace regex="&amp;" replacement="&amp;amp;" />
+				<antelope:replace regex="&apos;" replacement="&amp;apos;" />
+				<antelope:replace regex="&gt;" replacement="&amp;gt;" />
+				<antelope:replace regex="&lt;" replacement="&amp;lt;" />
+				<antelope:replace regex="&quot;" replacement="&amp;quot;" />
+			</antelope:stringutil>
+
+			<if>
+				<equals arg1="@{ant.target.failure.count}" arg2="0" />
+				<then>
+					<property name="ant.target.failure.message.element" value="" />
+				</then>
+				<else>
+					<property name="ant.target.failure.message.element"><![CDATA[<failure message="${ant.target.failure.message}">${ant.target.failure.stacktrace}</failure>]]></property>
+				</else>
+			</if>
+
+			<local name="test.class.name" />
+
+			<propertyregex
+				global="true"
+				input="@{ant.target.file}"
+				override="yes"
+				property="test.class.name"
+				regexp="\/"
+				replace="."
+			/>
+
+			<generate-backend-batch-junit-report
+				junit.failure.count="@{ant.target.failure.count}"
+				junit.failure.message.element="${ant.target.failure.message.element}"
+				test.class.duration="${ant.target.duration}"
+				test.class.file.name="${test.class.name}.@{ant.target.name}"
+				test.class.name="${test.class.name}"
+				test.command.name="@{ant.target.name}"
+				test.results.dir="modules/test-results"
+			/>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="generate-backend-batch-junit-report-gradle-task">
+		<attribute name="gradle.task.failure.count" />
+		<attribute default="" name="gradle.task.failure.message" />
+		<attribute default="" name="gradle.task.failure.stacktrace" />
+		<attribute name="gradle.task.module.dir" />
+		<attribute name="gradle.task.start.time" />
+		<attribute name="gradle.task.name" />
+
+		<sequential>
+			<local name="gradle.task.duration" />
+			<local name="gradle.task.name" />
+			<local name="gradle.task.failure.message" />
+			<local name="gradle.task.failure.message.element" />
+			<local name="gradle.task.failure.stacktrace" />
+
+			<beanshell>
+				<![CDATA[
+					long duration = System.currentTimeMillis() - Long.valueOf("@{gradle.task.start.time}");
+
+					project.setProperty("gradle.task.duration", String.valueOf((double)duration / 1000));
+				]]>
+			</beanshell>
+
+			<condition else="@{gradle.task.name}" property="gradle.task.name" value="assemble">
+				<or>
+					<contains string="@{gradle.task.name}" substring="assemble" />
+					<contains string="@{gradle.task.name}" substring="compileTestIntegrationJava" />
+				</or>
+			</condition>
+
+			<condition else="@{gradle.task.failure.message}" property="gradle.task.failure.message" value="@{gradle.task.module.dir} ${gradle.task.name} was not executed. Please check the logs for details.">
+				<equals arg1="@{gradle.task.failure.message}" arg2="" />
+			</condition>
+
+			<antelope:stringutil property="gradle.task.failure.stacktrace" string="@{gradle.task.failure.stacktrace}">
+				<antelope:replace regex="&amp;" replacement="&amp;amp;" />
+				<antelope:replace regex="&apos;" replacement="&amp;apos;" />
+				<antelope:replace regex="&gt;" replacement="&amp;gt;" />
+				<antelope:replace regex="&lt;" replacement="&amp;lt;" />
+				<antelope:replace regex="&quot;" replacement="&amp;quot;" />
+			</antelope:stringutil>
+
+			<if>
+				<equals arg1="@{gradle.task.failure.count}" arg2="0" />
+				<then>
+					<property name="gradle.task.failure.message.element" value="" />
+				</then>
+				<else>
+					<property name="gradle.task.failure.message.element"><![CDATA[<failure message="${gradle.task.failure.message}">${gradle.task.failure.stacktrace}</failure>]]></property>
+				</else>
+			</if>
+
+			<local name="test.class.name" />
+
+			<propertyregex
+				global="true"
+				input="@{gradle.task.module.dir}"
+				override="yes"
+				property="test.class.name"
+				regexp="\/"
+				replace="."
+			/>
+
+			<generate-backend-batch-junit-report
+				junit.failure.count="@{gradle.task.failure.count}"
+				junit.failure.message.element="${gradle.task.failure.message.element}"
+				test.class.duration="${gradle.task.duration}"
+				test.class.name="${test.class.name}"
+				test.command.name="${gradle.task.name}"
+				test.results.dir="modules/test-results"
+			/>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="generate-backend-batch-junit-report-modules">
+		<attribute name="test.class.name" />
+		<attribute name="test.task.name" />
+
+		<sequential>
+			<generate-backend-batch-junit-report
+				junit.failure.count="1"
+				junit.failure.message.element="&lt;failure message=&quot;@{test.task.name} was not executed. Please check the logs for details.&quot; /&gt;"
+				test.class.name="@{test.class.name}"
+				test.command.name="testRun"
+				test.results.dir="modules/test-results"
+			/>
 		</sequential>
 	</macrodef>
 
@@ -706,6 +829,36 @@ information.
 
 					<property name="artifact.version" value="${Bundle-Version}" />
 
+					<loadproperties prefix="portal.kernel" srcFile="${project.dir}/portal-kernel/bnd.bnd">
+						<filterchain>
+							<linecontains>
+								<contains value="Bundle-Version" />
+							</linecontains>
+						</filterchain>
+					</loadproperties>
+
+					<property name="portal.kernel.version" value="${portal.kernel.Bundle-Version}" />
+
+					<loadproperties prefix="util.bridges" srcFile="${project.dir}/util-bridges/bnd.bnd">
+						<filterchain>
+							<linecontains>
+								<contains value="Bundle-Version" />
+							</linecontains>
+						</filterchain>
+					</loadproperties>
+
+					<property name="util.bridges.version" value="${util.bridges.Bundle-Version}" />
+
+					<loadproperties prefix="util.java" srcFile="${project.dir}/util-java/bnd.bnd">
+						<filterchain>
+							<linecontains>
+								<contains value="Bundle-Version" />
+							</linecontains>
+						</filterchain>
+					</loadproperties>
+
+					<property name="util.java.version" value="${util.java.Bundle-Version}" />
+
 					<copy
 						file="../tools/maven/${artifact.name}.xml"
 						tofile="classes/META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml"
@@ -714,6 +867,9 @@ information.
 							<expandproperties />
 						</filterchain>
 						<filterset>
+							<filter token="portal.kernel.version" value="${portal.kernel.version}" />
+							<filter token="util.bridges.version" value="${util.bridges.version}" />
+							<filter token="util.java.version" value="${util.java.version}" />
 							<filter token="version" value="${artifact.version}" />
 						</filterset>
 					</copy>
@@ -723,6 +879,12 @@ information.
 						<entry key="groupId" value="${project.groupId}" />
 						<entry key="version" value="${artifact.version}" />
 					</propertyfile>
+
+					<replaceregexp
+						file="classes/META-INF/maven/${project.groupId}/${project.artifactId}/pom.properties"
+						match="#.*[0-9].*\n"
+						replace=""
+					/>
 				</then>
 			</if>
 		</sequential>
@@ -754,11 +916,13 @@ information.
 		<attribute default="${basedir}" name="dir" />
 		<attribute default="true" name="failonerror" />
 		<attribute default="true" name="forcedcacheenabled" />
-		<attribute default="" name="gradleopts" />
+		<attribute default="" name="gradlejvmargs" />
 		<attribute default="" name="outputproperty" />
 		<attribute default="" name="refreshdependencies" />
 		<attribute default="true" name="setupbinariescache" />
+		<attribute default="true" name="stacktrace" />
 		<attribute name="task" />
+		<attribute default="" name="test.name" />
 		<element implicit="true" name="args" optional="true" />
 
 		<sequential>
@@ -774,35 +938,23 @@ information.
 					<available file="${project.dir}/tools/${build.binaries.gradle.file}" />
 				</not>
 				<then>
-					<mirrors-get
-						dest="${project.dir}/tools/${build.binaries.gradle.file}"
-						skipChecksum="true"
-						src="${build.binaries.gradle.url}"
-					/>
+					<if>
+						<isset property="env.JENKINS_HOME" />
+						<then>
+							<mirrors-get
+								dest="${project.dir}/tools/${build.binaries.gradle.file}"
+								skipChecksum="true"
+								src="${build.binaries.gradle.url}"
+							/>
+						</then>
+						<else>
+							<get
+								dest="${project.dir}/tools/${build.binaries.gradle.file}"
+								src="${build.binaries.gradle.url}"
+							/>
+						</else>
+					</if>
 				</then>
-			</if>
-
-			<local name="task.gradle.opts" />
-
-			<if>
-				<not>
-					<equals arg1="@{gradleopts}" arg2="" />
-				</not>
-				<then>
-					<property name="task.gradle.opts" value="@{gradleopts}" />
-				</then>
-				<elseif>
-					<isset property="env.GRADLE_OPTS" />
-					<then>
-						<property name="task.gradle.opts" value="${env.GRADLE_OPTS}" />
-					</then>
-				</elseif>
-				<elseif>
-					<isset property="env.ANT_OPTS" />
-					<then>
-						<property name="task.gradle.opts" value="${env.ANT_OPTS}" />
-					</then>
-				</elseif>
 			</if>
 
 			<if>
@@ -828,24 +980,24 @@ information.
 					<local name="tasks.output" />
 
 					<exec dir="@{dir}" executable="${project.dir}/gradlew${gradlew.suffix}" failonerror="@{failonerror}">
-						<arg if:set="env.JENKINS_HOME" value="--max-workers=${gradle.ci.max.workers}" />
-						<arg value="--no-daemon" />
+						<arg if:set="env.JENKINS_HOME" value="--max-workers=4" />
+						<arg if:set="env.JENKINS_HOME" value="--no-daemon" />
+						<arg unless:true="${gradle.build.parallel.enabled}" value="--no-parallel" />
 						<arg if:true="${gradle.profile.enabled}" value="--profile" />
 						<arg if:set="env.JENKINS_HOME" value="--profile" />
 						<arg value="--project-cache-dir=${project.dir}/.gradle" />
 						<arg if:true="@{refreshdependencies}" value="--refresh-dependencies" />
-						<arg value="--stacktrace" />
+						<arg if:true="@{stacktrace}" value="--stacktrace" />
 						<arg value="-Dapp.server.parent.dir=${app.server.parent.dir}" />
 						<arg value="-Dforced.cache.enabled=@{forcedcacheenabled}" />
 						<arg value="-Dliferay.home=${liferay.home}" />
-						<arg if:set="env.JENKINS_HOME" value="-Dliferay.ssl.context.enabled=${gradle.ci.liferay.ssl.context.enabled}" />
-						<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=${gradle.ci.http.connection.timeout}" />
-						<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=${gradle.ci.http.socket.timeout}" />
+						<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=120000" />
+						<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=120000" />
 						<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.dirs=${build.patcher.hotfix.dirs}" />
 						<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.qualifier=${build.patcher.hotfix.qualifier}" />
+						<arg line="@{gradlejvmargs}" />
 						<arg value="tasks" />
 						<arg value="--all" />
-						<env key="GRADLE_OPTS" value="${task.gradle.opts}" />
 						<redirector errorproperty="tasks.error" outputproperty="tasks.output" unless:blank="tasks.output" />
 					</exec>
 
@@ -934,30 +1086,60 @@ information.
 
 					<local name="${redirector.error.property}" />
 					<local name="${redirector.output.property}" />
+					<local name="test.name" />
+
+					<condition property="test.name" value="@{test.name}">
+						<not>
+							<equals arg1="@{test.name}" arg2="" />
+						</not>
+					</condition>
 
 					<trycatch>
 						<try>
-							<echo message="Executing Gradle task: ${gradle.executable.task}" />
+							<beanshell>
+								<![CDATA[
+									StringBuilder sb = new StringBuilder();
+
+									String gradleExecutableTask = project.getProperty("gradle.executable.task");
+
+									if ((gradleExecutableTask != null) && !gradleExecutableTask.isEmpty()) {
+										sb.append("Executing Gradle task: ");
+										sb.append(gradleExecutableTask);
+									}
+
+									String testName = project.getProperty("test.name");
+
+									if ((testName != null) && !testName.isEmpty()) {
+										sb.append(" ");
+										sb.append(testName);
+									}
+
+									if (sb.length() > 0) {
+										System.out.println(sb.toString());
+									}
+								]]>
+							</beanshell>
 
 							<exec dir="@{dir}" executable="${project.dir}/gradlew${gradlew.suffix}" failonerror="@{failonerror}">
 								<args />
-								<arg if:set="env.JENKINS_HOME" value="--max-workers=${gradle.ci.max.workers}" />
-								<arg value="--no-daemon" />
+								<arg if:set="env.JENKINS_HOME" value="--max-workers=4" />
+								<arg if:set="env.JENKINS_HOME" value="--no-daemon" />
+								<arg unless:true="${gradle.build.parallel.enabled}" value="--no-parallel" />
 								<arg if:true="${gradle.profile.enabled}" value="--profile" />
 								<arg if:set="env.JENKINS_HOME" value="--profile" />
 								<arg value="--project-cache-dir=${project.dir}/.gradle" />
 								<arg if:true="@{refreshdependencies}" value="--refresh-dependencies" />
-								<arg value="--stacktrace" />
+								<arg if:true="@{stacktrace}" value="--stacktrace" />
 								<arg value="-Dapp.server.parent.dir=${app.server.parent.dir}" />
 								<arg value="-Dforced.cache.enabled=@{forcedcacheenabled}" />
 								<arg value="-Dliferay.home=${liferay.home}" />
-								<arg if:set="env.JENKINS_HOME" value="-Dliferay.ssl.context.enabled=${gradle.ci.liferay.ssl.context.enabled}" />
-								<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=${gradle.ci.http.connection.timeout}" />
-								<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=${gradle.ci.http.socket.timeout}" />
+								<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=120000" />
+								<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=120000" />
 								<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.dirs=${build.patcher.hotfix.dirs}" />
 								<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.qualifier=${build.patcher.hotfix.qualifier}" />
+								<arg line="@{gradlejvmargs}" />
 								<arg line="@{task}" />
-								<env key="GRADLE_OPTS" value="${task.gradle.opts}" />
+								<arg if:set="test.name" line="${test.name}" />
 								<redirector errorproperty="${redirector.error.property}" outputproperty="${redirector.output.property}" unless:blank="${redirector.output.property}" />
 							</exec>
 						</try>
@@ -969,7 +1151,7 @@ information.
 
 									<propertycopy from="${redirector.error.property}" name="task.error" />
 
-									<echo message="${task.error}" />
+									<echo>${task.error}</echo>
 								</then>
 							</if>
 
@@ -978,23 +1160,23 @@ information.
 							<echoxml>
 								<exec dir="@{dir}" executable="${project.dir}/gradlew${gradlew.suffix}" failonerror="@{failonerror}">
 									<args />
-									<arg if:set="env.JENKINS_HOME" value="--max-workers=${gradle.ci.max.workers}" />
-									<arg value="--no-daemon" />
+									<arg if:set="env.JENKINS_HOME" value="--max-workers=4" />
+									<arg if:set="env.JENKINS_HOME" value="--no-daemon" />
+									<arg unless:true="${gradle.build.parallel.enabled}" value="--no-parallel" />
 									<arg if:true="${gradle.profile.enabled}" value="--profile" />
 									<arg if:set="env.JENKINS_HOME" value="--profile" />
 									<arg value="--project-cache-dir=${project.dir}/.gradle" />
 									<arg if:true="@{refreshdependencies}" value="--refresh-dependencies" />
-									<arg value="--stacktrace" />
+									<arg if:true="@{stacktrace}" value="--stacktrace" />
 									<arg value="-Dapp.server.parent.dir=${app.server.parent.dir}" />
 									<arg value="-Dforced.cache.enabled=@{forcedcacheenabled}" />
 									<arg value="-Dliferay.home=${liferay.home}" />
-									<arg if:set="env.JENKINS_HOME" value="-Dliferay.ssl.context.enabled=${gradle.ci.liferay.ssl.context.enabled}" />
-									<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=${gradle.ci.http.connection.timeout}" />
-									<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=${gradle.ci.http.socket.timeout}" />
+									<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.connectionTimeout=120000" />
+									<arg if:set="env.JENKINS_HOME" value="-Dorg.gradle.internal.http.socketTimeout=120000" />
 									<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.dirs=${build.patcher.hotfix.dirs}" />
 									<arg if:set="env.FIX_PACKS_RELEASE_ENVIRONMENT" value="-Dpatcher.hotfix.qualifier=${build.patcher.hotfix.qualifier}" />
 									<arg line="@{task}" />
-									<env key="GRADLE_OPTS" value="${task.gradle.opts}" />
+									<arg if:set="test.name" line="${test.name}" />
 									<redirector errorproperty="${redirector.error.property}" outputproperty="${redirector.output.property}" unless:blank="${redirector.output.property}" />
 								</exec>
 							</echoxml>
@@ -1026,7 +1208,7 @@ information.
 
 											<propertycopy from="${redirector.output.property}" name="task.output" />
 
-											<echo message="${task.output}" />
+											<echo>${task.output}</echo>
 										</then>
 									</if>
 								</then>
@@ -1037,6 +1219,29 @@ information.
 				<else>
 					<echo>Skipped unavailable task: @{task}.</echo>
 				</else>
+			</if>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="gradle-stop-daemon">
+		<sequential>
+			<if>
+				<and>
+					<equals arg1="${gradle.stop.daemon.enabled}" arg2="true" />
+					<equals arg1="${org.gradle.daemon}" arg2="true" />
+					<available file="${project.dir}/.gradle/wrapper" type="dir" />
+				</and>
+				<then>
+					<local name="gradle.execute.silent" />
+
+					<property name="gradle.execute.silent" value="false" />
+
+					<echo>Stopping all running Gradle Daemon processes.</echo>
+
+					<gradle-execute dir="." forcedcacheenabled="false" setupbinariescache="false" task="">
+						<arg value="--stop" />
+					</gradle-execute>
+				</then>
 			</if>
 		</sequential>
 	</macrodef>
@@ -1061,7 +1266,14 @@ information.
 
 			<prepare-portal-artifact-pom snapshot.version.suffix="${snapshot.version.suffix}" />
 
-			<delete dir="${build.repository.local.actual.dir}/com/liferay/portal/com.liferay.${processed.artifact.name}" />
+			<if>
+				<not>
+					<isset property="env.JENKINS_HOME" />
+				</not>
+				<then>
+					<delete dir="${build.repository.local.actual.dir}/com/liferay/portal/com.liferay.${processed.artifact.name}" />
+				</then>
+			</if>
 
 			<artifact:install file="${artifact.name}.@{packaging}">
 				<attach-files />
@@ -1121,9 +1333,9 @@ information.
 			</condition>
 
 			<if>
-				<isset property="junit.java.unit.gc[@{junit.jvm.override.version}]" />
+				<isset property="junit.java.unit.gc[${junit.jvm.override.version}]" />
 				<then>
-					<propertycopy from="junit.java.unit.gc[@{junit.jvm.override.version}]" name="junit.java.unit.gc" override="true" />
+					<propertycopy from="junit.java.unit.gc[${junit.jvm.override.version}]" name="junit.java.unit.gc" override="true" />
 				</then>
 			</if>
 
@@ -1138,26 +1350,34 @@ information.
 			</if>
 
 			<if>
-				<isset property="junit.java.add.opens[@{junit.jvm.override.version}]" />
+				<isset property="junit.java.add.opens[${junit.jvm.override.version}]" />
 				<then>
-					<propertycopy from="junit.java.add.opens[@{junit.jvm.override.version}]" name="junit.java.add.opens" override="true" />
+					<propertycopy from="junit.java.add.opens[${junit.jvm.override.version}]" name="junit.java.add.opens" override="true" />
+				</then>
+			</if>
+
+			<if>
+				<equals arg1="${junit.jvm.override.version}" arg2="21" />
+				<then>
+					<property name="java.security.manager" value="allow" />
 				</then>
 			</if>
 
 			<local name="junit.jvm.bin" />
 
-			<condition else="${junit.jvm.override}" property="junit.jvm.bin" value="${junit.jvm}">
-				<equals arg1="${junit.jvm.override}" arg2="" />
+			<condition else="${junit.jvm}" property="junit.jvm.bin" value="${junit.jvm.override}">
+				<isset property="junit.jvm.override" />
 			</condition>
 
 			<junit dir="${project.dir}" fork="on" forkmode="@{forkmode}" haltonfailure="${junit.halt.on.failure}" jvm="${junit.jvm.bin}" outputtoformatters="false" printsummary="on" showoutput="true">
 				<sysproperty if:true="${aspectj.weaver.enabled}" key="aspectj.agent" value="${aspectj.agent}" />
 				<sysproperty key="catalina.base" value="." />
 				<sysproperty file="woven-classes" key="junit.aspectj.dump" />
+				<sysproperty if:set="java.security.manager" key="java.security.manager" value="${java.security.manager}" />
 				<sysproperty key="junit.code.coverage" value="${junit.code.coverage}" />
 				<sysproperty if:true="${jvm.debug}" key="jvm.debug" value="true" />
-				<sysproperty key="liferay.lib.portal.dir" value="${app.server.tomcat.lib.portal.dir}" />
 				<sysproperty key="liferay.temp.dir" value="${app.server.tomcat.temp.dir}" />
+				<sysproperty key="net.bytebuddy.experimental" value="true" />
 				<sysproperty if:true="${aspectj.weaver.enabled}" key="org.aspectj.weaver.loadtime.configuration" value="${aspectj.configuration}" />
 				<sysproperty key="whip.agent" value="${whip.agent}" />
 				<sysproperty file="test-coverage/@{test.type}/whip.dat" key="whip.datafile" />
@@ -1172,8 +1392,8 @@ information.
 				<jvmarg value="-Xss2m" />
 				<jvmarg value="-Dexternal-properties=${test.properties}" />
 				<jvmarg value="-Dfixed.issues=${fixed.issues}" />
+				<jvmarg value="-Djava.locale.providers=CLDR" />
 				<jvmarg value="-Dliferay.log.dir=${liferay.home}/logs" />
-				<jvmarg value="-Dliferay.mode=test" />
 				<jvmarg value="-Dosgi.state.dir=${liferay.home}/osgi/state" />
 				<jvmarg value="-Drelease.versions.test.other.dir=${release.versions.test.other.dir}" />
 				<jvmarg value="-Drelease.versions.test.other.dir.names=${release.versions.test.other.dir.names}" />
@@ -1216,7 +1436,7 @@ information.
 			<trycatch>
 				<try>
 					<taskdef
-						classname="com.liferay.util.ant.ManifestHelperTask"
+						classname="com.liferay.ant.manifest.helper.ManifestHelperTask"
 						classpathref="project.classpath"
 						name="liferay-manifest-helper"
 					/>
@@ -1226,7 +1446,7 @@ information.
 					<ant dir="${project.dir}/util-java" inheritAll="false" target="compile" />
 
 					<taskdef
-						classname="com.liferay.util.ant.ManifestHelperTask"
+						classname="com.liferay.ant.manifest.helper.ManifestHelperTask"
 						classpathref="project.classpath"
 						name="liferay-manifest-helper"
 					/>
@@ -1286,7 +1506,7 @@ information.
 				<format pattern="MMMM d, yyyy 'at' hh:mm aa" property="current.time" />
 			</tstamp>
 
-			<echo message="${current.time}" />
+			<echo>${current.time}</echo>
 		</sequential>
 	</macrodef>
 
@@ -1441,8 +1661,19 @@ information.
 								<arg value="." />
 							</exec>
 
+							<loadresource property="remote.repository.cdn.url">
+								<filterchain>
+									<tokenfilter>
+										<filetokenizer />
+
+										<replacestring from="repository.liferay.com" to="repository-cdn.liferay.com" />
+									</tokenfilter>
+								</filterchain>
+								<propertyresource name="remote.repository.url" />
+							</loadresource>
+
 							<echo file="${project.dir}/modules/.releng/${artifact.name}.properties">artifact.git.id=${artifact.git.id}
-artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed.artifact.name}/${artifact.version}/com.liferay.${processed.artifact.name}-${artifact.version}.@{packaging}</echo>
+artifact.url=${remote.repository.cdn.url}/com/liferay/portal/com.liferay.${processed.artifact.name}/${artifact.version}/com.liferay.${processed.artifact.name}-${artifact.version}.@{packaging}</echo>
 
 							<exec dir="${project.dir}/modules/.releng" executable="git" failonerror="true">
 								<arg value="add" />
@@ -1455,6 +1686,32 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 								<arg value="artifact:ignore ${artifact.name} ${artifact.version} releng" />
 							</exec>
 						</then>
+					</if>
+
+					<if>
+						<os family="windows" />
+						<then>
+							<exec executable="cmd" failonerror="true">
+								<arg value="/c" />
+								<arg value="ant.bat" />
+								<arg value="deploy" />
+							</exec>
+
+							<exec executable="cmd" failonerror="true">
+								<arg value="/c" />
+								<arg value="ant.bat" />
+								<arg value="install-portal-snapshot" />
+							</exec>
+						</then>
+						<else>
+							<exec executable="ant" failonerror="true">
+								<arg value="deploy" />
+							</exec>
+
+							<exec executable="ant" failonerror="true">
+								<arg value="install-portal-snapshot" />
+							</exec>
+						</else>
 					</if>
 
 					<propertyfile file="../.gradle/gradle.properties">
@@ -1499,7 +1756,7 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 				</filterchain>
 			</loadproperties>
 
-			<echo append="true" file="@{file}" message="${line.separator}${processed.artifact.name}=${Bundle-Version}-SNAPSHOT" />
+			<echo append="true" file="@{file}">${line.separator}${processed.artifact.name}=${Bundle-Version}-SNAPSHOT</echo>
 		</sequential>
 	</macrodef>
 
@@ -1560,11 +1817,13 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 
 							<echo>Updating ${build.binaries.cache.dir.absolute.path}.</echo>
 
-							<exec dir="${project.dir}/${build.binaries.cache.dir}" executable="git" failonerror="true">
-								<arg value="pull" />
-								<arg value="--rebase" />
-								<arg value="${build.binaries.cache.url}" />
-							</exec>
+							<retry retrycount="3" retrydelay="30000">
+								<exec dir="${project.dir}/${build.binaries.cache.dir}" executable="git" failonerror="true">
+									<arg value="pull" />
+									<arg value="--rebase" />
+									<arg value="${build.binaries.cache.url}" />
+								</exec>
+							</retry>
 						</then>
 					</if>
 
@@ -1577,18 +1836,6 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 						symbolic="${sync.dir.symbolic}"
 						toDir="${project.dir}/.gradle/caches/modules-2/files-2.1"
 					/>
-
-					<if>
-						<not>
-							<available file="${project.dir}/tools/${build.binaries.gradle.file}" type="file" />
-						</not>
-						<then>
-							<copy
-								file="${project.dir}/${build.binaries.cache.dir}/${build.binaries.gradle.file}"
-								todir="${project.dir}/tools"
-							/>
-						</then>
-					</if>
 				</then>
 			</if>
 
@@ -1604,56 +1851,97 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 		</sequential>
 	</macrodef>
 
+	<macrodef name="setup-nodejs-sass">
+		<sequential>
+			<mkdir dir="${nodejs.sass.dir}" />
+			<if>
+				<os family="unix" />
+				<then>
+					<if>
+						<os name="Mac OS X" />
+						<then>
+							<if>
+								<os arch="aarch64" />
+								<then>
+									<mirrors-get
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.mac.arm.url}"
+									/>
+
+									<untar
+										compression="gzip"
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.dir}/${nodejs.sass.mac.arm.name}"
+									/>
+								</then>
+								<else>
+									<mirrors-get
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.mac.url}"
+									/>
+
+									<untar
+										compression="gzip"
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.dir}/${nodejs.sass.mac.name}"
+									/>
+								</else>
+							</if>
+						</then>
+						<else>
+							<if>
+								<os arch="aarch64" />
+								<then>
+									<mirrors-get
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.linux.arm.url}"
+									/>
+
+									<untar
+										compression="gzip"
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.dir}/${nodejs.sass.linux.arm.name}"
+									/>
+								</then>
+								<else>
+									<mirrors-get
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.linux.url}"
+									/>
+
+									<untar
+										compression="gzip"
+										dest="${nodejs.sass.dir}"
+										src="${nodejs.sass.dir}/${nodejs.sass.linux.name}"
+									/>
+								</else>
+							</if>
+						</else>
+					</if>
+				</then>
+				<elseif>
+					<os family="windows" />
+					<then>
+						<mirrors-get
+							dest="${nodejs.sass.dir}"
+							src="${nodejs.sass.windows.url}"
+						/>
+
+						<unzip
+							dest="${nodejs.sass.dir}"
+							src="${nodejs.sass.dir}/${nodejs.sass.windows.name}"
+						/>
+					</then>
+				</elseif>
+			</if>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="setup-sdk">
 		<attribute default="true" name="setupbinariescache" />
 
 		<sequential>
-			<gradle-execute forcedcacheenabled="true" outputproperty="sdk.zip.file" setupbinariescache="@{setupbinariescache}" task="printDependencyPath">
-				<arg value="--build-file=${project.dir}/modules/util.gradle" />
-				<arg value="--quiet" />
-				<arg value="-Dorg.gradle.internal.launcher.welcomeMessageEnabled=false" />
-				<arg value="-PdependencyNotation=com.liferay.portal:com.liferay.portal.plugins.sdk:${build.sdk.version}" />
-			</gradle-execute>
-
-			<propertyregex
-				input="${sdk.zip.file}"
-				override="true"
-				property="sdk.zip.file"
-				regexp="(.*$)"
-				select="\1"
-			/>
-
-			<dirname file="${sdk.zip.file}" property="sdk.zip.dir" />
-
-			<if>
-				<not>
-					<uptodate>
-						<mapper
-							to="${sdk.dir}"
-							type="merge"
-						/>
-						<srcfiles dir="${sdk.zip.dir}" includes="com.liferay.portal.plugins.sdk-${build.sdk.version}.zip" />
-					</uptodate>
-				</not>
-				<then>
-					<delete dir="${sdk.dir}" />
-
-					<unzip
-						dest="${project.dir}/tools"
-						src="${sdk.zip.dir}/com.liferay.portal.plugins.sdk-${build.sdk.version}.zip"
-					>
-						<mapper
-							from="com.liferay.portal.plugins.sdk-${build.sdk.version}/*"
-							to="sdk/*"
-							type="glob"
-						/>
-					</unzip>
-
-					<update-sdk-properties />
-				</then>
-			</if>
-
-			<update-gradle-properties />
+			<antcall inheritAll="false" target="update-gradle-properties" />
 
 			<gradle-execute setupbinariescache="@{setupbinariescache}" task="setUpPortalTools">
 				<arg value="--build-file=${project.dir}/modules/util.gradle" />
@@ -1697,6 +1985,16 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 				</then>
 			</if>
 
+			<if>
+				<and>
+					<equals arg1="${basedir.unix}" arg2="${project.dir}/util-taglib" />
+					<equals arg1="@{test.type}" arg2="unit" />
+				</and>
+				<then>
+					<var name="junit.classpath" value="${classpath.util-taglib-unit}" />
+				</then>
+			</if>
+
 			<path id="test.classpath">
 				<pathelement path="test-classes/@{test.type}" />
 				<pathelement path="${junit.classpath}" />
@@ -1705,16 +2003,11 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 				<path refid="lib.pre.classpath" />
 				<fileset
 					dir="${project.dir}/lib/development"
-					excludes="osgi-annotation-versioning.jar,jalopy.jar,jetty*.jar,tomcat*.jar"
-					includes="*.jar"
-				/>
-				<fileset
-					dir="${project.dir}/lib/global"
+					excludes="jalopy.jar"
 					includes="*.jar"
 				/>
 				<fileset
 					dir="${project.dir}/lib/portal"
-					excludes="ant.jar"
 					includes="*.jar"
 				/>
 				<fileset
@@ -1728,6 +2021,8 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 
 	<macrodef name="setup-yarn">
 		<sequential>
+			<lstopwatch action="start" name="setup.yarn" />
+
 			<if>
 				<not>
 					<and>
@@ -1745,12 +2040,38 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 						</then>
 					</if>
 
-					<gradle-execute dir="${project.dir}/modules" task="setUpYarnOfflineCache">
-						<arg value="--build-file=${project.dir}/modules/util.gradle" />
-					</gradle-execute>
+					<if>
+						<and>
+							<available file="${project.dir}/${build.binaries.cache.dir}/.yarn/offline-cache" type="dir" />
+							<isset property="env.JENKINS_HOME" />
+						</and>
+						<then>
+							<sync-dir
+								dir="${project.dir}/${build.binaries.cache.dir}/.yarn/offline-cache"
+								symbolic="${sync.dir.symbolic}"
+								toDir="${project.dir}/modules/node_modules_cache"
+							/>
 
-					<retry retrycount="5" retrydelay="10000">
-						<gradle-execute dir="${project.dir}/modules" task=":yarnInstall" />
+							<if>
+								<available file="${project.dir}/${build.binaries.cache.dir}/.yarn/dxp/apps/osb/osb-faro/offline-cache" type="dir" />
+								<then>
+									<sync-dir
+										dir="${project.dir}/${build.binaries.cache.dir}/.yarn/dxp/apps/osb/osb-faro/offline-cache"
+										symbolic="${sync.dir.symbolic}"
+										toDir="${project.dir}/modules/dxp/apps/osb/osb-faro/node_modules_cache"
+									/>
+								</then>
+							</if>
+						</then>
+						<else>
+							<gradle-execute dir="${project.dir}/modules" task="setUpYarnOfflineCache">
+								<arg value="--build-file=${project.dir}/modules/util.gradle" />
+							</gradle-execute>
+						</else>
+					</if>
+
+					<retry retrycount="5" retrydelay="30000">
+						<gradle-execute dir="${project.dir}/modules" task=":portalYarnInstall" />
 					</retry>
 
 					<if>
@@ -1763,6 +2084,8 @@ artifact.url=${remote.repository.url}/com/liferay/portal/com.liferay.${processed
 					</if>
 				</then>
 			</if>
+
+			<lstopwatch action="total" name="setup.yarn" />
 		</sequential>
 	</macrodef>
 
@@ -1843,8 +2166,8 @@ rerun your task.
 		<attribute name="test.includes" />
 		<attribute name="test.type" />
 		<attribute default="" name="test.excludes" />
-		<attribute default="" name="junit.jvm.override" />
-		<attribute default="" name="junit.jvm.override.version" />
+		<attribute default="${junit.jvm.override}" name="junit.jvm.override" />
+		<attribute default="${junit.jvm.override.version}" name="junit.jvm.override.version" />
 
 		<sequential>
 			<lstopwatch action="start" name="test.cmd" />
@@ -1873,7 +2196,6 @@ rerun your task.
 						test.type="@{test.type}"
 					>
 						<misc>
-							<jvmarg value="-Dliferay.lib.portal.dir=${project.dir}/lib/portal" />
 							<jvmarg value="-Dtest.class.group.index=${test.class.group.index}" />
 							<jvmarg value="-Dtest.class.groups=${TEST_CLASS_GROUPS}" />
 						</misc>
@@ -1916,6 +2238,20 @@ rerun your task.
 
 			<property file="${project.dir}/ci.properties" />
 
+			<if>
+				<isset property="junit.java.add.opens[${junit.jvm.override.version}]" />
+				<then>
+					<propertycopy from="junit.java.add.opens[${junit.jvm.override.version}]" name="junit.java.add.opens" override="true" />
+				</then>
+			</if>
+
+			<if>
+				<equals arg1="${junit.jvm.override.version}" arg2="21" />
+				<then>
+					<property name="junit.java.security.manager" value="allow" />
+				</then>
+			</if>
+
 			<echoproperties destfile="${gradle.properties.file}">
 				<propertyset>
 					<propertyref name="app.server.type" />
@@ -1926,28 +2262,36 @@ rerun your task.
 					<propertyref name="build.binaries.cache.dir" />
 					<propertyref name="compile.jsp.include" />
 					<propertyref name="git.working.branch.name" />
+					<propertyref if:set="gradle.update.file.versions.excludes" name="gradle.update.file.versions.excludes" unless:blank="${gradle.update.file.versions.excludes}" />
 					<propertyref name="jacoco.agent.configuration" />
 					<propertyref name="jacoco.agent.jar" />
 					<propertyref name="jira.project.keys" />
 					<propertyref name="jsp.precompile.from.source" />
+					<propertyref name="jsp.precompile.pooling.enabled.modules" />
 					<propertyref name="junit.code.coverage" />
+					<propertyref if:set="junit.java.add.opens" name="junit.java.add.opens" />
+					<propertyref if:set="junit.java.security.manager" name="junit.java.security.manager" />
 					<propertyref name="junit.java.unit.gc" />
+					<propertyref name="junit.jvm.override.version" />
 					<propertyref name="liferay.home" />
 					<propertyref name="liferay.releng.app.title.prefix" />
 					<propertyref name="liferay.releng.product.display.name" />
 					<propertyref name="liferay.releng.public" />
 					<propertyref name="liferay.releng.supported" />
 					<propertyref name="project.templates.test.builds" />
+					<propertyref name="release.info.version" />
 					<propertyref name="release.versions.test.other.dir" />
 					<propertyref name="release.versions.test.other.dir.names" />
 					<propertyref name="sass.compiler.class.name" />
 					<propertyref name="sass.generate.source.map" />
 					<propertyref name="sass.precision" />
 					<propertyref name="sdk.dir" />
+					<propertyref name="service.builder.incubation.features" />
 					<propertyref name="timeout.app.server.wait" />
 					<propertyref name="upgrade.table.dir" />
 					<propertyref prefix="build.compat.version.com.liferay.portal." />
 					<propertyref prefix="build.compat.version.com.liferay.util." />
+					<propertyref prefix="build.jakarta.transformer." />
 					<propertyref prefix="gradle.publish." />
 					<propertyref prefix="gradle.releng.pom." />
 					<propertyref prefix="ivy.pom." />
@@ -1958,7 +2302,7 @@ rerun your task.
 					<propertyref prefix="source.formatter." />
 					<propertyref prefix="systemProp." />
 					<propertyref regex=".+\.ignore\.local$" />
-					<propertyref regex="^\s*app\.server\.(?:jboss|tcserver|tomcat|weblogic|websphere|wildfly).*" />
+					<propertyref regex="^\s*app\.server\.(?:jboss|tomcat|weblogic|wildfly).*" />
 				</propertyset>
 			</echoproperties>
 
@@ -1967,8 +2311,6 @@ rerun your task.
 			<record-artifact-version artifact.name="portal-kernel" file="${gradle.properties.file}" />
 
 			<record-artifact-version artifact.name="portal-test" file="${gradle.properties.file}" />
-
-			<record-artifact-version artifact.name="portal-test-integration" file="${gradle.properties.file}" />
 
 			<record-artifact-version artifact.name="util-bridges" file="${gradle.properties.file}" />
 
@@ -1991,11 +2333,22 @@ rerun your task.
 				</then>
 			</if>
 
+			<propertyregex
+				input="${junit.jvm.override}"
+				property="java.installation.paths.override"
+				regexp="[\/]bin[\/]java[\/]?$"
+				replace=""
+			/>
+
 			<propertyfile file="${gradle.properties.file}">
 				<entry key="database.jdbc.drivers.url" value="${test.jdbc.drivers.url}" />
 				<entry key="database.jdbc.oracle.driver" value="${jdbc.oracle.driver}" />
 				<entry key="database.oracle.version" value="${database.oracle.version}" />
-				<entry key="plugins.sdk.version" value="${build.sdk.version}" />
+				<entry if:set="build.java.version.override" key="java.version.override" unless:blank="${build.java.version.override}" value="${build.java.version.override}" />
+				<entry if:set="build.java.version.override.include.dirs" key="java.version.override.include.dirs" unless:blank="${build.java.version.override.include.dirs}" value="${build.java.version.override.include.dirs}" />
+				<entry if:set="build.java.version.source.compatibility" key="java.version.source.compatibility" unless:blank="${build.java.version.source.compatibility}" value="${build.java.version.source.compatibility}" />
+				<entry if:set="build.java.version.target.compatibility" key="java.version.target.compatibility" unless:blank="${build.java.version.target.compatibility}" value="${build.java.version.target.compatibility}" />
+				<entry if:set="junit.jvm.override" key="org.gradle.java.installations.paths" unless:blank="${junit.jvm.override}" value="${java.installation.paths.override}" />
 				<entry key="systemProp.build.bnd.print.enabled" value="${build.bnd.print.enabled}" />
 				<entry key="systemProp.build.performance.logger.enabled" value="${build.performance.logger.enabled}" />
 				<entry key="systemProp.maven.repo.local" unless:blank="${build.repository.local.dir}" value="${build.repository.local.dir}" />
@@ -2004,72 +2357,30 @@ rerun your task.
 				<entry key="systemProp.repository.private.username" value="${build.repository.private.username}" />
 			</propertyfile>
 
+			<if>
+				<available file="${project.dir}/portal-impl/src/portal.properties" />
+				<then>
+					<loadfile
+						property="portal.properties.content"
+						srcfile="${project.dir}/portal-impl/src/portal.properties"
+					/>
+
+					<if>
+						<contains string="${portal.properties.content}" substring="module.framework.portal.war.dir" />
+						<then>
+							<propertyfile file="${gradle.properties.file}">
+								<entry key="portal.war.auto.deploy.enabled" value="true" />
+							</propertyfile>
+						</then>
+					</if>
+				</then>
+			</if>
+
 			<replaceregexp
 				file="${gradle.properties.file}"
 				flags="g"
 				match="\\([\:\=\!\\])"
 				replace="\1"
-			/>
-		</sequential>
-	</macrodef>
-
-	<macrodef name="update-sdk-properties">
-		<sequential>
-			<property file="release.${user.name}.properties" />
-			<property file="release.${env.COMPUTERNAME}.properties" />
-			<property file="release.${env.HOST}.properties" />
-			<property file="release.${env.HOSTNAME}.properties" />
-			<property file="release.properties" />
-
-			<property location="${sdk.dir}/build.${env.COMPUTERNAME}.properties" name="sdk.properties.file" />
-
-			<delete file="${sdk.properties.file}" />
-
-			<echoproperties destfile="${sdk.properties.file}">
-				<propertyset>
-					<propertyref name="app.server.parent.dir" />
-					<propertyref name="app.server.type" />
-					<propertyref name="junit.java.unit.gc" />
-					<propertyref name="junit.java.unit.gc.logging" />
-					<propertyref name="junit.test.excludes" />
-					<propertyref name="liferay.home" />
-					<propertyref name="lp.version" />
-					<propertyref name="sass.compiler.class.name" />
-					<propertyref name="snapshot.check.enabled" />
-					<propertyref name="upgrade.table.dir" />
-					<propertyref name="-baselinerepo" />
-					<propertyref name="-metatype" />
-					<propertyref name="-plugin" />
-					<propertyref name="-releaserepo" />
-					<propertyref prefix="ivy.pom." />
-					<propertyref prefix="microsoft.translator." />
-					<propertyref prefix="sonatype." />
-					<propertyref regex="^\s*app\.server\.(?:jboss|tcserver|tomcat|weblogic|websphere|wildfly).*\.dir" />
-				</propertyset>
-			</echoproperties>
-
-			<propertyfile file="${sdk.properties.file}">
-				<entry key="ivy.repository.liferay.private.password" value="${build.repository.private.password}" />
-				<entry key="ivy.repository.liferay.private.url" value="${build.repository.private.url}" />
-				<entry key="ivy.repository.liferay.private.username" value="${build.repository.private.username}" />
-				<entry key="lp.portal.project.dir" value="${project.dir}" />
-				<entry key="module.framework.base.dir" value="${liferay.home}/osgi" />
-			</propertyfile>
-
-			<replaceregexp
-				file="${sdk.properties.file}"
-				flags="g"
-				match="\\([\:\=\!\\])"
-				replace="\1"
-			/>
-
-			<copy
-				file="${sdk.properties.file}"
-				tofile="${sdk.dir}/build.${env.HOST}.properties"
-			/>
-			<copy
-				file="${sdk.properties.file}"
-				tofile="${sdk.dir}/build.${env.HOSTNAME}.properties"
 			/>
 		</sequential>
 	</macrodef>
@@ -2135,8 +2446,8 @@ rerun your task.
 			<isset property="class.names" />
 			<then>
 				<taskdef
-					classname="com.liferay.util.ant.GetFileSetTask"
-					classpath="${project.dir}/util-java/util-java.jar"
+					classname="com.liferay.ant.get.file.set.GetFileSetTask"
+					classpathref="project.classpath"
 					name="get-file-set"
 				/>
 
@@ -2219,6 +2530,28 @@ rerun your task.
 		</if>
 	</target>
 
+	<target name="gradle-execute-modules">
+		<local name="test.task.name" />
+
+		<antelope:stringutil property="test.task.name" string="${test.task}">
+			<antelope:replace regex="\:" replacement="." />
+		</antelope:stringutil>
+
+		<trycatch property="exception.message">
+			<try>
+				<lstopwatch action="start" name="test.execution.duration${test.task.name}" />
+
+				<gradle-execute dir="${dir}" gradlejvmargs="${gradle.jvm.args}" task="${test.task}" test.name="${test.name}" />
+			</try>
+			<catch>
+				<fail>${exception.message}</fail>
+			</catch>
+			<finally>
+				<lstopwatch action="total" name="test.execution.duration${test.task.name}" />
+			</finally>
+		</trycatch>
+	</target>
+
 	<target name="print-properties">
 		<echoproperties />
 	</target>
@@ -2295,15 +2628,55 @@ rerun your task.
 	</target>
 
 	<target name="run-cpd">
-		<ant antfile="build-common.xml" dir="${sdk.dir}" inheritRefs="true" target="run-cpd">
-			<property name="cpd.basedir" value="${basedir}" />
-		</ant>
+		<path id="pmd.classpath">
+			<fileset
+				dir="${sdk.dir}/dependencies/net.sourceforge.pmd/lib"
+				includes="*.jar"
+			/>
+		</path>
+
+		<taskdef
+			classname="net.sourceforge.pmd.cpd.CPDTask"
+			classpathref="pmd.classpath"
+			name="cpd"
+		/>
+
+		<mkdir dir="${basedir}/pmd-reports" />
+
+		<cpd encoding="UTF-8" format="${pmd.output.type}" minimumTokenCount="${pmd.cpd.minimun.token.count}" outputFile="${basedir}/pmd-reports/cpd.${pmd.output.type}">
+			<fileset
+				dir="${basedir}"
+				includes="**/*.java"
+			/>
+		</cpd>
 	</target>
 
 	<target name="run-pmd">
-		<ant antfile="build-common.xml" dir="${sdk.dir}" inheritRefs="true" target="run-pmd">
-			<property name="pmd.basedir" value="${basedir}" />
-		</ant>
+		<path id="pmd.classpath">
+			<fileset
+				dir="${sdk.dir}/dependencies/net.sourceforge.pmd/lib"
+				includes="*.jar"
+			/>
+		</path>
+
+		<taskdef
+			classname="net.sourceforge.pmd.ant.PMDTask"
+			classpathref="pmd.classpath"
+			name="pmd"
+		/>
+
+		<mkdir dir="${basedir}/pmd-reports" />
+
+		<pmd shortFilenames="true" threads="${pmd.threads}">
+			<fileset
+				dir="${basedir}"
+				excludes="${pmd.java.excludes}"
+				includes="${pmd.java.includes}"
+			/>
+			<formatter toConsole="${pmd.output.console}" toFile="${basedir}/pmd-reports/pmd-report.${pmd.output.type}" type="${pmd.output.type}" />
+			<ruleset>${pmd.java.ruleset}</ruleset>
+			<sourceLanguage name="java" version="${ant.build.javac.source}" />
+		</pmd>
 	</target>
 
 	<target if="setproxy.proxy.host" name="setproxy">
@@ -2590,9 +2963,5 @@ rerun your task.
 
 	<target name="update-gradle-properties">
 		<update-gradle-properties />
-	</target>
-
-	<target name="update-sdk-properties">
-		<update-sdk-properties />
 	</target>
 </project>

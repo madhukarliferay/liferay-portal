@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -28,18 +19,20 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 %>
 
 <portlet:renderURL var="viewUADExportProcesses">
-	<portlet:param name="mvcRenderCommandName" value="/view_uad_export_processes" />
 	<portlet:param name="p_u_i_d" value="<%= String.valueOf(selectedUser.getUserId()) %>" />
+	<portlet:param name="mvcRenderCommandName" value="/user_associated_data/view_uad_export_processes" />
 </portlet:renderURL>
 
-<div class="container-fluid container-fluid-max-xl container-form-lg">
-	<aui:form method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "exportApplicationData();" %>'>
-		<aui:input name="redirect" type="hidden" value="<%= viewUADExportProcesses.toString() %>" />
+<clay:container-fluid
+	cssClass="container-form-lg"
+>
+	<aui:form method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "exportApplicationData();" %>'>
 		<aui:input name="p_u_i_d" type="hidden" value="<%= String.valueOf(selectedUser.getUserId()) %>" />
+		<aui:input name="redirect" type="hidden" value="<%= viewUADExportProcesses.toString() %>" />
 		<aui:input name="applicationKeys" type="hidden" />
 
-		<div class="sheet sheet-lg">
-			<div class="sheet-section">
+		<clay:sheet>
+			<clay:sheet-section>
 				<h2 class="sheet-title"><liferay-ui:message key="export-personal-data" /></h2>
 
 				<div class="sheet-text">
@@ -61,7 +54,6 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 				<clay:management-toolbar
 					disabled="<%= disableManagementBar %>"
 					itemsTotal="<%= uadApplicationExportDisplayList.size() %>"
-					namespace="<%= renderResponse.getNamespace() %>"
 					searchContainerId="uadApplicationExportDisplay"
 					selectable="<%= true %>"
 					showSearch="<%= false %>"
@@ -74,7 +66,8 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 					total="<%= uadApplicationExportDisplayList.size() %>"
 				>
 					<liferay-ui:search-container-results
-						results="<%= ListUtil.subList(uadApplicationExportDisplayList, searchContainer.getStart(), searchContainer.getEnd()) %>"
+						calculateStartAndEnd="<%= true %>"
+						results="<%= uadApplicationExportDisplayList %>"
 					/>
 
 					<liferay-ui:search-container-row
@@ -120,16 +113,16 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 						searchResultCssClass="show-quick-actions-on-hover table table-autofit"
 					/>
 				</liferay-ui:search-container>
-			</div>
+			</clay:sheet-section>
 
-			<div class="sheet-footer">
+			<clay:sheet-footer>
 				<aui:button primary="<%= true %>" type="submit" value="export" />
 
 				<aui:button href="<%= backURL %>" type="cancel" />
-			</div>
-		</div>
+			</clay:sheet-footer>
+		</clay:sheet>
 	</aui:form>
-</div>
+</clay:container-fluid>
 
 <aui:script>
 	function <portlet:namespace />exportApplicationData() {
@@ -143,7 +136,7 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 			if (applicationKeys) {
 				applicationKeys.setAttribute(
 					'value',
-					Liferay.Util.listCheckedExcept(
+					Liferay.Util.getCheckedCheckboxes(
 						form,
 						'<portlet:namespace />allRowIds',
 						'<portlet:namespace />rowIds'
@@ -153,7 +146,7 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 
 			submitForm(
 				form,
-				'<portlet:actionURL name="/export_application_data" />'
+				'<portlet:actionURL name="/user_associated_data/export_application_data" />'
 			);
 		}
 	}

@@ -1,26 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.list.service.persistence.impl;
 
 import com.liferay.asset.list.exception.NoSuchEntryUsageException;
 import com.liferay.asset.list.model.AssetListEntryUsage;
+import com.liferay.asset.list.model.AssetListEntryUsageTable;
 import com.liferay.asset.list.model.impl.AssetListEntryUsageImpl;
 import com.liferay.asset.list.model.impl.AssetListEntryUsageModelImpl;
 import com.liferay.asset.list.service.persistence.AssetListEntryUsagePersistence;
+import com.liferay.asset.list.service.persistence.AssetListEntryUsageUtil;
 import com.liferay.asset.list.service.persistence.impl.constants.AssetListPersistenceConstants;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.change.tracking.CTColumnResolutionType;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
@@ -35,9 +31,12 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,8 +46,13 @@ import java.io.Serializable;
 
 import java.lang.reflect.InvocationHandler;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,7 +80,7 @@ public class AssetListEntryUsagePersistenceImpl
 	extends BasePersistenceImpl<AssetListEntryUsage>
 	implements AssetListEntryUsagePersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>AssetListEntryUsageUtil</code> to access the asset list entry usage persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -168,110 +172,111 @@ public class AssetListEntryUsagePersistenceImpl
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByUuid;
+					finderArgs = new Object[] {uuid};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByUuid;
+				finderArgs = new Object[] {uuid, start, end, orderByComparator};
+			}
+
+			List<AssetListEntryUsage> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByUuid;
-				finderArgs = new Object[] {uuid};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByUuid;
-			finderArgs = new Object[] {uuid, start, end, orderByComparator};
-		}
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetListEntryUsage> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if (!uuid.equals(assetListEntryUsage.getUuid())) {
+							list = null;
 
-		if (useFinderCache) {
-			list = (List<AssetListEntryUsage>)finderCache.getResult(
-				finderPath, finderArgs, this);
-
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetListEntryUsage assetListEntryUsage : list) {
-					if (!uuid.equals(assetListEntryUsage.getUuid())) {
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(3);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_UUID_3);
+				}
+				else {
+					bindUuid = true;
+
+					sb.append(_FINDER_COLUMN_UUID_UUID_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
-
-		if (list == null) {
-			StringBundler query = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
-			}
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				list = (List<AssetListEntryUsage>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
 	}
 
 	/**
@@ -295,16 +300,16 @@ public class AssetListEntryUsagePersistenceImpl
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
@@ -349,16 +354,16 @@ public class AssetListEntryUsagePersistenceImpl
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
@@ -425,8 +430,8 @@ public class AssetListEntryUsagePersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -438,28 +443,28 @@ public class AssetListEntryUsagePersistenceImpl
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_UUID_2);
 		}
 
 		if (orderByComparator != null) {
@@ -467,72 +472,72 @@ public class AssetListEntryUsagePersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
 		if (orderByComparator != null) {
@@ -540,11 +545,11 @@ public class AssetListEntryUsagePersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						assetListEntryUsage)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetListEntryUsage> list = q.list();
+		List<AssetListEntryUsage> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -576,60 +581,64 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public int countByUuid(String uuid) {
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		FinderPath finderPath = _finderPathCountByUuid;
+			uuid = Objects.toString(uuid, "");
 
-		Object[] finderArgs = new Object[] {uuid};
+			FinderPath finderPath = _finderPathCountByUuid;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {uuid};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
 
-			boolean bindUuid = false;
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
 
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
-			}
-			else {
-				bindUuid = true;
+				boolean bindUuid = false;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
-			}
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_UUID_3);
+				}
+				else {
+					bindUuid = true;
 
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					sb.append(_FINDER_COLUMN_UUID_UUID_2);
 				}
 
-				count = (Long)q.uniqueResult();
+				String sql = sb.toString();
 
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
+				Session session = null;
 
-				throw processException(e);
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			finally {
-				closeSession(session);
-			}
+
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_UUID_UUID_2 =
@@ -639,7 +648,6 @@ public class AssetListEntryUsagePersistenceImpl
 		"(assetListEntryUsage.uuid IS NULL OR assetListEntryUsage.uuid = '')";
 
 	private FinderPath _finderPathFetchByUUID_G;
-	private FinderPath _finderPathCountByUUID_G;
 
 	/**
 	 * Returns the asset list entry usage where uuid = &#63; and groupId = &#63; or throws a <code>NoSuchEntryUsageException</code> if it could not be found.
@@ -656,23 +664,23 @@ public class AssetListEntryUsagePersistenceImpl
 		AssetListEntryUsage assetListEntryUsage = fetchByUUID_G(uuid, groupId);
 
 		if (assetListEntryUsage == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("uuid=");
-			msg.append(uuid);
+			sb.append("uuid=");
+			sb.append(uuid);
 
-			msg.append(", groupId=");
-			msg.append(groupId);
+			sb.append(", groupId=");
+			sb.append(groupId);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchEntryUsageException(msg.toString());
+			throw new NoSuchEntryUsageException(sb.toString());
 		}
 
 		return assetListEntryUsage;
@@ -702,101 +710,101 @@ public class AssetListEntryUsagePersistenceImpl
 	public AssetListEntryUsage fetchByUUID_G(
 		String uuid, long groupId, boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if (useFinderCache) {
-			finderArgs = new Object[] {uuid, groupId};
-		}
+			Object[] finderArgs = null;
 
-		Object result = null;
-
-		if (useFinderCache) {
-			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs, this);
-		}
-
-		if (result instanceof AssetListEntryUsage) {
-			AssetListEntryUsage assetListEntryUsage =
-				(AssetListEntryUsage)result;
-
-			if (!Objects.equals(uuid, assetListEntryUsage.getUuid()) ||
-				(groupId != assetListEntryUsage.getGroupId())) {
-
-				result = null;
-			}
-		}
-
-		if (result == null) {
-			StringBundler query = new StringBundler(4);
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
+			if (useFinderCache) {
+				finderArgs = new Object[] {uuid, groupId};
 			}
 
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
+			Object result = null;
 
-			String sql = query.toString();
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByUUID_G, finderArgs, this);
+			}
 
-			Session session = null;
+			if (result instanceof AssetListEntryUsage) {
+				AssetListEntryUsage assetListEntryUsage =
+					(AssetListEntryUsage)result;
 
-			try {
-				session = openSession();
+				if (!Objects.equals(uuid, assetListEntryUsage.getUuid()) ||
+					(groupId != assetListEntryUsage.getGroupId())) {
 
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					result = null;
 				}
+			}
 
-				qPos.add(groupId);
+			if (result == null) {
+				StringBundler sb = new StringBundler(4);
 
-				List<AssetListEntryUsage> list = q.list();
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
-				if (list.isEmpty()) {
-					if (useFinderCache) {
-						finderCache.putResult(
-							_finderPathFetchByUUID_G, finderArgs, list);
-					}
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_G_UUID_3);
 				}
 				else {
-					AssetListEntryUsage assetListEntryUsage = list.get(0);
+					bindUuid = true;
 
-					result = assetListEntryUsage;
-
-					cacheResult(assetListEntryUsage);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByUUID_G, finderArgs);
+					sb.append(_FINDER_COLUMN_UUID_G_UUID_2);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
 
-		if (result instanceof List<?>) {
-			return null;
-		}
-		else {
-			return (AssetListEntryUsage)result;
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(groupId);
+
+					List<AssetListEntryUsage> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByUUID_G, finderArgs, list);
+						}
+					}
+					else {
+						AssetListEntryUsage assetListEntryUsage = list.get(0);
+
+						result = assetListEntryUsage;
+
+						cacheResult(assetListEntryUsage);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (AssetListEntryUsage)result;
+			}
 		}
 	}
 
@@ -825,64 +833,13 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public int countByUUID_G(String uuid, long groupId) {
-		uuid = Objects.toString(uuid, "");
+		AssetListEntryUsage assetListEntryUsage = fetchByUUID_G(uuid, groupId);
 
-		FinderPath finderPath = _finderPathCountByUUID_G;
-
-		Object[] finderArgs = new Object[] {uuid, groupId};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_G_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_G_UUID_2);
-			}
-
-			query.append(_FINDER_COLUMN_UUID_G_GROUPID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				qPos.add(groupId);
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (assetListEntryUsage == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String _FINDER_COLUMN_UUID_G_UUID_2 =
@@ -975,118 +932,119 @@ public class AssetListEntryUsagePersistenceImpl
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean useFinderCache) {
 
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+			uuid = Objects.toString(uuid, "");
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByUuid_C;
+					finderArgs = new Object[] {uuid, companyId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByUuid_C;
+				finderArgs = new Object[] {
+					uuid, companyId, start, end, orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByUuid_C;
-				finderArgs = new Object[] {uuid, companyId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByUuid_C;
-			finderArgs = new Object[] {
-				uuid, companyId, start, end, orderByComparator
-			};
-		}
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetListEntryUsage> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if (!uuid.equals(assetListEntryUsage.getUuid()) ||
+							(companyId != assetListEntryUsage.getCompanyId())) {
 
-		if (useFinderCache) {
-			list = (List<AssetListEntryUsage>)finderCache.getResult(
-				finderPath, finderArgs, this);
+							list = null;
 
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetListEntryUsage assetListEntryUsage : list) {
-					if (!uuid.equals(assetListEntryUsage.getUuid()) ||
-						(companyId != assetListEntryUsage.getCompanyId())) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(4);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				boolean bindUuid = false;
+
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				}
+				else {
+					bindUuid = true;
+
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				}
+
+				sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(companyId);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
 		}
-
-		if (list == null) {
-			StringBundler query = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					4 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(4);
-			}
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			boolean bindUuid = false;
-
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
-			}
-			else {
-				bindUuid = true;
-
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
-			}
-
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
-				}
-
-				qPos.add(companyId);
-
-				list = (List<AssetListEntryUsage>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
 	}
 
 	/**
@@ -1111,19 +1069,19 @@ public class AssetListEntryUsagePersistenceImpl
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
@@ -1171,19 +1129,19 @@ public class AssetListEntryUsagePersistenceImpl
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
@@ -1255,8 +1213,8 @@ public class AssetListEntryUsagePersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1269,117 +1227,117 @@ public class AssetListEntryUsagePersistenceImpl
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 		}
 
-		query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						assetListEntryUsage)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetListEntryUsage> list = q.list();
+		List<AssetListEntryUsage> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1415,64 +1373,68 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public int countByUuid_C(String uuid, long companyId) {
-		uuid = Objects.toString(uuid, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		FinderPath finderPath = _finderPathCountByUuid_C;
+			uuid = Objects.toString(uuid, "");
 
-		Object[] finderArgs = new Object[] {uuid, companyId};
+			FinderPath finderPath = _finderPathCountByUuid_C;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {uuid, companyId};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
 
-			boolean bindUuid = false;
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
 
-			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
-			}
-			else {
-				bindUuid = true;
+				boolean bindUuid = false;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
-			}
+				if (uuid.isEmpty()) {
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				}
+				else {
+					bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (bindUuid) {
-					qPos.add(uuid);
+					sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 				}
 
-				qPos.add(companyId);
+				sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
-				count = (Long)q.uniqueResult();
+				String sql = sb.toString();
 
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
+				Session session = null;
 
-				throw processException(e);
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindUuid) {
+						queryPos.add(uuid);
+					}
+
+					queryPos.add(companyId);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			finally {
-				closeSession(session);
-			}
+
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_UUID_C_UUID_2 =
@@ -1484,73 +1446,67 @@ public class AssetListEntryUsagePersistenceImpl
 	private static final String _FINDER_COLUMN_UUID_C_COMPANYID_2 =
 		"assetListEntryUsage.companyId = ?";
 
-	private FinderPath _finderPathWithPaginationFindByAssetListEntryId;
-	private FinderPath _finderPathWithoutPaginationFindByAssetListEntryId;
-	private FinderPath _finderPathCountByAssetListEntryId;
+	private FinderPath _finderPathWithPaginationFindByPlid;
+	private FinderPath _finderPathWithoutPaginationFindByPlid;
+	private FinderPath _finderPathCountByPlid;
 
 	/**
-	 * Returns all the asset list entry usages where assetListEntryId = &#63;.
+	 * Returns all the asset list entry usages where plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @return the matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByAssetListEntryId(
-		long assetListEntryId) {
-
-		return findByAssetListEntryId(
-			assetListEntryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	public List<AssetListEntryUsage> findByPlid(long plid) {
+		return findByPlid(plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns a range of all the asset list entry usages where assetListEntryId = &#63;.
+	 * Returns a range of all the asset list entry usages where plid = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @return the range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByAssetListEntryId(
-		long assetListEntryId, int start, int end) {
-
-		return findByAssetListEntryId(assetListEntryId, start, end, null);
+	public List<AssetListEntryUsage> findByPlid(long plid, int start, int end) {
+		return findByPlid(plid, start, end, null);
 	}
 
 	/**
-	 * Returns an ordered range of all the asset list entry usages where assetListEntryId = &#63;.
+	 * Returns an ordered range of all the asset list entry usages where plid = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByAssetListEntryId(
-		long assetListEntryId, int start, int end,
+	public List<AssetListEntryUsage> findByPlid(
+		long plid, int start, int end,
 		OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		return findByAssetListEntryId(
-			assetListEntryId, start, end, orderByComparator, true);
+		return findByPlid(plid, start, end, orderByComparator, true);
 	}
 
 	/**
-	 * Returns an ordered range of all the asset list entry usages where assetListEntryId = &#63;.
+	 * Returns an ordered range of all the asset list entry usages where plid = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -1558,155 +1514,150 @@ public class AssetListEntryUsagePersistenceImpl
 	 * @return the ordered range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByAssetListEntryId(
-		long assetListEntryId, int start, int end,
+	public List<AssetListEntryUsage> findByPlid(
+		long plid, int start, int end,
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByPlid;
+					finderArgs = new Object[] {plid};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByPlid;
+				finderArgs = new Object[] {plid, start, end, orderByComparator};
+			}
+
+			List<AssetListEntryUsage> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByAssetListEntryId;
-				finderArgs = new Object[] {assetListEntryId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByAssetListEntryId;
-			finderArgs = new Object[] {
-				assetListEntryId, start, end, orderByComparator
-			};
-		}
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetListEntryUsage> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if (plid != assetListEntryUsage.getPlid()) {
+							list = null;
 
-		if (useFinderCache) {
-			list = (List<AssetListEntryUsage>)finderCache.getResult(
-				finderPath, finderArgs, this);
-
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetListEntryUsage assetListEntryUsage : list) {
-					if (assetListEntryId !=
-							assetListEntryUsage.getAssetListEntryId()) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			query.append(_FINDER_COLUMN_ASSETLISTENTRYID_ASSETLISTENTRYID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetListEntryId);
-
-				list = (List<AssetListEntryUsage>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(3);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_PLID_PLID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(plid);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
-	 * Returns the first asset list entry usage in the ordered set where assetListEntryId = &#63;.
+	 * Returns the first asset list entry usage in the ordered set where plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching asset list entry usage
 	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage findByAssetListEntryId_First(
-			long assetListEntryId,
-			OrderByComparator<AssetListEntryUsage> orderByComparator)
+	public AssetListEntryUsage findByPlid_First(
+			long plid, OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = fetchByAssetListEntryId_First(
-			assetListEntryId, orderByComparator);
+		AssetListEntryUsage assetListEntryUsage = fetchByPlid_First(
+			plid, orderByComparator);
 
 		if (assetListEntryUsage != null) {
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetListEntryId=");
-		msg.append(assetListEntryId);
+		sb.append("plid=");
+		sb.append(plid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
-	 * Returns the first asset list entry usage in the ordered set where assetListEntryId = &#63;.
+	 * Returns the first asset list entry usage in the ordered set where plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByAssetListEntryId_First(
-		long assetListEntryId,
-		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+	public AssetListEntryUsage fetchByPlid_First(
+		long plid, OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		List<AssetListEntryUsage> list = findByAssetListEntryId(
-			assetListEntryId, 0, 1, orderByComparator);
+		List<AssetListEntryUsage> list = findByPlid(
+			plid, 0, 1, orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -1716,58 +1667,56 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry usage in the ordered set where assetListEntryId = &#63;.
+	 * Returns the last asset list entry usage in the ordered set where plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching asset list entry usage
 	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage findByAssetListEntryId_Last(
-			long assetListEntryId,
-			OrderByComparator<AssetListEntryUsage> orderByComparator)
+	public AssetListEntryUsage findByPlid_Last(
+			long plid, OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = fetchByAssetListEntryId_Last(
-			assetListEntryId, orderByComparator);
+		AssetListEntryUsage assetListEntryUsage = fetchByPlid_Last(
+			plid, orderByComparator);
 
 		if (assetListEntryUsage != null) {
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetListEntryId=");
-		msg.append(assetListEntryId);
+		sb.append("plid=");
+		sb.append(plid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
-	 * Returns the last asset list entry usage in the ordered set where assetListEntryId = &#63;.
+	 * Returns the last asset list entry usage in the ordered set where plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByAssetListEntryId_Last(
-		long assetListEntryId,
-		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+	public AssetListEntryUsage fetchByPlid_Last(
+		long plid, OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		int count = countByAssetListEntryId(assetListEntryId);
+		int count = countByPlid(plid);
 
 		if (count == 0) {
 			return null;
 		}
 
-		List<AssetListEntryUsage> list = findByAssetListEntryId(
-			assetListEntryId, count - 1, count, orderByComparator);
+		List<AssetListEntryUsage> list = findByPlid(
+			plid, count - 1, count, orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -1777,17 +1726,17 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where assetListEntryId = &#63;.
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where plid = &#63;.
 	 *
 	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the previous, current, and next asset list entry usage
 	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
 	 */
 	@Override
-	public AssetListEntryUsage[] findByAssetListEntryId_PrevAndNext(
-			long assetListEntryUsageId, long assetListEntryId,
+	public AssetListEntryUsage[] findByPlid_PrevAndNext(
+			long assetListEntryUsageId, long plid,
 			OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
 
@@ -1801,128 +1750,125 @@ public class AssetListEntryUsagePersistenceImpl
 
 			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
 
-			array[0] = getByAssetListEntryId_PrevAndNext(
-				session, assetListEntryUsage, assetListEntryId,
-				orderByComparator, true);
+			array[0] = getByPlid_PrevAndNext(
+				session, assetListEntryUsage, plid, orderByComparator, true);
 
 			array[1] = assetListEntryUsage;
 
-			array[2] = getByAssetListEntryId_PrevAndNext(
-				session, assetListEntryUsage, assetListEntryId,
-				orderByComparator, false);
+			array[2] = getByPlid_PrevAndNext(
+				session, assetListEntryUsage, plid, orderByComparator, false);
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
 
-	protected AssetListEntryUsage getByAssetListEntryId_PrevAndNext(
-		Session session, AssetListEntryUsage assetListEntryUsage,
-		long assetListEntryId,
+	protected AssetListEntryUsage getByPlid_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage, long plid,
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
-		query.append(_FINDER_COLUMN_ASSETLISTENTRYID_ASSETLISTENTRYID_2);
+		sb.append(_FINDER_COLUMN_PLID_PLID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(assetListEntryId);
+		queryPos.add(plid);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						assetListEntryUsage)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetListEntryUsage> list = q.list();
+		List<AssetListEntryUsage> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1933,15 +1879,559 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Removes all the asset list entry usages where assetListEntryId = &#63; from the database.
+	 * Removes all the asset list entry usages where plid = &#63; from the database.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param plid the plid
 	 */
 	@Override
-	public void removeByAssetListEntryId(long assetListEntryId) {
+	public void removeByPlid(long plid) {
 		for (AssetListEntryUsage assetListEntryUsage :
-				findByAssetListEntryId(
-					assetListEntryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				findByPlid(plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+
+			remove(assetListEntryUsage);
+		}
+	}
+
+	/**
+	 * Returns the number of asset list entry usages where plid = &#63;.
+	 *
+	 * @param plid the plid
+	 * @return the number of matching asset list entry usages
+	 */
+	@Override
+	public int countByPlid(long plid) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			FinderPath finderPath = _finderPathCountByPlid;
+
+			Object[] finderArgs = new Object[] {plid};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
+
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_PLID_PLID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(plid);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_PLID_PLID_2 =
+		"assetListEntryUsage.plid = ?";
+
+	private FinderPath _finderPathWithPaginationFindByCT_P;
+	private FinderPath _finderPathWithoutPaginationFindByCT_P;
+	private FinderPath _finderPathCountByCT_P;
+
+	/**
+	 * Returns all the asset list entry usages where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @return the matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCT_P(long containerType, long plid) {
+		return findByCT_P(
+			containerType, plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry usages where containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @return the range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCT_P(
+		long containerType, long plid, int start, int end) {
+
+		return findByCT_P(containerType, plid, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCT_P(
+		long containerType, long plid, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		return findByCT_P(
+			containerType, plid, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCT_P(
+		long containerType, long plid, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByCT_P;
+					finderArgs = new Object[] {containerType, plid};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByCT_P;
+				finderArgs = new Object[] {
+					containerType, plid, start, end, orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
+
+			if (useFinderCache) {
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if ((containerType !=
+								assetListEntryUsage.getContainerType()) ||
+							(plid != assetListEntryUsage.getPlid())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						4 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(4);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_CT_P_CONTAINERTYPE_2);
+
+				sb.append(_FINDER_COLUMN_CT_P_PLID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(containerType);
+
+					queryPos.add(plid);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByCT_P_First(
+			long containerType, long plid,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByCT_P_First(
+			containerType, plid, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("containerType=");
+		sb.append(containerType);
+
+		sb.append(", plid=");
+		sb.append(plid);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByCT_P_First(
+		long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		List<AssetListEntryUsage> list = findByCT_P(
+			containerType, plid, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByCT_P_Last(
+			long containerType, long plid,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByCT_P_Last(
+			containerType, plid, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("containerType=");
+		sb.append(containerType);
+
+		sb.append(", plid=");
+		sb.append(plid);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByCT_P_Last(
+		long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		int count = countByCT_P(containerType, plid);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<AssetListEntryUsage> list = findByCT_P(
+			containerType, plid, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where containerType = &#63; and plid = &#63;.
+	 *
+	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset list entry usage
+	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
+	 */
+	@Override
+	public AssetListEntryUsage[] findByCT_P_PrevAndNext(
+			long assetListEntryUsageId, long containerType, long plid,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = findByPrimaryKey(
+			assetListEntryUsageId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
+
+			array[0] = getByCT_P_PrevAndNext(
+				session, assetListEntryUsage, containerType, plid,
+				orderByComparator, true);
+
+			array[1] = assetListEntryUsage;
+
+			array[2] = getByCT_P_PrevAndNext(
+				session, assetListEntryUsage, containerType, plid,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetListEntryUsage getByCT_P_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage,
+		long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+		sb.append(_FINDER_COLUMN_CT_P_CONTAINERTYPE_2);
+
+		sb.append(_FINDER_COLUMN_CT_P_PLID_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(containerType);
+
+		queryPos.add(plid);
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						assetListEntryUsage)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<AssetListEntryUsage> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the asset list entry usages where containerType = &#63; and plid = &#63; from the database.
+	 *
+	 * @param containerType the container type
+	 * @param plid the plid
+	 */
+	@Override
+	public void removeByCT_P(long containerType, long plid) {
+		for (AssetListEntryUsage assetListEntryUsage :
+				findByCT_P(
+					containerType, plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 					null)) {
 
 			remove(assetListEntryUsage);
@@ -1949,132 +2439,147 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the number of asset list entry usages where assetListEntryId = &#63;.
+	 * Returns the number of asset list entry usages where containerType = &#63; and plid = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param containerType the container type
+	 * @param plid the plid
 	 * @return the number of matching asset list entry usages
 	 */
 	@Override
-	public int countByAssetListEntryId(long assetListEntryId) {
-		FinderPath finderPath = _finderPathCountByAssetListEntryId;
+	public int countByCT_P(long containerType, long plid) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		Object[] finderArgs = new Object[] {assetListEntryId};
+			FinderPath finderPath = _finderPathCountByCT_P;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {containerType, plid};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(3);
 
-			query.append(_FINDER_COLUMN_ASSETLISTENTRYID_ASSETLISTENTRYID_2);
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_CT_P_CONTAINERTYPE_2);
 
-			Session session = null;
+				sb.append(_FINDER_COLUMN_CT_P_PLID_2);
 
-			try {
-				session = openSession();
+				String sql = sb.toString();
 
-				Query q = session.createQuery(sql);
+				Session session = null;
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				try {
+					session = openSession();
 
-				qPos.add(assetListEntryId);
+					Query query = session.createQuery(sql);
 
-				count = (Long)q.uniqueResult();
+					QueryPos queryPos = QueryPos.getInstance(query);
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					queryPos.add(containerType);
+
+					queryPos.add(plid);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
-	private static final String
-		_FINDER_COLUMN_ASSETLISTENTRYID_ASSETLISTENTRYID_2 =
-			"assetListEntryUsage.assetListEntryId = ?";
+	private static final String _FINDER_COLUMN_CT_P_CONTAINERTYPE_2 =
+		"assetListEntryUsage.containerType = ? AND ";
 
-	private FinderPath _finderPathWithPaginationFindByA_C;
-	private FinderPath _finderPathWithoutPaginationFindByA_C;
-	private FinderPath _finderPathCountByA_C;
+	private static final String _FINDER_COLUMN_CT_P_PLID_2 =
+		"assetListEntryUsage.plid = ?";
+
+	private FinderPath _finderPathWithPaginationFindByG_C_K;
+	private FinderPath _finderPathWithoutPaginationFindByG_C_K;
+	private FinderPath _finderPathCountByG_C_K;
 
 	/**
-	 * Returns all the asset list entry usages where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @return the matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByA_C(
-		long assetListEntryId, long classNameId) {
+	public List<AssetListEntryUsage> findByG_C_K(
+		long groupId, long classNameId, String key) {
 
-		return findByA_C(
-			assetListEntryId, classNameId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+		return findByG_C_K(
+			groupId, classNameId, key, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 			null);
 	}
 
 	/**
-	 * Returns a range of all the asset list entry usages where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns a range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @return the range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByA_C(
-		long assetListEntryId, long classNameId, int start, int end) {
+	public List<AssetListEntryUsage> findByG_C_K(
+		long groupId, long classNameId, String key, int start, int end) {
 
-		return findByA_C(assetListEntryId, classNameId, start, end, null);
+		return findByG_C_K(groupId, classNameId, key, start, end, null);
 	}
 
 	/**
-	 * Returns an ordered range of all the asset list entry usages where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns an ordered range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByA_C(
-		long assetListEntryId, long classNameId, int start, int end,
+	public List<AssetListEntryUsage> findByG_C_K(
+		long groupId, long classNameId, String key, int start, int end,
 		OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		return findByA_C(
-			assetListEntryId, classNameId, start, end, orderByComparator, true);
+		return findByG_C_K(
+			groupId, classNameId, key, start, end, orderByComparator, true);
 	}
 
 	/**
-	 * Returns an ordered range of all the asset list entry usages where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns an ordered range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
 	 * </p>
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param start the lower bound of the range of asset list entry usages
 	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2082,165 +2587,189 @@ public class AssetListEntryUsagePersistenceImpl
 	 * @return the ordered range of matching asset list entry usages
 	 */
 	@Override
-	public List<AssetListEntryUsage> findByA_C(
-		long assetListEntryId, long classNameId, int start, int end,
+	public List<AssetListEntryUsage> findByG_C_K(
+		long groupId, long classNameId, String key, int start, int end,
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			key = Objects.toString(key, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByG_C_K;
+					finderArgs = new Object[] {groupId, classNameId, key};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByG_C_K;
+				finderArgs = new Object[] {
+					groupId, classNameId, key, start, end, orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByA_C;
-				finderArgs = new Object[] {assetListEntryId, classNameId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByA_C;
-			finderArgs = new Object[] {
-				assetListEntryId, classNameId, start, end, orderByComparator
-			};
-		}
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetListEntryUsage> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if ((groupId != assetListEntryUsage.getGroupId()) ||
+							(classNameId !=
+								assetListEntryUsage.getClassNameId()) ||
+							!key.equals(assetListEntryUsage.getKey())) {
 
-		if (useFinderCache) {
-			list = (List<AssetListEntryUsage>)finderCache.getResult(
-				finderPath, finderArgs, this);
+							list = null;
 
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetListEntryUsage assetListEntryUsage : list) {
-					if ((assetListEntryId !=
-							assetListEntryUsage.getAssetListEntryId()) ||
-						(classNameId != assetListEntryUsage.getClassNameId())) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					4 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(4);
-			}
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			query.append(_FINDER_COLUMN_A_C_ASSETLISTENTRYID_2);
-
-			query.append(_FINDER_COLUMN_A_C_CLASSNAMEID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetListEntryId);
-
-				qPos.add(classNameId);
-
-				list = (List<AssetListEntryUsage>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						5 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(5);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_G_C_K_GROUPID_2);
+
+				sb.append(_FINDER_COLUMN_G_C_K_CLASSNAMEID_2);
+
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_K_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_G_C_K_KEY_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
-	 * Returns the first asset list entry usage in the ordered set where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the first asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching asset list entry usage
 	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage findByA_C_First(
-			long assetListEntryId, long classNameId,
+	public AssetListEntryUsage findByG_C_K_First(
+			long groupId, long classNameId, String key,
 			OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = fetchByA_C_First(
-			assetListEntryId, classNameId, orderByComparator);
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_K_First(
+			groupId, classNameId, key, orderByComparator);
 
 		if (assetListEntryUsage != null) {
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetListEntryId=");
-		msg.append(assetListEntryId);
+		sb.append("groupId=");
+		sb.append(groupId);
 
-		msg.append(", classNameId=");
-		msg.append(classNameId);
+		sb.append(", classNameId=");
+		sb.append(classNameId);
 
-		msg.append("}");
+		sb.append(", key=");
+		sb.append(key);
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
-	 * Returns the first asset list entry usage in the ordered set where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the first asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByA_C_First(
-		long assetListEntryId, long classNameId,
+	public AssetListEntryUsage fetchByG_C_K_First(
+		long groupId, long classNameId, String key,
 		OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		List<AssetListEntryUsage> list = findByA_C(
-			assetListEntryId, classNameId, 0, 1, orderByComparator);
+		List<AssetListEntryUsage> list = findByG_C_K(
+			groupId, classNameId, key, 0, 1, orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -2250,63 +2779,68 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry usage in the ordered set where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the last asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching asset list entry usage
 	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage findByA_C_Last(
-			long assetListEntryId, long classNameId,
+	public AssetListEntryUsage findByG_C_K_Last(
+			long groupId, long classNameId, String key,
 			OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = fetchByA_C_Last(
-			assetListEntryId, classNameId, orderByComparator);
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_K_Last(
+			groupId, classNameId, key, orderByComparator);
 
 		if (assetListEntryUsage != null) {
 			return assetListEntryUsage;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetListEntryId=");
-		msg.append(assetListEntryId);
+		sb.append("groupId=");
+		sb.append(groupId);
 
-		msg.append(", classNameId=");
-		msg.append(classNameId);
+		sb.append(", classNameId=");
+		sb.append(classNameId);
 
-		msg.append("}");
+		sb.append(", key=");
+		sb.append(key);
 
-		throw new NoSuchEntryUsageException(msg.toString());
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
 	}
 
 	/**
-	 * Returns the last asset list entry usage in the ordered set where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the last asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByA_C_Last(
-		long assetListEntryId, long classNameId,
+	public AssetListEntryUsage fetchByG_C_K_Last(
+		long groupId, long classNameId, String key,
 		OrderByComparator<AssetListEntryUsage> orderByComparator) {
 
-		int count = countByA_C(assetListEntryId, classNameId);
+		int count = countByG_C_K(groupId, classNameId, key);
 
 		if (count == 0) {
 			return null;
 		}
 
-		List<AssetListEntryUsage> list = findByA_C(
-			assetListEntryId, classNameId, count - 1, count, orderByComparator);
+		List<AssetListEntryUsage> list = findByG_C_K(
+			groupId, classNameId, key, count - 1, count, orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -2316,20 +2850,24 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
 	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the previous, current, and next asset list entry usage
 	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
 	 */
 	@Override
-	public AssetListEntryUsage[] findByA_C_PrevAndNext(
-			long assetListEntryUsageId, long assetListEntryId, long classNameId,
+	public AssetListEntryUsage[] findByG_C_K_PrevAndNext(
+			long assetListEntryUsageId, long groupId, long classNameId,
+			String key,
 			OrderByComparator<AssetListEntryUsage> orderByComparator)
 		throws NoSuchEntryUsageException {
+
+		key = Objects.toString(key, "");
 
 		AssetListEntryUsage assetListEntryUsage = findByPrimaryKey(
 			assetListEntryUsageId);
@@ -2341,132 +2879,147 @@ public class AssetListEntryUsagePersistenceImpl
 
 			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
 
-			array[0] = getByA_C_PrevAndNext(
-				session, assetListEntryUsage, assetListEntryId, classNameId,
+			array[0] = getByG_C_K_PrevAndNext(
+				session, assetListEntryUsage, groupId, classNameId, key,
 				orderByComparator, true);
 
 			array[1] = assetListEntryUsage;
 
-			array[2] = getByA_C_PrevAndNext(
-				session, assetListEntryUsage, assetListEntryId, classNameId,
+			array[2] = getByG_C_K_PrevAndNext(
+				session, assetListEntryUsage, groupId, classNameId, key,
 				orderByComparator, false);
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
 
-	protected AssetListEntryUsage getByA_C_PrevAndNext(
-		Session session, AssetListEntryUsage assetListEntryUsage,
-		long assetListEntryId, long classNameId,
+	protected AssetListEntryUsage getByG_C_K_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage, long groupId,
+		long classNameId, String key,
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
+			sb = new StringBundler(
+				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
 
-		query.append(_FINDER_COLUMN_A_C_ASSETLISTENTRYID_2);
+		sb.append(_FINDER_COLUMN_G_C_K_GROUPID_2);
 
-		query.append(_FINDER_COLUMN_A_C_CLASSNAMEID_2);
+		sb.append(_FINDER_COLUMN_G_C_K_CLASSNAMEID_2);
+
+		boolean bindKey = false;
+
+		if (key.isEmpty()) {
+			sb.append(_FINDER_COLUMN_G_C_K_KEY_3);
+		}
+		else {
+			bindKey = true;
+
+			sb.append(_FINDER_COLUMN_G_C_K_KEY_2);
+		}
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(assetListEntryId);
+		queryPos.add(groupId);
 
-		qPos.add(classNameId);
+		queryPos.add(classNameId);
+
+		if (bindKey) {
+			queryPos.add(key);
+		}
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						assetListEntryUsage)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetListEntryUsage> list = q.list();
+		List<AssetListEntryUsage> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2477,16 +3030,17 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Removes all the asset list entry usages where assetListEntryId = &#63; and classNameId = &#63; from the database.
+	 * Removes all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; from the database.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 */
 	@Override
-	public void removeByA_C(long assetListEntryId, long classNameId) {
+	public void removeByG_C_K(long groupId, long classNameId, String key) {
 		for (AssetListEntryUsage assetListEntryUsage :
-				findByA_C(
-					assetListEntryId, classNameId, QueryUtil.ALL_POS,
+				findByG_C_K(
+					groupId, classNameId, key, QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS, null)) {
 
 			remove(assetListEntryUsage);
@@ -2494,362 +3048,2367 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	/**
-	 * Returns the number of asset list entry usages where assetListEntryId = &#63; and classNameId = &#63;.
+	 * Returns the number of asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
-	 * @param assetListEntryId the asset list entry ID
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
+	 * @param key the key
 	 * @return the number of matching asset list entry usages
 	 */
 	@Override
-	public int countByA_C(long assetListEntryId, long classNameId) {
-		FinderPath finderPath = _finderPathCountByA_C;
+	public int countByG_C_K(long groupId, long classNameId, String key) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		Object[] finderArgs = new Object[] {assetListEntryId, classNameId};
+			key = Objects.toString(key, "");
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			FinderPath finderPath = _finderPathCountByG_C_K;
 
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			Object[] finderArgs = new Object[] {groupId, classNameId, key};
 
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_FINDER_COLUMN_A_C_ASSETLISTENTRYID_2);
+			if (count == null) {
+				StringBundler sb = new StringBundler(4);
 
-			query.append(_FINDER_COLUMN_A_C_CLASSNAMEID_2);
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_G_C_K_GROUPID_2);
 
-			Session session = null;
+				sb.append(_FINDER_COLUMN_G_C_K_CLASSNAMEID_2);
 
-			try {
-				session = openSession();
+				boolean bindKey = false;
 
-				Query q = session.createQuery(sql);
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_K_KEY_3);
+				}
+				else {
+					bindKey = true;
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					sb.append(_FINDER_COLUMN_G_C_K_KEY_2);
+				}
 
-				qPos.add(assetListEntryId);
+				String sql = sb.toString();
 
-				qPos.add(classNameId);
+				Session session = null;
 
-				count = (Long)q.uniqueResult();
+				try {
+					session = openSession();
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_G_C_K_GROUPID_2 =
+		"assetListEntryUsage.groupId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_CLASSNAMEID_2 =
+		"assetListEntryUsage.classNameId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_KEY_2 =
+		"assetListEntryUsage.key = ?";
+
+	private static final String _FINDER_COLUMN_G_C_K_KEY_3 =
+		"(assetListEntryUsage.key IS NULL OR assetListEntryUsage.key = '')";
+
+	private FinderPath _finderPathWithPaginationFindByC_C_K;
+	private FinderPath _finderPathWithoutPaginationFindByC_C_K;
+	private FinderPath _finderPathCountByC_C_K;
+
+	/**
+	 * Returns all the asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @return the matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByC_C_K(
+		long companyId, long classNameId, String key) {
+
+		return findByC_C_K(
+			companyId, classNameId, key, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			null);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @return the range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByC_C_K(
+		long companyId, long classNameId, String key, int start, int end) {
+
+		return findByC_C_K(companyId, classNameId, key, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByC_C_K(
+		long companyId, long classNameId, String key, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		return findByC_C_K(
+			companyId, classNameId, key, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByC_C_K(
+		long companyId, long classNameId, String key, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			key = Objects.toString(key, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_C_K;
+					finderArgs = new Object[] {companyId, classNameId, key};
+				}
 			}
-			finally {
-				closeSession(session);
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_C_K;
+				finderArgs = new Object[] {
+					companyId, classNameId, key, start, end, orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
+
+			if (useFinderCache) {
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if ((companyId != assetListEntryUsage.getCompanyId()) ||
+							(classNameId !=
+								assetListEntryUsage.getClassNameId()) ||
+							!key.equals(assetListEntryUsage.getKey())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						5 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(5);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_C_K_COMPANYID_2);
+
+				sb.append(_FINDER_COLUMN_C_C_K_CLASSNAMEID_2);
+
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_C_C_K_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_C_C_K_KEY_2);
+				}
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(companyId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByC_C_K_First(
+			long companyId, long classNameId, String key,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByC_C_K_First(
+			companyId, classNameId, key, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("companyId=");
+		sb.append(companyId);
+
+		sb.append(", classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", key=");
+		sb.append(key);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByC_C_K_First(
+		long companyId, long classNameId, String key,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		List<AssetListEntryUsage> list = findByC_C_K(
+			companyId, classNameId, key, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByC_C_K_Last(
+			long companyId, long classNameId, String key,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByC_C_K_Last(
+			companyId, classNameId, key, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("companyId=");
+		sb.append(companyId);
+
+		sb.append(", classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", key=");
+		sb.append(key);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByC_C_K_Last(
+		long companyId, long classNameId, String key,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		int count = countByC_C_K(companyId, classNameId, key);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<AssetListEntryUsage> list = findByC_C_K(
+			companyId, classNameId, key, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where companyId = &#63; and classNameId = &#63; and key = &#63;.
+	 *
+	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset list entry usage
+	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
+	 */
+	@Override
+	public AssetListEntryUsage[] findByC_C_K_PrevAndNext(
+			long assetListEntryUsageId, long companyId, long classNameId,
+			String key,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		key = Objects.toString(key, "");
+
+		AssetListEntryUsage assetListEntryUsage = findByPrimaryKey(
+			assetListEntryUsageId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
+
+			array[0] = getByC_C_K_PrevAndNext(
+				session, assetListEntryUsage, companyId, classNameId, key,
+				orderByComparator, true);
+
+			array[1] = assetListEntryUsage;
+
+			array[2] = getByC_C_K_PrevAndNext(
+				session, assetListEntryUsage, companyId, classNameId, key,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetListEntryUsage getByC_C_K_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage,
+		long companyId, long classNameId, String key,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
+
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_C_K_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_C_K_CLASSNAMEID_2);
+
+		boolean bindKey = false;
+
+		if (key.isEmpty()) {
+			sb.append(_FINDER_COLUMN_C_C_K_KEY_3);
+		}
+		else {
+			bindKey = true;
+
+			sb.append(_FINDER_COLUMN_C_C_K_KEY_2);
+		}
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(companyId);
+
+		queryPos.add(classNameId);
+
+		if (bindKey) {
+			queryPos.add(key);
+		}
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						assetListEntryUsage)) {
+
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		return count.intValue();
+		List<AssetListEntryUsage> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
 	}
 
-	private static final String _FINDER_COLUMN_A_C_ASSETLISTENTRYID_2 =
-		"assetListEntryUsage.assetListEntryId = ? AND ";
+	/**
+	 * Removes all the asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 */
+	@Override
+	public void removeByC_C_K(long companyId, long classNameId, String key) {
+		for (AssetListEntryUsage assetListEntryUsage :
+				findByC_C_K(
+					companyId, classNameId, key, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
 
-	private static final String _FINDER_COLUMN_A_C_CLASSNAMEID_2 =
-		"assetListEntryUsage.classNameId = ?";
-
-	private FinderPath _finderPathFetchByC_C_P;
-	private FinderPath _finderPathCountByC_C_P;
+			remove(assetListEntryUsage);
+		}
+	}
 
 	/**
-	 * Returns the asset list entry usage where classNameId = &#63; and classPK = &#63; and portletId = &#63; or throws a <code>NoSuchEntryUsageException</code> if it could not be found.
+	 * Returns the number of asset list entry usages where companyId = &#63; and classNameId = &#63; and key = &#63;.
 	 *
+	 * @param companyId the company ID
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param portletId the portlet ID
+	 * @param key the key
+	 * @return the number of matching asset list entry usages
+	 */
+	@Override
+	public int countByC_C_K(long companyId, long classNameId, String key) {
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			key = Objects.toString(key, "");
+
+			FinderPath finderPath = _finderPathCountByC_C_K;
+
+			Object[] finderArgs = new Object[] {companyId, classNameId, key};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(4);
+
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_C_K_COMPANYID_2);
+
+				sb.append(_FINDER_COLUMN_C_C_K_CLASSNAMEID_2);
+
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_C_C_K_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_C_C_K_KEY_2);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(companyId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_C_C_K_COMPANYID_2 =
+		"assetListEntryUsage.companyId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_C_K_CLASSNAMEID_2 =
+		"assetListEntryUsage.classNameId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_C_K_KEY_2 =
+		"assetListEntryUsage.key = ?";
+
+	private static final String _FINDER_COLUMN_C_C_K_KEY_3 =
+		"(assetListEntryUsage.key IS NULL OR assetListEntryUsage.key = '')";
+
+	private FinderPath _finderPathWithPaginationFindByCK_CT_P;
+	private FinderPath _finderPathWithoutPaginationFindByCK_CT_P;
+	private FinderPath _finderPathCountByCK_CT_P;
+
+	/**
+	 * Returns all the asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @return the matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCK_CT_P(
+		String containerKey, long containerType, long plid) {
+
+		return findByCK_CT_P(
+			containerKey, containerType, plid, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @return the range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCK_CT_P(
+		String containerKey, long containerType, long plid, int start,
+		int end) {
+
+		return findByCK_CT_P(
+			containerKey, containerType, plid, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCK_CT_P(
+		String containerKey, long containerType, long plid, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		return findByCK_CT_P(
+			containerKey, containerType, plid, start, end, orderByComparator,
+			true);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByCK_CT_P(
+		String containerKey, long containerType, long plid, int start, int end,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			containerKey = Objects.toString(containerKey, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByCK_CT_P;
+					finderArgs = new Object[] {
+						containerKey, containerType, plid
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByCK_CT_P;
+				finderArgs = new Object[] {
+					containerKey, containerType, plid, start, end,
+					orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
+
+			if (useFinderCache) {
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if (!containerKey.equals(
+								assetListEntryUsage.getContainerKey()) ||
+							(containerType !=
+								assetListEntryUsage.getContainerType()) ||
+							(plid != assetListEntryUsage.getPlid())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						5 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(5);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				boolean bindContainerKey = false;
+
+				if (containerKey.isEmpty()) {
+					sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_3);
+				}
+				else {
+					bindContainerKey = true;
+
+					sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_2);
+				}
+
+				sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERTYPE_2);
+
+				sb.append(_FINDER_COLUMN_CK_CT_P_PLID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindContainerKey) {
+						queryPos.add(containerKey);
+					}
+
+					queryPos.add(containerType);
+
+					queryPos.add(plid);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByCK_CT_P_First(
+			String containerKey, long containerType, long plid,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByCK_CT_P_First(
+			containerKey, containerType, plid, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("containerKey=");
+		sb.append(containerKey);
+
+		sb.append(", containerType=");
+		sb.append(containerType);
+
+		sb.append(", plid=");
+		sb.append(plid);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByCK_CT_P_First(
+		String containerKey, long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		List<AssetListEntryUsage> list = findByCK_CT_P(
+			containerKey, containerType, plid, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByCK_CT_P_Last(
+			String containerKey, long containerType, long plid,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByCK_CT_P_Last(
+			containerKey, containerType, plid, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("containerKey=");
+		sb.append(containerKey);
+
+		sb.append(", containerType=");
+		sb.append(containerType);
+
+		sb.append(", plid=");
+		sb.append(plid);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByCK_CT_P_Last(
+		String containerKey, long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		int count = countByCK_CT_P(containerKey, containerType, plid);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<AssetListEntryUsage> list = findByCK_CT_P(
+			containerKey, containerType, plid, count - 1, count,
+			orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset list entry usage
+	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
+	 */
+	@Override
+	public AssetListEntryUsage[] findByCK_CT_P_PrevAndNext(
+			long assetListEntryUsageId, String containerKey, long containerType,
+			long plid, OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		containerKey = Objects.toString(containerKey, "");
+
+		AssetListEntryUsage assetListEntryUsage = findByPrimaryKey(
+			assetListEntryUsageId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
+
+			array[0] = getByCK_CT_P_PrevAndNext(
+				session, assetListEntryUsage, containerKey, containerType, plid,
+				orderByComparator, true);
+
+			array[1] = assetListEntryUsage;
+
+			array[2] = getByCK_CT_P_PrevAndNext(
+				session, assetListEntryUsage, containerKey, containerType, plid,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetListEntryUsage getByCK_CT_P_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage,
+		String containerKey, long containerType, long plid,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
+
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+		boolean bindContainerKey = false;
+
+		if (containerKey.isEmpty()) {
+			sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_3);
+		}
+		else {
+			bindContainerKey = true;
+
+			sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_2);
+		}
+
+		sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERTYPE_2);
+
+		sb.append(_FINDER_COLUMN_CK_CT_P_PLID_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		if (bindContainerKey) {
+			queryPos.add(containerKey);
+		}
+
+		queryPos.add(containerType);
+
+		queryPos.add(plid);
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						assetListEntryUsage)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<AssetListEntryUsage> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63; from the database.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 */
+	@Override
+	public void removeByCK_CT_P(
+		String containerKey, long containerType, long plid) {
+
+		for (AssetListEntryUsage assetListEntryUsage :
+				findByCK_CT_P(
+					containerKey, containerType, plid, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(assetListEntryUsage);
+		}
+	}
+
+	/**
+	 * Returns the number of asset list entry usages where containerKey = &#63; and containerType = &#63; and plid = &#63;.
+	 *
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param plid the plid
+	 * @return the number of matching asset list entry usages
+	 */
+	@Override
+	public int countByCK_CT_P(
+		String containerKey, long containerType, long plid) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			containerKey = Objects.toString(containerKey, "");
+
+			FinderPath finderPath = _finderPathCountByCK_CT_P;
+
+			Object[] finderArgs = new Object[] {
+				containerKey, containerType, plid
+			};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(4);
+
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+
+				boolean bindContainerKey = false;
+
+				if (containerKey.isEmpty()) {
+					sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_3);
+				}
+				else {
+					bindContainerKey = true;
+
+					sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERKEY_2);
+				}
+
+				sb.append(_FINDER_COLUMN_CK_CT_P_CONTAINERTYPE_2);
+
+				sb.append(_FINDER_COLUMN_CK_CT_P_PLID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindContainerKey) {
+						queryPos.add(containerKey);
+					}
+
+					queryPos.add(containerType);
+
+					queryPos.add(plid);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_CK_CT_P_CONTAINERKEY_2 =
+		"assetListEntryUsage.containerKey = ? AND ";
+
+	private static final String _FINDER_COLUMN_CK_CT_P_CONTAINERKEY_3 =
+		"(assetListEntryUsage.containerKey IS NULL OR assetListEntryUsage.containerKey = '') AND ";
+
+	private static final String _FINDER_COLUMN_CK_CT_P_CONTAINERTYPE_2 =
+		"assetListEntryUsage.containerType = ? AND ";
+
+	private static final String _FINDER_COLUMN_CK_CT_P_PLID_2 =
+		"assetListEntryUsage.plid = ?";
+
+	private FinderPath _finderPathWithPaginationFindByG_C_K_T;
+	private FinderPath _finderPathWithoutPaginationFindByG_C_K_T;
+	private FinderPath _finderPathCountByG_C_K_T;
+
+	/**
+	 * Returns all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @return the matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByG_C_K_T(
+		long groupId, long classNameId, String key, int type) {
+
+		return findByG_C_K_T(
+			groupId, classNameId, key, type, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @return the range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByG_C_K_T(
+		long groupId, long classNameId, String key, int type, int start,
+		int end) {
+
+		return findByG_C_K_T(groupId, classNameId, key, type, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByG_C_K_T(
+		long groupId, long classNameId, String key, int type, int start,
+		int end, OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		return findByG_C_K_T(
+			groupId, classNameId, key, type, start, end, orderByComparator,
+			true);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AssetListEntryUsageModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param start the lower bound of the range of asset list entry usages
+	 * @param end the upper bound of the range of asset list entry usages (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching asset list entry usages
+	 */
+	@Override
+	public List<AssetListEntryUsage> findByG_C_K_T(
+		long groupId, long classNameId, String key, int type, int start,
+		int end, OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			key = Objects.toString(key, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByG_C_K_T;
+					finderArgs = new Object[] {groupId, classNameId, key, type};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByG_C_K_T;
+				finderArgs = new Object[] {
+					groupId, classNameId, key, type, start, end,
+					orderByComparator
+				};
+			}
+
+			List<AssetListEntryUsage> list = null;
+
+			if (useFinderCache) {
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetListEntryUsage assetListEntryUsage : list) {
+						if ((groupId != assetListEntryUsage.getGroupId()) ||
+							(classNameId !=
+								assetListEntryUsage.getClassNameId()) ||
+							!key.equals(assetListEntryUsage.getKey()) ||
+							(type != assetListEntryUsage.getType())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						6 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(6);
+				}
+
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_GROUPID_2);
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_CLASSNAMEID_2);
+
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_K_T_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_G_C_K_T_KEY_2);
+				}
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_TYPE_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					queryPos.add(type);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByG_C_K_T_First(
+			long groupId, long classNameId, String key, int type,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_K_T_First(
+			groupId, classNameId, key, type, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("groupId=");
+		sb.append(groupId);
+
+		sb.append(", classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", key=");
+		sb.append(key);
+
+		sb.append(", type=");
+		sb.append(type);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the first asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByG_C_K_T_First(
+		long groupId, long classNameId, String key, int type,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		List<AssetListEntryUsage> list = findByG_C_K_T(
+			groupId, classNameId, key, type, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage
+	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage findByG_C_K_T_Last(
+			long groupId, long classNameId, String key, int type,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_K_T_Last(
+			groupId, classNameId, key, type, orderByComparator);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("groupId=");
+		sb.append(groupId);
+
+		sb.append(", classNameId=");
+		sb.append(classNameId);
+
+		sb.append(", key=");
+		sb.append(key);
+
+		sb.append(", type=");
+		sb.append(type);
+
+		sb.append("}");
+
+		throw new NoSuchEntryUsageException(sb.toString());
+	}
+
+	/**
+	 * Returns the last asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByG_C_K_T_Last(
+		long groupId, long classNameId, String key, int type,
+		OrderByComparator<AssetListEntryUsage> orderByComparator) {
+
+		int count = countByG_C_K_T(groupId, classNameId, key, type);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<AssetListEntryUsage> list = findByG_C_K_T(
+			groupId, classNameId, key, type, count - 1, count,
+			orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the asset list entry usages before and after the current asset list entry usage in the ordered set where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param assetListEntryUsageId the primary key of the current asset list entry usage
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset list entry usage
+	 * @throws NoSuchEntryUsageException if a asset list entry usage with the primary key could not be found
+	 */
+	@Override
+	public AssetListEntryUsage[] findByG_C_K_T_PrevAndNext(
+			long assetListEntryUsageId, long groupId, long classNameId,
+			String key, int type,
+			OrderByComparator<AssetListEntryUsage> orderByComparator)
+		throws NoSuchEntryUsageException {
+
+		key = Objects.toString(key, "");
+
+		AssetListEntryUsage assetListEntryUsage = findByPrimaryKey(
+			assetListEntryUsageId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetListEntryUsage[] array = new AssetListEntryUsageImpl[3];
+
+			array[0] = getByG_C_K_T_PrevAndNext(
+				session, assetListEntryUsage, groupId, classNameId, key, type,
+				orderByComparator, true);
+
+			array[1] = assetListEntryUsage;
+
+			array[2] = getByG_C_K_T_PrevAndNext(
+				session, assetListEntryUsage, groupId, classNameId, key, type,
+				orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetListEntryUsage getByG_C_K_T_PrevAndNext(
+		Session session, AssetListEntryUsage assetListEntryUsage, long groupId,
+		long classNameId, String key, int type,
+		OrderByComparator<AssetListEntryUsage> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(6);
+		}
+
+		sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+		sb.append(_FINDER_COLUMN_G_C_K_T_GROUPID_2);
+
+		sb.append(_FINDER_COLUMN_G_C_K_T_CLASSNAMEID_2);
+
+		boolean bindKey = false;
+
+		if (key.isEmpty()) {
+			sb.append(_FINDER_COLUMN_G_C_K_T_KEY_3);
+		}
+		else {
+			bindKey = true;
+
+			sb.append(_FINDER_COLUMN_G_C_K_T_KEY_2);
+		}
+
+		sb.append(_FINDER_COLUMN_G_C_K_T_TYPE_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(groupId);
+
+		queryPos.add(classNameId);
+
+		if (bindKey) {
+			queryPos.add(key);
+		}
+
+		queryPos.add(type);
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						assetListEntryUsage)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<AssetListEntryUsage> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 */
+	@Override
+	public void removeByG_C_K_T(
+		long groupId, long classNameId, String key, int type) {
+
+		for (AssetListEntryUsage assetListEntryUsage :
+				findByG_C_K_T(
+					groupId, classNameId, key, type, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(assetListEntryUsage);
+		}
+	}
+
+	/**
+	 * Returns the number of asset list entry usages where groupId = &#63; and classNameId = &#63; and key = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param key the key
+	 * @param type the type
+	 * @return the number of matching asset list entry usages
+	 */
+	@Override
+	public int countByG_C_K_T(
+		long groupId, long classNameId, String key, int type) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
+
+			key = Objects.toString(key, "");
+
+			FinderPath finderPath = _finderPathCountByG_C_K_T;
+
+			Object[] finderArgs = new Object[] {
+				groupId, classNameId, key, type
+			};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(5);
+
+				sb.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_GROUPID_2);
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_CLASSNAMEID_2);
+
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_K_T_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_G_C_K_T_KEY_2);
+				}
+
+				sb.append(_FINDER_COLUMN_G_C_K_T_TYPE_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					queryPos.add(classNameId);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					queryPos.add(type);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	private static final String _FINDER_COLUMN_G_C_K_T_GROUPID_2 =
+		"assetListEntryUsage.groupId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_T_CLASSNAMEID_2 =
+		"assetListEntryUsage.classNameId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_T_KEY_2 =
+		"assetListEntryUsage.key = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_T_KEY_3 =
+		"(assetListEntryUsage.key IS NULL OR assetListEntryUsage.key = '') AND ";
+
+	private static final String _FINDER_COLUMN_G_C_K_T_TYPE_2 =
+		"assetListEntryUsage.type = ?";
+
+	private FinderPath _finderPathFetchByG_C_CK_CT_K_P;
+
+	/**
+	 * Returns the asset list entry usage where groupId = &#63; and classNameId = &#63; and containerKey = &#63; and containerType = &#63; and key = &#63; and plid = &#63; or throws a <code>NoSuchEntryUsageException</code> if it could not be found.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param key the key
+	 * @param plid the plid
 	 * @return the matching asset list entry usage
 	 * @throws NoSuchEntryUsageException if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage findByC_C_P(
-			long classNameId, long classPK, String portletId)
+	public AssetListEntryUsage findByG_C_CK_CT_K_P(
+			long groupId, long classNameId, String containerKey,
+			long containerType, String key, long plid)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = fetchByC_C_P(
-			classNameId, classPK, portletId);
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_CK_CT_K_P(
+			groupId, classNameId, containerKey, containerType, key, plid);
 
 		if (assetListEntryUsage == null) {
-			StringBundler msg = new StringBundler(8);
+			StringBundler sb = new StringBundler(14);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("classNameId=");
-			msg.append(classNameId);
+			sb.append("groupId=");
+			sb.append(groupId);
 
-			msg.append(", classPK=");
-			msg.append(classPK);
+			sb.append(", classNameId=");
+			sb.append(classNameId);
 
-			msg.append(", portletId=");
-			msg.append(portletId);
+			sb.append(", containerKey=");
+			sb.append(containerKey);
 
-			msg.append("}");
+			sb.append(", containerType=");
+			sb.append(containerType);
+
+			sb.append(", key=");
+			sb.append(key);
+
+			sb.append(", plid=");
+			sb.append(plid);
+
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchEntryUsageException(msg.toString());
+			throw new NoSuchEntryUsageException(sb.toString());
 		}
 
 		return assetListEntryUsage;
 	}
 
 	/**
-	 * Returns the asset list entry usage where classNameId = &#63; and classPK = &#63; and portletId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the asset list entry usage where groupId = &#63; and classNameId = &#63; and containerKey = &#63; and containerType = &#63; and key = &#63; and plid = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param portletId the portlet ID
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param key the key
+	 * @param plid the plid
 	 * @return the matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByC_C_P(
-		long classNameId, long classPK, String portletId) {
+	public AssetListEntryUsage fetchByG_C_CK_CT_K_P(
+		long groupId, long classNameId, String containerKey, long containerType,
+		String key, long plid) {
 
-		return fetchByC_C_P(classNameId, classPK, portletId, true);
+		return fetchByG_C_CK_CT_K_P(
+			groupId, classNameId, containerKey, containerType, key, plid, true);
 	}
 
 	/**
-	 * Returns the asset list entry usage where classNameId = &#63; and classPK = &#63; and portletId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the asset list entry usage where groupId = &#63; and classNameId = &#63; and containerKey = &#63; and containerType = &#63; and key = &#63; and plid = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param portletId the portlet ID
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param key the key
+	 * @param plid the plid
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching asset list entry usage, or <code>null</code> if a matching asset list entry usage could not be found
 	 */
 	@Override
-	public AssetListEntryUsage fetchByC_C_P(
-		long classNameId, long classPK, String portletId,
-		boolean useFinderCache) {
+	public AssetListEntryUsage fetchByG_C_CK_CT_K_P(
+		long groupId, long classNameId, String containerKey, long containerType,
+		String key, long plid, boolean useFinderCache) {
 
-		portletId = Objects.toString(portletId, "");
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		Object[] finderArgs = null;
+			containerKey = Objects.toString(containerKey, "");
+			key = Objects.toString(key, "");
 
-		if (useFinderCache) {
-			finderArgs = new Object[] {classNameId, classPK, portletId};
-		}
+			Object[] finderArgs = null;
 
-		Object result = null;
-
-		if (useFinderCache) {
-			result = finderCache.getResult(
-				_finderPathFetchByC_C_P, finderArgs, this);
-		}
-
-		if (result instanceof AssetListEntryUsage) {
-			AssetListEntryUsage assetListEntryUsage =
-				(AssetListEntryUsage)result;
-
-			if ((classNameId != assetListEntryUsage.getClassNameId()) ||
-				(classPK != assetListEntryUsage.getClassPK()) ||
-				!Objects.equals(
-					portletId, assetListEntryUsage.getPortletId())) {
-
-				result = null;
-			}
-		}
-
-		if (result == null) {
-			StringBundler query = new StringBundler(5);
-
-			query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
-
-			query.append(_FINDER_COLUMN_C_C_P_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_C_P_CLASSPK_2);
-
-			boolean bindPortletId = false;
-
-			if (portletId.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_C_P_PORTLETID_3);
-			}
-			else {
-				bindPortletId = true;
-
-				query.append(_FINDER_COLUMN_C_C_P_PORTLETID_2);
+			if (useFinderCache) {
+				finderArgs = new Object[] {
+					groupId, classNameId, containerKey, containerType, key, plid
+				};
 			}
 
-			String sql = query.toString();
+			Object result = null;
 
-			Session session = null;
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByG_C_CK_CT_K_P, finderArgs, this);
+			}
 
-			try {
-				session = openSession();
+			if (result instanceof AssetListEntryUsage) {
+				AssetListEntryUsage assetListEntryUsage =
+					(AssetListEntryUsage)result;
 
-				Query q = session.createQuery(sql);
+				if ((groupId != assetListEntryUsage.getGroupId()) ||
+					(classNameId != assetListEntryUsage.getClassNameId()) ||
+					!Objects.equals(
+						containerKey, assetListEntryUsage.getContainerKey()) ||
+					(containerType != assetListEntryUsage.getContainerType()) ||
+					!Objects.equals(key, assetListEntryUsage.getKey()) ||
+					(plid != assetListEntryUsage.getPlid())) {
 
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(classPK);
-
-				if (bindPortletId) {
-					qPos.add(portletId);
+					result = null;
 				}
+			}
 
-				List<AssetListEntryUsage> list = q.list();
+			if (result == null) {
+				StringBundler sb = new StringBundler(8);
 
-				if (list.isEmpty()) {
-					if (useFinderCache) {
-						finderCache.putResult(
-							_finderPathFetchByC_C_P, finderArgs, list);
-					}
+				sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE_WHERE);
+
+				sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_GROUPID_2);
+
+				sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_CLASSNAMEID_2);
+
+				boolean bindContainerKey = false;
+
+				if (containerKey.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERKEY_3);
 				}
 				else {
-					AssetListEntryUsage assetListEntryUsage = list.get(0);
+					bindContainerKey = true;
 
-					result = assetListEntryUsage;
-
-					cacheResult(assetListEntryUsage);
-				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(
-						_finderPathFetchByC_C_P, finderArgs);
+					sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERKEY_2);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERTYPE_2);
 
-		if (result instanceof List<?>) {
-			return null;
-		}
-		else {
-			return (AssetListEntryUsage)result;
+				boolean bindKey = false;
+
+				if (key.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_KEY_3);
+				}
+				else {
+					bindKey = true;
+
+					sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_KEY_2);
+				}
+
+				sb.append(_FINDER_COLUMN_G_C_CK_CT_K_P_PLID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					queryPos.add(classNameId);
+
+					if (bindContainerKey) {
+						queryPos.add(containerKey);
+					}
+
+					queryPos.add(containerType);
+
+					if (bindKey) {
+						queryPos.add(key);
+					}
+
+					queryPos.add(plid);
+
+					List<AssetListEntryUsage> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByG_C_CK_CT_K_P, finderArgs,
+								list);
+						}
+					}
+					else {
+						AssetListEntryUsage assetListEntryUsage = list.get(0);
+
+						result = assetListEntryUsage;
+
+						cacheResult(assetListEntryUsage);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (AssetListEntryUsage)result;
+			}
 		}
 	}
 
 	/**
-	 * Removes the asset list entry usage where classNameId = &#63; and classPK = &#63; and portletId = &#63; from the database.
+	 * Removes the asset list entry usage where groupId = &#63; and classNameId = &#63; and containerKey = &#63; and containerType = &#63; and key = &#63; and plid = &#63; from the database.
 	 *
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param portletId the portlet ID
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param key the key
+	 * @param plid the plid
 	 * @return the asset list entry usage that was removed
 	 */
 	@Override
-	public AssetListEntryUsage removeByC_C_P(
-			long classNameId, long classPK, String portletId)
+	public AssetListEntryUsage removeByG_C_CK_CT_K_P(
+			long groupId, long classNameId, String containerKey,
+			long containerType, String key, long plid)
 		throws NoSuchEntryUsageException {
 
-		AssetListEntryUsage assetListEntryUsage = findByC_C_P(
-			classNameId, classPK, portletId);
+		AssetListEntryUsage assetListEntryUsage = findByG_C_CK_CT_K_P(
+			groupId, classNameId, containerKey, containerType, key, plid);
 
 		return remove(assetListEntryUsage);
 	}
 
 	/**
-	 * Returns the number of asset list entry usages where classNameId = &#63; and classPK = &#63; and portletId = &#63;.
+	 * Returns the number of asset list entry usages where groupId = &#63; and classNameId = &#63; and containerKey = &#63; and containerType = &#63; and key = &#63; and plid = &#63;.
 	 *
+	 * @param groupId the group ID
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param portletId the portlet ID
+	 * @param containerKey the container key
+	 * @param containerType the container type
+	 * @param key the key
+	 * @param plid the plid
 	 * @return the number of matching asset list entry usages
 	 */
 	@Override
-	public int countByC_C_P(long classNameId, long classPK, String portletId) {
-		portletId = Objects.toString(portletId, "");
+	public int countByG_C_CK_CT_K_P(
+		long groupId, long classNameId, String containerKey, long containerType,
+		String key, long plid) {
 
-		FinderPath finderPath = _finderPathCountByC_C_P;
+		AssetListEntryUsage assetListEntryUsage = fetchByG_C_CK_CT_K_P(
+			groupId, classNameId, containerKey, containerType, key, plid);
 
-		Object[] finderArgs = new Object[] {classNameId, classPK, portletId};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(4);
-
-			query.append(_SQL_COUNT_ASSETLISTENTRYUSAGE_WHERE);
-
-			query.append(_FINDER_COLUMN_C_C_P_CLASSNAMEID_2);
-
-			query.append(_FINDER_COLUMN_C_C_P_CLASSPK_2);
-
-			boolean bindPortletId = false;
-
-			if (portletId.isEmpty()) {
-				query.append(_FINDER_COLUMN_C_C_P_PORTLETID_3);
-			}
-			else {
-				bindPortletId = true;
-
-				query.append(_FINDER_COLUMN_C_C_P_PORTLETID_2);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(classNameId);
-
-				qPos.add(classPK);
-
-				if (bindPortletId) {
-					qPos.add(portletId);
-				}
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (assetListEntryUsage == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
-	private static final String _FINDER_COLUMN_C_C_P_CLASSNAMEID_2 =
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_GROUPID_2 =
+		"assetListEntryUsage.groupId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_CLASSNAMEID_2 =
 		"assetListEntryUsage.classNameId = ? AND ";
 
-	private static final String _FINDER_COLUMN_C_C_P_CLASSPK_2 =
-		"assetListEntryUsage.classPK = ? AND ";
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERKEY_2 =
+		"assetListEntryUsage.containerKey = ? AND ";
 
-	private static final String _FINDER_COLUMN_C_C_P_PORTLETID_2 =
-		"assetListEntryUsage.portletId = ?";
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERKEY_3 =
+		"(assetListEntryUsage.containerKey IS NULL OR assetListEntryUsage.containerKey = '') AND ";
 
-	private static final String _FINDER_COLUMN_C_C_P_PORTLETID_3 =
-		"(assetListEntryUsage.portletId IS NULL OR assetListEntryUsage.portletId = '')";
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_CONTAINERTYPE_2 =
+		"assetListEntryUsage.containerType = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_KEY_2 =
+		"assetListEntryUsage.key = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_KEY_3 =
+		"(assetListEntryUsage.key IS NULL OR assetListEntryUsage.key = '') AND ";
+
+	private static final String _FINDER_COLUMN_G_C_CK_CT_K_P_PLID_2 =
+		"assetListEntryUsage.plid = ?";
 
 	public AssetListEntryUsagePersistenceImpl() {
+		Map<String, String> dbColumnNames = new HashMap<String, String>();
+
+		dbColumnNames.put("uuid", "uuid_");
+		dbColumnNames.put("key", "key_");
+		dbColumnNames.put("type", "type_");
+
+		setDBColumnNames(dbColumnNames);
+
 		setModelClass(AssetListEntryUsage.class);
 
 		setModelImplClass(AssetListEntryUsageImpl.class);
 		setModelPKClass(long.class);
 
-		Map<String, String> dbColumnNames = new HashMap<String, String>();
-
-		dbColumnNames.put("uuid", "uuid_");
-
-		setDBColumnNames(dbColumnNames);
+		setTable(AssetListEntryUsageTable.INSTANCE);
 	}
 
 	/**
@@ -2859,28 +5418,36 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public void cacheResult(AssetListEntryUsage assetListEntryUsage) {
-		entityCache.putResult(
-			entityCacheEnabled, AssetListEntryUsageImpl.class,
-			assetListEntryUsage.getPrimaryKey(), assetListEntryUsage);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					assetListEntryUsage.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathFetchByUUID_G,
-			new Object[] {
-				assetListEntryUsage.getUuid(), assetListEntryUsage.getGroupId()
-			},
-			assetListEntryUsage);
+			entityCache.putResult(
+				AssetListEntryUsageImpl.class,
+				assetListEntryUsage.getPrimaryKey(), assetListEntryUsage);
 
-		finderCache.putResult(
-			_finderPathFetchByC_C_P,
-			new Object[] {
-				assetListEntryUsage.getClassNameId(),
-				assetListEntryUsage.getClassPK(),
-				assetListEntryUsage.getPortletId()
-			},
-			assetListEntryUsage);
+			finderCache.putResult(
+				_finderPathFetchByUUID_G,
+				new Object[] {
+					assetListEntryUsage.getUuid(),
+					assetListEntryUsage.getGroupId()
+				},
+				assetListEntryUsage);
 
-		assetListEntryUsage.resetOriginalValues();
+			finderCache.putResult(
+				_finderPathFetchByG_C_CK_CT_K_P,
+				new Object[] {
+					assetListEntryUsage.getGroupId(),
+					assetListEntryUsage.getClassNameId(),
+					assetListEntryUsage.getContainerKey(),
+					assetListEntryUsage.getContainerType(),
+					assetListEntryUsage.getKey(), assetListEntryUsage.getPlid()
+				},
+				assetListEntryUsage);
+		}
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the asset list entry usages in the entity cache if it is enabled.
@@ -2889,15 +5456,25 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public void cacheResult(List<AssetListEntryUsage> assetListEntryUsages) {
-		for (AssetListEntryUsage assetListEntryUsage : assetListEntryUsages) {
-			if (entityCache.getResult(
-					entityCacheEnabled, AssetListEntryUsageImpl.class,
-					assetListEntryUsage.getPrimaryKey()) == null) {
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (assetListEntryUsages.size() >
+				 _valueObjectFinderCacheListThreshold))) {
 
-				cacheResult(assetListEntryUsage);
-			}
-			else {
-				assetListEntryUsage.resetOriginalValues();
+			return;
+		}
+
+		for (AssetListEntryUsage assetListEntryUsage : assetListEntryUsages) {
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						assetListEntryUsage.getCtCollectionId())) {
+
+				if (entityCache.getResult(
+						AssetListEntryUsageImpl.class,
+						assetListEntryUsage.getPrimaryKey()) == null) {
+
+					cacheResult(assetListEntryUsage);
+				}
 			}
 		}
 	}
@@ -2913,9 +5490,7 @@ public class AssetListEntryUsagePersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(AssetListEntryUsageImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(AssetListEntryUsageImpl.class);
 	}
 
 	/**
@@ -2928,117 +5503,53 @@ public class AssetListEntryUsagePersistenceImpl
 	@Override
 	public void clearCache(AssetListEntryUsage assetListEntryUsage) {
 		entityCache.removeResult(
-			entityCacheEnabled, AssetListEntryUsageImpl.class,
-			assetListEntryUsage.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
-		clearUniqueFindersCache(
-			(AssetListEntryUsageModelImpl)assetListEntryUsage, true);
+			AssetListEntryUsageImpl.class, assetListEntryUsage);
 	}
 
 	@Override
 	public void clearCache(List<AssetListEntryUsage> assetListEntryUsages) {
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (AssetListEntryUsage assetListEntryUsage : assetListEntryUsages) {
 			entityCache.removeResult(
-				entityCacheEnabled, AssetListEntryUsageImpl.class,
-				assetListEntryUsage.getPrimaryKey());
-
-			clearUniqueFindersCache(
-				(AssetListEntryUsageModelImpl)assetListEntryUsage, true);
+				AssetListEntryUsageImpl.class, assetListEntryUsage);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(AssetListEntryUsageImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
-			entityCache.removeResult(
-				entityCacheEnabled, AssetListEntryUsageImpl.class, primaryKey);
+			entityCache.removeResult(AssetListEntryUsageImpl.class, primaryKey);
 		}
 	}
 
 	protected void cacheUniqueFindersCache(
 		AssetListEntryUsageModelImpl assetListEntryUsageModelImpl) {
 
-		Object[] args = new Object[] {
-			assetListEntryUsageModelImpl.getUuid(),
-			assetListEntryUsageModelImpl.getGroupId()
-		};
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					assetListEntryUsageModelImpl.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathCountByUUID_G, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByUUID_G, args, assetListEntryUsageModelImpl,
-			false);
-
-		args = new Object[] {
-			assetListEntryUsageModelImpl.getClassNameId(),
-			assetListEntryUsageModelImpl.getClassPK(),
-			assetListEntryUsageModelImpl.getPortletId()
-		};
-
-		finderCache.putResult(
-			_finderPathCountByC_C_P, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByC_C_P, args, assetListEntryUsageModelImpl, false);
-	}
-
-	protected void clearUniqueFindersCache(
-		AssetListEntryUsageModelImpl assetListEntryUsageModelImpl,
-		boolean clearCurrent) {
-
-		if (clearCurrent) {
 			Object[] args = new Object[] {
 				assetListEntryUsageModelImpl.getUuid(),
 				assetListEntryUsageModelImpl.getGroupId()
 			};
 
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
+			finderCache.putResult(
+				_finderPathFetchByUUID_G, args, assetListEntryUsageModelImpl);
 
-		if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-			 _finderPathFetchByUUID_G.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				assetListEntryUsageModelImpl.getOriginalUuid(),
-				assetListEntryUsageModelImpl.getOriginalGroupId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUUID_G, args);
-			finderCache.removeResult(_finderPathFetchByUUID_G, args);
-		}
-
-		if (clearCurrent) {
-			Object[] args = new Object[] {
+			args = new Object[] {
+				assetListEntryUsageModelImpl.getGroupId(),
 				assetListEntryUsageModelImpl.getClassNameId(),
-				assetListEntryUsageModelImpl.getClassPK(),
-				assetListEntryUsageModelImpl.getPortletId()
+				assetListEntryUsageModelImpl.getContainerKey(),
+				assetListEntryUsageModelImpl.getContainerType(),
+				assetListEntryUsageModelImpl.getKey(),
+				assetListEntryUsageModelImpl.getPlid()
 			};
 
-			finderCache.removeResult(_finderPathCountByC_C_P, args);
-			finderCache.removeResult(_finderPathFetchByC_C_P, args);
-		}
-
-		if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-			 _finderPathFetchByC_C_P.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				assetListEntryUsageModelImpl.getOriginalClassNameId(),
-				assetListEntryUsageModelImpl.getOriginalClassPK(),
-				assetListEntryUsageModelImpl.getOriginalPortletId()
-			};
-
-			finderCache.removeResult(_finderPathCountByC_C_P, args);
-			finderCache.removeResult(_finderPathFetchByC_C_P, args);
+			finderCache.putResult(
+				_finderPathFetchByG_C_CK_CT_K_P, args,
+				assetListEntryUsageModelImpl);
 		}
 	}
 
@@ -3109,11 +5620,11 @@ public class AssetListEntryUsagePersistenceImpl
 
 			return remove(assetListEntryUsage);
 		}
-		catch (NoSuchEntryUsageException nsee) {
-			throw nsee;
+		catch (NoSuchEntryUsageException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3135,12 +5646,14 @@ public class AssetListEntryUsagePersistenceImpl
 					assetListEntryUsage.getPrimaryKeyObj());
 			}
 
-			if (assetListEntryUsage != null) {
+			if ((assetListEntryUsage != null) &&
+				ctPersistenceHelper.isRemove(assetListEntryUsage)) {
+
 				session.delete(assetListEntryUsage);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3188,25 +5701,25 @@ public class AssetListEntryUsagePersistenceImpl
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		Date now = new Date();
+		Date date = new Date();
 
 		if (isNew && (assetListEntryUsage.getCreateDate() == null)) {
 			if (serviceContext == null) {
-				assetListEntryUsage.setCreateDate(now);
+				assetListEntryUsage.setCreateDate(date);
 			}
 			else {
 				assetListEntryUsage.setCreateDate(
-					serviceContext.getCreateDate(now));
+					serviceContext.getCreateDate(date));
 			}
 		}
 
 		if (!assetListEntryUsageModelImpl.hasSetModifiedDate()) {
 			if (serviceContext == null) {
-				assetListEntryUsage.setModifiedDate(now);
+				assetListEntryUsage.setModifiedDate(date);
 			}
 			else {
 				assetListEntryUsage.setModifiedDate(
-					serviceContext.getModifiedDate(now));
+					serviceContext.getModifiedDate(date));
 			}
 		}
 
@@ -3215,163 +5728,36 @@ public class AssetListEntryUsagePersistenceImpl
 		try {
 			session = openSession();
 
-			if (assetListEntryUsage.isNew()) {
-				session.save(assetListEntryUsage);
+			if (ctPersistenceHelper.isInsert(assetListEntryUsage)) {
+				if (!isNew) {
+					session.evict(
+						AssetListEntryUsageImpl.class,
+						assetListEntryUsage.getPrimaryKeyObj());
+				}
 
-				assetListEntryUsage.setNew(false);
+				session.save(assetListEntryUsage);
 			}
 			else {
 				assetListEntryUsage = (AssetListEntryUsage)session.merge(
 					assetListEntryUsage);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				assetListEntryUsageModelImpl.getUuid()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid, args);
-
-			args = new Object[] {
-				assetListEntryUsageModelImpl.getUuid(),
-				assetListEntryUsageModelImpl.getCompanyId()
-			};
-
-			finderCache.removeResult(_finderPathCountByUuid_C, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByUuid_C, args);
-
-			args = new Object[] {
-				assetListEntryUsageModelImpl.getAssetListEntryId()
-			};
-
-			finderCache.removeResult(_finderPathCountByAssetListEntryId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByAssetListEntryId, args);
-
-			args = new Object[] {
-				assetListEntryUsageModelImpl.getAssetListEntryId(),
-				assetListEntryUsageModelImpl.getClassNameId()
-			};
-
-			finderCache.removeResult(_finderPathCountByA_C, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByA_C, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					assetListEntryUsageModelImpl.getOriginalUuid()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-
-				args = new Object[] {assetListEntryUsageModelImpl.getUuid()};
-
-				finderCache.removeResult(_finderPathCountByUuid, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-			}
-
-			if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					assetListEntryUsageModelImpl.getOriginalUuid(),
-					assetListEntryUsageModelImpl.getOriginalCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-
-				args = new Object[] {
-					assetListEntryUsageModelImpl.getUuid(),
-					assetListEntryUsageModelImpl.getCompanyId()
-				};
-
-				finderCache.removeResult(_finderPathCountByUuid_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-			}
-
-			if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByAssetListEntryId.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					assetListEntryUsageModelImpl.getOriginalAssetListEntryId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByAssetListEntryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetListEntryId, args);
-
-				args = new Object[] {
-					assetListEntryUsageModelImpl.getAssetListEntryId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByAssetListEntryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetListEntryId, args);
-			}
-
-			if ((assetListEntryUsageModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByA_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					assetListEntryUsageModelImpl.getOriginalAssetListEntryId(),
-					assetListEntryUsageModelImpl.getOriginalClassNameId()
-				};
-
-				finderCache.removeResult(_finderPathCountByA_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByA_C, args);
-
-				args = new Object[] {
-					assetListEntryUsageModelImpl.getAssetListEntryId(),
-					assetListEntryUsageModelImpl.getClassNameId()
-				};
-
-				finderCache.removeResult(_finderPathCountByA_C, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByA_C, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, AssetListEntryUsageImpl.class,
-			assetListEntryUsage.getPrimaryKey(), assetListEntryUsage, false);
+			AssetListEntryUsageImpl.class, assetListEntryUsageModelImpl, false,
+			true);
 
-		clearUniqueFindersCache(assetListEntryUsageModelImpl, false);
 		cacheUniqueFindersCache(assetListEntryUsageModelImpl);
+
+		if (isNew) {
+			assetListEntryUsage.setNew(false);
+		}
 
 		assetListEntryUsage.resetOriginalValues();
 
@@ -3420,12 +5806,190 @@ public class AssetListEntryUsagePersistenceImpl
 	/**
 	 * Returns the asset list entry usage with the primary key or returns <code>null</code> if it could not be found.
 	 *
+	 * @param primaryKey the primary key of the asset list entry usage
+	 * @return the asset list entry usage, or <code>null</code> if a asset list entry usage with the primary key could not be found
+	 */
+	@Override
+	public AssetListEntryUsage fetchByPrimaryKey(Serializable primaryKey) {
+		if (ctPersistenceHelper.isProductionMode(
+				AssetListEntryUsage.class, primaryKey)) {
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKey(primaryKey);
+			}
+		}
+
+		AssetListEntryUsage assetListEntryUsage =
+			(AssetListEntryUsage)entityCache.getResult(
+				AssetListEntryUsageImpl.class, primaryKey);
+
+		if (assetListEntryUsage != null) {
+			return assetListEntryUsage;
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			assetListEntryUsage = (AssetListEntryUsage)session.get(
+				AssetListEntryUsageImpl.class, primaryKey);
+
+			if (assetListEntryUsage != null) {
+				cacheResult(assetListEntryUsage);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return assetListEntryUsage;
+	}
+
+	/**
+	 * Returns the asset list entry usage with the primary key or returns <code>null</code> if it could not be found.
+	 *
 	 * @param assetListEntryUsageId the primary key of the asset list entry usage
 	 * @return the asset list entry usage, or <code>null</code> if a asset list entry usage with the primary key could not be found
 	 */
 	@Override
 	public AssetListEntryUsage fetchByPrimaryKey(long assetListEntryUsageId) {
 		return fetchByPrimaryKey((Serializable)assetListEntryUsageId);
+	}
+
+	@Override
+	public Map<Serializable, AssetListEntryUsage> fetchByPrimaryKeys(
+		Set<Serializable> primaryKeys) {
+
+		if (ctPersistenceHelper.isProductionMode(AssetListEntryUsage.class)) {
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKeys(primaryKeys);
+			}
+		}
+
+		if (primaryKeys.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		Map<Serializable, AssetListEntryUsage> map =
+			new HashMap<Serializable, AssetListEntryUsage>();
+
+		if (primaryKeys.size() == 1) {
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			Serializable primaryKey = iterator.next();
+
+			AssetListEntryUsage assetListEntryUsage = fetchByPrimaryKey(
+				primaryKey);
+
+			if (assetListEntryUsage != null) {
+				map.put(primaryKey, assetListEntryUsage);
+			}
+
+			return map;
+		}
+
+		Set<Serializable> uncachedPrimaryKeys = null;
+
+		for (Serializable primaryKey : primaryKeys) {
+			try (SafeCloseable safeCloseable =
+					ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+						AssetListEntryUsage.class, primaryKey)) {
+
+				AssetListEntryUsage assetListEntryUsage =
+					(AssetListEntryUsage)entityCache.getResult(
+						AssetListEntryUsageImpl.class, primaryKey);
+
+				if (assetListEntryUsage == null) {
+					if (uncachedPrimaryKeys == null) {
+						uncachedPrimaryKeys = new HashSet<>();
+					}
+
+					uncachedPrimaryKeys.add(primaryKey);
+				}
+				else {
+					map.put(primaryKey, assetListEntryUsage);
+				}
+			}
+		}
+
+		if (uncachedPrimaryKeys == null) {
+			return map;
+		}
+
+		if ((databaseInMaxParameters > 0) &&
+			(primaryKeys.size() > databaseInMaxParameters)) {
+
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			while (iterator.hasNext()) {
+				Set<Serializable> page = new HashSet<>();
+
+				for (int i = 0;
+					 (i < databaseInMaxParameters) && iterator.hasNext(); i++) {
+
+					page.add(iterator.next());
+				}
+
+				map.putAll(fetchByPrimaryKeys(page));
+			}
+
+			return map;
+		}
+
+		StringBundler sb = new StringBundler((primaryKeys.size() * 2) + 1);
+
+		sb.append(getSelectSQL());
+		sb.append(" WHERE ");
+		sb.append(getPKDBName());
+		sb.append(" IN (");
+
+		for (Serializable primaryKey : primaryKeys) {
+			sb.append((long)primaryKey);
+
+			sb.append(",");
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		sb.append(")");
+
+		String sql = sb.toString();
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Query query = session.createQuery(sql);
+
+			for (AssetListEntryUsage assetListEntryUsage :
+					(List<AssetListEntryUsage>)query.list()) {
+
+				map.put(
+					assetListEntryUsage.getPrimaryKeyObj(),
+					assetListEntryUsage);
+
+				cacheResult(assetListEntryUsage);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return map;
 	}
 
 	/**
@@ -3493,79 +6057,81 @@ public class AssetListEntryUsagePersistenceImpl
 		OrderByComparator<AssetListEntryUsage> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindAll;
+					finderArgs = FINDER_ARGS_EMPTY;
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindAll;
+				finderArgs = new Object[] {start, end, orderByComparator};
+			}
+
+			List<AssetListEntryUsage> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindAll;
-				finderArgs = FINDER_ARGS_EMPTY;
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindAll;
-			finderArgs = new Object[] {start, end, orderByComparator};
-		}
-
-		List<AssetListEntryUsage> list = null;
-
-		if (useFinderCache) {
-			list = (List<AssetListEntryUsage>)finderCache.getResult(
-				finderPath, finderArgs, this);
-		}
-
-		if (list == null) {
-			StringBundler query = null;
-			String sql = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					2 + (orderByComparator.getOrderByFields().length * 2));
-
-				query.append(_SQL_SELECT_ASSETLISTENTRYUSAGE);
-
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-
-				sql = query.toString();
-			}
-			else {
-				sql = _SQL_SELECT_ASSETLISTENTRYUSAGE;
-
-				sql = sql.concat(AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
+				list = (List<AssetListEntryUsage>)finderCache.getResult(
+					finderPath, finderArgs, this);
 			}
 
-			Session session = null;
+			if (list == null) {
+				StringBundler sb = null;
+				String sql = null;
 
-			try {
-				session = openSession();
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						2 + (orderByComparator.getOrderByFields().length * 2));
 
-				Query q = session.createQuery(sql);
+					sb.append(_SQL_SELECT_ASSETLISTENTRYUSAGE);
 
-				list = (List<AssetListEntryUsage>)QueryUtil.list(
-					q, getDialect(), start, end);
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+					sql = sb.toString();
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sql = _SQL_SELECT_ASSETLISTENTRYUSAGE;
+
+					sql = sql.concat(
+						AssetListEntryUsageModelImpl.ORDER_BY_JPQL);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				Session session = null;
 
-		return list;
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					list = (List<AssetListEntryUsage>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -3586,34 +6152,37 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Override
 	public int countAll() {
-		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetListEntryUsage.class)) {
 
-		if (count == null) {
-			Session session = null;
+			Long count = (Long)finderCache.getResult(
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
-			try {
-				session = openSession();
+			if (count == null) {
+				Session session = null;
 
-				Query q = session.createQuery(_SQL_COUNT_ASSETLISTENTRYUSAGE);
+				try {
+					session = openSession();
 
-				count = (Long)q.uniqueResult();
+					Query query = session.createQuery(
+						_SQL_COUNT_ASSETLISTENTRYUSAGE);
 
-				finderCache.putResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	@Override
@@ -3637,8 +6206,82 @@ public class AssetListEntryUsagePersistenceImpl
 	}
 
 	@Override
-	protected Map<String, Integer> getTableColumnsMap() {
+	public Set<String> getCTColumnNames(
+		CTColumnResolutionType ctColumnResolutionType) {
+
+		return _ctColumnNamesMap.getOrDefault(
+			ctColumnResolutionType, Collections.emptySet());
+	}
+
+	@Override
+	public List<String> getMappingTableNames() {
+		return _mappingTableNames;
+	}
+
+	@Override
+	public Map<String, Integer> getTableColumnsMap() {
 		return AssetListEntryUsageModelImpl.TABLE_COLUMNS_MAP;
+	}
+
+	@Override
+	public String getTableName() {
+		return "AssetListEntryUsage";
+	}
+
+	@Override
+	public List<String[]> getUniqueIndexColumnNames() {
+		return _uniqueIndexColumnNames;
+	}
+
+	private static final Map<CTColumnResolutionType, Set<String>>
+		_ctColumnNamesMap = new EnumMap<CTColumnResolutionType, Set<String>>(
+			CTColumnResolutionType.class);
+	private static final List<String> _mappingTableNames =
+		new ArrayList<String>();
+	private static final List<String[]> _uniqueIndexColumnNames =
+		new ArrayList<String[]>();
+
+	static {
+		Set<String> ctControlColumnNames = new HashSet<String>();
+		Set<String> ctIgnoreColumnNames = new HashSet<String>();
+		Set<String> ctMergeColumnNames = new HashSet<String>();
+		Set<String> ctStrictColumnNames = new HashSet<String>();
+
+		ctControlColumnNames.add("mvccVersion");
+		ctControlColumnNames.add("ctCollectionId");
+		ctStrictColumnNames.add("uuid_");
+		ctStrictColumnNames.add("groupId");
+		ctStrictColumnNames.add("companyId");
+		ctStrictColumnNames.add("userId");
+		ctStrictColumnNames.add("userName");
+		ctStrictColumnNames.add("createDate");
+		ctIgnoreColumnNames.add("modifiedDate");
+		ctStrictColumnNames.add("classNameId");
+		ctMergeColumnNames.add("containerKey");
+		ctMergeColumnNames.add("containerType");
+		ctMergeColumnNames.add("key_");
+		ctMergeColumnNames.add("plid");
+		ctMergeColumnNames.add("type_");
+		ctMergeColumnNames.add("lastPublishDate");
+
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.CONTROL, ctControlColumnNames);
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.IGNORE, ctIgnoreColumnNames);
+		_ctColumnNamesMap.put(CTColumnResolutionType.MERGE, ctMergeColumnNames);
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.PK,
+			Collections.singleton("assetListEntryUsageId"));
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.STRICT, ctStrictColumnNames);
+
+		_uniqueIndexColumnNames.add(new String[] {"uuid_", "groupId"});
+
+		_uniqueIndexColumnNames.add(
+			new String[] {
+				"groupId", "classNameId", "containerKey", "containerType",
+				"key_", "plid"
+			});
 	}
 
 	/**
@@ -3646,153 +6289,220 @@ public class AssetListEntryUsagePersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		AssetListEntryUsageModelImpl.setEntityCacheEnabled(entityCacheEnabled);
-		AssetListEntryUsageModelImpl.setFinderCacheEnabled(finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 			new String[] {
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_"}, true);
 
 		_finderPathWithoutPaginationFindByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
-			new String[] {String.class.getName()},
-			AssetListEntryUsageModelImpl.UUID_COLUMN_BITMASK);
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			true);
 
 		_finderPathCountByUuid = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-			new String[] {String.class.getName()});
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			false);
 
 		_finderPathFetchByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByUUID_G",
+			FINDER_CLASS_NAME_ENTITY, "fetchByUUID_G",
 			new String[] {String.class.getName(), Long.class.getName()},
-			AssetListEntryUsageModelImpl.UUID_COLUMN_BITMASK |
-			AssetListEntryUsageModelImpl.GROUPID_COLUMN_BITMASK);
-
-		_finderPathCountByUUID_G = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUUID_G",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {"uuid_", "groupId"}, true);
 
 		_finderPathWithPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 			new String[] {
 				String.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathWithoutPaginationFindByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 			new String[] {String.class.getName(), Long.class.getName()},
-			AssetListEntryUsageModelImpl.UUID_COLUMN_BITMASK |
-			AssetListEntryUsageModelImpl.COMPANYID_COLUMN_BITMASK);
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathCountByUuid_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"uuid_", "companyId"}, false);
 
-		_finderPathWithPaginationFindByAssetListEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByAssetListEntryId",
+		_finderPathWithPaginationFindByPlid = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByPlid",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"plid"}, true);
 
-		_finderPathWithoutPaginationFindByAssetListEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByAssetListEntryId",
-			new String[] {Long.class.getName()},
-			AssetListEntryUsageModelImpl.ASSETLISTENTRYID_COLUMN_BITMASK);
+		_finderPathWithoutPaginationFindByPlid = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByPlid",
+			new String[] {Long.class.getName()}, new String[] {"plid"}, true);
 
-		_finderPathCountByAssetListEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-			"countByAssetListEntryId", new String[] {Long.class.getName()});
+		_finderPathCountByPlid = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByPlid",
+			new String[] {Long.class.getName()}, new String[] {"plid"}, false);
 
-		_finderPathWithPaginationFindByA_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByA_C",
+		_finderPathWithPaginationFindByCT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCT_P",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"containerType", "plid"}, true);
 
-		_finderPathWithoutPaginationFindByA_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByA_C",
+		_finderPathWithoutPaginationFindByCT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByCT_P",
 			new String[] {Long.class.getName(), Long.class.getName()},
-			AssetListEntryUsageModelImpl.ASSETLISTENTRYID_COLUMN_BITMASK |
-			AssetListEntryUsageModelImpl.CLASSNAMEID_COLUMN_BITMASK);
+			new String[] {"containerType", "plid"}, true);
 
-		_finderPathCountByA_C = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByA_C",
-			new String[] {Long.class.getName(), Long.class.getName()});
+		_finderPathCountByCT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByCT_P",
+			new String[] {Long.class.getName(), Long.class.getName()},
+			new String[] {"containerType", "plid"}, false);
 
-		_finderPathFetchByC_C_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetListEntryUsageImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByC_C_P",
+		_finderPathWithPaginationFindByG_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_K",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"groupId", "classNameId", "key_"}, true);
+
+		_finderPathWithoutPaginationFindByG_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_C_K",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName()
 			},
-			AssetListEntryUsageModelImpl.CLASSNAMEID_COLUMN_BITMASK |
-			AssetListEntryUsageModelImpl.CLASSPK_COLUMN_BITMASK |
-			AssetListEntryUsageModelImpl.PORTLETID_COLUMN_BITMASK);
+			new String[] {"groupId", "classNameId", "key_"}, true);
 
-		_finderPathCountByC_C_P = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_P",
+		_finderPathCountByG_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_K",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName()
-			});
+			},
+			new String[] {"groupId", "classNameId", "key_"}, false);
+
+		_finderPathWithPaginationFindByC_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C_K",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"companyId", "classNameId", "key_"}, true);
+
+		_finderPathWithoutPaginationFindByC_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_C_K",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName()
+			},
+			new String[] {"companyId", "classNameId", "key_"}, true);
+
+		_finderPathCountByC_C_K = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_K",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName()
+			},
+			new String[] {"companyId", "classNameId", "key_"}, false);
+
+		_finderPathWithPaginationFindByCK_CT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCK_CT_P",
+			new String[] {
+				String.class.getName(), Long.class.getName(),
+				Long.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"containerKey", "containerType", "plid"}, true);
+
+		_finderPathWithoutPaginationFindByCK_CT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByCK_CT_P",
+			new String[] {
+				String.class.getName(), Long.class.getName(),
+				Long.class.getName()
+			},
+			new String[] {"containerKey", "containerType", "plid"}, true);
+
+		_finderPathCountByCK_CT_P = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByCK_CT_P",
+			new String[] {
+				String.class.getName(), Long.class.getName(),
+				Long.class.getName()
+			},
+			new String[] {"containerKey", "containerType", "plid"}, false);
+
+		_finderPathWithPaginationFindByG_C_K_T = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_K_T",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {"groupId", "classNameId", "key_", "type_"}, true);
+
+		_finderPathWithoutPaginationFindByG_C_K_T = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_C_K_T",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Integer.class.getName()
+			},
+			new String[] {"groupId", "classNameId", "key_", "type_"}, true);
+
+		_finderPathCountByG_C_K_T = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_K_T",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Integer.class.getName()
+			},
+			new String[] {"groupId", "classNameId", "key_", "type_"}, false);
+
+		_finderPathFetchByG_C_CK_CT_K_P = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByG_C_CK_CT_K_P",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Long.class.getName(),
+				String.class.getName(), Long.class.getName()
+			},
+			new String[] {
+				"groupId", "classNameId", "containerKey", "containerType",
+				"key_", "plid"
+			},
+			true);
+
+		AssetListEntryUsageUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		AssetListEntryUsageUtil.setPersistence(null);
+
 		entityCache.removeCache(AssetListEntryUsageImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -3801,12 +6511,6 @@ public class AssetListEntryUsagePersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.asset.list.model.AssetListEntryUsage"),
-			true);
 	}
 
 	@Override
@@ -3827,7 +6531,8 @@ public class AssetListEntryUsagePersistenceImpl
 		super.setSessionFactory(sessionFactory);
 	}
 
-	private boolean _columnBitmaskEnabled;
+	@Reference
+	protected CTPersistenceHelper ctPersistenceHelper;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -3859,15 +6564,11 @@ public class AssetListEntryUsagePersistenceImpl
 		AssetListEntryUsagePersistenceImpl.class);
 
 	private static final Set<String> _badColumnNames = SetUtil.fromArray(
-		new String[] {"uuid"});
+		new String[] {"uuid", "key", "type"});
 
-	static {
-		try {
-			Class.forName(AssetListPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.portlet;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.PortletConstants;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.ObjectValuePair;
@@ -54,9 +46,10 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
-				"User ID and instance ID are null", ipe.getMessage());
+				"User ID and instance ID are null",
+				invalidParameterException.getMessage());
 		}
 
 		// Test 2
@@ -70,9 +63,10 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
-				"User ID and instance ID are null", ipe.getMessage());
+				"User ID and instance ID are null",
+				invalidParameterException.getMessage());
 		}
 
 		// Test 3
@@ -134,9 +128,10 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
-				"User ID and instance ID contain slashes", ipe.getMessage());
+				"User ID and instance ID contain slashes",
+				invalidParameterException.getMessage());
 		}
 
 		// Test 8
@@ -153,10 +148,10 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
 				"User ID and instance ID has more than one underscore",
-				ipe.getMessage());
+				invalidParameterException.getMessage());
 		}
 
 		// Test 10
@@ -166,8 +161,10 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
-			Assert.assertEquals("User ID is not a number", ipe.getMessage());
+		catch (InvalidParameterException invalidParameterException) {
+			Assert.assertEquals(
+				"User ID is not a number",
+				invalidParameterException.getMessage());
 		}
 	}
 
@@ -315,11 +312,11 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
 				"The portlet name \"" + encodedPortletId +
 					"\" must not contain the keyword _INSTANCE_",
-				ipe.getMessage());
+				invalidParameterException.getMessage());
 		}
 
 		// Test 3
@@ -331,11 +328,11 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
 				"The portlet name \"" + encodedPortletId +
 					"\" must not contain the keyword _INSTANCE_",
-				ipe.getMessage());
+				invalidParameterException.getMessage());
 		}
 
 		// Test 4
@@ -347,11 +344,11 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
 				"The portlet name \"" + encodedPortletId +
 					"\" must not contain the keyword _USER_",
-				ipe.getMessage());
+				invalidParameterException.getMessage());
 		}
 
 		// Test 5
@@ -363,22 +360,18 @@ public class PortletIdCodecTest {
 
 			Assert.fail();
 		}
-		catch (InvalidParameterException ipe) {
+		catch (InvalidParameterException invalidParameterException) {
 			Assert.assertEquals(
 				"The portlet name \"" + encodedPortletId +
 					"\" must not contain the keyword _INSTANCE_",
-				ipe.getMessage());
+				invalidParameterException.getMessage());
 		}
 	}
 
 	private static final String _TEST_PORTLET_NAME =
 		"com_liferay_test_portlet_TestPortlet";
 
-	private static final String _TEST_PORTLET_NAME_WAR =
-		_TEST_PORTLET_NAME.concat(
-			PortletConstants.WAR_SEPARATOR
-		).concat(
-			"context"
-		);
+	private static final String _TEST_PORTLET_NAME_WAR = StringBundler.concat(
+		_TEST_PORTLET_NAME, PortletConstants.WAR_SEPARATOR, "context");
 
 }

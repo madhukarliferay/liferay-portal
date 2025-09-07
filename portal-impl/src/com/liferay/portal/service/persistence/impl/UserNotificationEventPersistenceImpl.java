@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.impl;
@@ -17,6 +8,7 @@ package com.liferay.portal.service.persistence.impl;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
+import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.Query;
@@ -27,10 +19,15 @@ import com.liferay.portal.kernel.exception.NoSuchUserNotificationEventException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
+import com.liferay.portal.kernel.model.UserNotificationEventTable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.persistence.UserNotificationEventPersistence;
+import com.liferay.portal.kernel.service.persistence.UserNotificationEventUtil;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -62,7 +59,7 @@ public class UserNotificationEventPersistenceImpl
 	extends BasePersistenceImpl<UserNotificationEvent>
 	implements UserNotificationEventPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>UserNotificationEventUtil</code> to access the user notification event persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -190,54 +187,54 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_UUID_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -245,12 +242,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -281,16 +274,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -336,16 +329,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -413,8 +406,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -426,28 +419,28 @@ public class UserNotificationEventPersistenceImpl
 		String uuid, OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_UUID_2);
 		}
 
 		if (orderByComparator != null) {
@@ -455,72 +448,72 @@ public class UserNotificationEventPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
 		if (orderByComparator != null) {
@@ -528,11 +521,11 @@ public class UserNotificationEventPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -574,44 +567,42 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_UUID_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -750,58 +741,58 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 			}
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -809,12 +800,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -846,19 +833,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -906,19 +893,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("uuid=");
-		msg.append(uuid);
+		sb.append("uuid=");
+		sb.append(uuid);
 
-		msg.append(", companyId=");
-		msg.append(companyId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -990,8 +977,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1004,117 +991,117 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 		boolean bindUuid = false;
 
 		if (uuid.isEmpty()) {
-			query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 		}
 		else {
 			bindUuid = true;
 
-			query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 		}
 
-		query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindUuid) {
-			qPos.add(uuid);
+			queryPos.add(uuid);
 		}
 
-		qPos.add(companyId);
+		queryPos.add(companyId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1160,48 +1147,46 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindUuid = false;
 
 			if (uuid.isEmpty()) {
-				query.append(_FINDER_COLUMN_UUID_C_UUID_3);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
 			}
 			else {
 				bindUuid = true;
 
-				query.append(_FINDER_COLUMN_UUID_C_UUID_2);
+				sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
 			}
 
-			query.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+			sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindUuid) {
-					qPos.add(uuid);
+					queryPos.add(uuid);
 				}
 
-				qPos.add(companyId);
+				queryPos.add(companyId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1329,43 +1314,43 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_USERID_USERID_2);
+			sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1373,12 +1358,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1409,16 +1390,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -1464,16 +1445,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -1541,8 +1522,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1554,102 +1535,102 @@ public class UserNotificationEventPersistenceImpl
 		long userId, OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_USERID_USERID_2);
+		sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1690,33 +1671,31 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_USERID_USERID_2);
+			sb.append(_FINDER_COLUMN_USERID_USERID_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1840,54 +1819,54 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					3 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(3);
+				sb = new StringBundler(3);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_TYPE_TYPE_3);
+				sb.append(_FINDER_COLUMN_TYPE_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_TYPE_TYPE_2);
+				sb.append(_FINDER_COLUMN_TYPE_TYPE_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -1895,12 +1874,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -1931,16 +1906,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("type=");
-		msg.append(type);
+		sb.append("type=");
+		sb.append(type);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -1986,16 +1961,16 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("type=");
-		msg.append(type);
+		sb.append("type=");
+		sb.append(type);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -2063,8 +2038,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2076,28 +2051,28 @@ public class UserNotificationEventPersistenceImpl
 		String type, OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
 		boolean bindType = false;
 
 		if (type.isEmpty()) {
-			query.append(_FINDER_COLUMN_TYPE_TYPE_3);
+			sb.append(_FINDER_COLUMN_TYPE_TYPE_3);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_TYPE_TYPE_2);
+			sb.append(_FINDER_COLUMN_TYPE_TYPE_2);
 		}
 
 		if (orderByComparator != null) {
@@ -2105,72 +2080,72 @@ public class UserNotificationEventPersistenceImpl
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
 		if (bindType) {
-			qPos.add(type);
+			queryPos.add(type);
 		}
 
 		if (orderByComparator != null) {
@@ -2178,11 +2153,11 @@ public class UserNotificationEventPersistenceImpl
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2224,44 +2199,42 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler sb = new StringBundler(2);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_TYPE_TYPE_3);
+				sb.append(_FINDER_COLUMN_TYPE_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_TYPE_TYPE_2);
+				sb.append(_FINDER_COLUMN_TYPE_TYPE_2);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2399,47 +2372,47 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -2447,12 +2420,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2484,19 +2453,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -2544,19 +2513,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -2626,8 +2595,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -2640,106 +2609,106 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -2783,37 +2752,35 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_DELIVERYTYPE_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -2950,47 +2917,47 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_DELIVERED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -2998,12 +2965,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3035,19 +2998,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -3095,19 +3058,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -3177,8 +3140,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3191,106 +3154,106 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_D_USERID_2);
+		sb.append(_FINDER_COLUMN_U_D_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_D_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_D_DELIVERED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -3334,37 +3297,35 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_DELIVERED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3500,47 +3461,47 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					4 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(4);
+				sb = new StringBundler(4);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -3548,12 +3509,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -3585,19 +3542,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -3645,19 +3602,19 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(6);
+		StringBundler sb = new StringBundler(6);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -3727,8 +3684,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -3741,106 +3698,106 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(4);
+			sb = new StringBundler(4);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -3884,37 +3841,35 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler sb = new StringBundler(3);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4059,51 +4014,51 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -4111,12 +4066,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4149,22 +4100,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -4214,22 +4165,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -4303,8 +4254,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -4317,110 +4268,110 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_D_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -4468,41 +4419,39 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_DELIVERED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4650,51 +4599,51 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -4702,12 +4651,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -4740,22 +4685,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -4805,22 +4750,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -4894,8 +4839,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -4908,110 +4853,110 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -5059,41 +5004,39 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5243,51 +5186,51 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_AR_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -5295,12 +5238,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5333,22 +5272,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -5398,22 +5337,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -5487,8 +5426,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -5501,110 +5440,110 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_D_AR_USERID_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -5654,41 +5593,39 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_AR_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_ACTIONREQUIRED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5834,51 +5771,51 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -5886,12 +5823,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -5924,22 +5857,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -5989,22 +5922,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -6077,8 +6010,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -6091,110 +6024,110 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_D_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_D_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -6242,41 +6175,39 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_D_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -6425,51 +6356,51 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					5 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(5);
+				sb = new StringBundler(5);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -6477,12 +6408,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -6515,22 +6442,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -6580,22 +6507,22 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(8);
+		StringBundler sb = new StringBundler(8);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -6669,8 +6596,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -6683,110 +6610,110 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(5);
+			sb = new StringBundler(5);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_AR_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_AR_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
 
-		query.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -6836,41 +6763,39 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(4);
+			StringBundler sb = new StringBundler(4);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_AR_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -6888,6 +6813,658 @@ public class UserNotificationEventPersistenceImpl
 
 	private static final String _FINDER_COLUMN_U_AR_A_ARCHIVED_2 =
 		"userNotificationEvent.archived = ?";
+
+	private FinderPath _finderPathWithPaginationFindByU_T_GteT_D;
+	private FinderPath _finderPathWithPaginationCountByU_T_GteT_D;
+
+	/**
+	 * Returns all the user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @return the matching user notification events
+	 */
+	@Override
+	public List<UserNotificationEvent> findByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered) {
+
+		return findByU_T_GteT_D(
+			userId, type, timestamp, delivered, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>UserNotificationEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param start the lower bound of the range of user notification events
+	 * @param end the upper bound of the range of user notification events (not inclusive)
+	 * @return the range of matching user notification events
+	 */
+	@Override
+	public List<UserNotificationEvent> findByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered, int start,
+		int end) {
+
+		return findByU_T_GteT_D(
+			userId, type, timestamp, delivered, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>UserNotificationEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param start the lower bound of the range of user notification events
+	 * @param end the upper bound of the range of user notification events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching user notification events
+	 */
+	@Override
+	public List<UserNotificationEvent> findByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered, int start,
+		int end, OrderByComparator<UserNotificationEvent> orderByComparator) {
+
+		return findByU_T_GteT_D(
+			userId, type, timestamp, delivered, start, end, orderByComparator,
+			true);
+	}
+
+	/**
+	 * Returns an ordered range of all the user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>UserNotificationEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param start the lower bound of the range of user notification events
+	 * @param end the upper bound of the range of user notification events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching user notification events
+	 */
+	@Override
+	public List<UserNotificationEvent> findByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered, int start,
+		int end, OrderByComparator<UserNotificationEvent> orderByComparator,
+		boolean useFinderCache) {
+
+		type = Objects.toString(type, "");
+
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
+
+		finderPath = _finderPathWithPaginationFindByU_T_GteT_D;
+		finderArgs = new Object[] {
+			userId, type, timestamp, delivered, start, end, orderByComparator
+		};
+
+		List<UserNotificationEvent> list = null;
+
+		if (useFinderCache) {
+			list = (List<UserNotificationEvent>)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
+
+			if ((list != null) && !list.isEmpty()) {
+				for (UserNotificationEvent userNotificationEvent : list) {
+					if ((userId != userNotificationEvent.getUserId()) ||
+						!type.equals(userNotificationEvent.getType()) ||
+						(timestamp > userNotificationEvent.getTimestamp()) ||
+						(delivered != userNotificationEvent.isDelivered())) {
+
+						list = null;
+
+						break;
+					}
+				}
+			}
+		}
+
+		if (list == null) {
+			StringBundler sb = null;
+
+			if (orderByComparator != null) {
+				sb = new StringBundler(
+					6 + (orderByComparator.getOrderByFields().length * 2));
+			}
+			else {
+				sb = new StringBundler(6);
+			}
+
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_USERID_2);
+
+			boolean bindType = false;
+
+			if (type.isEmpty()) {
+				sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_3);
+			}
+			else {
+				bindType = true;
+
+				sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_2);
+			}
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_TIMESTAMP_2);
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_DELIVERED_2);
+
+			if (orderByComparator != null) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+			}
+			else {
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(userId);
+
+				if (bindType) {
+					queryPos.add(type);
+				}
+
+				queryPos.add(timestamp);
+
+				queryPos.add(delivered);
+
+				list = (List<UserNotificationEvent>)QueryUtil.list(
+					query, getDialect(), start, end);
+
+				cacheResult(list);
+
+				if (useFinderCache) {
+					FinderCacheUtil.putResult(finderPath, finderArgs, list);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 * Returns the first user notification event in the ordered set where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching user notification event
+	 * @throws NoSuchUserNotificationEventException if a matching user notification event could not be found
+	 */
+	@Override
+	public UserNotificationEvent findByU_T_GteT_D_First(
+			long userId, String type, long timestamp, boolean delivered,
+			OrderByComparator<UserNotificationEvent> orderByComparator)
+		throws NoSuchUserNotificationEventException {
+
+		UserNotificationEvent userNotificationEvent = fetchByU_T_GteT_D_First(
+			userId, type, timestamp, delivered, orderByComparator);
+
+		if (userNotificationEvent != null) {
+			return userNotificationEvent;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("userId=");
+		sb.append(userId);
+
+		sb.append(", type=");
+		sb.append(type);
+
+		sb.append(", timestamp>=");
+		sb.append(timestamp);
+
+		sb.append(", delivered=");
+		sb.append(delivered);
+
+		sb.append("}");
+
+		throw new NoSuchUserNotificationEventException(sb.toString());
+	}
+
+	/**
+	 * Returns the first user notification event in the ordered set where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching user notification event, or <code>null</code> if a matching user notification event could not be found
+	 */
+	@Override
+	public UserNotificationEvent fetchByU_T_GteT_D_First(
+		long userId, String type, long timestamp, boolean delivered,
+		OrderByComparator<UserNotificationEvent> orderByComparator) {
+
+		List<UserNotificationEvent> list = findByU_T_GteT_D(
+			userId, type, timestamp, delivered, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last user notification event in the ordered set where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching user notification event
+	 * @throws NoSuchUserNotificationEventException if a matching user notification event could not be found
+	 */
+	@Override
+	public UserNotificationEvent findByU_T_GteT_D_Last(
+			long userId, String type, long timestamp, boolean delivered,
+			OrderByComparator<UserNotificationEvent> orderByComparator)
+		throws NoSuchUserNotificationEventException {
+
+		UserNotificationEvent userNotificationEvent = fetchByU_T_GteT_D_Last(
+			userId, type, timestamp, delivered, orderByComparator);
+
+		if (userNotificationEvent != null) {
+			return userNotificationEvent;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("userId=");
+		sb.append(userId);
+
+		sb.append(", type=");
+		sb.append(type);
+
+		sb.append(", timestamp>=");
+		sb.append(timestamp);
+
+		sb.append(", delivered=");
+		sb.append(delivered);
+
+		sb.append("}");
+
+		throw new NoSuchUserNotificationEventException(sb.toString());
+	}
+
+	/**
+	 * Returns the last user notification event in the ordered set where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching user notification event, or <code>null</code> if a matching user notification event could not be found
+	 */
+	@Override
+	public UserNotificationEvent fetchByU_T_GteT_D_Last(
+		long userId, String type, long timestamp, boolean delivered,
+		OrderByComparator<UserNotificationEvent> orderByComparator) {
+
+		int count = countByU_T_GteT_D(userId, type, timestamp, delivered);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<UserNotificationEvent> list = findByU_T_GteT_D(
+			userId, type, timestamp, delivered, count - 1, count,
+			orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the user notification events before and after the current user notification event in the ordered set where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userNotificationEventId the primary key of the current user notification event
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next user notification event
+	 * @throws NoSuchUserNotificationEventException if a user notification event with the primary key could not be found
+	 */
+	@Override
+	public UserNotificationEvent[] findByU_T_GteT_D_PrevAndNext(
+			long userNotificationEventId, long userId, String type,
+			long timestamp, boolean delivered,
+			OrderByComparator<UserNotificationEvent> orderByComparator)
+		throws NoSuchUserNotificationEventException {
+
+		type = Objects.toString(type, "");
+
+		UserNotificationEvent userNotificationEvent = findByPrimaryKey(
+			userNotificationEventId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			UserNotificationEvent[] array = new UserNotificationEventImpl[3];
+
+			array[0] = getByU_T_GteT_D_PrevAndNext(
+				session, userNotificationEvent, userId, type, timestamp,
+				delivered, orderByComparator, true);
+
+			array[1] = userNotificationEvent;
+
+			array[2] = getByU_T_GteT_D_PrevAndNext(
+				session, userNotificationEvent, userId, type, timestamp,
+				delivered, orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected UserNotificationEvent getByU_T_GteT_D_PrevAndNext(
+		Session session, UserNotificationEvent userNotificationEvent,
+		long userId, String type, long timestamp, boolean delivered,
+		OrderByComparator<UserNotificationEvent> orderByComparator,
+		boolean previous) {
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			sb = new StringBundler(6);
+		}
+
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+
+		sb.append(_FINDER_COLUMN_U_T_GTET_D_USERID_2);
+
+		boolean bindType = false;
+
+		if (type.isEmpty()) {
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_3);
+		}
+		else {
+			bindType = true;
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_2);
+		}
+
+		sb.append(_FINDER_COLUMN_U_T_GTET_D_TIMESTAMP_2);
+
+		sb.append(_FINDER_COLUMN_U_T_GTET_D_DELIVERED_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields =
+				orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				sb.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(WHERE_GREATER_THAN);
+					}
+					else {
+						sb.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			sb.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						sb.append(ORDER_BY_ASC);
+					}
+					else {
+						sb.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = sb.toString();
+
+		Query query = session.createQuery(sql);
+
+		query.setFirstResult(0);
+		query.setMaxResults(2);
+
+		QueryPos queryPos = QueryPos.getInstance(query);
+
+		queryPos.add(userId);
+
+		if (bindType) {
+			queryPos.add(type);
+		}
+
+		queryPos.add(timestamp);
+
+		queryPos.add(delivered);
+
+		if (orderByComparator != null) {
+			for (Object orderByConditionValue :
+					orderByComparator.getOrderByConditionValues(
+						userNotificationEvent)) {
+
+				queryPos.add(orderByConditionValue);
+			}
+		}
+
+		List<UserNotificationEvent> list = query.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 */
+	@Override
+	public void removeByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered) {
+
+		for (UserNotificationEvent userNotificationEvent :
+				findByU_T_GteT_D(
+					userId, type, timestamp, delivered, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(userNotificationEvent);
+		}
+	}
+
+	/**
+	 * Returns the number of user notification events where userId = &#63; and type = &#63; and timestamp &ge; &#63; and delivered = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @param timestamp the timestamp
+	 * @param delivered the delivered
+	 * @return the number of matching user notification events
+	 */
+	@Override
+	public int countByU_T_GteT_D(
+		long userId, String type, long timestamp, boolean delivered) {
+
+		type = Objects.toString(type, "");
+
+		FinderPath finderPath = _finderPathWithPaginationCountByU_T_GteT_D;
+
+		Object[] finderArgs = new Object[] {userId, type, timestamp, delivered};
+
+		Long count = (Long)FinderCacheUtil.getResult(
+			finderPath, finderArgs, this);
+
+		if (count == null) {
+			StringBundler sb = new StringBundler(5);
+
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_USERID_2);
+
+			boolean bindType = false;
+
+			if (type.isEmpty()) {
+				sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_3);
+			}
+			else {
+				bindType = true;
+
+				sb.append(_FINDER_COLUMN_U_T_GTET_D_TYPE_2);
+			}
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_TIMESTAMP_2);
+
+			sb.append(_FINDER_COLUMN_U_T_GTET_D_DELIVERED_2);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(userId);
+
+				if (bindType) {
+					queryPos.add(type);
+				}
+
+				queryPos.add(timestamp);
+
+				queryPos.add(delivered);
+
+				count = (Long)query.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_U_T_GTET_D_USERID_2 =
+		"userNotificationEvent.userId = ? AND ";
+
+	private static final String _FINDER_COLUMN_U_T_GTET_D_TYPE_2 =
+		"userNotificationEvent.type = ? AND ";
+
+	private static final String _FINDER_COLUMN_U_T_GTET_D_TYPE_3 =
+		"(userNotificationEvent.type IS NULL OR userNotificationEvent.type = '') AND ";
+
+	private static final String _FINDER_COLUMN_U_T_GTET_D_TIMESTAMP_2 =
+		"userNotificationEvent.timestamp >= ? AND ";
+
+	private static final String _FINDER_COLUMN_U_T_GTET_D_DELIVERED_2 =
+		"userNotificationEvent.delivered = ?";
 
 	private FinderPath _finderPathWithPaginationFindByU_T_DT_D;
 	private FinderPath _finderPathWithoutPaginationFindByU_T_DT_D;
@@ -7032,66 +7609,66 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
 			}
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -7099,12 +7676,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -7138,25 +7711,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", type=");
-		msg.append(type);
+		sb.append(", type=");
+		sb.append(type);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -7208,25 +7781,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", type=");
-		msg.append(type);
+		sb.append(", type=");
+		sb.append(type);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -7304,8 +7877,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -7318,125 +7891,125 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
 
 		boolean bindType = false;
 
 		if (type.isEmpty()) {
-			query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
 		}
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
 		if (bindType) {
-			qPos.add(type);
+			queryPos.add(type);
 		}
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -7492,56 +8065,54 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_USERID_2);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_TYPE_2);
 			}
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_DELIVERED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -7709,55 +8280,55 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -7765,12 +8336,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -7805,25 +8372,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -7878,25 +8445,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -7974,8 +8541,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -7989,114 +8556,114 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -8152,45 +8719,43 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_ACTIONREQUIRED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -8353,55 +8918,55 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -8409,12 +8974,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -8448,25 +9009,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -8518,25 +9079,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -8612,8 +9173,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -8626,114 +9187,114 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -8787,45 +9348,43 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -8990,55 +9549,55 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -9046,12 +9605,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -9086,25 +9641,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -9158,25 +9713,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -9253,8 +9808,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -9267,114 +9822,114 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
 
-		query.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -9430,45 +9985,43 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_AR_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -9632,55 +10185,55 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					6 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(6);
+				sb = new StringBundler(6);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -9688,12 +10241,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -9728,25 +10277,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -9801,25 +10350,25 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(10);
+		StringBundler sb = new StringBundler(10);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -9897,8 +10446,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -9912,114 +10461,114 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(6);
+			sb = new StringBundler(6);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
 
-		query.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -10075,45 +10624,43 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(5);
+			StringBundler sb = new StringBundler(5);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_D_AR_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -10284,70 +10831,70 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					7 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(7);
+				sb = new StringBundler(7);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
 			}
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -10355,12 +10902,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -10396,28 +10939,28 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", type=");
-		msg.append(type);
+		sb.append(", type=");
+		sb.append(type);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -10474,28 +11017,28 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", type=");
-		msg.append(type);
+		sb.append(", type=");
+		sb.append(type);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -10577,8 +11120,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -10592,129 +11135,129 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(7);
+			sb = new StringBundler(7);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
 
 		boolean bindType = false;
 
 		if (type.isEmpty()) {
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
 		}
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
 		if (bindType) {
-			qPos.add(type);
+			queryPos.add(type);
 		}
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -10774,60 +11317,58 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_USERID_2);
 
 			boolean bindType = false;
 
 			if (type.isEmpty()) {
-				query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_3);
 			}
 			else {
 				bindType = true;
 
-				query.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
+				sb.append(_FINDER_COLUMN_U_T_DT_D_A_TYPE_2);
 			}
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_T_DT_D_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
 				if (bindType) {
-					qPos.add(type);
+					queryPos.add(type);
 				}
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -11004,59 +11545,59 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					7 + (orderByComparator.getOrderByFields().length * 2));
 			}
 			else {
-				query = new StringBundler(7);
+				sb = new StringBundler(7);
 			}
 
-			query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 			}
 			else {
-				query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+				sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 			}
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -11064,12 +11605,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -11106,28 +11643,28 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -11185,28 +11722,28 @@ public class UserNotificationEventPersistenceImpl
 			return userNotificationEvent;
 		}
 
-		StringBundler msg = new StringBundler(12);
+		StringBundler sb = new StringBundler(12);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("userId=");
-		msg.append(userId);
+		sb.append("userId=");
+		sb.append(userId);
 
-		msg.append(", deliveryType=");
-		msg.append(deliveryType);
+		sb.append(", deliveryType=");
+		sb.append(deliveryType);
 
-		msg.append(", delivered=");
-		msg.append(delivered);
+		sb.append(", delivered=");
+		sb.append(delivered);
 
-		msg.append(", actionRequired=");
-		msg.append(actionRequired);
+		sb.append(", actionRequired=");
+		sb.append(actionRequired);
 
-		msg.append(", archived=");
-		msg.append(archived);
+		sb.append(", archived=");
+		sb.append(archived);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchUserNotificationEventException(msg.toString());
+		throw new NoSuchUserNotificationEventException(sb.toString());
 	}
 
 	/**
@@ -11286,8 +11823,8 @@ public class UserNotificationEventPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -11301,118 +11838,118 @@ public class UserNotificationEventPersistenceImpl
 		OrderByComparator<UserNotificationEvent> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(7);
+			sb = new StringBundler(7);
 		}
 
-		query.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
+		sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT_WHERE);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
 
-		query.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
+		sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
+			sb.append(UserNotificationEventModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(userId);
+		queryPos.add(userId);
 
-		qPos.add(deliveryType);
+		queryPos.add(deliveryType);
 
-		qPos.add(delivered);
+		queryPos.add(delivered);
 
-		qPos.add(actionRequired);
+		queryPos.add(actionRequired);
 
-		qPos.add(archived);
+		queryPos.add(archived);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						userNotificationEvent)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<UserNotificationEvent> list = q.list();
+		List<UserNotificationEvent> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -11470,49 +12007,47 @@ public class UserNotificationEventPersistenceImpl
 			finderPath, finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			query.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
+			sb.append(_SQL_COUNT_USERNOTIFICATIONEVENT_WHERE);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_USERID_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERYTYPE_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_DELIVERED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ACTIONREQUIRED_2);
 
-			query.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
+			sb.append(_FINDER_COLUMN_U_DT_D_AR_A_ARCHIVED_2);
 
-			String sql = query.toString();
+			String sql = sb.toString();
 
 			Session session = null;
 
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(query);
 
-				qPos.add(userId);
+				queryPos.add(userId);
 
-				qPos.add(deliveryType);
+				queryPos.add(deliveryType);
 
-				qPos.add(delivered);
+				queryPos.add(delivered);
 
-				qPos.add(actionRequired);
+				queryPos.add(actionRequired);
 
-				qPos.add(archived);
+				queryPos.add(archived);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -11538,19 +12073,19 @@ public class UserNotificationEventPersistenceImpl
 		"userNotificationEvent.archived = ?";
 
 	public UserNotificationEventPersistenceImpl() {
-		setModelClass(UserNotificationEvent.class);
-
-		setModelImplClass(UserNotificationEventImpl.class);
-		setModelPKClass(long.class);
-		setEntityCacheEnabled(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED);
-
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
 
 		dbColumnNames.put("uuid", "uuid_");
 		dbColumnNames.put("type", "type_");
 
 		setDBColumnNames(dbColumnNames);
+
+		setModelClass(UserNotificationEvent.class);
+
+		setModelImplClass(UserNotificationEventImpl.class);
+		setModelPKClass(long.class);
+
+		setTable(UserNotificationEventTable.INSTANCE);
 	}
 
 	/**
@@ -11561,12 +12096,11 @@ public class UserNotificationEventPersistenceImpl
 	@Override
 	public void cacheResult(UserNotificationEvent userNotificationEvent) {
 		EntityCacheUtil.putResult(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
 			UserNotificationEventImpl.class,
 			userNotificationEvent.getPrimaryKey(), userNotificationEvent);
-
-		userNotificationEvent.resetOriginalValues();
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the user notification events in the entity cache if it is enabled.
@@ -11577,18 +12111,22 @@ public class UserNotificationEventPersistenceImpl
 	public void cacheResult(
 		List<UserNotificationEvent> userNotificationEvents) {
 
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (userNotificationEvents.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (UserNotificationEvent userNotificationEvent :
 				userNotificationEvents) {
 
 			if (EntityCacheUtil.getResult(
-					UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
 					UserNotificationEventImpl.class,
 					userNotificationEvent.getPrimaryKey()) == null) {
 
 				cacheResult(userNotificationEvent);
-			}
-			else {
-				userNotificationEvent.resetOriginalValues();
 			}
 		}
 	}
@@ -11597,60 +12135,45 @@ public class UserNotificationEventPersistenceImpl
 	 * Clears the cache for all user notification events.
 	 *
 	 * <p>
-	 * The <code>EntityCache</code> and <code>com.liferay.portal.kernel.dao.orm.FinderCache</code> are both cleared by this method.
+	 * The <code>EntityCache</code> and <code>FinderCache</code> are both cleared by this method.
 	 * </p>
 	 */
 	@Override
 	public void clearCache() {
 		EntityCacheUtil.clearCache(UserNotificationEventImpl.class);
 
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		FinderCacheUtil.clearCache(UserNotificationEventImpl.class);
 	}
 
 	/**
 	 * Clears the cache for the user notification event.
 	 *
 	 * <p>
-	 * The <code>EntityCache</code> and <code>com.liferay.portal.kernel.dao.orm.FinderCache</code> are both cleared by this method.
+	 * The <code>EntityCache</code> and <code>FinderCache</code> are both cleared by this method.
 	 * </p>
 	 */
 	@Override
 	public void clearCache(UserNotificationEvent userNotificationEvent) {
 		EntityCacheUtil.removeResult(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
-			userNotificationEvent.getPrimaryKey());
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+			UserNotificationEventImpl.class, userNotificationEvent);
 	}
 
 	@Override
 	public void clearCache(List<UserNotificationEvent> userNotificationEvents) {
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (UserNotificationEvent userNotificationEvent :
 				userNotificationEvents) {
 
 			EntityCacheUtil.removeResult(
-				UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-				UserNotificationEventImpl.class,
-				userNotificationEvent.getPrimaryKey());
+				UserNotificationEventImpl.class, userNotificationEvent);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		FinderCacheUtil.clearCache(UserNotificationEventImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
 			EntityCacheUtil.removeResult(
-				UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
 				UserNotificationEventImpl.class, primaryKey);
 		}
 	}
@@ -11723,11 +12246,11 @@ public class UserNotificationEventPersistenceImpl
 
 			return remove(userNotificationEvent);
 		}
-		catch (NoSuchUserNotificationEventException nsee) {
-			throw nsee;
+		catch (NoSuchUserNotificationEventException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -11753,8 +12276,8 @@ public class UserNotificationEventPersistenceImpl
 				session.delete(userNotificationEvent);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -11806,700 +12329,28 @@ public class UserNotificationEventPersistenceImpl
 		try {
 			session = openSession();
 
-			if (userNotificationEvent.isNew()) {
+			if (isNew) {
 				session.save(userNotificationEvent);
-
-				userNotificationEvent.setNew(false);
 			}
 			else {
 				userNotificationEvent = (UserNotificationEvent)session.merge(
 					userNotificationEvent);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!UserNotificationEventModelImpl.COLUMN_BITMASK_ENABLED) {
-			FinderCacheUtil.clearCache(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				userNotificationEventModelImpl.getUuid()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByUuid, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByUuid, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUuid(),
-				userNotificationEventModelImpl.getCompanyId()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByUuid_C, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByUuid_C, args);
-
-			args = new Object[] {userNotificationEventModelImpl.getUserId()};
-
-			FinderCacheUtil.removeResult(_finderPathCountByUserId, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByUserId, args);
-
-			args = new Object[] {userNotificationEventModelImpl.getType()};
-
-			FinderCacheUtil.removeResult(_finderPathCountByType, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByType, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isDelivered()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_D, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_D, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_D, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_D, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isActionRequired()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_D_AR, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_D_AR, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_D_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_D_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isActionRequired(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_AR_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_AR_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getType(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_T_DT_D, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_T_DT_D, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isActionRequired()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_AR, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_D_AR, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_D_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isActionRequired(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_AR_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_AR_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isActionRequired(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_D_AR_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_D_AR_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getType(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_T_DT_D_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_T_DT_D_A, args);
-
-			args = new Object[] {
-				userNotificationEventModelImpl.getUserId(),
-				userNotificationEventModelImpl.getDeliveryType(),
-				userNotificationEventModelImpl.isDelivered(),
-				userNotificationEventModelImpl.isActionRequired(),
-				userNotificationEventModelImpl.isArchived()
-			};
-
-			FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_AR_A, args);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindByU_DT_D_AR_A, args);
-
-			FinderCacheUtil.removeResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
-			FinderCacheUtil.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUuid()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUuid, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-
-				args = new Object[] {userNotificationEventModelImpl.getUuid()};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUuid, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUuid, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUuid_C.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUuid(),
-					userNotificationEventModelImpl.getOriginalCompanyId()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUuid_C, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUuid(),
-					userNotificationEventModelImpl.getCompanyId()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUuid_C, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUuid_C, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByUserId.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUserId, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUserId, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByUserId, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByUserId, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByType.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalType()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByType, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByType, args);
-
-				args = new Object[] {userNotificationEventModelImpl.getType()};
-
-				FinderCacheUtil.removeResult(_finderPathCountByType, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByType, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_D.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_A.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_D.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_A.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_D_AR.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalActionRequired()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_AR, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_AR, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isActionRequired()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_AR, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_AR, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_D_A.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_AR_A.getColumnBitmask()) !=
-					 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalActionRequired(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_AR_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isActionRequired(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_AR_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_T_DT_D.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalType(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_T_DT_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_T_DT_D, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getType(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_T_DT_D, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_T_DT_D, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_D_AR.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalActionRequired()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_AR, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_AR, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isActionRequired()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_AR, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_AR, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_D_A.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_AR_A.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalActionRequired(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_AR_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isActionRequired(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_DT_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_AR_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_D_AR_A.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalActionRequired(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_AR_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isActionRequired(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(_finderPathCountByU_D_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_D_AR_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_T_DT_D_A.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalType(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(
-					_finderPathCountByU_T_DT_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_T_DT_D_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getType(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(
-					_finderPathCountByU_T_DT_D_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_T_DT_D_A, args);
-			}
-
-			if ((userNotificationEventModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByU_DT_D_AR_A.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					userNotificationEventModelImpl.getOriginalUserId(),
-					userNotificationEventModelImpl.getOriginalDeliveryType(),
-					userNotificationEventModelImpl.getOriginalDelivered(),
-					userNotificationEventModelImpl.getOriginalActionRequired(),
-					userNotificationEventModelImpl.getOriginalArchived()
-				};
-
-				FinderCacheUtil.removeResult(
-					_finderPathCountByU_DT_D_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_AR_A, args);
-
-				args = new Object[] {
-					userNotificationEventModelImpl.getUserId(),
-					userNotificationEventModelImpl.getDeliveryType(),
-					userNotificationEventModelImpl.isDelivered(),
-					userNotificationEventModelImpl.isActionRequired(),
-					userNotificationEventModelImpl.isArchived()
-				};
-
-				FinderCacheUtil.removeResult(
-					_finderPathCountByU_DT_D_AR_A, args);
-				FinderCacheUtil.removeResult(
-					_finderPathWithoutPaginationFindByU_DT_D_AR_A, args);
-			}
-		}
-
 		EntityCacheUtil.putResult(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
-			userNotificationEvent.getPrimaryKey(), userNotificationEvent,
-			false);
+			UserNotificationEventImpl.class, userNotificationEventModelImpl,
+			false, true);
+
+		if (isNew) {
+			userNotificationEvent.setNew(false);
+		}
 
 		userNotificationEvent.resetOriginalValues();
 
@@ -12648,19 +12499,19 @@ public class UserNotificationEventPersistenceImpl
 		}
 
 		if (list == null) {
-			StringBundler query = null;
+			StringBundler sb = null;
 			String sql = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(
+				sb = new StringBundler(
 					2 + (orderByComparator.getOrderByFields().length * 2));
 
-				query.append(_SQL_SELECT_USERNOTIFICATIONEVENT);
+				sb.append(_SQL_SELECT_USERNOTIFICATIONEVENT);
 
 				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				sql = query.toString();
+				sql = sb.toString();
 			}
 			else {
 				sql = _SQL_SELECT_USERNOTIFICATIONEVENT;
@@ -12673,10 +12524,10 @@ public class UserNotificationEventPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(sql);
+				Query query = session.createQuery(sql);
 
 				list = (List<UserNotificationEvent>)QueryUtil.list(
-					q, getDialect(), start, end);
+					query, getDialect(), start, end);
 
 				cacheResult(list);
 
@@ -12684,12 +12535,8 @@ public class UserNotificationEventPersistenceImpl
 					FinderCacheUtil.putResult(finderPath, finderArgs, list);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					FinderCacheUtil.removeResult(finderPath, finderArgs);
-				}
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -12726,18 +12573,16 @@ public class UserNotificationEventPersistenceImpl
 			try {
 				session = openSession();
 
-				Query q = session.createQuery(_SQL_COUNT_USERNOTIFICATIONEVENT);
+				Query query = session.createQuery(
+					_SQL_COUNT_USERNOTIFICATIONEVENT);
 
-				count = (Long)q.uniqueResult();
+				count = (Long)query.uniqueResult();
 
 				FinderCacheUtil.putResult(
 					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
-
-				throw processException(e);
+			catch (Exception exception) {
+				throw processException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -12776,642 +12621,534 @@ public class UserNotificationEventPersistenceImpl
 	 * Initializes the user notification event persistence.
 	 */
 	public void afterPropertiesSet() {
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
+
 		_finderPathWithPaginationFindAll = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByUuid = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 			new String[] {
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_"}, true);
 
 		_finderPathWithoutPaginationFindByUuid = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
-			new String[] {String.class.getName()},
-			UserNotificationEventModelImpl.UUID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			true);
 
 		_finderPathCountByUuid = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-			new String[] {String.class.getName()});
+			new String[] {String.class.getName()}, new String[] {"uuid_"},
+			false);
 
 		_finderPathWithPaginationFindByUuid_C = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 			new String[] {
 				String.class.getName(), Long.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathWithoutPaginationFindByUuid_C = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 			new String[] {String.class.getName(), Long.class.getName()},
-			UserNotificationEventModelImpl.UUID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.COMPANYID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"uuid_", "companyId"}, true);
 
 		_finderPathCountByUuid_C = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-			new String[] {String.class.getName(), Long.class.getName()});
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"uuid_", "companyId"}, false);
 
 		_finderPathWithPaginationFindByUserId = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUserId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId"}, true);
 
 		_finderPathWithoutPaginationFindByUserId = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUserId",
-			new String[] {Long.class.getName()},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {Long.class.getName()}, new String[] {"userId"}, true);
 
 		_finderPathCountByUserId = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUserId",
-			new String[] {Long.class.getName()});
+			new String[] {Long.class.getName()}, new String[] {"userId"},
+			false);
 
 		_finderPathWithPaginationFindByType = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByType",
 			new String[] {
 				String.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"type_"}, true);
 
 		_finderPathWithoutPaginationFindByType = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByType",
-			new String[] {String.class.getName()},
-			UserNotificationEventModelImpl.TYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {String.class.getName()}, new String[] {"type_"},
+			true);
 
 		_finderPathCountByType = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByType",
-			new String[] {String.class.getName()});
+			new String[] {String.class.getName()}, new String[] {"type_"},
+			false);
 
 		_finderPathWithPaginationFindByU_DT = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType"}, true);
 
 		_finderPathWithoutPaginationFindByU_DT = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT",
 			new String[] {Long.class.getName(), Integer.class.getName()},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "deliveryType"}, true);
 
 		_finderPathCountByU_DT = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT",
-			new String[] {Long.class.getName(), Integer.class.getName()});
+			new String[] {Long.class.getName(), Integer.class.getName()},
+			new String[] {"userId", "deliveryType"}, false);
 
 		_finderPathWithPaginationFindByU_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_D",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered"}, true);
 
 		_finderPathWithoutPaginationFindByU_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_D",
 			new String[] {Long.class.getName(), Boolean.class.getName()},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "delivered"}, true);
 
 		_finderPathCountByU_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_D",
-			new String[] {Long.class.getName(), Boolean.class.getName()});
+			new String[] {Long.class.getName(), Boolean.class.getName()},
+			new String[] {"userId", "delivered"}, false);
 
 		_finderPathWithPaginationFindByU_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "archived"}, true);
 
 		_finderPathWithoutPaginationFindByU_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_A",
 			new String[] {Long.class.getName(), Boolean.class.getName()},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "archived"}, true);
 
 		_finderPathCountByU_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_A",
-			new String[] {Long.class.getName(), Boolean.class.getName()});
+			new String[] {Long.class.getName(), Boolean.class.getName()},
+			new String[] {"userId", "archived"}, false);
 
 		_finderPathWithPaginationFindByU_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_D",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "delivered"}, true);
 
 		_finderPathWithoutPaginationFindByU_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_D",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "deliveryType", "delivered"}, true);
 
 		_finderPathCountByU_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_D",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "delivered"}, false);
 
 		_finderPathWithPaginationFindByU_DT_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "archived"}, true);
 
 		_finderPathWithoutPaginationFindByU_DT_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "deliveryType", "archived"}, true);
 
 		_finderPathCountByU_DT_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "archived"}, false);
 
 		_finderPathWithPaginationFindByU_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_D_AR",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "actionRequired"}, true);
 
 		_finderPathWithoutPaginationFindByU_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_D_AR",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "delivered", "actionRequired"}, true);
 
 		_finderPathCountByU_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_D_AR",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "actionRequired"}, false);
 
 		_finderPathWithPaginationFindByU_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_D_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "archived"}, true);
 
 		_finderPathWithoutPaginationFindByU_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_D_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "delivered", "archived"}, true);
 
 		_finderPathCountByU_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_D_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "archived"}, false);
 
 		_finderPathWithPaginationFindByU_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "actionRequired", "archived"}, true);
 
 		_finderPathWithoutPaginationFindByU_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "actionRequired", "archived"}, true);
 
 		_finderPathCountByU_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "actionRequired", "archived"}, false);
+
+		_finderPathWithPaginationFindByU_T_GteT_D = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_T_GteT_D",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Long.class.getName(), Boolean.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {"userId", "type_", "timestamp", "delivered"}, true);
+
+		_finderPathWithPaginationCountByU_T_GteT_D = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByU_T_GteT_D",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Long.class.getName(), Boolean.class.getName()
+			},
+			new String[] {"userId", "type_", "timestamp", "delivered"}, false);
 
 		_finderPathWithPaginationFindByU_T_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_T_DT_D",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "type_", "deliveryType", "delivered"},
+			true);
 
 		_finderPathWithoutPaginationFindByU_T_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_T_DT_D",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "type_", "deliveryType", "delivered"},
+			true);
 
 		_finderPathCountByU_T_DT_D = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_T_DT_D",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "type_", "deliveryType", "delivered"},
+			false);
 
 		_finderPathWithPaginationFindByU_DT_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_D_AR",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired"
+			},
+			true);
 
 		_finderPathWithoutPaginationFindByU_DT_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_D_AR",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired"
+			},
+			true);
 
 		_finderPathCountByU_DT_D_AR = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_D_AR",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired"
+			},
+			false);
 
 		_finderPathWithPaginationFindByU_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_D_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "delivered", "archived"},
+			true);
 
 		_finderPathWithoutPaginationFindByU_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_D_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "deliveryType", "delivered", "archived"},
+			true);
 
 		_finderPathCountByU_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_D_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "deliveryType", "delivered", "archived"},
+			false);
 
 		_finderPathWithPaginationFindByU_DT_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "actionRequired", "archived"
+			},
+			true);
 
 		_finderPathWithoutPaginationFindByU_DT_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {
+				"userId", "deliveryType", "actionRequired", "archived"
+			},
+			true);
 
 		_finderPathCountByU_DT_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "actionRequired", "archived"
+			},
+			false);
 
 		_finderPathWithPaginationFindByU_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_D_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Integer.class.getName(), Integer.class.getName(),
 				OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "actionRequired", "archived"},
+			true);
 
 		_finderPathWithoutPaginationFindByU_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_D_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {"userId", "delivered", "actionRequired", "archived"},
+			true);
 
 		_finderPathCountByU_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_D_AR_A",
 			new String[] {
 				Long.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {"userId", "delivered", "actionRequired", "archived"},
+			false);
 
 		_finderPathWithPaginationFindByU_T_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_T_DT_D_A",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "type_", "deliveryType", "delivered", "archived"
+			},
+			true);
 
 		_finderPathWithoutPaginationFindByU_T_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_T_DT_D_A",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {
+				"userId", "type_", "deliveryType", "delivered", "archived"
+			},
+			true);
 
 		_finderPathCountByU_T_DT_D_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_T_DT_D_A",
 			new String[] {
 				Long.class.getName(), String.class.getName(),
 				Integer.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "type_", "deliveryType", "delivered", "archived"
+			},
+			false);
 
 		_finderPathWithPaginationFindByU_DT_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_DT_D_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired",
+				"archived"
+			},
+			true);
 
 		_finderPathWithoutPaginationFindByU_DT_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED,
-			UserNotificationEventImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_DT_D_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
 			},
-			UserNotificationEventModelImpl.USERID_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERYTYPE_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.DELIVERED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ACTIONREQUIRED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.ARCHIVED_COLUMN_BITMASK |
-			UserNotificationEventModelImpl.TIMESTAMP_COLUMN_BITMASK);
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired",
+				"archived"
+			},
+			true);
 
 		_finderPathCountByU_DT_D_AR_A = new FinderPath(
-			UserNotificationEventModelImpl.ENTITY_CACHE_ENABLED,
-			UserNotificationEventModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_DT_D_AR_A",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Boolean.class.getName(), Boolean.class.getName(),
 				Boolean.class.getName()
-			});
+			},
+			new String[] {
+				"userId", "deliveryType", "delivered", "actionRequired",
+				"archived"
+			},
+			false);
+
+		UserNotificationEventUtil.setPersistence(this);
 	}
 
 	public void destroy() {
+		UserNotificationEventUtil.setPersistence(null);
+
 		EntityCacheUtil.removeCache(UserNotificationEventImpl.class.getName());
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	private static final String _SQL_SELECT_USERNOTIFICATIONEVENT =
@@ -13440,5 +13177,10 @@ public class UserNotificationEventPersistenceImpl
 
 	private static final Set<String> _badColumnNames = SetUtil.fromArray(
 		new String[] {"uuid", "type"});
+
+	@Override
+	protected FinderCache getFinderCache() {
+		return FinderCacheUtil.getFinderCache();
+	}
 
 }

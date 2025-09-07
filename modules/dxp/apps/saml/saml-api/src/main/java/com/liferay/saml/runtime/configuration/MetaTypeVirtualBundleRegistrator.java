@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.runtime.configuration;
 
-import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -59,23 +51,33 @@ public class MetaTypeVirtualBundleRegistrator implements Closeable {
 		mainAttributes.put(new Attributes.Name("Bundle-Version"), "1.0.0");
 	}
 
+	@Override
 	public void close() {
 		try {
 			_servicesDropDownMetaTypeProvider.close();
 		}
-		catch (IOException ioe) {
+		catch (IOException ioException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ioException);
+			}
 		}
 
 		try {
 			_serviceRegistration.unregister();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		try {
 			_bundle.uninstall();
 		}
-		catch (BundleException be) {
+		catch (BundleException bundleException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(bundleException);
+			}
 		}
 	}
 
@@ -118,24 +120,8 @@ public class MetaTypeVirtualBundleRegistrator implements Closeable {
 		return this;
 	}
 
-	protected MetaTypeVirtualBundleRegistrator requireLanguageKeys(
-		String filterString) {
-
-		Attributes mainAttributes = _manifest.getMainAttributes();
-
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("liferay.resource.bundle;bundle.symbolic.name=");
-		sb.append(_symbolicName);
-		sb.append(";resource.bundle.aggregate=\"");
-		sb.append(filterString);
-		sb.append("\";resource.bundle.base.name=\"content.Language\"");
-
-		mainAttributes.put(
-			new Attributes.Name("Provide-Capability"), sb.toString());
-
-		return this;
-	}
+	private static final Log _log = LogFactoryUtil.getLog(
+		MetaTypeVirtualBundleRegistrator.class);
 
 	private Bundle _bundle;
 	private final BundleContext _bundleContext;

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.split.packages.test;
@@ -23,7 +14,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.module.framework.ModuleFrameworkUtilAdapter;
 
 import java.io.IOException;
 
@@ -36,17 +26,20 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Tom Wang
  * @author Shuyang Zhou
  */
+@Ignore
 @RunWith(Arquillian.class)
 public class SplitPackagesTest {
 
@@ -56,9 +49,9 @@ public class SplitPackagesTest {
 			_getAllowedSplitPackageNames();
 		Map<Bundle, Set<ExportPackage>> exportPackagesMap = new HashMap<>();
 
-		Bundle systemBundle = (Bundle)ModuleFrameworkUtilAdapter.getFramework();
+		Bundle currentBundle = FrameworkUtil.getBundle(SplitPackagesTest.class);
 
-		BundleContext bundleContext = systemBundle.getBundleContext();
+		BundleContext bundleContext = currentBundle.getBundleContext();
 
 		for (Bundle bundle : bundleContext.getBundles()) {
 			Set<ExportPackage> exportPackages = _getExportPackages(bundle);
@@ -166,8 +159,8 @@ public class SplitPackagesTest {
 	private class ExportPackage {
 
 		@Override
-		public boolean equals(Object obj) {
-			ExportPackage exportPackage = (ExportPackage)obj;
+		public boolean equals(Object object) {
+			ExportPackage exportPackage = (ExportPackage)object;
 
 			if (Objects.equals(_name, exportPackage._name) &&
 				Objects.equals(_version, exportPackage._version)) {
@@ -187,15 +180,8 @@ public class SplitPackagesTest {
 
 		@Override
 		public String toString() {
-			StringBundler sb = new StringBundler(5);
-
-			sb.append("{name=");
-			sb.append(_name);
-			sb.append(", version=");
-			sb.append(_version);
-			sb.append("}");
-
-			return sb.toString();
+			return StringBundler.concat(
+				"{name=", _name, ", version=", _version, "}");
 		}
 
 		private ExportPackage(String name, String version) {

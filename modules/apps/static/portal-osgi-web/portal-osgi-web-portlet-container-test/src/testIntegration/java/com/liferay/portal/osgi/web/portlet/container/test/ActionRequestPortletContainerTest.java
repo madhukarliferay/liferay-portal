@@ -1,60 +1,44 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.portlet.container.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.AuthToken;
 import com.liferay.portal.kernel.security.auth.AuthTokenWhitelist;
-import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionary;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.osgi.web.portlet.container.test.util.PortletContainerTestUtil;
 import com.liferay.portal.security.auth.AuthTokenWhitelistImpl;
 import com.liferay.portal.security.auth.SessionAuthToken;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
-import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portlet.SecurityPortletContainerWrapper;
+
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.ResourceResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.List;
-import java.util.Map;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,31 +49,21 @@ import org.junit.runner.RunWith;
 public class ActionRequestPortletContainerTest
 	extends BasePortletContainerTestCase {
 
-	@ClassRule
-	@Rule
-	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
-
 	@Test
 	public void testAuthTokenCheckEnabled() throws Exception {
-		HashMapDictionary<String, Object> properties =
-			new HashMapDictionary<>();
-
-		properties.put("service.ranking", Integer.MAX_VALUE);
-
 		registerService(
-			AuthToken.class, new DisabledSessionAuthToken(), properties);
+			AuthToken.class, new DisabledSessionAuthToken(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"service.ranking", Integer.MAX_VALUE
+			).build());
 
 		setUpPortlet(
 			testPortlet, new HashMapDictionary<String, Object>(),
 			TEST_PORTLET_ID);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.ACTION_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -101,24 +75,20 @@ public class ActionRequestPortletContainerTest
 
 	@Test
 	public void testAuthTokenIgnoreOrigins() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS,
-			SecurityPortletContainerWrapper.class.getName());
-
-		registerService(Object.class, new Object(), properties);
+		registerService(
+			Object.class, new Object(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS,
+				SecurityPortletContainerWrapper.class.getName()
+			).build());
 
 		setUpPortlet(
 			testPortlet, new HashMapDictionary<String, Object>(),
 			TEST_PORTLET_ID);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.ACTION_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -130,22 +100,19 @@ public class ActionRequestPortletContainerTest
 
 	@Test
 	public void testAuthTokenIgnorePortlets() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS, TEST_PORTLET_ID);
-
-		registerService(Object.class, new Object(), properties);
+		registerService(
+			Object.class, new Object(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS, TEST_PORTLET_ID
+			).build());
 
 		setUpPortlet(
 			testPortlet, new HashMapDictionary<String, Object>(),
 			TEST_PORTLET_ID);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.ACTION_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -157,20 +124,17 @@ public class ActionRequestPortletContainerTest
 
 	@Test
 	public void testInitParam() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"javax.portlet.init-param.check-auth-token",
-			Boolean.FALSE.toString());
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"jakarta.portlet.init-param.check-auth-token",
+				Boolean.FALSE.toString()
+			).build(),
+			TEST_PORTLET_ID);
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+			PortletContainerTestUtil.getHttpServletRequest(group, layout),
+			TEST_PORTLET_ID, layout.getPlid(), PortletRequest.ACTION_PHASE);
 
 		PortletContainerTestUtil.Response response =
 			PortletContainerTestUtil.request(portletURL.toString());
@@ -186,39 +150,31 @@ public class ActionRequestPortletContainerTest
 			testPortlet, new HashMapDictionary<String, Object>(),
 			TEST_PORTLET_ID);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
+		String url = String.valueOf(
+			PortletURLFactoryUtil.create(
+				PortletContainerTestUtil.getHttpServletRequest(group, layout),
+				TEST_PORTLET_ID, layout.getPlid(),
+				PortletRequest.ACTION_PHASE));
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
-
-		String url = portletURL.toString();
-
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					SecurityPortletContainerWrapper.class.getName(),
-					Level.WARN)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				SecurityPortletContainerWrapper.class.getName(),
+				LoggerTestUtil.DEBUG)) {
 
 			PortletContainerTestUtil.Response response =
 				PortletContainerTestUtil.request(url);
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+
+			LogEntry logEntry = logEntries.get(0);
+
+			Throwable throwable = logEntry.getThrowable();
 
 			Assert.assertEquals(
-				loggingEvents.toString(), 1, loggingEvents.size());
-
-			LoggingEvent loggingEvent = loggingEvents.get(0);
-
-			Assert.assertEquals(
-				StringBundler.concat(
-					"User 0 is not allowed to access URL ",
-					url.substring(0, url.indexOf('?')), " and portlet ",
-					TEST_PORTLET_ID, ": User 0 did not provide a valid CSRF ",
-					"token for ",
-					"com.liferay.portlet.SecurityPortletContainerWrapper"),
-				loggingEvent.getMessage());
+				"User 0 session does not have a CSRF token for " +
+					"com.liferay.portlet.SecurityPortletContainerWrapper",
+				throwable.getMessage());
 
 			Assert.assertEquals(403, response.getCode());
 			Assert.assertFalse(testPortlet.isCalledAction());
@@ -244,13 +200,13 @@ public class ActionRequestPortletContainerTest
 
 		// Make an action request using the portal authentication token
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+		String url = String.valueOf(
+			PortletURLFactoryUtil.create(
+				httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
+				PortletRequest.ACTION_PHASE));
 
-		String url = portletURL.toString();
-
-		url = HttpUtil.setParameter(url, "p_auth", response.getBody());
+		url = HttpComponentsUtil.setParameter(
+			url, "p_auth", response.getBody());
 
 		response = PortletContainerTestUtil.request(
 			url, Collections.singletonMap("Cookie", response.getCookies()));
@@ -262,30 +218,27 @@ public class ActionRequestPortletContainerTest
 
 	@Test
 	public void testPortalAuthenticationTokenSecret() throws Exception {
-		HashMapDictionary<String, Object> properties =
-			new HashMapDictionary<>();
-
-		properties.put("service.ranking", Integer.MAX_VALUE);
-
 		registerService(
 			AuthTokenWhitelist.class, new TestSharedSecretTokenWhitelist(),
-			properties);
+			HashMapDictionaryBuilder.<String, Object>put(
+				"service.ranking", Integer.MAX_VALUE
+			).build());
 
 		setUpPortlet(
 			testPortlet, new HashMapDictionary<String, Object>(),
 			TEST_PORTLET_ID);
 
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
-
-		portletURL.setParameter("p_auth_secret", _SHARED_SECRET);
-
 		PortletContainerTestUtil.Response response =
-			PortletContainerTestUtil.request(portletURL.toString());
+			PortletContainerTestUtil.request(
+				PortletURLBuilder.create(
+					PortletURLFactoryUtil.create(
+						PortletContainerTestUtil.getHttpServletRequest(
+							group, layout),
+						TEST_PORTLET_ID, layout.getPlid(),
+						PortletRequest.ACTION_PHASE)
+				).setParameter(
+					"p_auth_secret", _SHARED_SECRET
+				).buildString());
 
 		Assert.assertEquals(200, response.getCode());
 
@@ -294,24 +247,26 @@ public class ActionRequestPortletContainerTest
 
 	@Test
 	public void testStrutsAction() throws Exception {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(PropsKeys.AUTH_TOKEN_IGNORE_ACTIONS, "/test/portlet/1");
-		properties.put("com.liferay.portlet.struts-path", "test/portlet");
-
-		setUpPortlet(testPortlet, properties, TEST_PORTLET_ID);
-
-		HttpServletRequest httpServletRequest =
-			PortletContainerTestUtil.getHttpServletRequest(group, layout);
-
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
-
-		portletURL.setParameter("struts_action", "/test/portlet/1");
+		setUpPortlet(
+			testPortlet,
+			HashMapDictionaryBuilder.<String, Object>put(
+				PropsKeys.AUTH_TOKEN_IGNORE_ACTIONS, "/test/portlet/1"
+			).put(
+				"com.liferay.portlet.struts-path", "test/portlet"
+			).build(),
+			TEST_PORTLET_ID);
 
 		PortletContainerTestUtil.Response response =
-			PortletContainerTestUtil.request(portletURL.toString());
+			PortletContainerTestUtil.request(
+				PortletURLBuilder.create(
+					PortletURLFactoryUtil.create(
+						PortletContainerTestUtil.getHttpServletRequest(
+							group, layout),
+						TEST_PORTLET_ID, layout.getPlid(),
+						PortletRequest.ACTION_PHASE)
+				).setParameter(
+					"struts_action", "/test/portlet/1"
+				).buildString());
 
 		Assert.assertEquals(200, response.getCode());
 
@@ -337,22 +292,20 @@ public class ActionRequestPortletContainerTest
 
 		// Make an action request using the portal authentication token
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
-			PortletRequest.ACTION_PHASE);
+		String url = String.valueOf(
+			PortletURLFactoryUtil.create(
+				httpServletRequest, TEST_PORTLET_ID, layout.getPlid(),
+				PortletRequest.ACTION_PHASE));
 
-		String url = portletURL.toString();
+		url = HttpComponentsUtil.removeParameter(url, "p_auth");
 
-		url = HttpUtil.removeParameter(url, "p_auth");
-
-		Map<String, List<String>> headers =
+		response = PortletContainerTestUtil.request(
+			url,
 			HashMapBuilder.<String, List<String>>put(
 				"Cookie", response.getCookies()
 			).put(
 				"X-CSRF-Token", Collections.singletonList(response.getBody())
-			).build();
-
-		response = PortletContainerTestUtil.request(url, headers);
+			).build());
 
 		Assert.assertEquals(200, response.getCode());
 
@@ -373,13 +326,10 @@ public class ActionRequestPortletContainerTest
 
 			PortletURL portletURL = resourceResponse.createActionURL();
 
-			String queryString = HttpUtil.getQueryString(portletURL.toString());
-
-			Map<String, String[]> parameterMap = HttpUtil.getParameterMap(
-				queryString);
-
 			String portalAuthenticationToken = MapUtil.getString(
-				parameterMap, "p_auth");
+				HttpComponentsUtil.getParameterMap(
+					HttpComponentsUtil.getQueryString(portletURL.toString())),
+				"p_auth");
 
 			printWriter.write(portalAuthenticationToken);
 		}
@@ -406,11 +356,7 @@ public class ActionRequestPortletContainerTest
 
 		@Override
 		public boolean isValidSharedSecret(String sharedSecret) {
-			if (_SHARED_SECRET.equals(sharedSecret)) {
-				return true;
-			}
-
-			return false;
+			return _SHARED_SECRET.equals(sharedSecret);
 		}
 
 	}

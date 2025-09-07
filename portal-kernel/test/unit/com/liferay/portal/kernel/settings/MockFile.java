@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.settings;
@@ -52,15 +43,7 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public void copyFile(File source, File destination, boolean lazy) {
-	}
-
-	@Override
 	public void copyFile(String source, String destination) {
-	}
-
-	@Override
-	public void copyFile(String source, String destination, boolean lazy) {
 	}
 
 	@Override
@@ -74,7 +57,7 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public File createTempFile(InputStream is) {
+	public File createTempFile(InputStream inputStream) {
 		return null;
 	}
 
@@ -147,23 +130,6 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public String extractText(InputStream is, String fileName) {
-		return null;
-	}
-
-	@Override
-	public String extractText(
-		InputStream is, String fileName, int maxStringLength) {
-
-		return null;
-	}
-
-	@Override
-	public String[] find(String directory, String includes, String excludes) {
-		return new String[0];
-	}
-
-	@Override
 	public String getAbsolutePath(File file) {
 		return null;
 	}
@@ -179,12 +145,12 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public byte[] getBytes(InputStream is) {
+	public byte[] getBytes(InputStream inputStream) {
 		return new byte[0];
 	}
 
 	@Override
-	public byte[] getBytes(InputStream is, int bufferSize) {
+	public byte[] getBytes(InputStream inputStream, int bufferSize) {
 		return new byte[0];
 	}
 
@@ -213,11 +179,6 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	@Override
 	public String getShortFileName(String fullFileName) {
 		return null;
-	}
-
-	@Override
-	public boolean isAscii(File file) {
-		return false;
 	}
 
 	@Override
@@ -314,7 +275,7 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public Properties toProperties(FileInputStream fis) {
+	public Properties toProperties(FileInputStream fileInputStream) {
 		return null;
 	}
 
@@ -364,7 +325,7 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public void write(File file, InputStream is) {
+	public void write(File file, InputStream inputStream) {
 	}
 
 	@Override
@@ -384,7 +345,7 @@ public class MockFile implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
-	public void write(String fileName, InputStream is) {
+	public void write(String fileName, InputStream inputStream) {
 	}
 
 	@Override

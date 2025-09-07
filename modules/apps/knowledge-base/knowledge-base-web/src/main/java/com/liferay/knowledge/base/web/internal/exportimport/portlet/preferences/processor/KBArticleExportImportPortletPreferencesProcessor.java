@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.web.internal.exportimport.portlet.preferences.processor;
@@ -30,11 +21,11 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
+import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.ReadOnlyException;
+
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletPreferences;
-import javax.portlet.ReadOnlyException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,8 +34,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sorin Pop
  */
 @Component(
-	immediate = true,
-	property = "javax.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ARTICLE,
+	property = "jakarta.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ARTICLE,
 	service = ExportImportPortletPreferencesProcessor.class
 )
 public class KBArticleExportImportPortletPreferencesProcessor
@@ -106,33 +96,23 @@ public class KBArticleExportImportPortletPreferencesProcessor
 			portletPreferences.setValue(
 				"resourcePrimKey", String.valueOf(resourcePrimKey));
 		}
-		catch (ReadOnlyException roe) {
-			StringBundler sb = new StringBundler(7);
-
-			sb.append("Unable to save converted portlet preference ");
-			sb.append("resourcePrimKey=");
-			sb.append(resourcePrimKey);
-			sb.append(" (the root article) while importing KB Article ");
-			sb.append("portlet. (portletId=");
-			sb.append(portletDataContext.getPortletId());
-			sb.append(")");
-
-			throw new PortletDataException(sb.toString(), roe);
+		catch (ReadOnlyException readOnlyException) {
+			throw new PortletDataException(
+				StringBundler.concat(
+					"Unable to save converted portlet preference ",
+					"resourcePrimKey=", resourcePrimKey,
+					" (the root article) while importing KB Article portlet. ",
+					"(portletId=", portletDataContext.getPortletId(), ")"),
+				readOnlyException);
 		}
 
 		return portletPreferences;
 	}
 
-	@Reference(unbind = "-")
-	protected void seKBArticleLocalService(
-		KBArticleLocalService kbArticleLocalService) {
-
-		_kbArticleLocalService = kbArticleLocalService;
-	}
-
 	@Reference(target = "(name=ReferencedStagedModelImporter)")
 	private Capability _capability;
 
+	@Reference
 	private KBArticleLocalService _kbArticleLocalService;
 
 }

@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -23,8 +14,8 @@ Set<String> groupTypes = groupSelectorDisplayContext.getGroupTypes();
 %>
 
 <c:if test="<%= groupTypes.size() > 1 %>">
-	<div class="container-fluid-1280">
-		<div class="btn-group" role="group">
+	<clay:container-fluid>
+		<div class="btn-group btn-group-sm my-3" role="group">
 
 			<%
 			for (String curGroupType : groupTypes) {
@@ -37,33 +28,27 @@ Set<String> groupTypes = groupSelectorDisplayContext.getGroupTypes();
 			%>
 
 		</div>
-	</div>
+	</clay:container-fluid>
 </c:if>
 
-<div class="container-fluid-1280 lfr-item-viewer">
+<clay:container-fluid
+	cssClass="lfr-item-viewer"
+>
 	<liferay-ui:search-container
 		searchContainer="<%= groupSelectorDisplayContext.getSearchContainer() %>"
 		var="listSearchContainer"
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.model.Group"
-			cssClass="entry-card lfr-asset-item"
+			cssClass="card-page-item card-page-item-directory"
 			modelVar="curGroup"
 		>
 			<liferay-ui:search-container-column-text
 				colspan="<%= 3 %>"
 			>
-				<liferay-frontend:horizontal-card
-					cardCssClass="card-interactive card-interactive-primary"
-					text="<%= curGroup.getDescriptiveName(locale) %>"
-					url="<%= groupSelectorDisplayContext.getViewGroupURL(curGroup) %>"
-				>
-					<liferay-frontend:horizontal-card-col>
-						<liferay-frontend:horizontal-card-icon
-							icon="<%= groupSelectorDisplayContext.getGroupItemSelectorIcon() %>"
-						/>
-					</liferay-frontend:horizontal-card-col>
-				</liferay-frontend:horizontal-card>
+				<clay:navigation-card
+					navigationCard="<%= new GroupNavigationCard(curGroup, groupSelectorDisplayContext, request) %>"
+				/>
 			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
@@ -72,4 +57,4 @@ Set<String> groupTypes = groupSelectorDisplayContext.getGroupTypes();
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>

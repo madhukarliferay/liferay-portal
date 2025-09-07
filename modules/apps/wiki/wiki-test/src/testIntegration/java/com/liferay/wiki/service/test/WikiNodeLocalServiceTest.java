@@ -1,28 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.wiki.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -30,6 +24,7 @@ import com.liferay.portal.kernel.util.ProgressTracker;
 import com.liferay.portal.kernel.util.ProgressTrackerThreadLocal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.wiki.exception.DuplicateWikiNodeExternalReferenceCodeException;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.service.WikiNodeLocalServiceUtil;
@@ -58,6 +53,59 @@ public class WikiNodeLocalServiceTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
+	@Test(expected = DuplicateWikiNodeExternalReferenceCodeException.class)
+	public void testAddNodeWithExistingExternalReferenceCode()
+		throws Exception {
+
+		User user = TestPropsValues.getUser();
+
+		WikiNode wikiNode = WikiNodeLocalServiceUtil.addNode(
+			user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext());
+
+		WikiNodeLocalServiceUtil.addNode(
+			wikiNode.getExternalReferenceCode(), user.getUserId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext());
+	}
+
+	@Test
+	public void testAddNodeWithExternalReferenceCode() throws Exception {
+		String externalReferenceCode = RandomTestUtil.randomString();
+		User user = TestPropsValues.getUser();
+
+		WikiNode wikiNode = WikiNodeLocalServiceUtil.addNode(
+			externalReferenceCode, user.getUserId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext());
+
+		Assert.assertEquals(
+			externalReferenceCode, wikiNode.getExternalReferenceCode());
+	}
+
+	@Test
+	public void testAddNodeWithoutExternalReferenceCode()
+		throws PortalException {
+
+		User user = TestPropsValues.getUser();
+
+		WikiNode wikiNode1 = WikiNodeLocalServiceUtil.addNode(
+			user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext());
+
+		String externalReferenceCode = wikiNode1.getExternalReferenceCode();
+
+		Assert.assertEquals(externalReferenceCode, wikiNode1.getUuid());
+
+		WikiNode wikiNode2 =
+			WikiNodeLocalServiceUtil.getWikiNodeByExternalReferenceCode(
+				externalReferenceCode, TestPropsValues.getGroupId());
+
+		Assert.assertEquals(wikiNode1, wikiNode2);
+	}
+
 	@Test
 	public void testImportPages() throws Exception {
 		_node = WikiTestUtil.addNode(TestPropsValues.getGroupId());
@@ -72,11 +120,11 @@ public class WikiNodeLocalServiceTest {
 			"/com/liferay/wiki/service/test/dependencies" +
 				"/liferay_media_wiki.xml");
 
-		InputStream is = new ByteArrayInputStream(bytes);
+		InputStream inputStream = new ByteArrayInputStream(bytes);
 
 		WikiNodeLocalServiceUtil.importPages(
-			TestPropsValues.getUserId(), _node.getNodeId(), "MediaWiki",
-			new InputStream[] {is, null, null},
+			TestPropsValues.getUserId(), _node.getNodeId(),
+			new InputStream[] {inputStream, null, null},
 			Collections.<String, String[]>emptyMap());
 
 		WikiPage importedPage = WikiPageLocalServiceUtil.fetchPage(
@@ -107,7 +155,7 @@ public class WikiNodeLocalServiceTest {
 		InputStream filesInputStream = new ByteArrayInputStream(filesBytes);
 
 		WikiNodeLocalServiceUtil.importPages(
-			TestPropsValues.getUserId(), _node.getNodeId(), "MediaWiki",
+			TestPropsValues.getUserId(), _node.getNodeId(),
 			new InputStream[] {pagesInputStream, null, filesInputStream},
 			Collections.<String, String[]>emptyMap());
 
@@ -119,9 +167,7 @@ public class WikiNodeLocalServiceTest {
 		Company company = CompanyLocalServiceUtil.getCompany(
 			_node.getCompanyId());
 
-		String portalURL = company.getPortalURL(_node.getGroupId());
-
-		themeDisplay.setPortalURL(portalURL);
+		themeDisplay.setPortalURL(company.getPortalURL(_node.getGroupId()));
 
 		WikiPage sharedImagesPage = WikiPageLocalServiceUtil.fetchPage(
 			_node.getNodeId(), "SharedImages");
@@ -129,27 +175,19 @@ public class WikiNodeLocalServiceTest {
 		long sharedImagesPageAttachmentsFolderId =
 			sharedImagesPage.getAttachmentsFolderId();
 
-		String testFileName = "media_link_test.docx";
-
-		String linkLabel = "Download link";
-
 		FileEntry attachmentFileEntry =
 			PortletFileRepositoryUtil.getPortletFileEntry(
 				_node.getGroupId(), sharedImagesPageAttachmentsFolderId,
-				testFileName);
+				"media_link_test.docx");
 
 		String attachmentFileEntryURL =
 			PortletFileRepositoryUtil.getPortletFileEntryURL(
 				themeDisplay, attachmentFileEntry, StringPool.BLANK);
 
-		String linkTag = StringBundler.concat(
-			"[[", attachmentFileEntryURL, StringPool.PIPE, linkLabel, "]]");
+		String linkTag = "[[" + attachmentFileEntryURL + "|Download link]]";
 
-		String expectedContent = StringBundler.concat(
-			"<<TableOfContents>>", StringPool.NEW_LINE, StringPool.NEW_LINE,
-			linkTag);
-
-		Assert.assertEquals(expectedContent, importedPage.getContent());
+		Assert.assertEquals(
+			"<<TableOfContents>>\n\n" + linkTag, importedPage.getContent());
 	}
 
 	@DeleteAfterTestRun

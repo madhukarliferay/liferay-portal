@@ -1,27 +1,19 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.LocaleException;
-import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.LocalizedModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 import java.util.Locale;
@@ -42,10 +34,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface SegmentsExperienceModel
-	extends AttachedModel, BaseModel<SegmentsExperience>, LocalizedModel,
-			MVCCModel, ShardedModel, StagedGroupedModel {
+	extends BaseModel<SegmentsExperience>, CTModel<SegmentsExperience>,
+			ExternalReferenceCodeModel, LocalizedModel, MVCCModel, ShardedModel,
+			StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a segments experience model instance should use the {@link SegmentsExperience} interface instead.
@@ -56,6 +49,7 @@ public interface SegmentsExperienceModel
 	 *
 	 * @return the primary key of this segments experience
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -63,6 +57,7 @@ public interface SegmentsExperienceModel
 	 *
 	 * @param primaryKey the primary key of this segments experience
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -82,6 +77,22 @@ public interface SegmentsExperienceModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this segments experience.
+	 *
+	 * @return the ct collection ID of this segments experience
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this segments experience.
+	 *
+	 * @param ctCollectionId the ct collection ID of this segments experience
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this segments experience.
 	 *
 	 * @return the uuid of this segments experience
@@ -97,6 +108,23 @@ public interface SegmentsExperienceModel
 	 */
 	@Override
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this segments experience.
+	 *
+	 * @return the external reference code of this segments experience
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this segments experience.
+	 *
+	 * @param externalReferenceCode the external reference code of this segments experience
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the segments experience ID of this segments experience.
@@ -255,46 +283,18 @@ public interface SegmentsExperienceModel
 	public void setSegmentsExperienceKey(String segmentsExperienceKey);
 
 	/**
-	 * Returns the fully qualified class name of this segments experience.
+	 * Returns the plid of this segments experience.
 	 *
-	 * @return the fully qualified class name of this segments experience
+	 * @return the plid of this segments experience
 	 */
-	@Override
-	public String getClassName();
-
-	public void setClassName(String className);
+	public long getPlid();
 
 	/**
-	 * Returns the class name ID of this segments experience.
+	 * Sets the plid of this segments experience.
 	 *
-	 * @return the class name ID of this segments experience
+	 * @param plid the plid of this segments experience
 	 */
-	@Override
-	public long getClassNameId();
-
-	/**
-	 * Sets the class name ID of this segments experience.
-	 *
-	 * @param classNameId the class name ID of this segments experience
-	 */
-	@Override
-	public void setClassNameId(long classNameId);
-
-	/**
-	 * Returns the class pk of this segments experience.
-	 *
-	 * @return the class pk of this segments experience
-	 */
-	@Override
-	public long getClassPK();
-
-	/**
-	 * Sets the class pk of this segments experience.
-	 *
-	 * @param classPK the class pk of this segments experience
-	 */
-	@Override
-	public void setClassPK(long classPK);
+	public void setPlid(long plid);
 
 	/**
 	 * Returns the name of this segments experience.
@@ -431,6 +431,21 @@ public interface SegmentsExperienceModel
 	public void setActive(boolean active);
 
 	/**
+	 * Returns the type settings of this segments experience.
+	 *
+	 * @return the type settings of this segments experience
+	 */
+	@AutoEscape
+	public String getTypeSettings();
+
+	/**
+	 * Sets the type settings of this segments experience.
+	 *
+	 * @param typeSettings the type settings of this segments experience
+	 */
+	public void setTypeSettings(String typeSettings);
+
+	/**
 	 * Returns the last publish date of this segments experience.
 	 *
 	 * @return the last publish date of this segments experience
@@ -458,5 +473,12 @@ public interface SegmentsExperienceModel
 	@Override
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
+
+	@Override
+	public SegmentsExperience cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

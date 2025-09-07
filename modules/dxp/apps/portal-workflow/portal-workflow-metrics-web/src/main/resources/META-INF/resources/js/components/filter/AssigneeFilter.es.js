@@ -1,12 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import React, {useMemo} from 'react';
@@ -16,30 +10,40 @@ import {useFilterFetch} from '../../shared/components/filter/hooks/useFilterFetc
 import {useFilterName} from '../../shared/components/filter/hooks/useFilterName.es';
 import filterConstants from '../../shared/components/filter/util/filterConstants.es';
 
-const AssigneeFilter = ({
+const unassigned = {
+	dividerAfter: true,
+	id: -1,
+	key: '-1',
+	name: Liferay.Language.get('unassigned'),
+};
+
+export default function AssigneeFilter({
 	className,
-	dispatch,
 	filterKey = filterConstants.assignee.key,
 	options = {},
 	prefixKey = '',
-	processId
-}) => {
-	const defaultOptions = {
-		hideControl: false,
-		multiple: true,
-		position: 'left',
-		withSelectionTitle: false
+	processId,
+	staticData,
+}) {
+	options = {
+		withSelectionTitle: false,
+		withoutRouteParams: false,
+		withoutUnassigned: false,
+		...options,
 	};
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	options = useMemo(() => ({...defaultOptions, ...options}), [options]);
 
 	const {items, selectedItems} = useFilterFetch({
-		dispatch,
 		filterKey,
 		prefixKey,
-		requestUrl: `/processes/${processId}/assignee-users?page=0&pageSize=0`,
-		staticItems: [unassignedItem]
+		propertyKey: 'id',
+		requestMethod: 'post',
+		requestUrl: `/processes/${processId}/assignees`,
+		staticData,
+		staticItems: !options.withoutUnassigned ? [unassigned] : [],
+		withoutRouteParams: options.withoutRouteParams,
 	});
+
+	const defaultItem = useMemo(() => items[0], [items]);
 
 	const filterName = useFilterName(
 		options.multiple,
@@ -50,7 +54,7 @@ const AssigneeFilter = ({
 
 	return (
 		<Filter
-			dataTestId="assigneeFilter"
+			defaultItem={defaultItem}
 			elementClasses={className}
 			filterKey={filterKey}
 			items={items}
@@ -59,13 +63,4 @@ const AssigneeFilter = ({
 			{...options}
 		/>
 	);
-};
-
-const unassignedItem = {
-	dividerAfter: true,
-	id: -1,
-	key: '-1',
-	name: Liferay.Language.get('unassigned')
-};
-
-export default AssigneeFilter;
+}

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.monitoring.internal.statistics.portal;
@@ -20,26 +11,28 @@ import com.liferay.portal.monitoring.internal.statistics.SummaryStatistics;
 
 import java.util.Set;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Michael C. Han
  * @author Brian Wing Shun Chan
  */
-@Component(
-	enabled = false, immediate = true,
-	property = "name=portalSummaryStatistics",
-	service = ServerSummaryStatistics.class
-)
 public class ServerSummaryStatistics implements SummaryStatistics {
+
+	public ServerSummaryStatistics(
+		ServerStatisticsHelper serverStatisticsHelper) {
+
+		_serverStatisticsHelper = serverStatisticsHelper;
+	}
 
 	@Override
 	public long getAverageTime() {
-		long averageTime = 0;
-
 		Set<CompanyStatistics> companyStatisticsSet =
-			_serverStatistics.getCompanyStatisticsSet();
+			_serverStatisticsHelper.getCompanyStatisticsSet();
+
+		if (companyStatisticsSet.isEmpty()) {
+			return 0;
+		}
+
+		long averageTime = 0;
 
 		for (CompanyStatistics companyStatistics : companyStatisticsSet) {
 			RequestStatistics requestStatistics =
@@ -74,7 +67,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		int errorCount = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			RequestStatistics requestStatistics =
 				companyStatistics.getRequestStatistics();
@@ -108,7 +101,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		long maxTime = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			if (companyStatistics.getMaxTime() > maxTime) {
 				maxTime = companyStatistics.getMaxTime();
@@ -137,7 +130,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		long minTime = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			if (companyStatistics.getMinTime() < minTime) {
 				minTime = companyStatistics.getMinTime();
@@ -166,7 +159,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		int requestCount = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			RequestStatistics requestStatistics =
 				companyStatistics.getRequestStatistics();
@@ -200,7 +193,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		int successCount = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			RequestStatistics requestStatistics =
 				companyStatistics.getRequestStatistics();
@@ -234,7 +227,7 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 		int timeoutCount = 0;
 
 		for (CompanyStatistics companyStatistics :
-				_serverStatistics.getCompanyStatisticsSet()) {
+				_serverStatisticsHelper.getCompanyStatisticsSet()) {
 
 			RequestStatistics requestStatistics =
 				companyStatistics.getRequestStatistics();
@@ -268,13 +261,14 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 
 		try {
 			CompanyStatistics companyStatistics =
-				_serverStatistics.getCompanyStatistics(companyId);
+				_serverStatisticsHelper.getCompanyStatistics(companyId);
 
 			return companyStatistics.getRequestStatistics();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new MonitoringException(
-				"Unable to get company with company id " + companyId, e);
+				"Unable to get company with company ID " + companyId,
+				exception);
 		}
 	}
 
@@ -283,21 +277,16 @@ public class ServerSummaryStatistics implements SummaryStatistics {
 
 		try {
 			CompanyStatistics companyStatistics =
-				_serverStatistics.getCompanyStatistics(webId);
+				_serverStatisticsHelper.getCompanyStatistics(webId);
 
 			return companyStatistics.getRequestStatistics();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new MonitoringException(
-				"Unable to get company with web id " + webId, e);
+				"Unable to get company with web ID " + webId, exception);
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setServerStatistics(ServerStatistics serverStatistics) {
-		_serverStatistics = serverStatistics;
-	}
-
-	private ServerStatistics _serverStatistics;
+	private final ServerStatisticsHelper _serverStatisticsHelper;
 
 }

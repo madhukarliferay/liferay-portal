@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -30,47 +21,47 @@
 	<aui:input name="redirect" type="hidden" value="<%= configurationRenderURL %>" />
 
 	<liferay-frontend:edit-form-body>
-		<aui:row>
-			<aui:col width="<%= 50 %>">
-				<liferay-frontend:fieldset-group>
-					<liferay-frontend:fieldset
-						cssClass="ml-3"
-					>
-						<aui:row>
-							<aui:select name="preferences--sites--" value="<%= sitesDirectoryDisplayContext.getSites() %>">
-								<aui:option label="<%= SitesDirectoryTag.SITES_TOP_LEVEL %>" />
-								<aui:option label="<%= SitesDirectoryTag.SITES_PARENT_LEVEL %>" />
-								<aui:option label="<%= SitesDirectoryTag.SITES_SIBLINGS %>" />
-								<aui:option label="<%= SitesDirectoryTag.SITES_CHILDREN %>" />
-							</aui:select>
-						</aui:row>
+		<clay:row>
+			<clay:col
+				md="6"
+			>
+				<liferay-frontend:fieldset
+					cssClass="ml-3"
+				>
+					<clay:row>
+						<aui:select name="preferences--sites--" value="<%= sitesDirectoryDisplayContext.getSites() %>">
+							<aui:option label="top-level" />
+							<aui:option label="parent-level" />
+							<aui:option label="siblings" />
+							<aui:option label="children" />
+						</aui:select>
+					</clay:row>
 
-						<aui:row>
-							<aui:select name="preferences--displayStyle--" value="<%= sitesDirectoryDisplayContext.getDisplayStyle() %>">
-								<aui:option label="icon" />
-								<aui:option label="descriptive" />
-								<aui:option label="list" />
-								<aui:option label="list-hierarchy" />
-							</aui:select>
-						</aui:row>
-					</liferay-frontend:fieldset>
-				</liferay-frontend:fieldset-group>
-			</aui:col>
+					<clay:row>
+						<aui:select name="preferences--displayStyle--" value="<%= sitesDirectoryDisplayContext.getDisplayStyle() %>">
+							<aui:option label="icon" />
+							<aui:option label="descriptive" />
+							<aui:option label="list" />
+							<aui:option label="list-hierarchy" />
+						</aui:select>
+					</clay:row>
+				</liferay-frontend:fieldset>
+			</clay:col>
 
-			<aui:col width="<%= 50 %>">
+			<clay:col
+				md="6"
+			>
 				<liferay-portlet:preview
 					portletName="<%= portletResource %>"
 					queryString="struts_action=/sites_directory/view"
 					showBorders="<%= true %>"
 				/>
-			</aui:col>
-		</aui:row>
+			</clay:col>
+		</clay:row>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -78,7 +69,7 @@
 	function refreshPreview(displayStyle, sites) {
 		var data = Liferay.Util.ns('_<%= HtmlUtil.escapeJS(portletResource) %>_', {
 			displayStyle: displayStyle,
-			sites: sites
+			sites: sites,
 		});
 
 		Liferay.Portlet.refresh(
@@ -93,11 +84,11 @@
 	var sitesSelect = Liferay.Util.getFormElement(form, 'sites');
 
 	if (displayStyleSelect && sitesSelect) {
-		form.addEventListener('change', function() {
+		form.addEventListener('change', () => {
 			refreshPreview(displayStyleSelect.value, sitesSelect.value);
 		});
 
-		form.addEventListener('select', function() {
+		form.addEventListener('select', () => {
 			refreshPreview(displayStyleSelect.value, sitesSelect.value);
 		});
 	}

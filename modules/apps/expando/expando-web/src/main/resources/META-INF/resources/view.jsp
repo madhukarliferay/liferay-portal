@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -29,7 +20,9 @@ List<CustomAttributesDisplay> customAttributesDisplays = PortletLocalServiceUtil
 Collections.sort(customAttributesDisplays, new CustomAttributesDisplayComparator(locale));
 %>
 
-<div class="container-fluid container-fluid-max-xl container-view">
+<clay:container-fluid
+	cssClass="container-view"
+>
 	<liferay-ui:search-container
 		emptyResultsMessage='<%= LanguageUtil.get(request, "custom-fields-are-not-enabled-for-any-resource") %>'
 		iteratorURL="<%= portletURL %>"
@@ -50,7 +43,7 @@ Collections.sort(customAttributesDisplays, new CustomAttributesDisplayComparator
 			/>
 
 			<portlet:renderURL var="rowURL">
-				<portlet:param name="mvcPath" value="/view_attributes.jsp" />
+				<portlet:param name="mvcRenderCommandName" value="/expando/view_attributes" />
 				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="modelResource" value="<%= customAttributesDisplay.getClassName() %>" />
 			</portlet:renderURL>
@@ -78,4 +71,4 @@ Collections.sort(customAttributesDisplays, new CustomAttributesDisplayComparator
 			paginate="<%= false %>"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>

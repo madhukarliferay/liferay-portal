@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.aggregation.bucket;
@@ -25,7 +16,7 @@ public class Order {
 
 	public static final String KEY_METRIC_NAME = "_key";
 
-	public static final Order count(boolean ascending) {
+	public static Order count(boolean ascending) {
 		Order order = new Order(null);
 
 		order.setMetricName(COUNT_METRIC_NAME);
@@ -34,7 +25,7 @@ public class Order {
 		return order;
 	}
 
-	public static final Order key(boolean ascending) {
+	public static Order key(boolean ascending) {
 		Order order = new Order(null);
 
 		order.setMetricName(KEY_METRIC_NAME);
@@ -57,17 +48,12 @@ public class Order {
 			return false;
 		}
 
-		final Order order = (Order)object;
+		Order order = (Order)object;
 
-		if (_ascending != order._ascending) {
-			return false;
-		}
+		if ((_ascending != order._ascending) ||
+			!Objects.equals(_metricName, order._metricName) ||
+			!Objects.equals(_path, order._path)) {
 
-		if (!Objects.equals(_metricName, order._metricName)) {
-			return false;
-		}
-
-		if (!Objects.equals(_path, order._path)) {
 			return false;
 		}
 

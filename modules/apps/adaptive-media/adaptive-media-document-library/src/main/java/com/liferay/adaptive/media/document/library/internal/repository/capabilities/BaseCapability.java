@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.document.library.internal.repository.capabilities;
@@ -57,6 +48,9 @@ public abstract class BaseCapability
 		repositoryEventRegistry.registerRepositoryEventListener(
 			RepositoryEventType.Update.class, FileEntry.class,
 			this::_updateAdaptiveMedia);
+		repositoryEventRegistry.registerRepositoryEventListener(
+			RepositoryEventType.Delete.class, FileVersion.class,
+			this::_deleteAdaptiveMedia);
 	}
 
 	@Reference
@@ -88,8 +82,27 @@ public abstract class BaseCapability
 					String.valueOf(fileVersion.getFileVersionId()));
 			}
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
+	private void _deleteAdaptiveMedia(FileVersion fileVersion) {
+		if (!DLAppHelperThreadLocal.isEnabled() ||
+			ExportImportThreadLocal.isImportInProcess()) {
+
+			return;
+		}
+
+		try {
+			AMAsyncProcessor<FileVersion, ?> amAsyncProcessor =
+				amAsyncProcessorLocator.locateForClass(FileVersion.class);
+
+			amAsyncProcessor.triggerCleanUp(
+				fileVersion, String.valueOf(fileVersion.getFileVersionId()));
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 
@@ -116,8 +129,8 @@ public abstract class BaseCapability
 				_wrap(latestFileVersion),
 				String.valueOf(latestFileVersion.getFileVersionId()));
 		}
-		catch (PortalException pe) {
-			throw new RuntimeException(pe);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
 	}
 

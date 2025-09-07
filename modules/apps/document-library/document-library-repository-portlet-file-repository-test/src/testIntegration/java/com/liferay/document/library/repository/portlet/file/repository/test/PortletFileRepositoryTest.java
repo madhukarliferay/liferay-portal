@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.repository.portlet.file.repository.test;
@@ -19,8 +10,8 @@ import com.liferay.document.library.kernel.exception.DuplicateFileEntryException
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
@@ -28,15 +19,14 @@ import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil
 import com.liferay.portal.kernel.repository.capabilities.WorkflowCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestDataConstants;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -71,6 +61,32 @@ public class PortletFileRepositoryTest {
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext());
+	}
+
+	@Test
+	public void testFetchPortletFileEntryByExternalReferenceCode()
+		throws Exception {
+
+		FileEntry fileEntry = _addPortletFileEntry(
+			RandomTestUtil.randomString());
+
+		FileEntry fetchFileEntry =
+			PortletFileRepositoryUtil.
+				fetchPortletFileEntryByExternalReferenceCode(
+					fileEntry.getExternalReferenceCode(),
+					fileEntry.getGroupId());
+
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(), fetchFileEntry.getFileEntryId());
+
+		PortletFileRepositoryUtil.deletePortletFileEntry(
+			fileEntry.getFileEntryId());
+
+		Assert.assertNull(
+			PortletFileRepositoryUtil.
+				fetchPortletFileEntryByExternalReferenceCode(
+					fileEntry.getExternalReferenceCode(),
+					fileEntry.getGroupId()));
 	}
 
 	@Test
@@ -230,19 +246,11 @@ public class PortletFileRepositoryTest {
 
 		String queryString = "param=value";
 
-		StringBundler sb = new StringBundler(8);
-
-		sb.append("/documents/portlet_file_entry/");
-		sb.append(_group.getGroupId());
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getTitle());
-		sb.append(StringPool.SLASH);
-		sb.append(fileEntry.getUuid());
-		sb.append(StringPool.QUESTION);
-		sb.append(queryString);
-
 		Assert.assertEquals(
-			sb.toString(),
+			StringBundler.concat(
+				"/documents/portlet_file_entry/", _group.getGroupId(),
+				StringPool.SLASH, fileEntry.getTitle(), StringPool.SLASH,
+				fileEntry.getUuid(), StringPool.QUESTION, queryString),
 			PortletFileRepositoryUtil.getPortletFileEntryURL(
 				null, fileEntry, StringPool.AMPERSAND + queryString));
 	}
@@ -252,14 +260,14 @@ public class PortletFileRepositoryTest {
 				TestDataConstants.TEST_BYTE_ARRAY)) {
 
 			return PortletFileRepositoryUtil.addPortletFileEntry(
-				_group.getGroupId(), TestPropsValues.getUserId(),
+				null, _group.getGroupId(), TestPropsValues.getUserId(),
 				User.class.getName(), TestPropsValues.getUserId(), _portletId,
 				_folder.getFolderId(), inputStream, name,
 				ContentTypes.APPLICATION_OCTET_STREAM, false);
 		}
 	}
 
-	private Folder _addPortletFolder(String name) throws PortalException {
+	private Folder _addPortletFolder(String name) throws Exception {
 		return PortletFileRepositoryUtil.addPortletFolder(
 			_group.getGroupId(), TestPropsValues.getUserId(), _portletId,
 			_folder.getFolderId(), name,

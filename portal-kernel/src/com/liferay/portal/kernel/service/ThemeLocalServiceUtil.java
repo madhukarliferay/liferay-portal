@@ -1,20 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import java.util.List;
 
 /**
  * Provides the local service utility for Theme. This utility wraps
@@ -30,16 +21,10 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class ThemeLocalServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.ThemeLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
-	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ThemeLocalServiceUtil} to access the theme local service. Add custom service methods to <code>com.liferay.portal.service.impl.ThemeLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
 	public static com.liferay.portal.kernel.model.ColorScheme fetchColorScheme(
 		long companyId, String themeId, String colorSchemeId) {
@@ -67,7 +52,7 @@ public class ThemeLocalServiceUtil {
 		return getService().getColorScheme(companyId, themeId, colorSchemeId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme>
+	public static List<com.liferay.portal.kernel.model.Theme>
 		getControlPanelThemes(long companyId, long userId) {
 
 		return getService().getControlPanelThemes(companyId, userId);
@@ -82,8 +67,8 @@ public class ThemeLocalServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme>
-		getPageThemes(long companyId, long groupId, long userId) {
+	public static List<com.liferay.portal.kernel.model.Theme> getPageThemes(
+		long companyId, long groupId, long userId) {
 
 		return getService().getPageThemes(companyId, groupId, userId);
 	}
@@ -102,20 +87,18 @@ public class ThemeLocalServiceUtil {
 		return getService().getTheme(companyId, themeId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme>
-		getThemes(long companyId) {
+	public static List<com.liferay.portal.kernel.model.Theme> getThemes(
+		long companyId) {
 
 		return getService().getThemes(companyId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme>
-		getWARThemes() {
-
+	public static List<com.liferay.portal.kernel.model.Theme> getWARThemes() {
 		return getService().getWARThemes();
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme> init(
-		javax.servlet.ServletContext servletContext, String themesPath,
+	public static List<com.liferay.portal.kernel.model.Theme> init(
+		jakarta.servlet.ServletContext servletContext, String themesPath,
 		boolean loadFromServletContext, String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 
@@ -124,9 +107,10 @@ public class ThemeLocalServiceUtil {
 			pluginPackage);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.Theme> init(
-		String servletContextName, javax.servlet.ServletContext servletContext,
-		String themesPath, boolean loadFromServletContext, String[] xmls,
+	public static List<com.liferay.portal.kernel.model.Theme> init(
+		String servletContextName,
+		jakarta.servlet.ServletContext servletContext, String themesPath,
+		boolean loadFromServletContext, String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 
 		return getService().init(
@@ -135,20 +119,19 @@ public class ThemeLocalServiceUtil {
 	}
 
 	public static void uninstallThemes(
-		java.util.List<com.liferay.portal.kernel.model.Theme> themes) {
+		List<com.liferay.portal.kernel.model.Theme> themes) {
 
 		getService().uninstallThemes(themes);
 	}
 
 	public static ThemeLocalService getService() {
-		if (_service == null) {
-			_service = (ThemeLocalService)PortalBeanLocatorUtil.locate(
-				ThemeLocalService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static ThemeLocalService _service;
+	public static void setService(ThemeLocalService service) {
+		_service = service;
+	}
+
+	private static volatile ThemeLocalService _service;
 
 }

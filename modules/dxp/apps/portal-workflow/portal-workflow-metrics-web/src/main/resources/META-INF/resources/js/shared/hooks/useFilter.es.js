@@ -1,83 +1,66 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {useReducer, useMemo} from 'react';
+import {useContext, useMemo} from 'react';
 
+import {FilterContext} from '../components/filter/FilterContext.es';
 import {useFiltersConstants} from '../components/filter/hooks/useFiltersConstants.es';
 import {
+	getCapitalizedFilterKey,
 	getFilterResults,
-	getSelectedItems
+	getSelectedItems,
 } from '../components/filter/util/filterUtil.es';
 import {useRouterParams} from './useRouterParams.es';
 
-const buildFilterItem = data => {
-	if (typeof data === 'string') {
-		return {
-			active: true,
-			key: data
-		};
-	}
+const useFilter = ({
+	filterKeys = [],
+	prefixKeys = [''],
+	withoutRouteParams,
+}) => {
+	const {dispatch, dispatchFilter, filterState, filterValues} =
+		useContext(FilterContext);
 
-	return {
-		...data,
-		active: true
-	};
-};
+	const {filters} = useRouterParams();
+	const {keys, pinnedValues, titles} = useFiltersConstants(filterKeys);
 
-const buildInitialState = (filterKeys, filters, prefixKeys) => {
-	const initialState = {};
+	const filtersError = filterKeys
+		.map((filterKey) => filterState.errors?.includes(filterKey))
+		.some((hasError) => hasError);
 
-	filterKeys.forEach(filterKey => {
-		prefixKeys.forEach(prefixKey => {
-			const key = `${prefixKey}${filterKey}`;
-
-			if (filters[key]) {
-				initialState[key] = filters[key].map(buildFilterItem);
-			}
-		});
-	});
-
-	return initialState;
-};
-
-const reducer = (state = {}, {filterKey, selectedItems}) => {
-	return {
-		...state,
-		[filterKey]: selectedItems
-	};
-};
-
-const useFilter = (filterKeys = [], prefixKeys = ['']) => {
-	const {filters: filterValues} = useRouterParams();
-	const {keys, titles} = useFiltersConstants(filterKeys);
-
-	const initialState = useMemo(
-		() => buildInitialState(keys, filterValues, prefixKeys),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+	const prefixedKeys = keys.reduce(
+		(keys, key) => [
+			...keys,
+			...prefixKeys.map((prefix) => getCapitalizedFilterKey(prefix, key)),
+		],
 		[]
 	);
 
-	const [filterState, dispatch] = useReducer(reducer, initialState);
+	const selectedFilters = useMemo(
+		() =>
+			getSelectedItems(
+				getFilterResults(
+					prefixedKeys,
+					pinnedValues,
+					titles,
+					filterState
+				)
+			),
 
-	const filterResults = useMemo(
-		() => getFilterResults(keys, titles, filterState),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filterState, filterValues]
+		[filterState]
 	);
 
-	const selectedFilters = useMemo(() => getSelectedItems(filterResults), [
-		filterResults
-	]);
-
-	return {dispatch, filterState, filterValues, selectedFilters};
+	return {
+		dispatch,
+		dispatchFilter,
+		filterState,
+		filterValues: withoutRouteParams ? filterValues : filters,
+		filtersError,
+		prefixedKeys,
+		selectedFilters,
+	};
 };
 
 export {useFilter};

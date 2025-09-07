@@ -1,7 +1,6 @@
 Bundle-Name: Liferay Export Import Web
 Bundle-SymbolicName: com.liferay.exportimport.web
-Bundle-Version: 4.0.0
-Liferay-JS-Config: /META-INF/resources/js/config.js
+Bundle-Version: 5.0.109
+Liferay-JS-Config: /META-INF/resources/js/legacy/config.js
 Web-ContextPath: /exportimport-web
 -dsannotations-options: inherit
--includeresource: content=../../staging/staging-lang/src/main/resources/content

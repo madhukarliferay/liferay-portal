@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.model;
@@ -40,7 +31,7 @@ public interface SiteFriendlyURLModel
 	extends BaseModel<SiteFriendlyURL>, MVCCModel, ShardedModel,
 			StagedGroupedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a site friendly url model instance should use the {@link SiteFriendlyURL} interface instead.
@@ -106,6 +97,22 @@ public interface SiteFriendlyURLModel
 	 * @param siteFriendlyURLId the site friendly url ID of this site friendly url
 	 */
 	public void setSiteFriendlyURLId(long siteFriendlyURLId);
+
+	/**
+	 * Returns the group ID of this site friendly url.
+	 *
+	 * @return the group ID of this site friendly url
+	 */
+	@Override
+	public long getGroupId();
+
+	/**
+	 * Sets the group ID of this site friendly url.
+	 *
+	 * @param groupId the group ID of this site friendly url
+	 */
+	@Override
+	public void setGroupId(long groupId);
 
 	/**
 	 * Returns the company ID of this site friendly url.
@@ -205,22 +212,6 @@ public interface SiteFriendlyURLModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
-	 * Returns the group ID of this site friendly url.
-	 *
-	 * @return the group ID of this site friendly url
-	 */
-	@Override
-	public long getGroupId();
-
-	/**
-	 * Sets the group ID of this site friendly url.
-	 *
-	 * @param groupId the group ID of this site friendly url
-	 */
-	@Override
-	public void setGroupId(long groupId);
-
-	/**
 	 * Returns the friendly url of this site friendly url.
 	 *
 	 * @return the friendly url of this site friendly url
@@ -265,5 +256,12 @@ public interface SiteFriendlyURLModel
 	 */
 	@Override
 	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public SiteFriendlyURL cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

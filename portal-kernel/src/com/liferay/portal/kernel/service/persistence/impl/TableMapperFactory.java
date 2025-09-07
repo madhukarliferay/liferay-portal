@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service.persistence.impl;
 
 import com.liferay.portal.kernel.internal.service.persistence.TableMapperImpl;
+import com.liferay.portal.kernel.internal.service.persistence.change.tracking.CTTableMapper;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -76,12 +69,25 @@ public class TableMapperFactory {
 		TableMapper<?, ?> tableMapper = _tableMappers.get(tableMapperKey);
 
 		if (tableMapper == null) {
-			tableMapper = new TableMapperImpl<>(
-				tableName, companyColumnName, leftColumnName, rightColumnName,
-				leftPersistence.getModelClass(),
-				rightPersistence.getModelClass(), leftPersistence,
-				rightPersistence,
-				_cachelessMappingTableNames.contains(tableName));
+			Class<L> leftModelClass = leftPersistence.getModelClass();
+			Class<R> rightModelClass = rightPersistence.getModelClass();
+
+			if (CTModel.class.isAssignableFrom(leftModelClass) &&
+				CTModel.class.isAssignableFrom(rightModelClass)) {
+
+				tableMapper = new CTTableMapper<>(
+					tableName, companyColumnName, leftColumnName,
+					rightColumnName, leftModelClass, rightModelClass,
+					leftPersistence, rightPersistence,
+					_cachelessMappingTableNames.contains(tableName));
+			}
+			else {
+				tableMapper = new TableMapperImpl<>(
+					tableName, companyColumnName, leftColumnName,
+					rightColumnName, leftModelClass, rightModelClass,
+					leftPersistence, rightPersistence,
+					_cachelessMappingTableNames.contains(tableName));
+			}
 
 			_tableMappers.put(tableMapperKey, tableMapper);
 		}

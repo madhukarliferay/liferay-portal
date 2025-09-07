@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.rest.resource.v2_0.test;
@@ -26,50 +17,76 @@ import com.liferay.data.engine.rest.client.dto.v2_0.DataRecordCollection;
 import com.liferay.data.engine.rest.client.http.HttpInvoker;
 import com.liferay.data.engine.rest.client.pagination.Page;
 import com.liferay.data.engine.rest.client.pagination.Pagination;
+import com.liferay.data.engine.rest.client.permission.Permission;
 import com.liferay.data.engine.rest.client.resource.v2_0.DataRecordCollectionResource;
 import com.liferay.data.engine.rest.client.serdes.v2_0.DataRecordCollectionSerDes;
+import com.liferay.headless.batch.engine.client.dto.v1_0.ImportTask;
+import com.liferay.headless.batch.engine.client.http.HttpInvoker.HttpResponse;
+import com.liferay.headless.batch.engine.client.resource.v1_0.ImportTaskResource;
+import com.liferay.oauth2.provider.scope.ScopeChecker;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegateBuilderRegistry;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
-import java.lang.reflect.InvocationTargetException;
+import jakarta.annotation.Generated;
 
-import java.text.DateFormat;
+import jakarta.servlet.http.HttpServletRequest;
+
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.PathSegment;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
+
+import java.lang.reflect.Method;
+
+import java.net.URI;
+
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Generated;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-
-import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.log4j.Level;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -78,6 +95,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 /**
  * @author Jeyvison Nascimento
@@ -88,12 +108,14 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 	@ClassRule
 	@Rule
-	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
-		new LiferayIntegrationTestRule();
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -107,10 +129,26 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 		_dataRecordCollectionResource.setContextCompany(testCompany);
 
-		DataRecordCollectionResource.Builder builder =
-			DataRecordCollectionResource.builder();
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
-		dataRecordCollectionResource = builder.locale(
+		dataRecordCollectionResource = DataRecordCollectionResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
 			LocaleUtil.getDefault()
 		).build();
 	}
@@ -123,21 +161,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 	@Test
 	public void testClientSerDesToDTO() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				enable(SerializationFeature.INDENT_OUTPUT);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
 
 		DataRecordCollection dataRecordCollection1 =
 			randomDataRecordCollection();
@@ -152,20 +176,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 	@Test
 	public void testClientSerDesToJSON() throws Exception {
-		ObjectMapper objectMapper = new ObjectMapper() {
-			{
-				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-				configure(
-					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
-				setDateFormat(new ISO8601DateFormat());
-				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-				setSerializationInclusion(JsonInclude.Include.NON_NULL);
-				setVisibility(
-					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-				setVisibility(
-					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-			}
-		};
+		ObjectMapper objectMapper = getClientSerDesObjectMapper();
 
 		DataRecordCollection dataRecordCollection =
 			randomDataRecordCollection();
@@ -175,6 +186,24 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 		Assert.assertEquals(
 			objectMapper.readTree(json1), objectMapper.readTree(json2));
+	}
+
+	protected ObjectMapper getClientSerDesObjectMapper() {
+		return new ObjectMapper() {
+			{
+				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+				configure(
+					SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
+				enable(SerializationFeature.INDENT_OUTPUT);
+				setDateFormat(new ISO8601DateFormat());
+				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+				setSerializationInclusion(JsonInclude.Include.NON_NULL);
+				setVisibility(
+					PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+				setVisibility(
+					PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
+			}
+		};
 	}
 
 	@Test
@@ -197,13 +226,173 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	}
 
 	@Test
+	public void testDeleteDataRecordCollection() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		DataRecordCollection dataRecordCollection =
+			testDeleteDataRecordCollection_addDataRecordCollection();
+
+		assertHttpResponseStatusCode(
+			204,
+			dataRecordCollectionResource.deleteDataRecordCollectionHttpResponse(
+				dataRecordCollection.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
+				dataRecordCollection.getId()));
+		assertHttpResponseStatusCode(
+			404,
+			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
+				0L));
+	}
+
+	protected DataRecordCollection
+			testDeleteDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLDeleteDataRecordCollection() throws Exception {
+
+		// No namespace
+
+		DataRecordCollection dataRecordCollection1 =
+			testGraphQLDeleteDataRecordCollection_addDataRecordCollection();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"deleteDataRecordCollection",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataRecordCollectionId",
+									dataRecordCollection1.getId());
+							}
+						})),
+				"JSONObject/data", "Object/deleteDataRecordCollection"));
+
+		JSONArray errorsJSONArray1 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"dataRecordCollection",
+					new HashMap<String, Object>() {
+						{
+							put(
+								"dataRecordCollectionId",
+								dataRecordCollection1.getId());
+						}
+					},
+					new GraphQLField("id"))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray1.length() > 0);
+
+		// Using the namespace dataEngine_v2_0
+
+		DataRecordCollection dataRecordCollection2 =
+			testGraphQLDeleteDataRecordCollection_addDataRecordCollection();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"deleteDataRecordCollection",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"dataRecordCollectionId",
+										dataRecordCollection2.getId());
+								}
+							}))),
+				"JSONObject/data", "JSONObject/dataEngine_v2_0",
+				"Object/deleteDataRecordCollection"));
+
+		JSONArray errorsJSONArray2 = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"dataEngine_v2_0",
+					new GraphQLField(
+						"dataRecordCollection",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataRecordCollectionId",
+									dataRecordCollection2.getId());
+							}
+						},
+						new GraphQLField("id")))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray2.length() > 0);
+	}
+
+	protected DataRecordCollection
+			testGraphQLDeleteDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		return testGraphQLDataRecordCollection_addDataRecordCollection();
+	}
+
+	@Test
+	public void testDeleteDataRecordCollectionBatch() throws Exception {
+		DataRecordCollection dataRecordCollection1 =
+			testDeleteDataRecordCollectionBatch_addDataRecordCollection();
+
+		testDeleteDataRecordCollectionBatch_deleteDataRecordCollection(
+			202, null, dataRecordCollection1.getId());
+
+		assertHttpResponseStatusCode(
+			404,
+			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
+				dataRecordCollection1.getId()));
+	}
+
+	protected DataRecordCollection
+			testDeleteDataRecordCollectionBatch_addDataRecordCollection()
+		throws Exception {
+
+		return testDeleteDataRecordCollection_addDataRecordCollection();
+	}
+
+	protected void
+			testDeleteDataRecordCollectionBatch_deleteDataRecordCollection(
+				int expectedStatusCode, String externalReferenceCode, Long id)
+		throws Exception {
+
+		HttpInvoker.HttpResponse httpResponse =
+			dataRecordCollectionResource.
+				deleteDataRecordCollectionBatchHttpResponse(
+					null,
+					JSONUtil.putAll(
+						JSONUtil.put(
+							"externalReferenceCode", () -> externalReferenceCode
+						).put(
+							"id", () -> id
+						)));
+
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
+
+		waitForFinish(
+			"COMPLETED",
+			JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+	}
+
+	@Test
 	public void testGetDataDefinitionDataRecordCollection() throws Exception {
 		DataRecordCollection postDataRecordCollection =
 			testGetDataDefinitionDataRecordCollection_addDataRecordCollection();
 
 		DataRecordCollection getDataRecordCollection =
 			dataRecordCollectionResource.getDataDefinitionDataRecordCollection(
-				postDataRecordCollection.getDataDefinitionId());
+				testGetDataDefinitionDataRecordCollection_getDataDefinitionId(
+					postDataRecordCollection));
 
 		assertEquals(postDataRecordCollection, getDataRecordCollection);
 		assertValid(getDataRecordCollection);
@@ -211,6 +400,15 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 	protected DataRecordCollection
 			testGetDataDefinitionDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		return testPostDataDefinitionDataRecordCollection_addDataRecordCollection(
+			randomDataRecordCollection());
+	}
+
+	protected Long
+			testGetDataDefinitionDataRecordCollection_getDataDefinitionId(
+				DataRecordCollection dataRecordCollection)
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -222,53 +420,135 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		throws Exception {
 
 		DataRecordCollection dataRecordCollection =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
+			testGraphQLGetDataDefinitionDataRecordCollection_addDataRecordCollection();
 
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"dataDefinitionDataRecordCollection",
-				new HashMap<String, Object>() {
-					{
-						put(
-							"dataDefinitionId",
-							dataRecordCollection.getDataDefinitionId());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
+		// No namespace
 
 		Assert.assertTrue(
-			equalsJSONObject(
+			equals(
 				dataRecordCollection,
-				dataJSONObject.getJSONObject(
-					"dataDefinitionDataRecordCollection")));
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataDefinitionDataRecordCollection",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"dataDefinitionId",
+											testGraphQLGetDataDefinitionDataRecordCollection_getDataDefinitionId(
+												dataRecordCollection));
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/dataDefinitionDataRecordCollection"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataRecordCollection,
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataDefinitionDataRecordCollection",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"dataDefinitionId",
+												testGraphQLGetDataDefinitionDataRecordCollection_getDataDefinitionId(
+													dataRecordCollection));
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataDefinitionDataRecordCollection"))));
+	}
+
+	protected Long
+			testGraphQLGetDataDefinitionDataRecordCollection_getDataDefinitionId(
+				DataRecordCollection dataRecordCollection)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetDataDefinitionDataRecordCollectionNotFound()
+		throws Exception {
+
+		Long irrelevantDataDefinitionId = RandomTestUtil.randomLong();
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataDefinitionDataRecordCollection",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataDefinitionId",
+									irrelevantDataDefinitionId);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataDefinitionDataRecordCollection",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"dataDefinitionId",
+										irrelevantDataDefinitionId);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataRecordCollection
+			testGraphQLGetDataDefinitionDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		return testGraphQLDataRecordCollection_addDataRecordCollection();
 	}
 
 	@Test
 	public void testGetDataDefinitionDataRecordCollectionsPage()
 		throws Exception {
 
-		Page<DataRecordCollection> page =
-			dataRecordCollectionResource.
-				getDataDefinitionDataRecordCollectionsPage(
-					testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId(),
-					RandomTestUtil.randomString(), Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long dataDefinitionId =
 			testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId();
 		Long irrelevantDataDefinitionId =
 			testGetDataDefinitionDataRecordCollectionsPage_getIrrelevantDataDefinitionId();
 
-		if ((irrelevantDataDefinitionId != null)) {
+		Page<DataRecordCollection> page =
+			dataRecordCollectionResource.
+				getDataDefinitionDataRecordCollectionsPage(
+					dataDefinitionId, null, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantDataDefinitionId != null) {
 			DataRecordCollection irrelevantDataRecordCollection =
 				testGetDataDefinitionDataRecordCollectionsPage_addDataRecordCollection(
 					irrelevantDataDefinitionId,
@@ -277,14 +557,18 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			page =
 				dataRecordCollectionResource.
 					getDataDefinitionDataRecordCollectionsPage(
-						irrelevantDataDefinitionId, null, Pagination.of(1, 2));
+						irrelevantDataDefinitionId, null,
+						Pagination.of(1, (int)totalCount + 1));
 
-			Assert.assertEquals(1, page.getTotalCount());
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
 
-			assertEquals(
-				Arrays.asList(irrelevantDataRecordCollection),
+			assertContains(
+				irrelevantDataRecordCollection,
 				(List<DataRecordCollection>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetDataDefinitionDataRecordCollectionsPage_getExpectedActions(
+					irrelevantDataDefinitionId));
 		}
 
 		DataRecordCollection dataRecordCollection1 =
@@ -298,14 +582,18 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		page =
 			dataRecordCollectionResource.
 				getDataDefinitionDataRecordCollectionsPage(
-					dataDefinitionId, null, Pagination.of(1, 2));
+					dataDefinitionId, null, Pagination.of(1, 10));
 
-		Assert.assertEquals(2, page.getTotalCount());
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataRecordCollection1, dataRecordCollection2),
-			(List<DataRecordCollection>)page.getItems());
-		assertValid(page);
+		assertContains(
+			dataRecordCollection1, (List<DataRecordCollection>)page.getItems());
+		assertContains(
+			dataRecordCollection2, (List<DataRecordCollection>)page.getItems());
+		assertValid(
+			page,
+			testGetDataDefinitionDataRecordCollectionsPage_getExpectedActions(
+				dataDefinitionId));
 
 		dataRecordCollectionResource.deleteDataRecordCollection(
 			dataRecordCollection1.getId());
@@ -314,12 +602,40 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			dataRecordCollection2.getId());
 	}
 
+	protected Map<String, Map<String, String>>
+			testGetDataDefinitionDataRecordCollectionsPage_getExpectedActions(
+				Long dataDefinitionId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/data-engine/v2.0/data-definitions/{dataDefinitionId}/data-record-collections/batch".
+				replace(
+					"{dataDefinitionId}", String.valueOf(dataDefinitionId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
+	}
+
 	@Test
 	public void testGetDataDefinitionDataRecordCollectionsPageWithPagination()
 		throws Exception {
 
 		Long dataDefinitionId =
 			testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId();
+
+		Page<DataRecordCollection> dataRecordCollectionsPage =
+			dataRecordCollectionResource.
+				getDataDefinitionDataRecordCollectionsPage(
+					dataDefinitionId, null, null);
+
+		int totalCount = GetterUtil.getInteger(
+			dataRecordCollectionsPage.getTotalCount());
 
 		DataRecordCollection dataRecordCollection1 =
 			testGetDataDefinitionDataRecordCollectionsPage_addDataRecordCollection(
@@ -333,42 +649,94 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			testGetDataDefinitionDataRecordCollectionsPage_addDataRecordCollection(
 				dataDefinitionId, randomDataRecordCollection());
 
-		Page<DataRecordCollection> page1 =
-			dataRecordCollectionResource.
-				getDataDefinitionDataRecordCollectionsPage(
-					dataDefinitionId, null, Pagination.of(1, 2));
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
 
-		List<DataRecordCollection> dataRecordCollections1 =
-			(List<DataRecordCollection>)page1.getItems();
+		int pageSizeLimit = 500;
 
-		Assert.assertEquals(
-			dataRecordCollections1.toString(), 2,
-			dataRecordCollections1.size());
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<DataRecordCollection> page1 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+							pageSizeLimit));
 
-		Page<DataRecordCollection> page2 =
-			dataRecordCollectionResource.
-				getDataDefinitionDataRecordCollectionsPage(
-					dataDefinitionId, null, Pagination.of(2, 2));
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
 
-		Assert.assertEquals(3, page2.getTotalCount());
+			assertContains(
+				dataRecordCollection1,
+				(List<DataRecordCollection>)page1.getItems());
 
-		List<DataRecordCollection> dataRecordCollections2 =
-			(List<DataRecordCollection>)page2.getItems();
+			Page<DataRecordCollection> page2 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+							pageSizeLimit));
 
-		Assert.assertEquals(
-			dataRecordCollections2.toString(), 1,
-			dataRecordCollections2.size());
+			assertContains(
+				dataRecordCollection2,
+				(List<DataRecordCollection>)page2.getItems());
 
-		Page<DataRecordCollection> page3 =
-			dataRecordCollectionResource.
-				getDataDefinitionDataRecordCollectionsPage(
-					dataDefinitionId, null, Pagination.of(1, 3));
+			Page<DataRecordCollection> page3 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(
+							(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+							pageSizeLimit));
 
-		assertEqualsIgnoringOrder(
-			Arrays.asList(
-				dataRecordCollection1, dataRecordCollection2,
-				dataRecordCollection3),
-			(List<DataRecordCollection>)page3.getItems());
+			assertContains(
+				dataRecordCollection3,
+				(List<DataRecordCollection>)page3.getItems());
+		}
+		else {
+			Page<DataRecordCollection> page1 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(1, totalCount + 2));
+
+			List<DataRecordCollection> dataRecordCollections1 =
+				(List<DataRecordCollection>)page1.getItems();
+
+			Assert.assertEquals(
+				dataRecordCollections1.toString(), totalCount + 2,
+				dataRecordCollections1.size());
+
+			Page<DataRecordCollection> page2 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<DataRecordCollection> dataRecordCollections2 =
+				(List<DataRecordCollection>)page2.getItems();
+
+			Assert.assertEquals(
+				dataRecordCollections2.toString(), 1,
+				dataRecordCollections2.size());
+
+			Page<DataRecordCollection> page3 =
+				dataRecordCollectionResource.
+					getDataDefinitionDataRecordCollectionsPage(
+						dataDefinitionId, null,
+						Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(
+				dataRecordCollection1,
+				(List<DataRecordCollection>)page3.getItems());
+			assertContains(
+				dataRecordCollection2,
+				(List<DataRecordCollection>)page3.getItems());
+			assertContains(
+				dataRecordCollection3,
+				(List<DataRecordCollection>)page3.getItems());
+		}
 	}
 
 	protected DataRecordCollection
@@ -398,6 +766,504 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	}
 
 	@Test
+	public void testGetDataRecordCollection() throws Exception {
+		DataRecordCollection postDataRecordCollection =
+			testGetDataRecordCollection_addDataRecordCollection();
+
+		DataRecordCollection getDataRecordCollection =
+			dataRecordCollectionResource.getDataRecordCollection(
+				postDataRecordCollection.getId());
+
+		assertEquals(postDataRecordCollection, getDataRecordCollection);
+		assertValid(getDataRecordCollection);
+	}
+
+	@Test
+	public void testVulcanCRUDItemDelegateGetItem() throws Exception {
+		DataRecordCollection postDataRecordCollection =
+			testGetDataRecordCollection_addDataRecordCollection();
+
+		DataRecordCollection getDataRecordCollection =
+			dataRecordCollectionResource.getDataRecordCollection(
+				postDataRecordCollection.getId());
+
+		VulcanCRUDItemDelegate vulcanCRUDItemDelegate =
+			_vulcanCRUDItemDelegateBuilderRegistry.builder(
+				testCompany,
+				"com.liferay.data.engine.rest.dto.v2_0.DataRecordCollection"
+			).acceptLanguage(
+				new AcceptLanguage() {
+
+					@Override
+					public List<Locale> getLocales() {
+						return Arrays.asList(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public String getPreferredLanguageId() {
+						return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+					}
+
+					@Override
+					public Locale getPreferredLocale() {
+						return LocaleUtil.getDefault();
+					}
+
+				}
+			).groupLocalService(
+				_groupLocalService
+			).httpServletRequest(
+				testVulcanCRUDItemDelegate_getHttpServletRequest()
+			).httpServletResponse(
+				new MockHttpServletResponse()
+			).resourceActionLocalService(
+				_resourceActionLocalService
+			).resourcePermissionLocalService(
+				_resourcePermissionLocalService
+			).roleLocalService(
+				_roleLocalService
+			).scopeChecker(
+				_scopeChecker
+			).uriInfo(
+				testVulcanCRUDItemDelegate_getUriInfo()
+			).user(
+				testVulcanCRUDItemDelegate_getUser()
+			).build();
+
+		Object item = vulcanCRUDItemDelegate.getItem(
+			postDataRecordCollection.getId());
+
+		assertEquals(
+			getDataRecordCollection,
+			DataRecordCollectionSerDes.toDTO(item.toString()));
+	}
+
+	protected HttpServletRequest
+		testVulcanCRUDItemDelegate_getHttpServletRequest() {
+
+		return new MockHttpServletRequest() {
+
+			@Override
+			public StringBuffer getRequestURL() {
+				return new StringBuffer(
+					StringBundler.concat(
+						"http://localhost:8080/o/v1.0/",
+						RandomTestUtil.randomString(), "/",
+						RandomTestUtil.randomString()));
+			}
+
+		};
+	}
+
+	protected UriInfo testVulcanCRUDItemDelegate_getUriInfo() {
+		String applicationPath = RandomTestUtil.randomString() + "/";
+		String resourcePath = RandomTestUtil.randomString();
+
+		return new UriInfo() {
+
+			@Override
+			public String getPath() {
+				return resourcePath;
+			}
+
+			@Override
+			public String getPath(boolean decode) {
+				return getPath();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<PathSegment> getPathSegments(boolean decode) {
+				return getPathSegments();
+			}
+
+			@Override
+			public URI getRequestUri() {
+				return URI.create(
+					"http://localhost:8080/o/" + applicationPath +
+						resourcePath);
+			}
+
+			@Override
+			public UriBuilder getRequestUriBuilder() {
+				return UriBuilder.fromUri(getRequestUri());
+			}
+
+			@Override
+			public URI getAbsolutePath() {
+				return getRequestUri();
+			}
+
+			@Override
+			public UriBuilder getAbsolutePathBuilder() {
+				return getRequestUriBuilder();
+			}
+
+			@Override
+			public URI getBaseUri() {
+				return URI.create("http://localhost:8080/o/" + applicationPath);
+			}
+
+			@Override
+			public UriBuilder getBaseUriBuilder() {
+				return UriBuilder.fromUri(getBaseUri());
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getPathParameters(
+				boolean decode) {
+
+				return getPathParameters();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters() {
+				return new MultivaluedHashMap<>();
+			}
+
+			@Override
+			public MultivaluedMap<String, String> getQueryParameters(
+				boolean decode) {
+
+				return getQueryParameters();
+			}
+
+			@Override
+			public List<String> getMatchedURIs() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public List<String> getMatchedURIs(boolean decode) {
+				return getMatchedURIs();
+			}
+
+			@Override
+			public List<Object> getMatchedResources() {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public URI resolve(URI requestUri) {
+				return getBaseUri().resolve(requestUri);
+			}
+
+			@Override
+			public URI relativize(URI uri) {
+				return getBaseUri().relativize(uri);
+			}
+
+		};
+	}
+
+	protected com.liferay.portal.kernel.model.User
+		testVulcanCRUDItemDelegate_getUser() {
+
+		return _testCompanyAdminUser;
+	}
+
+	protected DataRecordCollection
+			testGetDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetDataRecordCollection() throws Exception {
+		DataRecordCollection dataRecordCollection =
+			testGraphQLGetDataRecordCollection_addDataRecordCollection();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				dataRecordCollection,
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataRecordCollection",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"dataRecordCollectionId",
+											dataRecordCollection.getId());
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data", "Object/dataRecordCollection"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataRecordCollection,
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataRecordCollection",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"dataRecordCollectionId",
+												dataRecordCollection.getId());
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataRecordCollection"))));
+	}
+
+	@Test
+	public void testGraphQLGetDataRecordCollectionNotFound() throws Exception {
+		Long irrelevantDataRecordCollectionId = RandomTestUtil.randomLong();
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataRecordCollection",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"dataRecordCollectionId",
+									irrelevantDataRecordCollectionId);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataRecordCollection",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"dataRecordCollectionId",
+										irrelevantDataRecordCollectionId);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataRecordCollection
+			testGraphQLGetDataRecordCollection_addDataRecordCollection()
+		throws Exception {
+
+		return testGraphQLDataRecordCollection_addDataRecordCollection();
+	}
+
+	@Test
+	public void testGetDataRecordCollectionPermissionByCurrentUser()
+		throws Exception {
+
+		Assert.assertTrue(false);
+	}
+
+	@Test
+	public void testGetDataRecordCollectionPermissionsPage() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		DataRecordCollection postDataRecordCollection =
+			testGetDataRecordCollectionPermissionsPage_addDataRecordCollection();
+
+		Page<Permission> page =
+			dataRecordCollectionResource.getDataRecordCollectionPermissionsPage(
+				postDataRecordCollection.getId(), RoleConstants.GUEST);
+
+		Assert.assertNotNull(page);
+	}
+
+	protected DataRecordCollection
+			testGetDataRecordCollectionPermissionsPage_addDataRecordCollection()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetSiteDataRecordCollectionByDataRecordCollectionKey()
+		throws Exception {
+
+		DataRecordCollection postDataRecordCollection =
+			testGetSiteDataRecordCollectionByDataRecordCollectionKey_addDataRecordCollection();
+
+		DataRecordCollection getDataRecordCollection =
+			dataRecordCollectionResource.
+				getSiteDataRecordCollectionByDataRecordCollectionKey(
+					postDataRecordCollection.getSiteId(),
+					postDataRecordCollection.getDataRecordCollectionKey());
+
+		assertEquals(postDataRecordCollection, getDataRecordCollection);
+		assertValid(getDataRecordCollection);
+	}
+
+	protected DataRecordCollection
+			testGetSiteDataRecordCollectionByDataRecordCollectionKey_addDataRecordCollection()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataRecordCollectionByDataRecordCollectionKey()
+		throws Exception {
+
+		DataRecordCollection dataRecordCollection =
+			testGraphQLGetSiteDataRecordCollectionByDataRecordCollectionKey_addDataRecordCollection();
+
+		// No namespace
+
+		Assert.assertTrue(
+			equals(
+				dataRecordCollection,
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataRecordCollectionByDataRecordCollectionKey",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"siteKey",
+											"\"" +
+												dataRecordCollection.
+													getSiteId() + "\"");
+										put(
+											"dataRecordCollectionKey",
+											"\"" +
+												dataRecordCollection.
+													getDataRecordCollectionKey() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/dataRecordCollectionByDataRecordCollectionKey"))));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertTrue(
+			equals(
+				dataRecordCollection,
+				DataRecordCollectionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"dataEngine_v2_0",
+								new GraphQLField(
+									"dataRecordCollectionByDataRecordCollectionKey",
+									new HashMap<String, Object>() {
+										{
+											put(
+												"siteKey",
+												"\"" +
+													dataRecordCollection.
+														getSiteId() + "\"");
+											put(
+												"dataRecordCollectionKey",
+												"\"" +
+													dataRecordCollection.
+														getDataRecordCollectionKey() +
+															"\"");
+										}
+									},
+									getGraphQLFields()))),
+						"JSONObject/data", "JSONObject/dataEngine_v2_0",
+						"Object/dataRecordCollectionByDataRecordCollectionKey"))));
+	}
+
+	@Test
+	public void testGraphQLGetSiteDataRecordCollectionByDataRecordCollectionKeyNotFound()
+		throws Exception {
+
+		String irrelevantDataRecordCollectionKey =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		// No namespace
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataRecordCollectionByDataRecordCollectionKey",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"siteKey",
+									"\"" + irrelevantGroup.getGroupId() + "\"");
+								put(
+									"dataRecordCollectionKey",
+									irrelevantDataRecordCollectionKey);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+
+		// Using the namespace dataEngine_v2_0
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"dataEngine_v2_0",
+						new GraphQLField(
+							"dataRecordCollectionByDataRecordCollectionKey",
+							new HashMap<String, Object>() {
+								{
+									put(
+										"siteKey",
+										"\"" + irrelevantGroup.getGroupId() +
+											"\"");
+									put(
+										"dataRecordCollectionKey",
+										irrelevantDataRecordCollectionKey);
+								}
+							},
+							getGraphQLFields()))),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected DataRecordCollection
+			testGraphQLGetSiteDataRecordCollectionByDataRecordCollectionKey_addDataRecordCollection()
+		throws Exception {
+
+		return testGraphQLDataRecordCollection_addDataRecordCollection();
+	}
+
+	@Test
 	public void testPostDataDefinitionDataRecordCollection() throws Exception {
 		DataRecordCollection randomDataRecordCollection =
 			randomDataRecordCollection();
@@ -419,139 +1285,6 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			postDataDefinitionDataRecordCollection(
 				testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId(),
 				dataRecordCollection);
-	}
-
-	@Test
-	public void testDeleteDataRecordCollection() throws Exception {
-		DataRecordCollection dataRecordCollection =
-			testDeleteDataRecordCollection_addDataRecordCollection();
-
-		assertHttpResponseStatusCode(
-			204,
-			dataRecordCollectionResource.deleteDataRecordCollectionHttpResponse(
-				dataRecordCollection.getId()));
-
-		assertHttpResponseStatusCode(
-			404,
-			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
-				dataRecordCollection.getId()));
-
-		assertHttpResponseStatusCode(
-			404,
-			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
-				0L));
-	}
-
-	protected DataRecordCollection
-			testDeleteDataRecordCollection_addDataRecordCollection()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testGraphQLDeleteDataRecordCollection() throws Exception {
-		DataRecordCollection dataRecordCollection =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"mutation",
-			new GraphQLField(
-				"deleteDataRecordCollection",
-				new HashMap<String, Object>() {
-					{
-						put(
-							"dataRecordCollectionId",
-							dataRecordCollection.getId());
-					}
-				}));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		Assert.assertTrue(
-			dataJSONObject.getBoolean("deleteDataRecordCollection"));
-
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"graphql.execution.SimpleDataFetcherExceptionHandler",
-					Level.WARN)) {
-
-			graphQLField = new GraphQLField(
-				"query",
-				new GraphQLField(
-					"dataRecordCollection",
-					new HashMap<String, Object>() {
-						{
-							put(
-								"dataRecordCollectionId",
-								dataRecordCollection.getId());
-						}
-					},
-					new GraphQLField("id")));
-
-			jsonObject = JSONFactoryUtil.createJSONObject(
-				invoke(graphQLField.toString()));
-
-			JSONArray errorsJSONArray = jsonObject.getJSONArray("errors");
-
-			Assert.assertTrue(errorsJSONArray.length() > 0);
-		}
-	}
-
-	@Test
-	public void testGetDataRecordCollection() throws Exception {
-		DataRecordCollection postDataRecordCollection =
-			testGetDataRecordCollection_addDataRecordCollection();
-
-		DataRecordCollection getDataRecordCollection =
-			dataRecordCollectionResource.getDataRecordCollection(
-				postDataRecordCollection.getId());
-
-		assertEquals(postDataRecordCollection, getDataRecordCollection);
-		assertValid(getDataRecordCollection);
-	}
-
-	protected DataRecordCollection
-			testGetDataRecordCollection_addDataRecordCollection()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testGraphQLGetDataRecordCollection() throws Exception {
-		DataRecordCollection dataRecordCollection =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
-
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"dataRecordCollection",
-				new HashMap<String, Object>() {
-					{
-						put(
-							"dataRecordCollectionId",
-							dataRecordCollection.getId());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		Assert.assertTrue(
-			equalsJSONObject(
-				dataRecordCollection,
-				dataJSONObject.getJSONObject("dataRecordCollection")));
 	}
 
 	@Test
@@ -586,28 +1319,46 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	}
 
 	@Test
-	public void testPostDataRecordCollectionDataRecordCollectionPermission()
-		throws Exception {
-
+	public void testPutDataRecordCollectionPermissionsPage() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		DataRecordCollection dataRecordCollection =
-			testPostDataRecordCollectionDataRecordCollectionPermission_addDataRecordCollection();
+			testPutDataRecordCollectionPermissionsPage_addDataRecordCollection();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		com.liferay.portal.kernel.model.Role role = RoleTestUtil.addRole(
+			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
+			200,
 			dataRecordCollectionResource.
-				postDataRecordCollectionDataRecordCollectionPermissionHttpResponse(
-					dataRecordCollection.getId(), null, null));
+				putDataRecordCollectionPermissionsPageHttpResponse(
+					dataRecordCollection.getId(),
+					new Permission[] {
+						new Permission() {
+							{
+								setActionIds(new String[] {"VIEW"});
+								setRoleName(role.getName());
+							}
+						}
+					}));
 
 		assertHttpResponseStatusCode(
 			404,
 			dataRecordCollectionResource.
-				postDataRecordCollectionDataRecordCollectionPermissionHttpResponse(
-					0L, null, null));
+				putDataRecordCollectionPermissionsPageHttpResponse(
+					0L,
+					new Permission[] {
+						new Permission() {
+							{
+								setActionIds(new String[] {"-"});
+								setRoleName("-");
+							}
+						}
+					}));
 	}
 
 	protected DataRecordCollection
-			testPostDataRecordCollectionDataRecordCollectionPermission_addDataRecordCollection()
+			testPutDataRecordCollectionPermissionsPage_addDataRecordCollection()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -615,271 +1366,59 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	}
 
 	@Test
-	public void testPostSiteDataRecordCollectionPermission() throws Exception {
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		DataRecordCollection dataRecordCollection =
-			testPostSiteDataRecordCollectionPermission_addDataRecordCollection();
+	public void testBatchEngineDeleteImportTask() throws Exception {
+		DataRecordCollection dataRecordCollection1 =
+			testBatchEngineDeleteImportTask_addDataRecordCollection();
 
-		assertHttpResponseStatusCode(
-			204,
-			dataRecordCollectionResource.
-				postSiteDataRecordCollectionPermissionHttpResponse(
-					null, null, null));
+		testBatchEngineDeleteImportTask_deleteDataRecordCollection(
+			200, null, dataRecordCollection1.getId());
 
 		assertHttpResponseStatusCode(
 			404,
-			dataRecordCollectionResource.
-				postSiteDataRecordCollectionPermissionHttpResponse(
-					null, null, null));
+			dataRecordCollectionResource.getDataRecordCollectionHttpResponse(
+				dataRecordCollection1.getId()));
 	}
 
 	protected DataRecordCollection
-			testPostSiteDataRecordCollectionPermission_addDataRecordCollection()
+			testBatchEngineDeleteImportTask_addDataRecordCollection()
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		return testDeleteDataRecordCollection_addDataRecordCollection();
 	}
 
-	@Test
-	public void testGetSiteDataRecordCollectionsPage() throws Exception {
-		Page<DataRecordCollection> page =
-			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-				testGetSiteDataRecordCollectionsPage_getSiteId(),
-				RandomTestUtil.randomString(), Pagination.of(1, 2));
+	protected void testBatchEngineDeleteImportTask_deleteDataRecordCollection(
+			int expectedStatusCode, String externalReferenceCode, Long id,
+			String... parameters)
+		throws Exception {
 
-		Assert.assertEquals(0, page.getTotalCount());
+		ImportTaskResource importTaskResource = ImportTaskResource.builder(
+		).authentication(
+			_testCompanyAdminUser.getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).parameters(
+			parameters
+		).build();
 
-		Long siteId = testGetSiteDataRecordCollectionsPage_getSiteId();
-		Long irrelevantSiteId =
-			testGetSiteDataRecordCollectionsPage_getIrrelevantSiteId();
+		HttpResponse httpResponse =
+			importTaskResource.deleteImportTaskHttpResponse(
+				"com.liferay.data.engine.rest.dto.v2_0.DataRecordCollection",
+				null, null, null, null,
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"externalReferenceCode", () -> externalReferenceCode
+					).put(
+						"id", () -> id
+					)));
 
-		if ((irrelevantSiteId != null)) {
-			DataRecordCollection irrelevantDataRecordCollection =
-				testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-					irrelevantSiteId, randomIrrelevantDataRecordCollection());
+		Assert.assertEquals(expectedStatusCode, httpResponse.getStatusCode());
 
-			page =
-				dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-					irrelevantSiteId, null, Pagination.of(1, 2));
-
-			Assert.assertEquals(1, page.getTotalCount());
-
-			assertEquals(
-				Arrays.asList(irrelevantDataRecordCollection),
-				(List<DataRecordCollection>)page.getItems());
-			assertValid(page);
+		if (expectedStatusCode == 200) {
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
 		}
-
-		DataRecordCollection dataRecordCollection1 =
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, randomDataRecordCollection());
-
-		DataRecordCollection dataRecordCollection2 =
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, randomDataRecordCollection());
-
-		page = dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-			siteId, null, Pagination.of(1, 2));
-
-		Assert.assertEquals(2, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataRecordCollection1, dataRecordCollection2),
-			(List<DataRecordCollection>)page.getItems());
-		assertValid(page);
-
-		dataRecordCollectionResource.deleteDataRecordCollection(
-			dataRecordCollection1.getId());
-
-		dataRecordCollectionResource.deleteDataRecordCollection(
-			dataRecordCollection2.getId());
-	}
-
-	@Test
-	public void testGetSiteDataRecordCollectionsPageWithPagination()
-		throws Exception {
-
-		Long siteId = testGetSiteDataRecordCollectionsPage_getSiteId();
-
-		DataRecordCollection dataRecordCollection1 =
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, randomDataRecordCollection());
-
-		DataRecordCollection dataRecordCollection2 =
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, randomDataRecordCollection());
-
-		DataRecordCollection dataRecordCollection3 =
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, randomDataRecordCollection());
-
-		Page<DataRecordCollection> page1 =
-			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-				siteId, null, Pagination.of(1, 2));
-
-		List<DataRecordCollection> dataRecordCollections1 =
-			(List<DataRecordCollection>)page1.getItems();
-
-		Assert.assertEquals(
-			dataRecordCollections1.toString(), 2,
-			dataRecordCollections1.size());
-
-		Page<DataRecordCollection> page2 =
-			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-				siteId, null, Pagination.of(2, 2));
-
-		Assert.assertEquals(3, page2.getTotalCount());
-
-		List<DataRecordCollection> dataRecordCollections2 =
-			(List<DataRecordCollection>)page2.getItems();
-
-		Assert.assertEquals(
-			dataRecordCollections2.toString(), 1,
-			dataRecordCollections2.size());
-
-		Page<DataRecordCollection> page3 =
-			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-				siteId, null, Pagination.of(1, 3));
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(
-				dataRecordCollection1, dataRecordCollection2,
-				dataRecordCollection3),
-			(List<DataRecordCollection>)page3.getItems());
-	}
-
-	protected DataRecordCollection
-			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				Long siteId, DataRecordCollection dataRecordCollection)
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected Long testGetSiteDataRecordCollectionsPage_getSiteId()
-		throws Exception {
-
-		return testGroup.getGroupId();
-	}
-
-	protected Long testGetSiteDataRecordCollectionsPage_getIrrelevantSiteId()
-		throws Exception {
-
-		return irrelevantGroup.getGroupId();
-	}
-
-	@Test
-	public void testGraphQLGetSiteDataRecordCollectionsPage() throws Exception {
-		List<GraphQLField> graphQLFields = new ArrayList<>();
-
-		List<GraphQLField> itemsGraphQLFields = getGraphQLFields();
-
-		graphQLFields.add(
-			new GraphQLField(
-				"items", itemsGraphQLFields.toArray(new GraphQLField[0])));
-
-		graphQLFields.add(new GraphQLField("page"));
-		graphQLFields.add(new GraphQLField("totalCount"));
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"dataRecordCollections",
-				new HashMap<String, Object>() {
-					{
-						put("page", 1);
-						put("pageSize", 2);
-						put("siteKey", "\"" + testGroup.getGroupId() + "\"");
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		JSONObject dataRecordCollectionsJSONObject =
-			dataJSONObject.getJSONObject("dataRecordCollections");
-
-		Assert.assertEquals(
-			0, dataRecordCollectionsJSONObject.get("totalCount"));
-
-		DataRecordCollection dataRecordCollection1 =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
-		DataRecordCollection dataRecordCollection2 =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
-
-		jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		dataJSONObject = jsonObject.getJSONObject("data");
-
-		dataRecordCollectionsJSONObject = dataJSONObject.getJSONObject(
-			"dataRecordCollections");
-
-		Assert.assertEquals(
-			2, dataRecordCollectionsJSONObject.get("totalCount"));
-
-		assertEqualsJSONArray(
-			Arrays.asList(dataRecordCollection1, dataRecordCollection2),
-			dataRecordCollectionsJSONObject.getJSONArray("items"));
-	}
-
-	@Test
-	public void testGetSiteDataRecordCollection() throws Exception {
-		DataRecordCollection postDataRecordCollection =
-			testGetSiteDataRecordCollection_addDataRecordCollection();
-
-		DataRecordCollection getDataRecordCollection =
-			dataRecordCollectionResource.getSiteDataRecordCollection(
-				postDataRecordCollection.getSiteId(),
-				postDataRecordCollection.getDataRecordCollectionKey());
-
-		assertEquals(postDataRecordCollection, getDataRecordCollection);
-		assertValid(getDataRecordCollection);
-	}
-
-	protected DataRecordCollection
-			testGetSiteDataRecordCollection_addDataRecordCollection()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testGraphQLGetSiteDataRecordCollection() throws Exception {
-		DataRecordCollection dataRecordCollection =
-			testGraphQLDataRecordCollection_addDataRecordCollection();
-
-		List<GraphQLField> graphQLFields = getGraphQLFields();
-
-		GraphQLField graphQLField = new GraphQLField(
-			"query",
-			new GraphQLField(
-				"siteDataRecordCollection",
-				new HashMap<String, Object>() {
-					{
-						put("siteId", dataRecordCollection.getSiteId());
-						put(
-							"dataRecordCollectionKey",
-							dataRecordCollection.getDataRecordCollectionKey());
-					}
-				},
-				graphQLFields.toArray(new GraphQLField[0])));
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			invoke(graphQLField.toString()));
-
-		JSONObject dataJSONObject = jsonObject.getJSONObject("data");
-
-		Assert.assertTrue(
-			equalsJSONObject(
-				dataRecordCollection,
-				dataJSONObject.getJSONObject("siteDataRecordCollection")));
 	}
 
 	protected DataRecordCollection
@@ -888,6 +1427,25 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
+	}
+
+	protected void assertContains(
+		DataRecordCollection dataRecordCollection,
+		List<DataRecordCollection> dataRecordCollections) {
+
+		boolean contains = false;
+
+		for (DataRecordCollection item : dataRecordCollections) {
+			if (equals(dataRecordCollection, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			dataRecordCollections + " does not contain " + dataRecordCollection,
+			contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -953,31 +1511,9 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		}
 	}
 
-	protected void assertEqualsJSONArray(
-		List<DataRecordCollection> dataRecordCollections, JSONArray jsonArray) {
+	protected void assertValid(DataRecordCollection dataRecordCollection)
+		throws Exception {
 
-		for (DataRecordCollection dataRecordCollection :
-				dataRecordCollections) {
-
-			boolean contains = false;
-
-			for (Object object : jsonArray) {
-				if (equalsJSONObject(
-						dataRecordCollection, (JSONObject)object)) {
-
-					contains = true;
-
-					break;
-				}
-			}
-
-			Assert.assertTrue(
-				jsonArray + " does not contain " + dataRecordCollection,
-				contains);
-		}
-	}
-
-	protected void assertValid(DataRecordCollection dataRecordCollection) {
 		boolean valid = true;
 
 		if (dataRecordCollection.getId() == null) {
@@ -1036,6 +1572,13 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	}
 
 	protected void assertValid(Page<DataRecordCollection> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<DataRecordCollection> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<DataRecordCollection> dataRecordCollections =
@@ -1051,19 +1594,78 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		assertValid(page.getActions(), expectedActions);
+	}
+
+	protected void assertValid(
+		Map<String, Map<String, String>> actions1,
+		Map<String, Map<String, String>> actions2) {
+
+		for (String key : actions2.keySet()) {
+			Map action = actions1.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map<String, String> expectedAction = actions2.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[0];
 	}
 
-	protected List<GraphQLField> getGraphQLFields() {
+	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
-		for (String additionalAssertFieldName :
-				getAdditionalAssertFieldNames()) {
+		graphQLFields.add(new GraphQLField("siteId"));
 
-			graphQLFields.add(new GraphQLField(additionalAssertFieldName));
+		for (java.lang.reflect.Field field :
+				getDeclaredFields(
+					com.liferay.data.engine.rest.dto.v2_0.DataRecordCollection.
+						class)) {
+
+			if (!ArrayUtil.contains(
+					getAdditionalAssertFieldNames(), field.getName())) {
+
+				continue;
+			}
+
+			graphQLFields.addAll(getGraphQLFields(field));
+		}
+
+		return graphQLFields;
+	}
+
+	protected List<GraphQLField> getGraphQLFields(
+			java.lang.reflect.Field... fields)
+		throws Exception {
+
+		List<GraphQLField> graphQLFields = new ArrayList<>();
+
+		for (java.lang.reflect.Field field : fields) {
+			com.liferay.portal.vulcan.graphql.annotation.GraphQLField
+				vulcanGraphQLField = field.getAnnotation(
+					com.liferay.portal.vulcan.graphql.annotation.GraphQLField.
+						class);
+
+			if (vulcanGraphQLField != null) {
+				Class<?> clazz = field.getType();
+
+				if (clazz.isArray()) {
+					clazz = clazz.getComponentType();
+				}
+
+				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
+					getDeclaredFields(clazz));
+
+				graphQLFields.add(
+					new GraphQLField(field.getName(), childrenGraphQLFields));
+			}
 		}
 
 		return graphQLFields;
@@ -1116,9 +1718,9 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			}
 
 			if (Objects.equals("description", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(
-						dataRecordCollection1.getDescription(),
-						dataRecordCollection2.getDescription())) {
+				if (!equals(
+						(Map)dataRecordCollection1.getDescription(),
+						(Map)dataRecordCollection2.getDescription())) {
 
 					return false;
 				}
@@ -1138,9 +1740,9 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			}
 
 			if (Objects.equals("name", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(
-						dataRecordCollection1.getName(),
-						dataRecordCollection2.getName())) {
+				if (!equals(
+						(Map)dataRecordCollection1.getName(),
+						(Map)dataRecordCollection2.getName())) {
 
 					return false;
 				}
@@ -1156,48 +1758,49 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		return true;
 	}
 
-	protected boolean equalsJSONObject(
-		DataRecordCollection dataRecordCollection, JSONObject jsonObject) {
+	protected boolean equals(
+		Map<String, Object> map1, Map<String, Object> map2) {
 
-		for (String fieldName : getAdditionalAssertFieldNames()) {
-			if (Objects.equals("dataDefinitionId", fieldName)) {
-				if (!Objects.deepEquals(
-						dataRecordCollection.getDataDefinitionId(),
-						jsonObject.getLong("dataDefinitionId"))) {
+		if (Objects.equals(map1.keySet(), map2.keySet())) {
+			for (Map.Entry<String, Object> entry : map1.entrySet()) {
+				if (entry.getValue() instanceof Map) {
+					if (!equals(
+							(Map)entry.getValue(),
+							(Map)map2.get(entry.getKey()))) {
+
+						return false;
+					}
+				}
+				else if (!Objects.deepEquals(
+							entry.getValue(), map2.get(entry.getKey()))) {
 
 					return false;
 				}
-
-				continue;
 			}
 
-			if (Objects.equals("dataRecordCollectionKey", fieldName)) {
-				if (!Objects.deepEquals(
-						dataRecordCollection.getDataRecordCollectionKey(),
-						jsonObject.getString("dataRecordCollectionKey"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals("id", fieldName)) {
-				if (!Objects.deepEquals(
-						dataRecordCollection.getId(),
-						jsonObject.getLong("id"))) {
-
-					return false;
-				}
-
-				continue;
-			}
-
-			throw new IllegalArgumentException(
-				"Invalid field name " + fieldName);
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
+		throws Exception {
+
+		if (clazz.getClassLoader() == null) {
+			return new java.lang.reflect.Field[0];
+		}
+
+		return TransformUtil.transform(
+			ReflectionUtil.getDeclaredFields(clazz),
+			field -> {
+				if (field.isSynthetic()) {
+					return null;
+				}
+
+				return field;
+			},
+			java.lang.reflect.Field.class);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()
@@ -1214,6 +1817,10 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1223,18 +1830,18 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 	protected List<EntityField> getEntityFields(EntityField.Type type)
 		throws Exception {
 
-		java.util.Collection<EntityField> entityFields = getEntityFields();
+		return TransformUtil.transform(
+			getEntityFields(),
+			entityField -> {
+				if (!Objects.equals(entityField.getType(), type) ||
+					ArrayUtil.contains(
+						getIgnoredEntityFieldNames(), entityField.getName())) {
 
-		Stream<EntityField> stream = entityFields.stream();
+					return null;
+				}
 
-		return stream.filter(
-			entityField ->
-				Objects.equals(entityField.getType(), type) &&
-				!ArrayUtil.contains(
-					getIgnoredEntityFieldNames(), entityField.getName())
-		).collect(
-			Collectors.toList()
-		);
+				return entityField;
+			});
 	}
 
 	protected String getFilterString(
@@ -1257,11 +1864,47 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		}
 
 		if (entityFieldName.equals("dataRecordCollectionKey")) {
-			sb.append("'");
-			sb.append(
-				String.valueOf(
-					dataRecordCollection.getDataRecordCollectionKey()));
-			sb.append("'");
+			Object object = dataRecordCollection.getDataRecordCollectionKey();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
 
 			return sb.toString();
 		}
@@ -1300,11 +1943,32 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			"application/json");
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
 		httpInvoker.path("http://localhost:8080/o/graphql");
-		httpInvoker.userNameAndPassword("test@liferay.com:test");
+		httpInvoker.userNameAndPassword(
+			"test@liferay.com:" + PropsValues.DEFAULT_ADMIN_PASSWORD);
 
 		HttpInvoker.HttpResponse httpResponse = httpInvoker.invoke();
 
 		return httpResponse.getContent();
+	}
+
+	protected JSONObject invokeGraphQLMutation(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField mutationGraphQLField = new GraphQLField(
+			"mutation", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(mutationGraphQLField.toString()));
+	}
+
+	protected JSONObject invokeGraphQLQuery(GraphQLField graphQLField)
+		throws Exception {
+
+		GraphQLField queryGraphQLField = new GraphQLField(
+			"query", graphQLField);
+
+		return JSONFactoryUtil.createJSONObject(
+			invoke(queryGraphQLField.toString()));
 	}
 
 	protected DataRecordCollection randomDataRecordCollection()
@@ -1313,7 +1977,8 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		return new DataRecordCollection() {
 			{
 				dataDefinitionId = RandomTestUtil.randomLong();
-				dataRecordCollectionKey = RandomTestUtil.randomString();
+				dataRecordCollectionKey = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				siteId = testGroup.getGroupId();
 			}
@@ -1338,10 +2003,155 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 		return randomDataRecordCollection();
 	}
 
+	protected final JSONObject waitForFinish(
+			String expectedExecuteStatus, JSONObject jsonObject)
+		throws Exception {
+
+		while (true) {
+			ImportTask importTask = importTaskResource.getImportTask(
+				jsonObject.getLong("id"));
+
+			ImportTask.ExecuteStatus executeStatus =
+				importTask.getExecuteStatus();
+
+			if (StringUtil.equals(executeStatus.getValue(), "COMPLETED") ||
+				StringUtil.equals(executeStatus.getValue(), "FAILED")) {
+
+				Assert.assertEquals(
+					expectedExecuteStatus, executeStatus.getValue());
+
+				return jsonObject;
+			}
+		}
+	}
+
 	protected DataRecordCollectionResource dataRecordCollectionResource;
-	protected Group irrelevantGroup;
-	protected Company testCompany;
-	protected Group testGroup;
+	protected ImportTaskResource importTaskResource;
+	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
+	protected com.liferay.portal.kernel.model.Company testCompany;
+	protected com.liferay.portal.kernel.model.Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = source.getClass();
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					_getAllDeclaredFields(sourceClass)) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				try {
+					Method setMethod = _getMethod(
+						targetClass, field.getName(), "set",
+						getMethod.getReturnType());
+
+					setMethod.invoke(target, getMethod.invoke(source));
+				}
+				catch (Exception e) {
+					continue;
+				}
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static List<java.lang.reflect.Field> _getAllDeclaredFields(
+			Class<?> clazz) {
+
+			List<java.lang.reflect.Field> fields = new ArrayList<>();
+
+			while ((clazz != null) && (clazz != Object.class)) {
+				for (java.lang.reflect.Field field :
+						clazz.getDeclaredFields()) {
+
+					fields.add(field);
+				}
+
+				clazz = clazz.getSuperclass();
+			}
+
+			return fields;
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -1349,9 +2159,22 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			this(key, new HashMap<>(), graphQLFields);
 		}
 
+		public GraphQLField(String key, List<GraphQLField> graphQLFields) {
+			this(key, new HashMap<>(), graphQLFields);
+		}
+
 		public GraphQLField(
 			String key, Map<String, Object> parameterMap,
 			GraphQLField... graphQLFields) {
+
+			_key = key;
+			_parameterMap = parameterMap;
+			_graphQLFields = Arrays.asList(graphQLFields);
+		}
+
+		public GraphQLField(
+			String key, Map<String, Object> parameterMap,
+			List<GraphQLField> graphQLFields) {
 
 			_key = key;
 			_parameterMap = parameterMap;
@@ -1369,25 +2192,25 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 						_parameterMap.entrySet()) {
 
 					sb.append(entry.getKey());
-					sb.append(":");
+					sb.append(": ");
 					sb.append(entry.getValue());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append(")");
 			}
 
-			if (_graphQLFields.length > 0) {
+			if (!_graphQLFields.isEmpty()) {
 				sb.append("{");
 
 				for (GraphQLField graphQLField : _graphQLFields) {
 					sb.append(graphQLField.toString());
-					sb.append(",");
+					sb.append(", ");
 				}
 
-				sb.setLength(sb.length() - 1);
+				sb.setLength(sb.length() - 2);
 
 				sb.append("}");
 			}
@@ -1395,32 +2218,44 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			return sb.toString();
 		}
 
-		private final GraphQLField[] _graphQLFields;
+		private final List<GraphQLField> _graphQLFields;
 		private final String _key;
 		private final Map<String, Object> _parameterMap;
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseDataRecordCollectionResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseDataRecordCollectionResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
+	private static Format _format;
 
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
-	private static DateFormat _dateFormat;
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private
 		com.liferay.data.engine.rest.resource.v2_0.DataRecordCollectionResource
 			_dataRecordCollectionResource;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private ScopeChecker _scopeChecker;
+
+	@Inject
+	private UserLocalService _userLocalService;
+
+	@Inject
+	private VulcanCRUDItemDelegateBuilderRegistry
+		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }

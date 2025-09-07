@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.web.internal.social;
@@ -27,7 +18,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.social.kernel.model.BaseSocialActivityInterpreter;
@@ -36,15 +26,13 @@ import com.liferay.social.kernel.model.SocialActivityInterpreter;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Peter Shin
  * @author Brian Wing Shun Chan
  */
 @Component(
-	property = "javax.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ADMIN,
+	property = "jakarta.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ADMIN,
 	service = SocialActivityInterpreter.class
 )
 public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
@@ -134,11 +122,6 @@ public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
 	}
 
 	@Override
-	protected ResourceBundleLoader getResourceBundleLoader() {
-		return _resourceBundleLoader;
-	}
-
-	@Override
 	protected String getTitlePattern(
 		String groupName, SocialActivity activity) {
 
@@ -222,35 +205,13 @@ public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
 			return true;
 		}
 		else if (className.equals(KBTemplate.class.getName())) {
-			KBTemplate kbTemplate = _kbTemplateLocalService.getKBTemplate(
-				activity.getClassPK());
-
 			return _kbTemplateModelResourcePermission.contains(
-				permissionChecker, kbTemplate, KBActionKeys.VIEW);
+				permissionChecker,
+				_kbTemplateLocalService.getKBTemplate(activity.getClassPK()),
+				KBActionKeys.VIEW);
 		}
 
 		return false;
-	}
-
-	@Reference(unbind = "-")
-	protected void setKBArticleLocalService(
-		KBArticleLocalService kbArticleLocalService) {
-
-		_kbArticleLocalService = kbArticleLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setKBCommentLocalService(
-		KBCommentLocalService kbCommentLocalService) {
-
-		_kbCommentLocalService = kbCommentLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setKBTemplateLocalService(
-		KBTemplateLocalService kbTemplateLocalService) {
-
-		_kbTemplateLocalService = kbTemplateLocalService;
 	}
 
 	private static final String[] _CLASS_NAMES = {
@@ -258,6 +219,7 @@ public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
 		KBTemplate.class.getName()
 	};
 
+	@Reference
 	private KBArticleLocalService _kbArticleLocalService;
 
 	@Reference(
@@ -266,7 +228,10 @@ public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
 	private ModelResourcePermission<KBArticle>
 		_kbArticleModelResourcePermission;
 
+	@Reference
 	private KBCommentLocalService _kbCommentLocalService;
+
+	@Reference
 	private KBTemplateLocalService _kbTemplateLocalService;
 
 	@Reference(
@@ -274,12 +239,5 @@ public class KBActivityInterpreter extends BaseSocialActivityInterpreter {
 	)
 	private ModelResourcePermission<KBTemplate>
 		_kbTemplateModelResourcePermission;
-
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.knowledge.base.web)"
-	)
-	private volatile ResourceBundleLoader _resourceBundleLoader;
 
 }

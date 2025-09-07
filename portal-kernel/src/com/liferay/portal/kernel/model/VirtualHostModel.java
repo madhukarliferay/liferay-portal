@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -31,9 +23,9 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface VirtualHostModel
-	extends BaseModel<VirtualHost>, MVCCModel, ShardedModel {
+	extends BaseModel<VirtualHost>, CTModel<VirtualHost>, MVCCModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a virtual host model instance should use the {@link VirtualHost} interface instead.
@@ -44,6 +36,7 @@ public interface VirtualHostModel
 	 *
 	 * @return the primary key of this virtual host
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -51,6 +44,7 @@ public interface VirtualHostModel
 	 *
 	 * @param primaryKey the primary key of this virtual host
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -68,6 +62,22 @@ public interface VirtualHostModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this virtual host.
+	 *
+	 * @return the ct collection ID of this virtual host
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this virtual host.
+	 *
+	 * @param ctCollectionId the ct collection ID of this virtual host
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the virtual host ID of this virtual host.
@@ -88,7 +98,6 @@ public interface VirtualHostModel
 	 *
 	 * @return the company ID of this virtual host
 	 */
-	@Override
 	public long getCompanyId();
 
 	/**
@@ -96,7 +105,6 @@ public interface VirtualHostModel
 	 *
 	 * @param companyId the company ID of this virtual host
 	 */
-	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -163,5 +171,12 @@ public interface VirtualHostModel
 	 * @param languageId the language ID of this virtual host
 	 */
 	public void setLanguageId(String languageId);
+
+	@Override
+	public VirtualHost cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

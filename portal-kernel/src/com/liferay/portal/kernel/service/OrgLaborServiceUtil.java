@@ -1,20 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.OrgLabor;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for OrgLabor. This utility wraps
@@ -30,23 +24,17 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class OrgLaborServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portal.service.impl.OrgLaborServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link OrgLaborServiceUtil} to access the org labor remote service. Add custom service methods to <code>com.liferay.portal.service.impl.OrgLaborServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.portal.kernel.model.OrgLabor addOrgLabor(
+	public static OrgLabor addOrgLabor(
 			long organizationId, long typeId, int sunOpen, int sunClose,
 			int monOpen, int monClose, int tueOpen, int tueClose, int wedOpen,
 			int wedClose, int thuOpen, int thuClose, int friOpen, int friClose,
 			int satOpen, int satClose)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().addOrgLabor(
 			organizationId, typeId, sunOpen, sunClose, monOpen, monClose,
@@ -54,22 +42,16 @@ public class OrgLaborServiceUtil {
 			friClose, satOpen, satClose);
 	}
 
-	public static void deleteOrgLabor(long orgLaborId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static void deleteOrgLabor(long orgLaborId) throws PortalException {
 		getService().deleteOrgLabor(orgLaborId);
 	}
 
-	public static com.liferay.portal.kernel.model.OrgLabor getOrgLabor(
-			long orgLaborId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public static OrgLabor getOrgLabor(long orgLaborId) throws PortalException {
 		return getService().getOrgLabor(orgLaborId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.model.OrgLabor>
-			getOrgLabors(long organizationId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<OrgLabor> getOrgLabors(long organizationId)
+		throws PortalException {
 
 		return getService().getOrgLabors(organizationId);
 	}
@@ -83,12 +65,12 @@ public class OrgLaborServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.portal.kernel.model.OrgLabor updateOrgLabor(
+	public static OrgLabor updateOrgLabor(
 			long orgLaborId, long typeId, int sunOpen, int sunClose,
 			int monOpen, int monClose, int tueOpen, int tueClose, int wedOpen,
 			int wedClose, int thuOpen, int thuClose, int friOpen, int friClose,
 			int satOpen, int satClose)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().updateOrgLabor(
 			orgLaborId, typeId, sunOpen, sunClose, monOpen, monClose, tueOpen,
@@ -97,14 +79,13 @@ public class OrgLaborServiceUtil {
 	}
 
 	public static OrgLaborService getService() {
-		if (_service == null) {
-			_service = (OrgLaborService)PortalBeanLocatorUtil.locate(
-				OrgLaborService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static OrgLaborService _service;
+	public static void setService(OrgLaborService service) {
+		_service = service;
+	}
+
+	private static volatile OrgLaborService _service;
 
 }

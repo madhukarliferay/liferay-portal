@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.service;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
+import com.liferay.portal.kernel.exception.PortalException;
 
 /**
  * Provides the remote service utility for ExportImportConfiguration. This utility wraps
@@ -30,20 +22,14 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
  */
 public class ExportImportConfigurationServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.ExportImportConfigurationServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ExportImportConfigurationServiceUtil} to access the export import configuration remote service. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.ExportImportConfigurationServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	public static void deleteExportImportConfiguration(
 			long exportImportConfigurationId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().deleteExportImportConfiguration(
 			exportImportConfigurationId);
@@ -58,36 +44,32 @@ public class ExportImportConfigurationServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static
-		com.liferay.exportimport.kernel.model.ExportImportConfiguration
-				moveExportImportConfigurationToTrash(
-					long exportImportConfigurationId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static ExportImportConfiguration
+			moveExportImportConfigurationToTrash(
+				long exportImportConfigurationId)
+		throws PortalException {
 
 		return getService().moveExportImportConfigurationToTrash(
 			exportImportConfigurationId);
 	}
 
-	public static
-		com.liferay.exportimport.kernel.model.ExportImportConfiguration
-				restoreExportImportConfigurationFromTrash(
-					long exportImportConfigurationId)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static ExportImportConfiguration
+			restoreExportImportConfigurationFromTrash(
+				long exportImportConfigurationId)
+		throws PortalException {
 
 		return getService().restoreExportImportConfigurationFromTrash(
 			exportImportConfigurationId);
 	}
 
 	public static ExportImportConfigurationService getService() {
-		if (_service == null) {
-			_service =
-				(ExportImportConfigurationService)PortalBeanLocatorUtil.locate(
-					ExportImportConfigurationService.class.getName());
-		}
-
 		return _service;
 	}
 
-	private static ExportImportConfigurationService _service;
+	public static void setService(ExportImportConfigurationService service) {
+		_service = service;
+	}
+
+	private static volatile ExportImportConfigurationService _service;
 
 }

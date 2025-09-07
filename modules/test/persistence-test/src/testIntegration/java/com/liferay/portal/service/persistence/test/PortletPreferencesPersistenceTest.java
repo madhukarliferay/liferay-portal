@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchPortletPreferencesException;
 import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
@@ -44,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -138,8 +129,6 @@ public class PortletPreferencesPersistenceTest {
 
 		newPortletPreferences.setPortletId(RandomTestUtil.randomString());
 
-		newPortletPreferences.setPreferences(RandomTestUtil.randomString());
-
 		_portletPreferenceses.add(_persistence.update(newPortletPreferences));
 
 		PortletPreferences existingPortletPreferences =
@@ -170,9 +159,6 @@ public class PortletPreferencesPersistenceTest {
 		Assert.assertEquals(
 			existingPortletPreferences.getPortletId(),
 			newPortletPreferences.getPortletId());
-		Assert.assertEquals(
-			existingPortletPreferences.getPreferences(),
-			newPortletPreferences.getPreferences());
 	}
 
 	@Test
@@ -527,31 +513,73 @@ public class PortletPreferencesPersistenceTest {
 
 		_persistence.clearCache();
 
-		PortletPreferences existingPortletPreferences =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newPortletPreferences.getPrimaryKey());
+				newPortletPreferences.getPrimaryKey()));
+	}
 
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		PortletPreferences newPortletPreferences = addPortletPreferences();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			PortletPreferences.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"portletPreferencesId",
+				newPortletPreferences.getPortletPreferencesId()));
+
+		List<PortletPreferences> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(PortletPreferences portletPreferences) {
 		Assert.assertEquals(
-			Long.valueOf(existingPortletPreferences.getOwnerId()),
+			Long.valueOf(portletPreferences.getOwnerId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPortletPreferences, "getOriginalOwnerId",
-				new Class<?>[0]));
+				portletPreferences, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "ownerId"));
 		Assert.assertEquals(
-			Integer.valueOf(existingPortletPreferences.getOwnerType()),
+			Integer.valueOf(portletPreferences.getOwnerType()),
 			ReflectionTestUtil.<Integer>invoke(
-				existingPortletPreferences, "getOriginalOwnerType",
-				new Class<?>[0]));
+				portletPreferences, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "ownerType"));
 		Assert.assertEquals(
-			Long.valueOf(existingPortletPreferences.getPlid()),
+			Long.valueOf(portletPreferences.getPlid()),
 			ReflectionTestUtil.<Long>invoke(
-				existingPortletPreferences, "getOriginalPlid",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingPortletPreferences.getPortletId(),
-				ReflectionTestUtil.invoke(
-					existingPortletPreferences, "getOriginalPortletId",
-					new Class<?>[0])));
+				portletPreferences, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "plid"));
+		Assert.assertEquals(
+			portletPreferences.getPortletId(),
+			ReflectionTestUtil.invoke(
+				portletPreferences, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "portletId"));
 	}
 
 	protected PortletPreferences addPortletPreferences() throws Exception {
@@ -572,8 +600,6 @@ public class PortletPreferencesPersistenceTest {
 		portletPreferences.setPlid(RandomTestUtil.nextLong());
 
 		portletPreferences.setPortletId(RandomTestUtil.randomString());
-
-		portletPreferences.setPreferences(RandomTestUtil.randomString());
 
 		_portletPreferenceses.add(_persistence.update(portletPreferences));
 

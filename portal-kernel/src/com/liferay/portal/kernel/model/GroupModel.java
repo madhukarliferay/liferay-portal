@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.LocaleException;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,10 +28,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface GroupModel
-	extends AttachedModel, BaseModel<Group>, LocalizedModel, MVCCModel,
+	extends AttachedModel, BaseModel<Group>, CTModel<Group>,
+			ExternalReferenceCodeModel, LocalizedModel, MVCCModel,
 			ShardedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a group model instance should use the {@link Group} interface instead.
@@ -49,6 +43,7 @@ public interface GroupModel
 	 *
 	 * @return the primary key of this group
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -56,6 +51,7 @@ public interface GroupModel
 	 *
 	 * @param primaryKey the primary key of this group
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -75,6 +71,22 @@ public interface GroupModel
 	public void setMvccVersion(long mvccVersion);
 
 	/**
+	 * Returns the ct collection ID of this group.
+	 *
+	 * @return the ct collection ID of this group
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this group.
+	 *
+	 * @param ctCollectionId the ct collection ID of this group
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
 	 * Returns the uuid of this group.
 	 *
 	 * @return the uuid of this group
@@ -88,6 +100,23 @@ public interface GroupModel
 	 * @param uuid the uuid of this group
 	 */
 	public void setUuid(String uuid);
+
+	/**
+	 * Returns the external reference code of this group.
+	 *
+	 * @return the external reference code of this group
+	 */
+	@AutoEscape
+	@Override
+	public String getExternalReferenceCode();
+
+	/**
+	 * Sets the external reference code of this group.
+	 *
+	 * @param externalReferenceCode the external reference code of this group
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode);
 
 	/**
 	 * Returns the group ID of this group.
@@ -146,6 +175,20 @@ public interface GroupModel
 	 * @param creatorUserUuid the creator user uuid of this group
 	 */
 	public void setCreatorUserUuid(String creatorUserUuid);
+
+	/**
+	 * Returns the modified date of this group.
+	 *
+	 * @return the modified date of this group
+	 */
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this group.
+	 *
+	 * @param modifiedDate the modified date of this group
+	 */
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the fully qualified class name of this group.
@@ -615,5 +658,12 @@ public interface GroupModel
 	@Override
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
+
+	@Override
+	public Group cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

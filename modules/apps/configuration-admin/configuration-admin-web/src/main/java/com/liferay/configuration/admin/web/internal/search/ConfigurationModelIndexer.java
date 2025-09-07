@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.configuration.admin.web.internal.search;
@@ -19,14 +10,23 @@ import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.configuration.admin.web.internal.model.ConfigurationModel;
 import com.liferay.configuration.admin.web.internal.util.ConfigurationEntryRetriever;
 import com.liferay.configuration.admin.web.internal.util.ConfigurationModelRetriever;
-import com.liferay.configuration.admin.web.internal.util.ResourceBundleLoaderProvider;
+import com.liferay.configuration.admin.web.internal.util.ResourceBundleLoaderProviderUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.cluster.ClusterExecutor;
+import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
+import com.liferay.portal.kernel.cluster.ClusterMasterTokenTransitionListener;
+import com.liferay.portal.kernel.cluster.ClusterRequest;
+import com.liferay.portal.kernel.concurrent.NoticeableFuture;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiServiceUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
@@ -42,37 +42,49 @@ import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.generic.BooleanQueryImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.ResourceBundleLoader;
+import com.liferay.portal.kernel.util.MethodHandler;
+import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.index.IndexStatusManager;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.ObjectClassDefinition;
+import org.osgi.util.tracker.BundleTracker;
+import org.osgi.util.tracker.BundleTrackerCustomizer;
 
 /**
  * @author Michael C. Han
  */
 @Component(
-	immediate = true, property = "index.on.startup=false",
-	service = {ConfigurationModelIndexer.class, Indexer.class}
+	property = {"index.on.startup=false", "system.index=true"},
+	service = Indexer.class
 )
-public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
+public class ConfigurationModelIndexer
+	extends BaseIndexer<ConfigurationModel> implements IdentifiableOSGiService {
 
 	@Override
 	public String getClassName() {
@@ -96,12 +108,17 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 
 			return fullQuery;
 		}
-		catch (SearchException se) {
-			throw se;
+		catch (SearchException searchException) {
+			throw searchException;
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
+	}
+
+	@Override
+	public String getOSGiServiceIdentifier() {
+		return ConfigurationModelIndexer.class.getName();
 	}
 
 	@Override
@@ -125,28 +142,31 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 			}
 
 			_indexWriterHelper.updateDocuments(
-				getSearchEngineId(), CompanyConstants.SYSTEM, documents, false);
+				CompanyConstants.SYSTEM, documents, false);
 		}
-		catch (SearchException se) {
+		catch (SearchException searchException) {
 			_log.error(
-				"Unable to index documents for " + configurationModels, se);
+				"Unable to index documents for " + configurationModels,
+				searchException);
 		}
 	}
 
 	@Override
 	public Hits search(SearchContext searchContext) throws SearchException {
 		try {
+			_initialize();
+
 			Hits hits = doSearch(searchContext);
 
 			processHits(searchContext, hits);
 
 			return hits;
 		}
-		catch (SearchException se) {
-			throw se;
+		catch (SearchException searchException) {
+			throw searchException;
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
@@ -164,6 +184,19 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		setPermissionAware(false);
 		setSelectAllLocales(false);
 		setStagingAware(false);
+
+		_bundleContext = bundleContext;
+
+		_serviceRegistration = _bundleContext.registerService(
+			IdentifiableOSGiService.class, this, null);
+
+		if (_clusterExecutor.isEnabled()) {
+			_configurationModelsClusterMasterTokenTransitionListener =
+				new ConfigurationModelsClusterMasterTokenTransitionListener();
+
+			_clusterMasterExecutor.addClusterMasterTokenTransitionListener(
+				_configurationModelsClusterMasterTokenTransitionListener);
+		}
 	}
 
 	@Override
@@ -203,19 +236,25 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		return fullBooleanQuery;
 	}
 
+	@Deactivate
+	protected void deactivate() {
+		if (_configurationModelsClusterMasterTokenTransitionListener != null) {
+			_clusterMasterExecutor.removeClusterMasterTokenTransitionListener(
+				_configurationModelsClusterMasterTokenTransitionListener);
+		}
+
+		_serviceRegistration.unregister();
+
+		_stopBundleTracker();
+	}
+
 	@Override
 	protected void doDelete(ConfigurationModel configurationModel)
 		throws Exception {
 
-		Document document = newDocument();
-
-		document.addUID(
-			ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
-			configurationModel.getFactoryPid());
-
 		_indexWriterHelper.deleteDocument(
-			getSearchEngineId(), CompanyConstants.SYSTEM,
-			document.get(Field.UID), isCommitImmediately());
+			CompanyConstants.SYSTEM, _getUID(configurationModel),
+			isCommitImmediately());
 	}
 
 	@Override
@@ -224,9 +263,8 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 
 		Document document = newDocument();
 
-		document.addUID(
-			ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
-			configurationModel.getFactoryPid());
+		_setUID(document, configurationModel);
+
 		document.addKeyword(
 			FieldNames.CONFIGURATION_MODEL_FACTORY_PID,
 			configurationModel.getFactoryPid());
@@ -254,10 +292,10 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		}
 
 		ResourceBundleLoader resourceBundleLoader =
-			_resourceBundleLoaderProvider.getResourceBundleLoader(
+			ResourceBundleLoaderProviderUtil.getResourceBundleLoader(
 				configurationModel.getBundleSymbolicName());
 
-		for (Locale locale : LanguageUtil.getAvailableLocales()) {
+		for (Locale locale : _language.getAvailableLocales()) {
 			String fieldNameSuffix = StringBundler.concat(
 				StringPool.UNDERLINE, locale.getLanguage(),
 				StringPool.UNDERLINE, locale.getCountry());
@@ -321,8 +359,7 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), CompanyConstants.SYSTEM,
-			getDocument(configurationModel), isCommitImmediately());
+			CompanyConstants.SYSTEM, getDocument(configurationModel));
 	}
 
 	@Override
@@ -331,6 +368,8 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 
 	@Override
 	protected void doReindex(String[] ids) throws Exception {
+		Set<Document> documents = new HashSet<>();
+
 		Map<String, ConfigurationModel> configurationModels =
 			_configurationModelRetriever.getConfigurationModels(
 				ExtendedObjectClassDefinition.Scope.SYSTEM, null);
@@ -338,15 +377,38 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		for (ConfigurationModel configurationModel :
 				configurationModels.values()) {
 
-			doReindex(configurationModel);
+			documents.add(getDocument(configurationModel));
 		}
+
+		_indexWriterHelper.updateDocuments(
+			CompanyConstants.SYSTEM, documents, false);
+	}
+
+	private static void _initialize(String osgiServiceIdentifier)
+		throws Exception {
+
+		ConfigurationModelIndexer configurationModelIndexer =
+			(ConfigurationModelIndexer)
+				IdentifiableOSGiServiceUtil.getIdentifiableOSGiService(
+					osgiServiceIdentifier);
+
+		configurationModelIndexer._initialize();
+	}
+
+	private static void _reset(String osgiServiceIdentifier) {
+		ConfigurationModelIndexer configurationModelIndexer =
+			(ConfigurationModelIndexer)
+				IdentifiableOSGiServiceUtil.getIdentifiableOSGiService(
+					osgiServiceIdentifier);
+
+		configurationModelIndexer._initialized = false;
 	}
 
 	private void _addLocalizedText(
 		Document document, ResourceBundleLoader resourceBundleLoader,
 		List<TranslationHelper> translationHelpers) {
 
-		for (Locale locale : LanguageUtil.getAvailableLocales()) {
+		for (Locale locale : _language.getAvailableLocales()) {
 			for (TranslationHelper translationHelper : translationHelpers) {
 				ResourceBundle resourceBundle = _getResourceBundle(
 					locale, resourceBundleLoader);
@@ -363,35 +425,44 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		}
 	}
 
+	private void _commit() {
+		try {
+			_indexWriterHelper.commit();
+		}
+		catch (SearchException searchException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to commit", searchException);
+			}
+		}
+	}
+
 	private List<String> _getLocalizedValues(
 		List<String> attributeDescriptions,
 		ResourceBundleLoader resourceBundleLoader, Locale locale) {
 
-		List<String> values = new ArrayList<>(attributeDescriptions.size());
+		return TransformUtil.transform(
+			attributeDescriptions,
+			attributeDescription -> {
+				if (Validator.isNull(attributeDescription)) {
+					return null;
+				}
 
-		for (String attributeDescription : attributeDescriptions) {
-			if (Validator.isNull(attributeDescription)) {
-				continue;
-			}
+				ResourceBundle resourceBundle = _getResourceBundle(
+					locale, resourceBundleLoader);
 
-			ResourceBundle resourceBundle = _getResourceBundle(
-				locale, resourceBundleLoader);
+				if (resourceBundle == null) {
+					return null;
+				}
 
-			if (resourceBundle == null) {
-				continue;
-			}
+				String value = ResourceBundleUtil.getString(
+					resourceBundle, attributeDescription);
 
-			String value = ResourceBundleUtil.getString(
-				resourceBundle, attributeDescription);
+				if (Validator.isNull(value)) {
+					return null;
+				}
 
-			if (Validator.isNull(value)) {
-				continue;
-			}
-
-			values.add(value);
-		}
-
-		return values;
+				return value;
+			});
 	}
 
 	private ResourceBundle _getResourceBundle(
@@ -407,14 +478,121 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		return resourceBundleLoader.loadResourceBundle(LocaleUtil.getDefault());
 	}
 
+	private String _getUID(ConfigurationModel configurationModel) {
+		return Field.getUID(
+			ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
+			configurationModel.getFactoryPid());
+	}
+
+	private void _initialize() throws PortletException {
+		if (_initialized) {
+			return;
+		}
+
+		synchronized (this) {
+			if (_initialized) {
+				return;
+			}
+
+			if (_clusterMasterExecutor.isMaster()) {
+				Map<String, Collection<ConfigurationModel>>
+					configurationModelsMap1 = new ConcurrentHashMap<>();
+
+				Bundle[] bundles = _bundleContext.getBundles();
+
+				List<ConfigurationModel> configurationModels =
+					new ArrayList<>();
+
+				for (Bundle bundle : bundles) {
+					if (bundle.getState() != Bundle.ACTIVE) {
+						continue;
+					}
+
+					Map<String, ConfigurationModel> configurationModelsMap2 =
+						_configurationModelRetriever.getConfigurationModels(
+							bundle, ExtendedObjectClassDefinition.Scope.SYSTEM,
+							null);
+
+					configurationModels.addAll(
+						configurationModelsMap2.values());
+
+					configurationModelsMap1.put(
+						bundle.getSymbolicName(),
+						configurationModelsMap2.values());
+				}
+
+				reindex(configurationModels);
+
+				_commit();
+
+				_bundleTracker = new BundleTracker<>(
+					_bundleContext, Bundle.ACTIVE,
+					new ConfigurationModelsBundleTrackerCustomizer(
+						configurationModelsMap1));
+
+				_bundleTracker.open();
+			}
+			else {
+				NoticeableFuture<Void> noticeableFuture =
+					_clusterMasterExecutor.executeOnMaster(
+						new MethodHandler(
+							_initializeMethodKey, getOSGiServiceIdentifier()));
+
+				try {
+					noticeableFuture.get();
+				}
+				catch (Exception exception) {
+					throw new PortletException(
+						"Unable to initialize configuration model index",
+						exception);
+				}
+			}
+
+			_initialized = true;
+		}
+	}
+
+	private void _setUID(
+		Document document, ConfigurationModel configurationModel) {
+
+		document.addUID(
+			ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
+			configurationModel.getFactoryPid());
+	}
+
+	private synchronized void _stopBundleTracker() {
+		if (_bundleTracker != null) {
+			_bundleTracker.close();
+
+			_bundleTracker = null;
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		ConfigurationModelIndexer.class);
+
+	private static final MethodKey _initializeMethodKey = new MethodKey(
+		ConfigurationModelIndexer.class, "_initialize", String.class);
+	private static final MethodKey _resetMethodKey = new MethodKey(
+		ConfigurationModelIndexer.class, "_reset", String.class);
+
+	private BundleContext _bundleContext;
+	private BundleTracker<Collection<ConfigurationModel>> _bundleTracker;
+
+	@Reference
+	private ClusterExecutor _clusterExecutor;
+
+	@Reference
+	private ClusterMasterExecutor _clusterMasterExecutor;
 
 	@Reference
 	private ConfigurationEntryRetriever _configurationEntryRetriever;
 
-	@Reference
+	@Reference(target = "(!(filter.visibility=*))")
 	private ConfigurationModelRetriever _configurationModelRetriever;
+
+	private ConfigurationModelsClusterMasterTokenTransitionListener
+		_configurationModelsClusterMasterTokenTransitionListener;
 
 	@Reference
 	private IndexStatusManager _indexStatusManager;
@@ -422,8 +600,12 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;
 
+	private volatile boolean _initialized;
+
 	@Reference
-	private ResourceBundleLoaderProvider _resourceBundleLoaderProvider;
+	private Language _language;
+
+	private ServiceRegistration<IdentifiableOSGiService> _serviceRegistration;
 
 	private static class TranslationHelper {
 
@@ -443,6 +625,101 @@ public class ConfigurationModelIndexer extends BaseIndexer<ConfigurationModel> {
 		private final String _key;
 		private final String _name;
 		private final Map<Locale, String> _values = new HashMap<>();
+
+	}
+
+	private class ConfigurationModelsBundleTrackerCustomizer
+		implements BundleTrackerCustomizer<Collection<ConfigurationModel>> {
+
+		@Override
+		public Collection<ConfigurationModel> addingBundle(
+			Bundle bundle, BundleEvent bundleEvent) {
+
+			Collection<ConfigurationModel> configurationModels =
+				_configurationModelsMap.remove(bundle.getSymbolicName());
+
+			if (configurationModels != null) {
+				if (configurationModels.isEmpty()) {
+					return null;
+				}
+
+				return configurationModels;
+			}
+
+			Map<String, ConfigurationModel> configurationModelsMap =
+				_configurationModelRetriever.getConfigurationModels(
+					bundle, ExtendedObjectClassDefinition.Scope.SYSTEM, null);
+
+			if (configurationModelsMap.isEmpty()) {
+				return null;
+			}
+
+			reindex(configurationModelsMap.values());
+
+			_commit();
+
+			return configurationModelsMap.values();
+		}
+
+		@Override
+		public void modifiedBundle(
+			Bundle bundle, BundleEvent bundleEvent,
+			Collection<ConfigurationModel> configurationModels) {
+		}
+
+		@Override
+		public void removedBundle(
+			Bundle bundle, BundleEvent bundleEvent,
+			Collection<ConfigurationModel> configurationModels) {
+
+			for (ConfigurationModel configurationModel : configurationModels) {
+				try {
+					delete(configurationModel);
+				}
+				catch (SearchException searchException) {
+					if (_log.isWarnEnabled()) {
+						_log.warn("Unable to reindex models", searchException);
+					}
+				}
+			}
+
+			_commit();
+		}
+
+		private ConfigurationModelsBundleTrackerCustomizer(
+			Map<String, Collection<ConfigurationModel>>
+				configurationModelsMap) {
+
+			_configurationModelsMap = configurationModelsMap;
+		}
+
+		private final Map<String, Collection<ConfigurationModel>>
+			_configurationModelsMap;
+
+	}
+
+	private class ConfigurationModelsClusterMasterTokenTransitionListener
+		implements ClusterMasterTokenTransitionListener {
+
+		@Override
+		public void masterTokenAcquired() {
+			_initialized = false;
+
+			ClusterRequest clusterRequest =
+				ClusterRequest.createMulticastRequest(
+					new MethodHandler(
+						_resetMethodKey, getOSGiServiceIdentifier()),
+					true);
+
+			clusterRequest.setFireAndForget(true);
+
+			_clusterExecutor.execute(clusterRequest);
+		}
+
+		@Override
+		public void masterTokenReleased() {
+			_stopBundleTracker();
+		}
 
 	}
 

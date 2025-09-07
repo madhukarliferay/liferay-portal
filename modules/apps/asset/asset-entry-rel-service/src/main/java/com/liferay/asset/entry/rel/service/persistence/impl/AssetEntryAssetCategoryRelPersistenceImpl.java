@@ -1,26 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.asset.entry.rel.service.persistence.impl;
 
 import com.liferay.asset.entry.rel.exception.NoSuchEntryAssetCategoryRelException;
 import com.liferay.asset.entry.rel.model.AssetEntryAssetCategoryRel;
+import com.liferay.asset.entry.rel.model.AssetEntryAssetCategoryRelTable;
 import com.liferay.asset.entry.rel.model.impl.AssetEntryAssetCategoryRelImpl;
 import com.liferay.asset.entry.rel.model.impl.AssetEntryAssetCategoryRelModelImpl;
 import com.liferay.asset.entry.rel.service.persistence.AssetEntryAssetCategoryRelPersistence;
+import com.liferay.asset.entry.rel.service.persistence.AssetEntryAssetCategoryRelUtil;
 import com.liferay.asset.entry.rel.service.persistence.impl.constants.AssetPersistenceConstants;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.change.tracking.CTColumnResolutionType;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
@@ -33,17 +29,24 @@ import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
 import java.lang.reflect.InvocationHandler;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +73,7 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	extends BasePersistenceImpl<AssetEntryAssetCategoryRel>
 	implements AssetEntryAssetCategoryRelPersistence {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this class directly. Always use <code>AssetEntryAssetCategoryRelUtil</code> to access the asset entry asset category rel persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -166,103 +169,105 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		OrderByComparator<AssetEntryAssetCategoryRel> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByAssetEntryId;
+					finderArgs = new Object[] {assetEntryId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByAssetEntryId;
+				finderArgs = new Object[] {
+					assetEntryId, start, end, orderByComparator
+				};
+			}
+
+			List<AssetEntryAssetCategoryRel> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByAssetEntryId;
-				finderArgs = new Object[] {assetEntryId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByAssetEntryId;
-			finderArgs = new Object[] {
-				assetEntryId, start, end, orderByComparator
-			};
-		}
+				list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetEntryAssetCategoryRel> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if (assetEntryId !=
+								assetEntryAssetCategoryRel.getAssetEntryId()) {
 
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
-						list) {
+							list = null;
 
-					if (assetEntryId !=
-							assetEntryAssetCategoryRel.getAssetEntryId()) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
-
-			query.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetEntryId);
-
-				list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(3);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(
+						AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(assetEntryId);
+
+					list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -286,16 +291,16 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			return assetEntryAssetCategoryRel;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetEntryId=");
-		msg.append(assetEntryId);
+		sb.append("assetEntryId=");
+		sb.append(assetEntryId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryAssetCategoryRelException(msg.toString());
+		throw new NoSuchEntryAssetCategoryRelException(sb.toString());
 	}
 
 	/**
@@ -341,16 +346,16 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			return assetEntryAssetCategoryRel;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetEntryId=");
-		msg.append(assetEntryId);
+		sb.append("assetEntryId=");
+		sb.append(assetEntryId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryAssetCategoryRelException(msg.toString());
+		throw new NoSuchEntryAssetCategoryRelException(sb.toString());
 	}
 
 	/**
@@ -419,8 +424,8 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -433,102 +438,102 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		OrderByComparator<AssetEntryAssetCategoryRel> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
+		sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-		query.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
+		sb.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(assetEntryId);
+		queryPos.add(assetEntryId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						assetEntryAssetCategoryRel)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetEntryAssetCategoryRel> list = q.list();
+		List<AssetEntryAssetCategoryRel> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -561,47 +566,51 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	 */
 	@Override
 	public int countByAssetEntryId(long assetEntryId) {
-		FinderPath finderPath = _finderPathCountByAssetEntryId;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		Object[] finderArgs = new Object[] {assetEntryId};
+			FinderPath finderPath = _finderPathCountByAssetEntryId;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {assetEntryId};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_ASSETENTRYASSETCATEGORYREL_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
 
-			query.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
+				sb.append(_SQL_COUNT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2);
 
-			Session session = null;
+				String sql = sb.toString();
 
-			try {
-				session = openSession();
+				Session session = null;
 
-				Query q = session.createQuery(sql);
+				try {
+					session = openSession();
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					Query query = session.createQuery(sql);
 
-				qPos.add(assetEntryId);
+					QueryPos queryPos = QueryPos.getInstance(query);
 
-				count = (Long)q.uniqueResult();
+					queryPos.add(assetEntryId);
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String _FINDER_COLUMN_ASSETENTRYID_ASSETENTRYID_2 =
@@ -686,103 +695,107 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		OrderByComparator<AssetEntryAssetCategoryRel> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath =
+						_finderPathWithoutPaginationFindByAssetCategoryId;
+					finderArgs = new Object[] {assetCategoryId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByAssetCategoryId;
+				finderArgs = new Object[] {
+					assetCategoryId, start, end, orderByComparator
+				};
+			}
+
+			List<AssetEntryAssetCategoryRel> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindByAssetCategoryId;
-				finderArgs = new Object[] {assetCategoryId};
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindByAssetCategoryId;
-			finderArgs = new Object[] {
-				assetCategoryId, start, end, orderByComparator
-			};
-		}
+				list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
+					finderPath, finderArgs, this);
 
-		List<AssetEntryAssetCategoryRel> list = null;
+				if ((list != null) && !list.isEmpty()) {
+					for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
+							list) {
 
-		if (useFinderCache) {
-			list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
-				finderPath, finderArgs, this);
+						if (assetCategoryId !=
+								assetEntryAssetCategoryRel.
+									getAssetCategoryId()) {
 
-			if ((list != null) && !list.isEmpty()) {
-				for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
-						list) {
+							list = null;
 
-					if (assetCategoryId !=
-							assetEntryAssetCategoryRel.getAssetCategoryId()) {
-
-						list = null;
-
-						break;
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		if (list == null) {
-			StringBundler query = null;
+			if (list == null) {
+				StringBundler sb = null;
 
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					3 + (orderByComparator.getOrderByFields().length * 2));
-			}
-			else {
-				query = new StringBundler(3);
-			}
-
-			query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
-
-			query.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-			}
-			else {
-				query.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetCategoryId);
-
-				list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
-					q, getDialect(), start, end);
-
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sb = new StringBundler(3);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-		return list;
+				sb.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(
+						AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(assetCategoryId);
+
+					list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -806,16 +819,16 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			return assetEntryAssetCategoryRel;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetCategoryId=");
-		msg.append(assetCategoryId);
+		sb.append("assetCategoryId=");
+		sb.append(assetCategoryId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryAssetCategoryRelException(msg.toString());
+		throw new NoSuchEntryAssetCategoryRelException(sb.toString());
 	}
 
 	/**
@@ -861,16 +874,16 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			return assetEntryAssetCategoryRel;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler sb = new StringBundler(4);
 
-		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-		msg.append("assetCategoryId=");
-		msg.append(assetCategoryId);
+		sb.append("assetCategoryId=");
+		sb.append(assetCategoryId);
 
-		msg.append("}");
+		sb.append("}");
 
-		throw new NoSuchEntryAssetCategoryRelException(msg.toString());
+		throw new NoSuchEntryAssetCategoryRelException(sb.toString());
 	}
 
 	/**
@@ -939,8 +952,8 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 
 			return array;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -953,102 +966,102 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		OrderByComparator<AssetEntryAssetCategoryRel> orderByComparator,
 		boolean previous) {
 
-		StringBundler query = null;
+		StringBundler sb = null;
 
 		if (orderByComparator != null) {
-			query = new StringBundler(
+			sb = new StringBundler(
 				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
 					(orderByComparator.getOrderByFields().length * 3));
 		}
 		else {
-			query = new StringBundler(3);
+			sb = new StringBundler(3);
 		}
 
-		query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
+		sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-		query.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
+		sb.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields =
 				orderByComparator.getOrderByConditionFields();
 
 			if (orderByConditionFields.length > 0) {
-				query.append(WHERE_AND);
+				sb.append(WHERE_AND);
 			}
 
 			for (int i = 0; i < orderByConditionFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByConditionFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByConditionFields[i]);
 
 				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(WHERE_GREATER_THAN);
+						sb.append(WHERE_GREATER_THAN);
 					}
 					else {
-						query.append(WHERE_LESSER_THAN);
+						sb.append(WHERE_LESSER_THAN);
 					}
 				}
 			}
 
-			query.append(ORDER_BY_CLAUSE);
+			sb.append(ORDER_BY_CLAUSE);
 
 			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
-				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				sb.append(_ORDER_BY_ENTITY_ALIAS);
+				sb.append(orderByFields[i]);
 
 				if ((i + 1) < orderByFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC_HAS_NEXT);
+						sb.append(ORDER_BY_ASC_HAS_NEXT);
 					}
 					else {
-						query.append(ORDER_BY_DESC_HAS_NEXT);
+						sb.append(ORDER_BY_DESC_HAS_NEXT);
 					}
 				}
 				else {
 					if (orderByComparator.isAscending() ^ previous) {
-						query.append(ORDER_BY_ASC);
+						sb.append(ORDER_BY_ASC);
 					}
 					else {
-						query.append(ORDER_BY_DESC);
+						sb.append(ORDER_BY_DESC);
 					}
 				}
 			}
 		}
 		else {
-			query.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
+			sb.append(AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
 		}
 
-		String sql = query.toString();
+		String sql = sb.toString();
 
-		Query q = session.createQuery(sql);
+		Query query = session.createQuery(sql);
 
-		q.setFirstResult(0);
-		q.setMaxResults(2);
+		query.setFirstResult(0);
+		query.setMaxResults(2);
 
-		QueryPos qPos = QueryPos.getInstance(q);
+		QueryPos queryPos = QueryPos.getInstance(query);
 
-		qPos.add(assetCategoryId);
+		queryPos.add(assetCategoryId);
 
 		if (orderByComparator != null) {
 			for (Object orderByConditionValue :
 					orderByComparator.getOrderByConditionValues(
 						assetEntryAssetCategoryRel)) {
 
-				qPos.add(orderByConditionValue);
+				queryPos.add(orderByConditionValue);
 			}
 		}
 
-		List<AssetEntryAssetCategoryRel> list = q.list();
+		List<AssetEntryAssetCategoryRel> list = query.list();
 
 		if (list.size() == 2) {
 			return list.get(1);
@@ -1082,47 +1095,51 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	 */
 	@Override
 	public int countByAssetCategoryId(long assetCategoryId) {
-		FinderPath finderPath = _finderPathCountByAssetCategoryId;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		Object[] finderArgs = new Object[] {assetCategoryId};
+			FinderPath finderPath = _finderPathCountByAssetCategoryId;
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
+			Object[] finderArgs = new Object[] {assetCategoryId};
 
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
 
-			query.append(_SQL_COUNT_ASSETENTRYASSETCATEGORYREL_WHERE);
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
 
-			query.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
+				sb.append(_SQL_COUNT_ASSETENTRYASSETCATEGORYREL_WHERE);
 
-			String sql = query.toString();
+				sb.append(_FINDER_COLUMN_ASSETCATEGORYID_ASSETCATEGORYID_2);
 
-			Session session = null;
+				String sql = sb.toString();
 
-			try {
-				session = openSession();
+				Session session = null;
 
-				Query q = session.createQuery(sql);
+				try {
+					session = openSession();
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					Query query = session.createQuery(sql);
 
-				qPos.add(assetCategoryId);
+					QueryPos queryPos = QueryPos.getInstance(query);
 
-				count = (Long)q.uniqueResult();
+					queryPos.add(assetCategoryId);
 
-				finderCache.putResult(finderPath, finderArgs, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	private static final String
@@ -1130,7 +1147,6 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			"assetEntryAssetCategoryRel.assetCategoryId = ?";
 
 	private FinderPath _finderPathFetchByA_A;
-	private FinderPath _finderPathCountByA_A;
 
 	/**
 	 * Returns the asset entry asset category rel where assetEntryId = &#63; and assetCategoryId = &#63; or throws a <code>NoSuchEntryAssetCategoryRelException</code> if it could not be found.
@@ -1149,23 +1165,23 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 			assetEntryId, assetCategoryId);
 
 		if (assetEntryAssetCategoryRel == null) {
-			StringBundler msg = new StringBundler(6);
+			StringBundler sb = new StringBundler(6);
 
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
 
-			msg.append("assetEntryId=");
-			msg.append(assetEntryId);
+			sb.append("assetEntryId=");
+			sb.append(assetEntryId);
 
-			msg.append(", assetCategoryId=");
-			msg.append(assetCategoryId);
+			sb.append(", assetCategoryId=");
+			sb.append(assetCategoryId);
 
-			msg.append("}");
+			sb.append("}");
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(msg.toString());
+				_log.debug(sb.toString());
 			}
 
-			throw new NoSuchEntryAssetCategoryRelException(msg.toString());
+			throw new NoSuchEntryAssetCategoryRelException(sb.toString());
 		}
 
 		return assetEntryAssetCategoryRel;
@@ -1197,107 +1213,91 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	public AssetEntryAssetCategoryRel fetchByA_A(
 		long assetEntryId, long assetCategoryId, boolean useFinderCache) {
 
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		if (useFinderCache) {
-			finderArgs = new Object[] {assetEntryId, assetCategoryId};
-		}
+			Object[] finderArgs = null;
 
-		Object result = null;
-
-		if (useFinderCache) {
-			result = finderCache.getResult(
-				_finderPathFetchByA_A, finderArgs, this);
-		}
-
-		if (result instanceof AssetEntryAssetCategoryRel) {
-			AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
-				(AssetEntryAssetCategoryRel)result;
-
-			if ((assetEntryId !=
-					assetEntryAssetCategoryRel.getAssetEntryId()) ||
-				(assetCategoryId !=
-					assetEntryAssetCategoryRel.getAssetCategoryId())) {
-
-				result = null;
+			if (useFinderCache) {
+				finderArgs = new Object[] {assetEntryId, assetCategoryId};
 			}
-		}
 
-		if (result == null) {
-			StringBundler query = new StringBundler(4);
+			Object result = null;
 
-			query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByA_A, finderArgs, this);
+			}
 
-			query.append(_FINDER_COLUMN_A_A_ASSETENTRYID_2);
+			if (result instanceof AssetEntryAssetCategoryRel) {
+				AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
+					(AssetEntryAssetCategoryRel)result;
 
-			query.append(_FINDER_COLUMN_A_A_ASSETCATEGORYID_2);
+				if ((assetEntryId !=
+						assetEntryAssetCategoryRel.getAssetEntryId()) ||
+					(assetCategoryId !=
+						assetEntryAssetCategoryRel.getAssetCategoryId())) {
 
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetEntryId);
-
-				qPos.add(assetCategoryId);
-
-				List<AssetEntryAssetCategoryRel> list = q.list();
-
-				if (list.isEmpty()) {
-					if (useFinderCache) {
-						finderCache.putResult(
-							_finderPathFetchByA_A, finderArgs, list);
-					}
+					result = null;
 				}
-				else {
-					if (list.size() > 1) {
-						Collections.sort(list, Collections.reverseOrder());
+			}
 
-						if (_log.isWarnEnabled()) {
-							if (!useFinderCache) {
-								finderArgs = new Object[] {
-									assetEntryId, assetCategoryId
-								};
-							}
+			if (result == null) {
+				StringBundler sb = new StringBundler(4);
 
-							_log.warn(
-								"AssetEntryAssetCategoryRelPersistenceImpl.fetchByA_A(long, long, boolean) with parameters (" +
-									StringUtil.merge(finderArgs) +
-										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
+				sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL_WHERE);
+
+				sb.append(_FINDER_COLUMN_A_A_ASSETENTRYID_2);
+
+				sb.append(_FINDER_COLUMN_A_A_ASSETCATEGORYID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(assetEntryId);
+
+					queryPos.add(assetCategoryId);
+
+					List<AssetEntryAssetCategoryRel> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByA_A, finderArgs, list);
 						}
 					}
+					else {
+						AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
+							list.get(0);
 
-					AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
-						list.get(0);
+						result = assetEntryAssetCategoryRel;
 
-					result = assetEntryAssetCategoryRel;
-
-					cacheResult(assetEntryAssetCategoryRel);
+						cacheResult(assetEntryAssetCategoryRel);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
 				}
 			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(_finderPathFetchByA_A, finderArgs);
-				}
 
-				throw processException(e);
+			if (result instanceof List<?>) {
+				return null;
 			}
-			finally {
-				closeSession(session);
+			else {
+				return (AssetEntryAssetCategoryRel)result;
 			}
-		}
-
-		if (result instanceof List<?>) {
-			return null;
-		}
-		else {
-			return (AssetEntryAssetCategoryRel)result;
 		}
 	}
 
@@ -1328,51 +1328,14 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	 */
 	@Override
 	public int countByA_A(long assetEntryId, long assetCategoryId) {
-		FinderPath finderPath = _finderPathCountByA_A;
+		AssetEntryAssetCategoryRel assetEntryAssetCategoryRel = fetchByA_A(
+			assetEntryId, assetCategoryId);
 
-		Object[] finderArgs = new Object[] {assetEntryId, assetCategoryId};
-
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_ASSETENTRYASSETCATEGORYREL_WHERE);
-
-			query.append(_FINDER_COLUMN_A_A_ASSETENTRYID_2);
-
-			query.append(_FINDER_COLUMN_A_A_ASSETCATEGORYID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(assetEntryId);
-
-				qPos.add(assetCategoryId);
-
-				count = (Long)q.uniqueResult();
-
-				finderCache.putResult(finderPath, finderArgs, count);
-			}
-			catch (Exception e) {
-				finderCache.removeResult(finderPath, finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+		if (assetEntryAssetCategoryRel == null) {
+			return 0;
 		}
 
-		return count.intValue();
+		return 1;
 	}
 
 	private static final String _FINDER_COLUMN_A_A_ASSETENTRYID_2 =
@@ -1386,6 +1349,8 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 
 		setModelImplClass(AssetEntryAssetCategoryRelImpl.class);
 		setModelPKClass(long.class);
+
+		setTable(AssetEntryAssetCategoryRelTable.INSTANCE);
 	}
 
 	/**
@@ -1397,21 +1362,26 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	public void cacheResult(
 		AssetEntryAssetCategoryRel assetEntryAssetCategoryRel) {
 
-		entityCache.putResult(
-			entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-			assetEntryAssetCategoryRel.getPrimaryKey(),
-			assetEntryAssetCategoryRel);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					assetEntryAssetCategoryRel.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathFetchByA_A,
-			new Object[] {
-				assetEntryAssetCategoryRel.getAssetEntryId(),
-				assetEntryAssetCategoryRel.getAssetCategoryId()
-			},
-			assetEntryAssetCategoryRel);
+			entityCache.putResult(
+				AssetEntryAssetCategoryRelImpl.class,
+				assetEntryAssetCategoryRel.getPrimaryKey(),
+				assetEntryAssetCategoryRel);
 
-		assetEntryAssetCategoryRel.resetOriginalValues();
+			finderCache.putResult(
+				_finderPathFetchByA_A,
+				new Object[] {
+					assetEntryAssetCategoryRel.getAssetEntryId(),
+					assetEntryAssetCategoryRel.getAssetCategoryId()
+				},
+				assetEntryAssetCategoryRel);
+		}
 	}
+
+	private int _valueObjectFinderCacheListThreshold;
 
 	/**
 	 * Caches the asset entry asset category rels in the entity cache if it is enabled.
@@ -1422,17 +1392,27 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	public void cacheResult(
 		List<AssetEntryAssetCategoryRel> assetEntryAssetCategoryRels) {
 
+		if ((_valueObjectFinderCacheListThreshold == 0) ||
+			((_valueObjectFinderCacheListThreshold > 0) &&
+			 (assetEntryAssetCategoryRels.size() >
+				 _valueObjectFinderCacheListThreshold))) {
+
+			return;
+		}
+
 		for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
 				assetEntryAssetCategoryRels) {
 
-			if (entityCache.getResult(
-					entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-					assetEntryAssetCategoryRel.getPrimaryKey()) == null) {
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						assetEntryAssetCategoryRel.getCtCollectionId())) {
 
-				cacheResult(assetEntryAssetCategoryRel);
-			}
-			else {
-				assetEntryAssetCategoryRel.resetOriginalValues();
+				if (entityCache.getResult(
+						AssetEntryAssetCategoryRelImpl.class,
+						assetEntryAssetCategoryRel.getPrimaryKey()) == null) {
+
+					cacheResult(assetEntryAssetCategoryRel);
+				}
 			}
 		}
 	}
@@ -1448,9 +1428,7 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	public void clearCache() {
 		entityCache.clearCache(AssetEntryAssetCategoryRelImpl.class);
 
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(AssetEntryAssetCategoryRelImpl.class);
 	}
 
 	/**
@@ -1465,47 +1443,29 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		AssetEntryAssetCategoryRel assetEntryAssetCategoryRel) {
 
 		entityCache.removeResult(
-			entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-			assetEntryAssetCategoryRel.getPrimaryKey());
-
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
-		clearUniqueFindersCache(
-			(AssetEntryAssetCategoryRelModelImpl)assetEntryAssetCategoryRel,
-			true);
+			AssetEntryAssetCategoryRelImpl.class, assetEntryAssetCategoryRel);
 	}
 
 	@Override
 	public void clearCache(
 		List<AssetEntryAssetCategoryRel> assetEntryAssetCategoryRels) {
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-
 		for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
 				assetEntryAssetCategoryRels) {
 
 			entityCache.removeResult(
-				entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-				assetEntryAssetCategoryRel.getPrimaryKey());
-
-			clearUniqueFindersCache(
-				(AssetEntryAssetCategoryRelModelImpl)assetEntryAssetCategoryRel,
-				true);
+				AssetEntryAssetCategoryRelImpl.class,
+				assetEntryAssetCategoryRel);
 		}
 	}
 
 	@Override
 	public void clearCache(Set<Serializable> primaryKeys) {
-		finderCache.clearCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		finderCache.clearCache(AssetEntryAssetCategoryRelImpl.class);
 
 		for (Serializable primaryKey : primaryKeys) {
 			entityCache.removeResult(
-				entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-				primaryKey);
+				AssetEntryAssetCategoryRelImpl.class, primaryKey);
 		}
 	}
 
@@ -1513,42 +1473,18 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		AssetEntryAssetCategoryRelModelImpl
 			assetEntryAssetCategoryRelModelImpl) {
 
-		Object[] args = new Object[] {
-			assetEntryAssetCategoryRelModelImpl.getAssetEntryId(),
-			assetEntryAssetCategoryRelModelImpl.getAssetCategoryId()
-		};
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					assetEntryAssetCategoryRelModelImpl.getCtCollectionId())) {
 
-		finderCache.putResult(
-			_finderPathCountByA_A, args, Long.valueOf(1), false);
-		finderCache.putResult(
-			_finderPathFetchByA_A, args, assetEntryAssetCategoryRelModelImpl,
-			false);
-	}
-
-	protected void clearUniqueFindersCache(
-		AssetEntryAssetCategoryRelModelImpl assetEntryAssetCategoryRelModelImpl,
-		boolean clearCurrent) {
-
-		if (clearCurrent) {
 			Object[] args = new Object[] {
 				assetEntryAssetCategoryRelModelImpl.getAssetEntryId(),
 				assetEntryAssetCategoryRelModelImpl.getAssetCategoryId()
 			};
 
-			finderCache.removeResult(_finderPathCountByA_A, args);
-			finderCache.removeResult(_finderPathFetchByA_A, args);
-		}
-
-		if ((assetEntryAssetCategoryRelModelImpl.getColumnBitmask() &
-			 _finderPathFetchByA_A.getColumnBitmask()) != 0) {
-
-			Object[] args = new Object[] {
-				assetEntryAssetCategoryRelModelImpl.getOriginalAssetEntryId(),
-				assetEntryAssetCategoryRelModelImpl.getOriginalAssetCategoryId()
-			};
-
-			finderCache.removeResult(_finderPathCountByA_A, args);
-			finderCache.removeResult(_finderPathFetchByA_A, args);
+			finderCache.putResult(
+				_finderPathFetchByA_A, args,
+				assetEntryAssetCategoryRelModelImpl);
 		}
 	}
 
@@ -1619,11 +1555,11 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 
 			return remove(assetEntryAssetCategoryRel);
 		}
-		catch (NoSuchEntryAssetCategoryRelException nsee) {
-			throw nsee;
+		catch (NoSuchEntryAssetCategoryRelException noSuchEntityException) {
+			throw noSuchEntityException;
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1646,12 +1582,14 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 						assetEntryAssetCategoryRel.getPrimaryKeyObj());
 			}
 
-			if (assetEntryAssetCategoryRel != null) {
+			if ((assetEntryAssetCategoryRel != null) &&
+				ctPersistenceHelper.isRemove(assetEntryAssetCategoryRel)) {
+
 				session.delete(assetEntryAssetCategoryRel);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -1698,10 +1636,14 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		try {
 			session = openSession();
 
-			if (assetEntryAssetCategoryRel.isNew()) {
-				session.save(assetEntryAssetCategoryRel);
+			if (ctPersistenceHelper.isInsert(assetEntryAssetCategoryRel)) {
+				if (!isNew) {
+					session.evict(
+						AssetEntryAssetCategoryRelImpl.class,
+						assetEntryAssetCategoryRel.getPrimaryKeyObj());
+				}
 
-				assetEntryAssetCategoryRel.setNew(false);
+				session.save(assetEntryAssetCategoryRel);
 			}
 			else {
 				assetEntryAssetCategoryRel =
@@ -1709,94 +1651,22 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 						assetEntryAssetCategoryRel);
 			}
 		}
-		catch (Exception e) {
-			throw processException(e);
+		catch (Exception exception) {
+			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 
-		finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-
-		if (!_columnBitmaskEnabled) {
-			finderCache.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
-		}
-		else if (isNew) {
-			Object[] args = new Object[] {
-				assetEntryAssetCategoryRelModelImpl.getAssetEntryId()
-			};
-
-			finderCache.removeResult(_finderPathCountByAssetEntryId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByAssetEntryId, args);
-
-			args = new Object[] {
-				assetEntryAssetCategoryRelModelImpl.getAssetCategoryId()
-			};
-
-			finderCache.removeResult(_finderPathCountByAssetCategoryId, args);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindByAssetCategoryId, args);
-
-			finderCache.removeResult(_finderPathCountAll, FINDER_ARGS_EMPTY);
-			finderCache.removeResult(
-				_finderPathWithoutPaginationFindAll, FINDER_ARGS_EMPTY);
-		}
-		else {
-			if ((assetEntryAssetCategoryRelModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByAssetEntryId.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					assetEntryAssetCategoryRelModelImpl.
-						getOriginalAssetEntryId()
-				};
-
-				finderCache.removeResult(_finderPathCountByAssetEntryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetEntryId, args);
-
-				args = new Object[] {
-					assetEntryAssetCategoryRelModelImpl.getAssetEntryId()
-				};
-
-				finderCache.removeResult(_finderPathCountByAssetEntryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetEntryId, args);
-			}
-
-			if ((assetEntryAssetCategoryRelModelImpl.getColumnBitmask() &
-				 _finderPathWithoutPaginationFindByAssetCategoryId.
-					 getColumnBitmask()) != 0) {
-
-				Object[] args = new Object[] {
-					assetEntryAssetCategoryRelModelImpl.
-						getOriginalAssetCategoryId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByAssetCategoryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetCategoryId, args);
-
-				args = new Object[] {
-					assetEntryAssetCategoryRelModelImpl.getAssetCategoryId()
-				};
-
-				finderCache.removeResult(
-					_finderPathCountByAssetCategoryId, args);
-				finderCache.removeResult(
-					_finderPathWithoutPaginationFindByAssetCategoryId, args);
-			}
-		}
-
 		entityCache.putResult(
-			entityCacheEnabled, AssetEntryAssetCategoryRelImpl.class,
-			assetEntryAssetCategoryRel.getPrimaryKey(),
-			assetEntryAssetCategoryRel, false);
+			AssetEntryAssetCategoryRelImpl.class,
+			assetEntryAssetCategoryRelModelImpl, false, true);
 
-		clearUniqueFindersCache(assetEntryAssetCategoryRelModelImpl, false);
 		cacheUniqueFindersCache(assetEntryAssetCategoryRelModelImpl);
+
+		if (isNew) {
+			assetEntryAssetCategoryRel.setNew(false);
+		}
 
 		assetEntryAssetCategoryRel.resetOriginalValues();
 
@@ -1847,6 +1717,58 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	/**
 	 * Returns the asset entry asset category rel with the primary key or returns <code>null</code> if it could not be found.
 	 *
+	 * @param primaryKey the primary key of the asset entry asset category rel
+	 * @return the asset entry asset category rel, or <code>null</code> if a asset entry asset category rel with the primary key could not be found
+	 */
+	@Override
+	public AssetEntryAssetCategoryRel fetchByPrimaryKey(
+		Serializable primaryKey) {
+
+		if (ctPersistenceHelper.isProductionMode(
+				AssetEntryAssetCategoryRel.class, primaryKey)) {
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKey(primaryKey);
+			}
+		}
+
+		AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
+			(AssetEntryAssetCategoryRel)entityCache.getResult(
+				AssetEntryAssetCategoryRelImpl.class, primaryKey);
+
+		if (assetEntryAssetCategoryRel != null) {
+			return assetEntryAssetCategoryRel;
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			assetEntryAssetCategoryRel =
+				(AssetEntryAssetCategoryRel)session.get(
+					AssetEntryAssetCategoryRelImpl.class, primaryKey);
+
+			if (assetEntryAssetCategoryRel != null) {
+				cacheResult(assetEntryAssetCategoryRel);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return assetEntryAssetCategoryRel;
+	}
+
+	/**
+	 * Returns the asset entry asset category rel with the primary key or returns <code>null</code> if it could not be found.
+	 *
 	 * @param assetEntryAssetCategoryRelId the primary key of the asset entry asset category rel
 	 * @return the asset entry asset category rel, or <code>null</code> if a asset entry asset category rel with the primary key could not be found
 	 */
@@ -1855,6 +1777,137 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		long assetEntryAssetCategoryRelId) {
 
 		return fetchByPrimaryKey((Serializable)assetEntryAssetCategoryRelId);
+	}
+
+	@Override
+	public Map<Serializable, AssetEntryAssetCategoryRel> fetchByPrimaryKeys(
+		Set<Serializable> primaryKeys) {
+
+		if (ctPersistenceHelper.isProductionMode(
+				AssetEntryAssetCategoryRel.class)) {
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.
+						setProductionModeWithSafeCloseable()) {
+
+				return super.fetchByPrimaryKeys(primaryKeys);
+			}
+		}
+
+		if (primaryKeys.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		Map<Serializable, AssetEntryAssetCategoryRel> map =
+			new HashMap<Serializable, AssetEntryAssetCategoryRel>();
+
+		if (primaryKeys.size() == 1) {
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			Serializable primaryKey = iterator.next();
+
+			AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
+				fetchByPrimaryKey(primaryKey);
+
+			if (assetEntryAssetCategoryRel != null) {
+				map.put(primaryKey, assetEntryAssetCategoryRel);
+			}
+
+			return map;
+		}
+
+		Set<Serializable> uncachedPrimaryKeys = null;
+
+		for (Serializable primaryKey : primaryKeys) {
+			try (SafeCloseable safeCloseable =
+					ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+						AssetEntryAssetCategoryRel.class, primaryKey)) {
+
+				AssetEntryAssetCategoryRel assetEntryAssetCategoryRel =
+					(AssetEntryAssetCategoryRel)entityCache.getResult(
+						AssetEntryAssetCategoryRelImpl.class, primaryKey);
+
+				if (assetEntryAssetCategoryRel == null) {
+					if (uncachedPrimaryKeys == null) {
+						uncachedPrimaryKeys = new HashSet<>();
+					}
+
+					uncachedPrimaryKeys.add(primaryKey);
+				}
+				else {
+					map.put(primaryKey, assetEntryAssetCategoryRel);
+				}
+			}
+		}
+
+		if (uncachedPrimaryKeys == null) {
+			return map;
+		}
+
+		if ((databaseInMaxParameters > 0) &&
+			(primaryKeys.size() > databaseInMaxParameters)) {
+
+			Iterator<Serializable> iterator = primaryKeys.iterator();
+
+			while (iterator.hasNext()) {
+				Set<Serializable> page = new HashSet<>();
+
+				for (int i = 0;
+					 (i < databaseInMaxParameters) && iterator.hasNext(); i++) {
+
+					page.add(iterator.next());
+				}
+
+				map.putAll(fetchByPrimaryKeys(page));
+			}
+
+			return map;
+		}
+
+		StringBundler sb = new StringBundler((primaryKeys.size() * 2) + 1);
+
+		sb.append(getSelectSQL());
+		sb.append(" WHERE ");
+		sb.append(getPKDBName());
+		sb.append(" IN (");
+
+		for (Serializable primaryKey : primaryKeys) {
+			sb.append((long)primaryKey);
+
+			sb.append(",");
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		sb.append(")");
+
+		String sql = sb.toString();
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Query query = session.createQuery(sql);
+
+			for (AssetEntryAssetCategoryRel assetEntryAssetCategoryRel :
+					(List<AssetEntryAssetCategoryRel>)query.list()) {
+
+				map.put(
+					assetEntryAssetCategoryRel.getPrimaryKeyObj(),
+					assetEntryAssetCategoryRel);
+
+				cacheResult(assetEntryAssetCategoryRel);
+			}
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		return map;
 	}
 
 	/**
@@ -1922,80 +1975,81 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		OrderByComparator<AssetEntryAssetCategoryRel> orderByComparator,
 		boolean useFinderCache) {
 
-		FinderPath finderPath = null;
-		Object[] finderArgs = null;
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-			(orderByComparator == null)) {
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindAll;
+					finderArgs = FINDER_ARGS_EMPTY;
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindAll;
+				finderArgs = new Object[] {start, end, orderByComparator};
+			}
+
+			List<AssetEntryAssetCategoryRel> list = null;
 
 			if (useFinderCache) {
-				finderPath = _finderPathWithoutPaginationFindAll;
-				finderArgs = FINDER_ARGS_EMPTY;
-			}
-		}
-		else if (useFinderCache) {
-			finderPath = _finderPathWithPaginationFindAll;
-			finderArgs = new Object[] {start, end, orderByComparator};
-		}
-
-		List<AssetEntryAssetCategoryRel> list = null;
-
-		if (useFinderCache) {
-			list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
-				finderPath, finderArgs, this);
-		}
-
-		if (list == null) {
-			StringBundler query = null;
-			String sql = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(
-					2 + (orderByComparator.getOrderByFields().length * 2));
-
-				query.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL);
-
-				appendOrderByComparator(
-					query, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
-
-				sql = query.toString();
-			}
-			else {
-				sql = _SQL_SELECT_ASSETENTRYASSETCATEGORYREL;
-
-				sql = sql.concat(
-					AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
+				list = (List<AssetEntryAssetCategoryRel>)finderCache.getResult(
+					finderPath, finderArgs, this);
 			}
 
-			Session session = null;
+			if (list == null) {
+				StringBundler sb = null;
+				String sql = null;
 
-			try {
-				session = openSession();
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						2 + (orderByComparator.getOrderByFields().length * 2));
 
-				Query q = session.createQuery(sql);
+					sb.append(_SQL_SELECT_ASSETENTRYASSETCATEGORYREL);
 
-				list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
-					q, getDialect(), start, end);
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
 
-				cacheResult(list);
-
-				if (useFinderCache) {
-					finderCache.putResult(finderPath, finderArgs, list);
+					sql = sb.toString();
 				}
-			}
-			catch (Exception e) {
-				if (useFinderCache) {
-					finderCache.removeResult(finderPath, finderArgs);
+				else {
+					sql = _SQL_SELECT_ASSETENTRYASSETCATEGORYREL;
+
+					sql = sql.concat(
+						AssetEntryAssetCategoryRelModelImpl.ORDER_BY_JPQL);
 				}
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
+				Session session = null;
 
-		return list;
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					list = (List<AssetEntryAssetCategoryRel>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
 	}
 
 	/**
@@ -2018,35 +2072,37 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	 */
 	@Override
 	public int countAll() {
-		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					AssetEntryAssetCategoryRel.class)) {
 
-		if (count == null) {
-			Session session = null;
+			Long count = (Long)finderCache.getResult(
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
-			try {
-				session = openSession();
+			if (count == null) {
+				Session session = null;
 
-				Query q = session.createQuery(
-					_SQL_COUNT_ASSETENTRYASSETCATEGORYREL);
+				try {
+					session = openSession();
 
-				count = (Long)q.uniqueResult();
+					Query query = session.createQuery(
+						_SQL_COUNT_ASSETENTRYASSETCATEGORYREL);
 
-				finderCache.putResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(
+						_finderPathCountAll, FINDER_ARGS_EMPTY, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
 			}
-			catch (Exception e) {
-				finderCache.removeResult(
-					_finderPathCountAll, FINDER_ARGS_EMPTY);
 
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
+			return count.intValue();
 		}
-
-		return count.intValue();
 	}
 
 	@Override
@@ -2065,8 +2121,64 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	}
 
 	@Override
-	protected Map<String, Integer> getTableColumnsMap() {
+	public Set<String> getCTColumnNames(
+		CTColumnResolutionType ctColumnResolutionType) {
+
+		return _ctColumnNamesMap.getOrDefault(
+			ctColumnResolutionType, Collections.emptySet());
+	}
+
+	@Override
+	public List<String> getMappingTableNames() {
+		return _mappingTableNames;
+	}
+
+	@Override
+	public Map<String, Integer> getTableColumnsMap() {
 		return AssetEntryAssetCategoryRelModelImpl.TABLE_COLUMNS_MAP;
+	}
+
+	@Override
+	public String getTableName() {
+		return "AssetEntryAssetCategoryRel";
+	}
+
+	@Override
+	public List<String[]> getUniqueIndexColumnNames() {
+		return _uniqueIndexColumnNames;
+	}
+
+	private static final Map<CTColumnResolutionType, Set<String>>
+		_ctColumnNamesMap = new EnumMap<CTColumnResolutionType, Set<String>>(
+			CTColumnResolutionType.class);
+	private static final List<String> _mappingTableNames =
+		new ArrayList<String>();
+	private static final List<String[]> _uniqueIndexColumnNames =
+		new ArrayList<String[]>();
+
+	static {
+		Set<String> ctControlColumnNames = new HashSet<String>();
+		Set<String> ctMergeColumnNames = new HashSet<String>();
+		Set<String> ctStrictColumnNames = new HashSet<String>();
+
+		ctControlColumnNames.add("mvccVersion");
+		ctControlColumnNames.add("ctCollectionId");
+		ctStrictColumnNames.add("companyId");
+		ctMergeColumnNames.add("assetEntryId");
+		ctMergeColumnNames.add("assetCategoryId");
+		ctMergeColumnNames.add("priority");
+
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.CONTROL, ctControlColumnNames);
+		_ctColumnNamesMap.put(CTColumnResolutionType.MERGE, ctMergeColumnNames);
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.PK,
+			Collections.singleton("assetEntryAssetCategoryRelId"));
+		_ctColumnNamesMap.put(
+			CTColumnResolutionType.STRICT, ctStrictColumnNames);
+
+		_uniqueIndexColumnNames.add(
+			new String[] {"assetEntryId", "assetCategoryId"});
 	}
 
 	/**
@@ -2074,89 +2186,70 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		AssetEntryAssetCategoryRelModelImpl.setEntityCacheEnabled(
-			entityCacheEnabled);
-		AssetEntryAssetCategoryRelModelImpl.setFinderCacheEnabled(
-			finderCacheEnabled);
+		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
 		_finderPathWithPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathWithoutPaginationFindAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll",
-			new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0],
+			new String[0], true);
 
 		_finderPathCountAll = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
-			new String[0]);
+			new String[0], new String[0], false);
 
 		_finderPathWithPaginationFindByAssetEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByAssetEntryId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"assetEntryId"}, true);
 
 		_finderPathWithoutPaginationFindByAssetEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByAssetEntryId",
-			new String[] {Long.class.getName()},
-			AssetEntryAssetCategoryRelModelImpl.ASSETENTRYID_COLUMN_BITMASK);
+			new String[] {Long.class.getName()}, new String[] {"assetEntryId"},
+			true);
 
 		_finderPathCountByAssetEntryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByAssetEntryId",
-			new String[] {Long.class.getName()});
+			new String[] {Long.class.getName()}, new String[] {"assetEntryId"},
+			false);
 
 		_finderPathWithPaginationFindByAssetCategoryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByAssetCategoryId",
 			new String[] {
 				Long.class.getName(), Integer.class.getName(),
 				Integer.class.getName(), OrderByComparator.class.getName()
-			});
+			},
+			new String[] {"assetCategoryId"}, true);
 
 		_finderPathWithoutPaginationFindByAssetCategoryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByAssetCategoryId",
 			new String[] {Long.class.getName()},
-			AssetEntryAssetCategoryRelModelImpl.ASSETCATEGORYID_COLUMN_BITMASK);
+			new String[] {"assetCategoryId"}, true);
 
 		_finderPathCountByAssetCategoryId = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByAssetCategoryId",
-			new String[] {Long.class.getName()});
+			new String[] {Long.class.getName()},
+			new String[] {"assetCategoryId"}, false);
 
 		_finderPathFetchByA_A = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled,
-			AssetEntryAssetCategoryRelImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByA_A",
+			FINDER_CLASS_NAME_ENTITY, "fetchByA_A",
 			new String[] {Long.class.getName(), Long.class.getName()},
-			AssetEntryAssetCategoryRelModelImpl.ASSETENTRYID_COLUMN_BITMASK |
-			AssetEntryAssetCategoryRelModelImpl.ASSETCATEGORYID_COLUMN_BITMASK);
+			new String[] {"assetEntryId", "assetCategoryId"}, true);
 
-		_finderPathCountByA_A = new FinderPath(
-			entityCacheEnabled, finderCacheEnabled, Long.class,
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByA_A",
-			new String[] {Long.class.getName(), Long.class.getName()});
+		AssetEntryAssetCategoryRelUtil.setPersistence(this);
 	}
 
 	@Deactivate
 	public void deactivate() {
+		AssetEntryAssetCategoryRelUtil.setPersistence(null);
+
 		entityCache.removeCache(AssetEntryAssetCategoryRelImpl.class.getName());
-		finderCache.removeCache(FINDER_CLASS_NAME_ENTITY);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
-		finderCache.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	@Override
@@ -2165,12 +2258,6 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		unbind = "-"
 	)
 	public void setConfiguration(Configuration configuration) {
-		super.setConfiguration(configuration);
-
-		_columnBitmaskEnabled = GetterUtil.getBoolean(
-			configuration.get(
-				"value.object.column.bitmask.enabled.com.liferay.asset.entry.rel.model.AssetEntryAssetCategoryRel"),
-			true);
 	}
 
 	@Override
@@ -2191,7 +2278,8 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 		super.setSessionFactory(sessionFactory);
 	}
 
-	private boolean _columnBitmaskEnabled;
+	@Reference
+	protected CTPersistenceHelper ctPersistenceHelper;
 
 	@Reference
 	protected EntityCache entityCache;
@@ -2223,13 +2311,9 @@ public class AssetEntryAssetCategoryRelPersistenceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		AssetEntryAssetCategoryRelPersistenceImpl.class);
 
-	static {
-		try {
-			Class.forName(AssetPersistenceConstants.class.getName());
-		}
-		catch (ClassNotFoundException cnfe) {
-			throw new ExceptionInInitializerError(cnfe);
-		}
+	@Override
+	protected FinderCache getFinderCache() {
+		return finderCache;
 	}
 
 }

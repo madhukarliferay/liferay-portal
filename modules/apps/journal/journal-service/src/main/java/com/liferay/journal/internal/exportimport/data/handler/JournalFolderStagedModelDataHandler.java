@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.internal.exportimport.data.handler;
@@ -22,8 +13,8 @@ import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandler;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelModifiedDateComparator;
+import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalFolder;
-import com.liferay.journal.model.JournalFolderConstants;
 import com.liferay.journal.service.JournalFolderLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -33,6 +24,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
+import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -49,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Daniel Kocsis
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class JournalFolderStagedModelDataHandler
 	extends BaseStagedModelDataHandler<JournalFolder> {
 
@@ -100,7 +92,7 @@ public class JournalFolderStagedModelDataHandler
 			List<JournalFolder> ancestorFolders = folder.getAncestors();
 
 			StringBundler sb = new StringBundler(
-				4 * ancestorFolders.size() + 1);
+				(4 * ancestorFolders.size()) + 1);
 
 			Collections.reverse(ancestorFolders);
 
@@ -115,9 +107,9 @@ public class JournalFolderStagedModelDataHandler
 
 			return sb.toString();
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(pe, pe);
+				_log.warn(portalException);
 			}
 		}
 
@@ -139,10 +131,29 @@ public class JournalFolderStagedModelDataHandler
 
 		Element folderElement = portletDataContext.getExportDataElement(folder);
 
-		exportFolderDDMStructures(portletDataContext, folder);
+		_exportFolderDDMStructures(portletDataContext, folder);
 
 		portletDataContext.addClassedModel(
 			folderElement, ExportImportPathUtil.getModelPath(folder), folder);
+	}
+
+	@Override
+	protected void doImportMissingReference(
+		PortletDataContext portletDataContext, String uuid, long groupId,
+		long folderId) {
+
+		JournalFolder existingJournalFolder = fetchMissingReference(
+			uuid, groupId);
+
+		if (existingJournalFolder == null) {
+			return;
+		}
+
+		Map<Long, Long> journalFolderIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				JournalFolder.class);
+
+		journalFolderIds.put(folderId, existingJournalFolder.getFolderId());
 	}
 
 	@Override
@@ -177,8 +188,9 @@ public class JournalFolderStagedModelDataHandler
 				serviceContext.setUuid(folder.getUuid());
 
 				importedFolder = _journalFolderLocalService.addFolder(
-					userId, groupId, parentFolderId, name,
-					folder.getDescription(), serviceContext);
+					folder.getExternalReferenceCode(), userId, groupId,
+					parentFolderId, name, folder.getDescription(),
+					serviceContext);
 			}
 			else {
 				String name = _journalFolderLocalService.getUniqueFolderName(
@@ -196,8 +208,8 @@ public class JournalFolderStagedModelDataHandler
 				null, groupId, parentFolderId, folder.getName(), 2);
 
 			importedFolder = _journalFolderLocalService.addFolder(
-				userId, groupId, parentFolderId, name, folder.getDescription(),
-				serviceContext);
+				folder.getExternalReferenceCode(), userId, groupId,
+				parentFolderId, name, folder.getDescription(), serviceContext);
 		}
 
 		importedFolder.setRestrictionType(folder.getRestrictionType());
@@ -205,7 +217,7 @@ public class JournalFolderStagedModelDataHandler
 		importedFolder = _journalFolderLocalService.updateJournalFolder(
 			importedFolder);
 
-		importFolderDDMStructures(portletDataContext, folder, importedFolder);
+		_importFolderDDMStructures(portletDataContext, folder, importedFolder);
 
 		portletDataContext.importClassedModel(folder, importedFolder);
 	}
@@ -222,17 +234,17 @@ public class JournalFolderStagedModelDataHandler
 			return;
 		}
 
-		TrashHandler trashHandler = existingFolder.getTrashHandler();
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			JournalFolder.class.getName());
 
 		if (trashHandler.isRestorable(existingFolder.getFolderId())) {
-			long userId = portletDataContext.getUserId(folder.getUserUuid());
-
 			trashHandler.restoreTrashEntry(
-				userId, existingFolder.getFolderId());
+				portletDataContext.getUserId(folder.getUserUuid()),
+				existingFolder.getFolderId());
 		}
 	}
 
-	protected void exportFolderDDMStructures(
+	private void _exportFolderDDMStructures(
 			PortletDataContext portletDataContext, JournalFolder folder)
 		throws Exception {
 
@@ -253,7 +265,7 @@ public class JournalFolderStagedModelDataHandler
 		}
 	}
 
-	protected void importFolderDDMStructures(
+	private void _importFolderDDMStructures(
 			PortletDataContext portletDataContext, JournalFolder folder,
 			JournalFolder importedFolder)
 		throws Exception {
@@ -291,7 +303,8 @@ public class JournalFolderStagedModelDataHandler
 				JournalFolderConstants.
 					RESTRICTION_TYPE_DDM_STRUCTURES_AND_WORKFLOW);
 
-			_journalFolderLocalService.updateJournalFolder(importedFolder);
+			importedFolder = _journalFolderLocalService.updateJournalFolder(
+				importedFolder);
 
 			_journalFolderLocalService.updateFolderDDMStructures(
 				importedFolder,
@@ -299,24 +312,13 @@ public class JournalFolderStagedModelDataHandler
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		_ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalFolderLocalService(
-		JournalFolderLocalService journalFolderLocalService) {
-
-		_journalFolderLocalService = journalFolderLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalFolderStagedModelDataHandler.class);
 
+	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
 	private JournalFolderLocalService _journalFolderLocalService;
 
 }

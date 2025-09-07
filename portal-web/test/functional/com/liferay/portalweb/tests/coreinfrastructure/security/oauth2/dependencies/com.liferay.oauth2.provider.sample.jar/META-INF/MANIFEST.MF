@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Liferay OAuth2 Provider Sample
+Bundle-SymbolicName: com.liferay.oauth2.provider.sample
+Bundle-Vendor: Liferay, Inc.
+Bundle-Version: 1.0.0
+Created-By: 17.0.13 (Azul Systems, Inc.)
+Import-Package: com.liferay.oauth2.provider.scope;version="1.0",jakart
+ a.ws.rs;version="3.1",jakarta.ws.rs.core;version="3.1",java.lang,java
+ .util
+Javac-Debug: on
+Javac-Deprecation: off
+Javac-Encoding: UTF-8
+Private-Package: com.liferay.oauth2.provider.sample
+Provide-Capability: osgi.service;objectClass:List<String>="jakarta.ws.
+ rs.core.Application";uses:="jakarta.ws.rs.core"
+Require-Capability: osgi.extender;filter:="(&(osgi.extender=osgi.compo
+ nent)(version>=1.4.0)(!(version>=2.0.0)))",osgi.ee;filter:="(&(osgi.e
+ e=JavaSE)(version=17))"
+Service-Component: OSGI-INF/com.liferay.oauth2.provider.sample.SampleA
+ pp.xml
+Tool: Bnd-6.4.0.202211291949
+

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.knowledge.base.web.internal.util;
@@ -35,6 +26,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -43,16 +35,16 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.service.WikiPageLocalServiceUtil;
 
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletURL;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Peter Shin
@@ -68,6 +60,7 @@ public class KBArticleAssetEntriesUtil {
 
 		assetEntryQuery.setAnyTagIds(assetTagIds);
 		assetEntryQuery.setClassNameIds(classNameIds);
+		assetEntryQuery.setEnablePermissions(true);
 		assetEntryQuery.setEnd(end + 1);
 		assetEntryQuery.setGroupIds(groupIds);
 		assetEntryQuery.setOrderByCol1(orderByColumn);
@@ -104,12 +97,12 @@ public class KBArticleAssetEntriesUtil {
 			try {
 				AssetTagServiceUtil.getTag(tagId);
 			}
-			catch (PrincipalException pe) {
+			catch (PrincipalException principalException) {
 
 				// LPS-52675
 
 				if (_log.isDebugEnabled()) {
-					_log.debug(pe, pe);
+					_log.debug(principalException);
 				}
 
 				continue;
@@ -127,8 +120,8 @@ public class KBArticleAssetEntriesUtil {
 
 	public static String getURL(
 			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay,
-			AssetRendererFactory assetRendererFactory,
-			AssetRenderer assetRenderer)
+			AssetRendererFactory<?> assetRendererFactory,
+			AssetRenderer<?> assetRenderer)
 		throws Exception {
 
 		long classPK = assetRenderer.getClassPK();
@@ -141,52 +134,65 @@ public class KBArticleAssetEntriesUtil {
 		PortletURL portletURL = null;
 
 		if (className.equals(BlogsEntry.class.getName())) {
-			portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"mvcRenderCommandName", "/blogs/view_entry");
-			portletURL.setParameter("entryId", String.valueOf(classPK));
+			portletURL = PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest, portletId, PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/blogs/view_entry"
+			).setParameter(
+				"entryId", classPK
+			).buildPortletURL();
 		}
 		else if (className.equals(JournalArticle.class.getName())) {
 			JournalArticle journalArticle =
 				JournalArticleLocalServiceUtil.getLatestArticle(classPK);
 
-			portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter("struts_action", "/journal_content/view");
-			portletURL.setParameter(
-				"groupId", String.valueOf(journalArticle.getGroupId()));
-			portletURL.setParameter("articleId", journalArticle.getArticleId());
+			portletURL = PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest, portletId, PortletRequest.RENDER_PHASE)
+			).setParameter(
+				"articleId", journalArticle.getArticleId()
+			).setParameter(
+				"groupId", journalArticle.getGroupId()
+			).setParameter(
+				"struts_action", "/journal_content/view"
+			).buildPortletURL();
 		}
 		else if (className.equals(KBArticle.class.getName())) {
-			portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest,
-				KBPortletKeys.KNOWLEDGE_BASE_ARTICLE_DEFAULT_INSTANCE,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter("mvcPath", "/article/view_article.jsp");
-			portletURL.setParameter("resourcePrimKey", String.valueOf(classPK));
+			portletURL = PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest,
+					KBPortletKeys.KNOWLEDGE_BASE_ARTICLE_DEFAULT_INSTANCE,
+					PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/knowledge_base/view_kb_article"
+			).setParameter(
+				"resourcePrimKey", classPK
+			).buildPortletURL();
 		}
 		else if (className.equals(MBMessage.class.getName())) {
-			portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"struts_action", "/message_boards/view_message");
-			portletURL.setParameter("messageId", String.valueOf(classPK));
+			portletURL = PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest, portletId, PortletRequest.RENDER_PHASE)
+			).setParameter(
+				"messageId", classPK
+			).setParameter(
+				"struts_action", "/message_boards/view_message"
+			).buildPortletURL();
 		}
 		else if (className.equals(WikiPage.class.getName())) {
 			WikiPage wikiPage = WikiPageLocalServiceUtil.getPage(classPK);
 
-			portletURL = PortletURLFactoryUtil.create(
-				httpServletRequest, portletId, PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter("struts_action", "/wiki/view");
-			portletURL.setParameter(
-				"nodeId", String.valueOf(wikiPage.getNodeId()));
-			portletURL.setParameter("title", wikiPage.getTitle());
+			portletURL = PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					httpServletRequest, portletId, PortletRequest.RENDER_PHASE)
+			).setParameter(
+				"nodeId", wikiPage.getNodeId()
+			).setParameter(
+				"struts_action", "/wiki/view"
+			).setParameter(
+				"title", wikiPage.getTitle()
+			).buildPortletURL();
 		}
 
 		String currentURL = PortalUtil.getCurrentURL(httpServletRequest);
@@ -197,7 +203,6 @@ public class KBArticleAssetEntriesUtil {
 
 		portletURL.setWindowState(WindowState.MAXIMIZED);
 		portletURL.setPortletMode(PortletMode.VIEW);
-
 		portletURL.setParameter("returnToFullPageURL", currentURL);
 
 		return portletURL.toString();

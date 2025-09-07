@@ -1,22 +1,15 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.push.notifications.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.push.notifications.model.PushNotificationsDevice;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for PushNotificationsDevice. This utility wraps
@@ -32,35 +25,29 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class PushNotificationsDeviceServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.push.notifications.service.impl.PushNotificationsDeviceServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link PushNotificationsDeviceServiceUtil} to access the push notifications device remote service. Add custom service methods to <code>com.liferay.push.notifications.service.impl.PushNotificationsDeviceServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.push.notifications.model.PushNotificationsDevice
-			addPushNotificationsDevice(String token, String platform)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PushNotificationsDevice addPushNotificationsDevice(
+			String token, String platform)
+		throws PortalException {
 
 		return getService().addPushNotificationsDevice(token, platform);
 	}
 
-	public static com.liferay.push.notifications.model.PushNotificationsDevice
-			deletePushNotificationsDevice(long pushNotificationsDeviceId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PushNotificationsDevice deletePushNotificationsDevice(
+			long pushNotificationsDeviceId)
+		throws PortalException {
 
 		return getService().deletePushNotificationsDevice(
 			pushNotificationsDeviceId);
 	}
 
-	public static com.liferay.push.notifications.model.PushNotificationsDevice
-			deletePushNotificationsDevice(String token)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static PushNotificationsDevice deletePushNotificationsDevice(
+			String token)
+		throws PortalException {
 
 		return getService().deletePushNotificationsDevice(token);
 	}
@@ -75,42 +62,25 @@ public class PushNotificationsDeviceServiceUtil {
 	}
 
 	public static void sendPushNotification(long[] toUserIds, String payload)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		getService().sendPushNotification(toUserIds, payload);
 	}
 
 	public static void sendPushNotification(
-			String platform, java.util.List<String> tokens, String payload)
-		throws com.liferay.portal.kernel.exception.PortalException {
+			String platform, List<String> tokens, String payload)
+		throws PortalException {
 
 		getService().sendPushNotification(platform, tokens, payload);
 	}
 
 	public static PushNotificationsDeviceService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<PushNotificationsDeviceService, PushNotificationsDeviceService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<PushNotificationsDeviceService>
+		_serviceSnapshot = new Snapshot<>(
+			PushNotificationsDeviceServiceUtil.class,
 			PushNotificationsDeviceService.class);
-
-		ServiceTracker
-			<PushNotificationsDeviceService, PushNotificationsDeviceService>
-				serviceTracker =
-					new ServiceTracker
-						<PushNotificationsDeviceService,
-						 PushNotificationsDeviceService>(
-							 bundle.getBundleContext(),
-							 PushNotificationsDeviceService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

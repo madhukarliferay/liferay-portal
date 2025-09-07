@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.service.test;
@@ -24,7 +15,6 @@ import com.liferay.message.boards.service.MBCategoryServiceUtil;
 import com.liferay.message.boards.service.MBMessageLocalServiceUtil;
 import com.liferay.message.boards.service.MBMessageServiceUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.model.Group;
@@ -34,9 +24,9 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.test.constants.ServiceTestConstants;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -47,9 +37,9 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.security.permission.DoAsUserThread;
-import com.liferay.portal.service.test.ServiceTestUtil;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
@@ -58,10 +48,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
-
-import org.hibernate.util.JDBCExceptionReporter;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -108,9 +95,9 @@ public class MBMessageServiceTest {
 
 		_group = GroupTestUtil.addGroup();
 
-		_users = new User[ServiceTestUtil.THREAD_COUNT];
+		_users = new User[ServiceTestConstants.THREAD_COUNT];
 
-		for (int i = 0; i < ServiceTestUtil.THREAD_COUNT; i++) {
+		for (int i = 0; i < ServiceTestConstants.THREAD_COUNT; i++) {
 			User user = UserTestUtil.addUser(_group.getGroupId());
 
 			_users[i] = user;
@@ -119,18 +106,19 @@ public class MBMessageServiceTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
-		ModelPermissions modelPermissions = ModelPermissionsFactory.create(
-			new String[] {ActionKeys.ADD_MESSAGE, ActionKeys.VIEW},
-			new String[] {ActionKeys.ADD_MESSAGE, ActionKeys.VIEW});
-
-		serviceContext.setModelPermissions(modelPermissions);
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(
+				new String[] {ActionKeys.ADD_MESSAGE, ActionKeys.VIEW},
+				new String[] {ActionKeys.ADD_MESSAGE, ActionKeys.VIEW},
+				MBCategory.class.getName()));
 
 		_category = MBCategoryServiceUtil.addCategory(
-			MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, name, description,
-			displayStyle, emailAddress, inProtocol, inServerName, inServerPort,
-			inUseSSL, inUserName, inPassword, inReadInterval, outEmailAddress,
-			outCustom, outServerName, outServerPort, outUseSSL, outUserName,
-			outPassword, allowAnonymous, mailingListActive, serviceContext);
+			null, MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, name,
+			description, displayStyle, emailAddress, inProtocol, inServerName,
+			inServerPort, inUseSSL, inUserName, inPassword, inReadInterval,
+			outEmailAddress, outCustom, outServerName, outServerPort, outUseSSL,
+			outUserName, outPassword, allowAnonymous, mailingListActive,
+			serviceContext);
 	}
 
 	@Test
@@ -144,25 +132,19 @@ public class MBMessageServiceTest {
 				_users[i].getUserId(), subject);
 		}
 
-		try (CaptureAppender captureAppender1 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					BasePersistenceImpl.class.getName(), Level.ERROR);
-			CaptureAppender captureAppender2 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.portal.spring.transaction." +
-						"DefaultTransactionExecutor",
-					Level.ERROR);
-			CaptureAppender captureAppender3 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					DoAsUserThread.class.getName(), Level.ERROR);
-			CaptureAppender captureAppender4 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					JDBCExceptionReporter.class.getName(), Level.ERROR);
-			CaptureAppender captureAppender5 =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					"com.liferay.portal.messaging.internal." +
-						"SynchronousDestination",
-					Level.ERROR)) {
+		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
+				BasePersistenceImpl.class.getName(), LoggerTestUtil.ERROR);
+			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.spring.transaction." +
+					"DefaultTransactionExecutor",
+				LoggerTestUtil.ERROR);
+			LogCapture logCapture3 = LoggerTestUtil.configureLog4JLogger(
+				DoAsUserThread.class.getName(), LoggerTestUtil.ERROR);
+			LogCapture logCapture4 = LoggerTestUtil.configureLog4JLogger(
+				SqlExceptionHelper.class.getName(), LoggerTestUtil.ERROR);
+			LogCapture logCapture5 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.messaging.internal.SynchronousDestination",
+				LoggerTestUtil.ERROR)) {
 
 			for (DoAsUserThread doAsUserThread : doAsUserThreads) {
 				doAsUserThread.start();
@@ -172,13 +154,9 @@ public class MBMessageServiceTest {
 				doAsUserThread.join();
 			}
 
-			DB db = DBManagerUtil.getDB();
-
-			if (db.getDBType() == DBType.HYPERSONIC) {
-				for (LoggingEvent loggingEvent :
-						captureAppender2.getLoggingEvents()) {
-
-					String message = loggingEvent.getRenderedMessage();
+			if (DBManagerUtil.getDBType() == DBType.HYPERSONIC) {
+				for (LogEntry logEntry : logCapture2.getLogEntries()) {
+					String message = logEntry.getMessage();
 
 					Assert.assertTrue(
 						message.startsWith(
@@ -186,50 +164,11 @@ public class MBMessageServiceTest {
 								"exception"));
 				}
 
-				for (LoggingEvent loggingEvent :
-						captureAppender5.getLoggingEvents()) {
-
-					String message = loggingEvent.getRenderedMessage();
+				for (LogEntry logEntry : logCapture5.getLogEntries()) {
+					String message = logEntry.getMessage();
 
 					Assert.assertTrue(
 						message.startsWith("Unable to process message"));
-				}
-			}
-			else if (db.getDBType() == DBType.SYBASE) {
-				for (LoggingEvent loggingEvent :
-						captureAppender1.getLoggingEvents()) {
-
-					String message = loggingEvent.getRenderedMessage();
-
-					Assert.assertTrue(
-						message.startsWith("Caught unexpected exception"));
-				}
-
-				for (LoggingEvent loggingEvent :
-						captureAppender3.getLoggingEvents()) {
-
-					String message = loggingEvent.getRenderedMessage();
-
-					StringBundler sb = new StringBundler(2);
-
-					sb.append("com.liferay.portal.kernel.exception.");
-					sb.append("SystemException:");
-
-					Assert.assertTrue(message.startsWith(sb.toString()));
-				}
-
-				for (LoggingEvent loggingEvent :
-						captureAppender4.getLoggingEvents()) {
-
-					String message = loggingEvent.getRenderedMessage();
-
-					Assert.assertTrue(
-						message, message.contains("Your server command"));
-					Assert.assertTrue(
-						message,
-						message.contains(
-							"encountered a deadlock situation. Please re-run " +
-								"your command."));
 				}
 			}
 		}
@@ -311,7 +250,7 @@ public class MBMessageServiceTest {
 	private class AddMessageThread extends DoAsUserThread {
 
 		public AddMessageThread(long userId, String subject) {
-			super(userId, ServiceTestUtil.RETRY_COUNT);
+			super(userId, ServiceTestConstants.RETRY_COUNT);
 
 			_subject = subject;
 		}

@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 
 import java.io.IOException;
@@ -26,8 +18,11 @@ import java.net.URL;
 import java.text.Normalizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -203,15 +198,33 @@ public class StringUtil {
 	 *         space, followed by the suffix enclosed in parentheses
 	 */
 	public static String appendParentheticalSuffix(String s, String suffix) {
-		StringBundler sb = new StringBundler(5);
+		return StringBundler.concat(
+			s, StringPool.SPACE, StringPool.OPEN_PARENTHESIS, suffix,
+			StringPool.CLOSE_PARENTHESIS);
+	}
 
-		sb.append(s);
-		sb.append(StringPool.SPACE);
-		sb.append(StringPool.OPEN_PARENTHESIS);
-		sb.append(suffix);
-		sb.append(StringPool.CLOSE_PARENTHESIS);
+	public static List<String> asList(Object object) {
+		if (object instanceof String) {
+			return new ArrayList<>(Collections.singletonList((String)object));
+		}
+		else if (object instanceof String[]) {
+			return new ArrayList<>(Arrays.asList((String[])object));
+		}
+		else if (object instanceof Collection) {
+			Collection<?> collection = (Collection<?>)object;
 
-		return sb.toString();
+			if (!collection.isEmpty()) {
+				Iterator<?> iterator = collection.iterator();
+
+				Object element = iterator.next();
+
+				if (element instanceof String) {
+					return new ArrayList<>((Collection<String>)object);
+				}
+			}
+		}
+
+		return new ArrayList<>();
 	}
 
 	/**
@@ -226,7 +239,7 @@ public class StringUtil {
 
 		for (int i = 0; i < bytes.length; i++) {
 			chars[i * 2] = HEX_DIGITS[(bytes[i] & 0xFF) >> 4];
-			chars[i * 2 + 1] = HEX_DIGITS[bytes[i] & 0x0F];
+			chars[(i * 2) + 1] = HEX_DIGITS[bytes[i] & 0x0F];
 		}
 
 		return new String(chars);
@@ -291,22 +304,14 @@ public class StringUtil {
 			s = s.concat(delimiter);
 		}
 
-		String dtd = delimiter.concat(
-			text
-		).concat(
-			delimiter
-		);
+		String dtd = StringBundler.concat(delimiter, text, delimiter);
 
 		int pos = s.indexOf(dtd);
 
 		if (pos == -1) {
 			String td = text.concat(delimiter);
 
-			if (s.startsWith(td)) {
-				return true;
-			}
-
-			return false;
+			return s.startsWith(td);
 		}
 
 		return true;
@@ -456,21 +461,13 @@ public class StringUtil {
 	 *         <code>end</code>, ignoring case; <code>false</code> otherwise
 	 */
 	public static boolean endsWith(String s, String end) {
-		if ((s == null) || (end == null)) {
-			return false;
-		}
-
-		if (end.length() > s.length()) {
+		if ((s == null) || (end == null) || (end.length() > s.length())) {
 			return false;
 		}
 
 		String temp = s.substring(s.length() - end.length());
 
-		if (equalsIgnoreCase(temp, end)) {
-			return true;
-		}
-
-		return false;
+		return equalsIgnoreCase(temp, end);
 	}
 
 	/**
@@ -571,11 +568,7 @@ public class StringUtil {
 			return true;
 		}
 
-		if ((s1 == null) || (s2 == null)) {
-			return false;
-		}
-
-		if (s1.length() != s2.length()) {
+		if ((s1 == null) || (s2 == null) || (s1.length() != s2.length())) {
 			return false;
 		}
 
@@ -768,6 +761,91 @@ public class StringUtil {
 		return sb.toString();
 	}
 
+	public static String getTitleCase(
+		String s, boolean allowDash, String... exceptions) {
+
+		if (!allowDash) {
+			s = replace(s, CharPool.DASH, CharPool.SPACE);
+		}
+
+		String[] words = s.split("\\s+");
+
+		if (ArrayUtil.isEmpty(words)) {
+			return s;
+		}
+
+		StringBundler sb = new StringBundler(words.length * 2);
+
+		outerLoop:
+		for (int i = 0; i < words.length; i++) {
+			String word = words[i];
+
+			if (Validator.isNull(word)) {
+				continue;
+			}
+
+			for (String exception : exceptions) {
+				if (equalsIgnoreCase(exception, word)) {
+					sb.append(exception);
+					sb.append(CharPool.SPACE);
+
+					continue outerLoop;
+				}
+			}
+
+			if ((i != 0) && (i != (words.length - 1))) {
+				String lowerCaseWord = toLowerCase(word);
+
+				if (ArrayUtil.contains(_ARTICLES, lowerCaseWord) ||
+					ArrayUtil.contains(_CONJUNCTIONS, lowerCaseWord) ||
+					ArrayUtil.contains(_PREPOSITIONS, lowerCaseWord)) {
+
+					sb.append(lowerCaseWord);
+					sb.append(CharPool.SPACE);
+
+					continue;
+				}
+			}
+
+			if (Character.isUpperCase(word.charAt(0))) {
+				sb.append(word);
+			}
+			else {
+				sb.append(upperCaseFirstLetter(word));
+			}
+
+			sb.append(CharPool.SPACE);
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		return sb.toString();
+	}
+
+	public static byte[] hexStringToBytes(String hexString) {
+		if ((hexString.length() % 2) != 0) {
+			throw new IllegalArgumentException("Odd number of characters");
+		}
+
+		byte[] bytes = new byte[hexString.length() / 2];
+
+		for (int i = 0; i < hexString.length(); i = i + 2) {
+			String s = hexString.substring(i, i + 2);
+
+			try {
+				bytes[i / 2] = (byte)Integer.parseInt(s, 16);
+			}
+			catch (NumberFormatException numberFormatException) {
+				throw new IllegalArgumentException(
+					StringBundler.concat(
+						"Illegal hexadecimal characters ", s, " at index ", i),
+					numberFormatException);
+			}
+		}
+
+		return bytes;
+	}
+
 	/**
 	 * Returns the index within the string of the first occurrence of any
 	 * character from the array.
@@ -885,15 +963,9 @@ public class StringUtil {
 	public static int indexOfAny(
 		String s, char[] chars, int fromIndex, int toIndex) {
 
-		if ((s == null) || (toIndex < fromIndex)) {
-			return -1;
-		}
+		if ((s == null) || (toIndex < fromIndex) || ArrayUtil.isEmpty(chars) ||
+			(fromIndex >= s.length())) {
 
-		if (ArrayUtil.isEmpty(chars)) {
-			return -1;
-		}
-
-		if (fromIndex >= s.length()) {
 			return -1;
 		}
 
@@ -1052,15 +1124,9 @@ public class StringUtil {
 	public static int indexOfAny(
 		String s, String[] texts, int fromIndex, int toIndex) {
 
-		if ((s == null) || (toIndex < fromIndex)) {
-			return -1;
-		}
+		if ((s == null) || (toIndex < fromIndex) || ArrayUtil.isEmpty(texts) ||
+			(fromIndex >= s.length())) {
 
-		if (ArrayUtil.isEmpty(texts)) {
-			return -1;
-		}
-
-		if (fromIndex >= s.length()) {
 			return -1;
 		}
 
@@ -1116,11 +1182,7 @@ public class StringUtil {
 		String prefix = s.substring(0, offset);
 		String postfix = s.substring(offset);
 
-		return prefix.concat(
-			insert
-		).concat(
-			postfix
-		);
+		return StringBundler.concat(prefix, insert, postfix);
 	}
 
 	/**
@@ -1316,15 +1378,9 @@ public class StringUtil {
 	public static int lastIndexOfAny(
 		String s, char[] chars, int fromIndex, int toIndex) {
 
-		if ((s == null) || (toIndex < fromIndex)) {
-			return -1;
-		}
+		if ((s == null) || (toIndex < fromIndex) || ArrayUtil.isEmpty(chars) ||
+			(fromIndex >= s.length())) {
 
-		if (ArrayUtil.isEmpty(chars)) {
-			return -1;
-		}
-
-		if (fromIndex >= s.length()) {
 			return -1;
 		}
 
@@ -1482,15 +1538,9 @@ public class StringUtil {
 	public static int lastIndexOfAny(
 		String s, String[] texts, int fromIndex, int toIndex) {
 
-		if ((s == null) || (toIndex < fromIndex)) {
-			return -1;
-		}
+		if ((s == null) || (toIndex < fromIndex) || ArrayUtil.isEmpty(texts) ||
+			(fromIndex >= s.length())) {
 
-		if (ArrayUtil.isEmpty(texts)) {
-			return -1;
-		}
-
-		if (fromIndex >= s.length()) {
 			return -1;
 		}
 
@@ -1635,7 +1685,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1684,7 +1734,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1701,36 +1751,44 @@ public class StringUtil {
 	 * Merges the elements of the collection by returning a string representing
 	 * a comma delimited list of its values.
 	 *
-	 * @param  col the collection of objects
+	 * @param  collection the collection of objects
 	 * @return the merged collection elements, or <code>null</code> if the
 	 *         collection is <code>null</code>
 	 */
-	public static String merge(Collection<?> col) {
-		return merge(col, StringPool.COMMA);
+	public static String merge(Collection<?> collection) {
+		return merge(collection, StringPool.COMMA);
 	}
 
 	/**
 	 * Merges the elements of the collection by returning a string representing
 	 * a delimited list of its values.
 	 *
-	 * @param  col the collection of objects
+	 * @param  collection the collection of objects
 	 * @param  delimiter the string whose last index in the string marks where
 	 *         to begin the substring
 	 * @return the merged collection elements, or <code>null</code> if the
 	 *         collection is <code>null</code>
 	 */
-	public static String merge(Collection<?> col, String delimiter) {
-		if (col == null) {
+	public static String merge(Collection<?> collection, String delimiter) {
+		if (collection == null) {
 			return null;
 		}
 
-		if (col.isEmpty()) {
+		int size = collection.size();
+
+		if (size == 0) {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(2 * col.size());
+		if (size == 1) {
+			Iterator<?> iterator = collection.iterator();
 
-		for (Object object : col) {
+			return String.valueOf(iterator.next());
+		}
+
+		StringBundler sb = new StringBundler(2 * collection.size());
+
+		for (Object object : collection) {
 			String objectString = String.valueOf(object);
 
 			sb.append(objectString.trim());
@@ -1782,7 +1840,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1831,7 +1889,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1880,7 +1938,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1929,7 +1987,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -1978,7 +2036,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -2029,7 +2087,7 @@ public class StringUtil {
 			return String.valueOf(array[0]);
 		}
 
-		StringBundler sb = new StringBundler(2 * array.length - 1);
+		StringBundler sb = new StringBundler((2 * array.length) - 1);
 
 		for (int i = 0; i < array.length; i++) {
 			if (i != 0) {
@@ -2117,11 +2175,7 @@ public class StringUtil {
 			return null;
 		}
 
-		return quote.concat(
-			s
-		).concat(
-			quote
-		);
+		return StringBundler.concat(quote, s, quote);
 	}
 
 	/**
@@ -2130,11 +2184,22 @@ public class StringUtil {
 	 * @return a randomized string of four lower case, alphabetic characters
 	 */
 	public static String randomId() {
+		return randomId(4);
+	}
+
+	/**
+	 * Returns a randomized string with the length informed and only alphabetic
+	 * characters.
+	 *
+	 * @return a randomized string with the length informed and only alphabetic
+	 *         characters.
+	 */
+	public static String randomId(int length) {
 		Random random = new Random();
 
-		char[] chars = new char[4];
+		char[] chars = new char[length];
 
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < length; i++) {
 			chars[i] = (char)(CharPool.LOWER_CASE_A + random.nextInt(26));
 		}
 
@@ -2178,8 +2243,8 @@ public class StringUtil {
 		try (InputStream inputStream = clazz.getResourceAsStream(name)) {
 			return read(inputStream);
 		}
-		catch (IOException ioe) {
-			return ReflectionUtil.throwException(ioe);
+		catch (IOException ioException) {
+			return ReflectionUtil.throwException(ioException);
 		}
 	}
 
@@ -2195,13 +2260,13 @@ public class StringUtil {
 		if (all) {
 			StringBundler sb = new StringBundler();
 
-			Enumeration<URL> enu = classLoader.getResources(name);
+			Enumeration<URL> enumeration = classLoader.getResources(name);
 
-			while (enu.hasMoreElements()) {
-				URL url = enu.nextElement();
+			while (enumeration.hasMoreElements()) {
+				URL url = enumeration.nextElement();
 
-				try (InputStream is = url.openStream()) {
-					String s = read(is);
+				try (InputStream inputStream = url.openStream()) {
+					String s = read(inputStream);
 
 					if (s != null) {
 						sb.append(s);
@@ -2215,20 +2280,20 @@ public class StringUtil {
 			return s.trim();
 		}
 
-		try (InputStream is = classLoader.getResourceAsStream(name)) {
-			if (is == null) {
+		try (InputStream inputStream = classLoader.getResourceAsStream(name)) {
+			if (inputStream == null) {
 				throw new IOException(
 					StringBundler.concat(
 						"Unable to open resource ", name, " in class loader ",
-						String.valueOf(classLoader)));
+						classLoader));
 			}
 
-			return read(is);
+			return read(inputStream);
 		}
 	}
 
-	public static String read(InputStream is) throws IOException {
-		String s = _read(is);
+	public static String read(InputStream inputStream) throws IOException {
+		String s = _read(inputStream);
 
 		s = replace(s, "\r\n", StringPool.NEW_LINE);
 
@@ -2237,10 +2302,11 @@ public class StringUtil {
 		return s.trim();
 	}
 
-	public static void readLines(InputStream is, Collection<String> lines)
+	public static void readLines(
+			InputStream inputStream, Collection<String> lines)
 		throws IOException {
 
-		_splitLines(_read(is), lines);
+		_splitLines(_read(inputStream), lines);
 	}
 
 	public static String removeChar(String s, char oldSub) {
@@ -2300,6 +2366,24 @@ public class StringUtil {
 		}
 
 		return sb.toString();
+	}
+
+	public static String removeFirst(String s, String oldSub) {
+		if (s == null) {
+			return null;
+		}
+
+		if (oldSub == null) {
+			return s;
+		}
+
+		int index = s.indexOf(oldSub);
+
+		if (index == -1) {
+			return s;
+		}
+
+		return s.substring(0, index) + s.substring(index + oldSub.length());
 	}
 
 	/**
@@ -2376,11 +2460,7 @@ public class StringUtil {
 			s += delimiter;
 		}
 
-		String drd = delimiter.concat(
-			element
-		).concat(
-			delimiter
-		);
+		String drd = StringBundler.concat(delimiter, element, delimiter);
 
 		String rd = element.concat(delimiter);
 
@@ -2406,6 +2486,24 @@ public class StringUtil {
 		}
 
 		return s;
+	}
+
+	public static String removeLast(String s, String oldSub) {
+		if (s == null) {
+			return null;
+		}
+
+		if (oldSub == null) {
+			return s;
+		}
+
+		int index = s.lastIndexOf(oldSub);
+
+		if (index == -1) {
+			return s;
+		}
+
+		return s.substring(0, index) + s.substring(index + oldSub.length());
 	}
 
 	public static String removeSubstring(String s, String oldSub) {
@@ -2727,6 +2825,22 @@ public class StringUtil {
 		return sb.toString();
 	}
 
+	public static String replace(String s, String[] oldSubs, Object[] newSubs) {
+		if ((s == null) || (oldSubs == null) || (newSubs == null)) {
+			return null;
+		}
+
+		if (oldSubs.length != newSubs.length) {
+			return s;
+		}
+
+		for (int i = 0; i < oldSubs.length; i++) {
+			s = replace(s, oldSubs[i], String.valueOf(newSubs[i]));
+		}
+
+		return s;
+	}
+
 	/**
 	 * Replaces all occurrences of the elements of the string array with the
 	 * corresponding elements of the new string array.
@@ -2906,13 +3020,8 @@ public class StringUtil {
 		int y = s.indexOf(oldSub, fromIndex);
 
 		if (y >= 0) {
-			return s.substring(
-				0, y
-			).concat(
-				newSub
-			).concat(
-				s.substring(y + oldSub.length())
-			);
+			return StringBundler.concat(
+				s.substring(0, y), newSub, s.substring(y + oldSub.length()));
 		}
 
 		return s;
@@ -3016,13 +3125,8 @@ public class StringUtil {
 		int y = s.lastIndexOf(oldSub);
 
 		if (y >= 0) {
-			return s.substring(
-				0, y
-			).concat(
-				newSub
-			).concat(
-				s.substring(y + oldSub.length())
-			);
+			return StringBundler.concat(
+				s.substring(0, y), newSub, s.substring(y + oldSub.length()));
 		}
 
 		return s;
@@ -3109,7 +3213,7 @@ public class StringUtil {
 			return new StringBundler(s);
 		}
 
-		StringBundler sb = new StringBundler(values.size() * 2 + 1);
+		StringBundler sb = new StringBundler((values.size() * 2) + 1);
 
 		int pos = 0;
 
@@ -3131,7 +3235,7 @@ public class StringUtil {
 			String newValue = values.get(oldValue);
 
 			if (newValue == null) {
-				newValue = oldValue;
+				newValue = StringBundler.concat(begin, oldValue, end);
 			}
 
 			sb.append(newValue);
@@ -3428,7 +3532,7 @@ public class StringUtil {
 	 * <p>
 	 * <pre>
 	 * <code>
-	 * splitLines("First;Second;Third", ';') returns {"First","Second","Third"}
+	 * split("First;Second;Third", ';') returns {"First","Second","Third"}
 	 * </code>
 	 * </pre></p>
 	 *
@@ -3543,7 +3647,7 @@ public class StringUtil {
 	 * <p>
 	 * <pre>
 	 * <code>
-	 * splitLines("oneandtwoandthreeandfour", "and") returns {"one","two","three","four"}
+	 * split("oneandtwoandthreeandfour", "and") returns {"one","two","three","four"}
 	 * </code>
 	 * </pre></p>
 	 *
@@ -3617,7 +3721,7 @@ public class StringUtil {
 
 				value = booleanValue.booleanValue();
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3650,7 +3754,7 @@ public class StringUtil {
 			try {
 				value = Double.parseDouble(array[i]);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3682,7 +3786,7 @@ public class StringUtil {
 			try {
 				value = Float.parseFloat(array[i]);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3714,7 +3818,7 @@ public class StringUtil {
 			try {
 				value = Integer.parseInt(array[i]);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3746,7 +3850,7 @@ public class StringUtil {
 			try {
 				value = Long.parseLong(array[i]);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3778,7 +3882,7 @@ public class StringUtil {
 			try {
 				value = Short.parseShort(array[i]);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
 			}
 
 			newArray[i] = value;
@@ -3849,11 +3953,7 @@ public class StringUtil {
 	 *         specified start string; <code>false</code> otherwise
 	 */
 	public static boolean startsWith(String s, String start) {
-		if ((s == null) || (start == null)) {
-			return false;
-		}
-
-		if (start.length() > s.length()) {
+		if ((s == null) || (start == null) || (start.length() > s.length())) {
 			return false;
 		}
 
@@ -4015,15 +4115,10 @@ public class StringUtil {
 		int x = s.lastIndexOf(StringPool.OPEN_PARENTHESIS);
 		int y = s.lastIndexOf(StringPool.CLOSE_PARENTHESIS);
 
-		if ((x == -1) || (y == -1)) {
-			return s;
-		}
+		if ((x == -1) || (y == -1) || (x > y) ||
+			!s.endsWith(StringPool.CLOSE_PARENTHESIS) ||
+			(s.charAt(x - 1) != CharPool.SPACE)) {
 
-		if ((x > y) || !s.endsWith(StringPool.CLOSE_PARENTHESIS)) {
-			return s;
-		}
-
-		if (s.charAt(x - 1) != CharPool.SPACE) {
 			return s;
 		}
 
@@ -4139,23 +4234,23 @@ public class StringUtil {
 	 * <code>Integer</code> or <code>Long</code> object type. If the object is
 	 * not an instance of these types, the object's original value is returned.
 	 *
-	 * @param  obj the object to convert
+	 * @param  object the object to convert
 	 * @return a string representing the hexidecimal character code of the
 	 *         object
 	 */
-	public static String toHexString(Object obj) {
-		if (obj instanceof Integer) {
-			Integer integerObj = (Integer)obj;
+	public static String toHexString(Object object) {
+		if (object instanceof Integer) {
+			Integer integerObj = (Integer)object;
 
 			return toHexString(integerObj.intValue());
 		}
-		else if (obj instanceof Long) {
-			Long longObj = (Long)obj;
+		else if (object instanceof Long) {
+			Long longObj = (Long)object;
 
 			return toHexString(longObj.longValue());
 		}
 
-		return String.valueOf(obj);
+		return String.valueOf(object);
 	}
 
 	/**
@@ -4668,6 +4763,10 @@ public class StringUtil {
 	 * @return the string, with its first character converted to upper-case
 	 */
 	public static String upperCaseFirstLetter(String s) {
+		if ((s == null) || s.isEmpty()) {
+			return s;
+		}
+
 		char[] chars = s.toCharArray();
 
 		if ((chars[0] >= 97) && (chars[0] <= 122)) {
@@ -4954,7 +5053,18 @@ public class StringUtil {
 		}
 	}
 
+	private static final String[] _ARTICLES = {"a", "an", "the"};
+
+	private static final String[] _CONJUNCTIONS = {
+		"and", "but", "for", "nor", "or", "yet"
+	};
+
 	private static final String[] _EMPTY_STRING_ARRAY = new String[0];
+
+	private static final String[] _PREPOSITIONS = {
+		"a", "an", "as", "at", "but", "by", "for", "in", "of", "off", "on",
+		"per", "to", "up", "via", "vs"
+	};
 
 	private static final char[] _RANDOM_STRING_CHAR_TABLE = {
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.transaction.test;
@@ -58,8 +49,8 @@ public class TransactionInvokerUtilTest {
 
 	@Test
 	public void testCommit() throws Throwable {
-		final long classNameId = _counterLocalService.increment();
-		final String classNameValue = PwdGenerator.getPassword();
+		long classNameId = _counterLocalService.increment();
+		String classNameValue = PwdGenerator.getPassword();
 
 		try {
 			TransactionInvokerUtil.invoke(
@@ -88,8 +79,8 @@ public class TransactionInvokerUtilTest {
 
 	@Test
 	public void testRollback() {
-		final long classNameId = _counterLocalService.increment();
-		final Exception exception = new Exception();
+		long classNameId = _counterLocalService.increment();
+		Exception exception1 = new Exception();
 
 		try {
 			TransactionInvokerUtil.invoke(
@@ -102,24 +93,21 @@ public class TransactionInvokerUtilTest {
 
 					_classNamePersistence.update(className);
 
-					throw exception;
+					throw exception1;
 				});
 
 			Assert.fail();
 		}
 		catch (Throwable throwable) {
-			Assert.assertSame(exception, throwable);
-
-			ClassName className = _classNameLocalService.fetchClassName(
-				classNameId);
-
-			Assert.assertNull(className);
+			Assert.assertSame(exception1, throwable);
+			Assert.assertNull(
+				_classNameLocalService.fetchClassName(classNameId));
 		}
 		finally {
 			try {
 				_classNameLocalService.deleteClassName(classNameId);
 			}
-			catch (Exception e) {
+			catch (Exception exception2) {
 			}
 		}
 	}

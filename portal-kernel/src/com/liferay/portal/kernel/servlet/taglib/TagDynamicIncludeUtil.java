@@ -1,36 +1,28 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet.taglib;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapper;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.collections.ServiceReferenceMapper;
-import com.liferay.registry.collections.ServiceTrackerCollections;
-import com.liferay.registry.collections.ServiceTrackerMap;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Iterator;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
  * @author Carlos Sierra Andrés
@@ -41,22 +33,15 @@ public class TagDynamicIncludeUtil {
 	public static List<TagDynamicInclude> getTagDynamicIncludes(
 		String tagClassName, String tagDynamicId, String tagPoint) {
 
-		String key = _getKey(tagClassName, tagDynamicId, tagPoint);
-
-		return _tagDynamicIncludeUtil._tagDynamicIncludes.getService(key);
+		return _tagDynamicIncludes.getService(
+			_getKey(tagClassName, tagDynamicId, tagPoint));
 	}
 
 	public static boolean hasTagDynamicInclude(
 		String tagClassName, String tagDynamicId, String tagPoint) {
 
-		List<TagDynamicInclude> tagDynamicIncludes = getTagDynamicIncludes(
-			tagClassName, tagDynamicId, tagPoint);
-
-		if ((tagDynamicIncludes == null) || tagDynamicIncludes.isEmpty()) {
-			return false;
-		}
-
-		return true;
+		return ListUtil.isNotEmpty(
+			getTagDynamicIncludes(tagClassName, tagDynamicId, tagPoint));
 	}
 
 	public static void include(
@@ -67,7 +52,7 @@ public class TagDynamicIncludeUtil {
 		List<TagDynamicInclude> tagDynamicIncludes = getTagDynamicIncludes(
 			tagClassName, tagDynamicId, tagPoint);
 
-		if ((tagDynamicIncludes == null) || tagDynamicIncludes.isEmpty()) {
+		if (ListUtil.isEmpty(tagDynamicIncludes)) {
 			return;
 		}
 
@@ -88,8 +73,8 @@ public class TagDynamicIncludeUtil {
 					httpServletRequest, httpServletResponse, tagClassName,
 					tagDynamicId, tagPoint);
 			}
-			catch (Exception e) {
-				_log.error(e, e);
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 		}
 	}
@@ -97,20 +82,23 @@ public class TagDynamicIncludeUtil {
 	private static String _getKey(
 		String tagClassName, String tagDynamicId, String tagPoint) {
 
-		StringBundler sb = new StringBundler(5);
-
-		sb.append(tagClassName);
-		sb.append(CharPool.POUND);
-		sb.append(tagPoint);
-		sb.append(CharPool.POUND);
-		sb.append(tagDynamicId);
-
-		return sb.toString();
+		return StringBundler.concat(
+			tagClassName, CharPool.POUND, tagPoint, CharPool.POUND,
+			tagDynamicId);
 	}
 
 	private TagDynamicIncludeUtil() {
-		_tagDynamicIncludes = ServiceTrackerCollections.openMultiValueMap(
-			TagDynamicInclude.class, null,
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		TagDynamicIncludeUtil.class);
+
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
+
+	private static final ServiceTrackerMap<String, List<TagDynamicInclude>>
+		_tagDynamicIncludes = ServiceTrackerMapFactory.openMultiValueMap(
+			_bundleContext, TagDynamicInclude.class, null,
 			new ServiceReferenceMapper<String, TagDynamicInclude>() {
 
 				@Override
@@ -118,10 +106,8 @@ public class TagDynamicIncludeUtil {
 					ServiceReference<TagDynamicInclude> serviceReference,
 					final Emitter<String> emitter) {
 
-					Registry registry = RegistryUtil.getRegistry();
-
-					TagDynamicInclude tagDynamicInclude = registry.getService(
-						serviceReference);
+					TagDynamicInclude tagDynamicInclude =
+						_bundleContext.getService(serviceReference);
 
 					try {
 						tagDynamicInclude.register(
@@ -132,29 +118,19 @@ public class TagDynamicIncludeUtil {
 									String tagClassName, String tagDynamicId,
 									String tagPoint) {
 
-									String key = _getKey(
-										tagClassName, tagDynamicId, tagPoint);
-
-									emitter.emit(key);
+									emitter.emit(
+										_getKey(
+											tagClassName, tagDynamicId,
+											tagPoint));
 								}
 
 							});
 					}
 					finally {
-						registry.ungetService(serviceReference);
+						_bundleContext.ungetService(serviceReference);
 					}
 				}
 
 			});
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		TagDynamicIncludeUtil.class);
-
-	private static final TagDynamicIncludeUtil _tagDynamicIncludeUtil =
-		new TagDynamicIncludeUtil();
-
-	private final ServiceTrackerMap<String, List<TagDynamicInclude>>
-		_tagDynamicIncludes;
 
 }

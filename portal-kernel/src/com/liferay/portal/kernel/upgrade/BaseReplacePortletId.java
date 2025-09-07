@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.upgrade;
@@ -30,7 +21,7 @@ import java.util.Map;
 /**
  * @author Adolfo Pérez
  */
-public abstract class BaseReplacePortletId extends BaseUpgradePortletId {
+public abstract class BaseReplacePortletId extends BasePortletIdUpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
@@ -92,12 +83,14 @@ public abstract class BaseReplacePortletId extends BaseUpgradePortletId {
 	}
 
 	protected boolean hasRow(String sql, String value) throws SQLException {
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.setString(1, value);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					int count = rs.getInt(1);
+			preparedStatement.setString(1, value);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					int count = resultSet.getInt(1);
 
 					if (count > 0) {
 						return true;
@@ -124,37 +117,36 @@ public abstract class BaseReplacePortletId extends BaseUpgradePortletId {
 		throws Exception {
 
 		if (hasResourceAction(newName)) {
-			StringBundler sb = new StringBundler(3);
-
-			sb.append("select RA1.resourceActionId from ResourceAction RA1 ");
-			sb.append("inner join ResourceAction RA2 on RA1.actionId = ");
-			sb.append("RA2.actionId where RA1.name = ? and RA2.name = ?");
-
-			try (PreparedStatement ps1 = connection.prepareStatement(
-					sb.toString());
-				PreparedStatement ps2 =
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"select RA1.resourceActionId from ResourceAction ",
+							"RA1 inner join ResourceAction RA2 on ",
+							"RA1.actionId = RA2.actionId where RA1.name = ? ",
+							"and RA2.name = ?"));
+				PreparedStatement preparedStatement2 =
 					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 						connection,
 						"delete from ResourceAction where resourceActionId = " +
 							"?")) {
 
-				ps1.setString(1, oldName);
-				ps1.setString(2, newName);
+				preparedStatement1.setString(1, oldName);
+				preparedStatement1.setString(2, newName);
 
-				ResultSet rs = ps1.executeQuery();
+				ResultSet resultSet = preparedStatement1.executeQuery();
 
 				int deleteCount = 0;
 
-				while (rs.next()) {
-					ps2.setLong(1, rs.getLong(1));
+				while (resultSet.next()) {
+					preparedStatement2.setLong(1, resultSet.getLong(1));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 
 					deleteCount++;
 				}
 
 				if (deleteCount > 0) {
-					ps2.executeBatch();
+					preparedStatement2.executeBatch();
 				}
 			}
 		}
@@ -169,12 +161,13 @@ public abstract class BaseReplacePortletId extends BaseUpgradePortletId {
 		throws Exception {
 
 		if (hasResourcePermission(newRootPortletId)) {
-			try (PreparedStatement ps = connection.prepareStatement(
-					"delete from ResourcePermission where name = ?")) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						"delete from ResourcePermission where name = ?")) {
 
-				ps.setString(1, oldRootPortletId);
+				preparedStatement.setString(1, oldRootPortletId);
 
-				ps.execute();
+				preparedStatement.execute();
 			}
 		}
 		else {
@@ -184,36 +177,33 @@ public abstract class BaseReplacePortletId extends BaseUpgradePortletId {
 	}
 
 	private void _deleteConflictingPreferences(String orClauses)
-		throws SQLException {
+		throws Exception {
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append("select PP1.portletPreferencesId from PortletPreferences ");
-		sb.append("PP1 inner join PortletPreferences PP2 on PP1.plid = ");
-		sb.append("PP2.plid where ");
-		sb.append(orClauses);
-
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				StringBundler.concat(
+					"select PP1.portletPreferencesId from PortletPreferences ",
+					"PP1 inner join PortletPreferences PP2 on PP1.plid = ",
+					"PP2.plid where ", orClauses));
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"delete from PortletPreferences where " +
 						"portletPreferencesId = ?")) {
 
-			ResultSet rs = ps1.executeQuery();
+			ResultSet resultSet = preparedStatement1.executeQuery();
 
 			int deleteCount = 0;
 
-			while (rs.next()) {
-				ps2.setLong(1, rs.getLong(1));
+			while (resultSet.next()) {
+				preparedStatement2.setLong(1, resultSet.getLong(1));
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 
 				deleteCount++;
 			}
 
 			if (deleteCount > 0) {
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}

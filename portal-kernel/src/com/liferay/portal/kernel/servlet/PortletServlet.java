@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.servlet;
@@ -22,20 +13,21 @@ import com.liferay.portal.kernel.portlet.LiferayPortletSession;
 import com.liferay.portal.kernel.portlet.PortletFilterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import jakarta.portlet.PortletException;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.filter.FilterChain;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
-
-import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.portlet.filter.FilterChain;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Brian Wing Shun Chan
@@ -66,12 +58,12 @@ public class PortletServlet extends HttpServlet {
 		if (httpServletRequest.getAttribute(WebKeys.EXTEND_SESSION) != null) {
 			httpServletRequest.removeAttribute(WebKeys.EXTEND_SESSION);
 
-			HttpSession session = httpServletRequest.getSession(false);
+			HttpSession httpSession = httpServletRequest.getSession(false);
 
-			if (session != null) {
-				session.setAttribute(WebKeys.EXTEND_SESSION, Boolean.TRUE);
+			if (httpSession != null) {
+				httpSession.setAttribute(WebKeys.EXTEND_SESSION, Boolean.TRUE);
 
-				session.removeAttribute(WebKeys.EXTEND_SESSION);
+				httpSession.removeAttribute(WebKeys.EXTEND_SESSION);
 			}
 
 			return;
@@ -82,11 +74,11 @@ public class PortletServlet extends HttpServlet {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_REQUEST);
+				JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 		PortletResponse portletResponse =
 			(PortletResponse)httpServletRequest.getAttribute(
-				JavaConstants.JAVAX_PORTLET_RESPONSE);
+				JavaConstants.JAKARTA_PORTLET_RESPONSE);
 
 		String lifecycle = (String)httpServletRequest.getAttribute(
 			PortletRequest.LIFECYCLE_PHASE);
@@ -106,23 +98,25 @@ public class PortletServlet extends HttpServlet {
 
 		// LPS-66826
 
-		HttpSession session = _getSharedSession(
-			httpServletRequest, portletRequest);
-
-		portletSession.setHttpSession(session);
+		portletSession.setHttpSession(
+			_getSharedHttpSession(httpServletRequest, portletRequest));
 
 		try {
 			PortletFilterUtil.doFilter(
 				portletRequest, portletResponse, lifecycle, filterChain);
 		}
-		catch (PortletException pe) {
-			_log.error(pe, pe);
+		catch (PortletException portletException) {
+			_log.error(
+				StringBundler.concat(
+					"Unable to process portlet ", portletId, ": ",
+					portletException.getMessage()),
+				portletException);
 
-			throw new ServletException(pe);
+			throw new ServletException(portletException);
 		}
 	}
 
-	private HttpSession _getSharedSession(
+	private HttpSession _getSharedHttpSession(
 		HttpServletRequest httpServletRequest, PortletRequest portletRequest) {
 
 		LiferayPortletRequest liferayPortletRequest =
@@ -133,14 +127,15 @@ public class PortletServlet extends HttpServlet {
 		HttpServletRequest originalHttpServletRequest =
 			liferayPortletRequest.getOriginalHttpServletRequest();
 
-		HttpSession portalSession = originalHttpServletRequest.getSession();
+		HttpSession portalHttpSession = originalHttpServletRequest.getSession();
 
 		if (!portlet.isPrivateSessionAttributes()) {
-			return portalSession;
+			return portalHttpSession;
 		}
 
-		return SharedSessionUtil.getSharedSessionWrapper(
-			portalSession, httpServletRequest);
+		HttpSession portletHttpSession = httpServletRequest.getSession();
+
+		return new SharedSession(portalHttpSession, portletHttpSession);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(PortletServlet.class);

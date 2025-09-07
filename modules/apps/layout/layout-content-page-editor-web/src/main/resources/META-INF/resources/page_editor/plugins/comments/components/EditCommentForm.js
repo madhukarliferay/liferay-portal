@@ -1,35 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {openToast} from 'frontend-js-web';
+import {openToast} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 
-import {ConfigContext} from '../../../app/config/index';
-import {DispatchContext} from '../../../app/reducers/index';
+import {useDispatch} from '../../../app/contexts/StoreContext';
 import editFragmentComment from '../../../app/thunks/editFragmentComment';
 import CommentForm from './CommentForm';
 
 export default function EditCommentForm({
 	comment,
 	fragmentEntryLinkId,
-	onCloseForm
+	onCloseForm,
 }) {
 	const [editingComment, setEditingComment] = useState(false);
 	const [textareaContent, setTextareaContent] = useState(comment.body);
-	const config = useContext(ConfigContext);
-	const dispatch = useContext(DispatchContext);
+	const dispatch = useDispatch();
 
 	const _handleCommentButtonClick = () => {
 		setEditingComment(true);
@@ -38,9 +27,8 @@ export default function EditCommentForm({
 			editFragmentComment({
 				body: textareaContent,
 				commentId: comment.commentId,
-				config,
 				fragmentEntryLinkId,
-				parentCommentId: comment.parentCommentId
+				parentCommentId: comment.parentCommentId,
 			})
 		)
 			.then(() => {
@@ -53,8 +41,7 @@ export default function EditCommentForm({
 					message: Liferay.Language.get(
 						'the-comment-could-not-be-edited'
 					),
-					title: Liferay.Language.get('error'),
-					type: 'danger'
+					type: 'danger',
 				});
 
 				setEditingComment(false);
@@ -68,7 +55,7 @@ export default function EditCommentForm({
 			loading={editingComment}
 			onCancelButtonClick={() => onCloseForm()}
 			onSubmitButtonClick={_handleCommentButtonClick}
-			onTextareaChange={content => setTextareaContent(content)}
+			onTextareaChange={(content) => setTextareaContent(content)}
 			showButtons
 			submitButtonLabel={Liferay.Language.get('update')}
 			textareaContent={textareaContent}
@@ -79,7 +66,7 @@ export default function EditCommentForm({
 EditCommentForm.propTypes = {
 	comment: PropTypes.shape({
 		body: PropTypes.string.isRequired,
-		commentId: PropTypes.string.isRequired
+		commentId: PropTypes.string.isRequired,
 	}),
-	onCloseForm: PropTypes.func.isRequired
+	onCloseForm: PropTypes.func.isRequired,
 };

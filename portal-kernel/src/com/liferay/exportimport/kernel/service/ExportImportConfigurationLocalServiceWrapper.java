@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.exportimport.kernel.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link ExportImportConfigurationLocalService}.
@@ -27,6 +19,10 @@ public class ExportImportConfigurationLocalServiceWrapper
 	implements ExportImportConfigurationLocalService,
 			   ServiceWrapper<ExportImportConfigurationLocalService> {
 
+	public ExportImportConfigurationLocalServiceWrapper() {
+		this(null);
+	}
+
 	public ExportImportConfigurationLocalServiceWrapper(
 		ExportImportConfigurationLocalService
 			exportImportConfigurationLocalService) {
@@ -35,11 +31,6 @@ public class ExportImportConfigurationLocalServiceWrapper
 			exportImportConfigurationLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link ExportImportConfigurationLocalServiceUtil} to access the export import configuration local service. Add custom service methods to <code>com.liferay.portlet.exportimport.service.impl.ExportImportConfigurationLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.exportimport.kernel.model.ExportImportConfiguration
 			addDraftExportImportConfiguration(
@@ -64,6 +55,10 @@ public class ExportImportConfigurationLocalServiceWrapper
 
 	/**
 	 * Adds the export import configuration to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExportImportConfigurationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param exportImportConfiguration the export import configuration
 	 * @return the export import configuration that was added
@@ -124,7 +119,23 @@ public class ExportImportConfigurationLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _exportImportConfigurationLocalService.createPersistedModel(
+			primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the export import configuration from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExportImportConfigurationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param exportImportConfiguration the export import configuration
 	 * @return the export import configuration that was removed
@@ -141,6 +152,10 @@ public class ExportImportConfigurationLocalServiceWrapper
 
 	/**
 	 * Deletes the export import configuration with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExportImportConfigurationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param exportImportConfigurationId the primary key of the export import configuration
 	 * @return the export import configuration that was removed
@@ -171,6 +186,18 @@ public class ExportImportConfigurationLocalServiceWrapper
 
 		return _exportImportConfigurationLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _exportImportConfigurationLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _exportImportConfigurationLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -445,6 +472,9 @@ public class ExportImportConfigurationLocalServiceWrapper
 			getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -508,6 +538,10 @@ public class ExportImportConfigurationLocalServiceWrapper
 	/**
 	 * Updates the export import configuration in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect ExportImportConfigurationLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param exportImportConfiguration the export import configuration
 	 * @return the export import configuration that was updated
 	 */
@@ -544,6 +578,11 @@ public class ExportImportConfigurationLocalServiceWrapper
 
 		return _exportImportConfigurationLocalService.updateStatus(
 			userId, exportImportConfigurationId, status);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _exportImportConfigurationLocalService.getBasePersistence();
 	}
 
 	@Override

@@ -1,25 +1,16 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/admin/init.jsp" %>
 
 <%
-final String currentAppTab = ParamUtil.getString(request, "appTab", "credentials");
+String navigation = ParamUtil.getString(request, "navigation", "credentials");
 
-final String redirect = ParamUtil.getString(request, "redirect");
+String redirect = ParamUtil.getString(request, "redirect");
 
 long oAuth2ApplicationId = 0;
 
@@ -29,7 +20,7 @@ if (oAuth2Application != null) {
 	oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 }
 
-final String oAuth2ApplicationIdString = String.valueOf(oAuth2ApplicationId);
+String oAuth2ApplicationIdString = String.valueOf(oAuth2ApplicationId);
 
 String headerTitle = LanguageUtil.get(request, "add-o-auth2-application");
 
@@ -41,61 +32,81 @@ renderResponse.setTitle(headerTitle);
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
+
+boolean showTreeScopesView = false;
+
+if (request.getAttribute(OAuth2ProviderWebKeys.ASSIGN_SCOPES_TREE_DISPLAY_CONTEXT) != null) {
+	showTreeScopesView = true;
+}
 %>
 
 <c:if test="<%= oAuth2Application != null %>">
 	<clay:navigation-bar
-		inverted="<%= true %>"
 		navigationItems='<%=
-				new JSPNavigationItemList(pageContext) {
+			new JSPNavigationItemList(pageContext) {
 				{
 					add(
 						navigationItem -> {
-							navigationItem.setActive(currentAppTab.equals("credentials"));
+							navigationItem.setActive(navigation.equals("credentials"));
 
-							PortletURL portletURL = renderResponse.createRenderURL();
-
-							portletURL.setParameter("mvcRenderCommandName", "/admin/update_oauth2_application");
-							portletURL.setParameter("appTab", "credentials");
-							portletURL.setParameter("redirect", redirect);
-							portletURL.setParameter("oAuth2ApplicationId", oAuth2ApplicationIdString);
+							PortletURL portletURL = PortletURLBuilder.createRenderURL(
+								renderResponse
+							).setMVCRenderCommandName(
+								"/oauth2_provider/update_oauth2_application"
+							).setRedirect(
+								redirect
+							).setNavigation(
+								"credentials"
+							).setParameter(
+								"oAuth2ApplicationId", oAuth2ApplicationIdString
+							).buildPortletURL();
 
 							navigationItem.setHref(portletURL.toString());
 
-							navigationItem.setLabel(LanguageUtil.get(request, "credentials"));
+							navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "credentials"));
 						});
 
 					add(
 						navigationItem -> {
-							navigationItem.setActive(currentAppTab.equals("assign_scopes"));
+							navigationItem.setActive(navigation.equals("assign_scopes"));
 
-							PortletURL portletURL = renderResponse.createRenderURL();
-
-							portletURL.setParameter("mvcRenderCommandName", "/admin/assign_scopes");
-							portletURL.setParameter("appTab", "assign_scopes");
-							portletURL.setParameter("redirect", redirect);
-							portletURL.setParameter("oAuth2ApplicationId", oAuth2ApplicationIdString);
+							PortletURL portletURL = PortletURLBuilder.createRenderURL(
+								renderResponse
+							).setMVCRenderCommandName(
+								"/oauth2_provider/assign_scopes"
+							).setRedirect(
+								redirect
+							).setNavigation(
+								"assign_scopes"
+							).setParameter(
+								"oAuth2ApplicationId", oAuth2ApplicationIdString
+							).buildPortletURL();
 
 							navigationItem.setHref(portletURL.toString());
 
-							navigationItem.setLabel(LanguageUtil.get(request, "scopes"));
+							navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "scopes"));
 						});
 
 					if (oAuth2AdminPortletDisplayContext.hasViewGrantedAuthorizationsPermission()) {
 						add(
 							navigationItem -> {
-								navigationItem.setActive(currentAppTab.equals("application_authorizations"));
+								navigationItem.setActive(navigation.equals("application_authorizations"));
 
-								PortletURL portletURL = renderResponse.createRenderURL();
-
-								portletURL.setParameter("mvcRenderCommandName", "/admin/view_oauth2_authorizations");
-								portletURL.setParameter("appTab", "application_authorizations");
-								portletURL.setParameter("redirect", redirect);
-								portletURL.setParameter("oAuth2ApplicationId", oAuth2ApplicationIdString);
+								PortletURL portletURL = PortletURLBuilder.createRenderURL(
+									renderResponse
+								).setMVCRenderCommandName(
+									"/oauth2_provider/view_oauth2_authorizations"
+								).setRedirect(
+									redirect
+								).setNavigation(
+									"application_authorizations"
+								).setParameter(
+									"oAuth2ApplicationId", oAuth2ApplicationIdString
+								).buildPortletURL();
 
 								navigationItem.setHref(portletURL.toString());
 
-								navigationItem.setLabel(LanguageUtil.get(request, "authorizations"));
+								navigationItem.setLabel(LanguageUtil.get(httpServletRequest, "authorizations"));
 							});
 					}
 				}
@@ -105,13 +116,16 @@ portletDisplay.setURLBack(redirect);
 </c:if>
 
 <c:choose>
-	<c:when test='<%= currentAppTab.equals("credentials") && ((oAuth2Application == null) || oAuth2AdminPortletDisplayContext.hasUpdatePermission(oAuth2Application)) %>'>
+	<c:when test='<%= navigation.equals("credentials") && ((oAuth2Application == null) || oAuth2AdminPortletDisplayContext.hasUpdatePermission(oAuth2Application)) %>'>
 		<liferay-util:include page="/admin/edit_application_credentials.jsp" servletContext="<%= application %>" />
 	</c:when>
-	<c:when test='<%= (oAuth2Application != null) && currentAppTab.equals("assign_scopes") && oAuth2AdminPortletDisplayContext.hasUpdatePermission(oAuth2Application) %>'>
+	<c:when test='<%= (oAuth2Application != null) && navigation.equals("assign_scopes") && oAuth2AdminPortletDisplayContext.hasUpdatePermission(oAuth2Application) && showTreeScopesView %>'>
+		<liferay-util:include page="/admin/assign_scopes_tree.jsp" servletContext="<%= application %>" />
+	</c:when>
+	<c:when test='<%= (oAuth2Application != null) && navigation.equals("assign_scopes") && oAuth2AdminPortletDisplayContext.hasUpdatePermission(oAuth2Application) && !showTreeScopesView %>'>
 		<liferay-util:include page="/admin/assign_scopes.jsp" servletContext="<%= application %>" />
 	</c:when>
-	<c:when test='<%= (oAuth2Application != null) && currentAppTab.equals("application_authorizations") && oAuth2AdminPortletDisplayContext.hasViewGrantedAuthorizationsPermission() %>'>
+	<c:when test='<%= (oAuth2Application != null) && navigation.equals("application_authorizations") && oAuth2AdminPortletDisplayContext.hasViewGrantedAuthorizationsPermission() %>'>
 		<liferay-util:include page="/admin/application_authorizations.jsp" servletContext="<%= application %>" />
 	</c:when>
 </c:choose>

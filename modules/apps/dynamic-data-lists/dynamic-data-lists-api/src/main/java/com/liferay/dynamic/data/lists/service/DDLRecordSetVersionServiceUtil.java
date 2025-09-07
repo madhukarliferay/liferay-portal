@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.service;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import com.liferay.dynamic.data.lists.model.DDLRecordSetVersion;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
+
+import java.util.List;
 
 /**
  * Provides the remote service utility for DDLRecordSetVersion. This utility wraps
@@ -32,20 +26,14 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class DDLRecordSetVersionServiceUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordSetVersionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link DDLRecordSetVersionServiceUtil} to access the ddl record set version remote service. Add custom service methods to <code>com.liferay.dynamic.data.lists.service.impl.DDLRecordSetVersionServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
-	public static com.liferay.dynamic.data.lists.model.DDLRecordSetVersion
-			getLatestRecordSetVersion(long recordSetId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDLRecordSetVersion getLatestRecordSetVersion(
+			long recordSetId)
+		throws PortalException {
 
 		return getService().getLatestRecordSetVersion(recordSetId);
 	}
@@ -59,54 +47,35 @@ public class DDLRecordSetVersionServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
-	public static com.liferay.dynamic.data.lists.model.DDLRecordSetVersion
-			getRecordSetVersion(long recordSetVersionId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public static DDLRecordSetVersion getRecordSetVersion(
+			long recordSetVersionId)
+		throws PortalException {
 
 		return getService().getRecordSetVersion(recordSetVersionId);
 	}
 
-	public static java.util.List
-		<com.liferay.dynamic.data.lists.model.DDLRecordSetVersion>
-				getRecordSetVersions(
-					long recordSetId, int start, int end,
-					com.liferay.portal.kernel.util.OrderByComparator
-						<com.liferay.dynamic.data.lists.model.
-							DDLRecordSetVersion> orderByComparator)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public static List<DDLRecordSetVersion> getRecordSetVersions(
+			long recordSetId, int start, int end,
+			OrderByComparator<DDLRecordSetVersion> orderByComparator)
+		throws PortalException {
 
 		return getService().getRecordSetVersions(
 			recordSetId, start, end, orderByComparator);
 	}
 
 	public static int getRecordSetVersionsCount(long recordSetId)
-		throws com.liferay.portal.kernel.exception.PortalException {
+		throws PortalException {
 
 		return getService().getRecordSetVersionsCount(recordSetId);
 	}
 
 	public static DDLRecordSetVersionService getService() {
-		return _serviceTracker.getService();
+		return _serviceSnapshot.get();
 	}
 
-	private static ServiceTracker
-		<DDLRecordSetVersionService, DDLRecordSetVersionService>
-			_serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
+	private static final Snapshot<DDLRecordSetVersionService> _serviceSnapshot =
+		new Snapshot<>(
+			DDLRecordSetVersionServiceUtil.class,
 			DDLRecordSetVersionService.class);
-
-		ServiceTracker<DDLRecordSetVersionService, DDLRecordSetVersionService>
-			serviceTracker =
-				new ServiceTracker
-					<DDLRecordSetVersionService, DDLRecordSetVersionService>(
-						bundle.getBundleContext(),
-						DDLRecordSetVersionService.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
-	}
 
 }

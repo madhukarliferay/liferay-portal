@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.social.kernel.model;
@@ -17,6 +8,7 @@ package com.liferay.social.kernel.model;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -37,11 +29,7 @@ import java.util.Objects;
 public class BaseSocialAchievement implements SocialAchievement {
 
 	public boolean equals(SocialAchievement socialAchievement) {
-		if (Objects.equals(_name, socialAchievement.getName())) {
-			return true;
-		}
-
-		return false;
+		return Objects.equals(_name, socialAchievement.getName());
 	}
 
 	public int getCounterIncrement() {
@@ -117,9 +105,9 @@ public class BaseSocialAchievement implements SocialAchievement {
 		try {
 			doProcessActivity(activity);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to process activity", e);
+				_log.warn("Unable to process activity", exception);
 			}
 		}
 	}
@@ -167,7 +155,7 @@ public class BaseSocialAchievement implements SocialAchievement {
 			return;
 		}
 
-		StringBuilder sb = new StringBuilder(name.length());
+		StringBundler sb = new StringBundler(name.length());
 
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);

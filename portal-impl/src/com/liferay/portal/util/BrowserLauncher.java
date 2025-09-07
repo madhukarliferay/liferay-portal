@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.util;
@@ -17,6 +8,8 @@ package com.liferay.portal.util;
 import com.liferay.petra.process.ConsumerOutputProcessor;
 import com.liferay.petra.process.ProcessUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.OSDetector;
 
 import java.net.HttpURLConnection;
@@ -44,11 +37,17 @@ public class BrowserLauncher implements Runnable {
 				try {
 					launchBrowser();
 				}
-				catch (Exception e2) {
+				catch (Exception exception) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception);
+					}
 				}
 			}
 		}
-		catch (Exception e1) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 	}
 
@@ -71,7 +70,7 @@ public class BrowserLauncher implements Runnable {
 	}
 
 	protected void launchBrowserUnix(Runtime runtime) throws Exception {
-		StringBundler sb = new StringBundler(_BROWSERS.length * 5 - 1);
+		StringBundler sb = new StringBundler((_BROWSERS.length * 5) - 1);
 
 		for (int i = 0; i < _BROWSERS.length; i++) {
 			if (i != 0) {
@@ -100,5 +99,8 @@ public class BrowserLauncher implements Runnable {
 	private static final String[] _BROWSERS = {
 		"xdg-open", "firefox", "mozilla", "konqueror", "opera"
 	};
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BrowserLauncher.class);
 
 }

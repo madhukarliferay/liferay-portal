@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.bookmarks.service.persistence.test;
@@ -26,14 +17,19 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PersistenceTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
@@ -45,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +121,8 @@ public class BookmarksFolderPersistenceTest {
 
 		newBookmarksFolder.setMvccVersion(RandomTestUtil.nextLong());
 
+		newBookmarksFolder.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newBookmarksFolder.setUuid(RandomTestUtil.randomString());
 
 		newBookmarksFolder.setGroupId(RandomTestUtil.nextLong());
@@ -166,6 +163,9 @@ public class BookmarksFolderPersistenceTest {
 		Assert.assertEquals(
 			existingBookmarksFolder.getMvccVersion(),
 			newBookmarksFolder.getMvccVersion());
+		Assert.assertEquals(
+			existingBookmarksFolder.getCtCollectionId(),
+			newBookmarksFolder.getCtCollectionId());
 		Assert.assertEquals(
 			existingBookmarksFolder.getUuid(), newBookmarksFolder.getUuid());
 		Assert.assertEquals(
@@ -294,12 +294,12 @@ public class BookmarksFolderPersistenceTest {
 	}
 
 	@Test
-	public void testCountByF_C_P_NotS() throws Exception {
-		_persistence.countByF_C_P_NotS(
+	public void testCountByGtF_C_P_NotS() throws Exception {
+		_persistence.countByGtF_C_P_NotS(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
-		_persistence.countByF_C_P_NotS(0L, 0L, 0L, 0);
+		_persistence.countByGtF_C_P_NotS(0L, 0L, 0L, 0);
 	}
 
 	@Test
@@ -327,19 +327,37 @@ public class BookmarksFolderPersistenceTest {
 
 	@Test
 	public void testFilterFindByGroupId() throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			new SimplePermissionChecker() {
+				{
+					init(TestPropsValues.getUser());
+				}
+
+				@Override
+				public boolean isCompanyAdmin(long companyId) {
+					return false;
+				}
+
+			});
+
+		Assert.assertTrue(InlineSQLHelperUtil.isEnabled(0));
+
+		_persistence.filterFindByGroupId(
+			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
 		_persistence.filterFindByGroupId(
 			0, QueryUtil.ALL_POS, QueryUtil.ALL_POS, getOrderByComparator());
 	}
 
 	protected OrderByComparator<BookmarksFolder> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"BookmarksFolder", "mvccVersion", true, "uuid", true, "folderId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"parentFolderId", true, "treePath", true, "name", true,
-			"description", true, "lastPublishDate", true, "status", true,
-			"statusByUserId", true, "statusByUserName", true, "statusDate",
-			true);
+			"BookmarksFolder", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "folderId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "parentFolderId", true, "treePath", true,
+			"name", true, "description", true, "lastPublishDate", true,
+			"status", true, "statusByUserId", true, "statusByUserName", true,
+			"statusDate", true);
 	}
 
 	@Test
@@ -558,20 +576,61 @@ public class BookmarksFolderPersistenceTest {
 
 		_persistence.clearCache();
 
-		BookmarksFolder existingBookmarksFolder = _persistence.findByPrimaryKey(
-			newBookmarksFolder.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newBookmarksFolder.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingBookmarksFolder.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingBookmarksFolder, "getOriginalUuid",
-					new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		BookmarksFolder newBookmarksFolder = addBookmarksFolder();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			BookmarksFolder.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"folderId", newBookmarksFolder.getFolderId()));
+
+		List<BookmarksFolder> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(BookmarksFolder bookmarksFolder) {
 		Assert.assertEquals(
-			Long.valueOf(existingBookmarksFolder.getGroupId()),
+			bookmarksFolder.getUuid(),
+			ReflectionTestUtil.invoke(
+				bookmarksFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(bookmarksFolder.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingBookmarksFolder, "getOriginalGroupId",
-				new Class<?>[0]));
+				bookmarksFolder, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected BookmarksFolder addBookmarksFolder() throws Exception {
@@ -580,6 +639,8 @@ public class BookmarksFolderPersistenceTest {
 		BookmarksFolder bookmarksFolder = _persistence.create(pk);
 
 		bookmarksFolder.setMvccVersion(RandomTestUtil.nextLong());
+
+		bookmarksFolder.setCtCollectionId(RandomTestUtil.nextLong());
 
 		bookmarksFolder.setUuid(RandomTestUtil.randomString());
 

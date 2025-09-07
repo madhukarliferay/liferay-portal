@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.data.engine.model;
@@ -17,7 +8,12 @@ package com.liferay.data.engine.model;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.model.AttachedModel;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.StagedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
+
+import java.util.Date;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -34,9 +30,11 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface DEDataDefinitionFieldLinkModel
-	extends AttachedModel, BaseModel<DEDataDefinitionFieldLink>, ShardedModel {
+	extends AttachedModel, BaseModel<DEDataDefinitionFieldLink>,
+			CTModel<DEDataDefinitionFieldLink>, MVCCModel, ShardedModel,
+			StagedModel {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify or reference this interface directly. All methods that expect a de data definition field link model instance should use the {@link DEDataDefinitionFieldLink} interface instead.
@@ -47,6 +45,7 @@ public interface DEDataDefinitionFieldLinkModel
 	 *
 	 * @return the primary key of this de data definition field link
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -54,7 +53,40 @@ public interface DEDataDefinitionFieldLinkModel
 	 *
 	 * @param primaryKey the primary key of this de data definition field link
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
+
+	/**
+	 * Returns the mvcc version of this de data definition field link.
+	 *
+	 * @return the mvcc version of this de data definition field link
+	 */
+	@Override
+	public long getMvccVersion();
+
+	/**
+	 * Sets the mvcc version of this de data definition field link.
+	 *
+	 * @param mvccVersion the mvcc version of this de data definition field link
+	 */
+	@Override
+	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this de data definition field link.
+	 *
+	 * @return the ct collection ID of this de data definition field link
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this de data definition field link.
+	 *
+	 * @param ctCollectionId the ct collection ID of this de data definition field link
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this de data definition field link.
@@ -62,6 +94,7 @@ public interface DEDataDefinitionFieldLinkModel
 	 * @return the uuid of this de data definition field link
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -69,6 +102,7 @@ public interface DEDataDefinitionFieldLinkModel
 	 *
 	 * @param uuid the uuid of this de data definition field link
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -115,6 +149,38 @@ public interface DEDataDefinitionFieldLinkModel
 	 */
 	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the create date of this de data definition field link.
+	 *
+	 * @return the create date of this de data definition field link
+	 */
+	@Override
+	public Date getCreateDate();
+
+	/**
+	 * Sets the create date of this de data definition field link.
+	 *
+	 * @param createDate the create date of this de data definition field link
+	 */
+	@Override
+	public void setCreateDate(Date createDate);
+
+	/**
+	 * Returns the modified date of this de data definition field link.
+	 *
+	 * @return the modified date of this de data definition field link
+	 */
+	@Override
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this de data definition field link.
+	 *
+	 * @param modifiedDate the modified date of this de data definition field link
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the fully qualified class name of this de data definition field link.
@@ -186,5 +252,26 @@ public interface DEDataDefinitionFieldLinkModel
 	 * @param fieldName the field name of this de data definition field link
 	 */
 	public void setFieldName(String fieldName);
+
+	/**
+	 * Returns the last publish date of this de data definition field link.
+	 *
+	 * @return the last publish date of this de data definition field link
+	 */
+	public Date getLastPublishDate();
+
+	/**
+	 * Sets the last publish date of this de data definition field link.
+	 *
+	 * @param lastPublishDate the last publish date of this de data definition field link
+	 */
+	public void setLastPublishDate(Date lastPublishDate);
+
+	@Override
+	public DEDataDefinitionFieldLink cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

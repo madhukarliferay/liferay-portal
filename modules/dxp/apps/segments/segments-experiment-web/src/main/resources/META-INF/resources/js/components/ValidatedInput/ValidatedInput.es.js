@@ -1,92 +1,94 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayForm, {ClayInput} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
-import getCN from 'classnames';
+import {useId} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
-function _isValueValid(value) {
-	const noSpacesValue = value.replace(/\s/g, '');
-	return !!noSpacesValue;
-}
-
-function ValidatedInput(props) {
-	const {
-		autofocus = false,
-		errorMessage,
-		label,
-		onBlur = () => {},
-		onChange = () => {},
-		onFocus = () => {},
-		onValidationChange = () => {},
-		value = ''
-	} = props;
-
+function ValidatedInput({
+	autofocus = false,
+	errorMessage,
+	label,
+	onBlur = () => {},
+	onChange = () => {},
+	onFocus = () => {},
+	onValidationChange = () => {},
+	required = false,
+	value = '',
+}) {
+	const inputId = useId();
 	const [invalid, setInvalid] = useState(false);
+	const nodeRef = useRef();
 
-	const node = useRef();
+	const updateInvalid = (newInvalid) => {
+		setInvalid((previousInvalid) => {
+			if (newInvalid !== previousInvalid) {
+				onValidationChange(newInvalid);
+			}
+
+			return newInvalid;
+		});
+	};
+
+	const onNameInputBlur = (event) => {
+		if (!value.trim().length) {
+			updateInvalid(true);
+		}
+
+		onBlur(event);
+	};
+
+	const onNameInputFocus = (event) => {
+		updateInvalid(false);
+		onFocus(event);
+	};
+
 	useEffect(() => {
-		if (node.current && autofocus) {
-			node.current.focus();
+		if (nodeRef.current && autofocus) {
+			nodeRef.current.focus();
 		}
 	}, [autofocus]);
 
-	const formGroupClasses = getCN('form-group w-100', {
-		'has-error': invalid
-	});
-
 	return (
-		<label className={formGroupClasses}>
+		<ClayForm.Group className={invalid ? 'has-error' : ''}>
 			{label && (
 				<>
-					{label}
+					<label htmlFor={inputId}>{label}</label>
 					<ClayIcon
-						className="ml-1 reference-mark text-warning"
+						className="lexicon-icon-sm ml-1 reference-mark text-warning"
+						style={{verticalAlign: 'super'}}
 						symbol="asterisk"
 					/>
 				</>
 			)}
 
-			<input
-				className="form-control mt-1"
+			<ClayInput
+				id={inputId}
 				maxLength="75"
-				onBlur={_handleNameInputBlur}
+				onBlur={onNameInputBlur}
 				onChange={onChange}
-				onFocus={_handleNameInputFocus}
-				ref={node}
+				onFocus={onNameInputFocus}
+				ref={nodeRef}
+				required={required}
 				type="text"
 				value={value}
 			/>
+
 			{invalid && errorMessage && (
-				<div className="form-feedback-group">
-					<div className="form-feedback-item">{errorMessage}</div>
-				</div>
+				<ClayForm.FeedbackGroup>
+					<ClayForm.FeedbackItem>
+						<ClayForm.FeedbackIndicator symbol="exclamation-full" />
+
+						{errorMessage}
+					</ClayForm.FeedbackItem>
+				</ClayForm.FeedbackGroup>
 			)}
-		</label>
+		</ClayForm.Group>
 	);
-
-	function _handleNameInputBlur(event) {
-		if (!_isValueValid(value)) _setInvalid(true);
-		onBlur(event);
-	}
-	function _handleNameInputFocus(event) {
-		_setInvalid(false);
-		onFocus(event);
-	}
-
-	function _setInvalid(newInvalid) {
-		setInvalid(newInvalid);
-		if (newInvalid !== invalid) onValidationChange(newInvalid);
-	}
 }
 
 ValidatedInput.propTypes = {
@@ -97,7 +99,7 @@ ValidatedInput.propTypes = {
 	onChange: PropTypes.func,
 	onFocus: PropTypes.func,
 	onValidationChange: PropTypes.func,
-	value: PropTypes.string
+	value: PropTypes.string,
 };
 
 export default ValidatedInput;

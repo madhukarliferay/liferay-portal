@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link WebsiteLocalService}.
@@ -24,28 +17,32 @@ package com.liferay.portal.kernel.service;
 public class WebsiteLocalServiceWrapper
 	implements ServiceWrapper<WebsiteLocalService>, WebsiteLocalService {
 
+	public WebsiteLocalServiceWrapper() {
+		this(null);
+	}
+
 	public WebsiteLocalServiceWrapper(WebsiteLocalService websiteLocalService) {
 		_websiteLocalService = websiteLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link WebsiteLocalServiceUtil} to access the website local service. Add custom service methods to <code>com.liferay.portal.service.impl.WebsiteLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
 	public com.liferay.portal.kernel.model.Website addWebsite(
-			long userId, java.lang.String className, long classPK,
-			java.lang.String url, long typeId, boolean primary,
+			String externalReferenceCode, long userId, String className,
+			long classPK, String url, long listTypeId, boolean primary,
 			ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _websiteLocalService.addWebsite(
-			userId, className, classPK, url, typeId, primary, serviceContext);
+			externalReferenceCode, userId, className, classPK, url, listTypeId,
+			primary, serviceContext);
 	}
 
 	/**
 	 * Adds the website to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebsiteLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param website the website
 	 * @return the website that was added
@@ -55,6 +52,17 @@ public class WebsiteLocalServiceWrapper
 		com.liferay.portal.kernel.model.Website website) {
 
 		return _websiteLocalService.addWebsite(website);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _websiteLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -84,6 +92,10 @@ public class WebsiteLocalServiceWrapper
 	/**
 	 * Deletes the website with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebsiteLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param websiteId the primary key of the website
 	 * @return the website that was removed
 	 * @throws PortalException if a website with the primary key could not be found
@@ -98,6 +110,10 @@ public class WebsiteLocalServiceWrapper
 	/**
 	 * Deletes the website from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebsiteLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param website the website
 	 * @return the website that was removed
 	 */
@@ -109,10 +125,20 @@ public class WebsiteLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteWebsites(
-		long companyId, java.lang.String className, long classPK) {
-
+	public void deleteWebsites(long companyId, String className, long classPK) {
 		_websiteLocalService.deleteWebsites(companyId, className, classPK);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _websiteLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _websiteLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -211,6 +237,15 @@ public class WebsiteLocalServiceWrapper
 		return _websiteLocalService.fetchWebsite(websiteId);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.model.Website
+		fetchWebsiteByExternalReferenceCode(
+			String externalReferenceCode, long companyId) {
+
+		return _websiteLocalService.fetchWebsiteByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	/**
 	 * Returns the website with the matching UUID and company.
 	 *
@@ -220,7 +255,7 @@ public class WebsiteLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Website
-		fetchWebsiteByUuidAndCompanyId(java.lang.String uuid, long companyId) {
+		fetchWebsiteByUuidAndCompanyId(String uuid, long companyId) {
 
 		return _websiteLocalService.fetchWebsiteByUuidAndCompanyId(
 			uuid, companyId);
@@ -256,10 +291,13 @@ public class WebsiteLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _websiteLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -282,6 +320,16 @@ public class WebsiteLocalServiceWrapper
 		return _websiteLocalService.getWebsite(websiteId);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.model.Website
+			getWebsiteByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _websiteLocalService.getWebsiteByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	/**
 	 * Returns the website with the matching UUID and company.
 	 *
@@ -292,7 +340,7 @@ public class WebsiteLocalServiceWrapper
 	 */
 	@Override
 	public com.liferay.portal.kernel.model.Website getWebsiteByUuidAndCompanyId(
-			java.lang.String uuid, long companyId)
+			String uuid, long companyId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _websiteLocalService.getWebsiteByUuidAndCompanyId(
@@ -326,7 +374,7 @@ public class WebsiteLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.Website> getWebsites(
-		long companyId, java.lang.String className, long classPK) {
+		long companyId, String className, long classPK) {
 
 		return _websiteLocalService.getWebsites(companyId, className, classPK);
 	}
@@ -343,15 +391,20 @@ public class WebsiteLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Website updateWebsite(
-			long websiteId, java.lang.String url, long typeId, boolean primary)
+			String externalReferenceCode, long websiteId, String url,
+			long listTypeId, boolean primary)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _websiteLocalService.updateWebsite(
-			websiteId, url, typeId, primary);
+			externalReferenceCode, websiteId, url, listTypeId, primary);
 	}
 
 	/**
 	 * Updates the website in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect WebsiteLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param website the website
 	 * @return the website that was updated
@@ -361,6 +414,11 @@ public class WebsiteLocalServiceWrapper
 		com.liferay.portal.kernel.model.Website website) {
 
 		return _websiteLocalService.updateWebsite(website);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _websiteLocalService.getBasePersistence();
 	}
 
 	@Override

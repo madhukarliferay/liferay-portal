@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.depot.service.persistence.test;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -126,6 +117,8 @@ public class DepotEntryPersistenceTest {
 
 		newDepotEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		newDepotEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newDepotEntry.setUuid(RandomTestUtil.randomString());
 
 		newDepotEntry.setGroupId(RandomTestUtil.nextLong());
@@ -134,9 +127,13 @@ public class DepotEntryPersistenceTest {
 
 		newDepotEntry.setUserId(RandomTestUtil.nextLong());
 
+		newDepotEntry.setUserName(RandomTestUtil.randomString());
+
 		newDepotEntry.setCreateDate(RandomTestUtil.nextDate());
 
 		newDepotEntry.setModifiedDate(RandomTestUtil.nextDate());
+
+		newDepotEntry.setType(RandomTestUtil.nextInt());
 
 		_depotEntries.add(_persistence.update(newDepotEntry));
 
@@ -146,6 +143,9 @@ public class DepotEntryPersistenceTest {
 		Assert.assertEquals(
 			existingDepotEntry.getMvccVersion(),
 			newDepotEntry.getMvccVersion());
+		Assert.assertEquals(
+			existingDepotEntry.getCtCollectionId(),
+			newDepotEntry.getCtCollectionId());
 		Assert.assertEquals(
 			existingDepotEntry.getUuid(), newDepotEntry.getUuid());
 		Assert.assertEquals(
@@ -158,11 +158,15 @@ public class DepotEntryPersistenceTest {
 		Assert.assertEquals(
 			existingDepotEntry.getUserId(), newDepotEntry.getUserId());
 		Assert.assertEquals(
+			existingDepotEntry.getUserName(), newDepotEntry.getUserName());
+		Assert.assertEquals(
 			Time.getShortTimestamp(existingDepotEntry.getCreateDate()),
 			Time.getShortTimestamp(newDepotEntry.getCreateDate()));
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingDepotEntry.getModifiedDate()),
 			Time.getShortTimestamp(newDepotEntry.getModifiedDate()));
+		Assert.assertEquals(
+			existingDepotEntry.getType(), newDepotEntry.getType());
 	}
 
 	@Test
@@ -224,9 +228,10 @@ public class DepotEntryPersistenceTest {
 
 	protected OrderByComparator<DepotEntry> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"DepotEntry", "mvccVersion", true, "uuid", true, "depotEntryId",
-			true, "groupId", true, "companyId", true, "userId", true,
-			"createDate", true, "modifiedDate", true);
+			"DepotEntry", "mvccVersion", true, "ctCollectionId", true, "uuid",
+			true, "depotEntryId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "type", true);
 	}
 
 	@Test
@@ -444,23 +449,67 @@ public class DepotEntryPersistenceTest {
 
 		_persistence.clearCache();
 
-		DepotEntry existingDepotEntry = _persistence.findByPrimaryKey(
-			newDepotEntry.getPrimaryKey());
+		_assertOriginalValues(
+			_persistence.findByPrimaryKey(newDepotEntry.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingDepotEntry.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingDepotEntry, "getOriginalUuid", new Class<?>[0])));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		DepotEntry newDepotEntry = addDepotEntry();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			DepotEntry.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"depotEntryId", newDepotEntry.getDepotEntryId()));
+
+		List<DepotEntry> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(DepotEntry depotEntry) {
 		Assert.assertEquals(
-			Long.valueOf(existingDepotEntry.getGroupId()),
+			depotEntry.getUuid(),
+			ReflectionTestUtil.invoke(
+				depotEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
+		Assert.assertEquals(
+			Long.valueOf(depotEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDepotEntry, "getOriginalGroupId", new Class<?>[0]));
+				depotEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(existingDepotEntry.getGroupId()),
+			Long.valueOf(depotEntry.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingDepotEntry, "getOriginalGroupId", new Class<?>[0]));
+				depotEntry, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 	}
 
 	protected DepotEntry addDepotEntry() throws Exception {
@@ -470,6 +519,8 @@ public class DepotEntryPersistenceTest {
 
 		depotEntry.setMvccVersion(RandomTestUtil.nextLong());
 
+		depotEntry.setCtCollectionId(RandomTestUtil.nextLong());
+
 		depotEntry.setUuid(RandomTestUtil.randomString());
 
 		depotEntry.setGroupId(RandomTestUtil.nextLong());
@@ -478,9 +529,13 @@ public class DepotEntryPersistenceTest {
 
 		depotEntry.setUserId(RandomTestUtil.nextLong());
 
+		depotEntry.setUserName(RandomTestUtil.randomString());
+
 		depotEntry.setCreateDate(RandomTestUtil.nextDate());
 
 		depotEntry.setModifiedDate(RandomTestUtil.nextDate());
+
+		depotEntry.setType(RandomTestUtil.nextInt());
 
 		_depotEntries.add(_persistence.update(depotEntry));
 

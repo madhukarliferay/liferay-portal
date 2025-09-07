@@ -1,28 +1,97 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.elasticsearch7.internal.search.engine.adapter.snapshot;
 
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchClientResolver;
 import com.liferay.portal.search.engine.adapter.snapshot.CreateSnapshotRequest;
 import com.liferay.portal.search.engine.adapter.snapshot.CreateSnapshotResponse;
+import com.liferay.portal.search.engine.adapter.snapshot.SnapshotDetails;
+
+import java.io.IOException;
+
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.SnapshotClient;
 
 /**
  * @author Michael C. Han
  */
-public interface CreateSnapshotRequestExecutor {
+public class CreateSnapshotRequestExecutor {
+
+	public CreateSnapshotRequestExecutor(
+		ElasticsearchClientResolver elasticsearchClientResolver) {
+
+		_elasticsearchClientResolver = elasticsearchClientResolver;
+	}
 
 	public CreateSnapshotResponse execute(
-		CreateSnapshotRequest createSnapshotRequest);
+		CreateSnapshotRequest createSnapshotRequest) {
+
+		org.elasticsearch.action.admin.cluster.snapshots.create.
+			CreateSnapshotRequest elasticsearchCreateSnapshotRequest =
+				createCreateSnapshotRequest(createSnapshotRequest);
+
+		org.elasticsearch.action.admin.cluster.snapshots.create.
+			CreateSnapshotResponse elasticsearchCreateSnapshotResponse =
+				_getCreateSnapshotResponse(
+					elasticsearchCreateSnapshotRequest, createSnapshotRequest);
+
+		SnapshotDetails snapshotDetails = SnapshotInfoConverter.convert(
+			elasticsearchCreateSnapshotResponse.getSnapshotInfo());
+
+		return new CreateSnapshotResponse(snapshotDetails);
+	}
+
+	protected org.elasticsearch.action.admin.cluster.snapshots.create.
+		CreateSnapshotRequest createCreateSnapshotRequest(
+			CreateSnapshotRequest createSnapshotRequest) {
+
+		org.elasticsearch.action.admin.cluster.snapshots.create.
+			CreateSnapshotRequest elasticsearchCreateSnapshotRequest =
+				new org.elasticsearch.action.admin.cluster.snapshots.create.
+					CreateSnapshotRequest();
+
+		if (ArrayUtil.isNotEmpty(createSnapshotRequest.getIndexNames())) {
+			elasticsearchCreateSnapshotRequest.indices(
+				createSnapshotRequest.getIndexNames());
+		}
+
+		elasticsearchCreateSnapshotRequest.repository(
+			createSnapshotRequest.getRepositoryName());
+		elasticsearchCreateSnapshotRequest.snapshot(
+			createSnapshotRequest.getSnapshotName());
+		elasticsearchCreateSnapshotRequest.waitForCompletion(
+			createSnapshotRequest.isWaitForCompletion());
+
+		return elasticsearchCreateSnapshotRequest;
+	}
+
+	private org.elasticsearch.action.admin.cluster.snapshots.create.
+		CreateSnapshotResponse _getCreateSnapshotResponse(
+			org.elasticsearch.action.admin.cluster.snapshots.create.
+				CreateSnapshotRequest elasticsearchCreateSnapshotRequest,
+			CreateSnapshotRequest createSnapshotRequest) {
+
+		RestHighLevelClient restHighLevelClient =
+			_elasticsearchClientResolver.getRestHighLevelClient(
+				createSnapshotRequest.getConnectionId(),
+				createSnapshotRequest.isPreferLocalCluster());
+
+		SnapshotClient snapshotClient = restHighLevelClient.snapshot();
+
+		try {
+			return snapshotClient.create(
+				elasticsearchCreateSnapshotRequest, RequestOptions.DEFAULT);
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+	}
+
+	private final ElasticsearchClientResolver _elasticsearchClientResolver;
 
 }

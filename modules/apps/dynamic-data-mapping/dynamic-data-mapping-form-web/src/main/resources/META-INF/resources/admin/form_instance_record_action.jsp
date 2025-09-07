@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -45,8 +36,22 @@ FormInstancePermissionCheckerHelper formInstancePermissionCheckerHelper = ddmFor
 		/>
 	</c:if>
 
+	<c:if test="<%= !DDMFormInstanceExpirationStatusUtil.isFormExpired(formInstanceRecord.getFormInstance(), timeZone) && formInstancePermissionCheckerHelper.isShowEditIcon(ddmFormAdminDisplayContext.getDDMFormInstance()) %>">
+		<portlet:renderURL var="editURL">
+			<portlet:param name="mvcPath" value="/admin/edit_form_instance_record.jsp" />
+			<portlet:param name="redirect" value="<%= currentURL %>" />
+			<portlet:param name="formInstanceRecordId" value="<%= String.valueOf(formInstanceRecord.getFormInstanceRecordId()) %>" />
+			<portlet:param name="formInstanceId" value="<%= String.valueOf(formInstanceRecord.getFormInstanceId()) %>" />
+		</portlet:renderURL>
+
+		<liferay-ui:icon
+			message="edit"
+			url="<%= editURL %>"
+		/>
+	</c:if>
+
 	<c:if test="<%= formInstancePermissionCheckerHelper.isShowDeleteIcon(ddmFormAdminDisplayContext.getDDMFormInstance()) %>">
-		<portlet:actionURL name="deleteFormInstanceRecord" var="deleteURL">
+		<portlet:actionURL name="/dynamic_data_mapping_form/delete_form_instance_record" var="deleteURL">
 			<portlet:param name="redirect" value="<%= currentURL %>" />
 			<portlet:param name="formInstanceRecordId" value="<%= String.valueOf(formInstanceRecord.getFormInstanceRecordId()) %>" />
 		</portlet:actionURL>

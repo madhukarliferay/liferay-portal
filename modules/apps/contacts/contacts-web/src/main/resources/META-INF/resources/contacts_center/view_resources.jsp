@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -31,7 +22,7 @@ boolean portalUser = ParamUtil.getBoolean(request, "portalUser");
 			<c:if test="<%= entryId > 0 %>">
 
 				<%
-				Entry entry = EntryLocalServiceUtil.getEntry(entryId);
+				Entry entry = EntryServiceUtil.getEntry(entryId);
 
 				String redirect = ParamUtil.getString(request, "redirect");
 				%>
@@ -43,7 +34,7 @@ boolean portalUser = ParamUtil.getBoolean(request, "portalUser");
 				<span id="<portlet:namespace />contactsToolbar">
 					<div class="lfr-button-column">
 						<div class="lfr-button-column-content">
-							<aui:button-row cssClass="edit-toolbar" id='<%= renderResponse.getNamespace() + "entryToolbar" %>' />
+							<aui:button-row cssClass="edit-toolbar" id='<%= liferayPortletResponse.getNamespace() + "entryToolbar" %>' />
 						</div>
 					</div>
 
@@ -60,53 +51,67 @@ boolean portalUser = ParamUtil.getBoolean(request, "portalUser");
 
 						contactsToolbarChildren.push({
 							on: {
-								click: function(event) {
+								click: function (event) {
 									Liferay.component('contactsCenter').showPopup(
 										'<%= UnicodeLanguageUtil.get(request, "update-contact") %>',
 										'<%= viewEntryURL %>'
 									);
-								}
+								},
 							},
 							icon: 'icon-edit',
 							id: '<portlet:namespace />edit',
-							label: '<%= UnicodeLanguageUtil.get(request, "edit") %>'
+							label: '<%= UnicodeLanguageUtil.get(request, "edit") %>',
 						});
 
 						contactsToolbarChildren.push({
 							on: {
-								click: function(event) {
+								click: function (event) {
 									var confirmMessage =
 										'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-delete-x-from-your-contacts", entry.getFullName(), false) %>';
 
-									if (confirm(confirmMessage)) {
-										var data = new URLSearchParams();
-										data.append('<portlet:namespace />entryId', <%= entryId %>);
+									Liferay.Util.openConfirmModal({
+										message: confirmMessage,
+										onConfirm: (isConfirmed) => {
+											if (isConfirmed) {
+												var data = new URLSearchParams();
+												data.append(
+													'<portlet:namespace />entryId',
+													<%= entryId %>
+												);
 
-										Liferay.Util.fetch('<portlet:actionURL name="deleteEntry" />', {
-											body: data,
-											method: 'POST'
-										})
-											.then(function(response) {
-												return response.text();
-											})
-											.then(function(data) {
-												location.href = '<%= HtmlUtil.escape(redirect) %>';
-											})
-											.catch(function() {
-												Liferay.component('contactsCenter').showMessage(false);
-											});
-									}
-								}
+												Liferay.Util.fetch(
+													'<portlet:actionURL name="deleteEntry" />',
+													{
+														body: data,
+														method: 'POST',
+													}
+												)
+													.then((response) => {
+														return response.text();
+													})
+													.then((data) => {
+														location.href =
+															'<%= HtmlUtil.escape(redirect) %>';
+													})
+													.catch(() => {
+														Liferay.component('contactsCenter').showMessage(
+															false
+														);
+													});
+											}
+										},
+									});
+								},
 							},
 							icon: 'icon-remove',
 							id: '<portlet:namespace />delete',
-							label: '<%= UnicodeLanguageUtil.get(request, "delete") %>'
+							label: '<%= UnicodeLanguageUtil.get(request, "delete") %>',
 						});
 
 						new A.Toolbar({
 							activeState: false,
 							boundingBox: buttonRow,
-							children: contactsToolbarChildren
+							children: contactsToolbarChildren,
 						}).render();
 					</aui:script>
 				</span>
@@ -131,16 +136,11 @@ boolean portalUser = ParamUtil.getBoolean(request, "portalUser");
 			</c:if>
 
 			<span id="<portlet:namespace />contactsToolbar">
-
-				<%
-				boolean showDetailView = ParamUtil.getBoolean(request, "showDetailView");
-				%>
-
 				<c:choose>
-					<c:when test="<%= showDetailView %>">
+					<c:when test='<%= ParamUtil.getBoolean(request, "showDetailView") %>'>
 						<div class="lfr-button-column">
 							<div class="lfr-button-column-content">
-								<aui:button-row cssClass="edit-toolbar" id='<%= renderResponse.getNamespace() + "userToolbar" %>' />
+								<aui:button-row cssClass="edit-toolbar" id='<%= liferayPortletResponse.getNamespace() + "userToolbar" %>' />
 							</div>
 						</div>
 
@@ -154,16 +154,16 @@ boolean portalUser = ParamUtil.getBoolean(request, "portalUser");
 								id: '<portlet:namespace />backSelection',
 								label: '<%= UnicodeLanguageUtil.get(request, "back-to-selection") %>',
 								on: {
-									click: function(event) {
+									click: function (event) {
 										Liferay.component('contactsCenter')._setVisibleSelectedUsersView();
-									}
-								}
+									},
+								},
 							});
 
 							new A.Toolbar({
 								activeState: false,
 								boundingBox: buttonRow,
-								children: contactsToolbarChildren
+								children: contactsToolbarChildren,
 							}).render();
 						</aui:script>
 					</c:when>

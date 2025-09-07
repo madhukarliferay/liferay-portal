@@ -1,32 +1,24 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser;
 
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.CamelCaseUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodParameter;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodSignature;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser.util.OpenAPIParserUtil;
-import com.liferay.portal.vulcan.pagination.Page;
-import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.yaml.config.ConfigYAML;
-import com.liferay.portal.vulcan.yaml.openapi.Components;
-import com.liferay.portal.vulcan.yaml.openapi.OpenAPIYAML;
-import com.liferay.portal.vulcan.yaml.openapi.Operation;
-import com.liferay.portal.vulcan.yaml.openapi.Parameter;
-import com.liferay.portal.vulcan.yaml.openapi.Schema;
+import com.liferay.portal.tools.rest.builder.internal.freemarker.util.OpenAPIUtil;
+import com.liferay.portal.tools.rest.builder.internal.yaml.config.ConfigYAML;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Components;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.OpenAPIYAML;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Operation;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Parameter;
+import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Schema;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
@@ -43,14 +36,22 @@ import java.util.function.Predicate;
 public class GraphQLOpenAPIParser {
 
 	public static List<JavaMethodSignature> getJavaMethodSignatures(
-		ConfigYAML configYAML, OpenAPIYAML openAPIYAML,
-		Predicate<Operation> predicate) {
+			ConfigYAML configYAML, OpenAPIYAML openAPIYAML,
+			Predicate<Operation> predicate)
+		throws Exception {
 
 		List<JavaMethodSignature> javaMethodSignatures = new ArrayList<>();
 
+		Map<String, Schema> schemas = new TreeMap<>();
+
 		Components components = openAPIYAML.getComponents();
 
-		Map<String, Schema> schemas = components.getSchemas();
+		if (components != null) {
+			schemas.putAll(components.getSchemas());
+		}
+
+		schemas.putAll(
+			OpenAPIUtil.getAllExternalSchemas(configYAML, openAPIYAML));
 
 		for (String schemaName : schemas.keySet()) {
 			javaMethodSignatures.addAll(
@@ -71,7 +72,7 @@ public class GraphQLOpenAPIParser {
 		String httpMethod = OpenAPIParserUtil.getHTTPMethod(operation);
 
 		if (httpMethod != null) {
-			StringBuilder sb = new StringBuilder("@GraphQLField(");
+			StringBundler sb = new StringBundler("@GraphQLField(");
 
 			if (operation.getDescription() != null) {
 				sb.append("description=\"");
@@ -108,11 +109,9 @@ public class GraphQLOpenAPIParser {
 					javaMethodParameter, operation);
 			}
 
-			String parameter = OpenAPIParserUtil.getParameter(
-				javaMethodParameter, parameterAnnotation);
-
-			sb.append(parameter);
-
+			sb.append(
+				OpenAPIParserUtil.getParameter(
+					javaMethodParameter, parameterAnnotation));
 			sb.append(',');
 		}
 
@@ -133,7 +132,7 @@ public class GraphQLOpenAPIParser {
 
 			if (Objects.equals(
 					javaMethodParameter.getParameterType(),
-					Pagination.class.getName())) {
+					"com.liferay.portal.vulcan.pagination.Pagination")) {
 
 				javaMethodParameters.add(
 					new JavaMethodParameter("pageSize", int.class.getName()));
@@ -153,53 +152,40 @@ public class GraphQLOpenAPIParser {
 		ConfigYAML configYAML, OpenAPIYAML openAPIYAML,
 		Predicate<Operation> predicate, String schemaName) {
 
-		List<JavaMethodSignature> javaMethodSignatures = new ArrayList<>();
-
-		List<JavaMethodSignature> resourceJavaMethodSignatures =
+		return TransformUtil.transform(
 			ResourceOpenAPIParser.getJavaMethodSignatures(
-				configYAML, openAPIYAML, schemaName);
+				configYAML, openAPIYAML, schemaName),
+			javaMethodSignature -> {
+				Operation operation = javaMethodSignature.getOperation();
 
-		for (JavaMethodSignature resourceJavaMethodSignature :
-				resourceJavaMethodSignatures) {
+				if (!predicate.test(operation)) {
+					return null;
+				}
 
-			Operation operation = resourceJavaMethodSignature.getOperation();
+				String returnType = javaMethodSignature.getReturnType();
 
-			if (!predicate.test(operation)) {
-				continue;
-			}
+				if (returnType.startsWith(
+						"com.liferay.portal.vulcan.pagination.Page<")) {
 
-			String returnType = resourceJavaMethodSignature.getReturnType();
+					String pageClassName =
+						"com.liferay.portal.vulcan.pagination.Page";
 
-			if (returnType.startsWith(Page.class.getName() + "<")) {
-				String pageClassName = Page.class.getName();
+					String className = returnType.substring(
+						pageClassName.length() + 1, returnType.length() - 1);
 
-				String className = returnType.substring(
-					pageClassName.length() + 1, returnType.length() - 1);
+					returnType = StringBundler.concat(
+						Collection.class.getName(), "<", className, ">");
+				}
 
-				StringBuilder sb = new StringBuilder();
-
-				sb.append(Collection.class.getName());
-				sb.append("<");
-				sb.append(className);
-				sb.append(">");
-
-				returnType = sb.toString();
-			}
-
-			List<JavaMethodParameter> javaMethodParameters =
-				_getJavaMethodParameters(resourceJavaMethodSignature);
-
-			javaMethodSignatures.add(
-				new JavaMethodSignature(
-					resourceJavaMethodSignature.getPath(),
-					resourceJavaMethodSignature.getPathItem(), operation,
-					resourceJavaMethodSignature.getRequestBodyMediaTypes(),
-					resourceJavaMethodSignature.getSchemaName(),
-					javaMethodParameters,
-					resourceJavaMethodSignature.getMethodName(), returnType));
-		}
-
-		return javaMethodSignatures;
+				return new JavaMethodSignature(
+					javaMethodSignature.getPath(),
+					javaMethodSignature.getPathItem(), operation,
+					javaMethodSignature.getRequestBodyMediaTypes(),
+					javaMethodSignature.getSchemaName(),
+					_getJavaMethodParameters(javaMethodSignature),
+					javaMethodSignature.getMethodName(), returnType,
+					javaMethodSignature.getParentSchemaName());
+			});
 	}
 
 	private static String _getMethodAnnotationGraphQLName(
@@ -217,7 +203,7 @@ public class GraphQLOpenAPIParser {
 		List<JavaMethodParameter> javaMethodParameters =
 			javaMethodSignature.getJavaMethodParameters();
 
-		StringBuilder sb = new StringBuilder("@GraphQLName(value=\"");
+		StringBundler sb = new StringBundler("@GraphQLName(value=\"");
 
 		sb.append(javaMethodSignature.getMethodName());
 
@@ -253,17 +239,12 @@ public class GraphQLOpenAPIParser {
 			Schema schema = parameter.getSchema();
 
 			if (schema.getType() != null) {
-				StringBuilder sb = new StringBuilder();
-
-				sb.append("@GraphQLName(\"");
-				sb.append(parameter.getName());
-				sb.append("\")");
-
-				return sb.toString();
+				return StringBundler.concat(
+					"@GraphQLName(\"", parameter.getName(), "\")");
 			}
 		}
 
-		StringBuilder sb = new StringBuilder();
+		StringBundler sb = new StringBundler(3);
 
 		sb.append("@GraphQLName(\"");
 

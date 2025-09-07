@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.model.impl;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +16,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import java.util.Date;
 
@@ -37,17 +32,17 @@ public class DDMStructureVersionCacheModel
 	implements CacheModel<DDMStructureVersion>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DDMStructureVersionCacheModel)) {
+		if (!(object instanceof DDMStructureVersionCacheModel)) {
 			return false;
 		}
 
 		DDMStructureVersionCacheModel ddmStructureVersionCacheModel =
-			(DDMStructureVersionCacheModel)obj;
+			(DDMStructureVersionCacheModel)object;
 
 		if ((structureVersionId ==
 				ddmStructureVersionCacheModel.structureVersionId) &&
@@ -210,7 +205,12 @@ public class DDMStructureVersionCacheModel
 
 		ddmStructureVersionImpl.resetOriginalValues();
 
-		ddmStructureVersionImpl.setDDMForm(_ddmForm);
+		try {
+			_ddmFormMethodHandle.invokeExact(ddmStructureVersionImpl, ddmForm);
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
 
 		return ddmStructureVersionImpl;
 	}
@@ -238,8 +238,8 @@ public class DDMStructureVersionCacheModel
 
 		parentStructureId = objectInput.readLong();
 		name = objectInput.readUTF();
-		description = objectInput.readUTF();
-		definition = objectInput.readUTF();
+		description = (String)objectInput.readObject();
+		definition = (String)objectInput.readObject();
 		storageType = objectInput.readUTF();
 
 		type = objectInput.readInt();
@@ -250,7 +250,7 @@ public class DDMStructureVersionCacheModel
 		statusByUserName = objectInput.readUTF();
 		statusDate = objectInput.readLong();
 
-		_ddmForm =
+		ddmForm =
 			(com.liferay.dynamic.data.mapping.model.DDMForm)
 				objectInput.readObject();
 	}
@@ -297,17 +297,17 @@ public class DDMStructureVersionCacheModel
 		}
 
 		if (description == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(description);
+			objectOutput.writeObject(description);
 		}
 
 		if (definition == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(definition);
+			objectOutput.writeObject(definition);
 		}
 
 		if (storageType == null) {
@@ -332,7 +332,7 @@ public class DDMStructureVersionCacheModel
 
 		objectOutput.writeLong(statusDate);
 
-		objectOutput.writeObject(_ddmForm);
+		objectOutput.writeObject(ddmForm);
 	}
 
 	public long mvccVersion;
@@ -355,6 +355,21 @@ public class DDMStructureVersionCacheModel
 	public long statusByUserId;
 	public String statusByUserName;
 	public long statusDate;
-	public com.liferay.dynamic.data.mapping.model.DDMForm _ddmForm;
+	public volatile com.liferay.dynamic.data.mapping.model.DDMForm ddmForm;
+
+	private static final MethodHandle _ddmFormMethodHandle;
+
+	static {
+		MethodHandles.Lookup lookup = ReflectionUtil.getImplLookup();
+
+		try {
+			_ddmFormMethodHandle = lookup.findSetter(
+				DDMStructureVersionImpl.class, "_ddmForm",
+				com.liferay.dynamic.data.mapping.model.DDMForm.class);
+		}
+		catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new ExceptionInInitializerError(reflectiveOperationException);
+		}
+	}
 
 }

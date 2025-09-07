@@ -1,21 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.layout.exception.NoSuchClassedModelUsageException;
+import com.liferay.layout.exception.NoSuchLayoutClassedModelUsageException;
 import com.liferay.layout.model.LayoutClassedModelUsage;
 import com.liferay.layout.service.LayoutClassedModelUsageLocalServiceUtil;
 import com.liferay.layout.service.persistence.LayoutClassedModelUsagePersistence;
@@ -26,6 +17,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -45,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.junit.After;
@@ -131,13 +122,20 @@ public class LayoutClassedModelUsagePersistenceTest {
 
 		newLayoutClassedModelUsage.setMvccVersion(RandomTestUtil.nextLong());
 
+		newLayoutClassedModelUsage.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newLayoutClassedModelUsage.setUuid(RandomTestUtil.randomString());
 
 		newLayoutClassedModelUsage.setGroupId(RandomTestUtil.nextLong());
 
+		newLayoutClassedModelUsage.setCompanyId(RandomTestUtil.nextLong());
+
 		newLayoutClassedModelUsage.setCreateDate(RandomTestUtil.nextDate());
 
 		newLayoutClassedModelUsage.setModifiedDate(RandomTestUtil.nextDate());
+
+		newLayoutClassedModelUsage.setClassExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newLayoutClassedModelUsage.setClassNameId(RandomTestUtil.nextLong());
 
@@ -166,6 +164,9 @@ public class LayoutClassedModelUsagePersistenceTest {
 			existingLayoutClassedModelUsage.getMvccVersion(),
 			newLayoutClassedModelUsage.getMvccVersion());
 		Assert.assertEquals(
+			existingLayoutClassedModelUsage.getCtCollectionId(),
+			newLayoutClassedModelUsage.getCtCollectionId());
+		Assert.assertEquals(
 			existingLayoutClassedModelUsage.getUuid(),
 			newLayoutClassedModelUsage.getUuid());
 		Assert.assertEquals(
@@ -175,6 +176,9 @@ public class LayoutClassedModelUsagePersistenceTest {
 			existingLayoutClassedModelUsage.getGroupId(),
 			newLayoutClassedModelUsage.getGroupId());
 		Assert.assertEquals(
+			existingLayoutClassedModelUsage.getCompanyId(),
+			newLayoutClassedModelUsage.getCompanyId());
+		Assert.assertEquals(
 			Time.getShortTimestamp(
 				existingLayoutClassedModelUsage.getCreateDate()),
 			Time.getShortTimestamp(newLayoutClassedModelUsage.getCreateDate()));
@@ -183,6 +187,9 @@ public class LayoutClassedModelUsagePersistenceTest {
 				existingLayoutClassedModelUsage.getModifiedDate()),
 			Time.getShortTimestamp(
 				newLayoutClassedModelUsage.getModifiedDate()));
+		Assert.assertEquals(
+			existingLayoutClassedModelUsage.getClassExternalReferenceCode(),
+			newLayoutClassedModelUsage.getClassExternalReferenceCode());
 		Assert.assertEquals(
 			existingLayoutClassedModelUsage.getClassNameId(),
 			newLayoutClassedModelUsage.getClassNameId());
@@ -227,6 +234,15 @@ public class LayoutClassedModelUsagePersistenceTest {
 	}
 
 	@Test
+	public void testCountByUuid_C() throws Exception {
+		_persistence.countByUuid_C("", RandomTestUtil.nextLong());
+
+		_persistence.countByUuid_C("null", 0L);
+
+		_persistence.countByUuid_C((String)null, 0L);
+	}
+
+	@Test
 	public void testCountByPlid() throws Exception {
 		_persistence.countByPlid(RandomTestUtil.nextLong());
 
@@ -234,20 +250,47 @@ public class LayoutClassedModelUsagePersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_C() throws Exception {
-		_persistence.countByC_C(
+	public void testCountByC_CN() throws Exception {
+		_persistence.countByC_CN(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
 
-		_persistence.countByC_C(0L, 0L);
+		_persistence.countByC_CN(0L, 0L);
 	}
 
 	@Test
-	public void testCountByC_C_T() throws Exception {
-		_persistence.countByC_C_T(
+	public void testCountByCN_CPK() throws Exception {
+		_persistence.countByCN_CPK(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByCN_CPK(0L, 0L);
+	}
+
+	@Test
+	public void testCountByC_CERC_CN() throws Exception {
+		_persistence.countByC_CERC_CN(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong());
+
+		_persistence.countByC_CERC_CN(0L, "null", 0L);
+
+		_persistence.countByC_CERC_CN(0L, (String)null, 0L);
+	}
+
+	@Test
+	public void testCountByC_CN_CT() throws Exception {
+		_persistence.countByC_CN_CT(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextLong());
+
+		_persistence.countByC_CN_CT(0L, 0L, 0L);
+	}
+
+	@Test
+	public void testCountByCN_CPK_T() throws Exception {
+		_persistence.countByCN_CPK_T(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
 			RandomTestUtil.nextInt());
 
-		_persistence.countByC_C_T(0L, 0L, 0);
+		_persistence.countByCN_CPK_T(0L, 0L, 0);
 	}
 
 	@Test
@@ -261,14 +304,28 @@ public class LayoutClassedModelUsagePersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_C_CK_CT_P() throws Exception {
-		_persistence.countByC_C_CK_CT_P(
-			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(), "",
-			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+	public void testCountByC_CERC_CN_T() throws Exception {
+		_persistence.countByC_CERC_CN_T(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong(),
+			RandomTestUtil.nextInt());
 
-		_persistence.countByC_C_CK_CT_P(0L, 0L, "null", 0L, 0L);
+		_persistence.countByC_CERC_CN_T(0L, "null", 0L, 0);
 
-		_persistence.countByC_C_CK_CT_P(0L, 0L, (String)null, 0L, 0L);
+		_persistence.countByC_CERC_CN_T(0L, (String)null, 0L, 0);
+	}
+
+	@Test
+	public void testCountByG_CERC_CN_CPK_CK_CT_P() throws Exception {
+		_persistence.countByG_CERC_CN_CPK_CK_CT_P(
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong(),
+			RandomTestUtil.nextLong(), "", RandomTestUtil.nextLong(),
+			RandomTestUtil.nextLong());
+
+		_persistence.countByG_CERC_CN_CPK_CK_CT_P(
+			0L, "null", 0L, 0L, "null", 0L, 0L);
+
+		_persistence.countByG_CERC_CN_CPK_CK_CT_P(
+			0L, (String)null, 0L, 0L, (String)null, 0L, 0L);
 	}
 
 	@Test
@@ -284,7 +341,7 @@ public class LayoutClassedModelUsagePersistenceTest {
 			existingLayoutClassedModelUsage, newLayoutClassedModelUsage);
 	}
 
-	@Test(expected = NoSuchClassedModelUsageException.class)
+	@Test(expected = NoSuchLayoutClassedModelUsageException.class)
 	public void testFindByPrimaryKeyMissing() throws Exception {
 		long pk = RandomTestUtil.nextLong();
 
@@ -301,11 +358,12 @@ public class LayoutClassedModelUsagePersistenceTest {
 		getOrderByComparator() {
 
 		return OrderByComparatorFactoryUtil.create(
-			"LayoutClassedModelUsage", "mvccVersion", true, "uuid", true,
-			"layoutClassedModelUsageId", true, "groupId", true, "createDate",
-			true, "modifiedDate", true, "classNameId", true, "classPK", true,
-			"containerKey", true, "containerType", true, "plid", true, "type",
-			true, "lastPublishDate", true);
+			"LayoutClassedModelUsage", "mvccVersion", true, "ctCollectionId",
+			true, "uuid", true, "layoutClassedModelUsageId", true, "groupId",
+			true, "companyId", true, "createDate", true, "modifiedDate", true,
+			"classExternalReferenceCode", true, "classNameId", true, "classPK",
+			true, "containerKey", true, "containerType", true, "plid", true,
+			"type", true, "lastPublishDate", true);
 	}
 
 	@Test
@@ -551,48 +609,102 @@ public class LayoutClassedModelUsagePersistenceTest {
 
 		_persistence.clearCache();
 
-		LayoutClassedModelUsage existingLayoutClassedModelUsage =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newLayoutClassedModelUsage.getPrimaryKey());
+				newLayoutClassedModelUsage.getPrimaryKey()));
+	}
 
-		Assert.assertTrue(
-			Objects.equals(
-				existingLayoutClassedModelUsage.getUuid(),
-				ReflectionTestUtil.invoke(
-					existingLayoutClassedModelUsage, "getOriginalUuid",
-					new Class<?>[0])));
-		Assert.assertEquals(
-			Long.valueOf(existingLayoutClassedModelUsage.getGroupId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutClassedModelUsage, "getOriginalGroupId",
-				new Class<?>[0]));
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		LayoutClassedModelUsage newLayoutClassedModelUsage =
+			addLayoutClassedModelUsage();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			LayoutClassedModelUsage.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"layoutClassedModelUsageId",
+				newLayoutClassedModelUsage.getLayoutClassedModelUsageId()));
+
+		List<LayoutClassedModelUsage> result =
+			_persistence.findWithDynamicQuery(dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		LayoutClassedModelUsage layoutClassedModelUsage) {
 
 		Assert.assertEquals(
-			Long.valueOf(existingLayoutClassedModelUsage.getClassNameId()),
-			ReflectionTestUtil.<Long>invoke(
-				existingLayoutClassedModelUsage, "getOriginalClassNameId",
-				new Class<?>[0]));
+			layoutClassedModelUsage.getUuid(),
+			ReflectionTestUtil.invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "uuid_"));
 		Assert.assertEquals(
-			Long.valueOf(existingLayoutClassedModelUsage.getClassPK()),
+			Long.valueOf(layoutClassedModelUsage.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLayoutClassedModelUsage, "getOriginalClassPK",
-				new Class<?>[0]));
-		Assert.assertTrue(
-			Objects.equals(
-				existingLayoutClassedModelUsage.getContainerKey(),
-				ReflectionTestUtil.invoke(
-					existingLayoutClassedModelUsage, "getOriginalContainerKey",
-					new Class<?>[0])));
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
+
 		Assert.assertEquals(
-			Long.valueOf(existingLayoutClassedModelUsage.getContainerType()),
+			Long.valueOf(layoutClassedModelUsage.getGroupId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLayoutClassedModelUsage, "getOriginalContainerType",
-				new Class<?>[0]));
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "groupId"));
 		Assert.assertEquals(
-			Long.valueOf(existingLayoutClassedModelUsage.getPlid()),
+			layoutClassedModelUsage.getClassExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classExternalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(layoutClassedModelUsage.getClassNameId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingLayoutClassedModelUsage, "getOriginalPlid",
-				new Class<?>[0]));
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classNameId"));
+		Assert.assertEquals(
+			Long.valueOf(layoutClassedModelUsage.getClassPK()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "classPK"));
+		Assert.assertEquals(
+			layoutClassedModelUsage.getContainerKey(),
+			ReflectionTestUtil.invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "containerKey"));
+		Assert.assertEquals(
+			Long.valueOf(layoutClassedModelUsage.getContainerType()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "containerType"));
+		Assert.assertEquals(
+			Long.valueOf(layoutClassedModelUsage.getPlid()),
+			ReflectionTestUtil.<Long>invoke(
+				layoutClassedModelUsage, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "plid"));
 	}
 
 	protected LayoutClassedModelUsage addLayoutClassedModelUsage()
@@ -605,13 +717,20 @@ public class LayoutClassedModelUsagePersistenceTest {
 
 		layoutClassedModelUsage.setMvccVersion(RandomTestUtil.nextLong());
 
+		layoutClassedModelUsage.setCtCollectionId(RandomTestUtil.nextLong());
+
 		layoutClassedModelUsage.setUuid(RandomTestUtil.randomString());
 
 		layoutClassedModelUsage.setGroupId(RandomTestUtil.nextLong());
 
+		layoutClassedModelUsage.setCompanyId(RandomTestUtil.nextLong());
+
 		layoutClassedModelUsage.setCreateDate(RandomTestUtil.nextDate());
 
 		layoutClassedModelUsage.setModifiedDate(RandomTestUtil.nextDate());
+
+		layoutClassedModelUsage.setClassExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		layoutClassedModelUsage.setClassNameId(RandomTestUtil.nextLong());
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.internal.exportimport.test;
@@ -28,13 +19,11 @@ import com.liferay.exportimport.test.util.lar.BasePortletExportImportTestCase;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.Map;
-
-import javax.portlet.PortletPreferences;
+import jakarta.portlet.PortletPreferences;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -65,7 +54,7 @@ public class DDLDisplayExportImportTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
 			group.getGroupId(), DDLRecordSet.class.getName());
@@ -84,13 +73,19 @@ public class DDLDisplayExportImportTest
 
 		DDLRecordSet recordSet = record.getRecordSet();
 
-		Map<String, String[]> preferenceMap = HashMapBuilder.put(
-			"recordSetId",
-			new String[] {String.valueOf(recordSet.getRecordSetId())}
-		).build();
-
 		PortletPreferences importedPortletPreferences =
-			getImportedPortletPreferences(preferenceMap);
+			getImportedPortletPreferences(
+				HashMapBuilder.put(
+					"groupId",
+					new String[] {String.valueOf(recordSet.getGroupId())}
+				).put(
+					"recordSetId",
+					new String[] {String.valueOf(recordSet.getRecordSetId())}
+				).put(
+					"recordSetKey",
+					new String[] {String.valueOf(recordSet.getRecordSetKey())}
+				).build(),
+				false);
 
 		DDLRecord importedRecord =
 			DDLRecordLocalServiceUtil.fetchDDLRecordByUuidAndGroupId(

@@ -1,28 +1,25 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.type.controller.display.page.internal.product.navigation.control.menu;
 
-import com.liferay.asset.display.page.constants.AssetDisplayPageWebKeys;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
-import com.liferay.info.display.contributor.InfoDisplayObjectProvider;
+import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.display.url.provider.InfoEditURLProvider;
+import com.liferay.info.display.url.provider.InfoEditURLProviderRegistry;
+import com.liferay.info.item.ClassPKInfoItemIdentifier;
+import com.liferay.info.item.InfoItemDetails;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.layout.type.controller.display.page.internal.constants.DisplayPageLayoutTypeControllerWebKeys;
+import com.liferay.layout.type.controller.display.page.internal.display.context.EditDisplayPageMenuDisplayContext;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -34,11 +31,13 @@ import com.liferay.product.navigation.control.menu.BaseJSPProductNavigationContr
 import com.liferay.product.navigation.control.menu.ProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.constants.ProductNavigationControlMenuCategoryKeys;
 
-import java.util.Locale;
-import java.util.Objects;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+
+import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -47,10 +46,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
-		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.TOOLS,
-		"product.navigation.control.menu.entry.order:Integer=200"
+		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.USER,
+		"product.navigation.control.menu.entry.order:Integer=50"
 	},
 	service = ProductNavigationControlMenuEntry.class
 )
@@ -74,6 +72,29 @@ public class EditDisplayPageMenuProductNavigationControlMenuEntry
 	}
 
 	@Override
+	public boolean includeIcon(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws IOException {
+
+		InfoItemDetails infoItemDetails =
+			(InfoItemDetails)httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_DETAILS);
+
+		InfoEditURLProvider<Object> infoEditURLProvider =
+			_infoEditURLProviderRegistry.getInfoEditURLProvider(
+				infoItemDetails.getClassName());
+
+		httpServletRequest.setAttribute(
+			DisplayPageLayoutTypeControllerWebKeys.
+				EDIT_DISPLAY_PAGE_MENU_DISPLAY_CONTEXT,
+			new EditDisplayPageMenuDisplayContext(
+				httpServletRequest, infoEditURLProvider));
+
+		return super.includeIcon(httpServletRequest, httpServletResponse);
+	}
+
+	@Override
 	public boolean isShow(HttpServletRequest httpServletRequest)
 		throws PortalException {
 
@@ -83,13 +104,7 @@ public class EditDisplayPageMenuProductNavigationControlMenuEntry
 
 		Layout layout = themeDisplay.getLayout();
 
-		if (layout.isTypeControlPanel()) {
-			return false;
-		}
-
-		if (!Objects.equals(
-				layout.getType(), LayoutConstants.TYPE_ASSET_DISPLAY)) {
-
+		if (layout.isTypeControlPanel() || !layout.isTypeAssetDisplay()) {
 			return false;
 		}
 
@@ -108,24 +123,37 @@ public class EditDisplayPageMenuProductNavigationControlMenuEntry
 			return false;
 		}
 
-		InfoDisplayObjectProvider infoDisplayObjectProvider =
-			(InfoDisplayObjectProvider)httpServletRequest.getAttribute(
-				AssetDisplayPageWebKeys.INFO_DISPLAY_OBJECT_PROVIDER);
+		InfoItemDetails infoItemDetails =
+			(InfoItemDetails)httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_DETAILS);
 
-		if (infoDisplayObjectProvider == null) {
+		if (infoItemDetails == null) {
 			return false;
 		}
 
-		AssetRendererFactory assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.
-				getAssetRendererFactoryByClassNameId(
-					infoDisplayObjectProvider.getClassNameId());
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				infoItemDetails.getClassName());
 
-		AssetRenderer assetRenderer = null;
+		AssetRenderer<?> assetRenderer = null;
 
 		if (assetRendererFactory != null) {
+			InfoItemReference infoItemReference =
+				infoItemDetails.getInfoItemReference();
+
+			InfoItemIdentifier infoItemIdentifier =
+				infoItemReference.getInfoItemIdentifier();
+
+			if (!(infoItemIdentifier instanceof ClassPKInfoItemIdentifier)) {
+				return false;
+			}
+
+			ClassPKInfoItemIdentifier classPKInfoItemIdentifier =
+				(ClassPKInfoItemIdentifier)
+					infoItemReference.getInfoItemIdentifier();
+
 			assetRenderer = assetRendererFactory.getAssetRenderer(
-				infoDisplayObjectProvider.getClassPK());
+				classPKInfoItemIdentifier.getClassPK());
 		}
 
 		if (((assetRenderer == null) ||
@@ -142,12 +170,16 @@ public class EditDisplayPageMenuProductNavigationControlMenuEntry
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.display.page)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
+
+	@Reference
+	private InfoEditURLProviderRegistry _infoEditURLProviderRegistry;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.display.page)"
+	)
+	private ServletContext _servletContext;
 
 }

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.exportimport.service.impl;
@@ -18,21 +9,28 @@ import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelTitleComparator;
-import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactoryUtil;
+import com.liferay.exportimport.kernel.configuration.constants.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.exception.ExportImportIOException;
+import com.liferay.exportimport.kernel.exception.MissingReferenceException;
 import com.liferay.exportimport.kernel.exception.RemoteExportException;
 import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.exportimport.kernel.lar.MissingReferences;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
-import com.liferay.exportimport.kernel.staging.StagingConstants;
+import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
+import com.liferay.exportimport.kernel.service.ExportImportLocalService;
 import com.liferay.exportimport.kernel.staging.StagingURLHelperUtil;
 import com.liferay.exportimport.kernel.staging.StagingUtil;
+import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -45,6 +43,7 @@ import com.liferay.portal.kernel.model.LayoutSetBranchConstants;
 import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
@@ -54,6 +53,12 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.RemoteAuthException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutRevisionLocalService;
+import com.liferay.portal.kernel.service.LayoutSetBranchLocalService;
+import com.liferay.portal.kernel.service.PortletPreferenceValueLocalService;
+import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -73,6 +78,8 @@ import com.liferay.portal.service.http.GroupServiceHttp;
 import com.liferay.portlet.exportimport.service.base.StagingLocalServiceBaseImpl;
 import com.liferay.portlet.exportimport.staging.StagingAdvicesThreadLocal;
 
+import jakarta.portlet.PortletRequest;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -85,8 +92,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
 
 /**
  * @author Michael C. Han
@@ -118,7 +123,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		}
 
 		LayoutSetBranch layoutSetBranch =
-			layoutSetBranchLocalService.fetchLayoutSetBranch(
+			_layoutSetBranchLocalService.fetchLayoutSetBranch(
 				targetGroupId, false,
 				LayoutSetBranchConstants.MASTER_BRANCH_NAME);
 
@@ -129,12 +134,15 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		}
 		else if (!branchingPublic && (layoutSetBranch != null)) {
 			deleteLayoutSetBranches(targetGroupId, false);
+
+			removeLayoutSetBranchIdFromExportImportConfigurations(
+				targetGroupId, remote, false);
 		}
 		else if (layoutSetBranch != null) {
 			ExportImportDateUtil.clearLastPublishDate(targetGroupId, false);
 		}
 
-		layoutSetBranch = layoutSetBranchLocalService.fetchLayoutSetBranch(
+		layoutSetBranch = _layoutSetBranchLocalService.fetchLayoutSetBranch(
 			targetGroupId, true, LayoutSetBranchConstants.MASTER_BRANCH_NAME);
 
 		if (branchingPrivate && (layoutSetBranch == null)) {
@@ -144,6 +152,9 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		}
 		else if (!branchingPrivate && (layoutSetBranch != null)) {
 			deleteLayoutSetBranches(targetGroupId, true);
+
+			removeLayoutSetBranchIdFromExportImportConfigurations(
+				targetGroupId, remote, true);
 		}
 		else if (layoutSetBranch != null) {
 			ExportImportDateUtil.clearLastPublishDate(targetGroupId, true);
@@ -161,11 +172,11 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		try {
 			PortletFileRepositoryUtil.deletePortletFolder(stagingRequestId);
 		}
-		catch (NoSuchFolderException nsfe) {
+		catch (NoSuchFolderException noSuchFolderException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"Unable to clean up staging request " + stagingRequestId,
-					nsfe);
+					noSuchFolderException);
 			}
 		}
 		finally {
@@ -220,13 +231,13 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			return;
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			liveGroup.getTypeSettingsProperties();
 
 		boolean stagedLocally = GetterUtil.getBoolean(
-			typeSettingsProperties.getProperty("staged"));
+			typeSettingsUnicodeProperties.getProperty("staged"));
 		boolean stagedRemotely = GetterUtil.getBoolean(
-			typeSettingsProperties.getProperty("stagedRemotely"));
+			typeSettingsUnicodeProperties.getProperty("stagedRemotely"));
 
 		if (!stagedLocally && !stagedRemotely) {
 			return;
@@ -234,36 +245,38 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		if (stagedRemotely) {
 			String remoteURL = StagingURLHelperUtil.buildRemoteURL(
-				typeSettingsProperties);
+				typeSettingsUnicodeProperties);
 
 			long remoteGroupId = GetterUtil.getLong(
-				typeSettingsProperties.getProperty("remoteGroupId"));
+				typeSettingsUnicodeProperties.getProperty("remoteGroupId"));
 			boolean forceDisable = GetterUtil.getBoolean(
 				serviceContext.getAttribute("forceDisable"));
 
 			disableRemoteStaging(remoteURL, remoteGroupId, forceDisable);
 		}
 
-		typeSettingsProperties.remove("branchingPrivate");
-		typeSettingsProperties.remove("branchingPublic");
-		typeSettingsProperties.remove("remoteAddress");
-		typeSettingsProperties.remove("remoteGroupId");
-		typeSettingsProperties.remove("remotePathContext");
-		typeSettingsProperties.remove("remotePort");
-		typeSettingsProperties.remove("secureConnection");
-		typeSettingsProperties.remove("staged");
-		typeSettingsProperties.remove("stagedRemotely");
+		typeSettingsUnicodeProperties.remove("branchingPrivate");
+		typeSettingsUnicodeProperties.remove("branchingPublic");
+		typeSettingsUnicodeProperties.remove("remoteAddress");
+		typeSettingsUnicodeProperties.remove("remoteGroupId");
+		typeSettingsUnicodeProperties.remove("remotePathContext");
+		typeSettingsUnicodeProperties.remove("remotePort");
+		typeSettingsUnicodeProperties.remove("remoteSiteURL");
+		typeSettingsUnicodeProperties.remove("secureConnection");
+		typeSettingsUnicodeProperties.remove("overrideRemoteSiteURL");
+		typeSettingsUnicodeProperties.remove("staged");
+		typeSettingsUnicodeProperties.remove("stagedRemotely");
 
 		Set<String> keys = new HashSet<>();
 
-		for (String key : typeSettingsProperties.keySet()) {
+		for (String key : typeSettingsUnicodeProperties.keySet()) {
 			if (key.startsWith(StagingConstants.STAGED_PORTLET)) {
 				keys.add(key);
 			}
 		}
 
 		for (String key : keys) {
-			typeSettingsProperties.remove(key);
+			typeSettingsUnicodeProperties.remove(key);
 		}
 
 		StagingUtil.deleteLastImportSettings(liveGroup, true);
@@ -276,13 +289,13 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		if (liveGroup.hasStagingGroup()) {
 			Group stagingGroup = liveGroup.getStagingGroup();
 
-			groupLocalService.deleteGroup(stagingGroup.getGroupId());
+			_groupLocalService.deleteGroup(stagingGroup.getGroupId());
 
 			liveGroup.clearStagingGroup();
 		}
 
-		groupLocalService.updateGroup(
-			liveGroup.getGroupId(), typeSettingsProperties.toString());
+		_groupLocalService.updateGroup(
+			liveGroup.getGroupId(), typeSettingsUnicodeProperties.toString());
 	}
 
 	@Override
@@ -303,7 +316,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			disableStaging(liveGroup, serviceContext);
 		}
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			liveGroup.getTypeSettingsProperties();
 
 		boolean hasStagingGroup = liveGroup.hasStagingGroup();
@@ -311,7 +324,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		if (!hasStagingGroup) {
 			serviceContext.setAttribute("staging", Boolean.TRUE.toString());
 
-			String languageId = typeSettingsProperties.getProperty(
+			String languageId = typeSettingsUnicodeProperties.getProperty(
 				"languageId");
 
 			if (Validator.isNotNull(languageId)) {
@@ -325,47 +338,48 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			userId, liveGroup, branchingPublic, branchingPrivate, false,
 			serviceContext);
 
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"branchingPrivate", String.valueOf(branchingPrivate));
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"branchingPublic", String.valueOf(branchingPublic));
 
 		if (!hasStagingGroup) {
-			typeSettingsProperties.setProperty(
+			typeSettingsUnicodeProperties.setProperty(
 				"staged", Boolean.TRUE.toString());
-			typeSettingsProperties.setProperty(
+			typeSettingsUnicodeProperties.setProperty(
 				"stagedRemotely", Boolean.FALSE.toString());
 
-			setCommonStagingOptions(typeSettingsProperties, serviceContext);
+			setCommonStagingOptions(
+				typeSettingsUnicodeProperties, serviceContext);
 		}
 
-		groupLocalService.updateGroup(
-			liveGroup.getGroupId(), typeSettingsProperties.toString());
+		_groupLocalService.updateGroup(
+			liveGroup.getGroupId(), typeSettingsUnicodeProperties.toString());
 
-		if (!hasStagingGroup) {
-			Group stagingGroup = liveGroup.getStagingGroup();
+		if (hasStagingGroup) {
+			return;
+		}
 
-			Map<String, String[]> parameterMap =
+		Group stagingGroup = liveGroup.getStagingGroup();
+
+		Map<String, String[]> parameterMap =
+			ExportImportConfigurationParameterMapFactoryUtil.
+				buildFullPublishParameterMap();
+
+		if (liveGroup.hasPrivateLayouts()) {
+			StagingUtil.publishLayouts(
+				userId, liveGroup.getGroupId(), stagingGroup.getGroupId(), true,
+				parameterMap);
+
+			parameterMap =
 				ExportImportConfigurationParameterMapFactoryUtil.
-					buildFullPublishParameterMap();
+					buildParameterMap();
+		}
 
-			if (liveGroup.hasPrivateLayouts()) {
-				StagingUtil.publishLayouts(
-					userId, liveGroup.getGroupId(), stagingGroup.getGroupId(),
-					true, parameterMap);
-
-				parameterMap =
-					ExportImportConfigurationParameterMapFactoryUtil.
-						buildParameterMap();
-			}
-
-			if (liveGroup.hasPublicLayouts() ||
-				!liveGroup.hasPrivateLayouts()) {
-
-				StagingUtil.publishLayouts(
-					userId, liveGroup.getGroupId(), stagingGroup.getGroupId(),
-					false, parameterMap);
-			}
+		if (liveGroup.hasPublicLayouts() || !liveGroup.hasPrivateLayouts()) {
+			StagingUtil.publishLayouts(
+				userId, liveGroup.getGroupId(), stagingGroup.getGroupId(),
+				false, parameterMap);
 		}
 	}
 
@@ -377,7 +391,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			long remoteGroupId, ServiceContext serviceContext)
 		throws PortalException {
 
-		groupLocalService.validateRemote(
+		_groupLocalService.validateRemote(
 			stagingGroup.getGroupId(), remoteAddress, remotePort,
 			remotePathContext, secureConnection, remoteGroupId);
 
@@ -389,7 +403,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		boolean oldStagedRemotely = stagedRemotely;
 
-		UnicodeProperties typeSettingsProperties =
+		UnicodeProperties typeSettingsUnicodeProperties =
 			stagingGroup.getTypeSettingsProperties();
 
 		String remoteURL = StagingURLHelperUtil.buildRemoteURL(
@@ -397,10 +411,10 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		if (stagedRemotely) {
 			long oldRemoteGroupId = GetterUtil.getLong(
-				typeSettingsProperties.getProperty("remoteGroupId"));
+				typeSettingsUnicodeProperties.getProperty("remoteGroupId"));
 
 			String oldRemoteURL = StagingURLHelperUtil.buildRemoteURL(
-				typeSettingsProperties);
+				typeSettingsUnicodeProperties);
 
 			if (!remoteURL.equals(oldRemoteURL) ||
 				(remoteGroupId != oldRemoteGroupId)) {
@@ -430,35 +444,42 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			userId, stagingGroup, branchingPublic, branchingPrivate, true,
 			serviceContext);
 
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"branchingPrivate", String.valueOf(branchingPrivate));
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"branchingPublic", String.valueOf(branchingPublic));
-		typeSettingsProperties.setProperty("remoteAddress", remoteAddress);
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
+			"remoteAddress", remoteAddress);
+		typeSettingsUnicodeProperties.setProperty(
+			"remoteGroupExternalReferenceCode",
+			remoteGroup.getExternalReferenceCode());
+		typeSettingsUnicodeProperties.setProperty(
 			"remoteGroupId", String.valueOf(remoteGroupId));
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"remoteGroupUUID", remoteGroup.getUuid());
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"remotePathContext", remotePathContext);
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"remotePort", String.valueOf(remotePort));
-		typeSettingsProperties.setProperty(
+		typeSettingsUnicodeProperties.setProperty(
 			"secureConnection", String.valueOf(secureConnection));
 
 		if (!oldStagedRemotely) {
-			typeSettingsProperties.setProperty(
+			typeSettingsUnicodeProperties.setProperty(
 				"staged", Boolean.TRUE.toString());
-			typeSettingsProperties.setProperty(
+			typeSettingsUnicodeProperties.setProperty(
 				"stagedRemotely", Boolean.TRUE.toString());
 
-			setCommonStagingOptions(typeSettingsProperties, serviceContext);
+			setCommonStagingOptions(
+				typeSettingsUnicodeProperties, serviceContext);
 		}
 
-		groupLocalService.updateGroup(
-			stagingGroup.getGroupId(), typeSettingsProperties.toString());
+		_groupLocalService.updateGroup(
+			stagingGroup.getGroupId(),
+			typeSettingsUnicodeProperties.toString());
 
-		updateStagedPortlets(remoteURL, remoteGroupId, typeSettingsProperties);
+		updateStagedPortlets(
+			remoteURL, remoteGroupId, typeSettingsUnicodeProperties);
 	}
 
 	@Override
@@ -510,38 +531,43 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 					ExportImportConfigurationConstants.
 						TYPE_PUBLISH_PORTLET_REMOTE) {
 
-				exportImportLocalService.importPortletDataDeletions(
+				_exportImportLocalService.importPortletDataDeletions(
 					exportImportConfiguration, file);
 
 				missingReferences =
-					exportImportLocalService.validateImportPortletInfo(
+					_exportImportLocalService.validateImportPortletInfo(
 						exportImportConfiguration, file);
 
-				exportImportLocalService.importPortletInfo(
+				_exportImportLocalService.importPortletInfo(
 					exportImportConfiguration, file);
 			}
 			else {
-				exportImportLocalService.importLayoutsDataDeletions(
+				_exportImportLocalService.importLayoutsDataDeletions(
 					exportImportConfiguration, file);
 
 				missingReferences =
-					exportImportLocalService.validateImportLayoutsFile(
+					_exportImportLocalService.validateImportLayoutsFile(
 						exportImportConfiguration, file);
 
-				exportImportLocalService.importLayouts(
+				_exportImportLocalService.importLayouts(
 					exportImportConfiguration, file);
 			}
 
 			return missingReferences;
 		}
-		catch (IOException ioe) {
-			ExportImportIOException eiioe = new ExportImportIOException(
-				StagingLocalServiceImpl.class.getName(), ioe);
+		catch (IOException ioException) {
+			ExportImportIOException exportImportIOException =
+				new ExportImportIOException(
+					StagingLocalServiceImpl.class.getName(), ioException);
 
-			eiioe.setStagingRequestId(stagingRequestId);
-			eiioe.setType(ExportImportIOException.PUBLISH_STAGING_REQUEST);
+			exportImportIOException.setStagingRequestId(stagingRequestId);
+			exportImportIOException.setType(
+				ExportImportIOException.PUBLISH_STAGING_REQUEST);
 
-			throw eiioe;
+			throw exportImportIOException;
+		}
+		catch (MissingReferenceException missingReferenceException) {
+			return missingReferenceException.getMissingReferences();
 		}
 		finally {
 			if (exportImportConfiguration.getType() ==
@@ -576,7 +602,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		try {
 			PortletFileRepositoryUtil.addPortletFileEntry(
-				folder.getGroupId(), userId, Group.class.getName(),
+				null, folder.getGroupId(), userId, Group.class.getName(),
 				folder.getGroupId(), _PORTLET_REPOSITORY_ID,
 				folder.getFolderId(), new UnsyncByteArrayInputStream(bytes),
 				fileName, ContentTypes.APPLICATION_ZIP, false);
@@ -607,28 +633,28 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			serviceContext.setWorkflowAction(WorkflowConstants.STATUS_APPROVED);
 
 			LayoutSetBranch layoutSetBranch =
-				layoutSetBranchLocalService.addLayoutSetBranch(
+				_layoutSetBranchLocalService.addLayoutSetBranch(
 					userId, groupId, privateLayout,
 					LayoutSetBranchConstants.MASTER_BRANCH_NAME, description,
 					true, LayoutSetBranchConstants.ALL_BRANCHES,
 					serviceContext);
 
 			List<LayoutRevision> layoutRevisions =
-				layoutRevisionLocalService.getLayoutRevisions(
+				_layoutRevisionLocalService.getLayoutRevisions(
 					layoutSetBranch.getLayoutSetBranchId(), false);
 
 			for (LayoutRevision layoutRevision : layoutRevisions) {
-				layoutRevisionLocalService.updateStatus(
+				_layoutRevisionLocalService.updateStatus(
 					userId, layoutRevision.getLayoutRevisionId(),
 					WorkflowConstants.STATUS_APPROVED, serviceContext);
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to create master branch for " +
 						(privateLayout ? "private" : "public") + " layouts",
-					pe);
+					portalException);
 			}
 		}
 	}
@@ -637,7 +663,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			long userId, Group liveGroup, ServiceContext serviceContext)
 		throws PortalException {
 
-		Group stagingGroup = groupLocalService.addGroup(
+		Group stagingGroup = _groupLocalService.addGroup(
 			userId, liveGroup.getParentGroupId(), liveGroup.getClassName(),
 			liveGroup.getClassPK(), liveGroup.getGroupId(),
 			liveGroup.getNameMap(), liveGroup.getDescriptionMap(),
@@ -649,27 +675,27 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			return stagingGroup;
 		}
 
-		UnicodeProperties liveTypeSettingsProperties =
+		UnicodeProperties liveTypeSettingsUnicodeProperties =
 			liveGroup.getTypeSettingsProperties();
 
-		UnicodeProperties stagingTypeSettingsProperties =
+		UnicodeProperties stagingTypeSettingsUnicodeProperties =
 			stagingGroup.getTypeSettingsProperties();
 
-		stagingTypeSettingsProperties.setProperty(
+		stagingTypeSettingsUnicodeProperties.setProperty(
 			GroupConstants.TYPE_SETTINGS_KEY_INHERIT_LOCALES,
 			Boolean.FALSE.toString());
-		stagingTypeSettingsProperties.setProperty(
+		stagingTypeSettingsUnicodeProperties.setProperty(
 			PropsKeys.LOCALES,
-			liveTypeSettingsProperties.getProperty(PropsKeys.LOCALES));
-		stagingTypeSettingsProperties.setProperty(
+			liveTypeSettingsUnicodeProperties.getProperty(PropsKeys.LOCALES));
+		stagingTypeSettingsUnicodeProperties.setProperty(
 			"languageId",
-			liveTypeSettingsProperties.getProperty(
+			liveTypeSettingsUnicodeProperties.getProperty(
 				"languageId",
 				LocaleUtil.toLanguageId(LocaleUtil.getDefault())));
 
-		return groupLocalService.updateGroup(
+		return _groupLocalService.updateGroup(
 			stagingGroup.getGroupId(),
-			stagingTypeSettingsProperties.toString());
+			stagingTypeSettingsUnicodeProperties.toString());
 	}
 
 	protected void deleteLayoutSetBranches(long groupId, boolean privateLayout)
@@ -680,7 +706,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		Map<Long, LayoutRevision> layoutRevisions = new HashMap<>();
 
 		List<LayoutSetBranch> layoutSetBranches =
-			layoutSetBranchLocalService.getLayoutSetBranches(
+			_layoutSetBranchLocalService.getLayoutSetBranches(
 				groupId, privateLayout);
 
 		boolean publishedToLive = false;
@@ -712,7 +738,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			}
 
 			List<LayoutRevision> headLayoutRevisions =
-				layoutRevisionLocalService.getLayoutRevisions(
+				_layoutRevisionLocalService.getLayoutRevisions(
 					layoutSetBranch.getLayoutSetBranchId(), true);
 
 			for (LayoutRevision headLayoutRevision : headLayoutRevisions) {
@@ -744,7 +770,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			updateLayoutWithLayoutRevision(layoutRevision);
 		}
 
-		layoutSetBranchLocalService.deleteLayoutSetBranches(
+		_layoutSetBranchLocalService.deleteLayoutSetBranches(
 			groupId, privateLayout, true);
 	}
 
@@ -764,53 +790,73 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		try {
 			GroupServiceHttp.disableStaging(httpPrincipal, remoteGroupId);
 		}
-		catch (NoSuchGroupException nsge) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("Remote live group was already deleted", nsge);
-			}
-		}
-		catch (PrincipalException pe) {
+		catch (RemoteAuthException remoteAuthException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(remoteAuthException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.NO_PERMISSIONS);
+			remoteAuthException.setURL(remoteURL);
 
-			ree.setGroupId(remoteGroupId);
-
-			throw ree;
+			throw remoteAuthException;
 		}
-		catch (RemoteAuthException rae) {
+		catch (SystemException systemException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(rae, rae);
-			}
-
-			rae.setURL(remoteURL);
-
-			throw rae;
-		}
-		catch (SystemException se) {
-
-			// LPS-52675
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(se, se);
+				_log.debug(systemException);
 			}
 
 			if (!forceDisable) {
-				RemoteExportException ree = new RemoteExportException(
-					RemoteExportException.BAD_CONNECTION);
+				RemoteExportException remoteExportException =
+					new RemoteExportException(
+						RemoteExportException.BAD_CONNECTION);
 
-				ree.setURL(remoteURL);
+				remoteExportException.setURL(remoteURL);
 
-				throw ree;
+				throw remoteExportException;
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn("Forcibly disable remote staging");
+			}
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			String message = portalException.getMessage();
+
+			if (message.contains(
+					NoSuchGroupException.class.getCanonicalName())) {
+
+				if (!forceDisable) {
+					RemoteExportException remoteExportException =
+						new RemoteExportException(
+							RemoteExportException.NO_GROUP);
+
+					remoteExportException.setGroupId(remoteGroupId);
+
+					throw remoteExportException;
+				}
+			}
+			else if (message.contains(
+						PrincipalException.class.getCanonicalName())) {
+
+				RemoteExportException remoteExportException =
+					new RemoteExportException(
+						RemoteExportException.NO_PERMISSIONS);
+
+				remoteExportException.setGroupId(remoteGroupId);
+
+				throw remoteExportException;
+			}
+			else {
+				throw portalException;
 			}
 
 			if (_log.isWarnEnabled()) {
@@ -826,80 +872,72 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		try {
 			GroupServiceHttp.enableStaging(httpPrincipal, remoteGroupId);
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsge, nsge);
+				_log.debug(noSuchGroupException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.NO_GROUP);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.NO_GROUP);
 
-			ree.setGroupId(remoteGroupId);
+			remoteExportException.setGroupId(remoteGroupId);
 
-			throw ree;
+			throw remoteExportException;
 		}
-		catch (PrincipalException pe) {
+		catch (PrincipalException principalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(principalException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.NO_PERMISSIONS);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.NO_PERMISSIONS);
 
-			ree.setGroupId(remoteGroupId);
+			remoteExportException.setGroupId(remoteGroupId);
 
-			throw ree;
+			throw remoteExportException;
 		}
-		catch (RemoteAuthException rae) {
+		catch (RemoteAuthException remoteAuthException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(rae, rae);
+				_log.debug(remoteAuthException);
 			}
 
-			rae.setURL(httpPrincipal.getUrl());
+			remoteAuthException.setURL(httpPrincipal.getUrl());
 
-			throw rae;
+			throw remoteAuthException;
 		}
-		catch (SystemException se) {
+		catch (SystemException systemException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(se, se);
+				_log.debug(systemException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.BAD_CONNECTION);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.BAD_CONNECTION);
 
-			ree.setURL(httpPrincipal.getUrl());
+			remoteExportException.setURL(httpPrincipal.getUrl());
 
-			throw ree;
+			throw remoteExportException;
 		}
 	}
 
 	protected Group fetchRemoteGroup(HttpPrincipal httpPrincipal, long groupId)
 		throws PortalException {
 
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
-
-		try {
-			currentThread.setContextClassLoader(
-				PortalClassLoaderUtil.getClassLoader());
+		try (SafeCloseable safeCloseable = ThreadContextClassLoaderUtil.swap(
+				PortalClassLoaderUtil.getClassLoader())) {
 
 			return GroupServiceHttp.getGroup(httpPrincipal, groupId);
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
 		}
 	}
 
@@ -912,12 +950,12 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 				folder.getGroupId(), folder.getFolderId(),
 				getAssembledFileName(stagingRequestId));
 		}
-		catch (NoSuchFileEntryException nsfee) {
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsfee, nsfee);
+				_log.debug(noSuchFileEntryException);
 			}
 
 			return null;
@@ -969,17 +1007,19 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			String checksum = FileUtil.getMD5Checksum(tempFile);
 
 			if (!checksum.equals(folder.getName())) {
-				ExportImportIOException eiioe = new ExportImportIOException(
-					StagingLocalServiceImpl.class.getName());
+				ExportImportIOException exportImportIOException =
+					new ExportImportIOException(
+						StagingLocalServiceImpl.class.getName());
 
-				eiioe.setChecksum(checksum);
-				eiioe.setType(ExportImportIOException.STAGING_REQUEST_CHECKSUM);
+				exportImportIOException.setChecksum(checksum);
+				exportImportIOException.setType(
+					ExportImportIOException.STAGING_REQUEST_CHECKSUM);
 
-				throw eiioe;
+				throw exportImportIOException;
 			}
 
 			PortletFileRepositoryUtil.addPortletFileEntry(
-				folder.getGroupId(), userId, Group.class.getName(),
+				null, folder.getGroupId(), userId, Group.class.getName(),
 				folder.getGroupId(), _PORTLET_REPOSITORY_ID,
 				folder.getFolderId(), tempFile,
 				getAssembledFileName(stagingRequestId),
@@ -994,15 +1034,16 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 			return stagingRequestFileEntry;
 		}
-		catch (IOException ioe) {
-			ExportImportIOException eiioe = new ExportImportIOException(
-				StagingLocalServiceImpl.class.getName(), ioe);
+		catch (IOException ioException) {
+			ExportImportIOException exportImportIOException =
+				new ExportImportIOException(
+					StagingLocalServiceImpl.class.getName(), ioException);
 
-			eiioe.setStagingRequestId(stagingRequestId);
-			eiioe.setType(
+			exportImportIOException.setStagingRequestId(stagingRequestId);
+			exportImportIOException.setType(
 				ExportImportIOException.STAGING_REQUEST_REASSEMBLE_FILE);
 
-			throw eiioe;
+			throw exportImportIOException;
 		}
 		finally {
 			IndexStatusManagerThreadLocal.setIndexReadOnly(indexReadOnly);
@@ -1011,11 +1052,52 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		}
 	}
 
+	protected void removeLayoutSetBranchIdFromExportImportConfigurations(
+			long groupId, boolean remote, boolean privateLayout)
+		throws PortalException {
+
+		int configurationType =
+			ExportImportConfigurationConstants.TYPE_PUBLISH_LAYOUT_LOCAL;
+
+		if (remote) {
+			configurationType =
+				ExportImportConfigurationConstants.TYPE_PUBLISH_LAYOUT_REMOTE;
+		}
+
+		List<ExportImportConfiguration> exportImportConfigurations =
+			_exportImportConfigurationLocalService.
+				getExportImportConfigurations(groupId, configurationType);
+
+		for (ExportImportConfiguration exportImportConfiguration :
+				exportImportConfigurations) {
+
+			Map<String, Serializable> settingsMap =
+				exportImportConfiguration.getSettingsMap();
+
+			Map<String, String[]> parameterMap =
+				(Map<String, String[]>)settingsMap.get("parameterMap");
+
+			if (MapUtil.getBoolean(parameterMap, "privateLayout") !=
+					privateLayout) {
+
+				continue;
+			}
+
+			parameterMap.remove("layoutSetBranchId");
+
+			exportImportConfiguration.setSettings(
+				JSONFactoryUtil.serialize(settingsMap));
+
+			_exportImportConfigurationLocalService.
+				updateExportImportConfiguration(exportImportConfiguration);
+		}
+	}
+
 	protected void setCommonStagingOptions(
-		UnicodeProperties typeSettingsProperties,
+		UnicodeProperties typeSettingsUnicodeProperties,
 		ServiceContext serviceContext) {
 
-		typeSettingsProperties.putAll(
+		typeSettingsUnicodeProperties.putAll(
 			PropertiesParamUtil.getProperties(
 				serviceContext, StagingConstants.STAGED_PREFIX));
 	}
@@ -1035,7 +1117,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		try {
 			StagingAdvicesThreadLocal.setEnabled(false);
 
-			layout = layoutLocalService.fetchLayout(layoutRevision.getPlid());
+			layout = _layoutLocalService.fetchLayout(layoutRevision.getPlid());
 		}
 		finally {
 			StagingAdvicesThreadLocal.setEnabled(
@@ -1060,31 +1142,35 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		layout.setColorSchemeId(layoutRevision.getColorSchemeId());
 		layout.setCss(layoutRevision.getCss());
 
-		return layoutLocalService.updateLayout(layout);
+		return _layoutLocalService.updateLayout(layout);
 	}
 
 	protected void updatePortletPreferences(
 		LayoutRevision layoutRevision, Layout layout) {
 
-		portletPreferencesLocalService.deletePortletPreferencesByPlid(
+		_portletPreferencesLocalService.deletePortletPreferencesByPlid(
 			layout.getPlid());
 
 		List<PortletPreferences> portletPreferencesList =
-			portletPreferencesLocalService.getPortletPreferencesByPlid(
+			_portletPreferencesLocalService.getPortletPreferencesByPlid(
 				layoutRevision.getLayoutRevisionId());
 
 		for (PortletPreferences portletPreferences : portletPreferencesList) {
-			portletPreferencesLocalService.addPortletPreferences(
+			jakarta.portlet.PortletPreferences jxPortletPreferences =
+				_portletPreferenceValueLocalService.getPreferences(
+					portletPreferences);
+
+			_portletPreferencesLocalService.addPortletPreferences(
 				layoutRevision.getCompanyId(), portletPreferences.getOwnerId(),
 				portletPreferences.getOwnerType(), layout.getPlid(),
 				portletPreferences.getPortletId(), null,
-				portletPreferences.getPreferences());
+				PortletPreferencesFactoryUtil.toXML(jxPortletPreferences));
 		}
 	}
 
 	protected void updateStagedPortlets(
 			String remoteURL, long remoteGroupId,
-			UnicodeProperties typeSettingsProperties)
+			UnicodeProperties typeSettingsUnicodeProperties)
 		throws PortalException {
 
 		PermissionChecker permissionChecker =
@@ -1098,10 +1184,10 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		Map<String, String> stagedPortletIds = new HashMap<>();
 
-		for (String key : typeSettingsProperties.keySet()) {
+		for (String key : typeSettingsUnicodeProperties.keySet()) {
 			if (key.startsWith(StagingConstants.STAGED_PORTLET)) {
 				stagedPortletIds.put(
-					key, typeSettingsProperties.getProperty(key));
+					key, typeSettingsUnicodeProperties.getProperty(key));
 			}
 		}
 
@@ -1109,62 +1195,62 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			GroupServiceHttp.updateStagedPortlets(
 				httpPrincipal, remoteGroupId, stagedPortletIds);
 		}
-		catch (NoSuchGroupException nsge) {
+		catch (NoSuchGroupException noSuchGroupException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(nsge, nsge);
+				_log.debug(noSuchGroupException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.NO_GROUP);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.NO_GROUP);
 
-			ree.setGroupId(remoteGroupId);
+			remoteExportException.setGroupId(remoteGroupId);
 
-			throw ree;
+			throw remoteExportException;
 		}
-		catch (PrincipalException pe) {
+		catch (PrincipalException principalException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe, pe);
+				_log.debug(principalException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.NO_PERMISSIONS);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.NO_PERMISSIONS);
 
-			ree.setGroupId(remoteGroupId);
+			remoteExportException.setGroupId(remoteGroupId);
 
-			throw ree;
+			throw remoteExportException;
 		}
-		catch (RemoteAuthException rae) {
+		catch (RemoteAuthException remoteAuthException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(rae, rae);
+				_log.debug(remoteAuthException);
 			}
 
-			rae.setURL(remoteURL);
+			remoteAuthException.setURL(remoteURL);
 
-			throw rae;
+			throw remoteAuthException;
 		}
-		catch (SystemException se) {
+		catch (SystemException systemException) {
 
 			// LPS-52675
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(se, se);
+				_log.debug(systemException);
 			}
 
-			RemoteExportException ree = new RemoteExportException(
-				RemoteExportException.BAD_CONNECTION);
+			RemoteExportException remoteExportException =
+				new RemoteExportException(RemoteExportException.BAD_CONNECTION);
 
-			ree.setURL(remoteURL);
+			remoteExportException.setURL(remoteURL);
 
-			throw ree;
+			throw remoteExportException;
 		}
 	}
 
@@ -1174,5 +1260,31 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		StagingLocalServiceImpl.class);
+
+	@BeanReference(type = ExportImportConfigurationLocalService.class)
+	private ExportImportConfigurationLocalService
+		_exportImportConfigurationLocalService;
+
+	@BeanReference(type = ExportImportLocalService.class)
+	private ExportImportLocalService _exportImportLocalService;
+
+	@BeanReference(type = GroupLocalService.class)
+	private GroupLocalService _groupLocalService;
+
+	@BeanReference(type = LayoutLocalService.class)
+	private LayoutLocalService _layoutLocalService;
+
+	@BeanReference(type = LayoutRevisionLocalService.class)
+	private LayoutRevisionLocalService _layoutRevisionLocalService;
+
+	@BeanReference(type = LayoutSetBranchLocalService.class)
+	private LayoutSetBranchLocalService _layoutSetBranchLocalService;
+
+	@BeanReference(type = PortletPreferencesLocalService.class)
+	private PortletPreferencesLocalService _portletPreferencesLocalService;
+
+	@BeanReference(type = PortletPreferenceValueLocalService.class)
+	private PortletPreferenceValueLocalService
+		_portletPreferenceValueLocalService;
 
 }

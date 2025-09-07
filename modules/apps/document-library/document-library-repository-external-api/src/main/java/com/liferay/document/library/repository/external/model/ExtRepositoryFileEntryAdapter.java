@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.repository.external.model;
@@ -43,6 +34,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import java.io.InputStream;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -88,6 +80,16 @@ public class ExtRepositoryFileEntryAdapter
 	}
 
 	@Override
+	public Date getDisplayDate() {
+		return null;
+	}
+
+	@Override
+	public Date getExpirationDate() {
+		return null;
+	}
+
+	@Override
 	public ExtRepositoryFileEntry getExtRepositoryModel() {
 		return _extRepositoryFileEntry;
 	}
@@ -116,8 +118,8 @@ public class ExtRepositoryFileEntryAdapter
 
 			return extRepositoryFileVersionAdapters.get(0);
 		}
-		catch (PortalException pe) {
-			throw new SystemException(pe);
+		catch (PortalException portalException) {
+			throw new SystemException(portalException);
 		}
 	}
 
@@ -143,7 +145,6 @@ public class ExtRepositoryFileEntryAdapter
 	}
 
 	@Override
-	@SuppressWarnings("rawtypes")
 	public List<FileVersion> getFileVersions(int status) {
 		if ((status == WorkflowConstants.STATUS_ANY) ||
 			(status == WorkflowConstants.STATUS_APPROVED)) {
@@ -151,13 +152,18 @@ public class ExtRepositoryFileEntryAdapter
 			try {
 				return (List)_getExtRepositoryFileVersionAdapters();
 			}
-			catch (PortalException pe) {
-				throw new SystemException(pe);
+			catch (PortalException portalException) {
+				throw new SystemException(portalException);
 			}
 		}
 		else {
 			return Collections.emptyList();
 		}
+	}
+
+	@Override
+	public List<FileVersion> getFileVersions(int status, int start, int end) {
+		return getFileVersions(status);
 	}
 
 	@Override
@@ -174,8 +180,8 @@ public class ExtRepositoryFileEntryAdapter
 		try {
 			parentFolder = getParentFolder();
 		}
-		catch (Exception e) {
-			_log.error(e, e);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		return parentFolder;
@@ -249,22 +255,22 @@ public class ExtRepositoryFileEntryAdapter
 		try {
 			fileVersion = getFileVersion(version);
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Unable to obtain version ", version, " for external ",
 						"repository file entry ", getTitle()),
-					pe);
+					portalException);
 			}
 		}
-		catch (SystemException se) {
+		catch (SystemException systemException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					StringBundler.concat(
 						"Unable to obtain version ", version, " for external ",
 						"repository file entry ", getTitle()),
-					se);
+					systemException);
 			}
 		}
 
@@ -304,6 +310,11 @@ public class ExtRepositoryFileEntryAdapter
 	}
 
 	@Override
+	public Date getReviewDate() {
+		return null;
+	}
+
+	@Override
 	public StagedModelType getStagedModelType() {
 		return new StagedModelType(DLFileEntryConstants.getClassName());
 	}
@@ -324,24 +335,13 @@ public class ExtRepositoryFileEntryAdapter
 
 			return fileVersion.getVersion();
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return null;
 		}
-	}
-
-	@Override
-	public long getVersionUserId() {
-		return getUserId();
-	}
-
-	@Override
-	public String getVersionUserName() {
-		return getUserName();
-	}
-
-	@Override
-	public String getVersionUserUuid() {
-		return getUserUuid();
 	}
 
 	@Override
@@ -362,11 +362,7 @@ public class ExtRepositoryFileEntryAdapter
 
 	@Override
 	public boolean isCheckedOut() {
-		if (Validator.isNull(_extRepositoryFileEntry.getCheckedOutBy())) {
-			return false;
-		}
-
-		return true;
+		return Validator.isNotNull(_extRepositoryFileEntry.getCheckedOutBy());
 	}
 
 	@Override

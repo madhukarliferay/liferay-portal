@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 /**
@@ -107,17 +98,17 @@ public class DayAndPosition implements Cloneable, Serializable {
 	/**
 	 * Constructs a DayAndPosition with the day of the week and day position.
 	 */
-	public DayAndPosition(int d, int p) {
-		if (!isValidDayOfWeek(d)) {
+	public DayAndPosition(int day, int position) {
+		if (!isValidDayOfWeek(day)) {
 			throw new IllegalArgumentException("Invalid day of week");
 		}
 
-		if (!isValidDayPosition(p)) {
+		if (!isValidDayPosition(position)) {
 			throw new IllegalArgumentException("Invalid day position");
 		}
 
-		_day = d;
-		_position = p;
+		_day = day;
+		_position = position;
 	}
 
 	/**
@@ -135,7 +126,7 @@ public class DayAndPosition implements Cloneable, Serializable {
 
 			return other;
 		}
-		catch (CloneNotSupportedException cnse) {
+		catch (CloneNotSupportedException cloneNotSupportedException) {
 			throw new InternalError();
 		}
 	}
@@ -143,25 +134,25 @@ public class DayAndPosition implements Cloneable, Serializable {
 	/**
 	 * Returns <code>true</code> if the object equals this DayAndPosition.
 	 *
-	 * @param  obj the other object
+	 * @param  object the other object
 	 * @return <code>true</code> if the object equals this DayAndPosition,
 	 *         <code>false</code> otherwise
 	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
+	public boolean equals(Object object) {
+		if (object == null) {
 			return false;
 		}
 
-		if (this == obj) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof DayAndPosition)) {
+		if (!(object instanceof DayAndPosition)) {
 			return false;
 		}
 
-		DayAndPosition that = (DayAndPosition)obj;
+		DayAndPosition that = (DayAndPosition)object;
 
 		if ((getDayOfWeek() == that.getDayOfWeek()) &&
 			(getDayPosition() == that.getDayPosition())) {

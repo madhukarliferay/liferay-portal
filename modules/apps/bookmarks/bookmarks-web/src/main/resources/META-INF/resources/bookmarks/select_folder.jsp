@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -32,27 +23,26 @@ if (folder != null) {
 }
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<aui:form method="post" name="selectFolderFm">
-		<liferay-ui:breadcrumb
-			showCurrentGroup="<%= false %>"
-			showGuestGroup="<%= false %>"
-			showLayout="<%= false %>"
-			showParentGroups="<%= false %>"
+		<liferay-site-navigation:breadcrumb
+			breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 		/>
-
-		<%
-		PortletURL portletURL = renderResponse.createRenderURL();
-
-		portletURL.setParameter("mvcRenderCommandName", "/bookmarks/select_folder");
-		portletURL.setParameter("folderId", String.valueOf(folderId));
-		portletURL.setParameter("eventName", eventName);
-		%>
 
 		<br />
 
 		<liferay-ui:search-container
-			iteratorURL="<%= portletURL %>"
+			iteratorURL='<%=
+				PortletURLBuilder.createRenderURL(
+					renderResponse
+				).setMVCRenderCommandName(
+					"/bookmarks/select_folder"
+				).setParameter(
+					"eventName", eventName
+				).setParameter(
+					"folderId", folderId
+				).buildPortletURL()
+			%>'
 			total="<%= BookmarksFolderServiceUtil.getFoldersCount(scopeGroupId, folderId) %>"
 		>
 			<liferay-ui:search-container-results
@@ -101,16 +91,17 @@ if (folder != null) {
 				/>
 
 				<liferay-ui:search-container-column-text>
-
-					<%
-					Map<String, Object> data = HashMapBuilder.<String, Object>put(
-						"entityid", curFolder.getFolderId()
-					).put(
-						"entityname", curFolder.getName()
-					).build();
-					%>
-
-					<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+					<aui:button
+						cssClass="selector-button"
+						data='<%=
+							HashMapBuilder.<String, Object>put(
+								"resourceid", curFolder.getFolderId()
+							).put(
+								"resourcename", curFolder.getName()
+							).build()
+						%>'
+						value="choose"
+					/>
 				</liferay-ui:search-container-column-text>
 			</liferay-ui:search-container-row>
 
@@ -125,25 +116,22 @@ if (folder != null) {
 					<aui:button href="<%= editFolderURL %>" value='<%= (folder == null) ? "add-folder" : "add-subfolder" %>' />
 				</c:if>
 
-				<%
-				Map<String, Object> data = HashMapBuilder.<String, Object>put(
-					"entityid", folderId
-				).put(
-					"entityname", folderName
-				).build();
-				%>
-
-				<aui:button cssClass="selector-button" data="<%= data %>" value="choose-this-folder" />
+				<aui:button
+					cssClass="selector-button"
+					data='<%=
+						HashMapBuilder.<String, Object>put(
+							"resourceid", folderId
+						).put(
+							"resourcename", folderName
+						).build()
+					%>'
+					value="choose-this-folder"
+				/>
 			</aui:button-row>
 
-			<liferay-ui:search-iterator />
+			<liferay-ui:search-iterator
+				markupView="lexicon"
+			/>
 		</liferay-ui:search-container>
 	</aui:form>
-</div>
-
-<aui:script>
-	Liferay.Util.selectEntityHandler(
-		'#<portlet:namespace />selectFolderFm',
-		'<%= HtmlUtil.escapeJS(eventName) %>'
-	);
-</aui:script>
+</clay:container-fluid>

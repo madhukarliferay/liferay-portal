@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.osgi.web.servlet.jsp.compiler.test;
@@ -19,6 +10,7 @@ import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
@@ -29,6 +21,8 @@ import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -36,10 +30,17 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.osgi.web.servlet.jsp.compiler.test.servlet.PrecompileTestServlet;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PropsValues;
+
+import jakarta.portlet.Portlet;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,28 +51,26 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
-import javax.portlet.Portlet;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -92,6 +91,16 @@ import org.osgi.framework.FrameworkUtil;
  */
 @RunWith(Arquillian.class)
 public class JspPrecompileTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new AssumeTestRule("assume"), new LiferayIntegrationTestRule());
+
+	public static void assume() {
+		Assume.assumeFalse(DBPartition.isPartitionEnabled());
+	}
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -122,7 +131,7 @@ public class JspPrecompileTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		Layout layout = LayoutTestUtil.addLayout(_group);
+		Layout layout = LayoutTestUtil.addTypePortletLayout(_group);
 
 		LayoutTypePortlet layoutTypePortlet =
 			(LayoutTypePortlet)layout.getLayoutType();
@@ -192,16 +201,16 @@ public class JspPrecompileTest {
 			outputStream.write(classWriter.toByteArray());
 		}
 
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_JSP_COMPILER_CLASS_NAME, Level.DEBUG)) {
+		Files.setLastModifiedTime(jspClassPath, _fileTime);
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_JSP_COMPILER, LoggerTestUtil.DEBUG)) {
 
 			_invokeJSP(_PRECOMPILE_JSP_FILE_NAME, "Precompiled");
 
 			Assert.assertFalse(
 				"JSP was compiled at runtime",
-				_containsCompilerLog(
-					captureAppender, _PRECOMPILE_JSP_FILE_NAME));
+				_containsCompilerLog(logCapture, _PRECOMPILE_JSP_FILE_NAME));
 		}
 		finally {
 			Files.delete(jspClassPath);
@@ -210,16 +219,15 @@ public class JspPrecompileTest {
 
 	@Test
 	public void testRuntimeCompiledJsp() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_JSP_COMPILER_CLASS_NAME, Level.DEBUG)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_JSP_COMPILER, LoggerTestUtil.DEBUG)) {
 
 			_invokeJSP(_RUNTIME_COMPILE_JSP_FILE_NAME, "Runtime Compiled");
 
 			Assert.assertTrue(
 				"No JSP was compiled at runtime",
 				_containsCompilerLog(
-					captureAppender, _RUNTIME_COMPILE_JSP_FILE_NAME));
+					logCapture, _RUNTIME_COMPILE_JSP_FILE_NAME));
 		}
 	}
 
@@ -246,7 +254,7 @@ public class JspPrecompileTest {
 		return sb.toString();
 	}
 
-	private static InputStream _createTestBundle() throws IOException {
+	private static InputStream _createTestBundle() throws Exception {
 		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 				new UnsyncByteArrayOutputStream()) {
 
@@ -304,10 +312,15 @@ public class JspPrecompileTest {
 
 				jarOutputStream.closeEntry();
 
-				jarOutputStream.putNextEntry(
-					new ZipEntry(
-						"META-INF/resources/".concat(
-							_PRECOMPILE_JSP_FILE_NAME)));
+				ZipEntry zipEntry = new ZipEntry(
+					"META-INF/resources/".concat(_PRECOMPILE_JSP_FILE_NAME));
+
+				_fileTime = FileTime.from(
+					System.currentTimeMillis() / 1000, TimeUnit.SECONDS);
+
+				zipEntry.setLastModifiedTime(_fileTime);
+
+				jarOutputStream.putNextEntry(zipEntry);
 
 				jarOutputStream.closeEntry();
 			}
@@ -347,19 +360,14 @@ public class JspPrecompileTest {
 	}
 
 	private boolean _containsCompilerLog(
-		CaptureAppender captureAppender, String jspName) {
+		LogCapture logCapture, String jspName) {
 
-		StringBundler sb = new StringBundler(3);
-
-		sb.append("Compiling JSP: ");
-		sb.append(_JSP_PACKAGE_NAME);
-		sb.append(
+		String compilerLog = StringBundler.concat(
+			"Compiling JSP: ", _JSP_PACKAGE_NAME,
 			StringUtil.replace(jspName, CharPool.PERIOD, CharPool.UNDERLINE));
 
-		String compilerLog = sb.toString();
-
-		for (LoggingEvent loggingEvent : captureAppender.getLoggingEvents()) {
-			String message = loggingEvent.getRenderedMessage();
+		for (LogEntry logEntry : logCapture.getLogEntries()) {
+			String message = logEntry.getMessage();
 
 			if (message.equals(compilerLog)) {
 				return true;
@@ -372,34 +380,26 @@ public class JspPrecompileTest {
 	private void _invokeJSP(String jspFileName, String expectedMessage)
 		throws IOException {
 
-		StringBundler sb = new StringBundler(9);
+		URL url = new URL(
+			StringBundler.concat(
+				"http://localhost:8080/web", _group.getFriendlyURL(),
+				"?p_p_id=", JspPrecompilePortlet.PORTLET_NAME,
+				StringPool.AMPERSAND,
+				JspPrecompilePortlet.getJspFileNameParameterName(), "=/",
+				jspFileName));
 
-		sb.append("http://localhost:8080/web");
-		sb.append(_group.getFriendlyURL());
-		sb.append(StringPool.QUESTION);
-		sb.append("p_p_id=");
-		sb.append(JspPrecompilePortlet.PORTLET_NAME);
-		sb.append(StringPool.AMPERSAND);
-		sb.append(JspPrecompilePortlet.getJspFileNameParameterName());
-		sb.append("=/");
-		sb.append(jspFileName);
+		String content = URLUtil.toString(url);
 
-		URL url = new URL(sb.toString());
-
-		try (InputStream inputStream = url.openStream()) {
-			String content = StringUtil.read(inputStream);
-
-			Assert.assertTrue(
-				StringBundler.concat(
-					"Content {", content,
-					"} does not contain expected message {", expectedMessage,
-					"}"),
-				content.contains(expectedMessage));
-		}
+		Assert.assertTrue(
+			StringBundler.concat(
+				"Content {", content, "} does not contain expected message {",
+				expectedMessage, "}"),
+			content.contains(expectedMessage));
 	}
 
-	private static final String _JSP_COMPILER_CLASS_NAME =
-		"com.liferay.portal.osgi.web.servlet.jsp.compiler.internal.JspCompiler";
+	private static final String _CLASS_NAME_JSP_COMPILER =
+		"com.liferay.portal.osgi.web.servlet.jsp.compiler.internal." +
+			"CompilerWrapper";
 
 	private static final String _JSP_PACKAGE_NAME = "org.apache.jsp.";
 
@@ -409,6 +409,7 @@ public class JspPrecompileTest {
 	private static final String _RUNTIME_COMPILE_JSP_FILE_NAME = "runtime.jsp";
 
 	private static Bundle _bundle;
+	private static FileTime _fileTime;
 	private static Path _workDirPath;
 
 	private Group _group;

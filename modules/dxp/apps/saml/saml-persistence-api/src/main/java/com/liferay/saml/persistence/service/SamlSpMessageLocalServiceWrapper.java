@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.saml.persistence.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link SamlSpMessageLocalService}.
@@ -27,6 +19,10 @@ public class SamlSpMessageLocalServiceWrapper
 	implements SamlSpMessageLocalService,
 			   ServiceWrapper<SamlSpMessageLocalService> {
 
+	public SamlSpMessageLocalServiceWrapper() {
+		this(null);
+	}
+
 	public SamlSpMessageLocalServiceWrapper(
 		SamlSpMessageLocalService samlSpMessageLocalService) {
 
@@ -35,6 +31,10 @@ public class SamlSpMessageLocalServiceWrapper
 
 	/**
 	 * Adds the saml sp message to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpMessageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param samlSpMessage the saml sp message
 	 * @return the saml sp message that was added
@@ -55,6 +55,17 @@ public class SamlSpMessageLocalServiceWrapper
 		return _samlSpMessageLocalService.addSamlSpMessage(
 			samlIdpEntityId, samlIdpResponseKey, expirationDate,
 			serviceContext);
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _samlSpMessageLocalService.createPersistedModel(primaryKeyObj);
 	}
 
 	/**
@@ -89,6 +100,10 @@ public class SamlSpMessageLocalServiceWrapper
 	/**
 	 * Deletes the saml sp message with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpMessageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpMessageId the primary key of the saml sp message
 	 * @return the saml sp message that was removed
 	 * @throws PortalException if a saml sp message with the primary key could not be found
@@ -104,6 +119,10 @@ public class SamlSpMessageLocalServiceWrapper
 	/**
 	 * Deletes the saml sp message from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpMessageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpMessage the saml sp message
 	 * @return the saml sp message that was removed
 	 */
@@ -112,6 +131,18 @@ public class SamlSpMessageLocalServiceWrapper
 		com.liferay.saml.persistence.model.SamlSpMessage samlSpMessage) {
 
 		return _samlSpMessageLocalService.deleteSamlSpMessage(samlSpMessage);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _samlSpMessageLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _samlSpMessageLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -244,6 +275,9 @@ public class SamlSpMessageLocalServiceWrapper
 		return _samlSpMessageLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -307,6 +341,10 @@ public class SamlSpMessageLocalServiceWrapper
 	/**
 	 * Updates the saml sp message in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect SamlSpMessageLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param samlSpMessage the saml sp message
 	 * @return the saml sp message that was updated
 	 */
@@ -315,6 +353,11 @@ public class SamlSpMessageLocalServiceWrapper
 		com.liferay.saml.persistence.model.SamlSpMessage samlSpMessage) {
 
 		return _samlSpMessageLocalService.updateSamlSpMessage(samlSpMessage);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _samlSpMessageLocalService.getBasePersistence();
 	}
 
 	@Override

@@ -1,24 +1,18 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.petra.lang;
 
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +24,7 @@ import java.util.function.Function;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -38,38 +33,45 @@ import org.junit.Test;
 public class CentralizedThreadLocalTest {
 
 	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor() {
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new CodeCoverageAssertor() {
 
-			@Override
-			public void appendAssertClasses(List<Class<?>> assertClasses) {
-				assertClasses.add(SafeClosable.class);
-			}
+				@Override
+				public void appendAssertClasses(List<Class<?>> assertClasses) {
+					assertClasses.add(SafeClosable.class);
+					assertClasses.add(SafeCloseable.class);
+				}
 
-		};
+			},
+			LiferayUnitTestRule.INSTANCE);
 
 	@Test
 	public void testCopy() {
 
 		// No copy
 
-		Object obj = new Object();
+		Object object = new Object();
 
 		CentralizedThreadLocal<Object> centralizedThreadLocal =
 			new CentralizedThreadLocal<>(false);
 
-		centralizedThreadLocal.set(obj);
+		centralizedThreadLocal.set(object);
 
-		Map<CentralizedThreadLocal<?>, Object> longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		Map<CentralizedThreadLocal<?>, Object>
+			longLivedCentralizedThreadLocals =
+				CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
-		Map<CentralizedThreadLocal<?>, Object> shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		Map<CentralizedThreadLocal<?>, Object>
+			shortLivedCentralizedThreadLocals =
+				CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		centralizedThreadLocal.remove();
 
 		CentralizedThreadLocal.setThreadLocals(
-			longLivedThreadLocals, shortLivedThreadLocals);
+			longLivedCentralizedThreadLocals,
+			shortLivedCentralizedThreadLocals);
 
 		Assert.assertNull(centralizedThreadLocal.get());
 
@@ -80,20 +82,21 @@ public class CentralizedThreadLocalTest {
 		centralizedThreadLocal = new CentralizedThreadLocal<>(
 			null, null, Function.identity(), false);
 
-		centralizedThreadLocal.set(obj);
+		centralizedThreadLocal.set(object);
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		centralizedThreadLocal.remove();
 
 		CentralizedThreadLocal.setThreadLocals(
-			longLivedThreadLocals, shortLivedThreadLocals);
+			longLivedCentralizedThreadLocals,
+			shortLivedCentralizedThreadLocals);
 
-		Assert.assertSame(obj, centralizedThreadLocal.get());
+		Assert.assertSame(object, centralizedThreadLocal.get());
 
 		centralizedThreadLocal.remove();
 
@@ -105,16 +108,17 @@ public class CentralizedThreadLocalTest {
 
 		centralizedThreadLocal.set(testString);
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		centralizedThreadLocal.remove();
 
 		CentralizedThreadLocal.setThreadLocals(
-			longLivedThreadLocals, shortLivedThreadLocals);
+			longLivedCentralizedThreadLocals,
+			shortLivedCentralizedThreadLocals);
 
 		Assert.assertSame(testString, centralizedThreadLocal.get());
 
@@ -126,16 +130,17 @@ public class CentralizedThreadLocalTest {
 
 		centralizedThreadLocal.set(null);
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		centralizedThreadLocal.remove();
 
 		CentralizedThreadLocal.setThreadLocals(
-			longLivedThreadLocals, shortLivedThreadLocals);
+			longLivedCentralizedThreadLocals,
+			shortLivedCentralizedThreadLocals);
 
 		Assert.assertNull(centralizedThreadLocal.get());
 
@@ -156,6 +161,24 @@ public class CentralizedThreadLocalTest {
 
 		Assert.assertFalse(
 			centralizedThreadLocal1.equals(centralizedThreadLocal2));
+	}
+
+	@Test
+	public void testGetShortLivedCentralizedThreadLocals() {
+		CentralizedThreadLocal<?> centralizedThreadLocal =
+			new CentralizedThreadLocal<>(true);
+
+		centralizedThreadLocal.set(null);
+
+		Assert.assertEquals(
+			new HashMap<CentralizedThreadLocal<?>, Object>() {
+				{
+					put(centralizedThreadLocal, null);
+				}
+			},
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals());
+
+		centralizedThreadLocal.remove();
 	}
 
 	@Test
@@ -196,9 +219,10 @@ public class CentralizedThreadLocalTest {
 			shortLivedHashCode + hashIncrement,
 			shortLivedCentralizedThreadLocal.hashCode());
 		Assert.assertEquals(
-			longLivedHashCode + hashIncrement * 2, longLivedNextHasCode.get());
+			longLivedHashCode + (hashIncrement * 2),
+			longLivedNextHasCode.get());
 		Assert.assertEquals(
-			shortLivedHashCode + hashIncrement * 2,
+			shortLivedHashCode + (hashIncrement * 2),
 			shortLivedNextHasCode.get());
 	}
 
@@ -207,27 +231,28 @@ public class CentralizedThreadLocalTest {
 
 		// By override
 
-		Object obj = new Object();
+		Object object = new Object();
 
 		CentralizedThreadLocal<?> centralizedThreadLocal =
 			new CentralizedThreadLocal<Object>(false) {
 
 				@Override
 				protected Object initialValue() {
-					return obj;
+					return object;
 				}
 
 			};
 
-		Assert.assertSame(obj, centralizedThreadLocal.get());
+		Assert.assertSame(object, centralizedThreadLocal.get());
 
 		centralizedThreadLocal.remove();
 
 		// By Supplier
 
-		centralizedThreadLocal = new CentralizedThreadLocal<>(null, () -> obj);
+		centralizedThreadLocal = new CentralizedThreadLocal<>(
+			null, () -> object);
 
-		Assert.assertSame(obj, centralizedThreadLocal.get());
+		Assert.assertSame(object, centralizedThreadLocal.get());
 
 		centralizedThreadLocal.remove();
 
@@ -275,12 +300,70 @@ public class CentralizedThreadLocalTest {
 	}
 
 	@Test
+	public void testSetWithCloseable() {
+		String initialValue = "initialValue";
+
+		CentralizedThreadLocal<String> centralizedThreadLocal =
+			new CentralizedThreadLocal<>("test", () -> initialValue);
+
+		String value1 = "value1";
+
+		try (SafeCloseable safeCloseable =
+				centralizedThreadLocal.setWithSafeCloseable(value1)) {
+
+			Assert.assertSame(value1, centralizedThreadLocal.get());
+		}
+
+		Assert.assertSame(initialValue, centralizedThreadLocal.get());
+
+		try (SafeCloseable safeCloseable =
+				centralizedThreadLocal.setWithSafeCloseable(value1)) {
+
+			Assert.assertSame(value1, centralizedThreadLocal.get());
+
+			centralizedThreadLocal.remove();
+
+			Assert.assertSame(initialValue, centralizedThreadLocal.get());
+		}
+
+		Assert.assertSame(initialValue, centralizedThreadLocal.get());
+
+		String value2 = "value2";
+
+		try (SafeCloseable safeCloseable1 =
+				centralizedThreadLocal.setWithSafeCloseable(value1)) {
+
+			try (SafeCloseable safeCloseable2 =
+					centralizedThreadLocal.setWithSafeCloseable(value2)) {
+
+				Assert.assertSame(value2, centralizedThreadLocal.get());
+			}
+
+			Assert.assertSame(value1, centralizedThreadLocal.get());
+
+			try (SafeCloseable safeCloseable3 =
+					centralizedThreadLocal.setWithSafeCloseable(value2)) {
+
+				Assert.assertSame(value2, centralizedThreadLocal.get());
+
+				centralizedThreadLocal.remove();
+
+				Assert.assertSame(initialValue, centralizedThreadLocal.get());
+			}
+
+			Assert.assertSame(value1, centralizedThreadLocal.get());
+		}
+
+		Assert.assertSame(initialValue, centralizedThreadLocal.get());
+	}
+
+	@Test
 	public void testThreadLocalManagement() {
 
 		// Initial clean up
 
-		CentralizedThreadLocal.clearLongLivedThreadLocals();
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
+		CentralizedThreadLocal.clearLongLivedCentralizedThreadLocals();
+		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
 
 		// Lazy registration
 
@@ -290,70 +373,77 @@ public class CentralizedThreadLocalTest {
 		CentralizedThreadLocal<String> shortLivedCentralizedThreadLocal =
 			new CentralizedThreadLocal<>(true);
 
-		Map<CentralizedThreadLocal<?>, Object> longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		Map<CentralizedThreadLocal<?>, Object>
+			longLivedCentralizedThreadLocals =
+				CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
 		Assert.assertTrue(
-			longLivedThreadLocals.toString(), longLivedThreadLocals.isEmpty());
+			longLivedCentralizedThreadLocals.toString(),
+			longLivedCentralizedThreadLocals.isEmpty());
 
-		Map<CentralizedThreadLocal<?>, Object> shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		Map<CentralizedThreadLocal<?>, Object>
+			shortLivedCentralizedThreadLocals =
+				CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		Assert.assertTrue(
-			shortLivedThreadLocals.toString(),
-			shortLivedThreadLocals.isEmpty());
+			shortLivedCentralizedThreadLocals.toString(),
+			shortLivedCentralizedThreadLocals.isEmpty());
 
 		// Trigger registration
 
 		longLiveCentralizedThreadLocal.set("longLive");
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
 		Assert.assertEquals(
 			"longLive",
-			longLivedThreadLocals.get(longLiveCentralizedThreadLocal));
+			longLivedCentralizedThreadLocals.get(
+				longLiveCentralizedThreadLocal));
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		Assert.assertTrue(
-			shortLivedThreadLocals.toString(),
-			shortLivedThreadLocals.isEmpty());
+			shortLivedCentralizedThreadLocals.toString(),
+			shortLivedCentralizedThreadLocals.isEmpty());
 
 		shortLivedCentralizedThreadLocal.set("shortLive");
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
 		Assert.assertEquals(
 			"longLive",
-			longLivedThreadLocals.get(longLiveCentralizedThreadLocal));
+			longLivedCentralizedThreadLocals.get(
+				longLiveCentralizedThreadLocal));
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		Assert.assertEquals(
 			"shortLive",
-			shortLivedThreadLocals.get(shortLivedCentralizedThreadLocal));
+			shortLivedCentralizedThreadLocals.get(
+				shortLivedCentralizedThreadLocal));
 
 		// Clean up
 
-		CentralizedThreadLocal.clearLongLivedThreadLocals();
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
+		CentralizedThreadLocal.clearLongLivedCentralizedThreadLocals();
+		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
-
-		Assert.assertTrue(
-			longLivedThreadLocals.toString(), longLivedThreadLocals.isEmpty());
-
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
 		Assert.assertTrue(
-			shortLivedThreadLocals.toString(),
-			shortLivedThreadLocals.isEmpty());
+			longLivedCentralizedThreadLocals.toString(),
+			longLivedCentralizedThreadLocals.isEmpty());
+
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
+
+		Assert.assertTrue(
+			shortLivedCentralizedThreadLocals.toString(),
+			shortLivedCentralizedThreadLocals.isEmpty());
 
 		// Set threadlocals
 
@@ -363,24 +453,26 @@ public class CentralizedThreadLocalTest {
 			Collections.singletonMap(
 				shortLivedCentralizedThreadLocal, "shortLive"));
 
-		longLivedThreadLocals =
-			CentralizedThreadLocal.getLongLivedThreadLocals();
+		longLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getLongLivedCentralizedThreadLocals();
 
 		Assert.assertEquals(
 			"longLive",
-			longLivedThreadLocals.get(longLiveCentralizedThreadLocal));
+			longLivedCentralizedThreadLocals.get(
+				longLiveCentralizedThreadLocal));
 
-		shortLivedThreadLocals =
-			CentralizedThreadLocal.getShortLivedThreadLocals();
+		shortLivedCentralizedThreadLocals =
+			CentralizedThreadLocal.getShortLivedCentralizedThreadLocals();
 
 		Assert.assertEquals(
 			"shortLive",
-			shortLivedThreadLocals.get(shortLivedCentralizedThreadLocal));
+			shortLivedCentralizedThreadLocals.get(
+				shortLivedCentralizedThreadLocal));
 
 		// Clean up
 
-		CentralizedThreadLocal.clearLongLivedThreadLocals();
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
+		CentralizedThreadLocal.clearLongLivedCentralizedThreadLocals();
+		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
 	}
 
 	@Test
@@ -404,11 +496,12 @@ public class CentralizedThreadLocalTest {
 			centralizedThreadLocal.set(String.valueOf(i));
 		}
 
-		ThreadLocal<Object> shortLivedThreadLocals =
+		ThreadLocal<Object> shortLivedCentralizedThreadLocals =
 			ReflectionTestUtil.getFieldValue(
-				CentralizedThreadLocal.class, "_shortLivedThreadLocals");
+				CentralizedThreadLocal.class,
+				"_shortLivedCentralizedThreadLocals");
 
-		Object threadLocalMap = shortLivedThreadLocals.get();
+		Object threadLocalMap = shortLivedCentralizedThreadLocals.get();
 
 		Object[] table = ReflectionTestUtil.getFieldValue(
 			threadLocalMap, "_table");
@@ -419,7 +512,7 @@ public class CentralizedThreadLocalTest {
 			Integer.valueOf(32 * 2 / 3),
 			ReflectionTestUtil.getFieldValue(threadLocalMap, "_threshold"));
 
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
+		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
 
 		// Auto expanding upper threshold
 
@@ -476,10 +569,10 @@ public class CentralizedThreadLocalTest {
 
 		// Empty remove
 
-		CentralizedThreadLocal<String> centralizedThreadLocal =
+		CentralizedThreadLocal<String> centralizedThreadLocal4 =
 			new CentralizedThreadLocal<>(true);
 
-		centralizedThreadLocal.remove();
+		centralizedThreadLocal4.remove();
 	}
 
 	@Test

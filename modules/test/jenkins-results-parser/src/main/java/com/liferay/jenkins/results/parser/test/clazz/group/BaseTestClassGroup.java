@@ -1,21 +1,22 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.jenkins.results.parser.test.clazz.group;
 
+import com.liferay.jenkins.results.parser.BuildDatabase;
+import com.liferay.jenkins.results.parser.BuildDatabaseUtil;
+import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
+
+import java.io.File;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Peter Yoo
@@ -23,77 +24,68 @@ import java.util.List;
 public abstract class BaseTestClassGroup implements TestClassGroup {
 
 	@Override
-	public List<TestClassGroup.TestClass> getTestClasses() {
-		return testClasses;
+	public List<TestClass> getTestClasses() {
+		return new ArrayList<>(_testClasses);
 	}
 
 	@Override
-	public List<TestClass.TestClassFile> getTestClassFiles() {
-		List<TestClass.TestClassFile> testClassFiles = new ArrayList<>();
+	public List<File> getTestClassFiles() {
+		List<File> testClassFiles = new ArrayList<>();
 
-		for (TestClassGroup.TestClass testClass : testClasses) {
+		for (TestClass testClass : _testClasses) {
 			testClassFiles.add(testClass.getTestClassFile());
 		}
 
 		return testClassFiles;
 	}
 
-	public abstract static class BaseTestClass
-		implements TestClassGroup.TestClass {
+	@Override
+	public boolean hasTestClasses() {
+		List<TestClass> testClasses = getTestClasses();
 
-		@Override
-		public int compareTo(TestClassGroup.TestClass testClass) {
-			if (testClass == null) {
-				throw new NullPointerException("Test class is null");
-			}
-
-			return _testClassFile.compareTo(testClass.getTestClassFile());
+		if ((testClasses != null) && !testClasses.isEmpty()) {
+			return true;
 		}
 
-		@Override
-		public TestClassFile getTestClassFile() {
-			return _testClassFile;
-		}
-
-		@Override
-		public List<TestClassGroup.TestClass.TestClassMethod>
-			getTestClassMethods() {
-
-			return _testClassMethods;
-		}
-
-		protected BaseTestClass(TestClassFile testClassFile) {
-			_testClassFile = testClassFile;
-		}
-
-		protected void addTestClassMethod(
-			boolean methodIgnored, String methodName) {
-
-			addTestClassMethod(
-				new TestClassMethod(methodIgnored, methodName, this));
-		}
-
-		protected void addTestClassMethod(String methodName) {
-			addTestClassMethod(false, methodName);
-		}
-
-		protected void addTestClassMethod(
-			TestClassGroup.TestClass.TestClassMethod testClassMethod) {
-
-			_testClassMethods.add(testClassMethod);
-		}
-
-		private final TestClassFile _testClassFile;
-		private final List<TestClassMethod> _testClassMethods =
-			new ArrayList<>();
-
+		return false;
 	}
 
-	protected void addTestClass(TestClassGroup.TestClass testClass) {
-		testClasses.add(testClass);
+	protected void addTestClass(TestClass testClass) {
+		_testClasses.add(testClass);
 	}
 
-	protected final List<TestClassGroup.TestClass> testClasses =
-		new ArrayList<>();
+	protected void addTestClasses(List<TestClass> testClasses) {
+		for (TestClass testClass : testClasses) {
+			addTestClass(testClass);
+		}
+	}
+
+	protected boolean containsTestClasses() {
+		return !_testClasses.isEmpty();
+	}
+
+	protected String getBuildStartProperty(String propertyName) {
+		BuildDatabase buildDatabase = BuildDatabaseUtil.getBuildDatabase();
+
+		if (buildDatabase.hasProperties("start.properties")) {
+			Properties startProperties = buildDatabase.getProperties(
+				"start.properties");
+
+			return JenkinsResultsParserUtil.getProperty(
+				startProperties, propertyName);
+		}
+
+		return null;
+	}
+
+	protected int getTestClassCount() {
+		return _testClasses.size();
+	}
+
+	protected void removeTestClass(TestClass testClass) {
+		_testClasses.remove(testClass);
+	}
+
+	private final Set<TestClass> _testClasses = new TreeSet<>();
 
 }

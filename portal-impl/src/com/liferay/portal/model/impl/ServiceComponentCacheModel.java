@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.model.impl;
@@ -35,17 +26,17 @@ public class ServiceComponentCacheModel
 	implements CacheModel<ServiceComponent>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof ServiceComponentCacheModel)) {
+		if (!(object instanceof ServiceComponentCacheModel)) {
 			return false;
 		}
 
 		ServiceComponentCacheModel serviceComponentCacheModel =
-			(ServiceComponentCacheModel)obj;
+			(ServiceComponentCacheModel)object;
 
 		if ((serviceComponentId ==
 				serviceComponentCacheModel.serviceComponentId) &&
@@ -125,7 +116,9 @@ public class ServiceComponentCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		serviceComponentId = objectInput.readLong();
@@ -134,7 +127,7 @@ public class ServiceComponentCacheModel
 		buildNumber = objectInput.readLong();
 
 		buildDate = objectInput.readLong();
-		data = objectInput.readUTF();
+		data = (String)objectInput.readObject();
 	}
 
 	@Override
@@ -155,10 +148,10 @@ public class ServiceComponentCacheModel
 		objectOutput.writeLong(buildDate);
 
 		if (data == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(data);
+			objectOutput.writeObject(data);
 		}
 	}
 

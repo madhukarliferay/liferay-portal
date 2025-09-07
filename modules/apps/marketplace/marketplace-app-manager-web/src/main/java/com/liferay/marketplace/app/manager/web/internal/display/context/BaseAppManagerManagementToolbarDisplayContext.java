@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.marketplace.app.manager.web.internal.display.context;
@@ -17,27 +8,27 @@ package com.liferay.marketplace.app.manager.web.internal.display.context;
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.BaseManagementToolbarDisplayContext;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.marketplace.app.manager.web.internal.constants.BundleStateConstants;
-import com.liferay.marketplace.app.manager.web.internal.util.BundleManagerUtil;
 import com.liferay.marketplace.app.manager.web.internal.util.MarketplaceAppManagerUtil;
-import com.liferay.marketplace.model.App;
 import com.liferay.marketplace.service.AppLocalServiceUtil;
+import com.liferay.marketplace.util.BundleManagerUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import jakarta.portlet.PortletURL;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Pei-Jung Lan
@@ -46,29 +37,27 @@ public abstract class BaseAppManagerManagementToolbarDisplayContext
 	extends BaseManagementToolbarDisplayContext {
 
 	public BaseAppManagerManagementToolbarDisplayContext(
+		HttpServletRequest httpServletRequest,
 		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse,
-		HttpServletRequest httpServletRequest) {
+		LiferayPortletResponse liferayPortletResponse) {
 
 		super(
-			liferayPortletRequest, liferayPortletResponse, httpServletRequest);
+			httpServletRequest, liferayPortletRequest, liferayPortletResponse);
 	}
 
 	public String getCategory() {
 		if (Validator.isNull(_category)) {
 			_category = ParamUtil.getString(
-				request, "category", "all-categories");
+				httpServletRequest, "category", "all-categories");
 		}
 
 		return _category;
 	}
 
 	public List<DropdownItem> getCategoryDropdownItems() {
-		List<App> apps = AppLocalServiceUtil.getApps(
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
 		String[] categories = MarketplaceAppManagerUtil.getCategories(
-			apps, BundleManagerUtil.getBundles());
+			AppLocalServiceUtil.getApps(QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+			BundleManagerUtil.getBundles());
 
 		Map<String, String> categoriesMap = new LinkedHashMap<>();
 
@@ -78,22 +67,24 @@ public abstract class BaseAppManagerManagementToolbarDisplayContext
 				CharPool.DASH);
 
 			String translatedCategory = LanguageUtil.get(
-				request, kebabCaseCategory, category);
+				httpServletRequest, kebabCaseCategory, category);
 
 			categoriesMap.put(translatedCategory, category);
 		}
 
-		PortletURL portletURL = getPortletURL();
-
-		portletURL.setParameter("resetCur", Boolean.TRUE.toString());
-
 		return getDropdownItems(
-			categoriesMap, portletURL, "category", getCategory());
+			categoriesMap,
+			PortletURLBuilder.create(
+				getPortletURL()
+			).setParameter(
+				"resetCur", true
+			).buildPortletURL(),
+			"category", getCategory());
 	}
 
 	@Override
 	public String getOrderByCol() {
-		return ParamUtil.getString(request, "orderByCol", "title");
+		return ParamUtil.getString(httpServletRequest, "orderByCol", "title");
 	}
 
 	@Override
@@ -101,18 +92,20 @@ public abstract class BaseAppManagerManagementToolbarDisplayContext
 
 	@Override
 	public String getSearchActionURL() {
-		PortletURL searchActionURL = liferayPortletResponse.createRenderURL();
-
-		searchActionURL.setParameter("mvcPath", "/view_search_results.jsp");
-
-		return searchActionURL.toString();
+		return PortletURLBuilder.createRenderURL(
+			liferayPortletResponse
+		).setMVCPath(
+			"/view_search_results.jsp"
+		).buildString();
 	}
 
-	public abstract SearchContainer getSearchContainer() throws Exception;
+	public abstract SearchContainer<Object> getSearchContainer()
+		throws Exception;
 
 	public String getState() {
 		if (Validator.isNull(_state)) {
-			_state = ParamUtil.getString(request, "state", "all-statuses");
+			_state = ParamUtil.getString(
+				httpServletRequest, "state", "all-statuses");
 		}
 
 		return _state;
@@ -125,12 +118,14 @@ public abstract class BaseAppManagerManagementToolbarDisplayContext
 			BundleStateConstants.INSTALLED_LABEL
 		};
 
-		PortletURL portletURL = getPortletURL();
-
-		portletURL.setParameter("resetCur", Boolean.TRUE.toString());
-
 		return getDropdownItems(
-			getDefaultEntriesMap(states), portletURL, "state", getState());
+			getDefaultEntriesMap(states),
+			PortletURLBuilder.create(
+				getPortletURL()
+			).setParameter(
+				"resetCur", true
+			).buildPortletURL(),
+			"state", getState());
 	}
 
 	@Override

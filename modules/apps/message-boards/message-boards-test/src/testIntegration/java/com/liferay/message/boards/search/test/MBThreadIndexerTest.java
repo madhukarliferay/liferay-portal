@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.message.boards.search.test;
@@ -21,10 +12,8 @@ import com.liferay.message.boards.model.MBThread;
 import com.liferay.message.boards.service.MBMessageLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.comment.CommentManagerUtil;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -32,14 +21,15 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
-import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ObjectValuePair;
-import com.liferay.portal.test.log.CaptureAppender;
-import com.liferay.portal.test.log.Log4JLoggerTestUtil;
+import com.liferay.portal.search.test.rule.SearchTestRule;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
@@ -47,9 +37,6 @@ import java.io.InputStream;
 
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -76,92 +63,81 @@ public class MBThreadIndexerTest {
 	@Before
 	public void setUp() throws Exception {
 		_indexer = IndexerRegistryUtil.getIndexer(MBThread.class);
-
-		_company1 = CompanyTestUtil.addCompany();
-
-		_user1 = UserTestUtil.getAdminUser(_company1.getCompanyId());
 	}
 
 	@Test
 	public void testNotReindexGroupNotContainingMBMessages() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_LOG_NAME, Level.DEBUG)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_LOG_NAME, LoggerTestUtil.DEBUG)) {
 
-			GroupTestUtil.addGroup(
-				_company1.getCompanyId(), _user1.getUserId(),
+			_group = GroupTestUtil.addGroup(
+				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 				GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 			_indexer.reindex(
-				new String[] {String.valueOf(_company1.getCompanyId())});
+				new String[] {String.valueOf(TestPropsValues.getCompanyId())});
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 0, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 		}
 	}
 
 	@Test
 	public void testReindexGroupContainingMBDiscussion() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_LOG_NAME, Level.DEBUG)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_LOG_NAME, LoggerTestUtil.DEBUG)) {
 
-			Group group = GroupTestUtil.addGroup(
-				_company1.getCompanyId(), _user1.getUserId(),
+			_group = GroupTestUtil.addGroup(
+				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 				GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 			ServiceContext serviceContext =
 				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), _user1.getUserId());
+					_group.getGroupId(), TestPropsValues.getUserId());
 
 			CommentManagerUtil.addComment(
-				_user1.getUserId(), group.getGroupId(),
+				TestPropsValues.getUserId(), _group.getGroupId(),
 				RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
 				RandomTestUtil.randomString(), s -> serviceContext);
 
 			_indexer.reindex(
-				new String[] {String.valueOf(_company1.getCompanyId())});
+				new String[] {String.valueOf(TestPropsValues.getCompanyId())});
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 1, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
 			Assert.assertEquals(
 				StringBundler.concat(
 					"Reindexing message boards threads for message board ",
 					"category ID ", MBCategoryConstants.DISCUSSION_CATEGORY_ID,
-					" and group ID ", group.getGroupId()),
-				loggingEvent.getMessage());
+					" and group ID ", _group.getGroupId()),
+				logEntry.getMessage());
 		}
 	}
 
 	@Test
 	public void testReindexGroupContainingMBMessage() throws Exception {
-		try (CaptureAppender captureAppender =
-				Log4JLoggerTestUtil.configureLog4JLogger(
-					_LOG_NAME, Level.DEBUG)) {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_LOG_NAME, LoggerTestUtil.DEBUG)) {
 
-			Group group = GroupTestUtil.addGroup(
-				_company1.getCompanyId(), _user1.getUserId(),
+			_group = GroupTestUtil.addGroup(
+				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 				GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 			ServiceContext serviceContext =
 				ServiceContextTestUtil.getServiceContext(
-					group.getGroupId(), _user1.getUserId());
+					_group.getGroupId(), TestPropsValues.getUserId());
 
 			List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
 				Collections.emptyList();
 
 			MBMessageLocalServiceUtil.addMessage(
-				_user1.getUserId(), RandomTestUtil.randomString(),
-				group.getGroupId(),
+				TestPropsValues.getUserId(), RandomTestUtil.randomString(),
+				_group.getGroupId(),
 				MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, 0,
 				MBMessageConstants.DEFAULT_PARENT_MESSAGE_ID,
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
@@ -169,34 +145,34 @@ public class MBThreadIndexerTest {
 				false, serviceContext);
 
 			_indexer.reindex(
-				new String[] {String.valueOf(_company1.getCompanyId())});
+				new String[] {String.valueOf(TestPropsValues.getCompanyId())});
 
-			List<LoggingEvent> loggingEvents =
-				captureAppender.getLoggingEvents();
+			List<LogEntry> logEntries = logCapture.getLogEntries();
 
-			Assert.assertEquals(
-				loggingEvents.toString(), 1, loggingEvents.size());
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
-			LoggingEvent loggingEvent = loggingEvents.get(0);
+			LogEntry logEntry = logEntries.get(0);
 
 			Assert.assertEquals(
 				StringBundler.concat(
 					"Reindexing message boards threads for message board ",
 					"category ID ",
 					MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
-					" and group ID ", group.getGroupId()),
-				loggingEvent.getMessage());
+					" and group ID ", _group.getGroupId()),
+				logEntry.getMessage());
 		}
 	}
+
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	private static final String _LOG_NAME =
 		"com.liferay.message.boards.internal.search.spi.model.index." +
 			"contributor.MBThreadModelIndexerWriterContributor";
 
 	@DeleteAfterTestRun
-	private Company _company1;
+	private Group _group;
 
 	private Indexer<MBThread> _indexer;
-	private User _user1;
 
 }

@@ -1,18 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.service;
+
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link LayoutSetBranchLocalService}.
@@ -25,6 +18,10 @@ public class LayoutSetBranchLocalServiceWrapper
 	implements LayoutSetBranchLocalService,
 			   ServiceWrapper<LayoutSetBranchLocalService> {
 
+	public LayoutSetBranchLocalServiceWrapper() {
+		this(null);
+	}
+
 	public LayoutSetBranchLocalServiceWrapper(
 		LayoutSetBranchLocalService layoutSetBranchLocalService) {
 
@@ -33,6 +30,10 @@ public class LayoutSetBranchLocalServiceWrapper
 
 	/**
 	 * Adds the layout set branch to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutSetBranchLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutSetBranch the layout set branch
 	 * @return the layout set branch that was added
@@ -46,9 +47,9 @@ public class LayoutSetBranchLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.LayoutSetBranch addLayoutSetBranch(
-			long userId, long groupId, boolean privateLayout,
-			java.lang.String name, java.lang.String description, boolean master,
-			long copyLayoutSetBranchId, ServiceContext serviceContext)
+			long userId, long groupId, boolean privateLayout, String name,
+			String description, boolean master, long copyLayoutSetBranchId,
+			ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetBranchLocalService.addLayoutSetBranch(
@@ -71,7 +72,22 @@ public class LayoutSetBranchLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutSetBranchLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the layout set branch from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutSetBranchLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param layoutSetBranch the layout set branch
 	 * @return the layout set branch that was removed
@@ -101,6 +117,10 @@ public class LayoutSetBranchLocalServiceWrapper
 	/**
 	 * Deletes the layout set branch with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutSetBranchLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param layoutSetBranchId the primary key of the layout set branch
 	 * @return the layout set branch that was removed
 	 * @throws PortalException if a layout set branch with the primary key could not be found
@@ -112,6 +132,28 @@ public class LayoutSetBranchLocalServiceWrapper
 
 		return _layoutSetBranchLocalService.deleteLayoutSetBranch(
 			layoutSetBranchId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.LayoutSetBranch
+			deleteLayoutSetBranch(
+				long currentLayoutPlid,
+				com.liferay.portal.kernel.model.LayoutSetBranch layoutSetBranch,
+				boolean includeMaster)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutSetBranchLocalService.deleteLayoutSetBranch(
+			currentLayoutPlid, layoutSetBranch, includeMaster);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.model.LayoutSetBranch
+			deleteLayoutSetBranch(
+				long currentLayoutPlid, long layoutSetBranchId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutSetBranchLocalService.deleteLayoutSetBranch(
+			currentLayoutPlid, layoutSetBranchId);
 	}
 
 	@Override
@@ -141,6 +183,18 @@ public class LayoutSetBranchLocalServiceWrapper
 
 		return _layoutSetBranchLocalService.deletePersistedModel(
 			persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _layoutSetBranchLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _layoutSetBranchLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -244,7 +298,7 @@ public class LayoutSetBranchLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.LayoutSetBranch fetchLayoutSetBranch(
-		long groupId, boolean privateLayout, java.lang.String name) {
+		long groupId, boolean privateLayout, String name) {
 
 		return _layoutSetBranchLocalService.fetchLayoutSetBranch(
 			groupId, privateLayout, name);
@@ -283,7 +337,7 @@ public class LayoutSetBranchLocalServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.LayoutSetBranch getLayoutSetBranch(
-			long groupId, boolean privateLayout, java.lang.String name)
+			long groupId, boolean privateLayout, String name)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetBranchLocalService.getLayoutSetBranch(
@@ -299,15 +353,15 @@ public class LayoutSetBranchLocalServiceWrapper
 	}
 
 	/**
-	 * Returns a range of all the layout set branchs.
+	 * Returns a range of all the layout set branches.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>com.liferay.portal.model.impl.LayoutSetBranchModelImpl</code>.
 	 * </p>
 	 *
-	 * @param start the lower bound of the range of layout set branchs
-	 * @param end the upper bound of the range of layout set branchs (not inclusive)
-	 * @return the range of layout set branchs
+	 * @param start the lower bound of the range of layout set branches
+	 * @param end the upper bound of the range of layout set branches (not inclusive)
+	 * @return the range of layout set branches
 	 */
 	@Override
 	public java.util.List<com.liferay.portal.kernel.model.LayoutSetBranch>
@@ -317,9 +371,9 @@ public class LayoutSetBranchLocalServiceWrapper
 	}
 
 	/**
-	 * Returns the number of layout set branchs.
+	 * Returns the number of layout set branches.
 	 *
-	 * @return the number of layout set branchs
+	 * @return the number of layout set branches
 	 */
 	@Override
 	public int getLayoutSetBranchsCount() {
@@ -341,10 +395,13 @@ public class LayoutSetBranchLocalServiceWrapper
 	 * @return the OSGi service identifier
 	 */
 	@Override
-	public java.lang.String getOSGiServiceIdentifier() {
+	public String getOSGiServiceIdentifier() {
 		return _layoutSetBranchLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -377,6 +434,10 @@ public class LayoutSetBranchLocalServiceWrapper
 	/**
 	 * Updates the layout set branch in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect LayoutSetBranchLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
+	 *
 	 * @param layoutSetBranch the layout set branch
 	 * @return the layout set branch that was updated
 	 */
@@ -392,12 +453,17 @@ public class LayoutSetBranchLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.LayoutSetBranch
 			updateLayoutSetBranch(
-				long layoutSetBranchId, java.lang.String name,
-				java.lang.String description, ServiceContext serviceContext)
+				long layoutSetBranchId, String name, String description,
+				ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutSetBranchLocalService.updateLayoutSetBranch(
 			layoutSetBranchId, name, description, serviceContext);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _layoutSetBranchLocalService.getBasePersistence();
 	}
 
 	@Override

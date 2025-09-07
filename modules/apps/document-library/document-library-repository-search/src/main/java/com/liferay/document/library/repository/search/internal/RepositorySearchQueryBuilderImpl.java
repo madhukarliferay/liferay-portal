@@ -1,21 +1,14 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.repository.search.internal;
 
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppService;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.search.RepositorySearchQueryBuilder;
 import com.liferay.portal.kernel.repository.search.RepositorySearchQueryTermBuilder;
 import com.liferay.portal.kernel.search.BooleanClause;
@@ -51,11 +44,11 @@ public class RepositorySearchQueryBuilderImpl
 		try {
 			BooleanQuery contextQuery = new BooleanQueryImpl();
 
-			addContext(contextQuery, searchContext);
+			_addContext(contextQuery, searchContext);
 
 			BooleanQuery searchQuery = new BooleanQueryImpl();
 
-			addSearchKeywords(searchQuery, searchContext);
+			_addSearchKeywords(searchQuery, searchContext);
 
 			BooleanQuery fullQuery = new BooleanQueryImpl();
 
@@ -82,22 +75,20 @@ public class RepositorySearchQueryBuilderImpl
 
 			return fullQuery;
 		}
-		catch (Exception e) {
-			throw new SearchException(e);
+		catch (Exception exception) {
+			throw new SearchException(exception);
 		}
 	}
 
-	protected void addContext(
+	private void _addContext(
 			BooleanQuery contextQuery, SearchContext searchContext)
 		throws Exception {
 
 		long[] folderIds = searchContext.getFolderIds();
 
-		if (ArrayUtil.isEmpty(folderIds)) {
-			return;
-		}
+		if (ArrayUtil.isEmpty(folderIds) ||
+			(folderIds[0] == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
 
-		if (folderIds[0] == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 			return;
 		}
 
@@ -107,7 +98,11 @@ public class RepositorySearchQueryBuilderImpl
 			try {
 				_dlAppService.getFolder(folderId);
 			}
-			catch (Exception e) {
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+
 				continue;
 			}
 
@@ -119,7 +114,7 @@ public class RepositorySearchQueryBuilderImpl
 		contextQuery.add(folderIdsQuery, BooleanClauseOccur.MUST);
 	}
 
-	protected void addSearchKeywords(
+	private void _addSearchKeywords(
 			BooleanQuery searchQuery, SearchContext searchContext)
 		throws Exception {
 
@@ -134,7 +129,7 @@ public class RepositorySearchQueryBuilderImpl
 		_repositorySearchQueryTermBuilder.addTerm(
 			titleQuery, searchContext, Field.TITLE, keywords);
 
-		if (titleQuery.hasClauses() && !contains(searchQuery, titleQuery)) {
+		if (titleQuery.hasClauses() && !_contains(searchQuery, titleQuery)) {
 			searchQuery.add(titleQuery, BooleanClauseOccur.SHOULD);
 		}
 
@@ -144,7 +139,7 @@ public class RepositorySearchQueryBuilderImpl
 			userNameQuery, searchContext, Field.USER_NAME, keywords);
 
 		if (userNameQuery.hasClauses() &&
-			!contains(searchQuery, userNameQuery)) {
+			!_contains(searchQuery, userNameQuery)) {
 
 			searchQuery.add(userNameQuery, BooleanClauseOccur.SHOULD);
 		}
@@ -154,17 +149,19 @@ public class RepositorySearchQueryBuilderImpl
 		_repositorySearchQueryTermBuilder.addTerm(
 			contentQuery, searchContext, Field.CONTENT, keywords);
 
-		if (contentQuery.hasClauses() && !contains(searchQuery, contentQuery)) {
+		if (contentQuery.hasClauses() &&
+			!_contains(searchQuery, contentQuery)) {
+
 			searchQuery.add(contentQuery, BooleanClauseOccur.SHOULD);
 		}
 	}
 
-	protected boolean contains(Query query1, Query query2) {
+	private boolean _contains(Query query1, Query query2) {
 		if (query1 instanceof BooleanQuery) {
 			BooleanQuery booleanQuery = (BooleanQuery)query1;
 
 			for (BooleanClause<Query> booleanClause : booleanQuery.clauses()) {
-				if (contains(booleanClause.getClause(), query2)) {
+				if (_contains(booleanClause.getClause(), query2)) {
 					return true;
 				}
 			}
@@ -175,7 +172,7 @@ public class RepositorySearchQueryBuilderImpl
 			BooleanQuery booleanQuery = (BooleanQuery)query2;
 
 			for (BooleanClause<Query> booleanClause : booleanQuery.clauses()) {
-				if (contains(query1, booleanClause.getClause())) {
+				if (_contains(query1, booleanClause.getClause())) {
 					return true;
 				}
 			}
@@ -253,19 +250,13 @@ public class RepositorySearchQueryBuilderImpl
 		return false;
 	}
 
-	@Reference(unbind = "-")
-	protected void setDLAppService(DLAppService dlAppService) {
-		_dlAppService = dlAppService;
-	}
+	private static final Log _log = LogFactoryUtil.getLog(
+		RepositorySearchQueryBuilderImpl.class);
 
-	@Reference(unbind = "-")
-	protected void setRepositorySearchQueryTermBuilder(
-		RepositorySearchQueryTermBuilder repositorySearchQueryTermBuilder) {
-
-		_repositorySearchQueryTermBuilder = repositorySearchQueryTermBuilder;
-	}
-
+	@Reference
 	private DLAppService _dlAppService;
+
+	@Reference
 	private RepositorySearchQueryTermBuilder _repositorySearchQueryTermBuilder;
 
 }

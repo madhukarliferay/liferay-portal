@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.document.library.internal.trash;
@@ -39,17 +30,18 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionHelper;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
-import com.liferay.trash.kernel.exception.RestoreEntryException;
+import com.liferay.trash.constants.TrashEntryConstants;
+import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.kernel.model.TrashEntry;
-import com.liferay.trash.kernel.model.TrashEntryConstants;
 
-import javax.portlet.PortletRequest;
+import jakarta.portlet.PortletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -64,7 +56,7 @@ import org.osgi.service.component.annotations.Reference;
 	property = "model.class.name=com.liferay.document.library.kernel.model.DLFolder",
 	service = TrashHandler.class
 )
-public class DLFolderTrashHandler extends DLBaseTrashHandler {
+public class DLFolderTrashHandler extends BaseDLTrashHandler {
 
 	@Override
 	public void checkRestorableEntry(
@@ -119,6 +111,13 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 			return null;
 		}
 
+		DLFolder parentFolder = _dlFolderLocalService.fetchDLFolder(
+			parentFolderId);
+
+		if (parentFolder == null) {
+			return null;
+		}
+
 		return getContainerModel(parentFolderId);
 	}
 
@@ -151,7 +150,8 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		DLFolder dlFolder = getDLFolder(classPK);
 
 		return DLUtil.getAbsolutePath(
-			portletRequest, dlFolder.getParentFolderId());
+			portletRequest, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFolder.getParentFolderId());
 	}
 
 	@Override
@@ -169,9 +169,9 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		try {
 			return getDLFolder(classPK);
 		}
-		catch (PortalException | UnsupportedCapabilityException e) {
+		catch (PortalException | UnsupportedCapabilityException exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 
 			return null;
@@ -194,7 +194,7 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		throws PortalException {
 
 		if (trashActionId.equals(TrashActionKeys.MOVE)) {
-			return ModelResourcePermissionHelper.contains(
+			return ModelResourcePermissionUtil.contains(
 				_folderModelResourcePermission, permissionChecker, groupId,
 				classPK, ActionKeys.ADD_FOLDER);
 		}
@@ -243,7 +243,7 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 			return false;
 		}
 
-		return !dlFolder.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(dlFolder);
 	}
 
 	@Override
@@ -320,14 +320,15 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 			dlFolder.getGroupId(), containerModelId, originalTitle);
 
 		if (duplicateDLFolder != null) {
-			RestoreEntryException ree = new RestoreEntryException(
-				RestoreEntryException.DUPLICATE);
+			RestoreEntryException restoreEntryException =
+				new RestoreEntryException(RestoreEntryException.DUPLICATE);
 
-			ree.setDuplicateEntryId(duplicateDLFolder.getFolderId());
-			ree.setOldName(duplicateDLFolder.getName());
-			ree.setTrashEntryId(trashEntryId);
+			restoreEntryException.setDuplicateEntryId(
+				duplicateDLFolder.getFolderId());
+			restoreEntryException.setOldName(duplicateDLFolder.getName());
+			restoreEntryException.setTrashEntryId(trashEntryId);
 
-			throw ree;
+			throw restoreEntryException;
 		}
 
 		DLFileEntry duplicateDLFileEntry =
@@ -335,15 +336,16 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 				dlFolder.getGroupId(), containerModelId, originalTitle);
 
 		if (duplicateDLFileEntry != null) {
-			RestoreEntryException ree = new RestoreEntryException(
-				RestoreEntryException.DUPLICATE);
+			RestoreEntryException restoreEntryException =
+				new RestoreEntryException(RestoreEntryException.DUPLICATE);
 
-			ree.setDuplicateEntryId(duplicateDLFileEntry.getFileEntryId());
-			ree.setOldName(duplicateDLFileEntry.getTitle());
-			ree.setOverridable(false);
-			ree.setTrashEntryId(trashEntryId);
+			restoreEntryException.setDuplicateEntryId(
+				duplicateDLFileEntry.getFileEntryId());
+			restoreEntryException.setOldName(duplicateDLFileEntry.getTitle());
+			restoreEntryException.setOverridable(false);
+			restoreEntryException.setTrashEntryId(trashEntryId);
 
-			throw ree;
+			throw restoreEntryException;
 		}
 	}
 
@@ -378,30 +380,16 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 			permissionChecker, dlFolder, actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDLFileEntryLocalService(
-		DLFileEntryLocalService dlFileEntryLocalService) {
-
-		_dlFileEntryLocalService = dlFileEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDLFolderLocalService(
-		DLFolderLocalService dlFolderLocalService) {
-
-		_dlFolderLocalService = dlFolderLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLFolderTrashHandler.class);
 
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
 	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Reference
 	private DLFolderLocalService _dlFolderLocalService;
 
 	@Reference(
@@ -416,5 +404,8 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		target = "(model.class.name=com.liferay.portal.kernel.repository.model.Folder)"
 	)
 	private ModelResourcePermission<Folder> _folderModelResourcePermission;
+
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

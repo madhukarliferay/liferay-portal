@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.journal.model;
@@ -56,6 +47,7 @@ public class JournalArticleWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("folderId", getFolderId());
 		attributes.put("classNameId", getClassNameId());
 		attributes.put("classPK", getClassPK());
@@ -63,8 +55,7 @@ public class JournalArticleWrapper
 		attributes.put("articleId", getArticleId());
 		attributes.put("version", getVersion());
 		attributes.put("urlTitle", getUrlTitle());
-		attributes.put("content", getContent());
-		attributes.put("DDMStructureKey", getDDMStructureKey());
+		attributes.put("DDMStructureId", getDDMStructureId());
 		attributes.put("DDMTemplateKey", getDDMTemplateKey());
 		attributes.put("defaultLanguageId", getDefaultLanguageId());
 		attributes.put("layoutUuid", getLayoutUuid());
@@ -74,6 +65,7 @@ public class JournalArticleWrapper
 		attributes.put("indexable", isIndexable());
 		attributes.put("smallImage", isSmallImage());
 		attributes.put("smallImageId", getSmallImageId());
+		attributes.put("smallImageSource", getSmallImageSource());
 		attributes.put("smallImageURL", getSmallImageURL());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
@@ -152,6 +144,13 @@ public class JournalArticleWrapper
 			setModifiedDate(modifiedDate);
 		}
 
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
+		}
+
 		Long folderId = (Long)attributes.get("folderId");
 
 		if (folderId != null) {
@@ -194,16 +193,10 @@ public class JournalArticleWrapper
 			setUrlTitle(urlTitle);
 		}
 
-		String content = (String)attributes.get("content");
+		Long DDMStructureId = (Long)attributes.get("DDMStructureId");
 
-		if (content != null) {
-			setContent(content);
-		}
-
-		String DDMStructureKey = (String)attributes.get("DDMStructureKey");
-
-		if (DDMStructureKey != null) {
-			setDDMStructureKey(DDMStructureKey);
+		if (DDMStructureId != null) {
+			setDDMStructureId(DDMStructureId);
 		}
 
 		String DDMTemplateKey = (String)attributes.get("DDMTemplateKey");
@@ -260,6 +253,12 @@ public class JournalArticleWrapper
 			setSmallImageId(smallImageId);
 		}
 
+		Integer smallImageSource = (Integer)attributes.get("smallImageSource");
+
+		if (smallImageSource != null) {
+			setSmallImageSource(smallImageSource);
+		}
+
 		String smallImageURL = (String)attributes.get("smallImageURL");
 
 		if (smallImageURL != null) {
@@ -314,6 +313,11 @@ public class JournalArticleWrapper
 	@Override
 	public Object clone() {
 		return new JournalArticleWrapper((JournalArticle)model.clone());
+	}
+
+	@Override
+	public JournalArticle cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
 	}
 
 	/**
@@ -392,11 +396,6 @@ public class JournalArticleWrapper
 		return model.getCompanyId();
 	}
 
-	/**
-	 * Returns the content of this journal article.
-	 *
-	 * @return the content of this journal article
-	 */
 	@Override
 	public String getContent() {
 		return model.getContent();
@@ -428,6 +427,20 @@ public class JournalArticleWrapper
 	}
 
 	@Override
+	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		getDDMFormValues() {
+
+		return model.getDDMFormValues();
+	}
+
+	@Override
+	public com.liferay.dynamic.data.mapping.storage.DDMFormValues
+		getDDMFormValues(boolean addMissingDDMFormFieldValues) {
+
+		return model.getDDMFormValues(addMissingDDMFormFieldValues);
+	}
+
+	@Override
 	public com.liferay.dynamic.data.mapping.model.DDMStructure
 		getDDMStructure() {
 
@@ -435,10 +448,15 @@ public class JournalArticleWrapper
 	}
 
 	/**
-	 * Returns the ddm structure key of this journal article.
+	 * Returns the ddm structure ID of this journal article.
 	 *
-	 * @return the ddm structure key of this journal article
+	 * @return the ddm structure ID of this journal article
 	 */
+	@Override
+	public long getDDMStructureId() {
+		return model.getDDMStructureId();
+	}
+
 	@Override
 	public String getDDMStructureKey() {
 		return model.getDDMStructureKey();
@@ -495,6 +513,11 @@ public class JournalArticleWrapper
 	}
 
 	@Override
+	public String getDescriptionCurrentValue() {
+		return model.getDescriptionCurrentValue();
+	}
+
+	@Override
 	public Map<java.util.Locale, String> getDescriptionMap() {
 		return model.getDescriptionMap();
 	}
@@ -519,6 +542,13 @@ public class JournalArticleWrapper
 		return model.getDocument();
 	}
 
+	@Override
+	public com.liferay.portal.kernel.xml.Document getDocumentByLocale(
+		String languageId) {
+
+		return model.getDocumentByLocale(languageId);
+	}
+
 	/**
 	 * Returns the expiration date of this journal article.
 	 *
@@ -527,6 +557,16 @@ public class JournalArticleWrapper
 	@Override
 	public Date getExpirationDate() {
 		return model.getExpirationDate();
+	}
+
+	/**
+	 * Returns the external reference code of this journal article.
+	 *
+	 * @return the external reference code of this journal article
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	@Override
@@ -600,10 +640,12 @@ public class JournalArticleWrapper
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry>
 			getImagesFileEntries(
 				int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator obc)
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.portal.kernel.repository.model.FileEntry>
+						orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return model.getImagesFileEntries(start, end, obc);
+		return model.getImagesFileEntries(start, end, orderByComparator);
 	}
 
 	@Override
@@ -651,24 +693,6 @@ public class JournalArticleWrapper
 	@Override
 	public String getLayoutUuid() {
 		return model.getLayoutUuid();
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	@Override
-	public String getLegacyDescription() {
-		return model.getLegacyDescription();
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	@Override
-	public String getLegacyTitle() {
-		return model.getLegacyTitle();
 	}
 
 	/**
@@ -741,6 +765,16 @@ public class JournalArticleWrapper
 		return model.getSmallImageId();
 	}
 
+	/**
+	 * Returns the small image source of this journal article.
+	 *
+	 * @return the small image source of this journal article
+	 */
+	@Override
+	public int getSmallImageSource() {
+		return model.getSmallImageSource();
+	}
+
 	@Override
 	public String getSmallImageType()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -808,26 +842,6 @@ public class JournalArticleWrapper
 		return model.getStatusDate();
 	}
 
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #getDDMStructureKey()}
-	 */
-	@Deprecated
-	@Override
-	public String getStructureId() {
-		return model.getStructureId();
-	}
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #getDDMTemplateKey()}
-	 */
-	@Deprecated
-	@Override
-	public String getTemplateId() {
-		return model.getTemplateId();
-	}
-
 	@Override
 	public String getTitle() {
 		return model.getTitle();
@@ -869,18 +883,6 @@ public class JournalArticleWrapper
 	}
 
 	/**
-	 * Returns the trash entry created when this journal article was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this journal article.
-	 *
-	 * @return the trash entry created when this journal article was moved to the Recycle Bin
-	 */
-	@Override
-	public com.liferay.trash.kernel.model.TrashEntry getTrashEntry()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return model.getTrashEntry();
-	}
-
-	/**
 	 * Returns the class primary key of the trash entry for this journal article.
 	 *
 	 * @return the class primary key of the trash entry for this journal article
@@ -888,18 +890,6 @@ public class JournalArticleWrapper
 	@Override
 	public long getTrashEntryClassPK() {
 		return model.getTrashEntryClassPK();
-	}
-
-	/**
-	 * Returns the trash handler for this journal article.
-	 *
-	 * @return the trash handler for this journal article
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.trash.TrashHandler getTrashHandler() {
-		return model.getTrashHandler();
 	}
 
 	/**
@@ -1065,26 +1055,6 @@ public class JournalArticleWrapper
 	}
 
 	/**
-	 * Returns <code>true</code> if the parent of this journal article is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if the parent of this journal article is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isInTrashContainer() {
-		return model.isInTrashContainer();
-	}
-
-	@Override
-	public boolean isInTrashExplicitly() {
-		return model.isInTrashExplicitly();
-	}
-
-	@Override
-	public boolean isInTrashImplicitly() {
-		return model.isInTrashImplicitly();
-	}
-
-	/**
 	 * Returns <code>true</code> if this journal article is pending.
 	 *
 	 * @return <code>true</code> if this journal article is pending; <code>false</code> otherwise
@@ -1119,20 +1089,6 @@ public class JournalArticleWrapper
 		return model.isSmallImage();
 	}
 
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public boolean isTemplateDriven() {
-		return model.isTemplateDriven();
-	}
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this class directly. All methods that expect a journal article model instance should use the <code>JournalArticle</code> interface instead.
-	 */
 	@Override
 	public void persist() {
 		model.persist();
@@ -1184,16 +1140,6 @@ public class JournalArticleWrapper
 	}
 
 	/**
-	 * Sets the content of this journal article.
-	 *
-	 * @param content the content of this journal article
-	 */
-	@Override
-	public void setContent(String content) {
-		model.setContent(content);
-	}
-
-	/**
 	 * Sets the create date of this journal article.
 	 *
 	 * @param createDate the create date of this journal article
@@ -1214,13 +1160,13 @@ public class JournalArticleWrapper
 	}
 
 	/**
-	 * Sets the ddm structure key of this journal article.
+	 * Sets the ddm structure ID of this journal article.
 	 *
-	 * @param DDMStructureKey the ddm structure key of this journal article
+	 * @param DDMStructureId the ddm structure ID of this journal article
 	 */
 	@Override
-	public void setDDMStructureKey(String DDMStructureKey) {
-		model.setDDMStructureKey(DDMStructureKey);
+	public void setDDMStructureId(long DDMStructureId) {
+		model.setDDMStructureId(DDMStructureId);
 	}
 
 	/**
@@ -1241,15 +1187,6 @@ public class JournalArticleWrapper
 	@Override
 	public void setDefaultLanguageId(String defaultLanguageId) {
 		model.setDefaultLanguageId(defaultLanguageId);
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	@Override
-	public void setDescription(String description) {
-		model.setDescription(description);
 	}
 
 	@Override
@@ -1282,6 +1219,16 @@ public class JournalArticleWrapper
 	@Override
 	public void setExpirationDate(Date expirationDate) {
 		model.setExpirationDate(expirationDate);
+	}
+
+	/**
+	 * Sets the external reference code of this journal article.
+	 *
+	 * @param externalReferenceCode the external reference code of this journal article
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -1419,6 +1366,16 @@ public class JournalArticleWrapper
 		model.setSmallImageId(smallImageId);
 	}
 
+	/**
+	 * Sets the small image source of this journal article.
+	 *
+	 * @param smallImageSource the small image source of this journal article
+	 */
+	@Override
+	public void setSmallImageSource(int smallImageSource) {
+		model.setSmallImageSource(smallImageSource);
+	}
+
 	@Override
 	public void setSmallImageType(String smallImageType) {
 		model.setSmallImageType(smallImageType);
@@ -1482,35 +1439,6 @@ public class JournalArticleWrapper
 	@Override
 	public void setStatusDate(Date statusDate) {
 		model.setStatusDate(statusDate);
-	}
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #setDDMStructureKey(String)}
-	 */
-	@Deprecated
-	@Override
-	public void setStructureId(String ddmStructureKey) {
-		model.setStructureId(ddmStructureKey);
-	}
-
-	/**
-	 * @deprecated As of Wilberforce (7.0.x), replaced by {@link
-	 #setDDMTemplateKey(String)}
-	 */
-	@Deprecated
-	@Override
-	public void setTemplateId(String ddmTemplateKey) {
-		model.setTemplateId(ddmTemplateKey);
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x)
-	 */
-	@Deprecated
-	@Override
-	public void setTitle(String title) {
-		model.setTitle(title);
 	}
 
 	@Override
@@ -1586,6 +1514,11 @@ public class JournalArticleWrapper
 	@Override
 	public void setVersion(double version) {
 		model.setVersion(version);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

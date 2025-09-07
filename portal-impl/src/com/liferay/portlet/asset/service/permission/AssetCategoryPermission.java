@@ -1,21 +1,13 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portlet.asset.service.permission;
 
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetCategoryConstants;
+import com.liferay.asset.kernel.model.AssetVocabularyConstants;
 import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -70,6 +62,8 @@ public class AssetCategoryPermission {
 		throws PortalException {
 
 		if (actionId.equals(ActionKeys.VIEW) &&
+			(category.getVocabularyId() !=
+				AssetVocabularyConstants.EMPTY_VOCABULARY_ID) &&
 			!AssetVocabularyPermission.contains(
 				permissionChecker, category.getVocabularyId(),
 				ActionKeys.VIEW)) {
@@ -87,8 +81,10 @@ public class AssetCategoryPermission {
 
 				long parentCategoryId = category.getParentCategoryId();
 
-				if (parentCategoryId ==
-						AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+				if ((parentCategoryId ==
+						AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) ||
+					(parentCategoryId ==
+						AssetCategoryConstants.EMPTY_PARENT_CATEGORY_ID)) {
 
 					break;
 				}
@@ -97,8 +93,12 @@ public class AssetCategoryPermission {
 					parentCategoryId);
 			}
 
-			return AssetVocabularyPermission.contains(
-				permissionChecker, category.getVocabularyId(), actionId);
+			if (category.getVocabularyId() !=
+					AssetVocabularyConstants.EMPTY_VOCABULARY_ID) {
+
+				return AssetVocabularyPermission.contains(
+					permissionChecker, category.getVocabularyId(), actionId);
+			}
 		}
 
 		return _hasPermission(permissionChecker, category, actionId);
@@ -109,7 +109,9 @@ public class AssetCategoryPermission {
 			String actionId)
 		throws PortalException {
 
-		if (categoryId == AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+		if ((categoryId == AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) ||
+			(categoryId == AssetCategoryConstants.EMPTY_PARENT_CATEGORY_ID)) {
+
 			return AssetCategoriesPermission.contains(
 				permissionChecker, groupId, actionId);
 		}

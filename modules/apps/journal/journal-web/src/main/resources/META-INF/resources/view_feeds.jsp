@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -19,28 +10,30 @@
 <%
 JournalFeedsDisplayContext journalFeedsDisplayContext = new JournalFeedsDisplayContext(renderRequest, renderResponse);
 
-JournalFeedsManagementToolbarDisplayContext journalFeedsManagementToolbarDisplayContext = new JournalFeedsManagementToolbarDisplayContext(liferayPortletRequest, liferayPortletResponse, request, journalFeedsDisplayContext);
+JournalFeedsManagementToolbarDisplayContext journalFeedsManagementToolbarDisplayContext = new JournalFeedsManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, journalFeedsDisplayContext);
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(journalFeedsDisplayContext.getRedirect());
+portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 renderResponse.setTitle(LanguageUtil.get(request, "feeds"));
 %>
 
 <clay:navigation-bar
 	inverted="<%= true %>"
-	navigationItems='<%= journalDisplayContext.getNavigationBarItems("feeds") %>'
+	navigationItems='<%= journalDisplayContext.getNavigationItems("feeds") %>'
 />
 
 <clay:management-toolbar
-	displayContext="<%= journalFeedsManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= journalFeedsManagementToolbarDisplayContext %>"
+	propsTransformer="{FeedsManagementToolbarPropsTransformer} from journal-web"
 />
 
 <portlet:actionURL name="/journal/delete_feeds" var="deleteFeedsURL">
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </portlet:actionURL>
 
-<aui:form action="<%= deleteFeedsURL %>" cssClass="container-fluid-1280" method="post" name="fm">
+<aui:form action="<%= deleteFeedsURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<liferay-ui:search-container
 		id="feeds"
 		searchContainer="<%= journalFeedsDisplayContext.getFeedsSearchContainer() %>"
@@ -56,21 +49,23 @@ renderResponse.setTitle(LanguageUtil.get(request, "feeds"));
 			String editURL = StringPool.BLANK;
 
 			if (JournalFeedPermission.contains(permissionChecker, feed, ActionKeys.UPDATE)) {
-				PortletURL editFeedURL = liferayPortletResponse.createRenderURL();
-
-				editFeedURL.setParameter("mvcPath", "/edit_feed.jsp");
-				editFeedURL.setParameter("redirect", currentURL);
-				editFeedURL.setParameter("groupId", String.valueOf(feed.getGroupId()));
-				editFeedURL.setParameter("feedId", feed.getFeedId());
-
-				editURL = editFeedURL.toString();
+				editURL = PortletURLBuilder.createRenderURL(
+					liferayPortletResponse
+				).setMVCPath(
+					"/edit_feed.jsp"
+				).setRedirect(
+					currentURL
+				).setParameter(
+					"feedId", feed.getFeedId()
+				).setParameter(
+					"groupId", feed.getGroupId()
+				).buildString();
 			}
 
-			Map<String, Object> rowData = new HashMap<>();
-
-			rowData.put("actions", journalFeedsManagementToolbarDisplayContext.getAvailableActions(feed));
-
-			row.setData(rowData);
+			row.setData(
+				HashMapBuilder.<String, Object>put(
+					"actions", journalFeedsManagementToolbarDisplayContext.getAvailableActions(feed)
+				).build());
 			%>
 
 			<c:choose>
@@ -83,24 +78,33 @@ renderResponse.setTitle(LanguageUtil.get(request, "feeds"));
 					<liferay-ui:search-container-column-text
 						colspan="<%= 2 %>"
 					>
-						<h5>
+						<div class="h5">
 							<aui:a href="<%= editURL %>">
 								<%= feed.getName() %>
 							</aui:a>
-						</h5>
+						</div>
 
-						<h6 class="text-default">
+						<div class="h6 text-default">
 							<%= feed.getDescription() %>
-						</h6>
+						</div>
 
-						<h6 class="text-default">
+						<div class="h6 text-default">
 							<strong><liferay-ui:message key="id" /></strong>: <%= feed.getId() %>
-						</h6>
+						</div>
 					</liferay-ui:search-container-column-text>
 
-					<liferay-ui:search-container-column-jsp
-						path="/feed_action.jsp"
-					/>
+					<liferay-ui:search-container-column-text>
+
+						<%
+						JournalFeedActionDropdownItemsProvider journalFeedActionDropdownItemsProvider = new JournalFeedActionDropdownItemsProvider(feed, liferayPortletRequest, liferayPortletResponse);
+						%>
+
+						<clay:dropdown-actions
+							aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+							dropdownItems="<%= journalFeedActionDropdownItemsProvider.getActionDropdownItems() %>"
+							propsTransformer="{FeedElementsDefaultPropsTransformer} from journal-web"
+						/>
+					</liferay-ui:search-container-column-text>
 				</c:when>
 				<c:when test='<%= Objects.equals(journalFeedsDisplayContext.getDisplayStyle(), "list") %>'>
 					<liferay-ui:search-container-column-text
@@ -121,9 +125,18 @@ renderResponse.setTitle(LanguageUtil.get(request, "feeds"));
 						truncate="<%= true %>"
 					/>
 
-					<liferay-ui:search-container-column-jsp
-						path="/feed_action.jsp"
-					/>
+					<liferay-ui:search-container-column-text>
+
+						<%
+						JournalFeedActionDropdownItemsProvider journalFeedActionDropdownItemsProvider = new JournalFeedActionDropdownItemsProvider(feed, liferayPortletRequest, liferayPortletResponse);
+						%>
+
+						<clay:dropdown-actions
+							aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+							dropdownItems="<%= journalFeedActionDropdownItemsProvider.getActionDropdownItems() %>"
+							propsTransformer="{FeedElementsDefaultPropsTransformer} from journal-web"
+						/>
+					</liferay-ui:search-container-column-text>
 				</c:when>
 			</c:choose>
 		</liferay-ui:search-container-row>
@@ -134,8 +147,3 @@ renderResponse.setTitle(LanguageUtil.get(request, "feeds"));
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= journalFeedsManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/FeedsManagementToolbarDefaultEventHandler.es"
-/>

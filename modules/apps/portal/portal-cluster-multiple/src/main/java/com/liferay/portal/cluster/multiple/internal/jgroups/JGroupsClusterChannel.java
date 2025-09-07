@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.cluster.multiple.internal.jgroups;
@@ -20,9 +11,9 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.cluster.multiple.configuration.ClusterExecutorConfiguration;
 import com.liferay.portal.cluster.multiple.internal.BaseClusterChannel;
 import com.liferay.portal.cluster.multiple.internal.ClusterReceiver;
-import com.liferay.portal.cluster.multiple.internal.io.ClusterSerializationUtil;
 import com.liferay.portal.kernel.cluster.Address;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.io.Serializer;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -32,6 +23,8 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 
 import java.net.InetAddress;
+
+import java.nio.ByteBuffer;
 
 import java.util.List;
 import java.util.Map;
@@ -95,24 +88,20 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 			_localAddress = new AddressImpl(_jChannel.getAddress());
 
 			if (_log.isInfoEnabled()) {
-				StringBundler sb = new StringBundler(7);
-
-				sb.append("Create a new JGroups channel {channelName: ");
-				sb.append(_clusterName);
-				sb.append(", localAddress: ");
-				sb.append(_localAddress.getDescription());
-				sb.append(", properties: ");
-				sb.append(
-					_getJChannelProperties(
-						clusterExecutorConfiguration.excludedPropertyKeys()));
-				sb.append("}");
-
-				_log.info(sb.toString());
+				_log.info(
+					StringBundler.concat(
+						"Create a new JGroups channel {channelName: ",
+						_clusterName, ", localAddress: ",
+						_localAddress.getDescription(), ", properties: ",
+						_getJChannelProperties(
+							clusterExecutorConfiguration.
+								excludedPropertyKeys()),
+						"}"));
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new SystemException(
-				"Unable to initial cluster channel " + clusterName, e);
+				"Unable to initial cluster channel " + clusterName, exception);
 		}
 	}
 
@@ -154,6 +143,7 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 		return _localAddress;
 	}
 
+	@Override
 	protected void doSendMessage(Serializable message, Address address) {
 		if (_jChannel.isClosed()) {
 			if (_log.isWarnEnabled()) {
@@ -170,9 +160,16 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 			jgroupsAddress = (org.jgroups.Address)address.getRealAddress();
 		}
 
+		Serializer serializer = new Serializer();
+
+		serializer.writeObject(message);
+
+		ByteBuffer byteBuffer = serializer.toByteBuffer();
+
 		try {
 			_jChannel.send(
-				jgroupsAddress, ClusterSerializationUtil.writeObject(message));
+				jgroupsAddress, byteBuffer.array(), byteBuffer.position(),
+				byteBuffer.remaining());
 
 			if (_log.isDebugEnabled()) {
 				if (address == null) {
@@ -183,13 +180,14 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 				}
 			}
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (address == null) {
 				throw new SystemException(
-					"Unable to send multicast message", e);
+					"Unable to send multicast message", exception);
 			}
 
-			throw new SystemException("Unable to send unicast message", e);
+			throw new SystemException(
+				"Unable to send unicast message", exception);
 		}
 	}
 
@@ -247,8 +245,8 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 			_getPropsMethod = ReflectionUtil.getDeclaredMethod(
 				ProtocolStack.class, "getProps", Protocol.class);
 		}
-		catch (Exception e) {
-			throw new ExceptionInInitializerError(e);
+		catch (Exception exception) {
+			throw new ExceptionInInitializerError(exception);
 		}
 	}
 

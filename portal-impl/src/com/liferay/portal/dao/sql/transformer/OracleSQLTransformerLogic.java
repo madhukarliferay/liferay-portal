@@ -1,20 +1,10 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.sql.transformer;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.internal.dao.sql.transformer.SQLFunctionTransformer;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -33,11 +23,13 @@ public class OracleSQLTransformerLogic extends BaseSQLTransformerLogic {
 		super(db);
 
 		Function[] functions = {
+			getAggregationFunction(), getBitwiseOrFunction(),
 			getBooleanFunction(), getCastClobTextFunction(),
-			getCastLongFunction(), getCastTextFunction(), getConcatFunction(),
+			getCastDecimalFunction(), getCastLongFunction(),
+			getCastTextFunction(), getConcatFunction(),
 			getDropTableIfExistsTextFunction(), getIntegerDivisionFunction(),
 			getNullDateFunction(), _getEscapeFunction(),
-			_getNotEqualsBlankStringFunction()
+			getTruncateTableFunction(), _getNotEqualsBlankStringFunction()
 		};
 
 		if (!db.isSupportsStringCaseSensitiveQuery()) {
@@ -56,6 +48,10 @@ public class OracleSQLTransformerLogic extends BaseSQLTransformerLogic {
 		return sqlFunctionTransformer::transform;
 	}
 
+	protected String replaceBitwiseOr(Matcher matcher) {
+		return matcher.replaceAll("($1 + $2 - BITAND($1, $2))");
+	}
+
 	@Override
 	protected String replaceCastClobText(Matcher matcher) {
 		return matcher.replaceAll("DBMS_LOB.SUBSTR($1, 4000, 1)");
@@ -66,22 +62,12 @@ public class OracleSQLTransformerLogic extends BaseSQLTransformerLogic {
 		return matcher.replaceAll("CAST($1 AS VARCHAR(4000))");
 	}
 
+	@Override
 	protected String replaceDropTableIfExistsText(Matcher matcher) {
-		StringBundler sb = new StringBundler(9);
-
-		sb.append("BEGIN\n");
-		sb.append("EXECUTE IMMEDIATE 'DROP TABLE $1';\n");
-		sb.append("EXCEPTION\n");
-		sb.append("WHEN OTHERS THEN\n");
-		sb.append("IF SQLCODE != -942 THEN\n");
-		sb.append("RAISE;\n");
-		sb.append("END IF;\n");
-		sb.append("END;\n");
-		sb.append("/");
-
-		String dropTableIfExists = sb.toString();
-
-		return matcher.replaceAll(dropTableIfExists);
+		return matcher.replaceAll(
+			"BEGIN\nEXECUTE IMMEDIATE 'DROP TABLE $1';\nEXCEPTION\nWHEN " +
+				"OTHERS THEN\nIF SQLCODE != -942 THEN\nRAISE;\nEND IF;\nEND;" +
+					"\n/");
 	}
 
 	@Override

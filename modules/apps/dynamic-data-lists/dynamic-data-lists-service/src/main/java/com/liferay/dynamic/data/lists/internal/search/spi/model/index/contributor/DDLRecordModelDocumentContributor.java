@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.lists.internal.search.spi.model.index.contributor;
@@ -20,7 +11,6 @@ import com.liferay.dynamic.data.lists.model.DDLRecordVersion;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -40,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcela Cunha
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.dynamic.data.lists.model.DDLRecord",
 	service = ModelDocumentContributor.class
 )
@@ -70,18 +59,24 @@ public class DDLRecordModelDocumentContributor
 
 			DDMFormValues ddmFormValues = ddlRecordVersion.getDDMFormValues();
 
-			addContent(ddlRecordVersion, ddmFormValues, document);
+			_addContent(ddlRecordVersion, ddmFormValues, document);
 
 			ddmIndexer.addAttributes(document, ddmStructure, ddmFormValues);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(e, e);
+				_log.debug(exception);
 			}
 		}
 	}
 
-	protected void addContent(
+	@Reference
+	protected ClassNameLocalService classNameLocalService;
+
+	@Reference
+	protected DDMIndexer ddmIndexer;
+
+	private void _addContent(
 			DDLRecordVersion ddlRecordVersion, DDMFormValues ddmFormValues,
 			Document document)
 		throws Exception {
@@ -89,18 +84,13 @@ public class DDLRecordModelDocumentContributor
 		Set<Locale> locales = ddmFormValues.getAvailableLocales();
 
 		for (Locale locale : locales) {
-			StringBundler sb = new StringBundler(3);
-
-			sb.append("ddmContent");
-			sb.append(StringPool.UNDERLINE);
-			sb.append(LocaleUtil.toLanguageId(locale));
-
 			document.addText(
-				sb.toString(), extractContent(ddlRecordVersion, locale));
+				"ddmContent_" + LocaleUtil.toLanguageId(locale),
+				_extractContent(ddlRecordVersion, locale));
 		}
 	}
 
-	protected String extractContent(
+	private String _extractContent(
 			DDLRecordVersion ddlRecordVersion, Locale locale)
 		throws Exception {
 
@@ -115,12 +105,6 @@ public class DDLRecordModelDocumentContributor
 		return ddmIndexer.extractIndexableAttributes(
 			ddlRecordSet.getDDMStructure(), ddmFormValues, locale);
 	}
-
-	@Reference
-	protected ClassNameLocalService classNameLocalService;
-
-	@Reference
-	protected DDMIndexer ddmIndexer;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDLRecordModelDocumentContributor.class);

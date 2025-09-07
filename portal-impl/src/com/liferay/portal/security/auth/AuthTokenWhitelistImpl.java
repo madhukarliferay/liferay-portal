@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.auth;
 
+import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
@@ -23,11 +15,11 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsValues;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Raymond Augé
@@ -35,28 +27,12 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class AuthTokenWhitelistImpl extends BaseAuthTokenWhitelist {
 
-	public AuthTokenWhitelistImpl() {
-		trackWhitelistServices(
-			PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS, _originCSRFWhitelist);
-
-		registerPortalProperty(PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS);
-
-		trackWhitelistServices(
-			PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS, _portletCSRFWhitelist);
-
-		registerPortalProperty(PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS);
-
-		trackWhitelistServices(
-			PropsKeys.PORTLET_ADD_DEFAULT_RESOURCE_CHECK_WHITELIST,
-			_portletInvocationWhitelist);
-
-		registerPortalProperty(
-			PropsKeys.PORTLET_ADD_DEFAULT_RESOURCE_CHECK_WHITELIST);
-	}
-
 	@Override
 	public boolean isOriginCSRFWhitelisted(long companyId, String origin) {
-		for (String whitelistedOrigin : _originCSRFWhitelist) {
+		for (String whitelistedOrigin :
+				_originCSRFWhitelist.getSingleton(
+					this::_createOriginCSRFWhitelist)) {
+
 			if (origin.startsWith(whitelistedOrigin)) {
 				return true;
 			}
@@ -69,14 +45,21 @@ public class AuthTokenWhitelistImpl extends BaseAuthTokenWhitelist {
 	public boolean isPortletCSRFWhitelisted(
 		HttpServletRequest httpServletRequest, Portlet portlet) {
 
-		return _portletCSRFWhitelist.contains(portlet.getRootPortletId());
+		Set<String> portletCSRFWhitelist = _portletCSRFWhitelist.getSingleton(
+			this::_createPortletCSRFWhitelist);
+
+		return portletCSRFWhitelist.contains(portlet.getRootPortletId());
 	}
 
 	@Override
 	public boolean isPortletInvocationWhitelisted(
 		HttpServletRequest httpServletRequest, Portlet portlet) {
 
-		return _portletInvocationWhitelist.contains(portlet.getPortletId());
+		Set<String> portletInvocationWhitelist =
+			_portletInvocationWhitelist.getSingleton(
+				this::_createPortletInvocationWhitelist);
+
+		return portletInvocationWhitelist.contains(portlet.getPortletId());
 	}
 
 	@Override
@@ -86,24 +69,29 @@ public class AuthTokenWhitelistImpl extends BaseAuthTokenWhitelist {
 		String rootPortletId = PortletIdCodec.decodePortletName(
 			liferayPortletURL.getPortletId());
 
-		return _portletCSRFWhitelist.contains(rootPortletId);
+		Set<String> portletCSRFWhitelist = _portletCSRFWhitelist.getSingleton(
+			this::_createPortletCSRFWhitelist);
+
+		return portletCSRFWhitelist.contains(rootPortletId);
 	}
 
 	@Override
 	public boolean isPortletURLPortletInvocationWhitelisted(
 		LiferayPortletURL liferayPortletURL) {
 
-		return _portletInvocationWhitelist.contains(
+		Set<String> portletInvocationWhitelist =
+			_portletInvocationWhitelist.getSingleton(
+				this::_createPortletInvocationWhitelist);
+
+		return portletInvocationWhitelist.contains(
 			liferayPortletURL.getPortletId());
 	}
 
 	@Override
 	public boolean isValidSharedSecret(String sharedSecret) {
-		if (Validator.isNull(sharedSecret)) {
-			return false;
-		}
+		if (Validator.isNull(sharedSecret) ||
+			Validator.isNull(PropsValues.AUTH_TOKEN_SHARED_SECRET)) {
 
-		if (Validator.isNull(PropsValues.AUTH_TOKEN_SHARED_SECRET)) {
 			return false;
 		}
 
@@ -111,11 +99,49 @@ public class AuthTokenWhitelistImpl extends BaseAuthTokenWhitelist {
 			DigesterUtil.digest(PropsValues.AUTH_TOKEN_SHARED_SECRET));
 	}
 
-	private final Set<String> _originCSRFWhitelist = Collections.newSetFromMap(
-		new ConcurrentHashMap<>());
-	private final Set<String> _portletCSRFWhitelist = Collections.newSetFromMap(
-		new ConcurrentHashMap<>());
-	private final Set<String> _portletInvocationWhitelist =
-		Collections.newSetFromMap(new ConcurrentHashMap<>());
+	private Set<String> _createOriginCSRFWhitelist() {
+		Set<String> originCSRFWhitelist = Collections.newSetFromMap(
+			new ConcurrentHashMap<>());
+
+		registerPortalProperty(PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS);
+
+		trackWhitelistServices(
+			PropsKeys.AUTH_TOKEN_IGNORE_ORIGINS, originCSRFWhitelist);
+
+		return originCSRFWhitelist;
+	}
+
+	private Set<String> _createPortletCSRFWhitelist() {
+		Set<String> portletCSRFWhitelist = Collections.newSetFromMap(
+			new ConcurrentHashMap<>());
+
+		registerPortalProperty(PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS);
+
+		trackWhitelistServices(
+			PropsKeys.AUTH_TOKEN_IGNORE_PORTLETS, portletCSRFWhitelist);
+
+		return portletCSRFWhitelist;
+	}
+
+	private Set<String> _createPortletInvocationWhitelist() {
+		Set<String> portletInvocationWhitelist = Collections.newSetFromMap(
+			new ConcurrentHashMap<>());
+
+		registerPortalProperty(
+			PropsKeys.PORTLET_ADD_DEFAULT_RESOURCE_CHECK_WHITELIST);
+
+		trackWhitelistServices(
+			PropsKeys.PORTLET_ADD_DEFAULT_RESOURCE_CHECK_WHITELIST,
+			portletInvocationWhitelist);
+
+		return portletInvocationWhitelist;
+	}
+
+	private final DCLSingleton<Set<String>> _originCSRFWhitelist =
+		new DCLSingleton<>();
+	private final DCLSingleton<Set<String>> _portletCSRFWhitelist =
+		new DCLSingleton<>();
+	private final DCLSingleton<Set<String>> _portletInvocationWhitelist =
+		new DCLSingleton<>();
 
 }

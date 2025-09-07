@@ -1,28 +1,17 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
 import PropTypes from 'prop-types';
-import React, {useContext} from 'react';
+import React from 'react';
 
 import editFragmentEntryComment from '../../../app/actions/editFragmentEntryLinkComment';
-import {useSelectItem} from '../../../app/components/Controls';
-import {StoreContext} from '../../../app/store/index';
-import SidebarPanelContent from '../../../common/components/SidebarPanelContent';
+import {useSelectItem} from '../../../app/contexts/ControlsContext';
+import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
 import SidebarPanelHeader from '../../../common/components/SidebarPanelHeader';
-import AppContext from '../../../core/AppContext';
 import AddCommentForm from './AddCommentForm';
 import FragmentComment from './FragmentComment';
 import ResolvedCommentsToggle from './ResolvedCommentsToggle';
@@ -32,8 +21,10 @@ export default function FragmentComments({fragmentEntryLink}) {
 
 	const selectItem = useSelectItem();
 
-	const {dispatch} = useContext(AppContext);
-	const {showResolvedComments} = useContext(StoreContext);
+	const dispatch = useDispatch();
+	const showResolvedComments = useSelector(
+		(state) => state.showResolvedComments
+	);
 
 	const fragmentEntryLinkComments = showResolvedComments
 		? comments
@@ -41,56 +32,57 @@ export default function FragmentComments({fragmentEntryLink}) {
 
 	return (
 		<>
-			<SidebarPanelHeader
-				className="comments-sidebar-title"
-				padded={false}
-			>
-				<ClayButton
-					borderless
-					className="text-dark"
-					onClick={() => selectItem(null)}
-					small
+			<div className="flex-shrink-0">
+				<SidebarPanelHeader
+					iconLeft={
+						<ClayButton
+							aria-label={Liferay.Language.get('back')}
+							borderless
+							className="mr-3 p-0"
+							displayType="secondary"
+							onClick={() => selectItem(null)}
+							size="sm"
+						>
+							<ClayIcon symbol="angle-left" />
+						</ClayButton>
+					}
 				>
-					<ClayIcon symbol="angle-left" />
-				</ClayButton>
+					{name}
+				</SidebarPanelHeader>
 
-				<span>{name}</span>
-			</SidebarPanelHeader>
-
-			<SidebarPanelContent padded={false}>
 				<ResolvedCommentsToggle />
 
-				<div>
-					<AddCommentForm fragmentEntryLinkId={fragmentEntryLinkId} />
+				<AddCommentForm fragmentEntryLinkId={fragmentEntryLinkId} />
+			</div>
 
-					{fragmentEntryLinkComments.map((_, i) => {
-						const comment =
-							fragmentEntryLinkComments[
-								fragmentEntryLinkComments.length - 1 - i
-							];
+			<div className="overflow-auto">
+				{fragmentEntryLinkComments.map((_, i) => {
+					const comment =
+						fragmentEntryLinkComments[
+							fragmentEntryLinkComments.length - 1 - i
+						];
 
-						return (
-							<FragmentComment
-								comment={comment}
-								fragmentEntryLinkId={fragmentEntryLinkId}
-								key={comment.commentId}
-								onEdit={fragmentEntryLinkComment =>
-									dispatch(
-										editFragmentEntryComment({
-											fragmentEntryLinkComment,
-											fragmentEntryLinkId
-										})
-									)
-								}
-							/>
-						);
-					})}
-				</div>
-			</SidebarPanelContent>
+					return (
+						<FragmentComment
+							comment={comment}
+							fragmentEntryLinkId={fragmentEntryLinkId}
+							key={comment.commentId}
+							onEdit={(fragmentEntryLinkComment) =>
+								dispatch(
+									editFragmentEntryComment({
+										fragmentEntryLinkComment,
+										fragmentEntryLinkId,
+									})
+								)
+							}
+						/>
+					);
+				})}
+			</div>
 		</>
 	);
 }
 
 FragmentComments.propTypes = {
-	fragmentEntryLink: PropTypes.object.isRequired
+	fragmentEntryLink: PropTypes.object.isRequired,
 };

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.test;
@@ -123,6 +114,8 @@ public class SystemEventPersistenceTest {
 
 		newSystemEvent.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSystemEvent.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSystemEvent.setGroupId(RandomTestUtil.nextLong());
 
 		newSystemEvent.setCompanyId(RandomTestUtil.nextLong());
@@ -132,6 +125,9 @@ public class SystemEventPersistenceTest {
 		newSystemEvent.setUserName(RandomTestUtil.randomString());
 
 		newSystemEvent.setCreateDate(RandomTestUtil.nextDate());
+
+		newSystemEvent.setClassExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newSystemEvent.setClassNameId(RandomTestUtil.nextLong());
 
@@ -158,6 +154,9 @@ public class SystemEventPersistenceTest {
 			existingSystemEvent.getMvccVersion(),
 			newSystemEvent.getMvccVersion());
 		Assert.assertEquals(
+			existingSystemEvent.getCtCollectionId(),
+			newSystemEvent.getCtCollectionId());
+		Assert.assertEquals(
 			existingSystemEvent.getSystemEventId(),
 			newSystemEvent.getSystemEventId());
 		Assert.assertEquals(
@@ -171,6 +170,9 @@ public class SystemEventPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingSystemEvent.getCreateDate()),
 			Time.getShortTimestamp(newSystemEvent.getCreateDate()));
+		Assert.assertEquals(
+			existingSystemEvent.getClassExternalReferenceCode(),
+			newSystemEvent.getClassExternalReferenceCode());
 		Assert.assertEquals(
 			existingSystemEvent.getClassNameId(),
 			newSystemEvent.getClassNameId());
@@ -251,10 +253,11 @@ public class SystemEventPersistenceTest {
 
 	protected OrderByComparator<SystemEvent> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SystemEvent", "mvccVersion", true, "systemEventId", true,
-			"groupId", true, "companyId", true, "userId", true, "userName",
-			true, "createDate", true, "classNameId", true, "classPK", true,
-			"classUuid", true, "referrerClassNameId", true,
+			"SystemEvent", "mvccVersion", true, "ctCollectionId", true,
+			"systemEventId", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true,
+			"classExternalReferenceCode", true, "classNameId", true, "classPK",
+			true, "classUuid", true, "referrerClassNameId", true,
 			"parentSystemEventId", true, "systemEventSetKey", true, "type",
 			true);
 	}
@@ -475,6 +478,8 @@ public class SystemEventPersistenceTest {
 
 		systemEvent.setMvccVersion(RandomTestUtil.nextLong());
 
+		systemEvent.setCtCollectionId(RandomTestUtil.nextLong());
+
 		systemEvent.setGroupId(RandomTestUtil.nextLong());
 
 		systemEvent.setCompanyId(RandomTestUtil.nextLong());
@@ -484,6 +489,9 @@ public class SystemEventPersistenceTest {
 		systemEvent.setUserName(RandomTestUtil.randomString());
 
 		systemEvent.setCreateDate(RandomTestUtil.nextDate());
+
+		systemEvent.setClassExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		systemEvent.setClassNameId(RandomTestUtil.nextLong());
 

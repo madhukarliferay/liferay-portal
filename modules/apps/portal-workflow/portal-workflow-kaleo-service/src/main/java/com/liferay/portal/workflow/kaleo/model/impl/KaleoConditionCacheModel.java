@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.workflow.kaleo.model.impl;
@@ -37,17 +28,17 @@ public class KaleoConditionCacheModel
 	implements CacheModel<KaleoCondition>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof KaleoConditionCacheModel)) {
+		if (!(object instanceof KaleoConditionCacheModel)) {
 			return false;
 		}
 
 		KaleoConditionCacheModel kaleoConditionCacheModel =
-			(KaleoConditionCacheModel)obj;
+			(KaleoConditionCacheModel)object;
 
 		if ((kaleoConditionId == kaleoConditionCacheModel.kaleoConditionId) &&
 			(mvccVersion == kaleoConditionCacheModel.mvccVersion)) {
@@ -77,10 +68,12 @@ public class KaleoConditionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(31);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
 		sb.append(", kaleoConditionId=");
 		sb.append(kaleoConditionId);
 		sb.append(", groupId=");
@@ -95,6 +88,8 @@ public class KaleoConditionCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", kaleoDefinitionId=");
+		sb.append(kaleoDefinitionId);
 		sb.append(", kaleoDefinitionVersionId=");
 		sb.append(kaleoDefinitionVersionId);
 		sb.append(", kaleoNodeId=");
@@ -115,6 +110,7 @@ public class KaleoConditionCacheModel
 		KaleoConditionImpl kaleoConditionImpl = new KaleoConditionImpl();
 
 		kaleoConditionImpl.setMvccVersion(mvccVersion);
+		kaleoConditionImpl.setCtCollectionId(ctCollectionId);
 		kaleoConditionImpl.setKaleoConditionId(kaleoConditionId);
 		kaleoConditionImpl.setGroupId(groupId);
 		kaleoConditionImpl.setCompanyId(companyId);
@@ -141,6 +137,7 @@ public class KaleoConditionCacheModel
 			kaleoConditionImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		kaleoConditionImpl.setKaleoDefinitionId(kaleoDefinitionId);
 		kaleoConditionImpl.setKaleoDefinitionVersionId(
 			kaleoDefinitionVersionId);
 		kaleoConditionImpl.setKaleoNodeId(kaleoNodeId);
@@ -173,8 +170,12 @@ public class KaleoConditionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
 
 		kaleoConditionId = objectInput.readLong();
 
@@ -187,10 +188,12 @@ public class KaleoConditionCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		kaleoDefinitionId = objectInput.readLong();
+
 		kaleoDefinitionVersionId = objectInput.readLong();
 
 		kaleoNodeId = objectInput.readLong();
-		script = objectInput.readUTF();
+		script = (String)objectInput.readObject();
 		scriptLanguage = objectInput.readUTF();
 		scriptRequiredContexts = objectInput.readUTF();
 	}
@@ -198,6 +201,8 @@ public class KaleoConditionCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
 
 		objectOutput.writeLong(kaleoConditionId);
 
@@ -217,15 +222,17 @@ public class KaleoConditionCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		objectOutput.writeLong(kaleoDefinitionId);
+
 		objectOutput.writeLong(kaleoDefinitionVersionId);
 
 		objectOutput.writeLong(kaleoNodeId);
 
 		if (script == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(script);
+			objectOutput.writeObject(script);
 		}
 
 		if (scriptLanguage == null) {
@@ -244,6 +251,7 @@ public class KaleoConditionCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
 	public long kaleoConditionId;
 	public long groupId;
 	public long companyId;
@@ -251,6 +259,7 @@ public class KaleoConditionCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long kaleoDefinitionId;
 	public long kaleoDefinitionVersionId;
 	public long kaleoNodeId;
 	public String script;

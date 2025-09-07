@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.odata.internal.filter;
@@ -18,14 +9,16 @@ import com.fasterxml.jackson.databind.util.ISO8601Utils;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
+import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.ExistsFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
-import com.liferay.portal.kernel.search.filter.PrefixFilter;
 import com.liferay.portal.kernel.search.filter.QueryFilter;
-import com.liferay.portal.kernel.search.filter.RangeTermFilter;
-import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.search.generic.BooleanQueryImpl;
+import com.liferay.portal.kernel.search.generic.TermQueryImpl;
+import com.liferay.portal.kernel.search.generic.TermRangeQueryImpl;
 import com.liferay.portal.kernel.search.generic.WildcardQueryImpl;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.CollectionEntityField;
@@ -41,12 +34,14 @@ import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
 import com.liferay.portal.odata.filter.expression.ExpressionVisitor;
 import com.liferay.portal.odata.filter.expression.LambdaFunctionExpression;
 import com.liferay.portal.odata.filter.expression.LambdaVariableExpression;
+import com.liferay.portal.odata.filter.expression.ListExpression;
 import com.liferay.portal.odata.filter.expression.LiteralExpression;
 import com.liferay.portal.odata.filter.expression.MemberExpression;
 import com.liferay.portal.odata.filter.expression.MethodExpression;
 import com.liferay.portal.odata.filter.expression.PrimitivePropertyExpression;
 import com.liferay.portal.odata.filter.expression.PropertyExpression;
 import com.liferay.portal.odata.filter.expression.UnaryExpression;
+import com.liferay.portal.search.query.NestedFieldQueryHelper;
 
 import java.text.Format;
 import java.text.ParseException;
@@ -58,7 +53,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author Julio Camarero
@@ -66,24 +60,52 @@ import java.util.Optional;
 public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 
 	public ExpressionVisitorImpl(
-		Format format, Locale locale, EntityModel entityModel) {
+		Format format, Locale locale, EntityModel entityModel,
+		NestedFieldQueryHelper nestedFieldQueryHelper) {
 
 		_format = format;
 		_locale = locale;
 		_entityModel = entityModel;
+		_nestedFieldQueryHelper = nestedFieldQueryHelper;
 	}
 
 	@Override
 	public Filter visitBinaryExpressionOperation(
 		BinaryExpression.Operation operation, Object left, Object right) {
 
-		Optional<Filter> filterOptional = _getFilterOptional(
-			operation, left, right, _locale);
+		Filter filter = null;
 
-		return filterOptional.orElseThrow(
-			() -> new UnsupportedOperationException(
+		if (Objects.equals(BinaryExpression.Operation.AND, operation)) {
+			filter = _getANDFilter((Filter)left, (Filter)right);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.EQ, operation)) {
+			filter = _getEQFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.GE, operation)) {
+			filter = _getGEFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.GT, operation)) {
+			filter = _getGTFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.LE, operation)) {
+			filter = _getLEFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.LT, operation)) {
+			filter = _getLTFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.NE, operation)) {
+			filter = _getNEFilter((EntityField)left, right, _locale);
+		}
+		else if (Objects.equals(BinaryExpression.Operation.OR, operation)) {
+			filter = _getORFilter((Filter)left, (Filter)right);
+		}
+		else {
+			throw new UnsupportedOperationException(
 				"Unsupported method visitBinaryExpressionOperation with " +
-					"operation " + operation));
+					"operation " + operation);
+		}
+
+		return filter;
 	}
 
 	@Override
@@ -103,7 +125,8 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 				_getLambdaEntityModel(
 					lambdaFunctionExpression.getVariableName(),
 					(CollectionEntityField)entityFieldsMap.get(
-						collectionPropertyExpression.getName()))));
+						collectionPropertyExpression.getName())),
+				_nestedFieldQueryHelper));
 	}
 
 	@Override
@@ -154,12 +177,26 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 
 		if (entityField == null) {
 			throw new ExpressionVisitException(
-				"Invoked visitlambdavariableexpression when no entity field " +
+				"Invoked visitLambdaVariableExpression when no entity field " +
 					"is stored for lambda variable name " +
 						lambdaVariableExpression.getVariableName());
 		}
 
 		return entityField;
+	}
+
+	@Override
+	public Object visitListExpressionOperation(
+			ListExpression.Operation operation, Object left, List<Object> right)
+		throws ExpressionVisitException {
+
+		if (operation == ListExpression.Operation.IN) {
+			return _getINFilter((EntityField)left, right, _locale);
+		}
+
+		throw new UnsupportedOperationException(
+			"Unsupported method visitListExpressionOperation with operation " +
+				operation);
 	}
 
 	@Override
@@ -199,15 +236,24 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			if (expressions.size() != 2) {
 				throw new UnsupportedOperationException(
 					StringBundler.concat(
-						"Unsupported method visitMethodExpression with method",
+						"Unsupported method visitMethodExpression with method ",
 						"type ", type, " and ", expressions.size(), "params"));
 			}
 
 			return _contains(
 				(EntityField)expressions.get(0), expressions.get(1), _locale);
 		}
+		else if (type == MethodExpression.Type.NOW) {
+			if (!expressions.isEmpty()) {
+				throw new UnsupportedOperationException(
+					StringBundler.concat(
+						"Unsupported method visitMethodExpression with method",
+						"type ", type, " and ", expressions.size(), "params"));
+			}
 
-		if (type == MethodExpression.Type.STARTS_WITH) {
+			return _normalizeDateLiteral(ISO8601Utils.format(_now));
+		}
+		else if (type == MethodExpression.Type.STARTS_WITH) {
 			if (expressions.size() != 2) {
 				throw new UnsupportedOperationException(
 					StringBundler.concat(
@@ -255,9 +301,11 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 		EntityField entityField, Object fieldValue, Locale locale) {
 
 		return new QueryFilter(
-			new WildcardQueryImpl(
+			_nestedFieldQueryHelper.getQuery(
 				entityField.getFilterableName(locale),
-				"*" + entityField.getFilterableValue(fieldValue) + "*"));
+				fieldName -> new WildcardQueryImpl(
+					fieldName,
+					"*" + entityField.getFilterableValue(fieldValue) + "*")));
 	}
 
 	private Filter _getANDFilter(Filter leftFilter, Filter rightFilter) {
@@ -276,52 +324,17 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			BooleanFilter booleanFilter = new BooleanFilter();
 
 			booleanFilter.add(
-				new ExistsFilter(entityField.getFilterableName(locale)),
+				_getNullValueFilter(entityField, locale),
 				BooleanClauseOccur.MUST_NOT);
 
 			return booleanFilter;
 		}
 
-		return new TermFilter(
-			entityField.getFilterableName(locale),
-			entityField.getFilterableValue(fieldValue));
-	}
-
-	private Optional<Filter> _getFilterOptional(
-		BinaryExpression.Operation operation, Object left, Object right,
-		Locale locale) {
-
-		Filter filter = null;
-
-		if (Objects.equals(BinaryExpression.Operation.AND, operation)) {
-			filter = _getANDFilter((Filter)left, (Filter)right);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.EQ, operation)) {
-			filter = _getEQFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.GE, operation)) {
-			filter = _getGEFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.GT, operation)) {
-			filter = _getGTFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.LE, operation)) {
-			filter = _getLEFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.LT, operation)) {
-			filter = _getLTFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.NE, operation)) {
-			filter = _getNEFilter((EntityField)left, right, locale);
-		}
-		else if (Objects.equals(BinaryExpression.Operation.OR, operation)) {
-			filter = _getORFilter((Filter)left, (Filter)right);
-		}
-		else {
-			return Optional.empty();
-		}
-
-		return Optional.of(filter);
+		return new QueryFilter(
+			_nestedFieldQueryHelper.getQuery(
+				entityField.getFilterableName(locale),
+				fieldName -> new TermQueryImpl(
+					fieldName, entityField.getFilterableValue(fieldValue))));
 	}
 
 	private Filter _getGEFilter(
@@ -338,9 +351,12 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			Objects.equals(entityField.getType(), EntityField.Type.INTEGER) ||
 			Objects.equals(entityField.getType(), EntityField.Type.STRING)) {
 
-			return new RangeTermFilter(
-				entityField.getFilterableName(locale), true, true,
-				entityField.getFilterableValue(fieldValue), null);
+			return new QueryFilter(
+				_nestedFieldQueryHelper.getQuery(
+					entityField.getFilterableName(locale),
+					fieldName -> new TermRangeQueryImpl(
+						fieldName, entityField.getFilterableValue(fieldValue),
+						null, true, true)));
 		}
 
 		throw new UnsupportedOperationException(
@@ -362,14 +378,40 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			Objects.equals(entityField.getType(), EntityField.Type.INTEGER) ||
 			Objects.equals(entityField.getType(), EntityField.Type.STRING)) {
 
-			return new RangeTermFilter(
-				entityField.getFilterableName(locale), false, true,
-				entityField.getFilterableValue(fieldValue), null);
+			return new QueryFilter(
+				_nestedFieldQueryHelper.getQuery(
+					entityField.getFilterableName(locale),
+					fieldName -> new TermRangeQueryImpl(
+						fieldName, entityField.getFilterableValue(fieldValue),
+						null, false, true)));
 		}
 
 		throw new UnsupportedOperationException(
 			"Unsupported method _getGTFilter with entity field type " +
 				entityField.getType());
+	}
+
+	private Filter _getINFilter(
+		EntityField entityField, List<Object> fieldValues, Locale locale) {
+
+		BooleanQuery booleanQuery = new BooleanQueryImpl();
+
+		try {
+			for (Object fieldValue : fieldValues) {
+				booleanQuery.add(
+					_nestedFieldQueryHelper.getQuery(
+						entityField.getFilterableName(locale),
+						fieldName -> new TermQueryImpl(
+							fieldName,
+							entityField.getFilterableValue(fieldValue))),
+					BooleanClauseOccur.SHOULD);
+			}
+		}
+		catch (com.liferay.portal.kernel.search.ParseException parseException) {
+			throw new SystemException(parseException);
+		}
+
+		return new QueryFilter(booleanQuery);
 	}
 
 	private EntityModel _getLambdaEntityModel(
@@ -405,9 +447,13 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			Objects.equals(entityField.getType(), EntityField.Type.INTEGER) ||
 			Objects.equals(entityField.getType(), EntityField.Type.STRING)) {
 
-			return new RangeTermFilter(
-				entityField.getFilterableName(locale), false, true, null,
-				entityField.getFilterableValue(fieldValue));
+			return new QueryFilter(
+				_nestedFieldQueryHelper.getQuery(
+					entityField.getFilterableName(locale),
+					fieldName -> new TermRangeQueryImpl(
+						fieldName, null,
+						entityField.getFilterableValue(fieldValue), false,
+						true)));
 		}
 
 		throw new UnsupportedOperationException(
@@ -429,9 +475,13 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			Objects.equals(entityField.getType(), EntityField.Type.INTEGER) ||
 			Objects.equals(entityField.getType(), EntityField.Type.STRING)) {
 
-			return new RangeTermFilter(
-				entityField.getFilterableName(locale), false, false, null,
-				entityField.getFilterableValue(fieldValue));
+			return new QueryFilter(
+				_nestedFieldQueryHelper.getQuery(
+					entityField.getFilterableName(locale),
+					fieldName -> new TermRangeQueryImpl(
+						fieldName, null,
+						entityField.getFilterableValue(fieldValue), false,
+						false)));
 		}
 
 		throw new UnsupportedOperationException(
@@ -443,15 +493,18 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 		EntityField entityField, Object fieldValue, Locale locale) {
 
 		if (fieldValue == null) {
-			return new ExistsFilter(entityField.getFilterableName(locale));
+			return _getNullValueFilter(entityField, locale);
 		}
 
 		BooleanFilter booleanFilter = new BooleanFilter();
 
 		booleanFilter.add(
-			new TermFilter(
-				entityField.getFilterableName(locale),
-				entityField.getFilterableValue(fieldValue)),
+			new QueryFilter(
+				_nestedFieldQueryHelper.getQuery(
+					entityField.getFilterableName(locale),
+					fieldName -> new TermQueryImpl(
+						fieldName,
+						entityField.getFilterableValue(fieldValue)))),
 			BooleanClauseOccur.MUST_NOT);
 
 		return booleanFilter;
@@ -463,6 +516,21 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 		booleanFilter.add(filter, BooleanClauseOccur.MUST_NOT);
 
 		return booleanFilter;
+	}
+
+	private Filter _getNullValueFilter(EntityField entityField, Locale locale) {
+		EntityField.Type type = entityField.getType();
+
+		if (Objects.equals(type, EntityField.Type.DATE) ||
+			Objects.equals(type, EntityField.Type.DATE_TIME)) {
+
+			return new ExistsFilter(entityField.getFilterableName(locale));
+		}
+
+		return new QueryFilter(
+			_nestedFieldQueryHelper.getQuery(
+				entityField.getFilterableName(locale),
+				fieldName -> new WildcardQueryImpl(fieldName, "*")));
 	}
 
 	private Filter _getORFilter(Filter leftFilter, Filter rightFilter) {
@@ -480,9 +548,10 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 
 			return _format.format(date);
 		}
-		catch (ParseException pe) {
+		catch (ParseException parseException) {
 			throw new InvalidFilterException(
-				"Invalid date format, use ISO 8601: " + pe.getMessage());
+				"Invalid date format, use ISO 8601: " +
+					parseException.getMessage());
 		}
 	}
 
@@ -498,13 +567,18 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<Object> {
 	private Filter _startsWith(
 		EntityField entityField, Object fieldValue, Locale locale) {
 
-		return new PrefixFilter(
-			entityField.getFilterableName(locale),
-			entityField.getFilterableValue(fieldValue));
+		return new QueryFilter(
+			_nestedFieldQueryHelper.getQuery(
+				entityField.getFilterableName(locale),
+				fieldName -> new WildcardQueryImpl(
+					fieldName,
+					entityField.getFilterableValue(fieldValue) + "*")));
 	}
 
 	private final EntityModel _entityModel;
 	private final Format _format;
 	private final Locale _locale;
+	private final NestedFieldQueryHelper _nestedFieldQueryHelper;
+	private final Date _now = new Date();
 
 }

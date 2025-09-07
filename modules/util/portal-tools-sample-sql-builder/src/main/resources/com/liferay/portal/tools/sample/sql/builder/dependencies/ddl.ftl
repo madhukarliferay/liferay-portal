@@ -8,9 +8,9 @@
 		/>
 
 		<@insertDDMStructure
-			_ddmStructureLayoutModel=dataFactory.newDDLDDMStructureLayoutModel(groupId, ddmStructureVersionModel)
-			_ddmStructureModel=ddmStructureModel
-			_ddmStructureVersionModel=ddmStructureVersionModel
+			_ddmStructureLayoutModel = dataFactory.newDDLDDMStructureLayoutModel(groupId, ddmStructureVersionModel)
+			_ddmStructureModel = ddmStructureModel
+			_ddmStructureVersionModel = ddmStructureVersionModel
 		/>
 	</#if>
 
@@ -21,7 +21,7 @@
 		layoutModel = dataFactory.newLayoutModel(groupId, layoutName, "", portletId)
 	/>
 
-	<@insertLayout _layoutModel=layoutModel />
+	<@insertLayout _layoutModel = layoutModel />
 
 	<#assign ddlRecordSetModel = dataFactory.newDDLRecordSetModel(ddmStructureModel, ddlRecordSetCount) />
 
@@ -39,16 +39,25 @@
 		${dataFactory.toInsertSQL(dataFactory.newDDLRecordVersionModel(ddlRecordModel))}
 
 		<@insertDDMContent
-			_currentIndex=ddlRecordCount
-			_ddmStorageLinkId=dataFactory.getCounterNext()
-			_ddmStructureId=ddmStructureModel.structureId
-			_entry=ddlRecordModel
+			_currentIndex = ddlRecordCount
+			_ddmStorageLinkId = dataFactory.getCounterNext()
+			_ddmStructureId = ddmStructureModel.structureId
+			_ddmStructureVersionId = ddmStructureVersionModel.structureVersionId
+			_entry = ddlRecordModel
 		/>
 
-		${dataFactory.getCSVWriter("dynamicDataList").write(ddlRecordModel.groupId + "," + layoutName + "," + portletId + "," + ddlRecordSetModel.recordSetId + "," + ddlRecordModel.recordId + "\n")}
+		${csvFileWriter.write("dynamicDataList", virtualHostModel.hostname + "," + groupModel.friendlyURL + "," + ddlRecordModel.groupId + "," + layoutName + "," + portletId + "," + ddlRecordSetModel.recordSetId + "," + ddlRecordModel.recordId + "\n")}
 	</#list>
 
-	${dataFactory.toInsertSQL(dataFactory.newPortletPreferencesModel(layoutModel.plid, portletId, ddlRecordSetModel))}
+	<#assign ddlPortletPreferencesModel = dataFactory.newPortletPreferencesModel(layoutModel.plid, portletId) />
+
+	${dataFactory.toInsertSQL(ddlPortletPreferencesModel)}
+
+	<#assign ddlPortletPreferenceValueModels = dataFactory.newDDLPortletPreferenceValueModels(ddlPortletPreferencesModel, ddlRecordSetModel) />
+
+	<#list ddlPortletPreferenceValueModels as ddlPortletPreferenceValueModel>
+		${dataFactory.toInsertSQL(ddlPortletPreferenceValueModel)}
+	</#list>
 
 	<#assign portletPreferencesModels = dataFactory.newDDLPortletPreferencesModels(layoutModel.plid) />
 

@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.service.persistence.impl;
 
-import com.liferay.petra.string.StringPool;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
@@ -22,15 +14,14 @@ import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.model.PortletConstants;
+import com.liferay.portal.kernel.model.PortletPreferenceValueTable;
 import com.liferay.portal.kernel.model.PortletPreferences;
+import com.liferay.portal.kernel.model.PortletPreferencesTable;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.service.persistence.PortletPreferencesFinder;
 import com.liferay.portal.kernel.service.persistence.PortletPreferencesUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.impl.PortletPreferencesImpl;
-import com.liferay.portal.model.impl.PortletPreferencesModelImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
 import java.io.Serializable;
@@ -49,12 +40,6 @@ public class PortletPreferencesFinderImpl
 	extends PortletPreferencesFinderBaseImpl
 	implements PortletPreferencesFinder {
 
-	public static final String COUNT_BY_O_O_P =
-		PortletPreferencesFinder.class.getName() + ".countByO_O_P";
-
-	public static final String COUNT_BY_O_O_P_P_P =
-		PortletPreferencesFinder.class.getName() + ".countByO_O_P_P_P";
-
 	public static final String FIND_BY_PORTLET_ID =
 		PortletPreferencesFinder.class.getName() + ".findByPortletId";
 
@@ -63,9 +48,6 @@ public class PortletPreferencesFinderImpl
 
 	public static final FinderPath FINDER_PATH_FIND_BY_C_G_O_O_P_P =
 		new FinderPath(
-			PortletPreferencesModelImpl.ENTITY_CACHE_ENABLED,
-			PortletPreferencesModelImpl.FINDER_CACHE_ENABLED,
-			PortletPreferencesImpl.class,
 			PortletPreferencesPersistenceImpl.
 				FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
 			"findByC_G_O_O_P_P",
@@ -73,68 +55,16 @@ public class PortletPreferencesFinderImpl
 				Long.class.getName(), Long.class.getName(),
 				Long.class.getName(), Integer.class.getName(),
 				String.class.getName(), Boolean.class.getName()
-			});
+			},
+			new String[] {"ownerId", "ownerType", "portletId"}, true);
 
 	@Override
 	public long countByO_O_P(
 		long ownerId, int ownerType, String portletId,
 		boolean excludeDefaultPreferences) {
 
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(COUNT_BY_O_O_P);
-
-			if (ownerId == -1) {
-				sql = StringUtil.replace(sql, _OWNER_ID_SQL, StringPool.BLANK);
-			}
-
-			if (excludeDefaultPreferences) {
-				sql = StringUtil.replace(
-					sql, "[$PORTLET_PREFERENCES_PREFERENCES_DEFAULT$]",
-					PortletConstants.DEFAULT_PREFERENCES);
-			}
-			else {
-				sql = StringUtil.replace(
-					sql, _PREFERENCES_SQL, StringPool.BLANK);
-			}
-
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			if (ownerId != -1) {
-				qPos.add(ownerId);
-			}
-
-			qPos.add(ownerType);
-			qPos.add(portletId);
-			qPos.add(portletId.concat("%_INSTANCE_%"));
-
-			int count = 0;
-
-			Iterator<Long> itr = q.iterate();
-
-			while (itr.hasNext()) {
-				Long l = itr.next();
-
-				if (l != null) {
-					count += l.intValue();
-				}
-			}
-
-			return count;
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
+		return countByO_O_P_P_P(
+			ownerId, ownerType, -1, portletId, excludeDefaultPreferences);
 	}
 
 	@Override
@@ -147,56 +77,65 @@ public class PortletPreferencesFinderImpl
 		try {
 			session = openSession();
 
-			String sql = CustomSQLUtil.get(COUNT_BY_O_O_P_P_P);
-
-			if (ownerId == -1) {
-				sql = StringUtil.replace(sql, _OWNER_ID_SQL, StringPool.BLANK);
-			}
-
-			if (plid == -1) {
-				sql = StringUtil.replace(sql, _PLID_SQL, StringPool.BLANK);
-			}
-			else {
-				sql = StringUtil.replace(
-					sql, _PORTLET_ID_INSTANCE_SQL, StringPool.BLANK);
-			}
+			JoinStep joinStep = DSLQueryFactoryUtil.count(
+			).from(
+				PortletPreferencesTable.INSTANCE
+			);
 
 			if (excludeDefaultPreferences) {
-				sql = StringUtil.replace(
-					sql, "[$PORTLET_PREFERENCES_PREFERENCES_DEFAULT$]",
-					PortletConstants.DEFAULT_PREFERENCES);
-			}
-			else {
-				sql = StringUtil.replace(
-					sql, _PREFERENCES_SQL, StringPool.BLANK);
-			}
-
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			if (ownerId != -1) {
-				qPos.add(ownerId);
+				joinStep = joinStep.innerJoinON(
+					PortletPreferenceValueTable.INSTANCE,
+					PortletPreferenceValueTable.INSTANCE.portletPreferencesId.
+						eq(
+							PortletPreferencesTable.INSTANCE.
+								portletPreferencesId));
 			}
 
-			qPos.add(ownerType);
-			qPos.add(portletId);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(
+				joinStep.where(
+					() -> PortletPreferencesTable.INSTANCE.ownerType.eq(
+						ownerType
+					).and(
+						() -> {
+							if (ownerId != -1) {
+								return PortletPreferencesTable.INSTANCE.ownerId.
+									eq(ownerId);
+							}
 
-			if (plid != -1) {
-				qPos.add(plid);
-			}
-			else {
-				qPos.add(portletId.concat("%_INSTANCE_%"));
-			}
+							return null;
+						}
+					).and(
+						() -> {
+							if (plid == -1) {
+								return PortletPreferencesTable.INSTANCE.
+									portletId.eq(
+										portletId
+									).or(
+										PortletPreferencesTable.INSTANCE.
+											portletId.like(
+												portletId.concat(
+													"%_INSTANCE_%"))
+									).withParentheses();
+							}
+
+							return PortletPreferencesTable.INSTANCE.portletId.
+								eq(
+									portletId
+								).and(
+									PortletPreferencesTable.INSTANCE.plid.eq(
+										plid)
+								);
+						}
+					)));
+
+			sqlQuery.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 
 			int count = 0;
 
-			Iterator<Long> itr = q.iterate();
+			Iterator<Long> iterator = sqlQuery.iterate();
 
-			while (itr.hasNext()) {
-				Long l = itr.next();
+			while (iterator.hasNext()) {
+				Long l = iterator.next();
 
 				if (l != null) {
 					count += l.intValue();
@@ -205,14 +144,18 @@ public class PortletPreferencesFinderImpl
 
 			return count;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
 		}
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public Map<Serializable, PortletPreferences> fetchByPrimaryKeys(
 		Set<Serializable> primaryKeys) {
@@ -229,18 +172,19 @@ public class PortletPreferencesFinderImpl
 
 			String sql = CustomSQLUtil.get(FIND_BY_PORTLET_ID);
 
-			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			q.addEntity("PortletPreferences", PortletPreferencesImpl.class);
+			sqlQuery.addEntity(
+				"PortletPreferences", PortletPreferencesImpl.class);
 
-			QueryPos qPos = QueryPos.getInstance(q);
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			qPos.add(portletId);
+			queryPos.add(portletId);
 
-			return q.list(true);
+			return sqlQuery.list(true);
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+		catch (Exception exception) {
+			throw new SystemException(exception);
 		}
 		finally {
 			closeSession(session);
@@ -258,7 +202,8 @@ public class PortletPreferencesFinderImpl
 
 		List<PortletPreferences> list =
 			(List<PortletPreferences>)FinderCacheUtil.getResult(
-				FINDER_PATH_FIND_BY_C_G_O_O_P_P, finderArgs, this);
+				FINDER_PATH_FIND_BY_C_G_O_O_P_P, finderArgs,
+				PortletPreferencesUtil.getPersistence());
 
 		if ((list != null) && !list.isEmpty()) {
 			for (PortletPreferences portletPreferences : list) {
@@ -282,32 +227,30 @@ public class PortletPreferencesFinderImpl
 
 				String sql = CustomSQLUtil.get(FIND_BY_C_G_O_O_P_P);
 
-				SQLQuery q = session.createSynchronizedSQLQuery(sql);
+				SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-				q.addEntity("PortletPreferences", PortletPreferencesImpl.class);
+				sqlQuery.addEntity(
+					"PortletPreferences", PortletPreferencesImpl.class);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+				QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-				qPos.add(companyId);
-				qPos.add(groupId);
-				qPos.add(ownerId);
-				qPos.add(ownerType);
-				qPos.add(portletId);
-				qPos.add(portletId.concat("_INSTANCE_%"));
-				qPos.add(privateLayout);
+				queryPos.add(companyId);
+				queryPos.add(groupId);
+				queryPos.add(ownerId);
+				queryPos.add(ownerType);
+				queryPos.add(portletId);
+				queryPos.add(portletId.concat("_INSTANCE_%"));
+				queryPos.add(privateLayout);
 
-				list = q.list(true);
+				list = sqlQuery.list(true);
 
 				PortletPreferencesUtil.cacheResult(list);
 
 				FinderCacheUtil.putResult(
 					FINDER_PATH_FIND_BY_C_G_O_O_P_P, finderArgs, list);
 			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(
-					FINDER_PATH_FIND_BY_C_G_O_O_P_P, finderArgs);
-
-				throw new SystemException(e);
+			catch (Exception exception) {
+				throw new SystemException(exception);
 			}
 			finally {
 				closeSession(session);
@@ -333,17 +276,5 @@ public class PortletPreferencesFinderImpl
 
 		return Objects.equals(portletName, portletId);
 	}
-
-	private static final String _OWNER_ID_SQL =
-		"(PortletPreferences.ownerId = ?) AND";
-
-	private static final String _PLID_SQL = "AND (PortletPreferences.plid = ?)";
-
-	private static final String _PORTLET_ID_INSTANCE_SQL =
-		"OR (PortletPreferences.portletId LIKE ?)";
-
-	private static final String _PREFERENCES_SQL =
-		"AND (CAST_CLOB_TEXT(PortletPreferences.preferences) != " +
-			"'[$PORTLET_PREFERENCES_PREFERENCES_DEFAULT$]')";
 
 }

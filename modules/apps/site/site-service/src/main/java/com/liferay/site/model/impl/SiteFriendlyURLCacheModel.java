@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.site.model.impl;
@@ -37,17 +28,17 @@ public class SiteFriendlyURLCacheModel
 	implements CacheModel<SiteFriendlyURL>, Externalizable, MVCCModel {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SiteFriendlyURLCacheModel)) {
+		if (!(object instanceof SiteFriendlyURLCacheModel)) {
 			return false;
 		}
 
 		SiteFriendlyURLCacheModel siteFriendlyURLCacheModel =
-			(SiteFriendlyURLCacheModel)obj;
+			(SiteFriendlyURLCacheModel)object;
 
 		if ((siteFriendlyURLId ==
 				siteFriendlyURLCacheModel.siteFriendlyURLId) &&
@@ -86,6 +77,8 @@ public class SiteFriendlyURLCacheModel
 		sb.append(uuid);
 		sb.append(", siteFriendlyURLId=");
 		sb.append(siteFriendlyURLId);
+		sb.append(", groupId=");
+		sb.append(groupId);
 		sb.append(", companyId=");
 		sb.append(companyId);
 		sb.append(", userId=");
@@ -96,8 +89,6 @@ public class SiteFriendlyURLCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", groupId=");
-		sb.append(groupId);
 		sb.append(", friendlyURL=");
 		sb.append(friendlyURL);
 		sb.append(", languageId=");
@@ -123,6 +114,7 @@ public class SiteFriendlyURLCacheModel
 		}
 
 		siteFriendlyURLImpl.setSiteFriendlyURLId(siteFriendlyURLId);
+		siteFriendlyURLImpl.setGroupId(groupId);
 		siteFriendlyURLImpl.setCompanyId(companyId);
 		siteFriendlyURLImpl.setUserId(userId);
 
@@ -146,8 +138,6 @@ public class SiteFriendlyURLCacheModel
 		else {
 			siteFriendlyURLImpl.setModifiedDate(new Date(modifiedDate));
 		}
-
-		siteFriendlyURLImpl.setGroupId(groupId);
 
 		if (friendlyURL == null) {
 			siteFriendlyURLImpl.setFriendlyURL("");
@@ -182,14 +172,14 @@ public class SiteFriendlyURLCacheModel
 
 		siteFriendlyURLId = objectInput.readLong();
 
+		groupId = objectInput.readLong();
+
 		companyId = objectInput.readLong();
 
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-
-		groupId = objectInput.readLong();
 		friendlyURL = objectInput.readUTF();
 		languageId = objectInput.readUTF();
 		lastPublishDate = objectInput.readLong();
@@ -208,6 +198,8 @@ public class SiteFriendlyURLCacheModel
 
 		objectOutput.writeLong(siteFriendlyURLId);
 
+		objectOutput.writeLong(groupId);
+
 		objectOutput.writeLong(companyId);
 
 		objectOutput.writeLong(userId);
@@ -221,8 +213,6 @@ public class SiteFriendlyURLCacheModel
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
-
-		objectOutput.writeLong(groupId);
 
 		if (friendlyURL == null) {
 			objectOutput.writeUTF("");
@@ -244,12 +234,12 @@ public class SiteFriendlyURLCacheModel
 	public long mvccVersion;
 	public String uuid;
 	public long siteFriendlyURLId;
+	public long groupId;
 	public long companyId;
 	public long userId;
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
-	public long groupId;
 	public String friendlyURL;
 	public String languageId;
 	public long lastPublishDate;

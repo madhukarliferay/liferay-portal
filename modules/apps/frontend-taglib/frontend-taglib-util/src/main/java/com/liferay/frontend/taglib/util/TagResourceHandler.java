@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.frontend.taglib.util;
@@ -18,14 +9,20 @@ import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.frontend.taglib.util.internal.NPMResolverRef;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.content.security.policy.ContentSecurityPolicyNonceProviderUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.taglib.util.OutputData;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
 
 import java.io.IOException;
 
@@ -34,11 +31,6 @@ import java.net.URL;
 import java.util.Dictionary;
 import java.util.EnumMap;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.PageContext;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -61,16 +53,15 @@ public class TagResourceHandler {
 	}
 
 	public void outputBundleStyleSheet(String bundleCssPath) {
-		StringBundler sb = new StringBundler(6);
-
-		sb.append("<link data-senna-track=\"temporary\" href=\"");
-		sb.append(PortalUtil.getPathModule());
-		sb.append(_webContextPath);
-		sb.append(StringPool.SLASH);
-		sb.append(bundleCssPath);
-		sb.append("\" rel=\"stylesheet\">");
-
-		outputResource(Position.TOP, sb.toString());
+		outputResource(
+			Position.TOP,
+			StringBundler.concat(
+				"<link data-senna-track=\"temporary\" href=\"",
+				PortalUtil.getPathModule(), _webContextPath, StringPool.SLASH,
+				bundleCssPath, StringPool.QUOTE,
+				ContentSecurityPolicyNonceProviderUtil.getNonceAttribute(
+					_getHttpServletRequest()),
+				" rel=\"stylesheet\">"));
 	}
 
 	public void outputNPMResource(String npmResourcePath) {
@@ -83,10 +74,11 @@ public class TagResourceHandler {
 			URL url = _bundle.getEntry(
 				"META-INF/resources/node_modules/" + resourcePath);
 
-			outputResource(Position.BOTTOM, StringUtil.read(url.openStream()));
+			outputResource(Position.BOTTOM, URLUtil.toString(url));
 		}
-		catch (Exception e) {
-			_log.error("Unable to output NPM resource " + npmResourcePath, e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to output NPM resource " + npmResourcePath, exception);
 		}
 	}
 
@@ -96,24 +88,24 @@ public class TagResourceHandler {
 
 			String cssPath = npmResolver.resolveModuleName(npmCssPath);
 
-			StringBundler sb = new StringBundler(6);
-
-			sb.append("<link href=\"");
-			sb.append(PortalUtil.getPathModule());
-			sb.append(_webContextPath);
-			sb.append("/node_modules/");
-			sb.append(cssPath);
-			sb.append("\" rel=\"stylesheet\">");
-
-			outputResource(Position.TOP, sb.toString());
+			outputResource(
+				Position.TOP,
+				StringBundler.concat(
+					"<link href=\"", PortalUtil.getPathModule(),
+					_webContextPath, "/node_modules/", cssPath,
+					StringPool.QUOTE,
+					ContentSecurityPolicyNonceProviderUtil.getNonceAttribute(
+						_getHttpServletRequest()),
+					" rel=\"stylesheet\">"));
 		}
-		catch (Exception e) {
-			_log.error("Unable to output NPM style sheet " + npmCssPath, e);
+		catch (Exception exception) {
+			_log.error(
+				"Unable to output NPM style sheet " + npmCssPath, exception);
 		}
 	}
 
 	public void outputResource(Position position, String html) {
-		HttpServletRequest httpServletRequest = _getRequest();
+		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
 		boolean xPjax = GetterUtil.getBoolean(
 			httpServletRequest.getHeader("X-PJAX"));
@@ -130,8 +122,8 @@ public class TagResourceHandler {
 
 				jspWriter.write(html);
 			}
-			catch (IOException ioe) {
-				_log.error("Unable to output resource", ioe);
+			catch (IOException ioException) {
+				_log.error("Unable to output resource", ioException);
 			}
 		}
 		else {
@@ -151,8 +143,12 @@ public class TagResourceHandler {
 
 	}
 
+	private HttpServletRequest _getHttpServletRequest() {
+		return _tagAccessor.getRequest();
+	}
+
 	private OutputData _getOutputData() {
-		HttpServletRequest httpServletRequest = _getRequest();
+		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
 		OutputData outputData = (OutputData)httpServletRequest.getAttribute(
 			WebKeys.OUTPUT_DATA);
@@ -166,12 +162,8 @@ public class TagResourceHandler {
 		return outputData;
 	}
 
-	private HttpServletRequest _getRequest() {
-		return _tagAccessor.getRequest();
-	}
-
 	private ThemeDisplay _getThemeDisplay() {
-		ServletRequest servletRequest = _getRequest();
+		ServletRequest servletRequest = _getHttpServletRequest();
 
 		return (ThemeDisplay)servletRequest.getAttribute(WebKeys.THEME_DISPLAY);
 	}

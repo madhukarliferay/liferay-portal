@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.fragment.service.persistence;
@@ -25,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
-
 /**
  * The persistence utility for the fragment collection service. This utility wraps <code>com.liferay.fragment.service.persistence.impl.FragmentCollectionPersistenceImpl</code> and provides direct access to the database for CRUD operations. This utility should only be used by the service layer, as it must operate within a transaction. Never access this utility in a JSP, controller, model, or other front-end class.
  *
@@ -42,7 +29,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class FragmentCollectionUtil {
 
-	/**
+	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
 	 * Never modify this class directly. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
@@ -749,7 +736,7 @@ public class FragmentCollectionUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param start the lower bound of the range of fragment collections
 	 * @param end the upper bound of the range of fragment collections (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -1092,7 +1079,7 @@ public class FragmentCollectionUtil {
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param name the name
 	 * @param start the lower bound of the range of fragment collections
 	 * @param end the upper bound of the range of fragment collections (not inclusive)
@@ -1139,6 +1126,662 @@ public class FragmentCollectionUtil {
 	 */
 	public static int countByG_LikeN(long[] groupIds, String name) {
 		return getPersistence().countByG_LikeN(groupIds, name);
+	}
+
+	/**
+	 * Returns all the fragment collections where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @return the matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long groupId, boolean marketplace) {
+
+		return getPersistence().findByG_M(groupId, marketplace);
+	}
+
+	/**
+	 * Returns a range of all the fragment collections where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @return the range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long groupId, boolean marketplace, int start, int end) {
+
+		return getPersistence().findByG_M(groupId, marketplace, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long groupId, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().findByG_M(
+			groupId, marketplace, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long groupId, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_M(
+			groupId, marketplace, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
+	 * Returns the first fragment collection in the ordered set where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching fragment collection
+	 * @throws NoSuchCollectionException if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection findByG_M_First(
+			long groupId, boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_M_First(
+			groupId, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the first fragment collection in the ordered set where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByG_M_First(
+		long groupId, boolean marketplace,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().fetchByG_M_First(
+			groupId, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the last fragment collection in the ordered set where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching fragment collection
+	 * @throws NoSuchCollectionException if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection findByG_M_Last(
+			long groupId, boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_M_Last(
+			groupId, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the last fragment collection in the ordered set where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByG_M_Last(
+		long groupId, boolean marketplace,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().fetchByG_M_Last(
+			groupId, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the fragment collections before and after the current fragment collection in the ordered set where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param fragmentCollectionId the primary key of the current fragment collection
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next fragment collection
+	 * @throws NoSuchCollectionException if a fragment collection with the primary key could not be found
+	 */
+	public static FragmentCollection[] findByG_M_PrevAndNext(
+			long fragmentCollectionId, long groupId, boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_M_PrevAndNext(
+			fragmentCollectionId, groupId, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns all the fragment collections where groupId = any &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param marketplace the marketplace
+	 * @return the matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long[] groupIds, boolean marketplace) {
+
+		return getPersistence().findByG_M(groupIds, marketplace);
+	}
+
+	/**
+	 * Returns a range of all the fragment collections where groupId = any &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @return the range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long[] groupIds, boolean marketplace, int start, int end) {
+
+		return getPersistence().findByG_M(groupIds, marketplace, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = any &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long[] groupIds, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().findByG_M(
+			groupIds, marketplace, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and marketplace = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_M(
+		long[] groupIds, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_M(
+			groupIds, marketplace, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
+	 * Removes all the fragment collections where groupId = &#63; and marketplace = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 */
+	public static void removeByG_M(long groupId, boolean marketplace) {
+		getPersistence().removeByG_M(groupId, marketplace);
+	}
+
+	/**
+	 * Returns the number of fragment collections where groupId = &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param marketplace the marketplace
+	 * @return the number of matching fragment collections
+	 */
+	public static int countByG_M(long groupId, boolean marketplace) {
+		return getPersistence().countByG_M(groupId, marketplace);
+	}
+
+	/**
+	 * Returns the number of fragment collections where groupId = any &#63; and marketplace = &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param marketplace the marketplace
+	 * @return the number of matching fragment collections
+	 */
+	public static int countByG_M(long[] groupIds, boolean marketplace) {
+		return getPersistence().countByG_M(groupIds, marketplace);
+	}
+
+	/**
+	 * Returns all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @return the matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long groupId, String name, boolean marketplace) {
+
+		return getPersistence().findByG_LikeN_M(groupId, name, marketplace);
+	}
+
+	/**
+	 * Returns a range of all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @return the range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long groupId, String name, boolean marketplace, int start, int end) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupId, name, marketplace, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long groupId, String name, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupId, name, marketplace, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long groupId, String name, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupId, name, marketplace, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
+	 * Returns the first fragment collection in the ordered set where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching fragment collection
+	 * @throws NoSuchCollectionException if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection findByG_LikeN_M_First(
+			long groupId, String name, boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_LikeN_M_First(
+			groupId, name, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the first fragment collection in the ordered set where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByG_LikeN_M_First(
+		long groupId, String name, boolean marketplace,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().fetchByG_LikeN_M_First(
+			groupId, name, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the last fragment collection in the ordered set where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching fragment collection
+	 * @throws NoSuchCollectionException if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection findByG_LikeN_M_Last(
+			long groupId, String name, boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_LikeN_M_Last(
+			groupId, name, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the last fragment collection in the ordered set where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByG_LikeN_M_Last(
+		long groupId, String name, boolean marketplace,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().fetchByG_LikeN_M_Last(
+			groupId, name, marketplace, orderByComparator);
+	}
+
+	/**
+	 * Returns the fragment collections before and after the current fragment collection in the ordered set where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param fragmentCollectionId the primary key of the current fragment collection
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next fragment collection
+	 * @throws NoSuchCollectionException if a fragment collection with the primary key could not be found
+	 */
+	public static FragmentCollection[] findByG_LikeN_M_PrevAndNext(
+			long fragmentCollectionId, long groupId, String name,
+			boolean marketplace,
+			OrderByComparator<FragmentCollection> orderByComparator)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByG_LikeN_M_PrevAndNext(
+			fragmentCollectionId, groupId, name, marketplace,
+			orderByComparator);
+	}
+
+	/**
+	 * Returns all the fragment collections where groupId = any &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @return the matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long[] groupIds, String name, boolean marketplace) {
+
+		return getPersistence().findByG_LikeN_M(groupIds, name, marketplace);
+	}
+
+	/**
+	 * Returns a range of all the fragment collections where groupId = any &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @return the range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long[] groupIds, String name, boolean marketplace, int start, int end) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupIds, name, marketplace, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = any &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long[] groupIds, String name, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupIds, name, marketplace, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>FragmentCollectionModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @param start the lower bound of the range of fragment collections
+	 * @param end the upper bound of the range of fragment collections (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching fragment collections
+	 */
+	public static List<FragmentCollection> findByG_LikeN_M(
+		long[] groupIds, String name, boolean marketplace, int start, int end,
+		OrderByComparator<FragmentCollection> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_LikeN_M(
+			groupIds, name, marketplace, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
+	 * Removes all the fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 */
+	public static void removeByG_LikeN_M(
+		long groupId, String name, boolean marketplace) {
+
+		getPersistence().removeByG_LikeN_M(groupId, name, marketplace);
+	}
+
+	/**
+	 * Returns the number of fragment collections where groupId = &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @return the number of matching fragment collections
+	 */
+	public static int countByG_LikeN_M(
+		long groupId, String name, boolean marketplace) {
+
+		return getPersistence().countByG_LikeN_M(groupId, name, marketplace);
+	}
+
+	/**
+	 * Returns the number of fragment collections where groupId = any &#63; and name LIKE &#63; and marketplace = &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @param name the name
+	 * @param marketplace the marketplace
+	 * @return the number of matching fragment collections
+	 */
+	public static int countByG_LikeN_M(
+		long[] groupIds, String name, boolean marketplace) {
+
+		return getPersistence().countByG_LikeN_M(groupIds, name, marketplace);
+	}
+
+	/**
+	 * Returns the fragment collection where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchCollectionException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching fragment collection
+	 * @throws NoSuchCollectionException if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the fragment collection where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the fragment collection where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching fragment collection, or <code>null</code> if a matching fragment collection could not be found
+	 */
+	public static FragmentCollection fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the fragment collection where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the fragment collection that was removed
+	 */
+	public static FragmentCollection removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.fragment.exception.NoSuchCollectionException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of fragment collections where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching fragment collections
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
 	}
 
 	/**
@@ -1297,29 +1940,15 @@ public class FragmentCollectionUtil {
 	}
 
 	public static FragmentCollectionPersistence getPersistence() {
-		return _serviceTracker.getService();
+		return _persistence;
 	}
 
-	private static ServiceTracker
-		<FragmentCollectionPersistence, FragmentCollectionPersistence>
-			_serviceTracker;
+	public static void setPersistence(
+		FragmentCollectionPersistence persistence) {
 
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(
-			FragmentCollectionPersistence.class);
-
-		ServiceTracker
-			<FragmentCollectionPersistence, FragmentCollectionPersistence>
-				serviceTracker =
-					new ServiceTracker
-						<FragmentCollectionPersistence,
-						 FragmentCollectionPersistence>(
-							 bundle.getBundleContext(),
-							 FragmentCollectionPersistence.class, null);
-
-		serviceTracker.open();
-
-		_serviceTracker = serviceTracker;
+		_persistence = persistence;
 	}
+
+	private static volatile FragmentCollectionPersistence _persistence;
 
 }

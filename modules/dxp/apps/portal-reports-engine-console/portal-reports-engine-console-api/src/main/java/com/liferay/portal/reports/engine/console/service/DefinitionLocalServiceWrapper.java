@@ -1,20 +1,12 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.reports.engine.console.service;
 
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 
 /**
  * Provides a wrapper for {@link DefinitionLocalService}.
@@ -26,6 +18,10 @@ import com.liferay.portal.kernel.service.ServiceWrapper;
 public class DefinitionLocalServiceWrapper
 	implements DefinitionLocalService, ServiceWrapper<DefinitionLocalService> {
 
+	public DefinitionLocalServiceWrapper() {
+		this(null);
+	}
+
 	public DefinitionLocalServiceWrapper(
 		DefinitionLocalService definitionLocalService) {
 
@@ -34,6 +30,10 @@ public class DefinitionLocalServiceWrapper
 
 	/**
 	 * Adds the definition to the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param definition the definition
 	 * @return the definition that was added
@@ -77,7 +77,22 @@ public class DefinitionLocalServiceWrapper
 	}
 
 	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public com.liferay.portal.kernel.model.PersistedModel createPersistedModel(
+			java.io.Serializable primaryKeyObj)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _definitionLocalService.createPersistedModel(primaryKeyObj);
+	}
+
+	/**
 	 * Deletes the definition from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param definition the definition
 	 * @return the definition that was removed
@@ -95,6 +110,10 @@ public class DefinitionLocalServiceWrapper
 
 	/**
 	 * Deletes the definition with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param definitionId the primary key of the definition
 	 * @return the definition that was removed
@@ -133,6 +152,18 @@ public class DefinitionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _definitionLocalService.deletePersistedModel(persistedModel);
+	}
+
+	@Override
+	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+		return _definitionLocalService.dslQuery(dslQuery);
+	}
+
+	@Override
+	public int dslQueryCount(
+		com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
+
+		return _definitionLocalService.dslQueryCount(dslQuery);
 	}
 
 	@Override
@@ -254,6 +285,13 @@ public class DefinitionLocalServiceWrapper
 		return _definitionLocalService.getActionableDynamicQuery();
 	}
 
+	@Override
+	public String[] getAttachmentsFileNames(
+		com.liferay.portal.reports.engine.console.model.Definition definition) {
+
+		return _definitionLocalService.getAttachmentsFileNames(definition);
+	}
+
 	/**
 	 * Returns the definition with the primary key.
 	 *
@@ -313,7 +351,8 @@ public class DefinitionLocalServiceWrapper
 				String sourceId, String reportName, boolean andSearch,
 				int start, int end,
 				com.liferay.portal.kernel.util.OrderByComparator
-					orderByComparator) {
+					<com.liferay.portal.reports.engine.console.model.Definition>
+						orderByComparator) {
 
 		return _definitionLocalService.getDefinitions(
 			groupId, definitionName, description, sourceId, reportName,
@@ -406,6 +445,9 @@ public class DefinitionLocalServiceWrapper
 		return _definitionLocalService.getOSGiServiceIdentifier();
 	}
 
+	/**
+	 * @throws PortalException
+	 */
 	@Override
 	public com.liferay.portal.kernel.model.PersistedModel getPersistedModel(
 			java.io.Serializable primaryKeyObj)
@@ -416,6 +458,10 @@ public class DefinitionLocalServiceWrapper
 
 	/**
 	 * Updates the definition in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
+	 *
+	 * <p>
+	 * <strong>Important:</strong> Inspect DefinitionLocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
+	 * </p>
 	 *
 	 * @param definition the definition
 	 * @return the definition that was updated
@@ -454,6 +500,11 @@ public class DefinitionLocalServiceWrapper
 
 		_definitionLocalService.updateDefinitionResources(
 			definition, communityPermissions, guestPermissions);
+	}
+
+	@Override
+	public BasePersistence<?> getBasePersistence() {
+		return _definitionLocalService.getBasePersistence();
 	}
 
 	@Override

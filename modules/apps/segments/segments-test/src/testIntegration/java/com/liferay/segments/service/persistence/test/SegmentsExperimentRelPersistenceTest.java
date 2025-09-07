@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.service.persistence.test;
@@ -21,6 +12,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -130,6 +122,8 @@ public class SegmentsExperimentRelPersistenceTest {
 
 		newSegmentsExperimentRel.setMvccVersion(RandomTestUtil.nextLong());
 
+		newSegmentsExperimentRel.setCtCollectionId(RandomTestUtil.nextLong());
+
 		newSegmentsExperimentRel.setGroupId(RandomTestUtil.nextLong());
 
 		newSegmentsExperimentRel.setCompanyId(RandomTestUtil.nextLong());
@@ -160,6 +154,9 @@ public class SegmentsExperimentRelPersistenceTest {
 		Assert.assertEquals(
 			existingSegmentsExperimentRel.getMvccVersion(),
 			newSegmentsExperimentRel.getMvccVersion());
+		Assert.assertEquals(
+			existingSegmentsExperimentRel.getCtCollectionId(),
+			newSegmentsExperimentRel.getCtCollectionId());
 		Assert.assertEquals(
 			existingSegmentsExperimentRel.getSegmentsExperimentRelId(),
 			newSegmentsExperimentRel.getSegmentsExperimentRelId());
@@ -202,6 +199,13 @@ public class SegmentsExperimentRelPersistenceTest {
 	}
 
 	@Test
+	public void testCountBySegmentsExperienceId() throws Exception {
+		_persistence.countBySegmentsExperienceId(RandomTestUtil.nextLong());
+
+		_persistence.countBySegmentsExperienceId(0L);
+	}
+
+	@Test
 	public void testCountByS_S() throws Exception {
 		_persistence.countByS_S(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
@@ -237,9 +241,9 @@ public class SegmentsExperimentRelPersistenceTest {
 
 	protected OrderByComparator<SegmentsExperimentRel> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"SegmentsExperimentRel", "mvccVersion", true,
-			"segmentsExperimentRelId", true, "groupId", true, "companyId", true,
-			"userId", true, "userName", true, "createDate", true,
+			"SegmentsExperimentRel", "mvccVersion", true, "ctCollectionId",
+			true, "segmentsExperimentRelId", true, "groupId", true, "companyId",
+			true, "userId", true, "userName", true, "createDate", true,
 			"modifiedDate", true, "segmentsExperimentId", true,
 			"segmentsExperienceId", true, "split", true);
 	}
@@ -487,22 +491,66 @@ public class SegmentsExperimentRelPersistenceTest {
 
 		_persistence.clearCache();
 
-		SegmentsExperimentRel existingSegmentsExperimentRel =
+		_assertOriginalValues(
 			_persistence.findByPrimaryKey(
-				newSegmentsExperimentRel.getPrimaryKey());
+				newSegmentsExperimentRel.getPrimaryKey()));
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromDatabase()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(true);
+	}
+
+	@Test
+	public void testResetOriginalValuesWithDynamicQueryLoadFromSession()
+		throws Exception {
+
+		_testResetOriginalValuesWithDynamicQuery(false);
+	}
+
+	private void _testResetOriginalValuesWithDynamicQuery(boolean clearSession)
+		throws Exception {
+
+		SegmentsExperimentRel newSegmentsExperimentRel =
+			addSegmentsExperimentRel();
+
+		if (clearSession) {
+			Session session = _persistence.openSession();
+
+			session.flush();
+
+			session.clear();
+		}
+
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			SegmentsExperimentRel.class, _dynamicQueryClassLoader);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"segmentsExperimentRelId",
+				newSegmentsExperimentRel.getSegmentsExperimentRelId()));
+
+		List<SegmentsExperimentRel> result = _persistence.findWithDynamicQuery(
+			dynamicQuery);
+
+		_assertOriginalValues(result.get(0));
+	}
+
+	private void _assertOriginalValues(
+		SegmentsExperimentRel segmentsExperimentRel) {
 
 		Assert.assertEquals(
-			Long.valueOf(
-				existingSegmentsExperimentRel.getSegmentsExperimentId()),
+			Long.valueOf(segmentsExperimentRel.getSegmentsExperimentId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsExperimentRel,
-				"getOriginalSegmentsExperimentId", new Class<?>[0]));
+				segmentsExperimentRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "segmentsExperimentId"));
 		Assert.assertEquals(
-			Long.valueOf(
-				existingSegmentsExperimentRel.getSegmentsExperienceId()),
+			Long.valueOf(segmentsExperimentRel.getSegmentsExperienceId()),
 			ReflectionTestUtil.<Long>invoke(
-				existingSegmentsExperimentRel,
-				"getOriginalSegmentsExperienceId", new Class<?>[0]));
+				segmentsExperimentRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "segmentsExperienceId"));
 	}
 
 	protected SegmentsExperimentRel addSegmentsExperimentRel()
@@ -513,6 +561,8 @@ public class SegmentsExperimentRelPersistenceTest {
 		SegmentsExperimentRel segmentsExperimentRel = _persistence.create(pk);
 
 		segmentsExperimentRel.setMvccVersion(RandomTestUtil.nextLong());
+
+		segmentsExperimentRel.setCtCollectionId(RandomTestUtil.nextLong());
 
 		segmentsExperimentRel.setGroupId(RandomTestUtil.nextLong());
 

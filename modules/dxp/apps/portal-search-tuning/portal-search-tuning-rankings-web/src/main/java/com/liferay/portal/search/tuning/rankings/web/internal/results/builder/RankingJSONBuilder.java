@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.search.tuning.rankings.web.internal.results.builder;
@@ -38,6 +29,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.search.document.Document;
 
+import jakarta.portlet.ResourceRequest;
+
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -45,8 +38,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
-
-import javax.portlet.ResourceRequest;
 
 /**
  * @author André de Oliveira
@@ -63,11 +54,12 @@ public class RankingJSONBuilder {
 			WebKeys.THEME_DISPLAY);
 
 		_dlAppLocalService = dlAppLocalService;
+		_fastDateFormatFactory = fastDateFormatFactory;
+		_resourceActions = resourceActions;
+
 		_dlConfiguration = ConfigurableUtil.createConfigurable(
 			DLConfiguration.class, new HashMap<String, Object>());
-		_fastDateFormatFactory = fastDateFormatFactory;
 		_locale = themeDisplay.getLocale();
-		_resourceActions = resourceActions;
 		_themeDisplay = themeDisplay;
 	}
 
@@ -78,6 +70,8 @@ public class RankingJSONBuilder {
 			"clicks", _document.getString("clicks")
 		).put(
 			"date", _getDateString()
+		).put(
+			"deleted", _deleted
 		).put(
 			"description", _getDescription()
 		).put(
@@ -92,7 +86,15 @@ public class RankingJSONBuilder {
 			"title", _getTitle()
 		).put(
 			"type", _getType()
+		).put(
+			"viewURL", _viewURL
 		);
+	}
+
+	public RankingJSONBuilder deleted(boolean deleted) {
+		_deleted = deleted;
+
+		return this;
 	}
 
 	public RankingJSONBuilder document(Document document) {
@@ -109,6 +111,12 @@ public class RankingJSONBuilder {
 
 	public RankingJSONBuilder pinned(boolean pinned) {
 		_pinned = pinned;
+
+		return this;
+	}
+
+	public RankingJSONBuilder viewURL(String viewURL) {
+		_viewURL = viewURL;
 
 		return this;
 	}
@@ -164,9 +172,10 @@ public class RankingJSONBuilder {
 		try {
 			return dateFormat.parse(dateStringFieldValue);
 		}
-		catch (Exception e) {
+		catch (Exception exception) {
 			throw new IllegalArgumentException(
-				"Unable to parse date string: " + dateStringFieldValue, e);
+				"Unable to parse date string: " + dateStringFieldValue,
+				exception);
 		}
 	}
 
@@ -204,10 +213,11 @@ public class RankingJSONBuilder {
 
 				return _getIconFileMimeType(fileEntry.getMimeType());
 			}
-			catch (PortalException pe) {
+			catch (PortalException portalException) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
-						"Unable to get file entry for " + entryClassPK, pe);
+						"Unable to get file entry for " + entryClassPK,
+						portalException);
 				}
 
 				return "document-default";
@@ -312,6 +322,7 @@ public class RankingJSONBuilder {
 	private static final Log _log = LogFactoryUtil.getLog(
 		RankingJSONBuilder.class);
 
+	private boolean _deleted;
 	private final DLAppLocalService _dlAppLocalService;
 	private final DLConfiguration _dlConfiguration;
 	private Document _document;
@@ -321,5 +332,6 @@ public class RankingJSONBuilder {
 	private boolean _pinned;
 	private final ResourceActions _resourceActions;
 	private final ThemeDisplay _themeDisplay;
+	private String _viewURL;
 
 }

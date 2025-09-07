@@ -1,19 +1,11 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.calendar.service;
 
+import com.liferay.calendar.model.CalendarResource;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 
 /**
@@ -27,19 +19,18 @@ public class CalendarResourceServiceWrapper
 	implements CalendarResourceService,
 			   ServiceWrapper<CalendarResourceService> {
 
+	public CalendarResourceServiceWrapper() {
+		this(null);
+	}
+
 	public CalendarResourceServiceWrapper(
 		CalendarResourceService calendarResourceService) {
 
 		_calendarResourceService = calendarResourceService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never modify or reference this interface directly. Always use {@link CalendarResourceServiceUtil} to access the calendar resource remote service. Add custom service methods to <code>com.liferay.calendar.service.impl.CalendarResourceServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface.
-	 */
 	@Override
-	public com.liferay.calendar.model.CalendarResource addCalendarResource(
+	public CalendarResource addCalendarResource(
 			long groupId, long classNameId, long classPK, String classUuid,
 			String code, java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
@@ -53,8 +44,7 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public com.liferay.calendar.model.CalendarResource deleteCalendarResource(
-			long calendarResourceId)
+	public CalendarResource deleteCalendarResource(long calendarResourceId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _calendarResourceService.deleteCalendarResource(
@@ -62,7 +52,7 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public com.liferay.calendar.model.CalendarResource fetchCalendarResource(
+	public CalendarResource fetchCalendarResource(
 			long classNameId, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -71,8 +61,7 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public com.liferay.calendar.model.CalendarResource getCalendarResource(
-			long calendarResourceId)
+	public CalendarResource getCalendarResource(long calendarResourceId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _calendarResourceService.getCalendarResource(calendarResourceId);
@@ -89,11 +78,11 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.calendar.model.CalendarResource> search(
+	public java.util.List<CalendarResource> search(
 		long companyId, long[] groupIds, long[] classNameIds, String keywords,
 		boolean active, boolean andOperator, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.calendar.model.CalendarResource> orderByComparator) {
+		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
+			orderByComparator) {
 
 		return _calendarResourceService.search(
 			companyId, groupIds, classNameIds, keywords, active, andOperator,
@@ -101,12 +90,12 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.calendar.model.CalendarResource> search(
+	public java.util.List<CalendarResource> search(
 		long companyId, long[] groupIds, long[] classNameIds, String code,
 		String name, String description, boolean active, boolean andOperator,
 		int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<com.liferay.calendar.model.CalendarResource> orderByComparator) {
+		com.liferay.portal.kernel.util.OrderByComparator<CalendarResource>
+			orderByComparator) {
 
 		return _calendarResourceService.search(
 			companyId, groupIds, classNameIds, code, name, description, active,
@@ -133,7 +122,7 @@ public class CalendarResourceServiceWrapper
 	}
 
 	@Override
-	public com.liferay.calendar.model.CalendarResource updateCalendarResource(
+	public CalendarResource updateCalendarResource(
 			long calendarResourceId,
 			java.util.Map<java.util.Locale, String> nameMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.adaptive.media.image.internal.scaler.test;
@@ -30,15 +21,14 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.service.test.ServiceTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -65,7 +55,7 @@ public class AMGIFImageScalerTest {
 
 		_group = GroupTestUtil.addGroup();
 
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		Collection<AMImageConfigurationEntry> amImageConfigurationEntries =
 			_amImageConfigurationHelper.getAMImageConfigurationEntries(
@@ -94,29 +84,29 @@ public class AMGIFImageScalerTest {
 		Assert.assertEquals(100, amImageScaledImage.getWidth());
 
 		Assert.assertArrayEquals(
-			FileUtil.getBytes(AMGIFImageScalerTest.class, "scaled.gif"),
+			FileUtil.getBytes(
+				AMGIFImageScalerTest.class, "dependencies/scaled.gif"),
 			FileUtil.getBytes(amImageScaledImage.getInputStream()));
 	}
 
 	private FileEntry _addFileEntry() throws Exception {
 		return DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString() + ".gif", ContentTypes.IMAGE_GIF,
-			FileUtil.getBytes(AMGIFImageScalerTest.class, "image.gif"),
-			new ServiceContext());
+			FileUtil.getBytes(
+				AMGIFImageScalerTest.class, "dependencies/image.gif"),
+			null, null, null, new ServiceContext());
 	}
 
 	private AMImageConfigurationEntry _addTestVariant() throws Exception {
-		Map<String, String> properties = HashMapBuilder.put(
-			"max-height", "100"
-		).put(
-			"max-width", "100"
-		).build();
-
 		return _amImageConfigurationHelper.addAMImageConfigurationEntry(
 			TestPropsValues.getCompanyId(), "small", StringPool.BLANK, "0",
-			properties);
+			HashMapBuilder.put(
+				"max-height", "100"
+			).put(
+				"max-width", "100"
+			).build());
 	}
 
 	private AMImageConfigurationEntry _amImageConfigurationEntry;
@@ -124,7 +114,7 @@ public class AMGIFImageScalerTest {
 	@Inject
 	private AMImageConfigurationHelper _amImageConfigurationHelper;
 
-	@Inject(filter = "mime.type=image/gif", type = AMImageScaler.class)
+	@Inject(filter = "mimeTypes=image/gif", type = AMImageScaler.class)
 	private AMImageScaler _amImageScaler;
 
 	@DeleteAfterTestRun

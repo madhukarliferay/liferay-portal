@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * The contents of this file are subject to the terms of the Liferay Enterprise
- * Subscription License ("License"). You may not use this file except in
- * compliance with the License. You can obtain a copy of the License by
- * contacting Liferay, Inc. See the License for the specific language governing
- * permissions and limitations under the License, including but not limited to
- * distribution rights of the Software.
- *
- *
- *
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.sharepoint.rest.oauth2.model.impl;
@@ -36,18 +27,18 @@ public class SharepointOAuth2TokenEntryCacheModel
 	implements CacheModel<SharepointOAuth2TokenEntry>, Externalizable {
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (!(obj instanceof SharepointOAuth2TokenEntryCacheModel)) {
+		if (!(object instanceof SharepointOAuth2TokenEntryCacheModel)) {
 			return false;
 		}
 
 		SharepointOAuth2TokenEntryCacheModel
 			sharepointOAuth2TokenEntryCacheModel =
-				(SharepointOAuth2TokenEntryCacheModel)obj;
+				(SharepointOAuth2TokenEntryCacheModel)object;
 
 		if (sharepointOAuth2TokenEntryId ==
 				sharepointOAuth2TokenEntryCacheModel.
@@ -151,7 +142,9 @@ public class SharepointOAuth2TokenEntryCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		sharepointOAuth2TokenEntryId = objectInput.readLong();
 
 		companyId = objectInput.readLong();
@@ -159,10 +152,10 @@ public class SharepointOAuth2TokenEntryCacheModel
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
-		accessToken = objectInput.readUTF();
+		accessToken = (String)objectInput.readObject();
 		configurationPid = objectInput.readUTF();
 		expirationDate = objectInput.readLong();
-		refreshToken = objectInput.readUTF();
+		refreshToken = (String)objectInput.readObject();
 	}
 
 	@Override
@@ -183,10 +176,10 @@ public class SharepointOAuth2TokenEntryCacheModel
 		objectOutput.writeLong(createDate);
 
 		if (accessToken == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(accessToken);
+			objectOutput.writeObject(accessToken);
 		}
 
 		if (configurationPid == null) {
@@ -199,10 +192,10 @@ public class SharepointOAuth2TokenEntryCacheModel
 		objectOutput.writeLong(expirationDate);
 
 		if (refreshToken == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(refreshToken);
+			objectOutput.writeObject(refreshToken);
 		}
 	}
 

@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.security.permission.test.util;
@@ -31,7 +22,6 @@ import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
-import com.liferay.portal.service.test.ServiceTestUtil;
 
 import java.util.Map;
 
@@ -53,7 +43,7 @@ public abstract class BasePermissionTestCase {
 
 		doSetUp();
 
-		ServiceTestUtil.setUser(user);
+		UserTestUtil.setUser(user);
 
 		permissionChecker = PermissionThreadLocal.getPermissionChecker();
 
@@ -62,7 +52,7 @@ public abstract class BasePermissionTestCase {
 
 	@After
 	public void tearDown() throws Exception {
-		ServiceTestUtil.setUser(TestPropsValues.getUser());
+		UserTestUtil.setUser(TestPropsValues.getUser());
 
 		removePortletModelViewPermission();
 	}
@@ -70,7 +60,7 @@ public abstract class BasePermissionTestCase {
 	protected void addPortletModelViewPermission() throws Exception {
 		RoleTestUtil.addResourcePermission(
 			getRoleName(), getResourceName(), ResourceConstants.SCOPE_GROUP,
-			getPrimKey(), ActionKeys.VIEW);
+			String.valueOf(group.getGroupId()), ActionKeys.VIEW);
 
 		Role role = RoleLocalServiceUtil.getRole(
 			TestPropsValues.getCompanyId(), getRoleName());
@@ -96,7 +86,7 @@ public abstract class BasePermissionTestCase {
 	protected void removePortletModelViewPermission() throws Exception {
 		RoleTestUtil.removeResourcePermission(
 			getRoleName(), getResourceName(), ResourceConstants.SCOPE_GROUP,
-			getPrimKey(), ActionKeys.VIEW);
+			String.valueOf(group.getGroupId()), ActionKeys.VIEW);
 
 		RoleTestUtil.removeResourcePermission(
 			getRoleName(), getResourceName(),

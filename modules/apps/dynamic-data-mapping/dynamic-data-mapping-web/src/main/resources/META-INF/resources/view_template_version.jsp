@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -27,14 +18,18 @@ DDMTemplate template = templateVersion.getTemplate();
 
 String title = LanguageUtil.format(request, "x-version-x", new Object[] {templateVersion.getName(locale), templateVersion.getVersion()});
 
-PortletURL backURL = renderResponse.createRenderURL();
-
-backURL.setParameter("mvcPath", "/view_template_history.jsp");
-backURL.setParameter("redirect", redirect);
-backURL.setParameter("templateId", String.valueOf(template.getTemplateId()));
+PortletURL backURL = PortletURLBuilder.createRenderURL(
+	renderResponse
+).setMVCPath(
+	"/view_template_history.jsp"
+).setRedirect(
+	redirect
+).setParameter(
+	"templateId", template.getTemplateId()
+).buildPortletURL();
 %>
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<c:choose>
 		<c:when test="<%= ddmDisplay.isShowBackURLInTitleBar() %>">
 
@@ -69,13 +64,11 @@ backURL.setParameter("templateId", String.valueOf(template.getTemplateId()));
 			<%
 			DDMStructure structure = ddmDisplayContext.fetchStructure(template);
 
-			String portletResourceNamespace = ParamUtil.getString(request, "portletResourceNamespace", renderResponse.getNamespace());
+			String portletResourceNamespace = ParamUtil.getString(request, "portletResourceNamespace", liferayPortletResponse.getNamespace());
 
 			String script = templateVersion.getScript();
 
-			JSONArray fieldsJSONArray = _getFormTemplateFieldsJSONArray(structure, script);
-
-			String fieldsJSONArrayString = fieldsJSONArray.toString();
+			String fieldsJSONArrayString = String.valueOf(_getFormTemplateFieldsJSONArray(structure, script));
 			%>
 
 			<%@ include file="/form_builder.jspf" %>
@@ -88,4 +81,4 @@ backURL.setParameter("templateId", String.valueOf(template.getTemplateId()));
 	<aui:button-row>
 		<aui:button href="<%= backURL.toString() %>" type="cancel" />
 	</aui:button-row>
-</div>
+</clay:container-fluid>

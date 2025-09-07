@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.segments.model.impl;
@@ -21,7 +12,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.segments.constants.SegmentsEntryConstants;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.model.SegmentsExperimentRel;
@@ -50,50 +40,44 @@ import java.util.Locale;
  */
 public class SegmentsExperimentImpl extends SegmentsExperimentBaseImpl {
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never reference this class directly. All methods that expect a segments
-	 * experiment model instance should use the {@link
-	 * com.liferay.segments.model.SegmentsExperiment} interface instead.
-	 */
-	public SegmentsExperimentImpl() {
-	}
-
 	@Override
 	public double getConfidenceLevel() {
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
 		return GetterUtil.getDouble(
-			typeSettingsProperties.getProperty("confidenceLevel"));
+			typeSettingsUnicodeProperties.getProperty("confidenceLevel"));
 	}
 
 	@Override
 	public String getGoal() {
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
-		return GetterUtil.getString(typeSettingsProperties.getProperty("goal"));
+		return GetterUtil.getString(
+			typeSettingsUnicodeProperties.getProperty("goal"));
 	}
 
 	@Override
 	public String getGoalTarget() {
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
 		return GetterUtil.getString(
-			typeSettingsProperties.getProperty("goalTarget"));
+			typeSettingsUnicodeProperties.getProperty("goalTarget"));
 	}
 
 	@Override
 	public String getSegmentsEntryName(Locale locale) throws PortalException {
-		if (getSegmentsExperienceId() ==
-				SegmentsExperienceConstants.ID_DEFAULT) {
-
-			return SegmentsEntryConstants.getDefaultSegmentsEntryName(locale);
-		}
-
 		SegmentsExperience segmentsExperience =
 			SegmentsExperienceLocalServiceUtil.getSegmentsExperience(
 				getSegmentsExperienceId());
+
+		if (segmentsExperience.getSegmentsEntryId() ==
+				SegmentsEntryConstants.ID_DEFAULT) {
+
+			return SegmentsEntryConstants.getDefaultSegmentsEntryName(locale);
+		}
 
 		SegmentsEntry segmentsEntry =
 			SegmentsEntryLocalServiceUtil.getSegmentsEntry(
@@ -108,11 +92,11 @@ public class SegmentsExperimentImpl extends SegmentsExperimentBaseImpl {
 			SegmentsExperienceLocalServiceUtil.fetchSegmentsExperience(
 				getSegmentsExperienceId());
 
-		if (segmentsExperience != null) {
-			return segmentsExperience.getSegmentsExperienceKey();
+		if (segmentsExperience == null) {
+			return null;
 		}
 
-		return SegmentsExperienceConstants.KEY_DEFAULT;
+		return segmentsExperience.getSegmentsExperienceKey();
 	}
 
 	@Override
@@ -122,27 +106,38 @@ public class SegmentsExperimentImpl extends SegmentsExperimentBaseImpl {
 	}
 
 	@Override
+	public String getType() {
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
+
+		return GetterUtil.getString(
+			typeSettingsUnicodeProperties.getProperty("type"));
+	}
+
+	@Override
 	public UnicodeProperties getTypeSettingsProperties() {
-		if (_typeSettingsProperties == null) {
-			_typeSettingsProperties = new UnicodeProperties(true);
+		if (_typeSettingsUnicodeProperties == null) {
+			_typeSettingsUnicodeProperties = new UnicodeProperties(true);
 
 			try {
-				_typeSettingsProperties.load(super.getTypeSettings());
+				_typeSettingsUnicodeProperties.load(super.getTypeSettings());
 			}
-			catch (IOException ioe) {
-				_log.error(ioe, ioe);
+			catch (IOException ioException) {
+				_log.error(ioException);
 			}
 		}
 
-		return _typeSettingsProperties;
+		return _typeSettingsUnicodeProperties;
 	}
 
 	@Override
 	public long getWinnerSegmentsExperienceId() {
-		UnicodeProperties typeSettingsProperties = getTypeSettingsProperties();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			getTypeSettingsProperties();
 
 		return GetterUtil.getLong(
-			typeSettingsProperties.getProperty("winnerSegmentsExperienceId"),
+			typeSettingsUnicodeProperties.getProperty(
+				"winnerSegmentsExperienceId"),
 			-1);
 	}
 
@@ -158,16 +153,19 @@ public class SegmentsExperimentImpl extends SegmentsExperimentBaseImpl {
 			SegmentsExperienceLocalServiceUtil.fetchSegmentsExperience(
 				winnerSegmentsExperienceId);
 
-		if (winnerSegmentsExperience != null) {
-			return winnerSegmentsExperience.getSegmentsExperienceKey();
-		}
+		return winnerSegmentsExperience.getSegmentsExperienceKey();
+	}
 
-		return SegmentsExperienceConstants.KEY_DEFAULT;
+	@Override
+	public void setTypeSettings(String typeSettings) {
+		super.setTypeSettings(typeSettings);
+
+		_typeSettingsUnicodeProperties = null;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SegmentsExperimentImpl.class);
 
-	private UnicodeProperties _typeSettingsProperties;
+	private UnicodeProperties _typeSettingsUnicodeProperties;
 
 }

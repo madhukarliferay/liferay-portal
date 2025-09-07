@@ -1,22 +1,16 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.dao.sql.transformer;
 
 import com.liferay.portal.dao.db.PostgreSQLDB;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -25,6 +19,11 @@ import org.junit.Test;
 public class PostgreSQLTransformerLogicTest
 	extends BaseSQLTransformerLogicTestCase {
 
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
 	public PostgreSQLTransformerLogicTest() {
 		super(new PostgreSQLDB(1, 0));
 	}
@@ -32,6 +31,15 @@ public class PostgreSQLTransformerLogicTest
 	@Override
 	public String getDropTableIfExistsTextTransformedSQL() {
 		return "DROP TABLE IF EXISTS Foo";
+	}
+
+	@Test
+	public void testReplaceBooleanAggregation() {
+		Assert.assertEquals(
+			"select foo from Foo order by CASE WHEN MIN(CAST(foo AS " +
+				"INTEGER)) = 1 THEN 1 ELSE 0 END",
+			sqlTransformer.transform(
+				"select foo from Foo order by AGGREGATION_BOOLEAN_MIN(foo)"));
 	}
 
 	@Override
@@ -59,18 +67,26 @@ public class PostgreSQLTransformerLogicTest
 	}
 
 	@Override
-	protected String getCastClobTextTransformedSQL() {
-		return "select CAST(foo AS TEXT) from Foo";
+	protected String getBitwiseOrTransformedSQL() {
+		return "select (foo | bar) from Foo";
 	}
 
 	@Override
-	protected String getCastLongOriginalSQL() {
-		return "select CAST_LONG(foo) from Foo";
+	protected String getCastClobTextTransformedSQL() {
+		return "select CAST(foo || (CAST(foo AS TEXT) || (bar || foo)) AS " +
+			"TEXT), CAST(foo || (bar || foo) AS TEXT) from Foo";
 	}
 
 	@Override
 	protected String getCastLongTransformedSQL() {
-		return "select CAST(foo AS INTEGER) from Foo";
+		return "select CAST(1 + (CAST(foo AS BIGINT) - (bar x 2)) AS " +
+			"BIGINT), CAST(foo + (bar x 3) AS BIGINT) from Foo";
+	}
+
+	@Override
+	protected String getCastTextTransformedSQL() {
+		return "select CAST(foo || (CAST(foo AS TEXT) || (bar || foo)) AS " +
+			"TEXT), CAST(foo || (bar || foo) AS TEXT) from Foo";
 	}
 
 	@Override

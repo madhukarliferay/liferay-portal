@@ -1,16 +1,7 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
@@ -30,16 +21,19 @@ MasterLayoutManagementToolbarDisplayContext masterLayoutManagementToolbarDisplay
 %>
 
 <clay:management-toolbar
-	displayContext="<%= masterLayoutManagementToolbarDisplayContext %>"
+	managementToolbarDisplayContext="<%= masterLayoutManagementToolbarDisplayContext %>"
+	propsTransformer="{MasterLayoutManagementToolbarPropsTransformer} from layout-page-template-admin-web"
 />
 
-<portlet:actionURL name="/layout_page_template/delete_master_layout" var="deleteMasterLayoutURL">
+<liferay-ui:success key="masterPagePublished" message="the-master-page-was-published-successfully" />
+
+<portlet:actionURL name="/layout_page_template_admin/delete_master_layout" var="deleteMasterLayoutURL">
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </portlet:actionURL>
 
-<aui:form action="<%= deleteMasterLayoutURL %>" cssClass="container-fluid-1280" name="fm">
+<aui:form action="<%= deleteMasterLayoutURL %>" cssClass="container-fluid container-fluid-max-xxxl" name="fm">
 	<liferay-ui:error key="<%= PortalException.class.getName() %>" message="one-or-more-entries-could-not-be-deleted" />
-	<liferay-ui:error key="<%= RequiredLayoutPageTemplateEntryException.class.getName() %>" message="you-cannot-delete-master-pages-that-are-used-by-a-page" />
+	<liferay-ui:error key="<%= RequiredLayoutPageTemplateEntryException.class.getName() %>" message="you-cannot-delete-master-pages-that-are-used-by-a-page,-a-page-template,-or-a-display-page-template" />
 
 	<liferay-ui:search-container
 		id="<%= masterLayoutManagementToolbarDisplayContext.getSearchContainerId() %>"
@@ -47,24 +41,21 @@ MasterLayoutManagementToolbarDisplayContext masterLayoutManagementToolbarDisplay
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.layout.page.template.model.LayoutPageTemplateEntry"
-			cssClass="selectable"
 			escapedModel="<%= true %>"
 			keyProperty="layoutPrototypeId"
 			modelVar="layoutPageTemplateEntry"
 		>
 
 			<%
-			row.setCssClass("entry-card lfr-asset-item");
-
-			Map<String, Object> rowData = new HashMap<>();
-
-			rowData.put("actions", masterLayoutManagementToolbarDisplayContext.getAvailableActions(layoutPageTemplateEntry));
-
-			row.setData(rowData);
+			row.setData(
+				HashMapBuilder.<String, Object>put(
+					"actions", masterLayoutManagementToolbarDisplayContext.getAvailableActions(layoutPageTemplateEntry)
+				).build());
 			%>
 
 			<liferay-ui:search-container-column-text>
 				<clay:vertical-card
+					propsTransformer="{MasterLayoutDropdownPropsTransformer} from layout-page-template-admin-web"
 					verticalCard="<%= new MasterLayoutVerticalCard(layoutPageTemplateEntry, renderRequest, renderResponse, searchContainer.getRowChecker()) %>"
 				/>
 			</liferay-ui:search-container-column-text>
@@ -77,7 +68,7 @@ MasterLayoutManagementToolbarDisplayContext masterLayoutManagementToolbarDisplay
 	</liferay-ui:search-container>
 </aui:form>
 
-<portlet:actionURL name="/layout_page_template/update_layout_page_template_entry_preview" var="masterLayoutPreviewURL">
+<portlet:actionURL name="/layout_page_template_admin/update_layout_page_template_entry_preview" var="masterLayoutPreviewURL">
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </portlet:actionURL>
 
@@ -85,13 +76,3 @@ MasterLayoutManagementToolbarDisplayContext masterLayoutManagementToolbarDisplay
 	<aui:input name="layoutPageTemplateEntryId" type="hidden" />
 	<aui:input name="fileEntryId" type="hidden" />
 </aui:form>
-
-<liferay-frontend:component
-	componentId="<%= LayoutPageTemplateAdminWebKeys.MASTER_LAYOUT_DROPDOWN_DEFAULT_EVENT_HANDLER %>"
-	module="js/MasterLayoutDropdownDefaultEventHandler.es"
-/>
-
-<liferay-frontend:component
-	componentId="<%= masterLayoutManagementToolbarDisplayContext.getDefaultEventHandler() %>"
-	module="js/MasterLayoutManagementToolbarDefaultEventHandler.es"
-/>

@@ -1,82 +1,24 @@
 <%--
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
 
 <%@ include file="/init.jsp" %>
 
 <%
-String displayStyle = ParamUtil.getString(request, "displayStyle", "list");
-
-boolean orderByAsc = false;
-
-String orderByType = ParamUtil.getString(request, "orderByType", "asc");
-
-if (orderByType.equals("asc")) {
-	orderByAsc = true;
-}
-
-OrderByComparator<SAPEntry> orderByComparator = new SAPEntryNameComparator(orderByAsc);
-
-int sapEntriesCount = SAPEntryServiceUtil.getCompanySAPEntriesCount(company.getCompanyId());
-
-PortletURL portletURL = renderResponse.createRenderURL();
-
-PortletURL sortingURL = renderResponse.createRenderURL();
-
-sortingURL.setParameter("displayStyle", displayStyle);
-sortingURL.setParameter("orderByType", orderByAsc ? "desc" : "asc");
+SAPEntryDisplayContext sapEntryDisplayContext = new SAPEntryDisplayContext(liferayPortletRequest, liferayPortletResponse);
 %>
 
-<aui:nav-bar markupView="lexicon">
-	<aui:nav cssClass="navbar-nav">
-		<aui:nav-item label="policies" selected="<%= true %>" />
-	</aui:nav>
-</aui:nav-bar>
-
 <clay:management-toolbar
-	creationMenu='<%=
-		new JSPCreationMenu(pageContext) {
-			{
-					addPrimaryDropdownItem(
-						dropdownItem -> dropdownItem.setHref(
-							renderResponse.createRenderURL(),
-							"mvcPath", "/edit_entry.jsp", "redirect",
-							PortalUtil.getCurrentURL(request))
-					);
-			}
-		}
-	%>'
-	disabled="<%= sapEntriesCount == 0 %>"
-	namespace="<%= renderResponse.getNamespace() %>"
-	selectable="<%= false %>"
-	showCreationMenu="<%= SAPPermission.contains(permissionChecker, SAPActionKeys.ACTION_ADD_SAP_ENTRY) %>"
-	showSearch="<%= false %>"
-	sortingOrder="<%= orderByType %>"
-	sortingURL="<%= sortingURL.toString() %>"
+	managementToolbarDisplayContext="<%= new SAPEntryManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse, sapEntryDisplayContext.getSearchContainer()) %>"
 />
 
-<div class="container-fluid-1280">
+<clay:container-fluid>
 	<liferay-ui:search-container
-		emptyResultsMessage="there-are-no-service-access-policies"
-		iteratorURL="<%= portletURL %>"
-		total="<%= sapEntriesCount %>"
+		searchContainer="<%= sapEntryDisplayContext.getSearchContainer() %>"
 	>
-		<liferay-ui:search-container-results
-			results="<%= SAPEntryServiceUtil.getCompanySAPEntries(company.getCompanyId(), searchContainer.getStart(), searchContainer.getEnd(), orderByComparator) %>"
-		/>
-
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.security.service.access.policy.model.SAPEntry"
 			escapedModel="<%= true %>"
@@ -90,7 +32,7 @@ sortingURL.setParameter("orderByType", orderByAsc ? "desc" : "asc");
 			</portlet:renderURL>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				href="<%= rowURL %>"
 				name="name"
 			>
@@ -98,7 +40,7 @@ sortingURL.setParameter("orderByType", orderByAsc ? "desc" : "asc");
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
-				cssClass="table-cell-content"
+				cssClass="table-cell-expand"
 				name="description"
 				value="<%= sapEntry.getTitle(locale) %>"
 			/>
@@ -122,4 +64,4 @@ sortingURL.setParameter("orderByType", orderByAsc ? "desc" : "asc");
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
-</div>
+</clay:container-fluid>

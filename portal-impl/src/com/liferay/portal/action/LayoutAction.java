@@ -1,15 +1,6 @@
 /**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.action;
@@ -17,8 +8,11 @@ package com.liferay.portal.action;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouterUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.login.AuthLoginGroupSettingsUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
@@ -27,12 +21,13 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.PortletContainerUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -41,7 +36,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.SSOUtil;
 import com.liferay.portal.struts.Action;
-import com.liferay.portal.struts.ActionConstants;
+import com.liferay.portal.struts.constants.ActionConstants;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 import com.liferay.portal.util.PropsValues;
@@ -50,21 +45,20 @@ import com.liferay.portlet.RenderParametersPool;
 import com.liferay.portlet.internal.RenderData;
 import com.liferay.portlet.internal.RenderStateUtil;
 
+import jakarta.portlet.PortletMode;
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.ResourceRequest;
+import jakarta.portlet.WindowState;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import java.io.PrintWriter;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
-import javax.portlet.ResourceRequest;
-import javax.portlet.WindowState;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Brian Wing Shun Chan
@@ -90,7 +84,20 @@ public class LayoutAction implements Action {
 			Layout requestedLayout = (Layout)httpServletRequest.getAttribute(
 				WebKeys.REQUESTED_LAYOUT);
 
-			if (requestedLayout != null) {
+			if ((requestedLayout == null) ||
+				!AuthLoginGroupSettingsUtil.isPromptEnabled(
+					requestedLayout.getGroupId())) {
+
+				String redirect = PortalUtil.getLayoutURL(
+					themeDisplay.getLayout(), themeDisplay);
+
+				if (_log.isDebugEnabled()) {
+					_log.debug("Redirect default layout to " + redirect);
+				}
+
+				httpServletResponse.sendRedirect(redirect);
+			}
+			else {
 				String redirectParam = "redirect";
 
 				if (Validator.isNotNull(PropsValues.AUTH_LOGIN_PORTLET_NAME)) {
@@ -112,25 +119,26 @@ public class LayoutAction implements Action {
 				}
 
 				if (Validator.isNull(authLoginURL)) {
-					PortletURL loginURL = PortletURLFactoryUtil.create(
-						httpServletRequest, PortletKeys.LOGIN,
-						PortletRequest.RENDER_PHASE);
-
-					loginURL.setParameter(
-						"saveLastPath", Boolean.FALSE.toString());
-					loginURL.setParameter(
-						"mvcRenderCommandName", "/login/login");
-					loginURL.setPortletMode(PortletMode.VIEW);
-					loginURL.setWindowState(WindowState.MAXIMIZED);
-
-					authLoginURL = loginURL.toString();
+					authLoginURL = PortletURLBuilder.create(
+						PortletURLFactoryUtil.create(
+							httpServletRequest, PortletKeys.LOGIN,
+							PortletRequest.RENDER_PHASE)
+					).setMVCRenderCommandName(
+						"/login/login"
+					).setParameter(
+						"saveLastPath", false
+					).setPortletMode(
+						PortletMode.VIEW
+					).setWindowState(
+						WindowState.MAXIMIZED
+					).buildString();
 				}
 
-				authLoginURL = HttpUtil.setParameter(
+				authLoginURL = HttpComponentsUtil.setParameter(
 					authLoginURL, "p_p_id",
 					PropsValues.AUTH_LOGIN_PORTLET_NAME);
 
-				authLoginURL = HttpUtil.setParameter(
+				authLoginURL = HttpComponentsUtil.setParameter(
 					authLoginURL, redirectParam,
 					PortalUtil.getCurrentURL(httpServletRequest));
 
@@ -139,16 +147,6 @@ public class LayoutAction implements Action {
 				}
 
 				httpServletResponse.sendRedirect(authLoginURL);
-			}
-			else {
-				String redirect = PortalUtil.getLayoutURL(
-					themeDisplay.getLayout(), themeDisplay);
-
-				if (_log.isDebugEnabled()) {
-					_log.debug("Redirect default layout to " + redirect);
-				}
-
-				httpServletResponse.sendRedirect(redirect);
 			}
 
 			return null;
@@ -167,8 +165,11 @@ public class LayoutAction implements Action {
 				plid = layout.getPlid();
 			}
 
-			return processLayout(
-				actionMapping, httpServletRequest, httpServletResponse, plid);
+			if (!layout.isTypeLinkToLayout()) {
+				return processLayout(
+					actionMapping, httpServletRequest, httpServletResponse,
+					plid);
+			}
 		}
 
 		try {
@@ -177,8 +178,9 @@ public class LayoutAction implements Action {
 			return actionMapping.getActionForward(
 				ActionConstants.COMMON_FORWARD_JSP);
 		}
-		catch (Exception e) {
-			PortalUtil.sendError(e, httpServletRequest, httpServletResponse);
+		catch (Exception exception) {
+			PortalUtil.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}
@@ -212,12 +214,12 @@ public class LayoutAction implements Action {
 		}
 
 		if (Validator.isNotNull(themeDisplay.getDoAsUserId())) {
-			forwardURL = HttpUtil.addParameter(
+			forwardURL = HttpComponentsUtil.addParameter(
 				forwardURL, "doAsUserId", themeDisplay.getDoAsUserId());
 		}
 
 		if (Validator.isNotNull(themeDisplay.getDoAsUserLanguageId())) {
-			forwardURL = HttpUtil.addParameter(
+			forwardURL = HttpComponentsUtil.addParameter(
 				forwardURL, "doAsUserLanguageId",
 				themeDisplay.getDoAsUserLanguageId());
 		}
@@ -271,7 +273,7 @@ public class LayoutAction implements Action {
 			HttpServletResponse httpServletResponse, long plid)
 		throws Exception {
 
-		HttpSession session = httpServletRequest.getSession();
+		HttpSession httpSession = httpServletRequest.getSession();
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
@@ -288,13 +290,13 @@ public class LayoutAction implements Action {
 				return null;
 			}
 
-			Long previousLayoutPlid = (Long)session.getAttribute(
+			Long previousLayoutPlid = (Long)httpSession.getAttribute(
 				WebKeys.PREVIOUS_LAYOUT_PLID);
 
 			if ((previousLayoutPlid == null) ||
 				(layout.getPlid() != previousLayoutPlid.longValue())) {
 
-				session.setAttribute(
+				httpSession.setAttribute(
 					WebKeys.PREVIOUS_LAYOUT_PLID, layout.getPlid());
 
 				if (themeDisplay.isSignedIn() &&
@@ -302,12 +304,29 @@ public class LayoutAction implements Action {
 						AUDIT_MESSAGE_COM_LIFERAY_PORTAL_MODEL_LAYOUT_VIEW &&
 					AuditRouterUtil.isDeployed()) {
 
+					User realUser = themeDisplay.getRealUser();
 					User user = themeDisplay.getUser();
 
+					JSONObject additionalInfoJSONObject = null;
+
+					if (Validator.isNotNull(themeDisplay.getDoAsUserId()) &&
+						(realUser.getUserId() != user.getUserId())) {
+
+						additionalInfoJSONObject = JSONUtil.put(
+							"doAsUserEmailAddress", user.getEmailAddress()
+						).put(
+							"doAsUserId", user.getUserId()
+						).put(
+							"doAsUserName", user.getFullName()
+						);
+					}
+
 					AuditMessage auditMessage = new AuditMessage(
-						ActionKeys.VIEW, user.getCompanyId(), user.getUserId(),
-						user.getFullName(), Layout.class.getName(),
-						String.valueOf(layout.getPlid()));
+						ActionKeys.VIEW, realUser.getCompanyId(),
+						layout.getGroupId(), realUser.getUserId(),
+						realUser.getFullName(), Layout.class.getName(),
+						String.valueOf(layout.getPlid()), null, null,
+						additionalInfoJSONObject);
 
 					AuditRouterUtil.route(auditMessage);
 				}
@@ -418,15 +437,16 @@ public class LayoutAction implements Action {
 
 			return actionMapping.getActionForward("portal.layout");
 		}
-		catch (Exception e) {
-			PortalUtil.sendError(e, httpServletRequest, httpServletResponse);
+		catch (Exception exception) {
+			PortalUtil.sendError(
+				exception, httpServletRequest, httpServletResponse);
 
 			return null;
 		}
 		finally {
 			PortletRequest portletRequest =
 				(PortletRequest)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_REQUEST);
+					JavaConstants.JAKARTA_PORTLET_REQUEST);
 
 			if (portletRequest != null) {
 				LiferayPortletRequest liferayPortletRequest =

@@ -1,40 +1,40 @@
-@component-name = "portal-upgrades"
+@component-name = "portal-db-infrastructure"
 definition {
 
-	property database.types = "db2,mariadb,mysql,oracle,postgresql,sybase";
+	property ci.retries.disabled = "true";
+	property database.types = "db2,mariadb,mysql,oracle,postgresql";
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.main.component.name = "Upgrades Core Infrastructure";
+	property test.liferay.virtual.instance = "false";
+	property test.run.type = "single";
+	property testray.main.component.name = "Database Upgrade Framework";
 
 	setUp {
 		SignIn.signIn();
 
-		Smoke.viewWelcomePage();
+		var portalURL = PropsUtil.get("portal.url");
 
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Search");
+		AssertLocation(value1 = "${portalURL}/web/guest?SM_USER=test@liferay.com");
 
-		SearchAdministration.executeSearchActions(actionsDescription = "Reindex all search indexes.");
+		SearchAdministration.executeReindex();
 	}
 
-	@priority = "5"
+	@priority = 4
 	test ViewPortletsPermissionsAfterUpgrade621015 {
 		property data.archive.type = "data-archive-portlets-permissions";
-		property database.types = "db2,mysql,oracle,sybase";
+		property database.types = "db2,mysql,oracle";
 		property portal.version = "6.2.10.15";
 
-		Upgrade.ViewPortletsPermissions();
+		ValidatePortletPermissionsUpgrade.viewPortletsPermissions();
 	}
 
-	@priority = "5"
+	@priority = 4
 	test ViewPortletsPermissionsAfterUpgrade621021 {
 		property data.archive.type = "data-archive-portlets-permissions";
-		property database.types = "db2,mysql,oracle,postgresql,sybase";
+		property database.types = "db2,mysql,oracle,postgresql";
 		property portal.version = "6.2.10.21";
 
-		Upgrade.ViewPortletsPermissions();
+		ValidatePortletPermissionsUpgrade.viewPortletsPermissions();
 	}
 
 }
